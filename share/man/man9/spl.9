@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.17 2002/02/13 08:18:52 ross Exp $
+.\"	$NetBSD: spl.9,v 1.18 2002/09/22 13:27:25 mycroft Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -244,6 +244,24 @@ permanently.  It is inappropriate to attempt to use them where the
 system priority level is being decreased temporarily, and would
 need to be restored to a previous value before continuing.
 .Sh HISTORY
+In
+.Bx 4.4 ,
+.Fn splnet
+was used to block network software interrupts.  Most device drivers used
+.Fn splimp
+to block hardware interrupts.  To avoid unnecessarily blocking other
+interrupts, in
+.Nx 1.1
+a new function was added that blocks only network hardware interrupts.
+For consistency with other
+.Xr spl 9
+functions, the old
+.Fn splnet
+function was renamed to
+.Fn splsoftnet ,
+and the new function was named
+.Fn splnet .
+.Pp
 Originally,
 .Fn splsoftclock
 lowered the system priority level.
