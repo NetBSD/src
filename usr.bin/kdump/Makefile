@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2002/09/18 20:50:22 lha Exp $
+#	$NetBSD: Makefile,v 1.21 2002/09/19 11:31:21 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-.include <bsd.own.mk>		# for MKDYNAMICROOT definition
+.include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
 
 PROG=	kdump
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys
