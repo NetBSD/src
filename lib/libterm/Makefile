@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/09 12:01:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/09 14:36:25 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
 CFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS=	termcap.c tgoto.c tputs.c
-WARNS?=	1
 
 MAN=	termcap.3
 MLINKS=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
