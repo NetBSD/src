@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.80.2.1 1999/09/18 01:04:43 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.80.2.2 1999/09/18 01:07:15 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1404,6 +1404,37 @@ struct scripth {
 	ncrcmd	snoopend	[  2];
 };
 
+#ifdef NCR_TEKRAM_EEPROM
+struct tekram_eeprom_dev {
+  u_char	devmode;
+#define	TKR_PARCHK	0x01
+#define	TKR_TRYSYNC	0x02
+#define	TKR_ENDISC	0x04
+#define	TKR_STARTUNIT	0x08
+#define	TKR_USETAGS	0x10
+#define	TKR_TRYWIDE	0x20
+  u_char	syncparam;	/* max. sync transfer rate (table ?) */
+  u_char	filler1;
+  u_char	filler2;
+};
+
+struct tekram_eeprom {
+  struct tekram_eeprom_dev 
+		dev[16];
+  u_char	adaptid;
+  u_char	adaptmode;
+#define	TKR_ADPT_GT2DRV	0x01
+#define	TKR_ADPT_GT1GB	0x02
+#define	TKR_ADPT_RSTBUS	0x04
+#define	TKR_ADPT_ACTNEG	0x08
+#define	TKR_ADPT_NOSEEK	0x10
+#define	TKR_ADPT_MORLUN	0x20
+  u_char	delay;		/* unit ? (table ???) */
+  u_char	tags;		/* use 4 times as many ... */
+  u_char	filler[60];
+};
+#endif
+
 /*==========================================================
 **
 **
@@ -1468,6 +1499,11 @@ static  char*	ncr_probe       (pcici_t tag, pcidi_t type);
 static	void	ncr_attach	(pcici_t tag, int unit);
 #endif /* __NetBSD__ */
 
+#ifdef NCR_TEKRAM_EEPROM
+static	int	read_tekram_eeprom
+				(ncb_p np, struct tekram_eeprom *buffer);
+#endif
+
 #endif /* KERNEL */
 
 /*==========================================================
@@ -1482,7 +1518,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.80.2.1 1999/09/18 01:04:43 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.80.2.2 1999/09/18 01:07:15 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -8082,36 +8118,6 @@ static void ncr_getclock (ncb_p np, u_char multiplier)
 /*=========================================================================*/
 
 #ifdef NCR_TEKRAM_EEPROM
-
-struct tekram_eeprom_dev {
-  u_char	devmode;
-#define	TKR_PARCHK	0x01
-#define	TKR_TRYSYNC	0x02
-#define	TKR_ENDISC	0x04
-#define	TKR_STARTUNIT	0x08
-#define	TKR_USETAGS	0x10
-#define	TKR_TRYWIDE	0x20
-  u_char	syncparam;	/* max. sync transfer rate (table ?) */
-  u_char	filler1;
-  u_char	filler2;
-};
-
-
-struct tekram_eeprom {
-  struct tekram_eeprom_dev 
-		dev[16];
-  u_char	adaptid;
-  u_char	adaptmode;
-#define	TKR_ADPT_GT2DRV	0x01
-#define	TKR_ADPT_GT1GB	0x02
-#define	TKR_ADPT_RSTBUS	0x04
-#define	TKR_ADPT_ACTNEG	0x08
-#define	TKR_ADPT_NOSEEK	0x10
-#define	TKR_ADPT_MORLUN	0x20
-  u_char	delay;		/* unit ? (table ???) */
-  u_char	tags;		/* use 4 times as many ... */
-  u_char	filler[60];
-};
 
 static void
 tekram_write_bit (ncb_p np, int bit)
