@@ -1,0 +1,61 @@
+.\"	$NetBSD: ntptrace.8,v 1.1.1.1 1997/04/18 13:29:08 christos Exp $
+.\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
+.\"
+.Dd April 17, 1997
+.Dt NTPTRACE 8
+.Os
+.Sh NAME
+.Nm ntptrace
+.Nd trace a chain of NTP servers back to the primary
+.Sh SYNOPSIS
+.Nm ntptrace
+.Op Fl vdn
+.Op Fl r Ar retries
+.Op Fl t Ar timeout
+.Ar server
+.Sh DESCRIPTION
+.Nm
+determines where a given Network Time Protocol
+(NTP) server gets its time from, and follows the chain of NTP servers
+back to their master time source. If given no arguments, it starts with
+.Pa localhost
+Here is an example of the output from
+.Nm 
+.nf
+% ntptrace
+localhost: stratum 4, offset 0.0019529, synch distance 0.144135
+server2ozo.com: stratum 2, offset 0.0124263, synch distance 0.115784
+usndh.edu: stratum 1, offset 0.00192, synch distance 0.011, refid 'WWVB'
+.fi
+.Pp
+On each line, the fields are (left to right): the host name, the host
+stratum, the time offset between that host and the local host (as
+measured by 
+.Nm 
+this is why it is not always zero for
+.Pa localhost, 
+the host synchronization distance, and (only
+for stratum-1 servers) the reference clock ID. All times are given in
+seconds. Note that the stratum is the server hop count to the primary
+source, while the synchronization distance is the estimated error
+relative to the primary source. These terms are precisely defined in
+RFC-1305.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl d
+Turns on some debugging output.
+.It Fl n
+Turns off the printing of host names; instead, host IP addresses are
+given. This may be useful if a nameserver is down.
+.It Fl r Ar retries
+Sets the number of retransmission attempts for each host (default = 5).
+.It Fl t Ar timeout
+Sets the retransmission timeout (in seconds) (default = 2).
+.It Fl v
+Prints verbose information about the NTP servers.
+.Sh BUGS
+This program makes no attempt to improve accuracy by doing multiple
+samples.
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
