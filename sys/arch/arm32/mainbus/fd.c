@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1996/03/27 22:18:44 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1996/03/28 21:52:41 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -67,9 +67,6 @@
 
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/fdreg.h>
-
-#define inb ReadByte
-#define outb WriteByte
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.5 1996/03/27 22:08:28 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.6 1996/03/28 21:52:47 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,7 +49,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.5 1996/03/27 22:08:28 mark Exp $
+ *	from:$NetBSD: lpt.c,v 1.6 1996/03/28 21:52:47 mark Exp $
  */
 
 /*
@@ -95,9 +95,6 @@
 #include <machine/io.h>
 #include <arm32/mainbus/lptreg.h>
 #include <arm32/mainbus/mainbus.h>
-
-#define inb ReadByte
-#define outb WriteByte 
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4

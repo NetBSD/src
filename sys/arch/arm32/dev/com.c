@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.4 1996/03/27 22:08:31 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.5 1996/03/28 21:52:32 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -61,9 +61,6 @@
 #include <machine/io.h>
 #include <arm32/mainbus/comreg.h>
 #include <arm32/mainbus/mainbus.h>
-
-#define inb ReadByte
-#define outb WriteByte 
 
 #define	com_lcr	com_cfcr
 
