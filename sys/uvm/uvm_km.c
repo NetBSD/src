@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.2 1998/02/06 22:31:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.3 1998/02/07 02:29:21 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -100,7 +100,6 @@ static int uvm_km_get __P((struct uvm_object *, vm_offset_t,
  */
 
 static struct vm_map		kernel_map_store;
-static struct uvm_object	kernel_object_store;
 static struct uvm_object	kmem_object_store;
 static struct uvm_object	mb_object_store;
 
@@ -335,14 +334,9 @@ vm_offset_t start, end;
    * first, init kernel memory objects.
    */
 
-  /* kernel_object: for pageable anonymous kernel memory (eventually) */
-  simple_lock_init(&kernel_object_store.vmobjlock);
-  kernel_object_store.pgops = &km_pager;
-  TAILQ_INIT(&kernel_object_store.memq);
-  kernel_object_store.uo_npages = 0;
-  kernel_object_store.uo_refs = UVM_OBJ_KERN; 
-					/* we are special.  we never die */
-  uvm.kernel_object = &kernel_object_store;
+  /* kernel_object: for pageable anonymous kernel memory */
+  uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
+				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
   /* kmem_object: for malloc'd memory (always wired) */
   simple_lock_init(&kmem_object_store.vmobjlock);
@@ -455,12 +449,15 @@ struct uvm_object *uobj;
 vm_offset_t start, end;
 
 {
-  boolean_t by_list;
+  boolean_t by_list, is_aobj;
   struct vm_page *pp, *ppnext;
   vm_offset_t curoff;
   UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
   simple_lock(&uobj->vmobjlock);		/* lock object */
+
+  /* is uobj an aobj? */
+  is_aobj = uobj->pgops == &aobj_pager;
 
   /* choose cheapest traversal */
   by_list = (uobj->uo_npages <=
@@ -482,6 +479,17 @@ vm_offset_t start, end;
       pp->flags |= PG_RELEASED;	/* owner must check for this when done */
     else {
       pmap_page_protect(PMAP_PGARG(pp), VM_PROT_NONE);
+
+      /*
+       * if this kernel object is an aobj, free the swap slot.
+       */
+      if (is_aobj) {
+	int slot = uao_set_swslot(uobj, curoff / PAGE_SIZE, 0);
+
+	if (slot)
+	  uvm_swap_free(slot, 1);
+      }
+
       uvm_lock_pageq();
       uvm_pagefree(pp);
       uvm_unlock_pageq();
@@ -507,6 +515,17 @@ loop_by_list:
       pp->flags |= PG_RELEASED;	/* owner must check for this when done */
     else {
       pmap_page_protect(PMAP_PGARG(pp), VM_PROT_NONE);
+
+      /*
+       * if this kernel object is an aobj, free the swap slot.
+       */
+      if (is_aobj) {
+	int slot = uao_set_swslot(uobj, pp->offset / PAGE_SIZE, 0);
+
+	if (slot)
+	  uvm_swap_free(slot, 1);
+      }
+
       uvm_lock_pageq();
       uvm_pagefree(pp);
       uvm_unlock_pageq();
@@ -599,6 +618,9 @@ int flags;
     if (pg) {
       pg->flags &= ~PG_BUSY;	/* new page */
       UVM_PAGE_OWN(pg, NULL);
+
+      pg->wire_count = 1;
+      uvmexp.wired++;
     }
     simple_unlock(&obj->vmobjlock);
     
