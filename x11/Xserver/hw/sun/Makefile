@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/20 01:32:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/21 13:07:50 mrg Exp $
 
 .include "../../Makefile.serverlib"
 
@@ -26,6 +26,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/sun \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS.sunKbd.c=		-Wno-error
+CPPFLAGS.sunGX.c=		-Wno-error
 CPPFLAGS.sunInExMono.c=		-URENDER
 CPPFLAGS.sunInitMono.c=		-DSUNMAXDEPTH=1
 CPPFLAGS.sunInitMulti.c=	-DSUNMAXDEPTH=32
