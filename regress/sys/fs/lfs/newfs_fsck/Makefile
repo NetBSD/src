@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/01/29 04:56:17 perseant Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/29 05:39:41 perseant Exp $
 
 NOMAN=	# defined
 
@@ -37,7 +37,7 @@ regress:
 	fsck_lfs -n ${CVND}${MPART}
 	mkdir ${TMPMP}
 	mount -t lfs ${BVND}${MPART} ${TMPMP}
-	dd if=/dev/zero of=${TMPMP}/zero bs=16384 count=100
+	for i in 0 1 2 3 4 5 6 7 8 9; do dd if=/dev/zero of=${TMPMP}/zero bs=16384 count=50; sync; done
 	umount ${TMPMP}
 	@echo "***  Checking that kernel write could be understood by fsck_lfs"
 	fsck_lfs -n ${CVND}${MPART}
@@ -46,5 +46,6 @@ regress:
 clean:
 	-umount ${TMPMP}
 	vnconfig -u ${BVND}${RPART}
+	rmdir ${TMPMP}
 
 .include <bsd.prog.mk>
