@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.1 2002/01/15 19:15:47 tv Exp $
+#	$NetBSD: configure.ac,v 1.2 2002/01/25 17:51:31 tv Exp $
 #
 # Autoconf definition file for make.
 #
@@ -16,5 +16,7 @@ dnl # Cygwin: We *MUST* look at -lregex *before* the "no libs" condition.
 dnl # Thus AC_CHECK_LIB(regex...) comes first, and AC_SEARCHLIBS next.
 AC_CHECK_LIB(regex, regfree)
 AC_SEARCH_LIBS(regfree, rx posix)
+
+AC_CHECK_FUNCS(setenv strdup strerror strftime vsnprintf)
 
 AC_OUTPUT
