@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 2003/05/18 18:54:07 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 2003/05/30 22:17:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,6 +91,11 @@ message askfsswap
 {
 Next the swap partition.  You have %d %s left on your disk.
 Swap partition size? }
+
+message askfsusr
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
 
 message otherparts
 {You still have some space remaining unallocated on your disk.  Please

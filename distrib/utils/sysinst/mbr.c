@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.35 2003/05/21 10:05:21 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.36 2003/05/30 22:17:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -775,6 +775,13 @@ configure_bootsel(void)
 	 * they don't get set and bootselector doesn't 'appear' when
 	 * it's loaded.
 	 */
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ == 0 ||
+		    parts[i].mbrp_typ == MBR_PTYPE_LNXSWAP ||
+		    MBR_IS_EXTENDED(parts[i].mbrp_typ))
+			mbs->mbrb_nametab[i][0] = 0;
+	}
+
 	for (i = 0; i < NMBRPART; i++) {
 		if (parts[i].mbrp_typ == MBR_PTYPE_NETBSD &&
 		    mbs->mbrb_nametab[i][0] != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.9 2003/05/30 11:56:23 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.10 2003/05/30 22:17:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,6 +150,8 @@ make_bsd_partitions(void)
 	 */
 	if (ptsize == 0)
 		ptsize = dlsize - ptstart;
+	if (dlsize == 0)
+		dlsize = ptstart + ptsize;
 
 	partstart = ptstart;
 	ptend = ptstart + ptsize;
