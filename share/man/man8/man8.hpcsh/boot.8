@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2004/04/03 04:13:49 uwe Exp $
+.\"	$NetBSD: boot.8,v 1.2 2004/04/03 15:24:42 wiz Exp $
 .Dd April 3, 2004
 .Dt BOOT 8 hpcsh
 .Os
@@ -8,7 +8,7 @@
 .Sh DESCRIPTION
 Windows\ CE machines with
 .Tn SuperH
-CPU use
+CPUs use the
 .Xr hpcboot 8
 program to boot
 .Nx .
@@ -19,7 +19,7 @@ can reboot itself if
 is configured in the kernel.
 .Ss Power fail and crash recovery
 .\"
-Unfortunately, 
+Unfortunately,
 .Nx
 can't reboot itself at power-up or after crashes.
 The machine will go through the cold reset and boot into Windows\ CE.
@@ -36,7 +36,7 @@ operations.
 .\"
 .Ss Cold starts
 .\"
-On cold reset Windows\ CE handheld machines attempt to boot Windows\ CE
+On cold reset Windows\ CE handheld machines attempt to boot the Windows\ CE
 operating system from the boot ROM.
 The boot ROM is usually not rewritable, so you cannot erase or damage
 Windows\ CE image.
