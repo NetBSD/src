@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.66.4.1 2001/05/01 12:27:18 he Exp $	*/
+/*	$NetBSD: mcd.c,v 1.66.4.2 2001/05/26 16:22:14 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -618,7 +618,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
-ifdef __HAVE_OLD_DISKLABEL
+#ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 		newlabel = *(sc->sc_dk.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
