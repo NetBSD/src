@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.12 2002/07/20 16:30:18 hannken Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.13 2002/07/21 15:32:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.12 2002/07/20 16:30:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.13 2002/07/21 15:32:18 hannken Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -150,7 +150,7 @@ ed_mca_attach(parent, self, aux)
 	ed->sc_devno  = eda->edc_drive;
 	edc_add_disk(sc, ed);
 
-	bufq_init(&ed->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&ed->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 	simple_lock_init(&ed->sc_q_lock);
 	snprintf(lckname, sizeof(lckname), "%slck", ed->sc_dev.dv_xname);
 	lockinit(&ed->sc_lock, PRIBIO | PCATCH, lckname, 0, 0);

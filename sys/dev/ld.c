@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.14 2002/07/20 11:28:07 hannken Exp $	*/
+/*	$NetBSD: ld.c,v 1.15 2002/07/21 15:32:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.14 2002/07/20 11:28:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.15 2002/07/21 15:32:18 hannken Exp $");
 
 #include "rnd.h"
 
@@ -130,7 +130,7 @@ ldattach(struct ld_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
-	bufq_init(&sc->sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
 }
 
 int
@@ -200,6 +200,7 @@ ldenddetach(struct ld_softc *sc)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+	bufq_free(&sc->sc_bufq);
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.50 2002/07/16 18:03:19 hannken Exp $	*/
+/*	$NetBSD: buf.h,v 1.51 2002/07/21 15:32:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -158,13 +158,13 @@ struct bufq_state {
 	void (*bq_put)(struct bufq_state *, struct buf *);
 	struct buf *(*bq_get)(struct bufq_state *, int);
 	void *bq_private;
-	int bq_flags;			/* Flags from bufq_init() */
+	int bq_flags;			/* Flags from bufq_alloc() */
 };
 
 #ifdef _KERNEL
 
 /*
- * Flags for bufq_init.
+ * Flags for bufq_alloc.
  */
 #define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
 #define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
@@ -176,7 +176,8 @@ struct bufq_state {
 #define BUFQ_SORT_MASK		0x000f
 #define BUFQ_METHOD_MASK	0x00f0
 
-void	bufq_init(struct bufq_state *, int);
+void	bufq_alloc(struct bufq_state *, int);
+void	bufq_free(struct bufq_state *);
 
 #define BUFQ_PUT(bufq, bp) \
 	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */

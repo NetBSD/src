@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.184 2002/07/16 18:03:18 hannken Exp $	*/
+/*	$NetBSD: sd.c,v 1.185 2002/07/21 15:32:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.184 2002/07/16 18:03:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.185 2002/07/21 15:32:19 hannken Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -134,7 +134,7 @@ sdattach(parent, sd, periph, ops)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
-	bufq_init(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -275,6 +275,8 @@ sddetach(self, flags)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&sd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
