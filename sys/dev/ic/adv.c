@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.24 2001/04/25 17:53:28 bouyer Exp $	*/
+/*	$NetBSD: adv.c,v 1.25 2001/06/09 17:18:21 briggs Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -961,6 +961,10 @@ adv_narrow_isr_callback(sc, qdonep)
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;
 			}
+			break;
+
+		case ASC_QHSTA_M_SEL_TIMEOUT:
+			xs->error = XS_TIMEOUT;
 			break;
 
 		default:

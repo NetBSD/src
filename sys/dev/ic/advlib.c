@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.15 2001/04/30 02:57:17 lukem Exp $        */
+/*      $NetBSD: advlib.c,v 1.16 2001/06/09 17:18:21 briggs Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -702,7 +702,7 @@ AscResetChipAndScsiBus(bus_space_tag_t iot, bus_space_handle_t ioh)
 	DvcSleepMilliSecond(200);
 
 	ASC_SET_CHIP_STATUS(iot, ioh, ASC_CIW_CLR_SCSI_RESET_INT);
-	AscStartChip(iot, ioh);
+	ASC_SET_CHIP_STATUS(iot, ioh, 0);
 
 	DvcSleepMilliSecond(200);
 
@@ -986,7 +986,7 @@ AscWriteLramByte(bus_space_tag_t iot, bus_space_handle_t ioh,
 		word_data |= ((u_int16_t) data) & 0x00FF;
 	}
 
-	AscWriteLramWord(iot, ioh, addr, word_data);
+	AscWriteLramWord(iot, ioh, addr & 0xFFFE, word_data);
 }
 
 
