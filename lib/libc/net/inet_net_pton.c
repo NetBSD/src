@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.12 2000/04/23 16:59:12 itojun Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.13 2000/07/06 02:56:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.12 2000/04/23 16:59:12 itojun Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.13 2000/07/06 02:56:55 christos Exp $");
 #endif
 #endif
 
@@ -135,15 +135,11 @@ inet_net_pton_ipv4(src, dst, size)
 			else
 				tmp = (tmp << 4) | n;
 			if (++dirty == 2) {
-				if (size-- <= 0)
-					goto emsgsize;
 				*dst++ = (u_char) tmp;
 				dirty = 0;
 			}
 		}
 		if (dirty) {  /* Odd trailing nybble? */
-			if (size-- <= 0)
-				goto emsgsize;
 			*dst++ = (u_char) (tmp << 4);
 		}
 	} else if (isascii(ch) && isdigit(ch)) {
