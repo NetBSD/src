@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2000/03/07 15:55:17 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2000/03/30 11:37:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -456,11 +456,11 @@ disklabel_bsd_to_sun(lp, cp)
  */
 int
 isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+	struct dkbad *bt;
 	int cyl, trk, sec;
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < 126; i++) {
