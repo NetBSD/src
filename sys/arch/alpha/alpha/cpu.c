@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.37 1999/07/06 21:44:11 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.38 1999/08/10 23:35:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 1999/07/06 21:44:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 1999/08/10 23:35:43 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 1999/07/06 21:44:11 thorpej Exp $");
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/alpha.h>
-
-#include <alpha/alpha/cpuvar.h>
 
 #if defined(MULTIPROCESSOR)
 #include <sys/malloc.h>
