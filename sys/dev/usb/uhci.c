@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.119 2000/06/01 14:28:59 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.120 2000/06/01 15:51:26 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -858,6 +858,7 @@ uhci_dump_ii(uhci_intr_info_t *ii)
 #undef DONE
 }
 
+void uhci_dump_iis(struct uhci_softc *sc);
 void
 uhci_dump_iis(struct uhci_softc *sc)
 {
@@ -868,6 +869,7 @@ uhci_dump_iis(struct uhci_softc *sc)
 		uhci_dump_ii(ii);
 }
 
+void iidump(void);
 void iidump(void) { uhci_dump_iis(thesc); }
 
 #endif
