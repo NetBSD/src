@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.3 2003/12/16 06:48:09 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.4 2004/03/03 00:05:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -109,7 +109,7 @@ struct ath_diag {
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
-	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
+	(1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
 	0)
 
