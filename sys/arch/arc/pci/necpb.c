@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.6 2000/12/24 09:25:30 ur Exp $	*/
+/*	$NetBSD: necpb.c,v 1.7 2001/01/13 10:46:18 ur Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ void		necpb_decompose_tag __P((pci_chipset_tag_t, pcitag_t, int *,
 pcireg_t	necpb_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void		necpb_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t));
-int		necpb_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
+int		necpb_intr_map __P((struct pci_attach_args *,
 		    pci_intr_handle_t *));
 const char *	necpb_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void *		necpb_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
@@ -329,12 +329,13 @@ necpb_conf_write(pc, tag, reg, data)
 }
 
 int
-necpb_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+necpb_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int pin = pa->pa_intrpin;
 	int bus, dev;
 
 	if (pin == 0) {
