@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1998/12/10 17:03:20 christos Exp $
+	$NetBSD: syscalls.master,v 1.6 1999/03/25 15:33:48 mrg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -269,19 +269,19 @@
 167	UNIMPL
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(sparc32_voidp ) != sizeof(int)
-#if defined(SYSVSEM) && !defined(alpha)
+#if defined(SYSVSEM) && !defined(alpha) && defined(COMPAT_10)
 169	STD		{ int compat_sparc32_compat_10_sys_semsys(int which, int a2, int a3, int a4, int a5); } osemsys
 #else
 169	UNIMPL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(sparc32_voidp ) != sizeof(int)
-#if defined(SYSVMSG) && !defined(alpha)
+#if defined(SYSVMSG) && !defined(alpha) && defined(COMPAT_10)
 170	STD		{ int compat_sparc32_compat_10_sys_msgsys(int which, int a2, int a3, int a4, int a5, int a6); } omsgsys
 #else
 170	UNIMPL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(sparc32_voidp ) != sizeof(int)
-#if defined(SYSVSHM) && !defined(alpha)
+#if defined(SYSVSHM) && !defined(alpha) && defined(COMPAT_10)
 171	STD		{ int compat_sparc32_compat_10_sys_shmsys(int which, int a2, int a3, int a4); } oshmsys
 #else
 171	UNIMPL		1.0 shmsys
