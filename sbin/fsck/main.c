@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1995/04/12 21:24:10 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1995/07/12 01:49:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.16 1995/04/12 21:24:10 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.17 1995/07/12 01:49:21 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "dpnNyYb:c:l:m:")) != EOF) {
+	while ((ch = getopt(argc, argv, "dfpnNyYb:c:l:m:")) != EOF) {
 		switch (ch) {
 		case 'p':
 			preen++;
@@ -99,6 +99,10 @@ main(argc, argv)
 		
 		case 'd':
 			debug++;
+			break;
+
+		case 'f':
+			skipclean = 0;
 			break;
 
 		case 'l':
