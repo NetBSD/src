@@ -72,12 +72,12 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	while (grp = getgrent()) {
 		if (grp->gr_gid == agroup)
 			continue;
-		if (ngroups >= maxgroups) {
-			ret = -1;
-			break;
-		}
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
+				if (ngroups >= maxgroups) {
+					ret = -1;
+					break;
+				}
 				groups[ngroups++] = grp->gr_gid;
 				break;
 			}
