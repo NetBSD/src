@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.13 2003/03/16 09:44:25 jdolecek Exp $	*/
+/*	$NetBSD: dump.c,v 1.14 2003/03/16 09:59:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.13 2003/03/16 09:44:25 jdolecek Exp $");
+__RCSID("$NetBSD: dump.c,v 1.14 2003/03/16 09:59:09 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,13 +113,6 @@ dumprecord(ktr, trpoints, sizep, mp, fp)
 	char buff[KTR_BUFSZ], iobuff[KTR_BUFSZ], *bp;
 	int ktrlen, *lenp;
 	void *m;
-
-	if (!ktr) {
-		printf("%s\n", buff);
-		if (*iobuff)
-			printf("%s\n", iobuff);
-		return;
-	}
 
 	if (ktr->ktr_type == KTR_GENIO || ktr->ktr_type == KTR_EMUL) {
 		bp = iobuff;
@@ -222,7 +215,6 @@ dumpfile(file, fd, trpoints)
 		if (tail)
 			(void)fflush(stdout);
 	}
-	dumprecord(NULL, 0, NULL, NULL, fp);
 }
 
 
