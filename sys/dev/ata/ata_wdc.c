@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.8 1998/11/20 01:23:52 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.9 1998/11/21 15:41:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -551,7 +551,7 @@ wdc_ata_bio_done(chp, xfer)
 	}
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(chp->wdc, chp->channel);
+	wdcstart(chp);
 }
 
 /*
