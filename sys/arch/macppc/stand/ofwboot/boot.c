@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2002/03/29 20:31:52 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.16 2002/03/30 07:15:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -303,3 +303,24 @@ loaded:
 
 	OF_exit();
 }
+
+#ifdef HAVE_CHANGEDISK_HOOK
+void
+changedisk_hook(of)
+	struct open_file *of;
+{
+	struct of_dev *op = of->f_devdata;
+	int c;
+
+	OF_call_method("eject", op->handle, 0, 0);
+
+	c = getchar();
+	if (c == 'q') {
+		printf("quit\n");
+		OF_exit();
+	}
+
+	OF_call_method("close", op->handle, 0, 0);
+	OF_call_method("open", op->handle, 0, 0);
+}
+#endif
