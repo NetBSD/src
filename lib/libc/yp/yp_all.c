@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.5 1997/07/07 02:00:30 lukem Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.6 1997/07/13 20:28:11 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,14 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_all.c,v 1.5 1997/07/07 02:00:30 lukem Exp $";
+__RCSID("$NetBSD: yp_all.c,v 1.6 1997/07/13 20:28:11 christos Exp $");
 #endif
 
+#include "namespace.h"
 #include <string.h>
+#include <err.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include "local.h"
 
 extern struct timeval _yplib_timeout;
 
@@ -71,7 +75,7 @@ yp_all(indomain, inmap, incallback)
 	clnt_sin.sin_port = 0;
 	clnt = clnttcp_create(&clnt_sin, YPPROG, YPVERS, &clnt_sock, 0, 0);
 	if (clnt == NULL) {
-		printf("clnttcp_create failed\n");
+		warnx("clnttcp_create failed");
 		return YPERR_PMAP;
 	}
 	yprnk.domain = indomain;
