@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.7 1995/04/24 12:25:34 cgd Exp $	*/
+/*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: snake.c,v 1.7 1995/04/24 12:25:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,7 @@ char **argv;
 	snrand(&money);
 	snrand(&snake[0]);
 
-	if ((orig.sg_ospeed < B9600) ||
-	    ((! CM) && (! TA))) fast=0;
+	if (ospeed < 9600 || ((! CM) && (! TA))) fast=0;
 	for(i=1;i<6;i++)
 		chase (&snake[i], &snake[i-1]);
 	setup();
@@ -528,7 +527,7 @@ int	iscore, flag;
  */
 flushi()
 {
-	stty(0, &new);
+	tcflush(0, TCIFLUSH);
 }
 int mx [8] = { 
 	0, 1, 1, 1, 0,-1,-1,-1};
