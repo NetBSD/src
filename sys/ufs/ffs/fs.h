@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.29 2003/04/02 10:39:39 fvdl Exp $	*/
+/*	$NetBSD: fs.h,v 1.30 2003/04/03 16:07:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -482,7 +482,7 @@ struct ocg {
  * Cylinder group macros to locate things in cylinder groups.
  * They calc file system addresses of cylinder group data structures.
  */
-#define	cgbase(fs, c)	((daddr_t)((fs)->fs_fpg * (c)))
+#define	cgbase(fs, c)	(((daddr_t)(fs)->fs_fpg) * (c))
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
@@ -527,9 +527,9 @@ struct ocg {
 #define	fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
 	((loc) & (fs)->fs_qfmask)
 #define lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
-	((off_t)(frag) << (fs)->fs_fshift)
+	(((off_t)(frag)) << (fs)->fs_fshift)
 #define	lblktosize(fs, blk)	/* calculates ((off_t)blk * fs->fs_bsize) */ \
-	((off_t)(blk) << (fs)->fs_bshift)
+	(((off_t)(blk)) << (fs)->fs_bshift)
 #define	lblkno(fs, loc)		/* calculates (loc / fs->fs_bsize) */ \
 	((loc) >> (fs)->fs_bshift)
 #define	numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
@@ -554,7 +554,7 @@ struct ocg {
 #define	freespace(fs, percentreserved) \
 	(blkstofrags((fs), (fs)->fs_cstotal.cs_nbfree) + \
 	(fs)->fs_cstotal.cs_nffree - \
-	((off_t)((fs)->fs_dsize) * (percentreserved) / 100))
+	(((off_t)((fs)->fs_dsize)) * (percentreserved) / 100))
 
 /*
  * Determining the size of a file block in the file system.
