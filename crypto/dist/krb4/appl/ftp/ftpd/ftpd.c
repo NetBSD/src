@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
 #include "getarg.h"
 
 __RCSID("$KTH-KRB: ftpd.c,v 1.161 2002/02/28 15:50:14 joda Exp $"
-      "$NetBSD: ftpd.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
+      "$NetBSD: ftpd.c,v 1.2 2003/08/07 09:15:39 agc Exp $");
 
 static char version[] = "Version 6.00";
 
