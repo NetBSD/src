@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.30 2000/06/28 03:32:55 mrg Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.31 2001/01/22 12:17:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -1015,9 +1015,9 @@ static struct vfsops ntfs_vfsops = {
 };
 VFS_SET(ntfs_vfsops, ntfs, 0);
 #elif defined(__NetBSD__)
-extern struct vnodeopv_desc ntfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *ntfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 	&ntfs_vnodeop_opv_desc,
 	NULL,
 };

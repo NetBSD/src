@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.5 2000/11/19 05:53:21 chs Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.6 2001/01/22 12:17:40 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -42,7 +42,7 @@
 #include <miscfs/syncfs/syncfs.h>
 
 int (**sync_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_close_desc, sync_close },		/* close */
 	{ &vop_fsync_desc, sync_fsync },		/* fsync */
@@ -55,7 +55,7 @@ struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
-struct vnodeopv_desc sync_vnodeop_opv_desc =
+const struct vnodeopv_desc sync_vnodeop_opv_desc =
 	{ &sync_vnodeop_p, sync_vnodeop_entries };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.17 2001/01/22 09:57:25 jdolecek Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.18 2001/01/22 12:17:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -108,12 +108,12 @@ extern const struct vnodeop_desc * const vfs_op_descs[];
  * associated with any particular file system, and thus cannot
  * be initialized by vfs_attach().
  */
-extern struct vnodeopv_desc dead_vnodeop_opv_desc;
-extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
-extern struct vnodeopv_desc spec_vnodeop_opv_desc;
-extern struct vnodeopv_desc sync_vnodeop_opv_desc;
+extern const struct vnodeopv_desc dead_vnodeop_opv_desc;
+extern const struct vnodeopv_desc fifo_vnodeop_opv_desc;
+extern const struct vnodeopv_desc spec_vnodeop_opv_desc;
+extern const struct vnodeopv_desc sync_vnodeop_opv_desc;
 
-struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,
 	&fifo_vnodeop_opv_desc,
 	&spec_vnodeop_opv_desc,
@@ -129,8 +129,8 @@ struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
  */
 typedef int (*PFI) __P((void *));
 
-static void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
-static void vfs_opv_init_default __P((struct vnodeopv_desc *));
+static void vfs_opv_init_explicit __P((const struct vnodeopv_desc *));
+static void vfs_opv_init_default __P((const struct vnodeopv_desc *));
 #ifdef DEBUG
 static void vfs_op_check __P((void));
 #endif
@@ -171,10 +171,10 @@ vn_default_error(v)
  */
 static void
 vfs_opv_init_explicit(vfs_opv_desc)
-	struct vnodeopv_desc *vfs_opv_desc;
+	const struct vnodeopv_desc *vfs_opv_desc;
 {
 	int (**opv_desc_vector) __P((void *));
-	struct vnodeopv_entry_desc *opve_descp;
+	const struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
 
@@ -215,7 +215,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 
 static void
 vfs_opv_init_default(vfs_opv_desc)
-	struct vnodeopv_desc *vfs_opv_desc;
+	const struct vnodeopv_desc *vfs_opv_desc;
 {
 	int j;
 	int (**opv_desc_vector) __P((void *));
@@ -236,7 +236,7 @@ vfs_opv_init_default(vfs_opv_desc)
 
 void
 vfs_opv_init(vopvdpp)
-	struct vnodeopv_desc **vopvdpp;
+	const struct vnodeopv_desc * const *vopvdpp;
 {
 	int (**opv_desc_vector) __P((void *));
 	int i;
@@ -270,7 +270,7 @@ vfs_opv_init(vopvdpp)
 
 void
 vfs_opv_free(vopvdpp)
-	struct vnodeopv_desc **vopvdpp;
+	const struct vnodeopv_desc * const *vopvdpp;
 {
 	int i;
 

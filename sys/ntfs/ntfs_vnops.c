@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.30 2000/09/19 22:02:49 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.31 2001/01/22 12:17:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -916,7 +916,7 @@ VNODEOP_SET(ntfs_vnodeop_opv_desc);
 
 #else /* !FreeBSD */
 
-struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_default_desc, (vop_t *) ntfs_bypass },
 	{ &vop_lookup_desc, (vop_t *) ntfs_lookup },	/* lookup */
 	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
@@ -964,7 +964,7 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc *)NULL, (int (*) __P((void *)))NULL }
 };
-struct vnodeopv_desc ntfs_vnodeop_opv_desc =
+const struct vnodeopv_desc ntfs_vnodeop_opv_desc =
 	{ &ntfs_vnodeop_p, ntfs_vnodeop_entries };
 
 #endif

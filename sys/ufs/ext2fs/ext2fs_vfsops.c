@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.41 2000/12/10 19:36:32 chs Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42 2001/01/22 12:17:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -76,11 +76,11 @@ extern struct lock ufs_hashlock;
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 static int ext2fs_checksb __P((struct ext2fs *, int));
 
-extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
-extern struct vnodeopv_desc ext2fs_specop_opv_desc;
-extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
+extern const struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc ext2fs_specop_opv_desc;
+extern const struct vnodeopv_desc ext2fs_fifoop_opv_desc;
 
-struct vnodeopv_desc *ext2fs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ext2fs_vnodeopv_descs[] = {
 	&ext2fs_vnodeop_opv_desc,
 	&ext2fs_specop_opv_desc,
 	&ext2fs_fifoop_opv_desc,
