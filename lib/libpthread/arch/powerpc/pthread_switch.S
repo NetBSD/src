@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.8 2003/09/07 14:47:52 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.9 2004/07/07 18:21:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -261,7 +261,7 @@ ENTRY(pthread__locked_switch)
 #endif
 
 	/*
-	 * Exit the context to make it continue at locked_return instead of
+	 * Edit the context to make it continue at locked_return instead of
 	 * here.
 	 */
 #ifdef PIC
