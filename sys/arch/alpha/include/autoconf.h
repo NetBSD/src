@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.14 1998/02/13 02:09:12 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.15 1998/05/13 23:38:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,38 +35,10 @@ struct confargs;
 
 typedef int (*intr_handler_t) __P((void *));
 
-struct abus {
-	struct	device *ab_dv;		/* back-pointer to device */
-	int	ab_type;		/* bus type (see below) */
-	void	(*ab_intr_establish)	/* bus's set-handler function */
-		    __P((struct confargs *, intr_handler_t, void *));
-	void	(*ab_intr_disestablish)	/* bus's unset-handler function */
-		    __P((struct confargs *));
-	caddr_t	(*ab_cvtaddr)		/* convert slot/offset to address */
-		    __P((struct confargs *));
-	int	(*ab_matchname)		/* see if name matches driver */
-		    __P((struct confargs *, char *));
-};
-
-#define	BUS_MAIN	1		/* mainbus */
-#define	BUS_TC		2		/* TurboChannel */
-#define	BUS_ASIC	3		/* IOCTL ASIC; under TurboChannel */
-#define	BUS_TCDS	4		/* TCDS ASIC; under TurboChannel */
-
-#define	BUS_INTR_ESTABLISH(ca, handler, val)				\
-	    (*(ca)->ca_bus->ab_intr_establish)((ca), (handler), (val))
-#define	BUS_INTR_DISESTABLISH(ca)					\
-	    (*(ca)->ca_bus->ab_intr_establish)(ca)
-#define	BUS_CVTADDR(ca)							\
-	    (*(ca)->ca_bus->ab_cvtaddr)(ca)
-#define	BUS_MATCHNAME(ca, name)						\
-	    (*(ca)->ca_bus->ab_matchname)((ca), (name))
-
 struct confargs {
 	char	*ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot. */
 	int	ca_offset;		/* Offset into slot. */
-	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
 struct bootdev_data {
