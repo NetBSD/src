@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.12 2002/06/17 15:43:52 simonb Exp $	*/
+/*	$NetBSD: factor.c,v 1.13 2002/06/18 23:07:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.12 2002/06/17 15:43:52 simonb Exp $");
+__RCSID("$NetBSD: factor.c,v 1.13 2002/06/18 23:07:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,11 @@ __RCSID("$NetBSD: factor.c,v 1.12 2002/06/17 15:43:52 simonb Exp $");
 #else
 typedef long	BIGNUM;
 typedef u_long	BN_ULONG;
+int	BN_dec2bn(BIGNUM **a, const char *str);
 #define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
-#define BN_dec2bn(pp, str)	(**(pp) = atol(str))
+#define BN_is_zero(v)		(*(v) == 0)
+#define BN_is_one(v)		(*(v) == 1)
+#define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
 #define BN_is_zero(v)		(*(v) == 0)
 #define BN_is_one(v)		(*(v) == 1)
 #define BN_mod_word(a, b)	(*(a) % (b))
@@ -115,6 +118,21 @@ void	pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
 #else
 char	*BN_bn2dec(const BIGNUM *);
 BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
+#endif
+
+
+#ifndef HAVE_OPENSSL
+int
+BN_dec2bn(BIGNUM **a, const char *str)
+{
+	char *p;
+
+	errno = 0;
+	**a = strtoul(str, &p, 10);
+	if (errno)
+		err(1, "%s", str);
+	return (*p == '\n' || *p == '\0');
+}
 #endif
 
 int
