@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.2 2003/03/17 09:11:31 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.3 2003/03/17 10:28:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.2 2003/03/17 09:11:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.3 2003/03/17 10:28:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,7 +593,7 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
-	NULL,
+	NULL,				/* vfs_reinit */
 	union_done,
 	union_sysctl,
 	NULL,				/* vfs_mountroot */
