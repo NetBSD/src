@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.8 2002/03/25 16:39:56 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.9 2002/03/27 07:39:37 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.8 2002/03/25 16:39:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.9 2002/03/27 07:39:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -94,9 +94,12 @@ static void isic_pci_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
 static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname));
+static int isic_pci_detach(struct device *self, int flags);
+static int isic_pci_activate(struct device *self, enum devact act);
 
 struct cfattach isic_pci_ca = {
-	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach
+	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach,
+	isic_pci_detach, isic_pci_activate
 };
 
 
@@ -290,6 +293,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 		printf("\n");
 		return;
 	}
+	psc->sc_pc = pc;
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* ISAC setup */
@@ -333,3 +337,42 @@ isic_pci_isdn_attach(psc, pa, cardname)
 
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
+
+
+static int
+isic_pci_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+
+	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
+	return (0);
+}
+
+static int
+isic_pci_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+	int error = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		psc->sc_isic.sc_dying = 1;
+		isic_detach_bri(&psc->sc_isic);
+		break;
+	}
+	splx(s);
+	return (error);
+}
+
