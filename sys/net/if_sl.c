@@ -32,7 +32,7 @@
  *
  *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.22 1993/12/20 07:47:15 cgd Exp $
+ *	$Id: if_sl.c,v 1.23 1994/01/08 02:54:04 cgd Exp $
  */
 
 /*
@@ -731,9 +731,9 @@ slinput(c, tp)
 #if NBPFILTER > 0
 		if (sc->sc_bpf) {
 			/*
-			 * Save the compressed header, so we can
-			 * tack it on later.  Note that we just
-			 * we will end up copying garbage in some
+			 * Save the compressed header, so we
+			 * can tack it on later.  Note that we 
+			 * will end up copying garbage in some
 			 * cases but this is okay.  We remember
 			 * where the buffer started so we can
 			 * compute the new header length.

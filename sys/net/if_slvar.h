@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *	$Id: if_slvar.h,v 1.7 1993/12/20 07:47:18 cgd Exp $
+ *	$Id: if_slvar.h,v 1.8 1994/01/08 02:54:06 cgd Exp $
  */
 
 #ifndef _IF_SLVAR_H_
@@ -73,7 +73,7 @@ struct sl_softc {
 #define	SLIOCGUNIT	_IOR('t', 88, int)	/* get slip unit number */
 
 /*
- * definitions of the pseudo- link-level header attached to  slip
+ * definitions of the pseudo- link-level header attached to slip
  * packets grabbed by the packet filter (bpf) traffic monitor.
  * These definitions pulled from BPF's "slip.h" by cgd.
  */
