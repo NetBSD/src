@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.25 1999/09/30 17:48:24 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.26 1999/09/30 22:28:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ void	tlp_2114x_preinit __P((struct tulip_softc *));
 void	tlp_pnic_preinit __P((struct tulip_softc *));
 
 void	tlp_21140_reset __P((struct tulip_softc *));
+void	tlp_pmac_reset __P((struct tulip_softc *));
 
 u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 #define	tlp_mchash(addr, sz) (tlp_crc32((addr), ETHER_ADDR_LEN) & ((sz) - 1))
@@ -2997,6 +2998,34 @@ tlp_21140_reset(sc)
 		TULIP_WRITE(sc, CSR_GPP, 0);
 }
 
+/*
+ * tlp_pmac_reset:
+ *
+ *	Reset routine for Macronix chips.
+ */
+void
+tlp_pmac_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_82C115:
+	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98725:
+		/*
+		 * Set the LED operating mode.  This information is located
+		 * in the EEPROM at byte offset 0x77, per the MX98715A and
+		 * MX98725 application notes.
+		 */
+		TULIP_WRITE(sc, CSR_MIIROM, sc->sc_srom[0x77] << 24);
+		break;
+
+	default:
+		/* Nothing. */
+	}
+}
+
 /*****************************************************************************
  * Chip/board-specific media switches.  The ones here are ones that
  * are potentially common to multiple front-ends.
@@ -4433,6 +4462,10 @@ tlp_pmac_tmsw_init(sc)
 
 	printf("\n");
 
+	/* Set the LED modes. */
+	tlp_pmac_reset(sc);
+
+	sc->sc_reset = tlp_pmac_reset;
 	sc->sc_statchg = tlp_pmac_nway_statchg;
 	sc->sc_tick = tlp_pmac_nway_tick;
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
