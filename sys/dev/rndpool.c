@@ -1,11 +1,12 @@
-/*      $NetBSD: rndpool.c,v 1.1 1997/10/09 23:13:13 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.2 1997/10/13 00:47:19 explorer Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.
+ * by Michael Graff <explorer@flame.org>.  This code is derived from the
+ * random driver written by Ted Tyso.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.15 1997/10/10 01:13:02 explorer Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.16 1997/10/13 00:47:24 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rnd.h"
+
 #ifdef DDB
 #define	integrate
 #define hide
@@ -74,7 +76,9 @@
 #define hide		static
 #endif
 
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 /*
  * Ethernet software status per device.
@@ -171,7 +175,9 @@ struct am7990_softc {
 #endif
 	u_int8_t sc_enaddr[6];
 	u_int8_t sc_pad[2];
+#if NRND > 0
 	rndsource_element_t	rnd_source;
+#endif
 };
 
 /* Export this to machine-dependent drivers. */

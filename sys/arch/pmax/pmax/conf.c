@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1997/05/24 08:19:47 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1997/10/13 00:46:52 explorer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,6 +167,7 @@ dev_decl(filedesc,open);
 cdev_decl(tun);
 cdev_decl(vnd);
 #include "ipfilter.h"
+#include "rnd.h"
 
 #if (NDC_DS > 0) || (NDC_IOASIC > 0)
 # define NDC 1
@@ -283,6 +284,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 90: network tunnel */
 
 	cdev_ipf_init(NIPFILTER,ipl),	/* 91: ip-filter device */
+	cdev_rnd_init(NRND,rnd),	/* 92: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -413,6 +415,7 @@ static int chrtoblktbl[] =  {
 	/* 89 */	NODEV,
 	/* 90 */	NODEV,
 	/* 91 */	NODEV,
+	/* 92 */	NODEV,
 };
 
 /*

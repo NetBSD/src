@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1997/06/01 09:18:45 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1997/10/13 00:46:41 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -131,6 +131,7 @@ cdev_decl(lpt);
 	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
 #include "ipfilter.h" 
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -169,7 +170,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMD,md),		/* 32: memory disk driver */
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
-
+	cdev_rnd_init(NRND,rnd),	/* 35: random source pseudo-device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -243,6 +244,9 @@ static int chrtoblktbl[] = {
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
 	/* 32 */	9,		/* md */
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
 };
 
 /*

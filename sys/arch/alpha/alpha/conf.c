@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.26 1997/09/19 00:59:38 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.27 1997/10/13 00:46:08 explorer Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.26 1997/09/19 00:59:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.27 1997/10/13 00:46:08 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ cdev_decl(satlink);
 cdev_decl(prom);			/* XXX XXX XXX */
 
 #include "se.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -204,6 +205,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
 	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
+	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

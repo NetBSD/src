@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.150 1997/10/09 23:54:19 explorer Exp $
+#	$NetBSD: files,v 1.151 1997/10/13 00:47:11 explorer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -154,6 +154,7 @@ pseudo-device md: disk
 
 pseudo-device pty: tty
 pseudo-device tb: tty
+pseudo-device rnd
 
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
@@ -192,8 +193,8 @@ file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
 file dev/mulaw.c			mulaw
 file dev/vnd.c				vnd			needs-flag
-file dev/rnd.c
-file dev/rndpool.c
+file dev/rnd.c				rnd			needs-flag
+file dev/rndpool.c			rnd			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660

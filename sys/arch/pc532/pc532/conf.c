@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1997/03/20 12:00:34 matthias Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1997/10/13 00:46:46 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -56,6 +56,7 @@
 #include "ipfilter.h"
 #include "lpt.h"
 #include "pty.h"
+#include "rnd.h"
 #include "scn.h"
 #include "se.h"
 #include "ss.h"
@@ -111,6 +112,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 28: ip-filter device */
+	cdev_rnd_init(NRND,rnd),	/* 29: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -180,6 +182,8 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	NODEV
+	/* 28 */	NODEV
+	/* 29 */	NODEV
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.120 1997/10/10 01:09:10 explorer Exp $	*/
+/*	$NetBSD: sd.c,v 1.121 1997/10/13 00:47:58 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,8 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include "rnd.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +64,9 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -102,7 +106,9 @@ struct sd_softc {
 	} params;
 	struct buf buf_queue;
 	u_int8_t type;
+#if NRND > 0
 	rndsource_element_t rnd_source;
+#endif
 };
 
 struct scsi_mode_sense_data {
@@ -243,10 +249,12 @@ sdattach(parent, self, aux)
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
 
+#if NRND > 0
 	/*
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif
 }
 
 /*
@@ -651,7 +659,9 @@ sddone(xs)
 
 	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+#if NRND > 0
 		rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+#endif
 	}
 }
 

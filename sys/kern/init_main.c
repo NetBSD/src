@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.105 1997/10/10 08:19:41 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.106 1997/10/13 00:48:07 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,8 @@
  *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>
@@ -76,7 +78,9 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -186,7 +190,9 @@ main(framep)
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
+#if NRND > 0
 	rnd_init();
+#endif
 	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
