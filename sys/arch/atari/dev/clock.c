@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1995/05/05 16:31:46 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1995/05/28 19:38:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,18 +105,17 @@ struct device	*pdp, *dp;
 void			*auxp;
 {
 	/*
-	 * Initialize Timer-A in the ST-MFP. An exact reduce to HZ is not
-	 * possible by hardware. We use a divisor of 64 and reduce by software
-	 * with a factor of 4. The MFP clock runs at 2457600Hz. Therefore the
-	 * timer runs at an effective rate of: 2457600/(64*4) = 9600Hz. The
-	 * following expression works for all 'normal' values of hz.
+	 * Initialize Timer-A in the ST-MFP. We use a divisor of 200.
+	 * The MFP clock runs at 2457600Hz. Therefore the timer runs
+	 * at an effective rate of: 2457600/200 = 12288Hz. The
+	 * following expression works for 48, 64 or 96 hz.
 	 */
-	divisor       = 9600/hz;
+	divisor       = 12288/hz;
 	MFP->mf_tacr  = 0;		/* Stop timer			*/
 	MFP->mf_iera &= ~IA_TIMA;	/* Disable timer interrupts	*/
 	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
-	printf(": system hz %d timer-A divisor %d\n", hz, divisor);
+	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
 
 	/*
 	 * Initialize Timer-B in the ST-MFP. This timer is used by the 'delay'
@@ -132,7 +131,7 @@ void			*auxp;
 
 void cpu_initclocks()
 {
-	MFP->mf_tacr  = T_Q064;		/* Start timer			*/
+	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
 	MFP->mf_ipra &= ~IA_TIMA;	/* Clear pending interrupts	*/
 	MFP->mf_iera |= IA_TIMA;	/* Enable timer interrupts	*/
 	MFP->mf_imra |= IA_TIMA;	/*    .....			*/
@@ -149,12 +148,9 @@ setstatclockrate(hz)
  */
 clkread()
 {
-	extern	short	clk_div;
-			u_int	delta, elapsed;
-   
-	elapsed = (divisor - MFP->mf_tadr) + ((4 - clk_div) * divisor);
-	delta   = (elapsed * tick) / (divisor << 2);
-	
+	u_int	delta;
+
+	delta = ((divisor - MFP->mf_tadr) * tick) / divisor;
 	/*
 	 * Account for pending clock interrupts
 	 */
@@ -377,68 +373,41 @@ static	char	ldmsize[12] =
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-static __inline__ int rtc_getclkreg(regno)
-int	regno;
-{
-	RTC->rtc_regno = RTC_REGA;
-	RTC->rtc_regno = regno;
-	return(RTC->rtc_data & 0377);
-}
-
-static __inline__ void rtc_setclkreg(regno, value)
-int	regno, value;
-{
-	RTC->rtc_regno = regno;
-	RTC->rtc_data  = value;
-}
-
 static u_long
 gettod()
 {
-	int	i, year, mon, day, hour, min, sec;
-	u_long	new_time = 0;
-	char	*msize;
+	int		i, sps;
+	u_long		new_time = 0;
+	char		*msize;
+	mc_todregs	clkregs;
 
-	/*
-	 * Hold clock
-	 */
-	rtc_setclkreg(RTC_REGB, rtc_getclkreg(RTC_REGB) | RTC_B_SET);
+	sps = splhigh();
+	MC146818_GETTOD(RTC, &clkregs);
+	splx(sps);
 
-	/*
-	 * Read clock
-	 */
-	sec  = rtc_getclkreg(RTC_SEC);
-	min  = rtc_getclkreg(RTC_MIN);
-	hour = rtc_getclkreg(RTC_HOUR);
-	day  = rtc_getclkreg(RTC_DAY) - 1;
-	mon  = rtc_getclkreg(RTC_MONTH) - 1;
-	year = rtc_getclkreg(RTC_YEAR) + STARTOFTIME;
-
-	/*
-	 * Let it run again..
-	 */
-	rtc_setclkreg(RTC_REGB, rtc_getclkreg(RTC_REGB) & ~RTC_B_SET);
-
-	if(range_test(hour, 0, 23))
+	if(range_test(clkregs[MC_HOUR], 0, 23))
 		return(0);
-	if(range_test(day, 0, 30))
+	if(range_test(clkregs[MC_DOM], 1, 31))
 		return(0);
-	if (range_test(mon, 0, 11))
+	if (range_test(clkregs[MC_MONTH], 1, 12))
 		return(0);
-	if(range_test(year, STARTOFTIME, 2000))
+	if(range_test(clkregs[MC_YEAR], 0, 2000 - GEMSTARTOFTIME))
 		return(0);
+	clkregs[MC_YEAR] += GEMSTARTOFTIME;
 
-	for(i = STARTOFTIME; i < year; i++) {
+	for(i = BSDSTARTOFTIME; i < clkregs[MC_YEAR]; i++) {
 		if(is_leap(i))
 			new_time += 366;
 		else new_time += 365;
 	}
 
-	msize = is_leap(year) ? ldmsize : dmsize;
-	for(i = 0; i < mon; i++)
+	msize = is_leap(clkregs[MC_YEAR]) ? ldmsize : dmsize;
+	for(i = 0; i < (clkregs[MC_MONTH] - 1); i++)
 		new_time += msize[i];
-	new_time += day;
-	return((new_time * SECS_DAY) + (hour * 3600) + (min * 60) + sec);
+	new_time += clkregs[MC_DOM] - 1;
+	new_time *= SECS_DAY;
+	new_time += (clkregs[MC_HOUR] * 3600) + (clkregs[MC_MIN] * 60);
+	return(new_time + clkregs[MC_SEC]);
 }
 
 static int
@@ -447,9 +416,10 @@ u_long	newtime;
 {
 	register long	days, rem, year;
 	register char	*ml;
-			 int	sec, min, hour, month;
+		 int	sps, sec, min, hour, month;
+	mc_todregs	clkregs;
 
-	/* Number of days since Jan. 1 1970	*/
+	/* Number of days since Jan. 1 'BSDSTARTOFTIME'	*/
 	days = newtime / SECS_DAY;
 	rem  = newtime % SECS_DAY;
 
@@ -464,14 +434,10 @@ u_long	newtime;
 	/*
 	 * Figure out the year. Day in year is left in 'days'.
 	 */
-	year = STARTOFTIME;
+	year = BSDSTARTOFTIME;
 	while(days >= (rem = is_leap(year) ? 366 : 365)) {
-	  ++year;
-	  days -= rem;
-	}
-	while(days < 0) {
-	  --year;
-	  days += is_leap(year) ? 366 : 365;
+		++year;
+		days -= rem;
 	}
 
 	/*
@@ -484,16 +450,18 @@ u_long	newtime;
 	/*
 	 * Now that everything is calculated, program the RTC
 	 */
-	rtc_setclkreg(RTC_REGB, RTC_B_SET);
-	rtc_setclkreg(RTC_REGA, RTC_A_DV1|RTC_A_RS2|RTC_A_RS3);
-	rtc_setclkreg(RTC_REGB, RTC_B_SET|RTC_B_SQWE|RTC_B_DM|RTC_B_24_12);
-	rtc_setclkreg(RTC_SEC, sec);
-	rtc_setclkreg(RTC_MIN, min);
-	rtc_setclkreg(RTC_HOUR, hour);
-	rtc_setclkreg(RTC_DAY, days+1);
-	rtc_setclkreg(RTC_MONTH, month+1);
-	rtc_setclkreg(RTC_YEAR, year-1970);
-	rtc_setclkreg(RTC_REGB, RTC_B_SQWE|RTC_B_DM|RTC_B_24_12);
+	mc146818_write(RTC, MC_REGA, MC_BASE_32_KHz);
+	mc146818_write(RTC, MC_REGB, MC_REGB_24HR | MC_REGB_BINARY);
+	sps = splhigh();
+	MC146818_GETTOD(RTC, &clkregs);
+	clkregs[MC_SEC]   = sec;
+	clkregs[MC_MIN]   = min;
+	clkregs[MC_HOUR]  = hour;
+	clkregs[MC_DOM]   = days+1;
+	clkregs[MC_MONTH] = month+1;
+	clkregs[MC_YEAR]  = year - GEMSTARTOFTIME;
+	MC146818_PUTTOD(RTC, &clkregs);
+	splx(sps);
 
 	return(1);
 }
