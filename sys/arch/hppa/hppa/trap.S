@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.8 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: trap.S,v 1.9 2004/06/15 16:29:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1013,7 +1013,9 @@ $emulate_fpu:
 EXIT(TLABEL(emu))
 
 /*
- * void hppa_fpu_swap(struct user *user_out, struct user *user_in);
+ * void hppa_fpu_swap(paddr_t out, paddr_t in);
+ * or
+ * void hppa_fpu_swap(struct pcb *out, NULL);
  */
 LEAF_ENTRY(hppa_fpu_swap)
 
@@ -1027,18 +1029,17 @@ LEAF_ENTRY(hppa_fpu_swap)
 	 */
 
 	/*
-	 * Assuming that user_out and user_in aren't 
-	 * both NULL, we will have to run coprocessor
-	 * instructions, so we'd better enable it.
+	 * Assuming that out and in aren't both NULL,
+	 * we will have to run coprocessor instructions,
+	 * so we'd better enable it.
 	 * 
-	 * Also, branch if there's no FPU state
-	 * to swap out.
+	 * Also, branch if there's no FPU state to swap out.
 	 */
 	mfctl	%ccr, %r1
 	depi	3, 25, 2, %r1
 	comb,=	%r0, %arg0, $fpu_swap_in
 	mtctl	%r1, %ccr
-	
+
 	/*
 	 * Swap out the current FPU state.
 	 */
@@ -1075,6 +1076,19 @@ LEAF_ENTRY(hppa_fpu_swap)
 	fstds,ma %fr29, 8(%arg0)
 	fstds,ma %fr30, 8(%arg0)
 	fstds    %fr31, 0(%arg0)
+
+	ldo	-248(%arg0), %arg0
+	ldil	L%dcache_stride, %r1
+	ldw	R%dcache_stride(%r1), %r1
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	fdc,m	%r1(%arg0)
+	sync
 
 $fpu_swap_in:
 
@@ -1131,6 +1145,19 @@ $fpu_swap_in:
 	fldds,ma -8(%arg1), %fr2
 	fldds,ma -8(%arg1), %fr1
 	fldds     0(%arg1), %fr0	/* fr0 must be restored last */
+
+	ldo	-248(%arg1), %arg1
+	ldil	L%dcache_stride, %r1
+	ldw	R%dcache_stride(%r1), %r1
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	fdc,m	%r1(%arg1)
+	sync
 
 $fpu_swap_done:
 
