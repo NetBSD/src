@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.18 1999/07/04 20:07:51 fvdl Exp $
+# $NetBSD: makeflist,v 1.19 1999/11/27 13:10:45 mrg Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -20,6 +20,10 @@ while : ; do
 	case $1 in
 	-d*)
 		nlists="$nlists secr"
+		lists=$nlists
+		;;
+	-i*)
+		nlists="$nlists cryptint"
 		lists=$nlists
 		;;
 	-b*)
@@ -42,6 +46,7 @@ while : ; do
 Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 	-b		make netbsd + x11 lists
 	-d		do domestic ("secr") sets
+	-i		do international crypto ("cryptint") sets
 	-x		only make x11 lists
 	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]
 	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
@@ -94,4 +99,5 @@ for setname in $lists; do
 	if [ $setname = misc ]; then
 		grep -v ${machine} $setd/lists/man/md_share
 	fi
+
 done | egrep -v '^#' | sort -u
