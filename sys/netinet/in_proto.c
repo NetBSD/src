@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.33 1999/07/09 22:57:18 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.34 1999/12/13 15:17:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -195,14 +195,14 @@ struct protosw inetsw[] = {
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  in_gif_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  in_gif_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */
