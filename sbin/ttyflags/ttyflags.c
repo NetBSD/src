@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyflags.c,v 1.5 1995/04/23 10:33:44 cgd Exp $	*/
+/*	$NetBSD: ttyflags.c,v 1.6 1995/08/13 05:24:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ttyflags.c,v 1.5 1995/04/23 10:33:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttyflags.c,v 1.6 1995/08/13 05:24:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,8 @@ change_ttyflags(tep)
 
 	/* Open the device NON-BLOCKING, set the flags, and close it. */
 	if ((fd = open(path, O_RDONLY | O_NONBLOCK, 0)) == -1) {
-		if ((errno != ENOENT && errno != ENXIO) || (st & TTY_ON) != 0)
+		if (!(errno == ENXIO ||
+		      (errno == ENOENT && (st & TTY_ON) == 0)))
 			rval = 1;
 		if (rval || vflag)
 			warn("open %s", path);
