@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.76 2004/08/12 15:53:32 wiz Exp $
+#	$NetBSD: Makefile,v 1.77 2005/02/26 16:17:42 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 afterboot.8 \
 	compat_freebsd.8 compat_hpux.8 compat_ibcs2.8 compat_linux.8 \
 	compat_netbsd32.8 compat_osf1.8 compat_pecoff.8 compat_sunos.8 \
 	compat_svr4.8 compat_ultrix.8 diskless.8 genassym.sh.8 hpcboot.8 \
-	intro.8 \
-	rc.8 rc.subr.8 wizd.8 yp.8
+	intro.8 nis.8 \
+	rc.8 rc.subr.8 wizd.8
 MLINKS+=MAKEDEV.8 makedev.8
 MLINKS+=compat_svr4.8 compat_sco.8
 MLINKS+=compat_svr4.8 compat_solaris.8
@@ -15,7 +15,7 @@ MLINKS+=compat_svr4.8 compat_xenix.8
 MLINKS+=compat_pecoff.8 compat_win32.8
 MLINKS+=compat_pecoff.8 peace.8
 MLINKS+=compat_netbsd32.8 netbsd32.8
-MLINKS+=yp.8 nis.8
+MLINKS+=nis.8 yp.8
 MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.shutdown.8
 
