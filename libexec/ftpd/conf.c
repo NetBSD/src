@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 2000/07/17 02:30:52 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 2000/07/23 14:40:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.33 2000/07/17 02:30:52 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.34 2000/07/23 14:40:48 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ init_curclass(void)
 		free(conv);
 	}
 
-	curclass.checkportcmd = 0;
+	curclass.checkportcmd = 1;
 	REASSIGN(curclass.chroot, NULL);
 	REASSIGN(curclass.classname, NULL);
 	curclass.conversions =	NULL;

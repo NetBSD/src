@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2000/07/17 02:30:53 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.31 2000/07/23 14:40:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,6 +259,7 @@ GLOBAL	char		tmpline[7];
 GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
 GLOBAL	int		usedefault;		/* for data transfers */
+GLOBAL	const char     *version;
 
 						/* total file data bytes */
 GLOBAL	off_t		total_data_in,  total_data_out,  total_data;
