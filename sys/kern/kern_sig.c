@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.94 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.95 1999/12/30 16:00:23 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -42,6 +42,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
+#include "opt_compat_netbsd32.h"	
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>
@@ -80,7 +81,9 @@
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
 static int build_corename __P((char *));
-
+#if COMPAT_NETBSD32
+static int coredump32 __P((struct proc *, struct vnode *));
+#endif
 sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
@@ -1240,7 +1243,6 @@ sigexit(p, signum)
 	register struct proc *p;
 	int signum;
 {
-
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigacts->ps_sig = signum;
@@ -1314,6 +1316,11 @@ coredump(p)
 	VOP_LEASE(vp, p, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
+
+#if COMPAT_NETBSD32
+	if (p->p_flag & P_32)
+		return (coredump32(p, vp));
+#endif
 #if 0
 	/*
 	 * XXX
@@ -1377,6 +1384,85 @@ out:
 		error = error1;
 	return (error);
 }
+
+#if COMPAT_NETBSD32
+/*
+ * Same as coredump, but generates a 32-bit image.
+ */
+int
+coredump32(p, vp)
+	register struct proc *p;
+	register struct vnode *vp;
+{
+	register struct vmspace *vm = p->p_vmspace;
+	register struct ucred *cred = p->p_cred->pc_ucred;
+	int error, error1;
+	struct core32 core;
+
+#if 0
+	/*
+	 * XXX
+	 * It would be nice if we at least dumped the signal state (and made it
+	 * available at run time to the debugger, as well), but this code
+	 * hasn't actually had any effect for a long time, since we don't dump
+	 * the user area.  For now, it's dead.
+	 */
+	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
+	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
+#endif
+
+	core.c_midmag = 0;
+	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
+	core.c_nseg = 0;
+	core.c_signo = p->p_sigacts->ps_sig;
+	core.c_ucode = p->p_sigacts->ps_code;
+	core.c_cpusize = 0;
+	core.c_tsize = (u_long)ctob(vm->vm_tsize);
+	core.c_dsize = (u_long)ctob(vm->vm_dsize);
+	core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
+	error = cpu_coredump32(p, vp, cred, &core);
+	if (error)
+		goto out;
+	if (core.c_midmag == 0) {
+		/* XXX
+		 * cpu_coredump() didn't bother to set the magic; assume
+		 * this is a request to do a traditional dump. cpu_coredump()
+		 * is still responsible for setting sensible values in
+		 * the core header.
+		 */
+		if (core.c_cpusize == 0)
+			core.c_cpusize = USPACE; /* Just in case */
+		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
+		    (int)core.c_dsize,
+		    (off_t)core.c_cpusize, UIO_USERSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		if (error)
+			goto out;
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
+		    core.c_ssize,
+		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	} else {
+		/*
+		 * uvm_coredump() spits out all appropriate segments.
+		 * All that's left to do is to write the core header.
+		 */
+		error = uvm_coredump32(p, vp, cred, &core);
+		if (error)
+			goto out;
+		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
+		    (int)core.c_hdrsize, (off_t)0,
+		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	}
+out:
+	VOP_UNLOCK(vp, 0);
+	error1 = vn_close(vp, FWRITE, cred, p);
+	if (error == 0)
+		error = error1;
+	return (error);
+}
+#endif
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).
