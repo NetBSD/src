@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.3 1998/08/05 16:29:06 drochner Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.4 1998/08/12 22:15:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -369,7 +369,7 @@ sd_scsibus_shutdown(arg)
 		if (scsipi_command(sc_link,
 		    (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
 		    NULL, 0, SDRETRIES, 100000, NULL,
-		    SCSI_POLL|SCSI_IGNORE_ILLEGAL_REQUEST))
+		    SCSI_AUTOCONF|SCSI_IGNORE_ILLEGAL_REQUEST))
 			printf("%s: WARNING: cache synchronization failed\n",
 			    sd->sc_dev.dv_xname);
 	}
