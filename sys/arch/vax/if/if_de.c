@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.13 1996/02/02 18:08:12 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.14 1996/02/02 18:59:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -84,8 +84,9 @@ extern char all_es_snpa[], all_is_snpa[];
 
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
-#include "if_dereg.h"
-#include "if_uba.h"
+
+#include <vax/if/if_dereg.h>
+#include <vax/if/if_uba.h>
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
