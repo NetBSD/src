@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 1997/11/02 20:48:51 mellon Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 1997/11/10 19:23:56 thorpej Exp $
 #
 # Makefile for pc532
 #
@@ -7,7 +7,7 @@
 
 SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c util.c geom.c \
-	target.cmd.c
+	target.c md.c
 
 md.o:	menu_defs.h msg_defs.h
 

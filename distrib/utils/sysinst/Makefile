@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1.2.2 1997/10/30 05:41:30 mellon Exp $
-#
-#	$NetBSD: Makefile,v 1.1.1.1.2.2 1997/10/30 05:41:30 mellon Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.2.3 1997/11/10 19:22:34 thorpej Exp $
 #
 # can't make here due to crunchgen
 #
