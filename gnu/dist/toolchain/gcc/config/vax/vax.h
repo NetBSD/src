@@ -302,11 +302,11 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define CONST_OK_FOR_LETTER_P(VALUE, C)				\
   (  (C) == 'I' ?	(VALUE) == 0				\
    : (C) == 'J' ?	0 <= (VALUE) && (VALUE) < 64		\
+   : (C) == 'O' ?	-63 <= (VALUE) && (VALUE) < 0		\
    : (C) == 'K' ?	-128 <= (VALUE) && (VALUE) < 128	\
-   : (C) == 'L' ?	-32768 <= (VALUE) && (VALUE) < 32768	\
    : (C) == 'M' ?	0 <= (VALUE) && (VALUE) < 256		\
+   : (C) == 'L' ?	-32768 <= (VALUE) && (VALUE) < 32768	\
    : (C) == 'N' ?	0 <= (VALUE) && (VALUE) < 65536		\
-   : (C) == 'O' ?	-64 <= (VALUE) && (VALUE) < 0		\
    : 0)
 
 /* Similar, but for floating constants, and defining letters G and H.
