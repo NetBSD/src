@@ -1,3 +1,5 @@
+.\"     $NetBSD: wi.4,v 1.2 1999/08/09 18:23:44 bouyer Exp $
+.\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
 .\"
@@ -28,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.1 1999/08/09 18:19:24 bouyer Exp $
+.\"	$Id: wi.4,v 1.2 1999/08/09 18:23:44 bouyer Exp $
 .\"
 .Dd April 21, 1999
 .Dt WI 4 
@@ -82,7 +84,8 @@ The driver was unable to allocate memory for transmit frames in the
 NIC's on-board RAM.
 .It "wd%d: device timeout"
 The WaveLAN failed to generate an interrupt to acknowledge a transmit
-command.
+command. One reason can be that the board is mis-configured, see
+.Xr wiconfig 8 .
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
