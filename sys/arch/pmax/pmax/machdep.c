@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2000/02/29 04:41:54 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 2000/02/29 04:55:54 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2000/02/29 04:41:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2000/02/29 04:55:54 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -302,12 +302,11 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
-	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	memset(kernend, 0, USPACE);
 
-	kernend += UPAGES * PAGE_SIZE;
+	kernend += USPACE;
 
 	/*
 	 * Determine what model of computer we are running on.
