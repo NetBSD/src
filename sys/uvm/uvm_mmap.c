@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.59 2001/10/30 19:05:26 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.60 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -49,6 +49,10 @@
  * uvm_mmap.c: system call interface into VM system, plus kernel vm_mmap
  * function.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.60 2001/11/10 07:37:00 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>

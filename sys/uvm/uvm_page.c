@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.70 2001/11/06 08:07:51 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.71 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -69,6 +69,9 @@
 /*
  * uvm_page.c: page ops.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.71 2001/11/10 07:37:00 lukem Exp $");
 
 #include "opt_uvmhist.h"
 
