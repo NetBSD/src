@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.38 2003/09/26 21:09:13 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.39 2003/10/16 22:26:32 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -432,6 +432,8 @@ Sets or clears unbuffered mode.
 In this mode,
 .Fn el_gets
 will return immediately after processing a single character.
+.It Dv EL_PREP_TERM, Fa "int"
+Sets or clears terminal editing mode.
 .El
 .It Fn el_source
 Initialise
