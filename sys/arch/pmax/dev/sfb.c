@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.1 1995/04/11 10:21:51 mellon Exp $
+ *      $Id: sfb.c,v 1.2 1995/08/01 23:15:26 jonathan Exp $
  */
 
 /*
@@ -52,7 +52,7 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: sfb.c,v 1.1 1995/04/11 10:21:51 mellon Exp $
+ * $Id: sfb.c,v 1.2 1995/08/01 23:15:26 jonathan Exp $
  */
 /*
  * Mach Operating System
@@ -1056,6 +1056,7 @@ sfbConfigMouse()
 #endif
 #if NSCC > 1
 	case DS_3MIN:
+	case DS_3MAXPLUS:
 		sccDivertXInput = sfbKbdEvent;
 		sccMouseEvent = sfbMouseEvent;
 		sccMouseButtons = sfbMouseButtons;
@@ -1093,6 +1094,7 @@ sfbDeconfigMouse()
 #endif
 #if NSCC > 1
 	case DS_3MIN:
+	case DS_3MAXPLUS:
 		sccDivertXInput = (void (*)())0;
 		sccMouseEvent = (void (*)())0;
 		sccMouseButtons = (void (*)())0;
