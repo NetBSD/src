@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.7 2003/09/12 17:55:50 tsutsui Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.8 2003/10/17 18:20:10 cdi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7 2003/09/12 17:55:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.8 2003/10/17 18:20:10 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7 2003/09/12 17:55:50 tsutsui Exp 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/nvram.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+
+extern int console_present;
 
 struct com_mainbus_softc {
 	struct com_softc sc_com;
@@ -68,9 +71,8 @@ com_mainbus_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	/* XXX probe */
 
-	return 1;
+	return (console_present != 0);
 }
 
 struct com_softc *com0; /* XXX */

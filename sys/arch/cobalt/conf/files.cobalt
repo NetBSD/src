@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.18 2003/10/08 17:29:59 bouyer Exp $
+#	$NetBSD: files.cobalt,v 1.19 2003/10/17 18:20:10 cdi Exp $
 
 maxpartitions 16
 
@@ -35,6 +35,7 @@ file arch/mips/mips/softintr.c
 file dev/md_root.c			memory_disk_hooks
 
 file dev/cons.c
+file dev/cninit.c
 
 include "dev/i2o/files.i2o"
 
