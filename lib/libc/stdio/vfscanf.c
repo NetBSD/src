@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.15 1996/03/29 23:29:28 jtc Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.16 1997/07/13 20:15:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,13 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: vfscanf.c,v 1.16 1997/07/13 20:15:35 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: vfscanf.c,v 1.15 1996/03/29 23:29:28 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -96,7 +99,7 @@ static char rcsid[] = "$NetBSD: vfscanf.c,v 1.15 1996/03/29 23:29:28 jtc Exp $";
 #define u_char unsigned char
 #define u_long unsigned long
 
-static u_char *__sccl();
+static u_char *__sccl __P((char *, u_char *));
 
 /*
  * vfscanf
@@ -117,7 +120,8 @@ __svfscanf(fp, fmt0, ap)
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
 	int base;		/* base argument to strtoq/strtouq */
-	u_quad_t (*ccfn)();	/* conversion function (strtoq/strtouq) */
+	u_quad_t (*ccfn) __P((const char *, char **, int));
+				/* conversion function (strtoq/strtouq) */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
 
@@ -201,13 +205,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'd':
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
+			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
 			base = 10;
 			break;
 
 		case 'i':
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
+			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
 			base = 0;
 			break;
 
@@ -287,7 +291,7 @@ literal:
 			if (isupper(c))
 				flags |= LONG;
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
+			ccfn = (u_quad_t (*) __P((const char *, char **, int)))strtoq;
 			base = 10;
 			break;
 		}
