@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.23 1998/04/07 20:43:58 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.24 1998/04/18 19:00:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include <machine/bus.h>
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/xboxvar.h>
 
 #include <sparc/sparc/iommuvar.h>
 #include <machine/autoconf.h>
@@ -123,14 +124,19 @@ static void *sbus_intr_establish __P((
 /* autoconfiguration driver */
 int	sbus_match_mainbus __P((struct device *, struct cfdata *, void *));
 int	sbus_match_iommu __P((struct device *, struct cfdata *, void *));
+int	sbus_match_xbox __P((struct device *, struct cfdata *, void *));
 void	sbus_attach_mainbus __P((struct device *, struct device *, void *));
 void	sbus_attach_iommu __P((struct device *, struct device *, void *));
+void	sbus_attach_xbox __P((struct device *, struct device *, void *));
 
 struct cfattach sbus_mainbus_ca = {
 	sizeof(struct sbus_softc), sbus_match_mainbus, sbus_attach_mainbus
 };
 struct cfattach sbus_iommu_ca = {
 	sizeof(struct sbus_softc), sbus_match_iommu, sbus_attach_iommu
+};
+struct cfattach sbus_xbox_ca = {
+	sizeof(struct sbus_softc), sbus_match_xbox, sbus_attach_xbox
 };
 
 extern struct cfdriver sbus_cd;
@@ -230,6 +236,20 @@ sbus_match_iommu(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
 }
 
+int
+sbus_match_xbox(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct xbox_attach_args *xa = aux;
+
+	if (CPU_ISSUN4)
+		return (0);
+
+	return (strcmp(cf->cf_driver->cd_name, xa->xa_name) == 0);
+}
+
 /*
  * Attach an Sbus.
  */
@@ -294,6 +314,32 @@ sbus_attach_iommu(parent, self, aux)
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_attach(sc, "sbus", node, ia->iom_bp, NULL);
+}
+
+void
+sbus_attach_xbox(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct xbox_attach_args *xa = aux;
+	int node = xa->xa_node;
+
+	sc->sc_bustag = xa->xa_bustag;
+	sc->sc_dmatag = xa->xa_dmatag;
+
+	/* Setup interrupt translation tables */
+	sc->sc_intr2ipl = CPU_ISSUN4C ? intr_sbus2ipl_4c : intr_sbus2ipl_4m;
+
+	/*
+	 * Record clock frequency for synchronous SCSI.
+	 * IS THIS THE CORRECT DEFAULT??
+	 */
+	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
+
+	sbus_attach(sc, "sbus", node, xa->xa_bp, NULL);
 }
 
 void
