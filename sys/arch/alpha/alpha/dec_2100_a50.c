@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.16 1996/11/12 05:14:28 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.17 1996/11/19 05:08:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -127,9 +127,12 @@ dec_2100_a50_cons_init()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(acp->ac_iot, acp->ac_memt, &acp->ac_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(acp->ac_iot, acp->ac_memt);
+		else
+			pci_display_console(acp->ac_iot, acp->ac_memt,
+			    &acp->ac_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
