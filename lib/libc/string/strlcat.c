@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.6 2000/11/24 16:19:05 itojun Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.7 2001/01/03 14:33:02 lukem Exp $	*/
 /*	from OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.6 2000/11/24 16:19:05 itojun Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.7 2001/01/03 14:33:02 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,9 +50,9 @@ strlcat(dst, src, siz)
 	const char *src;
 	size_t siz;
 {
-	register char *d = dst;
-	register const char *s = src;
-	register size_t n = siz;
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
 	size_t dlen;
 
 	_DIAGASSERT(dst != NULL);
