@@ -1,4 +1,4 @@
-# $Id: TDR2,v 1.5 1994/04/12 07:47:22 deraadt Exp $
+# $Id: TDR2,v 1.6 1994/04/18 10:51:06 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -15,6 +15,7 @@ options		GDB			# support for normal gdb
 options		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
 options		MAXFDESCS=1024
+options		SYSVMSG,SYSVSEM,SYSVSHM
 
 # Filesystem options
 #options	FIFO		# POSIX fifo support (in all filesystems)
