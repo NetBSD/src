@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.26 1999/11/25 02:48:13 nisimura Exp $
+# 	$NetBSD: INSTALL,v 1.27 1999/12/09 02:11:55 simonb Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -22,7 +22,7 @@ options 	MIPS3			# R4000/R4400 support
 
 # Support for specific models of DECstation
 options 	DEC_3100		# kn01: DECstation 2100, 3100
-#options 	DEC_5100		# kn230: DECsystem 5100
+options 	DEC_5100		# kn230: DECsystem 5100
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
 options 	DEC_3MIN		#  5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_3MAX		# kn02: 5000/200 support
