@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.10 1997/10/14 11:22:48 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.11 1998/02/21 22:41:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -75,6 +75,8 @@
 #include <machine/undefined.h>
 #include <machine/irqhandler.h>
 
+#include <arm32/arm32/disassem.h>
+
 #ifdef HYDRA
 #include "hydrabus.h"
 #endif
@@ -102,7 +104,6 @@ extern int vmem_cachectl	__P((int flag));
 extern void pmap_dump_pvs	__P((void));
 extern int pmap_page_attributes	__P((vm_offset_t va));
 extern void pmap_pagedir_dump	__P((void));
-extern u_int disassemble	__P((u_int addr));
 extern void debug_show_all_procs	__P((int argc, char *argv[]));
 
 /* Macors to simplify the switch statement below */
