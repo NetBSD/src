@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.6 1998/07/28 20:22:29 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.7 1998/08/11 00:32:04 thorpej Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -414,13 +414,11 @@ sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
-# MII bus support
-mii*	at tl?
-
-# MII PHY network interfaces
-tlphy*	at mii? dev ?			# ThunderLAN PHYs
-nsphy*	at mii? dev ?			# NS and compatible PHYs
-
+# MII/PHY support
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
 # Audio Devices
 
