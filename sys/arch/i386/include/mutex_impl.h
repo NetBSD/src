@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/19 05:13:01 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.4 2002/03/22 03:33:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@ struct mutex {
 			int mtx_oldspl;			/* 4-7 */
 		} mtx_spin;
 	} mtx_un;
+#if defined(MUTEX_DEBUG)
+	struct mutex_debug_info mtx_debug;
+#endif
 };
 
 #define	MUTEX_INITIALIZER_ADAPTIVE					\

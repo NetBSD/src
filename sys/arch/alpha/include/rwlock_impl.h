@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_impl.h,v 1.1.2.4 2002/03/17 20:18:57 thorpej Exp $	*/
+/*	$NetBSD: rwlock_impl.h,v 1.1.2.5 2002/03/22 03:33:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 
 struct rwlock {
 	__volatile unsigned long rwl_owner;
+#if defined(RWLOCK_DEBUG)
+	struct rwlock_debug_info rwl_debug;
+#endif
 };
 
 #define	RWLOCK_INITIALIZER						\
