@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.4 1998/10/03 20:28:03 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.5 1999/10/29 15:02:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/cdio.h>
+#include <sys/dvdio.h>
 
 #include <sys/syscallargs.h>
 
@@ -92,6 +93,9 @@ linux_ioctl_cdrom(p, uap, retval)
 	struct cd_sub_channel_info *info, t_info;
 	struct ioc_read_subchannel t_subchannel;
 	struct ioc_vol t_vol;
+
+	dvd_struct ds;
+	dvd_authinfo dai;
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -330,6 +334,43 @@ linux_ioctl_cdrom(p, uap, retval)
 	case LINUX_CDROMRESET:
 		ncom = CDIOCRESET;
 		break;
+
+	case LINUX_DVD_READ_STRUCT:
+		error = copyin(SCARG(uap, data), &ds, sizeof ds);
+		if (error)
+			return (error);
+		error = ioctlf(fp, DVD_READ_STRUCT, (caddr_t)&ds, p);
+		if (error)
+			return (error);
+		error = copyout(&ds, SCARG(uap, data), sizeof ds);
+		if (error)
+			return (error);
+		return (0);
+
+	case LINUX_DVD_WRITE_STRUCT:
+		error = copyin(SCARG(uap, data), &ds, sizeof ds);
+		if (error)
+			return (error);
+		error = ioctlf(fp, DVD_WRITE_STRUCT, (caddr_t)&ds, p);
+		if (error)
+			return (error);
+		error = copyout(&ds, SCARG(uap, data), sizeof ds);
+		if (error)
+			return (error);
+		return (0);
+
+	case LINUX_DVD_AUTH:
+		error = copyin(SCARG(uap, data), &dai, sizeof dai);
+		if (error)
+			return (error);
+		error = ioctlf(fp, DVD_AUTH, (caddr_t)&dai, p);
+		if (error)
+			return (error);
+		error = copyout(&dai, SCARG(uap, data), sizeof dai);
+		if (error)
+			return (error);
+		return (0);
+
 
 	default:
 		DPRINTF(("linux_ioctl: unimplemented ioctl %08lx\n", com));
