@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.53 1998/04/29 00:43:46 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.54 1998/04/29 20:43:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,9 +169,13 @@ tcp_reass(tp, ti, m)
 	register struct tcpiphdr *ti;
 	struct mbuf *m;
 {
-	register struct ipqent *p, *q, *nq, *tiqe;
+	register struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = tp->t_inpcb->inp_socket;
-	int flags;
+	int pkt_flags;
+	tcp_seq pkt_seq;
+	unsigned pkt_len;
+	u_long rcvpartdupbyte = 0;
+	u_long rcvoobyte;
 
 	/*
 	 * Call with ti==0 after become established to
@@ -180,82 +184,215 @@ tcp_reass(tp, ti, m)
 	if (ti == 0)
 		goto present;
 
+	rcvoobyte = ti->ti_len;
 	/*
-	 * Allocate a new queue entry, before we throw away any data.
-	 * If we can't, just drop the packet.  XXX
+	 * Copy these to local variables because the tcpiphdr
+	 * gets munged while we are collapsing mbufs.
 	 */
-	MALLOC(tiqe, struct ipqent *, sizeof (struct ipqent), M_IPQ, M_NOWAIT);
-	if (tiqe == NULL) {
-		tcpstat.tcps_rcvmemdrop++;
-		m_freem(m);
-		return (0);
-	}
-
+	pkt_seq = ti->ti_seq;
+	pkt_len = ti->ti_len;
+	pkt_flags = ti->ti_flags;
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = tp->segq.lh_first; q != NULL;
-	    p = q, q = q->ipqe_q.le_next)
-		if (SEQ_GT(q->ipqe_tcp->ti_seq, ti->ti_seq))
-			break;
-
-	/*
-	 * If there is a preceding segment, it may provide some of
-	 * our data already.  If so, drop the data from the incoming
-	 * segment.  If it provides all of our data, drop us.
-	 */
-	if (p != NULL) {
-		register struct tcpiphdr *phdr = p->ipqe_tcp;
-		register int i;
-
-		/* conversion to int (in i) handles seq wraparound */
-		i = phdr->ti_seq + phdr->ti_len - ti->ti_seq;
-		if (i > 0) {
-			if (i >= ti->ti_len) {
-				tcpstat.tcps_rcvduppack++;
-				tcpstat.tcps_rcvdupbyte += ti->ti_len;
-				m_freem(m);
-				FREE(tiqe, M_IPQ);
-				return (0);
-			}
-			m_adj(m, i);
-			ti->ti_len -= i;
-			ti->ti_seq += i;
-		}
-	}
-	tcpstat.tcps_rcvoopack++;
-	tcpstat.tcps_rcvoobyte += ti->ti_len;
-
-	/*
-	 * While we overlap succeeding segments trim them or,
-	 * if they are completely covered, dequeue them.
-	 */
-	for (; q != NULL; q = nq) {
-		register struct tcpiphdr *qhdr = q->ipqe_tcp;
-		register int i = (ti->ti_seq + ti->ti_len) - qhdr->ti_seq;
-
-		if (i <= 0)
-			break;
-		if (i < qhdr->ti_len) {
-			qhdr->ti_seq += i;
-			qhdr->ti_len -= i;
-			m_adj(q->ipqe_m, i);
-			break;
-		}
+	for (p = NULL, q = tp->segq.lh_first; q != NULL; q = nq) {
 		nq = q->ipqe_q.le_next;
-		m_freem(q->ipqe_m);
+		/*
+		 * If the received segment is just right after this
+		 * fragment, merge the two together and then check
+		 * for further overlaps.
+		 */
+		if (q->ipqe_seq + q->ipqe_len == pkt_seq) {
+#ifdef TCPREASS_DEBUG
+			printf("tcp_reass[%p]: concat %u:%u(%u) to %u:%u(%u)\n",
+			       tp, pkt_seq, pkt_seq + pkt_len, pkt_len,
+			       q->ipqe_seq, q->ipqe_seq + q->ipqe_len, q->ipqe_len);
+#endif
+			pkt_len += q->ipqe_len;
+			pkt_flags |= q->ipqe_flags;
+			pkt_seq = q->ipqe_seq;
+			m_cat(q->ipqe_m, m);
+			m = q->ipqe_m;
+			goto free_ipqe;
+		}
+		/*
+		 * If the received segment is completely past this
+		 * fragment, we need to go the next fragment.
+		 */
+		if (SEQ_LT(q->ipqe_seq + q->ipqe_len, pkt_seq)) {
+			p = q;
+			continue;
+		}
+		/*
+		 * If the fragment is past the received segment, 
+		 * it (or any following) can't be concatenated.
+		 */
+		if (SEQ_GT(q->ipqe_seq, pkt_seq + pkt_len))
+			break;
+		/*
+		 * We've received all the data in this segment before.
+		 * mark it as a duplicate and return.
+		 */
+		if (SEQ_LEQ(q->ipqe_seq, pkt_seq) &&
+		    SEQ_GEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
+			tcpstat.tcps_rcvduppack++;
+			tcpstat.tcps_rcvdupbyte += pkt_len;
+			m_freem(m);
+			if (tiqe != NULL)
+				FREE(tiqe, M_IPQ);
+			return (0);
+		}
+		/*
+		 * Received segment completely overlaps this fragment
+		 * so we drop the fragment (this keeps the temporal
+		 * ordering of segments correct).
+		 */
+		if (SEQ_GEQ(q->ipqe_seq, pkt_seq) &&
+		    SEQ_LEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
+			rcvpartdupbyte += q->ipqe_len;
+			m_freem(q->ipqe_m);
+			goto free_ipqe;
+		}
+		/*
+		 * RX'ed segment extends past the end of the
+		 * fragment.  Drop the overlapping bytes.  Then
+		 * merge the fragment and segment then treat as
+		 * a longer received packet.
+		 */
+		if (SEQ_LT(q->ipqe_seq, pkt_seq)
+		    && SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
+			int overlap = q->ipqe_seq + q->ipqe_len - pkt_seq;
+#ifdef TCPREASS_DEBUG
+			printf("tcp_reass[%p]: trim starting %d bytes of %u:%u(%u)\n",
+			       tp, overlap,
+			       pkt_seq, pkt_seq + pkt_len, pkt_len);
+#endif
+			m_adj(m, overlap);
+			rcvpartdupbyte += overlap;
+			m_cat(q->ipqe_m, m);
+			m = q->ipqe_m;
+			pkt_seq = q->ipqe_seq;
+			pkt_len += q->ipqe_len - overlap;
+			rcvoobyte -= overlap;
+			goto free_ipqe;
+		}
+		/*
+		 * RX'ed segment extends past the front of the
+		 * fragment.  Drop the overlapping bytes on the
+		 * received packet.  The packet will then be
+		 * contatentated with this fragment a bit later.
+		 */
+		if (SEQ_GT(q->ipqe_seq, pkt_seq)
+		    && SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
+			int overlap = pkt_seq + pkt_len - q->ipqe_seq;
+#ifdef TCPREASS_DEBUG
+			printf("tcp_reass[%p]: trim trailing %d bytes of %u:%u(%u)\n",
+			       tp, overlap,
+			       pkt_seq, pkt_seq + pkt_len, pkt_len);
+#endif
+			m_adj(m, -overlap);
+			pkt_len -= overlap;
+			rcvpartdupbyte += overlap;
+			rcvoobyte -= overlap;
+		}
+		/*
+		 * If the received segment immediates precedes this
+		 * fragment then tack the fragment onto this segment
+		 * and reinsert the data.
+		 */
+		if (q->ipqe_seq == pkt_seq + pkt_len) {
+#ifdef TCPREASS_DEBUG
+			printf("tcp_reass[%p]: append %u:%u(%u) to %u:%u(%u)\n",
+			       tp, q->ipqe_seq, q->ipqe_seq + q->ipqe_len, q->ipqe_len,
+			       pkt_seq, pkt_seq + pkt_len, pkt_len);
+#endif
+			pkt_len += q->ipqe_len;
+			pkt_flags |= q->ipqe_flags;
+			m_cat(m, q->ipqe_m);
+			LIST_REMOVE(q, ipqe_q);
+			LIST_REMOVE(q, ipqe_timeq);
+			if (tiqe == NULL) {
+			    tiqe = q;
+			} else {
+			    FREE(q, M_IPQ);
+			}
+			break;
+		}
+		/*
+		 * If the fragment is before the segment, remember it.
+		 * When this loop is terminated, p will contain the
+		 * pointer to fragment that is right before the received
+		 * segment.
+		 */
+		if (SEQ_LEQ(q->ipqe_seq, pkt_seq))
+			p = q;
+
+		continue;
+
+		/*
+		 * This is a common operation.  It also will allow
+		 * to save doing a malloc/free in most instances.
+		 */
+	  free_ipqe:
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		LIST_REMOVE(q, ipqe_timeq);
+		if (tiqe == NULL) {
+		    tiqe = q;
+		} else {
+		    FREE(q, M_IPQ);
+		}
 	}
 
-	/* Insert the new fragment queue entry into place. */
+	/*
+	 * Allocate a new queue entry since the received segment did not
+	 * collapse onto any other out-of-order block; thus we are allocating
+	 * a new block.  If it had collapsed, tiqe would not be NULL and
+	 * we would be reusing it.
+	 * XXX If we can't, just drop the packet.  XXX
+	 */
+	if (tiqe == NULL) {
+		MALLOC(tiqe, struct ipqent *, sizeof (struct ipqent), M_IPQ, M_NOWAIT);
+		if (tiqe == NULL) {
+			tcpstat.tcps_rcvmemdrop++;
+			m_freem(m);
+			return (0);
+		}
+	}
+
+	/*
+	 * Update the counters.
+	 */
+	tcpstat.tcps_rcvoopack++;
+	tcpstat.tcps_rcvoobyte += rcvoobyte;
+	if (rcvpartdupbyte) {
+	    tcpstat.tcps_rcvpartduppack++;
+	    tcpstat.tcps_rcvpartdupbyte += rcvpartdupbyte;
+	}
+
+	/*
+	 * Insert the new fragment queue entry into both queues.
+	 */
 	tiqe->ipqe_m = m;
-	tiqe->ipqe_tcp = ti;
+	tiqe->ipqe_seq = pkt_seq;
+	tiqe->ipqe_len = pkt_len;
+	tiqe->ipqe_flags = pkt_flags;
 	if (p == NULL) {
 		LIST_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
+#ifdef TCPREASS_DEBUG
+		if (tiqe->ipqe_seq != tp->rcv_nxt)
+			printf("tcp_reass[%p]: insert %u:%u(%u) at front\n",
+			       tp, pkt_seq, pkt_seq + pkt_len, pkt_len);
+#endif
 	} else {
 		LIST_INSERT_AFTER(p, tiqe, ipqe_q);
+#ifdef TCPREASS_DEBUG
+		printf("tcp_reass[%p]: insert %u:%u(%u) after %u:%u(%u)\n",
+		       tp, pkt_seq, pkt_seq + pkt_len, pkt_len,
+		       p->ipqe_seq, p->ipqe_seq + p->ipqe_len, p->ipqe_len);
+#endif
 	}
+
+	LIST_INSERT_HEAD(&tp->timeq, tiqe, ipqe_timeq);
 
 present:
 	/*
@@ -265,25 +402,23 @@ present:
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
 	q = tp->segq.lh_first;
-	if (q == NULL || q->ipqe_tcp->ti_seq != tp->rcv_nxt)
+	if (q == NULL || q->ipqe_seq != tp->rcv_nxt)
 		return (0);
-	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_tcp->ti_len)
+	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_len)
 		return (0);
-	do {
-		tp->rcv_nxt += q->ipqe_tcp->ti_len;
-		flags = q->ipqe_tcp->ti_flags & TH_FIN;
 
-		nq = q->ipqe_q.le_next;
-		LIST_REMOVE(q, ipqe_q);
-		if (so->so_state & SS_CANTRCVMORE)
-			m_freem(q->ipqe_m);
-		else
-			sbappend(&so->so_rcv, q->ipqe_m);
-		FREE(q, M_IPQ);
-		q = nq;
-	} while (q != NULL && q->ipqe_tcp->ti_seq == tp->rcv_nxt);
+	tp->rcv_nxt += q->ipqe_len;
+	pkt_flags = q->ipqe_flags & TH_FIN;
+
+	LIST_REMOVE(q, ipqe_q);
+	LIST_REMOVE(q, ipqe_timeq);
+	if (so->so_state & SS_CANTRCVMORE)
+		m_freem(q->ipqe_m);
+	else
+		sbappend(&so->so_rcv, q->ipqe_m);
+	FREE(q, M_IPQ);
 	sorwakeup(so);
-	return (flags);
+	return (pkt_flags);
 }
 
 /*
@@ -602,8 +737,7 @@ after_listen:
 				else if (tp->t_timer[TCPT_PERSIST] == 0)
 					tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 
-				if (sb_notify(&so->so_snd))
-					sowwakeup(so);
+				sowwakeup(so);
 				if (so->so_snd.sb_cc)
 					(void) tcp_output(tp);
 				return;
@@ -1124,8 +1258,7 @@ after_listen:
 			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
-		if (sb_notify(&so->so_snd))
-			sowwakeup(so);
+		sowwakeup(so);
 		tp->snd_una = ti->ti_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
@@ -1474,6 +1607,30 @@ tcp_dooptions(tp, cp, cnt, ti, oi)
 				tp->t_flags |= TF_RCVD_TSTMP;
 				tp->ts_recent = oi->ts_val;
 				tp->ts_recent_age = tcp_now;
+			}
+			break;
+		case TCPOPT_SACK_PERMITTED:
+			if (optlen != TCPOLEN_SACK_PERMITTED)
+				continue;
+			if (!(ti->ti_flags & TH_SYN))
+				continue;
+			tp->t_flags &= ~TF_CANT_TXSACK;
+			break;
+
+		case TCPOPT_SACK:
+			if (tp->t_flags & TF_IGNR_RXSACK)
+				continue;
+			if (optlen % 8 != 2 || optlen < 10)
+				continue;
+			cp += 2;
+			optlen -= 2;
+			for (; optlen > 0; cp -= 8, optlen -= 8) {
+				tcp_seq lwe, rwe;
+				bcopy((char *)cp, (char *) &lwe, sizeof(lwe));
+				NTOHL(lwe);
+				bcopy((char *)cp, (char *) &rwe, sizeof(rwe));
+				NTOHL(rwe);
+				/* tcp_mark_sacked(tp, lwe, rwe); */
 			}
 			break;
 		}
