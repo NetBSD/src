@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.152 2002/05/04 17:19:25 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.153 2002/05/14 02:23:07 eeh Exp $	*/
 
 /*
- * Copyright (c) 1996-2001 Eduardo Horvath
+ * Copyright (c) 1996-2002 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
  * 	The President and Fellows of Harvard College.
@@ -91,6 +91,13 @@
 #include <machine/pmap.h>
 #include <machine/asm.h>
 
+/* A few convenient abbreviations for trapframe fields. */
+#define	TF_G	TF_GLOBAL
+#define	TF_O	TF_OUT
+#define	TF_L	TF_LOCAL
+#define	TF_I	TF_IN
+
+	
 #undef	CURPROC
 #undef	CPCB
 #undef	FPPROC
@@ -1737,6 +1744,30 @@ intr_setup_msg:
 	.text
 
 #ifdef _LP64
+#ifdef DEBUG
+	/* Only save a snapshot of locals and ins in DEBUG kernels */
+#define	SAVE_LOCALS_INS	\
+	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
+\
+	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
+\
+	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)];
+#else
+#define	SAVE_LOCALS_INS
+#endif
 #define	TRAP_SETUP(stackspace) \
 	sethi	%hi(CPCB), %g6; \
 	sethi	%hi((stackspace)), %g5; \
@@ -1766,25 +1797,8 @@ intr_setup_msg:
 	inc	-BIAS, %g6; \
 	nop; \
 	nop; \
-\
-1:	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
-\
-	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
-\
-	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)]; \
+1:\
+	SAVE_LOCALS_INS	\
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)];		/* Save out registers to trap frame */ \
 	stx	%i1, [%sp + CC64FSZ + BIAS + TF_O + (1*8)]; \
@@ -1851,24 +1865,7 @@ intr_setup_msg:
 	\
 	add	%g5, -BIAS, %g6; \
 	\
-1:	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
-\
-	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
-	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
-\
-	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
-	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)]; \
+1:	SAVE_LOCALS_INS	\
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)];		/* Save out registers to trap frame */ \
 	stx	%i1, [%sp + CC64FSZ + BIAS + TF_O + (1*8)]; \
@@ -1884,7 +1881,6 @@ intr_setup_msg:
 	/* came from user mode -- switch to kernel mode stack */ \
 	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
 	\
-/*	tst %g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
 	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
 	\
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
@@ -1905,6 +1901,30 @@ intr_setup_msg:
 1:
 	
 #else
+#ifdef DEBUG
+#define	SAVE_LOCALS_INS	\
+	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
+	\
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
+	\
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)];
+#else
+#define	SAVE_LOCALS_INS
+#endif
 #define	TRAP_SETUP(stackspace) \
 	sethi	%hi(USPACE), %g7; \
 	sethi	%hi(CPCB), %g6; \
@@ -1924,25 +1944,7 @@ intr_setup_msg:
 	add	%g6, BIAS, %g5; \
 	movne	%icc, %g5, %g6; \
 	\
-	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
-	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
-	\
-	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
-	\
-	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]; \
+	SAVE_LOCALS_INS \
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + STKB + TF_O + (0*8)];		/* Save out registers to trap frame */ \
 	stx	%i1, [%sp + CC64FSZ + STKB + TF_O + (1*8)]; \
@@ -1995,22 +1997,7 @@ intr_setup_msg:
 	movnz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
-	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
-	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
-	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]; \
+	SAVE_LOCALS_INS \
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + STKB + TF_O + (0*8)];		/* Save out registers to trap frame */ \
 	stx	%i1, [%sp + CC64FSZ + STKB + TF_O + (1*8)]; \
@@ -3591,7 +3578,9 @@ softtrap:
 	set	USPACE-CC64FSZ-TF_SIZE-STKB, %g5
 	add	%g7, %g5, %g6
 	SET_SP_REDZONE(%g7, %g5)
+#ifdef DEBUG
 	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]		! Generate a new trapframe
+#endif
 	stx	%i0, [%g6 + CC64FSZ + STKB + TF_O + (0*8)]	!	but don't bother with
 	stx	%i1, [%g6 + CC64FSZ + STKB + TF_O + (1*8)]	!	locals and ins
 	stx	%i2, [%g6 + CC64FSZ + STKB + TF_O + (2*8)]
@@ -4334,7 +4323,6 @@ _C_LABEL(sparc_interrupt):
 	stx	%l1, [%sp + CC64FSZ + STKB + TF_PC]
 	btst	TSTATE_PRIV, %l0		! User mode?
 	stx	%l2, [%sp + CC64FSZ + STKB + TF_NPC]
-	stx	%fp, [%sp + CC64FSZ + STKB + TF_KSTACK]	!  old frame pointer
 	
 	sub	%l5, 0x40, %l6			! Convert to interrupt level
 	sethi	%hi(_C_LABEL(intrcnt)), %l4
