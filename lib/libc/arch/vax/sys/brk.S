@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: brk.S,v 1.8 2000/06/30 23:46:36 matt Exp $"
+	.asciz "$NetBSD: brk.S,v 1.9 2000/07/01 05:21:12 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -46,13 +46,13 @@ WEAK_ALIAS(brk, _brk)
 #endif
 
 ENTRY(_brk, 0)
-	cmpl	4(ap),_C_LABEL(__minbrk)
-	bgeq	ok
-	movl	_C_LABEL(__minbrk),4(ap)
-	chmk	$ SYS_break
+	cmpl	4(ap),_C_LABEL(__minbrk)	# gtr > _end 
+	bgeq	1f				#   is fine
+	movl	_C_LABEL(__minbrk),4(ap)	# shrink back to _end
+1:	chmk	$ SYS_break			# do it
 	jcs	err
 	movl	4(ap),CURBRK
-ok:	clrl	r0
+	clrl	r0
 	ret
 err:
 	jmp	CERROR+2
