@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.1 2001/09/10 10:01:01 fvdl Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.2 2001/09/10 12:51:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -90,8 +90,8 @@ struct agp_methods agp_i810_methods = {
 static int
 agp_i810_vgamatch(struct pci_attach_args *pa)
 {
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
+	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
 		return 0;
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_82810_GC:
