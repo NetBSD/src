@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2000/05/30 01:30:01 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62 2000/05/30 01:42:43 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2000/05/30 01:30:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62 2000/05/30 01:42:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
 	chdr->c_cpusize = sizeof(struct cpustate);
 
-	if ((p->p_md.md_flags & MDP_FPUSED && p == fpcurproc)
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		savefpregs(p);
 	cpustate.frame = *(struct frame *)p->p_md.md_regs;
 	cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
