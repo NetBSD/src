@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.178 2003/10/04 07:04:17 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.179 2003/10/04 07:45:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,6 +62,9 @@
  *
  * The version name in comment must be kept in sync with the numeric
  * value, conf/osrelease.sh uses the value as the current kernel version.
+ *
+ * When new releases are made, src/gnu/usr.bin/groff/tmac/mdoc.local
+ * needs to be updated and the changes sent back to the groff maintainers.
  */
 
 #define	__NetBSD_Version__	106290000	/* NetBSD 1.6ZC */
