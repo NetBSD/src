@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/11/22 03:08:01 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2002/08/04 01:41:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -152,9 +151,7 @@ struct p6032_config p6032_configuration;
 #endif 
 
 /* The following are used externally (sysctl_hw). */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[64];
+extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
@@ -707,33 +704,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disklabels.
 	 */
 	bufinit();
-}
-
-/*
- * Machine-dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	dev_t consdev;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 int	waittime = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2002/05/03 01:49:22 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2002/08/04 01:41:29 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -59,7 +59,6 @@
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -89,10 +88,8 @@
 
 #include <dev/cons.h>
 
-/* For sysctl(3). */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
+/* For sysctl_hw. */
+extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
 
@@ -627,26 +624,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 int	waittime = -1;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2002/06/07 01:34:03 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2002/08/04 01:41:33 gmcgarry Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -76,7 +76,6 @@
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
@@ -118,10 +117,8 @@
 #include <sbmips/ikos/ikosvar.h>
 #endif
 
-/* For sysctl. */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[] = "sb1250";
+/* For sysctl_hw. */
+extern char cpu_model[];
 
 /* Our exported CPU info.  Only one for now */
 struct cpu_info cpu_info_store;
@@ -231,6 +228,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
 	    (u_int)fwhandle, (u_int)magic, (u_int)bootdata, (u_int)reserved);
 #endif
+
+	strcpy(cpu_model, "sb1250");
 
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;
@@ -458,21 +457,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 int	waittime = -1;
