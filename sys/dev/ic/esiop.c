@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.14 2002/05/04 17:51:16 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.15 2002/05/16 02:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.14 2002/05/04 17:51:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.15 2002/05/16 02:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,8 +1619,8 @@ esiop_scsipi_request(chan, req, arg)
 			/* allocate tag tables for this device */
 			for (lun = 0;
 			    lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-				if (sc->sc_c.sc_chan.chan_periphs[
-				    xm->xm_target][lun])
+				if (scsipi_lookup_periph(chan,
+				    xm->xm_target, lun) != NULL)
 					esiop_add_dev(sc, xm->xm_target, lun);
 			}
 		}
