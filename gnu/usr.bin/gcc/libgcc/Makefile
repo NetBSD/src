@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/12/21 05:36:19 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1996/11/11 01:06:54 mycroft Exp $
 
 LIB=	gcc
 NOPROFILE=
@@ -23,7 +23,7 @@ CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 
 LIB2OBJS+=__gcc_bcmp.o _varargs.o _eprintf.o _op_new.o _new_handler.o \
 	  _op_delete.o _bb.o _shtab.o _clear_cache.o _trampoline.o __main.o \
-	  _exit.o _ctors.o _op_vdel.o _op_vnew.o _pure.o
+	  _exit.o _ctors.o _op_vdel.o _op_vnew.o _pure.o _eh.o
 
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
 LIB2OBJS+=_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
