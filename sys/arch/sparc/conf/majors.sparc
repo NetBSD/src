@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.12 2003/10/05 08:04:26 jdolecek Exp $
+#	$NetBSD: majors.sparc,v 1.13 2003/10/10 21:21:27 jdolecek Exp $
 #
 # Device majors for sparc
 #
@@ -116,6 +116,6 @@ device-major	ksyms		char 136		ksyms
 device-major	pf		char 137		pf
 device-major	crypto		char 138		opencrypto
 
-# Majors up to 191 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
 # sys/dev/majors.
