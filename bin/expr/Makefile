@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 1997/07/20 17:32:57 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/07/20 22:37:03 christos Exp $
 
-WARNS=1
 PROG=		expr
 SRCS=		expr.c
 
