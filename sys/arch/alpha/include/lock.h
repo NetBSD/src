@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.11 2000/11/20 20:17:13 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.12 2000/11/20 21:18:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 		: "=m" (*alp));
 }
 
+#if defined(MULTIPROCESSOR)
 /*
  * On the Alpha, interprocessor interrupts come in at device priority
  * level.  This can cause some problems while waiting for r/w spinlocks
@@ -146,5 +147,6 @@ do {									\
 	if (__ci->ci_ipis != 0)						\
 		alpha_ipi_process(__ci);				\
 } while (0)
+#endif /* MULTIPROCESSOR */
 
 #endif /* _ALPHA_LOCK_H_ */
