@@ -1,5 +1,5 @@
-/*	$NetBSD: esp.h,v 1.12 2000/08/29 09:08:42 itojun Exp $	*/
-/*	$KAME: esp.h,v 1.13 2000/08/28 08:29:54 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.13 2000/09/26 08:37:38 itojun Exp $	*/
+/*	$KAME: esp.h,v 1.15 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ struct esp_algorithm {
 	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	size_t schedlen;
+	int (*schedlen) __P((const struct esp_algorithm *));
 	const char *name;
 	int (*ivlen) __P((const struct esp_algorithm *, struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
@@ -94,6 +94,7 @@ struct esp_algorithm {
 };
 
 extern const struct esp_algorithm *esp_algorithm_lookup __P((int));
+extern int esp_max_ivlen __P((void));
 
 /* crypt routines */
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
