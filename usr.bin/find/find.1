@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.41 2003/01/30 10:49:18 jhawk Exp $
+.\"	$NetBSD: find.1,v 1.42 2003/02/23 20:01:31 jhawk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,7 +204,9 @@ was started, rounded up to the next full 24-hour period, is
 24-hour periods.
 .It Ic -empty
 True if the current file or directory is empty.
-.It Ic -exec Ar utility Op argument ... ;
+.It Xo Ic -exec Ar utility Op argument ...
+.No ;
+.Xc
 True if the program named
 .Ar utility
 returns a zero value as its exit status.
@@ -219,7 +221,9 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm
 was executed.
-.It Ic -execdir Ar utility Op argument ... ;
+.It Xo Ic -execdir Ar utility Op argument ...
+.No ;
+.Xc
 The
 .Ic -execdir
 primary is identical to the
@@ -332,7 +336,9 @@ True if the difference between the file last modification time and the time
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
-.It Ic -ok Ar utility Op argument ... ;
+.It Xo Ic -ok Ar utility Op argument ...
+.No ;
+.Xc
 The
 .Ic -ok
 primary is identical to the
