@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.14.2.1 1997/12/30 05:44:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.14.2.1 1997/12/30 05:44:41 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -334,13 +334,18 @@ do_all(action)
 	char line[_POSIX2_LINE_MAX];
 	char *cp, **argv;
 	int argc, rval;
+	gid_t egid;
 
 	rval = 0;
 
+	egid = getegid();
+	(void)setegid(getgid());
 	if ((f = fopen(ccdconf, "r")) == NULL) {
+		(void)setegid(egid);
 		warn("fopen: %s", ccdconf);
 		return (1);
 	}
+	(void)setegid(egid);
 
 	while (fgets(line, sizeof(line), f) != NULL) {
 		argc = 0;
