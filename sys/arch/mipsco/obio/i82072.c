@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.1 2000/08/12 22:58:56 wdk Exp $	*/
+/*	$NetBSD: i82072.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,6 +67,8 @@ struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fd_match, fd_attach
 };
 
+static int	fd_intr __P((void *));
+
 int
 fd_match(parent, cf, aux)
 	struct device *parent;
@@ -94,6 +96,8 @@ fd_attach(parent, self, aux)
 	}
 	evcnt_attach_dynamic(&sc->fd_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     self->dv_xname, "intr");
+
+	bus_intr_establish(sc->fd_bst, SYS_INTR_FDC, 0, 0, fd_intr, sc);
 
 	fd_reset(sc);
 	printf(": not fully implemented\n");
@@ -134,17 +138,13 @@ void
 fdsize()
 {}
 
-void
-fdintr(unit)
-	int unit;
+static int
+fd_intr(arg)
+	void *arg;
 {
-	struct fd_softc *sc;
-	extern struct cfdriver fd_cd;
+	struct fd_softc *sc = arg;
 
-	if (unit < fd_cd.cd_ndevs) {
-		sc = fd_cd.cd_devs[unit];
-		printf("stray floppy interrupt\n");
-		sc->fd_intrcnt.ev_count++;
-		fd_reset(sc);
-	}
+	sc->fd_intrcnt.ev_count++;
+	fd_reset(sc);
+	return 0;
 }

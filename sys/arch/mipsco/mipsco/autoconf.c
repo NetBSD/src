@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2000/08/12 22:58:50 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,8 @@ int	cpuspeed = 25;	/* approx # instr per usec. */
 extern int initcpu __P((void));		/*XXX*/
 
 void	findroot __P((struct device **, int *));
+
+struct intrhandler intrtab[MAX_INTR_COOKIES];
 
 /*
  * Determine mass storage and memory configuration for a machine.
