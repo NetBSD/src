@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 1996/12/09 22:51:55 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218.2.1 1997/01/18 04:15:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -462,7 +462,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486, 
 			{
-				"486DX", "486DX", "486DX", "486DX2", "486SL",
+				"486DX", "486DX", "486SX", "486DX2", "486SL",
 				"486SX2", 0, "486DX2 W/B Enhanced",
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
@@ -628,8 +628,8 @@ identifycpu()
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
-		classnames[class]);
+	sprintf(cpu_model, "%s %s%s (%s-class)%s", vendorname, modifier, name,
+		classnames[class], cpu_feature & 0x800000 ? " with MMX" : "");
 	printf("cpu0: %s\n", cpu_model);
 
 	cpu_class = class;

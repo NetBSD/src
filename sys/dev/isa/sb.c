@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.38 1996/10/13 01:38:00 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.38.2.1 1997/01/18 04:30:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -53,16 +53,9 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
-#include <dev/isa/sbdspvar.h>
 #include <dev/isa/sbreg.h>
-
-#ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-#define DPRINTF(x)	if (sbdebug) Dprintf x
-int	sbdebug = 0;
-#else
-#define DPRINTF(x)
-#endif
+#include <dev/isa/sbvar.h>
+#include <dev/isa/sbdspvar.h>
 
 struct sb_softc {
 	struct	device sc_dev;		/* base device */
@@ -70,13 +63,6 @@ struct sb_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 
 	struct	sbdsp_softc sc_sbdsp;
-};
-
-int	sbprobe __P((struct device *, void *, void *));
-void	sbattach __P((struct device *, struct device *, void *));
-
-struct cfattach sb_ca = {
-	sizeof(struct sbdsp_softc), sbprobe, sbattach
 };
 
 struct cfdriver sb_cd = {
@@ -140,34 +126,21 @@ struct audio_hw_if sb_hw_if = {
  * Probe / attach routines.
  */
 
-/*
- * Probe for the soundblaster hardware.
- */
+
 int
-sbprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sbmatch(sc)
+	struct sbdsp_softc *sc;
 {
-	register struct sbdsp_softc *sc = match;
-	register struct isa_attach_args *ia = aux;
-	register int iobase = ia->ia_iobase;
 	static u_char drq_conf[4] = {
 		0x01, 0x02, -1, 0x08
 	};
+
 	static u_char irq_conf[11] = {
 		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
-	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
-		return 0;
-	}
-	sc->sc_iobase = iobase;
-	sc->sc_irq = ia->ia_irq;
-	sc->sc_drq = ia->ia_drq;
-
 	if (sbdsp_probe(sc) == 0) {
-		DPRINTF(("sb: sbdsp probe failed\n"));
+		printf("%s: sbdsp probe failed\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
 		
@@ -175,16 +148,18 @@ sbprobe(parent, match, aux)
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (ISSBPROCLASS(sc)) {
-		if (!SBP_DRQ_VALID(ia->ia_drq)) {
-			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
+		if (!SBP_DRQ_VALID(sc->sc_drq)) {
+			printf("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq);
 			return 0;
 		}
 		if (ISSB16CLASS(sc))
-			sbdsp_mix_write(sc, SBP_SET_DRQ, drq_conf[ia->ia_drq]);
+			sbdsp_mix_write(sc, SBP_SET_DRQ, drq_conf[sc->sc_drq]);
 	}
 	else {
-		if (!SB_DRQ_VALID(ia->ia_drq)) {
-			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
+		if (!SB_DRQ_VALID(sc->sc_drq)) {
+			printf("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq);
 			return 0;
 		}
 	}
@@ -193,43 +168,59 @@ sbprobe(parent, match, aux)
 	/*
 	 * If the IRQ wasn't compiled in, auto-detect it.
 	 */
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(sbforceintr, aux);
+	if (sc->sc_irq == IRQUNK) {
+		sc->sc_irq = isa_discoverintr(sbforceintr, sc);
 		sbdsp_reset(sc);
 		if (ISSBPROCLASS(sc)) {
-			if (!SBP_IRQ_VALID(ia->ia_irq)) {
-				printf("sb: couldn't auto-detect interrupt");
+			if (!SBP_IRQ_VALID(sc->sc_irq)) {
+				printf("%s: couldn't auto-detect interrupt\n",
+					sc->sc_dev.dv_xname);
 				return 0;
 			}
 		}
 		else {
-			if (!SB_IRQ_VALID(ia->ia_irq)) {
-				printf("sb: couldn't auto-detect interrupt");
+			if (!SB_IRQ_VALID(sc->sc_irq)) {
+				printf("%s: couldn't auto-detect interrupt\n");
+					sc->sc_dev.dv_xname);
 				return 0;
 			}
 		}
 	} else
 #endif
 	if (ISSBPROCLASS(sc)) {
-		if (!SBP_IRQ_VALID(ia->ia_irq)) {
-			printf("sb: configured irq %d invalid\n", ia->ia_irq);
+		if (!SBP_IRQ_VALID(sc->sc_irq)) {
+			printf("%s: configured irq %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq);
 			return 0;
 		}
 		if (ISSB16CLASS(sc))
-			sbdsp_mix_write(sc, SBP_SET_IRQ, irq_conf[ia->ia_irq]);
+			sbdsp_mix_write(sc, SBP_SET_IRQ, irq_conf[sc->sc_irq]);
 	}
 	else {
-		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			printf("sb: configured irq %d invalid\n", ia->ia_irq);
+		if (!SB_IRQ_VALID(sc->sc_irq)) {
+			printf("%s: configured irq %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq);
 			return 0;
 		}
 	}
-
-	if (ISSBPROCLASS(sc))
-		ia->ia_iosize = SBP_NPORT;
-	else
-		ia->ia_iosize = SB_NPORT;
 	return 1;
+}
+
+
+void
+sbattach(sc)
+	struct sbdsp_softc *sc;
+{
+	int error;
+
+	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, IST_EDGE,
+	    IPL_AUDIO, sbdsp_intr, sc);
+
+	sbdsp_attach(sc);
+
+	if ((error = audio_hardware_attach(&sb_hw_if, sc)) != 0)
+		printf("%s: could not attach to audio device driver (%d)\n",
+		    sc->sc_dev.dv_xname, error);
 }
 
 #ifdef NEWCONFIG
@@ -238,8 +229,7 @@ sbforceintr(aux)
 	void *aux;
 {
 	static char dmabuf;
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
+	struct sbdsp_softc *sc = aux;
 
 	/*
 	 * Set up a DMA read of one byte.
@@ -252,35 +242,14 @@ sbforceintr(aux)
 	 * it is needed (and you pay the latency).  Also, you might
 	 * never need the buffer anyway.)
 	 */
-	at_dma(DMAMODE_READ, &dmabuf, 1, ia->ia_drq);
-	if (sbdsp_wdsp(iobase, SB_DSP_RDMA) == 0) {
-		(void)sbdsp_wdsp(iobase, 0);
-		(void)sbdsp_wdsp(iobase, 0);
+	at_dma(DMAMODE_READ, &dmabuf, 1, sc->sc_drq);
+	if (sbdsp_wdsp(sc, SB_DSP_RDMA) == 0) {
+		(void)sbdsp_wdsp(sc, 0);
+		(void)sbdsp_wdsp(sc, 0);
 	}
 }
 #endif
 
-/*
- * Attach hardware to driver, attach hardware driver to audio
- * pseudo-device driver .
- */
-void
-sbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
-	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	int err;
-	
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_AUDIO, sbdsp_intr, sc);
-
-	sbdsp_attach(sc);
-
-	if ((err = audio_hardware_attach(&sb_hw_if, sc)) != 0)
-		printf("sb: could not attach to audio pseudo-device driver (%d)\n", err);
-}
 
 /*
  * Various routines to interface to higher level audio driver

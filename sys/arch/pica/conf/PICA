@@ -1,13 +1,9 @@
-#	$NetBSD: PICA,v 1.5.2.1 1997/01/14 21:25:50 thorpej Exp $
+#	$NetBSD: PICA,v 1.5.2.2 1997/01/18 04:24:30 thorpej Exp $
 #
 #
 include		"arch/pica/conf/std.pica"
 
 maxusers	8
-
-# Need to set locally
-options		TIMEZONE="8*60"		# minutes west of GMT (for)
-options		DST=1			# use daylight savings rules
 
 # Standard system options
 options		DIAGNOSTIC		# extra kernel debugging checks

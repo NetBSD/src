@@ -96,6 +96,8 @@ major   {kbd = 11}
 device podulebus { [slot = -1] }
 attach podulebus at root
 file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
+file	arch/arm32/podulebus/podulebus_io.c	podulebus
+file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
 
 # Ethernet devices
 device ea: ether, ifnet

@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.10.4.1 1997/01/14 21:24:44 thorpej Exp $
+#	$NetBSD: NOSY,v 1.10.4.2 1997/01/18 03:55:59 thorpej Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -9,10 +9,6 @@ maxusers 8
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-
-# needs to be set per system
-options		TIMEZONE="8*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging

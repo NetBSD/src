@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1996/12/28 23:22:07 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.38.2.1 1997/01/18 04:18:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,6 +137,8 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 dev_decl(filedesc,open);
+#include "ipfilter.h"
+cdev_decl(ipl);
 
 struct cdevsw	cdevsw[] =
 {
@@ -175,6 +177,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMD,md),		/* 32: memory disk driver */
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.11.4.1 1997/01/14 21:24:43 thorpej Exp $
+#	$NetBSD: JURA,v 1.11.4.2 1997/01/18 03:55:58 thorpej Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -12,10 +12,6 @@ maxusers 8
 options         DEC_2000_300    # "Jensen":     2000/300 (DECpc AXP 150)
 
 options		BOOTKEY			# ask for keyhit before halt/reboot 
-
-# needs to be set per system
-options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging

@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.11 1997/01/06 04:47:53 mark Exp $ */
+/* $NetBSD: clock.c,v 1.11.2.1 1997/01/18 04:08:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -290,6 +290,7 @@ resettodr()
 		return;
 
 	sec = time.tv_sec;
+	sec -= rtc_offset * 60;
 	year = (sec / SECPER4YEARS) * 4;
 	sec %= SECPER4YEARS;
 
@@ -383,9 +384,7 @@ inittodr(base)
 
 	n += days * 3600 * 24;
 
-	n += tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		n -= 3600;
+	n += rtc_offset * 60;
 
 	time.tv_sec = n;
 	time.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
+/*	$NetBSD: kernel.h,v 1.11.4.1 1997/01/18 04:33:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,19 +42,18 @@
 
 /* Global variables for the kernel. */
 
-/* 1.1 */
 extern long hostid;
 extern char hostname[MAXHOSTNAMELEN];
 extern int hostnamelen;
 extern char domainname[MAXHOSTNAMELEN];
 extern int domainnamelen;
 
-/* 1.2 */
 extern volatile struct timeval mono_time;
 extern struct timeval boottime;
 extern struct timeval runtime;
 extern volatile struct timeval time;
-extern struct timezone tz;			/* XXX */
+
+extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickfix;		/* periodic tick adj. tick not integral */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.7 1996/10/19 12:40:32 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.7.2.1 1997/01/18 04:29:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
+ *      This product includes software developed by Jonathan Stone for
  *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -338,6 +338,7 @@ ultrix_sys_mount(p, v, retval)
 	char fsname[MFSNAMELEN];
 	char * fstype;
 	struct sys_mount_args nuap;
+	char *native_fstype;
 
 #define	szsigcode	(esigcode - sigcode)
 	caddr_t usp = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
@@ -349,6 +350,8 @@ ultrix_sys_mount(p, v, retval)
 	 * Translate Ultrix integer mount codes for UFS and NFS to
 	 * NetBSD fstype strings.  Other Ultrix filesystem types
 	 *  (msdos, DEC ods-2) are not supported.
+	 * Copy resulting string out to userspace (on stack)
+	 * so we can pass it to the native mount syscall.
 	 */
 	if (otype == ULTRIX_FSTYPE_ULTRIX)
 		fstype = "ufs";
@@ -362,8 +365,9 @@ ultrix_sys_mount(p, v, retval)
 		SCARG(&nuap, flags) |= MNT_RDONLY;
 
 	/* Copy string-ified version of mount type back out to user space */
-	SCARG(&nuap, type) = (char *)usp;
-	if ((error = copyout(fstype, SCARG(&nuap, type),
+	native_fstype = (char *)usp;
+	SCARG(&nuap, type) = native_fstype;
+	if ((error = copyout(fstype, native_fstype,
 			    strlen(fstype)+1)) != 0) {
 		return (error);
 	}
@@ -374,6 +378,10 @@ ultrix_sys_mount(p, v, retval)
 #endif
 	SCARG(&nuap, path) = SCARG(uap, dir);
 
+	/*
+	 * Translate fstype-dependent mount options from
+	 * Ultrix format to native.
+	 */
 	if (otype == ULTRIX_FSTYPE_ULTRIX) {
 		/* attempt to mount a native, rather than 4.2bsd, ffs */
 		struct ufs_args ua;
