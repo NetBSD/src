@@ -1,6 +1,6 @@
-/* Definitions of target machine for GNU compiler, for DEC Alpha w/ELF.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
-   Contributed by Richard Henderson (rth@tamu.edu).
+/* Definitions of target machine for GNU compiler,
+   for Alpha NetBSD systems.
+   Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -16,8 +16,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.    */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* This is used on Alpha platforms that use the ELF format.
    This was taken from the Linux configuration, and modified
@@ -53,6 +52,9 @@ Boston, MA 02111-1307, USA.    */
 
 /* NetBSD Extension to GNU C: __KPRINTF_ATTRIBUTE__ */
 
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_FP | MASK_FPREGS | MASK_GAS)
+
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "\
 -D__alpha__ -D__alpha -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
@@ -66,12 +68,12 @@ Boston, MA 02111-1307, USA.    */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Name the port. */
-#define TARGET_NAME	"alpha-netbsd"
-
 /* XXX Redefine this; <alpha/alpha.h> mucks with it. */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);           
+
+/* Generate calls to memcpy, etc., not bcopy, etc. */
+#define TARGET_MEM_FUNCTIONS
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  Under NetBSD/Alpha, the assembler does
@@ -79,7 +81,7 @@ Boston, MA 02111-1307, USA.    */
 
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)			\
-  fputs ("\tjsr $28,_mcount\n", (FILE)); /* at */
+	fputs ("\tjsr $28,_mcount\n", (FILE))
 
 /* Show that we need a GP when profiling.  */
 #define TARGET_PROFILING_NEEDS_GP
