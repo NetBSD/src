@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.14 1996/10/10 19:58:33 gwr Exp $
+#	$NetBSD: install.sh,v 1.15 1997/05/01 13:26:54 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -365,7 +365,7 @@ install_sets $ALLSETS $MDSETS
 # Copy in configuration information and make devices in target root.
 (
 	cd /tmp
-	for file in fstab hostname.* hosts myname mygate resolv.conf; do
+	for file in fstab ifconfig.* hosts myname mygate resolv.conf; do
 		if [ -f $file ]; then
 			echo -n "Copying $file..."
 			cp $file /mnt/etc/$file
