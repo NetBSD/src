@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.2 2001/09/29 19:30:29 augustss Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.3 2001/12/25 03:46:34 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -60,7 +60,6 @@ struct esl_softc
 #define ESS_LEFT 0
 #define ESS_RIGHT 1
 
-	u_long	nintr;			/* number of interrupts */
 	void	(*intr)(void *);	/* ISR for FIFO Half-Empty */
 	void	*arg;			/* argument for intr() */
 
