@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.16 1994/06/29 06:46:00 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.17 1994/06/30 08:05:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -61,7 +61,7 @@ typedef	quad_t *	qaddr_t;
 
 typedef	char *		caddr_t;	/* core address */
 typedef	long		daddr_t;	/* disk address */
-typedef	short		dev_t;		/* device number XXX */
+typedef	unsigned long	dev_t;		/* device number */
 typedef unsigned long	fixpt_t;	/* fixed point number */
 typedef	unsigned long	gid_t;		/* group id */
 typedef	unsigned long	ino_t;		/* inode number */
