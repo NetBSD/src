@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.14 2001/06/19 13:42:10 wiz Exp $	*/
+/*	$NetBSD: symtab.c,v 1.15 2002/08/12 02:40:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.14 2001/06/19 13:42:10 wiz Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.15 2002/08/12 02:40:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,7 +573,7 @@ initsymtable(filename)
 		panic("cannot stat symbol table file %s\n", filename);
 	}
 	tblsize = stbuf.st_size - sizeof(struct symtableheader);
-	base = calloc(sizeof(char), (unsigned)tblsize);
+	base = calloc((unsigned)tblsize, sizeof(char));
 	if (base == NULL)
 		panic("cannot allocate space for symbol table\n");
 	if (read(fd, base, (int)tblsize) < 0 ||
