@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfcv.4,v 1.3 2001/09/11 22:52:55 wiz Exp $
+.\"	$NetBSD: grfcv.4,v 1.4 2002/01/15 01:25:39 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,12 +43,12 @@
 .Cd "ite5 at grf5"
 .Sh DESCRIPTION
 The
-.Nm ""
+.Nm
 device driver supports graphics boards with the S3 Trio64 chipset.
 It supports the minimal ioctl's needed to run X11.
 .Sh HARDWARE
 The
-.Nm ""
+.Nm
 interface supports the following ZorroIII expansion card:
 .Bl -tag -width "xxxxxxxxxxxxxx" -offset indent
 .It Em CyberVision 64
@@ -64,15 +64,14 @@ console interface special file for the internal terminal emulator
 .Sh SEE ALSO
 .Xr console 4 ,
 .Xr grfcv3d 4 ,
-.Xr grfconfig 8 ,
-.Xr ite 4
+.Xr ite 4 ,
+.Xr grfconfig 8
 .Sh HISTORY
 The
-.Nm ""
+.Nm
 interface first appeared in
-.Nx 1.1
-.Pp
+.Nx 1.1 .
 .Sh BUGS
-.Nm ""
+.Nm
 does not support the sync-on-green flag from
 .Xr grfconfig 8 .
