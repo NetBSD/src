@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1 1999/12/06 21:31:42 agc Exp $ */
+/* $NetBSD: defs.h,v 1.2 1999/12/06 22:50:46 simonb Exp $ */
 
 /*
  * Copyright © 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,14 +35,14 @@
 
 #define NEWARRAY(type,ptr,size,action) do {				\
 	if ((ptr = (type *) calloc(sizeof(type), size)) == (type *) NULL) { \
-		warn("can't allocate %d bytes", size * sizeof(type));	\
+		warn("can't allocate %ld bytes", (long)(size * sizeof(type))); \
 		action;							\
 	}								\
 } while( /* CONSTCOND */ 0)
 
 #define RENEW(type,ptr,size,action) do {				\
 	if ((ptr = (type *) realloc(ptr, sizeof(type) * size)) == (type *) NULL) { \
-		warn("can't realloc %d bytes", size * sizeof(type));	\
+		warn("can't realloc %ld bytes", (long)(size * sizeof(type))); \
 		action;							\
 	}								\
 } while( /* CONSTCOND */ 0)
