@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.39 1997/05/22 21:41:09 cjs Exp $
+#	$NetBSD: netstart,v 1.40 1997/07/22 18:41:08 phil Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -21,6 +21,11 @@ fi
 if [ -n "$domainname" ]; then
 	echo "domainname: $domainname"
 	domainname $domainname
+fi
+
+# Flush all routes just to make sure it is clean
+if [ "$flushroutes" = YES ]; then
+	route flush
 fi
 
 # Enable, flush and install packet filter rules before configuring interfaces.
