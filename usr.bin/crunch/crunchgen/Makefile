@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2004/01/03 14:04:27 lukem Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
@@ -12,12 +12,12 @@ crunched_skel.c: mkskel.sh crunched_main.c
 
 .ifndef HOSTPROG
 # Native tool -- key only off TOOLCHAIN_MISSING
-.if ${TOOLCHAIN_MISSING} != "yes"
+.if ${TOOLCHAIN_MISSING} == "no"
 CPPFLAGS+=	-DNEW_TOOLCHAIN
 .endif
 .else
 # Host tool -- We can also pay attention to EXTERNAL_TOOLCHAIN.
-.if ${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN)
+.if ${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)
 CPPFLAGS+=	-DNEW_TOOLCHAIN
 .endif
 .endif	# ! HOSTPROG

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.17 2003/12/04 09:29:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2004/01/03 14:04:27 lukem Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
-     (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))) || \
+     (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBFD} != "no"
 TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/binutils
