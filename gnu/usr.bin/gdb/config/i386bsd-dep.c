@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";*/
-static char rcsid[] = "$Id: i386bsd-dep.c,v 1.3 1993/09/17 03:12:16 brezak Exp $";
+static char rcsid[] = "$Id: i386bsd-dep.c,v 1.4 1993/12/06 09:40:27 cgd Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running on the Intel 386.
@@ -1789,7 +1789,7 @@ i386_float_info ()
 {
   struct user u; /* just for address computations */
   int i;
-#ifndef __386BSD__
+#ifndef __NetBSD__
   /* fpstate defined in <sys/user.h> */
   struct fpstate *fpstatep;
   char buf[sizeof (struct fpstate) + 2 * sizeof (int)];
