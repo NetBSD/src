@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.3 2001/04/02 05:29:43 dbj Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.3.16.1 2002/05/30 15:34:06 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -55,9 +55,11 @@ struct mb8795_softc {
 	struct mbuf *sc_tx_mb_head;   /* pointer to data for this command */
 	int sc_tx_loaded;
 
-	u_char *sc_txbuf;							/* to solve alignment problems, we
-																 * copy the mbuf into this buffer before
-																 * trying to dma it */
+	u_char *sc_txbuf; 	/* to solve alignment problems, we
+				 * copy the mbuf into this buffer before
+				 * trying to dma it */
+
+	struct ifaltq sc_tx_snd;
 
 	bus_dma_tag_t sc_rx_dmat;
 	bus_dmamap_t sc_rx_dmamap[MB8795_NRXBUFS];

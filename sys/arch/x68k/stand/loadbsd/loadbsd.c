@@ -19,18 +19,19 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.7 2001/06/12 16:57:28 minoura Exp $
+ *	$NetBSD: loadbsd.c,v 1.7.16.1 2002/05/30 15:36:42 gehenna Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.7 2001/06/12 16:57:28 minoura Exp $");
-#define VERSION	"$Revision: 1.7 $ $Date: 2001/06/12 16:57:28 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.7.16.1 2002/05/30 15:36:42 gehenna Exp $");
+#define VERSION	"$Revision: 1.7.16.1 $ $Date: 2002/05/30 15:36:42 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
 #include <sys/param.h>		/* ALIGN, ALIGNBYTES */
 #include <a.out.h>
+#include <sys/exec_elf.h>
 #include <string.h>
 #include <machine/bootinfo.h>
 
@@ -59,6 +60,7 @@ int main __P((int argc, char *argv[]));
 
 int opt_v;
 int opt_N;
+const char *kernel_fn;
 
 const struct hatbl {
 	char name[4];
@@ -278,12 +280,15 @@ found:	major = devtable[u].major;
 	return dev;
 }
 
+#define LOADBSD
+#include "../common/exec_sub.c"
+
 /*
  * read kernel and create trampoline
  *
  *	|----------------------| <- allocated buf addr
  *	| kernel image         |
- *	~ (header is excluded) ~
+ *	~ (exec file contents) ~
  *	|                      |
  *	|----------------------| <- return value (entry addr of trampoline)
  *	| struct tramparg      |
@@ -301,12 +306,12 @@ read_kernel(fn)
 	union dos_fcb *fcb;
 	size_t filesize, nread;
 	void *buf;
-	struct exec hdr;
-	int i;
 	struct tramparg *arg;
 	size_t size_tramp = end_trampoline - trampoline;
 
-	if ((fd = DOS_OPEN(fn, 0x20)) < 0)	/* RO, share READ */
+	kernel_fn = fn;
+
+	if ((fd = DOS_OPEN(fn, 0x00)) < 0)	/* read only */
 		xerr(1, "%s: open", fn);
 
 	if ((int)(fcb = DOS_GET_FCB_ADR(fd)) < 0)
@@ -322,38 +327,18 @@ read_kernel(fn)
 	/*filesize = fcb->blk.size;*/
 	filesize = IOCS_B_LPEEK(&fcb->blk.size);
 
-	/*
-	 * read a.out header
-	 */
-	if ((nread = DOS_READ(fd, (void *) &hdr, sizeof hdr)) != sizeof hdr) {
-		if ((int)nread < 0)
-			xerr(1, "%s: read header", fn);
-		else
-			xerrx(1, "%s: Not an a.out", fn);
-	}
-	/*
-	 * check header
-	 */
-	if (N_GETMAGIC(hdr) != NMAGIC)
-		xerrx(1, "%s: Bad magic number", fn);
-	if ((i = N_GETMID(hdr)) != MID_M68K)
-		xerrx(1, "%s: Wrong architecture (mid %d)", fn, i);
-
-	if (opt_v)
-		xwarnx("%s: %u bytes; text %u, data %u, bss %u, sym %u",
-			fn, filesize, hdr.a_text, hdr.a_data,
-			hdr.a_bss, hdr.a_syms);
+	if (filesize < sizeof(Elf32_Ehdr))
+		xerrx(1, "%s: Unknown format", fn);
 
 	/*
-	 * then, read entire body
+	 * read entire file
 	 */
-	if ((int)(buf = DOS_MALLOC(filesize + ALIGNBYTES - sizeof hdr
+	if ((int)(buf = DOS_MALLOC(filesize + ALIGNBYTES
 				   + sizeof(struct tramparg)
 				   + size_tramp + SIZE_TMPSTACK)) < 0)
 		xerr(1, "read_kernel");
 
-	if ((nread = DOS_READ(fd, buf, filesize - sizeof hdr))
-					!= filesize - sizeof hdr) {
+	if ((nread = DOS_READ(fd, buf, filesize)) != filesize) {
 		if ((int)nread < 0)
 			xerr(1, "%s: read", fn);
 		else
@@ -364,35 +349,34 @@ read_kernel(fn)
 		xerr(1, "%s: close", fn);
 
 	/*
-	 * create argument for trampoline code
+	 * address for argument for trampoline code
 	 */
-	arg = (struct tramparg *) ALIGN(buf + nread);
+	arg = (struct tramparg *) ALIGN((char *) buf + nread);
 
 	if (opt_v)
 		xwarnx("trampoline arg at %p", arg);
 
+	xk_load(&arg->xk, buf, 0 /* XXX load addr should not be fixed */);
+
+	/*
+	 * create argument for trampoline code
+	 */
 	arg->bsr_inst = TRAMP_BSR + sizeof(struct tramparg) - 2;
 	arg->tmp_stack = (char *) arg + sizeof(struct tramparg)
 				+ size_tramp + SIZE_TMPSTACK;
 	arg->mpu_type = IOCS_MPU_STAT() & 0xff;
-	arg->xk.image_top = buf;
-	arg->xk.load_addr = 0x00000000;	/* XXX should not be a fixed addr */
-	arg->xk.text_size = hdr.a_text;
-	arg->xk.data_size = hdr.a_data;
-	arg->xk.bss_size = hdr.a_bss;
-	arg->xk.symbol_size = hdr.a_syms;
+
 	arg->xk.d5 = IOCS_BOOTINF();	/* unused for now */
 #if 0
 	/* filled afterwards */
 	arg->xk.rootdev = 
 	arg->xk.boothowto = 
 #endif
-	arg->xk.entry_addr = hdr.a_entry;
 
 	if (opt_v)
 		xwarnx("args: mpu %d, image %p, load 0x%x, entry 0x%x",
-			arg->mpu_type, arg->xk.image_top, arg->xk.load_addr,
-			arg->xk.entry_addr);
+			arg->mpu_type, arg->xk.sec[0].sec_image,
+			arg->xk.load_addr, arg->xk.entry_addr);
 
 	/*
 	 * copy trampoline code

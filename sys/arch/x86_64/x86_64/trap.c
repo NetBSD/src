@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2002/02/14 07:08:20 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.8.1 2002/05/30 15:37:08 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ trap(frame)
 	int type = (int)frame.tf_trapno;
 	struct pcb *pcb = NULL;
 	extern char fusuintrfailure[],
-		    resume_iret[], IDTVEC(osyscall)[];
+		    resume_iret[], IDTVEC(oosyscall)[];
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -173,15 +173,15 @@ trap(frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %lx eip %lx cs %lx eflags %lx cr2 %lx "
+		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
 		       "cpl %x\n",
 		    type, frame.tf_err, frame.tf_rip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), cpl);
+		    frame.tf_rflags, rcr2(), cpl);
 		printf("curproc %p\n", curproc);
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
+	if (!KERNELMODE(frame.tf_cs, frame.tf_rflags)) {
 		type |= T_USER;
 		p->p_md.md_regs = &frame;
 	}
@@ -213,10 +213,10 @@ trap(frame)
 		else
 			printf("unknown trap %ld", (u_long)frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx eflags %lx cr2 "
+		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
 		       " %lx cpl %x\n",
 		    type, frame.tf_err, (u_long)frame.tf_rip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), cpl);
+		    frame.tf_rflags, rcr2(), cpl);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -277,7 +277,7 @@ copyfault:
 		default:
 			goto we_re_toast;
 		}
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+		if (KERNELMODE(vframe->tf_cs, vframe->tf_rflags))
 			goto we_re_toast;
 
 		frame.tf_rip = (u_int64_t)resume;
@@ -356,7 +356,7 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
+		if (type == T_PAGEFLT && va >= VM_MIN_KERNEL_ADDRESS)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -428,10 +428,10 @@ copyfault:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame.tf_rip == (int)IDTVEC(osyscall))
+		if (frame.tf_rip == (int)IDTVEC(oosyscall))
 			return;
-		if (frame.tf_rip == (int)IDTVEC(osyscall) + 1) {
-			frame.tf_eflags &= ~PSL_T;
+		if (frame.tf_rip == (int)IDTVEC(oosyscall) + 1) {
+			frame.tf_rflags &= ~PSL_T;
 			return;
 		}
 		goto we_re_toast;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2002/05/13 07:04:25 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.2.1 2002/05/30 15:36:34 gehenna Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -596,7 +596,8 @@ ENTRY(memcpy)
 	dcba	0,r3		/* Allocate another line */
 #else
 	.long	0x7c071dec	/* dcba	r7,r3 */
-#endif	bgt	0b
+#endif	
+	bgt	0b
 1:
 	mtxer	r5		/* Store byte count */
 	lswx	r24,0,r4	/* Load up to 32 bytes */

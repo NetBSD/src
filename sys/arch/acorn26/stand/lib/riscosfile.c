@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.1 2002/03/24 15:47:28 bjh21 Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.1.2.1 2002/05/30 15:32:03 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -72,6 +72,7 @@ riscos_open(char *path, struct open_file *f)
 	return 0;
 }
 
+#ifndef LIBSA_NO_FS_CLOSE
 int
 riscos_close(struct open_file *f)
 {
@@ -87,6 +88,7 @@ riscos_close(struct open_file *f)
 	free(rf, sizeof(*rf));
 	return err;
 }
+#endif
 
 int
 riscos_read(struct open_file *f, void *buf, size_t size, size_t *residp)
@@ -97,7 +99,9 @@ riscos_read(struct open_file *f, void *buf, size_t size, size_t *residp)
 
 	rf = f->f_fsdata;
 
+#ifndef LIBSA_NO_TWIDDLE
 	twiddle();
+#endif
 	error = xosgbpb_read(rf->file, buf, size, &resid);
 	*residp = resid;
 	if (error)
@@ -105,6 +109,7 @@ riscos_read(struct open_file *f, void *buf, size_t size, size_t *residp)
 	return 0;
 }
 
+#ifndef LIBSA_NO_FS_WRITE
 int
 riscos_write(struct open_file *f, void *buf, size_t size, size_t *residp)
 {
@@ -114,13 +119,16 @@ riscos_write(struct open_file *f, void *buf, size_t size, size_t *residp)
 
 	rf = f->f_fsdata;
 
+#ifndef LIBSA_NO_TWIDDLE
 	twiddle();
+#endif
 	error = xosgbpb_write(rf->file, buf, size, &resid);
 	*residp = resid;
 	if (error)
 		return riscos_errno(error);
 	return 0;
 }
+#endif
 
 int
 riscos_stat(struct open_file *f, struct stat *sb)
@@ -143,6 +151,7 @@ riscos_stat(struct open_file *f, struct stat *sb)
 	return 0;
 }
 
+#ifndef LIBSA_NO_FS_SEEK
 off_t
 riscos_seek(struct open_file *f, off_t offset, int where)
 {
@@ -183,3 +192,4 @@ err:
 	errno = riscos_errno(error);
 	return -1;
 }
+#endif

@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.12 2002/04/25 15:06:24 atatat Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.12.2.1 2002/05/30 15:32:56 gehenna Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.8 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
+#		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
 
 #This configuration file is for a generic Milan
 
@@ -204,7 +204,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #PCI network interfaces
 #If unsure, check the port-atari page for tested cards.
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 #This is the only tested audio card at the moment.

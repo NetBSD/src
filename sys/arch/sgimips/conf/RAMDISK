@@ -1,0 +1,16 @@
+#
+# sgimips install kernel with ramdisk added.
+#
+
+# Pull in standard `install' config
+include 	"arch/sgimips/conf/GENERIC"
+
+# Set load address for generic 32-bit systems (only O2 currently)
+makeoptions	TEXTADDR=0x80069000	# O2
+
+# Enable the hooks used for initializing the root memory-disk.
+options         MEMORY_DISK_HOOKS
+options         MEMORY_DISK_IS_ROOT     # force root on memory disk
+options         MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options		MEMORY_DISK_ROOT_SIZE=6144# size of memory disk, in blocks (3MB)
+

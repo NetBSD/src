@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 2002/03/15 05:55:38 gmcgarry Exp $	*/
+/*	$NetBSD: locore.s,v 1.120.4.1 2002/05/30 15:33:08 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -460,21 +460,18 @@ Lhighcode:
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lhpmmu3:
 	movl	#0,INTIOBASE+MMUBASE+MMUCMD		| clear external cache
 	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD	| turn on MMU
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lehighcode:
 
 	/*

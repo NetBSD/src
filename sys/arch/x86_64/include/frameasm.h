@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.1.14.1 2002/05/30 15:36:51 gehenna Exp $	*/
 
 #ifndef _X86_64_MACHINE_FRAMEASM_H
 #define _X86_64_MACHINE_FRAMEASM_H
@@ -49,5 +49,7 @@
 	INTR_RESTOREARGS ; \
 	addq	$16,%rsp	; \
 	iretq
+
+#define CPUPRIV(off) (cpu_private+CPRIV_/**/off)(%rip)
 
 #endif /* _X86_64_MACHINE_FRAMEASM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1999/12/14 11:17:26 dbj Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.24.1 2002/05/30 15:34:09 gehenna Exp $	*/
 
 /*
  * This file was taken from sun3/sun3/kgdb_machdep.c
@@ -6,6 +6,8 @@
  * Darrin B. Jewell <dbj@netbsd.org> 1999-12-14T06:05:22-0500
  * original cvs id:
  *	NetBSD: kgdb_machdep.c,v 1.4 1999/11/22 19:05:32 jdolecek Exp 
+ * This file was updated with changes from mac68k (rev. 1.4)
+ * and alpha (rev. 1.12) on 2002-05-14
  */
 
 /*
@@ -60,6 +62,8 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
+#define INVOKE_KGDB()   __asm __volatile("trap  #15")
+
 /*
  * Determine if the memory at va..(va+len) is valid.
  */
@@ -88,7 +92,7 @@ kgdb_connect(verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	Debugger();
+	INVOKE_KGDB();
 
 	if (verbose)
 		printf("connected.\n");
@@ -98,16 +102,12 @@ kgdb_connect(verbose)
 
 /*
  * Decide what to do on panic.
- *
- * The sun3 implementation of Debugger() arranges to call
- * either kgdb_trap() or kdb_trap() as appropriate, so
- * we can just call Debugger() here.
  */
 void
 kgdb_panic()
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
-		Debugger();
+		kgdb_connect(kgdb_active == 0);
 	}
 }

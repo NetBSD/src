@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.52.4.1 2002/05/19 07:41:29 gehenna Exp $ */
+/*	$NetBSD: scn.c,v 1.52.4.2 2002/05/30 15:34:19 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1633,7 +1633,7 @@ scnsoft(arg)
 			}
 			sc->sc_rbget = get;
 		}
-	done:
+	done: ;
 	}
 }
 

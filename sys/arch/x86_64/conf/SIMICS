@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.12 2002/04/25 15:06:40 atatat Exp $
+#	$NetBSD: SIMICS,v 1.12.2.1 2002/05/30 15:36:47 gehenna Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -13,8 +13,6 @@
 include "arch/x86_64/conf/std.x86_64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-
-makeoptions	COPTS="-Os"
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS
@@ -159,13 +157,13 @@ mainbus0 at root
 # PCI bus support
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
-#pci*	at ppb? bus ?
+pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 #pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
-#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
@@ -183,7 +181,7 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 # EISA bus support
 #eisa*	at mainbus?
 #eisa*	at pceb?
-
+#
 # ISA bus support
 isa*	at mainbus?
 #eisa*	at pceb?
@@ -197,22 +195,22 @@ isa*	at pcib?
 # Console Devices
 
 # ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
-#options 	WSEMUL_VT100		# VT100 / VT220 emulation
-#options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WSDISPLAY_COMPAT_USL
-#options 	PCDISPLAY_SOFTCURSOR
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_COMPAT_USL
+options 	PCDISPLAY_SOFTCURSOR
 
-#pckbc0 	at isa?			# pc keyboard controller
-#pckbd* 	at pckbc?		# PC keyboard
+pckbc0 	at isa?			# pc keyboard controller
+pckbd* 	at pckbc?		# PC keyboard
 #vga0 	at isa?
-#vga* 	at pci? dev ? function ?
+vga* 	at pci? dev ? function ?
 
 #pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
-#wsdisplay* 	at vga? console ?
+wsdisplay* 	at vga? console ?
 #wsdisplay* 	at pcdisplay? console ?
-#wskbd* 		at pckbd? console ?
+wskbd* 		at pckbd? console ?
 
 
 #pcppi0	at isa?

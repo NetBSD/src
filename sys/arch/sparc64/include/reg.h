@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.9 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.9.2.1 2002/05/30 15:35:55 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.
@@ -71,8 +71,8 @@ struct trapframe32 {
  * (The slot tf_global[0] is used to store the %fp when this is used
  * as a clockframe.  This is known as `cheating'.)
  */
-/* The 1.5 version had lots of extra goodies in it. */
-struct trapframe64_15 {
+
+struct trapframe64 {
 	int64_t		tf_tstate;	/* tstate register */
 	int64_t		tf_pc;		/* return pc */
 	int64_t		tf_npc;		/* return npc */
@@ -89,29 +89,6 @@ struct trapframe64_15 {
 	int64_t		tf_in[8];	/* in registers in trap's caller (for debug) */
 };
 
-/* 
- * The following version does not have the locals or outs so is almost
- * half the size of the 1.5 trapframe (160 bytes vs 304 bytes).
- */
-struct trapframe64 {
-	int64_t		tf_tstate;	/* tstate register */
-	int64_t		tf_pc;		/* return pc */
-	int64_t		tf_npc;		/* return npc */
-/* XXX -- next two fields are unused and should be removed. */
-	int64_t		tf_fault;	/* faulting addr -- need somewhere to save it */
-	int64_t		tf_kstack;	/* kernel stack of prev tf */
-	int		tf_y;		/* %y register -- 32-bits */
-	short		tf_tt;		/* What type of trap this was */
-	char		tf_pil;		/* What IRQ we're handling */
-	char		tf_oldpil;	/* What our old SPL was */
-	int64_t		tf_global[8];	/* global registers in trap's caller */
-	/* n.b. tf_global[0] is used for fp when this is a clockframe */
-	int64_t		tf_out[8];	/* output registers in trap's caller */
-#ifdef DEBUG
-	int64_t		tf_local[8];	/* local registers in trap's caller (for debug) */
-	int64_t		tf_in[8];	/* in registers in trap's caller (for debug) */
-#endif
-};
 
 /*
  * Register windows.  Each stack pointer (%o6 aka %sp) in each window

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.491 2002/04/26 02:05:10 ad Exp $
+# $NetBSD: GENERIC,v 1.491.2.1 2002/05/30 15:33:19 gehenna Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.491 $"
+#ident 		"GENERIC-$Revision: 1.491.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -341,7 +341,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#options 	PMS_DISABLE_POWERHOOK
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA

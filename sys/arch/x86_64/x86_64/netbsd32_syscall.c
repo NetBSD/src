@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.1 2001/06/19 00:21:17 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.1.14.1 2002/05/30 15:37:04 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ netbsd32_syscall_plain(frame)
 	case 0:
 		frame.tf_rax = rval[0];
 		frame.tf_rdx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -150,7 +150,7 @@ netbsd32_syscall_plain(frame)
 	default:
 	bad:
 		frame.tf_rax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -223,7 +223,7 @@ netbsd32_syscall_fancy(frame)
 	case 0:
 		frame.tf_rax = rval[0];
 		frame.tf_rdx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -239,7 +239,7 @@ netbsd32_syscall_fancy(frame)
 	default:
 	bad:
 		frame.tf_rax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2002/05/15 13:55:38 lukem Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.6.2.1 2002/05/30 15:33:38 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,12 @@
 #include <sys/bootblock.h>
 
 int (*openfirmware)(void *);
-int stack[1024];
+
+				/*
+				 * 32 KB of stack with 32 bytes overpad
+				 * (see below)
+				 */
+int32_t __attribute__((aligned(16))) stack[8192 + 8];
 
 struct shared_bbinfo bbinfo = {
 	{ MACPPC_BBINFO_MAGIC },
@@ -52,14 +57,16 @@ struct shared_bbinfo bbinfo = {
 
 void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;
 
+
 asm("
 	.text
 	.align 2
 	.globl	_start
 _start:
 
-	li	8,0x4000	/* _start */
-	li	9,0x20
+	lis	8,(_start)@ha
+	addi	8,8,(_start)@l
+	li	9,0x40		/* loop 64 times (for 2048 bytes of bootxx) */
 	mtctr	9
 1:
 	dcbf	0,8
@@ -80,7 +87,13 @@ _start:
 	mtibatu	3,8
 	isync
 
-	li	1,(stack+4096)@l	/* setup 4KB of stack */
+				/*
+				 * setup 32 KB of stack with 32 bytes overpad
+				 * (see above)
+				 */
+	lis	1,(stack  + 4 * 8192)@ha
+	addi	1,1,(stack+ 4 * 8192)@l
+	stw	0,0(1)		/* terminate the frame link chain */
 
 	b	startup
 ");
@@ -216,6 +229,46 @@ OF_seek(handle, pos)
 	return args.status;
 }
 
+static __inline int
+OF_write(handle, addr, len)
+	int handle;
+	void *addr;
+	int len;
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int ihandle;
+		void *addr;
+		int len;
+		int actual;
+	} args = {
+		"write",
+		3,
+		1,
+	};
+
+	args.ihandle = handle;
+	args.addr = addr;
+	args.len = len;
+	openfirmware(&args);
+
+	return args.actual;
+}
+
+int stdout;
+
+void
+putstrn(const char *s, size_t n)
+{
+	OF_write(stdout, s, n);
+}
+
+#define putstr(x)	putstrn((x),sizeof(x)-1)
+#define putc(x)		do { char __x = (x) ; putstrn(&__x, 1); } while (0)
+
+
 void
 startup(arg1, arg2, openfirm)
 	int arg1, arg2;
@@ -235,25 +288,35 @@ startup(arg1, arg2, openfirm)
 		options = OF_finddevice("/options");
 		OF_getprop(options, "boot-device", bootpath, sizeof(bootpath));
 	}
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout))
+	    != sizeof(stdout))
+		stdout = -1;
 
 	/*
 	 * "scsi/sd@0:0" --> "scsi/sd@0"
 	 */
-	for (i = 0; i < sizeof(bootpath); i++)
+	for (i = 0; i < sizeof(bootpath); i++) {
 		if (bootpath[i] == ':')
 			bootpath[i] = 0;
+		if (bootpath[i] == 0)
+			break;
+	}
 
+	putstr("\r\nOF_open bootpath=");
+	putstrn(bootpath, i);
 	fd = OF_open(bootpath);
 
 	addr = (char *)entry_point;
+	putstr("\r\nread stage 2 blocks: ");
 	for (i = 0; i < bbinfo.bbi_block_count; i++) {
 		if ((blk = bbinfo.bbi_block_table[i]) == 0)
 			break;
-
+		putc('0' + i % 10);
 		OF_seek(fd, (u_quad_t)blk * 512);
 		OF_read(fd, addr, bbinfo.bbi_block_size);
 		addr += bbinfo.bbi_block_size;
 	}
+	putstr(". done!\r\nstarting stage 2...\r\n");
 
 	/*
 	 * enable D/I cache
