@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.60 2003/01/20 05:30:11 simonb Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.61 2003/05/14 06:47:41 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.60 2003/01/20 05:30:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.61 2003/05/14 06:47:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -263,11 +263,6 @@ ip6_input(m)
 
 	in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_receive);
 	ip6stat.ip6s_total++;
-
-#ifndef PULLDOWN_TEST
-	/* XXX is the line really necessary? */
-	IP6_EXTHDR_CHECK(m, 0, sizeof(struct ip6_hdr), /*nothing*/);
-#endif
 
 	/*
 	 * If the IPv6 header is not aligned, slurp it up into a new
@@ -628,17 +623,12 @@ ip6_input(m)
 				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
 			return;
 		}
-#ifndef PULLDOWN_TEST
-		/* ip6_hopopts_input() ensures that mbuf is contiguous */
-		hbh = (struct ip6_hbh *)(ip6 + 1);
-#else
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
 			sizeof(struct ip6_hbh));
 		if (hbh == NULL) {
 			ip6stat.ip6s_tooshort++;
 			return;
 		}
-#endif
 		KASSERT(IP6_HDR_ALIGNED_P(hbh));
 		nxt = hbh->ip6h_nxt;
 
@@ -782,14 +772,6 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	u_int8_t *opt;
 
 	/* validation of the length of the header */
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(*hbh), -1);
-	hbh = (struct ip6_hbh *)(mtod(m, caddr_t) + off);
-	hbhlen = (hbh->ip6h_len + 1) << 3;
-
-	IP6_EXTHDR_CHECK(m, off, hbhlen, -1);
-	hbh = (struct ip6_hbh *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
 		sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
 	if (hbh == NULL) {
@@ -803,7 +785,6 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 		ip6stat.ip6s_tooshort++;
 		return -1;
 	}
-#endif
 	KASSERT(IP6_HDR_ALIGNED_P(hbh));
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
@@ -1095,10 +1076,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			struct ip6_hbh *hbh;
 			int hbhlen;
 
-#ifndef PULLDOWN_TEST
-			hbh = (struct ip6_hbh *)(ip6 + 1);
-			hbhlen = (hbh->ip6h_len + 1) << 3;
-#else
 			IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
 				sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
 			if (hbh == NULL) {
@@ -1112,7 +1089,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
-#endif
 
 			/*
 			 * XXX: We copy whole the header even if a jumbo
@@ -1143,13 +1119,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			struct ip6_ext *ip6e;
 			int elen;
 
-#ifndef PULLDOWN_TEST
-			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + off);
-			if (nxt == IPPROTO_AH)
-				elen = (ip6e->ip6e_len + 2) << 2;
-			else
-				elen = (ip6e->ip6e_len + 1) << 3;
-#else
 			IP6_EXTHDR_GET(ip6e, struct ip6_ext *, m, off,
 				sizeof(struct ip6_ext));
 			if (ip6e == NULL) {
@@ -1165,7 +1134,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
-#endif
 			KASSERT(IP6_HDR_ALIGNED_P(ip6e));
 
 			switch (nxt) {
