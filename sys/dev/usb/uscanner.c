@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.43 2003/11/23 19:07:10 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.44 2004/01/05 13:29:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.43 2003/11/23 19:07:10 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.44 2004/01/05 13:29:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,9 @@ static const struct uscan_info uscanner_devs[] = {
 
   /* Canon */
  {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U }, 0 },
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N670U }, 0 },
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N1220U }, 0 },
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N1240U }, 0 },
 
   /* Kye */
  {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
@@ -144,6 +147,9 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL2 }, 0 },
  {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6UL }, 0 },
 #endif
+
+  /* Minolta */
+ {{ USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_5400 }, 0 },
 
   /* Mustek */
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU }, 0 },
