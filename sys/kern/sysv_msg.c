@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.29 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.30 2000/06/02 16:05:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -75,9 +75,9 @@
 #define MSG_PRINTF(a)
 #endif
 
-int nfree_msgmaps;		/* # of free map entries */
-short free_msgmaps;		/* head of linked list of free map entries */
-struct __msg *free_msghdrs;	/* list of free msg headers */
+int	nfree_msgmaps;		/* # of free map entries */
+short	free_msgmaps;		/* head of linked list of free map entries */
+struct	__msg *free_msghdrs;	/* list of free msg headers */
 char	*msgpool;		/* MSGMAX byte long msg buffer pool */
 struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
 struct __msg *msghdrs;		/* MSGTQL msg headers */
