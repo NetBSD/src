@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.8 1995/05/23 19:47:16 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.8 1995/05/23 19:47:16 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ static Char *justabs[] = {STRNULL, 0};
 static void	pexerr __P((void));
 static void	texec __P((Char *, Char **));
 static int	hashname __P((Char *));
-static void 	tellmewhat __P((struct wordent *));
+static int 	tellmewhat __P((struct wordent *, Char *));
 static int	executable __P((Char *, Char *, bool));
 static int	iscommand __P((Char *));
 
@@ -646,28 +646,30 @@ dowhich(v, c)
 	    (void) fprintf(cshout, "%s: \t aliased to ", vis_str(*v));
 	    blkpr(cshout, vp->vec);
 	    (void) fputc('\n', cshout);
+	    set(STRstatus, Strsave(STR0));
 	}
 	else {
 	    lex[1].word = *v;
-	    tellmewhat(lex);
+	    set(STRstatus, Strsave(tellmewhat(lex, NULL) ? STR0 : STR1));
 	}
     }
 }
 
-static void
-tellmewhat(lex)
-    struct wordent *lex;
+static int
+tellmewhat(lexp, str)
+    struct wordent *lexp;
+    Char *str;
 {
     register int i;
     register struct biltins *bptr;
-    register struct wordent *sp = lex->next;
-    bool    aliased = 0;
+    register struct wordent *sp = lexp->next;
+    bool    aliased = 0, found;
     Char   *s0, *s1, *s2, *cmd;
     Char    qc;
 
     if (adrof1(sp->word, &aliases)) {
-	alias(lex);
-	sp = lex->next;
+	alias(lexp);
+	sp = lexp->next;
 	aliased = 1;
     }
 
@@ -700,18 +702,22 @@ tellmewhat(lex)
 
     for (bptr = bfunc; bptr < &bfunc[nbfunc]; bptr++) {
 	if (eq(sp->word, str2short(bptr->bname))) {
-	    if (aliased)
-		prlex(cshout, lex);
-	    (void) fprintf(cshout, "%s: shell built-in command.\n", 
-			   vis_str(sp->word));
+	    if (str == NULL) {
+		if (aliased)
+		    prlex(cshout, lexp);
+		(void) fprintf(cshout, "%s: shell built-in command.\n", 
+			       vis_str(sp->word));
+	    }
+	    else
+		(void) Strcpy(str, sp->word);
 	    sp->word = s0;	/* we save and then restore this */
-	    return;
+	    return 1;
 	}
     }
 
     sp->word = cmd = globone(sp->word, G_IGNORE);
 
-    if ((i = iscommand(strip(sp->word))) != 0) {
+    if ((i = iscommand(sp->word)) != 0) {
 	register Char **pv;
 	register struct varent *v;
 	bool    slash = any(short2str(sp->word), '/');
@@ -727,26 +733,36 @@ tellmewhat(lex)
 	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {
 	    if (!slash) {
 		sp->word = Strspl(STRdotsl, sp->word);
-		prlex(cshout, lex);
+		prlex(cshout, lexp);
 		xfree((ptr_t) sp->word);
 	    }
 	    else
-		prlex(cshout, lex);
-	    sp->word = s0;	/* we save and then restore this */
-	    xfree((ptr_t) cmd);
-	    return;
+		prlex(cshout, lexp);
 	}
-	s1 = Strspl(*pv, STRslash);
-	sp->word = Strspl(s1, sp->word);
-	xfree((ptr_t) s1);
-	prlex(cshout, lex);
-	xfree((ptr_t) sp->word);
+	else {
+	    s1 = Strspl(*pv, STRslash);
+	    sp->word = Strspl(s1, sp->word);
+	    xfree((ptr_t) s1);
+	    if (str == NULL)
+		prlex(cshout, lexp);
+	    else
+		(void) Strcpy(str, sp->word);
+	    xfree((ptr_t) sp->word);
+	}
+	found = 1;
     }
     else {
-	if (aliased)
-	    prlex(cshout, lex);
-	(void) fprintf(csherr, "%s: Command not found.\n", vis_str(sp->word));
+ 	if (str == NULL) {
+	    if (aliased)
+		prlex(cshout, lexp);
+	    (void) fprintf(csherr,
+			   "%s: Command not found.\n", vis_str(sp->word));
+	}
+	else
+	    (void) Strcpy(str, sp->word);
+	found = 0;
     }
     sp->word = s0;		/* we save and then restore this */
     xfree((ptr_t) cmd);
+    return found;
 }
