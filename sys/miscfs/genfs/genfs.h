@@ -1,7 +1,8 @@
-/*	$NetBSD: genfs.h,v 1.6 1998/06/25 22:15:30 thorpej Exp $	*/
+/*	$NetBSD: genfs.h,v 1.7 1998/08/10 08:11:11 matthias Exp $	*/
 
 int	genfs_badop	__P((void *));
 int	genfs_nullop	__P((void *));
+int	genfs_enoioctl	__P((void *));
 int	genfs_eopnotsupp __P((void *));
 int	genfs_ebadf	__P((void *));
 int	genfs_nolock	__P((void *));

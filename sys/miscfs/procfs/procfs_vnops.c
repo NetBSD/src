@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.56 1998/08/09 20:51:10 perry Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.57 1998/08/10 08:11:12 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -109,7 +109,7 @@ int	procfs_getattr	__P((void *));
 int	procfs_setattr	__P((void *));
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
-#define	procfs_ioctl	genfs_eopnotsupp
+#define	procfs_ioctl	genfs_enoioctl
 #define	procfs_poll	genfs_poll
 #define procfs_revoke	genfs_revoke
 #define	procfs_mmap	genfs_eopnotsupp

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.46 1998/08/09 20:15:40 perry Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.47 1998/08/10 08:11:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -570,24 +570,6 @@ good:
 #endif /* QUOTA */
 	ip->i_flag |= IN_CHANGE;
 	return (0);
-}
-
-/* ARGSUSED */
-int
-ufs_ioctl(v)
-	void *v;
-{
-#if 0
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-	return (ENOTTY);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.7 1998/03/01 02:23:29 fvdl Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.8 1998/08/10 08:11:13 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,6 +44,8 @@ struct ucred;
 struct vnode;
 
 __BEGIN_DECLS
+#define	mfs_ioctl	genfs_enoioctl
+
 /* mfs_vfsops.c */
 int	mfs_mountroot	__P((void));
 int	mfs_initminiroot	__P((caddr_t));
@@ -58,7 +60,6 @@ void	mfs_init	__P((void));
 
 /* mfs_vnops.c */
 int	mfs_open	__P((void *));
-int	mfs_ioctl	__P((void *));
 int	mfs_strategy	__P((void *));
 void	mfs_doio	__P((struct buf *, caddr_t));
 int	mfs_bmap	__P((void *));

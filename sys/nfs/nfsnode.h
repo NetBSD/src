@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.26 1998/06/25 22:15:29 thorpej Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27 1998/08/10 08:11:13 matthias Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -193,7 +193,7 @@ int	nfsspec_read	__P((void *));
 int	nfsspec_write	__P((void *));
 int	nfsfifo_read	__P((void *));
 int	nfsfifo_write	__P((void *));
-#define nfs_ioctl	((int (*)	__P((void *)))enoioctl)
+#define	nfs_ioctl	genfs_enoioctl
 #define	nfs_poll	genfs_poll
 #define nfs_revoke	genfs_revoke
 int	nfs_mmap	__P((void *));
