@@ -8,11 +8,11 @@
  *
  *
  * from: Id: igmp.c,v 1.5 1993/06/23 18:47:17 pavel Exp
- *      $Id: igmp.c,v 1.1 1994/01/11 20:15:53 brezak Exp $
+ *      $Id: igmp.c,v 1.2 1994/06/09 16:05:28 brezak Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: igmp.c,v 1.1 1994/01/11 20:15:53 brezak Exp $";
+static char rcsid[] = "$Id: igmp.c,v 1.2 1994/06/09 16:05:28 brezak Exp $";
 #endif
 
 #include "defs.h"
@@ -47,8 +47,10 @@ void init_igmp()
     ip         = (struct ip *)send_buf;
     ip->ip_tos = 0;
     ip->ip_off = 0;
+    ip->ip_v   = IPVERSION;
     ip->ip_p   = IPPROTO_IGMP;
     ip->ip_ttl = MAXTTL;	/* applies to unicasts only */
+    ip->ip_hl  = (MIN_IP_HEADER_LEN >> 2);
 
     allhosts_group = htonl(INADDR_ALLHOSTS_GROUP);
     dvmrp_group    = htonl(INADDR_DVMRP_GROUP);
