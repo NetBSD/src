@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.2 2001/04/10 12:40:53 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.3 2001/05/14 15:12:39 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sun2/sun2/machdep.h>
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/vector.h>
+#include <machine/pte.h>
 
 /*
  * The state we save when we get ready to disappear into the PROM.
@@ -55,24 +56,41 @@
 struct kernel_state {
 	int saved_spl;
 	int saved_ctx;
-	int saved_pmeg;
+	u_int saved_ptes[4];
 };
 
 static void **sunmon_vbr;
 static struct kernel_state sunmon_kernel_state;
 static struct bootparam sunmon_bootparam;
+static u_int sunmon_ptes[4];
 
 static void tracedump __P((int));
 
 /*
  * The PROM keeps its data is in the first four physical pages, and
- * assumes that they're mapped to the first four virtual pages (i.e.,
- * segment zero).  Normally we keep segment zero either unmapped or
- * mapped to something else entirely, so before we can dereference
- * pointers in romVectorPtr or call the PROM, we have to set up its
- * mapping.  The pmeg to use is the same one used to map KERNBASE,
- * since KERNBASE points to the first four physical pages.
+ * assumes that they're mapped to the first four virtual pages.
+ * Normally we keep the first four virtual pages unmapped, so before
+ * we can dereference pointers in romVectorPtr or call the PROM, we 
+ * have to restore its mappings.  
  */
+
+/*
+ * This swaps out one set of PTEs for the first 
+ * four virtual pages, and swaps another set in.
+ */
+static inline void _prom_swap_ptes __P((u_int *, u_int *));
+static inline void
+_prom_swap_ptes(swapout, swapin)
+	u_int *swapout, *swapin;
+{
+	int pte_number;
+	vm_offset_t va;
+
+	for(pte_number = 0, va = 0; pte_number < 4; pte_number++, va += NBPG) {
+		swapout[pte_number] = get_pte(va);
+		set_pte(va, swapin[pte_number]);
+	}
+}
 
 /*
  * Prepare for running the PROM monitor.
@@ -84,13 +102,13 @@ _mode_monitor(state, full)
 	int full;
 {
 	/*
-	 * Save the current context, and the PMEG for segment
-	 * zero, and reset them to what the PROM expects.
+	 * Save the current context, and the PTEs for pages
+	 * zero through three, and reset them to what the PROM 
+	 * expects.
 	 */
 	state->saved_ctx = get_context();
 	set_context(0);
-	state->saved_pmeg = get_segmap(0);
-	set_segmap(0, get_segmap(KERNBASE));
+	_prom_swap_ptes(state->saved_ptes, sunmon_ptes);
 
 	/*
 	 * If we're going to enter the PROM fully, raise the interrupt
@@ -126,10 +144,10 @@ _mode_kernel(state, full)
 	}
 
 	/*
-	 * Restore our PMEG for segment zero, and restore
-	 * the current context.
+	 * Restore our PTEs for pages zero through three, 
+	 * and restore the current context.
 	 */
-	set_segmap(0, state->saved_pmeg);
+	_prom_swap_ptes(sunmon_ptes, state->saved_ptes);
 	set_context(state->saved_ctx);
 }
 
@@ -348,10 +366,10 @@ prom_init()
 
 	/*
 	 * Any second the pointers in the PROM vector are going to
-	 * break (since they point into segment zero, which we like to
-	 * keep unmapped), so we grab a complete copy of the
-	 * bootparams, taking care to adjust the pointers in the copy
-	 * to also point to the copy.
+	 * break (since they point into pages zero through three, 
+	 * which we like to keep unmapped), so we grab a complete 
+	 * copy of the bootparams, taking care to adjust the pointers 
+	 * in the copy to also point to the copy.
 	 */
 	old_bp = *romVectorPtr->bootParam;
 	new_bp = &sunmon_bootparam;
@@ -361,6 +379,9 @@ prom_init()
 		new_bp->argPtr[i] += bp_shift;
 	}
 	new_bp->fileName += bp_shift;
+
+	/* Save the PROM's mappings for pages zero through three. */
+	_prom_swap_ptes(sunmon_ptes, sunmon_ptes);
 
 	/* Save the PROM monitor Vector Base Register (VBR). */
 	sunmon_vbr = getvbr();
