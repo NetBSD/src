@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.33 1999/07/08 18:08:54 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.34 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -168,6 +168,7 @@ ascattach(parent, self, aux)
 	}
 	sc->sc_open = 0;
 	sc->sc_ringing = 0;
+	callout_init(&sc->sc_bell_ch);
 
 	for (i = 0; i < 256; i++) {	/* up part of wave, four voices? */
 		asc_wave_tab[i] = i / 4;
@@ -347,9 +348,9 @@ asc_ring_bell(arg, freq, length, volume)
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80f, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x802, 2); /* sampled */
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 2); /* enable sampled */
+		sc->sc_ringing = 1;
+		callout_reset(&sc->sc_bell_ch, length, asc_stop_bell, sc);
 	}
-	sc->sc_ringing++;
-	timeout(asc_stop_bell, sc, length);
 
 	return (0);
 }

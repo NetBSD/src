@@ -197,6 +197,7 @@ do_vgapage(int page)
  */
 
 static int lost_intr_timeout_queued = 0;
+static struct callout check_for_lost_intr_ch = CALLOUT_INITIALIZER;
 
 static void
 check_for_lost_intr (void *arg)
@@ -244,9 +245,10 @@ update_led(void)
 
 #if PCVT_UPDLED_LOSES_INTR
 		if (lost_intr_timeout_queued)
-			untimeout (check_for_lost_intr, (void *)NULL);
+			callout_stop(&check_for_lost_intr_ch);
 
-		timeout (check_for_lost_intr, (void *)NULL, hz);
+		callout_reset(&check_for_lost_intr_ch, hz,
+		    check_for_lost_intr, NULL);
 		lost_intr_timeout_queued = 1;
 #endif /* PCVT_UPDLED_LOSES_INTR */
 

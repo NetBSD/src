@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.3 2000/02/22 11:26:01 soda Exp $	*/
+/*	$NetBSD: btl.c,v 1.4 2000/03/23 06:34:25 thorpej Exp $	*/
 
 #undef BTDIAG
 #define integrate
@@ -503,7 +503,7 @@ AGAIN:
 			goto next;
 		}
 
-		untimeout(bt_timeout, ccb);
+		callout_stop(&ccb->xs->xs_callout);
 		bt_done(sc, ccb);
 
 	next:
@@ -812,7 +812,8 @@ bt_start_ccbs(sc)
 		isa_outb(iobase + BT_CMD_PORT, BT_START_SCSI);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(bt_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000, bt_timeout, ccb);
 
 		++sc->sc_mbofull;
 		bt_nextmbx(wmbo, wmbx, mbo);

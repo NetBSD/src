@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.4 1998/11/19 21:45:00 thorpej Exp $ */
+/* $NetBSD: sbicvar.h,v 1.5 2000/03/23 06:35:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,7 @@
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
 #include <sys/malloc.h>
+#include <sys/callout.h>
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -106,6 +107,7 @@ struct sbic_tinfo {
 struct	sbic_softc {
 	struct	device sc_dev;
 /*	struct	isr sc_isr;*/
+	struct  callout sc_timo_ch;
 	struct	target_sync {
 		u_char	state;
 		u_char	period;

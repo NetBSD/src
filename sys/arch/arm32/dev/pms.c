@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.20 1999/06/01 09:34:07 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.21 2000/03/23 06:35:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -190,6 +190,7 @@ pmsinit(sc)
 	int mid;
 
 	/* Set up softc */
+	callout_init(&sc->sc_watchdog_ch);
 	sc->sc_state = 0;
 	sc->origx = 0;
 	sc->origy = 0;
@@ -295,7 +296,8 @@ pmsopen(dev, flag, mode, p)
 	sc->sc_intenable(sc, 1);
 	
 	/* install watchdog timeout */
-	timeout(pmswatchdog, (void *) sc, 30 * hz);
+	callout_reset(&sc->sc_watchdog_ch, 30 * hz,
+	    pmswatchdog, sc);
 
 	return(0);
 }
@@ -313,7 +315,7 @@ pmsclose(dev, flag, mode, p)
 	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* remove the timeout */
-	untimeout(pmswatchdog, (void *) sc);
+	callout_stop(&sc->sc_watchdog_ch);
 
 	/* disable interrupts */
 	sc->sc_intenable(sc, 0);

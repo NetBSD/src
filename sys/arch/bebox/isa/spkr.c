@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.5 1998/09/28 09:33:14 sakamoto Exp $	*/
+/*	$NetBSD: spkr.c,v 1.6 2000/03/23 06:36:44 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -17,6 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -71,6 +72,9 @@ static void playinit __P((void));
 static void playtone __P((int, int, int));
 static void playstring __P((char *, int));
 
+static struct callout endtone_ch = CALLOUT_INITIALIZER;
+static struct callout endreset_ch = CALLOUT_INITIALIZER;
+
 static void
 endtone(v)
     void *v;
@@ -107,7 +111,7 @@ void tone(hz, ticks)
      * This is so other processes can execute while the tone is being
      * emitted.
      */
-    timeout(endtone, NULL, ticks);
+    callout_reset(&endtone_ch, ticks, endtone, NULL);
     sleep(endtone, PZERO - 1);
 }
 
@@ -132,7 +136,7 @@ rest(ticks)
 #ifdef DEBUG
     printf("rest: %d\n", ticks);
 #endif /* DEBUG */
-    timeout(endrest, NULL, ticks);
+    callout_reset(&endrest_ch, ticks, endrest, NULL);
     sleep(endrest, PZERO - 1);
 }
 
