@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.41 1999/12/02 01:09:11 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.42 1999/12/07 21:35:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.41 1999/12/02 01:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.42 1999/12/07 21:35:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ badaddr_read(addr, size, rptr)
 		panic("badaddr: invalid size (%ld)\n", size);
 	}
 	alpha_mb();
+	alpha_mb();	/* MAGIC ON SOME SYSTEMS */
 
 	/* Make sure we took the machine check, if we caused one. */
 	alpha_pal_draina();
