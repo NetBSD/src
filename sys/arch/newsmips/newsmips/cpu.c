@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 1999/12/06 06:58:30 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2000/02/19 03:59:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -66,6 +66,6 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
 
-	printf("\n");
+	printf(": ");
 	cpu_identify();
 }
