@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.7 1996/06/13 19:18:33 cgd Exp $
+#	$NetBSD: JURA,v 1.8 1996/08/21 16:25:10 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -38,6 +38,7 @@ options		COMPAT_43
 #options	COMPAT_09
 options		COMPAT_10
 options		COMPAT_11
+options		COMPAT_12
 
 # Loadable Kernel Modules
 options		LKM

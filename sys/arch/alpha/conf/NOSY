@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.7 1996/06/13 19:18:37 cgd Exp $
+#	$NetBSD: NOSY,v 1.8 1996/08/21 16:25:11 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
@@ -37,6 +37,7 @@ options		COMPAT_43
 #options	COMPAT_09
 options		COMPAT_10
 options		COMPAT_11
+options		COMPAT_12
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #options	COMPAT_OSF1
