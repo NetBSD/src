@@ -24,7 +24,7 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  *
- * $Id: md4.h,v 1.1 1994/05/21 05:46:05 deraadt Exp $
+ * $Id: md4.h,v 1.2 1996/09/19 19:36:52 thorpej Exp $
  */
 
 #ifdef  __STDC__
@@ -35,7 +35,7 @@
 
 /* MDstruct is the data structure for a message digest computation. */
 typedef struct {
-	unsigned long buffer[4];/* Holds 4-word result of MD computation */
+	unsigned int buffer[4];/* Holds 4-word result of MD computation */
 	unsigned char count[8];	/* Number of bits processed so far */
 	unsigned int done;	/* Nonzero means MD computation finished */
 } MDstruct, *MDptr;
