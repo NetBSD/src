@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.6 1995/02/12 19:18:38 chopps Exp $	*/
+/*	$NetBSD: isr.h,v 1.7 1995/10/09 15:19:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -45,3 +45,12 @@ struct isr {
 
 #define	NISR		3
 #define	ISRIPL(x)	((x) - 3)
+
+#ifdef _KERNEL
+void add_isr __P((struct isr *));
+void remove_isr __P((struct isr *));
+typedef void (*sifunc_t) __P((void *, void *));
+void alloc_sicallback __P((void));
+void add_sicallback __P((sifunc_t, void *, void *));
+void rem_sicallback __P((sifunc_t));
+#endif
