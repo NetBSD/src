@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.169 1999/11/04 10:34:40 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.170 1999/11/04 16:18:41 tsarna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.164 1999/11/04 10:34:03 augustss Exp 
+ *	NetBSD: pcidevs,v 1.165 1999/11/04 16:02:20 tsarna Exp 
  */
 
 /*
@@ -764,6 +764,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
+	    0,
+	    "Aureal Semiconductor",
+	    "AU8820 Vortex Digital Audio Processor",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -6313,6 +6319,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AUREAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Aureal Semiconductor",
 	    NULL,
 	},
 	{
