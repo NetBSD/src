@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.3 2001/05/28 07:22:37 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.4 2001/05/28 08:12:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -40,6 +40,14 @@
 
 #include <atari/dev/font.h>
 
+#if NVGA_PCI > 0
+#include <dev/cons.h>
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+
 static void loadfont(volatile u_char *, u_char *fb);
 
 /* XXX: Shouldn't these be in font.h???? */
@@ -51,6 +59,8 @@ static u_char conscolors[3][3] = {	/* background, foreground, hilite */
 	{0x0, 0x0, 0x0}, {0x30, 0x30, 0x30}, { 0x3f,  0x3f,  0x3f}
 };
 
+static bus_space_tag_t	vga_iot, vga_memt;
+static int		tags_valid = 0;
 
 #define		VGA_REG_SIZE	(8*1024)
 #define		VGA_FB_SIZE	(32*1024)
@@ -186,6 +196,29 @@ bad:
 		bus_space_unmap(iot, ioh_regs, VGA_REG_SIZE);
 	return (rv);
 }
+
+#if NVGA_PCI > 0
+void vgacnprobe(struct consdev *);
+void vgacninit(struct consdev *);
+
+void
+vgacnprobe(cp)
+	struct consdev *cp;
+{
+	if (tags_valid)
+		cp->cn_pri = CN_NORMAL;
+}
+
+void
+vgacninit(cp)
+	struct consdev *cp;
+{
+	if (tags_valid) {
+		/* XXX: Are those arguments correct? Leo */
+		vga_cnattach(vga_iot, vga_memt, 8, 0);
+	}
+}
+#endif /* NVGA_PCI */
 
 /*
  * Generic VGA. Load the configured kernel font into the videomemory and
