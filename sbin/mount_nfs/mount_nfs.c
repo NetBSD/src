@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.32 2002/05/29 02:19:56 cjs Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.33 2002/06/16 02:27:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.32 2002/05/29 02:19:56 cjs Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.33 2002/06/16 02:27:31 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ mount_nfs(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c;
+	int c, retval;
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	struct nfsd_cargs ncd;
@@ -448,7 +448,15 @@ mount_nfs(argc, argv)
 
 	if (!getnfsargs(spec, nfsargsp))
 		exit(1);
-	if (mount(MOUNT_NFS, name, mntflags, nfsargsp))
+	if ((retval = mount(MOUNT_NFS, name, mntflags, nfsargsp))) {
+		/* Did we just default to v3 on a v2-only kernel?
+		 * If so, default to v2 & try again */
+		if ((errno == EPROGMISMATCH) && !force3) {
+			nfsargsp->flags &= ~NFSMNT_NFSV3;
+			retval = mount(MOUNT_NFS, name, mntflags, nfsargsp);
+		}
+	}
+	if (retval)
 		err(1, "%s on %s", ospec, name);
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
 		if ((opflags & ISBGRND) == 0) {
