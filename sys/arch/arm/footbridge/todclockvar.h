@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridgevar.h,v 1.2 2002/02/10 12:26:00 chris Exp $	*/
+/*	$NetBSD: todclockvar.h,v 1.1 2002/02/10 12:26:00 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -16,7 +16,6 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Mark Brinicombe
- *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -32,64 +31,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-#include <machine/bus.h>
-#include <machine/rtc.h>
-#include <dev/pci/pcivar.h>
-#include <arm/footbridge/todclockvar.h>
-
-/*
- * DC21285 softc structure.
  *
- * Contains the device node, bus space tag, handle and address
+ * todclockvar.h
+ *
+ * structures and variables for the todclock device
+ *
+ * Created      : 12/02/97
  */
-
-struct footbridge_softc {
-	struct device 		sc_dev;	/* device node */
-	bus_space_tag_t		sc_iot;	/* bus tag */
-	bus_space_handle_t	sc_ioh;	/* bus handle */
-
-	/* Clock related variables - used in footbridge_clock.c */
-	unsigned int		sc_clock_ticks_per_256us;
-	unsigned int		sc_clock_count;
-	void	 		*sc_clockintr;
-	unsigned int		sc_statclock_count;
-	void	 		*sc_statclockintr;
-
-	/* Miscellaneous interrupts */
-	void *			sc_serr_ih;
-	void *			sc_sdram_par_ih;
-	void *			sc_data_par_ih;
-	void *			sc_master_abt_ih;
-	void *			sc_target_abt_ih;
-	void *			sc_parity_ih;
-};
 
 /*
- * Attach args for child devices
+ * Attach args for todclock device
  */
 
-union footbridge_attach_args {
-	const char *fba_name;			/* first element*/
-	struct {
-		bus_space_tag_t fba_iot;	/* Bus tag */
-		bus_space_handle_t fba_ioh;	/* Bus handle */
-	} fba_fba;
-	struct pcibus_attach_args fba_pba;	/* pci attach args */
-	struct todclock_attach_args fba_tca;
-	struct fcom_attach_args {
-		char *fca_name;
-		bus_space_tag_t fca_iot;
-		bus_space_handle_t fca_ioh;
-		int fca_rx_irq;
-		int fca_tx_irq;
-	} fba_fca;
-/*	struct clock_attach_args {
-		char *ca_name;
-		bus_space_tag_t ca_iot;
-		bus_space_handle_t ca_ioh;
-	} fba_ca;*/
+struct todclock_attach_args {
+	const char	*ta_name;			/* device name */
+	void	*ta_rtc_arg;				/* arg to read/write */
+	int	(*ta_rtc_write) __P((void *, rtc_t *));	/* function to write rtc */
+	int	(*ta_rtc_read)  __P((void *, rtc_t *));	/* function to read rtc */
+	int	ta_flags;				/* flags */
+#define TODCLOCK_FLAG_FAKE	0x01			/* tod service is faked */
 };
 
-/* End of footbridgevar.h */
+/* End of todclockvar.h */
