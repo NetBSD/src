@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.3 1998/03/26 13:15:01 tsubai Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.4 1998/06/08 20:35:15 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,39 +47,19 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/signalvar.h>
-#include <sys/syscall.h>
-#include <sys/user.h>
-#include <sys/buf.h>
+#include <sys/mbuf.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <net/netisr.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
-#include <machine/mips_opcode.h>
-#include <mips/locore.h>		/* wbflush() */
+#include <machine/intr.h>
+#include <machine/adrsmap.h>
 
 #include <newsmips/dev/scc.h>
-
-#include <sys/socket.h>
-#include <sys/mbuf.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <net/if_ether.h>
-#include <net/if_media.h>
-#include <netinet/if_inarp.h>
-
-struct ifnet; struct ethercom;
-#include <dev/ic/am7990var.h>
 
 #include "le.h"
 #include "kb.h"
@@ -89,26 +69,20 @@ struct ifnet; struct ethercom;
 /*#include "sb.h"*/
 /* XXX hokanimo ippai */
 
-#include <sys/cdefs.h>
-#include <sys/syslog.h>
-
-#include <newsmips/newsmips/trap.h>
-
-#include <machine/autoconf.h>
-#include <machine/adrsmap.h>
-
-void level0_intr(void);
-void level1_intr(void);
-void dma_intr(void);
-void print_int_stat(char *);
-void exec_hb_intr2(void);
-void exec_hb_intr4(void);
+void level0_intr __P((void));
+void level1_intr __P((void));
+void dma_intr __P((void));
+void print_int_stat __P((char *));
+void exec_hb_intr2 __P((void));
+void exec_hb_intr4 __P((void));
 
 extern int leintr __P((int));
-extern int sc_intr();
+extern int sc_intr __P((void));
 extern void kbm_rint __P((int));
 
-extern u_long intrcnt[];
+extern u_int intrcnt[];
+
+static int badaddr_flag;
 
 /*
  * Handle news3400 interrupts.
@@ -134,6 +108,7 @@ news3400_intr(mask, pc, statusReg, causeReg)
 			cf.pc = pc;
 			cf.sr = statusReg;
 			hardclock(&cf);
+			intrcnt[HARDCLOCK_INTR]++;
 			if (++led_count > hz) {
 				led_count = 0;
 				*(volatile u_char *)DEBUG_PORT ^= DP_LED1;
@@ -156,8 +131,8 @@ news3400_intr(mask, pc, statusReg, causeReg)
 	if (mask & MIPS_INT_MASK_5) {		/* level 5 interrupt */
 		printf("level 5 interrupt: PC %x CR %x SR %x\n",
 			pc, causeReg, statusReg);
-		causeReg &= ~MIPS_INT_MASK_5;
-		/* should we panic? */
+		/* causeReg &= ~MIPS_INT_MASK_5; */
+		/* panic("level 5 interrupt"); */
 	}
 	if (mask & MIPS_INT_MASK_4) {		/* level 4 interrupt */
 		/*
@@ -165,8 +140,7 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		 */
 		*(char *)INTCLR0 = INTCLR0_BERR;
 		causeReg &= ~MIPS_INT_MASK_4;
-		printf("level 4 interrupt: PC %x CR %x SR %x\n",
-			pc, causeReg, statusReg);
+		badaddr_flag = 1;
 	}
 	if (mask & MIPS_INT_MASK_1) {		/* level 1 interrupt */
 		level1_intr();
@@ -214,8 +188,10 @@ level0_intr()
 
 	if (stat & INTST1_DMA)
 		dma_intr();
-	if (stat & INTST1_SLOT1)
+	if (stat & INTST1_SLOT1) {
+		intrcnt[SLOT1_INTR]++;
 		exec_hb_intr2();
+	}
 #if NLE > 0
 	if (stat & INTST1_SLOT3) {
 		int s, t;
@@ -225,6 +201,7 @@ level0_intr()
 		splx(s);
 		if (t == 0)
 			exec_hb_intr4();
+		intrcnt[SLOT3_INTR]++;
 	}
 #endif
 
@@ -267,14 +244,17 @@ level1_intr()
 	if (stat & INTST1_SCC) {
 		extern void zs_intr();
 
+		intrcnt[SERIAL0_INTR]++;
 		zs_intr();
 		if (saved_inten1 & *(u_char *)INTST1 & INTST1_SCC)
 			zs_intr();
 	}
 
 #if NLE > 0
-	if (stat & INTST1_LANCE)
+	if (stat & INTST1_LANCE) {
+		intrcnt[LANCE_INTR]++;
 		leintr(0);
+	}
 #endif
 
 	*(u_char *)INTEN1 = saved_inten1;
@@ -378,4 +358,3 @@ exec_hb_intr4()
 {
 	printf("stray hb interrupt level 4\n");
 }
-

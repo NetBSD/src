@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1998/06/08 20:35:14 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 1998/06/08 20:35:14 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $");
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
@@ -95,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $");
 
 #include <machine/adrsmap.h>
 #include <machine/machConst.h>
-#include <newsmips/newsmips/trap.h>
+#include <machine/intr.h>
 #include <newsmips/newsmips/clockreg.h>
 #include <newsmips/newsmips/machid.h>
 #include <dev/cons.h>
@@ -152,9 +151,9 @@ void to_monitor __P((int)) __attribute__((__noreturn__));
  *  Local functions.
  */
 int initcpu __P((void));
-int readidrom __P((u_char *));
 int atoi __P((const char *cp));
 void configure __P((void));
+int readidrom __P((u_char *));
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init __P((int, int, int, int));
