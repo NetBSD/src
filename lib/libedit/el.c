@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.13 1999/07/02 15:21:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.13 1999/07/02 15:21:23 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -127,7 +127,7 @@ el_end(el)
 
     el_free((ptr_t) el->el_prog);
     el_free((ptr_t) el);
-} /* end el_end */ 
+} /* end el_end */
 
 
 /* el_reset():
@@ -165,7 +165,7 @@ el_set(va_alist)
     el = va_arg(va, EditLine *);
     op = va_arg(va, int);
 #endif
-    
+
     if (el == NULL)
 	return -1;
     switch (op) {
@@ -234,7 +234,7 @@ el_set(va_alist)
 	    }
 	}
 	break;
-    
+
     case EL_ADDFN:
 	{
 	    char 	*name = va_arg(va, char *);
@@ -351,7 +351,7 @@ el_get(el, op, ret)
 	    }
 	}
 	break;
-    
+
     case EL_ADDFN:
 	{
 	    char 	*name = va_arg(va, char *);
@@ -405,14 +405,14 @@ el_source(el, fname)
     if (fname == NULL) {
 	fname = &elpath[1];
 	if ((fp = fopen(fname, "r")) == NULL) {
-	    if ((ptr = getenv("HOME")) == NULL) 
+	    if ((ptr = getenv("HOME")) == NULL)
 		return -1;
 	    (void)snprintf(path, sizeof(path), "%s%s", ptr, elpath);
 	    fname = path;
 	}
     }
 
-    if ((fp = fopen(fname, "r")) == NULL) 
+    if ((fp = fopen(fname, "r")) == NULL)
 	return -1;
 
     while ((ptr = fgetln(fp, &len)) != NULL) {

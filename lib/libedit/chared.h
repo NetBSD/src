@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.3 1998/12/12 20:08:21 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.4 1999/07/02 15:21:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  * like real vi: i.e. the transition from command<->insert modes moves
  * the cursor.
  *
- * On the other hand we really don't want to move the cursor, because 
+ * On the other hand we really don't want to move the cursor, because
  * all the editing commands don't include the character under the cursor.
  * Probably the best fix is to make all the editing commands aware of
  * this fact.
@@ -70,7 +70,7 @@ typedef struct c_macro_t {
     char  *nline;
 } c_macro_t;
 
-/* 
+/*
  * Undo information for both vi and emacs
  */
 typedef struct c_undo_t {
@@ -141,7 +141,7 @@ protected void  cv_delfini	__P((EditLine *));
 protected char *cv__endword	__P((char *, char *, int));
 protected int   ce__isword	__P((int));
 protected void  cv_undo		__P((EditLine *, int, size_t, char *));
-protected char *cv_next_word	__P((EditLine*, char *, char *, int, 
+protected char *cv_next_word	__P((EditLine*, char *, char *, int,
 				     int (*)(int)));
 protected char *cv_prev_word	__P((EditLine*, char *, char *, int,
 				     int (*)(int)));

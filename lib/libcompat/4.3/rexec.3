@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rexec.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: rexec.3,v 1.8 1999/03/22 19:45:14 garbled Exp $
+.\"	$NetBSD: rexec.3,v 1.9 1999/07/02 15:16:41 simonb Exp $
 .\"
 .Dd June 4, 1993
 .Dt REXEC 3
@@ -77,7 +77,7 @@ specifies which well-known
 Internet port to use for
 the connection; the call
 .Ql getservbyname(\\*qexec\\*q, \\*qtcp\\*q)
-(see 
+(see
 .Xr getservent 3 )
 will return a pointer to a structure, which contains the
 necessary port.
@@ -109,10 +109,10 @@ as the secondary connection is set up after authorization has been
 verified.
 If
 .Fa fd2p
-is 0, then the 
+is 0, then the
 .Em stderr
 (unit 2 of the remote
-command) will be made the same as the 
+command) will be made the same as the
 .Em stdout
 and no
 provision is made for sending arbitrary signals to the remote process,
@@ -123,5 +123,5 @@ although you may be able to get its attention by using out-of-band data.
 .Sh HISTORY
 The
 .Fn rexec
-function appeared in 
+function appeared in
 .Bx 4.2 .
