@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.60 2001/10/09 19:17:02 yamt Exp $	*/
+/*	$NetBSD: ping.c,v 1.61 2001/10/10 15:58:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.60 2001/10/09 19:17:02 yamt Exp $");
+__RCSID("$NetBSD: ping.c,v 1.61 2001/10/10 15:58:04 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -109,7 +109,7 @@ __RCSID("$NetBSD: ping.c,v 1.60 2001/10/09 19:17:02 yamt Exp $");
 #endif /*IPSEC*/
 
 #define FLOOD_INTVL	0.01		/* default flood output interval */
-#define	MAXPACKET	(65536-60-8)	/* max packet size */
+#define	MAXPACKET	(IP_MAXPACKET-60-8)	/* max packet size */
 
 #define F_VERBOSE	0x0001
 #define F_QUIET		0x0002		/* minimize all output */
@@ -208,7 +208,7 @@ double maxwait = 0.0;
 int reset_kerninfo;
 #endif
 
-int bufspace = 65535;
+int bufspace = IP_MAXPACKET;
 
 struct timeval now, clear_cache, last_tx, next_tx, first_tx;
 struct timeval last_rx, first_rx;
