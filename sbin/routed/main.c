@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2001/09/24 13:22:32 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2001/11/02 05:30:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.29 2001/09/24 13:22:32 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2001/11/02 05:30:56 lukem Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -646,7 +646,7 @@ static int				/* <0 or file descriptor */
 get_rip_sock(naddr addr,
 	     int serious)		/* 1=failure to bind is serious */
 {
-	struct sockaddr_in sin;
+	struct sockaddr_in rsin;
 	unsigned char ttl;
 	int s;
 
@@ -654,14 +654,14 @@ get_rip_sock(naddr addr,
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		BADERR(1,"rip_sock = socket()");
 
-	memset(&sin, 0, sizeof(sin));
+	memset(&rsin, 0, sizeof(rsin));
 #ifdef _HAVE_SIN_LEN
-	sin.sin_len = sizeof(sin);
+	rsin.sin_len = sizeof(rsin);
 #endif
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(RIP_PORT);
-	sin.sin_addr.s_addr = addr;
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	rsin.sin_family = AF_INET;
+	rsin.sin_port = htons(RIP_PORT);
+	rsin.sin_addr.s_addr = addr;
+	if (bind(s, (struct sockaddr *)&rsin, sizeof(rsin)) < 0) {
 		if (serious)
 			BADERR(errno != EADDRINUSE, "bind(rip_sock)");
 		return -1;
