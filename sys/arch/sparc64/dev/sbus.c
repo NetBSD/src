@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.38 2000/12/04 20:19:49 fvdl Exp $ */
+/*	$NetBSD: sbus.c,v 1.39 2000/12/06 01:47:49 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -646,7 +646,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 		vec = INTVEC(vec);
 		DPRINTF(SDB_INTR,
 		    ("\nsbus: intr[%ld]%lx: %lx\nHunting for IRQ...\n",
-		    (long)ipl, (long)vec, intrlev[vec]));
+		    (long)ipl, (long)vec, (u_long)intrlev[vec]));
 		if ((vec & INTMAP_OBIO) == 0) {
 			/* We're in an SBUS slot */
 			/* Register the map and clear intr registers */
