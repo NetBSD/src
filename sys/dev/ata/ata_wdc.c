@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.51 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.52 2004/01/03 23:59:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.51 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.52 2004/01/03 23:59:58 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -221,7 +221,7 @@ wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		if ((xfer->c_flags & C_POLL) == 0 &&
 		    (chp->ch_flags & WDCF_TH_RUN) == 0) {
 			chp->ch_queue->queue_freeze++;
-			wakeup(&chp->thread);
+			wakeup(&chp->ch_thread);
 			return;
 		}
 		/*
