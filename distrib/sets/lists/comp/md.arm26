@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.24 2001/11/25 16:28:52 thorpej Exp $
+# $NetBSD: md.arm26,v 1.25 2001/11/25 23:34:41 thorpej Exp $
 ./usr/include/arm26			comp-c-include
 ./usr/include/arm26/ansi.h		comp-c-include
 ./usr/include/arm26/aout_machdep.h	comp-c-include
@@ -40,3 +40,4 @@
 ./usr/include/arm26/types.h		comp-c-include
 ./usr/include/arm26/varargs.h		comp-c-include
 ./usr/include/arm26/vmparam.h		comp-c-include
+./usr/lib/libarm32.so			comp-c-lib
