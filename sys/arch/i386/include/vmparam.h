@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.10 1993/12/22 12:30:59 cgd Exp $
+ *	$Id: vmparam.h,v 1.11 1994/01/03 16:20:47 mycroft Exp $
  */
 
 
@@ -129,50 +129,12 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFDBFE000)
-#define UPT_MIN_ADDRESS		((vm_offset_t)0xFDC00000)
-#define UPT_MAX_ADDRESS		((vm_offset_t)0xFDFF7000)
-#define VM_MAX_ADDRESS		UPT_MAX_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xFDFF7000)
-#define KPT_MIN_ADDRESS		((vm_offset_t)0xFDFF8000)
-#define KPT_MAX_ADDRESS		((vm_offset_t)0xFDFFF000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFF7FF000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xfdbfe000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xfdff7000)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xfdff7000)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xff7ff000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-/*
- * Flush MMU TLB
- */
-
-#ifndef I386_CR3PAT
-#define	I386_CR3PAT	0x0
-#endif
-
-#ifdef notyet
-#define _cr3() ({u_long rtn; \
-	asm (" movl %%cr3,%%eax; movl %%eax,%0 " \
-		: "=g" (rtn) \
-		: \
-		: "ax"); \
-	rtn; \
-})
-
-#define load_cr3(s) ({ u_long val; \
-	val = (s) | I386_CR3PAT; \
-	asm ("movl %0,%%eax; movl %%eax,%%cr3" \
-		:  \
-		: "g" (val) \
-		: "ax"); \
-})
-
-#define tlbflush() ({ u_long val; \
-	val = u.u_pcb.pcb_ptd | I386_CR3PAT; \
-	asm ("movl %0,%%eax; movl %%eax,%%cr3" \
-		:  \
-		: "g" (val) \
-		: "ax"); \
-})
-#endif
