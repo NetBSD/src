@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2003/01/18 06:23:29 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 2003/01/19 00:42:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,25 @@ struct trapframe {
 	int exc;
 	uint32_t vrsave;
 };
+
+#if defined(_KERNEL) || defined(_LKM)
+#ifdef _LP64
+struct trapframe32 {
+	register32_t fixreg[32];
+	register32_t lr;
+	int cr;
+	int xer;
+	register32_t ctr;
+	register32_t srr0;
+	register32_t srr1;
+	register32_t dar;		/* dar & dsisr are only filled on a DSI trap */
+	int dsisr;
+	int exc;
+	uint32_t vrsave;
+};
+#endif
+#endif /* _KERNEL || _LKM */
+
 /*
  * This is to ensure alignment of the stackpointer
  */
@@ -83,6 +102,7 @@ struct clockframe {
 /*
  * Call frame for PowerPC used during fork.
  */
+#define	CALLFRAMELEN	sizeof(struct callframe)
 struct callframe {
 	register_t sp;
 	register_t lr;
