@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2003/04/26 14:10:13 ragge Exp $
+# $NetBSD: GENERIC,v 1.44 2003/08/06 12:32:07 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -155,6 +155,7 @@ ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #dpt*		at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*		at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FC
 siop*		at pci? dev ? function ?	# NCR 53c8xx SCSI
+esiop*		at pci? dev ? function ?	# NCR 53c82s75xx SCSI and newer
 #pcscp*		at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # SCSI bus support
@@ -165,6 +166,7 @@ scsibus* 	at ahc?
 #scsibus* 	at dpt?
 #scsibus* 	at isp?
 scsibus* 	at siop?
+scsibus* 	at esiop?
 #scsibus* 	at pcscp?
 
 # SCSI devices
