@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 1997/02/19 23:35:02 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 1997/03/04 23:37:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,6 +54,8 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <m68k/asm_single.h>
+
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/cpu.h>
@@ -66,11 +68,13 @@
 #include <sun3/sun3/interreg.h>
 #include "intersil7170.h"
 
+#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
+
 #define	CLOCK_PRI	5
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
-static void frob_leds __P((struct clockframe *));
+static void frob_leds __P((void));
 
 /* Note: this is used by locore.s:__isr_clock */
 static volatile char *clock_va;
@@ -138,64 +142,72 @@ clock_attach(parent, self, args)
  * Set and/or clear the desired clock bits in the interrupt
  * register.  We have to be extremely careful that we do it
  * in such a manner that we don't get ourselves lost.
+ * XXX:  Watch out!  It's really easy to break this!
  */
 void
-set_clk_mode(on, off, enable)
+set_clk_mode(on, off, enable_clk)
 	u_char on, off;
-	int enable;
+	int enable_clk;
 {
 	register u_char interreg;
-	register int s;
 
-	s = getsr();
-	if ((s & PSL_IPL) < PSL_IPL7)
-		panic("set_clk_mode: ipl");
+	/*
+	 * If we have not yet mapped these registers,
+	 * then we do not want to do any of this...
+	 */
+	if (!clock_va || !interrupt_reg)
+		return;
 
-	if (!intersil_clock)
-		panic("set_clk_mode: map");
+#ifdef	DIAGNOSTIC
+	/* Assertion: were are at splhigh! */
+	if ((getsr() & PSL_IPL) < PSL_IPL7)
+		panic("set_clk_mode: bad ipl");
+#endif
 
 	/*
 	 * make sure that we are only playing w/
 	 * clock interrupt register bits
 	 */
-	on &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	off &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	on  &= IREG_CLK_BITS;
+	off &= IREG_CLK_BITS;
+
+	/* First, turn off the "master" enable bit. */
+	single_inst_bclr_b(*interrupt_reg, IREG_ALL_ENAB);
 
 	/*
-	 * Get a copy of current interrupt register,
-	 * turning off any undesired bits (aka `off')
+	 * Save a copy of current interrupt register, and
+	 * turn off/on the requested bits in the copy.
 	 */
-	interreg = *interrupt_reg & ~(off | IREG_ALL_ENAB);
-	*interrupt_reg &= ~IREG_ALL_ENAB;
+	interreg = *interrupt_reg;
+	interreg &= ~off;
+	interreg |= on;
+
+	/* Clear the CLK5 and CLK7 bits to clear the flip-flops. */
+	single_inst_bclr_b(*interrupt_reg, IREG_CLK_BITS);
 
 	/*
-	 * Next we turns off the CLK5 and CLK7 bits to clear
-	 * the flip-flops, then we disable clock interrupts.
-	 * Now we can read the clock's interrupt register
-	 * to clear any pending signals there.
+	 * Then disable clock interrupts, and read the clock's
+	 * interrupt register to clear any pending signals there.
 	 */
-	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 	intersil_clear();
 
-	/*
-	 * Now we set all the desired bits
-	 * in the interrupt register, then
-	 * we turn the clock back on and
-	 * finally we can enable all interrupts.
-	 */
-	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
+	/* Set the requested bits in the interrupt register. */
+	single_inst_bset_b(*interrupt_reg, interreg);
 
-	if (enable)
+	/* Turn the clock back on (maybe) */
+	if (enable_clk)
 		intersil_clock->clk_cmd_reg =
 			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
+	/* Finally, turn the "master" enable back on. */
+	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
 }
 
 /* Called very early by internal_configure. */
-void clock_init()
+void
+clock_init()
 {
 	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
 
@@ -204,11 +216,15 @@ void clock_init()
 		sunmon_abort();
 	}
 
-	/* Turn off clock interrupts until cpu_initclocks() */
 	/* intreg_init() already cleared the interrupt register. */
+
+	/* Turn off clock interrupts until cpu_initclocks() */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 	intersil_clear();
+
+	/* Set the clock to 100 Hz, but do not enable it yet. */
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
 }
 
 /*
@@ -221,20 +237,14 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!clock_va)
-		panic("cpu_initclocks");
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
 	isr_add_custom(5, (void*)_isr_clock);
 
-	/* Set the clock to interrupt 100 time per second. */
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	/* Now enable the clock at level 5 in the interrupt reg. */
+	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 
-	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 	splx(s);
 }
 
@@ -257,27 +267,37 @@ clock_intr(cf)
 	struct clockframe cf;
 {
 	register volatile struct intersil7170 *clk = intersil_clock;
-	extern int ticks;
+	int s;
+
+	/* Prevent ZS interrupts while we tickle the clock. */
+	s = splhigh();
 
 	/* Read the clock interrupt register. */
 	(void) clk->clk_intr_reg;
 	/* Pulse the clock intr. enable low. */
-	*interrupt_reg &= ~IREG_CLOCK_ENAB_5;
-	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
+	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
+	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 	/* Read the clock intr. reg AGAIN! */
 	(void) clk->clk_intr_reg;
 
+	/* Back to normal clock priority. */
+	splx(s);
+
+	/* Call common clock interrupt handler. */
 	hardclock(&cf);
 
-	if ((ticks & 7) == 0)
-		frob_leds(&cf);
+	/* Entertainment! */
+	frob_leds();
 }
 
 static void
-frob_leds(cf)
-	struct clockframe *cf;
+frob_leds()
 {
 	static unsigned char led_pattern = 0xFE;
+	extern int ticks;
+
+	if ((ticks & 7) != 0)
+		return;
 
 	/* XXX - Move this LED frobbing to the idle loop? */
 	led_pattern = (led_pattern << 1) | 1;
