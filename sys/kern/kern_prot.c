@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.59 2000/10/17 20:53:45 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.60 2000/10/17 23:38:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -124,7 +124,7 @@ sys_getsid(p, v, retval)
 		return (ESRCH);
 found:
 	*retval = p->p_session->s_sid;
-	return 0;
+	return (0);
 }
 
 int
@@ -143,7 +143,7 @@ sys_getpgid(p, v, retval)
 		return (ESRCH);
 found:
 	*retval = p->p_pgid;
-	return 0;
+	return (0);
 }
 
 /* ARGSUSED */
@@ -326,11 +326,11 @@ sys_setuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
-	 * check if we are all set, and this is a no-op
+	 * Check if we are all set, and this is a no-op.
 	 */
 	if (pc->p_ruid == uid && pc->p_svuid == uid &&
 	    pc->pc_ucred->cr_uid == uid)
-		return 0;
+		return (0);
 	/*
 	 * Everything's okay, do it.
 	 * Transfer proc count to new user.
@@ -365,10 +365,10 @@ sys_seteuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
-	 * check if we are all set, and this is a no-op
+	 * Check if we are all set, and this is a no-op.
 	 */
 	if (pc->pc_ucred->cr_uid == euid)
-		return 0;
+		return (0);
 
 	/*
 	 * Everything's okay, do it.  Copy credentials so other references do
@@ -447,11 +447,11 @@ sys_setgid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
-	 * check if we are all set, and this is a no-op
+	 * Check if we are all set, and this is a no-op.
 	 */
 	if (pc->pc_ucred->cr_gid == gid && pc->p_rgid == gid &&
 	    pc->p_svgid == gid)
-		return 0;
+		return (0);
 
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
@@ -480,10 +480,10 @@ sys_setegid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
-	 * check if we are all set, and this is a no-op
+	 * Check if we are all set, and this is a no-op.
 	 */
 	if (pc->pc_ucred->cr_gid == egid)
-		return 0;
+		return (0);
 
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
@@ -552,7 +552,7 @@ sys_issetugid(p, v, retval)
 	 * that libc *might* have put in their data segment.
 	 */
 	*retval = (p->p_flag & P_SUGID) != 0;
-	return 0;
+	return (0);
 }
 
 /* ARGSUSED */
@@ -584,11 +584,11 @@ sys_setgroups(p, v, retval)
 	if (error)
 		return (error);
 	/*
-	 * check if this is a no-op
+	 * Check if this is a no-op.
 	 */
 	if (pc->pc_ucred->cr_ngroups == ngrp &&
 	    memcmp(grp, pc->pc_ucred->cr_groups, grsize) == 0)
-		return 0;
+		return (0);
 
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	(void)memcpy(pc->pc_ucred->cr_groups, grp, grsize);
