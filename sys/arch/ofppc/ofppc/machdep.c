@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2002/07/05 18:45:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2002/07/09 19:21:05 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,6 +95,8 @@ struct machvec machine_interface = {
 };
 
 void	ofppc_bootstrap_console(void);
+
+struct pmap ofw_pmap;
 
 void
 initppc(startkernel, endkernel, args)

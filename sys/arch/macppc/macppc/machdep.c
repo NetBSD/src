@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2002/07/05 18:45:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 2002/07/09 19:21:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -250,6 +250,9 @@ restore_ofmap(ofmap, len)
 	pmap_pinit(&ofw_pmap);
 
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+#ifdef KERNEL2_SR
+	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+#endif
 
 	for (i = 0; i < n; i++) {
 		paddr_t pa = ofmap[i].pa;
