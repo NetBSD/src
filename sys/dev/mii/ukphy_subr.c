@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.6 2002/07/03 06:25:53 simonb Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.6.8.1 2004/08/12 18:16:01 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.6 2002/07/03 06:25:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.6.8.1 2004/08/12 18:16:01 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ ukphy_status(struct mii_softc *phy)
 {
 	struct mii_data *mii = phy->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, anlpar;
+	int bmsr, bmcr, anlpar, gtcr, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -97,7 +97,20 @@ ukphy_status(struct mii_softc *phy)
 		}
 
 		anlpar = PHY_READ(phy, MII_ANAR) & PHY_READ(phy, MII_ANLPAR);
-		if (anlpar & ANLPAR_T4)
+		if ((phy->mii_flags & MIIF_HAVE_GTCR) != 0 &&
+		    (phy->mii_extcapabilities &
+		     (EXTSR_1000THDX|EXTSR_1000TFDX)) != 0) {
+			gtcr = PHY_READ(phy, MII_100T2CR);
+			gtsr = PHY_READ(phy, MII_100T2SR);
+		} else
+			gtcr = gtsr = 0;
+
+		if ((gtcr & GTCR_ADV_1000TFDX) && (gtsr & GTSR_LP_1000TFDX))
+			mii->mii_media_active |= IFM_1000_T|IFM_FDX;
+		else if ((gtcr & GTCR_ADV_1000THDX) &&
+			 (gtsr & GTSR_LP_1000THDX))
+			mii->mii_media_active |= IFM_1000_T;
+		else if (anlpar & ANLPAR_T4)
 			mii->mii_media_active |= IFM_100_T4;
 		else if (anlpar & ANLPAR_TX_FD)
 			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
@@ -109,6 +122,10 @@ ukphy_status(struct mii_softc *phy)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_NONE;
+
+		if ((mii->mii_media_active & IFM_1000_T) &&
+		    (gtsr & GTSR_MS_RES))
+			mii->mii_media_active |= IFM_ETH_MASTER;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
