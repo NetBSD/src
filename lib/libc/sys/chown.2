@@ -1,4 +1,4 @@
-.\"	$NetBSD: chown.2,v 1.12 1997/07/14 23:19:52 kleink Exp $
+.\"	$NetBSD: chown.2,v 1.13 1997/10/06 01:12:05 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@
 .Os BSD 4
 .Sh NAME
 .Nm chown ,
+.Nm lchown ,
 .Nm fchown
 .Nd change owner and group of a file
 .Sh SYNOPSIS
@@ -45,6 +46,8 @@
 .Fd #include <unistd.h>
 .Ft int
 .Fn chown "const char *path" "uid_t owner" "gid_t group"
+.Ft int
+.Fn lchown "const char *path" "uid_t owner" "gid_t group"
 .Ft int
 .Fn fchown "int fd" "uid_t owner" "gid_t group"
 .Sh DESCRIPTION
@@ -65,13 +68,25 @@ but the change
 .Fa owner
 capability is restricted to the super-user.
 .Pp
-.Fn Chown
+.Fn Chown ,
+.Fn lchown
 and
 .Fn fchown
 clear the set-user-id and set-group-id bits
 on the file
 to prevent accidental or mischievous creation of
 set-user-id and set-group-id programs.
+.Pp
+.Fn Lchown
+is like
+.Fn chown
+except in the case where the named file is a symbolic link,
+in which case
+.Fn lchown
+changes the owner and group of the link,
+while
+.Fn chown
+changes the owner and group of the file the link references.
 .Pp
 .Fn Fchown
 is particularly useful when used in conjunction
@@ -114,6 +129,12 @@ points outside the process's allocated address space.
 An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
+.Fn Lchown
+is like
+.Fn chown
+execpt that it doesn't return
+.Er ELOOP .
+.Pp
 .Fn Fchown
 will fail if:
 .Bl -tag -width Er
@@ -152,3 +173,7 @@ and
 .Fn fchown
 functions were changed to follow symbolic links in
 .Bx 4.4 .
+The
+.Fn lchown
+function call appeared in
+.Nx 1.3 .
