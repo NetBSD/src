@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdsetimage.8,v 1.1 2001/10/22 03:19:29 simonb Exp $
+.\"	$NetBSD: mdsetimage.8,v 1.2 2002/02/23 02:30:37 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl b Ar bfdname
+.Op Fl s
 .Op Fl v
 .Ar kernel
 .Ar image
@@ -54,6 +55,13 @@ as the root file system.
 To recognize kernel executable format, the
 .Fl b
 flag specifies BFD name of kernel.
+.Pp
+If the
+.Fl s
+flags is given,
+.Nm
+will write back the actual disk image size back into
+.Ar kernel .
 .Pp
 If the
 .Fl v

@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.4 2002/01/31 22:43:36 tv Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.5 2002/02/23 02:30:37 thorpej Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.4 2002/01/31 22:43:36 tv Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.5 2002/02/23 02:30:37 thorpej Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -77,6 +77,7 @@ static void	usage __P((void)) __attribute__((noreturn));
 static int	find_md_root __P((bfd *, struct symbols symbols[]));
 
 int	verbose;
+int	setsize;
 
 static const char *progname;
 #undef setprogname
@@ -91,7 +92,7 @@ main(argc, argv)
 {
 	int ch, kfd, fsfd, rv;
 	struct stat ksb, fssb;
-	size_t md_root_offset;
+	size_t md_root_offset, md_root_size_offset;
 	u_int32_t md_root_size;
 	const char *kfile, *fsfile;
 	char *mappedkfile;
@@ -101,10 +102,13 @@ main(argc, argv)
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "b:v")) != -1)
+	while ((ch = getopt(argc, argv, "b:sv")) != -1)
 		switch (ch) {
 		case 'b':
 			bfdname = optarg;
+			break;
+		case 's':
+			setsize = 1;
 			break;
 		case 'v':
 			verbose = 1;
@@ -151,8 +155,9 @@ main(argc, argv)
 		fprintf(stderr, "mapped %s\n", kfile);
 
 	md_root_offset = md_root_symbols[X_MD_ROOT_IMAGE].offset;
-	md_root_size = bfd_get_32(abfd,
-	    &mappedkfile[md_root_symbols[X_MD_ROOT_SIZE].offset]);
+	md_root_size_offset = md_root_symbols[X_MD_ROOT_SIZE].offset;
+	md_root_size = bfd_get_32(abfd, &mappedkfile[md_root_size_offset]);
+
 	munmap(mappedkfile, ksb.st_size);
 
 	if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
@@ -193,7 +198,20 @@ main(argc, argv)
 	}
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
-	
+	if (setsize) {
+		char buf[sizeof(uint32_t)];
+
+		if (verbose)
+			fprintf(stderr, "setting md_root_size to %llu\n",
+			    (unsigned long long) fssb.st_size);
+		if (lseek(kfd, md_root_size_offset, SEEK_SET) !=
+		    md_root_size_offset)
+			err(1, "seek %s", kfile);
+		bfd_put_32(abfd, fssb.st_size, buf);
+		if (write(kfd, buf, sizeof(buf)) != sizeof(buf))
+			err(1, "write %s", kfile);
+	}
+
 	close(fsfd);
 	close(kfd);
 
