@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.32 2001/06/08 20:13:27 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.33 2001/07/04 13:49:24 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -122,15 +122,15 @@ device	arcpp
 attach	arcpp at ioc
 file	arch/arm26/ioc/arcpp.c			arcpp		needs-flag
 
+include "dev/podulebus/files.podulebus"
+
 # Podule interface (podules listed later) (usually at bank 4 irq 13 fiq 6)
 #  Unix backplanes also use bank 6
 #  MEMC podules also use the iobus directly
 # XXX How on Earth do we codify all that?
 device	unixbp
 attach	unixbp at ioc
-device	podulebus { [slot = -1] }
 attach	podulebus at ioc
-define	podloader
 file	arch/arm26/podulebus/podulebus.c	podulebus
 file	arch/arm26/podulebus/podloader_asm.S	podloader	needs-flag
 file	arch/arm26/podulebus/unixbp.c		unixbp		needs-flag
@@ -170,13 +170,15 @@ file	arch/arm26/iobus/upc_iobus.c		upc_iobus
 # Assorted podules
 #
 
-include "dev/podulebus/files.podulebus"
-
 # i-cubed EtherLAN 100, 200 and 500
 device	eh: ether, ifnet, arp, dp8390nic, podloader
 attach	eh at podulebus
 file	arch/arm26/podulebus/if_eh.c		eh
 
+# PowerROM test driver
+device	powerrom: podloader
+attach	powerrom at podulebus
+file	arch/arm26/podulebus/powerrom.c		powerrom
 
 # Memory disk for installation (or ROM versions?)
 file	dev/md_root.c				memory_disk_hooks
