@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.5 1995/03/10 02:06:54 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.6 1995/05/24 20:47:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -206,6 +206,7 @@ static int ee_update(char *buf, int off, int cnt)
 		bp++;
 		cnt--;
 	}
+	return(0);
 }
 
 /*
