@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.21 1996/10/10 22:46:15 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.22 1996/10/13 02:32:32 christos Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -210,7 +210,7 @@ malloc(size, type, flags)
 		memname[freep->type] : "???";
 	if (kbp->kb_next &&
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) {
-		kprintf(
+		printf(
 		    "%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
 		    "Data modified on freelist: word", 
 		    (long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
@@ -235,7 +235,7 @@ malloc(size, type, flags)
 	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (*lp == WEIRD_ADDR)
 			continue;
-		kprintf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
+		printf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
 		    "Data modified on freelist: word",
 		    (long)(lp - (int32_t *)va), va, size, "previous type",
 		    savedtype, *lp, WEIRD_ADDR);
@@ -332,7 +332,7 @@ free(addr, type)
 		    cp = ((struct freelist *)cp)->next) {
 			if (addr != cp)
 				continue;
-			kprintf("multiply freed item %p\n", addr);
+			printf("multiply freed item %p\n", addr);
 			panic("free: duplicated free");
 		}
 	}
