@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.36 2003/05/15 21:29:49 fvdl Exp $	*/
+/*	$NetBSD: acpi.c,v 1.37 2003/07/02 11:54:43 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.36 2003/05/15 21:29:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.37 2003/07/02 11:54:43 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -226,6 +226,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		panic("acpi_attach: ACPI has already been attached");
 
 	sysmon_power_settype("acpi");
+
+	printf("%s: using Intel ACPI CA subsystem version %08x\n",
+	    sc->sc_dev.dv_xname, ACPI_CA_VERSION);
 
 	printf("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
