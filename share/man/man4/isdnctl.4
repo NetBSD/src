@@ -1,4 +1,4 @@
-.\" $NetBSD: i4btrc.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\" $NetBSD: isdnctl.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,33 +23,28 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4btrc.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\"	$Id: isdnctl.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
-.\"	last edit-date: [Mon Dec 13 23:14:19 1999]
+.\"	last edit-date: [Mon Dec 13 23:09:46 1999]
 .\"
-.Dd July 30, 1999
-.Dt I4BTRC 4
+.Dd February 3, 1998
+.Dt ISDNCTL 4
 .Os
 .Sh NAME
-.Nm i4btrc
-.Nd isdn4bsd ISDN interface driver for D and B channel tracing
+.Nm isdnctl
+.Nd control device for the isdn kernel part
 .Sh SYNOPSIS
-.Cd "pseudo-device i4btrc" Ar count
+.Cd "pseudo-device isdnctl"
 .Sh DESCRIPTION
-The
 .Nm
-driver is used to add a header to the data got from the D and/or B channel
-and queues it to be read and further processed by the
-.Xr isdntrace 8
-utility.
-Currently,
-.Ar count
-should be the number of B channels (twice the number of cards).
+is used by the
+.Xr isdndebug 8
+utility to get and set the current debugging level and other information
+of the kernel ISDN handling layers.
 .Sh SEE ALSO
-.Xr isdnd 8 ,
-.Xr isdntrace 8
+.Xr isdndebug 8
 .Sh AUTHORS
 The
 .Nm
