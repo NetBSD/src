@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26.14.1 2000/08/16 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.14.2 2001/06/17 22:27:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@ struct pcb {
 #define	pcb_cr3	pcb_tss.tss_cr3
 #define	pcb_esp	pcb_tss.tss_esp
 #define	pcb_ebp	pcb_tss.tss_ebp
-#define	pcb_fs	pcb_tss.tss_fs
-#define	pcb_gs	pcb_tss.tss_gs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_cr0;		/* saved image of CR0 */
 	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
