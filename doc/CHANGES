@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.442 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.443 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -246,3 +246,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		addresses to IPv4 or IPv6 respectively. [ginsbach 20050311]
 	rcp(1): Add support for specifying the rhost as an IPv6 address
 		string. [ginsbach 20050311]
+	stf(4): Add support for changing the MTU. [tron 20050311]
