@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.19 2001/04/25 14:36:58 he Exp $
+# $NetBSD: mi,v 1.169.2.20 2001/05/02 22:44:46 he Exp $
 .
 ./altroot
 ./bin
@@ -1168,6 +1168,7 @@
 ./usr/share/wscons/fonts/vt220l.814
 ./usr/share/wscons/fonts/vt220l.816
 ./usr/share/wscons/keymaps
+./usr/share/wscons/keymaps/pckbd.sv.svascii
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/Africa/Abidjan
