@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.13 2001/04/30 11:42:18 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.14 2001/05/06 14:25:16 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -256,8 +256,8 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	mode = INTR_MODE(intr);
 	port = INTR_PORT(intr);
 
-	VPRINTF(("ISA IRQ %d -> GPIO port %d, %s\n",
-	       irq, port, intr_mode_names[mode]));
+	VPRINTF(("ISA IRQ %d -> %s port %d, %s\n",
+	       irq, sc->sc_hc->hc_name, port, intr_mode_names[mode]));
 
 	/* Call Vr routine */
 	return hpcio_intr_establish(sc->sc_hc, port, intr_modes[mode],
