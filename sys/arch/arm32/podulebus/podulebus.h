@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.13 2001/03/18 15:56:05 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.14 2001/03/19 22:59:13 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -111,12 +111,33 @@ typedef struct {
 
 typedef	int	podulebus_intr_handle_t;
 
+#define podulebus_attach_args podule_attach_args
+
 struct podule_attach_args {
 	podule_t *pa_podule;		/* podule descriptor */
 	int pa_podule_number;		/* podule number */
 	int pa_slottype;		/* podule slot type */
 	bus_space_tag_t pa_iot;		/* bus space tag */
+
+#define pa_easi_t	pa_iot
+#define pa_mod_t	pa_iot
+#define pa_fast_t	pa_iot
+#define pa_medium_t	pa_iot
+#define pa_slow_t	pa_iot
+#define pa_sync_t	pa_iot
+
+#define pa_easi_base	pa_podule->easi_base
+#define pa_mod_base	pa_podule->mod_base
+#define pa_fast_base	pa_podule->fast_base
+#define pa_medium_base	pa_podule->medium_base
+#define pa_slow_base	pa_podule->slow_base
+#define pa_sync_base	pa_podule->sync_base
+
 	podulebus_intr_handle_t pa_ih;	/* interrupt handle */
+
+#define pa_manufacturer	pa_podule->manufacturer
+#define pa_product	pa_podule->product
+#define pa_descr	pa_podule->description
 };
 
 /* Useful macros */
@@ -125,7 +146,7 @@ struct podule_attach_args {
 
 
 #define IS_PODULE(pa, man, prod)	\
-	(pa->pa_podule->manufacturer == man && pa->pa_podule->product == prod)
+	(pa->pa_manufacturer == man && pa->pa_product == prod)
 
 
 
