@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.12 2001/07/05 20:35:33 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.13 2001/07/08 20:01:43 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.12 2001/07/05 20:35:33 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.13 2001/07/08 20:01:43 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,12 @@ main(argc, argv)
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
 
-	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_TMP);
+	/* 
+	 * We use rename() to produce the dev.db file, and rename() 
+	 * is not able to move files across filesystems. Hence we use
+	 * /var/run for dev.tmp, since dev.db will be in /var/run.
+	 */
+	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_VARRUN);
 	if (dbname_arg)
 		strncpy(dbname, dbname_arg, MAXPATHLEN);
 	else
