@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1994/12/13 18:37:22 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1994/12/20 05:30:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -110,6 +110,9 @@ void configure()
 	isr_add_autovect(soft1intr, 0, 1);
 	isr_cleanup();
 
+	/* Now ready for interrupts. */
+	(void)spl0();
+
 	/* Build table for CHR-to-BLK translation, etc. */
 	conf_init();
 
@@ -220,7 +223,7 @@ extern int fubyte(), fusword(), fuword();
 int bus_peek(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pte, rv, s;
+	int off, pte, rv;
 	vm_offset_t pgva;
 	caddr_t va;
 
@@ -228,13 +231,7 @@ int bus_peek(bustype, paddr, sz)
 	paddr -= off;
 	pte = PA_PGNUM(paddr);
 
-	/*
-	 * The temporary mapping has user-accessibility
-	 * because fubyte et. al. do the access using
-	 * an explicit switch to user space...
-	 * (XXX -Should see if fubyte still needs that.)
-	 */
-#define	PG_PEEK 	PG_VALID | PG_WRITE | PG_NC
+#define	PG_PEEK 	PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC
 	switch (bustype) {
 	case BUS_OBMEM:
 		pte |= (PG_PEEK | PGT_OBMEM);
@@ -253,8 +250,6 @@ int bus_peek(bustype, paddr, sz)
 	}
 #undef	PG_PEEK
 
-	s = splvm();
-
 	pgva = tmp_vpages[0];
 	va = (caddr_t)pgva + off;
 
@@ -266,19 +261,17 @@ int bus_peek(bustype, paddr, sz)
 	 */
 	switch (sz) {
 	case 1:
-		rv = fubyte(va);
+		rv = peek_byte(va);
 		break;
 	case 2:
-		rv = fusword(va);
-		break;
-	case 4:
-		rv = fuword(va);
+		rv = peek_word(va);
 		break;
 	default:
+		printf(" bus_peek: invalid size=%d\n", sz);
 		rv = -1;
 	}
 
 	set_pte(pgva, PG_INVAL);
-	splx(s);
+
 	return rv;
 }

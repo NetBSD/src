@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1994/11/21 21:38:44 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1994/12/20 05:30:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,7 +58,7 @@
 _kernel_text:
 
 | This is the entry point, as well as the end of the temporary stack
-| used during process switch (two pages at kernbase).
+| used during process switch (one 8K page ending at start)
 	.globl tmpstk
 tmpstk:
 	.globl start
@@ -139,9 +139,10 @@ final_before_main:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
-/* final setup for C code */
-	movw #PSL_LOWIPL, sr		| lower SPL (nothing blocked)
+/* Interrupts remain disabled until configure is nearly done. */
 /*
+ * Final preparation for calling main:
+ *
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and
  * pass the first available RAM and a pointer to the register
