@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.54 2001/05/10 14:19:27 atatat Exp $
+#	$NetBSD: security,v 1.55 2001/06/14 07:50:07 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -47,7 +47,7 @@ LIST=secure6.$$
 OUTPUT=secure7.$$
 LABELS=secure8.$$
 
-trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
+trap '/bin/rm -rf $SECUREDIR ; exit 0' EXIT INT QUIT
 
 # Handle backup_dir not being set in .conf file
 backup_dir=${backup_dir:-/var/backups}
