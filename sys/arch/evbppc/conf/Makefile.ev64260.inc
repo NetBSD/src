@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.ev64260.inc,v 1.2 2003/03/16 07:07:17 matt Exp $
+#	$NetBSD: Makefile.ev64260.inc,v 1.3 2005/03/17 16:45:50 jmc Exp $
 
-MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
+MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 
 TEXTADDR?=	300000
 
