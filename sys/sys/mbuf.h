@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.88 2003/11/13 01:48:12 jonathan Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.89 2004/02/10 01:33:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -538,11 +538,11 @@ do {									\
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-#define	MCLGET(m, how)							\
+#define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
 	MBUFLOCK(							\
 		(m)->m_ext.ext_buf =					\
-		    pool_cache_get_paddr(&mclpool_cache,		\
+		    pool_cache_get_paddr((pool_cache),			\
 		        (how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,	\
 			&(m)->m_ext.ext_paddr);				\
 		if ((m)->m_ext.ext_buf != NULL)				\
@@ -552,13 +552,18 @@ do {									\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER;			\
-		(m)->m_ext.ext_size = MCLBYTES;				\
+		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
-		(m)->m_ext.ext_arg = NULL;				\
+		(m)->m_ext.ext_arg = (pool_cache);			\
 		/* ext_paddr initialized above */			\
 		MCLINITREFERENCE(m);					\
 	}								\
 } while (/* CONSTCOND */ 0)
+
+/*
+ * The standard mbuf cluster pool.
+ */
+#define	MCLGET(m, how)	_MCLGET((m), &mclpool_cache, MCLBYTES, (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
@@ -596,8 +601,8 @@ do {									\
 		_MCLDEREFERENCE(m);					\
 		splx(_ms_);						\
 	} else if ((m)->m_flags & M_CLUSTER) {				\
-		pool_cache_put_paddr(&mclpool_cache, (m)->m_ext.ext_buf,\
-		    (m)->m_ext.ext_paddr);				\
+		pool_cache_put_paddr((m)->m_ext.ext_arg,		\
+		    (m)->m_ext.ext_buf, (m)->m_ext.ext_paddr);		\
 		splx(_ms_);						\
 	} else if ((m)->m_ext.ext_free) {				\
 		/*							\
@@ -646,7 +651,7 @@ do {									\
 				_MCLDEREFERENCE(m);			\
 				pool_cache_put(&mbpool_cache, (m));	\
 			} else if ((m)->m_flags & M_CLUSTER) {		\
-				pool_cache_put_paddr(&mclpool_cache,	\
+				pool_cache_put_paddr((m)->m_ext.ext_arg,\
 				    (m)->m_ext.ext_buf,			\
 				    (m)->m_ext.ext_paddr);		\
 				pool_cache_put(&mbpool_cache, (m));	\
