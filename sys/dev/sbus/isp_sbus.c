@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.16 1999/11/21 15:01:51 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.17 1999/12/04 02:56:30 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -45,15 +45,23 @@
 #include <machine/vmparam.h>
 
 #include <dev/ic/isp_netbsd.h>
+#include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
 
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
 static int isp_sbus_mbxdma __P((struct ispsoftc *));
 static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
-	ispreq_t *, u_int8_t *, u_int8_t));
+	ispreq_t *, u_int16_t *, u_int16_t));
 static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 	u_int32_t));
+
+#ifndef	ISP_1000_RISC_CODE
+#define	ISP_1000_RISC_CODE	NULL
+#endif
+#ifndef	ISP_CODE_ORG
+#define	ISP_CODE_ORG	0x1000
+#endif
 
 static struct ispmdvec mdvec = {
 	isp_sbus_rd_reg,
@@ -64,12 +72,8 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	0,
-	0,
-	0,
-	0,
-	BIU_BURST_ENABLE,
-	0
+	ISP_1000_RISC_CODE, 0, ISP_CODE_ORG, 0,
+	BIU_BURST_ENABLE
 };
 
 struct isp_sbussoftc {
@@ -327,8 +331,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	struct ispsoftc *isp;
 	struct scsipi_xfer *xs;
 	ispreq_t *rq;
-	u_int8_t *iptrp;
-	u_int8_t optr;
+	u_int16_t *iptrp;
+	u_int16_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
