@@ -247,7 +247,6 @@ static const char *const opt_usage[] =
     "    -q           Cause CVS to be somewhat quiet.\n",
     "    -r           Make checked-out files read-only.\n",
     "    -w           Make checked-out files read-write (default).\n",
-    "    -l           Turn history logging off.\n",
     "    -n           Do not execute anything that will change the disk.\n",
     "    -t           Show trace of program execution -- try with -n.\n",
     "    -v           CVS version and copyright.\n",
@@ -407,7 +406,7 @@ main (argc, argv)
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
-    static const char short_options[] = "+Qqrwtnlvb:T:e:d:Hfz:s:xa";
+    static const char short_options[] = "+Qqrwtnvb:T:e:d:Hfz:s:xa";
     static struct option long_options[] =
     {
         {"help", 0, NULL, 'H'},
@@ -537,7 +536,6 @@ main (argc, argv)
 		break;
 	    case 'n':
 		noexec = 1;
-	    case 'l':			/* Fall through */
 		logoff = 1;
 		break;
 	    case 'v':
@@ -545,7 +543,7 @@ main (argc, argv)
 		version (0, (char **) NULL);    
 		(void) fputs ("\n", stdout);
 		(void) fputs ("\
-Copyright (c) 1989-2002 Brian Berliner, david d `zoo' zuhn, \n\
+Copyright (c) 1989-2003 Brian Berliner, david d `zoo' zuhn, \n\
                         Jeff Polk, and other authors\n", stdout);
 		(void) fputs ("\n", stdout);
 		(void) fputs ("CVS may be copied only under the terms of the GNU General Public License,\n", stdout);
@@ -590,14 +588,19 @@ Copyright (c) 1989-2002 Brian Berliner, david d `zoo' zuhn, \n\
 		break;
 	    case 'z':
 #ifdef CLIENT_SUPPORT
-		gzip_level = atoi (optarg);
-		if (gzip_level < 0 || gzip_level > 9)
+		gzip_level = strtol (optarg, &end, 10);
+		if (*end != '\0' || gzip_level < 0 || gzip_level > 9)
 		  error (1, 0,
 			 "gzip compression level must be between 0 and 9");
-#endif
+#endif /* CLIENT_SUPPORT */
 		/* If no CLIENT_SUPPORT, we just silently ignore the gzip
-		   level, so that users can have it in their .cvsrc and not
-		   cause any trouble.  */
+		 * level, so that users can have it in their .cvsrc and not
+		 * cause any trouble.
+		 *
+		 * We still parse the argument to -z for correctness since
+		 * one user complained of being bitten by a run of
+		 * `cvs -z -n up' which read -n as the argument to -z without
+		 * complaining.  */
 		break;
 	    case 's':
 		variable_set (optarg);

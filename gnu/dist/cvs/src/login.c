@@ -12,12 +12,6 @@
 
 #ifdef AUTH_CLIENT_SUPPORT   /* This covers the rest of the file. */
 
-#ifdef HAVE_GETPASSPHRASE
-#define GETPASS getpassphrase
-#else
-#define GETPASS getpass
-#endif
-
 /* There seems to be very little agreement on which system header
    getpass is declared in.  With a lot of fancy autoconfiscation,
    we could perhaps detect this, but for now we'll just rely on
@@ -25,9 +19,6 @@
    declaration won't work (some Crays declare the 2#$@% thing as
    varadic, believe it or not).  On Cray, getpass will be declared
    in either stdlib.h or unistd.h.  */
-#ifndef _CRAY
-extern char *GETPASS ();
-#endif
 
 #ifndef CVS_PASSWORD_FILE 
 #define CVS_PASSWORD_FILE ".cvspass"
@@ -541,7 +532,7 @@ login (argc, argv)
     else
     {
 	char *tmp;
-	tmp = GETPASS ("CVS password: ");
+	tmp = getpass ("CVS password: ");
 	/* Must deal with a NULL return value here.  I haven't managed to
 	 * disconnect the CVS process from the tty and force a NULL return
 	 * in sanity.sh, but the Linux version of getpass is documented

@@ -106,7 +106,6 @@ fi
 
 %files
 %defattr(-,root,root)
-%defattr(-,root,root)
 %doc AUTHORS BUGS FAQ MINOR-BUGS NEWS PROJECTS TODO README
 %doc doc/RCSFILES doc/*.ps
 %{_bindir}/*
@@ -121,6 +120,9 @@ fi
 %endif
 
 %changelog
+* Tue May 27 2003 Derek Price <derek@ximbiot.com>
+- Install a few more files as part of doc.
+
 * Thu Mar 29 2002 Derek Price <oberon@umich.edu>
 - Misc changes imported from RedHat's spec files.
 - Let RPM pick up the krb5-libs dependency.

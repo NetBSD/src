@@ -273,14 +273,6 @@ checkout (argc, argv)
 
 	ign_setup ();
 	
-	/* We have to expand names here because the "expand-modules"
-           directive to the server has the side-effect of having the
-           server send the check-in and update programs for the
-           various modules/dirs requested.  If we turn this off and
-           simply request the names of the modules and directories (as
-           below in !expand_modules), those files (CVS/Checkin.prog
-           or CVS/Update.prog) don't get created.  Grrr.  */
-	
 	expand_modules = (!cat && !pipeout
 			  && supported_request ("expand-modules"));
 	
@@ -323,6 +315,7 @@ checkout (argc, argv)
 	    option_with_arg ("-j", join_rev1);
 	if (join_rev2 != NULL)
 	    option_with_arg ("-j", join_rev2);
+	send_arg ("--");
 
 	if (expand_modules)
 	{
@@ -398,38 +391,55 @@ checkout (argc, argv)
 /* FIXME: This is and emptydir_name are in checkout.c for historical
    reasons, probably want to move them.  */
 
+/* int
+ * safe_location ( char *where )
+ *
+ * Return true if where is a safe destination for a checkout.
+ *
+ * INPUTS
+ *  where	The requested destination directory.
+ *
+ * GLOBALS
+ *  current_parsed_root->directory
+ *  current_parsed_root->isremote
+ *  		Used to locate our CVSROOT.
+ *
+ * RETURNS
+ *  true	If we are running in client mode or if where is not located
+ *  		within the CVSROOT.
+ *  false	Otherwise.
+ *
+ * ERRORS
+ *  Exits with a fatal error message when various events occur, such as not
+ *  being able to resolve a path or failing ot chdir to a path.
+ */
 int
 safe_location (where)
     char *where;
 {
     char *current;
     char *where_location;
-    char hardpath[PATH_MAX+5];
+    char *hardpath;
     size_t hardpath_len;
     int  x;
     int retval;
 
-#ifdef HAVE_READLINK
-    /* FIXME-arbitrary limit: should be retrying this like xgetwd.
-       But how does readlink let us know that the buffer was too small?
-       (by returning sizeof hardpath - 1?).  */
-    x = readlink(current_parsed_root->directory, hardpath, sizeof hardpath - 1);
-#else
-    x = -1;
-#endif
-    if (x == -1)
-    {
-        strcpy(hardpath, current_parsed_root->directory);
-    }
-    else
-    {
-        hardpath[x] = '\0';
-    }
+    if (trace)
+	(void) fprintf (stderr, "%s-> safe_location( where=%s )\n",
+			CLIENT_SERVER_STR,
+			where ? where : "(null)");
+
+#ifdef CLIENT_SUPPORT
+    /* Don't compare remote CVSROOTs to our destination directory. */
+    if ( current_parsed_root->isremote ) return 1;
+#endif /* CLIENT_SUPPORT */
 
     /* set current - even if where is set we'll need to cd back... */
     current = xgetwd ();
     if (current == NULL)
 	error (1, errno, "could not get working directory");
+
+    hardpath = xresolvepath ( current_parsed_root->directory );
 
     /* if where is set, set current to where, where - last_component( where ),
      * or fail, depending on whether the directories exist or not.
@@ -463,6 +473,7 @@ safe_location (where)
 
 		if( chdir( where_location ) != -1 )
 		{
+		    free( where_location );
 		    where_location = xgetwd();
 		    if( where_location == NULL )
 			error( 1, errno, "could not get working directory (nominally `%s')", where_location );
@@ -505,6 +516,7 @@ safe_location (where)
     else
 	retval = 1;
     free (current);
+    free (hardpath);
     return retval;
 }
 
@@ -1086,7 +1098,8 @@ internal error: %s doesn't start with %s in checkout_proc",
 			  force_tag_match, 0 /* !local */ ,
 			  1 /* update -d */ , aflag, checkout_prune_dirs,
 			  pipeout, which, join_rev1, join_rev2,
-			  preload_update_dir, m_type == CHECKOUT);
+			  preload_update_dir, m_type == CHECKOUT,
+			  repository);
 	goto out;
     }
 
@@ -1142,7 +1155,8 @@ internal error: %s doesn't start with %s in checkout_proc",
     err += do_update (argc - 1, argv + 1, options, tag, date,
 		      force_tag_match, local_specified, 1 /* update -d */,
 		      aflag, checkout_prune_dirs, pipeout, which, join_rev1,
-		      join_rev2, preload_update_dir, m_type == CHECKOUT);
+		      join_rev2, preload_update_dir, m_type == CHECKOUT,
+		      repository);
 out:
     free (preload_update_dir);
     preload_update_dir = oldupdate;
