@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1997/10/13 00:46:55 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1997/10/16 23:42:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -140,7 +140,7 @@ static int chrtoblktbl[] = {
 /*
  * Return accompanying block dev for a char dev.
  */
-int
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
