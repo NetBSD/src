@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.2 2001/12/23 22:52:49 jdolecek Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.3 2001/12/23 23:14:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ struct emuxki_softc {
 	struct ac97_codec_if	*codecif;
 	struct device		*sc_audev;
 
-	struct emuxki_voice	*pvoice, *rvoice;
+	struct emuxki_voice	*pvoice, *rvoice, *lvoice;
 };
 
 #endif				/* !_DEV_PCI_EMU10K1VAR_H_ */
