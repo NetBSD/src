@@ -45,6 +45,8 @@
 #define u_int16_t	unsigned short 
 #define u_int32_t	unsigned int
 
+#define	ssize_t		int
+
 /* No endian.h either. */
 /*
  * Definitions for byte order, according to byte significance from low
