@@ -1,5 +1,0 @@
-# $NetBSD: obsolete.mi,v 1.4 2003/10/23 07:49:35 tron Exp $
-./usr/X11R6/man/cat3/X.0
-./usr/X11R6/man/cat3/XConsortium.0
-./usr/X11R6/man/cat3/XStandards.0
-./usr/X11R6/man/cat3/Xsecurity.0
