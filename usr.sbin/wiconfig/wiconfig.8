@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.29 2004/08/25 18:34:54 wiz Exp $
+.\"	$NetBSD: wiconfig.8,v 1.30 2004/08/25 18:48:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -41,30 +41,33 @@
 .Sh SYNOPSIS
 .Nm wiconfig
 .Ar interface
-.Op Fl \&Do
+.Op Fl \&Dho
 .Bk -words
 .Op Fl A Ar 1|2
 .Ek
 .Bk -words
-.Op Fl a Ar access point density
+.Op Fl a Ar access_point_density
 .Ek
 .Bk -words
-.Op Fl d Ar max data length
+.Op Fl d Ar max_data_length
+.Ek
+.Bk -words
+.Op Fl g Ar fragmentation_threshold
 .Ek
 .Bk -words
 .Op Fl M Ar 0|1
 .Ek
 .Bk -words
-.Op Fl m Ar MAC address
+.Op Fl m Ar MAC_address
 .Ek
 .Bk -words
 .Op Fl R Ar 1|3
 .Ek
 .Bk -words
-.Op Fl r Ar RTS threshold
+.Op Fl r Ar RTS_threshold
 .Ek
 .Bk -words
-.Op Fl s Ar station name
+.Op Fl s Ar station_name
 .Ek
 .Sh DESCRIPTION
 The
@@ -130,6 +133,10 @@ The
 .Ar max data length
 can be any number from 256 to 2346.
 The default is 2304.
+.It Fl g Ar fragmentation_threshold
+Set the fragmentation threshold.
+.It Fl h
+Display a short help.
 .It Fl M Ar 0|1
 Enable or disable
 .Qq microwave oven robustness
@@ -152,7 +159,7 @@ transmit time of each frame so that individual frames are more likely
 to be transmitted without error.
 .Pp
 Note that this does not impact the visible MTU of the link.
-.It Fl m Ar MAC address
+.It Fl m Ar MAC_address
 Set the station address for the specified interface.
 The
 .Ar MAC address
@@ -170,18 +177,18 @@ The legal values are
 .Ar 3
 (Roaming Disabled).
 The default is 1.
-.It Fl r Ar RTS threshold
+.It Fl r Ar RTS_threshold
 Set the RTS/CTS threshold for a given interface.
 This controls the number of bytes used for the RTS/CTS handshake boundary.
 The
-.Ar RTS threshold
+.Ar RTS_threshold
 can be any value between 0 and 2347.
 The default is 2347, which indicates RTS/CTS mechanism never to be used.
-.It Fl s Ar station name
+.It Fl s Ar station_name
 Sets the
-.Ar station name
+.Ar station_name
 for the specified interface.  The
-.Ar station name
+.Ar station_name
 is used for diagnostic purposes.
 The
 .Tn Lucent
