@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
- *	$Id: ct.c,v 1.3 1994/01/11 17:19:39 mycroft Exp $
+ *	$Id: ct.c,v 1.4 1994/02/06 01:32:31 mycroft Exp $
  */
 
 #include "ct.h"
@@ -64,6 +64,7 @@
 #define EOFS	128
 
 int	ctinit(), ctstart(), ctgo(), ctintr();
+void	ctstrategy();
 struct	driver ctdriver = {
 	ctinit, "ct", ctstart, ctgo, ctintr,
 };
