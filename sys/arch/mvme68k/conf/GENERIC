@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.23 2000/12/19 10:42:05 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.24 2001/04/30 09:05:58 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -97,7 +97,7 @@ vmetwo0 	at mainbus0
 memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 ie0		at pcctwo? ipl 3
-ncrsc0		at pcctwo? ipl 2
+osiop0		at pcctwo? ipl 2
 
 # MVME162/MVME172 specific devices
 zsc*		at pcctwo? ipl 4
@@ -117,7 +117,7 @@ vme0		at vmetwo0
 #foo0		at vme0 addr 0x00ef0000 irq 3 vect 0x80
 
 scsibus*	at wdsc?
-scsibus*	at ncrsc?
+scsibus*	at osiop?
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
