@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.11 1996/11/05 23:59:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.11 1996/11/05 23:59:01 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,8 @@ static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp 
 #endif
 
 #include <netinet/in.h>
-#include <netinet/tcp.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 
 #include <protocols/dumprestore.h>
 
@@ -128,7 +129,7 @@ rmtgetconn()
 #endif
 	char *tuser;
 	int size;
-	int maxseg;
+	int throughput;
 
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
@@ -151,6 +152,8 @@ rmtgetconn()
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
 	(void) setuid(uid);	/* Just to be Really Really safe */
+	if (rmtape < 0)
+		return;
 
 	size = ntrec * TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */
@@ -161,10 +164,10 @@ rmtgetconn()
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
-	maxseg = 1024;
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
-	    &maxseg, sizeof (maxseg)) < 0)
-		perror("TCP_MAXSEG setsockopt");
+	throughput = IPTOS_THROUGHPUT;
+	if (setsockopt(rmtape, IPPROTO_IP, IP_TOS,
+	    &throughput, sizeof(throughput)) < 0)
+		perror("IP_TOS:IPTOS_THROUGHPUT setsockopt");
 
 #ifdef notdef
 	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
