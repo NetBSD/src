@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.5.10.1 1997/05/23 21:19:19 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.5.10.2 1997/05/24 04:50:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.1 1997/05/23 21:19:19 lukem Exp $";
+static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.2 1997/05/24 04:50:05 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.1 1997/05/23 21:19:19 lu
 static char *okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
 static char	**curshell;
 static char **initshells __P((void));
-static struct stringlist *sl;
+static StringList *sl;
 
 /*
  * Get a list of shells from "shells" nsswitch database
