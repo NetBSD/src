@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 1999/02/19 23:22:14 scottr Exp $
+#	$NetBSD: Makefile,v 1.92 1999/02/20 09:10:41 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -103,9 +103,6 @@ build: beforeinstall
 	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no MKINFO=no && \
-	    ${MAKE} MKMAN=no MKINFO=no install)
-	(cd ${.CURDIR}/gnu/usr.bin/texinfo && \
 	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no MKINFO=no && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
 	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
