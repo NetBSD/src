@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.99 2003/10/28 09:52:32 simonb Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.100 2003/11/18 21:39:12 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.99 2003/10/28 09:52:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.100 2003/11/18 21:39:12 briggs Exp $");
 
 #include "opt_scsi.h"
 
@@ -2256,20 +2256,20 @@ scsipi_print_xfer_mode(periph)
 	if ((periph->periph_flags & PERIPH_MODE_VALID) == 0)
 		return;
 
-	printf("%s: ", periph->periph_dev->dv_xname);
+	aprint_normal("%s: ", periph->periph_dev->dv_xname);
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
-		printf("sync (%d.%02dns offset %d)",
+		aprint_normal("sync (%d.%02dns offset %d)",
 		    period / 100, period % 100, periph->periph_offset);
 	} else
-		printf("async");
+		aprint_normal("async");
 
 	if (periph->periph_mode & PERIPH_CAP_WIDE32)
-		printf(", 32-bit");
+		aprint_normal(", 32-bit");
 	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-		printf(", 16-bit");
+		aprint_normal(", 16-bit");
 	else
-		printf(", 8-bit");
+		aprint_normal(", 8-bit");
 
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		freq = scsipi_sync_factor_to_freq(periph->periph_period);
@@ -2281,17 +2281,17 @@ scsipi_print_xfer_mode(periph)
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)
-			printf(" (%d.%03dMB/s)", mbs, speed % 1000);
+			aprint_normal(" (%d.%03dMB/s)", mbs, speed % 1000);
 		else
-			printf(" (%dKB/s)", speed % 1000);
+			aprint_normal(" (%dKB/s)", speed % 1000);
 	}
 
-	printf(" transfers");
+	aprint_normal(" transfers");
 
 	if (periph->periph_mode & PERIPH_CAP_TQING)
-		printf(", tagged queueing");
+		aprint_normal(", tagged queueing");
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*
