@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.191 1999/02/18 14:44:34 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.192 1999/02/21 00:15:42 hubertf Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -65,7 +65,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef WDCDEBUG
 #define WDCDEBUG
+#endif /* WDCDEBUG */
 
 #include "rnd.h"
 
