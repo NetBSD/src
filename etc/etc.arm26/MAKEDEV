@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.6 2001/04/28 17:46:11 bjh21 Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2001/05/27 12:33:59 bjh21 Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,7 @@
 #
 # Disks:
 #	wd*	IDE disk drives
+#	sd*	SCSI or ATAPI disk drives
 #	cd*	SCSI or ATAPI CD-ROM
 #	ccd*	concatenated disk driver
 #	md*	memory pseudo-disk devices
@@ -183,12 +184,14 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|raid*|vnd*|wd*)
+ccd*|raid*|vnd*|wd*|sd*|cd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=3; chr=9;;
 	raid*)	name=raid;	unit=${i#raid};	blk=7; chr=26;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=2; chr=8;;
 	wd*)	name=wd;	unit=${i#wd};	blk=4; chr=15;;
+	sd*)	name=sd;	unit=${i#sd};	blk=5; chr=16;;
+	cd*)	name=cd;	unit=${i#cd};	blk=6; chr=17;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
