@@ -23,9 +23,9 @@ i386/i386/sys_machdep.c	standard
 i386/i386/trap.c	standard
 i386/i386/vm_machdep.c	standard
 i386/isa/aha1542.c	optional aha device-driver requires isa scsi not as
-i386/isa/aha1742.c	optional ahb device-driver requires isa scsi not as
+i386/isa/aha1742.c	optional ahb device-driver requires isa scsi not as not aha
 i386/isa/as.c		optional as device-driver requires isa not scsi
-i386/isa/bt742a.c	optional bt device-driver requires isa scsi not as
+i386/isa/bt742a.c	optional bt device-driver requires isa scsi not as not aha
 i386/isa/clock.c	optional isa
 i386/isa/com.c		optional com device-driver requires isa
 i386/isa/fd.c		optional fd device-driver requires isa
