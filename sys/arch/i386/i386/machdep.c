@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.320 1998/09/12 00:47:12 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.321 1998/09/12 10:48:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1176,9 +1176,6 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
-#ifdef COMPAT_13
-	native_sigset_to_sigset13(mask, &frame.sf_sc.sc_oldmask);
-#endif
 	frame.sf_sc.sc_mask = *mask;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
