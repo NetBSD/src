@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.48 2001/10/25 13:45:16 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.49 2001/10/26 17:58:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ USB_MATCH(ums)
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		return (UMATCH_NONE);
 
@@ -211,7 +211,7 @@ USB_ATTACH(ums)
 	if (quirks & UQ_SPUR_BUT_UP)
 		sc->flags |= UMS_SPUR_BUT_UP;
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		USB_ATTACH_ERROR_RETURN;
 
