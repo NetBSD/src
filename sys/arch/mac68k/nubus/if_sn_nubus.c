@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.6 1997/04/13 16:42:34 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.7 1997/04/14 00:44:01 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -109,7 +109,7 @@ sn_nubus_attach(parent, self, aux)
 {
         struct sn_softc *sc = (void *)self;
         struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
-	int		i, success;
+	int		i, success, offset;
 	bus_space_tag_t	bst;
 	bus_space_handle_t	bsh, tmp_bsh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
@@ -148,6 +148,7 @@ sn_nubus_attach(parent, self, aux)
 
 		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
 
+		offset = 2;
 		success = 1;
                 break;
 
@@ -170,6 +171,7 @@ sn_nubus_attach(parent, self, aux)
 
 		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
 
+		offset = 0;
 		success = 1;
                 break;
 
@@ -194,7 +196,7 @@ sn_nubus_attach(parent, self, aux)
 
 	/* Regs are addressed as words, big endian. */
 	for (i = 0; i < SN_NREGS; i++) {
-		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
+		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + offset);
 	}
 
 	/* snsetup returns 1 if something fails */
