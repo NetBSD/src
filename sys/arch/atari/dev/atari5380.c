@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.21 1996/11/17 13:38:03 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.22 1997/01/04 23:30:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -471,7 +471,7 @@ extern	int			*nofault;
 	 * Block SCSI interrupts while emulating DMA. They come
 	 * at a higher priority.
 	 */
-	single_inst_bclr_b(MFP2->mf_imra, ~IA_SCSI);
+	single_inst_bclr_b(MFP2->mf_imra, IA_SCSI);
 
 	/*
 	 * Setup for a possible bus error caused by SCSI controller
@@ -678,7 +678,7 @@ scsi_falcon_ienable()
 extern __inline__ void
 scsi_falcon_idisable()
 {
-	single_inst_bclr_b(MFP->mf_ierb, ~IB_DINT);
+	single_inst_bclr_b(MFP->mf_ierb, IB_DINT);
 }
 
 extern __inline__ void
