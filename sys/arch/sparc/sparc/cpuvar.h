@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.7 1998/07/26 23:35:34 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.8 1998/09/06 21:14:57 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ struct module_info {
 	void (*vcache_flush_context)__P((void));
 	void (*pcache_flush_line)__P((int, int));
 	void (*pure_vcache_flush)__P((void));
+	void (*memerr)__P((unsigned, u_int, u_int, u_int, u_int,
+			   struct trapframe *));
 };
 
 
@@ -188,6 +190,12 @@ struct cpu_softc {
 	void		(*mbusflush) __P((void));
 #endif
 
+	/*
+	 * Memory error handler; parity errors, unhandled NMIs and other
+	 * unrecoverable faults end up here.
+	 */
+	void	(*memerr)__P((unsigned, u_int, u_int, u_int, u_int,
+			      struct trapframe *));
 	/* XXX: Add more here! */
 };
 
