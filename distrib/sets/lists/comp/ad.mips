@@ -1,7 +1,6 @@
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
 ./usr/bin/objcopy
-./usr/bin/objdump
 ./usr/include/mips
 ./usr/include/mips/ansi.h
 ./usr/include/mips/aout_machdep.h
@@ -47,4 +46,3 @@
 ./usr/include/mips/vmparam.h
 ./usr/lib/c++rt0.o
 ./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/objdump.0
