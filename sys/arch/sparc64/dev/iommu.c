@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.62 2002/10/24 23:24:01 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.63 2003/01/16 21:55:52 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -910,6 +910,9 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	vaddr_t va = map->dm_segs[0].ds_addr + offset;
 	int64_t tte;
 	vaddr_t vaend;
+
+	if (!sb->sb_flush)
+		return;
 
 	/*
 	 * We only support one DMA segment; supporting more makes this code
