@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.18 2002/09/23 02:49:14 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.19 2002/11/22 20:56:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.18 2002/09/23 02:49:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.19 2002/11/22 20:56:10 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1220,6 +1220,7 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 	/* printf("dataQueueLength %d, mirrorQueueLength
 	 * %d\n",dataQueueLength, mirrorQueueLength); */
 }
+#if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0) || (RF_DEBUG_VALIDATE_DAG > 0)
 /*
  * Do simple partitioning. This assumes that
  * the data and parity disks are laid out identically.
@@ -1268,3 +1269,4 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 		/* use data disk, leave param 0 unchanged */
 	}
 }
+#endif
