@@ -1,7 +1,7 @@
-/*	$NetBSD: ccitt_proto.c,v 1.8 1998/07/05 03:14:44 jonathan Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.9 1998/09/13 16:21:16 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
