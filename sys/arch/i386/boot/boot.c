@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.10 1993/08/28 01:18:43 brezak Exp $
+ *	$Id: boot.c,v 1.11 1993/09/06 22:09:45 mycroft Exp $
  */
 
 /*
@@ -82,7 +82,7 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.10 $");
+		"$Revision: 1.11 $");
 	gateA20();
 loadstart:
 	/***************************************************************\
@@ -273,7 +273,7 @@ loadprog(howto)
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	/*printf("entry point=0x%x\n" ,((int)startaddr) & 0xffffff);*/
+	printf("entry=0x%x\n" ,((int)startaddr) & 0xffffff);
 	/* Under no circumstances overwrite precious BIOS variables! */
 	pcpy(tmpbuf, addr0, 0x400);
 	pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
