@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $	*/
+/*	$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $");
+__RCSID("$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -899,7 +899,8 @@ JobFinish(job, status)
 
 	if (WIFEXITED(*status)) {
 	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "Process %d exited.\n", job->pid);
+		(void) fprintf(stdout, "Process %d [%s] exited.\n",
+				job->pid, job->node->name);
 		(void) fflush(stdout);
 	    }
 	    if (WEXITSTATUS(*status) != 0) {
@@ -907,7 +908,8 @@ JobFinish(job, status)
 		    MESSAGE(out, job->node);
 		    lastNode = job->node;
 		}
-		(void) fprintf(out, "*** Error code %d%s\n",
+		(void) fprintf(out, "*** [%s] Error code %d%s\n",
+				job->node->name,
 			       WEXITSTATUS(*status),
 			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
 
@@ -919,11 +921,13 @@ JobFinish(job, status)
 		    MESSAGE(out, job->node);
 		    lastNode = job->node;
 		}
-		(void) fprintf(out, "*** Completed successfully\n");
+		(void) fprintf(out, "*** [%s] Completed successfully\n",
+				job->node->name);
 	    }
 	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) != SIGCONT) {
 	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "Process %d stopped.\n", job->pid);
+		(void) fprintf(stdout, "Process %d (%s) stopped.\n",
+				job->pid, job->node->name);
 		(void) fflush(stdout);
 	    }
 	    if (usePipes && job->node != lastNode) {
@@ -933,14 +937,16 @@ JobFinish(job, status)
 	    if (!(job->flags & JOB_REMIGRATE)) {
 		switch (WSTOPSIG(*status)) {
 		case SIGTSTP:
-		    (void) fprintf(out, "*** Suspended\n");
+		    (void) fprintf(out, "*** [%s] Suspended\n",
+				job->node->name);
 		    break;
 		case SIGSTOP:
-		    (void) fprintf(out, "*** Stopped\n");
+		    (void) fprintf(out, "*** [%s] Stopped\n",
+				job->node->name);
 		    break;
 		default:
-		    (void) fprintf(out, "*** Stopped -- signal %d\n",
-			WSTOPSIG(*status));
+		    (void) fprintf(out, "*** [%s] Stopped -- signal %d\n",
+			job->node->name, WSTOPSIG(*status));
 		}
 	    }
 	    job->flags |= JOB_RESUME;
@@ -962,13 +968,13 @@ JobFinish(job, status)
 		    MESSAGE(out, job->node);
 		    lastNode = job->node;
 		}
-		(void) fprintf(out, "*** Continued\n");
+		(void) fprintf(out, "*** [%s] Continued\n", job->node->name);
 	    }
 	    if (!(job->flags & JOB_CONTINUING)) {
 		if (DEBUG(JOB)) {
 		    (void) fprintf(stdout,
-				   "Warning: process %d was not continuing.\n",
-				   job->pid);
+			   "Warning: process %d [%s] was not continuing.\n",
+			   job->pid, job->node->name);
 		    (void) fflush(stdout);
 		}
 #ifdef notdef
@@ -1000,7 +1006,8 @@ JobFinish(job, status)
 		MESSAGE(out, job->node);
 		lastNode = job->node;
 	    }
-	    (void) fprintf(out, "*** Signal %d\n", WTERMSIG(*status));
+	    (void) fprintf(out, "*** [%s] Signal %d\n",
+			job->node->name, WTERMSIG(*status));
 	}
 
 	(void) fflush(out);
