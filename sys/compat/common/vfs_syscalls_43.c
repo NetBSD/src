@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.13 2000/03/30 11:27:15 augustss Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.14 2000/07/26 11:43:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,11 +146,22 @@ compat_43_sys_lstat(p, v, retval)
 	struct stat43 osb;
 	int error;
 	struct nameidata nd;
+	int ndflags;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	if ((error = namei(&nd)))
+	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
+again:
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd))) {
+		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
+			/*
+			 * Should only happen on '/'. Retry without LOCKPARENT;
+			 * this is safe since the vnode won't be a VLNK.
+			 */
+			ndflags &= ~LOCKPARENT;
+			goto again;
+		}
 		return (error);
+	}
 	/*
 	 * For symbolic links, always return the attributes of its
 	 * containing directory, except for mode, size, and links.
@@ -158,10 +169,12 @@ compat_43_sys_lstat(p, v, retval)
 	vp = nd.ni_vp;
 	dvp = nd.ni_dvp;
 	if (vp->v_type != VLNK) {
-		if (dvp == vp)
-			vrele(dvp);
-		else
-			vput(dvp);
+		if ((ndflags & LOCKPARENT) != 0) {
+			if (dvp == vp)
+				vrele(dvp);
+			else
+				vput(dvp);
+		}
 		error = vn_stat(vp, &sb, p);
 		vput(vp);
 		if (error)
