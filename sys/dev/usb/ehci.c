@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.9 2004/06/24 08:38:18 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.10 2004/06/24 08:40:04 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.9 2004/06/24 08:38:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.10 2004/06/24 08:40:04 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1351,8 +1351,8 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
 	sqh->sqtd = sqtd;
-	/* Keep toggle, clear the rest, including length. */
-	sqh->qh.qh_qtd.qtd_status &= htole32(EHCI_QTD_TOGGLE);
+	/* Clear halt */
+	sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_HALTED);
 }
 
 /*
@@ -2120,8 +2120,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 	    );
 	mps = UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
 	tog = epipe->nexttoggle;
-	if (tog)
-		qtdstatus |= EHCI_QTD_TOGGLE;
+	qtdstatus |= EHCI_QTD_SET_TOGGLE(tog);
 
 	cur = ehci_alloc_sqtd(sc);
 	*sp = cur;
@@ -2199,7 +2198,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 		   qtd */
 		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
-			qtdstatus ^= EHCI_QTD_TOGGLE;
+			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
 		}
 		if (len == 0)
 			break;
@@ -2551,11 +2550,11 @@ ehci_device_request(usbd_xfer_handle xfer)
 	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof *req);
 
 	/* Clear toggle */
-	sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_TOGGLE);
 	setup->qtd.qtd_status = htole32(
 	    EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(EHCI_QTD_PID_SETUP) |
 	    EHCI_QTD_SET_CERR(3) |
+	    EHCI_QTD_SET_TOGGLE(0) |
 	    EHCI_QTD_SET_BYTES(sizeof *req)
 	    );
 	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma, 0));
@@ -2569,7 +2568,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	    EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(isread ? EHCI_QTD_PID_OUT : EHCI_QTD_PID_IN) |
 	    EHCI_QTD_SET_CERR(3) |
-	    EHCI_QTD_TOGGLE |
+	    EHCI_QTD_SET_TOGGLE(1) |
 	    EHCI_QTD_IOC
 	    );
 	stat->qtd.qtd_buffer[0] = 0; /* XXX not needed? */
