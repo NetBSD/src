@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.1 2003/01/05 22:33:54 christos Exp $
+# $NetBSD: acpidevs,v 1.2 2003/02/04 00:49:56 perry Exp $
 #
 # ***** System Devices - PNP0xxx **************************
 # --Interrupt Controllers--
@@ -93,8 +93,7 @@ PNP0931	Chips & Technologies Accelerator
 PNP0940	NCR 77c22e Super VGA
 PNP0941	NCR 77c32blt
 PNP09FF	Plug and Play Monitors (VESA DDC)
-
---Peripheral Buses--
+#--Peripheral Buses--
 PNP0A00	ISA Bus
 PNP0A01	EISA Bus
 PNP0A02	MCA Bus
