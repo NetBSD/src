@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2000/02/21 20:38:49 erh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2000/03/09 18:59:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1010,7 +1010,7 @@ cninit()
 		 * XXX call wskbd_cnattach() twice.
 		 */
 		ofkbd_ihandle = stdin;
-		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc);
+		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc, NULL);
 		return;
 	}
 #endif /* NOFB > 0 */
