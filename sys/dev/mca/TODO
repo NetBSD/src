@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.8 2001/03/17 17:00:38 jdolecek Exp $
+# $NetBSD: TODO,v 1.9 2001/04/19 07:33:00 jdolecek Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -6,7 +6,8 @@ Bugs:
 * i386: keyboard freezes in fd_mountroothook when booting from floppy;
 	if the fd_mountroothook is not executed, the keyboard works
 	just fine
+	maybe rev.1.6 of sys/dev/ic/pckbc.c fixes this?
 
 Projects:
-* bus_dma(9) support (primarily for AHA-1640 ATM)
-* ESDI support
+* proper MCA DMA/bus_dma(9) support (primarily for AHA-1640 ATM), using
+  code from dasd_mca.c:dasd_setup_dma()
