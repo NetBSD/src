@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.25 2000/08/21 07:39:42 itohy Exp $
+#	$NetBSD: DR-EVIL,v 1.26 2000/09/24 15:59:32 jdolecek Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -830,7 +830,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	faith		1	# IPv[46] TCP relay translation
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		128	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.21 2000/09/13 03:44:38 nisimura Exp $
+# 	$NetBSD: R4000,v 1.22 2000/09/24 15:59:37 jdolecek Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -137,7 +137,7 @@ pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	strip		 4	# Metricom IP encapsulation
 pseudo-device	ppp		 2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
 

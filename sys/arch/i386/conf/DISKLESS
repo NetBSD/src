@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.74 2000/07/09 00:41:24 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.75 2000/09/24 15:59:32 jdolecek Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -264,7 +264,7 @@ pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter		# IP filter
 
-pseudo-device	pty	16		# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# paging to files
 #pseudo-device	ccd	4		# concatenated disk devices

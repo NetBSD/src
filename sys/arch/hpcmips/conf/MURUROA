@@ -2,12 +2,12 @@
 # Mycroft's WorkPad z50
 
 #
-# 	$NetBSD: MURUROA,v 1.9 2000/06/14 22:02:25 veego Exp $
+# 	$NetBSD: MURUROA,v 1.10 2000/09/24 15:59:32 jdolecek Exp $
 # 	From: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"MURUROA-$Revision: 1.9 $"
+#ident 		"MURUROA-$Revision: 1.10 $"
 
 maxusers	8
 
@@ -258,7 +258,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
-pseudo-device	pty		32	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	8	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
 

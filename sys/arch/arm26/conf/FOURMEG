@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.7 2000/09/23 12:58:26 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.8 2000/09/24 15:59:29 jdolecek Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -168,7 +168,7 @@ pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MINIROOTSIZE=
 #pseudo-device	ppp		4
-pseudo-device	pty		64
+pseudo-device	pty
 #pseudo-device	sl		4
 #pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel

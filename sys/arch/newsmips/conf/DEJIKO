@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.1 1999/12/22 05:55:25 tsubai Exp $
+# 	$NetBSD: DEJIKO,v 1.2 2000/09/24 15:59:36 jdolecek Exp $
 #
 #	NEWS5000 example
 
@@ -47,5 +47,5 @@ zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
 
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# Berkeley Packet Filter

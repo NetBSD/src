@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 2000/08/13 01:31:18 itojun Exp $
+#	$NetBSD: GENERIC,v 1.60 2000/09/24 15:59:32 jdolecek Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 # Support for various CPU types
 options 	HP320
@@ -176,7 +176,7 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4	# SLIP network interfaces
 pseudo-device	ppp		4	# PPP network interfaces
 pseudo-device	bpfilter	16	# Berkeley packet filter
