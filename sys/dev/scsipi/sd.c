@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.153 1999/11/03 20:50:17 matt Exp $	*/
+/*	$NetBSD: sd.c,v 1.154 1999/12/23 21:23:30 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -530,6 +530,9 @@ sdclose(dev, flag, fmt, p)
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~SDEV_OPEN;
 
+		if (! (sd->sc_link->flags & SDEV_KEEP_LABEL))
+			sd->sc_link->flags &= ~SDEV_MEDIA_LOADED;
+
 		scsipi_wait_drain(sd->sc_link);
 
 		scsipi_adapter_delref(sd->sc_link);
@@ -852,6 +855,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		switch (cmd) {
+		case DIOCKLABEL:
 		case DIOCWLABEL:
 		case DIOCLOCK:
 		case DIOCEJECT:
@@ -904,6 +908,13 @@ sdioctl(dev, cmd, addr, flag, p)
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
 		return (error);
+
+	case DIOCKLABEL:
+		if (*(int *)addr)
+			sd->sc_link->flags |= SDEV_KEEP_LABEL;
+		else
+			sd->sc_link->flags &= ~SDEV_KEEP_LABEL;
+		return (0);
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
