@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.36 2002/08/26 05:14:47 petrov Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.37 2002/08/26 06:23:32 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
-#define NCR53C9X_DEBUG		1
+/* #define NCR53C9X_DEBUG		1 */
 
 /* Wide or differential can have 16 targets */
 #define NCR_NTARG		8
@@ -177,6 +177,7 @@ struct ncr53c9x_tinfo {
 #define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
 #define T_TAG		0x40	/* Turn on TAG QUEUEs */
 #define T_WIDE		0x80	/* Negotiate wide options */
+#define T_WDTRSENT	0x04	/* WDTR message has been sent to */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char  cfg3;		/* per target config 3  */
