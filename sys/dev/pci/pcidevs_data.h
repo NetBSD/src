@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.543 2003/07/06 07:19:59 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.544 2003/07/06 12:03:07 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.544 2003/07/06 07:19:38 tron Exp 
+ *	NetBSD: pcidevs,v 1.545 2003/07/06 12:02:07 simonb Exp 
  */
 
 /*
@@ -4676,6 +4676,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "E7500 MCH HI_C vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HB,
+	    0,
+	    "Intel",
+	    "E7505 MCH",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,

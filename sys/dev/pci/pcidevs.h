@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.545 2003/07/06 07:19:58 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.546 2003/07/06 12:03:08 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.544 2003/07/06 07:19:38 tron Exp 
+ *	NetBSD: pcidevs,v 1.545 2003/07/06 12:02:07 simonb Exp 
  */
 
 /*
@@ -1584,6 +1584,7 @@
 #define	PCI_PRODUCT_INTEL_E7500_HI_C2	0x2546		/* E7500 MCH HI_C vppb 2 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_D1	0x2547		/* E7500 MCH HI_C vppb 1 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_D2	0x2548		/* E7500 MCH HI_C vppb 2 */
+#define	PCI_PRODUCT_INTEL_E7505_HB	0x2550		/* E7505 MCH */
 #define	PCI_PRODUCT_INTEL_82845G_DRAM	0x2560		/* 82845G/GL DRAM Controller / Host-Hub I/F Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_AGP	0x2561		/* 82845G/GL Host-to-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_IGD	0x2562		/* 82845G/GL Integrated Graphics Device */
