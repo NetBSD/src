@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.86 2003/10/20 13:41:28 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.87 2003/11/14 08:03:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -48,7 +48,9 @@
  * label can describe and the number of the "whole disk" (raw)
  * paritition are machine dependent.
  */
+#ifndef MAXPARTITIONS
 #include <machine/disklabel.h>
+#endif
 
 /*
  * The absolute maximum number of disk partitions allowed.
