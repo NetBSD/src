@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.18 2000/11/24 07:25:50 chs Exp $	*/
+/*	$NetBSD: db_command.h,v 1.19 2001/01/17 19:50:03 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,9 +34,10 @@
  */
 void db_skip_to_eol __P((void));
 struct db_command;
-int db_cmd_search __P((char *, struct db_command *, struct db_command **));
-void db_cmd_list __P((struct db_command *));
-void db_command __P((struct db_command **, struct db_command *));
+int db_cmd_search __P((const char *, const struct db_command *,
+			const struct db_command **));
+void db_cmd_list __P((const struct db_command *));
+void db_command __P((const struct db_command **, const struct db_command *));
 void db_map_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_object_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_page_print_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -65,7 +66,7 @@ db_addr_t	db_next;	/* next address to be examined
  * Command table
  */
 struct db_command {
-	char		*name;		/* command name */
+	const char	*name;		/* command name */
 	/* function to call */
 	void		(*fcn) __P((db_expr_t, int, db_expr_t, char *));
 	int		flag;		/* extra info: */
@@ -73,5 +74,5 @@ struct db_command {
 #define	CS_MORE		0x2		/* standard syntax, but may have other
 					   words at end */
 #define	CS_SET_DOT	0x100		/* set dot after command */
-	struct db_command *more;	/* another level of command */
+	const struct db_command *more;	/* another level of command */
 };

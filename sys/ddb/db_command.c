@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.52 2000/11/28 19:27:46 eeh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.53 2001/01/17 19:50:03 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -104,16 +104,16 @@ db_skip_to_eol()
  */
 int
 db_cmd_search(name, table, cmdp)
-	char			*name;
-	struct db_command	*table;
-	struct db_command	**cmdp;	/* out */
+	const char		*name;
+	const struct db_command	*table;
+	const struct db_command	**cmdp;	/* out */
 {
-	struct db_command	*cmd;
+	const struct db_command	*cmd;
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    char *lp;
-	    char *rp;
+	    const char *lp;
+	    const char *rp;
 	    int  c;
 
 	    lp = name;
@@ -152,10 +152,10 @@ db_cmd_search(name, table, cmdp)
 
 void
 db_cmd_list(table)
-	struct db_command *table;
+	const struct db_command *table;
 {
 	int	 i, j, w, columns, lines, width=0, items, numcmds;
-	char	*p;
+	const char	*p;
 
 	for (numcmds = 0; table[numcmds].name != NULL; numcmds++) {
 		w = strlen(table[numcmds].name);
@@ -189,10 +189,10 @@ db_cmd_list(table)
 
 void
 db_command(last_cmdp, cmd_table)
-	struct db_command	**last_cmdp;	/* IN_OUT */
-	struct db_command	*cmd_table;
+	const struct db_command	**last_cmdp;	/* IN_OUT */
+	const struct db_command	*cmd_table;
 {
-	struct db_command	*cmd;
+	const struct db_command	*cmd;
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
@@ -457,13 +457,13 @@ db_uvmexp_print_cmd(addr, have_addr, count, modif)
  * 'show' commands
  */
 
-struct db_command db_show_all_cmds[] = {
+static const struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "procs",	db_show_all_procs,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
-struct db_command db_show_cmds[] = {
+static const struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
 #if defined(INET) && (NARP > 0)
 	{ "arptab",	db_show_arptab,		0,	NULL },
@@ -482,7 +482,7 @@ struct db_command db_show_cmds[] = {
 	{ NULL,		NULL,			0,	NULL }
 };
 
-struct db_command db_command_table[] = {
+static const struct db_command db_command_table[] = {
 	{ "break",	db_breakpoint_cmd,	0,		NULL },
 	{ "c",		db_continue_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
@@ -540,7 +540,7 @@ db_machine_commands_install(ptr)
 
 #endif
 
-struct db_command	*db_last_command = 0;
+const struct db_command	*db_last_command = NULL;
 
 void
 db_command_loop()
