@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.5 1995/04/10 07:31:28 mycroft Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.6 1995/08/10 04:21:35 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,6 +98,8 @@ xcfb needs dtop device
 
 #include <vm/vm.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
 
@@ -119,13 +121,13 @@ struct pmax_fb xcfbfb;
 /*
  * Forward references.
  */
-static void xcfbScreenInit();
-static void xcfbLoadCursor();
-static void xcfbRestoreCursorColor();
-static void xcfbCursorColor();
-void xcfbPosCursor();
-static void xcfbInitColorMap();
-static void xcfbLoadColorMap();
+static void xcfbScreenInit __P(());
+static void xcfbLoadCursor __P((u_short *ptr));
+static void xcfbRestoreCursorColor __P(());
+static void xcfbCursorColor __P((u_int *color));
+void xcfbPosCursor __P((int x, int y));
+static void xcfbInitColorMap __P(());
+static void xcfbLoadColorMap __P ((ColorMap *ptr));
 static u_int ims332_read_register();
 static void ims332_write_register();
 static void ims332_load_colormap_entry();
@@ -141,27 +143,59 @@ extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
 
-int	xcfbprobe();
-struct	driver xcfbdriver = {
-	"xcfb", xcfbprobe, 0, 0,
-};
 
 /*
- * Test to see if device is present.
- * Return true if found and initialized ok.
+ * Autoconfiguration data for config.new.
+ * Use static-sized softc until config.old and old autoconfig
+ * code is completely gone.
  */
-/*ARGSUSED*/
-xcfbprobe(cp)
-	register struct pmax_ctlr *cp;
-{
-	register struct pmax_fb *fp = &xcfbfb;
 
-	if (pmax_boardtype != DS_MAXINE)
+int xcfbmatch __P((struct device *, void *, void *));
+void xcfbattach __P((struct device *, struct device *, void *));
+
+struct cfdriver xcfbcd = {
+	NULL, "xcfb", xcfbmatch, xcfbattach, DV_DULL, sizeof(struct device), 0
+};
+
+int
+xcfbmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+	static int nxcfbs = 1;
+
+	/* make sure that we're looking for this type of device. */
+	if (!BUS_MATCHNAME(ca, "PMAG-DV ") && !BUS_MATCHNAME(ca, "xcfb"))
 		return (0);
-	if (!fp->initialized && !xcfbinit())
+
+#ifdef notyet
+	/* if it can't have the one mentioned, reject it */
+	if (cf->cf_unit >= nxcfbs)
 		return (0);
-	printf("xcfb0 (color display)\n");
+#endif
 	return (1);
+}
+
+void
+xcfbattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (!xcfbinit(BUS_CVTADDR(ca)))
+		return;
+
+	/* mark slot as potential console */
+	framebuffer_in_slot(ca->ca_slotpri);
+
+	/* no interrupts for XCFB */
+	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	printf("\n");
 }
 
 /*ARGSUSED*/

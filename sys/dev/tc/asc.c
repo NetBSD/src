@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.11 1995/08/04 00:26:42 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.12 1995/08/10 04:21:47 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -487,11 +487,10 @@ struct scsi_device asc_dev = {
 /*
  * Definition of the controller for the old auto-configuration program.
  */
-int	asc_probe();
 void	asc_start();
 void	asc_intr();
 struct	driver ascdriver = {
-	"asc", asc_probe, asc_start, 0, asc_intr,
+	"asc", NULL, asc_start, 0, asc_intr,
 };
 
 
@@ -539,18 +538,7 @@ ascattach(parent, self, aux)
 	}
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, asc_intr, self->dv_unit);
-}
-
-
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-int
-asc_probe(cp)
-	register struct pmax_ctlr *cp;
-{
-	return asc_doprobe(cp->pmax_addr, cp->pmax_unit, cp->pmax_pri, NULL);
+	printf("\n");
 }
 
 /*
@@ -567,18 +555,11 @@ asc_doprobe(addr, unit, priority, self)
 	register asc_regmap_t *regs;
 	int id, s, i;
 	int bufsiz;
-	static int nunits = 0;
 
 	if (unit >= NASC)
 		return (0);
 	if (badaddr(addr + ASC_OFFSET_53C94, 1))
 		return (0);
-
-	/* allow both new and old config to coexist in a running kernel*/
-	if (++nunits > NASC) {
-		printf("asc%d: static softc full\n", unit);
-		return (0);
-	}
 
 	asc = &asc_softc[unit];
 
@@ -686,8 +667,9 @@ asc_doprobe(addr, unit, priority, self)
 		asc->st[i].dmaBufAddr = asc->buff + bufsiz * i;
 		asc->st[i].dmaBufSize = bufsiz;
 	}
-	printf("asc%d at nexus0 csr 0x%x priority %d SCSI id %d\n",
-		unit, addr, priority, id);
+
+	/* Hack for old-sytle SCSI-device probe */
+	(void) pmax_add_scsi(&ascdriver, unit);
 
 /*XXX*/
 #ifdef USE_NEW_SCSI
