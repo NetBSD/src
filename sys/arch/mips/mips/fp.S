@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.6 1994/11/23 17:47:53 dean Exp $	*/
+/*	$NetBSD: fp.S,v 1.7 1994/12/15 15:22:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(_MachEmulateFP, STAND_FRAME_SIZE, ra)
+NON_LEAF(MachEmulateFP, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)
 /*
@@ -2253,7 +2253,7 @@ done:
 	lw	ra, STAND_RA_OFFSET(sp)
 	addu	sp, sp, STAND_FRAME_SIZE
 	j	ra
-END(_MachEmulateFP)
+END(MachEmulateFP)
 
 /*----------------------------------------------------------------------------
  * get_fs_int --
