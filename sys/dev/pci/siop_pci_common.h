@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.8 2000/05/15 07:53:17 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.1 2000/05/15 07:53:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -29,55 +29,31 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
+/* common functions for the siop and esiop pci front ends */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
-
-#include <dev/ic/siopvar.h>
-#include <dev/pci/siop_pci_common.h>
-
-int     siop_pci_match __P((struct device *, struct cfdata *, void *));
-void    siop_pci_attach __P((struct device *, struct device *, void *));
-
-struct cfattach siop_pci_ca = {
-	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach
+/* structure describing each chip */
+struct siop_product_desc {
+	u_int32_t product;
+	int	revision;
+	const char *name;
+	int	features; /* features are defined in siopvar.h */
+	u_int8_t maxburst;
+	u_int8_t maxoff;  /* maximum supported offset */
+	u_int8_t clock_div; /* clock divider to use for async. logic */
+	u_int8_t clock_period; /* clock period (ns * 10) */
 };
 
-int
-siop_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct pci_attach_args *pa = aux;
-	const struct siop_product_desc *pp;
+const struct siop_product_desc * siop_lookup_product __P((u_int32_t, int));
 
-	/* look if it's a known product */
-	pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
-	if (pp)
-		return 1;
-	return 0;
-}
+/* Driver internal state */
+struct siop_pci_softc {
+	struct siop_softc siop;
+	pci_chipset_tag_t	sc_pc;	/* PCI registers info */
+	pcitag_t		sc_tag;
+	void			*sc_ih;	/* PCI interrupt handle */
+	const struct siop_product_desc *sc_pp; /* Adapter description */
+};
 
-void
-siop_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct pci_attach_args *pa = aux;
-	struct siop_pci_softc *sc = (struct siop_pci_softc *)self;
-
-	if (siop_pci_attach_common(sc, pa) == 0)
-		return;
-
-	siop_attach(&sc->siop);
-}
+int siop_pci_attach_common __P((struct siop_pci_softc *,
+	struct pci_attach_args *));
+void siop_pci_reset __P((struct siop_softc *));
