@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2001/03/31 12:52:31 toshii Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2001/09/03 01:33:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -261,7 +261,11 @@ struct cdevsw cdevsw[] = {
 	cdev_ugen_init(NUSCANNER,uscanner),/* 76: USB scanner */
 	cdev_notdef(),			/* 77: */
 	cdev_tty_init(NBICONSDEV,biconsdev),    /* 78: bicons pseudo-dev */
-
+	cdev_notdef(),			/* 79: */
+	cdev_notdef(),			/* 80: */
+	cdev_notdef(),			/* 81: */
+	cdev_notdef(),			/* 82: */
+	cdev_notdef(),			/* 83: */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -382,6 +386,11 @@ static int chrtoblktbl[] = {
     /* 76 */	    NODEV,
     /* 77 */	    NODEV,
     /* 78 */	    NODEV,
+    /* 79 */	    NODEV,
+    /* 80 */	    NODEV,
+    /* 81 */	    NODEV,
+    /* 82 */	    NODEV,
+    /* 83 */	    NODEV,
 };
 
 /*
