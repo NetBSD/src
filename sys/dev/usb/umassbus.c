@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.6 2001/05/02 11:24:01 bouyer Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.7 2001/05/15 15:25:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -350,6 +350,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		return;
 	default:
 		/* Not supported, nothing to do. */
+		;
 	}
 }
 
