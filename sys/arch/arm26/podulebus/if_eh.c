@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.1 2000/12/01 14:28:37 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.2 2000/12/16 18:24:36 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1 2000/12/01 14:28:37 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2 2000/12/16 18:24:36 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_datah);
 	sc->sc_ctlt = pa->pa_fast_t;
 	bus_space_subregion(sc->sc_ctlt, pa->pa_fast_h, EH_CTRL, 1,
-	    &sc->sc_ctlt);
+	    &sc->sc_ctlh);
 
 	/* dsc->cr_proto? */
 	/* dsc->rcr_proto? */
@@ -224,7 +224,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < 16; i++)
 		dsc->sc_reg_map[i] = i;
 
-	sc->sc_ctrl = 0xff;
+	sc->sc_ctrl = 0x00;
 
 	/* XXX XXX XXX Ethernet address */
 	switch (sc->sc_type) {
@@ -238,7 +238,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: rigged demo mode\n", self->dv_xname);
 
 	dp8390_config(dsc, media, sizeof(media) / sizeof(media[0]),
-	    IFM_ETHER | IFM_AUTO);
+	    IFM_ETHER | IFM_10_2);
 	dp8390_stop(dsc);
 
 #if 0
