@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.11.2.3 1998/05/08 22:19:03 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11.2.4 1998/05/10 03:40:11 mycroft Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
 CPPFLAGS+=-DNEWMOVE=12
-DPADD=	${LIBCURSES} ${LIBGNUMALLOC}
-LDADD=	-lcurses -lgnumalloc
+DPADD=	${LIBCURSES} ${LIBTERMCAP} ${LIBGNUMALLOC}
+LDADD=	-lcurses -ltermcap -lgnumalloc
 HIDEGAME=hidegame
 FILES=gnuchess.book
 FILESDIR=/usr/share/games
