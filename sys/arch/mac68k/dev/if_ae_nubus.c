@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.18.4.4 1997/10/14 10:16:56 thorpej Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.18.4.5 1997/10/14 21:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -346,6 +346,9 @@ ae_nubus_attach(parent, self, aux)
 #ifdef DEBUG
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
 #endif
+
+	/* Interface is always enabled. */
+	sc->sc_enabled = 1;
 
 	printf(": %s, %dKB memory\n", cardname, sc->mem_size / 1024);
 
