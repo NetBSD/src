@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.75 2001/05/30 16:42:02 itojun Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.76 2001/06/14 05:44:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -444,7 +444,7 @@ sloutput(ifp, m, dst, rtp)
 		struct timeval tv;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_if.if_lastchange, &tv);
+		timersub(&time, &sc->sc_lastpacket, &tv);
 		if (tv.tv_sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
@@ -473,7 +473,7 @@ sloutput(ifp, m, dst, rtp)
 		ifp->if_oerrors++;
 		return (error);
 	}
-	sc->sc_if.if_lastchange = time;
+	sc->sc_lastpacket = time;
 	splx(s);
 
 	s = spltty();
@@ -788,7 +788,7 @@ slintr(void *arg)
 			m_freem(bpf_m);
 		}
 #endif
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
 		s = spltty();
 
@@ -987,7 +987,7 @@ slintr(void *arg)
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
 		s = splnet();
 		if (IF_QFULL(&ipintrq)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.11 2001/04/13 23:30:14 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.12 2001/06/14 05:44:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -107,7 +107,6 @@ hippi_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 
 	/* HIPPI doesn't really do broadcast or multicast right now */
 	if (m->m_flags & (M_BCAST | M_MCAST))
@@ -268,7 +267,6 @@ hippi_input(ifp, m)
 
 	hh = mtod(m, struct hippi_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (hh->hi_le.le_dest_addr[0] & 1) {
 		if (bcmp((caddr_t)etherbroadcastaddr, 

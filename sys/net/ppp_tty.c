@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.24 2001/03/31 00:35:24 enami Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.25 2001/06/14 05:44:25 itojun Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -643,7 +643,6 @@ pppsyncstart(sc)
 			if (sc->sc_flags & SC_DEBUG)
 				pppdumpframe(sc,m,1);
 		}
-		microtime(&sc->sc_if.if_lastchange);
 		for(n=m,len=0;n!=NULL;n=n->m_next)
 			len += n->m_len;
 			
@@ -709,7 +708,6 @@ pppasyncstart(sc)
 
 	    /* Calculate the FCS for the first mbuf's worth. */
 	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
-	    sc->sc_if.if_lastchange = time;
 	}
 
 	for (;;) {
