@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.71 2003/11/02 16:53:43 jdolecek Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.72 2003/11/03 04:39:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.71 2003/11/02 16:53:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.72 2003/11/03 04:39:11 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -734,9 +734,6 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 	for (;;) {
 		if (entry == NULL)
 			entry = map->header.next;
-		else if (state.end < vm_map_min(map) ||
-		    vm_map_max(map) <= state.end)
-			break;
 		else if (!uvm_map_lookup_entry(map, state.end, &entry))
 			entry = entry->next;
 		if (entry == &map->header)
