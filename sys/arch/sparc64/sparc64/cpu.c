@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2001/09/10 21:19:26 chris Exp $ */
+/*	$NetBSD: cpu.c,v 1.15 2001/09/21 19:26:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -238,6 +238,7 @@ cpu_attach(parent, dev, aux)
 	char fpbuf[40];
 	register int i, l;
 	u_int64_t ver;
+	int bigcache, cachesize;
 	extern u_int64_t cpu_clockrate[];
 
 	/* This needs to be 64-bit aligned */
@@ -282,6 +283,8 @@ cpu_attach(parent, dev, aux)
 		clockfreq(clk), fpuname);
 	printf(": %s\n", cpu_model);
 
+	bigcache = 0;
+
 	cacheinfo.c_physical = 1; /* Dunno... */
 	cacheinfo.c_split = 1;
 	cacheinfo.ic_linesize = l = getpropint(node, "icache-line-size", 0);
@@ -293,7 +296,11 @@ cpu_attach(parent, dev, aux)
 	cacheinfo.ic_totalsize = l *
 		getpropint(node, "icache-nlines", 64) *
 		getpropint(node, "icache-associativity", 1);
-	
+
+	cachesize = cacheinfo.ic_totalsize /
+	    getpropint(node, "icache-associativity", 1);
+	bigcache = cachesize;
+
 	cacheinfo.dc_linesize = l =
 		getpropint(node, "dcache-line-size",0);
 	for (i = 0; (1 << i) < l && l; i++)
@@ -304,7 +311,12 @@ cpu_attach(parent, dev, aux)
 	cacheinfo.dc_totalsize = l *
 		getpropint(node, "dcache-nlines", 128) *
 		getpropint(node, "dcache-associativity", 1);
-	
+
+	cachesize = cacheinfo.dc_totalsize /
+	    getpropint(node, "dcache-associativity", 1);
+	if (cachesize > bigcache)
+		bigcache = cachesize;
+
 	cacheinfo.ec_linesize = l =
 		getpropint(node, "ecache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
@@ -315,7 +327,12 @@ cpu_attach(parent, dev, aux)
 	cacheinfo.ec_totalsize = l *
 		getpropint(node, "ecache-nlines", 32768) *
 		getpropint(node, "ecache-associativity", 1);
-	
+
+	cachesize = cacheinfo.ec_totalsize /
+	     getpropint(node, "ecache-associativity", 1);
+	if (cachesize > bigcache)
+		bigcache = cachesize;
+
 	/*
 	 * XXX - The following will have to do until
 	 * we have per-cpu cache handling.
@@ -354,6 +371,12 @@ cpu_attach(parent, dev, aux)
 	}
 	printf(" \n");
 	cache_enable();
+
+	/*
+	 * Now that we know the size of the largest cache on this CPU,
+	 * re-color our pages.
+	 */
+	uvm_page_recolor(atop(bigcache));
 }
 
 /*
