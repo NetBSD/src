@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 1999/10/04 19:11:43 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.35 1999/12/16 20:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,10 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+#if !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+
 #include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 
@@ -74,6 +78,10 @@
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 #define	cpu_number()	0		/* XXX */
+
+#if defined(MULTIPROCESSOR)
+void	cpu_boot_secondary_processors __P((void));
+#endif
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
