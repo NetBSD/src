@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 
-#define EX_DEBUG 4	/* define to report infomation for debugging */
+/* #define EX_DEBUG 4 */	/* define to report infomation for debugging */
 
 #define EX_POWER_STATIC		/* do not use enable/disable functions */
 				/* I'm waiting elinkxl.c uses
@@ -225,7 +225,7 @@ ex_cardbus_attach(parent, self, aux)
   case CARDBUS_PRODUCT_3COM_3C575TX:
     psc->sc_cardtype = EX_3C575;
     command |= (CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE);
-    printf("\n 3Com 3C575TX (boomerang)");
+    printf(": 3Com 3C575TX (boomerang)\n");
     break;
   case CARDBUS_PRODUCT_3COM_3C575BTX:
     psc->sc_cardtype = EX_3C575B;
@@ -249,7 +249,7 @@ ex_cardbus_attach(parent, self, aux)
     /* Setup interrupt acknowledge hook */
     sc->intr_ack = ex_cardbus_intr_ack;
     
-    printf("\n 3Com 3C575BTX (cyclone)");
+    printf(": 3Com 3C575BTX (cyclone)\n");
     break;
   }
 
@@ -261,7 +261,8 @@ ex_cardbus_attach(parent, self, aux)
   bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
   if (CARDBUS_LATTIMER(bhlc) < 0x20) {
     /* at least the value of latency timer should 0x20. */
-    DPRINTF(("if_ex_cardbus: lattimer %x -> 0x20\n", CARDBUS_LATTIMER(bhlc)));
+    DPRINTF(("if_ex_cardbus: lattimer 0x%x -> 0x20\n",
+	     CARDBUS_LATTIMER(bhlc)));
     bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
     bhlc |= (0x20 << CARDBUS_LATTIMER_SHIFT);
     cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, bhlc);
