@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.24 2002/10/06 23:14:25 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.25 2002/10/07 16:28:24 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.24 2002/10/06 23:14:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.25 2002/10/07 16:28:24 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,6 +963,10 @@ auvia_trigger_output(void *addr, void *start, void *end,
 
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_PLAY_BASE + VIA8233_RP_DXS_LVOL, 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_PLAY_BASE + VIA8233_RP_DXS_RVOL, 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_PLAY_BASE + AUVIA_RP_CONTROL,
 			AUVIA_RPCTRL_START | AUVIA_RPCTRL_AUTOSTART |
 			AUVIA_RPCTRL_STOP  | AUVIA_RPCTRL_EOL | AUVIA_RPCTRL_FLAG);
@@ -1005,6 +1009,10 @@ auvia_trigger_input(void *addr, void *start, void *end,
 		ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
 
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_RECORD_BASE + VIA8233_RP_DXS_LVOL, 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_RECORD_BASE + VIA8233_RP_DXS_RVOL, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_RECORD_BASE + AUVIA_RP_CONTROL,
 			AUVIA_RPCTRL_START | AUVIA_RPCTRL_AUTOSTART |
