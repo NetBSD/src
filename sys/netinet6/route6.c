@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.5 2000/01/31 10:33:23 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.6 2000/02/06 12:49:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,7 +38,7 @@
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 
 #include <netinet/icmp6.h>

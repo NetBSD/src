@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.28 1999/12/15 06:16:05 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.29 2000/02/06 12:49:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,7 +104,7 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #ifdef NS
