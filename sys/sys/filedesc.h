@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.19 2000/03/23 05:16:12 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.19.4.1 2001/06/10 18:23:18 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -90,7 +90,6 @@ struct filedesc0 {
  * Per-process open flags.
  */
 #define	UF_EXCLOSE 	0x01		/* auto-close on exec */
-#define	UF_MAPPED 	0x02		/* mapped from device */
 
 /*
  * Storage required per open file descriptor.
