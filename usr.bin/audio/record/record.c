@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.8 1999/09/27 01:58:07 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.9 1999/11/08 10:21:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -376,5 +376,5 @@ usage()
 	    "-s sample rate\n\t"
 	    "-t recording time\n\t"
 	    "-v volume\n");
-	exit(0);
+	exit(EXIT_FAILURE);
 }
