@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.21 1996/10/10 14:34:37 jtc Exp $	*/
+/*	$NetBSD: stat.h,v 1.22 1997/10/06 01:41:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -204,6 +204,7 @@ mode_t	umask __P((mode_t));
 int	chflags __P((const char *, u_long));
 int	fchflags __P((int, u_long));
 int	fchmod __P((int, mode_t));
+int	lchmod __P((const char *, mode_t));
 int	lstat __P((const char *, struct stat *));
 #endif
 __END_DECLS
