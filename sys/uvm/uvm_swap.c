@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.71 2002/10/23 09:15:10 jdolecek Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.72 2002/10/27 16:53:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.71 2002/10/23 09:15:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.72 2002/10/27 16:53:20 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1384,7 +1384,7 @@ sw_reg_iodone(bp)
 	struct vndxfer *vnx = vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
-	int		s, resid;
+	int s, resid, error;
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
@@ -1401,12 +1401,11 @@ sw_reg_iodone(bp)
 	pbp->b_resid -= resid;
 	vnx->vx_pending--;
 
-	if (vbp->vb_buf.b_error) {
-		UVMHIST_LOG(pdhist, "  got error=%d !",
-		    vbp->vb_buf.b_error, 0, 0, 0);
-
+	if (vbp->vb_buf.b_flags & B_ERROR) {
 		/* pass error upward */
-		vnx->vx_error = vbp->vb_buf.b_error;
+		error = vbp->vb_buf.b_error ? vbp->vb_buf.b_error : EIO;
+		UVMHIST_LOG(pdhist, "  got error=%d !", error, 0, 0, 0);
+		vnx->vx_error = error;
 	}
 
 	/*
