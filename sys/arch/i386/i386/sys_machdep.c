@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56.2.3 2001/09/21 22:35:07 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56.2.4 2001/10/08 21:49:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -366,6 +366,7 @@ i386_set_ioperm(l, args, retval)
 }
 
 #ifdef MTRR
+int
 i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 	struct i386_get_mtrr_args ua;
