@@ -1,4 +1,4 @@
-/*	$NetBSD: dol.c,v 1.7 1995/03/21 09:02:45 cgd Exp $	*/
+/*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dol.c,v 1.7 1995/03/21 09:02:45 cgd Exp $";
+static char rcsid[] = "$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -889,7 +889,7 @@ heredoc(term)
 	 */
 	if (c < 0 || eq(lbuf, term)) {
 	    (void) write(0, short2str(obuf), (size_t) (BUFSIZ - ocnt));
-	    (void) lseek(0, 0l, L_SET);
+	    (void) lseek(0, (off_t) 0, SEEK_SET);
 	    return;
 	}
 
