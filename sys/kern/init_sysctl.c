@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.2 2003/12/06 02:52:29 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.3 2003/12/06 09:36:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
 #ifndef MULTIPROCESSOR
-#define sysctl_ncpus() (1)
+#define	sysctl_ncpus()	(1)
 #else /* MULTIPROCESSOR */
 #ifndef CPU_INFO_FOREACH
 #define CPU_INFO_ITERATOR int
@@ -134,6 +134,7 @@ static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
 static int sysctl_hw_cnmagic(SYSCTLFN_PROTO);
+static int sysctl_hw_ncpu(SYSCTLFN_PROTO);
 
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
 static void fill_lwp(struct lwp *l, struct kinfo_lwp *kl);
@@ -581,9 +582,9 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       CTLTYPE_STRING, "model", NULL,
 		       NULL, 0, cpu_model, 0,
 		       CTL_HW, HW_MODEL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(SYSCTL_PERMANENT,
 		       CTLTYPE_INT, "ncpu", NULL,
-		       NULL, sysctl_ncpus(), NULL, 0,
+		       sysctl_hw_ncpu, 0, NULL, 0,
 		       CTL_HW, HW_NCPU, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
 		       CTLTYPE_INT, "byteorder", NULL,
@@ -1962,6 +1963,20 @@ sysctl_hw_cnmagic(SYSCTLFN_ARGS)
 	
 	return (cn_set_magic(magic));
 }
+
+static int
+sysctl_hw_ncpu(SYSCTLFN_ARGS)
+{
+	int ncpu;
+	struct sysctlnode node;
+
+	ncpu = sysctl_ncpus();
+	node = *rnode;
+	node.sysctl_data = &ncpu;
+	
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 
 /*
  * ********************************************************************
