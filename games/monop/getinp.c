@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: getinp.c,v 1.13 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getinp.c,v 1.12 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: getinp.c,v 1.13 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,7 @@ inter:
 		}
 		*sp = '\0';
 		for (sp = buf; *sp; sp++)
-			if (isupper(*sp))
-				*sp = tolower(*sp);
+			*sp = tolower((unsigned char)*sp);
 		for (i = n_match = 0; list[i]; i++)
 			if (comp(list[i])) {
 				n_match++;
@@ -115,7 +114,7 @@ comp(s1)
 
 	if (buf[0] != '\0')
 		for (sp = buf, tsp = s1; *sp; ) {
-			c = isupper(*tsp) ? tolower(*tsp) : *tsp;
+			c = tolower((unsigned char)*tsp);
 			tsp++;
 			if (c != *sp++)
 				return 0;

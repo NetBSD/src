@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.13 2003/05/17 22:57:30 itojun Exp $	*/
+/*	$NetBSD: atrun.c,v 1.14 2004/11/05 21:38:40 dsl Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -57,7 +57,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.13 2003/05/17 22:57:30 itojun Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.14 2004/11/05 21:38:40 dsl Exp $");
 #endif
 
 static int debug = 0;
@@ -475,7 +475,7 @@ main(argc, argv)
 		run_time = (time_t) ctm * 60;
 
 		if ((S_IXUSR & buf.st_mode) && (run_time <= now)) {
-			if (isupper(queue) &&
+			if (isupper((unsigned char)queue) &&
 			    (strcmp(batch_name, dirent->d_name) > 0)) {
 				run_batch = 1;
 				(void)strlcpy(batch_name, dirent->d_name,
@@ -485,7 +485,7 @@ main(argc, argv)
 			}
 
 			/* The file is executable and old enough */
-			if (islower(queue))
+			if (islower((unsigned char)queue))
 				run_file(dirent->d_name, buf.st_uid, buf.st_gid);
 		}
 

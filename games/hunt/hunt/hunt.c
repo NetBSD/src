@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.22 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: hunt.c,v 1.23 2004/11/05 21:30:32 dsl Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.22 2004/02/08 22:23:50 jsm Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.23 2004/11/05 21:30:32 dsl Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -142,7 +142,7 @@ main(ac, av)
 			break;
 		case 't':
 			team = *optarg;
-			if (!isdigit(team)) {
+			if (!isdigit((unsigned char)team)) {
 				warnx("Team names must be numeric");
 				team = ' ';
 			}
@@ -1048,7 +1048,7 @@ env_init(enter_status)
 # endif
 			else if (strncmp(envp, "team=", s - envp + 1) == 0) {
 				team = *(s + 1);
-				if (!isdigit(team))
+				if (!isdigit((unsigned char)team))
 					team = ' ';
 				if ((s = strchr(envp, ',')) == NULL) {
 					*envp = '\0';
@@ -1111,7 +1111,7 @@ again:
 		goto again;
 	}
 	for (cp = name; *cp != '\0'; cp++)
-		if (!isprint(*cp)) {
+		if (!isprint((unsigned char)*cp)) {
 			name[0] = '\0';
 			printf("Illegal character in your code name.\n");
 			goto again;
