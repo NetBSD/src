@@ -1,4 +1,4 @@
-/*	$NetBSD: com7.c,v 1.8 2000/09/10 10:51:17 jsm Exp $	*/
+/*	$NetBSD: com7.c,v 1.9 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com7.c,v 1.8 2000/09/10 10:51:17 jsm Exp $");
+__RCSID("$NetBSD: com7.c,v 1.9 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,14 +77,12 @@ fighton:
 	case SMITE:
 		if (testbit(inven, TWO_HANDED))
 			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) - ucard(wear) - exhaustion;
+		else if (testbit(inven, SWORD) || testbit(inven, BROAD))
+			hurt = rnd(50) % (WEIGHT - carrying) - card(injuries, NUMOFINJURIES) - encumber - exhaustion;
+		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) || testbit(inven, CHAIN) || testbit(inven, MACE) || testbit(inven, HALBERD))
+			hurt = rnd(15) - card(injuries, NUMOFINJURIES) - exhaustion;
 		else
-			if (testbit(inven, SWORD) || testbit(inven, BROAD))
-				hurt = rnd(50) % (WEIGHT - carrying) - card(injuries, NUMOFINJURIES) - encumber - exhaustion;
-			else
-				if (testbit(inven, KNIFE) || testbit(inven, MALLET) || testbit(inven, CHAIN) || testbit(inven, MACE) || testbit(inven, HALBERD))
-					hurt = rnd(15) - card(injuries, NUMOFINJURIES) - exhaustion;
-				else
-					hurt = rnd(7) - encumber;
+			hurt = rnd(7) - encumber;
 		if (hurt < 5)
 			switch (rnd(3)) {
 
@@ -98,82 +96,78 @@ fighton:
 				puts("His filthy tunic hangs by one less thread.");
 				break;
 			}
-		else
-			if (hurt < 10) {
-				switch (rnd(3)) {
-				case 0:
-					puts("He's bleeding.");
-					break;
-				case 1:
-					puts("A trickle of blood runs down his face.");
-					break;
-				case 2:
-					puts("A huge purple bruise is forming on the side of his face.");
-					break;
-				}
-				lifeline++;
-			} else
-				if (hurt < 20) {
-					switch (rnd(3)) {
-					case 0:
-						puts("He staggers back quavering.");
-						break;
-					case 1:
-						puts("He jumps back with his hand over the wound.");
-						break;
-					case 2:
-						puts("His shirt falls open with a swath across the chest.");
-						break;
-					}
-					lifeline += 5;
-				} else
-					if (hurt < 30) {
-						switch (rnd(3)) {
-						case 0:
-							printf("A bloody gash opens up on his %s side.\n", (rnd(2) ? "left" : "right"));
-							break;
-						case 1:
-							puts("The steel bites home and scrapes along his ribs.");
-							break;
-						case 2:
-							puts("You pierce him, and his breath hisses through clenched teeth.");
-							break;
-						}
-						lifeline += 10;
-					} else
-						if (hurt < 40) {
-							switch (rnd(3)) {
-							case 0:
-								puts("You smite him to the ground.");
-								if (strength - lifeline > 20)
-									puts("But in a flurry of steel he regains his feet!");
-								break;
-							case 1:
-								puts("The force of your blow sends him to his knees.");
-								puts("His arm swings lifeless at his side.");
-								break;
-							case 2:
-								puts("Clutching his blood drenched shirt, he collapses stunned.");
-								break;
-							}
-							lifeline += 20;
-						} else {
-							switch (rnd(3)) {
-							case 0:
-								puts("His ribs crack under your powerful swing, flooding his lungs with blood.");
-								break;
-							case 1:
-								puts("You shatter his upheld arm in a spray of blood.  The blade continues deep");
-								puts("into his back, severing the spinal cord.");
-								lifeline += 25;
-								break;
-							case 2:
-								puts("With a mighty lunge the steel slides in, and gasping, he falls to the ground.");
-								lifeline += 25;
-								break;
-							}
-							lifeline += 30;
-						}
+		else if (hurt < 10) {
+			switch (rnd(3)) {
+			case 0:
+				puts("He's bleeding.");
+				break;
+			case 1:
+				puts("A trickle of blood runs down his face.");
+				break;
+			case 2:
+				puts("A huge purple bruise is forming on the side of his face.");
+				break;
+			}
+			lifeline++;
+		} else if (hurt < 20) {
+			switch (rnd(3)) {
+			case 0:
+				puts("He staggers back quavering.");
+				break;
+			case 1:
+				puts("He jumps back with his hand over the wound.");
+				break;
+			case 2:
+				puts("His shirt falls open with a swath across the chest.");
+				break;
+			}
+			lifeline += 5;
+		} else if (hurt < 30) {
+			switch (rnd(3)) {
+			case 0:
+				printf("A bloody gash opens up on his %s side.\n", (rnd(2) ? "left" : "right"));
+				break;
+			case 1:
+				puts("The steel bites home and scrapes along his ribs.");
+				break;
+			case 2:
+				puts("You pierce him, and his breath hisses through clenched teeth.");
+				break;
+			}
+			lifeline += 10;
+		} else if (hurt < 40) {
+			switch (rnd(3)) {
+			case 0:
+				puts("You smite him to the ground.");
+				if (strength - lifeline > 20)
+					puts("But in a flurry of steel he regains his feet!");
+				break;
+			case 1:
+				puts("The force of your blow sends him to his knees.");
+				puts("His arm swings lifeless at his side.");
+				break;
+			case 2:
+				puts("Clutching his blood drenched shirt, he collapses stunned.");
+				break;
+			}
+			lifeline += 20;
+		} else {
+			switch (rnd(3)) {
+			case 0:
+				puts("His ribs crack under your powerful swing, flooding his lungs with blood.");
+				break;
+			case 1:
+				puts("You shatter his upheld arm in a spray of blood.  The blade continues deep");
+				puts("into his back, severing the spinal cord.");
+				lifeline += 25;
+				break;
+			case 2:
+				puts("With a mighty lunge the steel slides in, and gasping, he falls to the ground.");
+				lifeline += 25;
+				break;
+			}
+			lifeline += 30;
+		}
 		break;
 
 	case BACK:
@@ -207,17 +201,14 @@ fighton:
 			puts("A victorious bellow echoes from the battlescene.");
 			if (back && position != back)
 				moveplayer(back, BACK);
+			else if (ahead && position != ahead)
+				moveplayer(ahead, AHEAD);
+			else if (left && position != left)
+				moveplayer(left, LEFT);
+			else if (right && position != right)
+				moveplayer(right, RIGHT);
 			else
-				if (ahead && position != ahead)
-					moveplayer(ahead, AHEAD);
-				else
-					if (left && position != left)
-						moveplayer(left, LEFT);
-					else
-						if (right && position != right)
-							moveplayer(right, RIGHT);
-						else
-							moveplayer(location[position].down, AHEAD);
+				moveplayer(location[position].down, AHEAD);
 			return (0);
 		}
 
