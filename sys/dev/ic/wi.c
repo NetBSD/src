@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.163 2004/07/02 21:22:18 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.164 2004/07/02 23:41:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.163 2004/07/02 21:22:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.164 2004/07/02 23:41:34 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.163 2004/07/02 21:22:18 dyoung Exp $");
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/route.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
@@ -2630,9 +2631,10 @@ wi_rssadapt_updatestats(void *arg)
 static int
 wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct wi_softc *sc = ic->ic_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	int buflen;
+	int buflen, linkstate = LINK_STATE_DOWN, s;
 	u_int16_t val;
 	struct wi_ssid ssid;
 	struct wi_macaddr bssid, old_bssid;
@@ -2654,6 +2656,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		return (*sc->sc_newstate)(ic, nstate, arg);
 
 	case IEEE80211_S_RUN:
+		linkstate = LINK_STATE_UP;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		buflen = IEEE80211_ADDR_LEN;
 		IEEE80211_ADDR_COPY(old_bssid.wi_mac_addr, ni->ni_bssid);
@@ -2702,6 +2705,12 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
+	if (ifp->if_link_state != linkstate) {
+		ifp->if_link_state = linkstate;
+		s = splnet();
+		rt_ifmsg(ifp);
+		splx(s);
+	}
 	ic->ic_state = nstate;
 	/* skip standard ieee80211 handling */
 	return 0;
