@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.13 2001/09/29 13:56:04 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.14 2001/10/23 13:09:43 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,10 @@ opl_attach(sc)
 	/* Set up voice table */
 	for (i = 0; i < OPL3_NVOICE; i++)
 		sc->voices[i] = voicetab[i];
+
+	/* Set up panpot */
+	for (i = 0; i < MIDI_MAX_CHANS; i++)
+		sc->pan[i] = OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
 
 	opl_reset(sc);
 
@@ -457,6 +461,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	u_int32_t block_fnum;
 	int mult;
 	int c_mult, m_mult;
+	u_int32_t chan;
 	u_int8_t chars0, chars1, ksl0, ksl1, fbc;
 	u_int8_t r20m, r20c, r40m, r40c, rA0, rB0;
 	u_int8_t vol0, vol1;
@@ -477,7 +482,8 @@ oplsyn_noteon(ms, voice, freq, vel)
 
 	v = &sc->voices[voice];
 	
-	p = &opl2_instrs[MS_GETPGM(ms, voice)];
+	chan = MS_GETCHAN(&ms->voices[voice]);
+	p = &opl2_instrs[ms->pgms[chan]];
 	v->patch = p;
 	opl_load_patch(sc, voice);
 
@@ -524,8 +530,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	fbc = p->ops[OO_FB_CONN];
 	if (sc->model == OPL_3) {
 		fbc &= ~OPL_STEREO_BITS;
-		/* XXX use pan */
-		fbc |= OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
+		fbc |= sc->pan[chan];
 	}
 	opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, voice, fbc);
 
@@ -570,14 +575,20 @@ oplsyn_keypressure(ms, voice, note, vel)
 }
 
 void
-oplsyn_ctlchange(ms, voice, parm, w14)
+oplsyn_ctlchange(ms, chan, parm, w14)
 	midisyn *ms;
-	u_int32_t voice, parm, w14;
+	u_int32_t chan, parm, w14;
 {
-#ifdef AUDIO_DEBUG
 	struct opl_softc *sc = ms->data;
+
 	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, voice));
-#endif
+	switch (parm) {
+	case MIDI_CTRL_PAN_MSB:
+		sc->pan[chan] =
+		    (w14 <= OPL_MIDI_CENTER_MAX ? OPL_VOICE_TO_LEFT : 0) |
+		    (w14 >= OPL_MIDI_CENTER_MIN ? OPL_VOICE_TO_RIGHT : 0);
+		break;
+	}
 }
 
 /* PROGRAM CHANGE midi event: */
