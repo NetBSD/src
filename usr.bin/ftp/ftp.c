@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.63 1999/09/22 03:01:54 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.64 1999/09/22 07:18:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.63 1999/09/22 03:01:54 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.64 1999/09/22 07:18:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,9 @@ sendrequest(cmd, local, remote, printnames)
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
 	volatile off_t hashbytes;
-	char *lmode, buf[BUFSIZ], *bufp;
+	char *lmode, *bufp;
+	static size_t bufsize;
+	static char *buf;
 	int oprogress;
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
@@ -792,17 +794,27 @@ sendrequest(cmd, local, remote, printnames)
 	dout = dataconn(lmode);
 	if (dout == NULL)
 		goto abort;
+
+	if (sndbuf_size > bufsize) {
+		if (buf)
+			(void)free(buf);
+		bufsize = sndbuf_size;
+		buf = xmalloc(bufsize);
+	}
+	if (debug)
+		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
+
 	progressmeter(-1);
 	oldintp = signal(SIGPIPE, SIG_IGN);
+
 	switch (curtype) {
 
 	case TYPE_I:
 	case TYPE_L:
 		while (1) {
 			struct timeval then, now, td;
-			off_t bufrem, bufsize;
+			off_t bufrem;
 
-			bufsize = sizeof(buf);
 			if (rate_put)
 				(void)gettimeofday(&then, NULL);
 			errno = c = d = 0;
@@ -1124,24 +1136,21 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		closefunc = fclose;
 	}
 
-		/*
-		 * XXX:	look at punting and just using sndbuf_* for
-		 *	the buffer size, since st.st_blksize ~= 512
-		 *	and BUFSIZ ~= 4K
-		 */
-	if (fstat(fileno(fout), &st) < 0 || st.st_blksize == 0)
-		st.st_blksize = BUFSIZ;
-	if (st.st_blksize > bufsize) {
-		if (buf)
-			(void)free(buf);
-		bufsize = st.st_blksize;
-		buf = xmalloc(bufsize);
-	}
-	if (!S_ISREG(st.st_mode)) {
+	if (fstat(fileno(fout), &st) != -1 && !S_ISREG(st.st_mode)) {
 		progress = 0;
 		preserve = 0;
 	}
+	if (rcvbuf_size > bufsize) {
+		if (buf)
+			(void)free(buf);
+		bufsize = rcvbuf_size;
+		buf = xmalloc(bufsize);
+	}
+	if (debug)
+		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
+
 	progressmeter(-1);
+
 	switch (curtype) {
 
 	case TYPE_I:
