@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.26 1994/04/06 00:23:31 mycroft Exp $
+ *      $Id: sd.c,v 1.27 1994/04/06 00:43:57 mycroft Exp $
  */
 
 /* 
@@ -805,14 +805,6 @@ sd_get_parms(sd, flags)
 		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
 		    b2tol(scsi_sense.pages.rigid_geometry.land_zone)));
 
-		if (!scsi_sense.pages.rigid_geometry.nheads ||
-		    !scsi_sense.pages.rigid_geometry.ncyl_2 ||
-		    !scsi_sense.blk_desc.blklen) {
-			printf("%s: mode sense (4) returned nonsense",
-			    sd->sc_dev.dv_xname);
-			goto fake_it;
-		}
-
 		/*
 		 * KLUDGE!! (for zone recorded disks)
 		 * give a number of sectors so that sec * trks * cyls
@@ -823,6 +815,13 @@ sd_get_parms(sd, flags)
 		disk_parms->cyls =
 		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2);
 		disk_parms->blksize = _3btol(scsi_sense.blk_desc.blklen);
+
+		if (!disk_parms->heads || !disk_parms->cyls ||
+		    !disk_parms->blksize) {
+			printf("%s: mode sense (4) returned nonsense",
+			    sd->sc_dev.dv_xname);
+			goto fake_it;
+		}
 
 		sectors = sd_size(sd, flags);
 		disk_parms->disksize = sectors;
