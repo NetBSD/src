@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 1997/10/17 02:03:17 christos Exp $
+	$NetBSD: syscalls.master,v 1.26 1997/10/19 18:45:04 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -197,11 +197,11 @@
 112	UNIMPL		priocntlsys
 113	STD		{ int svr4_sys_pathconf(char *path, int name); }
 114	UNIMPL		mincore
-115	STD		{ int svr4_sys_mmap(svr4_caddr_t addr, \
+115	STD		{ void *svr4_sys_mmap(void *addr, \
 			    svr4_size_t len, int prot, int flags, int fd, \
 			    svr4_off_t pos); }
-116	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
-117	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
+116	NOARGS		{ int sys_mprotect(void *addr, int len, int prot); }
+117	NOARGS		{ int sys_munmap(void *addr, int len); }
 118	STD		{ int svr4_sys_fpathconf(int fd, int name); }
 119	NOARGS		{ int sys_vfork(void); }
 120	NOARGS		{ int sys_fchdir(int fd); }
@@ -222,8 +222,8 @@
 129	STD		{ int svr4_sys_getrlimit(int which, \
 			    struct orlimit *rlp); }
 130	UNIMPL		lchown
-131	STD		{ int svr4_sys_memcntl(svr4_caddr_t addr, \
-			    svr4_size_t len, int cmd, svr4_caddr_t arg, \
+131	STD		{ int svr4_sys_memcntl(void * addr, \
+			    svr4_size_t len, int cmd, void * arg, \
 			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
@@ -320,7 +320,7 @@
 213	STD		{ int svr4_sys_getdents64(int fd, \
 			    struct svr4_dirent64 *dp, \
 			    int nbytes); }
-214	STD		{ int svr4_sys_mmap64(svr4_caddr_t addr, \
+214	STD		{ void *svr4_sys_mmap64(void *addr, \
 			    svr4_size_t len, int prot, int flags, int fd, \
 			    svr4_off64_t pos); }
 215	STD		{ int svr4_sys_stat64(char* path, \
