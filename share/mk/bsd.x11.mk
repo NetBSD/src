@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.37 2004/03/26 21:29:54 fredb Exp $
+#	$NetBSD: bsd.x11.mk,v 1.38 2004/03/27 20:16:16 fredb Exp $
 
 .include <bsd.init.mk>
 
@@ -83,12 +83,15 @@ PRINTX11VERSION=awk '/^\#define XF86_VERSION_MAJOR/ {major = $$3} \
 		     END { print "((("major") * 10000000) + (("minor") * 100000) + (("patch") * 1000) + "snap")"}' \
 		     ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h
 
-# Commandline to convert 'XCOMM' comments and 'XHASH' to #
+# Commandline to convert 'XCOMM' comments and 'XHASH' to '#', among other
+# things. Transformed from the "CppSedMagic" macro from "Imake.rules".
 #
-X11TOOL_UNXCOMM=	sed -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
-			    -e '/^XCOMM$$/s//\#/' \
-			    -e '/^XCOMM[^a-zA-Z0-9_]/s/^XCOMM/\#/' \
-			    -e '/^XHASH[ie]/s/^XHASH/\#/'
+X11TOOL_UNXCOMM=    sed	-e '/^\#  *[0-9][0-9]*  *.*$$/d' \
+			-e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
+			-e '/^[ 	]*XCOMM$$/s/XCOMM/\#/' \
+			-e '/^[ 	]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \
+			-e '/^[ 	]*XHASH/s/XHASH/\#/' \
+			-e '/\@\@$$/s/\@\@$$/\\/'
 
 
 CPPFLAGS+=		-DCSRG_BASED -DFUNCPROTO=15 -DNARROWPROTO
