@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.11 1998/02/03 18:49:08 perry Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.12 1998/02/16 11:27:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.11 1998/02/03 18:49:08 perry Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.12 1998/02/16 11:27:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,14 +77,14 @@ __strerror(num, buf, buflen)
 	if (errnum < sys_nerr) {
 #ifdef NLS
 		strncpy(buf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum]), NL_TEXTMAX); 
-		buf[NL_TEXTMAX - 1] = '\0';
+		    (char *)sys_errlist[errnum]), buflen); 
+		buf[buflen - 1] = '\0';
 #else
 		return(sys_errlist[errnum]);
 #endif
 	} else {
 #ifdef NLS
-		snprintf(buf, NL_TEXTMAX, 
+		snprintf(buf, buflen, 
 		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
 #else
 		snprintf(buf, buflen, UPREFIX, errnum);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.7 1997/07/13 20:24:25 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.8 1998/02/16 11:27:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strerror.c,v 1.7 1997/07/13 20:24:25 christos Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.8 1998/02/16 11:27:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,5 +58,5 @@ strerror(num)
 {
 	static char buf[NL_TEXTMAX];
 
-	return __strerror(num, buf, NL_TEXTMAX);
+	return __strerror(num, buf, sizeof(buf));
 }
