@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.90 2003/03/05 19:58:37 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.91 2003/03/06 09:24:41 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1892,3 +1892,17 @@ lib/libz/gzio.c                                 1.15
         Remove the HAS_* ifdefs which select [v]s{,n}printf.  Always choose 
         the n version.
         [groo, ticket #30]
+
+etc/services					1.63
+
+  Add ms-sql-{s,m} entries.
+
+usr.bin/tftp/tftp.c				1.16
+
+  Fix sendto return value check (incomplete change in 1.14).
+  Noted by Brian Ginsbach in PR 19842.
+
+sys/dev/scsipi/scsiconf.c			1.199 via patch
+
+  Add SDEV_NOLUNS quirk entry for "NEC     ", "CD-ROM DRIVE:502".
+  Fixes kern/18479 .
