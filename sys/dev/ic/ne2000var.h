@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.14 2003/10/22 00:12:36 christos Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.15 2004/03/17 23:47:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,23 +46,17 @@ struct ne2000_softc {
 	bus_space_tag_t sc_asict;	/* space tag for ASIC */
 	bus_space_handle_t sc_asich;	/* space handle for ASIC */
 
-	int sc_type;
+	enum {
+		NE2000_TYPE_UNKNOWN = 0,
+		NE2000_TYPE_NE1000,
+		NE2000_TYPE_NE2000,
+		NE2000_TYPE_DL10019,
+		NE2000_TYPE_DL10022,
+		NE2000_TYPE_AX88190,
+		NE2000_TYPE_AX88790
+	} sc_type;
+	int sc_useword;
 };
-
-/* sc_type */
-#define	NE2000_TYPE_NE1000	1
-#define	NE2000_TYPE_NE2000	2
-#define	NE2000_TYPE_DL10019	3
-#define	NE2000_TYPE_DL10022	4
-#define	NE2000_TYPE_AX88190	5
-#define	NE2000_TYPE_AX88790	6
-
-#define	NE2000_USE_WORD(sc)				\
-	(((sc)->sc_type == NE2000_TYPE_NE2000) ||	\
-	 ((sc)->sc_type == NE2000_TYPE_DL10019) ||	\
-	 ((sc)->sc_type == NE2000_TYPE_DL10022) ||	\
-	 ((sc)->sc_type == NE2000_TYPE_AX88190) ||	\
-	 ((sc)->sc_type == NE2000_TYPE_AX88790))
 
 int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *));
 int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
