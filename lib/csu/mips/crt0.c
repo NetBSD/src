@@ -1,3 +1,5 @@
+/*	$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $	*/
+
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -34,6 +36,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
 
 #ifdef ECOFF_COMPAT
 #undef DYNAMIC
@@ -115,6 +119,8 @@ extern unsigned char _etext, _eprol;
 
 void __start __P((u_long, void (*) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
+
+asm(".text; .align 4;  .globl _start; _start:");
 
 void
 __start(sp, cleanup, obj, ps_strings)
@@ -215,6 +221,14 @@ __start(sp, cleanup, obj, ps_strings)
 #endif
 	exit(main(argc, argv, environ));
 }
+
+/*
+ * RCSid. Place after __start for programs that assume start of text
+ *  is the entrypoint. (Only needed for old toolchains).
+ */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 
 static char *
