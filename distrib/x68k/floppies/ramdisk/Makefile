@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/26 23:51:13 bad Exp $
+#	$NetBSD: Makefile,v 1.3 1998/09/05 14:46:18 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,7 +61,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/05/03 16:42:37 ross Exp $
+#	$NetBSD: Makefile,v 1.3 1998/09/05 14:46:14 lukem Exp $
 
 RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
@@ -10,7 +10,7 @@ all:
 	cp ${KERNEL} netbsd
 	mdsetimage -v netbsd ${RAMDISK}
 
-clean cleandir:
+clean cleandir distclean:
 	rm -f netbsd
 
 .include <bsd.own.mk>

@@ -12,7 +12,7 @@ MADE:
 	cd $(TC_SRC_DIR) ; configure
 	cd $(TC_SRC_DIR) ; make BISON="yacc"
 	touch MADE
-clean cleandir::
+clean cleandir distclean::
 	cd $(TC_SRC_DIR) ; make -k distclean
 	rm -f MADE
 install:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/05/20 02:05:58 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:14 lukem Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -50,7 +50,7 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_CDEV}
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES}
 
 .include <bsd.own.mk>

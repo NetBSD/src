@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/05/29 17:58:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.11 1998/09/05 14:46:17 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -59,7 +59,7 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 install.sub : ${TOP}/../miniroot/install.sub
 	sed -e "/^VERSION=/s/=.*/=${REV}/" < $? > $@
 
-clean cleandir:
+clean cleandir distclean:
 	-rm -f a.out core *.core *.o
 	-rm -f ${CLEANFILES}
 
