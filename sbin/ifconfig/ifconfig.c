@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.35 1997/05/05 06:32:11 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.36 1997/05/30 05:44:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.35 1997/05/05 06:32:11 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.36 1997/05/30 05:44:11 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ struct	netrange	at_nr;		/* AppleTalk net range */
 char	name[30];
 int	flags, metric, mtu, setaddr, setipdst, doalias;
 int	clearaddr, s;
-int	newaddr = 1;
+int	newaddr = -1;
 int	nsellength = 1;
 int	af;
 int	dflag, mflag, lflag, uflag;
@@ -395,7 +395,7 @@ main(argc, argv)
 				warn("SIOCDIFADDR");
 		}
 	}
-	if (newaddr) {
+	if (newaddr > 0) {
 		(void) strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
@@ -535,6 +535,8 @@ setifaddr(addr, param)
 	 * and the flags may change when the address is set.
 	 */
 	setaddr++;
+	if (newaddr == -1)
+		newaddr = 1;
 	if (doalias == 0)
 		clearaddr = 1;
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
