@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.76 2004/06/06 07:04:27 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.77 2004/06/14 01:28:00 lukem Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -69,7 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
