@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.32 1997/04/01 03:07:19 scottr Exp $	*/
+/*	$NetBSD: hil.c,v 1.33 1997/04/01 19:29:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,11 +129,6 @@ void	printhilpollbuf __P((struct hil_softc *));
 void	printhilcmdbuf __P((struct hil_softc *));
 void	hilreport __P((struct hil_softc *));
 #endif /* DEBUG */
-
-#ifdef COMPAT_HPUX
-int	hpuxhilioctl __P((dev_t, int, caddr_t, int));
-int	hildevno __P((dev_t));
-#endif /* COMPAT_HPUX */
 
 void
 hilsoftinit(unit, hilbase)
