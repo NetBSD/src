@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2001/06/30 11:00:32 darcy Exp $
+# $NetBSD: GENERIC,v 1.24 2001/07/08 16:32:14 abs Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -71,10 +71,10 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-# 4.3BSD compatibility.
-#options 	COMPAT_43
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+#options 	COMPAT_43	# 4.3BSD compatibility.
 
 # Binary compatibility with previous versions of NetBSD.
 # None yet, since NetBSD/arm26 hasn't been released.

@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.1 2001/06/19 00:19:48 fvdl Exp $
+#	$NetBSD: SIMICS,v 1.2 2001/07/08 16:32:26 abs Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -77,6 +77,8 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
 
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
 # File systems
 file-system 	FFS		# UFS
 #file-system 	EXT2FS		# second extended file system (linux)
@@ -116,9 +118,7 @@ options 	INET6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2001/06/30 11:00:35 darcy Exp $
+#	$NetBSD: GENERIC,v 1.5 2001/07/08 16:32:21 abs Exp $
 #
 #	GENERIC -- Netwinder Architecture Kernel
 #
@@ -71,6 +71,7 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
@@ -86,7 +87,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

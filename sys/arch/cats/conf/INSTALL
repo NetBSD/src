@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 2001/06/20 22:14:34 chris Exp $
+#	$NetBSD: INSTALL,v 1.6 2001/07/08 16:32:16 abs Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -76,6 +76,7 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
@@ -90,7 +91,7 @@ options 	COMPAT_13	# NetBSD 1.3 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

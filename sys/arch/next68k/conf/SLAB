@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.5 2001/06/11 01:50:54 wiz Exp $
+# $NetBSD: SLAB,v 1.6 2001/07/08 16:32:22 abs Exp $
 #
 # deberg's development machine
 #
@@ -50,6 +50,8 @@ options         SWAPDEBUG
 #options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
@@ -98,9 +100,7 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # NeXT specific options
 options 	M68040

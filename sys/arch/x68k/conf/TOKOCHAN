@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.18 2001/05/06 01:54:20 hubertf Exp $
+#	$NetBSD: TOKOCHAN,v 1.19 2001/07/08 16:32:26 abs Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.18 $"
+#ident 		"TOKOCHAN-$Revision: 1.19 $"
 
 maxusers	10
 
@@ -138,6 +138,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -168,7 +169,6 @@ options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
@@ -185,6 +185,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NVNODE=1024	# 'make build' required huge vnode table
 options 	MSGBUFSIZE=32768 # increase msgbuf to preserve debug messages

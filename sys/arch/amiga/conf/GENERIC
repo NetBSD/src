@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.159 2001/06/30 11:00:31 darcy Exp $
+#	$NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -73,6 +73,7 @@ options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #endif
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -125,7 +126,7 @@ options 	NFSSERVER	# Network File System server side code
 #
 
 #ifndef INSTALL_CONFIGURATION
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0

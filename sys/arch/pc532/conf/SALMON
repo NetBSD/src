@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.12 2000/09/24 15:59:36 jdolecek Exp $
+#	$NetBSD: SALMON,v 1.13 2001/07/08 16:32:22 abs Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -17,12 +17,12 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	LKM			# loadable kernel modules
 
 # compatibility options
-options 	"COMPAT_43"		# 4.3 system calls
-options 	"TCP_COMPAT_42"		# 4.2 networking ABI
-options 	"COMPAT_09"		# NetBSD-0.9
-options 	"COMPAT_10"		# NetBSD-1.0
+options 	"COMPAT_43"	# 4.3 system calls
+options 	"COMPAT_09"	# NetBSD-0.9
+options 	"COMPAT_10"	# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # file system options
 file-system 	FFS			# Berkeley fast file system
@@ -45,6 +45,7 @@ options 	INET			# IP
 #options 	ISO			# OSI
 #options 	TPIP			# ?
 #options 	EON			# ?
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # pc532 specific options
 #options 	"CONSOLE_SPEED=B9600"	# default baud on the console (tty00)

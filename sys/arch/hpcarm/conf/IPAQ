@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.8 2001/07/08 03:33:42 ichiro Exp $
+#	$NetBSD: IPAQ,v 1.9 2001/07/08 16:32:17 abs Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -71,6 +71,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Compatibility options
 
@@ -81,7 +82,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

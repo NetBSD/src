@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.12 2001/06/11 01:50:55 wiz Exp $
+# $NetBSD: RAMDISK3X,v 1.13 2001/07/08 16:32:25 abs Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -29,7 +29,9 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 
 # Networking options
 options 	INET		# IP prototol stack support
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

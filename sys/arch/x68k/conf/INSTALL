@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39 2001/05/02 13:15:24 minoura Exp $
+#	$NetBSD: INSTALL,v 1.40 2001/07/08 16:32:26 abs Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.39 $"
+#ident 		"INSTALL-$Revision: 1.40 $"
 
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
@@ -147,6 +147,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 ## File systems
 file-system	FFS		# Berkeley Fast Filesystem
@@ -179,7 +180,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
@@ -196,6 +196,7 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 
 
