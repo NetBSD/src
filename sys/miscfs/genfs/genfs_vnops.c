@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.21 2000/11/27 08:39:45 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.22 2000/11/27 18:26:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1044,10 +1044,8 @@ genfs_putpages(v)
 		UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
 		error2 = biowait(mbp);
 	}
-	{
-		/* XXXUBC */
-		void softdep_pageiodone(struct buf *);
-		softdep_pageiodone(mbp);
+	if (bioops.io_pageiodone) {
+		(*bioops.io_pageiodone)(mbp);
 	}
 	s = splbio();
 	vwakeup(mbp);
