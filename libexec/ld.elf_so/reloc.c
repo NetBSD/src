@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.4 1999/01/10 18:18:56 christos Exp $	*/
+/*	$NetBSD: reloc.c,v 1.5 1999/01/11 23:12:16 thorpej Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -317,8 +317,8 @@ _rtld_relocate_nonplt_object(
 	const Obj_Entry *defobj;
 
 	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj, &defobj, true);
-	dbg("sym = %d, type = %d, offset = %p, addend = %p, contents = %p, symbol = %s",
-	    ELF_R_SYM(rela->r_info), ELF_R_TYPE(rela->r_info),
+	dbg("sym = %lu, type = %lu, offset = %p, addend = %p, contents = %p, symbol = %s",
+	    (u_long)ELF_R_SYM(rela->r_info), (u_long)ELF_R_TYPE(rela->r_info),
 	    (void *)rela->r_offset, (void *)rela->r_addend, (void *)*where,
 	    def ? defobj->strtab + def->st_name : "??");
 	_rtld_error("%s: Unsupported relocation type %d in non-PLT relocations\n",
@@ -434,10 +434,11 @@ _rtld_relocate_objects(
 	    return -1;
 	}
 
-	dbg(" relocating %s (%d/%d rel/rela, %d/%d plt rel/rela)",
+	dbg(" relocating %s (%ld/%ld rel/rela, %ld/%ld plt rel/rela)",
 	    obj->path,
-	    obj->rellim - obj->rel, obj->relalim - obj->rela,
-	    obj->pltrellim - obj->pltrel, obj->pltrelalim - obj->pltrela);
+	    (long)(obj->rellim - obj->rel), (long)(obj->relalim - obj->rela),
+	    (long)(obj->pltrellim - obj->pltrel),
+	    (long)(obj->pltrelalim - obj->pltrela));
 
 	if (obj->textrel) {
 	    /* There are relocations to the write-protected text segment. */
