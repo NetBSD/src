@@ -706,7 +706,7 @@ extern int legitimate_address_p();
 	   && GET_CODE (XEXP (ADDR, 1)) == REG);			\
        else if (CONSTANT_ADDRESS_P (XEXP (ADDR, 1))			\
 		&& (!(flag_pic || TARGET_HALFPIC)			\
-		    || GET_CODE (XEXP (ADDR, 0)) != SYMBOL_REF)		\
+		    || GET_CODE (XEXP (ADDR, 1)) != SYMBOL_REF)		\
 		&& GET_CODE (XEXP (ADDR, 0)) == REG);			\
        else goto LABEL; }}
 
