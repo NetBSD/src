@@ -1,9 +1,9 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.2G
+INSTALLATION NOTES for NetBSD/_MACH _VER
 
 
 
 Be sure to read _ALL_ of this document before you try to install
-NetBSD/MACHINE.
+NetBSD/_MACH.
 
 
 
@@ -61,7 +61,7 @@ Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
 for this trend to continue.
 
-NetBSD 1.2 also includes some refinement to the NetBSD binary emulation
+NetBSD _VER also includes some refinement to the NetBSD binary emulation
 system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
 Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
 making the emulation as accurate as possible.
@@ -122,12 +122,12 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-NetBSD 1.2 Release Contents:
+NetBSD _VER Release Contents:
 ------ --- ------- --------
 
-The NetBSD 1.2 release is organized in the following way:
+The NetBSD _VER release is organized in the following way:
 
-.../NetBSD-1.2/
+.../NetBSD-_VER/
 		BUGS			Known bugs list (incomplete
 					and out of date).
 
@@ -137,7 +137,7 @@ The NetBSD 1.2 release is organized in the following way:
 		LAST_MINUTE		Last minute changes.
 
 		MIRRORS			A list of sites that mirror
-					the NetBSD 1.2 distribution.
+					the NetBSD _VER distribution.
 
 		README.files		README describing the
 					distribution's contents.
@@ -152,8 +152,8 @@ The NetBSD 1.2 release is organized in the following way:
 					below.
 
 In addition to the files and directories listed above, there is one
-directory per architecture, for each of the architectures that NetBSD
-1.2 has a binary distribution for.  There are also
+directory per architecture, for each of the architectures for which
+NetBSD _VER has a binary distribution.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (e.g. those containing crypt(3)) that should not be
@@ -176,7 +176,7 @@ are as follows:
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc12	This set contains the sources to the NetBSD 1.2
+	ksrc12	This set contains the sources to the NetBSD _VER
 		kernel, config(8), and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
@@ -186,7 +186,7 @@ are as follows:
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src12	This set contains all of the NetBSD 1.2 sources which
+	src12	This set contains all of the NetBSD _VER sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
