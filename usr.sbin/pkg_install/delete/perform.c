@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.3 1999/09/13 22:49:43 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.4 1999/12/20 15:12:51 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.3 1999/09/13 22:49:43 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.4 1999/12/20 15:12:51 he Exp $");
 #endif
 #endif
 
@@ -83,6 +83,17 @@ static package_t Plist;
 
 static lpkg_head_t lpfindq;
 static lpkg_head_t lpdelq;
+
+/*
+ * Called to see if pkg is already installed as some other version, 
+ * note found version in "note".
+ */
+static int
+note_whats_installed(const char *found, char *note)
+{
+	(void) strcpy(note, found);
+	return 0;
+}
 
 static void
 sanity_check(char *pkg)
@@ -197,9 +208,17 @@ require_delete(char *home, int tryall)
 		}
 
 		/* look to see if package was already deleted */
-		if (!fexists(lpp->lp_name)) {
-			warnx("%s appears to have been deleted", lpp->lp_name);
-			continue;
+		if (ispkgpattern(lpp->lp_name)) {
+			char installed[FILENAME_MAX];
+			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
+				warnx("%s appears to have been deleted", lpp->lp_name);
+				continue;
+			}
+		} else {
+			if (!fexists(lpp->lp_name)) {
+				warnx("%s appears to have been deleted", lpp->lp_name);
+				continue;
+			}
 		}
 
 		/* return home for execution of command */
@@ -385,9 +404,28 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		rPlist.tail = NULL;
 
 		/* prepare for recursion */
-		chdir((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
-		chdir(lpp->lp_name);
-		sanity_check(lpp->lp_name);
+		chdir ((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+		if (ispkgpattern(lpp->lp_name)) {
+			char installed[FILENAME_MAX];
+			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
+				warnx("cannot remove dependency for pkg-pattern %s", lpp->lp_name);
+				fail = 1;
+				goto fail; 
+			}
+			if (chdir(installed) == -1) {
+				warnx("can't chdir to %s", installed);
+				fail = 1;
+				goto fail;
+			}
+			sanity_check(installed);
+		} else {
+			if (chdir(lpp->lp_name) == -1) {
+				warnx("cannot remove dependency from %s", lpp->lp_name);
+				fail = 1;
+				goto fail; 
+			}
+			sanity_check(lpp->lp_name);
+		}
 
 		cfile = fopen(CONTENTS_FNAME, "r");
 		if (!cfile) {
