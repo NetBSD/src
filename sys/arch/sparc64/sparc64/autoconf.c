@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2000/07/07 12:44:47 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.37 2000/07/20 16:29:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1070,7 +1070,8 @@ static struct {
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
 	{ "pci",	BUSCLASS_PCI,		"simba" },
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
-	{ "disk",	BUSCLASS_NONE,		"wd" },
+	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
+	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
 };
 
 static char *
