@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.191 2004/04/05 10:44:09 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.192 2004/05/06 21:58:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.191 2004/04/05 10:44:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.192 2004/05/06 21:58:17 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -917,6 +917,20 @@ nfs_lookup(v)
 		*vpp = NULLVP;
 	}
 dorpc:
+	/*
+	 * because nfsv3 has the same CREATE semantics as ours,
+	 * we don't have to perform LOOKUPs beforehand.
+	 *
+	 * XXX ideally we can do the same for nfsv2 in the case of !O_EXCL.
+	 * XXX although we have no way to know if O_EXCL is requested or not.
+	 */
+
+	if (v3 && cnp->cn_nameiop == CREATE && (flags & ISLASTCN)) {
+		KASSERT(lockparent);
+		cnp->cn_flags |= SAVENAME;
+		return (EJUSTRETURN);
+	}
+
 	error = 0;
 	newvp = NULLVP;
 	nfsstats.lookupcache_misses++;
