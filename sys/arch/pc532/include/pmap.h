@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1996/12/23 08:37:38 matthias Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1997/03/20 12:02:42 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -80,12 +80,6 @@
 extern pt_entry_t	PTmap[], APTmap[];
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde;
 extern pt_entry_t	*Sysmap;
-
-extern int	PTDpaddr;	/* physical address of kernel PTD */
-
-void pmap_bootstrap __P((vm_offset_t start));
-boolean_t pmap_testbit __P((vm_offset_t, int));
-void pmap_changebit __P((vm_offset_t, int, int));
 #endif
 
 /*
@@ -161,6 +155,13 @@ struct pv_entry		*pv_table;	/* array of entries, one per page */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
+struct pcb;
+void pmap_activate __P((pmap_t, struct pcb *));
+void pmap_bootstrap __P((vm_offset_t start));
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+boolean_t pmap_testbit __P((vm_offset_t, int));
+void pmap_changebit __P((vm_offset_t, int, int));
+
 vm_offset_t reserve_dumppages __P((vm_offset_t));
 
 static __inline void
@@ -198,9 +199,6 @@ pmap_phys_address(int ppn)
 {
 	return ns532_ptob(ppn);
 }
-
-struct pcb;
-void pmap_activate __P((pmap_t, struct pcb *));
 
 #endif	/* _KERNEL */
 
