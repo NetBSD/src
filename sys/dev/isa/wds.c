@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.43 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.44 2001/07/18 20:52:48 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1157,7 +1157,7 @@ wds_scsipi_request(chan, req, arg)
 
 		/* Zero out the command structure. */
 		memset(&scb->cmd, 0, sizeof scb->cmd);
-		bcopy(xs->cmd, &scb->cmd.scb,
+		memcpy(&scb->cmd.scb, xs->cmd,
 		    xs->cmdlen < 12 ? xs->cmdlen : 12);
 
 		/* Set up some of the command fields. */
