@@ -1,4 +1,4 @@
-.\"	$NetBSD: secure_path.3,v 1.5 2001/04/09 12:11:07 wiz Exp $
+.\"	$NetBSD: secure_path.3,v 1.6 2001/08/20 14:26:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -48,10 +48,15 @@
 The
 .Fn secure_path
 function takes a path name and returns zero if the referenced file is
-``secure'', non-zero if not.  Any ``insecurity'', other than failure to access
+.Dq secure ,
+non-zero if not.  Any
+.Dq insecurity ,
+other than failure to access
 the referenced file, will be logged to the system log.
 .Pp
-To be ``secure'', the referenced file must exist, be a regular file (and not a
+To be
+.Dq secure ,
+the referenced file must exist, be a regular file (and not a
 directory), owned by the super-user, and writable only by the super-user.
 .Sh SEE ALSO
 .Xr openlog 3
