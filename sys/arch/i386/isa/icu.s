@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.24 1994/03/08 13:24:56 mycroft Exp $
+ *	$Id: icu.s,v 1.25 1994/03/09 07:58:40 mycroft Exp $
  */
 
 /*
@@ -45,7 +45,6 @@
  */
 
 #include <net/netisr.h>
-#include <machine/psl.h>
 
 /*
  * All spl levels include astmask; this forces cpl to be non-zero when
@@ -60,31 +59,36 @@
 #endif
 
 	.data
+	.globl	_cpl
+_cpl:
+	.long	-1		# current priority (all off)
+	.globl	_highmask
+_highmask:
+	.long	-1		# XXX needed for braindead config
 	.globl  _ipending
 _ipending:
 	.long   0
 	.globl	_imen
 _imen:
 	.long	0xffff		# interrupt mask enable (all off)
-
-#if 1 /* XXXX temporary */
-	.globl	_imask
-	.globl	_astmask
-_astmask:
-	.long	0
-	.globl	_netmask
-_netmask:
-	.long	0
+	.globl	_clockmask
+_clockmask:
+	.long	1
 	.globl	_ttymask
 _ttymask:
 	.long	0
 	.globl	_biomask
 _biomask:
 	.long	0
-	.globl	_clockmask
-_clockmask:
-	.long	1
-#endif
+	.globl	_netmask
+_netmask:
+	.long	0
+	.globl	_impmask
+_impmask:
+	.long	0
+	.globl	_astmask
+_astmask:
+	.long	0x80000000
 
 vec:
 	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
@@ -93,6 +97,16 @@ vec:
 	.long	INTRLOCAL(vec9), INTRLOCAL(vec10), INTRLOCAL(vec11)
 	.long	INTRLOCAL(vec12), INTRLOCAL(vec13), INTRLOCAL(vec14)
 	.long	INTRLOCAL(vec15)
+
+#define	GENSPL(name, mask, event) \
+	.globl  _spl/**/name ; \
+	ALIGN_TEXT ; \
+_spl/**/name: ; \
+	movl	_cpl,%eax ; \
+	movl	%eax,%edx ; \
+	orl	mask,%edx ; \
+	movl	%edx,_cpl ; \
+	ret
 
 #define	FASTSPL(mask) \
 	movl	mask,_cpl
@@ -220,6 +234,14 @@ test_ast:
  *	-- h/w masks for currently active or unused interrupts (imen)
  *	-- ipending = active interrupts currently masked by cpl
  */
+
+	GENSPL(tty, _ttymask, 18)
+	GENSPL(bio, _biomask, 12)
+	GENSPL(net, _netmask, 16)
+	GENSPL(imp, _impmask, 15)
+	GENSPL(high, $-1, 14)
+	GENSPL(clock, _clockmask, 13)
+	GENSPL(softclock, _astmask, 17)
 
 	.globl _spl0
 	ALIGN_TEXT
