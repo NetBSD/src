@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.60 2003/05/03 18:10:43 wiz Exp $ */
+/*	$NetBSD: fd.c,v 1.61 2003/05/10 23:12:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.60 2003/05/03 18:10:43 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2003/05/10 23:12:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,7 +664,7 @@ fdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-	if (bounds_check_with_label(bp, lp, sc->wlabel) <= 0)
+	if (bounds_check_with_label(&sc->dkdev, bp, sc->wlabel) <= 0)
 		goto done;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.81 2003/05/02 08:45:24 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.82 2003/05/10 23:12:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -492,6 +492,8 @@ struct partinfo {
 
 #ifdef _KERNEL
 
+struct disk;
+
 void	 diskerr __P((const struct buf *, const char *, const char *, int,
 	    int, const struct disklabel *));
 u_int	 dkcksum __P((struct disklabel *));
@@ -501,7 +503,7 @@ const char *readdisklabel __P((dev_t, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
-int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+int	 bounds_check_with_label __P((struct disk *, struct buf *, int));
 int	 bounds_check_with_mediasize __P((struct buf *, int, u_int64_t));
 #endif
 #endif /* _LOCORE */
