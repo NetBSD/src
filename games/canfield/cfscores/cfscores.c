@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.4 1997/10/10 12:26:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $";
+__RCSID("$NetBSD: cfscores.c,v 1.4 1997/10/10 12:26:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <fcntl.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 struct betinfo {
@@ -64,11 +67,15 @@ struct betinfo {
 
 int dbfd;
 
+int	main __P((int, char *[]));
+void	printuser __P((struct passwd *, int));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct passwd *pw;
+	struct passwd *pw;
 	int uid;
 
 	if (argc > 2) {
@@ -108,8 +115,9 @@ main(argc, argv)
 /*
  * print out info for specified password entry
  */
+void
 printuser(pw, printfail)
-	register struct passwd *pw;
+	struct passwd *pw;
 	int printfail;
 {
 	struct betinfo total;
@@ -141,14 +149,14 @@ printuser(pw, printfail)
 		printf("* Losses for %-10s*\n", pw->pw_name);
 	printf("*======================*\n");
 	printf("|Costs           Total |\n");
-	printf("| Hands       %8d |\n", total.hand);
-	printf("| Inspections %8d |\n", total.inspection);
-	printf("| Games       %8d |\n", total.game);
-	printf("| Runs        %8d |\n", total.runs);
-	printf("| Information %8d |\n", total.information);
-	printf("| Think time  %8d |\n", total.thinktime);
-	printf("|Total Costs  %8d |\n", total.wins - total.worth);
-	printf("|Winnings     %8d |\n", total.wins);
-	printf("|Net Worth    %8d |\n", total.worth);
+	printf("| Hands       %8ld |\n", total.hand);
+	printf("| Inspections %8ld |\n", total.inspection);
+	printf("| Games       %8ld |\n", total.game);
+	printf("| Runs        %8ld |\n", total.runs);
+	printf("| Information %8ld |\n", total.information);
+	printf("| Think time  %8ld |\n", total.thinktime);
+	printf("|Total Costs  %8ld |\n", total.wins - total.worth);
+	printf("|Winnings     %8ld |\n", total.wins);
+	printf("|Net Worth    %8ld |\n", total.worth);
 	printf("*----------------------*\n\n");
 }
