@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.210 2004/07/01 10:03:30 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.211 2004/09/13 20:02:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.210 2004/07/01 10:03:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.211 2004/09/13 20:02:20 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -692,6 +692,8 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct proc *p, int flags,
 		goto done;
 	}
 
+	/* Get the filesystem stats now */
+	memset(sp, 0, sizeof(*sp));
 	if ((error = VFS_STATVFS(mp, sp, p)) != 0) {
 		return error;
 	}
