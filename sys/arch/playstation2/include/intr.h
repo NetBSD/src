@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/11/14 18:15:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/01/02 12:36:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,6 +155,10 @@ extern int splraise(int);
 extern void splset(int);
 extern void spl0(void);
 extern int _splset(int);
+
+/* R5900 EI/DI instruction */
+extern int _intr_suspend(void);
+extern void _intr_resume(int);
 
 #endif /* _KERNEL */
 #endif /* _PLAYSTATION2_INTR_H_ */

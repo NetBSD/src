@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.2 2001/11/14 18:15:20 thorpej Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.3 2002/01/02 12:36:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
 /* R5900 has Enable Interrupt Enable bit. */
 #undef	MIPS_SR_INT_IE
 #define MIPS_SR_INT_IE			0x00010001	/* EIE + IE */
@@ -71,8 +72,4 @@
 #define dmtc0	mtc0
 #define dmfc0	mfc0
 
-/* R5900 EI/DI instruction */
-#ifndef _LOCORE
-extern int _intr_suspend(void);
-extern void _intr_resume(int);
-#endif /* !_LOCORE */
+#endif /* _KERNEL */
