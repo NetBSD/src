@@ -76,6 +76,7 @@
 ./sbin/mount_cd9660
 ./sbin/mount_ext2fs
 ./sbin/mount_fdesc
+./sbin/mount_filecore
 ./sbin/mount_ffs
 ./sbin/mount_kernfs
 ./sbin/mount_lfs
