@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.77 1994/07/04 23:20:44 mycroft Exp $
+ *	$Id: locore.s,v 1.78 1994/08/03 06:22:26 mycroft Exp $
  */
 
 /*
@@ -530,7 +530,7 @@ reloc_gdt:
 	movl	__udatasel,%ecx
 	pushl	%ecx			# user ss
 	pushl	$0xdeadbeef		# user esp (set by execve)
-	pushl	$(PSL_USERSET | PSL_IOPL)	# user eflags
+	pushl	$PSL_USERSET		# user eflags
 	pushl	%eax			# user cs
 	pushl	$0xdeadbeef		# user eip (set by execve)
 	subl	$40,%esp		# error code, trap number, registers
