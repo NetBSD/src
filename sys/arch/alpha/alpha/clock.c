@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1996/03/17 01:06:18 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1996/04/12 02:05:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,11 +68,11 @@ static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
 
 struct cfattach clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
+	sizeof(struct clock_softc), clockmatch, clockattach,
 };
 
 struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
+	NULL, "clock", DV_DULL,
 };
 
 #if defined(DEC_3000_500) || defined(DEC_3000_300) || \
@@ -107,19 +107,24 @@ clockmatch(parent, cfdata, aux)
 	} else
 #endif
 #if NISA
-	if ((parent->dv_cfdata->cf_driver == &isa_cd)) {
-		struct isadev_attach_args *ida = aux;
+    {
+	extern struct cfdriver isa_cd;
 
-		/* XXX XXX XXX */
-		if (ida->ida_port[0] != 0x70 && ida->ida_port[0] != -1)
+	if ((parent->dv_cfdata->cf_driver == &isa_cd)) {
+		struct isa_attach_args *ia = aux;
+
+		if (ia->ia_iobase != 0x70 && ia->ia_iobase != -1)
 			return (0);
 
-		ida->ida_port[0] = 0x70;		/* XXX */
-		ida->ida_nports[0] = 2;			/* XXX */
-		ida->ida_iosiz[0] = 0;
+		ia->ia_iobase = 0x70;		/* XXX */
+		ia->ia_iosize = 2;		/* XXX */
+		ia->ia_msize = 0;
 	} else
 #endif
 		return (0);
+#if NISA
+    }
+#endif
 
 	return (1);
 }
@@ -330,16 +335,4 @@ resettodr()
 	ct.sec = t % SECMIN;
 
 	(*csc->sc_set)(csc, &ct);
-}
-
-/*
- * Wait "n" microseconds.  This doesn't belong here.  XXX.
- */
-delay(n)
-	int n;
-{
-	register long N = cycles_per_usec * (n);
-
-	while (N > 0)
-		N -= 3;
 }
