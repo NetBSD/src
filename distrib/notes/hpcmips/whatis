@@ -1,11 +1,12 @@
-.\"	$NetBSD: whatis,v 1.8 2002/06/29 22:37:40 lukem Exp $
+.\"	$NetBSD: whatis,v 1.9 2002/07/08 14:42:48 lukem Exp $
 .
-This is the second official release of
+This is the second formal release of
 .Nx*M .
 .Pp
 .Nx*M
 brings the
-NetBSD operating system to
+.Nx
+operating system to
 MIPS based
 .Tn "Windows CE"
 PDA machines.
