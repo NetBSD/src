@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.1 2001/06/11 17:44:38 matt Exp $
+#	$NetBSD: Makefile.arm,v 1.2 2001/06/11 17:50:34 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -187,6 +187,7 @@ depend: .depend
 
 dependall: depend all
 
+.if !exists(include)
 ${OBJS} assym.h .depend: include-dir
 include-dir:
 	@rm -rf include
@@ -197,6 +198,7 @@ include-dir:
 .else
 	@ln -s $S/arch/${TARGET_MACHINE}/include include/arm/${TARGET_MACHINE}
 	@ln -s $S/arch/arm/include include/machine
+.endif
 .endif
 
 # depend on root or device configuration
