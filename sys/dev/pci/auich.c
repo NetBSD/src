@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.58 2004/01/13 14:42:50 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.59 2004/07/09 01:02:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.58 2004/01/13 14:42:50 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.59 2004/07/09 01:02:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,13 +642,6 @@ auich_open(void *v, int flags)
 void
 auich_close(void *v)
 {
-	struct auich_softc *sc = v;
-
-	auich_halt_output(sc);
-	auich_halt_input(sc);
-
-	sc->sc_pintr = NULL;
-	sc->sc_rintr = NULL;
 }
 
 int
