@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/29 02:14:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2005/02/24 14:54:02 christos Exp $
 
 .include "../Makefile.serverlib"
-
 .include <bsd.own.mk>
-
 LIB=	os
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/os
 .PATH:	${X11SRCDIR.xc}/lib/xtrans
@@ -53,6 +51,9 @@ CPPFLAGS.utils.c=	${XDMCP_DEFINES} ${X11FLAGS.EXTENSION}
 CPPFLAGS.xdmauth.c=	${XDMCP_DEFINES}
 COPTS.xdmauth.c=	-Wno-error	# XXX
 CPPFLAGS.xdmcp.c=	${XDMCP_DEFINES} -DBSD44SOCKETS
+.if (${USE_PAM} != "no")
+CPPFLAGS.utils.c=	${XDMCP_DEFINES} -DUSE_PAM
+.endif
 
 BUILDOBJS=		libc_wrapper.o
 .PATH:			${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared
