@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.91 2002/03/24 17:16:19 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.92 2002/04/02 09:48:27 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.91 2002/03/24 17:16:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.92 2002/04/02 09:48:27 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2175,6 +2175,7 @@ again:
 			printf("%s: DMA error; resetting\n",
 			    sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 1);
+			return 1;
 		}
 		/* If DMA active here, then go back to work... */
 		if (NCRDMA_ISACTIVE(sc))
