@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.18 2001/06/19 13:42:10 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.19 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -356,7 +356,7 @@ header file.
 .Pp
 Many common devices are used on multiple architectures, but are accessed
 differently on each because of architectural constraints.
-For instance, a device which is mapped in one systems's I/O space may be
+For instance, a device which is mapped in one system's I/O space may be
 mapped in memory space on a second system.  On a third system, architectural
 limitations might change the way registers need to be accessed (e.g.
 creating a non-linear register space).

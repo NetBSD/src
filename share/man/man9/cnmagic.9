@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.4 2001/06/12 15:17:13 wiz Exp $
+.\" $NetBSD: cnmagic.9,v 1.5 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -66,7 +66,7 @@ The
 .Nx
 console magic key sequence management framework is designed to provide
 flexible methods to set, change, and detect magic key sequences on console
-devices and break into the debugger or rom monitor with a minimum of interrupt
+devices and break into the debugger or ROM monitor with a minimum of interrupt
 latency.
 .Pp
 Drivers that generate console input should make use of these routines.  A
@@ -87,14 +87,14 @@ magic sequence with
 to any arbitrary string.  Whenever the driver receives input,
 it should call
 .Fn cn_check_magic
-to process the data and determine wheter the magic sequence has
+to process the data and determine whether the magic sequence has
 been hit.
 .Pp
 The magic key sequence can be accessed through the
 .Va hw.cnmagic
 .Ic sysctl
 variable.  This is the raw data and may be keycodes rather than
-processed characters, depending on the console deivce.
+processed characters, depending on the console device.
 .Pp
 Here is a description of the console magic interface:
 .Bl -tag -width indent
@@ -102,13 +102,13 @@ Here is a description of the console magic interface:
 .Pp
 Initialize the console magic state pointed to by
 .Fa cnm
-to a useable state.
+to a usable state.
 .It Fn "void cnm_trap"
 .Pp
-Trap into the kernel debugger or rom monitor.  By default this
+Trap into the kernel debugger or ROM monitor.  By default this
 routine is defined to be
 .Fn console_debugger
-but can be overriden in MI header files.
+but can be overridden in MI header files.
 .It Fn "int cn_isconsole" "dev_t dev"
 .Pp
 Determine whether a given
@@ -117,10 +117,10 @@ is the system console.  This macro tests to see if
 .Fa dev
 is the same as
 .Va cn_tab->cn_dev
-but can be overriden in MI header files.
+but can be overridden in MI header files.
 .It Fn "void cn_check_magic" "dev_t dev" "int k" "cnm_state_t *cnms"
 .Pp
-All input shoult be passed through
+All input should be passed through
 .Fn cn_check_magic
 so the state machine remains in a consistent state.
 .Fn cn_check_magic
