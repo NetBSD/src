@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.43 1998/04/29 20:43:30 matt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.44 1998/04/30 17:55:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -383,7 +383,8 @@ struct	tcpstat {
 #define	TCPCTL_SACK		10	/* RFC2018 selective acknowledgement */
 #define	TCPCTL_WSCALE		11	/* RFC1323 window scaling */
 #define	TCPCTL_TSTAMP		12	/* RFC1323 timestamps */
-#define	TCPCTL_MAXID		13
+#define	TCPCTL_COMPAT_42	13	/* 4.2BSD TCP bug work-arounds */
+#define	TCPCTL_MAXID		14
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -399,6 +400,7 @@ struct	tcpstat {
 	{ "sack", CTLTYPE_INT }, \
 	{ "win_scale", CTLTYPE_INT }, \
 	{ "timestamps", CTLTYPE_INT }, \
+	{ "compat_42", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -436,6 +438,7 @@ extern	u_long syn_cache_count;
 	&tcp_do_sack, \
 	&tcp_do_win_scale, \
 	&tcp_do_timestamps, \
+	&tcp_compat_42, \
 }
 
 int	 tcp_attach __P((struct socket *));
