@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.16 2002/09/11 05:36:27 itojun Exp $	*/
+/*	$NetBSD: if_media.c,v 1.17 2002/11/07 08:00:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.16 2002/09/11 05:36:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.17 2002/11/07 08:00:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,8 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	case  SIOCSIFMEDIA:
 	{
 		struct ifmedia_entry *oldentry;
-		int oldmedia;
-		int newmedia = ifr->ifr_media;
+		u_int oldmedia;
+		u_int newmedia = ifr->ifr_media;
 
 		match = ifmedia_match(ifm, newmedia, ifm->ifm_mask);
 		if (match == NULL) {
@@ -367,8 +367,8 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 struct ifmedia_entry *
 ifmedia_match(ifm, target, mask)
 	struct ifmedia *ifm; 
-	int target;
-	int mask;
+	u_int target;
+	u_int mask;
 {
 	struct ifmedia_entry *match, *next;
 
@@ -397,7 +397,7 @@ ifmedia_match(ifm, target, mask)
 void
 ifmedia_delete_instance(ifm, inst)
 	struct ifmedia *ifm;
-	int inst;
+	u_int inst;
 {
 	struct ifmedia_entry *ife, *nife;
 
