@@ -1,28 +1,30 @@
-#	$NetBSD: VME167,v 1.2 1999/02/14 17:54:27 scw Exp $
+#	$NetBSD: VME167,v 1.3 1999/02/20 00:16:38 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at least one
 options 	MVME167
+
+# Needed on m68040 boards to emulate some missing FP instructions
 options 	FPSP
 
-maxusers	2
+maxusers	16
 
-options 	DIAGNOSTIC, DEBUG
 options 	DDB
+options 	DIAGNOSTIC, DEBUG
 
 #options 	SYSVSHM
 options 	KTRACE
 options 	COMPAT_43
 
-#file-system 	FFS
+file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
 #file-system 	MFS
 #file-system	MSDOSFS
 #file-system	UNION
 
-#options 	NFSSERVER
+options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
@@ -33,7 +35,7 @@ options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        TPIP
 #options        EON
 
-options 	COMPAT_13
+options 	COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 
@@ -45,10 +47,10 @@ config netbsd		root on ? type ?
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 
-#pseudo-device	sl
-#pseudo-device	ppp 2
+pseudo-device	sl
+pseudo-device	ppp 2
 pseudo-device	loop
-#pseudo-device	bpfilter
+pseudo-device	bpfilter
 pseudo-device	pty
 pseudo-device	vnd 2
 
@@ -58,14 +60,22 @@ pcctwo0		at mainbus0
 clock0		at pcctwo? ipl 5
 clmpcc0		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
-#ncrsc0		at pcctwo? ipl 2
+ncrsc0		at pcctwo? ipl 2
 lpt0		at pcctwo? ipl 1
 
+# VMEbus Support
+vmechip0 	at mainbus0
+vmes0 		at vmechip0
+vmel0 		at vmechip0
 
-#scsibus*	at ncrsc?
+# example only - A24D16 device
+#foo0 		at vmes0 atype 24 addr 0x0ef00 ipl 3 vec 0x80
 
-#sd*		at scsibus? target ? lun ?
-#st*		at scsibus? target ? lun ?
+# SCSI Bus Support
+scsibus*	at ncrsc?
+
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?
 #cd*		at scsibus? target ? lun ?
 #ch*		at scsibus? target ? lun ?
 #ss*		at scsibus? target ? lun ?	# SCSI scanners
