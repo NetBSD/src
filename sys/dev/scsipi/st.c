@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.103 1998/09/02 02:18:48 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.104 1998/09/11 20:10:15 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,19 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
  	{{T_SEQUENTIAL, T_REMOV,
  	 "TANDBERG", " TDC 3800       ", ""},     {0, 0, {
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
+		{0, 0, QIC_525},			/* minor 4-7 */
+		{0, 0, QIC_150},			/* minor 8-11 */
+		{0, 0, QIC_120}				/* minor 12-15 */
+	}}},
+	/*
+	 * lacking a manual for the 4200, it's not clear what the
+	 * specific density codes should be- the device is a 2.5GB
+	 * capable QIC drive, those density codes aren't readily
+	 * availabel. The 'default' will just have to do.
+	 */
+ 	{{T_SEQUENTIAL, T_REMOV,
+ 	 "TANDBERG", " TDC 4200       ", ""},     {0, 0, {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
 		{0, 0, QIC_525},			/* minor 4-7 */
 		{0, 0, QIC_150},			/* minor 8-11 */
