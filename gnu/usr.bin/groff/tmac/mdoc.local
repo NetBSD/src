@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.13 2004/02/29 18:47:12 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.14 2004/03/29 11:02:47 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,7 +133,7 @@
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
 .
 .\" Default .Os value
-.ds doc-operating-system NetBSD\~1.6
+.ds doc-operating-system NetBSD\~2.0
 .\" Other known versions, not yet in groff distribution
 .ds doc-operating-system-NetBSD-1.4.1  1.4.1
 .ds doc-operating-system-NetBSD-1.4.2  1.4.2
@@ -144,6 +144,7 @@
 .ds doc-operating-system-NetBSD-1.6.1  1.6.1
 .ds doc-operating-system-NetBSD-1.6.2  1.6.2
 .ds doc-operating-system-NetBSD-2.0    2.0
+.ds doc-operating-system-NetBSD-2.1    2.1
 .ds doc-operating-system-FreeBSD-5.2   5.2
 .ds doc-str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
 .as doc-str-At-V.3 " \*[Tn-font-size]UNIX\*[str-At]
