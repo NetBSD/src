@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.11 2002/05/26 22:41:21 wiz Exp $	*/
+/*	$NetBSD: subr.c,v 1.12 2003/07/14 09:41:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.11 2002/05/26 22:41:21 wiz Exp $");
+__RCSID("$NetBSD: subr.c,v 1.12 2003/07/14 09:41:27 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -86,8 +86,8 @@ char *
 strsave(char *instring)
 {
 	char	*outstring;
-	(void)strcpy(outstring = (char *)Calloc(1, strlen(instring) + 1),
-		instring);
+
+	outstring = strdup(instring);
 	return(outstring);
 }
 
