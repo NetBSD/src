@@ -80,4 +80,17 @@ main input file is omitted.
 @ifclear cppmanual
 @xref{Preprocessor Options}.
 @end ifclear
+
+@item CPP_RESTRICTED
+@cindex only open regular files
+If this variable is defined, cpp will skip any include file which is not a
+regular file, and will continue searching for the requested name (this is
+always done if the found file is a directory).
+@ifset cppmanual
+@xref{Invocation}.
+@end ifset
+@ifclear cppmanual
+@xref{Preprocessor Options}.
+@end ifclear
+
 @end vtable

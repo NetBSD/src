@@ -774,7 +774,8 @@ preprocess as normal.  With two dashes, exit immediately.
 .IX Header "ENVIRONMENT"
 This section describes the environment variables that affect how \s-1CPP\s0
 operates.  You can use them to specify directories or prefixes to use
-when searching for include files, or to control dependency output.
+when searching for include files, or to control dependency output or behavior
+in the face of include files which are device nodes or named pipes.
 .PP
 Note that you can also specify places to search using options such as
 \&\fB\-I\fR, and control dependency output with options like
@@ -834,6 +835,11 @@ This variable is the same as \fB\s-1DEPENDENCIES_OUTPUT\s0\fR (see above),
 except that system header files are not ignored, so it implies
 \&\fB\-M\fR rather than \fB\-MM\fR.  However, the dependence on the
 main input file is omitted.
+.IP "\fB\s-1CPP_RESTRICTED\s0\fR" 4
+.IX Item "CPP_RESTRICTED"
+If this variable is defined, cpp will skip any include file which is not a
+regular file, and will continue searching for the requested name (this is
+always done if the found file is a directory).
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIgcc\fR\|(1), \fIas\fR\|(1), \fIld\fR\|(1), and the Info entries for \fIcpp\fR, \fIgcc\fR, and
