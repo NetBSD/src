@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.16 1996/02/02 18:09:08 mycroft Exp $     */
+/*      $NetBSD: trap.c,v 1.17 1996/02/02 23:19:43 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -306,9 +306,11 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 		trapsig=0;
 		break;
 
+#ifdef DDB
 	case T_KDBTRAP:
 		kdb_trap(frame);
 		return;
+#endif
 	}
 bad:
 	if (trapsig)
