@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.5 1999/09/25 19:27:36 is Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.6 1999/09/27 04:43:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 
 #elif defined(M68030) && !(defined(M68020)||defined(M68040)||defined(M68060))
 
+#define	TBIA()		TBIA_30()
 #define	TBIS(va)	TBIS_30((va))
 #define	TBIAS()		TBIAS_30()
 #define	TBIAU()		TBIAU_30()
