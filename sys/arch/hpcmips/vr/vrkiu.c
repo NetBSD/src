@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.22 2000/06/03 08:00:44 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.22.2.1 2000/08/06 04:27:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -605,15 +605,20 @@ detect_key(chip)
 	return (detected);
 }
 
-/* called from biconsdev.c */
+/* called from bicons.c */
 int
 vrkiu_getc()
 {
+	static int flag = 1;
+
 	/*
 	 * XXX, currently
 	 */
-	printf("%s(%d): vrkiu_getc() is not implemented\n",
-	       __FILE__, __LINE__);
+	if (flag) {
+		flag = 0;
+		printf("%s(%d): vrkiu_getc() is not implemented\n",
+		       __FILE__, __LINE__);
+	}
 	return 0;
 }
 
