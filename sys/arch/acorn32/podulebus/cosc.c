@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.4 2002/05/22 22:43:18 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.5 2002/08/05 23:30:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -61,8 +61,6 @@
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
-void cosc_scsi_request	__P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
 
 struct cfattach cosc_ca = {
 	sizeof(struct cosc_softc), coscmatch, coscattach
@@ -229,8 +227,10 @@ coscattach(pdp, dp, auxp)
 		get_bootconf_option(boot_args, "coscpoll",
 		    BOOTOPT_TYPE_BOOLEAN, &cosc_poll);
 
-	if (cosc_poll)
+	if (cosc_poll) {
 		printf(" polling");
+		sc->sc_softc.sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
+	}
 #endif
 
 	sc->sc_softc.sc_bump_sz = NBPG;
@@ -244,7 +244,7 @@ coscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
 	sc->sc_softc.sc_adapter.adapt_ioctl = NULL;
 	sc->sc_softc.sc_adapter.adapt_minphys = esc_minphys;
-	sc->sc_softc.sc_adapter.adapt_request = cosc_scsi_request;
+	sc->sc_softc.sc_adapter.adapt_request = esc_scsi_request;
 
 	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
@@ -429,32 +429,4 @@ cosc_build_dma_chain(sc, chain, p, l)
 {
 	printf("cosc_build_dma_chain()\n");
 	return(0);
-}
-
-
-void
-cosc_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
-{
-	struct scsipi_xfer *xs;
-
-	switch (req) {
-	case ADAPTER_REQ_RUN_XFER:
-		xs = arg;
-
-#if COSC_POLL > 0
-		if (cosc_poll)
-			xs->xs_control |= XS_CTL_POLL;
-#endif
-#if 0
-		if (periph->periph_lun == 0)
-		printf("id=%d lun=%d cmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
-#endif
-	default:
-	}
-	esc_scsi_request(chan, req, arg);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.2 2001/11/27 00:53:12 thorpej Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.3 2002/08/05 23:30:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -67,8 +67,6 @@
 
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
-void ptsc_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
 
 struct cfattach ptsc_ca = {
 	sizeof(struct ptsc_softc), ptscmatch, ptscattach
@@ -177,7 +175,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
 	sc->sc_softc.sc_adapter.adapt_ioctl = NULL;
 	sc->sc_softc.sc_adapter.adapt_minphys = sfas_minphys;
-	sc->sc_softc.sc_adapter.adapt_request = ptsc_scsi_request;
+	sc->sc_softc.sc_adapter.adapt_request = sfas_scsi_request;
 
 	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
@@ -206,6 +204,7 @@ ptscattach(pdp, dp, auxp)
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #else
 	printf(" polling");
+	sc->sc_softc.sc_adapter.adapt_flags = SCSIPI_ADAPT_POLL_ONLY;
 #endif
 	
 	printf("\n");
@@ -465,27 +464,4 @@ ptsc_led(sc, mode)
 			sc->sc_led_status--;
 	}
 	*rp->led = (sc->sc_led_status?1:0);
-}
-
-void
-ptsc_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
-{
-	struct scsipi_xfer *xs;
-
-	switch (req) {
-	case ADAPTER_REQ_RUN_XFER:
-		xs = arg;
-		/* ensure command is polling for the moment */
-#if PTSC_POLL > 0
-		xs->xs_control |= XS_CTL_POLL;
-#endif
-#if 0
-		printf("Opcode %d\n", (int)(xs->cmd->opcode));
-#endif
-	default:
-	}
-	sfas_scsi_request(chan, req, arg);
 }
