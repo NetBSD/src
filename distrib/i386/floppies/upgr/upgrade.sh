@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.sh,v 1.6 1996/10/26 19:04:47 perry Exp $
+#	$NetBSD: upgrade.sh,v 1.7 1997/05/30 01:34:48 lukem Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -102,7 +102,7 @@ echo	"on disks NOT listed above), this upgrade disk can upgrade your"
 echo	"system.  If it cannot, hit Control-C at the prompt."
 echo	""
 while [ "X${drivename}" = "X" ]; do
-	echo -n	"Which disk contains your root partion? "
+	echo -n	"Which disk contains your root partition? "
 	getresp
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
@@ -128,7 +128,7 @@ getresp "y"
 case "$resp" in
 	n*|N*)
 		echo	""
-		echo	"If you are upgrading from NetBSD 0.9 or above,"
+		echo	"If you are upgrading from NetBSD 0.9 or below,"
 		echo	"you should upgrade your file systems with 'fsck -c 2'"
 		echo	"as soon as is feasible, because the new file system"
 		echo	"code is better-tested and more performant."
