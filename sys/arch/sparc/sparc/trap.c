@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.3 2001/11/28 13:40:06 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.4 2001/11/29 13:14:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1259,7 +1259,7 @@ syscall(code, tf, pc)
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
 		panic("syscall");
-	if (cpuinfo.curpcb != &p->p_addr->u_pcb)
+	if (cpuinfo.curpcb != &l->l_addr->u_pcb)
 		panic("syscall cpcb/ppcb");
 	if (tf != (struct trapframe *)((caddr_t)cpuinfo.curpcb + USPACE) - 1)
 		panic("syscall trapframe");
@@ -1414,7 +1414,6 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
@@ -1423,6 +1422,7 @@ child_return(arg)
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
+		struct proc *p = l->l_proc;
 		KERNEL_PROC_LOCK(l);
 		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
