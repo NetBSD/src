@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.22.2.1 2000/10/18 17:51:14 tv Exp $ */
+/*	$NetBSD: mbr.c,v 1.22.2.2 2000/12/26 02:08:26 jhawk Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -384,7 +384,7 @@ disp_cur_part(part, sel, disp)
 			if (part[i].mbrp_size % sizemult)
 				rsize++;
 			rend = (part[i].mbrp_start + part[i].mbrp_size) / sizemult;
-			if ((part[i].mbrp_size + part[i].mbrp_size) % sizemult)
+			if ((part[i].mbrp_start + part[i].mbrp_size) % sizemult)
 				rend++;
 			msg_table_add(MSG_part_row_start_used, i,
 			    part[i].mbrp_start / sizemult, rsize, rend);
