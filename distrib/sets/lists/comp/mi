@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.581 2003/06/13 04:12:53 itojun Exp $
+#	$NetBSD: mi,v 1.582 2003/06/14 08:04:43 nonaka Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -949,6 +949,8 @@
 ./usr/lib/libdes_p.a		comp-c-proflib
 ./usr/lib/libedit.a		comp-c-lib
 ./usr/lib/libedit_p.a		comp-c-proflib
+./usr/lib/libevent.a		comp-c-lib
+./usr/lib/libevent_p.a		comp-c-proflib
 ./usr/lib/libfl.a		comp-c-lib
 ./usr/lib/libfl_p.a		comp-c-proflib
 ./usr/lib/libform.a		comp-c-lib
