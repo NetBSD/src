@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.62 1998/09/06 02:28:58 mark Exp $
+#	$NetBSD: files.arm32,v 1.63 1998/09/13 08:19:50 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -566,3 +566,10 @@ include "dev/usb/files.usb"
 #
 include "dev/isapnp/files.isapnp"       
 file	arch/arm32/isa/isapnp_machdep.c		isapnp
+
+#
+# Compatibility modules
+#
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/arm32/arm32/compat_13_machdep.c	compat_13

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1998/05/25 20:59:02 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 1998/09/13 08:19:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -61,9 +61,10 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 
-struct	sigcontext {
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
+	sigset13_t sc_mask;		/* signal mask to restore (old style) */
 
 	unsigned int sc_spsr;
 	unsigned int sc_r0;
@@ -83,6 +84,33 @@ struct	sigcontext {
 	unsigned int sc_usr_lr;
 	unsigned int sc_svc_lr;
 	unsigned int sc_pc;
+};
+#endif /* __LIBC12_SOURCE__ || _KERNEL */
+
+struct sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	sigset13_t __sc_mask13;		/* signal mask to restore (old style) */
+
+	unsigned int sc_spsr;
+	unsigned int sc_r0;
+	unsigned int sc_r1;
+	unsigned int sc_r2;
+	unsigned int sc_r3;
+	unsigned int sc_r4;
+	unsigned int sc_r5;
+	unsigned int sc_r6;
+	unsigned int sc_r7;
+	unsigned int sc_r8;
+	unsigned int sc_r9;
+	unsigned int sc_r10;
+	unsigned int sc_r11;
+	unsigned int sc_r12;
+	unsigned int sc_usr_sp;
+	unsigned int sc_usr_lr;
+	unsigned int sc_svc_lr;
+	unsigned int sc_pc;
+	
+	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
 #endif /* !_LOCORE */
