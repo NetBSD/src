@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12.6.5 2002/06/20 03:40:34 nathanw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12.6.6 2002/12/11 06:11:44 thorpej Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -287,8 +287,8 @@ db_ppc4xx_dumptlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			"li %0,0;"
 			"mtmsr %0;"
 			"sync; isync;"
-			"tlbre %0,%5,1;"
-			"tlbre %1,%5,0;"
+			"tlbrelo %0,%5;"
+			"tlbrehi %1,%5;"
 			"mfpid %2;"
 			"mtpid %4;"
 			"mtmsr %3;"

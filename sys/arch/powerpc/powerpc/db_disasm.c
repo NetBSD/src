@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9.8.3 2002/02/28 04:11:27 nathanw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9.8.4 2002/12/11 06:11:44 thorpej Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -737,6 +737,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		pstr += sprintf(pstr, "0x%x", IMM);
 		break;
 	default:
+		;
 	}
 	if (func & Op_BD) {
 		u_int BD;

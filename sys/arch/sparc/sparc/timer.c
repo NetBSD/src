@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3.2.5 2002/10/18 02:40:00 nathanw Exp $ */
+/*	$NetBSD: timer.c,v 1.3.2.6 2002/12/11 06:12:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,19 +125,21 @@ timerattach(cntreg, limreg)
 	}
 #endif
 	/* link interrupt handlers */
-	intr_establish(10, &level10);
-	intr_establish(14, &level14);
+	intr_establish(10, 0, &level10, NULL);
+	intr_establish(14, 0, &level14, NULL);
 }
 
-#if defined(SUN4) || defined(SUN4M)
 /*
+ * Both sun4 and sun4m can attach a timer on obio.
  * The sun4m OPENPROM calls the timer the "counter".
  * The sun4 timer must be probed.
  */
 static int
 timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
+#if defined(SUN4M)
 	union obio_attach_args *uoba = aux;
+#endif
 #if defined(SUN4)
 	struct obio4_attach_args *oba;
 #endif
@@ -147,12 +149,12 @@ timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 		return (strcmp("counter", uoba->uoba_sbus.sa_name) == 0);
 #endif /* SUN4M */
 
-#if defined(SUN4)
 	if (CPU_ISSUN4 == 0) {
 		printf("timermatch_obio: attach args mixed up\n");
 		return (0);
 	}
 
+#if defined(SUN4)
 	/* Only these sun4s have "timer" (others have "oclock") */
 	if (cpuinfo.cpu_type != CPUTYP_4_300 &&
 	    cpuinfo.cpu_type != CPUTYP_4_400)
@@ -174,22 +176,47 @@ timerattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
-#if defined(SUN4M)
 	if (uoba->uoba_isobio4 == 0) {
+#if defined(SUN4M)
 		/* sun4m timer at obio */
 		timerattach_obio_4m(parent, self, aux);
+#endif /* SUN4M */
 		return;
 	}
-#endif /* SUN4M */
 
-#if defined(SUN4)
 	if (uoba->uoba_isobio4 != 0) {
+#if defined(SUN4)
 		/* sun4 timer at obio */
 		timerattach_obio_4(parent, self, aux);
-	}
 #endif /* SUN4 */
+	}
 }
 
 CFATTACH_DECL(timer_obio, sizeof(struct device),
     timermatch_obio, timerattach_obio, NULL, NULL);
-#endif /* SUN4 || SUN4M */
+
+/*
+ * Only sun4c attaches a timer at mainbus
+ */
+static int
+timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+{
+#if defined(SUN4C)
+	struct mainbus_attach_args *ma = aux;
+
+	return (strcmp("counter-timer", ma->ma_name) == 0);
+#else
+	return (0);
+#endif
+}
+
+static void
+timerattach_mainbus(struct device *parent, struct device *self, void *aux)
+{
+#if defined(SUN4C)
+	timerattach_mainbus_4c(parent, self, aux);
+#endif /* SUN4C */
+}
+
+CFATTACH_DECL(timer_mainbus, sizeof(struct device),
+    timermatch_mainbus, timerattach_mainbus, NULL, NULL);

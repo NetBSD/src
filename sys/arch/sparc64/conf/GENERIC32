@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.23.2.10 2002/11/11 22:04:41 nathanw Exp $
+# 	$NetBSD: GENERIC32,v 1.23.2.11 2002/12/11 06:12:20 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23.2.10 $"
+#ident 		"GENERIC-$Revision: 1.23.2.11 $"
 
 maxusers	64
 
@@ -60,7 +60,7 @@ options 	LKM
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.35.6.5 2002/11/11 22:04:26 nathanw Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.35.6.6 2002/12/11 06:12:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,7 +159,6 @@ cgtwoattach(parent, self, aux)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
 	int isconsole = 0;
-	char *nam = NULL;
 
 	sc->sc_ct = ct;
 	fb->fb_driver = &cgtwofbdriver;
@@ -172,7 +171,7 @@ cgtwoattach(parent, self, aux)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
-	printf(": %s, %d x %d", nam,
+	printf(": cgtwo, %d x %d",
 	       fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 	/*

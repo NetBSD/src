@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.34.4.6 2002/10/18 02:39:55 nathanw Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.34.4.7 2002/12/11 06:12:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -681,8 +681,10 @@ vmeintr4(arg)
 	}
 
 	for (; ihp; ihp = ihp->next)
-		if (ihp->vec == vec && ihp->ih.ih_fun)
+		if (ihp->vec == vec && ihp->ih.ih_fun) {
+			splx(ihp->ih.ih_classipl);
 			rv |= (ihp->ih.ih_fun)(ihp->ih.ih_arg);
+		}
 
 	return (rv);
 }
@@ -755,8 +757,10 @@ vmeintr4m(arg)
 	}
 
 	for (; ihp; ihp = ihp->next)
-		if (ihp->vec == vec && ihp->ih.ih_fun)
+		if (ihp->vec == vec && ihp->ih.ih_fun) {
+			splx(ihp->ih.ih_classipl);
 			rv |= (ihp->ih.ih_fun)(ihp->ih.ih_arg);
+		}
 
 	return (rv);
 }
@@ -791,10 +795,10 @@ sparc_vme_intr_evcnt(cookie, vih)
 }
 
 void *
-sparc_vme_intr_establish(cookie, vih, pri, func, arg)
+sparc_vme_intr_establish(cookie, vih, level, func, arg)
 	void *cookie;
 	vme_intr_handle_t vih;
-	int pri;
+	int level;
 	int (*func) __P((void *));
 	void *arg;
 {
@@ -802,19 +806,23 @@ sparc_vme_intr_establish(cookie, vih, pri, func, arg)
 	struct sparc_vme_intr_handle *svih =
 			(struct sparc_vme_intr_handle *)vih;
 	struct intrhand *ih;
-	int level;
-
-	/* XXX pri == svih->pri ??? */
+	int pil;
 
 	/* Translate VME priority to processor IPL */
-	level = vme_ipl_to_pil[svih->pri];
+	pil = vme_ipl_to_pil[svih->pri];
+
+	if (level < pil)
+		panic("vme_intr_establish: class lvl (%d) < pil (%d)\n",
+			level, pil);
 
 	svih->ih.ih_fun = func;
 	svih->ih.ih_arg = arg;
+	svih->ih.ih_classipl = level;	/* note: used slightly differently
+						 than in intr.c (no shift) */
 	svih->next = NULL;
 
 	/* ensure the interrupt subsystem will call us at this level */
-	for (ih = intrhand[level]; ih != NULL; ih = ih->ih_next)
+	for (ih = intrhand[pil]; ih != NULL; ih = ih->ih_next)
 		if (ih->ih_fun == sc->sc_vmeintr)
 			break;
 
@@ -826,7 +834,7 @@ sparc_vme_intr_establish(cookie, vih, pri, func, arg)
 		bzero(ih, sizeof *ih);
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
-		intr_establish(level, ih);
+		intr_establish(pil, 0, ih, NULL);
 	} else {
 		svih->next = (vme_intr_handle_t)ih->ih_arg;
 		ih->ih_arg = vih;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.12.4.2 2002/02/28 04:10:43 nathanw Exp $	*/
+/*	$NetBSD: pcb.h,v 1.12.4.3 2002/12/11 06:11:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_PCB_H_
+#define	_MIPS_PCB_H_
+
 #include <mips/reg.h>
 
 /*
@@ -65,8 +68,6 @@ struct md_coredump {
 };
 
 #ifdef _KERNEL
-extern struct pcb *curpcb;			/* the current running pcb */
-extern struct segtab *segbase;			/* current segtab base */
-
 #define	PCB_FSR(pcb)	((pcb)->pcb_fpregs.r_regs[FSR - FPBASE])
 #endif
+#endif /*_MIPS_PCB_H_*/

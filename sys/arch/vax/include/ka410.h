@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.h,v 1.4 1998/10/06 04:04:31 matt Exp $ */
+/*	$NetBSD: ka410.h,v 1.4.30.1 2002/12/11 06:12:38 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _VAX_KA410_H_
+#define _VAX_KA410_H_
 
 /*
  * Definition for  I/O addresses of
@@ -192,3 +195,5 @@ struct ka410_clock {
 	u_long  :2;	u_long	csr3	:8;	u_long  :22;
 	u_long  :2;	u_long	cpmbx	:8;	u_long  :22;
 };
+
+#endif /* _VAX_KA410_H_ */

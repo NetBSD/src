@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.24.2.5 2002/11/11 22:00:23 nathanw Exp $
+#	$NetBSD: Makefile.mips,v 1.24.2.6 2002/12/11 06:10:57 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -24,15 +24,6 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ## (1) port identification
 ##
-.if ${MACHINE_ARCH} == "mipsel"
-ENDIAN=-EL
-.elif ${MACHINE_ARCH} == "mipseb"
-ENDIAN=-EB
-.else
-.BEGIN:
-	@echo "MACHINE_ARCH ${MACHINE_ARCH} is invalid"
-	@false
-.endif
 .ifndef S
 S=		../../../..
 .endif
@@ -47,8 +38,8 @@ GENASSYM=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
-CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls -msoft-float
-AFLAGS+=	${ENDIAN} -mno-abicalls -x assembler-with-cpp -traditional-cpp
+CFLAGS+=	${GP} -mno-abicalls -msoft-float
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp
 
 ##
 ## (3) libkern and compat
@@ -70,18 +61,13 @@ locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
 ##
 ## (5) link settings
 ##
-TEXTADDR?=	${DEFTEXTADDR}
-KERNLDSCRIPT?=	${MIPS}/conf/kern.ldscript
+TEXTADDR?=		${DEFTEXTADDR}
+KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
-LINKFORMAT+=	-T ${KERNLDSCRIPT}
-EXTRA_LINKFLAGS=	${ENDIAN} ${GP}
-.if (${ENDIAN} == "-EB")
-EXTRA_LINKFLAGS+=	--oformat elf32-bigmips
-.else
-EXTRA_LINKFLAGS+=	--oformat elf32-littlemips
-.endif
+LINKFORMAT+=		-T ${KERNLDSCRIPT}
+EXTRA_LINKFLAGS=	${GP}
 LINKFLAGS_NORMAL=	-x
-STRIPFLAGS=	-g -X -x
+STRIPFLAGS=		-g -X -x
 
 ##
 ## (6) port specific target dependencies

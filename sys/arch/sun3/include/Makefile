@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.16.4.4 2002/08/13 02:19:00 nathanw Exp $
+#	$NetBSD: Makefile,v 1.16.4.5 2002/12/11 06:12:34 thorpej Exp $
 
-KDIR=	/sys/arch/sun3/include
 INCSDIR= /usr/include/sun3
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

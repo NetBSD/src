@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.9 2002/10/18 02:39:29 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.10 2002/12/11 06:11:38 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -116,14 +116,14 @@ u_long itlb_miss_count = 0;
 u_long ktlb_miss_count = 0;
 u_long utlb_miss_count = 0;
 
-/* Event counters -- XXX type `INTR' so we can see them with vmstat -i */
-struct evcnt tlbmiss_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+/* Event counters */
+struct evcnt tlbmiss_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbmiss");
-struct evcnt tlbhit_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+struct evcnt tlbhit_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbhit");
-struct evcnt tlbflush_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+struct evcnt tlbflush_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbflush");
-struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
 
 struct pmap kernel_pmap_;

@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.2.2.2 2002/10/18 02:38:42 nathanw Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.2.2.3 2002/12/11 06:10:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -212,8 +212,6 @@ au_intr_init(void)
 		evcnt_attach_dynamic(&au1000_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", au1000_cpuintrnames[i]);
 	}
-
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	for (i = 0; i < NIRQS; i++) {
 		/* XXX steering - use an irqmap array? */

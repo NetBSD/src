@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.3 2002/04/17 00:04:03 nathanw Exp $
+#	$NetBSD: Makefile,v 1.10.2.4 2002/12/11 06:11:28 thorpej Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -7,6 +7,7 @@ SRCS= locore.S boot.c bootinfo.c devopen.c net.c netif_news.c
 NOMAN= # defined
 STRIPFLAG=
 BINMODE= 444
+WARNS?= 1
 
 SIZE?= size
 STRIP?= strip
@@ -18,14 +19,14 @@ COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 
 LDFLAGS= -x -N -Ttext a0700000 -e _start
-CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
+CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I${COMMON} -I${S}
 
-AFLAGS= -D_LOCORE
+AFLAGS= -D_LOCORE -mno-abicalls
 
 LIBS = ${COMMON}/romcalls.o
 LIBS+= ${COMMON}/lib/sa/libsa.a

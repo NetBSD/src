@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.18 2002/11/28 01:14:35 uwe Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.19 2002/12/11 06:12:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -490,6 +490,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+	case CPU_ARCH:
+		/* CPU architecture version */
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_arch));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2033,8 +2036,9 @@ static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 				    int, int));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int, int (*) __P((void *)),
-						   void *));
+						   int (*) __P((void *)),
+						   void *,
+						   void (*) __P((void)) ));
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
 
@@ -2205,13 +2209,13 @@ bus_space_probe(tag, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int	pil;
 	int	level;
-	int	flags;
 	int	(*handler)__P((void *));
 	void	*arg;
+	void	(*fastvec)__P((void));
 {
 	struct intrhand *ih;
 
@@ -2222,10 +2226,7 @@ sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(pil, (void (*)__P((void)))handler);
-	else
-		intr_establish(pil, ih);
+	intr_establish(pil, level, ih, fastvec);
 	return (ih);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.1.2.6 2002/10/18 02:39:53 nathanw Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.1.2.7 2002/12/11 06:12:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,6 +122,6 @@ com_ebus_attach(parent, self, aux)
 
 	if (ea->ea_nintr != 0)
 		(void)bus_intr_establish(sc->sc_iot,
-					 ea->ea_intr[0], IPL_SERIAL, 0,
+					 ea->ea_intr[0], IPL_SERIAL,
 					 comintr, sc);
 }

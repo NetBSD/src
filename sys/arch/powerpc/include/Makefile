@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.23.8.4 2002/08/13 02:18:44 nathanw Exp $
+#	$NetBSD: Makefile,v 1.23.8.5 2002/12/11 06:11:40 thorpej Exp $
 
-KDIR=	/sys/arch/powerpc/include
 INCSDIR= /usr/include/powerpc
 
 INCS=	ansi.h aout_machdep.h asm.h atomic.h \

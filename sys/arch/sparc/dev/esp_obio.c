@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.10.8.3 2002/10/18 02:39:54 nathanw Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.10.8.4 2002/12/11 06:12:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ espattach_obio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(esc->sc_bustag, oba->oba_pri, IPL_BIO, 0,
+	bus_intr_establish(esc->sc_bustag, oba->oba_pri, IPL_BIO,
 			   ncr53c9x_intr, sc);
 
 	/* register interrupt stats */

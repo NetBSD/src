@@ -1,12 +1,7 @@
-#	$NetBSD: Makefile.mipsco.inc,v 1.2.8.4 2002/04/01 07:41:15 nathanw Exp $
-
-# build ECOFF image that can be booted directly from firmware
-LD_ECOFF=	${LD} -N -Ttext ${TEXTADDR} -e start ${GP} \
-		-T ${THISMIPS}/conf/kern.ldscript -x --oformat ecoff-bigmips
+#	$NetBSD: Makefile.mipsco.inc,v 1.2.8.5 2002/12/11 06:11:17 thorpej Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
-		echo ${LD_ECOFF} -o $@.ecoff '$${SYSTEM_OBJ}' vers.o ; \
-		${LD_ECOFF} -o $@.ecoff ${SYSTEM_OBJ} vers.o ${SWAP_OBJ$@} ; \
+		echo ${ELF2ECOFF} $@ $@.ecoff; ${ELF2ECOFF} $@ $@.ecoff; \
 		${SIZE} $@.ecoff; chmod 755 $@.ecoff
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ecoff@}

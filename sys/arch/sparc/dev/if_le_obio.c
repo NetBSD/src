@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.12.8.3 2002/10/18 02:39:54 nathanw Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.12.8.4 2002/12/11 06:12:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,6 @@ leattach_obio(parent, self, aux)
 	am7990_config(&lesc->sc_am7990);
 
 	/* Install interrupt */
-	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, IPL_NET, 0,
+	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, IPL_NET,
 				 am7990_intr, sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.2.2.3 2002/10/18 02:39:55 nathanw Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.2.2.4 2002/12/11 06:12:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -256,7 +256,7 @@ pckbc_js_intr_establish(sc, slot)
 	}
 
 	res = bus_intr_establish(sc->id->t_iot, jsc->jsc_intr,
-				 IPL_TTY, 0, pckbcintr, sc);
+				 IPL_TTY, pckbcintr, sc);
 	if (res == NULL)
 		printf("%s: unable to establish %s slot interrupt\n",
 		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);

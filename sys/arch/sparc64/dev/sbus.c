@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.46.4.5 2002/10/18 02:40:05 nathanw Exp $ */
+/*	$NetBSD: sbus.c,v 1.46.4.6 2002/12/11 06:12:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -83,9 +83,9 @@ static void *sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
 		int,			/*`device class' priority*/
-		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
-		void *));		/*handler arg*/
+		void *,			/*handler arg*/
+		void (*) __P((void))));	/*optional fast trap*/
 
 
 /* autoconfiguration driver */
@@ -603,13 +603,13 @@ sbus_get_intr(sc, node, ipp, np, slot)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, pri, level, flags, handler, arg)
+sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
+	void (*fastvec) __P((void));	/* ignored */
 {
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
@@ -621,9 +621,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 	if (ih == NULL)
 		return (NULL);
 
-	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
-		ipl = vec;
-	else if ((vec & SBUS_INTR_COMPAT) != 0)
+	if ((vec & SBUS_INTR_COMPAT) != 0)
 		ipl = vec & ~SBUS_INTR_COMPAT;
 	else {
 		/* Decode and remove IPL */

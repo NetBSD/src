@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.8 2002/12/02 06:12:13 wdk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.9 2002/12/11 06:11:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.8 2002/12/02 06:12:13 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.9 2002/12/11 06:11:13 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1224,10 +1224,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pmap->pm_stats.wired_count++;
 			npte |= mips_pg_wired_bit();
 		}
-#ifdef PARANOIADIAG
-		if (mips_pg_wired(pte->pt_entry))
-			panic("pmap_enter: kernel wired");
-#endif
 		if (mips_pg_v(pte->pt_entry) &&
 		    mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va, va + NBPG);

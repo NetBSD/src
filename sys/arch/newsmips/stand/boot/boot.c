@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.8.3 2002/06/20 03:40:18 nathanw Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.8.4 2002/12/11 06:11:28 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -35,6 +35,9 @@
 #include <machine/cpu.h>
 #include <machine/romcall.h>
 
+void boot __P((u_int32_t, u_int32_t, uint32_t, u_int32_t, u_int32_t,
+    u_int32_t));
+
 void mips1_flushicache __P((void *, int));
 extern char _edata[], _end[];
 
@@ -58,14 +61,15 @@ char *kernels[] = { "/netbsd", "/netbsd.gz", NULL };
 
 void
 boot(a0, a1, a2, a3, a4, a5)
-	u_int a0, a1, a2, a3, a4, a5;
+	u_int32_t a0, a1, a2, a3, a4, a5;
 {
 	int fd, i;
 	char *netbsd = "";
 	int maxmem;
 	u_long marks[MARK_MAX];
 	char devname[32], file[32];
-	void (*entry)();
+	void (*entry) __P((u_int32_t, u_int32_t, uint32_t, u_int32_t,
+	    u_int32_t, u_int32_t));
 	struct btinfo_symtab bi_sym;
 	struct btinfo_bootarg bi_arg;
 	struct btinfo_bootpath bi_bpath;

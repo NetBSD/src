@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.8.4 2002/08/13 02:18:58 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.8.5 2002/12/11 06:12:32 thorpej Exp $
 
-KDIR=	/sys/arch/sun2/include
 INCSDIR= /usr/include/sun2
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

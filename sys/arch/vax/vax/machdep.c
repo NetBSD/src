@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.13 2002/10/18 02:40:35 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.14 2002/12/11 06:12:42 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -97,7 +97,7 @@
 
 #include "smg.h"
 
-extern int virtual_avail, virtual_end;
+extern vaddr_t virtual_avail, virtual_end;
 /*
  * We do these external declarations here, maybe they should be done
  * somewhere else...
@@ -141,7 +141,7 @@ cpu_startup()
 	u_int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
 	vsize_t		size;
-	extern unsigned int avail_end;
+	extern paddr_t avail_end;
 	char pbuf[9];
 
 	/*
@@ -357,33 +357,34 @@ compat_13_sys_sigreturn(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct trapframe *scf;
-	struct sigcontext13 *cntx;
+	struct sigcontext13 *ucntx;
+	struct sigcontext13 ksc;
 	sigset_t mask;
 
 	scf = l->l_addr->u_pcb.framep;
-	cntx = SCARG(uap, sigcntxp);
-	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+	ucntx = SCARG(uap, sigcntxp);
+	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 
 	/* Compatibility mode? */
-	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (cntx->sc_ps & PSL_CM)) {
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (cntx->sc_onstack & SS_ONSTACK)
+	if (ksc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	native_sigset13_to_sigset(&cntx->sc_mask, &mask);
+	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-	scf->fp = cntx->sc_fp;
-	scf->ap = cntx->sc_ap;
-	scf->pc = cntx->sc_pc;
-	scf->sp = cntx->sc_sp;
-	scf->psl = cntx->sc_ps;
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 #endif
@@ -399,31 +400,32 @@ sys___sigreturn14(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct trapframe *scf;
-	struct sigcontext *cntx;
+	struct sigcontext *ucntx;
+	struct sigcontext ksc;
 
 	scf = l->l_addr->u_pcb.framep;
-	cntx = SCARG(uap, sigcntxp);
+	ucntx = SCARG(uap, sigcntxp);
 
-	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 	/* Compatibility mode? */
-	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (cntx->sc_ps & PSL_CM)) {
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (cntx->sc_onstack & 01)
+	if (ksc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &cntx->sc_mask, 0);
+	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
 
-	scf->fp = cntx->sc_fp;
-	scf->ap = cntx->sc_ap;
-	scf->pc = cntx->sc_pc;
-	scf->sp = cntx->sc_sp;
-	scf->psl = cntx->sc_ps;
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.2.2.3 2002/10/18 02:39:50 nathanw Exp $
+#	$NetBSD: majors.sparc,v 1.2.2.4 2002/12/11 06:12:01 thorpej Exp $
 #
 # Device majors for sparc
 #
@@ -36,6 +36,7 @@ device-major	kbd		char 29			kbd
 device-major	cgtwo		char 31			cgtwo
 
 device-major	com		char 36			com
+device-major	lpt		char 37			lpt
 
 device-major	cgfour		char 39			cgfour
 

@@ -1,16 +1,16 @@
-#	$NetBSD: files.mips,v 1.32.2.8 2002/11/11 22:00:23 nathanw Exp $
+#	$NetBSD: files.mips,v 1.32.2.9 2002/12/11 06:10:57 thorpej Exp $
 #
 
-defflag	opt_cputype.h		NOFPU	# and the rest...
+defflag	opt_cputype.h		NOFPU
+				MIPS64_SB1
+					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
 					# MIPS3_4100
 					# MIPS3_5900
-					# MIPS64_SB1
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
-					# NOFPU
 defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_NO_PV_UNCACHED
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.39.8.6 2002/11/11 22:06:11 nathanw Exp $
+#	$NetBSD: files.x68k,v 1.39.8.7 2002/12/11 06:12:46 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -181,6 +181,11 @@ file	arch/x68k/dev/if_ne_intio.c	ne_intio
 # Nereid USB
 attach	slhci at intio with slhci_intio
 file	arch/x68k/dev/slhci_intio.c	slhci_intio
+
+# Nereid Bank Memory Disk
+device	bmd
+attach	bmd at intio
+file	arch/x68k/dev/bmd.c		bmd needs-flag
 
 # memory disk
 file	dev/md_root.c			memory_disk_hooks

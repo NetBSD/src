@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15.2.4 2002/08/01 02:42:54 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.5 2002/12/11 06:11:32 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,6 @@
 #ifndef	_MACHINE_VMPARAM_H_
 #define	_MACHINE_VMPARAM_H_
 
-#define	USRTEXT		NBPG
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ

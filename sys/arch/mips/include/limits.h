@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.15.8.2 2002/11/11 22:00:28 nathanw Exp $	*/
+/*	$NetBSD: limits.h,v 1.15.8.3 2002/12/11 06:11:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,8 +35,8 @@
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef	_MIPS_MACHINE_LIMITS_H_
-#define	_MIPS_MACHINE_LIMITS_H_
+#ifndef	_MIPS_LIMITS_H_
+#define	_MIPS_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	32		/* Allow 31 bit UTF2 */
@@ -131,4 +131,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MIPS_MACHINE_LIMITS_H_ */
+#endif /* _MIPS_LIMITS_H_ */

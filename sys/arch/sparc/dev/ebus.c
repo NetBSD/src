@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1.2.5 2002/10/18 02:39:53 nathanw Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.1.2.6 2002/12/11 06:12:02 thorpej Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -110,8 +110,8 @@ int	ebus_print(void *, const char *);
 static paddr_t	ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
 			      bus_size_t, int, vaddr_t, bus_space_handle_t *);
-static void	*ebus_intr_establish(bus_space_tag_t, int, int, int,
-				     int (*)(void *), void *);
+static void	*ebus_intr_establish(bus_space_tag_t, int, int,
+				     int (*)(void *), void *, void (*)(void));
 
 static bus_space_tag_t	ebus_alloc_bus_tag(struct ebus_softc *);
 static bus_dma_tag_t	ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
@@ -532,13 +532,13 @@ ebus_bus_mmap(t, ba, off, prot, flags)
  * Install an interrupt handler for a EBus device.
  */
 void *
-ebus_intr_establish(t, pri, level, flags, handler, arg)
+ebus_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int flags;
 	int (*handler)(void *);
 	void *arg;
+	void (*fastvec)(void);	/* ignored */
 {
-	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, handler, arg));
 }

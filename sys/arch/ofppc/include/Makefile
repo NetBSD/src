@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.13.2.4 2002/10/18 02:39:18 nathanw Exp $
+#	$NetBSD: Makefile,v 1.13.2.5 2002/12/11 06:11:32 thorpej Exp $
 
-KDIR=	/sys/arch/ofppc/include
 INCSDIR= /usr/include/ofppc
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.37.4.6 2002/11/11 22:02:33 nathanw Exp $	*/
+/*	$NetBSD: px.c,v 1.37.4.7 2002/12/11 06:11:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37.4.6 2002/11/11 22:02:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37.4.7 2002/12/11 06:11:34 thorpej Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1890,7 +1890,7 @@ filt_pxrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&fi->fi_selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&fi->fi_selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1918,7 +1918,7 @@ pxkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &fi->fi_selp.si_klist;
+		klist = &fi->fi_selp.sel_klist;
 		kn->kn_fop = &pxread_filtops;
 		break;
 

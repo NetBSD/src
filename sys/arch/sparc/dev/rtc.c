@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.2.6 2002/10/18 02:39:55 nathanw Exp $ */
+/*	$NetBSD: rtc.c,v 1.1.2.7 2002/12/11 06:12:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -223,17 +223,12 @@ rtc_settime(handle, tv)
 	struct rtc_ebus_softc *sc = handle->cookie;
 	struct clock_ymdhms dt;
 	u_int year;
-	u_int wday;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	year = dt.dt_year - 1900;
 	if (year >= 100 && rtc_auto_century_adjust != 0)
 		year -= 100;
-
-	wday = dt.dt_wday;
-	if (wday == 0)
-		wday = 7;
 
 	/* stop updates */
 	mc146818_write(sc, MC_REGB,
@@ -242,7 +237,7 @@ rtc_settime(handle, tv)
 	mc146818_write(sc, MC_SEC,   dt.dt_sec);
 	mc146818_write(sc, MC_MIN,   dt.dt_min);
 	mc146818_write(sc, MC_HOUR,  dt.dt_hour);
-	mc146818_write(sc, MC_DOW,   wday);
+	mc146818_write(sc, MC_DOW,   dt.dt_wday + 1);
 	mc146818_write(sc, MC_DOM,   dt.dt_day);
 	mc146818_write(sc, MC_MONTH, dt.dt_mon);
 	mc146818_write(sc, MC_YEAR,  year);

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.11 2002/12/10 03:55:50 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.12 2002/12/11 06:11:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -67,7 +67,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.11 2002/12/10 03:55:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.12 2002/12/11 06:11:46 thorpej Exp $");
 
 void
 child_return(void *arg)
@@ -120,7 +120,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	n = NARGREG;
 
 #ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(code)) == NULL)
+	if ((callp = mach_syscall_dispatch(&code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
 		switch (code) {
@@ -179,6 +179,15 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		frame->fixreg[FIRSTARG] = rval[0];
 		frame->fixreg[FIRSTARG + 1] = rval[1];
 		frame->cr &= ~0x10000000;
+#ifdef COMPAT_MACH
+		/* 
+		 * For regular system calls, on success,
+		 * the next instruction is skipped 
+		 */
+		if ((frame->fixreg[0] < p->p_emul->e_nsysent)
+		    && (frame->fixreg[0] >= 0))
+			frame->srr0 += 4;
+#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*
@@ -211,6 +220,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
+	register_t realcode;
 	register_t *params, rval[2];
 	register_t args[10];
 	int error;
@@ -223,8 +233,9 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
+	realcode = code;
 #ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(code)) == NULL)
+	if ((callp = mach_syscall_dispatch(&code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
 		switch (code) {
@@ -247,8 +258,9 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 			break;
 		}
 
-		callp = p->p_emul->e_sysent +
-		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
+		code &= EMULNAMEU(SYS_NSYSENT) - 1;
+		callp = p->p_emul->e_sysent + code;
+		realcode = code;
 	}
 
 	argsize = callp->sy_argsize;
@@ -263,7 +275,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		params = args;
 	}
 
-	if ((error = trace_enter(l, code, params, rval)) != 0)
+	if ((error = trace_enter(l, code, realcode, params, rval)) != 0)
 		goto syscall_bad;
 
 	rval[0] = 0;
@@ -275,6 +287,15 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		frame->fixreg[FIRSTARG] = rval[0];
 		frame->fixreg[FIRSTARG + 1] = rval[1];
 		frame->cr &= ~0x10000000;
+#ifdef COMPAT_MACH
+		/* 
+		 * For regular system calls, on success,
+		 * the next instruction is skipped 
+		 */
+		if ((frame->fixreg[0] < p->p_emul->e_nsysent)
+		    && (frame->fixreg[0] >= 0))
+			frame->srr0 += 4;
+#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*
@@ -294,7 +315,7 @@ syscall_bad:
 		break;
 	}
 	KERNEL_PROC_UNLOCK(l);
-	trace_exit(l, code, params, rval, error);
+	trace_exit(l, realcode, params, rval, error);
 	userret(l, frame);
 }
 #endif /* KTRACE || SYSTRACE */

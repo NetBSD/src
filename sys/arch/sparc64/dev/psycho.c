@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.39.4.6 2002/10/18 02:40:05 nathanw Exp $	*/
+/*	$NetBSD: psycho.c,v 1.39.4.7 2002/12/11 06:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -98,8 +98,8 @@ static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 				    int, int));
 static int _psycho_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 				vaddr_t, bus_space_handle_t *));
-static void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
-				int (*) __P((void *)), void *));
+static void *psycho_intr_establish __P((bus_space_tag_t, int, int,
+				int (*) __P((void *)), void *, void(*)__P((void))));
 
 static int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 				   bus_size_t, struct proc *, int));
@@ -998,13 +998,13 @@ psycho_bus_mmap(t, paddr, off, prot, flags)
  * install an interrupt handler for a PCI device
  */
 void *
-psycho_intr_establish(t, ihandle, level, flags, handler, arg)
+psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int ihandle;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
+	void (*fastvec) __P((void));	/* ignored */
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -1042,48 +1042,46 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		level = 2;
 	}
 
-	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+	DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
+	    (long)ino, intrlev[ino]));
 
-		DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
-		    (long)ino, intrlev[ino]));
-
-		/* Hunt thru obio first */
-		for (intrmapptr = &sc->sc_regs->scsi_int_map,
-			     intrclrptr = &sc->sc_regs->scsi_clr_int;
-		     intrmapptr < &sc->sc_regs->ffb0_int_map;
-		     intrmapptr++, intrclrptr++) {
-			if (INTINO(*intrmapptr) == ino)
-				goto found;
-		}
-
-		/* Now do PCI interrupts */
-		for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
-			     intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
-		     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
-		     intrmapptr++, intrclrptr += 4) {
-			if (((*intrmapptr ^ vec) & 0x3c) == 0) {
-				intrclrptr += vec & 0x3;
-				goto found;
-			}
-		}
-
-		/* Finally check the two FFB slots */
-		intrclrptr = NULL; /* XXX? */
-		for (intrmapptr = &sc->sc_regs->ffb0_int_map;
-		     intrmapptr <= &sc->sc_regs->ffb1_int_map;
-		     intrmapptr++) {
-			if (INTVEC(*intrmapptr) == ino)
-				goto found;
-		}
-
-		printf("Cannot find interrupt vector %lx\n", vec);
-		return (NULL);
-
-	found:
-		/* Register the map and clear intr registers */
-		ih->ih_map = intrmapptr;
-		ih->ih_clr = intrclrptr;
+	/* Hunt thru obio first */
+	for (intrmapptr = &sc->sc_regs->scsi_int_map,
+		     intrclrptr = &sc->sc_regs->scsi_clr_int;
+	     intrmapptr < &sc->sc_regs->ffb0_int_map;
+	     intrmapptr++, intrclrptr++) {
+		if (INTINO(*intrmapptr) == ino)
+			goto found;
 	}
+
+	/* Now do PCI interrupts */
+	for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
+		     intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
+	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
+	     intrmapptr++, intrclrptr += 4) {
+		if (((*intrmapptr ^ vec) & 0x3c) == 0) {
+			intrclrptr += vec & 0x3;
+			goto found;
+		}
+	}
+
+	/* Finally check the two FFB slots */
+	intrclrptr = NULL; /* XXX? */
+	for (intrmapptr = &sc->sc_regs->ffb0_int_map;
+	     intrmapptr <= &sc->sc_regs->ffb1_int_map;
+	     intrmapptr++) {
+		if (INTVEC(*intrmapptr) == ino)
+			goto found;
+	}
+
+	printf("Cannot find interrupt vector %lx\n", vec);
+	return (NULL);
+
+found:
+	/* Register the map and clear intr registers */
+	ih->ih_map = intrmapptr;
+	ih->ih_clr = intrclrptr;
+
 #ifdef NOT_DEBUG
 	if (psycho_debug & PDB_INTR) {
 		long i;

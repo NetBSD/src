@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.21 2002/12/04 07:55:32 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.22 2002/12/11 06:12:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -398,6 +398,62 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 };
 
+
+static char *parse_bootfile(char *);
+static char *parse_bootargs(char *);
+
+static char *
+parse_bootfile(args)
+	char *args;
+{
+	char *cp;
+
+	/*
+	 * bootargs is of the form: [kernelname] [args...]
+	 * It can be the empty string if we booted from the default
+	 * kernel name.
+	 */
+	cp = args;
+	for (cp = args; *cp != 0 && *cp != ' ' && *cp != '\t'; cp++) {
+		if (*cp == '-') {
+			int c;
+			/*
+			 * If this `-' is most likely the start of boot
+			 * options, we're done.
+			 */
+			if (cp == args)
+				break;
+			if ((c = *(cp-1)) == ' ' || c == '\t')
+				break;
+		}
+	}
+	/* Now we've separated out the kernel name from the args */
+	*cp = '\0';
+	return (args);
+}
+
+static char *
+parse_bootargs(args)
+	char *args;
+{
+	char *cp;
+
+	for (cp = args; *cp != '\0'; cp++) {
+		if (*cp == '-') {
+			int c;
+			/*
+			 * Looks like options start here, but check this
+			 * `-' is not part of the kernel name.
+			 */
+			if (cp == args)
+				break;
+			if ((c = *(cp-1)) == ' ' || c == '\t')
+				break;
+		}
+	}
+	return (cp);
+}
+
 /*
  * machine dependent system variables.
  */
@@ -421,31 +477,42 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
-		if (((chosen = OF_finddevice("/chosen")) != -1) &&
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
 		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
-		      >= 0)) {
-			/*
-			 * bootargs is of the form: [kernelname] [args...]
-			 * It can be the empty string if we booted from the default
-			 * kernel name.
-			 */
-			for (cp = bootargs; 
-			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
-			     cp++);
-			*cp = 0;
-			/* Now we've separated out the kernel name from the args */
-			cp = bootargs;
-			if (*cp == 0 || *cp == '-') 
-				/*
-				 * We can leave it NULL && let userland handle
-				 * the failure or set it to the default name,
-				 * `netbsd' 
-				 */
-				cp = "netbsd";
-		}
+		      < 0))
+			return (ENOENT);
+
+		cp = parse_bootfile(bootargs);
+		if (cp == NULL)
+			return (ENOENT);
+		if (*cp == '\0')
+			/* Unknown to firmware, return default name */
+			cp = "netbsd";
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+
+	case CPU_BOOT_ARGS:
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
+		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
+		      < 0))
+			return (ENOENT);
+
+		cp = parse_bootargs(bootargs);
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+
+	case CPU_BOOTED_DEVICE:
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
+		    ((OF_getprop(chosen, "bootpath", bootargs, sizeof bootargs))
+		      < 0))
+			return (ENOENT);
+
+		return (sysctl_rdstring(oldp, oldlenp, newp, bootargs));
+
+	case CPU_ARCH:
+		/* CPU architecture version */
+		return (sysctl_rdint(oldp, oldlenp, newp, 9));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1782,8 +1849,8 @@ static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 					 bus_space_handle_t *));
 static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int, int (*) __P((void *)),
-						   void *));
+						   int (*) __P((void *)),
+						   void *, void (*)__P((void))));
 static int	sparc_bus_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 				     bus_size_t, bus_size_t, bus_size_t, int,
 				     bus_addr_t *, bus_space_handle_t *));
@@ -1950,13 +2017,13 @@ sparc_bus_mmap(t, paddr, off, prot, flags)
 
 
 void *
-sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int	pil;
 	int	level;
-	int	flags;
 	int	(*handler)__P((void *));
 	void	*arg;
+	void	(*fastvec)__P((void));	/* ignored */
 {
 	struct intrhand *ih;
 

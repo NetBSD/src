@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4.2.4 2002/06/20 03:40:19 nathanw Exp $
+#	$NetBSD: Makefile,v 1.4.2.5 2002/12/11 06:11:29 thorpej Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
 NOMAN= # defined
 STRIPFLAG=
 BINMODE= 444
+WARNS?= 1
 SIZE?= size
 
 .include <bsd.own.mk>
@@ -12,12 +13,12 @@ SIZE?= size
 COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 LDFLAGS= -x -N -Ttext a0004000 -e _start
-CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
+CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
 CPPFLAGS+= -nostdinc -I${COMMON} -I${.CURDIR}/../../../..
 
-AFLAGS= -D_LOCORE
+AFLAGS= -D_LOCORE -mno-abicalls
 
 CLEANFILES+= machine mips ${PROG}.sym
 CLEANFILES+= ${PROG}.bin ${PROG}.tmp

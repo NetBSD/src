@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.32.4.5 2002/06/20 03:40:30 nathanw Exp $
+# $NetBSD: Makefile.booters,v 1.32.4.6 2002/12/11 06:11:35 thorpej Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -19,12 +19,12 @@ mips:
 BINMODE?=	444
 
 .PATH:		${.CURDIR}/../common
-AFLAGS+=	-D_LOCORE -D_KERNEL
+AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES \
 		-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
-CFLAGS=		-Os -g -mmemcpy -mno-abicalls -G 128
+CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
 OFORMAT=	--oformat elf32-littlemips
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
