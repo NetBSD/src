@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.44 1996/06/23 13:56:54 leo Exp $	*/
+/*	$NetBSD: kvm.c,v 1.45 1996/06/23 20:28:05 leo Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.44 1996/06/23 13:56:54 leo Exp $";
+static char *rcsid = "$NetBSD: kvm.c,v 1.45 1996/06/23 20:28:05 leo Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -473,7 +473,7 @@ off_t	dump_off;
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
-		return (-1);
+		return (0);
 	}
 	hdr_size = ALIGN(sizeof(cpu_hdr));
 

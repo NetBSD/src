@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_dump.3,v 1.1 1996/03/18 21:11:12 leo Exp $
+.\"	$NetBSD: kvm_dump.3,v 1.2 1996/06/23 20:28:12 leo Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -89,10 +89,18 @@ function clears the magic number in the physical memory file associated with
 .Fa kd .
 The address translations must be enabled for this to work (thus assuming
 that
-.Fn kvm_dum_mkheader
+.Fn kvm_dump_mkheader
 was called earlier in the sequence).
 .Sh RETURN VALUES
-All functions return 0 on success, -1 on failure. In the case of failure,
+All functions except
+.Fn kvm_dump_mkheader
+return 0 on success, -1 on failure. The function
+.Fn kvm_dump_mkheader
+returns the size of the headers present before the actual dumpdata starts. If
+no valid headers were found but no fatal errors occured, 0 is returned. On
+fatal errors the return value is -1.
+.Pp
+In the case of failure,
 .Xr kvm_geterr 3
 can be used to retrieve the cause of the error.
 .Sh HISTORY
