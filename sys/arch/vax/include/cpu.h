@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.68 2004/01/22 01:24:10 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.69 2004/03/19 20:17:51 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -55,6 +55,7 @@
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
+#include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/sched.h>
@@ -147,6 +148,7 @@ struct cpu_info {
 	int ci_flags;			/* See below */
 	long ci_ipimsgs;		/* Sent IPI bits */
 	struct trapframe *ci_ddb_regs;	/* Used by DDB */
+	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
 #endif
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
@@ -180,6 +182,12 @@ struct cpu_mp_softc {
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
+#define	CPU_INFO_ITERATOR	int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = SIMPLEQ_FIRST(&cpus); \
+					ci != NULL; \
+					ci = SIMPLEQ_NEXT(ci, ci_next)
+
+extern SIMPLEQ_HEAD(cpu_info_qh, cpu_info) cpus;
 extern char tramp;
 #endif
 

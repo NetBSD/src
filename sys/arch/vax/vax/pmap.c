@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2004/02/13 11:36:20 wiz Exp $	   */
+/*	$NetBSD: pmap.c,v 1.134 2004/03/19 20:17:51 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2004/03/19 20:17:51 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -396,6 +396,7 @@ pmap_bootstrap()
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
+	SIMPLEQ_FIRST(&cpus) = curcpu();
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	simple_lock_init(&pvtable_lock);
