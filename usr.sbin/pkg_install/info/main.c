@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.38 2004/01/06 15:48:47 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2004/03/22 11:42:51 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2004/01/06 15:48:47 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2004/03/22 11:42:51 wiz Exp $");
 #endif
 #endif
 
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 
 	/* Get all the remaining package names, if any */
 	if (File2Pkg && !AllInstalled)
-		if (pkgdb_open(ReadOnly) == -1) {
+		if (!pkgdb_open(ReadOnly)) {
 			err(EXIT_FAILURE, "cannot open pkgdb");
 		}
 	while (*argv) {
