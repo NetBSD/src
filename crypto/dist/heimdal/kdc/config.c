@@ -36,7 +36,7 @@
 #include <parse_bytes.h>
 
 __RCSID("$Heimdal: config.c,v 1.43 2002/08/29 01:51:07 assar Exp $"
-        "$NetBSD: config.c,v 1.7 2002/09/12 13:19:00 joda Exp $");
+        "$NetBSD: config.c,v 1.8 2002/09/12 17:16:38 joda Exp $");
 
 static const char *config_file;	/* location of kdc config file */
 
@@ -56,7 +56,7 @@ const char *port_str;
 
 #ifdef HAVE_DAEMON
 int detach_from_console = -1;
-#define DETACH_IS_DEFAULT FALSE
+#define DETACH_IS_DEFAULT TRUE
 #endif
 
 int enable_http = -1;
