@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.26 2000/03/27 03:25:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.27 2000/03/31 02:05:24 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -971,8 +971,10 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	unsigned int bs;
 	int spare_number;
 
+#if 0
 	printf("Just in rf_add_hot_spare: %d\n",raidPtr->numSpare);
 	printf("Num col: %d\n",raidPtr->numCol);
+#endif
 	if (raidPtr->numSpare >= RF_MAXSPARE) {
 		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
 		return(EINVAL);
