@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.11 2003/02/28 05:24:56 matt Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.12 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/bat.h>
+#include <powerpc/oea/bat.h>
 
 #include <sys/bootblock.h>
 

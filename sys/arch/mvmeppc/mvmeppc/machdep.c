@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2003/09/06 21:07:00 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2003/10/20 00:12:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/09/06 21:07:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2003/10/20 00:12:10 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/09/06 21:07:00 kleink Exp $");
 #include <net/netisr.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -73,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/09/06 21:07:00 kleink Exp $");
 #include <machine/platform.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <dev/cons.h>
 
