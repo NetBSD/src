@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.19 2000/11/24 05:02:26 nisimura Exp $
+#	$NetBSD: files.tc,v 1.20 2000/12/17 13:52:03 ad Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -58,6 +58,20 @@ file	dev/tc/if_fta.c			fta
 #device xcfb: wsemuldisplaydev, rasops8
 #attach xcfb at tc
 #file	dev/tc/xcfb.c			xcfb needs-flag
+
+# STIC (stamp interface chip) for PX and PXG
+#define	stic
+#file	dev/tc/stic.c			stic
+
+# PX PMAG-C
+#device	px: wsemuldisplaydev, stic
+#attach	px at tc
+#file	dev/tc/px.c			px needs-flag
+
+# PXG PMAG-D, PMAG-E, PMAG-F
+#device	pxg: wsemuldisplaydev, stic
+#attach	pxg at tc
+#file	dev/tc/pxg.c			pxg needs-flag
 
 # TCDS dual channel SCSI
 #device	tcds { chip = -1 }
