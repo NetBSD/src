@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.60 2003/01/19 01:13:46 wiz Exp $	*/
+/*	$NetBSD: options.c,v 1.61 2003/02/02 10:21:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.60 2003/01/19 01:13:46 wiz Exp $");
+__RCSID("$NetBSD: options.c,v 1.61 2003/02/02 10:21:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ FSUB fsub[] = {
 
 /*
  * ford is the archive search order used by get_arc() to determine what kind
- * of archive we are dealing with. This helps to properly id  archive formats
+ * of archive we are dealing with. This helps to properly id archive formats
  * some formats may be subsets of others....
  */
 int ford[] = {F_USTAR, F_TAR, F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, -1};

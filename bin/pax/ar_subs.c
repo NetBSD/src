@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.21 2002/12/10 18:33:26 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.22 2003/02/02 10:21:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.21 2002/12/10 18:33:26 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.22 2003/02/02 10:21:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ ARCHD archd;
 /*
  * list()
  *	list the contents of an archive which match user supplied pattern(s)
- *	(no pattern matches all).
+ *	(if no pattern is supplied, list entire contents).
  */
 
 void
@@ -234,7 +234,7 @@ extract(void)
 
 		/*
 		 * with -u or -D only extract when the archive member is newer
-		 * than the file with the same name in the file system (nos
+		 * than the file with the same name in the file system (no
 		 * test of being the same type is required).
 		 * NOTE: this test is done BEFORE name modifications as
 		 * specified by pax. this operation can be confusing to the
@@ -420,7 +420,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		return;
 
 	/*
-	 * if this not append, and there are no files, we do no write a trailer
+	 * if this is not append, and there are no files, we do no write a trailer
 	 */
 	wr_one = is_app;
 
