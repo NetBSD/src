@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.12 2000/01/22 22:19:18 mycroft Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.12.4.1 2002/08/01 17:30:49 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.12 2000/01/22 22:19:18 mycroft Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.12.4.1 2002/08/01 17:30:49 he Exp $");
 #endif
 #endif
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: xdr_array.c,v 1.12 2000/01/22 22:19:18 mycroft Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -86,13 +87,13 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	u_int nodesize;
 
 	/* like strings, arrays are really counted arrays */
-	if (! xdr_u_int(xdrs, sizep)) {
+	if (!xdr_u_int(xdrs, sizep))
 		return (FALSE);
-	}
+
 	c = *sizep;
-	if ((c > maxsize) && (xdrs->x_op != XDR_FREE)) {
+	if ((c > maxsize || UINT_MAX/elsize < c) &&
+	    (xdrs->x_op != XDR_FREE))
 		return (FALSE);
-	}
 	nodesize = c * elsize;
 
 	/*
@@ -160,7 +161,7 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 
 	elptr = basep;
 	for (i = 0; i < nelem; i++) {
-		if (! (*xdr_elem)(xdrs, elptr)) {
+		if (!(*xdr_elem)(xdrs, elptr)) {
 			return(FALSE);
 		}
 		elptr += elemsize;
