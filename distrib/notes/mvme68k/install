@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.4 1999/01/13 07:30:06 ross Exp $
+.\"	$NetBSD: install,v 1.5 1999/02/20 16:18:11 scw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@ onto your disk. If your
 machine has a tape drive the easiest way is "Installing from tape"
 (details below). If your machine is on a network with a suitable
 NFS server, then "Installing from NFS" is the next best method.
-Otherwise, if you have another VME147 machine running
+Otherwise, if you have another mvme68k machine running
 .Nx
 you can
 initialize the disk on that machine and then move the disk.
@@ -52,9 +52,9 @@ initialize the disk on that machine and then move the disk.
 .
 Create the NetBSD/mvme68k _VER boot tape as described in the section
 entitled "Preparing a boot tape". Then, with the tape in the drive,
-type the following at the 147Bug prompt:
+type the following at the 1x7Bug prompt:
 .Pp
-.Dl 147-Bug\*> Ic bo 5
+.Dl 1x7-Bug\*> Ic bo 5
 .Pp
 As mentioned earlier, this assumes your tape is jumpered for SCSI-id 5.
 .Pp
@@ -80,7 +80,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.4 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.5 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -103,7 +103,7 @@ clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
 .Pp
 .(Note
 The exact text of the messages will vary depending on which
-MVME147 variant you're using.
+MVME147 or MVME167 variant you're using.
 .Note)
 .Pp
 Finally, you will see the following "welcome" message:
@@ -128,7 +128,7 @@ The easiest is loading from tape, which is done as follows:
 
 To reboot using the swap partition after running installboot, first
 use "halt", then at the Bug monitor prompt use a command like:
-        bo 0,,b:
+        147Bug> bo 0,,b:   OR   167Bug> bo 0,,,b:
 
 To view this message again, type:  cat /.welcome
 ssh:
@@ -330,6 +330,7 @@ You can now shutdown the system.
 .Dl Cold/Warm Reset flag [C,W] = C?
 .Dl Execute Soft Reset [Y,N] N? Ic y
 .Pp
+Resetting the MVME167 board is very similar.
 You should now reboot from that just installed miniroot. See the section
 entitled "Booting the miniroot" for details.
 .
@@ -340,13 +341,14 @@ your NFS server to support your machine as a bootable client.
 Instructions for configuring the server are found in the section
 entitled "Getting the NetBSD System onto Useful Media" above.
 .Pp
-To get started, you need to download "sboot" into RAM (you will find
+To get started on the MVME147, you need to download "sboot" into RAM
+(you will find
 .Ic sboot
 in the 
 .Pa install
 directory of the mvme68k distribution).
 You can either do that through the console line or through a 2nd serial
-connection. For example, a VME147 connected to a sun4/110 and accessed via
+connection. For example, an MVME147 connected to a sun4/110 and accessed via
 .Xr tip 1
 can be loaded as follows:
 .Pp
@@ -367,7 +369,7 @@ Which will look like this:
 .Dl 147-Bug\*> Ic g 4000
 .Dl Effective address: 00004000
 .Pp
-.Dl sboot:\ serial\ line\ bootstrap\ program\ (\*&end\ =\ 6018)
+.Dl sboot: serial line bootstrap program (end = 6018)
 .Pp
 .Dl \*>\*>\*>
 .Pp
@@ -393,8 +395,25 @@ My ip address is: 192.168.1.4
 Server ip address is: 192.168.1.1
 4800
 Download was a success!
+.Ed
+.Pp
+See below for the next step in booting MVME147.
+.Pp
+The MVME167 is able to download netboot directly using TFTP.
+To enable this, you must first configure the networking parameters
+on the board as described in the section entitled "Preparing your System
+for
+.Nx
+Installation. On a properly configured MVME167, all you need
+to type is:
+.Pp
+.Dl 167-Bug\*> Ic nbo
+.Pp
+For both boards, the boot messages are very similar:
+.Pp
+.Bd -literal -offset indent
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.4 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.5 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -432,7 +451,13 @@ NFS server containing the miniroot image. For example the command:
 .Pp
 .Dl ssh: Ic ifconfig\ le0\ inet\ 192.168.1.4 up
 .Pp
-will bring up the network interface 'le0' with that address. The next
+will bring up the MVME147 network interface 'le0' with that address.
+The command:
+.Pp
+.Dl ssh: Ic ifconfig\ ie0\ inet\ 192.168.1.4 up
+.Pp
+will bring up the MVME167 network interface 'ie0' with that address.
+The next
 step is to copy the miniroot from your server. This can be done using
 either NFS or remote shell. (In the examples that follow, the server has
 IP address 192.168.1.1) You may then need to add a default route if the
@@ -480,12 +505,15 @@ Assuming the miniroot is installed on partition 'b' of the disk with
 SCSI-id 0, then the 147Bug boot command is:
 .Dl 147-Bug\*> Ic bo 0,,b:
 .Pp
+The corresponding 167Bug boot command is:
+.Dl 167-Bug\*> Ic bo 0,,,b:
+.Pp
 The command line parameters above are:
 .Pp
 .Bl -tag -width xxx
 .It Ic 0
 controller (usually zero)
-.It Ic ,,
+.It Ic ,, or ,,,
 bug argument separators
 .It Ic \&b:\&
 tell the bootstrap code to boot from partition
@@ -502,17 +530,16 @@ return twice to accept the defaults. When asked to enter a terminal
 type, either accept the default, or use whatever the TERM environment
 variable is set to in the shell of your host system:
 .Pp
-.DL vmel0 at vmechip0
-.DL boot device: sd0
-.DL root device (default sd0a): Ic sd0b
-.DL dump device (default sd0b):  Em (return)
-.DL file system (default generic): Em (return)
-.DL root on sd0b dumps on sd0b
-.DL mountroot: trying ffs...
-.DL root file system type: ffs
-.DL init: copying out path `/sbin/init' 11
-.DL erase ^H, werase ^W, kill ^U, intr ^C
-.DL Terminal type? [vt100] Em return
+.Dl boot device: sd0
+.Dl root device (default sd0a): Ic sd0b
+.Dl dump device (default sd0b):  Em (return)
+.Dl file system (default generic): Em (return)
+.Dl root on sd0b dumps on sd0b
+.Dl mountroot: trying ffs...
+.Dl root file system type: ffs
+.Dl init: copying out path `/sbin/init' 11
+.Dl erase ^H, werase ^W, kill ^U, intr ^C
+.Dl Terminal type? [vt100] Em return
 .Pp
 Congratulations! The system should now be running the miniroot
 installation program.
