@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.3 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: main.c,v 1.7 1995/02/20 19:43:54 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.8 1995/02/21 01:17:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -274,12 +274,12 @@ main(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage:\t%s%s%s%s%s",
-	    "restore tfhsvy [file ...]\n",
-	    "\trestore xfhmsvy [file ...]\n",
-	    "\trestore ifhmsvy\n",
-	    "\trestore rfsvy\n",
-	    "\trestore Rfsvy\n");
+
+	(void)fprintf(stderr, "usage: restore -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n");
+	(void)fprintf(stderr, "       restore -R [-cvy] [-b blocksize] [-f file] [-s fileno]\n");
+	(void)fprintf(stderr, "       restore -r [-cvy] [-b blocksize] [-f file] [-s fileno]\n");
+	(void)fprintf(stderr, "       restore -t [-chvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n");
+	(void)fprintf(stderr, "       restore -x [-chmvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n");
 	exit(1);
 }
 
