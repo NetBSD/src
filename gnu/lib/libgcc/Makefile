@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2002/02/11 21:36:35 tv Exp $
+#	$NetBSD: Makefile,v 1.39 2002/03/24 22:23:43 bjh21 Exp $
 
 REQUIRETOOLS=	yes
 
@@ -111,7 +111,7 @@ LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 LIB2OBJS+=	_udiv_w_sdiv.o
 .endif
 .if (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") || \
-    (${MACHINE_ARCH} == "arm26") || (${MACHINE_ARCH} == "arm")
+    (${MACHINE_ARCH} == "arm")
 LIB2OBJS+=	_fixunsdfsi.o _fixunssfsi.o
 .endif
 OBJS+=		${LIB2OBJS}
