@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.134 2004/01/12 16:19:36 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.135 2004/02/22 08:58:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.134 2004/01/12 16:19:36 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.135 2004/02/22 08:58:03 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -647,7 +647,7 @@ loop:
 /*
  * Possible superblock locations ordered from most to least likely.
  */
-static int sblock_try[] = SBLOCKSEARCH;
+static const int sblock_try[] = SBLOCKSEARCH;
 
 /*
  * Common code for mount and mountroot
