@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.35 2003/08/07 16:44:25 agc Exp $	*/
+/*	$NetBSD: tty.c,v 1.36 2004/01/20 08:30:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.35 2003/08/07 16:44:25 agc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.36 2004/01/20 08:30:55 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -162,6 +162,10 @@ _cursesi_gettmode(SCREEN *screen)
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, screen->curt) ? ERR : OK);
 }
 
+/*
+ * raw --
+ *	Put the terminal into raw mode
+ */
 int
 raw(void)
 {
@@ -181,6 +185,10 @@ raw(void)
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
+/*
+ * noraw --
+ *	Put the terminal into cooked mode
+ */
 int
 noraw(void)
 {
@@ -200,6 +208,10 @@ noraw(void)
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
+/*
+ * cbreak --
+ * 	Enable cbreak mode
+ */
 int
 cbreak(void)
 {
@@ -220,6 +232,10 @@ cbreak(void)
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
+/*
+ * nocbreak --
+ *	Disable cbreak mode
+ */
 int
 nocbreak(void)
 {
@@ -579,7 +595,6 @@ resetty(void)
 /*
  * erasechar --
  *     Return the character of the erase key.
- *
  */
 char
 erasechar(void)
