@@ -344,11 +344,11 @@ _trapbase:
 	UTRAP(0x21)
 	UTRAP(0x22)
 	UTRAP(0x23)
-	UTRAP(0x24)
+	TRAP(T_CPDISABLED)	! 24 = coprocessor instr, EC bit off in psr
 	UTRAP(0x25)
 	UTRAP(0x26)
 	UTRAP(0x27)
-	UTRAP(0x28)
+	TRAP(T_CPEXCEPTION)	! 28 = coprocessor exception
 	UTRAP(0x29)
 	UTRAP(0x2a)
 	UTRAP(0x2b)
@@ -362,7 +362,7 @@ _trapbase:
 	UTRAP(0x33)
 	UTRAP(0x34)
 	UTRAP(0x35)
-	TRAP(T_CPDISABLED)	! 36 = coprocessor instr, EC bit off in psr
+	UTRAP(0x36)
 	UTRAP(0x37)
 	UTRAP(0x38)
 	UTRAP(0x39)
@@ -372,7 +372,7 @@ _trapbase:
 	UTRAP(0x3d)
 	UTRAP(0x3e)
 	UTRAP(0x3f)
-	TRAP(T_CPEXCEPTION)	! 40 = coprocessor exception
+	UTRAP(0x40)
 	UTRAP(0x41)
 	UTRAP(0x42)
 	UTRAP(0x43)
