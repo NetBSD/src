@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.18 2003/08/24 15:14:18 kleink Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.19 2003/08/25 23:09:37 matt Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.18 2003/08/24 15:14:18 kleink Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.19 2003/08/25 23:09:37 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -308,11 +308,12 @@ int
 updwtmpx(const char *file, const struct utmpx *utx)
 {
 	int fd;
+	int saved_errno;
 
 	_DIAGASSERT(file != NULL);
 	_DIAGASSERT(utx != NULL);
 
-	fd = open(file, O_WRONLY|O_APPEND|O_EXLOCK);
+	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK);
 
 	if (fd == -1) {
 		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
@@ -321,13 +322,19 @@ updwtmpx(const char *file, const struct utmpx *utx)
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
 		if (write(fd, &ut, sizeof(ut)) == -1)
-			return -1;
+			goto failed;
 	}
 	if (write(fd, utx, sizeof(*utx)) == -1)
-		return -1;
+		goto failed;
 	if (close(fd) == -1)
 		return -1;
 	return 0;
+
+  failed:
+	saved_errno = errno;
+	(void) close(fd);
+	errno = saved_errno;
+	return -1;
 }
 
 
