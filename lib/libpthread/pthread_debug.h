@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.1.2.1 2003/01/13 18:53:16 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.1.2.2 2003/01/13 19:19:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,10 @@
 #define PTHREADD_CREATE		0
 #define PTHREADD_IDLE		1
 #define PTHREADD_UPCALLS	2
-#define PTHREADD_UP_BLOCK       3
-#define PTHREADD_UP_NEW		4
-#define PTHREADD_UP_PREEMPT	5
-#define PTHREADD_UP_UNBLOCK	6
+#define PTHREADD_UP_NEW		3
+#define PTHREADD_UP_BLOCK       4
+#define PTHREADD_UP_UNBLOCK	5
+#define PTHREADD_UP_PREEMPT	6
 #define PTHREADD_UP_SIGNAL	7
 #define PTHREADD_UP_SIGEV	8
 #define PTHREADD_SPINLOCKS	9
@@ -54,6 +54,23 @@
 #define PTHREADD_RESOLVELOCKS	12
 #define PTHREADD_SWITCHTO	13
 #define PTHREADD_NCOUNTERS	14
+
+#define PTHREADD_INITCOUNTERNAMES { \
+	"pthread_create()",	/*  0 CREATE */		\
+	"pthread_idle()",	/*  1 IDLE */		\
+	"upcall",		/*  2 UPCALLS */	\
+	"upcall: new",		/*  3 UP_NEW */		\
+	"upcall: block",	/*  4 UP_BLOCK */	\
+	"upcall: unblock",	/*  5 UP_UNBLOCK */	\
+	"upcall: preempt",	/*  6 UP_PREEMPT */	\
+	"upcall: signal",	/*  7 UP_SIGNAL */	\
+	"upcall: sigev",	/*  8 UP_SIGEV */	\
+	"spinlock",		/*  9 SPINLOCKS */	\
+	"spinunlock",		/* 10 SPINUNLOCKS */	\
+	"spin preemption",     	/* 11 SPINPREEMPT */	\
+	"resolvelocks",		/* 12 RESOLVELOCKS */	\
+	"switchto",		/* 13 SPINUNLOCKS */	\
+}
 
 #define PTHREAD__DEBUG_SHMKEY	(0x000f)
 #define PTHREAD__DEBUG_SHMSIZE	(1<<18)

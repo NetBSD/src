@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.11 2002/10/22 19:00:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.12 2003/01/13 19:19:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ int pthread__debug_counters[PTHREADD_NCOUNTERS];
 static struct pthread_msgbuf* debugbuf;
 
 static void pthread__debug_printcounters(void);
+static const char *pthread__counternames[] = PTHREADD_INITCOUNTERNAMES;
 
 void pthread__debug_init(void)
 {
@@ -90,9 +91,10 @@ pthread__debug_printcounters(void)
 	for (i = 0; i < PTHREADD_NCOUNTERS; i++)
 		counts[i] = pthread__debug_counters[i];
 
-	printf("Pthread event counters:\n");
+	printf("Pthread event counters\n");
 	for (i = 0; i < PTHREADD_NCOUNTERS; i++)
-		printf("Counter %2d: %9d\n", i, counts[i]);
+		printf("%2d %-20s %9d\n", i, pthread__counternames[i], 
+		    counts[i]);
 	printf("\n");
 }
 
