@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.135 2001/12/12 08:13:33 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.136 2002/01/21 11:25:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.135 2001/12/12 08:13:33 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.136 2002/01/21 11:25:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1570,8 +1570,9 @@ void
 closedataconn(FILE *fd)
 {
 
-	if (fd != NULL)
-		(void)fclose(fd);
+	if (fd == NULL)
+		return;
+	(void)fclose(fd);
 	data = -1;
 	if (pdata >= 0)
 		(void)close(pdata);
