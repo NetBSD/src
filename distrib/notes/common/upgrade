@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.19 2002/07/21 20:29:48 rafal Exp $
+.\"	$NetBSD: upgrade,v 1.20 2002/07/22 14:16:29 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@ is a binary upgrade; it can be quite difficult to update the system
 from an earlier version by recompiling from source, primarily due to
 interdependencies in the various components.
 .Pp
-.ie r_atari \{\
+.ie \n[atari] \{\
 To do the upgrade, you must first boot the system as described in the
 .Sx Booting the installer
 section.
@@ -51,7 +51,7 @@ To do the upgrade, you must boot from the installer kernel using one of
 the methods described above.
 .\}
 .el \{\
-.ie r_pmax \{\
+.ie \n[pmax] \{\
 To do the upgrade, you must install new bootblocks and boot off
 the
 .Ic install
@@ -60,7 +60,7 @@ kernel as described in the
 section.
 .\}
 .el \{\
-.ie r_x68k \{\
+.ie \n[x68k] \{\
 As noted above, you must have the
 .Pa loadbsd.x
 utility and the installation kernel you chose, or, the
@@ -68,7 +68,7 @@ boot floppies available to do the upgrade.
 .\}
 .el \{\
 To do the upgrade, you must have the boot floppy
-.if r_alpha set
+.if \n[alpha]:\n[i386] set
 available.
 .\}\}\}\}
 You must also have at least the
@@ -99,7 +99,7 @@ any important data on your disk, whether on the
 partition or on
 another operating system's partition, before beginning the upgrade
 process.
-.if r_macppc \{\
+.if \n[macppc] \{\
 Since installation of the bootloader will prevent
 .Tn Mac OS
 from using the disk and will prevent Open Firmware 3 machines from
