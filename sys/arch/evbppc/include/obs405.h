@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.3 2005/01/21 19:24:11 shige Exp $	*/
+/*	$NetBSD: obs405.h,v 1.4 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -65,7 +65,24 @@
 
 #include <dev/ic/comreg.h>
 
+/*
+ * Device Properties for OpenBlockS
+ */
+
+/* UART Clock */
 #define OBS405_COM_FREQ		(COM_FREQ * 4)	/* UART CLK 7.3728 MHz */
+
+/* GPIO LED */
+/* XXX: support only OpenBlockS266 LED */
+#define OBS405_LED1		(1)
+#define OBS405_LED2		(2)
+#define OBS405_LED4		(4)
+#define OBS405_LED_ON		(OBS405_LED1 | OBS405_LED2 | OBS405_LED4)
+#define OBS405_LED_OFF		(~OBS405_LED1 & ~OBS405_LED2 & ~OBS405_LED4)
+
+#define OBS405_GPIO_LED1	(12)
+#define OBS405_GPIO_LED2	(13)
+#define OBS405_GPIO_LED4	(14)
 
 /*
  * extern variables and functions
@@ -73,5 +90,6 @@
 extern void obs405_consinit(void);
 extern void obs405_cpu_startup(void);
 extern void obs405_device_register(struct device *dev, void *aux);
+extern void obs405_led_set(int led);
 
 #endif	/* _EVBPPC_OBS405_H_ */

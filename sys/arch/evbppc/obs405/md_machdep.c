@@ -1,4 +1,4 @@
-/*	$NetBSD: md_machdep.c,v 1.2 2005/01/21 19:24:11 shige Exp $	*/
+/*	$NetBSD: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_machdep.c,v 1.2 2005/01/21 19:24:11 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -212,6 +212,8 @@ cpu_reboot(int howto, char *what)
 	static char str[256];
 	char *ap = str, *ap1 = ap;
 
+	obs405_led_set(OBS405_LED_ON);
+
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
@@ -233,7 +235,9 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 
+#if 0
 		goto reboot;	/* XXX for now... */
+#endif
 
 #ifdef DDB
 		printf("dropping to debugger\n");
@@ -264,7 +268,9 @@ cpu_reboot(int howto, char *what)
 	/* flush cache for msgbuf */
 	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
 
+#if 0
  reboot:
+#endif
 	ppc4xx_reset();
 
 	printf("ppc4xx_reset() failed!\n");
