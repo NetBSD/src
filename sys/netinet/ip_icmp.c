@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.22 1996/10/13 02:03:04 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.23 1997/06/24 01:26:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -343,8 +343,10 @@ icmp_input(m, va_alist)
 		 * We are not able to respond with all ones broadcast
 		 * unless we receive it over a point-to-point interface.
 		 */
-		if (icmplen < ICMP_MASKLEN)
+		if (icmplen < ICMP_MASKLEN) {
+			icmpstat.icps_badlen++;
 			break;
+		}
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 		    in_nullhost(ip->ip_dst))
 			icmpdst.sin_addr = ip->ip_src;
