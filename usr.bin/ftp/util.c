@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.45 1999/02/12 12:11:18 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.46 1999/03/08 03:09:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.45 1999/02/12 12:11:18 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.46 1999/03/08 03:09:08 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -822,7 +822,7 @@ progressmeter(flag)
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		len += snprintf(buf + len, sizeof(buf) - len,
-		    "|%.*s%*s|", i, 
+		    "|%.*s%*s|", i,
 "*****************************************************************************"
 "*****************************************************************************",
 		    barlength - i, "");

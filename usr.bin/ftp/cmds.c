@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.46 1999/01/24 02:39:29 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.47 1999/03/08 03:09:08 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.46 1999/01/24 02:39:29 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.47 1999/03/08 03:09:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,7 +932,7 @@ setgate(argc, argv)
 				port = strtol(argv[2], &ep, 10);
 				if (port < 0 || port > MAX_IN_PORT_T ||
 				    *ep != '\0') {
-					fprintf(ttyout, 
+					fprintf(ttyout,
 					    "%s: bad gateport value.\n",
 					    argv[2]);
 					code = -1;
@@ -2094,7 +2094,7 @@ restart(argc, argv)
 #endif
 }
 
-/* 
+/*
  * Show remote system type
  */
 void
