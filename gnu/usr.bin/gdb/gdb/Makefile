@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/01/13 07:09:53 matt Exp $
+#	$NetBSD: Makefile,v 1.17 2003/01/18 21:36:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,10 @@ CPPFLAGS=	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 
 LDADD=		-ltermcap -lintl -lm -lkvm
 DPADD=		${LIBTERMCAP} ${LIBINTL} ${LIBM} ${LIBKVM}
+
+.if ${SRCS:Mnbsd-thread.c} != ""
+LDADD+=                -lpthread_dbg
+.endif
 
 TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
