@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.9 1998/05/18 22:50:20 christos Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.10 1999/02/05 07:52:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,14 +42,14 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.9 1998/05/18 22:50:20 christos Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.10 1999/02/05 07:52:52 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <unistd.h>
-#include "y.tab.h"
-#include "error.h"
 #include "arith.h"
+#include "error.h"
+#include "expand.h"
 
 extern int yylval;
 extern char *arith_buf, *arith_startbuf;
