@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6 1995/04/26 09:40:36 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.7 1995/04/27 17:18:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -84,17 +84,19 @@ in_cksum(m, len)
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
+		if (mlen < 16)
+			goto short_mbuf;
 		/*
 		 * Force to long boundary so we do longword aligned
 		 * memory operations
 		 */
 		if ((3 & (long)w) != 0) {
 			REDUCE;
-			if ((1 & (long)w) != 0 && mlen >= 1) {
+			if ((1 & (long)w) != 0) {
 				ADDBYTE;
 				ADVANCE(1);
 			}
-			if ((2 & (long)w) != 0 && mlen >= 2) {
+			if ((2 & (long)w) != 0) {
 				ADDWORD;
 				ADVANCE(2);
 			}
@@ -102,12 +104,12 @@ in_cksum(m, len)
 		/*
 		 * Align 4 bytes past a 16-byte cache line boundary.
 		 */
-		if ((4 & (long)w) == 0 && mlen >= 4) {
+		if ((4 & (long)w) == 0) {
 			ADD(0);
 			MOP;
 			ADVANCE(4);
 		}
-		if ((8 & (long)w) != 0 && mlen >= 8) {
+		if ((8 & (long)w) != 0) {
 			ADD(0);  ADC(4);
 			MOP;
 			ADVANCE(8);
@@ -137,20 +139,26 @@ in_cksum(m, len)
 			MOP;
 			ADVANCE(16);
 		}
+	short_mbuf:
 		if (mlen >= 8) {
 			ADD(0);  ADC(4);
 			MOP;
 			ADVANCE(8);
 		}
-		if (mlen == 0)
-			continue;
-		REDUCE;
-		while ((mlen -= 2) >= 0) {
-			ADDWORD;
-			w += 2;
+		if (mlen >= 4) {
+			ADD(0);
+			MOP;
+			ADVANCE(4);
 		}
-		if (mlen == -1) {
-			ADDBYTE;
+		if (mlen > 0) {
+			REDUCE;
+			if (mlen >= 2) {
+				ADDWORD;
+				ADVANCE(2);
+			}
+			if (mlen >= 1) {
+				ADDBYTE;
+			}
 		}
 	}
 
