@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.22 1997/09/23 21:15:07 fair Exp $	*/
+/*	$NetBSD: arch.c,v 1.23 1997/09/26 13:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.22 1997/09/23 21:15:07 fair Exp $");
+__RCSID("$NetBSD: arch.c,v 1.23 1997/09/26 13:29:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ static int ArchFindArchive __P((ClientData, ClientData));
 static void ArchFree __P((ClientData));
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
-#if defined(__svr4__) || defined(__SVR4)
+#if defined(__svr4__) || defined(__SVR4) || defined(__ELF__)
 #define SVR4ARCHIVES
 static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
 #endif

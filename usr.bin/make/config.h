@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.8 1997/04/26 07:11:14 mellon Exp $	*/
+/*	$NetBSD: config.h,v 1.9 1997/09/26 13:29:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -111,8 +111,7 @@
  */
 #define SUNSHCMD
 
-#if !defined(__svr4__) && !defined(__SVR4) && \
-	!(defined(__NetBSD__) && (defined(__mips__) || defined(__ELF__)))
+#if !defined(__svr4__) && !defined(__SVR4) && !defined(__ELF__)
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif
