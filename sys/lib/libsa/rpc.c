@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.5 1995/06/27 15:28:58 gwr Exp $	*/
+/*	$NetBSD: rpc.c,v 1.6 1995/07/03 02:59:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -40,13 +40,11 @@
  */
 
 /*
- * This code was copied from sys/lib/libsa/rpc.c and modified to
- * avoid copying the args/results to/from local packet buffers,
- * because that allows the new function rpc_fromaddr() to look
- * back into the headers to find out where a response is from.
- * This is needed by the bootparam.c code, and is also a little
- * more efficient (though efficiency is not a concern here.)
- * The new calling interface means nfs.c had to change too...
+ * RPC functions used by NFS and bootparams.
+ * Note that bootparams requires the ability to find out the
+ * address of the server from which its response has come.
+ * This is supported by keeping the IP/UDP headers in the
+ * buffer space provided by the caller.  (See rpc_fromaddr)
  */
 
 #include <sys/param.h>
@@ -109,7 +107,7 @@ int rpc_port = 0x400;	/* predecrement */
 
 /*
  * Make a rpc call; return length of answer
- * XXX - Caller must leave room for headers.
+ * Note: Caller must leave room for headers.
  */
 size_t
 rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
@@ -149,7 +147,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	auth->authtype = htonl(RPCAUTH_NULL);
 	auth->authlen = 0;
 
-#if 0	/* XXX */
+#if 1
 	/* Auth credentials: always auth unix (as root) */
 	send_head -= sizeof(struct auth_unix);
 	bzero(send_head, sizeof(struct auth_unix));
