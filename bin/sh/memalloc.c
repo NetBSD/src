@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)memalloc.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: memalloc.c,v 1.11 1994/12/23 13:21:01 cgd Exp $";
+static char *rcsid = "$Id: memalloc.c,v 1.12 1994/12/30 06:33:59 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -100,9 +100,12 @@ savestr(s)
  * Parse trees for commands are allocated in lifo order, so we use a stack
  * to make this more efficient, and also to avoid all sorts of exception
  * handling code to handle interrupts in the middle of a parse.
+ *
+ * The size 504 was chosen because the Ultrix malloc handles that size
+ * well.
  */
 
-#define MINSIZE 512		/* minimum size of a block */
+#define MINSIZE 504		/* minimum size of a block */
 
 
 struct stack_block {
@@ -124,19 +127,17 @@ stalloc(nbytes)
 	int nbytes;
 {
 	register char *p;
-	int roundbytes;
 
-	roundbytes = ALIGN(nbytes);
-	if (roundbytes > stacknleft) {
+	nbytes = ALIGN(nbytes);
+	if (nbytes > stacknleft) {
 		int blocksize;
 		struct stack_block *sp;
 
-		blocksize = roundbytes;
+		blocksize = nbytes;
 		if (blocksize < MINSIZE)
 			blocksize = MINSIZE;
 		INTOFF;
 		sp = ckmalloc(sizeof(struct stack_block) - MINSIZE + blocksize);
-		memmove(sp->space, stacknxt, nbytes);
 		sp->prev = stackp;
 		stacknxt = sp->space;
 		stacknleft = blocksize;
@@ -144,8 +145,8 @@ stalloc(nbytes)
 		INTON;
 	}
 	p = stacknxt;
-	stacknxt += roundbytes;
-	stacknleft -= roundbytes;
+	stacknxt += nbytes;
+	stacknleft -= nbytes;
 	return p;
 }
 
@@ -205,7 +206,7 @@ popstackmark(mark)
 void
 growstackblock() {
 	char *p;
-	int newlen = stacknleft * 2 + 128;
+	int newlen = stacknleft * 2 + 100;
 	char *oldspace = stacknxt;
 	int oldlen = stacknleft;
 	struct stack_block *sp;
