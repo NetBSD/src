@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.38 2003/05/03 18:11:15 wiz Exp $
+ * $Id: aic7xxxvar.h,v 1.39 2003/05/14 12:46:27 wiz Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -532,7 +532,7 @@ struct hardware_scb {
  * residual sg ptr and the transfer is considered complete.  If the
  * sequencer determines that there is a residual in the tranfer, it
  * will set the SG_RESID_VALID flag in sgptr and DMA the scb back into
- * host memory.  To sumarize:
+ * host memory.  To summarize:
  *
  * Sequencer:
  *	o A residual has occurred if SG_FULL_RESID is set in sgptr,
