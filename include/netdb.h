@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.25 2002/05/14 14:35:36 kleink Exp $	*/
+/*	$NetBSD: netdb.h,v 1.26 2002/05/22 09:42:37 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -319,7 +319,7 @@ void		setprotoent __P((int));
 int		getaddrinfo __P((const char *, const char *,
 				 const struct addrinfo *, struct addrinfo **));
 int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,
-				 socklen_t, char *, socklen_t, unsigned int));
+				 socklen_t, char *, socklen_t, int));
 void		freeaddrinfo __P((struct addrinfo *));
 char		*gai_strerror __P((int));
 #endif
