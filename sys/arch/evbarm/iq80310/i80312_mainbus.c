@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.4 2002/02/07 21:34:24 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.5 2002/02/08 02:31:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -126,12 +126,8 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Some boards are always considered "host". */
 #if defined(IOP310_TEAMASA_NPWR)
 	sc->sc_is_host = 1;
-#else
+#else /* Default to stock IQ80310 */
 	sc->sc_is_host = CPLD_READ(IQ80310_BACKPLANE_DET) & 1;
-#endif
-
-	printf(": i80312 Companion I/O, acting as PCI %s\n",
-	    sc->sc_is_host ? "host" : "slave");
 
 	/*
 	 * Set the subsystem vendor/device IDs to "Cyclone" "PCI-700",
@@ -140,6 +136,10 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_st, sc->sc_sh,
 	    I80312_ATU_BASE + PCI_SUBSYS_ID_REG,
 	    PCI_ID_CODE(PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700));
+#endif
+
+	printf(": i80312 Companion I/O, acting as PCI %s\n",
+	    sc->sc_is_host ? "host" : "slave");
 
 	i80312_sdram_bounds(sc->sc_st, sc->sc_mem_sh, &memstart, &memsize);
 
