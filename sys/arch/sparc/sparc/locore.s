@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.178 2003/01/07 12:09:00 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.179 2003/01/10 16:34:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -163,8 +163,12 @@ _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
  * virtual address for the same structure.  It must be stored in p->p_cpu
  * upon context switch.
  */
-_CISELFP = CPUINFO_VA + CPUINFO_SELF
-_CIFLAGS = CPUINFO_VA + CPUINFO_FLAGS
+_CISELFP	= CPUINFO_VA + CPUINFO_SELF
+_CIFLAGS	= CPUINFO_VA + CPUINFO_FLAGS
+
+/* Per-cpu AST and reschedule requests */
+_WANT_AST	= CPUINFO_VA + CPUINFO_WANT_AST
+_WANT_RESCHED	= CPUINFO_VA + CPUINFO_WANT_RESCHED
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -3298,8 +3302,8 @@ rft_kernel:
  * If returning to a valid window, just set psr and return.
  */
 rft_user:
-!	sethi	%hi(_C_LABEL(want_ast)), %l7	! (done below)
-	ld	[%l7 + %lo(_C_LABEL(want_ast))], %l7
+!	sethi	%hi(_WANT_AST)), %l7	! (done below)
+	ld	[%l7 + %lo(_WANT_AST)], %l7
 	tst	%l7			! want AST trap?
 	bne,a	softtrap		! yes, re-enter trap with type T_AST
 	 mov	T_AST, %o0
@@ -3410,7 +3414,7 @@ rft_user_or_recover_pcb_windows:
 	ld	[%l6 + PCB_NSAVED], %l7
 	tst	%l7
 	bz,a	rft_user
-	 sethi	%hi(_C_LABEL(want_ast)), %l7	! first instr of rft_user
+	 sethi	%hi(_WANT_AST), %l7	! first instr of rft_user
 
 	bg,a	softtrap		! if (pcb_nsaved > 0)
 	 mov	T_WINOF, %o0		!	trap(T_WINOF);
@@ -4531,15 +4535,6 @@ ENTRY(write_user_windows)
 	 nop
 
 
-	.comm	_C_LABEL(want_resched),4
-	.comm	_C_LABEL(want_ast),4
-/*
- * Masterpaddr is the p->p_addr of the last process on the processor.
- * XXX masterpaddr is almost the same as cpcb
- * XXX should delete this entirely
- */
-	.comm	_C_LABEL(masterpaddr), 4
-
 /*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
@@ -4869,12 +4864,12 @@ Lsw_load:
 	st	%o0, [%l3 + P_CPU]
 #endif
 
-	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
+	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Done with the run queues; release the scheduler lock */
 	call	_C_LABEL(sched_unlock_idle)
 #endif
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]! delay slot
+	st	%g0, [%o0 + %lo(_WANT_RESCHED)]! delay slot
 	ld	[%l3 + P_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%l3 + 4]			! p->p_back = NULL;
 	st	%l3, [%l7 + %lo(curproc)]	! curproc = p;
@@ -5422,8 +5417,8 @@ Lsw_scan:
 	st	%o0, [%g3 + P_CPU]
 #endif
 
-	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
+	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
+	st	%g0, [%o0 + %lo(_WANT_RESCHED)]
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Done with the run queues; release the scheduler lock */
 	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
