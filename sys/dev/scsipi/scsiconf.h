@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.46 1998/11/17 14:38:42 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.47 1998/12/05 19:39:24 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,8 +75,8 @@ struct scsibus_softc {
 	struct scsipi_link *adapter_link; /* prototype supplied by adapter */
 	struct scsipi_link ***sc_link;		/* dynamically allocated */
 	int	sc_flags;
-	int	sc_maxtarget;
-	u_int8_t moreluns;
+	int16_t	sc_maxtarget;
+	int16_t	sc_maxlun;
 };
 
 /* sc_flags */
