@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.313 2001/03/07 01:44:51 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.314 2001/03/13 17:22:27 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
+ *	NetBSD: pcidevs,v 1.308 2001/03/13 17:21:16 bouyer Exp 
  */
 
 /*
@@ -535,6 +535,7 @@
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics, Inc. */
+#define	PCI_VENDOR_TITAN	0x14d2		/* Titan Electronics, Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -1661,6 +1662,9 @@
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus Bridge */
+
+/* Titan Electronics products */
+#define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
