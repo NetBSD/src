@@ -1,8 +1,8 @@
-.\"	$NetBSD: ipf.5,v 1.3 2000/02/01 20:31:13 veego Exp $
+.\"	$NetBSD: ipf.5,v 1.3.4.1 2002/02/09 16:56:00 he Exp $
 .\"
 .TH IPF 5
 .SH NAME
-ipf, ipf.conf \- IP packet filter rule syntax
+ipf, ipf.conf, ipf6.conf \- IP packet filter rule syntax
 .SH DESCRIPTION
 .PP
 A rule file for \fBipf\fP may have any name or even be stdin.  As
@@ -33,7 +33,7 @@ proto	= "proto" protocol .
 ip	= srcdst [ flags ] [ with withopt ] [ icmp ] [ keep ] .
 group	= [ "head" decnumber ] [ "group" decnumber ] .
 
-block	= "block" [ icmp[return-code] | "return-rst" ] .
+block	= "block" [ return-icmp[return-code] | "return-rst" ] .
 auth    = "auth" | "preauth" .
 log	= "log" [ "body" ] [ "first" ] [ "or-block" ] [ "level" loglevel ] .
 call	= "call" [ "now" ] function-name .
@@ -44,7 +44,7 @@ protocol = "tcp/udp" | "udp" | "tcp" | "icmp" | decnumber .
 srcdst	= "all" | fromto .
 fromto	= "from" [ "!" ] object "to" [ "!" ] object .
 
-icmp	= "return-icmp" | "return-icmp-as-dest" .
+return-icmp = "return-icmp" | "return-icmp-as-dest" .
 object	= addr [ port-comp | port-range ] .
 addr	= "any" | nummask | host-name [ "mask" ipaddr | "mask" hexnumber ] .
 port-comp = "port" compare port-num .
@@ -118,7 +118,7 @@ below).
 Filters are installed by default at the end of the kernel's filter
 lists, prepending the rule with \fB@n\fP will cause it to be inserted
 as the n'th entry in the current list. This is especially useful when
-modifying and testing active filter rulesets. See ipf(1) for more
+modifying and testing active filter rulesets. See ipf(8) for more
 information.
 .SH ACTIONS
 .PP
@@ -376,7 +376,7 @@ against, e.g.:
 			# packets with ONLY the SYN flag set.
 
 	... flags SA
-			# becomes "flags SA/AUPRFS" and will match any
+			# becomes "flags SA/AUPRFSC" and will match any
 			# packet with only the SYN and ACK flags set.
 
 	... flags S/SA
