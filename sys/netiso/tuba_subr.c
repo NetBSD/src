@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.4 1995/06/13 07:58:24 mycroft Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.4.2.1 1996/02/02 21:58:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,8 +74,13 @@ extern	int	tuba_table_size, tcp_keepidle, tcp_keepintvl, tcp_maxidle;
 extern	int	tcppcbcachemiss, tcppredack, tcppreddat, tcprexmtthresh;
 extern	struct	tcpiphdr tcp_saveti;
 struct	inpcbtable	tuba_inpcb;
-struct	inpcb	*tuba_last_inpcb = 0;
 struct	isopcb	tuba_isopcb;
+
+#ifndef TUBA_INPCBHASHSIZE
+#define	TUBA_INPCBHASHSIZE	128
+#endif
+int	tuba_inpcbhashsize = TUBA_INPCBHASHSIZE;
+
 /*
  * Tuba initialization
  */
@@ -85,7 +90,7 @@ tuba_init()
 #define TUBAHDRSIZE (3 /*LLC*/ + 9 /*CLNP Fixed*/ + 42 /*Addresses*/ \
 		     + 6 /*CLNP Segment*/ + 20 /*TCP*/)
 
-	in_pcbinit(&tuba_inpcb);
+	in_pcbinit(&tuba_inpcb, tuba_inpcbhashsize);
 	tuba_isopcb.isop_next = tuba_isopcb.isop_prev = &tuba_isopcb;
 	tuba_isopcb.isop_faddr = &tuba_isopcb.isop_sfaddr;
 	tuba_isopcb.isop_laddr = &tuba_isopcb.isop_sladdr;
@@ -341,7 +346,6 @@ tuba_tcpinput(m, src, dst)
 #define TUBA_INCLUDE
 #define	in_pcbconnect	tuba_pcbconnect
 #define	tcb		tuba_inpcb
-#define tcp_last_inpcb	tuba_last_inpcb
 
 #include <netinet/tcp_input.c>
 }
