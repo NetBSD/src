@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.8 2001/11/01 07:44:05 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.9 2002/08/29 19:51:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.8 2001/11/01 07:44:05 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.9 2002/08/29 19:51:58 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: newfs.c,v 1.8 2001/11/01 07:44:05 lukem Exp $");
 #include <ufs/lfs/lfs.h>
 
 #include <disktab.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -320,8 +321,13 @@ main(int argc, char **argv)
 	}
 
 	/* Try autoconfiguring segment size, if asked to */
-	if (segsize == -1)
-		segsize = auto_segsize(fsi, dbtob(pp->p_size), version);
+	if (segsize == -1) {
+		if (!S_ISCHR(st.st_mode)) {
+			warnx("%s is not a character special device, ignoring -A", special);
+			segsize = 0;
+		} else
+			segsize = auto_segsize(fsi, dbtob(pp->p_size), version);
+	}
 
 	/* If we're making a LFS, we break out here */
 	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize,
