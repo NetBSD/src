@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.16 2002/09/12 21:06:38 mycroft Exp $	 */
+/*	$NetBSD: paths.c,v 1.17 2002/09/12 22:56:28 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -53,8 +53,8 @@
 
 static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
 static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
-    const char *, const char *, bool));
-static void _rtld_process_mapping __P((Library_Xform **, char *, char *, bool));
+    const char *, const char *));
+static void _rtld_process_mapping __P((Library_Xform **, char *, char *));
 
 static Search_Path *
 _rtld_find_path(path, pathstr, pathlen)
@@ -71,11 +71,10 @@ _rtld_find_path(path, pathstr, pathlen)
 }
 
 static Search_Path **
-_rtld_append_path(head_p, path_p, bp, ep, dodebug)
+_rtld_append_path(head_p, path_p, bp, ep)
 	Search_Path **head_p, **path_p;
 	const char *bp;
 	const char *ep;
-	bool dodebug;
 {
 	char *cp;
 	Search_Path *path;
@@ -96,16 +95,14 @@ _rtld_append_path(head_p, path_p, bp, ep, dodebug)
 	(*path_p) = path;
 	path_p = &path->sp_next;
 
-	if (dodebug)
-		dbg((" added path \"%s\"", path->sp_path));
+	dbg((" added path \"%s\"", path->sp_path));
 	return path_p;
 }
 
 void
-_rtld_add_paths(path_p, pathstr, dodebug)
+_rtld_add_paths(path_p, pathstr)
 	Search_Path **path_p;
 	const char *pathstr;
-	bool dodebug;
 {
 	Search_Path **head_p = path_p;
 
@@ -127,7 +124,7 @@ _rtld_add_paths(path_p, pathstr, dodebug)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, bp, ep, dodebug);
+		path_p = _rtld_append_path(head_p, path_p, bp, ep);
 
 		if (ep[0] == '\0')
 			break;
@@ -189,10 +186,9 @@ const struct list *lists[] = {
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
  */
 static void
-_rtld_process_mapping(lib_p, bp, ep, dodebug)
+_rtld_process_mapping(lib_p, bp, ep)
 	Library_Xform **lib_p;
 	char *bp, *ep;
-	bool dodebug;
 {
 	static const char WS[] = " \t\n";
 	Library_Xform *hwptr = NULL;
@@ -202,14 +198,12 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 	if (bp == NULL || bp == ep || *bp == '\0')
 		return;
 
-	if (dodebug)
-		dbg((" processing mapping \"%s\"", bp));
+	dbg((" processing mapping \"%s\"", bp));
 
 	if ((ptr = strsep(&bp, WS)) == NULL)
 		return;
 
-	if (dodebug)
-		dbg((" library \"%s\"", ptr));
+	dbg((" library \"%s\"", ptr));
 
 	hwptr = xmalloc(sizeof(*hwptr));
 	memset(hwptr, 0, sizeof(*hwptr));
@@ -223,8 +217,7 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 		goto cleanup;
 	}
 
-	if (dodebug)
-		dbg((" sysctl \"%s\"", ptr));
+	dbg((" sysctl \"%s\"", ptr));
 
 	for (i = 0; (l = strsep(&ptr, ".")) != NULL; i++) {
 
@@ -254,10 +247,8 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 		}
 	}
 
-	if (dodebug)
-		for (i = 0; i < hwptr->ctlmax; i++)
-			dbg((" sysctl %d, %d", hwptr->ctl[i],
-			    hwptr->ctltype[i]));
+	for (i = 0; i < hwptr->ctlmax; i++)
+		dbg((" sysctl %d, %d", hwptr->ctl[i], hwptr->ctltype[i]));
 
 	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
 		if (*ptr == '\0') {
@@ -287,8 +278,7 @@ no_more:
 				    hwptr->name);
 				goto cleanup;
 			}
-			if (dodebug)
-				dbg((" library \"%s\"", l));
+			dbg((" library \"%s\"", l));
 			hwptr->entry[i].library[j] = xstrdup(l);
 		}
 		if (j == 0) {
@@ -298,8 +288,7 @@ no_more:
 		}
 		j = i;
 		for (; (l = strsep(&key, ",")) != NULL; i++) {
-			if (dodebug)
-				dbg((" key \"%s\"", l));
+			dbg((" key \"%s\"", l));
 			if (i == RTLD_MAX_ENTRY)
 				goto no_more;
 			if (i != j)
@@ -330,11 +319,10 @@ cleanup:
 }
 
 void
-_rtld_process_hints(path_p, lib_p, fname, dodebug)
+_rtld_process_hints(path_p, lib_p, fname)
 	Search_Path **path_p;
 	Library_Xform **lib_p;
 	const char *fname;
-	bool dodebug;
 {
 	int fd;
 	char *p, *buf, *b, *ebuf;
@@ -386,10 +374,10 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 		case '\n':
 			*p = '\0';
 			if (doing_path)
-				path_p = _rtld_append_path(head_p, path_p, b, p,
-				    dodebug);
+				path_p = _rtld_append_path(head_p, path_p, b,
+				    p);
 			else
-				_rtld_process_mapping(lib_p, b, p, dodebug);
+				_rtld_process_mapping(lib_p, b, p);
 			b = NULL;
 			break;
 
@@ -402,10 +390,9 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 				*++sp = '\0';
 				if (doing_path)
 					path_p = _rtld_append_path(head_p,
-					    path_p, b, sp, dodebug);
+					    path_p, b, sp);
 				else
-					_rtld_process_mapping(lib_p, b, sp,
-					    dodebug);
+					_rtld_process_mapping(lib_p, b, sp);
 				*sp = ' ';
 			}
 			b = NULL;
@@ -419,9 +406,9 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 	}
 
 	if (doing_path)
-		path_p = _rtld_append_path(head_p, path_p, b, ebuf, dodebug);
+		path_p = _rtld_append_path(head_p, path_p, b, ebuf);
 	else
-		_rtld_process_mapping(lib_p, b, ebuf, dodebug);
+		_rtld_process_mapping(lib_p, b, ebuf);
 
 	(void)munmap(buf, sz);
 }

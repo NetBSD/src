@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.22 2002/09/12 20:21:00 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.23 2002/09/12 22:56:30 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -156,10 +156,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
@@ -214,7 +213,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 				*where += (Elf_Addr)obj->relocbase;
 
-				rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+				rdbg(("REL32 %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
 				    (void *)*where, obj->path));
 			} else {
@@ -225,14 +224,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 					return -1;
 				*where += (Elf_Addr)(defobj->relocbase +
 				    def->st_value);
-				rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+				rdbg(("REL32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
 				    obj->path, (void *)*where, defobj->path));
 			}
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
@@ -252,8 +251,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	sym = obj->symtab + obj->gotsym;
 	/* Now do the global GOT entries */
 	for (i = obj->gotsym; i < obj->symtabno; i++) {
-		rdbg(1, (" doing got %d sym %p (%s, %x)", i - obj->gotsym, 
-		    sym, sym->st_name + obj->strtab, *got));
+		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
+		    sym->st_name + obj->strtab, *got));
 
 		def = _rtld_find_symdef(i, obj, &defobj, true);
 		if (def == NULL)
@@ -280,9 +279,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rel *rel;
 
@@ -294,19 +292,17 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	}
 
 	return 0;
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp)
 	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
@@ -316,8 +312,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 	if (obj->isdynamic) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	} else {
 		return 0;
 	}

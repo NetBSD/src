@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.11 2002/09/05 16:58:16 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.12 2002/09/12 22:56:28 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -269,7 +269,7 @@ _rtld_digest_dynamic(obj)
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(&obj->rpaths, obj->strtab +
-		    dyn_rpath->d_un.d_val, true);
+		    dyn_rpath->d_un.d_val);
 	}
 }
 
