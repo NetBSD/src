@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.50 2003/05/15 01:00:07 itojun Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.51 2003/06/11 17:26:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.50 2003/05/15 01:00:07 itojun Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.51 2003/06/11 17:26:31 drochner Exp $");
 #endif /* not lint */
 
 /*
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.50 2003/05/15 01:00:07 itojun Exp $");
  */
 
 #include <sys/param.h>
-#include <sys/dkstat.h>
 #include <sys/user.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
