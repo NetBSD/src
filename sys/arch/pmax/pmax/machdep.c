@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2000/04/12 03:05:08 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 2000/04/12 04:40:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2000/04/12 03:05:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2000/04/12 04:40:50 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -102,6 +102,15 @@ int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
+/*      
+ * During autoconfiguration or after a panic, a sleep will simply
+ * lower the priority briefly to allow interrupts, then return.
+ * The priority to be used (safepri) is machine-dependent, thus this
+ * value is initialized and maintained in the machine-dependent layers.
+ * This priority will typically be 0, or the lowest priority
+ * that is safe for use on the interrupt stack; it can be made
+ * higher to block network software interrupts after panics.
+ */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
