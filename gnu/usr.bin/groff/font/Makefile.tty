@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.tty,v 1.4 2003/07/05 22:02:59 martin Exp $
+# $NetBSD: Makefile.tty,v 1.5 2003/07/06 18:43:36 martin Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/Makefile.tty,v 2.7 2001/04/17 12:36:42 ru Exp $
 
 all: ${FONTS}
-dependall:	all
 
 FONTS?=R I B BI S L CW
 DEVFILES=$(FONTS) DESC
