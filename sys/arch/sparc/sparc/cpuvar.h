@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.48 2003/01/04 18:54:45 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.49 2003/01/07 16:20:14 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,6 +138,11 @@ struct xpmsg {
 	} u;
 };
 
+struct xpmsg_lev15 {
+	__volatile int tag;
+#define	XPMSG11_PAUSECPU		1
+};
+
 /*
  * This must be locked around all message transactions to ensure only
  * one CPU is generating them.
@@ -170,8 +175,9 @@ struct cpu_info {
 	 */
 	struct cpu_info * __volatile ci_self;
 
-	/* Inter-processor message area */
+	/* Inter-processor message areas */
 	struct xpmsg msg;
+	struct xpmsg_lev15 msg_lev15;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 
@@ -190,8 +196,16 @@ struct cpu_info {
 
 	/* Per processor interrupt mask register (sun4m only) */
 	__volatile struct icr_pi	*intreg_4m;
+	/*
+	 * Send a IPI to (cpi).  For Ross cpus we need to read
+	 * the pending register to avoid a hardware bug.
+	 */
 #define raise_ipi(cpi,lvl)	do {			\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
+	if ((cpi)->cpu_type == CPUTYP_HS_MBUS) {	\
+		extern int ross_pend;			\
+		ross_pend = (cpi)->intreg_4m->pi_pend;	\
+	}						\
 } while (0)
 
 	int		sun4_mmu3l;	/* [4]: 3-level MMU present */

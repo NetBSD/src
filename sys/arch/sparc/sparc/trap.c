@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2003/01/06 18:32:31 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.125 2003/01/07 16:20:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -292,7 +292,7 @@ trap(type, psr, pc, tf)
 				return;
 			}
 		}
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 		if (type == T_DBPAUSE) {
 			/* XXX - deal with kgdb too */
 			extern void ddb_suspend(struct trapframe *tf);
