@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1998/07/28 02:23:38 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1998/07/28 02:47:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -214,7 +214,6 @@ void	  lshift __P((Char **, int));
 int	  number __P((Char *));
 int	  prefix __P((Char *, Char *));
 Char	**saveblk __P((Char **));
-void	  setzero __P((char *, int));
 Char	 *strip __P((Char *));
 Char	 *quote __P((Char *));
 char	 *strsave __P((char *));
