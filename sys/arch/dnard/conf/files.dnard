@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.8 2001/05/06 18:31:15 bjh21 Exp $
+#	$NetBSD: files.dnard,v 1.9 2001/05/09 15:20:49 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,16 +24,6 @@ defopt	XSERVER
 
 define todservice {}
 
-#device	mainbus { [base = -1], [dack = -1], [irq = -1] }
-#attach	mainbus at root
-#file	arch/arm32/mainbus/mainbus.c		mainbus
-#file	arch/arm32/mainbus/mainbus_io.c		mainbus
-#file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
-
-#device	cpu
-#attach	cpu at mainbus
-#file	arch/arm32/mainbus/cpu.c		cpu needs-flag
-
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
@@ -50,7 +40,10 @@ include "dev/ofw/files.ofw"
 attach	ofbus at root with ofbus_root
 file	arch/dnard/ofw/ofw.c
 file	arch/dnard/ofw/openfirm.c
-file	arch/dnard/ofw/oftodclock.c		ofwgencfg
+file	arch/dnard/ofw/oftodclock.c
+
+attach	cpu at ofbus with cpu_ofbus
+file	arch/dnard/ofw/cpu_ofbus.c		cpu_ofbus
 
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
@@ -63,7 +56,6 @@ file	arch/arm32/isa/joy.c			joy needs-flag
 include "dev/ofisa/files.ofisa"
 file	arch/dnard/ofw/ofisa_machdep.c		ofisa
 file	arch/dnard/ofw/com_ofisa_machdep.c	com_ofisa
-file	arch/dnard/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
 file	arch/dnard/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/dnard/ofw/lpt_ofisa_machdep.c	lpt_ofisa
 file	arch/dnard/ofw/wdc_ofisa_machdep.c	wdc_ofisa
@@ -93,7 +85,6 @@ major   {sd = 24}
 major   {cd = 26}
 
 # Generic MD files
-file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
@@ -109,22 +100,15 @@ file	arch/arm32/arm32/setcpsr.S
 file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/stubs.c
-file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/vm_machdep.c
 
 file	arch/arm32/dev/bus_space_notimpl.S
 
 # library functions
-file	arch/arm32/arm32/strstr.c
-file	arch/arm32/arm32/bcopy_page.S
-file	arch/arm32/arm32/bcopyinout.S
-file	arch/arm32/arm32/copystr.S
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
-
-file	dev/cninit.c
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
@@ -132,6 +116,8 @@ file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # Shark specific files
+file	arch/dnard/dnard/autoconf.c
+file	arch/dnard/dnard/conf.c
 file	arch/dnard/dnard/dnard_machdep.c
 file	arch/dnard/dnard/sequoia.c
 file	arch/dnard/dnard/fiq.S
@@ -173,6 +159,5 @@ attach  scr at ofisascr
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
-include "dev/wscons/files.rasops"
+include "dev/rasops/files.rasops"
 include "dev/pckbc/files.pckbc"
-
