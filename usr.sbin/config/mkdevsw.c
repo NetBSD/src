@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.1.2.1 2002/05/16 12:51:54 gehenna Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.1.2.2 2002/05/19 14:00:22 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,8 +84,12 @@ emitheader(FILE *fp)
 		return (1);
 	}
 
-	if (fprintf(fp, "#include <sys/param.h>\n#include <sys/conf.h>\n") < 0)
+	if (fputs("#include <sys/param.h>\n"
+		  "#include <sys/conf.h>\n"
+		  "\n#define\tDEVSW_ARRAY_SIZE(x)\t"
+		  "(sizeof((x))/sizeof((x)[0]))\n", fp) < 0) {
 		return (1);
+	}
 
 	return (0);
 }
@@ -109,9 +113,8 @@ emitdevm(FILE *fp)
 			continue;
 
 		if (fprintf(fp, "extern const struct bdevsw %s_bdevsw;\n",
-			    dm->dm_name) < 0) {
+			    dm->dm_name) < 0)
 			return (1);
-		}
 	}
 
 	if (fputs("\nconst struct bdevsw *bdevsw0[] = {\n", fp) < 0)
@@ -131,8 +134,8 @@ emitdevm(FILE *fp)
 	if (fputs("};\n\nconst struct bdevsw **bdevsw = bdevsw0;\n", fp) < 0)
 		return (1);
 
-	if (fputs("int nbdevsw = "
-		  "sizeof(bdevsw0)/sizeof(bdevsw0[0]);\n", fp) < 0)
+	if (fputs("const int sys_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n"
+		  "int max_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n", fp) < 0)
 		return (1);
 
 	if (fputs("\n/* device switch table for character device */\n", fp) < 0)
@@ -144,9 +147,8 @@ emitdevm(FILE *fp)
 			continue;
 
 		if (fprintf(fp, "extern const struct cdevsw %s_cdevsw;\n",
-			    dm->dm_name) < 0) {
+			    dm->dm_name) < 0)
 			return (1);
-		}
 	}
 
 	if (fputs("\nconst struct cdevsw *cdevsw0[] = {\n", fp) < 0)
@@ -166,8 +168,8 @@ emitdevm(FILE *fp)
 	if (fputs("};\n\nconst struct cdevsw **cdevsw = cdevsw0;\n", fp) < 0)
 		return (1);
 
-	if (fputs("int ncdevsw = "
-		  "sizeof(cdevsw0)/sizeof(cdevsw0[0]);\n", fp) < 0)
+	if (fputs("const int sys_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n"
+		  "int max_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n", fp) < 0)
 		return (1);
 
 	return (0);
@@ -186,19 +188,20 @@ emitconv(FILE *fp)
 	if (fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp) < 0)
 		return (-1);
-	for (i = 0 ; i < maxbdevm ; i++) {
+	for (i = 0 ; i < maxcdevm ; i++) {
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		dm = ht_lookup(bdevmtab, intern(mstr));
-		if (dm == NULL)
-			continue;
-		if (fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
-			    dm->dm_cmajor, dm->dm_bmajor) < 0)
+		dm = ht_lookup(cdevmtab, intern(mstr));
+		if (dm == NULL) {
+			dm = ht_lookup(alldevmtab, intern(mstr));
+			if (dm == NULL)
+				continue;
+		}
+		if (fprintf(fp, "\t{ \"%s\", %d },\n", dm->dm_name,
+			    dm->dm_bmajor) < 0)
 			return (1);
 	}
 	if (fputs("};\n\n"
-		  "struct devsw_conv *devsw_conv = devsw_conv0;\n"
-		  "int devsw_nconvs = "
-		  "sizeof(devsw_conv0)/sizeof(devsw_conv0[0]);\n", fp) < 0)
+		  "struct devsw_conv *devsw_conv = devsw_conv0;\n", fp) < 0)
 		return (1);
 
 	return (0);
