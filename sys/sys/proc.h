@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.156 2003/02/01 06:23:51 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.157 2003/02/04 13:41:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -430,10 +430,10 @@ void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
+int	ltsleep(const void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
-void	wakeup(void *chan);
-void	wakeup_one(void *chan);
+void	wakeup(const void *chan);
+void	wakeup_one(const void *chan);
 void	reaper(void *);
 void	exit1(struct lwp *, int);
 void	exit2(struct lwp *);
