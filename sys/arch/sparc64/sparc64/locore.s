@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.190 2004/01/16 12:43:43 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.191 2004/01/18 19:41:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8315,24 +8315,22 @@ Lsw_havectx:
 1:
 #endif
 
-#ifdef __arch64__
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
 	mov	%l4, %o0		! p is first arg to ras_lookup
-	ldx	[%o0 + P_RASLIST], %o1	! any RAS in p?
+	LDPTR	[%o0 + P_RASLIST], %o1	! any RAS in p?
 	brz,pt	%o1, Lsw_noras		! no, skip RAS check
-	 ldx	[%l3 + L_TF], %l3	! pointer to trap frame
+	 LDPTR	[%l3 + L_TF], %l3	! pointer to trap frame
 	call	_C_LABEL(ras_lookup)
-	 ldx	[%l3 + TF_PC], %o1
+	 LDPTR	[%l3 + TF_PC], %o1
 	cmp	%o0, -1
 	be,pt	%xcc, Lsw_noras
 	 add	%o0, 4, %o1
-	stx	%o0, [%l3 + TF_PC]	! store rewound %pc
-	stx	%o1, [%l3 + TF_NPC]	! and %npc
+	STPTR	%o0, [%l3 + TF_PC]	! store rewound %pc
+	STPTR	%o1, [%l3 + TF_NPC]	! and %npc
 
 Lsw_noras:
-#endif
 
 Lsw_sameproc:
 	/*
