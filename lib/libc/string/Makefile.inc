@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.36 1996/09/24 09:14:18 matthias Exp $
+#	$Id: Makefile.inc,v 1.37 1996/11/12 02:03:13 jtc Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
 
 SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c \
-	strftime.c strmode.c strsignal.c strtok.c strxfrm.c \
+	strftime.c strmode.c strsignal.c strtok.c strtok_r.c strxfrm.c \
 	__strerror.c __strsignal.c
 
 # machine-dependent net sources
