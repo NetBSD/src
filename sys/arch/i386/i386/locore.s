@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 1994/11/06 20:21:29 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 1994/11/06 20:51:46 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1632,14 +1632,13 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	 * Second phase: save old context.
 	 *
 	 * Registers:
-	 *   %eax - old process
+	 *   %eax - 0
 	 *   %ecx - scratch
 	 *   %esi - old pcb
 	 *   %edi - new process
 	 */
 
 	/* Save context. */
-	movl	%esi,%eax
 	movl	P_ADDR(%esi),%esi
 
 	movl	%esp,PCB_ESP(%esi)
@@ -1666,6 +1665,7 @@ switch_exited:
 	 * Third phase: restore saved context.
 	 *
 	 * Registers:
+	 *   %eax - 0
 	 *   %ecx - scratch
 	 *   %esi - new pcb
 	 *   %edi - new process
@@ -1684,7 +1684,7 @@ switch_exited:
 	movl	PCB_EBP(%esi),%ebp
 
 #ifdef USER_LDT
-	cmpl	$0,PCB_USERLDT(%esi)
+	cmpl	%eax,PCB_USERLDT(%esi)
 	jnz	1f
 	movl	__default_ldt,%ecx
 	cmpl	_currentldt,%ecx
@@ -1807,8 +1807,7 @@ ENTRY(savectx)
 	 * have to handle h/w bugs for reloading.  We used to lose the
 	 * parent's npx state for forks by forgetting to reload.
 	 */
-	movl	_curproc,%edi		# edi = p1
-	cmpl	%edi,_npxproc
+	cmpl	$0,_npxproc
 	jne	1f
 
 	leal	PCB_SAVEFPU(%esi),%ebx	# ebx = esi->u_pcb.pcb_savefpu
