@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2000/06/24 20:48:41 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.66 2000/06/30 22:58:02 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,8 +53,10 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
+#define	DIAGNOSTIC
 
-#undef	NO_VCACHE		/* Map w/D$ disabled */
+#undef	PHYS_CLEAR
+#define	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
 #define	TRAPSTATS		/* Count traps */
@@ -62,6 +64,7 @@
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	MMUDEBUG		/* Check use of regs during MMU faults */
 #define	VECTORED_INTERRUPTS	/* Use interrupt vectors */
+#define	NEW_VEC			/* New interrupt vector code */
 #define	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
@@ -249,16 +252,15 @@
 #define TO_STACK64(size) \
 	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
 	save	%sp, size, %sp; \
-	beq,a	9f; \
-	 add	%sp, -BIAS, %sp; /* Convert to 64-bits */ \
-9:	
+	add	%sp, -BIAS, %o0; /* Convert to 64-bits */ \
+	movz	%icc, %o0, %sp
 
 #define TO_STACK32(size) \
 	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
 	save	%sp, size, %sp; \
-	bne,a	9f; \
-	 add	%sp, +BIAS, %sp; /* Convert to 32-bits */ \
-9:	
+	add	%sp, +BIAS, %o0; /* Convert to 32-bits */ \
+	movnz	%icc, %o0, %sp
+
 
 	.data
 	.globl	_C_LABEL(data_start)
@@ -2327,7 +2329,9 @@ winfix:
 	!!
 	set	EINTSTACK+1024-STKB, %sp		! Set the stack pointer to the middle of the idle stack
 	wrpr	%g0, 15, %pil				! Disable interrupts, too
-	ta	1
+	wrpr	%g0, %g0, %canrestore			! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave			!  probably is too, so blow away
+	ta	1					!  all our register windows.
 #endif
 	
 winfixfill:
@@ -3899,6 +3903,9 @@ interrupt_vector:
 	set	_C_LABEL(intrlev), %g3
 	bz,pn	%icc, 3f		! spurious interrupt
 	 cmp	%g2, MAXINTNUM
+	
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 #ifdef DEBUG
 	tgeu	55
 #endif
@@ -3919,6 +3926,88 @@ setup_sparcintr:
 	DLFLUSH(%g6, %g7)
 	lduh	[%g5+IH_PIL], %g6	! Read interrupt mask
 	DLFLUSH2(%g7)
+#ifdef	VECTORED_INTERRUPTS
+#ifdef	NEW_VEC
+	set	intrpending, %g1
+	sll	%g6, PTRSHFT, %g3	! Find the slot for this IPL
+	add	%g1, %g3, %g1
+
+	DLFLUSH(%g1, %g3)
+1:	
+	LDPTR	[%g1], %g4		! Load list
+	STPTR	%g4, [%g5 + IH_PEND]	! Append list to new intrhand
+	mov	%g5, %g3
+	CASPTR	[%g1] ASI_N, %g4, %g3	! Swap in new list
+	cmp	%g4, %g3
+	bne,pn	%xcc, 1b
+	 nop
+	
+#else	/* NEW_VEC */
+	set	intrpending, %g1
+	mov	8, %g7			! Number of slots to search
+	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
+	add	%g1, %g3, %g1
+2:
+#if 1
+	DLFLUSH(%g1, %g3)
+	mov	%g5, %g3
+	CASPTR	[%g1] ASI_N, %g0, %g3	! Try a slot -- MPU safe
+	brz,pt	%g3, 5f			! Available?
+#else
+	DLFLUSH(%g1, %g3)
+	LDPTR	[%g1], %g3		! Try a slot
+	brz,a	%g3, 5f			! Available?
+	 STPTR	%g5, [%g1]		! Grab it
+#endif
+#ifdef DEBUG
+	cmp	%g5, %g3		! if these are the same
+	bne,pt	%icc, 1f		! then we aleady have the
+	 nop				! interrupt registered
+	set	_C_LABEL(intrdebug), %g4
+	ld	[%g4], %g4
+	btst	INTRDEBUG_VECTOR, %g4
+	bz,pt	%icc, 1f
+	 nop
+#ifdef _LP64
+	TO_STACK64(-CC64FSZ)		! Get a clean register window
+#else
+	TO_STACK32(-CC64FSZ)		! Get a clean register window
+#endif
+	set	9f, %o0
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 mov	%g3, %o1
+	LOCTOGLOB
+	ba	1f
+	 restore
+1:
+#endif
+	 dec	%g7
+	brgz,pt	%g7, 2b
+	 inc	PTRSZ, %g1		! Next slot
+	
+	!! If we get here we have a problem.
+	!! There were no available slots and the interrupt was lost.
+	!! We'll resort to polling in this case.
+#ifdef DIAGNOSTIC
+#ifdef _LP64
+	TO_STACK64(-CC64FSZ)		! Get a clean register window
+#else
+	TO_STACK32(-CC64FSZ)		! Get a clean register window
+#endif
+	set	8f, %o0
+	mov	%g6, %o1
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 rdpr	%pil, %o2
+	LOCTOGLOB
+	ba	5f
+	 restore
+#endif	
+#endif	/* NEW_VEC */
+5:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
@@ -3933,6 +4022,7 @@ setup_sparcintr:
 	set	4f, %o0
 	mov	%g2, %o1
 	rdpr	%pil, %o3
+	mov	%g1, %o4
 	GLOBTOLOC
 	clr	%g4
 	call	prom_printf
@@ -3942,37 +4032,10 @@ setup_sparcintr:
 	 restore
 1:
 #endif
-#ifdef	VECTORED_INTERRUPTS
-	set	intrpending, %g1
-	mov	8, %g7			! Number of slots to search
-	sll	%g6, PTRSHFT+3, %g2	! Find start of table for this IPL
-	add	%g1, %g2, %g1
-2:
-#if 1
-	DLFLUSH(%g1, %g2)
-	mov	%g5, %g2
-	CASPTR	[%g1] ASI_N, %g0, %g2	! Try a slot -- MPU safe
-	brz,pt	%g2, 5f			! Available?
-#else
-	DLFLUSH(%g1, %g2)
-	LDPTR	[%g1], %g2		! Try a slog
-	brz,a	%g2, 5f			! Available?
-	 STPTR	%g5, [%g1]		! Grab it
-#endif
-	 dec	%g7
-	brgz,pt	%g7, 2b
-	 inc	PTRSZ, %g1		! Next slot
-	
-	!! If we get here we have a problem.
-	!! There were no available slots and the interrupt was lost.
-	!! We'll resort to polling in this case.
-5:
-	 DLFLUSH(%g1, %g1)		! Prevent D$ pollution
-#endif
+	 DLFLUSH(%g1, %g3)		! Prevent D$ pollution
+#endif	/* VECTORED_INTERRUPTS */
 	set	1, %g7
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	sll	%g7, %g6, %g6
-	membar	#Sync			! Should not be needed due to retry
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
 5:	
 	CLRTT
@@ -4004,11 +4067,13 @@ setup_sparcintr:
 	ba	5b
 	 nop
 	.data
-4:	.asciz	"interrupt_vector: number %lx softint mask %lx pil %lu\r\n"
+4:	.asciz	"interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n"
 6:	.asciz	"interrupt_vector: spurious vector %lx at pil %d\r\n"
 #ifdef NOT_DEBUG
 7:	.asciz	"interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n"
 #endif
+8:	.asciz	"interrupt_vector: level %d out of slots\r\n"
+9:	.asciz	"interrupt_vector:	duplicate handler %p\r\n"
 	_ALIGN
 	.text
 /*
@@ -4087,7 +4152,7 @@ _C_LABEL(sparc_interrupt):
 	wr	%g0, 1, CLEAR_SOFTINT
 	DLFLUSH(%g3, %g2)
 	ba,pt	%icc, setup_sparcintr
-	 LDPTR	[%g3 + PTRSZ], %g5
+	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:	
 #ifdef TRAPSTATS
 	set	_C_LABEL(kintrcnt), %g1
@@ -4138,6 +4203,7 @@ _C_LABEL(sparc_interrupt):
 	rdpr	%tpc, %l1
 	rdpr	%tnpc, %l2
 	rdpr	%tl, %l3			! Dump our trap frame now we have taken the IRQ
+	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	dec	%l3
 	CHKPT(%l4,%l7,0x26)
 	wrpr	%g0, %l3, %tl
@@ -4151,24 +4217,102 @@ _C_LABEL(sparc_interrupt):
 
 !	call	_C_LABEL(blast_vcache)		! Clear out our D$ if from user mode
 1:	
-	 sub	%l5, 0x40, %l5			! Convert to interrupt level
-	mov	1, %l3				! Ack softint
-	 sll	%l3, %l5, %l3			! Generate IRQ mask
-	wr	%l3, 0, CLEAR_SOFTINT		! (don't clear possible %tick IRQ)
+	 sub	%l5, 0x40, %l6			! Convert to interrupt level
 
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	stb	%l5, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
+	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l5, PTRSHFT, %l3
+	sll	%l6, PTRSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
 	ld	[%l4 + %l3], %o0
 	inc	%o0
 	st	%o0, [%l4 + %l3]
-	wrpr	%l5, %pil
-#ifdef VECTORED_INTERRUPTS
+	wrpr	%l6, %pil
+	mov	1, %l3				! Ack softint
+	sll	%l3, %l6, %l3			! Generate IRQ mask
+	wr	%l3, 0, CLEAR_SOFTINT		! (don't clear possible %tick IRQ)
+#ifdef	VECTORED_INTERRUPTS
+#ifdef	NEW_VEC
 	set	intrpending, %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
-	sll	%l5, PTRSHFT+3, %l2
+	sll	%l6, PTRSHFT, %l2
+	add	%l2, %l4, %l4
+	clr	%l5				! Handled?
+3:
+	LDPTR	[%l4], %l2			! Try to grab entire list
+	clr	%l7
+	CASPTR	[%l4] ASI_N, %l2, %l7		! Atomically
+	cmp	%l2, %l7			! Worked?
+	bne,pn	%xcc, 3b			! no. try again.
+	 nop
+
+1:
+	brz,pn	%l2, 2f				! More to do?
+	 add	%sp, CC64FSZ+STKB, %o2		! tf = %sp + CC64FSZ + STKB
+#ifdef PHYS_CLEAR
+	ldx	[%l2 + IH_CLR], %l1
+#else
+	LDPTR	[%l2 + IH_CLR], %l1
+#endif
+	LDPTR	[%l2 + IH_FUN], %o4		! ih->ih_fun
+	LDPTR	[%l2 + IH_ARG], %o0		! ih->ih_arg
+	LDPTR	[%l2 + IH_PEND], %l4		! load next slot
+	STPTR	%g0, [%l2 + IH_PEND]		! free up this entry
+	
+	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
+	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
+	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+#ifdef DEBUG
+	set	_C_LABEL(intrdebug), %o3
+	ld	[%o3], %o3
+	btst	INTRDEBUG_FUNC, %o3
+	bz,a,pt	%icc, 0f
+	 nop
+#if 0
+	brnz,pt	%l1, 0f
+	 nop
+#endif
+
+	mov	%l4, %o5
+	mov	%l1, %o3
+	save	%sp, -CC64FSZ, %sp
+	mov	%i5, %o1
+	mov	%i3, %o3
+	set	99f, %o0
+	.data
+99:	.asciz	"sparc_interrupt: ih %p fun %p has %p clear\r\n"
+	_ALIGN
+	.text
+	GLOBTOLOC
+	call	prom_printf
+	 mov	%i4, %o2		! fun
+	LOCTOGLOB
+	restore
+0:	
+#endif
+	brz,pn	%l1, 0f
+	 add	%l5, %o0, %l5
+#ifdef PHYS_CLEAR
+	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	stx	%g0, [%l1]		! Clear intr source
+#endif
+	membar	#Sync				! Should not be needed
+0:
+	brnz,pt	%o0, 1b			! Handle any others
+	 mov	%l4, %l2
+	mov	1, %o1
+	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
+	 add	%sp, CC64FSZ + STKB, %o0
+	ba,a,pt	%icc, 1b		! Try another
+2:
+	brnz,pt	%l5, intrcmplt		! Finish up
+	 nop
+	
+#else	/* NEW_VEC */
+	set	intrpending, %l4
+	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
+	sll	%l6, PTRSHFT+3, %l2
 	add	%l2, %l4, %l4
 	mov	8, %l7
 	clr	%l5			! Handled?
@@ -4184,13 +4328,14 @@ _C_LABEL(sparc_interrupt):
 	 nop				! XXX Spitfire bug
 1:
 !	DLFLUSH(%l2, %o3)
-	LDPTR	[%l2 + IH_CLR], %o3
+#ifdef PHYS_CLEAR
+	ldx	[%l2 + IH_CLR], %l1
+#else
+	LDPTR	[%l2 + IH_CLR], %l1
+#endif
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
-	LDPTR	[%l2 + IH_FUN], %o1	! ih->ih_fun
-	brz,pn	%o3, 0f
-	 LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
-	stx	%g0, [%o3]		! Clear intr source
-0:
+	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
+	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
 	ld	[%o3], %o3
@@ -4201,19 +4346,57 @@ _C_LABEL(sparc_interrupt):
 	save	%sp, -CC64FSZ, %sp
 	set	9f, %o0
 	mov	%i0, %o2		! arg
-	mov	%i6, %o3		! sp
+	mov	%g0, %o3		! sp
 	GLOBTOLOC
 	call	prom_printf
-	 mov	%i1, %o1		! fun
+	 mov	%i4, %o1		! fun
 	LOCTOGLOB
 	restore
 0:	
 #endif
-	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
+	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
+	STPTR	%g0, [%l4]		! Clear the slot
+	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	inc	%l5
+#ifdef DEBUG
+	set	_C_LABEL(intrdebug), %o3
+	ld	[%o3], %o3
+	btst	INTRDEBUG_FUNC, %o3
+	bz,a,pt	%icc, 0f
+	 nop
+#if 0
+	brnz,pt	%l1, 0f
+	 nop
+#endif
+
+	mov	%l4, %o5
+	mov	%l1, %o3
+	save	%sp, -CC64FSZ, %sp
+	mov	%i5, %o1
+	mov	%i3, %o3
+	set	99f, %o0
+	.data
+99:	.asciz	"sparc_interrupt: ih %p fun %p has %p clear\r\n"
+	_ALIGN
+	.text
+	GLOBTOLOC
+	call	prom_printf
+	 mov	%i4, %o2		! fun
+	LOCTOGLOB
+	restore
+0:	
+#endif
+	brz,pn	%l1, 0f
+	 add	%l5, %o0, %l5
+#ifdef PHYS_CLEAR
+	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	stx	%g0, [%l1]		! Clear intr source
+#endif
+	membar	#Sync				! Should not be needed
+0:
 	brnz,pt	%o0, 3b			! Handle any others
-	 STPTR	%g0, [%l4]		! Clear the slot
+	 nop
 	mov	1, %o1
 	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
 	 add	%sp, CC64FSZ + STKB, %o0
@@ -4221,13 +4404,15 @@ _C_LABEL(sparc_interrupt):
 2:
 	brnz,pt	%l5, intrcmplt		! Finish up
 	 nop
-#endif
+#endif	/* NEW_VEC */
+#endif	/* VECTORED_INTERRUPTS */
 #ifdef TRAPSTATS
 	set	_C_LABEL(intrpoll), %l4
 	ld	[%l4], %o0
 	inc	%o0			! Increment non-vectored interrupts.
 	st	%o0, [%l4]
 #endif
+	sll	%l6, PTRSHFT, %l3
 	set	_C_LABEL(intrhand), %l4		! %l4 = intrhand[intlev];
 	add	%l4, %l3, %l4
 !	DLFLUSH(%l4, %o6)	! Not really needed
@@ -4258,7 +4443,7 @@ _C_LABEL(sparc_interrupt):
 	 clr	%l5
 	set	8f, %o0
 	call	prom_printf
-	 mov	%l5, %o1
+	 mov	%l6, %o1
 #endif
 	b	3f
 	 clr	%l5
@@ -4266,7 +4451,7 @@ _C_LABEL(sparc_interrupt):
 	.data
 7:	.asciz	"sparc_interrupt: stack %p eintstack %p\r\n"
 8:	.asciz	"sparc_interrupt: got lev %ld\r\n"
-9:	.asciz	"sparc_interrupt:            calling %llx(%llx) sp = %p\r\n"
+9:	.asciz	"sparc_interrupt:            calling %lx(%lx) sp = %p\r\n"
 	_ALIGN
 	.text
 #endif	
@@ -4276,11 +4461,13 @@ _C_LABEL(sparc_interrupt):
 	LDPTR	[%l4 + IH_FUN], %o1	! do {
 	LDPTR	[%l4 + IH_ARG], %o0
 #ifdef DEBUG
+#ifndef	VECTORED_INTERRUPTS
 	set	_C_LABEL(intrdebug), %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
-	bz,a,pt	%icc, 7f
+	bz,a,pt	%icc, 7f			! Always print this
 	 nop
+#endif
 	
 	save	%sp, -CC64FSZ, %sp
 	set	9b, %o0
@@ -4294,11 +4481,20 @@ _C_LABEL(sparc_interrupt):
 7:	
 #endif
 #if 0
-	LDPTR	[%l4 + IH_CLR], %l3	!		load up the clrintr ptr for later
+#ifdef PHYS_CLEAR
+	ldx	[%l4 + IH_CLR], %l3
+#else
+	LDPTR	[%l4 + IH_CLR], %l3
+#endif
 	add	%sp, CC64FSZ + STKB, %o2		!	tf = %sp + CC64FSZ + STKB
 	brnz,a,pt	%l3, 5f		!		Clear this intr?
-	 stx	%g0, [%l3]		!		Yes
-5:	
+#ifdef PHYS_CLEAR
+	 stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	 stx	%g0, [%l3]		! Clear intr source
+#endif
+5:
+	membar	#Sync				! Should not be needed
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		!	arg = (arg == 0) ? arg : tf
 	movrnz	%o0, %o0, %l5		! Store the success somewhere
@@ -4315,9 +4511,19 @@ _C_LABEL(sparc_interrupt):
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
+#ifdef PHYS_CLEAR
+	ldx	[%l4 + IH_CLR], %l3
+#else
 	LDPTR	[%l4 + IH_CLR], %l3
-	brnz,a,pt	%l3, 5f		! Clear intr?
-	 stx	%g0, [%l3]		! Yes
+#endif
+	brz,pn	%l3, 5f			! Clear intr?
+	 nop
+#ifdef PHYS_CLEAR
+	stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	stx	%g0, [%l3]		! Clear intr source
+#endif
+	membar	#Sync				! Should not be needed
 5:	brnz,pn	%o0, intrcmplt		! if (handled) break
 	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! while (ih)
@@ -4328,31 +4534,50 @@ _C_LABEL(sparc_interrupt):
 	/* all done: restore registers and go return */
 #endif
 intrcmplt:
+#ifdef DEBUG
+	set	_C_LABEL(intrdebug), %o2
+	ld	[%o2], %o2
+	btst	INTRDEBUG_FUNC, %o2
+	bz,a,pt	%icc, 7f
+	 nop
+	
+	save	%sp, -CC64FSZ, %sp
+	set	6f, %o0
+	GLOBTOLOC
+	call	prom_printf
+	 nop
+	LOCTOGLOB
+	restore
+	.data
+6:	.asciz	"sparc_interrupt: done\r\n"
+	_ALIGN
+	.text
+7:	
+#endif
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts	
-	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	wrpr	%l3, 0, %pil
 	
 	CHKPT(%o1,%o2,5)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
-
+#if 0
 /*
  * Level 10 %tick interrupt
  */
 tickhndlr:
-	mov	14, %l5
+	mov	14, %l6
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	wr	%g0, 1, CLEAR_SOFTINT
-	stb	%l5, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
+	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l5, PTRSHFT, %l3
+	sll	%l6, PTRSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
 	ld	[%l4 + %l3], %o0
 	inc	%o0
 	st	%o0, [%l4 + %l3]
-	wrpr	%l5, %pil
+	wr	%g0, 1, CLEAR_SOFTINT
+	wrpr	%l6, %pil
 	set	_C_LABEL(intrlev), %l3
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	LDPTR	[%l3 + PTRSZ], %l2		! %tick uses vector 1
@@ -4361,8 +4586,10 @@ tickhndlr:
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
 	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	clr	%l6
 	ba,a,pt	%icc, intrcmplt
 	 nop					! spitfire bug
+#endif
 	
 #ifdef notyet
 /*
@@ -10275,6 +10502,27 @@ ENTRY(ienab_bic)
  */
 ENTRY(send_softint)
 #ifdef	VECTORED_INTERRUPTS
+#ifdef	NEW_VEC
+	brz,pn	%o2, 1f
+	 set	intrpending, %o3
+	sll	%o1, PTRSHFT, %o5	! Find the slot for this IPL
+	add	%o3, %o5, %o3
+2:
+	DLFLUSH(%o3, %o5)
+	LDPTR	[%o3], %o4		! Load list
+	STPTR	%o4, [%o2 + IH_PEND]	! Append list to new intrhand
+	mov	%o2, %o5
+	CASPTR	[%o3] ASI_N, %o4, %o5	! Try a slot -- MPU safe
+	cmp	%o4, %o5
+	bne,pn	%xcc, 2b
+	 nop
+	
+	!! If we get here we have a problem.
+	!! There were no available slots and the interrupt was lost.
+	!! We'll resort to polling in this case.
+	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
+1:	
+#else	/* NEW_VEC */
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
 	mov	8, %o4			! Number of slots to search
@@ -10302,7 +10550,8 @@ ENTRY(send_softint)
 4:
 	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
 1:	
-#endif
+#endif	/* NEW_VEC */
+#endif	/* VECTORED_INTERRUPTS */
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3
 	retl

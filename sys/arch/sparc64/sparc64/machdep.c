@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2000/06/29 07:37:58 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.74 2000/06/30 22:58:02 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -902,12 +902,10 @@ printf("dumping segment at %llx\n", maddr);
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
-printf("dumping page %llx...", maddr);
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-printf("done\n");
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.21 2000/06/30 22:58:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,9 +219,13 @@ struct intrhand {
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	short			ih_pil;		/* interrupt priority */
-	struct intrhand		*ih_next;
+	struct intrhand		*ih_next;	/* global list */
 	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
 	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
+	struct intrhand		*ih_pending;	/* Used by interrupt 
+						 * dispatch code
+						 * -- DON'T TOUCH 
+						 */
 };
 extern struct intrhand *intrhand[15];
 extern struct intrhand *intrlev[MAXINTNUM];

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2000/06/24 20:48:40 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.17 2000/06/30 22:58:01 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ define	IH_PIL		offsetof(struct intrhand, ih_pil)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
+define	IH_PEND		offsetof(struct intrhand, ih_pending)
 	
 # floppy trap handler fields
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
