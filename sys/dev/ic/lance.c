@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.14 2000/10/20 09:40:26 bouyer Exp $	*/
+/*	$NetBSD: lance.c,v 1.15 2000/11/03 06:21:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -467,6 +467,9 @@ lance_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
+#ifdef LANCE_REVC_BUG
+	struct ether_header *eh;
+#endif
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
@@ -506,6 +509,7 @@ lance_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
+	eh = mtod(m, struct ether_header *);
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_enaddr) &&
 	    ETHER_CMP(eh->ether_dhost, bcast_enaddr)) {
 		m_freem(m);
