@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.22 2000/11/01 20:43:58 jdolecek Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.23 2000/11/08 04:19:01 erh Exp $ */
 
 /*
  * System call switch table.
@@ -73,7 +73,7 @@ struct sysent linux_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 21 = unimplemented osf_mount */
 	{ 0, 0,
-	    sys_nosys },			/* 22 = unimplemented osf_umount */
+	    sys_nosys },			/* 22 = unimplemented umount */
 	{ 1, s(struct sys_setuid_args),
 	    sys_setuid },			/* 23 = setuid */
 	{ 0, 0,
@@ -253,7 +253,7 @@ struct sysent linux_sysent[] = {
 	{ 3, s(struct linux_sys_sigsuspend_args),
 	    linux_sys_sigsuspend },		/* 111 = sigsuspend */
 	{ 0, 0,
-	    sys_nosys },			/* 112 = unimplemented */
+	    sys_nosys },			/* 112 = unimplemented osf_sigstack */
 	{ 3, s(struct sys_recvmsg_args),
 	    sys_recvmsg },			/* 113 = recvmsg */
 	{ 3, s(struct sys_sendmsg_args),
@@ -496,7 +496,7 @@ struct sysent linux_sysent[] = {
 	{ 3, s(struct linux_sys_msync_args),
 	    linux_sys_msync },			/* 217 = msync */
 	{ 0, 0,
-	    sys_nosys },			/* 218 = unimplemented osf_signal */
+	    sys_nosys },			/* 218 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 219 = unimplemented */
 	{ 0, 0,
@@ -530,7 +530,7 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct sys_getsid_args),
 	    sys_getsid },			/* 234 = getsid */
 	{ 0, 0,
-	    sys_nosys },			/* 235 = unimplemented */
+	    sys_nosys },			/* 235 = unimplemented sigaltstack */
 	{ 0, 0,
 	    sys_nosys },			/* 236 = unimplemented */
 	{ 0, 0,
@@ -672,7 +672,7 @@ struct sysent linux_sysent[] = {
 	{ 3, s(struct linux_sys_getdents_args),
 	    linux_sys_getdents },		/* 305 = getdents */
 	{ 0, 0,
-	    sys_nosys },			/* 306 = unimplemented create_module */
+	    sys_nosys },			/* 306 = unimplemented alpha_create_module */
 	{ 0, 0,
 	    sys_nosys },			/* 307 = unimplemented init_module */
 	{ 0, 0,
@@ -707,7 +707,7 @@ struct sysent linux_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 320 = unimplemented idle */
 	{ 0, 0,
-	    sys_nosys },			/* 321 = unimplemented umount */
+	    sys_nosys },			/* 321 = unimplemented oldumount */
 	{ 1, s(struct compat_12_sys_swapon_args),
 	    compat_12_sys_swapon },		/* 322 = swapon */
 	{ 1, s(struct linux_sys_times_args),
