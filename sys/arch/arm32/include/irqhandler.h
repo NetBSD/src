@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.5 1996/06/03 21:57:52 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.6 1996/06/12 19:47:11 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -36,7 +36,7 @@
  *
  * RiscBSD kernel project
  *
- * irq.h
+ * irqhandler.h
  *
  * IRQ related stuff
  *
@@ -45,23 +45,7 @@
 
 #include <sys/types.h>
 
-typedef struct irqhandler {
-	int (*ih_func)();		/* handler function */
-	void *ih_arg;			/* Argument to handler */
-	int ih_level;			/* Interrupt level */
-	int ih_num;			/* Interrupt number (for accounting) */
-	char *ih_name;			/* Name of interrupt (for vmstat -i) */
-	unsigned int ih_flags;		/* Interrupt flags */
-	unsigned int *ih_irqmask;	/* mask location for expansion cards */
-	unsigned int ih_irqbit;		/* interrupt bit for expansion cards */
-	struct irqhandler *ih_next;	/* next handler */
-} irqhandler_t;
-
-#define IRQ_FLAG_ACTIVE 0x00000001	/* This is the active handler in list */
-
 /* Define the IRQ bits */
-
-
 
 #ifdef RC7500
 
@@ -109,9 +93,6 @@ typedef struct irqhandler {
 #define IRQ_SDMA	0x1F
 
 #else /* RC7500 */
-
-
-
 
 /*#define IRQ_PRINTER	0x00*/
 #define IRQ_RESERVED0	0x01
@@ -168,17 +149,31 @@ typedef struct irqhandler {
 
 /* Interrupt Priority Levels are not mutually exclusive. */
 
-#define IPL_NONE      -1
 #define IPL_BIO        0	/* block I/O */
 #define IPL_NET        1	/* network */
 #define IPL_TTY        2	/* terminal */
 #define IPL_CLOCK      3	/* clock */
 #define IPL_IMP        4	/* memory allocation */
+#define IPL_NONE       5
 
-#define IRQ_LEVELS     5
+#define IRQ_LEVELS     6
+
+#ifndef _LOCORE
+typedef struct irqhandler {
+	int (*ih_func)();		/* handler function */
+	void *ih_arg;			/* Argument to handler */
+	int ih_level;			/* Interrupt level */
+	int ih_num;			/* Interrupt number (for accounting) */
+	char *ih_name;			/* Name of interrupt (for vmstat -i) */
+	u_int ih_flags;			/* Interrupt flags */
+	u_int ih_maskaddr;		/* mask address for expansion cards */
+	u_int ih_maskbits;		/* interrupt bit for expansion cards */
+	struct irqhandler *ih_next;	/* next handler */
+} irqhandler_t;
 
 #ifdef _KERNEL
 extern u_int irqmasks[IRQ_LEVELS];
+extern irqhandler_t *irqhandlers[NIRQS];
 
 void irq_init __P(());
 int irq_claim __P((int, irqhandler_t *));
@@ -189,8 +184,12 @@ void enable_irq __P((int));
 u_int enable_interrupts __P((u_int));
 u_int disable_interrupts __P((u_int));
 u_int restore_interrupts __P((u_int));
-#endif
+#endif	/* _KERNEL */
+#endif	/* _LOCORE */
 
+#define IRQ_FLAG_ACTIVE 0x00000001	/* This is the active handler in list */
+
+#ifndef _LOCORE
 typedef struct fiqhandler {
 	void (*fh_func)();	/* handler function */
 	u_int fh_size;		/* Size of handler function */
@@ -203,12 +202,10 @@ typedef struct fiqhandler {
 	u_int fh_r13;		/* FIQ mode r13 */
 } fiqhandler_t;
 
-#ifdef RC7500
-int fiq_claim __P((int, fiqhandler_t *));
-int fiq_release __P((int, fiqhandler_t *));
-#else
+#ifdef _KERNEL
 int fiq_claim __P((fiqhandler_t *));
 int fiq_release __P((fiqhandler_t *));
-#endif
+#endif	/* _KERNEL */
+#endif	/* _LOCORE */
 
 /* End of irqhandler.h */
