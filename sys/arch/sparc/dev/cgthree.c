@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.27 1996/04/01 17:30:03 christos Exp $ */
+/*	$NetBSD: cgthree.c,v 1.28 1996/05/31 09:59:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,6 +116,20 @@ static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 static void cgthree_set_video __P((struct cgthree_softc *, int));
 static int cgthree_get_video __P((struct cgthree_softc *));
 
+/* Video control parameters */
+struct cg3_videoctrl {
+	unsigned char	sense;		/* Monitor sense value */
+	unsigned char	vctrl[12];
+} cg3_videoctrl[] = {
+/* Missing entries: sense 0x10, 0x30, 0x50 */
+	{ 0x40, /* this happens to be my 19'' 1152x900 gray-scale monitor */
+	   {0xbb, 0x2b, 0x3, 0xb, 0xb3, 0x3, 0xaf, 0x2b, 0x2, 0xa, 0xff, 0x1}
+	},
+	{ 0x00, /* default? must be last */
+	   {0xbb, 0x2b, 0x3, 0xb, 0xb3, 0x3, 0xaf, 0x2b, 0x2, 0xa, 0xff, 0x1}
+	}
+};
+
 /*
  * Match a cgthree.
  */
@@ -211,6 +225,23 @@ cgthreeattach(parent, self, args)
 	sc->sc_fbc = (volatile struct fbcontrol *)
 	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
 		     sizeof(struct fbcontrol), ca->ca_bustype);
+
+	/* Transfer video magic to board, if it's not running */
+	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
+		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
+		     i++) {
+			volatile struct fbcontrol *fbc = sc->sc_fbc;
+			if ((fbc->fbc_status & FBS_MSENSE) ==
+			     cg3_videoctrl[i].sense) {
+				int j;
+				printf(" setting video ctrl");
+				for (j = 0; j < 12; j++)
+					fbc->fbc_vcontrol[j] =
+						cg3_videoctrl[i].vctrl[j];
+				fbc->fbc_ctrl |= FBC_TIMING;
+				break;
+			}
+		}
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
