@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.22 2003/05/09 20:43:47 christos Exp $	*/
+/*	$NetBSD: utility.c,v 1.23 2003/07/14 15:55:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.22 2003/05/09 20:43:47 christos Exp $");
+__RCSID("$NetBSD: utility.c,v 1.23 2003/07/14 15:55:56 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ extern int not42;
  * too full.
  */
 
-    void
+void
 ttloop()
 {
 
@@ -92,7 +92,7 @@ ttloop()
 /*
  * Check a descriptor to see if out of band data exists on it.
  */
-    int
+int
 stilloob(s)
     int	s;		/* socket number */
 {
@@ -115,7 +115,7 @@ stilloob(s)
     }
 }
 
-	void
+void
 ptyflush()
 {
 	int n;
@@ -146,7 +146,7 @@ ptyflush()
  * if the current address is a TELNET IAC ("I Am a Command")
  * character.
  */
-    char *
+char *
 nextitem(current)
     char	*current;
 {
@@ -193,7 +193,7 @@ nextitem(current)
  * caller should be setting the urgent data pointer AFTER calling
  * us in any case.
  */
-    void
+void
 netclear()
 {
     register char *thisitem, *next;
@@ -246,7 +246,7 @@ netclear()
  *		Send as much data as possible to the network,
  *	handling requests for urgent data.
  */
-    void
+void
 netflush()
 {
     int n;
@@ -322,7 +322,7 @@ netflush()
  *    ptr - A pointer to a character string to write
  *    len - How many bytes to write
  */
-	void
+void
 writenet(ptr, len)
 	register unsigned char *ptr;
 	register int len;
@@ -342,9 +342,7 @@ writenet(ptr, len)
 /*
  * miscellaneous functions doing a variety of little jobs follow ...
  */
-
-
-	void
+void
 fatal(f, msg)
 	int f;
 	const char *msg;
@@ -367,7 +365,7 @@ fatal(f, msg)
 	exit(1);
 }
 
-	void
+void
 fatalperror(f, msg)
 	int f;
 	const char *msg;
@@ -380,7 +378,7 @@ fatalperror(f, msg)
 
 char editedhost[MAXHOSTNAMELEN];
 
-	void
+void
 edithost(pat, host)
 	register char *pat;
 	register char *host;
@@ -422,7 +420,7 @@ edithost(pat, host)
 
 static char *putlocation;
 
-	void
+void
 putstr(s)
 	register char *s;
 {
@@ -431,7 +429,7 @@ putstr(s)
 		putchr(*s++);
 }
 
-	void
+void
 putchr(cc)
 	int cc;
 {
@@ -445,7 +443,7 @@ putchr(cc)
 static char fmtstr[] = { "%l:%M\
 %p on %A, %d %B %Y" };
 
-	char *
+char *
 putf(cp, where)
 	register char *cp;
 	char *where;
@@ -467,12 +465,7 @@ putf(cp, where)
 		switch (*++cp) {
 
 		case 't':
-#ifdef	STREAMSPTY
-			/* names are like /dev/pts/2 -- we want pts/2 */
-			slash = strchr(line+1, '/');
-#else
 			slash = strrchr(line, '/');
-#endif
 			if (slash == (char *) 0)
 				putstr(line);
 			else
@@ -519,7 +512,7 @@ putf(cp, where)
 /*
  * Print telnet options and commands in plain text, if possible.
  */
-	void
+void
 printoption(fmt, option)
 	register const char *fmt;
 	register int option;
@@ -533,7 +526,7 @@ printoption(fmt, option)
 	return;
 }
 
-    void
+void
 printsub(direction, pointer, length)
     char		direction;	/* '<' or '>' */
     unsigned char	*pointer;	/* where suboption data sits */
@@ -908,7 +901,7 @@ printsub(direction, pointer, length)
 	    }
 	    break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	case TELOPT_AUTHENTICATION:
 	    output_data("AUTHENTICATION");
 
@@ -1066,7 +1059,7 @@ printsub(direction, pointer, length)
 /*
  * Dump a data buffer in hex and ascii to the output data stream.
  */
-	void
+void
 printdata(tag, ptr, cnt)
 	register char *tag;
 	register char *ptr;

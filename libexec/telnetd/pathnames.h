@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1996/02/28 20:38:15 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2003/07/14 15:55:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,23 +35,8 @@
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/4/93
  */
 
-#if BSD > 43
+#include <paths.h>
 
-# include <paths.h>
-
-# ifndef _PATH_LOGIN
-#  define	_PATH_LOGIN	"/usr/bin/login"
-# endif
-
-#else
- 
-# define	_PATH_TTY	"/dev/tty"
-# ifndef _PATH_LOGIN
-#  define	_PATH_LOGIN	"/bin/login"
-# endif
-
+#ifndef _PATH_LOGIN
+# define	_PATH_LOGIN	"/usr/bin/login"
 #endif
-
-#ifdef BFTPDAEMON
-#define		BFTPPATH	"/usr/ucb/bftp"
-#endif  /* BFTPDAEMON */

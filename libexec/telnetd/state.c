@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.22 2002/02/11 10:57:58 wiz Exp $	*/
+/*	$NetBSD: state.c,v 1.23 2003/07/14 15:55:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.22 2002/02/11 10:57:58 wiz Exp $");
+__RCSID("$NetBSD: state.c,v 1.23 2003/07/14 15:55:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ unsigned char *subsave;
 #define	TS_DO		7	/* do " */
 #define	TS_DONT		8	/* dont " */
 
-	void
+void
 telrcv()
 {
 	register int c;
@@ -422,7 +422,7 @@ gotiac:			switch (c) {
  * is complete.
  *
  */
-	void
+void
 send_do(option, init)
 	int option, init;
 {
@@ -458,7 +458,7 @@ extern void encrypt_send_support __P((void));
 #endif	/* ENCRYPTION */
 #endif
 
-	void
+void
 willoption(option)
 	int option;
 {
@@ -652,7 +652,7 @@ willoption(option)
 		(*func)();
 }  /* end of willoption */
 
-	void
+void
 send_dont(option, init)
 	int option, init;
 {
@@ -668,7 +668,7 @@ send_dont(option, init)
 	DIAG(TD_OPTIONS, printoption("td: send dont", option));
 }
 
-	void
+void
 wontoption(option)
 	int option;
 {
@@ -735,7 +735,7 @@ wontoption(option)
 			slctab[SLC_XOFF].defset.flag |= SLC_CANTCHANGE;
 			break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
 			auth_finished(0, AUTH_REJECT);
 			break;
@@ -788,7 +788,7 @@ wontoption(option)
 #endif	/* defined(LINEMODE) && defined(KLUDGELINEMODE) */
 			break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
 			auth_finished(0, AUTH_REJECT);
 			break;
@@ -802,7 +802,7 @@ wontoption(option)
 
 }  /* end of wontoption */
 
-	void
+void
 send_will(option, init)
 	int option, init;
 {
@@ -829,7 +829,7 @@ send_will(option, init)
 int turn_on_sga = 0;
 #endif
 
-	void
+void
 dooption(option)
 	int option;
 {
@@ -942,9 +942,6 @@ dooption(option)
 		case TELOPT_TSPEED:
 		case TELOPT_LFLOW:
 		case TELOPT_XDISPLOC:
-#ifdef	TELOPT_ENVIRON
-		case TELOPT_NEW_ENVIRON:
-#endif
 		case TELOPT_OLD_ENVIRON:
 		default:
 			break;
@@ -961,7 +958,7 @@ dooption(option)
 
 }  /* end of dooption */
 
-	void
+void
 send_wont(option, init)
 	int option, init;
 {
@@ -977,7 +974,7 @@ send_wont(option, init)
 	DIAG(TD_OPTIONS, printoption("td: send wont", option));
 }
 
-	void
+void
 dontoption(option)
 	int option;
 {
@@ -1122,7 +1119,7 @@ envvarok(varp)
  *	Window size
  *	Terminal speed
  */
-	void
+void
 suboption()
 {
     register int subchar;
@@ -1285,9 +1282,7 @@ suboption()
 	break;
     }  /* end of case TELOPT_XDISPLOC */
 
-#ifdef	TELOPT_NEW_ENVIRON
     case TELOPT_NEW_ENVIRON:
-#endif
     case TELOPT_OLD_ENVIRON: {
 	register int c;
 	register char *cp, *varp, *valp;
@@ -1304,7 +1299,6 @@ suboption()
 		return;
 	}
 
-#ifdef	TELOPT_NEW_ENVIRON
 	if (subchar == TELOPT_NEW_ENVIRON) {
 	    while (!SB_EOF()) {
 		c = SB_GET();
@@ -1312,7 +1306,6 @@ suboption()
 			break;
 	    }
 	} else
-#endif
 	{
 #ifdef	ENV_HACK
 	    /*
@@ -1475,7 +1468,7 @@ suboption()
 	}
 	break;
     }  /* end of case TELOPT_NEW_ENVIRON */
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
     case TELOPT_AUTHENTICATION:
 	if (SB_EOF())
 		break;
@@ -1547,14 +1540,14 @@ suboption()
 }  /* end of suboption */
 
 #ifdef LINEMODE
-	void
+void
 doclientstat()
 {
 	clientstat(TELOPT_LINEMODE, WILL, 0);
 }
 #endif /* LINEMODE */
 
-	void
+void
 send_status()
 {
 #define	ADD(c) \

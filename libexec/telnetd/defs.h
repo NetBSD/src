@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2002/09/18 20:58:56 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2003/07/14 15:55:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,43 +41,20 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifndef	BSD
-# define	BSD 43
-#endif
-
-#if	defined(CRAY) && !defined(LINEMODE)
-# define SYSV_TERMIO
-# define LINEMODE
-# define KLUDGELINEMODE
-# define DIAGNOSTICS
-# define BFTPDAEMON
-# define HAS_IP_TOS
-#endif /* CRAY */
-
 #if defined(PRINTOPTIONS) && defined(DIAGNOSTICS)
 #define TELOPTS
 #define TELCMDS
 #define	SLC_NAMES
 #endif
 
-#if	defined(SYSV_TERMIO) && !defined(USE_TERMIO)
-# define	USE_TERMIO
-#endif
-
 #include <sys/socket.h>
-#ifndef	CRAY
 #include <sys/wait.h>
-#endif	/* CRAY */
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/poll.h>
-#ifndef	FILIO_H
 #include <sys/ioctl.h>
-#else
-#include <sys/filio.h>
-#endif
 
 #include <netinet/in.h>
 
@@ -89,80 +66,21 @@
 #include <errno.h>
 #include <netdb.h>
 #include <syslog.h>
-#ifndef	LOG_DAEMON
-#define	LOG_DAEMON	0
-#endif
-#ifndef	LOG_ODELAY
-#define	LOG_ODELAY	0
-#endif
 #include <ctype.h>
-#ifndef NO_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#ifndef	USE_TERMIO
-#include <sgtty.h>
-#else
-# ifdef	SYSV_TERMIO
-# include <termio.h>
-# else
-# include <termios.h>
-# endif
-#endif
-#if !defined(USE_TERMIO) || defined(NO_CC_T)
-typedef unsigned char cc_t;
-#endif
-
+#include <termios.h>
 #include <time.h>
-
 #include <unistd.h>
-
-#ifndef _POSIX_VDISABLE
-# ifdef VDISABLE
-#  define _POSIX_VDISABLE VDISABLE
-# else
-#  define _POSIX_VDISABLE ((unsigned char)'\377')
-# endif
-#endif
-
-
-#ifdef	CRAY
-#include <memory.h>
-#endif	/* CRAY */
-
-#ifdef __hpux
-#include <sys/ptyio.h>
-#endif
-
-#if	!defined(TIOCSCTTY) && defined(TCSETCTTY)
-# define	TIOCSCTTY TCSETCTTY
-#endif
-
-#ifndef	FD_SET
-#ifndef	HAVE_fd_set
-typedef struct fd_set { int fds_bits[1]; } fd_set;
-#endif
-
-#define	FD_SET(n, p)	((p)->fds_bits[0] |= (1<<(n)))
-#define	FD_CLR(n, p)	((p)->fds_bits[0] &= ~(1<<(n)))
-#define	FD_ISSET(n, p)	((p)->fds_bits[0] & (1<<(n)))
-#define FD_ZERO(p)	((p)->fds_bits[0] = 0)
-#endif	/* FD_SET */
 
 /*
  * I/O data buffers defines
  */
 #define	NETSLOP	64
-#ifdef CRAY
-#undef BUFSIZ
-#define BUFSIZ  2048
-#endif
 
-#define	NIACCUM(c)	{   *netip++ = c; \
+#define	NIACCUM(c)	do { \
+			    *netip++ = c; \
 			    ncc++; \
-			}
+			} while (0)
 
 /* clock manipulations */
 #define	settimer(x)	(clocks.x = ++clocks.system)
