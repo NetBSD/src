@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.47 2001/07/17 13:52:25 mrg Exp $	*/
+/*	$NetBSD: vector.s,v 1.48 2001/09/21 14:12:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ XINTR(irq_num):								;\
 	jnz	4f							;\
 	movl	%esp,%eax		/* 0 means frame pointer */	;\
 4:	pushl	%eax							;\
-	call	IH_FUN(%ebx)		/* call it */			;\
+	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
