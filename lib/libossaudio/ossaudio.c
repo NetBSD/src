@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.2 1997/10/19 07:47:48 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.2.2.1 1997/10/29 03:43:20 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 /* XXX This file is essentially the same as sys/compat/ossaudio.c.
- * With some preprocessor magic it coule be the same file.
+ * With some preprocessor magic it could be the same file.
  */
 
 #include <string.h>
@@ -132,6 +132,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = tmpinfo.blocksize;
 		break;
 	case SNDCTL_DSP_SETFMT:
+		AUDIO_INITINFO(&tmpinfo);
 		switch (INTARG) {
 		case AFMT_MU_LAW:
 			tmpinfo.play.precision =
@@ -184,7 +185,6 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		default:
 			return EINVAL;
 		}
-		AUDIO_INITINFO(&tmpinfo);
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* fall into ... */
 	case SOUND_PCM_READ_BITS:
