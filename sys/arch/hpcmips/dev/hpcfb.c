@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.36 2001/01/24 03:52:16 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.37 2001/01/24 09:34:26 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.36 2001/01/24 03:52:16 sato Exp $";
+    "$Id: hpcfb.c,v 1.37 2001/01/24 09:34:26 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 				sc->sc_mapping = 0;
 				if (dc->dc_state&HPCFB_DC_DRAWING)
 					dc->dc_state &= ~HPCFB_DC_ABORT;
-#if HPCFB_FORCE_REDRAW
+#ifdef HPCFB_FORCE_REDRAW
 				hpcfb_refresh_screen(sc);
 #else
 				dc->dc_state |= HPCFB_DC_UPDATEALL;
@@ -686,7 +686,7 @@ hpcfb_power(why, arg)
 	switch (why) {
 	case PWR_STANDBY:
 		break;
-	case PWR_SUSPEND:
+	case PWR_SOFTSUSPEND:
 		/* XXX, casting to 'struct wsdisplay_softc *' means
 		   that you should not call the method here... */
 		sc->sc_screen_resumed = wsdisplay_getactivescreen(
@@ -701,7 +701,7 @@ hpcfb_power(why, arg)
 			sc->sc_screen_resumed = WSDISPLAY_NULLSCREEN;
 		}
 		break;
-	case PWR_RESUME:
+	case PWR_SOFTRESUME:
 		if (sc->sc_screen_resumed != WSDISPLAY_NULLSCREEN)
 			wsdisplay_switch(sc->sc_wsdisplay,
 			    sc->sc_screen_resumed,
