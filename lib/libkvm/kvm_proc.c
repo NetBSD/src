@@ -657,6 +657,8 @@ kvm_doargv(kd, kp, nchr, info)
 		return (0);
 
 	(*info)(&arginfo, &addr, &cnt);
+	if (cnt == 0)
+		return (0);
 	ap = kvm_argv(kd, p, addr, cnt, nchr);
 	/*
 	 * For live kernels, make sure this process didn't go away.
