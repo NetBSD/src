@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.5.2.3 2002/06/20 03:50:08 nathanw Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.5.2.4 2002/11/01 23:04:39 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -67,5 +67,31 @@
 #endif
 #define	__KERNEL_SCCSID(_n,_s)
 #define	__KERNEL_COPYRIGHT(_n, _s) __IDSTRING(__CONCAT(copyright,_n),_s)
+
+#ifdef __lint__
+#define	__link_set_make_entry(set, sym, type)				\
+	static void const * const __link_set_##set##_sym_##sym = &sym;	\
+	__asm(".stabs \"___link_set_" #set "\", " #type ", 0, 0, _" #sym)
+#else
+#define	__link_set_make_entry(set, sym, type)				\
+	extern void const * const __link_set_##set##_sym_##sym
+#endif /* __lint__ */
+
+#define	__link_set_add_text(set, sym)	__link_set_make_entry(set, sym, 23)
+#define	__link_set_add_rodata(set, sym)	__link_set_make_entry(set, sym, 23)
+#define	__link_set_add_data(set, sym)	__link_set_make_entry(set, sym, 25)
+#define	__link_set_add_bss(set, sym)	__link_set_make_entry(set, sym, 27)
+
+#define	__link_set_decl(set, ptype)					\
+extern struct {								\
+	int	__ls_length;						\
+	ptype	*__ls_items[1];						\
+} __link_set_##set
+
+#define	__link_set_start(set)	(&(__link_set_##set).__ls_items[0])
+#define	__link_set_end(set)						\
+	(&(__link_set_##set).__ls_items[(__link_set_##set).__ls_length])
+
+#define	__link_set_count(set)	((__link_set_##set).__ls_length)
 
 #endif /* !_SYS_CDEFS_AOUT_H_ */

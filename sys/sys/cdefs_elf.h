@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.10.2.3 2002/10/18 02:45:39 nathanw Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.10.2.4 2002/11/01 23:04:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -114,5 +114,29 @@
 #else
 #define	__KERNEL_COPYRIGHT(_n, _s)	__SECTIONSTRING(.copyright, _s)
 #endif
+
+#ifndef __lint__
+#define	__link_set_make_entry(set, sym)					\
+	static void const * const __link_set_##set##_sym_##sym		\
+	    __section("link_set_" #set) __unused = &sym
+#else
+#define	__link_set_make_entry(set, sym)					\
+	extern void const * const __link_set_##set##_sym_##sym
+#endif /* __lint__ */
+
+#define	__link_set_add_text(set, sym)	__link_set_make_entry(set, sym)
+#define	__link_set_add_rodata(set, sym)	__link_set_make_entry(set, sym)
+#define	__link_set_add_data(set, sym)	__link_set_make_entry(set, sym)
+#define	__link_set_add_bss(set, sym)	__link_set_make_entry(set, sym)
+
+#define	__link_set_decl(set, ptype)					\
+	extern ptype *__start_link_set_##set;				\
+	extern ptype *__stop_link_set_##set
+
+#define	__link_set_start(set)	(&__start_link_set_##set)
+#define	__link_set_end(set)	(&__stop_link_set_##set)
+
+#define	__link_set_count(set)						\
+	(__link_set_end(set) - __link_set_start(set))
 
 #endif /* !_SYS_CDEFS_ELF_H_ */
