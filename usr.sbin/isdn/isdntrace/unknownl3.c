@@ -27,7 +27,7 @@
  *	unknownl3.c - print L3 packets with unknown PD
  *	----------------------------------------------
  *
- *	$Id: unknownl3.c,v 1.1.1.1 2001/01/06 13:00:29 martin Exp $
+ *	$Id: unknownl3.c,v 1.2 2003/10/06 09:43:28 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -47,12 +47,12 @@ decode_unknownl3(char *pbuf, int n, int off, unsigned char *buf, int raw)
 	int j;
 	int i;
 
-	if(n <= 0)
+	if (n <= 0)
 		return;
 
 	*pbuf = '\0';
 	
-	if(raw)
+	if (raw)
 	{
 		for (i = 0; i < n; i += 16)
 		{
@@ -80,21 +80,21 @@ decode_unknownl3(char *pbuf, int n, int off, unsigned char *buf, int raw)
 
 	sprintf((pbuf+strlen(pbuf)), "PD%02X: ", pd);	
 
-	if(pd >= 0x00 && pd <= 0x07)
+	if (pd >= 0x00 && pd <= 0x07)
 		sprintf((pbuf+strlen(pbuf)), "pd=User-User (0x%02x)",pd);
-	else if(pd == 0x08)
+	else if (pd == 0x08)
 		sprintf((pbuf+strlen(pbuf)), "pd=Q.931/I.451");
-	else if(pd >= 0x10 && pd <= 0x3f)
+	else if (pd >= 0x10 && pd <= 0x3f)
 		sprintf((pbuf+strlen(pbuf)), "pd=Other Layer 3 or X.25 (0x%02x)",pd);
-	else if(pd >= 0x40 && pd <= 0x4f)
+	else if (pd >= 0x40 && pd <= 0x4f)
 		sprintf((pbuf+strlen(pbuf)), "pd=National Use (0x%02x)",pd);
-	else if(pd >= 0x50 && pd <= 0xfe)
+	else if (pd >= 0x50 && pd <= 0xfe)
 		sprintf((pbuf+strlen(pbuf)), "pd=Other Layer 3 or X.25 (0x%02x)",pd);
 	else
 		sprintf((pbuf+strlen(pbuf)), "pd=Reserved (0x%02x)",pd);
 
 	sprintf((pbuf+strlen(pbuf)), "\n     [");	
-	for(j = 0; j < (n-i); j++)
+	for (j = 0; j < (n - i); j++)
 	{
 		sprintf((pbuf+strlen(pbuf)),"0x%02x ", buf[j+i]);
 	}

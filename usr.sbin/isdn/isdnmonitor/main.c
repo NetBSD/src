@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2003/10/06 09:18:41 itojun Exp $ */
+/* $NetBSD: main.c,v 1.6 2003/10/06 09:43:27 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -171,58 +171,58 @@ int main(int argc, char **argv)
 	while((i = getopt(argc, argv, "cd:f:h:p:")) != -1)
 #endif
 	{
-		switch(i)
+		switch (i)
 		{
-			case 'c':
-				fullscreen = 1;
-				break;
-			case 'd':
-                                if(*optarg == 'n')
-                                {
-	                                debug_noscreen = 1;
-	                        }
-				else
-				{
-					if((sscanf(optarg, "%i", &debug)) != 1)
-						usage();
-				}
-				break;
-			case 'f':
-				logfilename = optarg;
-				break;
-			case 'h':
-				hostname = optarg;
-				break;
-#ifndef FOREIGN
-			case 'l':
-				sockpath = optarg;
-				break;
-#endif
-			case 'p':
-				if((sscanf(optarg, "%i", &portno)) != 1)
+		case 'c':
+			fullscreen = 1;
+			break;
+		case 'd':
+			if (*optarg == 'n')
+			{
+				debug_noscreen = 1;
+			}
+			else
+			{
+				if ((sscanf(optarg, "%i", &debug)) != 1)
 					usage();
-				break;
-			default:
+			}
+			break;
+		case 'f':
+			logfilename = optarg;
+			break;
+		case 'h':
+			hostname = optarg;
+			break;
+#ifndef FOREIGN
+		case 'l':
+			sockpath = optarg;
+			break;
+#endif
+		case 'p':
+			if ((sscanf(optarg, "%i", &portno)) != 1)
 				usage();
-				break;
+			break;
+		default:
+			usage();
+			break;
 		}
 	}
 
 #ifndef FOREIGN
-	if(hostname && sockpath)
+	if (hostname && sockpath)
 	{
 		fprintf(stderr, "Error: can not use local socket path on remote machine\n"
 				"conflicting options -h and -l!\n");
 		return 1;
 	}
 
-	if(sockpath)
+	if (sockpath)
 	{
 		monsock = connect_local(sockpath);
 	}
-	else if(hostname)
+	else if (hostname)
 #else
-	if(hostname)
+	if (hostname)
 #endif
 
 	{
@@ -233,15 +233,15 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	if(monsock == -1)
+	if (monsock == -1)
 	{
 		fprintf(stderr, "Could not connect to i4b isdn daemon.\n");
 		return 1;
 	}
 
-	if(logfilename != NULL)
+	if (logfilename != NULL)
 	{
-		if((lfp = fopen(logfilename, "w")) == NULL)
+		if ((lfp = fopen(logfilename, "w")) == NULL)
 		{
 			fprintf(stderr, "could not open logfile [%s], %s\n", logfilename, strerror(errno));
 			exit(1);
@@ -272,7 +272,7 @@ connect_remote(char *host, int portno)
 
 	h = gethostbyname(host);
 
-	if(!h)
+	if (!h)
 	{
 		fprintf(stderr, "could not resolve hostname '%s'\n", host);
 		exit(1);
@@ -280,7 +280,7 @@ connect_remote(char *host, int portno)
 
 	remotesockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-	if(remotesockfd == -1)
+	if (remotesockfd == -1)
 	{
 		fprintf(stderr, "could not create remote monitor socket: %s\n", strerror(errno));
 		exit(1);
@@ -296,7 +296,7 @@ connect_remote(char *host, int portno)
 
 	memcpy(&sa.sin_addr.s_addr, h->h_addr_list[0], sizeof(sa.sin_addr.s_addr));
 
-	if(connect(remotesockfd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
+	if (connect(remotesockfd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 	{
 		fprintf(stderr, "could not connect remote monitor: %s\n", strerror(errno));
 		exit(1);
@@ -317,7 +317,7 @@ connect_local(char *sockpath)
 	struct sockaddr_un sa;
 
 	/* check path length */
-	if(strlen(sockpath) >= sizeof(sa.sun_path))
+	if (strlen(sockpath) >= sizeof(sa.sun_path))
 	{
 		fprintf(stderr, "pathname to long for local socket: %s\n",
 			sockpath);
@@ -327,7 +327,7 @@ connect_local(char *sockpath)
 	/* create and setup socket */
 	s = socket(AF_LOCAL, SOCK_STREAM, 0);
 
-	if(s == -1)
+	if (s == -1)
 	{
 		fprintf(stderr, "could not create local monitor socket:%s\n", strerror(errno));
 		exit(1);
@@ -339,7 +339,7 @@ connect_local(char *sockpath)
 	sa.sun_family = AF_LOCAL;
 	strlcpy(sa.sun_path, sockpath, sizeof(sa.sun_path));
 
-	if(connect(s, (struct sockaddr *)&sa, sizeof(sa)))
+	if (connect(s, (struct sockaddr *)&sa, sizeof(sa)))
 	{
 		fprintf(stderr, "could not connect local monitor socket [%s]: %s\n", sockpath, strerror(errno));
 	}
@@ -357,16 +357,16 @@ kbdrdhdl(void)
 {
 	int ch = getch();
 		
-	switch(ch)
+	switch (ch)
 	{
-		case 0x0c:	/* control L */
-			wrefresh(curscr);
-			break;
-		
-		case '\n':
-		case '\r':
-			do_menu();
-			break;
+	case 0x0c:	/* control L */
+		wrefresh(curscr);
+		break;
+	
+	case '\n':
+	case '\r':
+		do_menu();
+		break;
 	}
 }
 #endif
@@ -383,24 +383,24 @@ mloop()
 	set[0].events = POLLIN;
 	set[1].fd = monsock;
 	set[1].events = POLLIN;
-	for(;;)
+	for (;;)
 	{
 		poll(set, 2, INFTIM);
 
-		if(set[0].revents & POLLIN)
+		if (set[0].revents & POLLIN)
 		{
 #ifndef WIN32
-			if(fullscreen && curses_ready)
+			if (fullscreen && curses_ready)
 				kbdrdhdl();
 			else
 #endif
-			     if(!fullscreen)
+			     if (!fullscreen)
 				handle_input();
 			else
 				getchar();
 		}
 
-		if(set[1].revents & POLLIN)
+		if (set[1].revents & POLLIN)
 		{
 			u_int8_t buf[8192];
 			int bytes, ret;
@@ -410,12 +410,12 @@ mloop()
 
 			bytes = recv(monsock, buf, I4B_MON_EVNT_HDR, MSG_PEEK);
 
-			if(bytes == 0)
+			if (bytes == 0)
 			{
 				close(monsock);
 
 #ifndef WIN32
-				if(curses_ready)
+				if (curses_ready)
 				{
 					endwin();
 					curses_ready = 0;
@@ -425,7 +425,7 @@ mloop()
 				mprintf("remote isdnd has closed our connection\n");
 				exit(0);
 			}
-			else if(bytes < 0)
+			else if (bytes < 0)
 			{
 				fprintf(stderr, "recv error: %s\n", strerror(errno));
 				close(monsock);
@@ -437,7 +437,7 @@ mloop()
 
 			bytes = I4B_GET_2B(buf, I4B_MON_EVNT_LEN);
 
-			if(bytes >= sizeof(buf))
+			if (bytes >= sizeof(buf))
 			{
 				fprintf(stderr, "mloop: socket recv buffer overflow %d!\n", bytes);
 				break;
@@ -447,23 +447,23 @@ mloop()
 			
 			ret = sock_read(monsock, buf, bytes);
 
-			if(ret == 0)
+			if (ret == 0)
 			{
 				close(monsock);
 #ifndef WIN32
-				if(curses_ready)
+				if (curses_ready)
 					endwin();
 #endif
 				mprintf("remote isdnd has closed our connection\n");
 				exit(0);
 			}
-			else if(ret < 0)
+			else if (ret < 0)
 			{
 				mprintf("error reading from isdnd: %s", strerror(errno));
 				break;
 			}
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
+			if (debug & DBG_DUMPALL)
 				dump_event(buf, ret, 1);
 #endif
 			handle_event(buf, ret);
@@ -479,14 +479,14 @@ static void dump_event(u_int8_t *msg, int len, int read)
 {
 	int i;
 
-	if(read)
+	if (read)
 		mprintf("read from socket:");
 	else
 		mprintf("write to socket:");
 
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 	{
-		if(i % 8 == 0)
+		if (i % 8 == 0)
 			mprintf("\n%02d: ", i);
 		mprintf("0x%02x %c  ", msg[i], isprint(msg[i]) ? msg[i] : '.');
 	}
@@ -502,9 +502,9 @@ print_logevent(time_t tstamp, int prio, char * what, char * msg)
 	mprintf("log: %s prio %d what=%s msg=%s\n", buf, prio, what, msg);
 
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 	{
-		if((!debug_noscreen) || (debug_noscreen && (((strcmp(what, "DBG"))) != 0)))
+		if ((!debug_noscreen) || (debug_noscreen && (((strcmp(what, "DBG"))) != 0)))
 		{
 /*
  * FreeBSD-current integrated ncurses. Since then it is no longer possible
@@ -536,9 +536,9 @@ print_charge(time_t tstamp, int controller, int channel, int units, int estimate
 	mprintf("%s: controller %d, channel %d, charge = %d%s\n",
 		buf, controller, channel, units, estimated ? " (estimated)" : "");
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 	{
-		if(estimated)
+		if (estimated)
 			display_ccharge(CHPOS(controller, channel), units);
 		else
 			display_charge(CHPOS(controller, channel), units);
@@ -563,14 +563,14 @@ static void print_connect(
 {
 	char buf[256];
 
-	if(channel == 0)
+	if (channel == 0)
 		remstate[controller].ch1state = 1;
 	else
 		remstate[controller].ch2state = 1;
 
 	strftime(buf, sizeof(buf), I4B_TIME_FORMAT, localtime(&tstamp));
 
-	if(outgoing)
+	if (outgoing)
 		mprintf("%s: calling out to '%s' [from msn: '%s']",
 			buf, remphone, locphone);
 	else
@@ -580,7 +580,7 @@ static void print_connect(
 		controller, channel, cfgname, devname);
 
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 		display_connect(CHPOS(controller, channel), outgoing, cfgname, remphone, devname);
 #endif
 }
@@ -595,7 +595,7 @@ print_disconnect(time_t tstamp, int controller, int channel)
 {
 	char buf[256];
 
-	if(channel == 0)
+	if (channel == 0)
 		remstate[controller].ch1state = 0;
 	else
 		remstate[controller].ch2state = 0;
@@ -606,7 +606,7 @@ print_disconnect(time_t tstamp, int controller, int channel)
 		buf, controller, channel);
 
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 		display_disconnect(CHPOS(controller, channel));
 #endif
 }
@@ -635,7 +635,7 @@ print_l12stat(time_t tstamp, int controller, int layer, int state)
 	mprintf("%s: layer %d change on controller %d: %s\n",
 		buf, layer, controller, state ? "up" : "down");
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 		display_l12stat(controller, layer, state);
 #endif
 }
@@ -653,7 +653,7 @@ print_tei(time_t tstamp, int controller, int tei)
 		buf, controller, tei);
 
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 		display_tei(controller, tei);
 #endif
 }
@@ -671,7 +671,7 @@ print_acct(time_t tstamp, int controller, int channel, int obytes, int obps,
 	mprintf("%s: controller %d, channel %d: %d obytes, %d obps, %d ibytes, %d ibps\n",
 		buf, controller, channel, obytes, obps, ibytes, ibps);
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 		display_acct(CHPOS(controller, channel), obytes, obps, ibytes, ibps);
 #endif
 }
@@ -680,9 +680,9 @@ static void
 print_initialization(void)
 {
 #ifndef WIN32
-	if(fullscreen)
+	if (fullscreen)
 	{
-		if(curses_ready == 0)
+		if (curses_ready == 0)
 			init_screen();
 	}
 	else
@@ -705,244 +705,244 @@ handle_event(u_int8_t *msg, int len)
 	u_int32_t who;
 	static int first = 1;
 	
-	switch(state)
+	switch (state)
 	{
-		case ST_INIT:	/* initial data */
+	case ST_INIT:	/* initial data */
 
-			isdn_major = I4B_GET_2B(msg, I4B_MON_IDATA_VERSMAJOR);
-			isdn_minor = I4B_GET_2B(msg, I4B_MON_IDATA_VERSMINOR);
-			nctrl = I4B_GET_2B(msg, I4B_MON_IDATA_NUMCTRL);
-			nentries = I4B_GET_2B(msg, I4B_MON_IDATA_NUMENTR);
-			rights = I4B_GET_4B(msg, I4B_MON_IDATA_CLACCESS);
+		isdn_major = I4B_GET_2B(msg, I4B_MON_IDATA_VERSMAJOR);
+		isdn_minor = I4B_GET_2B(msg, I4B_MON_IDATA_VERSMINOR);
+		nctrl = I4B_GET_2B(msg, I4B_MON_IDATA_NUMCTRL);
+		nentries = I4B_GET_2B(msg, I4B_MON_IDATA_NUMENTR);
+		rights = I4B_GET_4B(msg, I4B_MON_IDATA_CLACCESS);
 
-			mprintf("remote protocol version is %02d.%02d\n", isdn_major, isdn_minor);
+		mprintf("remote protocol version is %02d.%02d\n", isdn_major, isdn_minor);
 
-			if(isdn_major != MPROT_VERSION || isdn_minor != MPROT_REL)
-			{
-				fprintf(stderr, "ERROR, remote protocol version mismatch:\n");
-				fprintf(stderr, "\tremote major version is %02d, local major version is %02d\n", isdn_major, MPROT_VERSION);
-				fprintf(stderr, "\tremote minor version is %02d, local minor version is %02d\n", isdn_minor, MPROT_REL);
-				exit(1);
-			}
+		if (isdn_major != MPROT_VERSION || isdn_minor != MPROT_REL)
+		{
+			fprintf(stderr, "ERROR, remote protocol version mismatch:\n");
+			fprintf(stderr, "\tremote major version is %02d, local major version is %02d\n", isdn_major, MPROT_VERSION);
+			fprintf(stderr, "\tremote minor version is %02d, local minor version is %02d\n", isdn_minor, MPROT_REL);
+			exit(1);
+		}
 
-			mprintf("our rights = 0x%x\n", rights);
+		mprintf("our rights = 0x%x\n", rights);
 
-			sub_state = 0;				
-			first = 1;
-			
-			if(nctrl > 0)
-			{
-				state = ST_ICTRL;
-			}
-			else if(nentries > 0)
-			{
-				state = ST_IDEV;
-			}
-			else
-			{
-				state = ST_ANYEV;
-				sleep(2);
-				print_initialization();
-			}
-			
-			/* set maximum event mask */
-			I4B_PREP_CMD(cmd, I4B_MON_CCMD_SETMASK);
-			I4B_PUT_2B(cmd, I4B_MON_ICLIENT_VERMAJOR, MPROT_VERSION);
-			I4B_PUT_2B(cmd, I4B_MON_ICLIENT_VERMINOR, MPROT_REL);
-			I4B_PUT_4B(cmd, I4B_MON_ICLIENT_EVENTS, ~0U);
+		sub_state = 0;				
+		first = 1;
+		
+		if (nctrl > 0)
+		{
+			state = ST_ICTRL;
+		}
+		else if (nentries > 0)
+		{
+			state = ST_IDEV;
+		}
+		else
+		{
+			state = ST_ANYEV;
+			sleep(2);
+			print_initialization();
+		}
+		
+		/* set maximum event mask */
+		I4B_PREP_CMD(cmd, I4B_MON_CCMD_SETMASK);
+		I4B_PUT_2B(cmd, I4B_MON_ICLIENT_VERMAJOR, MPROT_VERSION);
+		I4B_PUT_2B(cmd, I4B_MON_ICLIENT_VERMINOR, MPROT_REL);
+		I4B_PUT_4B(cmd, I4B_MON_ICLIENT_EVENTS, ~0U);
 
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
-				dump_event(cmd, sizeof(cmd), 0);
+		if (debug & DBG_DUMPALL)
+			dump_event(cmd, sizeof(cmd), 0);
 #endif
-			
-			if((sock_write(monsock, cmd, sizeof(cmd))) == -1)
+		
+		if ((sock_write(monsock, cmd, sizeof(cmd))) == -1)
+		{
+			fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
+			exit(1);
+		}
+		break;
+
+	case ST_ICTRL:	/* initial controller list */
+		if (first)
+		{
+			first = 0;
+			mprintf("%d controller(s) found:\n", nctrl);
+		}
+		mprintf("\tcontroller %d: %s\n", sub_state++, msg+I4B_MON_ICTRL_NAME);
+
+		if (sub_state >= nctrl)
+		{
+			sub_state = 0;
+			first = 1;
+			if (nentries > 0)
 			{
-				fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
-				exit(1);
-			}
-			break;
-
-		case ST_ICTRL:	/* initial controller list */
-			if(first)
-			{
-				first = 0;
-				mprintf("%d controller(s) found:\n", nctrl);
-			}
-			mprintf("\tcontroller %d: %s\n", sub_state++, msg+I4B_MON_ICTRL_NAME);
-
-			if(sub_state >= nctrl)
-			{
-				sub_state = 0;
-				first = 1;
-				if(nentries > 0)
-				{
-					state = ST_IDEV; /* end of list reached */
-				}
-				else
-				{
-					state = ST_ANYEV;
-					sleep(2);
-					print_initialization();
-				}
-			}
-			break;
-
-		case ST_IDEV:	/* initial entry devicename list */
-			if(first)
-			{
-				first = 0;
-				mprintf("%d entries found:\n", nentries);
-			}
-			
-			mprintf("\tentry %d: device %s\n", sub_state++, msg+I4B_MON_IDEV_NAME);
-
-			strlcat(devbuf, msg+I4B_MON_IDEV_NAME, sizeof(devbuf));
-			/* strlcat(devbuf, " ", sizeof(devbuf)); */
-			
-			if(sub_state >= nentries)
-			{
-				first = 1;
-				state = ST_ANYEV; /* end of list reached */
-				sub_state = 0;
-				sleep(2);
-				print_initialization();
-			}
-			break;
-
-		case ST_ANYEV: /* any event */
-			switch(I4B_GET_2B(msg, I4B_MON_EVNT))
-			{
-				case I4B_MON_DRINI_CODE:
-					state = ST_RIGHT;	/* list of rights entries will follow */
-					sub_state = 0;
-					sub_state_count = I4B_GET_2B(msg, I4B_MON_DRINI_COUNT);
-					mprintf("monitor rights:\n");
-					break;
-
-				case I4B_MON_DCINI_CODE:
-					state = ST_CONNS;
-					sub_state = 0;
-					sub_state_count = I4B_GET_2B(msg, I4B_MON_DCINI_COUNT);
-					mprintf("monitor connections:\n");
-					break;
-
-				case I4B_MON_LOGEVNT_CODE:
-					print_logevent(I4B_GET_4B(msg, I4B_MON_LOGEVNT_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_LOGEVNT_PRIO),
-						msg+I4B_MON_LOGEVNT_WHAT,
-						msg+I4B_MON_LOGEVNT_MSG);
-					break;
-
-				case I4B_MON_CHRG_CODE:
-					print_charge(I4B_GET_4B(msg, I4B_MON_CHRG_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_CHRG_CTRL),
-						I4B_GET_4B(msg, I4B_MON_CHRG_CHANNEL),
-						I4B_GET_4B(msg, I4B_MON_CHRG_UNITS),
-						I4B_GET_4B(msg, I4B_MON_CHRG_ESTIMATED));
-					break;
-					
-				case I4B_MON_CONNECT_CODE:
-					print_connect(
-						I4B_GET_4B(msg, I4B_MON_CONNECT_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_CONNECT_DIR),
-						I4B_GET_4B(msg, I4B_MON_CONNECT_CTRL),
-						I4B_GET_4B(msg, I4B_MON_CONNECT_CHANNEL),
-						msg+I4B_MON_CONNECT_CFGNAME,
-						msg+I4B_MON_CONNECT_DEVNAME,
-						msg+I4B_MON_CONNECT_REMPHONE,
-						msg+I4B_MON_CONNECT_LOCPHONE);
-					break;
-					
-				case I4B_MON_DISCONNECT_CODE:
-					print_disconnect(
-						I4B_GET_4B(msg, I4B_MON_DISCONNECT_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_DISCONNECT_CTRL),
-						I4B_GET_4B(msg, I4B_MON_DISCONNECT_CHANNEL));
-					break;
-					
-				case I4B_MON_UPDOWN_CODE:
-					print_updown(
-						I4B_GET_4B(msg, I4B_MON_UPDOWN_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_UPDOWN_CTRL),
-						I4B_GET_4B(msg, I4B_MON_UPDOWN_CHANNEL),
-						I4B_GET_4B(msg, I4B_MON_UPDOWN_ISUP));
-					break;
-				case I4B_MON_L12STAT_CODE:
-					print_l12stat(
-						I4B_GET_4B(msg, I4B_MON_L12STAT_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_L12STAT_CTRL),
-						I4B_GET_4B(msg, I4B_MON_L12STAT_LAYER),
-						I4B_GET_4B(msg, I4B_MON_L12STAT_STATE));
-					break;
-				case I4B_MON_TEI_CODE:
-					print_tei(
-						I4B_GET_4B(msg, I4B_MON_TEI_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_TEI_CTRL),
-						I4B_GET_4B(msg, I4B_MON_TEI_TEI));
-					break;
-				case I4B_MON_ACCT_CODE:
-					print_acct(
-						I4B_GET_4B(msg, I4B_MON_ACCT_TSTAMP),
-						I4B_GET_4B(msg, I4B_MON_ACCT_CTRL),
-						I4B_GET_4B(msg, I4B_MON_ACCT_CHAN),
-						I4B_GET_4B(msg, I4B_MON_ACCT_OBYTES),
-						I4B_GET_4B(msg, I4B_MON_ACCT_OBPS),
-						I4B_GET_4B(msg, I4B_MON_ACCT_IBYTES),
-						I4B_GET_4B(msg, I4B_MON_ACCT_IBPS));
-					break;
-				default:
-					mprintf("unknown event code: %d\n", I4B_GET_2B(msg, I4B_MON_EVNT));
-			}
-			break;
-
-		case ST_RIGHT:	/* one record in a list of monitor rights */
-			rights = I4B_GET_4B(msg, I4B_MON_DR_RIGHTS);
-			net = I4B_GET_4B(msg, I4B_MON_DR_NET);
-			mask = I4B_GET_4B(msg, I4B_MON_DR_MASK);
-			local = I4B_GET_1B(msg, I4B_MON_DR_LOCAL);
-
-			if(local)
-			{
-				mprintf("\tlocal: rights = %x\n", rights);
+				state = ST_IDEV; /* end of list reached */
 			}
 			else
 			{
-				mprintf("\tfrom: %d.%d.%d.%d, mask %d.%d.%d.%d, rights = %x\n",
-					(net >> 24) & 0x00ff, (net >> 16) & 0x00ff, (net >> 8) & 0x00ff, net & 0x00ff,
-					(mask >> 24) & 0x00ff, (mask >> 16) & 0x00ff, (mask >> 8) & 0x00ff, mask & 0x00ff,
-					rights);
-			}
-
-			sub_state++;
-
-			if(sub_state >= sub_state_count)
-			{
 				state = ST_ANYEV;
+				sleep(2);
 				print_initialization();
 			}
+		}
+		break;
+
+	case ST_IDEV:	/* initial entry devicename list */
+		if (first)
+		{
+			first = 0;
+			mprintf("%d entries found:\n", nentries);
+		}
+		
+		mprintf("\tentry %d: device %s\n", sub_state++, msg+I4B_MON_IDEV_NAME);
+
+		strlcat(devbuf, msg+I4B_MON_IDEV_NAME, sizeof(devbuf));
+		/* strlcat(devbuf, " ", sizeof(devbuf)); */
+		
+		if (sub_state >= nentries)
+		{
+			first = 1;
+			state = ST_ANYEV; /* end of list reached */
+			sub_state = 0;
+			sleep(2);
+			print_initialization();
+		}
+		break;
+
+	case ST_ANYEV: /* any event */
+		switch (I4B_GET_2B(msg, I4B_MON_EVNT))
+		{
+		case I4B_MON_DRINI_CODE:
+			state = ST_RIGHT;	/* list of rights entries will follow */
+			sub_state = 0;
+			sub_state_count = I4B_GET_2B(msg, I4B_MON_DRINI_COUNT);
+			mprintf("monitor rights:\n");
 			break;
 
-		case ST_CONNS:
-			who = I4B_GET_4B(msg, I4B_MON_DC_WHO);
-			rights = I4B_GET_4B(msg, I4B_MON_DC_RIGHTS);
-
-			mprintf("\tfrom: %d.%d.%d.%d, rights = %x\n",
-				(who >> 24) & 0x00ff, (who >> 16) & 0x00ff, (who >> 8) & 0x00ff, who & 0x00ff,
-				rights);
-
-			sub_state++;
-
-			if(sub_state >= sub_state_count)
-			{
-				state = ST_ANYEV;
-				print_initialization();
-			}
+		case I4B_MON_DCINI_CODE:
+			state = ST_CONNS;
+			sub_state = 0;
+			sub_state_count = I4B_GET_2B(msg, I4B_MON_DCINI_COUNT);
+			mprintf("monitor connections:\n");
 			break;
 
+		case I4B_MON_LOGEVNT_CODE:
+			print_logevent(I4B_GET_4B(msg, I4B_MON_LOGEVNT_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_LOGEVNT_PRIO),
+				msg+I4B_MON_LOGEVNT_WHAT,
+				msg+I4B_MON_LOGEVNT_MSG);
+			break;
+
+		case I4B_MON_CHRG_CODE:
+			print_charge(I4B_GET_4B(msg, I4B_MON_CHRG_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_CHRG_CTRL),
+				I4B_GET_4B(msg, I4B_MON_CHRG_CHANNEL),
+				I4B_GET_4B(msg, I4B_MON_CHRG_UNITS),
+				I4B_GET_4B(msg, I4B_MON_CHRG_ESTIMATED));
+			break;
+			
+		case I4B_MON_CONNECT_CODE:
+			print_connect(
+				I4B_GET_4B(msg, I4B_MON_CONNECT_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_CONNECT_DIR),
+				I4B_GET_4B(msg, I4B_MON_CONNECT_CTRL),
+				I4B_GET_4B(msg, I4B_MON_CONNECT_CHANNEL),
+				msg+I4B_MON_CONNECT_CFGNAME,
+				msg+I4B_MON_CONNECT_DEVNAME,
+				msg+I4B_MON_CONNECT_REMPHONE,
+				msg+I4B_MON_CONNECT_LOCPHONE);
+			break;
+			
+		case I4B_MON_DISCONNECT_CODE:
+			print_disconnect(
+				I4B_GET_4B(msg, I4B_MON_DISCONNECT_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_DISCONNECT_CTRL),
+				I4B_GET_4B(msg, I4B_MON_DISCONNECT_CHANNEL));
+			break;
+			
+		case I4B_MON_UPDOWN_CODE:
+			print_updown(
+				I4B_GET_4B(msg, I4B_MON_UPDOWN_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_UPDOWN_CTRL),
+				I4B_GET_4B(msg, I4B_MON_UPDOWN_CHANNEL),
+				I4B_GET_4B(msg, I4B_MON_UPDOWN_ISUP));
+			break;
+		case I4B_MON_L12STAT_CODE:
+			print_l12stat(
+				I4B_GET_4B(msg, I4B_MON_L12STAT_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_L12STAT_CTRL),
+				I4B_GET_4B(msg, I4B_MON_L12STAT_LAYER),
+				I4B_GET_4B(msg, I4B_MON_L12STAT_STATE));
+			break;
+		case I4B_MON_TEI_CODE:
+			print_tei(
+				I4B_GET_4B(msg, I4B_MON_TEI_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_TEI_CTRL),
+				I4B_GET_4B(msg, I4B_MON_TEI_TEI));
+			break;
+		case I4B_MON_ACCT_CODE:
+			print_acct(
+				I4B_GET_4B(msg, I4B_MON_ACCT_TSTAMP),
+				I4B_GET_4B(msg, I4B_MON_ACCT_CTRL),
+				I4B_GET_4B(msg, I4B_MON_ACCT_CHAN),
+				I4B_GET_4B(msg, I4B_MON_ACCT_OBYTES),
+				I4B_GET_4B(msg, I4B_MON_ACCT_OBPS),
+				I4B_GET_4B(msg, I4B_MON_ACCT_IBYTES),
+				I4B_GET_4B(msg, I4B_MON_ACCT_IBPS));
+			break;
 		default:
-			mprintf("unknown event from remote: local state = %d, evnt = %x, len = %d\n",
-				state, I4B_GET_2B(msg, I4B_MON_EVNT), len);
+			mprintf("unknown event code: %d\n", I4B_GET_2B(msg, I4B_MON_EVNT));
+		}
+		break;
+
+	case ST_RIGHT:	/* one record in a list of monitor rights */
+		rights = I4B_GET_4B(msg, I4B_MON_DR_RIGHTS);
+		net = I4B_GET_4B(msg, I4B_MON_DR_NET);
+		mask = I4B_GET_4B(msg, I4B_MON_DR_MASK);
+		local = I4B_GET_1B(msg, I4B_MON_DR_LOCAL);
+
+		if (local)
+		{
+			mprintf("\tlocal: rights = %x\n", rights);
+		}
+		else
+		{
+			mprintf("\tfrom: %d.%d.%d.%d, mask %d.%d.%d.%d, rights = %x\n",
+				(net >> 24) & 0x00ff, (net >> 16) & 0x00ff, (net >> 8) & 0x00ff, net & 0x00ff,
+				(mask >> 24) & 0x00ff, (mask >> 16) & 0x00ff, (mask >> 8) & 0x00ff, mask & 0x00ff,
+				rights);
+		}
+
+		sub_state++;
+
+		if (sub_state >= sub_state_count)
+		{
+			state = ST_ANYEV;
+			print_initialization();
+		}
+		break;
+
+	case ST_CONNS:
+		who = I4B_GET_4B(msg, I4B_MON_DC_WHO);
+		rights = I4B_GET_4B(msg, I4B_MON_DC_RIGHTS);
+
+		mprintf("\tfrom: %d.%d.%d.%d, rights = %x\n",
+			(who >> 24) & 0x00ff, (who >> 16) & 0x00ff, (who >> 8) & 0x00ff, who & 0x00ff,
+			rights);
+
+		sub_state++;
+
+		if (sub_state >= sub_state_count)
+		{
+			state = ST_ANYEV;
+			print_initialization();
+		}
+		break;
+
+	default:
+		mprintf("unknown event from remote: local state = %d, evnt = %x, len = %d\n",
+			state, I4B_GET_2B(msg, I4B_MON_EVNT), len);
 	}
 }
 
@@ -957,95 +957,95 @@ handle_input()
 	
 	fgets(buf, sizeof(buf), stdin);
 
-	switch(atoi(buf))
+	switch (atoi(buf))
 	{
-		case 1:
-		    {
-		    	u_int8_t cmd[I4B_MON_DUMPRIGHTS_SIZE];
-			I4B_PREP_CMD(cmd, I4B_MON_DUMPRIGHTS_CODE);
+	case 1:
+	    {
+		u_int8_t cmd[I4B_MON_DUMPRIGHTS_SIZE];
+		I4B_PREP_CMD(cmd, I4B_MON_DUMPRIGHTS_CODE);
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
-				dump_event(cmd, I4B_MON_DUMPRIGHTS_SIZE, 0);
+		if (debug & DBG_DUMPALL)
+			dump_event(cmd, I4B_MON_DUMPRIGHTS_SIZE, 0);
 #endif
 
-			if((sock_write(monsock, cmd, I4B_MON_DUMPRIGHTS_SIZE)) == -1)
-			{
-				fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
-				exit(1);
-			}
-		    }
-		    break;
+		if ((sock_write(monsock, cmd, I4B_MON_DUMPRIGHTS_SIZE)) == -1)
+		{
+			fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
+			exit(1);
+		}
+	    }
+	    break;
 
-		case 2:
-		    {
-		    	u_int8_t cmd[I4B_MON_DUMPMCONS_SIZE];
-			I4B_PREP_CMD(cmd, I4B_MON_DUMPMCONS_CODE);
+	case 2:
+	    {
+		u_int8_t cmd[I4B_MON_DUMPMCONS_SIZE];
+		I4B_PREP_CMD(cmd, I4B_MON_DUMPMCONS_CODE);
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
-				dump_event(cmd, I4B_MON_DUMPMCONS_CODE, 0);
+		if (debug & DBG_DUMPALL)
+			dump_event(cmd, I4B_MON_DUMPMCONS_CODE, 0);
 #endif
 
-			if((sock_write(monsock, cmd, I4B_MON_DUMPMCONS_SIZE)) == -1)
-			{
-				fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
-				exit(1);
-			}			
-		    }
-		    break;
+		if ((sock_write(monsock, cmd, I4B_MON_DUMPMCONS_SIZE)) == -1)
+		{
+			fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
+			exit(1);
+		}			
+	    }
+	    break;
 
-		case 3:
-		    {
-		    	u_int8_t cmd[I4B_MON_CFGREREAD_SIZE];
-			I4B_PREP_CMD(cmd, I4B_MON_CFGREREAD_CODE);
+	case 3:
+	    {
+		u_int8_t cmd[I4B_MON_CFGREREAD_SIZE];
+		I4B_PREP_CMD(cmd, I4B_MON_CFGREREAD_CODE);
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
-				dump_event(cmd, I4B_MON_CFGREREAD_CODE, 0);
+		if (debug & DBG_DUMPALL)
+			dump_event(cmd, I4B_MON_CFGREREAD_CODE, 0);
 #endif
 
-			if((sock_write(monsock, cmd, I4B_MON_CFGREREAD_SIZE)) == -1)
-			{
-				fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
-				exit(1);
-			}
-		    }
-		    break;
-			
-		case 4:
-		    {
-		    	u_int8_t cmd[I4B_MON_HANGUP_SIZE];
-			I4B_PREP_CMD(cmd, I4B_MON_HANGUP_CODE);
-			
-			printf("Which controller you wish to hangup? ");
-			fgets(buf, sizeof(buf), stdin);
-			controller = atoi(buf);
-			I4B_PUT_4B(cmd, I4B_MON_HANGUP_CTRL, controller);
+		if ((sock_write(monsock, cmd, I4B_MON_CFGREREAD_SIZE)) == -1)
+		{
+			fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
+			exit(1);
+		}
+	    }
+	    break;
+		
+	case 4:
+	    {
+		u_int8_t cmd[I4B_MON_HANGUP_SIZE];
+		I4B_PREP_CMD(cmd, I4B_MON_HANGUP_CODE);
+		
+		printf("Which controller you wish to hangup? ");
+		fgets(buf, sizeof(buf), stdin);
+		controller = atoi(buf);
+		I4B_PUT_4B(cmd, I4B_MON_HANGUP_CTRL, controller);
 
-			printf("Which channel do you wish to hangup? ");
-			fgets(buf, sizeof(buf), stdin);
-			channel = atoi(buf);
-			I4B_PUT_4B(cmd, I4B_MON_HANGUP_CHANNEL, channel);
-			
+		printf("Which channel do you wish to hangup? ");
+		fgets(buf, sizeof(buf), stdin);
+		channel = atoi(buf);
+		I4B_PUT_4B(cmd, I4B_MON_HANGUP_CHANNEL, channel);
+		
 #ifdef DEBUG
-			if(debug & DBG_DUMPALL)
-				dump_event(cmd, I4B_MON_HANGUP_CHANNEL, 0);
+		if (debug & DBG_DUMPALL)
+			dump_event(cmd, I4B_MON_HANGUP_CHANNEL, 0);
 #endif
 
-			if((sock_write(monsock, cmd, I4B_MON_HANGUP_SIZE)) == -1)
-			{
-				fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
-				exit(1);
-			}			
-		    }
-		    break;
+		if ((sock_write(monsock, cmd, I4B_MON_HANGUP_SIZE)) == -1)
+		{
+			fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
+			exit(1);
+		}			
+	    }
+	    break;
 
-		case 9:
-			close(monsock);
-			exit(0);
-			break;
+	case 9:
+		close(monsock);
+		exit(0);
+		break;
 
-		default:
-			print_menu();
-			break;
+	default:
+		print_menu();
+		break;
 	}
 }
 
@@ -1055,10 +1055,10 @@ reread(void)
     	u_int8_t cmd[I4B_MON_CFGREREAD_SIZE];
 	I4B_PREP_CMD(cmd, I4B_MON_CFGREREAD_CODE);
 #ifdef DEBUG
-	if(debug & DBG_DUMPALL)
+	if (debug & DBG_DUMPALL)
 		dump_event(cmd, I4B_MON_CFGREREAD_CODE, 0);
 #endif
-	if((sock_write(monsock, cmd, I4B_MON_CFGREREAD_SIZE)) == -1)
+	if ((sock_write(monsock, cmd, I4B_MON_CFGREREAD_SIZE)) == -1)
 	{
 		fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
 		exit(1);
@@ -1075,11 +1075,11 @@ hangup(int ctrl, int chan)
 	I4B_PUT_4B(cmd, I4B_MON_HANGUP_CHANNEL, chan);
 			
 #ifdef DEBUG
-	if(debug & DBG_DUMPALL)
+	if (debug & DBG_DUMPALL)
 		dump_event(cmd, I4B_MON_HANGUP_CHANNEL, 0);
 #endif
 
-	if((sock_write(monsock, cmd, I4B_MON_HANGUP_SIZE)) == -1)
+	if ((sock_write(monsock, cmd, I4B_MON_HANGUP_SIZE)) == -1)
 	{
 		fprintf(stderr, "sock_write failed: %s\n", strerror(errno));
 		exit(1);
@@ -1092,7 +1092,7 @@ hangup(int ctrl, int chan)
 static void
 print_menu()
 {
-	if(!fullscreen)
+	if (!fullscreen)
 	{
 		printf("Menu: <1> display rights,     <2> display monitor connections,\n");
 		printf("      <3> reread config file, <4> hangup \n");
@@ -1113,9 +1113,9 @@ sock_read(int fd, void *buf, size_t nbytes)
 
 	while(nleft > 0)
 	{
-		if((nread = read(fd, ptr, nleft)) < 0)
+		if ((nread = read(fd, ptr, nleft)) < 0)
 		{
-			if(errno == EINTR)
+			if (errno == EINTR)
 			{
 				nread = 0;
 			}
@@ -1124,7 +1124,7 @@ sock_read(int fd, void *buf, size_t nbytes)
 				return(-1);
 			}
 		}
-		else if(nread == 0)
+		else if (nread == 0)
 		{
 			break; /* EOF */
 		}
@@ -1147,9 +1147,9 @@ sock_write(int fd, void *buf, size_t nbytes)
 
 	while(nleft > 0)
 	{
-		if((nwritten = write(fd, ptr, nleft)) <= 0)
+		if ((nwritten = write(fd, ptr, nleft)) <= 0)
 		{
-			if(errno == EINTR)
+			if (errno == EINTR)
 			{
 				nwritten = 0;
 			}
@@ -1176,10 +1176,10 @@ mprintf(char *fmt, ...)
 	vsnprintf(buffer, PRBUFLEN-1, fmt, ap);
 	va_end(ap);
 
-	if(!fullscreen || (fullscreen && (!curses_ready)))
+	if (!fullscreen || (fullscreen && (!curses_ready)))
 		printf("%s", buffer);
 	
-	if(logfilename != NULL)
+	if (logfilename != NULL)
 	{
 		fprintf(lfp, "%s", buffer);
 		fflush(lfp);
