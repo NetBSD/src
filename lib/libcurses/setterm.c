@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.23 2000/05/19 01:05:44 mycroft Exp $	*/
+/*	$NetBSD: setterm.c,v 1.23.2.1 2000/06/23 16:16:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.23 2000/05/19 01:05:44 mycroft Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.23.2.1 2000/06/23 16:16:28 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ zap(struct tinfo *tinfo)
 		*tmp = *namp;
 		*(tmp + 1) = *(namp + 1);
 		t_getstr(tinfo, tmp, NULL, &i);
-		tspace_size += i;
+		tspace_size += i + 1;
 		namp += 2;
 	} while (*namp);
 
@@ -340,12 +340,11 @@ getcap(char *name)
 	char *new_tspace;
 
 	  /* verify cap exists and grab size of it at the same time */
-	if (t_getstr(_cursesi_genbuf, name, NULL, &ent_size) == ERR)
-		return ERR;
+	t_getstr(_cursesi_genbuf, name, NULL, &ent_size);
 
 	  /* grow tspace to hold the new cap */
 	if ((new_tspace = realloc(tspace, ent_size + tspace_size)) == NULL)
-		return ERR;
+		return NULL;
 
 	  /* point aoftspace to the same place in the newly allocated buffer */
 	offset = aoftspace - tspace;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.15 1999/05/04 15:34:50 kleink Exp $
+.\"	$NetBSD: ctime.3,v 1.15.6.1 2000/06/23 16:18:12 minoura Exp $
 .TH CTIME 3
 .SH NAME
 asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
@@ -9,8 +9,6 @@ Standard C Library (libc, -lc)
 .B #include <time.h>
 .PP
 .B extern char *tzname[2];
-.PP
-.B void tzset();
 .PP
 .B char *ctime(const time_t *clock);
 .B char *ctime_r(const time_t *clock, char *buf);
@@ -233,10 +231,6 @@ mktime()
 functions conform to
 ANSI X3.159-1989 (``ANSI C'').
 The
-tzset()
-function conforms to
-IEEE Std1003.1-1988 (``POSIX'').
-The
 ctime_r(),
 asctime_r(),
 localtime_r()
@@ -244,7 +238,6 @@ and
 gmtime_r()
 functions conform to
 IEEE Std1003.1c-1995 (``POSIX'').
-The
 .SH NOTES
 The return values point to static data;
 the data is overwritten by each call.

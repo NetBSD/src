@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.23 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.23.2.1 2000/06/23 16:17:41 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.23 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.23.2.1 2000/06/23 16:17:41 minoura Exp $");
 #endif
 #endif
 
@@ -281,6 +281,7 @@ clnt_spcreateerror(s)
 	case RPC_VERSMISMATCH:
 	case RPC_TIMEDOUT:
 	case RPC_CANTRECV:
+	default:
 		break;
 	}
 	return (str);

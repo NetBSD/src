@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.30.2.1 2000/06/23 16:16:55 minoura Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.30.2.1 2000/06/23 16:16:55 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,36 @@ static	char *tbuf;	/* termcap buffer */
 static  struct tinfo *fbuf;     /* untruncated termcap buffer */
 
 /*
+ * Set the termcap entry to the arbitrary string passed in, this can
+ * be used to provide a "dummy" termcap entry if a real one does not
+ * exist.  This function will malloc the buffer and space for the
+ * string.  If an error occurs return -1 otherwise return 0.
+ */
+int
+t_setinfo(struct tinfo **bp, const char *entry)
+{
+	char capability[256], *cap_ptr;
+	size_t limit;
+	
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
+		return -1;
+
+	if (((*bp)->info = (char *) malloc(strlen(entry) + 1)) == NULL)
+		return -1;
+
+	strcpy((*bp)->info, entry);
+
+	cap_ptr = capability;
+	limit = 255;
+	(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+	cap_ptr = capability;
+	limit = 255;
+	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	
+	return 0;
+}
+
+/*
  * Get an extended entry for the terminal name.  This differs from
  * tgetent only in a) the buffer is malloc'ed for the caller and
  * b) the termcap entry is not truncated to 1023 characters.
@@ -88,9 +118,12 @@ t_getent(bp, name)
 	char **fname;
 	char  *home;
 	int    i, did_getset;
+	size_t limit;
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
+	char  capability[256], *cap_ptr;
+	
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
@@ -182,10 +215,24 @@ t_getent(bp, name)
 				return (-2);
 		i = cgetent(&((*bp)->info), pathvec, name);      
 	}
-	
+
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
+
+	  /* fill in t_goto capabilities - this prevents memory leaks
+	   * and is more efficient than fetching these capabilities
+	   * every time t_goto is called.
+	   */
+	if (i >= 0) {
+		cap_ptr = capability;
+		limit = 255;
+		(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+		cap_ptr = capability;
+		limit = 255;
+		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	}
+		
 	return (i + 1);
 }
 
@@ -296,6 +343,8 @@ tgetflag(id)
  * placed in area, which is a ref parameter which is updated.
  * limit is the number of characters allowed to be put into
  * area, this is updated.
+ *
+ * returns dynamically allocated region, passed from cgetstr().
  */
 char *
 t_getstr(info, id, area, limit)
@@ -326,6 +375,7 @@ t_getstr(info, id, area, limit)
 		 */
 		if (limit != NULL && (*limit < i)) {
 			errno = E2BIG;
+			free(s);
 			return NULL;
 		}
   	
@@ -337,6 +387,7 @@ t_getstr(info, id, area, limit)
 	} else {
 		_DIAGASSERT(limit != NULL);
 		*limit = i;
+		free(s);
 		return NULL;
 	}
 }
@@ -395,7 +446,6 @@ t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
 	_DIAGASSERT(id != NULL);
 	_DIAGASSERT(bufptr != NULL);
 	_DIAGASSERT(area != NULL);
-	_DIAGASSERT(size != NULL);
 
 	t_getstr(info, id, NULL, &new_size);
 
@@ -432,6 +482,10 @@ t_freent(info)
 {
 	_DIAGASSERT(info != NULL);
 	free(info->info);
+	if (info->up != NULL)
+		free(info->up);
+	if (info->bc != NULL)
+		free(info->bc);
 	free(info);
 }
 

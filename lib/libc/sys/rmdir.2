@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmdir.2,v 1.12 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: rmdir.2,v 1.12.2.1 2000/06/23 16:18:09 minoura Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,9 +81,8 @@ and
 .Ql \&..
 in it.
 .It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
-.It Bq Er EACCES
-Write permission is denied on the directory containing the link
+Search permission is denied for a component of the path prefix, or
+write permission is denied on the directory containing the link
 to be removed.
 .It Bq Er EPERM
 The directory containing the directory to be removed is marked sticky,

@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_htonl.c,v 1.2 1999/05/03 13:12:34 christos Exp $	*/
+/* $NetBSD: Lint_htonl.c,v 1.2.6.1 2000/06/23 16:17:32 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.41 2000/03/05 09:40:57 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.41.2.1 2000/06/23 16:17:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,11 +39,13 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.41 2000/03/05 09:40:57 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.41.2.1 2000/06/23 16:17:36 minoura Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _LIBC
 #include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -733,10 +735,14 @@ again:
 
 /*
  * XXX
- * Don't make static, used by lpd(8).
+ * Don't make static, used by lpd(8).  We will be able to change the function
+ * into static function, when we bump libc major #.
  *
  * Returns 0 if ok, -1 if not ok.
  */
+#ifdef notdef	/*_LIBC*/
+static
+#endif
 int
 __ivaliduser(hostf, raddr, luser, ruser)
 	FILE *hostf;
@@ -755,6 +761,9 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	    sizeof(struct sockaddr_in), luser, ruser);
 }
 
+#ifdef notdef	/*_LIBC*/
+static
+#endif
 int
 __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 	FILE *hostf;

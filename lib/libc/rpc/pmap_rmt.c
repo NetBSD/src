@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.27 2000/05/15 17:11:29 itojun Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.27.2.1 2000/06/23 16:17:44 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.27 2000/05/15 17:11:29 itojun Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.27.2.1 2000/06/23 16:17:44 minoura Exp $");
 #endif
 #endif
 
@@ -70,18 +70,11 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.27 2000/05/15 17:11:29 itojun Exp $");
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_rmt.h>
 
-#include <ifaddrs.h>
-
 #ifdef __weak_alias
-__weak_alias(clnt_broadcast,_clnt_broadcast)
 __weak_alias(pmap_rmtcall,_pmap_rmtcall)
 __weak_alias(xdr_rmtcall_args,_xdr_rmtcall_args)
 __weak_alias(xdr_rmtcallres,_xdr_rmtcallres)
 #endif
-
-#define MAX_BROADCAST_SIZE 1400
-
-static int getbroadcastnets __P((struct in_addr *, int));
 
 static const struct timeval timeout = { 3, 0 };
 
@@ -189,223 +182,4 @@ xdr_rmtcallres(xdrs, crp)
 		return ((*(crp->xdr_results))(xdrs, crp->results_ptr));
 	}
 	return (FALSE);
-}
-
-
-/*
- * The following is kludged-up support for simple rpc broadcasts.
- * Someday a large, complicated system will replace these trivial 
- * routines which only support udp/ip .
- */
-
-static int
-getbroadcastnets(addrs, naddrs)
-	struct in_addr *addrs;
-	int naddrs;
-{
-	struct ifaddrs *ifap, *ifa;
-	int i;
-	struct sockaddr_in *sin;
-
-	_DIAGASSERT(addrs != NULL);
-
-	if (getifaddrs(&ifap) != 0) {
-                warn("getbroadcastnets: getifaddrs");
-		return 0;
-	}
-	i = 0;
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (i >= naddrs)
-			break;
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-		if ((ifa->ifa_flags & IFF_BROADCAST) &&
-		    (ifa->ifa_flags & IFF_UP)) {
-			if (ifa->ifa_broadaddr && 
-			    ifa->ifa_broadaddr->sa_family == AF_INET) {
-				sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
-				addrs[i++] = sin->sin_addr;
-			}
-		}
-	}
-	freeifaddrs(ifap);
-	return i;
-}
-
-typedef bool_t (*resultproc_t) __P((caddr_t, struct sockaddr_in *));
-
-enum clnt_stat 
-clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
-	u_long		prog;		/* program number */
-	u_long		vers;		/* version number */
-	u_long		proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	caddr_t		argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	resultproc_t	eachresult;	/* call with each result obtained */
-{
-	enum clnt_stat stat;
-	AUTH *unix_auth = authunix_create_default();
-	XDR xdr_stream;
-	XDR *xdrs = &xdr_stream;
-	int inlen, nets;
-	socklen_t fromlen;
-	size_t outlen;
-	int sock;
-	int on = 1;
-	struct pollfd fd;
-	int i;
-	bool_t done = FALSE;
-	u_int32_t xid;
-	u_long port;
-	struct in_addr addrs[20];
-	struct sockaddr_in baddr, raddr; /* broadcast and response addresses */
-	struct rmtcallargs a;
-	struct rmtcallres r;
-	struct rpc_msg msg;
-	struct timeval t; 
-	int milliseconds;
-	char outbuf[MAX_BROADCAST_SIZE], inbuf[UDPMSGSIZE];
-
-	/*
-	 * initialization: create a socket, a broadcast address, and
-	 * preserialize the arguments into a send buffer.
-	 */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		warn("Cannot create socket for broadcast rpc");
-		stat = RPC_CANTSEND;
-		goto done_broad;
-	}
-#ifdef SO_BROADCAST
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0) {
-		warn("Cannot set socket option SO_BROADCAST");
-		stat = RPC_CANTSEND;
-		goto done_broad;
-	}
-#endif /* def SO_BROADCAST */
-	fd.fd = sock;
-	fd.events = POLLIN;
-	nets = getbroadcastnets(addrs, sizeof(addrs) / sizeof(addrs[0]));
-	memset(&baddr, 0, sizeof (baddr));
-	baddr.sin_len = sizeof(struct sockaddr_in);
-	baddr.sin_family = AF_INET;
-	baddr.sin_port = htons(PMAPPORT);
-	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	(void)gettimeofday(&t, (struct timezone *)0);
-	msg.rm_xid = xid = (u_int32_t)(getpid() ^ t.tv_sec ^ t.tv_usec);
-	t.tv_usec = 0;
-	msg.rm_direction = CALL;
-	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	msg.rm_call.cb_prog = PMAPPROG;
-	msg.rm_call.cb_vers = PMAPVERS;
-	msg.rm_call.cb_proc = PMAPPROC_CALLIT;
-	msg.rm_call.cb_cred = unix_auth->ah_cred;
-	msg.rm_call.cb_verf = unix_auth->ah_verf;
-	a.prog = prog;
-	a.vers = vers;
-	a.proc = proc;
-	a.xdr_args = xargs;
-	a.args_ptr = argsp;
-	r.port_ptr = &port;
-	r.xdr_results = xresults;
-	r.results_ptr = resultsp;
-	xdrmem_create(xdrs, outbuf, MAX_BROADCAST_SIZE, XDR_ENCODE);
-	if ((! xdr_callmsg(xdrs, &msg)) || (! xdr_rmtcall_args(xdrs, &a))) {
-		stat = RPC_CANTENCODEARGS;
-		goto done_broad;
-	}
-	outlen = xdr_getpos(xdrs);
-	xdr_destroy(xdrs);
-	/*
-	 * Basic loop: broadcast a packet and wait a while for response(s).
-	 * The response timeout grows larger per iteration.
-	 */
-	for (t.tv_sec = 4; t.tv_sec <= 14; t.tv_sec += 2) {
-		for (i = 0; i < nets; i++) {
-			baddr.sin_addr = addrs[i];
-			if (sendto(sock, outbuf, outlen, 0,
-				(struct sockaddr *)(void *)&baddr,
-				sizeof (struct sockaddr)) != outlen) {
-				warn("Cannot send broadcast packet");
-				stat = RPC_CANTSEND;
-				goto done_broad;
-			}
-		}
-		if (eachresult == NULL) {
-			stat = RPC_SUCCESS;
-			goto done_broad;
-		}
-	recv_again:
-		milliseconds = (int)(t.tv_sec * 1000 + t.tv_usec / 1000);
-		msg.acpted_rply.ar_verf = _null_auth;
-		msg.acpted_rply.ar_results.where = (caddr_t)(void *)&r;
-                msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_rmtcallres;
-		switch (poll(&fd, 1, milliseconds)) {
-
-		case 0:  /* timed out */
-			stat = RPC_TIMEDOUT;
-			continue;
-
-		case -1:  /* some kind of error */
-			if (errno == EINTR)
-				goto recv_again;
-			warn("Broadcast poll problem");
-			stat = RPC_CANTRECV;
-			goto done_broad;
-
-		}  /* end of poll results switch */
-	try_again:
-		fromlen = sizeof(struct sockaddr);
-		inlen = recvfrom(sock, inbuf, UDPMSGSIZE, 0,
-			(struct sockaddr *)(void *)&raddr, &fromlen);
-		if (inlen < 0) {
-			if (errno == EINTR)
-				goto try_again;
-			warn("Cannot receive reply to broadcast");
-			stat = RPC_CANTRECV;
-			goto done_broad;
-		}
-		if (inlen < sizeof(u_int32_t))
-			goto recv_again;
-		/*
-		 * see if reply transaction id matches sent id.
-		 * If so, decode the results.
-		 */
-		xdrmem_create(xdrs, inbuf, (u_int)inlen, XDR_DECODE);
-		if (xdr_replymsg(xdrs, &msg)) {
-			if ((msg.rm_xid == xid) &&
-				(msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
-				(msg.acpted_rply.ar_stat == SUCCESS)) {
-				raddr.sin_port = htons((u_short)port);
-				done = (*eachresult)(resultsp, &raddr);
-			}
-			/* otherwise, we just ignore the errors ... */
-		} else {
-#ifdef notdef
-			/* some kind of deserialization problem ... */
-			if (msg.rm_xid == xid)
-				fprintf(stderr,
-				    "Broadcast deserialization problem");
-			/* otherwise, just random garbage */
-#endif
-		}
-		xdrs->x_op = XDR_FREE;
-		msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
-		(void)xdr_replymsg(xdrs, &msg);
-		(void)(*xresults)(xdrs, resultsp);
-		xdr_destroy(xdrs);
-		if (done) {
-			stat = RPC_SUCCESS;
-			goto done_broad;
-		} else {
-			goto recv_again;
-		}
-	}
-	stat = RPC_TIMEDOUT;
-done_broad:
-	if (sock != -1)
-		(void)close(sock);
-	AUTH_DESTROY(unix_auth);
-	return (stat);
 }

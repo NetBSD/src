@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint___vfork14.c,v 1.1 1998/01/04 20:52:09 thorpej Exp $	*/
+/* $NetBSD: Lint___vfork14.c,v 1.1.8.1 2000/06/23 16:18:07 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

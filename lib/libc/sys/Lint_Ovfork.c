@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_Ovfork.c,v 1.2 1999/05/04 13:53:11 christos Exp $	*/
+/* $NetBSD: Lint_Ovfork.c,v 1.2.6.1 2000/06/23 16:18:07 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

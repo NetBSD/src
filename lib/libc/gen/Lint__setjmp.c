@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint__setjmp.c,v 1.1 1997/11/06 00:50:36 cgd Exp $	*/
+/* $NetBSD: Lint__setjmp.c,v 1.1.10.1 2000/06/23 16:17:21 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1997/12/05 02:06:27 thorpej Exp $	*/
+/* $NetBSD: setjmp.S,v 1.3.8.1 2000/06/23 16:17:02 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

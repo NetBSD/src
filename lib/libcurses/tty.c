@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.21 2000/05/22 05:54:37 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.21.2.1 2000/06/23 16:16:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.21 2000/05/22 05:54:37 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.21.2.1 2000/06/23 16:16:28 minoura Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,12 +66,12 @@ int	__tcaction = 1;			/* Ignore hardware settings. */
 int	__tcaction = 0;
 #endif
 
-struct termios __orig_termios, __baset;
-int	__endwin;
-static struct termios cbreakt, rawt, *curt;
-static int useraw;
-static int ovmin = 1;
-static int ovtime = 0;
+struct termios	__orig_termios, __baset;
+int		__endwin;
+static struct	termios cbreakt, rawt, *curt;
+static int	useraw;
+static int	ovmin = 1;
+static int	ovtime = 0;
 
 #ifndef	OXTABS
 #ifdef	XTABS			/* SMI uses XTABS. */
@@ -140,10 +140,8 @@ int
 raw(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	useraw = __pfast = __rawmode = 1;
 	curt = &rawt;
@@ -155,10 +153,8 @@ int
 noraw(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	useraw = __pfast = __rawmode = 0;
 	curt = &__baset;
@@ -170,10 +166,8 @@ int
 cbreak(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	__rawmode = 1;
 	curt = useraw ? &rawt : &cbreakt;
@@ -185,10 +179,8 @@ int
 nocbreak(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	__rawmode = 0;
 	curt = useraw ? &rawt : &__baset;
@@ -200,10 +192,8 @@ int
 __delay(void)
  {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_cc[VMIN] = 1;
 	rawt.c_cc[VTIME] = 0;
@@ -220,10 +210,8 @@ int
 __nodelay(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_cc[VMIN] = 0;
 	rawt.c_cc[VTIME] = 0;
@@ -240,10 +228,8 @@ void
 __save_termios(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	ovmin = cbreakt.c_cc[VMIN];
 	ovtime = cbreakt.c_cc[VTIME];
@@ -253,10 +239,8 @@ void
 __restore_termios(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_cc[VMIN] = ovmin;
 	rawt.c_cc[VTIME] = ovtime;
@@ -270,10 +254,8 @@ int
 __timeout(int delay)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	ovmin = cbreakt.c_cc[VMIN];
 	ovtime = cbreakt.c_cc[VTIME];
@@ -292,10 +274,8 @@ int
 __notimeout(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_cc[VMIN] = 1;
 	rawt.c_cc[VTIME] = 0;
@@ -312,10 +292,8 @@ int
 echo(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	__echoit = 1;
 	return (OK);
@@ -325,10 +303,8 @@ int
 noecho(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	__echoit = 0;
 	return (OK);
@@ -338,10 +314,8 @@ int
 nl(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_iflag |= ICRNL;
 	rawt.c_oflag |= ONLCR;
@@ -359,10 +333,8 @@ int
 nonl(void)
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	rawt.c_iflag &= ~ICRNL;
 	rawt.c_oflag &= ~ONLCR;
@@ -380,10 +352,8 @@ int
 intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/
 {
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	if (bf) {
 		rawt.c_lflag &= ~NOFLSH;
@@ -427,12 +397,12 @@ __startwin(void)
 	tputs(VS, 0, __cputchar);
 	if (curscr->flags & __KEYPAD)
 		tputs(KS, 0, __cputchar);
+	__endwin = 0;
 }
 
 int
 endwin(void)
 {
-	__endwin = 1;
 	return __stopwin();
 }
 
