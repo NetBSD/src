@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.19 2002/03/10 16:18:44 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.19 2002/03/10 16:18:44 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,7 +674,7 @@ stp4020_iointr(arg)
 			/* Call card handler, if any */
 			if (h->intrhandler != NULL) {
 				s = dummy_splraise(h->ipl);
-				r |= (*h->intrhandler)(h->intrarg);
+				(*h->intrhandler)(h->intrarg);
 				splx(s);
 			}
 		}
@@ -754,6 +754,9 @@ stp4020_chip_mem_alloc(pch, size, pcmhp)
 	/* we can not do much here, defere work to _mem_map */
 	pcmhp->memt = h->tag;
 	pcmhp->size = size;
+	pcmhp->addr = 0;
+	pcmhp->mhandle = 0;
+	pcmhp->realsize = size;
 
 	return (0);
 }
@@ -780,6 +783,8 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 	pcmhp->memt = h->tag;
 	bus_space_subregion(h->tag, h->windows[win].winaddr, card_addr, size, &pcmhp->memh);
+	pcmhp->size = size;
+	pcmhp->realsize = STP4020_WINDOW_SIZE - card_addr;
 	*offsetp = 0;
 	*windowp = 0;
 
@@ -927,8 +932,6 @@ stp4020_chip_socket_disable(pch)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int v;
-
-	DPRINTF(("stp4020_chip_socket_disable\n"));
 
 	/*
 	 * Disable socket I/O interrupts.
