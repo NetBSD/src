@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2000/05/27 00:40:40 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2000/06/06 18:52:45 soren Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -48,6 +48,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
