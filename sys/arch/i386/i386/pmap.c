@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.16 1994/05/23 02:26:37 cgd Exp $
+ *	$Id: pmap.c,v 1.17 1994/05/23 03:02:41 cgd Exp $
  */
 
 /*
@@ -445,7 +445,8 @@ pmap_pinit(pmap)
 
 	/* install self-referential address mapping entry */
 	*(int *)(pmap->pm_pdir + PTDPTDI) =
-		(int)pmap_extract(kernel_pmap, pmap->pm_pdir) | PG_V | PG_KW;
+		(int)pmap_extract(kernel_pmap, (int)pmap->pm_pdir) \
+		    | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
