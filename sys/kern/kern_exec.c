@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.153 2002/08/25 21:18:15 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.154 2002/08/26 21:07:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.153 2002/08/25 21:18:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.154 2002/08/26 21:07:39 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -549,7 +549,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo, &stack, argp);
+	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo, &stack, argp);
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -763,7 +763,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 
 int
-copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+copyargs(struct proc *p, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;
