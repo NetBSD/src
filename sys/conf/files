@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.365 2000/04/25 06:08:31 itojun Exp $
+#	$NetBSD: files,v 1.366 2000/05/02 06:30:49 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -405,8 +405,8 @@ define	ad1848
 file	dev/ic/ad1848.c			ad1848
 
 # AMD 7930 audio/ISDN codec
-device audioamd: audio
-file	dev/ic/am7930.c			audioamd
+define	am7930
+file	dev/ic/am7930.c			am7930
 
 # SPARC `SUNW,audiocs'
 device	audiocs: audio, auconv, ad1848

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.42 2000/03/30 12:45:29 augustss Exp $	*/
+/*	$NetBSD: am7930.c,v 1.43 2000/05/02 06:30:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -32,7 +32,7 @@
 
 /*
  * Front-end attachment independent layer for AMD 79c30
- * audio driver. XXX isdn support??
+ * audio driver.  No ISDN support.
  */
 
 #include "audio.h"
@@ -53,31 +53,15 @@
 #include <dev/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
-#include <machine/am7930_machdep.h>
 #include <dev/ic/am7930var.h>
 
-#define AUDIO_ROM_NAME "audio"
-
 #ifdef AUDIO_DEBUG
-
 int     am7930debug = 0;
 #define DPRINTF(x)      if (am7930debug) printf x
 #else
 #define DPRINTF(x)
 #endif
 
-/* forward declarations */
-static void init_amd __P((bus_space_tag_t bt, bus_space_handle_t bh));
-
-/*
- * Audio device descriptor (attachment independent)
- */
-
-struct audio_device am7930_device = {
-	"amd7930",
-	"x",
-	"audioamd"
-};
 
 /* The following tables stolen from former (4.4Lite's) sys/sparc/bsd_audio.c */
 
@@ -155,46 +139,58 @@ static const u_short ger_coeff[] = {
  * Reset chip and set boot-time softc defaults.
  */
 void
-am7930_init(sc)
+am7930_init(sc, flag)
 	struct am7930_softc *sc;
+	int flag;
 {
-	/* Save bustag and handle in pdma struct. XXX is this MI? */
-	sc->sc_au.au_bt =  sc->sc_bustag;
-	sc->sc_au.au_bh =  sc->sc_bh;
 
-	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
-			     AMD_MMR1_GR | AMD_MMR1_STG;
+	DPRINTF(("am7930_init()\n"));
 
 	/* set boot defaults */
 	sc->sc_rlevel = 128;
 	sc->sc_plevel = 128;
 	sc->sc_mlevel = 0;
-	sc->sc_out_port = SUNAUDIO_SPEAKER;
-	init_amd(sc->sc_bustag, sc->sc_bh);
+	sc->sc_out_port = AUDIOAMD_SPEAKER_VOL;
+	sc->sc_mic_mute = 0;
+
+	/* disable sample interrupts */
+	AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR4, 0);
+
+	/* initialise voice and data, and disable interrupts */
+	AM7930_IWRITE(sc, AM7930_IREG_INIT,
+		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
+
+	if (flag == AUDIOAMD_DMA_MODE) {
+
+		/* configure PP for serial (SBP) mode */
+		AM7930_IWRITE(sc, AM7930_IREG_PP_PPCR1, AM7930_PPCR1_SBP);
+
+		/*
+		 * Initialise the MUX unit - route the MAP to the PP
+		 */
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR1,
+			(AM7930_MCRCHAN_BA << 4) | AM7930_MCRCHAN_BD);
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR2, AM7930_MCRCHAN_NC);
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR3, AM7930_MCRCHAN_NC);
+
+	} else {
+
+		/*
+		 * Initialize the MUX unit.  We use MCR3 to route the MAP
+		 * through channel Bb.  MCR1 and MCR2 are unused.
+		 * Setting the INT enable bit in MCR4 will generate an
+		 * interrupt on each converted audio sample.
+		 */
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR1, 0);
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR2, 0);
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR3,
+			(AM7930_MCRCHAN_BB << 4) | AM7930_MCRCHAN_BA);
+		AM7930_IWRITE(sc, AM7930_IREG_MUX_MCR4,
+			AM7930_MCR4_INT_ENABLE);
+	}
+
 }
 
-static void
-init_amd(bt, bh)
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
-{
-	/* disable interrupts */
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
-	AM7930_WRITE_REG(bt, bh, dr, 
-	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
-
-	/*
-	 * Initialize the mux unit.  We use MCR3 to route audio (MAP)
-	 * through channel Bb.  MCR1 and MCR2 are unused.
-	 * Setting the INT enable bit in MCR4 will generate an interrupt
-	 * on each converted audio sample.
-	 */
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MUX_1_4);
- 	AM7930_WRITE_REG(bt, bh, dr, 0);
-	AM7930_WRITE_REG(bt, bh, dr, 0);
-	AM7930_WRITE_REG(bt, bh, dr, (AMD_MCRCHAN_BB << 4) | AMD_MCRCHAN_BA);
-	AM7930_WRITE_REG(bt, bh, dr, AMD_MCR4_INT_ENABLE);
-}
 
 int
 am7930_open(addr, flags)
@@ -210,8 +206,7 @@ am7930_open(addr, flags)
 	sc->sc_open = 1;
 	sc->sc_locked = 0;
 
-	/* tell attach layer about open */
-	sc->sc_onopen(sc);
+	sc->sc_glue->onopen(sc);
 
 	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
 
@@ -225,27 +220,49 @@ am7930_close(addr)
 	struct am7930_softc *sc = addr;
 
 	DPRINTF(("sa_close: sc=%p\n", sc));
-	/*
-	 * halt i/o, clear open flag, and done.
-	 */
-	sc->sc_onclose(sc);
+
+	sc->sc_glue->onclose(sc);
 	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
 }
 
+
+/*
+ * XXX should be extended to handle a few of the more common formats.
+ */
 int
 am7930_set_params(addr, setmode, usemode, p, r)
 	void *addr;
 	int setmode, usemode;
 	struct audio_params *p, *r;
 {
-	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-	    p->encoding != AUDIO_ENCODING_ULAW ||
-	    p->precision != 8 ||
-	    p->channels != 1)
-		return EINVAL;
-	p->sample_rate = 8000;	/* no other sampling rates supported by amd chip */
+	struct am7930_softc *sc = addr;
+
+	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
+		if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
+			p->encoding != AUDIO_ENCODING_ULAW ||
+			p->precision != 8 ||
+			p->channels != 1)
+				return EINVAL;
+		p->sample_rate = 8000;
+		if (sc->sc_glue->factor > 1) {
+			p->factor = sc->sc_glue->factor;
+			p->sw_code = sc->sc_glue->output_conv;
+		}
+	}
+	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
+		if (r->sample_rate < 7500 || r->sample_rate > 8500 ||
+			r->encoding != AUDIO_ENCODING_ULAW ||
+			r->precision != 8 ||
+			r->channels != 1)
+				return EINVAL;
+		r->sample_rate = 8000;
+		if (sc->sc_glue->factor > 1) {
+			r->factor = sc->sc_glue->factor;
+			r->sw_code = sc->sc_glue->input_conv;
+		}
+	}
 
 	return 0;
 }
@@ -278,101 +295,88 @@ am7930_round_blocksize(addr, blk)
 	return(blk);
 }
 
+
 int
 am7930_commit_settings(addr)
 	void *addr;
 {
 	struct am7930_softc *sc = addr;
-	struct mapreg *map;
-	bus_space_tag_t bt = sc->sc_bustag;
-	bus_space_handle_t bh = sc->sc_bh;
+	u_int16_t ger, gr, gx, stgr;
+	u_int8_t mmr2, mmr3;
 	int s, level;
 
 	DPRINTF(("sa_commit.\n"));
 
-	map = &sc->sc_map;
-
-	map->mr_gx = gx_coeff[sc->sc_rlevel];
-	map->mr_stgr = gx_coeff[sc->sc_mlevel];
+	gx = gx_coeff[sc->sc_rlevel];
+	stgr = gx_coeff[sc->sc_mlevel];
 
 	level = (sc->sc_plevel * (256 + NGER)) >> 8;
 	if (level >= 256) {
-		map->mr_ger = ger_coeff[level - 256];
-		map->mr_gr = gx_coeff[255];
+		ger = ger_coeff[level - 256];
+		gr = gx_coeff[255];
 	} else {
-		map->mr_ger = ger_coeff[0];
-		map->mr_gr = gx_coeff[level];
+		ger = ger_coeff[0];
+		gr = gx_coeff[level];
 	}
-
-	if (sc->sc_out_port == SUNAUDIO_SPEAKER)
-		map->mr_mmr2 |= AMD_MMR2_LS;
-	else
-		map->mr_mmr2 &= ~AMD_MMR2_LS;
 
 	s = splaudio();
 
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_MMR1);
-	AM7930_WRITE_REG(bt, bh, dr, map->mr_mmr1);
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GX);
-	WAMD16(bt, bh, map->mr_gx);
+	mmr2 = AM7930_IREAD(sc, AM7930_IREG_MAP_MMR2);
+	if (sc->sc_out_port == AUDIOAMD_SPEAKER_VOL)
+		mmr2 |= AM7930_MMR2_LS;
+	else
+		mmr2 &= ~AM7930_MMR2_LS;
+	AM7930_IWRITE(sc, AM7930_IREG_MAP_MMR2, mmr2);
 
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_STG);
-	WAMD16(bt, bh, map->mr_stgr);
+	mmr3 = AM7930_IREAD(sc, AM7930_IREG_MAP_MMR3);
+	if (sc->sc_mic_mute)
+		mmr3 |= AM7930_MMR3_MUTE;
+	else
+		mmr3 &= ~AM7930_MMR3_MUTE;
+	AM7930_IWRITE(sc, AM7930_IREG_MAP_MMR3, mmr3);
 
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GR);
-	WAMD16(bt, bh, map->mr_gr);
+	AM7930_IWRITE(sc, AM7930_IREG_MAP_MMR1,
+		AM7930_MMR1_GX | AM7930_MMR1_GER |
+		AM7930_MMR1_GR | AM7930_MMR1_STG);
 
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GER);
-	WAMD16(bt, bh, map->mr_ger);
-
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_MMR2);
-	AM7930_WRITE_REG(bt, bh, dr, map->mr_mmr2);
+	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GX, gx);
+	AM7930_IWRITE16(sc, AM7930_IREG_MAP_STG, stgr);
+	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GR, gr);
+	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GER, ger);
 
 	splx(s);
+
 	return(0);
 }
+
 
 int
 am7930_halt_output(addr)
 	void *addr;
 {
 	struct am7930_softc *sc = addr;
-	bus_space_tag_t bt = sc->sc_bustag;
-	bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if input is also halted ?? */
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
-	AM7930_WRITE_REG(bt, bh, dr, 
-	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
+	AM7930_IWRITE(sc, AM7930_IREG_INIT,
+		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
 	sc->sc_locked = 0;
 
 	return(0);
 }
+
 
 int
 am7930_halt_input(addr)
 	void *addr;
 {
 	struct am7930_softc *sc = addr;
-	bus_space_tag_t bt = sc->sc_bustag;
-	bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if output is also halted ?? */
-	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
-	AM7930_WRITE_REG(bt, bh, dr,
-	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
+	AM7930_IWRITE(sc, AM7930_IREG_INIT,
+		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
 	sc->sc_locked = 0;
 
 	return(0);
-}
-
-int
-am7930_getdev(addr, retp)
-        void *addr;
-        struct audio_device *retp;
-{
-        *retp = am7930_device;
-        return 0;
 }
 
 
@@ -386,4 +390,216 @@ am7930_get_props(addr)
 {
 	return AUDIO_PROP_FULLDUPLEX;
 }
+
+/*
+ * Attach-dependent channel set/query
+ */
+int
+am7930_set_port(addr, cp)
+	void *addr;
+	mixer_ctrl_t *cp;
+{
+	struct am7930_softc *sc = addr;
+
+	DPRINTF(("am7930_set_port: port=%d", cp->dev));
+
+	if (cp->dev == AUDIOAMD_RECORD_SOURCE ||
+		cp->dev == AUDIOAMD_MONITOR_OUTPUT ||
+		cp->dev == AUDIOAMD_MIC_MUTE) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return(EINVAL);
+	} else if (cp->type != AUDIO_MIXER_VALUE ||
+					cp->un.value.num_channels != 1) {
+		return(EINVAL);
+	}
+
+	switch(cp->dev) {
+	    case AUDIOAMD_MIC_VOL:
+		    sc->sc_rlevel = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		    break;
+	    case AUDIOAMD_SPEAKER_VOL:
+	    case AUDIOAMD_HEADPHONES_VOL:
+		    sc->sc_plevel = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		    break;
+	    case AUDIOAMD_MONITOR_VOL:
+		    sc->sc_mlevel = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		    break;
+	    case AUDIOAMD_RECORD_SOURCE:
+		    if (cp->un.ord != AUDIOAMD_MIC_VOL)
+			    return EINVAL;
+		    break;
+	    case AUDIOAMD_MIC_MUTE:
+		    sc->sc_mic_mute = cp->un.ord;
+		    break;
+	    case AUDIOAMD_MONITOR_OUTPUT:
+		    if (cp->un.ord != AUDIOAMD_SPEAKER_VOL &&
+			cp->un.ord != AUDIOAMD_HEADPHONES_VOL)
+			    return EINVAL;
+			sc->sc_out_port = cp->un.ord;
+		    break;
+	    default:
+		    return(EINVAL);
+		    /* NOTREACHED */
+	}
+	return 0;
+}
+
+int
+am7930_get_port(addr, cp)
+	void *addr;
+	mixer_ctrl_t *cp;
+{
+	struct am7930_softc *sc = addr;
+
+	DPRINTF(("am7930_get_port: port=%d\n", cp->dev));
+
+	if (cp->dev == AUDIOAMD_RECORD_SOURCE ||
+		cp->dev == AUDIOAMD_MONITOR_OUTPUT ||
+		cp->dev == AUDIOAMD_MIC_MUTE) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return(EINVAL);
+	} else if (cp->type != AUDIO_MIXER_VALUE ||
+		cp->un.value.num_channels != 1) {
+		return(EINVAL);
+	}
+
+	switch(cp->dev) {
+	    case AUDIOAMD_MIC_VOL:
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_rlevel;
+		    break;
+	    case AUDIOAMD_SPEAKER_VOL:
+	    case AUDIOAMD_HEADPHONES_VOL:
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_plevel;
+		    break;
+	    case AUDIOAMD_MONITOR_VOL:
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_mlevel;
+		    break;
+	    case AUDIOAMD_RECORD_SOURCE:
+		    cp->un.ord = AUDIOAMD_MIC_VOL;
+		    break;
+	    case AUDIOAMD_MIC_MUTE:
+		    cp->un.ord = sc->sc_mic_mute;
+		    break;
+	    case AUDIOAMD_MONITOR_OUTPUT:
+		    cp->un.ord = sc->sc_out_port;
+		    break;
+	    default:
+		    return(EINVAL);
+		    /* NOTREACHED */
+	}
+	return 0;
+}
+
+
+/*
+ * Define mixer control facilities.
+ */
+int
+am7930_query_devinfo(addr, dip)
+	void *addr;
+	mixer_devinfo_t *dip;
+{
+
+	DPRINTF(("am7930_query_devinfo()\n"));
+
+	switch(dip->index) {
+	    case AUDIOAMD_MIC_VOL:
+		    dip->type = AUDIO_MIXER_VALUE;
+		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		    dip->prev =  AUDIO_MIXER_LAST;
+		    dip->next = AUDIOAMD_MIC_MUTE;
+		    strcpy(dip->label.name, AudioNmicrophone);
+		    dip->un.v.num_channels = 1;
+		    strcpy(dip->un.v.units.name, AudioNvolume);
+		    break;
+	    case AUDIOAMD_SPEAKER_VOL:
+		    dip->type = AUDIO_MIXER_VALUE;
+		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		    dip->prev = dip->next = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNspeaker);
+		    dip->un.v.num_channels = 1;
+		    strcpy(dip->un.v.units.name, AudioNvolume);
+		    break;
+	    case AUDIOAMD_HEADPHONES_VOL:
+		    dip->type = AUDIO_MIXER_VALUE;
+		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		    dip->prev = dip->next = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNheadphone);
+		    dip->un.v.num_channels = 1;
+		    strcpy(dip->un.v.units.name, AudioNvolume);
+		    break;
+	    case AUDIOAMD_MONITOR_VOL:
+		    dip->type = AUDIO_MIXER_VALUE;
+		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		    dip->prev = dip->next = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNmonitor);
+		    dip->un.v.num_channels = 1;
+		    strcpy(dip->un.v.units.name, AudioNvolume);
+		    break;
+	    case AUDIOAMD_RECORD_SOURCE:
+		    dip->type = AUDIO_MIXER_ENUM;
+		    dip->mixer_class = AUDIOAMD_RECORD_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNsource);
+		    dip->un.e.num_mem = 1;
+		    strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		    dip->un.e.member[0].ord = AUDIOAMD_MIC_VOL;
+		    break;
+	    case AUDIOAMD_MONITOR_OUTPUT:
+		    dip->type = AUDIO_MIXER_ENUM;
+		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNoutput);
+		    dip->un.e.num_mem = 2;
+		    strcpy(dip->un.e.member[0].label.name, AudioNspeaker);
+		    dip->un.e.member[0].ord = AUDIOAMD_SPEAKER_VOL;
+		    strcpy(dip->un.e.member[1].label.name, AudioNheadphone);
+		    dip->un.e.member[1].ord = AUDIOAMD_HEADPHONES_VOL;
+		    break;
+	    case AUDIOAMD_MIC_MUTE:
+		    dip->type = AUDIO_MIXER_ENUM;
+		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		    dip->prev =  AUDIOAMD_MIC_VOL;
+		    dip->next = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNmute);
+		    dip->un.e.num_mem = 2;
+		    strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		    dip->un.e.member[0].ord = 0;
+		    strcpy(dip->un.e.member[1].label.name, AudioNon);
+		    dip->un.e.member[1].ord = 1;
+		    break;
+	    case AUDIOAMD_INPUT_CLASS:
+		    dip->type = AUDIO_MIXER_CLASS;
+		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioCinputs);
+		    break;
+	    case AUDIOAMD_OUTPUT_CLASS:
+		    dip->type = AUDIO_MIXER_CLASS;
+		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioCoutputs);
+		    break;
+	    case AUDIOAMD_RECORD_CLASS:
+		    dip->type = AUDIO_MIXER_CLASS;
+		    dip->mixer_class = AUDIOAMD_RECORD_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioCrecord);
+		    break;
+	    case AUDIOAMD_MONITOR_CLASS:
+		    dip->type = AUDIO_MIXER_CLASS;
+		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		    dip->next = dip->prev = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioCmonitor);
+		    break;
+	    default:
+		    return ENXIO;
+		    /*NOTREACHED*/
+	}
+
+	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
+
+	return(0);
+}
+
 #endif	/* NAUDIO */
