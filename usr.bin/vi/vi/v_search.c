@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: v_search.c,v 1.10 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_search.c	10.18 (Berkeley) 9/19/96";
 #else
-__RCSID("$NetBSD: v_search.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: v_search.c,v 1.10 2004/11/05 19:50:13 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ v_exaddr(sp, vp, dir)
 
 		/* No blanks, just like the z command. */
 		for (t = cmd + 1, tlen = len - 1; tlen > 0; ++t, --tlen)
-			if (!isdigit(*t))
+			if (!isdigit((unsigned char)*t))
 				break;
 		if (tlen &&
 		    (*t == '-' || *t == '.' || *t == '+' || *t == '^')) {
