@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.621 2003/07/25 21:12:39 jonathan Exp $
+#	$NetBSD: files,v 1.622 2003/07/26 10:26:59 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1266,5 +1266,5 @@ file	dev/ic/joy.c			joy needs-flag
 
 file	dev/ieee1394/fwiso.c		fwiso			needs-count
 #
-include	"opencrypto/files.opencrypto"
+# include	"opencrypto/files.opencrypto"
 include	"netipsec/files.ipsec"
