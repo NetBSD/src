@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.63 2002/12/05 12:22:37 agc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.64 2002/12/06 02:17:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.63 2002/12/05 12:22:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.64 2002/12/06 02:17:30 jmc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2990,6 +2990,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 		return -1;
 	}
 	sc->sc_nodeid = val & 0xffff;
+	sc->sc_sc1394.sc1394_node_id = sc->sc_nodeid & OHCI_NodeId_NodeNumber;
 	
 	DPRINTF(("%s: nodeid=0x%04x(%d), rootid=%d, irmid=%d\n",
 	    sc->sc_sc1394.sc1394_dev.dv_xname, sc->sc_nodeid,
