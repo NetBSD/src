@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.40 2001/10/24 18:49:39 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.41 2001/10/24 19:12:18 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -12,10 +12,14 @@
 #	/sys/arch/sparc64/conf/Makefile.sparc64
 # after which config should be rerun for all machines of that type.
 
-# Always use sparc64 as the MACHINE_ARCH, so we select the correct
-# toolchain (i.e. need v9 instruction support in the assembler, etc.)
-# 32-bit vs. 64-bit will be selected based on compiler/assember options.
+# Default to 32-bit.  Set the MACHINE_ARCH accordingly, using either
+# the 32-bit or 64-bit toolchain.
+LP64?=	no
+.if ${LP64} == "yes"
 MACHINE_ARCH=sparc64
+.else
+MACHINE_ARCH=sparc
+.endif
 
 .include <bsd.own.mk>
 
@@ -51,19 +55,8 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
-
-# Select the compiler, assembler, and linker flags based on the
-# LP64 variable.
-LP64?=	no
 .if ${LP64} == "yes"
-CC:=		${CC} -m64
-AS:=		${AS} -64
-LD:=		${LD} -m elf64_sparc
 CPPFLAGS+=	-D_LP64
-.else
-CC:=		${CC} -m32
-AS:=		${AS} -32
-LD:=		${LD} -m elf32_sparc
 .endif
 
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
