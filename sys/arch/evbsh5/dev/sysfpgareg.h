@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgareg.h,v 1.2 2002/10/05 10:59:10 scw Exp $	*/
+/*	$NetBSD: sysfpgareg.h,v 1.3 2002/11/23 09:05:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #define	SYSFPGA_OFFSET_SUPERIO	0x0000
 #define	SYSFPGA_OFFSET_LAN	0x1000
 #define	SYSFPGA_OFFSET_REGS	0x2000
+#define	SYSFPGA_OFFSET_ALPHALED	0x2100
 
 /*
  * The System FPGA's registers
@@ -59,7 +60,7 @@
 #define	SYSFPGA_REG_IOWAIT	0x44	/* Super IO wait register */
 #define	SYSFPGA_REG_DATE	0x60	/* FPGA data code register */
 #define	SYSFPGA_REG_SOFT_RESET	0x80	/* Software reset register */
-#define	SYSFPGA_REG_SZ		0x200
+#define	SYSFPGA_REG_SZ		0x100
 
 /*
  * Bit definitions for the System FPGA's register
