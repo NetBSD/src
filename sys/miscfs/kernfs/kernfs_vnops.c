@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vnops.c,v 4.1 1994/01/02 14:41:30 jsp Exp
  *
- *	$Id: kernfs_vnops.c,v 1.20 1994/02/14 19:46:18 ws Exp $
+ *	$Id: kernfs_vnops.c,v 1.21 1994/05/17 04:10:29 cgd Exp $
  */
 
 /*
@@ -385,7 +385,7 @@ kernfs_getattr(vp, vap, cred, p)
 	vap->va_uid = 0;
 	vap->va_gid = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
-	/* vap->va_qsize = 0; */
+	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
 	microtime(&vap->va_atime);
 	vap->va_mtime = vap->va_atime;
@@ -393,7 +393,6 @@ kernfs_getattr(vp, vap, cred, p)
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
-	/* vap->va_qbytes = 0; */
 	vap->va_bytes = 0;
 
 	if (vp->v_flag & VROOT) {
