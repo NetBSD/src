@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.2 1998/07/05 00:51:10 jonathan Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.3 1998/07/05 02:12:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -34,6 +34,7 @@
  * ethernet on the Centris/Quadra 660av and Quadra 840av.
  */
 #include "opt_inet.h"
+#include "opt_ccitt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
