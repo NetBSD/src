@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.5 1997/03/15 21:06:11 cgd Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.6 1997/03/17 03:19:12 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -28,6 +28,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
