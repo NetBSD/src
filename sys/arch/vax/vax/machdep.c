@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.75 1999/03/26 23:41:38 mycroft Exp $	 */
+/* $NetBSD: machdep.c,v 1.76 1999/04/01 00:17:50 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -306,11 +306,6 @@ cpu_startup()
 	 */
 
 	bufinit();
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 /*
