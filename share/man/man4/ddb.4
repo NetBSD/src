@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" 
-.\"	$NetBSD: ddb.4,v 1.9 1997/03/08 13:54:26 mouse Exp $
+.\"	$NetBSD: ddb.4,v 1.10 1997/03/11 16:58:55 sommerfe Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -251,6 +251,14 @@ If the 'count' is omitted, all frames are printed.
 .sp
 Warning: User space stack trace is valid
 only if the machine dependent code supports it.
+.XX "\fBtrace/t \fI[ <pid> ][,<count>]\fR"
+Stack trace by "thread" (process, on NetBSD) rather than by stack
+frame address.  Note that pid is interpreted using the current radix,
+while ps displays pids in decimal; prefix the pid with "0t" to force
+it to be interpreted as decimal.
+.sp
+Warning: trace by pid is valid only if the machine dependent code
+supports it.
 .XX "\fBsearch[/bhl] \fI<addr> <value> [<mask>] [,<count>]\fR"
 Search memory for a value. This command might fail in interesting
 ways if it doesn't find the searched-for value.  This is because
