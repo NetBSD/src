@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.153 1999/08/27 23:27:39 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.154 1999/08/28 09:22:59 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.148 1999/08/27 23:25:36 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.149 1999/08/28 09:18:08 augustss Exp 
  */
 
 /*
@@ -1666,6 +1666,90 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
+	    0,
+	    "Intel",
+	    "82801AA LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE,
+	    0,
+	    "Intel",
+	    "82801AA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_USB,
+	    0,
+	    "Intel",
+	    "82801AA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB,
+	    0,
+	    "Intel",
+	    "82801AA SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACM,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB,
+	    0,
+	    "Intel",
+	    "82801AA Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC,
+	    0,
+	    "Intel",
+	    "82801AB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_IDE,
+	    0,
+	    "Intel",
+	    "82801AB IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_USB,
+	    0,
+	    "Intel",
+	    "82801AB USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_SMB,
+	    0,
+	    "Intel",
+	    "82801AB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACM,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB,
+	    0,
+	    "Intel",
+	    "82801AB Hub-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
 	    0,
 	    "Intel",
@@ -1718,6 +1802,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82371AB Power Management Controller (PIIX4)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH,
+	    0,
+	    "Intel",
+	    "82810 Memory Controller Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_GC,
+	    0,
+	    "Intel",
+	    "82810 Graphics Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_MCH,
+	    0,
+	    "Intel",
+	    "82810-DC100 Memory Controller Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_GC,
+	    0,
+	    "Intel",
+	    "82810-DC100 Graphics Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
