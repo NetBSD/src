@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_ndbm.c,v 1.1.1.2 1997/07/24 21:20:53 christos Exp $
+ * $Id: info_ndbm.c,v 1.1.1.3 1997/09/26 16:06:40 christos Exp $
  *
  */
 
@@ -51,6 +51,11 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+/* forward declarations */
+int ndbm_init(mnt_map *m, char *map, time_t *tp);
+int ndbm_mtime(mnt_map *m, char *map, time_t *tp);
+int ndbm_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp);
 
 
 static int

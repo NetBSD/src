@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_cdfs.c,v 1.1.1.2 1997/09/22 21:12:08 christos Exp $
+ * $Id: ops_cdfs.c,v 1.1.1.3 1997/09/26 16:07:06 christos Exp $
  *
  */
 
@@ -124,6 +124,7 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   /*
    * Fill in the mount structure
    */
+  memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_CDFS;
@@ -132,10 +133,15 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   flags = compute_mount_flags(&mnt);
 
   cdfs_args.fspec = fs_name;
+
 #ifdef HAVE_FIELD_CDFS_ARGS_T_NORRIP
   /* XXX: need to provide norrip mount opt */
   cdfs_args.norrip = 0;		/* use Rock-Ridge Protocol extensions */
 #endif /* HAVE_FIELD_CDFS_ARGS_T_NORRIP */
+
+#ifdef HAVE_FIELD_CDFS_ARGS_T_SSECTOR
+  cdfs_args.ssector = 0;	/* use 1st session on disk */
+#endif /* HAVE_FIELD_CDFS_ARGS_T_SSECTOR */
 
   /*
    * Call generic mount routine

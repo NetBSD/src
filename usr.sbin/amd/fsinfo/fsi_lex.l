@@ -39,7 +39,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: fsi_lex.l,v 1.1.1.3 1997/09/22 21:13:05 christos Exp $
+ * $Id: fsi_lex.l,v 1.1.1.4 1997/09/26 16:08:05 christos Exp $
  *
  */
 
@@ -92,12 +92,12 @@ static int yylineno;
 #include <fsinfo.h>
 #include <fsi_gram.h>
 
+YYSTYPE yylval;
 static char *fsi_filename;
 static char *optr;
 static char ostr[1024];
-static find_resword();
+static int find_resword(char *);
 static int quoted;
-YYSTYPE yylval;
 
 struct r {
   char *rw;

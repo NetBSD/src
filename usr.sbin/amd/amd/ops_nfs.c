@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_nfs.c,v 1.1.1.2 1997/09/22 21:12:12 christos Exp $
+ * $Id: ops_nfs.c,v 1.1.1.3 1997/09/26 16:07:10 christos Exp $
  *
  */
 
@@ -225,8 +225,10 @@ flush_nfs_fhandle_cache(fserver *fs)
 
 
 static void
-discard_fh(fh_cache *fp)
+discard_fh(voidp v)
 {
+  fh_cache *fp = v;
+
   rem_que(&fp->fh_q);
   if (fp->fh_fs) {
 #ifdef DEBUG
@@ -601,6 +603,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   else
     xopts = strdup(opts);
 
+  memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_opts = xopts;

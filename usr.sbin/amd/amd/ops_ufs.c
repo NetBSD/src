@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_ufs.c,v 1.1.1.2 1997/09/22 21:12:17 christos Exp $
+ * $Id: ops_ufs.c,v 1.1.1.3 1997/09/26 16:07:18 christos Exp $
  *
  */
 
@@ -118,6 +118,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
   /*
    * Fill in the mount structure
    */
+  memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_UFS;

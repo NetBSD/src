@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wr_fstab.c,v 1.1.1.2 1997/07/24 21:23:42 christos Exp $
+ * $Id: wr_fstab.c,v 1.1.1.3 1997/09/26 16:08:02 christos Exp $
  *
  */
 
@@ -67,8 +67,8 @@ static void write_ultrix_dkrmount(FILE *ef, char *hn, fsmount *fp);
 
 static struct os_fstab_type {
   char *os_name;
-  void (*op_fstab) ();
-  void (*op_mount) ();
+  void (*op_fstab) (FILE *ef, disk_fs *dp);
+  void (*op_mount) (FILE *ef, char *hn, fsmount *fp);
 } os_tabs[] = {
 
   {

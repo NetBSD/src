@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fsinfo.h,v 1.1.1.2 1997/07/24 21:23:59 christos Exp $
+ * $Id: fsinfo.h,v 1.1.1.3 1997/09/26 16:08:07 christos Exp $
  *
  */
 
@@ -59,7 +59,7 @@ extern char *mount_pref;
 extern char *mount_strings[];
 extern char *progname;
 extern char *username;
-extern char *xcalloc();
+extern char *xcalloc(int, int);
 extern char hostname[];
 extern char idvbuf[];
 extern dict *dict_of_hosts;
@@ -70,7 +70,7 @@ extern disk_fs *new_disk_fs(void);
 extern ether_if *new_ether_if(void);
 extern fsmount *new_fsmount(void);
 extern host *new_host(void);
-extern int dict_iter(dict *, int (*)());
+extern int dict_iter(dict *, int (*)(qelem *));
 extern int errors;
 extern int file_io_errors;
 extern int parse_errors;

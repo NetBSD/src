@@ -143,14 +143,26 @@ wire-test
 =========
 
    A simple program to test if some of the most basic networking
-functions in am-util's library `libamu' work.  For example
+functions in am-util's library `libamu' work.  It also tests the
+combination of NFS protocol and version number that are supported from
+the current host, to a remote one.
 
-     $ wire-test
-     Network name is "mcl-net.cs.columbia.edu"
-     Network number is "128.59.8.24"
-     Network name is "notknown"
-     Network number is "0.0.0.0"
-     My IP address is 0x100007f.
+   For example, in this test a machine which only supports NFS Version
+2 is contacting a remote host that can support the same version, but
+using both UDP and TCP.  If no host name is specified, `wire-test' will
+try `localhost'.
+
+     $ wire-test moisil
+     Network name is "mcl-lab-net.cs.columbia.edu"
+     Network number is "128.59.13"
+     Network name is "old-net.cs.columbia.edu"
+     Network number is "128.59.16"
+     My IP address is 0x7f000001.
+     NFS Version and protocol tests to host "moisil"...
+             testing vers=2, proto="udp" -> found version 2.
+             testing vers=3, proto="udp" -> failed!
+             testing vers=2, proto="tcp" -> found version 2.
+             testing vers=3, proto="tcp" -> failed!
 
 
 File: am-utils.info,  Node: Examples,  Next: Internals,  Prev: Assorted Tools,  Up: Top

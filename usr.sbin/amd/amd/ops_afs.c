@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_afs.c,v 1.1.1.2 1997/09/22 21:12:06 christos Exp $
+ * $Id: ops_afs.c,v 1.1.1.3 1997/09/26 16:07:04 christos Exp $
  *
  */
 
@@ -304,6 +304,7 @@ mount_toplvl(char *dir, char *opts)
 
   memset((voidp) &nfs_args, 0, sizeof(nfs_args)); /* Paranoid */
 
+  memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
   mnt.mnt_fsname = pid_fsname;
   mnt.mnt_opts = opts;
@@ -375,14 +376,25 @@ mount_toplvl(char *dir, char *opts)
   /*
    * Make a ``hostname'' string for the kernel
    */
-  sprintf(fs_hostname, "pid%ld@%s:%s", foreground ? mypid : getppid(),
-	  hostname, dir);
+  sprintf(fs_hostname, "pid%ld@%s:%s",
+	  (long) (foreground ? mypid : getppid()),
+	  hostname,
+	  dir);
 
   /*
-   * Most kernels have a name length restriction.
+   * Most kernels have a name length restriction (64 bytes)...
    */
   if (strlen(fs_hostname) >= MAXHOSTNAMELEN)
     strcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..");
+#ifdef HOSTNAMESZ
+  /*
+   * ... and some of these restrictions are 32 bytes (HOSTNAMESZ)
+   * If you need to get the definition for HOSTNAMESZ found, you may
+   * add the proper header file to the conf/nfs_prot/nfs_prot_*.h file.
+   */
+  if (strlen(fs_hostname) >= HOSTNAMESZ)
+    strcpy(fs_hostname + HOSTNAMESZ - 3, "..");
+#endif /* HOSTNAMESZ */
 
   /* copy over the host name */
   NFS_HN_DREF(nfs_args.hostname, fs_hostname);

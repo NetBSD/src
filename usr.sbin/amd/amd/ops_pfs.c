@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_pfs.c,v 1.1.1.1 1997/07/24 21:21:46 christos Exp $
+ * $Id: ops_pfs.c,v 1.1.1.2 1997/09/26 16:07:15 christos Exp $
  *
  */
 
@@ -106,7 +106,7 @@ pfs_init(mntfs *mf)
    */
   if (mf->mf_refc == 1) {
     mf->mf_private = (voidp) strdup(mf->mf_fo->opt_unmount);
-    mf->mf_prfree = (void (*)()) free;
+    mf->mf_prfree = (void (*)(voidp)) free;
   }
 
   return 0;

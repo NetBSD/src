@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mntfs.c,v 1.1.1.3 1997/09/22 21:12:01 christos Exp $
+ * $Id: mntfs.c,v 1.1.1.4 1997/09/26 16:06:56 christos Exp $
  *
  */
 
@@ -227,8 +227,10 @@ uninit_mntfs(mntfs *mf, int rmd)
 
 
 static void
-discard_mntfs(mntfs *mf)
+discard_mntfs(voidp v)
 {
+  mntfs *mf = v;
+
   rem_que(&mf->mf_q);
 
   /*
@@ -257,8 +259,10 @@ flush_mntfs(void)
 
 
 void
-free_mntfs(mntfs *mf)
+free_mntfs(voidp v)
 {
+  mntfs *mf = v;
+
   if (--mf->mf_refc == 0) {
     if (mf->mf_flags & MFF_MOUNTED) {
       int quoted;
