@@ -1,9 +1,9 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.7 1993/08/15 21:09:22 mycroft Exp $
+#	$Id: sys.mk,v 1.8 1993/09/08 13:13:46 brezak Exp $
 
 unix=		We run UNIX.
 
-.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .cl .p .h 
+.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .S .cl .p .h 
 .SUFFIXES: .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .LIBS:		.a
@@ -63,6 +63,9 @@ YFLAGS=-d
 
 .s.o:
 	${AS} ${AFLAGS} -o ${.TARGET} ${.IMPSRC}
+
+.S.o:
+	${CC} -E ${CFLAGS} ${AFLAGS} ${.IMPSRC} | as -o ${.TARGET}
 
 .y.o:
 	${YACC} ${YFLAGS} ${.IMPSRC}
