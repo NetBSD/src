@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.13 1999/03/17 20:31:19 garbled Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.13.2.1 1999/04/19 15:02:34 kleink Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"	Stolen from compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl 
 .\"
-.Dd July 6, 1996
+.Dd April 19, 1999
 .Dt COMPAT_SVR4 8
 .Os
 .Sh NAME
@@ -146,6 +146,15 @@ Setup the configuration files and devices:
 .br
 .It (me@netbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
 .El
+.Pp
+As the major number allocated for emulation of SVR4 devices may vary between
+.Nx
+platforms, the SVR4_MAKEDEV script utilizes the
+.Xr uname 1
+command to determine the architecture the devices nodes are being created for;
+this can be overridden by setting the
+.Ev MACHINE
+environment variable accordingly.
 .El
 .Pp
 An alternative method is to mount a whole SVR4 partition in /emul/svr4
