@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.8 2003/09/30 21:04:54 manu Exp $ */
+/*	$NetBSD: darwin_signal.h,v 1.9 2003/11/17 01:52:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ struct darwin___sigaction {
 };
 
 void darwin_sendsig(const ksiginfo_t *, const sigset_t *);
+void darwin_trapsignal(struct lwp *, const struct ksiginfo *);
 
 #endif /* _DARWIN_SIGNAL_H_ */
 
