@@ -1,7 +1,7 @@
-You will need an AmigaDOS hard drive prep tool to prepare you hard
+You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
-of AmigaDOS so we will provide instructions for its use.
+of AmigaDOS, so we will provide instructions for its use.
 
 Preparing you hard disk with HDToolBox:
 
@@ -13,7 +13,7 @@ Preparing you hard disk with HDToolBox:
 	you enter the "Change drive type" menu, and either use "read
 	parameters from drive" or set them manually.
 
-	Note you will be modifying your HD's if you mess something 
+	Note you will be modifying your HD's. If you mess something 
 	up here you could lose everything on all the drives that 
 	you configure.  It is therefore advised that you:
 
@@ -25,11 +25,11 @@ Preparing you hard disk with HDToolBox:
 
 	What you need to do is partition your drives; creating at least
 	root, swap and /usr partitions and possibly at least one more for
-	/local if you have the space.
+	/usr/local if you have the space.
 
 	This should be done as the HDToolBox manual describes.  One thing
 	to note is that if you are not using a Commodore controller you
-	will need to specify the device your SCSI controller uses e.g.
+	will need to specify the device your SCSI controller uses, e.g.
 	if you have a Warp Engine you would:
 
 		from cli,
@@ -53,7 +53,6 @@ Preparing you hard disk with HDToolBox:
 
 		- Click the `Adv. Options' button
 		- Click the `Change file system' button
-
 		- Choose `Custom File System'
 		- Turn off `Automount' if on.
 		- Set the dostype to one of these three choices:
@@ -103,8 +102,8 @@ Transferring the miniroot file system:
 	file system (miniroot.fs) is transferred to the swap
 	partition configured during the hard disk prep (or the existing
 	swap partition in the case of an upgrade).  The xstreamtodev
-	utility provided in the "amiga/utilities" directory can be used
-	on AmigaDOS to transfer the file system for either a new
+	utility provided in the "amiga/installation/misc" directory can
+	be used on AmigaDOS to transfer the file system for either a new
 	installation or an upgrade.  The file system can also be
 	transferred on an existing NetBSD system for an update by
 	using dd.  This should only be done after booting NetBSD
