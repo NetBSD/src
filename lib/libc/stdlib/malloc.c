@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.23 1999/07/05 22:14:38 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.24 1999/07/08 22:18:06 thorpej Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1082,8 +1082,11 @@ malloc(size_t size)
     UTRACE(0, size, r);
     malloc_active--;
     THREAD_UNLOCK();
-    if (malloc_xmalloc && !r)
-	wrterror("out of memory.\n");
+    if (r == NULL) {
+	if (malloc_xmalloc)
+	    wrterror("out of memory.\n");
+	errno = ENOMEM;
+    }
     return (r);
 }
 
@@ -1134,7 +1137,10 @@ realloc(void *ptr, size_t size)
     UTRACE(ptr, size, r);
     malloc_active--;
     THREAD_UNLOCK();
-    if (malloc_xmalloc && !r)
-	wrterror("out of memory.\n");
+    if (r == NULL) {
+	if (malloc_xmalloc)
+	    wrterror("out of memory.\n");
+	errno = ENOMEM;
+    }
     return (r);
 }
