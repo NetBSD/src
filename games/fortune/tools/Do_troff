@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	@(#)Do_troff	5.4 (Berkeley) 4/8/91
+#	@(#)Do_troff	8.1 (Berkeley) 5/31/93
 #
 
 set file=$1
