@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: network,v 1.2 2000/03/11 20:13:42 veego Exp $
 #
 
 # PROVIDE: network
@@ -313,7 +313,7 @@ network_stop()
 		fi
 		for int in $tmp; do
 			eval `echo 'args=$ifconfig_'$int`
-			if [ -n "$args" || -f /etc/ifconfig.$int ]; then
+			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
 				ifconfig $int down
 			fi
