@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.5 1996/02/28 21:03:55 thorpej Exp $	*/
+/*	$NetBSD: defines.h,v 1.6 2002/06/14 00:30:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,8 +43,8 @@
 
 #endif	/* !defined(TN3270) */
 
-#define	NETADD(c)	{ *netoring.supply = c; ring_supplied(&netoring, 1); }
-#define	NET2ADD(c1,c2)	{ NETADD(c1); NETADD(c2); }
+#define	NETADD(c)	{ *netoring.supply = (c); ring_supplied(&netoring, 1); }
+#define	NET2ADD(c1,c2)	{ NETADD((c1)); NETADD((c2)); }
 #define	NETBYTES()	(ring_full_count(&netoring))
 #define	NETROOM()	(ring_empty_count(&netoring))
 
