@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2000/08/03 00:04:30 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2001/01/10 05:23:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -183,15 +183,6 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			ifsin = (struct sockaddr_in *)ifap->ifa_addr;
 			if (!bitmaskcmp(&ifsin->sin_addr, &clntsin->sin_addr,
 			    &sinmask->sin_addr, sizeof (struct in_addr))) {
-				/*
-				 * Found it.
-				 */
-				memcpy(newsin, ifap->ifa_addr,
-				    clnt_sa->sa_len);
-				newsin->sin_port = servsin->sin_port;
-				tbuf.len = clnt_sa->sa_len;
-				tbuf.maxlen = sizeof (struct sockaddr_storage);
-				tbuf.buf = newsin;
 				goto found;
 			}
 			break;
@@ -224,18 +215,12 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 				if (ifsin6->sin6_scope_id !=
 				    realsin6->sin6_scope_id)
 					continue;
-match:
-				memcpy(newsin6, ifsin6, clnt_sa->sa_len);
-				newsin6->sin6_port = servsin6->sin6_port;
-				tbuf.maxlen = sizeof (struct sockaddr_storage);
-				tbuf.len = clnt_sa->sa_len;
-				tbuf.buf = newsin6;
 				goto found;
 			}
 			if (!bitmaskcmp(&ifsin6->sin6_addr,
 			    &clntsin6->sin6_addr, &sin6mask->sin6_addr,
 			    sizeof (struct in6_addr)))
-				goto match;
+				goto found;
 			break;
 #endif
 		default:
@@ -265,6 +250,26 @@ match:
 	}
 	ifap = bestif;
 found:
+	switch (clnt->sa_family) {
+	case AF_INET:
+		memcpy(newsin, ifap->ifa_addr, clnt_sa->sa_len);
+		newsin->sin_port = servsin->sin_port;
+		tbuf.len = clnt_sa->sa_len;
+		tbuf.maxlen = sizeof (struct sockaddr_storage);
+		tbuf.buf = newsin;
+		break;				
+#ifdef INET6
+	case AF_INET6:
+		memcpy(newsin6, ifsin6, clnt_sa->sa_len);
+		newsin6->sin6_port = servsin6->sin6_port;
+		tbuf.maxlen = sizeof (struct sockaddr_storage);
+		tbuf.len = clnt_sa->sa_len;
+		tbuf.buf = newsin6;
+		break;
+#endif
+	default:
+		goto freeit;
+	}
 	if (ifap != NULL)
 		ret = taddr2uaddr(nconf, &tbuf);
 freeit:
