@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.29 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.30 1998/06/26 05:42:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.29 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.30 1998/06/26 05:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.29 1998/06/06 01:33:23 thorpej Exp $");
 #include <alpha/pci/lcavar.h>
 #ifdef DEC_AXPPCI_33
 #include <alpha/pci/pci_axppci_33.h>
+#endif
+#ifdef DEC_ALPHABOOK1
+#include <alpha/pci/pci_alphabook1.h>
 #endif
 
 int	lcamatch __P((struct device *, struct cfdata *, void *));
@@ -171,6 +174,11 @@ lcaattach(parent, self, aux)
 #ifdef DEC_AXPPCI_33
 	case ST_DEC_AXPPCI_33:
 		pci_axppci_33_pickintr(lcp);
+		break;
+#endif
+#ifdef DEC_ALPHABOOK1
+	case ST_ALPHABOOK1:
+		pci_alphabook1_pickintr(lcp);
 		break;
 #endif
 
