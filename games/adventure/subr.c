@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.7 1998/09/13 15:21:37 hubertf Exp $	*/
+/*	$NetBSD: subr.c,v 1.8 1998/09/14 09:29:08 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.7 1998/09/13 15:21:37 hubertf Exp $");
+__RCSID("$NetBSD: subr.c,v 1.8 1998/09/14 09:29:08 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -500,7 +500,7 @@ bug(n)
 	int     n;
 {
 	printf("Please tell jim@rand.org that fatal bug %d happened.\n", n);
-	exit(0);
+	exit(1);
 }
 
 
