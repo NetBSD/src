@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.27 1997/07/06 22:38:23 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.28 1997/07/28 21:48:33 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,7 +109,7 @@ char *traptypes[]={
 	"privileged instruction",
 	"reserved operand",
 	"breakpoint instruction",
-	"Nothing",
+	"XFC instruction",
 	"system call ",
 	"arithmetic trap",
 	"asynchronous system trap",
@@ -322,6 +322,10 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 	case T_RESADFLT|T_USER:
 	case T_RESOPFLT|T_USER:
 		sig=SIGILL;
+		break;
+
+	case T_XFCFLT|T_USER:
+		sig = SIGEMT;
 		break;
 
 	case T_ARITHFLT|T_USER:
