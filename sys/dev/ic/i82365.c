@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.18 1998/12/25 16:50:08 msaitoh Exp $	*/
+/*	$NetBSD: i82365.c,v 1.19 1999/01/01 14:05:18 christos Exp $	*/
 
 #define	PCICDEBUG
 
@@ -709,13 +709,15 @@ pcic_chip_mem_alloc(pch, size, pcmhp)
 
 	/* convert size to PCIC pages */
 	sizepg = (size + (PCIC_MEM_ALIGN - 1)) / PCIC_MEM_ALIGN;
+	if (sizepg > PCIC_MAX_MEM_PAGES)
+		return (1);
 
 	mask = (1 << sizepg) - 1;
 
 	addr = 0;		/* XXX gcc -Wuninitialized */
 	mhandle = 0;		/* XXX gcc -Wuninitialized */
 
-	for (i = 0; i < (PCIC_MEM_PAGES + 1 - sizepg); i++) {
+	for (i = 0; i <= PCIC_MAX_MEM_PAGES - sizepg; i++) {
 		if ((h->sc->subregionmask & (mask << i)) == (mask << i)) {
 			if (bus_space_subregion(h->sc->memt, h->sc->memh,
 			    i * PCIC_MEM_PAGESIZE,
@@ -724,24 +726,17 @@ pcic_chip_mem_alloc(pch, size, pcmhp)
 			mhandle = mask << i;
 			addr = h->sc->membase + (i * PCIC_MEM_PAGESIZE);
 			h->sc->subregionmask &= ~(mhandle);
-			break;
+			pcmhp->memt = h->sc->memt;
+			pcmhp->memh = memh;
+			pcmhp->addr = addr;
+			pcmhp->size = size;
+			pcmhp->mhandle = mhandle;
+			pcmhp->realsize = sizepg * PCIC_MEM_PAGESIZE;
+			return (0);
 		}
 	}
 
-	if (i == (PCIC_MEM_PAGES + 1 - size))
-		return (1);
-
-	DPRINTF(("pcic_chip_mem_alloc bus addr 0x%lx+0x%lx\n", (u_long) addr,
-		 (u_long) size));
-
-	pcmhp->memt = h->sc->memt;
-	pcmhp->memh = memh;
-	pcmhp->addr = addr;
-	pcmhp->size = size;
-	pcmhp->mhandle = mhandle;
-	pcmhp->realsize = sizepg * PCIC_MEM_PAGESIZE;
-
-	return (0);
+	return (1);
 }
 
 void 
