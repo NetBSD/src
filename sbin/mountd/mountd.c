@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	8.8 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: mountd.c,v 1.16 1994/10/15 03:55:33 mycroft Exp $";
+static char *rcsid = "$Id: mountd.c,v 1.17 1994/10/31 04:24:32 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -449,7 +449,7 @@ xdr_fhs(xdrsp, nfh)
 	XDR *xdrsp;
 	nfsv2fh_t *nfh;
 {
-	int ok = 0;
+	long ok = 0;
 
 	if (!xdr_long(xdrsp, &ok))
 		return (0);
