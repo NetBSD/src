@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.117 2000/12/19 22:08:36 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.118 2000/12/22 22:59:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -54,6 +54,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/signalvar.h>
 
 /*
  * One structure allocated per session.
@@ -138,7 +139,7 @@ struct	proc {
 	struct	pstats *p_stats;	/* Accounting/statistics (PROC ONLY). */
 	struct	plimit *p_limit;	/* Process limits. */
 	struct	vmspace *p_vmspace;	/* Address space. */
-	struct	sigacts *p_sigacts;	/* Signal actions, state (PROC ONLY). */
+	struct	sigacts *p_sigacts;	/* Process sigactions (state is below)*/
 
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
@@ -184,9 +185,6 @@ struct	proc {
 	int	p_traceflag;		/* Kernel trace points. */
 	struct 	file *p_tracep;		/* Trace to file */
 
-	sigset_t p_siglist;		/* Signals arrived but not delivered. */
-	char	p_sigcheck;		/* May have deliverable signals. */
-
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
 	int	p_locks;		/* DEBUG: lockmgr count of held locks */
@@ -200,11 +198,9 @@ struct	proc {
 #define	p_endzero	p_startcopy
 
 /* The following fields are all copied upon creation in fork. */
-#define	p_startcopy	p_sigmask
+#define	p_startcopy	p_sigctx.ps_startcopy
 
-	sigset_t p_sigmask;	/* Current signal mask. */
-	sigset_t p_sigignore;	/* Signals being ignored. */
-	sigset_t p_sigcatch;	/* Signals being caught by user. */
+	struct	sigctx p_sigctx;	/* Signal state. */
 
 	u_char	p_priority;	/* Process priority. */
 	u_char	p_usrpri;	/* User-priority based on p_cpu and p_nice. */

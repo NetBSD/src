@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.39 2000/07/27 14:00:56 mrg Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.40 2000/12/22 22:58:59 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ svr4_sys_signal(p, v, retval)
 		return (sigaction1(p, signum, &nbsa, 0));
 
 	case SVR4_SIGPAUSE_MASK:
-		ss = p->p_sigmask;
+		ss = p->p_sigctx.ps_sigmask;
 		sigdelset(&ss, signum);
 		return (sigsuspend1(p, &ss));
 
@@ -590,7 +590,7 @@ svr4_setcontext(p, uc)
 	/* set signal stack */
 	if (uc->uc_flags & SVR4_UC_STACK) {
 		svr4_to_native_sigaltstack(&uc->uc_stack,
-		    &p->p_sigacts->ps_sigstk);
+		    &p->p_sigctx.ps_sigstk);
 	}
 
 	/* set signal mask */
@@ -621,7 +621,7 @@ svr4_sys_context(p, v, retval)
 	switch (SCARG(uap, func)) {
 	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
-		svr4_getcontext(p, &uc, &p->p_sigmask);
+		svr4_getcontext(p, &uc, &p->p_sigctx.ps_sigmask);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT: 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.86 2000/11/07 12:41:52 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.87 2000/12/22 22:59:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -165,9 +165,9 @@ exit1(struct proc *p, int rv)
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
 	}
-	sigfillset(&p->p_sigignore);
-	sigemptyset(&p->p_siglist);
-	p->p_sigcheck = 0;
+	sigfillset(&p->p_sigctx.ps_sigignore);
+	sigemptyset(&p->p_sigctx.ps_siglist);
+	p->p_sigctx.ps_sigcheck = 0;
 	callout_stop(&p->p_realit_ch);
 
 	/*
