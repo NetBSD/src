@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2000/04/09 02:09:49 simonb Exp $
+#	$NetBSD: Makefile,v 1.112 2000/04/10 14:47:22 mrg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -50,6 +50,10 @@ HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 _J= -j${NBUILDJOBS}
 .endif
 
+.if defined(DESTDIR)
+_M=-m ${DESTDIR}/usr/share/mk
+.endif
+
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
 SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
@@ -74,7 +78,7 @@ SUBDIR+= regress
 
 regression-tests:
 	@echo Running regression tests...
-	@(cd ${.CURDIR}/regress && ${MAKE} regress)
+	@(cd ${.CURDIR}/regress && ${MAKE} ${_M} regress)
 .endif
 
 buildmsg:
@@ -82,19 +86,21 @@ buildmsg:
 	@date
 
 beforeinstall:
+.ifndef NODISTRIBDIRS
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
 	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
 .endif
+.endif
 
 afterinstall:
 .if ${MKMAN} != "no" && !defined(_BUILD)
-	${MAKE} whatis.db
+	${MAKE} ${_M} whatis.db
 .endif
 
 whatis.db:
-	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
+	(cd ${.CURDIR}/share/man && ${MAKE} ${_M} makedb)
 
 # wrt info/dir below:  It's safe to move this over top of /usr/share/info/dir,
 # as the build will automatically remove/replace the non-pkg entries there.
@@ -113,8 +119,8 @@ build: buildmsg beforeinstall
 .if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 .endif
-.if !defined(UPDATE)
-	${MAKE} cleandir
+.if !defined(UPDATE) && !defined(NOCLEANDIR)
+	${MAKE} ${_M} cleandir
 .endif
 .if ${MKOBJDIRS} != "no"
 	${MAKE} obj
@@ -127,33 +133,35 @@ build: buildmsg beforeinstall
 	@false
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
-	    ${MAKE} ${_J} dependall MKMAN=no && \
-	    ${MAKE} MKMAN=no install && ${MAKE} cleandir)
+	    ${MAKE} ${_M} ${_J} dependall MKMAN=no && \
+	    ${MAKE} ${_M} MKMAN=no install && ${MAKE} ${_M} cleandir)
 .endif
 .endif
-	${MAKE} includes
+.if !defined(NOINCLUDES)
+	${MAKE} ${_M} includes
+.endif
 	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} ${_J} MKMAN=no dependall && \
-	    ${MAKE} MKMAN=no install)
+	    ${MAKE} ${_M} ${_J} MKMAN=no dependall && \
+	    ${MAKE} ${_M} MKMAN=no install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} ${_J} MKMAN=no MKINFO=no dependall && \
-	    ${MAKE} MKMAN=no MKINFO=no install)
+	    ${MAKE} ${_M} ${_J} MKMAN=no MKINFO=no dependall && \
+	    ${MAKE} ${_M} MKMAN=no MKINFO=no install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} ${_J} MKMAN=no MKINFO=no dependall && \
-	    ${MAKE} MKMAN=no MKINFO=no install)
+	    ${MAKE} ${_M} ${_J} MKMAN=no MKINFO=no dependall && \
+	    ${MAKE} ${_M} MKMAN=no MKINFO=no install)
 .if target(cryptobuild)
-	${MAKE} ${_J} cryptobuild
+	${MAKE} ${_M} ${_J} cryptobuild
 .endif
-	${MAKE} ${_J} dependall && ${MAKE} _BUILD= install
+	${MAKE} ${_M} ${_J} dependall && ${MAKE} ${_M} _BUILD= install
 .if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
-	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_J} _SLAVE_BUILD= build)
+	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_M} ${_J} _SLAVE_BUILD= build)
 .endif
-	${MAKE} whatis.db
+	${MAKE} ${_M} whatis.db
 	@echo -n "Build finished at: "
 	@date
 .endif
 
 release snapshot: build
-	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
+	(cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release)
 
 .include <bsd.subdir.mk>

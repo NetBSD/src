@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.32 2000/03/11 14:51:40 aidan Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.33 2000/04/10 14:47:23 mrg Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -18,6 +18,12 @@ __REALSUBDIR+=${dir}
 .endif
 .endfor
 
+.if defined(DESTDIR) && !defined(_USE_INSTALLED_MK)
+_M=-m ${DESTDIR}/usr/share/mk
+.else
+_M=
+.endif
+
 .for dir in ${__REALSUBDIR}
 .for targ in ${TARGETS}
 .PHONY: ${targ}-${dir}
@@ -25,12 +31,12 @@ ${targ}-${dir}: .MAKE
 	@case "${dir}" in /*) \
 		echo "${targ} ===> ${dir}"; \
 		cd ${dir}; \
-		${MAKE} "_THISDIR_=${dir}/" ${targ}; \
+		${MAKE} ${_M} "_THISDIR_=${dir}/" ${targ}; \
 		;; \
 	*) \
 		echo "${targ} ===> ${_THISDIR_}${dir}"; \
 		cd ${.CURDIR}/${dir}; \
-		${MAKE} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}; \
+		${MAKE} ${_M} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}; \
 		;; \
 	esac
 subdir-${targ}: ${targ}-${dir}
