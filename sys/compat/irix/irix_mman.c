@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.5 2002/10/14 21:14:24 manu Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.6 2002/10/23 20:45:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.5 2002/10/14 21:14:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.6 2002/10/23 20:45:38 manu Exp $");
 
 #include "opt_sysv.h"
 
@@ -226,6 +226,7 @@ out:
 	if (flags & IRIX_MAP_LOCAL) {
 		if ((error = sys_mmap(p, &cup, retval)) != 0)
 			return error;
+		addr = (void *)*retval;
 		irix_isrr_insert((vaddr_t)addr, len, IRIX_ISRR_PRIVATE, p);
 		return 0;
 	}
