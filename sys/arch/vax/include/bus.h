@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1999/06/18 04:49:26 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2000/01/25 22:13:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ struct vax_bus_space {
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 #define	bus_space_map(t, a, s, f, hp)					\
 	(*(t)->vbs_map)((t)->vbs_cookie, (a), (s), (f), (hp), 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 1999/06/07 05:28:04 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2000/01/25 22:13:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,9 +314,10 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #endif
 
 /* flags for bus space map functions */
-#define BUS_SPACE_MAP_CACHEABLE	0x0001
-#define BUS_SPACE_MAP_LINEAR	0x0002
-#define BUS_SPACE_MAP_READONLY	0x0004
+#define BUS_SPACE_MAP_CACHEABLE		0x0001
+#define BUS_SPACE_MAP_LINEAR		0x0002
+#define BUS_SPACE_MAP_READONLY		0x0004
+#define BUS_SPACE_MAP_PREFETCHABLE	0x0008
 #define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
 #define BUS_SPACE_MAP_BUS2	0x0200
 #define BUS_SPACE_MAP_BUS3	0x0400

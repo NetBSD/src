@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1999/06/18 04:49:25 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2000/01/25 22:13:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,8 +105,9 @@ typedef u_int32_t bus_space_handle_t;
  * Map a region of bus space.
  */
 
-#define BUS_SPACE_MAP_CACHEABLE	0x01
-#define BUS_SPACE_MAP_LINEAR	0x02
+#define BUS_SPACE_MAP_CACHEABLE		0x01
+#define BUS_SPACE_MAP_LINEAR		0x02
+#define BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 extern void * mapiodev __P((paddr_t, psize_t));
 
