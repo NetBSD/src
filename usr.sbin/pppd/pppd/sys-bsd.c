@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.40 2002/09/13 14:32:12 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.41 2003/05/28 13:43:26 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.40 2002/09/13 14:32:12 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.41 2003/05/28 13:43:26 christos Exp $");
 #endif
 #endif
 
@@ -1501,7 +1501,9 @@ dodefaultroute(g, cmd)
 	struct rt_msghdr	hdr;
 	struct sockaddr_in	dst;
 	struct sockaddr_in	gway;
-	struct sockaddr_in	mask;
+	struct sockaddr_in	netmask;
+	struct sockaddr_in	genmask;
+	struct sockaddr_dl	ifp;
     } rtmsg;
 
     if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
@@ -1511,20 +1513,36 @@ dodefaultroute(g, cmd)
     }
 
     memset(&rtmsg, 0, sizeof(rtmsg));
+
     rtmsg.hdr.rtm_type = cmd == 's'? RTM_ADD: RTM_DELETE;
     rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
     rtmsg.hdr.rtm_version = RTM_VERSION;
     rtmsg.hdr.rtm_seq = ++rtm_seq;
-    rtmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+    rtmsg.hdr.rtm_addrs =
+	RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_GENMASK | RTA_IFP;
+
     rtmsg.dst.sin_len = sizeof(rtmsg.dst);
     rtmsg.dst.sin_family = AF_INET;
+    rtmsg.dst.sin_addr.s_addr = g;
+
     rtmsg.gway.sin_len = sizeof(rtmsg.gway);
     rtmsg.gway.sin_family = AF_INET;
     rtmsg.gway.sin_addr.s_addr = g;
-    rtmsg.mask.sin_len = sizeof(rtmsg.dst);
-    rtmsg.mask.sin_family = AF_INET;
+
+    rtmsg.netmask.sin_len = sizeof(rtmsg.netmask);
+    rtmsg.netmask.sin_family = AF_INET;
+    rtmsg.netmask.sin_addr.s_addr = 0;
+
+    rtmsg.genmask.sin_len = sizeof(rtmsg.genmask);
+    rtmsg.genmask.sin_family = AF_INET;
+    rtmsg.genmask.sin_addr.s_addr = 0;
+
+    rtmsg.ifp.sdl_family = AF_LINK;
+    rtmsg.ifp.sdl_len = sizeof(rtmsg.ifp);
+    link_addr(ifname, &rtmsg.ifp);
 
     rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
+
     if (write(routes, &rtmsg, sizeof(rtmsg)) < 0) {
 	error("Couldn't %s default route: %m",
 	       cmd=='s'? "add": "delete");
