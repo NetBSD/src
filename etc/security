@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.52 2001/04/04 03:17:19 atatat Exp $
+#	$NetBSD: security,v 1.53 2001/05/10 14:10:15 atatat Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -83,7 +83,7 @@ if checkyesno check_passwd; then
 			    printf "Line %d includes entries with uid 0.\n", NR;
 			next;
 		}
-		if ($1 !~ /^[A-Za-z0-9]*$/)
+		if ($1 !~ /^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])*$/)
 			printf "Login %s has non-alphanumeric characters.\n",
 			    $1;
 		if (length($1) > len)
@@ -159,7 +159,7 @@ if checkyesno check_group; then
 		if ($1 == "+" )  {
 			next;
 		}
-		if ($1 !~ /^[A-za-z0-9]*$/)
+		if ($1 !~ /^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])*$/)
 			printf "Group %s has non-alphanumeric characters.\n",
 			    $1;
 		if (length($1) > len)
