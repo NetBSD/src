@@ -51,3 +51,9 @@ gnu/usr.bin/cpio/Makefile		1.6		frueauf
 lib/libc/stdio/fseek.3			1.10-1.11	kleink
 
   Fix typo (PR#6053), and make return value description match XSH5.
+
+include/time.h				1.22		kleink
+
+  Remove the public declaration of gtime(), which is shipped with
+  tzcode but is not compiled into our libc since it is intended for
+  use with Mach only.
