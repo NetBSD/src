@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.59 1995/06/05 19:08:09 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.60 1995/06/28 04:31:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -60,7 +60,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
-#include <dev/ic/ns16550.h>
+#include <dev/ic/ns16550reg.h>
 
 #define	COM_IBUFSIZE	(2 * 256)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)

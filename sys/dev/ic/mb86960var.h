@@ -83,7 +83,7 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/ic/mb86960.h>
+#include <dev/ic/mb86960reg.h>
 #include <dev/isa/if_fereg.h>
 
 /*

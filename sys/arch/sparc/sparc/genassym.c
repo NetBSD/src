@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.14 1995/05/04 19:42:36 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.15 1995/06/28 04:31:23 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@
 #include <sparc/dev/zsreg.h>
 #include <sparc/dev/zsvar.h>
 #endif
-#include <dev/ic/amd7930.h>
+#include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
 
 #include <sparc/dev/fdreg.h>

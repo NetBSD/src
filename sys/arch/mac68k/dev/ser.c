@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.25 1995/06/21 03:03:17 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.26 1995/06/28 04:31:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 
 #include <dev/cons.h>
 
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <mac68k/dev/serreg.h>
 
 /*#define DEBUG*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.30 1995/06/21 02:50:22 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.31 1995/06/28 04:31:06 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -58,7 +58,7 @@
 
 #include "../mac68k/via.h"
 #include "nubus.h"
-#include <dev/ic/dp8390.h>
+#include <dev/ic/dp8390reg.h>
 #include "if_aereg.h"
 
 #define INTERFACE_NAME_LEN	32

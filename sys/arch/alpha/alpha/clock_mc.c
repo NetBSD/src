@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.1 1995/06/28 02:44:55 cgd Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,7 @@
 #include <machine/pte.h>		/* XXX */
 
 #include <alpha/alpha/clockvar.h>
-#include <dev/ic/mc146818.h>
+#include <dev/ic/mc146818reg.h>
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));

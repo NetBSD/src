@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 1995/06/26 10:14:05 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -100,7 +100,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/ic/mc146818.h>
+#include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>

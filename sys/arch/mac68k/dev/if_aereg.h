@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.9 1995/04/21 02:47:55 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.10 1995/06/28 04:31:10 cgd Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -12,7 +12,7 @@
 
 /*
  * The following is a structure that we should be pulling from
- * dev/ic/dp8390.h, but since we have the card in x86 mode and
+ * dev/ic/dp8390reg.h, but since we have the card in x86 mode and
  * the std. include file assumes that big-endian processors will
  * have the card in m68k mode, we're hosed for the moment.
  * Fix this.  --  XXX

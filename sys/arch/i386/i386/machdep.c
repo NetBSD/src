@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 1995/06/26 05:22:53 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164 1995/06/28 04:30:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -86,8 +86,8 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/ic/i8042.h>
-#include <dev/ic/mc146818.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
 

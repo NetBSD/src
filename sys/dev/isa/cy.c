@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.11 1995/04/17 12:08:46 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.12 1995/06/28 04:31:32 cgd Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
 #include <machine/cpufunc.h>
 
 #include <i386/isa/isa_device.h>	/* XXX BROKEN */
-#include <dev/ic/cd1400.h>
+#include <dev/ic/cd1400reg.h>
 
 #define RxFifoThreshold	3	/* 3 characters (out of 12) in the receive
 				 * FIFO before an interrupt is generated
