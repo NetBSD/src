@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.14 1996/10/13 03:06:48 christos Exp $ */
+/* $NetBSD: podulebus.c,v 1.15 1996/10/14 23:26:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -53,114 +53,8 @@
 #include <machine/irqhandler.h>
 #include <arm32/podulebus/podulebus.h>
 
-/*
- * Now construct the table of know podules.
- * A podule description array is setup for each manufacturer id
- */
- 
-struct podule_description podules_0000[] = {
-	{ 0x02, "SCSI interface" },
-	{ 0x03, "ether 1 interface" },
-	{ 0x61, "ether 2 interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0004[] = {
-	{ 0x14, "laser direct (Canon LBP-4)" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0009[] = {
-	{ 0x52, "hawk V9 mark2" },
-	{ 0xcb, "scanlight Video256" },
-	{ 0xcc, "eagle M2" },
-	{ 0xce, "lark A16" },
-	{ 0x200, "MIDI max" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0011[] = {
-	{ 0xa4, "ether 3 interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_001a[] = {
-	{ 0x95, "16 bit SCSI interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_001f[] = {
-	{ 0xe6, "24i16 digitiser" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0021[] = {
-	{ 0x58, "16 bit SCSI interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_002b[] = {
-	{ 0x67, "SCSI interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_003a[] = {
-	{ 0x3a, "SCSI II interface" },
-	{ 0xdd, "CDFS & SLCD expansion card" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0041[] = {
-	{ 0x41, "16 bit SCSI interface" },
-	{ 0x00, NULL },
-};
-  
-struct podule_description podules_0042[] = {
-	{ 0xea, "PC card" },
-	{ 0x00, NULL },
-};
-  
-struct podule_description podules_0046[] = {
-	{ 0xec, "etherlan 600 network slot interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0050[] = {
-	{ 0x00, "BriniPort intelligent I/O interface" },
-	{ 0xdf, "BriniLink transputer link adapter" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_0053[] = {
-	{ 0xa4, "ether 3 interface" },
-	{ 0xe4, "ether B network slot interface" },
-	{ 0x00, NULL },
-};
-
-struct podule_description podules_005b[] = {
-	{ 0x107, "SCSI 1 / SCSI 2 host adapter" },
-	{ 0x00, NULL },
-};
-
-/* A podule list if setup for all the manufacturers */
-  
-struct podule_list known_podules[] = {
-	{ 0x00, "Acorn",	podules_0000 },
-	{ 0x04, "CConcepts",	podules_0004 },	/* Two codes ??? */
-	{ 0x09, "CConcepts",	podules_0009 },
-	{ 0x11, "Atomwide",	podules_0011 },
-	{ 0x1a, "Lingenuity",	podules_001a },
-	{ 0x1f, "Irlam",	podules_001f },
-	{ 0x21, "Oak",		podules_0021 },
-	{ 0x2b, "Morley",	podules_002b },
-	{ 0x3a, "Cumana",	podules_003a },
-	{ 0x41, "ARXE",		podules_0041 },
-	{ 0x42, "Aleph1",	podules_0042 },
-	{ 0x46, "I-Cubed",	podules_0046 },
-	{ 0x50, "Brini",	podules_0050 },
-	{ 0x53, "ANT",		podules_0053 },
-	{ 0x5b, "Power-tec",	podules_005b },
-};
+#include <arm32/podulebus/podules.h>
+#include <arm32/podulebus/podule_data.h>
 
 /* Array of podule structures, one per possible podule */
 
@@ -173,7 +67,7 @@ extern irqhandler_t *irqhandlers[NIRQS];
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t));
 int poduleirqhandler __P((void));
-u_int poduleread __P((u_int /*address*/, int /*offset*/, int /*slottype*/));
+u_int poduleread __P((u_int address, int offset, int slottype));
 
 
 /*
@@ -212,7 +106,7 @@ podulebusprint(aux, name)
 	else
 		panic("Invalid slot type\n");
 
-/* XXXX print flags */
+	/* XXXX print flags */
 	return (QUIET);
 }
 
@@ -229,27 +123,21 @@ podulebussubmatch(parent, match, aux)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("nope cannot handle this");
 
-/*	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_podule_number)
-		return(0);
-
-	return((*cf->cf_attach->ca_match)(parent, match, aux));
-*/
-
-/* Return priority 0 or 1 for wildcarded podule */
+	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[0] == -1)
 		return((*cf->cf_attach->ca_match)(parent, match, aux));
 
-/* Return higher priority if we match the specific podule */
+	/* Return higher priority if we match the specific podule */
 
 	else if (cf->cf_loc[0] == pa->pa_podule_number)
 		return((*cf->cf_attach->ca_match)(parent, match, aux) * 8);
 
-/* Fail */
+	/* Fail */
 	return(0);
 }
 
-
+#if 0
 void
 dump_podule(podule)
 	podule_t *podule;
@@ -276,7 +164,7 @@ dump_podule(podule)
 	printf("podulenum=%d ", podule->podulenum);
 	printf("\n");
 }
-
+#endif
 
 void
 podulechunkdirectory(podule)
@@ -287,7 +175,9 @@ podulechunkdirectory(podule)
 	u_int size;
 	u_int addr;
 	int loop;
-	
+	int done_f5;
+
+	done_f5 = 0;	
 	address = 0x40;
 
 	do {
@@ -300,11 +190,32 @@ podulechunkdirectory(podule)
 			addr |= (poduleread(podule->slow_base, address + 20, podule->slottype) << 8);
 			addr |= (poduleread(podule->slow_base, address + 24, podule->slottype) << 16);
 			addr |= (poduleread(podule->slow_base, address + 28, podule->slottype) << 24);
-			if (addr < 0x800) {
-				for (loop = 0; loop < size; ++loop)
-					printf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
+			if (addr < 0x800 && done_f5 == 0) {
+				done_f5 = 1;
+				for (loop = 0; loop < size; ++loop) {
+					if (loop < PODULE_DESCRIPTION_LENGTH) {
+						podule->description[loop] =
+						    poduleread(podule->slow_base, (addr + loop)*4, podule->slottype);
+						podule->description[loop + 1] = 0;
+					}
+				}
 			}
 		}
+#if 0
+		if (id == 0xf5 || id == 0xf1 || id == 0xf2 || id == 0xf3 || id == 0xf4 || id == 0xf6) {
+			addr = poduleread(podule->slow_base, address + 16, podule->slottype);
+			addr |= (poduleread(podule->slow_base, address + 20, podule->slottype) << 8);
+			addr |= (poduleread(podule->slow_base, address + 24, podule->slottype) << 16);
+			addr |= (poduleread(podule->slow_base, address + 28, podule->slottype) << 24);
+			printf("<%04x.%04x.%04x.%04x>", id, address, addr, size);
+			if (addr < 0x800) {
+				for (loop = 0; loop < size; ++loop) {
+					printf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
+				}
+				printf("\\n\n");
+			}
+		}
+#endif
 		address += 32;
 	} while (id != 0 && address < 0x800);
 }
@@ -319,7 +230,7 @@ poduleexamine(podule, dev, slottype)
 	struct podule_list *pod_list;
 	struct podule_description *pod_desc;
 
-/* Test to see if the podule is present */
+	/* Test to see if the podule is present */
 
 	if ((podule->flags0 & 0x02) == 0x00) {
 		podule->slottype = slottype;
@@ -330,20 +241,24 @@ poduleexamine(podule, dev, slottype)
 			printf("podule%d  at %s : ", podule->podulenum,
 			    dev->dv_xname);
 
-/* Is it Acorn conformant ? */
+		/* Is it Acorn conformant ? */
 
 		if (podule->flags0 & 0x80)
 			printf("Non-Acorn conformant expansion card\n");
 		else {
 			int id;
 
-/* Is it a simple podule ? */
+			/* Is it a simple podule ? */
 
 			id = (podule->flags0 >> 3) & 0x0f;
 			if (id != 0)
 				printf("Simple expansion card <%x>\n", id);
 			else {
-/* Do we know this manufacturer ? */
+				/* Scan the chunk directory if present for tags we use */
+				if (podule->flags1 & PODULE_FLAGS_CD)
+					podulechunkdirectory(podule);
+
+				/* Do we know this manufacturer ? */
 				pod_list = known_podules;
 				while (pod_list->description) {
 					if (pod_list->manufacturer_id == podule->manufacturer)
@@ -355,7 +270,7 @@ poduleexamine(podule, dev, slottype)
 				else
 					printf("%10s : ", pod_list->description);
 
-/* Do we know this product ? */
+				/* Do we know this product ? */
 
 				pod_desc = pod_list->products;
 				while (pod_desc->description) {
@@ -365,11 +280,9 @@ poduleexamine(podule, dev, slottype)
 				}
 				if (!pod_desc->description) {
 					printf("prod=%04x : ", podule->product);
-					if (podule->flags1 & PODULE_FLAGS_CD)
-						podulechunkdirectory(podule);
-					printf("\n");
+					printf("%s\n", podule->description);
 				} else
-					printf("%s\n", pod_desc->description);
+					printf("%s : %s\n", pod_desc->description, podule->description);
 			}
 		}
 	}
@@ -410,7 +323,7 @@ podulescan(dev)
 	u_char *address;
 	u_int offset = 0;
 
-/* Loop round all the podules */
+	/* Loop round all the podules */
 
 	for (loop = 0; loop < MAX_PODULES; ++loop, offset += SIMPLE_PODULE_SIZE) {
 		if (loop == 4) offset += PODULE_GAP;
@@ -427,8 +340,9 @@ podulescan(dev)
 		podule->attached = 0;
 		podule->slottype = SLOT_NONE;
 		podule->podulenum = loop;
+		podule->description[0] = 0;
 
-/* Get information from the podule header */
+		/* Get information from the podule header */
 
 		podule->flags0 = address[0];
 		if ((podule->flags0 & 0x78) == 0) {
@@ -468,9 +382,9 @@ netslotscan(dev)
 	podule_t *podule;
 	volatile u_char *address;
 
-/* Only one netslot atm */
+	/* Only one netslot atm */
 
-/* Reset the address counter */
+	/* Reset the address counter */
 
 	WriteByte(NETSLOT_BASE, 0x00);
 
@@ -487,8 +401,9 @@ netslotscan(dev)
 	podule->attached = 0;
 	podule->slottype = SLOT_NONE;
 	podule->podulenum = MAX_PODULES;
+	podule->description[0] = 0;
 
-/* Get information from the podule header */
+	/* Get information from the podule header */
 
 	podule->flags0 = *address;
 	podule->flags1 = *address;
@@ -550,43 +465,50 @@ podulebusattach(parent, self, aux)
 
 	printf("\n");
 
-/* Ok we need to map in the podulebus */
+	/* Ok we need to map in the podulebus */
 
-/* Map the FAST and SYNC simple podules */
+	/* Map the FAST and SYNC simple podules */
 
 	map_section(PAGE_DIRS_BASE, SYNC_PODULE_BASE & 0xfff00000,
 	    SYNC_PODULE_HW_BASE & 0xfff00000);
+	tlb_flush();
 
-/* Now map the EASI space */
+	/* Now map the EASI space */
 
+#if 0
+	/* XXX - we don't use EASI space yet */
+	
 	for (loop = 0; loop < MAX_PODULES; ++loop) {
 		int loop1;
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE); loop1 += (1 << 20))
 		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1, EASI_HW_BASE + loop1);
 	}
+	tlb_flush();
+#endif
+	/*
+	 * The MEDIUM and SLOW simple podules and the module space will have been
+	 * mapped when the IOMD and COMBO we mapped in for the RPC
+	 */
 
-/*
- * The MEDIUM and SLOW simple podules and the module space will have been
- * mapped when the IOMD and COMBO we mapped in for the RPC
- */
-
-/* Install an podule IRQ handler */
+	/* Install an podule IRQ handler */
 
 	poduleirq.ih_func = poduleirqhandler;
 	poduleirq.ih_arg = NULL;
 	poduleirq.ih_level = IPL_NONE;
 	poduleirq.ih_name = "podule";
 
-/*	if (irq_claim(IRQ_PODULE, &poduleirq))
-		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);*/
+/*
+	if (irq_claim(IRQ_PODULE, &poduleirq))
+		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
+*/
 
-/* Find out what hardware is bolted on */
+	/* Find out what hardware is bolted on */
 
 	podulescan(self); 
 	netslotscan(self);
 
-/* Look for drivers to attach */
+	/* Look for drivers to attach */
 
 	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop)
 		if (podules[loop].slottype != SLOT_NONE) {
@@ -617,11 +539,11 @@ poduleirqhandler()
 	disable_irq(IRQ_PODULE);
 /*	return(1);*/
 
-/* Loop round the expansion card handlers */
+	/* Loop round the expansion card handlers */
 
 	for (loop = IRQ_EXPCARD0; loop <= IRQ_EXPCARD7; ++loop) {
 
-/* Is the IRQ currently allowable */
+	/* Is the IRQ currently allowable */
 
 		if (actual_mask & (1 << loop)) {
 			handler = irqhandlers[loop];
@@ -647,39 +569,9 @@ struct cfdriver podulebus_cd = {
 /* Useful functions that drivers may share */
 
 /*
- * Search the podule list for the specified manufacturer and product.
- * Return the podule number if the podule is not already attach and
- * the podule was in the required slot.
- * A required slot of -1 means any slot.
- */
-
-/* The use of this function is deprecated, use matchpodule() instead */
-
-int
-findpodule(manufacturer, product, required_slot)
-	int manufacturer;
-	int product;
-	int required_slot;
-{
-	int loop;
-
-	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop) {
-		if (podules[loop].slottype != SLOT_NONE
-		    && !podules[loop].attached
-		    && podules[loop].manufacturer == manufacturer
-		    && podules[loop].product == product
-		    && (required_slot == -1 || required_slot == loop))
-			return(loop);
-	}
-      
-	return(-1);
-}
-
-
-/*
  * Match a podule structure with the specified parameters
  * Returns 0 if the match failed
- * The required_slot is not used.
+ * The required_slot is not used at the moment.
  */
 
 int
