@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.8.2.2 1997/05/17 00:34:13 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.8.2.3 1997/05/18 17:38:50 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -175,7 +175,11 @@ struct scsi_device ahb_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	ahbmatch __P((struct device *, void *, void *));
+#else
+int	ahbmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	ahbattach __P((struct device *, struct device *, void *));
 
 struct cfattach ahb_ca = {
@@ -199,7 +203,12 @@ struct cfdriver ahb_cd = {
 int
 ahbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
