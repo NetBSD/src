@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/23 22:50:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1998/02/05 12:25:48 christos Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 .if (${MACHINE_ARCH} != "alpha")
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
 CPPFLAGS+=-DNEWMOVE=12
-DPADD=	${LIBCURSES} ${LIBTERM} ${LIBGNUMALLOC}
-LDADD=	-lcurses -ltermlib -lgnumalloc
+DPADD=	${LIBCURSES} ${LIBTERMCAP} ${LIBGNUMALLOC}
+LDADD=	-lcurses -ltermcap -lgnumalloc
 HIDEGAME=hidegame
 FILES=gnuchess.book
 FILESDIR=/usr/share/games
