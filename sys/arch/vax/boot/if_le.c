@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1998/08/08 16:10:41 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.6 1998/10/09 06:14:22 matt Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -169,11 +169,11 @@ igen:
 	while (to--)
 		;
 
-	if (initblock == NULL) {
-		ea = (void *)0x20090000; /* XXX ethernetadressen */
-		for (i = 0; i < 6; i++)
-			desc->myea[i] = ea[i] & 0377;
+	ea = (void *)0x20090000; /* XXX ethernetadressen */
+	for (i = 0; i < 6; i++)
+		desc->myea[i] = ea[i] & 0377;
 
+	if (initblock == NULL) {
 		initblock = (void *)alloc(sizeof(struct initblock)) + addoff;
 		initblock->ib_mode = LE_MODE_NORMAL;
 		bcopy(desc->myea, initblock->ib_padr, 6);
