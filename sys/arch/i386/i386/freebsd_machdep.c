@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.21 1998/09/11 12:50:05 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.22 1998/09/13 01:43:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_ptrace.h>
-
-void native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
-void native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
 
 void
 freebsd_setregs(p, epp, stack)
