@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_page.3,v 1.3 2002/02/07 07:00:47 ross Exp $
+.\"	$NetBSD: form_page.3,v 1.4 2002/02/20 11:30:35 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January, 2001
+.Dd January 1, 2001
 .Dt FORM_PAGE 3
 .Os
 .Sh NAME
@@ -72,7 +72,9 @@ the current page of a form can be programmatically set by calling
 The maximum page number for a form can be found by
 calling the function
 .Fn form_max_page
-but note that this function is a NetBSD extension and must not be used
+but note that this function is a
+.Nx
+extension and must not be used
 in portable forms library programs.  The current field on the form may
 be set by calling
 .Fn set_current_field
@@ -107,4 +109,6 @@ and
 .Pp
 The
 .Nm form_max_page
-is a NetBSD extension and should not be used in portable applications.
+is a
+.Nx
+extension and should not be used in portable applications.
