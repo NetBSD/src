@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.57 2000/01/05 01:50:45 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.58 2000/06/18 23:50:04 cyber Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,6 +70,12 @@ static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
 
 static void write_etc_hosts(FILE *f);
+
+#define DHCLIENT_EX "/sbin/dhclient"
+#include <signal.h>
+static int config_dhcp __P((char *));
+static void get_command_out __P((char *, char *, char *));
+static void get_dhcp_value __P(( char *, char *));
 
 #ifdef INET6
 static int is_v6kernel __P((void));
@@ -245,6 +251,8 @@ get_ifinterface_info()
 	int textsize;
 	char *t;
 	char hostname[MAXHOSTNAMELEN + 1];
+	int max_len;
+	char *dot;
 
 	/* First look to see if the selected interface is already configured. */
 	textsize = collect(T_OUTPUT, &textbuf,
@@ -300,7 +308,22 @@ get_ifinterface_info()
 	/* Check host (and domain?) name */
 	if (gethostname(hostname, sizeof(hostname)) == 0) {
 		hostname[sizeof(hostname) - 1] = '\0';
-		strncpy(net_host, hostname, sizeof(net_host));
+		/* check for a . */
+		dot = strchr(hostname, '.');
+		if ( dot == NULL ) {
+			/* if not found its just a host, punt on domain */
+			strncpy(net_host, hostname, sizeof(net_host));
+		} else {
+			/* split hostname into host/domain parts */
+			max_len = dot - hostname;
+			max_len = (sizeof(net_host)<max_len)?sizeof(net_host):max_len;
+			*dot = '\0';
+			dot++;
+			strncpy(net_host, hostname, max_len);
+			max_len = strlen(dot);
+			max_len = (sizeof(net_host)<max_len)?sizeof(net_host):max_len;
+			strncpy(net_domain, dot, max_len);
+		}
 	}
 }
 
@@ -367,7 +390,7 @@ config_network()
 {	char *tp;
 	char defname[255];
 	int  octet0;
-	int  pass, needmedia, v6config;
+	int  pass, needmedia, v6config, dhcp_config;
 
 	FILE *f;
 	time_t now;
@@ -404,17 +427,34 @@ config_network()
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev) - 1] = 0;
 
+again:
+
 #ifdef INET6
 	v6config = 1;
 #else
 	v6config = 0;
 #endif
 
-again:
 	/* Preload any defaults we can find */
+	dhcp_config = config_dhcp(net_dev);
 	get_ifinterface_info();
 	pass = strlen(net_mask) == 0 ? 0 : 1;
 	needmedia = strlen(net_media) == 0 ? 0 : 1;
+	if(dhcp_config) {
+		/* disable ipv6 */
+		v6config=0;
+		/* run route show and extract data */
+		get_command_out(net_defroute,"/sbin/route show 2>/dev/null","default");
+		/* pull nameserver info out of /etc/resolv.conf */
+		get_command_out(net_namesvr,"cat /etc/resolv.conf 2> /dev/null","nameserver");
+
+		/* pull domainname out of leases file */
+		get_dhcp_value(net_domain,"domain-name");
+		/* pull hostname out of leases file */
+		get_dhcp_value(net_host,"hostname");
+
+		goto confirm;  /* CEBXXX goto's suck */
+	}
 
 	/* domain and host */
 	msg_display(MSG_netinfo);
@@ -427,7 +467,6 @@ again:
 			       STRSIZE);
 
 	/* Manually configure IPv4 */
-	/* XXX todo: dhcp */
 	msg_prompt_add(MSG_net_ip, net_ip, net_ip, STRSIZE);
 	octet0 = atoi(net_ip);
 	if (!pass) {
@@ -444,9 +483,9 @@ again:
 
 #ifdef INET6
 	/* IPv6 autoconfiguration */
-	if (!is_v6kernel())
+	if (!is_v6kernel() )
 		v6config = 0;
-	else {
+	else if(v6config) {  /* dhcp config will disable this */
 		process_menu(MENU_ip6autoconf);
 		v6config = yesno ? 1 : 0;
 	}
@@ -459,6 +498,7 @@ again:
 	}
 #endif
 
+confirm:
 	/* confirm the setting */
 	msg_display(MSG_netok, net_domain, net_host,
 		     *net_ip == '\0' ? "<none>" : net_ip,
@@ -866,3 +906,112 @@ mnt_net_config(void)
 		}
 	}
 }
+
+
+int
+config_dhcp (inter)
+char * inter;
+{
+	int dhcpautoconf;
+	int result;
+	char *textbuf;
+	int pid;
+
+	/* check if dhclient is running, if so, kill it */
+	result = collect(T_FILE, &textbuf, "/tmp/dhclient.pid");
+	if (result >=0) {
+		pid = atoi(textbuf);
+		if (pid > 0) {
+			kill(pid,15);
+			sleep(1);
+			kill(pid,9);
+		}
+	}
+
+	result = run_prog(0, 0, NULL, "test %s %s", "-f", DHCLIENT_EX);
+	if (result!=0) {
+		return 0;
+	}
+	process_menu(MENU_dhcpautoconf);
+	if (yesno) {
+		/* spawn off dhclient and wait for parent to exit */
+		dhcpautoconf = run_prog(0, 1, NULL, "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s", DHCLIENT_EX,inter);
+		return dhcpautoconf?0:1;
+	}
+	return 0;
+}
+
+void
+get_command_out (targ, command, search)
+char *targ;
+char *command;
+char *search;
+{
+	int textsize;
+	char *textbuf;
+	char *t;
+
+	textsize = collect(T_OUTPUT, &textbuf, command);
+	if (textsize < 0) {
+		if (logging)
+			(void)fprintf(log, "Aborting: Could not run %s.\n", command);
+		(void)fprintf(stderr, "Could not run ifconfig.");
+		exit(1);
+	}
+	if (textsize >= 0) {
+		(void)strtok(textbuf, " \t\n"); /* ignore interface name */
+		while ((t = strtok(NULL, " \t\n")) != NULL) {
+			if (strcmp(t, search) == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "0.0.0.0") != 0) {
+					strcpy(targ, t);
+				}
+			} 
+		}
+	}
+	return;
+}
+
+
+void
+get_dhcp_value(targ, line)
+char *targ;
+char *line;
+{
+	int textsize;
+	char *textbuf;
+	char *t;
+	char *walk;
+
+	textsize = collect(T_FILE, &textbuf, "/tmp/dhclient.leases");
+	if (textsize < 0) {
+		if (logging)
+			(void)fprintf(log, "Could not open file /tmp/dhclient.leases.\n");
+		(void)fprintf(stderr, "Could not open /tmp/dhclient.leases\n");
+		/* not fatal, just assume value not found */
+	}
+	if (textsize >=0 ) {
+		(void)strtok(textbuf, " \t\n"); /* jump past 'lease' */
+		while ((t=strtok(NULL, " \t\n")) !=NULL) {
+			if (strcmp(t, line) == 0) {
+				t = strtok(NULL, " \t\n");
+				/* found the tag, extract the value */
+				/* last char should be a ';' */
+				walk = strrchr(t,';');
+				if (walk != NULL ) {
+					*walk = '\0';
+				}
+				/* strip any " from the string */
+				walk = strrchr(t,'"');
+				if (walk != NULL ) {
+					*walk = '\0';
+					t++;
+				}
+				strcpy(targ, t);
+				return;
+			}
+		}
+	}
+	return;
+}
+
