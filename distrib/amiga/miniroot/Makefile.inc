@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/02/12 11:20:38 is Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/06 12:04:50 lukem Exp $
 
-VND=		vnd0
-IMAGESIZE?=	10240 # 512 byte blocks
-VND_GEOM?=	512/64/2/80
-NEWFSOPTS?=	-c 80 -B be
+IMAGESIZE=	5m
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	floppy
+IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
+		${ARCHDIR}/install.md ${ARCHDIR}/termcap.vt \
+		${DESTDIR}/boot.amiga ${DESTDIR}/etc/spwd.db \
+		${KERNOBJDIR}/INSTALL/netbsd
 
-#
-# install bootblock, so that we can boot from there
-#
-BOOTINSTALL=dd if=${DESTDIR}/usr/mdec/bootxx_ffs of=${VND_RDEV} bs=8192
+image_md_post:
+	dd if=${DESTDIR}/usr/mdec/bootxx_ffs of=${IMAGE} bs=8192 conv=notrunc
