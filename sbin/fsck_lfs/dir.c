@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.12 2003/10/03 12:23:22 yamt Exp $	 */
+/* $NetBSD: dir.c,v 1.13 2003/10/05 17:11:23 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -283,7 +283,6 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 {
 	char pathbuf[MAXPATHLEN + 1];
 	struct uvnode *vp;
-	struct inode *ip;
 
 	pwarn("%s ", errmesg);
 	pinode(ino);
@@ -294,13 +293,12 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 		return;
 	}
 	vp = vget(fs, ino);
-	ip = VTOI(vp);
 	if (vp == NULL)
 		pfatal("INO is NULL\n");
 	else {
 		if (ftypeok(VTOD(vp)))
 			pfatal("%s=%s\n",
-			    (ip->i_ffs1_mode & IFMT) == IFDIR ?
+			    (VTOI(vp)->i_ffs1_mode & IFMT) == IFDIR ?
 			    "DIR" : "FILE", pathbuf);
 		else
 			pfatal("NAME=%s\n", pathbuf);
