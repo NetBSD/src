@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.3 2003/06/06 09:05:42 scw Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.4 2003/07/15 00:24:56 lukem Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -74,6 +74,9 @@
  * bus_space functions for Intel PXA2[51]0 application processor.
  * Derived from i80321_space.c.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.4 2003/07/15 00:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.4 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.5 2003/07/15 00:24:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -39,6 +39,9 @@
  *
  * Created      : 11/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.5 2003/07/15 00:24:37 lukem Exp $");
 
 #include "opt_ddb.h"
 

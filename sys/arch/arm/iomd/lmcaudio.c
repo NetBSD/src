@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.11 2003/04/01 23:19:10 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.12 2003/07/15 00:24:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -38,6 +38,9 @@
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lmcaudio.c,v 1.12 2003/07/15 00:24:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

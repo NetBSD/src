@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.3 2003/06/05 13:48:26 scw Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.4 2003/07/15 00:24:54 lukem Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -92,6 +92,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.4 2003/07/15 00:24:54 lukem Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"

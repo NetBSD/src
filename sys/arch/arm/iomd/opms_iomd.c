@@ -1,4 +1,4 @@
-/*	$NetBSD: opms_iomd.c,v 1.5 2002/10/02 15:45:12 thorpej Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.6 2003/07/15 00:24:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -38,6 +38,9 @@
  * Ported from 386 version of PS/2 mouse driver.
  * D.C. Tsen
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opms_iomd.c,v 1.6 2003/07/15 00:24:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

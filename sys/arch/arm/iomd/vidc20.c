@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.8 2002/10/02 15:45:13 thorpej Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.9 2003/07/15 00:24:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,6 +42,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.9 2003/07/15 00:24:46 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

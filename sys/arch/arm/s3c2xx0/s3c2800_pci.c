@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.6 2003/06/18 10:56:35 bsh Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.7 2003/07/15 00:24:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -98,6 +98,9 @@
 /*
  * PCI configuration support for Samsung s3c2800.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.7 2003/07/15 00:24:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
