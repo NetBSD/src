@@ -1090,7 +1090,10 @@ portnum:
 					  $$ = ntohs($$);
 					  free($1);
 					}
-	| YY_NUMBER			{ $$ = $1; }
+	| YY_NUMBER			{ $$ = $1;
+					  if ($$ < 0 || $$ > 65535)
+						yyerror("invalid port number");
+					}
 	;
 
 withlist:

@@ -1,4 +1,4 @@
-/*	$NetBSD: proxy.c,v 1.4 2004/07/23 05:39:04 martti Exp $	*/
+/*	$NetBSD: proxy.c,v 1.5 2005/02/19 21:30:25 martti Exp $	*/
 
 /*
  * Sample transparent proxy program.
@@ -141,6 +141,7 @@ char *extif;
 	struct sockaddr_in usin;
 	u_32_t sum1, sum2, sumd;
 	int onoff, ofd, slen;
+	ipfobj_t obj;
 	ipnat_t *ipn;
 	nat_t *nat;
 
@@ -200,9 +201,15 @@ printf("local port# to use: %d\n", ntohs(usin.sin_port));
 
 	nat->nat_flags = IPN_TCPUDP;
 
+	bzero((char *)&obj, sizeof(obj));
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(*nsp);
+	obj.ipfo_ptr = nsp;
+	obj.ipfo_type = IPFOBJ_NATSAVE;
+
 	onoff = 1;
 	if (ioctl(fd, SIOCSTLCK, &onoff) == 0) {
-		if (ioctl(fd, SIOCSTPUT, &nsp) != 0)
+		if (ioctl(fd, SIOCSTPUT, &obj) != 0)
 			perror("SIOCSTPUT");
 		onoff = 0;
 		if (ioctl(fd, SIOCSTLCK, &onoff) != 0)

@@ -10,6 +10,35 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.6 - Released 19 February 2005
+
+add a new timeout number to NAT (fr_defnatipage) that is used for all
+non-TCP/UDP/ICMP protocols - default 60 seconds.
+
+buffer leak with bad nat - David Gueluy
+
+fix memory leak with state entries created by proxies
+
+eliminate copying too much data into a scan buffer
+
+allow a trailing protocol name for map rules as well as rdr ones
+
+fix bug in parsing of <= and > for NAT rules (two were crossed over)
+
+FreeBSD's iplwrite hasn't kept pace with iplread's prototype
+
+expand documention on the karma of using "auto" in ipnat map rules
+
+add matching on IP protocol to ipnat map rules
+
+allow ippool definitions to contain no addresses to start with
+
+Linux NAT needs to modify the IP header checksum as it gets called after it
+has been computed by IP.
+
+UDP was missing a pullup for packet header information before examining
+the header
+
 4.1.5 - Released 9 January 2005
 
 all rules were being converted into "dup-to" rules in the kernel

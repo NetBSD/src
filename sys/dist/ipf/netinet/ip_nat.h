@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.3 2005/02/08 07:01:55 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.4 2005/02/19 21:30:25 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.5 2004/12/20 23:12:05 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.6 2005/02/04 09:56:15 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -429,6 +429,7 @@ extern	int	fr_nat_lock;
 extern	void	fr_natsync __P((void *));
 extern	u_long	fr_defnatage;
 extern	u_long	fr_defnaticmpage;
+extern	u_long	fr_defnatipage;
 	/* nat_table[0] -> hashed list sorted by inside (ip, port) */
 	/* nat_table[1] -> hashed list sorted by outside (ip, port) */
 extern	nat_t	**nat_table[2];
