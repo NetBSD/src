@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.9 1998/12/19 16:31:41 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.10 2000/02/10 12:34:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.9 1998/12/19 16:31:41 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.10 2000/02/10 12:34:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ save1(str, mark, cmd, ignore)
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
-		if (send(mp, obuf, ignore, NOSTR) < 0) {
+		if (sendmessage(mp, obuf, ignore, NOSTR) < 0) {
 			perror(file);
 			Fclose(obuf);
 			return(1);

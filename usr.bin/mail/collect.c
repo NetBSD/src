@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.19 1999/02/17 20:48:48 mjl Exp $	*/
+/*	$NetBSD: collect.c,v 1.20 2000/02/10 12:34:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.19 1999/02/17 20:48:48 mjl Exp $");
+__RCSID("$NetBSD: collect.c,v 1.20 2000/02/10 12:34:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,7 @@ forward(ms, fp, f)
 
 		touch(mp);
 		printf(" %d", *msgvec);
-		if (send(mp, fp, ig, tabst) < 0) {
+		if (sendmessage(mp, fp, ig, tabst) < 0) {
 			perror(tempMail);
 			return(-1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/10/08 17:36:55 wsanchez Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2000/02/10 12:34:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.10 1998/10/08 17:36:55 wsanchez Exp $
+ *	$NetBSD: extern.h,v 1.11 2000/02/10 12:34:43 tron Exp $
  */
 
 struct name;
@@ -224,7 +224,7 @@ void	 scaninit __P((void));
 int	 schdir __P((void *));
 int	 screensize __P((void));
 int	 scroll __P((void *));
-int	 send __P((struct message *, FILE *, struct ignoretab *, char *));
+int	 sendmessage __P((struct message *, FILE *, struct ignoretab *, char *));
 int	 sendmail __P((void *));
 int	 set __P((void *));
 int	 setfile __P((char *));

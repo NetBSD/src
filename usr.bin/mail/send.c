@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.10 1998/12/19 16:34:38 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.11 2000/02/10 12:34:44 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.10 1998/12/19 16:34:38 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.11 2000/02/10 12:34:44 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: send.c,v 1.10 1998/12/19 16:34:38 christos Exp $");
  * prefix is a string to prepend to each output line.
  */
 int
-send(mp, obuf, doign, prefix)
+sendmessage(mp, obuf, doign, prefix)
 	struct message *mp;
 	FILE *obuf;
 	struct ignoretab *doign;
