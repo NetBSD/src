@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.210 1999/07/20 22:25:18 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.211 1999/08/23 08:24:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,9 +114,15 @@
 /*
  * override user-land alignment before including asm.h
  */
+#ifdef __ELF__
+#define	ALIGN_DATA	.align	4
+#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
+#else
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
 #define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
+#endif
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
 
