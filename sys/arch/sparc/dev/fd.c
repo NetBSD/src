@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.78 2000/03/23 06:44:45 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.79 2000/03/24 10:30:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1493,7 +1493,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 
 		disk_busy(&fd->sc_dk);
-		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeot, fdc);
+		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
 
 		/* specify command */
 		FDC_WRFIFO(fdc, NE7CMD_SPECIFY);
