@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.27 1996/05/17 22:54:40 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.28 1996/05/21 19:07:30 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -82,14 +82,6 @@ struct cfdriver ledma_cd = {
 	NULL, "ledma", DV_DULL
 };
 
-struct cfattach espdma_ca = {
-	sizeof(struct dma_softc), matchbyname, dmaattach
-};
-
-struct cfdriver espdma_cd = {
-	NULL, "espdma", DV_DULL
-};
-
 int
 dmaprint(aux, name)
 	void *aux;
@@ -112,7 +104,8 @@ dmamatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
+	    strcmp("espdma", ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
@@ -215,8 +208,7 @@ dmaattach(parent, self, aux)
 	printf("\n");
 
 	/* indirect functions */
-	if (sc->sc_dev.dv_cfdata->cf_attach == &espdma_ca ||
-	    sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
+	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
 		sc->intr = espdmaintr;
 	} else {
 		sc->intr = ledmaintr;
