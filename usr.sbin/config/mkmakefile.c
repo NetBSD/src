@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.41 1999/07/09 09:53:01 mrg Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.42 1999/07/09 18:45:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -475,16 +475,11 @@ emitincludes(fp)
 	FILE *fp;
 {
 	struct prefix *pf;
-	int done = 0;
 
 	for (pf = allprefixes; pf != NULL; pf = pf->pf_next) {
-		if (done == 0) {
-			done = 1;
-			fprintf(fp, "INCLUDES+=\t");
-		}
-		fprintf(fp, " -I$S/%s", pf->pf_prefix);
+		if (fprintf(fp, "INCLUDES+=\t-I$S/%s\n", pf->pf_prefix) < 0)
+			return (1);
 	}
-	putc('\n', fp);
 
 	return (0);
 }
