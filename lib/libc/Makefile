@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 1995/03/13 05:26:07 jtc Exp $
+#	$NetBSD: Makefile,v 1.39 1995/04/12 00:56:12 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -80,7 +80,7 @@ rm-from-libkern:
 .endif
 
 beforeinstall: tags
-	install -c -o bin -g bin -m 444 tags /var/db/libc.tags
+	install -c -o bin -g bin -m 444 tags ${DESTDIR}/var/db/libc.tags
 
 tags: ${SRCS}
 	ctags ${.ALLSRC:M*.c}
