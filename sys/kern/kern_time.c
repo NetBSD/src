@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_time.c	7.15 (Berkeley) 3/17/91
- *	$Id: kern_time.c,v 1.4 1993/07/13 22:13:28 cgd Exp $
+ *	$Id: kern_time.c,v 1.4.4.1 1993/11/14 20:32:14 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "resourcevar.h"
-#include "kernel.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/resourcevar.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* 
  * Time of day and interval timer support.

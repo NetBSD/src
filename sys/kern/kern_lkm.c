@@ -36,26 +36,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.6.2.1 1993/10/16 02:39:19 mycroft Exp $
+ *	$Id: kern_lkm.c,v 1.6.2.2 1993/11/14 20:31:57 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "conf.h"
-#include "file.h"
-#include "proc.h"
-#include "uio.h"
-#include "kernel.h"
-#include "vnode.h"
-#include "malloc.h"
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/vm_kern.h"
-#include "mount.h"
-#include "exec.h"
-#include "lkm.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
+#include <sys/exec.h>
+#include <sys/lkm.h>
+
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/vm_kern.h>
 
 #define PAGESIZE 1024		/* kmem_alloc() allocation quantum*/
 

@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.6.4.1 1993/09/27 04:02:17 deraadt Exp $
+ *	$Id: kern_xxx.c,v 1.6.4.2 1993/11/14 20:32:16 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "reboot.h"
-#include "utsname.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/utsname.h>
 
 long	hostid;
 
