@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.31 2004/03/17 14:03:22 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.32 2004/03/21 15:08:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.31 2004/03/17 14:03:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.32 2004/03/21 15:08:24 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -436,7 +436,7 @@ kd_putfb(tp)
 		while (p < end)
 			*p++ &= 0x7f;
 		/* Now let the PROM print it. */
-		OF_write(OF_stdout(), buf, len);
+		prom_write(prom_stdout(), buf, len);
 	}
 }
 
@@ -644,7 +644,7 @@ kdcnputc(dev, c)
 	char c0 = (c & 0x7f);
 
 	s = splhigh();
-	OF_write(OF_stdout(), &c0, 1);
+	prom_write(prom_stdout(), &c0, 1);
 	splx(s);
 }
 
