@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.13 2003/11/02 10:50:40 wiz Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.14 2004/02/19 13:34:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -425,6 +425,7 @@ struct fxp_rfa {
 #define FXP_RFA_STATUS_RNR	0x0200	/* no resources */
 #define FXP_RFA_STATUS_ALIGN	0x0400	/* alignment error */
 #define FXP_RFA_STATUS_CRC	0x0800	/* CRC error */
+#define FXP_RFA_STATUS_VLAN	0x1000	/* VLAN */
 #define FXP_RFA_STATUS_OK	0x2000	/* packet received okay */
 #define FXP_RFA_STATUS_C	0x8000	/* packet reception complete */
 
