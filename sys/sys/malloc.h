@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.72 2001/12/05 01:29:05 enami Exp $	*/
+/*	$NetBSD: malloc.h,v 1.73 2001/12/18 10:57:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -177,7 +177,8 @@
 #define	M_PIPE		118	/* Pipe structures */
 #define	M_AGP		119	/* AGP memory */
 #define	M_PROP		120	/* Kernel properties structures */
-#define	M_LAST		121	/* Must be last type + 1 */
+#define M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
+#define	M_LAST		122	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -301,7 +302,8 @@
 	"pipe",		/* 118 M_PIPE */ \
 	"AGP",		/* 119 M_AGP */ \
 	"prop",		/* 120 M_PROP */ \
-	NULL,		/* 121 */ \
+	"newdirblk",	/* 121 M_NEWDIRBLK */ \
+	NULL,		/* 122 */ \
 }
 
 struct kmemstats {
