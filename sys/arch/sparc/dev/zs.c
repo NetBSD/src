@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.56 1998/01/21 05:54:39 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.57 1998/03/21 20:24:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -168,16 +168,16 @@ struct zschan *
 zs_get_chan_addr(zs_unit, channel)
 	int zs_unit, channel;
 {
-	struct zsdevice *addr;
-	struct zschan *zc;
+	struct zsdevice	*addr;
+	struct zschan	*zc;
 
 	if (zs_unit >= NZS)
-		return NULL;
+		return (NULL);
 	addr = zsaddr[zs_unit];
 	if (addr == NULL)
 		addr = zsaddr[zs_unit] = findzs(zs_unit);
 	if (addr == NULL)
-		return NULL;
+		return (NULL);
 	if (channel == 0) {
 		zc = &addr->zs_chan_a;
 	} else {
@@ -192,12 +192,20 @@ zs_get_chan_addr(zs_unit, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_match __P((struct device *, struct cfdata *, void *));
-static void	zs_attach __P((struct device *, struct device *, void *));
+static int  zs_match_mainbus __P((struct device *, struct cfdata *, void *));
+static int  zs_match_obio __P((struct device *, struct cfdata *, void *));
+static void zs_attach_mainbus __P((struct device *, struct device *, void *));
+static void zs_attach_obio __P((struct device *, struct device *, void *));
+
+static void zs_attach __P((struct zsc_softc *, int));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zs_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
+struct cfattach zs_mainbus_ca = {
+	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
+};
+
+struct cfattach zs_obio_ca = {
+	sizeof(struct zsc_softc), zs_match_obio, zs_attach_obio
 };
 
 extern struct cfdriver zs_cd;
@@ -205,7 +213,6 @@ extern struct cfdriver zs_cd;
 /* Interrupt handlers. */
 static int zshard __P((void *));
 static int zssoft __P((void *));
-static struct intrhand levelhard = { zshard };
 static struct intrhand levelsoft = { zssoft };
 
 static int zs_get_speed __P((struct zs_chanstate *));
@@ -215,23 +222,90 @@ static int zs_get_speed __P((struct zs_chanstate *));
  * Is the zs chip present?
  */
 static int
-zs_match(parent, cf, aux)
+zs_match_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
 		return (0);
-	if ((ca->ca_bustype == BUS_MAIN && !CPU_ISSUN4) ||
-	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M))
-		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 1) != -1);
+
+	return (getpropint(ma->ma_node, "slave", -2) == cf->cf_unit);
 }
 
+static int
+zs_match_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0) {
+		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+
+		if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+			return (0);
+
+		return (getpropint(sa->sa_node, "slave", -2) == cf->cf_unit);
+	}
+
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 1, NULL, NULL));
+}
+
+static void
+zs_attach_mainbus(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct zsc_softc *zsc = (void *) self;
+	struct mainbus_attach_args *ma = aux;
+	int zs_unit = zsc->zsc_dev.dv_unit;
+
+	zsc->zsc_bustag = ma->ma_bustag;
+	zsc->zsc_dmatag = ma->ma_dmatag;
+
+	/* Use the mapping setup by the Sun PROM. */
+	if (zsaddr[zs_unit] == NULL)
+		zsaddr[zs_unit] = findzs(zs_unit);
+	if ((void*)zsaddr[zs_unit] != ma->ma_promvaddr)
+		panic("zsattach_mainbus");
+
+	zs_attach(zsc, ma->ma_pri);
+}
+
+static void
+zs_attach_obio(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct zsc_softc *zsc = (void *) self;
+	union obio_attach_args *uoba = aux;
+	int zs_unit = zsc->zsc_dev.dv_unit;
+
+	/* Use the mapping setup by the Sun PROM. */
+	if (zsaddr[zs_unit] == NULL)
+		zsaddr[zs_unit] = findzs(zs_unit);
+
+	if (uoba->uoba_isobio4 == 0) {
+		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+		zsc->zsc_bustag = sa->sa_bustag;
+		zsc->zsc_dmatag = sa->sa_dmatag;
+		zs_attach(zsc, sa->sa_pri);
+	} else {
+		struct obio4_attach_args *oba = &uoba->uoba_oba4;
+		zsc->zsc_bustag = oba->oba_bustag;
+		zsc->zsc_dmatag = oba->oba_dmatag;
+		zs_attach(zsc, oba->oba_pri);
+	}
+}
 /*
  * Attach a found zs.
  *
@@ -239,39 +313,22 @@ zs_match(parent, cf, aux)
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
 static void
-zs_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zs_attach(zsc, pri)
+	struct zsc_softc *zsc;
+	int pri;
 {
-	struct zsc_softc *zsc = (void *) self;
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int pri, s, zs_unit, channel;
+	int s, zs_unit, channel;
 	static int didintr, prevpri;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
-
-	/* Use the mapping setup by the Sun PROM. */
-	if (zsaddr[zs_unit] == NULL)
-		zsaddr[zs_unit] = findzs(zs_unit);
-
-	if (ca->ca_bustype==BUS_MAIN)
-		if ((void*)zsaddr[zs_unit] != ra->ra_vaddr)
-			panic("zsattach");
-	if (ra->ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
-		return;
-	}
-	pri = ra->ra_intr[0].int_pri;
-	printf(" pri %d, softpri %d\n", pri, PIL_TTY);
+	printf(" softpri %d\n", PIL_TTY);
 
 	/*
 	 * Initialize software state for each channel.
 	 */
+	zs_unit = zsc->zsc_dev.dv_unit;
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
 		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
@@ -321,7 +378,7 @@ zs_attach(parent, self, aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(self, (void *)&zsc_args, zs_print)) {
+		if (!config_found(&zsc->zsc_dev, (void *)&zsc_args, zs_print)) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -339,10 +396,11 @@ zs_attach(parent, self, aux)
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
-		intr_establish(pri, &levelhard);
+		bus_intr_establish(zsc->zsc_bustag, pri, 0, zshard, NULL);
 		intr_establish(PIL_TTY, &levelsoft);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
+
 	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
 
 	/*
@@ -384,7 +442,7 @@ zs_print(aux, name)
 	if (args->channel != -1)
 		printf(" channel %d", args->channel);
 
-	return UNCONF;
+	return (UNCONF);
 }
 
 static volatile int zssoftpending;
@@ -572,7 +630,7 @@ zs_read_reg(cs, reg)
 	ZS_DELAY();
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
-	return val;
+	return (val);
 }
 
 void
@@ -594,7 +652,7 @@ zs_read_csr(cs)
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
-	return val;
+	return (val);
 }
 
 void  zs_write_csr(cs, val)
@@ -612,7 +670,7 @@ u_char zs_read_data(cs)
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
-	return val;
+	return (val);
 }
 
 void  zs_write_data(cs, val)
