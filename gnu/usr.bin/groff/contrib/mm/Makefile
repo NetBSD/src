@@ -1,6 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2003/07/03 11:46:46 tron Exp $
+# $NetBSD: Makefile,v 1.7 2004/01/12 01:08:34 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/contrib/mm/Makefile,v 1.6 2002/10/11 08:58:13 ru Exp $
+
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"					# {
 
 DIST_SUBDIR=	contrib/mm
 
@@ -37,3 +41,5 @@ beforeinstall:
 		/dev/null ${DESTDIR}${TMACDIR}/mm/${locale}
 .endif
 .endfor
+
+.endif							# }
