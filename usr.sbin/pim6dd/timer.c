@@ -1,4 +1,5 @@
-/*	$NetBSD: timer.c,v 1.7 2000/10/06 00:13:02 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.8 2000/12/04 07:05:49 itojun Exp $	*/
+/*	$KAME: timer.c,v 1.7 2000/12/04 06:33:11 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -34,8 +35,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
- *
- *  KAME Id: timer.c,v 1.5 2000/05/18 16:09:39 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
