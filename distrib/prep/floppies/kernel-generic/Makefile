@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/05/02 18:02:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/05/08 07:57:09 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,12 +8,11 @@
 KERN=		${KERNOBJDIR}/GENERIC/netbsd
 KERNEL=		netbsd.GENERIC.gz
 
-CLEANFILES+=	${KERNEL} netbsd.tmp netbsd.tmp.gz
+CLEANFILES+=	${KERNEL}
 
 ${KERNEL}: ${KERN}
-	cp ${KERN} netbsd.tmp
-	gzip -9f netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+	-rm -f ${.TARGET}
+	gzip -9c ${.ALLSRC} > ${.TARGET}
 
 realall: ${KERNEL}
 
