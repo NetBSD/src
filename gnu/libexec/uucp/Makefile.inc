@@ -1,11 +1,11 @@
 LIBUNIX!=cd $(.CURDIR)/../libunix; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libunix.a\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/libunix.a\n" | ${MAKE} -r -s -f - xxx
 
 LIBUUCONF!=cd $(.CURDIR)/../libuuconf; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libuuconf.a\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/libuuconf.a\n" | ${MAKE} -r -s -f - xxx
 
 LIBUUCP!=cd $(.CURDIR)/../libuucp; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libuucp.a\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/libuucp.a\n" | ${MAKE} -r -s -f - xxx
 
 VERSION=	1.04
 owner=		uucp
