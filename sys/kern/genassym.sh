@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.8 1997/08/20 06:58:10 mikel Exp $
+#	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -49,10 +49,20 @@ BEGIN {
 	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
 	defining = 0;
+	type = "long";
+	asmtype = "n";
+	asmprint = "";
 }
 
 $0 ~ /^[ \t]*#.*/ || $0 ~ /^[ \t]*$/ {
 	# Just ignore comments and empty lines
+	next;
+}
+
+$0 ~ /^config[ \t]/ {
+	type = $2;
+	asmtype = $3;
+	asmprint = $4;
 	next;
 }
 
@@ -103,9 +113,9 @@ $0 ~ /^endif/ {
 	value = $0
 	gsub("^define[ \t]+[A-Za-z_][A-Za-z_0-9]*[ \t]+", "", value)
 	if (ccode)
-		printf("printf(\"#define " $2 " %%ld\\n\", (long)" value ");\n");
+		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
 	else
-		printf("__asm(\"XYZZY %s %%0\" : : \"n\" (%s));\n", $2, value);
+		printf("__asm(\"XYZZY %s %%%s0\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 	next;
 }
 
