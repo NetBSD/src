@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.40 1998/01/20 16:44:22 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.41 1998/03/21 06:25:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.40 1998/01/20 16:44:22 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.41 1998/03/21 06:25:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,6 +442,7 @@ main(argc, argv, envp)
 	sigvec(SIGTERM, &sv, (struct sigvec *)0);
 	sv.sv_handler = goaway;
 	sigvec(SIGINT, &sv, (struct sigvec *)0);
+	sv.sv_mask = 0L;
 	sv.sv_handler = SIG_IGN;
 	sigvec(SIGPIPE, &sv, (struct sigvec *)0);
 
@@ -542,8 +543,13 @@ main(argc, argv, envp)
 				FD_CLR(sep->se_fd, &allsock);
 				nsock--;
 			}
-			if (pid == 0 && debug)
-				setsid();
+			if (pid == 0) {
+				sv.sv_mask = 0L;
+				sv.sv_handler = SIG_DFL;
+				sigvec(SIGPIPE, &sv, (struct sigvec *)0);
+				if (debug)
+					setsid();
+			}
 		}
 		sigsetmask(0L);
 		if (pid == 0) {
