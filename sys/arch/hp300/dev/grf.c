@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.56 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56 2004/08/28 17:37:00 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -123,25 +123,25 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $");
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
-int	grfmatch __P((struct device *, struct cfdata *, void *));
-void	grfattach __P((struct device *, struct device *, void *));
+static int	grfmatch(struct device *, struct cfdata *, void *);
+static void	grfattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(grf, sizeof(struct grf_softc),
     grfmatch, grfattach, NULL, NULL);
 
 extern struct cfdriver grf_cd;
 
-dev_type_open(grfopen);
-dev_type_close(grfclose);
-dev_type_ioctl(grfioctl);
-dev_type_mmap(grfmmap);
+static dev_type_open(grfopen);
+static dev_type_close(grfclose);
+static dev_type_ioctl(grfioctl);
+static dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
 	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
-int	grfprint __P((void *, const char *));
+static int	grfprint(void *, const char *);
 
 /*
  * Frambuffer state information, statically allocated for benefit
@@ -157,20 +157,15 @@ int grfdebug = 0;
 #define GDB_LOCK	0x08
 #endif
 
-int
-grfmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+grfmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
-void
-grfattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+grfattach(struct device *parent, struct device *self, void *aux)
 {
 	struct grf_softc *sc = (struct grf_softc *)self;
 	struct grfdev_attach_args *ga = aux;
@@ -184,10 +179,8 @@ grfattach(parent, self, aux)
 	(void)config_found(self, aux, grfprint);
 }
 
-int
-grfprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+static int
+grfprint(void *aux, const char *pnp)
 {
 
 	/* Only ITEs can attach to GRFs, easy... */
@@ -198,11 +191,8 @@ grfprint(aux, pnp)
 }
 
 /*ARGSUSED*/
-int
-grfopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+static int
+grfopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -248,11 +238,8 @@ grfopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
-int
-grfclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+static int
+grfclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -274,13 +261,8 @@ grfclose(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
-int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	int flag;
-	caddr_t data;
-	struct proc *p;
+static int
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct grf_softc *sc;
 	struct grf_data *gp;
@@ -329,11 +311,8 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+static paddr_t
+grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 
@@ -341,8 +320,7 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfon(dev)
-	dev_t dev;	/* XXX */
+grfon(dev_t dev/*XXX*/)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -363,8 +341,7 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;	/* XXX */
+grfoff(dev_t dev/*XXX*/)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -384,9 +361,7 @@ grfoff(dev)
 }
 
 paddr_t
-grfaddr(sc, off)
-	struct grf_softc *sc;
-	off_t off;
+grfaddr(struct grf_softc *sc, off_t off)
 {
 	struct grf_data *gp= sc->sc_data;
 	struct grfinfo *gi = &gp->g_display;
@@ -411,11 +386,7 @@ grfaddr(sc, off)
 
 /*ARGSUSED*/
 int
-hpuxgrfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd, flag;
-	caddr_t data;
-	struct proc *p;
+hpuxgrfioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 	struct grf_data *gp = sc->sc_data;
@@ -516,9 +487,7 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 }
 
 int
-grflock(gp, block)
-	struct grf_data *gp;
-	int block;
+grflock(struct grf_data *gp, int block)
 {
 	struct proc *p = curproc;		/* XXX */
 	int error;
@@ -569,8 +538,7 @@ grflock(gp, block)
 }
 
 int
-grfunlock(gp)
-	struct grf_data *gp;
+grfunlock(struct grf_data *gp)
 {
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
@@ -606,8 +574,7 @@ grfunlock(gp)
  * machines where device 10 exists.
  */
 int
-grfdevno(dev)
-	dev_t dev;
+grfdevno(dev_t dev)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -641,10 +608,7 @@ grfdevno(dev)
 #endif	/* COMPAT_HPUX */
 
 int
-grfmap(dev, addrp, p)
-	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
+grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 	struct grf_data *gp = sc->sc_data;
@@ -678,10 +642,7 @@ grfmap(dev, addrp, p)
 }
 
 int
-grfunmap(dev, addr, p)
-	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
+grfunmap(dev_t dev, caddr_t addr, struct proc *p)
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 	struct grf_data *gp = sc->sc_data;
@@ -701,9 +662,7 @@ grfunmap(dev, addr, p)
 
 #ifdef COMPAT_HPUX
 int
-iommap(dev, addrp)
-	dev_t dev;
-	caddr_t *addrp;
+iommap(dev_t dev, caddr_t *addrp)
 {
 
 #ifdef DEBUG
@@ -714,9 +673,7 @@ iommap(dev, addrp)
 }
 
 int
-iounmmap(dev, addr)
-	dev_t dev;
-	caddr_t addr;
+iounmmap(dev_t dev, caddr_t addr)
 {
 #ifdef DEBUG
 	int unit = minor(dev);
@@ -736,8 +693,7 @@ iounmmap(dev, addr)
  * slot is available.
  */
 int
-grffindpid(gp)
-	struct grf_data *gp;
+grffindpid(struct grf_data *gp)
 {
 	short pid, *sp;
 	int i, limit;
@@ -773,8 +729,7 @@ done:
 }
 
 void
-grfrmpid(gp)
-	struct grf_data *gp;
+grfrmpid(struct grf_data *gp)
 {
 	short pid, *sp;
 	int limit, i;
@@ -802,9 +757,7 @@ grfrmpid(gp)
 }
 
 int
-grflckmmap(dev, addrp)
-	dev_t dev;
-	caddr_t *addrp;
+grflckmmap(dev_t dev, caddr_t *addrp)
 {
 #ifdef DEBUG
 	struct proc *p = curproc;		/* XXX */
@@ -817,9 +770,7 @@ grflckmmap(dev, addrp)
 }
 
 int
-grflckunmmap(dev, addr)
-	dev_t dev;
-	caddr_t addr;
+grflckunmmap(dev_t dev, caddr_t addr)
 {
 #ifdef DEBUG
 	int unit = minor(dev);

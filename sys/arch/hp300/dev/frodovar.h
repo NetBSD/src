@@ -1,4 +1,4 @@
-/*	$NetBSD: frodovar.h,v 1.5 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.6 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct frodo_device {
 #define	frodocf_offset		cf_loc[FRODOCF_OFFSET]
 #define	FRODO_UNKNOWN_OFFSET	FRODOCF_OFFSET_DEFAULT
 
-void	frodo_intr_establish __P((struct device *, int (*func)(void *),
-	    void *, int, int));
-void	frodo_intr_disestablish __P((struct device *, int));
-void	frodo_init_bus_space __P((bus_space_tag_t));
+void	frodo_intr_establish(struct device *, int (*func)(void *),
+	    void *, int, int);
+void	frodo_intr_disestablish(struct device *, int);
+void	frodo_init_bus_space(bus_space_tag_t);

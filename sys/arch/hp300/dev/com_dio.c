@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dio.c,v 1.1 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: com_dio.c,v 1.2 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.1 2003/11/08 11:18:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.2 2004/08/28 17:37:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ struct com_dio_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_dio_match(struct device *, struct cfdata *, void *);
-void com_dio_attach(struct device *, struct device *, void *);
+static int	com_dio_match(struct device *, struct cfdata *, void *);
+static void	com_dio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_dio, sizeof(struct com_dio_softc),
     com_dio_match, com_dio_attach, NULL, NULL);
@@ -105,7 +105,7 @@ static struct bus_space_tag comcntag;
 
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 
-int
+static int
 com_dio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
@@ -121,7 +121,7 @@ com_dio_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 com_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_dio_softc *dsc = (void *)self;
