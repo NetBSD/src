@@ -1,12 +1,11 @@
-/*	$NetBSD: strncmp.S,v 1.7 1997/01/04 03:26:27 jtc Exp $	*/
+/*	$NetBSD: strncmp.S,v 1.8 1997/05/18 20:32:21 jtc Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by J.T. Conklin <jtc@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,58 +17,68 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-	RCSID("from: @(#)strncmp.s	5.1 (Berkeley) 5/12/90")
-#else
-	RCSID("$NetBSD: strncmp.S,v 1.7 1997/01/04 03:26:27 jtc Exp $")
-#endif
+	RCSID("$NetBSD: strncmp.S,v 1.8 1997/05/18 20:32:21 jtc Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-/*
- * NOTE: this guy returns result compatible with the VAX assembly version.
- * The C version on the portable gen directory returns different results
- * (different signs!) when comparing chars with the high bit on.  Who is
- * right??
- */
 ENTRY(strncmp)
-	movl	sp@(12),d1		| count
-	jeq	Lscdone			| nothing to do
-	movl	sp@(4),a0		| a0 = string1
-	movl	sp@(8),a1		| a1 = string2
-Lscloop:
-	movb	a0@+,d0			| get *string1
-	cmpb	a1@+,d0			| compare a byte
-	jne	Lscexit			| not equal, break out
-	tstb	d0			| at end of string1?
-	jeq	Lscdone			| yes, all done
-	subql	#1,d1			| no, adjust count
-	jne	Lscloop			| more to do, keep going
-Lscdone:
-	moveq	#0,d0			| strings are equal
+	movl	sp@(12),d1
+	jeq	L4
+	movl	sp@(4),a0
+	movl	sp@(8),a1
+L1:				/* unroll by 4 for m680[23]0's */
+	movb	a0@+,d0
+	jeq	L2
+	subb	a1@+,d0
+	jne	L3
+	subql	#1,d1
+	jne	L4
+
+	movb	a0@+,d0
+	jeq	L2
+	subb	a1@+,d0
+	jne	L3
+	subql	#1,d1
+	jne	L4
+
+	movb	a0@+,d0
+	jeq	L2
+	subb	a1@+,d0
+	jne	L3
+	subql	#1,d1
+	jne	L4
+
+	movb	a0@+,d0
+	jeq	L2
+	subb	a1@+,d0
+	jne	L3
+	subql	#1,d1
+	jne	L1
+
+L4:	moveq	#0,d0
 	rts
-Lscexit:
-	subb	a1@-,d0			| *string1 - *string2
-	extbl	d0
+
+L2:	subb	a1@,d0
+L3:	extbl	d0
 	rts
