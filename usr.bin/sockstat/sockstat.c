@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.1 2005/03/09 05:20:05 atatat Exp $ */
+/*	$NetBSD: sockstat.c,v 1.2 2005/03/09 05:53:47 atatat Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.1 2005/03/09 05:20:05 atatat Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.2 2005/03/09 05:53:47 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -188,6 +188,7 @@ main(int argc, char *argv[])
 
 	get_files();
 
+	p.p_pid = 0;
 	for (i = 0; i < nfiles; i++)
 		if ((kp = pick_socket(&flist[i])) != NULL &&
 		    get_proc(&p, flist[i].ki_pid) == 0)
@@ -491,6 +492,9 @@ get_proc(struct kinfo_proc2 *p, int pid)
 	int name[6];
 	u_int namelen;
 	size_t sz;
+
+	if (p->p_pid == pid)
+		return (0);
 
 	sz = sizeof(*p);
 	namelen = 0;
