@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.81 2003/05/04 13:43:09 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.82 2003/06/24 07:32:03 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.81 2003/05/04 13:43:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.82 2003/06/24 07:32:03 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,6 +436,7 @@ nd6_timer(ignored_arg)
 			} else {
 				struct mbuf *m = ln->ln_hold;
 				if (m) {
+					ln->ln_hold = NULL;
 					/*
 					 * Fake rcvif to make the ICMP error
 					 * more helpful in diagnosing for the
@@ -447,7 +448,6 @@ nd6_timer(ignored_arg)
 
 					icmp6_error(m, ICMP6_DST_UNREACH,
 						    ICMP6_DST_UNREACH_ADDR, 0);
-					ln->ln_hold = NULL;
 				}
 				next = nd6_free(rt, 0);
 			}
