@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.41 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.amiga,v 1.42 2001/04/15 17:14:26 kleink Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/amiga/ieee.h	comp-c-include
 ./usr/include/amiga/ieeefp.h	comp-c-include
 ./usr/include/amiga/int_const.h	comp-c-include
+./usr/include/amiga/int_fmtio.h	comp-c-include
 ./usr/include/amiga/int_limits.h	comp-c-include
 ./usr/include/amiga/int_mwgwtypes.h	comp-c-include
 ./usr/include/amiga/int_types.h	comp-c-include
