@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.27 2001/01/19 09:02:40 kleink Exp $	*/
+/*	$NetBSD: gencode.c,v 1.28 2001/04/29 10:25:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.27 2001/01/19 09:02:40 kleink Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.28 2001/04/29 10:25:50 martin Exp $");
 #endif
 #endif
 
@@ -604,14 +604,13 @@ init_linktype(type)
 		off_nl = 4;
 		return;
 
-	case DLT_PPP_ETHER:		/* NetBSD PPP over Ethernet */
+	case DLT_PPP_ETHER:
 		/*
-		 * This includes the Ethernet header (since we need
-		 * the ethertype to dispatch Session vs. Discovery)
-		 * and the PPPoE (RFC 2516) header.
+		 * This does no include the Ethernet header, and
+		 * only covers session state.
 		 */
-		off_linktype = 20;
-		off_nl = 22;
+		off_linktype = 6;
+		off_nl = 8;
 		return;
 
 	case DLT_FDDI:
@@ -737,6 +736,7 @@ gen_linktype(proto)
 
 	case DLT_PPP:
 	case DLT_PPP_SERIAL:
+	case DLT_PPP_ETHER:
 		if (proto == ETHERTYPE_IP)
 			proto = PPP_IP;
 #ifdef INET6
