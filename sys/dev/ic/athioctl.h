@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.5 2004/04/30 23:59:55 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.6 2004/07/28 08:57:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -97,12 +97,19 @@ struct ath_stats {
 #define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
 
 struct ath_diag {
-	char	ad_name[IFNAMSIZ];		/* if name, e.g. "ath0" */
-	u_int	ad_id;
-	caddr_t	ad_data;
-	u_int	ad_size;
+	char	ad_name[IFNAMSIZ];	/* if name, e.g. "ath0" */
+	u_int16_t ad_id;
+#define	ATH_DIAG_DYN	0x8000		/* allocate buffer in caller */
+#define	ATH_DIAG_IN	0x4000		/* copy in parameters */
+#define	ATH_DIAG_OUT	0x0000		/* copy out results (always) */
+#define	ATH_DIAG_ID	0x0fff
+	u_int16_t ad_in_size;		/* pack to fit, yech */
+	caddr_t	ad_in_data;
+	caddr_t	ad_out_data;
+	u_int	ad_out_size;
 
 };
+
 #define	SIOCGATHDIAG	_IOWR('i', 138, struct ath_diag)
 
 /*

@@ -4,7 +4,7 @@ copyright does _NOT_ contain a "or GPL" clause and does _NOT_ permit
 redistribution with changes.
 
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -39,5 +39,5 @@ redistribution with changes.
  * SUCH DAMAGES.
  *
  * $NetBSD$
- * $Id: COPYRIGHT,v 1.2 2003/06/25 04:50:21 sam Exp $
+ * $Id: COPYRIGHT,v 1.2 2004/05/15 22:26:24 samleffler Exp $
  */

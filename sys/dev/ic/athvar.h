@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.8 2004/04/30 23:59:52 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.9 2004/07/28 08:57:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -262,13 +262,10 @@ int	ath_intr(void *);
 	((*(_ah)->ah_reset)((_ah), (_opmode), (_chan), (_outdoor), (_pstatus)))
 #define	ath_hal_getratetable(_ah, _mode) \
 	((*(_ah)->ah_getRateTable)((_ah), (_mode)))
-#define	ath_hal_getregdomain(_ah) \
-	((*(_ah)->ah_getRegDomain)((_ah)))
-#define	ath_hal_getcountrycode(_ah)	(_ah)->ah_countryCode
 #define	ath_hal_getmac(_ah, _mac) \
 	((*(_ah)->ah_getMacAddress)((_ah), (_mac)))
-#define	ath_hal_detach(_ah) \
-	((*(_ah)->ah_detach)((_ah)))
+#define	ath_hal_setmac(_ah, _mac) \
+	((*(_ah)->ah_setMacAddress)((_ah), (_mac)))
 #define	ath_hal_intrset(_ah, _mask) \
 	((*(_ah)->ah_setInterrupts)((_ah), (_mask)))
 #define	ath_hal_intrget(_ah) \
@@ -330,6 +327,28 @@ int	ath_intr(void *);
 		(_dc), (_cc)))
 #define	ath_hal_setassocid(_ah, _bss, _associd) \
 	((*(_ah)->ah_writeAssocid)((_ah), (_bss), (_associd), 0))
+#define	ath_hal_getcapability(_ah, _cap, _param, _result) \
+	((*(_ah)->ah_getCapability)((_ah), (_cap), (_param), (_result)))
+#define	ath_hal_getregdomain(_ah, _prd) \
+	ath_hal_getcapability(_ah, HAL_CAP_REG_DMN, 0, (_prd))
+#define	ath_hal_getcountrycode(_ah, _pcc) \
+	(*(_pcc) = (_ah)->ah_countryCode)
+#define	ath_hal_detach(_ah) \
+	((*(_ah)->ah_detach)(_ah))
+
+#ifdef SOFTLED
+#define ath_hal_gpioCfgOutput(_ah, _gpio) \
+        ((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
+#define ath_hal_gpioCfgInput(_ah, _gpio) \
+        ((*(_ah)->ah_gpioCfgInput)((_ah), (_gpio)))
+#define ath_hal_gpioGet(_ah, _gpio) \
+        ((*(_ah)->ah_gpioGet)((_ah), (_gpio)))
+#define ath_hal_gpioSet(_ah, _gpio, _b) \
+        ((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
+#define ath_hal_gpioSetIntr(_ah, _gpioSel, _b) \
+        ((*(_ah)->ah_gpioSetIntr)((_ah), (_sel), (_b)))
+#endif
+
 #define	ath_hal_setopmode(_ah) \
 	((*(_ah)->ah_setPCUConfig)((_ah)))
 #define	ath_hal_stoptxdma(_ah, _qnum) \
@@ -340,12 +359,16 @@ int	ath_intr(void *);
 	((*(_ah)->ah_startPcuReceive)((_ah)))
 #define	ath_hal_stopdmarecv(_ah) \
 	((*(_ah)->ah_stopDmaReceive)((_ah)))
-#define	ath_hal_dumpstate(_ah) \
-	((*(_ah)->ah_dumpState)((_ah)))
-#define	ath_hal_getdiagstate(_ah, _id, _data, _size) \
-	((*(_ah)->ah_getDiagState)((_ah), (_id), (_data), (_size)))
-#define	ath_hal_setuptxqueue(_ah, _type, _irq) \
-	((*(_ah)->ah_setupTxQueue)((_ah), (_type), (_irq)))
+#define	ath_hal_getdiagstate(_ah, _id, _indata, _insize, _outdata, _outsize) \
+	((*(_ah)->ah_getDiagState)((_ah), (_id), \
+		(_indata), (_insize), (_outdata), (_outsize)))
+#define	ath_hal_getregdomain(_ah, _prd) \
+	ath_hal_getcapability(_ah, HAL_CAP_REG_DMN, 0, (_prd))
+#define	ath_hal_getcountrycode(_ah, _pcc) \
+	(*(_pcc) = (_ah)->ah_countryCode)
+
+#define	ath_hal_setuptxqueue(_ah, _type, _qinfo) \
+	((*(_ah)->ah_setupTxQueue)((_ah), (_type), (_qinfo)))
 #define	ath_hal_resettxqueue(_ah, _q) \
 	((*(_ah)->ah_resetTxQueue)((_ah), (_q)))
 #define	ath_hal_releasetxqueue(_ah, _q) \
@@ -357,10 +380,6 @@ int	ath_intr(void *);
 #define	ath_hal_rxmonitor(_ah) \
 	((*(_ah)->ah_rxMonitor)((_ah)))
 
-#define	ath_hal_setupbeacondesc(_ah, _ds, _opmode, _flen, _hlen, \
-		_rate, _antmode) \
-	((*(_ah)->ah_setupBeaconDesc)((_ah), (_ds), (_opmode), \
-		(_flen), (_hlen), (_rate), (_antmode)))
 #define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
 #define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext) \
@@ -371,9 +390,9 @@ int	ath_intr(void *);
 	((*(_ah)->ah_setupTxDesc)((_ah), (_ds), (_plen), (_hlen), (_atype), \
 		(_txpow), (_txr0), (_txtr0), (_keyix), (_ant), \
 		(_flags), (_rtsrate), (_rtsdura)))
-#define	ath_hal_setupxtxdesc(_ah, _ds, _short, \
+#define	ath_hal_setupxtxdesc(_ah, _ds, \
 		_txr1, _txtr1, _txr2, _txtr2, _txr3, _txtr3) \
-	((*(_ah)->ah_setupXTxDesc)((_ah), (_ds), (_short), \
+	((*(_ah)->ah_setupXTxDesc)((_ah), (_ds), \
 		(_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
 #define	ath_hal_filltxdesc(_ah, _ds, _l, _first, _last) \
 	((*(_ah)->ah_fillTxDesc)((_ah), (_ds), (_l), (_first), (_last)))
