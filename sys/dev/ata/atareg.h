@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.8 2002/01/13 17:24:30 christos Exp $	*/
+/*	$NetBSD: atareg.h,v 1.8.10.1 2004/05/14 06:04:40 jdc Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -103,29 +103,54 @@ struct ataparams {
 #define	WDC_VER_ATA3	0x0008
 #define	WDC_VER_ATA4	0x0010
 #define	WDC_VER_ATA5	0x0020
+#define	WDC_VER_ATA6	0x0040
+#define	WDC_VER_ATA7	0x0080
     u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
     u_int16_t	atap_cmd_set1;    	/* 82: command set supported */
-#define WDC_CMD1_NOP	0x4000
-#define WDC_CMD1_RB	0x2000
-#define WDC_CMD1_WB	0x1000
-#define WDC_CMD1_HPA	0x0400
-#define WDC_CMD1_DVRST	0x0200
-#define WDC_CMD1_SRV	0x0100
-#define WDC_CMD1_RLSE	0x0080
-#define WDC_CMD1_AHEAD	0x0040
-#define WDC_CMD1_CACHE	0x0020
-#define WDC_CMD1_PKT	0x0010
-#define WDC_CMD1_PM	0x0008
-#define WDC_CMD1_REMOV	0x0004
-#define WDC_CMD1_SEC	0x0002
-#define WDC_CMD1_SMART	0x0001
+#define	WDC_CMD1_NOP	0x4000		/*	NOP */
+#define	WDC_CMD1_RB	0x2000		/*	READ BUFFER */
+#define	WDC_CMD1_WB	0x1000		/*	WRITE BUFFER */
+/*			0x0800			Obsolete */
+#define	WDC_CMD1_HPA	0x0400		/*	Host Protected Area */
+#define	WDC_CMD1_DVRST	0x0200		/*	DEVICE RESET */
+#define	WDC_CMD1_SRV	0x0100		/*	SERVICE */
+#define	WDC_CMD1_RLSE	0x0080		/*	release interrupt */
+#define	WDC_CMD1_AHEAD	0x0040		/*	look-ahead */
+#define	WDC_CMD1_CACHE	0x0020		/*	write cache */
+#define	WDC_CMD1_PKT	0x0010		/*	PACKET */
+#define	WDC_CMD1_PM	0x0008		/*	Power Management */
+#define	WDC_CMD1_REMOV	0x0004		/*	Removable Media */
+#define	WDC_CMD1_SEC	0x0002		/*	Security Mode */
+#define	WDC_CMD1_SMART	0x0001		/*	SMART */
     u_int16_t	atap_cmd_set2;    	/* 83: command set supported */
-#define WDC_CMD2_RMSN	0x0010
-#define WDC_CMD2_DM	0x0001
-#define ATA_CMD2_APM	0x0008
-#define ATA_CMD2_CFA	0x0004
-#define ATA_CMD2_RWQ	0x0002
+#define	ATA_CMD2_FCE	0x2000		/*	FLUSH CACHE EXT */
+#define	WDC_CMD2_FC	0x1000		/*	FLUSH CACHE */
+#define	WDC_CMD2_DCO	0x0800		/*	Device Configuration Overlay */
+#define	ATA_CMD2_LBA48	0x0400		/*	48-bit Address */
+#define	WDC_CMD2_AAM	0x0200		/*	Automatic Acoustic Management */
+#define	WDC_CMD2_SM	0x0100		/*	SET MAX security extention */
+#define	WDC_CMD2_SFREQ	0x0040		/*	SET FEATURE is required
+						to spin-up after power-up */
+#define	WDC_CMD2_PUIS	0x0020		/*	Power-Up In Standby */
+#define	WDC_CMD2_RMSN	0x0010		/*	Removable Media Status Notify */
+#define	ATA_CMD2_APM	0x0008		/*	Advanced Power Management */
+#define	ATA_CMD2_CFA	0x0004		/*	CFA */
+#define	ATA_CMD2_RWQ	0x0002		/*	READ/WRITE DMA QUEUED */
+#define	WDC_CMD2_DM	0x0001		/*	DOWNLOAD MICROCODE */
     u_int16_t	atap_cmd_ext;		/* 84: command/features supp. ext. */
+#define	ATA_CMDE_TLCONT	0x1000		/*	Time-limited R/W Continuous */
+#define	ATA_CMDE_TL	0x0800		/*	Time-limited R/W */
+#define	ATA_CMDE_URGW	0x0400		/*	URG for WRITE STREAM DMA/PIO */
+#define	ATA_CMDE_URGR	0x0200		/*	URG for READ STREAM DMA/PIO */
+#define	ATA_CMDE_WWN	0x0100		/*	World Wide name */
+#define	ATA_CMDE_WQFE	0x0080		/*	WRITE DMA QUEUED FUA EXT */
+#define	ATA_CMDE_WFE	0x0040		/*	WRITE DMA/MULTIPLE FUA EXT */
+#define	ATA_CMDE_GPL	0x0020		/*	General Purpose Logging */
+#define	ATA_CMDE_STREAM	0x0010		/*	Streaming */
+#define	ATA_CMDE_MCPTC	0x0008		/*	Media Card Pass Through Cmd */
+#define	ATA_CMDE_MS	0x0004		/*	Media serial number */
+#define	ATA_CMDE_SST	0x0002		/*	SMART self-test */
+#define	ATA_CMDE_SEL	0x0001		/*	SMART error logging */
     u_int16_t	atap_cmd1_en;		/* 85: cmd/features enabled */
 /* bits are the same as atap_cmd_set1 */
     u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
