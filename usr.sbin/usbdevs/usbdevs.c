@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.10 1999/06/30 06:23:28 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.11 1999/09/08 02:39:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,13 +198,14 @@ main(argc, argv)
 			sprintf(buf, "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
-				ncont++;
 				dumpone(buf, f, addr);
 				close(f);
 			} else {
-				if (errno == EACCES)
-					warn("%s", buf);
+				if (errno == ENOENT || errno == ENXIO)
+					continue;
+				warn("%s", buf);
 			}
+			ncont++;
 		}
 		if (verbose && ncont == 0)
 			printf("%s: no USB controllers found\n", __progname);
