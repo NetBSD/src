@@ -163,7 +163,7 @@ extern int lineno;
 extern int err_count;
 extern char line[], *lineptr;
 
-#ifdef sparc
+#if defined(sparc) && !defined(__NetBSD__)
 #include <alloca.h>
 #else
 #ifdef __GNUC__
