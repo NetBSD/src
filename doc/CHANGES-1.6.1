@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.122 2003/03/04 04:54:46 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.123 2003/03/04 05:50:22 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3772,3 +3772,12 @@ gnu/dist/sendmail/sendmail/sendmail.h		1.11
 	[atatat, ticket #1190]
 
 	[Moved RC2 tag for these files]
+
+sys/net/if_pppoe.c				1.40
+
+	When looking up a Host-Uniq tag, do not consider NULL as a valid
+	(struct pppoe_softc *). Although we do not generate such tags, 
+	other hosts could and some actually do.
+	[aymeric, ticket #1187]
+
+	[Moved RC2 tag for this file]
