@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.1.1.1 2003/03/25 22:30:19 pooka Exp $	*/
+/*	$NetBSD: names.h,v 1.1.1.2 2003/10/27 16:14:23 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -39,7 +39,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * Id: names.h,v 1.21 2003/03/23 21:16:26 christos Exp
+ * Id: names.h,v 1.23 2003/10/14 19:29:55 christos Exp
  */
 
 /*
@@ -81,7 +81,7 @@ static const struct {
 	{ "HTML document",				"text/html", },
 	{ "BCPL program",				"text/x-bcpl" },
 	{ "M4 macro language pre-processor",		"text/x-m4" },
-	{ "can't happen error on names.h/types",	"error/x-error" },
+	{ "cannot happen error on names.h/types",	"error/x-error" },
 	{ 0, 0}
 };
 
@@ -183,6 +183,8 @@ static struct names {
 	{"HREF=",	L_HTML},
 	{"<body",	L_HTML},
 	{"<BODY",	L_HTML},
+	{"<html",	L_HTML},
+	{"<HTML",	L_HTML},
 	{NULL,		0}
 };
 #define NNAMES ((sizeof(names)/sizeof(struct names)) - 1)

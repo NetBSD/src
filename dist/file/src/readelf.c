@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.1.1.2 2003/05/25 21:28:10 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.1.1.3 2003/10/27 16:14:24 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -42,9 +42,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.32 2003/05/23 21:31:59 christos Exp")
+FILE_RCSID("@(#)Id: readelf.c,v 1.35 2003/10/14 19:29:55 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.1.1.2 2003/05/25 21:28:10 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.1.1.3 2003/10/27 16:14:24 pooka Exp $");
 #endif
 #endif
 
@@ -228,7 +228,7 @@ dophn_core(struct magic_set *ms, int class, int swap, int fd, off_t off,
 	ssize_t bufsize;
 
 	if (size != ph_size) {
-		file_error(ms, "Corrupted program header size");
+		file_error(ms, 0, "corrupted program header size");
 		return -1;
 	}
 	/*
@@ -372,17 +372,12 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 			if (ver_rel == 0 && ver_patch != 0) {
 				if (file_printf(ms, ".%u", ver_patch) == -1)
 					return size;
-			} else if (ver_rel != 0 && ver_rel <= 26) {
-				if (file_printf(ms, "%c", 'A' + ver_rel - 1)
-				    == -1)
-					return size;
-			} else if (ver_rel != 0 && ver_rel <= 52) {
-				if (file_printf(ms, "Z%c", 'A' + ver_rel - 1)
-				    == -1)
-					return size;
 			} else if (ver_rel != 0) {
-				if (file_printf(ms, "<unknown>") == -1)
-					return size;
+				while (ver_rel > 26) {
+					file_printf(ms, "Z");
+					ver_rel -= 26;
+				}
+				file_printf(ms, "%c", 'A' + ver_rel - 1);
 			}
 		}
 		return size;
@@ -554,7 +549,7 @@ doshn(struct magic_set *ms, int class, int swap, int fd, off_t off, int num,
 	Elf64_Shdr sh64;
 
 	if (size != sh_size) {
-		file_error(ms, "Corrupted section header size");
+		file_error(ms, 0, "corrupted section header size");
 		return -1;
 	}
 
@@ -598,7 +593,7 @@ dophn_exec(struct magic_set *ms, int class, int swap, int fd, off_t off,
 	off_t savedoffset;
 
 	if (size != ph_size) {
-		file_error(ms, "Corrupted program header size");
+		file_error(ms, 0, "corrupted program header size");
 		return -1;
 	}
 	if (lseek(fd, off, SEEK_SET) == (off_t)-1) {
@@ -672,7 +667,7 @@ file_tryelf(struct magic_set *ms, int fd, const unsigned char *buf,
 	int swap;
 
 	/*
-	 * If we can't seek, it must be a pipe, socket or fifo.
+	 * If we cannot seek, it must be a pipe, socket or fifo.
 	 */
 	if((lseek(fd, (off_t)0, SEEK_SET) == (off_t)-1) && (errno == ESPIPE))
 		fd = file_pipe2file(ms, fd, buf, nbytes);

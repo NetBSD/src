@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.4 2003/10/27 16:14:22 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -75,9 +75,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.81 2003/09/12 19:39:44 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.85 2003/10/09 16:29:53 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.4 2003/10/27 16:14:22 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -90,10 +90,6 @@ __RCSID("$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $");
 
 # define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
 
-#ifndef MAGIC
-# define MAGIC "/etc/magic"
-#endif
-
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512
 #endif
@@ -102,8 +98,7 @@ private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
 	nobuffer = 0,   /* Do not buffer stdout 		*/
-	kflag = 0,	/* Keep going after the first match	*/
-	rflag = 0;	/* Restore access times of files	*/
+	kflag = 0;	/* Keep going after the first match	*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
@@ -139,7 +134,7 @@ main(int argc, char *argv[])
 	int flags = 0;
 	char *mime, *home, *usermagic;
 	struct stat sb;
-#define OPTSTRING	"bcCdf:F:ikLm:nNpsvz"
+#define OPTSTRING	"bcCdf:F:ikLm:nNprsvz"
 #ifdef HAVE_GETOPT_LONG
 	int longindex;
 	private struct option long_options[] =
@@ -161,6 +156,7 @@ main(int argc, char *argv[])
 		{"preserve-date", 0, 0, 'p'},
 #endif
 		{"uncompress", 0, 0, 'z'},
+		{"raw", 0, 0, 'r'},
 		{"no-buffer", 0, 0, 'n'},
 		{"no-pad", 0, 0, 'N'},
 		{"special-files", 0, 0, 's'},
@@ -235,11 +231,6 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			flags |= MAGIC_MIME;
-			if ((mime = malloc(strlen(magicfile) + 6)) != NULL) {
-				(void)strcpy(mime, magicfile);
-				(void)strcat(mime, ".mime");
-				magicfile = mime;
-			}
 			break;
 		case 'k':
 			kflag = 1;
@@ -258,6 +249,9 @@ main(int argc, char *argv[])
 			flags |= MAGIC_PRESERVE_ATIME;
 			break;
 #endif
+		case 'r':
+			flags |= MAGIC_RAW;
+			break;
 		case 's':
 			flags |= MAGIC_DEVICES;
 			break;
@@ -288,7 +282,7 @@ main(int argc, char *argv[])
 	switch(action) {
 	case FILE_CHECK:
 	case FILE_COMPILE:
-		magic = magic_open(flags);
+		magic = magic_open(flags|MAGIC_CHECK);
 		if (magic == NULL) {
 			(void)fprintf(stderr, "%s: %s\n", progname,
 			    strerror(errno));
@@ -296,7 +290,12 @@ main(int argc, char *argv[])
 		}
 		c = action == FILE_CHECK ? magic_check(magic, magicfile) :
 		    magic_compile(magic, magicfile);
-		return c == -1 ? 1 : 0;
+		if (c == -1) {
+			(void)fprintf(stderr, "%s: %s\n", progname,
+			    magic_error(magic));
+			return -1;
+		}
+		return 0;
 	default:
 		load(magicfile, flags);
 		break;
@@ -486,6 +485,7 @@ help(void)
 "  -n, --no-buffer            do not buffer output\n"
 "  -N, --no-pad               do not pad output\n"
 "  -p, --preserve-date        preserve access times on files\n"
+"  -r, --raw                  don't translate unprintable chars to \\ooo\n"
 "  -s, --special-files        treat special (block/char devices) files as\n"
 "                             ordinary ones\n"
 "      --help                 display this help and exit\n"
