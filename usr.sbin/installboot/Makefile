@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/03 05:21:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/03 05:58:44 lukem Exp $
 #
 
 PROG=	installboot
@@ -14,13 +14,10 @@ IB_MACHINES?=	vax
 SRCS+=		${IB_MACHINES:S/$/.c/}
 
 
-# XXX: maybe build as necessary and commit, rather than build each time?
-#
-CPPFLAGS+=	-I${.CURDIR}
-CLEANFILES+=	machines.c
-
-machines.c: mkmachines.awk Makefile
+regenmachines: mkmachines.awk Makefile
+	-mv -f ${.CURDIR}/machines.c ${.CURDIR}/machines.c.bak
 	awk -f ${.CURDIR}/mkmachines.awk ${IB_MACHINES} > ${.TARGET}
+	mv ${.TARGET} ${.CURDIR}/machines.c
 
 
 .ifndef HOSTPROG
