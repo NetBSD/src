@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.14 1996/03/17 01:33:37 thorpej Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.15 1996/03/24 16:58:46 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -51,9 +51,7 @@
 
 /* Support for the NCR 53C96 SCSI processor--primarily for '040 Macs. */
 
-#ifdef DDB
-int     Debugger();
-#else
+#ifndef DDB
 #define Debugger() panic("Should call Debugger here (mac/dev/scsi96.c).")
 #endif
 
