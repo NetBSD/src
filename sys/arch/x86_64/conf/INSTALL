@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2003/04/17 14:45:33 fvdl Exp $
+# $NetBSD: INSTALL,v 1.8 2003/04/22 22:39:25 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/x86_64/conf/std.x86_64"
 
-#ident 		"INSTALL-$Revision: 1.7 $"
+#ident 		"INSTALL-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -186,6 +186,8 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
 #agp* 	at pchb?
 
