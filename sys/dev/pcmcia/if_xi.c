@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.44 2004/08/09 04:47:40 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.45 2004/08/09 05:11:33 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.44 2004/08/09 04:47:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.45 2004/08/09 05:11:33 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -321,7 +321,7 @@ xi_intr(arg)
 {
 	struct xi_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t esr, rsr, isr, rx_status, savedpage;
+	u_int8_t esr, rsr, isr, rx_status;
 	u_int16_t tx_status, recvcount = 0, tempint;
 
 	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
@@ -332,16 +332,13 @@ xi_intr(arg)
 
 	ifp->if_timer = 0;	/* turn watchdog timer off */
 
+	PAGE(sc, 0);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK) {
 		/* Disable interrupt (Linux does it). */
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    0);
 	}
 
-	savedpage =
-	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + PR);
-
-	PAGE(sc, 0);
 	esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + ESR);
 	isr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + ISR0);
 	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RSR);
@@ -440,7 +437,7 @@ xi_intr(arg)
 
 end:
 	/* Reenable interrupts. */
-	PAGE(sc, savedpage);
+	PAGE(sc, 0);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 	    ENABLE_INT);
 
@@ -1167,8 +1164,6 @@ done:
 	if (!LIST_FIRST(&sc->sc_mii.mii_phys))
 		x |= SWC1_AUTO_MEDIA;
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + SWC1, x);
-
-	PAGE(sc, 0);
 }
 
 STATIC void
