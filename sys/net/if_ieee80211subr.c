@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.16 2002/09/30 15:48:42 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.17 2002/10/01 03:27:02 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.16 2002/09/30 15:48:42 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.17 2002/10/01 03:27:02 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2997,7 +2997,6 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		default:
 			return EINVAL;
-			break;
 		}
 		if (le16toh(wreq.wi_val[0]) != ic->ic_opmode) {
 			ic->ic_opmode = le16toh(wreq.wi_val[0]);
@@ -3005,8 +3004,12 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case WI_RID_MAC_NODE:
-		/* XXX: should be implemented? */
-		return EPERM;
+		if (wreq.wi_len != IEEE80211_ADDR_LEN / 2)
+			return EINVAL;
+		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), wreq.wi_val);
+		/* if_init will copy lladdr into ic_myaddr */
+		error = ENETRESET;
+		break;
 	case WI_RID_TX_RATE:
 		if (wreq.wi_len != 1)
 			return EINVAL;
