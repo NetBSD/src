@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_sysmp.h,v 1.2 2002/03/09 10:52:21 manu Exp $ */
+/*	$NetBSD: irix_sysmp.h,v 1.3 2002/03/26 10:54:40 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,4 +115,65 @@
 #define IRIX_MPKA_SEM_MAC            38
 #define IRIX_MPKA_MSG_MAC            40
 #define IRIX_MPKA_BSD_KERNADDRS      41
-#endif /* _IRIX_SYSIRIX_MP_H_ */
+
+/* SASZ/SAGET subcommands */
+#define IRIX_MPSA_SINFO			1
+#define IRIX_MPSA_MINFO			2
+#define IRIX_MPSA_DINFO			3
+#define IRIX_MPSA_SERR			4
+#define IRIX_MPSA_NCSTATS		5
+#define IRIX_MPSA_EFS			6
+#define IRIX_MPSA_RMINFO		8
+#define IRIX_MPSA_BUFINFO		9
+#define IRIX_MPSA_RUNQ			10
+#define IRIX_MPSA_DISPQ			11
+#define IRIX_MPSA_VOPINFO		13
+#define IRIX_MPSA_TCPIPSTATS		14
+#define IRIX_MPSA_RCSTAT		15
+#define IRIX_MPSA_CLSTAT		16
+#define IRIX_MPSA_RSSTAT		17
+#define IRIX_MPSA_SVSTAT		18
+#define IRIX_MPSA_XFSSTATS		20
+#define IRIX_MPSA_CLSTAT3		21
+#define IRIX_MPSA_TILEINFO		22
+#define IRIX_MPSA_CFSSTAT		23
+#define IRIX_MPSA_SVSTAT3		24
+#define IRIX_MPSA_NODE_INFO		25
+#define IRIX_MPSA_LPGSTATS		26
+#define IRIX_MPSA_SHMSTAT		27
+#define IRIX_MPSA_KSYM			28
+#define IRIX_MPSA_MSGQUEUE		29
+#define IRIX_MPSA_SEM			30
+#define IRIX_MPSA_SOCKSTATS		31
+#define IRIX_MPSA_SINFO_CPU		32
+#define IRIX_MPSA_STREAMSTATS 		33
+#define IRIX_MPSA_TILEINFO		22
+#define IRIX_MPSA_CFSSTAT		23
+#define IRIX_MPSA_SVSTAT3		24
+#define IRIX_MPSA_NODE_INFO		25
+#define IRIX_MPSA_LPGSTATS		26
+#define IRIX_MPSA_SHMSTAT		27
+#define IRIX_MPSA_KSYM			28
+#define IRIX_MPSA_MSGQUEUE		29
+#define IRIX_MPSA_SEM			30
+#define IRIX_MPSA_SOCKSTATS		31
+#define IRIX_MPSA_SINFO_CPU		32
+#define IRIX_MPSA_STREAMSTATS 		33
+
+/* Real Memory system accounting struct */
+struct irix_sysmp_rminfo {
+	uint32_t	freemem;
+	uint32_t	availsmem;
+	uint32_t	availrmem;
+	uint32_t	bufmem;
+	uint32_t	physmem;
+	uint32_t	dchunkpages;
+	uint32_t	pmapmem;
+	uint32_t	strmem;
+	uint32_t	chunkpages;
+	uint32_t	dpages;
+	uint32_t	emptymem;
+	uint32_t	ravailrmem;
+};
+
+#endif	/* _IRIX_SYSIRIX_IRIX_MP_H_ */
