@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.39 1998/06/30 07:39:23 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.40 1998/07/28 17:58:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,8 +119,15 @@ dofileread(p, fd, fp, buf, nbyte, offset, flags, retval)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (auio.uio_resid < 0)
-		return EINVAL;
+
+	/*
+	 * Reads return ssize_t because -1 is returned on error.  Therefore
+	 * we must restrict the length to SSIZE_MAX to avoid garbage return
+	 * values.
+	 */
+	if (auio.uio_resid > SSIZE_MAX)
+		return (EINVAL);
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
@@ -213,7 +220,12 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++) {
 		auio.uio_resid += iov->iov_len;
-		if (auio.uio_resid < 0) {
+		/*
+		 * Reads return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
@@ -303,8 +315,15 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, flags, retval)
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (auio.uio_resid < 0)
-		return EINVAL;
+
+	/*
+	 * Writes return ssize_t because -1 is returned on error.  Therefore
+	 * we must restrict the length to SSIZE_MAX to avoid garbage return
+	 * values.
+	 */
+	if (auio.uio_resid > SSIZE_MAX)
+		return (EINVAL);
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
@@ -400,7 +419,12 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++) {
 		auio.uio_resid += iov->iov_len;
-		if (auio.uio_resid < 0) {
+		/*
+		 * Writes return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
