@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.20 1998/04/07 10:16:04 fair Exp $	*/
+/*	$NetBSD: var.c,v 1.21 1998/04/07 21:15:33 fair Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.20 1998/04/07 10:16:04 fair Exp $");
+__RCSID("$NetBSD: var.c,v 1.21 1998/04/07 21:15:33 fair Exp $");
 #endif
 #endif /* not lint */
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <paths.h>
 
 /*
  * Shell variables.
@@ -113,8 +114,7 @@ const struct varinit varinit[] = {
 	  NULL },
 	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
 	  NULL },
-/* this should be taken from <paths.h> as _PATH_DEFPATH XXX */
-	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin",
+	{ &vpath,	VSTRFIXED|VTEXTFIXED,		__CONCAT("PATH=",_PATH_DEFPATH),
 	  changepath },
 	/*
 	 * vps1 depends on uid
