@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.3 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.3 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.4 2005/01/09 16:59:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.3 2004/09/14 20:20:47 drochner Exp 
 
 #include <dev/isa/isavar.h>
 
-int	fmv_isa_match __P((struct device *, struct cfdata *, void *));
-void	fmv_isa_attach __P((struct device *, struct device *, void *));
+int	fmv_isa_match(struct device *, struct cfdata *, void *);
+void	fmv_isa_attach(struct device *, struct device *, void *);
 
 struct fmv_isa_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -66,20 +66,26 @@ CFATTACH_DECL(fmv_isa, sizeof(struct fmv_isa_softc),
     fmv_isa_match, fmv_isa_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
-	u_int8_t port;	/* Offset from the base I/O address. */
-	u_int8_t mask;	/* Bits to be checked. */
-	u_int8_t bits;	/* Values to be compared against. */
+	uint8_t port;	/* Offset from the base I/O address. */
+	uint8_t mask;	/* Bits to be checked. */
+	uint8_t bits;	/* Values to be compared against. */
 };
 
-static __inline__ int fe_simple_probe __P((bus_space_tag_t, 
-    bus_space_handle_t, struct fe_simple_probe_struct const *));
-static int fmv_find __P((bus_space_tag_t, bus_space_handle_t, int *, int *));
+static __inline__ int fe_simple_probe(bus_space_tag_t, bus_space_handle_t,
+    struct fe_simple_probe_struct const *);
+static int fmv_find(bus_space_tag_t, bus_space_handle_t, int *, int *);
 
 static int const fmv_iomap[8] = {
 	0x220, 0x240, 0x260, 0x280, 0x2A0, 0x2C0, 0x300, 0x340
 };
 #define NFMV_IOMAP (sizeof (fmv_iomap) / sizeof (fmv_iomap[0]))
 #define FMV_NPORTS 0x20
+
+#ifdef FMV_DEBUG
+#define DPRINTF	printf
+#else
+#define DPRINTF	while (/* CONSTCOND */0) printf
+#endif
 
 /*
  * Hardware probe routines.
@@ -89,28 +95,25 @@ static int const fmv_iomap[8] = {
  * Determine if the device is present.
  */
 int
-fmv_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+fmv_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int i, iobase, irq, rv = 0;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded values. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
 	/*
 	 * See if the sepcified address is valid for FMV-180 series.
@@ -119,41 +122,31 @@ fmv_isa_match(parent, match, aux)
 		if (fmv_iomap[i] == ia->ia_io[0].ir_addr)
 			break;
 	if (i == NFMV_IOMAP) {
-#ifdef FMV_DEBUG
-		printf("fmv_match: unknown iobase 0x%x\n",
+		DPRINTF("fmv_match: unknown iobase 0x%x\n",
 		    ia->ia_io[0].ir_addr);
-#endif
-		return (0);
+		return 0;
 	}
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, FMV_NPORTS, 0, &ioh)) {
-#ifdef FMV_DEBUG
-		printf("fmv_match: couldn't map iospace 0x%x\n",
+		DPRINTF("fmv_match: couldn't map iospace 0x%x\n",
 		    ia->ia_io[0].ir_addr);
-#endif
-		return (0);
+		return 0;
 	}
 
 	if (fmv_find(iot, ioh, &iobase, &irq) == 0) {
-#ifdef FMV_DEBUG
-		printf("fmv_match: fmv_find failed\n");
-#endif
+		DPRINTF("fmv_match: fmv_find failed\n");
 		goto out;
 	}
 
 	if (iobase != ia->ia_io[0].ir_addr) {
-#ifdef FMV_DEBUG
-		printf("fmv_match: unexpected iobase in board: 0x%x\n",
+		DPRINTF("fmv_match: unexpected iobase in board: 0x%x\n",
 		    iobase);
-#endif
 		goto out;
 	}
 
 	if (fmv_detect(iot, ioh, myea) == 0) { /* XXX necessary? */
-#ifdef FMV_DEBUG
-		printf("fmv_match: fmv_detect failed\n");
-#endif
+		DPRINTF("fmv_match: fmv_detect failed\n");
 		goto out;
 	}
 
@@ -179,33 +172,29 @@ fmv_isa_match(parent, match, aux)
 
  out:
 	bus_space_unmap(iot, ioh, FMV_NPORTS);
-	return (rv);
+	return rv;
 }
 
 /*
  * Check for specific bits in specific registers have specific values.
  */
 static __inline__ int
-fe_simple_probe (iot, ioh, sp)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct fe_simple_probe_struct const *sp;
+fe_simple_probe(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct fe_simple_probe_struct const *sp)
 {
-	u_int8_t val;
+	uint8_t val;
 	struct fe_simple_probe_struct const *p;
 
 	for (p = sp; p->mask != 0; p++) {
 		val = bus_space_read_1(iot, ioh, p->port);
 		if ((val & p->mask) != p->bits) {
-#ifdef FMV_DEBUG
-			printf("fe_simple_probe: %x & %x != %x\n",
+			DPRINTF("fe_simple_probe: %x & %x != %x\n",
 			    val, p->mask, p->bits);
-#endif
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -217,12 +206,9 @@ fe_simple_probe (iot, ioh, sp)
  * board.
  */
 static int
-fmv_find(iot, ioh, iobase, irq)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int *iobase, *irq;
+fmv_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 {
-	u_int8_t config;
+	uint8_t config;
 	static int const fmv_irqmap[4] = { 3, 7, 10, 15 };
 	static struct fe_simple_probe_struct const probe_table[] = {
 		{ FE_DLCR2, 0x70, 0x00 },
@@ -254,8 +240,8 @@ fmv_find(iot, ioh, iobase, irq)
 	};
 
 	/* Simple probe. */
-	if (!fe_simple_probe(iot, ioh, probe_table))
-		return (0);
+	if (fe_simple_probe(iot, ioh, probe_table) != 0)
+		return 0;
 
 	/* Check if our I/O address matches config info on EEPROM. */
 	config = bus_space_read_1(iot, ioh, FE_FMV2);
@@ -270,13 +256,11 @@ fmv_find(iot, ioh, iobase, irq)
 	 */
 	*irq = fmv_irqmap[(config & FE_FMV2_IRQ) >> FE_FMV2_IRQ_SHIFT];
 
-	return (1);
+	return 1;
 }
 
 void
-fmv_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fmv_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fmv_isa_softc *isc = (struct fmv_isa_softc *)self;
 	struct mb86960_softc *sc = &isc->sc_mb86960;
