@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.1 1996/01/31 23:25:37 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.2 1996/03/06 23:56:59 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -38,9 +38,6 @@
  * Ether3 device driver
  *
  * Created      : 08/07/95
- * Last updated : 31/12/95
- *
- *    $Id: if_ea.c,v 1.1 1996/01/31 23:25:37 mark Exp $
  */
 
 /*
@@ -99,7 +96,9 @@
 #define ETHER_MAX_LEN	1514
 #define ETHER_ADDR_LEN	6
 
+#ifndef EA_TIMEOUT
 #define EA_TIMEOUT	60
+#endif
 
 /*#define EA_TX_DEBUG*/
 /*#define EA_RX_DEBUG*/

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.1 1996/01/31 23:25:43 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.2 1996/03/06 23:57:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -38,9 +38,6 @@
  * EtherB device driver
  *
  * Created      : 08/07/95
- * Last updated : 01/01/96
- *
- *    $Id: if_eb.c,v 1.1 1996/01/31 23:25:43 mark Exp $
  */
 
 /*
@@ -100,7 +97,9 @@
 #define ETHER_MAX_LEN	1514
 #define ETHER_ADDR_LEN	6
 
+#ifndef EB_TIMEOUT
 #define EB_TIMEOUT	60
+#endif
 
 /*#define EB_TX_DEBUG*/
 /*#define EB_RX_DEBUG*/
