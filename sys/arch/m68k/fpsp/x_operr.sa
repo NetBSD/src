@@ -105,7 +105,7 @@ fpsp_operr:
 *
 	move.l	CMDREG1B(a6),d0
 	bfextu	d0{3:3},d0	;0=long, 4=word, 6=byte
-	cmpi.b	#0,d0		;determine size; check long
+	tst.b	d0		;determine size; check long
 	beq.w	operr_long
 	cmpi.b	#4,d0		;check word
 	beq.w	operr_word

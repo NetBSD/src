@@ -327,21 +327,21 @@ sdiv:
 sabs:
 	fmovem.x	ETEMP(a6),fp0
 	fmove.l	d1,fpcr
-	fabs	fp0
+	fabs.x	fp0
 	rts
 
 	xdef	sneg
 sneg:
 	fmovem.x	ETEMP(a6),fp0
 	fmove.l	d1,fpcr
-	fneg	fp0
+	fneg.x	fp0
 	rts
 
 	xdef	ssqrt
 ssqrt:
 	fmovem.x	ETEMP(a6),fp0
 	fmove.l	d1,fpcr
-	fsqrt	fp0
+	fsqrt.x	fp0
 	rts
 
 *

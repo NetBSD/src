@@ -138,7 +138,7 @@ SINHBIG:
 	bgt	t_ovfl
 	FABS.X	FP0
 	FSUB.D	T1(pc),FP0	...(|X|-16381LOG2_LEAD)
-	move.l	#0,-(sp)
+	clr.l	-(sp)
 	move.l	#$80000000,-(sp)
 	move.l	a1,d0
 	AND.L	#$80000000,D0

@@ -168,7 +168,7 @@ unf_res:
 *					;1=sgl, 2=dbl
 *					;we need the RND_PREC in the
 *					;upper word for round
-	move.w		#0,-(a7)	
+	clr.w		-(a7)	
 	move.w		d0,-(a7)	;copy RND_PREC to stack
 *
 *

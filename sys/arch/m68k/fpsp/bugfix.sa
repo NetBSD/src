@@ -290,7 +290,7 @@ op0_xu:
 	move.l	CMDREG1B(a6),L_SCR2(a6)	
 	move.l	DTAG(a6),L_SCR3(a6)
 	andi.l	#$e0000000,L_SCR3(a6)
-	move.b	#0,CU_SAVEPC(a6)
+	clr.b	CU_SAVEPC(a6)
 	move.l	(a7)+,d1		;save return address from bsr
 	frestore (a7)+
 	fsave	-(a7)
@@ -413,7 +413,7 @@ op2_xu:
 	move.l	CMDREG1B(a6),L_SCR2(a6)	
 	move.l	DTAG(a6),L_SCR3(a6)	
 	andi.l	#$e0000000,L_SCR3(a6)
-	move.b	#0,CU_SAVEPC(a6)
+	clr.b	CU_SAVEPC(a6)
 	move.l	ETEMP(a6),FP_SCR2(a6)
 	move.l	ETEMP_HI(a6),FP_SCR2+4(a6)
 	move.l	ETEMP_LO(a6),FP_SCR2+8(a6)

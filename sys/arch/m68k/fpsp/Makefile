@@ -34,19 +34,17 @@
 #	Makefile for 68040 Floating Point Software Package
 #
 
-TARGET = FPSP
+TARGET = fpsp
 
-ASM		= ./pasm
-ASMOPTS		= +p=68020/68881 +l +C +M
-PLINK		= ./plink
-PLINKOPTS	= dummy +q$(TARGET) +w32 +x +i +m$(TARGET).linkmap
+AS		= as -m68040
+LD		= ld
 
 #
 # For the Library Version:
 #
 AR		= ar
-LIB_FILTER 	= sed 's/fpsp.h/l_fpsp.h/'
-LIB_TARGET	= libFPSP.a
+LIB_FILTER 	= sed 's/fpsp.defs/l_fpsp.defs/'
+LIB_TARGET	= lib$(TARGET).a
 #
 # SYS selects the template set to use
 #	templates are supplied for R3V6, CI5 and GEN(generic)
@@ -59,170 +57,93 @@ LIB_TARGET	= libFPSP.a
 #SYS		= CI5
 #PREFIX		= .L
 #
-SYS		= GEN
+#SYS		= GEN
+#PREFIX		= L_
+#
+SYS		= GCC
 PREFIX		= L_
 
-.SUFFIXES:	.s .s~ .sa .sa~ .ro .h .h~
-
-.sa.ro:
-	$(ASM) $(ASMOPTS) $*.sa
-	
-.sa~.ro:
-	sccs get SCCS/s.$*.sa
-	$(ASM) $(ASMOPTS) $*.sa
-	rm -f $*.sa
+.SUFFIXES:	.o .s .sa .defs .h
 
 .sa.s:
-	asm2as $*.sa >$*.s
-
-.sa~.sa:
-	sccs get SCCS/s.$*.sa
-
-.s~.s:
-	sccs get SCCS/s.$*.s
-
-.h~.h:
-	sccs get SCCS/s.$*.h
-
-RO_FILES = \
-	skeleton.ro \
-	bindec.ro \
-	binstr.ro \
-	decbin.ro \
-	do_func.ro \
-	gen_except.ro \
-	get_op.ro \
-	kernel_ex.ro \
-	res_func.ro \
-	round.ro \
-	sacos.ro \
-	sasin.ro \
-	satan.ro \
-	satanh.ro \
-	scosh.ro \
-	setox.ro \
-	sgetem.ro \
-	sint.ro \
-	slogn.ro \
-	slog2.ro \
-	smovecr.ro \
-	srem_mod.ro \
-	scale.ro \
-	ssin.ro \
-	ssinh.ro \
-	stan.ro \
-	stanh.ro \
-	sto_res.ro \
-	stwotox.ro \
-	tbldo.ro \
-	util.ro \
-	x_bsun.ro \
-	x_fline.ro \
-	x_operr.ro \
-	x_ovfl.ro \
-	x_snan.ro \
-	x_store.ro \
-	x_unfl.ro \
-	x_unimp.ro \
-	x_unsupp.ro \
-	bugfix.ro \
-	FPSP.ro
-
-LIB_RO_FILES	= \
-	l_entry.ro \
-	l_do_func.ro \
-	l_round.ro \
-	l_sacos.ro \
-	l_sasin.ro \
-	l_satan.ro \
-	l_satanh.ro \
-	l_scale.ro \
-	l_scosh.ro \
-	l_setox.ro \
-	l_sgetem.ro \
-	l_sint.ro \
-	l_slog2.ro \
-	l_slogn.ro \
-	l_srem_mod.ro \
-	l_ssin.ro \
-	l_ssinh.ro \
-	l_stan.ro \
-	l_stanh.ro \
-	l_stwotox.ro \
-	l_support.ro
-
-SA_FILES = \
-	skeleton.sa \
-	bindec.sa \
-	binstr.sa \
-	decbin.sa \
-	do_func.sa \
-	get_op.sa \
-	gen_except.sa \
-	kernel_ex.sa \
-	res_func.sa \
-	round.sa \
-	sacos.sa \
-	sasin.sa \
-	satan.sa \
-	satanh.sa \
-	scosh.sa \
-	setox.sa \
-	sgetem.sa \
-	sint.sa \
-	slogn.sa \
-	slog2.sa \
-	smovecr.sa \
-	srem_mod.sa \
-	scale.sa \
-	ssin.sa \
-	ssinh.sa \
-	stan.sa \
-	stanh.sa \
-	sto_res.sa \
-	stwotox.sa \
-	tbldo.sa \
-	util.sa \
-	x_bsun.sa \
-	x_fline.sa \
-	x_operr.sa \
-	x_ovfl.sa \
-	x_snan.sa \
-	x_store.sa \
-	x_unfl.sa \
-	x_unimp.sa \
-	x_unsupp.sa \
-	bugfix.sa \
-	FPSP.sa
-
-LIB_SA_FILES	= \
-	l_entry.sa \
-	l_do_func.sa \
-	l_round.sa \
-	l_sacos.sa \
-	l_sasin.sa \
-	l_satan.sa \
-	l_satanh.sa \
-	l_scale.sa \
-	l_scosh.sa \
-	l_setox.sa \
-	l_sgetem.sa \
-	l_sint.sa \
-	l_slog2.sa \
-	l_slogn.sa \
-	l_srem_mod.sa \
-	l_ssin.sa \
-	l_ssinh.sa \
-	l_stan.sa \
-	l_stanh.sa \
-	l_stwotox.sa
+	sh ${.CURDIR}/asm2gas ${.CURDIR}/$*.sa >$*.s
+.h.defs:
+	sh ${.CURDIR}/asm2gas ${.CURDIR}/$*.h >$*.defs
+.s.o:
+	$(AS) -o $*.o $*.s
 
 H_FILES = \
-	fpsp.h \
-	l_fpsp.h
+	fpsp.defs \
+	l_fpsp.defs
 
-U_FILES = \
-	unix.s \
+O_FILES = \
+	netbsd.o \
+	bindec.o \
+	binstr.o \
+	decbin.o \
+	do_func.o \
+	gen_except.o \
+	get_op.o \
+	kernel_ex.o \
+	res_func.o \
+	round.o \
+	sacos.o \
+	sasin.o \
+	satan.o \
+	satanh.o \
+	scosh.o \
+	setox.o \
+	sgetem.o \
+	sint.o \
+	slogn.o \
+	slog2.o \
+	smovecr.o \
+	srem_mod.o \
+	scale.o \
+	ssin.o \
+	ssinh.o \
+	stan.o \
+	stanh.o \
+	sto_res.o \
+	stwotox.o \
+	tbldo.o \
+	util.o \
+	x_bsun.o \
+	x_fline.o \
+	x_operr.o \
+	x_ovfl.o \
+	x_snan.o \
+	x_store.o \
+	x_unfl.o \
+	x_unimp.o \
+	x_unsupp.o \
+	bugfix.o
+
+LIB_O_FILES	= \
+	l_entry.o \
+	l_do_func.o \
+	l_round.o \
+	l_sacos.o \
+	l_sasin.o \
+	l_satan.o \
+	l_satanh.o \
+	l_scale.o \
+	l_scosh.o \
+	l_setox.o \
+	l_sgetem.o \
+	l_sint.o \
+	l_slog2.o \
+	l_slogn.o \
+	l_srem_mod.o \
+	l_ssin.o \
+	l_ssinh.o \
+	l_stan.o \
+	l_stanh.o \
+	l_stwotox.o \
+	l_support.o
+
+S_FILES = \
+	netbsd.s \
 	bindec.s \
 	binstr.s \
 	decbin.s \
@@ -262,10 +183,10 @@ U_FILES = \
 	x_unfl.s \
 	x_unimp.s \
 	x_unsupp.s \
-	bugfix.s \
-	fpsp.mk \
-	fpsp.defs \
-	l_entry.s \
+	bugfix.s
+
+LIB_S_FILES	= \
+	l_entry.sa l_entry.s \
 	l_do_func.s \
 	l_round.s \
 	l_sacos.s \
@@ -285,36 +206,19 @@ U_FILES = \
 	l_stan.s \
 	l_stanh.s \
 	l_stwotox.s \
-	l_support.s \
-	l_fpsp.defs
+	l_support.s
 
 #
 #	Build the target object.  The linkfile is created on the fly.
 #	Change the SEG directives to suit your system.
 #
-$(TARGET).mx:	$(RO_FILES)
-	rm -f linkfile
-	echo 'IDENT FPSP,2,1,68040 Floating Point Software Package'>linkfile
-	echo 'SEG SEG0(G):7  $$00004000' >>linkfile
-	echo 'SEG SEG1(G):8  $$000D0000' >>linkfile
-	echo 'SEG SEG2(G):15 $$000E0000' >>linkfile
-	echo $(RO_FILES) | tr ' ' '\012' | sed 's/^/INPUT /' >>linkfile
-	echo 'END' >>linkfile
-	$(PLINK) $(PLINKOPTS) <linkfile
+$(TARGET).o:	$(O_FILES)
+	$(LD) -r -o $(TARGET).o $(O_FILES)
 
 #
 #	Just about every file needs fpsp.h so:
 #
-$(RO_FILES):	fpsp.h
-
-fpsp.defs:	fpsp.h
-	asm2as fpsp.h >fpsp.defs
-
-unix.s:
-	sccs get unix.s
-
-fpsp.mk:
-	sccs get fpsp.mk
+$(O_FILES):	fpsp.defs
 
 #
 #-----------------------------------------------------------------------
@@ -323,14 +227,11 @@ fpsp.mk:
 #
 library:	$(LIB_TARGET)
 
-$(LIB_TARGET):	$(LIB_RO_FILES)
+$(LIB_TARGET):	$(LIB_O_FILES)
 	rm -f $(LIB_TARGET)
-	$(AR) crv $(LIB_TARGET) $(LIB_RO_FILES)
+	$(AR) crv $(LIB_TARGET) $(LIB_O_FILES)
 
-$(LIB_RO_FILES): l_fpsp.h
-
-l_fpsp.defs:	l_fpsp.h
-	asm2as l_fpsp.h >l_fpsp.defs
+$(LIB_O_FILES): l_fpsp.defs
 
 #
 # The entry points to the library version are created here
@@ -345,90 +246,86 @@ l_entry.sa: L_ENTRY.AWK L_LIST MONADIC.$(SYS) DYADIC.$(SYS) l_fpsp.h
 # aren't needed in the library version.  Beware that changes in
 # the source code may cause this editing to break....
 #
-l_do_func.sa: do_func.sa 
-	$(LIB_FILTER) do_func.sa >l_do_func.sa
-	echo '/xdef.*do_func/,/^	rts/d' >.SCRIPT
+l_do_func.s: do_func.s 
+	$(LIB_FILTER) do_func.s >l_do_func.s
+	echo '/global.*do_func/,/^	rts/d' >.SCRIPT
 	echo 'g/smovcr/d' >>.SCRIPT
 	echo 'g/tblpre/d' >>.SCRIPT
 	echo 'w' >>.SCRIPT
 	echo 'q' >>.SCRIPT
-	ed - l_do_func.sa <.SCRIPT
+	ed - l_do_func.s <.SCRIPT
 	rm .SCRIPT
 
-l_round.sa: round.sa 
-	$(LIB_FILTER) round.sa >l_round.sa
+l_round.s: round.s 
+	$(LIB_FILTER) round.s >l_round.s
 	echo '/^not_E3:/-6,/^not_E3:/d' >.SCRIPT
 	echo 'w' >>.SCRIPT
 	echo 'q' >>.SCRIPT
-	ed - l_round.sa <.SCRIPT
+	ed - l_round.s <.SCRIPT
 	rm .SCRIPT
 
-l_sacos.sa: sacos.sa 
-	$(LIB_FILTER) sacos.sa >l_sacos.sa
+l_sacos.s: sacos.s 
+	$(LIB_FILTER) sacos.s >l_sacos.s
 
-l_sasin.sa: sasin.sa 
-	$(LIB_FILTER) sasin.sa >l_sasin.sa
+l_sasin.s: sasin.s 
+	$(LIB_FILTER) sasin.s >l_sasin.s
 
-l_satan.sa: satan.sa 
-	$(LIB_FILTER) satan.sa >l_satan.sa
+l_satan.s: satan.s 
+	$(LIB_FILTER) satan.s >l_satan.s
 
-l_satanh.sa: satanh.sa 
-	$(LIB_FILTER) satanh.sa >l_satanh.sa
+l_satanh.s: satanh.s 
+	$(LIB_FILTER) satanh.s >l_satanh.s
 
-l_scale.sa: scale.sa 
-	$(LIB_FILTER) scale.sa >l_scale.sa
+l_scale.s: scale.s 
+	$(LIB_FILTER) scale.s >l_scale.s
 
-l_scosh.sa: scosh.sa 
-	$(LIB_FILTER) scosh.sa >l_scosh.sa
+l_scosh.s: scosh.s 
+	$(LIB_FILTER) scosh.s >l_scosh.s
 
-l_setox.sa: setox.sa 
-	$(LIB_FILTER) setox.sa >l_setox.sa
+l_setox.s: setox.s 
+	$(LIB_FILTER) setox.s >l_setox.s
 
-l_sgetem.sa: sgetem.sa 
-	$(LIB_FILTER) sgetem.sa >l_sgetem.sa
+l_sgetem.s: sgetem.s 
+	$(LIB_FILTER) sgetem.s >l_sgetem.s
 
-l_sint.sa: sint.sa 
-	$(LIB_FILTER) sint.sa >l_sint.sa
+l_sint.s: sint.s 
+	$(LIB_FILTER) sint.s >l_sint.s
 
-l_slog2.sa: slog2.sa 
-	$(LIB_FILTER) slog2.sa >l_slog2.sa
+l_slog2.s: slog2.s 
+	$(LIB_FILTER) slog2.s >l_slog2.s
 
-l_slogn.sa: slogn.sa 
-	$(LIB_FILTER) slogn.sa >l_slogn.sa
+l_slogn.s: slogn.s 
+	$(LIB_FILTER) slogn.s >l_slogn.s
 
-l_srem_mod.sa: srem_mod.sa 
-	$(LIB_FILTER) srem_mod.sa >l_srem_mod.sa
+l_srem_mod.s: srem_mod.s 
+	$(LIB_FILTER) srem_mod.s >l_srem_mod.s
 
-l_ssin.sa: ssin.sa 
-	$(LIB_FILTER) ssin.sa >l_ssin.sa
+l_ssin.s: ssin.s 
+	$(LIB_FILTER) ssin.s >l_ssin.s
 
-l_ssinh.sa: ssinh.sa 
-	$(LIB_FILTER) ssinh.sa >l_ssinh.sa
+l_ssinh.s: ssinh.s 
+	$(LIB_FILTER) ssinh.s >l_ssinh.s
 
-l_stan.sa: stan.sa 
-	$(LIB_FILTER) stan.sa >l_stan.sa
+l_stan.s: stan.s 
+	$(LIB_FILTER) stan.s >l_stan.s
 
-l_stanh.sa: stanh.sa 
-	$(LIB_FILTER) stanh.sa >l_stanh.sa
+l_stanh.s: stanh.s 
+	$(LIB_FILTER) stanh.s >l_stanh.s
 
-l_stwotox.sa: stwotox.sa 
-	$(LIB_FILTER) stwotox.sa >l_stwotox.sa
+l_stwotox.s: stwotox.s 
+	$(LIB_FILTER) stwotox.s >l_stwotox.s
 
 #
 #	Extract all files from SCCS directory
 #
-getall:	$(SA_FILES) $(H_FILES)
-
-convert:	$(U_FILES)
-
 clean:
-	rm -f $(RO_FILES)
-	rm -f $(U_FILES)
-	rm -f *.ls linkfile $(TARGET).linkmap
-	rm -f FPSP.mx
-	rm -f $(LIB_TARGET) .SCRIPT
-	rm -f $(LIB_RO_FILES)
-	rm -f $(LIB_SA_FILES)
+	rm -f $(H_FILES)
+	rm -f $(S_FILES)
+	rm -f $(O_FILES)
+	rm -f $(TARGET).o
+	rm -f $(LIB_S_FILES)
+	rm -f $(LIB_O_FILES)
+	rm -f $(LIB_TARGET)
 
 clobber:	clean
 

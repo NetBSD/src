@@ -310,7 +310,7 @@ EXPBIG:
 *--|X| IS LARGE, GENERATE OVERFLOW IF X > 0; ELSE GENERATE UNDERFLOW
 *--REGISTERS SAVE SO FAR ARE FPCR AND  D0
 	MOVE.L		X(a6),D0
-	CMPI.L		#0,D0
+	TST.L		D0
 	BLT.B		EXPNEG
 
 	bclr.b		#7,(a0)		;t_ovfl expects positive value

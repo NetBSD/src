@@ -112,7 +112,7 @@ opc011:
 *				;ext=00, sgl=01, dbl=10
 	move.l	a0,a1		;save source addr in a1
 	move.l	EXC_EA(a6),a0	;get the address
-	cmpi.l	#0,d0		;if dest format is extended
+	tst.l	d0		;if dest format is extended
 	beq.w	dest_ext	;then branch
 	cmpi.l	#1,d0		;if dest format is single
 	beq.b	dest_sgl	;then branch
