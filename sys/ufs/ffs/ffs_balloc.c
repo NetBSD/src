@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13 1998/10/27 21:32:58 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -50,9 +49,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -106,11 +103,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			if (error)
 				return (error);
 			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-#else
-			vnode_pager_setsize(vp, ip->i_ffs_size);
-#endif
 			ip->i_ffs_db[nb] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
 			    UFS_MPNEEDSWAP(vp->v_mount));
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;

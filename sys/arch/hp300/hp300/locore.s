@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 1999/02/25 22:34:41 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 1999/03/24 05:50:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -45,7 +45,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -462,11 +461,7 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#if defined(UVM)
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -964,11 +959,7 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
@@ -976,11 +967,7 @@ ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
 	jbsr	_C_LABEL(hilint)
 	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+4
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 2 through 5 */
@@ -1051,11 +1038,7 @@ Lnoleds0:
 	addql	#4,sp
 	CLKADDR(a0)
 Lrecheck:
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR	| chalk up another interrupt
-#endif
 	movb	a0@(CLKSR),d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 	INTERRUPT_RESTOREREG

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.78 1999/03/22 19:21:09 kleink Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.79 1999/03/24 05:51:27 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,10 +47,6 @@
  * October 1992
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -72,9 +68,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/direntry.h>
@@ -670,17 +664,9 @@ msdosfs_write(v)
 		n = min(uio->uio_resid, pmp->pm_bpcluster - croffset);
 		if (uio->uio_offset + n > dep->de_FileSize) {
 			dep->de_FileSize = uio->uio_offset + n;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, dep->de_FileSize);/* why? */
-#else
-			vnode_pager_setsize(vp, dep->de_FileSize);/* why? */
-#endif
 		}
-#if defined(UVM)
 		(void) uvm_vnp_uncache(vp);	/* why not? */
-#else
-		(void) vnode_pager_uncache(vp);	/* why not? */
-#endif
 		/*
 		 * Should these vnode_pager_* functions be done on dir
 		 * files?

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.1 1998/09/06 02:20:36 mark Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.2 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,8 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +72,7 @@ footbridge_sa110_cc_setup(void)
 	pt_entry_t *pte;
 
 	cleanarea = (NBPG * 4) * 2;
-#if defined(UVM)
 	vaddr = uvm_km_valloc(kernel_map, cleanarea + (NBPG * 4));
-#else
-	vaddr = kmem_alloc_pageable(kernel_map, cleanarea + (NBPG * 4));
-#endif
 	addr = (vaddr + (cleanarea - 1)) & ~(cleanarea - 1);
 
 /*	printf("vaddr=%x addr=%x\n", vaddr, addr);*/

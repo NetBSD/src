@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.64 1999/02/23 02:57:18 ross Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.65 1999/03/24 05:51:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -120,9 +119,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * exit --
@@ -202,15 +199,9 @@ exit1(p, rv)
 	 * Can't free the entire vmspace as the kernel stack
 	 * may be mapped within that space also.
 	 */
-#if defined(UVM)
 	if (vm->vm_refcnt == 1)
 		(void) uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-#else
-	if (vm->vm_refcnt == 1)
-		(void) vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS,
-		    VM_MAXUSER_ADDRESS);
-#endif
 
 	if (SESS_LEADER(p)) {
 		register struct session *sp = p->p_session;
@@ -374,11 +365,7 @@ reaper()
 		 * We must do this from a valid thread because doing
 		 * so may block.
 		 */
-#if defined(UVM)
 		uvm_exit(p);
-#else
-		vm_exit(p);
-#endif
 
 		/* Process is now a true zombie. */
 		LIST_INSERT_HEAD(&zombproc, p, p_list);

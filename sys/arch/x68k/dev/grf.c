@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.12 1998/10/11 23:21:03 chuck Exp $	*/
+/*	$NetBSD: grf.c,v 1.13 1999/03/24 05:51:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,6 @@
  * Hardware access is through the machine dependent grf switch routines.
  */
 
-#include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
@@ -80,9 +79,7 @@ extern struct emul emul_hpux;
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h>
-#endif
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -567,15 +564,9 @@ grfmap(dev, addrp, p)
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
-#if defined(UVM)
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
 			 flags, (caddr_t)&vn, 0);
-#else
-	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-			(vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
-			flags, (caddr_t)&vn, 0);
-#endif
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
 	return(error);
@@ -599,12 +590,8 @@ grfunmap(dev, addr, p)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-#if defined(UVM)
 	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
 	    (vaddr_t)addr + size);
-#else
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
-#endif
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 

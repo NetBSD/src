@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fthread.c,v 1.3 1998/02/07 16:23:35 chs Exp $	*/
+/*	$NetBSD: kern_fthread.c,v 1.4 1999/03/24 05:51:23 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -76,32 +76,6 @@
 /*
  * these routines fake thread handling
  */
-
-#if !defined(UVM)
-
-void
-assert_wait(event, ruptible)
-	void *event;
-	boolean_t ruptible;
-{
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-}
-
-void
-thread_block(msg)
-char *msg;
-{
-	int s = splhigh();
-
-	if (curproc->p_thread)
-		tsleep(curproc->p_thread, PVM, msg, 0);
-	splx(s);
-}
-
-#endif
 
 void
 thread_sleep_msg(event, lock, ruptible, msg, timo)

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.12 1999/03/02 00:22:42 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.13 1999/03/24 05:51:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.12 1999/03/02 00:22:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.13 1999/03/24 05:51:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.12 1999/03/02 00:22:42 nisimura Exp $");
 #include <dev/ic/bt459reg.h>	
 #include <dev/tc/sfbreg.h>
 
-#include "opt_uvm.h"
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#define useracc uvm_useracc
-#endif
 
 /* XXX BUS'IFYING XXX */
  
@@ -700,9 +696,9 @@ get_cmap(sc, p)
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
 		return (EINVAL);
 
-	if (!useracc(p->red, count, B_WRITE) ||
-	    !useracc(p->green, count, B_WRITE) ||
-	    !useracc(p->blue, count, B_WRITE))
+	if (!uvm_useracc(p->red, count, B_WRITE) ||
+	    !uvm_useracc(p->green, count, B_WRITE) ||
+	    !uvm_useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
 
 	copyout(&sc->sc_cmap.r[index], p->red, count);
@@ -722,9 +718,9 @@ set_cmap(sc, p)
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
 		return (EINVAL);
 
-	if (!useracc(p->red, count, B_READ) ||
-	    !useracc(p->green, count, B_READ) ||
-	    !useracc(p->blue, count, B_READ))
+	if (!uvm_useracc(p->red, count, B_READ) ||
+	    !uvm_useracc(p->green, count, B_READ) ||
+	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
 
 	copyin(p->red, &sc->sc_cmap.r[index], count);
@@ -751,17 +747,17 @@ set_cursor(sc, p)
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
-		if (!useracc(p->cmap.red, count, B_READ) ||
-		    !useracc(p->cmap.green, count, B_READ) ||
-		    !useracc(p->cmap.blue, count, B_READ))
+		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
+		    !uvm_useracc(p->cmap.green, count, B_READ) ||
+		    !uvm_useracc(p->cmap.blue, count, B_READ))
 			return (EFAULT);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!useracc(p->image, icount, B_READ) ||
-		    !useracc(p->mask, icount, B_READ))
+		if (!uvm_useracc(p->image, icount, B_READ) ||
+		    !uvm_useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {

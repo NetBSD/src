@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.7 1999/01/17 11:53:52 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 1999/03/24 05:51:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -372,9 +372,7 @@ start:
 			ih = ih->ih_next;
 		}
 
-#if defined(UVM)
 		uvmexp.intrs++;
-#endif
 		intrcnt[hwirq[irq]]++;
 	}
 	int_state &= ~r_imen;

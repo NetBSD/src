@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 1999/02/07 09:34:59 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.20 1999/03/24 05:51:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,6 @@
  */
 
 #include "opt_md.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -430,11 +429,7 @@ md_ioctl_kalloc(sc, umd, proc)
 
 	/* Sanity check the size. */
 	size = umd->md_size;
-#if defined(UVM)
 	addr = uvm_km_zalloc(kernel_map, size);
-#else
-	addr = kmem_alloc(kernel_map, size);
-#endif
 	if (!addr)
 		return ENOMEM;
 

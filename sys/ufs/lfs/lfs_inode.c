@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.18 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.19 1999/03/24 05:51:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -226,11 +226,7 @@ lfs_truncate(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
-#ifdef UVM
 	uvm_vnp_setsize(vp, length);
-#else
-	vnode_pager_setsize(vp, length);
-#endif
 	
 	fs = ip->i_lfs;
 	lfs_imtime(fs);
@@ -285,11 +281,7 @@ lfs_truncate(v)
 			return (e1);
 		}
 		ip->i_ffs_size = length;
-#if defined(UVM)
 		(void)uvm_vnp_uncache(vp);
-#else
-		(void)vnode_pager_uncache(vp);
-#endif
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
 #ifdef DEBUG

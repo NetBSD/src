@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.15 1999/02/28 14:09:45 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.16 1999/03/24 05:51:29 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -45,7 +45,6 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/queue.h>
@@ -65,12 +64,12 @@ struct simplelock {
 	unsigned long lock_holder;		/* CPU ID */
 #endif
 };
-#if defined(UVM) /* XXXCDC: kill typedefs later? */
+
+/* XXXCDC: kill typedefs later? */
 typedef struct simplelock       simple_lock_data_t;
 typedef struct simplelock       *simple_lock_t;
 typedef struct lock             lock_data_t;
 typedef struct lock             *lock_t;
-#endif
 
 /*
  * The general lock structure.  Provides for multiple shared locks,

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1999/03/22 06:47:01 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1999/03/24 05:51:13 mrg Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -64,7 +64,6 @@
 #undef NO_TSB			/* Don't use TSB */
 	
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sparc32.h"
 
@@ -2732,11 +2731,7 @@ datafault:
 	membar	#Sync					! No real reason for this XXXX
 	
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
-#else
-	INCR(_C_LABEL(cnt)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
-#endif
 
 !	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o5				! Move these to the out regs so we can save the globals
@@ -3015,11 +3010,7 @@ textfault:
 	membar	#Sync					! No real reason for this XXXX
 	
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1)
-#endif	
 
 	mov	%g3, %o2
 
@@ -3870,11 +3861,7 @@ _C_LABEL(sparc_interrupt):
 					
 	flushw			! DEBUG
 	rd	%y, %l6
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
-#else
-	INCR(_C_LABEL(cnt)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
-#endif	
 	rdpr	%tt, %l5			! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
@@ -4617,6 +4604,8 @@ dump_dtlb:
 
 	retl
 	 nop
+#endif /* DEBUG */
+#if defined(DEBUG) || defined(DDB)
 	.globl	print_dtlb
 print_dtlb:
 #ifdef _LP64
@@ -6633,11 +6622,7 @@ ENTRY(switchexit)
 	 */
 
 	INCR(_C_LABEL(nswitchexit))		! nswitchexit++;
-#if defined(UVM)
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)		! cnt.v_switch++;
-#else
-	INCR(_C_LABEL(cnt)+V_SWTCH)		! cnt.v_switch++;
-#endif	
 
 	sethi	%hi(_C_LABEL(whichqs)), %g2
 	clr	%g4			! lastproc = NULL;

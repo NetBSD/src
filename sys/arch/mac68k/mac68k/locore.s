@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 1999/02/25 23:13:41 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 1999/03/24 05:51:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
@@ -300,11 +299,7 @@ Lloaddone:
  */
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#if defined(UVM)
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
 
 /* set kernel stack, user SP, proc0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
@@ -811,11 +806,7 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)
@@ -827,11 +818,7 @@ ENTRY_NOPROFILE(lev1intr)
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev2intr)
@@ -844,11 +831,7 @@ ENTRY_NOPROFILE(lev2intr)
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
@@ -891,11 +874,7 @@ ENTRY_NOPROFILE(rtclock_intr)
 	lea	sp@(12),sp		| pop params
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
 	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
 	movl	#1,d0			| clock taken care of

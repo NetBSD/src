@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1999/02/28 00:26:46 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.10 1999/03/24 05:51:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,17 +136,10 @@ main()
 	off("PM_SEGS", struct pmap, pm_segs);
 	off("PM_PHYS", struct pmap, pm_physaddr);
 
-#ifdef UVM
 	/* interrupt/fault metering */
 	off("V_SWTCH", struct uvmexp, swtch);
 	off("V_INTR", struct uvmexp, intrs);
 	off("V_FAULTS", struct uvmexp, faults);
-#else
-	/* interrupt/fault metering */
-	off("V_SWTCH", struct vmmeter, v_swtch);
-	off("V_INTR", struct vmmeter, v_intr);
-	off("V_FAULTS", struct vmmeter, v_faults);
-#endif
 
 	/* FPU state */
 	off("FS_REGS", struct fpstate, fs_regs);

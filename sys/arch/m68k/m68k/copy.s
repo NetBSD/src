@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.32 1998/08/15 10:34:43 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.33 1999/03/24 05:51:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@
  * This file contains the functions for user-space access:
  * copyin/copyout, fuword/suword, etc.
  */
-
-#include "opt_uvm.h"
 
 #include <sys/errno.h>
 #include <machine/asm.h>
@@ -348,7 +346,6 @@ Lcosfault:
 	moveq	#EFAULT,d0
 	bra	Lcosdone
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -379,7 +376,6 @@ Lkcfault:
 	addl	#16,sp			| pop args and return address
 	moveq	#EFAULT,d0		| indicate a fault
 	bra	Lkcdone
-#endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);

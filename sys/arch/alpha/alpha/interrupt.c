@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.38 1999/02/28 18:14:57 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.39 1999/03/24 05:50:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,11 +33,10 @@
  */
 
 #include "opt_multiprocessor.h"
-#include "opt_uvm.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.38 1999/02/28 18:14:57 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.39 1999/03/24 05:50:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.38 1999/02/28 18:14:57 ross Exp $");
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -119,11 +117,7 @@ interrupt(a0, a1, a2, framep)
 		if (cpu_id != hwrpb->rpb_primary_cpu_id)
 			return;
 #endif
-#if defined(UVM)
 		uvmexp.intrs++;
-#else
-		cnt.v_intr++;
-#endif
 		intrcnt[INTRCNT_CLOCK]++;
 		if (platform.clockintr) {
 			(*platform.clockintr)(framep);
@@ -148,11 +142,7 @@ interrupt(a0, a1, a2, framep)
 		if (cpu_id != hwrpb->rpb_primary_cpu_id)
 			return;
 #endif
-#if defined(UVM)
 		uvmexp.intrs++;
-#else
-		cnt.v_intr++;
-#endif
 		if (platform.iointr)
 			(*platform.iointr)(framep, a1);
 		break;

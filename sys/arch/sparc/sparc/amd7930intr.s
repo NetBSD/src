@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.15 1999/03/14 22:29:00 jonathan Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.16 1999/03/24 05:51:10 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -43,8 +43,6 @@
  *
  *	@(#)bsd_audiointr.s	8.1 (Berkeley) 6/11/93
  */
-
-#include "opt_uvm.h"
 
 #ifndef AUDIO_C_HANDLER
 #include "assym.h"
@@ -100,17 +98,10 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	st	%l2, [%l7 + %lo(savepc)]
 
 	! tally interrupt
-#if defined(UVM)
 	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
 	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
 	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
-#else
-	sethi	%hi(_C_LABEL(cnt)+V_INTR), %l7
-	ld	[%l7 + %lo(_C_LABEL(cnt)+V_INTR)], %l6
-	inc	%l6
-	st	%l6, [%l7 + %lo(_C_LABEL(cnt)+V_INTR)]
-#endif
 
 	sethi	%hi(_C_LABEL(auiop)), %l7
 	ld	[%l7 + %lo(_C_LABEL(auiop))], %l7

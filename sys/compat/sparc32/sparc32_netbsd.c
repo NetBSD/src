@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_netbsd.c,v 1.7 1998/12/18 13:18:43 drochner Exp $	*/
+/*	$NetBSD: sparc32_netbsd.c,v 1.8 1999/03/24 05:51:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -3839,11 +3839,7 @@ compat_sparc32___sysctl(p, v, retval)
 		fn = hw_sysctl;
 		break;
 	case CTL_VM:
-#if defined(UVM)
 		fn = uvm_sysctl;
-#else
-		fn = vm_sysctl;
-#endif
 		break;
 	case CTL_NET:
 		fn = net_sysctl;
@@ -3872,11 +3868,7 @@ compat_sparc32___sysctl(p, v, retval)
 	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen, sizeof(savelen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-#if defined(UVM)
 		if (!uvm_useracc((caddr_t)(u_long)SCARG(uap, old), savelen, B_WRITE))
-#else
-		if (!useracc(SCARG(uap, old), savelen, B_WRITE))
-#endif
 			return (EFAULT);
 #if 0 /* XXXXXXXX */
 		while (memlock.sl_lock) {
@@ -3887,22 +3879,14 @@ compat_sparc32___sysctl(p, v, retval)
 		memlock.sl_lock = 1;
 #endif /* XXXXXXXX */
 		if (dolock)
-#if defined(UVM)
 			uvm_vslock(p, SCARG(uap, old), savelen);
-#else
-			vslock(p, SCARG(uap, old), savelen);
-#endif
 		oldlen = savelen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
-#if defined(UVM)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
-#else
-			vsunlock(p, SCARG(uap, old), savelen);
-#endif
 #if 0 /* XXXXXXXXXXX */
 		memlock.sl_lock = 0;
 		if (memlock.sl_want) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 1999/02/27 06:39:37 scottr Exp $ */
+/*	$NetBSD: machdep.c,v 1.141 1999/03/24 05:51:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
  */
 
 #include "opt_bufcache.h"
-#include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_sysv.h"
@@ -122,17 +121,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h>	/* XXX: not _extern ... need vm_map_create */
-#else
-/* A few straightforward translations to reduce clutter */
-#define uvm_km_alloc(m,s)	kmem_alloc(m,s)
-#define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
-#define uvm_unmap(m,a,s)	kmem_free(m,a,s)
-#define uvm_km_suballoc(m,l,h,s,p,x,y) \
-				kmem_suballoc(m,l,h,s,p)
-#define uvm_useracc(a,s,f)	useracc(a,s,f)
-#endif
+#include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
 #include <sys/sysctl.h>
 
@@ -157,12 +146,8 @@
 #include <sparc/dev/power.h>
 #endif
 
-#if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
-#else
-vm_map_t buffer_map;
-#endif
 extern paddr_t avail_end;
 
 /*
@@ -254,7 +239,6 @@ cpu_startup()
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
-#if defined(UVM)
         /*
          * allocate virtual and physical memory for the buffers.
          */
@@ -300,46 +284,6 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-#else
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-
-	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
-	    &maxaddr, size, TRUE);
-
-	minaddr = (vaddr_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-	}
-#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -377,11 +321,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-#if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-#else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -461,9 +401,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 	return (v);
 }
@@ -1037,15 +974,9 @@ oldmon_w_trace(va)
 	else
 		printf("no curproc\n");
 
-#if defined(UVM)
 	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
 		uvmexp.softs, uvmexp.faults);
-#else
-	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
-	    cnt.v_swtch, cnt.v_trap, cnt.v_syscall, cnt.v_intr, cnt.v_soft,
-	    cnt.v_faults);
-#endif
 	write_user_windows();
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
@@ -1340,13 +1271,8 @@ _bus_dmamem_alloc_common(t, size, alignment, boundary, segs, nsegs, rsegs, flags
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
-#if defined(UVM)
 	error = uvm_pglistalloc(size, low, high,
 	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#else
-	error = vm_page_alloc_memory(size, low, high,
-	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#endif
 	if (error)
 		return (error);
 
@@ -1378,11 +1304,7 @@ _bus_dmamem_free_common(t, segs, nsegs)
 	/*
 	 * Return the list of pages back to the VM system.
 	 */
-#if defined(UVM)
 	uvm_pglistfree(segs[0]._ds_mlist);
-#else
-	vm_page_free_memory(segs[0]._ds_mlist);
-#endif
 	free(segs[0]._ds_mlist, M_DEVBUF);
 }
 
@@ -1596,14 +1518,10 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if ((flags & BUS_DMA_24BIT) == 0) {
 		/* Any memory will do */
 		vaddr_t va;
-#ifdef UVM
 		va = uvm_km_kmemalloc(kernel_map, uvm.kernel_object, size,
 				      (flags & BUS_DMA_NOWAIT) != 0
 						? UVM_KMF_NOWAIT
 						: 0);
-#else
-		va = kmem_malloc(kernel_map, size, !(flags & BUS_DMA_NOWAIT));
-#endif
 		if (va == NULL)
 			return (ENOMEM);
 

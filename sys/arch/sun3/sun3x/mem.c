@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1998/11/19 15:38:24 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1999/03/24 05:51:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,8 +44,6 @@
  * Memory special file
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -58,11 +56,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-/* XXX - Gratuitous name changes... */
-#define kernacc uvm_kernacc
-#endif  
 
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -178,7 +172,7 @@ mmrw(dev, uio, flags)
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
-			if (!(kernacc((caddr_t)v, c, rw) ||
+			if (!(uvm_kernacc((caddr_t)v, c, rw) ||
 			      promacc((caddr_t)v, c, rw)))
 			{
 				error = EFAULT;
@@ -297,7 +291,7 @@ mmmmap(dev, off, prot)
 
 
 /*
- * Just like kernacc(), but for the PROM mappings.
+ * Just like uvm_kernacc(), but for the PROM mappings.
  * Return non-zero if access at VA is allowed.
  */
 static int

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.31 1999/01/19 21:04:48 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.32 1999/03/24 05:51:16 mrg Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -111,11 +111,7 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_deactivate(p)		/* Dont do anything */
-#ifdef UVM
 #define	pmap_reference(pmap)		(pmap)->ref_count++
-#else
-#define	pmap_reference(pmap)		((pmap) ? (pmap)->ref_count++ : 0)
-#endif
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)				\

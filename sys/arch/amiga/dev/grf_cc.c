@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.25 1998/07/10 20:23:24 mhitch Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.26 1999/03/24 05:50:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,8 +36,6 @@
  * view.c
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
@@ -60,10 +58,9 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include "view.h" 
 
