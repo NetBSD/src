@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.18 1998/02/16 03:59:57 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.19 1998/02/27 03:59:59 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -57,9 +57,10 @@ extern vm_offset_t       vtophys(vm_offset_t);
  * Pmap stuff
  */
 struct pmap {
+	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
+	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	pt_entry_t		*pm_stab;	/* KVA of segment table */
-	pt_entry_t		pm_stpte;	/* PTE mapping STE */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
