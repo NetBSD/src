@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.68 2002/01/27 14:18:11 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.69 2002/01/29 18:47:29 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -59,8 +59,14 @@ file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
-file	arch/hpcmips/hpcmips/bitdisp.c
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
+
+file	arch/hpc/hpc/kloader.c
+file	arch/hpcmips/hpcmips/kloader_machdep.c
+file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx
+file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx
+defflag	debug_kloader.h			KLOADER_DEBUG
+defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
 #
 # H/PC Platform common files.
@@ -71,6 +77,11 @@ include "dev/hpc/files.bicons"
 include "dev/hpc/files.hpcfb"
 include "dev/hpc/files.hpckbd"
 include "dev/hpc/files.hpctp"
+
+#
+# Debug utility
+#
+file	arch/hpc/hpc/debug_subr.c
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
@@ -202,13 +213,12 @@ file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 #
 #	TOSHIBA TX3912/3922
 #
-defflag			TX39_DEBUG
 defflag			TX39_WATCHDOGTIMER
-defflag			TX39ICUDEBUG
-defflag			TX39CLKDEBUG
-defflag			TX39BIUDEBUG
-defflag			TX39POWERDEBUG
-defflag			TX39UARTDEBUG
+defflag			TX39ICU_DEBUG
+defflag			TX39CLOCK_DEBUG
+defflag			TX39BIU_DEBUG
+defflag			TX39POWER_DEBUG
+defflag			TX39UART_DEBUG
 defflag			USE_POLL
 
 device txsim { }
