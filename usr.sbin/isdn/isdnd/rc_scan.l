@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration lexical analyzer
  *	---------------------------------------------------
  *
- *	$Id: rc_scan.l,v 1.1.1.1 2001/01/06 13:00:26 martin Exp $ 
+ *	$Id: rc_scan.l,v 1.2 2001/01/07 21:01:03 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -151,7 +151,7 @@ ppp-auth-rechallenge		{ return PPP_AUTH_RECHALLENGE; }
 ppp-auth-paranoid		{ return PPP_AUTH_PARANOID; }
 ppp-expect-auth			{ return PPP_EXPECT_AUTH; }
 ppp-expect-name			{ return PPP_EXPECT_NAME; }
-ppp-expect-password		{ return PPP_EXPECT_NAME; }
+ppp-expect-password		{ return PPP_EXPECT_PASSWORD; }
 ppp-send-auth			{ return PPP_SEND_AUTH; }
 ppp-send-name			{ return PPP_SEND_NAME; }
 ppp-send-password		{ return PPP_SEND_PASSWORD; }
