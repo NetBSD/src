@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.5 1995/05/21 10:52:19 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.6 1995/07/24 05:56:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <dev/cons.h>
 
 #include <atari/atari/kdassert.h>
+#include <atari/dev/kbdmap.h>
 #include <atari/dev/iteioctl.h>
 #include <atari/dev/itevar.h>
 #include <atari/dev/grfioctl.h>
@@ -67,7 +68,6 @@
 #include <atari/dev/grfvar.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
-#include <atari/dev/kbdmap.h>
 
 #define ITEUNIT(dev)	(minor(dev))
 
@@ -313,12 +313,19 @@ void
 iteinit(dev)
 	dev_t dev;
 {
-	struct ite_softc *ip;
+	extern int		atari_realconfig;
+	struct ite_softc	*ip;
 
 	ip = getitesp(dev);
-	if(ip->flags & ITE_INITED)
+	if (ip->flags & ITE_INITED)
 		return;
-	bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+	if (atari_realconfig) {
+		if (ip->kbdmap && ip->kbdmap != &ascii_kbdmap)
+			free(ip->kbdmap, M_DEVBUF);
+		ip->kbdmap = malloc(sizeof(struct kbdmap), M_DEVBUF, M_WAITOK);
+		bcopy(&ascii_kbdmap, ip->kbdmap, sizeof(struct kbdmap));
+	}
+	else ip->kbdmap = &ascii_kbdmap;
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
@@ -476,12 +483,17 @@ iteioctl(dev, cmd, addr, flag, p)
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
-		bcopy(addr, &kbdmap, sizeof(struct kbdmap));
+		bcopy(addr, ip->kbdmap, sizeof(struct kbdmap));
+		return(0);
+	case ITEIOCSSKMAP:
+		if (addr == 0)
+			return(EFAULT);
+		bcopy(addr, &ascii_kbdmap, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		bcopy(&kbdmap, addr, sizeof(struct kbdmap));
+		bcopy(ip->kbdmap, addr, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGREPT:
 		irp = (struct iterepeat *)addr;
@@ -688,6 +700,7 @@ u_int		c;
 enum caller	caller;
 {
 	struct key	key;
+	struct kbdmap	*kbdmap;
 	u_char		code, up, mask;
 	int		s;
 
@@ -695,6 +708,7 @@ enum caller	caller;
 	c    = KBD_SCANCODE(c);
 	code = 0;
 	mask = 0;
+	kbdmap = (kbd_ite == NULL) ? &ascii_kbdmap : kbd_ite->kbdmap;
 
 	s = spltty();
 
@@ -742,18 +756,18 @@ enum caller	caller;
 	/* translate modifiers */
 	if(key_mod & KBD_MOD_SHIFT) {
 		if(key_mod & KBD_MOD_ALT)
-			key = kbdmap.alt_shift_keys[c];
-		else key = kbdmap.shift_keys[c];
+			key = kbdmap->alt_shift_keys[c];
+		else key = kbdmap->shift_keys[c];
 	}
 	else if(key_mod & KBD_MOD_ALT)
-			key = kbdmap.alt_keys[c];
+			key = kbdmap->alt_keys[c];
 	else {
-		key = kbdmap.keys[c];
+		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
 		if((key_mod & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
-			key = kbdmap.shift_keys[c];
+			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
 
@@ -819,6 +833,7 @@ u_int		c;
 enum caller	caller;
 {
 	struct tty	*kbd_tty;
+	struct kbdmap	*kbdmap;
 	u_char		code, *str, up, mask;
 	struct key	key;
 	int		s, i;
@@ -827,6 +842,7 @@ enum caller	caller;
 		return;
 
 	kbd_tty = kbd_ite->tp;
+	kbdmap  = kbd_ite->kbdmap;
 
 	up   = KBD_RELEASED(c);
 	c    = KBD_SCANCODE(c);
@@ -912,7 +928,7 @@ enum caller	caller;
 	 */
 	if(key_mod == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
 		/* ALT + LSHIFT + F1 */
-		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		bcopy(&ascii_kbdmap, kbdmap, sizeof(struct kbdmap));
 		splx(s);
 		return;
 #ifdef DDB
@@ -939,18 +955,18 @@ enum caller	caller;
 	 */
 	if(key_mod & KBD_MOD_SHIFT) {
 		if(key_mod & KBD_MOD_ALT)
-			key = kbdmap.alt_shift_keys[c];
-		else key = kbdmap.shift_keys[c];
+			key = kbdmap->alt_shift_keys[c];
+		else key = kbdmap->shift_keys[c];
 	}
 	else if(key_mod & KBD_MOD_ALT)
-			key = kbdmap.alt_keys[c];
+			key = kbdmap->alt_keys[c];
 	else {
-		key = kbdmap.keys[c];
+		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
 		if((key_mod & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
-			key = kbdmap.shift_keys[c];
+			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
 
@@ -1024,7 +1040,7 @@ enum caller	caller;
 		    3, 27, 'O', 'C',
 		    3, 27, 'O', 'D'};
 
-		str = kbdmap.strings + code;
+		str = kbdmap->strings + code;
 		/* 
 		 * if this is a cursor key, AND it has the default
 		 * keymap setting, AND we're in app-cursor mode, switch
