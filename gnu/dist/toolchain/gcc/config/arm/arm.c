@@ -3657,8 +3657,11 @@ arm_reload_in_hi (operands)
      rtx *operands;
 {
   rtx ref = operands[1];
-  rtx base, scratch;
+  rtx base, scratch, scratch2;
   HOST_WIDE_INT offset = 0;
+
+  scratch = gen_rtx_REG (SImode, REGNO (operands[2]));
+  scratch2 = gen_rtx_REG (SImode, REGNO (operands[2]) + 1);
 
   if (GET_CODE (ref) == SUBREG)
     {
@@ -3692,7 +3695,7 @@ arm_reload_in_hi (operands)
   if (GET_CODE (base) == MINUS
       || (GET_CODE (base) == PLUS && GET_CODE (XEXP (base, 1)) != CONST_INT))
     {
-      rtx base_plus = gen_rtx_REG (SImode, REGNO (operands[2]) + 1);
+      rtx base_plus = scratch;
 
       emit_insn (gen_rtx_SET (VOIDmode, base_plus, base));
       base = base_plus;
@@ -3726,7 +3729,7 @@ arm_reload_in_hi (operands)
 
       if (hi != 0)
 	{
-	  rtx base_plus = gen_rtx_REG (SImode, REGNO (operands[2]) + 1);
+	  rtx base_plus = scratch;
 
 	  /* Get the base address; addsi3 knows how to handle constants
 	     that require more than one insn */
@@ -3736,37 +3739,38 @@ arm_reload_in_hi (operands)
 	}
     }
 
-  /* Operands[2] may overlap operands[0] (though it won't overlap
-     operands[1]), that's why we asked for a DImode reg -- so we can
-     use the bit that does not overlap.  */
-  if (REGNO (operands[2]) == REGNO (operands[0]))
-    scratch = gen_rtx_REG (SImode, REGNO (operands[2]) + 1);
-  else
-    scratch = gen_rtx_REG (SImode, REGNO (operands[2]));
+  if (GET_CODE (base) != REG)
+    abort ();
 
-  emit_insn (gen_zero_extendqisi2 (scratch,
+  /* Operands[2] may overlap BASE.  Ensure that we don't clobber it in
+     the first load.  */
+  if (REGNO (scratch2) == REGNO (base))
+    {
+      rtx tmp = scratch2;
+      scratch2 = scratch;
+      scratch = tmp;
+    }
+
+  emit_insn (gen_zero_extendqisi2 (scratch2,
 				   gen_rtx_MEM (QImode,
 						plus_constant (base,
 							       offset))));
-  emit_insn (gen_zero_extendqisi2 (gen_rtx_SUBREG (SImode, operands[0], 0),
+  emit_insn (gen_zero_extendqisi2 (scratch,
 				   gen_rtx_MEM (QImode, 
 						plus_constant (base,
 							       offset + 1))));
-  if (! BYTES_BIG_ENDIAN)
-    emit_insn (gen_rtx_SET (VOIDmode, gen_rtx_SUBREG (SImode, operands[0], 0),
-			gen_rtx_IOR (SImode, 
-				     gen_rtx_ASHIFT
-				     (SImode,
-				      gen_rtx_SUBREG (SImode, operands[0], 0),
-				      GEN_INT (8)),
-				     scratch)));
-  else
+  if (BYTES_BIG_ENDIAN)
     emit_insn (gen_rtx_SET (VOIDmode, gen_rtx_SUBREG (SImode, operands[0], 0),
 			    gen_rtx_IOR (SImode, 
-					 gen_rtx_ASHIFT (SImode, scratch,
+					 gen_rtx_ASHIFT (SImode, scratch2,
 							 GEN_INT (8)),
-					 gen_rtx_SUBREG (SImode, operands[0],
-							 0))));
+					 scratch)));
+  else
+    emit_insn (gen_rtx_SET (VOIDmode, gen_rtx_SUBREG (SImode, operands[0], 0),
+			gen_rtx_IOR (SImode, 
+				     gen_rtx_ASHIFT (SImode, scratch,
+						     GEN_INT (8)),
+				     scratch2)));
 }
 
 /* Handle storing a half-word to memory during reload by synthesising as two
