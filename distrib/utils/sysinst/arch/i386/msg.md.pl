@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.15 2003/07/07 21:26:34 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.16 2003/07/27 20:25:07 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -51,10 +51,23 @@ message dobad144
 
 message getboottype
 {Czy chcesz zainstalowac normalne bootbloki, czy te do uzycia z zewn. konsola?
-}
+
+Selected bootblock: }
+
+message console_PC {BIOS console}
+message console_com {Serial port com%d, baud rate %d}
 
 message Bootblocks_selection
 {Wybor bootblokow}
+message Use_normal_bootblocks	{Use BIOS console}
+message Use_serial_com0		{Use serial port com0}
+message Use_serial_com1		{Use serial port com1}
+message Use_serial_com2		{Use serial port com2}
+message Use_serial_com3		{Use serial port com3}
+message serial_baud_rate	{Serial baud rate}
+message Use_existing_bootblocks	{Use exitisting bootblocks}
+
+.if 0
 message Use_normal_bootblocks
 {Uzyj normalnych bootblokow}
 message Use_serial_9600_bootblocks
@@ -65,6 +78,7 @@ message Use_serial_57600_bootblocks
 {Uzyj bootblokow na zewn. konsole (57600)}
 message Use_serial_115200_bootblocks
 {Uzyj bootblokow na zewn. konsole (115200)}
+.endif
 
 message dobootblks
 {Instalowanie bootblokow na %s....
