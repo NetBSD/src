@@ -236,7 +236,7 @@ static int ipl_load()
 }
 
 
-int xxxinit(lkmtp, cmd, ver)
+int if_ipl_lkmentry(lkmtp, cmd, ver)
 struct lkm_table *lkmtp;
 int cmd, ver;
 {
