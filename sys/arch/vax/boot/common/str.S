@@ -1,4 +1,4 @@
-/*	$NetBSD: str.S,v 1.2 2003/09/04 10:40:44 dsl Exp $ */
+/*	$NetBSD: str.S,v 1.3 2003/10/07 12:01:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -57,11 +57,10 @@ ENTRY(atoi, 0)
 
 /*
  * index() small and easy.
- * doesnt work if we search for null.
  */
 ENTRY(index, 0)
 	movq	4(%ap),%r0
-1:	cmpb	(%r0), %r1
+1:	cmpb	(%r0), 8(%ap)
 	beql	2f
 	tstb	(%r0)+
 	bneq	1b
@@ -79,8 +78,7 @@ ENTRY(bcmp, 0)
 	movl	12(%ap), %r0
 2:	cmpb	(%r2)+, (%r1)+
 	bneq	1f
-	decl	%r0
-	bneq	2b
+	sobgtr	%r0, 2b
 3:	ret
 1:	bgtru	5f
 	movl	$-1, %r0
@@ -89,24 +87,42 @@ ENTRY(bcmp, 0)
 	ret
 
 /*
- * Is movc3/movc5 emulated on any CPU? I dont think so; use them here.
+ * movc can't do length in excess of 64K, so we shall not use them.
  */
 ENTRY(bzero,0)
-	movc5	$0,*4(%ap),$0,8(%ap),*4(%ap)
+	movl	4(%ap),%r0
+	movl	8(%ap),%r1
+1:	clrb	(%r0)+
+	sobgtr	%r1,1b
 	ret
 
+/*
+ * memcpy and bcopy are the same, except for argument order. Silly stuff.
+ */
+ENTRY(memcpy,0)
+	movl	8(%ap),%r0
+	movl	4(%ap),%r1
+	brb	1f
 ENTRY(bcopy,0)
-	movc3	12(%ap), *4(%ap), *8(%ap)
+	movl	4(%ap),%r0
+	movl	8(%ap),%r1
+1:	movl	12(%ap),%r2
+	cmpl	%r0,%r1
+	bgtru	3f
+	addl2	%r2,%r0
+	addl2	%r2,%r1
+2:	movb	-(%r0),-(%r1)
+	sobgtr	%r2,2b
+	ret
+3:	movb	(%r0)+,(%r1)+
+	sobgtr	%r2,3b
 	ret
 
 ENTRY(memset,0)
-	movc5	$0,*4(%ap),8(%ap),12(%ap),*4(%ap)
-	movl    4(%ap), %r0
-	ret
-
-ENTRY(memcpy,0)
-	movc3	12(%ap), *8(%ap), *4(%ap)
-	movl    4(%ap), %r0
+	movl	4(%ap),%r0
+	movl	12(%ap),%r1
+1:	movb	8(%ap),(%r0)+
+	sobgtr	%r1,1b
 	ret
 
 ENTRY(strlen, 0)
@@ -150,9 +166,12 @@ ENTRY(strncpy, 0)
 
 1:	movb	(%r2)+, (%r1)+
 	beql	2f
-	decl	%r3
-	bneq	1b
-2:	ret
+	sobgtr	%r3,1b
+	ret
+2:	decl	%r1
+3:	clrb	(%r1)+
+	sobgtr	%r3,3b
+	ret
 
 ENTRY(strcat, 0)
 	pushl	4(%ap)
