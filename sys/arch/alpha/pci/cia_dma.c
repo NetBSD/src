@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.3 1997/09/02 13:19:18 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.4 1998/01/17 03:43:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.3 1997/09/02 13:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.4 1998/01/17 03:43:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ cia_dma_init(ccp)
 	struct cia_config *ccp;
 {
 	bus_addr_t tbase;
-	u_int32_t memcs_en;
 	bus_dma_tag_t t;
 
 	/*
@@ -163,34 +162,29 @@ cia_dma_init(ccp)
 	 */
 
 	/*
-	 * Initialize the SGMAP if safe to do so.
+	 * Initialize the SGMAP if safe to do so.  Must align page
+	 * table to 32k (hardware bug?).
 	 */
 	if (ccp->cc_mallocsafe) {
 		alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
 		    CIA_SGMAP_MAPPED_BASE, 0, (8*1024*1024),
-		    sizeof(u_int64_t), NULL);
-
-		/* Remember the MEMCS value. */
-		alpha_mb();
-		memcs_en = REGVAL(CIA_PCI_W0BASE) & CIA_PCI_WnBASE_MEMCS_EN;
-
-		/* Now disable window 0. */
-		REGVAL(CIA_PCI_W0BASE) = 0;
-		alpha_mb();
+		    sizeof(u_int64_t), NULL, (32*1024*1024));
 
 		/*
 		 * Set up window 0 as an 8MB SGMAP-mapped window
 		 * starting at 8MB.
 		 */
+		REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_BASE |
+		    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
+		alpha_mb();
+
+		REGVAL(CIA_PCI_W0MASK) = CIA_PCI_WnMASK_8M;
+		alpha_mb();
+
 		tbase = ccp->cc_sgmap.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
 		if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
 			panic("cia_dma_init: bad page table address");
 		REGVAL(CIA_PCI_T0BASE) = tbase;
-		REGVAL(CIA_PCI_W0MASK) = CIA_PCI_WnMASK_8M;
-		alpha_mb();
-
-		REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_BASE |
-		    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN | memcs_en;
 		alpha_mb();
 
 		CIA_TLB_INVALIDATE();
