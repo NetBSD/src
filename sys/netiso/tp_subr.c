@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.13 2001/10/18 20:17:32 thorpej Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.14 2001/11/13 01:10:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,9 @@ SOFTWARE.
  * (tp_sbdrop()),  and put incoming packet data into socket buffers
  * (tp_stash()).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.14 2001/11/13 01:10:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

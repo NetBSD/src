@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.11 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.12 2001/11/13 00:56:57 lukem Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -30,11 +30,14 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-
 /*
  * RFC1827/2406 Encapsulated Security Payload.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.12 2001/11/13 00:56:57 lukem Exp $");
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

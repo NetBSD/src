@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.43 2001/10/24 06:36:38 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.44 2001/11/13 00:56:59 lukem Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.44 2001/11/13 00:56:59 lukem Exp $");
 
 #include "opt_ipsec.h"
 

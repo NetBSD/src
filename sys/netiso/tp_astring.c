@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_astring.c,v 1.3 1996/02/13 22:10:37 christos Exp $	*/
+/*	$NetBSD: tp_astring.c,v 1.4 2001/11/13 01:10:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tp_astring.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_astring.c,v 1.4 2001/11/13 01:10:49 lukem Exp $");
 
 char           *tp_sstring[] = {
 	"ST_ERROR(0x0)",

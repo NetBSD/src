@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.6 2001/04/13 23:30:28 thorpej Exp $	*/
+/*	$NetBSD: natm.c,v 1.7 2001/11/13 01:37:45 lukem Exp $	*/
 
 /*
  *
@@ -35,6 +35,9 @@
 /*
  * natm.c: native mode ATM access (both aal0 and aal5).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.7 2001/11/13 01:37:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

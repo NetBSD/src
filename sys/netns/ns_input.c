@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.16 2001/04/13 23:30:29 thorpej Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.17 2001/11/13 01:08:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_input.c	8.2 (Berkeley) 9/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.17 2001/11/13 01:08:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

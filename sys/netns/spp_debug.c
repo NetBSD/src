@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.11 2001/07/08 16:14:22 abs Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.12 2001/11/13 01:08:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)spp_debug.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.12 2001/11/13 01:08:11 lukem Exp $");
 
 #include "opt_inet.h"
 

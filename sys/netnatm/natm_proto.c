@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.4 1999/01/14 01:25:19 thorpej Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.5 2001/11/13 01:37:45 lukem Exp $	*/
 
 /*
  *
@@ -35,6 +35,9 @@
 /*
  * protocol layer for access to native mode ATM
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.5 2001/11/13 01:37:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

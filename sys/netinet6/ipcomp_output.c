@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.15 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.16 2001/11/13 00:57:03 lukem Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * RFC2393 IP payload compression protocol (IPComp).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.16 2001/11/13 00:57:03 lukem Exp $");
 
 #include "opt_inet.h"
 
