@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.135 2000/08/19 17:25:33 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.136 2000/08/21 02:16:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -183,11 +183,6 @@ void printlockedvnodes __P((void));
 void
 vntblinit()
 {
-
-	simple_lock_init(&mntvnode_slock);
-	simple_lock_init(&mntid_slock);
-	simple_lock_init(&spechash_slock);
-	simple_lock_init(&vnode_free_list_slock);
 
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
