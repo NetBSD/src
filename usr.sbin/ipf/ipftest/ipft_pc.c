@@ -1,3 +1,5 @@
+/*	$NetBSD: ipft_pc.c,v 1.1.1.2 1997/03/29 02:49:50 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -30,7 +32,7 @@
 #include "pcap.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipft_pc.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipft_pc.c,v 1.1.1.2 1997/03/29 02:49:50 darrenr Exp $";
 #endif
 
 struct	llc	{
@@ -59,11 +61,15 @@ static	struct	llc	llcs[DLT_MAX+1] = {
 	{ 0, 0, 0 }	/* DLT_FDDI */
 };
 
-static        int     ipft_pcap_open(), ipft_pcap_close(), ipft_pcap_readip();
+static	int	pcap_open __P((char *));
+static	int	pcap_close __P((void));
+static	int	pcap_readip __P((char *, int, char **, int *));
+static	void	swap_hdr __P((pcaphdr_t *));
+static	int	pcap_read_rec __P((struct pcap_pkthdr *));
 
 static	int	pfd = -1, s_type = -1, swapped = 0;
 
-struct	ipread	pcap = { ipft_pcap_open, ipft_pcap_close, ipft_pcap_readip };
+struct	ipread	pcap = { pcap_open, pcap_close, pcap_readip };
 
 #define	SWAPLONG(y)	\
 	((((y)&0xff)<<24) | (((y)&0xff00)<<8) | (((y)&0xff0000)>>8) | (((y)>>24)&0xff))
@@ -81,7 +87,7 @@ pcaphdr_t	*p;
 	p->pc_type = SWAPLONG(p->pc_type);
 }
 
-static	int	ipft_pcap_open(fname)
+static	int	pcap_open(fname)
 char	*fname;
 {
 	pcaphdr_t ph;
@@ -122,7 +128,7 @@ char	*fname;
 }
 
 
-static	int	ipft_ipft_pcap_close()
+static	int	pcap_close()
 {
 	return close(pfd);
 }
@@ -132,8 +138,8 @@ static	int	ipft_ipft_pcap_close()
  * read in the header (and validate) which should be the first record
  * in a pcap file.
  */
-static	int	ipft_pcap_read_rec(rec)
-struct	ipft_pcap_pkthdr *rec;
+static	int	pcap_read_rec(rec)
+struct	pcap_pkthdr *rec;
 {
 	int	n, p;
 
@@ -160,15 +166,15 @@ struct	ipft_pcap_pkthdr *rec;
  * read an entire pcap packet record.  only the data part is copied into
  * the available buffer, with the number of bytes copied returned.
  */
-static	int	ipft_pcap_read(buf, cnt)
+static	int	pcap_read(buf, cnt)
 char	*buf;
 int	cnt;
 {
-	struct	ipft_pcap_pkthdr rec;
+	struct	pcap_pkthdr rec;
 	static	char	*bufp = NULL;
 	int	i, n;
 
-	if ((i = ipft_pcap_read_rec(&rec)) <= 0)
+	if ((i = pcap_read_rec(&rec)) <= 0)
 		return i;
 
 	if (!bufp)
@@ -189,18 +195,18 @@ int	cnt;
 /*
  * return only an IP packet read into buf
  */
-static	int	ipft_ipft_pcap_readip(buf, cnt, ifn, dir)
+static	int	pcap_readip(buf, cnt, ifn, dir)
 char	*buf, **ifn;
 int	cnt, *dir;
 {
 	static	char	*bufp = NULL;
-	struct	ipft_pcap_pkthdr rec;
+	struct	pcap_pkthdr rec;
 	struct	llc	*l;
 	char	*s, ty[4];
 	int	i, n;
 
 	do {
-		if ((i = ipft_pcap_read_rec(&rec)) <= 0)
+		if ((i = pcap_read_rec(&rec)) <= 0)
 			return i;
 
 		if (!bufp)
