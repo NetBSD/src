@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.496 2002/02/21 22:23:33 mjacob Exp $
+#	$NetBSD: files,v 1.497 2002/02/27 01:16:30 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -962,6 +962,7 @@ file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
+file	dev/mm.c
 file	dev/mulaw.c			mulaw
 file	dev/radio.c			radio			needs-flag
 file	dev/raidframe/rf_acctrace.c		raid		needs-flag
