@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.70 2000/03/26 20:54:45 kleink Exp $	*/
+/*	$NetBSD: vnode.h,v 1.71 2000/03/28 05:49:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -260,7 +260,6 @@ ilstatic void vhold __P((struct vnode *));
 ilstatic void vref __P((struct vnode *));
 
 #ifdef DIAGNOSTIC
-void vattr_null __P((struct vattr *));
 #define	VATTR_NULL(vap)	vattr_null(vap)
 #else
 #define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
@@ -404,7 +403,7 @@ extern struct vnodeop_desc *vnodeop_descs[];
 /*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
-struct simplelock mntvnode_slock;
+extern struct simplelock mntvnode_slock;
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
