@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.16 1998/01/09 18:46:40 perry Exp $	
+	$NetBSD: install,v 1.17 1998/01/12 23:23:38 ender Exp $	
 
 The installation can be broken down into three basic steps:
 	* Run Mkfs to build a filesystem or filesystems.
@@ -79,6 +79,10 @@ If you are installing onto a single root partition, proceed to the
 
 		* You can use the 'disklabel' command to get a listing of
 		  the available partitions and their types and sizes.
+
+		* Create the directory mount point(s) with the command:
+			mkdir path
+		  (e.g. for the /usr partition type: mkdir /usr)
 
 		* Mount the filesystems you wish with the command:
 			mount device path
