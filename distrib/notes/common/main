@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.251 2003/12/29 13:33:58 igy Exp $
+.\"	$NetBSD: main,v 1.252 2004/01/19 23:34:11 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1790,6 +1790,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.org
 .It Ta IWAMOTO Toshihiro Ta Mt toshii@NetBSD.org
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.org
+.It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.org
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.org
 .It Ta Chris Jones Ta Mt cjones@NetBSD.org
