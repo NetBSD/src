@@ -555,8 +555,6 @@
 ./usr/share/doc/psd/21.ipc
 ./usr/share/doc/smm
 ./usr/share/doc/smm/01.setup
-./usr/share/doc/smm/01.setup/tahoe
-./usr/share/doc/smm/01.setup/vax
 ./usr/share/doc/smm/02.config
 ./usr/share/doc/smm/03.fsck_ffs
 ./usr/share/doc/smm/04.quotas
