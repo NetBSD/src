@@ -1,29 +1,34 @@
-#	$NetBSD: Makefile,v 1.2 1996/01/06 22:40:58 pk Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1996/06/20 20:30:22 pk Exp $
 
-# Revision is 1.1A
-REV=		11A
+# Revision is 1.1B
+REV=		11B
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 
-MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-IMAGE?=		xxx-${REV}.fs
-MDEC=		${DESTDIR}/usr/mdec
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
-LISTS=		${ARCHDIR}/list ${.CURDIR}/list
+MOUNT_POINT?=	/mnt
+VND?=		vnd0a
+VND_DEV=	/dev/${VND}
+VND_RDEV=	/dev/r${VND}
+IMAGE?=		miniroot-${REV}.fs
+IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
+NEWFSOPTS?=
+
+LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 
 all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} bs=512k count=10
+	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space ${VND_RDEV} miniroot
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
+	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

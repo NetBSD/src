@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 1996/05/21 18:54:40 pk Exp $
+#	$NetBSD: install.md,v 1.3.2.1 1996/06/20 20:31:22 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,9 +65,20 @@ md_get_ifdevs() {
 	dmesg | egrep "(^le[0-9] |^ie[0-9] )" | cut -d" " -f1 | sort -u
 }
 
+md_get_partition_range() {
+    # return range of valid partition letters
+    echo "[a-h]"
+}
+
 md_installboot() {
 	echo "Installing boot block..."
-	/usr/mdec/binstall -v ffs /mnt
+	/usr/mdec/binstall ffs /mnt
+}
+
+md_native_fstype() {
+}
+
+md_native_fsopts() {
 }
 
 md_checkfordisklabel() {
@@ -109,9 +120,16 @@ in case you have defined less than eight partitions.
 [End of example]
 
 __md_prep_disklabel_1
+	echo -n "Press [Enter] to continue "
+	getresp ""
+	disklabel -W ${ROOTDISK}
+	disklabel -e ${ROOTDISK}
+}
 
-	disklabel -W $1
-	disklabel -e $1
+md_copy_kernel() {
+	echo -n "Copying kernel..."
+	cp -p /netbsd /mnt/netbsd
+	echo "done."
 }
 
 md_welcome_banner() {
@@ -182,6 +200,3 @@ system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
 }
-
-md_native_fstype () {}
-md_native_fsopts () {}
