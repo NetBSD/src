@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.44 2002/10/01 01:28:04 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.45 2002/10/02 16:53:15 thorpej Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.44 2002/10/01 01:28:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.45 2002/10/02 16:53:15 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -194,10 +194,10 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  */
 
 CFATTACH_DECL(xyc, sizeof(struct xyc_softc),
-    xycmatch, xycattach, NULL, NULL)
+    xycmatch, xycattach, NULL, NULL);
 
 CFATTACH_DECL(xy, sizeof(struct xy_softc),
-    xymatch, xyattach, NULL, NULL)
+    xymatch, xyattach, NULL, NULL);
 
 extern struct cfdriver xy_cd;
 

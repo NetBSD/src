@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.15 2002/09/30 20:37:24 thorpej Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.16 2002/10/02 16:51:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.15 2002/09/30 20:37:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.16 2002/10/02 16:51:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
 void	pcic_pci_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pcic_pci, sizeof(struct pcic_pci_softc),
-    pcic_pci_match, pcic_pci_attach, NULL, NULL)
+    pcic_pci_match, pcic_pci_attach, NULL, NULL);
 
 static struct pcmcia_chip_functions pcic_pci_functions = {
 	pcic_chip_mem_alloc,

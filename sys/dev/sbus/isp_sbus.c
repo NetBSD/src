@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.57 2002/09/30 23:07:08 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.58 2002/10/02 16:52:39 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.57 2002/09/30 23:07:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.58 2002/10/02 16:52:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ struct isp_sbussoftc {
 static int isp_match(struct device *, struct cfdata *, void *);
 static void isp_sbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(isp_sbus, sizeof (struct isp_sbussoftc),
-    isp_match, isp_sbus_attach, NULL, NULL)
+    isp_match, isp_sbus_attach, NULL, NULL);
 
 static int
 isp_match(struct device *parent, struct cfdata *cf, void *aux)

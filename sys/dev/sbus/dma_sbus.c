@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.15 2002/09/30 23:07:07 thorpej Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.16 2002/10/02 16:52:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.15 2002/09/30 23:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.16 2002/10/02 16:52:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,10 +112,10 @@ void	*dmabus_intr_establish __P((
 static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
 CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
-    dmamatch_sbus, dmaattach_sbus, NULL, NULL)
+    dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
 CFATTACH_DECL(ledma, sizeof(struct dma_softc),
-    dmamatch_sbus, dmaattach_sbus, NULL, NULL)
+    dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
 int
 dmaprint_sbus(aux, busname)

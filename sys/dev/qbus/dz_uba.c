@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.18 2002/09/30 22:42:11 thorpej Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.19 2002/10/02 16:52:26 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.18 2002/09/30 22:42:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19 2002/10/02 16:52:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ static	int	dz_uba_match __P((struct device *, struct cfdata *, void *));
 static	void	dz_uba_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(dz_uba, sizeof(struct dz_softc),
-    dz_uba_match, dz_uba_attach, NULL, NULL)
+    dz_uba_match, dz_uba_attach, NULL, NULL);
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.4 2002/09/30 22:33:19 thorpej Exp $	*/
+/*	$NetBSD: hcide.c,v 1.5 2002/10/02 16:52:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.4 2002/09/30 22:33:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.5 2002/10/02 16:52:23 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -58,7 +58,7 @@ static void hcide_attach (struct device *, struct device *, void *);
 static int  hcide_match  (struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(hcide, sizeof(struct hcide_softc),
-    hcide_match, hcide_attach, NULL, NULL)
+    hcide_match, hcide_attach, NULL, NULL);
 
 static const int hcide_cmdoffsets[] = { HCIDE_CMD0, HCIDE_CMD1, HCIDE_CMD2 };
 static const int hcide_ctloffsets[] = { HCIDE_CTL, HCIDE_CTL, HCIDE_CTL };

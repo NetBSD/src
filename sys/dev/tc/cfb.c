@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.37 2002/10/01 01:12:36 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.38 2002/10/02 16:53:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.37 2002/10/01 01:12:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.38 2002/10/02 16:53:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ static int  cfbmatch __P((struct device *, struct cfdata *, void *));
 static void cfbattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(cfb, sizeof(struct cfb_softc),
-    cfbmatch, cfbattach, NULL, NULL)
+    cfbmatch, cfbattach, NULL, NULL);
 
 static void cfb_common_init __P((struct rasops_info *));
 static struct rasops_info cfb_console_ri;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.13 2002/09/30 20:37:35 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.14 2002/10/02 16:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.13 2002/09/30 20:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.14 2002/10/02 16:51:27 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -460,7 +460,7 @@ int	pcn_match(struct device *, struct cfdata *, void *);
 void	pcn_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcn, sizeof(struct pcn_softc),
-    pcn_match, pcn_attach, NULL, NULL)
+    pcn_match, pcn_attach, NULL, NULL);
 
 /*
  * Routines to read and write the PCnet-PCI CSR/BCR space.

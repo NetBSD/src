@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.18 2002/10/01 01:12:39 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.19 2002/10/02 16:53:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.18 2002/10/01 01:12:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.19 2002/10/02 16:53:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -197,7 +197,7 @@ int	zs_ioasic_print __P((void *, const char *name));
 int	zs_ioasic_submatch __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
-    zs_ioasic_match, zs_ioasic_attach, NULL, NULL)
+    zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
 
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));

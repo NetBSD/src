@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.38 2002/09/30 20:37:33 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.39 2002/10/02 16:51:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.38 2002/09/30 20:37:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39 2002/10/02 16:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ void le_pci_attach __P((struct device *, struct device *, void *));
 int le_pci_mediachange __P((struct lance_softc *));
 
 CFATTACH_DECL(le_pci, sizeof(struct le_softc),
-    le_pci_match, le_pci_attach, NULL, NULL)
+    le_pci_match, le_pci_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"

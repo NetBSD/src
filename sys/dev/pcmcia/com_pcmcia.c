@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.31 2002/09/30 22:26:59 thorpej Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.32 2002/10/02 16:52:05 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.31 2002/09/30 22:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32 2002/10/02 16:52:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ struct com_pcmcia_softc {
 };
 
 CFATTACH_DECL(com_pcmcia, sizeof(struct com_pcmcia_softc),
-    com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate)
+    com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate);
 
 /* Look for pcmcia cards with particular CIS strings */
 static struct com_dev *

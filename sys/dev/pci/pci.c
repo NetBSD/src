@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.72 2002/09/30 20:37:57 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.73 2002/10/02 16:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.72 2002/09/30 20:37:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.73 2002/10/02 16:51:50 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -58,7 +58,7 @@ int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, NULL, NULL)
+    pcimatch, pciattach, NULL, NULL);
 
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.4 2002/09/30 22:27:00 thorpej Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.5 2002/10/02 16:52:10 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.4 2002/09/30 22:27:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.5 2002/10/02 16:52:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ struct cs_pcmcia_softc {
 #define CS_PCMCIA_FLAGS_IO_MAPPED 2
 
 CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
-    cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate)
+    cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
 
 static int
 cs_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)

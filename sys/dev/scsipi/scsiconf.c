@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.191 2002/09/30 23:12:51 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.192 2002/10/02 16:52:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.191 2002/09/30 23:12:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.192 2002/10/02 16:52:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ int	scsibusdetach __P((struct device *, int flags));
 int	scsibussubmatch __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(scsibus, sizeof(struct scsibus_softc),
-    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate)
+    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate);
 
 extern struct cfdriver scsibus_cd;
 

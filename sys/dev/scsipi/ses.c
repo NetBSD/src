@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.16 2002/09/30 23:12:52 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.17 2002/10/02 16:52:55 thorpej Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.16 2002/09/30 23:12:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.17 2002/10/02 16:52:55 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -171,7 +171,7 @@ static void ses_attach __P((struct device *, struct device *, void *));
 static enctyp ses_device_type __P((struct scsipibus_attach_args *));
 
 CFATTACH_DECL(ses, sizeof (struct ses_softc),
-    ses_match, ses_attach, NULL, NULL)
+    ses_match, ses_attach, NULL, NULL);
 
 extern struct cfdriver ses_cd;
 
