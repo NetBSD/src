@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.1.2.2 2002/05/30 14:44:56 gehenna Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.1.2.3 2002/05/31 01:01:08 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1.2.2 2002/05/30 14:44:56 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1.2.3 2002/05/31 01:01:08 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1.2.2 2002/05/30 14:44:56 gehenna E
 #include <compat/irix/irix_usema.h>
 #include <compat/irix/irix_ioctl.h>
 #include <compat/irix/irix_syscallargs.h>
-
-#include <machine/irix_machdep.h>
 
 dev_type_open(irix_usemaopen);
 dev_type_close(irix_usemaclose);
