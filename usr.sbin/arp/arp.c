@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.30 2001/04/24 23:11:06 atatat Exp $ */
+/*	$NetBSD: arp.c,v 1.31 2001/07/29 21:24:57 chs Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.30 2001/04/24 23:11:06 atatat Exp $");
+__RCSID("$NetBSD: arp.c,v 1.31 2001/07/29 21:24:57 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -653,7 +653,7 @@ getinetaddr(host, inap)
 	if (inet_aton(host, inap) == 1)
 		return (0);
 	if ((hp = gethostbyname(host)) == NULL) {
-		warnx("%s: %s\n", host, hstrerror(h_errno));
+		warnx("%s: %s", host, hstrerror(h_errno));
 		return (-1);
 	}
 	(void)memcpy(inap, hp->h_addr, sizeof(*inap));
