@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.40 1997/01/11 05:21:14 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.41 1997/06/24 19:31:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -291,7 +291,6 @@ udp_input(m, va_alist)
 				goto bad;
 			}
 			*ip = save_ip;
-			ip->ip_len += iphlen;
 #if NIPKDB > 0
 			if (checkipkdb(&ip->ip_src,
 				       uh->uh_sport,
