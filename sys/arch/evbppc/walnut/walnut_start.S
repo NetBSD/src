@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.9 2003/08/03 23:28:45 eeh Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.10 2003/08/18 21:30:51 eeh Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -90,6 +90,9 @@
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/pmap.h>
 
+/* Function pointer for requesting board_config_data from openbios*/
+#define BOARD_CFG_FP       0xFFFE0B50
+
 /*
  * Some instructions gas doesn't understand (yet?)
  */
@@ -148,7 +151,14 @@ __start:
 	nop
 
 1:
-	mflr	%r31			/* Save address of PROM info_block */
+	/* Get the board_config_data from openbios */
+	lis	%r3,BOARD_CFG_FP@h
+	ori	%r3,%r3,BOARD_CFG_FP@l
+	lwz     %r0,0x0(%r3)
+	mtctr   %r0
+	bctrl				/* call the xcoff function */
+	mr	%r31,%r3		/* Save value in r31 */
+
 	li	%r0,0
 	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 	isync
