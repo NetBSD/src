@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1999/10/30 11:03:39 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/11/21 07:58:50 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -130,9 +130,18 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("NEC MC-R510(15bit color)"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_510 },
+	{ TEXT("MobileGearII MC-R520"), BIFB_D8_00,
+		640, 240, 1024, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520 },
+	{ TEXT("Mobile Pro 770"), BIFB_D8_00,
+		640, 240, 1024, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520A },
 	{ TEXT("MobileGearII MC-R700"), BIFB_D16_0000,
 		800, 600, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_700 },
+	{ TEXT("Mobile Pro 800"), BIFB_D16_0000,
+		800, 600, 1600, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_700A },
 	{ TEXT("Tripad PV-6000"), BIFB_D8_FF,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_SHARP_TRIPAD_PV6000 },
@@ -407,7 +416,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.7.2 1999.10.30\r\n")
+			       TEXT("Version 1.7.3 1999.11.21\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
