@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2005/03/19 18:16:34 yamt Exp $
+# $NetBSD: Makefile,v 1.23 2005/03/20 14:21:05 yamt Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 SRCDIR=		${.CURDIR}/../../../sbin/ifconfig
@@ -19,7 +19,17 @@ DPADD+=${LIBUTIL}
 LDADD+=-lutil
 
 SRCS= ifconfig.c 
+
+SRCS+= af_atalk.c
+SRCS+= af_inet.c
+.if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
+SRCS+= af_inet6.c
+.endif
+SRCS+= af_iso.c
+SRCS+= af_ns.c
+
 SRCS+= agr.c
+SRCS+= ieee80211.c
 SRCS+= tunnel.c
 SRCS+= vlan.c
 
