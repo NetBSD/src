@@ -4,7 +4,7 @@ Some things that need to be done in no particular order:
 Find race condition in UHCI driver.  Rarely (under heavy USB load) you get a
 "uhci_idone: ii=0x%x is done!".  This "cannot happen".
 
-Add shutdown hooks for host controllers to make sure they are stopped.
+Add events for HC attach/detach and driver attach/detach.
 
 Add lots of bus_dmamap_sync().
 
@@ -34,7 +34,7 @@ Add generic ucom layer for serial adapters.
 
 Add isoc to OHCI driver.
 
-Do memory deallocation when HC driver is deactivated.
+Do memory deallocation when HC driver is detached.
 
 uaudio problems:
 	mixer names are awful, use some heuristics.
@@ -51,3 +51,7 @@ Document device driver API.
 Document HC driver API.
 
 Handle CLEAR_ENPOINT_STALL centrally.
+
+Use splsoftusb() or a thread to deliver callbacks.
+
+Add threads to the Ethernet drivers.
