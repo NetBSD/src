@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.22 1999/06/09 03:41:34 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.23 1999/06/27 23:43:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -139,7 +139,8 @@ int	esp_quick_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
 void	esp_quick_dma_go __P((struct ncr53c9x_softc *));
 
-int	esp_dualbus_intr __P((register struct ncr53c9x_softc *sc));
+void	esp_intr __P((void *sc));
+void	esp_dualbus_intr __P((void *sc));
 static struct esp_softc		*esp0 = NULL, *esp1 = NULL;
 
 static __inline__ int esp_dafb_have_dreq __P((struct esp_softc *esc));
@@ -249,8 +250,7 @@ espattach(parent, self, aux)
 		esp0 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;
-		via2_register_irq(VIA2_SCSIIRQ,
-		    (void (*)(void *))ncr53c9x_intr, esc);
+		via2_register_irq(VIA2_SCSIIRQ, esp_intr, esc);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		if (reg_offset == 0x10000) {
 			sc->sc_freq = 16500000;
@@ -265,8 +265,7 @@ espattach(parent, self, aux)
 		esp1 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
-		via2_register_irq(VIA2_SCSIIRQ,
-		    (void (*)(void *))esp_dualbus_intr, NULL);
+		via2_register_irq(VIA2_SCSIIRQ, esp_dualbus_intr, NULL);
 		esc->irq_mask = 0;
 		sc->sc_freq = 25000000;
 
@@ -334,13 +333,8 @@ esp_read_reg(sc, reg)
 	int reg;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char	v;
-	int	s;
 
-	s = splhigh();
-	v = esc->sc_reg[reg * 16];
-	splx(s);
-	return v;
+	return esc->sc_reg[reg * 16];
 }
 
 void
@@ -351,14 +345,11 @@ esp_write_reg(sc, reg, val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	u_char	v = val;
-	int	s;
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA)) {
 		v = NCRCMD_TRANS;
 	}
-	s = splhigh();
 	esc->sc_reg[reg * 16] = v;
-	splx(s);
 }
 
 void
@@ -512,12 +503,8 @@ esp_quick_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char	v = val;
-	int	s;
 
-	s = splhigh();
-	esc->sc_reg[reg * 16] = v;
-	splx(s);
+	esc->sc_reg[reg * 16] = val;
 }
 
 int
@@ -706,9 +693,28 @@ gotintr:
 	if (espspl != -1) splx(espspl); espspl = -1;
 }
 
-int
+void
+esp_intr(sc)
+	void *sc;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	int	i = 0;
+
+	do {
+		if (esc->sc_reg[NCR_STAT * 16] & 0x80) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+			i++;
+		}
+
+		if (!i) {
+			delay(10000);
+		}
+	} while (!i++);
+}
+
+void
 esp_dualbus_intr(sc)
-	register struct ncr53c9x_softc *sc;
+	void *sc;
 {
 	int	i = 0;
 
@@ -722,10 +728,9 @@ esp_dualbus_intr(sc)
 			ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
 			i++;
 		}
-		if (!i) {
-			delay(100); i++;
-		}
-	} while (!i);
 
-	return 0;
+		if (!i) {
+			delay(10000);
+		}
+	} while (!i++);
 }
