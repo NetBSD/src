@@ -1,4 +1,4 @@
-/* $NetBSD: va-sh.h,v 1.3 2000/02/24 17:19:57 msaitoh Exp $ */
+/* $NetBSD: va-sh.h,v 1.3.4.1 2000/08/08 18:34:22 msaitoh Exp $ */
 
 /* This is just like the default gvarargs.h
    except for differences described below.  */
@@ -117,11 +117,11 @@ enum __va_type_classes {
 #endif
 #define va_end(pvar)	((void)0)
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
+#ifndef _BYTE_ORDER
+#error Define _BYTE_ORDER!
 #endif
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == LITTLE_ENDIAN
 #define __LITTLE_ENDIAN_P 1
 #else
 #define __LITTLE_ENDIAN_P 0
