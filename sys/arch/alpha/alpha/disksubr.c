@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1995/03/24 15:15:45 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1995/04/22 12:43:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,10 +39,6 @@
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-
-#include <alpha/tc/dmavar.h>
-#include <alpha/tc/espreg.h>
-#include <alpha/tc/espvar.h>
 
 extern struct device *bootdv;
 
