@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.40 2003/08/27 18:36:19 uwe Exp $	*/
+/* $NetBSD: cat.c,v 1.41 2003/09/14 19:20:16 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.40 2003/08/27 18:36:19 uwe Exp $");
+__RCSID("$NetBSD: cat.c,v 1.41 2003/09/14 19:20:16 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,6 @@ void cook_args(char *argv[]);
 void cook_buf(FILE *);
 void raw_args(char *argv[]);
 void raw_cat(int);
-char *printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -157,10 +156,7 @@ cook_args(char **argv)
 				fp = stdin;
 			else if ((fp = fopen(*argv,
 			    fflag ? "rf" : "r")) == NULL) {
-				char *fn;
-				fn = printescaped(*argv);
-				warn("%s", fn);
-				free(fn);
+				warn("%s", *argv);
 				rval = 1;
 				++argv;
 				continue;
@@ -236,10 +232,7 @@ cook_buf(FILE *fp)
 			break;
 	}
 	if (ferror(fp)) {
-		char *fn;
-		fn = printescaped(filename);
-		warn("%s", fn);
-		free(fn);
+		warn("%s", filename);
 		rval = 1;
 		clearerr(fp);
 	}
@@ -251,7 +244,6 @@ void
 raw_args(char **argv)
 {
 	int fd;
-	char *fn;
 
 	fd = fileno(stdin);
 	filename = "stdin";
@@ -271,17 +263,13 @@ raw_args(char **argv)
 				}
 				if (!S_ISREG(st.st_mode)) {
 					close(fd);
-					fn = printescaped(*argv);
-					warnx("%s: not a regular file", fn);
-					free(fn);
+					warnx("%s: not a regular file", *argv);
 					goto skipnomsg;
 				}
 			}
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
 skip:
-				fn = printescaped(*argv);
-				warn("%s", fn);
-				free(fn);
+				warn("%s", *argv);
 skipnomsg:
 				rval = 1;
 				++argv;
@@ -305,7 +293,6 @@ raw_cat(int rfd)
 	struct stat sbuf;
 	ssize_t nr, nw, off;
 	int wfd;
-	char *fn;
 
 	wfd = fileno(stdout);
 	if (buf == NULL) {
@@ -324,33 +311,7 @@ raw_cat(int rfd)
 			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
 				err(1, "stdout");
 	if (nr < 0) {
-		fn = printescaped(filename);
-		warn("%s", fn);
-		free(fn);
+		warn("%s", filename);
 		rval = 1;
 	}
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

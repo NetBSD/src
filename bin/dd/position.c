@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.15 2003/08/20 10:43:55 kleink Exp $	*/
+/*	$NetBSD: position.c,v 1.16 2003/09/14 19:20:20 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.15 2003/08/20 10:43:55 kleink Exp $");
+__RCSID("$NetBSD: position.c,v 1.16 2003/09/14 19:20:20 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ pos_in(void)
 	if (!(in.flags & (ISPIPE|ISTAPE))) {
 		if (lseek(in.fd,
 		    (off_t)in.offset * (off_t)in.dbsz, SEEK_CUR) == -1) {
-			err(EXIT_FAILURE, "%s", printescaped(in.name));
+			err(EXIT_FAILURE, "%s", in.name);
 			/* NOTREACHED */
 		}
 		return;
@@ -112,17 +112,14 @@ pos_in(void)
 		 */
 		if (ddflags & C_NOERROR) {
 			if (!warned) {
-				char *fn;
 
-				fn = printescaped(in.name);
-				warn("%s", fn);
-				free(fn);
+				warn("%s", in.name);
 				warned = 1;
 				summary();
 			}
 			continue;
 		}
-		err(EXIT_FAILURE, "%s", printescaped(in.name));
+		err(EXIT_FAILURE, "%s", in.name);
 		/* NOTREACHED */
 	}
 }
@@ -141,7 +138,7 @@ pos_out(void)
 	if (!(out.flags & ISTAPE)) {
 		if (lseek(out.fd,
 		    (off_t)out.offset * (off_t)out.dbsz, SEEK_SET) == -1)
-			err(EXIT_FAILURE, "%s", printescaped(out.name));
+			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 		return;
 	}
@@ -152,7 +149,7 @@ pos_out(void)
 		t_op.mt_count = out.offset;
 
 		if (ioctl(out.fd, MTIOCTOP, &t_op) < 0)
-			err(EXIT_FAILURE, "%s", printescaped(out.name));
+			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 		return;
 	}
@@ -163,7 +160,7 @@ pos_out(void)
 			continue;
 
 		if (n < 0)
-			err(EXIT_FAILURE, "%s", printescaped(out.name));
+			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 
 		/*
@@ -174,12 +171,12 @@ pos_out(void)
 		t_op.mt_op = MTBSR;
 		t_op.mt_count = 1;
 		if (ioctl(out.fd, MTIOCTOP, &t_op) == -1)
-			err(EXIT_FAILURE, "%s", printescaped(out.name));
+			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 
 		while (cnt++ < out.offset)
 			if ((n = bwrite(out.fd, out.db, out.dbsz)) != out.dbsz)
-				err(EXIT_FAILURE, "%s", printescaped(out.name));
+				err(EXIT_FAILURE, "%s", out.name);
 				/* NOTREACHED */
 		break;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.25 2003/08/07 09:05:03 agc Exp $ */
+/* $NetBSD: utils.c,v 1.26 2003/09/14 19:20:18 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.25 2003/08/07 09:05:03 agc Exp $");
+__RCSID("$NetBSD: utils.c,v 1.26 2003/09/14 19:20:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,28 +332,4 @@ usage(void)
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strcpy(retval, src);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

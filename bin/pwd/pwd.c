@@ -1,4 +1,4 @@
-/* $NetBSD: pwd.c,v 1.17 2003/08/13 03:27:21 itojun Exp $ */
+/* $NetBSD: pwd.c,v 1.18 2003/09/14 19:20:23 jschauma Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.17 2003/08/13 03:27:21 itojun Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.18 2003/09/14 19:20:23 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,12 @@ int	stdout_ok;			/* stdout connected to a terminal */
 static char *getcwd_logical(char *, size_t);
 static void usage(void);
 int main(int, char *[]);
-char *printescaped(const char *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, lFlag;
 	const char *p;
-	char *pn;
 
 	setprogname(argv[0]);
 	lFlag = 0;
@@ -99,9 +97,7 @@ main(int argc, char *argv[])
 
 	stdout_ok = isatty(STDOUT_FILENO);
 
-	pn = printescaped(p);
-	(void)printf("%s\n", pn);
-	free(pn);
+	(void)printf("%s\n", p);
 
 	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
@@ -152,28 +148,4 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-LP]\n", getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.11 2003/08/07 09:05:12 agc Exp $	*/
+/* $NetBSD: echo.c,v 1.12 2003/09/14 19:20:20 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.11 2003/08/07 09:05:12 agc Exp $");
+__RCSID("$NetBSD: echo.c,v 1.12 2003/09/14 19:20:20 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: echo.c,v 1.11 2003/08/07 09:05:12 agc Exp $");
 int stdout_ok;
 
 int main(int, char *[]);
-char *printescaped(const char *);
 
 /* ARGSUSED */
 int
@@ -74,10 +73,7 @@ main(int argc, char *argv[])
 		nflag = 0;
 
 	while (*argv) {
-		char *n;
-		n = printescaped(*argv);
-		(void)printf("%s", n);
-		free(n);
+		(void)printf("%s", *argv);
 		if (*++argv)
 			(void)putchar(' ');
 	}
@@ -85,28 +81,4 @@ main(int argc, char *argv[])
 		(void)putchar('\n');
 	exit(0);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strcpy(retval, src);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.34 2003/08/07 09:05:03 agc Exp $ */
+/* $NetBSD: cp.c,v 1.35 2003/09/14 19:20:18 jschauma Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.34 2003/08/07 09:05:03 agc Exp $");
+__RCSID("$NetBSD: cp.c,v 1.35 2003/09/14 19:20:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: cp.c,v 1.34 2003/08/07 09:05:03 agc Exp $");
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, fflag, iflag, pflag, rflag, stdout_ok, vflag; 
+int Rflag, fflag, iflag, pflag, rflag, vflag; 
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -149,8 +149,6 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	stdout_ok = isatty(STDOUT_FILENO);
-
 	fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
 	if (rflag) {
 		if (Rflag) {
@@ -187,7 +185,7 @@ main(int argc, char *argv[])
 	/* Save the target base in "to". */
 	target = argv[--argc];
 	if (strlen(target) > MAXPATHLEN) {
-		errx(EXIT_FAILURE, "%s: name too long", printescaped(target));
+		errx(EXIT_FAILURE, "%s: name too long", target);
 		/* NOTREACHED */
 	}
 	(void)strcpy(to.p_path, target);
@@ -218,7 +216,7 @@ main(int argc, char *argv[])
 	 */
 	r = stat(to.p_path, &to_stat);
 	if (r == -1 && errno != ENOENT) {
-		err(EXIT_FAILURE, "%s", printescaped(to.p_path));
+		err(EXIT_FAILURE, "%s", to.p_path);
 		/* NOTREACHED */
 	}
 	if (r == -1 || !S_ISDIR(to_stat.st_mode)) {
@@ -242,7 +240,7 @@ main(int argc, char *argv[])
 			else
 				r = lstat(*argv, &tmp_stat);
 			if (r == -1) {
-				err(EXIT_FAILURE, "%s", printescaped(*argv));
+				err(EXIT_FAILURE, "%s", *argv);
 				/* NOTREACHED */
 			}
 			
@@ -270,27 +268,24 @@ copy(char *argv[], enum op type, int fts_options)
 	FTS *ftsp;
 	FTSENT *curr;
 	int base, dne, nlen, rval;
-	char *p, *tmp, *fn;
+	char *p, *tmp;
 
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
-		err(EXIT_FAILURE, "%s", printescaped(argv[0]));
+		err(EXIT_FAILURE, "%s", argv[0]);
 		/* NOTREACHED */
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
 		case FTS_NS:
 		case FTS_DNR:
 		case FTS_ERR:
-			fn = printescaped(curr->fts_path);
-			warnx("%s: %s", fn, strerror(curr->fts_errno));
-			free(fn);
+			warnx("%s: %s", curr->fts_path,
+					strerror(curr->fts_errno));
 			rval = 1;
 			continue;
 		case FTS_DC:			/* Warn, continue. */
-			fn = printescaped(curr->fts_path);
-			warnx("%s: directory causes a cycle", fn);
-			free(fn);
+			warnx("%s: directory causes a cycle", curr->fts_path);
 			rval = 1;
 			continue;
 		}
@@ -302,12 +297,8 @@ copy(char *argv[], enum op type, int fts_options)
 		if (type != FILE_TO_FILE) {
 			if ((curr->fts_namelen +
 			    to.target_end - to.p_path + 1) > MAXPATHLEN) {
-				char *tn;
-				tn = printescaped(to.p_path);
-				fn = printescaped(curr->fts_name);
-				warnx("%s/%s: name too long (not copied)", tn, fn);
-				free(fn);
-				free(tn);
+				warnx("%s/%s: name too long (not copied)",
+						to.p_path, curr->fts_name);
 				rval = 1;
 				continue;
 			}
@@ -373,13 +364,8 @@ copy(char *argv[], enum op type, int fts_options)
 			}
 			if (!S_ISDIR(curr->fts_statp->st_mode) &&
 			    S_ISDIR(to_stat.st_mode)) {
-				char *tn;
-				tn = printescaped(to.p_path);
-				fn = printescaped(curr->fts_path);
 		warnx("cannot overwrite directory %s with non-directory %s",
-				    tn, fn);
-				free(tn);
-				free(fn);
+				    to.p_path, curr->fts_path);
 				rval = 1;
 				continue;
 			}
@@ -400,12 +386,9 @@ copy(char *argv[], enum op type, int fts_options)
 			break;
 		case S_IFDIR:
 			if (!Rflag && !rflag) {
-				if (curr->fts_info == FTS_D) {
-					fn = printescaped(curr->fts_path);
+				if (curr->fts_info == FTS_D)
 					warnx("%s is a directory (not copied).",
-					    fn);
-					free(fn);
-				}
+					    curr->fts_path);
 				(void)fts_set(ftsp, curr, FTS_SKIP);
 				rval = 1;
 				break;
@@ -430,12 +413,12 @@ copy(char *argv[], enum op type, int fts_options)
 					if (mkdir(to.p_path, 
 					    curr->fts_statp->st_mode | S_IRWXU) < 0)
 						err(EXIT_FAILURE, "%s",
-						    printescaped(to.p_path));
+						    to.p_path);
 						/* NOTREACHED */
 				} else if (!S_ISDIR(to_stat.st_mode)) {
 					errno = ENOTDIR;
 					err(EXIT_FAILURE, "%s",
-						printescaped(to.p_path));
+						to.p_path);
 					/* NOTREACHED */
 				}
 			}
@@ -455,9 +438,8 @@ copy(char *argv[], enum op type, int fts_options)
 			}
 			else
                         {
-				fn = printescaped(curr->fts_path);
-                        	warnx("directory %s encountered when not expected.", fn);
-				free(fn);
+                        	warnx("directory %s encountered when not expected.",
+						curr->fts_path);
                         	rval = 1;
                                 break;
                         }
@@ -485,14 +467,8 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 			break;
 		}
-		if (vflag) {
-			char *tn;
-			fn = printescaped(curr->fts_path);
-			tn = printescaped(to.p_path);
-			(void)printf("%s -> %s\n", fn, tn);
-			free(fn);
-			free(tn);
-		}
+		if (vflag)
+			(void)printf("%s -> %s\n", curr->fts_path, to.p_path);
 	}
 	if (errno) {
 		err(EXIT_FAILURE, "fts_read");
