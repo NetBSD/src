@@ -3,6 +3,7 @@
 ./usr/include/machine/aout_machdep.h
 ./usr/include/machine/apmvar.h
 ./usr/include/machine/asm.h
+./usr/include/machine/bioscall.h
 ./usr/include/machine/bootinfo.h
 ./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
