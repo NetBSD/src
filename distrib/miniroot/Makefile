@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/05/24 23:36:38 pk Exp $
+#	$NetBSD: Makefile,v 1.4 1996/05/27 12:39:01 leo Exp $
 
 # Revision is 1.1B
 REV=		11B
@@ -11,22 +11,24 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .endif
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
+VND?=		vnd0a
+VND_DEV=	/dev/${VND}
+VND_RDEV=	/dev/r${VND}
 IMAGE?=		miniroot-${REV}.fs
-IMAGESIZE?=	5
+IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
+NEWFSOPTS?=
 
-LISTS=		${ARCHDIR}/list ${.CURDIR}/list
+LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 
 all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} bs=1024k count=${IMAGESIZE}
+	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space ${VND_RDEV} miniroot
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} floppybt
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	echo "VERSION=${REV}; export VERSION" > ${MOUNT_POINT}/VERSION
 	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
 	@echo ""
