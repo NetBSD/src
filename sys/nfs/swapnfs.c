@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
- *	$Id: swapnfs.c,v 1.3 1993/12/18 00:46:03 mycroft Exp $
+ *	$Id: swapnfs.c,v 1.4 1994/01/18 01:35:15 brezak Exp $
  */
 
 /*
@@ -110,8 +110,6 @@ int (*mountroot)() = nfs_mountroot;
 int nfs_hack_mountroot();
 int (*mountroot)() = nfs_hack_mountroot;
 
-#endif     
-     
 #define NFS_SOCKET 2049
 
 /* this is an egregious hack necessitated by many unfortunate circumstances*/
@@ -166,3 +164,5 @@ int nfs_hack_mountroot()
 
     return nfs_mountroot();
 }
+
+#endif     
