@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.160 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: audio.c,v 1.161 2002/09/23 03:44:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.160 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.161 2002/09/23 03:44:56 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1430,7 +1430,7 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 			n -= nfill - 1;
 		}
 		while (n >= nfill) {
-			int k;
+			int k = nfill;
 			*p++ = auzero0;
 			while (--k > 0)
 				*p++ = auzero1;
