@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 2001/01/14 23:50:30 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.7 2001/01/15 20:19:52 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -106,7 +106,6 @@ extern int hardsplx(int);
  */
 
 /* Old-fashioned soft interrupts */
-extern void setsoftclock(void);
 extern void setsoftnet(void);
 
 /* New-fangled generic soft interrupts */

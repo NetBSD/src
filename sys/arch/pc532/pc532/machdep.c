@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2001/01/02 19:16:34 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2001/01/15 20:19:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1128,16 +1128,6 @@ cpu_reset()
 
 	/* Jump into ROM copy. */
 	__asm __volatile("jump @0");
-}
-
-/*
- * Clock software interrupt routine
- */
-void
-do_softclock(arg)
-	void *arg;
-{
-	softclock();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2001/01/07 21:12:31 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2001/01/15 20:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -738,7 +738,7 @@ softint()
 		siroff(SIR_CLOCK);
 		uvmexp.softs++;
 		/* XXXX softclock(&frame.f_stackadj); */
-		softclock();
+		softclock(NULL);
 	}
 	if (ssir & SIR_CBACK) {
 		siroff(SIR_CBACK);

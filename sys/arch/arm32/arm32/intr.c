@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2000/12/12 06:06:05 mycroft Exp $	*/
+/*	$NetBSD: intr.c,v 1.23 2001/01/15 20:19:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -132,7 +132,7 @@ dosoftints()
 		++COUNT;
 		INC_SINTRCNT(SOFTIRQ_CLOCK);
 		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_CLOCK));
-		softclock();
+		softclock(NULL);
 		(void)splx(s);
 	}
 
