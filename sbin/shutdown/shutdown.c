@@ -1,6 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.23 1998/01/21 00:32:53 mycroft Exp $	*/
-
-#define	DEBUG
+/*	$NetBSD: shutdown.c,v 1.24 1998/01/21 00:33:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -45,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.23 1998/01/21 00:32:53 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.24 1998/01/21 00:33:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
