@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.18 1997/10/06 19:58:01 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.18.4.1 1998/01/27 19:30:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,10 +50,8 @@
 #define DIAG_REG    0x70000000
 
 #define CONTROL_ADDR_MASK 0x0FFFFFFC
-
-
-#define NBSEG    0x20000
-#define NPMEG    0x100
+#define CONTROL_ADDR_BUILD(as, va) \
+((as) | ((va) & CONTROL_ADDR_MASK))
 
 #define VAC_CACHE_TAGS    0x80000000
 #define VAC_CACHE_DATA    0x90000000
@@ -62,43 +60,29 @@
 #define VAC_FLUSH_PAGE    0x2
 #define VAC_FLUSH_SEGMENT 0x3
 
-#define CONTEXT_0  0x0
-#define CONTEXT_1  0x1
-#define CONTEXT_2  0x2
-#define CONTEXT_3  0x3
-#define CONTEXT_4  0x4
-#define CONTEXT_5  0x5
-#define CONTEXT_6  0x6
-#define CONTEXT_7  0x7
 #define CONTEXT_NUM 0x8
 #define CONTEXT_MASK 0x7
-
-#define SYSTEM_ENAB_DIAG  0x01
-#define SYSTEM_ENAB_FPA   0x02
-#define SYSTEM_ENAB_COPY  0x04
-#define SYSTEM_ENAB_VIDEO 0x08
-#define SYSTEM_ENAB_CACHE 0x10
-#define SYSTEM_ENAB_SVDMA 0x20
-#define SYSTEM_ENAB_FPP   0x40
-#define SYSTEM_ENAB_BOOT  0x80
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
 /* ctrlsp.S */
-int get_control_byte __P((vm_offset_t));
-int get_control_word __P((vm_offset_t));
-void set_control_byte __P((vm_offset_t, int));
-void set_control_word __P((vm_offset_t, int));
+int   get_control_byte __P((vm_offset_t));
+void  set_control_byte __P((vm_offset_t, int));
+u_int get_control_word __P((vm_offset_t));
+void  set_control_word __P((vm_offset_t, u_int));
 
 /* control.c */
-int get_context __P((void));
+int  get_context __P((void));
 void set_context __P((int));
 
-int  get_pte __P((vm_offset_t));
-void set_pte __P((vm_offset_t, int));
-
-int get_segmap __P((vm_offset_t));
+int  get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t, int));
 void set_segmap_allctx __P((vm_offset_t, int));
+
+#if 0
+/* Moved to pte.h (now a common interface). */
+int  get_pte __P((vm_offset_t));
+void set_pte __P((vm_offset_t, int));
+#endif
 
 #endif	/* _KERNEL | _STANDALONE */
