@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_bsd.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: api_bsd.c,v 1.2 1993/08/01 18:06:22 mycroft Exp $";
+static char rcsid[] = "$Id: api_bsd.c,v 1.3 1995/04/29 05:56:57 cgd Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -43,6 +43,7 @@ static char rcsid[] = "$Id: api_bsd.c,v 1.2 1993/08/01 18:06:22 mycroft Exp $";
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../ctlr/api.h"
 #include "api_exch.h"
