@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.16.2.1 2000/07/27 02:10:49 mycroft Exp $
+#	$NetBSD: GENERIC_TINY,v 1.16.2.2 2000/09/12 00:48:39 fvdl Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -78,8 +78,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-options 	COMPAT_AOUT	# binary compat with NetBSD a.out binaries
 
 # File systems
 file-system 	FFS		# UFS
