@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.600 2003/08/31 16:41:41 wiz Exp $
+# $NetBSD: mi,v 1.601 2003/09/02 05:26:44 mrg Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -22,7 +22,6 @@
 ./usr/share/info/heimdal.info			man-krb5-info
 ./usr/share/info/info-stnd.info			man-texinfo-info
 ./usr/share/info/info.info			man-texinfo-info
-./usr/share/info/iostream.info			man-cxx-info
 ./usr/share/info/kth-krb.info			man-krb4-info
 ./usr/share/info/ld.info			man-computil-info
 ./usr/share/info/send-pr.info			man-gnats-info
