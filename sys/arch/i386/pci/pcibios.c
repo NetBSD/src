@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.15 2004/04/04 16:06:09 kochi Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.16 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.15 2004/04/04 16:06:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.16 2004/04/11 06:00:26 kochi Exp $");
 
 #include "opt_pcibios.h"
 
@@ -109,18 +109,18 @@ int pcibios_max_bus;
 
 struct bios32_entry pcibios_entry;
 
-void	pcibios_pir_init __P((void));
+void	pcibios_pir_init(void);
 
-int	pcibios_get_status __P((u_int32_t *, u_int32_t *, u_int32_t *,
-	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *));
-int	pcibios_get_intr_routing __P((struct pcibios_intr_routing *,
-	    int *, u_int16_t *));
+int	pcibios_get_status(u_int32_t *, u_int32_t *, u_int32_t *,
+	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *);
+int	pcibios_get_intr_routing(struct pcibios_intr_routing *,
+	    int *, u_int16_t *);
 
-int	pcibios_return_code __P((u_int16_t, const char *));
+int	pcibios_return_code(u_int16_t, const char *);
 
-void	pcibios_print_exclirq __P((void));
+void	pcibios_print_exclirq(void);
 #ifdef PCIINTR_DEBUG
-void	pcibios_print_pir_table __P((void));
+void	pcibios_print_pir_table(void);
 #endif
 
 #define	PCI_IRQ_TABLE_START	0xf0000
@@ -339,9 +339,9 @@ pcibios_pir_init()
 }
 
 int
-pcibios_get_status(rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
-	u_int32_t *rev_maj, *rev_min, *mech1, *mech2, *scmech1, *scmech2,
-	    *maxbus;
+pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
+    u_int32_t *mech1, u_int32_t *mech2, u_int32_t *scmech1, u_int32_t *scmech2,
+    u_int32_t *maxbus)
 {
 	u_int16_t ax, bx, cx;
 	u_int32_t edx;
@@ -376,10 +376,8 @@ pcibios_get_status(rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 }
 
 int
-pcibios_get_intr_routing(table, nentries, exclirq)
-	struct pcibios_intr_routing *table;
-	int *nentries;
-	u_int16_t *exclirq;
+pcibios_get_intr_routing(struct pcibios_intr_routing *table,
+    int *nentries, u_int16_t *exclirq)
 {
 	u_int16_t ax, bx;
 	int rv;
@@ -415,9 +413,7 @@ pcibios_get_intr_routing(table, nentries, exclirq)
 }
 
 int
-pcibios_return_code(ax, func)
-	u_int16_t ax;
-	const char *func;
+pcibios_return_code(u_int16_t ax, const char *func)
 {
 	const char *errstr;
 	int rv = ax >> 8;
@@ -500,22 +496,15 @@ pcibios_print_pir_table()
 #endif
 
 void 
-pci_device_foreach(pc, maxbus, func, context)
-	pci_chipset_tag_t pc;
-	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
-	void *context;
+pci_device_foreach(pci_chipset_tag_t pc, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
 {
-  pci_device_foreach_min(pc, 0, maxbus, func, context);
+	pci_device_foreach_min(pc, 0, maxbus, func, context);
 }
 
 void
-pci_device_foreach_min(pc, minbus, maxbus, func, context)
-	pci_chipset_tag_t pc;
-	int minbus;
-	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
-	void *context;
+pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
 {
 	const struct pci_quirkdata *qd;
 	int bus, device, function, maxdevs, nfuncs;

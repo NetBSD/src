@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.6 2004/04/04 16:06:09 kochi Exp $	*/
+/*	$NetBSD: piix.c,v 1.7 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.6 2004/04/04 16:06:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.7 2004/04/11 06:00:26 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,12 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.6 2004/04/04 16:06:09 kochi Exp $");
 #define	DPRINTF(arg)
 #endif
 
-int	piix_getclink __P((pciintr_icu_handle_t, int, int *));
-int	ich_getclink __P((pciintr_icu_handle_t, int, int *));
-int	piix_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	piix_set_intr __P((pciintr_icu_handle_t, int, int));
+int	piix_getclink(pciintr_icu_handle_t, int, int *);
+int	ich_getclink(pciintr_icu_handle_t, int, int *);
+int	piix_get_intr(pciintr_icu_handle_t, int, int *);
+int	piix_set_intr(pciintr_icu_handle_t, int, int);
 #ifdef PIIX_DEBUG
-void	piix_pir_dump __P((struct piix_handle *));
+void	piix_pir_dump(struct piix_handle *);
 #endif
 
 const struct pciintr_icu piix_pci_icu = {
@@ -124,12 +124,8 @@ const struct pciintr_icu ich_pci_icu = {
 static int piix_max_link = 3;
 
 int
-piix_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+piix_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct piix_handle *ph;
 
@@ -156,12 +152,8 @@ piix_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-ich_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+ich_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	int rv;
 
@@ -176,9 +168,7 @@ ich_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-piix_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+piix_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	DPRINTF(("PIIX link value 0x%x: ", link));
 
@@ -211,9 +201,7 @@ piix_getclink(v, link, clinkp)
 }
 
 int
-ich_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+ich_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	/*
 	 * configuration registers 0x68..0x6b are for PIRQ[EFGH]
@@ -228,9 +216,7 @@ ich_getclink(v, link, clinkp)
 }
 
 int
-piix_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+piix_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct piix_handle *ph = v;
 	int shift;
@@ -254,9 +240,7 @@ piix_get_intr(v, clink, irqp)
 }
 
 int
-piix_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+piix_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct piix_handle *ph = v;
 	int shift;
@@ -279,9 +263,7 @@ piix_set_intr(v, clink, irq)
 }
 
 int
-piix_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+piix_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
@@ -303,9 +285,7 @@ piix_get_trigger(v, irq, triggerp)
 }
 
 int
-piix_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+piix_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
@@ -329,8 +309,7 @@ piix_set_trigger(v, irq, trigger)
 
 #ifdef PIIX_DEBUG
 void
-piix_pir_dump(ph)
-	struct piix_handle *ph;
+piix_pir_dump(struct piix_handle *ph)
 {
 	int i, irq;
 	pcireg_t irqs = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
