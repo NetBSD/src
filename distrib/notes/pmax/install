@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.29 2001/08/26 12:08:07 simonb Exp $
+.\"	$NetBSD: install,v 1.30 2002/05/08 04:13:14 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -242,7 +242,7 @@ use the following commands:
 .Pp
 .Dl # Ic "cd /"
 .Dl # Ic "tar -zxpvf .../\*M/installation/misc/bootblocks.tgz"
-.Dl # Ic "/usr/mdec/installboot /dev/rrz" Ns Ar X Ns Ic "c /usr/mdec/bootxx_ffs"
+.Dl # Ic "/usr/sbin/installboot /dev/rrz" Ns Ar X Ns Ic "c /usr/mdec/bootxx_ffs"
 .Pp
 where
 .Ar X
