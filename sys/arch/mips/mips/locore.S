@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 1997/08/08 06:52:59 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.45 1997/08/09 03:41:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -760,13 +760,13 @@ sw1:
 	jal	_C_LABEL(pmap_alloc_tlbpid)	# v0 = TLB PID
 	move	s0, a0				# BDSLOT: save p
 	sw	s0, _C_LABEL(curproc)		# set curproc
-	lw	t0, P_MD_UPTE+0(s0)		# t0 = first u. pte
-	lw	t1, P_MD_UPTE+4(s0)		# t1 = 2nd u. pte
-	lw	s0, P_ADDR(s0)
+	lw	a1, P_MD_UPTE+0(s0)		# a1 = first u. pte
+	lw	a2, P_MD_UPTE+4(s0)		# a2 = 2nd u. pte
+	lw	a0, P_ADDR(s0)			# a0 = p_addr
 	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
-	sw	s0, _C_LABEL(curpcb)		# set curpcb
+	sw	a0, _C_LABEL(curpcb)		# set curpcb
 	jr	s1				# CPU-specific: resume process
-	nop
+	move	a3, v0				# BDSLOT: a3 = TLB PID
 END(cpu_switch)
 
 /*
@@ -1492,17 +1492,18 @@ END(splx)
  *
  *	Return the current value of the cause register.
  *
- *	mips_read_causereg(void)
+ *	int mips_read_causereg(void)
  *
  * Results:
  *	current value of Cause register.None.
  *
  * Side effects:
  *	None.
+ *	Not profiled,  skews CPU-clock measurement to uselessness.
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips_read_causereg)
+NLEAF(mips_read_causereg)
 	mfc0	v0, MIPS_COP_0_CAUSE_REG
 	j	ra
 	nop

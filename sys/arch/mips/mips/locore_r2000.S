@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.39 1997/07/20 19:48:13 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.40 1997/08/09 03:41:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1645,9 +1645,10 @@ END(mips1_switch_exit)
  * Also, there should be no TLB faults at this point.
  *
  * Entered from CPU-common cpu_switch()
- * v0 = TLB Process ID for this process
- * t0 = First u.pte
- * t1 = Second u.pte
+ * a0 = p_addr [curpcb]
+ * a1 = First u.pte
+ * a2 = Second u.pte
+ * a3 = TLB Process ID for this process
  */
 /*
  * XXXX - almost done with the UADDR mapping; only the kernel stack should
@@ -1656,27 +1657,29 @@ END(mips1_switch_exit)
  * map the current u-area.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
  *
+ * Both the UADDR and u-area are now mapped global.
+ *
  * NB: cannot be profiled due to weird argument-assing convention.
  *     mcount would trash v0, t0, t1.
  */
 NLEAF(mips1_cpu_switch_resume)
-	sll	v0, v0, MIPS1_TLB_PID_SHIFT	# v0 = aligned PID
-	or	v0, v0, UADDR			# v0 = first HI entry
+	sll	a3, a3, MIPS1_TLB_PID_SHIFT	# a3 = aligned PID
+	li	v0, UADDR			# HI entry; PID = 0
+	ori	a1, MIPS1_PG_G			# Global
+	ori	a2, MIPS1_PG_G			# Global
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	t0, MIPS_COP_0_TLB_LOW		# init low entry
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# init low entry
 	li	s1, 1 << MIPS1_TLB_INDEX_SHIFT
 	tlbwi					# Write the TLB entry.
 	addu	v0, v0, NBPG			# 2nd HI entry
 	mtc0	s1, MIPS_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MIPS_COP_0_TLB_LOW		# init low entry
+	mtc0	a2, MIPS_COP_0_TLB_LOW		# init low entry
 	nop
 	tlbwi					# Write the TLB entry.
  # now map p_addr; may need to flush random TLB entries
-	andi	v0, MIPS1_TLB_PID		# mask PID
-	or	v0, s0				# insert p_addr
-	mtc0	v0, MIPS_COP_0_TLB_HI
+	mtc0	a0, MIPS_COP_0_TLB_HI		# PID = 0
 	nop
 	tlbp					# probe for entry
 	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
@@ -1688,15 +1691,15 @@ NLEAF(mips1_cpu_switch_resume)
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MIPS_COP_0_TLB_HI		# restore High
+	mtc0	a0, MIPS_COP_0_TLB_HI		# restore High
 1:
 	li	s1, 2 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	s1, MIPS_COP_0_TLB_INDEX
-	mtc0	t0, MIPS_COP_0_TLB_LOW
+	mtc0	a1, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
-	addu	v0, v0, NBPG
-	mtc0	v0, MIPS_COP_0_TLB_HI
+	addu	a0, a0, NBPG
+	mtc0	a0, MIPS_COP_0_TLB_HI		# second page of p_addr
 	nop
 	tlbp					# probe for entry
 	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
@@ -1708,13 +1711,14 @@ NLEAF(mips1_cpu_switch_resume)
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MIPS_COP_0_TLB_HI		# restore High
+	mtc0	a0, MIPS_COP_0_TLB_HI		# restore High
 1:
 	li	s1, 3 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	s1, MIPS_COP_0_TLB_INDEX
-	mtc0	t1, MIPS_COP_0_TLB_LOW
+	mtc0	a2, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
+	mtc0	a3, MIPS_COP_0_TLB_HI		# set PID [UADDR/pcb GLOBAL]
 /*
  * Now running on new u struct.
  * Restore registers and return.
