@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2000/02/21 20:38:51 erh Exp $ */
+/*	$NetBSD: intr.c,v 1.21 2000/03/16 02:36:58 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,9 @@
 struct intrhand *intrlev[MAXINTNUM];
 
 void	strayintr __P((const struct trapframe64 *, int));
-int	soft01intr __P((void *));
+int	softintr __P((void *));
+int	softnet __P((void *));
+int	send_softclock __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -158,47 +160,64 @@ strayintr(fp, vectored)
  *	Soft clock interrupt
  */
 int
-soft01intr(fp)
+softintr(fp)
 	void *fp;
 {
 	extern int rom_console_input;
 
 	if (rom_console_input && cnrom())
 		cnrint();
-	if (sir.sir_any) {
-		/*
-		 * XXX	this is bogus: should just have a list of
-		 *	routines to call, a la timeouts.  Mods to
-		 *	netisr are not atomic and must be protected (gah).
-		 */
-		if (sir.sir_which[SIR_NET]) {
-			int n, s;
+	return (1);
+}
 
-			s = splhigh();
-			n = netisr;
-			netisr = 0;
-			splx(s);
-			sir.sir_which[SIR_NET] = 0;
-
+int
+softnet(fp)
+	void *fp;
+{
+	int n, s;
+	
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
+	
 #define DONETISR(bit, fn) do {		\
 	if (n & (1 << bit))		\
 		fn();			\
 } while (0)
-
 #include <net/netisr_dispatch.h>
-
 #undef DONETISR
-
-		}
-		if (sir.sir_which[SIR_CLOCK]) {
-			sir.sir_which[SIR_CLOCK] = 0;
-			softclock();
-		}
-	}
-	return (1);
 }
 
-struct intrhand level01 = { soft01intr, NULL, 1 };
+/* 
+ * Damn softclock doesn't return a value.
+ */
+int
+send_softclock(fp)
+	void *fp;
+{
+	softclock();
+	return 1;
+}
+
+struct intrhand soft01intr = { softintr, NULL, 1 };
+struct intrhand soft01net = { softnet, NULL, 1 };
+struct intrhand soft01clock = { send_softclock, NULL, 1 };
+
+#if 1
+void 
+setsoftint() {
+	send_softint(-1, IPL_SOFTINT, &soft01intr);
+}
+void 
+setsoftnet() {
+	send_softint(-1, IPL_SOFTNET, &soft01net);
+}
+void 
+setsoftclock() {
+	send_softint(-1, IPL_SOFTCLOCK, &soft01clock);
+}
+#endif
 
 /*
  * Level 15 interrupts are special, and not vectored here.
@@ -207,7 +226,7 @@ struct intrhand level01 = { soft01intr, NULL, 1 };
  */
 struct intrhand *intrhand[15] = {
 	NULL,			/*  0 = error */
-	&level01,		/*  1 = software level 1 + Sbus */
+	&soft01intr,		/*  1 = software level 1 + Sbus */
 	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
 	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
 	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
