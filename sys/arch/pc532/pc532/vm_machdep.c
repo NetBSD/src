@@ -37,13 +37,13 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  *
- *	$Id: vm_machdep.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp $
+ *	$Id: vm_machdep.c,v 1.2 1993/09/13 07:26:52 phil Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.2 1993/09/13 07:26:52 phil Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -154,6 +154,9 @@ cpu_exit(p)
 #endif
 	splclock();
 	swtch();
+	/* Not reached. */
+	panic ("cpu_exit! swtch returned!");
+	while (1);
 }
 
 void
@@ -384,11 +387,11 @@ vunmapbuf(bp)
 }
 
 /*
- * Force reset the processor by invalidating the entire address space!
+ * (Force reset the processor by invalidating the entire address space!)
+ * Well, lets just hang!
  */
 cpu_reset()
 {
 	splhigh();
-	printf ("\n\nMachine halted.  Push reset.\n\n");
 	while (1);
 }

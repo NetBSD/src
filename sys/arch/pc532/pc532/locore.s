@@ -30,7 +30,7 @@
  *
  *	locore.s
  *
- *	$Id: locore.s,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: locore.s,v 1.2 1993/09/13 07:26:47 phil Exp $
  */
 
 /*
@@ -290,15 +290,17 @@ ENTRY (_get_fp)
 ENTRY(bpt_to_monitor)
 
 /* Switch to monitor's stack. */
+	ints_off
 	bicpsrw	PSR_S			/* make sure we are using sp0. */
 	sprd	psr, tos		/* Push the current psl. */
-	ints_off
-	save	[r1,r2,r3]
+	save	[r1,r2,r3,r4]
 	sprd	sp, r1  		/* save kernel's sp */
 	sprd	fp, r2  		/* save kernel's fp */
 	sprd	intbase, r3		/* Save current intbase. */
+	smr	ptb0, r4		/* Save current ptd! */		
 
 /* Change to low addresses */
+	lmr	ptb0, _IdlePTD(pc)	/* Load the idle ptd */
 	addr	low(pc), r0
 	andd	~KERNBASE, r0
 	movd	r0, tos
@@ -318,8 +320,14 @@ low:
 	lprd	fp, r2			/* restore kernel's fp */
 	lprd	sp, r1			/* restore kernel's sp */
 	lmr	mcr, r0
-	restore	[r1,r2,r3]
+	addr	highagain(pc), r0
+	ord  	KERNBASE, r0
+	jump 	0(r0)
+highagain:
+	lmr	ptb0, r4		/* Get the last ptd! */
+	restore	[r1,r2,r3,r4]
 	lprd	psr, tos		/* restore psl */
+	ints_on
 	ret 0
 
 
