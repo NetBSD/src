@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.17 2001/01/03 19:16:00 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.18 2001/07/19 18:42:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.17 2001/01/03 19:16:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.18 2001/07/19 18:42:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,9 @@ void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
  */
 #define	CIA_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	CIA_SGMAP_MAPPED_SIZE	(8*1024*1024)
+
+/* ALCOR/ALGOR2/PYXIS have a 256-byte out-bound DMA prefetch threshold. */
+#define	CIA_SGMAP_PFTHRESH	256
 
 void	cia_tlb_invalidate __P((void));
 void	cia_broken_pyxis_tlb_invalidate __P((void));
@@ -142,6 +145,7 @@ cia_dma_init(ccp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_sgmap;
+	t->_pfthresh = CIA_SGMAP_PFTHRESH;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
