@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.6 2001/01/08 06:57:21 itojun Exp $	*/
+/*	$NetBSD: ld.c,v 1.7 2001/02/04 17:15:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,15 +83,16 @@ ldattach(struct ld_softc *sc)
 {
 	char buf[9];
 
+	if ((sc->sc_flags & LDF_ENABLED) == 0) {
+		printf("%s: disabled\n", sc->sc_dv.dv_xname);
+		return;
+	}
+
 	/* Initialise and attach the disk structure. */
 	sc->sc_dk.dk_driver = &lddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dv.dv_xname;
 	disk_attach(&sc->sc_dk);
 
-	if ((sc->sc_flags & LDF_ENABLED) == 0) {
-		printf("%s: disabled\n", sc->sc_dv.dv_xname);
-		return;
-	}
 	if (sc->sc_maxxfer > MAXPHYS)
 		sc->sc_maxxfer = MAXPHYS;
 
@@ -114,28 +115,55 @@ ldattach(struct ld_softc *sc)
 }
 
 int
-lddrain(struct ld_softc *sc, int flags)
+ldadjqparam(struct ld_softc *sc, int max)
 {
-	int s;
+	int s, rv;
+
+	s = splbio();
+	sc->sc_maxqueuecnt = max;
+	if (sc->sc_queuecnt > max) {
+		sc->sc_flags |= LDF_DRAIN;
+		rv = tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 30 * hz);
+		sc->sc_flags &= ~LDF_DRAIN;
+	} else
+		rv = 0;
+	splx(s);
+
+	return (rv);
+}
+
+int
+ldbegindetach(struct ld_softc *sc, int flags)
+{
+	int s, rv;
+
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
+		return (0);
 
 	if ((flags & DETACH_FORCE) == 0 && sc->sc_dk.dk_openmask != 0)
 		return (EBUSY);
 
 	s = splbio();
-	sc->sc_flags |= LDF_DRAIN;
+	sc->sc_flags |= LDF_DETACH;
+	rv = ldadjqparam(sc, 0);
 	splx(s);
-	return (0);
+
+	return (rv);
 }
 
 void
-lddetach(struct ld_softc *sc)
+ldenddetach(struct ld_softc *sc)
 {
 	struct buf *bp;
 	int s, bmaj, cmaj, mn;
 
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
+		return;
+
 	/* Wait for commands queued with the hardware to complete. */
 	if (sc->sc_queuecnt != 0)
-		tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 30 * hz);
+		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
+			printf("%s: not drained\n", sc->sc_dv.dv_xname);
 
 	/* Locate the major numbers. */
 	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
@@ -388,7 +416,7 @@ ldstrategy(struct buf *bp)
 	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 
 	s = splbio();
-	if (sc->sc_queuecnt == sc->sc_maxqueuecnt) {
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
 		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
 		splx(s);
 		return;
@@ -403,7 +431,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	struct disklabel *lp;
 	int part, s, rv;
 
-	if ((sc->sc_flags & LDF_DRAIN) != 0) {
+	if ((sc->sc_flags & LDF_DETACH) != 0) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
@@ -488,13 +516,15 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
 	biodone(bp);
-	if (--sc->sc_queuecnt == 0 && (sc->sc_flags & LDF_DRAIN) != 0)
-		wakeup(&sc->sc_queuecnt);
 
-	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
-		BUFQ_REMOVE(&sc->sc_bufq, bp);
-		if (!ldstart(sc, bp))
-			break;
+	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
+		if ((sc->sc_flags & LDF_DRAIN) != 0)
+			wakeup(&sc->sc_queuecnt);
+		while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+			BUFQ_REMOVE(&sc->sc_bufq, bp);
+			if (!ldstart(sc, bp))
+				break;
+		}
 	}
 }
 
