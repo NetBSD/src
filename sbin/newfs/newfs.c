@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.51 2001/12/30 16:47:55 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.52 2001/12/30 16:53:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.51 2001/12/30 16:47:55 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.52 2001/12/30 16:53:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -568,10 +568,6 @@ main(int argc, char *argv[])
 		bsize = pp->p_frag * pp->p_fsize;
 		if (bsize <= 0)
 			bsize = MIN(DFL_BLKSIZE, 8 * fsize);
-	}
-	if (cpgflg == 0) {
-		if (pp->p_cpg != 0)
-			cpg = pp->p_cpg;
 	}
 	/*
 	 * Maxcontig sets the default for the maximum number of blocks
