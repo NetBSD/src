@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.15 2000/11/24 09:36:41 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.16 2000/11/30 22:54:32 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,6 +85,12 @@
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
+#include "zsc_pcc.h"
+#include "le_pcc.h"
+#include "wdsc_pcc.h"
+#include "lpt_pcc.h"
+#include "vmepcc.h"
+
 /*
  * Autoconfiguration stuff for the PCC chip on mvme147
  */
@@ -113,13 +119,25 @@ struct pcc_device {
  */
 static struct pcc_device pcc_devices[] = {
 	{"clock", PCC_RTC_OFF},
+#if 0
 	{"nvram", PCC_NVRAM_OFF},
+#endif
+#if NZSC_PCC
 	{"zsc", PCC_ZS0_OFF},
 	{"zsc", PCC_ZS1_OFF},
+#endif
+#if NLE_PCC
 	{"le", PCC_LE_OFF},
+#endif
+#if NWDSC_PCC
 	{"wdsc", PCC_WDSC_OFF},
+#endif
+#if NLPT_PCC
 	{"lpt", PCC_LPT_OFF},
+#endif
+#if NVMEPCC
 	{"vmepcc", PCC_VME_OFF},
+#endif
 	{NULL, 0},
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.38 2000/11/24 09:42:09 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.39 2000/11/30 22:54:31 scw Exp $
 
 # config file for mvme68k
 
@@ -9,17 +9,17 @@ maxpartitions 8
 
 device mainbus { }
 attach mainbus at root
-file arch/mvme68k/dev/mainbus.c		mainbus
+file arch/mvme68k/dev/mainbus.c			mainbus
 
 # MVME-147 Peripheral Channel Controller
 device pcc { [ ipl = -1 ] }
 attach pcc at mainbus
-file arch/mvme68k/dev/pcc.c			pcc needs-flag
+file arch/mvme68k/dev/pcc.c			pcc
 
 # MVME-166,167 and 177 Peripheral Channel Controller Chip2
 device pcctwo { [ ipl = -1 ] }
 attach pcctwo at mainbus
-file arch/mvme68k/dev/pcctwo.c			pcctwo needs-flag
+file arch/mvme68k/dev/pcctwo.c			pcctwo
 
 # Grab the MD VMEbus goop
 include "dev/vme/files.vme"
@@ -31,12 +31,12 @@ file arch/mvme68k/dev/mvmebus.c			mvmebus
 # MVME-147 VME controller chip
 device	vmepcc: mvmebus, vmebus
 attach	vmepcc at pcc
-file	arch/mvme68k/dev/vme_pcc.c		vmepcc
+file	arch/mvme68k/dev/vme_pcc.c		vmepcc needs-flag
 
 # MVME-1[67]7 VME controller chip
 device	vmetwo: mvmebus, vmebus
 attach	vmetwo at mainbus
-file	arch/mvme68k/dev/vme_two.c		vmetwo
+file	arch/mvme68k/dev/vme_two.c		vmetwo needs-flag
 
 device clock
 attach clock at pcc with clock_pcc
@@ -63,16 +63,16 @@ device lpt
 attach lpt at pcc with lpt_pcc
 attach lpt at pcctwo with lpt_pcctwo
 file arch/mvme68k/dev/lpt.c			lpt needs-flag
-file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
-file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
+file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc needs-flag
+file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo needs-flag
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
-file arch/mvme68k/dev/if_le.c			le_pcc
+file arch/mvme68k/dev/if_le.c			le_pcc needs-flag
 
 # i82596 Ethernet Interface on MVME1[67]7
 attach ie at pcctwo with ie_pcctwo
-file arch/mvme68k/dev/if_ie.c			ie_pcctwo
+file arch/mvme68k/dev/if_ie.c			ie_pcctwo needs-flag
 
 # CD2401 Quad Serial Controller
 attach clmpcc at pcctwo with clmpcc_pcctwo
@@ -81,7 +81,7 @@ file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 # MVME16x and MVME17x Memory Controller ASICs
 device memc
 attach memc at pcctwo
-file arch/mvme68k/dev/memc.c			memc
+file arch/mvme68k/dev/memc.c			memc needs-flag
 
 # Memory disk for boot tape
 file dev/md_root.c				memory_disk_hooks
@@ -102,7 +102,7 @@ file arch/mvme68k/dev/sbic.c			sbic
 # ... on the MVME-147
 device wdsc: sbic, scsi
 attach wdsc at pcc with wdsc_pcc
-file arch/mvme68k/dev/wdsc.c			wdsc_pcc
+file arch/mvme68k/dev/wdsc.c			wdsc_pcc needs-flag
 
 # NCR53C710 SCSI ...
 define msiop
@@ -111,7 +111,7 @@ file arch/mvme68k/dev/siop.c			msiop
 # ... on everything else
 device ncrsc: msiop, scsi
 attach ncrsc at pcctwo with ncrsc_pcctwo
-file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo
+file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo needs-flag
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/bus_dma.c
