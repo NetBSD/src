@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdformat.1,v 1.9 1999/03/22 18:16:37 garbled Exp $
+.\"	$NetBSD: fdformat.1,v 1.9.10.1 2000/10/08 23:49:51 hubertf Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,16 @@ indicates a track was formatted.
 indicates the track was successfully verified.
 .Em E
 indicates an error in formatting or verifying a track.
+.Pp
+The
+.Nn
+utility does not create a filesystem of any kind. Use tools like
+.Xr newfs 8 ,
+.Xr newfs_msdos 8 
+or
+.Xr mformat 1
+(part of the pkgsrc/sysutils/mtools package) depending on what filesystem
+type you want to use on the floppy disk to do so.
 .Pp
 Available command-line flags are:
 .Bl -tag -width indent -compact
