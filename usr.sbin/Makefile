@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 1998/11/16 18:44:25 ws Exp $
+#	$NetBSD: Makefile,v 1.99 1998/11/19 19:47:33 tron Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
@@ -26,10 +26,10 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
 SUBDIR+=	sendmail
 .endif
 
-.ifdef USE_BIND8
-SUBDIR+=	bind
-.else
+.ifdef USE_BIND4
 SUBDIR+=	named
+.else
+SUBDIR+=	bind
 .endif
 
 .include <bsd.subdir.mk>
