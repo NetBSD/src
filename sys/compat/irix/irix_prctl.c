@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.13 2002/06/12 20:33:20 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.14 2002/08/02 23:02:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.13 2002/06/12 20:33:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.14 2002/08/02 23:02:51 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -46,7 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.13 2002/06/12 20:33:20 manu Exp $")
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
+#include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/lock.h>
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
@@ -72,6 +74,7 @@ struct irix_sproc_child_args {
 	size_t isc_len;
 	int isc_inh;
 	struct proc *isc_parent;
+	struct irix_share_group *isc_share_group;
 }; 
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
@@ -128,36 +131,32 @@ irix_sys_prctl(p, v, retval)
 
 	case IRIX_PR_GETNSHARE: {	/* Number of sproc share group memb.*/
 		struct irix_emuldata *ied;
-		struct proc *pp;
-		struct proc *shareparent;
+		struct irix_emuldata *iedp;
+		struct irix_share_group *isg;
 		int count;
 
 		ied = (struct irix_emuldata *)p->p_emuldata;
-		shareparent = ied->ied_shareparent;
-		if (shareparent == NULL) {
+		if ((isg = ied->ied_share_group) == NULL) {
 			*retval = 0;
 			return 0;
 		}
 			
 		count = 0;
-		LIST_FOREACH(pp, &allproc, p_list) {
-			if (irix_check_exec(pp)) {
-				ied = (struct irix_emuldata *)pp->p_emuldata;
-				if (ied->ied_shareparent == shareparent)
-					count++;
-			}
-		}
+		(void)lockmgr(&isg->isg_lock, LK_SHARED, NULL);
+		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist)
+			count++;
+		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
 
 		*retval = count;
 		return 0;
 		break;
 	}
 
-	case IRIX_PR_TERMCHILD: {	/* Send SIGHUP to children on exit */
+	case IRIX_PR_TERMCHILD: {	/* Get SIGHUP when parent's exit */
 		struct irix_emuldata *ied;
 
 		ied = (struct irix_emuldata *)(p->p_emuldata);
-		ied->ied_pptr = p->p_pptr;
+		ied->ied_termchild = 1;
 		break;
 	}
 
@@ -272,10 +271,10 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	struct exec_vmcmd vmc;
 	int error;
 	struct proc *p2;
-	struct proc *pp;
-	struct irix_sproc_child_args isc;	
+	struct irix_sproc_child_args *isc;	
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
+	struct irix_share_group *isg;
 	segsz_t stacksize;
 
 #ifdef DEBUG_IRIX
@@ -297,6 +296,25 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		printf("Warning: unimplemented IRIX sproc flag PR_SUMASK\n");
 	if (inh & IRIX_PR_SDIR)
 		printf("Warning: unimplemented IRIX sproc flag PR_SDIR\n");
+
+	/*
+	 * If revelant, initialize the share group structure
+	 */
+	ied = (struct irix_emuldata *)(p->p_emuldata);
+	if (ied->ied_share_group == NULL) {
+		isg = malloc(sizeof(struct irix_share_group), 
+		    M_EMULDATA, M_WAITOK);
+		lockinit(&isg->isg_lock, PZERO|PCATCH, "sharegroup", 0, 0);
+		isg->isg_refcount = 0;
+	
+		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		LIST_INIT(&isg->isg_head);
+		LIST_INSERT_HEAD(&isg->isg_head, ied, ied_sglist);
+		isg->isg_refcount++;
+		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+
+		ied->ied_share_group = isg;
+	}
 
 	/* 
 	 * Setting up child stack 
@@ -332,47 +350,38 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		/* Update stack parameters for the share group members */
 		ied = (struct irix_emuldata *)p->p_emuldata;
 		stacksize = (p->p_vmspace->vm_minsaddr - sp) / PAGE_SIZE;
-		LIST_FOREACH(pp, &allproc, p_list) {
-			if (irix_check_exec(pp) == 0)
-				continue;
-			iedp = (struct irix_emuldata *)pp->p_emuldata;
-			if (iedp->ied_shareparent != ied->ied_shareparent)
-				continue;
-			pp->p_vmspace->vm_maxsaddr = (caddr_t)sp;
-			pp->p_vmspace->vm_ssize = stacksize;
-		}
 
+		/* Normally it cannot be NULL since we just initialized it */
+		if ((isg = ied->ied_share_group) == NULL)
+			panic("irix_sproc: NULL ied->ied_share_group");
+
+		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
+			iedp->ied_p->p_vmspace->vm_maxsaddr = (caddr_t)sp;
+			iedp->ied_p->p_vmspace->vm_ssize = stacksize;
+		}
+		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
 	}
 
 	/*
 	 * Arguments for irix_sproc_child()
+	 * This will be freed by the child.
 	 */
-	isc.isc_proc = &p2;
-	isc.isc_entry = entry;
-	isc.isc_arg = arg;
-	isc.isc_len = len;
-	isc.isc_inh = inh;
-	isc.isc_parent = p;
+	isc = malloc(sizeof(*isc), M_TEMP, M_WAITOK);
+	isc->isc_proc = &p2;
+	isc->isc_entry = entry;
+	isc->isc_arg = arg;
+	isc->isc_len = len;
+	isc->isc_inh = inh;
+	isc->isc_parent = p;
+	isc->isc_share_group = isg;
 
-	/*
-	 * If revelant, initialize as the parent of the share group
-	 */
-	ied = (struct irix_emuldata *)(p->p_emuldata);
-	if (ied->ied_shareparent == NULL)
-		ied->ied_shareparent = p;
 	if (inh & IRIX_PR_SADDR)
 		ied->ied_shareaddr = 1;
 
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
-	    (void *)irix_sproc_child, (void *)&isc, retval, &p2)) != 0)
+	    (void *)irix_sproc_child, (void *)isc, retval, &p2)) != 0)
 		return error;
-
-	/* 
-	 * Some local variables are referenced in irix_sproc_child()
-	 * through isc. We need to ensure the child does not use them
-	 * anymore before leaving.
-	 */
-	(void)ltsleep((void *)&isc, 0, "sproc", 0, NULL);
 
 	retval[0] = (register_t)p2->p_pid;
 	retval[1] = 0;
@@ -394,6 +403,9 @@ irix_sproc_child(isc)
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
 
+#ifdef DEBUG_IRIX
+	printf("irix_sproc_child()\n");
+#endif
 	/*
 	 * Handle shared VM space. The process private arena is not shared
 	 */
@@ -413,9 +425,8 @@ irix_sproc_child(isc)
 		error = uvm_map_extract(&parent->p_vmspace->vm_map, 
 		    vm_min, vm_len, &p2->p_vmspace->vm_map, &dstaddrp, 0);
 		if (error != 0) {
-			printf("sproc: uvm_map_extract failed ");
-			printf("error = %d, pid = %d\n", error, p2->p_pid);
-			sigexit(p2, SIGSEGV);
+			free(isc, M_TEMP);
+			killproc(p2, "failed to initialize share group VM");
 		}
 
 		/* Unmap the process private arena (shared) */
@@ -425,9 +436,8 @@ irix_sproc_child(isc)
 		/* Remap the process private arena (unshared) */
 		error = irix_prda_init(p2);
 		if (error != 0) {
-			printf("sproc: uvm_map arena failed ");
-			printf("error = %d, pid = %d\n", error, p2->p_pid);
-			sigexit(p2, SIGSEGV);
+			free(isc, M_TEMP);
+			killproc(p2, "failed to initialize share group VM");
 		}
 	}
 
@@ -480,15 +490,17 @@ irix_sproc_child(isc)
 	 */
 	ied = (struct irix_emuldata *)(p2->p_emuldata);
 	parent_ied = (struct irix_emuldata *)(parent->p_emuldata);
-	ied->ied_shareparent = parent_ied->ied_shareparent;
-	if (inh & IRIX_PR_SADDR)
+	ied->ied_share_group = parent_ied->ied_share_group;
+
+	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+	LIST_INSERT_HEAD(&ied->ied_share_group->isg_head, ied, ied_sglist);
+	ied->ied_share_group->isg_refcount++;
+	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
+
+	if (inh & IRIX_PR_SADDR) 
 		ied->ied_shareaddr = 1;
 
-	/* 
-	 * We do not need isc anymore, we can wakeup our parent
-	 */
-	wakeup((void *)isc);
-
+	free(isc, M_TEMP);
 	/*
 	 * Return to userland for a newly created process
 	 */
@@ -509,12 +521,12 @@ irix_sys_procblk(p, v, retval)
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
 	struct irix_emuldata *ied;
+	struct irix_emuldata *iedp;
+	struct irix_share_group *isg;
 	struct proc *target;
 	struct pcred *pc;
 	int oldcount;
 	int error, last_error;
-	struct proc *pp;
-	struct irix_emuldata *pp_ied;
 	struct irix_sys_procblk_args cup;
 
 	/* Find the process */
@@ -560,21 +572,25 @@ irix_sys_procblk(p, v, retval)
 		SCARG(&cup, count) = SCARG(uap, count);
 		last_error = 0;
 		
-		LIST_FOREACH(pp, &allproc, p_list) { 
-			/* Select IRIX processes */
-			if (irix_check_exec(target) == 0)
-				continue;
-			
-			/* Is this process in the target share group? */
-			pp_ied = (struct irix_emuldata *)pp->p_emuldata;
-			if (pp_ied->ied_shareparent != ied->ied_shareparent)
-				continue;
+		/* 
+		 * If the process does not belong to a 
+		 * share group, do it just for the process 
+		 */
+		if ((isg = ied->ied_share_group) == NULL) {
+			SCARG(&cup, pid) = SCARG(uap, pid);
+			return irix_sys_procblk(p, &cup, retval);
+		}
 
+		(void)lockmgr(&isg->isg_lock, LK_SHARED, NULL);
+		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
 			/* Recall procblk for this process */
-			SCARG(&cup, pid) = pp->p_pid;
-			if ((error = irix_sys_procblk(p, &cup, retval)) != 0)
+			SCARG(&cup, pid) = iedp->ied_p->p_pid;
+			error = irix_sys_procblk(iedp->ied_p, &cup, retval);
+			if (error != 0) 
 				last_error = error;
 		}
+		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+
 		return last_error;
 		break;
 	default:
@@ -613,62 +629,58 @@ irix_prda_init(p)
 	return error;
 }
 
+
 int
 irix_sync_saddr_syscall(p, v, retval, syscall)
-	struct proc *p;
+        struct proc *p;
 	void *v;
 	register_t *retval;
 	int (*syscall) __P((struct proc *, void *, register_t *));
 {
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
-	struct proc *pp;
 	int error; 
+	int failures;
 
 	/* 
-	 * First run the system call on the original process 
-	 */
-	if ((error = (*syscall)(p, v, retval)) != 0)
-		return error;
-
-	/*
-	 * Is memory shared with other members of the share group ?
+	 * If we are not in a share group with shared VM, 
+	 * just do the syscall for the process and return.
 	 */
 	ied = (struct irix_emuldata *)p->p_emuldata;
-	if (ied->ied_shareaddr == 0 || ied->ied_shareparent == NULL)
-		return 0;
-
-	/* 
-	 * Do the syscall for all ather process in the share group
-	 */
-	LIST_FOREACH(pp, &allproc, p_list) {
-		if (pp != p && irix_check_exec(pp)) {
-			iedp = (struct irix_emuldata *)pp->p_emuldata;	
-			if (iedp->ied_shareparent == ied->ied_shareparent &&
-			    iedp->ied_shareaddr == 1)
-				if ((error = (*syscall)(pp, v, retval)) != 0)
-					break;
-		}
+	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0) {
+		error = (*syscall)(ied->ied_p, v, retval);
+		return error;
 	}
 
-	/* Full success */
-	if (pp == NULL) 
-		return 0;
-
-	/* 
-	 * In case of failure, destroy the whole share group
+	/*
+	 * We are in a share group with shared VM: the operation
+	 * will be applied to all members. One failure of some but not
+	 * all members, we will destroy the whole group. 
 	 */
-	LIST_FOREACH(pp, &allproc, p_list) {
-		if (irix_check_exec(pp)) {
-			iedp = (struct irix_emuldata *)pp->p_emuldata;	
-			if (iedp->ied_shareparent == ied->ied_shareparent)
-				sigexit(pp, SIGSEGV);
-		}
+	lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+		
+	failures = 0;
+	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
+		if (iedp->ied_shareaddr == 1)
+			if ((error = (*syscall)(iedp->ied_p, v, retval)) != 0)
+				failures++;
 	}
-#ifdef DEBUG_IRIX
-	printf("irix_sync_saddr_syscall: killed IRIX share group (pid %d)\n", 
-	    p->p_pid);
-#endif
+
+	/* Full success: the operation succeed or failed for all members */
+	if (failures == 0 || failures == ied->ied_share_group->isg_refcount)
+		error = 0;
+	/* 
+	 * Failure: the operation failed, but not on all members.
+	 * This means that we failed to keep the VM in sync. 
+	 * We will destroy the whole share group 
+	 */
+	if (error != 0) {
+		LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist)
+			killproc(iedp->ied_p, "corrupted share group VM space");
+	}
+
+	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
+
 	return error;
 }
 
@@ -680,18 +692,30 @@ irix_sync_saddr_vmcmd(p, evc)
 
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
-	struct proc *pp;
 	int error; 
 	void *addr;
 	int len;
+	int failures;
 
 	/* 
-	 * First, do the command on the original process 
+	 * If we are not in a share group with shared VM, 
+	 * just do the vmcmd for the process and return.
 	 */
-	if ((error = (*evc->ev_proc)(p, evc)) != 0)
+	ied = (struct irix_emuldata *)p->p_emuldata;
+	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0) {
+		error = (*evc->ev_proc)(p, evc);
 		return error;
+	}
 
 	/*
+	 * We are in a share group with shared VM: the operation
+	 * will be applied to all members. One failure of some but not
+	 * all members, we will destroy the whole group. 
+	 */
+	lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+		
+	/*
+	 * We do a shared VM operation.
 	 * Check that this vmcmd does not operate on the private arena
 	 */
 	addr = (void *)evc->ev_addr;
@@ -700,42 +724,28 @@ irix_sync_saddr_vmcmd(p, evc)
 	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
 		printf("Warning: shared vmcmd on process private arena\n");
 
-	/* 
-	 * If the process shares memory within a share group, apply
-	 * the vmcmd to all other members of the share group
-	 */
-	ied = (struct irix_emuldata *)p->p_emuldata;
-	if (ied->ied_shareaddr == 0 || ied->ied_shareparent == NULL)
-		return 0;
-
-	LIST_FOREACH(pp, &allproc, p_list) {
-		if (pp != p && irix_check_exec(pp)) {
-			iedp = (struct irix_emuldata *)pp->p_emuldata;	
-			if (iedp->ied_shareparent == ied->ied_shareparent &&
-			    iedp->ied_shareaddr == 1)
-				if ((error = (*evc->ev_proc)(pp, evc)) != 0)
-					break;
-		}
+	failures = 0;
+	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
+		if (iedp->ied_shareaddr == 1)
+			if ((error = (*evc->ev_proc)(iedp->ied_p, evc)) != 0) 
+				failures++;
 	}
 
-	/* Full success */
-	if (pp == NULL)
-		return 0;
-
+	/* Full success: the operation succeed or failed for all members */
+	if (failures == 0 || failures == ied->ied_share_group->isg_refcount)
+		error = 0;
 	/* 
-	 * In case of failure, destroy the whole share group
+	 * Failure: the operation failed, but not on all members.
+	 * This means that we failed to keep the VM in sync. 
+	 * We will destroy the whole share group 
 	 */
-	LIST_FOREACH(pp, &allproc, p_list) {
-		if (irix_check_exec(pp)) {
-			iedp = (struct irix_emuldata *)pp->p_emuldata;	
-			if (iedp->ied_shareparent == ied->ied_shareparent)
-				sigexit(pp, SIGSEGV);
-		}
+	if (error != 0) {
+		LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist)
+			killproc(iedp->ied_p, "corrupted share group VM space");
 	}
-#ifdef DEBUG_IRIX
-	printf("irix_sync_saddr_vmcmd: killed IRIX share group (pid %d)\n", 
-	    p->p_pid);
-#endif
-	return EFAULT;
+
+	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
+
+	return error;
 }
 
