@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.16 2002/07/20 02:41:15 lukem Exp $
+.\"	$NetBSD: install,v 1.17 2002/10/21 20:35:39 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,14 +127,14 @@ After transferring the miniroot to disk, bring the system down by:
 .Pp
 Then boot the miniroot by typing the appropriate command at the OpenBoot PROM:
 .Pp
-.Dl ok Ic "boot disk:b netbsd -s"
+.Dl ok Ic "boot disk:b netbsd"
 .Pp
 If you've loaded the miniroot onto some other disk than
 .Li sd0
 adapt
 the boot specifier accordingly, e.g.:
 .Pp
-.Dl ok Ic "boot disk1:b netbsd -s"
+.Dl ok Ic "boot disk1:b netbsd"
 .Pp
 The monitor boot command will cause the
 .Nx
@@ -143,7 +143,7 @@ miniroot image to be booted.
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
-.Sx Running the installation scripts
+.Sx Running sysinst
 below.
 .
 .Ss2 Installing NetBSD by using a diskless setup
@@ -305,7 +305,7 @@ machine once it has booted.
 Boot your workstation from the server by entering the following
 command at the monitor prompt:
 .Pp
-.Dl "ok boot net netbsd -s"
+.Dl "ok boot net netbsd"
 .Pp
 This will boot the
 .Nx
@@ -487,7 +487,7 @@ to look at the output of the
 command to see how your disks
 have been identified by the kernel.
 .Pp
-The installation script goes through the following phases:
+The sysinst goes through the following phases:
 .(bullet
 determination of the disk to install
 .Nx
