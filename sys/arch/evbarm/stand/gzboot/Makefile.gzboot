@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.9 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile.gzboot,v 1.9.2.1 2004/06/22 07:52:48 tron Exp $
 
 NOMAN=  # defined
 
@@ -86,7 +86,7 @@ LIBSA=		${SALIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LDFLAGS= -M -T ${LDSCRIPT}
 
