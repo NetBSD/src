@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.1 2001/06/19 00:20:12 fvdl Exp $	*/
+/*	$NetBSD: reg.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,7 +67,7 @@
 
 #define	tRIP	17
 #define	tCS	18
-#define	tEFLAGS	19
+#define	tRFLAGS	19
 #define	tRSP	20
 #define	tSS	21
 
@@ -95,7 +95,7 @@ struct reg {
 	u_int64_t	r_rax;
 	u_int64_t	r_rsp;
 	u_int64_t	r_rip;
-	u_int64_t	r_eflags;
+	u_int64_t	r_rflags;
 	u_int64_t	r_cs;
 	u_int64_t	r_ss;
 	u_int64_t	r_ds;

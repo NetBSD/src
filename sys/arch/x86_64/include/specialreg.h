@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
 
 #ifdef _KERNEL
 #include <i386/include/specialreg.h>
@@ -19,6 +19,8 @@
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
 #define MSR_CSTAR	0xc0000083		/* compat syscall gate addr */
+#define MSR_SFMASK	0xc0000084		/* flags to clear on syscall */
 
-#define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
-#define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
+#define MSR_FSBASE		0xc0000100	/* 64bit offset for fs: */
+#define MSR_GSBASE		0xc0000101	/* 64bit offset for gs: */
+#define MSR_KERNELGSBASE	0xc0000102	/* storage for swapgs ins */

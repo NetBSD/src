@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2 2001/06/19 01:40:42 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.3 2002/05/28 23:11:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -229,27 +229,124 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 
+/*
+ * syscall insn entry. This currently isn't much faster, but
+ * it can be made faster in the future.
+ */
+IDTVEC(syscall)
+	/*
+	 * We're out of spare registers in the ABI. I don't want
+	 * to go the swapgs route, so use temp storage in
+	 * per-CPU private data. XXX
+	 */
+	movq	%r15,CPUPRIV(SCRATCH_R15)
+	movq	_C_LABEL(curpcb)(%rip), %r15
+	movq	PCB_RSP0(%r15),%r15
+	xchgq	%rsp,%r15
+	sti
+
+	/*
+	 * XXX don't need this whole frame, split of the
+	 * syscall frame and trapframe is needed.
+	 */
+	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
+	pushq	%r15
+	pushq	%r11	/* old rflags */
+	pushq	$(LSEL(LUCODE_SEL, SEL_UPL))
+	pushq	%rcx	/* old rip */
+	pushq	$0
+	pushq	$T_ASTFLT
+	pushq	%rax
+	pushq	%rcx
+	pushq	%rdx
+	pushq	%rbx
+	pushq	%rbp
+	pushq	%rsi
+	pushq	%rdi
+	pushq	%r8
+	pushq	%r9
+	pushq	%r10
+	pushq	%r11
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	movq	CPUPRIV(SCRATCH_R15),%r15
+	pushq	%r15
+
+	movq	_C_LABEL(curproc)(%rip),%r15	# get pointer to curproc
+	orl	$MDP_SYSCALL,P_MD_FLAGS(%r15)
+	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
+	call	*P_MD_SYSCALL(%r15)
+1:	/* Check for ASTs on exit to user mode. */
+	cli
+	cmpb	$0,_C_LABEL(astpending)(%rip)
+	je	2f
+	/* Always returning to user mode here. */
+	movb	$0,_C_LABEL(astpending)(%rip)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	1b
+2:
+	sti
+	andl	$~MDP_SYSCALL,P_MD_FLAGS(%r15)
+syscall_return:
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%r11
+	popq	%r10
+	popq	%r9
+	popq	%r8
+	popq	%rdi
+	popq	%rsi
+	popq	%rbp
+	popq	%rbx
+	popq	%rdx
+	popq	%rcx
+	popq	%rax
+	addq	$16,%rsp
+	popq	%rcx	/* return rip */
+	addq	$8,%rsp
+	popq	%r11	/* flags as set by sysret insn */
+	cli
+	movq	(%rsp),%rsp
+	sysretq
+
+NENTRY(proc_trampoline)
+	movq	%r13,%rdi
+	call	*%r12
+	INTRFASTEXIT
+	/* NOTREACHED */
+
+NENTRY(child_trampoline)
+	movq	%r13,%rdi
+	call	*%r12
+	btrl	$MDP_SYSCALL,P_MD_FLAGS(%r13)
+	jc	syscall_return
+	INTRFASTEXIT
 
 /*
  * Old call gate entry for syscall. XXXfvdl: only needed if we're
  * going to support running old NetBSD or ibcs2 binaries, etc,
  * on NetBSD/x86_64.
  */
-IDTVEC(osyscall)
-	/* Set eflags in trap frame. */
+IDTVEC(oosyscall)
+	/* Set rflags in trap frame. */
 	pushfq
 	popq	8(%rsp)
 	pushq	$7		# size of instruction for restart
-	jmp	syscall1
+	jmp	osyscall1
 
 /*
- * Trap gate entry for syscall
+ * Trap gate entry for int $80 syscall
  * XXX convert to using syscall/sysret.
  * XXXfvdl Pushing all of the intr frame is overkill.
  */
-IDTVEC(syscall)
+IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
-syscall1:
+osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
