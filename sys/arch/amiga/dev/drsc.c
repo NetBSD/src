@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.15 1998/12/05 19:43:34 mjacob Exp $	*/
+/*	$NetBSD: drsc.c,v 1.16 2000/01/16 21:19:44 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -51,6 +51,8 @@
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
+
+#include <machine/cpu.h>	/* is_xxx(), */
 
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, struct cfdata *, void *));
