@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.18 2002/02/17 21:21:16 augustss Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.19 2002/11/11 12:51:07 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.21 2002/02/17 21:20:46 augustss Exp 
+ *	NetBSD: cardbusdevs,v 1.22 2002/11/11 12:50:33 onoe Exp 
  */
 
 /*
@@ -180,6 +180,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "AboCom Systems",
 	    "FE2500 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500MX,
+	    0,
+	    "AboCom Systems",
+	    "FE2500MX 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_HAWKING, CARDBUS_PRODUCT_HAWKING_PN672TX,
