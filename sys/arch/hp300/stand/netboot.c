@@ -323,7 +323,7 @@ main()
 	bootdev = -1;	/* network */
 	
 	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.4 $");
+	       getmachineid(), "$Revision: 1.5 $");
 
 	s = netif_open(NULL);	/* XXX machdep may be "le" */
 	if (s < 0)

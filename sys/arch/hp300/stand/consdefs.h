@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.1 1995/08/04 07:55:39 thorpej Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.2 1995/08/05 16:47:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

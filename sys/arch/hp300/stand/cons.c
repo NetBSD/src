@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.7 1995/08/04 07:55:38 thorpej Exp $	*/
+/*	$NetBSD: cons.c,v 1.8 1995/08/05 16:47:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,7 @@ struct consdev constab[] = {
 struct consdev *cn_tab;
 int noconsole;
 
+void
 cninit()
 {
 	register struct consdev *cp;
@@ -82,6 +83,7 @@ cninit()
 	}
 }
 
+int
 cngetc()
 {
 
@@ -91,6 +93,7 @@ cngetc()
 	return(0);
 }
 
+int
 cnputc(c)
 	int c;
 {
@@ -105,4 +108,6 @@ cnputc(c)
 #endif
 	if (cn_tab)
 		(*cn_tab->cn_putc)(0, c);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.4 1994/10/26 07:27:46 cgd Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.5 1995/08/05 16:47:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <hp300/dev/nhpibreg.h>
 #include <hp300/stand/hpibvar.h>
+#include <hp300/stand/samachdep.h>
 
 nhpibinit(unit)
 {

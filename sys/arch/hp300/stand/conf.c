@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1995/08/04 07:55:37 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1995/08/05 16:47:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
