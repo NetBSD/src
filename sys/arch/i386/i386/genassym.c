@@ -38,11 +38,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/vmmeter.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
+#include <vm/vm.h>
+#include <sys/user.h>
 
 #include <machine/trap.h>
 #include <machine/pmap.h>
