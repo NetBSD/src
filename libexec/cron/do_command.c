@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,12 +16,11 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.1.1.2 1994/01/11 19:11:07 jtc Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.1.1.3 1994/01/12 18:37:36 jtc Exp $";
 #endif
 
 
 #include "cron.h"
-#include "externs.h"
 #include <sys/signal.h>
 #if defined(sequent)
 # include <sys/universe.h>
@@ -444,8 +443,8 @@ child_process(e, u)
 	 */
 	for (;  children > 0;  children--)
 	{
-		int		pid;
 		WAIT_T		waiter;
+		PID_T		pid;
 
 		Debug(DPROC, ("[%d] waiting for grandchild #%d to finish\n",
 			getpid(), children))
