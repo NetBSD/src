@@ -1,8 +1,11 @@
-#	$NetBSD: std.integrator,v 1.1 2001/10/27 16:14:44 rearnsha Exp $
+#	$NetBSD: std.integrator,v 1.2 2001/11/04 02:20:22 thorpej Exp $
 #
 # standard NetBSD/netwinder options
 
 machine	evbarm arm
+
+# Pull in Integrator config definitions.
+include "arch/evbarm/conf/files.integrator"
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
