@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.200 2004/06/10 00:29:59 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.201 2004/07/30 04:18:48 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -50,51 +50,6 @@ _SHLINKER=	${SHLINKDIR}/ld.so
 LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 .MADE: ${LIBCRT0}
 .endif
-
-##### Installed system library definitions
-#     E.g. LIBC?=${DESTDIR}/usr/lib/libc.a
-#     etc..
-#
-__bsd_prog_mk_system_libs?= \
-	BZ2 C C_PIC CDK COM_ERR COMPAT CRYPT CRYPTO CRYPTO_IDEA CRYPTO_MDC2 \
-	CRYPTO_RC5 \
-	CURSES DBM DES EDIT EVENT FORM GCC GNUMALLOC GSSAPI HDB INTL IPSEC \
-	KADM KADM5CLNT KADM5SRV KAFS KDB KRB KRB5 KSTREAM KVM L M MAGIC MENU \
-	OBJC OSSAUDIO PCAP PCI PMC POSIX PTHREAD PTHREAD_DBG RESOLV RMT \
-	ROKEN RPCSVC RT SKEY SL SS SSL TERMCAP USBHID UTIL WRAP Y Z
-
-.for _n in ${__bsd_prog_mk_system_libs}
-.ifndef LIB${_n}
-LIB${_n}= ${DESTDIR}/usr/lib/lib${_n:tl}.a
-# Note: ${DESTDIR} will be expanded in the following rule
-.MADE: ${LIB${_n}}
-.endif
-.endfor
-.undef __bsd_prog_mk_system_libs
-
-.ifndef LIBSTDCXX
-LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
-.MADE: ${LIBSTDCXX}
-.endif
-
-##### Installed X11R6 library definitions
-#     E.g. LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
-#     etc..
-#
-__bsd_prog_mk_x11r6_libs?= \
-	dps expat fntstubs fontcache fontconfig fontenc freetype FS \
-	GL GLU ICE lbxutil SM X11 Xau Xaw Xdmcp Xext Xfont Xft \
-	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
-	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
-
-.for _n in ${__bsd_prog_mk_x11r6_libs}
-.ifndef LIB${_n:tu}
-LIB${_n:tu}= ${DESTDIR}/usr/X11R6/lib/lib${_n}.a
-# Note: ${DESTDIR} will be expanded in the following rule
-.MADE: ${LIB${_n:tu}}
-.endif
-.endfor
-.undef __bsd_prog_mk_x11r6_libs
 
 ##### Build and install rules
 .if defined(SHAREDSTRINGS)
