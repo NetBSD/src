@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.21 2000/01/20 02:49:41 mycroft Exp $	*/
+/*	$NetBSD: chmod.c,v 1.22 2000/01/20 02:50:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.21 2000/01/20 02:49:41 mycroft Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.22 2000/01/20 02:50:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,8 @@ main(argc, argv)
 	FTS *ftsp;
 	FTSENT *p;
 	mode_t *set;
-	long val;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
-	char *ep, *mode;
+	char *mode;
 	int (*change_mode) __P((const char *, mode_t));
 
 	set = NULL;	/* XXX gcc -Wuninitialized */
