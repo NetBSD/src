@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461video.c,v 1.26 2004/06/04 13:23:34 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.27 2004/07/03 12:49:21 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.26 2004/06/04 13:23:34 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.27 2004/07/03 12:49:21 uch Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -135,8 +135,10 @@ STATIC void hd64461video_set_clut(struct hd64461video_chip *, int, int,
     u_int8_t *, u_int8_t *, u_int8_t *);
 STATIC void hd64461video_get_clut(struct hd64461video_chip *, int, int,
     u_int8_t *, u_int8_t *, u_int8_t *);
-STATIC void hd64461video_off(struct hd64461video_chip *vc);
-STATIC void hd64461video_on(struct hd64461video_chip *vc);
+STATIC int hd64461video_power(void *, int, long, void *);
+STATIC void hd64461video_off(struct hd64461video_chip *);
+STATIC void hd64461video_on(struct hd64461video_chip *);
+STATIC void hd64461video_display_onoff(void *, boolean_t);
 STATIC void hd64461video_display_on(void *);
 
 #if notyet
@@ -225,7 +227,9 @@ hd64461video_attach(struct device *parent, struct device *self, void *aux)
 	hd64461video_info(sc);
 	hd64461video_dump();
 #endif
-
+	/* Add a hard power hook to power saving */
+	config_hook(CONFIG_HOOK_PMEVENT, CONFIG_HOOK_PMEVENT_HARDPOWER,
+	    CONFIG_HOOK_SHARE, hd64461video_power, sc);
 
 	/* setup hpcfb interface */
 	hd64461video_setup_hpcfbif(&hd64461video_chip);
@@ -1121,17 +1125,38 @@ hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	} 
 }
 
+int
+hd64461video_power(void *ctx, int type, long id, void *msg)
+{
+	struct hd64461video_softc *sc = ctx;
+	struct hd64461video_chip *hvc = sc->sc_vc;
+
+	switch ((int)msg) {
+	case PWR_RESUME:
+		if (!hvc->console)
+			break; /* serial console */
+		DPRINTF("%s: ON\n", sc->sc_dev.dv_xname);
+		hd64461video_on(hvc);
+		break;
+	case PWR_SUSPEND:
+		/* FALLTHROUGH */
+	case PWR_STANDBY:
+		DPRINTF("%s: OFF\n", sc->sc_dev.dv_xname);
+		hd64461video_off(hvc);
+		break;
+	}
+
+	return 0;
+}
+
 void
 hd64461video_off(struct hd64461video_chip *vc)
 {
-	u_int16_t r;
 
 	callout_stop(&vc->unblank_ch);
 
 	/* turn off display in LCDC */
-	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
-	r &= ~HD64461_LCDLDR1_DON;
-	hd64461_reg_write_2(HD64461_LCDLDR1_REG16, r);
+	hd64461video_display_onoff(vc, FALSE);
 
 	/* turn off the LCD */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
@@ -1152,20 +1177,30 @@ hd64461video_on(struct hd64461video_chip *vc)
 	if (err == 0)
 		/* let the LCD warm up before turning on the display */
 		callout_reset(&vc->unblank_ch, hz/2,
-			      hd64461video_display_on, vc);
+		    hd64461video_display_on, vc);
 	else
-		hd64461video_display_on(vc);
+		hd64461video_display_onoff(vc, TRUE);
 }
 
 void
 hd64461video_display_on(void *arg)
 {
+
+	hd64461video_display_onoff(arg, TRUE);
+}
+
+void
+hd64461video_display_onoff(void *arg, boolean_t on)
+{
 	/* struct hd64461video_chip *vc = arg; */
 	u_int16_t r;
 
-	/* turn on display in LCDC */
+	/* turn on/off display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
-	r |= HD64461_LCDLDR1_DON;
+	if (on)
+		r |= HD64461_LCDLDR1_DON;
+	else
+		r &= ~HD64461_LCDLDR1_DON;
 	hd64461_reg_write_2(HD64461_LCDLDR1_REG16, r);
 }
 
