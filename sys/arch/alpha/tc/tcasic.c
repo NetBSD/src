@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.10 1996/10/13 03:00:39 christos Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.11 1996/10/22 21:34:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -87,7 +87,6 @@ tcasicattach(parent, self, aux)
 	struct tcbus_attach_args tba;
 	void (*intr_setup) __P((void));
 	void (*iointr) __P((void *, unsigned long));
-	struct alpha_bus_chipset bc;
 
 	printf("\n");
 	tcasicfound = 1;
@@ -131,9 +130,7 @@ tcasicattach(parent, self, aux)
 		panic("tcasicattach: bad cputype");
 	}
 
-	tc_bus_io_init(&bc, NULL);
-	tc_bus_mem_init(&bc, NULL);
-	tba.tba_bc = &bc;
+	tba.tba_memt = tc_bus_mem_init(NULL);
 
 	(*intr_setup)();
 	set_iointr(iointr);
