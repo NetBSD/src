@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.21 2001/09/15 16:13:02 chs Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.22 2002/09/21 18:08:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,6 +89,13 @@ struct nfs_args {
 #define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
 #define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
 #define NFSMNT_XLATECOOKIE	0x00040000  /* 32<->64 dir cookie xlation */
+
+#define NFSMNT_BITS	"\177\20" \
+    "b\00soft\0b\01wsize\0b\02rsize\0b\03timeo\0" \
+    "b\04retrans\0b\05maxgrps\0b\06intr\0b\07noconn\0" \
+    "b\10nqnfs\0b\11nfsv3\0b\12kerb\0b\13dumbtimr\0" \
+    "b\14leaseterm\0b\15readahead\0b\16deadthresh\0b\17resvport\0" \
+    "b\20rdirplus\0b\21readdirsize\0b\22xlatecookie"
 
 /*
  * NFS internal flags (nm_iflag) */
