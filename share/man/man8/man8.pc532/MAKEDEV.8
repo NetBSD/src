@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.11 2001/06/26 02:28:51 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.12 2001/09/08 01:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,13 +95,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
@@ -122,25 +122,25 @@ Concatenated disk driver, see
 RAIDframe disk driver, see
 .Xr \&raid 4
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Rs232 devices, see
 .Xr \&tty 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Matthias's lp interface, see
 .Xr \&lpt 4
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
 File descriptors

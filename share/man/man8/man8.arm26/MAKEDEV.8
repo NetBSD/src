@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.6 2001/06/26 02:28:47 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.7 2001/09/08 01:32:39 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 IDE disk drives, see
@@ -129,7 +129,7 @@ File pseudo-disks, see
 RAIDframe disk devices, see
 .Xr \&raid 4
 . El
-.It Terminals:
+.It Terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyE?
 Workstation console (``wscons'') glass-tty emulators
@@ -140,13 +140,13 @@ Standard PC COM ports, see
 Alias for PC COM ports, this is what the system really wants, see
 .Xr \&tty 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp
@@ -155,7 +155,7 @@ Interruptless lp
 . It Ar arcpp#
 Archimedes parallel port
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
 File descriptors (/dev/fd/*)

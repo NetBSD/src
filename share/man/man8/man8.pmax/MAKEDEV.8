@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.9 2001/08/26 13:30:29 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.10 2001/09/08 01:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,13 +95,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 MI SCSI tape drives, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
@@ -122,7 +122,7 @@ MI SCSI disks, see
 ``file'' pseudo-disks, see
 .Xr \&vnd 4
 . El
-.It Terminal multiplexors:
+.It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
 . It Ar dc#
 4 channel serial interface (keyboard, mouse, modem, printer), see
@@ -131,13 +131,13 @@ MI SCSI disks, see
 82530 serial interface, see
 .Xr \&scc 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar audio#
 Phone-quality audio on Personal DECstations, see
@@ -171,7 +171,7 @@ Network tunnel driver, see
 MI unknown scsi devices, see
 .Xr \&uk 4
 . El
-.It Platform-specific devices:
+.It Platform-specific devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar NOTE:
 /dev/mouse should be a link to one of these for X windows.
@@ -181,7 +181,7 @@ Generic framebuffer pseudo-device
 PixelStamp Xserver access, see
 .Xr \&px 4
 . El
-.It The following names are reserved for future use:
+.It The following names are reserved for future use :
 . Bl -tag -width 0123456789 -compact
 . It Ar fdc#
 Baseboard 2.88 floppy disk on Personal DECstations
