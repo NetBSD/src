@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.45 2000/06/04 02:19:28 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.46 2000/06/04 18:13:06 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -102,6 +102,7 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
  * Signal handler code.
  */
 
+		.align	2
 		.globl	_sigcode,_esigcode
 _sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -111,10 +112,10 @@ _sigcode:	pushr	$0x3f
 		chmk	$SYS___sigreturn14
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _esigcode:
 
 #ifdef COMPAT_IBCS2
+		.align	2
 		.globl	_ibcs2_sigcode,_ibcs2_esigcode
 _ibcs2_sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -124,11 +125,11 @@ _ibcs2_sigcode:	pushr	$0x3f
 		chmk	$SYS___sigreturn14
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _ibcs2_esigcode:
 #endif /* COMPAT_IBCS2 */
 
 #ifdef COMPAT_ULTRIX
+		.align	2
 		.globl	_ultrix_sigcode,_ultrix_esigcode
 _ultrix_sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -138,10 +139,10 @@ _ultrix_sigcode:	pushr	$0x3f
 		chmk	$ULTRIX_SYS_sigreturn
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _ultrix_esigcode:
 #endif
 
+		.align	2
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
 		.word	0x9f16		# jsb to absolute address
@@ -163,8 +164,8 @@ _cmn_idsptch:
 		rei			# return from interrut
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
-		mfpr	$0x12,r0	# splhigh()
-		mtpr	$IPL_HIGH,$0x12
+		mfpr	$PR_IPL,r0	# splhigh()
+		mtpr	$IPL_HIGH,$PR_IPL
 		movl	4(ap),r2	# First argument, the address
 		movl	8(ap),r1	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
@@ -187,7 +188,7 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 		brb	5f
 
 4:		incl	r3		# Got machine chk => addr bad
-5:		mtpr	(sp)+,$0x12
+5:		mtpr	(sp)+,$PR_IPL
 		movl	r3,r0
 		ret
 
@@ -201,7 +202,7 @@ _setjmp:.word	0
 	movl	8(fp), (r0)
 	movl	12(fp), 4(r0)
 	movl	16(fp), 8(r0)
-	addl3	fp,$28,12(r0)
+	moval	28(fp),12(r0)
 	clrl	r0
 	ret
 
