@@ -1,6 +1,9 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Cimarron D. Taylor of the University of California, Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +35,27 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.9 (Berkeley) 5/24/91";
+char copyright[] =
+"@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <time.h>
-#include <fts.h>
+
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "find.h"
 
 time_t now;			/* time find was run */
@@ -53,37 +66,45 @@ int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int isxargs;			/* don't permit xargs delimiting chars */
 
-static void usage();
+static void usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register char **p, **start;
-	PLAN *find_formplan();
-	int ch;
+	int Hflag, Lflag, Pflag, ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
 
 	p = start = argv;
-	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "df:sXx")) != EOF)
-		switch(ch) {
+	Hflag = Lflag = Pflag = 0;
+	ftsoptions = FTS_NOSTAT | FTS_PHYSICAL;
+	while ((ch = getopt(argc, argv, "HLPXdf:x")) != EOF)
+		switch (ch) {
+		case 'H':
+			Hflag = 1;
+			Lflag = Pflag = 0;
+			break;
+		case 'L':
+			Lflag = 1;
+			Hflag = Pflag = 0;
+			break;
+		case 'P':
+			Pflag = 1;
+			Hflag = Lflag = 0;
+			break;
+		case 'X':
+			isxargs = 1;
+			break;
 		case 'd':
 			isdepth = 1;
 			break;
 		case 'f':
 			*p++ = optarg;
 			break;
-		case 's':
-			ftsoptions &= ~FTS_PHYSICAL;
-			ftsoptions |= FTS_LOGICAL;
-			break;
-		case 'X':
-			isxargs = 1;
-			break;
 		case 'x':
-			ftsoptions &= ~FTS_NOSTAT;
 			ftsoptions |= FTS_XDEV;
 			break;
 		case '?':
@@ -94,11 +115,24 @@ main(argc, argv)
 	argc -= optind;	
 	argv += optind;
 
-	/* Find first option to delimit the file list. */
-	while (*argv) {
-		if (option(*argv))
+	if (Hflag)
+		ftsoptions |= FTS_COMFOLLOW;
+	if (Lflag) {
+		ftsoptions &= ~FTS_PHYSICAL;
+		ftsoptions |= FTS_LOGICAL;
+	}
+
+	/*
+	 * Find first option to delimit the file list.  The first argument
+	 * that starts with a -, or is a ! or a ( must be interpreted as a
+	 * part of the find expression, according to POSIX .2.
+	 */
+	for (; *argv != NULL; *p++ = *argv++) {
+		if (argv[0][0] == '-')
 			break;
-		*p++ = *argv++;
+		if ((argv[0][0] == '!' || argv[0][0] == '(') &&
+		    argv[0][1] == '\0')
+			break;
 	}
 
 	if (p == start)
@@ -106,15 +140,15 @@ main(argc, argv)
 	*p = NULL;
 
 	if ((dotfd = open(".", O_RDONLY, 0)) < 0)
-		err(".: %s", strerror(errno));
+		err(1, ".");
 
-	find_execute(find_formplan(argv), start);
+	exit(find_execute(find_formplan(argv), start));
 }
 
 static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: find [-dsXx] [-f file] [file ...] expression\n");
+"usage: find [-H | -L | -P] [-Xdx] [-f file] [file ...] [expression]\n");
 	exit(1);
 }

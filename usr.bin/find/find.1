@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)find.1	6.29 (Berkeley) 7/29/91
+.\"	@(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd July 29, 1991
+.Dd May 9, 1995
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@
 .Nd walk a file hierarchy
 .Sh SYNOPSIS
 .Nm find
-.Op Fl dsXx
+.Op Fl H | Fl L | Fl P
+.Op Fl Xdx
 .Op Fl f Ar file
 .Op Ar file ...
 .Ar expression
@@ -55,14 +56,47 @@ listed, evaluating an
 (composed of the ``primaries'' and ``operands'' listed below) in terms
 of each file in the tree.
 .Pp
-If
-.Ar file
-is a symbolic link referencing an existing file, the directory tree
-referenced by the link is descended instead of the link itself.
-.Pp
 The options are as follows:
 .Pp
 .Bl -tag -width Ds
+.It Fl H
+The
+.Fl H
+option causes the file information and file type (see
+.Xr stat 2)
+returned for each symbolic link specified on the command line to be 
+those of the file referenced by the link, not the link itself.
+If the referenced file does not exist, the file information and type will
+be for the link itself.  File information of all symbolic links not on 
+the command line is that of the link itself.
+.It Fl L
+The
+.Fl L
+option causes the file information and file type (see
+.Xr stat 2)
+returned for each symbolic link to be those of the file referenced by the
+link, not the link itself.
+If the referenced file does not exist, the file information and type will
+be for the link itself.
+.It Fl P
+The
+.Fl P
+option causes the file information and file type (see
+.Xr stat 2)
+returned for each symbolic link to be those of the link itself.
+.It Fl X
+The
+.Fl X
+option is a modification to permit
+.Nm
+to be safely used in conjunction with
+.Xr xargs 1 .
+If a file name contains any of the delimiting characters used by
+.Xr xargs ,
+a diagnostic message is displayed on standard error, and the file
+is skipped.
+The delimiting characters include single (`` ' '') and double (`` " '')
+quotes, backslash (``\e''), space, tab and newline characters.
 .It Fl d
 The
 .Fl d
@@ -85,28 +119,6 @@ option specifies a file hierarchy for
 to traverse.
 File hierarchies may also be specified as the operands immediately
 following the options.
-.It Fl s
-The
-.Fl s
-option causes the file information and file type (see
-.Xr stat  2  ) ,
-returned for each symbolic link to be those of the file referenced by the
-link, not the link itself.
-If the referenced file does not exist, the file information and type will
-be for the link itself.
-.It Fl X
-The
-.Fl X
-option is a modification to permit
-.Nm
-to be safely used in conjunction with
-.Xr xargs 1 .
-If a file name contains any of the delimiting characters used by
-.Xr xargs ,
-a diagnostic message is displayed on standard error, and the file
-is skipped.
-The delimiting characters include single (`` ' '') and double (`` " '')
-quotes, backslash (``\e''), space, tab and newline characters.
 .It Fl x
 The
 .Fl x
@@ -145,9 +157,14 @@ was executed.
 .It Ic -fstype Ar type 
 True if the file is contained in a file system of type
 .Ar type .
-Currently supported types are ``local'', ``mfs'', ``nfs'', ``msdos'', ``isofs'',
-``rdonly'' and ``ufs''.
-The types ``local'' and ``rdonly'' are not specific file system types.
+The
+.Xr sysctl 8
+command can be used to find out the types of filesystems
+that are available on the system:
+.Bd -literal -offset indent
+sysctl vfs
+.Ed
+In addition, there are two pseudo-types, ``local'' and ``rdonly''.
 The former matches any file system physically mounted on the system where
 the
 .Nm find
@@ -184,7 +201,7 @@ True if the difference between the file last modification time and the time
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
-.It Ic \&-ok Ar utility Ns Op argument ... ; 
+.It Ic \&-ok Ar utility Op argument ... ; 
 The
 .Ic \&-ok
 primary is identical to the
@@ -253,12 +270,14 @@ Note, the first character of a symbolic mode may not be a dash (``\-'').
 .It Ic -print
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output.
-The expression is appended to the user specified expression if neither
+If none of
 .Ic -exec ,
-.Ic -ls
+.Ic -ls ,
 or
 .Ic \&-ok
-is specified.
+is specified, the given expression shall be effectively replaced by
+.Cm \&( Ns Ar given\& expression Ns Cm \&) 
+.Ic -print .
 .It Ic -prune
 This primary always evaluates to true.
 It causes
@@ -373,13 +392,13 @@ that are newer than ``ttt''.
 .El
 .Sh SEE ALSO
 .Xr chmod 1 ,
-.Xr sh 1 ,
-.Xr test 1 ,
+.Xr locate 1 ,
 .Xr stat 2 ,
-.Xr umask 2 ,
-.Xr getpwent 3 ,
+.Xr fts 3 ,
 .Xr getgrent 3 ,
-.Xr strmode 3
+.Xr getpwent 3 ,
+.Xr strmode 3 ,
+.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm find
@@ -400,7 +419,7 @@ primaries are extensions to
 .Pp
 Historically, the
 .Fl d ,
-.Fl s
+.Fl h
 and
 .Fl x
 options were implemented using the primaries ``\-depth'', ``\-follow'',
