@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.6 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: underscore.c,v 1.7 2003/01/27 21:04:10 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: underscore.c,v 1.6 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: underscore.c,v 1.7 2003/01/27 21:04:10 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -82,9 +82,6 @@ wunderscore(WINDOW *win)
 		__CTRACE("wunderscore\n");
 #endif
 		win->wattr |= __UNDERSCORE;
-		if ((win->wattr & __COLOR) && (__nca & __UNDERSCORE)) {
-			win->wattr &= ~__COLOR;
-		}
 	}
 	return (1);
 }

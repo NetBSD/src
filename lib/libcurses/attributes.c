@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.9 2000/12/19 21:34:25 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.10 2003/01/27 21:04:10 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.9 2000/12/19 21:34:25 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.10 2003/01/27 21:04:10 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -112,17 +112,12 @@ wattron(WINDOW *win, int attr)
 		wstandout(win);
 	if ((attr_t) attr & __UNDERSCORE)
 		wunderscore(win);
-	/* Check for conflict with color. */
-	if (win->wattr & __nca)
-		win->wattr &= ~__COLOR;
 	if ((attr_t) attr & __COLOR) {
 		/* If another color pair is set, turn that off first. */
 		win->wattr &= ~__COLOR;
 		/* If can do color video, set the color pair bits. */
-		if (__tc_Co != NULL) {
+		if (__tc_Co != NULL)
 			win->wattr |= attr & __COLOR;
-			win->wattr &= ~__nca;
-		}
 	}
 	return (OK);
 }
