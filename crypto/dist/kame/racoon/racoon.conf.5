@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.21 2004/04/12 03:34:07 itojun Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.22 2004/11/10 20:23:28 thorpej Exp $
 .\"	$KAME: racoon.conf.5,v 1.109 2003/12/17 01:43:57 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 12, 2004
+.Dd November 4, 2004
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -208,6 +208,36 @@ You can provide more than one address definition.
 .It Ic strict_address ;
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any addresses.
+.El
+.El
+.\"
+.Ss Miscellaneous Global Parameters
+.Bl -tag -width Ds -compact
+.It Ic gss_id_enc Ar enctype ;
+Older versions of
+.Xr racoon 8
+used ISO-Latin-1 as the encoding of the GSS-API identifier attribute.
+For interoperability with Microsoft Windows' GSS-API authentication
+scheme, the default encoding has been changed to UTF-16LE.
+The
+.Ic gss_id_enc
+parameter allows
+.Xr racoon 8
+to be configured to use the old encoding for compatibility with existing
+.Xr racoon 8
+installations.
+The following are valid values for
+.Ar enctype :
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic utf-16le
+Use UTF-16LE to encode the GSS-API identifier attribute.
+This is the default encoding.
+This encoding is compatible with Microsoft Windows.
+.It Ic latin1
+Use ISO-Latin-1 to encode the GSS-API identifier attribute.
+This is the encoding used by older versions of
+.Xr racoon 8 .
 .El
 .El
 .\"
@@ -478,13 +508,15 @@ Refer to the description of
 directive immediately defined in
 .Ic remote
 directive.
-.It Ic gssapi_id Ar string ;
+.It Ic gss_id Ar string ;
 define the GSS-API endpoint name, to be included as an attribute in the SA,
 if the
 .Ic gssapi_krb
 authentication method is used. If this is not defined, the default value of
-.Ql ike/hostname
-is used, where hostname is the FQDN of the interface being used.
+.Ql host/hostname
+is used, where hostname is the value returned by the
+.Xr hostname 1
+command.
 .El
 .El
 .El
