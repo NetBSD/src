@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.57 1995/11/17 09:50:23 thorpej Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.56 1995/10/09 03:43:55 chopps Exp $
 
 # not yet done: catman
 

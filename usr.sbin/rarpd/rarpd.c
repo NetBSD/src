@@ -1,3 +1,5 @@
+/*	$NetBSD: rarpd.c,v 1.9 1995/11/17 09:54:49 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -25,8 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.8 1995/09/01 21:55:47 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.9 1995/11/17 09:54:49 thorpej Exp $";
 #endif
 
 
