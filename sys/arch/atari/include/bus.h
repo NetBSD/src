@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1997/06/25 12:06:10 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1997/07/15 06:50:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -61,6 +61,8 @@ int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
+int	bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, bus_size_t, bus_space_handle_t *));
 void	bus_space_read_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 void	bus_space_read_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
