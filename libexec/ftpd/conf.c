@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7.2.2 1997/11/11 14:27:45 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.7.2.3 1997/11/17 16:43:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.7.2.2 1997/11/11 14:27:45 mrg Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7.2.3 1997/11/17 16:43:03 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -471,6 +471,6 @@ do_conversion(fname)
 	}
 
 	snprintf(cmd, LINE_MAX, cp->command, base);
-	syslog(LOG_INFO, "get command is: %s", cmd);
+	syslog(LOG_DEBUG, "get command: %s", cmd);
 	return(cmd);
 }
