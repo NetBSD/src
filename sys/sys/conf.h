@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.58 1998/08/07 00:01:01 augustss Exp $	*/
+/*	$NetBSD: conf.h,v 1.59 1998/08/30 21:34:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -503,7 +503,8 @@ struct devnametobdevmaj {
 };
 
 #ifdef _KERNEL
-struct device;
+extern	struct devnametobdevmaj dev_name2blk[];
+struct	device;
 void	setroot __P((struct device *, int, struct devnametobdevmaj *));
 void	swapconf __P((void));
 #endif /* _KERNEL */
