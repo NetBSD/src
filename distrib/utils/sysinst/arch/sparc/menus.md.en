@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.15 2001/11/29 23:21:02 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.15.2.1 2003/02/20 06:57:29 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,7 @@ menu editfsparts, y=12, exit;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
 	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
  
+/* don't forget to update md.c if these change numbers */
 menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
