@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.37 1997/12/01 06:07:33 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.38 1997/12/03 03:05:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,8 +52,9 @@
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 
-static void	grfmv_intr_generic_1 __P((void *vsc, int slot));
-static void	grfmv_intr_generic_4 __P((void *vsc, int slot));
+static void	grfmv_intr_generic_write1 __P((void *vsc, int slot));
+static void	grfmv_intr_generic_write4 __P((void *vsc, int slot));
+static void	grfmv_intr_generic_or4 __P((void *vsc, int slot));
 
 static void	grfmv_intr_cb264 __P((void *vsc, int slot));
 static void	grfmv_intr_cb364 __P((void *vsc, int slot));
@@ -234,12 +235,12 @@ bad:
 	case NUBUS_DRHW_PVC:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc);
 		break;
 	case NUBUS_DRHW_COLORMAX:
 		add_nubus_intr(na->slot, grfmv_intr_cmax, sc);
@@ -250,7 +251,7 @@ bad:
 	case NUBUS_DRHW_MDC:
 		sc->cli_offset = 0x200148;
 		sc->cli_value = 1;
-		add_nubus_intr(na->slot, grfmv_intr_generic_4, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
 
 		/* Enable interrupts; to disable, write 0x7 to this location */
 		bus_space_write_4(sc->sc_tag, sc->sc_handle, 0x20013C, 5);
@@ -264,7 +265,7 @@ bad:
 	case NUBUS_DRHW_RPC8:
 		sc->cli_offset = 0xfdff8f;
 		sc->cli_value = 0xff;
-		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
@@ -274,13 +275,18 @@ bad:
 	case NUBUS_DRHW_FUTURASX:
 		sc->cli_offset = 0xf05000;
 		sc->cli_value = 0x80;
-		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc);
 		break;
 	case NUBUS_DRHW_SAM768:
 		add_nubus_intr(na->slot, grfmv_intr_cti, sc);
 		break;
 	case NUBUS_DRHW_SUPRGFX:
 		add_nubus_intr(na->slot, grfmv_intr_supermacgfx, sc);
+		break;
+	case NUBUS_DRHW_SPECTRM8:
+		sc->cli_offset = 0x0de178;
+		sc->cli_value = 0x80;
+		add_nubus_intr(na->slot, grfmv_intr_generic_or4, sc);
 		break;
 	case NUBUS_DRHW_LAPIS:
 		add_nubus_intr(na->slot, grfmv_intr_lapis, sc);
@@ -333,7 +339,7 @@ grfmv_phys(gp)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_1(vsc, slot)
+grfmv_intr_generic_write1(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
@@ -350,7 +356,7 @@ grfmv_intr_generic_1(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_4(vsc, slot)
+grfmv_intr_generic_write4(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
@@ -358,6 +364,25 @@ grfmv_intr_generic_4(vsc, slot)
 
 	bus_space_write_4(sc->sc_tag, sc->sc_handle,
 	    sc->cli_offset, sc->cli_value);
+}
+
+/*
+ * Generic routine to clear interrupts for cards where it simply takes
+ * an OR.L to clear the interrupt.  The offset and value of this byte
+ * varies between cards.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_generic_or4(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	unsigned long	scratch;
+
+	scratch = bus_space_read_4(sc->sc_tag, sc->sc_handle, sc->cli_offset);
+	scratch |= 0x80;
+	bus_space_write_4(sc->sc_tag, sc->sc_handle, sc->cli_offset, scratch);
 }
 
 /*
