@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.57.2.1 2000/12/14 23:37:35 he Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.57.2.2 2000/12/15 00:08:32 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -185,7 +185,7 @@ nfs_connect(nmp, rep)
 		sin->sin_addr.s_addr = INADDR_ANY;
 		tport = IPPORT_RESERVED - 1;
 		sin->sin_port = htons(tport);
-		while ((error = sobind(so, m)) == EADDRINUSE &&
+		while ((error = sobind(so, m, &proc0)) == EADDRINUSE &&
 		       --tport > IPPORT_RESERVED / 2)
 			sin->sin_port = htons(tport);
 		m_freem(m);
@@ -201,7 +201,7 @@ nfs_connect(nmp, rep)
 		sin6->sin6_addr = in6addr_any;
 		tport = IPV6PORT_RESERVED - 1;
 		sin6->sin6_port = htons(tport);
-		while ((error = sobind(so, m)) == EADDRINUSE &&
+		while ((error = sobind(so, m, &proc0)) == EADDRINUSE &&
 		       --tport > IPV6PORT_RESERVED / 2)
 			sin6->sin6_port = htons(tport);
 		m_freem(m);
