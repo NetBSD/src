@@ -1,6 +1,6 @@
-.\" $NetBSD: bus_dma.9,v 1.7 1997/11/11 10:06:50 mrg Exp $
+.\"	$NetBSD: bus_dma.9,v 1.8 1998/02/04 06:42:53 thorpej Exp $
 .\"
-.\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\" 
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Aug 11, 1997
+.Dd February 3, 1998
 .Dt BUS_DMA 9
 .Os NetBSD
 .Sh NAME
@@ -77,7 +77,7 @@
 .Fn bus_dmamap_unload "bus_dma_tag_t tag" "bus_dmamap_t dmam"
 .Ft void
 .Fn bus_dmamap_sync "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"bus_dmasync_op_t op"
+"bus_addr_t offset" "bus_size_t len" "int ops"
 .Ft int
 .Fn bus_dmamem_alloc "bus_dma_tag_t tag" "bus_size_t size" \
 "bus_size_t alignment" "bus_size_t boundary" "bus_dma_segment_t *segs" \
@@ -132,11 +132,16 @@ DMA controller address and length registers.
 .It Fa bus_dmamap_t
 A pointer to a structure with at least the following members:
 .Bd -literal
+	bus_size_t	dm_mapsize;
+	int		dm_nsegs;
 	bus_dma_segment_t *dm_segs;
-	int	dm_nsegs;
 .Ed
 .sp
 The structure may have machine-dependent members and arbitrary layout.
+The
+.Fa dm_mapsize
+member indicates the size of the mapping.  A value of 0 indicates the
+mapping is invalid.
 The
 .Fa dm_segs
 member may be an array of segments or a pointer to an
@@ -144,19 +149,6 @@ array of segments.  The
 .Fa dm_nsegs
 member indicates the number of segments in
 .Fa dm_segs .
-A value of 0 indicates the mapping is invalid.
-.It Fa bus_dmasync_op_t
-An enumerated type providing the following unique values:
-.Bd -literal
-	BUS_DMASYNC_PREREAD
-	BUS_DMASYNC_POSTREAD
-	BUS_DMASYNC_PREWRITE
-	BUS_DMASYNC_POSTWRITE
-.Ed
-.sp
-See 
-.Fn bus_dmamap_sync
-for more details.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -348,18 +340,24 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_unload
 always succeeds.
-.It Fn bus_dmamap_sync "tag" "dmam" "op"
+.It Fn bus_dmamap_sync "tag" "dmam" "offset" "len" "ops"
 Performs pre- and post-DMA operation cache and/or buffer synchronization.
 Arguments are as follows:
-.Bl -tag -width dmam -compact
+.Bl -tag -width offset -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA mapping to be synchronized.
-.It Fa op
-The synchronization operation to perform.  The following DMA synchronization
-operations are defined:
+.It Fa offset
+The offset into the DMA mapping to synchronize.
+.It Fa len
+The length of the mapping from
+.Fa offset
+to synchronize.
+.It Fa ops
+One or more synchronization operation to perform.  The following DMA
+synchronization operations are defined:
 .Bl -tag -width BUS_DMASYNC_POSTWRITE -compact
 .It Dv BUS_DMASYNC_PREREAD
 Perform any pre-read DMA cache and/or bounce operations.
@@ -370,7 +368,37 @@ Perform any pre-write DMA cache and/or bounce operations.
 .It Dv BUS_DMASYNC_POSTWRITE
 Perform any post-write DMA cache and/or bounce operations.
 .El
+.Pp
+More than one operation may performed in a given synchronization call.
+Mixing of
+.Em PRE
+and
+.Em POST
+operations is not allowed, and behavior is undefined if this is attempted.
 .El
+.Pp
+Synchronization operations are expressed from the perspective of
+the host RAM, e.g. a
+.Em "device -> memory"
+operation is a
+.Em READ
+and a
+.Em "memory -> device"
+operation is a
+.Em WRITE .
+.Pp
+.Fn bus_dmamp_sync
+may consult state kept within the DMA map to determine if the memory
+is mapped in a DMA coherent fashion.  If so,
+.Fn bus_dmamap_sync
+may elect to skip certain expensive operations, such as flushing
+of the data cache.  See
+.Fn bus_dmamem_map
+for more information on this subject.
+.Pp
+On platforms which implement reordered stores,
+.Fn bus_dmamap_sync
+will always cause the store buffer to be flushed.
 .Pp
 This function exists so that multiple read and write transfers can be
 performed with the same buffer, and so that drivers can explicitly
@@ -521,7 +549,7 @@ The size of the mapping.
 Filled in to specify the kernel virtual address where the memory is mapped.
 .It Fa flags
 Flags are defined as follows:
-.Bl -tag -width BUS_DMAMEM_NOSYNC -compact
+.Bl -tag -width BUS_DMA_COHERENT -compact
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -529,14 +557,23 @@ It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_BUS[1-4]
 These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
-.It Dv BUS_DMAMEM_NOSYNC
-Map the memory in such a way that synchronization of the map with
-.Fn bus_dmamap_sync
-will not be required.  This is especially useful in
-the case of descriptor blocks which are occasionally read/written by
-the device and host as a means of command/status communications, for
-which map synchronization would be unnecessarily expensive.  This flag
-should be used with care.
+.It Dv BUS_DMA_COHERENT
+This flag is a
+.Em hint
+to machine-dependent code.  If possible, map the memory in such a way
+as it will be DMA coherent.  This may include mapping the pages into
+uncached address space or setting the cache-inhibit bits in page table
+entries.  If implementation of DMA coherent mappings is impossible, this
+is ignored.
+.Pp
+Later, when this memory is loaded into a DMA map, machine-dependent code
+will take whatever steps are necessary to determine if the memory was
+mapped in a DMA coherent fashion.  This may include checking if the
+kernel virtual address lies within uncached address space or if the
+cache-inhibit bits are set in page table entries.  If it is determined
+that the mapping is DMA coherent, state may be placed into the DMA map
+for use by later calls to
+.Fn bus_dmamap_sync .
 .El
 .El
 .Pp
@@ -592,7 +629,7 @@ The offset of the page in DMA memory which is to be mapped.
 The protection codes for the mapping.
 .It Fa flags
 Flags are defined as follows:
-.Bl -tag -width BUS_DMAMEM_NOSYNC -compact
+.Bl -tag -width BUS_DMA_COHERENT -compact
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -600,14 +637,10 @@ It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_BUS[1-4]
 These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
-.It Dv BUS_DMAMEM_NOSYNC
-Map the memory in such a way that synchronization of the map with
-.Fn bus_dmamap_sync
-will not
-be required.  This is especially useful in the case of descriptor
-blocks which are occasionally read/written by the device and host as a
-means of command/status communications, for which map synchronization
-would be unnecessarily expensive.  This flag should be used with care.
+.It Dv BUS_DMA_COHERENT
+See
+.Fn bus_dmamem_map
+above for a description of this flag.
 .El
 .El
 .Pp
@@ -619,8 +652,17 @@ Returns -1 to indicate failure.  Otherwise, returns an opaque
 value to be interpreted by the device pager.
 .Sh SEE ALSO
 .Xr bus_space 9
-.Sh HISTORY
-A
+.Sh AUTHOR
+The
 .Nm
-manual page appeared in
+interface was designed and implemented by Jason R. Thorpe of the
+Numerical Aerospace Simulation Facility, NASA Ames Research Center.
+Additional input on the
+.Nm
+design was provided by Chris Demetriou, Charles Hannum, Ross Harvey,
+Matthew Jacob, Jonathan Stone, and Matt Thomas.
+.Sh HISTORY
+The
+.Nm
+interface appeared in
 .Nx 1.3 .
