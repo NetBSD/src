@@ -947,10 +947,8 @@
 ./usr/include/uvm/uvm_vnode.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
-./usr/include/vm/device_pager.h
 ./usr/include/vm/pglist.h
 ./usr/include/vm/pmap.h
-./usr/include/vm/swap_pager.h
 ./usr/include/vm/vm.h
 ./usr/include/vm/vm_conf.h
 ./usr/include/vm/vm_extern.h
@@ -964,7 +962,6 @@
 ./usr/include/vm/vm_param.h
 ./usr/include/vm/vm_prot.h
 ./usr/include/vm/vm_swap.h
-./usr/include/vm/vnode_pager.h
 ./usr/include/zconf.h
 ./usr/include/zlib.h
 ./usr/lib/crt0.o
