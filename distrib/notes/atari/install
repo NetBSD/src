@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.16 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: install,v 1.17 2001/07/24 17:30:55 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ for each
 track loaded. After loading 80 tracks, it will ask you
 to insert the next floppy. At this time, insert the
 .Nx
-install floppy 2 and press any key. The kernel continous
+install floppy 2 and press any key. The kernel continuous
 loading another 40 tracks before it continues to boot.
 .(Note
 If you are using 1.44 MB floppies, you should select
@@ -189,7 +189,7 @@ change anything
 unless you are absolutely sure what you are doing!
 If you are labeling an empty SCSI disk, you can make life easy for
 yourself by selecting
-.Dq standarize geometry .
+.Dq standardize geometry .
 This allows you to
 select a
 .Dq sectors per track
@@ -246,7 +246,7 @@ correctly, it starts creating them for you.
 Configure your network
 Currently none of the kernels supplied in the distribution has
 network support builtin. If you compiled your own kernel, network
-configuration mostly works. [ Due to space limitiations, some
+configuration mostly works. [ Due to space limitations, some
 of the network commands are not present on the install floppy ]
 .It
 Edit the fstab - again....
@@ -305,7 +305,7 @@ for 1.44 MB disks, or one of the hard disk partitions.
 .It
 Installing the bootstrap
 Finally, the installer ask you if you want to install the bootblock
-code on your root disk. This is a matter of personal choise and can
+code on your root disk. This is a matter of personal choice and can
 also be done from a running
 .Nx
 system. See the
@@ -342,7 +342,7 @@ from
 .Pa /netbsd
 to
 .Pa /kernels/netbsd .
-This sceme is particulary handy when you want to make your
+This scheme is particularly handy when you want to make your
 own kernel. When compilation is finished, you just copy
 your kernel to
 .Pa /kernels/netbsd

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: prep,v 1.9 2001/07/24 17:30:56 nra Exp $
 .
 Note you will be modifying your HD's if you mess something up here you
 could lose everything on all the drives that you work with.  It is
@@ -42,9 +42,9 @@ As you might know; every hard disk has a
 .Sq root sector
 that contains information about the size of the hard disk and the partitions
 on the hard disk.
-The root sector can only contain the neccessary data for four
+The root sector can only contain the necessary data for four
 partitions. Nobody thought that this limitation would cause any problems.
-After all, 640 KByte should be enough.  As hard disk grew, it was neccessary
+After all, 640 KByte should be enough.  As hard disk grew, it was necessary
 to define more than four partitions. In order to be more or less compatible
 with the old format, a new type of partition entry was defined: XGM partions.
 .Pp
@@ -69,7 +69,7 @@ If you are creating your partitions with HDX, you'll have to be very careful
 to fulfill this rule. HDX has some very strange ideas when it comes to
 extended partitions. Fortunately, you can edit this stuff: The
 .Dq "Edit partition scheme of the unit"
-dialog box has a button labelled
+dialog box has a button labeled
 .Dq "expert" .
 This button is inactive unless you have defined more than four partitions.
 Click on it
@@ -93,7 +93,7 @@ have defined 7 partitions, partitions #2 to #5 will be extended partitions,
 while partitions #1, #6 and #7 will be primary partitions.
 .Pp
 You can move the extended partition range by clicking on one of the buttons
-on the right side of the dalog box. Try to find one where your first
+on the right side of the dialog box. Try to find one where your first
 .Nx
 partition is a primary partition. Golden rules:
 .(bullet
