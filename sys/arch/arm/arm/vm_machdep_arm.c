@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.2 2001/02/27 00:16:48 reinoud Exp $	*/
+/*	$NetBSD: vm_machdep_arm.c,v 1.3 2001/02/27 14:00:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.2 2001/02/27 00:16:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.3 2001/02/27 14:00:24 bjh21 Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -57,8 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.2 2001/02/27 00:16:48 reinoud E
 void
 cpu_wait(struct proc *p)
 {
+
 	/* nothing */
-};
+}
 
 /*
  * Dump the machine specific segment at the start of a core dump.
@@ -70,8 +71,8 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 {
 	int error;
 	struct {
-	  struct reg regs;
-	  struct fpreg fpregs;
+		struct reg regs;
+		struct fpreg fpregs;
 	} cpustate;
 	struct coreseg cseg;
 
