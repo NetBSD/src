@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp $
+# $NetBSD: GENERIC,v 1.149 2003/12/17 08:08:02 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148 $"
+#ident 		"GENERIC-$Revision: 1.149 $"
 
 maxusers	32
 
@@ -233,7 +233,7 @@ xbox*	at sbus? slot ? offset ?
 sbus*	at xbox?
 
 ## SBus to PCMCIA bridge
-# Currently enabling nell* with audioamd* causes panic at attach
+#options	FULL_SPARC_BUS_SPACE
 #nell*	at sbus? slot ? offset ?		# PCMCIA bridge
 #pcmcia*	at nell?
 
@@ -416,7 +416,11 @@ fd*	at fdc0					# the drive itself
 
 ## PCMCIA IDE controllers
 #wdc*	at pcmcia?
-#wd*	at wdc?
+#atabus* at ata?
+#wd*	at atabus? drive ? flags 0x0000
+
+## PCMCIA wavelan card
+#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
