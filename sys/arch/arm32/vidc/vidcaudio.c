@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.18 1997/08/24 22:31:26 augustss Exp $ */
+/*	$NetBSD: vidcaudio.c,v 1.19 1997/10/14 12:03:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -58,12 +58,12 @@
 #include <dev/audio_if.h>
 
 #include <machine/irqhandler.h>
-#include <machine/iomd.h>
 #include <machine/vidc.h>
 #include <machine/katelib.h>
 
+#include <arm32/iomd/iomdreg.h>
 #include <arm32/mainbus/mainbus.h>
-#include "waveform.h"
+#include <arm32/vidc/waveform.h>
 #include "vidcaudio.h"
 
 #undef DEBUG
@@ -96,7 +96,7 @@ struct vidcaudio_softc {
 	int outport;
 };
 
-int  vidcaudio_probe	__P((struct device *parent, void *match, void *aux));
+int  vidcaudio_probe	__P((struct device *parent, struct cfdata *cf, void *aux));
 void vidcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
 int  vidcaudio_open	__P((void *addr, int flags));
 void vidcaudio_close	__P((void *addr));
@@ -119,6 +119,66 @@ struct cfdriver vidcaudio_cd = {
 };
 
 
+int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
+int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
+int    vidcaudio_round_blocksize __P((void *, int));
+int    vidcaudio_set_out_port	 __P((void *, int));
+int    vidcaudio_get_out_port	 __P((void *));
+int    vidcaudio_set_in_port	 __P((void *, int));
+int    vidcaudio_get_in_port  	 __P((void *));
+int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
+int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
+int    vidcaudio_halt_output	 __P((void *));
+int    vidcaudio_halt_input 	 __P((void *));
+int    vidcaudio_cont_output	 __P((void *));
+int    vidcaudio_cont_input	 __P((void *));
+int    vidcaudio_speaker_ctl	 __P((void *, int));
+int    vidcaudio_getdev		 __P((void *, struct audio_device *));
+int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
+int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
+int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
+int    vidcaudio_get_props	 __P((void *));
+
+struct audio_device vidcaudio_device = {
+	"VidcAudio 8-bit",
+	"x",
+	"vidcaudio"
+};
+
+struct audio_hw_if vidcaudio_hw_if = {
+    vidcaudio_open,
+    vidcaudio_close,
+    0,
+    vidcaudio_query_encoding,
+    vidcaudio_set_params,
+    vidcaudio_round_blocksize,
+    vidcaudio_set_out_port,
+    vidcaudio_get_out_port,
+    vidcaudio_set_in_port,
+    vidcaudio_get_in_port,
+    0,
+    0,
+    0,
+    vidcaudio_start_output,
+    vidcaudio_start_input,
+    vidcaudio_halt_output,
+    vidcaudio_halt_input,
+    vidcaudio_cont_output,
+    vidcaudio_cont_input,
+    vidcaudio_speaker_ctl,
+    vidcaudio_getdev,
+    0,
+    vidcaudio_set_port,
+    vidcaudio_get_port,
+    vidcaudio_query_devinfo,
+    0,
+    0,
+    0,
+    0,
+    vidcaudio_get_props,
+};
+
+
 void
 vidcaudio_beep_generate()
 {
@@ -128,9 +188,9 @@ vidcaudio_beep_generate()
 
 
 int
-vidcaudio_probe(parent, match, aux)
+vidcaudio_probe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata* cf;
 	void *aux;
 {
 	int id;
@@ -144,6 +204,7 @@ vidcaudio_probe(parent, match, aux)
 		return(1);
 		break;
 	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
 #ifdef RC7500
 		return(0);
 #else
@@ -212,6 +273,7 @@ vidcaudio_attach(parent, self, aux)
 		break;
 #else
 	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
 		sound_dma_intr = IRQ_SDMA;
 		break;
 #endif
@@ -224,12 +286,12 @@ vidcaudio_attach(parent, self, aux)
 
 	disable_irq(sound_dma_intr);
 
+	printf("\n");
+
 	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
 	    vidcaudio_dummy_routine, NULL);
 
 	audio_attach_mi(&vidcaudio_hw_if, 0, sc, &sc->device);
-
-	printf("\n");
 
 #ifdef DEBUG
 	printf(" UNDER DEVELOPMENT (nuts)\n");
@@ -276,32 +338,6 @@ vidcaudio_close(addr)
 /* ************************************************************************* * 
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
-
-int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
-int    vidcaudio_round_blocksize __P((void *, int));
-int    vidcaudio_set_out_port	 __P((void *, int));
-int    vidcaudio_get_out_port	 __P((void *));
-int    vidcaudio_set_in_port	 __P((void *, int));
-int    vidcaudio_get_in_port  	 __P((void *));
-int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
-int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
-int    vidcaudio_halt_output	 __P((void *));
-int    vidcaudio_halt_input 	 __P((void *));
-int    vidcaudio_cont_output	 __P((void *));
-int    vidcaudio_cont_input	 __P((void *));
-int    vidcaudio_speaker_ctl	 __P((void *, int));
-int    vidcaudio_getdev		 __P((void *, struct audio_device *));
-int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
-int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
-int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
-int    vidcaudio_get_props	 __P((void *));
-
-struct audio_device vidcaudio_device = {
-	"VidcAudio 8-bit",
-	"x",
-	"vidcaudio"
-};
 
 int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
 {
@@ -477,40 +513,6 @@ int vidcaudio_get_props ( void *addr )
 {
     return 0;
 }
-
-struct audio_hw_if vidcaudio_hw_if = {
-    vidcaudio_open,
-    vidcaudio_close,
-    0,
-    vidcaudio_query_encoding,
-    vidcaudio_set_params,
-    vidcaudio_round_blocksize,
-    vidcaudio_set_out_port,
-    vidcaudio_get_out_port,
-    vidcaudio_set_in_port,
-    vidcaudio_get_in_port,
-    0,
-    0,
-    0,
-    vidcaudio_start_output,
-    vidcaudio_start_input,
-    vidcaudio_halt_output,
-    vidcaudio_halt_input,
-    vidcaudio_cont_output,
-    vidcaudio_cont_input,
-    vidcaudio_speaker_ctl,
-    vidcaudio_getdev,
-    0,
-    vidcaudio_set_port,
-    vidcaudio_get_port,
-    vidcaudio_query_devinfo,
-    0,
-    0,
-    0,
-    0,
-    vidcaudio_get_props,
-};
-
 void vidcaudio_dummy_routine ( void *arg )
 {
 #ifdef DEBUG
@@ -549,13 +551,13 @@ int vidcaudio_dma_program ( vm_offset_t cur, vm_offset_t end,
     if ( ag.in_progress==0 )
     {
 	ag.buffer = 0;
-        WriteWord ( IOMD_SD0CR, 0x90 );	/* Reset State Machine */
-        WriteWord ( IOMD_SD0CR, 0x30 );	/* Reset State Machine */
+        IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
+        IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
 
- 	WriteWord ( IOMD_SD0CURB, PHYS(cur) );
-        WriteWord ( IOMD_SD0ENDB, PHYS(end-16)|FLAGS );
- 	WriteWord ( IOMD_SD0CURA, PHYS(cur) );
-        WriteWord ( IOMD_SD0ENDA, PHYS(end-16)|FLAGS );
+ 	IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
+        IOMD_WRITE_WORD(IOMD_SD0ENDB, PHYS(end-16)|FLAGS);
+ 	IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
+        IOMD_WRITE_WORD(IOMD_SD0ENDA, PHYS(end-16)|FLAGS);
 
         ag.in_progress = 1;
 
@@ -614,20 +616,20 @@ void vidcaudio_shutdown ( void )
 #ifdef PRINT
 printf ( "vidcaudio: stop output\n" );
 #endif
-    WriteWord ( IOMD_SD0CURB, ag.silence );
-    WriteWord ( IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30) );
+    IOMD_WRITE_WORD(IOMD_SD0CURB, ag.silence);
+    IOMD_WRITE_WORD(IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30));
     disable_irq(sound_dma_intr);
 }
 
 int vidcaudio_intr ( void *arg )
 {
-    int status = ReadByte(IOMD_SD0ST);
+    int status = IOMD_READ_BYTE(IOMD_SD0ST);
     void (*nintr)();
     void *narg;
     void (*xintr)();
     void *xarg;
     int xcur, xend;
-    WriteWord ( IOMD_DMARQ, 0x10 );
+    IOMD_WRITE_WORD(IOMD_DMARQ, 0x10);
 
 #ifdef PRINT
     printf ( "I" );
@@ -681,32 +683,32 @@ int vidcaudio_intr ( void *arg )
 #ifdef PRINT
 printf( "B" );
 #endif
-        	WriteWord ( IOMD_SD0CURB, xcur );
-        	WriteWord ( IOMD_SD0ENDB, xend|FLAGS );
+        	IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+        	IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
 		break;
 
 	    case (INTERRUPT|BANK_B):
 #ifdef PRINT
 printf( "A" );
 #endif
-        	WriteWord ( IOMD_SD0CURA, xcur );
-        	WriteWord ( IOMD_SD0ENDA, xend|FLAGS );
+        	IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+        	IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
 		break;
 
 	    case (OVERRUN|INTERRUPT|BANK_A):
 #ifdef PRINT
 printf( "A" );
 #endif
-        	WriteWord ( IOMD_SD0CURA, xcur );
-        	WriteWord ( IOMD_SD0ENDA, xend|FLAGS );
+        	IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+        	IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
 		break;
 		 
 	    case (OVERRUN|INTERRUPT|BANK_B):
 #ifdef PRINT
 printf( "B" );
 #endif
-        	WriteWord ( IOMD_SD0CURB, xcur );
-        	WriteWord ( IOMD_SD0ENDB, xend|FLAGS );
+        	IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+        	IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
 		break;
 	}
 /*

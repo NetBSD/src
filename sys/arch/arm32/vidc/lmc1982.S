@@ -1,4 +1,4 @@
-/* $NetBSD: lmc1982.S,v 1.1 1996/10/15 21:10:24 mark Exp $ */
+/*	$NetBSD: lmc1982.S,v 1.2 1997/10/14 12:03:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -34,7 +34,7 @@
 
 
 #include <machine/asm.h>
-#include <machine/iomd.h>
+#include <arm32/iomd/iomdreg.h>
 #include <arm32/mainbus/lmc1982.h>
 
 /*
@@ -56,7 +56,7 @@ ENTRY(volume_ctl)
 	 * operate the volume control circuit
 	 */
 	mov	r7, #(IOMD_BASE)
-	add	r6, r7, #(FREQCON - IOMD_BASE)	/* location of FREQCON register */
+	add	r6, r7, #(FREQCON << 2)	/* location of FREQCON register */
 	ldr	r5, Lvfreqcon		/* frequency reg shadow */
 	orr	r0,r0,#0x40		/* chip address adder */
 
