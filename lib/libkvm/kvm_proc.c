@@ -54,6 +54,7 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -74,6 +75,7 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
 
 int _kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
+ssize_t kvm_uread __P((kvm_t *, const struct proc *, u_long, char *, size_t));
 
 static char *
 kvm_readswap(kd, p, va, cnt)
@@ -388,7 +390,8 @@ kvm_getprocs(kd, op, arg, cnt)
 	int op, arg;
 	int *cnt;
 {
-	int mib[4], size, st, nprocs;
+	size_t size;
+	int mib[4], st, nprocs;
 
 	if (kd->procbase != 0) {
 		free((void *)kd->procbase);
@@ -699,7 +702,7 @@ kvm_getenvv(kd, kp, nchr)
 ssize_t
 kvm_uread(kd, p, uva, buf, len)
 	kvm_t *kd;
-	register struct proc *p;
+	register const struct proc *p;
 	register u_long uva;
 	register char *buf;
 	register size_t len;
