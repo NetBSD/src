@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.11 1997/12/10 23:12:15 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -70,18 +70,40 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	db_clear_single_step(regs)	(void) (0)
-#define	db_set_single_step(regs)	(void) (0)
-
 #define	IS_BREAKPOINT_TRAP(type, code)	\
 	((type) == T_BREAKPOINT || (type) == T_KGDB_EXEC)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)
 
-#define	inst_trap_return(ins)	((ins)&0)
-#define	inst_return(ins)	((ins)&0)
-#define	inst_call(ins)		((ins)&0)
-#define inst_load(ins)		0
-#define inst_store(ins)		0
+/*
+ * Sparc cpus have no hardware single-step.
+ */
+#define SOFTWARE_SSTEP
+
+boolean_t	db_inst_trap_return __P((int inst));
+boolean_t	db_inst_return __P((int inst));
+boolean_t	db_inst_call __P((int inst));
+boolean_t	db_inst_branch __P((int inst));
+int		db_inst_load __P((int inst));
+int		db_inst_store __P((int inst));
+boolean_t	db_inst_unconditional_flow_transfer __P((int inst));
+db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
+
+#define inst_trap_return(ins)	db_inst_trap_return(ins)
+#define inst_return(ins)	db_inst_return(ins)
+#define inst_call(ins)		db_inst_call(ins)
+#define inst_branch(ins)	db_inst_branch(ins)
+#define inst_load(ins)		db_inst_load(ins)
+#define inst_store(ins)		db_inst_store(ins)
+#define	inst_unconditional_flow_transfer(ins) \
+				db_inst_unconditional_flow_transfer(ins)
+#define branch_taken(ins, pc, regs) \
+				db_branch_taken((ins), (pc), (regs))
+
+/* see note in db_interface.c about reversed breakpoint addrs */
+#define next_instr_address(pc, bd) \
+	((bd) ? (pc) : ddb_regs.db_tf.tf_npc)
+
+
 
 #define DB_MACHINE_COMMANDS
 
