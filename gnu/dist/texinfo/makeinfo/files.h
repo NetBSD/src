@@ -1,4 +1,4 @@
-/*	$NetBSD: files.h,v 1.1.1.4 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: files.h,v 1.2 2004/07/14 00:12:28 wiz Exp $	*/
 
 /* files.h -- declarations for files.c.
    Id: files.h,v 1.7 2004/02/28 10:42:50 dirt Exp
@@ -41,7 +41,7 @@ extern void popfile (void);
 extern void flush_file_stack (void);
 extern char *get_file_info_in_path (char *filename, char *path,
     struct stat *finfo);
-extern char *find_and_load (char *filename);
+extern char *find_and_load (char *filename, int use_path);
 extern char *output_name_from_input_name (char *name);
 extern char *expand_filename (char *filename, char *input_name);
 extern char *filename_part (char *filename);
