@@ -1,4 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.19 2000/02/06 12:49:44 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.20 2000/03/02 06:42:52 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.34 2000/02/22 14:04:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -230,13 +231,11 @@ in6_pcbbind(in6p, nam)
 			 * XXX: bind to an anycast address might accidentally
 			 * cause sending a packet with anycast source address.
 			 */
-			if (ia != NULL) {
-				struct in6_ifaddr *ia6 = (void *)ia;
-				
-				if (ia6->ia6_flags &
-				    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-				     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED))
-					return (EADDRNOTAVAIL);
+			if (ia &&
+			    ((struct in6_ifaddr *)ia)->ia6_flags &
+			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
+			     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
+				return(EADDRNOTAVAIL);
 			}
 		}
 		if (lport) {
@@ -309,7 +308,7 @@ in6_pcbsetport(laddr, in6p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-                if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
+		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
 		min = IPV6PORT_RESERVEDMIN;
@@ -816,11 +815,14 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 	int cmd;
 	void (*notify) __P((struct in6pcb *, int));
 {
-	struct in6pcb *in6p, *oin6p;
+	struct in6pcb *in6p, *nin6p;
 	struct in6_addr faddr6;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	int errno;
 	int nmatch = 0;
+	void (*notify2) __P((struct in6pcb *, int));
+
+	notify2 = NULL;
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 0;
@@ -830,8 +832,9 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 
 	/*
 	 * Redirects go to all references to the destination,
-	 * and use in_rtchange to invalidate the route cache.
-	 * Dead host indications: notify all references to the destination.
+	 * and use in6_rtchange to invalidate the route cache.
+	 * Dead host indications: also use in6_rtchange to invalidate
+	 * the cache, and deliver the error to all the sockets.
 	 * Otherwise, if we have knowledge of the local port and address,
 	 * deliver only to that socket.
 	 */
@@ -839,25 +842,53 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 		fport = 0;
 		lport = 0;
 		bzero((caddr_t)laddr6, sizeof(*laddr6));
-		if (cmd != PRC_HOSTDEAD)
-			notify = in6_rtchange;
+
+		/*
+		 * Keep the old notify function to store a soft error
+		 * in each PCB.
+		 */
+		if (cmd == PRC_HOSTDEAD && notify != in6_rtchange)
+			notify2 = notify;
+
+		notify = in6_rtchange;
 	}
+
 	if (notify == NULL)
 		return 0;
+
 	errno = inet6ctlerrmap[cmd];
-	for (in6p = head->in6p_next; in6p != head;) {
-		if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,&faddr6) ||
-		   in6p->in6p_socket == 0 ||
-		   (lport && in6p->in6p_lport != lport) ||
-		   (!IN6_IS_ADDR_UNSPECIFIED(laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6)) ||
-		   (fport && in6p->in6p_fport != fport)) {
-			in6p = in6p->in6p_next;
-			continue;
+	for (in6p = head->in6p_next; in6p != head; in6p = nin6p) {
+		nin6p = in6p->in6p_next;
+
+		if (notify == in6_rtchange) {
+			/*
+			 * Since a non-connected PCB might have a cached route,
+			 * we always call in6_rtchange without matching
+			 * the PCB to the src/dst pair.
+			 *
+			 * XXX: we assume in6_rtchange does not free the PCB.
+			 */
+			if (IN6_ARE_ADDR_EQUAL(&in6p->in6p_route.ro_dst.sin6_addr,
+					       &faddr6))
+				in6_rtchange(in6p, errno);
+
+			if (notify2 == NULL)
+				continue;
+
+			notify = notify2;
 		}
-		oin6p = in6p;
-		in6p = in6p->in6p_next;
-		(*notify)(oin6p, errno);
+
+		/* at this point, we can assume that NOTIFY is not NULL. */
+
+		if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &faddr6) ||
+		    in6p->in6p_socket == 0 ||
+		    (lport && in6p->in6p_lport != lport) ||
+		    (!IN6_IS_ADDR_UNSPECIFIED(laddr6) &&
+		     !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6)) ||
+		    (fport && in6p->in6p_fport != fport))
+			continue;
+
+		(*notify)(in6p, errno);
 		nmatch++;
 	}
 	return nmatch;
@@ -1114,10 +1145,10 @@ in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 			} else
 				match = in6p;
 		}
-		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) && 
+		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
 			 in6p->in6p_laddr.s6_addr32[3] == 0) {
-			if (IN6_IS_ADDR_V4MAPPED(laddr6)
-			 && laddr6->s6_addr32[3] != 0)
+			if (IN6_IS_ADDR_V4MAPPED(laddr6) &&
+			    laddr6->s6_addr32[3] != 0)
 				match = in6p;
 		}
 		else if (IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
