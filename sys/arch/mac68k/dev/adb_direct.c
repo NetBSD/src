@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.10 1998/01/09 06:59:29 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.11 1998/02/21 00:37:07 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -57,7 +57,7 @@
  */
 
 #ifdef __NetBSD__
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -74,10 +74,14 @@
 #define printf_intr printf
 #else
 #include "via.h"				/* for macos based testing */
+/* #define DEBUG */				/* more verbose for testing */
 #endif
 
-/* more verbose for testing */
-/*#define DEBUG*/
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -387,8 +391,9 @@ switch_start:
 
 		adbInputBuffer[0] = 1;
 		adbActionState = ADB_ACTION_IN;
-#ifdef DEBUG
-		printf_intr("idle 0x%02x ", adbInputBuffer[1]);
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("idle 0x%02x ", adbInputBuffer[1]);
 #endif
 		break;
 
@@ -401,10 +406,12 @@ switch_start:
 			ending = 0;
 
 		if (1 == ending) {	/* end of message? */
-#ifdef DEBUG
-			printf_intr("in end 0x%02x ",
-			    adbInputBuffer[adbInputBuffer[0]]);
-			print_single(adbInputBuffer);
+#ifdef ADB_DEBUG
+			if (adb_debug) {
+				printf_intr("in end 0x%02x ",
+				    adbInputBuffer[adbInputBuffer[0]]);
+				print_single(adbInputBuffer);
+			}
 #endif
 
 			/* Are we waiting AND does this packet match what we
@@ -480,23 +487,26 @@ switch_start:
 			}
 		} else {
 			ADB_TOGGLE_STATE_ACK_CUDA();
-#ifdef DEBUG
-			printf_intr("in 0x%02x ",
-			    adbInputBuffer[adbInputBuffer[0]]);
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf_intr("in 0x%02x ",
+				    adbInputBuffer[adbInputBuffer[0]]);
 #endif
 		}
 		break;
 
 	case ADB_ACTION_OUT:
 		i = ADB_SR();	/* reset SR-intr in IFR */
-#ifdef DEBUG
-		printf_intr("intr out 0x%02x ", i);
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("intr out 0x%02x ", i);
 #endif
 
 		adbSentChars++;
 		if (ADB_INTR_IS_ON) {	/* ADB intr low during write */
-#ifdef DEBUG
-			printf_intr("intr was on ");
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf_intr("intr was on ");
 #endif
 			ADB_SET_SR_INPUT();	/* make sure SR is set to IN */
 			ADB_SET_STATE_IDLE_CUDA();
@@ -538,15 +548,17 @@ switch_start:
 			adbActionState = ADB_ACTION_IDLE;	/* signal bus is idle */
 			ADB_SET_SR_INPUT();
 			ADB_SET_STATE_IDLE_CUDA();
-#ifdef DEBUG
-			printf_intr("write done ");
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf_intr("write done ");
 #endif
 		} else {
 			ADB_SR() = adbOutputBuffer[adbSentChars + 1];	/* send next byte */
 			ADB_TOGGLE_STATE_ACK_CUDA();	/* signal byte ready to
 							 * shift */
-#ifdef DEBUG
-			printf_intr("toggle ");
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf_intr("toggle ");
 #endif
 		}
 		break;
@@ -573,8 +585,9 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 {
 	int i, s, len;
 
-#ifdef DEBUG
-	printf_intr("SEND\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf_intr("SEND\n");
 #endif
 
 	if (adbActionState == ADB_ACTION_NOTREADY)
@@ -594,8 +607,9 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 			return 1;	/* really busy! */
 		}
 
-#ifdef DEBUG
-	printf_intr("QUEUE\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf_intr("QUEUE\n");
 #endif
 	if ((long) in == (long) 0) {	/* need to convert? */
 		/* don't need to use adb_cmd_extra here because this section
@@ -626,8 +640,9 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 	adbWaitingCmd = adbOutputBuffer[2];	/* save wait command */
 
 	if (adbWriteDelay != 1) {	/* start command now? */
-#ifdef DEBUG
-		printf_intr("out start NOW");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("out start NOW");
 #endif
 		delay(ADB_DELAY);
 		adbActionState = ADB_ACTION_OUT;	/* set next state */
@@ -1507,8 +1522,8 @@ adb_pass_up(struct adbCommand *in)
 		adbInbound[adbInTail].saveBuf=(void *)in->saveBuf;
 	}
 
-#if DEBUG
-	if (in->data[1] == 2) 
+#ifdef ADB_DEBUG
+	if (adb_debug && in->data[1] == 2) 
 		printf_intr("adb: caught error\n");
 #endif
 
@@ -2003,12 +2018,14 @@ adb_reinit(void)
 		}
 	}
 
-#ifdef DEBUG
-	for (i = 1; i <= ADBNumDevices; i++) {
-		x = get_ind_adb_info(&data, i);
-		if (x != -1)
-			printf_intr("index 0x%x, addr 0x%x, type 0x%x\n", i, x, data.devType);
-
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		for (i = 1; i <= ADBNumDevices; i++) {
+			x = get_ind_adb_info(&data, i);
+			if (x != -1)
+				printf_intr("index 0x%x, addr 0x%x, type 0x%x\n",
+				    i, x, data.devType);
+		}
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.37 1997/08/11 22:53:48 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.38 1998/02/21 00:37:08 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -45,7 +45,7 @@
  * are similar to the IIsi ("Universal ROMs"?).
  */
 
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

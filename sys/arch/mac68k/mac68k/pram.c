@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.16 1997/11/11 17:31:11 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.17 1998/02/21 00:37:08 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -33,7 +33,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
