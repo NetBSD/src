@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.82 2004/04/21 01:05:33 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.83 2004/06/25 14:44:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.82 2004/04/21 01:05:33 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.83 2004/06/25 14:44:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,8 @@ main(int argc, char *argv[])
 	}
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FINO:S:T:Za:b:c:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
+	    "NT:a:b:d:e:f:g:h:i:m:n:o:p:s:u:" :
+	    "B:FINO:S:T:Za:b:d:e:f:g:h:i:l:m:n:o:p:r:s:u:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -300,8 +300,6 @@ main(int argc, char *argv[])
 		case 'b':
 			bsize = strsuftoi64("block size",
 			    optarg, MINBSIZE, MAXBSIZE, NULL);
-			break;
-		case 'c':	/* was cylinders per group... */
 			break;
 		case 'd':
 			maxbsize = strsuftoi64("maximum extent size",
@@ -860,7 +858,6 @@ struct help_strings {
 	{ NEWFS,	"-Z \t\tpre-zero the image file" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
-	{ BOTH,		"-c blocks\tblocks per cylinder group" },
 	{ BOTH,		"-d maxbsize\tmaximum extent size" },
 	{ BOTH,		"-e maxbpg\tmaximum blocks per file in a cylinder group"
 			    },
