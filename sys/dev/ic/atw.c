@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.36 2004/06/23 09:27:59 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.36 2004/06/23 09:27:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2887,7 +2887,8 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 		    sc->sc_dev.dv_xname, bits, test0, stsr));
 	}
 out:
-	atw_txdrain(sc);
+	if ((bits & ATW_NAR_ST) != 0)
+		atw_txdrain(sc);
 	splx(s);
 	return;
 }
