@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.23 1997/07/21 14:07:13 jtc Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.24 1998/02/02 02:41:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,9 +37,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.23 1997/07/21 14:07:13 jtc Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.24 1998/02/02 02:41:25 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +72,12 @@ __weak_alias(getpwuid,_getpwuid);
 __weak_alias(setpassent,_setpassent);
 __weak_alias(setpwent,_setpwent);
 #endif
+
+
+/*
+ * The lookup techniques and data extraction code here must be kept
+ * in sync with that in `pwd_mkdb'.
+ */
 
 static struct passwd _pw_passwd;	/* password structure */
 static DB *_pw_db;			/* password database */
@@ -668,12 +674,8 @@ pwnam_netgrp:
 }
 
 struct passwd *
-#ifdef __STDC__
-getpwuid(uid_t uid)
-#else
 getpwuid(uid)
 	uid_t uid;
-#endif
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
@@ -936,27 +938,24 @@ __hashpw(key)
 	if (data.size > max && !(line = realloc(line, (max += 1024))))
 		return(0);
 
+	/* THIS CODE MUST MATCH THAT IN pwd_mkdb. */
 	t = line;
 #define	EXPAND(e)	e = t; while ((*t++ = *p++));
+#define	SCALAR(v)	memmove(&(v), p, sizeof v); p += sizeof v
 	EXPAND(_pw_passwd.pw_name);
 	EXPAND(_pw_passwd.pw_passwd);
-	bcopy(p, (char *)&_pw_passwd.pw_uid, sizeof(int));
-	p += sizeof(int);
-	bcopy(p, (char *)&_pw_passwd.pw_gid, sizeof(int));
-	p += sizeof(int);
-	bcopy(p, (char *)&_pw_passwd.pw_change, sizeof(time_t));
-	p += sizeof(time_t);
+	SCALAR(_pw_passwd.pw_uid);
+	SCALAR(_pw_passwd.pw_gid);
+	SCALAR(_pw_passwd.pw_change);
 	EXPAND(_pw_passwd.pw_class);
 	EXPAND(_pw_passwd.pw_gecos);
 	EXPAND(_pw_passwd.pw_dir);
 	EXPAND(_pw_passwd.pw_shell);
-	bcopy(p, (char *)&_pw_passwd.pw_expire, sizeof(time_t));
-	p += sizeof(time_t);
+	SCALAR(_pw_passwd.pw_expire);
 
 	/* See if there's any data left.  If so, read in flags. */
 	if (data.size > (p - (char *)data.data)) {
-		bcopy(p, (char *)&_pw_flags, sizeof(int));
-		p += sizeof(int);
+		SCALAR(_pw_flags);
 	} else
 		_pw_flags = _PASSWORD_NOUID|_PASSWORD_NOGID;	/* default */
 
