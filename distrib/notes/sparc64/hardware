@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2000/11/17 06:20:07 mrg Exp $
+.\"	$NetBSD: hardware,v 1.7 2001/08/23 14:33:14 mrg Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -99,7 +99,7 @@ Floppy drives
 .It
 Audio devices
 .(bullet -compact
-Sbus & PCI based system audio
+PCI based system audio
 .Pq Em audiocs
 .bullet)
 .It
@@ -108,11 +108,11 @@ Serial devices
 PCI based systems
 .Pq Em sab
 .bullet)
-.It
-Keyboard & Mouse devices
-.(bullet -compact
-PCI based systems
-.bullet)
+.\" .It
+.\" Keyboard & Mouse devices
+.\" .(bullet -compact
+.\" PCI based systems
+..\" bullet)
 .It
 Video devices
 .(bullet -compact
@@ -121,10 +121,10 @@ Creator3D framebuffers
 .It
 General PCI VGA support
 .bullet)
-.It
-SCSI host controllers
-.(bullet -compact
-ESP366 based controllers found in Ultra1E and Ultra2 systems
-.Pq Em esp
-.bullet)
+.\" .It
+.\" SCSI host controllers
+.\" .(bullet -compact
+.\" ESP366 based controllers found in Ultra1E and Ultra2 systems
+.\" .Pq Em esp
+.\" .bullet)
 .bullet)
