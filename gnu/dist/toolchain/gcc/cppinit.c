@@ -1,5 +1,6 @@
 /* CPP Library.
-   Copyright (C) 1986, 87, 89, 92-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -210,7 +211,7 @@ enum { QUOTE = 0, BRACKET, SYSTEM, AFTER };
 /* If gcc is in use (stage2/stage3) we can make these tables initialized
    data. */
 #if defined __GNUC__ && (__GNUC__ > 2 \
-			 || (__GNUC__ == 2 && __GNUC_MINOR__ > 6))
+			 || (__GNUC__ == 2 && __GNUC_MINOR__ > 8))
 /* Table to tell if a character is legal as the second or later character
    of a C identifier. */
 U_CHAR is_idchar[256] =

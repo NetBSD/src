@@ -1,5 +1,6 @@
 ;;- Machine description for ARM for GNU compiler
-;;  Copyright (C) 1991, 93-98, 1999 Free Software Foundation, Inc.
+;;  Copyright (C) 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+;;  Free Software Foundation, Inc.
 ;;  Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
 ;;  and Martin Simmons (@harleqn.co.uk).
 ;;  More major hacks by Richard Earnshaw (rearnsha@arm.com).
@@ -1837,7 +1838,8 @@
 
 (define_insn "negdi2"
   [(set (match_operand:DI 0 "s_register_operand" "=&r,&r")
-	(neg:DI (match_operand:DI 1 "s_register_operand" "?r,0")))]
+	(neg:DI (match_operand:DI 1 "s_register_operand" "?r,0")))
+   (clobber (reg:CC 24))]
   ""
   "rsbs\\t%Q0, %Q1, #0\;rsc\\t%R0, %R1, #0"
 [(set_attr "conds" "clob")
@@ -5797,15 +5799,19 @@
 ; It doesn't seem worth adding peepholes for anything but the most common
 ; cases since, unlike combine, the increment must immediately follow the load
 ; for this pattern to match.
-; When loading we must watch to see that the base register isn't trampled by
-; the load.  In such cases this isn't a post-inc expression.
+; We must watch to see that the source/destination register isn't also the
+; same as the base address register, and that if the index is a register,
+; that it is not the same as the base address register.  In such cases the
+; instruction that we would generate would have UNPREDICTABLE behaviour so 
+; we cannot use it.
 
 (define_peephole
   [(set (mem:QI (match_operand:SI 0 "s_register_operand" "+r"))
 	(match_operand:QI 2 "s_register_operand" "r"))
    (set (match_dup 0)
 	(plus:SI (match_dup 0) (match_operand:SI 1 "index_operand" "rJ")))]
-  ""
+  "(REGNO (operands[2]) != REGNO (operands[0]))
+   && (GET_CODE (operands[1]) != REG || (REGNO (operands[1]) != REGNO (operands[0])))"
   "str%?b\\t%2, [%0], %1")
 
 (define_peephole
@@ -5813,9 +5819,8 @@
 	(mem:QI (match_operand:SI 1 "s_register_operand" "+r")))
    (set (match_dup 1)
 	(plus:SI (match_dup 1) (match_operand:SI 2 "index_operand" "rJ")))]
-  "REGNO(operands[0]) != REGNO(operands[1])
-   && (GET_CODE (operands[2]) != REG
-       || REGNO(operands[0]) != REGNO (operands[2]))"
+  "REGNO (operands[0]) != REGNO (operands[1])
+   && (GET_CODE (operands[2]) != REG || REGNO (operands[0]) != REGNO (operands[2]))"
   "ldr%?b\\t%0, [%1], %2")
 
 (define_peephole
@@ -5823,7 +5828,8 @@
 	(match_operand:SI 2 "s_register_operand" "r"))
    (set (match_dup 0)
 	(plus:SI (match_dup 0) (match_operand:SI 1 "index_operand" "rJ")))]
-  ""
+  "(REGNO (operands[2]) != REGNO (operands[0]))
+   && (GET_CODE (operands[1]) != REG || (REGNO (operands[1]) != REGNO (operands[0])))"
   "str%?\\t%2, [%0], %1")
 
 (define_peephole
@@ -5833,9 +5839,8 @@
 	(plus:SI (match_dup 1) (match_operand:SI 2 "index_operand" "rJ")))]
   "(! BYTES_BIG_ENDIAN)
    && ! TARGET_SHORT_BY_BYTES
-   && REGNO(operands[0]) != REGNO(operands[1])
-   && (GET_CODE (operands[2]) != REG
-       || REGNO(operands[0]) != REGNO (operands[2]))"
+   && REGNO (operands[0]) != REGNO (operands[1])
+   && (GET_CODE (operands[2]) != REG || REGNO (operands[0]) != REGNO (operands[2]))"
   "ldr%?\\t%0, [%1], %2\\t%@ loadhi")
 
 (define_peephole
@@ -5843,9 +5848,8 @@
 	(mem:SI (match_operand:SI 1 "s_register_operand" "+r")))
    (set (match_dup 1)
 	(plus:SI (match_dup 1) (match_operand:SI 2 "index_operand" "rJ")))]
-  "REGNO(operands[0]) != REGNO(operands[1])
-   && (GET_CODE (operands[2]) != REG
-       || REGNO(operands[0]) != REGNO (operands[2]))"
+  "REGNO (operands[0]) != REGNO (operands[1])
+   && (GET_CODE (operands[2]) != REG || REGNO (operands[0]) != REGNO (operands[2]))"
   "ldr%?\\t%0, [%1], %2")
 
 (define_peephole
@@ -5853,7 +5857,8 @@
 			 (match_operand:SI 1 "index_operand" "rJ")))
 	(match_operand:QI 2 "s_register_operand" "r"))
    (set (match_dup 0) (plus:SI (match_dup 0) (match_dup 1)))]
-  ""
+  "(REGNO (operands[2]) != REGNO (operands[0]))
+   && (GET_CODE (operands[1]) != REG || (REGNO (operands[1]) != REGNO (operands[0])))"
   "str%?b\\t%2, [%0, %1]!")
 
 (define_peephole
@@ -5864,7 +5869,8 @@
 	(match_operand:QI 3 "s_register_operand" "r"))
    (set (match_dup 2) (plus:SI (match_op_dup 4 [(match_dup 0) (match_dup 1)])
 			       (match_dup 2)))]
-  ""
+  "REGNO (operands[0]) != REGNO (operands[2])
+   && REGNO (operands[3]) != REGNO (operands[2])"
   "str%?b\\t%3, [%2, %0%S4]!")
 
 ; This pattern is never tried by combine, so do it as a peephole

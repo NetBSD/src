@@ -1,5 +1,5 @@
 /* Definitions for specs for C++.
-   Copyright (C) 1995, 96-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
   {"@c++",
 #if USE_CPPLIB
    {
-     "%{E|M|MM:cpp -lang-c++ %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
+     "%{E|M|MM:cpp0 -lang-c++ %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C++ does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
 	%{!no-gcc:-D__GNUC__=%v1 -D__GNUG__=%v1 -D__GNUC_MINOR__=%v2}\
@@ -62,7 +62,7 @@ Boston, MA 02111-1307, USA.  */
 		      %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}\
                       %{!pipe:%g.s} %A\n }}}}"}},
 #else /* ! USE_CPPLIB */
-   {"cpp -lang-c++ %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
+   {"cpp0 -lang-c++ %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C++ does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
 	%{!no-gcc:-D__GNUC__=%v1 -D__GNUG__=%v1 -D__GNUC_MINOR__=%v2}\
