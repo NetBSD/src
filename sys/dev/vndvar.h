@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.6 2000/03/20 13:17:47 jdolecek Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.7 2002/06/21 19:09:31 atatat Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,15 @@ struct vnd_softc {
 #define	VNF_BUSY	0x20	/* unit is busy */
 
 /*
+ * A simple structure for describing which vnd units are in use.
+ */
+struct vnd_user {
+	int		vnu_unit;	/* which vnd unit */
+	dev_t		vnu_dev;	/* file is on this device... */
+	ino_t		vnu_ino;	/* ...at this inode */
+};
+
+/*
  * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
  * an VNDIOCCLR must be used to reset a configuration.  An attempt to
@@ -144,3 +153,4 @@ struct vnd_softc {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
+#define VNDIOCGET	_IOWR('F', 2, struct vnd_user)	/* get list */
