@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.77 2003/05/17 20:43:13 thorpej Exp $	*/
+/*	$NetBSD: namespace.h,v 1.78 2003/05/28 20:22:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -376,6 +376,7 @@
 #define radixsort		_radixsort
 #define random			_random
 #define readdir			_readdir
+#define readdir_r		_readdir_r
 #define realpath		_realpath
 #define regcomp			_regcomp
 #define regerror		_regerror
