@@ -23,6 +23,10 @@
  * target processor specific header files. 
  */
 
+#define	MID_M68K	135
+#define	MID_M68K4K	136
+#include <machine/param.h>
+
 #define TC_M68K 1
 
 #define NO_LISTING
@@ -31,7 +35,7 @@
 #define REVERSE_SORT_RELOCS
 #endif /* OLD_GAS */
 
-#define AOUT_MACHTYPE 0x2
+#define AOUT_MACHTYPE MID_MACHINE
 #define LOCAL_LABELS_FB
     
 #define tc_crawl_symbol_chain(a)	{;} /* not used */
