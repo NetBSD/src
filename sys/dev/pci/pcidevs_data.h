@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.284 2000/12/30 04:39:04 eeh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.285 2000/12/31 14:04:27 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.281 2000/12/30 04:38:02 eeh Exp 
+ *	NetBSD: pcidevs,v 1.282 2000/12/31 14:03:24 ad Exp 
  */
 
 /*
@@ -3298,10 +3298,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPC106 \"Grackle\" Host Bridge",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
 	    0,
 	    "Mylex",
-	    "DAC960P RAID controller",
+	    "DAC960 RAID (v2 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V3,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v3 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V4,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v4 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V5,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v5 interface)",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
