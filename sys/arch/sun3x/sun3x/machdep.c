@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1997/04/25 18:52:11 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1997/05/14 16:45:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -420,7 +420,7 @@ char	cpu_model[120];
  * Note that the value of delay_divisor is roughly
  * 2048 / cpuclock	(where cpuclock is in MHz).
  */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
+int delay_divisor = 62;		/* assume the fastest (33 MHz) */
 
 void
 identifycpu()
@@ -442,7 +442,7 @@ identifycpu()
 
 	case SUN3X_MACH_80:
 		cpu_string = "80";  	/* Hydra */
-		delay_divisor = 102;	/* 20 MHz ? XXX */
+		delay_divisor = 102;	/* 20 MHz */
 		cpu_has_vme = FALSE;
 		break;
 
