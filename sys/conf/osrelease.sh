@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.104 2003/09/13 08:55:09 jdolecek Exp $
+#	$NetBSD: osrelease.sh,v 1.105 2003/09/14 07:01:19 christos Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@
 #	sys/sys/param.h:	__NetBSD_Version__
 #	share/tmac/doc-common:	ds oS
 #
-release=1.6ZA
+release=1.6ZB
 
 case $1 in
 -s)
