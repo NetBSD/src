@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.11 1994/06/26 12:53:38 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.12 1994/06/26 12:55:32 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -62,6 +62,7 @@ file	arch/m68k/m68k/copy.s
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/fpu.c
 file	arch/mac68k/mac68k/itedumm.c		ite needs-count
+file	arch/mac68k/mac68k/mac68k_init.c	mc68040
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/mem.c
 file	arch/mac68k/mac68k/pmap.c
@@ -70,7 +71,6 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
-file	arch/mac68k/mac68k/mac68k_init.c	mc68040
 
 file	compat/sunos/sun_misc.c		compat_sunos
 file	compat/sunos/sun_sysent.c	compat_sunos
