@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.12 1995/04/13 06:36:41 cgd Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.13 1995/04/13 20:09:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -308,7 +308,7 @@ send:
  	     (flags & TH_RST) == 0 &&
  	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
 	     (tp->t_flags & TF_RCVD_TSTMP))) {
-		u_int32_t *lp = (u_long *)(opt + optlen);
+		u_int32_t *lp = (u_int32_t *)(opt + optlen);
  
  		/* Form timestamp option as shown in appendix A of RFC 1323. */
  		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
