@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.25 1995/05/11 21:29:55 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.26 1995/05/17 00:05:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)parser.c	8.6 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.25 1995/05/11 21:29:55 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.26 1995/05/17 00:05:25 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1158,8 +1158,10 @@ parsesub: {
 		if (c == '{') {
 			c = pgetc();
 			if (c == '#') {
-				subtype = VSLENGTH;
-				c = pgetc();
+				if ((c = pgetc()) == '}')
+					c = '#';
+				else
+					subtype = VSLENGTH;
 			}
 			else
 				subtype = 0;
