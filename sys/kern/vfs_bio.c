@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.127 2004/06/20 18:29:47 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.128 2004/06/20 18:55:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.127 2004/06/20 18:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.128 2004/06/20 18:55:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,6 +403,11 @@ static int
 buf_lotsfree(void)
 {
 	int try, thresh;
+	struct lwp *l = curlwp;
+
+	/* Always allocate if doing copy on write */
+	if (l->l_flag & L_COWINPROGRESS)
+		return 1;
 
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
