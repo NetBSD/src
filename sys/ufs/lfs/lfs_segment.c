@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.43 2000/05/05 20:59:21 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.44 2000/05/10 16:47:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -416,6 +416,7 @@ lfs_writevnodes(fs, mp, sp, op)
 					VTOI(vp)->i_number,
 					vp->v_lock.lk_lockholder);
 #endif
+				lfs_vunref(vp);
 				continue;
 			}
 		} else {
