@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.22 1999/02/12 00:49:00 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.23 1999/02/18 18:13:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -491,7 +491,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 {
 	struct extent_region *rp, *myrp, *last, *bestlast;
 	u_long newstart, newend, beststart, bestovh, ovh;
-	u_long dontcross, odontcross;
+	u_long dontcross;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -554,22 +554,6 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 * list.  See extent_insert_and_optimize() for deatails.
 	 */
 	last = NULL;
-
-	/*
-	 * Initialize the "don't cross" boundary, a.k.a a line
-	 * that a region should not cross.  If the boundary lies
-	 * before the region starts, we add the "boundary" argument
-	 * until we get a meaningful comparison.
-	 *
-	 * Start the boundary lines at 0 if the caller requests it.
-	 */
-	dontcross = 0;
-	if (boundary) {
-		dontcross =
-		    ((flags & EX_BOUNDZERO) ? 0 : ex->ex_start) + boundary;
-		while (dontcross < substart)
-			dontcross += boundary;
-	}
 
 	/*
 	 * Keep track of size and location of the smallest
@@ -642,26 +626,25 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				newend = newstart + (size - 1);
 
 				/*
-				 * Adjust boundary for a meaningful
-				 * comparison.
+				 * Calculate the next boundary after the start
+				 * of this region.
 				 */
-				while (dontcross <= newstart) {
-					odontcross = dontcross;
-					dontcross += boundary;
+				dontcross = EXTENT_ALIGN(newstart, boundary, 
+				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
+				    - 1;
 
-					/*
-					 * If we run past the end of
-					 * the extent or the boundary
-					 * overflows, then the request
-					 * can't fit.
-					 */
-					if ((dontcross > ex->ex_end) ||
-					    (dontcross < odontcross))
-						goto fail;
-				}
+				/*
+				 * If we run past the end of
+				 * the extent or the boundary
+				 * overflows, then the request
+				 * can't fit.
+				 */
+				if (dontcross > ex->ex_end ||
+				    dontcross < newstart)
+					goto fail;
 
 				/* Do the boundary check. */
-				if (newend >= dontcross) {
+				if (newend > dontcross) {
 					/*
 					 * Candidate region crosses
 					 * boundary.  Try again.
