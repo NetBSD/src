@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.4 2002/01/07 21:47:14 thorpej Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.5 2002/09/03 18:53:41 augustss Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -168,6 +168,7 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 	struct isa_attach_args *ia = aux;
 
 	sc->tea.iot = ia->ia_iot;
+	sc->tea.flags = 0;
 	sc->mute = 0;
 	sc->vol = 0;
 	sc->freq = MIN_FM_FREQ;
