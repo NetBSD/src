@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.23 1998/02/03 18:41:23 perry Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.24 1998/07/26 12:31:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.23 1998/02/03 18:41:23 perry Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.24 1998/07/26 12:31:39 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -215,9 +215,9 @@ vfprintf(fp, fmt0, ap)
 	 * below longer.
 	 */
 #define	PADSIZE	16		/* pad chunk size */
-	static char blanks[PADSIZE] =
+	static const char blanks[PADSIZE] =
 	 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '};
-	static char zeroes[PADSIZE] =
+	static const char zeroes[PADSIZE] =
 	 {'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'};
 
 	/*
