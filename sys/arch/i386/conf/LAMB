@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.25 2002/07/10 08:41:28 itojun Exp $
+#	$NetBSD: LAMB,v 1.26 2002/07/22 11:06:03 wiz Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -63,7 +63,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 

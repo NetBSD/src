@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.501 2002/07/10 08:37:40 itojun Exp $
+# $NetBSD: GENERIC,v 1.502 2002/07/22 11:06:00 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.501 $"
+#ident 		"GENERIC-$Revision: 1.502 $"
 
 maxusers	32		# estimated number of users
 
@@ -78,7 +78,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
