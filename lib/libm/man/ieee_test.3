@@ -30,15 +30,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee_test.3,v 1.5 1999/07/02 15:37:35 simonb Exp $
+.\"	$NetBSD: ieee_test.3,v 1.6 1999/08/15 22:23:54 kleink Exp $
 .\"
 .Dd March 10, 1994
 .Dt IEEE_TEST 3
 .Os
 .Sh NAME
 .Nm logb ,
+.Nm logbf ,
 .Nm scalb ,
-.Nm significand
+.Nm scalbf ,
+.Nm significand ,
+.Nm significandf
 .Nd IEEE test functions
 .Sh LIBRARY
 .Lb libm
@@ -55,7 +58,7 @@
 .Ft double
 .Fn significand "double x"
 .Ft float
-.Fn significand "float x"
+.Fn significandf "float x"
 .Sh DESCRIPTION
 These functions allow users to test conformance to
 .St -ieee754 .
