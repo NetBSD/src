@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: events.c,v 1.1.2.1 2004/05/22 15:57:33 he Exp $	*/
 
 /*
  *
@@ -33,12 +33,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.1.2.1 2004/05/22 15:57:33 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/reboot.h>
 
 #include <machine/intrdefs.h>
 
@@ -47,15 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include <machine/events.h>
 
 struct pic xenev_pic = {
-        {0, {0}, NULL, NULL, NULL, 0, "xen_fakepic", NULL, 0}, /* dev */
-        PIC_XEN,		/* type */
-        __SIMPLELOCK_UNLOCKED,	/* pic_lock */
-	NULL,			/* hwmask */
-	NULL,			/* hwunmask */
-	NULL,			/* addroute */
-	NULL,			/* delroute */
-	NULL/* xenev_stubs */,		/* level stubs */
-	NULL/* xenev_stubs */,		/* edge stubs */
+	.pic_dev = {
+		.dv_xname = "xen_fakepic",
+	},
+	.pic_type = PIC_XEN,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
 
 typedef struct ev_vector {
@@ -64,8 +61,9 @@ typedef struct ev_vector {
 
 static ev_vector_t ev_vectors[MAXEVENTS];
 
-int xen_debug_handler(void *);
-int xen_die_handler(void *);
+static int xen_debug_handler(void *);
+static int xen_die_handler(void *);
+static int xen_stop_handler(void *);
 
 void
 init_events()
@@ -75,15 +73,18 @@ init_events()
 	for (i = 0; i < MAXEVENTS; i++)
 		ev_vectors[i].ev_handler = NULL;
 
-	event_set_handler(_EVENT_DIE, &xen_die_handler, IPL_DIE);
+	event_set_handler(_EVENT_DIE, &xen_die_handler, NULL, IPL_DIE);
 	hypervisor_enable_event(_EVENT_DIE);
 
-	event_set_handler(_EVENT_DEBUG, &xen_debug_handler, IPL_DEBUG);
+	event_set_handler(_EVENT_DEBUG, &xen_debug_handler, NULL, IPL_DEBUG);
 	hypervisor_enable_event(_EVENT_DEBUG);
+
+	event_set_handler(_EVENT_STOP, &xen_stop_handler, NULL, IPL_DIE);
+	hypervisor_enable_event(_EVENT_STOP);
 }
 
 unsigned int
-do_event(int num, struct pt_regs *regs)
+do_event(int num, struct trapframe *regs)
 {
 	ev_vector_t  *ev;
 	struct cpu_info *ci;
@@ -127,7 +128,7 @@ do_event(int num, struct pt_regs *regs)
 }
 
 int
-event_set_handler(int num, ev_handler_t handler, int level)
+event_set_handler(int num, ev_handler_t handler, void *arg, int level)
 {
 	struct intrsource *isp;
 	struct intrhand *ih;
@@ -155,7 +156,7 @@ event_set_handler(int num, ev_handler_t handler, int level)
 	isp->is_resume = xenev_stubs[num].ist_resume;
 	ih->ih_level = level;
 	ih->ih_fun = handler;
-	ih->ih_arg = NULL;
+	ih->ih_arg = arg;
 	ih->ih_next = NULL;
 	isp->is_handlers = ih;
 	isp->is_pic = &xenev_pic;
@@ -169,17 +170,25 @@ event_set_handler(int num, ev_handler_t handler, int level)
 	return 0;
 }
 
-int
+static int
 xen_die_handler(void *arg)
 {
-	printf("die event\n");
+	printf("hypervisor: DIE event received...\n");
+	cpu_reboot(0, NULL);
+	/* NOTREACHED */
 	return 0;
 }
 
-int
+static int
 xen_debug_handler(void *arg)
 {
-	printf("die event\n");
+	printf("debug event\n");
 	return 0;
 }
 
+static int
+xen_stop_handler(void *arg)
+{
+	printf("stop event\n");
+	return 0;
+}
