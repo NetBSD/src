@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.9 2002/07/26 00:01:48 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.10 2002/10/24 23:36:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.9 2002/07/26 00:01:48 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.10 2002/10/24 23:36:41 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ main(argc, argv)
 	 * select procs
 	 */
 	if (!(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
-		err(1, "%s.", kvm_geterr(kd));
+		err(1, "%s", kvm_geterr(kd));
 
 	if (nentries == 0) {
 		printheader();
@@ -470,7 +470,7 @@ pick_representative_lwp(ki, kl, nlwps)
 	struct kinfo_lwp *kl;
 	int nlwps;
 {
-	int i, onproc, running, sleeping, suspended;
+	int i, onproc, running, sleeping, stopped, suspended;
 	static struct kinfo_lwp zero_lwp;
 
 	if (kl == 0)
@@ -482,15 +482,9 @@ pick_representative_lwp(ki, kl, nlwps)
 
 	switch (ki->p_realstat) {
 	case SSTOP:
-		/* Pick the first stopped LWP */
-		for (i = 0; i < nlwps; i++) {
-			if (kl[i].l_stat == LSSTOP)
-				return &kl[i];
-		}
-		break;
 	case SACTIVE:
 		/* Pick the most live LWP */
-		onproc = running = sleeping = suspended = -1;
+		onproc = running = sleeping = stopped = suspended = -1;
 		for (i = 0; i < nlwps; i++) {
 			switch (kl[i].l_stat) {
 			case LSONPROC:
@@ -501,6 +495,9 @@ pick_representative_lwp(ki, kl, nlwps)
 				break;
 			case LSSLEEP:
 				sleeping = i;
+				break;
+			case LSSTOP:
+				stopped = i;
 				break;
 			case LSSUSPENDED:
 				suspended = i;
@@ -513,6 +510,8 @@ pick_representative_lwp(ki, kl, nlwps)
 			return &kl[running];
 		if (sleeping != -1)
 			return &kl[sleeping];
+		if (stopped != -1)
+			return &kl[stopped];
 		if (suspended != -1)
 			return &kl[suspended];
 		break;
