@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.11 1998/08/10 14:33:33 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -133,6 +133,17 @@
 #define	PR_CACHEX 93 /* Cache invalidate Register (KA820) */
 #define	PR_BINID  94 /* VAXBI node ID Register (KA820) */
 #define	PR_BISTOP 95 /* VAXBI Stop Register (KA820) */
+
+#define PR_BCBTS  113 /* Backup Cache Tag Store (KA670) */
+#define PR_BCP1TS 114 /* Primary Tag Store 1st half (KA670) */
+#define PR_BCP2TS 115 /* Primary Tag Store 2st half (KA670) */
+#define PR_BCRFR  116 /* Refresh Register (KA670) */
+#define PR_BCIDX  117 /* Index Register (KA670) */
+#define PR_BCSTS  118 /* Status (KA670) */
+#define PR_BCCTL  119 /* Control Register (KA670) */
+#define PR_BCERR  120 /* Error Address (KA670) */
+#define PR_BCFBTS 121 /* Flush backup tag store (KA670) */
+#define PR_BCFPTS 122 /* Flush primary tag store (KA670) */
 
 #define	PR_VINTSR 123 /* vector i/f error status (KA43/KA46) */
 #define PR_PCTAG  124 /* primary cache tag store (KA43/KA46) */
