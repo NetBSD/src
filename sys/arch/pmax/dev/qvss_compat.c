@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.5 1996/10/11 00:44:53 christos Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.6 1996/10/13 03:39:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,7 +197,7 @@ init_pmaxfbu(fi)
 
 	if (tty_rows != fbu->scrInfo.max_row ||
 	    tty_cols != fbu->scrInfo.max_col)
-		kprintf("framebuffer init: size mismatch: given %dx%d, compute %dx%d\n",
+		printf("framebuffer init: size mismatch: given %dx%d, compute %dx%d\n",
 		       fbu->scrInfo.max_row, fbu->scrInfo.max_col,
 		       tty_rows, tty_cols);
 
@@ -590,7 +590,7 @@ genConfigMouse()
 		break;
 #endif
 	default:
-		kprintf("Can't configure mouse/keyboard\n");
+		printf("Can't configure mouse/keyboard\n");
 	};
 	splx(s);
 }
@@ -629,7 +629,7 @@ genDeconfigMouse()
 		break;
 #endif
 	default:
-		kprintf("Can't deconfigure mouse/keyboard\n");
+		printf("Can't deconfigure mouse/keyboard\n");
 	};
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.26 1996/10/12 23:41:35 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.27 1996/10/13 03:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1164,7 +1164,7 @@ dcPutc(dev, c)
 		while (!(dcaddr->dc_csr & CSR_TRDY) && timeout > 0)
 			timeout--;
 		if (timeout == 0) {
-			kprintf("dcPutc: timeout waiting for CSR_TRDY\n");
+			printf("dcPutc: timeout waiting for CSR_TRDY\n");
 			break;
 		}
 		activeline = (dcaddr->dc_csr >> 8) & 3;
@@ -1233,7 +1233,7 @@ dcPollc(dev, on)
 	int on;
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
-	kprintf("dc_Pollc(%d, %d): not implemented\n", minor(dev), on);
+	printf("dc_Pollc(%d, %d): not implemented\n", minor(dev), on);
 #endif
 }
 

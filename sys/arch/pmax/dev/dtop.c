@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.18 1996/10/11 00:44:48 christos Exp $	*/
+/*	$NetBSD: dtop.c,v 1.19 1996/10/13 03:39:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -278,7 +278,7 @@ dtopattach(parent, self, aux)
 
 	/* tie pseudo-slot to device */
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_NONE, dtopintr, sc);
-	kprintf("\n");
+	printf("\n");
 }
 
 
@@ -433,7 +433,7 @@ dtopintr(sc)
 	dtop = sc;
 	if (dtop_get_packet(dtop, &msg) < 0) {
 #ifdef DIAGNOSTIC
-	    kprintf("dtop: overrun (or stray)\n");
+	    printf("dtop: overrun (or stray)\n");
 #endif
 	    /*
 	     * Ugh! The most common occurrence of a data overrun is upon a
@@ -565,7 +565,7 @@ dtop_escape(c)
 	case 0xe9:	return (0xf9);
 	case 0xea:	return (0xfa);
 	case 0xeb:	return (0xfb);
-	default:	/* kprintf("{esc %x}", c); */
+	default:	/* printf("{esc %x}", c); */
 			return (c);
 	}
 }
@@ -814,7 +814,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	/* Check for errors */
 	c = msg->body[0];
 	if ((c < DTOP_KBD_KEY_MIN) && (c != DTOP_KBD_EMPTY)) {
-		kprintf("Keyboard error: %x %x %x..\n", msg_len, c, msg->body[1]);
+		printf("Keyboard error: %x %x %x..\n", msg_len, c, msg->body[1]);
 #ifdef notdef
 		if (c != DTOP_KBD_OUT_ERR) return -1;
 #endif

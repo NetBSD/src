@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 1996/10/11 00:45:06 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 1996/10/13 03:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -72,7 +72,7 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
 
-	kprintf(": ");
+	printf(": ");
 
 	cpu_identify();
 }
@@ -87,11 +87,11 @@ cpuprint(aux, pnp)
 {
 	register struct confargs *ca = aux;
 
-/*XXX*/ kprintf("debug: cpuprint\n");
+/*XXX*/ printf("debug: cpuprint\n");
 
 #if 0
 	if (pnp)
-		kprintf("%s at %s", ca->ca_name, pnp);
+		printf("%s at %s", ca->ca_name, pnp);
 #endif
 	return (UNCONF);
 }

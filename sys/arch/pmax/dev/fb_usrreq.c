@@ -193,7 +193,7 @@ fbioctl(dev, cmd, data, flag, p)
 			return (*(fi->fi_driver->fbd_unblank)) (fi);
 
 	default:
-		kprintf("fb%d: Unknown ioctl command %lx\n", minor(dev), cmd);
+		printf("fb%d: Unknown ioctl command %lx\n", minor(dev), cmd);
 		return (EINVAL);
 	}
 	return (0);

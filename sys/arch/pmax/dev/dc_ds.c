@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.2 1996/10/11 00:44:45 christos Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.3 1996/10/13 03:39:30 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -47,7 +47,7 @@ dc_ds_consinit(dev)
 	dev_t dev;
 {
 #if defined(DEBUG) || 1			/* XXX untested */
-	kprintf("dc_ds(%d,%d): serial console at 0x%x\n",
+	printf("dc_ds(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
 	       MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
 	DELAY(100000);
@@ -120,7 +120,7 @@ dc_ds_attach(parent, self, aux)
 		/* tie pseudo-slot to device */
 		BUS_INTR_ESTABLISH(ca, dcintr, self);
 	}
-	kprintf("\n");
+	printf("\n");
 }
 
 

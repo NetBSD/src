@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.38 1996/10/11 00:45:18 christos Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.39 1996/10/13 03:39:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,10 +270,10 @@ kn02_intr(mask, pc, statusReg, causeReg)
 		csr = *(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
 			warned = 1;
-			kprintf("WARNING: power supply is overheating!\n");
+			printf("WARNING: power supply is overheating!\n");
 		} else if (warned && !(csr & KN02_CSR_PSWARN)) {
 			warned = 0;
-			kprintf("WARNING: power supply is OK again\n");
+			printf("WARNING: power supply is OK again\n");
 		}
 
 		temp = c->regc;	/* XXX clear interrupt bits */
@@ -308,7 +308,7 @@ kn02_intr(mask, pc, statusReg, causeReg)
 			if (tc_slot_info[i].intr)
 				(*tc_slot_info[i].intr)(tc_slot_info[i].sc);
 			else
-				kprintf("spurious interrupt %d\n", i);
+				printf("spurious interrupt %d\n", i);
 		}
 #if 0
 		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR) =
@@ -410,12 +410,12 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		}
 		
 		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
-			kprintf("%s\n", "Power supply ok now.");
+			printf("%s\n", "Power supply ok now.");
 			user_warned = 0;
 		}
 		if ((intr & KMIN_INTR_PSWARN) && (user_warned < 3)) {
 			user_warned++;
-			kprintf("%s\n", "Power supply overheating");
+			printf("%s\n", "Power supply overheating");
 		}
 	}
 	if ((mask & MACH_INT_MASK_0) && tc_slot_info[0].intr) {
@@ -434,7 +434,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 
 #if 0 /*XXX*/
 	if (mask & (MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0))
-		kprintf("kmin: slot intr, mask 0x%x\n",
+		printf("kmin: slot intr, mask 0x%x\n",
 			mask &
 			(MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0));
 #endif
@@ -491,7 +491,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_SCC0_SLOT].intr))
 				(tc_slot_info[XINE_SCC0_SLOT].sc);
 			else
-				kprintf ("can't handle scc interrupt\n");
+				printf ("can't handle scc interrupt\n");
 			intrcnt[SERIAL0_INTR]++;
 		}
 	
@@ -513,7 +513,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_DTOP_SLOT].intr))
 				(tc_slot_info[XINE_DTOP_SLOT].sc);
 			else
-				kprintf ("can't handle dtop interrupt\n");
+				printf ("can't handle dtop interrupt\n");
 			intrcnt[DTOP_INTR]++;
 		}
 	
@@ -522,7 +522,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
 				(tc_slot_info[XINE_FLOPPY_SLOT].sc);
 		else
-			kprintf ("can't handle floppy interrupt\n");
+			printf ("can't handle floppy interrupt\n");
 			intrcnt[FLOPPY_INTR]++;
 		}
 	
@@ -531,7 +531,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[0].intr))
 				(tc_slot_info[0].sc);
 			else
-				kprintf ("can't handle tc0 interrupt\n");
+				printf ("can't handle tc0 interrupt\n");
 			intrcnt[SLOT0_INTR]++;
 		}
 	
@@ -540,7 +540,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[1].intr))
 				(tc_slot_info[1].sc);
 			else
-				kprintf ("can't handle tc1 interrupt\n");
+				printf ("can't handle tc1 interrupt\n");
 			intrcnt[SLOT1_INTR]++;
 		}
 	
@@ -549,7 +549,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
 				(tc_slot_info[XINE_ISDN_SLOT].sc);
 			else
-				kprintf ("can't handle isdn interrupt\n");
+				printf ("can't handle isdn interrupt\n");
 				intrcnt[ISDN_INTR]++;
 		}
 	
@@ -558,7 +558,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
 				(tc_slot_info[XINE_SCSI_SLOT].sc);
 			else
-				kprintf ("can't handle scsi interrupt\n");
+				printf ("can't handle scsi interrupt\n");
 			intrcnt[SCSI_INTR]++;
 		}
 	
@@ -567,7 +567,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
 				(tc_slot_info[XINE_LANCE_SLOT].sc);
 			else
-				kprintf ("can't handle lance interrupt\n");
+				printf ("can't handle lance interrupt\n");
 	
 			intrcnt[LANCE_INTR]++;
 		}
@@ -692,7 +692,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_0)
-			kprintf ("can't handle tc0 interrupt\n");
+			printf ("can't handle tc0 interrupt\n");
 #endif /*DIAGNOSTIC*/
 
 		if ((intr & KN03_INTR_TC_1) &&
@@ -703,7 +703,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_1)
-			kprintf ("can't handle tc1 interrupt\n");
+			printf ("can't handle tc1 interrupt\n");
 #endif /*DIAGNOSTIC*/
 
 		if ((intr & KN03_INTR_TC_2) &&
@@ -714,7 +714,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_2)
-			kprintf ("can't handle tc2 interrupt\n");
+			printf ("can't handle tc2 interrupt\n");
 #endif /*DIAGNOSTIC*/
 	
 		if ((intr & KN03_INTR_SCSI) &&
@@ -732,12 +732,12 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		}
 	
 		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {
-			kprintf("%s\n", "Power supply ok now.");
+			printf("%s\n", "Power supply ok now.");
 			user_warned = 0;
 		}
 		if ((intr & KN03_INTR_PSWARN) && (user_warned < 3)) {
 			user_warned++;
-			kprintf("%s\n", "Power supply overheating");
+			printf("%s\n", "Power supply overheating");
 		}
 	}
 	if (mask & MACH_INT_MASK_3)
@@ -777,7 +777,7 @@ pmax_errintr()
 	csr = *sysCSRPtr;
 
 	if (csr & KN01_CSR_MERR) {
-		kprintf("Memory error at 0x%x\n",
+		printf("Memory error at 0x%x\n",
 			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
@@ -802,7 +802,7 @@ kn02_errintr()
 	if (!(erradr & KN02_ERR_WRITE))
 		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
 	physadr <<= 2;
-	kprintf("%s memory %s %s error at 0x%08x\n",
+	printf("%s memory %s %s error at 0x%08x\n",
 		(erradr & KN02_ERR_CPU) ? "CPU" : "DMA",
 		(erradr & KN02_ERR_WRITE) ? "write" : "read",
 		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
@@ -810,7 +810,7 @@ kn02_errintr()
 	if (erradr & KN02_ERR_ECCERR) {
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
 		wbflush();
-		kprintf("ECC 0x%08x\n", chksyn);
+		printf("ECC 0x%08x\n", chksyn);
 
 		/* check for a corrected, single bit, read error */
 		if (!(erradr & KN02_ERR_WRITE)) {
@@ -846,7 +846,7 @@ kn03_errintr()
 	if (!(erradr & KN03_ERR_WRITE))
 		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
 	physadr <<= 2;
-	kprintf("%s memory %s %s error at 0x%08x",
+	printf("%s memory %s %s error at 0x%08x",
 		(erradr & KN03_ERR_CPU) ? "CPU" : "DMA",
 		(erradr & KN03_ERR_WRITE) ? "write" : "read",
 		(erradr & KN03_ERR_ECCERR) ? "ECC" : "timeout",
@@ -854,7 +854,7 @@ kn03_errintr()
 	if (erradr & KN03_ERR_ECCERR) {
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRSYN) = 0;
 		wbflush();
-		kprintf("   ECC 0x%08x\n", errsyn);
+		printf("   ECC 0x%08x\n", errsyn);
 
 		/* check for a corrected, single bit, read error */
 		if (!(erradr & KN03_ERR_WRITE)) {
@@ -868,11 +868,11 @@ kn03_errintr()
 					return;
 			}
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 	else
-		kprintf("\n");
-	kprintf("panic(\"Mem error interrupt\");\n");
+		printf("\n");
+	printf("panic(\"Mem error interrupt\");\n");
 }
 #endif /* DS5000_240 */
 
@@ -890,7 +890,7 @@ kn02ba_errintr()
 	*(unsigned int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT) = 0;
 
 	errintr_cnt++;
-	kprintf("(%d)%s%x [%x %x %x]\n", errintr_cnt,
+	printf("(%d)%s%x [%x %x %x]\n", errintr_cnt,
 	       "Bad memory chip at phys ",
 	       kn02ba_recover_erradr(adr, mer),
 	       mer, siz, adr);
