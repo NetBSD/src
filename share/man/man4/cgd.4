@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.1 2002/10/04 18:57:35 elric Exp $
+.\" $NetBSD: cgd.4,v 1.2 2002/10/05 15:52:25 grant Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,9 +51,10 @@ to and from a disk or partition.
 In order to compile support for the
 .Nm
 into your kernel, you must add the driver to your kernel configuration
-file.  To do this, add a line similar to:
+file.
+To do this, add a line similar to:
 .Bd -unfilled -offset indent
-pseudo-device   cgd     4       # cryptographic disk devices
+pseudo-device   cgd     4       # cryptographic disk driver
 .Ed
 .Pp
 The count argument defines how many
@@ -63,22 +64,28 @@ may be configured at a time.
 Currently the following cryptographic algorithms are supported:
 .Bl -tag -width indentxxxxxxx
 .It aes-cbc
-AES in CBC mode.  AES uses a 128 bit blocksize and can accept keys of
-length 128, 192 or 256.  The default key length is 256.
+AES in CBC mode.
+AES uses a 128 bit blocksize and can accept keys of
+length 128, 192 or 256.
+The default key length is 256.
 .It 3des-cbc
-Triple DES in CBC mode.  Triple DES uses a 64 bit blocksize and is
-performed in EDE3 mode with a 168 bit key.  The key passed to the kernel
+Triple DES in CBC mode.
+Triple DES uses a 64 bit blocksize and is
+performed in EDE3 mode with a 168 bit key.
+The key passed to the kernel
 is 192 bits but the parity bits are ignored.
 .It blowfish-cbc
-Blowfish in CBC mode.  Blowfish uses a 64 bit blocksize and can accept
-keys of length 128.
+Blowfish in CBC mode.
+Blowfish uses a 64 bit blocksize and can accept keys of length 128.
 .El
 .Ss IV Methods
 Currently, the only IV Method supported is
 .Ar encblkno
-(Encrypted Block Number.)  This method encrypts the block number of the
+(Encrypted Block Number).
+This method encrypts the block number of the
 physical disk block with the cipher and key provided and uses that as the
-IV for CBC mode.  This method should ensure that each block has a different
+IV for CBC mode.
+This method should ensure that each block has a different
 IV and that the IV is reasonably unpredictable.
 .Ss IOCTLS
 A
@@ -110,8 +117,8 @@ and their associated data structures are defined in
 It goes without saying that if you forget the passphrase that you used
 to configure a
 .Nm "" ,
-then you have irrevocably lost all of the data on the disk.  Please ensure
-that you are using an appropriate backup strategy.
+then you have irrevocably lost all of the data on the disk.
+Please ensure that you are using an appropriate backup strategy.
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxx
 .It /dev/{,r}cgd*
