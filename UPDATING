@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.33 2001/08/22 03:15:48 itojun Exp $
+$NetBSD: UPDATING,v 1.34 2001/09/15 13:59:29 simonb Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -214,7 +214,7 @@ Critical utilities:
 	usr.bin/xlint
 	usr.sbin/config
 
-Other problems and possibly solutions:
+Other problems and possible solutions:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Symptom:Unreasonable compiler errors.
 Fix:	Rebuild gnu/usr.bin/egcs
