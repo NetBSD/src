@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.37 2003/02/23 04:15:02 simonb Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.38 2003/10/13 06:43:22 dyoung Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37 2003/02/23 04:15:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.38 2003/10/13 06:43:22 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -77,7 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37 2003/02/23 04:15:02 simonb Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 #include <net/if_media.h>
 
 #ifdef INET
