@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.1 2003/04/18 04:54:50 thorpej Exp $	*/
+/*	$NetBSD: powerd.c,v 1.2 2003/04/20 20:53:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -252,6 +252,9 @@ pswitch_type_name(int type)
 
 	case PSWITCH_TYPE_LID:
 		return ("lid_switch");
+
+	case PSWITCH_TYPE_RESET:
+		return ("reset_button");
 
 	default:
 		return ("=unknown pswitch type=");
