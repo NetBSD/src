@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.5 1994/10/26 06:43:16 cgd Exp $	*/
+/*	$NetBSD: rpc.c,v 1.6 1995/04/22 14:09:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,6 +55,8 @@
 #include "netboot.h"
 #include "netif.h"
 #include "bootbootp.h"
+
+size_t    strlen __P((const char *));				/* XXX */
 
 /* XXX defines we can't easily get from system includes */
 #define	PMAPPORT		111
