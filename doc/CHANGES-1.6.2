@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.40 2003/06/19 01:29:44 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.41 2003/06/19 01:31:50 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -561,3 +561,9 @@ distrib/notes/macppc/prep			1.37
 	http://asu.info.apple.com/ has been replaced by
 	http://www.info.apple.com/support/downloads.html.
 	[yyamano, ticket #1297]
+
+lib/libc/stdio/vfscanf.c			1.34
+
+	Fix handing of -ve hexadecimal numbers in the %i format.  Fixes
+	PR lib/21691.  Patch from Simon Burge.
+	[thorpej, ticket #1298]
