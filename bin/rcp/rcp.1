@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcp.1,v 1.20 2005/03/11 02:55:23 ginsbach Exp $
+.\"	$NetBSD: rcp.1,v 1.21 2005/03/11 13:16:10 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,21 +51,35 @@ Each
 or
 .Ar directory
 argument is either a remote file name of the
-form ``rname@rhost:path'', or a local file name (containing no `:'
+form
+.Dq rname@rhost:path ,
+or a local file name (containing no
+.Sq \&:
 (colon) characters,
-or a `/' (slash) before any `:' (colon) characters).
+or a
+.Sq /
+(slash) before any
+.Sq \&:
+(colon) characters).
 .Pp
 The
 .Ar rhost
 can be an IPv4 or an IPv6 address string.
-Since IPv6 addresses already contain `:' (colon) characters,
-an IPv6 address string must be enclosed between `[' (left square bracket)
-and `]' (right square bracket) characters.
-Otherwise, the first occurrence of a `:' (colon) character would be
+Since IPv6 addresses already contain
+.Sq \&:
+(colon) characters,
+an IPv6 address string must be enclosed between
+.Sq \&[
+(left square bracket) and
+.Sq \&]
+(right square bracket) characters.
+Otherwise, the first occurrence of a
+.Sq \&:
+(colon) character would be
 interpreted as the separator between the
 .Ar rhost
 and the
-.Ar path.
+.Ar path .
 For example,
 .Pp
 .Dl [2001:DB8::800:200C:417A]:tmp/file
@@ -151,7 +165,8 @@ or
 file on the remote host.
 .Pp
 The destination user and hostname may have to be specified as
-``rhost.rname'' when the destination machine is running the
+.Dq rhost.rname
+when the destination machine is running the
 .Bx 4.2
 version of
 .Nm .
