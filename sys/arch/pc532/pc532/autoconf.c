@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1999/09/17 20:04:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2001/11/29 08:41:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,10 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -60,7 +64,7 @@
  */
 
 u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
-struct device *booted_device;	/* boot device, set by dk_establish */
+struct device *booted_device;	/* boot device */
 
 /*
  * Determine i/o configuration for a machine.
@@ -91,10 +95,51 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	int booted_partition = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
+	int booted_partition = B_PARTITION(bootdev);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
+}
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	static int found;
+	static struct device *booted_controller;
+	struct device *parent = dev->dv_parent;
+	struct cfdriver *cd = dev->dv_cfdata->cf_driver;
+
+	if (found)
+		return;
+
+	/*
+	 * Check for NCR SCSI controller.
+	 */
+	if (strcmp(cd->cd_name, "ncr") == 0) {
+		booted_controller = dev;
+		return;
+	}
+
+	/* XXX Adaptec SCSI controller one day... */
+
+	/*
+	 * If we found the boot controller, if check disk/cdrom device
+	 * on that controller matches.
+	 */
+	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
+	    strcmp(cd->cd_name, "cd") == 0)) {
+		struct scsipibus_attach_args *sa = aux;
+
+		if (parent->dv_parent != booted_controller)
+			return;
+		if (B_UNIT(bootdev) != sa->sa_periph->periph_target)
+			return;
+		booted_device = dev;
+		found = 1;
+		return;
+	}
 }
