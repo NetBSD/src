@@ -1,7 +1,7 @@
-/*	$NetBSD: miivar.h,v 1.15 2000/02/02 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.16 2000/02/02 17:50:45 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
 #include <sys/queue.h>
 
 /*
- * Media Independent Interface autoconfiguration defintions.
+ * Media Independent Interface datat structure defintions.
  */
 
 struct mii_softc;
@@ -96,6 +96,11 @@ typedef struct mii_data mii_data_t;
 typedef	int (*mii_downcall_t) __P((struct mii_softc *, struct mii_data *, int));
 
 /*
+ * This is a call back into the PHY driver made by a `status request'.
+ */
+typedef void (*mii_statusreq_t) __P((struct mii_softc *));
+
+/*
  * Requests that can be made to the downcall.
  */
 #define	MII_TICK	1	/* once-per-second tick */
@@ -118,6 +123,7 @@ struct mii_softc {
 	int mii_inst;			/* instance for ifmedia */
 
 	mii_downcall_t mii_service;	/* our downcall */
+	mii_statusreq_t mii_status;	/* our status request fn */
 	struct mii_data *mii_pdata;	/* pointer to parent's mii_data */
 
 	int mii_flags;			/* misc. flags; see below */
@@ -203,6 +209,8 @@ void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 void	mii_phy_down __P((struct mii_softc *));
+
+void	mii_phy_status __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */

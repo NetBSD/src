@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.23 2000/02/02 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.24 2000/02/02 17:50:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ nsphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = nsphy_service;
+	sc->mii_status = nsphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -275,7 +276,7 @@ nsphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	nsphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
