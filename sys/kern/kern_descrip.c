@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.113 2003/09/21 19:17:03 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.114 2003/09/22 12:59:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.113 2003/09/21 19:17:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.114 2003/09/22 12:59:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1585,13 +1585,13 @@ fgetown(struct proc *p, pid_t pgid, int cmd, void *data)
  * Send signal to descriptor owner, either process or process group.
  */
 void
-fownsignal(pid_t pgid, int code, int band, void *fdescdata)
+fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
 	struct proc *p1;
 	ksiginfo_t ksi; 
 
 	memset(&ksi, 0, sizeof(ksi));
-	ksi.ksi_signo = SIGIO;
+	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
 
