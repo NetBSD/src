@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.15 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16 1999/03/30 10:10:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -87,8 +87,10 @@ default_undefined_handler(address, instruction, frame, fault_code)
 	p = curproc;
 	if (p == NULL)
 		p = &proc0;
+#ifdef VERBOSE_ARM32
 	log(LOG_ERR, "Undefined instruction 0x%08x @ 0x%08x in process %s (pid %d)\n",
 	    instruction, address, p->p_comm, p->p_pid);
+#endif
 	return(1);
 }
 
@@ -191,6 +193,7 @@ undefinedinstruction(frame)
 	    frame, fault_code)) != 0) {
 		/* Fault has not been handled */
 
+#ifdef VERBOSE_ARM32
 		s = spltty();
 
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
@@ -212,6 +215,7 @@ undefinedinstruction(frame)
 		}
 
 		(void)splx(s);
+#endif
         
 		if ((fault_code & FAULT_USER) == 0) {
 			printf("Undefined instruction in kernel: Heavy man !\n");
