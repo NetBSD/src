@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2004/08/08 09:40:48 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2004/08/08 09:47:05 yamt Exp $	*/
 
 /*
  *
@@ -560,7 +560,7 @@ kvtopte(vaddr_t va)
 	{
 		pd_entry_t *pde;
 
-		pde = L1_BASE + pl2_i(va);
+		pde = L2_BASE + pl2_i(va);
 		if (*pde & PG_PS)
 			return ((pt_entry_t *)pde);
 	}
