@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.52 2003/03/20 22:53:12 ross Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.53 2003/03/28 14:01:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.52 2003/03/20 22:53:12 ross Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.53 2003/03/28 14:01:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,9 +153,7 @@ struct miniproc {
 	} while (/*CONSTCOND*/0);
 
 
-#define	PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(void *)(foo))
-#define	CONSTPTRTOINT64(foo) ((const u_int64_t)(const uintptr_t)	\
-					(const void *)(foo))
+#define	PTRTOINT64(foo)	((u_int64_t)(const uintptr_t)(const void *)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -173,8 +171,7 @@ static ssize_t	kvm_ureadm __P((kvm_t *, const struct miniproc *, u_long,
 
 static char	**kvm_argv __P((kvm_t *, const struct miniproc *, u_long, int,
 		    int));
-static int	kvm_deadprocs __P((kvm_t *, int, int, u_long, u_long, u_long,
-		    int));
+static int	kvm_deadprocs __P((kvm_t *, int, int, u_long, u_long, int));
 static char	**kvm_doargv __P((kvm_t *, const struct miniproc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *)));
 static char	**kvm_doargv2 __P((kvm_t *, pid_t, int, int));
@@ -429,16 +426,15 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
  * Return number of procs read.  maxcnt is the max we will read.
  */
 static int
-kvm_deadprocs(kd, what, arg, a_allproc, a_deadproc, a_zombproc, maxcnt)
+kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
 	kvm_t *kd;
 	int what, arg;
 	u_long a_allproc;
-	u_long a_deadproc;
 	u_long a_zombproc;
 	int maxcnt;
 {
 	struct kinfo_proc *bp = kd->procbase;
-	int acnt, dcnt, zcnt;
+	int acnt, zcnt;
 	struct proc *p;
 
 	if (KREAD(kd, a_allproc, &p)) {
@@ -449,21 +445,12 @@ kvm_deadprocs(kd, what, arg, a_allproc, a_deadproc, a_zombproc, maxcnt)
 	if (acnt < 0)
 		return (acnt);
 
-	if (KREAD(kd, a_deadproc, &p)) {
-		_kvm_err(kd, kd->program, "cannot read deadproc");
-		return (-1);
-	}
-
-	dcnt = kvm_proclist(kd, what, arg, p, bp, maxcnt - acnt);
-	if (dcnt < 0)
-		dcnt = 0;
-
 	if (KREAD(kd, a_zombproc, &p)) {
 		_kvm_err(kd, kd->program, "cannot read zombproc");
 		return (-1);
 	}
 	zcnt = kvm_proclist(kd, what, arg, p, bp + acnt,
-	    maxcnt - (acnt + dcnt));
+	    maxcnt - acnt);
 	if (zcnt < 0)
 		zcnt = 0;
 
@@ -782,7 +769,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 			kl->l_priority = l.l_priority;
 			kl->l_usrpri = l.l_usrpri;
 			kl->l_stat = l.l_stat;
-			kl->l_wchan = CONSTPTRTOINT64(l.l_wchan);
+			kl->l_wchan = PTRTOINT64(l.l_wchan);
 			if (l.l_wmesg)
 				(void)kvm_read(kd, (u_long)l.l_wmesg,
 				    kl->l_wmesg, (size_t)WMESGLEN);
@@ -843,13 +830,12 @@ kvm_getprocs(kd, op, arg, cnt)
 		    "can't use kvm_getprocs");
 		return (NULL);
 	} else {
-		struct nlist nl[5], *p;
+		struct nlist nl[4], *p;
 
 		nl[0].n_name = "_nprocs";
 		nl[1].n_name = "_allproc";
-		nl[2].n_name = "_deadproc";
-		nl[3].n_name = "_zombproc";
-		nl[4].n_name = NULL;
+		nl[2].n_name = "_zombproc";
+		nl[3].n_name = NULL;
 
 		if (kvm_nlist(kd, nl) != 0) {
 			for (p = nl; p->n_type != 0; ++p)
@@ -868,7 +854,7 @@ kvm_getprocs(kd, op, arg, cnt)
 			return (NULL);
 
 		nprocs = kvm_deadprocs(kd, op, arg, nl[1].n_value,
-		    nl[2].n_value, nl[3].n_value, nprocs);
+		    nl[2].n_value, nprocs);
 		if (nprocs < 0)
 			return (NULL);
 #ifdef notdef
