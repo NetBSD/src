@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.26 2000/06/24 11:08:49 soren Exp $
+.\"	$NetBSD: hier.7,v 1.27 2000/07/14 02:51:25 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,11 +41,24 @@
 .Nd layout of filesystems
 .Sh DESCRIPTION
 An outline of the filesystem hierarchy.
+.Pp
+Naming is very important.
+The
+.Ux
+System relies on filename conventions for much of its power as a system.
+The following file system layout describes generally where things are
+and what they are, with references to other man pages for more detailed
+documentation.
+.Pp
+Not all files will be in every system.
+.Pp
 .Bl -tag -width "/altroot/"
 .It Sy \&/
 root directory of the system
 .It Sy /COPYRIGHT
-system copyright notice
+system copyright notice, most often put on
+.Tn CD-ROM
+distributions.
 .It Sy "/[a-z]"
 user filesystems
 .It Sy /altroot/
@@ -259,9 +272,10 @@ service name data base; see
 .It Sy shells
 list of permitted shells; see
 .Xr shells 5
-.It Sy sliphome
-slip login/logout scripts; see
-.Xr slattach 8
+.It Sy sliphome/
+.Tn SLIP
+login/logout scripts; see
+.Xr sliplogin 8
 .It Sy syslog.conf
 .Xr syslogd 8
 configuration file; see
