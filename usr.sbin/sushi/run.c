@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.4 2002/02/12 12:21:01 blymn Exp $       */
+/*      $NetBSD: run.c,v 1.5 2002/04/02 18:57:01 christos Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,8 +71,35 @@ extern nl_catd catalog;
  * local prototypes 
  */
 int launch_subwin(WINDOW *actionwin, char **args, struct winsize win, int display);
+static int handleoflow(WINDOW *actionwin, int x, int y, int xcor, int ycor);
 
 #define BUFSIZE 4096
+
+
+static int
+handleoflow(actionwin, x, y, xcor, ycor)
+	WINDOW *actionwin;
+	int x;
+	int y;
+	int xcor;
+	int ycor;
+{
+	if (ycor + 1 >= getmaxy(actionwin)) {
+		if (x == 999) {
+			int i;
+			for (i = 1; i < 1000; i++)
+				savelines[i - 1] = savelines[i];
+		} else
+			x++;
+		savelines[x] = malloc(y);
+		mvwinnstr(actionwin, 0, 0, savelines[x], y);
+		wmove(actionwin, getmaxy(actionwin) - 1, 0);
+		scroll(actionwin);
+		wmove(actionwin, getmaxy(actionwin) - 1, 0);
+	} else
+		wmove(actionwin, ycor + 1, 0);
+	return x;
+}
 
 /*
  * launch a program inside a subwindow, and report it's return status when done
@@ -86,7 +113,7 @@ launch_subwin(actionwin, args, win, display)
 	int display;
 {
 	int xcor,ycor;
-	int i, j, x, y;
+	int i, j, x;
 	int selectfailed, multiloop, cols;
 	int status, master, slave;
 	fd_set active_fd_set, read_fd_set;
@@ -212,72 +239,55 @@ again:
 				    strerror(errno));
 			++selectfailed;
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
-			if (FD_ISSET (i, &read_fd_set)) {
-				n = read(i, ibuf, MAXBUF);
-				if (n)
-					multiloop=0;
-				if (i == STDIN_FILENO)
-					(void)write(master, ibuf, (size_t)n);
-				for (j=0; j < n; j++) {
-					if (display) {
-						cols++;
-						if (cols == getmaxx(actionwin) && ibuf[j] != '\n') {
-							cols = 0;
-							getyx(actionwin, ycor, xcor);
-							if (ycor + 1 >= getmaxy(actionwin)) {
-								if (x == 999) {
-									for (y=1; y<1000; y++)
-										savelines[y-1] = savelines[y];
-								} else
-									x++;
-								savelines[x] = malloc(sizeof(char *) * win.ws_col);
-								mvwinstr(actionwin, 0, 0, savelines[x]);
-								wmove(actionwin, getmaxy(actionwin) - 1, 0);
-								scroll(actionwin);
-								wmove(actionwin, getmaxy(actionwin) - 1, 0);
-							} else
-								wmove(actionwin, ycor + 1, 0);
-						}
-						switch (ibuf[j]) {
-						case '\n':
-							cols = 0;
-							getyx(actionwin, ycor, xcor);
-							if (ycor + 1 >= getmaxy(actionwin)) {
-								if (x == 999) {
-									for (y=1; y<1000; y++)
-										savelines[y-1] = savelines[y];
-								} else
-									x++;
-								savelines[x] = malloc(sizeof(char *) * win.ws_col);
-								mvwinstr(actionwin, 0, 0, savelines[x]);
-								wmove(actionwin, getmaxy(actionwin) - 1, 0);
-								scroll(actionwin);
-								wmove(actionwin, getmaxy(actionwin) - 1, 0);
-							} else
-								wmove(actionwin, ycor + 1, 0);
-							break;
-						case '\r':
-							getyx(actionwin, ycor, xcor);
-							wmove(actionwin, ycor, 0);
-							break;
-						case '\b':
-							getyx(actionwin, ycor, xcor);
-							if (xcor > 0)
-								wmove(actionwin, ycor, xcor - 1);
-							break;
-						default:
-							waddch(actionwin, ibuf[j]);
-							break;
-						}
-						if (logging)
-							putc(ibuf[j], logfile);
-					}
-				}
-				if (display)
-					wrefresh(actionwin);
-				if (logging)
+			if (!FD_ISSET(i, &read_fd_set))
+				continue;
+			n = read(i, ibuf, MAXBUF);
+			if (n)
+				multiloop=0;
+			if (i == STDIN_FILENO)
+				(void)write(master, ibuf, (size_t)n);
+			if (!display) {
+				if(logging)
 					fflush(logfile);
+				continue;
 			}
+			for (j=0; j < n; j++) {
+				cols++;
+				if (cols == getmaxx(actionwin)
+				    && ibuf[j] != '\n') {
+					cols = 0;
+					getyx(actionwin, ycor, xcor);
+					x = handleoflow(actionwin, x,
+					    win.ws_col, xcor, ycor);
+				}
+				switch (ibuf[j]) {
+				case '\n':
+					cols = 0;
+					getyx(actionwin, ycor, xcor);
+					x = handleoflow(actionwin, x,
+					    win.ws_col, xcor, ycor);
+					break;
+				case '\r':
+					getyx(actionwin, ycor, xcor);
+					wmove(actionwin, ycor, 0);
+					break;
+				case '\b':
+					getyx(actionwin, ycor, xcor);
+					if (xcor <= 0)
+						break;
+					wmove(actionwin, ycor, xcor - 1);
+					break;
+				default:
+					waddch(actionwin, ibuf[j]);
+					break;
+				}
+				if (logging)
+					putc(ibuf[j], logfile);
+			}
+			if (display)
+				wrefresh(actionwin);
+			if(logging)
+				fflush(logfile);
 		}
 		multiloop++;
 		goto again;
@@ -422,12 +432,11 @@ run_prog(int display, char **args)
 	for (numlines = 0; savelines[numlines] != NULL; numlines++);
 	for (x = 0; x < win.ws_row; x++) {
 		if (numlines == 999) {
-			for (y=1; y<1000; y++)
+			for (y=1; y < 1000; y++)
 				savelines[y-1] = savelines[y];
 		} else
-			savelines[numlines] =
-			    malloc(sizeof(char *) * win.ws_col);
-		mvwinstr(actionwin, x, 0, savelines[numlines]);
+			savelines[numlines] = malloc(win.ws_col);
+		mvwinnstr(actionwin, x, 0, savelines[numlines], win.ws_col);
 		numlines++;
 	}
 	savelines[numlines] = NULL;
