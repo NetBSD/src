@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.28.2.1 1996/06/12 20:48:31 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.28.2.2 1996/07/02 23:46:29 jtc Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -220,10 +220,10 @@ dmaattach(parent, self, aux)
 	sc->go = dma_go;
 
 	sc->sc_node = ca->ca_ra.ra_node;
-#if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4)
 		goto espsearch;
 
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
