@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)exec.c	5.2 (Berkeley) 3/13/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/exec.c,v 1.3 1993/03/23 00:27:54 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/exec.c,v 1.4 1993/04/10 14:55:52 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -69,6 +69,11 @@ static char rcsid[] = "$Header: /cvsroot/src/bin/sh/exec.c,v 1.3 1993/03/23 00:2
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef  BSD
+#undef BSD      /* temporary, already defined in <sys/param.h> */
+#include <sys/param.h>
+#include <unistd.h>
+#endif
 
 
 #define CMDTABLESIZE 31		/* should be prime */
@@ -487,9 +492,27 @@ loop:
 			if ((statb.st_mode & 010) == 0)
 				goto loop;
 		} else {
-			if ((statb.st_mode & 01) == 0)
+			if ((statb.st_mode & 01) == 0) {
+#ifdef  BSD
+				if ((statb.st_mode & 010) == 0)
+					goto loop;
+				/* Are you in this group too? */
+				{
+					int group_list[NGROUPS];
+					int ngroups, i;
+
+					ngroups = getgroups(NGROUPS, group_list);
+					for (i = 0; i < ngroups; i++)
+						if (statb.st_gid == group_list[i])
+							goto Found;
+				}
+#endif
 				goto loop;
+			}
 		}
+#ifdef  BSD
+	Found:
+#endif
 		TRACE(("searchexec \"%s\" returns \"%s\"\n", name, fullname));
 		INTOFF;
 		cmdp = cmdlookup(name, 1);
