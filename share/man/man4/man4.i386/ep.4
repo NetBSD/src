@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ep.4,v 1.2 1994/02/16 21:12:22 hpeyerl Exp $
+.\"	$Id: ep.4,v 1.3 1994/03/05 22:12:07 hpeyerl Exp $
 .\"
 .Dd February 04, 1993
 .Dt EP 4
@@ -69,10 +69,10 @@ Thus to enable 10BaseT you would "ifconfig ep0 link0 link1"
 
 It does not make sense to "ifconfig ep0 -link0 link1"
 
-The default is "-link0".
+The default is "-link0 -link1".
 
 .Sh NOTES
-Since the driver has no jumpers, the autoconfig routines scribbles 
+Since the card has no jumpers, the autoconfig routine scribbles 
 all over 0x100 to get the attention of any 3c509 cards that may
 be in the machine.  If you have any other hardware that lives at
 0x100, then you should put any ep drivers before that hardware
@@ -81,6 +81,9 @@ in your config file.
 Some models of 3c5x9 have all three connectors on them.  In the case of these
 cards; you must configure the transceiver type with the configuration 
 disk before the link0/link1 flags will operate correctly.
+.Sh BUGS
+Currently there is little support for EISA (3c579) cards and
+multiple occurances of 3c501 (ISA) cards.
 .Sh DIAGNOSTICS
 ep%d: reset (status: %x)
 .in +4
