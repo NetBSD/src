@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.15 2001/02/14 15:07:28 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.16 2001/02/14 21:10:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -584,10 +584,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x1407,	0x0180,	0,	0	},
 	    {	0xffff,	0xfffc,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
