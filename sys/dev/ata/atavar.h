@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.13.2.1 2000/01/23 12:26:30 he Exp $	*/
+/*	$NetBSD: atavar.h,v 1.13.2.2 2000/07/07 17:33:47 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -19,17 +19,16 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -63,10 +62,22 @@ struct ata_drive_datas {
     u_int8_t DMA_cap; /* supported drive's DMA mode */
     u_int8_t UDMA_cap; /* supported drive's UDMA mode */
     /*
-     * Drive state. This is drive-type (ATA or ATAPI) dependant
+     * Drive state.
      * This is reset to 0 after a channel reset.
      */
     u_int8_t state;
+#define RESET          0
+#define RECAL          1
+#define RECAL_WAIT     2
+#define PIOMODE        3
+#define PIOMODE_WAIT   4
+#define DMAMODE        5
+#define DMAMODE_WAIT   6
+#define GEOMETRY       7
+#define GEOMETRY_WAIT  8
+#define MULTIMODE      9
+#define MULTIMODE_WAIT 10
+#define READY          11
 
     /* numbers of xfers and DMA errs. Used by ata_dmaerr() */
     u_int8_t n_dmaerrs;
@@ -80,10 +91,17 @@ struct ata_drive_datas {
 };
 
 /* ATA/ATAPI common attachement datas */
+/*
+ * XXX Small hack alert
+ * NOTE:  The first field of struct ata_atapi_attach is shared with 
+ * dev/scspi/scsipiconf.h's struct scsipi_link.  This allows
+ * atapibus and scsibus to attach to the same device.
+ */
 struct ata_atapi_attach {
     u_int8_t aa_type; /* Type of device */
-#define T_ATA 0
+/*#define T_SCSI 0*/
 #define T_ATAPI 1
+#define T_ATA 2
     u_int8_t aa_channel; /* controller's channel */
     u_int8_t aa_openings; /* Number of simultaneous commands possible */
     struct ata_drive_datas *aa_drv_data;

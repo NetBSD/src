@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.7.2.2 2000/01/23 12:25:32 he Exp $      */
+/*      $NetBSD: ata.c,v 1.7.2.3 2000/07/07 17:33:46 he Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -19,7 +19,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -88,14 +88,21 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_pmask = WDCS_DRQ;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
+	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_exec_command failed\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
+	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_c.flags=0x%x\n",
+		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
@@ -189,7 +196,7 @@ ata_perror(drvp, errno, buf)
 	    "track 0 not found", "aborted command", "media change requested",
 	    "id not found", "media changed", "uncorrectable data error",
 	    "bad block detected"};
-	static char *errstr4_5[] = {"",
+	static char *errstr4_5[] = {"obsolete (address mark not found)",
 	    "no media/write protected", "aborted command",
 	    "media change requested", "id not found", "media changed",
 	    "uncorrectable data error", "interface CRC error"};
@@ -208,8 +215,8 @@ ata_perror(drvp, errno, buf)
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s %s", sep, errstr[i]);
-			sep = ",";
+			buf += sprintf(buf, "%s%s", sep, errstr[i]);
+			sep = ", ";
 		}
 	}
 }
