@@ -1,4 +1,4 @@
-# $NetBSD: files.rcons,v 1.8 2001/10/05 22:08:28 eeh Exp $
+# $NetBSD: files.rcons,v 1.9 2001/11/20 14:34:27 lukem Exp $
 #
 # Configuration file for RASTER Console.
 #
@@ -8,5 +8,5 @@ file dev/rcons/raster_text.c	raster | wsrasteremulops
 file dev/rcons/rcons_kern.c	rasterconsole
 file dev/rcons/rcons_subr.c	rasterconsole
 
-defopt opt_rcons.h	RASTERCONSOLE_FGCOL RASTERCONSOLE_BGCOL 
-			RCONS_2BPP RCONS_4BPP RCONS_16BPP
+defparam opt_rcons.h	RASTERCONSOLE_FGCOL RASTERCONSOLE_BGCOL 
+defopt	opt_rcons.h	RCONS_2BPP RCONS_4BPP RCONS_16BPP
