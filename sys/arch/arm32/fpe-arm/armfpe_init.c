@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.7 1996/04/26 21:02:49 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.8 1996/06/12 19:37:03 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -140,7 +140,7 @@ initialise_arm_fpe(cpu)
 	cpu->fpu_class = FPU_CLASS_FPE;
 	cpu->fpu_type = FPU_TYPE_ARMLTD_FPE;
 	strcpy(cpu->fpu_model, "Advanced RISC Machines floating point emulator");
-	error = arm_fpe_boot();
+	error = arm_fpe_boot(cpu);
 	if (error != 0) {
 		strcat(cpu->fpu_model, " - boot failed");
 		return(1);
@@ -162,7 +162,8 @@ initialise_arm_fpe(cpu)
  */
 
 int
-arm_fpe_boot(void)
+arm_fpe_boot(cpu)
+	cpu_t *cpu;
 {
 	u_int workspace;
 	int id;
@@ -194,6 +195,11 @@ arm_fpe_boot(void)
 #endif
 
 	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler, (u_int)&fpe_nexthandler);
+
+	if (id == FPU_TYPE_FPA11) {
+		cpu->fpu_class = FPU_CLASS_FPA;
+		cpu->fpu_type = FPU_TYPE_FPA11;
+	}
 
 #ifdef DEBUG
 	printf("id=%08x\n", id);
