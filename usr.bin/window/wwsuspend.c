@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsuspend.c,v 1.4 1997/11/21 08:37:52 lukem Exp $	*/
+/*	$NetBSD: wwsuspend.c,v 1.5 2002/06/14 01:07:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwsuspend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwsuspend.c,v 1.4 1997/11/21 08:37:52 lukem Exp $");
+__RCSID("$NetBSD: wwsuspend.c,v 1.5 2002/06/14 01:07:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: wwsuspend.c,v 1.4 1997/11/21 08:37:52 lukem Exp $");
 #include "tt.h"
 
 void
-wwsuspend()
+wwsuspend(void)
 {
 	sig_t oldsig;
 

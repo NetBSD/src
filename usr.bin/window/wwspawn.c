@@ -1,4 +1,4 @@
-/*	$NetBSD: wwspawn.c,v 1.6 1998/04/17 15:56:14 cgd Exp $	*/
+/*	$NetBSD: wwspawn.c,v 1.7 2002/06/14 01:07:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwspawn.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwspawn.c,v 1.6 1998/04/17 15:56:14 cgd Exp $");
+__RCSID("$NetBSD: wwspawn.c,v 1.7 2002/06/14 01:07:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,7 @@ __RCSID("$NetBSD: wwspawn.c,v 1.6 1998/04/17 15:56:14 cgd Exp $");
  * So we have to be sneaky about error reporting.
  */
 int
-wwspawn(wp, file, argv)
-	struct ww *wp;
-	char *file;
-	char **argv;
+wwspawn(struct ww *wp, char *file, char **argv)
 {
 	int pid;
 	int ret;

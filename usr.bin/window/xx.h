@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
+/*	$NetBSD: xx.h,v 1.6 2002/06/14 01:07:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,21 +61,21 @@ EXTERN int xxbufsize;
 
 #define char_sep '\0'
 
-struct xx *xxalloc __P((void));
-void	xxclear __P((void));
-void	xxclreol __P((int, int));
-void	xxclreos __P((int, int));
-void	xxdelchar __P((int, int));
-void	xxend __P((void));
-void	xxflush __P((int));
-void	xxflush_scroll __P((struct xx *));
-void	xxfree __P((struct xx *));
-int	xxinit __P((void));
-void	xxinschar __P((int, int, int, int));
-void	xxinsspace __P((int, int));
-void	xxmove __P((int, int));
-void	xxreset __P((void));
-void	xxreset1 __P((void));
-void	xxscroll __P((int, int, int));
-void	xxstart __P((void));
-void	xxwrite __P((int, int, char *, int, int));
+struct xx *xxalloc(void);
+void	xxclear(void);
+void	xxclreol(int, int);
+void	xxclreos(int, int);
+void	xxdelchar(int, int);
+void	xxend(void);
+void	xxflush(int);
+void	xxflush_scroll(struct xx *);
+void	xxfree(struct xx *);
+int	xxinit(void);
+void	xxinschar(int, int, int, int);
+void	xxinsspace(int, int);
+void	xxmove(int, int);
+void	xxreset(void);
+void	xxreset1(void);
+void	xxscroll(int, int, int);
+void	xxstart(void);
+void	xxwrite(int, int, char *, int, int);

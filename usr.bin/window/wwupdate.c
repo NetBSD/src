@@ -1,4 +1,4 @@
-/*	$NetBSD: wwupdate.c,v 1.4 1997/11/21 08:37:59 lukem Exp $	*/
+/*	$NetBSD: wwupdate.c,v 1.5 2002/06/14 01:07:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwupdate.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwupdate.c,v 1.4 1997/11/21 08:37:59 lukem Exp $");
+__RCSID("$NetBSD: wwupdate.c,v 1.5 2002/06/14 01:07:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: wwupdate.c,v 1.4 1997/11/21 08:37:59 lukem Exp $");
 #include "xx.h"
 
 void
-wwupdate1(top, bot)
-	int top, bot;
+wwupdate1(int top, int bot)
 {
 	int i;
 	int j;

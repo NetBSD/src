@@ -1,4 +1,4 @@
-/*	$NetBSD: wwredrawwin.c,v 1.5 1997/11/21 08:37:45 lukem Exp $	*/
+/*	$NetBSD: wwredrawwin.c,v 1.6 2002/06/14 01:07:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,16 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)wwredrawwin.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwredrawwin.c,v 1.5 1997/11/21 08:37:45 lukem Exp $");
+__RCSID("$NetBSD: wwredrawwin.c,v 1.6 2002/06/14 01:07:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 void
-wwredrawwin1(w, row1, row2, offset)
-	struct ww *w;
-	int row1, row2, offset;
+wwredrawwin1(struct ww *w, int row1, int row2, int offset)
 {
 	int row;
 	int col;
