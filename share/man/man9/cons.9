@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.1 2001/06/02 19:13:00 jdolecek Exp $
+.\"	$NetBSD: cons.9,v 1.2 2001/06/02 22:04:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 These functions operate over current console device. The console has
 to be initialized first, before these functions could be used.
 .Pp
-Keyboard polling functions
+Console input polling functions
 .Fn cngetc ,
 .Fn cngetsn
 and
@@ -99,7 +99,7 @@ and
 .Fn cngetc .
 Number of read characters is
 .Fa size
-at maximum, user is notified by keyboard bell when the end
+at maximum, user is notified by console bell when the end
 of input buffer is reached. Standard <Baskspace> key
 work as expected. <@> key makes
 .Fn cngetsn
@@ -119,10 +119,11 @@ Switch the console driver to polling mode if
 .Fa on
 is nonzero, or back to interrupt driven mode if
 .Fa on
-is zero. The system priority level has to be raised to splhigh before
-the polling mode could be switched on, so that the polled console device would
-not be disturbed by interrupts. The system priority level has to be
-restored to previous level once the polling mode is switched back off.
+is zero.
+.\" The system priority level has to be raised to splhigh before
+.\" he polling mode could be switched on, so that the polled console device would
+.\" ot be disturbed by interrupts. The system priority level has to be
+.\" estored to previous level once the polling mode is switched back off.
 .Fn cnpollc
 should be used during kernel startup only.
 .It Fn cnputc
@@ -134,9 +135,10 @@ rather than using this low-level interface.
 This waits until a <Enter> key is pressed:
 .Pp
 .Bd -literal -compact
-int s, c;
+.\" int s, c;
+int c;
 
-s = splhigh();
+.\" s = splhigh();
 cnpollc(1);
 for(;;) {
 	c = cngetc();
@@ -146,7 +148,7 @@ for(;;) {
 	}
 }
 cnpollc(0);
-splx(s);
+.\" splx(s);
 .Ed
 .Sh SEE ALSO
 .Xr pckbd 4 ,
