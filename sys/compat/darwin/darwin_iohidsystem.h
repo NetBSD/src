@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.8 2003/10/18 13:27:17 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.9 2003/10/25 10:41:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ typedef union {
 		} tablet;
 	} mouse_move;
 	struct {
-		uint16_t origi_charset;
+		uint16_t orig_charset;
 		int16_t repeat;
 		uint16_t charset;
 		uint16_t charcode;
@@ -277,6 +277,7 @@ struct  darwin_iohidsystem_shmem {
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
 int darwin_iohidsystem_connect_method_structi_structo(struct mach_trap_args *);
 int darwin_iohidsystem_connect_map_memory(struct mach_trap_args *);
+void darwin_iohidsystem_postfake(struct proc *);
 
 /* I/O notifications: XXX not checked on Darwin */
 
