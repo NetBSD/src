@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.2 2002/10/09 00:11:15 thorpej Exp $ */
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,6 +52,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 
 #include "opt_pci.h"
 #include "pci.h"
