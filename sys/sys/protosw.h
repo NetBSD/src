@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.15 1998/05/06 01:11:47 thorpej Exp $	*/
+/*	$NetBSD: protosw.h,v 1.16 1998/05/07 01:30:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -243,8 +243,14 @@ extern	u_int pffasttimo_now;
 #define	PRT_SLOW_ARM(t, nticks)	(t) = (pfslowtimo_now + (nticks))
 #define	PRT_FAST_ARM(t, nticks)	(t) = (pffasttimo_now + (nticks))
 
-#define	PRT_SLOW_ISEXPIRED(t)	((t) <= pfslowtimo_now)
-#define	PRT_FAST_ISEXPIRED(t)	((t) <= pffasttimo_now)
+#define	PRT_SLOW_DISARM(t)	(t) = 0
+#define	PRT_FAST_DISARM(t)	(t) = 0
+
+#define	PRT_SLOW_ISARMED(t)	((t) != 0)
+#define	PRT_FAST_ISARMED(t)	((t) != 0)
+
+#define	PRT_SLOW_ISEXPIRED(t)	(PRT_SLOW_ISARMED((t)) && (t) <= pfslowtimo_now)
+#define	PRT_FAST_ISEXPIRED(t)	(PRT_FAST_ISARMED((t)) && (t) <= pffasttimo_now)
 
 struct sockaddr;
 struct protosw *pffindproto __P((int, int, int));
