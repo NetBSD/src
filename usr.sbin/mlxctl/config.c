@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1 2001/02/04 17:30:37 ad Exp $	*/
+/*	$NetBSD: config.c,v 1.1.4.1 2003/07/28 18:14:00 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1 2001/02/04 17:30:37 ad Exp $");
+__RCSID("$NetBSD: config.c,v 1.1.4.1 2003/07/28 18:14:00 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -133,6 +133,11 @@ cmd_config(char **argv)
 	char hostname[MAXHOSTNAMELEN];
 	struct conf_config conf;
 	int i, j;
+
+	if (ci.ci_firmware_id[0] < 3) {
+		warnx("action not supported by this firmware version");
+		return (1);
+	}
 
 	memset(&conf.cc_cfg, 0, sizeof(conf.cc_cfg));
 	mlx_configuration(&conf.cc_cfg, 0);
