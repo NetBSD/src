@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.79 1999/09/28 07:51:05 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.80 1999/09/29 00:44:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.79 1999/09/28 07:51:05 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.80 1999/09/29 00:44:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -176,7 +176,7 @@ auth_url(challenge, response, guser, gpass)
 	(void)strlcat(clear, ":", clen);
 	(void)strlcat(clear, pass, clen);
 	if (gpass == NULL)
-		memset(pass, '\0', strlen(pass));
+		memset(pass, 0, strlen(pass));
 
 						/* scheme + " " + enc + "\0" */
 	rlen = strlen(scheme) + 1 + (clen + 2) * 4 / 3 + 1;
@@ -184,7 +184,7 @@ auth_url(challenge, response, guser, gpass)
 	(void)strlcpy(*response, scheme, rlen);
 	len = strlcat(*response, " ", rlen);
 	base64_encode(clear, clen, *response + len);
-	memset(clear, '\0', clen);
+	memset(clear, 0, clen);
 	rval = 0;
 
 cleanup_auth_url:
@@ -1000,7 +1000,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			if (auth_url(auth, authp, auser, apass) == 0) {
 				rval = fetch_url(url, proxyenv,
 				    proxyauth, wwwauth);
-				memset(*authp, '\0', strlen(*authp));
+				memset(*authp, 0, strlen(*authp));
 				FREEPTR(*authp);
 			}
 			goto cleanup_fetch_url;
