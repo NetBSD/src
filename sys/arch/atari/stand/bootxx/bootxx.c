@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2001/10/13 20:22:56 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.7 2001/10/14 19:43:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -65,7 +65,7 @@ bootxx(readsector, disklabel, autoboot)
 	setheap(end, (void*)(LOADADDR3 - 4));
 
 	printf("\033v\nNetBSD/Atari secondary bootloader"
-						" ($Revision: 1.6 $)\n\n");
+						" ($Revision: 1.7 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
@@ -184,9 +184,11 @@ load_booter(od)
 	/*
 	 * Read booter's exec-header.
 	 */
-	if ((fd = open("/boot", 0)) < 0) {
-		printf("Cannot open /boot.\n");
-		return (-1);
+	if ((fd = open("/boot.atari", 0)) < 0) {
+		if ((fd = open("/boot", 0)) < 0) {
+			printf("Cannot open /boot{.atari}\n");
+			return (-1);
+		}
 	}
 	while((bsize = read(fd, bstart, 1024)) > 0) {
 		bstart += bsize;
