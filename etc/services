@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.67 2003/07/08 02:48:37 simonb Exp $
+#	$NetBSD: services,v 1.68 2003/07/08 03:32:00 enami Exp $
 #
 # Network services, Internet style
 #
@@ -162,7 +162,7 @@ remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 #
 webster		765/tcp				# Network dictionary
 webster		765/udp
-rsync		873/tcp				# rsync 
+rsync		873/tcp				# rsync
 rsync		873/udp				# rsync
 
 #
@@ -333,10 +333,10 @@ rtsp		554/tcp			# Real Time Stream Control Protocol
 rtsp		554/udp			# Real Time Stream Control Protocol
 socks		1080/tcp		# Socks
 socks		1080/udp		# Socks
-ms-sql-s        1433/tcp   		# Microsoft-SQL-Server
-ms-sql-s        1433/udp   		# Microsoft-SQL-Server
-ms-sql-m        1434/tcp   		# Microsoft-SQL-Monitor
-ms-sql-m        1434/udp   		# Microsoft-SQL-Monitor 
+ms-sql-s	1433/tcp		# Microsoft-SQL-Server
+ms-sql-s	1433/udp		# Microsoft-SQL-Server
+ms-sql-m	1434/tcp		# Microsoft-SQL-Monitor
+ms-sql-m	1434/udp		# Microsoft-SQL-Monitor
 ms-wbt-server	3389/tcp		# MS WBT Server
 ms-wbt-server	3389/udp		# MS WBT Server
 radmin-port	4899/tcp		# RAdmin Port
