@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2002/08/26 10:16:44 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2002/09/01 09:01:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -149,6 +149,18 @@ const struct db_variable db_regs[] = {
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
+/*
+ * SH5-specific commands
+ */
+static void db_sh5_tlb(db_expr_t, int, db_expr_t, char *);
+static void print_tlb_entry(int, pteh_t, ptel_t);
+
+const struct db_command db_machine_command_table[] = {
+	{"tlb",		db_sh5_tlb,	0,	0},
+	{NULL,}
+};
+
+
 static int
 db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 {
@@ -246,18 +258,6 @@ inst_branch(int inst)
 }
 
 boolean_t
-inst_call(int inst)
-{
-	/*
-	 * Deal with blink tr?, r18
-	 */
-	if ((inst & M_CALL) == I_CALL)
-		return (TRUE);
-
-	return (FALSE);
-}
-
-boolean_t
 inst_unconditional_flow_transfer(int inst)
 {
 	/*
@@ -316,13 +316,6 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	return ((db_addr_t)(uintptr_t)trv);
 }
 
-db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
-{
-	/* I *think* this is the correct behaviour. SH5 has no delay slots */
-	return (pc);
-}
-
 int
 inst_load(int inst)
 {
@@ -333,4 +326,129 @@ int
 inst_store(int inst)
 {
 	return (0);
+}
+
+/*
+ * Dump the contents of both TLBs.
+ *
+ * XXX: This should make use of a CPU-specific backend so that it is
+ * independent of TLB implementation.
+ */
+#define	ITLB_REG(r)	((r) * 16)
+#define	DTLB_REG(r)	(0x800000 + ((r) * 16))
+
+static void
+db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	register_t tlbreg;
+	ptel_t ptel;
+	pteh_t pteh;
+	int i, flagv, flagi, flagd;
+
+	flagv = (strchr(modif, 'v') != NULL);
+	flagi = (strchr(modif, 'i') != NULL);
+	flagd = (strchr(modif, 'd') != NULL);
+
+	if (flagi == 0 && flagd == 0)
+		flagi = flagd = 1;
+
+	if (flagi) {
+		db_printf("ITLB:\n");
+		for (i = 0; i < 64; i++) {
+			tlbreg = ITLB_REG(i);
+
+			asm volatile("getcfg %1, 0, %0" :
+			    "=r"(pteh) : "r"(tlbreg));
+
+			asm volatile("getcfg %1, 1, %0" :
+			    "=r"(ptel) : "r"(tlbreg));
+
+			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)
+				continue;
+
+			print_tlb_entry(i, pteh, ptel);
+		}
+	}
+
+	if (flagd) {
+		db_printf("DTLB:\n");
+		for (i = 0; i < 64; i++) {
+			tlbreg = DTLB_REG(i);
+
+			asm volatile("getcfg %1, 0, %0" :
+			    "=r"(pteh) : "r"(tlbreg));
+
+			asm volatile("getcfg %1, 1, %0" :
+			    "=r"(ptel) : "r"(tlbreg));
+
+			if (flagv == 0 && (pteh & SH5_PTEH_V) == 0)
+				continue;
+
+			print_tlb_entry(i, pteh, ptel);
+		}
+	}
+}
+
+static void
+print_tlb_entry(int i, pteh_t pteh, ptel_t ptel)
+{
+	int asid;
+
+	db_printf("%2d: %08x/%08x ", i, (u_int)pteh, (u_int)ptel);
+
+	if ((pteh & SH5_PTEH_V)) {
+		asid = (int)(pteh >> SH5_PTEH_ASID_SHIFT);
+		asid &= SH5_PTEH_ASID_MASK;
+
+		db_printf("%cASID:%02x ",
+		    ((pteh & SH5_PTEH_SH) == 0) ? ' ' : '*', asid);
+	} else {
+		db_printf("INVALID\n");
+		return;
+	}
+
+	db_printf("EPN:%08x PPN:%08x ", (u_int)(pteh & SH5_PTEH_EPN_MASK),
+	    (u_int)(ptel & SH5_PTEH_EPN_MASK));
+
+	switch (ptel & SH5_PTEL_SZ_MASK) {
+	case SH5_PTEL_SZ_4KB:
+		db_printf("SZ:4KB   ");
+		break;
+
+	case SH5_PTEL_SZ_64KB:
+		db_printf("SZ:64KB  ");
+		break;
+
+	case SH5_PTEL_SZ_1MB:
+		db_printf("SZ:1MB   ");
+		break;
+
+	case SH5_PTEL_SZ_512MB:
+		db_printf("SZ:512MB ");
+		break;
+	}
+
+	db_printf("PR:%c%c%c%c ",
+	    (ptel & SH5_PTEL_PR_U) ? 'u' : 's',
+	    (ptel & SH5_PTEL_PR_R) ? 'r' : '-',
+	    (ptel & SH5_PTEL_PR_W) ? 'w' : '-',
+	    (ptel & SH5_PTEL_PR_X) ? 'x' : '-');
+
+	switch (ptel & SH5_PTEL_CB_MASK) {
+	case SH5_PTEL_CB_NOCACHE:
+		db_printf("OFF\n");
+		break;
+
+	case SH5_PTEL_CB_DEVICE:
+		db_printf("DEV\n");
+		break;
+
+	case SH5_PTEL_CB_WRITEBACK:
+		db_printf("WBK\n");
+		break;
+
+	case SH5_PTEL_CB_WRITETHRU:
+		db_printf("WTH\n");
+		break;
+	}
 }
