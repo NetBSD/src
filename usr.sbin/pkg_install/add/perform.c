@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.43 2000/01/09 17:21:53 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.44 2000/01/19 23:28:28 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.43 2000/01/09 17:21:53 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.44 2000/01/19 23:28:28 hubertf Exp $");
 #endif
 #endif
 
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: perform.c,v 1.43 2000/01/09 17:21:53 hubertf Exp $");
 #include "add.h"
 
 #include <signal.h>
+#include <string.h>
 #include <sys/wait.h>
 
 static char LogDir[FILENAME_MAX];
@@ -124,19 +125,72 @@ pkg_do(char *pkg)
 		 * specification?
 		 */
 		if (IS_URL(pkg)) {
+			char buf[FILENAME_MAX];
+			char *tmppkg = pkg;
+
 			if (ispkgpattern(pkg)) {
+#if 0
 				warnx("patterns not supported in URLs, "
-				    "please install manually!");
+				    "please install %s manually!", pkg);
 				/* ... until we come up with a better solution :-/  - HF */
+				
 				goto bomb;
+#else
+				{
+					/* Handle wildcard wildcard depends */
+ 
+					char *s;
+					s=fileFindByPath(NULL, pkg);
+					if (s == NULL) {
+						warnx("no pkg found for '%s', sorry.", pkg);
+						return 1;
+					}
+					strcpy(buf, s);
+					tmppkg = buf;
+				} 
+#endif
 			}
 			
-			if (!(Home = fileGetURL(NULL, pkg))) {
-				warnx("unable to fetch `%s' by URL", pkg);
+			if (!(Home = fileGetURL(NULL, tmppkg))) {
+				warnx("unable to fetch `%s' by URL", tmppkg);
+				if (ispkgpattern(pkg))
+					return 1;
+
+				if (strstr(pkg, ".tgz") != NULL) {
+					/* There already is a ".tgz" - give up 
+					 * (We don't want to pretend to be exceedingly
+					 *  clever - the user should give something sane!)
+					 */
+					return 1;
+			}
+			
+				
+				/* Second chance - maybe just a package name was given,
+				 * without even a wildcard as a version. Tack on
+				 * the same pattern as we do for local packages: "-[0-9]*",
+				 * plus a ".tgz" as we're talking binary pkgs here.
+				 * Then retry.
+				 */
+				{
+					char *s;
+					char buf2[FILENAME_MAX];
+					
+					snprintf(buf2, sizeof(buf2), "%s-[0-9]*.tgz", tmppkg);
+					s=fileFindByPath(NULL, buf2);
+					if (s == NULL) {
+						warnx("no pkg found for '%s' on 2nd try, sorry.", buf2);
+						return 1;
+					}
+					strcpy(buf, s);
+					tmppkg = buf;
+					if (!(Home = fileGetURL(NULL, tmppkg))) {
+						warnx("unable to fetch `%s' by URL", tmppkg);
 				return 1;
 			}
+				}
+			}
 			where_to = Home;
-			strcpy(pkg_fullname, pkg);
+			strcpy(pkg_fullname, tmppkg);
 			cfile = fopen(CONTENTS_FNAME, "r");
 			if (!cfile) {
 				warnx("unable to open table of contents file `%s' - not a package?",
@@ -341,52 +395,82 @@ pkg_do(char *pkg)
 								++code;
 						}
 					} else {
-						warnx("add of dependency `%s' failed%s",
-						    p->name, Force ? " (proceeding anyway)" : "!");
+						warnx("<%s> (1) add of dependency `%s' failed%s",
+						    pkg, p->name, Force ? " (proceeding anyway)" : "!");
 						if (!Force)
 							++code;
 					} /* cp */
 				} else {
-					/* install depending pkg via FTP */
+					/* pkg is url -> install depending pkg via FTP */
+
+					char   *saved_Current;	/* allocated/set by save_dirs(), */
+					char   *saved_Previous;	/* freed by restore_dirs() */
+					char   *cp, *new_pkg, *new_name;
+
+					new_pkg = pkg;
+					new_name = p->name;
 
 					if (ispkgpattern(p->name)) {
+#if 0
 						warnx("can't install dependent pkg '%s' via FTP, "
 						    "please install manually!", p->name);
 						/* ... until we come up with a better solution - HF */
+ 
 						goto bomb;
-					} else {
-						char   *saved_Current;	/* allocated/set by save_dirs(), */
-						char   *saved_Previous;	/* freed by restore_dirs() */
-						char   *cp;
+#else
+						{
+							/* Might hack stuff for wildcard depends in here - HF */
+							
+							char *s;
+							s=fileFindByPath(pkg, p->name);
+							printf("HF: pkg='%s'\n", pkg);
+							printf("HF: s='%s'\n", s);
 
+							/* adjust new_pkg and new_name */
+							new_pkg = NULL;
+							new_name = s;
+						}						
+#endif
+					}
+
+					/* makeplaypen() and leave_playpen() clobber Current and
+					 * Previous, save them! */
 						save_dirs(&saved_Current, &saved_Previous);
 
-						if ((cp = fileGetURL(pkg, p->name)) != NULL) {
+					if ((cp = fileGetURL(new_pkg, new_name)) != NULL) {
 							if (Verbose)
-								printf("Finished loading %s over FTP.\n", p->name);
+							printf("Finished loading %s over FTP.\n", new_name);
 							if (!fexists(CONTENTS_FNAME)) {
 								warnx("autoloaded package %s has no %s file?",
 								    p->name, CONTENTS_FNAME);
 								if (!Force)
 									++code;
-							} else if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
+						} else {
+							if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
 									CONTENTS_FNAME,
 									Force ? "-f " : "",
 									Prefix ? "-p " : "",
 									Prefix ? Prefix : "",
 								Verbose ? "-v " : "")) {
-								warnx("add of dependency `%s' failed%s",
-								    p->name, Force ? " (proceeding anyway)" : "!");
+								warnx("<%s> (2) add of dependency `%s' failed%s",
+								      pkg, p->name, Force ? " (proceeding anyway)" : "!");
 								if (!Force)
 									++code;
-							} else if (Verbose)
-								printf("\t`%s' loaded successfully.\n", p->name);
+							} else if (Verbose) {
+								printf("\t`%s' loaded successfully as `%s'.\n", p->name, new_name);
+							}
+						}
 							/* Nuke the temporary playpen */
 							leave_playpen(cp);
 
-							restore_dirs(saved_Current, saved_Previous);
-						}
+					} else {
+						if (Verbose)
+							warnx("HF: fileGetURL('%s', '%s') failed", new_pkg, new_name);
+						if (!Force)
+							code++;
 					}
+					
+					restore_dirs(saved_Current, saved_Previous);
 				}
 			} else {
 			        /* fake install (???) */
@@ -628,5 +712,8 @@ pkg_perform(lpkg_head_t *pkgs)
 			free_lpkg(lpp);
 		}
 	}
+	
+	ftp_stop();
+	
 	return err_cnt;
 }
