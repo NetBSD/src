@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.4 2005/03/13 15:33:45 perry Exp $
+# $NetBSD: Makefile,v 1.5 2005/03/13 15:40:32 perry Exp $
 
-SUBDIR+= swab
+SUBDIR+= memmem swab
 
 .include <bsd.subdir.mk>
