@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.12 1994/07/16 13:45:59 mycroft Exp $
+ *	$Id: if_ie.c,v 1.13 1994/08/14 09:24:55 mycroft Exp $
  */
 
 /*
@@ -68,7 +68,7 @@
 Mode of operation:
 
 We run the 82586 in a standard Ethernet mode.  We keep NFRAMES received frame
-descriptors around for the receiver to use, and NBUFFS associated receive
+descriptors around for the receiver to use, and NRXBUF associated receive
 buffer descriptors, both in a circular list.  Whenever a frame is received, we
 rotate both lists as necessary.  (The 586 treats both lists as a simple
 queue.)  We also keep a transmit command around so that packets can be sent
@@ -161,8 +161,6 @@ static struct mbuf *last_not_for_us;
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-#define IE_BUF_LEN 1512		/* length of transmit buffer */
-
 /* 
 sizeof(iscp) == 1+1+2+4 == 8
 sizeof(scb) == 2+2+2+2+2+2+2+2 == 16
@@ -173,12 +171,12 @@ sizeof(transmit buffer desc) == 8
 -----
 1946
 
-NBUFFS * sizeof(rbd) == NBUFFS*(2+2+4+2+2) == NBUFFS*12
-NBUFFS * IE_RBUF_SIZE == NBUFFS*256
+NRXBUF * sizeof(rbd) == NRXBUF*(2+2+4+2+2) == NRXBUF*12
+NRXBUF * IE_RBUF_SIZE == NRXBUF*256
 
-NBUFFS should be (16384 - 1946) / (256 + 12) == 14438 / 268 == 53
+NRXBUF should be (16384 - 1946) / (256 + 12) == 14438 / 268 == 53
 
-With NBUFFS == 48, this leaves us 1574 bytes for another command or
+With NRXBUF == 48, this leaves us 1574 bytes for another command or
 more buffers.  Another transmit command would be 18+8+1512 == 1538
 ---just barely fits!
 
@@ -188,8 +186,11 @@ both transmit and receive buffers.
 */
 
 #define	NFRAMES		16	/* number of frames to allow for receive */
-#define	NBUFFS		48	/* number of buffers to allocate */
+#define	NRXBUF		48	/* number of buffers to allocate */
 #define	IE_RBUF_SIZE	256	/* size of each buffer, MUST BE POWER OF TWO */
+#define	NTXBUF		2	/* number of transmit buffer/command pairs */
+#define	IE_TBUF_SIZE	1512	/* length of transmit buffer */
+
 
 enum ie_hardware {
 	IE_STARLAN10,
@@ -231,14 +232,14 @@ struct ie_softc {
 	volatile struct ie_int_sys_conf_ptr *iscp;
 	volatile struct ie_sys_ctl_block *scb;
 	volatile struct ie_recv_frame_desc *rframes[NFRAMES];
-	volatile struct ie_recv_buf_desc *rbuffs[NBUFFS];
-	volatile char *cbuffs[NBUFFS];
+	volatile struct ie_recv_buf_desc *rbuffs[NRXBUF];
+	volatile char *cbuffs[NRXBUF];
 	int rfhead, rftail, rbhead, rbtail;
 
-	volatile struct ie_xmit_cmd *xmit_cmds[2];
-	volatile struct ie_xmit_buf *xmit_buffs[2];
+	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
+	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
 	int xmit_count;
-	u_char *xmit_cbuffs[2];
+	u_char *xmit_cbuffs[NTXBUF];
 
 	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
 	int mcast_count;
@@ -373,7 +374,7 @@ sl_probe(sc, ia)
 	sc->chan_attn = sl_chan_attn;
 
 	c = inb(PORT + IEATT_REVISION);
-	switch(SL_BOARD(c)) {
+	switch (SL_BOARD(c)) {
 	case SL10_BOARD:
 		sc->hard_type = IE_STARLAN10;
 		break;
@@ -440,6 +441,12 @@ el_probe(sc, ia)
 	elink_idseq(ELINK_507_POLY);
 	outb(ELINK_ID_PORT, 0xff);
 
+	/* Check for 3COM signature before proceeding. */
+	outb(PORT + IE507_CTRL, inb(PORT + IE507_CTRL) & 0xfc);	/* XXX */
+	for (i = 0; i < 6; i++)
+		if (inb(PORT + i) != signature[i])
+			return 0;
+	
 	c = inb(PORT + IE507_MADDR);
 	if (c & 0x20) {
 		printf("%s: can't map 3C507 RAM in high memory\n",
@@ -454,10 +461,6 @@ el_probe(sc, ia)
 
 	outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 
-	for (i = 0; i < 6; i++)
-		if (inb(PORT + i) != signature[i])
-			return 0;
-	
 	c = inb(PORT + IE507_IRQ) & 0x0f;
 
 	if (ia->ia_irq != (1 << c)) {
@@ -914,7 +917,7 @@ ie_packet_len(sc)
 		i = sc->rbuffs[head]->ie_rbd_actual & IE_RBD_LAST;
 	
 		acc += ie_buflen(sc, head);
-		head = (head + 1) % NBUFFS;
+		head = (head + 1) % NRXBUF;
 	} while (!i);
 
 	return acc;
@@ -1081,9 +1084,9 @@ ieget(sc, mp, ehp, to_bpf)
 		offset = 0;
 		sc->rbuffs[head]->ie_rbd_actual = 0;
 		sc->rbuffs[head]->ie_rbd_length |= IE_RBD_LAST;
-		sc->rbhead = head = (head + 1) % NBUFFS;
+		sc->rbhead = head = (head + 1) % NRXBUF;
 		sc->rbuffs[sc->rbtail]->ie_rbd_length &= ~IE_RBD_LAST;
-		sc->rbtail = (sc->rbtail + 1) % NBUFFS;
+		sc->rbtail = (sc->rbtail + 1) % NRXBUF;
 	}
 
 	/*
@@ -1218,9 +1221,9 @@ ie_drop_packet_buffer(sc)
 		
 		sc->rbuffs[sc->rbhead]->ie_rbd_length |= IE_RBD_LAST;
 		sc->rbuffs[sc->rbhead]->ie_rbd_actual = 0;
-		sc->rbhead = (sc->rbhead + 1) % NBUFFS;
+		sc->rbhead = (sc->rbhead + 1) % NRXBUF;
 		sc->rbuffs[sc->rbtail]->ie_rbd_length &= ~IE_RBD_LAST;
-		sc->rbtail = (sc->rbtail + 1) % NBUFFS;
+		sc->rbtail = (sc->rbtail + 1) % NRXBUF;
 	} while (!i);
 }
 
@@ -1250,7 +1253,7 @@ iestart(ifp)
 		buffer = sc->xmit_cbuffs[sc->xmit_count];
 		len = 0;
 		
-		for (m0 = m; m && len < IE_BUF_LEN; m = m->m_next) {
+		for (m0 = m; m && len < IE_TBUF_SIZE; m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
@@ -1281,7 +1284,7 @@ iestart(ifp)
 		
 		*bptr = MK_16(MEM, sc->xmit_cmds[sc->xmit_count]);
 		bptr = &sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_link;
-	} while (++sc->xmit_count < 2);
+	} while (++sc->xmit_count < NTXBUF);
 	
 	/*
 	 * If we queued up anything for transmission, send it.
@@ -1647,7 +1650,7 @@ setup_rfa(ptr, sc)
 	 */
 	rbd = (void *)ptr;
 	
-	for (i = 0; i < NBUFFS; i++) {
+	for (i = 0; i < NRXBUF; i++) {
 		sc->rbuffs[i] = rbd;
 		bzero((char *)rbd, sizeof *rbd);
 		ptr = (caddr_t)Align(ptr + sizeof *rbd);
@@ -1659,19 +1662,19 @@ setup_rfa(ptr, sc)
 	}
 	
 	/* Now link them together */
-	for (i = 0; i < NBUFFS; i++)
+	for (i = 0; i < NRXBUF; i++)
 		sc->rbuffs[i]->ie_rbd_next =
-		    MK_16(MEM, sc->rbuffs[(i + 1) % NBUFFS]);
+		    MK_16(MEM, sc->rbuffs[(i + 1) % NRXBUF]);
 	
 	/* Tag EOF on the last one */
-	sc->rbuffs[NBUFFS - 1]->ie_rbd_length |= IE_RBD_LAST;
+	sc->rbuffs[NRXBUF - 1]->ie_rbd_length |= IE_RBD_LAST;
 	
 	/* We use the head and tail pointers on receive to keep track of
 	 * the order in which RFDs and RBDs are used. */
 	sc->rfhead = 0;
 	sc->rftail = NFRAMES - 1;
 	sc->rbhead = 0;
-	sc->rbtail = NBUFFS - 1;
+	sc->rbtail = NRXBUF - 1;
 	
 	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
 	sc->rframes[0]->ie_fd_buf_desc = MK_16(MEM, sc->rbuffs[0]);
@@ -1724,6 +1727,7 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	caddr_t ptr;
+	int n;
 	
 	ptr = (caddr_t)Align((caddr_t)scb + sizeof *scb);
 	
@@ -1786,31 +1790,22 @@ ieinit(sc)
 	/*
 	 * Finally, the transmit command and buffer are the last little bit of work.
 	 */
-	sc->xmit_cmds[0] = (void *)ptr;
-	ptr += sizeof *sc->xmit_cmds[0];
-	ptr = Align(ptr);
-	sc->xmit_buffs[0] = (void *)ptr;
-	ptr += sizeof *sc->xmit_buffs[0];
-	ptr = Align(ptr);
+	for (n = 0; n < NTXBUF; n++) {
+		sc->xmit_cmds[n] = (void *)ptr;
+		bzero(ptr, sizeof *sc->xmit_cmds[n]);
+		ptr += sizeof *sc->xmit_cmds[n];
+		ptr = Align(ptr);
+		sc->xmit_buffs[n] = (void *)ptr;
+		bzero(ptr, sizeof *sc->xmit_buffs[n]);
+		ptr += sizeof *sc->xmit_buffs[n];
+		ptr = Align(ptr);
+	}
 	
-	/* Second transmit command */
-	sc->xmit_cmds[1] = (void *)ptr;
-	ptr += sizeof *sc->xmit_cmds[1];
-	ptr = Align(ptr);
-	sc->xmit_buffs[1] = (void *)ptr;
-	ptr += sizeof *sc->xmit_buffs[1];
-	ptr = Align(ptr);
-	
-	/* Both transmit buffers */
-	sc->xmit_cbuffs[0] = (void *)ptr;
-	ptr += IE_BUF_LEN;
-	ptr = Align(ptr);
-	sc->xmit_cbuffs[1] = (void *)ptr;
-	
-	bzero((caddr_t)sc->xmit_cmds[0], sizeof *sc->xmit_cmds[0]);
-	bzero((caddr_t)sc->xmit_buffs[0], sizeof *sc->xmit_buffs[0]);
-	bzero((caddr_t)sc->xmit_cmds[1], sizeof *sc->xmit_cmds[0]);
-	bzero((caddr_t)sc->xmit_buffs[1], sizeof *sc->xmit_buffs[0]);
+	for (n = 0; n < NTXBUF; n++) {
+		sc->xmit_cbuffs[n] = (void *)ptr;
+		ptr += IE_TBUF_SIZE;
+		ptr = Align(ptr);
+	}
 	
 	/*
 	 * This must be coordinated with iestart() and ietint().
@@ -1823,7 +1818,7 @@ ieinit(sc)
 }
 
 static void
-ie_stop(sc)
+iestop(sc)
 	struct ie_softc *sc;
 {
 
@@ -1832,7 +1827,7 @@ ie_stop(sc)
 
 int
 ieioctl(ifp, cmd, data)
-	struct ifnet *ifp;
+	register struct ifnet *ifp;
 	int cmd;
 	caddr_t data;
 {
@@ -1871,14 +1866,10 @@ ieioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else {
-				/*
-				 *
-				 */
+			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
-			}
 			/* Set new address. */
 			ieinit(sc);
 			break;
@@ -1890,18 +1881,14 @@ ieioctl(ifp, cmd, data)
 		}
 		break;
 		
-	    case SIOCSIFFLAGS:
-		/*
-		 * Note that this device doesn't have an "all multicast" mode, so we
-		 * must turn on promiscuous mode and do the filtering manually.
-		 */
+	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			ie_stop(sc);
+			iestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1915,6 +1902,7 @@ ieioctl(ifp, cmd, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
+			iestop(sc);
 			ieinit(sc);
 		}
 		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
