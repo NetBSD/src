@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.6 1999/10/17 15:06:46 tsubai Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.7 1999/12/17 03:21:10 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,7 @@
 
 #include <newsmips/dev/scc.h>
 
-#include "le.h"
+#include "sc.h"
 #include "kb.h"
 #include "ms.h"
 /*#include "lp.h"*/
@@ -75,13 +75,11 @@ void level0_intr __P((void));
 void level1_intr __P((void));
 void dma_intr __P((void));
 void print_int_stat __P((char *));
-void exec_hb_intr2 __P((void));
-void exec_hb_intr4 __P((void));
 void news3400_errintr __P((u_int));
 
-extern int leintr __P((int));
-extern int sc_intr __P((void));
-extern void kbm_rint __P((int));
+int sc_intr __P((void));
+void kbm_rint __P((int));
+void hb_intr_dispatch __P((int));
 
 static int badaddr_flag;
 
@@ -185,25 +183,12 @@ level0_intr()
 	stat = *(volatile u_char *)INTST1 & LEVEL0_MASK;
 	*(u_char *)INTCLR1 = stat;
 
-	if (stat & INTST1_DMA)
-		dma_intr();
-	if (stat & INTST1_SLOT1) {
+	hb_intr_dispatch(0);
+
+	if (stat & INTST1_SLOT1)
 		intrcnt[SLOT1_INTR]++;
-		exec_hb_intr2();
-	}
-#if NLE > 0
-	if (stat & INTST1_SLOT3) {
-		int s, t;
-
-		s = splimp();
-		t = leintr(1);
-		splx(s);
-		if (t == 0)
-			exec_hb_intr4();
+	if (stat & INTST1_SLOT3)
 		intrcnt[SLOT3_INTR]++;
-	}
-#endif
-
 	if (stat & INTST1_EXT1)
 		print_int_stat("EXT #1");
 	if (stat & INTST1_EXT3)
@@ -240,21 +225,13 @@ level1_intr()
 		*(volatile u_char *)INTCLR1 = INTCLR1_BEEP;
 		print_int_stat("BEEP");
 	}
-	if (stat & INTST1_SCC) {
-		extern void zs_intr();
-
+	if (stat & INTST1_SCC)
 		intrcnt[SERIAL0_INTR]++;
-		zs_intr();
-		if (saved_inten1 & *(u_char *)INTST1 & INTST1_SCC)
-			zs_intr();
-	}
 
-#if NLE > 0
-	if (stat & INTST1_LANCE) {
+	if (stat & INTST1_LANCE)
 		intrcnt[LANCE_INTR]++;
-		leintr(0);
-	}
-#endif
+
+	hb_intr_dispatch(1);
 
 	*(u_char *)INTEN1 = saved_inten1;
 
@@ -289,6 +266,7 @@ level1_intr()
 
 /*
  * DMA interrupt service routine.
+ * XXX only SCSI works now.
  */
 void
 dma_intr()
@@ -312,9 +290,11 @@ dma_intr()
 			printf("dma_intr: MRQ\n");
 	}
 
+#if NSC > 0
 	/* SCSI Dispatch */
 	if (gstat & CH_INT(CH_SCSI))
 		sc_intr();
+#endif
 
 #if NFD > 0
         /* FDC Interrupt Dispatch */
@@ -344,18 +324,6 @@ print_int_stat(msg)
 	else
 		printf("intr: ");
 	printf("INTST0=0x%x, INTST1=0x%x.\n", s0, s1);
-}
-
-void
-exec_hb_intr2()
-{
-	printf("stray hb interrupt level 2\n");
-}
-
-void
-exec_hb_intr4()
-{
-	printf("stray hb interrupt level 4\n");
 }
 
 int
