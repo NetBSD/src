@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.46 2001/05/26 21:27:03 chs Exp $ */
+/* $NetBSD: bus_dma.c,v 1.47 2001/07/12 23:25:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46 2001/05/26 21:27:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47 2001/07/12 23:25:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct alpha_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
