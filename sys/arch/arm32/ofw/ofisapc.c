@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/intr.h>
 #include <arm32/isa/isa_machdep.h>
@@ -55,9 +56,7 @@ struct cfattach ofisapc_ca = {
 	sizeof(struct device), ofisapcprobe, ofisapcattach
 };
 
-struct cfdriver ofisapc_cd = {
-	NULL, "ofisapc", DV_DULL
-}; 
+extern struct cfdriver ofisapc_cd;
 
 
 int
@@ -66,16 +65,14 @@ ofisapcprobe(parent, cf, aux)
     struct cfdata *cf;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     char type[64];
     char name[64];
-    char model[64];
-    char compatible[64];
 
     /* At a minimum, must match type and name properties. */
-    if ( OF_getprop(ofp->phandle, "device_type", type, sizeof(type)) < 0 ||
+    if ( OF_getprop(oba->oba_phandle, "device_type", type, sizeof(type)) < 0 ||
 	 strcmp(type, "keyboard") != 0 ||
-	 OF_getprop(ofp->phandle, "name", name, sizeof(name)) < 0 ||
+	 OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
 	 strcmp(name, "keyboard") != 0)
 	return 0;
 
@@ -89,10 +86,8 @@ ofisapcattach(parent, dev, aux)
     struct device *parent, *dev;
     void *aux;
 {
-    struct ofprobe         *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     static struct isa_attach_args ia;
-    bus_space_tag_t        nsioIot;
-    bus_space_handle_t     nsioIoh;
 
     printf("\n");
     
@@ -115,8 +110,7 @@ ofisapcattach(parent, dev, aux)
     ia.ia_drq = DRQUNK;
     ia.ia_maddr = MADDRUNK;
     ia.ia_msize = 0;
-    ia.ia_aux = (void *)ofp->phandle;
-    ia.ia_delaybah = 0;			/* don't have this! */
+    ia.ia_aux = (void *)oba->oba_phandle;
 
     config_found(dev, &ia, NULL);
 

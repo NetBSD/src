@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/socket.h>
+#include <sys/systm.h>
 
 #include <machine/intr.h>
 #include <arm32/isa/isa_machdep.h>
@@ -54,9 +54,7 @@ struct cfattach ofisascr_ca = {
 	sizeof(struct device), ofisascrprobe, ofisascrattach
 };
 
-struct cfdriver ofisascr_cd = {
-	NULL, "ofisascr", DV_DULL
-};
+extern struct cfdriver ofisascr_cd;
 
 
 int
@@ -65,24 +63,18 @@ ofisascrprobe(parent, cf, aux)
     struct cfdata *cf;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     char type[64];
     char name[64];
-    char model[64];
-    char compatible[64];
-
-        
-    
 
     /* At a minimum, must match type and name properties. */
-    if ( OF_getprop(ofp->phandle, "device_type", type, sizeof(type)) < 0 ||
+    if ( OF_getprop(oba->oba_phandle, "device_type", type, sizeof(type)) < 0 ||
 	 strcmp(type, "ISO7816") != 0 ||
-	 OF_getprop(ofp->phandle, "name", name, sizeof(name)) < 0 ||
+	 OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
 	 strcmp(name, "scr") != 0)
     {
 	return 0;
     }
-    
 	
     /* Match, we dont have models yet  */
     return 2;
@@ -95,7 +87,7 @@ ofisascrattach(parent, dev, aux)
     struct device *parent, *dev;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     struct isa_attach_args ia;
     
     printf("\n");
@@ -110,8 +102,7 @@ ofisascrattach(parent, dev, aux)
     ia.ia_drq = DRQUNK;
     ia.ia_maddr = MADDRUNK;
     ia.ia_msize = 0;
-    ia.ia_aux = (void *)ofp->phandle;
-    ia.ia_delaybah = 0;			/* don't have this! */
+    ia.ia_aux = (void *)oba->oba_phandle;
     
     config_found(dev, &ia, NULL);
 }

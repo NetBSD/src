@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <vm/vm.h>
@@ -58,9 +59,7 @@ struct cfattach ofrom_ca = {
 	sizeof(struct ofrom_softc), ofromprobe, ofromattach
 };
 
-struct cfdriver ofrom_cd = {
-	NULL, "ofrom", DV_DULL
-};
+extern struct cfdriver ofrom_cd;
 
 cdev_decl(ofrom);
 
@@ -70,10 +69,10 @@ ofromprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	const char *compatible_strings[] = { "rom", NULL };
 
-	return (of_compatible(ofp->phandle, compatible_strings) == -1) ?
+	return (of_compatible(oba->oba_phandle, compatible_strings) == -1) ?
 	    0 : 5;
 }
 
@@ -84,14 +83,14 @@ ofromattach(parent, self, aux)
 	void *aux;
 {
 	struct ofrom_softc *sc = (struct ofrom_softc *)self;
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char regbuf[8];
 
-	if (OF_getproplen(ofp->phandle, "reg") != 8) {
+	if (OF_getproplen(oba->oba_phandle, "reg") != 8) {
 		printf(": invalid reg property\n");
 		return;
 	}
-	if (OF_getprop(ofp->phandle, "reg", regbuf, sizeof regbuf) != 8) {
+	if (OF_getprop(oba->oba_phandle, "reg", regbuf, sizeof regbuf) != 8) {
 		printf(": couldn't read reg property\n");
 		return;
 	}
@@ -99,7 +98,7 @@ ofromattach(parent, self, aux)
 	sc->size = of_decode_int(&regbuf[4]);
 	sc->enabled = 1;
 
-	printf(": 0x%x-0x%x\n", sc->base, sc->base + sc->size - 1);
+	printf(": %#lx-%#lx\n", sc->base, sc->base + sc->size - 1);
 }
 
 int
