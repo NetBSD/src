@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.3 2004/02/14 14:33:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.3 2004/02/14 14:33:29 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,21 +116,6 @@ pckbc_mace_attach(parent, self, aux)
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
-}
-
-/* XXX */
-
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-
-	return (ENXIO);
 }
 
 void
