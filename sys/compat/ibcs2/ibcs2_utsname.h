@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_utsname.h,v 1.2 1994/10/26 02:53:14 cgd Exp $	*/
+/*	$NetBSD: ibcs2_utsname.h,v 1.2.18.1 1998/05/05 09:39:48 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994, 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,5 +41,19 @@ struct ibcs2_utsname {
 	char	machine[9];
 };
 #define ibcs2_utsname_len	(sizeof(struct ibcs2_utsname))
+
+struct scoutsname {
+	char	sysname[9];
+	char 	nodename[9];
+	char	release[16];
+	char	kid[20];
+	char	machine[9];
+	char	bustype[9];
+	char	serial[10];
+	u_short	origin;
+	u_short	oem;
+	char	nusers[9];
+	u_short	ncpu;
+};
 
 #endif /* _IBCS2_UTSNAME_H */
