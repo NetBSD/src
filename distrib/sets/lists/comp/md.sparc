@@ -1,51 +1,51 @@
-# $NetBSD: md.sparc,v 1.38 2000/01/14 13:40:32 pk Exp $
-./usr/include/sparc
-./usr/include/sparc/_G_config.h
-./usr/include/sparc/ansi.h
-./usr/include/sparc/aout_machdep.h
-./usr/include/sparc/apmvar.h
-./usr/include/sparc/asm.h
-./usr/include/sparc/autoconf.h
-./usr/include/sparc/bootinfo.h
-./usr/include/sparc/bswap.h
-./usr/include/sparc/cdefs.h
-./usr/include/sparc/cgtworeg.h
-./usr/include/sparc/conf.h
-./usr/include/sparc/cpu.h
-./usr/include/sparc/disklabel.h
-./usr/include/sparc/eeprom.h
-./usr/include/sparc/elf_machdep.h
-./usr/include/sparc/endian.h
-./usr/include/sparc/fbio.h
-./usr/include/sparc/float.h
-./usr/include/sparc/frame.h
-./usr/include/sparc/fsr.h
-./usr/include/sparc/idprom.h
-./usr/include/sparc/ieee.h
-./usr/include/sparc/ieeefp.h
-./usr/include/sparc/kbd.h
-./usr/include/sparc/kbio.h
-./usr/include/sparc/kcore.h
-./usr/include/sparc/limits.h
-./usr/include/sparc/math.h
-./usr/include/sparc/oldmon.h
-./usr/include/sparc/openpromio.h
-./usr/include/sparc/param.h
-./usr/include/sparc/pcb.h
-./usr/include/sparc/pmap.h
-./usr/include/sparc/proc.h
-./usr/include/sparc/profile.h
-./usr/include/sparc/psl.h
-./usr/include/sparc/pte.h
-./usr/include/sparc/ptrace.h
-./usr/include/sparc/reg.h
-./usr/include/sparc/reloc.h
-./usr/include/sparc/setjmp.h
-./usr/include/sparc/signal.h
-./usr/include/sparc/stdarg.h
-./usr/include/sparc/tctrl.h
-./usr/include/sparc/trap.h
-./usr/include/sparc/types.h
-./usr/include/sparc/varargs.h
-./usr/include/sparc/vmparam.h
-./usr/include/sparc/vuid_event.h
+# $NetBSD: md.sparc,v 1.39 2000/02/03 05:28:01 jwise Exp $
+./usr/include/sparc	comp-c-include
+./usr/include/sparc/_G_config.h	comp-c-include
+./usr/include/sparc/ansi.h	comp-c-include
+./usr/include/sparc/aout_machdep.h	comp-c-include
+./usr/include/sparc/apmvar.h	comp-c-include
+./usr/include/sparc/asm.h	comp-c-include
+./usr/include/sparc/autoconf.h	comp-c-include
+./usr/include/sparc/bootinfo.h	comp-c-include
+./usr/include/sparc/bswap.h	comp-c-include
+./usr/include/sparc/cdefs.h	comp-c-include
+./usr/include/sparc/cgtworeg.h	comp-c-include
+./usr/include/sparc/conf.h	comp-c-include
+./usr/include/sparc/cpu.h	comp-c-include
+./usr/include/sparc/disklabel.h	comp-c-include
+./usr/include/sparc/eeprom.h	comp-c-include
+./usr/include/sparc/elf_machdep.h	comp-c-include
+./usr/include/sparc/endian.h	comp-c-include
+./usr/include/sparc/fbio.h	comp-c-include
+./usr/include/sparc/float.h	comp-c-include
+./usr/include/sparc/frame.h	comp-c-include
+./usr/include/sparc/fsr.h	comp-c-include
+./usr/include/sparc/idprom.h	comp-c-include
+./usr/include/sparc/ieee.h	comp-c-include
+./usr/include/sparc/ieeefp.h	comp-c-include
+./usr/include/sparc/kbd.h	comp-c-include
+./usr/include/sparc/kbio.h	comp-c-include
+./usr/include/sparc/kcore.h	comp-c-include
+./usr/include/sparc/limits.h	comp-c-include
+./usr/include/sparc/math.h	comp-c-include
+./usr/include/sparc/oldmon.h	comp-c-include
+./usr/include/sparc/openpromio.h	comp-c-include
+./usr/include/sparc/param.h	comp-c-include
+./usr/include/sparc/pcb.h	comp-c-include
+./usr/include/sparc/pmap.h	comp-c-include
+./usr/include/sparc/proc.h	comp-c-include
+./usr/include/sparc/profile.h	comp-c-include
+./usr/include/sparc/psl.h	comp-c-include
+./usr/include/sparc/pte.h	comp-c-include
+./usr/include/sparc/ptrace.h	comp-c-include
+./usr/include/sparc/reg.h	comp-c-include
+./usr/include/sparc/reloc.h	comp-c-include
+./usr/include/sparc/setjmp.h	comp-c-include
+./usr/include/sparc/signal.h	comp-c-include
+./usr/include/sparc/stdarg.h	comp-c-include
+./usr/include/sparc/tctrl.h	comp-c-include
+./usr/include/sparc/trap.h	comp-c-include
+./usr/include/sparc/types.h	comp-c-include
+./usr/include/sparc/varargs.h	comp-c-include
+./usr/include/sparc/vmparam.h	comp-c-include
+./usr/include/sparc/vuid_event.h	comp-c-include

@@ -1,48 +1,48 @@
-# $NetBSD: ad.mips,v 1.15 1999/12/23 10:22:59 kleink Exp $
-./usr/bin/elf2aout
-./usr/bin/elf2ecoff
+# $NetBSD: ad.mips,v 1.16 2000/02/03 05:27:57 jwise Exp $
+./usr/bin/elf2aout	comp-sysutil-bin
+./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips
-./usr/include/mips/ansi.h
-./usr/include/mips/aout_machdep.h
-./usr/include/mips/asm.h
-./usr/include/mips/bsd-aout.h
-./usr/include/mips/bswap.h
-./usr/include/mips/cachectl.h
-./usr/include/mips/cdefs.h
-./usr/include/mips/cpu.h
-./usr/include/mips/cpuregs.h
-./usr/include/mips/db_machdep.h
-./usr/include/mips/ecoff_machdep.h
-./usr/include/mips/elf_machdep.h
-./usr/include/mips/endian.h
-./usr/include/mips/float.h
-./usr/include/mips/ieee.h
-./usr/include/mips/ieeefp.h
-./usr/include/mips/kcore.h
-./usr/include/mips/kdbparam.h
-./usr/include/mips/limits.h
-./usr/include/mips/locore.h
-./usr/include/mips/math.h
-./usr/include/mips/mips1_pte.h
-./usr/include/mips/mips3_pte.h
-./usr/include/mips/mips_opcode.h
-./usr/include/mips/mips_param.h
-./usr/include/mips/pcb.h
-./usr/include/mips/pmap.h
-./usr/include/mips/proc.h
-./usr/include/mips/profile.h
-./usr/include/mips/psl.h
-./usr/include/mips/pte.h
-./usr/include/mips/ptrace.h
-./usr/include/mips/reg.h
-./usr/include/mips/regdef.h
-./usr/include/mips/regnum.h
-./usr/include/mips/reloc.h
-./usr/include/mips/setjmp.h
-./usr/include/mips/signal.h
-./usr/include/mips/stdarg.h
-./usr/include/mips/sysarch.h
-./usr/include/mips/trap.h
-./usr/include/mips/types.h
-./usr/include/mips/varargs.h
-./usr/include/mips/vmparam.h
+./usr/include/mips/ansi.h		comp-c-include
+./usr/include/mips/aout_machdep.h		comp-c-include
+./usr/include/mips/asm.h		comp-c-include
+./usr/include/mips/bsd-aout.h		comp-c-include
+./usr/include/mips/bswap.h		comp-c-include
+./usr/include/mips/cachectl.h		comp-c-include
+./usr/include/mips/cdefs.h		comp-c-include
+./usr/include/mips/cpu.h		comp-c-include
+./usr/include/mips/cpuregs.h		comp-c-include
+./usr/include/mips/db_machdep.h		comp-c-include
+./usr/include/mips/ecoff_machdep.h		comp-c-include
+./usr/include/mips/elf_machdep.h		comp-c-include
+./usr/include/mips/endian.h		comp-c-include
+./usr/include/mips/float.h		comp-c-include
+./usr/include/mips/ieee.h		comp-c-include
+./usr/include/mips/ieeefp.h		comp-c-include
+./usr/include/mips/kcore.h		comp-c-include
+./usr/include/mips/kdbparam.h		comp-c-include
+./usr/include/mips/limits.h		comp-c-include
+./usr/include/mips/locore.h		comp-c-include
+./usr/include/mips/math.h		comp-c-include
+./usr/include/mips/mips1_pte.h		comp-c-include
+./usr/include/mips/mips3_pte.h		comp-c-include
+./usr/include/mips/mips_opcode.h		comp-c-include
+./usr/include/mips/mips_param.h		comp-c-include
+./usr/include/mips/pcb.h		comp-c-include
+./usr/include/mips/pmap.h		comp-c-include
+./usr/include/mips/proc.h		comp-c-include
+./usr/include/mips/profile.h		comp-c-include
+./usr/include/mips/psl.h		comp-c-include
+./usr/include/mips/pte.h		comp-c-include
+./usr/include/mips/ptrace.h		comp-c-include
+./usr/include/mips/reg.h		comp-c-include
+./usr/include/mips/regdef.h		comp-c-include
+./usr/include/mips/regnum.h		comp-c-include
+./usr/include/mips/reloc.h		comp-c-include
+./usr/include/mips/setjmp.h		comp-c-include
+./usr/include/mips/signal.h		comp-c-include
+./usr/include/mips/stdarg.h		comp-c-include
+./usr/include/mips/sysarch.h		comp-c-include
+./usr/include/mips/trap.h		comp-c-include
+./usr/include/mips/types.h		comp-c-include
+./usr/include/mips/varargs.h		comp-c-include
+./usr/include/mips/vmparam.h		comp-c-include

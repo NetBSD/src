@@ -1,54 +1,54 @@
-# $NetBSD: md.bebox,v 1.5 1999/12/23 10:22:59 kleink Exp $
-./usr/include/bebox
-./usr/include/bebox/_G_config.h
-./usr/include/bebox/ansi.h
-./usr/include/bebox/aout_machdep.h
-./usr/include/bebox/asm.h
-./usr/include/bebox/bat.h
-./usr/include/bebox/bootinfo.h
-./usr/include/bebox/bswap.h
-./usr/include/bebox/bus.h
-./usr/include/bebox/cdefs.h
-./usr/include/bebox/conf.h
-./usr/include/bebox/cpu.h
-./usr/include/bebox/cpufunc.h
-./usr/include/bebox/db_machdep.h
-./usr/include/bebox/disklabel.h
-./usr/include/bebox/display.h
-./usr/include/bebox/elf_machdep.h
-./usr/include/bebox/endian.h
-./usr/include/bebox/float.h
-./usr/include/bebox/fpu.h
-./usr/include/bebox/frame.h
-./usr/include/bebox/ieee.h
-./usr/include/bebox/ieeefp.h
-./usr/include/bebox/intr.h
-./usr/include/bebox/ipkdb.h
-./usr/include/bebox/kcore.h
-./usr/include/bebox/kgdb.h
-./usr/include/bebox/limits.h
-./usr/include/bebox/machine_type.h
-./usr/include/bebox/math.h
-./usr/include/bebox/mouse.h
-./usr/include/bebox/param.h
-./usr/include/bebox/pcb.h
-./usr/include/bebox/pccons.h
-./usr/include/bebox/pio.h
-./usr/include/bebox/pmap.h
-./usr/include/bebox/powerpc.h
-./usr/include/bebox/proc.h
-./usr/include/bebox/profile.h
-./usr/include/bebox/psl.h
-./usr/include/bebox/pte.h
-./usr/include/bebox/ptrace.h
-./usr/include/bebox/reg.h
-./usr/include/bebox/reloc.h
-./usr/include/bebox/setjmp.h
-./usr/include/bebox/signal.h
-./usr/include/bebox/spkr.h
-./usr/include/bebox/stdarg.h
-./usr/include/bebox/trap.h
-./usr/include/bebox/types.h
-./usr/include/bebox/va-ppc.h
-./usr/include/bebox/varargs.h
-./usr/include/bebox/vmparam.h
+# $NetBSD: md.bebox,v 1.6 2000/02/03 05:27:58 jwise Exp $
+./usr/include/bebox	comp-c-include
+./usr/include/bebox/_G_config.h	comp-c-include
+./usr/include/bebox/ansi.h	comp-c-include
+./usr/include/bebox/aout_machdep.h	comp-c-include
+./usr/include/bebox/asm.h	comp-c-include
+./usr/include/bebox/bat.h	comp-c-include
+./usr/include/bebox/bootinfo.h	comp-c-include
+./usr/include/bebox/bswap.h	comp-c-include
+./usr/include/bebox/bus.h	comp-c-include
+./usr/include/bebox/cdefs.h	comp-c-include
+./usr/include/bebox/conf.h	comp-c-include
+./usr/include/bebox/cpu.h	comp-c-include
+./usr/include/bebox/cpufunc.h	comp-c-include
+./usr/include/bebox/db_machdep.h	comp-c-include
+./usr/include/bebox/disklabel.h	comp-c-include
+./usr/include/bebox/display.h	comp-c-include
+./usr/include/bebox/elf_machdep.h	comp-c-include
+./usr/include/bebox/endian.h	comp-c-include
+./usr/include/bebox/float.h	comp-c-include
+./usr/include/bebox/fpu.h	comp-c-include
+./usr/include/bebox/frame.h	comp-c-include
+./usr/include/bebox/ieee.h	comp-c-include
+./usr/include/bebox/ieeefp.h	comp-c-include
+./usr/include/bebox/intr.h	comp-c-include
+./usr/include/bebox/ipkdb.h	comp-c-include
+./usr/include/bebox/kcore.h	comp-c-include
+./usr/include/bebox/kgdb.h	comp-c-include
+./usr/include/bebox/limits.h	comp-c-include
+./usr/include/bebox/machine_type.h	comp-c-include
+./usr/include/bebox/math.h	comp-c-include
+./usr/include/bebox/mouse.h	comp-c-include
+./usr/include/bebox/param.h	comp-c-include
+./usr/include/bebox/pcb.h	comp-c-include
+./usr/include/bebox/pccons.h	comp-c-include
+./usr/include/bebox/pio.h	comp-c-include
+./usr/include/bebox/pmap.h	comp-c-include
+./usr/include/bebox/powerpc.h	comp-c-include
+./usr/include/bebox/proc.h	comp-c-include
+./usr/include/bebox/profile.h	comp-c-include
+./usr/include/bebox/psl.h	comp-c-include
+./usr/include/bebox/pte.h	comp-c-include
+./usr/include/bebox/ptrace.h	comp-c-include
+./usr/include/bebox/reg.h	comp-c-include
+./usr/include/bebox/reloc.h	comp-c-include
+./usr/include/bebox/setjmp.h	comp-c-include
+./usr/include/bebox/signal.h	comp-c-include
+./usr/include/bebox/spkr.h	comp-c-include
+./usr/include/bebox/stdarg.h	comp-c-include
+./usr/include/bebox/trap.h	comp-c-include
+./usr/include/bebox/types.h	comp-c-include
+./usr/include/bebox/va-ppc.h	comp-c-include
+./usr/include/bebox/varargs.h	comp-c-include
+./usr/include/bebox/vmparam.h	comp-c-include

@@ -1,57 +1,57 @@
-# $NetBSD: md.sparc64,v 1.2 1999/12/23 10:23:00 kleink Exp $
-./usr/include/sparc64/_G_config.h
-./usr/include/sparc64/ansi.h
-./usr/include/sparc64/aout_machdep.h
-./usr/include/sparc64/asm.h
-./usr/include/sparc64/autoconf.h
-./usr/include/sparc64/bsd_audioio.h
-./usr/include/sparc64/bsd_openprom.h
-./usr/include/sparc64/bswap.h
-./usr/include/sparc64/bus.h
-./usr/include/sparc64/cdefs.h
-./usr/include/sparc64/cgtworeg.h
-./usr/include/sparc64/conf.h
-./usr/include/sparc64/cpu.h
-./usr/include/sparc64/ctlreg.h
-./usr/include/sparc64/db_machdep.h
-./usr/include/sparc64/disklabel.h
-./usr/include/sparc64/eeprom.h
-./usr/include/sparc64/elf_machdep.h
-./usr/include/sparc64/endian.h
-./usr/include/sparc64/fbio.h
-./usr/include/sparc64/fbvar.h
-./usr/include/sparc64/float.h
-./usr/include/sparc64/frame.h
-./usr/include/sparc64/fsr.h
-./usr/include/sparc64/idprom.h
-./usr/include/sparc64/ieee.h
-./usr/include/sparc64/ieeefp.h
-./usr/include/sparc64/instr.h
-./usr/include/sparc64/kbd.h
-./usr/include/sparc64/kbio.h
-./usr/include/sparc64/kcore.h
-./usr/include/sparc64/limits.h
-./usr/include/sparc64/math.h
-./usr/include/sparc64/oldmon.h
-./usr/include/sparc64/openpromio.h
-./usr/include/sparc64/param.h
-./usr/include/sparc64/pcb.h
-./usr/include/sparc64/pmap.h
-./usr/include/sparc64/proc.h
-./usr/include/sparc64/profile.h
-./usr/include/sparc64/psl.h
-./usr/include/sparc64/pte.h
-./usr/include/sparc64/ptrace.h
-./usr/include/sparc64/reg.h
-./usr/include/sparc64/reloc.h
-./usr/include/sparc64/remote-sl.h
-./usr/include/sparc64/setjmp.h
-./usr/include/sparc64/signal.h
-./usr/include/sparc64/stdarg.h
-./usr/include/sparc64/svr4_machdep.h
-./usr/include/sparc64/trap.h
-./usr/include/sparc64/types.h
-./usr/include/sparc64/varargs.h
-./usr/include/sparc64/vmparam.h
-./usr/include/sparc64/vuid_event.h
-./usr/include/sparc64/z8530var.h
+# $NetBSD: md.sparc64,v 1.3 2000/02/03 05:28:01 jwise Exp $
+./usr/include/sparc64/_G_config.h	comp-c-include
+./usr/include/sparc64/ansi.h	comp-c-include
+./usr/include/sparc64/aout_machdep.h	comp-c-include
+./usr/include/sparc64/asm.h	comp-c-include
+./usr/include/sparc64/autoconf.h	comp-c-include
+./usr/include/sparc64/bsd_audioio.h	comp-c-include
+./usr/include/sparc64/bsd_openprom.h	comp-c-include
+./usr/include/sparc64/bswap.h	comp-c-include
+./usr/include/sparc64/bus.h	comp-c-include
+./usr/include/sparc64/cdefs.h	comp-c-include
+./usr/include/sparc64/cgtworeg.h	comp-c-include
+./usr/include/sparc64/conf.h	comp-c-include
+./usr/include/sparc64/cpu.h	comp-c-include
+./usr/include/sparc64/ctlreg.h	comp-c-include
+./usr/include/sparc64/db_machdep.h	comp-c-include
+./usr/include/sparc64/disklabel.h	comp-c-include
+./usr/include/sparc64/eeprom.h	comp-c-include
+./usr/include/sparc64/elf_machdep.h	comp-c-include
+./usr/include/sparc64/endian.h	comp-c-include
+./usr/include/sparc64/fbio.h	comp-c-include
+./usr/include/sparc64/fbvar.h	comp-c-include
+./usr/include/sparc64/float.h	comp-c-include
+./usr/include/sparc64/frame.h	comp-c-include
+./usr/include/sparc64/fsr.h	comp-c-include
+./usr/include/sparc64/idprom.h	comp-c-include
+./usr/include/sparc64/ieee.h	comp-c-include
+./usr/include/sparc64/ieeefp.h	comp-c-include
+./usr/include/sparc64/instr.h	comp-c-include
+./usr/include/sparc64/kbd.h	comp-c-include
+./usr/include/sparc64/kbio.h	comp-c-include
+./usr/include/sparc64/kcore.h	comp-c-include
+./usr/include/sparc64/limits.h	comp-c-include
+./usr/include/sparc64/math.h	comp-c-include
+./usr/include/sparc64/oldmon.h	comp-c-include
+./usr/include/sparc64/openpromio.h	comp-c-include
+./usr/include/sparc64/param.h	comp-c-include
+./usr/include/sparc64/pcb.h	comp-c-include
+./usr/include/sparc64/pmap.h	comp-c-include
+./usr/include/sparc64/proc.h	comp-c-include
+./usr/include/sparc64/profile.h	comp-c-include
+./usr/include/sparc64/psl.h	comp-c-include
+./usr/include/sparc64/pte.h	comp-c-include
+./usr/include/sparc64/ptrace.h	comp-c-include
+./usr/include/sparc64/reg.h	comp-c-include
+./usr/include/sparc64/reloc.h	comp-c-include
+./usr/include/sparc64/remote-sl.h	comp-c-include
+./usr/include/sparc64/setjmp.h	comp-c-include
+./usr/include/sparc64/signal.h	comp-c-include
+./usr/include/sparc64/stdarg.h	comp-c-include
+./usr/include/sparc64/svr4_machdep.h	comp-c-include
+./usr/include/sparc64/trap.h	comp-c-include
+./usr/include/sparc64/types.h	comp-c-include
+./usr/include/sparc64/varargs.h	comp-c-include
+./usr/include/sparc64/vmparam.h	comp-c-include
+./usr/include/sparc64/vuid_event.h	comp-c-include
+./usr/include/sparc64/z8530var.h	comp-c-include
