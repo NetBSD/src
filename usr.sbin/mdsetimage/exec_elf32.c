@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.4 1999/10/22 11:05:59 hannken Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.5 1999/10/25 13:57:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.4 1999/10/22 11:05:59 hannken Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.5 1999/10/25 13:57:12 kleink Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -74,7 +74,8 @@ ELFNAMEEND(check)(mappedfile, mappedsize)
 		BAD;
 	ehdrp = (Elf_Ehdr *)&mappedfile[0];
 
-	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
 		BAD;
 
 	switch (ehdrp->e_machine) {

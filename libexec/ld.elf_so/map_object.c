@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.7 1999/10/22 10:30:08 hannken Exp $	 */
+/*	$NetBSD: map_object.c,v 1.8 1999/10/25 13:57:12 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -97,18 +97,19 @@ _rtld_map_object(path, fd)
 	}
 	/* Make sure the file is valid */
 	if (nbytes < sizeof(Elf_Ehdr) ||
-	    memcmp(Elf_e_ident, u.hdr.e_ident, Elf_e_siz) != 0) {
+	    memcmp(ELFMAG, u.hdr.e_ident, SELFMAG) != 0 ||
+	    u.hdr.e_ident[EI_CLASS] != ELFCLASS) {
 		_rtld_error("%s: unrecognized file format", path);
 		return NULL;
 	}
 	/* Elf_e_ident includes class */
-	if (u.hdr.e_ident[Elf_ei_version] != Elf_ev_current ||
-	    u.hdr.e_version != Elf_ev_current ||
-	    u.hdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
+	if (u.hdr.e_ident[EI_VERSION] != EV_CURRENT ||
+	    u.hdr.e_version != EV_CURRENT ||
+	    u.hdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
 		_rtld_error("%s: Unsupported file version", path);
 		return NULL;
 	}
-	if (u.hdr.e_type != Elf_et_exec && u.hdr.e_type != Elf_et_dyn) {
+	if (u.hdr.e_type != ET_EXEC && u.hdr.e_type != ET_DYN) {
 		_rtld_error("%s: Unsupported file type", path);
 		return NULL;
 	}
@@ -142,7 +143,7 @@ _rtld_map_object(path, fd)
 	while (phdr < phlimit) {
 		switch (phdr->p_type) {
 
-		case Elf_pt_load:
+		case PT_LOAD:
 #ifdef __mips__
 			/* NetBSD/pmax 1.1 elf toolchain peculiarity */
 			if (nsegs >= 2) {
@@ -155,11 +156,11 @@ _rtld_map_object(path, fd)
 			++nsegs;
 			break;
 
-		case Elf_pt_phdr:
+		case PT_PHDR:
 			phphdr = phdr;
 			break;
 
-		case Elf_pt_dynamic:
+		case PT_DYNAMIC:
 			phdyn = phdr;
 			break;
 		}
@@ -190,7 +191,7 @@ _rtld_map_object(path, fd)
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
 	mapsize = base_vlimit - base_vaddr;
 #ifdef RTLD_LOADER
-	base_addr = u.hdr.e_type == Elf_et_exec ? (caddr_t) base_vaddr : NULL;
+	base_addr = u.hdr.e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
 #else
 	base_addr = NULL;
 #endif
@@ -277,13 +278,13 @@ protflags(elfflags)
 	int elfflags;
 {
 	int prot = 0;
-	if (elfflags & Elf_pf_r)
+	if (elfflags & PF_R)
 		prot |= PROT_READ;
 #ifdef RTLD_LOADER
-	if (elfflags & Elf_pf_w)
+	if (elfflags & PF_W)
 		prot |= PROT_WRITE;
 #endif
-	if (elfflags & Elf_pf_x)
+	if (elfflags & PF_X)
 		prot |= PROT_EXEC;
 	return prot;
 }

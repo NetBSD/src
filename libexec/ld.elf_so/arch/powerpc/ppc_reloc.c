@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.4 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.5 1999/10/25 13:57:12 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -117,7 +117,7 @@ _rtld_bind_pltgot(obj, rela)
 	Elf_Addr targ_addr;
 	int distance;
 
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+	assert(ELFDEFNNAME(ST_TYPE)(rela->r_info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 				&defobj, true);

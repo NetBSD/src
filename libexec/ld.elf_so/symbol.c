@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.3 1999/03/01 16:40:08 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.4 1999/10/25 13:57:12 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -101,10 +101,10 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 		assert(symp->st_name != 0);
 #endif
 		if (strcmp(name, strp) == 0) {
-			if (symp->st_shndx != Elf_eshn_undefined
+			if (symp->st_shndx != SHN_UNDEF
 #if !defined(__mips__)		/* Following doesn't work on MIPS? mhitch */
 			    || (!in_plt && symp->st_value != 0 &&
-			    ELF_SYM_TYPE(symp->st_info) == Elf_estt_func)) {
+			    ELFDEFNNAME(ST_TYPE)(symp->st_info) == STT_FUNC)) {
 #else
 				) {
 #endif
