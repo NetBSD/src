@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 1999/03/15 15:47:22 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 1999/09/22 07:18:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -300,12 +300,15 @@ enable_pci_devices()
 	/*
 	 * special case: if a display card is found and memory is enabled
 	 * preserve 128k at 0xa0000 as vga memory.
+	 * XXX: if a display card is found without being enabled, leave
+	 *      it alone! You will usually only create conflicts by enabeling
+	 *      it.
 	 */
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	switch (PCI_CLASS(class)) {
 	    case PCI_CLASS_PREHISTORIC:
 	    case PCI_CLASS_DISPLAY:
-		if (csr & (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) {
+	      if (csr & (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) {
 		    p = (struct pci_memreg *)malloc(sizeof(struct pci_memreg),
 				M_TEMP, M_WAITOK);
 		    memset(p, '\0', sizeof(struct pci_memreg));
@@ -318,7 +321,8 @@ enable_pci_devices()
 		    p->address = 0xa0000;
 
 		    insert_into_list(&memlist, p);
-		}
+	      }
+	      else continue;
 	}
 
 	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
