@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.49 2001/04/30 02:37:51 lukem Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.50 2001/05/02 09:47:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ struct scsipi_bustype {
  *	regarding the resource counter.
  */
 struct scsipi_channel {
-	int type; /* XXX will die, compat with ata_atapi_attach for umass */
+	u_int8_t type; /* XXX will die, compat with ata_atapi_attach for umass */
 #define BUS_SCSI                0
 #define BUS_ATAPI               1
 /*define BUS_ATA                2*/
