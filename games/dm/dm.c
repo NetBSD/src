@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.15 1999/09/22 18:54:42 jsm Exp $	*/
+/*	$NetBSD: dm.c,v 1.16 2001/01/25 20:41:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.15 1999/09/22 18:54:42 jsm Exp $");
+__RCSID("$NetBSD: dm.c,v 1.16 2001/01/25 20:41:41 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,10 +116,7 @@ play(args)
 {
 	char pbuf[MAXPATHLEN];
 
-	(void)strncpy(pbuf, _PATH_HIDE, sizeof(pbuf) - 1);
-	(void)strncpy(pbuf + sizeof(_PATH_HIDE) - 1, game,
-	    sizeof(pbuf) - sizeof(_PATH_HIDE) - 1);
-	pbuf[sizeof(pbuf) - 1] = '\0';
+	snprintf(pbuf, sizeof(pbuf), "%s%s", _PATH_HIDE, game);
 	if (priority > 0)	/* < 0 requires root */
 		(void)setpriority(PRIO_PROCESS, 0, priority);
 	execv(pbuf, args);
