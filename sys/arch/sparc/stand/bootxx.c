@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1994/11/20 20:54:53 deraadt Exp $ */
+/*	$NetBSD: bootxx.c,v 1.3 1995/02/22 08:18:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -127,5 +127,3 @@ _rtt()
 {
 	promvec->pv_halt();
 }
-
-twiddle() {}
