@@ -1766,6 +1766,11 @@ krb5_password_key_proc __P((
 	krb5_const_pointer keyseed,
 	krb5_keyblock **key));
 
+NAME_TYPE
+krb5_princ_type __P((
+	krb5_context context,
+	krb5_principal principal));
+
 krb5_realm*
 krb5_princ_realm __P((
 	krb5_context context,
@@ -1776,6 +1781,11 @@ krb5_princ_set_realm __P((
 	krb5_context context,
 	krb5_principal principal,
 	krb5_realm *realm));
+
+unsigned int
+krb5_princ_size __P((
+	krb5_context context,
+	krb5_principal principal));
 
 krb5_error_code
 krb5_principal2principalname __P((
