@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.12 1997/12/20 20:18:47 christos Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.13 1997/12/20 20:29:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
@@ -53,6 +54,13 @@
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
 #include "kmem.h"
+
+#if	defined(sun) && !defined(SOLARIS2)
+#define	STRERROR(x)	sys_errlist[x]
+extern	char	*sys_errlist[];
+#else
+#define	STRERROR(x)	strerror(x)
+#endif
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
@@ -135,7 +143,8 @@ char *argv[];
 
 	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
-		perror("open");
+		(void) fprintf(stderr, "%s: open: %s", IPL_NAT,
+		    STRERROR(errno));                     
 		exit(-1);
 	}
 
@@ -762,7 +771,8 @@ int opts;
 
 	if (strcmp(file, "-")) {
 		if (!(fp = fopen(file, "r"))) {
-			perror(file);
+			(void) fprintf(stderr, "%s: open: %s", file,
+			    STRERROR(errno));                     
 			exit(1);
 		}
 	} else
