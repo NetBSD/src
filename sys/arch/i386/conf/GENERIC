@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.311 2000/03/14 22:37:55 augustss Exp $
+#	$NetBSD: GENERIC,v 1.312 2000/03/16 15:05:18 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.311 $"
+#ident 		"GENERIC-$Revision: 1.312 $"
 
 maxusers	32		# estimated number of users
 
@@ -417,6 +417,9 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# RAID controllers and devices
+cac*	at pci? dev ? function ?	# Compaq array controller
+ca*	at cac? unit ?			# Compaq array disk device
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
