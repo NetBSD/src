@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.37 1997/03/20 12:03:03 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.38 1997/04/01 16:31:53 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1003,7 +1003,9 @@ scnattach(parent, self, aux)
 			scninit(kgdb_dev, kgdb_rate);
 			scn_rxenable(sc);
 			scnkgdb = DEV_UNIT(kgdb_dev);
-			kgdb_attach(scncngetc, scncnputc, kgdb_dev);
+			kgdb_attach((int (*) __P((void *)))scncngetc,
+				    (void (*) __P((void *, int)))scncnputc,
+				    (void *)kgdb_dev);
 			if (kgdb_debug_init) {
 				printf("%c ", delim);
 				kgdb_connect(1);
