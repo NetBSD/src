@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.26 1998/09/11 19:39:28 jonathan Exp $	*/
+/*	$NetBSD: comvar.h,v 1.27 1998/09/16 21:30:58 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -129,7 +129,7 @@ struct com_softc {
 #define CLR(t, f)	(t) &= ~(f)
 #define ISSET(t, f)	((t) & (f))
 
-int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
 int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
