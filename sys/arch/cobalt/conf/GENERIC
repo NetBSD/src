@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.19 2001/09/01 21:52:26 atatat Exp $
+#	$NetBSD: GENERIC,v 1.20 2001/09/01 23:08:42 atatat Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -237,7 +237,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	faith		1		# IPv[46] tcp relay translation 
 #pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	bridge			# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
