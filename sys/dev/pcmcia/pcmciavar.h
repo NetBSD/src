@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.3 1997/10/19 14:00:42 enami Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.4 1998/02/01 23:38:06 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -122,6 +122,8 @@ struct pcmcia_function {
 #define	pf_ccr_realsize	pf_pcmh.realsize
 	bus_addr_t	pf_ccr_offset;
 	int		pf_ccr_window;
+	long		pf_mfc_iobase;
+	long		pf_mfc_iomax;
 	int		(*ih_fct) __P((void *));
 	void		*ih_arg;
 	int		ih_ipl;
