@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.15 2000/12/11 15:49:07 is Exp $
+# $NetBSD: obsolete.mi,v 1.16 2000/12/14 04:15:54 jmc Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -40,6 +40,15 @@
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
 /usr/share/games/ching
+/usr/share/lkm
+/usr/share/lkm/misc
+/usr/share/lkm/misc/module
+/usr/share/lkm/misc/test
+/usr/share/lkm/syscall
+/usr/share/lkm/syscall/module
+/usr/share/lkm/syscall/test
+/usr/share/lkm/vfs 
+/usr/share/lkm/vfs/module
 /usr/share/man/cat4/tahoe
 /usr/share/man/cat8/tahoe
 /usr/share/man/man4/tahoe
