@@ -1,6 +1,8 @@
+/*	$NetBSD: driver.h,v 1.3 1995/04/22 10:36:54 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)driver.h	5.4 (Berkeley) 6/1/90
- *	$Id: driver.h,v 1.2 1993/08/01 18:51:58 mycroft Exp $
+ *	@(#)driver.h	8.1 (Berkeley) 5/31/93
  */
 
 #include "externs.h"

@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.10 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1994/12/22 09:36:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/22 10:36:43 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	sail
 SRCS=	main.c pl_main.c pl_1.c pl_2.c pl_3.c pl_4.c pl_5.c pl_6.c pl_7.c \

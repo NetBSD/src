@@ -1,6 +1,8 @@
+/*	$NetBSD: machdep.h,v 1.3 1995/04/22 10:37:00 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)machdep.h	5.5 (Berkeley) 6/1/90
- *	$Id: machdep.h,v 1.2 1993/08/01 18:51:56 mycroft Exp $
+ *	@(#)machdep.h	8.1 (Berkeley) 5/31/93
  */
 
 #define TIMEOUT 300				/* Sync() timeout in seconds */
