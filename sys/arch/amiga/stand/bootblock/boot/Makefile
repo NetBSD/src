@@ -57,7 +57,7 @@ ${COBJS}: txlt
 
 ${BOOTBLOCKS}: aout2bb
 
-CLEANFILES += xxboot fdboot x.out f.out xxstart.o fdstart.o
+CLEANFILES += xxboot fdboot x.out f.out xxstart.o fdstart.o libboot.a
 
 xxboot: x.out
 	./aout2bb x.out $@ || nm -u x.out
