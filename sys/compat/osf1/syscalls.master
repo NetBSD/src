@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1998/02/14 01:29:45 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.8 1998/02/14 21:29:14 kleink Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,7 +57,7 @@
 13	NOARGS		{ int sys_fchdir(int fd); }
 14	STD		{ int osf1_sys_mknod(char *path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
+16	NOARGS		{ int sys___posix_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); }
 18	STD		{ int osf1_sys_getfsstat(struct osf1_statfs *buf, \
 			    long bufsize, int flags); }
@@ -188,14 +188,14 @@
 			    u_int iovcnt); }
 122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
 			    struct timezone *tzp); }
-123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
 			    int *fromlenaddr); }
 126	UNIMPL		setreuid
 127	UNIMPL		setregid
-128	NOARGS		{ int sys_posix_rename(char *from, char *to); }
+128	NOARGS		{ int sys_posix___posix_rename(char *from, char *to); }
 129	STD		{ int osf1_sys_truncate(char *path, off_t length); }
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
 131	UNIMPL		flock
@@ -283,7 +283,8 @@
 205	UNIMPL		semget
 206	UNIMPL		semop
 207	UNIMPL		uname
-208	UNIMPL		lchown
+208	NOARGS		{ int sys___posix_lchown(char *path, int uid, \
+			    int gid); }
 209	UNIMPL		shmat
 210	UNIMPL		shmctl
 211	UNIMPL		shmdt
