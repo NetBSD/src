@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.26 2003/12/24 23:22:22 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.26.2.1 2004/08/15 13:54:31 tron Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ int exec_mach_probe(char **);
 void mach_e_proc_init(struct proc *, struct vmspace *);
 void mach_e_proc_exit(struct proc *);
 void mach_e_proc_exec(struct proc *, struct exec_package *);
-void mach_e_proc_fork(struct proc *, struct proc *);
+void mach_e_proc_fork(struct proc *, struct proc *, int);
 void mach_e_proc_fork1(struct proc *, struct proc *, int);
 void mach_e_lwp_fork(struct lwp *, struct lwp *);
 void mach_e_lwp_exit(struct lwp *);
