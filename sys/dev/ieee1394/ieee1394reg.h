@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.5 2000/12/13 11:30:15 enami Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.6 2001/04/29 08:37:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -158,6 +158,11 @@ struct ieee1394_async_nodata {
 #define	IEEE1394_RCODE_DATA_ERROR	0x5
 #define	IEEE1394_RCODE_TYPE_ERROR	0x6
 #define	IEEE1394_RCODE_ADDRESS_ERROR	0x7
+
+/*
+ * Signature
+ */
+#define IEEE1394_SIGNATURE              0x31333934
 
 /*
  * Tag value
