@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: expand.c,v 1.5 1994/03/07 05:05:28 cgd Exp $";
+static char *rcsid = "$Id: expand.c,v 1.6 1996/07/12 00:06:34 thorpej Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -181,12 +181,13 @@ expstr(s)
 			*tail = savec;
 		if (tp != NULL) {
 			for (; tp != NULL; tp = tp->n_next) {
-				sprintf(buf, "%s%s%s", s, tp->n_name, tail);
+				snprintf(buf, sizeof(buf), "%s%s%s", s,
+				    tp->n_name, tail);
 				expstr(buf);
 			}
 			return;
 		}
-		sprintf(buf, "%s%s", s, tail);
+		snprintf(buf, sizeof(buf), "%s%s", s, tail);
 		expstr(buf);
 		return;
 	}

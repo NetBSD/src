@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: lookup.c,v 1.3 1994/03/07 05:05:33 cgd Exp $";
+static char *rcsid = "$Id: lookup.c,v 1.4 1996/07/12 00:06:36 thorpej Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -142,7 +142,8 @@ lookup(name, action, value)
 			continue;
 		if (action != LOOKUP) {
 			if (action != INSERT || s->s_type != CONST) {
-				(void)sprintf(buf, "%s redefined", name);
+				(void)snprintf(buf, sizeof(buf),
+				    "%s redefined", name);
 				yyerror(buf);
 			}
 		}
@@ -150,7 +151,7 @@ lookup(name, action, value)
 	}
 
 	if (action == LOOKUP) {
-		(void)sprintf(buf, "%s undefined", name);
+		(void)snprintf(buf, sizeof(buf), "%s undefined", name);
 		yyerror(buf);
 		return(NULL);
 	}
