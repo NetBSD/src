@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2002/04/20 16:56:29 manu Exp $
+	$NetBSD: syscalls.master,v 1.37 2002/04/22 05:58:49 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -250,8 +250,8 @@
 131	UNIMPL		procblk
 132	UNIMPL		sprocsp
 133	UNIMPL		sgigsc
-134	NOARGS		{ void *svr4_sys_mmap(void *addr, svr4_size_t len, \
-			    int prot, int flags, int fd, svr4_off_t pos); }
+134	STD		{ void *irix_sys_mmap(void *addr, irix_size_t len, \
+			    int prot, int flags, int fd, irix_off_t pos); }
 135	NOARGS		{ int sys_munmap(void *addr, int len); }
 136	NOARGS		{ int sys_mprotect(void *addr, int len, int prot); }
 137	NOARGS		{ int sys___msync13(void *addr, \
@@ -321,7 +321,9 @@
 			    off_t length); } truncate64
 184	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); } \
 			    ftruncate64
-185	UNIMPL		mmap64
+185	STD		{ void *irix_sys_mmap64(void *addr, irix_size_t len, \
+			    int prot, int flags, int fd, int pad1, \
+			    irix_off_t pos); }
 186	UNIMPL		dmi
 187	UNIMPL		pread
 188	UNIMPL		pwrite
