@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.60 2004/03/09 12:23:07 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.60 2004/03/09 12:23:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_bufq.h"
@@ -236,6 +236,14 @@ disk_attach(struct disk *diskp)
 	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
+	 * Initialize the wedge-related locks and other fields.
+	 */
+	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
+	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	LIST_INIT(&diskp->dk_wedges);
+	diskp->dk_nwedges = 0;
+
+	/*
 	 * Set the attached timestamp.
 	 */
 	s = splclock();
@@ -257,6 +265,8 @@ disk_attach(struct disk *diskp)
 void
 disk_detach(struct disk *diskp)
 {
+
+	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
 
 	/*
 	 * Remove from the disklist.

@@ -1,7 +1,7 @@
-/*	$NetBSD: disk.h,v 1.24 2003/08/07 16:34:01 agc Exp $	*/
+/*	$NetBSD: disk.h,v 1.25 2004/09/25 03:30:44 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,12 +86,87 @@
  * Disk device structures.
  */
 
+#include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+#include <sys/lock.h>
 
 struct buf;
 struct disklabel;
 struct cpu_disklabel;
+
+/*
+ * dkwedge_info:
+ *
+ *	Information needed to configure (or query configuration of) a
+ *	disk wedge.
+ */
+struct dkwedge_info {
+	char		dkw_devname[16];/* device-style name (e.g. "dk0") */
+	uint8_t		dkw_wname[128];	/* wedge name (Unicode, UTF-8) */
+	char		dkw_parent[16];	/* parent disk device name */
+	daddr_t		dkw_offset;	/* LBA offset of wedge in parent */
+	uint64_t	dkw_size;	/* size of wedge in blocks */
+	char		dkw_ptype[32];	/* partition type string */
+};
+
+/*
+ * dkwedge_list:
+ *
+ *	Structure used to query a list of wedges.
+ */
+struct dkwedge_list {
+	void		*dkwl_buf;	/* storage for dkwedge_info array */
+	size_t		dkwl_bufsize;	/* size of that buffer */
+	u_int		dkwl_nwedges;	/* total number of wedges */
+	u_int		dkwl_ncopied;	/* number actually copied */
+};
+
+/* Some common partition types */
+#define	DKW_PTYPE_UNKNOWN	""
+#define	DKW_PTYPE_UNUSED	"unused"
+#define	DKW_PTYPE_SWAP		"swap"
+#define	DKW_PTYPE_FFS		"ffs"
+#define	DKW_PTYPE_LFS		"lfs"
+#define	DKW_PTYPE_EXT2FS	"ext2fs"
+#define	DKW_PTYPE_ISO9660	"cd9660"
+#define	DKW_PTYPE_AMIGADOS	"ados"
+#define	DKW_PTYPE_APPLEHFS	"hfs"
+#define	DKW_PTYPE_FAT		"msdos"
+#define	DKW_PTYPE_FILECORE	"filecore"
+#define	DKW_PTYPE_RAIDFRAME	"raidframe"
+#define	DKW_PTYPE_CCD		"ccd"
+#define	DKW_PTYPE_APPLEUFS	"appleufs"
+#define	DKW_PTYPE_NTFS		"ntfs"
+
+/*
+ * Disk geometry information.
+ *
+ * NOTE: Not all geometry information is relevant for every kind of disk.
+ */
+struct disk_geom {
+	int64_t		dg_secperunit;	/* # of data sectors per unit */
+	uint32_t	dg_secsize;	/* # of bytes per sector */
+	uint32_t	dg_nsectors;	/* # of data sectors per track */
+	uint32_t	dg_ntracks;	/* # of tracks per cylinder */
+	uint32_t	dg_ncylinders;	/* # of data cylinders per unit */
+	uint32_t	dg_secpercyl;	/* # of data sectors per cylinder */
+	uint32_t	dg_pcylinders;	/* # of physical cylinders per unit */
+
+	/*
+	 * Spares (bad sector replacements) below are not counted in
+	 * dg_nsectors or dg_secpercyl.  Spare sectors are assumed to
+	 * be physical sectors which occupy space at the end of each
+	 * track and/or cylinder.
+	 */
+	uint32_t	dg_sparespertrack;
+	uint32_t	dg_sparespercyl;
+	/*
+	 * Alternative cylinders include maintenance, replacement,
+	 * configuration description areas, etc.
+	 */
+	uint32_t	dg_acylinders;
+};
 
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
@@ -118,6 +193,18 @@ struct disk {
 	struct timeval	dk_time;	/* total time spent busy */
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
+
+	/*
+	 * Information required to be the parent of a disk wedge.
+	 */
+	struct lock	dk_rawlock;	/* lock on these fields */
+	struct vnode	*dk_rawvp;	/* vnode for the RAW_PART bdev */
+	u_int		dk_rawopens;	/* # of openes of rawvp */
+
+	struct lock	dk_openlock;	/* lock on these and openmask */
+	u_int		dk_nwedges;	/* # of configured wedges */
+					/* all wedges on this disk */
+	LIST_HEAD(, dkwedge_softc) dk_wedges;
 
 	/*
 	 * Disk label information.  Storage for the in-core disk label
@@ -154,6 +241,7 @@ struct disk_sysctl {
 
 struct dkdriver {
 	void	(*d_strategy) __P((struct buf *));
+	void	(*d_minphys) __P((struct buf *));
 #ifdef notyet
 	int	(*d_open) __P((dev_t, int, int, struct proc *));
 	int	(*d_close) __P((dev_t, int, int, struct proc *));
@@ -198,6 +286,8 @@ struct disk_badsecinfo {
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
 
+struct proc;
+
 void	disk_init __P((void));
 void	disk_attach __P((struct disk *));
 void	disk_detach __P((struct disk *));
@@ -205,6 +295,12 @@ void	disk_busy __P((struct disk *));
 void	disk_unbusy __P((struct disk *, long, int));
 void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
+
+int	dkwedge_add(struct dkwedge_info *);
+int	dkwedge_del(struct dkwedge_info *);
+void	dkwedge_delall(struct disk *);
+int	dkwedge_list(struct disk *, struct dkwedge_list *, struct proc *);
+void	dkwedge_discover(struct disk *);
 #endif
 
 #endif /* _SYS_DISK_H_ */

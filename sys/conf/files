@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.685 2004/09/21 03:10:35 thorpej Exp $
+#	$NetBSD: files,v 1.686 2004/09/25 03:30:44 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -59,6 +59,8 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
+
+defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 
 # compatibility options
 #
@@ -1135,6 +1137,7 @@ file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
+file	dev/dk.c
 file	dev/dksubr.c			cgd | xbd
 file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
