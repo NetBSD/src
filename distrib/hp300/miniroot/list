@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1996/06/11 09:53:25 thorpej Exp $
+#	$NetBSD: list,v 1.2.2.1 1998/05/05 08:27:38 mycroft Exp $
 
 # hp300 extra's
 LINK	instbin			sbin/disklabel
@@ -18,7 +18,7 @@ SYMLINK	../../instbin		usr/bin/less usr/bin/more
 
 # crunchgen source directory specials
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
-CRUNCHSPECIAL	less srcdir /usr/src/usr.bin/less/less
+CRUNCHSPECIAL	less srcdir usr.bin/less/less
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
