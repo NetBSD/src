@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.20 1999/03/24 03:45:28 cgd Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.21 1999/03/25 00:20:35 sommerfe Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1700,17 +1700,31 @@ uvn_io(uvn, pps, npages, flags, rw)
 
 	UVMHIST_LOG(maphist, "calling VOP",0,0,0,0);
 
+	/*
+	 * This process may already have this vnode locked, if we faulted in
+	 * copyin() or copyout() on a region backed by this vnode
+	 * while doing I/O to the vnode.  If this is the case, don't
+	 * panic.. instead, return the error to the user.
+	 *
+	 * XXX this is a stopgap to prevent a panic.
+	 * Ideally, this kind of operation *should* work.
+	 */
+	result = 0;
 	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		vn_lock(vn, LK_EXCLUSIVE | LK_RETRY);
-	/* NOTE: vnode now locked! */
+		result = vn_lock(vn, LK_EXCLUSIVE | LK_RETRY | LK_RECURSEFAIL);
 
-	if (rw == UIO_READ)
-		result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
-	else
-		result = VOP_WRITE(vn, &uio, 0, curproc->p_ucred);
+	if (result == 0) {
+		/* NOTE: vnode now locked! */
 
-	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		VOP_UNLOCK(vn, 0);
+		if (rw == UIO_READ)
+			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
+		else
+			result = VOP_WRITE(vn, &uio, 0, curproc->p_ucred);
+
+		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
+			VOP_UNLOCK(vn, 0);
+	}
+	
 	/* NOTE: vnode now unlocked (unless vnislocked) */
 
 	UVMHIST_LOG(maphist, "done calling VOP",0,0,0,0);

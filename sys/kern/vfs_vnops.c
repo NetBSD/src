@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.33 1999/03/24 05:51:26 mrg Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.34 1999/03/25 00:20:35 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -537,10 +537,13 @@ vn_lock(vp, flags)
 	int flags;
 {
 	int error;
-	
+	int have_interlock = 0;
+
 	do {
-		if ((flags & LK_INTERLOCK) == 0)
+		if ((flags & LK_INTERLOCK) == 0) {
 			simple_lock(&vp->v_interlock);
+			have_interlock++;
+		}
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
 			simple_unlock(&vp->v_interlock);
@@ -550,6 +553,11 @@ vn_lock(vp, flags)
 			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
 			if (error == 0)
 				return (error);
+		}
+		if (error == EDEADLK) {
+			if (have_interlock)
+				simple_unlock(&vp->v_interlock);
+			break;
 		}
 		flags &= ~LK_INTERLOCK;
 	} while (flags & LK_RETRY);
