@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.26 1995/04/21 04:01:27 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.27 1995/04/22 12:08:12 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -113,7 +113,7 @@ void ae_watchdog __P(( /* short */ ));
 void ae_reset __P((struct ae_softc *));
 void ae_init __P((struct ae_softc *));
 void ae_stop __P((struct ae_softc *));
-void ae_getmcaf __P((struct arpcom *, u_long *));
+void ae_getmcaf __P((struct arpcom *, u_char *));
 u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
 
 #define inline			/* XXX for debugging porpoises */
@@ -489,7 +489,7 @@ ae_init(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int     i, s;
 	u_char  command;
-	u_long  mcaf[2];
+	u_char  mcaf[8];
 
 	/* Address not known. */
 	if (ifp->if_addrlist == 0)
@@ -532,9 +532,10 @@ ae_init(sc)
 
 	/* Initialize receive buffer ring. */
 	NIC_PUT(sc, ED_P0_TPSR, sc->rec_page_start);
-	NIC_PUT(sc, ED_P0_BNRY, sc->rec_page_start);
 	NIC_PUT(sc, ED_P0_PSTART, sc->rec_page_start);
+
 	NIC_PUT(sc, ED_P0_PSTOP, sc->rec_page_stop);
+	NIC_PUT(sc, ED_P0_BNRY, sc->rec_page_start);
 
 	/*
 	 * Clear all interrupts.  A '1' in each bit position clears the
@@ -562,7 +563,7 @@ ae_init(sc)
 	/* Set multicast filter on chip. */
 	ae_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
-		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *) mcaf)[i]);
+		NIC_PUT(sc, ED_P1_MAR0 + i, mcaf[i]);
 
 	/*
 	 * Set current page pointer to one page after the boundary pointer, as
@@ -1252,7 +1253,7 @@ ae_ring_to_mbuf(sc, src, dst, total_len)
 void
 ae_getmcaf(ac, af)
 	struct arpcom *ac;
-	u_long *af;
+	u_char *af;
 {
 	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
@@ -1271,10 +1272,12 @@ ae_getmcaf(ac, af)
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
-		af[0] = af[1] = 0xffffffff;
+		for (i = 0; i < 8; i++)
+			af[i] = 0xff;
 		return;
 	}
-	af[0] = af[1] = 0;
+	for (i = 0; i < 8; i++)
+		af[i] = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1288,7 +1291,8 @@ ae_getmcaf(ac, af)
 			 * range is big enough to require all bits set.)
 			 */
 			ifp->if_flags |= IFF_ALLMULTI;
-			af[0] = af[1] = 0xffffffff;
+			for (i = 0; i < 8; i++)
+				af[i] = 0xff;
 			return;
 		}
 		cp = enm->enm_addrlo;
@@ -1308,7 +1312,7 @@ ae_getmcaf(ac, af)
 		crc >>= 26;
 
 		/* Turn on the corresponding bit in the filter. */
-		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 0);
+		af[crc >> 3] |= 1 << (crc & 0x7);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
