@@ -2604,7 +2604,7 @@ rx_search  (rxb, startpos, range, stop, total_size,
 
       search_state.outer_pos.offset = 0;
       search_state.outer_pos.size = 0;
-      search_state.outer_pos.pos = (unsigned char *)startpos;
+      search_state.outer_pos.pos = (unsigned char *)(long)startpos;
       init_fastmap (rxb, &search_state);
 
       search_state.fastmap_resume_pt = rx_fastmap_start;
@@ -2886,7 +2886,7 @@ rx_search  (rxb, startpos, range, stop, total_size,
 	/* We've encountered an instruction other than next-char.
 	 * Dispatch that instruction:
 	 */
-	inx = (int)search_state.ifr->inx;
+	inx = (long)search_state.ifr->inx;
 #ifdef RX_DEBUG_0
 	if (rx_debug_trace)
 	  {
