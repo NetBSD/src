@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1998/02/04 06:42:32 enami Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1998/02/06 23:30:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1998/02/04 06:42:32 enami Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1998/02/06 23:30:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ summary()
 	}
 	(void)snprintf(buf, sizeof(buf),
 	    "%qu bytes transferred in %lu secs (%qu bytes/sec)\n",
-	    st.bytes, (long) secs, st.bytes / secs);
+	    (long long) st.bytes, (long) secs, (long long) (st.bytes / secs));
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 
