@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.3 2003/02/01 06:23:42 thorpej Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.4 2003/02/18 10:24:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -229,14 +229,16 @@ loop:
 	if (fap == NULL)
 		return ENOENT;
 
+	/* XXX use pool ? */
 	MALLOC(np, struct smbnode *, sizeof *np, M_SMBNODE, M_WAITOK);
+	memset(np, 0, sizeof(*np));
+
 	error = getnewvnode(VT_SMBFS, mp, smbfs_vnodeop_p, &vp);
 	if (error) {
 		FREE(np, M_SMBNODE);
 		return error;
 	}
 	vp->v_type = fap->fa_attr & SMB_FA_DIR ? VDIR : VREG;
-	bzero(np, sizeof(*np));
 	vp->v_data = np;
 	np->n_vnode = vp;
 	np->n_mount = VFSTOSMBFS(mp);
@@ -280,7 +282,6 @@ smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct vnode *vp;
 	int error;
 
-	*vpp = NULL;
 	error = smbfs_node_alloc(mp, dvp, name, nmlen, fap, &vp);
 	if (error)
 		return error;
@@ -373,6 +374,7 @@ void
 smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 {
 	struct smbnode *np = VTOSMB(vp);
+	int s;
 
 	if (vp->v_type == VREG) {
 		if (np->n_size != fap->fa_size) {
@@ -383,12 +385,13 @@ smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 		np->n_size = 16384; 		/* should be a better way ... */
 	} else
 		return;
+
 	np->n_mtime = fap->fa_mtime;
 	np->n_dosattr = fap->fa_attr;
-#ifndef __NetBSD__
-	np->n_attrage = time_second;
-#endif
-	return;
+
+	s = splclock();
+	np->n_attrage = mono_time.tv_sec;
+	splx(s);
 }
 
 int
@@ -396,13 +399,14 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 {
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
-#ifndef __NetBSD__
-	int diff;
+	int s, diff;
 
-	diff = time_second - np->n_attrage;
+	s = splclock();
+	diff = mono_time.tv_sec - np->n_attrage;
+	splx(s);
 	if (diff > 2)	/* XXX should be configurable */
 		return ENOENT;
-#endif
+
 	va->va_type = vp->v_type;		/* vnode type (for create) */
 	if (vp->v_type == VREG) {
 		va->va_mode = smp->sm_args.file_mode;	/* files access mode and type */
