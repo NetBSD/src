@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.4 1994/02/14 09:37:13 deraadt Exp $
+ * $Id: zs.c,v 1.5 1994/03/23 10:43:20 pk Exp $
  */
 
 /*
@@ -799,8 +799,12 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 zsabort()
 {
 
+#ifdef DDB
+	Debugger();
+#else
 	printf("stopping on keyboard abort\n");
 	callrom();
+#endif
 }
 
 #ifdef KGDB
