@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.81 1997/02/26 23:50:04 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.82 1997/03/14 23:16:08 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -95,9 +95,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: ${I386}/i386/genassym.cf $S/kern/genassym.sh
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	<${I386}/i386/genassym.cf >assym.h || rm assym.h
+assym.h: $S/kern/genassym.sh ${I386}/i386/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${I386}/i386/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -117,7 +118,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -152,7 +153,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o machdep.o: Makefile

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.21 1997/03/13 04:22:05 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.22 1997/03/14 23:19:03 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -104,9 +104,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: ${MVME68K}/mvme68k/genassym.cf $S/kern/genassym.sh
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	<${MVME68K}/mvme68k/genassym.cf >assym.h || rm assym.h
+assym.h: $S/kern/genassym.sh ${MVME68K}/mvme68k/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${MVME68K}/mvme68k/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -126,7 +127,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -161,7 +162,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o pmap.o sys_machdep.o trap.o: Makefile
