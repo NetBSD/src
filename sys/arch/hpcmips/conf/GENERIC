@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 2002/03/23 03:17:57 shin Exp $
+# $NetBSD: GENERIC,v 1.113 2002/03/25 08:42:35 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.112 $"
+#ident 		"GENERIC-$Revision: 1.113 $"
 
 maxusers	16
 
@@ -32,6 +32,7 @@ options 	VR4121			# NEC VR4121
 options 	VR4122			# NEC VR4122
 options 	VR4131			# NEC VR4131
 options 	TX392X			# Toshiba TX3922
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
 options 	DDB			# in-kernel debugger
