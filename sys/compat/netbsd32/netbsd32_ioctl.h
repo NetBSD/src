@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.2 1998/11/24 13:18:42 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.3 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,27 +34,27 @@
 #define	FBIOGINFO	_IOR('F', 2, struct fbinfo)
 #endif
 
-struct sparc32_fbcmap {
+struct netbsd32_fbcmap {
 	int	index;		/* first element (0 origin) */
 	int	count;		/* number of elements */
-	sparc32_u_charp	red;		/* red color map elements */
-	sparc32_u_charp	green;		/* green color map elements */
-	sparc32_u_charp	blue;		/* blue color map elements */
+	netbsd32_u_charp	red;		/* red color map elements */
+	netbsd32_u_charp	green;		/* green color map elements */
+	netbsd32_u_charp	blue;		/* blue color map elements */
 };
 #if 0
 #define	FBIOPUTCMAP	_IOW('F', 3, struct fbcmap)
 #define	FBIOGETCMAP	_IOW('F', 4, struct fbcmap)
 #endif
 
-struct sparc32_fbcursor {
+struct netbsd32_fbcursor {
 	short set;		/* what to set */
 	short enable;		/* enable/disable cursor */
 	struct fbcurpos pos;	/* cursor's position */
 	struct fbcurpos hot;	/* cursor's hot spot */
-	struct sparc32_fbcmap cmap;	/* color map info */
+	struct netbsd32_fbcmap cmap;	/* color map info */
 	struct fbcurpos size;	/* cursor's bit map size */
-	sparc32_charp image;	/* cursor's image bits */
-	sparc32_charp mask;	/* cursor's mask bits */
+	netbsd32_charp image;	/* cursor's image bits */
+	netbsd32_charp mask;	/* cursor's mask bits */
 };
 #if 0
 #define FBIOSCURSOR	_IOW('F', 24, struct fbcursor)
@@ -62,12 +62,12 @@ struct sparc32_fbcursor {
 #endif
 
 /* from arch/sparc/include/openpromio.h */
-struct sparc32_opiocdesc {
+struct netbsd32_opiocdesc {
 	int	op_nodeid;		/* passed or returned node id */
 	int	op_namelen;		/* length of op_name */
-	sparc32_charp op_name;		/* pointer to field name */
+	netbsd32_charp op_name;		/* pointer to field name */
 	int	op_buflen;		/* length of op_buf (value-result) */
-	sparc32_charp op_buf;		/* pointer to field value */
+	netbsd32_charp op_buf;		/* pointer to field value */
 };
 #if 0
 #define	OPIOCGET	_IOWR('O', 1, struct opiocdesc) /* get openprom field */
@@ -81,18 +81,18 @@ struct sparc32_opiocdesc {
 #endif
 
 /* from <sys/dkio.h> */
-typedef int32_t sparc32_disklabel_tp_t;
-typedef int32_t sparc32_partition_tp_t;
-struct sparc32_partinfo {
-	sparc32_disklabel_tp_t disklab;
-	sparc32_partition_tp_t part;
+typedef int32_t netbsd32_disklabel_tp_t;
+typedef int32_t netbsd32_partition_tp_t;
+struct netbsd32_partinfo {
+	netbsd32_disklabel_tp_t disklab;
+	netbsd32_partition_tp_t part;
 };
 #if 0
 #define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
 #endif
 
-struct sparc32_format_op {
-	sparc32_charp df_buf;
+struct netbsd32_format_op {
+	netbsd32_charp df_buf;
 	int	 df_count;		/* value-result */
 	daddr_t	 df_startblk;
 	int	 df_reg[8];		/* result */
@@ -182,11 +182,11 @@ sys/scsiio.h:43:#define SCIOCCOMMAND	_IOWR('Q', 1, scsireq_t)
 
 /* from <net/if.h> */
 
-typedef int32_t sparc32_ifreq_tp_t;
+typedef int32_t netbsd32_ifreq_tp_t;
 /*
  * note that ifr_data is the only one that needs to be changed
  */
-struct	sparc32_ifreq {
+struct	netbsd32_ifreq {
 	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	union {
 		struct	sockaddr ifru_addr;
@@ -195,7 +195,7 @@ struct	sparc32_ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
-		sparc32_caddr_t	ifru_data;
+		netbsd32_caddr_t	ifru_data;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -244,11 +244,11 @@ struct	sparc32_ifreq {
 #endif
 
 /* from <net/if.h> */
-struct	sparc32_ifconf {
+struct	netbsd32_ifconf {
 	int	ifc_len;		/* size of associated buffer */
 	union {
-		sparc32_caddr_t	ifcu_buf;
-		sparc32_ifreq_tp_t ifcu_req;
+		netbsd32_caddr_t	ifcu_buf;
+		netbsd32_ifreq_tp_t ifcu_req;
 	} ifc_ifcu;
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
@@ -260,7 +260,7 @@ struct	sparc32_ifconf {
 #endif
 
 /* from <net/if.h> */
-struct sparc32_ifmediareq {
+struct netbsd32_ifmediareq {
 	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	int	ifm_current;			/* current media options */
 	int	ifm_mask;			/* don't care mask */
@@ -268,7 +268,7 @@ struct sparc32_ifmediareq {
 	int	ifm_active;			/* active options */
 	int	ifm_count;			/* # entries in ifm_ulist
 						   array */
-	sparc32_intp	ifm_ulist;		/* media words */
+	netbsd32_intp	ifm_ulist;		/* media words */
 };
 #if 0
 /* from <sys/sockio.h> */
@@ -276,7 +276,7 @@ struct sparc32_ifmediareq {
 #endif
 
 /* from <net/if.h> */
-struct  sparc32_ifdrv {
+struct  netbsd32_ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	unsigned long	ifd_cmd;
 	size_t		ifd_len;
@@ -288,19 +288,19 @@ struct  sparc32_ifdrv {
 #endif
 
 /* from <netinet/ip_mroute.h> */
-struct sparc32_sioc_vif_req {
+struct netbsd32_sioc_vif_req {
 	vifi_t	vifi;			/* vif number */
-	sparc32_u_long	icount;		/* input packet count on vif */
-	sparc32_u_long	ocount;		/* output packet count on vif */
-	sparc32_u_long	ibytes;		/* input byte count on vif */
-	sparc32_u_long	obytes;		/* output byte count on vif */
+	netbsd32_u_long	icount;		/* input packet count on vif */
+	netbsd32_u_long	ocount;		/* output packet count on vif */
+	netbsd32_u_long	ibytes;		/* input byte count on vif */
+	netbsd32_u_long	obytes;		/* output byte count on vif */
 };
 #if 0
 /* from <sys/sockio.h> */
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
 #endif
 
-struct sparc32_sioc_sg_req {
+struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
 	struct	in_addr grp;
 	u_long	pktcnt;

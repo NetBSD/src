@@ -1,18 +1,18 @@
-#	$NetBSD: files.netbsd32,v 1.2 1998/10/01 14:27:56 eeh Exp $
+#	$NetBSD: files.netbsd32,v 1.3 1999/03/25 16:22:49 mrg Exp $
 #
-# config file description for machine-independent sparc32 compat code.
+# config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
 
 # ports should define any machine-specific files they need in their
 # own file lists.
 
-file	compat/sparc32/sparc32_exec.c		compat_sparc32
-file	compat/sparc32/sparc32_netbsd.c		compat_sparc32
-file	compat/sparc32/sparc32_ioctl.c		compat_sparc32
-file	compat/sparc32/sparc32_sysent.c		compat_sparc32
-file	compat/sparc32/sparc32_compat_09.c	compat_sparc32 & compat_09
-file	compat/sparc32/sparc32_compat_10.c	compat_sparc32 & compat_10
-file	compat/sparc32/sparc32_compat_12.c	compat_sparc32 & compat_12
-file	compat/sparc32/sparc32_compat_13.c	compat_sparc32 & compat_13
-file	compat/sparc32/sparc32_compat_43.c	compat_sparc32 & compat_43
-file	compat/sparc32/sparc32_syscalls.c	compat_sparc32 & syscall_debug
+file	compat/netbsd32/netbsd32_exec.c		compat_netbsd32
+file	compat/netbsd32/netbsd32_netbsd.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_ioctl.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_sysent.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_compat_09.c	compat_netbsd32 & compat_09
+file	compat/netbsd32/netbsd32_compat_10.c	compat_netbsd32 & compat_10
+file	compat/netbsd32/netbsd32_compat_12.c	compat_netbsd32 & compat_12
+file	compat/netbsd32/netbsd32_compat_13.c	compat_netbsd32 & compat_13
+file	compat/netbsd32/netbsd32_compat_43.c	compat_netbsd32 & compat_43
+file	compat/netbsd32/netbsd32_syscalls.c	compat_netbsd32 & syscall_debug

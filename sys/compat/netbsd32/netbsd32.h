@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.3 1998/10/01 14:27:56 eeh Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.4 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -44,201 +44,201 @@
  * first, define all the types we need.
  */
 
-typedef int32_t sparc32_long;
-typedef u_int32_t sparc32_u_long;
+typedef int32_t netbsd32_long;
+typedef u_int32_t netbsd32_u_long;
 
-typedef u_int32_t sparc32_clock_t;
-typedef u_int32_t sparc32_size_t;
-typedef int32_t sparc32_ssize_t;
-typedef int32_t sparc32_clockid_t;
-typedef u_int32_t sparc32_caddr_t;
-typedef int32_t sparc32_key_t;
+typedef u_int32_t netbsd32_clock_t;
+typedef u_int32_t netbsd32_size_t;
+typedef int32_t netbsd32_ssize_t;
+typedef int32_t netbsd32_clockid_t;
+typedef u_int32_t netbsd32_caddr_t;
+typedef int32_t netbsd32_key_t;
 
 /* all pointers are u_int32_t */
 
-typedef u_int32_t sparc32_voidp;
-typedef u_int32_t sparc32_u_shortp;
-typedef u_int32_t sparc32_charp;
-typedef u_int32_t sparc32_u_charp;
-typedef u_int32_t sparc32_charpp;
-typedef u_int32_t sparc32_size_tp;
-typedef u_int32_t sparc32_intp;
-typedef u_int32_t sparc32_longp;
-typedef u_int32_t sparc32_caddrp;
-typedef u_int32_t sparc32_caddr;
-typedef u_int32_t sparc32_gid_tp;
-typedef u_int32_t sparc32_fsid_tp_t;
+typedef u_int32_t netbsd32_voidp;
+typedef u_int32_t netbsd32_u_shortp;
+typedef u_int32_t netbsd32_charp;
+typedef u_int32_t netbsd32_u_charp;
+typedef u_int32_t netbsd32_charpp;
+typedef u_int32_t netbsd32_size_tp;
+typedef u_int32_t netbsd32_intp;
+typedef u_int32_t netbsd32_longp;
+typedef u_int32_t netbsd32_caddrp;
+typedef u_int32_t netbsd32_caddr;
+typedef u_int32_t netbsd32_gid_tp;
+typedef u_int32_t netbsd32_fsid_tp_t;
 
 /*
  * now, the compatibility structures and their fake pointer types.
  */
 
 /* from <sys/types.h> */
-typedef u_int32_t sparc32_fd_setp_t;
+typedef u_int32_t netbsd32_fd_setp_t;
 
 /* from <sys/uio.h> */
-typedef u_int32_t sparc32_iovecp_t;
-struct sparc32_iovec {
-	sparc32_voidp	iov_base;	/* Base address. */
-	sparc32_size_t	 iov_len;	/* Length. */
+typedef u_int32_t netbsd32_iovecp_t;
+struct netbsd32_iovec {
+	netbsd32_voidp	iov_base;	/* Base address. */
+	netbsd32_size_t	 iov_len;	/* Length. */
 };
 
 /* from <sys/time.h> */
-typedef int32_t sparc32_timer_t;
+typedef int32_t netbsd32_timer_t;
 
-typedef u_int32_t sparc32_timespecp_t;
-struct sparc32_timespec {
+typedef u_int32_t netbsd32_timespecp_t;
+struct netbsd32_timespec {
 	time_t	tv_sec;			/* seconds */
-	sparc32_long	tv_nsec;	/* and nanoseconds */
+	netbsd32_long	tv_nsec;	/* and nanoseconds */
 };
 
-typedef u_int32_t sparc32_timevalp_t;
-struct sparc32_timeval {
-	sparc32_long	tv_sec;		/* seconds */
-	sparc32_long	tv_usec;	/* and microseconds */
+typedef u_int32_t netbsd32_timevalp_t;
+struct netbsd32_timeval {
+	netbsd32_long	tv_sec;		/* seconds */
+	netbsd32_long	tv_usec;	/* and microseconds */
 };
 
-typedef u_int32_t sparc32_timezonep_t;
-struct sparc32_timezone {
+typedef u_int32_t netbsd32_timezonep_t;
+struct netbsd32_timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of dst correction */
 };
 
-typedef u_int32_t sparc32_itimervalp_t;
-struct	sparc32_itimerval {
-	struct	sparc32_timeval it_interval;	/* timer interval */
-	struct	sparc32_timeval it_value;	/* current value */
+typedef u_int32_t netbsd32_itimervalp_t;
+struct	netbsd32_itimerval {
+	struct	netbsd32_timeval it_interval;	/* timer interval */
+	struct	netbsd32_timeval it_value;	/* current value */
 };
 
 /* from <sys/mount.h> */
-typedef u_int32_t sparc32_fidp_t;
+typedef u_int32_t netbsd32_fidp_t;
 
-typedef u_int32_t sparc32_fhandlep_t;
+typedef u_int32_t netbsd32_fhandlep_t;
 
-typedef u_int32_t sparc32_statfsp_t;
-struct sparc32_statfs {
+typedef u_int32_t netbsd32_statfsp_t;
+struct netbsd32_statfs {
 	short	f_type;			/* type of file system */
 	u_short	f_flags;		/* copy of mount flags */
-	sparc32_long	f_bsize;	/* fundamental file system block size */
-	sparc32_long	f_iosize;	/* optimal transfer block size */
-	sparc32_long	f_blocks;	/* total data blocks in file system */
-	sparc32_long	f_bfree;	/* free blocks in fs */
-	sparc32_long	f_bavail;	/* free blocks avail to non-superuser */
-	sparc32_long	f_files;	/* total file nodes in file system */
-	sparc32_long	f_ffree;	/* free file nodes in fs */
+	netbsd32_long	f_bsize;	/* fundamental file system block size */
+	netbsd32_long	f_iosize;	/* optimal transfer block size */
+	netbsd32_long	f_blocks;	/* total data blocks in file system */
+	netbsd32_long	f_bfree;	/* free blocks in fs */
+	netbsd32_long	f_bavail;	/* free blocks avail to non-superuser */
+	netbsd32_long	f_files;	/* total file nodes in file system */
+	netbsd32_long	f_ffree;	/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the file system */
-	sparc32_long	f_spare[4];	/* spare for later */
+	netbsd32_long	f_spare[4];	/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
 };
 
 /* from <sys/poll.h> */
-typedef u_int32_t sparc32_pollfdp_t;
+typedef u_int32_t netbsd32_pollfdp_t;
 
 /* from <sys/resource.h> */
-typedef u_int32_t sparc32_rusagep_t;
-struct	sparc32_rusage {
-	struct sparc32_timeval ru_utime;/* user time used */
-	struct sparc32_timeval ru_stime;/* system time used */
-	sparc32_long	ru_maxrss;	/* max resident set size */
-	sparc32_long	ru_ixrss;	/* integral shared memory size */
-	sparc32_long	ru_idrss;	/* integral unshared data " */
-	sparc32_long	ru_isrss;	/* integral unshared stack " */
-	sparc32_long	ru_minflt;	/* page reclaims */
-	sparc32_long	ru_majflt;	/* page faults */
-	sparc32_long	ru_nswap;	/* swaps */
-	sparc32_long	ru_inblock;	/* block input operations */
-	sparc32_long	ru_oublock;	/* block output operations */
-	sparc32_long	ru_msgsnd;	/* messages sent */
-	sparc32_long	ru_msgrcv;	/* messages received */
-	sparc32_long	ru_nsignals;	/* signals received */
-	sparc32_long	ru_nvcsw;	/* voluntary context switches */
-	sparc32_long	ru_nivcsw;	/* involuntary " */
+typedef u_int32_t netbsd32_rusagep_t;
+struct	netbsd32_rusage {
+	struct netbsd32_timeval ru_utime;/* user time used */
+	struct netbsd32_timeval ru_stime;/* system time used */
+	netbsd32_long	ru_maxrss;	/* max resident set size */
+	netbsd32_long	ru_ixrss;	/* integral shared memory size */
+	netbsd32_long	ru_idrss;	/* integral unshared data " */
+	netbsd32_long	ru_isrss;	/* integral unshared stack " */
+	netbsd32_long	ru_minflt;	/* page reclaims */
+	netbsd32_long	ru_majflt;	/* page faults */
+	netbsd32_long	ru_nswap;	/* swaps */
+	netbsd32_long	ru_inblock;	/* block input operations */
+	netbsd32_long	ru_oublock;	/* block output operations */
+	netbsd32_long	ru_msgsnd;	/* messages sent */
+	netbsd32_long	ru_msgrcv;	/* messages received */
+	netbsd32_long	ru_nsignals;	/* signals received */
+	netbsd32_long	ru_nvcsw;	/* voluntary context switches */
+	netbsd32_long	ru_nivcsw;	/* involuntary " */
 };
 
-typedef u_int32_t sparc32_orlimitp_t;
+typedef u_int32_t netbsd32_orlimitp_t;
 
-typedef u_int32_t sparc32_rlimitp_t;
+typedef u_int32_t netbsd32_rlimitp_t;
 
 /* from <sys/ipc.h> */
-typedef u_int32_t sparc32_ipc_permp_t;
-struct sparc32_ipc_perm {
+typedef u_int32_t netbsd32_ipc_permp_t;
+struct netbsd32_ipc_perm {
 	ushort	cuid;		/* creator user id */
 	ushort	cgid;		/* creator group id */
 	ushort	uid;		/* user id */
 	ushort	gid;		/* group id */
 	ushort	mode;		/* r/w permission */
 	ushort	seq;		/* sequence # (to generate unique msg/sem/shm id) */
-	sparc32_key_t	key;	/* user specified msg/sem/shm key */
+	netbsd32_key_t	key;	/* user specified msg/sem/shm key */
 };
 
 /* from <sys/msg.h> */
-typedef u_int32_t sparc32_msgp_t;
-struct sparc32_msg {
-	sparc32_msgp_t msg_next;	/* next msg in the chain */
-	sparc32_long	msg_type;	/* type of this message */
+typedef u_int32_t netbsd32_msgp_t;
+struct netbsd32_msg {
+	netbsd32_msgp_t msg_next;	/* next msg in the chain */
+	netbsd32_long	msg_type;	/* type of this message */
     				/* >0 -> type of this message */
     				/* 0 -> free header */
 	u_short	msg_ts;		/* size of this message */
 	short	msg_spot;	/* location of start of msg in buffer */
 };
 
-typedef u_int32_t sparc32_msqid_dsp_t;
-struct sparc32_msqid_ds {
-	struct	sparc32_ipc_perm msg_perm;	/* msg queue permission bits */
-	sparc32_msgp_t	msg_first;	/* first message in the queue */
-	sparc32_msgp_t	msg_last;	/* last message in the queue */
-	sparc32_u_long	msg_cbytes;	/* number of bytes in use on the queue */
-	sparc32_u_long	msg_qnum;	/* number of msgs in the queue */
-	sparc32_u_long	msg_qbytes;	/* max # of bytes on the queue */
+typedef u_int32_t netbsd32_msqid_dsp_t;
+struct netbsd32_msqid_ds {
+	struct	netbsd32_ipc_perm msg_perm;	/* msg queue permission bits */
+	netbsd32_msgp_t	msg_first;	/* first message in the queue */
+	netbsd32_msgp_t	msg_last;	/* last message in the queue */
+	netbsd32_u_long	msg_cbytes;	/* number of bytes in use on the queue */
+	netbsd32_u_long	msg_qnum;	/* number of msgs in the queue */
+	netbsd32_u_long	msg_qbytes;	/* max # of bytes on the queue */
 	pid_t msg_lspid;		/* pid of last msgsnd() */
 	pid_t msg_lrpid;		/* pid of last msgrcv() */
 	time_t	msg_stime;		/* time of last msgsnd() */
-	sparc32_long	msg_pad1;
+	netbsd32_long	msg_pad1;
 	time_t	msg_rtime;		/* time of last msgrcv() */
-	sparc32_long	msg_pad2;
+	netbsd32_long	msg_pad2;
 	time_t	msg_ctime;		/* time of last msgctl() */
-	sparc32_long	msg_pad3;
-	sparc32_long	msg_pad4[4];
+	netbsd32_long	msg_pad3;
+	netbsd32_long	msg_pad4[4];
 };
 
 /* from <sys/sem.h> */
-typedef u_int32_t sparc32_semp_t;
+typedef u_int32_t netbsd32_semp_t;
 
-typedef u_int32_t sparc32_semid_dsp_t;
-struct sparc32_semid_ds {
-	struct sparc32_ipc_perm	sem_perm;/* operation permission struct */
-	sparc32_semp_t	sem_base;	/* pointer to first semaphore in set */
+typedef u_int32_t netbsd32_semid_dsp_t;
+struct netbsd32_semid_ds {
+	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
+	netbsd32_semp_t	sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
 	time_t	sem_otime;		/* last operation time */
-	sparc32_long	sem_pad1;	/* SVABI/386 says I need this here */
+	netbsd32_long	sem_pad1;	/* SVABI/386 says I need this here */
 	time_t	sem_ctime;		/* last change time */
 					/* Times measured in secs since */
 					/* 00:00:00 GMT, Jan. 1, 1970 */
-	sparc32_long	sem_pad2;	/* SVABI/386 says I need this here */
-	sparc32_long	sem_pad3[4];	/* SVABI/386 says I need this here */
+	netbsd32_long	sem_pad2;	/* SVABI/386 says I need this here */
+	netbsd32_long	sem_pad3[4];	/* SVABI/386 says I need this here */
 };
 
-typedef u_int32_t sparc32_semunu_t;
-union sparc32_semun {
+typedef u_int32_t netbsd32_semunu_t;
+union netbsd32_semun {
 	int	val;		/* value for SETVAL */
-	sparc32_semid_dsp_t buf; /* buffer for IPC_STAT & IPC_SET */
-	sparc32_u_shortp array;	/* array for GETALL & SETALL */
+	netbsd32_semid_dsp_t buf; /* buffer for IPC_STAT & IPC_SET */
+	netbsd32_u_shortp array;	/* array for GETALL & SETALL */
 };
 
-typedef u_int32_t sparc32_sembufp_t;
-struct sparc32_sembuf {
+typedef u_int32_t netbsd32_sembufp_t;
+struct netbsd32_sembuf {
 	unsigned short	sem_num;	/* semaphore # */
 	short		sem_op;		/* semaphore operation */
 	short		sem_flg;	/* operation flags */
 };
 
 /* from <sys/shm.h> */
-typedef u_int32_t sparc32_shmid_dsp_t;
-struct sparc32_shmid_ds {
-	struct sparc32_ipc_perm	shm_perm; /* operation permission structure */
+typedef u_int32_t netbsd32_shmid_dsp_t;
+struct netbsd32_shmid_ds {
+	struct netbsd32_ipc_perm	shm_perm; /* operation permission structure */
 	int		shm_segsz;	/* size of segment in bytes */
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
@@ -246,72 +246,72 @@ struct sparc32_shmid_ds {
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
-	sparc32_voidp	shm_internal;	/* sysv stupidity */
+	netbsd32_voidp	shm_internal;	/* sysv stupidity */
 };
 
 /* from <sys/signal.h> */
-typedef u_int32_t sparc32_sigactionp_t;
-struct	sparc32_sigaction {
-	sparc32_voidp sa_handler;	/* signal handler */
+typedef u_int32_t netbsd32_sigactionp_t;
+struct	netbsd32_sigaction {
+	netbsd32_voidp sa_handler;	/* signal handler */
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
 
-typedef u_int32_t sparc32_sigaltstack13p_t;
-struct sparc32_sigaltstack13 {
-	sparc32_charp	ss_sp;			/* signal stack base */
+typedef u_int32_t netbsd32_sigaltstack13p_t;
+struct netbsd32_sigaltstack13 {
+	netbsd32_charp	ss_sp;			/* signal stack base */
 	int	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
 
-typedef u_int32_t sparc32_sigaltstackp_t;
-struct sparc32_sigaltstack {
-	sparc32_voidp	ss_sp;			/* signal stack base */
-	sparc32_size_t	ss_size;		/* signal stack length */
+typedef u_int32_t netbsd32_sigaltstackp_t;
+struct netbsd32_sigaltstack {
+	netbsd32_voidp	ss_sp;			/* signal stack base */
+	netbsd32_size_t	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
 
-typedef u_int32_t sparc32_sigstackp_t;
-struct	sparc32_sigstack {
-	sparc32_voidp	ss_sp;			/* signal stack pointer */
+typedef u_int32_t netbsd32_sigstackp_t;
+struct	netbsd32_sigstack {
+	netbsd32_voidp	ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
 
-typedef u_int32_t sparc32_sigvecp_t;
-struct	sparc32_sigvec {
-	sparc32_voidp sv_handler;	/* signal handler */
+typedef u_int32_t netbsd32_sigvecp_t;
+struct	netbsd32_sigvec {
+	netbsd32_voidp sv_handler;	/* signal handler */
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
 
 /* from <sys/socket.h> */
-typedef u_int32_t sparc32_sockaddrp_t;
-typedef u_int32_t sparc32_osockaddrp_t;
+typedef u_int32_t netbsd32_sockaddrp_t;
+typedef u_int32_t netbsd32_osockaddrp_t;
 
-typedef u_int32_t sparc32_msghdrp_t;
-struct sparc32_msghdr {
-	sparc32_caddr_t	msg_name;		/* optional address */
+typedef u_int32_t netbsd32_msghdrp_t;
+struct netbsd32_msghdr {
+	netbsd32_caddr_t	msg_name;		/* optional address */
 	u_int	msg_namelen;		/* size of address */
-	sparc32_iovecp_t msg_iov;		/* scatter/gather array */
+	netbsd32_iovecp_t msg_iov;		/* scatter/gather array */
 	u_int	msg_iovlen;		/* # elements in msg_iov */
-	sparc32_caddr_t	msg_control;		/* ancillary data, see below */
+	netbsd32_caddr_t	msg_control;		/* ancillary data, see below */
 	u_int	msg_controllen;		/* ancillary data buffer len */
 	int	msg_flags;		/* flags on received message */
 };
 
-typedef u_int32_t sparc32_omsghdrp_t;
-struct sparc32_omsghdr {
-	sparc32_caddr_t	msg_name;		/* optional address */
+typedef u_int32_t netbsd32_omsghdrp_t;
+struct netbsd32_omsghdr {
+	netbsd32_caddr_t	msg_name;		/* optional address */
 	int	msg_namelen;		/* size of address */
-	sparc32_iovecp_t msg_iov;		/* scatter/gather array */
+	netbsd32_iovecp_t msg_iov;		/* scatter/gather array */
 	int	msg_iovlen;		/* # elements in msg_iov */
-	sparc32_caddr_t	msg_accrights;		/* access rights sent/received */
+	netbsd32_caddr_t	msg_accrights;		/* access rights sent/received */
 	int	msg_accrightslen;
 };
 
 /* from <sys/stat.h> */
-typedef u_int32_t sparc32_stat12p_t;
-struct sparc32_stat12 {			/* NetBSD-1.2 stat struct */
+typedef u_int32_t netbsd32_stat12p_t;
+struct netbsd32_stat12 {			/* NetBSD-1.2 stat struct */
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
@@ -319,9 +319,9 @@ struct sparc32_stat12 {			/* NetBSD-1.2 stat struct */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-	struct	  sparc32_timespec st_atimespec;/* time of last access */
-	struct	  sparc32_timespec st_mtimespec;/* time of last data modification */
-	struct	  sparc32_timespec st_ctimespec;/* time of last file status change */
+	struct	  netbsd32_timespec st_atimespec;/* time of last access */
+	struct	  netbsd32_timespec st_mtimespec;/* time of last data modification */
+	struct	  netbsd32_timespec st_ctimespec;/* time of last file status change */
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
@@ -331,8 +331,8 @@ struct sparc32_stat12 {			/* NetBSD-1.2 stat struct */
 	int64_t	  st_qspare[2];
 };
 
-typedef u_int32_t sparc32_stat43p_t;
-struct sparc32_stat43 {			/* BSD-4.3 stat struct */
+typedef u_int32_t netbsd32_stat43p_t;
+struct netbsd32_stat43 {			/* BSD-4.3 stat struct */
 	u_int16_t st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
@@ -341,16 +341,16 @@ struct sparc32_stat43 {			/* BSD-4.3 stat struct */
 	u_int16_t st_gid;		/* group ID of the file's group */
 	u_int16_t st_rdev;		/* device type */
 	int32_t	  st_size;		/* file size, in bytes */
-	struct	  sparc32_timespec st_atimespec;/* time of last access */
-	struct	  sparc32_timespec st_mtimespec;/* time of last data modification */
-	struct	  sparc32_timespec st_ctimespec;/* time of last file status change */
+	struct	  netbsd32_timespec st_atimespec;/* time of last access */
+	struct	  netbsd32_timespec st_mtimespec;/* time of last data modification */
+	struct	  netbsd32_timespec st_ctimespec;/* time of last file status change */
 	int32_t	  st_blksize;		/* optimal blocksize for I/O */
 	int32_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-typedef u_int32_t sparc32_statp_t;
-struct sparc32_stat {
+typedef u_int32_t netbsd32_statp_t;
+struct netbsd32_stat {
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
@@ -370,66 +370,59 @@ struct sparc32_stat {
 };
 
 /* from <sys/timex.h> */
-typedef u_int32_t sparc32_ntptimevalp_t;
-struct sparc32_ntptimeval {
-	struct sparc32_timeval time;	/* current time (ro) */
-	sparc32_long maxerror;	/* maximum error (us) (ro) */
-	sparc32_long esterror;	/* estimated error (us) (ro) */
+typedef u_int32_t netbsd32_ntptimevalp_t;
+struct netbsd32_ntptimeval {
+	struct netbsd32_timeval time;	/* current time (ro) */
+	netbsd32_long maxerror;	/* maximum error (us) (ro) */
+	netbsd32_long esterror;	/* estimated error (us) (ro) */
 };
 
-typedef u_int32_t sparc32_timexp_t;
-struct sparc32_timex {
+typedef u_int32_t netbsd32_timexp_t;
+struct netbsd32_timex {
 	unsigned int modes;	/* clock mode bits (wo) */
-	sparc32_long offset;	/* time offset (us) (rw) */
-	sparc32_long freq;	/* frequency offset (scaled ppm) (rw) */
-	sparc32_long maxerror;	/* maximum error (us) (rw) */
-	sparc32_long esterror;	/* estimated error (us) (rw) */
+	netbsd32_long offset;	/* time offset (us) (rw) */
+	netbsd32_long freq;	/* frequency offset (scaled ppm) (rw) */
+	netbsd32_long maxerror;	/* maximum error (us) (rw) */
+	netbsd32_long esterror;	/* estimated error (us) (rw) */
 	int status;		/* clock status bits (rw) */
-	sparc32_long constant;	/* pll time constant (rw) */
-	sparc32_long precision;	/* clock precision (us) (ro) */
-	sparc32_long tolerance;	/* clock frequency tolerance (scaled
+	netbsd32_long constant;	/* pll time constant (rw) */
+	netbsd32_long precision;	/* clock precision (us) (ro) */
+	netbsd32_long tolerance;	/* clock frequency tolerance (scaled
 				 * ppm) (ro) */
 	/*
 	 * The following read-only structure members are implemented
 	 * only if the PPS signal discipline is configured in the
 	 * kernel.
 	 */
-	sparc32_long ppsfreq;	/* pps frequency (scaled ppm) (ro) */
-	sparc32_long jitter;	/* pps jitter (us) (ro) */
+	netbsd32_long ppsfreq;	/* pps frequency (scaled ppm) (ro) */
+	netbsd32_long jitter;	/* pps jitter (us) (ro) */
 	int shift;		/* interval duration (s) (shift) (ro) */
-	sparc32_long stabil;	/* pps stability (scaled ppm) (ro) */
-	sparc32_long jitcnt;	/* jitter limit exceeded (ro) */
-	sparc32_long calcnt;	/* calibration intervals (ro) */
-	sparc32_long errcnt;	/* calibration errors (ro) */
-	sparc32_long stbcnt;	/* stability limit exceeded (ro) */
+	netbsd32_long stabil;	/* pps stability (scaled ppm) (ro) */
+	netbsd32_long jitcnt;	/* jitter limit exceeded (ro) */
+	netbsd32_long calcnt;	/* calibration intervals (ro) */
+	netbsd32_long errcnt;	/* calibration errors (ro) */
+	netbsd32_long stbcnt;	/* stability limit exceeded (ro) */
 };
 
 /* from <ufs/lfs/lfs.h> */
-typedef u_int32_t sparc32_block_infop_t;  /* XXX broken */
+typedef u_int32_t netbsd32_block_infop_t;  /* XXX broken */
 
 /* from <sys/utsname.h> */
-typedef u_int32_t sparc32_utsnamep_t;
+typedef u_int32_t netbsd32_utsnamep_t;
 
 /* from <compat/common/kern_info_09.c> */
-typedef u_int32_t sparc32_outsnamep_t;
-
-/* from <arch/sparc/include/signal.h> */
-typedef u_int32_t sparc32_sigcontextp_t;
-/* XXX how can this work? */
-struct sparc32_sigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
-	/* begin machine dependent portion */
-	int	sc_sp;			/* %sp to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_npc;			/* npc to restore */
-	int	sc_psr;			/* psr to restore */
-	int	sc_g1;			/* %g1 to restore */
-	int	sc_o0;			/* %o0 to restore */
-};
+typedef u_int32_t netbsd32_outsnamep_t;
 
 /*
- * here are some macros to convert between sparc32 and sparc64 types.
+ * machine depedant section; must define:
+ *	netbsd32_sigcontextp_t	- point to sigcontext
+ *	<arch32>_sigcontext
+ */
+
+#include <machine/netbsd32.h>
+
+/*
+ * here are some macros to convert between netbsd32 and sparc64 types.
  * note that they do *NOT* act like good macros and put ()'s around all
  * arguments cuz this _breaks_ SCARG().
  */
@@ -453,9 +446,9 @@ struct sparc32_sigcontext {
  */
 #include <compat/common/compat_util.h>
  
-extern const char sparc32_emul_path[];
+extern const char netbsd32_emul_path[];
   
 #define SPARC32_CHECK_ALT_EXIST(p, sgp, path) \
-    emul_find(p, sgp, sparc32_emul_path, (char *)path, (char **)&path, 0)
+    emul_find(p, sgp, netbsd32_emul_path, (char *)path, (char **)&path, 0)
 
 #endif /* _COMPAT_SPARC32_SPARC32_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.12 1998/12/18 15:08:21 drochner Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.13 1999/03/25 16:22:49 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -46,58 +46,59 @@
 
 #include <vm/vm.h>
 
-#include <compat/sparc32/sparc32.h>
-#include <compat/sparc32/sparc32_exec.h>
-#include <compat/sparc32/sparc32_syscall.h>
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_exec.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 
 #include <machine/frame.h>
+#include <machine/netbsd32.h>
 
-const char sparc32_emul_path[] = "/emul/sparc32";
-extern char sparc32_sigcode[], sparc32_esigcode[];
-extern struct sysent sparc32_sysent[];
+const char netbsd32_emul_path[] = "/emul/netbsd32";
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
-extern char *sparc32_syscallnames[];
+extern char *netbsd32_syscallnames[];
 #endif
-void sparc32_sendsig __P((sig_t, int, int, u_long));
-void sparc32_setregs __P((struct proc *, struct exec_package *, u_long));
-void *sparc32_copyargs __P((struct exec_package *, struct ps_strings *,
+void netbsd32_sendsig __P((sig_t, int, int, u_long));
+void netbsd32_setregs __P((struct proc *, struct exec_package *, u_long));
+void *netbsd32_copyargs __P((struct exec_package *, struct ps_strings *,
 	void *, void *));
-int sparc32_copyinargs __P((struct ps_strings *, void *, size_t,
+int netbsd32_copyinargs __P((struct ps_strings *, void *, size_t,
 			      const void *, const void *));
 
-static int sparc32_exec_aout_prep_zmagic __P((struct proc *,
+static int netbsd32_exec_aout_prep_zmagic __P((struct proc *,
 	struct exec_package *));
-static int sparc32_exec_aout_prep_nmagic __P((struct proc *,
+static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
 	struct exec_package *));
-static int sparc32_exec_aout_prep_omagic __P((struct proc *,
+static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
 	struct exec_package *));
 
-struct emul emul_sparc32 = {
-	"sparc32",
+struct emul emul_netbsd32 = {
+	"netbsd32",
 	NULL,
-	sparc32_sendsig,	/* XXX needs to be written */
-	sparc32_SYS_syscall,
-	sparc32_SYS_MAXSYSCALL,
-	sparc32_sysent,
+	netbsd32_sendsig,	/* XXX needs to be written */
+	netbsd32_SYS_syscall,
+	netbsd32_SYS_MAXSYSCALL,
+	netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
-	sparc32_syscallnames,
+	netbsd32_syscallnames,
 #else
 	NULL,
 #endif
 	0,
-	sparc32_copyinargs,
-	sparc32_copyargs,
-	sparc32_setregs,	/* XXX needs to be written?? */
-	sparc32_sigcode,
-	sparc32_esigcode,
+	netbsd32_copyinargs,
+	netbsd32_copyargs,
+	netbsd32_setregs,	/* XXX needs to be written?? */
+	netbsd32_sigcode,
+	netbsd32_esigcode,
 };
 
 /*
- * exec_sparc32_makecmds(): Check if it's an sparc32 a.out format
+ * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
  * executable.
  *
  * Given a proc pointer and an exec package pointer, see if the referent
- * of the epp is in sparc32 a.out format.  Check 'standard' magic
+ * of the epp is in netbsd32 a.out format.  Check 'standard' magic
  * numbers for this architecture.
  *
  * This function, in the former case, or the hook, in the latter, is
@@ -106,19 +107,19 @@ struct emul emul_sparc32 = {
  */
 
 int
-exec_sparc32_makecmds(p, epp)
+exec_netbsd32_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	sparc32_u_long midmag, magic;
+	netbsd32_u_long midmag, magic;
 	u_short mid;
 	int error;
-	struct sparc32_exec *execp = epp->ep_hdr;
+	struct netbsd32_exec *execp = epp->ep_hdr;
 
-	if (epp->ep_hdrvalid < sizeof(struct sparc32_exec))
+	if (epp->ep_hdrvalid < sizeof(struct netbsd32_exec))
 		return ENOEXEC;
 
-	midmag = (sparc32_u_long)ntohl(execp->a_midmag);
+	midmag = (netbsd32_u_long)ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0x3ff;
 	magic = midmag & 0xffff;
 
@@ -126,13 +127,13 @@ exec_sparc32_makecmds(p, epp)
 
 	switch (midmag) {
 	case (MID_SPARC << 16) | ZMAGIC:
-		error = sparc32_exec_aout_prep_zmagic(p, epp);
+		error = netbsd32_exec_aout_prep_zmagic(p, epp);
 		break;
 	case (MID_SPARC << 16) | NMAGIC:
-		error = sparc32_exec_aout_prep_nmagic(p, epp);
+		error = netbsd32_exec_aout_prep_nmagic(p, epp);
 		break;
 	case (MID_SPARC << 16) | OMAGIC:
-		error = sparc32_exec_aout_prep_omagic(p, epp);
+		error = netbsd32_exec_aout_prep_omagic(p, epp);
 		break;
 	default:
 		/* Invalid magic */
@@ -142,7 +143,7 @@ exec_sparc32_makecmds(p, epp)
 
 	if (error == 0) {
 		/* set up our emulation information */
-		epp->ep_emul = &emul_sparc32;
+		epp->ep_emul = &emul_netbsd32;
 	} else
 		kill_vmcmds(&epp->ep_vmcmds);
 
@@ -150,7 +151,7 @@ exec_sparc32_makecmds(p, epp)
 }
 
 /*
- * sparc32_exec_aout_prep_zmagic(): Prepare a 'native' ZMAGIC binary's
+ * netbsd32_exec_aout_prep_zmagic(): Prepare a 'native' ZMAGIC binary's
  * exec package
  *
  * First, set of the various offsets/lengths in the exec package.
@@ -161,11 +162,11 @@ exec_sparc32_makecmds(p, epp)
  */
 
 int
-sparc32_exec_aout_prep_zmagic(p, epp)
+netbsd32_exec_aout_prep_zmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct sparc32_exec *execp = epp->ep_hdr;
+	struct netbsd32_exec *execp = epp->ep_hdr;
 
 	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
@@ -206,16 +207,16 @@ sparc32_exec_aout_prep_zmagic(p, epp)
 }
 
 /*
- * sparc32_exec_aout_prep_nmagic(): Prepare a 'native' NMAGIC binary's
+ * netbsd32_exec_aout_prep_nmagic(): Prepare a 'native' NMAGIC binary's
  * exec package
  */
 
 int
-sparc32_exec_aout_prep_nmagic(p, epp)
+netbsd32_exec_aout_prep_nmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct sparc32_exec *execp = epp->ep_hdr;
+	struct netbsd32_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
@@ -245,16 +246,16 @@ sparc32_exec_aout_prep_nmagic(p, epp)
 }
 
 /*
- * sparc32_exec_aout_prep_omagic(): Prepare a 'native' OMAGIC binary's
+ * netbsd32_exec_aout_prep_omagic(): Prepare a 'native' OMAGIC binary's
  * exec package
  */
 
 int
-sparc32_exec_aout_prep_omagic(p, epp)
+netbsd32_exec_aout_prep_omagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct sparc32_exec *execp = epp->ep_hdr;
+	struct netbsd32_exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
@@ -288,212 +289,11 @@ sparc32_exec_aout_prep_omagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 
-/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */
-/*
- * the rest is pretty much verbatum from sys/arch/sparc/sparc64/machdep.c
- */
-/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */
-
-/*
- * Set up registers on exec.
- *
- * XXX this entire mess must be fixed
- */
-/* ARGSUSED */
-void
-sparc32_setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack; /* XXX */
-{
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
-	register int64_t tstate;
-
-	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
-
-	/*
-	 * Set the registers to 0 except for:
-	 *	%o6: stack pointer, built in exec())
-	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of PS_STRINGS (used by crt0)
-	 *	%tpc,%tnpc: entry point of program
-	 */
-	tstate = ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) 
-		| (tf->tf_tstate & TSTATE_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		/*
-		 * We hold an FPU state.  If we own *the* FPU chip state
-		 * we must get rid of it, and the only way to do that is
-		 * to save it.  In any case, get rid of our FPU state.
-		 */
-		if (p == fpproc) {
-			savefpstate(fs);
-			fpproc = NULL;
-		}
-		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
-	}
-	bzero((caddr_t)tf, sizeof *tf);
-	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (int)PS_STRINGS;
-	tf->tf_pc = pack->ep_entry & ~3;
-	tf->tf_npc = tf->tf_pc + 4;
-
-	stack -= sizeof(struct rwindow32);
-	tf->tf_out[6] = stack;
-	tf->tf_out[7] = NULL;
-}
-
-/*
- * NB: since this is a 32-bit address world, sf_scp and sf_sc
- *	can't be a pointer since those are 64-bits wide.
- */
-struct sparc32_sigframe {
-	int	sf_signo;		/* signal number */
-	int	sf_code;		/* code */
-	u_int	sf_scp;			/* SunOS user addr of sigcontext */
-	int	sf_addr;		/* SunOS compat, always 0 for now */
-	struct	sparc32_sigcontext sf_sc;	/* actual sigcontext */
-};
-
-#undef DEBUG
-#ifdef DEBUG
-extern int sigdebug;
-#endif
-
-void
-sparc32_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-{
-	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
-	register struct sparc32_sigframe *fp;
-	register struct trapframe *tf;
-	register int addr, onstack; 
-	struct rwindow32 *kwin, *oldsp, *newsp;
-	struct sparc32_sigframe sf;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
-
-	tf = p->p_md.md_tf;
-	/* Need to attempt to zero extend this 32-bit pointer */
-	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-	if (onstack) {
-		fp = (struct sparc32_sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sparc32_sigframe *)oldsp;
-	fp = (struct sparc32_sigframe *)((long)(fp - 1) & ~7);
-
-#ifdef DEBUG
-	sigpid = p->p_pid;
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
-		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
-		if (sigdebug & SDB_DDB) Debugger();
-	}
-#endif
-	/*
-	 * Now set up the signal frame.  We build it in kernel space
-	 * and then copy it out.  We probably ought to just build it
-	 * directly in user space....
-	 */
-	sf.sf_signo = sig;
-	sf.sf_code = code;
-#ifdef COMPAT_SUNOS
-	sf.sf_scp = (u_long)&fp->sf_sc;
-#endif
-	sf.sf_addr = 0;			/* XXX */
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	sf.sf_sc.sc_onstack = onstack;
-	sf.sf_sc.sc_mask = mask;
-	sf.sf_sc.sc_sp = (long)oldsp;
-	sf.sf_sc.sc_pc = tf->tf_pc;
-	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
-	sf.sf_sc.sc_g1 = tf->tf_global[1];
-	sf.sf_sc.sc_o0 = tf->tf_out[0];
-
-	/*
-	 * Put the stack in a consistent state before we whack away
-	 * at it.  Note that write_user_windows may just dump the
-	 * registers into the pcb; we need them in the process's memory.
-	 * We also need to make sure that when we start the signal handler,
-	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
-	 * joins seamlessly with the frame it was in when the signal occurred,
-	 * so that the debugger and _longjmp code can back up through it.
-	 */
-	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
-	write_user_windows();
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK))
-	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
-#endif
-	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	if (rwindow_save(p) || 
-	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
-		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW) {
-		printf("sendsig: %s[%d] sig %d scp %p\n",
-		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
-	}
-#endif
-	/*
-	 * Arrange to continue execution at the code copied out in exec().
-	 * It needs the function to call in %g1, and a new stack pointer.
-	 */
-	addr = (long)PS_STRINGS - szsigcode;
-	tf->tf_global[1] = (long)catcher;
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		printf("sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, addr);
-		if (sigdebug & SDB_DDB) Debugger();
-	}
-#endif
-}
-
 /*
  * We need to copy out all pointers as 32-bit values.
  */
 void *
-sparc32_copyargs(pack, arginfo, stack, argp)
+netbsd32_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	void *stack;
@@ -544,7 +344,7 @@ sparc32_copyargs(pack, arginfo, stack, argp)
  * routine needs to copyin 32-bit pointers and convert them.
  */
 int
-sparc32_copyinargs(arginfo, destp, len, argp, envp)
+netbsd32_copyinargs(arginfo, destp, len, argp, envp)
 	struct ps_strings *arginfo;
 	void *destp;
 	size_t len;

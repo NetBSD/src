@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.2 1998/08/26 13:38:21 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.3 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -35,29 +35,29 @@
 #include <sys/signal.h>
 #include <sys/syscallargs.h>
 
-#include <compat/sparc32/sparc32.h>
-#include <compat/sparc32/sparc32_syscallargs.h>
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_13_compat_sparc32_sigaltstack13(p, v, retval)
+compat_13_compat_netbsd32_sigaltstack13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_compat_sparc32_sigaltstack13_args /* {
-		syscallarg(const sparc32_sigaltstack13p_t) nss;
-		syscallarg(sparc32_sigaltstack13p_t) oss;
+	struct compat_13_compat_netbsd32_sigaltstack13_args /* {
+		syscallarg(const netbsd32_sigaltstack13p_t) nss;
+		syscallarg(netbsd32_sigaltstack13p_t) oss;
 	} */ *uap = v;
 	struct compat_13_sys_sigaltstack_args ua;
 	struct sigaltstack13 nss13, oss13;
-	struct sparc32_sigaltstack13 *s32nss13, *s32oss13;
+	struct netbsd32_sigaltstack13 *s32nss13, *s32oss13;
 	int rv;
 
 	SCARG(&ua, nss) = &nss13;
 	SCARG(&ua, oss) = &oss13;
 
-	s32nss13 = (struct sparc32_sigaltstack13 *)(u_long)SCARG(uap, nss);
-	s32oss13 = (struct sparc32_sigaltstack13 *)(u_long)SCARG(uap, oss);
+	s32nss13 = (struct netbsd32_sigaltstack13 *)(u_long)SCARG(uap, nss);
+	s32oss13 = (struct netbsd32_sigaltstack13 *)(u_long)SCARG(uap, oss);
 
 	nss13.ss_sp = (char *)(u_long)s32nss13->ss_sp;
 	nss13.ss_size = s32nss13->ss_size;
@@ -65,7 +65,7 @@ compat_13_compat_sparc32_sigaltstack13(p, v, retval)
 
 	rv = compat_13_sys_sigaltstack(p, &ua, retval);
 
-	s32oss13->ss_sp = (sparc32_charp)(u_long)oss13.ss_sp;
+	s32oss13->ss_sp = (netbsd32_charp)(u_long)oss13.ss_sp;
 	s32oss13->ss_size = oss13.ss_size;
 	s32oss13->ss_flags = oss13.ss_flags;
 

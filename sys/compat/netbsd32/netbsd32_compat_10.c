@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.2 1998/10/19 22:39:09 tron Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.3 1999/03/25 16:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -42,8 +42,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <compat/sparc32/sparc32.h>
-#include <compat/sparc32/sparc32_syscallargs.h>
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <vm/vm.h>
 #include <vm/vm_map.h>
@@ -52,12 +52,12 @@
 
 #ifdef SYSVSEM
 int
-compat_sparc32_compat_10_sys_semsys(p, v, retval)
+compat_netbsd32_compat_10_sys_semsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_sparc32_compat_10_sys_semsys_args /* {
+	struct compat_netbsd32_compat_10_sys_semsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
@@ -120,12 +120,12 @@ compat_sparc32_compat_10_sys_semsys(p, v, retval)
 
 #ifdef SYSVSHM
 int
-compat_sparc32_compat_10_sys_shmsys(p, v, retval)
+compat_netbsd32_compat_10_sys_shmsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_sparc32_compat_10_sys_shmsys_args /* {
+	struct compat_netbsd32_compat_10_sys_shmsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
@@ -181,12 +181,12 @@ compat_sparc32_compat_10_sys_shmsys(p, v, retval)
 
 #ifdef SYSVMSG
 int
-compat_sparc32_compat_10_sys_msgsys(p, v, retval)
+compat_netbsd32_compat_10_sys_msgsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_sparc32_compat_10_sys_msgsys_args /* {
+	struct compat_netbsd32_compat_10_sys_msgsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
