@@ -4,6 +4,10 @@
     Defines: M4 macro processor.
 */
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.4 1993/08/02 17:54:43 mycroft Exp $";
+#endif /* not lint */
+
 #include "mdef.h"
 #include "extr.h"
 #include "ourlims.h"

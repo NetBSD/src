@@ -1,39 +1,6 @@
-/* $Header: /cvsroot/src/usr.bin/patch/pch.c,v 1.1 1993/04/09 11:34:07 cgd Exp $
- *
- * $Log: pch.c,v $
- * Revision 1.1  1993/04/09 11:34:07  cgd
- * patch 2.0.12u8, from prep.ai.mit.edu.  this is not under the GPL.
- *
- * Revision 2.0.2.0  90/05/01  22:17:51  davison
- * patch12u: unidiff support added
- *
- * Revision 2.0.1.7  88/06/03  15:13:28  lwall
- * patch10: Can now find patches in shar scripts.
- * patch10: Hunks that swapped and then swapped back could core dump.
- * 
- * Revision 2.0.1.6  87/06/04  16:18:13  lwall
- * pch_swap didn't swap p_bfake and p_efake.
- * 
- * Revision 2.0.1.5  87/01/30  22:47:42  lwall
- * Improved responses to mangled patches.
- * 
- * Revision 2.0.1.4  87/01/05  16:59:53  lwall
- * New-style context diffs caused double call to free().
- * 
- * Revision 2.0.1.3  86/11/14  10:08:33  lwall
- * Fixed problem where a long pattern wouldn't grow the hunk.
- * Also restored p_input_line when backtracking so error messages are right.
- * 
- * Revision 2.0.1.2  86/11/03  17:49:52  lwall
- * New-style delete triggers spurious assertion error.
- * 
- * Revision 2.0.1.1  86/10/29  15:52:08  lwall
- * Could falsely report new-style context diff.
- * 
- * Revision 2.0  86/09/17  15:39:37  lwall
- * Baseline for netwide release.
- * 
- */
+#ifndef lint
+static char rcsid[] = "$Id: pch.c,v 1.2 1993/08/02 17:55:21 mycroft Exp $";
+#endif /* not lint */
 
 #include "EXTERN.h"
 #include "common.h"

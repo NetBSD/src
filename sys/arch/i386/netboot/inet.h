@@ -1,17 +1,10 @@
-/* netboot
- *
- * $Log: inet.h,v $
- * Revision 1.1  1993/07/08 16:03:59  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Various UDP/IP definitions (see RFC 768, and 791)
+ *
+ *	$Id: inet.h,v 1.2 1993/08/02 17:52:55 mycroft Exp $
  */
 
 /* generic IP address */

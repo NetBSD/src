@@ -5,6 +5,8 @@
  *	14407 SW Teal Blvd. #C
  *	Beaverton, OR 97005
  *	kirkenda@cs.pdx.edu
+ *
+ *	$Id: curses.h,v 1.2 1993/08/02 17:53:50 mycroft Exp $
  */
 
 

@@ -9,6 +9,11 @@
  *		-f file	   default filename for static functions
  *		-c class   default class names for class functions
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: ref.c,v 1.2 1993/08/02 17:55:31 mycroft Exp $";
+#endif /* not lint */
+
 #ifdef __STDC__
 # include <string.h>
 # include <stdlib.h>

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/tools/Attic/Makefile,v 1.2 1993/04/27 06:47:40 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/08/02 17:56:20 mycroft Exp $
 
 SUBDIR = mkhits mkastosc mkastods mkdstoas mkdctype
 

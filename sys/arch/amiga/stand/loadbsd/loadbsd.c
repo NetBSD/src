@@ -1,3 +1,5 @@
+/*	$Id: loadbsd.c,v 1.2 1993/08/02 17:52:07 mycroft Exp $ */
+
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>

@@ -31,6 +31,10 @@
  * SUCH DAMAGE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: rusers_proc.c,v 1.5 1993/08/02 17:50:46 mycroft Exp $";
+#endif /* not lint */
+
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>

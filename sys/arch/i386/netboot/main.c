@@ -1,25 +1,4 @@
-/* netboot
- *
- * $Log: main.c,v $
- * Revision 1.2  1993/07/09 15:24:12  brezak
- * Cleanup warnings and add netbsd kernel name suffix.
- *
- * Revision 1.1  1993/07/08  16:04:02  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.4  1993/06/30  20:14:13  mckim
- * Added BOOTP support.
- *
- * Revision 1.3  1993/06/08  14:27:08  mckim
- * Reboot options (argv[1]) passed to kernel.
- *
- * Revision 1.2  1993/05/28  20:01:27  mckim
- * Fixed various StartProg() problems.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source code in this file is from:
  * 386BSD boot blocks by Julian Elischer (julian@tfs.com)
  * 386BSD Adaptec 1542 SCSI boot blocks by Pace Willisson (pace@blitz.com)
@@ -47,6 +26,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: main.c,v 1.3 1993/08/02 17:52:56 mycroft Exp $
  */
 
 /*

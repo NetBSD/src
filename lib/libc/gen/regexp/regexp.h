@@ -3,7 +3,10 @@
  *
  * Caveat:  this is V8 regexp(3) [actually, a reimplementation thereof],
  * not the System V one.
+ *
+ *	$Id: regexp.h,v 1.2 1993/08/02 17:49:31 mycroft Exp $
  */
+
 #define NSUBEXP  10
 typedef struct regexp {
 	char *startp[NSUBEXP];

@@ -1,21 +1,11 @@
-/* netboot
- *
- * $Log: genprom.c,v $
- * Revision 1.1  1993/07/08 16:03:58  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/30  20:15:38  mckim
- * Display code size.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:06  mckim
- * Initial version.
- *
- *
+/*
  * Read a binary image of a bios extension, generate the
  * appropriate block count and checksum and write them
  * into the rom image (replacing 2nd and 5th bytes)
  * The binary image should be sized before being filtered
  * through this routine.
+ *
+ *	$Id: genprom.c,v 1.2 1993/08/02 17:52:54 mycroft Exp $
  */
 
 #include <stdio.h>

@@ -4,6 +4,11 @@
  * version of <ctype.h>.  It should be portable.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: ctype.c,v 1.3 1993/08/02 17:53:46 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "ctype.h"
 

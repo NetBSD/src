@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: update.c,v 1.3 1993/08/02 17:49:08 mycroft Exp $";
+#endif /* not lint */
+
 /* JF implement the 'r' 'u' and 'A' options for tar. */
 /* The 'A' option is my own invention:  It means that the file-names are
    tar files, and they should simply be appended to the end of the archive.

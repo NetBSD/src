@@ -1,14 +1,7 @@
-/* netboot
- *
- * $Log: param.h,v $
- * Revision 1.1  1993/07/08 16:04:09  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- *
+/*
  * Tunable parameters
+ *
+ *	$Id: param.h,v 1.2 1993/08/02 17:53:01 mycroft Exp $
  */
 
 /*

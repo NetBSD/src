@@ -15,6 +15,10 @@ License along with this library; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: fnmatch.c,v 1.2 1993/08/02 17:48:44 mycroft Exp $";
+#endif /* not lint */
+
 #include <errno.h>
 #include <fnmatch.h>
 

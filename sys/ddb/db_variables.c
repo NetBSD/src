@@ -22,42 +22,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * db_variables.c,v 1.2 1993/05/20 03:39:35 cgd Exp
  *
- * HISTORY
- * db_variables.c,v
- * Revision 1.2  1993/05/20  03:39:35  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:33  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:07:19  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:19:46  mrt]
- * 
- * Revision 2.2  90/08/27  21:53:24  dbg
- * 	New db_read/write_variable functions.  Should be used instead
- * 	of dereferencing valuep directly, which might not be a true
- * 	pointer if there is an fcn() access function.
- * 	[90/08/20            af]
- * 
- * 	Fix declarations.
- * 	Check for trailing garbage after last expression on command line.
- * 	[90/08/10  14:34:54  dbg]
- * 
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
- * 	Author: David B. Golub, Carnegie Mellon University
- *	Date:	7/90
+ *	$Id: db_variables.c,v 1.4 1993/08/02 17:53:15 mycroft Exp $
  */
 
 #include "param.h"

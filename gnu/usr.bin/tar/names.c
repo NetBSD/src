@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: names.c,v 1.4 1993/08/02 17:48:53 mycroft Exp $";
+#endif /* not lint */
+
 /*
  * Look up user and/or group names.
  *

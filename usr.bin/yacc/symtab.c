@@ -1,5 +1,8 @@
-#include "defs.h"
+#ifndef lint
+static char rcsid[] = "$Id: symtab.c,v 1.3 1993/08/02 17:56:50 mycroft Exp $";
+#endif /* not lint */
 
+#include "defs.h"
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */

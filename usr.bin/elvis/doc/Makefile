@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.2 1993/08/02 17:53:27 mycroft Exp $
+
 NROFF=	nroff
 HPROFF=	troff
 HPDEST= >/dev/hp

@@ -10,6 +10,10 @@
 
 /* This file contains some of the commands - mostly ones that change text */
 
+#ifndef lint
+static char rcsid[] = "$Id: cmd2.c,v 1.3 1993/08/02 17:53:45 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

@@ -3,6 +3,10 @@
  *	      (written by Chris Torek, converted to NetBSD by cgd)
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: swapinfo.c,v 1.4 1993/08/02 17:57:17 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>

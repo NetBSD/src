@@ -23,47 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         4       00083
- * --------------------         -----   ----------------------
- *
- * 14 Mar 93	Chris G. Demetriou	Fixed so that tab is not output,
- *					use spaces instead.
- */
-/*
- * db_output.c,v 1.3 1993/05/20 03:39:21 cgd Exp
- *
- * HISTORY
- * db_output.c,v
- * Revision 1.3  1993/05/20  03:39:21  cgd
- * add explicit rcs id
- *
- * Revision 1.2  1993/03/21  18:08:08  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 1.1.1.1  93/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- * 
- * Revision 1.1  1992/03/25  21:45:18  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:06:45  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:18:41  mrt]
- * 
- * Revision 2.2  90/08/27  21:51:25  dbg
- * 	Put extra features of db_doprnt in _doprnt.
- * 	[90/08/20            dbg]
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
- * 	Author: David B. Golub, Carnegie Mellon University
- *	Date:	7/90
+ *	$Id: db_output.c,v 1.5 1993/08/02 17:53:13 mycroft Exp $
  */
 
 /*

@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: arpadate.c,v 1.2 1993/08/02 17:50:20 mycroft Exp $";
+#endif /* not lint */
+
 #include <time.h>
 
 #include "cron.h"

@@ -1,6 +1,4 @@
-#
-# $Header: /cvsroot/src/usr.sbin/catman/Makefile,v 1.1 1993/07/27 21:29:27 jtc Exp $
-#
+#	$Id: Makefile,v 1.2 1993/08/02 17:54:57 mycroft Exp $
 
 BINDIR=		/usr/sbin
 PROG=		catman

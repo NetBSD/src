@@ -1,34 +1,6 @@
-#if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/usr.bin/crontab/Attic/crontab.c,v 1.3 1993/05/28 08:34:33 cgd Exp $";
-#endif
-
-/* Revision 1.5  87/05/02  17:33:22  paul
- * pokecron?  (RCS file has the rest of the log)
- * 
- * Revision 1.5  87/05/02  17:33:22  paul
- * baseline for mod.sources release
- * 
- * Revision 1.4  87/03/31  13:11:48  paul
- * I won't say that rs@mirror gave me this idea but crontab uses getopt() now
- * 
- * Revision 1.3  87/03/30  23:43:48  paul
- * another suggestion from rs@mirror:
- *   use getpwuid(getuid)->pw_name instead of getenv("USER")
- *   this is a boost to security...
- * 
- * Revision 1.2  87/02/11  17:40:12  paul
- * changed command syntax to allow append and replace instead of append as
- * default and no replace at all.
- * 
- * Revision 1.1  87/01/26  23:49:06  paul
- * Initial revision
- */
-
-/*
- * ++COPYRIGHT++
- * --COPYRIGHT--
- */
-
+#ifndef lint
+static char rcsid[] = "$Id: crontab.c,v 1.4 1993/08/02 17:53:24 mycroft Exp $";
+#endif /* not lint */
 
 #define	MAIN_PROGRAM
 

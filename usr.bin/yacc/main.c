@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.3 1993/08/02 17:56:41 mycroft Exp $";
+#endif /* not lint */
+
 #include <signal.h>
 #include "defs.h"
 

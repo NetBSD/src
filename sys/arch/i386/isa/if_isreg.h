@@ -1,3 +1,5 @@
+/*	$Id: if_isreg.h,v 1.4 1993/08/02 17:52:33 mycroft Exp $ */
+
 /* Declarations specific to this driver */
 #define NTBUF 2
 #define TLEN 1

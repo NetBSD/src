@@ -12,6 +12,11 @@
  * It also contains the code that supports digraphs.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: input.c,v 1.3 1993/08/02 17:53:54 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

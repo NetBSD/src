@@ -1,3 +1,4 @@
+#	$Id: Makefile.dist,v 1.2 1993/08/02 17:54:50 mycroft Exp $
 
 CFLAGS = -I..
 

@@ -12,6 +12,11 @@
  * reusable blocks.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: recycle.c,v 1.3 1993/08/02 17:54:04 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 

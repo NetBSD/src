@@ -1,8 +1,4 @@
-#
-# a makefile for /usr/bin/rusers
-#
-# $Header: /cvsroot/src/usr.bin/rusers/Makefile,v 1.3 1993/06/08 19:22:59 brezak Exp $
-#
+#	$Id: Makefile,v 1.4 1993/08/02 17:55:45 mycroft Exp $
 
 PROG = rusers
 MAN1 = rusers.0

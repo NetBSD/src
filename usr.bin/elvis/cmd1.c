@@ -12,6 +12,10 @@
  * files, options, etc. -- anything except text.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: cmd1.c,v 1.3 1993/08/02 17:53:43 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"

@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: open3.h,v 1.3 1993/08/02 17:48:54 mycroft Exp $
+*/
 
 /*
  * open3.h -- #defines for the various flags for the Sys V style 3-argument

@@ -24,6 +24,10 @@
  * the rights to redistribute these changes.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: fdisk.c,v 1.2 1993/08/02 17:51:04 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <stdio.h>

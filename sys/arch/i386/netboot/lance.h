@@ -1,15 +1,8 @@
-/* netboot
- *
- * $Log: lance.h,v $
- * Revision 1.1  1993/07/08 16:04:01  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:08  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
+ *
+ *	$Id: lance.h,v 1.2 1993/08/02 17:52:55 mycroft Exp $
  */
 
 /* RAP functions as a select for RDP */

@@ -6,7 +6,10 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  */
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+	$Id: backupfile.h,v 1.2 1993/08/02 17:55:14 mycroft Exp $
+*/
 
 /* When to make backup files. */
 enum backup_type

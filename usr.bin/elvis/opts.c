@@ -12,6 +12,11 @@
  * values that can be modified via the "set" command.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: opts.c,v 1.3 1993/08/02 17:54:02 mycroft Exp $";
+#endif /* not lint */
+
+
 #include "config.h"
 #include "vi.h"
 #include "ctype.h"

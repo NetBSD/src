@@ -1,3 +1,5 @@
+/*	$Id: amiga_init.c,v 1.2 1993/08/02 17:51:47 mycroft Exp $ */
+
 #include "pte.h"
 #include "machine/cpu.h"
 #include "param.h"

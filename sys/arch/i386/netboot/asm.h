@@ -1,13 +1,4 @@
-/* netboot
- *
- * $Log: asm.h,v $
- * Revision 1.1  1993/07/08 16:03:49  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
+/*
  * source in this file came from
  * the 386BSD boot blocks written by Julian Elsicher.
  * 
@@ -36,6 +27,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: asm.h,v 1.2 1993/08/02 17:52:48 mycroft Exp $
  */
 
 #define S_ARG0	 4(%esp)
