@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/01/23 17:04:08 mycroft Exp $
+#	$NetBSD: Makefile,v 1.12 2000/08/10 13:29:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ LDSTATIC?=	-static
 
 .if !make(obj)
 .BEGIN:
-	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
+	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
 .NOPATH: machine
 CLEANFILES+= machine
 .endif

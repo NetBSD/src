@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 1999/11/13 12:09:41 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.6 2000/08/10 13:29:40 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/mman.h>
+#include <sys/utsname.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -55,7 +57,7 @@
 
 #include "loadfile.h"
 
-int	verbose, nowrite, hflag = 1;
+int	verbose, nowrite, sparc64, uflag, hflag = 1;
 char	*boot, *proto, *dev;
 
 #if 0
@@ -89,14 +91,21 @@ static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
-
 static void
 usage()
 {
 	extern char *__progname;
-	(void)fprintf(stderr,
-	    "Usage: %s [-n] [-v] <boot> <proto> <device>\n",
-	    __progname);
+
+	if (sparc64)
+		(void)fprintf(stderr,
+		    "Usage: %s [-nv] <bootblk> <device>\n"
+		    "       %s -U [-nv] <boot> <proto> <device>\n",
+		    __progname, __progname);
+	else
+		(void)fprintf(stderr,
+		    "Usage: %s [-nv] <boot> <proto> <device>\n"
+		    "       %s -u [-n] [-v] <bootblk> <device>\n",
+		    __progname, __progname);
 	exit(1);
 }
 
@@ -109,8 +118,17 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
+	struct	utsname utsname;
 
-	while ((c = getopt(argc, argv, "a:vnh")) != -1) {
+	/*
+	 * For UltraSPARC machines, we turn on the uflag by default.
+	 */
+	if (uname(&utsname) == -1)
+		err(1, "uname");
+	if (strcmp(utsname.machine, "sparc64") == 0)
+		sparc64 = uflag = 1;
+
+	while ((c = getopt(argc, argv, "a:nhuUv")) != -1) {
 		switch (c) {
 		case 'a':
 			warnx("-a option is obsolete");
@@ -123,6 +141,14 @@ main(argc, argv)
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
 			break;
+		case 'u':
+			/* UltraSPARC boot block */
+			uflag = 1;
+			break;
+		case 'U':
+			/* Force non-ultrasparc */
+			uflag = 0;
+			break;
 		case 'v':
 			/* Chat */
 			verbose = 1;
@@ -132,33 +158,54 @@ main(argc, argv)
 		}
 	}
 
-	if (argc - optind < 3) {
-		usage();
+	if (uflag) {
+		if (argc - optind < 2)
+			usage();
+	} else {
+		if (argc - optind < 3)
+			usage();
+		boot = argv[optind++];
 	}
 
-	boot = argv[optind];
-	proto = argv[optind + 1];
-	dev = argv[optind + 2];
+	proto = argv[optind++];
+	dev = argv[optind];
 
 	if (verbose) {
-		printf("boot: %s\n", boot);
+		if (!uflag)
+			printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
 	}
 
 	/* Load proto blocks into core */
-	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
-		exit(1);
+	if (uflag == 0) {
+		if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
+			exit(1);
 
-	/* Open and check raw disk device */
-	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
-		err(1, "open: %s", dev);
+		/* Open and check raw disk device */
+		if ((devfd = open(dev, O_RDONLY, 0)) < 0)
+			err(1, "open: %s", dev);
 
-	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
-		exit(1);
+		/* Extract and load block numbers */
+		if (loadblocknums(boot, devfd) != 0)
+			exit(1);
 
-	(void)close(devfd);
+		(void)close(devfd);
+	} else {
+		struct stat sb;
+		int protofd;
+
+		if ((protofd = open(dev, O_RDONLY)) < 0)
+			err(1, "open: %s", proto);
+
+		if (fstat(protofd, &sb) < 0)
+			err(1, "fstat: %s", proto);
+
+		protosize = sb.st_size;
+		if ((protostore = mmap(0, (size_t)protosize, PROT_READ,
+			    MAP_SHARED, protofd, 0)) == MAP_FAILED)
+			err(1, "mmap: %s", proto);
+	}
 
 	if (nowrite)
 		return 0;
@@ -233,19 +280,19 @@ loadprotoblocks(fname, size)
 	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
 	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
 	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value - st);
-	if ((int)block_table & 3) {
+	if ((int)(u_long)block_table & 3) {
 		warn("%s: invalid address: block_table = %p",
 		     fname, block_table);
 		free((void *)bp);
 		return NULL;
 	}
-	if ((int)block_count_p & 3) {
+	if ((int)(u_long)block_count_p & 3) {
 		warn("%s: invalid address: block_count_p = %p",
 		     fname, block_count_p);
 		free((void *)bp);
 		return NULL;
 	}
-	if ((int)block_size_p & 3) {
+	if ((int)(u_long)block_size_p & 3) {
 		warn("%s: invalid address: block_size_p = %p",
 		     fname, block_size_p);
 		free((void *)bp);
