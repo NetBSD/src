@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.15 1998/08/28 17:15:46 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.16 1998/08/28 20:04:35 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -586,7 +586,7 @@ initarm(prom_id)
 	(var) = physical_freestart;		\
 	physical_freestart += ((np) * NBPG);	\
 	free_pages -= (np);			\
-	bzero((char *)(var), ((np) * NBPG));
+	bzero((char *)(var) - physical_start, ((np) * NBPG));
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
@@ -839,6 +839,10 @@ initarm(prom_id)
 	setleds(LEDOFF);	/* turns off LEDs */
 
 	/* Switch tables */
+#ifdef VERBOSE_INIT_ARM
+	printf("switching to new L1 page table\n");
+#endif
+
 	setttb(kernel_l1pt.physical);
 
 	/*
