@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.4 1993/09/30 20:19:02 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.5 1993/10/01 00:38:39 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -51,6 +51,7 @@
 #include "uio.h"
 #include "syslog.h"
 #include "sys/device.h"
+#include "machine/cpu.h"
 #include "machine/cpufunc.h"
 
 #include "i386/isa/isavar.h"
