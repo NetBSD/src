@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.25 1998/05/29 15:34:25 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.26 1998/06/01 00:50:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ struct	in_aliasreq {
 #define IN_IFADDR_HASH_SIZE 293
 #endif
 
-#define IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
+#define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) & in_ifaddrhash]
 
 u_long in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
