@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.6 2002/06/01 23:50:55 lukem Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.7 2002/09/27 03:17:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ hd64465pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	paa->pct = (pcmcia_chipset_tag_t)&hd64465pcmcia_functions;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

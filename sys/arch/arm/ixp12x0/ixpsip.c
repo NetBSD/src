@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.2 2002/09/27 03:17:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -93,7 +93,7 @@ ixpsip_search(parent, cf, aux)
 	sa.sa_size = cf->cf_loc[IXPSIPCF_SIZE];
 	sa.sa_intr = cf->cf_loc[IXPSIPCF_INTR];
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &sa) > 0)
+	if (config_match(parent, cf, &sa) > 0)
 		config_attach(parent, cf, &sa, ixpsip_print);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2002/09/27 03:17:49 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -173,7 +173,7 @@ mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[MAINBUSCF_ADDR] != ma->ma_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

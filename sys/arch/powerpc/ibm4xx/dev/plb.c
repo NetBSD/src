@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.3 2002/08/23 15:01:08 scw Exp $ */
+/* $NetBSD: plb.c,v 1.4 2002/09/27 03:18:03 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@ static int
 plb_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

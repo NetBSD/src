@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.7 2002/09/23 05:51:21 simonb Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.8 2002/09/27 03:18:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
 	else
 		uha->matchlvl = 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

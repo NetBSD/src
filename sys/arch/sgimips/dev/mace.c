@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.4 2002/03/13 13:12:26 simonb Exp $	*/
+/*	$NetBSD: mace.c,v 1.5 2002/09/27 03:18:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -147,7 +147,7 @@ mace_search(parent, cf, aux)
 		maa.maa_sh = MIPS_PHYS_TO_KSEG1(maa.maa_offset + 0x1f000000);
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &maa) > 0) {
+		if (config_match(parent, cf, &maa) > 0) {
 			config_attach(parent, cf, &maa, mace_print);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

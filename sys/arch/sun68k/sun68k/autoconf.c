@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2002/09/27 02:24:27 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2002/09/27 03:18:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -194,7 +194,6 @@ int sun68k_bus_search(parent, cf, aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;
-	cfmatch_t mf;
 
 	/* Check whether we're looking for a specifically named device */
 	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_name) != 0)
@@ -243,8 +242,7 @@ int sun68k_bus_search(parent, cf, aux)
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	mf = cf->cf_attach->ca_match;
-	if ((*mf)(parent, cf, &ma) > 0) {
+	if (config_match(parent, cf, &ma) > 0) {
 		config_attach(parent, cf, &ma, sun68k_bus_print);
 	}
 	return (0);

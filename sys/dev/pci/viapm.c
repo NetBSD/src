@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.4 2002/03/25 21:29:58 thorpej Exp $	*/
+/*	$NetBSD: viapm.c,v 1.5 2002/09/27 03:18:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.4 2002/03/25 21:29:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.5 2002/09/27 03:18:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static int
 viapm_submatch(struct device * parent, struct cfdata * cf, void *aux)
 {
 
-	return (*cf->cf_attach->ca_match) (parent, cf, aux);
+	return config_match(parent, cf, aux);
 }
 
 static void

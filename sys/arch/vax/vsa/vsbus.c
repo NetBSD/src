@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.35 2002/09/27 02:24:27 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.36 2002/09/27 03:18:08 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -223,7 +223,7 @@ vsbus_search(parent, cf, aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
+	i = config_match(parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
 	if (i == 0)

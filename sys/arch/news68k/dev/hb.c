@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.6 2002/09/27 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.7 2002/09/27 03:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -96,7 +96,7 @@ hb_search(parent, cf, aux)
 	ha->ha_bust = ISIIOPA(ha->ha_address) ?
 	    NEWS68K_BUS_SPACE_INTIO : NEWS68K_BUS_SPACE_EIO;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ha) > 0)
+	if (config_match(parent, cf, ha) > 0)
 		config_attach(parent, cf, ha, hb_print);
 
 	return 0;

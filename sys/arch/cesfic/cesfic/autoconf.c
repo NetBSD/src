@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2002/09/25 22:21:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2002/09/27 03:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -105,7 +105,7 @@ mainbussearch(parent, cf, aux)
 	void *aux;
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return (0);
 }
