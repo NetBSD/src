@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.3,v 1.7 1998/02/05 18:52:32 perry Exp $
+.\" $NetBSD: ttyaction.3,v 1.8 1998/08/29 17:31:55 tsarna Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,9 +50,11 @@
 The
 .Fn ttyaction
 function is used by
-.Xr login 1
+.Xr login 1 ,
+.Xr getty 8 ,
+.Xr telnetd 8
 and
-.Xr getty 8
+.Xr rlogind 8
 to execute site-specific commands
 when a login session begins and ends.
 .Pp
