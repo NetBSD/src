@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.174 2001/05/06 18:30:56 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.175 2001/05/22 18:59:57 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -801,7 +801,7 @@ sdstart(periph)
 		 */
 		error = scsipi_command(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    SDRETRIES, 60000, bp, flags);
+		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
 		if (error) {
 			disk_unbusy(&sd->sc_dk, 0);
 			printf("%s: not queued, error %d\n",
