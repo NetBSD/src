@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2000/12/12 20:30:13 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2000/12/13 01:24:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -55,10 +53,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/trap.h>
 #include <machine/userret.h>
 
 void syscall_intern __P((struct proc *));
