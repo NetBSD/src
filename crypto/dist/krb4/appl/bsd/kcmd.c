@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,7 +30,7 @@
 #include "bsd_locl.h"
 
 __RCSID("$KTH-KRB: kcmd.c,v 1.23 2001/09/17 04:57:22 assar Exp $"
-      "$NetBSD: kcmd.c,v 1.3 2002/09/12 12:33:10 joda Exp $");
+      "$NetBSD: kcmd.c,v 1.4 2003/08/07 09:15:33 agc Exp $");
 
 #define	START_PORT	5120	 /* arbitrary */
 

@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$KTH-KRB: popen.c,v 1.26 2002/04/02 11:57:39 joda Exp $"
-      "$NetBSD: popen.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
+      "$NetBSD: popen.c,v 1.2 2003/08/07 09:15:41 agc Exp $");
 #endif
 
 #include <sys/types.h>
