@@ -1,9 +1,4 @@
-/*
-  TODO:
-  use method to get sc of muxee, common code for add&rem
- */
-
-/*	$NetBSD: wsmux.c,v 1.17 2001/10/26 20:35:55 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.18 2001/10/26 20:45:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
