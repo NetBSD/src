@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntwoc.4,v 1.8 2004/05/11 22:58:22 wiz Exp $
+.\"	$NetBSD: ntwoc.4,v 1.9 2004/05/11 22:59:56 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
 .\" All rights reserved.
@@ -46,7 +46,7 @@ The hd64570 supports 2 asynchronous/byte-synchronous/bit-synchronous
 serial ports, and has a 4-channel DMA controller for loading
 the serial port FIFOs.
 .Pp
-The isa Riscom/N2 card has a jumper block to set the IRQ and a DIP switch
+The ISA Riscom/N2 card has a jumper block to set the IRQ and a DIP switch
 to set the port address the card will use.
 The values programmed into the card must be specified with the
 .Cm port
@@ -147,7 +147,7 @@ SDL Communications Riscom/N2
 .It
 SDL Communications N2pci
 .It
-SDL Communications WAN/ic 400 (untested)
+SDL Communications WANic 400 (untested)
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -168,9 +168,9 @@ there are no free receive buffers.
 .Xr pci 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
-The pci driver first appeared in
+The PCI driver first appeared in
 .Nx 1.4 .
-Much of the isa driver was adapted from the
+Much of the ISA driver was adapted from the
 .Fx
 .Nm sr
 driver and first appeared in
