@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.47 1998/02/16 22:05:36 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.48 1998/02/18 07:00:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@ static int emitloc __P((FILE *));
 static int emitpseudo __P((FILE *));
 static int emitpv __P((FILE *));
 static int emitroots __P((FILE *));
+static int emitvfslist __P((FILE *));
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -87,7 +88,8 @@ mkioconf()
 	}
 	v = emithdr(fp);
 	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) || emitloc(fp) ||
-	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp)) {
+	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp) ||
+	    emitvfslist(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
 			    "config: error writing ioconf.c: %s\n",
@@ -141,7 +143,8 @@ emithdr(ofp)
 	} else {
 		if (fputs("\
 #include <sys/param.h>\n\
-#include <sys/device.h>\n", ofp) < 0)
+#include <sys/device.h>\n\
+#include <sys/mount.h>\n", ofp) < 0)
 			return (1);
 	}
 	return (0);
@@ -372,4 +375,42 @@ emitpseudo(fp)
 			return (1);
 	}
 	return (fputs("\t{ 0, 0 }\n};\n", fp) < 0);
+}
+
+/*
+ * Emit the initial VFS list.
+ */
+static int
+emitvfslist(fp)
+	FILE *fp;
+{
+	struct nvlist *nv;
+
+	if (fputs("\n/* file systems */\n", fp) < 0)
+		return (1);
+
+	/*
+	 * Walk the list twice, once to emit the externs,
+	 * and again to actually emit the vfs_list_initial[]
+	 * array.
+	 */
+
+	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
+		if (fprintf(fp, "extern struct vfsops %s_vfsops;\n",
+		    nv->nv_name) < 0)
+			return (1);
+	}
+
+	if (fputs("\nstruct vfsops *vfs_list_initial[] = {\n", fp) < 0)
+		return (1);
+
+	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
+		if (fprintf(fp, "\t&%s_vfsops,\n", nv->nv_name) < 0)
+			return (1);
+	}
+
+	if (fputs("\tNULL,\n};\n", fp) < 0)
+		return (1);
+
+	return (0);
 }
