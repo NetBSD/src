@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.7 2001/03/23 19:25:35 jdolecek Exp $
+# $NetBSD: files.mca,v 1.8 2001/03/31 00:43:05 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -34,3 +34,8 @@ file	dev/mca/if_elmc_mca.c		elmc_mca
 # serial port devices
 attach	com at mca with com_mca
 file	dev/mca/com_mca.c		com_mca
+
+# Allied Telesis AT1720
+# device in sys/conf/files
+attach	ate at mca with ate_mca
+file	dev/mca/if_ate_mca.c		ate_mca	
