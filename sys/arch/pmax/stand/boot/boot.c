@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1999/03/26 05:23:58 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1999/03/31 07:23:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@
 #include "byteswap.h"
 #include "loadfile.h"
 
-int	errno;
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 /*

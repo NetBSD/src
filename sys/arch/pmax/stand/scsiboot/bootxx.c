@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.15 1999/03/26 05:23:58 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.16 1999/03/31 07:23:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,8 +80,6 @@
 #include <machine/dec_prom.h>
 
 #include "byteswap.h"
-
-int errno;
 
 int loadfile __P((char *name));
 extern int clear_cache __P((char *addr, int len));
