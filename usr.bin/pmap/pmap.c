@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2002/09/13 15:32:49 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.4 2002/09/17 19:54:28 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.3 2002/09/13 15:32:49 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.4 2002/09/17 19:54:28 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -105,7 +105,7 @@ LIST_HEAD(nchashhead, namecache) *nchashtbl = NULL;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
 void *kernel_floor;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
-int debug, verbose;
+int debug, verbose, recurse;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
 int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE, heapfound;
 rlim_t maxssiz;
@@ -155,12 +155,15 @@ struct kbit {
 	ssize_t len; \
 	len = kvm_read((kd), (addr), (dst), (sz)); \
 	if (len != (sz)) \
-		errx(1, "%s == %ld vs. %lu @ %lx", \
-		    kvm_geterr(kd), (long)len, (unsigned long)(sz), (addr)); \
+		errx(1, "trying to read %lu bytes from %lx: %s", \
+		    (unsigned long)(sz), (addr), kvm_geterr(kd)); \
 } while (0/*CONSTCOND*/)
 
 /* suck the data using the structure */
 #define KDEREF(kd, item) _KDEREF((kd), A(item), D(item, data), S(item))
+
+/* when recursing, output is indented */
+#define indent(n) ((n) * (recurse > 1 ? recurse - 1 : 0))
 
 struct nlist nl[] = {
 	{ "_maxsmap" },
@@ -186,12 +189,13 @@ struct nlist nl[] = {
 
 void load_symbols(kvm_t *);
 void process_map(kvm_t *, pid_t, struct kinfo_proc2 *);
+void dump_vm_map(kvm_t *, struct kbit *, struct kbit *, char *);
 size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	       struct kbit *, struct kbit *);
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 void load_name_cache(kvm_t *);
-void cache_enter(struct namecache *);
+void cache_enter(int, struct namecache *);
 
 int
 main(int argc, char *argv[])
@@ -200,17 +204,16 @@ main(int argc, char *argv[])
 	pid_t pid;
 	int many, ch, rc;
 	char errbuf[_POSIX2_LINE_MAX + 1];
-	/* u_long addr, next; */
 	struct kinfo_proc2 *kproc;
-	/* struct proc proc; */
 	char *kmem, *kernel;
 
 	pid = -1;
 	verbose = debug = 0;
 	print_all = print_map = print_maps = print_solaris = print_ddb = 0;
+	recurse = 0;
 	kmem = kernel = NULL;
 
-	while ((ch = getopt(argc, argv, "aD:dlmM:N:p:Prsvx")) != -1) {
+	while ((ch = getopt(argc, argv, "aD:dlmM:N:p:PRrsvx")) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all = 1;
@@ -238,6 +241,9 @@ main(int argc, char *argv[])
 			break;
 		case 'P':
 			pid = getpid();
+			break;
+		case 'R':
+			recurse = 1;
 			break;
 		case 's':
 			print_solaris = 1;
@@ -325,22 +331,14 @@ main(int argc, char *argv[])
 void
 process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 {
-	struct kbit kbit[4];
-	struct kbit *vmspace, *vm_map, *header, *vm_map_entry;
-	struct vm_map_entry *last;
-	size_t total;
-	u_long addr, next;
+	struct kbit kbit[2], *vmspace, *vm_map;
 	char *thing;
 
 	vmspace = &kbit[0];
 	vm_map = &kbit[1];
-	header = &kbit[2];
-	vm_map_entry = &kbit[3];
 
 	A(vmspace) = 0;
 	A(vm_map) = 0;
-	A(header) = 0;
-	A(vm_map_entry) = 0;
 
 	if (pid > 0) {
 		heapfound = 0;
@@ -381,94 +379,8 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 		A(vm_map) = kernel_map_addr;
 		KDEREF(kd, vm_map);
 	}
-	if (debug & PRINT_VM_MAP) {
-		printf("%s %p = {", thing, P(vm_map));
 
-		printf(" pmap = %p,\n", D(vm_map, vm_map)->pmap);
-		printf("    lock = <struct lock>,");
-		printf(" header = <struct vm_map_entry>,");
-		printf(" nentries = %d,\n", D(vm_map, vm_map)->nentries);
-		printf("    size = %lx,", D(vm_map, vm_map)->size);
-		printf(" ref_count = %d,", D(vm_map, vm_map)->ref_count);
-		printf(" ref_lock = <struct simplelock>,\n");
-		printf("    hint = %p,", D(vm_map, vm_map)->hint);
-		printf(" hint_lock = <struct simplelock>,\n");
-		printf("    first_free = %p,", D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
-		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
-#if VM_MAP_TOPDOWN > 0
-		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
-#endif
-		       "");
-		printf("    flags_lock = <struct simplelock>,");
-		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
-	}
-	if (print_ddb) {
-		printf("MAP %p: [0x%lx->0x%lx]\n", P(vm_map),
-		       D(vm_map, vm_map)->min_offset, D(vm_map, vm_map)->max_offset);
-		printf("\t#ent=%d, sz=%ld, ref=%d, version=%d, flags=0x%x\n",
-		       D(vm_map, vm_map)->nentries, D(vm_map, vm_map)->size,
-		       D(vm_map, vm_map)->ref_count, D(vm_map, vm_map)->timestamp,
-		       D(vm_map, vm_map)->flags);
-		printf("\tpmap=%p(resident=<unknown>)\n", D(vm_map, vm_map)->pmap);
-	}
-
-	A(header) = A(vm_map) + offsetof(struct vm_map, header);
-	S(header) = sizeof(struct vm_map_entry);
-	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
-	dump_vm_map_entry(kd, vmspace, header, 1);
-
-	/* headers */
-#ifdef DISABLED_HEADERS
-	if (print_map)
-		printf("%-*s %-*s rwx RWX CPY NCP I W A\n",
-		       (int)sizeof(long) * 2 + 2, "Start",
-		       (int)sizeof(long) * 2 + 2, "End");
-	if (print_maps)
-		printf("%-*s %-*s rwxp %-*s Dev   Inode      File\n",
-		       (int)sizeof(long) * 2 + 0, "Start",
-		       (int)sizeof(long) * 2 + 0, "End",
-		       (int)sizeof(long) * 2 + 0, "Offset");
-	if (print_solaris)
-		printf("%-*s %*s Protection        File\n",
-		       (int)sizeof(long) * 2 + 0, "Start",
-		       (int)sizeof(int) * 2 - 1,  "Size ");
-#endif
-	if (print_all)
-		printf("%-*s %-*s %*s %-*s rwxpc  RWX  I/W/A Dev  %*s - File\n",
-		       (int)sizeof(long) * 2, "Start",
-		       (int)sizeof(long) * 2, "End",
-		       (int)sizeof(int)  * 2, "Size ",
-		       (int)sizeof(long) * 2, "Offset",
-		       (int)sizeof(int)  * 2, "Inode");
-
-	/* these are the "sub entries" */
-	total = 0;
-	next = (u_long)D(header, vm_map_entry)->next;
-	D(vm_map_entry, vm_map_entry)->next =
-		D(header, vm_map_entry)->next + 1;
-	last = P(header);
-
-	while (next != 0 && D(vm_map_entry, vm_map_entry)->next != last) {
-		addr = next;
-		A(vm_map_entry) = addr;
-		S(vm_map_entry) = sizeof(struct vm_map_entry);
-		KDEREF(kd, vm_map_entry);
-		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, 0);
-		next = (u_long)D(vm_map_entry, vm_map_entry)->next;
-	}
-	if (print_solaris)
-		printf("%-*s %8luK\n",
-		       (int)sizeof(void *) * 2 - 2, " total",
-		       (unsigned long)total);
-	if (print_all)
-		printf("%-*s %9luk\n",
-		       (int)sizeof(void *) * 4 - 1, " total",
-		       (unsigned long)total);
+	dump_vm_map(kd, vmspace, vm_map, thing);
 }
 
 void
@@ -496,6 +408,125 @@ load_symbols(kvm_t *kd)
 		sizeof(kernel_map_addr));
 }
 
+void
+dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
+	    char *name)
+{
+	struct kbit kbit[2], *header, *vm_map_entry;
+	struct vm_map_entry *last, *next;
+	size_t total;
+	u_long addr;
+
+	header = &kbit[0];
+	vm_map_entry = &kbit[1];
+	A(header) = 0;
+	A(vm_map_entry) = 0;
+
+	if (debug & PRINT_VM_MAP) {
+		printf("%*s%s %p = {", indent(2), "", name, P(vm_map));
+		printf(" pmap = %p,\n", D(vm_map, vm_map)->pmap);
+		printf("%*s    lock = <struct lock>,", indent(2), "");
+		printf(" header = <struct vm_map_entry>,");
+		printf(" nentries = %d,\n", D(vm_map, vm_map)->nentries);
+		printf("%*s    size = %lx,", indent(2), "",
+		       D(vm_map, vm_map)->size);
+		printf(" ref_count = %d,", D(vm_map, vm_map)->ref_count);
+		printf(" ref_lock = <struct simplelock>,\n");
+		printf("%*s    hint = %p,", indent(2), "",
+		       D(vm_map, vm_map)->hint);
+		printf(" hint_lock = <struct simplelock>,\n");
+		printf("%*s    first_free = %p,", indent(2), "",
+		       D(vm_map, vm_map)->first_free);
+		printf(" flags = %x <%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
+		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
+		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
+		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
+		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
+#if VM_MAP_TOPDOWN > 0
+		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
+#endif
+		       "");
+		printf("%*s    flags_lock = <struct simplelock>,", indent(2), "");
+		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
+	}
+	if (print_ddb) {
+		printf("%*s%s %p: [0x%lx->0x%lx]\n", indent(2), "",
+		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
+		       D(vm_map, vm_map)->min_offset,
+		       D(vm_map, vm_map)->max_offset);
+		printf("\t%*s#ent=%d, sz=%ld, ref=%d, version=%d, flags=0x%x\n",
+		       indent(2), "", D(vm_map, vm_map)->nentries,
+		       D(vm_map, vm_map)->size, D(vm_map, vm_map)->ref_count,
+		       D(vm_map, vm_map)->timestamp, D(vm_map, vm_map)->flags);
+		printf("\t%*spmap=%p(resident=<unknown>)\n", indent(2), "",
+		       D(vm_map, vm_map)->pmap);
+	}
+
+	A(header) = A(vm_map) + offsetof(struct vm_map, header);
+	S(header) = sizeof(struct vm_map_entry);
+	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
+	dump_vm_map_entry(kd, vmspace, header, 1);
+
+	/*
+	 * we're not recursing into a submap, so print headers
+	 */
+	if (recurse < 2) {
+		/* headers */
+#ifdef DISABLED_HEADERS
+		if (print_map)
+			printf("%-*s %-*s rwx RWX CPY NCP I W A\n",
+			       (int)sizeof(long) * 2 + 2, "Start",
+			       (int)sizeof(long) * 2 + 2, "End");
+		if (print_maps)
+			printf("%-*s %-*s rwxp %-*s Dev   Inode      File\n",
+			       (int)sizeof(long) * 2 + 0, "Start",
+			       (int)sizeof(long) * 2 + 0, "End",
+			       (int)sizeof(long) * 2 + 0, "Offset");
+		if (print_solaris)
+			printf("%-*s %*s Protection        File\n",
+			       (int)sizeof(long) * 2 + 0, "Start",
+			       (int)sizeof(int) * 2 - 1,  "Size ");
+#endif
+		if (print_all)
+			printf("%-*s %-*s %*s %-*s rwxpc  RWX  I/W/A Dev  %*s"
+			       " - File\n",
+			       (int)sizeof(long) * 2, "Start",
+			       (int)sizeof(long) * 2, "End",
+			       (int)sizeof(int)  * 2, "Size ",
+			       (int)sizeof(long) * 2, "Offset",
+			       (int)sizeof(int)  * 2, "Inode");
+	}
+
+	/* these are the "sub entries" */
+	total = 0;
+	next = D(header, vm_map_entry)->next;
+	last = P(header);
+
+	while (next != 0 && next != last) {
+		addr = (u_long)next;
+		A(vm_map_entry) = addr;
+		S(vm_map_entry) = sizeof(struct vm_map_entry);
+		KDEREF(kd, vm_map_entry);
+		next = D(vm_map_entry, vm_map_entry)->next;
+		total += dump_vm_map_entry(kd, vmspace, vm_map_entry, 0);
+	}
+
+	/*
+	 * we're not recursing into a submap, so print totals
+	 */
+	if (recurse < 2) {
+		if (print_solaris)
+			printf("%-*s %8luK\n",
+			       (int)sizeof(void *) * 2 - 2, " total",
+			       (unsigned long)total);
+		if (print_all)
+			printf("%-*s %9luk\n",
+			       (int)sizeof(void *) * 4 - 1, " total",
+			       (unsigned long)total);
+	}
+}
+
 size_t
 dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		  struct kbit *vm_map_entry,
@@ -521,24 +552,27 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 
 	if ((ishead && (debug & PRINT_VM_MAP_HEADER)) ||
 	    (!ishead && (debug & PRINT_VM_MAP_ENTRY))) {
-		printf("%s %p = {", ishead ? "vm_map.header" : "vm_map_entry",
+		printf("%*s%s %p = {", indent(2), "",
+		       ishead ? "vm_map.header" : "vm_map_entry",
 		       P(vm_map_entry));
 		printf(" prev = %p,", vme->prev);
 		printf(" next = %p,\n", vme->next);
-		printf("    start = %lx,", vme->start);
+		printf("%*s    start = %lx,", indent(2), "", vme->start);
 		printf(" end = %lx,", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
-		printf("    offset = %lx,", (unsigned long)vme->offset);
+		printf("%*s    offset = %lx,", indent(2), "",
+		       (unsigned long)vme->offset);
 		printf(" etype = %x <%s%s%s%s >,", vme->etype,
 		       vme->etype & UVM_ET_OBJ ? " OBJ" : "",
 		       vme->etype & UVM_ET_SUBMAP ? " SUBMAP" : "",
 		       vme->etype & UVM_ET_COPYONWRITE ? " COW" : "",
 		       vme->etype & UVM_ET_NEEDSCOPY ? " NEEDSCOPY" : "");
 		printf(" protection = %x,\n", vme->protection);
-		printf("    max_protection = %x,", vme->max_protection);
+		printf("%*s    max_protection = %x,", indent(2), "",
+		       vme->max_protection);
 		printf(" inheritance = %d,", vme->inheritance);
 		printf(" wired_count = %d,\n", vme->wired_count);
-		printf("    aref = <struct vm_aref>,");
+		printf("%*s    aref = <struct vm_aref>,", indent(2), "");
 		printf(" advice = %d,", vme->advice);
 		printf(" flags = %x <%s%s > }\n", vme->flags,
 		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
@@ -627,7 +661,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	name = findname(kd, vmspace, vm_map_entry, vp, vfs, uvm_obj);
 
 	if (print_map) {
-		printf("0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d",
+		printf("%*s0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d",
+		       indent(2), "",
 		       vme->start, vme->end,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->protection & VM_PROT_WRITE) ? 'w' : '-',
@@ -649,8 +684,9 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		printf("\n");
 	}
 
-	if (print_maps)
-		printf("%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %d     %s\n",
+	if (print_maps) {
+		printf("%*s%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %d     %s\n",
+		       indent(2), "",
 		       (int)sizeof(void *) * 2, vme->start,
 		       (int)sizeof(void *) * 2, vme->end,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
@@ -661,28 +697,32 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       (unsigned long)vme->offset,
 		       major(dev), minor(dev), inode,
 		       (name[0] != ' ') || verbose ? name : "");
+	}
 
 	if (print_ddb) {
-		printf(" - %p: 0x%lx->0x%lx: obj=%p/0x%lx, amap=%p/%d\n",
+		printf("%*s - %p: 0x%lx->0x%lx: obj=%p/0x%lx, amap=%p/%d\n",
+		       indent(2), "",
 		       P(vm_map_entry), vme->start, vme->end,
 		       vme->object.uvm_obj, (unsigned long)vme->offset,
 		       vme->aref.ar_amap, vme->aref.ar_pageoff);
-		printf("\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
+		printf("\t%*ssubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
 		       "wc=%d, adv=%d\n",
+		       indent(2), "",
 		       (vme->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		       (vme->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
 		       (vme->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		       vme->protection, vme->max_protection,
 		       vme->inheritance, vme->wired_count, vme->advice);
 		if (verbose) {
+			printf("\t%*s", indent(2), "");
 			if (inode)
-				printf("\t(dev=%d,%d ino=%d [%s] [%p])\n",
+				printf("(dev=%d,%d ino=%d [%s] [%p])\n",
 				       major(dev), minor(dev), inode,
 				       name, P(vp));
 			else if (name[0] == ' ')
-				printf("\t(%s)\n", &name[2]);
+				printf("(%s)\n", &name[2]);
 			else
-				printf("\t(%s)\n", name);
+				printf("(%s)\n", name);
 		}
 	}
 
@@ -700,7 +740,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 			strcat(prot, "/exec");
 
 		sz = (size_t)((vme->end - vme->start) / 1024);
-		printf("%0*lX %6luK %-15s   %s\n",
+		printf("%*s%0*lX %6luK %-15s   %s\n",
+		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       (unsigned long)vme->start,
 		       (unsigned long)sz,
@@ -711,8 +752,9 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf(A(vp) ?
-		       "%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s [%p]\n" :
-		       "%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s\n",
+		       "%*s%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s [%p]\n" :
+		       "%*s%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s\n",
+		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,
 		       (int)sizeof(void *) * 2,
@@ -738,6 +780,18 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	/* no access allowed, don't count space */
 	if ((vme->protection & rwx) == 0)
 		sz = 0;
+
+	if (recurse && (vme->etype & UVM_ET_SUBMAP)) {
+		struct kbit kbit, *submap;
+
+		recurse++;
+		submap = &kbit;
+		P(submap) = vme->object.sub_map;
+		S(submap) = sizeof(*vme->object.sub_map);
+		KDEREF(kd, submap);
+		dump_vm_map(kd, vmspace, submap, "submap");
+		recurse--;
+	}
 
 	return (sz);
 }
@@ -902,21 +956,21 @@ load_name_cache(kvm_t *kd)
 				    ncp->nc_name[0] != '.' ||
 				    (ncp->nc_name[1] != '.' &&
 				     ncp->nc_nlen != 1))
-					cache_enter(ncp);
+					cache_enter(i, ncp);
 			}
 		}
 	}
 }
 
 void
-cache_enter(struct namecache *ncp)
+cache_enter(int i, struct namecache *ncp)
 {
 	struct cache_entry *ce;
 
 	if (debug & DUMP_NAMEI_CACHE)
-		printf("ncp->nc_vp %10p, ncp->nc_dvp %10p, ncp->nc_nlen "
-		       "%3d [%.*s] (nc_dvpid=%lu, nc_vpid=%lu)\n",
-		       ncp->nc_vp, ncp->nc_dvp,
+		printf("[%d] ncp->nc_vp %10p, ncp->nc_dvp %10p, "
+		       "ncp->nc_nlen %3d [%.*s] (nc_dvpid=%lu, nc_vpid=%lu)\n",
+		       i, ncp->nc_vp, ncp->nc_dvp,
 		       ncp->nc_nlen, ncp->nc_nlen, ncp->nc_name,
 		       ncp->nc_dvpid, ncp->nc_vpid);
 
