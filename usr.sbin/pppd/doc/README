@@ -34,19 +34,21 @@ system, which contains more specific details for installing PPP on
 that system.  The supported systems, and the corresponding README
 files, are:
 
-	Digital Unix (OSF/1)		README.osf
 	Linux				README.linux
+	Solaris 2			README.sol2
+	Digital Unix (OSF/1)		README.osf
 	NetBSD, FreeBSD			README.bsd
 	NeXTStep			README.next
-	Solaris 2			README.sol2
 	SunOS 4.x			README.sunos4
 	System V Release 4		README.svr4
 	Ultrix 4.x			README.ultrix
 
-Unfortunately, AIX 4 is no longer supported, since I don't have a
-maintainer for the AIX 4 port.  If you want to volunteer, contact me.
-The Ultrix port is untested, as I no longer have access to an Ultrix
-box.
+In fact, only the Linux and Solaris 2 ports have been tested in this
+release.  Code for the other systems is still included; if you use it,
+let me know how it works.  If I don't hear from anyone it will
+probably get dropped in a subsequent release.  AIX 4 is no longer
+supported, since I don't have a maintainer for the AIX 4 port.  If you
+want to volunteer, contact me.
 
 In each case you start by running the ./configure script.  This works
 out which operating system you are using and creates symbolic links to
@@ -67,8 +69,209 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.3.4.
+What's new in ppp-2.3.9.
 ************************
+
+* Support for the new generic PPP layer under development for the
+  Linux kernel.
+
+* You can now place extra options to apply to specific users at the
+  end of the line with their password in the pap-secrets or
+  chap-secrets file, separated from the IP address(es) with a "--"
+  separator.  These options are parsed after the peer is authenticated
+  but before network protocol (IPCP, IPXCP) or CCP negotiation
+  commences.
+
+* Pppd will apply the holdoff period if the link was terminated by the
+  peer.  It doesn't apply it if the link was terminated because the
+  local pppd thought it was idle.
+
+* Synchronous support for Solaris has been added, thanks to John
+  Morrison, and for FreeBSD, thanks to Paul Fulghum.
+
+* IPV6 support has been merged in, from Tommi Komulainen.  At the
+  moment it only supports Linux and it is not tested by me.
+
+* The `nodefaultip' option can be used in demand mode to say that pppd
+  should not suggest its local IP address to the peer.
+
+* The `init' option has been added; this causes pppd to run a script
+  to initialize the serial device (e.g. by sending an init string to
+  the modem).  Unlike the connect option, this can be used in a
+  dial-in situation.  (Thanks to Tobias Ringstrom.)
+
+* There is a new `logfile' option to send log messages to a file as
+  well as syslog.
+
+* There is a new, privileged `linkname' option which sets a logical
+  name for the link.  Pppd will create a /var/run/ppp-<linkname>.pid
+  file containing its process ID.
+
+* There is a new `maxfail' option which specifies how many consecutive
+  failed connection attempts are permitted before pppd will exit.  The
+  default value is 10, and 0 means infinity. :-)
+
+* Sundry bugs fixed.
+
+
+What was new in ppp-2.3.8.
+**************************
+
+* The exit status of pppd will now indicate whether the link was
+  successfully established, or if not, what error was encountered.
+
+* Pppd has two new options: fdlog <n> will send log messages to file
+  descriptor <n> instead of standard output, and nofdlog will stop log
+  messages from being sent to any file descriptor (they will still be
+  sent to syslog).  Pppd now will not send log messages to a file
+  descriptor if the serial port is open on that file descriptor.
+
+* Pppd sets an environment variable called PPPLOGNAME for scripts that
+  it runs, indicating the login name of the user who invoked pppd.
+
+* Pppd sets environment variables CONNECT_TIME, BYTES_SENT and
+  BYTES_RCVD for the ip-down and auth-down scripts indicating the
+  statistics for the connection just terminated.  (CONNECT_TIME is in
+  seconds.)
+
+* If the user has the serial device open on standard input and
+  specifies a symbolic link to the serial device on the command line,
+  pppd will detect this and behave correctly (i.e. not detach from its
+  controlling terminal).  Furthermore, if the serial port is open for
+  reading and writing on standard input, pppd will assume that it is
+  locked by its invoker and not lock it itself.
+
+* Chat now has a feature where if a string to be sent begins with an
+  at sign (@), the rest of the string is taken as the name of a file
+  (regular file or named pipe), and the actual string to send is taken
+  from that file.
+
+* Support for FreeBSD-2.2.8 and 3.0 has been added, thanks to Paul
+  Fulghum.
+
+* The Tru64 (aka Digital Unix aka OSF/1) port has been updated.
+
+* The system panics on Solaris SMP systems related to PPP connections
+  being established and terminated should no longer occur.
+
+* Fixed quite a few bugs.
+
+
+What was new in ppp-2.3.7.
+**************************
+
+* Pppd can now automatically allocate itself a pseudo-tty to use as
+  the serial device.  This has made three new options possible:
+
+  - `pty script' will run `script' with its standard input and output
+    connected to the master side of the pty.  For example:
+	pppd pty 'ssh -t server.my.net pppd'
+    is a basic command for setting up a PPP link (tunnel) over ssh.
+    (In practice you may need to specify other options such as IP
+    addresses, etc.)
+
+  - `notty' tells pppd to communicate over its standard input and
+    output, which do not have to be a terminal device.
+
+  - `record filename' tells pppd to record all of the characters sent
+    and received over the serial device to a file called `filename'.
+    The data is recorded in a tagged format with timestamps, which can
+    be printed in a readable form with the pppdump program, which is
+    included in this distribution.
+
+* Pppd now logs the connect time and number of bytes sent and received
+  (at the level of the serial device) when the connection is
+  terminated.
+
+* If you use the updetach or nodetach option, pppd will print its
+  messages to standard output as well as logging them with syslog
+  (provided of course pppd isn't using its standard input or output as
+  its serial device).
+
+* There is a new `privgroup groupname' option (a privileged option).
+  If the user running pppd is in group `groupname', s/he can use
+  privileged options without restriction.
+
+* There is a new `receive-all' option, which causes pppd to accept all
+  control characters, even the ones that the peer should be escaping
+  (i.e. the receive asyncmap is 0).  This is useful with some buggy
+  peers.
+
+* The default asyncmap is now 0.
+
+* There is a new `sync' option, currently only implemented under
+  Linux, which allows pppd to run on synchronous HDLC devices.
+
+* If a value for the device name or for the connect, disconnect,
+  welcome or pty option is given in a privileged option file
+  (i.e. /etc/ppp/options or a file loaded with the `call' option), it
+  cannot be overridden by a non-privileged user.
+
+* Many bugs have been fixed, notably:
+  - signals are not blocked unnecessarily, as they were in 2.3.6.
+  - the usepeerdns option should work now.
+  - the SPEED environment variable for scripts is set correctly.
+  - the /etc/ppp/auth-down script is not run until auth-up completes.
+  - the device is opened as root if it is the device on standard
+    input.
+  - pppd doesn't die with the ioctl(PPPIOCSASYNCMAP) error under linux
+    if a hangup occurs at the wrong time.
+
+* Some error messages have been changed to be clearer (I hope :-)
+
+
+What was new in ppp-2.3.6.
+**************************
+
+* Pppd now opens the tty device as the user (rather than as root) if
+  the device name was given by the user, i.e. on the command line or
+  in the ~/.ppprc file.  If the device name was given in
+  /etc/ppp/options or in a file loaded with the `call' option, the
+  device is opened as root.
+
+* The default behaviour of pppd is now to let a peer which has not
+  authenticated itself (e.g. your ISP) use any IP address to which the
+  system does not already have a route.  (This is currently only
+  supported under Linux, Solaris and Digital Unix; on the other
+  systems, the peer must now authenticate itself unless the noauth
+  option is used.)
+
+* Added new option `usepeerdns', thanks to Nick Walker
+  <nickwalker@email.com>.  If the peer supplies DNS addresses, these
+  will be written to /etc/ppp/resolv.conf.  The ip-up script can then
+  be used to add these addresses to /etc/resolv.conf if desired (see
+  the ip-up.local.add and ip-down.local.add files in the scripts
+  directory).
+
+* The Solaris ppp driver should now work correctly on SMP systems.
+
+* Minor corrections so that the code can compile under Solaris 7,
+  and under Linux with glibc-2.1.
+
+* The Linux kernel driver has been restructured for improved
+  performance.
+
+* Pppd now won't start the ip-down script until the ip-up script has
+  finished.
+
+
+What was new in ppp-2.3.5.
+**************************
+
+* Minor corrections to the Digital UNIX and NetBSD ports.
+
+* A workaround to avoid tickling a bug in the `se' serial port driver
+on Sun PCI Ultra machines running Solaris.
+
+* Fixed a bug in the negotiation of the Microsoft WINS server address
+option.
+
+* Fixed a bug in the Linux port where it would fail for kernel
+versions above 2.1.99.
+
+
+What was new in ppp-2.3.4.
+**************************
 
 * The NeXT port has been updated, thanks to Steve Perkins.
 
@@ -214,6 +417,19 @@ not acceptable (put a ! on the front).
 Thanks to those who reported bugs in ppp-2.2.
 
 
+Compression methods.
+********************
+
+This package supports two packet compression methods: Deflate and
+BSD-Compress.  Other compression methods which are in common use
+include Predictor, LZS, and MPPC.  These methods are not supported for
+two reasons - they are patent-encumbered, and they cause some packets
+to expand slightly, which pppd doesn't currently allow for.
+BSD-Compress is also patent-encumbered (its inclusion in this package
+can be considered a historical anomaly :-) but it doesn't ever expand
+packets.  Neither does Deflate, which uses the same algorithm as gzip.
+
+
 Patents.
 ********
 
@@ -240,13 +456,13 @@ questions like this that I get.
 If you find bugs in this package, please report them to the maintainer
 for the port for the operating system you are using:
 
-Digital Unix (OSF/1)	Farrell Woods <ftw@zk3.dec.com>
-Linux			Al Longyear <longyear@pobox.com>
-NetBSD			Matthew Green <mrg@eterna.com.au
+Linux			Paul Mackerras <Paul.Mackerras@cs.anu.edu.au>
+Solaris 2		Adi Masputra <adi.masputra@sun.com>
+SunOS 4.x		Adi Masputra <adi.masputra@sun.com>
+Digital Unix (OSF/1)	Sowmini Varadhan <varadhan@zk3.dec.com>
+NetBSD			Matthew Green <mrg@eterna.com.au>
 FreeBSD			Peter Wemm <peter@haywire.DIALix.COM>
 NeXTStep		Steve Perkins <perkins@cps.msu.edu>
-Solaris 2		Paul Mackerras <Paul.Mackerras@cs.anu.edu.au>
-SunOS 4.x		Paul Mackerras <Paul.Mackerras@cs.anu.edu.au>
 System V Release 4	Matthias Apitz <Matthias.Apitz@SOFTCON.de>
 Ultrix 4.x		Paul Mackerras (for want of anybody better :-)
 
@@ -254,7 +470,9 @@ Ultrix 4.x		Paul Mackerras (for want of anybody better :-)
 Copyrights:
 ***********
 
-All of the code can be freely used and redistributed.
+All of the code can be freely used and redistributed.  The individual
+source files each have their own copyright and permission notice; some
+have a BSD-style notice and some are under the GPL.
 
 
 Distribution:
@@ -265,4 +483,4 @@ The primary site for releases of this software is:
 	ftp://cs.anu.edu.au/pub/software/ppp/
 
 
-($Id: README,v 1.1.1.1 1998/05/02 14:21:43 christos Exp $)
+($Id: README,v 1.1.1.2 1999/08/25 03:10:28 christos Exp $)
