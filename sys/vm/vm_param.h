@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_param.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_param.h,v 1.5 1994/04/15 07:05:03 cgd Exp $
+ *	$Id: vm_param.h,v 1.6 1994/05/06 22:44:22 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -103,6 +103,19 @@ extern vm_size_t	page_mask;
 extern int		page_shift;
 #endif
 
+/*
+ * CTL_VM identifiers
+ */
+#define	VM_METER	1		/* struct vmmeter */
+#define	VM_LOADAVG	2		/* struct loadavg */
+#define	VM_MAXID	3		/* number of valid vm ids */
+   
+#define	CTL_VM_NAMES { \
+	{ 0, 0 }, \
+	{ "vmmeter", CTLTYPE_STRUCT }, \
+	{ "loadavg", CTLTYPE_STRUCT }, \
+}
+
 /* 
  *	Return values from the VM routines.
  */
@@ -137,6 +150,8 @@ extern int		page_shift;
 #ifdef	KERNEL
 #define	round_page(x)	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
 #define	trunc_page(x)	((vm_offset_t)(((vm_offset_t)(x)) & ~PAGE_MASK))
+#define	num_pages(x) \
+	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
 #else	/* KERNEL */
 #define	round_page(x)	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * vm_page_size)
 #define	trunc_page(x)	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
