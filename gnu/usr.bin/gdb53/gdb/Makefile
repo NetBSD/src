@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/10/25 18:24:23 matt Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2004/04/06 04:33:53 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -66,11 +66,11 @@ LIBEDIT= -L${LIBREADLINEDIR} -lreadline
 .endif
 
 ## PSIM support for PowerPC.
-#.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
-#PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
-#LDADD+=		-L${PSIMOBJ} -lsim
-#DPADD+=		${PSIMOBJ}/libsim.a
-#.endif
+.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
+PSIMOBJ!=	cd ${.CURDIR}/../sim/ppc && ${PRINTOBJDIR}
+LDADD+=		-L${PSIMOBJ} -lsim
+DPADD+=		${PSIMOBJ}/libsim.a
+.endif
 
 LDADD+= -L${LIBOPCODESDIR} -lopcodes\
 	-L${LIBBFDDIR} -lbfd \
