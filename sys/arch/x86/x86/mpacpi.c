@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6 2003/06/01 19:14:20 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.7 2003/07/14 22:32:40 lukem Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
