@@ -16,7 +16,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,26 +25,37 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Id: exit.c,v 1.1 1994/01/26 02:03:43 brezak Exp $";
+static char rcsid[] = "$Id: exit.c,v 1.2 1994/05/08 16:11:22 brezak Exp $";
 #endif /* not lint */
+
+void
+#ifdef __STDC__
+panic(const char *fmt, ...)
+#else
+panic(fmt /*, va_alist */)
+	char *fmt;
+#endif
+{
+    va_list ap;
+
+    static int paniced;
+    
+    if (!paniced) {
+        paniced = 1;
+        closeall();
+    }
+
+    va_start(ap, fmt);
+    printf(fmt, ap);
+    printf("\n");
+    va_end(ap);
+    _rtt();
+}
 
 exit()
 {
     panic("exit");
-}
-
-panic(str)
-    char *str;
-{
-    static int paniced;
-    
-    if (!paniced) {
-	paniced = 1;
-	closeall();
-    }
-
-    printf("%s\n",str);
-    _rtt();
 }

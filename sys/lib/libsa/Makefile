@@ -1,15 +1,26 @@
-#	$Id: Makefile,v 1.1 1994/01/26 02:03:32 brezak Exp $
+#	$Id: Makefile,v 1.2 1994/05/08 16:11:14 brezak Exp $
 
 LIB=	sa
 
-CFLAGS+=-DSTANDALONE -I${.CURDIR}
+#DEBUGFLAGS= -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
+CFLAGS+=-DSTANDALONE $(DEBUGFLAGS) -I${.CURDIR}
+
+# stand routines
+SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
+	printf.c strerror.c
 
 # io routines
 SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
-	stat.c ufs.c write.c
+	stat.c write.c
 
-# other misc routines
-SRCS+=	alloc.c bcopy.c exit.c getfile.c gets.c printf.c strerror.c
+# network routines
+SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
+
+# network info services:
+SRCS+=	bootp.c rarp.c
+
+# boot filesystems
+SRCS+=	ufs.c nfs.c
 
 NOPROFILE=
 NOPIC=

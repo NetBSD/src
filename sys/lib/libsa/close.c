@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: close.c,v 1.1 1994/01/26 02:03:38 brezak Exp $
+ * 	$Id: close.c,v 1.2 1994/05/08 16:11:19 brezak Exp $
  */
 
 #include "stand.h"
@@ -70,7 +70,7 @@ close(fd)
 	int fd;
 {
 	register struct open_file *f = &files[fd];
-	int err1, err2;
+	int err1 = 0, err2 = 0;
 
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
@@ -78,7 +78,8 @@ close(fd)
 	}
 	if (!(f->f_flags & F_RAW))
 		err1 = (f->f_ops->close)(f);
-	err2 = (f->f_dev->dv_close)(f);
+	if (!(f->f_flags & F_NODEV))
+		err2 = (f->f_dev->dv_close)(f);
 	f->f_flags = 0;
 	if (err1) {
 		errno = err1;
@@ -96,7 +97,7 @@ closeall()
 {
 	int i;
 
-	for (i = 0; i < SOPEN_MAX; i++)
-	    if (files[i].f_flags != 0)
-		(void)close(i);
+        for (i = 0; i < SOPEN_MAX; i++)
+            if (files[i].f_flags != 0)
+                (void)close(i);
 }

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stand.h	8.1 (Berkeley) 6/11/93
- *	     $Id: stand.h,v 1.1 1994/01/26 02:03:58 brezak Exp $
+ * 	     $Id: stand.h,v 1.2 1994/05/08 16:11:37 brezak Exp $
  */
 
 #include <sys/types.h>
@@ -92,11 +92,13 @@ struct open_file {
 
 #define	SOPEN_MAX	4
 extern struct open_file files[SOPEN_MAX];
+extern int nfsys;
 
 /* f_flags values */
 #define	F_READ		0x0001	/* file opened for reading */
 #define	F_WRITE		0x0002	/* file opened for writing */
 #define	F_RAW		0x0004	/* raw device open - no file system */
+#define F_NODEV		0x0008	/* network open - no device */
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define tolower(c)	((c) - 'A' + 'a')
@@ -108,5 +110,24 @@ void	*alloc __P((unsigned size));
 void	free __P((void *ptr, unsigned size));
 struct	disklabel;
 char	*getdisklabel __P((const char *buf, struct disklabel *lp));
+
+int	printf __P((char *, ...));
+void	panic __P((char *, ...));
+int	getchar __P((void));
+int	exec __P((char *, char *, int));
+	
 int	nodev(), noioctl();
 void	nullsys();
+
+int	null_open __P((char *path, struct open_file *f));
+int	null_close __P((struct open_file *f));
+int	null_read __P((struct open_file *f, char *buf,
+		u_int size, u_int *resid));
+int	null_write __P((struct open_file *f, char *buf,
+		u_int size, u_int *resid));
+off_t	null_seek __P((struct open_file *f, off_t offset, int where));
+int	null_stat __P((struct open_file *f, struct stat *sb));
+
+/* Machine dependant functions */
+void	machdep_start __P((char *, int, char *, char *, char *));
+int	machdep_exec __P((char *, char *, int));
