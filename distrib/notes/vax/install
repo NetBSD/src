@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.6 2000/03/04 15:05:19 ragge Exp $	
+.\"	$NetBSD: install,v 1.7 2000/10/10 12:55:23 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,9 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Pp
-Installation of NetBSD/vax is now easier than ever!
+Installation of
+.Nx*M
+is now easier than ever!
 For the latest news, problem reports, and discussion, join
 the port-vax mainlist by mailing a line saying
 .Dl subscribe port-vax
@@ -75,7 +76,6 @@ Other devices may be appropriate for your configuration.
 .Pp
 Then just proceed with the program sysinst. The install descriptions
 for sysinst that follows can be easily adopted to vax.
-
+.Pp
 .\" Sad that the sysinst install instructions are so i386-specific.
 .so ../common/sysinst
-

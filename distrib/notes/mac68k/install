@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.21 1999/05/31 06:38:16 ender Exp $	
+.\"	$NetBSD: install,v 1.22 2000/10/10 12:55:19 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,13 @@
 .\"
 The installation can be broken down into three basic steps:
 .Pp
-.Bl -bullet -compact
-.It
+.(bullet -compact
 Run Mkfs to build a filesystem or filesystems.
 .It
 Run the Installer to load the files onto your filesystems.
 .It
 Run the Booter to boot the system.
-.El
+.bullet)
 .
 .Ss2 Preparing the filesystem(s)
 .
@@ -96,12 +95,11 @@ you did for Mkfs--i.e., the one you are installing onto.
 If you are installing onto a single root partition, proceed to the
 .Sx Installation\ of\ base\ files
 section, below.
-.Bl -item
-.It
+.Pp
 If you have not created filesystems for the root, usr, and
 any other filesystems, go back to "Preparing the filesystem(s),"
 above.
-.It
+.Pp
 When you started the Installer, it mounted your root partition.
 Just before it printed, "Mounting partition 'A' as /," it printed
 lines like:
@@ -110,53 +108,45 @@ This means that the device for scsi ID 5 is sd1. The partitions
 are signified by a trailing letter. For instance, sd1a would be
 the root partition of the second scsi disk in the chain, and sd0g
 would be the first Usr partition on the first scsi disk.
-.It
+.Pp
 You will need to know the proper device to mount the remaining
 partition(s) by hand:
-.Bl -bullet
-.It
+.(bullet
 Select "Build Devices" from the "File" menu.
-
-.It
+.Pp
 Select "Mini Shell" from the "File" menu.
-
-.It
+.Pp
 You can use the 'disklabel' command to get a listing of
 the available partitions and their types and sizes.
-
-.It
+.Pp
 Create the directory mount point(s) with the command:
 .Dl mkdir path
 (e.g. for the
 .Pa /usr
 partition type:
 .Ic mkdir /usr )
-
-.It
+.Pp
 Mount the filesystems you wish with the command:
 .Dl mount device path
 For example, if you wish to mount a usr partition from
 the first scsi disk, sd0, on
 .Pa /usr , No you would type:
 .Dl mount /dev/sd0g /usr
-.It
+.Pp
 .No Type Ic fstab force
 .No to create a proper Pa /etc/fstab
 file.
-.It
+.Pp
 Type
 .Ic quit
 after you have mounted all the filesystems.
-.El
-.El
+.bullet)
 .
-.Ss2 Installation of base files:
+.Ss2 Installation of base files
 .
-.Bl -item
-.It
 Select the
 .Ic Install
-menu item from the 
+menu item from the
 .Ic File
 menu and install
 .Pa base.tgz , etc.tgz , netbsd.tgz ,
@@ -166,14 +156,14 @@ about what's in each set.) The Installer will print out the
 filename of each file as it is installed, and will take quite some
 time to install everything (the base package alone can take over an
 hour on a slow hard drive).
-.It
+.Pp
 As is the case with Mkfs, this is not a particularly well-behaved
 Macintosh application and the machine will be completely tied up
 while the installation takes place.
-.It
+.Pp
 At some point after installing the base set, select the
 .Ic Build Devices
-option from the 
+option from the
 .Ic File
 menu if you have not already done
 so. This will create a bunch of device nodes for you and will
@@ -182,20 +172,20 @@ create your initial
 The Installer program also has an
 option to give you a mini-shell. Do not use this unless you are
 sure know what you are doing.
-.It
+.Pp
 When you are finished installing all of the sets you wish to
 install, exit the Installer by choosing
 .Ic Quit No from the Ic File
 .No menu.
-.El
 .
 .Ss2 Booting the system
 .
-Prior to attempting to boot NetBSD/mac68k, please verify that all of
+Prior to attempting to boot
+.Nx*M ,
+please verify that all of
 the following are true:
-.Bl -enum
-.It
-32-bit addressing is enabled[*] in the Memory control panel;
+.(enum
+32-bit addressing is enabled [1] in the Memory control panel;
 .It
 All forms of virtual memory are disabled (the Memory control
 panel, RAM Doubler, or other software-based memory enhancement
@@ -205,16 +195,17 @@ Your system is in B\*&W mode (1-bit color or grayscale) as shown
 by the Monitors control panel. You may choose to have the
 Booter do this for you automatically by selecting the appropriate
 check box and radio button in the
-.Ic Monitors No dialog on the 
+.Ic Monitors No dialog on the
 .Ic Options No menu .
-.El
+.enum)
 .Pp
 It is probably best to boot your machine with all extensions turned
-off[*]. You can do this by booting into MacOS with the
+off [1]. You can do this by booting into MacOS with the
 .Tn SHIFT No key held
 down. You may have to restart your Macintosh for changes to take effect
 before proceeding.
-.(tag Em [*]Note:
+.(tag [1]
+.It [1]
 If your version of the Memory control panel does not have a 32-bit
 addressing mode radio button, this means that your system is already
 32-bit clean and is running in 32-bit addressing mode by default.  If the
@@ -230,10 +221,12 @@ ROM issues which prevent you from enabling 32-bit addressing. Please see
 for more information.
 .tag)
 .Pp
-Double-click on the NetBSD/mac68k Booter icon to start the application.
-Select 
+Double-click on the
+.Nx*M
+Booter icon to start the application.
+Select
 .Ic Booting
-from the 
+from the
 .Ic Options
 menu. Check that all of the items in
 the resulting dialog look sane--especially the SCSI ID. If not, correct

@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.5 2000/03/13 22:37:12 soren Exp $	
+.\"	$NetBSD: install,v 1.6 2000/10/10 12:55:18 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -36,27 +36,27 @@ you through the entire process, and is well automated. Additional
 improvements are planned for future releases.
 .Pp
 The miniroot's install program will:
-.Bl -bullet
-.It
+.(enum
 Allow you to place disklabels on additional disks.
 Note that partition sizes and offsets are expressed
 in sectors. When you fill out the disklabel, you will
 need to specify partition types and filesystem parameters.
 If you're unsure what these values should be, use the
 following:
-.Bd -ragged
+.(disp
 fstype: 4.2BSD
 fsize: 1024
 bsize: 4096
 cpg: 16
-.Ed
+.disp)
+.Pp
 If the partition will be a swap partition, use the following:
-.Bd -ragged
+.(disp
 fstype: swap
 fsize: 0 (or blank)
 bsize: 0 (or blank)
 cpg: 0 (or blank)
-.Ed
+.disp)
 .Pp
 You will also need to specify the number of partitions.
 The number of partitions is determined by the `index' of
@@ -73,16 +73,16 @@ the `c' partition must be fstype `boot'.
 Anything after a `#' is a comment.
 .Pp
 The following is an example disklabel partition map:
-.Bd -literal
+.(disp
 7 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
+#      size   offset    fstype   [fsize bsize   cpg]
 a:    30912      448    4.2BSD     1024  8192    16   # (Cyl.    1 - 69)
 b:   130816    31360      swap                        # (Cyl.   70 - 361)
 c:  1296512        0      boot                        # (Cyl.    0 - 2893)
 e:    81984   162176    4.2BSD     1024  8192    16   # (Cyl.  362 - 544)
 f:   102592   244160    4.2BSD     1024  4096    16   # (Cyl.  545 - 773)
 g:   949760   346752    4.2BSD     1024  8192    16   # (Cyl.  774 - 2893)
-.Ed
+.disp)
 .It
 Create filesystems on target partitions.
 .It
@@ -110,7 +110,7 @@ Copy a new kernel onto your root partition.
 Install a new boot block.
 .It
 Check your filesystems for integrity.
-.El
+.enum)
 .Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.

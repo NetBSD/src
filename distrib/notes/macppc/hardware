@@ -1,92 +1,116 @@
-.\"	$NetBSD: hardware,v 1.3 2000/03/21 10:50:04 soda Exp $	
+.\"	$NetBSD: hardware,v 1.4 2000/10/10 12:55:19 lukem Exp $
 .
-NetBSD/macppc \*V runs on PCI-based Power Macs and several compatibles.
-The minimal configuration requires 4M of RAM and ~80M of disk space.
+.Nx*M
+\*V runs on PCI-based Power Macs and several compatibles.
+The minimal configuration requires 4 MB of RAM and ~80 MB of disk space.
 To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (NetBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
-around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)
-.Ss2 Supported models:
-.Pp
-.Bl -bullet -compact -offset indent
-.	It
+X or compile the system, more RAM is recommended, as
+.Nx with 4 MB of RAM is very slow. Note that until you have
+around 16 MB of RAM, getting more RAM is more important than getting a
+faster CPU.
+.
+.Ss2 Supported models
+.(bullet -compact -offset indent
 Apple Power Macintosh 7300/7600/8500/8600/9500/9600
-.	It
+.It
 Apple Power Macintosh G3 MT266/DT233
-.	It
+.It
 Apple PowerBook 2400c/180
-.	It
+.It
 Apple iMac (netboot only)
-.	It
+.It
 UMAX Apus2000
-.	It
+.It
 PowerComputing PowerWave 604/120
-.	It
+.It
 Motorola StarMax 3000/240
-.	It
+.It
 PowerCity 4000/200 (StarMax 4000/200  OEM)
-.	It
+.It
 APS M*Power 604e/200
-.El
-.Pp
-NetBSD/macppc \*V does
-.Em not
-run on these machines (yet):
-.Bl -bullet -compact -offset indent
-.	It
+.bullet)
+.
+.Ss2 Unsupported models
+.(bullet -compact -offset indent
 Systems without Open Firmware. (e.g. PowerBook 5xxx)
-.	It
-NuBus-based systems.
-.	It
-PowerPC601-based systems.
-.	It
-m68k-based systems with a PowerPC upgrade card.
-.El
-.Pp
-Supported devices include:
-.Pp
-.Bl -tag -width indent
-.	It Em Ethernet: 
-on-board 79C950-based Ethernet interface. ("mace")
-.		br
-on-board bmac Ethernet interface. (10Base-T only)
-.		br
+.It
+NuBus-based systems
+.It
+PowerPC601-based systems
+.It
+m68k-based systems with a PowerPC upgrade card
+.bullet)
+.
+.Ss2 Supported devices
+.(bullet -offset indent
+Ethernet
+.(bullet -compact
+On-board 79C950-based Ethernet interface. ("mace")
+.It
+On-board bmac Ethernet interface. (10Base-T only)
+.It
 PCI NE2000 compatible Ethernet adapters. ("ne")
-.	It Em SCSI:
-on-board 53c94 SCSI controler.
-.		br
-on-board MESH SCSI controler. ("mesh")
-.		br
+.bullet)
+.It
+SCSI
+.(bullet -compact
+On-board 53c94 SCSI controller
+.It
+On-board MESH SCSI controller ("mesh")
+.It
 Adaptec 291x, 2920, 2930C, 294x, 295x, 39xx, 19160, 29160
-and AIC-78xx SCSI controller. ("ahc")
-.		br
-AdvanSys 1200[A,B], 9xx[U,UA] SCSI controler.  (Since it has no OpenFirmware
+and AIC-78xx SCSI controller ("ahc")
+.It
+AdvanSys 1200[A,B], 9xx[U,UA] SCSI controller. (Since it has no OpenFirmware
 support, you cannot boot from drive connected to this card)
-.		br
-Most of SCSI disk/tape/CD-ROM devices should work.
-.	It Em PCI controler:
-bandit/MPC106
-.	It Em IDE:
-on-board IDE controler which is found in several models. (e.g. iMac)
-.		br
-Most of hard drive and CD-ROM should work.
-.	It Em ADB devices:
-Most ADB keyboards and mice.
-.		br
-.	It Em PS/2 devices: (PowerMac 4400 and several compatibles have them)
+.It
+Most of SCSI disk/tape/CD-ROM devices should work
+.bullet)
+.It
+PCI controller
+.(bullet -compact
+Bandit/MPC106
+.bullet)
+.It
+IDE
+.(bullet -compact
+On-board IDE controler which is found in several models. (e.g. iMac)
+Most hard drives and CD-ROMs should work
+.bullet)
+.It
+ADB devices
+.(bullet -compact
+Most ADB keyboards and mice
+.bullet)
+.It
+PS/2 devices
+.br
+(PowerMac 4400 and several compatibles have PS/2 devices)
+.(bullet -compact
 PS/2 Keyboards
-.		br
+.It
 PS/2 Mice (middle button of 3-button one does not work)
-.	It Em Video (video card/on-board video): 
-PCI frame buffers which have Open Firmware support.
-.	It Em Serial ports:
-ttya and ttyb can be used as console if needed.  AKA serial/printer port.
-.El
-.Pp
-Hardware the we do NOT currently support yet:
-.Bl -tag -width indent
-.	It Em Floppy disk:
-Though NetBSD/macppc can boot from it, no kernel support yet.
-.	It Em AWACS internal audio:
-.El
+.bullet)
+.It
+Video (video card/on-board video)
+.(bullet -compact
+PCI frame buffers which have Open Firmware support
+.bullet)
+.It
+Serial ports
+.(bullet -compact
+ttya and ttyb (AKA the serial/printer port) can be used as console if needed
+.bullet)
+.bullet)
+.
+.Ss2 Unsupported devices
+.(bullet -offset indent
+Floppy disk
+.(item -offset indent
+Though
+.Nx*M
+can boot from it, there is no kernel support yet
+.item)
+.It
+AWACS internal audio
+.bullet)

@@ -1,9 +1,7 @@
-.\"	$NetBSD: xfer,v 1.5 1999/02/20 16:18:11 scw Exp $	
+.\"	$NetBSD: xfer,v 1.6 2000/10/10 12:55:20 lukem Exp $
 .
 Installation is supported from several media types, including:
-.Bl -bullet -compact
-.Pp
-.It
+.(bullet
 Tape
 .It
 NFS
@@ -11,7 +9,7 @@ NFS
 CD-ROM
 .It
 FTP
-.El
+.bullet)
 Note that installing on a "bare" machine requires either a bootable
 tape drive or an ethernet to a compatible NFS server. MVME147 may
 also need to be booted over an RS232 connection.
@@ -26,7 +24,7 @@ subdirectories in these two directories:
 .Dl Pa \&.../NetBSD-\*V/mvme68k/installation
 .Dl Pa \&.../NetBSD-\*V/mvme68k/binary
 .
-.Ss2 Creating boot/install tapes:
+.Ss2 Creating boot/install tapes
 .
 Installing from tape is the simplest method of all. This method uses two
 tapes, one containing a bootable ramdisk and miniroot, the other containing
@@ -58,7 +56,7 @@ set the EOF mark at the end of each tape segment. Consult the
 tape-related manual pages on the system where the tapes are created for
 more details.
 .
-.Ss2 Boot/Install from NFS server:
+.Ss2 Boot/Install from NFS server
 .
 If your machine has a disk and network connection, but no tape drive,
 it may be convenient for you to install
@@ -89,7 +87,8 @@ It will look for a filename derived from the machine's IP address
 expressed in hexadecimal, with an extension of ".147". For example,
 an MVME147 with IP address 130.115.144.11 will make an TFTP request for
 `8273900B.147'. Normally, this file is just a symbolic link to the
-NetBSD/mvme68k "netboot" program, which should be located in a place
+.Nx*M
+"netboot" program, which should be located in a place
 where the TFTP daemon can find it (remember, many TFTP daemons run in
 a chroot'ed environment). The netboot program may be found in the
 install directory of this distribution.
@@ -111,7 +110,7 @@ trying to netboot the client.
 The client will need access to the miniroot image, which can be
 provided using NFS or remote shell. If using NFS, miniroot.gz should be
 expanded on the server, because doing so from the RAMDISK shell is not
-so easy. The unzipped miniroot takes about 6Mb of space.
+so easy. The unzipped miniroot takes about 6 MB of space.
 .Pp
 If you will be installing
 .Nx
@@ -121,7 +120,7 @@ as they only use the netbsd-rd kernel. There will be no conflict
 between clients because the RAM-disk kernel will not use the NFS root.
 No swap file is needed; the RAM-disk kernel does not use that either.
 .
-.Ss2 Install/Upgrade from CD-ROM:
+.Ss2 Install/Upgrade from CD-ROM
 .
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
@@ -131,7 +130,7 @@ miniroot, you can load any of the distribution sets directly from
 the CD-ROM. The "install" program in the miniroot automates the
 work required to mount the CD-ROM and extract the files.
 .
-.Ss2 Install/Upgrade via FTP:
+.Ss2 Install/Upgrade via FTP
 .
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
@@ -143,16 +142,16 @@ automates the work required to configure the network interface and
 transfer the files.
 .Pp
 This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.NetBSD.ORG
-itself. If you wish to use ftp.NetBSD.ORG as your FTP file
+This might be a local system, or it might even be ftp.netbsd.org
+itself. If you wish to use ftp.netbsd.org as your FTP file
 server, you may want to keep the following information handy:
 .Pp
-.Dl No IP Address: ftp.NetBSD.ORG
+.Dl No IP Address: ftp.netbsd.org
 .Dl Login: Ic anonymous
 .Dl Password: Ar your e-mail address
 .Dl Server path: Ic /pub/NetBSD/NetBSD-\*V/mvme68k/binary
 .(Note
 If you're not using a nameserver duing installation,
 you might find 204.152.184.75 handy; it's the IP address of
-ftp.NetBSD.ORG as of January, 1999.
+ftp.netbsd.org as of January, 1999.
 .Note)

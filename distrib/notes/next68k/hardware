@@ -1,42 +1,50 @@
-.\"	$NetBSD: hardware,v 1.1 1999/04/24 18:47:14 dbj Exp $
-NetBSD/next68k \*V will run on 68040-based non-turbo NeXT workstations.
+.\"	$NetBSD: hardware,v 1.2 2000/10/10 12:55:20 lukem Exp $
+.
+.Nx*M
+\*V will run on 68040-based non-turbo
+.Tn NeXT
+workstations.
 This include the NeXTstation and NeXTstation Color slabs, and the
-non-Turbo NeXT Cube.  NetBSD/next68k does not currently support 68030
-machines or Turbo (33 MHz) machines.  NetBSD/next68k \*V does not
+non-Turbo NeXT Cube.
+machines or Turbo (33 MHz) machines.
+.Nx*M
+\*V does not
 have complete scsi support, so installations must use a remote NFS
 filesystem.
+.
+.Ss2 Supported hardware
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+68030-based: none.
+.It
+68040-based: NeXTstation, NeXTstation color, NeXT Cube.
+.bullet)
+.It
+RS232 interfaces
+.(bullet -compact
+built in A and B serial ports (zsc).
+.bullet)
+.It
+Network interfaces:
+.(bullet -compact
+built in ethernet (xe).
+.bullet)
+.It
+Displays
+.(bullet -compact
+NeXT monochrome display (nextdisplay).
+.bullet)
+.It
+Input devices
+.(bullet -compact
+NeXT non-adb keyboard (nextkbd).
+.bullet)
+.It
+Miscellaneous
+.(bullet -compact
+Battery-backed real-time clock.
+.bullet)
+.bullet)
 .Pp
-The following NeXT hardware is supported:
-.de section
-.	El
-.	Pp
-.	It Em \\$*
-.	br
-.	Bl -bullet -compact
-..
-.de item
-.	It
-\\$*
-..
-.Bl -tag -width Disks
-.	It Em CPUs:
-.	br
-.	Bl -bullet -compact
-.		item 68030-based: none.
-.		item 68040-based: NeXTstation, NeXTstation color, NeXT Cube.
-.	section RS232 interfaces:
-.		item built in A and B serial ports (zsc).
-.	section Network interfaces:
-.		item built in ethernet (xe).
-.	section Displays:
-.		item NeXT monochrome display (nextdisplay).
-.	section Input devices:
-.		item NeXT non-adb keyboard (nextkbd).
-.	section Miscellaneous:
-.		item Battery-backed real-time clock.
-.	El
-.El
-.Pp
-.Bl -tag -width (***)
-.El
 If it's not on this list, there is no official support for it in this release.

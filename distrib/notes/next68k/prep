@@ -1,3 +1,6 @@
-.\"	$NetBSD: prep,v 1.1 1999/04/24 18:47:15 dbj Exp $
-No preparation is necessary, since the NetBSD/next68k sets must be
+.\"	$NetBSD: prep,v 1.2 2000/10/10 12:55:20 lukem Exp $
+.
+No preparation is necessary, since the
+.Nx*M
+sets must be
 installed on a server.

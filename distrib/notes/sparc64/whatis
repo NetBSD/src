@@ -1,4 +1,4 @@
-.\" $NetBSD: whatis,v 1.1 2000/08/19 13:16:00 mrg Exp $	
+.\"	$NetBSD: whatis,v 1.2 2000/10/10 12:55:22 lukem Exp $
 .
 .Nx \*V
 is the first release for the sparc64!

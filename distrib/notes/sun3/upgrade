@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.7 2000/05/13 08:13:55 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.8 2000/10/10 12:55:23 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,45 +33,45 @@
 .\"
 .
 .if r_sun3 \{\
-It is possible to easily upgrade your existing NetBSD/sun3 system
+It is possible to easily upgrade your existing
+.Nx*M
+system
 using the upgrade program in the miniroot. If you wish to upgrade
 your system by this method, simply select the `upgrade' option once
 the miniroot has booted. The upgrade program with then guide you
 through the procedure. The upgrade program will:
-.	Bl -bullet -offset indent
-.	It
+.(bullet -offset indent
 Enable the network based on your system's current network configuration.
-.	It
+.It
 Mount your existing filesystems.
-.	It
+.It
 Extract binary sets from the media of your choice.
-.	It
+.It
 Make new device nodes in your root filesystem.
-.	It
+.It
 Copy a new kernel onto your root partition.
-.	(Note
+.(Note
 the existing kernel
-.	Em will not
+.Em will not
 be backed up; doing
 so would be pointless, since older kernels may not be
 capable of running
-.	Nx \*V
+.Nx \*V
 executables.
-.	Note)
-.	It
+.Note)
+.It
 Install a new boot block.
-.	It
+.It
 Check your filesystems for integrity.
-.	El
-.	Pp
+.bullet)
+.Pp
 Using the miniroot's upgrade program is the preferred method
 of upgrading your system.
 .\}
 .Pp
 However, it is possible to upgrade your system
 manually. To do this, follow the following procedure:
-.Bl -bullet -offset indent
-.It
+.(bullet -offset indent
 Place
 .Em at least
 the `base' binary set in a filesystem
@@ -122,7 +122,7 @@ wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
 .D1 Ic cd /
 .D1 Ic pax -zrvpe -f Ar "path to set
-.El
+.bullet)
 .(Note
 .No You Em should not
 extract the

@@ -1,6 +1,6 @@
 	Guide for the Impatient
 	-----------------------
-	$NetBSD: QUICK.INSTALL,v 1.2 1998/11/16 07:58:38 simonb Exp $
+	$NetBSD: QUICK.INSTALL,v 1.3 2000/10/10 12:55:21 lukem Exp $
 
 NetBSD 1.3.3 includes the install materials on CD.  However, we cannot
 make a single CD bootable on a dozen systems, so the CD cannot be
@@ -30,7 +30,8 @@ your swap partition (for example a 16MB root filesystem but a 48MB
 swap partition), you can move the start of the swap partition forward
 and leave a "gap" between the existing root filesystem and the swap
 partition.  If you have any questions, send them to the NetBSD/pmax
-mailling list at port-pmax@NetBSD.ORG .
+mailling list at
+.Mt port-pmax@netbsd.org .
 
 
 Under Ultrix, do:
@@ -49,7 +50,7 @@ Under Ultrix, do:
     PATH=$PATH:/cdrom/NetBSD-1.3/pmax/installation/misc; export PATH
 
     # Check that your swap partition is at least 32Mbytes
-    chpt -q /dev/rz0c           
+    chpt -q /dev/rz0c
     # Look at the "b" partition, you'll need at least 65536 blocks
 
     # Put the netbsd kernel on the root filesystem

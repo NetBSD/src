@@ -1,9 +1,10 @@
+.\"	$NetBSD: contrib,v 1.2 2000/10/10 12:55:19 lukem Exp $
+.
 .Ss Contributions
 .Pp
 The following people have made contributions of various sorts specifically
 for the Macintosh port (in alphabetical order):
-.Bl -bullet
-.It
+.(bullet
 All of the users who have supplied us with good bug reports and
 moral support.
 .It
@@ -25,7 +26,7 @@ Takashi Hamada and John Wittkoski beating the direct ADB hardware
 driver into submission.
 .It
 David Huang for getting MACE Ethernet and basic DMA working on the
-AV Macs. 
+AV Macs.
 .It
 Scott Jann for acquiring a IIx and a IIci, used for building and
 testing release sets.
@@ -77,8 +78,11 @@ Tenon Intersystems for monetary donations, MachTen, and Brad's
 access to several machines and documentation after hours.
 .It
 Virginia Tech English Department for loan of a IIci w/ NuBus
-video and 32MB of RAM--the first IIci to run NetBSD/Mac68k.
+video and 32 MB of RAM - the first IIci to run
+.Nx*M .
 .It
-Colin Wood for maintaining a host of NetBSD/mac68k documentation,
+Colin Wood for maintaining a host of
+.Nx*M
+documentation,
 including the FAQ, Meta-FAQ, and OS Info documents.
-.El
+.bullet)

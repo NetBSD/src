@@ -1,4 +1,5 @@
-.\"	$NetBSD: prep,v 1.1 2000/08/22 21:46:48 bjh21 Exp $
-.Nx Ns /arm26
-cannot currently be installed to a local disc, so there's not a lot to do to
-prepare a machine to run it.
+.\"	$NetBSD: prep,v 1.2 2000/10/10 12:55:17 lukem Exp $
+.
+.Nx*M
+cannot currently be installed to a local disk,
+so there's not a lot to do to prepare a machine to run it.

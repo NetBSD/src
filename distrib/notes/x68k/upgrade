@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.11 2000/10/03 22:24:33 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.12 2000/10/10 12:55:24 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,18 +33,19 @@
 .\"
 .
 .so ../common/upgrade
-
+.Pp
 Upgrading procedure using the
 .Dq script
 installer is much more complicated than that with
 .Dq sysinst
-installer.  When the installer comes up, 
+installer.  When the installer comes up,
 you will be presented with a welcome message and a prompt
-asking whether you are going to "install" NetBSD or "upgrade"
+asking whether you are going to "install"
+.Nx
+or "upgrade"
 an exisiting system.  Select "upgrade" to start.
 .Pp
-.Bl -enum
-.It
+.(enum
 You will be presented with some information about the upgrade
 process and a warning message, and will be asked if you wish
 to proceed with the upgrade process.  If you answer
@@ -127,13 +128,15 @@ When you are done upgrading all of the distribution sets you
 wish to upgrade, issue the command "Cleanup".  It will clean
 up the installation, by remaking some system databases.  When
 it is complete, all you have to do is to reboot(8) your system.
-.El
+.enum)
 .Pp
 .Em Your system has now been upgraded to
 .Nx \*V .
 .Pp
 After a new kernel has been copied to your hard disk, your
-machine is a complete NetBSD \*V system.  However, that
+machine is a complete
+.Nx
+\*V system.  However, that
 doesn't mean that you're finished with the upgrade process.
 There are several things that you should do, or might have to
 do, to insure that the system works properly.
@@ -183,8 +186,12 @@ man page.
 .Note)
 .Pp
 Finally, you will want to delete old binaries that were part
-of the version of NetBSD that you upgraded from and have since
-been removed from the NetBSD distribution.  If you are
+of the version of
+.Nx
+that you upgraded from and have since
+been removed from the
+.Nx
+distribution.  If you are
 upgrading from a pre-1.0 NetBSD, you might also
 want to recompile any locally-built binaries, to take
 advantage of the shared libraries.  (Note that any new

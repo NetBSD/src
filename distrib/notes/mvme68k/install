@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 2000/10/03 23:23:56 lukem Exp $
+.\"	$NetBSD: install,v 1.9 2000/10/10 12:55:20 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,6 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.
 Installing
 .Nx
 is a relatively complex process, but if you have
@@ -48,9 +47,11 @@ Otherwise, if you have another mvme68k machine running
 you can
 initialize the disk on that machine and then move the disk.
 .
-.Ss2 Installing from tape:
+.Ss2 Installing from tape
 .
-Create the NetBSD/mvme68k _VER boot tape as described in the section
+Create the
+.Nx*M
+_VER boot tape as described in the section
 entitled "Preparing a boot tape". Then, with the tape in the drive,
 type the following at the 1x7Bug prompt:
 .Pp
@@ -65,15 +66,15 @@ series of status messages. It may be useful if you can capture these
 messages to a file, or a scrollable xterm window. In particular, you
 should make a note of the lines which describe the geometry of the
 SCSI disks detected by NetBSD. They are of the form:
-.Bd -literal -offset indent
+.(disp
 sd0 at scsibus0 targ 0 lun 0: \*<CDC, 94161-9, 2506\*> SCSI1 0/direct fixed
-sd0: 148MB, 967 cyl, 9 head, 35 sec, 512 bytes/sect x 304605 sectors
-.Ed
+sd0: 148 MB, 967 cyl, 9 head, 35 sec, 512 bytes/sect x 304605 sectors
+.disp)
 .Pp
 The information of most interest is the number of sectors; here it's
 304605. You will need this number when you come to create a disklabel
 for that drive.
-.Bd -literal -offset indent
+.(disp
 RAM address from VMEbus = $00000000
 
 Booting from: VME147, Controller 5, Device 0
@@ -82,7 +83,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.8 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.9 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -101,7 +102,7 @@ clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
   \&.
   \&.
 
-.Ed
+.disp)
 .Pp
 .(Note
 The exact text of the messages will vary depending on which
@@ -109,8 +110,8 @@ MVME147 or MVME167 variant you're using.
 .Note)
 .Pp
 Finally, you will see the following "welcome" message:
-.Bd -literal offset indent
-        Welcome to the NetBSD/mvme68k RAMDISK root!
+.(disp
+        Welcome to the NetBSD/\*M RAMDISK root!
 
 This environment is designed to do only four things:
   1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
@@ -134,7 +135,7 @@ use "halt", then at the Bug monitor prompt use a command like:
 
 To view this message again, type:  cat /.welcome
 ssh:
-.Ed
+.disp)
 .Pp
 You must now create a disklabel on the disk you wish to use for the
 root filesystem. This will usually be
@@ -146,11 +147,11 @@ the disk.
 Partitions are named
 .Li sd0a, sd0b, sd0c
 .No etc, up to Li sd0h .
-The \*m port of
+The \*M port of
 .Nx
 makes some assumptions about the first three partitions on a boot disk:
 .Pp
-.Bl -tag -compact -width sd0c
+.(tag sd0c -compact
 .It Li sd0a
 The root filesystem.
 .It Li sd0b
@@ -158,7 +159,7 @@ The swap partition.
 .It Li sd0c
 The whole disk. Also known as the
 .Em raw partition .
-.El
+.tag)
 .Pp
 The
 .Em raw partition No is special;
@@ -230,13 +231,13 @@ blocks or cylinder/track/sector notation. If this is the first time
 you've partitioned a disk for NetBSD, it's probably easiest to use block
 notation. The above example creates partition 'a', starting at block zero
 and with a size of 38000 blocks. Note that the usual size of a block is
-512 bytes, so this creates a 19Mb partition.
+512 bytes, so this creates a 19 MB partition.
 .Pp
 The 'type' of the partition should be "4.2BSD", otherwise you won't
 be able to create a filesystem on it.
 .Pp
 Next, create a swap partition (b). Note that the minimum size of this
-swap partition should be 8Mb, otherwise you won't be able to use a
+swap partition should be 8 MB, otherwise you won't be able to use a
 miniroot to complete the
 .Nx
 installation!
@@ -251,10 +252,10 @@ installation!
 Here, we specify a value for 'start' such that the swap partition follows
 immediately after partition 'a', i.e. 38000. The length of the swap
 partition should be a multiple of the amount of RAM you have in your
-system. Here, I've chosen 32768, or 16Mb. The next available block on the
+system. Here, I've chosen 32768, or 16 MB. The next available block on the
 drive is thus 38000 + 32768. We will use this to create partition 'd' for
 our /usr filesystem. (Note that for a busy system, or a system with more
-than 8Mb of RAM, you'll be better off with a 32 or 64Mb swap partition.)
+than 8 MB of RAM, you'll be better off with a 32 or 64 MB swap partition.)
 .Pp
 .Dl edlabel/modify\*> Ic d
 .Dl d (user)          0       (0/00/00)          0       (0/00/00)  unused
@@ -278,7 +279,7 @@ details you've just entered, to disk. You might also try the 'p' command
 to view the partitions. Once written, you can quit back to ssh using 'q'.
 .Pp
 .Dl edlabel\*> Ic p
-.Bd -literal -offset indent
+.(disp
 	type_num: 4
 	sub_type: 0
        type_name: SCSI disk
@@ -294,7 +295,8 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
  b (swap)      38000     (120/05/25)*     32768     (104/00/08)* swap
  c (disk)          0       (0/00/00)     304605     (967/00/00)  unused
  d (user)      70768     (224/05/33)*    233837     (742/03/02)* 4.2BSD
-.Ed
+.disp)
+.Pp
 .Dl edlabel\*> Ic w
 .Dl edlabel\*> Ic q
 .Dl ssh:
@@ -336,7 +338,7 @@ Resetting the MVME167 board is very similar.
 You should now reboot from that just installed miniroot. See the section
 entitled "Booting the miniroot" for details.
 .
-.Ss2 Installing from NFS:
+.Ss2 Installing from NFS
 .
 Before you can install from NFS, you must have already configured
 your NFS server to support your machine as a bootable client.
@@ -346,7 +348,7 @@ entitled "Getting the NetBSD System onto Useful Media" above.
 To get started on the MVME147, you need to download "sboot" into RAM
 (you will find
 .Ic sboot
-in the 
+in the
 .Pa install
 directory of the mvme68k distribution).
 You can either do that through the console line or through a 2nd serial
@@ -354,11 +356,11 @@ connection. For example, an MVME147 connected to a sun4/110 and accessed via
 .Xr tip 1
 can be loaded as follows:
 .Pp
-.Bd -literal -offset indent
+.(disp
 lo 0
 ~Ccat sboot
 go 4000
-.Ed
+.disp)
 .Pp
 Which will look like this:
 .Pp
@@ -379,7 +381,7 @@ Now, if you want to do it through serial line 1, then connect serial
 line one to a machine. At the
 .Li 147-Bug\*> No prompt type Ic \&tm 1
 You should then login to the machine it is connected to.
-Then press Control-A to escape to Bug. do 
+Then press Control-A to escape to Bug. do
 .Ic lo 1;x=cat sboot Em ...
 then when that is done you can reconnect
 .Ic tm 1 No and logout.
@@ -391,13 +393,13 @@ from the server:
 .Pp
 .Dl \*>\*>\*> b
 .Pp
-.Bd -literal -offset indent
+.(disp
 le0: ethernet address: 8:0:3e:20:cb:87
 My ip address is: 192.168.1.4
 Server ip address is: 192.168.1.1
 4800
 Download was a success!
-.Ed
+.disp)
 .Pp
 See below for the next step in booting MVME147.
 .Pp
@@ -413,9 +415,9 @@ to type is:
 .Pp
 For both boards, the boot messages are very similar:
 .Pp
-.Bd -literal -offset indent
+.(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.8 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.9 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -437,7 +439,7 @@ pcc0 at mainbus0: Peripheral Channel Controller, rev 0, vecbase 0x40
 clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
   \&.
   \&.
-.Ed
+.disp)
 .Pp
 After the boot program loads the RAMDISK kernel, you should see the
 welcome screen as shown in the "tape boot" section above.
@@ -501,7 +503,7 @@ installing from tape, where it describes how to run 'installboot'.
 This is immediately following the part which explains how to copy the
 miniroot from tape.
 .
-.Ss2 Booting the miniroot:
+.Ss2 Booting the miniroot
 .
 Assuming the miniroot is installed on partition 'b' of the disk with
 SCSI-id 0, then the 147Bug boot command is:
@@ -512,7 +514,7 @@ The corresponding 167Bug boot command is:
 .Pp
 The command line parameters above are:
 .Pp
-.Bl -tag -width xxx
+.(tag xxx
 .It Ic 0
 controller (usually zero)
 .It Ic ,, or ,,,
@@ -520,7 +522,7 @@ bug argument separators
 .It Ic \&b:\&
 tell the bootstrap code to boot from partition
 .Ic b
-.El
+.tag)
 .Pp
 You should see a bunch of boot messages, followed by messages from
 the miniroot kernel just as you did when the RAMDISK kernel booted.
@@ -553,8 +555,7 @@ you through the entire process, and is well automated. Additional
 improvements are planned for future releases.
 .Pp
 The miniroot's install program will:
-.Bl -bullet
-.It
+.(bullet
 Allow you to place disklabels on additional disks.
 The disk we are installing on should already have
 been partitioned using the RAMDISK kernel.
@@ -607,7 +608,7 @@ Copy a new kernel onto your root partition.
 Install a new boot block.
 .It
 Check your filesystems for integrity.
-.El
+.bullet)
 .Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.

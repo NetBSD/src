@@ -1,60 +1,108 @@
-.\"	$NetBSD: hardware,v 1.4 1999/02/20 16:18:11 scw Exp $	
+.\"	$NetBSD: hardware,v 1.5 2000/10/10 12:55:20 lukem Exp $
 .
-NetBSD/mvme68k \*V runs on Motorola
+.Nx*M
+\*V runs on Motorola
 .Tn MVME147 No and MVME167 No Single Board Computers.
 .Pp
-The minimal configuration requires 4M of RAM and ~100MB of disk space.
+The minimal configuration requires 4 MB of RAM and ~100 MB of disk space.
 To install the entire system requires much more disk space (approx.
-200MB additional space is necessary for full sources. Double that if you
+200 MB additional space is necessary for full sources. Double that if you
 want to recompile it all!). To run X (clients only) or compile the system,
-more RAM is recommended. Good performance requires 8MB of RAM, or 16 MB
+more RAM is recommended. Good performance requires 8 MB of RAM, or 16 MB
 when running the X Window System.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
-.Bd -literal -offset indent
-partition:      advise          needed
-root (/)        20M             12M
-user (/usr)     100M            80M
-swap            (2 or 3 * RAM)   8M
+.Bl -column -offset indent Partition Suggested Needed
+.It Partition Ta Suggested Ta Needed
+.It root\ (/) Ta "20 MB"   Ta "12 MB"
+.It /usr      Ta "100 MB"  Ta "80 MB"
+.It /var      Ta "20 MB"   Ta "5 MB"
+.It swap      Ta Em "2-3 *RAM" Ta 6 MB
+.El
+.(item -offset indent
 Anything else is up to you!
-.Ed
+.item)
 .Pp
-Note that the \*m installation procedure uses a
+Note that the
+.Nx*M
+installation procedure uses a
 .Em miniroot
 image which is placed into the swap area of the disk. The swap partition
-must be large enough to hold this miniroot image (\*> 6Mb).
-.Pp
-The following
-.Tn VME147 No hardware is supported:
-.Bl -tag -width Parallel
-.It Em Serial ports (RS232):
-built-in console, ttyZ1, ttyZ2 and ttyZ3
-.It Em Parallel port:
+must be large enough to hold this miniroot image (\*> 6 MB).
+.
+.Ss2 Supported VME147 hardware
+.(bullet -offset indent
+Serial ports (RS232)
+.(bullet -compact
+built-in console
+.It
+ttyZ1
+.It
+ttyZ2
+.It
+ttyZ3
+.bullet)
+.It
+Parallel port
+.(bullet -compact
 On-board centronics style printer port
-.It Em Network interfaces:
+.bullet)
+.It
+Network interfaces:
+.(bullet -compact
 On-board Lance Ethernet (le)
-.It Em SCSI: 
-(Most SCSI disks, tapes, CD-ROMs, etc.)
-On-board wd33c93 SCSI bus interface chip (async only for now).
-.It Em Miscellaneous:
-Battery-backed real-time clock.
-VMEbus RAM cards.
-.El
-.Pp
-The following
-.Tn VME167 No hardware is supported:
-.Bl -tag -width Parallel
-.It Em Serial ports (RS232):
-built-in console, ttyC1, ttyC2 and ttyC3
-.It Em Parallel port:
+.bullet)
+.It
+SCSI
+.(bullet -compact
+Most SCSI disks, tapes, CD-ROMs, etc
+.It
+On-board wd33c93 SCSI bus interface chip (async only for now)
+.bullet)
+.It
+Miscellaneous:
+.(bullet -compact
+Battery-backed real-time clock
+.It
+VMEbus RAM cards
+.bullet)
+.bullet)
+.
+.Ss2 Supported VME167 hardware
+.(bullet -offset indent
+Serial ports (RS232)
+.(bullet -compact
+built-in console
+.It
+ttyZ1
+.It
+ttyZ2
+.It
+ttyZ3
+.bullet)
+.It
+Parallel port
+.(bullet -compact
 On-board centronics style printer port
-.It Em Network interfaces:
-On-board Ethernet (ie)
-.It Em SCSI: 
-(Most SCSI disks, tapes, CD-ROMs, etc.)
-On-board ncr53c710 SCSI I/O Processor chip.
-.It Em Miscellaneous:
-Battery-backed real-time clock.
-.El
+.bullet)
+.It
+Network interfaces:
+.(bullet -compact
+On-board Lance Ethernet (ie)
+.bullet)
+.It
+SCSI
+.(bullet -compact
+Most SCSI disks, tapes, CD-ROMs, etc
+.It
+On-board ncr53c710 SCSI I/O Processor chip
+.bullet)
+.It
+Miscellaneous:
+.(bullet -compact
+Battery-backed real-time clock
+.bullet)
+.bullet)
+.
 .Pp
 If it's not on the above lists, there is no support for it in this release.

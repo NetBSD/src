@@ -1,15 +1,13 @@
-.\"	$NetBSD: xfer,v 1.3 2000/06/17 15:05:26 martin Exp $
+.\"	$NetBSD: xfer,v 1.4 2000/10/10 12:55:19 lukem Exp $
 .
 Installation is supported from several media types, including:
-.Bl -bullet -compact
-.Pp
-.It
+.(bullet -compact
 NFS
 .It
 FTP
 .It
 CD-ROM
-.El
+.bullet)
 .(Note
 Installing on a "bare" machine requires some bootable device; either an MO
 drive or a floppy.  When the target has on-board Ethernet, NFS installation is
@@ -26,7 +24,7 @@ subdirectories in these two directories:
 .Dl Pa \&.../NetBSD-\*V/macppc/installation
 .Dl Pa \&.../NetBSD-\*V/macppc/binary
 .
-.Ss2 Boot/Install from NFS server:
+.Ss2 Boot/Install from NFS server
 .
 If your machine has a disk and network connection and on-board Ethernet, it may
 be convenient for you to install
@@ -46,5 +44,7 @@ another operating system, consult the documentation that came with it (i.e.
 add_client(8) on SunOS).
 .Pp
 .
-Since NetBSD/macppc does not have floppy disk support yet, you need MacOS or
+Since
+.Nx*M
+does not have floppy disk support yet, you need MacOS or
 another machine that can write the install kernel image to floppy.
