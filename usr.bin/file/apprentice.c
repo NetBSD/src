@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.29 2002/05/21 12:51:27 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.30 2002/06/05 12:52:57 itojun Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -49,7 +49,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.46 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.29 2002/05/21 12:51:27 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.30 2002/06/05 12:52:57 itojun Exp $");
 #endif
 #endif	/* lint */
 
@@ -85,19 +85,19 @@ __RCSID("$NetBSD: apprentice.c,v 1.29 2002/05/21 12:51:27 christos Exp $");
 static int getvalue	__P((struct magic *, char **));
 static int hextoint	__P((int));
 static char *getstr	__P((char *, char *, int, int *));
-static int parse	__P((struct magic **, uint32 *, char *, int));
+static int parse	__P((struct magic **, uint32_t *, char *, int));
 static void eatsize	__P((char **));
 static int apprentice_1	__P((const char *, int));
-static int apprentice_file	__P((struct magic **, uint32 *,
+static int apprentice_file	__P((struct magic **, uint32_t *,
     const char *, int));
-static void byteswap	__P((struct magic *, uint32));
+static void byteswap	__P((struct magic *, uint32_t));
 static void bs1		__P((struct magic *));
-static uint16 swap2	__P((uint16));
-static uint32 swap4	__P((uint32));
+static uint16_t swap2	__P((uint16_t));
+static uint32_t swap4	__P((uint32_t));
 static char *mkdbname	__P((const char *));
-static int apprentice_map	__P((struct magic **, uint32 *,
+static int apprentice_map	__P((struct magic **, uint32_t *,
     const char *, int));
-static int apprentice_compile	__P((struct magic **, uint32 *,
+static int apprentice_compile	__P((struct magic **, uint32_t *,
     const char *, int));
 
 static int maxmagic = 0;
@@ -143,7 +143,7 @@ apprentice_1(fn, action)
 	int action;
 {
 	struct magic *magic = NULL;
-	uint32 nmagic = 0;
+	uint32_t nmagic = 0;
 	struct mlist *ml;
 	int rv = -1;
 
@@ -233,7 +233,7 @@ apprentice(fn, action)
 static int
 apprentice_file(magicp, nmagicp, fn, action)
 	struct magic **magicp;
-	uint32 *nmagicp;
+	uint32_t *nmagicp;
 	const char *fn;			/* name of magic file */
 	int action;
 {
@@ -287,10 +287,10 @@ apprentice_file(magicp, nmagicp, fn, action)
 /*
  * extend the sign bit if the comparison is to be signed
  */
-uint32
+uint32_t
 signextend(m, v)
 	struct magic *m;
-	uint32 v;
+	uint32_t v;
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -316,7 +316,7 @@ signextend(m, v)
 		case LONG:
 		case BELONG:
 		case LELONG:
-			v = (int32) v;
+			v = (int32_t) v;
 			break;
 		case STRING:
 		case PSTRING:
@@ -337,7 +337,7 @@ signextend(m, v)
 static int
 parse(magicp, nmagicp, l, action)
 	struct magic **magicp;
-	uint32 *nmagicp;
+	uint32_t *nmagicp;
 	char *l;
 	int action;
 {
@@ -942,14 +942,14 @@ eatsize(p)
 static int
 apprentice_map(magicp, nmagicp, fn, action)
 	struct magic **magicp;
-	uint32 *nmagicp;
+	uint32_t *nmagicp;
 	const char *fn;
 	int action;
 {
 	int fd;
 	struct stat st;
-	uint32 *ptr;
-	uint32 version;
+	uint32_t *ptr;
+	uint32_t version;
 	int needsbyteswap;
 	char *dbname = mkdbname(fn);
 
@@ -986,7 +986,7 @@ apprentice_map(magicp, nmagicp, fn, action)
 #endif
 	(void)close(fd);
 	fd = -1;
-	ptr = (uint32 *) *magicp;
+	ptr = (uint32_t *) *magicp;
 	if (*ptr != MAGICNO) {
 		if (swap4(*ptr) != MAGICNO) {
 			(void)fprintf(stderr, "%s: Bad magic in `%s'\n",
@@ -1034,13 +1034,13 @@ error:
 static int
 apprentice_compile(magicp, nmagicp, fn, action)
 	struct magic **magicp;
-	uint32 *nmagicp;
+	uint32_t *nmagicp;
 	const char *fn;
 	int action;
 {
 	int fd;
 	char *dbname = mkdbname(fn);
-	static const uint32 ar[] = {
+	static const uint32_t ar[] = {
 	    MAGICNO, VERSIONNO
 	};
 
@@ -1106,9 +1106,9 @@ mkdbname(fn)
 static void
 byteswap(magic, nmagic)
 	struct magic *magic;
-	uint32 nmagic;
+	uint32_t nmagic;
 {
-	uint32 i;
+	uint32_t i;
 	for (i = 0; i < nmagic; i++)
 		bs1(&magic[i]);
 }
@@ -1116,13 +1116,13 @@ byteswap(magic, nmagic)
 /*
  * swap a short
  */
-static uint16
+static uint16_t
 swap2(sv) 
-	uint16 sv;
+	uint16_t sv;
 {
-	uint16 rv;
-	uint8 *s = (uint8 *) &sv; 
-	uint8 *d = (uint8 *) &rv; 
+	uint16_t rv;
+	uint8_t *s = (uint8_t *) &sv; 
+	uint8_t *d = (uint8_t *) &rv; 
 	d[0] = s[1];
 	d[1] = s[0];
 	return rv;
@@ -1131,13 +1131,13 @@ swap2(sv)
 /*
  * swap an int
  */
-static uint32
+static uint32_t
 swap4(sv) 
-	uint32 sv;
+	uint32_t sv;
 {
-	uint32 rv;
-	uint8 *s = (uint8 *) &sv; 
-	uint8 *d = (uint8 *) &rv; 
+	uint32_t rv;
+	uint8_t *s = (uint8_t *) &sv; 
+	uint8_t *d = (uint8_t *) &rv; 
 	d[0] = s[3];
 	d[1] = s[2];
 	d[2] = s[1];
