@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.3 1995/06/28 02:45:18 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.4 1995/08/03 00:58:33 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -36,11 +36,10 @@
 /* XXX this is to fake out the console routines, while booting. */
 void promcnputc __P((dev_t, int));
 int promcngetc __P((dev_t));
-void promcnpollc __P((dev_t, int));
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
-			    promcnpollc, makedev(23,0), 1 };
+			    nullcnpollc, makedev(23,0), 1 };
 
-struct rpb	*hwrpb;			/* NOT in BSS! */
+struct rpb	*hwrpb;
 int		alpha_console;
 int		prom_mapped = 1;	/* Is PROM still mapped? */
 
@@ -142,19 +141,6 @@ promcngetc(dev)
                 if (ret.u.status == 0 || ret.u.status == 1)
                         return (ret.u.retval);
         }
-}
-
-/*
- * promcnpollc:
- *
- * Enable/disable polling mode
- */
-void
-promcnpollc(dev, on)
-	dev_t dev;
-	int on;
-{
-
 }
 
 /*
