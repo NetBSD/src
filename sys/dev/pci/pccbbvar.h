@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.9 2000/03/12 04:27:12 mycroft Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.10 2000/03/15 00:38:40 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -61,18 +61,6 @@ static char *cb_chipset_name[CB_CHIPS_LAST] = {
 struct pccbb_softc;
 struct pccbb_intrhand_list;
 
-#if pccard
-struct cbb_pcmcia_softc {
-	pccard_chipset_t cpc_ct;
-	struct pccard_softc *cpc_csc;
-	struct pccbb_softc *cpc_parent;
-	u_int8_t cpc_statreg;		/* status register */
-	u_int32_t cpc_regbase;		/* base index of the slot */
-	u_int16_t cpc_flags;
-	bus_space_tag_t cpc_iot;
-	bus_space_handle_t cpc_ioh;
-};
-#endif /* pccard */
 
 struct cbb_pcic_handle {
 	struct device *ph_parent;
@@ -139,9 +127,6 @@ struct pccbb_softc {
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
 
-#if pccard
-	struct cbb_pcmcia_softc sc_pcmcia;
-#endif					/* pccard */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
 	int sc_chipset;			/* chipset id */
