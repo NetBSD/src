@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/06/15 21:33:07 itojun Exp $
+#	$NetBSD: Makefile,v 1.27 2002/06/15 21:34:19 itojun Exp $
 #
 
 TARGETS+=	release
@@ -12,6 +12,8 @@ SUBDIR+= acorn26
 SUBDIR+= acorn32
 SUBDIR+= alpha
 SUBDIR+= amiga
+SUBDIR+= arc
+SUBDIR+= arm32
 SUBDIR+= atari
 SUBDIR+= cats
 SUBDIR+= evbarm
