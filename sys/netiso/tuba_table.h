@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.h,v 1.2 1994/06/29 06:40:55 cgd Exp $	*/
+/*	$NetBSD: tuba_table.h,v 1.3 1995/03/26 20:35:36 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@ struct tuba_cache {
 #define SWAB(a, b) { union { u_char c[2]; u_short s;} s; u_char t; \
 	s.s = (b); t = s.c[0]; s.c[0] = s.c[1]; s.c[1] = t; a = s.s;}
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	int	tuba_table_size;
 extern	struct	tuba_cache **tuba_table;
 extern	struct	radix_node_head *tuba_tree;

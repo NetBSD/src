@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_var.h,v 1.5 1994/06/29 06:39:26 cgd Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.6 1995/03/26 20:35:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,7 +50,7 @@ struct	cltpstat {
 	int	cltps_opackets;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	isopcb cltb;
 struct	cltpstat cltpstat;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.h,v 1.5 1994/06/29 06:41:47 cgd Exp $	*/
+/*	$NetBSD: ns_pcb.h,v 1.6 1995/03/26 20:36:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -76,7 +76,7 @@ struct nspcb {
 #define	NSRCVQ		2048
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	nspcb nspcb;			/* head of list */
 struct	nspcb *ns_pcblookup();
 #endif
