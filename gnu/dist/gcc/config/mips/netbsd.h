@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES \
  "-D__ANSI_COMPAT -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
   -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
-  -Dunix -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
+  -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
 
 /* Always uses gas.  */
 
