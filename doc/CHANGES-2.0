@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.85 2004/04/12 05:19:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.86 2004/04/12 05:20:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -873,3 +873,8 @@ xfree/xc/config/cf/NetBSD.cf			1.67
 	Pull in an AMD64 specific configuration fix. 
 	Static X servers using the vesa driver also need AFB. PR#25112
 	[tron, ticket #127]
+
+distrib/utils/sysinst/Makefile.inc		1.35
+
+	Use ${DISTRIBVER} for the version number, not ${VER}. PR#24995
+	[grant, ticket #131]
