@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.17 2000/09/08 20:56:37 tshiozak Exp $	*/
+/*	$NetBSD: catopen.c,v 1.18 2000/09/30 16:47:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ _catopen(name, oflag)
 	const char *name;
 	int oflag;
 {
-	char tmppath[PATH_MAX];
+	char tmppath[PATH_MAX+1];
 	char *nlspath;
 	char *lang;
 	char *s, *t;
