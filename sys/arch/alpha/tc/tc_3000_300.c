@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.19 1999/03/28 13:48:40 drochner Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.19 1999/03/28 13:48:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,15 +284,15 @@ tc_3000_300_fb_cnattach(turbo_slot)
 	output_slot = turbo_slot & 0xffffffff;
 
 	if (output_slot >= tc_3000_300_nslots) {
-		return 0;
+		return EINVAL;
 	}
 
 	if (output_slot == 0) {
 #if NSFB > 0
 		sfb_cnattach(KV(0x1c0000000) + 0x02000000);
-		return 1;
-#else
 		return 0;
+#else
+		return ENXIO;
 #endif
 	}
 
