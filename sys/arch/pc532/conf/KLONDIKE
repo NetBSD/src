@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.6 1996/10/23 07:49:55 matthias Exp $
+#	$NetBSD: KLONDIKE,v 1.7 1996/11/07 07:32:18 matthias Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -10,7 +10,7 @@ options		TIMEZONE=0, DST=0	# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 
-makeoptions	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 options		DDB			# kernel debugger; recommended
 #options	DIAGNOSTIC		# internal consistency checking
 options		KTRACE			# system call tracing, a la ktrace(1)
@@ -19,27 +19,20 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	SHMMAXPGS=1024
-#options	LKM			# loadable kernel modules
+options		LKM			# loadable kernel modules
+options		INSECURE		# allow lkms in multiuser mode
 
 # compatibility options
 options		COMPAT_43		# 4.3 system calls
-options 	COMPAT_11
-options 	COMPAT_12
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+options 	EXEC_SCRIPT		# #! scripts
+options 	EXEC_AOUT		# a.out executables
 
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
 #options	LFS			# log-structered file system
 options		MFS			# memory file system; uses RAM and swap
-options		MSDOSFS			# MS-DOS file system
-options		CD9660			# ISO 9660 CD-ROM file system, with RR
-options		NULLFS			# loopback file system
-#options	UMAPFS			# NULLFS + uid and gid remapping
-options		UNION			# union file system
-#options	PORTAL			# /portal
 options		FDESC			# /dev/fd
 options		KERNFS			# /kern
 options		PROCFS			# /proc
@@ -78,11 +71,12 @@ sd3 at scsibus0 target 2 lun 1		# Teac FC-1 GF (5.25" Floppy)
 cd0 at scsibus0 target 3 lun 0		# Toshiba XM-4101TA
 st0 at scsibus0 target 4 lun 0		# Conner 4324RP DAT Drive
 st1 at scsibus0 target 5 lun 0		# Tandberg TDC 3660 QIC-150 Drive
-#uk0 at scsibus0 target 6 lun 0		# Adaptec 1542CF
+uk0 at scsibus0 target 6 lun 0		# Adaptec 1542B (Send)
+uk1 at scsibus0 target 6 lun 1		# Adaptec 1542B (Receive)
 sd* at scsibus? target ? lun ?		# SCSI disks
 cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 st* at scsibus? target ? lun ?		# SCSI tapes
-#uk* at scsibus? target ? lun ?		# All the things we don't know
+uk* at scsibus? target ? lun ?		# All the things we don't know
 
 scn0 at membus?
 scn1 at membus?
