@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.20 1999/06/15 15:54:28 kleink Exp $	 */
+/*	$NetBSD: rtld.c,v 1.21 1999/07/22 00:18:19 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -546,7 +546,7 @@ _rtld_dlopen(name, mode)
 	if (name == NULL) {
 		obj = _rtld_objmain;
 	} else {
-		char *path = _rtld_find_library(name, NULL);
+		char *path = _rtld_find_library(name, _rtld_objmain);
 		if (path != NULL)
 			obj = _rtld_load_object(path, true);
 	}
