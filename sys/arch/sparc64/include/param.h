@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1998/09/09 11:01:38 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.8 1998/10/06 05:18:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,12 +77,15 @@
  * (within reasonable limits). 
  *
  */
+#define ALIGNBYTES32		0x7
+#define ALIGNBYTES64		0xf
 #ifdef _LP64
-#define	ALIGNBYTES		0xf
+#define	ALIGNBYTES		ALIGNBYTES64
 #else
-#define	ALIGNBYTES		0x7
+#define	ALIGNBYTES		ALIGNBYTES32
 #endif
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 
@@ -108,8 +111,13 @@ extern int nbpg, pgofset, pgshift;
 #define	CLSIZELOG2	0
 
 /* NOTE: SSIZE must be multiple of CLSIZE */
-#define	SSIZE		1		/* initial stack size in pages */
-#define	USPACE		(1*8192)
+#ifdef _LP64
+/* We get stack overflows w/8K stacks in 64-bit mode */
+#define	SSIZE		2		/* initial stack size in pages */
+#else
+#define	SSIZE		1
+#endif
+#define	USPACE		(SSIZE*8192)
 
 /*
  * Constants related to network buffer management.
