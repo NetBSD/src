@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.97 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.97 2004/04/23 21:13:06 itojun Exp $");
 
 /*
 #define CBB_DEBUG
@@ -433,7 +433,7 @@ pccbbattach(parent, self, aux)
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
-	pci_devinfo(pa->pa_id, 0, 0, devinfo);
+	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
 #ifdef CBB_DEBUG
 	printf(" (chipflags %x)", flags);

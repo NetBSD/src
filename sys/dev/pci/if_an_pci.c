@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.13 2004/01/29 16:57:29 martin Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.14 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.13 2004/01/29 16:57:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.14 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -130,7 +130,7 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": 802.11 controller\n");
 
-        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
         aprint_normal(": %s\n", devinfo);
 
         /* Map I/O registers */

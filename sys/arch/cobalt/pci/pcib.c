@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9 2003/09/12 17:55:53 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.10 2004/04/23 21:13:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2003/09/12 17:55:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2004/04/23 21:13:05 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ pcib_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
 					PCI_REVISION(pa->pa_class));
 
