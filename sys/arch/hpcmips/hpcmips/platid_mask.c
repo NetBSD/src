@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.11 1999/12/26 05:50:59 shin Exp $ */
+/* $Id: platid_mask.c,v 1.12 1999/12/26 17:21:59 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -337,6 +337,14 @@ platid_t platid_mask_MACH_COMPAQ_C_2015 = {{
 platid_t platid_mask_MACH_COMPAQ_AERO = {{
 	PLATID_WILD,
 	PLATID_MACH_COMPAQ_AERO
+}};
+platid_t platid_mask_MACH_COMPAQ_AERO_15XX = {{
+	PLATID_WILD,
+	PLATID_MACH_COMPAQ_AERO_15XX
+}};
+platid_t platid_mask_MACH_COMPAQ_AERO_1530 = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_COMPAQ_AERO_1530
 }};
 platid_t platid_mask_MACH_COMPAQ_AERO_21XX = {{
 	PLATID_WILD,
