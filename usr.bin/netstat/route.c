@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36 1999/04/01 23:12:30 chopps Exp $	*/
+/*	$NetBSD: route.c,v 1.37 1999/04/02 20:13:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.36 1999/04/01 23:12:30 chopps Exp $");
+__RCSID("$NetBSD: route.c,v 1.37 1999/04/02 20:13:40 chopps Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ struct bits {
  * XXX we put all of the sockaddr types in here to force the alignment
  * to be correct.
  */
-static union {
+static union sockaddr_union {
 	struct	sockaddr u_sa;
 	struct	sockaddr_in u_in;
 	struct	sockaddr_un u_un;
@@ -494,34 +494,27 @@ p_flags(f, format)
 	printf(format, name);
 }
 
-static struct sockaddr *sockdup __P((struct sockaddr *));
+static struct sockaddr *sockcopy __P((struct sockaddr *,
+    union sockaddr_union *));
 
 /*
  * copy a sockaddr into an allocated region, allocate at least sockaddr
  * bytes and zero unused
  */
 static struct sockaddr *
-sockdup(sp)
+sockcopy(sp, dp)
 	struct sockaddr *sp;
+	union sockaddr_union *dp;
 {
-	struct sockaddr *dp;
-	int len, salen;
+	int len;
 
-	if (sp == 0)
-		salen = 0;
-	else
-		salen = sp->sa_len;
-	if (salen < sizeof(struct sockaddr))
-		len = sizeof(struct sockaddr);
-	else
-		len = sp->sa_len;
-	if ((dp = malloc(len)) == 0)
-		err(1, "sockdup");
-	if (salen)
-		memcpy(dp, sp, salen);
-	if (len > salen)
-		memset(dp + salen, 0, len - salen);
-	return (dp);
+	if (sp == 0 || sp->sa_len == 0)
+		(void)memset(dp, 0, sizeof (*sp));
+	else {
+		len = (sp->sa_len >= sizeof (*sp)) ? sp->sa_len : sizeof (*sp);
+		(void)memcpy(dp, sp, len);
+	}
+	return ((struct sockaddr *)dp);
 }
 
 static void
@@ -529,18 +522,15 @@ p_rtentry(rt)
 	struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
+	union sockaddr_union addr_un, mask_un;
 	struct sockaddr *addr, *mask;
 
-	addr = sockdup(kgetsa(rt_key(rt)));
+	addr = sockcopy(kgetsa(rt_key(rt)), &addr_un);
 	if (rt_mask(rt))
-		mask = sockdup(kgetsa(rt_mask(rt)));
+		mask = sockcopy(kgetsa(rt_mask(rt)), &mask_un);
 	else
-		mask = sockdup(0);
+		mask = sockcopy(0, &mask_un);
 	p_sockaddr(addr, mask, rt->rt_flags, WID_DST);
-
-	free(addr);
-	free(mask);
-
 	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
