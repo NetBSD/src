@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.67 2002/04/27 15:54:47 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.68 2002/06/06 21:54:12 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2828,3 +2828,71 @@ sys/arch/alpha/isa/isadma_bounce.c		1.4
 
   Fix a DMA resource leak on Alpha systems with more than 1GB of
   RAM.
+
+distrib/notes/x68k/hardware			1.13
+
+  Add the Nereid ethernet driver which will appear in 1.5.3.
+
+sys/dev/i2o/iopsp.c				patch
+
+  Make this compile under SCSIDEBUG.
+
+share/man/man9/lock.9				1.11
+
+  Correct some errors.  Fixes PR#14367.
+
+crypto/dist/ssh/radix.c				patch
+crypto/dist/ssh/bufaux.c			patch
+crypto/dist/ssh/bufaux.h			patch
+crypto/dist/ssh/version.h			patch
+
+  Switch to a ``vendor-supplied'' version of the patch which protects
+  against buffer overruns when decoding KerberosIV credentials.
+  Bump NetBSD part of version string.
+
+distrib/utils/libhack/getpwent.c		1.6 via patch
+
+  Initialize pw_class for added compatibility.
+
+sys/dev/sun/kbd.c				1.30
+
+  Avoid a NULL pointer dereference if a workstation keyboard is
+  connected but not configured as the console input device.
+
+usr.sbin/tcpdump/print-bootp.c			1.8
+
+  Fix endian mistake in DHCP printing.  Fixes PR#15512.
+
+sys/dev/ic/i82557.c	1.45-1.53,1.55-1.57,1.60,1.62-1.63,1.65-1.66 via patch
+sys/dev/ic/i82557reg.h				1.4-1.10
+sys/dev/ic/i82557var.h				1.17-1.26,1.29 via patch
+sys/dev/pci/if_fxp_pci.c			1.13-1.18,1.20,1.22
+sys/dev/pci/pcidevs				1.324 via patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+  Work around a bug which can cause some machines to randomly hang.
+  Drag along performance improvements and improved hardware support.
+
+sys/arch/mac68k/mac68k/machdep.c		1.273-1.274
+
+  Restore video console support in PowerBook 140/145+145B/170.
+  Fixes PR#16907.
+
+sys/kern/vfs_syscalls.c				1.174
+
+  Do not release the lock on the mount point vnode too early when
+  doing an update mount, to avoid race conditionn and eventual
+  panic.
+
+usr.sbin/tcpdump/interface.h			patch
+usr.sbin/tcpdump/nfsfh.h			patch
+usr.sbin/tcpdump/parsenfsfh.c			patch
+usr.sbin/tcpdump/print-nfs.c			patch
+
+  Plug buffer overrun during NFS decoding.
+
+sys/ifsofs/cd9660/cd9660_vfsops.c		1.60
+
+  Add actual session offset to the volume size, so that ``df'' does
+  not underestimate, and other checks against volume size succeed.
