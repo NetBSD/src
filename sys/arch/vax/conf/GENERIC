@@ -1,20 +1,21 @@
-#	$NetBSD: GENERIC,v 1.74 2000/06/30 17:10:21 itojun Exp $
+#	$NetBSD: GENERIC,v 1.75 2000/07/06 18:04:56 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 # Here are all different supported CPU types listed.
+#options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
 options 	"VAX8600"
 options 	"VAX8200"
+#options 	"VAX6400"
 options 	"VAX780"
 options 	"VAX750"
 options 	"VAX630"	# MV II
-#options	"VAX640"	# MV 3400
-options 	"VAX650"	# MV III, 3600, 3800, 3900
+options 	"VAX650"	# MV III, 3300, 3400, 3500, 3600, 3800, 3900
 options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
 #options 	"VAX680"	# VAX 4000/500
@@ -110,6 +111,16 @@ ibus0		at mainbus0		# All MicroVAX
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
 
+# NMI (internal bus) on VAX 88xx-series.
+#cpu*		at nmi0 slot?		# 1-4 KA88 CPUs
+#mem*		at nmi0 slot?
+#bi*		at nmi0 slot?		# BI bus adapters
+
+# XMI on VAX 6000 (and higher)
+#cpu*		at xmi? node?		# 1-? VAX 6000 CPUs
+#mem*		at xmi? node?
+#bi*		at xmi? node?		# XMI-BI adapter
+
 # Vsbus, the virtual VAXstation bus, and possible devices.
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
@@ -178,9 +189,6 @@ mscpbus*	at kdb?
 ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
-
-# VS2000 builtin MFM controller (HDC9224)
-#hdc0		at vsbus0		# The strange builtin MFM controller
 
 # SCSI devices
 scsibus*	at asc?
