@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.4 1996/02/18 20:44:40 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.5 1996/02/18 23:21:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -162,7 +162,7 @@ ssopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit;
-	u_int mode;
+	u_int ssmode;
 	int error = 0;
 	struct ss_softc *ss;
 	struct scsi_link *sc_link;
@@ -174,7 +174,7 @@ ssopen(dev, flag, mode, p)
 	if (!ss)
 		return (ENXIO);
 
-	mode = SSMODE(dev);
+	ssmode = SSMODE(dev);
 	sc_link = ss->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
@@ -194,7 +194,7 @@ ssopen(dev, flag, mode, p)
 	 */
 	error = scsi_test_unit_ready(sc_link,
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    (mode == MODE_CONTROL ? SCSI_IGNORE_NOT_READY : 0));
+	    (ssmode == MODE_CONTROL ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
@@ -205,7 +205,7 @@ ssopen(dev, flag, mode, p)
 	 * then the device has been opened to set defaults
 	 * This mode does NOT ALLOW I/O, only ioctls
 	 */
-	if (mode == MODE_CONTROL)
+	if (ssmode == MODE_CONTROL)
 		return (0);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
