@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)newfs.8	8.3 (Berkeley) 3/27/94
-.\"	$Id: newfs.8,v 1.10 1994/12/01 18:46:37 mycroft Exp $
+.\"	$Id: newfs.8,v 1.11 1994/12/18 06:10:22 cgd Exp $
 .\"
 .Dd March 27, 1994
 .Dt NEWFS 8
@@ -114,7 +114,11 @@ a set of configuration parameters for the memory based file system.
 The special file is typically that of the primary swap area,
 since that is where the file system will be backed up when
 free memory gets low and the memory supporting
-the file system has to be paged.
+the file system has to be paged.  If the keyword ``swap''
+is used instead of a special file name, default configuration parameters
+will be used.  (This option is useful when trying to use
+.Nm mount_mfs
+on a machine without any disks.)
 .Pp
 The following options define the general layout policies.
 .Bl -tag -width Fl
