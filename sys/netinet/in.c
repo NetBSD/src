@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.55 2000/03/06 19:33:13 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.56 2000/03/12 05:01:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -316,6 +316,7 @@ in_control(so, cmd, data, ifp, p)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
+	int newifaddr;
 
 #if NGIF > 0
 	if (ifp && ifp->if_type == IFT_GIF) {
@@ -408,7 +409,10 @@ in_control(so, cmd, data, ifp, p)
 			LIST_INIT(&ia->ia_multiaddrs);
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces++;
-		}
+
+			newifaddr = 1;
+		} else
+			newifaddr = 0;
 		break;
 
 	case SIOCSIFBRDADDR:
@@ -471,7 +475,17 @@ in_control(so, cmd, data, ifp, p)
 		break;
 
 	case SIOCSIFADDR:
-		return (in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1));
+		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+  undo:
+		if (error && newifaddr) {
+			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+			IFAFREE(&ia->ia_ifa);
+			TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+			IFAFREE(&ia->ia_ifa);
+			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
+				in_interfaces--;
+		}
+		return error;
 
 	case SIOCSIFNETMASK:
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr =
@@ -502,8 +516,11 @@ in_control(so, cmd, data, ifp, p)
 			maskIsNew  = 1; /* We lie; but the effect's the same */
 		}
 		if (ifra->ifra_addr.sin_family == AF_INET &&
-		    (hostIsNew || maskIsNew))
+		    (hostIsNew || maskIsNew)) {
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			if (error)
+				goto undo;
+		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
