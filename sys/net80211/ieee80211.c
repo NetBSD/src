@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.18 2004/06/06 05:44:25 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.18 2004/06/06 05:44:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $");
 #endif
 
 /*
@@ -966,12 +966,14 @@ SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link",
+	    "link-layer statistics and controls",
 	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211",
+	    "IEEE 802.11 WLAN statistics and controls",
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
