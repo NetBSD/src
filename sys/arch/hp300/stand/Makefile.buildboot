@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.6 1999/11/11 20:27:42 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7 1999/11/13 21:19:27 thorpej Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -21,6 +21,11 @@ ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
 
 .include <bsd.prog.mk>
 
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
 ### find out what to use for libz
 Z_AS=		library
 .include "${S}/lib/libz/Makefile.inc"
@@ -32,10 +37,10 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ}
+${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 	${LD} -N -T ${RELOC} -e begin -o ${PROGAOUT} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ}
+	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	@size ${PROGAOUT}
 	@echo ${PROGAOUT} total size should not exceed 1044480 bytes

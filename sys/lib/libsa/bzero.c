@@ -1,4 +1,4 @@
-/* $NetBSD: bzero.c,v 1.2 1999/11/11 20:23:16 thorpej Exp $ */
+/* $NetBSD: bzero.c,v 1.3 1999/11/13 21:17:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -30,7 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stand.h"
+#include <sys/cdefs.h>
+#include <lib/libkern/libkern.h>
 
 #undef bzero			/* in case of LIBSA_USE_MEMSET */
 

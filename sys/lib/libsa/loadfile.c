@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.5 1999/11/11 20:23:16 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.6 1999/11/13 21:17:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #else
 #include <stdio.h>
 #include <string.h>

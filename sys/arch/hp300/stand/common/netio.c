@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.6 1999/11/11 20:28:04 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.7 1999/11/13 21:21:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,8 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/nfs.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <hp300/stand/common/samachdep.h>
 

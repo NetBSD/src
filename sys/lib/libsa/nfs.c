@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.26 1999/11/11 20:23:17 thorpej Exp $	*/
+/*	$NetBSD: nfs.c,v 1.27 1999/11/13 21:17:57 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -42,6 +42,11 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
