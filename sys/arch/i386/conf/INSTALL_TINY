@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.37 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: INSTALL_TINY,v 1.38 2001/07/30 19:59:06 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -263,6 +263,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+#mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 #siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 
 # EISA SCSI controllers
@@ -306,6 +307,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at sea?
+#scsibus* at mly?
 #scsibus* at siop?
 #scsibus* at uha?
 #scsibus* at wds?
