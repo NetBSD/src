@@ -125,7 +125,7 @@ char *
 nls_str_toloc(char *dst, const char *src)
 {
 	char *p = dst;
-	int inlen, outlen;
+	size_t inlen, outlen;
 
 	if (!iconv_loaded)
 		return strcpy(dst, src);
@@ -147,7 +147,7 @@ char *
 nls_str_toext(char *dst, const char *src)
 {
 	char *p = dst;
-	int inlen, outlen;
+	size_t inlen, outlen;
 
 	if (!iconv_loaded)
 		return strcpy(dst, src);
@@ -166,11 +166,11 @@ nls_str_toext(char *dst, const char *src)
 }
 
 void *
-nls_mem_toloc(void *dst, const void *src, int size)
+nls_mem_toloc(void *dst, const void *src, size_t size)
 {
 	char *p = dst;
 	const char *s = src;
-	int inlen, outlen;
+	size_t inlen, outlen;
 
 	if (!iconv_loaded)
 		return memcpy(dst, src, size);
@@ -191,11 +191,11 @@ nls_mem_toloc(void *dst, const void *src, int size)
 }
 
 void *
-nls_mem_toext(void *dst, const void *src, int size)
+nls_mem_toext(void *dst, const void *src, size_t size)
 {
 	char *p = dst;
 	const char *s = src;
-	int inlen, outlen;
+	size_t inlen, outlen;
 
 	if (size == 0)
 		return NULL;
