@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.518 2003/04/03 16:13:53 kent Exp $
+$NetBSD: pcidevs,v 1.519 2003/04/05 16:41:42 lha Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -887,6 +887,7 @@ product ATI RAGE_LT_PRO_PCI	0x4c49	3D Rage LT Pro
 product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility	
 product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro	
 product ATI RAGE_MOB_M1_PCI	0x4c52	Rage Mobility M1
+product ATI RAGEON_M7_AGP	0x4c57	Radeon Mobility M7 LW (AGP)
 product ATI RADEON_M9		0x4c66	Radeon Mobility M9
 product ATI RAGE1PCI		0x5041	Rage 128 Pro PCI
 product ATI RAGE1AGP2X		0x5042	Rage 128 Pro AGP 2x
