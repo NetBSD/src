@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.42 2000/06/04 16:26:13 mycroft Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.43 2000/06/09 22:38:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -168,7 +168,7 @@ struct execsw execsw[] = {
 	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */
 #endif
 #ifdef COMPAT_PECOFF
-	{ sizeof(struct exec), exec_win32_makecmds, },	/* Win32 PE/COFF */
+	{ sizeof(struct exec), exec_pecoff_makecmds, },	/* Win32/CE PE/COFF */
 #endif
 };
 int nexecs = (sizeof(execsw) / sizeof(*execsw));
