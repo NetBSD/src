@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.35 2003/10/31 13:47:00 reinoud Exp $	*/
+/*	$NetBSD: cy.c,v 1.36 2003/10/31 14:22:48 reinoud Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.35 2003/10/31 13:47:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.36 2003/10/31 14:22:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -82,7 +82,7 @@ int
 cy_find(struct cy_softc *sc)
 {
 	int cy_chip, chip;
-	u_char firmware_ver = 0;
+	u_char firmware_ver;
 	bus_space_tag_t tag = sc->sc_memt;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int bustype = sc->sc_bustype;
