@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.5 2002/04/05 16:58:11 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.6 2002/04/19 01:43:50 wiz Exp $       */
 
 /*
  * Copyright 1997
@@ -87,7 +87,7 @@
 **    driver to use the bus_space_ macros, re-organise the sget and sput
 **    mechanisms and utilise a more robust set of i8042 keybord controller
 **    routines which are now external to this module and also used by the
-**    pms mouse driver.
+**    opms mouse driver.
 **
 **  AUTHORS:
 **
