@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2000/06/20 06:00:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.119 2000/08/05 10:17:35 toddpw Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -27,6 +27,9 @@
 #	'make build'. It defaults to 1.
 #   UPDATE will avoid a `make cleandir' at the start of `make build',
 #	as well as having the effects listed in /usr/share/mk/bsd.README.
+#   NOCLEANDIR will avoid a `make cleandir' at the start of `make build',
+#	but without having the effects listed in /usr/share/mk/bsd.README.
+#   NOINCLUDES will avoid the `make includes' usually done by `make build'.
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR. If BUILD_DONE is
