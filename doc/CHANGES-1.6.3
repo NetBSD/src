@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.128 2004/08/22 14:30:00 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.129 2004/08/25 21:10:27 he Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1382,3 +1382,55 @@ lib/libc/net/gethnamaddr.c			1.62 via patch
 	Now that e.f.f.3.ip6.arpa is ready, we no longer need to query ip6.int.
 	[itojun, ticket #1731]
 
+bin/pax/ar_subs.c				1.30
+
+	Remove misplaced semi-colons.
+	[cube, ticket #1732]
+
+bin/pax/buf_subs.c				1.24
+
+	Do the special symlink treatment with all negative fd's.
+	[cube, ticket #1733]
+
+bin/pax/tar.1					1.14
+
+	Document that ``--unlink'' is the default, and that it is
+	therefore ignored and only accepted for compatibility with
+	other tar(1) implememtations.
+	[cube, ticket #1734]
+
+bin/pax/pax.1					1.48
+
+	Remove extraneous word, and fix a grammar error.
+	[cube, ticket #1735]
+
+bin/pax/file_subs.c				1.42-1.46,1.48-1.50
+
+	Fix handling of certain archives, fixing core dump (PR#25207).
+	Fix problem with trailing slashes (PR#15188).
+	Treat sticky bit specially for non-superuser (PR#25350).
+	Set chflags after rename, not before.
+	Don't exit with 1 on broken archives that mark directories as files.
+	Don't attempt to remove current directory.
+	Break out of loop and avoid infinite loop in certain error situations.
+	Salvage the `create parent directories and try again' patch.
+	[cube, ticket #1736]
+
+bin/pax/tar.c					1.49-1.52,1.54-1.57 (patch)
+
+	Fix bug in --exclude emulation, and use snprintf.  (PR#25131)
+	Fix bug in pax append mode.  (PR#25200)
+	Fix handling of certain archives, fixing core dump. (PR#25207)
+	Fix problems with 1.5.3/i386 kernel sets (PR#25299) and
+	MS-DOS gzip files (PR#25310).
+	Slight code restructuring.
+	Fix handling of tar with hardlinks to long file names
+	(PR#25934, PR#25934).
+	Fix unterminated buffer string in exaclude destination buffer.
+	Fix isfoo() ctype macros to take unsigned char.
+	[cube, ticket #1737]
+
+bin/pax/gen_subs.c				patch
+
+	Minimize difference with -current and netbsd-2-0 version.
+	[cube, ticket #1738]
