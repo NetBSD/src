@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.3 1994/12/21 20:03:48 glass Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.4 1994/12/23 15:59:21 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: announce.c,v 1.3 1994/12/21 20:03:48 glass Exp $";
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vis.h>
 #include <paths.h>
