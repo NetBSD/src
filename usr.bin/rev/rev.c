@@ -1,6 +1,8 @@
+/*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
+
 /*-
- * Copyright (c) 1987, 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +34,29 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987, 1992 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rev.c	5.2 (Berkeley) 3/21/92";*/
-static char rcsid[] = "$Id: rev.c,v 1.4 1994/01/04 05:24:10 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
+#else
+static char rcsid[] = "$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void usage __P((void));
-void warn __P((const char *, ...));
 
 int
 main(argc, argv)
@@ -77,15 +84,15 @@ main(argc, argv)
 	do {
 		if (*argv) {
 			if ((fp = fopen(*argv, "r")) == NULL) {
-				warn("%s: %s", *argv, strerror(errno));
+				warn("%s", *argv);
 				rval = 1;
 				++argv;
 				continue;
 			}
 			filename = *argv++;
 		}
-		while (p = fgetln(fp, &len)) {
-			if (p[len-1] == '\n')
+		while ((p = fgetln(fp, &len)) != NULL) {
+			if (p[len - 1] == '\n')
 				--len;
 			t = p + len - 1;
 			for (t = p + len - 1; t >= p; --t)
@@ -93,39 +100,12 @@ main(argc, argv)
 			putchar('\n');
 		}
 		if (ferror(fp)) {
-			warn("%s: %s", filename, strerror(errno));
+			warn("%s", filename);
 			rval = 1;
 		}
 		(void)fclose(fp);
 	} while(*argv);
 	exit(rval);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-warn(const char *fmt, ...)
-#else
-warn(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "rev: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
 }
 
 void
