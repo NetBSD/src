@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.40 2001/01/14 02:38:14 mrg Exp $ */
+/*	$NetBSD: disks.c,v 1.41 2001/01/14 23:45:17 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -648,3 +648,25 @@ set_swap(dev, pp, enable)
 
 	return 0;
 }
+
+/* XXX
+ * these belong in bsddisklabel.c but until that is common across all sysinst
+ * ports, they need to be here.
+ */
+
+void
+show_cur_filesystems()
+{
+
+	msg_display(MSG_cur_fs);
+	msg_table_add(MSG_cur_fs_header);
+	msg_table_add(MSG_cur_fs_row, "/    ", "[X]      (always)");
+	msg_table_add(MSG_cur_fs_row, "swap ", layout_swap ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/usr ", layout_usr ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/var ", layout_var ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/home", layout_home ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/tmp ", layout_tmp ? "[X]      (mfs)" : "         (mfs)");
+}
+
+int	layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.4 2001/01/14 02:38:13 mrg Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.5 2001/01/14 23:45:16 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,22 +42,6 @@
 /* For the current state of this file blame abs@netbsd.org */
 
 int	make_bsd_partitions (void);
-
-void
-show_cur_filesystems()
-{
-
-	msg_display(MSG_cur_fs);
-	msg_table_add(MSG_cur_fs_header);
-	msg_table_add(MSG_cur_fs_row, "/    ", "[X]      (always)");
-	msg_table_add(MSG_cur_fs_row, "swap ", layout_swap ? "[X]" : "");
-	msg_table_add(MSG_cur_fs_row, "/usr ", layout_usr ? "[X]" : "");
-	msg_table_add(MSG_cur_fs_row, "/var ", layout_var ? "[X]" : "");
-	msg_table_add(MSG_cur_fs_row, "/home", layout_home ? "[X]" : "");
-	msg_table_add(MSG_cur_fs_row, "/tmp ", layout_tmp ? "[X]      (mfs)" : "         (mfs)");
-}
-
-int	layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
