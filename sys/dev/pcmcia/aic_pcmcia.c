@@ -47,7 +47,7 @@ aic_pcmcia_match(parent, match, aux)
 #endif
      void *aux;
 {
-    struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
+    struct pcmcia_attach_args *pa = aux;
 
     if ((pa->manufacturer == PCMCIA_MANUFACTURER_ADAPTEC) &&
 	(pa->product == PCMCIA_PRODUCT_ADAPTEC_APA1460) &&

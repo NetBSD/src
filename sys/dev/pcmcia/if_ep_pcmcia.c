@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.9 1997/10/14 04:11:45 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.10 1997/10/15 02:41:28 enami Exp $	*/
 
 #include "bpfilter.h"
 
@@ -83,7 +83,7 @@ ep_pcmcia_match(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
+	struct pcmcia_attach_args *pa = aux;
 
 	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
 	    (pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
@@ -236,7 +236,7 @@ ep_pcmcia_get_enaddr(tuple, arg)
 	struct pcmcia_tuple *tuple;
 	void *arg;
 {
-	u_int8_t *myla = (u_int8_t *) arg;
+	u_int8_t *myla = arg;
 	int i;
 
 	/* this is 3c562 magic */
