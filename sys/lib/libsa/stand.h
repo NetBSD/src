@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stand.h	8.1 (Berkeley) 6/11/93
- * 	     $Id: stand.h,v 1.3 1994/08/04 19:39:40 brezak Exp $
+ * 	     $Id: stand.h,v 1.4 1994/08/22 21:56:13 brezak Exp $
  */
 
 #include <sys/types.h>
@@ -110,11 +110,16 @@ void	free __P((void *ptr, unsigned size));
 struct	disklabel;
 char	*getdisklabel __P((const char *buf, struct disklabel *lp));
 
-int	printf __P((char *, ...));
-void	panic __P((char *, ...));
+void	printf __P((const char *, ...));
+void	gets __P((char *));
+void	panic __P((const char *, ...));
 int	getchar __P((void));
 int	exec __P((char *, char *, int));
-	
+int	open __P((char *,int));
+int	close __P((int));
+int	read __P((int, void *, u_int));
+int	write __P((int, void *, u_int));
+    
 int	nodev(), noioctl();
 void	nullsys();
 
@@ -127,6 +132,8 @@ int	null_write __P((struct open_file *f, char *buf,
 off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 
-/* Machine dependant functions */
+/* Machine dependent functions */
 void	machdep_start __P((char *, int, char *, char *, char *));
 int	machdep_exec __P((char *, char *, int));
+int	getchar __P((void));
+void	putchar __P((int));    

@@ -61,13 +61,14 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.6 1994/07/27 07:58:45 cgd Exp $
+ *	$Id: ufs.c,v 1.7 1994/08/22 21:56:15 brezak Exp $
  */
 
 /*
  *	Stand-alone file reading package.
  */
 
+#include <string.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ffs/fs.h>
@@ -96,6 +97,10 @@ struct file {
 	u_int		f_buf_size;	/* size of data block */
 	daddr_t		f_buf_blkno;	/* block number of data block */
 };
+
+#ifdef COMPAT_UFS
+void ffs_oldfscompat __P((struct fs *));
+#endif
 
 /*
  * Read a new inode into a file structure.
@@ -374,12 +379,12 @@ ufs_open(path, f)
 	register char *cp, *ncp;
 	register int c;
 	ino_t inumber, parent_inumber;
-	int nlinks = 0;
 	struct file *fp;
 	struct fs *fs;
 	int rc;
 	u_int buf_size;
 #if 0
+	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
 #endif
 
@@ -401,7 +406,9 @@ ufs_open(path, f)
 		rc = EINVAL;
 		goto out;
 	}
+#ifdef COMPAT_UFS
 	ffs_oldfscompat(fs);
+#endif
 
 	/*
 	 * Calculate indirect block levels.
@@ -656,11 +663,13 @@ ufs_stat(f, sb)
 	return (0);
 }
 
+#ifdef COMPAT_UFS
 /*
  * Sanity checks for old file systems.
  *
  * XXX - goes away some day.
  */
+void
 ffs_oldfscompat(fs)
 	struct fs *fs;
 {
@@ -681,5 +690,5 @@ ffs_oldfscompat(fs)
 		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
 		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
 	}							/* XXX */
-	return (0);
 }
+#endif

@@ -24,12 +24,16 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * $Id $
  */
+#ifdef __STDC__
 #include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
-#ifndef lint
-static char rcsid[] = "$Id: exit.c,v 1.2 1994/05/08 16:11:22 brezak Exp $";
-#endif /* not lint */
+#include "stand.h"
 
 void
 #ifdef __STDC__
@@ -39,8 +43,9 @@ panic(fmt /*, va_alist */)
 	char *fmt;
 #endif
 {
+    extern void closeall __P((void));
+    extern void _rtt __P((void));
     va_list ap;
-
     static int paniced;
     
     if (!paniced) {
@@ -48,14 +53,20 @@ panic(fmt /*, va_alist */)
         closeall();
     }
 
+#ifdef __STDC__
     va_start(ap, fmt);
+#else
+    va_start(ap);
+#endif
     printf(fmt, ap);
     printf("\n");
     va_end(ap);
     _rtt();
+    /*NOTREACHED*/
 }
 
-exit()
+void volatile exit()
 {
     panic("exit");
+    /*NOTREACHED*/
 }
