@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.18 1998/09/01 17:59:36 pk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.19 1998/09/10 20:52:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ static pool_handle_t expool;
 /*
  * Macro to align to an arbitrary power-of-two boundary.
  */
-#define EXTENT_ALIGN(_start, _align)			\
-	(((_start) + ((_align) - 1)) & (-(_align)))
+#define EXTENT_ALIGN(_start, _align, _skew)		\
+	(((((_start) - (_skew)) + ((_align) - 1)) & (-(_align))) + (_skew))
 
 /*
  * Create the extent_region pool.
@@ -482,10 +482,10 @@ extent_alloc_region(ex, start, size, flags)
  * a power of 2.
  */
 int
-extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
+extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
     flags, result)
 	struct extent *ex;
-	u_long substart, subend, size, alignment, boundary;
+	u_long substart, subend, size, alignment, skew, boundary;
 	int flags;
 	u_long *result;
 {
@@ -592,7 +592,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * check is the area from the beginning of the subregion
 	 * to the first allocated region after that point.
 	 */
-	newstart = EXTENT_ALIGN(substart, alignment);
+	newstart = EXTENT_ALIGN(substart, alignment, skew);
 	if (newstart < ex->ex_start) {
 #ifdef DIAGNOSTIC
 		printf(
@@ -625,7 +625,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * the last allocated region (if there was one).
 	 */
 	if (rp == NULL && last != NULL)
-		newstart = EXTENT_ALIGN((last->er_end + 1), alignment);
+		newstart = EXTENT_ALIGN((last->er_end + 1), alignment, skew);
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
 		/*
@@ -694,7 +694,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		/*
 		 * Skip past the current region and check again.
 		 */
-		newstart = EXTENT_ALIGN((rp->er_end + 1), alignment);
+		newstart = EXTENT_ALIGN((rp->er_end + 1), alignment, skew);
 		if (newstart < rp->er_end) {
 			/*
 			 * Overflow condition.  Don't error out, since
