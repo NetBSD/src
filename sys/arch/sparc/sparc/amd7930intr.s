@@ -45,6 +45,7 @@
 
 #ifndef AUDIO_C_HANDLER
 #include "assym.h"
+#include <machine/param.h>
 #include <sparc/sparc/intreg.h>
 #include <machine/psl.h>
 
