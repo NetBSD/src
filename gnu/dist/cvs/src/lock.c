@@ -388,7 +388,7 @@ unlock_proc (p, closure)
     Node *p;
     void *closure;
 {
-    lock_simple_remove ((struct lock *)p->data);
+    lock_simple_remove (p->data);
     return (0);
 }
 
@@ -435,6 +435,8 @@ lock_simple_remove (lock)
     }
 }
 
+
+
 /*
  * Create a lock file for readers
  */
@@ -454,13 +456,13 @@ Reader_Lock (xrepository)
                         xrepository);
 
     if (noexec)
-	return (0);
+	return 0;
 
     /* we only do one directory at a time for read locks! */
     if (global_readlock.repository != NULL)
     {
 	error (0, 0, "Reader_Lock called while read locks set - Help!");
-	return (1);
+	return 1;
     }
 
     if (readlock == NULL)
@@ -489,7 +491,7 @@ Reader_Lock (xrepository)
 	/* We don't set global_readlock.repository to NULL.  I think this
 	   only works because recurse.c will give a fatal error if we return
 	   a nonzero value.  */
-	return (1);
+	return 1;
     }
 
     /* write a read-lock */
@@ -508,8 +510,10 @@ Reader_Lock (xrepository)
     /* free the lock dir */
     clear_lock (&global_readlock);
 
-    return (err);
+    return err;
 }
+
+
 
 /*
  * Lock a list of directories for writing
@@ -527,12 +531,14 @@ Writer_Lock (list)
 
     if (nolock)
 	return (0);
+    if (noexec)
+	return 0;
 
     /* We only know how to do one list at a time */
     if (locklist != (List *) NULL)
     {
 	error (0, 0, "Writer_Lock called while write locks set - Help!");
-	return (1);
+	return 1;
     }
 
     wait_repos = NULL;
@@ -555,7 +561,7 @@ Writer_Lock (list)
 		    free (wait_repos);
 		Lock_Cleanup ();	/* clean up any locks we set */
 		error (0, 0, "lock failed - giving up");
-		return (1);
+		return 1;
 
 	    case L_LOCKED:		/* Someone already had a lock */
 		remove_locks ();	/* clean up any locks we set */
@@ -569,17 +575,19 @@ Writer_Lock (list)
 		    lock_obtained (wait_repos);
 		    free (wait_repos);
 		}
-		return (0);
+		return 0;
 
 	    default:
 		if (wait_repos != NULL)
 		    free (wait_repos);
 		error (0, 0, "unknown lock status %d in Writer_Lock",
 		       lock_error);
-		return (1);
+		return 1;
 	}
     }
 }
+
+
 
 /*
  * walklist proc for setting write locks
@@ -591,13 +599,15 @@ set_writelock_proc (p, closure)
 {
     /* if some lock was not OK, just skip this one */
     if (lock_error != L_OK)
-	return (0);
+	return 0;
 
     /* apply the write lock */
     lock_error_repos = p->key;
-    lock_error = write_lock ((struct lock *)p->data);
-    return (0);
+    lock_error = write_lock (p->data);
+    return 0;
 }
+
+
 
 /*
  * Create a lock file for writers returns L_OK if lock set ok, L_LOCKED if
@@ -641,7 +651,7 @@ write_lock (lock)
 	    }
 
 	    /* indicate we failed due to read locks instead of error */
-	    return (L_LOCKED);
+	    return L_LOCKED;
 	}
 
 	/* write the write-lock file */
@@ -663,14 +673,16 @@ write_lock (lock)
 	    error (0, xerrno, "cannot create write lock in repository `%s'",
 		   lock->repository);
 	    free (tmp);
-	    return (L_ERROR);
+	    return L_ERROR;
 	}
 	free (tmp);
-	return (L_OK);
+	return L_OK;
     }
     else
-	return (status);
+	return status;
 }
+
+
 
 /*
  * readers_exist() returns 0 if there are no reader lock files remaining in
@@ -689,7 +701,7 @@ readers_exist (repository)
     int ret;
 #ifdef CVS_FUDGELOCKS
     time_t now;
-    (void) time (&now);
+    (void)time (&now);
 #endif
 
     lockdir = lock_name (repository, "");
@@ -706,8 +718,8 @@ readers_exist (repository)
 	    if (CVS_FNMATCH (CVSRFLPAT, dp->d_name, 0) == 0)
 	    {
 		line = xmalloc (strlen (lockdir) + 1 + strlen (dp->d_name) + 1);
-		(void) sprintf (line, "%s/%s", lockdir, dp->d_name);
-		if ( CVS_STAT (line, &sb) != -1)
+		(void)sprintf (line, "%s/%s", lockdir, dp->d_name);
+		if (CVS_STAT (line, &sb) != -1)
 		{
 #ifdef CVS_FUDGELOCKS
 		    /*
@@ -727,9 +739,10 @@ readers_exist (repository)
 		}
 		else
 		{
-		    /* If the file doesn't exist, it just means that it disappeared
-		       between the time we did the readdir and the time we did
-		       the stat.  */
+                    /* If the file doesn't exist, it just means that it
+                     * disappeared between the time we did the readdir and the
+                     * time we did the stat.
+                     */
 		    if (!existence_error (errno))
 			error (0, errno, "cannot stat %s", line);
 		}
@@ -745,8 +758,13 @@ readers_exist (repository)
 
 	CVS_CLOSEDIR (dirp);
     } while (ret < 0);
-    return (ret);
+
+    if (lockdir != NULL)
+	free (lockdir);
+    return ret;
 }
+
+
 
 /*
  * Set the static variable lockers_name appropriately, based on the stat
@@ -760,17 +778,19 @@ set_lockers_name (statp)
 
     if (lockers_name != NULL)
 	free (lockers_name);
-    if ((pw = (struct passwd *) getpwuid (statp->st_uid)) !=
-	(struct passwd *) NULL)
+    if ((pw = (struct passwd *)getpwuid (statp->st_uid)) !=
+	(struct passwd *)NULL)
     {
 	lockers_name = xstrdup (pw->pw_name);
     }
     else
     {
 	lockers_name = xmalloc (20);
-	(void) sprintf (lockers_name, "uid%lu", (unsigned long) statp->st_uid);
+	(void)sprintf (lockers_name, "uid%lu", (unsigned long) statp->st_uid);
     }
 }
+
+
 
 /*
  * Persistently tries to make the directory "lckdir", which serves as a
@@ -961,10 +981,13 @@ lock_obtained (repos)
     cvs_flusherr ();
     free (msg);
 }
-
+
+
+
 static int lock_filesdoneproc PROTO ((void *callerdat, int err,
-				      char *repository, char *update_dir,
-				      List *entries));
+                                      const char *repository,
+                                      const char *update_dir,
+                                      List *entries));
 
 /*
  * Create a list of repositories to lock
@@ -974,8 +997,8 @@ static int
 lock_filesdoneproc (callerdat, err, repository, update_dir, entries)
     void *callerdat;
     int err;
-    char *repository;
-    char *update_dir;
+    const char *repository;
+    const char *update_dir;
     List *entries;
 {
     Node *p;
@@ -1001,16 +1024,15 @@ lock_tree_for_write (argc, argv, local, which, aflag)
     int which;
     int aflag;
 {
-    int err;
     /*
      * Run the recursion processor to find all the dirs to lock and lock all
      * the dirs
      */
     lock_tree_list = getlist ();
-    err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
-			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
-			   argv, local, which, aflag, CVS_LOCK_NONE,
-			   (char *) NULL, 0, (char *) NULL);
+    start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
+		     (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
+		     argv, local, which, aflag, CVS_LOCK_NONE,
+		     (char *) NULL, 0, (char *) NULL);
     sortlist (lock_tree_list, fsortcmp);
     if (Writer_Lock (lock_tree_list) != 0)
 	error (1, 0, "lock failed - giving up");

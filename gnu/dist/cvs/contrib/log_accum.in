@@ -89,8 +89,6 @@ $SUMMARY_FILE  = "$TMPDIR/${FILE_PREFIX}files.summary";
 
 $CVSROOT       = $ENV{'CVSROOT'};
 
-$CVSBIN        = '/usr/bin';
-$PATH          = "$PATH:/bin:/usr/bin";
 $MAIL_CMD      = "| /usr/lib/sendmail -i -t";
 #$MAIL_CMD      = "| /var/qmail/bin/qmail-inject";
 $MAIL_FROM     = 'commitlogger';  #not needed if EMULATE_LOCAL_MAIL_USER
