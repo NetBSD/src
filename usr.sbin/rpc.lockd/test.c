@@ -1,11 +1,15 @@
-/*	$NetBSD: test.c,v 1.1 1997/03/10 06:26:22 scottr Exp $	*/
+/*	$NetBSD: test.c,v 1.2 1997/10/18 04:01:21 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/nlm_prot.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
-/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "nlm_prot.x,v 1.1 1994/08/04 19:01:48 wollman Exp";
+#if 0
+static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
+static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: test.c,v 1.2 1997/10/18 04:01:21 lukem Exp $");
+#endif
 #endif				/* not lint */
 
 /* Default timeout can be changed using clnt_control() */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/31 21:22:17 cjs Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 04:01:10 lukem Exp $
 
 PROG=	rpc.lockd
 SRCS=	nlm_prot_svc.c lockd.c lock_proc.c
@@ -17,7 +17,7 @@ nlm_prot_svc.c: ${DESTDIR}/usr/include/rpcsvc/nlm_prot.x
 	ln -s ${DESTDIR}/usr/include/rpcsvc/nlm_prot.x .
 	rm -f nlm_prot.h
 	ln -s ${DESTDIR}/usr/include/rpcsvc/nlm_prot.h .
-	rpcgen -m -o $@ nlm_prot.x
+	rpcgen -C -L -m -o ${.TARGET} nlm_prot.x
 
 test: ${.CURDIR}/test.c
 	cc -o test ${.CURDIR}/test.c -lrpcsvc
