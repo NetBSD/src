@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.h,v 1.3 2000/09/04 22:06:32 lukem Exp $	*/
+/*	$NetBSD: refresh.h,v 1.4 2001/01/10 07:45:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@ typedef struct {
 	int	r_newcv;
 } el_refresh_t;
 
-protected void	re_putc(EditLine *, int);
+protected void	re_putc(EditLine *, int, int);
 protected void	re_clear_lines(EditLine *);
 protected void	re_clear_display(EditLine *);
 protected void	re_refresh(EditLine *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.15 2000/09/04 22:06:32 lukem Exp $	*/
+/*	$NetBSD: refresh.c,v 1.16 2001/01/10 07:45:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.15 2000/09/04 22:06:32 lukem Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.16 2001/01/10 07:45:42 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -99,13 +99,13 @@ re_addc(EditLine *el, int c)
 {
 
 	if (isprint(c)) {
-		re_putc(el, c);
+		re_putc(el, c, 1);
 		return;
 	}
 	if (c == '\n') {				/* expand the newline */
 		int oldv = el->el_refresh.r_cursor.v;
-		re_putc(el, '\0');			/* assure end of line */
-		if (oldv == el->el_refresh.r_cursor.v) {
+		re_putc(el, '\0', 0);			/* assure end of line */
+		if (oldv == el->el_refresh.r_cursor.v) { /* XXX */
 			el->el_refresh.r_cursor.h = 0;	/* reset cursor pos */
 			el->el_refresh.r_cursor.v++;
 		}
@@ -113,22 +113,22 @@ re_addc(EditLine *el, int c)
 	}
 	if (c == '\t') {				/* expand the tab */
 		for (;;) {
-			re_putc(el, ' ');
+			re_putc(el, ' ', 1);
 			if ((el->el_refresh.r_cursor.h & 07) == 0)
 				break;			/* go until tab stop */
 		}
 	} else if (iscntrl(c)) {
-		re_putc(el, '^');
+		re_putc(el, '^', 1);
 		if (c == '\177')
-			re_putc(el, '?');
+			re_putc(el, '?', 1);
 		else
 		    /* uncontrolify it; works only for iso8859-1 like sets */
-			re_putc(el, (c | 0100));
+			re_putc(el, (c | 0100), 1);
 	} else {
-		re_putc(el, '\\');
-		re_putc(el, (int) ((((unsigned int) c >> 6) & 07) + '0'));
-		re_putc(el, (int) ((((unsigned int) c >> 3) & 07) + '0'));
-		re_putc(el, (c & 07) + '0');
+		re_putc(el, '\\', 1);
+		re_putc(el, (int) ((((unsigned int) c >> 6) & 07) + '0'), 1);
+		re_putc(el, (int) ((((unsigned int) c >> 3) & 07) + '0'), 1);
+		re_putc(el, (c & 07) + '0', 1);
 	}
 }
 
@@ -137,18 +137,39 @@ re_addc(EditLine *el, int c)
  *	Draw the character given
  */
 protected void
-re_putc(EditLine *el, int c)
+re_putc(EditLine *el, int c, int shift)
 {
 
 	ELRE_DEBUG(1, (__F, "printing %3.3o '%c'\r\n", c, c),);
 
 	el->el_vdisplay[el->el_refresh.r_cursor.v][el->el_refresh.r_cursor.h] = c;
+	if (!shift)
+		return;
+
 	el->el_refresh.r_cursor.h++;	/* advance to next place */
 	if (el->el_refresh.r_cursor.h >= el->el_term.t_size.h) {
 		el->el_vdisplay[el->el_refresh.r_cursor.v][el->el_term.t_size.h] = '\0';
 		/* assure end of line */
 		el->el_refresh.r_cursor.h = 0;	/* reset it. */
-		el->el_refresh.r_cursor.v++;
+
+		/*
+		 * If we would overflow (input is longer than terminal size),
+		 * emulate scroll by dropping first line and shuffling the rest.
+		 * We do this via pointer shuffling - it's safe in this case
+		 * and we avoid memcpy().
+		 */
+		if (el->el_refresh.r_cursor.v + 1 >= el->el_term.t_size.v) {
+			int i, lins = el->el_term.t_size.v;
+			char *firstline = el->el_vdisplay[0];
+
+			for(i=1; i < lins; i++)
+				el->el_vdisplay[i-1] = el->el_vdisplay[i];
+
+			firstline[0] = '\0';		/* empty the string */	
+			el->el_vdisplay[i-1] = firstline;
+		} else
+			el->el_refresh.r_cursor.v++;
+
 		ELRE_DEBUG(el->el_refresh.r_cursor.v >= el->el_term.t_size.v,
 		    (__F, "\r\nre_putc: overflow! r_cursor.v == %d > %d\r\n",
 		    el->el_refresh.r_cursor.v, el->el_term.t_size.v),
@@ -167,8 +188,11 @@ protected void
 re_refresh(EditLine *el)
 {
 	int i, rhdiff;
-	char *cp;
+	char *cp, *st;
 	coord_t cur;
+#ifdef notyet
+	size_t termsz;
+#endif
 
 	ELRE_DEBUG(1, (__F, "el->el_line.buffer = :%s:\r\n",
 	    el->el_line.buffer),);
@@ -190,10 +214,26 @@ re_refresh(EditLine *el)
 	prompt_print(el, EL_PROMPT);
 
 	/* draw the current input buffer */
-	for (cp = el->el_line.buffer; cp < el->el_line.lastchar; cp++) {
+#if notyet
+	termsz = el->el_term.t_size.h * el->el_term.t_size.v;
+	if (el->el_line.lastchar - el->el_line.buffer > termsz) {
+		/*
+		 * If line is longer than terminal, process only part
+		 * of line which would influence display.
+		 */
+		size_t rem = (el->el_line.lastchar-el->el_line.buffer)%termsz;
+
+		st = el->el_line.lastchar - rem
+			- (termsz - (((rem / el->el_term.t_size.v) - 1)
+					* el->el_term.t_size.v));
+	} else
+#endif
+		st = el->el_line.buffer;
+
+	for (cp = st; cp < el->el_line.lastchar; cp++) {
 		if (cp == el->el_line.cursor) {
+			/* save for later */
 			cur.h = el->el_refresh.r_cursor.h;
-			    /* save for later */
 			cur.v = el->el_refresh.r_cursor.v;
 		}
 		re_addc(el, (unsigned char) *cp);
@@ -213,16 +253,16 @@ re_refresh(EditLine *el)
 		 * one character gap to the input buffer.
 		 */
 		while (--rhdiff > 0)	/* pad out with spaces */
-			re_putc(el, ' ');
+			re_putc(el, ' ', 1);
 		prompt_print(el, EL_RPROMPT);
 	} else {
 		el->el_rprompt.p_pos.h = 0;	/* flag "not using rprompt" */
 		el->el_rprompt.p_pos.v = 0;
 	}
 
-	/* must be done BEFORE the NUL is written */
+	re_putc(el, '\0', 0);	/* make line ended with NUL, no cursor shift */
+
 	el->el_refresh.r_newcv = el->el_refresh.r_cursor.v;
-	re_putc(el, '\0');	/* put NUL on end */
 
 	ELRE_DEBUG(1, (__F,
 		"term.h=%d vcur.h=%d vcur.v=%d vdisplay[0]=\r\n:%80.80s:\r\n",
@@ -256,7 +296,7 @@ re_refresh(EditLine *el)
 #ifdef DEBUG_REFRESH
 			term_overwrite(el, "C\b", 2);
 #endif /* DEBUG_REFRESH */
-			*el->el_display[i] = '\0';
+			el->el_display[i][0] = '\0';
 		}
 
 	el->el_refresh.r_oldcv = el->el_refresh.r_newcv; /* set for next time */
@@ -876,10 +916,9 @@ re__copy_and_pad(char *dst, char *src, size_t width)
 		*dst++ = *src++;
 	}
 
-	while (i < width) {
+	for (; i < width; i++)
 		*dst++ = ' ';
-		i++;
-	}
+
 	*dst = '\0';
 }
 
@@ -952,8 +991,26 @@ re_fastputc(EditLine *el, int c)
 	if (el->el_cursor.h >= el->el_term.t_size.h) {
 		/* if we must overflow */
 		el->el_cursor.h = 0;
-		el->el_cursor.v++;
-		el->el_refresh.r_oldcv++;
+
+		/*
+		 * If we would overflow (input is longer than terminal size),
+		 * emulate scroll by dropping first line and shuffling the rest.
+		 * We do this via pointer shuffling - it's safe in this case
+		 * and we avoid memcpy().
+		 */
+		if (el->el_cursor.v + 1 >= el->el_term.t_size.v) {
+			int i, lins = el->el_term.t_size.v;
+			char *firstline = el->el_display[0];
+	
+			for(i=1; i < lins; i++)
+				el->el_display[i-1] = el->el_display[i];
+
+			re__copy_and_pad(firstline, "", 0);
+			el->el_display[i-1] = firstline;
+		} else {
+			el->el_cursor.v++;
+			el->el_refresh.r_oldcv++;
+		}
 		if (EL_HAS_AUTO_MARGINS) {
 			if (EL_HAS_MAGIC_MARGINS) {
 				term__putc(' ');
