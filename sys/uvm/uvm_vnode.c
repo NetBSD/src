@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.6 1999/04/30 04:29:15 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.7 1999/05/30 15:41:44 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -67,6 +67,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
+#include <sys/pool.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -115,6 +116,8 @@ static int		uvn_put __P((struct uvm_object *, vm_page_t *,
 static void		uvn_reference __P((struct uvm_object *));
 static boolean_t	uvn_releasepg __P((struct vm_page *, 
 					   struct vm_page **));
+static void		uvn_doasyncget __P((struct vm_page **, size_t,
+					    daddr_t));
 
 /*
  * master pager structure
@@ -571,6 +574,7 @@ uvn_flush(uobj, start, stop, flags)
 			printf("... and PGO_ALLPAGES not set: "
 			       "start 0x%lx end 0x%lx flags 0x%x\n",
 			       start, stop, flags);
+		vprint("uvn_flush VSIZENOTSET", vp);
 		vp_name(uvn);
 #endif
 		flags |= PGO_ALLPAGES;
@@ -1461,13 +1465,8 @@ uvm_vnp_sync(mp)
 		}
 #endif
 #endif
-		/*
-		 * XXX use PGO_SYNCIO for now to avoid problems with
-		 * uvmexp.paging.
-		 */
-
 		uvn_flush(&uvn->u_obj, 0, 0,
-		    PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST|PGO_SYNCIO);
+			  PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST);
 
 		/*
 		 * if we have the only reference and we just cleaned the uvn,
@@ -1497,54 +1496,6 @@ uvm_vnp_sync(mp)
 
 
 /*
- * uvm_vnp_setpageblknos:  find pages and set their blknos.
- * this is used for two purposes:  updating blknos in existing pages
- * when the data is relocated on disk, and preallocating pages when
- * those pages are about to be completely overwritten.
- *
- * => vp's uobj should not be locked, and is returned not locked.
- */
-
-void
-uvm_vnp_setpageblknos(vp, off, len, blkno, ufp_flags, zero)
-	struct vnode *vp;
-	off_t off, len;
-	daddr_t blkno;
-	int ufp_flags;
-	boolean_t zero;
-{
-	int i;
-	int npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page *pgs[16];
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
-
-	simple_lock(&uobj->vmobjlock);
-	while (npages > 0) { 
-		int pages = min(npages, 16);
-
-		memset(pgs, 0, pages);
-		uvn_findpages(uobj, trunc_page(off), &pages, pgs, ufp_flags);
-		for (i = 0; i < pages; i++) {
-			if (pgs[i] == NULL) {
-				continue;
-			}
-			pgs[i]->blkno = blkno;
-			blkno += PAGE_SIZE >> DEV_BSHIFT;
-			if (zero) {
-				uvm_pagezero(pgs[i]);
-			}
-		}
-		uvm_pager_dropcluster(uobj, NULL, pgs, &pages, PGO_PDFREECLUST,
-				      0);
-
-		off += pages << PAGE_SHIFT;
-		npages -= pages;
-	}
-	simple_unlock(&uobj->vmobjlock);
-}
-
-
-/*
  * uvm_vnp_zerorange:  set a range of bytes in a file to zero.
  * this is called from fs-specific code when truncating a file
  * to zero the part of last block that is past the new end-of-file.
@@ -1567,6 +1518,163 @@ uvm_vnp_zerorange(vp, off, len)
 		win = ubc_alloc(&vp->v_uvm.u_obj, off, &bytelen, UBC_WRITE);
 		memset(win, 0, bytelen);
 		ubc_release(win, 0);
+
+		off += bytelen;
 		len -= bytelen;
+	}
+}
+
+/*
+ * uvn_doasyncget: start one readahead i/o.
+ */
+
+static void
+uvn_doasyncget(pgs, bytes, blkno)
+	struct vm_page **pgs;
+	size_t bytes;
+	daddr_t blkno;
+{
+	struct uvm_aiobuf *abp;
+	struct buf *bp;
+	struct vnode *vp = (struct vnode *)pgs[0]->uobject;
+	int pages = roundup(bytes, PAGE_SIZE) >> PAGE_SHIFT;
+	UVMHIST_FUNC("uvn_doasyncget"); UVMHIST_CALLED(ubchist);
+
+	UVMHIST_LOG(ubchist, "vp %p offset 0x%x bytes 0x%x blkno 0x%x",
+		    vp, (int)pgs[0]->offset, (int)bytes, (int)blkno);
+
+	abp = pool_get(uvm_aiobuf_pool, PR_WAITOK);
+	abp->aio.aiodone = uvm_aio_aiodone;
+	abp->aio.kva = uvm_pagermapin(pgs, pages, NULL, M_WAITOK);
+	abp->aio.npages = pages;
+	abp->aio.pd_ptr = abp;
+
+	bp = &abp->buf;
+	bzero(bp, sizeof *bp);
+	bp->b_flags = B_BUSY|B_READ|B_CALL|B_ASYNC;
+	bp->b_iodone = uvm_aio_biodone;
+	bp->b_lblkno = 0;
+	bp->b_blkno = blkno;
+	bp->b_bufsize = pages << PAGE_SHIFT;
+	bp->b_bcount = bytes;
+	bp->b_vp = vp;
+	bp->b_data = (void *)abp->aio.kva;
+
+	VOP_STRATEGY(bp);
+}
+
+#define MAXRAPAGES 16
+
+/*
+ * asynchronously create pages for a vnode and read their data.
+ */
+
+void
+uvm_vnp_asyncget(vp, off, len, bsize)
+	struct vnode *vp;
+	off_t off;
+	size_t len;
+	size_t bsize;
+{
+	off_t filesize = vp->v_uvm.u_size;
+	struct vm_page *pgs[MAXRAPAGES];
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	daddr_t lbn, blkno;
+	int i, npages, npgs, startidx, run, bytes, startpage, endpage;
+	int count;
+	UVMHIST_FUNC("uvn_asyncget"); UVMHIST_CALLED(ubchist);
+
+	if (off != trunc_page(off)) {
+		panic("off 0x%x not page-aligned", (int)off);
+	}
+
+	UVMHIST_LOG(ubchist, "asyncget off 0x%x len 0x%x",
+		    (int)off, (int)len,0,0);
+
+	count = round_page(len) >> PAGE_SHIFT;
+	while (count > 0) {
+		if (off >= filesize) {
+			return;
+		}
+
+		lbn = off / bsize;
+		if (VOP_BMAP(vp, lbn, NULL, &blkno, &run) != 0) {
+			return;
+		}
+
+		UVMHIST_LOG(ubchist, "bmap lbn 0x%x bn 0x%x",
+			    (int)lbn, (int)blkno,0,0);
+
+		/* don't do readahead past file holes... */
+		if (blkno == (daddr_t)-1) {
+			return;
+		}
+
+		startpage = off >> PAGE_SHIFT;
+		endpage = min(roundup(off + 1 + run * bsize, bsize),
+			      round_page(filesize)) >> PAGE_SHIFT;
+		npages = min(endpage - startpage, min(count, MAXRAPAGES));
+
+		UVMHIST_LOG(ubchist, "off 0x%x run 0x%x "
+			    "startpage %d endpage %d",
+			    (int)off, run, startpage, endpage);
+		UVMHIST_LOG(ubchist, "runend 0x%x fileend 0x%x sum 0x%x",
+			    (int)roundup(off + 1 + run * bsize, bsize),
+			    (int)round_page(filesize),
+			    (int)(off + 1 + run * bsize), 0);
+
+		if (npages == 0) {
+			return;
+		}
+
+		memset(pgs, 0, npages * sizeof(pgs[0]));
+
+		simple_lock(&uobj->vmobjlock);
+		npgs = npages;
+		uvn_findpages(uobj, off, &npgs, pgs, UFP_NOWAIT | UFP_NOCACHE);
+		simple_unlock(&uobj->vmobjlock);
+
+		blkno += (off - lbn * bsize) >> DEV_BSHIFT;
+
+		/*
+		 * activate any pages we just allocated.
+		 */
+
+		for (i = 0; i < npages; i++) {
+			if (pgs[i] == NULL) {
+				continue;
+			}
+			uvm_pageactivate(pgs[i]);
+		}
+
+		/*
+		 * start i/os on the pages.
+		 */
+
+		for (i = 0; i < npages; i++) {
+			for (startidx = i; i < npages; i++) {
+				if (pgs[i] == NULL) {
+					break;
+				}
+			}
+			if (i > startidx) {
+				bytes = min((i - startidx) << PAGE_SHIFT,
+					    filesize - pgs[startidx]->offset);
+				bytes = roundup(bytes, DEV_BSIZE);
+
+				UVMHIST_LOG(ubchist, "bytes i %d startidx %d "
+					    "filesize 0x%x pgoff 0x%x",
+					    i, startidx, (int)filesize,
+					    (int)pgs[startidx]->offset);
+
+				uvn_doasyncget(&pgs[startidx], bytes,
+					       blkno + startidx * (PAGE_SIZE >>
+								   DEV_BSHIFT));
+			}
+		}
+
+		off += npages << PAGE_SHIFT;
+		count -= npages;
+		return;
 	}
 }
