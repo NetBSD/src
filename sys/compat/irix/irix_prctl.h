@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.5 2002/08/25 19:03:13 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.6 2002/09/21 21:14:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -47,9 +47,24 @@ struct irix_share_group {
 };
 
 int irix_prda_init __P((struct proc *));
-int irix_sync_saddr_syscall __P((struct proc *, void *, register_t *,
-	int (*syscall) __P((struct proc *, void *, register_t *))));
-int irix_sync_saddr_vmcmd __P((struct proc *, struct exec_vmcmd *));
+void irix_vm_sync __P((struct proc *));
+int irix_vm_fault __P((struct proc *, vaddr_t, vm_fault_t, vm_prot_t));
+
+/* macro used to wrap irix_vm_sync calls */
+#define IRIX_VM_SYNC(q,cmd)                                                   \
+if (((struct irix_emuldata *)((q)->p_emuldata))->ied_share_group == NULL ||   \
+    ((struct irix_emuldata *)((q)->p_emuldata))->ied_shareaddr == 0) {        \
+	(cmd);                                                                \
+} else {                                                                      \
+	lockmgr(&((struct irix_emuldata *)                                    \
+	    ((q)->p_emuldata))->ied_share_group->isg_lock,                    \
+	    LK_EXCLUSIVE, NULL);                                              \
+	(cmd);                                                                \
+	irix_vm_sync((q));                                                    \
+	lockmgr(&((struct irix_emuldata *)                                    \
+	    ((q)->p_emuldata))->ied_share_group->isg_lock,                    \
+	    LK_RELEASE, NULL);                                                \
+}
 
 /* From IRIX's <sys/prctl.h> */
 

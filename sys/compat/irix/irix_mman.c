@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.3 2002/08/02 23:02:51 manu Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.4 2002/09/21 21:14:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.3 2002/08/02 23:02:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.4 2002/09/21 21:14:57 manu Exp $");
 
 #include "opt_sysv.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.3 2002/08/02 23:02:51 manu Exp $");
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
 #include <sys/mount.h>
+#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
@@ -223,13 +224,9 @@ out:
 	SCARG(&cup, fd) = fd;
 	SCARG(&cup, pos) = pos;
 
-	if ((u_long)addr >= (u_long)IRIX_PRDA && 
-	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
-		printf("Warning: shared mmap() on process private arena\n");
-
-	/* Eventually do it for a whole share group */
-	return irix_sync_saddr_syscall(p, &cup, retval, (void *)sys_mmap);
-};
+	IRIX_VM_SYNC(p, error = sys_mmap(p, &cup, retval));
+	return error;
+}
 
 
 int 
@@ -238,19 +235,10 @@ irix_sys_munmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct irix_sys_munmap_args /* {
-		syscallarg(void *) addr;
-		syscallarg(int) len;
-	} */ *uap = v;
-	void *addr = SCARG(uap, addr);
-	int len = SCARG(uap, len);
+	int error;
 
-	if ((u_long)addr >= (u_long)IRIX_PRDA && 
-	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
-		printf("Warning: shared munmap() on process private arena\n");
-	
-	/* Eventually do it for a whole share group */
-	return irix_sync_saddr_syscall(p, v, retval, (void *)sys_munmap);
+	IRIX_VM_SYNC(p, error = sys_munmap(p, v, retval));
+	return error;
 }
 
 int 
@@ -259,8 +247,10 @@ irix_sys_break(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* Eventually do it for a whole share group */
-	return irix_sync_saddr_syscall(p, v, retval, (void *)svr4_sys_break);
+	int error;
+
+	IRIX_VM_SYNC(p, error = svr4_sys_break(p, v, retval));
+	return error;
 }
 
 #ifdef SYSVSHM 
@@ -270,8 +260,10 @@ irix_sys_shmsys(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* Eventually do it for a whole share group */
-	return irix_sync_saddr_syscall(p, v, retval, (void *)svr4_sys_shmsys);
+	int error;
+
+	IRIX_VM_SYNC(p, error = svr4_sys_shmsys(p, v, retval));
+	return error;
 }
 #endif
 
@@ -281,18 +273,8 @@ irix_sys_mprotect(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct irix_sys_mprotect_args /* {
-		syscallarg(void *) addr;
-		syscallarg(int) len;
-		syscallarg(int) prot;
-	} */ *uap = v;
-	void *addr = SCARG(uap, addr);
-	int len = SCARG(uap, len);
+	int error;
 
-	if ((u_long)addr >= (u_long)IRIX_PRDA && 
-	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
-		printf("Warning: shared mprotect() on process private arena\n");
-
-	/* Eventually do it for a whole share group */
-	return irix_sync_saddr_syscall(p, v, retval, (void *)sys_mprotect);
+	IRIX_VM_SYNC(p, error = sys_mprotect(p, v, retval));
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.17 2001/11/13 02:08:06 lukem Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.18 2002/09/21 21:14:56 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.17 2001/11/13 02:08:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.18 2002/09/21 21:14:56 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,4 +74,6 @@ const struct emul emul_freebsd = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };
