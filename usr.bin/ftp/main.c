@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1996/11/25 05:13:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1996/11/28 03:12:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.12 1996/11/25 05:13:26 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.13 1996/11/28 03:12:40 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ main(argc, argv)
 	interactive = 1;
 	autologin = 1;
 	passivemode = 0;
+	preserve = 1;
 	mark = HASHBYTES;
 
 	while ((ch = getopt(argc, argv, "adginpP:tv")) != EOF) {
@@ -302,6 +303,7 @@ cmdscanner(top)
 			printf("Not connected.\n");
 			continue;
 		}
+		confirmrest = 0;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
 			(void) putchar('\007');
@@ -314,9 +316,9 @@ cmdscanner(top)
 
 struct cmd *
 getcmd(name)
-	char *name;
+	const char *name;
 {
-	char *p, *q;
+	const char *p, *q;
 	struct cmd *c, *found;
 	int nmatches, longest;
 
@@ -571,7 +573,7 @@ help(argc, argv)
 int
 auto_fetch(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	char *xargv[5];
 	char *cp, *host, *dir, *file;

@@ -1,4 +1,4 @@
-/*      $NetBSD: cmdtab.c,v 1.8 1996/11/25 09:53:50 fvdl Exp $      */
+/*      $NetBSD: cmdtab.c,v 1.9 1996/11/28 03:12:30 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.8 1996/11/25 09:53:50 fvdl Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.9 1996/11/28 03:12:30 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
 char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
+char	lpwdhelp[] =	"print local working directory";
 char	lshelp[] =	"list contents of remote directory";
 char	macdefhelp[] =  "define a macro";
 char	mdeletehelp[] =	"delete multiple files";
@@ -85,6 +86,8 @@ char	nlisthelp[] =	"nlist contents of remote directory";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
+char	preservhelp[] = "toggle preservation of modification time of "
+			"retreived files";
 char	prompthelp[] =	"force interactive prompting on multiple commands";
 char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
@@ -101,7 +104,8 @@ char	runiquehelp[] = "toggle store unique for local files";
 char	resethelp[] =	"clear queued command replies";
 char	sendhelp[] =	"send one file";
 char	passivehelp[] =	"enter passive transfer mode";
-char	sitehelp[] =	"send site specific command to remote server\n\t\tTry \"rhelp site\" or \"site help\" for more information";
+char	sitehelp[] =	"send site specific command to remote server\n"
+		"\t\tTry \"rhelp site\" or \"site help\" for more information";
 char	shellhelp[] =	"escape to the shell";
 char	sizecmdhelp[] = "show size of remote file";
 char	statushelp[] =	"show current status";
@@ -134,6 +138,7 @@ struct cmd cmdtab[] = {
 	{ "debug",	debughelp,	0,	0,	0,	setdebug },
 	{ "dir",	dirhelp,	1,	1,	1,	ls },
 	{ "disconnect",	disconhelp,	0,	1,	1,	disconnect },
+	{ "exit",	quithelp,	0,	0,	0,	quit },
 	{ "form",	formhelp,	0,	1,	1,	setform },
 	{ "ftp",	connecthelp,	0,	0,	1,	setpeer },
 	{ "get",	receivehelp,	1,	1,	1,	get },
@@ -143,6 +148,7 @@ struct cmd cmdtab[] = {
 	{ "idle",	idlehelp,	0,	1,	1,	idle },
 	{ "image",	binaryhelp,	0,	1,	1,	setbinary },
 	{ "lcd",	lcdhelp,	0,	0,	0,	lcd },
+	{ "lpwd",	lpwdhelp,	0,	0,	0,	lpwd },
 	{ "ls",		lshelp,		1,	1,	1,	ls },
 	{ "macdef",	macdefhelp,	0,	0,	0,	macdef },
 	{ "mdelete",	mdeletehelp,	1,	1,	1,	mdelete },
@@ -153,12 +159,14 @@ struct cmd cmdtab[] = {
 	{ "mode",	modehelp,	0,	1,	1,	setftmode },
 	{ "modtime",	modtimehelp,	0,	1,	1,	modtime },
 	{ "mput",	mputhelp,	1,	1,	1,	mput },
+	{ "msend",	mputhelp,	1,	1,	1,	mput },
 	{ "newer",	newerhelp,	1,	1,	1,	newer },
 	{ "nmap",	nmaphelp,	0,	0,	1,	setnmap },
 	{ "nlist",	nlisthelp,	1,	1,	1,	ls },
 	{ "ntrans",	ntranshelp,	0,	0,	1,	setntrans },
 	{ "open",	connecthelp,	0,	0,	1,	setpeer },
 	{ "passive",	passivehelp,	0,	0,	0,	setpassive },
+	{ "preserve",	preservhelp,	0,	0,	0,	setpreserve },
 	{ "prompt",	prompthelp,	0,	0,	0,	setprompt },
 	{ "proxy",	proxyhelp,	0,	0,	1,	doproxy },
 	{ "sendport",	porthelp,	0,	0,	0,	setport },
