@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.14 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.15 1999/03/22 03:20:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -367,7 +367,8 @@ iteopen(dev, mode, devtype, p)
 	register int error;
 	int first = 0;
 
-	ip = getitesp(dev);
+	if (unit >= ite_cd.cd_ndevs || (ip = getitesp(dev)) == NULL)
+		return (ENXIO);
 	if (!ite_tty[unit]) {
 		tp = ite_tty[unit] = ttymalloc();
 		tty_attach(tp);
