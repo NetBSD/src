@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.12 2002/10/01 14:07:43 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.13 2003/04/03 06:21:36 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.26 2002/08/27 17:13:56 stevesk Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.28 2003/02/12 09:33:04 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -34,11 +34,10 @@ RCSID("$OpenBSD: ssh-rsa.c,v 1.26 2002/08/27 17:13:56 stevesk Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "key.h"
-#include "ssh-rsa.h"
 #include "compat.h"
 #include "ssh.h"
 
-static int openssh_RSA_verify(int, u_char *, u_int, u_char *, u_int , RSA *);
+static int openssh_RSA_verify(int, u_char *, u_int, u_char *, u_int, RSA *);
 
 /* RSASSA-PKCS1-v1_5 (PKCS #1 v2.0 signature) with SHA1 */
 int

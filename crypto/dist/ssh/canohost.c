@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.15 2002/12/06 03:39:08 thorpej Exp $	*/
+/*	$NetBSD: canohost.c,v 1.16 2003/04/03 06:21:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.34 2002/09/23 20:46:27 stevesk Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.35 2002/11/26 02:38:54 stevesk Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -39,7 +39,7 @@ get_remote_hostname(int socket, int verify_reverse_mapping)
 	/* Get IP address of client. */
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));
-	if (getpeername(socket, (struct sockaddr *) &from, &fromlen) < 0) {
+	if (getpeername(socket, (struct sockaddr *)&from, &fromlen) < 0) {
 		debug("getpeername failed: %.100s", strerror(errno));
 		fatal_cleanup();
 	}
@@ -181,8 +181,8 @@ get_canonical_hostname(int verify_reverse_mapping)
 }
 
 /*
- * Returns the remote IP-address of socket as a string.  The returned
- * string must be freed.
+ * Returns the local/remote IP-address/hostname of socket as a string.
+ * The returned string must be freed.
  */
 static char *
 get_socket_address(int socket, int remote, int flags)
@@ -207,7 +207,7 @@ get_socket_address(int socket, int remote, int flags)
 	/* Get the address in ascii. */
 	if (getnameinfo((struct sockaddr *)&addr, addrlen, ntop, sizeof(ntop),
 	    NULL, 0, flags) != 0) {
-		error("get_socket_ipaddr: getnameinfo %d failed", flags);
+		error("get_socket_address: getnameinfo %d failed", flags);
 		return NULL;
 	}
 	return xstrdup(ntop);
@@ -293,7 +293,7 @@ get_sock_port(int sock, int local)
 			return 0;
 		}
 	} else {
-		if (getpeername(sock, (struct sockaddr *) & from, &fromlen) < 0) {
+		if (getpeername(sock, (struct sockaddr *)&from, &fromlen) < 0) {
 			debug("getpeername failed: %.100s", strerror(errno));
 			fatal_cleanup();
 		}
