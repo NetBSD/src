@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.6 1998/10/15 04:05:53 mycroft Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.7 1999/02/17 23:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -148,10 +148,10 @@ wssfind(parent, sc, ia)
 	goto bad;
     }
 #endif
-    sc->wss_drq = ia->ia_drq;
-    sc->wss_ic  = ia->ia_ic;
+    sc->wss_playdrq = ia->ia_drq;
+    sc->wss_ic      = ia->ia_ic;
 
-    if (sc->wss_drq != DRQUNK && !isa_drq_isfree(sc->wss_ic, sc->wss_drq))
+    if (sc->wss_playdrq != DRQUNK && !isa_drq_isfree(sc->wss_ic, sc->wss_playdrq))
 	    goto bad;
 
 #if 0
@@ -168,7 +168,7 @@ wssfind(parent, sc, ia)
     sc->wss_recdrq = 
 	ac->mode > 1 && ia->ia_drq2 != DRQUNK ? 
 	ia->ia_drq2 : ia->ia_drq;
-    if (sc->wss_recdrq != sc->wss_drq && !isa_drq_isfree(sc->wss_ic,
+    if (sc->wss_recdrq != sc->wss_playdrq && !isa_drq_isfree(sc->wss_ic,
       sc->wss_recdrq))
 	goto bad;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.2 1998/08/27 18:45:12 pk Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.3 1999/02/17 23:05:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -52,9 +52,6 @@ struct ad1848_softc {
 #define ADWRITE(sc, index, data)	(*(sc)->sc_writereg)(sc, index, data)
 
 	void	*parent;
-
-	u_short	sc_locked;		/* true when doing HS DMA  */
-	int	sc_mode;		/* half-duplex record/play */
 
 	/* We keep track of these */
 	struct ad1848_volume gains[6];
