@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 1997/05/19 23:25:09 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 1997/06/15 01:08:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2010,6 +2010,50 @@ LEAF(cpu_getregs)
 	j	ra
 	sw	s8, 8(a0)
 END(cpu_getregs)
+
+
+/*
+ * Stacktrace support hooks which use type punnign to access
+ * the caller's registers.
+ */
+
+
+/*
+ * stacktrace() -- print a stack backtrace to the console. 
+ *	implicitly accesses caller's a0-a3.
+ */
+NON_LEAF(stacktrace, 32, ra)
+	subu	$sp,$sp,32
+	la	$2, _C_LABEL(printf)
+	sw	$31,24($sp)
+
+	jal	stacktrace_subr
+	sw	$2,16($sp)
+
+	lw	$31,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	stacktrace
+END(stacktrace)
+
+/*
+ * logstacktrace() -- log a stack traceback to msgbuf.
+ *	implicitly accesses caller's a0-a3.
+ */
+NON_LEAF(logstacktrace, 32, ra)
+	subu	$sp,$sp,32
+	la	$2, _C_LABEL(addlog)
+	sw	$31,24($sp)
+
+	jal	stacktrace_subr
+	sw	$2,16($sp)
+
+	lw	$31,24($sp)
+	addu	$sp,$sp,32
+	j	$31
+	.end	stacktrace
+END(stacktrace)
+
 
 
 /*
