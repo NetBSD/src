@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getbsize.c	5.3 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: getbsize.c,v 1.4 1994/12/11 20:43:56 christos Exp $";
+static char rcsid[] = "$Id: getbsize.c,v 1.5 1994/12/12 22:42:08 jtc Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -83,17 +83,17 @@ getbsize(headerlenp, blocksizep)
 			mul = 1;
 			break;
 		default:
-fmterr:			__warnx("%s: unknown blocksize", p);
+fmterr:			_warnx("%s: unknown blocksize", p);
 			n = 512;
 			mul = 1;
 			break;
 		}
 		if (n > max) {
-			__warnx("maximum blocksize is %dG", MAXB / GB);
+			_warnx("maximum blocksize is %dG", MAXB / GB);
 			n = max;
 		}
 		if ((blocksize = n * mul) < 512) {
-underflow:		__warnx("%s: minimum blocksize is 512");
+underflow:		_warnx("%s: minimum blocksize is 512");
 			form = "";
 			blocksize = n = 512;
 		}

@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: getnetgrent.c,v 1.6 1994/12/12 19:05:31 christos Exp $";
+static char *rcsid = "$Id: getnetgrent.c,v 1.7 1994/12/12 22:42:10 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -82,13 +82,13 @@ _ng_sl_init()
 {
 	struct stringlist *sl = malloc(sizeof(struct stringlist));
 	if (sl == NULL)
-		__err(1, _ngoomem);
+		_err(1, _ngoomem);
 
 	sl->sl_cur = 0;
 	sl->sl_max = 20;
 	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
 	if (sl->sl_str == NULL)
-		__err(1, _ngoomem);
+		_err(1, _ngoomem);
 	return sl;
 }
 
@@ -105,7 +105,7 @@ _ng_sl_add(sl, name)
 		sl->sl_max += 20;
 		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
 		if (sl->sl_str == NULL)
-			__err(1, _ngoomem);
+			_err(1, _ngoomem);
 	}
 	sl->sl_str[sl->sl_cur++] = name;
 }
@@ -182,7 +182,7 @@ getstring(pp, del, str)
 	if (del > 1) {
 		dp = malloc(del);
 		if (dp == NULL)
-			__err(1, _ngoomem);
+			_err(1, _ngoomem);
 		memcpy(dp, sp, del);
 		dp[del - 1] = '\0';
 	} else
@@ -203,7 +203,7 @@ getnetgroup(pp)
 	struct netgroup *ng = malloc(sizeof(struct netgroup));
 
 	if (ng == NULL)
-		__err(1, _ngoomem);
+		_err(1, _ngoomem);
 
 	(*pp)++;	/* skip '(' */
 	if (!getstring(pp, ',', &ng->ng_host))
@@ -266,14 +266,14 @@ lookup(ypdom, name, line, bywhat)
 			free(ks);
 			*line = strdup(data.data);
 			if (*line == NULL)
-				__err(1, _ngoomem);
+				_err(1, _ngoomem);
 			return 1;
 
 		case 1:
 			break;
 
 		case -1:
-			__warn("netgroup: db get");
+			_warn("netgroup: db get");
 			break;
 		}
 		free(ks);
@@ -332,7 +332,7 @@ _ng_parse(p, name, ng)
 
 		if (**p == '(') {
 			if ((*ng = getnetgroup(p)) == NULL) {
-				__warnx("netgroup: Syntax error `%s'", *p);
+				_warnx("netgroup: Syntax error `%s'", *p);
 				return _NG_ERROR;
 			}
 			return _NG_GROUP;
@@ -346,7 +346,7 @@ _ng_parse(p, name, ng)
 				i = (*p - np) + 1;
 				*name = malloc(i);
 				if (*name == NULL)
-					__err(1, _ngoomem);
+					_err(1, _ngoomem);
 				memcpy(*name, np, i);
 				(*name)[i - 1] = '\0';
 				return _NG_NAME;
@@ -376,7 +376,7 @@ addgroup(ypdom, sl, grp)
 	/* check for cycles */
 	if (_ng_sl_find(sl, grp) != NULL) {
 		free(grp);
-		__warnx("netgroup: Cycle in group `%s'", grp);
+		_warnx("netgroup: Cycle in group `%s'", grp);
 		return;
 	}
 	_ng_sl_add(sl, grp);
@@ -466,7 +466,7 @@ in_find(ypdom, sl, grp, host, user, domain)
 	/* check for cycles */
 	if (_ng_sl_find(sl, grp) != NULL) {
 		free(grp);
-		__warnx("netgroup: Cycle in group `%s'", grp);
+		_warnx("netgroup: Cycle in group `%s'", grp);
 		return 0;
 	}
 	_ng_sl_add(sl, grp);
@@ -531,7 +531,7 @@ _ng_makekey(s1, s2, len)
 {
 	char *buf = malloc(len);
 	if (buf == NULL)
-		__err(1, _ngoomem);
+		_err(1, _ngoomem);
 	(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
 	return buf;
 }
@@ -659,7 +659,7 @@ setnetgrent(ng)
 #endif
 	ng_copy = strdup(ng);
 	if (ng_copy == NULL)
-		__err(1, _ngoomem);
+		_err(1, _ngoomem);
 	addgroup(ypdom, sl, ng_copy);
 	_nghead = _nglist;
 	_ng_sl_free(sl, 1);
