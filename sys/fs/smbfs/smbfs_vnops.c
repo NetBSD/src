@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.14 2003/02/25 09:09:32 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.15 2003/02/25 10:33:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.14 2003/02/25 09:09:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.15 2003/02/25 10:33:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,6 +497,7 @@ smbfs_setattr(v)
 	smbfs_attr_cacheremove(vp);	/* invalidate cache */
 	VOP_GETATTR(vp, vap, ap->a_cred, ap->a_p);
 	np->n_mtime.tv_sec = vap->va_mtime.tv_sec;
+	VN_KNOTE(vp, NOTE_ATTRIB);
 	return error;
 }
 /*
@@ -587,6 +588,7 @@ smbfs_create(v)
 
   out:
 	PNBUF_PUT(cnp->cn_pnbuf);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
 
@@ -618,6 +620,8 @@ smbfs_remove(v)
 	}
 
 	PNBUF_PUT(cnp->cn_pnbuf);
+	VN_KNOTE(ap->a_vp, NOTE_DELETE);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -687,9 +691,14 @@ smbfs_rename(v)
 			error = smbfs_smb_delete(VTOSMB(tvp), &scred);
 			if (error)
 				goto out;
+			VN_KNOTE(tdvp, NOTE_WRITE);
+			VN_KNOTE(tvp, NOTE_DELETE);
+			cache_purge(tvp);
 		}
 		error = smbfs_smb_rename(VTOSMB(fvp), VTOSMB(tdvp),
 		    tcnp->cn_nameptr, tcnp->cn_namelen, &scred);
+		VN_KNOTE(fdvp, NOTE_WRITE);
+		VN_KNOTE(fvp, NOTE_RENAME);
 	}
 
 	if (fvp->v_type == VDIR) {
@@ -697,7 +706,6 @@ smbfs_rename(v)
 			cache_purge(tdvp);
 		cache_purge(fdvp);
 	}
-
 out:
 	smbfs_attr_cacheremove(fdvp);
 	smbfs_attr_cacheremove(tdvp);
@@ -776,6 +784,7 @@ smbfs_mkdir(v)
 
  out:
 	PNBUF_PUT(cnp->cn_pnbuf);
+	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	vput(dvp);
 	
 	return (error);
@@ -814,6 +823,8 @@ smbfs_rmdir(v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 	dnp->n_flag |= NMODIFIED;
 	smbfs_attr_cacheremove(dvp);
+	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+	VN_KNOTE(vp, NOTE_DELETE);
 	cache_purge(dvp);
 	cache_purge(vp);
 	vput(vp);
