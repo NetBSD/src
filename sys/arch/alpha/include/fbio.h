@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.1 1996/04/12 01:45:41 cgd Exp $	*/
+/*	$NetBSD: fbio.h,v 1.2 1996/05/01 19:44:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -48,15 +48,16 @@
  */
 #define	FBTYPE_PM_MONO		0	/* never on the alpha */
 #define	FBTYPE_PM_COLOR		1	/* never on the alpha */
-#define	FBTYPE_CFB		2
-#define	FBTYPE_XCFB		3
-#define	FBTYPE_MFB		4
-#define	FBTYPE_SFB		5
+#define	FBTYPE_CFB		2	/* CFB (TurboChannel) */
+#define	FBTYPE_XCFB		3	/* ??? (TurboChannel) */
+#define	FBTYPE_MFB		4	/* MFB (TurboChannel) */
+#define	FBTYPE_SFB		5	/* SFB (TurboChannel) */
 #define	FBTYPE_VGA		6	/* ISA or EISA VGA */
 #define	FBTYPE_PCIVGA		7	/* PCI VGA */
-#define	FBTYPE_TGA		8	/* TGA */
+#define	FBTYPE_TGA		8	/* TGA (PCI) */
+#define	FBTYPE_SFBP		9	/* SFB+ (TurboChannel) */
 
-#define	FBTYPE_LASTPLUSONE	9
+#define	FBTYPE_LASTPLUSONE	10
 
 /*
  * Frame buffer descriptor as returned by FBIOGTYPE.
