@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.11 1996/02/13 22:08:26 christos Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.12 1996/04/13 01:34:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -348,8 +348,7 @@ clnp_input(m, va_alist)
 		dump_buf(mtod(m, caddr_t), clnp->cnf_hdr_len);
 		printf("clnp_input: mbuf chain:\n");
 		for (mhead = m; mhead != NULL; mhead = mhead->m_next) {
-			printf("m x%x, len %d\n", (unsigned int) mhead,
-			       mhead->m_len);
+			printf("m %p, len %d\n", mhead, mhead->m_len);
 			total_len += mhead->m_len;
 		}
 		printf("clnp_input: total length of mbuf chain %d:\n",
