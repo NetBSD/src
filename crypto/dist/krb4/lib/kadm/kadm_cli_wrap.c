@@ -29,7 +29,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kadm_cli_wrap.c,v 1.1.1.2 2000/12/29 01:43:09 assar Exp $");
+RCSID("$Id: kadm_cli_wrap.c,v 1.2 2000/12/29 02:52:35 assar Exp $");
 
 static Kadm_Client client_parm;
 
@@ -47,7 +47,7 @@ clear_secrets(void)
 	memset(sess_sched, 0, sizeof(sess_sched));
 }
 
-static RETSIGTYPE (*opipe)();
+static RETSIGTYPE (*opipe)(int);
 
 static void
 kadm_cli_disconn(void)
@@ -276,8 +276,8 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 #ifdef NOENCRYPTION
 	cksum = 0;
 #else
-	cksum = des_quad_cksum((des_cblock *)priv_pak,
-			       (des_cblock *)0, priv_len, 0,
+	cksum = des_quad_cksum(priv_pak,
+			       0, priv_len, 0,
 			       &sess_key);
 #endif
 	

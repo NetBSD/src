@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: decomp_ticket.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+RCSID("$Id: decomp_ticket.c,v 1.2 2000/12/29 02:52:36 assar Exp $");
 
 /*
  * This routine takes a ticket and pointers to the variables that
@@ -70,7 +70,7 @@ decomp_ticket(KTEXT tkt,	/* The ticket to be decoded */
     
     int little_endian;
 
-    des_pcbc_encrypt((des_cblock *)tkt->dat, (des_cblock *)tkt->dat,
+    des_pcbc_encrypt(tkt->dat, tkt->dat,
 		     tkt->length, schedule, key, DES_DECRYPT);
 
     tkt->mbz = 0;
