@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25 2004/04/08 23:58:24 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 2004/12/07 13:22:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2004/04/08 23:58:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2004/12/07 13:22:51 briggs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -494,12 +494,13 @@ nomap:
 #endif
 	}
 
-#if 0
-	/* XXX This may be wrong... */
-	len = OF_getprop(node, "interrupts", intr, 4) ;
+	/*
+	 * If all else fails, attempt to get AAPL, interrupts property.
+	 * Grackle, at least, uses this instead of above in some cases.
+	 */
+	len = OF_getprop(node, "AAPL,interrupts", intr, 4) ;
 	if (len == 4)
 		return len;
-#endif
 
 	return -1;
 }
