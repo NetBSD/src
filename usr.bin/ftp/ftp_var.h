@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.26 1998/08/08 03:02:55 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.27 1998/11/25 16:55:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -68,7 +68,7 @@
 #define	GATE_SERVER	""	/* default server */
 #endif
 
-#define PAGER		"less"	/* default pager if $PAGER isn't set */
+#define PAGER		"more"	/* default pager if $PAGER isn't set */
 
 /*
  * Options and other state info.
