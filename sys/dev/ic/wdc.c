@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.22 1998/04/26 06:03:24 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.23 1998/04/28 18:36:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -1034,6 +1034,12 @@ wdcintr(arg)
 	return wdc_ata_intr(wdc,xfer);
 #endif /* NWD > 0 */
 #endif /* NATAPIBUS > 0  && NWD > 0 */
+
+	/*
+	 * Catch-all; if no children were configured, the interrupt
+	 * could not have been for us.
+	 */
+	return (0);
 }
 
 int
