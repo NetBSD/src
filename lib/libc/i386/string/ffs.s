@@ -46,7 +46,7 @@ ENTRY(ffs)
 	jz	L1	 		/* ZF is set if all bits are 0 */
 	incl	%eax			/* bits numbered from 1, not 0 */
 	ret
-L1:
+
 	.align 2
-	xorl	%eax,%eax		/* clear result */
+L1:	xorl	%eax,%eax		/* clear result */
 	ret
