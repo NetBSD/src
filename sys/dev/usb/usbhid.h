@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.4 1999/04/22 01:57:01 augustss Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.5 1999/05/13 23:29:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,9 +117,23 @@ typedef struct usb_hid_descriptor {
 
 /* Usages Digitizers */
 #define HUD_TIP_PRESSURE	0x0030
+#define HUD_BARREL_PRESSURE	0x0031
 #define HUD_IN_RANGE		0x0032
+#define HUD_TOUCH		0x0033
+#define HUD_UNTOUCH		0x0034
+#define HUD_TAP			0x0035
+#define HUD_QUALITY		0x0036
 #define HUD_INVERT		0x003c
+#define HUD_X_TILT		0x003d
+#define HUD_Y_TILT		0x003e
+#define HUD_AZIMUTH		0x003f
+#define HUD_ALTITUDE		0x0040
+#define HUD_TWIST		0x0041
+#define HUD_TIP_SWITCH		0x0042
+#define HUD_SEC_TIP_SWITCH	0x0043
 #define HUD_BARREL_SWITCH	0x0044
+#define HUD_ERASER		0x0045
+#define HUD_TABLET_PICK		0x0046
 
 #define HID_USAGE2(p,u) (((p) << 16) | u)
 
