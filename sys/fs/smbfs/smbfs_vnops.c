@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.16 2003/03/02 22:06:51 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.17 2003/03/24 13:30:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.16 2003/03/02 22:06:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.17 2003/03/24 13:30:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ smbfs_getattr(v)
 	u_int32_t oldsize;
 	int error;
 
-	SMBVDEBUG("%lx: '%.*s' %d\n", (long)vp,
+	SMBVDEBUG("%p: '%.*s' isroot %d\n", vp,
 		(int) np->n_nmlen, np->n_name, (vp->v_flag & VROOT) != 0);
 
 	if ((error = smbfs_attr_cachelookup(vp, va)) == 0)
@@ -535,7 +535,7 @@ smbfs_write(v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 
-	SMBVDEBUG("%d,ofs=%d,sz=%d\n",vp->v_type, (int)uio->uio_offset, uio->uio_resid);
+	SMBVDEBUG("%d,ofs=%lld,sz=%u\n",vp->v_type, (long long int)uio->uio_offset, uio->uio_resid);
 	if (vp->v_type != VREG)
 		return (EPERM);
 	return smbfs_writevnode(vp, uio, ap->a_cred, ap->a_ioflag);
