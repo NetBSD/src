@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.15 2003/01/01 13:29:45 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.16 2003/01/01 14:34:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -602,18 +602,22 @@ static int
 _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 			int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc;
 	size_t nr;
 	int err = 0;
-	char s0[MB_LEN_MAX];
 
 	_DIAGASSERT(cl != NULL);
 
-	if (s==NULL)
-		s = s0;
+	psenc = &_CEI_TO_STATE(_TO_CEI(cl), wctomb);
+	if (s == NULL) {
+		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
+		*nresult = _ENCODING_IS_STATE_DEPENDENT;
+		return 0;
+	}
 
 	err = _FUNCNAME(wcrtomb_priv)(cl, s,
 		      _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
-		      wc, &_CEI_TO_STATE(_TO_CEI(cl), wctomb), &nr);
+		      wc, psenc, &nr);
 	*nresult = (int)nr;
 
 	return 0;
