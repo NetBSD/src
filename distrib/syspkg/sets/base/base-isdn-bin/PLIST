@@ -1,0 +1,9 @@
+@cwd /
+./usr/sbin/daicctl
+./usr/sbin/dtmfdecode
+./usr/sbin/g711conv
+./usr/sbin/isdnd
+./usr/sbin/isdnmonitor
+./usr/sbin/isdntel
+./usr/sbin/isdntelctl
+./usr/sbin/isdntrace

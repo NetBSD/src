@@ -1,0 +1,12 @@
+@cwd /
+./etc/namedb
+./var/chroot/named
+./var/chroot/named/dev
+./var/chroot/named/etc
+./var/chroot/named/etc/namedb
+./var/chroot/named/etc/namedb/cache
+./var/chroot/named/usr
+./var/chroot/named/usr/libexec
+./var/chroot/named/var
+./var/chroot/named/var/run
+./var/chroot/named/var/tmp

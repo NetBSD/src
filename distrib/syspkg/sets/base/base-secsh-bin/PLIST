@@ -1,0 +1,11 @@
+@cwd /
+./usr/bin/scp
+./usr/bin/sftp
+./usr/bin/slogin
+./usr/bin/ssh
+./usr/bin/ssh-add
+./usr/bin/ssh-agent
+./usr/bin/ssh-keygen
+./usr/bin/ssh-keyscan
+./usr/libexec/sftp-server
+./usr/sbin/sshd

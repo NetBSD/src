@@ -1,0 +1,4 @@
+@cwd /
+./usr/sbin/chat
+./usr/sbin/pppd
+./usr/sbin/pppstats

@@ -1,0 +1,7 @@
+@cwd /
+./usr/share/examples/apm
+./usr/share/examples/emul
+./usr/share/examples/emul/svr4
+./usr/share/examples/emul/svr4/etc
+./usr/share/examples/emul/ultrix
+./usr/share/examples/emul/ultrix/etc

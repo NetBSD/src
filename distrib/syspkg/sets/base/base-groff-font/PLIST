@@ -1,0 +1,17 @@
+@cwd /
+./usr/share/groff_font
+./usr/share/groff_font/devX100
+./usr/share/groff_font/devX100-12
+./usr/share/groff_font/devX75
+./usr/share/groff_font/devX75-12
+./usr/share/groff_font/devascii
+./usr/share/groff_font/devdvi
+./usr/share/groff_font/devdvi/generate
+./usr/share/groff_font/devhtml
+./usr/share/groff_font/devlatin1
+./usr/share/groff_font/devlbp
+./usr/share/groff_font/devlj4
+./usr/share/groff_font/devlj4/generate
+./usr/share/groff_font/devps
+./usr/share/groff_font/devps/generate
+./usr/share/groff_font/devutf8

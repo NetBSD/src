@@ -1,0 +1,18 @@
+@cwd /
+./usr/bin/tip
+./usr/bin/uucp
+./usr/bin/uulog
+./usr/bin/uuname
+./usr/bin/uupick
+./usr/bin/uusched
+./usr/bin/uustat
+./usr/bin/uuto
+./usr/bin/uux
+./usr/libexec/rmail
+./usr/libexec/uucp
+./usr/libexec/uucp/uucico
+./usr/libexec/uucp/uuconv
+./usr/libexec/uucp/uuxqt
+./usr/libexec/uucpd
+./usr/libexec/uugetty
+./usr/sbin/uuchk

@@ -1,0 +1,21 @@
+@cwd /
+./bin/rcmd
+./bin/rcp
+./sbin/brconfig
+./sbin/ifconfig
+./sbin/ipf
+./sbin/ispppcontrol
+./sbin/lmcctl
+./sbin/ping
+./sbin/ping6
+./sbin/pppoectl
+./sbin/route
+./sbin/rrestore
+./sbin/rtsol
+./sbin/setkey
+./var/log/rdist
+./var/rwho
+./var/spool/ftp
+./var/spool/ftp/bin
+./var/spool/ftp/etc
+./var/spool/ftp/hidden

@@ -1,0 +1,6 @@
+OPSYS= NetBSD
+OS_VERSION= 1.5ZA
+MACHINE_ARCH= i386
+OBJECT_FMT= ELF
+CC=	/home/NetBSD/tools/arnor.draga.com/bin/i386--netbsdelf-gcc-2.95.3
+_PKGTOOLS_VER=20011004

@@ -1,0 +1,2 @@
+SETNAME=base
+PREFIX=/

@@ -1,0 +1,6 @@
+@cwd /
+./usr/share/locale/ko
+./usr/share/locale/ko/LC_MESSAGES
+./usr/share/locale/ko/LC_MESSAGES/grep.mo
+./usr/share/locale/ko_KR.eucKR
+./usr/share/locale/ko_KR.eucKR/LC_CTYPE

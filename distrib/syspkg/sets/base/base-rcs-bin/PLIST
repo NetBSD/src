@@ -1,0 +1,10 @@
+@cwd /
+./usr/bin/ci
+./usr/bin/co
+./usr/bin/rcs
+./usr/bin/rcsclean
+./usr/bin/rcsdiff
+./usr/bin/rcsfreeze
+./usr/bin/rcslog
+./usr/bin/rcsmerge
+./usr/bin/rlog

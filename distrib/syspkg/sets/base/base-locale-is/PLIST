@@ -1,0 +1,5 @@
+@cwd /
+./usr/share/locale/is_IS.ISO8859-1
+./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE
+./usr/share/locale/is_IS.ISO8859-15
+./usr/share/locale/is_IS.ISO8859-15/LC_CTYPE

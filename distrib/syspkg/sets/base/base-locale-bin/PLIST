@@ -1,0 +1,3 @@
+@cwd /
+./usr/bin/gencat
+./usr/bin/mklocale

@@ -1,0 +1,8 @@
+@cwd /
+./usr/sbin/ntpd
+./usr/sbin/ntpdate
+./usr/sbin/ntpdc
+./usr/sbin/ntpq
+./usr/sbin/ntptime
+./usr/sbin/ntptimeset
+./usr/sbin/ntptrace

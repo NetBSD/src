@@ -1,0 +1,14 @@
+@cwd /
+./usr/sbin/bootpd
+./usr/sbin/bootpef
+./usr/sbin/bootpgw
+./usr/sbin/bootptest
+./usr/sbin/mopa.out
+./usr/sbin/mopchk
+./usr/sbin/mopd
+./usr/sbin/mopprobe
+./usr/sbin/moptrace
+./usr/sbin/ndbootd
+./usr/sbin/rarpd
+./usr/sbin/rbootd
+./usr/sbin/rpc.bootparamd
