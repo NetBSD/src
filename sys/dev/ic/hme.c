@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.26 2001/11/25 22:12:01 tron Exp $	*/
+/*	$NetBSD: hme.c,v 1.27 2001/11/26 06:51:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.26 2001/11/25 22:12:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.27 2001/11/26 06:51:12 tron Exp $");
 
 #undef HMEDEBUG
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.26 2001/11/25 22:12:01 tron Exp $");
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.26 2001/11/25 22:12:01 tron Exp $");
 #include <dev/mii/miivar.h>
 
 #include <machine/bus.h>
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>
@@ -301,6 +296,9 @@ hme_config(sc)
 		 */
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 	}
+
+	/* We can support 802.1Q VLAN-sized frames. */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Attach the interface. */
 	if_attach(ifp);
