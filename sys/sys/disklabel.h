@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.35 1995/10/09 12:00:18 pk Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.36 1996/01/30 18:21:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -308,26 +308,6 @@ struct partinfo {
 	struct disklabel *disklab;
 	struct partition *part;
 };
-
-/*
- * Disk-specific ioctls.
- */
-		/* get and set disklabel; DIOCGPART used internally */
-#define DIOCGDINFO	_IOR('d', 101, struct disklabel)/* get */
-#define DIOCSDINFO	_IOW('d', 102, struct disklabel)/* set */
-#define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
-#define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
-
-/* do format operation, read or write */
-#define DIOCRFORMAT	_IOWR('d', 105, struct format_op)
-#define DIOCWFORMAT	_IOWR('d', 106, struct format_op)
-
-#define DIOCSSTEP	_IOW('d', 107, int)	/* set step rate */
-#define DIOCSRETRIES	_IOW('d', 108, int)	/* set # of retries */
-#define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
-
-#define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
-#define DIOCEJECT	_IO('d', 112)		/* Eject removable disk */
 
 #ifdef _KERNEL
 void	 diskerr
