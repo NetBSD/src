@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1997/03/25 03:07:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/04/16 13:30:01 christos Exp $
 
 PROG=	mopprobe
 SRCS=	mopprobe.c device.c get.c cmp.c mopdef.c version.c pf.c loop-bsd.c
-CFLAGS+= -I${.CURDIR} -I${.CURDIR}/.. -I${.CURDIR}/../common -DNODL
+CFLAGS+= -I${.CURDIR}/.. -DNODL
 CLEANFILES= version.c version.h
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
