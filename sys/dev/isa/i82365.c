@@ -124,7 +124,8 @@ int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
 			  struct pcmcia_io_handle *, int *));
 void pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
-void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t, u_int16_t, int,
+void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t,
+				    struct pcmcia_function *, int,
 				    int (*)(void *), void *));
 void pcic_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
@@ -423,7 +424,8 @@ pcic_attach(parent, self, aux)
        scarce, shareable, and for PCIC controllers, very infrequent. */
 
     if (ia->ia_irq == IRQUNK) {
-	isa_intr_alloc(ic, PCIC_CSC_INTR_IRQ_VALIDMASK, IST_EDGE, &irq);
+	/* XXX CHECK RETURN VALUE */
+	(void) isa_intr_alloc(ic, PCIC_CSC_INTR_IRQ_VALIDMASK, IST_EDGE, &irq);
 	sc->irq = irq;
 
 	printf(": using irq %d", irq);
@@ -1224,26 +1226,37 @@ void pcic_chip_io_unmap(pch, window)
     h->ioalloc &= ~(1 << window);
 }
 
+#ifndef PCIC_INTR_ALLOC_MASK
+#define	PCIC_INTR_ALLOC_MASK	0xffff
+#endif
+
+int	pcic_intr_alloc_mask = PCIC_INTR_ALLOC_MASK;
+
 void *
-pcic_chip_intr_establish(pch, irqmask, ipl, fct, arg)
+pcic_chip_intr_establish(pch, pf, ipl, fct, arg)
      pcmcia_chipset_handle_t pch;
-     u_int16_t irqmask;
+     struct pcmcia_function *pf;
      int ipl;
      int (*fct)(void *);
      void *arg;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
-    int irq;
+    int irq, ist;
     void *ih;
     int reg;
 
-    /* Mask out IRQs which we shouldn't allocate. */
-    irqmask &= PCIC_INTR_IRQ_VALIDMASK;
-    if (irqmask == 0)
-	return(NULL);
+    if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
+	ist = IST_LEVEL;
+    else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
+	ist = IST_PULSE;
+    else
+	ist = IST_LEVEL;
 
-    isa_intr_alloc(h->sc->ic, irqmask, IST_PULSE, &irq);
-    if (!(ih = isa_intr_establish(h->sc->ic, irq, IST_PULSE, ipl, fct, arg)))
+    if (isa_intr_alloc(h->sc->ic,
+    		       PCIC_INTR_IRQ_VALIDMASK & pcic_intr_alloc_mask,
+    		       ist, &irq))
+	return(NULL);
+    if (!(ih = isa_intr_establish(h->sc->ic, irq, ist, ipl, fct, arg)))
 	return(NULL);
 
     reg = pcic_read(h, PCIC_INTR);
