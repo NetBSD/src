@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.53 2002/06/18 13:18:37 tshiozak Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.54 2003/03/19 17:56:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -142,8 +142,6 @@ struct pci_quirkdata {
 	int			quirks;		/* quirks; see below */
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
-
-#include "locators.h"
 
 struct pci_softc {
 	struct device sc_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.75 2003/01/01 00:10:23 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.76 2003/03/19 17:56:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.75 2003/01/01 00:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.76 2003/03/19 17:56:58 christos Exp $");
 
 #include "opt_pci.h"
 
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.75 2003/01/01 00:10:23 thorpej Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include "locators.h"
 
 #ifdef PCI_CONFIG_DUMP
 int pci_config_dump = 1;
