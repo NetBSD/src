@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.33 2003/01/08 23:50:23 soren Exp $ */
+/* $NetBSD: pnpbios.c,v 1.34 2003/01/28 22:19:26 wiz Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.33 2003/01/08 23:50:23 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.34 2003/01/28 22:19:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1588,7 +1588,7 @@ start:
 				printf("%s: vendor defined event 0x%04x\n",
 				    sc->sc_dev.dv_xname, event);
 			else
-				printf("%s: unkown event 0x%04x\n",
+				printf("%s: unknown event 0x%04x\n",
 				    sc->sc_dev.dv_xname, event);
 #endif
 			break;
