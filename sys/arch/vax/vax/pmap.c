@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2000/11/21 06:14:40 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.92 2000/12/31 11:16:55 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -99,6 +99,8 @@ struct	extent *ptemap;
 char	ptmapstorage[PTMAPSZ];
 
 extern	caddr_t msgbufaddr;
+
+#define	IOSPACE(p)	(((u_long)(p)) & 0xe0000000)
 
 #ifdef PMAPDEBUG
 volatile int recurse;
@@ -527,6 +529,8 @@ rensa(clp, ptp)
 if (startpmapdebug)
 	printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
 #endif
+	if (IOSPACE(ptp->pg_pfn << VAX_PGSHIFT))
+		return; /* Nothing in pv_table */
 	s = splimp();
 	RECURSESTART;
 	if (pv->pv_pte == ptp) {
@@ -651,7 +655,7 @@ if(startpmapdebug)
 
 /*
  * pmap_enter() is the main routine that puts in mappings for pages, or
- * upgrades mappings to more "rights". Note that:
+ * upgrades mappings to more "rights".
  */
 int
 pmap_enter(pmap, v, p, prot, flags)
@@ -720,8 +724,10 @@ if (startpmapdebug)
 				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 				if (pg != NULL)
 					break;
-				if (flags & PMAP_CANFAIL)
+				if (flags & PMAP_CANFAIL) {
+					RECURSEEND;
 					return (KERN_RESOURCE_SHORTAGE);
+				}
 
 				if (pmap == pmap_kernel())
 					panic("pmap_enter: no free pages");
@@ -735,6 +741,24 @@ if (startpmapdebug)
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
 	}
+	/*
+	 * Do not keep track of anything if mapping IO space.
+	 */
+	if (IOSPACE(p)) {
+		patch[i] = newpte;
+		patch[i+1] = newpte+1;
+		patch[i+2] = newpte+2;
+		patch[i+3] = newpte+3;
+		patch[i+4] = newpte+4;
+		patch[i+5] = newpte+5;
+		patch[i+6] = newpte+6;
+		patch[i+7] = newpte+7;
+		if (pmap != pmap_kernel())
+			pmap->pm_refcnt[index]++; /* New mapping */
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
+
 	if (flags & PMAP_WIRED)
 		newpte |= PG_W;
 
@@ -1037,10 +1061,12 @@ if (startpmapdebug)
 	pte[5] |= PG_V;
 	pte[6] |= PG_V;
 	pte[7] |= PG_V;
-	pv = pv_table + (pa >> PGSHIFT);
-	pv->pv_attr |= PG_V; /* Referenced */
-	if (bits & 4)
-		pv->pv_attr |= PG_M; /* (will be) modified. XXX page tables  */
+	if (IOSPACE(pa) == 0) { /* No pv_table fiddling in iospace */
+		pv = pv_table + (pa >> PGSHIFT);
+		pv->pv_attr |= PG_V; /* Referenced */
+		if (bits & 4) /* (will be) modified. XXX page tables  */
+			pv->pv_attr |= PG_M;
+	}
 	return 0;
 }
 
@@ -1054,6 +1080,10 @@ pmap_is_referenced(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_is_referenced: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1076,6 +1106,10 @@ pmap_clear_reference(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_clear_reference: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1111,6 +1145,10 @@ pmap_is_modified(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_is_modified: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1163,6 +1201,10 @@ pmap_clear_modify(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_is_modified: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 
 #ifdef PMAPDEBUG
@@ -1207,6 +1249,10 @@ if(startpmapdebug) printf("pmap_page_protect: pg %p, prot %x, ",pg, prot);
 if(startpmapdebug) printf("pa %lx\n",pa);
 #endif
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_page_protect: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 	if (pv->pv_pte == 0 && pv->pv_next == 0)
 		return;
