@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.21 2002/12/30 09:33:25 matt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.22 2002/12/31 05:59:53 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.21 2002/12/30 09:33:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.22 2002/12/31 05:59:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,6 +553,7 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
+	char *uid;
 #if 0
 	char *str;
 #endif
@@ -569,8 +570,13 @@ acpi_print(void *aux, const char *pnp)
 		printf("at %s", pnp);
 	} else {
 		printf(" (%s", aa->aa_node->ad_devinfo.HardwareId);
-		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID)
-			printf("-%s", aa->aa_node->ad_devinfo.UniqueId);
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
+			if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
+				uid = "<null>";
+			else
+				uid = aa->aa_node->ad_devinfo.UniqueId;
+			printf("-%s", uid);
+		}
 		printf(")");
 	}
 
