@@ -1,0 +1,98 @@
+#
+# $Id: Makefile.osf1,v 1.1 1993/11/27 21:18:31 mycroft Exp $
+#
+# Copyright (c) 1989 Jan-Simon Pendry
+# Copyright (c) 1989 Imperial College of Science, Technology & Medicine
+# Copyright (c) 1989 The Regents of the University of California.
+# (c) Copyright 1990, OPEN SOFTWARE FOUNDATION, INC.
+# All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# Jan-Simon Pendry at Imperial College, London.
+#
+# Redistribution and use in source and binary forms are permitted provided
+# that: (1) source distributions retain this entire copyright notice and
+# comment, and (2) distributions including binaries display the following
+# acknowledgement:  ``This product includes software developed by the
+# University of California, Berkeley and its contributors'' in the
+# documentation or other materials provided with the distribution and in
+# all advertising materials mentioning features or use of this software.
+# Neither the name of the University nor the names of its contributors may
+# be used to endorse or promote products derived from this software without
+# specific prior written permission.
+# THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#	@(#)Makefile.bsd44	5.1 (Berkeley) 6/29/90
+#
+# Extra Makefile definitions for OSF/1
+#
+
+SYSLIB = -lbsd
+
+#
+# Define RPCLIB if your C library does not include
+# support for RPC
+#
+RPCLIB = -lrpc
+
+#
+# Define NISLIB if your C library does not include
+# support for NIS
+#
+NISLIB = ${USE_YP?-lyp:}
+
+#
+# Include support for Network Information Service (NIS)
+# Also define HAS_NIS_RELOAD to include map
+# enumeration code implementing "cache:=all"
+#
+HAS_NIS_MAPS = ${USE_YP?-DHAS_NIS_MAPS -DHAS_NIS_RELOAD:}
+
+#
+# Include support for file maps
+#
+HAS_FILE_MAPS = -DHAS_FILE_MAPS
+
+#
+# Include support for Hesiod
+# Also define HAS_HESIOD_RELOAD to include zone
+# transfer code implementing "cache:=all"
+#
+#HAS_HESIOD_MAPS = -DHAS_HESIOD_MAPS -DHAS_HESIOD_RELOAD
+
+#
+# Include support for /etc/passwd
+#
+HAS_PASSWD_MAPS = -DHAS_PASSWD_MAPS
+
+#
+# Include support for union maps
+#
+HAS_UNION_MAPS = -DHAS_UNION_MAPS
+
+#
+# Include support for ndbm.
+# This removes support for gdbm and is only supported
+# if your operating system supports ndbm
+#
+HAS_NDBM_MAPS = -DHAS_NDBM_MAPS
+
+#
+# Include support for "regexp" maps
+#
+#HAS_REGEXP = -DHAS_REGEXP
+
+#
+# Make sure that the hostname passed in RPC authentication packets
+# contains a fully qualified domain name.  See nfs_ops.c
+#
+#HAS_NFS_QUALIFIED_NAMES = -DHAS_NFS_QUALIFIED_NAMES
+
+##############################################################
+# Do NOT edit the following lines
+#
+CONFIG = ${XINCLUDE} ${HAS_NIS_MAPS} ${HAS_FILE_MAPS} ${HAS_HESIOD_MAPS} \
+		${HAS_NDBM_MAPS} ${HAS_MOUNTD_MAPS} ${HAS_PASSWD_MAPS} \
+		${HAS_REGEXP} ${HAS_NFS_QUALIFIED_NAMES}
