@@ -1,5 +1,5 @@
-#	From: @(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.25 1993/12/15 07:24:31 mycroft Exp $
+#	@(#)rc	5.27 (Berkeley) 6/5/91
+#	$Id: rc,v 1.26 1993/12/16 04:02:24 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -66,7 +66,31 @@ rm -f /fastboot		# XXX (root now writeable)
 echo 'starting network'
 . /etc/netstart
 
-mount -a -t nfs >/dev/null 2>&1 &	# XXX shouldn't need background
+mount /usr >/dev/null 2>&1
+mount -a -t nfs >/dev/null 2>&1
+
+echo -n 'starting rpc daemons:'
+echo -n ' portmap';		portmap
+
+if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
+	echo -n ' ypbind';		ypbind
+fi
+
+# $nfs_server is imported from /etc/netstart;
+# if $nfs_server == YES, the machine is setup for being an nfs server
+if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
+	rm -f /var/db/mountdtab	
+	echo -n ' mountd';		mountd
+	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
+fi
+
+# $nfs_client is imported from /etc/netstart;
+# if $nfs_client == YES, the machine is setup for being an nfs client
+if [ X${nfs_client} = X"YES" ]; then
+	echo -n ' nfsiod';		nfsiod 4
+fi
+
+echo '.'
 
 # clean up left-over files
 rm -f /etc/nologin
@@ -159,22 +183,6 @@ if [ X${rwhod} = X"YES" ]; then
 fi
 
 echo -n ' printer';		lpd
-
-echo -n ' portmap';		portmap
-
-# $nfs_server is imported from /etc/netstart;
-# if $nfs_server == YES, the machine is setup for being an nfs server
-if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
-	rm -f /var/db/mountdtab	
-	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
-fi
-
-# $nfs_client is imported from /etc/netstart;
-# if $nfs_client == YES, the machine is setup for being an nfs client
-if [ X${nfs_client} = X"YES" ]; then
-	echo -n ' nfsiod';		nfsiod 4
-fi
 
 # $sendmail_flags is imported from /etc/netstart;
 # If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
