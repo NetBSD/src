@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1997/11/17 09:47:07 cjs Exp $
+#	$NetBSD: Makefile,v 1.2 1997/11/18 05:16:50 cjs Exp $
 
-SUBDIR=	install
+SUBDIR=	md_install install
 
 .include <bsd.subdir.mk>
