@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.16 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.17 2005/02/15 12:54:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -561,7 +561,7 @@ void	idntfy(void);
 boolean	imitating(int, int);
 int	init(int, char **);
 void	init_str(char **, const char *);
-void	insert_score(char [][], char [][], const char *, short, short, const object *, int);
+void	insert_score(char [][82], char [][30], const char *, short, short, const object *, int);
 void	inv_armor_weapon(boolean);
 void	inv_rings(void);
 void	inventory(const object *, unsigned short);
