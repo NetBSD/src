@@ -1,5 +1,5 @@
-/* $NetBSD: ispvar.h,v 1.9 1998/07/15 19:50:16 mjacob Exp $ */
-/* $Id: ispvar.h,v 1.9 1998/07/15 19:50:16 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.10 1998/07/18 21:06:20 mjacob Exp $ */
+/* $Id: ispvar.h,v 1.10 1998/07/18 21:06:20 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -46,6 +46,9 @@
 #ifdef	__linux__
 #include <ispmbox.h>
 #endif
+
+#define	ISP_CORE_VERSION_MAJOR	1
+#define	ISP_CORE_VERSION_MINOR	1
 
 /*
  * Vector for MD code to provide specific services.
@@ -322,6 +325,11 @@ void isp_init __P((struct ispsoftc *));
  * Free any associated resources prior to decommissioning.
  */
 void isp_uninit __P((struct ispsoftc *));
+
+/*
+ * Reset the ISP and call completion for any orphaned commands.
+ */
+void isp_restart __P((struct ispsoftc *));
 
 /*
  * Interrupt Service Routine
