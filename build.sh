@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.114 2003/08/16 11:46:44 lukem Exp $
+#	$NetBSD: build.sh,v 1.115 2003/09/10 18:05:52 jmmv Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -613,7 +613,7 @@ parseoptions()
 	setmakeenv LC_ALL C
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
-	MAKEFLAGS="-m ${TOP}/share/mk ${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
+	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
 }
 
@@ -802,7 +802,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.114 2003/08/16 11:46:44 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.115 2003/09/10 18:05:52 jmmv Exp $
 #
 
 EOF
