@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.13 1994/12/01 12:12:08 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.14 1994/12/01 12:26:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -314,7 +314,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 		} else {
 			/* if no data, no need to translate it.. */
 			si->si_bp.b_data = 0;
-			si->si_bp.b_dev = -1; /* irrelevant info */
+			si->si_bp.b_dev = dev;
 			si->si_bp.b_flags = 0;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
