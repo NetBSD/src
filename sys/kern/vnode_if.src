@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp $
+#	$NetBSD: vnode_if.src,v 1.27 2001/05/26 21:27:19 chs Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -587,7 +587,7 @@ vop_whiteout {
 vop_getpages {
 	IN struct vnode *vp;
 	IN voff_t offset;
-	IN vm_page_t *m;
+	IN struct vm_page **m;
 	IN int *count;
 	IN int centeridx;
 	IN vm_prot_t access_type;

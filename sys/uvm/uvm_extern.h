@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.63 2001/05/25 04:06:12 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.64 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  *
@@ -103,7 +103,6 @@ struct vm_map;
 typedef struct vm_map *vm_map_t;
 
 struct vm_page;
-typedef struct vm_page  *vm_page_t;
 
 /*
  * defines

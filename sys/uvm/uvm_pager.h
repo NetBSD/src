@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.22 2001/05/25 04:06:16 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.23 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  *
@@ -93,15 +93,16 @@ struct uvm_pagerops {
 			 __P((struct uvm_object *));
 	int			(*pgo_fault)	/* special nonstd fault fn */
 			 __P((struct uvm_faultinfo *, vaddr_t,
-				 vm_page_t *, int, int, vm_fault_t,
+				 struct vm_page **, int, int, vm_fault_t,
 				 vm_prot_t, int));
 	boolean_t		(*pgo_flush)	/* flush pages out of obj */
 			 __P((struct uvm_object *, voff_t, voff_t, int));
 	int			(*pgo_get)	/* get/read page */
 			 __P((struct uvm_object *, voff_t,
-				 vm_page_t *, int *, int, vm_prot_t, int, int));
+				 struct vm_page **, int *, int, vm_prot_t, int,
+			         int));
 	int			(*pgo_put)	/* put/write page */
-			 __P((struct uvm_object *, vm_page_t *,
+			 __P((struct uvm_object *, struct vm_page **,
 				 int, boolean_t));
 	void			(*pgo_cluster)	/* return range of cluster */
 			__P((struct uvm_object *, voff_t, voff_t *,

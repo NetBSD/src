@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.9 2001/05/26 16:32:43 chs Exp $ */
+/* $NetBSD: pmap.h,v 1.10 2001/05/26 21:27:12 chs Exp $ */
 
 /*
  * This file was taken from from mvme68k/include/pmap.h and
@@ -101,7 +101,7 @@ typedef struct pmap	*pmap_t;
 }
 
 /*
- * For each vm_page_t, there is a list of all currently valid virtual
+ * For each struct vm_page, there is a list of all currently valid virtual
  * mappings of that page.  An entry is a pv_entry, the list is pv_table.
  */
 struct pv_entry {

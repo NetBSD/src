@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.53 2001/05/21 22:44:08 uwe Exp $ */
+/*	$NetBSD: iommu.c,v 1.54 2001/05/26 21:27:15 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -177,7 +177,7 @@ iommu_attach(parent, self, aux)
 	u_int iopte_table_pa;
 	struct pglist mlist;
 	u_int size;
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 
 	/*
@@ -693,7 +693,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	paddr_t pa;
 	bus_addr_t dva;
 	bus_size_t sgsize;
@@ -797,7 +797,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;

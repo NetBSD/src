@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2001/05/26 16:32:44 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2001/05/26 21:27:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2345,7 +2345,7 @@ pmap_test_attrs(pg, testbits)
  */
 
 boolean_t
-pmap_clear_modify(vm_page_t pg)
+pmap_clear_modify(struct vm_page *pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
@@ -2385,7 +2385,7 @@ pmap_clear_modify(vm_page_t pg)
  */
 
 boolean_t
-pmap_clear_reference(vm_page_t pg)
+pmap_clear_reference(struct vm_page *pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
@@ -2465,7 +2465,7 @@ pmap_changebit(struct pv_head *pvh, pt_entry_t set, pt_entry_t mask)
  */
 
 void
-pmap_page_protect(vm_page_t pg, vm_prot_t prot)
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	int bank, off;
 	struct pv_head *pvh;
