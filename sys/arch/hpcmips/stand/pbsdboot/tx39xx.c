@@ -1,4 +1,4 @@
-/* $NetBSD: tx39xx.c,v 1.4 2000/01/16 11:14:49 uch Exp $ */
+/* $NetBSD: tx39xx.c,v 1.5 2000/01/16 23:30:13 uch Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
@@ -144,16 +144,7 @@ tx39xx_asm_code_holder()
 		"nop;"
 		"mtc0	zero, $12;"
 		"nop;"
-		/* 
-		 * XXX Disable TX3922 write-back mode. for TX3912, no meaning. 
-		 * XXX Should be removed 
-		 */
-		"mfc0	t0, $3;"
-		"nop;"
-		"li	t1, 0xffffdfff;"
-		"and	t0, t0, t1;"
-		"mtc0	t0, $3;"
-		"nop;nop;nop;nop;"
+
 		/*
 		 * Copy kernel to bootaddr
 		 */
