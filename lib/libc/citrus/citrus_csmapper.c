@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.3 2004/01/02 21:49:35 itojun Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.3 2004/01/02 21:49:35 itojun Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -222,7 +222,7 @@ find_dst(struct parse_arg *pasrc, const char *dst)
 	struct _lookup *cl;
 	struct _region data;
 
-	ret = _lookup_seq_open(&cl, CS_PIVOT);
+	ret = _lookup_seq_open(&cl, CS_PIVOT, _LOOKUP_CASE_IGNORE);
 	if (ret)
 		return ret;
 
@@ -253,7 +253,7 @@ find_best_pivot_lookup(const char *src, const char *dst, char *pivot,
 	unsigned long norm_min;
 	char pivot_min[PATH_MAX];
 
-	ret = _lookup_seq_open(&cl, CS_PIVOT);
+	ret = _lookup_seq_open(&cl, CS_PIVOT, _LOOKUP_CASE_IGNORE);
 	if (ret)
 		return ret;
 
@@ -352,8 +352,10 @@ _citrus_csmapper_open(struct _citrus_csmapper * __restrict * __restrict rcsm,
 	if (ret)
 		return ret;
 
-	realsrc = _lookup_alias(CS_ALIAS, src, buf1, sizeof(buf1));
-	realdst = _lookup_alias(CS_ALIAS, dst, buf2, sizeof(buf2));
+	realsrc = _lookup_alias(CS_ALIAS, src, buf1, sizeof(buf1),
+				_LOOKUP_CASE_IGNORE);
+	realdst = _lookup_alias(CS_ALIAS, dst, buf2, sizeof(buf2),
+				_LOOKUP_CASE_IGNORE);
 	if (!strcmp(realsrc, realdst)) {
 		ret = get_none(maparea, rcsm);
 		if (ret == 0 && rnorm != NULL)

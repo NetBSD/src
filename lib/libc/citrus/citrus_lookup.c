@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_lookup.c,v 1.3 2004/07/21 14:16:34 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_lookup.c,v 1.3 2004/07/21 14:16:34 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -74,6 +74,7 @@ struct _citrus_lookup {
 #define cl_dblocator	u.db.locator
 #define cl_plainr	u.plain.r
 #define cl_plainms	u.plain.ms
+	int cl_ignore_case;
 	int cl_rewind;
 	char *cl_key;
 	size_t cl_keylen;
@@ -120,7 +121,8 @@ seq_lookup_db(struct _citrus_lookup *cl, const char *key,
 	cl->cl_rewind = 0;
 	free(cl->cl_key);
 	cl->cl_key = strdup(key);
-	_bcs_convert_to_lower(cl->cl_key);
+	if (cl->cl_ignore_case)
+		_bcs_convert_to_lower(cl->cl_key);
 	cl->cl_keylen = strlen(cl->cl_key);
 	_db_locator_init(&cl->cl_dblocator);
 	return _db_lookup_by_s(cl->cl_db, cl->cl_key, data, &cl->cl_dblocator);
@@ -229,7 +231,8 @@ seq_lookup_plain(struct _citrus_lookup *cl, const char *key,
 	cl->cl_rewind = 0;
 	free(cl->cl_key);
 	cl->cl_key = strdup(key);
-	_bcs_convert_to_lower(cl->cl_key);
+	if (cl->cl_ignore_case)
+		_bcs_convert_to_lower(cl->cl_key);
 	cl->cl_keylen = strlen(cl->cl_key);
 	_memstream_bind(&cl->cl_plainms, &cl->cl_plainr);
 	p = _memstream_matchline(&cl->cl_plainms, cl->cl_key, &len, 0);
@@ -268,7 +271,8 @@ seq_open_plain(struct _citrus_lookup *cl, const char *name)
 }
 
 int
-_citrus_lookup_seq_open(struct _citrus_lookup **rcl, const char *name)
+_citrus_lookup_seq_open(struct _citrus_lookup **rcl, const char *name,
+			int ignore_case)
 {
 	int ret;
 	struct _citrus_lookup *cl;
@@ -279,6 +283,7 @@ _citrus_lookup_seq_open(struct _citrus_lookup **rcl, const char *name)
 
 	cl->cl_key = NULL;
 	cl->cl_keylen = 0;
+	cl->cl_ignore_case = ignore_case;
 	ret = seq_open_db(cl, name);
 	if (ret == ENOENT)
 		ret = seq_open_plain(cl, name);
@@ -328,13 +333,13 @@ _citrus_lookup_seq_close(struct _citrus_lookup *cl)
 
 char *
 _citrus_lookup_simple(const char *name, const char *key,
-		      char *linebuf, size_t linebufsize)
+		      char *linebuf, size_t linebufsize, int ignore_case)
 {
 	int ret;
 	struct _citrus_lookup *cl;
 	struct _region data;
 
-	ret = _citrus_lookup_seq_open(&cl, name);
+	ret = _citrus_lookup_seq_open(&cl, name, ignore_case);
 	if (ret)
 		return NULL;
 
