@@ -1,4 +1,4 @@
-IPsec transport mode
+IPSec transport mode
 
 	HOST-A ================ HOST-B
 	(A)                     (B)
@@ -20,7 +20,7 @@ IPsec transport mode
 	both racoon.conf:
 		no particular twists
 
-IPsec tunnel mode
+IPSec tunnel mode
 
 	HOST-A --- Gateway-A =========== Gateway-B --- HOST-B
 	(A)        (GA)                  (GB)          (B)
@@ -70,12 +70,14 @@ MIP6
 		support_mip6 on;
 		(generate_policy on;)
 
-Accept anonymous client on IPsec transport mode
+o Anonymous client on IPSec transport mode
+
+	HOST-A communicates with Server by using IPSec transport mode.
 
 	HOST-A =========== Server
-	(A)                (S)
+	(A)                (G)
 
-	IKE negotiation: A <-> S
+	IKE negotiation: A <-> G
 	phase 1 ID payloads: anything,anything
 	SA addresses: A <--> S
 	phase 2 ID payloads: none
@@ -95,7 +97,71 @@ Accept anonymous client on IPsec transport mode
 		spdadd net/pl S any -P in ipsec esp/transport//require;
 
 	Server's racoon.conf:
+		anonymous { passive on; }
+
+	due to the absense of phase 2 ID, IPSec SA will be installed for
+	A <--> S, not for net/pl <--> S.
+
+o anonymous client allocated IP address dynamically and having a internal
+  address.
+
+	HOST-A communicates with hosts on Network-B through Gateway
+	by using IPSec tunnel mode.
+	IP address of HOST-A is allocated dynamically.
+
+	HOST-A =========== Gateway ----------- Network-B
+	(Ao/Ai)             (G)                  (net-B)
+
+	HOST-A has two IP address, Ao as outernal is dynamically allocated,
+	and Ai as internal can be routed to Network-B.
+	Gateway's address on A side is G.
+	main mode with pre-shared key can not be used.
+
+	IKE negotiation: Ao <-> G
+	phase 1 ID payloads: anything,anything
+	SA addresses: Ao <--> G
+	phase 2 ID payloads: Ai/net-B
+
+	policy configuration at HOST-A:
+		spdadd Ai net-B any -P out ipsec esp/tunnel/Ao-G/require;
+		spdadd net-B Ai any -P in ipsec esp/tunnel/G-Ao/require;
+
+	racoon.conf at HOST-A:
 		no particular twists
 
-	due to the absense of phase 2 ID, IPsec SA will be installed for
-	A <--> S, not for net/pl <--> S.
+	policy configuration at Gateway:
+		Nothing
+
+	Server's racoon.conf:
+		anonymous { passive on; }
+
+o anonymous client allocated IP address dynamically.
+
+	HOST-A communicates with hosts on Network-B through Gateway
+	by using IPSec tunnel mode, also using NAT.
+	IP address of HOST-A is allocated dynamically.
+
+	HOST-A =========== Gateway ----------- Network-B
+	  (A)               (G)                  (net-B)
+
+	HOST-A's IP address is dynamically allocated,
+	Gateway's address on A side is G.
+	main mode with pre-shared key can not be used.
+
+	IKE negotiation: A <-> G
+	phase 1 ID payloads: anything,anything
+	SA addresses: A <--> G
+	phase 2 ID payloads: A/net-B
+
+	policy configuration at HOST-A:
+		spdadd A net-B any -P out ipsec esp/tunnel/A-G/require;
+		spdadd net-B A any -P in ipsec esp/tunnel/G-A/require;
+
+	racoon.conf at HOST-A:
+		no particular twists
+
+	policy configuration at Gateway:
+		Nothing
+
+	Server's racoon.conf:
+		anonymous { passive on; }

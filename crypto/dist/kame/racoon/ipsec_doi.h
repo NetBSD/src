@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.h,v 1.31 2000/10/19 03:23:35 sakane Exp $	*/
+/*	$KAME: ipsec_doi.h,v 1.32 2001/04/06 14:23:48 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,6 +182,7 @@ extern int ipsecdoi_selectph2proposal __P((struct ph2handle *));
 extern int ipsecdoi_checkph2proposal __P((struct ph2handle *));
 
 extern struct prop_pair **get_proppair __P((vchar_t *, int));
+extern vchar_t *get_sabyproppair __P((struct prop_pair *, struct ph1handle *));
 extern int ipsecdoi_updatespi __P((struct ph2handle *iph2));
 extern vchar_t *get_sabysaprop __P((struct saprop *, vchar_t *));
 extern int ipsecdoi_checkid1 __P((struct ph1handle *));
@@ -199,9 +200,11 @@ extern int ipsecdoi_transportmode __P((struct ph2handle *));
 extern int ipsecdoi_get_defaultlifetime __P((void));
 extern int ipsecdoi_checkalgtypes __P((int, int, int, int));
 extern int ipproto2doi __P((int));
+extern int doi2ipproto __P((int));
 
 extern int ipsecdoi_t2satrns __P((struct isakmp_pl_t *,
 	struct saprop *, struct saproto *, struct satrns *));
 extern int ipsecdoi_authalg2trnsid __P((int));
 extern int idtype2doi __P((int));
 extern int doi2idtype __P((int));
+

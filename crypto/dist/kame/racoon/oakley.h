@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.17 2001/03/26 17:47:01 thorpej Exp $	*/
+/*	$KAME: oakley.h,v 1.18 2001/04/11 00:28:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -159,9 +159,9 @@ extern struct dhgroup dhgroup[MAXDHGROUP];
 
 /* certificate holder */
 typedef struct cert_t_tag {
-	u_int8_t type;		/* type of CERT, must be same to buf->v[0]*/
+	u_int8_t type;		/* type of CERT, must be same to pl->v[0]*/
 	vchar_t cert;		/* pointer to the CERT */
-	vchar_t *pl;		/* CERT payload */
+	vchar_t *pl;		/* CERT payload minus isakmp general header */
 } cert_t;
 
 struct ph1handle;

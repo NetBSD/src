@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.17 2001/01/24 06:22:51 sakane Exp $	*/
+/*	$KAME: strnames.c,v 1.19 2001/07/31 09:17:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,6 +44,7 @@
 #include "isakmp.h"
 #include "ipsec_doi.h"
 #include "oakley.h"
+#include "handler.h"
 #include "pfkey.h"
 #include "strnames.h"
 #include "algorithm.h"
@@ -68,6 +69,114 @@ num2str(n)
 }
 
 /* isakmp.h */
+char *
+s_isakmp_state(t, d, s)
+	int t, d, s;
+{
+	switch (t) {
+	case ISAKMP_ETYPE_AGG:
+		switch (d) {
+		case INITIATOR:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "agg I msg1";
+			case PHASE1ST_ESTABLISHED:
+				return "agg I msg2";
+			default:
+				break;
+			}
+		case RESPONDER:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "agg R msg1";
+			default:
+				break;
+			}
+		}
+		break;
+	case ISAKMP_ETYPE_BASE:
+		switch (d) {
+		case INITIATOR:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "base I msg1";
+			case PHASE1ST_MSG2SENT:
+				return "base I msg2";
+			default:
+				break;
+			}
+		case RESPONDER:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "base R msg1";
+			case PHASE1ST_ESTABLISHED:
+				return "base R msg2";
+			default:
+				break;
+			}
+		}
+		break;
+	case ISAKMP_ETYPE_IDENT:
+		switch (d) {
+		case INITIATOR:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "ident I msg1";
+			case PHASE1ST_MSG2SENT:
+				return "ident I msg2";
+			case PHASE1ST_MSG3SENT:
+				return "ident I msg3";
+			default:
+				break;
+			}
+		case RESPONDER:
+			switch (s) {
+			case PHASE1ST_MSG1SENT:
+				return "ident R msg1";
+			case PHASE1ST_MSG2SENT:
+				return "ident R msg2";
+			case PHASE1ST_ESTABLISHED:
+				return "ident R msg3";
+			default:
+				break;
+			}
+		}
+		break;
+	case ISAKMP_ETYPE_QUICK:
+		switch (d) {
+		case INITIATOR:
+			switch (s) {
+			case PHASE2ST_MSG1SENT:
+				return "quick I msg1";
+			case PHASE2ST_ADDSA:
+				return "quick I msg2";
+			default:
+				break;
+			}
+		case RESPONDER:
+			switch (s) {
+			case PHASE2ST_MSG1SENT:
+				return "quick R msg1";
+			case PHASE2ST_COMMIT:
+				return "quick R msg2";
+			default:
+				break;
+			}
+		}
+		break;
+	default:
+	case ISAKMP_ETYPE_NONE:
+	case ISAKMP_ETYPE_AUTH:
+	case ISAKMP_ETYPE_INFO:
+	case ISAKMP_ETYPE_NEWGRP:
+	case ISAKMP_ETYPE_ACKINFO:
+		break;
+	}
+	/*NOTREACHED*/
+
+	return "???";
+}
+
 static struct ksmap name_isakmp_certtype[] = {
 { ISAKMP_CERT_NONE,	"NONE",					NULL },
 { ISAKMP_CERT_PKCS7,	"PKCS #7 wrapped X.509 certificate",	NULL },
@@ -684,7 +793,6 @@ static struct ksmap name_pfkey_satype[] = {
 { SADB_SATYPE_RIPV2,	"RIPV2",	NULL },
 { SADB_SATYPE_MIP,	"MIP",		NULL },
 { SADB_X_SATYPE_IPCOMP,	"IPCOMP",	NULL },
-{ SADB_X_SATYPE_POLICY,	"POLICY",	NULL },
 };
 
 char *

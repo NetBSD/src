@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.77 2001/04/04 04:58:15 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.83 2001/07/09 08:10:32 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1014,32 +1014,53 @@ quick_r1recv(iph2, msg0)
     }
 
 	/* get sainfo */
-	if (get_sainfo_r(iph2) != 0) {
+	error = get_sainfo_r(iph2);
+	if (error) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get sainfo.\n");
-		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 		goto end;
 	}
 
 	/* check the existence of ID payload and create responder's proposal */
-	if (get_proposal_r(iph2) < 0) {
+	error = get_proposal_r(iph2);
+	switch (error) {
+	case 0:
+		/* select single proposal or reject it. */
+		if (ipsecdoi_selectph2proposal(iph2) < 0) {
+			error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
+			goto end;
+		}
+		break;
+	case -2:
+		/*
+		 * generate a policy from peer's proposal.
+		 * if there is no suitable policy in SPD and 
+		 */
+		error = set_proposal_from_proposal(iph2);
+		if (error) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to generate saprop "
+				"from client's proposal.\n");
+
+			return ISAKMP_INTERNAL_ERROR;
+		}
+		break;
+	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get proposal for responder.\n");
-		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
-		goto end;
-	}
-
-	/* select single proposal or reject it. */
-	if (ipsecdoi_selectph2proposal(iph2) < 0) {
-		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 		goto end;
 	}
 
 	/* check KE and attribute of PFS */
-	if ((iph2->dhpub_p != NULL && iph2->approval->pfs_group == 0)
-	 || (iph2->dhpub_p == NULL && iph2->approval->pfs_group != 0)) {
+	if (iph2->dhpub_p != NULL && iph2->approval->pfs_group == 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"KE payload and PFS attribute mismatched.\n");
+			"no PFS is specified, but peer sends KE.\n");
+		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
+		goto end;
+	}
+	if (iph2->dhpub_p == NULL && iph2->approval->pfs_group != 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"PFS is specified, but peer doesn't sends KE.\n");
 		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 		goto end;
 	}
@@ -1237,8 +1258,10 @@ quick_r2send(iph2, msg)
 		for (pr = pp->head; pr; pr = pr->next) {
 			body = isakmp_add_pl_n(body, &np_p,
 					ISAKMP_NTYPE_RESPONDER_LIFETIME, pr, data);
-			if (!body)
+			if (!body) {
+				vfree(data);
 				return error;	/* XXX */
+			}
 		}
 		vfree(data);
 	}
@@ -1553,6 +1576,55 @@ quick_r3prep(iph2, msg0)
 	}
 	plog(LLV_DEBUG, LOCATION, NULL, "pfkey add sent.\n");
 
+	/*
+	 * set policies into SPD if the policy is generated
+	 * from peer's policy.
+	 */
+	if (iph2->spidx_gen) {
+
+		struct policyindex *spidx;
+		struct sockaddr_storage addr;
+		u_int8_t pref;
+		struct sockaddr *src = iph2->src;
+		struct sockaddr *dst = iph2->dst;
+
+		/* make inbound policy */
+		iph2->src = dst;
+		iph2->dst = src;
+		if (pk_sendspdupdate2(iph2) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"pfkey spdupdate2(inbound) failed.\n");
+			goto end;
+		}
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"pfkey spdupdate2(inbound) sent.\n");
+
+		/* make outbound policy */
+		iph2->src = src;
+		iph2->dst = dst;
+		spidx = (struct policyindex *)iph2->spidx_gen;
+		spidx->dir = IPSEC_DIR_OUTBOUND;
+		addr = spidx->src;
+		spidx->src = spidx->dst;
+		spidx->dst = addr;
+		pref = spidx->prefs;
+		spidx->prefs = spidx->prefd;
+		spidx->prefd = pref;
+
+		if (pk_sendspdupdate2(iph2) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"pfkey spdupdate2(outbound) failed.\n");
+			goto end;
+		}
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"pfkey spdupdate2(outbound) sent.\n");
+
+		/* spidx_gen is unnecessary any more */
+		delsp_bothdir((struct policyindex *)iph2->spidx_gen);
+		racoon_free(iph2->spidx_gen);
+		iph2->spidx_gen = NULL;
+	}
+
 	error = 0;
 
 end:
@@ -1728,7 +1800,7 @@ get_proposal_r(iph2)
 	struct policyindex spidx;
 	struct secpolicy *sp_in, *sp_out;
 	int idi2type = 0;	/* switch whether copy IDs into id[src,dst]. */
-	int error;
+	int error = ISAKMP_INTERNAL_ERROR;
 
 	/* check the existence of ID payload */
 	if ((iph2->id_p != NULL && iph2->id == NULL)
@@ -1750,7 +1822,6 @@ get_proposal_r(iph2)
 #define _XIDT(d) ((struct ipsecdoi_id_b *)(d)->v)->type
 
 	/* make a spidx; a key to search SPD */
-	/* get inbound policy */
 	spidx.dir = IPSEC_DIR_INBOUND;
 	spidx.ul_proto = 0;
 
@@ -1888,8 +1959,23 @@ get_proposal_r(iph2)
 		saddr2str((struct sockaddr *)&spidx.dst),
 		spidx.prefd, spidx.ul_proto);
 
+	/* get inbound policy */
 	sp_in = getsp_r(&spidx);
 	if (sp_in == NULL) {
+		if (iph2->ph1->rmconf->gen_policy) {
+			plog(LLV_INFO, LOCATION, NULL,
+				"no policy found, "
+				"try to generate the policy : %s\n",
+				spidx2str(&spidx));
+			iph2->spidx_gen = racoon_malloc(sizeof(spidx));
+			if (!iph2->spidx_gen) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"buffer allocation failed.\n");
+				return ISAKMP_INTERNAL_ERROR;
+			}
+			memcpy(iph2->spidx_gen, &spidx, sizeof(spidx));
+			return -2;	/* special value */
+		}
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no policy found: %s\n", spidx2str(&spidx));
 		return ISAKMP_INTERNAL_ERROR;

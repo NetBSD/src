@@ -1,4 +1,4 @@
-/*	$KAME: gcmalloc.h,v 1.2 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: gcmalloc.h,v 1.3 2001/04/04 22:23:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001 WIDE Project.
@@ -85,6 +85,14 @@ free(void *ptr)
 #define	racoon_free(p)		GC_debug_free(p)
 
 #endif /* GC */
+
+/*
+ * Dmalloc only requires that you pull in a header file and link
+ * against libdmalloc.
+ */
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif /* DMALLOC */
 
 #ifndef racoon_malloc
 #define	racoon_malloc(sz)	malloc((sz))

@@ -1,4 +1,4 @@
-/*	$KAME: test-policy.c,v 1.14 2000/12/27 11:38:11 sakane Exp $	*/
+/*	$KAME: test-policy.c,v 1.15 2001/06/28 12:44:50 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -247,7 +247,6 @@ test2()
 	m = pfkey_recv(so);
 	free(m);
 
-#if 0
 	printf("spdsetidx()\n");
 	if (pfkey_send_spdsetidx(so, (struct sockaddr *)addr, 128,
 				(struct sockaddr *)addr, 128,
@@ -264,6 +263,7 @@ test2()
 	m = pfkey_recv(so);
 	free(m);
 
+	printf("sleep(4)\n");
 	sleep(4);
 
 	printf("spddelete()\n");
@@ -287,6 +287,7 @@ test2()
 	m = pfkey_recv(so);
 	free(m);
 
+	printf("sleep(4)\n");
 	sleep(4);
 
 	printf("spddelete2()\n");
@@ -294,7 +295,6 @@ test2()
 		errx(1, "ERROR: %s\n", ipsec_strerror());
 	m = pfkey_recv(so);
 	free(m);
-#endif
 
 	printf("spdadd() with lifetime's 10(s)\n");
 	if (pfkey_send_spdadd2(so, (struct sockaddr *)addr, 128,
@@ -303,7 +303,6 @@ test2()
 		errx(1, "ERROR: %s\n", ipsec_strerror());
 	spid = test2sub(so);
 
-#if 0
 	/* expecting failure */
 	printf("spdupdate()\n");
 	if (pfkey_send_spdupdate(so, (struct sockaddr *)addr, 128,
@@ -311,7 +310,6 @@ test2()
 				255, sp2, splen2, 0) == 0) {
 		warnx("ERROR: expecting failure.\n");
 	}
-#endif
 
 	return 0;
 }

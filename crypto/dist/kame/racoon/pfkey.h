@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.h,v 1.16 2001/03/05 18:37:07 thorpej Exp $	*/
+/*	$KAME: pfkey.h,v 1.20 2001/06/28 06:21:04 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -51,6 +51,9 @@ extern int pk_sendgetspi __P((struct ph2handle *));
 extern int pk_sendupdate __P((struct ph2handle *));
 extern int pk_sendadd __P((struct ph2handle *));
 extern int pk_sendeacquire __P((struct ph2handle *));
+extern int pk_sendspdupdate2 __P((struct ph2handle *));
+extern int pk_sendspdadd2 __P((struct ph2handle *));
+extern int pk_sendspddelete __P((struct ph2handle *));
 
 extern void pfkey_timeover_stub __P((void *));
 extern void pfkey_timeover __P((struct ph2handle *));
@@ -63,3 +66,5 @@ extern u_int ipsecdoi2pfkey_mode __P((u_int));
 extern int pfkey_convertfromipsecdoi __P(( u_int, u_int, u_int,
 	u_int *, u_int *, u_int *, u_int *, u_int *));
 extern u_int32_t pk_getseq __P((void));
+extern const char *sadbsecas2str
+	__P((struct sockaddr *, struct sockaddr *, int, u_int32_t, int));

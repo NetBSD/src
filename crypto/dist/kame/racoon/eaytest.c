@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.20 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: eaytest.c,v 1.22 2001/07/11 13:17:53 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -420,47 +420,77 @@ ciphertest()
 void
 hmactest()
 {
-	u_char *keyword = "hehehe test secret!";
-	vchar_t kir, ki, kr;
-	vchar_t *key, *data, *res, *data2;
+	char *keyword = "hehehe test secret!";
+	char *object  = "d7e6a6c1876ef0488bb74958b9fee94e";
+	char *object1 = "d7e6a6c1876ef048";
+	char *object2 =                 "8bb74958b9fee94e";
+	char *r_hmd5  = "5702d7d1 fd1bfc7e 210fc9fa cda7d02c";
+	char *r_hsha1 = "309999aa 9779a43e ebdea839 1b4e7ee1 d8646874";
+	vchar_t *key, *data, *data1, *data2, *res;
+	vchar_t mod;
+	caddr_t ctx;
 
 	printf("\n**Test for HMAC MD5 & SHA1.**\n");
-
-	kir.v = str2val("d7e6a6c1876ef0488bb74958b9fee94efdb563d4e18de4ec03a4a1842d432985", 16, &kir.l);
-	ki.v = str2val("d7e6a6c1876ef0488bb74958b9fee94e", 16, &ki.l);
-	kr.v = str2val("fdb563d4e18de4ec03a4a1842d432985", 16, &kr.l);
 
 	key = vmalloc(strlen(keyword));
 	memcpy(key->v, keyword, key->l);
 
-	data = vmalloc(kir.l);
-	memcpy(data->v, kir.v, kir.l);
+	data = vmalloc(strlen(object));
+	data1 = vmalloc(strlen(object1));
+	data2 = vmalloc(strlen(object2));
+	memcpy(data->v, object, data->l);
+	memcpy(data1->v, object1, data1->l);
+	memcpy(data2->v, object2, data2->l);
 
 	/* HMAC MD5 */
-	printf("HMAC MD5\n");
+	printf("HMAC MD5 by eay_hmacmd5_one()\n");
 	res = eay_hmacmd5_one(key, data);
 	PVDUMP(res);
+	mod.v = str2val(r_hmd5, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l))
+		printf(" XXX NG XXX\n");
+	free(mod.v);
+	vfree(res);
+
+	/* HMAC MD5 */
+	printf("HMAC MD5 by eay_hmacmd5_xxx()\n");
+	ctx = eay_hmacmd5_init(key);
+	eay_hmacmd5_update(ctx, data1);
+	eay_hmacmd5_update(ctx, data2);
+	res = eay_hmacmd5_final(ctx);
+	PVDUMP(res);
+	mod.v = str2val(r_hmd5, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l))
+		printf(" XXX NG XXX\n");
+	free(mod.v);
 	vfree(res);
 
 	/* HMAC SHA1 */
-	printf("HMAC SHA1\n");
+	printf("HMAC SHA1 by eay_hmacsha1_one()\n");
 	res = eay_hmacsha1_one(key, data);
 	PVDUMP(res);
+	mod.v = str2val(r_hsha1, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l))
+		printf(" XXX NG XXX\n");
+	free(mod.v);
+	vfree(res);
+
+	/* HMAC MD5 */
+	printf("HMAC SHA1 by eay_hmacsha1_xxx()\n");
+	ctx = eay_hmacsha1_init(key);
+	eay_hmacsha1_update(ctx, data1);
+	eay_hmacsha1_update(ctx, data2);
+	res = eay_hmacsha1_final(ctx);
+	PVDUMP(res);
+	mod.v = str2val(r_hsha1, 16, &mod.l);
+	if (memcmp(res->v, mod.v, mod.l))
+		printf(" XXX NG XXX\n");
+	free(mod.v);
 	vfree(res);
 
 	vfree(data);
-
-	/* HMAC SHA1 */
-	data = vmalloc(ki.l);
-	memcpy(data->v, ki.v, ki.l);
-	data2 = vmalloc(kr.l);
-	memcpy(data2->v, kr.v, kr.l);
-
-	printf("HMAC SHA1\n");
-	res = (vchar_t *)eay_hmacsha1_oneX(key, data, data2);
-	PVDUMP(res);
-	vfree(res);
-
+	vfree(data1);
+	vfree(data2);
 	vfree(key);
 }
 

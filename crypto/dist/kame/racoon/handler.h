@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.38 2001/03/05 18:37:07 thorpej Exp $	*/
+/*	$KAME: handler.h,v 1.41 2001/07/14 05:48:32 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -137,10 +137,8 @@ struct ph1handle {
 	vchar_t *sig;			/* SIG minus general header */
 	vchar_t *sig_p;			/* peer's SIG minus general header */
 	cert_t *cert;			/* CERT minus general header */
-	cert_t *cert_p;			/* peer's CERT not including general *
-					 * header and certificate type.      */
-	cert_t *crl_p;			/* peer's CRL not including general  *
-					 * header and certificate type.      */
+	cert_t *cert_p;			/* peer's CERT minus general header */
+	cert_t *crl_p;			/* peer's CRL minus general header */
 	cert_t *cr_p;			/* peer's CR not including general */
 	vchar_t *id;			/* ID minus gen header */
 	vchar_t *id_p;			/* partner's ID minus general header */
@@ -165,6 +163,10 @@ struct ph1handle {
 	struct isakmp_pl_hash *pl_hash;	/* pointer to hash payload */
 
 	time_t created;			/* timestamp for establish */
+#ifdef ENABLE_STATS
+	struct timeval start;
+	struct timeval end;
+#endif
 
 	u_int32_t msgid2;		/* msgid counter for Phase 2 */
 	int ph2cnt;			/* count to negotiate phase 2. */
@@ -247,6 +249,7 @@ struct ph2handle {
 	struct sainfo *sainfo;		/* place holder of sainfo */
 	struct saprop *proposal;	/* SA(s) proposal. */
 	struct saprop *approval;	/* SA(s) approved. */
+	caddr_t spidx_gen;		/* policy from peer's proposal */
 
 	struct dhgroup *pfsgrp;		/* DH; prime number */
 	vchar_t *dhpriv;		/* DH; private value */
@@ -269,6 +272,10 @@ struct ph2handle {
 
 	struct isakmp_ivm *ivm;		/* IVs */
 
+#ifdef ENABLE_STATS
+	struct timeval start;
+	struct timeval end;
+#endif
 	struct ph1handle *ph1;	/* back pointer to isakmp status */
 
 	LIST_ENTRY(ph2handle) chain;

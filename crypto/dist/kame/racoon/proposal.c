@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.30 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: proposal.c,v 1.34 2001/07/10 04:07:03 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -901,7 +901,7 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 {
 	struct saprop *newpp;
 	struct ipsecrequest *req;
-	int encmodesv;
+	int encmodesv = IPSEC_MODE_TRANSPORT; /* use only when complex_bundle */
 
 	newpp = newsaprop();
 	if (newpp == NULL) {
@@ -914,18 +914,21 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 	newpp->lifebyte = iph2->sainfo->lifebyte;
 	newpp->pfs_group = iph2->sainfo->pfs_group;
 
-	encmodesv = IPSECDOI_ATTR_ENC_MODE_ANY;
-
 	if (lcconf->complex_bundle)
 		goto skip1;
 
-	/* decide encryption mode */
+	/*
+	 * decide the encryption mode of this SA bundle.
+	 * the mode becomes tunnel mode when there is even one policy
+	 * of tunnel mode in the SPD.  otherwise the mode becomes
+	 * transport mode.
+	 */
+	encmodesv = IPSEC_MODE_TRANSPORT;
 	for (req = sp_out->req; req; req = req->next) {
 		if (req->saidx.mode == IPSEC_MODE_TUNNEL) {
 			encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
 			break;
 		}
-		encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
 	}
 
     skip1:
@@ -970,10 +973,7 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 		else
 			newpr->encmode = encmodesv;
 
-		if (iph2->side == INITIATOR)
-			newpr->reqid_out = req->saidx.reqid;
-		else
-			newpr->reqid_in = req->saidx.reqid;
+		newpr->reqid_out = req->saidx.reqid;
 
 		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -1006,7 +1006,66 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 
 	iph2->proposal = newpp;
 
+	printsaprop0(LLV_DEBUG, newpp);
+
 	return 0;
 err:
 	return -1;
+}
+
+/*
+ * generate a policy from peer's proposal.
+ * this function unconditionally choices first proposal in SA payload
+ * passed by peer.
+ */
+int
+set_proposal_from_proposal(iph2)
+	struct ph2handle *iph2;
+{
+	struct prop_pair **pair;
+	struct saprop *pp;
+	struct saproto *pr;
+	int error = -1;
+	int i;
+
+	/* get proposal pair */
+	pair = get_proppair(iph2->sa, IPSECDOI_TYPE_PH2);
+	if (pair == NULL)
+		goto end;
+
+	/* choice the first proposal */
+	for (i = 0; i < MAXPROPPAIRLEN; i++) {
+		if (pair[i] != NULL)
+			break;
+	}
+
+	if (i == MAXPROPPAIRLEN)
+		goto end;
+
+	pp = aproppair2saprop(pair[i]);
+	if (!pp)
+		goto end;
+
+	/* reverse SPI */
+	for (pr = pp->head; pr; pr = pr->next) {
+		pr->spi_p = pr->spi;	/* copy peer's SPI */
+		pr->spi = 0;		/* initialize */
+	}
+
+	plog(LLV_DEBUG, LOCATION, NULL, "choice a proposal from peer's:\n");
+	printsaprop0(LLV_DEBUG, pp);  
+
+	iph2->approval = pp;
+
+	/* make a SA to be replayed. */ 
+	/* SPI must be updated later. */
+	iph2->sa_ret = get_sabyproppair(pair[i], iph2->ph1);
+	if (iph2->sa_ret == NULL)
+		goto end;
+
+	error = 0;
+
+end:
+	free_proppair(pair);
+	return error;
 }

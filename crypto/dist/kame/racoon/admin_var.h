@@ -1,4 +1,4 @@
-/*	$KAME: admin_var.h,v 1.3 2000/10/04 17:40:58 itojun Exp $	*/
+/*	$KAME: admin_var.h,v 1.4 2001/06/01 10:12:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#define PORT_ADMIN ((u_short)61225)
+#define PORT_ADMIN "/tmp/.racoon"
 
 extern int admin_handler __P((void));
 extern int admin_init __P((void));

@@ -1,4 +1,4 @@
-/*	$KAME: plog.c,v 1.16 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: plog.c,v 1.17 2001/06/01 08:26:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -213,10 +213,8 @@ ploginit()
 {
 	if (logfile) {
 		logp = log_open(250, logfile);
-		if (logp == NULL) {
-			fprintf(stderr, "failed to open log file %s.", logfile);
-			exit(1);
-		}
+		if (logp == NULL)
+			errx(1, "ERROR: failed to open log file %s.", logfile);
 		return;
 	}
 
