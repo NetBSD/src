@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.9 2003/01/18 11:29:04 thorpej Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.10 2003/09/09 00:22:17 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.9 2003/01/18 11:29:04 thorpej Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.10 2003/09/09 00:22:17 itojun Exp $");
 #endif
 #endif
  
@@ -165,9 +165,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
-	struct timeval now;
 	struct rpc_msg call_msg;
-	static u_int32_t disrupt;
 #ifdef _REENTRANT
 	sigset_t mask;
 #endif
@@ -177,9 +175,6 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	struct __rpc_sockinfo si;
 
 	_DIAGASSERT(raddr != NULL);
-
-	if (disrupt == 0)
-		disrupt = (u_int32_t)(long)raddr;
 
 	h  = mem_alloc(sizeof(*h));
 	if (h == NULL) {
@@ -273,8 +268,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	/*
 	 * Initialize call message
 	 */
-	(void)gettimeofday(&now, NULL);
-	call_msg.rm_xid = ((u_int32_t)++disrupt) ^ __RPC_GETXID(&now);
+	call_msg.rm_xid = __RPC_GETXID();
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = (u_int32_t)prog;
