@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.2 2003/07/15 03:36:21 lukem Exp $	*/
+/*	$NetBSD: stub.c,v 1.3 2005/01/22 15:36:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stub.c,v 1.2 2003/07/15 03:36:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stub.c,v 1.3 2005/01/22 15:36:12 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,10 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: stub.c,v 1.2 2003/07/15 03:36:21 lukem Exp $");
  * When DDB is included, cpu_Debugger() comes from db_interface.c
  * otherwise we get the one compiled here.
  */
-void
-cpu_Debugger()
+void 
+cpu_Debugger(void)
 {
 	__asm ("trap #15");
 }
 #endif	/* !DDB */
-

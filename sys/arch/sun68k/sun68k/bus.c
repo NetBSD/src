@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.11 2003/08/07 16:30:01 agc Exp $	*/
+/*	$NetBSD: bus.c,v 1.12 2005/01/22 15:36:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.11 2003/08/07 16:30:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.12 2005/01/22 15:36:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,15 +184,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.11 2003/08/07 16:30:01 agc Exp $");
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
  */
-int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+int 
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct sun68k_bus_dmamap *map;
 	void *mapstore;
@@ -216,7 +210,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct sun68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -235,10 +229,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * Common function for DMA map destruction.  May be called by bus-specific
  * DMA map destruction functions.
  */
-void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+void 
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*
@@ -254,14 +246,10 @@ _bus_dmamap_destroy(t, map)
  * Common function for DMA-safe memory allocation.  May be called
  * by bus-specific DMA memory allocation functions.
  */
-int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+int 
+_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	vaddr_t low, high;
 	struct pglist *mlist;
@@ -312,11 +300,8 @@ extern	paddr_t avail_end;
  * Common function for freeing DMA-safe memory.  May be called by
  * bus-specific DMA memory free functions.
  */
-void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+void 
+_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 
 	if (nsegs != 1)
@@ -333,14 +318,9 @@ _bus_dmamem_free(t, segs, nsegs)
  * Common function for mapping DMA-safe memory.  May be called by
  * bus-specific DMA memory map functions.
  */
-int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+int 
+_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	struct vm_page *m;
 	vaddr_t va;
@@ -382,11 +362,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
  * Common function for unmapping DMA-safe memory.  May be called by
  * bus-specific DMA memory unmapping functions.
  */
-void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+void 
+_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -402,13 +379,9 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+paddr_t 
+_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
+    int prot, int flags)
 {
 
 	panic("_bus_dmamem_mmap: not implemented");
@@ -417,12 +390,8 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 /*
  * Utility to allocate an aligned kernel virtual address range
  */
-vaddr_t
-_bus_dma_valloc_skewed(size, boundary, align, skew)
-	size_t size;
-	u_long boundary;
-	u_long align;
-	u_long skew;
+vaddr_t 
+_bus_dma_valloc_skewed(size_t size, u_long boundary, u_long align, u_long skew)
 {
 	size_t oversize;
 	vaddr_t va, sva;
@@ -484,12 +453,9 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 /*
  * Like _bus_dmamap_load(), but for mbufs.
  */
-int
-_bus_dmamap_load_mbuf(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+int 
+_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
+    int flags)
 {
 
 	panic("_bus_dmamap_load_mbuf: not implemented");
@@ -498,12 +464,9 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 /*
  * Like _bus_dmamap_load(), but for uios.
  */
-int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+int 
+_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 
 	panic("_bus_dmamap_load_uio: not implemented");
@@ -513,13 +476,9 @@ _bus_dmamap_load_uio(t, map, uio, flags)
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
  */
-void
-_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+void 
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 }
 
@@ -545,37 +504,31 @@ struct sun68k_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-int		sun68k_find_prom_map __P(( bus_addr_t, bus_type_t, 
-					   int, bus_space_handle_t *));
-static int	sun68k_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
-				    bus_size_t, int, vaddr_t,
-				    bus_space_handle_t *));
-static int	sun68k_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
-				     bus_size_t));
-static int	sun68k_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
-					 bus_size_t, bus_size_t,
-					 bus_space_handle_t *));
-static paddr_t	sun68k_bus_mmap __P((bus_space_tag_t, bus_type_t,
-				    bus_addr_t, off_t, int, int));
-static void	*sun68k_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int, int (*) __P((void *)),
-						   void *));
-static void     sun68k_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
-					bus_size_t, bus_size_t, int));
-static int	sun68k_bus_peek __P(( bus_space_tag_t, bus_space_handle_t,
-				      bus_size_t, size_t, void *));
-static int	sun68k_bus_poke __P(( bus_space_tag_t, bus_space_handle_t,
-				      bus_size_t, size_t, u_int32_t));
+int		sun68k_find_prom_map(bus_addr_t, bus_type_t, int,
+		    bus_space_handle_t *);
+static int	sun68k_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
+		    bus_size_t, int, vaddr_t, bus_space_handle_t *);
+static int	sun68k_bus_unmap(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t);
+static int	sun68k_bus_subregion(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, bus_size_t, bus_space_handle_t *);
+static paddr_t	sun68k_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
+		    int, int);
+static void	*sun68k_mainbus_intr_establish(bus_space_tag_t, int, int, int,
+		    int (*)(void *), void *);
+static void     sun68k_bus_barrier(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, bus_size_t, int);
+static int	sun68k_bus_peek(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, size_t, void *);
+static int	sun68k_bus_poke(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t, size_t, uint32_t);
 
 /*
  * If we can find a mapping that was established by the PROM, use it.
  */
 int
-sun68k_find_prom_map(pa, iospace, len, hp)
-	bus_addr_t	pa;
-	bus_type_t	iospace;
-	int		len;
-	bus_space_handle_t *hp;
+sun68k_find_prom_map(bus_addr_t pa, bus_type_t iospace, int len,
+    bus_space_handle_t *hp)
 {
 	u_long	pf;
 	int	pgtype;
@@ -634,13 +587,8 @@ sun68k_find_prom_map(pa, iospace, len, hp)
 }
 
 int
-sun68k_bus_map(t, iospace, addr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	addr;
-	bus_size_t	size;
-	vaddr_t		vaddr;
-	bus_space_handle_t *hp;
+sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
 {
 	bus_size_t	offset;
 	vaddr_t v;
@@ -685,11 +633,8 @@ sun68k_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	return (0);
 }
 
-int
-sun68k_bus_unmap(t, bh, size)
-	bus_space_tag_t t;
-	bus_size_t	size;
-	bus_space_handle_t bh;
+int 
+sun68k_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 {
 	bus_size_t	offset;
 	vaddr_t va = (vaddr_t)bh;
@@ -722,28 +667,20 @@ sun68k_bus_unmap(t, bh, size)
 	return (0);
 }
 
-int
-sun68k_bus_subregion(tag, handle, offset, size, nhandlep)
-	bus_space_tag_t		tag;
-	bus_space_handle_t	handle;
-	bus_size_t		offset;
-	bus_size_t		size;
-	bus_space_handle_t	*nhandlep;
+int 
+sun68k_bus_subregion(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep)
 {
 	*nhandlep = handle + offset;
 	return (0);
 }
 
 paddr_t
-sun68k_bus_mmap(t, iospace, paddr, offset, prot, flags)
-	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	paddr;
-	off_t		offset;
-	int		prot;
-	int		flags;
+sun68k_bus_mmap(bus_space_tag_t t, bus_type_t iospace, bus_addr_t paddr,
+    off_t offset, int prot, int flags)
 {
 	paddr_t npaddr;
+
 	npaddr = m68k_trunc_page(paddr + offset);
 	return (npaddr | (paddr_t)iospace | PMAP_NC);
 }
@@ -754,17 +691,13 @@ sun68k_bus_mmap(t, iospace, paddr, offset, prot, flags)
 
 extern label_t *nofault;
 
-int
-sun68k_bus_peek(tag, handle, offset, size, vp)
-	bus_space_tag_t 	tag;
-	bus_space_handle_t	handle;
-	bus_size_t		offset;
-	size_t			size;
-	void 			*vp;
+int 
+sun68k_bus_peek(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_size_t offset, size_t size, void *vp)
 {
 	int result;
 	label_t	faultbuf;
-	u_int32_t junk;
+	uint32_t junk;
 	
 	if (vp == NULL)
 		vp = &junk;
@@ -775,13 +708,13 @@ sun68k_bus_peek(tag, handle, offset, size, vp)
 	else {
 		switch(size) {
 		case 1:
-			*((u_int8_t *) vp) = bus_space_read_1(tag, handle, offset);
+			*((uint8_t *) vp) = bus_space_read_1(tag, handle, offset);
 			break;
 		case 2:
-			*((u_int16_t *) vp) = bus_space_read_2(tag, handle, offset);
+			*((uint16_t *) vp) = bus_space_read_2(tag, handle, offset);
 			break;
 		case 4:
-			*((u_int32_t *) vp) = bus_space_read_4(tag, handle, offset);
+			*((uint32_t *) vp) = bus_space_read_4(tag, handle, offset);
 			break;
 		default:
 			panic("_bus_space_peek: bad size");
@@ -793,13 +726,9 @@ sun68k_bus_peek(tag, handle, offset, size, vp)
 	return (result);
 }
 
-int
-sun68k_bus_poke(tag, handle, offset, size, v)
-	bus_space_tag_t 	tag;
-	bus_space_handle_t	handle;
-	bus_size_t		offset;
-	size_t			size;
-	u_int32_t		v;
+int 
+sun68k_bus_poke(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_size_t offset, size_t size, uint32_t v)
 {
 	int result;
 	label_t	faultbuf;
@@ -810,13 +739,13 @@ sun68k_bus_poke(tag, handle, offset, size, v)
 	else {
 		switch(size) {
 		case 1:
-			bus_space_write_1(tag, handle, offset, (u_int8_t) v);
+			bus_space_write_1(tag, handle, offset, (uint8_t) v);
 			break;
 		case 2:
-			bus_space_write_2(tag, handle, offset, (u_int16_t) v);
+			bus_space_write_2(tag, handle, offset, (uint16_t) v);
 			break;
 		case 4:
-			bus_space_write_4(tag, handle, offset, (u_int32_t) v);
+			bus_space_write_4(tag, handle, offset, (uint32_t) v);
 			break;
 		default:
 			panic("_bus_space_poke: bad size");
@@ -829,24 +758,16 @@ sun68k_bus_poke(tag, handle, offset, size, v)
 }
 
 void *
-sun68k_mainbus_intr_establish(t, pil, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int	pil;
-	int	level;
-	int	flags;
-	int	(*handler)__P((void *));
-	void	*arg;
+sun68k_mainbus_intr_establish(bus_space_tag_t t, int pil, int level, int flags,
+    int (*handler)(void *), void *arg)
 {
 	isr_add_autovect(handler, arg, pil);
 	return (NULL);
 }
 
-void sun68k_bus_barrier (t, h, offset, size, flags)
-	bus_space_tag_t	t;
-	bus_space_handle_t h;
-	bus_size_t	offset;
-	bus_size_t	size;
-	int		flags;
+void
+sun68k_bus_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
+    bus_size_t size, int flags)
 {
 	/* No default barrier action defined */
 	return;

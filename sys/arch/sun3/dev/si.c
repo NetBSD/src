@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.55 2004/12/13 02:33:06 chs Exp $	*/
+/*	$NetBSD: si.c,v 1.56 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.55 2004/12/13 02:33:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.56 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,16 +118,15 @@ int si_debug = 0;
 /* How long to wait for DMA before declaring an error. */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
-static void	si_minphys __P((struct buf *));
+static void	si_minphys(struct buf *);
 
 /*
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
  */
 
-void
-si_attach(sc)
-	struct si_softc *sc;
+void 
+si_attach(struct si_softc *sc)
 {
 	struct ncr5380_softc *ncr_sc = (void *)sc;
 	volatile struct si_regs *regs = sc->sc_regs;
@@ -264,9 +263,8 @@ si_intr(void *arg)
  * for DMA transfer.  On the Sun3, this means mapping the buffer
  * into DVMA space.  dvma_mapin() flushes the cache for us.
  */
-void
-si_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -352,9 +350,8 @@ found:
 }
 
 
-void
-si_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
@@ -388,9 +385,8 @@ si_dma_free(ncr_sc)
  * xx_dma_stop() will be called next.
  * Same for either VME or OBIO.
  */
-void
-si_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

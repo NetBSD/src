@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.21 2003/07/15 03:36:15 lukem Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.22 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.21 2003/07/15 03:36:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.22 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,32 +119,32 @@ struct se_softc {
 #define SE_FORCE_POLLING 0x10000
 #define SE_DISABLE_DMA   0x20000
 
-void se_dma_alloc __P((struct ncr5380_softc *));
-void se_dma_free __P((struct ncr5380_softc *));
-void se_dma_poll __P((struct ncr5380_softc *));
+void se_dma_alloc(struct ncr5380_softc *);
+void se_dma_free(struct ncr5380_softc *);
+void se_dma_poll(struct ncr5380_softc *);
 
-void se_dma_setup __P((struct ncr5380_softc *));
-void se_dma_start __P((struct ncr5380_softc *));
-void se_dma_eop __P((struct ncr5380_softc *));
-void se_dma_stop __P((struct ncr5380_softc *));
+void se_dma_setup(struct ncr5380_softc *);
+void se_dma_start(struct ncr5380_softc *);
+void se_dma_eop(struct ncr5380_softc *);
+void se_dma_stop(struct ncr5380_softc *);
 
-void se_intr_on  __P((struct ncr5380_softc *));
-void se_intr_off __P((struct ncr5380_softc *));
+void se_intr_on (struct ncr5380_softc *);
+void se_intr_off(struct ncr5380_softc *);
 
-static int  se_intr __P((void *));
-static void se_reset __P((struct ncr5380_softc *));
+static int  se_intr(void *);
+static void se_reset(struct ncr5380_softc *);
 
 /*
  * New-style autoconfig attachment
  */
 
-static int	se_match __P((struct device *, struct cfdata *, void *));
-static void	se_attach __P((struct device *, struct device *, void *));
+static int	se_match(struct device *, struct cfdata *, void *);
+static void	se_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(si_sebuf, sizeof(struct se_softc),
     se_match, se_attach, NULL, NULL);
 
-static void	se_minphys __P((struct buf *));
+static void	se_minphys(struct buf *);
 
 /* Options for disconnect/reselect, DMA, and interrupts. */
 int se_options = SE_DISABLE_DMA | SE_FORCE_POLLING | 0xff;
@@ -154,11 +154,8 @@ int se_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 int se_debug = 0;
 
-static int
-se_match(parent, cf, args)
-	struct device	*parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+se_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct sebuf_attach_args *aa = args;
 
@@ -171,10 +168,8 @@ se_match(parent, cf, args)
 	return (1);
 }
 
-static void
-se_attach(parent, self, args)
-	struct device	*parent, *self;
-	void		*args;
+static void 
+se_attach(struct device *parent, struct device *self, void *args)
 {
 	struct se_softc *sc = (struct se_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -308,9 +303,8 @@ se_reset(struct ncr5380_softc *ncr_sc)
  * Who would have guessed!
  * What a NASTY trick!
  */
-void
-se_intr_on(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_intr_on(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	volatile struct se_regs *se = sc->sc_regs;
@@ -332,9 +326,8 @@ se_intr_on(ncr_sc)
  * This is called when the bus is idle and we are
  * about to start playing with the SBC chip.
  */
-void
-se_intr_off(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_intr_off(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	volatile struct se_regs *se = sc->sc_regs;
@@ -353,9 +346,8 @@ se_intr_off(ncr_sc)
  * when the FIFO is not empty or the FIFO count is non-zero!
  * XXX: Need to copy data into the DMA buffer...
  */
-void
-se_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -400,9 +392,8 @@ se_dma_setup(ncr_sc)
 }
 
 
-void
-se_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -450,18 +441,16 @@ se_dma_start(ncr_sc)
 }
 
 
-void
-se_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
 
 
-void
-se_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -578,9 +567,8 @@ se_intr(void *arg)
  * for DMA transfer.  On the Sun3/E, this means we have to
  * allocate space in the DMA buffer for this transfer.
  */
-void
-se_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -653,9 +641,8 @@ found:
 }
 
 
-void
-se_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct se_dma_handle *dh = sr->sr_dma_hand;
@@ -688,9 +675,8 @@ se_dma_free(ncr_sc)
  * xx_dma_stop() will be called next.
  * Same for either VME or OBIO.
  */
-void
-se_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+se_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	struct se_softc *sc = (struct se_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

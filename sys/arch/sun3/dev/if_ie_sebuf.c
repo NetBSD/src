@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.10 2003/07/15 03:36:15 lukem Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.11 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.10 2003/07/15 03:36:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.11 2005/01/22 15:36:10 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -74,33 +74,30 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.10 2003/07/15 03:36:15 lukem Exp $
 #include "sereg.h"
 #include "sevar.h"
 
-static void ie_sebuf_reset __P((struct ie_softc *));
-static void ie_sebuf_attend __P((struct ie_softc *));
-static void ie_sebuf_run __P((struct ie_softc *));
+static void ie_sebuf_reset(struct ie_softc *);
+static void ie_sebuf_attend(struct ie_softc *);
+static void ie_sebuf_run(struct ie_softc *);
 
 /*
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void *wmemcpy __P((void *dst, const void *src, size_t size));
-static void *wmemset __P((void *dst, int val, size_t size));
+static void *wmemcpy(void *, const void *, size_t);
+static void *wmemset(void *, int, size_t);
 
 
 /*
  * New-style autoconfig attachment
  */
 
-static int  ie_sebuf_match __P((struct device *, struct cfdata *, void *));
-static void ie_sebuf_attach __P((struct device *, struct device *, void *));
+static int  ie_sebuf_match(struct device *, struct cfdata *, void *);
+static void ie_sebuf_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ie_sebuf, sizeof(struct ie_softc),
     ie_sebuf_match, ie_sebuf_attach, NULL, NULL);
 
-static int
-ie_sebuf_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+ie_sebuf_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct sebuf_attach_args *aa = args;
 
@@ -113,11 +110,8 @@ ie_sebuf_match(parent, cf, args)
 	return (1);
 }
 
-static void
-ie_sebuf_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 {
 	struct ie_softc *sc = (void *) self;
 	struct sebuf_attach_args *aa = args;
@@ -197,8 +191,7 @@ ie_sebuf_attach(parent, self, args)
 
 /* Whack the "channel attetion" line. */
 void 
-ie_sebuf_attend(sc)
-	struct ie_softc *sc;
+ie_sebuf_attend(struct ie_softc *sc)
 {
 	volatile struct ie_regs *regs = (struct ie_regs *) sc->sc_reg;
 
@@ -211,8 +204,7 @@ ie_sebuf_attend(sc)
  * Reset and initialize.
  */
 void 
-ie_sebuf_reset(sc)
-	struct ie_softc *sc;
+ie_sebuf_reset(struct ie_softc *sc)
 {
 	volatile struct ie_regs *regs = (struct ie_regs *) sc->sc_reg;
 	regs->ie_csr = IE_CSR_RESET;
@@ -224,9 +216,8 @@ ie_sebuf_reset(sc)
  * This is called at the end of ieinit().
  * optional.
  */
-void
-ie_sebuf_run(sc)
-	struct ie_softc *sc;
+void 
+ie_sebuf_run(struct ie_softc *sc)
 {
 	/* do it all in reset */
 }
@@ -238,10 +229,7 @@ ie_sebuf_run(sc)
  */
 
 static void *
-wmemset(vb, val, l)
-	void *vb;
-	int val;
-	size_t l;
+wmemset(void *vb, int val, size_t l)
 {
 	u_char *b = vb;
 	u_char *be = b + l;
@@ -269,10 +257,7 @@ wmemset(vb, val, l)
 }
 
 static void *
-wmemcpy(dst, src, l)
-	void *dst;
-	const void *src;
-	size_t l;
+wmemcpy(void *dst, const void *src, size_t l)
 {
 	const u_char *b1e, *b1 = src;
 	u_char *b2 = dst;

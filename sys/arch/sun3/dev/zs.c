@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.72 2003/07/15 03:36:16 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.73 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.72 2003/07/15 03:36:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.73 2005/01/22 15:36:10 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -161,8 +161,8 @@ static u_char zs_init_reg[16] = {
 
 
 /* Find PROM mappings (for console support). */
-void
-zs_init()
+void 
+zs_init(void)
 {
 	int i;
 
@@ -173,8 +173,7 @@ zs_init()
 }
 
 struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
+zs_get_chan_addr(int zs_unit, int channel)
 {
 	struct zsdevice *addr;
 	struct zschan *zc;
@@ -198,28 +197,25 @@ zs_get_chan_addr(zs_unit, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_match __P((struct device *, struct cfdata *, void *));
-static void	zs_attach __P((struct device *, struct device *, void *));
-static int  zs_print __P((void *, const char *name));
+static int	zs_match(struct device *, struct cfdata *, void *);
+static void	zs_attach(struct device *, struct device *, void *);
+static int	zs_print(void *, const char *);
 
 CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
-static int zshard __P((void *));
-static int zssoft __P((void *));
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zshard(void *);
+static int zssoft(void *);
+static int zs_get_speed(struct zs_chanstate *);
 
 
 /*
  * Is the zs chip present?
  */
-static int
-zs_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+zs_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int unit;
@@ -259,11 +255,8 @@ zs_match(parent, cf, aux)
  * Match slave number to zs unit number, so that misconfiguration will
  * not set up the keyboard as ttya, etc.
  */
-static void
-zs_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+zs_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct confargs *ca = aux;
@@ -375,10 +368,8 @@ zs_attach(parent, self, aux)
 	}
 }
 
-static int
-zs_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -397,9 +388,8 @@ static volatile int zssoftpending;
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
-static int
-zshard(arg)
-	void *arg;
+static int 
+zshard(void *arg)
 {
 	struct zsc_softc *zsc;
 	int unit, rval, softreq;
@@ -425,9 +415,8 @@ zshard(arg)
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-static int
-zssoft(arg)
-	void *arg;
+static int 
+zssoft(void *arg)
 {
 	struct zsc_softc *zsc;
 	int s, unit;
@@ -461,9 +450,8 @@ zssoft(arg)
 /*
  * Compute the current baud rate given a ZS channel.
  */
-static int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+static int 
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
@@ -475,10 +463,8 @@ zs_get_speed(cs)
 /*
  * MD functions for setting the baud rate and control modes.
  */
-int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+int 
+zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	int tconst, real_bps;
 
@@ -508,10 +494,8 @@ zs_set_speed(cs, bps)
 	return (0);
 }
 
-int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+int 
+zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 {
 	int s;
 
@@ -555,9 +539,7 @@ zs_set_modes(cs, cflag)
  */
 
 u_char
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_char reg;
+zs_read_reg(struct zs_chanstate *cs, u_char reg)
 {
 	u_char val;
 
@@ -569,9 +551,7 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_char reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 {
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
@@ -579,8 +559,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
-	struct zs_chanstate *cs;
+u_char
+zs_read_csr(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -589,16 +569,15 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void
+zs_write_csr(struct zs_chanstate *cs, u_char val)
 {
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
-	struct zs_chanstate *cs;
+u_char
+zs_read_data(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -607,9 +586,8 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void
+zs_write_data(struct zs_chanstate *cs, u_char val)
 {
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
@@ -627,9 +605,8 @@ void *zs_conschan;
 /*
  * Handle user request to enter kernel debugger.
  */
-void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+void 
+zs_abort(struct zs_chanstate *cs)
 {
 	volatile struct zschan *zc = zs_conschan;
 	int rr0;
@@ -648,9 +625,8 @@ zs_abort(cs)
 /*
  * Polled input char.
  */
-int
-zs_getc(arg)
-	void *arg;
+int 
+zs_getc(void *arg)
 {
 	volatile struct zschan *zc = arg;
 	int s, c, rr0;
@@ -676,10 +652,8 @@ zs_getc(arg)
 /*
  * Polled output char.
  */
-void
-zs_putc(arg, c)
-	void *arg;
-	int c;
+void 
+zs_putc(void *arg, int c)
 {
 	volatile struct zschan *zc = arg;
 	int s, rr0;
@@ -698,9 +672,9 @@ zs_putc(arg, c)
 
 /*****************************************************************/
 
-static void zscninit __P((struct consdev *));
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
+static void zscninit(struct consdev *);
+static int  zscngetc(dev_t);
+static void zscnputc(dev_t, int);
 
 /*
  * Console table shared by ttya, ttyb
@@ -714,18 +688,16 @@ struct consdev consdev_tty = {
 	NULL,
 };
 
-static void
-zscninit(cn)
-	struct consdev *cn;
+static void 
+zscninit(struct consdev *cn)
 {
 }
 
 /*
  * Polled console input putchar.
  */
-static int
-zscngetc(dev)
-	dev_t dev;
+static int 
+zscngetc(dev_t dev)
 {
 	return (zs_getc(zs_conschan));
 }
@@ -733,19 +705,17 @@ zscngetc(dev)
 /*
  * Polled console output putchar.
  */
-static void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+static void 
+zscnputc(dev_t dev, int c)
 {
 	zs_putc(zs_conschan, c);
 }
 
 /*****************************************************************/
 
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -767,15 +737,13 @@ struct consdev consdev_prom = {
  */
 struct consdev *cn_tab = &consdev_prom;
 
-void
-nullcnprobe(cn)
-	struct consdev *cn;
+void 
+nullcnprobe(struct consdev *cn)
 {
 }
 
-static void
-prom_cninit(cn)
-	struct consdev *cn;
+static void 
+prom_cninit(struct consdev *cn)
 {
 }
 
@@ -783,9 +751,8 @@ prom_cninit(cn)
  * PROM console input putchar.
  * (dummy - this is output only)
  */
-static int
-prom_cngetc(dev)
-	dev_t dev;
+static int 
+prom_cngetc(dev_t dev)
 {
 	return (0);
 }
@@ -793,10 +760,8 @@ prom_cngetc(dev)
 /*
  * PROM console output putchar.
  */
-static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+static void 
+prom_cnputc(dev_t dev, int c)
 {
 	(*romVectorPtr->putChar)(c & 0x7f);
 }
@@ -825,8 +790,8 @@ static char *prom_inSrc_name[] = {
  * Determine which device is the console using
  * the PROM "input source" and "output sink".
  */
-void
-cninit()
+void 
+cninit(void)
 {
 	struct sunromvec *v;
 	struct zschan *zc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/06/14 12:57:11 fredette Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -69,9 +69,9 @@ struct softintr_handler {
 	int sh_pending;
 };
 
-extern void softintr_init __P((void));
-extern void *softintr_establish __P((int, void (*)(void *), void *));
-extern void softintr_disestablish __P((void *));
+extern void softintr_init(void);
+extern void *softintr_establish(int, void (*)(void *), void *);
+extern void softintr_disestablish(void *);
 
 static __inline void
 softintr_schedule(void *arg)
@@ -84,10 +84,10 @@ softintr_schedule(void *arg)
 }
 
 /* These connect interrupt handlers. */
-typedef int (*isr_func_t) __P((void *));
-extern void isr_add_autovect __P((isr_func_t, void *arg, int level));
-extern void isr_add_vectored __P((isr_func_t, void *arg, int pri, int vec));
-extern void isr_add_custom __P((int, void *));
+typedef int (*isr_func_t)(void *);
+extern void isr_add_autovect(isr_func_t, void *, int);
+extern void isr_add_vectored(isr_func_t, void *, int, int);
+extern void isr_add_custom(int, void *);
 
 #endif /* _KERNEL */
 #endif	/* _SUN68K_INTR_H */

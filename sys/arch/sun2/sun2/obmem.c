@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.12 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: obmem.c,v 1.13 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.12 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.13 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.12 2004/12/13 02:14:13 chs Exp $");
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
 
-static int  obmem_match __P((struct device *, struct cfdata *, void *));
-static void obmem_attach __P((struct device *, struct device *, void *));
+static int  obmem_match(struct device *, struct cfdata *, void *);
+static void obmem_attach(struct device *, struct device *, void *);
 
 struct obmem_softc {
 	struct device	sc_dev;		/* base device */
@@ -65,11 +65,10 @@ CFATTACH_DECL(obmem, sizeof(struct obmem_softc),
 
 static int obmem_attached;
 
-static	paddr_t obmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				off_t, int, int));
-static	int _obmem_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       bus_size_t, int,
-			       vaddr_t, bus_space_handle_t *));
+static	paddr_t obmem_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
+	    off_t, int, int);
+static	int _obmem_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
+	    bus_size_t, int, vaddr_t, bus_space_handle_t *);
 
 static struct sun68k_bus_space_tag obmem_space_tag = {
 	NULL,				/* cookie */
@@ -84,11 +83,8 @@ static struct sun68k_bus_space_tag obmem_space_tag = {
 	NULL				/* bus_space_poke_N */
 }; 
 
-static int
-obmem_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+obmem_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -98,11 +94,8 @@ obmem_match(parent, cf, aux)
 	return (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
-static void
-obmem_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+obmem_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct obmem_softc *sc = (struct obmem_softc *)self;
@@ -146,14 +139,8 @@ obmem_attach(parent, self, aux)
 }
 
 int
-_obmem_bus_map(t, btype, paddr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_obmem_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
 {
 	struct obmem_softc *sc = t->cookie;
 
@@ -162,13 +149,8 @@ _obmem_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 }
 
 paddr_t
-obmem_bus_mmap(t, btype, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+obmem_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
 {
 	struct obmem_softc *sc = t->cookie;
 

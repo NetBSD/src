@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2 2001/06/27 02:51:45 fredette Exp $	*/
+/*	$NetBSD: psl.h,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,13 +54,13 @@
  * (See the GCC extensions info document.)
  */
 
-static __inline int _getsr __P((void));
+static __inline int _getsr(void);
 
 /* Get current sr value. */
 static __inline int
 _getsr(void)
 {
-	register int rv;
+	int rv;
 
 	__asm __volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
 	return (rv);

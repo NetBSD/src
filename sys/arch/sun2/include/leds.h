@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.h,v 1.1 2001/04/06 13:13:04 fredette Exp $	*/
+/*	$NetBSD: leds.h,v 1.2 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct led_patterns {
 };
 
 #ifdef	_KERNEL
-void	leds_init __P((void));
-void	leds_intr __P((void));
-int 	leds_uio __P((struct uio *uio));
+void	leds_init(void);
+void	leds_intr(void);
+int 	leds_uio(struct uio *);
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.8 2003/08/07 16:29:55 agc Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.9 2005/01/22 15:36:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ struct fbdevice {
 	int	fb_flags;		/* copy of cf_flags */
 
 	/* This points to the P4 register if the FB has one. */
-	volatile u_int32_t *fb_pfour;
+	volatile uint32_t *fb_pfour;
 
 	/*
 	 * XXX - The "Raster console" stuff could be stored
@@ -72,31 +72,31 @@ struct fbdevice {
 
 struct fbdriver {
 	/* These avoid the need to know our major number. */
-	int 	(*fbd_open) __P((dev_t, int, int, struct proc *));
-	int 	(*fbd_close) __P((dev_t, int, int, struct proc *));
-	paddr_t	(*fbd_mmap) __P((dev_t, off_t, int));
-	int	(*fbd_kqfilter) __P((dev_t, struct knote *));
+	int 	(*fbd_open)(dev_t, int, int, struct proc *);
+	int 	(*fbd_close)(dev_t, int, int, struct proc *);
+	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
+	int	(*fbd_kqfilter)(dev_t, struct knote *);
 	/* These are the internal ioctl functions */
-	int 	(*fbd_gattr) __P((struct fbdevice *,  void *));
-	int 	(*fbd_gvideo) __P((struct fbdevice *, void *));
-	int 	(*fbd_svideo) __P((struct fbdevice *, void *));
-	int 	(*fbd_getcmap) __P((struct fbdevice *, void *));
-	int 	(*fbd_putcmap) __P((struct fbdevice *, void *));
+	int 	(*fbd_gattr)(struct fbdevice *,  void *);
+	int 	(*fbd_gvideo)(struct fbdevice *, void *);
+	int 	(*fbd_svideo)(struct fbdevice *, void *);
+	int 	(*fbd_getcmap)(struct fbdevice *, void *);
+	int 	(*fbd_putcmap)(struct fbdevice *, void *);
 };
 
-int 	fbioctlfb __P((struct fbdevice *, u_long, caddr_t));
+int 	fbioctlfb(struct fbdevice *, u_long, caddr_t);
 
-void	fb_attach __P((struct fbdevice *, int));
-int 	fb_noioctl __P((struct fbdevice *, void *));
-void	fb_unblank __P((void));
+void	fb_attach(struct fbdevice *, int);
+int 	fb_noioctl(struct fbdevice *, void *);
+void	fb_unblank(void);
 
-void	fb_eeprom_setsize  __P((struct fbdevice *));
+void	fb_eeprom_setsize (struct fbdevice *);
 
-int 	fb_pfour_id __P((void *));
-int 	fb_pfour_get_video __P((struct fbdevice *));
-void	fb_pfour_set_video __P((struct fbdevice *, int));
+int 	fb_pfour_id(void *);
+int 	fb_pfour_get_video(struct fbdevice *);
+void	fb_pfour_set_video(struct fbdevice *, int);
 
-void	fb_pfour_setsize __P((struct fbdevice *));
+void	fb_pfour_setsize(struct fbdevice *);
 
 /* This comes from enable.c */
-void	enable_video __P((int));
+void	enable_video(int);

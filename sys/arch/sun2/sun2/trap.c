@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2004/08/28 17:53:02 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2004/08/28 17:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2005/01/22 15:36:09 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -134,12 +134,12 @@ extern struct emul emul_netbsd_aoutm68k;
 extern char fubail[], subail[];
 
 /* These are called from locore.s */
-void trap __P((int type, u_int code, u_int v, struct trapframe));
-void trap_kdebug __P((int type, struct trapframe tf));
-int _nodb_trap __P((int type, struct trapframe *));
-void straytrap __P((struct trapframe));
+void trap(int type, u_int code, u_int v, struct trapframe);
+void trap_kdebug(int type, struct trapframe tf);
+int _nodb_trap(int type, struct trapframe *);
+void straytrap(struct trapframe);
 
-static void userret __P((struct lwp *, struct trapframe *, u_quad_t));
+static void userret(struct lwp *, struct trapframe *, u_quad_t);
 
 int astpending;
 int want_resched;
@@ -204,11 +204,8 @@ int mmupid = -1;
  * trap and syscall both need the following work done before
  * returning to user mode.
  */
-static void
-userret(l, tf, oticks)
-	struct lwp *l;
-	struct trapframe *tf;
-	u_quad_t oticks;
+static void 
+userret(struct lwp *l, struct trapframe *tf, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
@@ -233,11 +230,8 @@ userret(l, tf, oticks)
  */
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
-void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+void 
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, &f->F_t, t);
@@ -249,11 +243,8 @@ machine_userret(l, f, t)
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
-void
-trap(type, code, v, tf)
-	int type;
-	u_int code, v;
-	struct trapframe tf;
+void 
+trap(int type, u_int code, u_int v, struct trapframe tf)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -628,10 +619,8 @@ done:;
  * when there is no debugger installed (or not attached).
  * Drop into the PROM temporarily...
  */
-int
-_nodb_trap(type, tf)
-	int type;
-	struct trapframe *tf;
+int 
+_nodb_trap(int type, struct trapframe *tf)
 {
 
 	printf("\r\nKernel ");
@@ -656,10 +645,8 @@ _nodb_trap(type, tf)
  * If we have both DDB and KGDB, let KGDB see it first,
  * because KGDB will just return 0 if not connected.
  */
-void
-trap_kdebug(type, tf)
-	int type;
-	struct trapframe tf;
+void 
+trap_kdebug(int type, struct trapframe tf)
 {
 
 #ifdef	KGDB
@@ -681,9 +668,8 @@ trap_kdebug(type, tf)
  * Called by locore.s for an unexpected interrupt.
  * XXX - Almost identical to trap_kdebug...
  */
-void
-straytrap(tf)
-	struct trapframe tf;
+void 
+straytrap(struct trapframe tf)
 {
 	int type = -1;
 
