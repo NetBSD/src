@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.10 1998/01/12 09:33:33 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.11 1998/01/22 01:47:43 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,7 +144,7 @@ ofnattach(parent, self, aux)
 	if (OF_getprop(ofp->phandle, "mac-address",
 		       myaddr, sizeof myaddr)
 	    < 0)
-		panic("ofnattach: no max-address");
+		panic("ofnattach: no mac-address");
 	printf(": address %s\n", ether_sprintf(myaddr));
 	
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
