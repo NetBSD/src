@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.7 1999/08/09 17:48:49 cgd Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.8 1999/08/09 19:17:51 cgd Exp $
 
 A complete list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
@@ -1223,3 +1223,8 @@ sys/kern/kern_exec.c				1.102
 
   Stop profiling when execve()ing another program.  Addresses NetBSD
   Security Advistory SA1999-011.  (ross)
+
+sys/arch/pmax/include/Makefile			1.10 via patch
+distrib/sets/lists/comp/md.pmax			1.32
+
+  Install tc_machdep.h so the X server will build.  (simonb)
