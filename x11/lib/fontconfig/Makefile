@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/06 06:15:45 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/08 04:45:12 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,8 @@ SCRIPTS=	fontconfig-config
 .PHONY:		fontconfig.pc fontconfig-config
 all dependall:	fontconfig.pc fontconfig-config
 
-# XXX this should be ${SHELL} but I'm not getting joy w/ it.
 FONTCONFIGDIR=	${X11SRCDIR.xc}/lib/fontconfig
-CONFIG_SUBST=	sh ${FONTCONFIGDIR}/config/config-subst \
+CONFIG_SUBST=	${HOST_SH} ${FONTCONFIGDIR}/config/config-subst \
 		prefix="${X11ROOTDIR}" \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
