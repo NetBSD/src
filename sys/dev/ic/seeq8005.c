@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.2 2000/09/21 22:20:38 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.3 2000/09/23 15:13:02 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.2 2000/09/21 22:20:38 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.3 2000/09/23 15:13:02 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -126,7 +126,6 @@ static int ea_init(struct seeq8005_softc *);
 static int ea_ioctl(struct ifnet *, u_long, caddr_t);
 static void ea_start(struct ifnet *);
 static void ea_watchdog(struct ifnet *);
-static void ea_reinit(struct seeq8005_softc *);
 static void ea_chipreset(struct seeq8005_softc *);
 static void ea_ramtest(struct seeq8005_softc *);
 static int ea_stoptx(struct seeq8005_softc *);
@@ -136,9 +135,9 @@ static void ea_await_fifo_empty(struct seeq8005_softc *);
 static void ea_await_fifo_full(struct seeq8005_softc *);
 static void ea_writebuf(struct seeq8005_softc *, u_char *, u_int, size_t);
 static void ea_readbuf(struct seeq8005_softc *, u_char *, u_int, size_t);
+static void ea_select_buffer(struct seeq8005_softc *, int);
 static void earead(struct seeq8005_softc *, int, int);
 static struct mbuf *eaget(struct seeq8005_softc *, int, int, struct ifnet *);
-static void ea_hardreset(struct seeq8005_softc *);
 static void eagetpackets(struct seeq8005_softc *);
 static void eatxpacket(struct seeq8005_softc *);
 
@@ -204,10 +203,13 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 
 	printf(" address %s", ether_sprintf(myaddr));
 
+	/* Stop the board. */
+
+	ea_chipreset(sc);
+
 	/* Get the product ID */
 	
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
-			  EA_BUFCODE_PRODUCTID);
+	ea_select_buffer(sc, EA_BUFCODE_PRODUCTID);
 	id = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EA_8005_BUFWIN);
 
 	if ((id & 0xf0) == 0xa0) {
@@ -215,12 +217,6 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 		printf(", SEEQ 80C04 rev %02x", id);
 	} else
 		printf(", SEEQ 8005");
-
-	/* Stop the board. */
-
-	ea_chipreset(sc);
-	ea_stoptx(sc);
-	ea_stoprx(sc);
 
 	/* Initialise ifnet structure. */
 
@@ -270,110 +266,37 @@ ea_ramtest(struct seeq8005_softc *sc)
 
 	/* Set up the whole buffer RAM for writing */
 
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, EA_BUFCODE_TX_EAP);
+	ea_select_buffer(sc, EA_BUFCODE_TX_EAP);
 	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, (EA_BUFFER_SIZE >> 8) - 1);
 	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
 	bus_space_write_2(iot, ioh, EA_8005_RX_PTR, EA_BUFFER_SIZE - 2);
 
-	/* Set the write start address and write a pattern */
+#define EA_RAMTEST_LOOP(value)						\
+do {									\
+	/* Set the write start address and write a pattern */		\
+	ea_writebuf(sc, NULL, 0x0000, 0);				\
+	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)		\
+		bus_space_write_2(iot, ioh, EA_8005_BUFWIN, (value));	\
+									\
+	/* Set the read start address and verify the pattern */		\
+	ea_readbuf(sc, NULL, 0x0000, 0);				\
+	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)		\
+		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) != (value)) \
+			++sum;						\
+	if (sum != 0)							\
+		dprintf(("sum=%d\n", sum));				\
+} while (/*CONSTCOND*/0)
 
-	ea_writebuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN, loop);
-
-	/* Set the read start address and verify the pattern */
-	
-	ea_readbuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) != loop)
-			++sum;
-
-	if (sum != 0)
-		dprintf(("sum=%d\n", sum));
-
-	/* Set the write start address and write a pattern */
-
-	ea_writebuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-			   loop ^ (EA_BUFFER_SIZE - 1));
-
-	/* Set the read start address and verify the pattern */
-
-	ea_readbuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) !=
-		    (loop ^ (EA_BUFFER_SIZE - 1)))
-			++sum;
-
-	if (sum != 0)
-		dprintf(("sum=%d\n", sum));
-
-	/* Set the write start address and write a pattern */
-
-	ea_writebuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0xaa55);
-
-	/* Set the read start address and verify the pattern */
-
-	ea_readbuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) != 0xaa55)
-			++sum;
-
-	if (sum != 0)
-		dprintf(("sum=%d\n", sum));
-
-	/* Set the write start address and write a pattern */
-
-	ea_writebuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x55aa);
-
-	/* Set the read start address and verify the pattern */
-
-	ea_readbuf(sc, NULL, 0x0000, 0);
-
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) != 0x55aa)
-			++sum;
-
-	if (sum != 0)
-		dprintf(("sum=%d\n", sum));
+	EA_RAMTEST_LOOP(loop);
+	EA_RAMTEST_LOOP(loop ^ (EA_BUFFER_SIZE - 1));
+	EA_RAMTEST_LOOP(0xaa55);
+	EA_RAMTEST_LOOP(0x55aa);
 
 	/* Report */
 
 	if (sum > 0)
 		printf("%s: buffer RAM failed self test, %d faults\n",
 		       sc->sc_dev.dv_xname, sum);
-}
-
-
-/*
- * Stop and reinitialise the interface.
- */
-
-static void
-ea_reinit(struct seeq8005_softc *sc)
-{
-	int s;
-
-	dprintf(("eareinit()\n"));
-
-	/* Stop and reinitialise the interface */
-
-	s = splnet();
-	ea_stop(sc);
-	ea_init(sc);
-	splx(s);
 }
 
 
@@ -503,60 +426,11 @@ ea_chipreset(struct seeq8005_softc *sc)
 	/* Reset the controller. Min of 4us delay here */
 
 	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, EA_CFG2_RESET);
-	delay(100);
+	delay(4);
 
 	sc->sc_command = 0;
 	sc->sc_config1 = 0;
 	sc->sc_config2 = 0;
-}
-
-
-/*
- * Do a hardware reset of the board, and upload the ethernet address again in
- * case the board forgets.
- */
-
-static void
-ea_hardreset(struct seeq8005_softc *sc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int loop;
-
-	dprintf(("ea_hardreset()\n"));
-
-	/* Stop any activity */
-	ea_stoptx(sc);
-	ea_stoprx(sc);
-
-	ea_chipreset(sc);
-
-	/* Set up defaults for the registers */
-
-	/* Set the byte order for transfers to/from board RAM. */
-#if BYTE_ORDER == BIG_ENDIAN
-	sc->sc_config2 = EA_CFG2_BYTESWAP
-#else
-	sc->sc_config2 = 0;
-#endif
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
-	sc->sc_command = 0x00;
-	sc->sc_config1 = EA_CFG1_STATION_ADDR0 | EA_CFG1_DMA_BSIZE_1 |
-	    EA_CFG1_DMA_BURST_CONT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, sc->sc_config1);
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
-
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, EA_BUFCODE_TX_EAP);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-			  (EA_TX_BUFFER_SIZE >> 8) - 1);
-
-	/* Write the station address - the receiver must be off */
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-			  sc->sc_config1 | EA_BUFCODE_STATION_ADDR0);
-	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-				  LLADDR(ifp->if_sadl)[loop]);
 }
 
 
@@ -631,8 +505,7 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
 
 	ea_await_fifo_empty(sc);
 
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-			  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
+	ea_select_buffer(sc, EA_BUFCODE_LOCAL_MEM);
 	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
 			  sc->sc_command | EA_CMD_FIFO_WRITE);
        	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
@@ -676,9 +549,8 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
 		len++;
 
 	ea_await_fifo_empty(sc);
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-			  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
 
+	ea_select_buffer(sc, EA_BUFCODE_LOCAL_MEM);
 	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
 	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
 			  sc->sc_command | EA_CMD_FIFO_READ);
@@ -690,6 +562,13 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
 				       (u_int16_t *)buf, len / 2);
 }
 
+static void
+ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
+{
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
+			  sc->sc_config1 | bufcode);
+}
 
 /*
  * Initialize interface.
@@ -704,7 +583,7 @@ ea_init(struct seeq8005_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int s;
+	int s, loop;
 
 	dprintf(("ea_init()\n"));
 
@@ -712,8 +591,32 @@ ea_init(struct seeq8005_softc *sc)
 
 	/* First, reset the board. */
 
-	ea_hardreset(sc);
+	ea_chipreset(sc);
 
+	/* Set up defaults for the registers */
+
+	sc->sc_command = 0x00;
+	sc->sc_config1 = 0x00; /* XXX DMA settings? */
+#if BYTE_ORDER == BIG_ENDIAN
+	sc->sc_config2 = EA_CFG2_BYTESWAP
+#else
+	sc->sc_config2 = 0;
+#endif
+
+	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
+	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, sc->sc_config1);
+	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+
+	/* Split board memory into Rx and Tx. */
+	ea_select_buffer(sc, EA_BUFCODE_TX_EAP);
+	bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
+			  (EA_TX_BUFFER_SIZE >> 8) - 1);
+
+	/* Write the station address - the receiver must be off */
+	ea_select_buffer(sc, EA_BUFCODE_STATION_ADDR0);
+	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop)
+		bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
+				  LLADDR(ifp->if_sadl)[loop]);
 
 	/* Configure rx. */
 	dprintf(("Configuring rx...\n"));
@@ -721,34 +624,8 @@ ea_init(struct seeq8005_softc *sc)
 		sc->sc_config1 = EA_CFG1_PROMISCUOUS;
 	else
 		sc->sc_config1 = EA_CFG1_BROADCAST;
-
-	sc->sc_config1 |= EA_CFG1_DMA_BSIZE_8 | EA_CFG1_STATION_ADDR0 |
-		EA_CFG1_DMA_BURST_CONT;
+	sc->sc_config1 |= EA_CFG1_STATION_ADDR0;
 	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, sc->sc_config1);
-
-
-	/* Configure TX. */
-	dprintf(("Configuring tx...\n"));
-
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-			  sc->sc_config1 | EA_BUFCODE_TX_EAP);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-			  (EA_TX_BUFFER_SIZE >> 8) - 1);
-	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
-
-	sc->sc_config2 |= EA_CFG2_OUTPUT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
-
-
-	/* Place a NULL header at the beginning of the transmit area */
-	ea_writebuf(sc, NULL, 0x0000, 0);
-		
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-
-	sc->sc_command |= EA_CMD_TX_INTEN;
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
-
 
 	/* Setup the Rx pointers */
 	sc->sc_rx_ptr = EA_TX_BUFFER_SIZE;
@@ -768,6 +645,27 @@ ea_init(struct seeq8005_softc *sc)
 	sc->sc_command |= EA_CMD_RX_INTEN;
 	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
 			  sc->sc_command | EA_CMD_RX_ON);
+
+
+	/* Configure TX. */
+	dprintf(("Configuring tx...\n"));
+
+	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
+
+	sc->sc_config2 |= EA_CFG2_OUTPUT;
+	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+
+
+	/* Place a NULL header at the beginning of the transmit area */
+	ea_writebuf(sc, NULL, 0x0000, 0);
+		
+	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
+	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
+
+	sc->sc_command |= EA_CMD_TX_INTEN;
+	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
+
+	/* TX_ON gets set by ea_txpacket when there's something to transmit. */
 
 
 	/* Set flags appropriately. */
@@ -1117,7 +1015,7 @@ eagetpackets(struct seeq8005_softc *sc)
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
 					  sc->sc_config2);
-			ea_reinit(sc);
+			ea_init(sc);
 			return;
 		}
 
@@ -1132,7 +1030,7 @@ eagetpackets(struct seeq8005_softc *sc)
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
 					  sc->sc_config2);
-			ea_reinit(sc);
+			ea_init(sc);
 			return;
 		}
 
@@ -1289,7 +1187,7 @@ eaget(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 }
 
 /*
- * Process an ioctl request. This code needs some work - it looks pretty ugly.
+ * Process an ioctl request.  Mostly boilerplate.
  */
 static int
 ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
@@ -1365,7 +1263,7 @@ ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * reset.
 			 */
 			dprintf(("Interface ea is reinitialising\n"));
-			ea_reinit(sc);
+			ea_init(sc);
 		}
 		break;
 
@@ -1403,7 +1301,7 @@ ea_watchdog(struct ifnet *ifp)
 
 	/* Kick the interface */
 
-	ea_reinit(sc);
+	ea_init(sc);
 
 /*	ifp->if_timer = EA_TIMEOUT;*/
 	ifp->if_timer = 0;
