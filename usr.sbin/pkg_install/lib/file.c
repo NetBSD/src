@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.46 2001/01/05 03:27:27 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.47 2001/03/05 16:46:23 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.46 2001/01/05 03:27:27 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.47 2001/03/05 16:46:23 wiz Exp $");
 #endif
 #endif
 
@@ -651,7 +651,8 @@ unpack(char *pkg, char *flist)
 {
 	char    args[10], suff[80], *cp;
 
-	args[0] = '\0';
+	args[0] = '-';
+	args[1] = '\0';
 	/*
          * Figure out by a crude heuristic whether this or not this is probably
          * compressed.
@@ -661,10 +662,10 @@ unpack(char *pkg, char *flist)
 		if (cp) {
 			strcpy(suff, cp + 1);
 			if (strchr(suff, 'z') || strchr(suff, 'Z'))
-				strcpy(args, "-z");
+				strcat(args, "z");
 		}
 	} else
-		strcpy(args, "z");
+		strcat(args, "z");
 	strcat(args, "xpf");
 	if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
 		warnx("%s extract of %s failed!", TAR_CMD, pkg);
