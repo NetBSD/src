@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.7 1998/07/27 18:17:08 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.8 1998/09/17 18:05:43 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -60,7 +60,7 @@ struct wscons_event {
 /* Event type definitions.  Comment for each is information in value. */
 #define	WSCONS_EVENT_KEY_UP		1	/* key code */
 #define	WSCONS_EVENT_KEY_DOWN		2	/* key code */
-#define	WSCONS_EVENT_KEY_OTHER		3	/* key code */
+#define	WSCONS_EVENT_ALL_KEYS_UP	3	/* void */
 #define	WSCONS_EVENT_MOUSE_UP		4	/* button # (leftmost = 0) */
 #define	WSCONS_EVENT_MOUSE_DOWN		5	/* button # (leftmost = 0)  */
 #define	WSCONS_EVENT_MOUSE_DELTA_X	6	/* X delta amount */
