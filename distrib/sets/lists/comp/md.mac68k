@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.45 2001/04/15 17:14:27 kleink Exp $
+# $NetBSD: md.mac68k,v 1.46 2001/11/28 13:29:29 kleink Exp $
 ./usr/include/mac68k	comp-c-include
 ./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
@@ -47,7 +47,6 @@
 ./usr/include/mac68k/setjmp.h	comp-c-include
 ./usr/include/mac68k/signal.h	comp-c-include
 ./usr/include/mac68k/stdarg.h	comp-c-include
-./usr/include/mac68k/svr4_machdep.h	comp-c-include
 ./usr/include/mac68k/trap.h	comp-c-include
 ./usr/include/mac68k/types.h	comp-c-include
 ./usr/include/mac68k/varargs.h	comp-c-include

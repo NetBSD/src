@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.45 2001/04/15 17:14:27 kleink Exp $
+# $NetBSD: md.hp300,v 1.46 2001/11/28 13:29:29 kleink Exp $
 ./usr/include/hp300		comp-c-include
 ./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
@@ -42,7 +42,6 @@
 ./usr/include/hp300/setjmp.h		comp-c-include
 ./usr/include/hp300/signal.h		comp-c-include
 ./usr/include/hp300/stdarg.h		comp-c-include
-./usr/include/hp300/svr4_machdep.h		comp-c-include
 ./usr/include/hp300/trap.h		comp-c-include
 ./usr/include/hp300/types.h		comp-c-include
 ./usr/include/hp300/varargs.h		comp-c-include
