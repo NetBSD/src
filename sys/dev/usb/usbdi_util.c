@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.41 2004/10/23 13:26:34 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.41 2004/10/23 13:26:34 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,8 +365,8 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 	char *p, *end;
 
 	if (idesc == NULL)
-		return (0);
-	 usbd_interface2device_handle(ifc, &dev);
+		return (NULL);
+	usbd_interface2device_handle(ifc, &dev);
 	cdesc = usbd_get_config_descriptor(dev);
 
 	p = (char *)idesc + idesc->bLength;
@@ -379,7 +379,7 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 		if (hd->bDescriptorType == UDESC_INTERFACE)
 			break;
 	}
-	return (0);
+	return (NULL);
 }
 
 usbd_status
@@ -484,20 +484,19 @@ usb_detach_wakeup(device_ptr_t dv)
 	wakeup(dv);
 }
 
-usb_descriptor_t *
-usb_find_desc(usbd_device_handle dev, int type)
+const usb_descriptor_t *
+usb_find_desc(usbd_device_handle dev, int type, int subtype)
 {
-	usb_descriptor_t *desc;
-	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
-        uByte *p = (uByte *)cd;
-        uByte *end = p + UGETW(cd->wTotalLength);
+	usbd_desc_iter_t iter;
+	const usb_descriptor_t *desc;
 
-	while (p < end) {
-		desc = (usb_descriptor_t *)p;
-		if (desc->bDescriptorType == type)
-			return (desc);
-		p += desc->bLength;
+	usb_desc_iter_init(dev, &iter);
+	for (;;) {
+		desc = usb_desc_iter_next(&iter);
+		if (!desc || (desc->bDescriptorType == type &&
+			      (subtype == USBD_SUBTYPE_ANY ||
+			       subtype == desc->bDescriptorSubtype)))
+			break;
 	}
-
-	return (NULL);
+	return desc;
 }
