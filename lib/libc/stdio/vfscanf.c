@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.12 1995/02/02 02:10:49 jtc Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.13 1995/02/25 07:02:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: vfscanf.c,v 1.12 1995/02/02 02:10:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: vfscanf.c,v 1.13 1995/02/25 07:02:16 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -546,7 +546,8 @@ literal:
 				*p = 0;
 				res = (*ccfn)(buf, (char **)NULL, base);
 				if (flags & POINTER)
-					*va_arg(ap, void **) = (void *)res;
+					*va_arg(ap, void **) =
+					    (void *)(long)res;
 				else if (flags & QUAD)
 					*va_arg(ap, quad_t *) = res;
 				else if (flags & LONG)
