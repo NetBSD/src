@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.4 2001/12/14 12:02:53 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.5 2001/12/14 12:08:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.4 2001/12/14 12:02:53 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.5 2001/12/14 12:08:14 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,18 @@ uirda_open(void *h, int flag, int mode, struct proc *p)
 		error = ENOMEM;
 		goto bad4;
 	}
-
+	sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer,
+					  IRDA_MAX_FRAME_SIZE + 1);
+	if (sc->sc_rd_buf == NULL) {
+		error = ENOMEM;
+		goto bad5;
+	}
+	sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer,
+					  IRDA_MAX_FRAME_SIZE + 1);
+	if (sc->sc_wr_buf == NULL) {
+		error = ENOMEM;
+		goto bad5;
+	}
 	sc->sc_rd_count = 0;
 	sc->sc_rd_err = 0;
 	sc->sc_params.speed = 0;
@@ -471,6 +482,9 @@ uirda_open(void *h, int flag, int mode, struct proc *p)
 
 	return (0);
 
+bad5:
+	usbd_free_xfer(sc->sc_wr_xfer);
+	sc->sc_wr_xfer = NULL;
 bad4:
 	usbd_free_xfer(sc->sc_rd_xfer);
 	sc->sc_rd_xfer = NULL;
@@ -529,8 +543,10 @@ uirda_read(void *h, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return (EIO);
 
+#ifdef DIAGNOSTIC
 	if (sc->sc_rd_buf == NULL)
 		return (EINVAL);
+#endif
 
 	sc->sc_refcnt++;
 
@@ -586,8 +602,13 @@ uirda_write(void *h, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return (EIO);
 
+#ifdef DIAGNOSTIC
+	if (sc->sc_wr_buf == NULL)
+		return (EINVAL);
+#endif
+
 	n = uio->uio_resid;
-	if (n > sc->sc_params.maxsize || sc->sc_wr_buf == NULL)
+	if (n > sc->sc_params.maxsize)
 		return (EINVAL);
 
 	sc->sc_refcnt++;
@@ -635,10 +656,10 @@ uirda_poll(void *h, int events, struct proc *p)
 		revents |= events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_rd_count != 0) {
-			DPRINTF(("%s: have data\n", __FUNCTION__));
+			DPRINTFN(2,("%s: have data\n", __FUNCTION__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTF(("%s: recording select\n", __FUNCTION__));
+			DPRINTFN(2,("%s: recording select\n", __FUNCTION__));
 			selrecord(p, &sc->sc_rd_sel);
 		}
 	}
@@ -696,6 +717,10 @@ uirda_set_params(void *h, struct irda_params *p)
 		;
 	}
 	if (p->maxsize != sc->sc_params.maxsize) {
+		if (p->maxsize > IRDA_MAX_FRAME_SIZE)
+			return (EINVAL);
+		sc->sc_params.maxsize = p->maxsize;
+#if 0
 		DPRINTF(("%s: new buffers, old size=%d\n", __FUNCTION__,
 			 sc->sc_params.maxsize));
 		if (p->maxsize > 10000 || p < 0) /* XXX */
@@ -724,6 +749,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		sc->sc_params.maxsize = p->maxsize;
 		err = uirda_start_read(sc); /* XXX check */
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+#endif
 	}
 	if (hdr != 0) {
 		/* 
