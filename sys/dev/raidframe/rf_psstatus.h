@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.4 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.5 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,10 +54,10 @@
  * descriptor. Note that we use just one lock for the whole hash chain.
  */
 #define RF_HASH_PSID(_raid_,_psid_) ( (_psid_) % ((_raid_)->pssTableSize) )	/* simple hash function */
-#define RF_LOCK_PSS_MUTEX(_raidPtr, _row, _psid) \
-  RF_LOCK_MUTEX((_raidPtr)->reconControl[_row]->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
-#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _row, _psid) \
-  RF_UNLOCK_MUTEX((_raidPtr)->reconControl[_row]->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
+#define RF_LOCK_PSS_MUTEX(_raidPtr, _psid) \
+  RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
+#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _psid) \
+  RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
 
 struct RF_ReconParityStripeStatus_s {
 	RF_StripeNum_t parityStripeID;	/* the parity stripe ID */
@@ -123,10 +123,10 @@ void
 rf_PSStatusDelete(RF_Raid_t * raidPtr, RF_PSStatusHeader_t * pssTable,
     RF_ReconParityStripeStatus_t * pssPtr);
 void 
-rf_RemoveFromActiveReconTable(RF_Raid_t * raidPtr, RF_RowCol_t row,
+rf_RemoveFromActiveReconTable(RF_Raid_t * raidPtr,
     RF_StripeNum_t psid, RF_ReconUnitNum_t which_ru);
 RF_ReconParityStripeStatus_t *rf_AllocPSStatus(RF_Raid_t * raidPtr);
 void    rf_FreePSStatus(RF_Raid_t * raidPtr, RF_ReconParityStripeStatus_t * p);
-void    rf_PrintPSStatusTable(RF_Raid_t * raidPtr, RF_RowCol_t row);
+void    rf_PrintPSStatusTable(RF_Raid_t * raidPtr);
 
 #endif				/* !_RF__RF_PSSTATUS_H_ */

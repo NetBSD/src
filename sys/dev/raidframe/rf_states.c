@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.20 2002/09/23 04:14:20 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.21 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.20 2002/09/23 04:14:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.21 2003/12/29 02:38:18 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -376,7 +376,7 @@ rf_State_Lock(RF_RaidAccessDesc_t * desc)
 				}
 			}
 			if (desc->type == RF_IO_TYPE_WRITE &&
-			    raidPtr->status[asm_p->physInfo->row] == rf_rs_reconstructing) {
+			    raidPtr->status == rf_rs_reconstructing) {
 				if (!(asm_p->flags & RF_ASM_FLAGS_FORCE_TRIED)) {
 					int     val;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.71 2003/06/23 11:02:00 martin Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.71 2003/06/23 11:02:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -320,8 +320,8 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_Config_t *cfgPtr;
 	RF_AutoConfig_t *ac;
 {
-	RF_RowCol_t row, col;
-	int     i, rc;
+	RF_RowCol_t col;
+	int     rc;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
@@ -376,34 +376,12 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		DO_RAID_FAIL();
 		return (rc);
 	}
-	raidPtr->numRow = cfgPtr->numRow;
 	raidPtr->numCol = cfgPtr->numCol;
 	raidPtr->numSpare = cfgPtr->numSpare;
 
-	/* XXX we don't even pretend to support more than one row in the
-	 * kernel... */
-	if (raidPtr->numRow != 1) {
-		RF_ERRORMSG("Only one row supported in kernel.\n");
-		DO_RAID_FAIL();
-		return (EINVAL);
-	}
-	RF_CallocAndAdd(raidPtr->status, raidPtr->numRow, sizeof(RF_RowStatus_t),
-	    (RF_RowStatus_t *), raidPtr->cleanupList);
-	if (raidPtr->status == NULL) {
-		DO_RAID_FAIL();
-		return (ENOMEM);
-	}
-	RF_CallocAndAdd(raidPtr->reconControl, raidPtr->numRow,
-	    sizeof(RF_ReconCtrl_t *), (RF_ReconCtrl_t **), raidPtr->cleanupList);
-	if (raidPtr->reconControl == NULL) {
-		DO_RAID_FAIL();
-		return (ENOMEM);
-	}
-	for (i = 0; i < raidPtr->numRow; i++) {
-		raidPtr->status[i] = rf_rs_optimal;
-		raidPtr->reconControl[i] = NULL;
-	}
-
+	raidPtr->status = rf_rs_optimal;
+	raidPtr->reconControl = NULL;
+	
 	TAILQ_INIT(&(raidPtr->iodone));
 	simple_lock_init(&(raidPtr->iodone_lock));
 
@@ -439,13 +417,11 @@ rf_Configure(raidPtr, cfgPtr, ac)
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
 
-	for (row = 0; row < raidPtr->numRow; row++) {
-		for (col = 0; col < raidPtr->numCol; col++) {
-			/*
-		         * XXX better distribution
-		         */
-			raidPtr->hist_diskreq[row][col] = 0;
-		}
+	for (col = 0; col < raidPtr->numCol; col++) {
+		/*
+		 * XXX better distribution
+		 */
+		raidPtr->hist_diskreq[col] = 0;
 	}
 
 	raidPtr->numNewFailures = 0;
@@ -472,12 +448,11 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	printf("raid%d: %s\n", raidPtr->raidid,
 	       raidPtr->Layout.map->configName);
 	printf("raid%d: Components:", raidPtr->raidid);
-	for (row = 0; row < raidPtr->numRow; row++) {
-		for (col = 0; col < raidPtr->numCol; col++) {
-			printf(" %s", raidPtr->Disks[row][col].devname);
-			if (RF_DEAD_DISK(raidPtr->Disks[row][col].status)) {
-				printf("[**FAILED**]");
-			}
+
+	for (col = 0; col < raidPtr->numCol; col++) {
+		printf(" %s", raidPtr->Disks[col].devname);
+		if (RF_DEAD_DISK(raidPtr->Disks[col].status)) {
+			printf("[**FAILED**]");
 		}
 	}
 	printf("\n");
@@ -679,9 +654,8 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 #if 0
 /* force the array into reconfigured mode without doing reconstruction */
 int 
-rf_SetReconfiguredMode(raidPtr, row, col)
+rf_SetReconfiguredMode(raidPtr, col)
 	RF_Raid_t *raidPtr;
-	int     row;
 	int     col;
 {
 	if (!(raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
@@ -690,13 +664,13 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	}
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->numFailures++;
-	raidPtr->Disks[row][col].status = rf_ds_dist_spared;
-	raidPtr->status[row] = rf_rs_reconfigured;
+	raidPtr->Disks[col].status = rf_ds_dist_spared;
+	raidPtr->status = rf_rs_reconfigured;
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	/* install spare table only if declustering + distributed sparing
 	 * architecture. */
 	if (raidPtr->Layout.map->flags & RF_BD_DECLUSTERED)
-		rf_InstallSpareTable(raidPtr, row, col);
+		rf_InstallSpareTable(raidPtr, col);
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return (0);
 }
@@ -705,18 +679,17 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 int 
 rf_FailDisk(
     RF_Raid_t * raidPtr,
-    int frow,
     int fcol,
     int initRecon)
 {
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	if (raidPtr->Disks[frow][fcol].status != rf_ds_failed) {
+	if (raidPtr->Disks[fcol].status != rf_ds_failed) {
 		/* must be failing something that is valid, or else it's
 		   already marked as failed (in which case we don't 
 		   want to mark it failed again!) */
 		raidPtr->numFailures++;
-		raidPtr->Disks[frow][fcol].status = rf_ds_failed;
-		raidPtr->status[frow] = rf_rs_degraded;		
+		raidPtr->Disks[fcol].status = rf_ds_failed;
+		raidPtr->status = rf_rs_degraded;		
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	
@@ -725,20 +698,20 @@ rf_FailDisk(
 	/* Close the component, so that it's not "locked" if someone 
 	   else want's to use it! */
 
-	rf_close_component(raidPtr, raidPtr->raid_cinfo[frow][fcol].ci_vp,
-			   raidPtr->Disks[frow][fcol].auto_configured);
+	rf_close_component(raidPtr, raidPtr->raid_cinfo[fcol].ci_vp,
+			   raidPtr->Disks[fcol].auto_configured);
 
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+	raidPtr->raid_cinfo[fcol].ci_vp = NULL;
 
 	/* Need to mark the component as not being auto_configured 
 	   (in case it was previously). */
 
-	raidPtr->Disks[frow][fcol].auto_configured = 0;
+	raidPtr->Disks[fcol].auto_configured = 0;
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	if (initRecon)
-		rf_ReconstructFailedDisk(raidPtr, frow, fcol);
+		rf_ReconstructFailedDisk(raidPtr, fcol);
 	return (0);
 }
 /* releases a thread that is waiting for the array to become quiesced.

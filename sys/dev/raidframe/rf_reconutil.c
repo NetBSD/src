@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.14 2003/02/09 10:04:34 jdolecek Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14 2003/02/09 10:04:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,12 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14 2003/02/09 10:04:34 jdolecek E
  * allocates/frees the reconstruction control information structures
  *******************************************************************/
 RF_ReconCtrl_t *
-rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
+rf_MakeReconControl(reconDesc, fcol, scol)
 	RF_RaidReconDesc_t *reconDesc;
-	RF_RowCol_t frow;	/* failed row and column */
-	RF_RowCol_t fcol;
-	RF_RowCol_t srow;	/* identifies which spare we're using */
-	RF_RowCol_t scol;
+	RF_RowCol_t fcol;       /* failed column */
+	RF_RowCol_t scol;       /* identifies which spare we're using */
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -80,7 +78,6 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 		  sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));
 	reconCtrlPtr->reconDesc = reconDesc;
 	reconCtrlPtr->fcol = fcol;
-	reconCtrlPtr->spareRow = srow;
 	reconCtrlPtr->spareCol = scol;
 	reconCtrlPtr->lastPSID = layoutPtr->numStripe / layoutPtr->SUsPerPU;
 	reconCtrlPtr->percentComplete = 0;
@@ -88,7 +85,6 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	/* initialize each per-disk recon information structure */
 	for (i = 0; i < raidPtr->numCol; i++) {
 		reconCtrlPtr->perDiskInfo[i].reconCtrl = reconCtrlPtr;
-		reconCtrlPtr->perDiskInfo[i].row = frow;
 		reconCtrlPtr->perDiskInfo[i].col = i;
 		/* make it appear as if we just finished an RU */
 		reconCtrlPtr->perDiskInfo[i].curPSID = -1;	
@@ -109,7 +105,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
          * Not all distributed sparing archs need dynamic mappings
          */
 	if (lp->InstallSpareTable) {
-		retcode = rf_InstallSpareTable(raidPtr, frow, fcol);
+		retcode = rf_InstallSpareTable(raidPtr, fcol);
 		if (retcode) {
 			RF_PANIC();	/* XXX fix this */
 		}
@@ -121,7 +117,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 
 	/* make the per-disk reconstruction buffers */
 	for (i = 0; i < raidPtr->numCol; i++) {
-		reconCtrlPtr->perDiskInfo[i].rbuf = (i == fcol) ? NULL : rf_MakeReconBuffer(raidPtr, frow, i, RF_RBUF_TYPE_EXCLUSIVE);
+		reconCtrlPtr->perDiskInfo[i].rbuf = (i == fcol) ? NULL : rf_MakeReconBuffer(raidPtr, i, RF_RBUF_TYPE_EXCLUSIVE);
 	}
 
 	/* initialize the event queue */
@@ -151,7 +147,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		rbuf = rf_MakeReconBuffer(raidPtr, frow, fcol, 
+		rbuf = rf_MakeReconBuffer(raidPtr, fcol, 
 					  RF_RBUF_TYPE_FLOATING);
 		rbuf->next = reconCtrlPtr->floatingRbufs;
 		reconCtrlPtr->floatingRbufs = rbuf;
@@ -167,11 +163,10 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 }
 
 void 
-rf_FreeReconControl(raidPtr, row)
+rf_FreeReconControl(raidPtr)
 	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
 {
-	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl[row];
+	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_ReconBuffer_t *t;
 	RF_ReconUnitNum_t i;
 
@@ -238,7 +233,6 @@ rf_GetDefaultNumFloatingReconBuffers(raidPtr)
 RF_ReconBuffer_t *
 rf_MakeReconBuffer(
     RF_Raid_t * raidPtr,
-    RF_RowCol_t row,
     RF_RowCol_t col,
     RF_RbufType_t type)
 {
@@ -249,7 +243,6 @@ rf_MakeReconBuffer(
 	RF_Malloc(t, sizeof(RF_ReconBuffer_t), (RF_ReconBuffer_t *));
 	RF_Malloc(t->buffer, recon_buffer_size, (caddr_t));
 	t->raidPtr = raidPtr;
-	t->row = row;
 	t->col = col;
 	t->priority = RF_IO_RECON_PRIORITY;
 	t->type = type;
@@ -286,18 +279,10 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 	RF_PSStatusHeader_t *pssTable;
 	RF_ReconBuffer_t *rbuf;
 	int     i, j, sum = 0;
-	RF_RowCol_t frow = 0;
-
-	for (i = 0; i < raidPtr->numRow; i++)
-		if (raidPtr->reconControl[i]) {
-			frow = i;
-			break;
-		}
-	RF_ASSERT(frow >= 0);
 
 	if (dolock)
-		RF_LOCK_MUTEX(raidPtr->reconControl[frow]->rb_mutex);
-	pssTable = raidPtr->reconControl[frow]->pssTable;
+		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	pssTable = raidPtr->reconControl->pssTable;
 
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		RF_LOCK_MUTEX(pssTable[i].mutex);
@@ -320,17 +305,17 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 		RF_UNLOCK_MUTEX(pssTable[i].mutex);
 	}
 
-	for (rbuf = raidPtr->reconControl[frow]->floatingRbufs; rbuf; 
+	for (rbuf = raidPtr->reconControl->floatingRbufs; rbuf; 
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->committedRbufs; rbuf; 
+	for (rbuf = raidPtr->reconControl->committedRbufs; rbuf; 
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->fullBufferList; rbuf; 
+	for (rbuf = raidPtr->reconControl->fullBufferList; rbuf; 
 	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
@@ -338,7 +323,7 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 	RF_ASSERT(sum == raidPtr->numFloatingReconBufs);
 
 	if (dolock)
-		RF_UNLOCK_MUTEX(raidPtr->reconControl[frow]->rb_mutex);
+		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
 }
 #endif
 

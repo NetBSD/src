@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.6 2002/09/23 02:40:09 oster Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.7 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.6 2002/09/23 02:40:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.7 2003/12/29 02:38:18 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -76,8 +76,6 @@ rf_ConfigureRAID4(
 	for (i = 0; i < raidPtr->numCol; i++)
 		info->stripeIdentifier[i] = i;
 
-	RF_ASSERT(raidPtr->numRow == 1);
-
 	/* fill in the remaining layout parameters */
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
 	layoutPtr->numDataCol = raidPtr->numCol - 1;
@@ -104,13 +102,11 @@ void
 rf_MapSectorRAID4(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
-	*row = 0;
 	*col = SUID % raidPtr->Layout.numDataCol;
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
@@ -120,14 +116,12 @@ void
 rf_MapParityRAID4(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
-	*row = 0;
 	*col = raidPtr->Layout.numDataCol;
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
@@ -137,12 +131,10 @@ void
 rf_IdentifyStripeRAID4(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+    RF_RowCol_t ** diskids)
 {
 	RF_Raid4ConfigInfo_t *info = raidPtr->Layout.layoutSpecificInfo;
 
-	*outRow = 0;
 	*diskids = info->stripeIdentifier;
 }
 

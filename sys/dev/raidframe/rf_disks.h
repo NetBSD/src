@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.10 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.11 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -49,7 +49,7 @@ int rf_ConfigureDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 int rf_ConfigureSpareDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 			   RF_Config_t * cfgPtr);
 int rf_ConfigureDisk(RF_Raid_t * raidPtr, char *buf, RF_RaidDisk_t * diskPtr,
-		     RF_RowCol_t row, RF_RowCol_t col);
+		     RF_RowCol_t col);
 int rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			  RF_AutoConfig_t *auto_config);
 int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);

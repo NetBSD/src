@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.6 2002/10/06 18:49:12 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.7 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -78,7 +78,7 @@ RF_ReconUnitCount_t rf_UnitsLeftToReconstruct(RF_ReconMap_t * mapPtr);
 
 void 
 rf_PrintReconMap(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
-    RF_RowCol_t frow, RF_RowCol_t fcol);
+    RF_RowCol_t fcol);
 
 void    rf_PrintReconSchedule(RF_ReconMap_t * mapPtr, struct timeval * starttime);
 

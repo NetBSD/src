@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.14 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.14 2003/12/29 02:38:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -391,7 +391,6 @@ rf_CreateDegradedReadDAG(
 	}
 	/* make a PDA for the parity unit */
 	RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
-	parityPDA->row = asmap->parityInfo->row;
 	parityPDA->col = asmap->parityInfo->col;
 	parityPDA->startSector = ((asmap->parityInfo->startSector / sectorsPerSU)
 	    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -685,7 +684,7 @@ rf_DD_GenerateFailedAccessASMs(
 	fone_end = fone_start + fone->numSector;
 
 #define CONS_PDA(if,start,num) \
-  pda_p->row = asmap->if->row;    pda_p->col = asmap->if->col; \
+  pda_p->col = asmap->if->col; \
   pda_p->startSector = ((asmap->if->startSector / secPerSU) * secPerSU) + start; \
   pda_p->numSector = num; \
   pda_p->next = NULL; \
@@ -794,9 +793,9 @@ rf_DD_GenerateFailedAccessASMs(
 			continue;
 		pda_p->type = RF_PDA_TYPE_DATA;
 		pda_p->raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->row][pda_p->col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->col].status))
 			continue;
 		switch (state) {
 		case 1:	/* fone */
@@ -817,7 +816,7 @@ rf_DD_GenerateFailedAccessASMs(
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;
@@ -843,7 +842,7 @@ rf_DD_GenerateFailedAccessASMs(
 				 * access, snip off the begining */
 				pda_p->numSector = suoff - fone_start;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			}
@@ -853,7 +852,7 @@ rf_DD_GenerateFailedAccessASMs(
 				 * failed access, extend */
 				pda_p->numSector = fone_end - suend;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			}
@@ -864,14 +863,14 @@ rf_DD_GenerateFailedAccessASMs(
 						 * on */
 				pda_p->numSector = secPerSU - suend;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			} else
 				if (suoff > 0) {	/* short at front */
 					pda_p->numSector = suoff;
 					pda_p->raidAddress = sosAddr + (i * secPerSU);
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -885,7 +884,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * begining */
 					pda_p->numSector = suoff - fone_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -895,7 +894,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * of the failed access, extend */
 					pda_p->numSector = fone_end - suend;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -908,7 +907,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * begining */
 					pda_p->numSector = suoff - ftwo_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + ftwo_start;
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -918,7 +917,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * of the failed access, extend */
 					pda_p->numSector = ftwo_end - suend;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -935,9 +934,9 @@ rf_DD_GenerateFailedAccessASMs(
 			continue;
 		pda_p->type = RF_PDA_TYPE_DATA;
 		pda_p->raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->row][pda_p->col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->col].status))
 			continue;
 		switch (state) {
 		case 1:	/* fone */
@@ -958,7 +957,7 @@ rf_DD_GenerateFailedAccessASMs(
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;

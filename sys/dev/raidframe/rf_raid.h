@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.18 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.19 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -101,8 +101,6 @@ struct RF_Raid_s {
 	 * changed.  XXX this is no longer true.  numSpare and friends can 
 	 * change now. 
          */
-	u_int   numRow;		/* number of rows of disks, typically == # of
-				 * ranks */
 	u_int   numCol;		/* number of columns of disks, typically == #
 				 * of disks/rank */
 	u_int   numSpare;	/* number of spare disks */
@@ -117,8 +115,8 @@ struct RF_Raid_s {
 	RF_int32 sectorMask;	/* mask of bytes-per-sector */
 
 	RF_RaidLayout_t Layout;	/* all information related to layout */
-	RF_RaidDisk_t **Disks;	/* all information related to physical disks */
-	RF_DiskQueue_t **Queues;/* all information related to disk queues */
+	RF_RaidDisk_t *Disks;	/* all information related to physical disks */
+	RF_DiskQueue_t *Queues;/* all information related to disk queues */
 	const RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
 				   component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
@@ -128,7 +126,7 @@ struct RF_Raid_s {
 	 * locking on reads and updates */
 	        RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
 					 * the fields below */
-	RF_RowStatus_t *status;	/* the status of each row in the array */
+	RF_RowStatus_t status;	/* the status of each row in the array */
 	int     valid;		/* indicates successful configuration */
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
@@ -181,7 +179,7 @@ struct RF_Raid_s {
 	int     reconInProgress;
 	        RF_DECLARE_COND(waitForReconCond)
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
-	RF_ReconCtrl_t **reconControl;	/* reconstruction control structure
+	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
 					 * pointers for each row in the array */
 
 	/*
@@ -260,7 +258,7 @@ struct RF_Raid_s {
 	RF_AccTotals_t acc_totals;
 	int     keep_acc_totals;
 
-	struct raidcinfo **raid_cinfo;	/* array of component info */
+	struct raidcinfo *raid_cinfo;	/* array of component info */
 
 	int     terminate_disk_queues;
 
@@ -273,7 +271,7 @@ struct RF_Raid_s {
          */
 
 	/* used by rf_compute_workload_shift */
-	RF_RowCol_t hist_diskreq[RF_MAXROW][RF_MAXCOL];
+	RF_RowCol_t hist_diskreq[RF_MAXCOL];
 
 	/* used by declustering */
 	int     noRotate;

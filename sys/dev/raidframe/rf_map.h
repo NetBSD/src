@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.7 2002/09/21 01:14:22 oster Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.8 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,6 +81,6 @@ rf_ASMParityAdjust(RF_PhysDiskAddr_t * toAdjust,
 
 void 
 rf_ASMCheckStatus(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda_p,
-    RF_AccessStripeMap_t * asm_p, RF_RaidDisk_t ** disks, int parity);
+    RF_AccessStripeMap_t * asm_p, RF_RaidDisk_t * disks, int parity);
 
 #endif				/* !_RF__RF_MAP_H_ */

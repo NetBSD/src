@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.20 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.21 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.20 2003/02/09 10:04:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.21 2003/12/29 02:38:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -280,7 +280,7 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 		lk = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
 		unlk = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 		RF_ASSERT(!(lk && unlk));
-		printf("r %d c %d offs %ld nsect %d buf 0x%lx %s\n", pda->row, pda->col,
+		printf("c %d offs %ld nsect %d buf 0x%lx %s\n", pda->col,
 		    (long) pda->startSector, (int) pda->numSector, (long) bufPtr,
 		    (lk) ? "LOCK" : ((unlk) ? "UNLK" : " "));
 		return;
@@ -290,7 +290,7 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 		lk = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
 		unlk = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 		RF_ASSERT(!(lk && unlk));
-		printf("r %d c %d %s\n", pda->row, pda->col,
+		printf("c %d %s\n", pda->col,
 		    (lk) ? "LOCK" : ((unlk) ? "UNLK" : "nop"));
 		return;
 	}
@@ -300,8 +300,8 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 		for (i = 0; i < node->numParams - 1; i += 2) {
 			pda = (RF_PhysDiskAddr_t *) node->params[i].p;
 			bufPtr = (RF_PhysDiskAddr_t *) node->params[i + 1].p;
-			printf("    buf 0x%lx r%d c%d offs %ld nsect %d\n",
-			    (long) bufPtr, pda->row, pda->col,
+			printf("    buf 0x%lx c%d offs %ld nsect %d\n",
+			    (long) bufPtr, pda->col,
 			    (long) pda->startSector, (int) pda->numSector);
 		}
 		return;
@@ -311,8 +311,8 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 		for (i = 0; i < node->numParams - 1; i += 2) {
 			pda = (RF_PhysDiskAddr_t *) node->params[i].p;
 			bufPtr = (RF_PhysDiskAddr_t *) node->params[i + 1].p;
-			printf(" r%d c%d offs %ld nsect %d buf 0x%lx\n",
-			    pda->row, pda->col, (long) pda->startSector,
+			printf(" c%d offs %ld nsect %d buf 0x%lx\n",
+			    pda->col, (long) pda->startSector,
 			    (int) pda->numSector, (long) bufPtr);
 		}
 		return;
@@ -716,17 +716,15 @@ rf_redirect_asm(
     RF_AccessStripeMap_t * asmap)
 {
 	int     ds = (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) ? 1 : 0;
-	int     row = asmap->physInfo->row;
-	int     fcol = raidPtr->reconControl[row]->fcol;
-	int     srow = raidPtr->reconControl[row]->spareRow;
-	int     scol = raidPtr->reconControl[row]->spareCol;
+	int     fcol = raidPtr->reconControl->fcol;
+	int     scol = raidPtr->reconControl->spareCol;
 	RF_PhysDiskAddr_t *pda;
 
-	RF_ASSERT(raidPtr->status[row] == rf_rs_reconstructing);
+	RF_ASSERT(raidPtr->status == rf_rs_reconstructing);
 	for (pda = asmap->physInfo; pda; pda = pda->next) {
 		if (pda->col == fcol) {
 			if (rf_dagDebug) {
-				if (!rf_CheckRUReconstructed(raidPtr->reconControl[row]->reconMap,
+				if (!rf_CheckRUReconstructed(raidPtr->reconControl->reconMap,
 					pda->startSector)) {
 					RF_PANIC();
 				}
@@ -734,9 +732,8 @@ rf_redirect_asm(
 			/* printf("Remapped data for large write\n"); */
 			if (ds) {
 				raidPtr->Layout.map->MapSector(raidPtr, pda->raidAddress,
-				    &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+				    &pda->col, &pda->startSector, RF_REMAP);
 			} else {
-				pda->row = srow;
 				pda->col = scol;
 			}
 		}
@@ -744,15 +741,14 @@ rf_redirect_asm(
 	for (pda = asmap->parityInfo; pda; pda = pda->next) {
 		if (pda->col == fcol) {
 			if (rf_dagDebug) {
-				if (!rf_CheckRUReconstructed(raidPtr->reconControl[row]->reconMap, pda->startSector)) {
+				if (!rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, pda->startSector)) {
 					RF_PANIC();
 				}
 			}
 		}
 		if (ds) {
-			(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+			(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->col, &pda->startSector, RF_REMAP);
 		} else {
-			pda->row = srow;
 			pda->col = scol;
 		}
 	}
@@ -1072,21 +1068,19 @@ rf_compute_workload_shift(
          *  f   = column of failed disk
          *  n   = number of disks in array
          *  sd  = "shift distance" (number of columns that d is to the right of f)
-         *  row = row of array the access is in
          *  v   = numerator of redirection ratio
          *  k   = denominator of redirection ratio
          */
-	RF_RowCol_t d, f, sd, row, n;
+	RF_RowCol_t d, f, sd, n;
 	int     k, v, ret, i;
 
-	row = pda->row;
 	n = raidPtr->numCol;
 
 	/* assign column of primary copy to d */
 	d = pda->col;
 
 	/* assign column of dead disk to f */
-	for (f = 0; ((!RF_DEAD_DISK(raidPtr->Disks[row][f].status)) && (f < n)); f++);
+	for (f = 0; ((!RF_DEAD_DISK(raidPtr->Disks[f].status)) && (f < n)); f++);
 
 	RF_ASSERT(f < n);
 	RF_ASSERT(f != d);
@@ -1120,8 +1114,8 @@ rf_compute_workload_shift(
 	}
 #endif
 
-	raidPtr->hist_diskreq[row][d]++;
-	if (raidPtr->hist_diskreq[row][d] > v) {
+	raidPtr->hist_diskreq[d]++;
+	if (raidPtr->hist_diskreq[d] > v) {
 		ret = 0;	/* do not redirect */
 	} else {
 		ret = 1;	/* redirect */
@@ -1129,12 +1123,12 @@ rf_compute_workload_shift(
 
 #if 0
 	printf("d=%d f=%d sd=%d v=%d k=%d ret=%d h=%d\n", d, f, sd, v, k, ret,
-	    raidPtr->hist_diskreq[row][d]);
+	    raidPtr->hist_diskreq[d]);
 #endif
 
-	if (raidPtr->hist_diskreq[row][d] >= k) {
+	if (raidPtr->hist_diskreq[d] >= k) {
 		/* reset counter */
-		raidPtr->hist_diskreq[row][d] = 0;
+		raidPtr->hist_diskreq[d] = 0;
 	}
 	return (ret);
 }
@@ -1153,21 +1147,19 @@ void
 rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->dagHdr->raidPtr;
-	RF_RowCol_t rowData, colData, rowMirror, colMirror;
+	RF_RowCol_t colData, colMirror;
 	int     dataQueueLength, mirrorQueueLength, usemirror;
 	RF_PhysDiskAddr_t *data_pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	RF_PhysDiskAddr_t *mirror_pda = (RF_PhysDiskAddr_t *) node->params[4].p;
 	RF_PhysDiskAddr_t *tmp_pda;
-	RF_RaidDisk_t **disks = raidPtr->Disks;
-	RF_DiskQueue_t **dqs = raidPtr->Queues, *dataQueue, *mirrorQueue;
+	RF_RaidDisk_t *disks = raidPtr->Disks;
+	RF_DiskQueue_t *dqs = raidPtr->Queues, *dataQueue, *mirrorQueue;
 
 	/* return the [row col] of the disk with the shortest queue */
-	rowData = data_pda->row;
 	colData = data_pda->col;
-	rowMirror = mirror_pda->row;
 	colMirror = mirror_pda->col;
-	dataQueue = &(dqs[rowData][colData]);
-	mirrorQueue = &(dqs[rowMirror][colMirror]);
+	dataQueue = &(dqs[colData]);
+	mirrorQueue = &(dqs[colMirror]);
 
 #ifdef RF_LOCK_QUEUES_TO_READ_LEN
 	RF_LOCK_QUEUE_MUTEX(dataQueue, "SelectMirrorDiskIdle");
@@ -1183,10 +1175,10 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 #endif				/* RF_LOCK_QUEUES_TO_READ_LEN */
 
 	usemirror = 0;
-	if (RF_DEAD_DISK(disks[rowMirror][colMirror].status)) {
+	if (RF_DEAD_DISK(disks[colMirror].status)) {
 		usemirror = 0;
 	} else
-		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
+		if (RF_DEAD_DISK(disks[colData].status)) {
 			usemirror = 1;
 		} else
 			if (raidPtr->parity_good == RF_RAID_DIRTY) {
@@ -1229,24 +1221,22 @@ void
 rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->dagHdr->raidPtr;
-	RF_RowCol_t rowData, colData, rowMirror, colMirror;
+	RF_RowCol_t colData, colMirror;
 	RF_PhysDiskAddr_t *data_pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	RF_PhysDiskAddr_t *mirror_pda = (RF_PhysDiskAddr_t *) node->params[4].p;
 	RF_PhysDiskAddr_t *tmp_pda;
-	RF_RaidDisk_t **disks = raidPtr->Disks;
+	RF_RaidDisk_t *disks = raidPtr->Disks;
 	int     usemirror;
 
 	/* return the [row col] of the disk with the shortest queue */
-	rowData = data_pda->row;
 	colData = data_pda->col;
-	rowMirror = mirror_pda->row;
 	colMirror = mirror_pda->col;
 
 	usemirror = 0;
-	if (RF_DEAD_DISK(disks[rowMirror][colMirror].status)) {
+	if (RF_DEAD_DISK(disks[colMirror].status)) {
 		usemirror = 0;
 	} else
-		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
+		if (RF_DEAD_DISK(disks[colData].status)) {
 			usemirror = 1;
 		} else 
 			if (raidPtr->parity_good == RF_RAID_DIRTY) {
@@ -1254,7 +1244,7 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 				usemirror = 0;
 			} else
 				if (data_pda->startSector < 
-				    (disks[rowData][colData].numBlocks / 2)) {
+				    (disks[colData].numBlocks / 2)) {
 					usemirror = 0;
 				} else {
 					usemirror = 1;

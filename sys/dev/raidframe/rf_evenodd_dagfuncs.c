@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.12 2003/06/23 11:02:00 martin Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.12 2003/06/23 11:02:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -732,9 +732,9 @@ rf_EvenOddDoubleRecoveryFunc(node)
 		sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 		for (i = 0; i < numDataCol; i++) {
 			npda.raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.row), &(npda.col), &(npda.startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.col), &(npda.startSector), 0);
 			/* skip over dead disks */
-			if (RF_DEAD_DISK(raidPtr->Disks[npda.row][npda.col].status))
+			if (RF_DEAD_DISK(raidPtr->Disks[npda.col].status))
 				if (i != fcol[0])
 					break;
 		}
@@ -912,9 +912,9 @@ rf_EOWriteDoubleRecoveryFunc(node)
 	sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 	for (i = 0; i < numDataCol; i++) {
 		npda.raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.row), &(npda.col), &(npda.startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.col), &(npda.startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[npda.row][npda.col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[npda.col].status))
 			if (i != fcol[0])
 				break;
 	}
