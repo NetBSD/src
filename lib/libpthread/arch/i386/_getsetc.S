@@ -1,3 +1,5 @@
+/*	$NetBSD: _getsetc.S,v 1.1.2.4 2002/10/22 18:36:04 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
