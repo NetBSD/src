@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.25 2003/05/09 00:56:56 itojun Exp $	*/
+/*	$NetBSD: ftree.c,v 1.26 2003/06/23 13:14:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.25 2003/05/09 00:56:56 itojun Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.26 2003/06/23 13:14:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ ftree_add(char *str, int isdir)
 	 * simple check for bad args
 	 */
 	if ((str == NULL) || (*str == '\0')) {
-		tty_warn(0, "Invalid file name arguement");
+		tty_warn(0, "Invalid file name argument");
 		return(-1);
 	}
 
