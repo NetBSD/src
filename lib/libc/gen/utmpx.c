@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.20 2003/08/26 16:48:33 wiz Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.21 2003/09/06 16:42:10 wiz Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.20 2003/08/26 16:48:33 wiz Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.21 2003/09/06 16:42:10 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: utmpx.c,v 1.20 2003/08/26 16:48:33 wiz Exp $");
 
 __warn_references(getlastlogx,
     "warning: reference to compatibility getlastlogx(); include <utmpx.h> for correct reference")
+__warn_references(lastlogxname,
+    "warning: reference to deprecated lastlogxname()")
 
 static FILE *fp;
 static int readonly = 0;
