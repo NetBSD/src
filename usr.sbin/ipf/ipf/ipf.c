@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.10 1997/11/18 06:09:25 mrg Exp $	*/
+/*	$NetBSD: ipf.c,v 1.11 1997/12/20 20:07:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -206,12 +206,10 @@ char	*name, *file;
 		exit(1);
 	}
 
-	while (getline(line, sizeof(line)-1, fp)) {
+	while (getline(line, sizeof(line), fp)) {
 		/*
-		 * treat both CR and LF as EOL
+		 * treat CR as EOL.  LF is converted to NUL by getline().
 		 */
-		if ((s = index(line, '\n')))
-			*s = '\0';
 		if ((s = index(line, '\r')))
 			*s = '\0';
 		/*
@@ -224,7 +222,7 @@ char	*name, *file;
 			continue;
 
 		if (opts & OPT_VERBOSE)
-			(void)fprintf(stderr, "[%s]\n",line);
+			(void)fprintf(stderr, "[%s]\n", line);
 
 		fr = parse(line);
 		(void)fflush(stdout);
@@ -271,31 +269,50 @@ char	*name, *file;
 			}
 		}
 	}
+	if (ferror(fp) || !feof(fp)) {
+		fprintf(stderr, "%s: %s: file error or line too long\n",
+		    name, file);
+		exit(1);
+	}
 	(void)fclose(fp);
 }
 
 /*
- * Similar to fgets(3) but can handle '\\'
+ * Similar to fgets(3) but can handle '\\' and NL is converted to NUL.
+ * Returns NULL if error occured, EOF encounterd or input line is too long.
  */
 static char *getline(str, size, file)
 register char	*str;
 size_t	size;
 FILE	*file;
 {
-	register char *p;
-	register int len;
+	char *p;
+	int s, len;
 
 	do {
-		for (p = str; ; p += strlen(p) - 1) {
-			if (!fgets(p, size, file))
-				return(NULL);
+		for (p = str, s = size;; p += len, s -= len) {
+			/*
+			 * if an error occured, EOF was encounterd, or there
+			 * was no room to put NUL, return NULL.
+			 */
+			if (fgets(p, s, file) == NULL)
+				return (NULL);
 			len = strlen(p);
-			p[len - 1] = '\0';
-			if (p[len - 1] != '\\')
+			/*
+			 * if there was no room to put newline or there was
+			 * no room to put entire line, return NULL.
+			 */
+			if (len == 0 || p[--len] != '\n')
+				return (NULL);
+			p[len] = '\0';
+			/*
+			 * if the line just read has only newline or does not
+			 * end with '\\', we have read whole line.
+			 */
+			if (len == 0 || p[--len] != '\\')
 				break;
-			size -= len;
 		}
-	} while (*str == '\0' || *str == '\n');
+	} while (*str == '\0');
 	return(str);
 }
 
