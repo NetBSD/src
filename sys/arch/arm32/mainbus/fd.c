@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 2000/04/07 16:58:54 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 2000/04/09 00:18:12 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+
+#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
