@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.3 1999/04/26 07:16:12 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.4 1999/05/11 06:43:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.3 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.4 1999/05/11 06:43:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,31 +57,19 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.3 1999/04/26 07:16:12 nisimura E
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
-int     cold = 1;       /* if 1, still working on cold-start */
-
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
-u_int32_t	iplmask[IPL_HIGH+1];	/* interrupt mask bits for each IPL */
-u_int32_t	oldiplmask[IPL_HIGH+1];	/* old values for splx(s) */
+u_int32_t iplmask[IPL_HIGH+1];		/* interrupt mask bits for each IPL */
+u_int32_t oldiplmask[IPL_HIGH+1];	/* old values for splx(s) */
 
 struct device	*booted_device;
 int	booted_slot, booted_unit, booted_partition;
 char	*booted_protocol;
+
 void	calculate_iplmask __P((void));
 int	nullintr __P((void *));
 
-struct devnametobdevmaj pmax_nam2blk[] = {
-	{ "sd",		19 },
-	{ "cd",		25 },
-	{ NULL,		0 },
-};
+extern int cold;			/* if 1, still working on cold-start */
 
-/*
- * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
- * Once devices are configured, enable interrupts, and probe
- * for attached scsi devices.
- */
 void
 configure()
 {
@@ -125,10 +113,12 @@ consinit()
 void
 cpu_rootconf()
 {
+	extern struct devnametobdevmaj dev_name2blk[];
+
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, pmax_nam2blk);
+	setroot(booted_device, booted_partition, dev_name2blk);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.9 1999/04/26 07:16:12 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.10 1999/05/11 06:43:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.9 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.10 1999/05/11 06:43:15 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.9 1999/04/26 07:16:12 nisimura E
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>		/* XXX */
+#include <pmax/pmax/pmaxtype.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -97,8 +98,59 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.9 1999/04/26 07:16:12 nisimura E
 #include <ddb/db_extern.h>
 #endif
 
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/dev/promiovar.h>		/* prom console I/O vector */
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[40];
+
+/* maps for VM objects */
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+
+int	systype;		/* mother board type */
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
+int	cpuspeed = 30;		/* approx # of instructions per usec */
+int	cold = 1;		/* 1 until configure has been done well */
+int	maxmem;			/* max memory per process */
+int	physmem;		/* max supported memory, changes to actual */
+int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+int	mem_cluster_cnt;
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ * Used as an argument to splx().
+ * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
+ * disables mips1 FPU interrupts.
+ */
+int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
+
+struct splsw	*__spl;			/* model dependent spl switch */
+struct splvec	splvec;			/* XXX will go XXX */
+
+void	mach_init __P((int, char *[], int, int, u_int, char *));
+
+unsigned (*clkread) __P((void)); /* high resolution timer if available */
+unsigned nullclkread __P((void));
+
+void	prom_haltbutton __P((void));
+void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
+int	prom_systype __P((void));
+
+/* XXX should go XXX */
+u_long	le_iomem;		/* 128K IOASIC buffer for lance chip */
+volatile struct chiptime *mcclock_addr;
+/* XXX XXX XXX */
+
+/*XXXjrs*/
+const	struct callback *callv;	/* pointer to PROM entry points */
+
+#ifdef DEBUG
+/* stacktrace code violates prototypes to get callee's registers */
+extern void stacktrace __P((void)); /*XXX*/
+#endif
 
 /* Motherboard or system-specific initialization vector */
 void	unimpl_os_init __P((void));
@@ -119,61 +171,8 @@ struct platform platform = {
 	unimpl_clockintr
 };
 
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[40];
-
-/* maps for VM objects */
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
-
-char	*bootinfo = NULL;	/* pointer to bootinfo structure */
-int	cpuspeed = 30;		/* Approx # of instructions per usec */
-int	systype;		/* Mother board type */
-int	maxmem;			/* Max memory per process */
-int	physmem;		/* Max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
-int	mem_cluster_cnt;
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-unsigned latched_cycle_cnt;	/* high resolution timer cycle counter */
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
-unsigned (*clkread) __P((void));	/* model dependent clkread() */
-struct splsw	*__spl;			/* model dependent spl call switch */
-struct splvec	splvec;			/* XXX will go XXX */
-
 extern caddr_t esym;
-
-void	mach_init __P((int, char *[], int, int, u_int, char *));
-unsigned nullclkread __P((void));
-int	atoi __P((const char *));
-void	prom_haltbutton __P((void));
-void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
-int	prom_systype __P((void));
-
-/* XXX should go XXX */
-u_long	le_iomem;		/* 128K for lance chip via. IOASIC */
-volatile struct chiptime *mcclock_addr;
-/* XXX XXX XXX */
-
-/*XXXjrs*/
-const	struct callback *callv;	/* pointer to PROM entry points */
-
-#ifdef DEBUG
-/* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
-#endif
-
+extern struct consdev promcd;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -193,8 +192,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	caddr_t kernend, v;
 	unsigned size;
 #ifdef DDB
-	int nsym;
-	caddr_t ssym;
+	int nsym = 0;
+	caddr_t ssym = 0;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
@@ -350,7 +349,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/* Check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown System type '%x'\n", i);
+		printf("Unknown system type '%08x'\n", i);
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -411,11 +410,22 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/*
 	 * Load the rest of the available pages into the VM system.
+	 * Put the first 8M of RAM onto a lower-priority free list, since
+	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
+	 * into this region, and we want them to have a fighting chance of
+	 * allocating their DMA memory during autoconfiguratoin.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	if (last <= (8 * 1024 * 1024)) {
+		uvm_page_physload(atop(first), atop(last), atop(first),
+		    atop(last), VM_FREELIST_DEFAULT);
+	} else {
+		uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
+		    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
+		uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
+		    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -428,7 +438,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vsize_t)allocsys(0);
+	size = (unsigned)allocsys(0);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
 	if ((allocsys(v) - v) != size)
 		panic("mach_init: table size inconsistency");
@@ -620,7 +630,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  */ 
 void
 cpu_reboot(howto, bootstr)
-	int howto;
+	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
 	extern int cold;
@@ -680,36 +690,6 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-#if 0
-int
-initcpu()
-{
-	volatile struct chiptime *c;
-	int i = 0;
-
-	/*
-	 * reset after autoconfig probe:
-	 * clear  any memory errors, reset any pending interrupts.
-	 */
-
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
-
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
-}
-#endif
-
 /*
  * lookup_bootinfo:
  * Look up information in bootinfo of boot loader.
@@ -741,10 +721,10 @@ lookup_bootinfo(type)
 #include "opt_dec_3maxplus.h"
 
 /*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
+ * Return the best possible estimate of the time in the timeval to
+ * which tvp points.  We guarantee that the time will be greater than
+ * the value obtained by a previous call.  Some models of DECstations
+ * provide a high resolution timer circuit.
  */
 void
 microtime(tvp)
@@ -811,17 +791,6 @@ unimpl_device_register(sc, arg)
 	panic("sysconf.init didnt set device_register");
 }
 
-int
-unimpl_intr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr");
-}
-
-
 void
 unimpl_iointr(arg, arg2)
 	void *arg;
@@ -837,120 +806,19 @@ unimpl_clockintr(arg)
 	panic("sysconf.init didnt set clockintr");
 }
 
+int
+unimpl_intr(mask, pc, statusreg, causereg)
+	u_int mask;
+	u_int pc;
+	u_int statusreg;
+	u_int causereg;
+{
+	panic("sysconf.init didnt set intr");
+}
+
+
 unsigned
 nullclkread()
 {
 	return 0;
-}
-
-/*
- * PROM reset callback for reset switch.
- * XXX enter ddb instead?
- */
-void
-prom_haltbutton()
-{
-	(*callv->_halt)((int *)0, 0);
-}
-
-
-/*
- * Call PROM to halt or reboot.
- */
-volatile void
-prom_halt(howto, bootstr)
-	int howto;
-	char *bootstr;
-
-{
-	if (callv != &callvec)
-		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
-	else {
-		volatile void (*f) __P((void));
-
-		f = (howto & RB_HALT)
-			? (void *)DEC_PROM_REINIT
-			: (void *)DEC_PROM_AUTOBOOT;
-		(*f)();
-	}
-
-	while(1) ;	/* fool gcc */
-	/*NOTREACHED*/
-}
-
-/*
- * Get 32bit system type of Digital hardware.
- *	From highest order byte to lowest;
- *	'cputype,' 'systype,' 'firmware revision' and 'hardware revision.'
- */
-int
-prom_systype()
-{
-	char *cp;
-
-	if (callv != &callvec)
-		return (*callv->_getsysid)();
-	cp = (*callv->_getenv)("systype");
-	return (cp != NULL) ? atoi(cp) : 0;
-}
-
-/*
- * Convert an ASCII string into an integer.
- */
-int
-atoi(s)
-	const char *s;
-{
-	int c;
-	unsigned base = 10, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;
 }

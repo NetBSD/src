@@ -1,7 +1,7 @@
 #
 # GENERIC
 #
-#	$NetBSD: GENERIC,v 1.30.4.3 1999/04/17 13:45:52 nisimura Exp $
+#	$NetBSD: GENERIC,v 1.30.4.4 1999/05/11 06:43:16 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -111,8 +111,8 @@ asc0	at	ioasic?	offset ?	# NCR53C94 SCSI with IOASIC
 le0	at	ioasic?	offset ?	# LANCE
 zsc*	at	ioasic? offset ?	# Z85C30
 zstty*	at	zsc? channel 1
-lkkbd0	at	zsc?
-vsms0	at	zsc?
+lkkbd0	at	zsc? channel ?
+vsms0	at	zsc? channel ?
 dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 #isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
 #fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)
@@ -121,14 +121,12 @@ dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 ibus0	at	tc? # slot ? offset ?	# 3MAX system slot
 mcclock0 at	ibus0			# DS1287 RTC
 dc0	at	ibus0			# DC7085 quad line serial device
-dctty0	at	dc? line 2
-dctty1	at	dc? line 3
 
 # TURBOchannel devices
-mfb0	at	tc? # slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
-cfb0	at	tc? # slot ? offset ?	# PMAG-B CX Color Framebuffer
-tfb0	at	tc? # slot ? offset ?	# PMAG-RO TX True Color Framebuffer
-sfb0	at	tc? # slot ? offset ?	# PMAGB-B HX Smart Framebuffer
+mfb*	at	tc? # slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
+cfb*	at	tc? # slot ? offset ?	# PMAG-B CX Color Framebuffer
+tfb*	at	tc? # slot ? offset ?	# PMAG-RO TX True Color Framebuffer
+sfb*	at	tc? # slot ? offset ?	# PMAGB-B HX Smart Framebuffer
 xcfb0	at	tc? # slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? # slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? # slot ? offset ?	# PMAD-A LANCE
@@ -144,11 +142,12 @@ le0	at	ibus0			# 3100 onboard LANCE
 #sii0	at	ibus0			# DC7061 onboard SCSI
 pm0	at	ibus0			# 3100 onboard fb
 dc*	at	ibus0			# 5100 optional serial device
-dctty0	at	dc? line 2
-dctty1	at	dc? line 3
 
-lkkbd0	at	dc0
-vsms0	at	dc0
+lkkbd0	at	dc0 line ?
+vsms0	at	dc0 line ?
+dctty0	at	dc0 line 2
+dctty1	at	dc0 line 3
+dctty*	at	dc? line ?
 
 # SCSI bus support
 scsibus*	at asc?

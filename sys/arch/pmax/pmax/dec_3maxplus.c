@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.10 1999/05/11 06:43:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.10 1999/05/11 06:43:15 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimur
 
 #include <pmax/pmax/pmaxtype.h> 
 #include <pmax/pmax/kn03.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/dec_3max_subr.h>
+#include <pmax/pmax/memc.h>
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.9 1999/04/26 07:16:12 nisimur
 /* XXX XXX XXX */
 
 void dec_3maxplus_init __P((void));
-void dec_3maxplus_os_init __P((void));
 void dec_3maxplus_bus_reset __P((void));
 void dec_3maxplus_cons_init __P((void));
 void dec_3maxplus_device_register __P((struct device *, void *));
@@ -117,8 +116,8 @@ extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
 
+static unsigned latched_cycle_cnt;
 extern char cpu_model[];
-extern unsigned latched_cycle_cnt;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -141,26 +140,12 @@ extern volatile struct chiptime *mcclock_addr;	/* XXX */
 void
 dec_3maxplus_init()
 {
+	platform.iobus = "tc3maxplus";
 
-	platform.iobus = "tcioasic";
-
-	platform.os_init = dec_3maxplus_os_init;
 	platform.bus_reset = dec_3maxplus_bus_reset;
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 
-	dec_3maxplus_os_init();
-
-	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
-	    CPUISMIPS3 ? '6' : '4');
-}
-
-/*
- * Set up OS level stuff: spls, etc.
- */
-void
-dec_3maxplus_os_init()
-{
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
@@ -168,6 +153,9 @@ dec_3maxplus_os_init()
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
 	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_3maxplus_intr;
+
+	/* 3MAX+ has IOASIC free-running high resolution timer */
+	clkread = kn03_clkread;
 
 	/*
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
@@ -205,8 +193,8 @@ dec_3maxplus_os_init()
 	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
 
-	/* 3MAX+ has IOASIC free-running high resolution timer */
-	clkread = kn03_clkread;
+	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
+	    CPUISMIPS3 ? '6' : '4');
 }
 
 /*
@@ -278,11 +266,6 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	unsigned status;
 	unsigned cause;
 {
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
-	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
-	struct clockframe cf;
 	static int warned = 0;
 	u_long old_buscycle = latched_cycle_cnt;
 
@@ -291,10 +274,13 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
-		__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
+		struct clockframe cf;
+
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(ioasic_base + IOASIC_SLOT_8_START));
+		latched_cycle_cnt = *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 		cf.pc = pc;
 		cf.sr = status;
-		latched_cycle_cnt = *(u_int32_t *)(sc->sc_base + IOASIC_CTR);
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
@@ -320,11 +306,13 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 #endif
 	if (cpumask & MIPS_INT_MASK_0) {
 		int ifound;
-		u_int32_t can_serve, xxxintr;
+		u_int32_t imsk, intr, can_serve, xxxintr;
 
 		do {
 			ifound = 0;
-			can_serve = *intr & *imsk;
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			can_serve = intr & imsk;
 
 #define	CHECKINTR(slot, bits)					\
 	if (can_serve & (bits)) {				\
@@ -372,8 +360,8 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 			xxxintr = can_serve & (ERRORS | PTRLOAD);
 			if (xxxintr) {
 				ifound = 1;
-				*intr &= ~xxxintr;
-			/*printf("IOASIC error condition: %x\n", xxxintr);*/
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+					= intr &~ xxxintr;
 			}
 		} while (ifound);
 	}
@@ -421,3 +409,25 @@ kn03_clkread()
 {
 	return *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 }
+
+#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
+#define C(x)	(void *)(x)
+
+static struct tc_slotdesc tc_kn03_slots[] = {
+    { KV(KN03_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(KN03_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(KN03_PHYS_TC_2_START), C(SYS_DEV_OPT2),  },	/* 2 - opt slot 2 */
+    { KV(KN03_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - IOASIC */
+};
+
+static struct tc_builtin tc_ioasic_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, C(SYS_DEV_BOGUS), },
+};
+
+struct tcbus_attach_args kn03_tc_desc = {
+	"tc", 0,
+	TC_SPEED_25_MHZ,
+	4, tc_kn03_slots,
+	1, tc_ioasic_builtins,
+	ioasic_intr_establish, ioasic_intr_disestablish
+};

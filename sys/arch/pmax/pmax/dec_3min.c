@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.9 1999/05/11 06:43:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.9 1999/05/11 06:43:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Ex
 #include <machine/sysconf.h>
 
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
-#include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+#include <pmax/pmax/kmin.h>		/* baseboard addresses (constants) */
+#include <pmax/pmax/memc.h>		/* memory errors */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
 #include <dev/tc/tcvar.h>
@@ -102,28 +102,26 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Ex
 /* XXX XXX XXX */
 
 void dec_3min_init __P((void));
-void dec_3min_os_init __P((void));
 void dec_3min_bus_reset __P((void));
 void dec_3min_device_register __P((struct device *, void *));
 void dec_3min_cons_init __P((void));
 int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-void kn02ba_wbflush __P((void));
-unsigned kn02ba_clkread __P((void));
-
 void kmin_intr_establish
 	__P((struct device *, void *, int, int (*)(void *), void *));
-
-void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
-			       int clockmask));
+void dec_3min_mcclock_cpuspeed
+	__P((volatile struct chiptime *mcclock_addr, int clockmask));
+void kn02ba_wbflush __P((void));
+unsigned kn02ba_clkread __P((void));
 
 extern unsigned (*clkread) __P((void));
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
 
+static unsigned latched_cycle_cnt;
 extern char cpu_model[];
 extern int zs_major;
-extern volatile struct chiptime *mcclock_addr;
+extern int physmem_boardmax;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -138,45 +136,19 @@ struct splsw spl_3min = {
 	{ _splx_ioasic,		0 },
 };
 
+extern volatile struct chiptime *mcclock_addr;	/* XXX */
+
 /*
  * Fill in platform struct.
  */
 void
 dec_3min_init()
 {
-	platform.iobus = "tcbus";
+	platform.iobus = "tc3min";
 
-	platform.os_init = dec_3min_os_init;
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
-
-	dec_3min_os_init();
-
-	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
-}
-
-/*
- * Initalize the memory system and I/O buses.
- */
-void
-dec_3min_bus_reset()
-{
-	/*
-	 * Reset interrupts, clear any errors from newconf probes
-	 */
-
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
-	kn02ba_wbflush();
-
-	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
-	kn02ba_wbflush();
-}
-
-void
-dec_3min_os_init()
-{
-	extern int physmem_boardmax;
 
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
@@ -185,6 +157,9 @@ dec_3min_os_init()
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
 	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_3min_intr;
+
+	/* R4000 3MIN can ultilize on-chip counter */
+	clkread = kn02ba_clkread;
 
 	/*
 	 * Since all the motherboard interrupts come through the
@@ -231,8 +206,24 @@ dec_3min_os_init()
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
-	/* R4000 3MIN can ultilize on-chip counter */
-	clkread = kn02ba_clkread;
+	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
+}
+
+/*
+ * Initalize the memory system and I/O buses.
+ */
+void
+dec_3min_bus_reset()
+{
+	/*
+	 * Reset interrupts, clear any errors from newconf probes
+	 */
+
+	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	kn02ba_wbflush();
+
+	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
+	kn02ba_wbflush();
 }
 
 void
@@ -455,20 +446,38 @@ kn02ba_clkread()
 {
 #ifdef MIPS3
 	extern u_int32_t mips3_cycle_count __P((void));
-	extern unsigned latched_cycle_cnt;
 
 	if (CPUISMIPS3) {
 		u_int32_t mips3_cycles;
 
 		mips3_cycles = mips3_cycle_count() - latched_cycle_cnt;
-#if 0
-		/* XXX divides take 78 cycles: approximate with * 41/2048 */
-		return (mips3_cycles / cpu_mhz);
-#else
-		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
-		       (mips3_cycles >> 11));
-#endif
+		/* avoid div insn. 78 cycles: approximate with * 41/2048 */
+		return	(mips3_cycles >> 6)
+			+ (mips3_cycles >> 8)
+			+ (mips3_cycles >> 11);
 	}
 #endif
 	return 0;
 }
+
+#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
+#define C(x)	(void *)(x)
+
+static struct tc_slotdesc tc_kmin_slots[] = {
+    { KV(KMIN_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(KMIN_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(KMIN_PHYS_TC_2_START), C(SYS_DEV_OPT2),  },	/* 2 - opt slot 2 */
+    { KV(KMIN_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - IOASIC */
+};
+
+static struct tc_builtin tc_ioasic_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, C(SYS_DEV_BOGUS), },
+};
+
+struct tcbus_attach_args kmin_tc_desc = {
+	"tc", 0,
+	TC_SPEED_12_5_MHZ,
+	4, tc_kmin_slots,
+	1, tc_ioasic_builtins,
+	kmin_intr_establish, ioasic_intr_disestablish
+};

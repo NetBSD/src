@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.7 1999/04/26 07:16:12 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.8 1999/05/11 06:43:16 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.7 1999/04/26 07:16:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.8 1999/05/11 06:43:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
 
 void dec_5100_init __P((void));
-void dec_5100_os_init __P((void));
 void dec_5100_bus_reset __P((void));
 void dec_5100_cons_init __P((void));
 void dec_5100_device_register __P((struct device *, void *));
@@ -93,21 +92,13 @@ struct splsw spl_5100 = {
 void
 dec_5100_init()
 {
+	extern void mips_set_wbflush __P((void (*)(void)));
+
 	platform.iobus = "ibus";
 
-	platform.os_init = dec_5100_os_init;
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
-
-	dec_5100_os_init();
-	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
-}
-
-void
-dec_5100_os_init()
-{
-	extern void mips_set_wbflush __P((void (*)(void)));
 
 	/* set correct wbflush routine for this motherboard */
 	mips_set_wbflush(kn230_wbflush);
@@ -116,6 +107,11 @@ dec_5100_os_init()
 	 * Set up interrupt handling and I/O addresses.
 	 */
 	mips_hardware_intr = dec_5100_intr;
+	mcclock_addr = (volatile struct chiptime *)
+		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 
 #ifdef NEWSPL
 	__spl = &spl_5100;
@@ -127,14 +123,10 @@ dec_5100_os_init()
 	splvec.splclock = MIPS_SPL_0_1_2;
 	splvec.splstatclock = MIPS_SPL_0_1_2;
 #endif
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
 
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
+	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
-
 
 /*
  * Initalize the memory system and I/O buses.
