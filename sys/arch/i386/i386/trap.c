@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 1999/06/17 00:12:12 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.133 1999/10/04 17:36:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -472,8 +472,16 @@ trap(frame)
 		    && map != kernel_map) {
 			nss = clrnd(btoc(USRSTACK-(unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				rv = KERN_FAILURE;
-				goto nogo;
+				/*
+				 * We used to fail here. However, it may
+				 * just have been an mmap()ed page low
+				 * in the stack, which is legal. If it
+				 * wasn't, uvm_fault() will fail below.
+				 *
+				 * Set nss to 0, since this case is not
+				 * a "stack extension".
+				 */
+				nss = 0;
 			}
 		}
 
@@ -488,7 +496,6 @@ trap(frame)
 			goto out;
 		}
 
-	nogo:
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
@@ -576,7 +583,7 @@ trapwrite(addr)
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		nss = clrnd(btoc(USRSTACK-(unsigned)va));
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
-			return 1;
+			nss = 0;
 	}
 
 	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
