@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.5 2001/07/04 20:18:30 eeh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6 2001/07/05 06:29:49 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.5 2001/07/04 20:18:30 eeh Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6 2001/07/05 06:29:49 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -742,7 +742,8 @@ Lbcopy_block:
  *
  * %l0		XXXX DEBUG old fpstate
  * %l1		fpproc (hi bits only)
- * %l2		old fpproc
+ * %l2		orig fpproc
+ * %l3		orig fpstate
  * %l5		curproc
  * %l6		old fpstate
  *
@@ -757,10 +758,9 @@ Lbcopy_block:
  * %o5		last safe fetchable address
  */
 
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
+#if 1
+	ENABLE_FPU(0)
+#else
 	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
 	sethi	%hi(FPPROC), %l1
 	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
@@ -785,12 +785,13 @@ Lbcopy_block:
 	sethi	%hi(CURPROC), %l4			! Use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
 	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+	 nop
 2:
 	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
 	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
 	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
 	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-	
+#endif
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
@@ -802,6 +803,7 @@ Lbcopy_block:
 
 	mov	%o1, %g5				! memcpy retval
 	add	%o0, %o2, %o5				! End of source block
+	dec	%o5
 
 	clr	%g1					! No data loaded
 	andn	%o5, BLOCK_ALIGN, %o5			! Last safe addr.
@@ -960,35 +962,6 @@ Lbcopy_block_aligned64:
  * store.
  *
  */
-#if 0
-	/* XXXX DEBUG -- return which routine we used instead of *src */
-	and	%o0, BLOCK_ALIGN, %o3
-	set	Lbcopy_blocknames, %g5
-	ba	1f
-	 ldx	[%g5 + %o3], %g5
-	
-#define BL_NAME(x)	x:	.asciz #x
-	.align	8
-Lbcopy_blocknames:
-	.xword	100f
-	.xword	101f
-	.xword	102f
-	.xword	103f
-	.xword	104f
-	.xword	105f
-	.xword	106f
-	.xword	107f
-	BL_NAME(100)
-	BL_NAME(101)
-	BL_NAME(102)
-	BL_NAME(103)
-	BL_NAME(104)
-	BL_NAME(105)
-	BL_NAME(106)
-	BL_NAME(107)
-	.align	8
-1:
-#endif
 #if 1
 	and	%o0, BLOCK_ALIGN, %o3
 	srax	%o3, 3, %o3				! Isolate the offset
@@ -1061,16 +1034,28 @@ Lbcopy_block_jmp:
 	!! Source is block aligned.
 	!!
 	!! Just load a block and go.
-	!! 
+	!!
 L100:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L100"
+	.align	8
+2:	
+#endif
 	fmovd	%f0 , %f62
 	ldda	[%o0] ASI_BLK_P, %f0
 	inc	BLOCK_SIZE, %o0
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
+	bleu,a,pn	%icc, 3f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	ba,pt	%icc, 3f
 	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
-3:	
+	
+	.align	32					! ICache align.
+3:
 	faligndata	%f62, %f0, %f32
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f0, %f2, %f34
@@ -1081,16 +1066,14 @@ L100:
 	faligndata	%f6, %f8, %f40
 	faligndata	%f8, %f10, %f42
 	faligndata	%f10, %f12, %f44
-	
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f12, %f14, %f46
-
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:	
 	stda	%f32, [%o1] ASI_STORE
-
 	faligndata	%f14, %f16, %f32
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f16, %f18, %f34
@@ -1098,20 +1081,18 @@ L100:
 	faligndata	%f18, %f20, %f36
 	dec	BLOCK_SIZE, %o2
 	faligndata	%f20, %f22, %f38
-	faligndata	%f22, %f24, %f40
 	cmp	%o0, %o5
+	faligndata	%f22, %f24, %f40
 	faligndata	%f24, %f26, %f42
 	faligndata	%f26, %f28, %f44
-
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f28, %f30, %f46
-
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
-2:	
+	
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
+2:
 	stda	%f32, [%o1] ASI_STORE
-
 	faligndata	%f30, %f48, %f32
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f48, %f50, %f34
@@ -1119,17 +1100,15 @@ L100:
 	faligndata	%f50, %f52, %f36
 	dec	BLOCK_SIZE, %o2
 	faligndata	%f52, %f54, %f38
-	faligndata	%f54, %f56, %f40
 	cmp	%o0, %o5
+	faligndata	%f54, %f56, %f40
 	faligndata	%f56, %f58, %f42
 	faligndata	%f58, %f60, %f44
-
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f60, %f62, %f46
-
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16			! Increment is at top
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16			! Increment is at top
+	membar	#Sync
 2:	
 	stda	%f32, [%o1] ASI_STORE
 	ba	3b
@@ -1141,6 +1120,15 @@ L100:
 	!! We need to load almost 1 complete block by hand.
 	!! 
 L101:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L101"
+	.align	8
+2:	
+#endif
 !	fmovd	%f0, %f0				! Hoist fmovd
 	ldd	[%o0], %f2
 	inc	8, %o0
@@ -1158,23 +1146,23 @@ L101:
 	inc	8, %o0
 	
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 3f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
 3:	
 	faligndata	%f0, %f2, %f32
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f2, %f4, %f34
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f4, %f6, %f36
-	faligndata	%f6, %f8, %f38
 	cmp	%o0, %o5
+	faligndata	%f4, %f6, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f6, %f8, %f38
 	faligndata	%f8, %f10, %f40
 	faligndata	%f10, %f12, %f42
 	faligndata	%f12, %f14, %f44
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f14, %f16, %f46
@@ -1186,15 +1174,15 @@ L101:
 	faligndata	%f18, %f20, %f34
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f20, %f22, %f36
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f22, %f24, %f38
 	cmp	%o0, %o5
+	faligndata	%f22, %f24, %f38
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f24, %f26, %f40
 	faligndata	%f26, %f28, %f42
 	faligndata	%f28, %f30, %f44
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:	
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f30, %f48, %f46
@@ -1206,15 +1194,15 @@ L101:
 	faligndata	%f50, %f52, %f34
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f52, %f54, %f36
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f54, %f56, %f38
-	faligndata	%f56, %f58, %f40
 	cmp	%o0, %o5
+	faligndata	%f54, %f56, %f38
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f56, %f58, %f40
 	faligndata	%f58, %f60, %f42
 	faligndata	%f60, %f62, %f44
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:	
 	brlez,pn	%o2, Lbcopy_blockdone
 	 faligndata	%f62, %f0, %f46
@@ -1229,6 +1217,15 @@ L101:
 	!! We need to load 6 doubles by hand.
 	!! 
 L102:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L102"
+	.align	8
+2:	
+#endif
 	ldd	[%o0], %f4
 	inc	8, %o0
 	fmovd	%f0, %f2				! Hoist fmovd
@@ -1245,22 +1242,22 @@ L102:
 	inc	8, %o0
 	
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 3f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
 3:	
 	faligndata	%f2, %f4, %f32
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f4, %f6, %f34
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f6, %f8, %f36
-	faligndata	%f8, %f10, %f38
 	cmp	%o0, %o5
+	faligndata	%f6, %f8, %f36
+	dec	BLOCK_SIZE, %o2
+	faligndata	%f8, %f10, %f38
 	faligndata	%f10, %f12, %f40
 	faligndata	%f12, %f14, %f42
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f44
 
@@ -1274,14 +1271,14 @@ L102:
 	faligndata	%f20, %f22, %f34
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f22, %f24, %f36
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f24, %f26, %f38
 	cmp	%o0, %o5
+	faligndata	%f24, %f26, %f38
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f26, %f28, %f40
 	faligndata	%f28, %f30, %f42
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:	
 	faligndata	%f30, %f48, %f44
 	brlez,pn	%o2, Lbcopy_blockdone
@@ -1294,14 +1291,14 @@ L102:
 	faligndata	%f52, %f54, %f34
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f54, %f56, %f36
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f56, %f58, %f38
 	cmp	%o0, %o5
+	faligndata	%f56, %f58, %f38
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f58, %f60, %f40
 	faligndata	%f60, %f62, %f42
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:	
 	faligndata	%f62, %f0, %f44
 	brlez,pn	%o2, Lbcopy_blockdone
@@ -1317,6 +1314,15 @@ L102:
 	!! We need to load 5 doubles by hand.
 	!! 
 L103:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L103"
+	.align	8
+2:	
+#endif
 	fmovd	%f0, %f4
 	ldd	[%o0], %f6
 	inc	8, %o0
@@ -1330,21 +1336,22 @@ L103:
 	inc	8, %o0
 
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
+2:	
 	inc	BLOCK_SIZE, %o0
 3:	
 	faligndata	%f4, %f6, %f32
+	cmp	%o0, %o5
 	faligndata	%f6, %f8, %f34
 	dec	BLOCK_SIZE, %o2
 	faligndata	%f8, %f10, %f36
-	cmp	%o0, %o5
 	faligndata	%f10, %f12, %f38
 	faligndata	%f12, %f14, %f40
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f42
 	inc	BLOCK_SIZE, %o0
@@ -1355,16 +1362,16 @@ L103:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f20, %f22, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f22, %f24, %f34
 	cmp	%o0, %o5
+	faligndata	%f22, %f24, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f24, %f26, %f36
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f26, %f28, %f38
 	faligndata	%f28, %f30, %f40
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	ble,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:	
 	faligndata	%f30, %f48, %f42
 	inc	BLOCK_SIZE, %o0
@@ -1375,16 +1382,16 @@ L103:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f52, %f54, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f54, %f56, %f34
 	cmp	%o0, %o5
+	faligndata	%f54, %f56, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f56, %f58, %f36
 	faligndata	%f58, %f60, %f38
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f60, %f62, %f40
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:	
 	faligndata	%f62, %f0, %f42
 	inc	BLOCK_SIZE, %o0
@@ -1402,6 +1409,15 @@ L103:
 	!! We need to load 4 doubles by hand.
 	!! 
 L104:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L104"
+	.align	8
+2:	
+#endif
 	fmovd	%f0, %f6
 	ldd	[%o0], %f8
 	inc	8, %o0
@@ -1413,20 +1429,21 @@ L104:
 	inc	8, %o0
 	
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
+2:	
 	inc	BLOCK_SIZE, %o0
 3:	
 	faligndata	%f6, %f8, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f8, %f10, %f34
 	cmp	%o0, %o5
+	faligndata	%f8, %f10, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f10, %f12, %f36
 	faligndata	%f12, %f14, %f38
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f40
 	faligndata	%f16, %f18, %f42
@@ -1438,17 +1455,17 @@ L104:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f22, %f24, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f24, %f26, %f34
 	cmp	%o0, %o5
+	faligndata	%f24, %f26, %f34
 	faligndata	%f26, %f28, %f36
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f28, %f30, %f38
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:	
 	faligndata	%f30, %f48, %f40
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f48, %f50, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f50, %f52, %f44
@@ -1458,17 +1475,17 @@ L104:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f54, %f56, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f56, %f58, %f34
 	cmp	%o0, %o5
+	faligndata	%f56, %f58, %f34
 	faligndata	%f58, %f60, %f36
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f60, %f62, %f38
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:	
 	faligndata	%f62, %f0, %f40
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f0, %f2, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f2, %f4, %f44
@@ -1485,6 +1502,15 @@ L104:
 	!! We need to load 3 doubles by hand.
 	!! 
 L105:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L105"
+	.align	8
+2:	
+#endif
 	fmovd	%f0, %f8
 	ldd	[%o0], %f10
 	inc	8, %o0
@@ -1494,21 +1520,22 @@ L105:
 	inc	8, %o0
 	
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
+2:	
 	inc	BLOCK_SIZE, %o0
 3:	
 	faligndata	%f8, %f10, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f10, %f12, %f34
 	cmp	%o0, %o5
+	faligndata	%f10, %f12, %f34
 	faligndata	%f12, %f14, %f36
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f38
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f16, %f18, %f40
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f18, %f20, %f42
@@ -1519,13 +1546,13 @@ L105:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f24, %f26, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f26, %f28, %f34
 	cmp	%o0, %o5
+	faligndata	%f26, %f28, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f28, %f30, %f36
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:
 	faligndata	%f30, %f48, %f38
 	inc	BLOCK_SIZE, %o1
@@ -1539,13 +1566,13 @@ L105:
 	stda	%f32, [%o1] ASI_STORE
 
 	faligndata	%f56, %f58, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f58, %f60, %f34
 	cmp	%o0, %o5
+	faligndata	%f58, %f60, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f60, %f62, %f36
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:
 	faligndata	%f62, %f0, %f38
 	inc	BLOCK_SIZE, %o1
@@ -1567,6 +1594,15 @@ L105:
 	!! We need to load 2 doubles by hand.
 	!! 
 L106:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L106"
+	.align	8
+2:	
+#endif
 	fmovd	%f0, %f10
 	ldd	[%o0], %f12
 	inc	8, %o0
@@ -1574,20 +1610,21 @@ L106:
 	inc	8, %o0
 	
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
+2:	
 	inc	BLOCK_SIZE, %o0
 3:	
 	faligndata	%f10, %f12, %f32
-	dec	BLOCK_SIZE, %o2
-	faligndata	%f12, %f14, %f34
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	faligndata	%f12, %f14, %f34
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f36
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f16, %f18, %f38
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f18, %f20, %f40
@@ -1598,15 +1635,15 @@ L106:
 	
 	stda	%f32, [%o1] ASI_STORE
 
-	dec	BLOCK_SIZE, %o2
 	faligndata	%f26, %f28, %f32
 	cmp	%o0, %o5
 	faligndata	%f28, %f30, %f34
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:
 	faligndata	%f30, %f48, %f36
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f48, %f50, %f38
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f50, %f52, %f40
@@ -1618,15 +1655,15 @@ L106:
 
 	stda	%f32, [%o1] ASI_STORE
 
-	dec	BLOCK_SIZE, %o2
 	faligndata	%f58, %f60, %f32
 	cmp	%o0, %o5
 	faligndata	%f60, %f62, %f34
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:
 	faligndata	%f62, %f0, %f36
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f0, %f2, %f38
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f2, %f4, %f40
@@ -1647,24 +1684,34 @@ L106:
 	!! We need to load 1 double by hand.
 	!! 
 L107:
+#ifdef RETURN_NAME
+	sethi	%hi(1f), %g5
+	ba,pt	%icc, 2f
+	 or	%g5, %lo(1f), %g5
+1:	
+	.asciz	"L107"
+	.align	8
+2:	
+#endif
 	fmovd	%f0, %f12
 	ldd	[%o0], %f14
 	inc	8, %o0
 
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 3f
-	 membar #Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar #Sync
+2:	
 	inc	BLOCK_SIZE, %o0
 3:	
-	dec	BLOCK_SIZE, %o2
 	faligndata	%f12, %f14, %f32
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f48
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f48
+	membar	#Sync
 2:
 	faligndata	%f14, %f16, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f16, %f18, %f36
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f18, %f20, %f38
@@ -1676,14 +1723,14 @@ L107:
 	
 	stda	%f32, [%o1] ASI_STORE
 
-	dec	BLOCK_SIZE, %o2
 	faligndata	%f28, %f30, %f32
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f0
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f0
+	membar	#Sync
 2:
 	faligndata	%f30, %f48, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f48, %f50, %f36
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f50, %f52, %f38
@@ -1696,14 +1743,14 @@ L107:
 	
 	stda	%f32, [%o1] ASI_STORE
 
-	dec	BLOCK_SIZE, %o2
 	faligndata	%f60, %f62, %f32
 	cmp	%o0, %o5
-	bgu,a,pn	%icc, 2f
-	 membar	#Sync
-	ldda	[%o0] ASI_BLK_P, %f16
+	bleu,a,pn	%icc, 2f
+	 ldda	[%o0] ASI_BLK_P, %f16
+	membar	#Sync
 2:
 	faligndata	%f62, %f0, %f34
+	dec	BLOCK_SIZE, %o2
 	faligndata	%f0, %f2, %f36
 	inc	BLOCK_SIZE, %o1
 	faligndata	%f2, %f4, %f38
@@ -1724,7 +1771,7 @@ Lbcopy_blockdone:
 	membar	#Sync					! Finish any pending loads
 #define	FINISH_REG(f)				\
 	deccc	8, %o2;				\
-	ble,a	Lbcopy_blockfinish;		\
+	bl,a	Lbcopy_blockfinish;		\
 	 fmovd	f, %f48;			\
 	std	f, [%o1];			\
 	inc	8, %o1
@@ -1737,6 +1784,8 @@ Lbcopy_blockdone:
 	FINISH_REG(%f42)
 	FINISH_REG(%f44)
 	FINISH_REG(%f46)
+	FINISH_REG(%f48)
+#undef FINISH_REG
 	!! 
 	!! The low 3 bits have the sub-word bits needed to be
 	!! stored [because (x-8)&0x7 == x].
@@ -1778,11 +1827,58 @@ Lbcopy_blockfinish:
 	inc	1, %o1					! Update address
 2:
 	membar	#Sync
+#if 0
+	!!
+	!! verify copy success.
+	!! 
+
+	mov	%i0, %o2
+	mov	%i1, %o4
+	mov	%i2, %l4
+0:	
+	ldub	[%o2], %o1
+	inc	%o2
+	ldub	[%o4], %o3
+	inc	%o4
+	cmp	%o3, %o1
+	bnz	1f
+	 dec	%l4
+	brnz	%l4, 0b
+	 nop
+	ba	2f
+	 nop
+
+1:
+	set	block_disable, %o0
+	stx	%o0, [%o0]
+	
+	set	0f, %o0
+	call	prom_printf
+	 sub	%i2, %l4, %o5
+	set	1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	prom_printf
+	 mov	%i2, %o3
+	ta	1
+	.data
+	_ALIGN
+block_disable:	.xword	0
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\r\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
+	_ALIGN
+	.text
+2:	
+#endif
 #ifdef _KERNEL		
+
 /*
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
+#if 1
+	RESTORE_FPU
+#else
 #ifdef DEBUG
 	LDPTR	[%l1 + %lo(FPPROC)], %l7
 	cmp	%l7, %l5
@@ -1791,13 +1887,20 @@ Lbcopy_blockfinish:
 	cmp	%l7, %l0
 	tnz	1		! fpstate has changed!
 #endif
-	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
-	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
+	andcc	%l2, %l3, %g0				! If (fpproc && fpstate)
+	STPTR	%l2, [%l1 + %lo(FPPROC)]		! Restore old fproc
+	bz,pt	%xcc, 1f				! Skip if no fpstate
+	 STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
+	
+	call	_C_LABEL(loadfpstate)			! Re-load orig fpstate
+	 mov	%l3, %o0
+1:
+#endif
 	ret
 	 restore	%g5, 0, %o0			! Return DEST for memcpy
 #endif
 	retl
 	 mov	%g5, %o0
 #endif
+
 
