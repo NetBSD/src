@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.16 2002/08/01 02:42:17 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.17 2002/08/02 08:39:03 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,7 +154,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	kf.sf_signum = sig;
