@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.104 2002/04/23 19:43:18 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.104.2.1 2002/06/10 15:57:52 tv Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -263,6 +263,9 @@ Linksys PCI Fast Ethernet
 SMC EtherPower 10, 10/100 (PCI only!)
 .It
 SMC EtherPower^2 [b]
+.It
+Sundance ST-201 based ethernet adapters (including DLINK DFE550-TX and
+DFE580-TX)
 .It
 SVEC PN0455
 .It
