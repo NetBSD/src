@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.11 2001/04/20 01:18:47 matt Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.12 2001/04/24 11:04:11 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -358,7 +358,7 @@ gmac_rint(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	volatile struct gmac_dma *dp;
 	struct mbuf *m;
-	int i, len;
+	int i, j, len;
 	u_int cmd;
 
 	for (i = sc->sc_rxlast;; i++) {
@@ -398,9 +398,17 @@ next:
 		dp->cmd_hi = 0;
 		__asm __volatile ("sync");
 		dp->cmd = htole32(GMAC_OWN);
-		__asm __volatile ("eieio");	/* force out the OWN bit */
 	}
 	sc->sc_rxlast = i;
+
+	/* XXX Make sure free buffers have GMAC_OWN. */
+	i++;
+	for (j = 1; j < NRXBUF; j++) {
+		if (i == NRXBUF)
+			i = 0;
+		dp = &sc->sc_rxlist[i++];
+		dp->cmd = htole32(GMAC_OWN);
+	}
 }
 
 struct mbuf *
