@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2002/06/28 08:45:51 grant Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/24 20:26:57 jdolecek Exp $
 
-MAN=	MAKEDEV.8 boot.8 mkbootimage.8 setnetbootinfo.8
-MLINKS=	MAKEDEV.8 makedev.8
+MAN=	boot.8 mkbootimage.8 setnetbootinfo.8
 MANSUBDIR=/alpha
 
 .include <bsd.man.mk>
