@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.6 1999/01/09 13:39:24 tron Exp $
+.\"	$NetBSD: pciide.4,v 1.7 1999/02/02 16:56:54 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -50,8 +50,23 @@ functions for the
 and
 .Nm atapi
 drivers. This driver include specific, enhanced support for the CMD Tech
-PCI0640 controller, and IDE DMA/Ultra-DMA support for the Intel PIIX,
-VIA Apollo and CMD Tech PCI0643 and PCI0646 controllers series.
+PCI0640 controller, and IDE DMA/Ultra-DMA support for the following
+controllers:
+.Bl -dash -compact -offset indent
+.It
+Acer labs M5229 IDE Controller
+.It
+CMD Tech PCI0643 and PCI0646 IDE Controllers
+.It
+Contaq Microsystems/Cypress CY82C693 IDE Controller
+.It
+Intel PIIX, PIIX3 and PIIX4 IDE Controllers
+.It
+Silicon Integrated System 5597/5598 IDE controller
+.It
+VIA Technologies VT82C586 and VT82C586A IDE Controllers
+.El 
+Some of these contollers are only available in multifunction PCI chips.
 .Pp
 The 0x0001 flag force the
 .Nm 
@@ -67,8 +82,8 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
 .Pp
-The timings used for the PIO and DMA modes for the PCI064x, PIIX and Apollo
-controllers are for a PCI bus running at 30 or 33 Mhz. This driver may not
+The timings used for the PIO and DMA modes for controllers listed above
+are for a PCI bus running at 30 or 33 Mhz. This driver may not
 work properly on overclocked systems.
 
 .Sh SEE ALSO
