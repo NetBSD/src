@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.71 1998/09/30 21:52:25 tls Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.72 1998/10/08 01:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -88,6 +88,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -165,6 +166,8 @@ u_int16_t	ip_id;
 int	ip_defttl;
 struct ipqhead ipq;
 
+struct pool ipqent_pool;
+
 /*
  * We need to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
@@ -191,6 +194,9 @@ ip_init()
 {
 	register struct protosw *pr;
 	register int i;
+
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	    0, NULL, NULL, M_IPQ);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -492,8 +498,7 @@ found:
 		 */
 		if (mff || ip->ip_off) {
 			ipstat.ips_fragments++;
-			MALLOC(ipqe, struct ipqent *, sizeof (struct ipqent),
-			    M_IPQ, M_NOWAIT);
+			ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
 			if (ipqe == NULL) {
 				ipstat.ips_rcvmemdrop++;
 				goto bad;
@@ -609,7 +614,7 @@ ip_reass(ipqe, fp)
 		nq = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 	}
 
 insert:
@@ -648,11 +653,11 @@ insert:
 	m->m_next = 0;
 	m_cat(m, t);
 	nq = q->ipqe_q.le_next;
-	FREE(q, M_IPQ);
+	pool_put(&ipqent_pool, q);
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
 		nq = q->ipqe_q.le_next;
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 		m_cat(m, t);
 	}
 
@@ -681,7 +686,7 @@ insert:
 dropfrag:
 	ipstat.ips_fragdropped++;
 	m_freem(m);
-	FREE(ipqe, M_IPQ);
+	pool_put(&ipqent_pool, ipqe);
 	return (0);
 }
 
@@ -699,7 +704,7 @@ ip_freef(fp)
 		p = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 	}
 	LIST_REMOVE(fp, ipq_q);
 	FREE(fp, M_FTABLE);

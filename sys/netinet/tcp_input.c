@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.70 1998/10/06 00:41:13 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.71 1998/10/08 01:19:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ tcp_reass(tp, ti, m)
 			tcpstat.tcps_rcvdupbyte += pkt_len;
 			m_freem(m);
 			if (tiqe != NULL)
-				FREE(tiqe, M_IPQ);
+				pool_put(&ipqent_pool, tiqe);
 			return (0);
 		}
 		/*
@@ -315,7 +315,7 @@ tcp_reass(tp, ti, m)
 			if (tiqe == NULL) {
 			    tiqe = q;
 			} else {
-			    FREE(q, M_IPQ);
+			    pool_put(&ipqent_pool, q);
 			}
 			break;
 		}
@@ -340,7 +340,7 @@ tcp_reass(tp, ti, m)
 		if (tiqe == NULL) {
 		    tiqe = q;
 		} else {
-		    FREE(q, M_IPQ);
+		    pool_put(&ipqent_pool, q);
 		}
 	}
 
@@ -352,7 +352,7 @@ tcp_reass(tp, ti, m)
 	 * XXX If we can't, just drop the packet.  XXX
 	 */
 	if (tiqe == NULL) {
-		MALLOC(tiqe, struct ipqent *, sizeof (struct ipqent), M_IPQ, M_NOWAIT);
+		tiqe = pool_get(&ipqent_pool, PR_NOWAIT);
 		if (tiqe == NULL) {
 			tcpstat.tcps_rcvmemdrop++;
 			m_freem(m);
@@ -417,7 +417,7 @@ present:
 		m_freem(q->ipqe_m);
 	else
 		sbappend(&so->so_rcv, q->ipqe_m);
-	FREE(q, M_IPQ);
+	pool_put(&ipqent_pool, q);
 	sorwakeup(so);
 	return (pkt_flags);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.34 1998/06/02 15:48:03 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.35 1998/10/08 01:19:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -191,6 +191,7 @@ extern struct rttimer_queue *ip_mtudisc_timeout_q;
 #ifdef GATEWAY
 extern int ip_maxflows;
 #endif
+extern struct pool ipqent_pool;
 struct	 inpcb;
 
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
