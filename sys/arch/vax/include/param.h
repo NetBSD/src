@@ -1,5 +1,4 @@
-/*      $NetBSD: param.h,v 1.15 1996/02/02 18:08:25 mycroft Exp $    */
-
+/*      $NetBSD: param.h,v 1.16 1996/02/11 13:45:37 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -172,6 +171,11 @@
 
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
+
+/* Prototype needed for delay() */
+#ifndef	_LOCORE
+void	delay __P((int));
+#endif
 
 #define	DELAY(x) delay(x)
 
