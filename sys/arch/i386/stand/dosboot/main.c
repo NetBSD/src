@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1999/04/14 11:53:43 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.13 1999/04/14 15:22:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -43,8 +43,6 @@
 #include <lib/libsa/ufs.h>
 
 #include <libi386.h>
-
-extern int getopt __P((int, char **, const char *));
 
 #ifdef SUPPORT_LYNX
 extern int exec_lynx __P((const char*, int));
