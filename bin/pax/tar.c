@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.50 2004/04/16 22:45:56 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.51 2004/04/20 19:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.50 2004/04/16 22:45:56 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.51 2004/04/20 19:59:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -813,9 +813,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 
 	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
 		arcn->nlen = expandname(dest, sizeof(arcn->name) - cnt,
-		    &gnu_name_string, hd->name, sizeof(hd->name));
-		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
-		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
+		    &gnu_name_string, hd->name, sizeof(hd->name)) + cnt;
+		arcn->ln_nlen = expandname(arcn->ln_name,
+		    sizeof(arcn->ln_name), &gnu_link_string, hd->linkname,
+		    sizeof(hd->linkname));
 	}
 
 	/*
@@ -1291,18 +1292,18 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	}
 	/* don't need the .*\/ ones if we start with /, i guess */
 	if (line[0] != '/') {
-		snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
+		(void)snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
 		if (rep_add(rabuf) < 0)
 			return (-1);
-		snprintf(rabuf, sizeof rabuf, "/.*\\/%s\\/.*//", sbuf);
+		(void)snprintf(rabuf, sizeof rabuf, "/.*\\/%s\\/.*//", sbuf);
 		if (rep_add(rabuf) < 0)
 			return (-1);
 	}
 
-	snprintf(rabuf, sizeof rabuf, "/^%s$//", sbuf);
+	(void)snprintf(rabuf, sizeof rabuf, "/^%s$//", sbuf);
 	if (rep_add(rabuf) < 0)
 		return (-1);
-	snprintf(rabuf, sizeof rabuf, "/^%s\\/.*//", sbuf);
+	(void)snprintf(rabuf, sizeof rabuf, "/^%s\\/.*//", sbuf);
 	if (rep_add(rabuf) < 0)
 		return (-1);
 
