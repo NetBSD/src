@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.17 1997/03/13 02:20:14 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.18 1997/03/19 06:47:37 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -187,13 +187,13 @@ wssprobe(parent, match, aux)
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
-	printf("wss: configured iobase %x invalid\n", ia->ia_iobase);
+	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
 	return 0;
     }
 
-    sc->sc_ad1848.sc_iobase = iobase;
+    sc->sc_ad1848.sc_iobase = iobase + WSS_CODEC;
 
-    /* Is there an ad1848 chip at the WSS iobase ? */
+    /* Is there an ad1848 chip at (WSS iobase + WSS_CODEC)? */
     if (ad1848_probe(&sc->sc_ad1848) == 0)
 	return 0;
 	
@@ -201,7 +201,7 @@ wssprobe(parent, match, aux)
 
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq)) {
-	printf("wss: configured dma chan %d invalid\n", ia->ia_drq);
+	DPRINTF(("wss: configured dma chan %d invalid\n", ia->ia_drq));
 	return 0;
     }
     sc->wss_drq = ia->ia_drq;
@@ -220,7 +220,7 @@ wssprobe(parent, match, aux)
     else
 #endif
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	printf("wss: configured interrupt %d invalid\n", ia->ia_irq);
+	DPRINTF(("wss: configured interrupt %d invalid\n", ia->ia_irq));
 	return 0;
     }
 
