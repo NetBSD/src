@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.144 2003/12/04 14:57:47 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.145 2003/12/17 07:14:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.144 2003/12/04 14:57:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.145 2003/12/17 07:14:03 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1506,7 +1506,7 @@ lfs_initseg(struct lfs *fs)
 	sp->cbpp = sp->bpp;
 
 	/* Get a new buffer for SEGSUM */
-	sbp = *sp->cbpp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp,
+	sbp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp,
 	    fsbtodb(fs, fs->lfs_offset), fs->lfs_sumsize, LFS_NB_SUMMARY);
 
 	/* ... and enter it into the buffer list. */
