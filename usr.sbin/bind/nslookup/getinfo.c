@@ -1,4 +1,4 @@
-/*	$NetBSD: getinfo.c,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $	*/
+/*	$NetBSD: getinfo.c,v 1.2 1998/11/24 06:06:10 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -84,6 +84,7 @@ static char rcsid[] = "Id: getinfo.c,v 8.11 1998/03/19 19:30:55 halley Exp";
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "port_after.h"
 
@@ -321,7 +322,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->name = Calloc(1, len);
 		    memcpy(hostPtr->name, bp, len);
 		}
-		bp += (((u_int32_t)bp) % sizeof(align));
+		bp += (((size_t)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (_res.options & RES_DEBUG) {
