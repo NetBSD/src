@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.5 1997/05/24 00:48:29 jtc Exp $	*/
+/*	$NetBSD: pigs.c,v 1.6 1997/07/21 07:05:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$NetBSD: pigs.c,v 1.5 1997/05/24 00:48:29 jtc Exp $";
+__RCSID("$NetBSD: pigs.c,v 1.6 1997/07/21 07:05:07 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -131,7 +132,7 @@ showpigs()
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
 		mvwaddstr(wnd, y, 0, uname);
-		sprintf(pidname, "%10.10s", pname, 0);
+		sprintf(pidname, "%10.10s", pname);
 		mvwaddstr(wnd, y, 9, pidname);
 		wmove(wnd, y, 20);
 		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
