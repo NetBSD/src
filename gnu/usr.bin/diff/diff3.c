@@ -18,7 +18,7 @@
 /* Written by Randy Smith */
 
 #ifndef lint
-static char *rcsid = "$Id: diff3.c,v 1.4 1993/09/29 21:37:07 jtc Exp $";
+static char *rcsid = "$Id: diff3.c,v 1.5 1993/11/12 02:25:59 jtc Exp $";
 #endif
 
 #include "system.h"
@@ -200,7 +200,7 @@ static void fatal PARAMS((char const *));
 static void output_diff3 PARAMS((FILE *, struct diff3_block *, int const[3], int const[3]));
 static void perror_with_exit PARAMS((char const *));
 static void undotlines PARAMS((FILE *, int, int, int));
-static void usage PARAMS((void));
+static void usage PARAMS((int));
 
 static char const diff_program[] = DIFF_PROGRAM;
 
@@ -216,6 +216,7 @@ static struct option const longopts[] =
   {"overlap-only", 0, 0, 'x'},
   {"easy-only", 0, 0, '3'},
   {"version", 0, 0, 'v'},
+  {"help", 0, 0, 129},
   {0, 0, 0, 0}
 };
 
@@ -284,8 +285,10 @@ main (argc, argv)
 	  tab_align_flag = 1;
 	  break;
 	case 'v':
-	  fprintf (stderr, "GNU diff3 version %s\n", version_string);
-	  break;
+	  printf ("GNU diff3 version %s\n", version_string);
+	  exit (0);
+	case 129:
+	  usage (0);
 	case 'L':
 	  /* Handle up to three -L options.  */
 	  if (tag_count < 3)
@@ -295,8 +298,7 @@ main (argc, argv)
 	    }
 	  /* Falls through */
 	default:
-	  usage ();
-	  /* NOTREACHED */
+	  usage (2);
 	}
     }
 
@@ -308,7 +310,7 @@ main (argc, argv)
       || finalwrite & merge /* -i -m would rewrite input file.  */
       || (tag_count && ! flagging) /* -L requires one of -AEX.  */
       || argc - optind != 3)
-    usage ();
+    usage (2);
 
   file = &argv[optind];
 
@@ -396,17 +398,19 @@ main (argc, argv)
  * Explain, patiently and kindly, how to use this program.  Then exit.
  */
 static void
-usage ()
+usage (status)
+     int status;
 {
-  fprintf (stderr, "\
+  fflush (stderr);
+  printf ("\
 Usage: %s [options] my-file older-file your-file\n\
 Options:\n\
 	[-exAEX3aTv] [-i|-m] [-L label1 [-L label2 [-L label3]]]\n\
-	[--easy-only] [--ed] [--initial-tab]\n\
+	[--easy-only] [--ed] [--help] [--initial-tab]\n\
 	[--label=label1 [--label=label2 [--label=label3]]] [--merge]\n\
 	[--overlap-only] [--show-all] [--show-overlap] [--text] [--version]\n\
 	Only one of [exAEX3] is allowed\n", argv0);
-  exit (2);
+  exit (status);
 }
 
 /*
@@ -1094,12 +1098,12 @@ read_diff (filea, fileb, output_placement)
      char const *filea, *fileb;
      char **output_placement;
 {
+  char *diff_result;
+  size_t bytes, current_chunk_size, total;
   char const *argv[7];
   char horizon_arg[256];
   char const **ap;
   int fds[2];
-  char *diff_result;
-  size_t bytes, current_chunk_size, total;
   pid_t pid;
   int wstatus;
 
@@ -1147,7 +1151,15 @@ read_diff (filea, fileb, output_placement)
 		    current_chunk_size - total);
     total += bytes;
     if (total == current_chunk_size)
-      diff_result = xrealloc (diff_result, (current_chunk_size *= 2));
+      {
+	if (current_chunk_size < 2 * current_chunk_size)
+	  current_chunk_size = 2 * current_chunk_size;
+	else if (current_chunk_size < (size_t) -1)
+	  current_chunk_size = (size_t) -1;
+	else
+	  fatal ("files are too large to fit into memory");
+	diff_result = xrealloc (diff_result, (current_chunk_size *= 2));
+      }
   } while (bytes);
 
   if (total != 0 && diff_result[total-1] != '\n')
@@ -1664,7 +1676,7 @@ xmalloc (size)
 {
   VOID *result = (VOID *) malloc (size ? size : 1);
   if (!result)
-    fatal ("virtual memory exhausted");
+    fatal ("memory exhausted");
   return result;
 }
 
@@ -1675,7 +1687,7 @@ xrealloc (ptr, size)
 {
   VOID *result = (VOID *) realloc (ptr, size ? size : 1);
   if (!result)
-    fatal ("virtual memory exhausted");
+    fatal ("memory exhausted");
   return result;
 }
 

@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: io.c,v 1.4 1993/09/16 17:39:17 jtc Exp $";
+static char *rcsid = "$Id: io.c,v 1.5 1993/11/12 02:26:03 jtc Exp $";
 #endif
 
 #include "diff.h"
@@ -35,7 +35,7 @@ static char *rcsid = "$Id: io.c,v 1.4 1993/09/16 17:39:17 jtc Exp $";
 #define GUESS_LINES(n,s,t) (((t) - (s)) / ((n) < 10 ? 32 : (s) / ((n)-1)) + 5)
 
 /* Type used for fast prefix comparison in find_identical_ends.  */
-typedef long word;
+typedef int word;
 
 /* Lines are put into equivalence classes (of lines that match in line_cmp).
    Each equivalence class is represented by one of these structures,
@@ -90,38 +90,27 @@ sip (current, skip_test)
   if (current->desc < 0)
     {
       /* Leave room for a sentinel.  */
-      current->buffer = xmalloc (sizeof (word));
       current->bufsize = sizeof (word);
-      current->buffered_chars = 0;
+      current->buffer = xmalloc (current->bufsize);
     }
   else
     {
-      current->bufsize = current->buffered_chars
-	= STAT_BLOCKSIZE (current->stat);
-
-      if (S_ISREG (current->stat.st_mode))
-	/* Get the size out of the stat block.
-	   Allocate enough room for appended newline and sentinel.
-	   Allocate at least one block, to prevent overrunning the buffer
-	   when comparing growing binary files.  */
-	current->bufsize = max (current->bufsize,
-				current->stat.st_size + sizeof (word) + 1);
-
+      current->bufsize = STAT_BLOCKSIZE (current->stat);
       current->buffer = xmalloc (current->bufsize);
-      if (skip_test)
-	current->buffered_chars = 0;
-      else
+
+      if (! skip_test)
 	{
 	  /* Check first part of file to see if it's a binary file.  */
 	  current->buffered_chars = read (current->desc,
 					  current->buffer,
-					  current->buffered_chars);
+					  current->bufsize);
 	  if (current->buffered_chars == -1)
 	    pfatal_with_name (current->name);
 	  return binary_file_p (current->buffer, current->buffered_chars);
 	}
     }
   
+  current->buffered_chars = 0;
   return 0;
 }
 
@@ -139,12 +128,21 @@ slurp (current)
   else if (S_ISREG (current->stat.st_mode))
     {
       /* It's a regular file; slurp in the rest all at once.  */
-      cc = current->stat.st_size - current->buffered_chars;
-      if (cc)
+
+      /* Get the size out of the stat block.
+	 Allocate enough room for appended newline and sentinel.  */
+      cc = current->stat.st_size + 1 + sizeof (word);
+      if (current->bufsize < cc)
+	{
+	  current->bufsize = cc;
+	  current->buffer = xrealloc (current->buffer, cc);
+	}
+
+      if (current->buffered_chars < current->stat.st_size)
 	{
 	  cc = read (current->desc,
 		     current->buffer + current->buffered_chars,
-		     cc);
+		     current->stat.st_size - current->buffered_chars);
 	  if (cc == -1)
 	    pfatal_with_name (current->name);
 	  current->buffered_chars += cc;
@@ -170,7 +168,7 @@ slurp (current)
 	  current->buffered_chars += cc;
 	}
       /* Allocate just enough room for appended newline and sentinel.  */
-      current->bufsize = current->buffered_chars + sizeof (word) + 1;
+      current->bufsize = current->buffered_chars + 1 + sizeof (word);
       current->buffer = xrealloc (current->buffer, current->bufsize);
     }
 }
@@ -598,6 +596,7 @@ static int const primes[] =
   8191,
   16381,
   32749,
+#if 32767 < INT_MAX
   65521,
   131071,
   262139,
@@ -614,6 +613,7 @@ static int const primes[] =
   536870909,
   1073741789,
   2147483647,
+#endif
   0
 };
 

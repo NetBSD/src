@@ -18,12 +18,21 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: analyze.c,v 1.5 1993/09/29 21:37:02 jtc Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.6 1993/11/12 02:25:52 jtc Exp $";
 #endif
 
 /* The basic algorithm is described in:
    "An O(ND) Difference Algorithm and its Variations", Eugene Myers,
-   Algorithmica Vol. 1 No. 2, 1986, p 251.  */
+   Algorithmica Vol. 1 No. 2, 1986, pp. 251-266;
+   see especially section 4.2, which describes the variation used below.
+   Unless the --minimal option is specified, this code uses the TOO_EXPENSIVE
+   heuristic, by Paul Eggert, to limit the cost to O(N**1.5 log N)
+   at the price of producing suboptimal output for large inputs with
+   many differences.
+
+   The basic algorithm was independently discovered as described in:
+   "Algorithms for Approximate String Matching", E. Ukkonen,
+   Information and Control Vol. 64, 1985, pp. 100-118.  */
 
 #include "diff.h"
 #include "cmpbuf.h"
@@ -32,56 +41,74 @@ extern int no_discards;
 
 static int *xvec, *yvec;	/* Vectors being compared. */
 static int *fdiag;		/* Vector, indexed by diagonal, containing
-				   the X coordinate of the point furthest
+				   1 + the X coordinate of the point furthest
 				   along the given diagonal in the forward
 				   search of the edit matrix. */
 static int *bdiag;		/* Vector, indexed by diagonal, containing
 				   the X coordinate of the point furthest
 				   along the given diagonal in the backward
 				   search of the edit matrix. */
+static int too_expensive;	/* Edit scripts longer than this are too
+				   expensive to compute.  */
 
-static int diag PARAMS((int, int, int, int, int *));
+#define SNAKE_LIMIT 20	/* Snakes bigger than this are considered `big'.  */
+
+struct partition
+{
+  int xmid, ymid;	/* Midpoints of this partition.  */
+  int lo_minimal;	/* Nonzero if low half will be analyzed minimally.  */
+  int hi_minimal;	/* Likewise for high half.  */
+};
+
+static int diag PARAMS((int, int, int, int, int, struct partition *));
 static struct change *add_change PARAMS((int, int, int, int, struct change *));
 static struct change *build_reverse_script PARAMS((struct file_data const[]));
 static struct change *build_script PARAMS((struct file_data const[]));
 static void briefly_report PARAMS((int, struct file_data const[]));
-static void compareseq PARAMS((int, int, int, int));
+static void compareseq PARAMS((int, int, int, int, int));
 static void discard_confusing_lines PARAMS((struct file_data[]));
 static void shift_boundaries PARAMS((struct file_data[]));
 
 /* Find the midpoint of the shortest edit script for a specified
    portion of the two files.
 
-   We scan from the beginnings of the files, and simultaneously from the ends,
+   Scan from the beginnings of the files, and simultaneously from the ends,
    doing a breadth-first search through the space of edit-sequence.
    When the two searches meet, we have found the midpoint of the shortest
    edit sequence.
 
-   The value returned is the number of the diagonal on which the midpoint lies.
-   The diagonal number equals the number of inserted lines minus the number
+   If MINIMAL is nonzero, find the minimal edit script regardless
+   of expense.  Otherwise, if the search is too expensive, use
+   heuristics to stop the search and report a suboptimal answer.
+
+   Set PART->(XMID,YMID) to the midpoint (XMID,YMID).  The diagonal number
+   XMID - YMID equals the number of inserted lines minus the number
    of deleted lines (counting only lines before the midpoint).
-   The edit cost is stored into *COST; this is the total number of
-   lines inserted or deleted (counting only lines before the midpoint).
+   Return the approximate edit cost; this is the total number of
+   lines inserted or deleted (counting only lines before the midpoint),
+   unless a heuristic is used to terminate the search prematurely.
+
+   Set PART->LEFT_MINIMAL to nonzero iff the minimal edit script for the
+   left half of the partition is known; similarly for PART->RIGHT_MINIMAL.
 
    This function assumes that the first lines of the specified portions
    of the two files do not match, and likewise that the last lines do not
    match.  The caller must trim matching lines from the beginning and end
    of the portions it is going to specify.
 
-   Note that if we return the "wrong" diagonal value, or if
-   the value of bdiag at that diagonal is "wrong",
+   If we return the "wrong" partitions,
    the worst this can do is cause suboptimal diff output.
    It cannot cause incorrect diff output.  */
 
 static int
-diag (xoff, xlim, yoff, ylim, cost)
-     int xoff, xlim, yoff, ylim;
-     int *cost;
+diag (xoff, xlim, yoff, ylim, minimal, part)
+     int xoff, xlim, yoff, ylim, minimal;
+     struct partition *part;
 {
   int *const fd = fdiag;	/* Give the compiler a chance. */
   int *const bd = bdiag;	/* Additional help for the compiler. */
-  int *const xv = xvec;		/* Still more help for the compiler. */
-  int *const yv = yvec;		/* And more and more . . . */
+  int const *const xv = xvec;	/* Still more help for the compiler. */
+  int const *const yv = yvec;	/* And more and more . . . */
   int const dmin = xoff - ylim;	/* Minimum valid diagonal. */
   int const dmax = xlim - yoff;	/* Maximum valid diagonal. */
   int const fmid = xoff - yoff;	/* Center diagonal of top-down search. */
@@ -115,17 +142,19 @@ diag (xoff, xlim, yoff, ylim, cost)
 	  y = x - d;
 	  while (x < xlim && y < ylim && xv[x] == yv[y])
 	    ++x, ++y;
-	  if (x - oldx > 20)
+	  if (x - oldx > SNAKE_LIMIT)
 	    big_snake = 1;
 	  fd[d] = x;
-	  if (odd && bmin <= d && d <= bmax && bd[d] <= fd[d])
+	  if (odd && bmin <= d && d <= bmax && bd[d] <= x)
 	    {
-	      *cost = 2 * c - 1;
-	      return d;
+	      part->xmid = x;
+	      part->ymid = y;
+	      part->lo_minimal = part->hi_minimal = 1;
+	      return 2 * c - 1;
 	    }
 	}
 
-      /* Similar extend the bottom-up search. */
+      /* Similarly extend the bottom-up search.  */
       bmin > dmin ? bd[--bmin - 1] = INT_MAX : ++bmin;
       bmax < dmax ? bd[++bmax + 1] = INT_MAX : --bmax;
       for (d = bmax; d >= bmin; d -= 2)
@@ -140,15 +169,20 @@ diag (xoff, xlim, yoff, ylim, cost)
 	  y = x - d;
 	  while (x > xoff && y > yoff && xv[x - 1] == yv[y - 1])
 	    --x, --y;
-	  if (oldx - x > 20)
+	  if (oldx - x > SNAKE_LIMIT)
 	    big_snake = 1;
 	  bd[d] = x;
-	  if (!odd && fmin <= d && d <= fmax && bd[d] <= fd[d])
+	  if (!odd && fmin <= d && d <= fmax && x <= fd[d])
 	    {
-	      *cost = 2 * c;
-	      return d;
+	      part->xmid = x;
+	      part->ymid = y;
+	      part->lo_minimal = part->hi_minimal = 1;
+	      return 2 * c;
 	    }
 	}
+
+      if (minimal)
+	continue;
 
       /* Heuristic: check occasionally for a diagonal that has made
 	 lots of progress compared with the edit distance.
@@ -161,73 +195,133 @@ diag (xoff, xlim, yoff, ylim, cost)
       if (c > 200 && big_snake && heuristic)
 	{
 	  int best;
-	  int bestpos;
 
 	  best = 0;
-	  bestpos = 0; /* Pacify `gcc -Wall'.  */
 	  for (d = fmax; d >= fmin; d -= 2)
 	    {
 	      int dd = d - fmid;
-	      if ((fd[d] - xoff)*2 - dd > 12 * (c + (dd > 0 ? dd : -dd)))
+	      int x = fd[d];
+	      int y = x - d;
+	      int v = (x - xoff) * 2 - dd;
+	      if (v > 12 * (c + (dd < 0 ? -dd : dd)))
 		{
-		  if (fd[d] * 2 - dd > best
-		      && fd[d] - xoff > 20
-		      && fd[d] - d - yoff > 20)
+		  if (v > best
+		      && xoff + SNAKE_LIMIT <= x && x < xlim
+		      && yoff + SNAKE_LIMIT <= y && y < ylim)
 		    {
-		      int k;
-		      int x = fd[d];
-
 		      /* We have a good enough best diagonal;
 			 now insist that it end with a significant snake.  */
-		      for (k = 1; k <= 20; k++)
-			if (xvec[x - k] != yvec[x - d - k])
-			  break;
+		      int k;
 
-		      if (k == 21)
-			{
-			  best = fd[d] * 2 - dd;
-			  bestpos = d;
-			}
+		      for (k = 1; xv[x - k] == yv[y - k]; k++)
+			if (k == SNAKE_LIMIT)
+			  {
+			    best = v;
+			    part->xmid = x;
+			    part->ymid = y;
+			    break;
+			  }
 		    }
 		}
 	    }
 	  if (best > 0)
 	    {
-	      *cost = 2 * c - 1;
-	      return bestpos;
+	      part->lo_minimal = 1;
+	      part->hi_minimal = 0;
+	      return 2 * c - 1;
 	    }
 
 	  best = 0;
 	  for (d = bmax; d >= bmin; d -= 2)
 	    {
 	      int dd = d - bmid;
-	      if ((xlim - bd[d])*2 + dd > 12 * (c + (dd > 0 ? dd : -dd)))
+	      int x = bd[d];
+	      int y = x - d;
+	      int v = (xlim - x) * 2 + dd;
+	      if (v > 12 * (c + (dd < 0 ? -dd : dd)))
 		{
-		  if ((xlim - bd[d]) * 2 + dd > best
-		      && xlim - bd[d] > 20
-		      && ylim - (bd[d] - d) > 20)
+		  if (v > best
+		      && xoff < x && x <= xlim - SNAKE_LIMIT
+		      && yoff < y && y <= ylim - SNAKE_LIMIT)
 		    {
 		      /* We have a good enough best diagonal;
 			 now insist that it end with a significant snake.  */
 		      int k;
-		      int x = bd[d];
 
-		      for (k = 0; k < 20; k++)
-			if (xvec[x + k] != yvec[x - d + k])
-			  break;
-		      if (k == 20)
-			{
-			  best = (xlim - bd[d]) * 2 + dd;
-			  bestpos = d;
-			}
+		      for (k = 0; xv[x + k] == yv[y + k]; k++)
+			if (k == SNAKE_LIMIT - 1)
+			  {
+			    best = v;
+			    part->xmid = x;
+			    part->ymid = y;
+			    break;
+			  }
 		    }
 		}
 	    }
 	  if (best > 0)
 	    {
-	      *cost = 2 * c - 1;
-	      return bestpos;
+	      part->lo_minimal = 0;
+	      part->hi_minimal = 1;
+	      return 2 * c - 1;
 	    }
+	}
+
+      /* Heuristic: if we've gone well beyond the call of duty,
+	 give up and report halfway between our best results so far.  */
+      if (c >= too_expensive)
+	{
+	  int fxybest, fxbest;
+	  int bxybest, bxbest;
+
+	  fxbest = bxbest = 0;  /* Pacify `gcc -Wall'.  */
+
+	  /* Find forward diagonal that maximizes X + Y.  */
+	  fxybest = -1;
+	  for (d = fmax; d >= fmin; d -= 2)
+	    {
+	      int x = min (fd[d], xlim);
+	      int y = x - d;
+	      if (ylim < y)
+		x = ylim + d, y = ylim;
+	      if (fxybest < x + y)
+		{
+		  fxybest = x + y;
+		  fxbest = x;
+		}
+	    }
+
+	  /* Find backward diagonal that minimizes X + Y.  */
+	  bxybest = INT_MAX;
+	  for (d = bmax; d >= bmin; d -= 2)
+	    {
+	      int x = max (xoff, bd[d]);
+	      int y = x - d;
+	      if (y < yoff)
+		x = yoff + d, y = yoff;
+	      if (x + y < bxybest)
+		{
+		  bxybest = x + y;
+		  bxbest = x;
+		}
+	    }
+
+	  /* Use the better of the two diagonals.  */
+	  if ((xlim + ylim) - bxybest < fxybest - (xoff + yoff))
+	    {
+	      part->xmid = fxbest;
+	      part->ymid = fxybest - fxbest;
+	      part->lo_minimal = 1;
+	      part->hi_minimal = 0;
+	    }
+	  else
+	    {
+	      part->xmid = bxbest;
+	      part->ymid = bxybest - bxbest;
+	      part->lo_minimal = 0;
+	      part->hi_minimal = 1;
+	    }
+	  return 2 * c - 1;
 	}
     }
 }
@@ -241,17 +335,23 @@ diag (xoff, xlim, yoff, ylim, cost)
    The subsequence of file 0 is [XOFF, XLIM) and likewise for file 1.
 
    Note that XLIM, YLIM are exclusive bounds.
-   All line numbers are origin-0 and discarded lines are not counted.  */
+   All line numbers are origin-0 and discarded lines are not counted.
+ 
+   If MINIMAL is nonzero, find a minimal difference no matter how
+   expensive it is.  */
 
 static void
-compareseq (xoff, xlim, yoff, ylim)
-     int xoff, xlim, yoff, ylim;
+compareseq (xoff, xlim, yoff, ylim, minimal)
+     int xoff, xlim, yoff, ylim, minimal;
 {
+  int * const xv = xvec; /* Help the compiler.  */
+  int * const yv = yvec;
+
   /* Slide down the bottom initial diagonal. */
-  while (xoff < xlim && yoff < ylim && xvec[xoff] == yvec[yoff])
+  while (xoff < xlim && yoff < ylim && xv[xoff] == yv[yoff])
     ++xoff, ++yoff;
   /* Slide up the top initial diagonal. */
-  while (xlim > xoff && ylim > yoff && xvec[xlim - 1] == yvec[ylim - 1])
+  while (xlim > xoff && ylim > yoff && xv[xlim - 1] == yv[ylim - 1])
     --xlim, --ylim;
 
   /* Handle simple cases. */
@@ -263,13 +363,12 @@ compareseq (xoff, xlim, yoff, ylim)
       files[0].changed_flag[files[0].realindexes[xoff++]] = 1;
   else
     {
-      int c, d, f, b;
+      int c;
+      struct partition part;
 
       /* Find a point of correspondence in the middle of the files.  */
 
-      d = diag (xoff, xlim, yoff, ylim, &c);
-      f = fdiag[d];
-      b = bdiag[d];
+      c = diag (xoff, xlim, yoff, ylim, minimal, &part);
 
       if (c == 1)
 	{
@@ -281,21 +380,17 @@ compareseq (xoff, xlim, yoff, ylim)
 #if 0
 	  /* The two subsequences differ by a single insert or delete;
 	     record it and we are done.  */
-	  if (d < xoff - yoff)
-	    files[1].changed_flag[files[1].realindexes[b - d - 1]] = 1;
+	  if (part.xmid - part.ymid < xoff - yoff)
+	    files[1].changed_flag[files[1].realindexes[part.ymid - 1]] = 1;
 	  else
-	    files[0].changed_flag[files[0].realindexes[b]] = 1;
+	    files[0].changed_flag[files[0].realindexes[part.xmid]] = 1;
 #endif
 	}
       else
 	{
-	  /* Use that point to split this problem into two subproblems.  */
-	  compareseq (xoff, b, yoff, b - d);
-	  /* This used to use f instead of b,
-	     but that is incorrect!
-	     It is not necessarily the case that diagonal d
-	     has a snake from b to f.  */
-	  compareseq (b, xlim, b - d, ylim);
+	  /* Use the partitions to split this problem into subproblems.  */
+	  compareseq (xoff, part.xmid, yoff, part.ymid, part.lo_minimal);
+	  compareseq (part.xmid, xlim, part.ymid, ylim, part.hi_minimal);
 	}
     }
 }
@@ -515,16 +610,15 @@ discard_confusing_lines (filevec)
   free (equiv_count[0]);
 }
 
-/* Adjust inserts/deletes of blank lines to join changes
+/* Adjust inserts/deletes of identical lines to join changes
    as much as possible.
 
-   We do something when a run of changed lines include a blank
-   line at one end and have an excluded blank line at the other.
-   We are free to choose which blank line is included.
-   `compareseq' always chooses the one at the beginning,
-   but usually it is cleaner to consider the following blank line
-   to be the "change".  The only exception is if the preceding blank line
-   would join this change to other changes.  */
+   We do something when a run of changed lines include a
+   line at one end and have an excluded, identical line at the other.
+   We are free to choose which identical line is included.
+   `compareseq' usually chooses the one at the beginning,
+   but usually it is cleaner to consider the following identical line
+   to be the "change".  */
 
 int inhibit;
 
@@ -540,16 +634,15 @@ shift_boundaries (filevec)
   for (f = 0; f < 2; f++)
     {
       char *changed = filevec[f].changed_flag;
-      char *other_changed = filevec[1-f].changed_flag;
+      char const *other_changed = filevec[1-f].changed_flag;
+      int const *equivs = filevec[f].equivs;
       int i = 0;
       int j = 0;
       int i_end = filevec[f].buffered_lines;
-      int preceding = -1;
-      int other_preceding = -1;
 
       while (1)
 	{
-	  int start, other_start;
+	  int runlength, start, corresponding;
 
 	  /* Scan forwards to find beginning of another run of changes.
 	     Also keep track of the corresponding point in the other file.  */
@@ -557,9 +650,7 @@ shift_boundaries (filevec)
 	  while (i < i_end && changed[i] == 0)
 	    {
 	      while (other_changed[j++])
-		/* Non-corresponding lines in the other file
-		   will count as the preceding batch of changes.  */
-		other_preceding = j;
+		continue;
 	      i++;
 	    }
 
@@ -567,42 +658,67 @@ shift_boundaries (filevec)
 	    break;
 
 	  start = i;
-	  other_start = j;
 
-	  while (1)
+	  /* Find the end of this run of changes.  */
+
+	  while (changed[++i])
+	    continue;
+	  while (other_changed[j])
+	    j++;
+
+	  do
 	    {
-	      /* Now find the end of this run of changes.  */
+	      /* Record the length of this run of changes, so that
+		 we can later determine whether the run has grown.  */
+	      runlength = i - start;
 
-	      while (changed[++i] != 0)
-		;
+	      /* Move the changed region back, so long as the
+		 previous unchanged line matches the last changed one.
+		 This merges with previous changed regions.  */
 
-	      /* If the first changed line matches the following unchanged one,
-		 and this run does not follow right after a previous run,
-		 and there are no lines deleted from the other file here,
-		 then classify the first changed line as unchanged
-		 and the following line as changed in its place.  */
+	      while (start && equivs[start - 1] == equivs[i - 1])
+		{
+		  changed[--start] = 1;
+		  changed[--i] = 0;
+		  while (changed[start - 1])
+		    start--;
+		  while (other_changed[--j])
+		    continue;
+		}
 
-	      /* You might ask, how could this run follow right after another?
-		 Only because the previous run was shifted here.  */
+	      /* Set CORRESPONDING to the end of the changed run, at the last
+		 point where it corresponds to a changed run in the other file.
+		 CORRESPONDING == I_END means no such point has been found.  */
+	      corresponding = other_changed[j - 1] ? i : i_end;
 
-	      if (i != i_end
-		  && files[f].equivs[start] == files[f].equivs[i]
-		  && !other_changed[j]
-		  && !(start == preceding || other_start == other_preceding))
+	      /* Move the changed region forward, so long as the
+		 first changed line matches the following unchanged one.
+		 This merges with following changed regions.
+		 Do this second, so that if there are no merges,
+		 the changed region is moved forward as far as possible.  */
+
+	      while (i != i_end && equivs[start] == equivs[i])
 		{
 		  changed[start++] = 0;
-		  changed[i] = 1;
-		  /* Since one line-that-matches is now before this run
-		     instead of after, we must advance in the other file
-		     to keep in synch.  */
-		  ++j;
+		  changed[i++] = 1;
+		  while (changed[i])
+		    i++;
+		  while (other_changed[++j])
+		    corresponding = i;
 		}
-	      else
-		break;
 	    }
+	  while (runlength != i - start);
 
-	  preceding = i;
-	  other_preceding = j;
+	  /* If possible, move the fully-merged run of changes
+	     back to a corresponding run in the other file.  */
+
+	  while (corresponding < i)
+	    {
+	      changed[--start] = 1;
+	      changed[--i] = 0;
+	      while (other_changed[--j])
+		continue;
+	    }
 	}
     }
 }
@@ -827,11 +943,19 @@ diff_2_files (filevec, depth)
       fdiag += filevec[1].nondiscarded_lines + 1;
       bdiag += filevec[1].nondiscarded_lines + 1;
 
+      /* Set TOO_EXPENSIVE to be approximate square root of input size,
+	 bounded below by 256.  */
+      too_expensive = 1;
+      for (i = filevec[0].nondiscarded_lines + filevec[1].nondiscarded_lines;
+	   i != 0; i >>= 2)
+	too_expensive <<= 1;
+      too_expensive = max (256, too_expensive);
+
       files[0] = filevec[0];
       files[1] = filevec[1];
 
       compareseq (0, filevec[0].nondiscarded_lines,
-		  0, filevec[1].nondiscarded_lines);
+		  0, filevec[1].nondiscarded_lines, no_discards);
 
       free (fdiag - (filevec[1].nondiscarded_lines + 1));
 

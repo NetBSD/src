@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: sdiff.c,v 1.4 1993/09/29 21:37:12 jtc Exp $";
+static char *rcsid = "$Id: sdiff.c,v 1.5 1993/11/12 02:26:21 jtc Exp $";
 #endif
 
 /* GNU SDIFF was written by Thomas Lord. */
@@ -81,7 +81,7 @@ static void lf_skip PARAMS((struct line_filter *, int));
 static void perror_fatal PARAMS((char const *));
 static void trapsigs PARAMS((void));
 static void untrapsig PARAMS((int));
-static void usage PARAMS((void));
+static void usage PARAMS((int));
 
 /* this lossage until the gnu libc conquers the universe */
 #define PVT_tmpdir "/tmp"
@@ -113,22 +113,24 @@ static struct option const longopts[] =
   {"expand-tabs", 0, 0, 't'},
   {"width", 1, 0, 'w'},
   {"version", 0, 0, 'v'},
+  {"help", 0, 0, 129},
   {0, 0, 0, 0}
 };
 
 /* prints usage message and quits */
 static void
-usage ()
+usage (status)
+     int status;
 {
-  fprintf (stderr, "Usage: %s [options] from-file to-file\n", prog);
-  fprintf (stderr, "Options:\n\
-       [-abBdHilstv] [-I regexp] [-o outfile] [-w columns]\n\
-       [--text] [--minimal] [--speed-large-files] [--expand-tabs]\n\
-       [--ignore-case] [--ignore-matching-lines=regexp]\n\
-       [--ignore-space-change] [--ignore-blank-lines] [--ignore-all-space]\n\
-       [--suppress-common-lines] [--left-column] [--output=outfile]\n\
-       [--version] [--width=columns]\n");
-  exit (2);
+  printf ("Usage: %s [options] from-file to-file\n", prog);
+  printf ("Options:\n\
+	[-abBdHilstv] [-I regexp] [-o outfile] [-w columns]\n\
+	[--expand-tabs] [--help] [--ignore-all-space] [--ignore-blank-lines]\n\
+	[--ignore-case] [--ignore-matching-lines=regexp]\n\
+	[--ignore-space-change] [--left-column] [--minimal]\n\
+	[--output=outfile] [--speed-large-files] [--suppress-common-lines]\n\
+	[--text] [--version] [--width=columns]\n");
+  exit (status);
 }
 
 static void
@@ -177,7 +179,7 @@ xmalloc (size)
 {
   VOID *r = (VOID *) malloc (size);
   if (!r)
-    fatal ("virtual memory exhausted");
+    fatal ("memory exhausted");
   return r;
 }
 
@@ -432,7 +434,6 @@ main (argc, argv)
      char *argv[];
 {
   int opt;
-  int version_requested = 0;
   char *editor = getenv ("EDITOR");
   char *differ = getenv ("DIFF");
 
@@ -496,10 +497,8 @@ main (argc, argv)
 	  break;
 
 	case 'v':
-	  version_requested = 1;
-	  fprintf (stderr, "GNU sdiff version %s\n", version_string);
-	  ck_fflush (stderr);
-	  break;
+	  printf ("GNU sdiff version %s\n", version_string);
+	  exit (0);
 
 	case 'w':
 	  diffarg ("-W");
@@ -510,17 +509,16 @@ main (argc, argv)
 	  diffarg ("-w");
 	  break;
 
+	case 129:
+	  usage (0);
+
 	default:
-	  usage ();
+	  usage (2);
 	}
     }
 
-  /* check: did user just want version message? if so exit. */
-  if (version_requested && argc - optind == 0)
-    exit (0);
-
   if (argc - optind != 2)
-    usage ();
+    usage (2);
 
   if (! out_file)
     /* easy case: diff does everything for us */
