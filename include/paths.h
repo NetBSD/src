@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.24 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: paths.h,v 1.25 2003/10/03 13:17:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,6 +56,7 @@
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_CONSOLE	"/dev/console"
+#define	_PATH_CONSTTY	"/dev/constty"
 #define	_PATH_CSHELL	"/bin/csh"
 #define	_PATH_DEFTAPE	"/dev/nrst0"
 #define	_PATH_DEVDB	"/var/run/dev.db"
