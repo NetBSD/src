@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.5 1998/11/19 21:54:02 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.6 1999/03/26 06:48:40 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ void	espattach_sbus	__P((struct device *, struct device *, void *));
 void	espattach_dma	__P((struct device *, struct device *, void *));
 int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
 
-static void	espattach	__P((struct esp_softc *));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_sbus_ca = {
@@ -111,6 +110,8 @@ static struct scsipi_device esp_sbus_dev = {
  */
 static u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
 static void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+static u_char	esp_rdreg1 __P((struct ncr53c9x_softc *, int));
+static void	esp_wrreg1 __P((struct ncr53c9x_softc *, int, u_char));
 static int	esp_dma_isintr __P((struct ncr53c9x_softc *));
 static void	esp_dma_reset __P((struct ncr53c9x_softc *));
 static int	esp_dma_intr __P((struct ncr53c9x_softc *));
@@ -133,15 +134,33 @@ static struct ncr53c9x_glue esp_sbus_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
+static struct ncr53c9x_glue esp_sbus_glue1 = {
+	esp_rdreg1,
+	esp_wrreg1,
+	esp_dma_isintr,
+	esp_dma_reset,
+	esp_dma_intr,
+	esp_dma_setup,
+	esp_dma_go,
+	esp_dma_stop,
+	esp_dma_isactive,
+	NULL,			/* gl_clear_latched_intr */
+};
+
+static void	espattach __P((struct esp_softc *, struct ncr53c9x_glue *));
+
 int
 espmatch_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
+	int rv;
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	    strcmp("ptscII", sa->sa_name) == 0);
+	return (rv);
 }
 
 void
@@ -208,11 +227,15 @@ espattach_sbus(parent, self, aux)
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, &sc->sc_dev);
 
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, "esp") == 0 &&
+	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
 	    SAME_ESP(sc, sa->sa_bp, sa))
 		bootpath_store(1, sa->sa_bp + 1);
 
-	espattach(esc);
+	if (strcmp("ptscII", sa->sa_name) == 0) {
+		espattach(esc, &esp_sbus_glue1);
+	} else {
+		espattach(esc, &esp_sbus_glue);
+	}
 }
 
 void
@@ -223,6 +246,10 @@ espattach_dma(parent, self, aux)
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	struct sbus_attach_args *sa = aux;
+
+	if (strcmp("ptscII", sa->sa_name) == 0) {
+		return;
+	}
 
 	esc->sc_bustag = sa->sa_bustag;
 	esc->sc_dmatag = sa->sa_dmatag;
@@ -259,11 +286,11 @@ espattach_dma(parent, self, aux)
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, parent);
 
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, "esp") == 0 &&
+	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
 	    SAME_ESP(sc, sa->sa_bp, sa))
 		bootpath_store(1, sa->sa_bp + 1);
 
-	espattach(esc);
+	espattach(esc, &esp_sbus_glue);
 }
 
 
@@ -271,8 +298,9 @@ espattach_dma(parent, self, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-espattach(esc)
+espattach(esc, gluep)
 	struct esp_softc *esc;
+	struct ncr53c9x_glue *gluep;
 {
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	void *icookie;
@@ -280,7 +308,7 @@ espattach(esc)
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
-	sc->sc_glue = &esp_sbus_glue;
+	sc->sc_glue = gluep;
 
 	/* gimme Mhz */
 	sc->sc_freq /= 1000000;
@@ -405,6 +433,27 @@ esp_write_reg(sc, reg, v)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	bus_space_write_1(esc->sc_bustag, esc->sc_reg, reg * 4, v);
+}
+
+u_char
+esp_rdreg1(sc, reg)
+	struct ncr53c9x_softc *sc;
+	int reg;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	return (bus_space_read_1(esc->sc_bustag, esc->sc_reg, reg));
+}
+
+void
+esp_wrreg1(sc, reg, v)
+	struct ncr53c9x_softc *sc;
+	int reg;
+	u_char v;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	bus_space_write_1(esc->sc_bustag, esc->sc_reg, reg, v);
 }
 
 int
