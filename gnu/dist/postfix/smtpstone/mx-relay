@@ -1,0 +1,20 @@
+MX needs 19 seconds to relay 100 messages with one recipient.
+smtp/smtpd process limit = 100, bundle_recipients = 0.
+
+/usr/bin/time ./smtp-source -s 5 -m 100 fist
+        9.56 real         0.07 user         0.20 sys
+Jun  8 14:33:19 fist mx:smtpd[19366]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:33:36 fist mx:smtp[19382]: 085781: to=<foo@spike.porcupine.org>, relay
+Total time: 17 seconds
+
+/usr/bin/time ./smtp-source -s 10 -m 100 fist
+        8.95 real         0.12 user         0.19 sys
+Jun  8 14:34:22 fist mx:smtpd[19377]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:34:41 fist mx:smtp[19378]: 085792: to=<foo@spike.porcupine.org>, relay
+Total time: 19 seconds
+
+/usr/bin/time ./smtp-source -s 20 -m 100 fist
+        9.79 real         0.11 user         0.27 sys
+Jun  8 14:35:18 fist mx:smtpd[19377]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:35:38 fist mx:smtp[19382]: 085794: to=<foo@spike.porcupine.org>, relay
+Total time: 20 seconds
