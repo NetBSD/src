@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.1 1997/10/14 19:57:41 mark Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.2 1997/10/17 06:52:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 #include <machine/irqhandler.h>
 #include <arm32/mainbus/piocvar.h>
 #include <arm32/dev/wdreg.h>
-#include <arm32/dev/wdcvar.h>
+#include <arm32/dev/wdlink.h>
 
 #include "locators.h"
 
@@ -128,7 +128,7 @@ wdc_pioc_attach(parent, self, aux)
 	bus_space_handle_t aux_ioh;
 	u_int iobase;
 
-	TAILQ_INIT(&wdc->sc_drives);
+/*	TAILQ_INIT(&wdc->sc_drives);*/
 	iot = pa->pa_iot;
 	iobase = pa->pa_iobase + pa->pa_offset;
 
