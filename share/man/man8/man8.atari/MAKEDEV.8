@@ -1,4 +1,12 @@
-.\"	$NetBSD: MAKEDEV.8,v 1.4 1997/11/20 06:17:42 fair Exp $
+.\" *** ------------------------------------------------------------------
+.\" *** This file was generated automatically
+.\" *** from src/etc/etc.atari/MAKEDEV and
+.\" *** src/share/man/man8/man8.atari/MAKEDEV.8.template
+.\" *** 
+.\" *** DO NOT EDIT - any changes will be lost!!!
+.\" *** ------------------------------------------------------------------
+.\"
+.\"	$NetBSD: MAKEDEV.8,v 1.5 1999/09/18 00:31:02 hubertf Exp $
 .\"
 .\" Copyright (c) 1995 Leo Weppelman
 .\" All rights reserved.
@@ -57,89 +65,139 @@ files.
 .Nm MAKEDEV
 takes any number of device names as arguments,
 where the names are the common abbreviation for
-the device.  There are three special device names,
-.Ar all ,
-.Ar std
-and
-.Ar local .
-If
-given,
-.Ar all
-creates device files for all devices on the Atari.  If units are
-expected for a device
-.Nm MAKEDEV
-supplies the standard numbers.
-The
-.Ar std
-argument creates the standard devices for the Atari.
-Finally
-.Ar local
-is for devices specific to the local site, and
-executes the shell file
-.Pa MAKEDEV.local .
+the device.  There are several special device names:
+.Pp
+.\" @@@SPECIAL@@@
+.Bl -tag -width 01234567 -compact
+.It Ar all
+Makes all known devices, including local devices, Tries to make the ``standard'' number of each.
+.It Ar fd
+Makes fd/* for the fdescfs.
+.It Ar floppy
+Devices needed for install floppies
+.It Ar std
+Standard devices
+.It Ar local
+Configuration specific devices
+.El
 .Pp
 The Atari supports the following devices.
 Where a device name is followed by a hash
 sign ("#"), the hash sign must be replaced
 by a unit number.
 .Pp
-.Sy Pseudo\-names
-.Bl -tag -width indent -compact
-.It Ar all
-All known devices for the Atari.
-.It Ar std
-The standard devices (console, drum, fd/*, klog, kmem, mem, null,
-reload, stderr, stdin, stdout, tty, zero)
-.It Ar local
-Configuration specific devices
+.\" @@@DEVICES@@@
+.Bl -tag -width 01
+.It Tapes:
+. Bl -tag -width 0123456789 -compact
+. It Ar st#
+SCSI tapes, see
+.Xr st 4 
+. El
+.It Disks:
+. Bl -tag -width 0123456789 -compact
+. It Ar fd#
+Floppy disks (fdxa: 360Kb, fdxb: 720Kb, fdxc: 1.44Mb)
+. It Ar sd#
+SCSI disks, includes flopticals, see
+.Xr sd 4 
+. It Ar cd#
+SCSI cdrom discs, see
+.Xr cd 4 
+. It Ar vnd#
+``file'' pseudo-disks, see
+.Xr vnd 4 
+. It Ar ccd#
+Concatenated disk driver, see
+.Xr ccd 4 
+. It Ar raid#
+RAIDframe disk driver, see
+.Xr raid 4 
+. It Ar md#
+Memory pseudo-disk driver, see
+.Xr md 4 
+. It Ar wd#
+IDE disks, see
+.Xr wd 4 
+. El
+.It Console ports:
+. Bl -tag -width 0123456789 -compact
+. It Ar ttye#
+Ite bitmapped consoles
+. El
+.It Pointing devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar mouse#
+Atari mice
+. El
+.It Printer:
+. Bl -tag -width 0123456789 -compact
+. It Ar lpt0
+Centronics printer
+. El
+.It Terminal ports:
+. Bl -tag -width 0123456789 -compact
+. It Ar ttyA0
+8530 Channel A (formerly ser02)
+. It Ar ttyA1
+8530 Channel B (formerly mdm02)
+. It Ar ttyB0
+UART on first 68901 (formerly mdm01)
+. El
+.It Pseudo terminals:
+. Bl -tag -width 0123456789 -compact
+. It Ar pty#
+Set of 16 master and slave pseudo terminals, see
+.Xr pty 4 
+. El
+.It Special purpose devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar grf#
+Motherboard bitmapped video.
+. It Ar kbd
+Atari keyboard.
+. It Ar view#
+Generic interface to graphic displays.
+. It Ar aconf
+Autoconfig information (not yet)
+. It Ar lkm
+Loadable kernel modules interface, see
+.Xr lkm 4 
+. It Ar bpf#
+Berkeley Packet Filter, see
+.Xr bpf 4 
+. It Ar tun#
+Network tunnel driver, see
+.Xr tun 4 
+. It Ar scsibus#
+SCSI busses, see
+.Xr scsictl 8 ,
+.Xr scsi 4 
+. It Ar ss#
+SCSI scanner, see
+.Xr ss 4 
+. It Ar uk#
+SCSI unknown, see
+.Xr uk 4 
+. It Ar ch
+SCSI changer, see
+.Xr ch 4 
+. It Ar rtc
+Atari RealTimeClock
+. It Ar ipl
+IP Filter devices
+. It Ar random
+Random number generator
+. El
+.It Video devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar etvme
+Tseng et-compatible cards on VME
+. It Ar leo
+Circad Leonardo VME-bus true color
+. El
 .El
 .Pp
-.Sy Device\-names
-.Bl -tag -width indent -compact
-.It Ar aconf
-Autoconfig information
-.It Ar bpf#
-Berkeley packet filters
-.It Ar ccd#
-Concatenating disk driver
-.It Ar cd#
-SCSI CD-ROM drives
-.It Ar fd#
-Floppy disk drives
-.It Ar grf#
-Graphic "frame buffers"
-.It Ar ite#
-Bit-mapped based character consoles
-.It Ar kbd
-The keyboard
-.It Ar lkm
-Loadable kernel modules.
-.It Ar random
-Random number generator
-.It Ar mdm#
-Both modem ports
-.It Ar mouse#
-Mouse ports
-.It Ar par#
-Parallel ports (not yet supported)
-.It Ar pty#
-Set of 16 master and slave pseudo terminals
-.It Ar sd#
-SCSI disks drives
-.It Ar ser#
-Both serial ports
-.It Ar st#
-SCSI tape drives
-.It Ar ttye#
-Terminal emulator interface to the Atari graphics device. Also named
-pseudo console.
-.It Ar tun#
-The network tunnel device
-.It Ar view#
-Abstract graphics interface to grf#'s
-.It Ar vnd#
-"File" pseudo-disks
-.El
 .Sh FILES
 .Bl -tag -width /dev -compact
 .It Pa /dev
