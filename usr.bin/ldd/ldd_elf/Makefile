@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/08/27 14:46:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/18 14:00:38 lukem Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -21,7 +21,7 @@ CPPFLAGS+= -DELFSIZE=32
 CPPFLAGS+= -DVARPSZ
 .endif
 
-LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
+LDELFSO=${NETBSDSRCDIR}/libexec/ld.elf_so
 CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
 CPPFLAGS+= -D_RTLD_SOURCE
 .PATH: ${LDELFSO}

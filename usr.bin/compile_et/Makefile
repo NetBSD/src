@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.11 2001/12/12 12:24:27 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2002/09/18 14:00:35 lukem Exp $
 
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
 WARNS?=  1
@@ -17,12 +17,12 @@ YHEADER=	1
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/com_err		\
-	-I${.CURDIR}/../../include/heimdal	\
+	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
 .ifndef HOSTPROG
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-L${VERS} -lvers \
 	-lroken \
