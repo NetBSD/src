@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2004/05/16 17:07:29 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2004/06/09 16:06:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2004/05/16 17:07:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2004/06/09 16:06:56 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -501,9 +501,8 @@ trap(int type, struct trapframe *frame)
 		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
 
-	if ((l = curlwp) == NULL)
-		l = &lwp0;
-	p = l->l_proc;
+	l = curlwp;
+	p = l ? l->l_proc : NULL;
 
 #ifdef DIAGNOSTIC
 	/*
