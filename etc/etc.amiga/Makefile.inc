@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2004/06/01 03:08:42 mhitch Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2004/06/16 02:02:29 mhitch Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
@@ -11,6 +11,5 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
 
 snap_md_post:
-	cd ${KERNSRCDIR}/arch/amiga/stand/misc && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*'
 #	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/miniroot '*.gz'
