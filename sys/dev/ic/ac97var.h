@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.10 2004/09/22 12:20:24 kent Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.11 2004/11/08 14:24:17 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -71,12 +71,13 @@ struct ac97_codec_if_vtbl {
 	u_int16_t (*get_extcaps)(struct ac97_codec_if *);
 	int (*set_rate)(struct ac97_codec_if *, int, u_long *);
 	void (*set_clock)(struct ac97_codec_if *, unsigned int);
+	void (*detach)(struct ac97_codec_if *);
 };
 
 struct ac97_codec_if {
 	struct ac97_codec_if_vtbl *vtbl;
 };
 
-int ac97_attach __P((struct ac97_host_if *));
+int ac97_attach(struct ac97_host_if *);
 
 #endif /* _DEV_IC_AC97VAR_H_ */
