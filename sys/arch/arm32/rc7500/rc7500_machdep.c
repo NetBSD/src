@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.26 2000/03/13 23:52:27 soren Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.27 2000/03/24 17:05:31 ws Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -79,7 +79,7 @@
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #ifdef RC7500
 #include <arm32/rc7500/rc7500_prom.h>
@@ -97,7 +97,7 @@ u_int cpu_reset_address = 0;
 #define FIQ_STACK_SIZE	1
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#if NIPKDB > 0
+#ifdef IPKDB
 #define UND_STACK_SIZE	2
 #else
 #define UND_STACK_SIZE	1
@@ -920,7 +920,7 @@ initarm(prom_id)
 	irq_init();
 	printf("done.\n");
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.10 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.11 2000/03/24 17:05:31 ws Exp $	*/
 
 /*
  * Copyright 1997
@@ -63,7 +63,7 @@
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

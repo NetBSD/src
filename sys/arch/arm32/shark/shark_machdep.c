@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.14 1999/03/19 05:13:17 cgd Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.15 2000/03/24 17:05:32 ws Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.10 2000/01/10 07:43:07 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.11 2000/03/24 17:05:31 ws Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -72,7 +72,7 @@
 #include <arm32/footbridge/dc21285mem.h>
 #include <arm32/footbridge/dc21285reg.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include "isa.h"
 #if NISA > 0
@@ -95,7 +95,7 @@ u_int dc21285_fclk = FCLK;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#if NIPKDB > 0
+#ifdef IPKDB
 #define UND_STACK_SIZE	2
 #else
 #define UND_STACK_SIZE	1
@@ -734,7 +734,7 @@ initarm(bootinfo)
 	irq_init();
 	printf("done.\n");
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)

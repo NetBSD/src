@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2000/01/19 03:28:23 danw Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2000/03/24 17:05:33 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include "opt_ddb.h"
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -823,7 +823,7 @@ _C_LABEL(ddblow):
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
  * In case of IPKDB we want a separate trap catcher for it
@@ -842,7 +842,7 @@ _C_LABEL(ipkdblow):
 	addi	1,1,ipkdbstk+INTSTK@l
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 
 /*
  * FRAME_SETUP assumes:
@@ -1254,7 +1254,7 @@ ddbleave:
 	rfi
 #endif /* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 /*
  * Deliberate entry to ipkdbtrap
  */
@@ -1364,7 +1364,7 @@ _C_LABEL(ipkdbsbyte):
 	sync
 	icbi	0,9			/* and instruction caches */	
 	blr
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 	
 /*
  * int setfault()

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.32 2000/03/13 23:52:27 soren Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.33 2000/03/24 17:05:32 ws Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -80,7 +80,7 @@
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #ifdef HYDRA
 #include "hydrabus.h"
 #endif	/* HYDRA */
@@ -96,7 +96,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#if NIPKDB > 0
+#ifdef IPKDB
 #define UND_STACK_SIZE	2
 #else
 #define UND_STACK_SIZE	1
@@ -1130,7 +1130,7 @@ initarm(bootconf)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)
