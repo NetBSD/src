@@ -1,7 +1,7 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Id: if_edreg.h,v 1.8 1994/03/02 22:47:41 mycroft Exp $
+ * $Id: if_edreg.h,v 1.9 1994/04/14 03:54:14 mycroft Exp $
  */
 
 /*
@@ -583,14 +583,14 @@ struct ed_ring	{
  */
 #define ED_WD_MSR	0
 
-#define ED_WD_MSR_ADDR	0x3f	/* Memory decode bits 18-13 */
-#define ED_WD_MSR_MENB	0x40	/* Memory enable */
-#define ED_WD_MSR_RST	0x80	/* Reset board */
-#ifdef TOSH_ETHER
+/* next three definitions for Toshiba */
 #define	ED_WD_MSR_POW	0x02	/* 0 = power save, 1 = normal (R/W) */
 #define	ED_WD_MSR_BSY	0x04	/* gate array busy (R) */
 #define	ED_WD_MSR_LEN	0x20	/* 0 = 16-bit, 1 = 8-bit (R/W) */
-#endif
+
+#define ED_WD_MSR_ADDR	0x3f	/* Memory decode bits 18-13 */
+#define ED_WD_MSR_MENB	0x40	/* Memory enable */
+#define ED_WD_MSR_RST	0x80	/* Reset board */
 
 /*
  * Interface Configuration Register (ICR)
@@ -636,7 +636,7 @@ struct ed_ring	{
 #define ED_WD_IRR_FLASH	0x10	/* Flash RAM is in the ROM socket */
 
 /*
- * The three bit of the encoded IRQ are decoded as follows:
+ * The three bits of the encoded IRQ are decoded as follows:
  *
  * IR2 IR1 IR0  IRQ
  *  0   0   0   2/9
@@ -664,6 +664,49 @@ struct ed_ring	{
 
 /* i/o base offset to station address/card-ID PROM */
 #define ED_WD_PROM	8
+
+/*
+ *	83C790 specific registers
+ */
+/*
+ * Hardware Support Register (HWR) ('790)
+ */
+#define	ED_WD790_HWR	4
+
+#define	ED_WD790_HWR_RST	0x10	/* hardware reset */
+#define	ED_WD790_HWR_LPRM	0x40	/* LAN PROM select */
+#define	ED_WD790_HWR_SWH	0x80	/* switch register set */
+
+/*
+ * ICR790 Interrupt Control Register for the 83C790
+ */
+#define	ED_WD790_ICR	6
+
+#define	ED_WD790_ICR_EIL	0x01	/* enable interrupts */
+
+/*
+ * General Control Register (GCR)
+ * Eanbled with SWH bit == 1 in HWR register
+ */
+#define	ED_WD790_GCR	0x0d
+
+#define	ED_WD790_GCR_IR0	0x04	/* bit 0 of encoded IRQ */
+#define	ED_WD790_GCR_IR1	0x08	/* bit 1 of encoded IRQ */
+#define	ED_WD790_GCR_ZWSEN	0x20	/* zero wait state enable */
+#define	ED_WD790_GCR_IR2	0x40	/* bit 2 of encoded IRQ */
+/*
+ * The three bits of the encoded IRQ are decoded as follows:
+ *
+ * IR2 IR1 IR0  IRQ
+ *  0   0   0   none
+ *  0   0   1   9
+ *  0   1   0   3
+ *  0   1   1   5
+ *  1   0   0   7
+ *  1   0   1   10
+ *  1   1   0   11
+ *  1   1   1   15
+ */
 
 /* i/o base offset to CARD ID */
 #define ED_WD_CARD_ID	ED_WD_PROM+6
