@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.8 1999/12/20 20:49:06 jwise Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.9 1999/12/20 21:59:29 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.8 1999/12/20 20:49:06 jwise Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.9 1999/12/20 21:59:29 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -147,9 +147,7 @@ keyboard()
 		/* pass commands as lowercase */
 		for (i = 1; i < col ; i++)
 			line[i] = tolower(line[i]);
-		sigprocmask(SIG_BLOCK, &set, NULL);
 		command(line + 1);
-		sigprocmask(SIG_UNBLOCK, &set, NULL);
 	}
 	/* NOTREACHED */
 }
