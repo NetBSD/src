@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.16 1998/12/28 12:56:19 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.17 1998/12/28 20:13:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,22 +114,27 @@ void		ohci_hash_rem_td __P((ohci_softc_t *, ohci_soft_td_t *));
 ohci_soft_td_t *ohci_hash_find_td __P((ohci_softc_t *, ohci_physaddr_t));
 
 usbd_status	ohci_root_ctrl_transfer __P((usbd_request_handle));
+usbd_status	ohci_root_ctrl_start __P((usbd_request_handle));
 void		ohci_root_ctrl_abort __P((usbd_request_handle));
 void		ohci_root_ctrl_close __P((usbd_pipe_handle));
 
 usbd_status	ohci_root_intr_transfer __P((usbd_request_handle));
+usbd_status	ohci_root_intr_start __P((usbd_request_handle));
 void		ohci_root_intr_abort __P((usbd_request_handle));
 void		ohci_root_intr_close __P((usbd_pipe_handle));
 
 usbd_status	ohci_device_ctrl_transfer __P((usbd_request_handle));
+usbd_status	ohci_device_ctrl_start __P((usbd_request_handle));
 void		ohci_device_ctrl_abort __P((usbd_request_handle));
 void		ohci_device_ctrl_close __P((usbd_pipe_handle));
 
 usbd_status	ohci_device_bulk_transfer __P((usbd_request_handle));
+usbd_status	ohci_device_bulk_start __P((usbd_request_handle));
 void		ohci_device_bulk_abort __P((usbd_request_handle));
 void		ohci_device_bulk_close __P((usbd_pipe_handle));
 
 usbd_status	ohci_device_intr_transfer __P((usbd_request_handle));
+usbd_status	ohci_device_intr_start __P((usbd_request_handle));
 void		ohci_device_intr_abort __P((usbd_request_handle));
 void		ohci_device_intr_close __P((usbd_pipe_handle));
 usbd_status	ohci_device_setintr __P((ohci_softc_t *sc, 
@@ -196,6 +201,7 @@ struct ohci_pipe {
 
 struct usbd_methods ohci_root_ctrl_methods = {	
 	ohci_root_ctrl_transfer,
+	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
 	0,
@@ -203,6 +209,7 @@ struct usbd_methods ohci_root_ctrl_methods = {
 
 struct usbd_methods ohci_root_intr_methods = {	
 	ohci_root_intr_transfer,
+	ohci_root_intr_start,
 	ohci_root_intr_abort,
 	ohci_root_intr_close,
 	0,
@@ -210,6 +217,7 @@ struct usbd_methods ohci_root_intr_methods = {
 
 struct usbd_methods ohci_device_ctrl_methods = {	
 	ohci_device_ctrl_transfer,
+	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
 	ohci_device_ctrl_close,
 	0,
@@ -217,12 +225,14 @@ struct usbd_methods ohci_device_ctrl_methods = {
 
 struct usbd_methods ohci_device_intr_methods = {	
 	ohci_device_intr_transfer,
+	ohci_device_intr_start,
 	ohci_device_intr_abort,
 	ohci_device_intr_close,
 };
 
 struct usbd_methods ohci_device_bulk_methods = {	
 	ohci_device_bulk_transfer,
+	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
 	ohci_device_bulk_close,
 	0,
@@ -746,15 +756,18 @@ ohci_ii_done(sc, reqh)
 	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
 		ohci_ctrl_done(sc, reqh);
+		usb_start_next(reqh->pipe);
 		break;
 	case UE_INTERRUPT:
 		ohci_intr_done(sc, reqh);
 		break;
 	case UE_BULK:
 		ohci_bulk_done(sc, reqh);
+		usb_start_next(reqh->pipe);
 		break;
 	case UE_ISOCHRONOUS:
 		printf("ohci_process_done: ISO done?\n");
+		usb_start_next(reqh->pipe);
 		break;
 	}
 
@@ -831,6 +844,7 @@ ohci_intr_done(sc, reqh)
 		opipe->tail = tail;
 	} else {
 		usb_freemem(sc->sc_dmatag, dma);
+		usb_start_next(reqh->pipe);
 	}
 }
 
@@ -891,6 +905,7 @@ ohci_rhsc(sc, reqh)
 	if (reqh->pipe->intrreqh != reqh) {
 		sc->sc_intrreqh = 0;
 		usb_freemem(sc->sc_dmatag, &opipe->u.intr.datadma);
+		usb_start_next(reqh->pipe);
 	}
 }
 
@@ -1395,6 +1410,22 @@ usbd_status
 ohci_root_ctrl_transfer(reqh)
 	usbd_request_handle reqh;
 {
+	int s;
+	usbd_status r;
+
+	s = splusb();
+	r = usb_insert_transfer(reqh);
+	splx(s);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	else
+		return (ohci_root_ctrl_start(reqh));
+}
+
+usbd_status
+ohci_root_ctrl_start(reqh)
+	usbd_request_handle reqh;
+{
 	ohci_softc_t *sc = (ohci_softc_t *)reqh->pipe->device->bus;
 	usb_device_request_t *req;
 	void *buf;
@@ -1679,6 +1710,7 @@ ohci_root_ctrl_transfer(reqh)
  ret:
 	reqh->status = r;
 	reqh->xfercb(reqh);
+	usb_start_next(reqh->pipe);
 	return (USBD_IN_PROGRESS);
 }
 
@@ -1700,6 +1732,22 @@ ohci_root_ctrl_close(pipe)
 
 usbd_status
 ohci_root_intr_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	int s;
+	usbd_status r;
+
+	s = splusb();
+	r = usb_insert_transfer(reqh);
+	splx(s);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	else
+		return (ohci_root_intr_start(reqh));
+}
+
+usbd_status
+ohci_root_intr_start(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_pipe_handle pipe = reqh->pipe;
@@ -1745,6 +1793,22 @@ ohci_root_intr_close(pipe)
 
 usbd_status
 ohci_device_ctrl_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	int s;
+	usbd_status r;
+
+	s = splusb();
+	r = usb_insert_transfer(reqh);
+	splx(s);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	else
+		return (ohci_device_ctrl_start(reqh));
+}
+
+usbd_status
+ohci_device_ctrl_start(reqh)
 	usbd_request_handle reqh;
 {
 	ohci_softc_t *sc = (ohci_softc_t *)reqh->pipe->device->bus;
@@ -1800,6 +1864,22 @@ ohci_device_ctrl_close(pipe)
 
 usbd_status
 ohci_device_bulk_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	int s;
+	usbd_status r;
+
+	s = splusb();
+	r = usb_insert_transfer(reqh);
+	splx(s);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	else
+		return (ohci_device_bulk_start(reqh));
+}
+
+usbd_status
+ohci_device_bulk_start(reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
@@ -1916,6 +1996,22 @@ ohci_device_bulk_close(pipe)
 
 usbd_status
 ohci_device_intr_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	int s;
+	usbd_status r;
+
+	s = splusb();
+	r = usb_insert_transfer(reqh);
+	splx(s);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	else
+		return (ohci_device_intr_start(reqh));
+}
+
+usbd_status
+ohci_device_intr_start(reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;

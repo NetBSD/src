@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.18 1998/12/26 12:53:03 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.19 1998/12/28 20:14:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -326,9 +326,9 @@ usbd_find_idesc(cd, ifaceidx, altidx)
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
 	usb_interface_descriptor_t *d;
-	int curidx, lastno, curaidx = 0;
+	int curidx, lastidx, curaidx = 0;
 
-	for (curidx = lastno = -1; p < end; ) {
+	for (curidx = lastidx = -1; p < end; ) {
 		d = (usb_interface_descriptor_t *)p;
 		DPRINTFN(4,("usbd_find_idesc: idx=%d(%d) altidx=%d(%d) len=%d "
 			    "type=%d\n", 
@@ -338,8 +338,8 @@ usbd_find_idesc(cd, ifaceidx, altidx)
 			break;
 		p += d->bLength;
 		if (p <= end && d->bDescriptorType == UDESC_INTERFACE) {
-			if (d->bInterfaceNumber != lastno) {
-				lastno = d->bInterfaceNumber;
+			if (d->bInterfaceNumber != lastidx) {
+				lastidx = d->bInterfaceNumber;
 				curidx++;
 				curaidx = 0;
 			} else
@@ -394,7 +394,6 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	int altidx;
 {
 	usbd_interface_handle ifc = &dev->ifaces[ifaceidx];
-	usb_endpoint_descriptor_t *ed;
 	char *p, *end;
 	int endpt, nendpt;
 	usbd_status r;
@@ -403,10 +402,10 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 		    ifaceidx, altidx));
 	ifc->device = dev;
 	ifc->idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
-	ifc->index = ifaceidx;
-	ifc->altindex = altidx;
 	if (ifc->idesc == 0)
 		return (USBD_INVAL);
+	ifc->index = ifaceidx;
+	ifc->altindex = altidx;
 	nendpt = ifc->idesc->bNumEndpoints;
 	DPRINTFN(10,("usbd_fill_iface_data: found idesc n=%d\n", nendpt));
 	if (nendpt != 0) {
@@ -419,6 +418,7 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	ifc->priv = 0;
 	p = (char *)ifc->idesc + ifc->idesc->bLength;
 	end = (char *)dev->cdesc + UGETW(dev->cdesc->wTotalLength);
+#define ed ((usb_endpoint_descriptor_t *)p)
 	for (endpt = 0; endpt < nendpt; endpt++) {
 		DPRINTFN(10,("usbd_fill_iface_data: endpt=%d\n", endpt));
 		for (; p < end; p += ed->bLength) {
@@ -428,18 +428,19 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 				 p, end, ed->bLength, ed->bDescriptorType));
 			if (p + ed->bLength <= end && 
 			    ed->bDescriptorType == UDESC_ENDPOINT)
-				goto found;
-			if (ed->bDescriptorType == UDESC_INTERFACE)
 				break;
+			if (ed->bDescriptorType == UDESC_INTERFACE ||
+			    ed->bLength == 0) {
+				r = USBD_INVAL;
+				goto bad;
+			}
 		}
-		r = USBD_INVAL;
-		goto bad;
-	found:
 		ifc->endpoints[endpt].edesc = ed;
 		ifc->endpoints[endpt].state = USBD_ENDPOINT_ACTIVE;
 		ifc->endpoints[endpt].refcnt = 0;
 		ifc->endpoints[endpt].toggle = 0;
 	}
+#undef ed
 	LIST_INIT(&ifc->pipes);
 	ifc->state = USBD_INTERFACE_ACTIVE;
 	return (USBD_NORMAL_COMPLETION);
@@ -656,7 +657,8 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	SIMPLEQ_INIT(&p->queue);
 	r = dev->bus->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("usbd_setup_pipe: endpoint=%d failed, error=%d(%s)\n",
+		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error=%d"
+			 "(%s)\n",
 			 ep->edesc->bEndpointAddress, r, usbd_error_strs[r]));
 		free(p, M_USB);
 		return (r);
@@ -836,7 +838,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	r = usbd_setup_pipe(dev, 0, &dev->def_ep, &dev->default_pipe);
 	if (r != USBD_NORMAL_COMPLETION) {
 		usbd_remove_device(dev, up);
-		return r;
+		return (r);
 	}
 
 	up->device = dev;
@@ -997,6 +999,60 @@ usbd_bus_print_child(device_t bus, device_t dev)
 	 */
 }
 #endif
+
+usbd_status
+usb_insert_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	usbd_pipe_handle pipe = reqh->pipe;
+	usbd_interface_handle iface = pipe->iface;
+
+	if (pipe->state == USBD_PIPE_IDLE ||
+	    (iface && iface->state == USBD_INTERFACE_IDLE))
+		return (USBD_IS_IDLE);
+	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
+	if (pipe->state != USBD_PIPE_ACTIVE ||
+	    (iface && iface->state != USBD_INTERFACE_ACTIVE))
+		return (USBD_NOT_STARTED);
+	if (pipe->running)
+		return (USBD_IN_PROGRESS);
+	pipe->running = 1;
+	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+usb_start_next(pipe)
+	usbd_pipe_handle pipe;
+{
+	usbd_request_handle reqh;
+	usbd_status r;
+
+#ifdef DIAGNOSTIC
+	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
+		printf("usb_start_next: empty\n");
+		return;
+	}
+#endif
+
+	/* First remove remove old */
+	SIMPLEQ_REMOVE_HEAD(&pipe->queue, SIMPLEQ_FIRST(&pipe->queue), next);
+	if (pipe->state != USBD_PIPE_ACTIVE) {
+		pipe->running = 0;
+		return;
+	}
+	reqh = SIMPLEQ_FIRST(&pipe->queue);
+	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
+	if (!reqh)
+		pipe->running = 0;
+	else {
+		r = pipe->methods->start(reqh);
+		if (r != USBD_IN_PROGRESS) {
+			printf("usb_start_next: error=%d\n", r);
+			pipe->running = 0;
+			/* XXX do what? */
+		}
+	}
+}
 
 void
 usbd_fill_deviceinfo(dev, di)

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.15 1998/12/26 12:53:04 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.16 1998/12/28 20:14:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ static usbd_status usbd_ar_iface __P((usbd_interface_handle iface));
 static void usbd_transfer_cb __P((usbd_request_handle reqh));
 static void usbd_sync_transfer_cb __P((usbd_request_handle reqh));
 static usbd_status usbd_do_transfer __P((usbd_request_handle reqh));
-static usbd_status usbd_start __P((usbd_pipe_handle pipe));
 void usbd_do_request_async_cb 
 	__P((usbd_request_handle, usbd_private_handle, usbd_status));
 
@@ -217,9 +216,18 @@ usbd_do_transfer(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_pipe_handle pipe = reqh->pipe;
-	usbd_interface_handle iface = pipe->iface;
-	usbd_status r;
-	int s;
+
+	DPRINTFN(10,("usbd_do_transfer: reqh=%p\n", reqh));
+	reqh->done = 0;
+	return (pipe->methods->transfer(reqh));
+}
+
+#if 0
+static usbd_status
+usbd_do_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	usbd_pipe_handle pipe = reqh->pipe;
 
 	DPRINTFN(10,("usbd_do_transfer: reqh=%p\n", reqh));
 	reqh->done = 0;
@@ -261,7 +269,7 @@ usbd_start(pipe)
 	pipe->curreqh = reqh;
 	return (pipe->methods->transfer(reqh));
 }
-
+#endif
 
 usbd_request_handle 
 usbd_alloc_request()
@@ -560,6 +568,8 @@ usbd_set_pipe_state(pipe, state)
 	usbd_pipe_state state;
 {
 	int s;
+	usbd_status r;
+	usbd_request_handle reqh;
 
 	if (pipe->iface->state != USBD_INTERFACE_ACTIVE)
 		return (USBD_INTERFACE_NOT_ACTIVE);
@@ -568,12 +578,21 @@ usbd_set_pipe_state(pipe, state)
 	    state != USBD_PIPE_IDLE)
 		return (USBD_INVAL);
 	pipe->state = state;
+	r = USBD_NORMAL_COMPLETION;
 	if (state == USBD_PIPE_ACTIVE) {
 		s = splusb();
-		usbd_start(pipe);
-		splx(s);
+		if (!pipe->running) {
+			reqh = SIMPLEQ_FIRST(&pipe->queue);
+			if (reqh != 0) {
+				pipe->running = 1;
+				splx(s);
+				r = pipe->methods->start(reqh);
+			} else
+				splx(s);
+		} else
+			splx(s);
 	}
-	return (USBD_NORMAL_COMPLETION);
+	return (r);
 }
 
 usbd_status 
@@ -839,7 +858,8 @@ usbd_set_interface(iface, altidx)
 	if (LIST_FIRST(&iface->pipes) != 0)
 		return (USBD_IN_USE);
 
-	free(iface->endpoints, M_USB);
+	if (iface->endpoints)
+		free(iface->endpoints, M_USB);
 	iface->endpoints = 0;
 	iface->idesc = 0;
 	iface->state = USBD_INTERFACE_IDLE;
@@ -851,7 +871,7 @@ usbd_set_interface(iface, altidx)
 	req.bmRequestType = UT_WRITE_INTERFACE;
 	req.bRequest = UR_SET_INTERFACE;
 	USETW(req.wValue, iface->idesc->bAlternateSetting);
-	USETW(req.wIndex, iface->idesc->iInterface);
+	USETW(req.wIndex, iface->idesc->bInterfaceNumber);
 	USETW(req.wLength, 0);
 	return usbd_do_request(iface->device, &req, 0);
 }
@@ -893,7 +913,7 @@ usbd_get_interface(iface, aiface)
 	req.bmRequestType = UT_READ_INTERFACE;
 	req.bRequest = UR_GET_INTERFACE;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, iface->idesc->iInterface);
+	USETW(req.wIndex, iface->idesc->bInterfaceNumber);
 	USETW(req.wLength, 1);
 	return usbd_do_request(iface->device, &req, aiface);
 }
@@ -906,9 +926,6 @@ usbd_ar_pipe(pipe)
 	usbd_pipe_handle pipe;
 {
 	usbd_request_handle reqh;
-
-	if (pipe->curreqh != 0)
-		pipe->methods->abort(pipe->curreqh);
 
 	for (;;) {
 		reqh = SIMPLEQ_FIRST(&pipe->queue);
@@ -963,8 +980,6 @@ usbd_transfer_cb(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_pipe_handle pipe = reqh->pipe;
-	usbd_request_handle nreqh;
-	usbd_status r;
 
 	/* Count completed transfers. */
 	++pipe->device->bus->stats.requests
@@ -979,25 +994,8 @@ usbd_transfer_cb(reqh)
 			      reqh->actlen, reqh->length));
 		reqh->status = USBD_SHORT_XFER;
 	}
-	pipe->curreqh = 0;
 	if (reqh->callback)
 		reqh->callback(reqh, reqh->priv, reqh->status);
-
-	if (pipe->state != USBD_PIPE_ACTIVE) {
-		pipe->running = 0;
-		return;
-	}
-	nreqh = SIMPLEQ_FIRST(&pipe->queue);
-	DPRINTFN(5, ("usbd_transfer_cb: nreqh=%p\n", nreqh));
-	if (!nreqh)
-		pipe->running = 0;
-	else {
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, nreqh, next);
-		pipe->curreqh = nreqh;
-		r = pipe->methods->transfer(nreqh);
-		if (r != USBD_IN_PROGRESS)
-			printf("usbd_transfer_cb: error=%d\n", r);
-	}
 }
 
 static void
