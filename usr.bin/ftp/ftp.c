@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.105 2000/07/30 09:32:09 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.106 2000/07/31 00:56:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.105 2000/07/30 09:32:09 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.106 2000/07/31 00:56:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,12 +151,12 @@ struct sockinet {
 		struct sockaddr_in6 su_sin6;
 #endif
 	} si_su;
-#ifndef HAVE_SIN_LEN
+#if !defined(BSD4_4) && !HAVE_SIN_LEN
 	int	si_len;
 #endif
 };
 
-#ifndef HAVE_SIN_LEN
+#if !defined(BSD4_4) && !HAVE_SIN_LEN
 # define su_len		si_len
 #else
 # define su_len		si_su.su_sin.sin_len
@@ -176,6 +176,7 @@ hookup(char *host, char *port)
 	char *cause = "unknown";
 	
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
+	memset((char *)&myctladdr, 0, sizeof (myctladdr));
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_UNSPEC;
@@ -222,7 +223,7 @@ hookup(char *host, char *port)
 #endif
 		{
 			getnameinfo(res->ai_addr, res->ai_addrlen,
-				hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -238,8 +239,8 @@ hookup(char *host, char *port)
 			/* this "if" clause is to prevent print warning twice */
 			if (res->ai_next) {
 				getnameinfo(res->ai_addr, res->ai_addrlen,
-					hbuf, sizeof(hbuf), NULL, 0,
-					NI_NUMERICHOST);
+				    hbuf, sizeof(hbuf), NULL, 0,
+				    NI_NUMERICHOST);
 				warn("connect to address %s", hbuf);
 			}
 			cause = "connect";
@@ -263,7 +264,6 @@ hookup(char *host, char *port)
 	res0 = res = NULL;
 
 	len = hisctladdr.su_len;
-	memset((char *)&myctladdr, 0, sizeof (myctladdr));
 	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) < 0) {
 		warn("getsockname");
 		code = -1;
@@ -1618,8 +1618,8 @@ initconn(void)
 		case AF_INET6:
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&data_addr.si_su,
-					data_addr.su_len, hname, sizeof(hname),
-					NULL, 0, NI_NUMERICHOST)) {
+			    data_addr.su_len, hname, sizeof(hname), NULL, 0,
+			    NI_NUMERICHOST)) {
 				result = ERROR;
 			} else {
 				result = command("EPRT |%d|%s|%d|", af, hname,
@@ -2120,7 +2120,7 @@ ai_unmapped(struct addrinfo *ai)
 	sin.sin_port = sin6->sin6_port;
 
 	ai->ai_family = AF_INET;
-#ifdef HAVE_SIN_LEN
+#if defined(BSD4_4) || HAVE_SIN_LEN
 	sin.sin_len = len;
 #endif
 	memcpy(ai->ai_addr, &sin, len);
