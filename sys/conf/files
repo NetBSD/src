@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188 1998/06/02 01:29:42 thorpej Exp $
+#	$NetBSD: files,v 1.188.2.1 1998/06/04 16:53:57 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -56,9 +56,10 @@ devclass tty
 
 # generic attributes
 define	audio { }
+define  wdc_base
 define	scsi {[channel = -1]}
-define	ata {[drive = -1]}
-define	atapi { }
+define	ata {[channel = -1], [drive = -1]}
+define	atapi {[channel = -1]}
 define  miibus { }
 
 # audio device attributes
@@ -214,10 +215,9 @@ file    dev/ic/rrunner.c        esh
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
 #
-# # ESDI/IDE/etc. controllers
-# device  wdc: ata, atapi
-# file    dev/ic/wdc.c
-#				wdc & (wd | !wd) needs-flag # XXX
+# device  wdc: ata, atapi, wdc_base
+# # Common code for ESDI/IDE/etc. controllers
+file    dev/ic/wdc.c wdc_base
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse

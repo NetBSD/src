@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.6 1998/02/13 08:28:23 enami Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.6.2.1 1998/06/04 16:53:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -31,6 +31,10 @@
 
 #include <dev/scsipi/scsipiconf.h>
 
+struct atapi_mode_header;
+struct ataparams;
+
+#if 0
 struct atapi_identify {
 	struct config_s {
 		u_int8_t cmd_drq_rem;
@@ -122,13 +126,10 @@ struct atapi_identify {
 	u_int8_t reserved7[192];
 };
 
-struct atapibus_attach_args {
-	struct scsipi_link *sa_sc_link;
-	struct atapi_identify *sa_inqbuf;
-};
+#endif
 
-int	wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t,
-	    struct atapi_identify *)); 
+int	wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t, int,
+	    struct ataparams *)); 
 void	atapi_print_addr __P((struct scsipi_link *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
 int	atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
