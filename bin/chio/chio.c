@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.25 2004/06/25 14:27:57 wiz Exp $ */
+/* $NetBSD: chio.c,v 1.26 2004/10/29 19:51:36 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.25 2004/06/25 14:27:57 wiz Exp $");
+__RCSID("$NetBSD: chio.c,v 1.26 2004/10/29 19:51:36 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -545,7 +545,7 @@ do_status(const char *cname, int argc, char **argv)
 		 * If we get an element type, we can't have specified
 		 * anything else.
 		 */
-		if (isdigit(*argv[0]) == 0) {
+		if (isdigit((unsigned char)*argv[0]) == 0) {
 			if (schet == echet || flags != 0 || have_unit ||
 			    have_ucount) {
 				warnx("%s: malformed command line", cname);

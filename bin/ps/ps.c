@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.54 2004/03/27 14:09:10 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.55 2004/10/29 19:53:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.54 2004/03/27 14:09:10 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.55 2004/10/29 19:53:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,7 +698,7 @@ kludge_oldps_options(char *s)
 		 * otherwise check for trailing number, which *may* be a
 		 * pid.
 		 */
-		while (cp >= s && isdigit(*cp))
+		while (cp >= s && isdigit((unsigned char)*cp))
 			--cp;
 	}
 	cp++;
@@ -708,7 +708,7 @@ kludge_oldps_options(char *s)
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
 	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
 	 */
-	if (isdigit(*cp) &&
+	if (isdigit((unsigned char)*cp) &&
 	    (cp == s || (cp[-1] != 'U' && cp[-1] != 't' && cp[-1] != 'p' &&
 	     (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
