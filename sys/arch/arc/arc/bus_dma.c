@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2001/07/05 14:44:29 soda Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2001/09/10 21:19:31 chris Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -810,7 +810,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			/* XXX Do something about COHERENT here. */
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

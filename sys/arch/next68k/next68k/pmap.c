@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2001/08/04 16:26:49 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.36 2001/09/10 21:19:21 chris Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -746,7 +746,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (va);
 }
 
@@ -2738,7 +2738,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((caddr_t)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

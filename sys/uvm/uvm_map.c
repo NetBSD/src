@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.104 2001/09/09 19:38:22 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.105 2001/09/10 21:19:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1132,7 +1132,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		first_entry = entry;
 		entry = next;		/* next entry, please */
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(map));
 
 	/*
 	 * now we've cleaned up the map and are ready for the caller to drop
@@ -1628,7 +1628,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 			/* end of 'while' loop */
 			fudge = 0;
 		}
-		pmap_update();
+		pmap_update(srcmap->pmap);
 
 		/*
 		 * unlock dstmap.  we will dispose of deadentry in
@@ -1839,7 +1839,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		}
 		current = current->next;
 	}
-	pmap_update();
+	pmap_update(map->pmap);
 
  out:
 	vm_map_unlock(map);
@@ -3128,7 +3128,7 @@ uvmspace_fork(vm1)
 					     old_entry->end,
 					     old_entry->protection &
 					     ~VM_PROT_WRITE);
-				pmap_update();
+				pmap_update(old_map->pmap);
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
 			    }
@@ -3168,7 +3168,7 @@ uvmspace_fork(vm1)
 					 new_entry->end,
 					 new_entry->protection &
 					          ~VM_PROT_WRITE);
-			    pmap_update();
+			    pmap_update(new_pmap);
 			  }
 
 			}
