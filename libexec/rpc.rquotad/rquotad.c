@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.10 1998/01/21 11:37:16 lukem Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.11 1998/07/03 11:48:58 mrg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.10 1998/01/21 11:37:16 lukem Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.11 1998/07/03 11:48:58 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,7 +65,8 @@ void
 cleanup(dummy)
 	int dummy;
 {
-	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
+
+	(void)pmap_unset(RQUOTAPROG, RQUOTAVERS);
 	exit(0);
 }
 
@@ -226,7 +227,7 @@ initfs()
 
 	setfsent();
 	while ((fs = getfsent())) {
-		if (strcmp(fs->fs_vfstype, "ffs"))
+		if (strcmp(fs->fs_vfstype, MOUNT_FFS))
 			continue;
 		if (!hasquota(fs, &qfpathname))
 			continue;
