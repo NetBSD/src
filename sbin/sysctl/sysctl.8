@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.60 2000/11/08 22:48:32 eeh Exp $
+.\"	$NetBSD: sysctl.8,v 1.61 2000/12/21 01:10:52 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -262,6 +262,8 @@ privilege can change the value.
 .It net.inet.udp.recvspace	integer	yes
 .It net.inet.udp.sendspace	integer	yes
 .It net.inet6.icmp6.errppslimit	integer	yes
+.It net.inet6.icmp6.mtudisc_hiwat	integer	yes
+.It net.inet6.icmp6.mtudisc_lowat	integer	yes
 .It net.inet6.icmp6.nd6_delay	integer	yes
 .It net.inet6.icmp6.nd6_maxnudhint	integer	yes
 .It net.inet6.icmp6.nd6_mmaxtries	integer	yes
