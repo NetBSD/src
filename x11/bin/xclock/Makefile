@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2004/04/29 05:46:06 jmc Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2004/04/29 06:08:17 jmc Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xclock
 SRCS=	xclock.c Clock.c
 
-CPPFLAGS+=-DXRENDER -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=-DXRENDER -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 
 APPDEFS=XClock.ad XClock-color.ad
 
