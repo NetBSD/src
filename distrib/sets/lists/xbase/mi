@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2004/05/16 10:25:13 lukem Exp $
+# $NetBSD: mi,v 1.43 2004/05/16 10:35:55 lukem Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -404,6 +404,7 @@
 ./usr/X11R6/lib/X11/locale/zh_TW/Compose	-unknown-		share
 ./usr/X11R6/lib/X11/locale/zh_TW/XI18N_OBJS	-unknown-		share
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE	-unknown-		share
+./usr/X11R6/lib/X11/rgb.txt
 ./usr/X11R6/lib/X11/x11perfcomp/fillblnk
 ./usr/X11R6/lib/X11/x11perfcomp/perfboth
 ./usr/X11R6/lib/X11/x11perfcomp/perfratio
