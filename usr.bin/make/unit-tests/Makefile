@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004/01/09 00:56:44 sjg Exp $
+# $Id: Makefile,v 1.10 2004/01/19 00:32:26 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -53,6 +53,7 @@ mod-ts:
 varcmd modword:
 	@${.MAKE} -k -f ${UNIT_TESTS}/$@
 
+.PHONY:	ternary
 ternary:
 	@${.MAKE} -k -f ${UNIT_TESTS}/$@
 	@${.MAKE} -k -f ${UNIT_TESTS}/$@ A=
