@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.67 1998/11/29 15:04:36 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.68 1998/12/19 20:06:36 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -149,6 +149,11 @@ caddr_t allocsys __P((caddr_t));
 #define valloclim(name, type, num, lim) \
 		(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 
+#ifdef BUFCACHE
+int		bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+#else 
+int		bufcache = 0;		/* fallback to old algorithm */
+#endif  
 #ifdef	BUFPAGES
 int		bufpages = BUFPAGES;
 #else
@@ -385,10 +390,20 @@ allocsys(v)
 	 * buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = (physmem / 10) / CLSIZE;
-		else
-			bufpages = (physmem / 20) / CLSIZE;
+		if (bufcache == 0) {
+			if (physmem < btoc(2 * 1024 * 1024))
+				bufpages = physmem / 10;
+			else
+				bufpages = physmem / 20;
+		} else {
+			if (bufcache < 5 || bufcache > 95) {
+				printf(
+		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
+				    bufcache);
+				bufcache = 10;
+			}
+			bufpages = physmem / 100 * bufcache;
+		}
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
