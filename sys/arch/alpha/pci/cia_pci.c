@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.18 1997/10/14 06:22:02 cjs Exp $ */
+/* $NetBSD: cia_pci.c,v 1.19 1998/05/12 18:40:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.18 1997/10/14 06:22:02 cjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.19 1998/05/12 18:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,12 +115,11 @@ cia_conf_read(cpv, tag, offset)
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap, data;
 	int s, secondary, ba;
-	int32_t old_haxr2;					/* XXX */
-	u_int32_t errbits;
+	u_int32_t old_cfg, errbits;
 
 #ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
-	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+	old_cfg = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
 	/*
@@ -142,9 +141,9 @@ cia_conf_read(cpv, tag, offset)
 	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
-		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
+		old_cfg = REGVAL(CIA_CSR_CFG);
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2 | 0x1;	/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg | 0x1;
 		alpha_mb();
 	}
 
@@ -159,7 +158,7 @@ cia_conf_read(cpv, tag, offset)
 
 	if (secondary) {
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2;		/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg;
 		alpha_mb();
 		splx(s);
 	}
