@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2002/08/24 02:50:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2002/08/24 03:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2002/08/24 02:50:53 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2002/08/24 03:10:40 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -938,8 +938,10 @@ pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, int flags)
 {
 	vaddr_t ptva;
 
+	KASSERT((va & PD_OFFSET) == 0);		/* XXX KDASSERT */
+
 	/* Calculate the index into the L1 page table. */
-	ptva = (va >> L1_S_SHIFT) & ~3;
+	ptva = va >> L1_S_SHIFT;
 
 	/* Map page table into the L1. */
 	pmap->pm_pdir[ptva + 0] = L1_C_PROTO | (l2pa + 0x000);
@@ -963,8 +965,10 @@ pmap_unmap_in_l1(struct pmap *pmap, vaddr_t va)
 {
 	vaddr_t ptva;
 
+	KASSERT((va & PD_OFFSET) == 0);		/* XXX KDASSERT */
+
 	/* Calculate the index into the L1 page table. */
-	ptva = (va >> L1_S_SHIFT) & ~3;
+	ptva = va >> L1_S_SHIFT;
 
 	/* Unmap page table from the L1. */
 	pmap->pm_pdir[ptva + 0] = 0;
@@ -2033,10 +2037,10 @@ pmap_pte_addref(struct pmap *pmap, vaddr_t va)
 	if (pmap == pmap_kernel())
 		return;
 
-	pde = pmap_pde(pmap, va & ~(3 << L1_S_SHIFT));
+	pde = pmap_pde(pmap, va & PD_FRAME);
 	pa = pmap_pte_pa(pde);
 	m = PHYS_TO_VM_PAGE(pa);
-	++m->wire_count;
+	m->wire_count++;
 #ifdef MYCROFT_HACK
 	printf("addref pmap=%p va=%08lx pde=%p pa=%08lx m=%p wire=%d\n",
 	    pmap, va, pde, pa, m, m->wire_count);
@@ -2053,10 +2057,10 @@ pmap_pte_delref(struct pmap *pmap, vaddr_t va)
 	if (pmap == pmap_kernel())
 		return;
 
-	pde = pmap_pde(pmap, va & ~(3 << L1_S_SHIFT));
+	pde = pmap_pde(pmap, va & PD_FRAME);
 	pa = pmap_pte_pa(pde);
 	m = PHYS_TO_VM_PAGE(pa);
-	--m->wire_count;
+	m->wire_count--;
 #ifdef MYCROFT_HACK
 	printf("delref pmap=%p va=%08lx pde=%p pa=%08lx m=%p wire=%d\n",
 	    pmap, va, pde, pa, m, m->wire_count);
@@ -2066,7 +2070,7 @@ pmap_pte_delref(struct pmap *pmap, vaddr_t va)
 		printf("delref pmap=%p va=%08lx pde=%p pa=%08lx m=%p\n",
 		    pmap, va, pde, pa, m);
 #endif
-		pmap_unmap_in_l1(pmap, va);
+		pmap_unmap_in_l1(pmap, va & PD_FRAME);
 		uvm_pagefree(m);
 		--pmap->pm_stats.resident_count;
 	}
