@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.2 2001/10/18 19:15:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -379,7 +379,8 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		(PCI_COMMAND_STATUS_REG) | PCI_COMMAND_MASTER_ENABLE));
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(", couldn't map interrupt\n");
+		printf("%s: couldn't map interrupt\n",
+			sc->sc_dev.dv_xname);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
@@ -388,7 +389,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
 		sc);
 	if (sc->sc_ih == NULL) {
-		printf(", couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
