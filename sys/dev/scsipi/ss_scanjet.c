@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.27 2001/11/15 09:48:18 lukem Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.27 2001/11/15 09:48:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,6 @@ int scanjet_ctl_write __P((struct ss_softc *, char *, u_int));
 int scanjet_ctl_read __P((struct ss_softc *, char *, u_int));
 int scanjet_set_window __P((struct ss_softc *));
 int scanjet_compute_sizes __P((struct ss_softc *));
-/* Maybe move to libkern? */
-__inline static int atoi __P((const char *));
-
 
 /*
  * structure for the special handlers
@@ -105,18 +102,21 @@ scanjet_attach(ss, sa)
 	if (!memcmp(sa->sa_inqbuf.product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIc");
-	}
-	if (!memcmp(sa->sa_inqbuf.product, "C2500A", 6)) {
+	} else if (!memcmp(sa->sa_inqbuf.product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIcx");
-	}
-	if (!memcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
+	} else if (!memcmp(sa->sa_inqbuf.product, "C2520A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 4c");
+	} else if (!memcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 4p");
-	}
-	if (!memcmp(sa->sa_inqbuf.product, "C5110A", 6)) {
+	} else if (!memcmp(sa->sa_inqbuf.product, "C5110A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 5p");
+	} else {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet (unknown model)");
 	}
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
@@ -436,21 +436,6 @@ scanjet_set_window(ss)
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes));
 }
 
-/* atoi() is from /sys/arch/amiga/dev/ite.c
-   and is only used in scanjet_compute_sizes */
-
-__inline static int
-atoi(cp)
-	const char *cp;
-{
-	int n;
-
-	for (n = 0; *cp && *cp >= '0' && *cp <= '9'; cp++)
-		n = n * 10 + *cp - '0';
-
-	return (n);
-}
-
 int
 scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
@@ -496,7 +481,7 @@ scanjet_compute_sizes(ss)
 		uprintf(dfail, ss->sc_dev.dv_xname);
 		return (EIO);
 	}
-	ss->sio.scan_pixels_per_line = atoi(p + 1);
+	ss->sio.scan_pixels_per_line = strtoul(p + 1, NULL, 10);
 	if (ss->sio.scan_image_mode < SIM_GRAYSCALE)
 		ss->sio.scan_pixels_per_line *= 8;
 
@@ -516,7 +501,7 @@ scanjet_compute_sizes(ss)
 		uprintf(dfail, ss->sc_dev.dv_xname);
 		return (EIO);
 	}
-	ss->sio.scan_lines = atoi(p + 1);
+	ss->sio.scan_lines = strtoul(p + 1, NULL, 10);
 
 	ss->sio.scan_window_size = ss->sio.scan_lines *
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
