@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.3 2002/12/28 16:44:44 tsutsui Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.4 2003/05/04 10:01:19 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -39,12 +39,6 @@
 
 #include "com.h"
 
-#include "asc.h"
-#if NASC > 0
-#include <arc/jazz/ascreg.h>
-#include <arc/jazz/ascvar.h>
-#endif
-
 /* MAGNUM. NEC goes here too. */
 
 #ifndef COM_FREQ_MAGNUM
@@ -54,15 +48,6 @@
 #define COM_FREQ_MAGNUM	8192000	/* 8.192 MHz - NEC RISCstation M402 */
 #endif
 #endif /* COM_FREQ_MAGNUM */
-
-#if NASC > 0
-struct asc_config asc_ms_jazz_conf = {
-	&asc_timing_40mhz,
-
-	/* only if EPL is FE (Feature Enable bit for 53CF94) */
-	ASC_CNFG3_FCLK, /* clock 40MHz */
-};
-#endif
 
 void p_ms_jazz_init __P((void));
 
@@ -111,10 +96,6 @@ p_ms_jazz_init()
 
 	/* jazzio bus configuration */
 	jazzio_devconfig = mips_magnum_r4000_cpu;
-
-#if NASC > 0
-	asc_conf = &asc_ms_jazz_conf;
-#endif
 
 #if NCOM > 0
 	com_freq = COM_FREQ_MAGNUM;
