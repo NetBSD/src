@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.33 2003/08/07 16:32:02 agc Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.34 2003/10/25 09:13:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.33 2003/08/07 16:32:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.34 2003/10/25 09:13:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	struct lockf *sparelock;
 	struct simplelock *interlock = &ap->a_vp->v_interlock;
 	off_t start, end;
-	int error;
+	int error = 0;
 
 	/*
 	 * Convert the flock structure into a start and end.
