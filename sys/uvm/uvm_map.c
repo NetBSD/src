@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.92 2001/02/10 05:05:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93 2001/02/11 01:34:23 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2806,6 +2806,15 @@ uvmspace_exec(p, start, end)
 		 * now unmap the old program
 		 */
 		uvm_unmap(map, map->min_offset, map->max_offset);
+
+		/*
+		 * resize the map
+		 */
+		vm_map_lock(map);
+		map->min_offset = start;
+		map->max_offset = end;
+		vm_map_unlock(map);
+	
 
 	} else {
 
