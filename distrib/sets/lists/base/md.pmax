@@ -1,3 +1,4 @@
+./sbin/ldconfig
 ./usr/lib/crtn.o
 ./usr/lib/libamu.so
 ./usr/lib/libamu.so.0
