@@ -1,3 +1,7 @@
+#
+# $NetBSD: fskeletn.s,v 1.2 1996/05/15 19:48:30 is Exp $
+#
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 # M68000 Hi-Performance Microprocessor Division
