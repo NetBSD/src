@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.29 1997/08/27 07:10:01 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.30 1998/01/05 09:12:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -186,7 +186,7 @@ soclose(so)
 			while (so->so_state & SS_ISCONNECTED) {
 				error = tsleep((caddr_t)&so->so_timeo,
 					       PSOCK | PCATCH, netcls,
-					       so->so_linger);
+					       so->so_linger * hz);
 				if (error)
 					break;
 			}
