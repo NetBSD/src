@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.5 2001/03/07 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.6 2001/04/09 15:40:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -402,8 +402,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		}
 		mlx->mlx_enq2->me_firmware_id[0] = meo->me_fwmajor;
 		mlx->mlx_enq2->me_firmware_id[1] = meo->me_fwminor;
-		mlx->mlx_enq2->me_firmware_id[2] = '0';
-		mlx->mlx_enq2->me_firmware_id[3] = 0;
+		mlx->mlx_enq2->me_firmware_id[2] = 0;
+		mlx->mlx_enq2->me_firmware_id[3] = '0';
 		free(meo, M_DEVBUF);
 	}
 
@@ -514,7 +514,7 @@ mlx_describe(struct mlx_softc *mlx)
 	    mlx->mlx_dv.dv_xname, model, me->me_actual_channels,
 	    me->me_actual_channels > 1 ? "s" : "",
 	    me->me_firmware_id[0], me->me_firmware_id[1],
-	    me->me_firmware_id[2], me->me_firmware_id[3],
+	    me->me_firmware_id[3], me->me_firmware_id[2],
 	    le32toh(me->me_mem_size) >> 20);
 }
 
@@ -524,32 +524,40 @@ mlx_describe(struct mlx_softc *mlx)
 static void
 mlx_configure(struct mlx_softc *mlx, int waitok)
 {
+	struct mlx_enquiry *me;
 	struct mlx_enq_sys_drive *mes;
 	struct mlx_sysdrive *ms;
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
 
+	me = mlx_enquire(mlx, MLX_CMD_ENQUIRY, sizeof(struct mlx_enquiry),
+	    NULL, waitok);
+	if (me == NULL) {
+		printf("%s: ENQUIRY failed\n", mlx->mlx_dv.dv_xname);
+		return;
+	}
+
 	mes = mlx_enquire(mlx, MLX_CMD_ENQSYSDRIVE,
 	    sizeof(*mes) * MLX_MAX_DRIVES, NULL, waitok);
 	if (mes == NULL) {
 		printf("%s: error fetching drive status\n",
 		    mlx->mlx_dv.dv_xname);
+		free(me, M_DEVBUF);
 		return;
 	}
-
-	for (i = 0, nunits = 0; i < MLX_MAX_DRIVES; i++)
-		if (mes[i].sd_size != 0xffffffffU && mes[i].sd_size != 0)
-			nunits++;
-	if (nunits == 0)
-		nunits = 1;
 
 	/* Allow 1 queued command per unit while re-configuring. */
 	mlx_adjqparam(mlx, 1, 0);
 
 	ms = &mlx->mlx_sysdrive[0];
+	nunits = 0;
 	for (i = 0; i < MLX_MAX_DRIVES; i++, ms++) {
 		size = le32toh(mes[i].sd_size);
+		ms->ms_state = mes[i].sd_state;
+
+		if (i >= me->me_num_sys_drvs)
+			continue;
 
 		/*
 		 * If an existing device has changed in some way (e.g. no
@@ -573,11 +581,15 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		mlxa.mlxa_unit = i;
 		ms->ms_dv = config_found_sm(&mlx->mlx_dv, &mlxa, mlx_print,
 		    mlx_submatch);
+		nunits += (ms->ms_dv != NULL);
 	}
 
 	free(mes, M_DEVBUF);
-	mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
-	    mlx->mlx_max_queuecnt % nunits);
+	free(me, M_DEVBUF);
+
+	if (nunits != 0)
+		mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
+		    mlx->mlx_max_queuecnt % nunits);
 }
 
 /*
@@ -1126,10 +1138,6 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 		dr = &mlx->mlx_sysdrive[0];
 
 		for (i = 0; i < MLX_MAX_DRIVES; i++) {
-			if (mes[i].sd_size == 0xffffffffU ||
-			    mes[i].sd_size == 0)
-				 break;
-
 			/* Has state been changed by controller? */
 			if (dr->ms_state != mes[i].sd_state) {
 				switch (mes[i].sd_state) {
@@ -1195,6 +1203,11 @@ mlx_periodic_eventlog_poll(struct mlx_softc *mlx)
 	}
 	if ((rv = mlx_ccb_map(mlx, mc, result, 1024, MC_XFER_IN)) != 0)
 		goto out;
+	if (mc->mc_nsgent != 1) {
+		mlx_ccb_unmap(mlx, mc);
+		printf("mlx_periodic_eventlog_poll: too many segs\n");
+		goto out;
+	}
 
 	/* Build the command to get one log entry. */
 	mlx_make_type3(mc, MLX_CMD_LOGOP, MLX_LOGOP_GET, 1,
@@ -1499,6 +1512,10 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 	if ((rv = mlx_ccb_map(mlx, mc, result, bufsize, MC_XFER_IN)) != 0)
 		goto out;
 	mapped = 1;
+	if (mc->mc_nsgent != 1) {
+		printf("mlx_enquire: too many segs\n");
+		goto out;
+	}
 
 	/* Build an enquiry command. */
 	mlx_make_type2(mc, command, 0, 0, 0, 0, 0, 0, mc->mc_xfer_phys, 0);
@@ -1917,11 +1934,11 @@ mlx_ccb_unmap(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	    BUS_DMASYNC_POSTWRITE);
 
 	if ((mc->mc_flags & MC_XFER_OUT) != 0)
-		i = BUS_DMASYNC_PREWRITE;
+		i = BUS_DMASYNC_POSTWRITE;
 	else
 		i = 0;
 	if ((mc->mc_flags & MC_XFER_IN) != 0)
-		i |= BUS_DMASYNC_PREREAD;
+		i |= BUS_DMASYNC_POSTREAD;
 
 	bus_dmamap_sync(mlx->mlx_dmat, mc->mc_xfer_map, 0, mc->mc_xfer_size, i);
 	bus_dmamap_unload(mlx->mlx_dmat, mc->mc_xfer_map);
