@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.58 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.59 2003/10/19 03:00:55 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -29,7 +29,7 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .endif									# }
 
 .depend: ${__DPSRCS.d}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	rm -f .depend
 	${_MKCMD}\
@@ -38,25 +38,25 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
 
 .c.d:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .m.d:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .s.d .S.d:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${AINC} ${.IMPSRC}
 
 .C.d .cc.d .cpp.d .cxx.d:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \

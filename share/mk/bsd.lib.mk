@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.236 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.237 2003/10/19 03:00:55 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -171,7 +171,7 @@ CFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
 .c.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -185,7 +185,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .c.po:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -199,7 +199,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .c.so:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -213,12 +213,12 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .c.ln:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[-IDU]*} -i ${.IMPSRC}
 
 .cc.o .cpp.o .cxx.o .C.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -232,7 +232,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .cc.po .cpp.po .cxx.o .C.po:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -246,7 +246,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .cc.so .cpp.so .cxx.so .C.so:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -260,7 +260,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .f.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
@@ -274,7 +274,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .f.po:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
@@ -288,7 +288,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .f.so:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(FOPTS) && !empty(FOPTS:M*-g*)
@@ -302,11 +302,11 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .f.ln:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	@echo Skipping lint for Fortran libraries.
 
 .m.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.m} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
@@ -320,7 +320,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .m.po:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
@@ -334,7 +334,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .m.so:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
@@ -348,7 +348,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .S.o .s.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${_MKCMD}\
@@ -357,7 +357,7 @@ FFLAGS+=	${FOPTS}
 	rm -f ${.TARGET}.tmp
 
 .S.po .s.po:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${_MKCMD}\
@@ -366,7 +366,7 @@ FFLAGS+=	${FOPTS}
 	rm -f ${.TARGET}.tmp
 
 .S.so .s.so:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${_MKCMD}\
@@ -434,7 +434,7 @@ SOBJS=
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
 __archivebuild: .USE
-	${_MKMSG} "  build  ${.TARGET}"
+	${_MKMSGBUILD}
 	${_MKCMD}\
 	rm -f ${.TARGET}
 	${_MKCMD}\
@@ -443,13 +443,13 @@ __archivebuild: .USE
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${UPDATE:D:U-a "${RANLIB} -t"} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 __archivesymlinkpic: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
@@ -478,7 +478,7 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
-	${_MKMSG} "  build  ${.TARGET}"
+	${_MKMSGBUILD}
 	${_MKCMD}\
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
@@ -512,7 +512,7 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 .if !empty(LOBJS)
 LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	rm -f llib-l${LIB}.ln
 .if defined(DESTDIR)
@@ -624,7 +624,7 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
@@ -679,7 +679,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}

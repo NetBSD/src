@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.33 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.34 2003/10/19 03:00:55 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -35,7 +35,7 @@ INFODIRFILE=${DESTDIR}${INFODIR}/dir
 
 # serialize access to ${INFODIRFILE}; needed for parallel makes
 __infoinstall: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} \
 	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \

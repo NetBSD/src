@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.26 2003/10/18 16:41:19 lukem Exp $
+#	$NetBSD: bsd.inc.mk,v 1.27 2003/10/19 03:00:55 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -15,8 +15,8 @@ incinstall::	# ensure existence
 # -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (${_MKSHMSG} "install  ${.TARGET}"; ${_MKSHCMD}\
-	     echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+	    (${_MKSHMSG} "install  ${.TARGET}"; \
+	     ${_MKSHECHO} "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})

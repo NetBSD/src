@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.86 2003/10/18 16:41:19 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.87 2003/10/19 03:00:55 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -45,8 +45,8 @@ MANCOMPRESS:=	| ${MANCOMPRESS}
 
 __installpage: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (${_MKSHMSG} "install  ${.TARGET}"; ${_MKSHCMD}\
-	     echo "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    (${_MKSHMSG} "install  ${.TARGET}"; \
+	     ${_MKSHECHO} "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET})
@@ -119,7 +119,7 @@ realall:	${CATPAGES}
 .MADE:	${HTMLDEPS}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
-	${_MKMSG} " format  ${.TARGET}"
+	${_MKMSGFORMAT}
 .if defined(USETBL)
 	${_MKCMD}\
 	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
@@ -179,7 +179,7 @@ html:		${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
-	${_MKMSG} " format  ${.TARGET}"
+	${_MKMSGFORMAT}
 	${_MKCMD}\
 	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}

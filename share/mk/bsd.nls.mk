@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.42 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.43 2003/10/19 03:00:55 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -24,7 +24,7 @@ realall:	${NLSALL}
 
 .msg.cat:
 	@rm -f ${.TARGET}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${TOOL_GENCAT} ${.TARGET} ${.IMPSRC}
 
@@ -35,7 +35,7 @@ nlsinstall::	# ensure existence
 .if ${MKNLS} != "no"
 
 __nlsinstall: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} \
 		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
