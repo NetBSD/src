@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.9 1995/02/12 19:19:14 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.10 1995/04/10 13:08:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -115,7 +115,7 @@ ivscmatch(pdp, cdp, auxp)
 		 *
 		 * XXXX pa 0x00f00000 shouldn't be used for anything
 		 */
-		if (pmap_extract(kernel_pmap, (vm_offset_t) ztwomap(0x00f00000))
+		if (pmap_extract(pmap_kernel(), (vm_offset_t) ztwomap(0x00f00000))
 		    == 0x00f00000) {
 			physaccess(ztwomap(0x00f00000),zap->pa,
 			    NBPG, PG_W|PG_CI);

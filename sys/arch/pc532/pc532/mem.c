@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1995/04/10 11:55:01 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1995/04/10 13:15:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,13 +187,13 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1995/03/29 07:38:57 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1995/04/10 13:15:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -247,10 +247,10 @@ cpu_startup(void)
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 #ifdef MACHINE_NONCONTIG
-		pmap_enter(kernel_pmap, (vm_offset_t) msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
 			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #else  /* MACHINE_NONCONTIG */
-		pmap_enter(kernel_pmap, (vm_offset_t) msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
 			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #endif /* MACHINE_NONCONTIG */
 	msgbufmapped = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1995/03/05 22:19:26 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1995/04/10 13:10:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -203,7 +203,7 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
@@ -336,11 +336,11 @@ again:
 		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
 			vm_offset_t pa;
 
-			pa = pmap_extract(kernel_pmap, bufmemp);
+			pa = pmap_extract(pmap_kernel(), bufmemp);
 			if (pa == 0)
 				panic("startup: unmapped buffer");
-			pmap_remove(kernel_pmap, bufmemp, bufmemp+CLBYTES);
-			pmap_enter(kernel_pmap,
+			pmap_remove(pmap_kernel(), bufmemp, bufmemp+CLBYTES);
+			pmap_enter(pmap_kernel(),
 				   (vm_offset_t)(curbuf + ix * CLBYTES),
 				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
 			bufmemp += CLBYTES;
@@ -638,7 +638,7 @@ ledinit()
 {
 	extern caddr_t ledbase;
 
-	pmap_enter(kernel_pmap, (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
 		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
 	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
 }
@@ -1121,13 +1121,11 @@ boot(howto)
 #endif
 #endif
 		sync(&proc0, (void *)0, (int *)0);
-#ifdef notyet
 		/*
 		 * Unmount filesystems
 		 */
 		if (panicstr == 0)
 			vfs_unmountall();
-#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
@@ -1570,7 +1568,7 @@ findparerror()
 	looking = 1;
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
-		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, ctob(pg),
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, ctob(pg),
 		    VM_PROT_READ, TRUE);
 		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
@@ -1583,7 +1581,7 @@ findparerror()
 	found = 0;
 done:
 	looking = 0;
-	pmap_remove(kernel_pmap, (vm_offset_t)vmmap, (vm_offset_t)&vmmap[NBPG]);
+	pmap_remove(pmap_kernel(), (vm_offset_t)vmmap, (vm_offset_t)&vmmap[NBPG]);
 	ecacheon();
 	splx(s);
 	return(found);

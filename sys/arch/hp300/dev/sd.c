@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.12 1995/01/18 10:02:43 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.13 1995/04/10 13:10:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.12 1995/01/18 10:02:43 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.13 1995/04/10 13:10:10 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1182,7 +1182,7 @@ sddump(dev)
 		if (i && (i % NPGMB) == 0)
 			printf("%d ", i / NPGMB);
 #undef NPBMG
-		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, TRUE);
 		stat = scsi_tt_write(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
 				     vmmap, NBPG, baddr, sc->sc_bshift);

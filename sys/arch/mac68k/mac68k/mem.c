@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1995/04/10 11:54:59 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1995/04/10 13:15:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,7 +128,7 @@ mmrw(dev, uio, flags)
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
 			continue;
 

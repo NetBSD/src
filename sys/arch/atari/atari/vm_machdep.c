@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.1.1 1995/03/26 07:12:21 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 1995/04/10 13:09:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,16 +149,16 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
 			panic("pagemove 3");
 #endif
-		pmap_remove(kernel_pmap,
+		pmap_remove(pmap_kernel(),
 			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
@@ -240,7 +240,7 @@ kvtop(addr)
 {
 	vm_offset_t va;
 
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);

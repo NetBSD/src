@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1994/10/26 02:32:53 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1995/04/10 13:09:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
@@ -305,11 +305,11 @@ again:
 		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
 			vm_offset_t pa;
 
-			pa = pmap_extract(kernel_pmap, bufmemp);
+			pa = pmap_extract(pmap_kernel(), bufmemp);
 			if (pa == 0)
 				panic("startup: unmapped buffer");
-			pmap_remove(kernel_pmap, bufmemp, bufmemp+CLBYTES);
-			pmap_enter(kernel_pmap,
+			pmap_remove(pmap_kernel(), bufmemp, bufmemp+CLBYTES);
+			pmap_enter(pmap_kernel(),
 				   (vm_offset_t)(curbuf + ix * CLBYTES),
 				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
 			bufmemp += CLBYTES;
@@ -460,7 +460,7 @@ ledinit()
 {
 	extern caddr_t ledbase;
 
-	pmap_enter(kernel_pmap, (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
 		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
 	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
 }

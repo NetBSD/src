@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.10 1994/10/26 07:24:50 cgd Exp $	*/
+/*	$NetBSD: rd.c,v 1.11 1995/04/10 13:09:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1077,7 +1077,7 @@ rddump(dev)
 			 &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 		if (hpibswait(hp->hp_ctlr, hp->hp_slave))
 			return (EIO);
-		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, TRUE);
 		hpibsend(hp->hp_ctlr, hp->hp_slave, C_EXEC, vmmap, NBPG);
 		(void) hpibswait(hp->hp_ctlr, hp->hp_slave);

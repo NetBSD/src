@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1995/03/09 12:05:26 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1995/04/10 13:15:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -323,7 +323,7 @@ cpu_startup(void)
 
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(kernel_pmap, msgbufp, avail_end + i * NBPG,
+		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
 			   VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 

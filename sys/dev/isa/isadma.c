@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.10 1994/11/18 22:07:37 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.11 1995/04/10 13:14:54 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 	}
 
 	/* translate to physical */
-	phys = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	phys = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 
 	if ((chan & 4) == 0) {
 		/*
@@ -213,7 +213,7 @@ isa_dmarangecheck(va, length, chan)
 
 	endva = round_page(va + length);
 	for (; va < endva ; va += NBPG) {
-		phys = trunc_page(pmap_extract(kernel_pmap, va));
+		phys = trunc_page(pmap_extract(pmap_kernel(), va));
 		if (phys == 0)
 			panic("isa_dmacheck: no physical page present");
 		if (phys >= (1<<24)) 

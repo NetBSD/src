@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1995/03/26 08:03:44 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 1995/04/10 13:10:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -635,12 +635,12 @@ writeback(fp, docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(kernel_pmap, (vm_offset_t)fa));
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));
+			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 				    (vm_offset_t)&vmmap[NBPG]);
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
