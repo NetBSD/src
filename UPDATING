@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.99 2003/12/04 01:25:21 mrg Exp $
+$NetBSD: UPDATING,v 1.100 2003/12/12 12:36:37 keihan Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -9,7 +9,7 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20031203:
-	New binutils builds may fail due to old dependancies.
+	New binutils builds may fail due to old dependencies.
 	It's necessary to "make cleandir" to ensure that
 	the dependencies will be rebuilt correctly.
 
