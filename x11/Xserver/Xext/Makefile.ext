@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.ext,v 1.3 2003/09/30 06:41:29 lukem Exp $
-
-.include "../Makefile.serverlib"
+#	$NetBSD: Makefile.ext,v 1.4 2003/12/21 03:07:01 rtr Exp $
 
 .include <bsd.own.mk>
 
