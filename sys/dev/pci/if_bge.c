@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.53 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.54 2003/11/11 22:28:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.53 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.54 2003/11/11 22:28:58 fvdl Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -211,6 +211,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
 #define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
 #define	BGE_QUIRK_5705_CORE		0x00000080
+#define	BGE_QUIRK_FEWER_MBUFS		0x00000100
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -1188,8 +1189,7 @@ bge_chipinit(sc)
 	 */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
-		    BGE_MODECTL_NO_RX_CRC|BGE_MODECTL_TX_NO_PHDR_CSUM|
-		    BGE_MODECTL_RX_NO_PHDR_CSUM);
+		    BGE_MODECTL_TX_NO_PHDR_CSUM|BGE_MODECTL_RX_NO_PHDR_CSUM);
 
 	/* Get cache line size. */
 	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
@@ -1290,11 +1290,17 @@ bge_blockinit(sc)
 		if (sc->bge_extram) {
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 			    BGE_EXT_SSRAM);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
+			if ((sc->bge_quirks & BGE_QUIRK_FEWER_MBUFS) != 0)
+				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
+			else
+				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
 		} else {
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 			    BGE_BUFFPOOL_1);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
+			if ((sc->bge_quirks & BGE_QUIRK_FEWER_MBUFS) != 0)
+				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
+			else
+				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
 		}
 
 		/* Configure DMA resource pool */
@@ -1735,19 +1741,19 @@ static const struct bge_revision {
 	  "BCM5703 A2" },
 
 	{ BGE_CHIPID_BCM5704_A0,
-  	  BGE_QUIRK_ONLY_PHY_1,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
 	  "BCM5704 A0" },
 
 	{ BGE_CHIPID_BCM5704_A1,
-  	  BGE_QUIRK_ONLY_PHY_1,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
 	  "BCM5704 A1" },
 
 	{ BGE_CHIPID_BCM5704_A2,
-  	  BGE_QUIRK_ONLY_PHY_1,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
 	  "BCM5704 A2" },
 
 	{ BGE_CHIPID_BCM5704_A3,
-  	  BGE_QUIRK_ONLY_PHY_1,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
 	  "BCM5704 A3" },
 
 	{ BGE_CHIPID_BCM5705_A0,
@@ -2298,7 +2304,7 @@ bge_attach(parent, self, aux)
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
-			   MII_PHY_ANY, MII_OFFSET_ANY, 0);
+			   MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 		
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
@@ -2552,7 +2558,7 @@ bge_rxeof(sc)
 		}
 #endif
                 
-		m->m_pkthdr.len = m->m_len = cur_rx->bge_len;
+		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
