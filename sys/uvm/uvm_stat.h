@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.2 1998/02/06 22:32:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.3 1998/02/07 02:16:52 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -50,9 +50,6 @@
 struct uvm_cnt {
 	int c;					/* the value */
 	int t;					/* type */
-#if NCPU > 1
-	simple_lock_data_t l;			/* lock on this counter */
-#endif /* NCPU */
 	struct uvm_cnt *next;			/* global list of cnts */
 	char *name;				/* counter name */
 	void *p;				/* private data */
@@ -61,14 +58,12 @@ struct uvm_cnt {
 extern struct uvm_cnt *uvm_cnt_head;
 
 /*
- * counter operations.   note simple_locks compiles out if NCPU == 1.
- * assume spl is set ok.
+ * counter operations.  assume spl is set ok.
  */
 
 #define UVMCNT_INIT(CNT,TYP,VAL,NAM,PRIV) { \
 	CNT.c = VAL; \
 	CNT.t = TYP; \
-	simple_lock_init(&CNT.l); \
 	CNT.next = uvm_cnt_head; \
 	uvm_cnt_head = &CNT; \
 	CNT.name = NAM; \
@@ -76,15 +71,11 @@ extern struct uvm_cnt *uvm_cnt_head;
 	}
 
 #define UVMCNT_SET(C,V) { \
-	simple_lock(&(C).l); \
 	(C).c = (V); \
-	simple_unlock(&(C).l); \
 	}
 
 #define UVMCNT_ADD(C,V) { \
-	simple_lock(&(C).l); \
 	(C).c += (V); \
-	simple_unlock(&(C).l); \
 	}
 
 #define UVMCNT_INCR(C) UVMCNT_ADD(C,1)
