@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.18 1996/03/17 01:17:32 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.19 1996/03/21 21:00:21 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -236,6 +236,14 @@ ed_zbus_attach(parent, self, aux)
 
 	sc->mem_ring =
 	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+
+	/*
+	 * Interupts must be inactive when reading the prom, as the interupt
+	 * line is shared with one of its address lines.
+	 */
+
+	NIC_PUT(sc, ED_P0_IMR, 0x00); /* disable ints */
+	NIC_PUT(sc, ED_P0_ISR, 0xff); /* clear ints */
 
 	/*
 	 * read the ethernet address from the board
