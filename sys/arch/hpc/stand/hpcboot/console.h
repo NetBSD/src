@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.3 2001/03/22 18:19:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.4 2001/04/24 19:27:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,9 +48,12 @@ private:
 
 protected:
 	enum { CONSOLE_BUFSIZE = 256 };
+	TCHAR _bufw[CONSOLE_BUFSIZE];	// wide char buffer.
 	BOOL _on;
 
 protected:
+	int16_t _boot_console;
+
 	Console(void) { /* NO-OP */ }
 	~Console(void) { /* NO-OP */ }
 
@@ -69,19 +72,27 @@ private:
 	HANDLE _handle;
 
 protected:
-	TCHAR _bufw[CONSOLE_BUFSIZE];
-	char _bufm[CONSOLE_BUFSIZE];
+	char _bufm[CONSOLE_BUFSIZE];	// multibyte char buffer.
 
 protected:
 	SerialConsole(void) { _handle = INVALID_HANDLE_VALUE; }
 	BOOL openCOM1(void);
-	BOOL setupBuffer(void);
+	BOOL setupMultibyteBuffer(void);
 
 public:
 	void genericPrint(const char *);
-	virtual BOOL init(void) { return TRUE; };
+	virtual BOOL init(void);
 	virtual int16_t getBootConsole(void) { return BI_CNUSE_SERIAL; }
+	virtual void print(const TCHAR *fmt, ...);
 };
+
+#define SETUP_WIDECHAR_BUFFER()						\
+__BEGIN_MACRO								\
+	va_list ap;							\
+	va_start(ap, fmt);						\
+	wvsprintf(_bufw, fmt, ap);					\
+	va_end(ap);							\
+__END_MACRO
 
 #define DPRINTF_SETUP()		Console *_cons = Console::Instance()
 #define DPRINTFN(level, x)						\

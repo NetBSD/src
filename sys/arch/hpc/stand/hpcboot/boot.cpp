@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.cpp,v 1.1 2001/02/09 18:34:34 uch Exp $	*/
+/*	$NetBSD: boot.cpp,v 1.2 2001/04/24 19:27:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,10 +70,12 @@ Boot::Instance()
 	if (_instance)
 		return  *_instance;
 
+	// register bootloader to menu system.
+	// (will be invoked by boot button)
 	struct HpcMenuInterface::boot_hook_args bha;
 	bha.func	= hpcboot;
-	bha.arg	= 0;
-	HpcMenuInterface::Instance().register_boot_hook(bha);
+	bha.arg		= 0;
+	HPC_MENU.register_boot_hook(bha);
 
 #ifdef ARM
 	_instance = new ARMBoot();
@@ -99,8 +101,10 @@ Boot::Destroy()
 }
 
 BOOL
-Boot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
+Boot::setup()
 {
+	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
+
 	args.console = pref.boot_serial ? CONSOLE_SERIAL : CONSOLE_LCD;
 
 	// file path.
@@ -128,9 +132,9 @@ Boot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
 
 Boot::Boot()
 {
-	_arch		= 0;
-	_mem		= 0;
-	_file		= 0;
+	_arch	= 0;
+	_mem	= 0;
+	_file	= 0;
 	_loader	= 0;
 	// set default console
 	_cons = Console::Instance();

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.5 2001/04/24 19:28:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #include <sh3/sh3.h>
 
 class SHConsole : public SerialConsole {
+private:
+	typedef SerialConsole super;
+
 public:
 	typedef void (*print_func_t)(const char *);
 	struct console_info {
@@ -61,7 +64,6 @@ private:
 	static SHConsole *_instance;
 	int _kmode;
 	print_func_t _print;
-	int16_t _boot_console;
 
 	SHConsole(void);
 
