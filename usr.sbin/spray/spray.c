@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.2 1994/01/29 01:43:41 jtc Exp $
+ *	$Id: spray.c,v 1.3 1994/12/23 16:42:47 cgd Exp $
  */
 
 #include <stdio.h>
@@ -135,7 +135,7 @@ main(argc, argv)
 	 * The following (undocumented) hack resets the internal state
 	 * of the client handle.
 	 */
-	clnt_control(cl, CLSET_TIMEOUT, &NO_DEFAULT);
+	clnt_control(cl, CLSET_TIMEOUT, (caddr_t)&NO_DEFAULT);
 
 
 	/* Clear server statistics */
