@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.39 2005/02/02 21:41:55 perry Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.40 2005/02/03 03:49:01 perry Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.39 2005/02/02 21:41:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.40 2005/02/03 03:49:01 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -89,10 +89,7 @@ const struct protosw in_gif_protosw =
 };
 
 int
-in_gif_output(ifp, family, m)
-	struct ifnet	*ifp;
-	int		family;
-	struct mbuf	*m;
+in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
@@ -329,10 +326,7 @@ in_gif_input(struct mbuf *m, ...)
  * validate outer address.
  */
 static int
-gif_validate4(ip, sc, ifp)
-	const struct ip *ip;
-	struct gif_softc *sc;
-	struct ifnet *ifp;
+gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 {
 	struct sockaddr_in *src, *dst;
 	struct in_ifaddr *ia4;
@@ -392,11 +386,7 @@ gif_validate4(ip, sc, ifp)
  * matched the physical addr family.  see gif_encapcheck().
  */
 int
-gif_encapcheck4(m, off, proto, arg)
-	const struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
+gif_encapcheck4(const struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;
@@ -414,8 +404,7 @@ gif_encapcheck4(m, off, proto, arg)
 #endif
 
 int
-in_gif_attach(sc)
-	struct gif_softc *sc;
+in_gif_attach(struct gif_softc *sc)
 {
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in mask4;
@@ -439,8 +428,7 @@ in_gif_attach(sc)
 }
 
 int
-in_gif_detach(sc)
-	struct gif_softc *sc;
+in_gif_detach(struct gif_softc *sc)
 {
 	int error;
 
