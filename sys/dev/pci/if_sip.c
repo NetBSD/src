@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.92 2004/05/15 22:24:51 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.93 2004/05/15 22:26:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.92 2004/05/15 22:24:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.93 2004/05/15 22:26:49 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3175,7 +3175,7 @@ SIP_DECL(dp83820_mii_statchg)(struct device *self)
 		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
 			pcr |= sc->sc_rx_flow_thresh;
 		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
-			pcr |= PCR_PSEN | PCR_PS_MCAST | PCR_PS_DA;
+			pcr |= PCR_PSEN | PCR_PS_MCAST;
 	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CFG, cfg);
