@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90 2004/06/04 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.91 2004/06/04 23:36:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -758,8 +758,6 @@ void
 addoption(const char *name, const char *value)
 {
 	const char *n;
-	char *p, c;
-	char low[500];
 	int is_fs, is_param, is_flag, is_opt, is_undecl;
 
 	/* 
@@ -797,10 +795,7 @@ addoption(const char *name, const char *value)
 		return;
 
 	/* make lowercase, then add to select table */
-	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
-	*p = 0;
-	n = intern(low);
+	n = strtolower(name);
 	(void)ht_insert(selecttab, n, (void *)n);
 }
 
@@ -823,8 +818,6 @@ void
 addfsoption(const char *name)
 {
 	const char *n; 
-	char *p, c;
-	char low[500];
 
 	/* Make sure this is a defined file system. */
 	if (!OPT_FSOPT(name)) {
@@ -837,10 +830,7 @@ addfsoption(const char *name)
 	 * table, to verify root file systems, and when the initial
 	 * VFS list is created.
 	 */
-	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
-	*p = 0;
-	n = intern(low);
+	n = strtolower(name);
 
 	if (do_option(fsopttab, &nextfsopt, name, n, "file-system"))
 		return;
