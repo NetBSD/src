@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.3 2005/02/19 21:27:10 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.4 2005/04/03 15:02:05 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.27 2005/02/21 22:51:08 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -45,6 +45,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:1
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
+# include <netinet/tcp_timer.h>
+# include <netinet/tcp_var.h>
+#endif
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
@@ -70,7 +74,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:1
 #include "netinet/ip_pool.h"
 #include <sys/md5.h>
 #include <sys/kernel.h>
+#ifdef INET
 extern	int	ip_optcopy __P((struct ip *, struct ip *));
+#endif
 
 #ifdef IPFILTER_M_IPFILTER
 MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures");
@@ -129,23 +135,27 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
+	struct ip *ip;
+	int rv, hlen;
 
-#if __NetBSD_Version >= 200080000
+#if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
 	 * XXX inefficient
 	 */
-	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	int error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+
 	if (error) {
 		m_freem(*mp);
 		*mp = NULL;
 		return error;
 	}
 #endif
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
+#ifdef INET
 #if defined(M_CSUM_TCPv4)
 	/*
 	 * If the packet is out-bound, we can't delay checksums
@@ -160,6 +170,7 @@ int dir;
 		}
 	}
 #endif /* M_CSUM_TCPv4 */
+#endif /* INET */
 
 	/*
 	 * We get the packet with all fields in network byte
@@ -195,12 +206,12 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
 # endif
-#endif /* __NetBSD_Version >= 105110000 */
+#endif /* __NetBSD_Version__ >= 105110000 */
 
 
 #if	defined(IPFILTER_LKM)
@@ -321,8 +332,10 @@ pfil_error:
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
 
+#ifdef INET
 	if (fr_control_forwarding & 1)
 		ipforwarding = 1;
+#endif
 
 	SPL_X(s);
 
@@ -366,8 +379,10 @@ int ipldetach()
 	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
 	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
+#ifdef INET
 	if (fr_control_forwarding & 2)
 		ipforwarding = 0;
+#endif
 
 #ifdef NETBSD_PF
 # if (__NetBSD_Version__ >= 104200000)
@@ -822,6 +837,7 @@ fr_info_t *fin;
 		return fr_send_ip(fin, m, &m);
 	}
 #endif
+#ifdef INET
 	ip->ip_p = IPPROTO_TCP;
 	ip->ip_len = htons(sizeof(struct tcphdr));
 	ip->ip_src.s_addr = fin->fin_daddr;
@@ -829,6 +845,9 @@ fr_info_t *fin;
 	tcp2->th_sum = in_cksum(m, hlen + sizeof(*tcp2));
 	ip->ip_len = hlen + sizeof(*tcp2);
 	return fr_send_ip(fin, m, &m);
+#else
+	return 0;
+#endif
 }
 
 
@@ -837,7 +856,10 @@ fr_info_t *fin;
 mb_t *m, **mpp;
 {
 	fr_info_t fnew;
-	ip_t *ip, *oip;
+#ifdef INET
+	ip_t *oip;
+#endif
+	ip_t *ip;
 	int hlen;
 
 	ip = mtod(m, ip_t *);
@@ -846,6 +868,7 @@ mb_t *m, **mpp;
 	IP_V_A(ip, fin->fin_v);
 	switch (fin->fin_v)
 	{
+#ifdef INET
 	case 4 :
 		fnew.fin_v = 4;
 		oip = fin->fin_ip;
@@ -857,6 +880,7 @@ mb_t *m, **mpp;
 		ip->ip_sum = 0;
 		hlen = sizeof(*oip);
 		break;
+#endif
 #ifdef USE_INET6
 	case 6 :
 	{
@@ -1098,16 +1122,19 @@ frdest_t *fdp;
 		}
 		return error;
 	}
+#ifndef INET
+	return EPROTONOSUPPORT;
+#else
 
 	hlen = fin->fin_hlen;
 	ip = mtod(m0, struct ip *);
 
-#if defined(M_CSUM_IPv4)
+# if defined(M_CSUM_IPv4)
 	/*
 	 * Clear any in-bound checksum flags for this packet.
 	 */
 	m0->m_pkthdr.csuminfo = 0;
-#endif /* __NetBSD__ && M_CSUM_IPv4 */
+# endif /* __NetBSD__ && M_CSUM_IPv4 */
 
 	/*
 	 * Route packet.
@@ -1205,20 +1232,20 @@ frdest_t *fdp;
 
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
-#if defined(M_CSUM_IPv4)
-# if (__NetBSD_Version__ >= 105009999)
+# if defined(M_CSUM_IPv4)
+#  if (__NetBSD_Version__ >= 105009999)
 		if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
-# else
+#  else
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
-# endif /* (__NetBSD_Version__ >= 105009999) */
+#  endif /* (__NetBSD_Version__ >= 105009999) */
 		else if (ip->ip_sum == 0)
 			ip->ip_sum = in_cksum(m, hlen);
-#else
+# else
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
-#endif /* M_CSUM_IPv4 */
+# endif /* M_CSUM_IPv4 */
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 		if (i) {
@@ -1254,11 +1281,11 @@ frdest_t *fdp;
 	m0 = m;
 	mhlen = sizeof (struct ip);
 	for (off = hlen + len; off < ip->ip_len; off += len) {
-#ifdef MGETHDR
+# ifdef MGETHDR
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-#else
+# else
 		MGET(m, M_DONTWAIT, MT_HEADER);
-#endif
+# endif
 		if (m == 0) {
 			m = m0;
 			error = ENOBUFS;
@@ -1310,7 +1337,7 @@ sendorfree:
 		else
 			FREE_MB_T(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		fr_frouteok[0]++;
@@ -1334,6 +1361,7 @@ bad:
 	}
 	FREE_MB_T(m);
 	goto done;
+#endif /* INET */
 }
 
 
@@ -1514,20 +1542,21 @@ struct in_addr *inp, *inpmask;
 u_32_t fr_newisn(fin)
 fr_info_t *fin;
 {
-	u_32_t newiss;
-#if __NetBSD_Version >= 105190000	/* 1.5T */
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
-	
 
 	if (fin->fin_v == 4)
 		asz = sizeof(struct in_addr);
 	else if (fin->fin_v == 6)
 		asz = sizeof(fin->fin_src);
-	newiss = tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			      fin->fin_sport, fin->fin_dport, asz);
+	else	/* XXX: no way to return error */
+		return 0;
+	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
+			    fin->fin_sport, fin->fin_dport, asz, 0);
 #else
 	static int iss_seq_off = 0;
 	u_char hash[16];
+	u_32_t newiss;
 	MD5_CTX ctx;
 
 	/*
@@ -1557,8 +1586,8 @@ fr_info_t *fin;
 	 */
 	iss_seq_off += 0x00010000;
 	newiss += iss_seq_off;
-#endif
 	return newiss;
+#endif
 }
 
 

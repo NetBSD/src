@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.4 2005/04/03 15:00:57 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.16 2005/01/08 16:55:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.17 2005/03/03 14:03:00 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -1389,51 +1389,24 @@ int len;
 		dpoff = 0;
 
 	if (M_LEN(m) < len) {
-		int inc = 0;
 
-		if (ipoff > 0) {
-			if ((ipoff & 3) != 0) {
-				inc = 4 - (ipoff & 3);
-				if (m->b_rptr - inc >= m->b_datap->db_base)
-					m->b_rptr -= inc;
-				else
-					inc = 0;
-			}
-		}
-		m = msgpullup(min, len + ipoff + inc);
-		if (m == NULL) {
+		/*
+		 * pfil_precheck ensures the IP header is on a 32bit
+		 * aligned address so simply fail if that isn't currently
+		 * the case (should never happen).
+		 */
+		if (((ipoff & 3) != 0) || (pullupmsg(m, len + ipoff) == 0)) {
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
 			FREE_MB_T(*fin->fin_mp);
 			*fin->fin_mp = NULL;
 			fin->fin_m = NULL;
+			fin->fin_ip = NULL;
+			fin->fin_dp = NULL;
+			qpi->qpi_data = NULL;
 			return NULL;
 		}
 
-		/*
-		 * Because msgpullup allocates a new mblk, we need to delink
-		 * (and free) the old one and link on the new one.
-		 */
-		if (min == *fin->fin_mp) {	/* easy case 1st */
-			FREE_MB_T(*fin->fin_mp);
-			*fin->fin_mp = m;
-		} else {
-			mb_t *m2;
-
-			for (m2 = *fin->fin_mp; m2 != NULL; m2 = m2->b_next)
-				if (m2->b_next == min)
-					break;
-			if (m2 == NULL) {
-				ATOMIC_INCL(frstats[out].fr_pull[1]);
-				FREE_MB_T(*fin->fin_mp);
-				FREE_MB_T(m);
-				return NULL;
-			}
-			FREE_MB_T(min);
-			m2->b_next = m;
-		}
-
 		fin->fin_m = m;
-		m->b_rptr += inc;
 		ip = MTOD(m, char *) + ipoff;
 		qpi->qpi_data = ip;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.10 2005/02/08 06:52:57 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.11 2005/04/03 15:00:52 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.142.2.24 2005/01/08 14:22:59 darrenr Exp
+ * Id: ip_compat.h,v 2.142.2.25 2005/03/28 09:33:36 darrenr Exp
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -1280,12 +1280,13 @@ typedef union {
 #define	ipf_isw		ipf_lkun_s.ipf_sw
 #define	ipf_magic	ipf_lkun_s.ipf_magic
 
-#ifdef	__GNUC__
-# define	INLINE	__inline__
-#else
+#if !defined(__GNUC__) || \
+    (defined(__FreeBSD_version) && (__FreeBSD_version >= 503000))
 # ifndef	INLINE
 #  define	INLINE
 # endif
+#else
+# define	INLINE	__inline__
 #endif
 
 #if defined(linux) && defined(_KERNEL)

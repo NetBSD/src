@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.4 2005/02/19 21:27:01 martti Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.5 2005/04/03 15:01:55 martti Exp $	*/
 
 %{
 #include "ipf.h"
@@ -69,6 +69,7 @@ static	struct	wordtab logwords[33];
 	frentry_t	fr;
 	frtuc_t	*frt;
 	struct	alist_s	*alist;
+	u_short	port;
 	struct	{
 		u_short	p1;
 		u_short	p2;
@@ -81,7 +82,8 @@ static	struct	wordtab logwords[33];
 	union	i6addr	ip6;
 };
 
-%type	<num>	portnum facility priority icmpcode seclevel secname icmptype
+%type	<port>	portnum
+%type	<num>	facility priority icmpcode seclevel secname icmptype
 %type	<num>	opt compare range opttype flagset optlist ipv6hdrlist ipv6hdr
 %type	<num>	portc porteq
 %type	<ipa>	hostname ipv4 ipv4mask ipv4_16 ipv4_24
@@ -1086,15 +1088,15 @@ stateopt:
 	;
 
 portnum:
-	servicename			{ $$ = getport(frc, $1);
-					  if ($$ == -1)
+	servicename			{ if (getport(frc, $1, &($$)) == -1)
 						yyerror("service unknown");
 					  $$ = ntohs($$);
 					  free($1);
 					}
-	| YY_NUMBER			{ $$ = $1;
-					  if ($$ < 0 || $$ > 65535)
+	| YY_NUMBER			{ if ($1 > 65535)	/* Unsigned */
 						yyerror("invalid port number");
+					  else
+						$$ = $1;
 					}
 	;
 
@@ -2044,7 +2046,7 @@ void *ptr;
 
 	if ((opts & OPT_ZERORULEST) != 0) {
 		if ((*ioctlfunc)(fd, add, (void *)&obj) == -1) {
-			if ((opts & OPT_DONOTHING) != 0) {
+			if ((opts & OPT_DONOTHING) == 0) {
 				fprintf(stderr, "%d:", yylineNum);
 				perror("ioctl(SIOCZRLST)");
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat_y.y,v 1.1.1.4 2005/02/19 21:27:04 martti Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.1.1.5 2005/04/03 15:01:59 martti Exp $	*/
 
 %{
 #ifdef  __FreeBSD__
@@ -65,6 +65,7 @@ static	void	setnatproto __P((int));
 	struct	in_addr	ipa;
 	frentry_t	fr;
 	frtuc_t	*frt;
+	u_short	port;
 	struct	{
 		u_short	p1;
 		u_short	p2;
@@ -89,7 +90,8 @@ static	void	setnatproto __P((int));
 %token	IPNY_ROUNDROBIN IPNY_FRAG IPNY_AGE IPNY_ICMPIDMAP IPNY_PROXY
 %token	IPNY_TCP IPNY_UDP IPNY_TCPUDP IPNY_STICKY IPNY_MSSCLAMP IPNY_TAG
 %token	IPNY_TLATE
-%type	<num> hexnumber compare range proto portspec
+%type	<port> portspec
+%type	<num> hexnumber compare range proto
 %type	<ipa> hostname ipv4
 %type	<ipp> addr nummask rhaddr
 %type	<pc> portstuff
@@ -310,13 +312,12 @@ dip:
 	;
 
 portspec:
-	YY_NUMBER			{ $$ = $1;
-					  if ($$ < 0 || $$ > 65535)
+	YY_NUMBER			{ if ($1 > 65535)	/* Unsigned */
 						yyerror("invalid port number");
+					  else
+						$$ = $1;
 					}
-	| YY_STR			{ $$ = getport(NULL, $1);
-					  if (ntohl((long)$$) < 0 ||
-					      ntohl((long)$$) > 65535)
+	| YY_STR			{ if (getport(NULL, $1, &($$)) == -1)
 						yyerror("invalid port number");
 					  $$ = ntohs($$);
 					}

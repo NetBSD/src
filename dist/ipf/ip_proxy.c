@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.11 2005/02/19 21:26:06 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.12 2005/04/03 15:01:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.10 2005/02/17 04:40:03 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.12 2005/03/03 14:28:24 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
@@ -153,7 +153,7 @@ aproxy_t	ap_proxies[] = {
 #ifdef	IPF_PPTP_PROXY
 	{ NULL, "pptp", (char)IPPROTO_TCP, 0, 0,
 	  ippr_pptp_init, ippr_pptp_fini, ippr_pptp_new, ippr_pptp_del,
-	  ippr_pptp_inout, ippr_pptp_inout, ippr_pptp_match, NULL },
+	  ippr_pptp_inout, ippr_pptp_inout, NULL, NULL },
 #endif
 #ifdef  IPF_H323_PROXY
 	{ NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, ippr_h323_fini,
@@ -418,8 +418,8 @@ nat_t *nat;
 	KMALLOC(aps, ap_session_t *);
 	if (!aps) {
 		if (ipf_proxy_debug > 0)
-			printf("appr_new: malloc failed (%u)\n",
-				sizeof(ap_session_t));
+			printf("appr_new: malloc failed (%lu)\n",
+				(u_long)sizeof(ap_session_t));
 		return -1;
 	}
 
