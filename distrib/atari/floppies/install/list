@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2003/01/19 12:26:47 tsutsui Exp $
+#	$NetBSD: list,v 1.6 2003/07/11 11:54:10 he Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -57,10 +57,20 @@ COPY	${NETBSDSRCDIR}/etc/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/etc/services	etc/services
 
 # we need the boot block code in /usr/mdec
-COPY	${DESTDIR}/usr/mdec/fdboot	usr/mdec/fdboot
-COPY	${DESTDIR}/usr/mdec/sdb00t.ahdi	usr/mdec/sdb00t.ahdi
-COPY	${DESTDIR}/usr/mdec/wdb00t.ahdi	usr/mdec/wdb00t.ahdi
-COPY	${DESTDIR}/usr/mdec/xxboot.ahdi	usr/mdec/xxboot.ahdi
-COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
-COPY	${DESTDIR}/usr/mdec/wdboot	usr/mdec/wdboot
-COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+MTREE	./usr/mdec/std		type=dir uname=root gname=wheel mode=0755
+MTREE	./usr/mdec/milan	type=dir uname=root gname=wheel mode=0755
+
+COPY	${DESTDIR}/usr/mdec/std/bootxx		usr/mdec/std/bootxx
+COPY	${DESTDIR}/usr/mdec/std/boot.atari	usr/mdec/std/boot.atari	
+COPY	${DESTDIR}/usr/mdec/std/fdboot		usr/mdec/std/fdboot		
+COPY	${DESTDIR}/usr/mdec/std/sdboot		usr/mdec/std/sdboot		
+COPY	${DESTDIR}/usr/mdec/std/wdboot		usr/mdec/std/wdboot		
+COPY	${DESTDIR}/usr/mdec/std/sdb00t.ahdi	usr/mdec/std/sdb00t.ahdi	
+COPY	${DESTDIR}/usr/mdec/std/wdb00t.ahdi	usr/mdec/std/wdb00t.ahdi	
+COPY	${DESTDIR}/usr/mdec/std/xxboot.ahdi	usr/mdec/std/xxboot.ahdi	
+COPY	${DESTDIR}/usr/mdec/milan/bootxx	usr/mdec/milan/bootxx		
+COPY	${DESTDIR}/usr/mdec/milan/boot.atari	usr/mdec/milan/boot.atari	
+COPY	${DESTDIR}/usr/mdec/milan/fdboot	usr/mdec/milan/fdboot		
+COPY	${DESTDIR}/usr/mdec/milan/sdboot	usr/mdec/milan/sdboot		
+COPY	${DESTDIR}/usr/mdec/milan/sdb00t.ahdi	usr/mdec/milan/sdb00t.ahdi	
+COPY	${DESTDIR}/usr/mdec/milan/xxboot.ahdi	usr/mdec/milan/xxboot.ahdi	
