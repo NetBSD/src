@@ -1,3 +1,4 @@
+.\" $NetBSD: isdnd.rc.5,v 1.2 2001/04/09 13:41:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.1.1.1 2001/01/06 13:00:18 martin Exp $ 
+.\"	$Id: isdnd.rc.5,v 1.2 2001/04/09 13:41:16 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -38,7 +39,7 @@
 The file
 .Pa /etc/isdn/isdnd.rc
 contains (if not otherwise specified on the command line) the runtime
-configuration for the 
+configuration for the
 .Xr isdnd 8
 ISDN connection management daemon which is part of the isdn4bsd package.
 .Pp
@@ -67,7 +68,7 @@ sections and one or more
 sections.
 In the
 .Em system
-section parameters regarding the daemon operation or parameters 
+section parameters regarding the daemon operation or parameters
 not associated with a single remote connection can be set.
 In the
 .Em controller
@@ -83,7 +84,7 @@ The following keywords are recognized by
 .Bl -tag -width system -compact
 
 .It Li system
-This keyword starts the system configuration section. It must not 
+This keyword starts the system configuration section. It must not
 have a parameter and may be used only once. The keyword is mandatory.
 The following keywords are valid in the system configuration section:
 .Bl -tag -width useacctfile -compact
@@ -97,7 +98,7 @@ or no charging information is available or is not subscribed. (optional)
 .It Li acctfile
 Specifies the name of the accounting file which is used when the keyword
 .Em useacctfile
-(see below) is set to 
+(see below) is set to
 .Em on .
 See also system keyword
 .Em rotatesuffix .
@@ -112,8 +113,8 @@ keyword below). The default is off. (optional)
 
 .It Li aliasfile
 Specifies the name of the telephone number-to-name alias database file shared
-with the 
-.Xr isdntel 1
+with the
+.Xr isdntel 8
 utility when alias processing is enabled via the
 .Em aliasing
 keyword. (optional)
@@ -144,7 +145,7 @@ log-file. The default is off. (optional)
 
 .It Li mailer
 This keyword is used to specify the path/name of a mail program which
-which is able to use the "-s" flag to specify a subject on its 
+which is able to use the "-s" flag to specify a subject on its
 command line. In case of a fatal error exit of
 .Nm
 this program is used to send mail to an administrator specified by
@@ -157,14 +158,13 @@ This keyword is used to specify the email address of someone to notify
 in case of a fatal error exit of
 .Nm .
 (See also keyword
-.Em mailer
-).
+.Em mailer ) .
 (optional)
 
 .It Li monitor-allowed
 If this parameter is set to
-.Em on 
-or 
+.Em on
+or
 .Em yes ,
 monitoring via a local or remote machine is enabled.
 This parameter is optional and is set to
@@ -177,8 +177,8 @@ This integer parameter is optional and is set to port 451 by default.
 
 .It Li monitor
 This keyword specifies a local socket name or a host or network for remote
-monitoring. The 
-.Em monitor 
+monitoring. The
+.Em monitor
 specification may either be:
 .Pp
 .Bl -tag -width Ds -compact
@@ -195,7 +195,7 @@ example: up-vision-net/24
 .El
 
 .It Li monitor-access
-This keyword specifies the access rights for a previously used 
+This keyword specifies the access rights for a previously used
 .Em monitor
 keyword. The supported access rights are:
 .Pp
@@ -253,20 +253,20 @@ renamed to the former filename with the rotatesuffix string appended.
 If this keyword is omitted, the log-files are just closed and reopened; this
 is also the default behavior. (optional)
 
-.It Li rtprio
-Specifies the real-time priority 
-.Nm isdnd
-runs at as an integer value in the range 0...31 with 0 being the highest
-priority. This keyword is optional; if not specified the process priority of 
-.Nm isdnd
-is not touched in any way.
-( See also
-.Xr rtprio 1 
-).
-This keyword is only available if
-.Nm
-was compiled with -DUSE_RTPRIO.
-
+.\" .It Li rtprio
+.\" Specifies the real-time priority
+.\" .Nm isdnd
+.\" runs at as an integer value in the range 0...31 with 0 being the highest
+.\" priority. This keyword is optional; if not specified the process priority of
+.\" .Nm isdnd
+.\" is not touched in any way.
+.\" ( See also
+.\" .Xr rtprio 1
+.\" ).
+.\" This keyword is only available if.
+.\" Nm
+.\" was compiled with -DUSE_RTPRIO.
+.\"
 .It Li useacctfile
 If this parameter is set to
 .Em on
@@ -276,14 +276,14 @@ accounting file. (optional)
 .El
 
 .It Li controller
-This keyword starts the controller configuration section. It must not 
+This keyword starts the controller configuration section. It must not
 have a parameter and may be used once for every controller. The keyword
-is optional. The following keywords are valid in a controller 
+is optional. The following keywords are valid in a controller
 configuration section:
 .Bl -tag -width useacctfile -compact
 
 .It Li protocol
-This keyword is used to set the D-channel protocol for the S0-bus a 
+This keyword is used to set the D-channel protocol for the S0-bus a
 controller is connected to. The following parameters are currently
 supported:
 .Pp
@@ -335,14 +335,15 @@ No framing at all (used for telephony).
 
 .It Li budget-calloutperiod
 is used to specify a time period in seconds. Within this period, the number of calls
-specified by 
+specified by
 .Em budget-calloutncalls
 are allowed to succeed, any further attempt to call out will be blocked for the rest
 of the time left in the time period. (optional)
 
 .It Li budget-calloutncalls
 The number of outgoing calls allowed within the time period specified by
-.Em budget-calloutperiod. (optional)
+.Em budget-calloutperiod .
+(optional)
 
 .It Li budget-calloutsfile
 A path/filename to which the number of successfull callouts are written.
@@ -363,7 +364,7 @@ and the new day's (!) day of month number is appended. (optional)
 .It Li budget-callbacksfile
 .It Li budget-calloutsfile-rotate
 See
-.Em budget-calloutperiod, 
+.Em budget-calloutperiod ,
 .Em budget-calloutncalls and
 .Em budget-calloutsfile
 .Em budget-calloutsfile-rotate
@@ -385,11 +386,11 @@ expects to find the program below the path
 .Pa /etc/isdn
 which is prepended to the string specified as a parameter to this keyword.
 The programs specified by connect and disconnect will get the following
-command line arguments: -d (device) -f (flag) [ -a (addr) ] where 
+command line arguments: -d (device) -f (flag) [ -a (addr) ] where
 .Em device
-is the name of device, e.g. "isp0", 
+is the name of device, e.g. "isp0",
 .Em flag
-will be "up" if connection just got up, or "down" if interface changed to down 
+will be "up" if connection just got up, or "down" if interface changed to down
 state and
 .Em addr
 the address that got assigned to the interface as a dotted-quad ip address
@@ -475,8 +476,8 @@ seconds).
 further up). This keyword is optional.
 
 .It Li downtime
-is used to configure the time in seconds an interface is disabled 
-after the configured number of 
+is used to configure the time in seconds an interface is disabled
+after the configured number of
 .Em downtries .
 (see also the keyword
 .Em usedown
@@ -520,7 +521,7 @@ In case a channel is explicitly selected here, the SETUP message will request
 this channel but mark the request as
 .Em preferred
 (the indicated channel is preferred) instead of exclusive (only the indicated
-channel is acceptable). Thus the exchange is still free to select another 
+channel is acceptable). Thus the exchange is still free to select another
 than the requested channel!
 (mandatory)
 
@@ -528,10 +529,10 @@ than the requested channel!
 A delay value suitable for the
 .Em timeout()
 kernel subroutine to delay the transmission of the first packet after a
-successful connection is made by this value for 
+successful connection is made by this value for
 .Em incoming
 ISDN connections. The specification unit is 1/100 second. A zero (0) disables
-this feature and is the default value. This feature is implemented (and makes 
+this feature and is the default value. This feature is implemented (and makes
 sense only) for the
 .Xr i4bipr 4
 IP over raw HDLC ISDN driver. (optional)
@@ -540,9 +541,9 @@ IP over raw HDLC ISDN driver. (optional)
 A delay value suitable for the
 .Em timeout()
 kernel subroutine to delay the transmission of the first packet after a
-successful connection is made by this value for 
+successful connection is made by this value for
 .Em outgoing
-ISDN connections. The specification unit is 1/100 second. A zero (0) disables   
+ISDN connections. The specification unit is 1/100 second. A zero (0) disables
 this feature and is the default value. This feature is implemented (and makes
 sense only) for the
 .Xr i4bipr 4
@@ -553,13 +554,13 @@ The local telephone number used when the local site dials out. When dialing
 out to a remote site, the number specified here is put into the
 .Em "Calling Party Number Information Element" .
 .Pp
-This keyword is mandatory for the 
-.Em ipr 
+This keyword is mandatory for the
+.Em ipr
 user-land interfaces.
 
 .It Li local-phone-incoming
 The local telephone number used for verifying the destination of incoming
-calls. When a remote site dials in, this number is used to verify that it 
+calls. When a remote site dials in, this number is used to verify that it
 is the local site which the remote site wants to connect to. It is compared
 with the
 .Em "Called Party Number Information Element"
@@ -577,10 +578,10 @@ to a remote site and for accounting purposes. (mandatory)
 .It Li ppp-auth-paranoid
 If set to
 .Em no ,
-the remote site is not required to prove its authentity for connections 
+the remote site is not required to prove its authentity for connections
 that are initiated by the local site.
-The default is 
-.Em yes 
+The default is
+.Em yes
 and requires the remote site to always authenticate.
 .Pp
 This keyword is only used if
@@ -594,7 +595,7 @@ PPP interface.
 Set to
 .Em no ,
 if the other side does not support re-challenging for chap.
-The default is 
+The default is
 .Em yes ,
 which causes verification of the remote site's authentity once in a while.
 .Pp
@@ -607,33 +608,33 @@ PPP interface.
 
 .It Li ppp-expect-auth
 The local site expects the authentity of the remote site to be proved by
-the specified method. 
+the specified method.
 The supported methods are:
 .Pp
 .Bl -tag -width Ds -compact
 .It Ar none
-Do not require the other side to authenticate. Typical uses are dial-out to an ISP 
+Do not require the other side to authenticate. Typical uses are dial-out to an ISP
 (many ISPs do not authenticate themselves to clients)
 or offering anonymous dial-in at the local site.
 .It Ar chap
-The preferred authentication method, which does not require a password to be sent 
+The preferred authentication method, which does not require a password to be sent
 in the clear.
 .It Ar pap
-The unprotected authentication method, which allows anybody watching the wire 
+The unprotected authentication method, which allows anybody watching the wire
 to grab name and password.
 .El
 .Pp
-If 
+If
 .Em ppp-auth-paranoid
-is set to 
-.Em no 
-(the default is 
+is set to
+.Em no
+(the default is
 .Em yes )
 outgoing connections will not require the remote site to authenticate itself.
 .Pp
 This keyword is only used for the
 .Em isp
-PPP interfaces. 
+PPP interfaces.
 (optional)
 
 .It Li ppp-expect-name
@@ -664,16 +665,16 @@ The currently supported parameters are:
 .It Ar none
 The remote site does not expect or support authentication.
 .It Ar chap
-The preferred authentication method, which does not require a password to be sent 
+The preferred authentication method, which does not require a password to be sent
 in the clear.
 .It Ar pap
-The unprotected authentication method, which allows anybody watching the wire 
+The unprotected authentication method, which allows anybody watching the wire
 to grab name and password.
 .El
 .Pp
 This keyword is only used for the
 .Em isp
-PPP interfaces. 
+PPP interfaces.
 (optional)
 
 .It Li ppp-send-name
@@ -707,7 +708,7 @@ days of the week & times per day).
 The time in seconds to wait between dial retries. (optional)
 
 .It Li remdial-handling
-is used to specify the dialout behavior in case more than one outgoing 
+is used to specify the dialout behavior in case more than one outgoing
 number is specified.
 The currently supported parameters are:
 .Pp
@@ -736,7 +737,7 @@ numbers until one succeeds.
 The remote telephone number used to verify an incoming call. When a remote site
 dials in, this number is used to verify that it is the correct remote site
 which is herewith authorized to connect into the local system. This parameter
-is compared against the 
+is compared against the
 .Em "Calling Party Number Information Element"
 got from the telephone exchange.
 .Pp
@@ -755,7 +756,7 @@ takes the unitlength for short-hold mode. The currently configurable values are:
 .Pp
 .Bl -tag -width Ds -compact
 .It Ar none
-Then unitlength is not specified anywhere. 
+Then unitlength is not specified anywhere.
 .It Ar cmdl
 Use the unitlength specified on the command line.
 .It Ar conf
@@ -808,7 +809,7 @@ This parameter is optional and is set to
 by default.
 
 .It Li valid
-.Em Note:
+.Em Note :
 this feature is considered experimental!
 The parameter to this keyword is a string specifying a time range within
 which this entry is valid.
@@ -817,7 +818,7 @@ indicator ( see also the
 .Em holidayfile
 keyword in the system section ) separated by commas followed by an optional
 daytime range specification in the form hh:mm-hh:mm.
-The weekdays are specified as numbers from 0 to 6 and the number 7 for 
+The weekdays are specified as numbers from 0 to 6 and the number 7 for
 holidays:
 .Pp
 .Bl -tag -width Ds -compact
@@ -855,7 +856,6 @@ The use of this keyword is optional.
 
 .El
 .El
-
 .Sh IDLETIME CALCULATION AND SHORT-HOLD MODE
 .Bl -tag -width incoming calls -compact
 .It Li incoming calls
@@ -879,7 +879,7 @@ Outgoing call disconnect time can be setup in one of three ways:
 
 .Bl -tag -width shorthold mode -compact
 .It Li simple mode
-For simple mode, the 
+For simple mode, the
 .Em idle-algorithm-outgoing
 must be
 .Em fix-unit-size
@@ -887,7 +887,7 @@ and the selected
 .Em unitlength
 must be 0 (zero) and
 .Em idletime-outgoing
-greater zero. 
+greater zero.
 .Pp
 The outgoing traffic is constantly monitored, and in case there was
 not traffic taking place for the time in seconds specified by
@@ -897,16 +897,17 @@ the call is closed.
 Typical values in simple mode are 10 to 30 seconds.
 
 .It Li shorthold mode for fixed unit charging
-For shorthold mode, the 
+For shorthold mode, the
 .Em idle-algorithm-outgoing
  must be
 .Em fix-unit-size
  and the selected
-.Em unitlength 
-and 
+.Em unitlength
+and
 .Em idletime-outgoing
 must be greater than 0 (zero);
-.Em earlyhangup must be >= 0 (zero).
+.Em earlyhangup
+must be >= 0 (zero).
 
 .Bd -literal
 
@@ -926,7 +927,7 @@ there was traffic detected in the check-window, the same procedure is restarted
 at the beginning of the next unit. In case no traffic was detected during
 the check-window, the line is closed at the end of the check window.
 .Pp
-Notice: 
+Notice:
 .Em unitlength
 must (!) be greater than the sum of
 .Em idletime-outgoing
@@ -934,12 +935,12 @@ and
 .Em earlyhangup !
 
 .It Li shorthold mode for variable unit charging
-For shorthold mode, the 
+For shorthold mode, the
 .Em idle-algorithm-outgoing
 must be
 .Em var-unit-size
 and the selected
-.Em unitlength 
+.Em unitlength
 and
 .Em idletime-outgoing
 must be greater than 0 (zero);
@@ -981,9 +982,6 @@ network will cause a new call to be placed.
 .Pp
 .El
 .El
-
-.Pp
-
 .Sh FILES
 .Bl -tag -width /etc/isdn/isdnd.rc -compact
 .It Pa /etc/isdn/isdnd.rc
@@ -991,18 +989,16 @@ The default configuration file for the
 .Nm isdnd
 ISDN daemon.
 .El
-
 .Sh SEE ALSO
+.Xr regex 3 ,
+.Xr re_format 7 ,
+.Xr isdnd 8 ,
+.Xr isdnmonitor 8 ,
+.Sh AUTHORS
+The
 .Xr isdnd 8
-.Xr isdnmonitor 8
-.Xr regex 3
-.Xr re_format 7
-
-.Sh AUTHOR
-The 
-.Xr isdnd 8
-daemon and this manual page were written by 
+daemon and this manual page were written by
 .An Hellmuth Michaelis Aq hm@kts.org .
 .Pp
-Additions to this manual page by 
+Additions to this manual page by
 .An Barry Scott Aq barry@scottb.demon.co.uk .
