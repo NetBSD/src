@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 1997/08/04 20:09:54 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.94 1997/08/05 11:06:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5762,7 +5762,7 @@ pmap_extract4m(pm, va)
  * This routine is only advisory and need not do anything.
  */
 /* ARGSUSED */
-int donotdoit=0;
+int pmap_copy_disabled=0;
 void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	struct pmap *dst_pmap, *src_pmap;
@@ -5770,11 +5770,12 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vm_size_t len;
 	vm_offset_t src_addr;
 {
-#if 1
+#if notyet
 	struct regmap *rm;
 	struct segmap *sm;
 
-	if (donotdoit) return;
+	if (pmap_copy_disabled)
+		return;
 #ifdef DIAGNOSTIC
 	if (VA_OFF(src_addr) != 0)
 		printf("pmap_copy: addr not page aligned: 0x%lx\n", src_addr);
