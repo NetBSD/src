@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.4 1999/10/27 09:29:18 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.5 1999/10/27 14:01:04 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -234,7 +234,7 @@ cardbus_attach_card(sc)
   
   bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
   if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-    bhlc &= (CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+    bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
     bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
     cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
   }
