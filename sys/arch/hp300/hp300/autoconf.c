@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1996/10/11 00:11:41 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1996/10/13 03:14:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -140,11 +140,11 @@ configure()
 		if (!found) {
 			int sc = patosc(hw->hw_pa);
 
-			kprintf("unconfigured card id %x ", hw->hw_id);
+			printf("unconfigured card id %x ", hw->hw_id);
 			if (sc < 256)
-				kprintf("at sc%d\n", sc);
+				printf("at sc%d\n", sc);
 			else
-				kprintf("csr at %x\n", sc);
+				printf("csr at %x\n", sc);
 		}
 	}
 
@@ -178,7 +178,7 @@ find_controller(hw)
 
 #ifdef DEBUG
 	if (acdebug)
-		kprintf("find_controller: hw: id%x at sc%d (%x), type %x...",
+		printf("find_controller: hw: id%x at sc%d (%x), type %x...",
 		       hw->hw_id, hw->hw_sc, hw->hw_kva, hw->hw_type);
 #endif
 	sc = hw->hw_sc;
@@ -209,11 +209,11 @@ find_controller(hw)
 #ifdef DEBUG
 	if (acdebug) {
 		if (match_c)
-			kprintf("found %s%d\n",
+			printf("found %s%d\n",
 			       match_c->hp_driver->d_name,
 			       match_c->hp_unit);
 		else
-			kprintf("not found\n");
+			printf("not found\n");
 	}
 #endif
 	/*
@@ -235,19 +235,19 @@ find_controller(hw)
 
 		/* Set up external name. */
 		bzero(hc->hp_xname, sizeof(hc->hp_xname));
-		ksprintf(hc->hp_xname, "%s%d", hc->hp_driver->d_name,
+		sprintf(hc->hp_xname, "%s%d", hc->hp_driver->d_name,
 		    hc->hp_unit);
 
 		/* Print what we've found. */
-		kprintf("%s at ", hc->hp_xname);
+		printf("%s at ", hc->hp_xname);
 		sc = patosc(hw->hw_pa);
 		if (sc < 256)
-			kprintf("scode%d", sc);
+			printf("scode%d", sc);
 		else
-			kprintf("addr 0x%x,", sc);
-		kprintf(" ipl %d", hc->hp_ipl);
+			printf("addr 0x%x,", sc);
+		printf(" ipl %d", hc->hp_ipl);
 		if (hc->hp_flags)
-			kprintf(" flags 0x%x", hc->hp_flags);
+			printf(" flags 0x%x", hc->hp_flags);
 
 		/*
 		 * Call device "attach" routine.  It will print the
@@ -270,7 +270,7 @@ find_device(hw)
 
 #ifdef DEBUG
 	if (acdebug)
-		kprintf("find_device: hw: id%x at sc%d (%x), type %x...",
+		printf("find_device: hw: id%x at sc%d (%x), type %x...",
 		       hw->hw_id, hw->hw_sc, hw->hw_kva, hw->hw_type);
 #endif
 	match_d = NULL;
@@ -312,11 +312,11 @@ find_device(hw)
 #ifdef DEBUG
 	if (acdebug) {
 		if (match_d)
-			kprintf("found %s%d\n",
+			printf("found %s%d\n",
 			       match_d->hp_driver->d_name,
 			       match_d->hp_unit);
 		else
-			kprintf("not found\n");
+			printf("not found\n");
 	}
 #endif
 	/*
@@ -338,20 +338,20 @@ find_device(hw)
 
 		/* Set up external name. */
 		bzero(hd->hp_xname, sizeof(hd->hp_xname));
-		ksprintf(hd->hp_xname, "%s%d", hd->hp_driver->d_name,
+		sprintf(hd->hp_xname, "%s%d", hd->hp_driver->d_name,
 		    hd->hp_unit);
 
 		/* Print what we've found. */
-		kprintf("%s at ", hd->hp_xname);
+		printf("%s at ", hd->hp_xname);
 		sc = patosc(hw->hw_pa);
 		if (sc < 256)
-			kprintf("scode%d", sc);
+			printf("scode%d", sc);
 		else
-			kprintf("addr 0x%x", sc);
+			printf("addr 0x%x", sc);
 		if (hd->hp_ipl)
-			kprintf(" ipl %d", hd->hp_ipl);
+			printf(" ipl %d", hd->hp_ipl);
 		if (hd->hp_flags)
-			kprintf(" flags 0x%x", hd->hp_flags);
+			printf(" flags 0x%x", hd->hp_flags);
 
 		/*
 		 * Call device "attach" routine.  It will print the
@@ -410,7 +410,7 @@ find_busslaves(hc, startslave, endslave)
 #define LASTSLAVE(s) (startslave < endslave ? (s)-- : (s)++)
 #ifdef DEBUG
 	if (acdebug)
-		kprintf("find_busslaves: for %s\n", hc->hp_xname);
+		printf("find_busslaves: for %s\n", hc->hp_xname);
 #endif
 	NEXTSLAVE(endslave);
 	for (s = startslave; s != endslave; NEXTSLAVE(s)) {
@@ -497,7 +497,7 @@ find_busslaves(hc, startslave, endslave)
 				hd->hp_slave = new_s;
 #ifdef DEBUG
 			if (acdebug)
-				kprintf("looking for %s%d at slave %d...",
+				printf("looking for %s%d at slave %d...",
 				       hd->hp_driver->d_name,
 				       hd->hp_unit, hd->hp_slave);
 #endif
@@ -505,20 +505,20 @@ find_busslaves(hc, startslave, endslave)
 			if ((*hd->hp_driver->d_match)(hd)) {
 #ifdef DEBUG
 				if (acdebug)
-					kprintf("found\n");
+					printf("found\n");
 #endif
 				/* Set up external name. */
 				bzero(hd->hp_xname, sizeof(hd->hp_xname));
-				ksprintf(hd->hp_xname, "%s%d",
+				sprintf(hd->hp_xname, "%s%d",
 				    hd->hp_driver->d_name,
 				    hd->hp_unit);
 
 				/* Print what we've found. */
-				kprintf("%s at %s slave %d",
+				printf("%s at %s slave %d",
 				       hd->hp_xname, hc->hp_xname,
 				       hd->hp_slave);
 				if (hd->hp_flags)
-					kprintf(" flags 0x%x", hd->hp_flags);
+					printf(" flags 0x%x", hd->hp_flags);
 				hd->hp_alive = 1;
 				rescan = 1;
 
@@ -530,7 +530,7 @@ find_busslaves(hc, startslave, endslave)
 			} else {
 #ifdef DEBUG
 				if (acdebug)
-					kprintf("not found\n");
+					printf("not found\n");
 #endif
 				hd->hp_ctlr = old_c;
 				hd->hp_slave = old_s;
@@ -811,7 +811,7 @@ find_devs()
 			hw->hw_pa = sctopa(sc);
 			addr = iomap(hw->hw_pa, NBPG);
 			if (addr == 0) {
-				kprintf(notmappedmsg);
+				printf(notmappedmsg);
 				continue;
 			}
 			didmap = 1;
@@ -1005,7 +1005,7 @@ find_devs()
 			iounmap(addr, NBPG);
 			addr = iomap(hw->hw_pa, hw->hw_size);
 			if (addr == 0) {
-				kprintf(notmappedmsg);
+				printf(notmappedmsg);
 				continue;
 			}
 			hw->hw_kva = addr;
@@ -1159,7 +1159,7 @@ setroot()
 	 * rethought if you ever wanted to boot from other than unit 0.
 	 */
 	if (unit != 0)
-		kprintf("WARNING: using device at unit 0 of controller\n");
+		printf("WARNING: using device at unit 0 of controller\n");
 
 	mindev = hd->hp_unit;
 	/*
@@ -1175,7 +1175,7 @@ setroot()
 	if (rootdev == orootdev)
 		return;
 
-	kprintf("Changing root device to %c%c%d%c\n",
+	printf("Changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		mindev >> PARTITIONSHIFT, part + 'a');
 
