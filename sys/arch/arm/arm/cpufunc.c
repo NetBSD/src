@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.18 2001/04/16 18:09:56 chris Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.1 2001/05/06 18:01:43 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -378,7 +378,8 @@ set_cpufuncs()
 	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
-	if (cputype == CPU_ID_SA110) {
+	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
+	    cputype == CPU_ID_SA1110) {
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		return 0;
