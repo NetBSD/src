@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.6 1998/01/03 01:13:11 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.6.4.1 1998/01/27 02:12:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,26 +36,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SUN3X_PMAP_H
-#define	_SUN3X_PMAP_H
-
 /*
  * Physical map structures exported to the VM code.
+ * XXX - Does user-level code really see this struct?
  */
 
 struct pmap {
 	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */
 	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
-	int                 	pm_refcount;	/* reference count */
-	simple_lock_data_t  	pm_lock;    	/* lock on pmap */
+	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	int             	pm_refcount;	/* reference count */
+	int             	pm_version;
 };
 
-typedef struct pmap 	*pmap_t;
+typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
 extern	struct pmap 	kernel_pmap;
 #define	pmap_kernel()	(&kernel_pmap)
 
+/*
+ * The sun3 wants faults to go through the pmap code, but
+ * the sun3x just goes directly to the common VM code.
+ */
 #define _pmap_fault(map, va, ftype) \
 	vm_fault(map, va, ftype, 0)
 
@@ -82,4 +85,3 @@ segsz_t pmap_count __P((pmap_t, int));
 #define	PMAP_SPEC	0xFF	/* mask to get all above. */
 
 #endif	/* _KERNEL */
-#endif	/* _SUN3X_PMAP_H */
