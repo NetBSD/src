@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.6 2000/08/30 14:58:33 itojun Exp $	*/
-/*	$KAME: esp_core.c,v 1.36 2000/08/30 14:56:10 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.7 2000/08/31 07:33:05 itojun Exp $	*/
+/*	$KAME: esp_core.c,v 1.37 2000/08/31 07:27:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -264,7 +264,7 @@ esp_descbc_mature(sav)
 	}
 
 	/* weak key check */
-	if (des_is_weak_key((C_Block *)_KEYBUF(sav->key_enc))) {
+	if (des_is_weak_key((des_cblock *)_KEYBUF(sav->key_enc))) {
 		ipseclog((LOG_ERR,
 		    "esp_descbc_mature: weak key was passed.\n"));
 		return 1;
@@ -294,7 +294,7 @@ esp_des_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	if (des_key_sched((C_Block *)_KEYBUF(sav->key_enc),
+	if (des_key_sched((des_cblock *)_KEYBUF(sav->key_enc),
 	    *(des_key_schedule *)sav->sched))
 		return EINVAL;
 	else
@@ -371,9 +371,9 @@ esp_cbc_mature(sav)
 	switch (sav->alg_enc) {
 	case SADB_EALG_3DESCBC:
 		/* weak key check */
-		if (des_is_weak_key((C_Block *)_KEYBUF(sav->key_enc))
-		 || des_is_weak_key((C_Block *)(_KEYBUF(sav->key_enc) + 8))
-		 || des_is_weak_key((C_Block *)(_KEYBUF(sav->key_enc) + 16))) {
+		if (des_is_weak_key((des_cblock *)_KEYBUF(sav->key_enc)) ||
+		    des_is_weak_key((des_cblock *)(_KEYBUF(sav->key_enc) + 8)) ||
+		    des_is_weak_key((des_cblock *)(_KEYBUF(sav->key_enc) + 16))) {
 			ipseclog((LOG_ERR,
 			    "esp_cbc_mature %s: weak key was passed.\n",
 			    algo->name));
@@ -480,7 +480,7 @@ esp_3des_schedule(algo, sav)
 	p = (des_key_schedule *)sav->sched;
 	k = _KEYBUF(sav->key_enc);
 	for (i = 0; i < 3; i++) {
-		error = des_key_sched((C_Block *)(k + 8 * i), p[i]);
+		error = des_key_sched((des_cblock *)(k + 8 * i), p[i]);
 		if (error)
 			return EINVAL;
 	}

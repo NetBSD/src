@@ -1,5 +1,5 @@
-/*	$NetBSD: des_3cbc.c,v 1.1.1.1 2000/06/14 19:45:35 thorpej Exp $	*/
-/*	$KAME: des_3cbc.c,v 1.4 2000/06/14 10:41:17 itojun Exp $	*/
+/*	$NetBSD: des_3cbc.c,v 1.2 2000/08/31 07:33:04 itojun Exp $	*/
+/*	$KAME: des_3cbc.c,v 1.5 2000/08/31 07:27:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,6 +32,11 @@
 /*
  * based on sys/crypto/des/des_cbc.c, rewrote by Tomomi Suzuki
  */
+
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <crypto/des/des_locl.h>
 
 #define panic(x)	do { printf(x); return EINVAL; } while (0)
