@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.13 1993/10/29 20:38:46 mycroft Exp $
+#	$Id: TEST,v 1.14 1993/11/03 12:48:31 mycroft Exp $
 #
 
 # standard options
@@ -27,7 +27,7 @@ options		LKM			# loadable kernel modules
 # compatibility options
 options		"COMPAT_NOMID"		# old zmagic executables
 options		"COMPAT_43"		# 4.3 system calls
-options		"TCP_COMPAT_42"		# 4.2 networking ABI
+options		"TCP_COMPAT_42"		# 4.2 TCP bugs
 
 # file system options
 options		QUOTA			# file system quotas
@@ -124,5 +124,5 @@ pseudo-device	loop 1				# loopback network
 pseudo-device	bpfilter 4			# packet filter
 pseudo-device	sl 1				# compressed SLIP
 pseudo-device	ppp 1				# Point-to-Point Protocol
-#pseudo-device	tb 2				# was never ported to 4.4
+pseudo-device	tb 2				# tablet line discipline
 #pseudo-device	tun				# missing header files
