@@ -1,10 +1,9 @@
-#	$NetBSD: protocols,v 1.12 2003/09/08 21:02:55 itojun Exp $
+#	$NetBSD: protocols,v 1.13 2004/06/10 10:06:51 kleink Exp $
 #
 # Internet (IP) protocols
 #
 #	originally from: @(#)protocols	8.1 (Berkeley) 6/9/93
-#	see http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
-#	likely to move to http://www.iana.org/ one of these days
+#	see http://www.iana.org/assignments/protocol-numbers
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
