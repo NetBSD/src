@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.10 2001/10/25 23:56:02 augustss Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.11 2001/11/11 23:21:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,7 +108,9 @@ umass_attach_bus(struct umass_softc *sc)
 	sc->bus.sc_adapter.adapt_minphys = umass_scsipi_minphys;
 	sc->bus.sc_adapter.adapt_ioctl = umass_scsipi_ioctl;
 	sc->bus.sc_adapter.adapt_getgeom = umass_scsipi_getgeom;
+#if NATAPIBUS > 0
 	sc->bus.sc_atapi_adapter.atapi_probe_device =  umass_atapi_probe_device;
+#endif
 
 	/* fill in the channel */
 	memset(&sc->bus.sc_channel, 0, sizeof(sc->bus.sc_channel));
