@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.30 2002/02/06 14:17:51 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.31 2002/02/09 18:07:19 he Exp $	*/
 
 
 /*
@@ -3231,7 +3231,8 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & IDEDMA_CTL_INTR) == 0)
+		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
+		    IDEDMA_CTL_INTR)
 			continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;
