@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1996/11/07 07:33:55 matthias Exp $
+#	$NetBSD: Makefile,v 1.10 1997/02/08 09:34:46 matthias Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -92,7 +92,7 @@ FRC:
 
 # clean ...
 
-clean::
+clean:
 	rm -f ${ALL} ${.OBJDIR}/libdrive.a ${OBJS} boot.o srt0.o inflate.o
 
 cleandir: clean
