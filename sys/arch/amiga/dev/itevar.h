@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17 2005/01/19 02:08:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -109,6 +109,7 @@ enum ite_flags {
 	ITE_ISOPEN = 0x8,		/* ite has been opened */
 	ITE_INGRF  = 0x10,		/* ite is in graphics mode */
 	ITE_ACTIVE = 0x20,		/* ite is an active terminal */
+	ITE_ATTACHED = 0x40,		/* ite is attached */
 };
 
 enum ite_replrules {
@@ -200,7 +201,7 @@ void	iteinit(dev_t);
 void	itestart(struct tty *);
 
 /* ite functions */
-int	ite_on(dev_t, int);
+void	ite_on(dev_t, int);
 void	ite_off(dev_t, int);
 void	ite_reinit(dev_t);
 int	ite_param(struct tty *, struct termios *);
