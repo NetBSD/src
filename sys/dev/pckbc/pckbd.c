@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.33 2002/10/02 16:52:03 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.34 2003/02/05 17:36:16 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.33 2002/10/02 16:52:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.34 2003/02/05 17:36:16 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ struct pckbd_internal {
 	pckbc_slot_t t_kbcslot;
 
 	int t_lastchar;
-	int t_extended;
+	int t_extended0;
 	int t_extended1;
 
 	struct pckbd_softc *t_sc; /* back pointer */
@@ -425,7 +425,7 @@ pckbd_decode(id, datain, type, dataout)
 	int key;
 
 	if (datain == KBR_EXTENDED0) {
-		id->t_extended = 1;
+		id->t_extended0 = 1;
 		return(0);
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
@@ -433,11 +433,11 @@ pckbd_decode(id, datain, type, dataout)
 	}
 
  	/* map extended keys to (unused) codes 128-254 */
-	key = (datain & 0x7f) | (id->t_extended ? 0x80 : 0);
-	id->t_extended = 0;
+	key = (datain & 0x7f) | (id->t_extended0 ? 0x80 : 0);
+	id->t_extended0 = 0;
 
 	/*
-	 * process BREAK key (EXT1 1D 45  EXT1 9D C5):
+	 * process PAUSE (also break) key (EXT1 1D 45  EXT1 9D C5):
 	 * map to (unused) code 7F
 	 */
 	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
