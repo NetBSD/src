@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/23 08:45:02 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/27 15:27:01 soren Exp $
 
 .include <bsd.own.mk>
 
@@ -31,7 +31,7 @@ DPADD=	${LIBXF86_OS} ${LIBSCANPCI} ${LIBDUMMY}
 CPPFLAGS+=	-DUSE_I386_IOPL
 .if ${MACHINE_ARCH} != "x86_64"
 LDADD+=		-li386
-DPADD+=		${LIBI385}
+DPADD+=		${LIBI386}
 .else
 LDADD+=		-lx86_64
 DPADD+=		${LIBX86_64}
