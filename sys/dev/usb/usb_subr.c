@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.9 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.10 1998/12/02 17:20:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,8 +202,7 @@ usbd_devinfo(dev, showclass, cp)
 	int bcdDevice, bcdUSB;
 
 	usbd_devinfo_vp(dev, vendor, product);
-	cp += sprintf(cp, "%s", vendor);
-	cp += sprintf(cp, " %s", product);
+	cp += sprintf(cp, "addr %d, %s %s", dev->address, vendor, product);
 	if (showclass)
 		cp += sprintf(cp, " (class %d/%d)",
 			      udd->bDeviceClass, udd->bDeviceSubClass);
@@ -214,7 +213,7 @@ usbd_devinfo(dev, showclass, cp)
 	*cp++ = '/';
 	cp += usbd_printBCD(cp, bcdDevice);
 	*cp++ = ')';
-	cp += sprintf(cp, " (addr %d)", dev->address);
+	*cp = 0;
 }
 
 /* Delay for a certain number of ms */
@@ -734,10 +733,10 @@ usbd_print(aux, pnp)
 		if (!uaa->usegeneric)
 			return (QUIET);
 		usbd_devinfo(uaa->device, 1, devinfo);
-		printf("%s at %s", devinfo, pnp);
+		printf("%s: %s", pnp, devinfo);
 	}
 	if (uaa->port != 0)
-		printf(" port %d", uaa->port);
+		printf(", port %d", uaa->port);
 	return (UNCONF);
 }
 
