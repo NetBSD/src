@@ -1,4 +1,4 @@
-/*	$NetBSD: _getsetc.S,v 1.4 2004/11/10 01:12:57 kent Exp $	*/
+/*	$NetBSD: _getsetc.S,v 1.5 2004/11/30 21:05:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,10 +69,14 @@
 	leal	-4(%edx), %esp				; \
 	ret						; \
 							; \
-1:	and 	$_UC_FPU, %eax				; \
-	jz	2f					; \
+1:	btl	$8, (UC_REGS + _REG_EFL * 4)(%ecx)	; \
+	jnc	2f					; \
+	pushl %ecx					; \
+	call    PIC_GOT(_C_LABEL(setcontext))		; \
+2:	and 	$_UC_FPU, %eax				; \
+	jz	3f					; \
 	FPLOAD(%ecx)					; \
-2:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+3:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
 	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
 	movl	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
