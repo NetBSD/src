@@ -1,4 +1,4 @@
-/*	$NetBSD: link.h,v 1.8 1995/06/05 00:08:13 pk Exp $	*/
+/*	$NetBSD: link.h,v 1.9 1995/09/23 22:26:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -170,6 +170,8 @@ struct ld_entry {
 	int	(*dlclose) __P((void *));
 	void	*(*dlsym) __P((void *, char *));
 	int	(*dlctl) __P((void *, int, void *));
+	void	(*dlexit) __P((void));
+	void	(*dlrsrvd[3]) __P((void));
 };
 
 /*
@@ -190,7 +192,7 @@ struct	_dynamic {
 	union {
 		struct section_dispatch_table *d_sdt;
 	} d_un;
-	struct ld_entry *d_entry;	/* XXX */
+	struct ld_entry *d_entry;	/* compat - now in crt_ldso */
 };
 
 #define LD_VERSION_SUN		(3)
