@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.128 2002/12/12 17:41:19 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.129 2003/03/02 22:19:05 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -42,7 +42,7 @@ KERN_AS=	obj
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o spl.o vector.o
+MD_OBJS=	locore.o spl.o vector.o microtime.o
 MD_CFILES=
 MD_SFILES=	${I386}/i386/locore.S
 
@@ -53,6 +53,9 @@ spl.o: ${I386}/i386/spl.S assym.h
 	${NORMAL_S}
 
 vector.o: ${I386}/i386/vector.S assym.h
+	${NORMAL_S}
+
+microtime.o: ${I386}/i386/microtime.S assym.h
 	${NORMAL_S}
 
 ##
