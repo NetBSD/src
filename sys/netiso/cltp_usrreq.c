@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.9 1996/02/13 22:08:59 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.10 1996/05/22 13:55:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -292,17 +292,18 @@ u_long          cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
 
 /* ARGSUSED */
 int
-cltp_usrreq(so, req, m, nam, control)
-	struct socket  *so;
-	int             req;
-	struct mbuf    *m, *nam, *control;
+cltp_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct isopcb *isop = sotoisopcb(so);
 	int             s = 0, error = 0;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (long) m, (caddr_t) nam,
-				    (struct ifnet *) control));
+		return (iso_control(so, (long)m, (caddr_t)nam,
+		    (struct ifnet *)control, p));
 	if ((isop == NULL && req != PRU_ATTACH) ||
 	    (control && control->m_len)) {
 		error = EINVAL;
@@ -328,7 +329,7 @@ cltp_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_BIND:
-		error = iso_pcbbind(isop, nam);
+		error = iso_pcbbind(isop, nam, p);
 		break;
 
 	case PRU_LISTEN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.27 1996/05/22 13:55:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -132,11 +133,12 @@ int	in_interfaces;		/* number of external internet interfaces */
  */
 /* ARGSUSED */
 int
-in_control(so, cmd, data, ifp)
+in_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
+	struct proc *p;
 {
 	register struct ifreq *ifr = (struct ifreq *)data;
 	register struct in_ifaddr *ia = 0;
@@ -169,7 +171,7 @@ in_control(so, cmd, data, ifp)
 	case SIOCSIFADDR:
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 
 		if (ifp == 0)
@@ -199,7 +201,7 @@ in_control(so, cmd, data, ifp)
 		break;
 
 	case SIOCSIFBRDADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 		/* FALLTHROUGH */
 

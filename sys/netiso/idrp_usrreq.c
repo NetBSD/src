@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.5 1996/02/13 22:09:33 christos Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.6 1996/05/22 13:55:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,10 +152,11 @@ u_long          idrp_recvspace = 40 * 1024;	/* 40 1K datagrams */
 
 /* ARGSUSED */
 int
-idrp_usrreq(so, req, m, addr, control)
-	struct socket  *so;
-	int             req;
-	struct mbuf    *m, *addr, *control;
+idrp_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	int             error = 0;
 
@@ -179,7 +180,7 @@ idrp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_SEND:
-		return (idrp_output(m, addr));
+		return (idrp_output(m, nam));
 
 	case PRU_ABORT:
 		soisdisconnected(so);

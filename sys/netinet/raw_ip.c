@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.26 1996/05/22 13:55:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -269,10 +270,11 @@ u_long	rip_recvspace = RIPRCVQ;
 
 /*ARGSUSED*/
 int
-rip_usrreq(so, req, m, nam, control)
+rip_usrreq(so, req, m, nam, control, p)
 	register struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register int error = 0;
 	register struct inpcb *inp = sotoinpcb(so);
@@ -281,7 +283,7 @@ rip_usrreq(so, req, m, nam, control)
 #endif
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+		    (struct ifnet *)control, p));
 
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
@@ -293,7 +295,7 @@ rip_usrreq(so, req, m, nam, control)
 	case PRU_ATTACH:
 		if (inp)
 			panic("rip_attach");
-		if ((so->so_state & SS_PRIV) == 0) {
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

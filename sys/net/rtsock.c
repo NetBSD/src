@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.19 1996/05/22 13:55:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -79,10 +79,11 @@ static void	rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 
 /*ARGSUSED*/
 int
-route_usrreq(so, req, m, nam, control)
+route_usrreq(so, req, m, nam, control, p)
 	register struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register int error = 0;
 	register struct rawcb *rp = sotorawcb(so);
@@ -105,7 +106,7 @@ route_usrreq(so, req, m, nam, control)
 		route_cb.any_count--;
 	}
 	s = splsoftnet();
-	error = raw_usrreq(so, req, m, nam, control);
+	error = raw_usrreq(so, req, m, nam, control, p);
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
 		int af = rp->rcb_proto.sp_protocol;

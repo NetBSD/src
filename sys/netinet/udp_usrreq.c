@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.29 1996/05/20 16:56:20 mrg Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.30 1996/05/22 13:55:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -509,10 +509,11 @@ u_long	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 /*ARGSUSED*/
 int
-udp_usrreq(so, req, m, addr, control)
+udp_usrreq(so, req, m, addr, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *addr, *control;
+	struct proc *p;
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -520,7 +521,7 @@ udp_usrreq(so, req, m, addr, control)
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)addr,
-			(struct ifnet *)control));
+		    (struct ifnet *)control, p));
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -553,7 +554,7 @@ udp_usrreq(so, req, m, addr, control)
 
 	case PRU_BIND:
 		s = splsoftnet();
-		error = in_pcbbind(inp, addr);
+		error = in_pcbbind(inp, addr, p);
 		splx(s);
 		break;
 

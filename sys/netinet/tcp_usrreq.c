@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.21 1996/05/22 13:55:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -79,10 +79,11 @@ extern	char *tcpstates[];
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control)
+tcp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct inpcb *inp;
 	register struct tcpcb *tp = NULL;
@@ -92,7 +93,7 @@ tcp_usrreq(so, req, m, nam, control)
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+		    (struct ifnet *)control, p));
 	if (control && control->m_len) {
 		m_freem(control);
 		if (m)
@@ -157,7 +158,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 * Give the socket an address.
 	 */
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam);
+		error = in_pcbbind(inp, nam, p);
 		if (error)
 			break;
 		break;
@@ -167,7 +168,8 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_LISTEN:
 		if (inp->inp_lport == 0)
-			error = in_pcbbind(inp, (struct mbuf *)0);
+			error = in_pcbbind(inp, (struct mbuf *)0,
+			    (struct proc *)0);
 		if (error == 0)
 			tp->t_state = TCPS_LISTEN;
 		break;
@@ -181,7 +183,8 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_CONNECT:
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0);
+			error = in_pcbbind(inp, (struct mbuf *)0,
+			    (struct proc *)0);
 			if (error)
 				break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.13 1996/03/16 23:13:58 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.14 1996/05/22 13:56:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -925,9 +925,10 @@ tp_tselinuse(tlen, tsel, siso, reuseaddr)
 
 
 int
-tp_pcbbind(v, nam)
+tp_pcbbind(v, nam, p)
 	register void *v;
 	register struct mbuf *nam;
+	struct proc *p;
 {
 	register struct tp_pcb *tpcb = v;
 	register struct sockaddr_iso *siso = 0;
@@ -1001,5 +1002,5 @@ tp_pcbbind(v, nam)
 		tpcb->tp_flags |= TPF_GENERAL_ADDR;
 		return (0);
 	}
-	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam);
+	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam, p);
 }
