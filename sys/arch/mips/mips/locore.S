@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.124 2001/10/16 16:31:36 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.125 2001/11/12 11:12:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -962,7 +962,7 @@ END(suswintr)
 
 /*
  * int fuword(void *)
- * Fetches a short word of data from the user-space address.
+ * Fetches a word of data from the user-space address.
  */
 LEAF(fuword)
 XLEAF(fuiword)
