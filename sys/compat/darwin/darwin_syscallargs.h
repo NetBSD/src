@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.14 2002/12/08 21:53:58 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.15 2002/12/24 12:15:45 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -248,11 +248,7 @@ int	bsd_sys_chown(struct proc *, void *, register_t *);
 int	sys_obreak(struct proc *, void *, register_t *);
 int	sys_getfsstat(struct proc *, void *, register_t *);
 int	sys_lseek(struct proc *, void *, register_t *);
-#ifdef COMPAT_43
-int	sys_getpid_with_ppid(struct proc *, void *, register_t *);
-#else
-int	sys_getpid(struct proc *, void *, register_t *);
-#endif
+int	darwin_sys_getpid(struct proc *, void *, register_t *);
 int	bsd_sys_mount(struct proc *, void *, register_t *);
 int	bsd_sys_unmount(struct proc *, void *, register_t *);
 int	sys_setuid(struct proc *, void *, register_t *);
