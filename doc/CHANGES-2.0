@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.282 2004/06/18 10:15:00 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.283 2004/06/19 04:41:00 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4058,3 +4058,16 @@ src/sys/netinet/fil.c				1.66
 	Make sure the code doesn't use a stale mbuf pointer after
 	fr_makefrip() has been called.
 	[tron, ticket #502]
+
+sys/arch/sparc/stand/bootblk/bootblk.fth	1.6
+sys/arch/sparc/stand/bootblk/genfth.cf		1.4
+
+	Use RF_PROTECTED_SECTORS instead of a (wrong) magic value.
+	Fixes booting from raid1.
+	[martin, ticket #510]
+
+sys/compat/linux/arch/powerpc/linux_exec.h		1.17
+sys/compat/linux/arch/powerpc/linux_exec_powerpc.c	1.13-1.14
+
+	COMPAT_LINUX/powerpc fixes for non-executable stack.
+	[manu, ticket #511]
