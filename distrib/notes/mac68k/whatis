@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.12 1999/01/13 07:30:06 ross Exp $	
+.\"	$NetBSD: whatis,v 1.13 1999/05/07 03:30:44 ender Exp $	
 .Nx \*V
-is the fourth 
+is the fifth 
 .Dq real
 release of
 .Nx
@@ -11,34 +11,21 @@ For the mac68k port,
 brings a number of improvements:
 .Bl -bullet
 .It
-A host of new drivers and kernel changes enable support for
-many 68040-based Macintosh systems.
+A number of kernel changes enable support for several previously
+unsupported systems (such as the LC and Performa 470-series,
+570/580-series, and 630-series Macs).
 .It
-Many previously unsupported 68030-based Macintoshes are now working.
+Support for 800KB floppy drives has been added (i.e. machines that
+include the IWM or SWIM, but not the SWIM II or SWIM III)
 .It
-Support for SONIC (DP83932) and MACE (Am79C940) Ethernet controllers
-has been added (via the "sn" and "mc" devices).
-.It
-The 
-.Xr mac68k/ae 4
-driver for DP8390-based Ethernet cards now handles more
-NuBus ethernet cards.
-.It
-The
-.Xr mac68k/grf 4
-video driver supports many more NuBus video cards and
-most onboard video configurations.
-.It
-The serial driver code has been converted to use the machine
-independent driver. This change enables the use of cdtrcts flow
-control, but support for externally clocked serial ports is still
-incomplete.
+IBM-compatible MBR handling has been integrated to enable MS-DOS
+partition support
 .It
 The
 .Xr mac68k/adb 4
-driver now supports the ADB hardware on most Mac models,
-and a wider variety of third party mice and trackballs are handled
-as well.
+driver has undergone a major revamp.
+.It
+A number of bugs affecting II-series systems have been fixed.
 .El
 There is still a lot of work to be done and help is welcomed. Please jump in!
 .Nx \*V
