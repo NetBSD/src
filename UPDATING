@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.114 2004/03/26 17:48:13 jmc Exp $
+$NetBSD: UPDATING,v 1.115 2004/04/22 14:35:55 christos Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -8,8 +8,15 @@ For a more detailed description see Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
-20040326:
+20040418:
+	Statfs(2) and friends have been replaced with statvfs(2). Before
+	installing a newly build userland make sure that you are running
+	a newly built kernel with COMPAT_20 set. In addition your libc
+	build might not work (undefined SYS_statfs symbol) because make
+	clean does not know how to remove files it does not know about
+	anymore. Manually remove all objects from the libc build directory.
 
+20040326:
 	The method by which athhal-elf.o gets pulled into i386 kernel builds
 	has been changed. The file is now stored as a uuencode file in CVS
 	and the generated Makefile will use the new .uue rules from bsd.file.mk
