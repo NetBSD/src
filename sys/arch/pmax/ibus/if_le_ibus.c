@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.6 2002/09/27 20:34:51 thorpej Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.7 2002/10/02 04:15:09 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -48,9 +48,8 @@ static void le_dec_zerobuf_gap2(struct lance_softc *, int, int);
 static int le_pmax_match(struct device *, struct cfdata *, void *);
 static void le_pmax_attach(struct device *, struct device *, void *);
 
-const struct cfattach le_pmax_ca = {
-	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
-};
+CFATTACH_DECL(le_pmax, sizeof(struct le_softc),
+    le_pmax_match, le_pmax_attach, NULL, NULL);
 
 int
 le_pmax_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2002/09/27 20:34:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2002/10/02 04:10:09 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,9 +63,8 @@ static struct cputab models[] = {
 static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
 
-const struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpumatch, cpuattach, NULL, NULL);
 
 int ncpus;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.41 2002/09/27 20:34:47 thorpej Exp $	*/
+/*	$NetBSD: px.c,v 1.42 2002/10/02 04:15:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.41 2002/09/27 20:34:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.42 2002/10/02 04:15:07 thorpej Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -117,11 +117,8 @@ static void	px_cursor_hack __P((struct fbinfo *, int, int));
 static int	px_probe_sram __P((struct px_info *));
 static void	px_bt459_flush __P((struct px_info *));
 
-const struct cfattach px_ca = {
-	sizeof(struct px_softc),
-	px_match,
-	px_attach,
-};
+CFATTACH_DECL(px, sizeof(struct px_softc),
+    px_match, px_attach, NULL, NULL);
 
 dev_type_open(pxopen);
 dev_type_close(pxclose);

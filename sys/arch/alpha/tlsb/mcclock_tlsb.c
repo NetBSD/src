@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.9 2002/09/27 20:29:40 thorpej Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.10 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.9 2002/09/27 20:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.10 2002/10/02 04:06:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,11 +64,8 @@ struct mcclock_tlsb_softc {
 int	mcclock_tlsb_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_tlsb_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach mcclock_tlsb_ca = {
-	sizeof (struct mcclock_tlsb_softc),
-	mcclock_tlsb_match,
-	mcclock_tlsb_attach, 
-};
+CFATTACH_DECL(mcclock_tlsb, sizeof (struct mcclock_tlsb_softc),
+    mcclock_tlsb_match, mcclock_tlsb_attach, NULL, NULL);
 
 extern struct cfdriver mcclock_cd;
 
