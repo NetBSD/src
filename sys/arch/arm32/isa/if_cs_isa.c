@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.22 1998/07/22 22:09:18 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.23 1998/07/23 19:02:55 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -517,6 +517,7 @@ cs_isa_attach(parent, self, aux)
 	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
 
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_2, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_5, 0, NULL);
 	/* Default is set in cs_get_params()... */
@@ -550,12 +551,15 @@ cs_isa_attach(parent, self, aux)
 		str = "AUI";
 		break;
 	case IFM_10_T:
-		str = "UTP";
+		if (sc->sc_media.ifm_cur->ifm_media & IFM_FDX)
+			str = "UTP <full-duplex>";
+		else
+			str = "UTP";
 		break;
 	default:
 		panic("cs_isa_attach: impossible");
 	}
-	printf("%s: address %s, default media %s\n", sc->sc_dev.dv_xname,
+	printf("%s: address %s, media %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr), str);
 
 	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
@@ -676,10 +680,6 @@ cs_get_params(sc)
 		/* Copy the DC/DC Polarity flag */
 		if (adapterConfig & ADPTR_CFG_DCDC_POL)
 			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
-
-		/* Copy the Full Duplex flag */
-		if (xmitCtl & XMIT_CTL_FDX)
-			sc->sc_cfgflags |= CFGFLG_FDX;
 	}
 
 	/* If the PacketPage pointer was not specified */
@@ -717,7 +717,10 @@ cs_get_params(sc)
 		break;
 	case ADPTR_CFG_10BASET:
 	default:
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
+		if (xmitCtl & XMIT_CTL_FDX)
+			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX);
+		else
+			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
 		break;
 	}
 	return CS_OK;
@@ -945,15 +948,9 @@ cs_initChip(sc)
 	}
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, selfCtl);
 
-	/* If media type is 10BaseT */
-	if (media == IFM_10_T) {
-		/*
-		 * If full duplex mode then set the FDX bit in TestCtl
-		 * register
-		 */
-		if (sc->sc_cfgflags & CFGFLG_FDX)
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_TEST_CTL, TEST_CTL_FDX);
-	}
+	/* Enable full-duplex, if appropriate */
+	if (sc->sc_media.ifm_cur->ifm_media & IFM_FDX)
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_TEST_CTL, TEST_CTL_FDX);
 
 	/* RX_CTL set in cs_set_ladr_filt(), below */
 
