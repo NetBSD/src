@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.38 1994/05/22 10:05:59 deraadt Exp $
+#	$Id: TDR,v 1.39 1994/06/27 21:16:36 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -11,7 +11,7 @@ ident		TDR
 timezone	7 dst
 maxusers	10
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		FFS,KERNFS,FDESC,MSDOSFS
+options		FFS,KERNFS,FDESC,QUOTA
 options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -22,10 +22,10 @@ options		DUMMY_NOPS
 options		MACHINE_NONCONTIG
 #options	SYSVMSG,SYSVSEM
 #options	SYSVSHM
-
+options		"MATH_EMULATE"
 options		"COMPAT_SVR4"
 
-config		netbsd	root on sd0 swap on sd0 and sd1
+config		netbsd	root on sd0 swap on sd0 and sd1 and wd0
 
 controller	isa0
 
