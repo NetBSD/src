@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2000/02/03 10:02:59 abs Exp $
+	$NetBSD: syscalls.master,v 1.41 2000/03/18 22:20:57 erh Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -161,7 +161,8 @@
 			    int count); }
 86	STD		{ int linux_sys_uselib(const char *path); }
 87	NOARGS		{ int compat_12_sys_swapon(char *name); }
-88	NOARGS		{ int sys_reboot(int opt); }
+88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
+			    int cmd, void *arg); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
 			    unsigned int count); }
 90	STD		{ int linux_sys_old_mmap(struct linux_oldmmap *lmp); }
