@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.11 1996/02/18 23:19:20 mycroft Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)nfsiod.c	8.3 (Berkeley) 2/22/94";
+static char sccsid[] = "@(#)nfsiod.c	8.4 (Berkeley) 5/3/95"
 #else
-static char rcsid[] = "$NetBSD: nfsiod.c,v 1.11 1996/02/18 23:19:20 mycroft Exp $";
+static char rcsid[] = "$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $";
 #endif
 #endif not lint
 
@@ -55,9 +55,10 @@ static char rcsid[] = "$NetBSD: nfsiod.c,v 1.11 1996/02/18 23:19:20 mycroft Exp 
 #include <sys/ucred.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/mount.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
 #include <err.h>
