@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 2000/09/23 04:30:09 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 2000/11/14 21:46:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -160,6 +160,8 @@ cdev_decl(uscanner);
 cdev_decl(com);
 #include "cy.h"
 cdev_decl(cy);
+#include "openfirm.h"
+cdev_decl(openfirm);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -215,6 +217,7 @@ struct cdevsw cdevsw[] = {
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
 	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
+	cdev_openfirm_init(NOPENFIRM,openfirm),	/* 53: /dev/openfirm */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -301,6 +304,7 @@ static int chrtoblktbl[] = {
 	/* 50 */	NODEV,
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
+	/* 53 */	NODEV,
 };
 
 /*
