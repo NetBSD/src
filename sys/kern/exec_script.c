@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_script.c,v 1.3 1994/01/28 23:47:07 jtc Exp $
+ *	$Id: exec_script.c,v 1.4 1994/02/16 01:21:00 cgd Exp $
  */
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
@@ -170,7 +170,7 @@ check_shell:
 #endif
 
 		if (error = falloc(p, &fp, &epp->ep_fd))
-			return error;
+			goto fail;
 
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
@@ -223,14 +223,18 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_pnbuf;
 
+	VOP_UNLOCK(scriptvp);
+
 	if ((error = check_exec(p, epp)) == 0) {
+		/* note that we've clobbered the header */
+		epp->ep_flags |= EXEC_DESTR;
+
 		/*
 		 * It succeeded.  Unlock the script and
 		 * close it if we aren't using it any more.
-		 * Also, et things up so that the fake args
+		 * Also, set things up so that the fake args
 		 * list will be used.
 		 */
-		VOP_UNLOCK(scriptvp);
 		if ((epp->ep_flags & EXEC_HASFD) == 0)
 			vn_close(scriptvp, FREAD, p->p_ucred, p);
 
@@ -250,22 +254,35 @@ check_shell:
 		if (script_sbits & VSGID)
 			epp->ep_vap->va_gid = script_gid;
 #endif
-	} else {
-		/*
-		 * Failed.  restore the vnode ptr and pnbuf so that
-		 * check_exec() will be able to kill them when it punts.
-		 */
-		epp->ep_vp = scriptvp;
-		epp->ep_ndp->ni_pnbuf = oldpnbuf;
-
-		/* free the fake arg list, because we're not returning it */
-		tmpsap = shellargp;
-		while (*tmpsap != NULL) {
-			FREE(*tmpsap, M_EXEC);
-			tmpsap++;
-		}
-		FREE(shellargp, M_EXEC);
+		return (0);
 	}
 
-	return error;
+fail:
+	/* note that we've clobbered the header */
+	epp->ep_flags |= EXEC_DESTR;
+
+	/* kill the opened file descriptor, else close the file */
+        if (epp->ep_flags & EXEC_HASFD) {
+                epp->ep_flags &= ~EXEC_HASFD;
+                exec_closefd(p, epp->ep_fd);
+        } else
+		vn_close(scriptvp, FREAD, p->p_ucred, p);
+
+        FREE(oldpnbuf, M_NAMEI);
+
+	/* free the fake arg list, because we're not returning it */
+	tmpsap = shellargp;
+	while (*tmpsap != NULL) {
+		FREE(*tmpsap, M_EXEC);
+		tmpsap++;
+	}
+	FREE(shellargp, M_EXEC);
+
+        /*
+         * free any vmspace-creation commands,
+         * and release their references
+         */
+        kill_vmcmds(&epp->ep_vmcmds);
+
+        return error;
 }
