@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.4 1999/01/18 19:45:26 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.4 1999/01/18 19:45:26 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $");
 #endif
 #endif
 
@@ -305,17 +305,18 @@ char   *rbl_hostaddr;				/* hostaddr */
     char *rbl_name;
     unsigned long host_address;
     int ret = NO;
+    size_t len = strlen(rbl_domain) + (4 * 4) + 2;
  
     if ((host_address = dot_quad_addr(rbl_hostaddr)) == INADDR_NONE) {
 	tcpd_warn("unable to convert %s to address", rbl_hostaddr);
 	return (NO);
     }
     /*  construct the rbl name to look up */
-    if ((rbl_name = malloc(strlen(rbl_domain) + (4*4) + 2)) == NULL) {
+    if ((rbl_name = malloc(len)) == NULL) {
 	tcpd_jump("not enough memory to build RBL name for %s in %s", rbl_hostaddr, rbl_domain);
 	/* NOTREACHED */
     }
-    sprintf(rbl_name, "%u.%u.%u.%u.%s",
+    snprintf(rbl_name, len, "%u.%u.%u.%u.%s",
 	    (unsigned int) ((host_address) & 0xff),
 	    (unsigned int) ((host_address >> 8) & 0xff),
 	    (unsigned int) ((host_address >> 16) & 0xff),
