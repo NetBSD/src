@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.4.1 2001/09/12 19:07:13 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.4.2 2002/06/18 19:37:17 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,6 +106,8 @@ static void	asc_intr __P((void *));
 
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
+
+cdev_decl(asc);
 
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
@@ -257,7 +260,7 @@ ascwrite(dev, uio, ioflag)
 int
 ascioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -287,7 +290,7 @@ ascpoll(dev, events, p)
 }
 
 int
-asckqfilter(dev_t dev, struct knote *)
+asckqfilter(dev_t dev, struct knote *kn)
 {
 
 	/* XXXLUKEM (thorpej): not supported (why is poll?) */
