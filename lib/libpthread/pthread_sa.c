@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.20 2002/02/13 19:36:11 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.21 2002/02/13 20:03:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -253,7 +253,18 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 						SDPRINTF((" parent %p", victim->pt_parent));
 						assert(victim->pt_parent != victim);
 					}
-				}
+				} else if (victim->pt_flags & PT_FLAG_IDLED) {
+					/* Idle threads that have already 
+					 * idled must be skipped so 
+					 * that we don't (a) idle-queue them
+					 * twice and (b) get the pt_next
+					 * queue of threads to put on the run 
+					 * queue mangled by 
+					 * pthread__sched_idle2()
+					 */
+					continue;
+			        }
+					
 			}
 		}
 
