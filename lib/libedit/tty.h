@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.3 1997/04/11 17:52:51 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.4 1997/04/11 21:38:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,7 +147,12 @@
 # endif /* IEXTEN != 0 */
 #endif /* convex || __convex__ */
 
-
+/*
+ * So that we don't lose job control.
+ */
+#ifdef __SVR4
+# undef CSWTCH
+#endif
 
 #ifndef _POSIX_VDISABLE
 # define _POSIX_VDISABLE ((unsigned char) -1)
