@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.1 1998/12/23 16:47:34 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.2 1999/01/30 15:07:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -559,7 +559,6 @@ again:
 	/*
 	 * Configure the system.
 	 */
-	splnone();
 	configure();
 }
 

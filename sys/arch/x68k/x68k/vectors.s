@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7.6.1 1998/12/23 16:47:35 minoura Exp $
+|	$NetBSD: vectors.s,v 1.7.6.2 1999/01/30 15:07:42 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -181,8 +181,8 @@ _vectab:
 #endif
 	.long	_intiotrap	/* 104: unassigned, reserved */
 	.long	_intiotrap	/* 105: unassigned, reserved */
-	.long	_audiotrap	/* 106: ADPCM DMA */
-	.long	_audioerrtrap	/* 107: ADPCM DMA */
+	.long	_intiotrap	/* 106: ADPCM DMA */
+	.long	_intiotrap	/* 107: ADPCM DMA */
 	.long	_spctrap	/* 108: internal SPC */
 	.long	_intiotrap	/* 109: unassigned, reserved */
 	.long	_intiotrap	/* 110: unassigned, reserved */

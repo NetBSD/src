@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1.2.1 1998/12/23 16:47:34 minoura Exp $	*/
+/*	$NetBSD: bus.c,v 1.1.2.2 1999/01/30 15:07:41 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -421,7 +421,8 @@ x68k_bus_space_copy_region_4(t, sbsh, soffset, dbsh, doffset, count)
 }
 
 
-#if 0
+extern paddr_t avail_end;
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -458,12 +459,13 @@ x68k_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct x68k_bus_dmamap *)mapstore;
 	map->x68k_dm_size = size;
 	map->x68k_dm_segcnt = nsegments;
 	map->x68k_dm_maxsegsz = maxsegsz;
 	map->x68k_dm_boundary = boundary;
+	map->x68k_dm_bounce_thresh = t->_bounce_thresh;
 	map->x68k_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -512,7 +514,7 @@ x68k_bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-	    t->_bounce_thresh, &lastaddr, &seg, 1);
+	    &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -553,7 +555,7 @@ x68k_bus_dmamap_load_mbuf(t, map, m0, flags)
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = x68k_bus_dmamap_load_buffer(map, m->m_data, m->m_len,
-		    NULL, flags, t->_bounce_thresh, &lastaddr, &seg, first);
+		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -573,8 +575,56 @@ x68k_bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+#if 0
+	paddr_t lastaddr;
+	int seg, i, error, first;
+	bus_size_t minlen, resid;
+	struct proc *p = NULL;
+	struct iovec *iov;
+	caddr_t addr;
 
-	panic("x68k_bus_dmamap_load_uio: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+	resid = uio->uio_resid;
+	iov = uio->uio_iov;
+
+	if (uio->uio_segflg == UIO_USERSPACE) {
+		p = uio->uio_procp;
+#ifdef DIAGNOSTIC
+		if (p == NULL)
+			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
+#endif
+	}
+
+	first = 1;
+	seg = 0;
+	error = 0;
+	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
+		/*
+		 * Now at the first iovec to load.  Load each iovec
+		 * until we have exhausted the residual count.
+		 */
+		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
+		addr = (caddr_t)iov[i].iov_base;
+
+		error = x68k_bus_dmamap_load_buffer(map, addr, minlen,
+		    p, flags, &lastaddr, &seg, first);
+		first = 0;
+
+		resid -= minlen;
+	}
+	if (error == 0) {
+		map->dm_mapsize = uio->uio_resid;
+		map->dm_nsegs = seg + 1;
+	}
+	return (error);
+#else
+	panic ("x68k_bus_dmamap_load_uio: not implemented");
+#endif
 }
 
 /*
@@ -697,6 +747,7 @@ x68k_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	extern vm_map_t kernel_map;
 
 	size = round_page(size);
 
@@ -735,6 +786,7 @@ x68k_bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	extern vm_map_t kernel_map;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -796,14 +848,13 @@ x68k_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh,
+x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
     lastaddrp, segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_addr_t bounce_thresh;
 	paddr_t *lastaddrp;
 	int *segp;
 	int first;
@@ -832,8 +883,8 @@ x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh,
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (bounce_thresh != 0 && curaddr >= bounce_thresh)
-			return (EINVAL);
+		if (map->x68k_dm_bounce_thresh != 0 &&
+		    curaddr >= map->x68k_dm_bounce_thresh)
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -962,4 +1013,3 @@ x68k_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
-#endif
