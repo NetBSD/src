@@ -1,4 +1,4 @@
-/* $NetBSD: fputwc.c,v 1.2 2003/01/18 11:29:53 thorpej Exp $ */
+/* $NetBSD: fputwc.c,v 1.3 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -38,7 +38,7 @@
 #include "fvwrite.h"
 
 wint_t
-fputwc(wchar_t wc, FILE *fp)
+__fputwc_unlock(wchar_t wc, FILE *fp)
 {
 	struct wchar_io_data *wcio;
 	mbstate_t *st;
@@ -54,11 +54,9 @@ fputwc(wchar_t wc, FILE *fp)
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 
-	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, 1);
 	wcio = WCIO_GET(fp);
 	if (wcio == 0) {
-		FUNLOCKFILE(fp);
 		errno = ENOMEM;
 		return WEOF;
 	}
@@ -68,7 +66,6 @@ fputwc(wchar_t wc, FILE *fp)
 
 	size = wcrtomb(buf, wc, st);
 	if (size == (size_t)-1) {
-		FUNLOCKFILE(fp);
 		errno = EILSEQ;
 		return WEOF;
 	}
@@ -77,11 +74,22 @@ fputwc(wchar_t wc, FILE *fp)
 
 	uio.uio_resid = iov.iov_len = size;
 	if (__sfvwrite(fp, &uio)) {
-		FUNLOCKFILE(fp);
 		return WEOF;
 	}
 
+	return (wint_t)wc;
+}
+
+wint_t
+fputwc(wchar_t wc, FILE *fp)
+{
+	wint_t r;
+
+	_DIAGASSERT(fp != NULL);
+
+	FLOCKFILE(fp);
+	r = __fputwc_unlock(wc, fp);
 	FUNLOCKFILE(fp);
 
-	return (wint_t)wc;
+	return (r);
 }
