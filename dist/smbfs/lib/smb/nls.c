@@ -32,6 +32,9 @@
  * from: Id: nls.c,v 1.10 2002/07/22 08:33:59 bp Exp 
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nls.c,v 1.4 2003/04/04 08:05:35 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
