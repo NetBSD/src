@@ -1,5 +1,5 @@
-/*	$NetBSD: cryptodev.h,v 1.4 2003/08/21 16:08:05 jonathan Exp $ */
-/*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.5 2003/06/03 00:09:02 sam Exp $	*/
+/*	$NetBSD: cryptodev.h,v 1.5 2003/08/21 19:44:14 jonathan Exp $ */
+/*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
 /*
@@ -260,12 +260,13 @@ struct cryptop {
 					 */
 	int		crp_flags;
 
-#define CRYPTO_F_IMBUF	0x0001	/* Input/output are mbuf chains, otherwise contig */
-#define CRYPTO_F_IOV	0x0002	/* Input/output are uio */
-#define CRYPTO_F_REL	0x0004	/* Must return data in same place */
-#define	CRYPTO_F_BATCH	0x0008	/* Batch op if possible possible */
-#define	CRYPTO_F_CBIMM	0x0010	/* Do callback immediately */
-#define	CRYPTO_F_DONE	0x0020	/* Operation completed */
+#define CRYPTO_F_IMBUF		0x0001	/* Input/output are mbuf chains */
+#define CRYPTO_F_IOV		0x0002	/* Input/output are uio */
+#define CRYPTO_F_REL		0x0004	/* Must return data in same place */
+#define	CRYPTO_F_BATCH		0x0008	/* Batch op if possible possible */
+#define	CRYPTO_F_CBIMM		0x0010	/* Do callback immediately */
+#define	CRYPTO_F_DONE		0x0020	/* Operation completed */
+#define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
 
 	caddr_t		crp_buf;	/* Data to be processed */
 	caddr_t		crp_opaque;	/* Opaque pointer, passed along */
@@ -318,8 +319,9 @@ struct cryptocap {
 	u_int8_t	cc_flags;
 	u_int8_t	cc_qblocked;		/* symmetric q blocked */
 	u_int8_t	cc_kqblocked;		/* asymmetric q blocked */
-#define CRYPTOCAP_F_CLEANUP   0x1
-#define CRYPTOCAP_F_SOFTWARE  0x02
+#define CRYPTOCAP_F_CLEANUP	0x01		/* needs resource cleanup */
+#define CRYPTOCAP_F_SOFTWARE	0x02		/* software implementation */
+#define CRYPTOCAP_F_SYNC	0x04		/* operates synchronously */
 
 	void		*cc_arg;		/* callback argument */
 	int		(*cc_newsession)(void*, u_int32_t*, struct cryptoini*);
@@ -328,6 +330,17 @@ struct cryptocap {
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
 };
+
+/*
+ * Session ids are 64 bits.  The lower 32 bits contain a "local id" which
+ * is a driver-private session identifier.  The upper 32 bits contain a
+ * "hardware id" used by the core crypto code to identify the driver and
+ * a copy of the driver's capabilities that can be used by client code to
+ * optimize operation.
+ */
+#define	CRYPTO_SESID2HID(_sid)	(((_sid) >> 32) & 0xffffff)
+#define	CRYPTO_SESID2CAPS(_sid)	(((_sid) >> 56) & 0xff)
+#define	CRYPTO_SESID2LID(_sid)	(((u_int32_t) (_sid)) & 0xffffffff)
 
 MALLOC_DECLARE(M_CRYPTO_DATA);
 
