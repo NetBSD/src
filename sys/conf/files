@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.345 2000/01/26 06:04:37 thorpej Exp $
+#	$NetBSD: files,v 1.346 2000/01/26 06:27:33 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -188,6 +188,10 @@ file	dev/mii/mii_bitbang.c		mii_bitbang
 # Adaptec AIC-6[32]60 ICs
 device	aic: scsi
 file	dev/ic/aic6360.c		aic
+
+# SMC 93Cx6 Serial EEPROM devices
+define	smc93cx6
+file	dev/ic/smc93cx6.c		smc93cx6
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
