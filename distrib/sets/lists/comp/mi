@@ -518,12 +518,16 @@
 ./usr/include/ndbm.h
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
+./usr/include/net/ethertypes.h
 ./usr/include/net/if.h
+./usr/include/net/if_arc.h
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_atm.h
 ./usr/include/net/if_dl.h
+./usr/include/net/if_ether.h
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_llc.h
+./usr/include/net/if_media.h
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
@@ -553,10 +557,7 @@
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet/icmp_var.h
-./usr/include/netinet/if_arc.h
-./usr/include/netinet/if_arp.h
 ./usr/include/netinet/if_atm.h
-./usr/include/netinet/if_ether.h
 ./usr/include/netinet/if_inarp.h
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
