@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.136 1995/01/15 00:44:19 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 1995/01/15 02:11:23 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -128,7 +128,6 @@ void dumpsys __P((void));
 
 caddr_t allocsys();
 
-int check_selectors __P((u_short, u_short, u_short, u_short));
 /*
  * Machine-dependent startup code
  */
