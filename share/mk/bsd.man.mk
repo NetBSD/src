@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.26 1997/03/29 08:02:51 mikel Exp $
+#	$NetBSD: bsd.man.mk,v 1.27 1997/04/15 16:57:46 perry Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 MANTARGET?=	cat
@@ -50,12 +50,12 @@ __installpage: .USE
 # Rules for source page installation
 .if defined(MANPAGES) && !empty(MANPAGES)
 .   for P in ${MANPAGES}
-manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
+manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .	if !defined(UPDATE)
-.PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
+.PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .	endif
 
-${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: ${P} __installpage
+${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
 .   endfor
 .else
 manpages::
@@ -106,11 +106,11 @@ manlinks: manpages
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
+		l=$${dir}${MANSUBDIR}/$${name}${MCOMPRESSSUFFIX}; \
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
+		t=$${dir}${MANSUBDIR}/$${name}${MCOMPRESSSUFFIX}; \
 		if [ ! -f $$t -o -z "${UPDATE}" ]; then \
 		    echo $$t -\> $$l; \
 		    rm -f $$t; \
