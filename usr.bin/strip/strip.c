@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.8 1993/11/19 02:24:40 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.9 1993/11/19 02:40:46 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -133,37 +133,45 @@ s_sym(fn, fd, ep, sp)
 	register EXEC *ep;
 	struct stat *sp;
 {
-	register char *fileend, *minend;
+	register char *neweof, *mineof;
+	int zmagic;
 
-#if 0
-	/* If no symbols or data/text relocation info, quit. */
-	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize)
-		return 0;
-#endif
+	zmagic = ep->a_data &&
+		 (N_GETMAGIC(*ep) == ZMAGIC || N_GETMAGIC(*ep) == QMAGIC);
+
+	/*
+	 * If no symbols or data/text relocation info and
+	 * the file data segment size is already minimized, quit.
+	 */
+	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize) {
+		if (!zmagic)
+			return 0;
+		if (sp->st_size < N_RELOFF(*ep))
+			return 0;
+	}
 
 	/*
 	 * New file size is the header plus text and data segments; OMAGIC
 	 * and NMAGIC formats have the text/data immediately following the
 	 * header.  ZMAGIC format wastes the rest of of header page.
 	 */
-	fileend = (char *)ep + N_RELOFF(*ep);
+	neweof = (char *)ep + N_RELOFF(*ep);
 
-	if (ep->a_data &&
-	    (N_GETMAGIC(*ep) == ZMAGIC || N_GETMAGIC(*ep) == QMAGIC)) {
+	if (zmagic) {
 		/*
 		 * Get rid of unneeded zeroes at the end of the data segment
 		 * to reduce the file size even more.
 		 */
-		minend = (char *)ep + N_DATOFF(*ep);
-		while (fileend > minend && fileend[-1] == '\0')
-			fileend--;
+		mineof = (char *)ep + N_DATOFF(*ep);
+		while (neweof > mineof && neweof[-1] == '\0')
+			neweof--;
 	}
 
 	/* Set symbol size and relocation info values to 0. */
 	ep->a_syms = ep->a_trsize = ep->a_drsize = 0;
 
 	/* Truncate the file. */
-	if (ftruncate(fd, fileend - (char *)ep)) {
+	if (ftruncate(fd, neweof - (char *)ep)) {
 		err("%s: %s", fn, strerror(errno));
 		return 1;
 	}
