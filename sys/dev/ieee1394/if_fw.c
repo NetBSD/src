@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.9 2001/06/29 14:46:54 onoe Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.10 2001/07/02 10:46:03 onoe Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -168,9 +168,6 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
-	(*psc->sc1394_ifinreg)
-	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
-	    fw_input);
 
 	sc->sc_flags |= FWF_ATTACHED;
 
@@ -275,7 +272,13 @@ fw_txint(struct device *self, struct mbuf *m0)
 int
 fw_init(struct ifnet *ifp)
 {
+	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
+	struct ieee1394_softc *psc =
+	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
 
+	(*psc->sc1394_ifinreg)
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
+	    fw_input);
 	ifp->if_flags |= IFF_RUNNING;
 	return 0;
 }
@@ -283,8 +286,14 @@ fw_init(struct ifnet *ifp)
 void
 fw_stop(struct ifnet *ifp, int disable)
 {
+	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
+	struct ieee1394_softc *psc =
+	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
 	struct mbuf *m;
 
+	(*psc->sc1394_ifinreg)
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
+	    NULL);
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)

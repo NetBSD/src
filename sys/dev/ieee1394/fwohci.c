@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.37 2001/07/02 02:26:40 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.38 2001/07/02 10:46:03 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -889,8 +889,12 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	return 0;
 
   fail:
-	while (i-- > 0)
-		fwohci_buf_free(sc, --fb);
+	while (i-- > 0) {
+		fb--;
+		if (fb->fb_desc)
+			fwohci_desc_put(sc, fb->fb_desc, 1);
+		fwohci_buf_free(sc, fb);
+	}
 	free(fc, M_DEVBUF);
 	return error;
 }
@@ -906,6 +910,8 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		    NULL, NULL);
 	while ((fb = TAILQ_FIRST(&fc->fc_buf)) != NULL) {
 		TAILQ_REMOVE(&fc->fc_buf, fb, fb_list);
+		if (fb->fb_desc)
+			fwohci_desc_put(sc, fb->fb_desc, 1);
 		fwohci_buf_free(sc, fb);
 	}
 	free(fc, M_DEVBUF);
@@ -1379,6 +1385,8 @@ fwohci_handler_set(struct fwohci_softc *sc,
 			free(fh, M_DEVBUF);
 		}
 		if (tcode == IEEE1394_TCODE_STREAM_DATA) {
+			OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
+			    OHCI_SUBREG_ContextControlClear, OHCI_CTXCTL_RUN);
 			sc->sc_ctx_ir[fc->fc_ctx] = NULL;
 			fwohci_ctx_free(sc, fc);
 		}
@@ -2501,10 +2509,10 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
 
 	fwohci_handler_set(sc, IEEE1394_TCODE_WRITE_REQ_BLOCK, offhi, offlo, 
-	    fwohci_if_input, handler);
+	    handler ? fwohci_if_input : NULL, handler);
 	fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
 	    sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] & OHCI_NodeId_NodeNumber,
-	    IEEE1394_TAG_GASP, fwohci_if_input, handler);
+	    IEEE1394_TAG_GASP, handler ? fwohci_if_input : NULL, handler);
 	return 0;
 }
 
