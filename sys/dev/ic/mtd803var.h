@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.1 2002/11/07 21:57:00 martin Exp $ */
+/* $NetBSD: mtd803var.h,v 1.2 2003/09/23 19:37:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
 
 
 /* Number of Tx and Rx descriptors */
-#define MTD_NUM_TXD		128
-#define MTD_NUM_RXD		128
+#define MTD_NUM_TXD		64
+#define MTD_NUM_RXD		64
 /* Tx and Rx buffer size */
-#define MTD_RXBUF_SIZE		768
-#define MTD_TXBUF_SIZE		768
+#define MTD_RXBUF_SIZE		1536
+#define MTD_TXBUF_SIZE		1536
 
 /* DMA mem must be longword (4 bytes) aligned */
 #define MTD_DMA_ALIGN		4
@@ -132,8 +132,8 @@ struct mtd_softc {
 #define MTD_RXD_RXERR		0x00000004	/* Receive error */
 #define MTD_RXD_RSRVD0		0x00000003	/* Bits [1:0] are reserved */
 	/* Configuration register */
-#define MTD_RXD_CONF_RSRVD0	0xfffffc00	/* Bits [31:11] are reserved */
-#define MTD_RXD_CONF_BUFS	0x000003ff	/* Receive buffer size */
+#define MTD_RXD_CONF_RSRVD0	0xfffff800	/* Bits [31:11] are reserved */
+#define MTD_RXD_CONF_BUFS	0x000007ff	/* Receive buffer size */
 
 #define MTD_RXD_FLEN_SHIFT	16
 
