@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2000/09/25 14:44:59 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.28 2000/09/25 19:37:59 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -190,6 +190,7 @@
 #define OPEN	1053
 #define VERBOSE	1054
 #define BRIEF	1055
+#define AUXVERB	1056
 
  /* injuries */
 #define ARM	6		/* broken arm */

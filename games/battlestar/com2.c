@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.20 2000/09/25 14:08:08 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.21 2000/09/25 19:37:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.20 2000/09/25 14:08:08 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.21 2000/09/25 19:37:58 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -117,10 +117,12 @@ put()
 {				/* synonyms = {buckle, strap, tie} */
 	if (wordvalue[wordnumber + 1] == ON) {
 		wordvalue[++wordnumber] = PUTON;
+		wordtype[wordnumber] = VERB;
 		return (cypher());
 	}
 	if (wordvalue[wordnumber + 1] == DOWN) {
 		wordvalue[++wordnumber] = DROP;
+		wordtype[wordnumber] = VERB;
 		return (cypher());
 	}
 	puts("I don't understand what you want to put.");
