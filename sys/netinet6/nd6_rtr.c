@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.24 2001/05/24 08:17:22 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.25 2001/10/16 06:24:45 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -1047,14 +1047,14 @@ find_pfxlist_reachable_router(pr)
 
 /*
  * Check if each prefix in the prefix list has at least one available router
- * that advertised the prefix (A router is "available" if its neighbor cache
- * entry has reachable or probably reachable).
+ * that advertised the prefix (a router is "available" if its neighbor cache
+ * entry is reachable or probably reachable).
  * If the check fails, the prefix may be off-link, because, for example,
  * we have moved from the network but the lifetime of the prefix has not
- * been expired yet. So we should not use the prefix if there is another
- * prefix that has an available router.
- * But if there is no prefix that has an available router, we still regards
- * all the prefixes as on-link. This is because we can't tell if all the
+ * expired yet.  So we should not use the prefix if there is another prefix
+ * that has an available router.
+ * But, if there is no prefix that has an available router, we still regards
+ * all the prefixes as on-link.  This is because we can't tell if all the
  * routers are simply dead or if we really moved from the network and there
  * is no router around us.
  */
