@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.6 1995/05/05 10:47:35 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.7 1995/06/05 16:26:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -110,7 +110,7 @@ to_kmem:
 	mtpr(0,PR_P1LR);
 	mtpr(0x80000000,PR_P1BR);
 
-	mtpr(0,PR_SCBB); /* SCB at physical addr 0 */
+	mtpr(512,PR_SCBB); /* SCB at physical addr 512 */
 	mtpr(0,PR_ESP); /* Must be zero, used in page fault routine */
 	mtpr(AST_NO,PR_ASTLVL);
 	

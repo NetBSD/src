@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.10 1995/05/03 19:20:17 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.11 1995/06/05 16:27:20 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -198,17 +198,6 @@ faulter:
 		/* Fall into... */
 	case T_ACCFLT:
 	case T_ACCFLT|T_USER:
-        {u_int tmpo=frame->code&0x7fffff00;
-         u_int tmpp=frame->pc&0x7fffff00;
-	 extern u_int sigsida;
-
-        if((tmpo==0x7fffe000)&&(tmpp==0x7fffe000)){
-                u_int *hej=(u_int *)(mfpr(PR_P1BR)+0x7fffc0);
-/*		printf("Faultar sigsida: pid %d\n", p->p_pid); */
-                *hej=0xf8000000|(sigsida>>PG_SHIFT);
-                mtpr(0x7fffe000,PR_TBIS);
-                return;
-        }}
 if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 
@@ -270,24 +259,38 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 		if(frame->code<0x40000000){ /* P0 */
-			int i=p->p_vmspace->vm_tsize+p->p_vmspace->vm_dsize;
-			if(i>(frame->code>>PAGE_SHIFT)){
-				pmap_expandp0(pm,i<<1);
-				trapsig=0;
-			} else {
-				sig=SIGSEGV;
+			int i;
+
+			if (p->p_vmspace == 0){
+				printf("no vmspace in fault\n");
+				goto faulter;
 			}
-		} else if(frame->code>0x7fffffff){ /* System, segv */
-			sig=SIGSEGV;
+			i = p->p_vmspace->vm_tsize + p->p_vmspace->vm_dsize;
+			if (i > (frame->code >> PAGE_SHIFT)){
+				pmap_expandp0(pm, i << 1);
+				trapsig = 0;
+			} else {
+				sig = SIGSEGV;
+			}
+		} else if (frame->code > 0x7fffffff){ /* System, segv */
+			sig = SIGSEGV;
 		} else { /* P1 */
-			int i=(u_int)(p->p_vmspace->vm_maxsaddr);
-			if(frame->code<i){
-				sig=SIGSEGV;
+			int i;
+
+			i = (u_int)(p->p_vmspace->vm_maxsaddr);
+			if (frame->code < i){
+				sig = SIGSEGV;
 			} else {
 				pmap_expandp1(pm);
-				trapsig=0;
+				trapsig = 0;
 			}
 		}
+		break;
+
+	case T_BPTFLT|T_USER:
+	case T_TRCTRAP|T_USER:
+		sig = SIGTRAP;
+		frame->psl &= ~PSL_T;
 		break;
 
 	case T_PRIVINFLT|T_USER:
@@ -321,8 +324,8 @@ if(p){
 	printf("virt text %x, virt data %x, max stack %x\n",
 		p->p_vmspace->vm_taddr,p->p_vmspace->vm_daddr,
 		p->p_vmspace->vm_maxsaddr);
-	printf("user pte p0br %x, user stack addr %x\n",
-		p->p_vmspace->vm_pmap.pm_pcb->P0BR, mfpr(PR_USP));
+	printf("kernel uarea %x, end uarea %x\n",p->p_addr, 
+		(u_int)p->p_addr + USPACE);
 } else {
 	printf("No process\n");
 }
@@ -436,4 +439,56 @@ settrap(plats, nyrut,arg)
 	introut->pushl[1]=arg;
 	introut->hoppaddr=nyrut-(u_int)&introut->popr[0];
 	return (u_int)introut;
+}
+
+printstack(loaddr, highaddr)
+	u_int *loaddr, *highaddr;
+{
+	u_int *tmp;
+
+	(u_int)tmp = 0xfffffffc & (u_int)loaddr; /* Easy align */
+
+	for (;tmp < highaddr;tmp += 4)
+		printf("%8x:  %8x  %8x  %8x  %8x\n",
+		    tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
+}
+
+invkstk(frame)
+	struct trapframe *frame;
+{
+	struct proc *p;
+	extern u_int scratch;
+
+
+	p = curproc;
+
+	printf("Kernel stack invalid: pid %d, name %s\n\n",
+	    p->p_pid, p->p_comm);
+	printf("Register state:\n\n\n");
+	showregs(frame);
+	printf("\n\nProcess state:\n\n");
+	showstate(p);
+	asm("halt");
+	printf("\n\nKernel stack:\n\n");
+	printstack(mfpr(PR_KSP), (u_int)p->p_addr + USPACE);
+	printf("\n\nInterrupt stack:\n\n");
+	printstack(mfpr(PR_ISP), scratch);
+	panic("Invalid kernel stack");
+}
+
+showregs(frame)
+	struct trapframe *frame;
+{
+	printf("P0BR %8x   P1BR %8x   P0LR %8x   P1LR %8x\n",
+	    mfpr(PR_P0BR), mfpr(PR_P1BR), mfpr(PR_P0LR), mfpr(PR_P1LR));
+	printf("KSP  %8x   ISP  %8x   USP  %8x\n",
+	    mfpr(PR_KSP), mfpr(PR_ISP), mfpr(PR_USP));
+	printf("R0   %8x   R1   %8x   R2   %8x   R3   %8x\n",
+	    frame->r0, frame->r1, frame->r2, frame->r3);
+	printf("R4   %8x   R5   %8x   R6   %8x   R7   %8x\n",
+	    frame->r4, frame->r5, frame->r6, frame->r7);
+	printf("R8   %8x   R9   %8x   R10  %8x   R11  %8x\n",
+	    frame->r8, frame->r9, frame->r10, frame->r11);
+	printf("FP   %8x   AP   %8x   PC   %8x   PSL  %8x\n",
+	    frame->fp, frame->ap, frame->pc, frame->psl);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.3 1995/04/18 22:02:35 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.4 1995/06/05 16:26:23 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -44,6 +44,7 @@
 #include "machine/param.h"
 #include "machine/vmparam.h"
 #include "machine/nexus.h"
+#include "machine/../vax/gencons.h"
 #include "vm/vm.h"
 
 #define	BACKPLANE	0
@@ -160,6 +161,7 @@ configure()
 	gencnslask(); /* XXX inte g|ras h{r */
 	swapconf();
 	cold=0;
+	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }
 
 
