@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.45 1996/06/17 22:21:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -366,17 +366,20 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
+	int s;
 
 	/*
 	 * If the block hasn't been seen before:
 	 *	(1) Mark it as having been seen,
-	 *	(2) Charge for the write.
-	 *	(3) Make sure it's on its vnode's correct block list,
+	 *	(2) Charge for the write,
+	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
+		s = splbio();
 		reassignbuf(bp, bp->b_vp);
+		splx(s);
 	}
 
 	/* If this is a tape block, write the block now. */
