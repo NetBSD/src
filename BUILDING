@@ -37,7 +37,6 @@ REQUIREMENTS
 
 FILES
    Source tree layout
-
      doc/BUILDING.mdoc
                     This document (in -mdoc troff format; the original copy).
 
@@ -520,8 +519,8 @@ BUILDING
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
                build idenfitier to the name of the ``make'' wrapper script so
-               that the resulting name is of the form ``nbmake-MACHINE-
-               BUILDID''.
+               that the resulting name is of the form
+               ``nbmake-MACHINE-BUILDID''.
 
      -D dest   Set the value of DESTDIR to dest.
 
@@ -652,4 +651,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           July 3, 2003                               10
+NetBSD                           July 3, 2003                           NetBSD
