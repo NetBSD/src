@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.11 1994/09/19 08:07:17 mycroft Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.12 1994/09/28 00:44:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -58,13 +58,8 @@ mbinit()
 {
 	int s;
 
-#if CLBYTES < 4096
-#define NCL_INIT	(4096/CLBYTES)
-#else
-#define NCL_INIT	1
-#endif
 	s = splimp();
-	if (m_clalloc(NCL_INIT, M_DONTWAIT) == 0)
+	if (m_clalloc(max(4096/CLBYTES, 1), M_DONTWAIT) == 0)
 		goto bad;
 	splx(s);
 	return;
