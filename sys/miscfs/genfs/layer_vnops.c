@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.14.2.1 2004/05/30 15:09:24 tron Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.14.2.2 2004/06/21 10:06:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.14.2.1 2004/05/30 15:09:24 tron Exp $
+ *	$Id: layer_vnops.c,v 1.14.2.2 2004/06/21 10:06:07 tron Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.14.2.1 2004/05/30 15:09:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.14.2.2 2004/06/21 10:06:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,6 +778,40 @@ layer_remove(v)
 		VTOLAYER(vp)->layer_flags |= LAYERFS_REMOVED;
 
 	vrele(vp);
+
+	return (error);
+}
+
+int
+layer_rename(v)
+	void *v;
+{
+	struct vop_rename_args  /* {
+		struct vnode		*a_fdvp;
+		struct vnode		*a_fvp;
+		struct componentname	*a_fcnp;
+		struct vnode		*a_tdvp;
+		struct vnode		*a_tvp;
+		struct componentname	*a_tcnp;
+	} */ *ap = v;
+
+	int error;
+	struct vnode *fdvp = ap->a_fdvp;
+	struct vnode *tvp;
+
+	tvp = ap->a_tvp;
+	if (tvp) {
+		if (tvp->v_mount != fdvp->v_mount)
+			tvp = NULL;
+		else
+			vref(tvp);
+	}
+	error = LAYERFS_DO_BYPASS(fdvp, ap);
+	if (tvp) {
+		if (error == 0)
+			VTOLAYER(tvp)->layer_flags |= LAYERFS_REMOVED;
+		vrele(tvp);
+	}
 
 	return (error);
 }
