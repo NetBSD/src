@@ -1,7 +1,7 @@
-$NetBSD: eisadevs,v 1.4 1996/04/25 02:16:35 thorpej Exp $
+/*	$NetBSD: elink3var.h,v 1.1 1996/04/25 02:17:36 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Christopher G. Demetriou
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,10 +14,9 @@ $NetBSD: eisadevs,v 1.4 1996/04/25 02:16:35 thorpej Exp $
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *      This product includes software developed by Herb Peyerl.
+ * 4. The name of Herb Peyerl may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,41 +31,31 @@ $NetBSD: eisadevs,v 1.4 1996/04/25 02:16:35 thorpej Exp $
  */
 
 /*
- * List of known EISA vendors
+ * Ethernet software status per interface.
  */
+struct ep_softc {
+	struct device sc_dev;
+	void *sc_ih;
 
-vendor ADP		Adaptec
-vendor AMI		AMI
-vendor BUS		BusLogic
-vendor DEC		Digital Equipment
-vendor TCM		3Com
+	struct arpcom sc_arpcom;	/* Ethernet common part		*/
+	int	ep_iobase;		/* i/o bus address		*/
+	char    ep_connectors;		/* Connectors on this card.	*/
+#define MAX_MBS	8			/* # of mbufs we keep around	*/
+	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
+	int	next_mb;		/* Which mbuf to use next. 	*/
+	int	last_mb;		/* Last mbuf.			*/
+	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
+	int	tx_succ_ok;		/* # packets sent in sequence   */
+					/* w/o underrun			*/
+	u_char	bustype;
+#define EP_BUS_ISA	  	0x0
+#define	EP_BUS_PCMCIA	  	0x1
+#define	EP_BUS_EISA	  	0x2
+#define EP_BUS_PCI	  	0x3
 
-/*
- * List of known products, grouped by vendor.
- */
+#define EP_IS_BUS_32(a)	((a) & 0x2)
+};
 
-/* Adaptec products */
-product ADP 0000	AHA-1740 SCSI
-product ADP 0001	AHA-1740A SCSI
-product ADP 0002	AHA-1742A SCSI
-product ADP 0400	AHA-1744 SCSI
-product ADP 7770	AIC-7770 SCSI (on motherboard)
-product ADP 7771	AHA-274x SCSI
-product ADP 7756	AHA-284x SCSI (BIOS enabled)
-product ADP 7757	AHA-284x SCSI (BIOS disabled)
-
-/* AMI products */
-product AMI 4801	Series 48 SCSI
-
-/* BusLogic products */
-product BUS 4201	Bt74xB SCSI
-product BUS 4202	Bt74xC SCSI
-
-/* Digital Equipment products */
-product DEC 4250	DE425 Ethernet
-/* ??? DEC DEFEA */
-
-/* 3Com products */
-product TCM 5091	3C509 Ethernet
-product TCM 5092	3C579-TP Ethernet
-product TCM 5093	3C579 Ethernet
+u_short	epreadeeprom __P((int id_port, int offset));
+void	epconfig __P((struct ep_softc *, u_int));
+int	epintr __P((void *));

@@ -62,5 +62,6 @@
 /* ??? DEC DEFEA */
 
 /* 3Com products */
+#define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
