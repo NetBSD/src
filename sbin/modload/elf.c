@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.13 2002/10/10 01:57:10 simonb Exp $	*/
+/*	$NetBSD: elf.c,v 1.14 2002/11/07 05:55:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.13 2002/10/10 01:57:10 simonb Exp $");
+__RCSID("$NetBSD: elf.c,v 1.14 2002/11/07 05:55:08 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -106,6 +106,8 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *shstrtab, struct elf_section **head)
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		struct elf_section *s;
 		read_section_header(fd, ehdr, i, &shdr);
+		if (shdr.sh_size == 0)
+			continue;
 		if (((shdr.sh_flags & SHF_ALLOC) == 0)
 		    && (shdr.sh_type != SHT_STRTAB)
 		    && (shdr.sh_type != SHT_SYMTAB)
