@@ -1,6 +1,7 @@
-/* $NetBSD: machdep.c,v 1.128 2002/09/25 21:25:39 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.129 2002/09/28 09:53:08 ragge Exp $	 */
 
 /*
+ * Copyright (c) 2002, Hugh Graham.
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -107,6 +108,7 @@ int		physmem;
 int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;
+struct cpmbx	*cpmbx;		/* Console program mailbox address */
 
 /*
  * Extent map to manage I/O register space.  We allocate storage for
@@ -932,3 +934,37 @@ krnunlock()
 	KERNEL_UNLOCK();
 }
 #endif
+
+/*
+ * Generic routines for machines with "console program mailbox".
+ */
+void
+generic_halt()
+{
+	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
+		asm("halt");
+
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;   /* let console override */
+	} else if (cpmbx->mbox_halt != MHALT_HALT)
+		cpmbx->mbox_halt = MHALT_HALT;  /* the os decides */
+
+	asm("halt");
+}
+
+void
+generic_reboot(int arg)
+{
+	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
+		asm("halt");
+
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;
+	} else if (cpmbx->mbox_halt != MHALT_REBOOT)
+		cpmbx->mbox_halt = MHALT_REBOOT;
+
+	asm("halt");
+}
+
