@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.147 2005/03/09 03:39:27 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.148 2005/03/10 06:03:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.147 2005/03/09 03:39:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.148 2005/03/10 06:03:00 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -990,7 +990,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		} else {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			m->m_pkthdr.csum_data |= hlen << 16;
+			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
 		ipstat.ips_ofragments++;
 		fragments++;
@@ -1010,7 +1010,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 	} else {
 		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
-		m->m_pkthdr.csum_data |= hlen << 16;
+		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+			sizeof(struct ip));
 	}
 sendorfree:
 	/*
