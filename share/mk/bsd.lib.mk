@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.192 2001/11/19 02:46:50 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.193 2001/11/24 21:23:38 perry Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -378,6 +378,9 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
 .if ${OBJECT_FMT} == "ELF"
+	# We don't use INSTALL_SYMLINK here because this is just
+	# happening inside the build directory/objdir. XXX Why does
+	# this spend so much effort on libraries that aren't live??? XXX
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
@@ -449,8 +452,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
 .if ${MKPICLIB} == "no"
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a:
-	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
-	ln -s lib${LIB}.a ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+	${INSTALL_SYMLINK} lib${LIB}.a ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .else
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
@@ -473,14 +475,10 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULL
 	/sbin/ldconfig -m ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION}\
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.tmp
-	mv -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.tmp\
+	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION}\
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .if ${MKLINKLIB} != "no"
-	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION}\
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.tmp
-	mv -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.tmp\
+	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION}\
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
