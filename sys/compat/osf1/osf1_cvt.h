@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.2 1999/05/01 04:38:20 cgd Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.3 1999/05/01 04:47:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,11 @@
 #include <sys/stat.h>
 
 #include <compat/common/compat_util.h>
+
+#define	osf1_cvt_dev_from_native(dev)					\
+    osf1_makedev(major(dev), minor(dev))
+#define	osf1_cvt_dev_to_native(dev)					\
+    makedev(osf1_major(dev), osf1_minor(dev))
 
 void	osf1_cvt_rusage_from_native(const struct rusage *nru,
 				    struct osf1_rusage *oru);
