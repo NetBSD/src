@@ -1,3 +1,5 @@
+/*	$NetBSD: workarounds.c,v 1.2 1997/10/09 21:20:58 christos Exp $	*/
+
  /*
   * Workarounds for known system software bugs. This module provides wrappers
   * around library functions and system calls that are known to have problems
@@ -7,8 +9,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 char    sccsid[] = "@(#) workarounds.c 1.6 96/03/19 16:22:25";
+#else
+__RCSID("$NetBSD: workarounds.c,v 1.2 1997/10/09 21:20:58 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: hosts_ctl.c,v 1.2 1997/10/09 21:20:32 christos Exp $	*/
+
  /*
   * hosts_ctl() combines common applications of the host access control
   * library routines. It bundles its arguments then calls the hosts_access()
@@ -11,8 +13,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) hosts_ctl.c 1.4 94/12/28 17:42:27";
+#else
+__RCSID("$NetBSD: hosts_ctl.c,v 1.2 1997/10/09 21:20:32 christos Exp $");
+#endif
 #endif
 
 #include <stdio.h>
