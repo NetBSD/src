@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,13 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
+static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <signal.h>
@@ -57,9 +57,7 @@ static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
 #include "jobs.h"
 #include "input.h"
 #include "trap.h"
-#if ATTY
 #include "var.h"
-#endif
 #include "memalloc.h"
 #include "error.h"
 #include "init.h"
@@ -118,12 +116,11 @@ main(argc, argv)  char **argv; {
 		} else if (state == 0 || iflag == 0 || ! rootshell)
 			exitshell(2);
 		reset();
-#if ATTY
 		if (exception == EXINT
-		 && (! attyset() || equal(termval(), "emacs"))) {
-#else
-		if (exception == EXINT) {
+#if ATTY
+		 && (! attyset() || equal(termval(), "emacs"))
 #endif
+		 ) {
 			out2c('\n');
 			flushout(&errout);
 		}
@@ -133,8 +130,10 @@ main(argc, argv)  char **argv; {
 			goto state1;
 		else if (state == 2)
 			goto state2;
-		else
+		else if (state == 3)
 			goto state3;
+		else
+			goto state4;
 	}
 	handler = &jmploc;
 #ifdef DEBUG
@@ -152,17 +151,21 @@ main(argc, argv)  char **argv; {
 state1:
 		state = 2;
 		read_profile(".profile");
-	} else if ((sflag || minusc) && (shinit = getenv("SHINIT")) != NULL) {
-		state = 2;
-		evalstring(shinit);
-	}
+	} 
 state2:
 	state = 3;
+	if ((shinit = lookupvar("ENV")) != NULL &&
+	     *shinit != '\0') {
+		state = 3;
+		read_profile(shinit);
+	}
+state3:
+	state = 4;
 	if (minusc) {
 		evalstring(minusc);
 	}
 	if (sflag || minusc == NULL) {
-state3:
+state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
 	}
 #if PROFILE
@@ -182,11 +185,10 @@ cmdloop(top) {
 	union node *n;
 	struct stackmark smark;
 	int inter;
-	int numeof;
+	int numeof = 0;
 
 	TRACE(("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
-	numeof = 0;
 	for (;;) {
 		if (pendingsigs)
 			dotrap();
@@ -198,28 +200,20 @@ cmdloop(top) {
 			flushout(&output);
 		}
 		n = parsecmd(inter);
-#ifdef DEBUG
-		/* showtree(n); */
-#endif
+		/* showtree(n); DEBUG */
 		if (n == NEOF) {
-			if (Iflag == 0 || numeof >= 50)
+			if (!top || numeof >= 50)
 				break;
-			out2str("\nUse \"exit\" to leave shell.\n");
+			if (!stoppedjobs()) {
+				if (!Iflag)
+					break;
+				out2str("\nUse \"exit\" to leave shell.\n");
+			}
 			numeof++;
 		} else if (n != NULL && nflag == 0) {
-			if (inter) {
-				INTOFF;
-				if (prevcmd)
-					freefunc(prevcmd);
-				prevcmd = curcmd;
-				curcmd = copyfunc(n);
-				INTON;
-			}
+			job_warning = (job_warning == 2) ? 1 : 0;
+			numeof = 0;
 			evaltree(n, 0);
-#ifdef notdef
-			if (exitstatus)				      /*DEBUG*/
-				outfmt(&errout, "Exit status 0x%X\n", exitstatus);
-#endif
 		}
 		popstackmark(&smark);
 	}
@@ -290,27 +284,12 @@ dotcmd(argc, argv)  char **argv; {
 
 
 exitcmd(argc, argv)  char **argv; {
+	if (stoppedjobs())
+		return;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
 	exitshell(exitstatus);
 }
-
-
-lccmd(argc, argv)  char **argv; {
-	if (argc > 1) {
-		defun(argv[1], prevcmd);
-		return 0;
-	} else {
-		INTOFF;
-		freefunc(curcmd);
-		curcmd = prevcmd;
-		prevcmd = NULL;
-		INTON;
-		evaltree(curcmd, 0);
-		return exitstatus;
-	}
-}
-
 
 
 #ifdef notdef

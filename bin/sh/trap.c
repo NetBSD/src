@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)trap.c	5.2 (Berkeley) 4/12/91";
+static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include "shell.h"
@@ -64,6 +64,7 @@ static char sccsid[] = "@(#)trap.c	5.2 (Berkeley) 4/12/91";
 #define S_CATCH 2		/* signal is caught */
 #define S_IGN 3			/* signal is ignored (SIG_IGN) */
 #define S_HARD_IGN 4		/* signal is ignored permenantly */
+#define S_RESET 5		/* temporary - to reset a hard ignored sig */
 
 
 extern char nullstr[1];		/* null string */
@@ -146,6 +147,7 @@ setsignal(signo) {
 	sig_t sigact;
 	char *t;
 	extern void onsig();
+	extern sig_t getsigaction();
 
 	if ((t = trap[signo]) == NULL)
 		action = S_DFL;
@@ -176,24 +178,26 @@ setsignal(signo) {
 #if JOBS
 		case SIGTSTP:
 		case SIGTTOU:
-			if (jflag)
+			if (mflag)
 				action = S_IGN;
 			break;
 #endif
 		}
 	}
 	t = &sigmode[signo - 1];
-	if (*t == 0) {	/* current setting unknown */
-		/*
-		 * There is a race condition here if action is not S_IGN.
-		 * A signal can be ignored that shouldn't be.
+	if (*t == 0) {	
+		/* 
+		 * current setting unknown 
 		 */
-		if ((int)(sigact = signal(signo, SIG_IGN)) == -1)
-			error("Signal system call failed");
+		sigact = getsigaction(signo);
 		if (sigact == SIG_IGN) {
-			*t = S_HARD_IGN;
+			if (mflag && (signo == SIGTSTP || 
+			     signo == SIGTTIN || signo == SIGTTOU)) {
+				*t = S_IGN;	/* don't hard ignore these */
+			} else
+				*t = S_HARD_IGN;
 		} else {
-			*t = S_IGN;
+			*t = S_RESET;	/* force to be set */
 		}
 	}
 	if (*t == S_HARD_IGN || *t == action)
@@ -207,6 +211,18 @@ setsignal(signo) {
 	return (int)signal(signo, sigact);
 }
 
+/*
+ * Return the current setting for sig w/o changing it.
+ */
+sig_t
+getsigaction(signo) {
+	struct sigaction sa;
+
+	if (sigaction(signo, (struct sigaction *)0, &sa) == -1)
+		error("Sigaction system call failed");
+
+	return sa.sa_handler;
+}
 
 /*
  * Ignore a signal.
@@ -287,10 +303,11 @@ done:
  * Controls whether the shell is interactive or not.
  */
 
-int is_interactive;
 
 void
 setinteractive(on) {
+	static int is_interactive;
+
 	if (on == is_interactive)
 		return;
 	setsignal(SIGINT);
@@ -311,8 +328,12 @@ exitshell(status) {
 	char *p;
 
 	TRACE(("exitshell(%d) pid=%d\n", status, getpid()));
-	if (setjmp(loc1.loc))  goto l1;
-	if (setjmp(loc2.loc))  goto l2;
+	if (setjmp(loc1.loc)) {
+		goto l1;
+	}
+	if (setjmp(loc2.loc)) {
+		goto l2;
+	}
 	handler = &loc1;
 	if ((p = trap[0]) != NULL && *p != '\0') {
 		trap[0] = NULL;

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)error.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)error.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -204,7 +204,7 @@ STATIC const struct errname errormsg[] = {
 #endif
 	ENOMEM, ALL,	"not enough memory",
 #ifdef ENOLINK
-	ENOLINK, ALL,	"remote access failed"
+	ENOLINK, ALL,	"remote access failed",
 #endif
 #ifdef EMULTIHOP
 	EMULTIHOP, ALL,	"remote access failed",

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)jobs.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include "shell.h"
@@ -83,7 +83,6 @@ STATIC void freejob(struct job *);
 STATIC int procrunning(int);
 STATIC int dowait(int, struct job *);
 STATIC int waitproc(int, int *);
-STATIC char *commandtext(union node *);
 #else
 STATIC void restartjob();
 STATIC struct job *getjob();
@@ -91,12 +90,10 @@ STATIC void freejob();
 STATIC int procrunning();
 STATIC int dowait();
 STATIC int waitproc();
-STATIC char *commandtext();
 #endif
 
 
- 
-#if JOBS
+
 /*
  * Turn job control on and off.
  *
@@ -109,15 +106,17 @@ MKINIT int jobctl;
 
 void
 setjobctl(on) {
+#ifdef OLD_TTY_DRIVER
 	int ldisc;
+#endif
 
 	if (on == jobctl || rootshell == 0)
 		return;
 	if (on) {
 		do { /* while we are in the background */
 			if (ioctl(2, TIOCGPGRP, (char *)&initialpgrp) < 0) {
-				out2str("ash: can't access tty; job control turned off\n");
-				jflag = 0;
+				out2str("sh: can't access tty; job control turned off\n");
+				mflag = 0;
 				return;
 			}
 			if (initialpgrp == -1)
@@ -127,13 +126,16 @@ setjobctl(on) {
 				continue;
 			}
 		} while (0);
+#ifdef OLD_TTY_DRIVER
 		if (ioctl(2, TIOCGETD, (char *)&ldisc) < 0 || ldisc != NTTYDISC) {
-			out2str("ash: need new tty driver to run job control; job control turned off\n");
-			jflag = 0;
+			out2str("sh: need new tty driver to run job control; job control turned off\n");
+			mflag = 0;
 			return;
 		}
+#endif
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
+		setsignal(SIGTTIN);
 		setpgrp(0, rootpid);
 		ioctl(2, TIOCSPGRP, (char *)&rootpid);
 	} else { /* turning job control off */
@@ -141,10 +143,10 @@ setjobctl(on) {
 		ioctl(2, TIOCSPGRP, (char *)&initialpgrp);
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
+		setsignal(SIGTTIN);
 	}
 	jobctl = on;
 }
-#endif
 
 
 #ifdef mkinit
@@ -534,7 +536,7 @@ forkshell(jp, n, mode)
 		clear_traps();
 #if JOBS
 		jobctl = 0;		/* do job control only in root shell */
-		if (wasroot && mode != FORK_NOJOB && jflag) {
+		if (wasroot && mode != FORK_NOJOB && mflag) {
 			if (jp == NULL || jp->nprocs == 0)
 				pgrp = getpid();
 			else
@@ -550,7 +552,8 @@ forkshell(jp, n, mode)
 		} else if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if (jp == NULL || jp->nprocs == 0) {
+			if ((jp == NULL || jp->nprocs == 0) &&
+			    ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
@@ -560,7 +563,8 @@ forkshell(jp, n, mode)
 		if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if (jp == NULL || jp->nprocs == 0) {
+			if ((jp == NULL || jp->nprocs == 0) &&
+			    ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
@@ -574,7 +578,7 @@ forkshell(jp, n, mode)
 		}
 		return pid;
 	}
-	if (rootshell && mode != FORK_NOJOB && jflag) {
+	if (rootshell && mode != FORK_NOJOB && mflag) {
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
@@ -805,7 +809,7 @@ waitproc(block, status)
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
-	return wait3((union wait *)status, flags, (struct rusage *)NULL);
+	return wait3(status, flags, (struct rusage *)NULL);
 #else
 #ifdef SYSV
 	int (*save)();
@@ -826,7 +830,30 @@ waitproc(block, status)
 #endif
 }
 
+/*
+ * return 1 if there are stopped jobs, otherwise 0
+ */
+int job_warning = 0;
+int
+stoppedjobs()
+{
+	register int jobno;
+	register struct job *jp;
 
+	if (job_warning)
+		return (0);
+	for (jobno = 1, jp = jobtab; jobno <= njobs; jobno++, jp++) {
+		if (jp->used == 0)
+			continue;
+		if (jp->state == JOBSTOPPED) {
+			out2str("You have stopped jobs.\n");
+			job_warning = 2;
+			return (1);
+		}
+	}
+
+	return (0);
+}
 
 /*
  * Return a string identifying a command (to be printed by the
@@ -836,15 +863,16 @@ waitproc(block, status)
 STATIC char *cmdnextc;
 STATIC int cmdnleft;
 STATIC void cmdtxt(), cmdputs();
+#define MAXCMDTEXT	200
 
-STATIC char *
+char *
 commandtext(n)
 	union node *n;
 	{
 	char *name;
 
-	cmdnextc = name = ckmalloc(50);
-	cmdnleft = 50 - 4;
+	cmdnextc = name = ckmalloc(MAXCMDTEXT);
+	cmdnleft = MAXCMDTEXT - 4;
 	cmdtxt(n);
 	*cmdnextc = '\0';
 	return name;
@@ -861,6 +889,8 @@ cmdtxt(n)
 	int i;
 	char s[2];
 
+	if (n == NULL)
+		return;
 	switch (n->type) {
 	case NSEMI:
 		cmdtxt(n->nbinary.ch1);
