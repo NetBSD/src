@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.63 1999/08/05 04:04:29 sommerfeld Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.64 1999/08/05 04:36:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,13 +288,10 @@ arp_drain()
 	int count = 0;
 	struct mbuf *mold;
 	
-	printf("arp_drain: entered\n");
-
 	if (arp_lock_try(0) == 0) {
 		printf("arp_drain: locked; punting\n");
 		return;
 	}
-		
 	
 	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
 		nla = la->la_list.le_next;
@@ -308,8 +305,6 @@ arp_drain()
 		}
 	}
 	ARP_UNLOCK();
-	
-	printf("arp_drain: freed %d\n", count);
 }
 
 
