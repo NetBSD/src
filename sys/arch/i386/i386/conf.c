@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.127.2.1 2000/07/30 17:56:52 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.127.2.2 2001/05/01 10:41:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ cdev_decl(scsibus);
 /* open, close, read, write */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
