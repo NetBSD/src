@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.16 2001/12/14 08:46:20 gehenna Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.17 2001/12/17 12:16:15 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.16 2001/12/14 08:46:20 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.17 2001/12/17 12:16:15 gehenna Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -123,9 +123,9 @@ umass_attach_bus(struct umass_softc *sc)
 	sc->bus.sc_channel.chan_max_periph = 1;
 
 	
-	switch (sc->cmd_proto) {
-	case CPROTO_RBC:
-	case CPROTO_SCSI:
+	switch (sc->sc_cmd) {
+	case UMASS_CPROTO_RBC:
+	case UMASS_CPROTO_SCSI:
 #if NSCSIBUS > 0
 		sc->bus.sc_channel.chan_bustype = &scsi_bustype;
 		sc->bus.sc_channel.chan_ntargets = UMASS_SCSIID_DEVICE + 1;
@@ -140,14 +140,14 @@ umass_attach_bus(struct umass_softc *sc)
 #endif
 		break;
 
-	case CPROTO_UFI:
-	case CPROTO_ATAPI:
+	case UMASS_CPROTO_UFI:
+	case UMASS_CPROTO_ATAPI:
 #if NATAPIBUS > 0
 		sc->bus.sc_channel.chan_bustype = &umass_atapi_bustype;
 		sc->bus.sc_channel.chan_ntargets = 2;
 		sc->bus.sc_channel.chan_nluns = 1;
 
-		if (sc->quirks & NO_TEST_UNIT_READY)
+		if (sc->sc_quirks & UMASS_QUIRK_NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
 		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
 				     USBDEVNAME(sc->sc_dev)));
@@ -160,7 +160,7 @@ umass_attach_bus(struct umass_softc *sc)
 
 	default:
 		printf("%s: cmd proto=0x%x not supported yet\n", 
-		       USBDEVNAME(sc->sc_dev), sc->cmd_proto);
+		       USBDEVNAME(sc->sc_dev), sc->sc_cmd);
 		return (1);
 	}
 
@@ -288,14 +288,14 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		/* XXX should use transform */
 
 		if (cmd->opcode == START_STOP &&
-		    (sc->quirks & NO_START_STOP)) {
+		    (sc->sc_quirks & UMASS_QUIRK_NO_START_STOP)) {
 			/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
 			xs->error = XS_NOERROR;
 			goto done;
 		}
 
 		if (cmd->opcode == INQUIRY &&
-		    (sc->quirks & FORCE_SHORT_INQUIRY)) {
+		    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
 			/*
 			 * some drives wedge when asked for full inquiry
 			 * information.
@@ -413,7 +413,7 @@ umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
 	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
 	/* If it's not a floppy, we don't know what to do. */
-	if (sc->cmd_proto != CPROTO_UFI)
+	if (sc->sc_cmd != UMASS_CPROTO_UFI)
 		return (0);
 
 	switch (sectors) {
@@ -468,7 +468,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->bus.sc_sense_cmd.length = sizeof(xs->sense);
 
 		cmdlen = sizeof(sc->bus.sc_sense_cmd);
-		if (sc->cmd_proto == CPROTO_UFI) /* XXX */
+		if (sc->sc_cmd == UMASS_CPROTO_UFI) /* XXX */
 			cmdlen = UFI_COMMAND_LENGTH;
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &sc->bus.sc_sense_cmd, cmdlen,
@@ -513,8 +513,8 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen
-		    || ((sc->quirks & RS_NO_CLEAR_UA) /* XXX */) )) {
+		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen ||
+		    (sc->sc_quirks & UMASS_QUIRK_RS_NO_CLEAR_UA /* XXX */))) {
 			/*
 			 * Some drivers return SENSE errors even after INQUIRY.
 			 * The upper layer doesn't like that.
