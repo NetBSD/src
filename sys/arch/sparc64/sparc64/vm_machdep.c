@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.39 2001/08/19 18:08:31 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,8 +173,7 @@ vunmapbuf(bp, len)
 	kva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
-
-	/* This will call pmap_remove() for us. */
+	pmap_remove(pmap_kernel(), kva, kva + len);
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
