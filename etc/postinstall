@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.74.2.2 2004/07/25 07:52:47 tron Exp $
+# $NetBSD: postinstall,v 1.74.2.3 2004/08/30 10:08:08 tron Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -868,6 +868,49 @@ do_sendmail()
 			failed=1
 		fi
 		msg "Client queue ${_cqueuepath} has wrong owner/mode${_notfixed}"
+	fi
+
+	return ${failed}
+}
+
+#
+#	hosts
+#
+additem hosts "/etc/hosts being up to date"
+do_hosts()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_hosts  fix|check"
+	op=$1
+
+	failed=0
+	h=${DEST_DIR}/hosts
+	if ! grep ^127 $h | sed 's/^[^ 	]*//' | grep '\.' > /dev/null; then
+		msg "/etc/hosts entry for localhost (ipv4) missing dotted alias"
+
+		if [ "${op}" = "fix" ]; then
+			if ! sed 's/^\(127.*\)$/\1 localhost./' < $h \
+			    > ${SCRATCHDIR}/hosts ||
+			    ! mv ${SCRATCHDIR}/hosts $h; then
+				msg "Can't update /etc/hosts"
+				failed=1
+			fi
+		else
+			failed=1
+		fi
+	fi
+	if ! grep ^::1 $h | sed 's/^[^ 	]*//' | grep '\.' > /dev/null; then
+		msg "/etc/hosts entry for localhost (ipv6) missing dotted alias"
+
+		if [ "${op}" = "fix" ]; then
+			if ! sed 's/^\(::1.*\)$/\1 localhost./' < $h \
+			    > ${SCRATCHDIR}/hosts ||
+			    ! mv ${SCRATCHDIR}/hosts $h; then
+				msg "Can't update /etc/hosts"
+				failed=1
+			fi
+		else
+			failed=1
+		fi
 	fi
 
 	return ${failed}
