@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.143 2002/12/22 02:17:24 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.144 2002/12/28 02:35:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -600,7 +600,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 		
 		simple_lock(&cpi->msg.lock);
@@ -641,7 +641,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
 
-			if (CPU_READY(cpi))
+			if (CPU_NOTREADY(cpi))
 				continue;
 
 			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
@@ -653,7 +653,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 		simple_unlock(&cpi->msg.lock);
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
@@ -679,7 +679,7 @@ mp_pause_cpus()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 
 		simple_lock(&cpi->msg.lock);
