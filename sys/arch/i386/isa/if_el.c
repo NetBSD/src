@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.3 1994/03/01 05:41:26 mycroft Exp $
+ *	$Id: if_el.c,v 1.4 1994/03/02 16:23:23 mycroft Exp $
  */
 
 /*
@@ -402,8 +402,10 @@ el_start(ifp)
 					}
 				} else
 					done = 1;
-			} else
+			} else {
+				sc->sc_arpcom.ac_if.if_opackets++;
 				done = 1;
+			}
 		}
 		if (done == -1)
 			/* Packet not transmitted. */
