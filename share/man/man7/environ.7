@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.10 2001/01/03 13:35:11 lukem Exp $
+.\"	$NetBSD: environ.7,v 1.11 2001/10/15 13:22:22 blymn Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,6 +165,12 @@ of
 is ignored if
 .Ev TERMCAP
 contains a full pathname.
+.It Ev TIMEFORMAT
+A
+.Xr strftime 3
+format string that may be used by programs such as 
+.Xr dump 8
+for formatting timestamps.
 .It Ev TMPDIR
 The directory in which to store temporary files.
 Most applications use either
@@ -222,7 +228,8 @@ unless you know what you are doing.
 .Xr system 3 ,
 .Xr termcap 3 ,
 .Xr audio 4 ,
-.Xr termcap 5
+.Xr termcap 5 ,
+.Xr dump 8
 .Sh HISTORY
 The
 .Nm
