@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: tar.c,v 1.5 1993/08/02 17:49:06 mycroft Exp $";
+static char rcsid[] = "$Id: tar.c,v 1.6 1993/08/07 07:42:54 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -184,6 +184,9 @@ struct option long_options[] =
   {"volno-file", 1, 0, 17},
   {"force-local", 0, &f_force_local, 1},
   {"atime-preserve", 0, &f_atime_preserve, 1},
+
+  {"norecurse", 0, &f_norecurse, 1},
+  {"unlink", 0, &f_unlink, 1},
 
   {0, 0, 0, 0}
 };
@@ -761,6 +764,8 @@ Other options:\n\
 			filter the archive through PROG (which must accept -d)\n\
 --block-compress	block the output of compression program for tapes\n\
 -[0-7][lmh]		specify drive and density\n\
+--norecurse		don't recurse into subdirectories when creating\n\
+--unlink		unlink files before creating them\n\
 ", stdout);
 }
 

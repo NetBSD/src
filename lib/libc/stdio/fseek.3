@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fseek.3	6.11 (Berkeley) 6/29/91
-.\"	$Id: fseek.3,v 1.2 1993/08/01 07:45:00 mycroft Exp $
+.\"	$Id: fseek.3,v 1.3 1993/08/07 07:44:41 cgd Exp $
 .\"
 .Dd June 29, 1991
 .Dt FSEEK 3
@@ -139,8 +139,12 @@ return 0,
 and
 .Fn ftell
 returns the current offset.
-Otherwise, \-1 is returned and the global variable errno is set to
-indicate the error.
+Otherwise, 
+.Fn fseek
+returns \-1 and 
+the others
+return a nonzero value and the global variable errno is 
+set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
 .It Bq Er EBADF

@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.6 1993/08/01 18:28:00 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.7 1993/08/07 07:46:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -515,6 +515,7 @@ readmbr(f)
 	 */
 	dp = dos_partitions;
 	npart = njunk = nboot = 0;
+	bsdp = NULL;
 	for (i = 0; i < NDOSPART; i++, dp++) {
 		if (dp->dp_flag != 0x80 && dp->dp_flag != 0) njunk++;
 		else
@@ -530,7 +531,7 @@ readmbr(f)
 		return (0);
 	/* if no bsd partition, pass back first one */
 	if (!bsdp) {
-		Warning("DOS partition table with no valid 386BSD partition");
+		Warning("DOS partition table with no valid NetBSD partition");
 		return (dos_partitions);
 	}
 	return (bsdp);
