@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.13 1997/03/15 16:36:19 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.14 1998/03/21 10:02:40 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -55,6 +55,7 @@
 struct	tty *gencn_tty[1];
 
 int	consinied = 0;
+int	consopened = 0;
 
 int	gencnparam __P((struct tty *, struct termios *));
 void	gencnstart __P((struct tty *));
@@ -106,6 +107,7 @@ gencnopen(dev, flag, mode, p)
         } else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
                 return EBUSY;
         tp->t_state |= TS_CARR_ON;
+	consopened = 1;
 	mtpr(GC_RIE, PR_RXCS); /* Turn on interrupts */
 	mtpr(GC_TIE, PR_TXCS);
 
@@ -120,6 +122,7 @@ gencnclose(dev, flag, mode, p)
 {
         struct tty *tp = gencn_tty[0];
 
+	consopened = 0;
         (*linesw[tp->t_line].l_close)(tp, flag);
         ttyclose(tp);
         return (0);
@@ -299,4 +302,18 @@ gencngetc(dev)
 	if (i == 13)
 		i = 10;
 	return i;
+}
+
+void 
+gencnpollc(dev, pollflag)
+        dev_t dev;
+        int pollflag;
+{
+        if (pollflag)  {
+                mtpr(0, PR_RXCS);
+	        mtpr(0, PR_TXCS); 
+	} else if (consopened) {
+	        mtpr(GC_RIE, PR_RXCS);
+	        mtpr(GC_TIE, PR_TXCS);
+	}
 }
