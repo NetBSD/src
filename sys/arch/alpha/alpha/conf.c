@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.23 1997/04/07 05:19:02 cgd Exp $ */
+/* $NetBSD: conf.c,v 1.24 1997/09/02 23:41:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,10 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.24 1997/09/02 23:41:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +145,8 @@ cdev_decl(fd);
 #include "ipfilter.h"
 cdev_decl(ipl);
 cdev_decl(wd);
+#include "satlink.h"
+cdev_decl(satlink);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -186,6 +192,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
+	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
