@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.44 2003/01/18 21:02:35 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.45 2003/01/18 21:18:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.44 2003/01/18 21:02:35 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.45 2003/01/18 21:18:18 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -197,9 +197,11 @@ get_interrupt_events(void)
 		ie->ie_name = malloc(evcnt.ev_namelen + 1);
 		if (ie->ie_group == NULL || ie->ie_name == NULL)
 			return;
-		if (!KREAD(evcnt.ev_group, ie->ie_group, evcnt.ev_grouplen + 1))
+		if (!KREAD((char *)evcnt.ev_group, ie->ie_group,
+		    evcnt.ev_grouplen + 1))
 			return;
-		if (!KREAD(evcnt.ev_name, ie->ie_name, evcnt.ev_namelen + 1))
+		if (!KREAD((char *)evcnt.ev_name, ie->ie_name,
+		    evcnt.ev_namelen + 1))
 			return;
 		ie->ie_count = &evptr->ev_count;
 		ie->ie_loc = 0;
