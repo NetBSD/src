@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.5 1994/07/27 07:37:35 cgd Exp $
+ *	$Id: ufs.c,v 1.6 1994/07/27 07:58:45 cgd Exp $
  */
 
 /*
@@ -73,6 +73,7 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 
