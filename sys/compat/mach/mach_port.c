@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.33 2003/02/02 19:07:18 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.34 2003/02/05 23:58:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.33 2003/02/02 19:07:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.34 2003/02/05 23:58:10 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -425,6 +425,11 @@ mach_port_init(void)
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();
 	mach_io_master_port = mach_port_get();
+
+	mach_bootstrap_port->mp_flags |= MACH_MP_INKERNEL;
+	mach_clock_port->mp_flags |= MACH_MP_INKERNEL;
+	mach_io_master_port->mp_flags |= MACH_MP_INKERNEL;
+
 	mach_saved_bootstrap_port = mach_bootstrap_port;
 
 	return;
@@ -439,6 +444,7 @@ mach_port_get(void)
 	bzero(mp, sizeof(*mp));
 	mp->mp_recv = NULL;
 	mp->mp_count = 0;
+	mp->mp_flags = 0;
 	TAILQ_INIT(&mp->mp_msglist);
 	lockinit(&mp->mp_msglock, PZERO|PCATCH, "mach_port", 0, 0);
 

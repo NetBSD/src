@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.26 2003/02/02 19:07:17 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.27 2003/02/05 23:58:09 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.26 2003/02/02 19:07:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.27 2003/02/05 23:58:09 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,10 @@ mach_e_proc_init(p, vmspace)
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
 	med->med_exception = mach_port_get();
+
+	med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
+	med->med_host->mp_flags |= MACH_MP_INKERNEL;
+	med->med_exception->mp_flags |= MACH_MP_INKERNEL;
 
 	/* Make sure they will not be deallocated */
 	med->med_kernel->mp_refcount++;
