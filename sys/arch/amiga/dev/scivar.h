@@ -34,13 +34,23 @@
  * SUCH DAMAGE.
  *
  *	@(#)scivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: scivar.h,v 1.2 1994/05/08 05:53:42 chopps Exp $
+ *	$Id: scivar.h,v 1.3 1994/05/29 04:50:24 chopps Exp $
  */
+#ifndef _SCIVAR_H_
+#define _SCIVAR_H_
+
+struct	sci_pending {
+	TAILQ_ENTRY(sci_pending) link;
+	struct scsi_xfer *xs;
+};
+
 
 struct	sci_softc {
-	struct	amiga_ctlr *sc_ac;
-	struct	devqueue sc_dq;
-	struct	devqueue sc_sq;
+	struct	device sc_dev;
+	struct	scsi_link sc_link;	/* proto for sub devices */
+	TAILQ_HEAD(,sci_pending) sc_xslist;
+	struct	sci_pending sc_xsstore[8][8];
+	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
 
 	volatile u_char	*sci_data;	/* r: Current data */
 	volatile u_char	*sci_odata;	/* w: Out data */
@@ -83,3 +93,52 @@ struct	sci_softc {
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
 				   or it rejected the request and we stay async *
+
+#define	PHASE		0x07		/* mask for psns/pctl phase */
+#define	DATA_OUT_PHASE	0x00
+#define	DATA_IN_PHASE	0x01
+#define	CMD_PHASE	0x02
+#define	STATUS_PHASE	0x03
+#define	BUS_FREE_PHASE	0x04
+#define	ARB_SEL_PHASE	0x05	/* Fuji chip combines arbitration with sel. */
+#define	MESG_OUT_PHASE	0x06
+#define	MESG_IN_PHASE	0x07
+
+#define	MSG_CMD_COMPLETE	0x00
+#define MSG_EXT_MESSAGE		0x01
+#define	MSG_SAVE_DATA_PTR	0x02
+#define	MSG_RESTORE_PTR		0x03
+#define	MSG_DISCONNECT		0x04
+#define	MSG_INIT_DETECT_ERROR	0x05
+#define	MSG_ABORT		0x06
+#define	MSG_REJECT		0x07
+#define	MSG_NOOP		0x08
+#define	MSG_PARITY_ERROR	0x09
+#define	MSG_BUS_DEVICE_RESET	0x0C
+#define	MSG_IDENTIFY		0x80
+#define	MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
+#define	MSG_SYNC_REQ 		0x01
+
+
+#define	STS_CHECKCOND	0x02	/* Check Condition (ie., read sense) */
+#define	STS_CONDMET	0x04	/* Condition Met (ie., search worked) */
+#define	STS_BUSY	0x08
+#define	STS_INTERMED	0x10	/* Intermediate status sent */
+#define	STS_EXT		0x80	/* Extended status valid */
+
+/*
+ * XXXX 
+ */
+struct scsi_fmt_cdb {
+	int len;		/* cdb length (in bytes) */
+	u_char cdb[28];		/* cdb to use on next read/write */
+};
+
+struct buf;
+struct scsi_xfer;
+
+void sci_minphys __P((struct buf *bp));
+u_int sci_adinfo __P((void));
+int sci_scsicmd __P((struct scsi_xfer *));
+
+#endif /* _SCIVAR_H_ */
