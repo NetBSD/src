@@ -196,7 +196,7 @@ sub sender_permitted_from {
 
   if    ($result eq "pass")  { return "DUNNO"; }
   elsif ($result eq "fail")  { return "REJECT " . ($smtp_comment || $header_comment); }
-  elsif ($result eq "error") { return "450 temporary failure: $smtp_comemnt"; }
+  elsif ($result eq "error") { return "450 temporary failure: $smtp_comment"; }
   else                       { return "DUNNO"; }
   # unknown, softfail, and none all return DUNNO
 
