@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_mbuf.c	7.19 (Berkeley) 4/20/91
- *	$Id: uipc_mbuf.c,v 1.6 1993/12/18 04:22:25 mycroft Exp $
+ *	$Id: uipc_mbuf.c,v 1.7 1994/01/08 05:32:20 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@
 #include <sys/protosw.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;

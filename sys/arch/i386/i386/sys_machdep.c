@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.6 1994/01/05 03:18:25 mycroft Exp $
+ *	$Id: sys_machdep.c,v 1.7 1994/01/08 05:29:15 mycroft Exp $
  */
 
 #include "npx.h"
@@ -57,6 +57,7 @@
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
+#include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
