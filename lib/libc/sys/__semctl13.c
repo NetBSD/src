@@ -1,4 +1,4 @@
-/*	$NetBSD: __semctl13.c,v 1.2 2002/01/03 01:55:49 thorpej Exp $	*/
+/*	$NetBSD: __semctl13.c,v 1.3 2002/01/03 16:13:11 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __semctl13.c,v 1.2 2002/01/03 01:55:49 thorpej Exp $");
+__RCSID("$NetBSD: __semctl13.c,v 1.3 2002/01/03 16:13:11 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ int __semctl13(va_alist)
 	case SETVAL:
 	case SETALL:
 #ifdef __lint__
-		memcpy(&semun, &semun, sizeof(semun));
+		memcpy(&semun, &ap, sizeof(semun));
 #else
 		semun = va_arg(ap, union __semun);
 #endif
