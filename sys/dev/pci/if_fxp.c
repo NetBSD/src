@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.21 1998/08/25 01:08:15 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.22 1998/10/19 23:51:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1088,11 +1088,12 @@ fxp_stop(sc)
 	/*
 	 * Release any xmit buffers.
 	 */
-	for (txp = sc->cbl_first; txp != NULL && txp->cb_soft.mb_head != NULL;
-	    txp = txp->cb_soft.next) {
-		bus_dmamap_unload(sc->sc_dmat, txp->cb_soft.dmamap);
-		m_freem(txp->cb_soft.mb_head);
-		txp->cb_soft.mb_head = NULL;
+	for (txp = sc->control_data->fcd_txcbs, i = 0; i < FXP_NTXCB; i++) {
+		if (txp[i].cb_soft.mb_head != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, txp[i].cb_soft.dmamap);
+			m_freem(txp[i].cb_soft.mb_head);
+			txp[i].cb_soft.mb_head = NULL;
+		}
 	}
 	sc->tx_queued = 0;
 
