@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.33.4.1 1996/12/10 08:04:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -323,6 +323,51 @@ sys_seteuid(p, v, retval)
 	return (0);
 }
 
+int
+sys_setreuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_setreuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+	} */ *uap = v;
+	register struct pcred *pc = p->p_cred;
+	register uid_t ruid, euid;
+	int error;
+
+	ruid = SCARG(uap, ruid);
+	euid = SCARG(uap, euid);
+
+	if (ruid != (uid_t)-1 &&
+	    ruid != pc->p_ruid && ruid != pc->pc_ucred->cr_uid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (euid != (uid_t)-1 &&
+	    euid != pc->p_ruid && euid != pc->pc_ucred->cr_uid &&
+	    euid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (euid != (uid_t)-1) {
+		pc->pc_ucred = crcopy(pc->pc_ucred);
+		pc->pc_ucred->cr_uid = euid;
+	}
+
+	if (ruid != (uid_t)-1) {
+		(void)chgproccnt(pc->p_ruid, -1);
+		(void)chgproccnt(ruid, 1);
+		pc->p_ruid = ruid;
+		pc->p_svuid = pc->pc_ucred->cr_uid;
+	}
+
+	if (euid != (uid_t)-1 && ruid != (uid_t)-1)
+		p->p_flag |= P_SUGID;
+	return (0);
+}
+
 /* ARGSUSED */
 int
 sys_setgid(p, v, retval)
@@ -342,12 +387,13 @@ sys_setgid(p, v, retval)
 #else
 	gid = SCARG(uap, gid);
 #endif
-	if (gid != pc->p_rgid && (error = suser(pc->pc_ucred, &p->p_acflag)))
+	if (gid != pc->p_rgid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
-	pc->p_svgid = gid;		/* ??? */
+	pc->p_svgid = gid;
 	p->p_flag |= P_SUGID;
 	return (0);
 }
@@ -377,6 +423,49 @@ sys_setegid(p, v, retval)
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
 	p->p_flag |= P_SUGID;
+	return (0);
+}
+
+int
+sys_setregid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_setregid_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+	} */ *uap = v;
+	register struct pcred *pc = p->p_cred;
+	register gid_t rgid, egid;
+	int error;
+
+	rgid = SCARG(uap, rgid);
+	egid = SCARG(uap, egid);
+
+	if (rgid != (gid_t)-1 &&
+	    rgid != pc->p_rgid && rgid != pc->pc_ucred->cr_gid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (egid != (gid_t)-1 &&
+	    egid != pc->p_rgid && egid != pc->pc_ucred->cr_gid &&
+	    egid != pc->p_svgid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (egid != (gid_t)-1) {
+		pc->pc_ucred = crcopy(pc->pc_ucred);
+		pc->pc_ucred->cr_gid = egid;
+	}
+
+	if (rgid != (gid_t)-1) {
+		pc->p_rgid = rgid;
+		pc->p_svgid = pc->pc_ucred->cr_gid;
+	}
+
+	if (egid != (gid_t)-1 && rgid != (gid_t)-1)
+		p->p_flag |= P_SUGID;
 	return (0);
 }
 
