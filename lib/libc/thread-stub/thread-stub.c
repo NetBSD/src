@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.10 2004/12/06 18:58:12 nathanw Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.11 2004/12/13 16:07:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -376,11 +376,12 @@ __libc_thr_self_stub(void)
 	return ((thr_t) -1);
 }
 
-void
+int
 __libc_thr_yield_stub(void)
 {
 
 	/* Nothing to do. */
+	return (0);
 }
 
 int
@@ -406,7 +407,6 @@ __libc_thr_exit_stub(void *v)
 {
 	/* LINTED deliberate lack of effect */
 	(void)v;
-
 	exit(0);
 }
 
