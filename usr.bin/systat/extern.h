@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2000/01/08 23:12:37 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2000/06/04 16:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,6 +60,7 @@ extern int	nports;
 extern int	protos;
 extern int	verbose;
 extern int	nflag;
+extern char	*memf;
 
 struct inpcb;
 #ifdef INET6
@@ -100,6 +101,7 @@ void	 fetchnetstat __P((void));
 void	 fetchpigs __P((void));
 void	 fetchswap __P((void));
 void	 fetchtcp __P((void));
+int	 fetch_cptime __P((u_int64_t *));
 void	 global_help __P((char *args));
 void	 global_interval __P((char *args));
 void	 global_load __P((char *args));
