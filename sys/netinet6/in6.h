@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.30 2001/10/18 07:44:34 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.31 2001/10/24 06:36:38 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ struct route_in6 {
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
 #define IPV6_V6ONLY		27 /* bool; make AF_INET6 sockets v6 only */
 
-#if 1 /*IPSEC*/
+#if 1 /* IPSEC */
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
