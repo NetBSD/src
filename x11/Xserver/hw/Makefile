@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/27 15:16:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/03 02:05:49 takemura Exp $
 
 SUBDIR=	vfb xnest
 
@@ -13,6 +13,10 @@ SUBDIR+=xfree86
 
 .if ${MACHINE} == "macppc"
 SUBDIR+=netbsd/macppc
+.endif
+
+.if ${MACHINE} == "hpcmips"
+SUBDIR+=netbsd/hpc
 .endif
 
 
