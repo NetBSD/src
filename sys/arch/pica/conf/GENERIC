@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 1996/08/26 23:40:46 mrg Exp $
+#	$NetBSD: GENERIC,v 1.4 1997/01/11 09:11:43 mikel Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -90,3 +90,4 @@ pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	vnd		4	# virtual disk
+pseudo-device	ccd		4	# concatenated disks

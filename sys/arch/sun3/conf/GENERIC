@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.33 1996/12/28 23:27:28 pk Exp $
+#	$NetBSD: GENERIC,v 1.34 1997/01/11 09:11:39 mikel Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -177,3 +177,4 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	vnd	4		# paging to files
+#pseudo-device	ccd	4		# concatenated disks

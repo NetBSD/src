@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 1996/12/28 23:10:45 pk Exp $
+#	$NetBSD: GENERIC,v 1.33 1997/01/11 09:11:37 mikel Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -149,3 +149,4 @@ pseudo-device	pty		64
 pseudo-device	md		1
 pseudo-device	sl		4
 pseudo-device	vnd		4
+pseudo-device	ccd		4
