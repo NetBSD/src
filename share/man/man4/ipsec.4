@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.5 2000/04/20 08:08:33 itojun Exp $
+.\"	$NetBSD: ipsec.4,v 1.6 2000/04/20 14:24:43 itojun Exp $
 .\"	$KAME: ipsec.4,v 1.7 2000/04/20 08:01:41 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -231,8 +231,14 @@ There is no single standard for policy engine API,
 so the policy engine API described herein is just for KAME implementation.
 .Pp
 AH tunnel may not work as you might expect.
-Packets will be exchanged just fine, however,
-policy engine will not consider the encapsulated packet to be authentic.
+If you configure
+.Dq require
+policy against AH tunnel for inbound, tunnelled packets will be rejected.
+This is because AH authenticates encapsulating
+.Pq outer
+packet, not the encapsulated
+.Pq inner
+packet.
 .\"
 .Sh HISTORY
 The implementation described herein appeared in WIDE/KAME IPv6/IPsec stack.
