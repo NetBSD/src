@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.5 2000/02/28 05:10:57 enami Exp $ */
+.\" $NetBSD: useradd.8,v 1.6 2000/10/02 18:28:28 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -43,8 +43,11 @@
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
-.Op Fl g Ar gid/name/=uid
-.Op Fl r Ar low..high
+.Oo
+.Fl g Ar gid | name | Li =uid Oc
+.Oo
+.Fl r Ar low Ns Li .. Ns Ar high
+.Oc
 .Nm ""
 .Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
@@ -52,12 +55,15 @@
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
-.Op Fl g Ar gid/name/=uid
+.Oo
+.Fl g Ar gid | name | Li =uid Oc
 .Op Fl k Ar skel-dir
 .Op Fl m
 .Op Fl o
 .Op Fl p Ar password
-.Op Fl r Ar low..high
+.Oo
+.Fl r Ar low Ns Li .. Ns Ar high
+.Oc
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Op Fl v
@@ -92,18 +98,23 @@ utility. Together with one of the options shown for the first version
 of the command, -D will set the default to be the new value.
 .It Fl b Ar base-dir
 sets the base directory. This is the directory to which the user name
-is added, which will be created if the -m option is specified and no
--d option is specified.
+is added, which will be created if the
+.Fl m
+option is specified and no
+.Fl d
+option is specified.
 .It Fl e Ar expiry-time
 sets the time at which the current password will expire for this user.
 .It Fl f Ar inactive-secs
 sets the number of seconds after which, if no login has occurred for
 the user during that time, the login will be "locked".
-.It Fl g Ar gid/groupname/=uid
+.It Fl g Ar gid | groupname | Li =uid
 sets the default group for any user added using the
 .Nm
 command.
-.It Fl r Ar low..high
+.It Xo
+.Fl r Ar low Ns Li .. Ns Ar high
+.Xc
 sets the low and high bounds of uid ranges for new users. A new user
 can only be created if there are uids which can be assigned from one
 of the free ranges.
@@ -126,7 +137,7 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar base_dir <path-to-base-dir> .
+.D1 Ic base_dir Ar path-to-base-dir
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
@@ -150,11 +161,11 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar expire <secs-to-expiry> .
-.It Fl g Ar gid/name/=uid
+.D1 Ic expire Ar secs-to-expiry
+.It Fl g Ar gid | name | Li =uid
 gives the group name or identifier to be used for the new user's primary group.
 If this is
-.Ar "-g=uid" ,
+.Ql =uid ,
 then a uid and gid will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
@@ -165,7 +176,10 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar group <groupname/groupid/=uid> .
+.Bd -ragged -offset indent
+.Ic group
+.Ar gid | name | Li =uid
+.Ed
 .It Fl k Ar skeleton directory
 gives the skeleton directory in which to find dot files
 with which to populate the new user's home directory.
@@ -184,7 +198,7 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar password <encrypted-password> .
+.D1 Ic password Ar encrypted-password
 .It Fl s Ar shell
 specifies the login shell for the new user.
 This value can be preset for all users
@@ -193,7 +207,7 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar shell <login-shell> .
+.D1 Ic shell Ar login-shell
 .It Fl u Ar uid
 specifies a uid for the new user.
 Boundaries for this value can be preset for all users
@@ -202,7 +216,9 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - they have the format:
-.Ar range <starting-uid>..<ending-uid> .
+.Bd -unfilled -offset indent -compact
+.Ic range Ar starting-uid Ns Li .. Ns Ar ending-uid
+.Ed
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
