@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.7 1994/11/25 23:09:20 deraadt Exp $ */
+/*	$NetBSD: promdev.c,v 1.8 1994/12/11 15:18:35 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -38,7 +38,7 @@ struct promvec	*promvec;
 
 int	promopen __P((struct open_file *, ...));
 int	promclose __P((struct open_file *));
-int	promioctl __P((struct open_file *, int, void *));
+int	promioctl __P((struct open_file *, u_long, void *));
 int	promstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
 char	*dev_type __P((int, char *));
 int	getprop __P((int, char *, void *, int));
@@ -184,7 +184,7 @@ promclose(f)
 int
 promioctl(f, cmd, data)
 	struct open_file *f;
-	int cmd;
+	u_long cmd;
 	void *data;
 {
 	return EIO;
