@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.15 2000/03/30 09:45:34 augustss Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.16 2000/04/12 04:21:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -51,12 +51,7 @@ static const char rcsid[] =
 #include <sys/types.h>
 #include <sys/time.h>
 
-#ifdef sun
-#include <netinet/in.h>
-#endif
-
-#if defined(sparc) || defined(mips) || defined(ibm032) || \
-    (defined(__NetBSD__) && !defined(UNALIGNED_ACCESS))
+#if !defined(UNALIGNED_ACCESS)
 #define BPF_ALIGN
 #endif
 
