@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.21 1997/04/07 23:40:08 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.22 1997/04/10 01:03:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 1997/04/07 23:40:08 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 1997/04/10 01:03:07 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,9 +137,7 @@ trap(a0, a1, a2, entry, framep)
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
 	} else {
-#ifdef DIAGNOSTIC
-		sticks = 0xdeadbeef;		/* XXX for -Wuninitialized */
-#endif
+		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 	}
 
 	switch (entry) {
