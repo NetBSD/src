@@ -81,12 +81,18 @@ int     valid_hostname(const char *name)
 	    }
 	    if (!ISDIGIT(ch))
 		non_numeric = 1;
-	} else if (ch == '.' || ch == '-') {
+	} else if (ch == '.') {
 	    if (label_length == 0 || cp[1] == 0) {
 		msg_warn("%s: misplaced delimiter: %.100s", myname, name);
 		return (0);
 	    }
 	    label_length = 0;
+	} else if (ch == '-') {
+	    label_length++;
+	    if (label_length == 1 || cp[1] == 0 || cp[1] == '.') {
+		msg_warn("%s: misplaced hyphen: %.100s", myname, name);
+		return (0);
+	    }
 	} else {
 	    msg_warn("%s: invalid character %d(decimal): %.100s",
 		     myname, ch, name);

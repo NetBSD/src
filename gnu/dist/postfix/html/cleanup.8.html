@@ -20,7 +20,7 @@ CLEANUP(8)                                             CLEANUP(8)
        mations:
 
        <b>o</b>      Insert missing message  headers:  (<b>Resent-</b>)  <b>From:</b>,
-              <b>Message-Id:</b>, and <b>Date:</b>.
+              <b>To:</b>, <b>Message-Id:</b>, and <b>Date:</b>.
 
        <b>o</b>      Extract envelope recipient addresses from (<b>Resent-</b>)
               <b>To:</b>, <b>Cc:</b> and <b>Bcc:</b> message headers when  no  recipi-
@@ -92,6 +92,11 @@ CLEANUP(8)                                             CLEANUP(8)
        <b>hopcount</b><i>_</i><b>limit</b>
               Limit the number of <b>Received:</b> message headers.
 
+       <b>recipients</b><i>_</i><b>witheld</b><i>_</i><b>header</b>
+              The header line that is inserted when no recipients
+              were specified in (Resent-)To: or (Resent-)Cc: mes-
+              sage headers.
+
 <b>Address</b> <b>transformations</b>
        <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
               The  destination  for  undeliverable  mail from &lt;&gt;.
@@ -120,11 +125,6 @@ CLEANUP(8)                                             CLEANUP(8)
 
        <b>virtual</b><i>_</i><b>maps</b>
               Address mapping lookup table for envelope recipient
-              addresses.
-
-<b>Resource</b> <b>controls</b>
-       <b>duplicate</b><i>_</i><b>filter</b><i>_</i><b>limit</b>
-              Limit  the  number  of envelope recipients that are
 
 
 
@@ -137,6 +137,11 @@ CLEANUP(8)                                             CLEANUP(8)
 CLEANUP(8)                                             CLEANUP(8)
 
 
+              addresses.
+
+<b>Resource</b> <b>controls</b>
+       <b>duplicate</b><i>_</i><b>filter</b><i>_</i><b>limit</b>
+              Limit  the  number  of envelope recipients that are
               remembered.
 
        <b>header</b><i>_</i><b>size</b><i>_</i><b>limit</b>
@@ -163,11 +168,6 @@ CLEANUP(8)                                             CLEANUP(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
 
 
 

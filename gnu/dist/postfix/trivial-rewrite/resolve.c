@@ -27,7 +27,7 @@
 /*
 /*	resolve_proto() implements the client-server protocol:
 /*	read one address in FQDN form, reply with a (transport,
-/*      nexthop, internalized recipient) triple.
+/*	nexthop, internalized recipient) triple.
 /*
 /*	resolve_addr() gives direct access to the address resolving
 /*	engine. It resolves an internalized address to a (transport,
@@ -110,10 +110,12 @@ void    resolve_addr(char *addr, VSTRING *channel, VSTRING *nexthop,
     while (tree->head) {
 
 	/*
-	 * Strip trailing dot.
+	 * Strip trailing dot or @.
 	 */
-	if (tree->tail->type == '.')
+	if (tree->tail->type == '.' || tree->tail->type == '@') {
 	    tok822_free_tree(tok822_sub_keep_before(tree, tree->tail));
+	    continue;
+ 	}
 
 	/*
 	 * A lone empty string becomes the postmaster.

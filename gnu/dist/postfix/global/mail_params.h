@@ -215,6 +215,13 @@ extern char *var_db_type;
 extern char *var_always_bcc;
 
  /*
+  * What to put in the To: header when no recipients were disclosed.
+  */
+#define VAR_RCPT_WITHELD	"undisclosed_recipients_header"
+#define DEF_RCPT_WITHELD	"To: undisclosed-recipients:;"  
+extern char *var_rcpt_witheld;
+
+ /*
   * Standards violation: allow/permit RFC 822-style addresses in SMTP
   * commands.
   */

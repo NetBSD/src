@@ -70,3 +70,32 @@
 ./valid_hostname: warning: valid_hostaddr: invalid character 102(decimal): 1.2.3.f4
 ./valid_hostname: testing: "1.2.3.f"
 ./valid_hostname: warning: valid_hostaddr: invalid character 102(decimal): 1.2.3.f
+./valid_hostname: testing: "-.a.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: -.a.b
+./valid_hostname: warning: valid_hostaddr: invalid character 45(decimal): -.a.b
+./valid_hostname: testing: "a.-.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.-.b
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.-.b
+./valid_hostname: testing: "a.b.-"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.b.-
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.b.-
+./valid_hostname: testing: "-aa.b.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: -aa.b.b
+./valid_hostname: warning: valid_hostaddr: invalid character 45(decimal): -aa.b.b
+./valid_hostname: testing: "aa-.b.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: aa-.b.b
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): aa-.b.b
+./valid_hostname: testing: "a.-bb.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.-bb.b
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.-bb.b
+./valid_hostname: testing: "a.bb-.b"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.bb-.b
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.bb-.b
+./valid_hostname: testing: "a.b.-bb"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.b.-bb
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.b.-bb
+./valid_hostname: testing: "a.b.bb-"
+./valid_hostname: warning: valid_hostname: misplaced hyphen: a.b.bb-
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a.b.bb-
+./valid_hostname: testing: "a-a.b-b"
+./valid_hostname: warning: valid_hostaddr: invalid character 97(decimal): a-a.b-b

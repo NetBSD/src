@@ -350,6 +350,15 @@ static void cleanup_missing_headers(void)
 			       cleanup_resent, vstring_str(cleanup_temp1));
 	}
     }
+
+    /*
+     * Add a missing destination header.
+     */
+#define VISIBLE_RCPT    ((1 << HDR_TO) | (1 << HDR_RESENT_TO) | \
+			    (1 << HDR_CC) | (1 << HDR_RESENT_CC))
+
+    if ((cleanup_headers_seen & VISIBLE_RCPT) == 0)
+	cleanup_out_format(REC_TYPE_NORM, "%s", var_rcpt_witheld);
 }
 
 /* cleanup_message - process message content segment */

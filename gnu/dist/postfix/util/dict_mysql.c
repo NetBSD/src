@@ -201,9 +201,9 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 
 /*
  * plmysql_query - process a MySQL query.  Return MYSQL_RES* on success.
- *	           On failure, log failure and try other db instances.
- *	           on failure of all db instances, return 0;
- *	           close unnecessary active connections
+ *		     On failure, log failure and try other db instances.
+ *		     on failure of all db instances, return 0;
+ *		     close unnecessary active connections
  */
 
 static MYSQL_RES *plmysql_query(PLMYSQL *PLDB,
@@ -361,20 +361,29 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
     int     i;
     char   *nameval;
     char   *hosts;
-    /* the name of the dict for processing the mysql options file */
     MYSQL_NAME *name = (MYSQL_NAME *) mymalloc(sizeof(MYSQL_NAME));
     ARGV   *hosts_argv;
-    
-    dict_load_file(mysqlcf_path, mysqlcf_path);
+    VSTRING *opt_dict_name;
+
+    /*
+     * setup a dict containing info in the mysql cf file. the dict has a
+     * name, and a path.  The name must be distinct from the path, or the
+     * dict interface gets confused.  The name must be distinct for two
+     * different paths, or the configuration info will cache across different
+     * mysql maps, which can be confusing.
+     */
+    opt_dict_name = vstring_alloc(64);
+    vstring_sprintf(opt_dict_name, "mysql opt dict %s", mysqlcf_path);
+    dict_load_file(vstring_str(opt_dict_name), mysqlcf_path);
     /* mysql username lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "user")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "user")) == NULL)
 	name->username = mystrdup("");
     else
 	name->username = mystrdup(nameval);
     if (msg_verbose)
 	msg_info("mysqlname_parse(): set username to '%s'", name->username);
     /* password lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "password")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "password")) == NULL)
 	name->password = mystrdup("");
     else
 	name->password = mystrdup(nameval);
@@ -382,7 +391,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set password to '%s'", name->password);
 
     /* database name lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "dbname")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "dbname")) == NULL)
 	msg_fatal("%s: mysql options file does not include database name", mysqlcf_path);
     else
 	name->dbname = mystrdup(nameval);
@@ -390,7 +399,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set database name to '%s'", name->dbname);
 
     /* table lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "table")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "table")) == NULL)
 	msg_fatal("%s: mysql options file does not include table name", mysqlcf_path);
     else
 	name->table = mystrdup(nameval);
@@ -398,7 +407,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set table name to '%s'", name->table);
 
     /* select field lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "select_field")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "select_field")) == NULL)
 	msg_fatal("%s: mysql options file does not include select field", mysqlcf_path);
     else
 	name->select_field = mystrdup(nameval);
@@ -406,7 +415,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set select_field to '%s'", name->select_field);
 
     /* where field lookup */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "where_field")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "where_field")) == NULL)
 	msg_fatal("%s: mysql options file does not include where field", mysqlcf_path);
     else
 	name->where_field = mystrdup(nameval);
@@ -414,7 +423,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set where_field to '%s'", name->where_field);
 
     /* additional conditions */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "additional_conditions")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "additional_conditions")) == NULL)
 	name->additional_conditions = mystrdup("");
     else
 	name->additional_conditions = mystrdup(nameval);
@@ -422,7 +431,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	msg_info("mysqlname_parse(): set additional_conditions to '%s'", name->additional_conditions);
 
     /* mysql server hosts */
-    if ((nameval = (char *) dict_lookup(mysqlcf_path, "hosts")) == NULL)
+    if ((nameval = (char *) dict_lookup(vstring_str(opt_dict_name), "hosts")) == NULL)
 	hosts = mystrdup("");
     else
 	hosts = mystrdup(nameval);
@@ -448,6 +457,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 	}
     }
     myfree(hosts);
+    vstring_free(opt_dict_name);
     argv_free(hosts_argv);
     return name;
 }
@@ -455,7 +465,7 @@ static MYSQL_NAME *mysqlname_parse(const char *mysqlcf_path)
 
 /*
  * plmysql_init - initalize a MYSQL database.
- *	          Return NULL on failure, or a PLMYSQL * on success.
+ *		    Return NULL on failure, or a PLMYSQL * on success.
  */
 static PLMYSQL *plmysql_init(char *hostnames[],
 			             int len_hosts)

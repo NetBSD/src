@@ -479,15 +479,6 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
 #define PERMIT_EMPTY_ADDR	1
 #define REJECT_EMPTY_ADDR	0
 
-    if (allow_empty_addr && strcmp(STR(arg->vstrval), "<>") == 0) {
-	if (msg_verbose)
-	    msg_info("%s: empty address", myname);
-	VSTRING_RESET(arg->vstrval);
-	VSTRING_TERMINATE(arg->vstrval);
-	arg->strval = STR(arg->vstrval);
-	return (0);
-    }
-
     /*
      * Some mailers send RFC822-style address forms (with comments and such)
      * in SMTP envelopes. We cannot blame users for this: the blame is with
@@ -519,9 +510,11 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
     }
 
     /*
-     * Report trouble. Log a warning only if we are going to sleep+reject.
+     * Report trouble. Log a warning only if we are going to sleep+reject so
+     * that attackers can't flood our logfiles.
      */
-    if (naddr != 1
+    if ((naddr < 1 && !allow_empty_addr)
+	|| naddr > 1
 	|| (strict_rfc821 && (non_addr || *STR(arg->vstrval) != '<'))) {
 	msg_warn("Illegal address syntax from %s in %s command: %s",
 		 state->namaddr, state->where, STR(arg->vstrval));
@@ -537,7 +530,7 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
     if (addr)
 	tok822_internalize(arg->vstrval, addr->head, TOK822_STR_DEFL);
     else
-	vstring_strcat(arg->vstrval, "");
+	vstring_strcpy(arg->vstrval, "");
     arg->strval = STR(arg->vstrval);
 
     /*

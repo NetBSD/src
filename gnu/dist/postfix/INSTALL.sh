@@ -332,6 +332,7 @@ no) ;;
      for file in man?/*
      do
 	 (test -f $MANPAGES/$file && cmp -s $file $MANPAGES/$file) || {
+	     echo Updating $MANPAGES/$file...
 	     rm -f $MANPAGES/$file
 	     cp $file $MANPAGES/$file || exit 1
 	     chmod 644 $MANPAGES/$file || exit 1
