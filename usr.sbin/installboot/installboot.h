@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.21 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.22 2003/10/27 16:51:05 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
 int		news68k_setboot(ib_params *);
 int		news68k_clearboot(ib_params *);
+int		next68k_setboot(ib_params *);
 int		newsmips_setboot(ib_params *);
 int		newsmips_clearboot(ib_params *);
 int		pmax_setboot(ib_params *);
