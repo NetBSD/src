@@ -37,7 +37,7 @@
  * From:
  *	Id: portal.h,v 1.4 1993/09/22 17:57:12 jsp Exp
  *
- *	$Id: portal.h,v 1.1 1994/01/05 14:23:21 cgd Exp $
+ *	$Id: portal.h,v 1.2 1994/01/12 19:50:22 cgd Exp $
  */
 
 struct portal_args {
@@ -46,8 +46,10 @@ struct portal_args {
 };
 
 struct portal_cred {
-	uid_t		pcr_uid;	/* From ucred */
-	gid_t		pcr_gid;	/* From ucred */
+	int		pcr_flag;		/* File open mode */
+	uid_t		pcr_uid;		/* From ucred */
+	short		pcr_ngroups;		/* From ucred */
+	gid_t		pcr_groups[NGROUPS];	/* From ucred */
 };
 
 
