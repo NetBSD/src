@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.228 2003/05/25 04:32:10 dan Exp $
+.\"	$NetBSD: main,v 1.229 2003/05/25 05:20:35 nakayama Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1821,6 +1821,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta der Mouse Ta Mt mouse@netbsd.org
 .It Ta Joseph Myers Ta Mt jsm@netbsd.org
 .It Ta Ken Nakata Ta Mt kenn@netbsd.org
+.It Ta Takeshi Nakayama Ta Mt nakayama@netbsd.org
 .It Ta Phil Nelson Ta Mt phil@netbsd.org
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org
