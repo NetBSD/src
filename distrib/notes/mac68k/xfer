@@ -1,9 +1,12 @@
 Installation is really only supported from the local Macintosh
-hard drive.  This means that you'll need at least enough room
-for the largest file that you will have to install.  This is the
-6.2M base10 file.  There has been talk of allowing an install
-from split files or over Appleshare.  If you have the time, desire,
-and knowledge, please feel free to add that functionality.
+hard drive or from an AppleShare volume.  This means that you'll
+need at least enough room for the largest file that you will have
+to install.  This is the 6.2M base10 file.  There has been talk
+of allowing an install from split files.  If you have the time,
+desire, and knowledge, please feel free to add that functionality.
+
+If the install is being done from an AppleShare-mounted volume,
+the install utility must be in the same folder as the data files.
 
 There will be two images of each file.  One in "raw" Unix format
 and one in a binhex format.  Therefore, base10 and base10.hqx both
