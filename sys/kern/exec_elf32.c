@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.100 2005/02/07 00:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.100 2005/02/07 00:12:49 christos Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -222,8 +222,7 @@ ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 	if (eh->e_type != type)
 		return (ENOEXEC);
 
-	if (eh->e_shnum > 1024 ||
-	    eh->e_phnum > 128)
+	if (eh->e_shnum > 32768 || eh->e_phnum > 128)
 		return (ENOEXEC);
 
 	return (0);
