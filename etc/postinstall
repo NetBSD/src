@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.69 2004/01/14 04:49:57 itojun Exp $
+# $NetBSD: postinstall,v 1.70 2004/01/14 10:51:54 jmmv Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -441,7 +441,7 @@ do_rc()
 		quota racoon rpcbind raidframe raidframeparity rarpd rbootd \
 		root route6d routed rtadvd rtclocaltime rtsold rwho savecore \
 		screenblank sendmail securelevel smmsp sshd staticroute \
-		swap1 swap2 sysdb sysctl syslogd timed ttys virecover \
+		swap1 swap2 sysdb sysctl syslogd timed ttys veriexec virecover \
 		wdogctl wscons wsmoused \
 		xdm xfs ypbind yppasswdd ypserv
 	failed=$(( ${failed} + $? ))
