@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2003/07/15 00:05:03 lukem Exp $ */
+/*	$NetBSD: db_interface.c,v 1.58 2003/09/07 00:52:01 uwe Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2003/07/15 00:05:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2003/09/07 00:52:01 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,7 +126,7 @@ cpu_Debugger()
 	sparc_noop();	/* Force this function to allocate a stack frame */
 }
 
-static int nil;
+static long nil;
 
 /*
  * Machine register set.
@@ -142,7 +142,7 @@ const struct db_variable db_regs[] = {
 	{ "npc",	dbreg(npc),		db_sparc_regop, },
 	{ "y",		dbreg(y),		db_sparc_regop, },
 	{ "wim",	dbreg(global[0]),	db_sparc_regop, }, /* see reg.h */
-	{ "g0",		(long *)&nil,		FCN_NULL, },
+	{ "g0",		&nil,			FCN_NULL, 	},
 	{ "g1",		dbreg(global[1]),	db_sparc_regop, },
 	{ "g2",		dbreg(global[2]),	db_sparc_regop, },
 	{ "g3",		dbreg(global[3]),	db_sparc_regop, },
