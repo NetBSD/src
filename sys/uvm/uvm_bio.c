@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.5 2000/12/27 04:44:42 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.6 2000/12/27 09:01:45 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -364,14 +364,15 @@ ubc_alloc(uobj, offset, lenp, flags)
 	int flags;
 {
 	int s;
-	vaddr_t umap_offset, slot_offset, va;
+	vaddr_t slot_offset, va;
 	struct ubc_map *umap;
+	voff_t umap_offset;
 	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx filesize 0x%x",
 		    uobj, offset, *lenp, ((struct uvm_vnode *)uobj)->u_size);
 
-	umap_offset = (vaddr_t)(offset & ~((voff_t)ubc_winsize - 1));
+	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
 	*lenp = min(*lenp, ubc_winsize - slot_offset);
 
