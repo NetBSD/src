@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.35 1998/01/15 22:25:54 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.36 1998/01/22 00:39:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,6 +32,7 @@
  */
 
 #include "opt_vm86.h"
+#include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
