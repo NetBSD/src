@@ -1,8 +1,8 @@
-/*	$NetBSD: tzone.c,v 1.4 1998/03/14 04:39:55 lukem Exp $	*/
+/*	$NetBSD: tzone.c,v 1.5 2002/07/14 00:26:18 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tzone.c,v 1.4 1998/03/14 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: tzone.c,v 1.5 2002/07/14 00:26:18 wiz Exp $");
 #endif
 
 /*
@@ -35,7 +35,7 @@ int32 secondswest;
  * configuration file doesn't specify one.
  */
 void
-tzone_init()
+tzone_init(void)
 {
 #ifdef	SVR4
 	/* XXX - Is this really SunOS specific? -gwr */

@@ -1,19 +1,15 @@
-/*	$NetBSD: report.c,v 1.5 2000/10/11 20:23:49 is Exp $	*/
+/*	$NetBSD: report.c,v 1.6 2002/07/14 00:26:18 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: report.c,v 1.5 2000/10/11 20:23:49 is Exp $");
+__RCSID("$NetBSD: report.c,v 1.6 2002/07/14 00:26:18 wiz Exp $");
 #endif
 
 /*
  * report() - calls syslog
  */
 
-#ifdef	__STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -41,8 +37,7 @@ extern char *progname;
 static int stderr_only = 1;
 
 void
-report_init(nolog)
-	int nolog;
+report_init(int nolog)
 {
 	stderr_only = nolog;
 #ifdef SYSLOG
@@ -96,17 +91,8 @@ static int numlevels = sizeof(levelnames) / sizeof(levelnames[0]);
  * Print a log message using syslog(3) and/or stderr.
  * The message passed in should not include a newline.
  */
-#ifdef	__STDC__
 void
 report(int priority, const char *fmt,...)
-#else
-/*VARARGS2*/
-void
-report(priority, fmt, va_alist)
-	int priority;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	static char buf[128];
@@ -114,11 +100,7 @@ report(priority, fmt, va_alist)
 	if ((priority < 0) || (priority >= numlevels)) {
 		priority = numlevels - 1;
 	}
-#ifdef	__STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
@@ -141,7 +123,7 @@ report(priority, fmt, va_alist)
  * Return pointer to static string which gives full filesystem error message.
  */
 const char *
-get_errmsg()
+get_errmsg(void)
 {
 	extern int errno;
 

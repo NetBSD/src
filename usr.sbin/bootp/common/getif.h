@@ -1,9 +1,5 @@
-/*	$NetBSD: getif.h,v 1.2 1998/01/09 08:09:09 perry Exp $	*/
+/*	$NetBSD: getif.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
 
 /* getif.h */
 
-#ifdef	__STDC__
 extern struct ifreq *getif(int, struct in_addr *);
-#else
-extern struct ifreq *getif();
-#endif
