@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.171 2001/06/04 06:00:20 augustss Exp $
+$NetBSD: usbdevs,v 1.172 2001/06/10 13:10:25 tron Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -778,6 +778,7 @@ product PERACOM ENET2		0x0005	Ethernet adapter
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
+product PHILIPS PCA646VC	0x0303	PCA646VC PC Camera
 product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
 
