@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 1994/12/21 08:48:05 jtc Exp $
+#	$NetBSD: Makefile,v 1.6 1994/12/22 12:30:53 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	showmount
-MAN8=	showmount.0
+MAN=	showmount.8
 
 .include <bsd.prog.mk>
