@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.10 1993/08/03 01:53:36 glass Exp $
+ *	$Id: isa.h,v 1.11 1993/08/28 00:02:45 brezak Exp $
  */
 
 /*
@@ -196,3 +196,18 @@ int isa_irq_pending __P((struct isa_device *dvp));
 #define CGA_BASE	0x3D4
 #define CGA_BUF		0xfe0B8000
 #define IOPHYSMEM	0xA0000
+
+
+#ifdef	MACHINE_NONCONTIG
+/*
+ * size of dma bounce buffer in pages
+ * - currently 1 page per channel
+ */
+#ifndef DMA_BOUNCE
+#define DMA_BOUNCE      8
+#endif
+
+#ifndef LOCORE
+extern vm_offset_t isaphysmem;
+#endif
+#endif
