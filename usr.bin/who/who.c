@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.7 1998/12/20 14:53:24 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.8 1999/07/17 16:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.7 1998/12/20 14:53:24 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.8 1999/07/17 16:41:44 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,7 +165,8 @@ who_am_i(ufp)
 		if ((t = strrchr(p, '/')) != NULL)
 			p = t + 1;
 		while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
-			if (usr.ut_name && !strcmp(usr.ut_line, p)) {
+			if (usr.ut_name[0] != '\0' &&
+			    !strcmp(usr.ut_line, p)) {
 				output(&usr);
 				return;
 			}
