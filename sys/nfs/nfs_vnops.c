@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.100.2.2 2000/01/05 23:39:50 he Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.100.2.3 2000/08/15 22:36:40 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -780,6 +780,12 @@ nfs_lookup(v)
 		struct vattr vattr;
 		int vpid, err2;
 
+		if (error != ENOENT) {
+			/* needs to happen before anything which can block.. */
+			newvp = *vpp;
+			vpid = newvp->v_id;
+		}
+		  	
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
 		if (err2) {
 			*vpp = NULLVP;
@@ -796,8 +802,6 @@ nfs_lookup(v)
 			goto dorpc;
 		}
 
-		newvp = *vpp;
-		vpid = newvp->v_id;
 		/*
 		 * See the comment starting `Step through' in ufs/ufs_lookup.c
 		 * for an explanation of the locking protocol
@@ -819,6 +823,8 @@ nfs_lookup(v)
 			   }
 			   cache_purge(newvp);
 			}
+			if (dvp != newvp)
+			  	VOP_UNLOCK(newvp, 0);
 			vrele(newvp);
 		}
 		*vpp = NULLVP;
