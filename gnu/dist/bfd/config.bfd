@@ -329,6 +329,10 @@ case "${targ}" in
     targ_defvec=m68klynx_coff_vec
     targ_selvecs=m68klynx_aout_vec
     ;;
+  m68*-*-netbsdelf*)
+    targ_defvec=bfd_elf32_m68k_vec
+    targ_selvecs="m68knetbsd_vec m68k4knetbsd_vec hp300bsd_vec sunos_big_vec"
+    ;;
   m68*-hp*-netbsd*0.* | m68*-hp*-netbsd*1.[012]*)
     targ_defvec=m68k4knetbsd_vec
     targ_selvecs="m68knetbsd_vec hp300bsd_vec bfd_elf32_m68k_vec sunos_big_vec"
