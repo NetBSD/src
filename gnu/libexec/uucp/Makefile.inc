@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2001/01/09 08:52:57 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/05/30 05:46:16 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ LIBUUCP=${LIBUUCPDIR}/libuucp.a
 
 CPPFLAGS+=-DPOSIX_HEADERS
 WARNS=		1
+CWARNFLAGS+=	-Wno-format-zero-length
 VERSION=	1.06.1
 owner=		uucp
 bindir=		/usr/bin
