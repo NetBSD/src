@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.84 2003/08/24 21:11:37 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.85 2003/08/25 10:35:28 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.84 2003/08/24 21:11:37 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.85 2003/08/25 10:35:28 tron Exp $");
 #endif
 #endif
 
@@ -124,8 +124,9 @@ pkg_do(const char *pkg)
 
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
-		if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
-			errx(EXIT_FAILURE, "Database-dir %s cannot be generated, aborting.",
+		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
+			errx(EXIT_FAILURE,
+			    "Database-dir %s cannot be generated, aborting.",
 			    dbdir);
 		}
 	}
@@ -219,7 +220,7 @@ pkg_do(const char *pkg)
 					if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 						if (Verbose)
 							printf("Desired prefix of %s does not exist, creating.\n", p->name);
-						(void) vsystem("mkdir -p %s", p->name);
+						(void) fexec("mkdir", "-p", p->name, NULL);
 					}
 					if (chdir(p->name) == -1) {
 						warn("unable to change directory to `%s'", p->name);
@@ -427,7 +428,7 @@ ignore_replace_depends_check:
 
 					if (Verbose)
 						printf("pkg_delete '%s'\n", installed);
-					vsystem("pkg_delete '%s'\n", installed);
+					(void) fexec("pkg_delete", installed, NULL);
 					
 				} else {
 					warnx("other version '%s' already installed", installed);
@@ -448,8 +449,6 @@ ignore_replace_depends_check:
 		if (Verbose)
 			printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
 
-		/* was: */
-		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
 			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
@@ -467,7 +466,6 @@ ignore_replace_depends_check:
 			continue;
 		if (Verbose)
 			printf("Depends pre-scan: `%s' required.\n", p->name);
-		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) <= 0) {
 			/* 
 			 * required pkg not found. look if it's available with a more liberal
@@ -587,7 +585,7 @@ ignore_replace_depends_check:
 	
 	/* If we're really installing, and have an installation file, run it */
 	if (!NoInstall && fexists(INSTALL_FNAME)) {
-		vsystem("%s +x %s", CHMOD_CMD, INSTALL_FNAME);	/* make sure */
+		(void) fexec(CHMOD_CMD, "+x", INSTALL_FNAME, NULL);	/* make sure */
 		if (Verbose)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
@@ -652,7 +650,7 @@ ignore_replace_depends_check:
 			goto success;	/* close enough for government work */
 		}
 		/* Make sure pkg_info can read the entry */
-		vsystem("%s a+rx %s", CHMOD_CMD, LogDir);
+		(void) fexec(CHMOD_CMD, "a+rx", LogDir, NULL);
 		if (fexists(INSTALL_FNAME))
 			move_file(".", INSTALL_FNAME, LogDir);
 		if (fexists(DEINSTALL_FNAME))
@@ -790,7 +788,7 @@ cleanup(int signo)
 		if (signo)
 			printf("Signal %d received, cleaning up.\n", signo);
 		if (!Fake && zapLogDir && LogDir[0])
-			vsystem("%s -rf %s", REMOVE_CMD, LogDir);
+			(void) fexec(REMOVE_CMD, "-fr", LogDir, NULL);
 		leave_playpen(Home);
 		if (signo)
 			exit(1);
