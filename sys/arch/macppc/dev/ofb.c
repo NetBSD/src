@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.5 1998/12/22 19:38:35 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.6 1999/01/11 21:54:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -95,7 +95,6 @@ static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void ofb_free_screen __P((void *, void *));
 static void ofb_show_screen __P((void *, void *));
-static int ofb_load_font __P((void *, void *, int, int, int, void *));
 
 struct wsdisplay_accessops ofb_accessops = {
 	ofb_ioctl,
@@ -103,7 +102,7 @@ struct wsdisplay_accessops ofb_accessops = {
 	ofb_alloc_screen,
 	ofb_free_screen,
 	ofb_show_screen,
-	ofb_load_font
+	0 /* load_font */
 };
 
 static void ofb_common_init __P((int, struct ofb_devconfig *));
@@ -365,16 +364,6 @@ ofb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-}
-
-static int
-ofb_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return EINVAL;
 }
 
 int
