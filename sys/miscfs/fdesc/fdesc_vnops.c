@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.2.1 2001/07/10 13:59:16 lukem Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.2 2001/09/08 03:29:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,7 @@ int	fdesc_read	__P((void *));
 int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
 int	fdesc_poll	__P((void *));
+int	fdesc_kqfilter	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
@@ -147,6 +148,7 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */
+	{ &vop_kqfilter_desc, fdesc_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fdesc_revoke },		/* revoke */
 	{ &vop_mmap_desc, fdesc_mmap },			/* mmap */
 	{ &vop_fsync_desc, fdesc_fsync },		/* fsync */
@@ -943,6 +945,29 @@ fdesc_poll(v)
 	}
 
 	return (revents);
+}
+
+int
+fdesc_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	int rv;
+
+	switch (VTOFDESC(ap->a_vp)->fd_type) {
+	case Fctty:
+		rv = cttykqfilter(devctty, ap->a_kn);
+		break;
+
+	default:
+		rv = 1;		/* XXXLUKEM (thorpej) */
+		break;
+	}
+
+	return (rv);
 }
 
 int
