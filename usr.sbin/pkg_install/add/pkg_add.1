@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.29 2001/07/22 13:34:18 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.30 2001/09/25 10:28:16 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -26,6 +26,9 @@
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl fIMnRSuVv
+.Bk -words
+.Op Fl s Ar verification-type
+.Ek
 .Bk -words
 .Op Fl t Ar template
 .Ek
@@ -55,6 +58,9 @@ attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, use the
+digital signatures provided where possible (see the
+.Fl s
+option), or, failing that, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.  Pay particular
@@ -160,6 +166,27 @@ expects the release contents to be already extracted and waiting
 in the staging area, the location of which is read as a string
 from stdin.  The complete packing list is also read from stdin,
 and the contents then acted on as normal.
+.It Fl s Ar verification-type
+Use a callout to an external program to verify the binary package
+being installed against an existing detached signature file.
+The signature file must reside in the same directory
+as the binary package.
+At the present time, the following verification types
+are defined: none, gpg and pgp5.
+The signature will be verified at install time, and the results
+will be displayed. If the signature type is anything other than
+none, the user will be asked if
+.Nm
+should proceed to install the binary package. The user must then
+take the decision whether to proceed or not, depending upon the
+amount of trust that is placed in the signatory of the binary
+package.
+Please note that, at the current time, it is not possible to use
+the verification feature when using
+.Nm
+to add a binary package via a URL - the package, and the related
+detached signature file, must be local
+for the verification to work.
 .It Fl t Ar template
 Use
 .Ar template
@@ -419,7 +446,7 @@ emits more messages to terminal.
 .Ed
 .Pp
 You can grab a compiled binary package from remote location, by specifying
-an URL.
+a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
