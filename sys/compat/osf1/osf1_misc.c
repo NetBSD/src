@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.13 1998/02/14 01:29:43 thorpej Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.14 1998/05/20 16:34:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,12 +42,18 @@
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
+#include <sys/exec.h>
+#include <sys/vnode.h>
+#include <sys/socketvar.h>
 
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 
 #include <vm/vm.h>
+
+void cvtstat2osf1 __P((struct stat *, struct osf1_stat *));
+
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
@@ -59,6 +65,7 @@ extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long));
 
 extern char sigcode[], esigcode[];
+const char osf1_emul_path[] = "/emul/osf1";
 
 struct emul emul_osf1 = {
 	"osf1",
@@ -112,6 +119,7 @@ osf1_sys_setsysinfo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct osf1_setsysinfo_args /* {
 		syscallarg(u_long) op;
 		syscallarg(caddr_t) buffer;
@@ -119,6 +127,7 @@ osf1_sys_setsysinfo(p, v, retval)
 		syscallarg(caddr_t) arg;
 		syscallarg(u_long) flag;
 	} */ *uap = v;
+#endif
 
 	return (0);
 }
@@ -127,6 +136,7 @@ osf1_sys_setsysinfo(p, v, retval)
 #define OSF1_RLIMIT_NOFILE	6		/* OSF1's RLIMIT_NOFILE */
 #define OSF1_RLIMIT_NLIMITS	8		/* Number of OSF1 rlimits */
 
+int
 osf1_sys_getrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -155,6 +165,7 @@ osf1_sys_getrlimit(p, v, retval)
 	return sys_getrlimit(p, &a, retval);
 }
 
+int
 osf1_sys_setrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -265,7 +276,7 @@ osf1_sys_usleep_thread(p, v, retval)
 	u_long ticks;
 	int error, s;
 
-	if (error = copyin(SCARG(uap, sleep), &tv, sizeof tv))
+	if ((error = copyin(SCARG(uap, sleep), &tv, sizeof tv)))
 		return (error);
 
 	ticks = ((u_long)tv.tv_sec * 1000000 + tv.tv_usec) / tick;
@@ -312,6 +323,7 @@ struct osf1_stat {
  * Get file status; this version follows links.
  */
 /* ARGSUSED */
+int
 osf1_sys_stat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -328,7 +340,7 @@ osf1_sys_stat(p, v, retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
@@ -343,6 +355,7 @@ osf1_sys_stat(p, v, retval)
  * Get file status; this version does not follow links.
  */
 /* ARGSUSED */
+int
 osf1_sys_lstat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -359,7 +372,7 @@ osf1_sys_lstat(p, v, retval)
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
@@ -373,6 +386,7 @@ osf1_sys_lstat(p, v, retval)
 /*
  * Return status information about a file descriptor.
  */
+int
 osf1_sys_fstat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -418,6 +432,7 @@ osf1_sys_fstat(p, v, retval)
 /*
  * Convert from a stat structure to an osf1 stat structure.
  */
+void
 cvtstat2osf1(st, ost)
 	struct stat *st;
 	struct osf1_stat *ost;
@@ -762,24 +777,22 @@ osf1_sys_readv(p, v, retval)
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ a;
-	struct emul *e = p->p_emul;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
-	int error, i;
-	extern char sigcode[], esigcode[];
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error, osize, nsize, i;
 
 	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
 		return (EINVAL);
 
-	oio = (struct osf1_iovec *)
-	    malloc(SCARG(uap, iovcnt)*sizeof (struct osf1_iovec),
-	    M_TEMP, M_WAITOK);
-	nio = (struct iovec *)malloc(SCARG(uap, iovcnt)*sizeof (struct iovec),
-	    M_TEMP, M_WAITOK);
+	osize = SCARG(uap, iovcnt) * sizeof (struct osf1_iovec);
+	nsize = SCARG(uap, iovcnt) * sizeof (struct iovec);
+
+	oio = malloc(osize, M_TEMP, M_WAITOK);
+	nio = malloc(nsize, M_TEMP, M_WAITOK);
 
 	error = 0;
-	if (error = copyin(SCARG(uap, iovp), oio,
-	    SCARG(uap, iovcnt) * sizeof (struct osf1_iovec)))
+	if ((error = copyin(SCARG(uap, iovp), oio, osize)))
 		goto punt;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
 		nio[i].iov_base = oio[i].iov_base;
@@ -787,11 +800,10 @@ osf1_sys_readv(p, v, retval)
 	}
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, iovp) = (struct iovec *)STACKGAPBASE;
+	SCARG(&a, iovp) = stackgap_alloc(&sg, nsize);
 	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
 
-	if (error = copyout(nio, (caddr_t)SCARG(&a, iovp),
-	    SCARG(uap, iovcnt) * sizeof (struct iovec)))
+	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
 	error = sys_readv(p, &a, retval);
 
@@ -817,24 +829,22 @@ osf1_sys_writev(p, v, retval)
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ a;
-	struct emul *e = p->p_emul;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
-	int error, i;
-	extern char sigcode[], esigcode[];
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error, osize, nsize, i;
 
 	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
 		return (EINVAL);
 
-	oio = (struct osf1_iovec *)
-	    malloc(SCARG(uap, iovcnt)*sizeof (struct osf1_iovec),
-	    M_TEMP, M_WAITOK);
-	nio = (struct iovec *)malloc(SCARG(uap, iovcnt)*sizeof (struct iovec),
-	    M_TEMP, M_WAITOK);
+	osize = SCARG(uap, iovcnt) * sizeof (struct osf1_iovec);
+	nsize = SCARG(uap, iovcnt) * sizeof (struct iovec);
+
+	oio = malloc(osize, M_TEMP, M_WAITOK);
+	nio = malloc(nsize, M_TEMP, M_WAITOK);
 
 	error = 0;
-	if (error = copyin(SCARG(uap, iovp), oio,
-	    SCARG(uap, iovcnt) * sizeof (struct osf1_iovec)))
+	if ((error = copyin(SCARG(uap, iovp), oio, osize)))
 		goto punt;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
 		nio[i].iov_base = oio[i].iov_base;
@@ -842,11 +852,10 @@ osf1_sys_writev(p, v, retval)
 	}
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, iovp) = (struct iovec *)STACKGAPBASE;
+	SCARG(&a, iovp) = stackgap_alloc(&sg, nsize);
 	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
 
-	if (error = copyout(nio, (caddr_t)SCARG(&a, iovp),
-	    SCARG(uap, iovcnt) * sizeof (struct iovec)))
+	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
 	error = sys_writev(p, &a, retval);
 
