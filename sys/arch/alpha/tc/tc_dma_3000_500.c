@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.11 2001/07/12 23:25:41 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.12 2001/07/12 23:35:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.11 2001/07/12 23:25:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.12 2001/07/12 23:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ tc_dma_init_3000_500(nslots)
 
 	/* Default all slots to direct-mapped. */
 	for (i = 0; i < nslots; i++)
-		bcopy(&tc_dmat_direct, &tc_dma_slot_info[i].tdsi_dmat,
+		memcpy(&tc_dma_slot_info[i].tdsi_dmat, &tc_dmat_direct,
 		    sizeof(tc_dma_slot_info[i].tdsi_dmat));
 }
 
