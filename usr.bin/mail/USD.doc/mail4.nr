@@ -29,9 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mail4.nr	8.1 (Berkeley) 6/8/93
+.\"	@(#)mail4.nr	8.2 (Berkeley) 5/16/94
 .\"
-.bp
 .sh 1 "More about sending mail"
 .sh 2 "Tilde escapes"
 .pp
