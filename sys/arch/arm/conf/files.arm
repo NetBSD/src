@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.51 2002/01/14 23:14:33 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.52 2002/01/17 17:26:04 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -103,4 +103,5 @@ include "compat/ossaudio/files.ossaudio"
 include "compat/linux/files.linux"
 include "compat/linux/arch/arm/files.linux_arm"
 file	arch/arm/arm/linux_sigcode.S		compat_linux
+file	arch/arm/arm/linux_syscall.c		compat_linux
 file	arch/arm/arm/linux_trap.c		compat_linux

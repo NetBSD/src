@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.4 2002/01/14 23:21:06 bjh21 Exp $	*/
+/*	$NetBSD: exception.S,v 1.5 2002/01/17 17:26:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -129,7 +129,7 @@ ASENTRY_NP(swi_entry)
 
 	mov	r0, sp			/* Pass the frame to any function */
 
-	bl	_C_LABEL(syscall)	/* It's a syscall ! */
+	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
 
 	ldr	r5, Lastpending		/* Get address of astpending */
 	mrs     r4, cpsr_all		/* Get CPSR */
