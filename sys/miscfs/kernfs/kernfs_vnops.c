@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.77 2001/11/10 13:33:42 lukem Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.78 2001/11/15 09:48:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,13 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.77 2001/11/10 13:33:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.78 2001/11/15 09:48:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vmmeter.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>

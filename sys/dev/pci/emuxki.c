@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.4 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.5 2001/11/15 09:48:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,14 +57,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.4 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.5 2001/11/15 09:48:11 lukem Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/select.h>
 #include <dev/pci/pcireg.h>

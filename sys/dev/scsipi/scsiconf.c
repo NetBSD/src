@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.165 2001/11/13 06:56:40 lukem Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.166 2001/11/15 09:48:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,9 +55,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.165 2001/11/13 06:56:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.166 2001/11/15 09:48:17 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

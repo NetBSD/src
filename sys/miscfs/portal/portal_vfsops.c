@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.28 2001/11/10 13:33:43 lukem Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.29 2001/11/15 09:48:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.28 2001/11/10 13:33:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.29 2001/11/15 09:48:23 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.28 2001/11/10 13:33:43 lukem Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>

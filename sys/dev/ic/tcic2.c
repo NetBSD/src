@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.7 2001/11/13 13:14:45 lukem Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.8 2001/11/15 09:48:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.7 2001/11/13 13:14:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.8 2001/11/15 09:48:08 lukem Exp $");
 
 #undef	TCICDEBUG
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.179 2001/11/13 06:56:40 lukem Exp $	*/
+/*	$NetBSD: sd.c,v 1.180 2001/11/15 09:48:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,12 +54,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.179 2001/11/13 06:56:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.180 2001/11/15 09:48:17 lukem Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
