@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86601reg.h,v 1.3 2003/08/07 16:30:25 agc Exp $	*/
+/*	$NetBSD: mb86601reg.h,v 1.4 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
  */
 
 /*
- * FUJITSU MB86601A SCSI Protocol Controler Hardware Description.
+ * FUJITSU MB86601A SCSI Protocol Controller Hardware Description.
  */
 
 #define			SCTL_INTR_ENAB	0x01
