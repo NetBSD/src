@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.57 2004/11/02 01:03:29 erh Exp $	*/
+/*	$NetBSD: perform.c,v 1.58 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.57 2004/11/02 01:03:29 erh Exp $");
+__RCSID("$NetBSD: perform.c,v 1.58 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -46,8 +46,8 @@ static int
 pkg_do(char *pkg)
 {
 	Boolean installed = FALSE, isTMP = FALSE;
-	char    log_dir[FILENAME_MAX];
-	char    fname[FILENAME_MAX];
+	char    log_dir[MaxPathSize];
+	char    fname[MaxPathSize];
 	struct stat sb;
 	char   *cp = NULL;
 	int     code = 0;
@@ -62,7 +62,7 @@ pkg_do(char *pkg)
 		int     len;
 
 		if (*pkg != '/') {
-			if (!getcwd(fname, FILENAME_MAX)) {
+			if (!getcwd(fname, MaxPathSize)) {
 				cleanup(0);
 				err(EXIT_FAILURE, "fatal error during execution: getcwd");
 			}
@@ -74,7 +74,7 @@ pkg_do(char *pkg)
 		cp = fname;
 	} else if (usedot) {
 		if ((cp = fileFindByPath(pkg)) != NULL) {
-			strncpy(fname, cp, FILENAME_MAX);
+			strncpy(fname, cp, MaxPathSize);
 		}
 	}
 
@@ -151,8 +151,8 @@ pkg_do(char *pkg)
 			{
 				/* Check if the given package name matches
 				 * something with 'pkg-[0-9]*' */
-				char    try[FILENAME_MAX];
-				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+				char    try[MaxPathSize];
+				snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
 					add_to_list_fn, &pkgs) > 0) {
 					return 0;	/* we've just appended some names to the pkgs list,
@@ -177,7 +177,7 @@ pkg_do(char *pkg)
          * any sense.
          */
 	if (Flags & SHOW_INDEX) {
-		char    tmp[FILENAME_MAX];
+		char    tmp[MaxPathSize];
 
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(tmp, COMMENT_FNAME);
@@ -279,7 +279,7 @@ static int
 foundpkg(const char *found, void *vp)
 {
 	char *data = vp;
-	char buf[FILENAME_MAX+1];
+	char buf[MaxPathSize+1];
 
 	/* we only want to display this if it really is a directory */
 	snprintf(buf, sizeof(buf), "%s/%s", data, found);
@@ -303,7 +303,7 @@ foundpkg(const char *found, void *vp)
 static int
 CheckForPkg(char *pkgspec, char *dbdir)
 {
-	char    buf[FILENAME_MAX];
+	char    buf[MaxPathSize];
 	int     error;
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
@@ -323,8 +323,8 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	if (error) {
 		/* found nothing - try 'pkg-[0-9]*' */
 		
-		char    try[FILENAME_MAX];
-		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
+		char    try[MaxPathSize];
+		snprintf(try, MaxPathSize, "%s-[0-9]*", pkgspec);
 		if (findmatchingname(dbdir, try, foundpkg, dbdir) > 0) {
 			error = 0;
 		}
@@ -367,7 +367,7 @@ pkg_perform(lpkg_head_t *pkghead)
 			/* Show all packges with description */
 			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
 				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-					char    tmp2[FILENAME_MAX];
+					char    tmp2[MaxPathSize];
 
 					if (strcmp(dp->d_name, ".") == 0 ||
 					    strcmp(dp->d_name, "..") == 0)

@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.32 2003/09/23 09:47:20 wiz Exp $	*/
+/*	$NetBSD: extract.c,v 1.33 2004/12/29 11:34:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.32 2003/09/23 09:47:20 wiz Exp $");
+__RCSID("$NetBSD: extract.c,v 1.33 2004/12/29 11:34:59 agc Exp $");
 #endif
 #endif
 
@@ -73,7 +73,7 @@ static void
 rollback(char *name, char *home, plist_t *start, plist_t *stop)
 {
 	plist_t *q;
-	char    try[FILENAME_MAX], bup[FILENAME_MAX], *dir;
+	char    try[MaxPathSize], bup[MaxPathSize], *dir;
 
 	dir = home;
 	for (q = start; q != stop; q = q->next) {
@@ -149,7 +149,7 @@ extract_plist(char *home, package_t *pkg)
 	}
 	/* Do it */
 	while (p) {
-		char    cmd[FILENAME_MAX];
+		char    cmd[MaxPathSize];
 
 		switch (p->type) {
 		case PLIST_NAME:
@@ -163,7 +163,7 @@ extract_plist(char *home, package_t *pkg)
 			if (Verbose)
 				printf("extract: %s/%s\n", Directory, p->name);
 			if (!Fake) {
-				char    try[FILENAME_MAX];
+				char    try[MaxPathSize];
 
 				if (strrchr(p->name, '\'')) {
 					cleanup(0);
@@ -175,7 +175,7 @@ extract_plist(char *home, package_t *pkg)
 				if (fexists(try)) {
 					(void) chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
 					if (preserve && PkgName) {
-						char    pf[FILENAME_MAX];
+						char    pf[MaxPathSize];
 
 						if (make_preserve_name(pf, sizeof(pf), PkgName, try)) {
 							if (rename(try, pf)) {
@@ -193,7 +193,7 @@ extract_plist(char *home, package_t *pkg)
 				if (rename(p->name, try) == 0) {
 					/* note in pkgdb */
 					{
-						char   *s, t[FILENAME_MAX];
+						char   *s, t[MaxPathSize];
 						int     rc;
 
 						(void) snprintf(t, sizeof(t), "%s/%s", Directory, p->name);
@@ -254,7 +254,7 @@ extract_plist(char *home, package_t *pkg)
 					 * that would probably affect too much code I prefer
 					 * not to touch - HF */
 					{
-						char   *s, t[FILENAME_MAX], *u;
+						char   *s, t[MaxPathSize], *u;
 						int     rc;
 
 						if (p->name[0] == '/')

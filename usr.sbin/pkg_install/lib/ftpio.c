@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.64 2004/10/31 02:45:37 grant Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.65 2004/12/29 11:35:02 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.64 2004/10/31 02:45:37 grant Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.65 2004/12/29 11:35:02 agc Exp $");
 #endif
 
 /*-
@@ -569,7 +569,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 {
 	char *pattern;
 	char *bestmatch;
-	char base[FILENAME_MAX];
+	char base[MaxPathSize];
 
 	pattern=strrchr(wildcardurl, '/');
 	if (pattern == NULL){
@@ -598,7 +598,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	if (bestmatch == NULL)
 		return -1;
 
-	snprintf(expandedurl, FILENAME_MAX, "%s%s", base, bestmatch);
+	snprintf(expandedurl, MaxPathSize, "%s%s", base, bestmatch);
 	if (Verbose)
 		printf("best match: '%s'\n", expandedurl);
 
@@ -609,9 +609,9 @@ expandURL(char *expandedurl, const char *wildcardurl)
 static char *
 ftp_expand_URL(const char *base, char *pattern)
 {
-	char *s, buf[FILENAME_MAX];
-	char tmpname[FILENAME_MAX];
-	char best[FILENAME_MAX];
+	char *s, buf[MaxPathSize];
+	char tmpname[MaxPathSize];
+	char best[MaxPathSize];
 	int rc, tfd;
 
 	rc = ftp_start(base);
@@ -665,7 +665,7 @@ ftp_expand_URL(const char *base, char *pattern)
 	if (access(tmpname, R_OK)==0) {
 		int matches;
 		FILE *f;
-		char filename[FILENAME_MAX];
+		char filename[MaxPathSize];
 
 		f=fopen(tmpname, "r");
 		if (f == NULL) {
@@ -683,8 +683,8 @@ ftp_expand_URL(const char *base, char *pattern)
 			 * suffix here
 			 */
 
-			char s_filename[FILENAME_MAX];
-			char s_pattern[FILENAME_MAX];
+			char s_filename[MaxPathSize];
+			char s_pattern[MaxPathSize];
 	    
 			filename[strlen(filename)-1] = '\0';
 
@@ -716,9 +716,9 @@ ftp_expand_URL(const char *base, char *pattern)
 static char *
 http_expand_URL(const char *base, char *pattern)
 {
-	char    best[FILENAME_MAX];
+	char    best[MaxPathSize];
 	char    line[BUFSIZ];
-	char    filename[FILENAME_MAX];
+	char    filename[MaxPathSize];
 	FILE   *fp;
 	int	pipefds[2];
 	int     state;
@@ -755,7 +755,7 @@ http_expand_URL(const char *base, char *pattern)
 	if ((fp=fdopen(pipefds[0], "r")) == NULL)
 		warn("can't fdopen pipe end");
 	else {
-		char s_pattern[FILENAME_MAX];
+		char s_pattern[MaxPathSize];
 		int len, offset;
 
 		/* strip of .t[bg]z for comparison */
@@ -769,7 +769,7 @@ http_expand_URL(const char *base, char *pattern)
 			len = offset = 0;
 			while ((len=http_extract_fn(line+offset, filename,
 						      sizeof(filename))) > 0) {
-				char s_filename[FILENAME_MAX];
+				char s_filename[MaxPathSize];
 
 				offset += len;
 				strip_txz(s_filename, NULL, filename);
@@ -811,7 +811,7 @@ static int
 http_extract_fn(char *input, char *outbuf, size_t outbuflen)
 {
 	/* partial copied hrefs from previous calls are saved here */
-	static char tempbuf[FILENAME_MAX];
+	static char tempbuf[MaxPathSize];
 	/* fill state of tempbuf */
 	static int tempbuffill = 0;
 	/* parsing state information */
@@ -1128,12 +1128,12 @@ unpackURL(const char *url, const char *dir)
 {
 	char *pkg;
 	int rc;
-	char base[FILENAME_MAX];
-	char pkg_path[FILENAME_MAX];
+	char base[MaxPathSize];
+	char pkg_path[MaxPathSize];
 
 	{
 		/* Verify if the URL is really ok */
-		char expnd[FILENAME_MAX];
+		char expnd[MaxPathSize];
 
 		rc=expandURL(expnd, url);
 		if (rc == -1) {
@@ -1242,7 +1242,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while(argv[0] != NULL) {
-		char newurl[FILENAME_MAX];
+		char newurl[MaxPathSize];
 	    
 		printf("Expand %s:\n", argv[0]);
 		rc = expandURL(newurl, argv[0]);
@@ -1253,7 +1253,7 @@ main(int argc, char *argv[])
 
 		/* test out connection caching */
 		if (1) {
-			char *s, buf[FILENAME_MAX];
+			char *s, buf[MaxPathSize];
 		    
 			if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
 				(void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);

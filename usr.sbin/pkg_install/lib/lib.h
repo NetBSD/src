@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.72 2004/12/10 21:49:31 erh Exp $ */
+/* $NetBSD: lib.h,v 1.73 2004/12/29 11:35:03 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -105,6 +105,15 @@
 # endif
 #endif
 
+/* some operating systems don't have this */
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	1024
+#endif
+
+enum {
+	MaxPathSize = MAXPATHLEN
+};
+
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"
 #define COMMENT_FNAME		"+COMMENT"
@@ -134,7 +143,7 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
-#define	PKG_PATTERN_MAX	FILENAME_MAX	/* max length of pattern, including nul */
+#define	PKG_PATTERN_MAX	MaxPathSize	/* max length of pattern, including nul */
 #define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
 
 enum {

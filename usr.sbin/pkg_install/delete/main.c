@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.33 2004/11/03 14:01:04 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2004/11/03 14:01:04 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 		/* Only delete the given packages' files from pkgdb, do not
 		 * touch the pkg itself. Used by "make reinstall" in
 		 * bsd.pkg.mk */
-		char	cachename[FILENAME_MAX];
+		char	cachename[MaxPathSize];
 
 		if (!pkgdb_open(ReadWrite)) {
 			err(EXIT_FAILURE, "cannot open %s", _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)));
