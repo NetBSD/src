@@ -1,4 +1,4 @@
-# $NetBSD: disktab,v 1.4 1998/10/05 00:15:30 mark Exp $
+# $NetBSD: disktab,v 1.5 1999/06/26 06:50:20 cgd Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -92,6 +92,6 @@ mdroot|miniroot|arm32 root disc:\
 
 install-ramdisk|Installation ramdisk:\
 	:ty=simulated:se#512:nt#2:ns#16:nc#100:\
-	:ta=4.4BSD:pa#3200:oa#0:ba#4096:fa#512:\
+	:ta=4.4BSD:pa#3400:oa#0:ba#4096:fa#512:\
 	:pb#0:ob#0:\
-	:pc#3200:oc#0:
+	:pc#3400:oc#0:
