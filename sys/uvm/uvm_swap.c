@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.35 2000/04/07 08:27:28 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.36 2000/04/15 18:08:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/disklabel.h>
@@ -53,8 +54,6 @@
 #include <sys/swap.h>
 
 #include <vm/vm.h>
-#include <vm/vm_conf.h>
-
 #include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -216,6 +215,9 @@ struct pool *vndbuf_pool;
 	pool_put(vndbuf_pool, (void *)(vbp));				\
 }
 
+/* /dev/drum */
+bdev_decl(sw);
+cdev_decl(sw);
 
 /*
  * local variables
