@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.12 1998/07/26 22:14:34 mycroft Exp $	*/
+/*	$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.12 1998/07/26 22:14:34 mycroft Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,10 +185,10 @@ main(argc, argv)
 
 	argc--, argv++;
 	while (argc > 0) {
-		if (isdigit(argv[0][0])) {	/* starting message # */
+		if (isdigit((unsigned char)argv[0][0])) {/* starting message # */
 			rcfirst = atoi(argv[0]);
 		}
-		else if (isdigit(argv[0][1])) {	/* backward offset */
+		else if (isdigit((unsigned char)argv[0][1])) {/* backward offset */
 			rcback = atoi( &( argv[0][1] ) );
 		}
 		else {
@@ -286,13 +286,15 @@ main(argc, argv)
 
 			if (dp->d_ino == 0)
 				continue;
+#ifndef __SVR4
 			if (dp->d_namlen == 0)
 				continue;
+#endif
 
 			if (clean)
 				sprintf(inbuf, "%s/%s", _PATH_MSGS, cp);
 
-			while (isdigit(*cp))
+			while (isdigit((unsigned char)*cp))
 				i = i * 10 + *cp++ - '0';
 			if (*cp)
 				continue;	/* not a message! */
@@ -571,7 +573,7 @@ cmnd:
 					sep = "replay";
 					break;
 				}
-				if (isdigit(*in)) {
+				if (isdigit((unsigned char)*in)) {
 					msg = next(in);
 					sep = in;
 					break;
@@ -611,7 +613,7 @@ cmnd:
 		 */
 		msg = prevmsg;
 		ask(NOMORE);
-		if (inbuf[0] == '-' || isdigit(inbuf[0]))
+		if (inbuf[0] == '-' || isdigit((unsigned char)inbuf[0]))
 			goto cmnd;
 	}
 	if (!(already || hush || qopt))
@@ -755,7 +757,7 @@ ask(prompt)
         if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
 		if (inbuf[1] == '-')
 			cmsg = prevmsg;
-		else if (isdigit(inbuf[1]))
+		else if (isdigit((unsigned char)inbuf[1]))
 			cmsg = atoi(&inbuf[1]);
 		else
 			cmsg = msg;
