@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.87 2002/06/25 02:55:14 enami Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.88 2002/06/25 04:04:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.87 2002/06/25 02:55:14 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.88 2002/06/25 04:04:53 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -630,16 +630,12 @@ arprequest(ifp, sip, tip, enaddr)
 	ah = mtod(m, struct arphdr *);
 	bzero((caddr_t)ah, m->m_len);
 	switch (ifp->if_type) {
-	case IFT_ETHER:		/* RFC826 */
-	case IFT_FDDI:		/* RFC1390 */
-	case IFT_HIPPI:		/* RFC1374 */
-		ah->ar_hrd = htons(ARPHRD_ETHER);
-		break;
 	case IFT_IEEE1394:	/* RFC2734 */
+		/* fill it now for ar_tpa computation */
 		ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		break;
 	default:
-		/* why we don't set ar_hrd in other cases? */
+		/* ifp->if_output will fill ar_hrd */
 		break;
 	}
 	ah->ar_pro = htons(ETHERTYPE_IP);
