@@ -32,7 +32,7 @@
  *
  *	@(#)if_slvar.h	7.7 (Berkeley) 5/7/91
  *
- * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.2 1993/03/21 18:04:42 cgd Exp $
+ * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.3 1993/03/25 00:27:59 cgd Exp $
  */
 
 /*
@@ -58,6 +58,7 @@ struct sl_softc {
 #ifdef INET				/* XXX */
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
+	caddr_t	sc_bpf;
 };
 
 /* visible flags */

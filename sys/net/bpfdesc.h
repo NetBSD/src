@@ -4,7 +4,8 @@
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne of Lawrence Berkeley Laboratory.
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +37,7 @@
  *
  *	@(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
  *
- * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.2 1993/03/25 00:27:55 cgd Exp $ (LBL)
  */
 
 /*
@@ -66,12 +67,13 @@ struct bpf_d {
 	struct bpf_insn *bd_filter; 	/* filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
-	struct proc *	bd_selproc;	/* process that last selected us */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
-	u_char		bd_selcoll;	/* true if selects collide */
 	u_char		bd_immediate;	/* true to return on packet arrival */
+	u_char		bd_selcoll;	/* true if selects collide */
+	int		bd_timedout;
+	struct proc *	bd_selproc;	/* process that last selected us */
 };
 
 /*
