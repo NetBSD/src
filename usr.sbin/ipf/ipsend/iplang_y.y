@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.2.2.3 1997/11/17 16:27:23 mrg Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2.2.4 1998/07/23 01:31:01 mellon Exp $	*/
 
 %{
 /*
@@ -8,7 +8,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.0.2.18.2.2 1997/11/05 11:04:19 darrenr Exp 
+ * Id: iplang_y.y,v 2.0.2.18.2.7 1998/05/23 14:29:53 darrenr Exp 
  */
  
 #include <stdio.h>
@@ -194,8 +194,8 @@ int	yyparse __P((void));
 %token	IL_IPO_TS IL_IPO_TR IL_IPO_SEC IL_IPO_LSRR IL_IPO_ESEC
 %token	IL_IPO_SATID IL_IPO_SSRR IL_IPO_ADDEXT IL_IPO_VISA IL_IPO_IMITD
 %token	IL_IPO_EIP IL_IPO_FINN IL_IPO_SECCLASS IL_IPO_CIPSO IL_IPO_ENCODE
-%token	IL_IPS_RESERV4 IL_IPS_TOPSECRET IL_IPS_SECRET IL_IPS_RESERV3
-%token	IL_IPS_CONFID IL_IPS_UNCLASS IL_IPS_RESERV2 IL_IPS_RESERV1
+%token	<str> IL_IPS_RESERV4 IL_IPS_TOPSECRET IL_IPS_SECRET IL_IPS_RESERV3
+%token	<str> IL_IPS_CONFID IL_IPS_UNCLASS IL_IPS_RESERV2 IL_IPS_RESERV1
 %token	IL_ICMP_ECHOREPLY IL_ICMP_UNREACH IL_ICMP_UNREACH_NET
 %token	IL_ICMP_UNREACH_HOST IL_ICMP_UNREACH_PROTOCOL IL_ICMP_UNREACH_PORT
 %token	IL_ICMP_UNREACH_NEEDFRAG IL_ICMP_UNREACH_SRCFAIL
@@ -239,10 +239,10 @@ ifaceopts:
 	;
 
 ifaceopt:
-	IL_IFNAME token			{ set_ifname(&yylval.str); }
-	| IL_MTU number			{ set_ifmtu(yylval.num); }
-	| IL_V4ADDR token		{ set_ifv4addr(&yylval.str); }
-	| IL_EADDR token		{ set_ifeaddr(&yylval.str); }
+	IL_IFNAME token			{ set_ifname(&$2); }
+	| IL_MTU number			{ set_ifmtu($2); }
+	| IL_V4ADDR token		{ set_ifv4addr(&$2); }
+	| IL_EADDR token		{ set_ifeaddr(&$2); }
 	;
 
 send:   sendhdr '{' sendbody '}' ';'	{ packet_done(); }
@@ -259,8 +259,8 @@ sendbody:
 	;
 
 sendopt:
-	IL_IFNAME token			{ set_sendif(&yylval.str); }
-	| IL_VIA token			{ set_sendvia(&yylval.str); }
+	IL_IFNAME token			{ set_sendif(&$2); }
+	| IL_VIA token			{ set_sendvia(&$2); }
 	;
 
 arp:    arphdr '{' arpbody '}' ';'
@@ -274,12 +274,12 @@ arpbody:
 	| arpbody arpopt
 	;
 
-arpopt: IL_V4ADDR token			{ set_arpv4addr(&yylval.str); }
-	| IL_EADDR token		{ set_arpeaddr(&yylval.str); }
+arpopt: IL_V4ADDR token			{ set_arpv4addr(&$2); }
+	| IL_EADDR token		{ set_arpeaddr(&$2); }
 	;
 
 defrouter:
-	IL_DEFROUTER token		{ set_defaultrouter(&yylval.str); }
+	IL_DEFROUTER token		{ set_defaultrouter(&$2); }
 	;
 
 bodyline:
@@ -302,17 +302,17 @@ ipv4body:
 	;
 
 ipv4type:
-	IL_V4PROTO token		{ set_ipv4proto(&yylval.str); }
-	| IL_V4SRC token		{ set_ipv4src(&yylval.str); }
-	| IL_V4DST token		{ set_ipv4dst(&yylval.str); }
-	| IL_V4OFF token		{ set_ipv4off(&yylval.str); }
-	| IL_V4V token			{ set_ipv4v(&yylval.str); }
-	| IL_V4HL token			{ set_ipv4hl(&yylval.str); }
-	| IL_V4ID token			{ set_ipv4id(&yylval.str); }
-	| IL_V4TTL token		{ set_ipv4ttl(&yylval.str); }
-	| IL_V4TOS token		{ set_ipv4tos(&yylval.str); }
-	| IL_V4SUM token		{ set_ipv4sum(&yylval.str); }
-	| IL_V4LEN token		{ set_ipv4len(&yylval.str); }
+	IL_V4PROTO token		{ set_ipv4proto(&$2); }
+	| IL_V4SRC token		{ set_ipv4src(&$2); }
+	| IL_V4DST token		{ set_ipv4dst(&$2); }
+	| IL_V4OFF token		{ set_ipv4off(&$2); }
+	| IL_V4V token			{ set_ipv4v(&$2); }
+	| IL_V4HL token			{ set_ipv4hl(&$2); }
+	| IL_V4ID token			{ set_ipv4id(&$2); }
+	| IL_V4TTL token		{ set_ipv4ttl(&$2); }
+	| IL_V4TOS token		{ set_ipv4tos(&$2); }
+	| IL_V4SUM token		{ set_ipv4sum(&$2); }
+	| IL_V4LEN token		{ set_ipv4len(&$2); }
 	| ipv4opt '{' ipv4optlist '}' ';'	{ end_ipopt(); }
 	;
 
@@ -324,20 +324,21 @@ tcpline:
 	;
 
 tcpheader:
-	tcpbody tcpheader
+	tcpbody
+	| tcpbody tcpheader
 	| bodyline
 	;
 
 tcpbody:
-	IL_SPORT token			{ set_tcpsport(&yylval.str); }
-	| IL_DPORT token		{ set_tcpdport(&yylval.str); }
-	| IL_TCPSEQ token		{ set_tcpseq(&yylval.str); }
-	| IL_TCPACK token		{ set_tcpack(&yylval.str); }
-	| IL_TCPOFF token		{ set_tcpoff(&yylval.str); }
-	| IL_TCPURP token		{ set_tcpurp(&yylval.str); }
-	| IL_TCPWIN token		{ set_tcpwin(&yylval.str); }
-	| IL_TCPSUM token		{ set_tcpsum(&yylval.str); }
-	| IL_TCPFL token		{ set_tcpflags(&yylval.str); }
+	IL_SPORT token			{ set_tcpsport(&$2); }
+	| IL_DPORT token		{ set_tcpdport(&$2); }
+	| IL_TCPSEQ token		{ set_tcpseq(&$2); }
+	| IL_TCPACK token		{ set_tcpack(&$2); }
+	| IL_TCPOFF token		{ set_tcpoff(&$2); }
+	| IL_TCPURP token		{ set_tcpurp(&$2); }
+	| IL_TCPWIN token		{ set_tcpwin(&$2); }
+	| IL_TCPSUM token		{ set_tcpsum(&$2); }
+	| IL_TCPFL token		{ set_tcpflags(&$2); }
 	| IL_TCPOPT '{' tcpopts '}' ';'	{ end_tcpopt(); }
 	;
 
@@ -347,9 +348,9 @@ tcpopts:
 
 tcpopt:	IL_TCPO_NOP ';'			{ set_tcpopt(IL_TCPO_NOP, NULL); }
 	| IL_TCPO_EOL ';'		{ set_tcpopt(IL_TCPO_EOL, NULL); }
-	| IL_TCPO_MSS optoken		{ set_tcpopt(IL_TCPO_MSS,&yylval.str);}
-	| IL_TCPO_WSCALE optoken	{ set_tcpopt(IL_TCPO_MSS,&yylval.str);}
-	| IL_TCPO_TS optoken		{ set_tcpopt(IL_TCPO_TS, &yylval.str);}
+	| IL_TCPO_MSS optoken		{ set_tcpopt(IL_TCPO_MSS,&$2);}
+	| IL_TCPO_WSCALE optoken	{ set_tcpopt(IL_TCPO_WSCALE,&$2);}
+	| IL_TCPO_TS optoken		{ set_tcpopt(IL_TCPO_TS, &$2);}
 	;
 
 udp:	IL_UDP				{ new_udpheader(); }
@@ -367,10 +368,10 @@ udpheader:
 	;
 
 udpbody:
-	IL_SPORT token			{ set_tcpsport(&yylval.str); }
-	| IL_DPORT token		{ set_tcpdport(&yylval.str); }
-	| IL_UDPLEN token		{ set_udplen(&yylval.str); }
-	| IL_UDPSUM token		{ set_udpsum(&yylval.str); }
+	IL_SPORT token			{ set_tcpsport(&$2); }
+	| IL_DPORT token		{ set_tcpdport(&$2); }
+	| IL_UDPLEN token		{ set_udplen(&$2); }
+	| IL_UDPSUM token		{ set_udpsum(&$2); }
 	;
 
 icmp:	IL_ICMP				{ new_icmpheader(); }
@@ -391,7 +392,7 @@ icmpheader:
 	;
 
 icmpcode:
-	IL_ICMPCODE token		{ set_icmpcodetok(&yylval.str); }
+	IL_ICMPCODE token		{ set_icmpcodetok(&$2); }
 	;
 
 icmptype:
@@ -417,7 +418,7 @@ icmptype:
 	| IL_ICMP_MASKREPLY '{' token '}' ';'
 	| IL_ICMP_PARAMPROB ';'		{ set_icmptype(ICMP_PARAMPROB); }
 	| IL_ICMP_PARAMPROB '{' paramprob '}' ';'
-	| IL_TOKEN ';'			{ set_icmptypetok(&yylval.str); }
+	| IL_TOKEN ';'			{ set_icmptypetok(&$1); }
 	;
 
 icmpechoopts:
@@ -425,17 +426,17 @@ icmpechoopts:
 	;
 
 icmpecho:
-	IL_ICMP_SEQ number 		{ set_icmpseq(yylval.num); }
-	| IL_ICMP_ID number		{ set_icmpid(yylval.num); }
+	IL_ICMP_SEQ number 		{ set_icmpseq($2); }
+	| IL_ICMP_ID number		{ set_icmpid($2); }
 	;
 
 icmptsopts:
 	| icmptsopts icmpts ';'
 	;
 
-icmpts: IL_ICMP_OTIME number 		{ set_icmpotime(yylval.num); }
-	| IL_ICMP_RTIME number 		{ set_icmprtime(yylval.num); }
-	| IL_ICMP_TTIME number 		{ set_icmpttime(yylval.num); }
+icmpts: IL_ICMP_OTIME number 		{ set_icmpotime($2); }
+	| IL_ICMP_RTIME number 		{ set_icmprtime($2); }
+	| IL_ICMP_TTIME number 		{ set_icmpttime($2); }
 	;
 
 unreach:
@@ -448,7 +449,7 @@ unreachopts:
 	| IL_ICMP_UNREACH_HOST line
 	| IL_ICMP_UNREACH_PROTOCOL line
 	| IL_ICMP_UNREACH_PORT line
-	| IL_ICMP_UNREACH_NEEDFRAG number ';'	{ set_icmpmtu(yylval.num); }
+	| IL_ICMP_UNREACH_NEEDFRAG number ';'	{ set_icmpmtu($2); }
 	| IL_ICMP_UNREACH_SRCFAIL line
 	| IL_ICMP_UNREACH_NET_UNKNOWN line
 	| IL_ICMP_UNREACH_HOST_UNKNOWN line
@@ -468,10 +469,10 @@ redirect:
 	;
 
 redirectopts:
-	| IL_ICMP_REDIRECT_NET token		{ set_redir(0, &yylval.str); }
-	| IL_ICMP_REDIRECT_HOST token		{ set_redir(1, &yylval.str); }
-	| IL_ICMP_REDIRECT_TOSNET token		{ set_redir(2, &yylval.str); }
-	| IL_ICMP_REDIRECT_TOSHOST token	{ set_redir(3, &yylval.str); }
+	| IL_ICMP_REDIRECT_NET token		{ set_redir(0, &$2); }
+	| IL_ICMP_REDIRECT_HOST token		{ set_redir(1, &$2); }
+	| IL_ICMP_REDIRECT_TOSNET token		{ set_redir(2, &$2); }
+	| IL_ICMP_REDIRECT_TOSHOST token	{ set_redir(3, &$2); }
 	;
 
 exceed:
@@ -484,7 +485,7 @@ paramprob:
 	| IL_ICMP_PARAMPROB_OPTABSENT paraprobarg
 
 paraprobarg:
-	'{' number '}' ';'		{ set_icmppprob(yylval.num); }
+	'{' number '}' ';'		{ set_icmppprob($2); }
 	;
 
 ipv4opt:	IL_V4OPT		{ new_ipv4opt(); }
@@ -496,7 +497,7 @@ ipv4optlist:
 
 ipv4opts:
 	IL_IPO_NOP ';'			{ add_ipopt(IL_IPO_NOP, NULL); }
-	| IL_IPO_RR optnumber		{ add_ipopt(IL_IPO_RR, &yylval.num); }
+	| IL_IPO_RR optnumber		{ add_ipopt(IL_IPO_RR, &$2); }
 	| IL_IPO_ZSU ';'		{ add_ipopt(IL_IPO_ZSU, NULL); }
 	| IL_IPO_MTUP ';'		{ add_ipopt(IL_IPO_MTUP, NULL); }
 	| IL_IPO_MTUR ';'		{ add_ipopt(IL_IPO_MTUR, NULL); }
@@ -505,11 +506,11 @@ ipv4opts:
 	| IL_IPO_TR ';'			{ add_ipopt(IL_IPO_TR, NULL); }
 	| IL_IPO_SEC ';'		{ add_ipopt(IL_IPO_SEC, NULL); }
 	| IL_IPO_SECCLASS secclass	{ add_ipopt(IL_IPO_SECCLASS, sclass); }
-	| IL_IPO_LSRR token		{ add_ipopt(IL_IPO_LSRR,&yylval.str); }
+	| IL_IPO_LSRR token		{ add_ipopt(IL_IPO_LSRR,&$2); }
 	| IL_IPO_ESEC ';'		{ add_ipopt(IL_IPO_ESEC, NULL); }
 	| IL_IPO_CIPSO ';'		{ add_ipopt(IL_IPO_CIPSO, NULL); }
-	| IL_IPO_SATID optnumber	{ add_ipopt(IL_IPO_SATID,&yylval.num);}
-	| IL_IPO_SSRR token		{ add_ipopt(IL_IPO_SSRR,&yylval.str); }
+	| IL_IPO_SATID optnumber	{ add_ipopt(IL_IPO_SATID,&$2);}
+	| IL_IPO_SSRR token		{ add_ipopt(IL_IPO_SSRR,&$2); }
 	| IL_IPO_ADDEXT ';'		{ add_ipopt(IL_IPO_ADDEXT, NULL); }
 	| IL_IPO_VISA ';'		{ add_ipopt(IL_IPO_VISA, NULL); }
 	| IL_IPO_IMITD ';'		{ add_ipopt(IL_IPO_IMITD, NULL); }
@@ -518,14 +519,14 @@ ipv4opts:
 	;
 
 secclass:
-	IL_IPS_RESERV4 ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_TOPSECRET ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_SECRET ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV3 ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_CONFID ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_UNCLASS ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV2 ';'		{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV1 ';'		{ set_secclass(&yylval.str); }
+	IL_IPS_RESERV4 ';'		{ set_secclass(&$1); }
+	| IL_IPS_TOPSECRET ';'		{ set_secclass(&$1); }
+	| IL_IPS_SECRET ';'		{ set_secclass(&$1); }
+	| IL_IPS_RESERV3 ';'		{ set_secclass(&$1); }
+	| IL_IPS_CONFID ';'		{ set_secclass(&$1); }
+	| IL_IPS_UNCLASS ';'		{ set_secclass(&$1); }
+	| IL_IPS_RESERV2 ';'		{ set_secclass(&$1); }
+	| IL_IPS_RESERV1 ';'		{ set_secclass(&$1); }
 	;
 
 data:	IL_DATA				{ new_data(); }
@@ -540,9 +541,9 @@ databody: dataopts
 	;
 
 dataopts:
-	IL_DLEN token			{ set_datalen(&yylval.str); }
-	| IL_DVALUE token 		{ set_data(&yylval.str); }
-	| IL_DFILE token 		{ set_datafile(&yylval.str); }
+	IL_DLEN token			{ set_datalen(&$2); }
+	| IL_DVALUE token 		{ set_data(&$2); }
+	| IL_DFILE token 		{ set_datafile(&$2); }
 	;
 
 token: IL_TOKEN ';'
@@ -622,28 +623,6 @@ ether_aton(s)
 }
 #endif
 
-#ifdef	bsdi
-struct ether_addr *
-ether_aton(s)
-	char *s;
-{
-	static struct ether_addr n;
-	u_int i[6];
-
-	if (sscanf(s, " %x:%x:%x:%x:%x:%x ", &i[0], &i[1],
-	    &i[2], &i[3], &i[4], &i[5]) == 6) {
-		n.ether_addr_octet[0] = (u_char)i[0];
-		n.ether_addr_octet[1] = (u_char)i[1];
-		n.ether_addr_octet[2] = (u_char)i[2];
-		n.ether_addr_octet[3] = (u_char)i[3];
-		n.ether_addr_octet[4] = (u_char)i[4];
-		n.ether_addr_octet[5] = (u_char)i[5];
-		return &n;
-	}
-	return NULL;
-}
-#endif
-
 
 struct in_addr getipv4addr(arg)
 char *arg;
@@ -667,7 +646,7 @@ char *pr, *name;
 	struct servent *sp;
 
 	if (!(sp = getservbyname(name, pr)))
-		return atoi(name);
+		return htons(atoi(name));
 	return sp->s_port;
 }
 
@@ -804,6 +783,8 @@ char **arg;
 				*t++ = (u_char)(val & 0xff);
 				todo = 0;
 			}
+			if (todo)
+				continue;
 		}
 		if (quote) {
 			if (isdigit(c)) {
@@ -832,8 +813,8 @@ char **arg;
 					*t++ = '\t';
 					break;
 				}
-				quote = 0;
 			}
+			quote = 0;
 			continue;
 		}
 
@@ -842,6 +823,8 @@ char **arg;
 		else
 			*t++ = c;
 	}
+	if (todo)
+		*t++ = (u_char)(val & 0xff);
 	if (quote)
 		*t++ = '\\';
 	len = t - (u_char *)canip->ah_data;
@@ -935,7 +918,7 @@ char **arg;
 void set_ipv4off(arg)
 char **arg;
 {
-	ip->ip_off = strtol(*arg, NULL, 0);
+	ip->ip_off = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -986,7 +969,7 @@ char **arg;
 void set_ipv4id(arg)
 char **arg;
 {
-	ip->ip_id = strtol(*arg, NULL, 0);
+	ip->ip_id = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1024,7 +1007,7 @@ void new_tcpheader()
 	ip->ip_p = IPPROTO_TCP;
 
 	tcp = (tcphdr_t *)new_header(IPPROTO_TCP);
-	tcp->th_win = 4096;
+	tcp->th_win = htons(4096);
 	tcp->th_off = sizeof(*tcp) >> 2;
 }
 
@@ -1072,7 +1055,7 @@ char **arg;
 void set_tcpseq(arg)
 char **arg;
 {
-	tcp->th_seq = strtol(*arg, NULL, 0);
+	tcp->th_seq = htonl(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1081,7 +1064,7 @@ char **arg;
 void set_tcpack(arg)
 char **arg;
 {
-	tcp->th_ack = strtol(*arg, NULL, 0);
+	tcp->th_ack = htonl(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1103,7 +1086,7 @@ char **arg;
 void set_tcpurp(arg)
 char **arg;
 {
-	tcp->th_urp = strtol(*arg, NULL, 0);
+	tcp->th_urp = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1112,7 +1095,7 @@ char **arg;
 void set_tcpwin(arg)
 char **arg;
 {
-	tcp->th_win = strtol(*arg, NULL, 0);
+	tcp->th_win = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1323,7 +1306,8 @@ void packet_done()
 	u_char  *s = (u_char *)ipbuffer, *t = (u_char *)outline;
 
 	if (opts & OPT_VERBOSE) {
-		for (i = ip->ip_len, j = 0; i; i--, j++, s++) {
+		ip->ip_len = htons(ip->ip_len);
+		for (i = ntohs(ip->ip_len), j = 0; i; i--, j++, s++) {
 			if (j && !(j & 0xf)) {
 				*t++ = '\n';
 				*t = '\0';
@@ -1363,6 +1347,7 @@ void packet_done()
 		}
 		fputs(outline, stdout);
 		fflush(stdout);
+		ip->ip_len = ntohs(ip->ip_len);
 	}
 
 	prep_packet();
@@ -1567,35 +1552,35 @@ char **type;
 void set_icmpid(arg)
 int arg;
 {
-	icmp->icmp_id = arg;
+	icmp->icmp_id = htons(arg);
 }
 
 
 void set_icmpseq(arg)
 int arg;
 {
-	icmp->icmp_seq = arg;
+	icmp->icmp_seq = htons(arg);
 }
 
 
 void set_icmpotime(arg)
 int arg;
 {
-	icmp->icmp_otime = arg;
+	icmp->icmp_otime = htonl(arg);
 }
 
 
 void set_icmprtime(arg)
 int arg;
 {
-	icmp->icmp_rtime = arg;
+	icmp->icmp_rtime = htonl(arg);
 }
 
 
 void set_icmpttime(arg)
 int arg;
 {
-	icmp->icmp_ttime = arg;
+	icmp->icmp_ttime = htonl(arg);
 }
 
 
@@ -1603,7 +1588,7 @@ void set_icmpmtu(arg)
 int arg;
 {
 #if	BSD >= 199306
-	icmp->icmp_nextmtu = arg;
+	icmp->icmp_nextmtu = htons(arg);
 #endif
 }
 
@@ -1744,7 +1729,9 @@ void free_anipheader()
 		canip->ah_next = NULL;
 		aniptail = &canip->ah_next;
 	}
-	free(aip);
+
+	if (canip)
+		free(aip);
 }
 
 
@@ -1753,7 +1740,9 @@ void end_ipv4()
 	aniphdr_t *aip;
 
 	ip->ip_sum = 0;
+	ip->ip_len = htons(ip->ip_len);
 	ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+	ip->ip_len = ntohs(ip->ip_len);
 	free_anipheader();
 	for (aip = aniphead, ip = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_IP)
@@ -1784,9 +1773,10 @@ void end_udp()
 	iptmp.ip_p = ip->ip_p;
 	iptmp.ip_src = ip->ip_src;
 	iptmp.ip_dst = ip->ip_dst;
-	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
+	iptmp.ip_len = htons(ip->ip_len - (ip->ip_hl << 2));
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
-	udp->uh_sum = c_chksum((u_short *)udp, (u_int)iptmp.ip_len, sum);
+	udp->uh_ulen = htons(udp->uh_ulen);
+	udp->uh_sum = c_chksum((u_short *)udp, (u_int)ntohs(iptmp.ip_len), sum);
 	free_anipheader();
 	for (aip = aniphead, udp = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_UDP)
@@ -1804,10 +1794,10 @@ void end_tcp()
 	iptmp.ip_p = ip->ip_p;
 	iptmp.ip_src = ip->ip_src;
 	iptmp.ip_dst = ip->ip_dst;
-	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
+	iptmp.ip_len = htons(ip->ip_len - (ip->ip_hl << 2));
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
 	tcp->th_sum = 0;
-	tcp->th_sum = c_chksum((u_short *)tcp, (u_int)iptmp.ip_len, sum);
+	tcp->th_sum = c_chksum((u_short *)tcp, (u_int)ntohs(iptmp.ip_len), sum);
 	free_anipheader();
 	for (aip = aniphead, tcp = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_TCP)
