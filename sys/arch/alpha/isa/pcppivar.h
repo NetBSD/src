@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.2 1997/04/06 23:17:57 cgd Exp $ */
+/* $NetBSD: pcppivar.h,v 1.3 1998/04/15 20:11:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,7 +36,6 @@ struct pcppi_attach_args {
 	bus_space_tag_t	pa_iot;
 	bus_space_handle_t pa_ioh;
 	bus_space_handle_t pa_pit_ioh;
-	bus_space_handle_t pa_delaybah;
 	isa_chipset_tag_t pa_ic;
 };
 
