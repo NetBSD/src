@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.36 2003/03/29 11:04:11 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.36 2003/03/29 11:04:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,6 +226,7 @@ mach_port_allocate(args)
 	default:
 		uprintf("mach_port_allocate: unknown right %x\n", 
 		    req->req_right);
+		return mach_msg_error(args, EINVAL);
 		break;
 	}
 
@@ -430,36 +431,54 @@ mach_port_request_notification(args)
 	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	mach_port_t mn;
-	struct mach_right *mr;
-	struct mach_right *oldmr;
+	struct mach_right *nmr;
+	struct mach_right *tmr;
+	struct mach_right *oldnmr;
 	mach_port_t oldmn;
 
-	mn = req->req_notify.name;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+#ifdef DEBUG_MACH
+	printf("mach_port_request_notification, notify = %08x, target = %08x\n",
+	    req->req_notify.name, mn = req->req_name);
+#endif
+	mn = req->req_notify.name;	
+	if ((nmr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EINVAL);
 
-	oldmr = NULL;
+	mn = req->req_name;
+	if ((tmr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+
+#ifdef DEBUG_MACH
+	if (nmr->mr_port == NULL) {
+		printf("Notification right without a port\n");
+		printf("### mr->mr_port = %p, mr = %08x\n", nmr->mr_port, nmr->mr_name);
+		return mach_msg_error(args, EINVAL);
+	}
+#endif
+
+
+	oldnmr = NULL;
 	switch(req->req_msgid) {
 	case MACH_NOTIFY_DESTROYED_MSGID:
-		oldmr = mr->mr_notify_destroyed;
-		mr->mr_notify_destroyed = mach_right_get(mach_port_get(),
-		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
+		oldnmr = tmr->mr_notify_destroyed;
+		tmr->mr_notify_destroyed = mach_right_get(nmr->mr_port,
+		    l, MACH_PORT_TYPE_SEND_ONCE, req->req_notify.name);
 		break;
 
 	case MACH_NOTIFY_NO_SENDERS_MSGID:
-		oldmr = mr->mr_notify_no_senders;
-		mr->mr_notify_no_senders = mach_right_get(mach_port_get(),
-		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
-		mr->mr_notify_no_senders->mr_port->mp_datatype = 
+		oldnmr = tmr->mr_notify_no_senders;
+		tmr->mr_notify_no_senders = mach_right_get(nmr->mr_port,
+		    l, MACH_PORT_TYPE_SEND_ONCE, req->req_notify.name);
+		tmr->mr_notify_no_senders->mr_port->mp_datatype = 
 		    MACH_MP_NOTIFY_SYNC;
-		(int)mr->mr_notify_no_senders->mr_port->mp_data =
+		(int)tmr->mr_notify_no_senders->mr_port->mp_data =
 		    req->req_count;
 		break;
 
 	case MACH_NOTIFY_DEAD_NAME_MSGID:
-		oldmr = mr->mr_notify_dead_name;
-		mr->mr_notify_dead_name = mach_right_get(mach_port_get(),
-		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
+		oldnmr = tmr->mr_notify_dead_name;
+		tmr->mr_notify_dead_name = mach_right_get(nmr->mr_port,
+		    l, MACH_PORT_TYPE_SEND_ONCE, req->req_notify.name);
 		break;
 
 	case MACH_NOTIFY_SEND_ONCE_MSGID:
@@ -472,9 +491,9 @@ mach_port_request_notification(args)
 #endif
 	}
 
-	if (oldmr != NULL) {
-		oldmr->mr_refcount++;
-		oldmn = oldmr->mr_name;
+	if (oldnmr != NULL) {
+		oldnmr->mr_refcount++;
+		oldmn = oldnmr->mr_name;
 	} else {
 		oldmn = (mach_port_t)MACH_PORT_NULL;
 	}
@@ -695,8 +714,8 @@ mach_right_put_exclocked(mr, right)
 	/* When receive right is deallocated, the port should die */
 	lright = (right & MACH_PORT_TYPE_RECEIVE);
 #ifdef DEBUG_MACH_RIGHT
-	printf("mr->mr_type = %x, lright = %x, right = %x\n",
-	    mr->mr_type, lright, right);
+	printf("mr->mr_type = %x, lright = %x, right = %x, refcount = %d\n",
+	    mr->mr_type, lright, right, mr->mr_refcount);
 #endif
 	if (mr->mr_type & lright) {
 		if (mr->mr_refcount <= 0) {

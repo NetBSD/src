@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.h,v 1.1 2003/03/29 11:04:10 manu Exp $ */
+/*	$NetBSD: mach_notify.h,v 1.2 2003/04/05 19:27:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,28 +70,33 @@ typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_port_name_t req_name;
+	mach_msg_trailer_t req_trailer;
 } mach_notify_port_deleted_request_t;
 
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
 	mach_msg_port_descriptor_t req_rights;
+	mach_msg_trailer_t req_trailer;
 } mach_notify_port_destroyed_request_t;
 
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_port_mscount_t req_mscount;
+	mach_msg_trailer_t req_trailer;
 } mach_notify_port_no_senders_request_t;
 
 typedef struct {
 	mach_msg_header_t req_msgh;
+	mach_msg_trailer_t req_trailer;
 } mach_notify_send_once_request_t;
 
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_port_name_t req_name;
+	mach_msg_trailer_t req_trailer;
 } mach_notify_port_dead_name_request_t;
 
 void mach_notify_port_destroyed(struct lwp *, struct mach_right *);
