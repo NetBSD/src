@@ -1,4 +1,4 @@
-#	$NetBSD: NBTY,v 1.7 1997/06/12 18:42:29 mrg Exp $
+#	$NetBSD: NBTY,v 1.8 1997/10/15 23:39:23 thorpej Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -113,8 +113,8 @@ zs0		at mainbus0		# Zilog serial
 zs1		at mainbus0		# Zilog serial
 par0		at mainbus0		# builtin parallel port
 
-com0		at mainbus0		# NS16550
-com1		at mainbus0		# NS16550
+xcom0		at mainbus0		# NS16550
+xcom1		at mainbus0		# NS16550
 
 # SCSI disks
 #sd*	at scsibus? target ? lun ?
