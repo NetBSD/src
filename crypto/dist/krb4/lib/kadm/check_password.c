@@ -32,7 +32,7 @@
  */
 
 #include "kadm_locl.h"
-RCSID("$Id: check_password.c,v 1.1.1.1 2000/06/16 18:45:36 thorpej Exp $");
+RCSID("$Id: check_password.c,v 1.1.1.2 2000/12/29 01:43:09 assar Exp $");
 
 /* This is a client side password check. Should perhaps be merged with
    kadmind version that lives in pw_check.c */

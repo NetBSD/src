@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: make_cmds.h,v 1.1.1.1 2000/06/16 18:45:45 thorpej Exp $ */
+/* $Id: make_cmds.h,v 1.1.1.2 2000/12/29 01:43:51 assar Exp $ */
 
 #ifndef __MAKE_CMDS_H__
 #define __MAKE_CMDS_H__

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xdbm.h,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $ */
+/* $Id: xdbm.h,v 1.1.1.2 2000/12/29 01:43:31 assar Exp $ */
 
 /* Generic *dbm include file */
 
@@ -40,6 +40,8 @@
 
 #ifdef HAVE_NDBM_H
 #include <ndbm.h>
+#elif defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
 #elif defined(HAVE_DBM_H)
 #include <dbm.h>
 #elif defined(HAVE_RPCSVC_DBM_H)

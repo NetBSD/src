@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: krb_net_write.c,v 1.1.1.1 2000/06/16 18:45:54 thorpej Exp $");
+RCSID("$Id: krb_net_write.c,v 1.1.1.2 2000/12/29 01:43:16 assar Exp $");
 
 int
 krb_net_write (int fd, const void *buf, size_t nbytes)

@@ -41,7 +41,7 @@
 
 #include "kauth.h"
 
-RCSID("$Id: kauth.c,v 1.1.1.1 2000/06/16 18:46:20 thorpej Exp $");
+RCSID("$Id: kauth.c,v 1.1.1.2 2000/12/29 01:42:52 assar Exp $");
 
 krb_principal princ;
 static char srvtab[MaxPathLen];

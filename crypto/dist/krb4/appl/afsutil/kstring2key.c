@@ -33,7 +33,7 @@
 
 #include "config.h"
 
-RCSID("$Id: kstring2key.c,v 1.1.1.1 2000/06/16 18:46:14 thorpej Exp $");
+RCSID("$Id: kstring2key.c,v 1.1.1.2 2000/12/29 01:42:19 assar Exp $");
 
 #include <stdio.h>
 #include <string.h>

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: err.h,v 1.1.1.1 2000/06/16 18:45:58 thorpej Exp $ */
+/* $Id: err.h,v 1.1.1.2 2000/12/29 01:43:23 assar Exp $ */
 
 #ifndef __ERR_H__
 #define __ERR_H__

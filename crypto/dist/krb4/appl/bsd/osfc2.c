@@ -32,7 +32,7 @@
  */
 
 #include "bsd_locl.h"
-RCSID("$Id: osfc2.c,v 1.1.1.1 2000/06/16 18:46:16 thorpej Exp $");
+RCSID("$Id: osfc2.c,v 1.1.1.2 2000/12/29 01:42:21 assar Exp $");
 
 int
 do_osfc2_magic(uid_t uid)

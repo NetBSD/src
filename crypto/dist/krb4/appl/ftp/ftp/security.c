@@ -37,7 +37,7 @@
 #include "ftp_locl.h"
 #endif
 
-RCSID("$Id: security.c,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: security.c,v 1.1.1.2 2000/12/29 01:42:56 assar Exp $");
 
 static enum protection_level command_prot;
 static enum protection_level data_prot;
