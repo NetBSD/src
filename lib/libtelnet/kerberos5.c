@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.9 2002/09/20 14:45:29 joda Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.10 2002/09/20 22:25:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -346,7 +346,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 			return;
 		}
 		if (key_block == NULL) {
-			ret = krb5_auth_con_getkey(context,
+			ret = krb5_auth_con_getkey(telnet_context,
 						   auth_context,
 						   &key_block);
 		}
@@ -356,7 +356,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 			if (auth_debug_mode)
 				printf("Kerberos V5: "
 				       "krb5_auth_con_getkey failed (%s)\r\n",
-				       krb5_get_err_text(context, ret));
+				       krb5_get_err_text(telnet_context, ret));
 			return;
 		}
 		if (key_block == NULL) {
