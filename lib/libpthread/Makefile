@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.15 2002/05/03 18:50:49 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.16 2002/08/14 18:41:50 nathanw Exp $
 #
 
 WARNS=	2
@@ -44,6 +44,9 @@ SRCS+=  pthread_debug.c
 SRCS+=	sched.c
 # Architecture-dependent files
 SRCS+=	pthread_switch.S _context_u.S
+.if exists(${ARCHDIR}/pthread_md.c)
+SRCS+= pthread_md.c
+.endif
 
 pthread_switch.S _context_u.S: assym.h
 
