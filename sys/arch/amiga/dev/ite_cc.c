@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.27 1999/09/20 23:17:15 is Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.28 2000/05/24 19:36:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -842,9 +842,6 @@ scroll8(ip, sy, sx, count, dir)
 	  for (i = (ip->cols - sx)-1; i >= 0; i--)
 	    {
 	      int t;
-	      asm("bfextu %1@{%2:%3},%0"
-	          : "=d" (t)
-		  : "a" (pl), "d" (sofs2), "d" (ip->ftwidth));
 	      BFEXT(t, pl, sofs2, ip->ftwidth);
 	      BFINS(t, pl, dofs2, ip->ftwidth);
 	      sofs2 += ip->ftwidth;
