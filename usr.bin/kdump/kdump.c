@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.53 2003/07/11 13:06:11 wiz Exp $	*/
+/*	$NetBSD: kdump.c,v 1.54 2003/07/12 10:07:08 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.53 2003/07/11 13:06:11 wiz Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.54 2003/07/12 10:07:08 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -563,11 +563,12 @@ hexdump_buf(void *vdp, int datalen)
 			line_len = datalen;
 		cp = chars;
 		l = 0;
+		printf("0x%08lx ", (u_long)dp - (u_long)vdp);
 		for (i = 0; i < line_len; i++) {
 			c = *dp++;
-			if (i == 8)
-				l += printf(" ");
-			l += printf("%2.2x ", c);
+			if ((i % 4) == 0)
+				l += printf("  0x");
+			l += printf("%2.2x", c);
 			*cp++ = isgraph(c) ? c : '.';
 		} while (--i);
 		printf("%*s %.*s\n", 50 - l, "", cp - chars, chars);
@@ -699,42 +700,11 @@ ktrmmsg(mmsg, len)
 	struct ktr_mmsg *mmsg;
 	int len;
 {
-	int i,j;
-	unsigned char *data;
-	int row_len = 16;
-	int aligned_len;
-
-	printf("id %d [0x%x -> 0x%x] %d bytes, flags 0x%x", 
+	printf("id %d [0x%x -> 0x%x] flags 0x%x\n", 
 	    mmsg->ktr_id, mmsg->ktr_local_port, 
-	    mmsg->ktr_remote_port, mmsg->ktr_size, mmsg->ktr_bits);
+	    mmsg->ktr_remote_port, mmsg->ktr_bits);
 
-	data = (unsigned char *)mmsg;
-	aligned_len = (len & ~(row_len - 1)) + row_len;
-	for (i = 0; i < aligned_len; i += row_len) {
-		printf("\n\t0x%04x  ", i);
-
-		for (j = 0; j < row_len; j += sizeof(int)) 
-			if ((i + j) < len)
-				printf("0x%08x ", *((int *)&data[i + j]));
-			else
-				printf("           ");
-
-		printf("  ");
-
-		for (j = 0; j < row_len; j++) {
-			if ((i + j) < len) {
-				if (isprint(data[i + j]))
-					printf("%c", data[i + j]);
-				else
-					printf(".");
-			} else {
-				printf(" ");
-			}
-		}
-	}
-
-	if (aligned_len != sizeof(struct ktr_mmsg))
-		printf("\n");
+	hexdump_buf(mmsg, len);
 }
 
 static const char *
