@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.37 2004/08/09 18:30:51 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.38 2004/08/09 20:30:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.37 2004/08/09 18:30:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.38 2004/08/09 20:30:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,6 @@ sm_pcmcia_attach(parent, self, aux)
 	const struct pcmcia_product *pp;
 
 	aprint_normal("\n");
-
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
@@ -156,32 +155,30 @@ sm_pcmcia_attach(parent, self, aux)
 		    &psc->sc_pcioh) == 0)
 			break;
 	}
-
-	if (cfe == 0) {
+	if (!cfe) {
 		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
 		goto ioalloc_failed;
 	}
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
-
-	/* XXX sanity check number of mem and i/o spaces */
-
 	sc->sc_bst = psc->sc_pcioh.iot;
 	sc->sc_bsh = psc->sc_pcioh.ioh;
 
-	sc->sc_enable = sm_pcmcia_enable;
-	sc->sc_disable = sm_pcmcia_disable;
+	/* Enable the card. */
+	pcmcia_function_init(pa->pf, cfe);
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
+
+	if (sm_pcmcia_enable(sc)) {
+		aprint_error("%s: function enable failed\n", self->dv_xname);
+		goto enable_failed;
+	}
+
+	sc->sc_enable = sm_pcmcia_enable;
+	sc->sc_disable = sm_pcmcia_disable;
 
 	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
 	    sizeof sm_pcmcia_products[0], NULL);
@@ -204,15 +201,13 @@ sm_pcmcia_attach(parent, self, aux)
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
-	pcmcia_function_disable(pa->pf);
+	sm_pcmcia_disable(sc);
 	return;
 
-iomap_failed:
-	pcmcia_function_disable(pa->pf);
-
 enable_failed:
+	pcmcia_io_unmap(pa->pf, psc->sc_io_window);
+iomap_failed:
 	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
-
 ioalloc_failed:
 	psc->sc_io_window = -1;
 }
@@ -283,7 +278,7 @@ sm_pcmcia_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
-	int rv;
+	int error;
 
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
@@ -294,13 +289,11 @@ sm_pcmcia_enable(sc)
 		return (1);
 	}
 
-	rv = pcmcia_function_enable(psc->sc_pf);
-	if (rv != 0) {
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error)
 		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-		return (rv);
-	}
 
-	return (0);
+	return (error);
 }
 
 void
