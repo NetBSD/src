@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.125 2000/11/27 08:39:43 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.126 2000/11/28 12:24:34 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -363,17 +363,18 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_es->es_emul->e_esigcode - pack.ep_es->es_emul->e_sigcode;
+	szsigcode = pack.ep_es->es_emul->e_esigcode -
+	    pack.ep_es->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(int) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(char *) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
