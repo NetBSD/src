@@ -1,7 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2003/07/08 03:41:34 gson Exp $
+#	$NetBSD: Makefile,v 1.3 2005/02/11 15:01:57 jmc Exp $
 #
 
 GNUHOSTDIST=	${.CURDIR}/../../dist/file
+
+CONFIGURE_ENV+=	CC=${HOST_CC:Q} \
+		CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} \
+		CXX=${HOST_CXX:Q}
 
 CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX}
 
