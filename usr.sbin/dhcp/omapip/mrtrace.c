@@ -64,7 +64,7 @@ ssize_t trace_mr_recvfrom (int s, void *, size_t, int,
 ssize_t trace_mr_read (int, void *, size_t);
 int trace_mr_connect (int s, struct sockaddr *, SOCKLEN_T);
 int trace_mr_socket (int, int, int);
-int trace_mr_bind (int, const struct sockaddr *, SOCKLEN_T);
+int trace_mr_bind (int, struct sockaddr *, SOCKLEN_T);
 int trace_mr_close (int);
 time_t trace_mr_time (time_t *);
 int trace_mr_select (int, fd_set *, fd_set *, fd_set *, struct timeval *);
@@ -358,7 +358,7 @@ int trace_mr_socket (int domain, int type, int protocol)
 #endif
 }
 
-int trace_mr_bind (int s, const struct sockaddr *name, SOCKLEN_T namelen)
+int trace_mr_bind (int s, struct sockaddr *name, SOCKLEN_T namelen)
 {
 #if defined (TRACING)
 	if (!trace_playback ())

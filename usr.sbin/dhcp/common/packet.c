@@ -3,7 +3,7 @@
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-1999 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.4 2001/04/02 23:45:56 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.5 2001/06/18 19:01:54 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -239,6 +239,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
   static int udp_packets_length_overflow;
   unsigned len;
   unsigned ulen;
+  int ignore = 0;
 
   ip = (struct ip *)(buf + bufix);
   udp = (struct udphdr *)(buf + bufix + ip_len);
@@ -274,9 +275,13 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
   }
 
   /* Check the IP packet length. */
-  if (ntohs (ip -> ip_len) != buflen)
-	  log_debug ("ip length %d disagrees with bytes received %d.",
-		     ntohs (ip -> ip_len), buflen);
+  if (ntohs (ip -> ip_len) != buflen) {
+	  if ((ntohs (ip -> ip_len + 2) & ~1) == buflen)
+		  ignore = 1;
+	  else
+		  log_debug ("ip length %d disagrees with bytes received %d.",
+			     ntohs (ip -> ip_len), buflen);
+  }
 
   /* Copy out the IP source address... */
   memcpy (&from -> sin_addr, &ip -> ip_src, 4);
@@ -302,7 +307,8 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 		  }
 		  return -1;
 	  }
-	  if (len + data < buf + bufix + buflen)
+	  if (len + data < buf + bufix + buflen &&
+	      len + data != buf + bufix + buflen && !ignore)
 		  log_debug ("accepting packet with data after udp payload.");
 	  if (len + data > buf + bufix + buflen) {
 		  log_debug ("dropping packet with bogus uh_ulen %ld",

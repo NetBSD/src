@@ -3,7 +3,7 @@
    BOOTP Protocol support. */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.15 2001/04/02 23:45:59 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.16 2001/06/18 19:01:58 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -151,7 +151,11 @@ void bootp (packet)
 			ack_lease (packet, lease, 0, 0, msgbuf, 0);
 			goto out;
 		}
+		/* XXX just ignore BOOTREQUESTS from unknown clients if
+		   XXX we can't allocate IP addresses for them. */
+#if 0
 		log_info ("%s: no available leases", msgbuf);
+#endif
 		goto out;
 	}
 
@@ -341,7 +345,6 @@ void bootp (packet)
 
 	/* We're done with the option state. */
 	option_state_dereference (&options, MDL);
-	static_lease_dereference (lease, MDL);
 
 	/* Set up the hardware destination address... */
 	hto.hbuf [0] = packet -> raw -> htype;
@@ -403,10 +406,8 @@ void bootp (packet)
       out:
 	if (options)
 		option_state_dereference (&options, MDL);
-	if (lease) {
-		static_lease_dereference (lease, MDL);
+	if (lease)
 		lease_dereference (&lease, MDL);
-	}
 	if (hp)
 		host_dereference (&hp, MDL);
 	if (host)

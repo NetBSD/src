@@ -76,7 +76,7 @@
 #include "inet.h"
 #include "dhctoken.h"
 
-#include <isc/result.h>
+#include <isc-dhcp/result.h>
 #include <omapip/omapip_p.h>
 
 #if !defined (OPTION_HASH_SIZE)
@@ -232,6 +232,19 @@ struct hardware {
 	u_int8_t hlen;
 	u_int8_t hbuf [17];
 };
+
+typedef enum {
+	server_startup = 0,
+	server_running = 1,
+	server_shutdown = 2,
+	server_hibernate = 3,
+	server_awaken = 4
+} control_object_state_t;
+
+typedef struct {
+	OMAPI_OBJECT_PREAMBLE;
+	control_object_state_t state;
+} dhcp_control_object_t;
 
 /* Lease states: */
 typedef enum {
@@ -683,7 +696,6 @@ struct client_config {
 
 	struct iaddrlist *reject_list;	/* Servers to reject. */
 
-	struct option_state *send_options;	/* Options to send. */
 	int omapi_port;			/* port on which to accept OMAPI
 					   connections, or -1 for no
 					   listener. */
@@ -716,6 +728,8 @@ struct client_state {
 	struct client_config *config;		    /* Client configuration. */
 	struct string_list *env;	       /* Client script environment. */
 	int envc;			/* Number of entries in environment. */
+
+	struct option_state *sent_options;	/* Options we sent. */
 };
 
 /* Information about each network interface. */
@@ -1078,10 +1092,12 @@ void cleanup PROTO ((void));
 void lease_pinged PROTO ((struct iaddr, u_int8_t *, int));
 void lease_ping_timeout PROTO ((void *));
 int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia);
+isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
+				     control_object_state_t newstate);
 
 /* conflex.c */
 isc_result_t new_parse PROTO ((struct parse **, int,
-			       char *, unsigned, const char *));
+			       char *, unsigned, const char *, int));
 isc_result_t end_parse PROTO ((struct parse **));
 enum dhcp_token next_token PROTO ((const char **, unsigned *, struct parse *));
 enum dhcp_token peek_token PROTO ((const char **, unsigned *, struct parse *));
@@ -1348,6 +1364,9 @@ OMAPI_OBJECT_ALLOC_DECL (subnet, struct subnet, dhcp_type_subnet)
 OMAPI_OBJECT_ALLOC_DECL (shared_network, struct shared_network,
 			 dhcp_type_shared_network)
 OMAPI_OBJECT_ALLOC_DECL (group_object, struct group_object, dhcp_type_group)
+OMAPI_OBJECT_ALLOC_DECL (dhcp_control,
+			 dhcp_control_object_t, dhcp_type_control)
+
 
 int option_chain_head_allocate (struct option_chain_head **,
 				const char *, int);
@@ -1455,7 +1474,7 @@ char *print_hex_3 PROTO ((unsigned, const u_int8_t *, unsigned));
 char *print_dotted_quads PROTO ((unsigned, const u_int8_t *));
 char *print_dec_1 PROTO ((unsigned long));
 char *print_dec_2 PROTO ((unsigned long));
-void print_expression PROTO ((char *, struct expression *));
+void print_expression PROTO ((const char *, struct expression *));
 int token_print_indent_concat (FILE *, int, int,
 			       const char *, const char *, ...);
 int token_indent_data_string (FILE *, int, int, const char *, const char *,
@@ -1770,6 +1789,7 @@ void state_init PROTO ((void *));
 void state_selecting PROTO ((void *));
 void state_requesting PROTO ((void *));
 void state_bound PROTO ((void *));
+void state_stop PROTO ((void *));
 void state_panic PROTO ((void *));
 
 void bind_lease PROTO ((struct client_state *));
@@ -1814,6 +1834,7 @@ void do_release PROTO ((struct client_state *));
 int dhclient_interface_shutdown_hook (struct interface_info *);
 int dhclient_interface_discovery_hook (struct interface_info *);
 isc_result_t dhclient_interface_startup_hook (struct interface_info *);
+void client_dns_update (struct client_state *client, int);
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
@@ -1828,7 +1849,7 @@ void write_billing_classes (void);
 int write_billing_class PROTO ((struct class *));
 int commit_leases PROTO ((void));
 void db_startup PROTO ((int));
-void new_lease_file PROTO ((void));
+int new_lease_file PROTO ((void));
 int group_writer (struct group_object *);
 
 /* packet.c */
@@ -1899,6 +1920,8 @@ void set_ip_address PROTO ((struct interface_info *, struct in_addr));
 
 /* clparse.c */
 isc_result_t read_client_conf PROTO ((void));
+int read_client_conf_file (const char *,
+			   struct interface_info *, struct client_config *);
 void read_client_leases PROTO ((void));
 void parse_client_statement PROTO ((struct parse *, struct interface_info *,
 				    struct client_config *));
@@ -1955,7 +1978,11 @@ isc_result_t find_cached_zone (const char *, ns_class, char *,
 void forget_zone (struct dns_zone **);
 void repudiate_zone (struct dns_zone **);
 void cache_found_zone (ns_class, char *, struct in_addr *, int);
-int get_dhcid (struct data_string *, struct lease *);
+int get_dhcid (struct data_string *, int, const u_int8_t *, unsigned);
+isc_result_t ddns_update_a (struct data_string *, struct iaddr,
+			    struct data_string *, unsigned long, int);
+isc_result_t ddns_remove_a (struct data_string *,
+			    struct iaddr, struct data_string *);
 #endif /* NSUPDATE */
 HASH_FUNCTIONS_DECL (dns_zone, const char *, struct dns_zone)
 
@@ -2018,6 +2045,8 @@ extern omapi_object_type_t *dhcp_type_interface;
 extern omapi_object_type_t *dhcp_type_group;
 extern omapi_object_type_t *dhcp_type_shared_network;
 extern omapi_object_type_t *dhcp_type_subnet;
+extern omapi_object_type_t *dhcp_type_control;
+extern dhcp_control_object_t *dhcp_control_object;
 
 void dhcp_common_objects_setup (void);
 
@@ -2039,6 +2068,25 @@ isc_result_t dhcp_group_create (omapi_object_t **,
 				omapi_object_t *);
 isc_result_t dhcp_group_remove (omapi_object_t *,
 				omapi_object_t *);
+
+isc_result_t dhcp_control_set_value  (omapi_object_t *, omapi_object_t *,
+				      omapi_data_string_t *,
+				      omapi_typed_data_t *);
+isc_result_t dhcp_control_get_value (omapi_object_t *, omapi_object_t *,
+				     omapi_data_string_t *,
+				     omapi_value_t **); 
+isc_result_t dhcp_control_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_control_signal_handler (omapi_object_t *,
+					  const char *, va_list);
+isc_result_t dhcp_control_stuff_values (omapi_object_t *,
+					omapi_object_t *,
+					omapi_object_t *);
+isc_result_t dhcp_control_lookup (omapi_object_t **,
+				  omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_control_create (omapi_object_t **,
+				  omapi_object_t *);
+isc_result_t dhcp_control_remove (omapi_object_t *,
+				  omapi_object_t *);
 
 isc_result_t dhcp_subnet_set_value  (omapi_object_t *, omapi_object_t *,
 				     omapi_data_string_t *,
@@ -2262,6 +2310,15 @@ isc_result_t dhcp_interface_remove (omapi_object_t *,
 void interface_stash (struct interface_info *);
 void interface_snorf (struct interface_info *, int);
 
+isc_result_t binding_scope_set_value (struct binding_scope *, int,
+				      omapi_data_string_t *,
+				      omapi_typed_data_t *);
+isc_result_t binding_scope_get_value (omapi_value_t **,
+				      struct binding_scope *,
+				      omapi_data_string_t *);
+isc_result_t binding_scope_stuff_values (omapi_object_t *,
+					 struct binding_scope *);
+
 /* mdb.c */
 
 extern struct subnet *subnets;
@@ -2299,7 +2356,7 @@ int subnet_inner_than PROTO ((struct subnet *, struct subnet *, int));
 void enter_subnet PROTO ((struct subnet *));
 void enter_lease PROTO ((struct lease *));
 int supersede_lease PROTO ((struct lease *, struct lease *, int, int, int));
-void process_state_transition (struct lease *);
+void make_binding_state_transition (struct lease *);
 int lease_copy PROTO ((struct lease **, struct lease *, const char *, int));
 void release_lease PROTO ((struct lease *, struct packet *));
 void abandon_lease PROTO ((struct lease *, const char *));
@@ -2315,7 +2372,7 @@ void uid_hash_add PROTO ((struct lease *));
 void uid_hash_delete PROTO ((struct lease *));
 void hw_hash_add PROTO ((struct lease *));
 void hw_hash_delete PROTO ((struct lease *));
-void write_leases PROTO ((void));
+int write_leases PROTO ((void));
 int lease_enqueue (struct lease *);
 void lease_instantiate (const unsigned char *, unsigned, struct lease *);
 void expire_all_pools PROTO ((void));
@@ -2341,8 +2398,9 @@ int deletePTR (const struct data_string *, const struct data_string *,
 
 /* failover.c */
 #if defined (FAILOVER_PROTOCOL)
+extern dhcp_failover_state_t *failover_states;
 void dhcp_failover_startup PROTO ((void));
-void dhcp_failover_write_all_states (void);
+int dhcp_failover_write_all_states (void);
 isc_result_t enter_failover_peer PROTO ((dhcp_failover_state_t *));
 isc_result_t find_failover_peer PROTO ((dhcp_failover_state_t **,
 					const char *, const char *, int));
@@ -2473,9 +2531,14 @@ void dhcp_failover_recover_done (void *);
 void failover_print PROTO ((char *, unsigned *, unsigned, const char *));
 void update_partner PROTO ((struct lease *));
 int load_balance_mine (struct packet *, dhcp_failover_state_t *);
-binding_state_t binding_state_transition_check (struct lease *,
-						dhcp_failover_state_t *,
-						binding_state_t);
+binding_state_t normal_binding_state_transition_check (struct lease *,
+						       dhcp_failover_state_t *,
+						       binding_state_t,
+						       u_int32_t);
+binding_state_t
+conflict_binding_state_transition_check (struct lease *,
+					 dhcp_failover_state_t *,
+					 binding_state_t, u_int32_t);
 int lease_mine_to_reallocate (struct lease *);
 
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_state, dhcp_failover_state_t,
@@ -2485,3 +2548,5 @@ OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_listener, dhcp_failover_listener_t,
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_link, dhcp_failover_link_t,
 			 dhcp_type_failover_link)
 #endif /* FAILOVER_PROTOCOL */
+
+const char *binding_state_print (enum failover_state);
