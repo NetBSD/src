@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.26 1995/06/28 04:31:13 cgd Exp $	*/
+/*	$NetBSD: ser.c,v 1.27 1995/08/11 03:00:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -183,8 +183,6 @@ static unsigned char ser_init_bytes[] = {
 	15, 0x00,		/* disable external interrupts. */
 	0, 0x10,		/* reset ext/status twice. */
 	0, 0x10,
-	1, 0x0a,		/* enable rcv and xmit interrupts. */
-	9, 0x0e,		/* enable master interrupt bit d3. */
 };
 
 static void
@@ -193,18 +191,18 @@ serinit(int running_interrupts)
 	int     bcount;
 	int     i, s, spd;
 
-	/*
-	 * Will be called twice if we're running a serial console.
-	 */
-	if (initted++)
-		return;
-
 	if (!sccA)
 		panic("sccA offset not set!\n");
 
 	spd = SERBRD(serdefaultrate);
 
 	s = splhigh();
+
+	/* If on a serial console, make sure transmitters are drained. */
+	if (mac68k_machine.serial_console & 0x01) {
+		while (!(SER_STATUS(0, 0) & ZSRR0_TX_READY));
+		while (!(SER_STATUS(1, 0) & ZSRR0_TX_READY));
+	}
 
 	SER_DOCNTL(0, 9, 0xc0);
 
@@ -217,13 +215,26 @@ serinit(int running_interrupts)
 			ser_init_bytes[i + 1] = (spd & 0xff);
 		if (ser_init_bytes[i] == 13)	/* baud rate high byte */
 			ser_init_bytes[i + 1] = ((spd >> 8) & 0xff);
-		if (!running_interrupts) {
-			if (ser_init_bytes[i] == 0x01
-			    && ser_init_bytes[i + 1] == 0x0a)
-				break;
-		}
 		SER_DOCNTL(0, ser_init_bytes[i], ser_init_bytes[i + 1]);
 		SER_DOCNTL(1, ser_init_bytes[i], ser_init_bytes[i + 1]);
+	}
+	if (running_interrupts) {
+		if (mac68k_machine.serial_console & 0x01) {
+#if 0
+			if (mac68k_machine.serial_console & 0x02) {
+				SER_DOCNTL(0, 1, 0x0a);
+				SER_DOCNTL(0, 9, 0x0e);
+			} else {
+				SER_DOCNTL(1, 1, 0x0a);
+				SER_DOCNTL(1, 9, 0x0e);
+			}
+#endif
+		} else {
+			SER_DOCNTL(0, 1, 0x0a);
+			SER_DOCNTL(0, 9, 0x0e);
+			SER_DOCNTL(1, 1, 0x0a);
+			SER_DOCNTL(1, 9, 0x0e);
+		}
 	}
 
 	splx(s);
@@ -235,12 +246,25 @@ serattach(parent, dev, aux)
 	void   *aux;
 {
 	if (mac68k_machine.serial_boot_echo) {
-		printf(" (serial boot echo is on)\n");
+		if (dev->dv_unit == 0)
+			printf(" (serial boot echo is on)");
 	}
+
+	if (mac68k_machine.serial_console & 0x01) {
+		if (dev->dv_unit == 0) {
+		        if ((mac68k_machine.serial_console & 0x02) == 0)
+				printf(" (serial console)");
+		} else {
+		        if (mac68k_machine.serial_console & 0x02)
+				printf(" (serial console)");
+		}
+	}
+
 	printf("\n");
 
 	serinit(1);
 }
+
 /* ARGSUSED */
 extern int
 seropen(dev_t dev, int flag, int mode, struct proc * p)
@@ -399,7 +423,7 @@ ser_intr(void)
 	int     s;
 	register int unit;
 
-	if (!initted) return;
+	if (!initted || (mac68k_machine.serial_console & 0x01)) return;
 
 	/* read status to reset SCC state machine */
 	reg0 = SCCCNTL(0);
@@ -872,10 +896,10 @@ serctl(dev_t dev, int bits, int how)
 	(void) splx(s);
 	return (bits);
 }
+
 /*
  * Console functions.
  */
-
 dev_t   mac68k_serdev;
 
 sercnprobe(struct consdev * cp)
@@ -905,14 +929,19 @@ nosercon:
 	if (mac68k_machine.serial_boot_echo) {
 		/* major number doesn't really matter. */
 		mac68k_serdev = makedev(maj, 0);
-		serinit(1);
+		serinit(0);
 	}
 	return 0;
 }
+
 sercninit(struct consdev * cp)
 {
-	serinit(1);
+	extern u_long	IOBase;
+
+	mac68k_set_io_offsets(IOBase);
+	serinit(0);
 }
+
 sercngetc(dev_t dev)
 {
 	int     unit, c;
@@ -925,6 +954,7 @@ sercngetc(dev_t dev)
 
 	return c;
 }
+
 sercnputc(dev_t dev, int c)
 {
 	int     unit;
