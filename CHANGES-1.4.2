@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.13 1999/08/29 16:44:24 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.14 1999/08/29 21:01:25 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -202,3 +202,10 @@ etc/etc.x68k/MAKEDEV				1.21
   Since we now use Xwrapper to start the X server, we can restrict
   non-root access to grf, mouse and kbd, closing a security hole.
   (minoura)
+
+sys/dev/pci/pcidevs				1.137
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_ex_pci.c				1.7
+
+  Recognize 3c905C-TX card.  (bouyer)
