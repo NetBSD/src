@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.4 1996/09/19 19:44:33 thorpej Exp $	*/
+/*	$NetBSD: skey.c,v 1.5 1997/06/22 18:51:47 christos Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -27,8 +27,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sgtty.h>
-#include "md4.h"
-#include "skey.h"
+#include <skey.h>
 
 void    usage __P((char *));
 
