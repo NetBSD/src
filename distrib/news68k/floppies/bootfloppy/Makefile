@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/02 16:06:52 sjg Exp $
+#	$NetBSD: Makefile,v 1.3 2000/06/10 02:50:34 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -74,6 +74,5 @@ clean cleandir distclean:
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=45k
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
