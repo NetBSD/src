@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.36 2002/03/24 21:41:13 thorpej Exp $
+#	$NetBSD: files.hpcarm,v 1.37 2002/03/25 16:34:46 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -29,7 +29,6 @@ file	arch/hpcarm/hpcarm/autoconf.c
 file	arch/hpcarm/hpcarm/intr.c
 file	arch/hpcarm/hpcarm/process_machdep.c
 file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs
-file	arch/hpcarm/hpcarm/setcpsr.S
 file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
