@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.14.2.2 1997/11/11 06:26:41 mrg Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.14.2.3 1998/02/14 20:34:01 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.14.2.2 1997/11/11 06:26:41 mrg Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.14.2.3 1998/02/14 20:34:01 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -526,7 +526,7 @@ cmd
 		}
 	;
 rcmd
-	: RNFR check_login SP pathname CRLF
+	: RNFR check_modify SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
