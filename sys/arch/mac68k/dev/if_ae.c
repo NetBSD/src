@@ -19,15 +19,15 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.4 1994/01/24 22:29:40 briggs Exp $
+ * $Id: if_ae.c,v 1.5 1994/01/30 01:14:49 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.4  1994/01/24 22:29:40  briggs
- * Apply patch as suggested by Theo.
+ * Revision 1.5  1994/01/30 01:14:49  briggs
+ * Include-cop strikes again.
  *
  * Revision 1.3  1993/12/21  03:18:04  briggs
  * Update ethernet driver to use config.new.  At least, it's a first stab
@@ -60,30 +60,30 @@
 #include "socket.h"
 #include "syslog.h"
 
-#include "net/if.h"
-#include "net/if_dl.h"
-#include "net/if_types.h"
-#include "net/netisr.h"
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
-#include "net/bpf.h"
-#include "net/bpfdesc.h"
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
-#include "sys/device.h"
+#include <sys/device.h>
 #include "nubus.h"
 #include "if_aereg.h"
 
