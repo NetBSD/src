@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.12 2000/05/26 15:13:44 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.13 2000/05/27 18:24:50 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -132,7 +132,7 @@
  */
 #define ADW_EEPROM_INTAB               0x0800   /* EEPROM Bit 11 */
 
-typedef struct adw_eep_3550_config
+typedef struct adw_eeprom
 {                              
 						/* Word Offset, Description */
 
@@ -143,7 +143,10 @@ typedef struct adw_eep_3550_config
 	u_int16_t	cfg_msw;		/* 01 unused	*/
 	u_int16_t	disc_enable;		/* 02 disconnect enable */
 	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
-	u_int16_t	sdtr_able;		/* 04 Synchronous DTR able */
+	union {
+		u_int16_t	sdtr_able;	/* 04 Synchronous DTR able */
+		u_int16_t	sdtr_speed1;	/* 04 SDTR Speed TID 0-3 */
+	} sdtr1;
 	u_int16_t	start_motor;		/* 05 send start up motor */
 	u_int16_t	tagqng_able;		/* 06 tag queuing able */
 	u_int16_t	bios_scan;		/* 07 BIOS device control */
@@ -157,13 +160,17 @@ typedef struct adw_eep_3550_config
 						/*    high nibble is lun */
 						/*    low nibble is scsi id */
 
-	u_int8_t	termination;		/* 11 0 - automatic */
+	u_int8_t	termination_se;		/* 11 0 - automatic */
 						/*    1 - low off / high off */
 						/*    2 - low off / high on */
 						/*    3 - low on  / high on */
 						/*    There is no low on  / high off */
 
-	u_int8_t	reserved1;		/*    reserved byte (not used) */
+	u_int8_t	termination_lvd;	/* 11 0 - automatic */
+						/*    1 - low off / high off */
+						/*    2 - low off / high on */
+						/*    3 - low on  / high on */
+						/*    There is no low on  / high off */
 
 	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
 						  	  /*  bit 0  BIOS don't act as initiator. */
@@ -182,15 +189,22 @@ typedef struct adw_eep_3550_config
 						/*  bit 13 */
 						/*  bit 14 */
 						/*  bit 15 */
-	u_int16_t	ultra_able;		/* 13 ULTRA speed able */
-	u_int16_t	reserved2;		/* 14 reserved */
+	union {
+		u_int16_t	ultra_able;	/* 13 ULTRA speed able */
+		u_int16_t	sdtr_speed2;	/* 13 SDTR speed TID 4-7 */
+	} sdtr2;
+	union {
+		u_int16_t	reserved2;	/* 14 reserved */
+		u_int16_t	sdtr_speed3;	/* 14 SDTR speed TID 8-11 */
+	} sdtr3;
 	u_int8_t	max_host_qng;		/* 15 maximum host queuing */
 	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
 	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
-	u_int16_t	bug_fix;		/* 17 control bit for bug fix */
-	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
-	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
-	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
+	union {
+		u_int16_t	bug_fix;	/* 17 control bit for bug fix */
+		u_int16_t	sdtr_speed4;	/* 17 SDTR speed 4 TID 12-15 */
+	} sdtr4;
+	u_int16_t	serial_number[3];	/* 18 - 20 Board serial number */
 	u_int16_t	check_sum;		/* 21 EEP check sum */
 	u_int8_t	oem_name[16];		/* 22 OEM name */
 	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
@@ -199,212 +213,13 @@ typedef struct adw_eep_3550_config
 	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
 	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
 	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
-	u_int16_t	num_of_err;		/* 36 number of error */
-} ADW_EEP_3550_CONFIG; 
-
-typedef struct adw_eep_38C0800_config
-{
-						/* Word Offset, Description */
-
-	u_int16_t	cfg_lsw;		/* 00 power up initialization */
-						/*  bit 13 set - Load CIS */
-						/*  bit 14 set - BIOS Enable */
-						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused	*/
-	u_int16_t	disc_enable;		/* 02 disconnect enable */
-	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
-	u_int16_t	sdtr_speed1;		/* 04 SDTR Speed TID 0-3 */
-	u_int16_t	start_motor;		/* 05 send start up motor */
-	u_int16_t	tagqng_able;		/* 06 tag queuing able */
-	u_int16_t	bios_scan;		/* 07 BIOS device control */
-	u_int16_t	scam_tolerant;		/* 08 no scam */
-
-	u_int8_t	adapter_scsi_id;	/* 09 Host Adapter ID */
-	u_int8_t	bios_boot_delay;	/*    power up wait */
-
-	u_int8_t	scsi_reset_delay;	/* 10 reset delay */
-	u_int8_t	bios_id_lun;		/*    first boot device scsi id & lun */
-						/*    high nibble is lun */
-						/*    low nibble is scsi id */
-
-	u_int8_t	termination_se;		/* 11 0 - automatic */
-						/*    1 - low off / high off */
-						/*    2 - low off / high on */
-						/*    3 - low on  / high on */
-						/*    There is no low on  / high off */
-
-	u_int8_t	termination_lvd;	/* 11 0 - automatic */
-						/*    1 - low off / high off */
-						/*    2 - low off / high on */
-						/*    3 - low on  / high on */
-						/*    There is no low on  / high off */
-
-	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  BIOS don't act as initiator. */
-						/*  bit 1  BIOS > 1 GB support */
-						/*  bit 2  BIOS > 2 Disk Support */
-						/*  bit 3  BIOS don't support removables */
-						/*  bit 4  BIOS support bootable CD */
-						/*  bit 5  BIOS scan enabled */
-						/*  bit 6  BIOS support multiple LUNs */
-						/*  bit 7  BIOS display of message */
-						/*  bit 8  SCAM disabled */
-						/*  bit 9  Reset SCSI bus during init. */
-						/*  bit 10 */
-						/*  bit 11 No verbose initialization. */
-						/*  bit 12 SCSI parity enabled */
-						/*  bit 13 */
-						/*  bit 14 */
-						/*  bit 15 */
-	u_int16_t	sdtr_speed2;		/* 13 SDTR speed TID 4-7 */
-	u_int16_t	sdtr_speed3;		/* 14 SDTR speed TID 8-11 */
-	u_int8_t	max_host_qng;		/* 15 maximum host queueing */
-	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
-	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
-	u_int16_t	sdtr_speed4;		/* 17 SDTR speed 4 TID 12-15 */
-	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
-	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
-	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
-	u_int16_t	check_sum;		/* 21 EEP check sum */
-	u_int8_t	oem_name[16];		/* 22 OEM name */
-	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
-	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
-	u_int16_t	adv_err_addr;		/* 32 last uc error address */
-	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
-	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
-	u_int16_t	reserved36;		/* 36 reserved */
-	u_int16_t	reserved37;		/* 37 reserved */
-	u_int16_t	reserved38;		/* 38 reserved */
-	u_int16_t	reserved39;		/* 39 reserved */
-	u_int16_t	reserved40;		/* 40 reserved */
-	u_int16_t	reserved41;		/* 41 reserved */
-	u_int16_t	reserved42;		/* 42 reserved */
-	u_int16_t	reserved43;		/* 43 reserved */
-	u_int16_t	reserved44;		/* 44 reserved */
-	u_int16_t	reserved45;		/* 45 reserved */
-	u_int16_t	reserved46;		/* 46 reserved */
-	u_int16_t	reserved47;		/* 47 reserved */
-	u_int16_t	reserved48;		/* 48 reserved */
-	u_int16_t	reserved49;		/* 49 reserved */
-	u_int16_t	reserved50;		/* 50 reserved */
-	u_int16_t	reserved51;		/* 51 reserved */
-	u_int16_t	reserved52;		/* 52 reserved */
-	u_int16_t	reserved53;		/* 53 reserved */
-	u_int16_t	reserved54;		/* 54 reserved */
-	u_int16_t	reserved55;		/* 55 reserved */
+	u_int16_t	reserved1[20];		/* 36 - 55 reserved */
 	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
 	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
 	u_int16_t	subsysvid;		/* 58 SubSystem Vendor ID */
 	u_int16_t	subsysid;		/* 59 SubSystem ID */
-	u_int16_t	reserved60;		/* 60 reserved */
-	u_int16_t	reserved61;		/* 61 reserved */
-	u_int16_t	reserved62;		/* 62 reserved */
-	u_int16_t	reserved63;		/* 63 reserved */
-} ADW_EEP_38C0800_CONFIG;
-
-typedef struct adw_eep_38C1600_config
-{
-						/* Word Offset, Description */
-
-	u_int16_t	cfg_lsw;		/* 00 power up initialization */
-						/*  bit 11 set - Func. 0 INTB, Func. 1 INTA */
-						/*	 clear - Func. 0 INTA, Func. 1 INTB */
-						/*  bit 13 set - Load CIS */
-						/*  bit 14 set - BIOS Enable */
-						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused */
-	u_int16_t	disc_enable;		/* 02 disconnect enable */
-	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
-	u_int16_t	sdtr_speed1;		/* 04 SDTR Speed TID 0-3 */
-	u_int16_t	start_motor;		/* 05 send start up motor */
-	u_int16_t	tagqng_able;		/* 06 tag queuing able */
-	u_int16_t	bios_scan;		/* 07 BIOS device control */
-	u_int16_t	scam_tolerant;		/* 08 no scam */
-
-	u_int8_t	adapter_scsi_id;	/* 09 Host Adapter ID */
-	u_int8_t	bios_boot_delay;	/*    power up wait */
-
-	u_int8_t	scsi_reset_delay;	/* 10 reset delay */
-	u_int8_t	bios_id_lun;		/*    first boot device scsi id & lun */
-						/*    high nibble is lun */
-						/*    low nibble is scsi id */
-
-	u_int8_t	termination_se;		/* 11 0 - automatic */
-						/*    1 - low off / high off */
-						/*    2 - low off / high on */
-						/*    3 - low on  / high on */
-						/*    There is no low on  / high off */
-
-	u_int8_t	termination_lvd;	/* 11 0 - automatic */
-						/*    1 - low off / high off */
-						/*    2 - low off / high on */
-						/*    3 - low on  / high on */
-						/*    There is no low on  / high off */
-
-	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  BIOS don't act as initiator. */
-						/*  bit 1  BIOS > 1 GB support */
-						/*  bit 2  BIOS > 2 Disk Support */
-						/*  bit 3  BIOS don't support removables */
-						/*  bit 4  BIOS support bootable CD */
-						/*  bit 5  BIOS scan enabled */
-						/*  bit 6  BIOS support multiple LUNs */
-						/*  bit 7  BIOS display of message */
-						/*  bit 8  SCAM disabled */
-						/*  bit 9  Reset SCSI bus during init. */
-						/*  bit 10 Basic Integrity Checking disabled */
-						/*  bit 11 No verbose initialization. */
-						/*  bit 12 SCSI parity enabled */
-						/*  bit 13 AIPP (Asyn. Info. Ph. Prot.) dis. */
-						/*  bit 14 */
-						/*  bit 15 */
-	u_int16_t	sdtr_speed2;		/* 13 SDTR speed TID 4-7 */
-	u_int16_t	sdtr_speed3;		/* 14 SDTR speed TID 8-11 */
-	u_int8_t	max_host_qng;		/* 15 maximum host queueing */
-	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
-	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
-	u_int16_t	sdtr_speed4;		/* 17 SDTR speed 4 TID 12-15 */
-	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
-	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
-	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
-	u_int16_t	check_sum;		/* 21 EEP check sum */
-	u_int8_t	oem_name[16];		/* 22 OEM name */
-	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
-	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
-	u_int16_t	adv_err_addr;		/* 32 last uc error address */
-	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code   */
-	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address	  */
-	u_int16_t	reserved36;		/* 36 reserved */
-	u_int16_t	reserved37;		/* 37 reserved */
-	u_int16_t	reserved38;		/* 38 reserved */
-	u_int16_t	reserved39;		/* 39 reserved */
-	u_int16_t	reserved40;		/* 40 reserved */
-	u_int16_t	reserved41;		/* 41 reserved */
-	u_int16_t	reserved42;		/* 42 reserved */
-	u_int16_t	reserved43;		/* 43 reserved */
-	u_int16_t	reserved44;		/* 44 reserved */
-	u_int16_t	reserved45;		/* 45 reserved */
-	u_int16_t	reserved46;		/* 46 reserved */
-	u_int16_t	reserved47;		/* 47 reserved */
-	u_int16_t	reserved48;		/* 48 reserved */
-	u_int16_t	reserved49;		/* 49 reserved */
-	u_int16_t	reserved50;		/* 50 reserved */
-	u_int16_t	reserved51;		/* 51 reserved */
-	u_int16_t	reserved52;		/* 52 reserved */
-	u_int16_t	reserved53;		/* 53 reserved */
-	u_int16_t	reserved54;		/* 54 reserved */
-	u_int16_t	reserved55;		/* 55 reserved */
-	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
-	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
-	u_int16_t	subsysvid;		/* 58 SubSystem Vendor ID */
-	u_int16_t	subsysid;		/* 59 SubSystem ID */
-	u_int16_t	reserved60;		/* 60 reserved */
-	u_int16_t	reserved61;		/* 61 reserved */
-	u_int16_t	reserved62;		/* 62 reserved */
-	u_int16_t	reserved63;		/* 63 reserved */
-} ADW_EEP_38C1600_CONFIG;
+	u_int16_t	reserved2[4];		/* 60 - 63 reserved */
+} ADW_EEPROM;
 
 
 /*
@@ -870,15 +685,16 @@ typedef struct adw_eep_38C1600_config
 typedef struct adw_dvc_cfg {
 	u_int16_t	disc_enable;	/* enable disconnection */
 	u_int8_t	chip_version;	/* chip version */
-	u_int8_t	termination;	/* Term. Ctrl. bits 6-5 of SCSI_CFG1 register */
+	u_int8_t	termination;	/* Term. Ctrl. bits 6-5 of SCSI_CFG1 */
 	u_int16_t	pci_device_id;	/* PCI device code number */
 	u_int16_t	lib_version;	/* Adv Library version number */
 	u_int16_t	control_flag;	/* Microcode Control Flag */
 	u_int16_t	mcode_date;	/* Microcode date */
 	u_int16_t	mcode_version;	/* Microcode version */
-	u_int16_t	pci_slot_info;	/* high byte device/function number */
-					/* bits 7-3 device num., bits 2-0 function num. */
-					/* low byte bus num. */
+	u_int16_t	pci_slot_info;	/* high byte device/function number
+					   bits 7-3 device num.,
+					   bits 2-0 function num.
+					   low byte bus num. */
 	u_int16_t	serial1;	/* EEPROM serial number word 1 */
 	u_int16_t	serial2;	/* EEPROM serial number word 2 */
 	u_int16_t	serial3;	/* EEPROM serial number word 3 */
@@ -1243,12 +1059,8 @@ do { \
  * Adv Library functions available to drivers.
  */
 
-int	AdwInitAsc3550Driver __P((ADW_SOFTC *));
-int	AdwInitAsc38C0800Driver __P((ADW_SOFTC *));
-int	AdwInitAsc38C1600Driver __P((ADW_SOFTC *));
-int	AdwInitFrom3550EEP __P((ADW_SOFTC *));
-int	AdwInitFrom38C0800EEP __P((ADW_SOFTC *));
-int	AdwInitFrom38C1600EEP __P((ADW_SOFTC *));
+int	AdwInitFromEEPROM __P((ADW_SOFTC *));
+int	AdwInitDriver __P((ADW_SOFTC *));
 int	AdwExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 int	AdwISR __P((ADW_SOFTC *));
 void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
