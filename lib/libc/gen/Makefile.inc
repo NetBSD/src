@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.121 2003/05/28 20:03:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.122 2003/08/26 17:37:51 wiz Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -44,7 +44,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
 	endutxent.3 err.3 exec.3 fmtcheck.3 \
 	fmtmsg.3 fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 getbsize.3 \
 	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
-	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
+	getgrent.3 getgrouplist.3 gethostname.3 getlastlogx.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
 	getprogname.3 getpwent.3 getttyent.3 getusershell.3 glob.3 \
 	humanize_number.3 initgroups.3 isalnum.3 isalpha.3 isascii.3 \
@@ -88,6 +88,9 @@ MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3
 MLINKS+=gethostname.3 sethostname.3
+MLINKS+=getlastlogx.3 getutmp.3 getlastlogx.3 getutmpx.3
+MLINKS+=getlastlogx.3 updlastlogx.3 getlastlogx.3 updwtmpx.3
+MLINKS+=getlastlogx.3 utmpxname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
 MLINKS+=getprogname.3 setprogname.3
