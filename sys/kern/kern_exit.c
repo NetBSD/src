@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.40 1996/10/17 16:31:54 perry Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.41.4.2 1997/02/07 05:33:10 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -296,10 +296,9 @@ sys_wait4(q, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
-#ifdef notyet
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
 		return (EINVAL);
-#endif
+
 loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {

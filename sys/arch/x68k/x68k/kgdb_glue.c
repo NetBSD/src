@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.1 1996/05/05 12:17:25 oki Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -56,7 +56,7 @@
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.1 1996/05/05 12:17:25 oki Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800
