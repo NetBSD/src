@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -166,16 +166,16 @@ ppbus_request_mode(int mode, int options)
 }
 
 
-/* Negociate the peripheral side */
+/* Negotiate the peripheral side */
 int
-ppbus_peripheral_negociate(struct device * dev, int mode, int options)
+ppbus_peripheral_negotiate(struct device * dev, int mode, int options)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 	int spin, request_mode, error = 0;
 	char r;
 
 	ppbus_1284_terminate(dev);
-	ppbus_1284_set_state(dev, PPBUS_PERIPHERAL_NEGOCIATION);
+	ppbus_1284_set_state(dev, PPBUS_PERIPHERAL_NEGOTIATION);
 
 	/* compute ext. value */
 	request_mode = ppbus_request_mode(mode, options);
@@ -218,7 +218,7 @@ ppbus_peripheral_negociate(struct device * dev, int mode, int options)
 #ifdef DEBUG_1284
 			printf("A");
 #endif
-			/* negociation succeeds */
+			/* negotiation succeeds */
 		}
 	} 
 	else {
@@ -481,11 +481,11 @@ end_read_id:
 }
 
 /*
- * IEEE1284 negociation phase: after negociation, nFAULT is low if data is 
+ * IEEE1284 negotiation phase: after negotiation, nFAULT is low if data is 
  * available for reverse modes.
  */
 int
-ppbus_1284_negociate(struct device * dev, int mode, int options)
+ppbus_1284_negotiate(struct device * dev, int mode, int options)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 	int error;
@@ -495,7 +495,7 @@ ppbus_1284_negociate(struct device * dev, int mode, int options)
 	printf("n");
 #endif
 
-	if (ppbus_1284_get_state(dev) >= PPBUS_PERIPHERAL_NEGOCIATION)
+	if (ppbus_1284_get_state(dev) >= PPBUS_PERIPHERAL_NEGOTIATION)
 		ppbus_peripheral_terminate(dev, PPBUS_WAIT);
 
 #ifdef DEBUG_1284
@@ -505,7 +505,7 @@ ppbus_1284_negociate(struct device * dev, int mode, int options)
 	/* ensure the host is in compatible mode */
 	ppbus_1284_terminate(dev);
 
-	/* reset error to catch the actual negociation error */
+	/* reset error to catch the actual negotiation error */
 	ppbus_1284_reset_error(bus, PPBUS_FORWARD_IDLE);
 
 	/* calculate ext. value */
@@ -515,8 +515,8 @@ ppbus_1284_negociate(struct device * dev, int mode, int options)
 	ppbus_wctr(dev, (nINIT | SELECTIN) & ~(STROBE | AUTOFEED));
 	DELAY(1);
 
-	/* enter negociation phase */
-	ppbus_1284_set_state(dev, PPBUS_NEGOCIATION);
+	/* enter negotiation phase */
+	ppbus_1284_set_state(dev, PPBUS_NEGOTIATION);
 
 	/* Event 0 - put the exten. value on the data lines */
 	ppbus_wdtr(dev, request_mode);
@@ -597,7 +597,7 @@ ppbus_1284_negociate(struct device * dev, int mode, int options)
 		ppbus_1284_set_state(dev, PPBUS_REVERSE_IDLE);
 		break;
 	case PPBUS_ECP:
-		/* negociation ok, now setup the communication */
+		/* negotiation ok, now setup the communication */
 		ppbus_1284_set_state(dev, PPBUS_SETUP);
 		ppbus_wctr(dev, (nINIT | AUTOFEED) & ~(SELECTIN | STROBE));
 
