@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 1998/10/24 08:04:07 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 1998/11/26 22:17:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5588,19 +5588,20 @@ Lback_mopb:
 ENTRY(kcopy)
 	sethi	%hi(_cpcb), %o5		! cpcb->pcb_onfault = Lkcerr;
 	ld	[%o5 + %lo(_cpcb)], %o5
+	ld	[%o5 + PCB_ONFAULT], %g1 ! save current onfault handler
 	set	Lkcerr, %o3
 	st	%o3, [%o5 + PCB_ONFAULT]
 
 	cmp	%o2, BCOPY_SMALL
 Lkcopy_start:
 	bge,a	Lkcopy_fancy	! if >= this many, go be fancy.
-	btst	7, %o0		! (part of being fancy)
+	 btst	7, %o0		! (part of being fancy)
 
 	/*
 	 * Not much to copy, just do it a byte at a time.
 	 */
 	deccc	%o2		! while (--len >= 0)
-	bl	1f
+	 bl	1f
 	EMPTY
 0:
 	inc	%o0
@@ -5608,11 +5609,11 @@ Lkcopy_start:
 	stb	%o4, [%o1]
 	deccc	%o2
 	bge	0b
-	inc	%o1
+	 inc	%o1
 1:
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
-	mov	0, %o0		! delay slot: return success
+	 mov	0, %o0		! delay slot: return success
 	/* NOTREACHED */
 
 	/*
@@ -5625,14 +5626,14 @@ Lkcopy_fancy:
 	EMPTY
 	btst	7, %o1
 	be,a	Lkcopy_doubles
-	dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
+	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
 
 	! If the low bits match, we can make these line up.
 1:
 	xor	%o0, %o1, %o3	! t = src ^ dst;
 	btst	1, %o3		! if (t & 1) {
 	be,a	1f
-	btst	1, %o0		! [delay slot: if (src & 1)]
+	 btst	1, %o0		! [delay slot: if (src & 1)]
 
 	! low bits do not match, must copy by bytes.
 0:
@@ -5642,15 +5643,15 @@ Lkcopy_fancy:
 	deccc	%o2
 	bnz	0b		!	} while (--len != 0);
 	stb	%o4, [%o1 - 1]
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
-	mov	0, %o0		! delay slot: return success
+	 mov	0, %o0		! delay slot: return success
 	/* NOTREACHED */
 
 	! lowest bit matches, so we can copy by words, if nothing else
 1:
 	be,a	1f		! if (src & 1) {
-	btst	2, %o3		! [delay slot: if (t & 2)]
+	 btst	2, %o3		! [delay slot: if (t & 2)]
 
 	! although low bits match, both are 1: must copy 1 byte to align
 	ldsb	[%o0], %o4	!	*dst++ = *src++;
@@ -5661,7 +5662,7 @@ Lkcopy_fancy:
 	btst	2, %o3		! } [if (t & 2)]
 1:
 	be,a	1f		! if (t & 2) {
-	btst	2, %o0		! [delay slot: if (src & 2)]
+	 btst	2, %o0		! [delay slot: if (src & 2)]
 	dec	2, %o2		!	len -= 2;
 0:
 	ldsh	[%o0], %o4	!	do {
@@ -5669,15 +5670,15 @@ Lkcopy_fancy:
 	inc	2, %o0		!		dst += 2, src += 2;
 	deccc	2, %o2		!	} while ((len -= 2) >= 0);
 	bge	0b
-	inc	2, %o1
+	 inc	2, %o1
 	b	Lkcopy_mopb	!	goto mop_up_byte;
-	btst	1, %o2		! } [delay slot: if (len & 1)]
+	 btst	1, %o2		! } [delay slot: if (len & 1)]
 	/* NOTREACHED */
 
 	! low two bits match, so we can copy by longwords
 1:
 	be,a	1f		! if (src & 2) {
-	btst	4, %o3		! [delay slot: if (t & 4)]
+	 btst	4, %o3		! [delay slot: if (t & 4)]
 
 	! although low 2 bits match, they are 10: must copy one short to align
 	ldsh	[%o0], %o4	!	(*short *)dst = *(short *)src;
@@ -5688,7 +5689,7 @@ Lkcopy_fancy:
 	btst	4, %o3		! } [if (t & 4)]
 1:
 	be,a	1f		! if (t & 4) {
-	btst	4, %o0		! [delay slot: if (src & 4)]
+	 btst	4, %o0		! [delay slot: if (src & 4)]
 	dec	4, %o2		!	len -= 4;
 0:
 	ld	[%o0], %o4	!	do {
@@ -5696,15 +5697,15 @@ Lkcopy_fancy:
 	inc	4, %o0		!		dst += 4, src += 4;
 	deccc	4, %o2		!	} while ((len -= 4) >= 0);
 	bge	0b
-	inc	4, %o1
+	 inc	4, %o1
 	b	Lkcopy_mopw	!	goto mop_up_word_and_byte;
-	btst	2, %o2		! } [delay slot: if (len & 2)]
+	 btst	2, %o2		! } [delay slot: if (len & 2)]
 	/* NOTREACHED */
 
 	! low three bits match, so we can copy by doublewords
 1:
 	be	1f		! if (src & 4) {
-	dec	8, %o2		! [delay slot: len -= 8]
+	 dec	8, %o2		! [delay slot: len -= 8]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
 	st	%o4, [%o1]
 	inc	4, %o0		!	dst += 4, src += 4, len -= 4;
@@ -5727,9 +5728,9 @@ Lkcopy_doubles2:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lkcopy_done	!	goto bcopy_done;
 
-	btst	4, %o2		! if ((len & 4)) == 0)
+	 btst	4, %o2		! if ((len & 4)) == 0)
 	be,a	Lkcopy_mopw	!	goto mop_up_word_and_byte;
-	btst	2, %o2		! [delay slot: if (len & 2)]
+	 btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
 	st	%o4, [%o1]
 	inc	4, %o0		!	dst += 4;
@@ -5740,34 +5741,34 @@ Lkcopy_doubles2:
 	! mop up trailing word (if present) and byte (if present).
 Lkcopy_mopw:
 	be	Lkcopy_mopb	! no word, go mop up byte
-	btst	1, %o2		! [delay slot: if (len & 1)]
+	 btst	1, %o2		! [delay slot: if (len & 1)]
 	ldsh	[%o0], %o4	! *(short *)dst = *(short *)src;
 	be	Lkcopy_done	! if ((len & 1) == 0) goto done;
-	sth	%o4, [%o1]
+	 sth	%o4, [%o1]
 	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
 	stb	%o4, [%o1 + 2]
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	st	%g1, [%o5 + PCB_ONFAULT]! restore onfault
 	retl
-	mov	0, %o0		! delay slot: return success
+	 mov	0, %o0		! delay slot: return success
 	/* NOTREACHED */
 
 	! mop up trailing byte (if present).
 Lkcopy_mopb:
 	bne,a	1f
-	ldsb	[%o0], %o4
+	 ldsb	[%o0], %o4
 
 Lkcopy_done:
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
-	mov	0, %o0		! delay slot: return success
+	 mov	0, %o0		! delay slot: return success
 
 1:
 	stb	%o4,[%o1]
-	mov	0, %o0		! delay slot: return success
+	mov	0, %o0		! return success
 	retl
 Lkcerr:
-	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
-	retl				! and return error indicator
+	 st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
+	retl					! and return error indicator
 	mov	-1, %o0
 
 /*
