@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.44 2003/09/04 12:28:53 yamt Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.45 2003/10/25 18:26:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.44 2003/09/04 12:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.45 2003/10/25 18:26:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -124,7 +124,7 @@ lfs_balloc(void *v)
 	struct vnode *vp;
 	int offset;
 	u_long iosize;
-	daddr_t daddr, idaddr;
+	daddr_t daddr, idaddr = 0; /* XXX: gcc */
 	struct buf *ibp, *bp, **bpp;
 	struct inode *ip;
 	struct lfs *fs;
