@@ -1,11 +1,11 @@
-# $NetBSD: VME,v 1.1 2001/11/26 21:20:35 fredette Exp $
+# $NetBSD: VME,v 1.2 2001/11/30 15:54:33 fredette Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"VME-$Revision: 1.1 $"
+#ident 		"VME-$Revision: 1.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -66,6 +66,8 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -169,6 +171,9 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ss*	at scsibus? target ? lun ?		# SCSI scanners
 #ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE
 #uk*	at scsibus? target ? lun ?		# unknown SCSI
+
+# support old SCSI devices that don't understand the INQUIRY command
+options 	SCSI_OLD_NOINQUIRY
 
 ## Xylogics 450 or 451 Multibus/VME SMD disk controllers and disks.
 #xyc0	at mbio0 addr 0xee40 ipl 2
