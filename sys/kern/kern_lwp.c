@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.26 2004/03/05 11:17:41 junyoung Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.27 2004/05/12 21:10:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.26 2004/03/05 11:17:41 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.27 2004/05/12 21:10:09 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -625,6 +625,7 @@ struct lwp *
 proc_representative_lwp(struct proc *p)
 {
 	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
+	struct lwp *signalled;
 
 	/* Trivial case: only one LWP */
 	if (p->p_nlwps == 1)
@@ -635,7 +636,10 @@ proc_representative_lwp(struct proc *p)
 	case SACTIVE:
 		/* Pick the most live LWP */
 		onproc = running = sleeping = stopped = suspended = NULL;
+		signalled = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_lid == p->p_sigctx.ps_lwp)
+				signalled = l;
 			switch (l->l_stat) {
 			case LSONPROC:
 				onproc = l;
@@ -654,6 +658,8 @@ proc_representative_lwp(struct proc *p)
 				break;
 			}
 		}
+		if (signalled)
+			return signalled;
 		if (onproc)
 			return onproc;
 		if (running)
