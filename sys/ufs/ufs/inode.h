@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.19 2000/05/29 18:41:07 mycroft Exp $	*/
+/*	$NetBSD: inode.h,v 1.20 2000/07/03 01:45:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -52,8 +52,8 @@ struct ext2fs_inode_ext {
 	ufs_daddr_t ext2fs_last_blk;	/* last block allocated on disk */
 };
 
-struct ffs_inode_ext {
-	int ffs_effnlink;	/* i_nlink when I/O completes */
+struct lfs_inode_ext {
+	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
 };
 
 /*
@@ -61,7 +61,7 @@ struct ffs_inode_ext {
  * UFS filesystem. It is composed of two types of information. The first part
  * is the information that is needed only while the file is active (such as
  * the identity of the file and linkage to speed its lookup). The second part
- * is * the permanent meta-data associated with the file which is read in
+ * is the permanent meta-data associated with the file which is read in
  * from the permanent dinode from long term storage when the file becomes
  * active, and is put back when the file is no longer being used.
  */
@@ -94,18 +94,18 @@ struct inode {
 	doff_t	  i_offset;	/* Offset of free space in directory. */
 	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
+	int       i_ffs_effnlink;  /* i_nlink when I/O completes */
 	/*
 	 * Inode extensions
 	 */
 	union {
 		/* Other extensions could go here... */
 		struct	ext2fs_inode_ext e2fs;
-		struct	ffs_inode_ext ffs;
+		struct  lfs_inode_ext lfs;
 	} inode_ext;
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
-#define	i_ffs_effnlink		inode_ext.ffs.ffs_effnlink
-
+#define i_lfs_effnblks		inode_ext.lfs.lfs_effnblocks
 	/*
 	 * The on-disk dinode itself.
 	 */

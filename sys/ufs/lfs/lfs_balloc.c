@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.20 2000/06/28 14:16:41 mrg Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.21 2000/07/03 01:45:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ lfs_balloc(v)
 			frags = numfrags(fs, nsize);
 			bb = fragstodb(fs, frags);
 			*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
-			ip->i_ffs_blocks += bb;
+			ip->i_lfs_effnblks += bb;
 			ip->i_lfs->lfs_bfree -= bb;
 			ip->i_ffs_db[lbn] = bp->b_blkno = UNWRITTEN;
 		} else {
@@ -233,7 +233,7 @@ lfs_balloc(v)
 	}
 	if (ISSPACE(fs, bcount, ap->a_cred)) {
 		ip->i_lfs->lfs_bfree -= bcount;
-		ip->i_ffs_blocks += bcount;
+		ip->i_lfs_effnblks += bcount;
 	} else {
 		return ENOSPC;
 	}

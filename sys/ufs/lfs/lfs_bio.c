@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.24 2000/06/27 20:57:13 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.25 2000/07/03 01:45:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,9 +159,8 @@ lfs_bwrite(v)
 inline static int
 lfs_fits(struct lfs *fs, int db)
 {
-	if(((db + (fs->lfs_uinodes + INOPB((fs))) /
-	     INOPB(fs) + fsbtodb(fs, 1) + LFS_SUMMARY_SIZE / DEV_BSIZE +
-	     fs->lfs_segtabsz)) >= fs->lfs_avail)
+	if(((db + fsbtodb(fs, roundup(fs->lfs_uinodes,INOPB(fs)) + 1) +
+	     btodb(LFS_SUMMARY_SIZE) + fs->lfs_segtabsz)) >= fs->lfs_avail)
 	{
 		return 0;
 	}
@@ -174,7 +173,7 @@ lfs_fits(struct lfs *fs, int db)
 	 *
 	 * XXX the old lfs_markv did not have this problem.
 	 */
-	if (fs->lfs_nclean <= MIN_FREE_SEGS)
+	if (fs->lfs_nclean <= fs->lfs_minfreeseg)
 		return 0;
 
 	return 1;
@@ -228,7 +227,7 @@ lfs_bwrite_ext(bp, flags)
 			{
 				printf("A");
 			}
-			if (fs->lfs_nclean <= MIN_FREE_SEGS-1)
+			if (fs->lfs_nclean < fs->lfs_minfreeseg)
 				printf("M");
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.39 2000/06/28 14:16:42 mrg Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.40 2000/07/03 01:45:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ extern long locked_queue_bytes;
 
 static int lfs_update_seguse(struct lfs *, long, size_t);
 static int lfs_indirtrunc (struct inode *, ufs_daddr_t, ufs_daddr_t,
-			   ufs_daddr_t, int, long *, long *, size_t *);
+			   ufs_daddr_t, int, long *, long *, long *, size_t *);
 static int lfs_blkfree (struct lfs *, daddr_t, size_t, long *, size_t *);
 static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
 
@@ -118,8 +118,10 @@ lfs_ifind(fs, ino, bp)
 		if (ldip->di_inumber == ino)
 			return (ldip);
 	
-	printf("offset is %d (seg %d)\n", fs->lfs_offset, datosn(fs,fs->lfs_offset));
-	printf("block is %d (seg %d)\n", bp->b_blkno, datosn(fs,bp->b_blkno));
+	printf("offset is 0x%x (seg %d)\n", fs->lfs_offset,
+	       datosn(fs,fs->lfs_offset));
+	printf("block is 0x%x (seg %d)\n", bp->b_blkno,
+	       datosn(fs,bp->b_blkno));
 	panic("lfs_ifind: dinode %u not found", ino);
 	/* NOTREACHED */
 }
@@ -223,7 +225,7 @@ lfs_truncate(v)
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, nblocks, blocksreleased = 0;
+	long count, rcount, nblocks, blocksreleased = 0, real_released = 0;
 	int i;
 	int aflags, error, allerror = 0;
 	off_t osize;
@@ -374,14 +376,19 @@ lfs_truncate(v)
 		bn = oip->i_ffs_ib[level];
 		if (bn != 0) {
 			error = lfs_indirtrunc(oip, indir_lbn[level],
-			    bn, lastiblock[level], level, &count, &lastseg, &bc);
+					       bn, lastiblock[level],
+					       level, &count, &rcount,
+					       &lastseg, &bc);
 			if (error)
 				allerror = error;
+			real_released += rcount;
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
+				if (oip->i_ffs_ib[level] > 0)
+					real_released += nblocks;
+				blocksreleased += nblocks;
 				oip->i_ffs_ib[level] = 0;
 				lfs_blkfree(fs, bn, fs->lfs_bsize, &lastseg, &bc);
-				blocksreleased += nblocks;
 			}
 		}
 		if (lastiblock[level] >= 0)
@@ -397,10 +404,12 @@ lfs_truncate(v)
 		bn = oip->i_ffs_db[i];
 		if (bn == 0)
 			continue;
-		oip->i_ffs_db[i] = 0;
 		bsize = blksize(fs, oip, i);
-		lfs_blkfree(fs, bn, bsize, &lastseg, &bc);
+		if (oip->i_ffs_db[i] > 0)
+			real_released += btodb(bsize);
 		blocksreleased += btodb(bsize);
+		oip->i_ffs_db[i] = 0;
+		lfs_blkfree(fs, bn, bsize, &lastseg, &bc);
 	}
 	if (lastblock < 0)
 		goto done;
@@ -424,6 +433,7 @@ lfs_truncate(v)
 			panic("itrunc: newspace");
 		if (oldspace - newspace > 0) {
 			lfs_blkfree(fs, bn, oldspace - newspace, &lastseg, &bc);
+			real_released += btodb(oldspace - newspace);
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
@@ -446,7 +456,8 @@ done:
 	 * Put back the real size.
 	 */
 	oip->i_ffs_size = length;
-	oip->i_ffs_blocks -= blocksreleased;
+	oip->i_lfs_effnblks -= blocksreleased;
+	oip->i_ffs_blocks -= real_released;
 	fs->lfs_bfree += blocksreleased;
 #ifdef DIAGNOSTIC
 	if (oip->i_ffs_size == 0 && oip->i_ffs_blocks > 0) {
@@ -522,7 +533,7 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 static int
 lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 	       ufs_daddr_t lastbn, int level, long *countp,
-	       long *lastsegp, size_t *bcp)
+	       long *rcountp, long *lastsegp, size_t *bcp)
 {
 	int i;
 	struct buf *bp;
@@ -530,8 +541,8 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 	ufs_daddr_t *bap;
 	struct vnode *vp;
 	ufs_daddr_t *copy = NULL, nb, nlbn, last;
-	long blkcount, factor;
-	int nblocks, blocksreleased = 0;
+	long blkcount, rblkcount, factor;
+	int nblocks, blocksreleased = 0, real_released = 0;
 	int error = 0, allerror = 0;
 
 	/*
@@ -571,7 +582,7 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 	}
 	if (error) {
 		brelse(bp);
-		*countp = 0;
+		*countp = *rcountp = 0;
 		return (error);
 	}
 
@@ -598,12 +609,16 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 		if (level > SINGLE) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       (ufs_daddr_t)-1, level - 1,
-					       &blkcount, lastsegp, bcp);
+					       &blkcount, &rblkcount,
+					       lastsegp, bcp);
 			if (error)
 				allerror = error;
 			blocksreleased += blkcount;
+			real_released += rblkcount;
 		}
 		lfs_blkfree(fs, nb, fs->lfs_bsize, lastsegp, bcp);
+		if (bap[i] > 0)
+			real_released += nblocks;
 		blocksreleased += nblocks;
 	}
 
@@ -616,9 +631,10 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 		if (nb != 0) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       last, level - 1, &blkcount,
-					       lastsegp, bcp);
+					       &rblkcount, lastsegp, bcp);
 			if (error)
 				allerror = error;
+			real_released += rblkcount;
 			blocksreleased += blkcount;
 		}
 	}
@@ -631,6 +647,7 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 	}
 
 	*countp = blocksreleased;
+	*rcountp = real_released;
 	return (allerror);
 }
 
