@@ -1,4 +1,4 @@
-.\" $NetBSD: usscanner.4,v 1.1 2001/01/11 06:10:01 augustss Exp $
+.\" $NetBSD: usscanner.4,v 1.2 2001/01/16 04:34:40 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Junuary 11, 2001
+.Dd January 11, 2001
 .Dt USSCANNER 4
 .Os
 .Sh NAME
 .Nm usscanner
-.Nd driver for some SCSI over USB scanners
+.Nd driver for some SCSI-over-USB scanners
 .Sh SYNOPSIS
 .Cd "usscanner* at uhub?"
 .Cd "scsibus*   at usscanner?"
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-provides support for some scanners based on non-standard SCSI over USB,
+provides support for some scanners based on non-standard SCSI-over-USB,
 e.g., HP5300C.
 .Sh HARDWARE
 The
