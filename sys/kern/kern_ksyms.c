@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.9 2003/05/11 08:23:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.10 2003/05/16 14:25:03 itojun Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -393,7 +393,7 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 	str[0] = 0;
 	n = 1;
 	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
-		strcpy(str+n, tab->sd_strstart + sym[i].st_name);
+		strcpy(str + n, tab->sd_strstart + sym[i].st_name);
 		sym[i].st_name = n;
 		n += strlen(str+n) + 1;
 	}
@@ -621,7 +621,7 @@ addsym(Elf_Sym *sym, char *name)
 		printf("addsym: too many sumbols, skipping '%s'\n", name);
 		return;
 	}
-	strcpy(&symnames[curnamep], name);
+	strlcpy(&symnames[curnamep], name, sizeof(symnames) - curnamep);
 	savedsyms[cursyms] = *sym;
 	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
 	curnamep += len;
@@ -705,8 +705,9 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	memcpy(str, symnames, curnamep);
 
 	st = malloc(sizeof(struct symtab), M_DEVBUF, M_WAITOK);
-	name = malloc(strlen(mod)+1, M_DEVBUF, M_WAITOK);
-	strcpy(name, mod);
+	i = strlen(mod) + 1;
+	name = malloc(i, M_DEVBUF, M_WAITOK);
+	strlcpy(name, mod, i);
 	st->sd_name = name;
 	st->sd_symnmoff = malloc(sizeof(int)*cursyms, M_DEVBUF, M_WAITOK);
 	memcpy(st->sd_symnmoff, symnmoff, sizeof(int)*cursyms);
@@ -895,9 +896,12 @@ ksyms_hdr_init(caddr_t hdraddr)
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_addralign = sizeof(char);
 
 	/* Set section names */
-	strcpy(&ksyms_hdr.kh_strtab[1], ".symtab");
-	strcpy(&ksyms_hdr.kh_strtab[9], ".strtab");
-	strcpy(&ksyms_hdr.kh_strtab[17], ".shstrtab");
+	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
+	    sizeof(ksyms_hdr.kh_strtab) - 1);
+	strlcpy(&ksyms_hdr.kh_strtab[9], ".strtab",
+	    sizeof(ksyms_hdr.kh_strtab) - 9);
+	strlcpy(&ksyms_hdr.kh_strtab[17], ".shstrtab",
+	    sizeof(ksyms_hdr.kh_strtab) - 17);
 };
 
 int
