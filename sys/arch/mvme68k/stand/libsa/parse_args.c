@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.5 2000/07/24 09:25:53 scw Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.6 2000/07/29 20:06:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -51,7 +51,6 @@ struct flags {
 	{ 'y', RB_NOSYM },
 	{ 'd', RB_KDB },
 	{ 'm', RB_MINIROOT },
-	{ 'r', RB_DFLTROOT },
 	{ 's', RB_SINGLE },
 };
 
