@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:35 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/03 10:50:59 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,6 @@ DIST=		${.CURDIR}/../../../dist
 PROG=		mailstats
 MAN=		mailstats.8
 
-CPPFLAGS+=	-I${DIST}/sendmail/src -DNOT_SENDMAIL
+CPPFLAGS+=	-DNOT_SENDMAIL
 
 .include <bsd.prog.mk>

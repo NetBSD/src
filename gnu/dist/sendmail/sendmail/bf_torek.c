@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Id: bf_torek.c,v 1.1.1.1 2000/05/03 09:27:22 itojun Exp $";
+static char id[] = "@(#)Id: bf_torek.c,v 8.19 1999/10/11 23:37:26 ca Exp";
 #endif /* ! lint */
 
 #include <sys/types.h>

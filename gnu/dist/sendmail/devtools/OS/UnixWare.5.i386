@@ -1,4 +1,4 @@
-#	$Id: UnixWare.5.i386,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: UnixWare.5.i386,v 8.4 1999/04/24 05:38:02 gshapiro Exp
 #
 # System V Rel 5.x (a.k.a Unixware7 w/o BSD-Compatiblity Libs ie. native)
 #	Contributed by Paul Gampe <paulg@apnic.net>
