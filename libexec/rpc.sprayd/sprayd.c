@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.9 1997/09/17 20:16:08 christos Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.10 1998/07/03 11:51:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.9 1997/09/17 20:16:08 christos Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.10 1998/07/03 11:51:19 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,7 +59,8 @@ static void
 cleanup(n)
 	int n;
 {
-	(void) pmap_unset(SPRAYPROG, SPRAYVERS);
+
+	(void)pmap_unset(SPRAYPROG, SPRAYVERS);
 	exit(0);
 }
 
@@ -67,6 +68,7 @@ static void
 die(n)
 	int n;
 {
+
 	exit(0);
 }
 
@@ -94,13 +96,13 @@ main(argc, argv)
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		(void) pmap_unset(SPRAYPROG, SPRAYVERS);
+		(void)pmap_unset(SPRAYPROG, SPRAYVERS);
 
-		(void) signal(SIGINT, cleanup);
-		(void) signal(SIGTERM, cleanup);
-		(void) signal(SIGHUP, cleanup);
+		(void)signal(SIGINT, cleanup);
+		(void)signal(SIGTERM, cleanup);
+		(void)signal(SIGHUP, cleanup);
 	} else {
-		(void) signal(SIGALRM, die);
+		(void)signal(SIGALRM, die);
 		alarm(TIMEOUT);
 	}
 
@@ -135,7 +137,7 @@ spray_service(rqstp, transp)
 	switch (rqstp->rq_proc) {
 	case SPRAYPROC_CLEAR:
 		scum.counter = 0;
-		(void) gettimeofday(&clear, 0);
+		(void)gettimeofday(&clear, 0);
 		/*FALLTHROUGH*/
 
 	case NULLPROC:
@@ -147,7 +149,7 @@ spray_service(rqstp, transp)
 		return;
 
 	case SPRAYPROC_GET:
-		(void) gettimeofday(&get, 0);
+		(void)gettimeofday(&get, 0);
 		timersub(&get, &clear, &get);
 		scum.clock.sec = get.tv_sec;
 		scum.clock.usec = get.tv_usec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.11 1997/09/17 20:19:45 christos Exp $	*/
+/*	$NetBSD: rwalld.c,v 1.12 1998/07/03 11:51:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.11 1997/09/17 20:19:45 christos Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.12 1998/07/03 11:51:19 mrg Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -65,7 +65,8 @@ static void
 cleanup(n)
 	int n;
 {
-	(void) pmap_unset(WALLPROG, WALLVERS);
+
+	(void)pmap_unset(WALLPROG, WALLVERS);
 	exit(0);
 }
 
