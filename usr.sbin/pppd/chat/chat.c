@@ -14,7 +14,7 @@
  */
 
 /*static char sccs_id[] = "@(#)chat.c	1.7";*/
-static char rcsid[] = "$Id: chat.c,v 1.3 1993/08/23 14:36:07 brezak Exp $";
+static char rcsid[] = "$Id: chat.c,v 1.4 1993/11/09 04:57:19 paulus Exp $";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -25,15 +25,11 @@ static char rcsid[] = "$Id: chat.c,v 1.3 1993/08/23 14:36:07 brezak Exp $";
 #include <varargs.h>
 #include <syslog.h>
 
-#ifdef __NetBSD__
+#ifndef TERMIO
 #define TERMIOS
-#define SIGHAND_TYPE	__sighandler_t
-#else
-#define TERMIO
 #endif
 
 #ifdef sun
-#define SIGHAND_TYPE	int (*)()
 # if defined(SUNOS) && SUNOS >= 41
 # ifndef HDB
 #  define	HDB
@@ -45,16 +41,13 @@ static char rcsid[] = "$Id: chat.c,v 1.3 1993/08/23 14:36:07 brezak Exp $";
 #include <termio.h>
 #endif
 #ifdef TERMIOS
-#include <sys/ioctl.h>
 #include <termios.h>
 #endif
 
 #define	STR_LEN	1024
 
-#if defined(sun) | defined(SYSV) | defined(POSIX_SOURCE)
+#ifndef SIGTYPE
 #define SIGTYPE void
-#else 
-#define SIGTYPE int
 #endif
 
 /*************** Micro getopt() *********************************************/
@@ -236,8 +229,8 @@ SIGTYPE
 {
     int flags;
 
-    alarm(1); alarmed = 1;		/* Reset alarm to avoid race window */
-    signal(SIGALRM, (SIGHAND_TYPE)sigalrm); /* that can cause hanging in read() */
+    alarm(1); alarmed = 1;	/* Reset alarm to avoid race window */
+    signal(SIGALRM, sigalrm);	/* that can cause hanging in read() */
 
     if ((flags = fcntl(0, F_GETFL, 0)) == -1)
 	sysfatal("Can't get file mode flags on stdin");
@@ -282,15 +275,15 @@ SIGTYPE
 
 init()
     {
-    signal(SIGINT, (SIGHAND_TYPE)sigint);
-    signal(SIGTERM, (SIGHAND_TYPE)sigterm);
-    signal(SIGHUP, (SIGHAND_TYPE)sighup);
+    signal(SIGINT, sigint);
+    signal(SIGTERM, sigterm);
+    signal(SIGHUP, sighup);
 
     if (lock_file)
 	lock();
 
     set_tty_parameters();
-    signal(SIGALRM, (SIGHAND_TYPE)sigalrm);
+    signal(SIGALRM, sigalrm);
     alarm(0); alarmed = 0;
     }
 
@@ -306,7 +299,7 @@ set_tty_parameters()
 #ifdef TERMIOS
     struct termios t;
 
-    if (ioctl(0, TIOCGETA, &t) < 0)
+    if (tcgetattr(0, &t) < 0)
 	sysfatal("Can't get terminal parameters");
 #endif
 
@@ -325,7 +318,7 @@ set_tty_parameters()
 	sysfatal("Can't set terminal parameters");
 #endif
 #ifdef TERMIOS
-    if (ioctl(0, TIOCSETA, &t) < 0)
+    if (tcsetattr(0, TCSANOW, &t) < 0)
 	sysfatal("Can't set terminal parameters");
 #endif
     }
@@ -338,7 +331,7 @@ terminate(status)
       ioctl(0, TCSETA, &saved_tty_parameters) < 0
 #endif
 #ifdef TERMIOS
-      ioctl(0, TIOCSETA, &saved_tty_parameters) < 0
+      tcsetattr(0, TCSANOW, &saved_tty_parameters) < 0
 #endif
       ) {
     perror("Can't restore terminal parameters");
@@ -721,12 +714,13 @@ int get_string(string)
 register char *string;
     {
     char temp[STR_LEN];
-    int c, printed = 0, len;
+    int c, printed = 0, len, minlen;
     register char *s = temp, *end = s + STR_LEN;
 
     fail_reason = (char *)0;
     string = clean(string, 0);
     len = strlen(string);
+    minlen = (len > sizeof(fail_buffer)? len: sizeof(fail_buffer)) - 1;
 
     if (verbose)
 	{
@@ -738,6 +732,12 @@ register char *string;
 	    logf("%s", character(*s1));
 
 	logf(")\n");
+	}
+
+    if (len > STR_LEN)
+	{
+	logf("expect string is too long\n");
+	return;
 	}
 
     if (len == 0)
@@ -766,17 +766,6 @@ register char *string;
 
 	*s++ = c;
 
-	if (s >= end)
-	    {
-	    if (verbose)
-		{
-		logf(" -- too much data\n");
-		}
-
-	    alarm(0); alarmed = 0;
-	    return (0);
-	    }
-
 	if (s - temp >= len &&
 	    c == string[len - 1] &&
 	    strncmp(s - len, string, len) == 0)
@@ -803,6 +792,12 @@ register char *string;
 		strcpy(fail_reason = fail_buffer, abort_string[n]);
 		return (0);
 		}
+
+	if (s >= end)
+	    {
+	    strncpy(temp, s - minlen, minlen);
+	    s = temp + minlen;
+	    }
 
 	if (alarmed && verbose)
 	    warn("Alarm synchronization problem");
