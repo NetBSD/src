@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.21 2002/02/13 20:03:37 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.22 2002/02/19 23:57:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	pthread_t t, self, next, intqueue;
 	int first = 1;
 	int deliversig = 0;
+	siginfo_t *si;
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
 
@@ -118,8 +119,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		deliversig = 1;
 		break;
 	case SA_UPCALL_SIGEV:
+		si = arg;
 		/* Run the alarm queue */
-		pthread__alarm_process(self, arg);
+		if (si->si_value.sival_int == PT_ALARMTIMER_MAGIC)
+			pthread__alarm_process(self, arg);
 		break;
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
@@ -139,32 +142,36 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		if (pthread__find_interrupted(sas + first, ev + intr,
 		    &intqueue, self) > 0)
 			pthread__resolve_locks(self, &intqueue);
-
-		/* Note that we handle signals after handling spinlock
-		 * preemption. This is because spinlocks are only used
-		 * internally to the thread library and we don't want to
-		 * expose the middle of them to a signal.
-		 * While this means that synchronous instruction traps
-		 * that occur inside critical sections in this library 
-		 * (SIGFPE, SIGILL, SIGBUS, SIGSEGV) won't be handled at
-		 * the precise location where they occured, that's okay,
-		 * because (1) we don't use any FP and 
-		 * (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.
-		 */
-		if (deliversig) {
-			siginfo_t *si = arg;
-			if (ev)
-				pthread__signal(pthread__sa_id(sas[1]),
-				    si->si_signo, si->si_code);
-			else
-				pthread__signal(NULL, 
-				    si->si_signo, si->si_code);
-		}
 	}
 
 	pthread__sched_idle2(self);
 	if (intqueue)
 		pthread__sched_bulk(self, intqueue);
+
+
+	/* Note that we handle signals after handling spinlock
+	 * preemption. This is because spinlocks are only used
+	 * internally to the thread library and we don't want to
+	 * expose the middle of them to a signal.  While this means
+	 * that synchronous instruction traps that occur inside
+	 * critical sections in this library (SIGFPE, SIGILL, SIGBUS,
+	 * SIGSEGV) won't be handled at the precise location where
+	 * they occured, that's okay, because (1) we don't use any FP
+	 * and (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.  
+	 *
+	 * This also means that a thread that was interrupted to take
+	 * a signal will be on a run queue, and not in upcall limbo.
+	 */
+
+	if (deliversig) {
+		si = arg;
+		if (ev)
+			pthread__signal(pthread__sa_id(sas[1]),
+			    si->si_signo, si->si_code);
+		else
+			pthread__signal(NULL, 
+			    si->si_signo, si->si_code);
+	}
 	
 	/* At this point everything on our list should be scheduled
 	 * (or was an upcall).
