@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2004/04/10 23:39:54 cl Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -116,9 +116,7 @@ rcr0(void)
 static __inline u_int
 rcr2(void)
 {
-	u_int val;
-	__asm __volatile("movl %%cr2,%0" : "=r" (val));
-	return val;
+	return 0;
 }
 
 #if 0
