@@ -1334,7 +1334,8 @@ check_format_info (info, params)
 
   if (integer_zerop (format_tree))
     {
-      warning ("null format string");
+      if (pedantic)
+        warning ("null format string");
       return;
     }
   if (TREE_CODE (format_tree) != ADDR_EXPR)
