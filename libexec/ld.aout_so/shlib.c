@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.14 1998/09/05 13:08:40 pk Exp $	*/
+/*	$NetBSD: shlib.c,v 1.15 1998/09/15 12:38:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -249,12 +249,11 @@ int	do_dot_a;
 		DIR		*dd = opendir(search_dirs[i]);
 		struct dirent	*dp;
 		int		found_dot_a = 0;
-		int		might_take_it;
+		int		found_dot_so = 0;
 
 		if (dd == NULL)
 			continue;
 
-		might_take_it = 0;
 		while ((dp = readdir(dd)) != NULL) {
 			int	n;
 
@@ -285,23 +284,26 @@ int	do_dot_a;
 			}
 
 			if (major == -1 && minor == -1) {
-				might_take_it = 1;
+				goto compare_version;
 			} else if (major != -1 && minor == -1) {
 				if (tmp[0] == major)
-					might_take_it = 1;
+					goto compare_version;
 			} else if (major != -1 && minor != -1) {
-				if (tmp[0] == major)
+				if (tmp[0] == major) {
 					if (n == 1 || tmp[1] >= minor)
-						might_take_it = 1;
+						goto compare_version;
+				}
 			}
 
-			if (!might_take_it)
-				continue;
+			/* else, this file does not qualify */
+			continue;
 
+		compare_version:
 			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
 				continue;
 
 			/* We have a better version */
+			found_dot_so = 1;
 			if (path)
 				free(path);
 			path = concat(search_dirs[i], "/", dp->d_name);
@@ -313,7 +315,7 @@ int	do_dot_a;
 		}
 		closedir(dd);
 
-		if (found_dot_a || might_take_it)
+		if (found_dot_a || found_dot_so)
 			/*
 			 * There's a lib in this dir; take it.
 			 */
