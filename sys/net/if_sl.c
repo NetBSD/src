@@ -314,6 +314,8 @@ sltioctl(tp, cmd, data, flag)
 	caddr_t data;
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
+	struct proc *p = curproc;		/* XXX */
+	int error;
 	int s;
 
 	switch (cmd) {
@@ -326,6 +328,8 @@ sltioctl(tp, cmd, data, flag)
 		break;
 
 	case SLIOCSFLAGS:
+		if (error = suser(p->p_ucred, &p->p_acflag))
+			return (error);
 #define	SC_MASK	0xffff
 		s = splimp();
 		sc->sc_flags =
