@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1996/12/03 18:11:40 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1996/12/03 19:52:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1432,24 +1432,25 @@ void
 do_sir()
 {
 	u_int64_t n;
-	int s;
 
 	do {
-		s = splhigh();
+		(void)splhigh();
 		n = ssir;
 		ssir = 0;
-		splsoft(s);		/* don't recurse through spl0() */
+		splsoft();		/* don't recurse through spl0() */
 	
 #define	DO_SIR(bit, fn)							\
 		do {							\
-			if (n & (1 << (bit))) {				\
+			if (n & (bit)) {				\
 				cnt.v_soft++;				\
 				fn;					\
 			}						\
 		} while (0)
 
-		DO_SIR(SIR_NET, netintr);
-		DO_SIR(SIR_CLOCK, softclock);
+		DO_SIR(SIR_NET, netintr());
+		DO_SIR(SIR_CLOCK, softclock());
+
+#undef DO_SIR
 	} while (ssir != 0);
 }
 
