@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgctl.2,v 1.3 1997/11/27 07:37:16 mikel Exp $	
+.\"	$NetBSD: msgctl.2,v 1.4 1997/11/27 10:24:44 mikel Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"/
+.\"
 .Dd August 17, 1995
 .Dt MSGCTL 2
 .Os NetBSD
@@ -47,7 +47,7 @@ The
 system call performs some control operations on the message queue specified
 by
 .Fa msqid .
-
+.Pp
 Each message queue has a data structure associated with it, parts of which
 may be altered by
 .Fn msgctl
@@ -69,14 +69,14 @@ struct msqid_ds {
     time_t msg_ctime;  /* time of last msgctl() */
 };
 .Ed
-
+.Pp
 The
 .Bf -literal
 ipc_perm
 .Ef
 structure used inside the
 .Bf -literal
-shmid_ds
+msgid_ds
 .Ef
 structure is defined in
 .Aq Pa sys/ipc.h
@@ -92,7 +92,7 @@ struct ipc_perm {
     key_t key;	 /* user specified msg/sem/shm key */
 };
 .Ed
-
+.Pp
 The operation to be performed by
 .Fn msgctl
 is specified in
@@ -125,10 +125,11 @@ The value of
 .Va msg_qbytes
 can only be increased by the super-user. Values for
 .Va msg_qbytes
-that exceed the system limit (MSGMNB from
+that exceed the system limit 
+.Pf ( Dv MSGMNB
+from
 .Aq Pa sys/msg.h )
 are silently truncated to that limit.
-
 .It Dv IPC_RMID
 Remove the message queue specified by
 .Fa msqid
@@ -139,7 +140,7 @@ or
 .Va msg_perm.uid
 values in the data structure associated with the queue can do this.
 .El
-
+.Pp
 The permission to read from or write to a message queue (see
 .Xr msgsnd 2
 and
@@ -148,7 +149,7 @@ is determined by the
 .Va msg_perm.mode
 field in the same way as is
 done with files (see
-.Xr chmod 2 ),
+.Xr chmod 2 ) ,
 but the effective uid can match either the
 .Va msg_perm.cuid
 field or the
@@ -169,25 +170,32 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
 .Fa cmd
-is equal to IPC_SET or IPC_RMID and the caller is not the super-user, nor does
+is equal to
+.Dv IPC_SET
+or
+.Dv IPC_RMID
+and the caller is not the super-user, nor does
 the effective uid match either the
 .Va msg_perm.uid
 or
 .Va msg_perm.cuid
 fields of the data structure associated with the message queue.
-
-An attempt is made to increase the value of
+.Pp
+An attempt was made to increase the value of
 .Va msg_qbytes
-through IPC_SET
+through
+.Dv IPC_SET ,
 but the caller is not the super-user.
 .It Bq Er EACCES
-The command is IPC_STAT
+.Fa cmd
+is
+.Dv IPC_STAT
 and the caller has no read permission for this message queue.
 .It Bq Er EINVAL
 .Fa msqid
 is not a valid message queue identifier.
-
-.Va cmd
+.Pp
+.Fa cmd
 is not a valid command.
 .It Bq Er EFAULT
 .Fa buf
@@ -198,4 +206,5 @@ specifies an invalid address.
 .Xr msgrcv 2 ,
 .Xr msgsnd 2
 .Sh HISTORY
-Message queues appeared in the first release of AT&T Unix System V.
+Message queues appeared in the first release of
+.At V .
