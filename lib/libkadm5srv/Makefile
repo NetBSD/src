@@ -1,52 +1,69 @@
-# $NetBSD: Makefile,v 1.2.2.3 2000/08/23 09:16:25 msaitoh Exp $
-DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/kadm5
+# $NetBSD: Makefile,v 1.2.2.4 2001/04/05 23:28:59 he Exp $
 
 .include <bsd.own.mk>
+
+DIST=		${.CURDIR}/../../crypto/dist
+.PATH: ${DIST}/heimdal/lib/kadm5
 
 WARNS?=  1
 MKLINT= no
 
+.include <bsd.own.mk>
+
 LIB=	kadm5srv
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/kadm5/kadm5_err.et
 
 ERR_FILES = kadm5_err.c
 
-SRCS	 =		\
-	acl.c		\
-	chpass_s.c	\
-	common_glue.c	\
-	context_s.c	\
-	create_s.c	\
-	delete_s.c	\
-	destroy_s.c	\
-	ent_setup.c	\
-	error.c		\
-	flush_s.c	\
-	free.c		\
-	get_princs_s.c	\
-	get_s.c		\
-	init_s.c	\
-	kadm5_err.c	\
-	log.c		\
-	marshall.c	\
-	modify_s.c	\
-	privs_s.c	\
-	randkey_s.c	\
-	rename_s.c	\
-	set_keys.c	\
-	set_modifier.c	\
-	password_quality.c \
-	server_glue.c \
+SRCS	 =					\
+	acl.c					\
+	bump_pw_expire.c			\
+	chpass_c.c				\
+	chpass_s.c				\
+	common_glue.c				\
+	context_s.c				\
+	create_c.c				\
+	create_s.c				\
+	delete_c.c				\
+	delete_s.c				\
+	destroy_c.c				\
+	destroy_s.c				\
+	ent_setup.c				\
+	error.c					\
+	flush_c.c				\
+	flush_s.c				\
+	free.c					\
+	get_c.c					\
+	get_princs_c.c				\
+	get_princs_s.c				\
+	get_s.c					\
+	init_c.c				\
+	init_s.c				\
+	keys.c					\
+	log.c					\
+	marshall.c				\
+	modify_c.c				\
+	modify_s.c				\
+	password_quality.c			\
+	privs_c.c				\
+	privs_s.c				\
+	randkey_c.c				\
+	randkey_s.c				\
+	rename_c.c				\
+	rename_s.c				\
+	send_recv.c				\
+	server_glue.c				\
+	set_keys.c				\
+	set_modifier.c				\
 	$(ERR_FILES)
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
-HDB!=	cd ${.CURDIR}/../libhdb && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+HDB!=	cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
