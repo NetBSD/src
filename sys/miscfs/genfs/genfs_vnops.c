@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.35.2.7 2002/09/29 09:58:16 jdolecek Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35.2.8 2002/10/02 19:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.7 2002/09/29 09:58:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.8 2002/10/02 19:37:53 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1673,7 +1673,6 @@ filt_genfsread(struct knote *kn, long hint)
 	}
 
 	/* XXXLUKEM lock the struct? */
-	/* XXXLUKEM (jdolecek): clipping to 32bit value */
 	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
         return (kn->kn_data != 0);
 }
