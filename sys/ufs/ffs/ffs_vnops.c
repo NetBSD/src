@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.16.2.1 1998/11/09 06:06:36 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.16.2.2 1998/11/16 08:25:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -425,13 +425,13 @@ ffs_putpages(v)
 	UVMHIST_FUNC("ffs_putpages"); UVMHIST_CALLED(ubchist);
 
 	/* XXX for now, just do one page at a time */
-	if (ap->a_count != 1)
+	if (ap->a_count != 1) {
 	    panic("ffs_putpages: one at a time, please\n");
+	}
 
 	m = ap->a_m[0];
 	kva = uvm_pagermapin(ap->a_m, ap->a_count, NULL, M_WAITOK);
-	if (kva == 0)
-	{
+	if (kva == 0) {
 	    printf("uvm_pagermapin failed\n");
 	    return EAGAIN;
 	}
