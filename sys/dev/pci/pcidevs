@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.148 1999/08/27 23:25:36 thorpej Exp $
+$NetBSD: pcidevs,v 1.149 1999/08/28 09:18:08 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -910,40 +910,58 @@ product IMS 8849	0x8849	8849
 product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
-product INTEL PCEB	0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
-product INTEL CDC	0x0483	82424ZX Cache and DRAM controller (CDC)
-product INTEL SIO	0x0484	82378ZB System I/O (SIO)
-product INTEL 82426EX	0x0486	82426EX PCI-to-ISA Bridge (PCIB)
-product INTEL PCMC	0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
-product INTEL 82092AA	0x1222	82092AA IDE controller
-product INTEL SAA7116	0x1223	SAA7116
-product INTEL 82596	0x1226	82596 LAN Controller
-product INTEL EEPRO100	0x1227	EE Pro 100 10/100 Fast Ethernet
-product INTEL EEPRO100S	0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
-product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
-product INTEL 82437FX	0x122d	82437FX System Controller (TSC)
+product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
+product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
+product INTEL SIO		0x0484	82378ZB System I/O (SIO)
+product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
+product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
+product INTEL 82092AA		0x1222	82092AA IDE controller
+product INTEL SAA7116		0x1223	SAA7116
+product INTEL 82596		0x1226	82596 LAN Controller
+product INTEL EEPRO100		0x1227	EE Pro 100 10/100 Fast Ethernet
+product INTEL EEPRO100S		0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
+product INTEL 82557		0x1229	82557 Fast Ethernet LAN Controller
+product INTEL 82437FX		0x122d	82437FX System Controller (TSC)
 product INTEL 82371FB_ISA	0x122e	82371FB PCI-to-ISA Bridge (PIIX)
 product INTEL 82371FB_IDE	0x1230	82371FB IDE controller (PIIX)
-product INTEL 82371MX	0x1234	82371MX Mobile PCI I/O IDE Xcelerator (MPIIX)
-product INTEL 82437MX	0x1235	82437MX Mobile System Controller (MTSC)
-product INTEL 82441FX	0x1237	82441FX PCI and Memory Controller (PMC)
-product INTEL 82380AB	0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
-product INTEL 82380FB	0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
-product INTEL 82439HX	0x1250	82439HX System Controller (TXC)
+product INTEL 82371MX		0x1234	82371MX Mobile PCI I/O IDE Xcelerator (MPIIX)
+product INTEL 82437MX		0x1235	82437MX Mobile System Controller (MTSC)
+product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
+product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
+product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
+product INTEL 82439HX		0x1250	82439HX System Controller (TXC)
+product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
+product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
+product INTEL 82801AA_USB	0x2412	82801AA USB Controller
+product INTEL 82801AA_SMB	0x2413	82801AA SMBus Controller
+product INTEL 82801AA_ACA	0x2415	82801AA AC-97 Audio Controller
+product INTEL 82801AA_ACM	0x2416	82801AA AC-97 PCI Modem
+product INTEL 82801AA_HPB	0x2418	82801AA Hub-to-PCI Bridge
+product INTEL 82801AB_LPC	0x2420	82801AB LPC Interface Bridge
+product INTEL 82801AB_IDE	0x2421	82801AB IDE Controller
+product INTEL 82801AB_USB	0x2422	82801AB USB Controller
+product INTEL 82801AB_SMB	0x2423	82801AB SMBus Controller
+product INTEL 82801AB_ACA	0x2425	82801AB AC-97 Audio Controller
+product INTEL 82801AB_ACM	0x2426	82801AB AC-97 PCI Modem
+product INTEL 82801AB_HPB	0x2428	82801AB Hub-to-PCI Bridge
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
 product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
 product INTEL 82371SB_USB	0x7020	82371SB USB Host Controller (PIIX3)
-product INTEL 82437VX	0x7030	82437VX System Controller (TVX)
-product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
+product INTEL 82437VX		0x7030	82437VX System Controller (TVX)
+product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
 product INTEL 82371AB_ISA	0x7110	82371AB PCI-to-ISA Bridge (PIIX4)
 product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
 product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
 product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
+product INTEL 82810_MCH		0x7120	82810 Memory Controller Hub
+product INTEL 82810_GC		0x7121	82810 Graphics Controller
+product INTEL 82810_DC100_MCH	0x7122	82810-DC100 Memory Controller Hub
+product INTEL 82810_DC100_GC	0x7123	82810-DC100 Graphics Controller
 product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
 product INTEL 82443LX_AGP	0x7181	82443LX AGP Interface (PAC)
 product INTEL 82443BX		0x7190	82443BX	Host Bridge/Controller
 product INTEL 82443BX_AGP	0x7191	82443BX AGP Interface
-product INTEL 82443BX_NOAGP	0x7192  82443BX Host Bridge/Controller (AGP disabled)
+product INTEL 82443BX_NOAGP	0x7192	82443BX Host Bridge/Controller (AGP disabled)
 product INTEL I740		0x7800	i740 Graphics Accelerator
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
@@ -1206,7 +1224,7 @@ product TI	PCI1225		0xac1c	PCI1225 PCI-CardBus Bridge
 product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI1211		0xac1e	PCI1211 PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
-  
+
 /* Sony products */
 product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
 
