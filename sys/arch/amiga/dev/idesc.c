@@ -66,7 +66,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: idesc.c,v 1.1 1994/05/22 07:22:29 chopps Exp $
+ *	$Id: idesc.c,v 1.2 1994/05/22 19:05:10 chopps Exp $
  *
  *
  */
@@ -1084,8 +1084,7 @@ idesc_intr()
 	short *bf;
 	int i;
 
-	dev = idesccd.cd_devs[0];
-	if (dev == NULL)
+	if (idesccd.cd_ndevs == 0 || (dev = idesccd.cd_devs[0]) == NULL)
 		return (0);
 	regs = dev->sc_cregs;
 	if (regs->ide_intpnd >= 0)
