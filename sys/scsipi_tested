@@ -35,8 +35,9 @@ pc532:
 powerpc:
 	Not affected by scsipi ?
 sun3x:
-	sd, cd, st, ch, ss, uk, se: ?
-	esp : ?
+	sd, cd: tested (Tue Jul 1)
+	st, ch, ss, uk, se: ?
+	esp : tested (Tue Jul 1) 
 amiga:
 	sd, cd, st, ch, ss, uk, se: ?
 	gtsc, ahsc, atzsc, wstsc, ivsc, mlhsc, otgsc, zssc, mgnsc, wesc, afsc, aftsc, flsc, bzsc, bztzsc, empsc, idesc, drsc: ?
