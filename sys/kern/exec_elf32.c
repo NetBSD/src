@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.49 2000/06/06 18:26:34 soren Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.49.2.1 2000/07/13 01:09:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ ELFNAME(check_header)(eh, type)
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    eh->e_ident[EI_CLASS] != ELFCLASS)
+		return ENOEXEC;
 
 	switch (eh->e_machine) {
 
