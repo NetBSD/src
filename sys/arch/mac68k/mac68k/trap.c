@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1999/03/27 05:21:20 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.72.2.1 1999/04/07 01:51:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,8 @@
 #include <vm/pmap.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "zsc.h"
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
