@@ -1,9 +1,12 @@
 /*
- *	$Id: version.c,v 1.21 1994/06/13 19:15:24 cgd Exp $
+ *	$Id: version.c,v 1.21.2.1 1994/07/22 01:16:24 cgd Exp $
  */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.21 -> 1.22
+ *		fix compatibility with pre-4.4 file systems. (mycroft)
  *
  *	1.20 -> 1.21
  *		update for 4.4-Lite file system includes and macros (cgd)
@@ -32,4 +35,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.21 $";
+char *version = "$Revision: 1.21.2.1 $";

@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.8 1994/06/13 19:15:19 cgd Exp $
+ *	$Id: sys.c,v 1.8.2.1 1994/07/22 01:16:16 cgd Exp $
  */
 
 #include "boot.h"
@@ -114,6 +114,10 @@ loop:
 			devread();
 		}
 		dp = (struct dirent *)(iodest + off);
+		if (dp->d_reclen < 8) {
+			printf("directory corrupted (possible geometry mismatch)\n");
+			return 0;
+		}
 		loc += dp->d_reclen;
 	} while (!dp->d_fileno || strcmp(path, dp->d_name));
 	ino = dp->d_fileno;
@@ -199,6 +203,15 @@ openrd()
 	cnt = SBSIZE;
 	bnum = SBLOCK + boff;
 	devread();
+
+	/*
+	 * Deal with old file system format.  This is borrowed from
+	 * ffs_oldfscompat() in ufs/ffs/ffs_vfsops.c.
+	 */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
+		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
+	}							/* XXX */
 
 	/***********************************************\
 	* Find the actual FILE on the mounted device	*
