@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.107 2001/03/10 01:51:49 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.108 2001/05/07 17:25:57 kleink Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -27,7 +27,7 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
-	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
