@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.11 1996/09/08 14:49:08 mycroft Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.12 1996/10/10 23:25:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -167,7 +167,7 @@ idp_output(m0, va_alist)
 	struct nspcb *nsp;
 	register struct mbuf *m;
 	register struct idp *idp;
-	register int len = m->m_pkthdr.len;
+	register int len = m0->m_pkthdr.len;
 	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
@@ -499,7 +499,6 @@ idp_raw_usrreq(so, req, m, nam, control, p)
 {
 	int error = 0;
 	struct nspcb *nsp = sotonspcb(so);
-	extern struct nspcb nsrawpcb;
 
 	switch (req) {
 
