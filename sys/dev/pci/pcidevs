@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.6 2002/06/25 21:58:18 lukem Exp $
+$NetBSD: pcidevs,v 1.428.2.7 2002/07/12 04:12:35 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -820,6 +820,11 @@ product APPLE UNINORTH_AGP2	0x002d	UniNorth AGP Interface
 product APPLE UNINORTH3		0x002e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
 product APPLE PANGEA_FW		0x0030	Pangea Firewire
+product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
+product APPLE GMAC3		0x0032	GMAC Ethernet
+product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
+product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
+product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
