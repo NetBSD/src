@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.6 1994/07/02 04:13:16 mycroft Exp $
+ *	$Id: if_le.c,v 1.7 1994/07/05 21:20:20 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -93,24 +93,24 @@ struct le_softc {
 };
 
 int leintr __P((struct le_softc *));
-int le_ioctl __P((struct ifnet *, int, caddr_t));
-int le_start __P((struct ifnet *));
-int le_watchdog __P((/* short */));
+int leioctl __P((struct ifnet *, int, caddr_t));
+int lestart __P((struct ifnet *));
+int lewatchdog __P((/* short */));
 static inline void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
 static inline u_short lerdcsr __P((/* struct le_softc *, u_short */));
-void le_init __P((struct le_softc *));
-void init_mem __P((struct le_softc *));
-void le_reset __P((struct le_softc *));
-void le_stop __P((struct le_softc *));
-void le_tint __P((struct le_softc *));
-void le_rint __P((struct le_softc *));
-void le_read __P((struct le_softc *, u_char *, int));
-struct mbuf *le_get __P((u_char *, int, struct ifnet *));
+void leinit __P((struct le_softc *));
+void lememinit __P((struct le_softc *));
+void lereset __P((struct le_softc *));
+void lestop __P((struct le_softc *));
+void letint __P((struct le_softc *));
+void lerint __P((struct le_softc *));
+void leread __P((struct le_softc *, u_char *, int));
+struct mbuf *leget __P((u_char *, int, struct ifnet *));
 #ifdef LEDEBUG
 void recv_print __P((struct le_softc *, int));
 void xmit_print __P((struct le_softc *, int));
 #endif
-void le_setladrf __P((struct arpcom *, u_long *));
+void lesetladrf __P((struct arpcom *, u_long *));
 
 int leprobe();
 int depca_probe __P((struct le_softc *, struct isa_attach_args *));
@@ -349,10 +349,10 @@ lance_probe(sc)
 	int type;
 
 	/* Stop the LANCE chip and put it in a known state. */
-	lewrcsr(sc, 0, STOP);
+	lewrcsr(sc, 0, LE_STOP);
 	delay(100);
 
-	if (lerdcsr(sc, 0) != STOP)
+	if (lerdcsr(sc, 0) != LE_STOP)
 		return 0;
 
 	/*
@@ -372,7 +372,7 @@ lance_probe(sc)
 		break;
 	}
 
-	lewrcsr(sc, 3, sc->sc_card == DEPCA ? ACON : 0);
+	lewrcsr(sc, 3, sc->sc_card == DEPCA ? LE_ACON : 0);
 	return type;
 }
 
@@ -393,9 +393,9 @@ leattach(parent, self, aux)
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = lecd.cd_name;
 	ifp->if_output = ether_output;
-	ifp->if_start = le_start;
-	ifp->if_ioctl = le_ioctl;
-	ifp->if_watchdog = le_watchdog;
+	ifp->if_start = lestart;
+	ifp->if_ioctl = leioctl;
+	ifp->if_watchdog = lewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -421,32 +421,31 @@ leattach(parent, self, aux)
 }
 
 void
-le_reset(sc)
+lereset(sc)
 	struct le_softc *sc;
 {
 
-	log(LOG_NOTICE, "%s: reset\n", sc->sc_dev.dv_xname);
-	le_init(sc);
+	leinit(sc);
 }
- 
+
 int
-le_watchdog(unit)
+lewatchdog(unit)
 	short unit;
 {
 	struct le_softc *sc = lecd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
-	le_reset(sc);
+	lereset(sc);
 }
 
 #define	LANCE_ADDR(sc, a) \
 	(sc->sc_card == DEPCA ?	((u_long)(a) - (u_long)sc->sc_mem) : kvtop(a))
 
-/* Lance initialisation block set up. */
+/* LANCE initialization block set up. */
 void
-init_mem(sc)
-	struct le_softc *sc;
+lememinit(sc)
+	register struct le_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
@@ -458,22 +457,18 @@ init_mem(sc)
 	 * quadword aligned.  If it isn't then the initialisation is going
 	 * fail later on.
 	 */
-
-	/* 
-	 * Set up lance initialisation block.
-	 */
 	mem = sc->sc_mem;
 
 	sc->sc_init = mem;
 #if NBPFILTER > 0
 	if (ifp->if_flags & IFF_PROMISC)
-		sc->sc_init->mode = PROM;
+		sc->sc_init->mode = LE_NORMAL | LE_PROM;
 	else
 #endif
-		sc->sc_init->mode = 0;
-	for (i = 0; i < ETHER_ADDR_LEN; i++) 
+		sc->sc_init->mode = LE_NORMAL;
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_init->padr[i] = sc->sc_arpcom.ac_enaddr[i];
-	le_setladrf(&sc->sc_arpcom, sc->sc_init->ladrf);
+	lesetladrf(&sc->sc_arpcom, sc->sc_init->ladrf);
 	mem += sizeof(struct init_block);
 
 	sc->sc_rd = mem;
@@ -495,7 +490,7 @@ init_mem(sc)
 	for (i = 0; i < NRBUF; i++) {
 		a = LANCE_ADDR(sc, mem);
 		sc->sc_rd[i].addr = a;
-		sc->sc_rd[i].flags = ((a >> 16) & 0xff) | OWN;
+		sc->sc_rd[i].flags = ((a >> 16) & 0xff) | LE_OWN;
 		sc->sc_rd[i].bcnt = -BUFSIZE;
 		sc->sc_rd[i].mcnt = 0;
 		mem += BUFSIZE;
@@ -516,11 +511,11 @@ init_mem(sc)
 }
 
 void
-le_stop(sc)
+lestop(sc)
 	struct le_softc *sc;
 {
 
-	lewrcsr(sc, 0, STOP);
+	lewrcsr(sc, 0, LE_STOP);
 }
 
 /*
@@ -528,54 +523,52 @@ le_stop(sc)
  * and transmit/receive descriptor rings.
  */
 void
-le_init(sc)
-	struct le_softc *sc;
+leinit(sc)
+	register struct le_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
-	register i;
+	register int timo;
 	u_long a;
 
 	/* Address not known. */
- 	if (!ifp->if_addrlist)
+	if (!ifp->if_addrlist)
 		return;
 
 	s = splimp();
 
-	/* 
-	 * Lance must be stopped to access registers.
-	 */
-	le_stop(sc);
+	/* Don't want to get in a weird state. */
+	lestop(sc);
 
 	sc->sc_last_rd = sc->sc_last_td = sc->sc_no_td = 0;
 
-	/* Set up lance's memory area. */
-	init_mem(sc);
+	/* Set up LANCE init block. */
+	lememinit(sc);
 
 	/* No byte swapping etc. */
-	lewrcsr(sc, 3, sc->sc_card == DEPCA ? ACON : 0);
+	lewrcsr(sc, 3, sc->sc_card == DEPCA ? LE_ACON : 0);
 
-	/* Give lance the physical address of its init block. */
+	/* Give LANCE the physical address of its init block. */
 	a = LANCE_ADDR(sc, sc->sc_init);
 	lewrcsr(sc, 1, a);
 	lewrcsr(sc, 2, (a >> 16) & 0xff);
 
-	/* OK, let's try and initialise the Lance. */
-	lewrcsr(sc, 0, INIT);
+	/* Try to initialize the LANCE. */
+	lewrcsr(sc, 0, LE_INIT);
 
-	/* Wait for initialisation to finish. */
-	for (i = 0; i < 1000; i++)
-		if (lerdcsr(sc, 0) & IDON)
+	/* Wait for initialization to finish. */
+	for (timo = 1000; timo; timo--)
+		if (lerdcsr(sc, 0) & LE_IDON)
 			break;
 
-	if (lerdcsr(sc, 0) & IDON) {
-		/* Start the lance. */
-		lewrcsr(sc, 0, INEA | STRT | IDON);
+	if (lerdcsr(sc, 0) & LE_IDON) {
+		/* Start the LANCE. */
+		lewrcsr(sc, 0, LE_INEA | LE_STRT | LE_IDON);
 		ifp->if_flags |= IFF_RUNNING;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		le_start(ifp);
-	} else 
-		printf("%s: card failed to initialise\n", sc->sc_dev.dv_xname);
+		lestart(ifp);
+	} else
+		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
 	
 	(void) splx(s);
 }
@@ -587,7 +580,7 @@ le_init(sc)
  * Called only at splimp or interrupt level.
  */
 int
-le_start(ifp)
+lestart(ifp)
 	struct ifnet *ifp;
 {
 	register struct le_softc *sc = lecd.cd_devs[ifp->if_unit];
@@ -614,7 +607,7 @@ outloop:
 
 	cdm = &sc->sc_td[sc->sc_last_td];
 #if 0 /* XXX redundant */
-	if (cdm->flags & OWN)
+	if (cdm->flags & LE_OWN)
 		return;
 #endif
 	
@@ -648,21 +641,20 @@ outloop:
 	 */
 	cdm->bcnt = -len;
 	cdm->mcnt = 0;
-	cdm->flags |= OWN | STP | ENP;
+	cdm->flags |= LE_OWN | LE_STP | LE_ENP;
 
 #ifdef LEDEBUG
 	if (sc->sc_debug)
 		xmit_print(sc, sc->sc_last_td);
 #endif
 		
-	lewrcsr(sc, 0, INEA | TDMD);
+	lewrcsr(sc, 0, LE_INEA | LE_TDMD);
 
 	/* possible more packets */
 	if (++sc->sc_last_td >= NTBUF)
 		sc->sc_last_td = 0;
 	goto outloop;
 }
-
 
 /*
  * Controller interrupt.
@@ -671,7 +663,7 @@ int
 leintr(sc)
 	register struct le_softc *sc;
 {
-	u_short isr;
+	register u_short isr;
 
 	isr = lerdcsr(sc, 0);
 #ifdef LEDEBUG
@@ -679,7 +671,7 @@ leintr(sc)
 		printf("%s: leintr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
 #endif
-	if ((isr & INTR) == 0)
+	if ((isr & LE_INTR) == 0)
 		return 0;
 
 	if (sc->sc_card == DEPCA)
@@ -687,55 +679,56 @@ leintr(sc)
 
 	do {
 		lewrcsr(sc, 0,
-		    isr & (INEA | BABL | MISS | MERR | RINT | TINT | IDON));
-		if (isr & (BABL | CERR | MISS | MERR)) {
-			if (isr & BABL){
+		    isr & (LE_INEA | LE_BABL | LE_MISS | LE_MERR |
+			   LE_RINT | LE_TINT | LE_IDON));
+		if (isr & (LE_BABL | LE_CERR | LE_MISS | LE_MERR)) {
+			if (isr & LE_BABL) {
 				printf("%s: BABL\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			}
 #if 0
-			if (isr & CERR) {
+			if (isr & LE_CERR) {
 				printf("%s: CERR\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
 #endif
-			if (isr & MISS) {
+			if (isr & LE_MISS) {
 				printf("%s: MISS\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_ierrors++;
 			}
-			if (isr & MERR) {
+			if (isr & LE_MERR) {
 				printf("%s: MERR\n", sc->sc_dev.dv_xname);
-				le_reset(sc);
+				lereset(sc);
 				goto out;
 			}
 		}
 
-		if ((isr & RXON) == 0) {
+		if ((isr & LE_RXON) == 0) {
 			printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_ierrors++;
-			le_reset(sc);
+			lereset(sc);
 			goto out;
 		}
-		if ((isr & TXON) == 0) {
+		if ((isr & LE_TXON) == 0) {
 			printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_oerrors++;
-			le_reset(sc);
+			lereset(sc);
 			goto out;
 		}
 
-		if (isr & RINT) {
+		if (isr & LE_RINT) {
 			/* Reset watchdog timer. */
 			sc->sc_arpcom.ac_if.if_timer = 0;
-			le_rint(sc);
+			lerint(sc);
 		}
-		if (isr & TINT) {
+		if (isr & LE_TINT) {
 			/* Reset watchdog timer. */
 			sc->sc_arpcom.ac_if.if_timer = 0;
-			le_tint(sc);
+			letint(sc);
 		}
 
 		isr = lerdcsr(sc, 0);
-	} while ((isr & INTR) != 0);
+	} while ((isr & LE_INTR) != 0);
 
 #ifdef LEDEBUG
 	if (sc->sc_debug)
@@ -753,13 +746,13 @@ out:
 	if (++tmd == NTBUF) tmd=0, cdm=sc->sc_td; else ++cdm
 	
 void
-le_tint(sc) 
+letint(sc) 
 	struct le_softc *sc;
 {
 	register int tmd = (sc->sc_last_td - sc->sc_no_td + NTBUF) % NTBUF;
 	struct mds *cdm = &sc->sc_td[tmd];
 
-	if (cdm->flags & OWN) {
+	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
 #ifdef LEDEBUG
 		if (sc->sc_debug)
@@ -779,23 +772,23 @@ le_tint(sc)
 #endif
 		sc->sc_arpcom.ac_if.if_opackets++;
 		--sc->sc_no_td;
-		if (cdm->flags & (TBUFF | UFLO | LCOL | LCAR | RTRY)) {
-			if (cdm->flags & TBUFF)
+		if (cdm->flags & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
+			if (cdm->flags & LE_TBUFF)
 				printf("%s: TBUFF\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (TBUFF | UFLO)) == UFLO)
+			if ((cdm->flags & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
 				printf("%s: UFLO\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & UFLO) {
-				le_reset(sc);
+			if (cdm->flags & LE_UFLO) {
+				lereset(sc);
 				return;
 			}
 #if 0
-			if (cdm->flags & LCOL) {
+			if (cdm->flags & LE_LCOL) {
 				printf("%s: late collision\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
-			if (cdm->flags & LCAR)
+			if (cdm->flags & LE_LCAR)
 				printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & RTRY) {
+			if (cdm->flags & LE_RTRY) {
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname, cdm->flags & 0x1ff);
 				sc->sc_arpcom.ac_if.if_collisions++;
@@ -803,9 +796,9 @@ le_tint(sc)
 #endif
 		}
 		NEXTTDS;
-	} while ((cdm->flags & OWN) == 0);
+	} while ((cdm->flags & LE_OWN) == 0);
 
-	le_start(&sc->sc_arpcom.ac_if);
+	lestart(&sc->sc_arpcom.ac_if);
 }
 
 #define NEXTRDS \
@@ -813,13 +806,13 @@ le_tint(sc)
 	
 /* only called from one place, so may as well integrate */
 void
-le_rint(sc)
+lerint(sc)
 	struct le_softc *sc;
 {
 	register int rmd = sc->sc_last_rd;
 	struct mds *cdm = &sc->sc_rd[rmd];
 
-	if (cdm->flags & OWN) {
+	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
 #ifdef LEDEBUG
 		if (sc->sc_debug)
@@ -830,25 +823,25 @@ le_rint(sc)
 
 	/* Process all buffers with valid data. */
 	do {
-		if (cdm->flags & (FRAM | OFLO | CRC | RBUFF)) {
-			if ((cdm->flags & (FRAM | OFLO | ENP)) == (FRAM | ENP))
+		if (cdm->flags & (LE_FRAM | LE_OFLO | LE_CRC | LE_RBUFF)) {
+			if ((cdm->flags & (LE_FRAM | LE_OFLO | LE_ENP)) == (LE_FRAM | LE_ENP))
 				printf("%s: FRAM\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (OFLO | ENP)) == OFLO)
+			if ((cdm->flags & (LE_OFLO | LE_ENP)) == LE_OFLO)
 				printf("%s: OFLO\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (CRC | OFLO | ENP)) == (CRC | ENP))
+			if ((cdm->flags & (LE_CRC | LE_OFLO | LE_ENP)) == (LE_CRC | LE_ENP))
 				printf("%s: CRC\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & RBUFF)
+			if (cdm->flags & LE_RBUFF)
 				printf("%s: RBUFF\n", sc->sc_dev.dv_xname);
-		} else if (cdm->flags & (STP | ENP) != (STP | ENP)) {
+		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
-				cdm->flags |= OWN;	
+				cdm->flags |= LE_OWN;
 				NEXTRDS;
-			} while ((cdm->flags & (OWN | ERR | STP | ENP)) == 0);
+			} while ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) == 0);
 			sc->sc_last_rd = rmd;
 			printf("%s: chained buffer\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (OWN | ERR | STP | ENP)) != ENP) {
-				le_reset(sc);
+			if ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) != LE_ENP) {
+				lereset(sc);
 				return;
 			}
 		} else {
@@ -856,31 +849,30 @@ le_rint(sc)
 			if (sc->sc_debug)
 				recv_print(sc, sc->sc_last_rd);
 #endif
-			le_read(sc, sc->sc_rbuf + (BUFSIZE * rmd),
+			leread(sc, sc->sc_rbuf + (BUFSIZE * rmd),
 			    (int)cdm->mcnt);
 			sc->sc_arpcom.ac_if.if_ipackets++;
 		}
 			
 		cdm->mcnt = 0;
-		cdm->flags |= OWN;
+		cdm->flags |= LE_OWN;
 		NEXTRDS;
 #ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("sc->sc_last_rd = %x, cdm = %x\n",
 			    sc->sc_last_rd, cdm);
 #endif
-	} while ((cdm->flags & OWN) == 0);
+	} while ((cdm->flags & LE_OWN) == 0);
 
 	sc->sc_last_rd = rmd;
-} /* le_rint */
-
+}
 
 /*
  * Pass a packet to the higher levels.
  */
-void 
-le_read(sc, buf, len)
-	struct le_softc *sc;
+void
+leread(sc, buf, len)
+	register struct le_softc *sc;
 	u_char *buf;
 	int len;
 {
@@ -893,14 +885,14 @@ le_read(sc, buf, len)
 		return;
 
 	/* Pull packet off interface. */
-	m = le_get(buf, len, &sc->sc_arpcom.ac_if);
+	m = leget(buf, len, &sc->sc_arpcom.ac_if);
 	if (m == 0)
 		return;
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf. 
+	 * If so, hand off the raw packet to BPF.
 	 */
 	if (sc->sc_arpcom.ac_if.if_bpf) {
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
@@ -934,7 +926,7 @@ le_read(sc, buf, len)
  * we copy into clusters.
  */
 struct mbuf *
-le_get(buf, totlen, ifp)
+leget(buf, totlen, ifp)
 	u_char *buf;
 	int totlen;
 	struct ifnet *ifp;
@@ -1000,8 +992,8 @@ le_get(buf, totlen, ifp)
  * Process an ioctl request.
  */
 int
-le_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
+leioctl(ifp, cmd, data)
+	register struct ifnet *ifp;
 	int cmd;
 	caddr_t data;
 {
@@ -1020,7 +1012,7 @@ le_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			le_init(sc);	/* before arpwhohas */
+			leinit(sc);	/* before arpwhohas */
 			/*
 			 * See if another station has *our* IP address.
 			 * i.e.: There is an address conflict! If a
@@ -1040,21 +1032,17 @@ le_ioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else {
-				/* 
-				 *
-				 */
+			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
-			}
 			/* Set new address. */
-			le_init(sc); 
+			leinit(sc);
 			break;
 		    }
 #endif
 		default:
-			le_init(sc);
+			leinit(sc);
 			break;
 		}
 		break;
@@ -1069,7 +1057,7 @@ le_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			le_stop(sc);
+			lestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1077,14 +1065,14 @@ le_ioctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			le_init(sc);
+			leinit(sc);
 		} else {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/*le_stop(sc);*/
-			le_init(sc);
+			/*lestop(sc);*/
+			leinit(sc);
 		}
 #ifdef LEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1105,7 +1093,7 @@ le_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			le_init(sc);
+			leinit(sc);
 			error = 0;
 		}
 		break;
@@ -1175,7 +1163,7 @@ xmit_print(sc, no)
  * Set up the logical address filter.
  */
 void
-le_setladrf(ac, af)
+lesetladrf(ac, af)
 	struct arpcom *ac;
 	u_long *af;
 {

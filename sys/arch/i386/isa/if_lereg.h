@@ -10,15 +10,15 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_lereg.h,v 1.1 1994/07/01 20:25:27 mycroft Exp $
+ *	$Id: if_lereg.h,v 1.2 1994/07/05 21:20:22 mycroft Exp $
  */
 
 /* Declarations specific to this driver */
-#define NTBUF 2
-#define TLEN 1
-#define NRBUF 8
-#define RLEN 3
-#define BUFSIZE 1518
+#define NTBUF	2
+#define TLEN	1
+#define NRBUF	8
+#define RLEN	3
+#define BUFSIZE	1518
 
 /* Board types */
 #define	BICC		1
@@ -38,51 +38,59 @@
 #define	PCnet_ISA	2
 #define	PCnet_ISA_MASK	0x0000
 
-/* Control and status register 0 flags */
-#define ERR	0x8000
-#define BABL	0x4000
-#define CERR	0x2000
-#define MISS	0x1000
-#define MERR	0x0800
-#define RINT	0x0400
-#define TINT	0x0200
-#define IDON	0x0100
-#define INTR	0x0080
-#define INEA	0x0040
-#define RXON	0x0020
-#define TXON	0x0010
-#define TDMD	0x0008
-#define STOP	0x0004
-#define STRT	0x0002
-#define INIT	0x0001
+/*
+ * Control and status bits
+ */
+#define	LE_SERR		0x8000
+#define	LE_BABL		0x4000
+#define LE_CERR		0x2000
+#define LE_MISS		0x1000
+#define LE_MERR		0x0800
+#define LE_RINT		0x0400
+#define LE_TINT		0x0200
+#define LE_IDON		0x0100
+#define LE_INTR		0x0080
+#define LE_INEA		0x0040
+#define LE_RXON		0x0020
+#define LE_TXON		0x0010
+#define LE_TDMD		0x0008
+#define LE_STOP		0x0004
+#define LE_STRT		0x0002
+#define LE_INIT		0x0001
 
-/* Coontrol and status register 3 flags */
-#define BSWP	0x0004
-#define ACON	0x0002
-#define BCON	0x0001
+#define LE_BSWP		0x0004
+#define LE_ACON		0x0002
+#define LE_BCON		0x0001
 
-/* Initialisation block (must be on word boundary) */
+/*
+ * LANCE initialization block
+ */
 struct init_block {
-	u_short mode;		/* Mode register */
-	u_char padr[6];		/* Ethernet address */
-	u_long ladrf[2];	/* Logical address filter (multicast) */
-	u_short rdra;		/* Low order pointer to receive ring */
-	u_short rlen;		/* High order pointer and no. rings */
-	u_short tdra;		/* Low order pointer to transmit ring */
-	u_short tlen;		/* High order pointer and no rings */
+	u_short mode;		/* mode register */
+	u_char padr[6];		/* ethernet address */
+	u_long ladrf[2];	/* logical address filter (multicast) */
+	u_short rdra;		/* low order pointer to receive ring */
+	u_short rlen;		/* high order pointer and no. rings */
+	u_short tdra;		/* low order pointer to transmit ring */
+	u_short tlen;		/* high order pointer and no rings */
 };
 
-/* Mode settings */
-#define PROM	0x8000		/* Promiscuous */
-#define INTL	0x0040		/* Internal loopback */
-#define DRTY	0x0020		/* Disable retry */
-#define COLL	0x0010		/* Force collision */
-#define DTCR	0x0008		/* Disable transmit crc */
-#define LOOP	0x0004		/* Loop back */
-#define DTX	0x0002		/* Disable transmitter */
-#define DRX	0x0001		/* Disable receiver */
+/*
+ * Mode bits -- init_block
+ */
+#define	LE_PROM		0x8000		/* promiscuous */
+#define	LE_INTL		0x0040		/* internal loopback */
+#define	LE_DRTY		0x0020		/* disable retry */
+#define	LE_COLL		0x0010		/* force collision */
+#define	LE_DTCR		0x0008		/* disable transmit crc */
+#define	LE_LOOP		0x0004		/* loopback */
+#define	LE_DTX		0x0002		/* disable transmitter */
+#define	LE_DRX		0x0001		/* disable receiver */
+#define	LE_NORMAL	0x0000
 
-/* Message descriptor structure */
+/*
+ * Message descriptor
+ */
 struct mds {
 	u_short addr;
 	u_short flags;
@@ -90,27 +98,29 @@ struct mds {
 	u_short mcnt;
 };
 
-/* Receive ring status flags */
-#define OWN	0x8000		/* Owner bit, 0=host, 1=Lance */
-#define MDERR	0x4000		/* Error */
-#define FRAM	0x2000		/* Framing error error */
-#define OFLO	0x1000		/* Silo overflow */
-#define CRC	0x0800		/* CRC error */
-#define RBUFF	0x0400		/* Buffer error */
-#define STP	0x0200		/* Start of packet */
-#define ENP	0x0100		/* End of packet */
+/* Message descriptor flags */
+#define LE_OWN		0x8000		/* owner bit, 0=host, 1=LANCE */
+#define LE_ERR		0x4000		/* error */
+#define	LE_STP		0x0200		/* start of packet */
+#define	LE_ENP		0x0100		/* end of packet */
 
-/* Transmit ring flags */
-#define MORE	0x1000		/* More than 1 retry */
-#define ONE	0x0800		/* One retry */
-#define DEF	0x0400		/* Deferred transmit */
+/* Receive ring status flags */
+#define LE_FRAM		0x2000		/* framing error error */
+#define LE_OFLO		0x1000		/* silo overflow */
+#define LE_CRC		0x0800		/* CRC error */
+#define LE_RBUFF	0x0400		/* buffer error */
+
+/* Transmit ring status flags */
+#define LE_MORE		0x1000		/* more than 1 retry */
+#define LE_ONE		0x0800		/* one retry */
+#define LE_DEF		0x0400		/* deferred transmit */
 
 /* Transmit errors */
-#define TBUFF	0x8000		/* Buffer error */
-#define UFLO	0x4000		/* Silo underflow */
-#define LCOL	0x1000		/* Late collision */
-#define LCAR	0x0800		/* Loss of carrier */
-#define RTRY	0x0400		/* Tried 16 times */
+#define LE_TBUFF	0x8000		/* buffer error */
+#define LE_UFLO		0x4000		/* silo underflow */
+#define LE_LCOL		0x1000		/* late collision */
+#define LE_LCAR		0x0800		/* loss of carrier */
+#define LE_RTRY		0x0400		/* tried 16 times */
 
 
 /* DEPCA-specific definitions */
