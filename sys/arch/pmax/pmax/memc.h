@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn02_subr.h,v 1.1 1998/03/25 06:04:31 jonathan Exp $	*/
+/*	$NetBSD: memc.h,v 1.1 1999/05/21 01:09:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,8 +32,10 @@
 
 /* public functions and data for KN02BA, KN02CA motherboards */
 
-#ifndef __PMAX_KN02_SUBR_H
-#define __PMAX_KN02_SUBR_H
+#ifndef __PMAX_MEMC_H
+#define __PMAX_MEMC_H
 
+void	dec_mtasic_err __P((u_int erradr, u_int errsyn));
 void	kn02ba_errintr __P ((void));
-#endif /* __KN02B_SUBR_H */
+
+#endif
