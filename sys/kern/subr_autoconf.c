@@ -1,6 +1,7 @@
-/* $NetBSD: subr_autoconf.c,v 1.62.6.1 2002/03/22 18:29:52 eeh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.62.6.2 2002/03/26 17:09:53 eeh Exp $ */
 
 /*
+ * Copyright (c) 2001-2002 Eduardo E. Horvath
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
  * All rights reserved.
  * 
@@ -81,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62.6.1 2002/03/22 18:29:52 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62.6.2 2002/03/26 17:09:53 eeh Exp $");
 
 #include "opt_ddb.h"
 
@@ -205,6 +206,9 @@ locset(struct device *d, struct cfdata *cf)
 	int type = PROP_CONST|PROP_INT;
 	char buf[32];
 
+	dev_setprop(d, "cd-name", cf->cf_driver->cd_name, 
+		strlen(cf->cf_driver->cd_name) + 1, PROP_STRING, (!cold));
+
 	for (i=0; cf->cf_locnames[i]; i++) {
 		sprintf(buf, "loc-%s", cf->cf_locnames[i]);
 		dev_setprop(d, buf, &cf->cf_loc[i], 
@@ -221,6 +225,7 @@ locrm(struct device *d, struct cfdata *cf)
 	int i;
 	char buf[32];
 
+	dev_delprop(d, "cd-name");
 	for (i=0; cf->cf_locnames[i]; i++) {
 		sprintf(buf, "loc-%s", cf->cf_locnames[i]);
 		dev_delprop(d, buf);
@@ -237,21 +242,22 @@ mapply(struct matchinfo *m, struct cfdata *cf, struct device *child)
 	int pri;
 	void *aux = m->aux;
 
-	if ((ssize_t)cf->cf_attach->ca_devsize < 0) {
-		/* New-style device driver */
-		if (!child)
-			panic("mapply: no device for new-style driver\n");
-		locset(child, cf);
-		child->dv_private = aux;
-		aux = child;
-	}
 	if (m->fn != NULL)
 		/* Someday the submatch function should use properties too. */
 		pri = (*m->fn)(m->parent, cf, m->aux);
 	else {
-	        if (cf->cf_attach->ca_match == NULL) {
+		if ((ssize_t)cf->cf_attach->ca_devsize < 0) {
+			/* New-style device driver */
+			if (!child)
+				panic("mapply: no dev for new-style driver\n");
+			locset(child, cf);
+			child->dv_private = aux;
+			aux = child;
+		}
+
+		if (cf->cf_attach->ca_match == NULL) {
 			panic("mapply: no match function for '%s' device\n",
-			    cf->cf_driver->cd_name);
+				cf->cf_driver->cd_name);
 		}
 		pri = (*cf->cf_attach->ca_match)(m->parent, cf, aux);
 	}
@@ -500,6 +506,13 @@ config_attach_ad(struct device *parent, struct cfdata *cf, void *aux,
 	if (lname + lunit >= sizeof(dev->dv_xname))
 		panic("config_attach: device name too long");
 
+	/* 
+	 * XXXXX We will continue to use the old-style device+softc in one
+	 * until all drivers are fixed to use DEV_PRIVATE() and not to refer
+	 * to sc->sc_dev.
+	 */
+	if (softsize < 0) softsize = -softsize;
+
 	/* get memory for all device vars */
 	if (softsize < 0) {
 		/* New-style device */
@@ -535,6 +548,8 @@ config_attach_ad(struct device *parent, struct cfdata *cf, void *aux,
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
+	/* Set the locators once again. */
+	locset(dev, cf);
 	if (propdev && propdev != dev) {
 		/* Inherit (steal) properties from dummy device */
 		dev_copyprops(propdev, dev, (!cold));
@@ -977,7 +992,7 @@ dev_getprop(struct device *dev, const char *name, void *val,
 	rv = prop_get(devpropdb, dev, name, val, len, type);
 	if (rv == -1) {
 		/* Not found -- try md_getprop */
-		rv = dev_mdgetprop(dev->dv_parent, name, val,
+		rv = dev_mdgetprop(dev, name, val,
 			len, type);
 	}
 	if ((rv == -1) && search) {
