@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.2 1998/09/22 02:48:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,7 @@ struct fpn {
 #define	FP_NMANT	115		/* total bits in mantissa (incl g,r) */
 #define	FP_NG		2		/* number of low-order guard bits */
 #define	FP_LG		((FP_NMANT - 1) & 31)	/* log2(1.0) for fp_mant[0] */
+#define	FP_LG2		((FP_NMANT - 1) & 63)	/* log2(1.0) for fp_mant[0] and fp_mant[1] */
 #define	FP_QUIETBIT	(1 << (FP_LG - 1))	/* Quiet bit in NaNs (0.5) */
 #define	FP_1		(1 << FP_LG)		/* 1.0 in fp_mant[0] */
 #define	FP_2		(1 << (FP_LG + 1))	/* 2.0 in fp_mant[0] */

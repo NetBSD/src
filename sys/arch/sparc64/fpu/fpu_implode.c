@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.2 1998/09/22 02:48:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,6 +239,57 @@ fpu_ftoi(fe, fp)
 }
 
 /*
+ * fpn -> extended int (high bits of int value returned as return value).
+ *
+ * N.B.: this conversion always rounds towards zero (this is a peculiarity
+ * of the SPARC instruction set).
+ */
+u_int
+fpu_ftoxi(fe, fp, res)
+	struct fpemu *fe;
+	register struct fpn *fp;
+	u_int *res;
+{
+	register u_int64_t i;
+	register int sign, exp;
+
+	sign = fp->fp_sign;
+	switch (fp->fp_class) {
+
+	case FPC_ZERO:
+		res[1] = 0;
+		return (0);
+
+	case FPC_NUM:
+		/*
+		 * If exp >= 2^64, overflow.  Otherwise shift value right
+		 * into last mantissa word (this will not exceed 0xffffffffffffffff),
+		 * shifting any guard and round bits out into the sticky
+		 * bit.  Then ``round'' towards zero, i.e., just set an
+		 * inexact exception if sticky is set (see round()).
+		 * If the result is > 0x8000000000000000, or is positive and equals
+		 * 0x8000000000000000, overflow; otherwise the last fraction word
+		 * is the result.
+		 */
+		if ((exp = fp->fp_exp) >= 64)
+			break;
+		/* NB: the following includes exp < 0 cases */
+		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+			fe->fe_cx |= FSR_NX;
+		i = (fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
+			break;
+		return (sign ? -i : i);
+
+	default:		/* Inf, qNaN, sNaN */
+		break;
+	}
+	/* overflow: replace any inexact exception with invalid */
+	fe->fe_cx = (fe->fe_cx & ~FSR_NX) | FSR_NV;
+	return (0x7fffffffffffffffLL + sign);
+}
+
+/*
  * fpn -> single (32 bit single returned as return value).
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
@@ -456,6 +507,10 @@ fpu_implode(fe, fp, type, space)
 {
 
 	switch (type) {
+
+	case FTYPE_LNG:
+		space[0] = fpu_ftoxi(fe, fp, space);
+		break;
 
 	case FTYPE_INT:
 		space[0] = fpu_ftoi(fe, fp);

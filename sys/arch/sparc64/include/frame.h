@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 1998/09/07 23:46:26 eeh Exp $ */
+/*	$NetBSD: frame.h,v 1.5 1998/09/22 02:48:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,17 +99,15 @@ struct frame64 {
 	/*
 	 * SVR4 reserves a bunch of extra stuff.
 	 */
-	int64_t	fr_argd[6];	/* `arg dump area' (lunacy) */
-	int64_t	fr_argx[1];	/* arg extension (args 7..n; variable size) */
+	int64_t fr_argd[6];	/* `register save area' (lunacy) */
+	int64_t	fr_argx[0];	/* arg extension (args 7..n; variable size) */
 };
 #endif
 
 #define v9next_frame(f)		((struct frame64*)(f->fr_fp+BIAS))
 /*
  * CC64FSZ (C Compiler 64-bit Frame SiZe) is the size of a stack frame used
- * by the compiler in 64-bit mode.  It is (16+1+6)*8; space for 8 ins, 8 outs,
- * one "hidden parameter", and 6 extended words where the callee can save its
- * arguments.
+ * by the compiler in 64-bit mode.  It is (16)*8; space for 8 ins, 8 outs.
  */
 #define CC64FSZ		176
 #define STACK_ALIGN64	16

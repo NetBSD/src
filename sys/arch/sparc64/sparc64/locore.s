@@ -687,8 +687,8 @@ _C_LABEL(trapbase):
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
-	UTRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
-	UTRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
+	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
+	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
 ufast_IMMU_miss:			! 063 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
@@ -913,8 +913,8 @@ kdatafault:
 	UTRAP(0x031)			! 031 = data MMU miss -- no MMU
 	VTRAP(T_DATA_ERROR, winfault)	! 032 = data fetch fault
 	VTRAP(T_DATA_PROT, winfault)	! 033 = data fetch fault
-!	TRAP(T_ALIGN)			! 034 = address alignment error -- we could fix it inline...
-	sir; nop; TA8	! DEBUG -- trap all kernel alignment errors
+	TRAP(T_ALIGN)			! 034 = address alignment error -- we could fix it inline...
+!	sir; nop; TA8	! DEBUG -- trap all kernel alignment errors
 	TRAP(T_LDDF_ALIGN)		! 035 = LDDF address alignment error -- we could fix it inline...
 	TRAP(T_STDF_ALIGN)		! 036 = STDF address alignment error -- we could fix it inline...
 	TRAP(T_PRIVACT)			! 037 = privileged action
@@ -940,8 +940,8 @@ kdatafault:
 	UTRAP(0x056); UTRAP(0x057); UTRAP(0x058); UTRAP(0x059); UTRAP(0x05a); UTRAP(0x05b)
 	UTRAP(0x05c); UTRAP(0x05d); UTRAP(0x05e); UTRAP(0x05f)
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
-	UTRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
-	UTRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
+	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
+	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
 kfast_IMMU_miss:			! 063 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
@@ -3130,7 +3130,7 @@ softtrap:
 	 nop
 	sethi	%hi(_C_LABEL(cpcb)), %g7
 	LDPTR	[%g7 + %lo(_C_LABEL(cpcb))], %g7
-	set	USPACE-CC64FSZ-TF_SIZE, %g5
+	set	USPACE-CC64FSZ-TF_SIZE-STKB, %g5
 	add	%g7, %g5, %g6
 	SET_SP_REDZONE(%g7, %g5)
 	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]		! Generate a new trapframe 
@@ -3446,25 +3446,25 @@ syscall_setup:
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]	
 	rdpr	%tstate, %g1
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]	
-	rdpr	%tnpc, %g3
+	rdpr	%tnpc, %o3
 	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + ( 4*8)]	
-	rd	%y, %g4
+	rd	%y, %o4
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]	
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]	
 	CHKPT(%g5,%g6,0x31)
-	wrpr	%g0, 0, %tl			! return to tl=0
+	wrpr	%g0, 0, %tl				! return to tl=0
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	add	%sp, CC64FSZ + STKB, %o1				! (&tf)
+	add	%sp, CC64FSZ + STKB, %o1		! (&tf)
 	
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]	
 	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
-	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]
+	stx	%o3, [%sp + CC64FSZ + STKB + TF_NPC]
+	st	%o4, [%sp + CC64FSZ + STKB + TF_Y]
 
 	rdpr	%pil, %g5
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
-	
+
 	!! In the medium anywhere model %g4 points to the start of the data segment.
 	!! In our case we need to clear it before calling any C-code
 	clr	%g4
@@ -3905,6 +3905,13 @@ zshard:
  *	If there are any, reload them
  */
 return_from_trap:
+#ifdef DEBUG
+	!! Make sure we don't have pc == npc or we suck.
+	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2
+	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
+	cmp	%g2, %g3
+	tz	%icc, 1
+#endif
 #ifdef NOTDEF_DEBUG
 	mov	%i6, %o1
 	save	%sp, -CC64FSZ, %sp
@@ -5315,7 +5322,9 @@ _C_LABEL(sigcode):
 	 * enabled and dirty.
 	 */
 	rd	%fprs, %l0
-	btst	1, %l0			! test dl
+	btst	3, %l0			! All clean?
+	bz,pt	%icc, 2f
+	 btst	1, %l0			! test dl
 	bz,pt	%icc, 1f
 	 btst	2, %l0			! test du
 
@@ -5334,17 +5343,18 @@ _C_LABEL(sigcode):
 	inc	BLOCK_SIZE, %l0
 	stda	%f48, [%l0] ASI_BLK_COMMIT_P
 2:
-	ldx	[%fp + BIAS + 64], %o0	! sig
-	ldx	[%fp + BIAS + 64], %o1		! code
-	ldx	[%fp + BIAS + 76], %o3		! arg3
-	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
-	 add	%fp, BIAS + 64 + 16, %o2	! scp
+	lduw	[%fp + BIAS + CC64FSZ], %o0	! sig
+	lduw	[%fp + BIAS + CC64FSZ + 4], %o1	! code
+	call	%g1			! (*sa->sa_handler)(sig,code,scp)
+	 add	%fp, BIAS + CC64FSZ + 8, %o2	! scp
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
 	 * we just saved above, then do a sigreturn.
 	 */
-	btst	1, %l0			! test dl
+	btst	3, %l0			! All clean?
+	bz,pt	%icc, 2f
+	 btst	1, %l0			! test dl
 	bz,pt	%icc, 1f
 	 btst	2, %l0			! test du
 
@@ -5355,7 +5365,7 @@ _C_LABEL(sigcode):
 	inc	BLOCK_SIZE, %o0
 	ldda	[%l0] ASI_BLK_P, %f16
 1:	
-	bz,pt	%icc, 1f
+	bz,pt	%icc, 2f
 	 wr	%l1, %g0, %y		! in any case, restore %y
 	inc	BLOCK_SIZE, %o0
 	ldda	[%l0] ASI_BLK_P, %f32
@@ -5370,7 +5380,7 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
-	add	%sp, 64 + 16, %o0	! compute scp
+	add	%sp, BIAS + CC64FSZ + 8, %o0! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
@@ -6597,12 +6607,12 @@ Lsw_scan:
 	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 
 #ifndef POPC
-	.globl	ffstab
+	.globl	_C_LABEL(__ffstab)
 	/*
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
 	 * branches to idle if ffs(whichqs) was 0.
 	 */
-	set	ffstab, %o2
+	set	_C_LABEL(__ffstab), %o2
 	andcc	%o3, 0xff, %o1		! byte 0 zero?
 	bz,a,pn	%icc, 1f		! yes, try byte 1
 	 srl	%o3, 8, %o0
@@ -8599,7 +8609,7 @@ ENTRY(ienab_bic)
  * The process switch code shares the table, so we just put the
  * whole thing here.
  */
-ffstab:
+_C_LABEL(__ffstab):
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */
@@ -8628,7 +8638,7 @@ ffstab:
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
 ENTRY(ffs)
-	set	ffstab, %o2
+	set	_C_LABEL(__ffstab), %o2
 	andcc	%o0, 0xff, %o1	! get low byte
 	bz,a	1f		! try again if 0
 	srl	%o0, 8, %o0	! delay slot, get ready for next byte
@@ -8753,6 +8763,12 @@ ENTRY(random)
  *
  * If we used the %tick register we could go into the nano-seconds,
  * and it must run for at least 10 years according to the v9 spec.
+ *
+ * For some insane reason timeval structure members are `long's so
+ * we need to change this code depending on the memory model.
+ *
+ * NB: if somehow time was 128-bit aligned we could use an atomic
+ * quad load to read it in and not bother de-bouncing it.
  */
 #define MICROPERSEC	(1000000)
 	
@@ -8763,12 +8779,6 @@ _C_LABEL(cpu_clockrate):
 	.xword	142857143					! 1/7ns or ~ 143MHz  Really should be 142857142.85
 	.text
 
-#ifdef _LP64
-	/* Use %tick on 64-bit kernels 'cause the other stuff don't work */
-#define TRY_TICK
-#endif
-	
-	
 ENTRY(microtime)
 #ifdef TRY_TICK
 	rdpr	%tick, %o1
@@ -8786,19 +8796,19 @@ ENTRY(microtime)
 	 stx	%o1, [%o0]
 1:	
 	srlx	%o1, 32, %o3					! Isolate high word
-	st	%o3, [%o0]					! and store it 
+	STPTR	%o3, [%o0]					! and store it 
 	retl
-	 st	%o1, [%o0+4]					! Save time_t low word
+	 STPTR	%o1, [%o0+PTRSZ]					! Save time_t low word
 #else
 	sethi	%hi(timerreg_4u), %g3
 	sethi	%hi(_C_LABEL(time)), %g2
 	LDPTR	[%g3+%lo(timerreg_4u)], %g3		! usec counter
 2:
-	ld	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
-	ld	[%g2+%lo(_C_LABEL(time))+4], %o3	! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %o3	! time.tv_sec & time.tv_usec
 	ldx	[%g3], %g7				! Load usec timer valuse
-	ld	[%g2+%lo(_C_LABEL(time))], %g1		! see if time values changed
-	ld	[%g2+%lo(_C_LABEL(time))+4], %g5	! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1		! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %g5	! see if time values changed
 	cmp	%g1, %o2
 	bne	2b				! if time.tv_sec changed
 	 cmp	%g5, %o3
@@ -8817,13 +8827,13 @@ ENTRY(microtime)
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
 	bl,a	4f
-	 st	%o2, [%o0]			! (should be able to std here)
+	 STPTR	%o2, [%o0]			! (should be able to std here)
 	add	%o2, 1, %o2			! overflow
 	sub	%o3, %g5, %o3
-	st	%o2, [%o0]			! (should be able to std here)
+	STPTR	%o2, [%o0]			! (should be able to std here)
 4:
 	retl
-	 st	%o3, [%o0+4]
+	 STPTR	%o3, [%o0+PTRSZ]
 #endif
 /*
  * delay function
