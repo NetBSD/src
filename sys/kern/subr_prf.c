@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.69 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.70 2000/05/02 09:29:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -80,12 +80,12 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 #define	KPRINTF_MUTEX_ENTER(s)						\
 do {									\
 	(s) = splhigh();						\
-	cpu_simple_lock(&kprintf_slock);				\
+	__cpu_simple_lock(&kprintf_slock.lock_data);			\
 } while (0)
 
 #define	KPRINTF_MUTEX_EXIT(s)						\
 do {									\
-	cpu_simple_unlock(&kprintf_slock);				\
+	__cpu_simple_unlock(&kprintf_slock.lock_data);			\
 	splx((s));							\
 } while (0)
 #else /* ! MULTIPROCESSOR */
