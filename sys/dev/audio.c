@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137 2001/06/03 23:52:51 jhawk Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.1 2001/09/08 20:03:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -106,6 +106,7 @@ int	audio_read __P((struct audio_softc *, struct uio *, int));
 int	audio_write __P((struct audio_softc *, struct uio *, int));
 int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 int	audio_poll __P((struct audio_softc *, int, struct proc *));
+int	audio_kqfilter __P((struct audio_softc *, struct knote *));
 paddr_t	audio_mmap __P((struct audio_softc *, off_t, int));
 
 int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
@@ -748,6 +749,34 @@ audiopoll(dev, events, p)
 	if (--sc->sc_refcnt < 0)
 		wakeup(&sc->sc_refcnt);
 	return (error);
+}
+
+int
+audiokqfilter(dev_t dev, struct knote *kn)
+{
+	int unit = AUDIOUNIT(dev);  
+	struct audio_softc *sc = audio_cd.cd_devs[unit];
+	int rv;
+
+	if (sc->sc_dying)
+		return (1);
+
+	sc->sc_refcnt++;
+	switch (AUDIODEV(dev)) {
+	case SOUND_DEVICE:
+	case AUDIO_DEVICE:
+		rv = audio_kqfilter(sc, kn);
+		break;
+	case AUDIOCTL_DEVICE:
+	case MIXER_DEVICE:
+		rv = 1;
+		break;
+	default:
+		rv = 1;
+	}
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+	return (rv);
 }
 
 paddr_t
@@ -1794,6 +1823,97 @@ audio_poll(sc, events, p)
 	return (revents);
 }
 
+static void
+filt_audiordetach(struct knote *kn)
+{
+	struct audio_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_audioread(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	/* XXXLUKEM (thorpej): please make sure this is right */
+
+	s = splaudio();
+	if (sc->sc_mode & AUMODE_PLAY)
+		kn->kn_data = sc->sc_pr.stamp - sc->sc_wstamp;
+	else
+		kn->kn_data = sc->sc_rr.used - sc->sc_rr.usedlow;
+	splx(s);
+
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops audioread_filtops =
+	{ 1, NULL, filt_audiordetach, filt_audioread };
+
+static void
+filt_audiowdetach(struct knote *kn)
+{
+	struct audio_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_audiowrite(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	/* XXXLUKEM (thorpej): please make sure this is right */
+
+	s = splaudio();
+	kn->kn_data = sc->sc_pr.usedlow - sc->sc_pr.used;
+	splx(s);
+
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops audiowrite_filtops =
+	{ 1, NULL, filt_audiowdetach, filt_audiowrite };
+
+int
+audio_kqfilter(struct audio_softc *sc, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &audioread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_klist;
+		kn->kn_fop = &audiowrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = splaudio();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 paddr_t
 audio_mmap(sc, off, prot)
 	struct audio_softc *sc;
@@ -2074,7 +2194,7 @@ audio_pint(v)
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
 		if (cb->used <= cb->usedlow) {
 			audio_wakeup(&sc->sc_wchan);
-			selwakeup(&sc->sc_wsel);
+			selnotify(&sc->sc_wsel, 0);
 			if (sc->sc_async_audio) {
 				DPRINTFN(3, ("audio_pint: sending SIGIO %p\n", 
                                              sc->sc_async_audio));
@@ -2086,7 +2206,7 @@ audio_pint(v)
 	/* Possible to return one or more "phantom blocks" now. */
 	if (!sc->sc_full_duplex && sc->sc_rchan) {
 		audio_wakeup(&sc->sc_rchan);
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 		if (sc->sc_async_audio)
 			psignal(sc->sc_async_audio, SIGIO);
 	}
@@ -2183,7 +2303,7 @@ audio_rint(v)
 	}
 
 	audio_wakeup(&sc->sc_rchan);
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0);
 	if (sc->sc_async_audio)
 		psignal(sc->sc_async_audio, SIGIO);
 }
