@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vnops.c	7.22 (Berkeley) 4/16/91
- *	$Id: mfs_vnops.c,v 1.4 1993/12/17 08:12:01 mycroft Exp $
+ *	$Id: mfs_vnops.c,v 1.5 1993/12/23 07:03:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ mfs_inactive(vp, p)
 /*
  * Print out the contents of an mfsnode.
  */
-void
+int
 mfs_print(vp)
 	struct vnode *vp;
 {
@@ -253,6 +253,7 @@ mfs_print(vp)
 
 	printf("tag VT_MFS, pid %d, base %d, size %d\n", mfsp->mfs_pid,
 		mfsp->mfs_baseoff, mfsp->mfs_size);
+	return (0);
 }
 
 /*
