@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.12 1999/03/22 19:44:52 garbled Exp $
+.\"	$NetBSD: inet.3,v 1.13 1999/07/03 14:16:12 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -298,9 +298,8 @@ The
 .Nm inet_ntop
 and
 .Nm inet_pton
-functions conforms to the IETF Next Generation IP (a.k.a. IPng and IPv6)
-.Bx
-API and address formatting specifications.
+functions conform to
+.St -xns5.2d2.0 .
 Note that
 .Nm inet_pton
 does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
