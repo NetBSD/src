@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/05/30 15:24:26 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2001/05/31 07:24:23 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ int	comcnrate = TTYDEF_SPEED;
 #ifdef ALGOR_P4032
 #include <algor/algor/algor_p4032reg.h> 
 #include <algor/algor/algor_p4032var.h> 
-struct p5064_config p5064_configuration;
+struct p4032_config p4032_configuration;
 #endif
 
 #ifdef ALGOR_P5064
@@ -215,7 +215,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	pmon_init(envp);
 
 	/*
-	 * Initiialize bus space tags and bring up the console.
+	 * Initialize bus space tags and bring up the console.
 	 */
 #if defined(ALGOR_P4032)
 	    {
@@ -541,7 +541,7 @@ cpu_startup(void)
 	    {
 		struct p4032_config *acp = &p4032_configuration;
 
-		acp->ac_mallocsafe;
+		acp->ac_mallocsafe = 1;
 	    }
 #elif defined(ALGOR_P5064)
 	    {
