@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.28 1998/07/27 18:38:08 bouyer Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.29 1998/07/27 18:42:27 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -205,10 +205,10 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
-#options        FRENCH_KBD
+#options 	FRENCH_KBD
 #options 	FINNISH_KBD
-#options        GERMAN_KBD
-#options        NORVEGIAN_KBD
+#options 	GERMAN_KBD
+#options 	NORVEGIAN_KBD
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
