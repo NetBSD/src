@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.2 1998/10/12 21:17:28 pk Exp $	*/
+/*	$NetBSD: dvma.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <machine/pte.h>
 #include <machine/ctlreg.h>
 
+#include <lib/libsa/stand.h>
 #include <sparc/stand/common/promdev.h>
 
 #define	DVMA_BASE	0xFFF00000
@@ -50,16 +51,25 @@
 #define SA_MIN_VA	(RELOC - 0x40000)	/* XXX - magic constant */
 #define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
 
+#if 0
 #define	getsegmap(va)		(CPU_ISSUN4C \
 					? lduba(va, ASI_SEGMAP) \
 					: (lduha(va, ASI_SEGMAP)))
 #define	setsegmap(va, pmeg)	(CPU_ISSUN4C \
 					? stba(va, ASI_SEGMAP, pmeg) \
 					: stha(va, ASI_SEGMAP, pmeg))
+#else
+/*
+ * This module is only used on sun4, so:
+ */
+#define	getsegmap(va)		(lduha(va, ASI_SEGMAP))
+#define	setsegmap(va, pmeg)	do stha(va, ASI_SEGMAP, pmeg); while(0)
+#endif
+
 void
 dvma_init()
 {
-	register int segva, dmava;
+	int segva, dmava;
 
 	dmava = DVMA_BASE;
 	for (segva = SA_MIN_VA; segva < SA_MAX_VA; segva += NBPSG) {
@@ -72,9 +82,11 @@ dvma_init()
  * Convert a local address to a DVMA address.
  */
 char *
-dvma_mapin(char *addr, size_t len)
+dvma_mapin(addr, len)
+	char *addr;
+	size_t len;
 {
-	register int va = (int)addr;
+	int va = (int)addr;
 
 	/* Make sure the address is in the DVMA map. */
 	if ((va < SA_MIN_VA) || (va >= SA_MAX_VA))
@@ -89,7 +101,9 @@ dvma_mapin(char *addr, size_t len)
  * Convert a DVMA address to a local address.
  */
 char *
-dvma_mapout(char *addr, size_t len)
+dvma_mapout(addr, len)
+	char *addr;
+	size_t len;
 {
 	int va = (int)addr;
 
@@ -102,26 +116,26 @@ dvma_mapout(char *addr, size_t len)
 	return ((char *)va);
 }
 
-extern char *alloc __P((int));
-
 char *
-dvma_alloc(int len)
+dvma_alloc(len)
+	int len;
 {
 	char *mem;
 
 	mem = alloc(len);
-	if (!mem)
+	if (mem == NULL)
 		return (mem);
 	return (dvma_mapin(mem, len));
 }
 
-extern void free(void *ptr, int len);
 void
-dvma_free(char *dvma, int len)
+dvma_free(dvma, len)
+	char *dvma;
+	int len;
 {
 	char *mem;
 
 	mem = dvma_mapout(dvma, len);
-	if (mem)
+	if (mem != NULL)
 		free(mem, len);
 }

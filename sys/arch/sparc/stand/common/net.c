@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 1997/07/22 17:41:07 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -58,6 +58,9 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
+
+#include <sparc/stand/common/promdev.h>
 
 char		rootpath[FNAME_SIZE];
 
@@ -94,9 +97,13 @@ net_close(pd)
 	struct promdata *pd;
 {
 	/* On last close, do netif close, etc. */
-	if (open_count > 0)
-		if (--open_count == 0)
-			netif_close(netdev_sock);
+	if (open_count <= 0)
+		return (0);
+
+	if (--open_count == 0)
+		return (netif_close(netdev_sock));
+
+	return (0);
 }
 
 int
@@ -119,7 +126,7 @@ net_mountroot()
 
 	/* Get our IP address.  (rarp.c) */
 	if (rarp_getipaddress(netdev_sock) == -1)
-		return errno;
+		return (errno);
 
 	printf("boot: client IP address: %s\n", inet_ntoa(myip));
 
@@ -154,5 +161,6 @@ net_mountroot()
 	/* Get the NFS file handle (mount). */
 	if (nfs_mount(netdev_sock, rootip, rootpath) != 0)
 		return (errno);
-	return 0;
+
+	return (0);
 }
