@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.11 2001/05/13 14:30:00 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.12 2001/07/09 21:46:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -95,6 +95,10 @@ extern struct bus_space iomd_bs_tag;
 int       iomd_found;
 u_int32_t iomd_base = IOMD_BASE;
 
+/* following flag is used in iomd_irq.s ... has to be cleaned up one day ! */
+u_int32_t arm7500_ioc_found = 0;
+
+
 /* Declare prototypes */
 
 /*
@@ -178,18 +182,22 @@ iomdattach(parent, self, aux)
 	case ARM7500_IOC_ID:
 		printf("ARM7500 IOMD ");
 		refresh = bus_space_read_1(iot, ioh, IOMD_REFCR) & 0x0f;
+		arm7500_ioc_found = 1;
 		break;
 	case ARM7500FE_IOC_ID:
 		printf("ARM7500FE IOMD ");
 		refresh = bus_space_read_1(iot, ioh, IOMD_REFCR) & 0x0f;
+		arm7500_ioc_found = 1;
 		break;
 	case RPC600_IOMD_ID:
 		printf("IOMD20 ");
 		refresh = bus_space_read_1(iot, ioh, IOMD_VREFCR) & 0x09;
+		arm7500_ioc_found = 0;
 		break;
 	default:
 		printf("Unknown IOMD ID=%04x ", sc->sc_id);
 		refresh = -1;
+		arm7500_ioc_found = 0;		/* just in case */
 		break;
 	}
 	

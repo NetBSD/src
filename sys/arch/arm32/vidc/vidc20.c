@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.5 2001/02/25 17:17:56 reinoud Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.6 2001/07/09 21:46:21 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,6 +50,8 @@
 #include <machine/bus.h>
 #include <machine/vidc.h>
 #include <machine/io.h>
+#include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #include <arm/mainbus/mainbus.h>
 
 #include "locators.h"
@@ -69,6 +71,13 @@ static int  vidcsearch __P((struct device *, struct cfdata *, void *));
  * busspaceified yet. Initialised with VIDC_BASE for backwards compatibility.
  */
 int *vidc_base = (int *) VIDC_BASE;
+
+
+/*
+ * vidc_fref is the reference frequency in Mhz of the detected VIDC (dependent on IOMD/IOC)
+ * XXX default is RPC600 ?
+ */
+int  vidc_fref = 24000000;
 
 
 struct cfattach vidc_ca = {
@@ -175,6 +184,17 @@ vidcattach(parent, self, aux)
 	sc->sc_iot = mb->mb_iot;
 
 	printf(": vidc20\n");
+
+	switch (IOMD_ID) {
+	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
+		vidc_fref = 32000000;
+		break;
+	default:				/* XXX default? */
+	case RPC600_IOMD_ID:
+		vidc_fref = 24000000;
+		break;
+	};
 
 	config_search(vidcsearch, self, NULL);
 }
