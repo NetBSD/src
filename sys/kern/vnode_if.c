@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.50 2004/09/21 03:11:53 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.51 2005/01/02 17:46:41 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.41 2004/09/21 03:10:35 thorpej Exp 
+ *	NetBSD: vnode_if.src,v 1.42 2005/01/02 16:08:29 thorpej Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.35 2004/09/21 03:10:35 thorpej Exp 
  */
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.50 2004/09/21 03:11:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.51 2005/01/02 17:46:41 thorpej Exp $");
 
 
 /*
@@ -2016,6 +2016,266 @@ VOP_PUTPAGES(vp, offlo, offhi, flags)
 }
 #endif
 
+const int vop_closeextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_closeextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_closeextattr_desc = {
+	50,
+	"vop_closeextattr",
+	0,
+	vop_closeextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_closeextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_closeextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_CLOSEEXTATTR(vp, commit, cred, p)
+	struct vnode *vp;
+	int commit;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_closeextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_closeextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_closeextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_commit = commit;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_closeextattr), &a));
+}
+#endif
+
+const int vop_getextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_getextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_getextattr_desc = {
+	51,
+	"vop_getextattr",
+	0,
+	vop_getextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_getextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_getextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_GETEXTATTR(vp, attrnamespace, name, uio, size, cred, p)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct uio *uio;
+	size_t *size;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_getextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_getextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_getextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_uio = uio;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_getextattr), &a));
+}
+#endif
+
+const int vop_listextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_listextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_listextattr_desc = {
+	52,
+	"vop_listextattr",
+	0,
+	vop_listextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_listextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_listextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_LISTEXTATTR(vp, attrnamespace, uio, size, cred, p)
+	struct vnode *vp;
+	int attrnamespace;
+	struct uio *uio;
+	size_t *size;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_listextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_listextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_listextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_uio = uio;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_listextattr), &a));
+}
+#endif
+
+const int vop_openextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_openextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_openextattr_desc = {
+	53,
+	"vop_openextattr",
+	0,
+	vop_openextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_openextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_openextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_OPENEXTATTR(vp, cred, p)
+	struct vnode *vp;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_openextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_openextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_openextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_openextattr), &a));
+}
+#endif
+
+const int vop_deleteextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_deleteextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_deleteextattr_desc = {
+	54,
+	"vop_deleteextattr",
+	0,
+	vop_deleteextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_deleteextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_deleteextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_DELETEEXTATTR(vp, attrnamespace, name, cred, p)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_deleteextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_deleteextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_deleteextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_deleteextattr), &a));
+}
+#endif
+
+const int vop_setextattr_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_setextattr_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_setextattr_desc = {
+	55,
+	"vop_setextattr",
+	0,
+	vop_setextattr_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_setextattr_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_setextattr_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_SETEXTATTR(vp, attrnamespace, name, uio, cred, p)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct uio *uio;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_setextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_setextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_setextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_uio = uio;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_setextattr), &a));
+}
+#endif
+
 /* End of special cases. */
 
 const struct vnodeop_desc * const vfs_op_descs[] = {
@@ -2070,6 +2330,12 @@ const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_whiteout_desc,
 	&vop_getpages_desc,
 	&vop_putpages_desc,
+	&vop_closeextattr_desc,
+	&vop_getextattr_desc,
+	&vop_listextattr_desc,
+	&vop_openextattr_desc,
+	&vop_deleteextattr_desc,
+	&vop_setextattr_desc,
 	NULL
 };
 
