@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.35 1998/09/01 04:42:49 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.36 1998/10/08 14:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.35 1998/09/01 04:42:49 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.36 1998/10/08 14:45:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -833,6 +833,16 @@ auto_fetch(argc, argv, outfile)
 			    host ? host : "", ntohs(port), path ? path : "",
 			    dir ? dir : "", file ? file : "");
 
+		dirhasglob = filehasglob = 0;
+		if (doglob) {
+			if (! EMPTYSTRING(dir) &&
+			    strpbrk(dir, "*?[]{}") != NULL)
+				dirhasglob = 1;
+			if (! EMPTYSTRING(file) &&
+			    strpbrk(file, "*?[]{}") != NULL)
+				filehasglob = 1;
+		}
+
 		/*
 		 * Set up the connection if we don't have one.
 		 */
@@ -867,27 +877,19 @@ auto_fetch(argc, argv, outfile)
 				break;
 			}
 
-			/* Always use binary transfers. */
+				/* Always use binary transfers. */
 			setbinary(0, NULL);
-		}
-			/* cd back to `/' */
-		xargv[0] = "cd";
-		xargv[1] = "/";
-		xargv[2] = NULL;
-		cd(2, xargv);
-		if (! dirchange) {
-			rval = argpos + 1;
-			break;
-		}
-
-		dirhasglob = filehasglob = 0;
-		if (doglob) {
-			if (! EMPTYSTRING(dir) &&
-			    strpbrk(dir, "*?[]{}") != NULL)
-				dirhasglob = 1;
-			if (! EMPTYSTRING(file) &&
-			    strpbrk(file, "*?[]{}") != NULL)
-				filehasglob = 1;
+		} else {
+				/* connection exists, cd back to `/' */
+			xargv[0] = "cd";
+			xargv[1] = "/";
+			xargv[2] = NULL;
+			dirchange = 0;
+			cd(2, xargv);
+			if (! dirchange) {
+				rval = argpos + 1;
+				break;
+			}
 		}
 
 				/* Change directories, if necessary. */
@@ -895,6 +897,7 @@ auto_fetch(argc, argv, outfile)
 			xargv[0] = "cd";
 			xargv[1] = dir;
 			xargv[2] = NULL;
+			dirchange = 0;
 			cd(2, xargv);
 			if (! dirchange) {
 				rval = argpos + 1;

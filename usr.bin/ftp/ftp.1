@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.29 1998/08/08 02:58:48 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.30 1998/10/08 14:45:26 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -430,6 +430,10 @@ The size of a data block defaults to 1024 bytes.
 This can be changed by specifying
 .Ar size
 in bytes.
+Enabling
+.Ic hash
+disables
+.Ic progress .
 .It Ic help Op Ar command
 Print an informative message about the meaning of
 .Ar command .
@@ -741,6 +745,10 @@ or a command that starts with
 Refer to
 .Sx FILE NAMING CONVENTIONS
 for more information.
+Enabling
+.Ic progress
+disables
+.Ic hash .
 .It Ic prompt
 Toggle interactive prompting.
 Interactive prompting
