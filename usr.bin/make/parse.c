@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.85 2002/11/26 06:13:01 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.86 2002/12/01 05:53:30 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1458,6 +1458,9 @@ Parse_DoVar(char *line, GNode *ctxt)
     }	    	    type;   	/* Type of assignment */
     char            *opc;	/* ptr to operator character to
 				 * null-terminate the variable name */
+    Boolean	   freeCp = FALSE; /* TRUE if cp needs to be freed,
+				    * i.e. if any variable expansion was
+				    * performed */
     /*
      * Avoid clobbered variable warnings by forcing the compiler
      * to ``unregister'' variables
@@ -1562,12 +1565,10 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 	cp = Var_Subst(NULL, cp, ctxt, FALSE);
 	oldVars = oldOldVars;
+	freeCp = TRUE;
 
 	Var_Set(line, cp, ctxt, 0);
-	free(cp);
     } else if (type == VAR_SHELL) {
-	Boolean	freeCmd = FALSE; /* TRUE if the command needs to be freed, i.e.
-				  * if any variable expansion was performed */
 	char *res, *err;
 
 	if (strchr(cp, '$') != NULL) {
@@ -1577,7 +1578,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	     * freeing when we're done, so set freeCmd to TRUE.
 	     */
 	    cp = Var_Subst(NULL, cp, VAR_CMD, TRUE);
-	    freeCmd = TRUE;
+	    freeCp = TRUE;
 	}
 
 	res = Cmd_Exec(cp, &err);
@@ -1586,9 +1587,6 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 	if (err)
 	    Parse_Error(PARSE_WARNING, err, cp);
-
-	if (freeCmd)
-	    free(cp);
     } else {
 	/*
 	 * Normal assignment -- just do it.
@@ -1606,6 +1604,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	Dir_InitCur(cp);
 	Dir_SetPATH();
     }
+    if (freeCp)
+	free(cp);
 }
 
 
