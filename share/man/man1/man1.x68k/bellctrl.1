@@ -1,4 +1,4 @@
-.\"	$NetBSD: bellctrl.1,v 1.8 2001/04/21 14:30:18 wiz Exp $
+.\"	$NetBSD: bellctrl.1,v 1.9 2001/06/24 01:25:49 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Takuya Harakawa.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 .Nm
 is used to set various preference options of the opm bell.
-
+.Pp
 The options are as follows:
 .Bl -tag -width Op
 .It Fl b
@@ -56,7 +56,7 @@ This option accepts up to three numerical parameters, a preceding
 dash(-), or a 'on/off' flag. If no parameters are given,
 or the 'on' flag is used, the system defaults will be used.
 If the dash or 'off' are given, the bell will be turned off.
-If only one numerical paramter is given, the bell volume will be
+If only one numerical parameter is given, the bell volume will be
 set to that value, as a percentage of its maximum.
 Like wise, the second numerical parameter specifies the bell pitch,
 in hertz, and the third numerical parameter specifies the duration
