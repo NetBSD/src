@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.4 2003/10/27 16:48:08 cl Exp $        */
+/*      $NetBSD: sd.c,v 1.5 2004/12/07 23:07:31 thorpej Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -240,7 +240,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 	   void *buf, size_t *rsize)
 {
     u_long blk = dblk + ss->sc_pinfo.offset[ss->sc_part];
-    struct scsipi_rw_big cdb;
+    struct scsipi_rw_10 cdb;
     int error;
     
     if (size == 0)
@@ -267,7 +267,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 		     blk, tsize, nblks, ss->sc_dev_bsize));
 
 	    bzero(&cdb, sizeof(cdb));
-	    cdb.opcode = READ_BIG;
+	    cdb.opcode = READ_10;
 	    cdb.addr[0] = (blk & 0xff000000) >> 24;
 	    cdb.addr[1] = (blk & 0xff0000) >> 16;
 	    cdb.addr[2] = (blk & 0xff00) >> 8;

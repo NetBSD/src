@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.230 2004/12/04 19:02:26 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.231 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.230 2004/12/04 19:02:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.231 2004/12/07 23:07:31 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -774,8 +774,8 @@ sdstart(struct scsipi_periph *periph)
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_16 cmd16;
-	struct scsipi_rw_big cmd_big;
-	struct scsi_rw cmd_small;
+	struct scsipi_rw_10 cmd_big;
+	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
 	int nblks, cmdlen, error, flags;
@@ -839,7 +839,7 @@ sdstart(struct scsipi_periph *periph)
 			/* 6-byte CDB */
 			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
-			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
+			    SCSI_READ_6_COMMAND : SCSI_WRITE_6_COMMAND;
 			_lto3b(bp->b_rawblkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
@@ -848,7 +848,7 @@ sdstart(struct scsipi_periph *periph)
 			/* 10-byte CDB */
 			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
-			    READ_BIG : WRITE_BIG;
+			    READ_10 : WRITE_10;
 			_lto4b(bp->b_rawblkno, cmd_big.addr);
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
@@ -1468,7 +1468,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	int	sectoff;	/* sector offset of partition */
 	int	totwrt;		/* total number of sectors left to write */
 	int	nwrt;		/* current number of sectors to write */
-	struct scsipi_rw_big cmd;	/* write command */
+	struct scsipi_rw_10 cmd;	/* write command */
 	struct scsipi_xfer *xs;	/* ... convenience */
 	struct scsipi_periph *periph;
 	struct scsipi_channel *chan;
@@ -1524,7 +1524,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		 *  Fill out the scsi command
 		 */
 		memset(&cmd, 0, sizeof(cmd));
-		cmd.opcode = WRITE_BIG;
+		cmd.opcode = WRITE_10;
 		_lto4b(blkno, cmd.addr);
 		_lto2b(nwrt, cmd.length);
 		/*

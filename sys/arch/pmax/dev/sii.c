@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.49 2003/08/07 16:29:10 agc Exp $	*/
+/*	$NetBSD: sii.c,v 1.50 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.49 2003/08/07 16:29:10 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.50 2004/12/07 23:07:31 thorpej Exp $");
 
 #include "sii.h"
 /*
@@ -399,8 +399,8 @@ sii_StartCmd(sc, target)
 			state->dmaDataPhase);
 	}
 	sii_debug_cmd = scsicmd->cmd[0];
-	if (scsicmd->cmd[0] == READ_BIG ||
-	    scsicmd->cmd[0] == WRITE_BIG) {
+	if (scsicmd->cmd[0] == READ_10 ||
+	    scsicmd->cmd[0] == WRITE_10) {
 		sii_debug_bn = (scsicmd->cmd[2] << 24) |
 			(scsicmd->cmd[3] << 16) |
 			(scsicmd->cmd[4] << 8) |

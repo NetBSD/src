@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.211 2004/10/28 07:07:45 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.212 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.211 2004/10/28 07:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.212 2004/12/07 23:07:31 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -739,8 +739,8 @@ cdstart(struct scsipi_periph *periph)
 {
 	struct cd_softc *cd = (void *)periph->periph_dev;
 	struct buf *bp = 0;
-	struct scsipi_rw_big cmd_big;
-	struct scsi_rw cmd_small;
+	struct scsipi_rw_10 cmd_big;
+	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
 	int flags, nblks, cmdlen, error;
@@ -803,7 +803,7 @@ cdstart(struct scsipi_periph *periph)
 			 */
 			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
-			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
+			    SCSI_READ_6_COMMAND : SCSI_WRITE_6_COMMAND;
 			_lto3b(bp->b_rawblkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
@@ -814,7 +814,7 @@ cdstart(struct scsipi_periph *periph)
 			 */
 			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
-			    READ_BIG : WRITE_BIG;
+			    READ_10 : WRITE_10;
 			_lto4b(bp->b_rawblkno, cmd_big.addr);
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);

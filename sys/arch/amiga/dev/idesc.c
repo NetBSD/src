@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.55 2004/03/28 18:59:39 mhitch Exp $ */
+/*	$NetBSD: idesc.c,v 1.56 2004/12/07 23:07:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.55 2004/03/28 18:59:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.56 2004/12/07 23:07:31 thorpej Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -1021,24 +1021,24 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 		dev->sc_stat[0] = 0;
 		return (0);
 
-	case READ_BIG:
+	case READ_10:
 		lba = *((long *)((char *)cbuf + 2));
 		nblks = *((u_short *)((char *)cbuf + 7));
 		return (ideiread(ide, lba, buf, nblks));
 
-	case SCSI_READ_COMMAND:
+	case SCSI_READ_6_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)((char *)cbuf + 4));
 		if (nblks == 0)
 			nblks = 256;
 		return (ideiread(ide, lba, buf, nblks));
 
-	case WRITE_BIG:
+	case WRITE_10:
 		lba = *((long *)((char *)cbuf + 2));
 		nblks = *((u_short *)((char *)cbuf + 7));
 		return (ideiwrite(ide, lba, buf, nblks));
 
-	case SCSI_WRITE_COMMAND:
+	case SCSI_WRITE_6_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)((char *)cbuf + 4));
 		if (nblks == 0)
@@ -1131,22 +1131,22 @@ idego(struct idec_softc *dev, struct scsipi_xfer *xs)
 		ide->sc_flags &= ~IDEF_SENSE;
 		return (idestart(dev));
 	}
-	if (xs->cmd->opcode != SCSI_READ_COMMAND && xs->cmd->opcode != READ_BIG &&
-	    xs->cmd->opcode != SCSI_WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
+	if (xs->cmd->opcode != SCSI_READ_6_COMMAND && xs->cmd->opcode != READ_10 &&
+	    xs->cmd->opcode != SCSI_WRITE_6_COMMAND && xs->cmd->opcode != WRITE_10) {
 		ideicmd (dev, xs->xs_periph->periph_target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen);
 		return (1);
 	}
 	switch (xs->cmd->opcode) {
-	case SCSI_READ_COMMAND:
-	case SCSI_WRITE_COMMAND:
+	case SCSI_READ_6_COMMAND:
+	case SCSI_WRITE_6_COMMAND:
 		lba = *((long *)xs->cmd) & 0x001fffff;
 		nblks = xs->cmd->bytes[3];
 		if (nblks == 0)
 			nblks = 256;
 		break;
-	case READ_BIG:
-	case WRITE_BIG:
+	case READ_10:
+	case WRITE_10:
 		lba = *((long *)&xs->cmd->bytes[1]);
 		nblks = *((short *)&xs->cmd->bytes[6]);
 		break;
@@ -1157,7 +1157,7 @@ idego(struct idec_softc *dev, struct scsipi_xfer *xs)
 	ide->sc_blkcnt = nblks;
 	ide->sc_skip = ide->sc_mskip = 0;
 	dev->sc_flags &= ~IDECF_READ;
-	if (xs->cmd->opcode == SCSI_READ_COMMAND || xs->cmd->opcode == READ_BIG)
+	if (xs->cmd->opcode == SCSI_READ_6_COMMAND || xs->cmd->opcode == READ_10)
 		dev->sc_flags |= IDECF_READ;
 	dev->sc_cur = ide;
 	return (idestart (dev));
@@ -1316,7 +1316,7 @@ int ide_atapi_start(struct idec_softc *dev)
 		int i;
 		u_short *bf;
 		union {
-			struct scsipi_rw_big rw_big;
+			struct scsipi_rw_10 rw_big;
 			struct scsipi_mode_sense_big md_big;
 		} cmd;
 
@@ -1336,8 +1336,8 @@ int ide_atapi_start(struct idec_softc *dev)
 
 		bf = (u_short *)xs->cmd;
 		switch (xs->cmd->opcode) {
-		case SCSI_READ_COMMAND:
-		case SCSI_WRITE_COMMAND:
+		case SCSI_READ_6_COMMAND:
+		case SCSI_WRITE_6_COMMAND:
 			bzero((char *)&cmd, sizeof(cmd.rw_big));
 			cmd.rw_big.opcode = xs->cmd->opcode | 0x20;
 			cmd.rw_big.addr[3] = xs->cmd->bytes[2];
@@ -1451,7 +1451,7 @@ ide_atapi_intr(struct idec_softc *dev)
 	int ire;
 	int retries = 0;
 	union {
-		struct scsipi_rw_big rw_big;
+		struct scsipi_rw_10 rw_big;
 		struct scsipi_mode_sense_big md_big;
 	} cmd;
 
@@ -1489,8 +1489,8 @@ again:
 
 		bf = (u_short *)xs->cmd;
 		switch (xs->cmd->opcode) {
-		case SCSI_READ_COMMAND:
-		case SCSI_WRITE_COMMAND:
+		case SCSI_READ_6_COMMAND:
+		case SCSI_WRITE_6_COMMAND:
 			bzero((char *)&cmd, sizeof(cmd.rw_big));
 			cmd.rw_big.opcode = xs->cmd->opcode | 0x20;
 			cmd.rw_big.addr[3] = xs->cmd->bytes[2];
