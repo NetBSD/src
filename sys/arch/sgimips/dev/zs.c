@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 2003/12/14 05:59:50 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21 2003/12/14 05:59:50 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/machtype.h>
 #include <machine/autoconf.h>
 #include <machine/z8530var.h>
 
@@ -636,7 +637,17 @@ zs_get_chan_addr(zs_unit, channel)
 	struct zsdevice *addr;
 	struct zschan *zc;
 
-	addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
+	switch(mach_type)
+	{
+	    	case MACH_SGI_IP20:
+		addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fb80d10);
+		break;
+ 
+	      	case MACH_SGI_IP22:
+		default:
+		addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
+		break;
+	} 
 
 	if (channel == 0) {
 		zc = &addr->zs_chan_b;
