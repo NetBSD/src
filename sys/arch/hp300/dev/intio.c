@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.7 2001/11/17 23:33:22 gmcgarry Exp $	*/
+/*	$NetBSD: intio.c,v 1.8 2002/03/15 05:40:01 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Autoconfiguration support for hp300 internal i/o space.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.8 2002/03/15 05:40:01 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,12 +161,13 @@ intioprint(aux, pnp)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (pnp)
+	if (pnp) {
 		printf("%s at %s", ia->ia_modname, pnp);
-	if (ia->ia_addr != 0) {
-		printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
-		if (ia->ia_ipl != -1)
-			printf(" ipl %d", ia->ia_ipl);
+		if (ia->ia_addr != 0) {
+			printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
+			if (ia->ia_ipl != -1)
+				printf(" ipl %d", ia->ia_ipl);
+		}
 	}
 	return (UNCONF);
 }
