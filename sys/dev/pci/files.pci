@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.96.2.7 2001/05/03 20:58:04 he Exp $
+#	$NetBSD: files.pci,v 1.96.2.8 2001/05/06 14:40:07 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -220,6 +220,11 @@ file	dev/pci/eap.c			eap
 device  auvia: audio, auconv, mulaw, ac97
 attach  auvia at pci
 file    dev/pci/auvia.c			auvia
+
+# NeoMagic 256 AC'97 Audio
+device	neo: audio, auconv, mulaw, ac97
+attach	neo at pci
+file	dev/pci/neo.c			neo
 
 # ESS Solo-1 PCI AudioDrive
 device	eso { }: audio, auconv, mulaw, midibus
