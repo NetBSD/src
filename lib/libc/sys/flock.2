@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.10 1999/12/02 21:42:36 kleink Exp $
+.\"	$NetBSD: flock.2,v 1.11 2001/05/19 17:23:39 jdolecek Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ is included in
 .Fa operation ,
 then this will not happen; instead the call will fail and
 the error
-.Er EWOULDBLOCK
+.Er EAGAIN
 will be returned.
 .Sh NOTES
 Locks are on files, not file descriptors.  That is, file descriptors
@@ -123,7 +123,7 @@ The
 .Fn flock
 call fails if:
 .Bl -tag -width Er
-.It Bq Er EWOULDBLOCK
+.It Bq Er EAGAIN
 The file is locked and the
 .Dv LOCK_NB
 option was specified.
