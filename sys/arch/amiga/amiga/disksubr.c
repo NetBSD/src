@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.36 2000/11/20 08:24:09 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37 2001/05/06 20:49:43 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -332,8 +332,8 @@ readdisklabel(dev, strat, lp, clp)
 			printf("Partition '%s' geometry %ld/%ld differs",
 			    pbp->partname + 1, pbp->e.numheads,
 			    pbp->e.secpertrk);
-			printf(" from RDB %d/%d\n", lp->d_ntracks,
-			    lp->d_nsectors);
+			printf(" from RDB %d/%d=%d\n", lp->d_ntracks,
+			    lp->d_nsectors, lp->d_secpercyl);
 		}
 #endif
 		/*
