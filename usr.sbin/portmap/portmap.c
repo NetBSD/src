@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.23 2000/01/27 16:28:32 thorpej Exp $	*/
+/*	$NetBSD: portmap.c,v 1.24 2000/04/10 20:26:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.23 2000/01/27 16:28:32 thorpej Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.24 2000/04/10 20:26:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -693,7 +693,9 @@ check_access(addr, proc, prog)
 	request_init(&req, RQ_DAEMON, "portmap", RQ_CLIENT_SIN, addr, 0);
 	sock_methods(&req);
 	if(!hosts_access(&req)) {
-		logit(deny_severity, addr, proc, prog, ": request from unauthorized host");
+		if (verboselog)
+			logit(deny_severity, addr, proc, prog,
+			      ": request from unauthorized host");
 		return 0;
 	}
 #endif
