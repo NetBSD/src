@@ -297,7 +297,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	strncpy(buf, p->dpme_name, name_length);
 	buf[name_length] = 0;
     } else {
-	sprintf(buf, "\"%s\"", entry->HFS_name);
+	snprintf(buf, name_length + 1, "\"%s\"", entry->HFS_name);
     }
     printf("%c%-*.32s ", driver, name_length, buf);
     free(buf);

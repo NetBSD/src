@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.31 2003/08/07 09:05:18 agc Exp $ */
+/* $NetBSD: mv.c,v 1.32 2003/08/13 03:22:03 itojun Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.31 2003/08/07 09:05:18 agc Exp $");
+__RCSID("$NetBSD: mv.c,v 1.32 2003/08/13 03:22:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,7 +439,7 @@ printescaped(const char *src)
 		if (stdout_ok)
 			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
 		else
-			(void)strcpy(retval, src);
+			(void)strlcpy(retval, src, 4 * len + 1);
 		return retval;
 	} else
 		errx(EXIT_FAILURE, "out of memory!");

@@ -506,9 +506,9 @@ step_file_iterator(MEDIA_ITERATOR m)
 		    switch (a->style) {
 		    case kSCSI_Disks:
 			if (value < 26) {
-			    sprintf(result, "/dev/sd%c", 'a'+value);
+			    snprintf(result, 20, "/dev/sd%c", 'a'+value);
 			} else if (value < 676) {
-			    sprintf(result, "/dev/sd%c%c",
+			    snprintf(result, 20, "/dev/sd%c%c",
 				    'a' + value / 26,
 				    'a' + value % 26);
 			} else {
@@ -517,14 +517,14 @@ step_file_iterator(MEDIA_ITERATOR m)
 			break;
 		    case kATA_Devices:
 			if (value < 26) {
-			    sprintf(result, "/dev/hd%c", 'a'+value);
+			    snprintf(result, 20, "/dev/hd%c", 'a'+value);
 			} else {
 			    bump = -1;
 			}
 			break;
 		    case kSCSI_CDs:
 			if (value < 10) {
-			    sprintf(result, "/dev/scd%c", '0'+value);
+			    snprintf(result, 20, "/dev/scd%c", '0'+value);
 			} else {
 			    bump = -1;
 			}
