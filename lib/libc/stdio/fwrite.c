@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.7 1998/01/19 07:38:49 jtc Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.8 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.7 1998/01/19 07:38:49 jtc Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.8 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,6 +64,7 @@ fwrite(buf, size, count, fp)
 	struct __suio uio;
 	struct __siov iov;
 
+	/* LINTED we don't play with buf */
 	iov.iov_base = (void *)buf;
 	uio.uio_resid = iov.iov_len = n = count * size;
 	uio.uio_iov = &iov;
