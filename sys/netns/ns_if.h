@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_if.h,v 1.8 1996/02/13 22:13:54 christos Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.9 1998/09/09 04:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -65,9 +65,6 @@ struct	ns_aliasreq {
  */
 
 #define	IA_SNS(ia) (&(((struct ns_ifaddr *)(ia))->ia_addr))
-
-/* This is not the right place for this but where is? */
-#define	ETHERTYPE_NS	0x0600
 
 #ifdef	NSIP
 struct nsip_req {
