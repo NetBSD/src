@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.4 1993/10/15 13:43:16 cgd Exp $
+ * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.5 1993/10/16 07:57:39 cgd Exp $
  */
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.4 1993/10/15 13:43:16 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.5 1993/10/16 07:57:39 cgd Exp $ (LBL)
  */
 
 #include <sys/param.h>
@@ -83,6 +83,8 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
+
+#include "salibc.h"
 
 #include "netboot.h"
 #include "bootbootp.h"
@@ -117,8 +119,10 @@ void nfs_setup(desc)
     getnfsinfo(desc, &roottime, NULL, &ftype);
     if (ftype != NFDIR)
 	panic("bad root ftype %d", ftype);
+#ifdef DEBUG
     if (debug)
 	printf("nfs_setup: got root fh\n");
+#endif
 
     desc->destip = swapip;
     getnfsfh(desc, swappath, swapfh);
@@ -129,15 +133,17 @@ void nfs_setup(desc)
     if (ftype != NFREG)
 	panic("bad swap ftype %d\n", ftype);
     swapblks = bytes / 512;
+#ifdef DEBUG
     if (debug)
 	printf("nfs_setup: got swap fh\n");
+#endif
     printf("swap: %d (%d blocks)\n", bytes, swapblks);
     desc->destip = rootip;
     desc->fh = rootfh;
 }
 
 
-unsigned int nfs_boot(kernel_override, machdep_hint)
+unsigned int boot_nfs(kernel_override, machdep_hint)
      char *kernel_override;
      void *machdep_hint;
 {
@@ -164,7 +170,7 @@ unsigned int nfs_boot(kernel_override, machdep_hint)
 	    panic("netboot: no interfaces left untried");
 	if (netif_probe(nif, machdep_hint)) {
 	    printf("netboot: couldn't probe %s%d\n",
-		   nif->netif_bname, nif->netif_unit);
+		   nif->nif_driver->netif_bname, nif->nif_unit);
 	    continue;
 	}
 	netif_attach(nif, &desc, machdep_hint);

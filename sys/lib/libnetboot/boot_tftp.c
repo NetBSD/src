@@ -27,11 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: boot_tftp.c,v 1.1 1993/10/15 13:52:28 cgd Exp $
+ *	$Id: boot_tftp.c,v 1.2 1993/10/16 07:57:40 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
+
+#include "salibc.h"
+
 #include "netboot.h"
 #include "netif.h"
 
@@ -65,7 +68,7 @@ boot_tftp(kernel_override, machdep_hint)
 
 		if (netif_probe(nif, machdep_hint)) {
 			printf("netboot: couldn't probe %s%d\n",
-			    nif->netif_bname, nif->netif_unit);
+			    nif->nif_driver->netif_bname, nif->nif_unit);
 			continue;
 		}
 		netif_attach(nif, &desc, machdep_hint);
@@ -73,7 +76,9 @@ boot_tftp(kernel_override, machdep_hint)
 		get_bootinfo(&desc);
 /*		loaded = tftp_load(&desc, kernel_override, &startaddr);*/
 		netif_detach(nif);
+#ifdef notdef
 		if (loaded)
-			machdep_exec(startaddr);
+			call((u_long) startaddr);
+#endif
 	}
 }

@@ -1,32 +1,59 @@
 
-struct netif {
-    char *netif_bname;
-    int netif_unit;
-    int netif_exhausted;
-    int (*netif_match) __P((void *, int *));
-    int (*netif_probe) __P((void *));
-    void (*netif_init) __P((struct iodesc *, void *));
-    int (*netif_get) __P((struct iodesc *, void *, int, time_t));
-    int (*netif_put) __P((struct iodesc *, void *, int));
-    void (*netif_end) __P((void));
-    struct netif_stats *netif_stats;
+#ifndef __SYS_LIBNETBOOT_NETIF_H
+#define __SYS_LIBNETBOOT_NETIF_H
+#include "iodesc.h"
+
+#define NENTS(x)	sizeof(x)/sizeof(x[0])
+
+struct netif_driver {
+	char	*netif_bname;
+	int	(*netif_match) __P((struct netif *, void *));
+	int	(*netif_probe) __P((struct netif *, void *));
+	void	(*netif_init) __P((struct iodesc *, void *));
+	int	(*netif_get) __P((struct iodesc *, void *, int, time_t));
+	int	(*netif_put) __P((struct iodesc *, void *, int));
+	void	(*netif_end) __P((struct netif *));
+	struct	netif_dif *netif_ifs;
+	int	netif_nifs;
+};
+
+struct netif_dif {
+	int		dif_unit;
+	int		dif_nsel;
+	struct netif_stats *dif_stats;
+	void		*dif_private;
+	/* the following fields are used internally by the netif layer */
+	u_long		dif_used;
 };
 
 struct netif_stats {
-    int collisions;
-    int collision_error;
-    int missed;
-    int sent;
-    int received;
-    int deferred;
-    int overflow;
+	int	collisions;
+	int	collision_error;
+	int	missed;
+	int	sent;
+	int	received;
+	int	deferred;
+	int	overflow;
 };
-extern struct netif *netiftab[];
 
-extern int n_netif;
+struct netif {
+	struct netif_driver	*nif_driver;
+	int			nif_unit;
+	int			nif_sel;
+};
 
-void netif_init __P((void));
-struct netif *netif_select __P((void *));
-int netif_probe __P((struct netif *, void *));
-void netif_attach __P((struct netif *, struct iodesc *, void *));
-void netif_detach __P((struct netif *));
+extern struct netif_driver	*netif_drivers[];	/* machdep */
+extern int			n_netif_drivers;
+#ifdef DEBUG
+extern int			netif_debug;
+#endif
+
+void		netif_init __P((void));
+struct netif	*netif_select __P((void *));
+int		netif_probe __P((struct netif *, void *));
+void		netif_attach __P((struct netif *, struct iodesc *, void *));
+void		netif_detach __P((struct netif *));
+int		netif_get __P((struct iodesc *, void *, int, time_t));
+int		netif_put __P((struct iodesc *, void *, int));
+
+#endif /* __SYS_LIBNETBOOT_NETIF_H */

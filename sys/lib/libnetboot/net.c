@@ -52,6 +52,8 @@
 
 #include <errno.h>
 
+#include "salibc.h"
+
 #include "netboot.h"
 #include "netif.h"
 
@@ -69,8 +71,10 @@ sendudp(d, buf, len)
 	register u_char *ea;
 	struct ip tip;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("sendudp: called\n");
+#endif
 	uh = ((struct udphdr *)buf) - 1;
 	ip = ((struct ip *)uh) - 1;
 	len += sizeof(*ip) + sizeof(*uh);
@@ -125,8 +129,10 @@ sendether(d, buf, len, dea, etype)
 {
 	register struct ether_header *eh;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("sendether: called\n");
+#endif
 	eh = ((struct ether_header *)buf) - 1;
 	len += ETHER_SIZE;
 
@@ -150,8 +156,10 @@ checkudp(d, pkt, lenp)
 	register struct udpiphdr *ui;
 	struct ip tip;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("checkudp: called\n");
+#endif
 	eh = pkt;
 	ip = (struct ip *)(eh + 1);
 	uh = (struct udphdr *)(ip + 1);
@@ -240,8 +248,10 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	register int cc;
 	register time_t t, tmo, tlast, tleft;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("sendrecv: called\n");
+#endif
 	tmo = MINTMO;
 	tlast = tleft = 0;
 	t = getsecs();
@@ -281,9 +291,11 @@ int ethernet_get(desc, pkt, len, timeout)
      time_t timeout;
 {
     int val;
-    val = desc->io_netif->netif_get(desc, pkt, len, timeout);
+    val = netif_get(desc, pkt, len, timeout);
+#ifdef DEBUG
     if (debug)
 	printf("ethernet_get: received %d\n", val);
+#endif
     return val;
 }
 int ethernet_put(desc, pkt, len)
@@ -293,6 +305,7 @@ int ethernet_put(desc, pkt, len)
 {
     int count, val;
 
+#ifdef DEBUG
     if (debug) {
 	struct ether_header *eh;
 	
@@ -304,8 +317,7 @@ int ethernet_put(desc, pkt, len)
 	       ether_sprintf(eh->ether_shost));
 	printf("ethernet_put: ether_type %x\n", eh->ether_type);
     }
-    if (!desc->io_netif)
-	panic("ethernet_put: no netif_put support");
-    val = desc->io_netif->netif_put(desc, pkt, len);
+#endif
+    val = netif_put(desc, pkt, len);
     return val;
 }

@@ -5,7 +5,11 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include "../include/stdarg.h"
+#include <stdarg.h>
+
+#include "salibc.h"
+
+#include "netboot.h"
 
 void
 #ifdef __STDC__
@@ -33,7 +37,7 @@ intoa(addr)
 	register char *cp;
 	register u_int byte;
 	register int n;
-	static char buf[sizeof(".xxx.xxx.xxx.xxx")];
+	static char buf[17];	/* strlen(".255.255.255.255") + 1 */
 
 	cp = &buf[sizeof buf];
 	*--cp = '\0';
@@ -53,7 +57,7 @@ intoa(addr)
 		addr >>= 8;
 	} while (--n > 0);
 
-	return (cp + 1);
+	return (cp+1);
 }
 
 /*

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
- *   $Id: rpc.c,v 1.2 1993/10/14 04:53:39 glass Exp $
+ *   $Id: rpc.c,v 1.3 1993/10/16 07:57:47 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -48,6 +48,8 @@
 #include <nfs/nfsv2.h>
 #undef NFSX_FATTR
 #include <errno.h>
+
+#include "salibc.h"
 
 #include "netboot.h"
 #include "netif.h"
@@ -157,8 +159,10 @@ callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 		} ru;
 	} rbuf;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("callrpc: called\n");
+#endif
 	if (rlen > sizeof(rbuf.ru.data))
 		panic("callrpc: huge read (%d > %d)",
 		    rlen, sizeof(rbuf.ru.data));
@@ -203,8 +207,10 @@ recvrpc(d, pkt, len)
 {
 	register struct rpc_reply *rpc;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("recvrpc: called\n");
+#endif
 	rpc = (struct rpc_reply *)checkudp(d, pkt, &len);
 	if (rpc == NULL || len < sizeof(*rpc)) {
 		errno = 0;
@@ -244,8 +250,10 @@ getport(d, prog, vers)
 		u_long	port;		/* call port (unused) */
 	} sdata;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("getport: called\n");
+#endif
 	/* Try for cached answer first */
 	for (i = 0, pl = pmap_list; i < pmap_num; ++i, ++pl)
 		if ((pl->addr == d->destip || pl->addr == 0) &&
@@ -292,8 +300,10 @@ getnfsfh(d, path, fhp)
 		u_char	fh[NFS_FHSIZE];
 	} rdata;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("getnfsfh: called\n");
+#endif
 	bzero(&sdata, sizeof(sdata));
 	len = strlen(path);
 	if (len > sizeof(sdata.path))
@@ -323,8 +333,10 @@ getnfsinfo(d, tp, sp, fp)
 		struct	nfsv2_fattr fa;
 	} rdata;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("getnfsinfo: called\n");
+#endif
 	rlen = sizeof(rdata);
 #if 0
 #ifdef NFSX_FATTR
@@ -371,8 +383,10 @@ lookupfh(d, name, fhp, tp, sp, fp)
 		struct	nfsv2_fattr fa;
 	} rdata;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("lookupfh: called\n");
+#endif
 
 	bzero(&sdata, sizeof(sdata));
 	bcopy(d->fh, sdata.fh, sizeof(sdata.fh));
@@ -434,8 +448,10 @@ sendreaddata(d, pkt, len)
 	register struct nfs_call_data *nfs;
 	register struct nfsstate *ns;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("sendreaddata: called\n");
+#endif
 
 	if (len != sizeof(*rpc) + sizeof(*nfs))
 		panic("sendreaddata: bad buffer (%d != %d)",
@@ -471,8 +487,10 @@ recvreaddata(d, pkt, len)
 	register struct nfs_reply_data *nfs;
 	register struct nfsstate *ns;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("recvreaddata: called\n");
+#endif
 	rpc = (struct rpc_reply *)checkudp(d, pkt, &len);
 	if (rpc == NULL || len < sizeof(*rpc)) {
 		errno = 0;
@@ -568,8 +586,10 @@ readdata(d, off, addr, len)
 		struct	nfs_reply_data nfs;
 	} rdata;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("readdata: called\n");
+#endif
 	if (len == 0)
 		return (0);
 	d->destport = getport(d, NFS_PROG, NFS_VER2);

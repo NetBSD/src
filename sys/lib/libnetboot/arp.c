@@ -35,20 +35,21 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
- *     $Id: arp.c,v 1.3 1993/10/14 04:53:35 glass Exp $
+ *     $Id: arp.c,v 1.4 1993/10/16 07:57:38 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <net/if.h>
-
 #include <netinet/in.h>
+
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <errno.h>
 #include <string.h>
+
+#include "salibc.h"
 
 #include "netboot.h"
 #include "bootbootp.h"
@@ -89,8 +90,10 @@ arpwhohas(d, addr)
 		} ru;
 	} rbuf;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("arpwhohas: called\n");
+#endif
 	/* Try for cached answer first */
 	for (i = 0, al = arp_list; i < arp_num; ++i, ++al)
 		if (addr == al->addr)
@@ -100,8 +103,10 @@ arpwhohas(d, addr)
 	if (arp_num > ARP_NUM - 1)
 		panic("arpwhohas: overflowed arp_list!");
 
+#ifdef DEBUG
  	if (debug)
  	    printf("arpwhohas: not cached\n");
+#endif
 	ah = &wbuf.warp;
 	bzero(ah, sizeof(*ah));
 
@@ -134,8 +139,10 @@ arpsend(d, pkt, len)
 	register void *pkt;
 	register int len;
 {
+#ifdef DEBUG
  	if (debug)
  	    printf("arpsend: called\n");
+#endif
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_ARP));
 }
 
@@ -149,8 +156,10 @@ arprecv(d, pkt, len)
 	register struct ether_header *eh;
 	register struct ether_arp *ah;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("arprecv: called\n");
+#endif
 	if (len < sizeof(*eh) + sizeof(*ah)) {
 		errno = 0;
 		return (-1);
