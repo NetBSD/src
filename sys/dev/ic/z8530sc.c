@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.2 1996/01/30 22:35:09 gwr Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.3 1996/04/10 21:44:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -116,11 +116,13 @@ zs_iflush(cs)
 		if ((rr0 & ZSRR0_RX_READY) == 0)
 			break;
 
-		/* Read the data. */
+		/*
+		 * First read the status, because reading the data
+		 * destroys the status of this char.
+		 */
+		rr1 = zs_read_reg(cs, 1);
 		c = zs_read_data(cs);
 
-		/* Need to read status register too? */
-		rr1 = zs_read_reg(cs, 1);
 		if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 			/* Clear the receive error. */
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
@@ -220,13 +222,12 @@ zsc_intr_hard(arg)
 	register struct zsc_softc *zsc = arg;
 	register struct zs_chanstate *cs_a;
 	register struct zs_chanstate *cs_b;
-	register int rval, soft;
+	register int rval;
 	register u_char rr3;
 
 	cs_a = &zsc->zsc_cs[0];
 	cs_b = &zsc->zsc_cs[1];
 	rval = 0;
-	soft = 0;
 
 	/* Note: only channel A has an RR3 */
 	rr3 = zs_read_reg(cs_a, 3);
@@ -237,17 +238,17 @@ zsc_intr_hard(arg)
 	if (rr3 & ZSRR3_IP_B_RX)
 		(*cs_b->cs_ops->zsop_rxint)(cs_b);
 
+	/* Handle status interrupts (i.e. flow control). */
+	if (rr3 & ZSRR3_IP_A_STAT)
+		(*cs_a->cs_ops->zsop_stint)(cs_a);
+	if (rr3 & ZSRR3_IP_B_STAT)
+		(*cs_b->cs_ops->zsop_stint)(cs_b);
+
 	/* Handle transmit done interrupts. */
 	if (rr3 & ZSRR3_IP_A_TX)
 		(*cs_a->cs_ops->zsop_txint)(cs_a);
 	if (rr3 & ZSRR3_IP_B_TX)
 		(*cs_b->cs_ops->zsop_txint)(cs_b);
-
-	/* Handle status interrupts. */
-	if (rr3 & ZSRR3_IP_A_STAT)
-		(*cs_a->cs_ops->zsop_stint)(cs_a);
-	if (rr3 & ZSRR3_IP_B_STAT)
-		(*cs_b->cs_ops->zsop_stint)(cs_b);
 
 	/* Clear interrupt. */
 	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
@@ -259,8 +260,7 @@ zsc_intr_hard(arg)
 		rval |= 2;
 	}
 
-	if ((cs_a->cs_softreq) || (cs_b->cs_softreq))
-	{
+	if ((cs_a->cs_softreq) || (cs_b->cs_softreq)) {
 		/* This is a machine-dependent function (or macro). */
 		zsc_req_softint(zsc);
 	}
@@ -278,18 +278,19 @@ zsc_intr_soft(arg)
 {
 	register struct zsc_softc *zsc = arg;
 	register struct zs_chanstate *cs;
-	register int req, rval, s, unit;
+	register int rval, unit;
 
 	rval = 0;
 	for (unit = 0; unit < 2; unit++) {
 		cs = &zsc->zsc_cs[unit];
 
-		s = splzs();
-		req = cs->cs_softreq;
-		cs->cs_softreq = 0;
-		splx(s);
-
-		if (req) {
+		/*
+		 * The softint flag can be safely cleared once
+		 * we have decided to call the softint routine.
+		 * (No need to do splzs() first.)
+		 */
+		if (cs->cs_softreq) {
+			cs->cs_softreq = 0;
 			(*cs->cs_ops->zsop_softint)(cs);
 			rval = 1;
 		}
@@ -298,7 +299,7 @@ zsc_intr_soft(arg)
 }
 
 
-static int
+static void
 zsnull_intr(cs)
 	struct zs_chanstate *cs;
 {
@@ -306,7 +307,7 @@ zsnull_intr(cs)
 	zs_write_reg(cs, 15, 0);
 }
 
-static int
+static void
 zsnull_softint(cs)
 	struct zs_chanstate *cs;
 {
