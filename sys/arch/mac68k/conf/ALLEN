@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: ALLEN,v 1.4 1994/07/21 01:19:41 briggs Exp $
+#     $Id: ALLEN,v 1.5 1994/10/20 21:21:02 briggs Exp $
 
 include	"std.mac68k"
 
@@ -59,6 +59,7 @@ options		FPSP
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
+options		COMPAT_10
 
 config		netbsd	swap generic
 
