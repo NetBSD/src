@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.7 2000/03/15 11:56:02 fvdl Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.8 2000/07/03 03:37:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,11 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.7 2000/03/15 11:56:02 fvdl Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.8 2000/07/03 03:37:59 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
