@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 1999/10/26 00:20:38 itohy Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 1999/11/10 00:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -141,7 +141,7 @@ ASENTRY_NOPROFILE(start)
 Lhaveihpib:
 
 	RELOC(boothowto, %a0)		| save reboot flags
-	movl	d7,%a0@
+	movl	%d7,%a0@
 	RELOC(bootdev, %a0)		|   and boot device
 	movl	%d6,%a0@
 
@@ -1738,7 +1738,7 @@ LmotommuC:
 	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),%a0	| CRP prototype
 	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,crp			| load root pointer
+	pmove	%a0@,%crp			| load root pointer
 	movl	#CACHE_CLR,%d0
 	movc	%d0,%cacr			| invalidate cache(s)
 	rts
