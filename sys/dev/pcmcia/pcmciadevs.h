@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.48 1999/09/09 18:12:05 is Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.49 1999/09/25 09:48:07 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.45 1999/09/09 18:09:10 is Exp 
+ *	NetBSD: pcmciadevs,v 1.46 1999/09/25 09:47:13 enami Exp 
  */
 
 /*-
@@ -314,9 +314,12 @@
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
-#define	PCMCIA_CIS_COREGA_PCC_2	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
-#define	PCMCIA_PRODUCT_COREGA_PCC_2	-1
-#define	PCMCIA_STR_COREGA_PCC_2	"Corega"
+#define	PCMCIA_CIS_COREGA_ETHER_PCC_T	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_T	-1
+#define	PCMCIA_STR_COREGA_ETHER_PCC_T	"Corega"
+#define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T	-1
+#define	PCMCIA_STR_COREGA_ETHER_II_PCC_T	"Corega"
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
 #define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
