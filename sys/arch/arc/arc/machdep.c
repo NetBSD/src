@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2003/01/17 22:19:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2003/01/19 10:06:12 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ mach_init(argc, argv, envv)
 
 	/* Initialize the CPU type */
 	ident_platform();
-	if (platform == NULL) { 
+	if (platform == NULL) {
 		/* This is probably the best we can do... */
 		printf("kernel not configured for this system:\n");
 		printf("ID [%s] Vendor [%8.8s] Product [%02x",
@@ -299,7 +299,7 @@ mach_init(argc, argv, envv)
 	 * Set the VM page size.
 	 */
 	uvm_setpagesize();
- 
+
 	/* make sure that we don't call BIOS console from now on */
 	cn_tab = NULL;
 
@@ -431,7 +431,7 @@ mach_init(argc, argv, envv)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -443,7 +443,7 @@ mach_init(argc, argv, envv)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 }
@@ -664,7 +664,7 @@ cpu_reboot(howto, bootstr)
  */
 void
 arc_sysreset(addr, cmd_offset)
-	bus_addr_t addr; 
+	bus_addr_t addr;
 	bus_size_t cmd_offset;
 {
 	volatile u_int8_t *kbdata = (u_int8_t *)addr + KBDATAP;

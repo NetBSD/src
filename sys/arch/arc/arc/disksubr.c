@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:42 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2003/01/19 10:06:12 tsutsui Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -57,7 +57,7 @@ static struct mbr_partition *
 mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
 
 
-/* 
+/*
  * Scan MBR for NetBSD partittion.
  *
  * OpenBSD source suggests MBR_MAGIC does not always exist, so,
@@ -239,7 +239,7 @@ readdisklabel(dev, strat, lp, osdep)
 				/* update disklabel with details */
 				lp->d_partitions[2].p_size =
 				    dp->mbrp_size;
-				lp->d_partitions[2].p_offset = 
+				lp->d_partitions[2].p_offset =
 				    dp->mbrp_start;
 
 				if (dp->mbrp_typ == MBR_PTYPE_OPENBSD) {
@@ -472,7 +472,7 @@ nombrpart:
 	/* disklabel in appropriate location? */
 	if (lp->d_partitions[2].p_offset != 0
 		&& lp->d_partitions[2].p_offset != dospartoff) {
-		error = EXDEV;		
+		error = EXDEV;
 		goto done;
 	}
 #endif
