@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.10 1994/02/04 14:15:57 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.11 1994/04/08 08:38:40 phil Exp $";
 #endif
 
 #include "as.h"
@@ -399,7 +399,7 @@ void write_object_file()
 					  lie->add,
 					  lie->sub,
 					  lie->addnum,
-					  0, 0, 2, 0, 0);
+					  0, 0, 2, 0, 0, NO_RELOC);
 #else /* TC_NS32K */
 #ifdef PIC
 			    fix_new(lie->frag, lie->word_goes_here - lie->frag->fr_literal,
@@ -1079,6 +1079,9 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 					 * even if defined here.
 					 */
 					if (!flagseen['k'] ||
+#ifdef TC_NS32K
+					   fixP->fx_pcrel ||
+#endif
 					   (fixP->fx_r_type != RELOC_GLOB_DAT &&
 #ifdef TC_I386
 /* XXX - This must be rationalized */

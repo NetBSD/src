@@ -17,7 +17,11 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef TC_NS32K
+#define TC_NS32K 1
 #include "bit_fix.h"
+
+#define LOCAL_LABELS_FB
 
 #define NO_LISTING
 
@@ -48,7 +52,8 @@ void fix_new_ns32k(fragS *frag,
 		   int pcrel_adjust,
 		   int im_disp,
 		   bit_fixS *bit_fixP, /* really bit_fixS */
-		   int bsr);
+		   int bsr,
+		   int r_type);
 
 #else /* not __STDC__ */
 
@@ -56,5 +61,6 @@ void fix_new_ns32k();
 
 #endif /* not __STDC__ */
 
+#endif /* TC_NS32K */
 
 /* end of tc-ns32k.h */
