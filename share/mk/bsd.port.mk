@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.15 1997/11/05 13:36:31 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.16 1997/11/08 00:18:24 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -244,7 +244,9 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  example, if your port has "man/man1/foo.1" and
 #				  "man/mann/bar.n", set "MAN1=foo.1" and "MANN=bar.n".
 #				  The available sections chars are "123456789LN".
-# MANPREFIX		- The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
+# CAT<sect>     - The same as MAN<sect>, only for formatted manpages.
+# MANPREFIX		 -The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
+# CATPREFIX     - The directory prefix for ${CAT<sect>} (default: ${PREFIX}).
 #
 # Default targets and their behaviors:
 #
@@ -757,13 +759,16 @@ SCRIPTS_ENV+=	BATCH=yes
 .endif
 
 MANPREFIX?=	${PREFIX}
+CATPREFIX?=	${PREFIX}
 
 .for sect in 1 2 3 4 5 6 7 8 9
 MAN${sect}PREFIX?=	${MANPREFIX}
-CAT${sect}PREFIX?=	${MANPREFIX}
+CAT${sect}PREFIX?=	${CATPREFIX}
 .endfor
 MANLPREFIX?=	${MANPREFIX}
 MANNPREFIX?=	${MANPREFIX}
+CATLPREFIX?=	${CATPREFIX}
+CATNPREFIX?=	${CATPREFIX}
 
 MANLANG?=	""	# english only by default
 
@@ -784,6 +789,14 @@ _MANPAGES+=	${MANL:S%^%${MANLPREFIX}/man/${lang}/manl/%}
 
 .if defined(MANN)
 _MANPAGES+=	${MANN:S%^%${MANNPREFIX}/man/${lang}/mann/%}
+.endif
+
+.if defined(CATL)
+_CATPAGES+=	${CATL:S%^%${CATLPREFIX}/man/${lang}/catl/%}
+.endif
+
+.if defined(CATN)
+_CATPAGES+=	${CATN:S%^%${CATNPREFIX}/man/${lang}/catn/%}
 .endif
 
 .endfor
