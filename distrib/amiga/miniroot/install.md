@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 1997/10/09 07:25:45 jtc Exp $
+#	$NetBSD: install.md,v 1.3.2.1 1997/10/31 21:27:07 mellon Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ md_makerootwritable() {
 	if [ ! -e /tmp/.root_writable ]; then
 		__mount_kernfs
 		# XXX: Use /kern/rootdev instead?
-		mount /kern/rootdev / > /dev/null 2>&1
+		mount -u /kern/rootdev / > /dev/null 2>&1
 		cp /dev/null /tmp/.root_writable
 	fi
 }
@@ -99,7 +99,7 @@ md_installboot() {
 		case "$resp" in
 			y*|Y*)
 				echo "Installing boot block..."
-				chroot /mnt /usr/mdec/installboot -v $1
+				chroot /mnt /usr/mdec/installboot /usr/mdec/xxboot /dev/r${1}a
 				;;
 			*)
 				echo "No bootblock installed..."
