@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13 2005/03/11 15:51:25 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.14 2005/03/17 22:30:17 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13 2005/03/11 15:51:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.14 2005/03/17 22:30:17 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -132,7 +132,8 @@ static int xen_network_handler(void *);
 static void network_tx_buf_gc(struct xennet_softc *);
 static void network_alloc_rx_buffers(struct xennet_softc *);
 static void network_alloc_tx_buffers(struct xennet_softc *);
-void xennet_init(struct xennet_softc *);
+int  xennet_init(struct ifnet *);
+void xennet_stop(struct ifnet *, int);
 void xennet_reset(struct xennet_softc *);
 #ifdef mediacode
 static int xennet_mediachange (struct ifnet *);
@@ -257,7 +258,12 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = xennet_start;
 	ifp->if_ioctl = xennet_ioctl;
 	ifp->if_watchdog = xennet_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_init = xennet_init;
+	ifp->if_stop = xennet_stop;
+	ifp->if_flags =
+	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_timer = 0;
+	IFQ_SET_READY(&ifp->if_snd);
 
 #ifdef mediacode
 	ifmedia_init(&sc->sc_media, 0, xennet_mediachange,
@@ -1096,8 +1102,6 @@ xennet_start(struct ifnet *ifp)
 int
 xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct xennet_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 #ifdef mediacode
 	struct ifreq *ifr = (struct ifreq *)data;
 #endif
@@ -1106,52 +1110,9 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n", sc->sc_dev.dv_xname));
-
-	switch(cmd) {
-	case SIOCSIFADDR:
-		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOCSIFADDR\n",
-		    sc->sc_dev.dv_xname));
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			xennet_init(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		default:
-			xennet_init(sc);
-			break;
-		}
-		break;
-
-	case SIOCSIFFLAGS:
-		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOCSIFFLAGS\n",
-		    sc->sc_dev.dv_xname));
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOC*MULTI\n",
-		    sc->sc_dev.dv_xname));
-		break;
-
-#ifdef mediacode
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOC*IFMEDIA\n",
-		    sc->sc_dev.dv_xname));
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-#endif
-
-	default:
-		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl(0x%lx) unknown cmd\n",
-		    sc->sc_dev.dv_xname, cmd));
-		error = EINVAL;
-		break;
-	}
-
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET)
+		error = 0;
 	splx(s);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() returning %d\n",
@@ -1167,10 +1128,11 @@ xennet_watchdog(struct ifnet *ifp)
 	panic("xennet_watchdog\n");
 }
 
-void
-xennet_init(struct xennet_softc *sc)
+int
+xennet_init(struct ifnet *ifp)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct xennet_softc *sc = ifp->if_softc;
+	int s = splnet();
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", sc->sc_dev.dv_xname));
 
@@ -1185,6 +1147,14 @@ xennet_init(struct xennet_softc *sc)
 		ifp->if_flags &= ~IFF_RUNNING;
 		xennet_reset(sc);
 	}
+	splx(s);
+	return 0;
+}
+
+void
+xennet_stop(struct ifnet *ifp, int disable)
+{
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 void
