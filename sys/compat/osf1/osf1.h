@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.18 1999/05/10 03:58:50 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.19 1999/05/10 04:18:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -430,17 +430,17 @@ struct osf1_sigaltstack {
 struct osf1_msghdr {
 	osf1_data_ptr	msg_name;
 	osf1_u_int	msg_namelen;
-	osf1_data_ptr	msg_iov;		/* struct osf1_xopen_iovec * */
+	osf1_data_ptr	msg_iov;		/* struct osf1_iovec_xopen * */
 	osf1_u_int	msg_iovlen;
 	osf1_data_ptr	msg_control;
 	osf1_u_int	msg_controllen;
 	osf1_int	msg_flags;
 };
 
-struct osf1_xopen_msghdr {
+struct osf1_msghdr_xopen {
 	osf1_data_ptr	msg_name;
 	osf1_size_t	msg_namelen;
-	osf1_data_ptr	msg_iov;		/* struct osf1_xopen_iovec * */
+	osf1_data_ptr	msg_iov;		/* struct osf1_iovec_xopen * */
 	osf1_int	msg_iovlen;
 	osf1_data_ptr	msg_control;
 	osf1_size_t	msg_controllen;
@@ -531,7 +531,7 @@ struct osf1_iovec {
 	osf1_int	iov_len;
 };
 
-struct osf1_xopen_iovec {
+struct osf1_iovec_xopen {
 	osf1_data_ptr	iov_base;
 	osf1_size_t	iov_len;
 };
