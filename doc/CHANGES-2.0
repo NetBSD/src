@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.358 2004/07/26 07:16:30 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.359 2004/07/26 12:47:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6180,4 +6180,12 @@ sys/compat/linux/arch/powerpc/linux_sp_wrap_powerpc.S	delete
 	anymore, and removing it lets us go back to mapping the stack
 	non-executable again.
 	[chs, ticket #715]
+
+lib/libcurses/cr_put.c				1.23
+lib/libcurses/setterm.c				1.39
+
+	Remove _cursesi_genbuf, it was not being set and caused a SIGSEGV
+	in getcap().  Fixed getcap() to use screen->cursesi_genbuf.
+	Thanks to Peter Bex for spotting this.  This closes pr lib/26404.
+	[blymn, ticket #716]
 
