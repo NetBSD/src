@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.71 1998/03/03 19:07:20 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.72 1998/03/24 13:49:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -577,7 +577,7 @@ nfs_decode_args(nmp, argp)
 	nmp->nm_soproto = argp->proto;
 
 	if (nmp->nm_so && adjsock) {
-		nfs_disconnect(nmp);
+		nfs_safedisconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0)) {
 				printf("nfs_args: retrying connect\n");
