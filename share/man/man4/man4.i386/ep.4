@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ep.4,v 1.4 1994/04/13 07:01:50 deraadt Exp $
+.\"	$Id: ep.4,v 1.5 1994/07/13 19:26:37 hpeyerl Exp $
 .\"
 .Dd February 04, 1993
 .Dt EP 4
@@ -59,14 +59,12 @@ use the following flag combinations with
 or in your /etc/hostname.ep? file.
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It -link0 -link1
+.It -link0
 Use the BNC port (default).
 .It \ link0 -link1
 Use the AUI port.
-.It -link0 \ link1
-Use the UTP port.
 .It \ link0 \ link1
-Undefined.
+Use the UTP port.
 .El
 .Pp
 If there are multiple cards in the computer, they are searched for
