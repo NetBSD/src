@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.87 2004/03/18 20:35:55 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.87.2.1 2004/04/27 17:26:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.87 2004/03/18 20:35:55 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.87.2.1 2004/04/27 17:26:24 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,6 +194,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		sblock.fs_maxsymlinklen = (Oflag == 1 ? MAXSYMLINKLEN_UFS1 :
 		    MAXSYMLINKLEN_UFS2);
 		sblock.fs_old_flags = FS_FLAGS_UPDATED;
+		if (isappleufs)
+			sblock.fs_old_flags = 0;
 		sblock.fs_flags = 0;
 	}
 
@@ -627,6 +629,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
 		ffs_sb_swap(&sblock, (struct fs *)iobuf);
+	if ((sblock.fs_old_flags & FS_FLAGS_UPDATED) == 0)
+		memset(iobuf + offsetof(struct fs, fs_old_postbl_start),
+		    0xff, 256);
 
 	if (!mfs || Nflag)
 		printf("super-block backups (for fsck -b #) at:");
@@ -665,6 +670,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
 		ffs_sb_swap(&sblock, (struct fs *)iobuf);
+	if ((sblock.fs_old_flags & FS_FLAGS_UPDATED) == 0)
+		memset(iobuf + offsetof(struct fs, fs_old_postbl_start),
+		    0xff, 256);
 	wtfs(sblock.fs_sblockloc / sectorsize, i, iobuf);
 
 	/* Write out first and last cylinder summary sectors */
@@ -744,6 +752,10 @@ initcg(int cylno, const struct timeval *tv)
 		acg.cg_iusedoff = start;
 	} else {
 		acg.cg_old_ncyl = sblock.fs_old_cpg;
+		if ((sblock.fs_old_flags & FS_FLAGS_UPDATED) == 0 &&
+		    (cylno == sblock.fs_ncg - 1))
+			acg.cg_old_ncyl = 
+			    sblock.fs_old_ncyl % sblock.fs_old_cpg;
 		acg.cg_old_time = tv->tv_sec;
 		acg.cg_old_niblk = sblock.fs_ipg;
 		acg.cg_old_btotoff = start;
@@ -793,6 +805,12 @@ initcg(int cylno, const struct timeval *tv)
 			if (sblock.fs_contigsumsize > 0)
 				setbit(cg_clustersfree(&acg, 0), blkno);
 			acg.cg_cs.cs_nbfree++;
+			if (Oflag <= 1) {
+				int cn = old_cbtocylno(&sblock, d);
+				old_cg_blktot(&acg, 0)[cn]++;
+				old_cg_blks(&sblock, &acg,
+				    cn, 0)[old_cbtorpos(&sblock, d)]++;
+			}
 			d += sblock.fs_frag;
 			blkno++;
 		}
@@ -810,6 +828,12 @@ initcg(int cylno, const struct timeval *tv)
 		if (sblock.fs_contigsumsize > 0)
 			setbit(cg_clustersfree(&acg, 0), blkno);
 		acg.cg_cs.cs_nbfree++;
+		if (Oflag <= 1) {
+			int cn = old_cbtocylno(&sblock, d);
+			old_cg_blktot(&acg, 0)[cn]++;
+			old_cg_blks(&sblock, &acg,
+			    cn, 0)[old_cbtorpos(&sblock, d)]++;
+		}
 		d += sblock.fs_frag;
 		blkno++;
 	}
@@ -1141,6 +1165,12 @@ goth:
 		acg.cg_cs.cs_ndir++;
 		sblock.fs_cstotal.cs_ndir++;
 		fscs_0->cs_ndir++;
+	}
+	if (Oflag <= 1) {
+		int cn = old_cbtocylno(&sblock, d);
+		old_cg_blktot(&acg, 0)[cn]--;
+		old_cg_blks(&sblock, &acg,
+		    cn, 0)[old_cbtorpos(&sblock, d)]--;
 	}
 	if (size != sblock.fs_bsize) {
 		frag = howmany(size, sblock.fs_fsize);
