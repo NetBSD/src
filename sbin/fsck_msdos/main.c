@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2005/01/13 15:22:35 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -71,7 +71,7 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "pqynf")) != -1) {
+	while ((ch = getopt(argc, argv, "pPqynf")) != -1) {
 		switch (ch) {
 		case 'f':
 			/*
@@ -93,7 +93,10 @@ main(argc, argv)
 			alwaysyes = alwaysno = 0;
 			break;
 
-		case 'q':		/* quite not implemented */
+		case 'P':		/* Progress meter not implemented. */
+			break;
+
+		case 'q':		/* Quiet not implemented. */
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ffs.8,v 1.38 2004/06/02 19:27:24 fair Exp $
+.\"	$NetBSD: fsck_ffs.8,v 1.39 2005/01/13 15:22:35 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd Fast File System consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm
-.Op Fl adFfpq
+.Op Fl adFfPpq
 .Op Fl B Ar byteorder
 .Op Fl b Ar block
 .Op Fl c Ar level
@@ -240,6 +240,14 @@ do not open the file system for writing.
 Specify
 .Dq preen
 mode, described above.
+.It Fl P
+Display a progress meter for the file system check.
+A new meter is displayed for each of the 5 file system check passes, unless
+.Fl p
+is specified, in which case only one meter for overall progress is displayed.
+Progress meters are disabled if the
+.Fl -d
+option is specified.
 .It Fl q
 Quiet mode, do not output any messages for clean filesystems.
 .It Fl y

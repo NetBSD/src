@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.17 2003/08/07 10:04:20 agc Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.18 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.17 2003/08/07 10:04:20 agc Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.18 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,9 @@ pass1b()
 			    c * 100 / sblock->fs_ncg);
 			got_siginfo = 0;
 		}
+#ifndef SMALL
+		progress_bar(cdevname(), "phase 1b", c, sblock->fs_ncg);
+#endif /* ! SMALL */
 		for (i = 0; i < sblock->fs_ipg; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;
@@ -86,6 +89,9 @@ pass1b()
 				return;
 		}
 	}
+#ifndef SMALL
+	progress_done();
+#endif /* ! SMALL */
 }
 
 static int
