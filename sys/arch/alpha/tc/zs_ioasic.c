@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.5 1999/02/03 20:25:05 mycroft Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.6 1999/08/03 05:30:56 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5 1999/02/03 20:25:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.6 1999/08/03 05:30:56 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5 1999/02/03 20:25:05 mycroft Exp $"
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
 #include "opt_zs_ioasic_dma.h"
+#include "zskbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -779,9 +780,6 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 
 	/* Copy "pending" to "current" and H/W. */
 	zs_loadchannelregs(cs);
-
-	/* Point the console at the SCC. */
-	cn_tab = &zs_ioasic_cons;
 }
 
 /*
@@ -820,9 +818,11 @@ zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
 	zs_ioasic_conschanstate->cs_defspeed = 4800;
 	zs_ioasic_conschanstate->cs_defcflag =
 	     (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-	return (zskbd_cnattach(zs_ioasic_conschanstate));
+	zs_ioasic_conschanstate->cs_brg_clk = PCLK / 16;
+	zskbd_cnattach(zs_ioasic_conschanstate);
+	return (1);
 #else
-	return (ENXIO);
+	return (0);
 #endif
 }
 
