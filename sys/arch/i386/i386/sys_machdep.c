@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.12 1994/10/20 23:48:21 mycroft Exp $
+ *	$Id: sys_machdep.c,v 1.13 1994/10/23 21:57:12 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -134,12 +134,10 @@ set_user_ldt(pcb)
 	currentldt = GSEL(GUSERLDT_SEL, SEL_KPL);
 }
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
-
 struct i386_get_ldt_args {
-	syscallarg(int) start;
-	syscallarg(union descriptor *) desc;
-	syscallarg(int) num;
+	int start;
+	union descriptor *desc;
+	int num;
 };
 
 int
@@ -160,30 +158,30 @@ i386_get_ldt(p, args, retval)
 
 	uap = &ua;
 #ifdef	DEBUG
-	printf("i386_get_ldt: start=%d num=%d descs=%x\n", SCARG(uap, start),
-	    SCARG(uap, num), SCARG(uap, desc));
+	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start,
+	    uap->num, uap->desc);
 #endif
 
-	if (SCARG(uap, start) < 0 || SCARG(uap, num) < 0)
+	if (uap->start < 0 || uap->num < 0)
 		return(EINVAL);
 
 	s = splhigh();
 
 	if (pcb->pcb_ldt) {
 		nldt = pcb->pcb_ldt_len;
-		num = min(SCARG(uap, num), nldt);
-		lp = &((union descriptor *)(pcb->pcb_ldt))[SCARG(uap, start)];
+		num = min(uap->num, nldt);
+		lp = &((union descriptor *)(pcb->pcb_ldt))[uap->start];
 	} else {
 		nldt = sizeof(ldt)/sizeof(ldt[0]);
-		num = min(SCARG(uap, num), nldt);
-		lp = &ldt[SCARG(uap, start)];
+		num = min(uap->num, nldt);
+		lp = &ldt[uap->start];
 	}
-	if (SCARG(uap, start) > nldt) {
+	if (uap->start > nldt) {
 		splx(s);
 		return(EINVAL);
 	}
 
-	error = copyout(lp, SCARG(uap, desc), num * sizeof(union descriptor));
+	error = copyout(lp, uap->desc, num * sizeof(union descriptor));
 	if (!error)
 		*retval = num;
 
@@ -192,9 +190,9 @@ i386_get_ldt(p, args, retval)
 }
 
 struct i386_set_ldt_args {
-	syscallarg(int) start;
-	syscallarg(union descriptor *) desc;
-	syscallarg(int) num;
+	int start;
+	union descriptor *desc;
+	int num;
 };
 
 int
@@ -215,16 +213,15 @@ i386_set_ldt(p, args, retval)
 	uap = &ua;
 
 #ifdef	DEBUG
-	printf("i386_set_ldt: start=%d num=%d descs=%x\n", SCARG(uap, start),
-	    SCARG(uap, num), SCARG(uap, desc));
+	printf("i386_set_ldt: start=%d num=%d descs=%x\n", uap->start,
+	    uap->num, uap->desc);
 #endif
 
-	if (SCARG(uap, start) < 0 || SCARG(uap, num) < 0)
+	if (uap->start < 0 || uap->num < 0)
 		return(EINVAL);
 
 	/* XXX Should be 8192 ! */
-	if (SCARG(uap, start) > 512 ||
-	    (SCARG(uap, start) + SCARG(uap, num)) > 512)
+	if (uap->start > 512 || (uap->start + uap->num) > 512)
 		return(EINVAL);
 
 	/* allocate user ldt */
@@ -241,9 +238,9 @@ i386_set_ldt(p, args, retval)
 	}
 
 	/* Check descriptors for access violations */
-	for (i = 0, n = SCARG(uap, start); i < SCARG(uap, num); i++, n++) {
+	for (i = 0, n = uap->start; i < uap->num; i++, n++) {
 		union descriptor desc, *dp;
-		dp = &SCARG(uap, desc)[i];
+		dp = &uap->desc[i];
 		error = copyin(dp, &desc, sizeof(union descriptor));
 		if (error)
 			return(error);
@@ -292,10 +289,9 @@ i386_set_ldt(p, args, retval)
 	s = splhigh();
 
 	/* Fill in range */
-	for (i = 0, n = SCARG(uap, start); i < SCARG(uap, num) && !error;
-	    i++, n++) {
+	for (i = 0, n = uap->start; i < uap->num && !error; i++, n++) {
 		union descriptor desc, *dp;
-		dp = &SCARG(uap, desc)[i];
+		dp = &uap->desc[i];
 		lp = &((union descriptor *)(pcb->pcb_ldt))[n];
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): ldtp=%x\n", p->p_pid, lp);
@@ -303,7 +299,7 @@ i386_set_ldt(p, args, retval)
 		error = copyin(dp, lp, sizeof(union descriptor));
 	}
 	if (!error) {
-		*retval = SCARG(uap, start);
+		*retval = uap->start;
 		if (p == curproc)
 			set_user_ldt(pcb);
 	}
