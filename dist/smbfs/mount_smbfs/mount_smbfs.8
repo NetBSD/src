@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_smbfs.8,v 1.6 2003/04/01 11:24:47 jdolecek Exp $
+.\" $NetBSD: mount_smbfs.8,v 1.7 2003/04/04 07:57:58 jdolecek Exp $
 .\" from: Id: mount_smbfs.8,v 1.10 2002/04/16 02:47:41 bp Exp
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -162,11 +162,13 @@ as the resource name on a remote server.
 Path to mount point.
 .El
 .Sh FILES
-.Bl -tag -width ".Pa ~/.nsmbrc" -compact
+.Bl -tag -width " /etc/nsmb.conf" -compact
+.It Pa /etc/nsmb.conf
+System wide parameters for smbfs mounts.
 .It Pa ~/.nsmbrc
 Keeps static parameters for connections and other information.
 See
-.Pa ./examples/dot.nsmbrc
+.Pa /usr/share/examples/smbfs/dot.nsmbrc
 for details.
 .El
 .Sh EXAMPLES
