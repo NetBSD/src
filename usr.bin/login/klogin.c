@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
+/*	$NetBSD: klogin.c,v 1.8 1997/02/11 08:15:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $";
+static char rcsid[] = "$NetBSD: klogin.c,v 1.8 1997/02/11 08:15:09 mrg Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -114,11 +114,11 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		(void)sprintf(tkt_location, "%s%d.%s",
-			      TKT_ROOT, pw->pw_uid, tty);
+		(void)snprintf(tkt_location, sizeof tkt_location, "%s%d.%s",
+		    TKT_ROOT, pw->pw_uid, tty);
 	else
-		(void)sprintf(tkt_location, "%s_root_%d.%s",
-			      TKT_ROOT, pw->pw_uid, tty);
+		(void)snprintf(tkt_location, sizeof tkt_location,
+		    "%s_root_%d.%s", TKT_ROOT, pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
 	(void)krb_set_tkt_string(tkt_location);
 
@@ -263,13 +263,15 @@ kdestroy()
 	(void) unlink(file);
 
 out:
-	if (errno != 0) return;
+	if (errno != 0)
+		return;
 #ifdef TKT_SHMEM
 	/* 
 	 * handle the shared memory case 
 	 */
-	(void) strcpy(shmidname, file);
-	(void) strcat(shmidname, ".shm");
+	/* 5 == 4 (".shm") + 1 */
+	(void)strncpy(shmidname, file, sizeof(shmidname) - 5);
+	(void)strcat(shmidname, ".shm");	/* XXX strcat is safe */
 	if (krb_shm_dest(shmidname) != KSUCCESS)
 	    return;
 #endif /* TKT_SHMEM */
