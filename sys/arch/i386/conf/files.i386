@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.249 2004/02/16 17:11:27 wiz Exp $
+#	$NetBSD: files.i386,v 1.250 2004/03/13 17:31:33 bjh21 Exp $
 #
 # new style config file for i386 architecture
 #
@@ -220,8 +220,8 @@ file	arch/i386/isa/npx_isa.c		npx_isa
 # PC console support a la "pccons"
 device	pc: tty
 attach	pc at isa
-device	pcconskbd: pckbc_machdep_cnattach
-attach	pcconskbd at pckbc
+device	pcconskbd: pckbport_machdep_cnattach
+attach	pcconskbd at pckbport
 file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice: Logitech-style and Microsoft-style
@@ -235,7 +235,7 @@ file	arch/i386/isa/mms.c		mms
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-include	"dev/pckbc/files.pckbc"
+include	"dev/pckbport/files.pckbport"
 
 device	sysbeep
 attach	sysbeep at pcppi

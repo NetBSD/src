@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.17 2003/10/08 17:29:59 bouyer Exp $
+#	$NetBSD: files.algor,v 1.18 2004/03/13 17:31:33 bjh21 Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -79,7 +79,7 @@ include "dev/wscons/files.wscons"
 #
 # Machine-independent PC-style keyboard controller drivers
 #
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 #
 # Machine-independent USB device support

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.1 1998/09/17 18:21:04 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.1 2004/03/13 17:31:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

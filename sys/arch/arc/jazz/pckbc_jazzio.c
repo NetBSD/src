@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.9 2003/07/15 00:04:50 lukem Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.10 2004/03/13 17:31:33 bjh21 Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.9 2003/07/15 00:04:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.10 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,14 +101,14 @@ pckbc_jazzio_match(parent, match, aux)
 		t.t_ioh_c = ioh_c;
 
 		/* flush KBC */
-		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
+		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
 
 		/* KBC selftest */
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0) {
 			ok = 0;
 			goto out;
 		}
-		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
+		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
 		if (res != 0x55) {
 			printf("kbc selftest: %x\n", res);
 			ok = 0;

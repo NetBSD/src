@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.49 2003/11/17 12:53:47 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.50 2004/03/13 17:31:33 bjh21 Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -95,7 +95,7 @@ include "dev/wsfont/files.wsfont"
 #
 include "dev/wscons/files.wscons"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 #
 #	System BUS types
