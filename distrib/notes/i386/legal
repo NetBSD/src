@@ -1,10 +1,6 @@
-.\" $NetBSD: legal,v 1.8 2000/06/17 09:28:26 soda Exp $	
-.
-.
-.
-.
+.\"	$NetBSD: legal,v 1.9 2000/10/04 00:28:36 lukem Exp $	
+.\"
 .ig
-
 
 WARNING: Don't insert markup into this file without making AT LEAST one of
 the following checks:
@@ -13,38 +9,40 @@ the following checks:
   2. The command is an -mdoc macro that doesn't change the point size.
   3. You restore the lowered point size after marked-up input changes it.
 
-
 ..
 .
 .
-.
-.
+.Pp
 This product includes software developed by Charles Hannum.
-
+.Pp
 This product includes software developed by Charles Hannum, by
 the University of Vermont and State Agricultural College and
 Garrett A. Wollman, by William F. Jolitz, and by the
 University of California, Berkeley, Lawrence Berkeley
 Laboratory, and its contributors.
-
+.Pp
 This product includes software developed by the University of
 Vermont and State Agricultural College and Garrett A. Wollman.
-
+.Pp
 This product includes software developed by Dean Huxley.
-
+.Pp
 This product includes software developed by Herb Peyerl.
-
+.Pp
 In the following statement, "This software" refers to the Mitsumi
 CD-ROM driver:
-
+.Bl -item -offset indent
+.It
 This software was developed by Holger Veit and Brian Moore for
 use with "386BSD" and similar operating systems.  "Similar
 operating systems" includes mainly non-profit oriented systems
 for research and education, including but not restricted to
 "NetBSD", "FreeBSD", "Mach" (by CMU).
-
+.El
+.Pp
 In the following statement, "This software" refers to the parallel
 port driver:
-
+.Bl -item -offset indent
+.It
 This software is a component of "386BSD" developed by 
 William F. Jolitz, TeleMuse.
+.El
