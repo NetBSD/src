@@ -138,7 +138,7 @@
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpIrq (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -184,7 +184,7 @@ AcpiRsDumpIrq (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpDma (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -267,7 +267,7 @@ AcpiRsDumpDma (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpStartDependentFunctions (
     ACPI_RESOURCE_DATA          *Data)
 {
@@ -334,7 +334,7 @@ AcpiRsDumpStartDependentFunctions (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpIo (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -377,7 +377,7 @@ AcpiRsDumpIo (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpFixedIo (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -410,7 +410,7 @@ AcpiRsDumpFixedIo (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpVendorSpecific (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -447,7 +447,7 @@ AcpiRsDumpVendorSpecific (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpMemory24 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -492,7 +492,7 @@ AcpiRsDumpMemory24 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpMemory32 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -537,7 +537,7 @@ AcpiRsDumpMemory32 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpFixedMemory32 (
     ACPI_RESOURCE_DATA          *Data)
 {
@@ -576,7 +576,7 @@ AcpiRsDumpFixedMemory32 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpAddress16 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -723,7 +723,7 @@ AcpiRsDumpAddress16 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpAddress32 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -869,7 +869,7 @@ AcpiRsDumpAddress32 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpAddress64 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -1015,7 +1015,7 @@ AcpiRsDumpAddress64 (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiRsDumpExtendedIrq (
     ACPI_RESOURCE_DATA      *Data)
 {

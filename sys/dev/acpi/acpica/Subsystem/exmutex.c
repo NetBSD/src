@@ -168,7 +168,7 @@ AcpiExUnlinkMutex (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiExLinkMutex (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_OPERAND_OBJECT     *ListHead)

@@ -150,7 +150,7 @@ NATIVE_CHAR                 *AcpiGbl_DbDisasmIndent = "....";
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiDbBlockType (
     ACPI_PARSE_OBJECT       *Op)
 {
@@ -222,7 +222,7 @@ AcpiPsDisplayObjectPathname (
 
 #else
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiPsDisplayObjectPathname (
     ACPI_PARSE_OBJECT       *Op)
 {
