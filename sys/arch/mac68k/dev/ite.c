@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.47 1999/03/12 22:42:30 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.48 1999/03/27 05:53:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@
  */
 
 #include "opt_grf.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1338,14 +1339,18 @@ itecngetc(dev_t dev)
 int
 itecnputc(dev_t dev, int c)
 {
+#if NZSC > 0
 	extern dev_t mac68k_zsdev;
 	extern int zscnputc __P((dev_t dev, int c));
+#endif
 
 	erasecursor();
 	ite_putchar(c);
 	drawcursor();
+#if NZSC > 0
 	if (mac68k_machine.serial_boot_echo)
 		zscnputc(mac68k_zsdev, c);
+#endif
 
 	return c;
 }
