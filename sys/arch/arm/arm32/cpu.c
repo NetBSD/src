@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2002/03/10 11:06:01 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2002/03/10 11:32:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpu.c,v 1.23 2002/03/10 11:06:01 bjh21 Exp $");
+__RCSID("$NetBSD: cpu.c,v 1.24 2002/03/10 11:32:00 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -566,25 +566,19 @@ identify_arm_fpu(struct device *dv, int cpu_number)
 
 	switch (cpu->fpu_class) {
 	case FPU_CLASS_NONE :
-		strcpy(cpu->fpu_model, "None");
 		break;
 	case FPU_CLASS_FPE :
-		printf("%s: FPE: %s\n", dv->dv_xname, cpu->fpu_model);
 		printf("%s: no FP hardware found\n", dv->dv_xname);
 		break;
 	case FPU_CLASS_FPA :
-		printf("%s: FPE: %s\n", dv->dv_xname, cpu->fpu_model);
-		if (cpu->fpu_type == FPU_TYPE_FPA11) {
-			strcpy(cpu->fpu_model, "FPA11");
+		if (cpu->fpu_type == FPU_TYPE_FPA11)
 			printf("%s: FPA11 found\n", dv->dv_xname);
-		} else {
-			strcpy(cpu->fpu_model, "FPA");
+		else
 			printf("%s: FPA10 found\n", dv->dv_xname);
-		}
+		break;
 	case FPU_CLASS_FPU :
-		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n",
-		    cpu->fpu_type);
-		printf("%s: %s\n", dv->dv_xname, cpu->fpu_model);
+		printf("%s: Unknown FPU (ID=%02x)\n",
+		    dv->dv_xname, cpu->fpu_type);
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.1 2001/11/24 01:26:25 thorpej Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.2 2002/03/10 11:32:00 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -94,13 +94,15 @@ initialise_arm_fpe(cpu)
 
 	cpu->fpu_class = FPU_CLASS_FPE;
 	cpu->fpu_type = FPU_TYPE_ARMLTD_FPE;
-	strcpy(cpu->fpu_model, fpe_arm_header.core_identity_addr);
+	printf("%s: FPE: %s",
+	    curcpu()->ci_dev->dv_xname, fpe_arm_header.core_identity_addr);
 	error = arm_fpe_boot(cpu);
 	if (error != 0) {
-		strcat(cpu->fpu_model, " - boot failed");
+		printf(" - boot failed\n");
 		return(1);
 	}
 
+	printf("\n");
 	return(0);
 }
 
