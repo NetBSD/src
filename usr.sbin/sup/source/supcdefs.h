@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.6.2.1 1999/04/12 21:27:10 pk Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.6.2.2 2000/01/23 12:03:53 he Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -77,7 +77,6 @@
 #include "sup.h"
 #include "supmsg.h"
 
-extern int errno;
 extern int PGMVERSION;
 
 /*******************************************
