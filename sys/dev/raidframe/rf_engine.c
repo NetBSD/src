@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.31 2004/01/02 21:41:08 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.32 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.31 2004/01/02 21:41:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.32 2004/02/29 04:03:50 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -125,7 +125,6 @@ int
 rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		   RF_Config_t *cfgPtr)
 {
-	int     rc;
 
 	rf_mutex_init(&raidPtr->node_queue_mutex);
 	raidPtr->node_queue = NULL;
@@ -159,12 +158,9 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	if (rf_engineDebug) {
 		printf("raid%d: Engine thread running and waiting for events\n", raidPtr->raidid);
 	}
-	rc = rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownEngine(NULL);
-	}
-	return (rc);
+	rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
+
+	return (0);
 }
 
 static int 

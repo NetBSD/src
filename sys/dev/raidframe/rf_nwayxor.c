@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.c,v 1.6 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_nwayxor.c,v 1.7 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_nwayxor.c,v 1.6 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_nwayxor.c,v 1.7 2004/02/29 04:03:50 oster Exp $");
 
 #include "rf_nwayxor.h"
 #include "rf_shutdown.h"
@@ -60,12 +60,12 @@ rf_ShutdownNWayXor(void *ignored)
 int 
 rf_ConfigureNWayXor(RF_ShutdownList_t **listp)
 {
-	int     i, rc;
+	int     i;
 
 	for (i = 0; i < 10; i++)
 		callcount[i] = 0;
-	rc = rf_ShutdownCreate(listp, rf_ShutdownNWayXor, NULL);
-	return (rc);
+	rf_ShutdownCreate(listp, rf_ShutdownNWayXor, NULL);
+	return (0);
 }
 
 void 
