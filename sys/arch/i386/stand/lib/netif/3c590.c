@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.7 1997/09/20 12:13:03 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.8 1998/02/25 12:15:49 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -31,11 +31,14 @@ Author: Martin Renters.
 #include <machine/pio.h>
 
 #include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
 #include <pcivar.h>
+
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
 #include <bootinfo.h>
+#endif
 
 #include "etherdrv.h"
 #include "3c509.h"
@@ -62,7 +65,9 @@ static struct mtabentry {
     {6, 0x40, "MII"},
 };
 
+#ifdef _STANDALONE
 static struct btinfo_netif bi_netif;
+#endif
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
@@ -88,11 +93,12 @@ char *myadr;
 	    return(0);
 	}
 
-	if(pcifinddev(0x10b7, 0x5900, &hdl) &&
-	   pcifinddev(0x10b7, 0x9001, &hdl) &&
-	   pcifinddev(0x10b7, 0x9050, &hdl)) {
-	    printf("cannot find 3c590 / 3c900\n");
-	    return(0);
+	if (pcifinddev(0x10b7, 0x5900, &hdl) &&
+	    pcifinddev(0x10b7, 0x9000, &hdl) &&
+	    pcifinddev(0x10b7, 0x9001, &hdl) &&
+	    pcifinddev(0x10b7, 0x9050, &hdl)) {
+		printf("cannot find 3c590 / 3c900\n");
+		return(0);
 	}
 
 	if(pcicfgread(&hdl, 0x10, &iobase) || !(iobase & 1)) {
@@ -142,11 +148,13 @@ ok:
 	epreset();
 
 
+#ifdef _STANDALONE
 	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
 	bi_netif.bus = BI_BUS_PCI;
 	bi_netif.addr.tag = hdl;
 
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+#endif
 
 	return(1);
 }
