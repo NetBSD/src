@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.1 2000/07/30 04:29:22 takemura Exp $ */
+/*	$NetBSD: apmdev.c,v 1.2 2000/08/09 16:34:25 tv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ static void	apm_periodic_check __P((struct apm_softc *));
 static void	apm_create_thread __P((void *));
 static void	apm_thread __P((void *));
 static void	apm_perror __P((const char *, int, ...))
-		    __kprintf_attribute__((__format__(__printf__,1,3)));
+		    __attribute__((__format__(__printf__,1,3)));
 #ifdef APM_POWER_PRINT
 static void	apm_power_print __P((struct apm_softc *, struct apm_power_info *));
 #endif
