@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.7 2001/01/20 02:26:40 thorpej Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.8 2001/01/20 19:29:06 thorpej Exp $	*/
 
 /*
  * cy_var.h
@@ -28,16 +28,6 @@
 #define CY_RX_DTR_THRESHOLD   9
 
 /*
- * Port number on card encoded in low 5 bits
- * card number in next 2 bits (only space for 4 cards)
- * high bit reserved for dialout flag
- */
-#define CY_PORT(x) (minor(x) & 0x1f)
-#define CY_CARD(x) ((minor(x) >> 5) & 3)
-#define CY_DIALOUT(x) ((minor(x) & 0x80) != 0)
-#define CY_DIALIN(x) (!CY_DIALOUT(x))
-
-/*
  * read/write cd1400 registers (when sc_softc-structure is available)
  */
 #define cd_read_reg(sc,chip,reg) bus_space_read_1(sc->sc_memt, \
@@ -56,6 +46,7 @@
 
 /* software state for one port */
 struct cy_port {
+	struct cy_softc *cy_softc;
 	int             cy_port_num;
 	int             cy_chip;
 	int             cy_clock;
@@ -94,6 +85,7 @@ struct cy_softc {
 	int		sc_nchips;	/* Number of cd1400's on this card */
 	int             sc_cd1400_offs[CY_MAX_CD1400s];
 	struct cy_port  sc_ports[CY_MAX_PORTS];
+	int		sc_nchannels;	/* total number of ports */
 #ifdef CY_DEBUG1
 	int             sc_poll_count1;
 	int             sc_poll_count2;
