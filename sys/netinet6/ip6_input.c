@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.6 1999/07/31 18:41:16 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.7 1999/08/07 12:33:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -178,8 +178,6 @@ ip6_init()
 	 */
 	microtime(&tv);
 	ip6_flow_seq = random() ^ tv.tv_usec;
-	in6_iflladdr = malloc(i, M_IFADDR, M_WAITOK);
-	bzero(in6_iflladdr, i);
 
 	ip6_init2((void *)0);
 }
