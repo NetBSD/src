@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 1999/03/26 16:53:29 tron Exp $
+#	$NetBSD: Makefile,v 1.101.2.1 1999/09/22 03:17:43 cgd Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -13,9 +13,9 @@ SUBDIR=	apply apropos asa at audio banner basename bdes biff \
 	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace \
 	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
-	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
-	msgc msgs netgroup netstat newsyslog nfsstat nice nl nohup pagesize \
-	passwd paste patch pr printenv printf quota rdist \
+	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr mktemp \
+	modstat msgc msgs netgroup netstat newsyslog nfsstat nice nl nohup \
+	pagesize passwd paste patch pr printenv printf quota rdist \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
 	showmount shuffle skey skeyinfo skeyinit soelim split \
