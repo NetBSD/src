@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2002/06/23 20:36:36 manu Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2002/08/04 01:47:17 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -95,6 +95,7 @@ do {									\
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
+#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
 
 /*
  * Platform can override, but note this breaks userland compatibility
@@ -108,6 +109,7 @@ do {									\
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "root_device", CTLTYPE_STRING }, \
+	{ "llsc", CTLTYPE_INT }, \
 }
 #endif
 
