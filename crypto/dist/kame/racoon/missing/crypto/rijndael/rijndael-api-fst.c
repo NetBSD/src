@@ -15,6 +15,9 @@
  * This code is placed in the public domain.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rijndael-api-fst.c,v 1.7 2003/07/12 09:37:14 itojun Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #ifdef _KERNEL
