@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.11 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.12 1998/11/30 21:39:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -702,6 +702,7 @@ ohci_ctrl_done(sc, reqh)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
 		usb_freemem(sc->sc_dmatag, dma);
 	}
+	untimeout(ohci_timeout, reqh);
 }
 
 void
@@ -766,6 +767,7 @@ ohci_bulk_done(sc, reqh)
 	if (reqh->request.bmRequestType & UT_READ)
 		memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
 	usb_freemem(sc->sc_dmatag, dma);
+	untimeout(ohci_timeout, reqh);
 }
 
 void
