@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.33.2.2 2000/07/05 01:15:25 enami Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.33.2.3 2000/08/07 01:20:20 enami Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.33.2.2 2000/07/05 01:15:25 enami Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.33.2.3 2000/08/07 01:20:20 enami Exp $");
 #endif
 
 #include <sys/types.h>
@@ -373,31 +373,34 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				else
 					canon = word;
 			} else {
+				struct hostent *hp;
 				/*
 				 * If it didn't match, try getting the
 				 * canonical host name of the client
-				 * on this line and comparing that to
-				 * the client we are looking for
+				 * on this line, if it's not a glob,
+				 * and comparing it to the client we
+				 * are looking up.
 				 */
-				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL) {
+				if (HASGLOB(word)) {
 					if (debug)
-						warnx(
-					    "Unknown bootparams host %s", word);
-					if (dolog)
-						syslog(LOG_NOTICE,
-					    "Unknown bootparams host %s", word);
+						warnx("Skipping non-match: %s",
+						    word);
 					continue;
 				}
-				if (fnmatch(word, hp->h_name,
-				    FNM_CASEFOLD) == 0) {
-					/* See above. */
-					if (HASGLOB(word))
-						canon = hp->h_name;
-					else
-						canon = word;
-				} else
+				if ((hp = gethostbyname(word)) == NULL) {
+					if (debug)
+						warnx(
+					    "Unknown bootparams host %s",
+					    word);
+					if (dolog)
+						syslog(LOG_NOTICE,
+					    "Unknown bootparams host %s",
+					    word);
 					continue;
+				}
+				if (strcasecmp(hp->h_name, client) != 0)
+					continue;
+				canon = hp->h_name;
 			}
 
 #undef HASGLOB
