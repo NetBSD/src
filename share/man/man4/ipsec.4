@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.19 2003/03/31 03:18:26 perry Exp $
+.\"	$NetBSD: ipsec.4,v 1.20 2003/04/09 16:44:46 jmmv Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +38,10 @@
 .Fd #include \*[Lt]sys/types.h\*[Gt]
 .Fd #include \*[Lt]netinet/in.h\*[Gt]
 .Fd #include \*[Lt]netinet6/ipsec.h\*[Gt]
+.Pp
+.Cd options IPSEC
+.Cd options IPSEC_ESP
+.Cd options IPSEC_DEBUG
 .Sh DESCRIPTION
 .Nm
 is a security protocol in Internet Protocol layer.
@@ -64,6 +68,51 @@ has two operation modes: transport mode and tunnel mode.
 Transport mode is for protecting peer-to-peer communication between end nodes.
 Tunnel mode includes IP-in-IP encapsulation operation
 and is designed for security gateways, like VPN configurations.
+.Pp
+The following kernel options are available:
+.Bl -ohang
+.It Cd options IPSEC
+Includes support for the
+.Tn IPsec
+protocol.
+.Em IPSEC
+will enable
+secret key management part,
+policy management part,
+.Tn AH
+and
+.Tn IPComp .
+Kernel binary will not be subject to export control in most of countries,
+even if compiled with
+.Em IPSEC .
+For example, it should be okay to export it from within the United States
+to the outside.
+.Em INET6
+and
+.Em IPSEC
+are orthogonal so you can get IPv4-only kernel with IPsec support,
+IPv4/v6 dual support kernel without IPsec, and so forth.
+This option requires
+.Em INET
+at this moment, but it should not.
+.It Cd options IPSEC_DEBUG
+Enables debugging code in
+.Tn IPsec
+stack.
+This option assumes
+.Em IPSEC .
+.It Cd options IPSEC_ESP
+Includes support for
+.Tn IPsec
+.Tn ESP
+protocol.
+.Em IPSEC_ESP
+will enable source code that is subject to export control in some countries
+.Pq including the United States ,
+and compiled kernel binary will be subject to certain restriction.
+This option assumes
+.Em IPSEC .
+.El
 .\"
 .Ss Kernel interface
 .Nm
