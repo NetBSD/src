@@ -1,14 +1,14 @@
-# $NetBSD: DRACO,v 1.44 2000/02/12 03:29:18 thorpej Exp $
+# $NetBSD: DRACO,v 1.45 2000/03/28 20:17:14 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.136 2000/02/05 18:41:58 mhitch Exp $
+#$ NetBSD: GENERIC,v 1.140 2000/03/23 22:44:42 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.44 $"
+#ident  		"GENERIC-$Revision: 1.45 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -42,6 +42,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
+
 #options 	MROUTING	# Multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -49,6 +50,7 @@ options 	ISO,TPIP	# OSI
 options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
+
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -58,13 +60,17 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured filesystem (experimental)
+
 file-system 	MFS		# Memory based filesystem
+
 file-system 	NFS		# Network File System client side code
 file-system 	ADOSFS		# AmigaDOS file system
 file-system 	CD9660		# ISO 9660 + Rock Ridge filesystem
 file-system 	MSDOSFS		# MS-DOS filesystem
-file-system 	FDESC		# user file descriptor filesystem
+
 file-system 	KERNFS		# kernel data-structure filesystem
+
+file-system 	FDESC		# user file descriptor filesystem
 file-system 	NULLFS		# loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
 #file-system 	PORTAL		# Portal filesystem
@@ -73,10 +79,13 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 
 #Filesystem options
-options 	QUOTA		# User and group quotas in FFS
+
 #options 	FFS_EI		# FFS Endian Independant support
+
+options 	QUOTA		# User and group quotas in FFS
 #options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
+
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -106,6 +115,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
+
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
@@ -186,6 +196,11 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
+#not enabled yet... needs more testing and clock frequency autodetection
+#iobl*		at zbus?		# zbus IOBlix
+#com*		at iobl? port ?		# IOBlix serial ports
+#lpt*		at iobl? port ?		# IOBlix parallel ports
+
 #DraCo Mainboard devices (sans keyboard)
 
 drbbc0		at mainbus0		# DraCo battery backed clock
@@ -233,6 +248,7 @@ pseudo-device	pty		16	# pseudo ptys
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 #rnd is EXPERIMENTAL at this point.
 #pseudo-device  rnd                     # /dev/random and in-kernel generator
