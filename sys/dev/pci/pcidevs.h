@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.95 1998/10/20 01:39:41 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.96 1998/11/26 20:05:38 mcr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.88 1998/10/20 01:38:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.89 1998/11/23 22:54:02 mcr Exp 
  */
 
 /*
@@ -858,6 +858,7 @@
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Device (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX PCI AGP Controller (PAC) */
 #define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Device (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX_AGP_NOT	0x7192		/* 82443BX AGP Device (PAC) (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 
