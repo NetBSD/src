@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.6 1994/03/09 00:25:14 phil Exp $
+ *	$Id: gprof.h,v 1.7 1994/03/09 00:40:39 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -41,25 +41,25 @@
 #include <stdlib.h>
 #include "gmon.h"
 
-#if vax
+#ifdef vax
 #   include "vax.h"
 #endif
-#if sun
+#ifdef sun
 #   include "sun.h"
 #endif
-#if tahoe
+#ifdef tahoe
 #   include "tahoe.h"
 #endif
-#if m68k
+#ifdef m68k
 #   include "m68k.h"
 #endif
-#if i386
+#ifdef i386
 #   include "i386.h"
 #endif
-#if sparc
+#ifdef sparc
 #   include "sparc.h"
 #endif
-#if ns32k
+#ifdef ns32k
 #   include "ns32k.h"
 #endif
 
