@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.4 2002/08/14 14:25:15 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.5 2002/08/18 19:18:33 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +36,12 @@
  */
 
 #include "opt_altivec.h"
+#include "opt_pmap.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -53,6 +55,22 @@
 
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm __volatile("sync; mtmsr %0; isync" :: "r"(psl))
+
+#ifdef PMAPCOUNTERS
+struct evcnt pmap_evcnt_zeroed_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages zeroed");
+struct evcnt pmap_evcnt_copied_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages copied");
+struct evcnt pmap_evcnt_idlezeroed_pages =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
+	"pages idle zeroed");
+#ifdef PPC_MPC6XX
+extern struct evcnt pmap_evcnt_exec_uncached_zero_page;
+extern struct evcnt pmap_evcnt_exec_uncached_copy_page;
+#endif
+#endif /* PMAPCOUNTERS */
 
 /*
  * This file uses a sick & twisted method to deal with the common pmap
@@ -73,7 +91,7 @@
  * However while relocation is off, we MUST not access the kernel stack in
  * any manner since it will probably no longer be mapped.  This mean no
  * calls while relocation is off.  The AltiVEC routines need to handle the
- * MSR fiddling themselves so they save things on the stack.
+ * MSR fiddling themselves so they can save things on the stack.
  */
 
 /*
@@ -85,7 +103,7 @@ pmap_zero_page(paddr_t pa)
 	size_t linewidth;
 	register_t msr;
 
-#if defined(PPC_MPC6XX) && !defined(OLDPMAP)
+#if defined(PPC_MPC6XX)
 	{
 		/*
 		 * If we are zeroing this page, we must clear the EXEC-ness
@@ -94,8 +112,16 @@ pmap_zero_page(paddr_t pa)
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 		KDASSERT(pg != NULL);
 		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+#ifdef PMAPCOUNTERS
+		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
+			pmap_evcnt_exec_uncached_zero_page.ev_count++;
+		}
+#endif
 		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
 	}
+#endif
+#ifdef PMAPCOUNTERS
+	pmap_evcnt_zeroed_pages.ev_count++;
 #endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
@@ -153,10 +179,10 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	const register_t *sp;
 	register_t *dp;
-	size_t i;
 	register_t msr;
+	size_t i;
 
-#if defined(PPC_MPC6XX) && !defined(OLDPMAP)
+#if defined(PPC_MPC6XX)
 	{
 		/*
 		 * If we are copying to the destination page, we must clear
@@ -166,8 +192,16 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		struct vm_page *pg = PHYS_TO_VM_PAGE(dst);
 		KDASSERT(pg != NULL);
 		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+#ifdef PMAPCOUNTERS
+		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
+			pmap_evcnt_exec_uncached_copy_page.ev_count++;
+		}
+#endif
 		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
 	}
+#endif
+#ifdef PMAPCOUNTERS
+	pmap_evcnt_copied_pages.ev_count++;
 #endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
@@ -278,6 +312,9 @@ pmap_pageidlezero(paddr_t pa)
 				return FALSE;
 			*dp++ = 0;
 		}
+#ifdef PMAPCOUNTERS
+		pmap_evcnt_idlezeroed_pages.ev_count++;
+#endif
 		return TRUE;
 	}
 #endif
@@ -303,5 +340,9 @@ pmap_pageidlezero(paddr_t pa)
 	 * Restore relocation (MMU on).
 	 */
 	MTMSR(msr);
+#ifdef PMAPCOUNTERS
+	if (rv)
+		pmap_evcnt_idlezeroed_pages.ev_count++;
+#endif
 	return rv;
 }
