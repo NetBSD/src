@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.8 1996/04/21 21:12:13 veego Exp $	*/
+/*	$NetBSD: ms.c,v 1.9 1996/04/24 11:41:16 is Exp $	*/
 
 /*
  * based on:
@@ -53,6 +53,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -66,40 +67,21 @@
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
+#include <amiga/amiga/device.h>
 
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-#include "mouse.h"
-#if NMOUSE > 0
-
-/* there's really no more physical ports on an amiga.. */
-#if NMOUSE > 2
-#undef NMOUSE
-#define NMOUSE 2
-#endif
+void msattach __P((struct device *, struct device *, void *));
+int msmatch __P((struct device *, void *, void *));
 
 void msintr __P((void *));
 void ms_enable __P((dev_t));
 void ms_disable __P((dev_t));
-int mouseattach __P((int));
 
-int
-mouseattach(cnt)
-	int cnt;
-{
-	printf("%d %s configured\n", NMOUSE, NMOUSE == 1 ? "mouse" : "mice");
-	return(NMOUSE);
-}
-
-/*
- * Amiga mice are hooked up to one of the two "game" ports, where
- * the main mouse is usually on the first port, and port 2 can
- * be used by a joystick. Nevertheless, we support two mouse
- * devices, /dev/mouse0 and /dev/mouse1 (with a link of /dev/mouse to
- * the device that represents the port of the mouse in use).
- */
 struct ms_softc {
+	struct device sc_dev;
+
 	u_char	ms_horc;	   /* horizontal counter on last scan */
   	u_char	ms_verc;	   /* vertical counter on last scan */
 	char	ms_mb;		   /* mouse button state */
@@ -108,8 +90,47 @@ struct ms_softc {
 	int	ms_dy;		   /* delta-y */
 	volatile int ms_ready;	   /* event queue is ready */
 	struct	evvar ms_events;   /* event queue state */
-} ms_softc[NMOUSE];
+};
 
+struct cfattach ms_ca = {
+	sizeof(struct ms_softc), msmatch, msattach
+};
+
+struct cfdriver ms_cd = {
+	NULL, "ms", DV_DULL, NULL, 0
+};
+
+int
+msmatch(pdp, match, auxp)
+	struct device *pdp;
+	void *match, *auxp;
+{
+	struct cfdata *cfp = (struct cfdata *)match;
+
+	if (matchname((char *)auxp, "ms") &&
+	    cfp->cf_unit >= 0 && cfp->cf_unit <= 1) /* only two units */
+		return 1;
+
+	return 0;
+}
+
+
+void
+msattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	printf("\n");
+}
+  
+
+/*
+ * Amiga mice are hooked up to one of the two "game" ports, where
+ * the main mouse is usually on the first port, and port 2 can
+ * be used by a joystick. Nevertheless, we support two mouse
+ * devices, /dev/mouse0 and /dev/mouse1 (with a link of /dev/mouse to
+ * the device that represents the port of the mouse in use).
+ */
 
 /*
  * enable scanner, called when someone opens the device.
@@ -121,7 +142,7 @@ ms_enable(dev)
 {
 	struct ms_softc *ms;
 
-	ms = &ms_softc[minor(dev)];
+	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 	/* 
 	 * use this as flag to the "interrupt" to tell it when to
 	 * shut off (when it's reset to 0).
@@ -142,7 +163,7 @@ ms_disable(dev)
 	struct ms_softc *ms;
 	int s;
 
-	ms = &ms_softc[minor(dev)];
+	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 	s = splhigh ();
 	ms->ms_ready = 0;
 	/*
@@ -170,7 +191,7 @@ msintr(arg)
 	short dx, dy;
 	
 	unit = (int)arg;
-	ms = &ms_softc[unit];
+	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
 	horc = ((u_char *) &count) + 1;
 	verc = (u_char *) &count;
 
@@ -322,9 +343,9 @@ msopen(dev, flags, mode, p)
 	int unit;
 
 	unit = minor(dev);
-	ms = &ms_softc[unit];
+	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
 
-	if (unit >= NMOUSE)
+	if (ms == NULL)
 		return(EXDEV);
 
 	if (ms->ms_events.ev_io)
@@ -346,7 +367,7 @@ msclose(dev, flags, mode, p)
 	struct ms_softc *ms;
 
 	unit = minor (dev);
-	ms = &ms_softc[unit];
+	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
 
 	ms_disable(dev);
 	ev_fini(&ms->ms_events);
@@ -362,7 +383,7 @@ msread(dev, uio, flags)
 {
 	struct ms_softc *ms;
 
-	ms = &ms_softc[minor(dev)];
+	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 	return(ev_read(&ms->ms_events, uio, flags));
 }
 
@@ -378,7 +399,7 @@ msioctl(dev, cmd, data, flag, p)
 	int unit;
 
 	unit = minor(dev);
-	ms = &ms_softc[unit];
+	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
 
 	switch (cmd) {
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -409,7 +430,6 @@ msselect(dev, rw, p)
 {
 	struct ms_softc *ms;
 
-	ms = &ms_softc[minor(dev)];
+	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 	return(ev_select(&ms->ms_events, rw, p));
 }
-#endif /* NMOUSE > 0 */
