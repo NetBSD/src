@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.17 2000/06/08 01:24:38 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.18 2000/06/13 01:00:17 wiz Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -8,9 +8,11 @@
 /usr/include/dev/ic/isp_netbsd.h
 /usr/include/dev/ic/opl3sa3.h
 /usr/include/dev/isa/ahareg.h
+/usr/include/dev/isa/awictl.h
 /usr/include/dev/isa/btreg.h
 /usr/include/dev/isa/comreg.h
 /usr/include/dev/isa/comvar.h
+/usr/include/dev/isa/espvar.h
 /usr/include/dev/isa/if_edreg.h
 /usr/include/dev/isa/if_epreg.h
 /usr/include/dev/isa/if_ie507.h
@@ -281,6 +283,11 @@
 /usr/include/netiso/tuba_table.h
 /usr/include/netkey/keyv2.h
 /usr/include/nfs/nfsv2.h
+/usr/include/ntfs/ntfs_compr.h
+/usr/include/ntfs/ntfs_extern.h
+/usr/include/ntfs/ntfs_ihash.h
+/usr/include/ntfs/ntfs_subr.h
+/usr/include/ntfs/ntfs_vfsops.h
 /usr/include/null.h
 /usr/include/objc/list.h
 /usr/include/sys/dmap.h
@@ -292,6 +299,8 @@
 /usr/include/vm/lock.h
 /usr/include/vm/swap_pager.h
 /usr/include/vm/vnode_pager.h
+/usr/include/vm/vm_conf.h
+/usr/include/vm/vm_swap.h
 /usr/lib/libamu.a
 /usr/lib/libamu_p.a
 /usr/lib/libamu_pic.a
@@ -334,6 +343,8 @@
 /usr/share/man/cat3/setpwfile.0
 /usr/share/man/cat3/setregid.0
 /usr/share/man/cat3/setreuid.0
+/usr/share/man/cat3/svc_getreg.0
+/usr/share/man/cat3/svc_getregset.0
 /usr/share/man/cat3/vlimit.0
 /usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
@@ -341,6 +352,8 @@
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/man3/getpw.3
 /usr/share/man/man3/regsterrpc.3
+/usr/share/man/man3/svc_getreg.3
+/usr/share/man/man3/svc_getregset.3
 /usr/share/man/man3/vlimit.3
 /usr/share/man/man3/vtimes.3
 /usr/share/man/man9/vslock.9
