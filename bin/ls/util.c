@@ -35,8 +35,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)util.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: util.c,v 1.9 1994/10/25 02:29:46 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)util.c	8.4 (Berkeley) 7/27/94";*/
+static char *rcsid = "$Id: util.c,v 1.10 1994/12/27 23:14:54 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: ls [-1ACFLRSTacdfikloqrstu] [file ...]\n");
+	(void)fprintf(stderr, "usage: ls [-1ACFLRSTWacdfikloqrstu] [file ...]\n");
 	exit(1);
 }
