@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.1 2000/06/02 23:15:41 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.1.2.1 2000/06/23 08:16:03 hannken Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -608,7 +608,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	XDR outxdr;
 	AUTH *auth;
 	int fd = -1;
-	char *uaddr, *m_uaddr, *local_uaddr;
+	char *uaddr, *m_uaddr, *local_uaddr = NULL;
 	u_int32_t *xidp;
 	struct __rpc_sockinfo si;
 	struct sockaddr *localsa;
@@ -883,7 +883,6 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		outbufp = outbuf;
 
 	na = uaddr2taddr(nconf, local_uaddr);
-	free(local_uaddr);
 	if (!na) {
 		if (reply_type == RPCBPROC_INDIRECT)
 			svcerr_systemerr(transp);
@@ -905,10 +904,16 @@ error:
 	if (call_msg.rm_xid != 0)
 		(void) free_slot_by_xid(call_msg.rm_xid);
 out:
+	if (local_uaddr)
+		free(local_uaddr);
 	if (buf_alloc)
 		free((void *) buf_alloc);
 	if (outbuf_alloc)
 		free((void *) outbuf_alloc);
+	if (na) {
+		free(na->buf);
+		free(na);
+	}
 }
 
 /*
@@ -1266,6 +1271,9 @@ handle_reply(int fd, SVCXPRT *xprt)
 #endif
 	svc_sendreply(xprt, (xdrproc_t) xdr_rmtcall_result, (char *) &a);
 done:
+	if (buffer)
+		free(buffer);
+
 	if (reply_msg.rm_xid == 0) {
 #ifdef	SVC_RUN_DEBUG
 	if (debugging) {
