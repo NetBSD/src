@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.31 1998/01/05 02:23:43 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.32 1998/02/16 09:52:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,8 @@
 #ifndef _SYS_STAT_H_
 #define	_SYS_STAT_H_
 
+#include <sys/featuretest.h>
+
 #include <sys/time.h>
 
 #ifdef _KERNEL
@@ -63,8 +65,9 @@ struct stat43 {				/* BSD-4.3 stat struct */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-#endif /* !_KERNEL */
+#endif /* defined(_KERNEL) */
 
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct stat12 {				/* NetBSD-1.2 stat struct */
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
@@ -84,6 +87,7 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
 	int32_t	  st_lspare;
 	int64_t	  st_qspare[2];
 };
+#endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
 
 /*
  * On systems with 8 byte longs and 4 byte time_ts, padding the time_ts
@@ -107,7 +111,7 @@ struct stat {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 	struct	  timespec st_atimespec;/* time of last access */
 	struct	  timespec st_mtimespec;/* time of last data modification */
 	struct	  timespec st_ctimespec;/* time of last file status change */
@@ -133,7 +137,7 @@ struct stat {
 
 #undef __STATPAD
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	st_atime	st_atimespec.tv_sec
 #define	st_atimensec	st_atimespec.tv_nsec
 #define	st_mtime	st_mtimespec.tv_sec
@@ -247,19 +251,22 @@ int	stat __P((const char *, struct stat *))	__RENAME(__stat13);
 int	fstat __P((int, struct stat *))		__RENAME(__fstat13);
 #endif
 mode_t	umask __P((mode_t));
-#ifndef _POSIX_SOURCE
-int	chflags __P((const char *, u_long));
-int	fchflags __P((int, u_long));
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	fchmod __P((int, mode_t));
-int	lchmod __P((const char *, mode_t));
-int	mknod __P((const char *, mode_t, dev_t));
 #ifdef __LIBC12_SOURCE__
 int	lstat __P((const char *, struct stat12 *));
 int	__lstat13 __P((const char *, struct stat *));
 #else
 int	lstat __P((const char *, struct stat *))	__RENAME(__lstat13);
 #endif
-#endif
+int	mknod __P((const char *, mode_t, dev_t));
+#endif /* !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+int	chflags __P((const char *, u_long));
+int	fchflags __P((int, u_long));
+int	lchmod __P((const char *, mode_t));
+#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 
 __END_DECLS
 
