@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2001/06/23 03:10:59 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 2001/06/28 15:23:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -244,7 +244,6 @@ cpu_coredump(p, vp, cred, chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
-	struct trapframe *tf;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int error;
 
@@ -253,8 +252,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
 	chdr->c_cpusize = sizeof md_core;
 
-	tf = trapframe(p);
-	bcopy(tf, &md_core.frame, sizeof md_core.frame);
+	md_core.frame = *trapframe(p);
 	if (pcb->pcb_flags & PCB_FPU) {
 #ifdef PPC_HAVE_FPU
 		if (p->p_addr->u_pcb.pcb_fpcpu)
