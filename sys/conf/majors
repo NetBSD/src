@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.5 2003/12/10 11:40:11 hannken Exp $
+# $NetBSD: majors,v 1.6 2003/12/31 16:44:26 jonathan Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -9,7 +9,7 @@
 #
 # Majors 160-255 are used for the MI drivers.
 
-device-major	crypto		char 160		opencrypto
+device-major	crypto		char 160		crypto
 device-major	pf		char 161		pf
 device-major	vinum		char 162 block 162	vinum
 device-major	fss		char 163 block 163	fss

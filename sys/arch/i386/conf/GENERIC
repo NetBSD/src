@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.589 2003/12/30 18:09:50 augustss Exp $
+# $NetBSD: GENERIC,v 1.590 2003/12/31 16:44:26 jonathan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.589 $"
+#ident 		"GENERIC-$Revision: 1.590 $"
 
 maxusers	32		# estimated number of users
 
@@ -1115,7 +1115,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # Pseudo-Devices
 
-pseudo-device 	opencrypto		# opencrypto framework
+pseudo-device 	crypto		# opencrypto framework
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.7 2003/11/19 03:24:20 jonathan Exp $ */
+/*	$NetBSD: crypto.c,v 1.8 2003/12/31 16:44:26 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.7 2003/11/19 03:24:20 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.8 2003/12/31 16:44:26 jonathan Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -99,7 +99,7 @@ struct pool cryptodesc_pool;
 int crypto_pool_initialized = 0;
 
 #ifdef __NetBSD__
-void	opencryptoattach(int);
+void	cryptoattach(int);
 static void deferred_crypto_thread(void *arg);
 #endif
 
@@ -117,7 +117,7 @@ int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
  * crypto_devallowsoft > 0:  Allow user requests only for transforms which
  *                               are hardware-accelerated.
  */
-int	crypto_devallowsoft = 1;	/* only use hardware crypto for asym */
+int	crypto_devallowsoft = 0;	/* only use hardware crypto for asym */
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern, OID_AUTO, usercrypto, CTLFLAG_RW,
@@ -1202,18 +1202,22 @@ deferred_crypto_thread(void *arg)
 	error = kthread_create1((void (*)(void*)) cryptoret, NULL,
 				&cryptoproc, "cryptoret");
 	if (error) {
-	printf("crypto_init: cannot start cryptoret thread; error %d",
-		error);
-	crypto_destroy();
+		printf("crypto_init: cannot start cryptoret thread; error %d",
+		    error);
+		crypto_destroy();
 	}
 
+	/*
+	 * XXX in absence of FreeBSD mod_init(), call init hooks here,
+	 * now that the thread used by software crypto is up and running.
+	 */
+	swcr_init();
 }
 
 void
-opencryptoattach(int n)
+cryptoattach(int n)
 {
-	/* XXX in absence of FreeBSD mod_init(), call init hooks here */
-	swcr_init();
+	/* Nothing to do. */
 }
 
 #ifdef __FreeBSD__
