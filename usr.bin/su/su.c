@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.44 2000/09/09 18:13:05 erh Exp $	*/
+/*	$NetBSD: su.c,v 1.45 2001/01/10 12:30:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.44 2000/09/09 18:13:05 erh Exp $");
+__RCSID("$NetBSD: su.c,v 1.45 2001/01/10 12:30:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ main(argc, argv)
 		prio = 0;
 	if (prio > -2)
 		(void)setpriority(PRIO_PROCESS, 0, -2);
-	openlog("su", LOG_CONS, 0);
+	openlog("su", 0, LOG_AUTH);
 
 	/* get current login name and shell */
 	ruid = getuid();
@@ -303,7 +303,7 @@ main(argc, argv)
 badlogin:
 #endif
 				fprintf(stderr, "Sorry\n");
-				syslog(LOG_AUTH|LOG_WARNING,
+				syslog(LOG_WARNING,
 					"BAD SU %s to %s%s", username,
 					pwd->pw_name, ontty());
 				exit(1);
@@ -418,7 +418,7 @@ badlogin:
  	}
 #endif
 	if (ruid != 0)
-		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
+		syslog(LOG_NOTICE, "%s to %s%s",
 		    username, pwd->pw_name, ontty());
 
 	/* Raise our priority back to what we had before */
@@ -616,7 +616,7 @@ kerberos(username, user, uid)
 			return (1);
 		}
 		warnx("kerberos: unable to su: %s", krb_err_txt[kerno]);
-		syslog(LOG_NOTICE|LOG_AUTH,
+		syslog(LOG_WARNING,
 		    "BAD Kerberos SU: %s to %s%s: %s",
 		    username, user, ontty(), krb_err_txt[kerno]);
 		return (1);
@@ -644,13 +644,13 @@ kerberos(username, user, uid)
 
 	if (kerno == KDC_PR_UNKNOWN) {
 		warnx("Warning: TGT not verified.");
-		syslog(LOG_NOTICE|LOG_AUTH,
+		syslog(LOG_WARNING,
 		    "%s to %s%s, TGT not verified (%s); %s.%s not registered?",
 		    username, user, ontty(), krb_err_txt[kerno],
 		    "rcmd", savehost);
 	} else if (kerno != KSUCCESS) {
 		warnx("Unable to use TGT: %s", krb_err_txt[kerno]);
-		syslog(LOG_NOTICE|LOG_AUTH, "failed su: %s to %s%s: %s",
+		syslog(LOG_WARNING, "failed su: %s to %s%s: %s",
 		    username, user, ontty(), krb_err_txt[kerno]);
 		dest_tkt();
 		return (1);
@@ -666,7 +666,7 @@ kerberos(username, user, uid)
 		    &authdata, "")) != KSUCCESS) {
 			warnx("kerberos: unable to verify rcmd ticket: %s\n",
 			    krb_err_txt[kerno]);
-			syslog(LOG_NOTICE|LOG_AUTH,
+			syslog(LOG_WARNING,
 			    "failed su: %s to %s%s: %s", username,
 			     user, ontty(), krb_err_txt[kerno]);
 			dest_tkt();
