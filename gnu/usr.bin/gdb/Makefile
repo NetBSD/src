@@ -1,9 +1,17 @@
-#	$NetBSD: Makefile,v 1.49 2001/08/06 19:36:58 tv Exp $
+#	$NetBSD: Makefile,v 1.50 2001/08/06 23:28:53 tv Exp $
 
-# for OBJECT_FMT
 .include <bsd.own.mk>
 
-.if !defined(USE_NEW_TOOLCHAIN)
+.if defined(USE_NEW_TOOLCHAIN)
+
+SUBDIR=		gdb.new
+
+.include <bsd.subdir.mk>
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
 .if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
 ELF_PLEASE=
 .endif
@@ -131,6 +139,7 @@ tm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/tm-nbsd.h
 	@-rm -f $@
 	cp $> $@
 .endif
-.else
-.include <bsd.prog.mk>
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
 .endif
