@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.10.22.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.10.22.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.10.22.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.10.22.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,7 @@ static const struct {
  * need to do peek/write/read tricks.
  */
 void *
-bus_tmapin(bustype, pa)
-	int bustype, pa;
+bus_tmapin(int bustype, int pa)
 {
 	vaddr_t pgva;
 	int off, pte;
@@ -122,8 +121,8 @@ bus_tmapin(bustype, pa)
 	return ((void *)(pgva + off));
 }
 
-void bus_tmapout(vp)
-	void *vp;
+void 
+bus_tmapout(void *vp)
 {
 	vaddr_t pgva;
 
@@ -139,8 +138,7 @@ void bus_tmapout(vp)
  * Make a permanent mapping for a device.
  */
 void *
-bus_mapin(bustype, pa, sz)
-	int bustype, pa, sz;
+bus_mapin(int bustype, int pa, int sz)
 {
 	vaddr_t va;
 	int off;
@@ -177,10 +175,8 @@ done:
 	return ((void*)(va + off));
 }
 
-void
-bus_mapout(ptr, sz)
-	void *ptr;
-	int sz;
+void 
+bus_mapout(void *ptr, int sz)
 {
 	vaddr_t va;
 	int off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.1.4.2 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.1.4.3 2005/01/24 08:35:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.1.4.2 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.1.4.3 2005/01/24 08:35:26 skrll Exp $");
 
 
 /*
@@ -67,7 +67,6 @@ CFATTACH_DECL(rgephy, sizeof(struct mii_softc),
 static int	rgephy_service(struct mii_softc *, struct mii_data *, int);
 static void	rgephy_status(struct mii_softc *);
 static int	rgephy_mii_phy_auto(struct mii_softc *);
-static void	rgephy_reset(struct mii_softc *);
 static void	rgephy_reset(struct mii_softc *);
 static void	rgephy_loop(struct mii_softc *);
 static void	rgephy_load_dspcode(struct mii_softc *);

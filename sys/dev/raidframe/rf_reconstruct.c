@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.56.2.6 2004/12/18 09:32:10 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.56.2.7 2005/01/24 08:35:36 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.6 2004/12/18 09:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.7 2005/01/24 08:35:36 skrll Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -94,10 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.6 2004/12/18 09:32:10 skrl
 
 #endif /* RF_DEBUG_RECON */
 
-
-#define RF_MAX_FREE_RECOND  10
-#define RF_MIN_FREE_RECOND  4
-
 #define RF_MAX_FREE_RECONBUFFER 32
 #define RF_MIN_FREE_RECONBUFFER 16
 
@@ -143,7 +139,6 @@ struct RF_ReconDoneProc_s {
 static void 
 rf_ShutdownReconstruction(void *ignored)
 {
-	pool_destroy(&rf_pools.recond);
 	pool_destroy(&rf_pools.reconbuffer);
 }
 
@@ -151,8 +146,6 @@ int
 rf_ConfigureReconstruction(RF_ShutdownList_t **listp)
 {
 
-	rf_pool_init(&rf_pools.recond, sizeof(RF_RaidReconDesc_t),
-		     "rf_recond_pl", RF_MIN_FREE_RECOND, RF_MAX_FREE_RECOND);
 	rf_pool_init(&rf_pools.reconbuffer, sizeof(RF_ReconBuffer_t),
 		     "rf_reconbuffer_pl", RF_MIN_FREE_RECONBUFFER, RF_MAX_FREE_RECONBUFFER);
 	rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
@@ -168,7 +161,8 @@ AllocRaidReconDesc(RF_Raid_t *raidPtr, RF_RowCol_t col,
 
 	RF_RaidReconDesc_t *reconDesc;
 
-	reconDesc = pool_get(&rf_pools.recond, PR_WAITOK);
+	RF_Malloc(reconDesc, sizeof(RF_RaidReconDesc_t),
+		  (RF_RaidReconDesc_t *));
 	reconDesc->raidPtr = raidPtr;
 	reconDesc->col = col;
 	reconDesc->spareDiskPtr = spareDiskPtr;
@@ -194,7 +188,7 @@ FreeReconDesc(RF_RaidReconDesc_t *reconDesc)
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
 	printf("\n");
 #endif				/* (RF_RECON_STATS > 0) || KERNEL */
-	pool_put(&rf_pools.recond, reconDesc);
+	RF_Free(reconDesc, sizeof(RF_RaidReconDesc_t));
 }
 
 
@@ -1550,6 +1544,7 @@ ForceReconReadDoneProc(void *arg, int status)
 	if (status) {
 		printf("raid%d: Forced recon read failed!\n", rbuf->raidPtr->raidid);
 		rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREAD_FAILED);
+		return;
 	}
 	rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREADDONE);
 }

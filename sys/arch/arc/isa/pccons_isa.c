@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.4.6.3 2004/09/21 13:13:00 skrll Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.4.6.4 2005/01/24 08:33:58 skrll Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.4.6.3 2004/09/21 13:13:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.4.6.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.4.6.3 2004/09/21 13:13:00 skrll Exp
 #include <arc/dev/pcconsvar.h>
 #include <arc/isa/pccons_isavar.h>
 
-int	pccons_isa_match __P((struct device *, struct cfdata *, void *));
-void	pccons_isa_attach __P((struct device *, struct device *, void *));
+int	pccons_isa_match(struct device *, struct cfdata *, void *);
+void	pccons_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pc_isa, sizeof(struct pc_softc),
     pccons_isa_match, pccons_isa_attach, NULL, NULL);
@@ -51,10 +51,7 @@ CFATTACH_DECL(pc_isa, sizeof(struct pc_softc),
 struct pccons_config *pccons_isa_conf;
 
 int
-pccons_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pccons_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_addr_t iobase = 0x3b0;	/* XXX mono 0x3b0 color 0x3c0 */
@@ -64,7 +61,7 @@ pccons_isa_match(parent, match, aux)
 	int irq = 1;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT)
 		iobase = ia->ia_io[0].ir_addr;
 #if 0	/* XXX isa.c */
@@ -72,14 +69,14 @@ pccons_isa_match(parent, match, aux)
 		iosize = ia->ia_iosize;
 #endif
 	if (ia->ia_niomem < 1)
-		return (0);
+		return 0;
 	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM)
 		maddr = ia->ia_iomem[0].ir_addr;
 	if (ia->ia_iomem[0].ir_size != ISA_UNKNOWN_IOSIZ)
 		msize = ia->ia_iomem[0].ir_size;
 
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ)
 		irq = ia->ia_irq[0].ir_irq;
 
@@ -88,15 +85,15 @@ pccons_isa_match(parent, match, aux)
 	if (iobase != 0x3b0 || iosize != 0x30 ||
 	    maddr != 0xa0000 || msize != 0x20000 ||
 	    ia->ia_irq != 1 || ia->ia_drq != DRQUNK)
-		return (0);
+		return 0;
 #endif
 
 	if (pccons_isa_conf == NULL)
-		return (0);
+		return 0;
 
 	if (!pccons_common_match(ia->ia_iot, ia->ia_memt, ia->ia_iot,
 	    pccons_isa_conf))
-		return (0);
+		return 0;
 
 	ia->ia_nio = 1;
 	ia->ia_io[0].ir_addr = iobase;
@@ -111,13 +108,11 @@ pccons_isa_match(parent, match, aux)
 
 	ia->ia_ndrq = 0;
 
-	return (1);
+	return 1;
 }
 
 void
-pccons_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pccons_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pc_softc *sc = (struct pc_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -129,12 +124,12 @@ pccons_isa_attach(parent, self, aux)
 }
 
 int
-pccons_isa_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+pccons_isa_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
+
 	if (pccons_isa_conf == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	pccons_common_cnattach(iot, memt, iot, pccons_isa_conf);
-	return (0);
+	return 0;
 }

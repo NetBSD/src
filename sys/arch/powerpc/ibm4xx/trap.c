@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.2.4 2004/09/21 13:20:34 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.5 2005/01/24 08:34:26 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.4 2004/09/21 13:20:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.5 2005/01/24 08:34:26 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -330,7 +330,7 @@ trap(struct trapframe *frame)
 		 *
 		 * let's try to see if it's FPU and can be emulated.
 		 */
-		uvmexp.traps ++;
+		uvmexp.traps++;
 		if (!(l->l_addr->u_pcb.pcb_flags & PCB_FPU)) {
 			memset(&l->l_addr->u_pcb.pcb_fpu, 0,
 				sizeof l->l_addr->u_pcb.pcb_fpu);

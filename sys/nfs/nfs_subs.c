@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.8 2005/01/17 19:32:55 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.9 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.8 2005/01/17 19:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.9 2005/01/24 08:35:53 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1832,7 +1832,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			}
 		}
 	}
-	np->n_attrstamp = time.tv_sec;
+	np->n_attrstamp = mono_time.tv_sec;
 	if (vaper != NULL) {
 		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1859,7 +1859,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -1901,6 +1901,87 @@ nfs_delayedtruncate(vp)
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
 	}
+}
+
+#define	NFS_WCCKLUDGE_TIMEOUT	(24 * 60 * 60)	/* 1 day */
+#define	NFS_WCCKLUDGE(nmp, now) \
+	(((nmp)->nm_iflag & NFSMNT_WCCKLUDGE) && \
+	((now) - (nmp)->nm_wcckludgetime - NFS_WCCKLUDGE_TIMEOUT) < 0)
+
+/*
+ * nfs_check_wccdata: check inaccurate wcc_data
+ *
+ * => return non-zero if we shouldn't trust the wcc_data.
+ * => NFS_WCCKLUDGE_TIMEOUT is for the case that the server is "fixed".
+ */
+
+int
+nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
+    struct timespec *mtime, boolean_t docheck)
+{
+	int error = 0;
+
+#if !defined(NFS_V2_ONLY)
+
+	if (docheck) {
+		struct vnode *vp = NFSTOV(np);
+		struct nfsmount *nmp;
+		long now = mono_time.tv_sec;
+#if defined(DEBUG)
+		const char *reason = NULL; /* XXX: gcc */
+#endif
+
+		if (timespeccmp(&np->n_vattr->va_mtime, mtime, <=)) {
+#if defined(DEBUG)
+			reason = "mtime";
+#endif
+			error = EINVAL;
+		}
+
+		if (vp->v_type == VDIR &&
+		    timespeccmp(&np->n_vattr->va_ctime, ctime, <=)) {
+#if defined(DEBUG)
+			reason = "ctime";
+#endif
+			error = EINVAL;
+		}
+
+		/*
+		 *
+		 */
+
+		nmp = VFSTONFS(vp->v_mount);
+		if (error) {
+			simple_lock(&nmp->nm_slock);
+#if defined(DEBUG)
+			if (!NFS_WCCKLUDGE(nmp, now)) {
+				printf("%s: inaccurate wcc data (%s) detected,"
+				    " disabling wcc\n",
+				    vp->v_mount->mnt_stat.f_mntfromname,
+				    reason);
+			}
+#endif
+			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
+			nmp->nm_wcckludgetime = now;
+			simple_unlock(&nmp->nm_slock);
+		} else if (NFS_WCCKLUDGE(nmp, now)) {
+			error = EPERM; /* XXX */
+		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
+			simple_lock(&nmp->nm_slock);
+			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
+#if defined(DEBUG)
+				printf("%s: re-enabling wcc\n",
+				    vp->v_mount->mnt_stat.f_mntfromname);
+#endif
+				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
+			}
+			simple_unlock(&nmp->nm_slock);
+		}
+	}
+
+#endif /* !defined(NFS_V2_ONLY) */
+
+	return error;
 }
 
 /*

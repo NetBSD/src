@@ -1,4 +1,4 @@
-/*	$NetBSD: jazziovar.h,v 1.2 2001/06/13 15:11:38 soda Exp $	*/
+/*	$NetBSD: jazziovar.h,v 1.2.24.1 2005/01/24 08:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -55,7 +55,7 @@ struct jazzio_config {
 
 void	jazzio_intr_establish(int, int (*)(void *), void *);
 void	jazzio_intr_disestablish(int);
-void	jazzio_reset __P((void));
+void	jazzio_reset(void);
 
 extern struct jazzio_config *jazzio_conf;
 extern struct pica_dev *jazzio_devconfig;

@@ -1,18 +1,17 @@
-/*	$NetBSD: zs_cons.h,v 1.3 1998/01/05 07:03:22 perry Exp $	*/
+/*	$NetBSD: zs_cons.h,v 1.3.50.1 2005/01/24 08:34:48 skrll Exp $	*/
 
 
 struct consdev;
 
 extern void *zs_conschan;
 
-extern void nullcnprobe __P((struct consdev *));
+extern void nullcnprobe(struct consdev *);
 
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg, int c));
+extern int  zs_getc(void *);
+extern void zs_putc(void *, int);
 
-struct zschan *
-zs_get_chan_addr __P((int zsc_unit, int channel));
+struct zschan *zs_get_chan_addr(int, int);
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
+void zs_kgdb_init(void);
 #endif

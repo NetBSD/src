@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.1 2001/06/14 12:57:14 fredette Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.1.24.1 2005/01/24 08:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,9 +99,8 @@ disk_open(struct open_file *f, ...)
 	return 0;
 }
 
-int
-disk_close(f)
-	struct open_file *f;
+int 
+disk_close(struct open_file *f)
 {
 	struct saioreq *si;
 
@@ -119,14 +118,9 @@ disk_close(f)
 	return 0;
 }
 
-int
-disk_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+int 
+disk_strategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct saioreq *si;
 	struct boottab *ops;
@@ -171,11 +165,8 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 	return (0);
 }
 
-int
-disk_ioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+int 
+disk_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.13.2.4 2004/09/21 13:19:41 skrll Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.13.2.5 2005/01/24 08:34:18 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.13.2.4 2004/09/21 13:19:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.13.2.5 2005/01/24 08:34:18 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -88,22 +88,21 @@ extern int ndtraceshow;
 
 extern int turbo;
 
-int	xe_match __P((struct device *, struct cfdata *, void *));
-void	xe_attach __P((struct device *, struct device *, void *));
-int	xe_tint __P((void *));
-int	xe_rint __P((void *));
+int	xe_match(struct device *, struct cfdata *, void *);
+void	xe_attach(struct device *, struct device *, void *);
+int	xe_tint(void *);
+int	xe_rint(void *);
 
-struct mbuf * xe_dma_rxmap_load __P((struct mb8795_softc *,
-		bus_dmamap_t map));
+struct mbuf * xe_dma_rxmap_load(struct mb8795_softc *, bus_dmamap_t);
 
-bus_dmamap_t xe_dma_rx_continue __P((void *));
-void xe_dma_rx_completed __P((bus_dmamap_t,void *));
-bus_dmamap_t xe_dma_tx_continue __P((void *));
-void xe_dma_tx_completed __P((bus_dmamap_t,void *));
-void xe_dma_rx_shutdown __P((void *));
-void xe_dma_tx_shutdown __P((void *));
+bus_dmamap_t xe_dma_rx_continue(void *);
+void xe_dma_rx_completed(bus_dmamap_t, void *);
+bus_dmamap_t xe_dma_tx_continue(void *);
+void xe_dma_tx_completed(bus_dmamap_t, void *);
+void xe_dma_rx_shutdown(void *);
+void xe_dma_tx_shutdown(void *);
 
-static void	findchannel_defer __P((struct device *));
+static void	findchannel_defer(struct device *);
 
 CFATTACH_DECL(xe, sizeof(struct xe_softc),
     xe_match, xe_attach, NULL, NULL);
@@ -120,23 +119,16 @@ static int attached = 0;
 /*
  * Functions and the switch for the MI code.
  */
-u_char		xe_read_reg __P((struct mb8795_softc *, int));
-void		xe_write_reg __P((struct mb8795_softc *, int, u_char));
-void		xe_dma_reset __P((struct mb8795_softc *));
-void		xe_dma_rx_setup __P((struct mb8795_softc *));
-void		xe_dma_rx_go __P((struct mb8795_softc *));
-struct mbuf *	xe_dma_rx_mbuf __P((struct mb8795_softc *));
-void		xe_dma_tx_setup __P((struct mb8795_softc *));
-void		xe_dma_tx_go __P((struct mb8795_softc *));
-int		xe_dma_tx_mbuf __P((struct mb8795_softc *, struct mbuf *));
-int		xe_dma_tx_isactive __P((struct mb8795_softc *));
-#if 0
-int	xe_dma_setup __P((struct mb8795_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	xe_dma_go __P((struct mb8795_softc *));
-void	xe_dma_stop __P((struct mb8795_softc *));
-int	xe_dma_isactive __P((struct mb8795_softc *));
-#endif
+u_char		xe_read_reg(struct mb8795_softc *, int);
+void		xe_write_reg(struct mb8795_softc *, int, u_char);
+void		xe_dma_reset(struct mb8795_softc *);
+void		xe_dma_rx_setup(struct mb8795_softc *);
+void		xe_dma_rx_go(struct mb8795_softc *);
+struct mbuf *	xe_dma_rx_mbuf(struct mb8795_softc *);
+void		xe_dma_tx_setup(struct mb8795_softc *);
+void		xe_dma_tx_go(struct mb8795_softc *);
+int		xe_dma_tx_mbuf(struct mb8795_softc *, struct mbuf *);
+int		xe_dma_tx_isactive(struct mb8795_softc *);
 
 struct mb8795_glue xe_glue = {
 	xe_read_reg,
@@ -149,20 +141,10 @@ struct mb8795_glue xe_glue = {
 	xe_dma_tx_go,
 	xe_dma_tx_mbuf,
 	xe_dma_tx_isactive,
-#if 0
-	xe_dma_setup,
-	xe_dma_go,
-	xe_dma_stop,
-	xe_dma_isactive,
-	NULL,			/* gl_clear_latched_intr */
-#endif
 };
 
 int
-xe_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xe_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
@@ -175,8 +157,7 @@ xe_match(parent, match, aux)
 }
 
 static void
-findchannel_defer(self)
-	struct device *self;
+findchannel_defer(struct device *self)
 {
 	struct xe_softc *xsc = (struct xe_softc *)self;
 	struct mb8795_softc *sc = &xsc->sc_mb8795;
@@ -250,9 +231,7 @@ findchannel_defer(self)
 }
 
 void
-xe_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 	struct xe_softc *xsc = (struct xe_softc *)self;
@@ -304,8 +283,7 @@ xe_attach(parent, self, aux)
 }
 
 int
-xe_tint(arg)
-	void *arg;
+xe_tint(void *arg)
 {
 	if (!INTR_OCCURRED(NEXT_I_ENETX))
 		return 0;
@@ -314,8 +292,7 @@ xe_tint(arg)
 }
 
 int
-xe_rint(arg)
-	void *arg;
+xe_rint(void *arg)
 {
 	if (!INTR_OCCURRED(NEXT_I_ENETR))
 		return(0);
@@ -328,9 +305,7 @@ xe_rint(arg)
  */
 
 u_char
-xe_read_reg(sc, reg)
-	struct mb8795_softc *sc;
-	int reg;
+xe_read_reg(struct mb8795_softc *sc, int reg)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -338,10 +313,7 @@ xe_read_reg(sc, reg)
 }
 
 void
-xe_write_reg(sc, reg, val)
-	struct mb8795_softc *sc;
-	int reg;
-	u_char val;
+xe_write_reg(struct mb8795_softc *sc, int reg, u_char val)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -349,8 +321,7 @@ xe_write_reg(sc, reg, val)
 }
 
 void
-xe_dma_reset(sc)
-	struct mb8795_softc *sc;
+xe_dma_reset(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	int i;
@@ -382,8 +353,7 @@ xe_dma_reset(sc)
 }
 
 void
-xe_dma_rx_setup (sc)
-	struct mb8795_softc *sc;
+xe_dma_rx_setup(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	int i;
@@ -402,8 +372,7 @@ xe_dma_rx_setup (sc)
 }
 
 void
-xe_dma_rx_go (sc)
-	struct mb8795_softc *sc;
+xe_dma_rx_go(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -413,8 +382,7 @@ xe_dma_rx_go (sc)
 }
 
 struct mbuf *
-xe_dma_rx_mbuf (sc)
-	struct mb8795_softc *sc;
+xe_dma_rx_mbuf(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	bus_dmamap_t map;
@@ -452,8 +420,7 @@ xe_dma_rx_mbuf (sc)
 }
 
 void
-xe_dma_tx_setup (sc)
-	struct mb8795_softc *sc;
+xe_dma_tx_setup(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -463,8 +430,7 @@ xe_dma_tx_setup (sc)
 }
 
 void
-xe_dma_tx_go (sc)
-	struct mb8795_softc *sc;
+xe_dma_tx_go(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -474,9 +440,7 @@ xe_dma_tx_go (sc)
 }
 
 int
-xe_dma_tx_mbuf (sc, m)
-	struct mb8795_softc *sc;
-	struct mbuf *m;
+xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	int error;
@@ -545,8 +509,7 @@ xe_dma_tx_mbuf (sc, m)
 }
 
 int
-xe_dma_tx_isactive (sc)
-	struct mb8795_softc *sc;
+xe_dma_tx_isactive(struct mb8795_softc *sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
@@ -556,9 +519,7 @@ xe_dma_tx_isactive (sc)
 /****************************************************************/
 
 void 
-xe_dma_tx_completed(map, arg)
-	bus_dmamap_t map;
-	void *arg;
+xe_dma_tx_completed(bus_dmamap_t map, void *arg)
 {
 #if defined (XE_DEBUG) || defined (DIAGNOSTIC)
 	struct mb8795_softc *sc = arg;
@@ -581,8 +542,7 @@ xe_dma_tx_completed(map, arg)
 }
 
 void 
-xe_dma_tx_shutdown(arg)
-	void *arg;
+xe_dma_tx_shutdown(void *arg)
 {
 	struct mb8795_softc *sc = arg;
 	struct xe_softc *xsc = (struct xe_softc *)sc;
@@ -620,7 +580,7 @@ xe_dma_tx_shutdown(arg)
 
 #if 1
 	if ((ifp->if_flags & IFF_RUNNING) && !IF_IS_EMPTY(&sc->sc_tx_snd)) {
-		void mb8795_start_dma __P((struct mb8795_softc *)); /* XXXX */
+		void mb8795_start_dma(struct mb8795_softc *); /* XXXX */
 		mb8795_start_dma(sc);
 	}
 #endif
@@ -635,9 +595,7 @@ xe_dma_tx_shutdown(arg)
 
 
 void 
-xe_dma_rx_completed(map, arg)
-	bus_dmamap_t map;
-	void *arg;
+xe_dma_rx_completed(bus_dmamap_t map, void *arg)
 {
 	struct mb8795_softc *sc = arg;
 	struct xe_softc *xsc = (struct xe_softc *)sc;
@@ -665,8 +623,7 @@ xe_dma_rx_completed(map, arg)
 }
 
 void 
-xe_dma_rx_shutdown(arg)
-	void *arg;
+xe_dma_rx_shutdown(void *arg)
 {
 	struct mb8795_softc *sc = arg;
 	struct xe_softc *xsc = (struct xe_softc *)sc;
@@ -691,9 +648,7 @@ xe_dma_rx_shutdown(arg)
  * load a dmamap with a freshly allocated mbuf
  */
 struct mbuf *
-xe_dma_rxmap_load(sc,map)
-	struct mb8795_softc *sc;
-	bus_dmamap_t map;
+xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -755,8 +710,7 @@ xe_dma_rxmap_load(sc,map)
 }
 
 bus_dmamap_t 
-xe_dma_rx_continue(arg)
-	void *arg;
+xe_dma_rx_continue(void *arg)
 {
 	struct mb8795_softc *sc = arg;
 	struct xe_softc *xsc = (struct xe_softc *)sc;
@@ -791,8 +745,7 @@ xe_dma_rx_continue(arg)
 }
 
 bus_dmamap_t 
-xe_dma_tx_continue(arg)
-	void *arg;
+xe_dma_tx_continue(void *arg)
 {
 	struct mb8795_softc *sc = arg;
 	struct xe_softc *xsc = (struct xe_softc *)sc;

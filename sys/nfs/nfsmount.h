@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.27.2.6 2004/10/30 07:36:47 skrll Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.27.2.7 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -112,6 +112,7 @@ struct nfs_args {
 #define	NFSMNT_AUTHERR		0x00002000  /* Authentication error */
 #define NFSMNT_SWAPCOOKIE	0x00004000  /* XDR encode dir cookies */
 #define NFSMNT_STALEWRITEVERF	0x00008000  /* Write verifier is changing */
+#define NFSMNT_WCCKLUDGE	0x00010000  /* see nfs_check_wccdata() */
 
 #ifdef _KERNEL
 /*
@@ -164,6 +165,7 @@ struct	nfsmount {
 	u_int64_t nm_maxfilesize;	/* maximum file size */
 	int	nm_iflag;		/* internal flags */
 	int	nm_waiters;		/* number of waiting listeners.. */
+	long	nm_wcckludgetime;	/* see nfs_check_wccdata() */
 };
 
 /*

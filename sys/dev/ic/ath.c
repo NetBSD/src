@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32.2.8 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.32.2.9 2005/01/24 08:35:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.8 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.9 2005/01/24 08:35:19 skrll Exp $");
 #endif
 
 /*
@@ -3356,7 +3356,7 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 			/* XXX adopt beacon interval and ATIM window */
 			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
 			ath_hal_stoptxdma(ah, sc->sc_bhalq);
-			ath_beacon_config(sc);
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		}
 		break;
 	default:

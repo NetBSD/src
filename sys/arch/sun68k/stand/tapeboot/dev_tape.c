@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.1 2001/06/14 12:57:17 fredette Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.1.24.1 2005/01/24 08:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,16 +66,13 @@ struct saioreq tape_ioreq;
  * one digit, which is passed to the device open so it
  * can open the appropriate tape segment.
  */
-int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;		/* normally "1" */
-	char **file;
+int 
+devopen(struct open_file *f, const char *fname,	char **file)
 {
 	struct devsw *dp;
 	int error;
 
-	*file = (char*)fname;
+	*file = (char *)fname;
 	dp = &devsw[0];
 	f->f_dev = dp;
 
@@ -113,7 +110,7 @@ tape_open(struct open_file *f, ...)
 	 * (determines what gets opened)
 	 */
 	si = &tape_ioreq;
-	bzero((caddr_t)si, sizeof(*si));
+	memset(si, 0, sizeof(*si));
 
 	bp = *romVectorPtr->bootParam;
 	si->si_boottab = bp->bootDevice;
@@ -133,9 +130,8 @@ tape_open(struct open_file *f, ...)
 	return (error);
 }
 
-int
-tape_close(f)
-	struct open_file *f;
+int 
+tape_close(struct open_file *f)
 {
 	struct saioreq *si;
 
@@ -149,14 +145,9 @@ tape_close(f)
 	return 0;
 }
 
-int
-tape_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+int 
+tape_strategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct saioreq *si;
 	struct boottab *ops;
@@ -194,11 +185,8 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	return (0);
 }
 
-int
-tape_ioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+int 
+tape_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }

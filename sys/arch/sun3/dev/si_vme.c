@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.21.2.3 2004/09/21 13:23:20 skrll Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.21.2.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.21.2.3 2004/09/21 13:23:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.21.2.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,22 +109,22 @@ __KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.21.2.3 2004/09/21 13:23:20 skrll Exp $"
 #include "sireg.h"
 #include "sivar.h"
 
-void si_vme_dma_setup __P((struct ncr5380_softc *));
-void si_vme_dma_start __P((struct ncr5380_softc *));
-void si_vme_dma_eop __P((struct ncr5380_softc *));
-void si_vme_dma_stop __P((struct ncr5380_softc *));
+void si_vme_dma_setup(struct ncr5380_softc *);
+void si_vme_dma_start(struct ncr5380_softc *);
+void si_vme_dma_eop(struct ncr5380_softc *);
+void si_vme_dma_stop(struct ncr5380_softc *);
 
-void si_vme_intr_on  __P((struct ncr5380_softc *));
-void si_vme_intr_off __P((struct ncr5380_softc *));
+void si_vme_intr_on (struct ncr5380_softc *);
+void si_vme_intr_off(struct ncr5380_softc *);
 
-static void si_vme_reset __P((struct ncr5380_softc *));
+static void si_vme_reset(struct ncr5380_softc *);
 
 /*
  * New-style autoconfig attachment
  */
 
-static int	si_vme_match __P((struct device *, struct cfdata *, void *));
-static void	si_vme_attach __P((struct device *, struct device *, void *));
+static int	si_vme_match(struct device *, struct cfdata *, void *);
+static void	si_vme_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(si_vme, sizeof(struct si_softc),
     si_vme_match, si_vme_attach, NULL, NULL);
@@ -137,11 +137,8 @@ CFATTACH_DECL(si_vme, sizeof(struct si_softc),
 int si_vme_options = 0x0f;
 
 
-static int
-si_vme_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+si_vme_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int probe_addr;
@@ -179,10 +176,8 @@ si_vme_match(parent, cf, aux)
 	return (1);
 }
 
-static void
-si_vme_attach(parent, self, args)
-	struct device	*parent, *self;
-	void		*args;
+static void 
+si_vme_attach(struct device *parent, struct device *self, void *args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -270,9 +265,8 @@ si_vme_reset(struct ncr5380_softc *ncr_sc)
  * Who would have guessed!
  * What a NASTY trick!
  */
-void
-si_vme_intr_on(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_intr_on(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	volatile struct si_regs *si = sc->sc_regs;
@@ -296,9 +290,8 @@ si_vme_intr_on(ncr_sc)
  * This is called when the bus is idle and we are
  * about to start playing with the SBC chip.
  */
-void
-si_vme_intr_off(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_intr_off(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	volatile struct si_regs *si = sc->sc_regs;
@@ -317,9 +310,8 @@ si_vme_intr_off(ncr_sc)
  * On the VME version, setup the start addres, but clear the
  * count (to make sure it stays idle) and set that later.
  */
-void
-si_vme_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -382,9 +374,8 @@ si_vme_dma_setup(ncr_sc)
 }
 
 
-void
-si_vme_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -437,18 +428,16 @@ si_vme_dma_start(ncr_sc)
 }
 
 
-void
-si_vme_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
 
 
-void
-si_vme_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+void 
+si_vme_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2003/05/25 14:00:15 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.1 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-extern const u_int32_t *ipl_sr_bits;
+extern const uint32_t *ipl_sr_bits;
 
 extern int _splraise(int);
 extern int _spllower(int);
@@ -114,7 +114,8 @@ extern void _clrsoftintr(int);
 #include <mips/softintr.h>
 
 struct clockframe;
-void arc_set_intr(int, int(*)(u_int, struct clockframe *), int);
+void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);
+extern uint32_t cpu_int_mask;
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: interreg.h,v 1.10 1998/02/05 04:57:35 gwr Exp $	*/
+/*	$NetBSD: interreg.h,v 1.10.48.1 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,6 @@
 
 extern volatile u_char *interrupt_reg;
 
-void set_clk_mode __P((u_char on, u_char off, int enable));
+void set_clk_mode(u_char on, u_char off, int enable);
 
 #endif	/* _KERNEL */

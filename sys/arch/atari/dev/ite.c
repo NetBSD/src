@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39.6.4 2005/01/17 08:25:43 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.39.6.5 2005/01/24 08:34:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.4 2005/01/17 08:25:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.5 2005/01/24 08:34:06 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -121,8 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.4 2005/01/17 08:25:43 skrll Exp $");
 #define SUBR_CURSOR(ip,flg)		(ip)->grf->g_itecursor(ip,flg)
 #define SUBR_CLEAR(ip,sy,sx,h,w)	(ip)->grf->g_iteclear(ip,sy,sx,h,w)
 #define SUBR_SCROLL(ip,sy,sx,cnt,dir)	(ip)->grf->g_itescroll(ip,sy,sx,cnt,dir)
-
-u_int	ite_confunits;			/* configured units */
 
 int	start_repeat_timeo = 30;	/* first repeat after x s/100 */
 int	next_repeat_timeo  = 10;	/* next repeat after x s/100 */
@@ -214,11 +212,10 @@ itematch(pdp, cfp, auxp)
 	struct cfdata	*cfp;
 	void		*auxp;
 {
-	static int	 nmatches = 0;
 	
 	/*
-	 * Handle early console stuff. The first cf_unit number
-	 * matches the console unit. All other early matches will fail.
+	 * Handle early console stuff. The first unit number
+	 * is the console unit. All other early matches will fail.
 	 */
 	if (atari_realconfig == 0) {
 		if (cons_ite >= 0)
@@ -226,23 +223,13 @@ itematch(pdp, cfp, auxp)
 		cons_ite = cfp->cf_unit;
 		return 1;
 	}
-
-	/*
-	 * all that our mask allows (more than enough no one 
-	 * has > 32 monitors for text consoles on one machine)
-	 */
-	if (nmatches >= sizeof(ite_confunits) * NBBY)
-		return 0;	/* checks STAR */
-	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
-		return 0;	/* refuses ite100 at .... */
-	nmatches++;
 	return 1;
 }
 
 void
 iteattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+	struct device	*pdp, *dp;
+	void		*auxp;
 {
 	struct grf_softc	*gp;
 	struct ite_softc	*ip;
@@ -256,10 +243,7 @@ void		*auxp;
 	unit = (dp != NULL) ? ip->device.dv_unit : cons_ite;
 	gp->g_itedev = makedev(maj, unit);
 
-	if(dp) {
-
-		ite_confunits |= 1 << ITEUNIT(gp->g_itedev);
-
+	if (dp) {
 		s = spltty();
 		if(con_itesoftc.grf != NULL
 			&& con_itesoftc.grf->g_unit == gp->g_unit) {
@@ -285,7 +269,8 @@ void		*auxp;
 		if (kbd_ite == ip)
 			printf(" has keyboard");
 		printf("\n");
-	} else {
+		ip->flags |= ITE_ATTACHED;
+ 	} else {
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gp->g_conpri)
 			return;
@@ -385,7 +370,7 @@ itecnputc(dev, c)
 
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE | ITE_INGRF)) != ITE_ACTIVE) {
-		(void)ite_on(dev, 3);
+		ite_on(dev, 3);
 		paniced = 1;
 	}
 	SUBR_CURSOR(ip, START_CURSOROPT);
@@ -440,12 +425,13 @@ iteopen(dev, mode, devtype, l)
 	int error, first, unit;
 
 	unit = ITEUNIT(dev);
+	if (unit >= ite_cd.cd_ndevs)
+		return ENXIO;
+
 	first = 0;
-	
-	if (((1 << unit) & ite_confunits) == 0)
-		return (ENXIO);
-	
 	ip = getitesp(dev);
+	if ((ip->flags & ITE_ATTACHED) == 0)
+		return (ENXIO);
 
 	if (ip->tp == NULL) {
 		tp = ip->tp = ttymalloc();
@@ -457,9 +443,7 @@ iteopen(dev, mode, devtype, l)
 	    && l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
-		error = ite_on(dev, 0);
-		if (error)
-			return (error);
+		ite_on(dev, 0);
 		first = 1;
 	}
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
@@ -706,7 +690,7 @@ itestart(tp)
 	} splx(s);
 }
 
-int
+void
 ite_on(dev, flag)
 	dev_t dev;
 	int flag;
@@ -715,9 +699,6 @@ ite_on(dev, flag)
 	int unit;
 
 	unit = ITEUNIT(dev);
-	if (((1 << unit) & ite_confunits) == 0)
-		return (ENXIO);
-	
 	ip = getitesp(dev); 
 
 	/* force ite active, overriding graphics mode */
@@ -729,13 +710,12 @@ ite_on(dev, flag)
 	if (flag & 2) {
 		ip->flags &= ~ITE_INGRF;
 		if ((ip->flags & ITE_ACTIVE) == 0)
-			return (0);
+			return;
 	}
 	ip->flags |= ITE_ACTIVE;
 	if (ip->flags & ITE_INGRF)
-		return (0);
+		return;
 	iteinit(dev);
-	return (0);
 }
 
 void
@@ -764,16 +744,14 @@ int	unit;
 	struct ite_softc	*ip;
 	extern const struct cdevsw view_cdevsw;
 
-	if(!(ite_confunits & (1 << unit)))
-		return;	/* Don't try unconfigured units	*/
 	ip = getitesp(unit);
-	if(!(ip->flags & ITE_INITED))
-		return; 
+	if ((ip->flags & (ITE_ATTACHED | ITE_INITED)) == 0)
+		return;
 
 	/*
 	 * If switching to an active ite, also switch the keyboard.
 	 */
-	if(ip->flags & ITE_ACTIVE)
+	if (ip->flags & ITE_ACTIVE)
 		kbd_ite = ip;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.64.2.4 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.64.2.5 2005/01/24 08:35:36 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.4 2004/11/02 07:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.5 2005/01/24 08:35:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,7 @@ USB_ATTACH(uhub)
 		else
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
+		up->reattach = 0;
 		if (UHUB_IS_HIGH_SPEED(sc)) {
 			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
 			up->tt->hub = hub;
@@ -356,7 +357,7 @@ uhub_explore(usbd_device_handle dev)
 	usbd_status err;
 	int speed;
 	int port;
-	int change, status;
+	int change, status, reconnect;
 
 	DPRINTFN(10, ("uhub_explore dev=%p addr=%d\n", dev, dev->address));
 
@@ -377,6 +378,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
+		reconnect = up->reattach;
+		up->reattach = 0;
 		DPRINTFN(3,("uhub_explore: %s port %d status 0x%04x 0x%04x\n",
 			    USBDEVNAME(sc->sc_dev), port, status, change));
 		if (change & UPS_C_PORT_ENABLED) {
@@ -403,7 +406,7 @@ uhub_explore(usbd_device_handle dev)
 					       USBDEVNAME(sc->sc_dev), port);
 			}
 		}
-		if (!(change & UPS_C_CONNECT_STATUS)) {
+		if (!reconnect && !(change & UPS_C_CONNECT_STATUS)) {
 			DPRINTFN(3,("uhub_explore: port=%d !C_CONNECT_"
 				    "STATUS\n", port));
 			/* No status change, just do recursive explore. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5.2.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5.2.5 2005/01/24 08:35:53 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.4 2004/09/21 13:37:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.5 2005/01/24 08:35:53 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -676,10 +676,9 @@ SYSCTL_NODE(_net, PF_KEY, key, CTLFLAG_RW, 0, "Key Family");
  * Definitions of protocols supported in the KEY domain.
  */
 
-/* This extern declaration is all that's common... */
+#ifdef __FreeBSD__
 extern struct domain keydomain;
 
-#ifdef __FreeBSD__
 struct pr_usrreqs key_usrreqs = {
 	key_abort, pru_accept_notsupp, key_attach, key_bind,
 	key_connect,
@@ -714,6 +713,7 @@ DOMAIN_SET(key);
 
 #else /* !__FreeBSD__ */
 
+DOMAIN_DEFINE(keydomain);
 
 struct protosw keysw[] = {
 { SOCK_RAW,	&keydomain,	PF_KEY_V2,	PR_ATOMIC|PR_ADDR,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.8.6.3 2004/09/21 13:23:07 skrll Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.8.6.4 2005/01/24 08:34:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.8.6.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_any.c,v 1.8.6.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,34 +121,29 @@ CFATTACH_DECL(bwtwo_obio, sizeof(struct bwtwosun2_softc),
 CFATTACH_DECL(bwtwo_obmem, sizeof(struct bwtwosun2_softc),
     bwtwomatch_any, bwtwoattach_any, NULL, NULL);
 
-static int	bwtwo_get_video_sun2 __P((struct bwtwo_softc *));
-static void	bwtwo_set_video_sun2 __P((struct bwtwo_softc *, int));
+static int	bwtwo_get_video_sun2(struct bwtwo_softc *);
+static void	bwtwo_set_video_sun2(struct bwtwo_softc *, int);
 
 extern int fbnode;
 
-static int
-bwtwomatch_any(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+bwtwomatch_any(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	int matched;
 
 	/* Make sure there is something there... */
-	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG, sizeof(struct bwtworeg), 
-			  0, &bh))
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG,
+			  sizeof(struct bwtworeg), 0, &bh))
 		return (0);
 	matched = (bus_space_peek_1(ma->ma_bustag, bh, 0, NULL) == 0);
 	bus_space_unmap(ma->ma_bustag, bh, sizeof(struct bwtworeg));
 	return (matched);
 }
 
-static void
-bwtwoattach_any(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+bwtwoattach_any(struct device *parent, struct device *self, void *aux)
 {
 	struct bwtwosun2_softc *scsun2 = (struct bwtwosun2_softc *)self;
 	struct bwtwo_softc *sc = &scsun2->sc;
@@ -177,15 +172,16 @@ bwtwoattach_any(parent, self, aux)
 	sc->sc_set_video = bwtwo_set_video_sun2;
 
 	/* Map the registers. */
-	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG, sizeof(struct bwtworeg), 
-	    		  0, &scsun2->bh)) {
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr + BWREG_REG,
+			  sizeof(struct bwtworeg), 0, &scsun2->bh)) {
 		printf("%s: cannot map regs\n", self->dv_xname);
 		return;
 	}
 
 	if (isconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (bus_space_map(ma->ma_bustag, ma->ma_paddr + sc->sc_pixeloffset,
+		if (bus_space_map(ma->ma_bustag,
+				  ma->ma_paddr + sc->sc_pixeloffset,
 				  ramsize,
 				  BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);
@@ -197,26 +193,25 @@ bwtwoattach_any(parent, self, aux)
 	bwtwoattach(sc, name, isconsole);
 }
 
-static void
-bwtwo_set_video_sun2(sc, enable)
-	struct bwtwo_softc *sc;
-	int enable;
+static void 
+bwtwo_set_video_sun2(struct bwtwo_softc *sc, int enable)
 {
 	struct bwtwosun2_softc *scsun2 = (struct bwtwosun2_softc *)sc;
 	unsigned char cr;
 
 	cr = bus_space_read_1(sc->sc_bustag, scsun2->bh, 0);
-	bus_space_write_1(sc->sc_bustag, scsun2->bh, 0, (enable ? 
-							 (cr | BW2_CR_ENABLE_VIDEO) : 
-	    						 (cr & ~BW2_CR_ENABLE_VIDEO)));
+	bus_space_write_1(sc->sc_bustag, scsun2->bh, 0,
+			  (enable ?
+			   (cr | BW2_CR_ENABLE_VIDEO) :
+			   (cr & ~BW2_CR_ENABLE_VIDEO)));
 	return;
 }
 
-static int
-bwtwo_get_video_sun2(sc)
-	struct bwtwo_softc *sc;
+static int 
+bwtwo_get_video_sun2(struct bwtwo_softc *sc)
 {
 	struct bwtwosun2_softc *scsun2 = (struct bwtwosun2_softc *)sc;
 
-	return ((bus_space_read_1(sc->sc_bustag, scsun2->bh, 0) & BW2_CR_ENABLE_VIDEO) != 0);
+	return ((bus_space_read_1(sc->sc_bustag, scsun2->bh, 0) &
+		 BW2_CR_ENABLE_VIDEO) != 0);
 }

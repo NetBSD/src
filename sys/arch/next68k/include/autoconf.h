@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2002/09/11 01:46:33 mycroft Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3.6.1 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,13 +47,10 @@ struct mainbus_attach_args {
 };
 
 /* autoconf.c */
-void	setconf __P((void));
+void	setconf(void);
 
 /* machdep.c */
-void	cpu_dumpconf __P((void));
-int	badbaddr __P((register caddr_t addr));
-int	badwaddr __P((register caddr_t addr));
-int	badladdr __P((register caddr_t addr));
-
-/* macrom.c */
-void	mrg_init __P((void));
+void	cpu_dumpconf(void);
+int	badbaddr(caddr_t);
+int	badwaddr(caddr_t);
+int	badladdr(caddr_t);

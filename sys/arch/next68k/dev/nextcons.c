@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.5.6.3 2004/09/21 13:19:41 skrll Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.5.6.4 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.5.6.3 2004/09/21 13:19:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.5.6.4 2005/01/24 08:34:18 skrll Exp $");
 
 #include <sys/cdefs.h>
 
@@ -60,11 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.5.6.3 2004/09/21 13:19:41 skrll Exp $
 
 #include <next68k/next68k/nextrom.h>
 
-void nextcnprobe __P((struct consdev *));
-void nextcninit __P((struct consdev *));
-int nextcngetc __P((dev_t));
-void nextcnputc __P((dev_t, int));
-void nextcnpollc __P((dev_t, int));
+void nextcnprobe(struct consdev *);
+void nextcninit(struct consdev *);
+int nextcngetc(dev_t);
+void nextcnputc(dev_t, int);
+void nextcnpollc(dev_t, int);
 
 
 void

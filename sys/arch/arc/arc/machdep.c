@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78.2.3 2004/09/21 13:12:47 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.3 2004/09/21 13:12:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.2.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -203,10 +203,10 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-void mach_init __P((int, char **argv, char **));
+void mach_init(int, char **argv, char **);
 
-char *firmware_getenv __P((char *env));
-void arc_sysreset __P((bus_addr_t, bus_size_t));
+char *firmware_getenv(char *env);
+void arc_sysreset(bus_addr_t, bus_size_t);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -216,8 +216,8 @@ void arc_sysreset __P((bus_addr_t, bus_size_t));
  */
 int	safepri = MIPS3_PSL_LOWIPL;
 
-const u_int32_t *ipl_sr_bits;
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t *ipl_sr_bits;
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
@@ -234,10 +234,7 @@ extern struct user *proc0paddr;
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, envv)
-	int argc;
-	char *argv[];
-	char *envv[];	/* Not on all arches... */
+mach_init(int argc, char *argv[], char *envv[])
 {
 	char *cp;
 	int i;
@@ -246,7 +243,7 @@ mach_init(argc, argv, envv)
 
 	/* clear the BSS segment in kernel code */
 	kernend = (caddr_t)mips_round_page(end);
-	bzero(edata, kernend - edata);
+	memset(edata, 0, kernend - edata);
 
 	environment = &argv[1];
 
@@ -472,6 +469,7 @@ mach_init(argc, argv, envv)
 void
 mips_machdep_cache_config(void)
 {
+
 	mips_sdcache_size = arc_cpu_l2cache_size;
 }
 
@@ -479,8 +477,7 @@ mips_machdep_cache_config(void)
  * Return a pointer to the given environment variable.
  */
 char *
-firmware_getenv(envname)
-	char *envname;
+firmware_getenv(char *envname)
 {
 	char **env;
 	int l;
@@ -489,10 +486,10 @@ firmware_getenv(envname)
 
 	for (env = environment; env[0]; env++) {
 		if (strncasecmp(envname, env[0], l) == 0 && env[0][l] == '=') {
-			return (&env[0][l + 1]);
+			return &env[0][l + 1];
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -501,7 +498,7 @@ firmware_getenv(envname)
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -517,7 +514,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -543,13 +540,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -568,9 +565,7 @@ int	waittime = -1;
 struct user dumppcb;	/* Actually, struct pcb would do. */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -599,7 +594,7 @@ cpu_reboot(howto, bootstr)
 		 */
 		resettodr();
 	}
-	(void) splhigh();		/* extreme priority */
+	(void)splhigh();		/* extreme priority */
 
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
@@ -630,12 +625,10 @@ cpu_reboot(howto, bootstr)
  * Pass system reset command to keyboard controller (8042).
  */
 void
-arc_sysreset(addr, cmd_offset)
-	bus_addr_t addr;
-	bus_size_t cmd_offset;
+arc_sysreset(bus_addr_t addr, bus_size_t cmd_offset)
 {
-	volatile u_int8_t *kbdata = (u_int8_t *)addr + KBDATAP;
-	volatile u_int8_t *kbcmd = (u_int8_t *)addr + cmd_offset;
+	volatile uint8_t *kbdata = (uint8_t *)addr + KBDATAP;
+	volatile uint8_t *kbcmd = (uint8_t *)addr + cmd_offset;
 
 #define KBC_ARC_SYSRESET 0xd1
 
@@ -652,8 +645,7 @@ arc_sysreset(addr, cmd_offset)
  * previous call.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;

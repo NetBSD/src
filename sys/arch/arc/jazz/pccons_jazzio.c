@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_jazzio.c,v 1.3.6.3 2004/09/21 13:13:01 skrll Exp $ */
+/* $NetBSD: pccons_jazzio.c,v 1.3.6.4 2005/01/24 08:34:05 skrll Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.3 2004/09/21 13:13:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.4 2005/01/24 08:34:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.3.6.3 2004/09/21 13:13:01 skrll 
 
 #define PCKBD_INTR 6	/* XXX - should be obtained from firmware */
 
-int	pccons_jazzio_match __P((struct device *, struct cfdata *, void *));
-void	pccons_jazzio_attach __P((struct device *, struct device *, void *));
+int	pccons_jazzio_match(struct device *, struct cfdata *, void *);
+void	pccons_jazzio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pc_jazzio, sizeof(struct pc_softc),
     pccons_jazzio_match, pccons_jazzio_attach, NULL, NULL);
@@ -59,7 +59,7 @@ CFATTACH_DECL(pc_jazzio, sizeof(struct pc_softc),
  * chipset-dependent pccons configuration
  */
 
-void pccons_jazzio_init __P((void));
+void pccons_jazzio_init(void);
 
 struct pccons_config pccons_jazzio_conf = {
 	0x3b4, 0xb0000,	/* mono: iobase, memaddr */
@@ -69,23 +69,23 @@ struct pccons_config pccons_jazzio_conf = {
 };
 
 void
-pccons_jazzio_init()
+pccons_jazzio_init(void)
 {
+
 	/* nothing to do */
 }
 
-int	pccons_jazzio_init_tag __P((char*, bus_space_tag_t*,bus_space_tag_t*));
+int	pccons_jazzio_init_tag(char*, bus_space_tag_t*,bus_space_tag_t*);
 
 int
-pccons_jazzio_init_tag(name, iotp, memtp)
-	char *name;
-	bus_space_tag_t *iotp, *memtp;
+pccons_jazzio_init_tag(char *name, bus_space_tag_t *iotp,
+    bus_space_tag_t *memtp)
 {
 	static int initialized = 0;
 	static struct arc_bus_space vga_io, vga_mem;
 
 	if (strcmp(name, "ALI_S3") != 0)
-		return(ENXIO);
+		return ENXIO;
 
 	if (!initialized) {
 		initialized = 1;
@@ -114,32 +114,27 @@ pccons_jazzio_init_tag(name, iotp, memtp)
 	}
 	*iotp = &vga_io;
 	*memtp = &vga_mem;
-	return (0);
+	return 0;
 }
 
 int
-pccons_jazzio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pccons_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t crt_iot, crt_memt;
 
 	if (pccons_jazzio_init_tag(ja->ja_name, &crt_iot, &crt_memt))
-		return (0);
+		return 0;
 
 	if (!pccons_common_match(crt_iot, crt_memt, ja->ja_bust,
 	    &pccons_jazzio_conf))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-pccons_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pccons_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pc_softc *sc = (struct pc_softc *)self;
 	struct jazzio_attach_args *ja = aux;
@@ -152,16 +147,13 @@ pccons_jazzio_attach(parent, self, aux)
 }
 
 int
-pccons_jazzio_cnattach(name, kbd_iot)
-	char *name;
-	bus_space_tag_t kbd_iot;
+pccons_jazzio_cnattach(char *name, bus_space_tag_t kbd_iot)
 {
 	bus_space_tag_t crt_iot, crt_memt;
 
 	if (pccons_jazzio_init_tag(name, &crt_iot, &crt_memt))
-		return (ENXIO);
+		return ENXIO;
 	pccons_common_cnattach(crt_iot, crt_memt, kbd_iot,
 	    &pccons_jazzio_conf);
-	return (0);
+	return 0;
 }
-

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.3 2004/09/21 13:20:49 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.4 2005/01/24 08:34:27 skrll Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -181,6 +181,7 @@ define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
+define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
 define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)

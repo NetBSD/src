@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.26.2.3 2004/09/21 13:23:29 skrll Exp $	*/
+/*	$NetBSD: dvma.c,v 1.26.2.4 2005/01/24 08:35:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.26.2.3 2004/09/21 13:23:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.26.2.4 2005/01/24 08:35:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.26.2.3 2004/09/21 13:23:29 skrll Exp $");
 /* Number of slots in dvmamap. */
 struct extent *dvma_extent;
 
-void
-dvma_init()
+void 
+dvma_init(void)
 {
 
 	/*
@@ -137,10 +137,8 @@ dvma_init()
  * would be used by some OTHER bus-master besides the CPU.
  * (Examples: on-board ie/le, VME xy board).
  */
-u_long
-dvma_kvtopa(kva, bustype)
-	void * kva;
-	int bustype;
+u_long 
+dvma_kvtopa(void *kva, int bustype)
 {
 	u_long addr, mask;
 
@@ -167,9 +165,7 @@ dvma_kvtopa(kva, bustype)
  * to a kernel address in DVMA space.
  */
 void *
-dvma_mapin(kmem_va, len, canwait)
-	void *  kmem_va;
-	int     len, canwait;
+dvma_mapin(void *kmem_va, int len, int canwait)
 {
 	void * dvma_addr;
 	vaddr_t kva, tva;
@@ -242,10 +238,8 @@ dvma_mapin(kmem_va, len, canwait)
  *       synchronization between the DVMA cache and central RAM
  *       on the 3/470.
  */
-void
-dvma_mapout(dvma_addr, len)
-	void *dvma_addr;
-	int len;
+void 
+dvma_mapout(void *dvma_addr, int len)
 {
 	u_long kva;
 	int s, off;
@@ -271,8 +265,7 @@ dvma_mapout(dvma_addr, len)
  * (For sun3 compatibility - the ie driver.)
  */
 void *
-dvma_malloc(bytes)
-	size_t bytes;
+dvma_malloc(size_t bytes)
 {
 	void *new_mem, *dvma_mem;
 	vsize_t new_size;
@@ -290,10 +283,8 @@ dvma_malloc(bytes)
 /*
  * Free pages from dvma_malloc()
  */
-void
-dvma_free(addr, size)
-	void *addr;
-	size_t size;
+void 
+dvma_free(void *addr, size_t size)
 {
 	vsize_t sz = m68k_round_page(size);
 

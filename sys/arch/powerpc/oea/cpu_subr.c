@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8.2.5 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8.2.6 2005/01/24 08:34:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.5 2005/01/17 19:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.6 2005/01/24 08:34:27 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -59,6 +59,7 @@ static void cpu_enable_l3cr(register_t);
 static void cpu_config_l2cr(int);
 static void cpu_config_l3cr(int);
 static void cpu_print_speed(void);
+static void cpu_idlespin(void);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
 static int cpu_tau_gtredata __P((struct sysmon_envsys *,
@@ -82,6 +83,15 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
+	{ 0 }
+};
+
+static const struct fmttab cpu_7448_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ L2CR_L2E, ~0, " 1MB L2 cache" },
 	{ 0 }
 };
 
@@ -189,6 +199,8 @@ static const struct cputab models[] = {
 	{ "7450",	MPC7450,	REVFMT_MAJMIN },
 	{ "7455",	MPC7455,	REVFMT_MAJMIN },
 	{ "7457",	MPC7457,	REVFMT_MAJMIN },
+	{ "7447A",	MPC7447A,	REVFMT_MAJMIN },
+	{ "7448",	MPC7448,	REVFMT_MAJMIN },
 	{ "8240",	MPC8240,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
@@ -215,6 +227,24 @@ cpu_fmttab_print(const struct fmttab *fmt, register_t data)
 }
 
 void
+cpu_idlespin(void)
+{
+	register_t msr;
+
+	if (powersave <= 0)
+		return;
+
+	__asm __volatile(
+		"sync;"
+		"mfmsr	%0;"
+		"oris	%0,%0,%1@h;"	/* enter power saving mode */
+		"mtmsr	%0;"
+		"isync;"
+	    :	"=r"(msr)
+	    :	"J"(PSL_POW));
+}
+
+void
 cpu_probe_cache(void)
 {
 	u_int assoc, pvr, vers;
@@ -227,6 +257,8 @@ cpu_probe_cache(void)
 	case IBM750FX:
 	case MPC601:
 	case MPC750:
+	case MPC7447A:
+	case MPC7448:
 	case MPC7450:
 	case MPC7455:
 	case MPC7457:
@@ -295,6 +327,7 @@ cpu_attach_common(struct device *self, int id)
 	ci->ci_cpuid = id;
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
+	ci->ci_idlespin = cpu_idlespin;
 
 	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
@@ -309,6 +342,8 @@ cpu_attach_common(struct device *self, int id)
 		case MPC604ev:
 		case MPC7400:
 		case MPC7410:
+		case MPC7447A:
+		case MPC7448:
 		case MPC7450:
 		case MPC7455:
 		case MPC7457:
@@ -377,6 +412,8 @@ cpu_setup(self, ci)
 		powersave = 1;
 		break;
 
+	case MPC7447A:
+	case MPC7448:
 	case MPC7457:
 	case MPC7455:
 	case MPC7450:
@@ -388,7 +425,7 @@ cpu_setup(self, ci)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_HIGH_BAT_EN | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
+		hid0 |= HID0_NAP | HID0_DPM /* | HID0_XBSEN */;
 		powersave = 1;
 		break;
 
@@ -424,6 +461,7 @@ cpu_setup(self, ci)
 	}
 
 	mtspr(SPR_HID0, hid0);
+	__asm __volatile("sync;isync");
 
 	switch (vers) {
 	case MPC601:
@@ -452,6 +490,8 @@ cpu_setup(self, ci)
 	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
+	case MPC7447A:
+	case MPC7448:
 	case MPC7450:
 	case MPC7455:
 	case MPC7457:
@@ -743,8 +783,18 @@ cpu_config_l3cr(int vers)
 	}
 	
 	aprint_normal(",");
-	cpu_fmttab_print(vers == MPC7457
-	    ? cpu_7457_l2cr_formats : cpu_7450_l2cr_formats, l2cr);
+	switch (vers) {
+	case MPC7447A:
+	case MPC7457:
+		cpu_fmttab_print(cpu_7457_l2cr_formats, l2cr);
+		return;
+	case MPC7448:
+		cpu_fmttab_print(cpu_7448_l2cr_formats, l2cr);
+		return;
+	default:
+		cpu_fmttab_print(cpu_7450_l2cr_formats, l2cr);
+		break;
+	}
 
 	l3cr = mfspr(SPR_L3CR);
 

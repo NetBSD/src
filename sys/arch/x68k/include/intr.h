@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/04/13 23:30:07 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.24.1 2005/01/24 08:35:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 /* spl0 requires checking for software interrupts */
-void	spl0 __P((void));
+void	spl0(void);
 
 #define splnone()       spl0()
 #define spllowersoftclock()  spl1()  /* disallow softclock */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15.2.3 2004/09/21 13:21:25 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.15.2.4 2005/01/24 08:34:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,7 +65,6 @@ typedef	__volatile unsigned char __cpu_simple_lock_t;
 #define	__SWAP_BROKEN
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
-#define	__BROKEN_CONFIG_UNIT_USAGE	/* scif, sci driver */
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

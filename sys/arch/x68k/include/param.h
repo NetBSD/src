@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18.2.3 2004/09/21 13:24:20 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.18.2.4 2005/01/24 08:35:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -125,7 +125,7 @@
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
 
-void	_delay __P((u_int));
+void	_delay(u_int);
 #endif /* _KERNEL && !_LOCORE */
 
 #if defined(_KERNEL_OPT)

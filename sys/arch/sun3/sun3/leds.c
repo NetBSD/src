@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.6.22.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: leds.c,v 1.6.22.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.6.22.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.6.22.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.6.22.3 2004/09/21 13:23:28 skrll Exp $");
 #endif
 #ifdef	_SUN3X_
 #include <sun3/sun3x/obio.h>
-static volatile u_int8_t *diagreg;
+static volatile uint8_t *diagreg;
 #endif
 
 static u_char led_countdown = 0;
@@ -91,8 +91,8 @@ static struct led_patterns ledpat = {
  * This is called early during startup to find the
  * diag register (LEDs) and turn on the light(s).
  */
-void
-leds_init()
+void 
+leds_init(void)
 {
 
 #ifdef	_SUN3X_
@@ -108,8 +108,8 @@ leds_init()
 /*
  * This is called by the clock interrupt.
  */
-void
-leds_intr()
+void 
+leds_intr(void)
 {
 	u_char i;
 

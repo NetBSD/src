@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.3.4.4 2004/09/21 13:11:44 skrll Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.3.4.5 2005/01/24 08:33:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.4 2004/09/21 13:11:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.5 2005/01/24 08:33:57 skrll Exp $");
 
 
 #ifdef DEBUG
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.4 2004/09/21 13:11:44 sk
 /*
  * Send an interrupt to process, old style
  */
-#ifdef COMPAT_16
 void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
@@ -149,7 +148,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_OSF1)
 	/*
 	 * XXX We always have to save an old style signal mask because
 	 * XXX we might be delivering a signal to a process which will
@@ -163,12 +162,6 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		native_sigset_to_sigset13(mask, &mask13);
 		frame.sf_sc.__sc_mask13 = mask13;
 	}
-#endif
-
-#ifdef COMPAT_OSF1
-	/*
-	 * XXX Create an OSF/1-style sigcontext and associated goo.
-	 */
 #endif
 
 	if (copyout(&frame, (caddr_t)fp, sizeof(frame)) != 0) {
@@ -202,12 +195,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 			     (void *)p->p_sigctx.ps_sigcode,
 			     (void *)fp);
 		break;
+#ifdef COMPAT_16
 	case 1:
 		buildcontext(l,(void *)catcher,
 			     (void *)ps->sa_sigdesc[sig].sd_tramp,
 			     (void *)fp);
 		break;
-
+#endif
 	default:
 		/* Don't know what trampoline version; kill it. */
 		sigexit(l, SIGILL);
@@ -233,8 +227,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		    p->p_pid, sig);
 #endif
 }
-#endif /* COMPAT_16 */
-#ifdef COMPAT_16
+
+#ifdef COMPAT_16 /* not needed if COMPAT_OSF1 only */
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and

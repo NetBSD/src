@@ -1,4 +1,4 @@
-/*	$NetBSD: opmvar.h,v 1.1.2.4 2004/09/21 13:24:09 skrll Exp $	*/
+/*	$NetBSD: opmvar.h,v 1.1.2.5 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -44,7 +44,7 @@
 #define	FDCSTBY	(0x00)
 #define	FDCRDY	(0x40)
 
-void adpcm_chgclk	__P((u_char));
-void fdc_force_ready	__P((u_char));
+void adpcm_chgclk(u_char);
+void fdc_force_ready(u_char);
 
 #endif /* !_OPMREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.4.2.4 2005/01/17 19:29:12 skrll Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.4.2.5 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.4.2.4 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.4.2.5 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.4.2.4 2005/01/17 19:29:12 skrll Exp 
 #endif
 #endif /* COM_FREQ_MAGNUM */
 
-void p_ms_jazz_init __P((void));
+void p_ms_jazz_init(void);
 
 struct platform platform_microsoft_jazz = {
 	"Microsoft-Jazz",
@@ -93,8 +93,9 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_ms_jazz_init()
+p_ms_jazz_init(void)
 {
+
 	c_magnum_init();
 
 	/* jazzio bus configuration */

@@ -1,6 +1,5 @@
-/*	$NetBSD: types.h,v 1.2 2002/02/28 03:17:32 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.2.16.1 2005/01/24 08:34:34 skrll Exp $	*/
 
 #include <m68k/types.h>
 
-#define	__BROKEN_CONFIG_UNIT_USAGE
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS

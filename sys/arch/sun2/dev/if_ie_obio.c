@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.6.2.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.6.2.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.6.2.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.6.2.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,12 +129,12 @@ struct ieob {
 #define IEOB_ADBASE 0x000000  /* KVA base addr of 24 bit address space */
 
 
-static void ie_obreset __P((struct ie_softc *, int));
-static void ie_obattend __P((struct ie_softc *, int));
-static void ie_obrun __P((struct ie_softc *));
+static void ie_obreset(struct ie_softc *, int);
+static void ie_obattend(struct ie_softc *, int);
+static void ie_obrun(struct ie_softc *);
 
-int ie_obio_match __P((struct device *, struct cfdata *, void *));
-void ie_obio_attach __P((struct device *, struct device *, void *));
+int ie_obio_match(struct device *, struct cfdata *, void *);
+void ie_obio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
@@ -149,19 +149,16 @@ static int media[] = {
 /*
  * OBIO ie support routines
  */
-void
-ie_obreset(sc, what)
-	struct ie_softc *sc;
+void 
+ie_obreset(struct ie_softc *sc, int what)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 	ieo->obctrl = 0;
 	delay(100);			/* XXX could be shorter? */
 	ieo->obctrl = IEOB_NORSET;
 }
-void
-ie_obattend(sc, why)
-	struct ie_softc *sc;
-	int why;
+void 
+ie_obattend(struct ie_softc *sc, int why)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 
@@ -169,27 +166,22 @@ ie_obattend(sc, why)
 	ieo->obctrl &= ~IEOB_ATTEN;	/* down. */
 }
 
-void
-ie_obrun(sc)
-	struct ie_softc *sc;
+void 
+ie_obrun(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 
 	ieo->obctrl |= (IEOB_ONAIR|IEOB_IENAB|IEOB_NORSET);
 }
 
-void ie_obio_memcopyin __P((struct ie_softc *, void *, int, size_t));
-void ie_obio_memcopyout __P((struct ie_softc *, const void *, int, size_t));
+void ie_obio_memcopyin(struct ie_softc *, void *, int, size_t);
+void ie_obio_memcopyout(struct ie_softc *, const void *, int, size_t);
 
 /*
  * Copy board memory to kernel.
  */
-void
-ie_obio_memcopyin(sc, p, offset, size)
-	struct ie_softc	*sc;
-	void *p;
-	int offset;
-	size_t size;
+void 
+ie_obio_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	bus_space_copyin(sc->bt, sc->bh, offset, p, size);
 }
@@ -197,49 +189,37 @@ ie_obio_memcopyin(sc, p, offset, size)
 /*
  * Copy from kernel space to naord memory.
  */
-void
-ie_obio_memcopyout(sc, p, offset, size)
-	struct ie_softc	*sc;
-	const void *p;
-	int offset;
-	size_t size;
+void 
+ie_obio_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	bus_space_copyout(sc->bt, sc->bh, offset, p, size);
 }
 
 /* read a 16-bit value at BH offset */
-u_int16_t ie_obio_read16 __P((struct ie_softc *, int offset));
+uint16_t ie_obio_read16(struct ie_softc *, int);
 /* write a 16-bit value at BH offset */
-void ie_obio_write16 __P((struct ie_softc *, int offset, u_int16_t value));
-void ie_obio_write24 __P((struct ie_softc *, int offset, int addr));
+void ie_obio_write16(struct ie_softc *, int, uint16_t);
+void ie_obio_write24(struct ie_softc *, int, int);
 
-u_int16_t
-ie_obio_read16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+uint16_t 
+ie_obio_read16(struct ie_softc *sc, int offset)
 {
-	u_int16_t v = bus_space_read_2(sc->bt, sc->bh, offset);
+	uint16_t v = bus_space_read_2(sc->bt, sc->bh, offset);
 	return (((v&0xff)<<8) | ((v>>8)&0xff));
 }
 
-void
-ie_obio_write16(sc, offset, v)
-	struct ie_softc *sc;	
-	int offset;
-	u_int16_t v;
+void 
+ie_obio_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 	v = (((v&0xff)<<8) | ((v>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v);
 }
 
-void
-ie_obio_write24(sc, offset, addr)
-	struct ie_softc *sc;	
-	int offset;
-	int addr;
+void 
+ie_obio_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
-	u_int16_t v0, v1;
+	uint16_t v0, v1;
 	u_char *t;
 
 	t = (u_char *)&v0;
@@ -251,16 +231,13 @@ ie_obio_write24(sc, offset, addr)
 	bus_space_write_2(sc->bt, sc->bh, offset+2, v1);
 }
 
-int
-ie_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+ie_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oba = aux;
 	bus_space_handle_t bh;
 	int matched;
-	u_int8_t ctrl;
+	uint8_t ctrl;
 
 	/* No default obio address. */
 	if (oba->oba_paddr == -1)
@@ -284,11 +261,8 @@ ie_obio_match(parent, cf, aux)
 	return (1);
 }
 
-void
-ie_obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+void 
+ie_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oba = aux;
 	struct ie_softc *sc = (void *) self;
@@ -301,7 +275,7 @@ ie_obio_attach(parent, self, aux)
 	struct intrhand *ih;
 	bus_size_t msize;
 	u_long iebase;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->bt = oba->oba_bustag;
 
@@ -430,7 +404,6 @@ ie_obio_attach(parent, self, aux)
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
 
 	/* Establish interrupt channel */
-	ih = bus_intr_establish(oba->oba_bustag,
-				oba->oba_pri, IPL_NET, 0,
+	ih = bus_intr_establish(oba->oba_bustag, oba->oba_pri, IPL_NET, 0,
 				i82586_intr, sc);
 }

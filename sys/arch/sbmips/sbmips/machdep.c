@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.2.3 2004/09/21 13:21:13 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.19.2.4 2005/01/24 08:34:27 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.2.3 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.2.4 2005/01/24 08:34:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -479,12 +479,12 @@ sbmips_cca_for_pa(paddr_t pa)
 	int rv;
 
 	/* Check each DRAM region. */
-	if ((pa >= 0x0000000000 && pa <= 0x000fffffff) ||	/* DRAM 0 */
-	    (pa >= 0x0080000000 && pa <= 0x008fffffff) ||	/* DRAM 1 */
-	    (pa >= 0x0090000000 && pa <= 0x009fffffff) ||	/* DRAM 2 */
-	    (pa >= 0x00c0000000 && pa <= 0x00cfffffff) ||	/* DRAM 3 */
+	if ((pa >= 0x0000000000   && pa <= 0x000fffffff) ||	/* DRAM 0 */
+	    (pa >= 0x0080000000   && pa <= 0x008fffffff) ||	/* DRAM 1 */
+	    (pa >= 0x0090000000   && pa <= 0x009fffffff) ||	/* DRAM 2 */
+	    (pa >= 0x00c0000000   && pa <= 0x00cfffffff) ||	/* DRAM 3 */
 #ifdef _MIPS_PADDR_T_64BIT
-	    (pa >= 0x0100000000 && pa <= 0x07ffffffff) ||	/* DRAM exp */
+	    (pa >= 0x0100000000LL && pa <= 0x07ffffffffLL) ||	/* DRAM exp */
 #endif
 	   0) {
 		rv = 5;		/* Cacheable coherent. */

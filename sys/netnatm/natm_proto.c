@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.5 2001/11/13 01:37:45 lukem Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.5.16.1 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.5 2001/11/13 01:37:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.5.16.1 2005/01/24 08:35:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,42 +56,36 @@ __KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.5 2001/11/13 01:37:45 lukem Exp $")
 
 #include <netnatm/natm.h>
 
-extern	struct domain natmdomain;
+DOMAIN_DEFINE(natmdomain);
 
-static	void natm_init __P((void));
+static void natm_init(void);
 
-struct protosw natmsw[] = {
+const struct protosw natmsw[] = {
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL5, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,	
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	natm5_sysctl
-#endif
 },
 { SOCK_DGRAM,	&natmdomain,	PROTO_NATMAAL5,	PR_CONNREQUIRED | PR_ATOMIC,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,	
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	natm5_sysctl
-#endif
 },
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL0, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,	
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	natm0_sysctl
-#endif
 },
 };
 
 struct domain natmdomain =
     { PF_NATM, "natm", natm_init, 0, 0, 
-      natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])], 0,
-      0, 0, 0};
+      natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])] };
 
+struct npcblist natm_pcbs = LIST_HEAD_INITIALIZER(natm_pcbs);
 struct	ifqueue natmintrq;       	/* natm packet input queue */
 int	natmqmaxlen = IFQ_MAXLEN;	/* max # of packets on queue */
 #ifdef NATM_STAT
@@ -101,16 +95,7 @@ u_int natm_sookcnt = 0;			/* # mbufs ok */
 u_int natm_sookbytes = 0;		/* # of bytes ok */
 #endif
 
-
-
-void natm_init()
-
+void natm_init(void)
 {
-  LIST_INIT(&natm_pcbs);
-  bzero(&natmintrq, sizeof(natmintrq));
-  natmintrq.ifq_maxlen = natmqmaxlen;
+	natmintrq.ifq_maxlen = natmqmaxlen;
 }
-
-#if defined(__FreeBSD__)
-DOMAIN_SET(natm);
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.4 2002/09/27 15:36:58 provos Exp $	*/
+/*	$NetBSD: sun3.c,v 1.4.6.1 2005/01/24 08:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,13 +70,13 @@
 
 #define OBIO_MASK 0xFFFFFF
 
-u_int	get_pte __P((vaddr_t va));
-void	set_pte __P((vaddr_t va, u_int pte));
-char *	dvma3_alloc  __P((int len));
-void	dvma3_free  __P((char *dvma, int len));
-char *	dvma3_mapin  __P((char *pkt, int len));
-void	dvma3_mapout  __P((char *dmabuf, int len));
-char *	dev3_mapin  __P((int type, u_long addr, int len));
+u_int	get_pte(vaddr_t);
+void	set_pte(vaddr_t, u_int);
+char *	dvma3_alloc(int);
+void	dvma3_free(char *, int);
+char *	dvma3_mapin(char *, int);
+void	dvma3_mapout(char *, int);
+char *	dev3_mapin(int, u_long, int);
 
 struct mapinfo {
 	int maptype;
@@ -108,10 +108,7 @@ sun3_mapinfo[MAP__NTYPES] = {
 int sun3_devmap = SUN3_MONSHORTSEG;
 
 char *
-dev3_mapin(maptype, physaddr, length)
-	int maptype;
-	u_long physaddr;
-	int length;
+dev3_mapin(int maptype, u_long physaddr, int length)
 {
 	u_int i, pa, pte, pgva, va;
 
@@ -128,8 +125,7 @@ found:
 		panic("dev3_mapin: bad address");
 	pa = sun3_mapinfo[i].base += physaddr;
 
-	pte = PA_PGNUM(pa) | PG_PERM |
-		sun3_mapinfo[i].pgtype;
+	pte = PA_PGNUM(pa) | PG_PERM | sun3_mapinfo[i].pgtype;
 
 	va = pgva = sun3_devmap;
 	do {
@@ -172,8 +168,8 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3_end = DVMA_BASE + DVMA_MAPLEN;
 
-void
-dvma3_init()
+void 
+dvma3_init(void)
 {
 	int segva, dmava, sme;
 
@@ -234,34 +230,28 @@ dvma3_free(char *dvma, int len)
  */
 
 u_int
-get_pte(va)
-	vaddr_t va;
+get_pte(vaddr_t va)
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	return (get_control_word(va));
 }
 
 void
-set_pte(va, pte)
-	vaddr_t va;
-	u_int pte;
+set_pte(vaddr_t va, u_int pte)
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	set_control_word(va, pte);
 }
 
 int
-get_segmap(va)
-	vaddr_t va;
+get_segmap(vaddr_t va)
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	return (get_control_byte(va));
 }
 
 void
-set_segmap(va, sme)
-	vaddr_t va;
-	int sme;
+set_segmap(vaddr_t va, int sme)
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	set_control_byte(va, sme);
@@ -289,8 +279,8 @@ sun3_getidprom(u_char *dst)
  * Init our function pointers, etc.
  */
 
-void
-sun3_init()
+void 
+sun3_init(void)
 {
 
 	/* Set the function pointers. */

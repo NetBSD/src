@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.6.6.3 2004/09/21 13:24:09 skrll Exp $	*/
+/*	$NetBSD: xel.c,v 1.6.6.4 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.6.6.3 2004/09/21 13:24:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.6.6.4 2005/01/24 08:35:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.6.6.3 2004/09/21 13:24:09 skrll Exp $");
 
 #include <arch/x68k/dev/intiovar.h>
 
-static paddr_t xel_addr __P((struct device *, struct cfdata *,
-			     struct intio_attach_args *));
-static int xel_probe __P((paddr_t));
-static int xel_match __P((struct device *, struct cfdata *, void *));
-static void xel_attach __P((struct device *, struct device *, void *));
+static paddr_t xel_addr(struct device *, struct cfdata *,
+	struct intio_attach_args *);
+static int xel_probe(paddr_t);
+static int xel_match(struct device *, struct cfdata *, void *);
+static void xel_attach(struct device *, struct device *, void *);
 
 struct xel_softc {
 	struct device dev;
@@ -83,18 +83,16 @@ static paddr_t xel_addrs[] = { 0xec0000, 0xec4000, 0xec8000, 0xecc000 };
 #define XEL_RAM_ADDR_HIGHER	0xfc0000
 
 
-static paddr_t
-xel_addr (parent, match, ia)
-	struct device *parent;
-	struct cfdata *match;
-	struct intio_attach_args *ia;
+static paddr_t 
+xel_addr(struct device *parent, struct cfdata *match,
+    struct intio_attach_args *ia)
 {
 	paddr_t addr = 0;
 
 	if (match->cf_addr == INTIOCF_ADDR_DEFAULT) {
 		int i;
 
-		for (i=0; i<sizeof(xel_addrs)/sizeof(xel_addrs[0]); i++) {
+		for (i = 0; i < sizeof(xel_addrs)/sizeof(xel_addrs[0]); i++) {
 			if (xel_probe(xel_addrs[i])) {
 				addr = xel_addrs[i];
 				break;
@@ -109,7 +107,7 @@ xel_addr (parent, match, ia)
 		/* found! */
 		ia->ia_addr = (int) addr;
 		ia->ia_size = 0x4000;
-		if (intio_map_allocate_region (parent, ia, INTIO_MAP_TESTONLY)
+		if (intio_map_allocate_region(parent, ia, INTIO_MAP_TESTONLY)
 		    < 0)
 			return 0;
 		else
@@ -121,9 +119,8 @@ xel_addr (parent, match, ia)
 
 extern int *nofault;
 
-static int
-xel_probe(addr)
-	paddr_t addr;
+static int 
+xel_probe(paddr_t addr)
 {
 	u_int32_t b1, b2;
 	u_int16_t *start = (void*) INTIO_ADDR(addr);
@@ -135,7 +132,7 @@ xel_probe(addr)
 
 	nofault = (int *) &faultbuf;
 	if (setjmp(&faultbuf)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return 0;
 	}
 
@@ -175,15 +172,12 @@ xel_probe(addr)
 	/* Unmap. */
 	start[0] = XEL_MODE_UNMAP_RAM | XEL_MODE_MPU_030;
 
-	nofault = (int *) 0;
+	nofault = NULL;
 	return 1;
 }
 
-static int
-xel_match (parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int 
+xel_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -200,10 +194,8 @@ xel_match (parent, match, aux)
 	return 0;
 }
 
-static void
-xel_attach (parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+xel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xel_softc *sc = (void*)self;
 	struct intio_attach_args *ia = aux;

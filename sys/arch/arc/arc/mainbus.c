@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17.6.3 2004/09/21 13:12:48 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.6.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.6.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.6.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,38 +46,32 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, struct cfdata *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
+static int	mbmatch(struct device *, struct cfdata *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
 
-void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	mb_intr_disestablish __P((struct confargs *));
-caddr_t	mb_cvtaddr __P((struct confargs *));
-int	mb_matchname __P((struct confargs *, char *));
+void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
+void	mb_intr_disestablish(struct confargs *);
+caddr_t	mb_cvtaddr(struct confargs *);
+int	mb_matchname(struct confargs *, char *);
 
 static int mainbus_found;
 
 static int
-mbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
@@ -115,47 +109,38 @@ mbattach(parent, self, aux)
 }
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
-		return (QUIET);
-	return (UNCONF);
+		return QUIET;
+	return UNCONF;
 }
 
 void
-mb_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler) __P((void *));
-	void *val;
+mb_intr_establish(struct confargs *ca, int (*handler)(void *), void *val)
 {
 
 	panic("can never mb_intr_establish");
 }
 
 void
-mb_intr_disestablish(ca)
-	struct confargs *ca;
+mb_intr_disestablish(struct confargs *ca)
 {
 
 	panic("can never mb_intr_disestablish");
 }
 
 caddr_t
-mb_cvtaddr(ca)
-	struct confargs *ca;
+mb_cvtaddr(struct confargs *ca)
 {
 
-	return (NULL);
+	return NULL;
 }
 
 int
-mb_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
+mb_matchname(struct confargs *ca, char *name)
 {
 
-	return (strcmp(name, ca->ca_name) == 0);
+	return strcmp(name, ca->ca_name) == 0;
 }

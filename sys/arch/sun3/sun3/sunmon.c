@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.12.24.3 2004/09/21 13:23:29 skrll Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.12.24.4 2005/01/24 08:34:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.12.24.3 2004/09/21 13:23:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.12.24.4 2005/01/24 08:34:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.12.24.3 2004/09/21 13:23:29 skrll Exp $
 static void **sunmon_vbr;
 static void *sunmon_vcmd;	/* XXX: always 0? */
 
-static void tracedump __P((int));
-static void v_handler __P((int addr, char *str));
+static void tracedump(int);
+static void v_handler(int, char *);
 
 /*
  * Prepare for running the PROM monitor
  */
 static void
-_mode_monitor __P((void))
+_mode_monitor(void)
 {
 	/* Disable our level-5 clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
@@ -76,7 +76,7 @@ _mode_monitor __P((void))
  * Prepare for running the kernel
  */
 static void
-_mode_kernel __P((void))
+_mode_kernel(void)
 {
 	/* Disable the PROM NMI clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
@@ -94,8 +94,8 @@ _mode_kernel __P((void))
  * also put our hardware state back into place after
  * the PROM "c" (continue) command is given.
  */
-void
-sunmon_abort()
+void 
+sunmon_abort(void)
 {
 	int s = splhigh();
 #ifdef	_SUN3X_
@@ -125,8 +125,8 @@ sunmon_abort()
 	splx(s);
 }
 
-void
-sunmon_halt()
+void 
+sunmon_halt(void)
 {
 	(void) splhigh();
 	_mode_monitor();
@@ -147,9 +147,8 @@ sunmon_halt()
 /*
  * Caller must pass a string that is in our data segment.
  */
-void
-sunmon_reboot(bs)
-	char *bs;
+void 
+sunmon_reboot(char *bs)
 {
 
 	(void) splhigh();
@@ -176,9 +175,8 @@ struct funcall_frame {
 	int fr_arg[1];
 };
 /*VARARGS0*/
-static void
-tracedump(x1)
-	int x1;
+static void 
+tracedump(int x1)
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
 	u_int stackpage = ((u_int)fp) & ~PGOFSET;
@@ -203,10 +201,8 @@ tracedump(x1)
  * commands and a printf hack.
  * [lifted from freed cmu mach3 sun3 port]
  */
-static void
-v_handler(addr, str)
-	int addr;
-	char *str;
+static void 
+v_handler(int addr, char *str)
 {
 
 	switch (*str) {
@@ -266,8 +262,8 @@ v_handler(addr, str)
  * argv[1] = options	(i.e. "-ds" or NULL)
  * argv[2] = NULL
  */
-void
-sunmon_init()
+void 
+sunmon_init(void)
 {
 	struct sunromvec *rvec;
 	struct bootparam *bp;

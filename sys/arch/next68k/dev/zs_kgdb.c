@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.3.6.4 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.3.6.5 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.3.6.4 2005/01/17 19:29:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.3.6.5 2005/01/24 08:34:18 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -81,7 +81,7 @@ struct zschan {
 	u_char		zc_xxx1;
 };
 
-static void zs_setparam __P((struct zs_chanstate *, int, int));
+static void zs_setparam(struct zs_chanstate *, int, int);
 struct zsops zsops_kgdb;
 
 static u_char zs_kgdb_regs[16] = {
@@ -217,10 +217,10 @@ zskgdb(struct zs_chanstate *cs)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zs_kgdb_rxint __P((struct zs_chanstate *));
-static void zs_kgdb_stint __P((struct zs_chanstate *, int));
-static void zs_kgdb_txint __P((struct zs_chanstate *));
-static void zs_kgdb_softint __P((struct zs_chanstate *));
+static void zs_kgdb_rxint(struct zs_chanstate *);
+static void zs_kgdb_stint(struct zs_chanstate *, int);
+static void zs_kgdb_txint(struct zs_chanstate *);
+static void zs_kgdb_softint(struct zs_chanstate *);
 
 int kgdb_input_lost;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/07/11 16:03:19 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.1 2005/01/24 08:34:26 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -86,7 +86,7 @@ putchar(int c)
 __dead void
 _rtt(void)
 {
-	extern __dead void _halt __P((void)) __attribute__((noreturn));
+	extern __dead void _halt(void) __attribute__((noreturn));
 
 	printf("Press any key to halt.\n");
 	getchar();
@@ -104,7 +104,7 @@ struct trapframe {
 	char info[0];
 } __attribute__ ((packed));
 
-int trap __P((struct trapframe *fp));
+int trap(struct trapframe *);
 
 int
 trap(struct trapframe *fp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.2.2.2 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.2.2.3 2005/01/24 08:34:26 skrll Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,12 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2.2.2 2005/01/17 19:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2.2.3 2005/01/24 08:34:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
 
 #include <machine/cpu.h>
 
@@ -50,14 +53,27 @@ ibm4xx_device_register(struct device *dev, void *aux)
 	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
 		/* Set the mac-addr of the on-chip Ethernet. */
-		/* XXX 405GP/405GPr only has one; what about CPUs with two? */
-		/* XXX board_data is for IBM ROM Monitor 1.x with 405GP */
-		if (prop_set(dev_propdb, dev, "mac-addr",
-			     &board_data.mac_address_local,
-			     sizeof(board_data.mac_address_local),
-			     PROP_CONST, 0) != 0)
-			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", dev->dv_xname);
+
+		if (dev->dv_unit < 10) {
+			uint8_t enaddr[ETHER_ADDR_LEN];
+			unsigned char prop_name[15];
+
+			snprintf(prop_name, sizeof(prop_name),
+				"emac%d-mac-addr", dev->dv_unit);
+
+			if (board_info_get(prop_name,
+				enaddr, sizeof(enaddr)) == -1) {
+				printf("WARNING: unable to get mac-addr "
+				    "property from board properties\n");
+				return;
+			}
+
+			if (prop_set(dev_propdb, dev, "mac-addr",
+				     enaddr, sizeof(enaddr),
+				     PROP_ARRAY, 0) != 0)
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+		}
 		return;
 	}
 }

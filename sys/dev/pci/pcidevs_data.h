@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.11 2005/01/17 19:31:25 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.12 2005/01/24 08:35:26 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3328,6 +3328,54 @@ const struct pci_product pci_products[] = {
 	    "Intrepid I/O Controller",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID_USB,
+	    "Intrepid USB Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_USB,
+	    "K2 USB Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
+	    "K2 MAC-IO Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_FW,
+	    "K2 Firewire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA,
+	    "K2 UATA Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB1,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB2,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB3,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB4,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB5,
+	    "U3 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP,
+	    "U3 AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
+	    "GMAC Ethernet",
+	},
+	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
 	    "1000PV",
 	},
@@ -5006,6 +5054,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
 	    "GT-64120 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    "Belkin Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
@@ -9944,4 +9996,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1907;
+const int pci_nproducts = 1920;

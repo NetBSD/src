@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.18.6.3 2004/09/21 13:23:19 skrll Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.18.6.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.18.6.3 2004/09/21 13:23:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.18.6.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -71,25 +71,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.18.6.3 2004/09/21 13:23:19 skrll Ex
 #include "if_iereg.h"
 #include "if_ievar.h"
 
-static void ie_obreset __P((struct ie_softc *));
-static void ie_obattend __P((struct ie_softc *));
-static void ie_obrun __P((struct ie_softc *));
+static void ie_obreset(struct ie_softc *);
+static void ie_obattend(struct ie_softc *);
+static void ie_obrun(struct ie_softc *);
 
 /*
  * New-style autoconfig attachment
  */
 
-static int  ie_obio_match __P((struct device *, struct cfdata *, void *));
-static void ie_obio_attach __P((struct device *, struct device *, void *));
+static int  ie_obio_match(struct device *, struct cfdata *, void *);
+static void ie_obio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
 
-static int
-ie_obio_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+ie_obio_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -104,11 +101,8 @@ ie_obio_match(parent, cf, args)
 	return (1);
 }
 
-void
-ie_obio_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+void 
+ie_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct ie_softc *sc = (void *) self;
 	struct confargs *ca = args;
@@ -176,9 +170,8 @@ ie_obio_attach(parent, self, args)
  */
 
 /* Whack the "channel attetion" line. */
-void
-ie_obattend(sc)
-	struct ie_softc *sc;
+void 
+ie_obattend(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 
@@ -190,9 +183,8 @@ ie_obattend(sc)
  * This is called during driver attach.
  * Reset and initialize.
  */
-void
-ie_obreset(sc)
-	struct ie_softc *sc;
+void 
+ie_obreset(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 	ieo->obctrl = 0;
@@ -204,9 +196,8 @@ ie_obreset(sc)
  * This is called at the end of ieinit().
  * optional.
  */
-void
-ie_obrun(sc)
-	struct ie_softc *sc;
+void 
+ie_obrun(struct ie_softc *sc)
 {
 	/* do it all in reset */
 }

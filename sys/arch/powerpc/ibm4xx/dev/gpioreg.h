@@ -1,4 +1,4 @@
-/*	$NetBSD: gpioreg.h,v 1.1 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: gpioreg.h,v 1.1.12.1 2005/01/24 08:34:27 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,9 +38,30 @@
 #ifndef _IBM4XX_GPIOREG_H_
 #define	_IBM4XX_GPIOREG_H_
 
-/* GPIO Registers */
-#define	GPIO_OR			0x00	/* Output */
-#define	GPIO_TCR		0x04	/* Three-State Control */
-#define	GPIO_ODR		0x18	/* Open Drain */
-#define	GPIO_IR			0x1c	/* Input */
+/*
+ * GPIO Registers
+ */
+
+/*
+ * GPIO ODR Control Logic:
+ * 	ODR	OR	Out	TCR	TS_Ctrl	Module I/O 3-State Driver
+ *	0	X	X	0	0	Forced to high impedance state
+ *	0	0	0	1	1	Drive 0
+ *	0	1	1	1	1	Drive 1
+ *	1	0	0	X	1	Drive 0
+ *	1	1	0	X	0	Forced to high impedance state
+ */
+
+/* GPIO Registers 0x00-0x7f */
+#define GPIO_NREG		(0x80)
+
+#define GPIO_SHIFT(n)		(31 - n)
+#define GPIO_SBIT(n)		(1 << GPIO_SHIFT(n))
+
+/* Offset */
+#define	GPIO_OR			(0x00)	/* Output */
+#define	GPIO_TCR		(0x04)	/* Three-State Control */
+#define	GPIO_ODR		(0x18)	/* Open Drain */
+#define	GPIO_IR			(0x1c)	/* Input */
+
 #endif	/* _IBM4XX_GPIOREG_H_ */

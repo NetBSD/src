@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.11.6.4 2004/12/18 09:31:35 skrll Exp $	*/
+/*	$NetBSD: mbio.c,v 1.11.6.5 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.11.6.4 2004/12/18 09:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.11.6.5 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.11.6.4 2004/12/18 09:31:35 skrll Exp $");
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
  
-static int  mbio_match __P((struct device *, struct cfdata *, void *));
-static void mbio_attach __P((struct device *, struct device *, void *));
+static int  mbio_match(struct device *, struct cfdata *, void *);
+static void mbio_attach(struct device *, struct device *, void *);
 
 struct mbio_softc {
 	struct device	sc_dev;		/* base device */
@@ -69,11 +69,10 @@ CFATTACH_DECL(mbio, sizeof(struct mbio_softc),
 
 static int mbio_attached;
 
-static	paddr_t mbio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       off_t, int, int));
-static	int _mbio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       bus_size_t, int,
-			       vaddr_t, bus_space_handle_t *));
+static	paddr_t mbio_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
+	    int, int);
+static	int _mbio_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+	    int, vaddr_t, bus_space_handle_t *);
 
 static struct sun68k_bus_space_tag mbio_space_tag = {
 	NULL,				/* cookie */
@@ -88,25 +87,20 @@ static struct sun68k_bus_space_tag mbio_space_tag = {
 	NULL				/* bus_space_poke_N */
 }; 
 
-static int
-mbio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+mbio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (mbio_attached)
 		return 0;
 
-	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
+	return (cpu_has_multibus &&
+		(ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
-static void
-mbio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+mbio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct mbio_softc *sc = (struct mbio_softc *)self;
@@ -150,14 +144,8 @@ mbio_attach(parent, self, aux)
 }
 
 int
-_mbio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_mbio_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
 {
 	struct mbio_softc *sc = t->cookie;
 
@@ -169,13 +157,8 @@ _mbio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 }
 
 paddr_t
-mbio_bus_mmap(t, btype, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+mbio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
 {
 	struct mbio_softc *sc = t->cookie;
 

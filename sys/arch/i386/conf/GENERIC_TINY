@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.56.2.5 2004/11/14 08:15:16 skrll Exp $
+#	$NetBSD: GENERIC_TINY,v 1.56.2.6 2005/01/24 08:34:13 skrll Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -573,6 +573,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcconsvar.h,v 1.1.26.3 2004/09/21 13:13:00 skrll Exp $	*/
+/*	$NetBSD: pcconsvar.h,v 1.1.26.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -81,7 +81,7 @@ struct pccons_config {
 	bus_addr_t pc_cga_iobase, pc_cga_memaddr;
 	bus_addr_t pc_kbd_cmdp, pc_kbd_datap;
 
-	void (*pc_init) __P((void));
+	void (*pc_init)(void);
 };
 
 struct pccons_kbd_context {
@@ -132,14 +132,14 @@ struct pc_softc {
 
 extern struct pccons_context pccons_console_context;
 
-void kbd_context_init __P((bus_space_tag_t, struct pccons_config *));
-int kbc_put8042cmd __P((u_char));
-void kbd_flush_input __P((void));
+void kbd_context_init(bus_space_tag_t, struct pccons_config *);
+int kbc_put8042cmd(u_char);
+void kbd_flush_input(void);
 
-int pccons_common_match __P((bus_space_tag_t,
-	bus_space_tag_t, bus_space_tag_t, struct pccons_config *));
-void pccons_common_attach __P((struct pc_softc *, bus_space_tag_t,
-	bus_space_tag_t, bus_space_tag_t, struct pccons_config *));
-void pccons_common_cnattach __P((bus_space_tag_t, bus_space_tag_t,
-	bus_space_tag_t, struct pccons_config *));
-int pcintr __P((void *));
+int pccons_common_match(bus_space_tag_t,
+	bus_space_tag_t, bus_space_tag_t, struct pccons_config *);
+void pccons_common_attach(struct pc_softc *, bus_space_tag_t,
+	bus_space_tag_t, bus_space_tag_t, struct pccons_config *);
+void pccons_common_cnattach(bus_space_tag_t, bus_space_tag_t,
+	bus_space_tag_t, struct pccons_config *);
+int pcintr(void *);

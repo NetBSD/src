@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.7.2.3 2004/09/21 13:11:48 skrll Exp $ */
+/* $NetBSD: signal.h,v 1.7.2.4 2005/01/24 08:33:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,6 +35,10 @@
 typedef long	sig_atomic_t;
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_compat_osf1.h"
+#endif
 #ifdef COMPAT_16
 #define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
 #else
@@ -42,7 +46,6 @@ typedef long	sig_atomic_t;
 #endif
 #endif
 
-#if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -53,7 +56,7 @@ typedef long	sig_atomic_t;
  * Note that sc_regs[] and sc_fpregs[]+sc_fpcr are inline
  * representations of 'struct reg' and 'struct fpreg', respectively.
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL) && (defined(COMPAT_13) || defined(COMPAT_OSF1))
 struct sigcontext13 {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	sc_mask;		/* signal mask to restore (old style) */
@@ -68,8 +71,9 @@ struct sigcontext13 {
 	long	sc_reserved[2];		/* XXX */
 	long	sc_xxx[8];		/* XXX */
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL && (COMPAT_13 || COMPAT_OSF1) */
 
+#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_OSF1)))
 struct sigcontext {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	__sc_mask13;		/* signal mask to restore (old style) */
@@ -85,6 +89,6 @@ struct sigcontext {
 	long	sc_xxx[8];		/* XXX */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
-#endif /* _NETBSD_SOURCE */
 #endif /* !_ALPHA_SIGNAL_H_*/

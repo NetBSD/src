@@ -36,7 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.5 2004/09/21 13:39:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.6 2005/01/24 08:36:05 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -573,10 +577,12 @@ out1:
 	blkno = fragstoblks(fs, fs->fs_csaddr);
 	len = howmany(fs->fs_cssize, fs->fs_bsize);
 	space = copy_fs->fs_csp;
+#ifdef FFS_EI
 	if (ns) {
 		ffs_sb_swap(copy_fs, copy_fs);
 		ffs_csum_swap(space, space, fs->fs_cssize);
 	}
+#endif
 	for (loc = 0; loc < len; loc++) {
 		if ((error = writevnblk(vp, space, blkno + loc)) != 0) {
 			fs->fs_snapinum[snaploc] = 0;

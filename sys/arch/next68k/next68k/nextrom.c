@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.15.2.3 2004/09/21 13:19:44 skrll Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.15.2.4 2005/01/24 08:34:18 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.15.2.3 2004/09/21 13:19:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.15.2.4 2005/01/24 08:34:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.15.2.3 2004/09/21 13:19:44 skrll Exp $
 #include <sys/exec_elf.h>
 #endif
 
-void    next68k_bootargs __P((unsigned char *args[]));
+void    next68k_bootargs(unsigned char **);
 
 int mon_getc(void);
-int mon_putc(int c);
+int mon_putc(int);
 
 extern char etext[], edata[], end[];
 int nsym;
@@ -135,8 +135,7 @@ paddr_t rom_reboot_vect;
 int turbo;
 
 void
-next68k_bootargs(args)
-     unsigned char *args[];
+next68k_bootargs(unsigned char **args)
 {
 #ifdef DDB
 	int i;

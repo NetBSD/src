@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.15.2.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.15.2.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.15.2.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.15.2.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.15.2.3 2004/09/21 13:23:28 skrll Exp $")
 #define	VAC_FLUSH_INCR	512	/* bytes */
 #define VADDR_MASK	0xfFFffFF	/* 28 bits */
 
-static void cache_clear_tags __P((void));
+static void cache_clear_tags(void);
 
-void
-cache_flush_page(pgva)
-	vaddr_t pgva;
+void 
+cache_flush_page(vaddr_t pgva)
 {
 	char *va, *endva;
 	int old_dfc, ctl_dfc;
@@ -99,9 +98,8 @@ cache_flush_page(pgva)
 	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void
-cache_flush_segment(sgva)
-	vaddr_t sgva;
+void 
+cache_flush_segment(vaddr_t sgva)
 {
 	char *va, *endva;
 	int old_dfc, ctl_dfc;
@@ -129,8 +127,8 @@ cache_flush_segment(sgva)
 	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void
-cache_flush_context()
+void 
+cache_flush_context(void)
 {
 	char *va, *endva;
 	int old_dfc, ctl_dfc;
@@ -155,8 +153,8 @@ cache_flush_context()
 	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-static void
-cache_clear_tags()
+static void 
+cache_clear_tags(void)
 {
 	char *va, *endva;
 	int old_dfc, ctl_dfc;
@@ -181,8 +179,8 @@ cache_clear_tags()
 	__asm __volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void
-cache_enable()
+void 
+cache_enable(void)
 {
 	int enab_reg;
 

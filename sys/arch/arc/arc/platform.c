@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.1.26.3 2004/09/21 13:12:48 skrll Exp $	*/
+/*	$NetBSD: platform.c,v 1.1.26.4 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.26.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.26.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,11 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.26.3 2004/09/21 13:12:48 skrll Exp 
 
 struct platform *platform = NULL;
 
-void print_platform __P((struct platform *));
+void print_platform(struct platform *);
 
 void
-print_platform(p)
-	struct platform *p;
+print_platform(struct platform *p)
 {
 	printf("\"%s %s%s\" (%s, %s)",
 	    p->vendor, p->model, p->variant,
@@ -61,7 +60,7 @@ print_platform(p)
 }
 
 int
-ident_platform()
+ident_platform(void)
 {
 	int i, rv, matched = -1, match = 0, ambiguous_match = 0;
 
@@ -97,21 +96,21 @@ ident_platform()
 	}
 	if (match)
 		platform = plattab[matched];
-	return (match);
+	return match;
 }
 
 int
-platform_generic_match(p)
-	struct platform *p;
+platform_generic_match(struct platform *p)
 {
+
 	if (strcmp(arc_id, p->system_id) == 0 &&
 	    (p->vendor_id == NULL || strcmp(arc_vendor_id, p->vendor_id) == 0))
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
-platform_nop()
+platform_nop(void)
 {
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: todclock.c,v 1.3.6.3 2004/09/21 13:12:48 skrll Exp $ */
+/* $NetBSD: todclock.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,8 +56,7 @@ static	todr_chip_handle_t todr_handle;
  * Common parts of todclock autoconfiguration.
  */
 void
-todr_attach(handle)
-	todr_chip_handle_t handle;
+todr_attach(todr_chip_handle_t handle)
 {
 
 	if (todr_handle)
@@ -70,8 +69,7 @@ todr_attach(handle)
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase, waszero;
 
@@ -121,7 +119,7 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)

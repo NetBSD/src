@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.4.12.3 2004/09/21 13:23:07 skrll Exp $ */
+/*	$NetBSD: promlib.h,v 1.4.12.4 2005/01/24 08:34:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -58,25 +58,25 @@
 #define PROM_OLDMON	0
 #define PROM_OBP_V0	1
 
-void	prom_init	__P((void));	/* To setup promops */
+void	prom_init(void);	/* To setup promops */
 
 #define	prom_version()	(PROM_OLDMON)
-int	prom_memsize	__P((void));
-int	prom_stdin	__P((void));
-int	prom_stdout	__P((void));
-int	prom_kbdid	__P((void));
-int	prom_getchar	__P((void));
-int	prom_peekchar	__P((void));
-void	prom_putchar	__P((int));
-void	prom_putstr	__P((char *, int));
-void	prom_printf	__P((const char *, ...));
-void	prom_abort	__P((void));
-void	prom_halt	__P((void))	__attribute__((__noreturn__));
-void	prom_boot	__P((char *))	__attribute__((__noreturn__));
-char	*prom_getbootpath	__P((void));
-char	*prom_getbootfile	__P((void));
-char	*prom_getbootargs	__P((void));
-int	prom_sd_target	__P((int));
+int	prom_memsize(void);
+int	prom_stdin(void);
+int	prom_stdout(void);
+int	prom_kbdid(void);
+int	prom_getchar(void);
+int	prom_peekchar(void);
+void	prom_putchar(int);
+void	prom_putstr(char *, int);
+void	prom_printf(const char *, ...);
+void	prom_abort(void);
+void	prom_halt(void) __attribute__((__noreturn__));
+void	prom_boot(char *) __attribute__((__noreturn__));
+char	*prom_getbootpath(void);
+char	*prom_getbootfile(void);
+char	*prom_getbootargs(void);
+int	prom_sd_target(int);
 #define	callrom		prom_abort
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.7.6.3 2004/09/21 13:24:08 skrll Exp $ */
+/*	$NetBSD: event.c,v 1.7.6.4 2005/01/24 08:35:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.6.3 2004/09/21 13:24:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.6.4 2005/01/24 08:35:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -63,8 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.6.3 2004/09/21 13:24:08 skrll Exp $");
  * Initialize a firm_event queue.
  */
 void
-ev_init(ev)
-	register struct evvar *ev;
+ev_init(struct evvar *ev)
 {
 
 	ev->ev_get = ev->ev_put = 0;
@@ -77,8 +76,7 @@ ev_init(ev)
  * Tear down a firm_event queue.
  */
 void
-ev_fini(ev)
-	register struct evvar *ev;
+ev_fini(struct evvar *ev)
 {
 
 	free(ev->ev_q, M_DEVBUF);
@@ -89,10 +87,7 @@ ev_fini(ev)
  * (User cannot write an event queue.)
  */
 int
-ev_read(ev, uio, flags)
-	register struct evvar *ev;
-	struct uio *uio;
-	int flags;
+ev_read(struct evvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
 
@@ -146,13 +141,11 @@ ev_read(ev, uio, flags)
 }
 
 int
-ev_poll(ev, events, p)
-	register struct evvar *ev;
-	int events;
-	struct proc *p;
+ev_poll(struct evvar *ev, int events, struct proc *p)
 {
-	int s = splev(), revents = 0;
+	int s, revents = 0;
 
+	s = splev();
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (ev->ev_get == ev->ev_put)
 			selrecord(p, &ev->ev_sel);
@@ -160,7 +153,6 @@ ev_poll(ev, events, p)
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
 	revents |= events & (POLLOUT | POLLWRNORM);
-
 	splx(s);
 	return (revents);
 }

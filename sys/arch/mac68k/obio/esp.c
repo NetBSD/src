@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.34.6.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: esp.c,v 1.34.6.5 2005/01/24 08:34:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34.6.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34.6.5 2005/01/24 08:34:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,16 +158,15 @@ struct ncr53c9x_glue esp_glue = {
 int
 espmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	int	found = 0;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 
-	if ((cf->cf_unit == 0) && mac68k_machine.scsi96) {
-		found = 1;
+	if (oa->oa_addr == 0 && mac68k_machine.scsi96) {
+		return 1;
 	}
-	if ((cf->cf_unit == 1) && mac68k_machine.scsi96_2) {
-		found = 1;
+	if (oa->oa_addr == 1 && mac68k_machine.scsi96_2) {
+		return 1;
 	}
-
-	return found;
+	return 0;
 }
 
 /*

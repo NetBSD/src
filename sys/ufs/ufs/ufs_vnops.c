@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102.2.9 2004/10/27 06:48:24 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102.2.10 2005/01/24 08:36:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.9 2004/10/27 06:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.10 2005/01/24 08:36:05 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -68,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.9 2004/10/27 06:48:24 skrll Ex
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
+#ifdef UFS_DIRHASH
+#include <ufs/ufs/dirhash.h>
+#endif
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 
@@ -1497,6 +1500,10 @@ ufs_rmdir(void *v)
 		    cnp->cn_lwp);
 	}
 	cache_purge(vp);
+#ifdef UFS_DIRHASH
+	if (ip->i_dirhash != NULL)
+		ufsdirhash_free(ip);
+#endif
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(dvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2001/09/05 13:31:36 tsutsui Exp $	*/
+/*	$NetBSD: pte.h,v 1.17.22.1 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 #endif	/* SUN3X */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-u_int get_pte __P((vaddr_t va));
-void  set_pte __P((vaddr_t va, u_int pte));
+u_int get_pte(vaddr_t va);
+void  set_pte(vaddr_t va, u_int pte);
 #endif	/* _KERNEL */
 
 #endif	/* _MACHINE_PTE_H */

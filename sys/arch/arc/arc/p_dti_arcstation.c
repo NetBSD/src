@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.3.2.3 2004/09/21 13:12:48 skrll Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.3.2.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.3.2.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.3.2.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.3.2.3 2004/09/21 13:12:48 skr
 
 #include <arc/dti/desktech.h>
 
-void arc_sysreset __P((bus_addr_t, bus_size_t));
+void arc_sysreset(bus_addr_t, bus_size_t);
 
 #include "pc.h"
 #if NPC_ISA > 0 || NOPMS_ISA > 0
@@ -112,9 +112,9 @@ char *p_dti_arcstation_mainbusdevs[] = {
 	NULL,
 };
 
-void p_dti_arcstation_init __P((void));
-void p_dti_arcstation_cons_init __P((void));
-void p_dti_arcstation_reset __P((void));
+void p_dti_arcstation_init(void);
+void p_dti_arcstation_cons_init(void);
+void p_dti_arcstation_reset(void);
 
 struct platform platform_desktech_arcstation_i = {
 	"DESKTECH-ARCStation I",
@@ -136,7 +136,7 @@ struct platform platform_desktech_arcstation_i = {
  * given interrupt priority level.
  */
 /* XXX see comments in p_dti_arcstation_init() */
-static const u_int32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
+static const uint32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -191,7 +191,7 @@ static const u_int32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
  * platform-dependent pccons configuration
  */
 
-void pccons_dti_arcstation_init __P((void));
+void pccons_dti_arcstation_init(void);
 
 struct pccons_config pccons_dti_arcstation_conf = {
 	0x3b4, 0xb0000,	/* mono: iobase, memaddr */
@@ -201,8 +201,9 @@ struct pccons_config pccons_dti_arcstation_conf = {
 };
 
 void
-pccons_dti_arcstation_init()
+pccons_dti_arcstation_init(void)
 {
+
 	kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 }
 
@@ -213,9 +214,9 @@ pccons_dti_arcstation_init()
  * platform-dependent btl configuration
  */
 
-void btl_dti_arcstation_bouncemem __P((u_int *, u_int *));
-u_int32_t btl_dti_arcstation_kvtophys __P((u_int32_t));
-u_int32_t btl_dti_arcstation_phystokv __P((u_int32_t));
+void btl_dti_arcstation_bouncemem(u_int *, u_int *);
+uint32_t btl_dti_arcstation_kvtophys(uint32_t);
+uint32_t btl_dti_arcstation_phystokv(uint32_t);
 
 struct btl_config btl_dti_arcstation_conf = {
 	btl_dti_arcstation_bouncemem,
@@ -224,8 +225,7 @@ struct btl_config btl_dti_arcstation_conf = {
 };
 
 void
-btl_dti_arcstation_bouncemem(basep, sizep)
-	u_int *basep, *sizep;
+btl_dti_arcstation_bouncemem(u_int *basep, u_int *sizep)
 {
 	/*
 	 * XXX static buffer as a kludge.
@@ -242,18 +242,18 @@ btl_dti_arcstation_bouncemem(basep, sizep)
 #endif
 }
 
-u_int32_t
-btl_dti_arcstation_kvtophys(v)
-	u_int32_t v;
+uint32_t
+btl_dti_arcstation_kvtophys(uint32_t v)
 {
-	return (v);
+
+	return v;
 }
 
-u_int32_t
-btl_dti_arcstation_phystokv(p)
-	u_int32_t p;
+uint32_t
+btl_dti_arcstation_phystokv(uint32_t p)
 {
-	return (p);
+
+	return p;
 }
 #endif /* NBTL > 0 */
 
@@ -261,8 +261,9 @@ btl_dti_arcstation_phystokv(p)
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_dti_arcstation_init()
+p_dti_arcstation_init(void)
 {
+
 	/*
 	 * XXX - should be enabled, if tested.
 	 *
@@ -312,7 +313,8 @@ p_dti_arcstation_init()
 }
 
 void
-p_dti_arcstation_reset()
+p_dti_arcstation_reset(void)
 {
+
 	arc_sysreset(RPC44_V_ISA_IO + IO_KBD, KBCMDP);
 }

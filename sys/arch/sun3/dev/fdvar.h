@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.3 2003/05/03 18:11:04 wiz Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.3.2.1 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,11 +47,11 @@ struct fdcio {
 	 * 82072 (sun4c,sun3x) and 82077 (sun4m) controllers have different
 	 * register layout; so we cache some here.
 	 */
-	volatile u_int8_t	*fdcio_reg_msr;
-	volatile u_int8_t	*fdcio_reg_fifo;
-	volatile u_int8_t	*fdcio_reg_dor;	/* 82077 only */
-	volatile u_int8_t	*fdcio_reg_fcr; /* sun3x floppy control reg */
-	volatile u_int8_t	*fdcio_reg_fvr; /* sun3x floppy int. vector */
+	volatile uint8_t	*fdcio_reg_msr;
+	volatile uint8_t	*fdcio_reg_fifo;
+	volatile uint8_t	*fdcio_reg_dor;	/* 82077 only */
+	volatile uint8_t	*fdcio_reg_fcr; /* sun3x floppy control reg */
+	volatile uint8_t	*fdcio_reg_fvr; /* sun3x floppy int. vector */
 
 	/*
 	 * Interrupt state.

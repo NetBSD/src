@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564.2.14 2005/01/17 19:29:28 skrll Exp $
+# $NetBSD: GENERIC,v 1.564.2.15 2005/01/24 08:34:12 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.564.2.14 $"
+#ident 		"GENERIC-$Revision: 1.564.2.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -464,6 +464,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -963,6 +964,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
+# USB 802.11b adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
@@ -1212,6 +1216,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

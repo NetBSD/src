@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.70.6.4 2004/11/02 07:53:04 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.70.6.5 2005/01/24 08:35:36 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct usbd_port {
 	u_int8_t		portno;
 	u_int8_t		restartcnt;
 #define USBD_RESTART_MAX 5
+	u_int8_t		reattach;
 	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
 	struct usbd_tt	       *tt; /* Transaction translator (if any) */
@@ -260,6 +261,7 @@ void		usb_disconnect_port(struct usbd_port *, device_ptr_t);
 
 /* Routines from usb.c */
 void		usb_needs_explore(usbd_device_handle);
+void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*

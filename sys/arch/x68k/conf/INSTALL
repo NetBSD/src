@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54.2.4 2004/11/14 08:15:33 skrll Exp $
+#	$NetBSD: INSTALL,v 1.54.2.5 2005/01/24 08:35:10 skrll Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.54.2.4 $"
+#ident 		"INSTALL-$Revision: 1.54.2.5 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -215,11 +215,11 @@ opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
-grf0	at grfbus0			# multiplane graphics
-#grf1	at grfbus0			# flexible graphics
+grf0	at grfbus0 addr 0		# multiplane graphics
+#grf1	at grfbus0 addr 1		# flexible graphics
 
 kbd0	at mfp0				# standard keyboard
-ite0	at grf0				# internal terminal emulator
+ite0	at grf0 grfaddr 0		# internal terminal emulator
 options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
 #pseudo-device	pow		2	# software power switch
@@ -307,6 +307,7 @@ pseudo-device	sl		1
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 #pseudo-device	tun		4
+#pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel

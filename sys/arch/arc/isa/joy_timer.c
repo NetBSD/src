@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.1.20.3 2004/09/21 13:13:00 skrll Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1.20.4 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.20.3 2004/09/21 13:13:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.20.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.20.3 2004/09/21 13:13:00 skrll Exp
 #include <dev/ic/joyvar.h>
 
 int
-joy_get_tick()
+joy_get_tick(void)
 {
 	int low, high;
 
@@ -62,7 +62,8 @@ joy_get_tick()
 }
 
 int
-joy_timer_freq()
+joy_timer_freq(void)
 {
-	return (TIMER_FREQ);
+
+	return TIMER_FREQ;
 }

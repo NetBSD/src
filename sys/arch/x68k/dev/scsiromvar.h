@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiromvar.h,v 1.3 2000/01/16 14:20:57 minoura Exp $	*/
+/*	$NetBSD: scsiromvar.h,v 1.3.28.1 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -46,4 +46,4 @@ struct scsirom_softc {
 	paddr_t		sc_addr;
 };
 
-int scsirom_find_rom __P((int));
+int scsirom_find_rom(int);

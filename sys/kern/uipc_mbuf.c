@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.69.2.5 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.69.2.6 2005/01/24 08:35:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.5 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.6 2005/01/24 08:35:36 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -378,12 +378,13 @@ m_reclaim(void *arg, int flags)
 	struct ifnet *ifp;
 	int s = splvm();
 
-	for (dp = domains; dp; dp = dp->dom_next)
+	DOMAIN_FOREACH(dp) {
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	}
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
 	splx(s);

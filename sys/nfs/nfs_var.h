@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.41.2.7 2004/12/18 09:33:17 skrll Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.41.2.8 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
 			   struct vattr *, int flags));
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
 void nfs_delayedtruncate __P((struct vnode *));
+int nfs_check_wccdata __P((struct nfsnode *, const struct timespec *,
+    struct timespec *, boolean_t));
 int nfs_namei __P((struct nameidata *, fhandle_t *, uint32_t,
 		   struct nfssvc_sock *, struct mbuf *, struct mbuf **,
 		   caddr_t *, struct vnode **, struct lwp *, int, int));

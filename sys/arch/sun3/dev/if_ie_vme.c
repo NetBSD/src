@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.16.6.3 2004/09/21 13:23:19 skrll Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.16.6.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.3 2004/09/21 13:23:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -71,33 +71,30 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.3 2004/09/21 13:23:19 skrll Exp
 #include "if_iereg.h"
 #include "if_ievar.h"
 
-static void ie_vmereset __P((struct ie_softc *));
-static void ie_vmeattend __P((struct ie_softc *));
-static void ie_vmerun __P((struct ie_softc *));
+static void ie_vmereset(struct ie_softc *);
+static void ie_vmeattend(struct ie_softc *);
+static void ie_vmerun(struct ie_softc *);
 
 /*
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void *wmemcpy __P((void *dst, const void *src, size_t size));
-static void *wmemset __P((void *dst, int val, size_t size));
+static void *wmemcpy(void *, const void *, size_t);
+static void *wmemset(void *, int, size_t);
 
 
 /*
  * New-style autoconfig attachment
  */
 
-static int  ie_vme_match __P((struct device *, struct cfdata *, void *));
-static void ie_vme_attach __P((struct device *, struct device *, void *));
+static int  ie_vme_match(struct device *, struct cfdata *, void *);
+static void ie_vme_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ie_vme, sizeof(struct ie_softc),
     ie_vme_match, ie_vme_attach, NULL, NULL);
 
-static int
-ie_vme_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+ie_vme_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -121,11 +118,8 @@ ie_vme_match(parent, cf, args)
  * a multibus/vme card.   if you want to use a 3E you'll have
  * to fix this.
  */
-void
-ie_vme_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+void 
+ie_vme_attach(struct device *parent, struct device *self, void *args)
 {
 	struct ie_softc *sc = (void *) self;
 	struct confargs *ca = args;
@@ -207,9 +201,8 @@ ie_vme_attach(parent, self, args)
  * MULTIBUS/VME support
  */
 
-void
-ie_vmeattend(sc)
-	struct ie_softc *sc;
+void 
+ie_vmeattend(struct ie_softc *sc)
 {
 	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
 
@@ -217,9 +210,8 @@ ie_vmeattend(sc)
 	iev->status &= ~IEVME_ATTEN;	/* down. */
 }
 
-void
-ie_vmereset(sc)
-	struct ie_softc *sc;
+void 
+ie_vmereset(struct ie_softc *sc)
 {
 	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
 
@@ -228,9 +220,8 @@ ie_vmereset(sc)
 	iev->status = (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
 }
 
-void
-ie_vmerun(sc)
-	struct ie_softc *sc;
+void 
+ie_vmerun(struct ie_softc *sc)
 {
 	/* do it all in reset */
 }
@@ -242,10 +233,7 @@ ie_vmerun(sc)
  */
 
 static void *
-wmemset(vb, val, l)
-	void *vb;
-	int val;
-	size_t l;
+wmemset(void *vb, int val, size_t l)
 {
 	u_char *b = vb;
 	u_char *be = b + l;
@@ -273,10 +261,7 @@ wmemset(vb, val, l)
 }
 
 static void *
-wmemcpy(dst, src, l)
-	void *dst;
-	const void *src;
-	size_t l;
+wmemcpy(void *dst, const void *src, size_t l)
 {
 	const u_char *b1e, *b1 = src;
 	u_char *b2 = dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.28.6.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.28.6.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -103,55 +103,55 @@ extern label_t *nofault;
 
 extern vaddr_t vmmap;	/* XXX - See mem.c */
 
-void	clock_init  __P((void));
-void	cninit __P((void));
+void	clock_init (void);
+void	cninit(void);
 
-void	dumpconf __P((void));
-void	dumpsys __P((void));
+void	dumpconf(void);
+void	dumpsys(void);
 
-void	enable_fpu __P((int));
-void	enable_init __P((void));
-void	enable_video __P((int));
+void	enable_fpu(int);
+void	enable_init(void);
+void	enable_video(int);
 
-int 	fpu_emulate __P((struct trapframe *, struct fpframe *, ksiginfo_t *));
+int 	fpu_emulate(struct trapframe *, struct fpframe *, ksiginfo_t *);
 
 /* Backward compatibility... */
 #define getsr	_getsr
 
-void**	getvbr __P((void));
-int	getcrp __P((struct mmu_rootptr *));
+void**	getvbr(void);
+int	getcrp(struct mmu_rootptr *);
 
-void	initfpu __P((void));
-void	intreg_init __P((void));
+void	initfpu(void);
+void	intreg_init(void);
 
-void	isr_init __P((void));
-void	isr_config __P((void));
+void	isr_init(void);
+void	isr_config(void);
 
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
-void	netintr __P((void));
+void	netintr(void);
 
-caddr_t	obio_find_mapping __P((paddr_t pa, psize_t size));
-void	obio_init __P((void));
+caddr_t	obio_find_mapping(paddr_t, psize_t);
+void	obio_init(void);
 
-void	setvbr __P((void **));
+void	setvbr(void **);
 
-void	sunmon_abort __P((void));
-void	sunmon_halt __P((void));
-void	sunmon_init __P((void));
-void	sunmon_reboot __P((char *));
+void	sunmon_abort(void);
+void	sunmon_halt(void);
+void	sunmon_init(void);
+void	sunmon_reboot(char *);
 
-void	swapconf __P((void));
+void	swapconf(void);
 
-void	zs_init __P((void));
+void	zs_init(void);
 
 #ifdef	_SUN3_
 
 struct sun3_kcore_hdr;
 
 extern int cache_size;
-void	cache_enable __P((void));
+void	cache_enable(void);
 
 /* Kernel virtual address space available: */
 extern vaddr_t virtual_avail, virtual_end;
@@ -161,15 +161,15 @@ extern paddr_t avail_start, avail_end;
 extern paddr_t hole_start, hole_size;
 
 /* cache.c */
-void	cache_enable __P((void));
-void	cache_flush_page(vaddr_t pgva);
-void	cache_flush_segment(vaddr_t sgva);
+void	cache_enable(void);
+void	cache_flush_page(vaddr_t);
+void	cache_flush_segment(vaddr_t);
 void	cache_flush_context(void);
 
 /* pmap.c */
-void	pmap_bootstrap __P((vaddr_t nextva));
-void	pmap_kcore_hdr __P((struct sun3_kcore_hdr *));
-void	pmap_get_pagemap __P((int *pt, int off));
+void	pmap_bootstrap(vaddr_t);
+void	pmap_kcore_hdr(struct sun3_kcore_hdr *);
+void	pmap_get_pagemap(int *, int);
 
 #endif	/* SUN3 */
 
@@ -186,11 +186,11 @@ extern struct mmu_rootptr mon_crp;
 /* Lowest "managed" kernel virtual address. */
 extern vaddr_t virtual_avail;
 
-void	loadcrp __P((struct mmu_rootptr *));
+void	loadcrp(struct mmu_rootptr *);
 
-void	pmap_bootstrap __P((vaddr_t nextva));
-void	pmap_kcore_hdr __P((struct sun3x_kcore_hdr *));
-int 	pmap_pa_exists __P((paddr_t pa));
+void	pmap_bootstrap(vaddr_t);
+void	pmap_kcore_hdr(struct sun3x_kcore_hdr *);
+int 	pmap_pa_exists(paddr_t);
 
 #endif	/* SUN3X */
 

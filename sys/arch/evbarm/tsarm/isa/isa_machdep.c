@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1.4.2 2005/01/17 19:29:23 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.4.3 2005/01/24 08:34:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.1.4.2 2005/01/17 19:29:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.1.4.3 2005/01/24 08:34:06 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -125,7 +125,7 @@ isa_intr_alloc(ic, mask, type, irq)
 	count = -1;
 
 	/* some interrupts should never be dynamically allocated */
-	mask &= 0xff1f;
+	mask &= 0x00e0;
 
 	for (i = 0; i < sizeof(isairq); i++) {
 		if ((mask & (1<<isairq[i])) == 0)

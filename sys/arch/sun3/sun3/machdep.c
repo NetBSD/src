@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.4 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.5 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.4 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.5 2005/01/24 08:34:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,8 +164,8 @@ int	safepri = PSL_LOWIPL;
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
 
-static void identifycpu __P((void));
-static void initcpu __P((void));
+static void identifycpu(void);
+static void initcpu(void);
 
 /*
  * Console initialization: called early on from main,
@@ -173,8 +173,8 @@ static void initcpu __P((void));
  * to use the console for output immediately (via PROM)
  * but can not use it for input until after this point.
  */
-void
-consinit()
+void 
+consinit(void)
 {
 
 	/*
@@ -216,8 +216,8 @@ consinit()
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void
-cpu_startup()
+void 
+cpu_startup(void)
 {
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
@@ -299,11 +299,8 @@ cpu_startup()
 /*
  * Set registers on exec.
  */
-void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+void 
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 
@@ -348,8 +345,8 @@ char	cpu_model[120];
  * the video memory on the Sun3/50.  Therefore, this
  * function just prints out what we already know.
  */
-void
-identifycpu()
+void 
+identifycpu(void)
 {
 	extern char *cpu_string;	/* XXX */
 
@@ -423,7 +420,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void
-reboot_sync __P((void))
+reboot_sync(void)
 {
 
 	/* Check waittime here to localize its use to this function. */
@@ -436,10 +433,8 @@ reboot_sync __P((void))
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void
-cpu_reboot(howto, user_boot_string)
-	int howto;
-	char *user_boot_string;
+__dead void 
+cpu_reboot(int howto, char *user_boot_string)
 {
 	char *bs, *p;
 	char default_boot_string[8];
@@ -515,7 +510,7 @@ cpu_reboot(howto, user_boot_string)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -528,13 +523,13 @@ long	dumplo = 0; 		/* blocks */
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
-void
-cpu_dumpconf()
+void 
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int (*getsize)__P((dev_t));
+	int (*getsize)(dev_t);
 
 	if (dumpdev == NODEV)
 		return;
@@ -580,8 +575,8 @@ extern paddr_t avail_start;
  *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
-void
-dumpsys()
+void 
+dumpsys(void)
 {
 	const struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
@@ -718,8 +713,8 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void
-initcpu()
+static void 
+initcpu(void)
 {
 	/* XXX: Enable RAM parity/ECC checking? */
 	/* XXX: parityenable(); */
@@ -744,10 +739,8 @@ initcpu()
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+int 
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }

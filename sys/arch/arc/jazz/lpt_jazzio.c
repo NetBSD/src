@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp
 
 #include <arc/jazz/jazziovar.h>
 
-int lpt_jazzio_probe __P((struct device *, struct cfdata *, void *));
-void lpt_jazzio_attach __P((struct device *, struct device *, void *));
+int lpt_jazzio_probe(struct device *, struct cfdata *, void *);
+void lpt_jazzio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_jazzio, sizeof(struct lpt_softc),
     lpt_jazzio_probe, lpt_jazzio_attach, NULL, NULL);
@@ -81,18 +81,14 @@ CFATTACH_DECL(lpt_jazzio, sizeof(struct lpt_softc),
  *	sys/arch/arm32/mainbus/lpt_pioc.c also copies this.
  *	sys/arch/amiga/dev/lpt_supio.c doesn't.
  */
-static int lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-		bus_size_t, u_char, u_char));
+static int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+		bus_size_t, u_char, u_char);
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 static int
-lpt_port_test(iot, ioh, base, off, data, mask)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	bus_size_t off;
-	u_char data, mask;
+lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh, bus_addr_t base,
+    bus_size_t off, u_char data, u_char mask)
 {
 	int timeout;
 	u_char temp;
@@ -104,20 +100,17 @@ lpt_port_test(iot, ioh, base, off, data, mask)
 		delay(10);
 		temp = bus_space_read_1(iot, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	return (temp == data);
+	return temp == data;
 }
 
 int
-lpt_jazzio_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
-	u_int8_t mask, data;
+	uint8_t mask, data;
 	int i, rv;
 
 #ifdef DEBUG
@@ -173,9 +166,7 @@ out:
 }
 
 void
-lpt_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct jazzio_attach_args *ja = aux;

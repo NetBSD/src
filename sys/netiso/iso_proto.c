@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.13.16.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.13.16.4 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,11 +65,9 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.13.16.3 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.13.16.4 2005/01/24 08:35:53 skrll Exp $");
 
-#include "opt_iso.h"
 
-#ifdef	ISO
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
@@ -96,6 +94,8 @@ const int isoctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	ENOPROTOOPT
 };
+
+DOMAIN_DEFINE(isodomain);	/* forward declare and add to link set */
 
 const struct protosw  isosw[] = {
 	/*
@@ -180,9 +180,7 @@ struct domain   isodomain = {
 	0,			/* dispose of internalized rights */
 	isosw,			/* protosw */
 	&isosw[sizeof(isosw) / sizeof(isosw[0])],	/* NPROTOSW */
-	0,			/* next */
 	rn_inithead,		/* rtattach */
 	48,			/* rtoffset */
 	sizeof(struct sockaddr_iso)	/* maxkeylen */
 };
-#endif				/* ISO */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:12 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.50.1 2005/01/24 08:36:05 skrll Exp $
 
 INCSDIR= /usr/include/ufs/ufs
 

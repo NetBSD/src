@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.7.2.4 2004/11/14 08:15:16 skrll Exp $
+#	$NetBSD: SMALLRAM,v 1.7.2.5 2005/01/24 08:34:13 skrll Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.7.2.4 $"
+#ident 		"SMALLRAM-$Revision: 1.7.2.5 $"
 
 maxusers	8
 
@@ -211,10 +211,10 @@ zstty*	at zsc? channel ?
 
 # SCSI controllers
 # XXX - use only one of ncrscsi or sbc
-#ncrscsi0 at obio?			# SCSI NCR 5380
-sbc0	at obio? flags 0x1		# MI SCSI NCR 5380
-#esp0	at obio?			# SCSI NCR 53C9x
-#esp1	at obio?			# SCSI NCR 53C9x
+#ncrscsi0 at obio? addr 0		# SCSI NCR 5380
+sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
+#esp0	at obio? addr 0			# SCSI NCR 53C9x
+#esp1	at obio? addr 1			# SCSI NCR 53C9x
 
 # SCSI bus support
 scsibus* at scsi?
@@ -286,6 +286,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

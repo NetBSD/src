@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.9.6.4 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: mfp.c,v 1.9.6.5 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.4 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.5 2005/01/24 08:35:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,21 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.4 2004/12/18 09:31:45 skrll Exp $");
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
 
-static int mfp_match __P((struct device *, struct cfdata *, void *));
-static void mfp_attach __P((struct device *, struct device *, void *));
-static void mfp_init __P((void));
-static void mfp_calibrate_delay __P((void));
+static int mfp_match(struct device *, struct cfdata *, void *);
+static void mfp_attach(struct device *, struct device *, void *);
+static void mfp_init(void);
+static void mfp_calibrate_delay(void);
 
 CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
     mfp_match, mfp_attach, NULL, NULL);
 
 static int mfp_attached;
 
-static int
-mfp_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -94,15 +91,11 @@ mfp_match(parent, cf, aux)
 }
 
 
-static void
-mfp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+mfp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
-
-	mfp_attached = 1;
 
 	mfp_init ();
 
@@ -112,6 +105,7 @@ mfp_attach(parent, self, aux)
 
 		printf ("\n");
 
+		mfp_attached = 1;
 		sc->sc_bst = ia->ia_bst;
 		sc->sc_intr = ia->ia_intr;
 		ia->ia_size = 0x30;
@@ -134,7 +128,7 @@ mfp_attach(parent, self, aux)
 }
 
 static void
-mfp_init (void)
+mfp_init(void)
 {
 #if 0				/* done in x68k_init.c::intr_reset() */
 	mfp_set_vr(MFP_INTR);
@@ -155,7 +149,7 @@ mfp_init (void)
 }
 
 extern int delay_divisor;
-void	_delay __P((u_int));
+void	_delay(u_int);
 
 static void
 mfp_calibrate_delay(void)
@@ -190,7 +184,7 @@ mfp_calibrate_delay(void)
  * might be called before realconfig.
  */
 void
-mfp_wait_for_hsync (void)
+mfp_wait_for_hsync(void)
 {
 	/* wait for CRT HSYNC */
 	while (mfp_get_gpip() & MFP_GPIP_HSYNC)
@@ -204,9 +198,8 @@ mfp_wait_for_hsync (void)
  * USART is attached to the keyboard.
  * might be called before realconfig.
  */
-int
-mfp_send_usart (command)
-	int command;
+int 
+mfp_send_usart(int command)
 {
 	while (!(mfp_get_tsr() & MFP_TSR_BE));
 	mfp_set_udr(command);

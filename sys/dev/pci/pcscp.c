@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.24.2.5 2005/01/17 19:31:26 skrll Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.24.2.6 2005/01/24 08:35:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24.2.5 2005/01/17 19:31:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24.2.6 2005/01/24 08:35:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,6 +605,7 @@ pcscp_dma_stop(struct ncr53c9x_softc *sc)
 	/* XXX What should we do here ? */
 	WRITE_DMAREG(esc, DMA_CMD,
 	    DMACMD_ABORT | (esc->sc_datain ? DMACMD_DIR : 0));
+	bus_dmamap_unload(esc->sc_dmat, esc->sc_xfermap);
 
 	esc->sc_active = 0;
 }

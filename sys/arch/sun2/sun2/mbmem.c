@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.12.6.4 2004/12/18 09:31:35 skrll Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.12.6.5 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.12.6.4 2004/12/18 09:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.12.6.5 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.12.6.4 2004/12/18 09:31:35 skrll Exp $")
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
  
-static int  mbmem_match __P((struct device *, struct cfdata *, void *));
-static void mbmem_attach __P((struct device *, struct device *, void *));
+static int  mbmem_match(struct device *, struct cfdata *, void *);
+static void mbmem_attach(struct device *, struct device *, void *);
 
 struct mbmem_softc {
 	struct device	sc_dev;		/* base device */
@@ -71,15 +71,14 @@ CFATTACH_DECL(mbmem, sizeof(struct mbmem_softc),
 
 static int mbmem_attached;
 
-static	paddr_t mbmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				off_t, int, int));
-static	int _mbmem_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       bus_size_t, int,
-			       vaddr_t, bus_space_handle_t *));
-static	int mbmem_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    		bus_size_t, struct proc *, int));
-static	int mbmem_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-		    		    bus_dma_segment_t *, int, bus_size_t, int));
+static	paddr_t mbmem_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
+	    int, int);
+static	int _mbmem_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+	    int, vaddr_t, bus_space_handle_t *);
+static	int mbmem_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int);
+static	int mbmem_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
 static struct sun68k_bus_space_tag mbmem_space_tag = {
 	NULL,				/* cookie */
@@ -96,25 +95,20 @@ static struct sun68k_bus_space_tag mbmem_space_tag = {
 
 static struct sun68k_bus_dma_tag mbmem_dma_tag;
 
-static int
-mbmem_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (mbmem_attached)
 		return 0;
 
-	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
+	return (cpu_has_multibus &&
+		(ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
-static void
-mbmem_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+mbmem_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct mbmem_softc *sc = (struct mbmem_softc *)self;
@@ -164,14 +158,8 @@ mbmem_attach(parent, self, aux)
 }
 
 int
-_mbmem_bus_map(t, btype, paddr, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_mbmem_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
 {
 	struct mbmem_softc *sc = t->cookie;
 
@@ -183,13 +171,8 @@ _mbmem_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 }
 
 paddr_t
-mbmem_bus_mmap(t, btype, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+mbmem_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
 {
 	struct mbmem_softc *sc = t->cookie;
 
@@ -198,13 +181,8 @@ mbmem_bus_mmap(t, btype, paddr, off, prot, flags)
 }
 
 static int
-mbmem_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+mbmem_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -215,13 +193,8 @@ mbmem_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 static int
-mbmem_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+mbmem_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 

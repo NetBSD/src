@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5.2.3 2004/09/21 13:23:40 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.2.4 2005/01/24 08:35:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5.2.3 2004/09/21 13:23:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5.2.4 2005/01/24 08:35:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,11 +134,8 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -214,11 +211,9 @@ readdisklabel(dev, strat, lp, clp)
  * Check new disk label for sensibility
  * before setting it.
  */
-int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+int 
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *clp)
 {
 	struct partition *opp, *npp;
 	int i;
@@ -262,11 +257,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
@@ -305,11 +297,8 @@ writedisklabel(dev, strat, lp, clp)
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
  */
-int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
+int 
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p;
@@ -381,9 +370,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -463,10 +450,8 @@ disklabel_sun_to_bsd(cp, lp)
  * Sun disklabel may have other info we need to keep.
  * Returns zero or error code.
  */
-static int
-disklabel_bsd_to_sun(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+static int 
+disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -518,10 +503,8 @@ disklabel_bsd_to_sun(lp, cp)
  * Return index if found.
  * Return -1 if not found.
  */
-int
-isbad(bt, cyl, trk, sec)
-	struct dkbad *bt;
-	int cyl, trk, sec;
+int 
+isbad(struct dkbad *bt, int cyl, int trk, int sec)
 {
 	int i;
 	long blk, bblk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.23.2.5 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.23.2.6 2005/01/24 08:35:53 skrll Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.23.2.5 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.23.2.6 2005/01/24 08:35:53 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -449,7 +449,7 @@ key_sendup_mbuf(so, m, target)
  * Definitions of protocols supported in the KEY domain.
  */
 
-extern struct domain keydomain;
+DOMAIN_DEFINE(keydomain);
 
 const struct protosw keysw[] = {
 { SOCK_RAW,	&keydomain,	PF_KEY_V2,	PR_ATOMIC|PR_ADDR,

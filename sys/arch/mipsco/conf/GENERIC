@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.2.4 2004/11/14 08:15:16 skrll Exp $
+# $NetBSD: GENERIC,v 1.30.2.5 2005/01/24 08:34:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -163,6 +163,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ppp		2	# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		4	# Network "tunnel" device
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	vnd		4	# disk-like interface to files

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.1 2001/06/14 12:57:14 fredette Exp $	*/
+/*	$NetBSD: dvma.h,v 1.1.24.1 2005/01/24 08:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,28 +36,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern char *	(*dvma_alloc_p) __P((int len));
+extern char *	(*dvma_alloc_p)(int);
 #define dvma_alloc	(*dvma_alloc_p)
 
-extern void	(*dvma_free_p) __P((char *dvma, int len));
+extern void	(*dvma_free_p)(char *, int);
 #define dvma_free	(*dvma_free_p)
 
-extern char *	(*dvma_mapin_p) __P((char *pkt, int len));
+extern char *	(*dvma_mapin_p)(char *, int);
 #define dvma_mapin	(*dvma_mapin_p)
 
-extern void	(*dvma_mapout_p) __P((char *dmabuf, int len));
+extern void	(*dvma_mapout_p)(char *, int);
 #define dvma_mapout	(*dvma_mapout_p)
 
 /*
  * This stuff is not really DVMA-related,
  * but is mapping related.  Oh well...
  */
-extern char *	(*dev_mapin_p) __P((int t, u_long a, int l));
+extern char *	(*dev_mapin_p)(int, u_long, int);
 #define dev_mapin	(*dev_mapin_p)
 
 /*
  * Called from SRT1.c to set the pointers declared above.
  */
-void	sun2_init __P((void));
-void	sun3_init __P((void));
-void	sun3x_init __P((void));
+void	sun2_init(void);
+void	sun3_init(void);
+void	sun3x_init(void);

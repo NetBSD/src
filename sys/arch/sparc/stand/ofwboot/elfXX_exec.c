@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.3.22.4 2005/01/17 19:30:27 skrll Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3.22.5 2005/01/24 08:34:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -174,7 +174,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	 * Now load the symbol sections themselves.
 	 */
 	shp = addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr));
-	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + ssize);
+	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + ssize;
 	size = ELF_ALIGN(size);
 	addr += size;
 	off = size;

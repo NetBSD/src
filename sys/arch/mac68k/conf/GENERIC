@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.4 2004/11/14 08:15:16 skrll Exp $
+# $NetBSD: GENERIC,v 1.138.2.5 2005/01/24 08:34:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.4 $"
+#ident 		"GENERIC-$Revision: 1.138.2.5 $"
 
 maxusers	16		# estimated number of users
 
@@ -238,10 +238,10 @@ zstty*	at zsc? channel ?
 
 # SCSI controllers
 # XXX - use only one of ncrscsi or sbc
-ncrscsi0 at obio?			# SCSI NCR 5380
-#sbc0	at obio? flags 0x1		# MI SCSI NCR 5380
-esp0	at obio?			# SCSI NCR 53C9x
-esp1	at obio?			# SCSI NCR 53C9x
+ncrscsi0 at obio? addr 0		# SCSI NCR 5380
+#sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
+esp0	at obio? addr 0			# SCSI NCR 53C9x
+esp1	at obio? addr 1			# SCSI NCR 53C9x
 
 # SCSI bus support
 scsibus* at scsi?
@@ -316,6 +316,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

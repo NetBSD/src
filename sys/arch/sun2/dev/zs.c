@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7.2.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.7.2.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.7.2.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.7.2.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -117,9 +117,9 @@ static u_char zs_init_reg[16] = {
 };
 
 /* Console ops */
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
-static void zscnpollc __P((dev_t, int));
+static int  zscngetc(dev_t);
+static void zscnputc(dev_t, int);
+static void zscnpollc(dev_t, int);
 
 struct consdev zs_consdev = {
 	NULL,
@@ -135,16 +135,16 @@ struct consdev zs_consdev = {
  * Autoconfig
  ****************************************************************/
 
-static int  zs_print __P((void *, const char *name));
+static int  zs_print(void *, const char *name);
 
 extern struct cfdriver zs_cd;
 
 /* Interrupt handlers. */
-int zscheckintr __P((void *));
-static int zshard __P((void *));
-static void zssoft __P((void *));
+int zscheckintr(void *);
+static int zshard(void *);
+static void zssoft(void *);
 
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zs_get_speed(struct zs_chanstate *);
 
 /*
  * Attach a found zs.
@@ -152,11 +152,8 @@ static int zs_get_speed __P((struct zs_chanstate *));
  * USE ROM PROPERTIES port-a-ignore-cd AND port-b-ignore-cd FOR
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
-void
-zs_attach(zsc, zsd, pri)
-	struct zsc_softc *zsc;
-	struct zsdevice *zsd;
-	int pri;
+void 
+zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
@@ -318,10 +315,8 @@ zs_attach(zsc, zsd, pri)
 
 }
 
-static int
-zs_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -334,9 +329,8 @@ zs_print(aux, name)
 	return (UNCONF);
 }
 
-static int
-zshard(arg)
-	void *arg;
+static int 
+zshard(void *arg)
 {
 	struct zsc_softc *zsc = (struct zsc_softc *)arg;
 	int rr3, rval;
@@ -355,9 +349,8 @@ zshard(arg)
 	return (rval);
 }
 
-int
-zscheckintr(arg)
-	void *arg;
+int 
+zscheckintr(void *arg)
 {
 	struct zsc_softc *zsc;
 	int unit, rval;
@@ -377,9 +370,8 @@ zscheckintr(arg)
 /*
  * We need this only for TTY_DEBUG purposes.
  */
-static void
-zssoft(arg)
-	void *arg;
+static void 
+zssoft(void *arg)
 {
 	struct zsc_softc *zsc = (struct zsc_softc *)arg;
 	int s;
@@ -406,9 +398,8 @@ zssoft(arg)
 /*
  * Compute the current baud rate given a ZS channel.
  */
-static int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+static int 
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
@@ -420,10 +411,8 @@ zs_get_speed(cs)
 /*
  * MD functions for setting the baud rate and control modes.
  */
-int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+int 
+zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	int tconst, real_bps;
 
@@ -453,10 +442,8 @@ zs_set_speed(cs, bps)
 	return (0);
 }
 
-int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+int 
+zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 {
 	int s;
 
@@ -504,9 +491,7 @@ zs_set_modes(cs, cflag)
  */
 
 u_char
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_char reg;
+zs_read_reg(struct zs_chanstate *cs, u_char reg)
 {
 	u_char val;
 
@@ -518,9 +503,7 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_char reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 {
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
@@ -529,8 +512,7 @@ zs_write_reg(cs, reg, val)
 }
 
 u_char
-zs_read_csr(cs)
-	struct zs_chanstate *cs;
+zs_read_csr(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -539,16 +521,15 @@ zs_read_csr(cs)
 	return (val);
 }
 
-void  zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void
+zs_write_csr(struct zs_chanstate *cs, u_char val)
 {
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
-	struct zs_chanstate *cs;
+u_char
+zs_read_data(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -557,9 +538,8 @@ u_char zs_read_data(cs)
 	return (val);
 }
 
-void  zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+void
+zs_write_data(struct zs_chanstate *cs, u_char val)
 {
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
@@ -572,14 +552,13 @@ void  zs_write_data(cs, val)
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
 
-extern void Debugger __P((void));
+extern void Debugger(void);
 
 /*
  * Handle user request to enter kernel debugger.
  */
-void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+void 
+zs_abort(struct zs_chanstate *cs)
 {
 	volatile struct zschan *zc = zs_conschan_get;
 	int rr0;
@@ -613,9 +592,8 @@ zs_abort(cs)
 /*
  * Polled input char.
  */
-int
-zs_getc(arg)
-	void *arg;
+int 
+zs_getc(void *arg)
 {
 	volatile struct zschan *zc = arg;
 	int s, c, rr0;
@@ -641,10 +619,8 @@ zs_getc(arg)
 /*
  * Polled output char.
  */
-void
-zs_putc(arg, c)
-	void *arg;
-	int c;
+void 
+zs_putc(void *arg, int c)
 {
 	volatile struct zschan *zc = arg;
 	int s, rr0;
@@ -680,9 +656,8 @@ zs_putc(arg, c)
 /*
  * Polled console input putchar.
  */
-static int
-zscngetc(dev)
-	dev_t dev;
+static int 
+zscngetc(dev_t dev)
 {
 	return (zs_getc(zs_conschan_get));
 }
@@ -690,20 +665,16 @@ zscngetc(dev)
 /*
  * Polled console output putchar.
  */
-static void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+static void 
+zscnputc(dev_t dev, int c)
 {
 	zs_putc(zs_conschan_put, c);
 }
 
 int swallow_zsintrs;
 
-static void
-zscnpollc(dev, on)
-	dev_t dev;
-	int on;
+static void 
+zscnpollc(dev_t dev, int on)
 {
 	/* 
 	 * Need to tell zs driver to acknowledge all interrupts or we get
