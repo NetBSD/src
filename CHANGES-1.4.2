@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.19 1999/09/03 09:51:07 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.20 1999/09/05 16:52:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -233,3 +233,26 @@ lib/libc/gen/__fts13.c				1.16-1.25
   Fix various bug in fts(3), preventing a buffer overflow on a very
   deep tree, and a silent trucation of the path when fts_pathlen 
   overflows.  Also, make this compile on Linux.  (bouyer)
+
+sbin/newfs_lfs/lfs.c				1.5
+
+  Refuse to create a file system with too few segments, which
+  would prevent the cleaner from working, fixing PR#7623.  (perseant)
+
+sbin/mount_ados/mount_ados.c			1.9
+sbin/mount_cd9660/mount_cd9660.c		1.8
+sbin/mount_fdesc/mount_fdesc.c			1.10
+sbin/mount_filecore/mount_filecore.c		1.2
+sbin/mount_kernfs/mount_kernfs.c		1.11
+sbin/mount_lfs/mount_lfs.c			1.8
+sbin/mount_msdos/mount_msdos.c			1.20
+sbin/mount_nfs/mount_nfs.c			1.23
+sbin/mount_null/mount_null.c			1.6
+sbin/mount_procfs/mount_procfs.c		1.10
+sbin/mount_umap/mount_umap.c			1.9
+sbin/mount_union/mount_union.c			1.6
+
+  Regularize error reporting of mount_* commands for failure of
+  mount(2) to the form "mount_xxx: dev on dir: reason for failure"
+  (as opposed to the old "mount_xxx: : reason for failure").
+  (perseant)
