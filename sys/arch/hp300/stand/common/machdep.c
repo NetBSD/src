@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1999/12/14 20:57:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2001/01/02 04:14:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,7 +192,6 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 {
 
 	/* Adjust entry point. */
-	entry += (long)loadaddr;
 	transfer(entry, howto, opendev, cons_scode, loadaddr, esym);
 }
 
