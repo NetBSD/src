@@ -1,3 +1,5 @@
+/*	$NetBSD: wiconfig.c,v 1.8 2000/08/07 00:55:08 enami Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -29,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: wiconfig.c,v 1.7 2000/07/06 03:37:26 enami Exp $
+ *	From: Id: wicontrol.c,v 1.6 1999/05/22 16:12:49 wpaul Exp $
  */
 
 #include <sys/types.h>
@@ -67,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.7 2000/07/06 03:37:26 enami Exp $";
+	"@(#) $Id: wiconfig.c,v 1.8 2000/08/07 00:55:08 enami Exp $";
 #endif
 
 struct wi_table {
