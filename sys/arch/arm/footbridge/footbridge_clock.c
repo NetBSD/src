@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.8 2002/09/27 20:30:36 thorpej Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.9 2002/09/28 15:44:29 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -203,6 +203,12 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
+	/* stathz and profhz should be set to something, we have the timer */
+	if (stathz == 0)
+		stathz = 64;
+
+	if (profhz == 0)
+		profhz = stathz * 5;
 
 	/* Report the clock frequencies */
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
@@ -227,7 +233,7 @@ cpu_initclocks()
 	if (stathz) {
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
-       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_CLOCK,
+       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
 			panic("%s: Cannot install timer 2 interrupt handler",
