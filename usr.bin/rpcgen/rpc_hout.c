@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.10 1998/10/08 01:31:34 wsanchez Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.11 1998/10/19 00:43:59 wsanchez Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.10 1998/10/08 01:31:34 wsanchez Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.11 1998/10/19 00:43:59 wsanchez Exp $");
 #endif
 #endif
 
@@ -265,7 +265,6 @@ define_printed(stop, start)
 	errx(1, "Internal error %s, %d: procedure not found\n",
 	    __FILE__, __LINE__);
 	/* NOTREACHED */
-        return (0);
 }
 
 static void
