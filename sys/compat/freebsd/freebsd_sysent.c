@@ -13,12 +13,6 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <machine/freebsd_machdep.h>
 
-#ifdef COMPAT_43
-#define compat_43(func) __CONCAT(compat_43_,func)
-#else
-#define compat_43(func) sys_nosys
-#endif
-
 #define	s(type)	sizeof(type)
 
 struct sysent freebsd_sysent[] = {
