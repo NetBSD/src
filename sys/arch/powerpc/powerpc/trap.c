@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2002/10/30 06:37:38 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 2002/10/30 07:39:40 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,6 +71,9 @@ int setfault __P((faultbuf));	/* defined in locore.S */
 /* Why are these not defined in a header? */
 int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
+
+/* XXX Duplicated from syscall.c. Move it to a header file ? */
+#define FIRSTARG	3	/* first argument is in reg 3 */
 
 void
 child_return(void *arg)
