@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.38 2004/03/27 12:44:08 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.39 2004/03/27 14:49:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.38 2004/03/27 12:44:08 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.39 2004/03/27 14:49:13 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ VAR var[] = {
 	{"ctime", "CTIME", 0, putimeval, POFF(p_uctime_sec), TIMEVAL},
 	GID("egid", "EGID", p_gid),
 	{"egroup", "EGROUP", LJUST, gname},
+	{"etime", "ELAPSED", 0, elapsed, POFF(p_ustart_sec), TIMEVAL},
 	UID("euid", "EUID", p_uid),
 	{"euser", "EUSER", LJUST, uname},
 	PVAR("f", "F", 0, p_flag, INT, "x"),

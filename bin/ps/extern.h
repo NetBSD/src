@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2004/03/27 12:09:28 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.27 2004/03/27 14:49:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -52,6 +52,7 @@ int	 donlist(void);
 int	 donlist_sysctl(void);
 void	 fmt_puts(char *, int *);
 void	 fmt_putc(int, int *);
+void	 elapsed(void *, VARENT *, int);
 double	 getpcpu(struct kinfo_proc2 *);
 double	 getpmem(struct kinfo_proc2 *);
 void	 gname(void *, VARENT *, int);
