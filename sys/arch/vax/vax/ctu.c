@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.14.16.1 2002/05/17 15:40:47 gehenna Exp $ */
+/*	$NetBSD: ctu.c,v 1.14.16.2 2002/07/17 02:12:40 gehenna Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -194,12 +194,14 @@ ctustrategy(struct buf *bp)
 	printf("ctustrategy: bcount %ld blkno %d\n", bp->b_bcount, bp->b_blkno);
 	printf("ctustrategy: bp %p\n", bp);
 #endif
+	s = spl7();
 	if (bp->b_blkno >= 512) {
 		bp->b_resid = bp->b_bcount;
-		return biodone(bp);
+		biodone(bp);
+		splx(s);
+		return;
 	}
 
-	s = spl7();
 	empty = TAILQ_EMPTY(&tu_sc.sc_bufq.bq_head);
 	BUFQ_INSERT_TAIL(&tu_sc.sc_bufq, bp);
 	if (empty)

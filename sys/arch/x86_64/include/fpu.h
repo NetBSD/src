@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.2.8.1 2002/07/15 01:41:08 gehenna Exp $	*/
+/*	$NetBSD: fpu.h,v 1.2.8.2 2002/07/17 02:14:51 gehenna Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -7,6 +7,7 @@
  * NetBSD/x86_64 only uses the extended save/restore format used
  * by fxsave/fsrestore, to always deal with the SSE registers,
  * which are part of the ABI to pass floating point values.
+ * Must be stored in memory on a 16-byte boundary.
  */
 
 struct fxsave64 {
@@ -22,15 +23,15 @@ struct fxsave64 {
 /*BITFIELDTYPE*/ u_int64_t	fx_st[8 * 2];	/* 8 normal FP regs */
 /*BITFIELDTYPE*/ u_int64_t	fx_xmm[16 * 2];	/* 16 SSE2 registers */
 /*BITFIELDTYPE*/ u_int8_t	fx_unused3[96];
-} __attribute__ ((aligned (16)));
-
-#ifdef _KERNEL
+};
 
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	u_int16_t fp_ex_sw;		/* saved status from last exception */
 	u_int16_t fp_ex_tw;		/* saved tag from last exception */
 };
+
+#ifdef _KERNEL
 
 /*
  * This one only used for backward compat coredumping.

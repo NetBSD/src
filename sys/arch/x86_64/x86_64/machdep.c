@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.3 2002/07/15 01:41:09 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.4 2002/07/17 02:14:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/fpu.h>
+#include <machine/mtrr.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -140,8 +141,10 @@
 char machine[] = "x86_64";		/* cpu "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
+char x86_64_doubleflt_stack[NBPG];
+
 u_int cpu_serial[3];
-char cpu_model[] = "VirtuHammer x86-64";
+char cpu_model[] = "Hammer x86-64";
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
@@ -189,11 +192,13 @@ int	mem_cluster_cnt;
  */
 u_int64_t cpu_tsc_freq;
 
+struct mtrr_funcs *mtrr_funcs;
+
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	init_x86_64 __P((vaddr_t));
+void	init_x86_64 __P((paddr_t));
 
 /*
  * Machine-dependent startup code
@@ -201,6 +206,7 @@ void	init_x86_64 __P((vaddr_t));
 void
 cpu_startup()
 {
+	struct cpu_info *ci = curcpu();
 	caddr_t v, v2;
 	unsigned long sz;
 	int x;
@@ -247,6 +253,12 @@ cpu_startup()
 			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
 			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
 			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
+	}
+
+	if (cpu_feature & CPUID_MTRR) {
+		mtrr_funcs = &i686_mtrr_funcs;
+		i686_mtrr_init_first();
+		mtrr_init_cpu(ci);
 	}
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
@@ -348,6 +360,7 @@ x86_64_proc0_tss_ldt_init()
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)proc0.p_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)&x86_64_doubleflt_stack[NBPG - 8];
 	tss_alloc(&proc0);
 
 	ltr(proc0.p_md.md_tss_sel);
@@ -462,18 +475,19 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	char *sp;
 	struct sigframe *fp, frame;
 	int onstack;
 	size_t tocopy;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 
@@ -492,7 +506,7 @@ sendsig(catcher, sig, mask, code)
 	 * Round down the stackpointer to a multiple of 16 for
 	 * fxsave and the ABI.
 	 */
-	sp = (char *)((unsigned long)sp & ~15);
+	sp = (char *)((unsigned long)sp & ~15) - 8;;
 	fp = (struct sigframe *)sp - 1;
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
@@ -506,18 +520,27 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		frame.sf_ra = (uint64_t) p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (uint64_t) ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Save register context. */
-	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));
-	__asm("movl %%fs,%0" : "=r" (frame.sf_sc.sc_fs));
-#if 0
 	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ds = tf->tf_ds;
-#endif
+	frame.sf_sc.sc_fs = tf->tf_fs;
+	frame.sf_sc.sc_gs = tf->tf_gs;
 	frame.sf_sc.sc_rflags = tf->tf_rflags;
 	frame.sf_sc.sc_r15 = tf->tf_r15;
 	frame.sf_sc.sc_r14 = tf->tf_r14;
@@ -559,13 +582,16 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-#if 0
-	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-#endif
-	tf->tf_rip = (u_int64_t)p->p_sigctx.ps_sigcode;
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+
+	tf->tf_rdi = sig;
+	tf->tf_rsi = code;
+	tf->tf_rdx = (int64_t) &fp->sf_sc;
+
+	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;
@@ -619,11 +645,10 @@ sys___sigreturn14(p, v, retval)
 	    !USERMODE(context.sc_cs, context.sc_rflags))
 		return (EINVAL);
 
-	/* %fs and %gs were restored by the trampoline. */
-#if 0
-	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
-#endif
+	tf->tf_es = context.sc_es;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_gs = context.sc_gs;
 	tf->tf_rflags = context.sc_rflags;
 	tf->tf_rdi = context.sc_rdi;
 	tf->tf_rsi = context.sc_rsi;
@@ -1009,12 +1034,10 @@ setregs(p, pack, stack)
 	p->p_flag &= ~P_32;
 
 	tf = p->p_md.md_regs;
-#if 0
-	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-#endif
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -1120,14 +1143,14 @@ extern vector *IDTVEC(exceptions)[];
 
 void
 init_x86_64(first_avail)
-	vaddr_t first_avail;
+	paddr_t first_avail;
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
 	struct btinfo_memmap *bim;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
-	int x, first16q;
+	int x, first16q, ist;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 
@@ -1473,10 +1496,16 @@ init_x86_64(first_avail)
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
-	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
+#if 0
+	pmap_kenter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	pmap_enter(pmap_kernel(), idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+#else
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+#endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
@@ -1539,9 +1568,11 @@ init_x86_64(first_avail)
 	    sizeof (struct gate_descriptor));
 
 	/* exceptions */
-	for (x = 0; x < 32; x++)
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+	for (x = 0; x < 32; x++) {
+		ist = (x == 8) ? 1 : 0;
+		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
+	}
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386TGT, SEL_UPL);

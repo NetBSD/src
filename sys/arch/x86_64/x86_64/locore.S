@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.14.2 2002/07/15 01:41:09 gehenna Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.14.3 2002/07/17 02:14:54 gehenna Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -651,7 +651,7 @@ longmode_hi:
 	movw	%ax,%fs
 
 	/* XXX merge these */
-	movq	$VM_MIN_KERNEL_ADDRESS,%rdi
+	leaq	TABLESIZE(%rsi),%rdi
 	call	_C_LABEL(init_x86_64)
 
 	call 	_C_LABEL(main)
@@ -660,21 +660,14 @@ longmode_hi:
 
 /*
  * Signal trampoline; copied to top of user stack.
- * XXXfvdl might as well do away with the frame here.
  */
 NENTRY(sigcode)
-	movq	SIGF_SIGNUM(%rsp),%rdi	# handler(sig, code, scp)
-	movq	SIGF_CODE(%rsp),%rsi
-	movq	SIGF_SCP(%rsp),%rdx
-	call	*SIGF_HANDLER(%rsp)
-	leaq	SIGF_SC(%rsp),%rax	# scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	movl	SC_FS(%rax),%ecx	# XXXfvdl these are wrong
-	movl	SC_GS(%rax),%edx
-	movl	%ecx,%fs
-	movl	%edx,%gs
-	movq	%rax,%rdi
-	pushq	%rax
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is now the first thing on the stack.
+	 */
+	movq	%rsp,%rdi
+	pushq	%rdi			/* fake return address */
 	movq	$SYS___sigreturn14,%rax
 	syscall
 	movq	$SYS_exit,%rax
@@ -1117,12 +1110,6 @@ ENTRY(switch_exit)
 	ltr	%dx
 
 	/* We're always in the kernel, so we don't need the LDT. */
-
-#if 0
-	movl	$GSEL(GUDATA_SEL,SEL_KPL),%ecx
-	movl	%ecx,%fs
-	movl	%ecx,%gs
-#endif
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%rsi),%ecx

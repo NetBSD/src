@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.14.2 2002/07/15 01:41:09 gehenna Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.14.3 2002/07/17 02:14:55 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,18 +54,23 @@
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#include <machine/mtrr.h>
 #include <machine/netbsd32_machdep.h>
+#include <machine/sysarch.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* Provide a the name of the architecture we're emulating */
-char	machine_arch32[] = "i386";	
+char	machine_arch32[] = "x86_64";	
 
 int process_read_fpregs32(struct proc *, struct fpreg32 *);
 int process_read_regs32(struct proc *, struct reg32 *);
 
 extern void (osyscall_return) __P((void));
+
+static int x86_64_get_mtrr32(struct proc *, void *, register_t *);
+static int x86_64_set_mtrr32(struct proc *, void *, register_t *);
 
 void
 netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
@@ -92,23 +97,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	p->p_flag |= P_32;
 
 	tf = p->p_md.md_regs;
-#if 0
-	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-#endif
-
-	/*
-	 * XXXfvdl needs to be revisited
-	 * if USER_LDT is going to be supported, these need
-	 * to be saved/restored.
-	 */
-#if 1
-	__asm("movl %0,%%ds" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%es" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-#else
-	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
-#endif
+	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA32_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -128,10 +120,11 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 }
 
 void
-netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
+netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct netbsd32_sigframe *fp, frame;
 	int onstack;
 
@@ -152,25 +145,16 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	frame.sf_ra = (uint32_t)(u_long)p->p_sigctx.ps_sigcode;
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = (u_int32_t)(u_long)&fp->sf_sc;
-	frame.sf_handler = (u_int32_t)(u_long)catcher;
 
-	/*
-	 * XXXfvdl these need to be saved and restored for USER_LDT.
-	 */
-
-	/* Save register context. */
-	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));
-	__asm("movl %%fs,%0" : "=r" (frame.sf_sc.sc_fs));
-#if 1
-	frame.sf_sc.sc_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	frame.sf_sc.sc_ds = LSEL(LUDATA32_SEL, SEL_UPL);
-#else
-	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ds = tf->tf_ds;
-#endif
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_es = tf->tf_fs;
+	frame.sf_sc.sc_es = tf->tf_gs;
+
 	frame.sf_sc.sc_eflags = tf->tf_rflags;
 	frame.sf_sc.sc_edi = tf->tf_rdi;
 	frame.sf_sc.sc_esi = tf->tf_rsi;
@@ -204,19 +188,12 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
-#if 0
-	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-#endif
-#if 1
-	/* XXXX */
-	__asm("movl %0,%%es" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%ds" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-#else
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-#endif
-	tf->tf_rip = (u_int64_t)p->p_sigctx.ps_sigcode;
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
+
+	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;
@@ -258,14 +235,11 @@ netbsd32___sigreturn14(struct proc *p, void *v, register_t *retval)
 	    !USERMODE(context.sc_cs, context.sc_eflags))
 		return (EINVAL);
 
-	/* %fs and %gs were restored by the trampoline. */
-#if 1
-	__asm("movl %0,%%ds" : : "r" (context.sc_ds));
-	__asm("movl %0,%%es" : : "r" (context.sc_es));
-#else
-	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
-#endif
+	tf->tf_es = context.sc_es;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_gs = context.sc_gs;
+
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
 	tf->tf_rsi = context.sc_esi;
@@ -387,4 +361,165 @@ process_read_fpregs32(struct proc *p, struct fpreg32 *regs)
 
 	memcpy(regs, &frame, sizeof(*regs));
 	return (0);
+}
+
+int
+netbsd32_sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(netbsd32_voidp) parms;
+	} */ *uap = v;
+	int error;
+
+	switch (SCARG(uap, op)) {
+		case X86_64_IOPL:
+			error = x86_64_iopl(p,
+			    (void *)(uintptr_t)SCARG(uap, parms), retval);
+			break;
+		case X86_64_GET_MTRR:
+			error = x86_64_get_mtrr32(p,
+			    (void *)(uintptr_t)SCARG(uap, parms),
+			    retval);
+			break;
+		case X86_64_SET_MTRR:
+			error = x86_64_set_mtrr32(p,
+			    (void *)(uintptr_t)SCARG(uap, parms),
+			    retval);
+			break;
+		default:
+			error = EINVAL;
+			break;
+	}
+	return error;
+}
+
+static int
+x86_64_get_mtrr32(struct proc *p, void *args, register_t *retval)
+{
+	struct x86_64_get_mtrr_args32 args32;
+	int error, i;
+	int32_t n;
+	struct mtrr32 *m32p, m32;
+	struct mtrr *m64p, *mp;
+
+	m64p = NULL;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &args32, sizeof args32);
+	if (error != 0)
+		return error;
+
+	if (args32.mtrrp == 0) {
+		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR);
+		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	}
+
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR))
+		return EINVAL;
+
+	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	if (m64p == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+	error = mtrr_get(m64p, &n, p, 0);
+	if (error != 0)
+		goto fail;
+	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
+	mp = m64p;
+	for (i = 0; i < n; i++) {
+		m32.base = mp->base;
+		m32.len = mp->len;
+		m32.type = mp->type;
+		m32.flags = mp->flags;
+		m32.owner = mp->owner;
+		error = copyout(&m32, m32p, sizeof m32);
+		if (error != 0)
+			break;
+		mp++;
+		m32p++;
+	}
+fail:
+	if (m64p != NULL)
+		free(m64p, M_TEMP);
+	if (error != 0)
+		n = 0;
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	return error;
+		
+}
+
+static int
+x86_64_set_mtrr32(struct proc *p, void *args, register_t *retval)
+{
+	struct x86_64_set_mtrr_args32 args32;
+	struct mtrr32 *m32p, m32;
+	struct mtrr *m64p, *mp;
+	int error, i;
+	int32_t n;
+
+	m64p = NULL;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &args32, sizeof args32);
+	if (error != 0)
+		return error;
+
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	if (m64p == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
+	mp = m64p;
+	for (i = 0; i < n; i++) {
+		error = copyin(m32p, &m32, sizeof m32);
+		if (error != 0)
+			goto fail;
+		mp->base = m32.base;
+		mp->len = m32.len;
+		mp->type = m32.type;
+		mp->flags = m32.flags;
+		mp->owner = m32.owner;
+		m32p++;
+		mp++;
+	}
+
+	error = mtrr_set(m64p, &n, p, 0);
+fail:
+	if (m64p != NULL)
+		free(m64p, M_TEMP);
+	if (error != 0)
+		n = 0;
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	return error;
 }

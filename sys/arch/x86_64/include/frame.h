@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.14.2 2002/07/15 01:41:08 gehenna Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.14.3 2002/07/17 02:14:51 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,10 @@ struct trapframe {
 	int64_t	tf_rdx;
 	int64_t	tf_rcx;
 	int64_t	tf_rax;
+	int64_t	tf_gs;
+	int64_t	tf_fs;
+	int64_t	tf_es;
+	int64_t	tf_ds;
 	int64_t	tf_trapno;
 	/* below portion defined in hardware */
 	int64_t	tf_err;
@@ -138,6 +142,10 @@ struct intrframe {
 	int64_t	if_rdx;
 	int64_t	if_rcx;
 	int64_t	if_rax;
+	int64_t	tf_gs;
+	int64_t	tf_fs;
+	int64_t	tf_es;
+	int64_t	tf_ds;
 	u_int64_t __if_trapno; /* for compat with trap frame - trapno */
 	u_int64_t __if_err;	/* for compat with trap frame - err */
 	/* below portion defined in hardware */
@@ -167,10 +175,7 @@ struct switchframe {
  * Signal frame
  */
 struct sigframe {
-	int64_t	sf_signum;
-	int64_t	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
+	uint64_t sf_ra;
 	struct	sigcontext sf_sc;
 	struct	fxsave64 sf_fp;
 };
