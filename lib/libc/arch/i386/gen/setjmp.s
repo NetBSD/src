@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
- *	$Id: setjmp.s,v 1.3 1993/10/21 01:40:02 jtc Exp $
+ *	$Id: setjmp.s,v 1.4 1993/10/21 01:48:16 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: setjmp.s,v 1.3 1993/10/21 01:40:02 jtc Exp $"
+	.asciz "$Id: setjmp.s,v 1.4 1993/10/21 01:48:16 jtc Exp $"
 #endif
 
 /*
@@ -59,7 +59,7 @@ ENTRY(setjmp)
 	pushl	$0
 	call	PIC_PLT(_sigblock)
 	popl	%edx
-	movl	4(%esp),%ecx 
+	movl	4(%esp),%ecx
 	movl	0(%esp),%edx
 	movl	%edx, 0(%ecx)
 	movl	%ebx, 4(%ecx)

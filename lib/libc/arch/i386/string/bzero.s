@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: bzero.s,v 1.2 1993/10/21 01:40:29 jtc Exp $
+ *	$Id: bzero.s,v 1.3 1993/10/21 01:48:29 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: bzero.s,v 1.2 1993/10/21 01:40:29 jtc Exp $"
+	.asciz "$Id: bzero.s,v 1.3 1993/10/21 01:48:29 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -56,7 +56,7 @@ ENTRY(bzero)
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain 
+	 * of aligning to word boundries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
 	cmpl	$0x0f,%ecx

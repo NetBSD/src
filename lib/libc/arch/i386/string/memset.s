@@ -27,19 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memset.s,v 1.2 1993/10/21 01:40:35 jtc Exp $
+ *	$Id: memset.s,v 1.3 1993/10/21 01:48:33 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: memset.s,v 1.2 1993/10/21 01:40:35 jtc Exp $"
+	.asciz "$Id: memset.s,v 1.3 1993/10/21 01:48:33 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 /*
  * memset(void *b, int c, size_t len)
- *	write len bytes of value c (converted to an unsigned char) to 
+ *	write len bytes of value c (converted to an unsigned char) to
  *	the string b.
  *
  * Written by:
@@ -58,7 +58,7 @@ ENTRY(memset)
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain 
+	 * of aligning to word boundries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
 	cmpl	$0x0f,%ecx
@@ -76,7 +76,7 @@ ENTRY(memset)
 	andl	$3,%edx
 	movl	%ecx,%ebx
 	subl	%edx,%ebx
-	
+
 	movl	%edx,%ecx		/* set until word aligned */
 	rep
 	stosb

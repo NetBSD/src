@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: swab.s,v 1.2 1993/10/21 01:40:44 jtc Exp $
+ *	$Id: swab.s,v 1.3 1993/10/21 01:48:38 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: swab.s,v 1.2 1993/10/21 01:40:44 jtc Exp $"
+	.asciz "$Id: swab.s,v 1.3 1993/10/21 01:48:38 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -43,7 +43,7 @@
  *	copy len bytes from src to dst, swapping adjacent bytes
  *
  * On the i486, this code is negligibly faster than the code generated
- * by gcc at about half the size.  If my i386 databook is correct, it 
+ * by gcc at about half the size.  If my i386 databook is correct, it
  * should be considerably faster than the gcc code on a i386.
  *
  * Written by:
@@ -70,7 +70,7 @@ L1:	lodsw
 	decl	%ecx
 	testl	$7,%ecx
 	jne	L1
-	
+
 L2:	shrl	$3,%ecx			# copy remainder 8 words at a time
 	jz	L4			# while swapping alternate bytes.
 	.align	2,0x90

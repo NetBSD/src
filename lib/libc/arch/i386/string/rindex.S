@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rindex.S,v 1.2 1993/10/21 01:40:36 jtc Exp $
+ *	$Id: rindex.S,v 1.3 1993/10/21 01:48:34 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: rindex.S,v 1.2 1993/10/21 01:40:36 jtc Exp $"
+	.asciz "$Id: rindex.S,v 1.3 1993/10/21 01:48:34 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -50,7 +50,7 @@
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
- 
+
 ENTRY(rindex)
 	pushl	%ebx
 	movl	8(%esp),%edx
@@ -62,7 +62,7 @@ L1:
 	cmpb	%bl,%cl
 	jne	L2
 	movl	%edx,%eax
-L2:	
+L2:
 	incl	%edx
 	testb	%bl,%bl			/* null terminator??? */
 	jne	L1
