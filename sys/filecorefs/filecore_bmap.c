@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.1 1998/08/14 03:26:12 mark Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -107,82 +107,99 @@ filecore_map(fcmp, addr, lbn, bnp)
 	daddr_t *bnp;
 {
 	struct buf *bp;
-	u_long frag,sect,zone,izone,a,b,m,n;
+	u_long frag, sect, zone, izone, a, b, m, n;
 	u_int64_t zaddr;
-	unsigned *ptr;
+	u_long *ptr;
 	long c;
-	int error=0;
+	int error = 0;
 
 #ifdef FILECORE_DEBUG
-	printf("filecore_map(addr=%x, lbn=%x)\n",addr,lbn);
+	printf("filecore_map(addr=%x, lbn=%x)\n", addr, lbn);
 #endif
-	frag=addr>>8;
-	sect=(addr & 0xff) +
-		((lbn<<fcmp->log2bsize)>>fcmp->drec.log2secsize);
-	if (frag!=2)
-		zone=frag/fcmp->idspz; else zone=fcmp->drec.nzones/2;
-	izone=zone;
-	if (zone!=0)
+	frag = addr >> 8;
+	sect = (addr & 0xff) +
+		((lbn << fcmp->log2bsize) >> fcmp->drec.log2secsize);
+	if (frag != 2)
+		zone = frag / fcmp->idspz;
+	else
+		zone = fcmp->drec.nzones / 2;
+	izone = zone;
+	if (zone != 0)
 		zaddr=((8<<fcmp->drec.log2secsize)-fcmp->drec.zone_spare)*zone
 		  - 8*FILECORE_DISCREC_SIZE;
 	else
-		zaddr=0;
-	if (sect>0) sect--;
+		zaddr = 0;
+	if (sect > 0)
+		sect--;
 	do {
 		error=bread(fcmp->fc_devvp, fcmp->map + zone,
-			    1<<fcmp->drec.log2secsize, NOCRED, &bp);
+			    1 << fcmp->drec.log2secsize, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-		printf("bread(%p, %lx, %d, CRED, %p)=%d\n",fcmp->fc_devvp,
-		       fcmp->map+zone,  1<<fcmp->drec.log2secsize, bp, error);
-		printf("block is at %p\n",bp->b_data);
+		printf("bread(%p, %lx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
+		       fcmp->map+zone, 1 << fcmp->drec.log2secsize, bp, error);
+		printf("block is at %p\n", bp->b_data);
 #endif
-		if (error!=0) {
+		if (error != 0) {
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) bm1\n",bp);
+			printf("brelse(%p) bm1\n", bp);
 #endif
-			
 			brelse(bp);
 			return error;
 		}
-		ptr=(unsigned *)(bp->b_data)+1; /* skip map zone header */
-		if (zone==0) ptr+=FILECORE_DISCREC_SIZE>>2;
-		b=0;
-		while (b < (8<<(fcmp->drec.log2secsize))-fcmp->drec.zone_spare) {
-			a=ptr[b>>5]>>(b&31);
-			c=32-(b&31)-fcmp->drec.idlen;
-			if (c<=0) {
-				m = ptr[(b>>5)+1];
+		ptr = (u_long *)(bp->b_data) + 1; /* skip map zone header */
+		if (zone == 0)
+			ptr += FILECORE_DISCREC_SIZE >> 2;
+		b = 0;
+		while (b < (8 << (fcmp->drec.log2secsize))
+		   - fcmp->drec.zone_spare) {
+			a = ptr[b >> 5] >> (b & 31);
+			c = 32 - (b & 31) - fcmp->drec.idlen;
+			if (c <= 0) {
+				m = ptr[(b >> 5) + 1];
 				a |= m << (fcmp->drec.idlen+c);
 				m >>= -c;
-				c+=32;
-			} else m = a >> fcmp->drec.idlen;
-			n=fcmp->drec.idlen+1;
-			while ((m&1)==0) {
-				m>>=1; n++;
-				if (--c==0) { c=32; m=ptr[(b+n-1)>>5]; }
+				c += 32;
+			} else
+				m = a >> fcmp->drec.idlen;
+			n = fcmp->drec.idlen + 1;
+			while ((m & 1) == 0) {
+				m >>= 1;
+				n++;
+				if (--c == 0) {
+					c=32;
+					m = ptr[(b + n - 1) >> 5];
+				}
 			}
 			a &= fcmp->mask;
-			if (a==frag) {
-				if (sect<<fcmp->drec.log2secsize<n<<fcmp->drec.log2bpmb) {
-					*bnp=(((zaddr+b)<<fcmp->drec.log2bpmb)>>fcmp->drec.log2secsize)+sect;
+			if (a == frag) {
+				if (sect << fcmp->drec.log2secsize < n
+				    << fcmp->drec.log2bpmb) {
+					*bnp = (((zaddr+b)
+					    << fcmp->drec.log2bpmb)
+					    >> fcmp->drec.log2secsize) + sect;
 
 #ifdef FILECORE_DEBUG_BR
-					printf("brelse(%p) bm2\n",bp);
+					printf("brelse(%p) bm2\n", bp);
 #endif
 					brelse(bp);
 					return 0;
-				} else sect -= (n<<fcmp->drec.log2bpmb) >> fcmp->drec.log2secsize;
+				} else
+					sect -= (n<<fcmp->drec.log2bpmb)
+					    >> fcmp->drec.log2secsize;
 			}
-			b+=n;
+			b += n;
 		}
 #ifdef FILECORE_DEBUG_BR
-		printf("brelse(%p) bm3\n",bp);
+		printf("brelse(%p) bm3\n", bp);
 #endif
 		brelse(bp);
-		if (++zone==fcmp->drec.nzones) {
-			zone=0; zaddr=0;
-		} else zaddr+=((8<<fcmp->drec.log2secsize)-fcmp->drec.zone_spare);
-	} while (zone!=izone);
+		if (++zone == fcmp->drec.nzones) {
+			zone = 0;
+			zaddr=0;
+		} else
+			zaddr += ((8 << fcmp->drec.log2secsize)
+			    - fcmp->drec.zone_spare);
+	} while (zone != izone);
 	return (E2BIG);
 }
 
@@ -194,20 +211,20 @@ filecore_bread(fcmp, addr, size, cred, bp)
 	struct ucred *cred;
 	struct buf **bp;
 {
-	int error=0;
+	int error = 0;
 	daddr_t bn;
 
 	error = filecore_map(fcmp, addr, 0, &bn);
 	if (error) {
 
 #ifdef FILECORE_DEBUG
-		printf("filecore_bread(error=%d)\n",error);
+		printf("filecore_bread(error=%d)\n", error);
 #endif
 		return error;
 	}
 	error = bread(fcmp->fc_devvp, bn, size, cred, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n",fcmp->fc_devvp, bn, size,
+	printf("bread(%p, %x, %d, CRED, %p)=%d\n", fcmp->fc_devvp, bn, size,
 	       *bp, error);
 #endif
 	return error;
@@ -218,15 +235,17 @@ filecore_dbread(ip, bp)
 	struct filecore_node *ip;
 	struct buf **bp;
 {
-	int error=0;
+	int error = 0;
 
-	if (ip->i_block==-1) error = filecore_map(ip->i_mnt, ip->i_dirent.addr,
-						 0, &(ip->i_block));
-	if (error) return error;
+	if (ip->i_block == -1)
+		error = filecore_map(ip->i_mnt, ip->i_dirent.addr,
+			0, &(ip->i_block));
+	if (error)
+		return error;
 	error = bread(ip->i_mnt->fc_devvp, ip->i_block, FILECORE_DIR_SIZE,
 		      NOCRED, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n",ip->i_mnt->fc_devvp,
+	printf("bread(%p, %x, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
 	       ip->i_block, FILECORE_DIR_SIZE, *bp, error);
 #endif
 	return error;

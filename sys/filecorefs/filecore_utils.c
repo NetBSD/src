@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.1 1998/08/14 03:26:13 mark Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.2 1998/08/14 18:04:07 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -159,29 +159,31 @@ mode_t
 filecore_mode(ip)
 	struct filecore_node *ip;
 {
-	mode_t m=0;
-	int rf=0;
+	mode_t m = 0;
+	int rf = 0;
 
 	if ((ip->i_dirent.attr & FILECORE_ATTR_READ) ||
 	    (ip->i_mnt->fc_mntflags & FILECOREMNT_OWNREAD) ||
-	    (ip->i_dirent.attr & FILECORE_ATTR_DIR)) rf=1;
+	    (ip->i_dirent.attr & FILECORE_ATTR_DIR))
+		rf = 1;
 	if (ip->i_mnt->fc_mntflags & FILECOREMNT_ALLACCESS) {
-		m|=S_IRUSR|S_IXUSR;
+		m |= S_IRUSR | S_IXUSR;
 		if (rf || (ip->i_dirent.attr & FILECORE_ATTR_OREAD))
-			m|=S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+			m |= S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 	} else if (ip->i_mnt->fc_mntflags & FILECOREMNT_OWNACCESS) {
-		if (rf) m|=S_IRUSR|S_IXUSR;
+		if (rf) m |= S_IRUSR | S_IXUSR;
 		if (ip->i_dirent.attr & FILECORE_ATTR_OREAD)
-			m|=S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+			m |= S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 	} else {
-		m|=S_IRUSR|S_IXUSR;
-		if (rf) m|=S_IRGRP|S_IXGRP;
+		m |= S_IRUSR | S_IXUSR;
+		if (rf) m |= S_IRGRP | S_IXGRP;
 		if (ip->i_dirent.attr & FILECORE_ATTR_OREAD)
-			m|=S_IROTH|S_IXOTH;
+			m |= S_IROTH | S_IXOTH;
 	}
 	if (ip->i_dirent.attr & FILECORE_ATTR_DIR) {
-		m|=S_IFDIR|S_IXUSR|S_IXGRP|S_IXOTH;
-	} else m|=S_IFREG;
+		m |= S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
+	} else
+		m |= S_IFREG;
 	return m;
 }
 
@@ -192,10 +194,10 @@ filecore_time(ip)
 	struct timespec ts;
 	u_int64_t cs;
 
-	cs=(((u_int64_t)(ip->i_dirent.load&0xFF))<<32) + ip->i_dirent.exec -
-	    ((u_int64_t)1725772500 << 7);
-	ts.tv_sec = cs/100;
-	ts.tv_nsec = (cs%100)*10000000;
+	cs = (((u_int64_t)(ip->i_dirent.load & 0xFF)) << 32)
+	    + ip->i_dirent.exec - ((u_int64_t)1725772500 << 7);
+	ts.tv_sec = cs / 100;
+	ts.tv_nsec = (cs % 100) * 10000000;
 	return ts;
 }
 
@@ -206,11 +208,11 @@ filecore_getparent(ip)
 	struct buf *pbp;
 	u_int32_t addr;
 	u_int32_t paddr;
-	int error=0;
-	int i=0;
+	int error = 0;
+	int i = 0;
 
 #ifdef FILECORE_DEBUG
-	printf("filecore_getparent(ino=%x)\n",ip->i_number);
+	printf("filecore_getparent(ino=%x)\n", ip->i_number);
 #endif
 	if (ip->i_parent != -2) {
 		return ip->i_parent;
@@ -219,18 +221,19 @@ filecore_getparent(ip)
 		ip->i_parent = ip->i_number;
 		return ip->i_number;
 	}
-	addr=ip->i_number & FILECORE_INO_MASK;
+	addr = ip->i_number & FILECORE_INO_MASK;
 	/* Read directory data for parent dir to find its parent */
 #ifdef FILECORE_DEBUG
 	printf("filecore_getparent() read parent dir contents\n");
 #endif
-	error=filecore_bread(ip->i_mnt, addr,
-                             FILECORE_DIR_SIZE, NOCRED, &pbp);
+	error = filecore_bread(ip->i_mnt, addr, FILECORE_DIR_SIZE,
+	    NOCRED, &pbp);
 	if (error)
 		return error;
-	paddr=fcdirtail(pbp->b_data)->parent1 | fcdirtail(pbp->b_data)->parent2<<16;
+	paddr = fcdirtail(pbp->b_data)->parent1
+	    | fcdirtail(pbp->b_data)->parent2 << 16;
 #ifdef FILECORE_DEBUG_BR
-	printf("brelse(%p) ut1\n",pbp);
+	printf("brelse(%p) ut1\n", pbp);
 #endif
 	brelse(pbp);
 
@@ -243,25 +246,25 @@ filecore_getparent(ip)
 #ifdef FILECORE_DEBUG
 	printf("filecore_getparent() read grand-parent dir contents\n");
 #endif
-	error=filecore_bread(ip->i_mnt, paddr,
-                             FILECORE_DIR_SIZE, NOCRED, &pbp);
+	error = filecore_bread(ip->i_mnt, paddr, FILECORE_DIR_SIZE,
+	    NOCRED, &pbp);
 	if (error)
 		return error;
 	while (fcdirentry(pbp->b_data,i)->addr != addr) {
-		if (fcdirentry(pbp->b_data,i++)->name[0]==0) {
+		if (fcdirentry(pbp->b_data, i++)->name[0] == 0) {
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) ut2\n",pbp);
+			printf("brelse(%p) ut2\n", pbp);
 #endif
 			brelse(pbp);
 			return FILECORE_ROOTINO;
 		}
 	}
 #ifdef FILECORE_DEBUG_BR
-	printf("brelse(%p) ut3\n",pbp);
+	printf("brelse(%p) ut3\n", pbp);
 #endif
 	brelse(pbp);
-	ip->i_parent = paddr + (i<<FILECORE_INO_INDEX);
-	return (paddr + (i<<FILECORE_INO_INDEX));
+	ip->i_parent = paddr + (i << FILECORE_INO_INDEX);
+	return (paddr + (i << FILECORE_INO_INDEX));
 }
 
 /*static char filecore_hexchar[16]="0123456789abcdef";*/
@@ -272,22 +275,25 @@ filecore_fn2unix(fcfn, ufn, len)
 	char *ufn;
 	u_int8_t *len;
 {
-	int i=0;
+	int i = 0;
 
-	if (*fcfn==0) return (-1);
-	while (i++<10 && *fcfn>=' ') {
-		if (*fcfn=='/') *ufn++ = '.';
-		else *ufn++ = *fcfn;
+	if (*fcfn == 0)
+		return (-1);
+	while (i++ < 10 && *fcfn >= ' ') {
+		if (*fcfn == '/')
+			*ufn++ = '.';
+		else
+			*ufn++ = *fcfn;
 		fcfn++;
 	}
 /*	if (ip->i_mnt->fc_mntflags & FILECOREMNT_FILETYPE) {
 		*ufn++ = ',';
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load>>10) & 15];
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load>>9) & 15];
-		*ufn++ = filecore_hexchar[(ip->i_dirent.load>>8) & 15];
+		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 10) & 15];
+		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 9) & 15];
+		*ufn++ = filecore_hexchar[(ip->i_dirent.load >> 8) & 15];
 	} */
-	*ufn=0;
-	*len=i-1;
+	*ufn = 0;
+	*len = i - 1;
 	return 0;
 }
 
@@ -298,19 +304,25 @@ filecore_fncmp(fcfn, ufn, len)
 	u_short len;
 {
 	char f, u;
-	int i=0;
+	int i = 0;
 
-	if (*fcfn==0 || len>10) return -1;
-	while (i++<len) {
-		if (*fcfn<' ') return 1;
+	if (*fcfn == 0 || len > 10)
+		return -1;
+	while (i++ < len) {
+		if (*fcfn < ' ')
+			return 1;
 		f = *fcfn++;
 		u = *ufn++;
-		if (u=='.') u = '/';
-		if (u>='a' && u<='z') u -= 'a'-'A';
-		if (f>='a' && f<='z') f -= 'a'-'A';
-		if (f<u) return 1;
-		else if (f>u) return -1;
+		if (u == '.')
+			u = '/';
+		if (u >= 'a' && u <= 'z') u -= 'a' - 'A';
+		if (f >= 'a' && f <= 'z') f -= 'a' - 'A';
+		if (f < u)
+			return 1;
+		else if (f > u)
+			return -1;
 	}
-	if (len==10 || *fcfn<' ') return 0;
+	if (len == 10 || *fcfn < ' ')
+		return 0;
 	return -1;
 }
