@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.9 2002/01/08 00:29:12 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.10 2002/01/11 21:48:32 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -78,6 +78,7 @@ defflag	opt_atalk.h		NETATALK
 defflag	opt_ns.h		NS NSIP		# NS network stack,
 						# XNS tunneled over IP
 defflag	opt_iso.h		ISO TPIP	# ISO network stack
+defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
 defflag				EON		# ISO clnp over IP
 defflag				CCITT		#
@@ -201,7 +202,7 @@ define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	mii		{[phy = -1]}
 define	irbus		{ }
-define	radio		{ }
+define	radiodev	{ }
 
 # audio device attributes
 #
@@ -811,7 +812,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # radio devices, attaches to radio hardware driver
 device	radio
-attach	radio at radio
+attach	radio at radiodev
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
@@ -853,6 +854,7 @@ defpseudo ccd:		disk
 defpseudo raid:		disk
 defpseudo md:		disk
 defpseudo vcoda
+defpseudo netsmb
 
 defpseudo pty:		tty
 defpseudo tb:		tty
@@ -1349,6 +1351,17 @@ file	netns/ns_pcb.c			ns
 file	netns/ns_proto.c		ns
 file	netns/spp_debug.c		ns
 file	netns/spp_usrreq.c		ns
+file	netsmb/iconv.c			netsmb
+file	netsmb/smb_conn.c		netsmb	needs-count
+file	netsmb/smb_crypt.c		netsmb	needs-count
+file	netsmb/smb_dev.c		netsmb	needs-count
+file	netsmb/smb_iod.c		netsmb	needs-count
+file	netsmb/smb_rq.c			netsmb	needs-count
+file	netsmb/smb_smb.c		netsmb	needs-count
+file	netsmb/smb_subr.c		netsmb	needs-count
+file	netsmb/smb_trantcp.c		netsmb	needs-count
+file	netsmb/smb_usr.c		netsmb	needs-count
+file	netsmb/subr_mchain.c		netsmb
 file	nfs/krpc_subr.c			nfs
 file	nfs/nfs_bio.c			nfs
 file	nfs/nfs_boot.c			nfs
