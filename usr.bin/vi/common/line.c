@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: line.c,v 1.5 2003/04/18 18:33:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,13 +16,14 @@
 #if 0
 static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: line.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: line.c,v 1.5 2003/04/18 18:33:41 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include <bitstring.h>
 #include <errno.h>
@@ -170,6 +171,23 @@ err3:		if (lenp != NULL)
 		if (pp != NULL)
 			*pp = NULL;
 		return (1);
+	}
+
+	if (F_ISSET(sp, SC_ARGRECOVER)) {
+		/*
+		 * Don't trust the integrity of the db.
+		 */
+		struct stat st;
+		int fd = (*ep->db->fd)(ep->db);
+		if (fd != -1 && fstat(fd, &st) != -1) {
+			if (data.size > (size_t)st.st_size)
+				data.size = strlen((const char *)data.data);
+		} else {
+			/*
+			 * This breaks recovery of binary files
+			 */
+			data.size = strlen((const char *)data.data);
+		}
 	}
 
 	/* Reset the cache. */
