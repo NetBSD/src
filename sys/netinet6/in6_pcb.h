@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.6 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.7 1999/12/27 06:38:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -112,21 +112,30 @@ struct	in6pcb {
 
 #define in6p_ip6_nxt in6p_ip6.ip6_nxt  /* for KAME src sync over BSD*'s */
 
-/* flags in in6p_flags */
-#define IN6P_RECVOPTS		0x01	/* receive incoming IP6 options */
-#define IN6P_RECVRETOPTS	0x02	/* receive IP6 options for reply */
-#define IN6P_RECVDSTADDR	0x04	/* receive IP6 dst address */
-#define IN6P_HIGHPORT		0x10	/* user wants "high" port binding */
-#define IN6P_LOWPORT		0x20	/* user wants "low" port binding */
-#define IN6P_ANONPORT		0x40	/* port chosen for user */
-#define IN6P_FAITH		0x80	/* accept FAITH'ed connections */
-#define IN6P_PKTINFO		0x010000
-#define IN6P_HOPLIMIT		0x020000
-#define IN6P_NEXTHOP		0x040000
-#define IN6P_HOPOPTS		0x080000
-#define IN6P_DSTOPTS		0x100000
-#define IN6P_RTHDR		0x200000
-#define IN6P_CONTROLOPTS	(0x3f0000 | IN6P_RECVOPTS | IN6P_RECVRETOPTS | IN6P_RECVDSTADDR)
+/*
+ * Flags in in6p_flags
+ * We define KAME's original flags in higher 16 bits as much as possible
+ * for compatibility with *bsd*s.
+ */
+#define IN6P_RECVOPTS		0x001000 /* receive incoming IP6 options */
+#define IN6P_RECVRETOPTS	0x002000 /* receive IP6 options for reply */
+#define IN6P_RECVDSTADDR	0x004000 /* receive IP6 dst address */
+#define IN6P_PKTINFO		0x010000 /* receive IP6 dst and I/F */
+#define IN6P_HOPLIMIT		0x020000 /* receive hoplimit */
+#define IN6P_HOPOPTS		0x040000 /* receive hop-by-hop options */
+#define IN6P_DSTOPTS		0x080000 /* receive dst options after rthdr */
+#define IN6P_RTHDR		0x100000 /* receive routing header */
+#define IN6P_RTHDRDSTOPTS	0x200000 /* receive dstoptions before rthdr */
+
+#define IN6P_HIGHPORT		0x1000000 /* user wants "high" port binding */
+#define IN6P_LOWPORT		0x2000000 /* user wants "low" port binding */
+#define IN6P_ANONPORT		0x4000000 /* port chosen for user */
+#define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+#define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
+
+#define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
+
 
 #define IN6PLOOKUP_WILDCARD	1
 #define IN6PLOOKUP_SETLOCAL	2
