@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.24 2002/10/23 09:12:44 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.25 2003/02/20 22:16:06 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -555,7 +555,7 @@ grfmap(dev, addrp, p)
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
-		*addrp = (caddr_t)0x1000000;	/* XXX */
+		*addrp = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */

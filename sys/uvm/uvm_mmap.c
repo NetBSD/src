@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.67 2003/01/18 09:43:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.68 2003/02/20 22:16:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.67 2003/01/18 09:43:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.68 2003/02/20 22:16:08 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,12 +352,19 @@ sys_mmap(l, v, retval)
 	} else {
 
 		/*
-		 * not fixed: make sure we skip over the largest possible heap.
-		 * we will refine our guess later (e.g. to account for VAC, etc)
+		 * not fixed: make sure we skip over the largest
+		 * possible heap for non-topdown mapping arrangements.
+		 * we will refine our guess later (e.g. to account for
+		 * VAC, etc)
 		 */
 
-		addr = MAX(addr, round_page((vaddr_t)p->p_vmspace->vm_daddr +
-					    MAXDSIZ));
+		if (addr == 0 ||
+		    !(p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN))
+			addr = MAX(addr,
+			    VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size));
+		else
+			addr = MIN(addr,
+			    VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size));
 	}
 
 	/*

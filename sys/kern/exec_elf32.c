@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.79 2003/01/30 20:03:46 atatat Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.80 2003/02/20 22:16:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.79 2003/01/30 20:03:46 atatat Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.80 2003/02/20 22:16:07 atatat Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -280,6 +280,8 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		psize = *size;
 	}
 
+	if ((flags & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) == VMCMD_TOPDOWN)
+		*addr -= round_page(*size);
 	if (psize > 0) {
 		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
 		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
@@ -288,7 +290,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	if (psize < *size) {
 		NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
 		    *addr + psize, vp, offset + psize, *prot, 
-		    psize > 0 ? flags & VMCMD_RELATIVE : flags);
+		    psize > 0 ? flags & (VMCMD_RELATIVE | VMCMD_TOPDOWN) : flags);
 	}
 
 	/*
@@ -299,7 +301,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 
 	if (rm != rf) {
 		NEW_VMCMD2(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
-		    0, *prot, flags & VMCMD_RELATIVE);
+		    0, *prot, flags & (VMCMD_RELATIVE | VMCMD_TOPDOWN));
 		*size = msize;
 	}
 }
@@ -317,6 +319,8 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
     Elf_Addr *last)
 {
 	int error, i;
+	const int topdown =
+	    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN ? VMCMD_TOPDOWN : 0;
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
@@ -403,7 +407,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 				flags = VMCMD_RELATIVE;
 			}
 			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
-			    &size, &prot, flags);
+			    &size, &prot, flags|topdown);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
@@ -596,7 +600,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * would (i.e. something safely out of the way).
 	 */
 	if (pos == ELFDEFNNAME(NO_ADDR))
-		pos = round_page(epp->ep_daddr + MAXDSIZ);
+		/* XXX size will be accounted for in load_psection */
+		pos = VM_DEFAULT_ADDRESS(epp->ep_daddr, 0);
 #endif	/* !ELF_INTERP_NON_RELOCATABLE */
 
 	/*

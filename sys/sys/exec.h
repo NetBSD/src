@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.92 2003/02/03 00:21:42 atatat Exp $	*/
+/*	$NetBSD: exec.h,v 1.93 2003/02/20 22:16:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -170,6 +170,7 @@ struct exec_vmcmd {
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
 #define	VMCMD_BASE	0x0002	/* marks a base entry */
 #define	VMCMD_FIXED	0x0004	/* entry must be mapped at ev_addr */
+#define	VMCMD_TOPDOWN	0x0008	/* shift back base for relative mappings */
 };
 
 #ifdef _KERNEL
@@ -221,12 +222,12 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
 		    u_int prot, int flags));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,VMCMD_FIXED)
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
 #else	/* DEBUG */
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,VMCMD_FIXED)
+	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
 	struct exec_vmcmd *vcp; \
 	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
@@ -240,6 +241,20 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 	vcp->ev_offset = (offset); \
 	vcp->ev_prot = (prot); \
 	vcp->ev_flags = (flags); \
+	if (((flags) & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) == \
+	    (VMCMD_TOPDOWN|VMCMD_RELATIVE)) { \
+		int i = (evsp)->evs_used - 2; \
+		while (i >= 0) { \
+			vcp = &(evsp)->evs_cmds[i--]; \
+			if (vcp->ev_flags & VMCMD_BASE) { \
+				if ((vcp->ev_flags & \
+				    (VMCMD_TOPDOWN|VMCMD_FIXED)) == \
+				    (VMCMD_TOPDOWN)) \
+					vcp->ev_addr -= round_page(len); \
+				break; \
+			} \
+		} \
+	} \
 } while (/* CONSTCOND */ 0)
 #endif /* DEBUG */
 

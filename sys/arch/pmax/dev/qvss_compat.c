@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.31 2002/10/23 09:11:51 jdolecek Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.32 2003/02/20 22:16:06 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -457,7 +457,7 @@ fbmmap_fb(fi, dev, data, p)
 	len = mips_round_page(((vaddr_t)fbu & PGOFSET) +
 			      sizeof(struct fbuaccess)) +
 		mips_round_page(fi->fi_type.fb_size);
-	addr = (vaddr_t)0x20000000;		/* XXX */
+	addr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */

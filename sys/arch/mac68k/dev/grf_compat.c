@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.10 2002/10/23 09:11:28 jdolecek Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.11 2003/02/20 22:16:06 atatat Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -342,8 +342,8 @@ grfmap(dev, sc, addrp, p)
 	u_long len;
 	int error, flags;
 
-	*addrp = (caddr_t)sc->sc_dc->dc_paddr;
 	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
+	*addrp = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
 	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;		/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.33 2002/11/02 07:40:49 perry Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.34 2003/02/20 22:16:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -195,6 +195,15 @@ struct vm_map_entry {
  *					is busy, and thread is attempting
  *					to write-lock.  must be tested
  *					while `flags_lock' is asserted.
+ *
+ *		VM_MAP_DYING		r/o; set when a vmspace is being
+ *					destroyed to indicate that updates
+ *					to the pmap can be skipped.
+ *
+ *		VM_MAP_TOPDOWN		r/o; set when the vmspace is
+ *					created if the unspecified map
+ *					allocations are to be arranged in
+ *					a "top down" manner.
  */
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
@@ -221,6 +230,7 @@ struct vm_map {
 #define	VM_MAP_BUSY		0x08		/* rw: map is busy */
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
+#define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 
 /* XXX: number of kernel maps and entries to statically allocate */
 

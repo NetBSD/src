@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.47 2003/01/29 14:12:36 drochner Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.48 2003/02/20 22:16:05 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,6 +101,15 @@
 		((vaddr_t)((PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_KERN << PDSHIFT))
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_APTE << PDSHIFT))
+
+/*
+ * The address to which unspecified mapping requests default
+ */
+#define __HAVE_TOPDOWN_VM
+#ifdef USE_TOPDOWN_VM
+#define VM_DEFAULT_ADDRESS(da, sz) \
+	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#endif
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
