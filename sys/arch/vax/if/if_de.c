@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_de.c	7.12 (Berkeley) 12/16/90
- *	$Id: if_de.c,v 1.1 1994/08/02 20:19:45 ragge Exp $
+ *	$Id: if_de.c,v 1.2 1994/10/08 15:42:54 ragge Exp $
  */
 
 #include "de.h"
@@ -288,15 +288,19 @@ dereset(unit, uban)
 deinit(unit)
 	int unit;
 {
-	register struct de_softc *ds = &de_softc[unit];
-	register struct uba_device *ui = deinfo[unit];
-	register struct dedevice *addr;
-	register struct ifrw *ifrw;
-	register struct ifxmt *ifxp;
-	struct ifnet *ifp = &ds->ds_if;
-	int s;
+	struct de_softc *ds;
+	struct uba_device *ui;
+	struct dedevice *addr;
+	struct ifrw *ifrw;
+	struct ifxmt *ifxp;
+	struct ifnet *ifp;
 	struct de_ring *rp;
-	int incaddr;
+	int s,incaddr;
+
+	printf("deinit: unit %d\n",unit);
+	ds = &de_softc[unit];
+	ui = deinfo[unit];
+	ifp = &ds->ds_if;
 
 	/* not yet, if address still unknown */
 	if (ifp->if_addrlist == (struct ifaddr *)0)
@@ -401,6 +405,8 @@ destart(ifp)
 	struct mbuf *m;
 	register int nxmit;
 
+printf("destart: if_flags %x, nxmit %x, NXMT %d, unit %d\n",
+	ds->ds_if.if_flags,ds->ds_nxmit,NXMT,unit);
 	/*
 	 * the following test is necessary, since
 	 * the code is not reentrant and we have
@@ -410,12 +416,14 @@ destart(ifp)
 		return;
 	for (nxmit = ds->ds_nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&ds->ds_if.if_snd, m);
+printf("m %x\n",m);
 		if (m == 0)
 			break;
 		rp = &ds->ds_xrent[ds->ds_xfree];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
 		len = if_ubaput(&ds->ds_deuba, &ds->ds_ifw[ds->ds_xfree], m);
+printf("len %d\n",len);
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP)
 			UBAPURGE(ds->ds_deuba.iff_uba,
 			ds->ds_ifw[ds->ds_xfree].ifw_bdp);
@@ -440,13 +448,19 @@ destart(ifp)
 deintr(unit)
 	int unit;
 {
-	struct uba_device *ui = deinfo[unit];
-	register struct dedevice *addr = (struct dedevice *)ui->ui_addr;
-	register struct de_softc *ds = &de_softc[unit];
+	struct uba_device *ui;
+	register struct dedevice *addr;
+	register struct de_softc *ds;
 	register struct de_ring *rp;
 	register struct ifxmt *ifxp;
 	short csr0;
+
+printf("Deintr\n");
 	unit=0; /* XXX J{tteful grej f|r att f} igenom... */
+	ui = deinfo[unit];
+	addr = (struct dedevice *)ui->ui_addr;
+	ds = &de_softc[unit];
+
 
 	/* save flags right away - clear out interrupt bits */
 	csr0 = addr->pcsr0;
@@ -606,6 +620,7 @@ deread(ds, ifrw, len)
 	 * information to be at the front.
 	 */
 	m = if_ubaget(&ds->ds_deuba, ifrw, len, off, &ds->ds_if);
+printf("deread: m %x ifrw %x, len %d, off %d\n",m,ifrw,len,off);
 	if (m)
 		ether_input(&ds->ds_if, eh, m);
 }
