@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.9 1999/11/05 19:21:12 erh Exp $	*/
+/*	$NetBSD: strftime.c,v 1.10 2000/01/15 16:59:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.9 1999/11/05 19:21:12 erh Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.10 2000/01/15 16:59:05 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,6 +152,10 @@ _fmt(format, t, pt, ptlim)
 				continue;
 			case 'e':
 				if (!_conv(t->tm_mday, 2, ' ', pt, ptlim))
+					return (0);
+				continue;
+			case 'F':
+				if (!_fmt("%Y-%m-%d", t, pt, ptlim))
 					return (0);
 				continue;
 			case 'H':
