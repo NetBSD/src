@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1999/06/20 06:08:14 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1999/06/22 00:43:57 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,8 @@
 
 int main __P((int argc, char **argv));
 static void usage __P((void));
-static void inthandler __P((int));
+static void miscsighandler __P((int));
+static void ttysighandler __P((int));
 static void cleanup __P((void));
 static void process_f_flag __P((char *));
 
@@ -125,9 +126,11 @@ main(argc, argv)
 	}
        	msg_window(win);
 
-	/* Watch for SIGINT and clean up */
-	(void)signal(SIGINT, inthandler);
+	/* Watch for signals and clean up */
 	(void)atexit(cleanup);
+	(void)signal(SIGINT, ttysighandler);
+	(void)signal(SIGQUIT, ttysighandler);
+	(void)signal(SIGHUP, miscsighandler);
 
 	/* Menu processing */
 	process_menu(MENU_netbsd);
@@ -167,9 +170,39 @@ usage()
 
 /* ARGSUSED */
 static void
-inthandler(notused)
-	int notused;
+miscsighandler(signo)
+	int signo;
 {
+
+	/*
+	 * we need to cleanup(), but it was already scheduled with atexit(),
+	 * so it'll be invoked on exit().
+	 */
+	exit(1);
+}
+
+static void
+ttysighandler(signo)
+	int signo;
+{
+
+	/*
+	 * if we want to ignore a TTY signal (SIGINT or SIGQUIT), then we
+	 * just return.  If we want to forward a TTY signal, we forward it
+	 * to the specified process group.
+	 *
+	 * This functionality is used when setting up and displaying child
+	 * output so that the child gets the signal and presumably dies,
+	 * but sysinst continues.  We use this rather than actually ignoring
+	 * the signals, because that will be be passed on to a child
+	 * through fork/exec, whereas special handlers get reset on exec..
+	 */
+	if (ttysig_ignore)
+		return;
+	if (ttysig_forward) {
+		killpg(ttysig_forward, signo);
+		return;
+	}
 
 	/*
 	 * we need to cleanup(), but it was already scheduled with atexit(),
