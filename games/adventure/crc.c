@@ -1,3 +1,5 @@
+/*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,12 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
+#else
+static char rcsid[] = "$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 typedef	unsigned long	u_long;
