@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.95 2004/04/18 02:20:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.96 2004/04/18 02:22:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -985,3 +985,9 @@ sys/arch/hpcmips/conf/std.lcard				1.4
 
 	Move -mips2 to CPUFLAGS in each kernel config file.
 	[tv, ticket #147]
+
+sys/arch/i386/conf/Makefile.i386			1.134
+
+	We need to also clean out athhal-elf-o, so that "make clean; make"
+	after an initial "make" will also (re)build athhal-elf.o.
+	[he, ticket #148]
