@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_eb164_intr.s,v 1.1 1996/11/25 03:47:07 cgd Exp $	*/
+/* $NetBSD: pci_eb164_intr.s,v 1.2 1997/04/07 02:01:23 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,6 +42,8 @@
  * 0 -> 23, since there are 3 8-bit interrupt-enable bits in the
  * interrupt mask PLD).
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <machine/asm.h>
 

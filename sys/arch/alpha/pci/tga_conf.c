@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_conf.c,v 1.2 1996/04/12 06:09:18 cgd Exp $	*/
+/* $NetBSD: tga_conf.c,v 1.3 1997/04/07 02:01:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/device.h>
