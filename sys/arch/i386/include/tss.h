@@ -49,7 +49,7 @@ struct i386tss {
 	int	tss_ss1;	/* actually 16 bits: top 16 bits must be zero */
 	int	tss_esp2; 	/* kernel stack pointer priviledge level 2 */
 	int	tss_ss2;	/* actually 16 bits: top 16 bits must be zero */
-	/* struct  ptd *tss_cr3; 	/* page table directory */
+	/* struct  ptd *tss_cr3; 	** page table directory */
 	int	tss_cr3; 	/* page table directory */
 #define	tss_ptd	tss_cr3
 	int	tss_eip; 	/* program counter */
