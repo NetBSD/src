@@ -29,9 +29,12 @@
 #include "symfile.h"
 #include "objfiles.h"
 #include "gdbthread.h"
+#include "bfd.h"
+#include "elf-bfd.h"
 #include "target.h"
 #include "inferior.h"
 #include "gdbcmd.h"
+#include "gdbcore.h"
 
 #include <machine/reg.h>
 
@@ -851,11 +854,34 @@ nbsd_thread_tsd_cmd (exp, from_tty)
 }
 
 static void
+nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
+     bfd *abfd;
+     asection *asect;
+     PTR reg_sect_arg;
+{
+  int thread_id;
+  td_thread_t *dummy;
+
+  asection *reg_sect = (asection *) reg_sect_arg;
+
+  if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
+    return;
+
+  thread_id = atoi (bfd_section_name (abfd, asect) + 5);
+
+  td_map_lwp2thr(main_ta, thread_id >> 16, &dummy);
+}
+
+static void
 nbsd_core_open (filename, from_tty)
      char *filename;
      int from_tty;
 {
   orig_core_ops.to_open (filename, from_tty);
+  main_pid = elf_tdata (core_bfd)->core_pid;
+  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list,
+			 bfd_get_section_by_name (core_bfd, ".reg"));
+  nbsd_find_new_threads();
 }
 
 static void
@@ -967,7 +993,12 @@ nbsd_thread_proc_getregs(void *arg, int regset, int lwp, void *buf)
   if (target_has_execution)
     child_ops.to_fetch_registers (-1);
   else
-    orig_core_ops.to_fetch_registers (-1);
+    {
+      /* Fetching core registers requires that inferior_pid have the
+         funky LWP/process mix that the kernel drops. */
+      inferior_pid = inferior_pid | (lwp << 16);
+      orig_core_ops.to_fetch_registers (-1);
+    }
 
   nbsd_internal_to_reg(&gregs);
   nbsd_internal_to_fpreg(&fpregs);
