@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2001/12/02 08:30:11 manu Exp $
+	$NetBSD: syscalls.master,v 1.5 2001/12/02 08:47:17 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -213,7 +213,8 @@
 131	UNIMPL		procblk
 132	UNIMPL		sprocsp
 133	UNIMPL		sgigsc
-134	UNIMPL		mmap
+134	STD		{ void *svr4_sys_mmap(void *addr, svr4_size_t len, \
+			    int prot, int flags, int fd, svr4_off_t pos); }
 135	UNIMPL		munmap
 136	UNIMPL		mprotect
 137	UNIMPL		msync
