@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethers.5,v 1.3 1998/02/06 06:11:54 perry Exp $
+.\"	$NetBSD: ethers.5,v 1.4 1998/04/29 11:33:55 fair Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
 .\"
@@ -10,13 +10,17 @@
 .Nd Ethernet host name data base
 .Sh DESCRIPTION
 The
-.Xr ethers
-file maps Ethernet addresses to host names.
-Lines consist of an address and a host name, separated by any number of blanks and/or tab characters.
-A ``#'' indicates the beginning of a comment; characters up to the end of
+.Nm
+file maps Ethernet MAC addresses to host names.
+Lines consist of an address and a host name, separated by any number
+of blanks and/or tab characters.
+A ``#'' character indicates the beginning of a comment;
+characters up to the end of
 the line are not interpreted by routines which search the file.
 .Pp
-Ethernet addresses are expressed as six hexadecimal numbers separated by colons.  The functions described in 
+Ethernet MAC addresses are expressed as six hexadecimal numbers separated
+by colons, e.g. "08:00:20:00:5a:bc".
+The functions described in 
 .Xr ethers 3
 and
 .Xr ether_aton 3
@@ -25,7 +29,7 @@ can read and produce this format.
 .Bl -tag -width /etc/ethers -compact
 .It Pa /etc/ethers
 The
-.Nm ethers
+.Nm
 file resides in
 .Pa /etc .
 .El
@@ -36,5 +40,7 @@ A name server should be used instead of a static file.
 .Sh HISTORY
 The
 .Nm ethers
-file format was adopted from SunOS and appeared in
+file format was adopted from
+.Tn SunOS
+and appeared in
 .Nx 1.0 .

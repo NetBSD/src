@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.16 1998/04/07 04:47:53 mrg Exp $
+.\"	$NetBSD: rc.conf.5,v 1.17 1998/04/29 11:33:58 fair Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -57,10 +57,12 @@ a brief description of what each variable does, and a reference to
 relevant manual pages.
 .Pp
 Most variables are one of two types: enabling variables or flags
-variables.  Enabling variables, such as
+variables.
+Enabling variables, such as
 .Sy inetd ,
 are generally named after the program or the system they enable,
-and are set to "YES" or "NO".  Flags variables, such as
+and are set to "YES" or "NO".
+Flags variables, such as
 .Sy inetd_flags
 have the same name with "_flags" appended, and determine what
 arguments are passed to the program if it is enabled.
@@ -100,41 +102,49 @@ file-systems.
 .It Sy no_swap
 Set the
 .Sy no_swap
-variable to YES if you have configured your system with no swap on
-purpose.  If not set, or set to anything other than YES, and no
-swap devices are configured, the system will warn you.
+variable to YES if you have configured your system with no swap on purpose.
+If not set, or set to anything other than YES, and no swap devices
+are configured, the system will warn you.
 .El
 .Pp
 One-time actions to perform or programs to run on boot-up:
 .Bl -tag -width net_interfaces
 .It Sy lkm
-YES or NO.  Runs
+YES or NO.
+Runs
 .Pa /etc/rc.lkm .
 .It Sy savecore
-YES or NO.  Runs the
+YES or NO.
+Runs the
 .Xr savecore 8
-utility.  Passes
+utility.
+Passes
 .Sy savecore_flags .
 .It Sy update_motd
-YES or NO.  Updates the
+YES or NO.
+Updates the
 .Nx
 version string in the
 .Pa /etc/motd
-file to reflect the version of the running kernel.  See
+file to reflect the version of the running kernel.
+See
 .Xr motd 5 .
 .El
 .Pp
 Networking startup:
 .Bl -tag -width net_interfaces
 .It Sy ipfilter
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr ipf 8
 to load in packet filter specifications from
 .Pa /etc/ipf.conf
-at network boot time, before any interfaces are configured.  See
+at network boot time, before any interfaces are configured.
+See
 .Xr ipf 5 .
 .It Sy auto_ifconfig
-YES or NO.  Sets the
+YES or NO.
+Sets the
 .Sy net_interfaces
 variable (see below) to the output of
 .Xr ifconfig 8
@@ -150,7 +160,8 @@ parameters in
 and then in the variable
 .Sy ifconfig_xxn .
 The contents of the file or the variable are handed to ifconfig
-after the interface name.  If
+after the interface name.
+If
 .Sy auto_ifconfig
 is set to "NO" and neither the file nor the variable is found,
 a warning is printed.
@@ -168,11 +179,13 @@ is
 .Dq - ,
 then use the default netmask for the interface.
 .It Sy flushroutes
-YES or NO.  Flushes the route table on networking startup.  Useful
-when coming up to multiuser mode after going down to single-user
-mode.
+YES or NO.
+Flushes the route table on networking startup.
+Useful when coming up to multiuser mode after going down to
+single-user mode.
 .It Sy ntpdate
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr ntpdate 8
 to set the system time from one of the hosts in
 .Sy ntpdate_hosts .
@@ -195,25 +208,29 @@ with the
 .Dq call Sy peer
 option.
 .El
-.Pp 
+.Pp
 Daemons required by other daemons:
 .Bl -tag -width net_interfaces
 .It Sy inetd
-YES or NO.  Runs the
+YES or NO.
+Runs the
 .Xr inetd 8
 daemon to start network server processes (as listed in
 .Pa /etc/inetd.conf )
-as necessary.  Passes
+as necessary.
+Passes
 .Sy inetd_flags .
 The
 .Ar -l
 flag turns on libwrap connection logging.
 .It Sy portmap
-YES or NO.  The
+YES or NO.
+The
 .Xr portmap 8
 daemon is required for any
 .Xr rpc 3
-services.  These include NFS, YP,
+services.
+These include NFS, YP,
 .Xr bootparamd 8 ,
 .Xr rstatd 8 ,
 .Xr rusersd 8 ,
@@ -224,22 +241,26 @@ and
 Commonly used daemons:
 .Bl -tag -width net_interfaces
 .It Sy update
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr update 8
 and passes
 .Sy update_flags .
 .It Sy syslogd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr syslogd 8
 and passes
 .Sy syslogd_flags .
 .It Sy named
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr named 8
 and passes
 .Sy named_flags .
 .It Sy timed
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr timed 8
 and passes
 .Sy timed_flags .
@@ -247,24 +268,28 @@ The
 .Ar -M
 option allows
 .Xr timed 8
-to be a master time source as well as a slave. If you are also running
+to be a master time source as well as a slave.
+If you are also running
 .Xr xntpd 8 ,
 only one machine running both should have the
 .Ar -M
 flag given to
 .Xr timed 8 .
 .It Sy xntpd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr xntpd 8
 and passes
 .Sy xntpd_flags .
 .It Sy sendmail
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
 .It Sy lpd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr lpd 8
 and passes
 .Sy lpd_flags .
@@ -276,63 +301,91 @@ flag will turn on extra logging.
 Routing daemons:
 .Bl -tag -width net_interfaces
 .It Sy routed
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr routed 8 ,
-the RIP routing protocol daemon.  Passes
+the RIP routing protocol daemon.
+Passes
 .Sy routed_flags .
 This should be NO if
 .Sy gated
 is YES.
 .It Sy gated
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr gated 8 ,
-the multiprotocol routing daemon.  Passes
+the multiprotocol routing daemon.
+Passes
 .Sy gated_flags .
 This should be NO if
 .Sy routed
 is YES.
-.Xr Gated 8
+.Xr gated 8
 is not included with
 .Nx .
 .It Sy mrouted
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr mrouted 8 ,
-the DVMRP multicast routing protocol daemon. Passes
+the DVMRP multicast routing protocol daemon.
+Passes
 .Sy mrouted_flags .
 .El
 .Pp
 Daemons used to boot other hosts over a network:
 .Bl -tag -width net_interfaces
 .It Sy rarpd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr rarpd 8 ,
 the reverse ARP daemon, often used to boot
 .Nx
-and Sun workstations.  Passes
+and Sun workstations.
+Passes
 .Sy rarpd_flags .
 .It Sy bootparamd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr bootparamd 8 ,
 the boot parameter server, with
 .Sy bootparamd_flags
-as options. Used to boot
+as options.
+Used to boot
 .Nx
-and SunOS 4.x systems.
+and
+.Tn "SunOS 4.x"
+systems.
 .It Sy dhcpd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr dhcpd 8 ,
-the Dynamic Host Configuration Protocol daemon, for assigning IP addresses to
-hosts and passing boot information.  Passes
+the Dynamic Host Configuration Protocol (DHCP) daemon,
+for assigning IP addresses to hosts and passing boot information.
+Passes
 .Sy dhcpd_flags .
 .It Sy rbootd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr rbootd 8 ,
-the HP boot protocol daemon; used for booting HP workstations.  Passes
+the
+.Tn HP
+boot protocol daemon; used for booting
+.Tn HP
+workstations.
+Passes
 .Sy rbootd_flags .
 .It Sy mopd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr mopd 8 ,
-the DEC MOP protocol daemon; used for booting VAX and other DEC machines.
+the
+.Tn DEC
+.Tn MOP
+protocol daemon; used for booting
+.Tn VAX
+and other
+.Tn DEC
+machines.
 Passes
 .Sy mopd_flags .
 .El
@@ -340,12 +393,15 @@ Passes
 YP (NIS) daemons:
 .Bl -tag -width net_interfaces
 .It Sy ypbind
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr ypbind 8 ,
-which lets YP (NIS) clients use information from a YP server.  Passes
+which lets YP (NIS) clients use information from a YP server.
+Passes
 .Sy ypbind_flags .
 .It Sy ypserv
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr ypserv 8 ,
 the YP (NIS) server for distributing information from certain files in
 .Pa /etc .
@@ -357,64 +413,76 @@ flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
 .It Sy yppasswdd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr yppasswdd 8 ,
-which allows remote YP users to update password on master server.  Passes
+which allows remote YP users to update password on master server.
+Passes
 .Sy yppasswdd_flags .
 .El
 .Pp
 NFS daemons and parameters:
 .Bl -tag -width net_interfaces
 .It Sy nfs_client
-YES or NO.  Runs 
+YES or NO.
+Runs
 .Xr nfsiod 8
-to increase performance of an NFS client host.  Passes
+to increase performance of an NFS client host.
+Passes
 .Sy nfsiod_flags .
 .It Sy nfs_server
-YES or NO.  Sets up a host to be a NFS server by running
+YES or NO.
+Sets up a host to be a NFS server by running
 .Xr mountd 8
 and
-.Xr nfsd 8 , and passing
+.Xr nfsd 8 ,
+and passing
 .Sy mountd_flags
 and
 .Sy nfsd_flags
 to them, respectively.
 .It Sy lockd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr rpc.lockd 8
 if either
 .Sy nfs_server
 or
 .Sy nfs_client
-is (or both are) set to YES.  Passes
+is (or both are) set to YES.
+Passes
 .Sy lockd_flags .
 .It Sy statd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr rpc.statd 8 ,
 a status monitoring daemon used when
-.Xr lockd 8
+.Xr rpc.lockd 8
 is running, if either
 .Sy nfs_server
 or
 .Sy nfs_client
-is (or both are) set to YES.  Passes
+is (or both are) set to YES.
+Passes
 .Sy statd_flags .
-
 .It Sy amd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr amd 8 ,
 the automounter daemon, which automatically mounts NFS file systems
-whenever a file or directory within that filesystem is accessed.  Passes
+whenever a file or directory within that filesystem is accessed.
+Passes
 .Sy amd_flags .
 .It Sy amd_dir
 The
-.Xr amd 8 
-mount directory.  Used only if
+.Xr amd 8
+mount directory.
+Used only if
 .Sy amd
 is set to YES.
 .It Sy amd_master
 The
-.Xr amd 8 
+.Xr amd 8
 automounter master map.
 Used only if
 .Sy amd
@@ -424,14 +492,15 @@ is set to YES.
 X Window System daemons:
 .Bl -tag -width net_interfaces
 .It Sy xfs
-YES or NO.  Runs the
+YES or NO.
+Runs the
 .Xr xfs 1
 X11 font server, which supplies local X font files to X terminals.
 .It Sy xdm
-YES or NO.  Runs the
+YES or NO.
+Runs the
 .Xr xdm 1
 X display manager.
-
 These X daemons are available only with the optional X distribution of
 .Nx .
 .El
@@ -439,20 +508,25 @@ These X daemons are available only with the optional X distribution of
 Other daemons:
 .Bl -tag -width net_interfaces
 .It Sy apmd
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr apmd 8
 and passes
 .Sy apmd_flags .
 .It Sy rwhod
-YES or NO.  Runs
+YES or NO.
+Runs
 .Xr rwhod 8
 to support the
 .Xr rwho 1
-command.
+and
+.Xr ruptime 1
+commands.
 .It Sy kerberos
-YES or NO.  Runs the kerberos  server
+YES or NO.
+Runs the kerberos server
 .Xr kerberos 8
-and the kerberos  admininstration server,
+and the kerberos admininstration server,
 .Xr kadmind 8 .
 This should only be run on the kerberos master server.
 Both servers implement version IV of the Kerberos protocol, not the
@@ -460,8 +534,9 @@ newer Kerberos version 5.
 The kerberos server is only available with the domestic distribution of
 .Nx .
 .It Sy screenblank
-YES or NO.  Runs
-.Xr screenblank 8
+YES or NO.
+Runs
+.Xr screenblank 1
 and passes
 .Sy screenblank_flags .
 .El
