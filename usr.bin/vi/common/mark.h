@@ -29,54 +29,45 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)mark.h	8.9 (Berkeley) 7/17/94
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
 
 /*
- * v_zexit -- ZZ
- *	Save the file and exit.
+ * The MARK and LMARK structures define positions in the file.  There are
+ * two structures because the mark subroutines are the only places where
+ * anything cares about something other than line and column.
+ *
+ * Because of the different interfaces used by the db(3) package, curses,
+ * and users, the line number is 1 based and the column number is 0 based.
+ * Additionally, it is known that the out-of-band line number is less than
+ * any legal line number.  The line number is of type recno_t, as that's
+ * the underlying type of the database.  The column number is of type size_t,
+ * guaranteeing that we can malloc a line.
  */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
+struct _mark {
+#define	OOBLNO		0		/* Out-of-band line number. */
+	recno_t	 lno;			/* Line number. */
+	size_t	 cno;			/* Column number. */
+};
 
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
+struct _lmark {
+	LIST_ENTRY(_lmark) q;		/* Linked list of marks. */
+	recno_t	 lno;			/* Line number. */
+	size_t	 cno;			/* Column number. */
+	CHAR_T	 name;			/* Mark name. */
 
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
+#define	MARK_DELETED	0x01		/* Mark was deleted. */
+#define	MARK_USERSET	0x02		/* User set this mark. */
+	u_int8_t flags;
+};
 
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+#define	ABSMARK1	'\''		/* Absolute mark name. */
+#define	ABSMARK2	'`'		/* Absolute mark name. */
+
+/* Mark routines. */
+int	mark_end __P((SCR *, EXF *));
+int	mark_get __P((SCR *, EXF *, ARG_CHAR_T, MARK *));
+int	mark_init __P((SCR *, EXF *));
+void	mark_insdel __P((SCR *, EXF *, enum operation, recno_t));
+int	mark_set __P((SCR *, EXF *, ARG_CHAR_T, MARK *, int));

@@ -29,12 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)trace.c	8.2 (Berkeley) 3/8/94
  */
 
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
-
+#ifdef DEBUG
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -43,7 +42,6 @@ static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
-#include <string.h>
 #include <termios.h>
 
 #include "compat.h"
@@ -51,32 +49,36 @@ static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
 #include <regex.h>
 
 #include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
 
-/*
- * v_zexit -- ZZ
- *	Save the file and exit.
- */
-int
-v_zexit(sp, ep, vp)
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#ifdef __STDC__
+TRACE(SCR *sp, const char *fmt, ...)
+#else
+TRACE(sp, fmt, va_alist)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	char *fmt;
+	va_dcl
+#endif
 {
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
+	FILE *tfp;
+	va_list ap;
 
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
+	if ((tfp = sp->gp->tracefp) == NULL)
+		return;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)vfprintf(tfp, fmt, ap);
+	va_end(ap);
 
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
-
-	F_SET(sp, S_EXIT);
-	return (0);
+	(void)fflush(tfp);
 }
+#endif

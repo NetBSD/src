@@ -1,4 +1,4 @@
-#	@(#)input	5.4 (Berkeley) 8/26/93
+#	@(#)input	5.5 (Berkeley) 7/2/94
 
 MAPS, EXECUTABLE BUFFERS AND INPUT IN EX/VI:
 
@@ -65,6 +65,8 @@ the historic maps and @ buffers work.  The summary is as follows:
 6: If an error is encountered while executing a mapped command or buffer,
    the rest of the mapped command/buffer is discarded.  No user input
    characters are discarded.
+7: Characters in executable buffers are remapped.
+8: Characters in executable buffers are not quoted.
 
 Individual test cases follow.  Note, in the test cases, control characters
 are not literal and will have to be replaced to make the test cases work.
@@ -311,4 +313,38 @@ line 3 foo bar baz
    The above mapping fails, however, if the 10G is changed to 1, 2,
    or 3G, it will succeed.
 
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+7: Characters in executable buffers are remapped.
+
+===   test file   ===
+abcdefghijklmnnop
+ggg
+=== end test file ===
+
+:map g x
+2G"ay$1G@a
+
+   The output should be:
+
+===   output file   ===
+defghijklmnnop
+ggg
+=== end output file ===
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+8: Characters in executable buffers are not quoted.
+
+===   test file   ===
+iFOO^[
+
+=== end test file ===
+
+1G"ay$2G@a
+
+   The output should be:
+
+===   output file   ===
+iFOO^[
+FOO
+=== end output file ===
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,54 +29,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)args.h	8.5 (Berkeley) 7/17/94
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
 
 /*
- * v_zexit -- ZZ
- *	Save the file and exit.
+ * Structure for building "argc/argv" vector of arguments.
+ *
+ * !!!
+ * All arguments are nul terminated as well as having an associated length.
+ * The argument vector is NOT necessarily NULL terminated.  The proper way
+ * to check the number of arguments is to use the argc value in the EXCMDARG
+ * structure or to walk the array until an ARGS structure with a length of 0
+ * is found.
  */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
+typedef struct _args {
+	CHAR_T	*bp;		/* Argument. */
+	size_t	 blen;		/* Buffer length. */
+	size_t	 len;		/* Argument length. */
 
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
-
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
-
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+#define	A_ALLOCATED	0x01	/* If allocated space. */
+	u_int8_t flags;
+} ARGS;
