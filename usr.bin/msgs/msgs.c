@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $	*/
+/*	$NetBSD: msgs.c,v 1.13.2.1 1999/06/23 14:27:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.13 1998/12/19 20:08:03 christos Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.13.2.1 1999/06/23 14:27:03 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -631,7 +631,8 @@ prmesg(length)
 	if (use_pager && length > Lpp) {
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
-                if ((env_pager = getenv("PAGER")) == NULL) {
+                if ((env_pager = getenv("PAGER")) == NULL ||
+		    env_pager[0] == '\0') {
                         sprintf(cmdbuf, _PATH_PAGER, Lpp);
                 } else {
                         strcpy(cmdbuf, env_pager);
