@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.6 2001/02/04 23:53:32 jmc Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.7 2002/03/31 22:21:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ svr4_getsiginfo(sip, sig, code, addr)
 	 * at a place near you.
 	 */
 
-	sip->si_signo = native_to_svr4_sig[sig];
+	sip->si_signo = native_to_svr4_signo[sig];
 	sip->si_errno = 0;
 	sip->si_code  = 0;	/* reserved, `no information' */
 	sip->si_addr  = addr;	/* XXX not necessarily correct */
