@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.11 2001/12/09 11:11:01 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.12 2001/12/29 05:54:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.11 2001/12/09 11:11:01 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.12 2001/12/29 05:54:36 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -210,6 +210,7 @@ fail:
 			strlcat(result, tmp, sizeof(result));
 			strlcat(result, ":", sizeof(result));
 		}
+		snprintf(tmp, sizeof(tmp), "%s_%s", l, t); 
 		strlcat(result, tmp, sizeof(result));
 		strlcat(result, ":", sizeof(result));
 	}
