@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4 2003/06/26 05:26:45 itojun Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.5 2003/07/06 17:52:08 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4 2003/06/26 05:26:45 itojun Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_nfsserver.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.5 2003/07/06 17:52:08 rearnsha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,12 +502,7 @@ filecore_pathconf(v)
 #define	filecore_mknod	genfs_eopnotsupp
 #define	filecore_write	genfs_eopnotsupp
 #define	filecore_setattr	genfs_eopnotsupp
-#ifdef	NFSSERVER
-int	lease_check	__P((void *));
-#define	filecore_lease_check	lease_check
-#else
-#define	filecore_lease_check	genfs_nullop
-#endif
+#define	filecore_lease_check	genfs_lease_check
 #define	filecore_fcntl	genfs_fcntl
 #define	filecore_ioctl	genfs_enoioctl
 #define	filecore_fsync	genfs_nullop
