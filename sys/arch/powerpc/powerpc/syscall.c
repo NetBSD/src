@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2002/11/13 09:36:10 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.14 2002/11/15 20:06:03 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2002/11/13 09:36:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2002/11/15 20:06:03 manu Exp $");
 
 void
 child_return(void *arg)
@@ -204,6 +204,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
+	register_t realcode;
 	register_t *params, rval[2];
 	register_t args[10];
 	int error;
@@ -216,6 +217,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
+	realcode = code;
 #ifdef COMPAT_MACH
 	if ((callp = mach_syscall_dispatch(&code)) == NULL)
 #endif /* COMPAT_MACH */
@@ -256,7 +258,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		params = args;
 	}
 
-	if ((error = trace_enter(p, code, params, rval)) != 0)
+	if ((error = trace_enter(p, code, realcode, params, rval)) != 0)
 		goto syscall_bad;
 
 	rval[0] = 0;
@@ -287,7 +289,7 @@ syscall_bad:
 		break;
 	}
 	KERNEL_PROC_UNLOCK(p);
-	trace_exit(p, code, params, rval, error);
+	trace_exit(p, realcode, params, rval, error);
 	userret(p, frame);
 }
 #endif /* KTRACE || SYSTRACE */

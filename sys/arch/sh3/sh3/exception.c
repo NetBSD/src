@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.2 2002/06/17 16:33:17 christos Exp $	*/
+/*	$NetBSD: exception.c,v 1.3 2002/11/15 20:06:03 manu Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -292,7 +292,7 @@ syscall(struct proc *p, struct trapframe *tf)
 	if (error)
 		goto bad;
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

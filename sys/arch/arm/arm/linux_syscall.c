@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.5 2002/06/17 16:32:59 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.6 2002/11/15 20:06:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5 2002/06/17 16:32:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.6 2002/11/15 20:06:01 manu Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -132,7 +132,7 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 	callp = p->p_emul->e_sysent + code;
 	nargs = callp->sy_argsize / sizeof(register_t);
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

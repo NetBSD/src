@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.4 2002/10/03 19:17:01 elric Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.5 2002/11/15 20:06:02 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.4 2002/10/03 19:17:01 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.5 2002/11/15 20:06:02 manu Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -198,12 +198,13 @@ mach_syscall_fancy(frame)
 	register struct proc *p;
 	int error;
 	size_t argsize;
-	register_t code, args[8], rval[2];
+	register_t code, realcode, args[8], rval[2];
 
 	uvmexp.syscalls++;
 	p = curproc;
 
 	code = frame.tf_eax;
+	realcode = code;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 	switch (code) {
@@ -245,7 +246,7 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, realcode, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
