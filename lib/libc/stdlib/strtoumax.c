@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: strtoumax.c,v 1.2 2001/05/07 02:51:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $");
+__RCSID("$NetBSD: strtoumax.c,v 1.2 2001/05/07 02:51:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: strtoumax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 #ifdef __weak_alias
 __weak_alias(strtoumax, _strtoumax)
