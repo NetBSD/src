@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2002/03/23 03:18:52 shin Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 2002/03/23 09:02:02 hamajima Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -192,6 +192,9 @@ cdev_decl(isdntel);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
+#include "audio.h"
+cdev_decl(audio);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_mm_init(1, mm),            /*  0: /dev/{null,mem,kmem,...} */
@@ -248,6 +251,7 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 45: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
 	cdev_lkm_init(NLKM,lkm),	/* 47: loadable module driver */
+	cdev_audio_init(NAUDIO,audio),		/* 48: VR4121 audio interface */
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -324,6 +328,8 @@ static int chrtoblktbl[] =  {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
 };
 
 /*
