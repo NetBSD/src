@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/09/23 23:28:29 rich Exp $
+#	$Id: Makefile,v 1.6 1993/09/30 22:42:09 jtc Exp $
 
 SUBDIR= libg++ genclass
 
@@ -7,17 +7,17 @@ INCLUDEDIRS=	iostream libg++ g++-include
 beforeinstall:
 	@-if [ ! -d ${DESTDIR}/usr/include/g++ ]; then \
 		mkdir ${DESTDIR}/usr/include/g++; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/g++; \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/g++; \
 		chmod 755 ${DESTDIR}/usr/include/g++; \
 	fi
 	@-if [ ! -d ${DESTDIR}/usr/include/g++/gen ]; then \
 		mkdir ${DESTDIR}/usr/include/g++/gen; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/g++/gen; \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/g++/gen; \
 		chmod 755 ${DESTDIR}/usr/include/g++/gen; \
 	fi
 	@-if [ ! -d ${DESTDIR}/usr/include/g++/sys ]; then \
 		mkdir ${DESTDIR}/usr/include/g++/sys; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/g++/sys; \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/g++/sys; \
 		chmod 755 ${DESTDIR}/usr/include/g++/sys; \
 	fi
 	@-for i in ${INCLUDEDIRS}; do \
