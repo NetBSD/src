@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 1997/03/15 18:09:51 is Exp $
+#	$NetBSD: genassym.cf,v 1.2.4.1 1997/10/15 20:59:28 thorpej Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -54,6 +54,7 @@ include <machine/vmparam.h>
 
 include "apm.h"
 if NAPM > 0
+include <machine/bioscall.h>
 include <machine/apmvar.h>
 endif
 
@@ -162,11 +163,11 @@ define	APM_DATA_LEN		offsetof(struct apm_connect_info, apm_data_seg_len)
 define	APM_ENTRY		offsetof(struct apm_connect_info, apm_entrypt)
 define	APM_DETAIL		offsetof(struct apm_connect_info, apm_detail)
 define	APM_SIZE		sizeof(struct apm_connect_info)
-define	APMREG_AX		offsetof(struct apmregs, ax)
-define	APMREG_BX		offsetof(struct apmregs, bx)
-define	APMREG_CX		offsetof(struct apmregs, cx)
-define	APMREG_DX		offsetof(struct apmregs, dx)
-define	APMREG_SI		offsetof(struct apmregs, si)
-define	APMREG_DI		offsetof(struct apmregs, di)
-define	APMREG_FLAGS		offsetof(struct apmregs, flags)
+define	BIOSCALLREG_AX		offsetof(struct bioscallregs, ax)
+define	BIOSCALLREG_BX		offsetof(struct bioscallregs, bx)
+define	BIOSCALLREG_CX		offsetof(struct bioscallregs, cx)
+define	BIOSCALLREG_DX		offsetof(struct bioscallregs, dx)
+define	BIOSCALLREG_SI		offsetof(struct bioscallregs, si)
+define	BIOSCALLREG_DI		offsetof(struct bioscallregs, di)
+define	BIOSCALLREG_FLAGS	offsetof(struct bioscallregs, flags)
 endif
