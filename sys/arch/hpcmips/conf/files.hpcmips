@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.15 2000/01/09 07:57:43 shin Exp $
+#	$NetBSD: files.hpcmips,v 1.16 2000/01/10 14:08:05 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -148,11 +148,12 @@ device vrdsu
 attach vrdsu at vrip
 file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
 
-define	mra
-file arch/hpcmips/vr/mra.c			mra
+define	tpcalib
+file arch/hpcmips/dev/tpcalib.c			tpcalib
+file arch/hpcmips/dev/mra.c			tpcalib
 
 device vrpiu: wsmousedev
-attach vrpiu at vrip: mra
+attach vrpiu at vrip: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
 
 #
@@ -210,7 +211,7 @@ file arch/hpcmips/tx/tx39sib.c		tx39sib
 
 #	PHILIPS UCB1200 modem/audio analog front-end
 device ucb: wsmousedev
-attach ucb at txsibif: mra
+attach ucb at txsibif: tpcalib
 file arch/hpcmips/dev/ucb1200.c		ucb
 
 
