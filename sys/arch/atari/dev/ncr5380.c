@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.19 1996/04/26 06:50:16 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.20 1996/05/15 09:21:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -46,10 +46,17 @@ u_char	ncr5380_no_parchk = 0xff;
 
 /*
  * Bit masks of targets that accept linked commands, and those
- * that we've already checked out
+ * that we've already checked out.  Some devices will report
+ * that they support linked commands when they have problems with
+ * them.  By default, don't try them on any devices.  Allow an
+ * option to override.
  */
+#ifdef	TRY_SCSI_LINKED_COMMANDS
+u_char	ncr_test_link = ((~TRY_SCSI_LINKED_COMMANDS) & 0x7f);
+#else
+u_char	ncr_test_link = 0x7f;
+#endif
 u_char	ncr_will_link = 0x00;
-u_char	ncr_test_link = 0x00;
 
 #endif	/* AUTO_SENSE */
 
@@ -70,9 +77,9 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys(struct buf *bp);
-static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
-static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+static void	ncr5380_minphys __P((struct buf *bp));
+static int	ncr5380_scsi_cmd __P((struct scsi_xfer *xs));
+static void	ncr5380_show_scsi_cmd __P((struct scsi_xfer *xs));
 
 struct scsi_adapter ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
@@ -125,7 +132,7 @@ u_char	opcode;
  */
 extern __inline__ int wait_req_true(void)
 {
-	int	timeout = 25000;
+	int	timeout = 250000;
 
 	while (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ) && --timeout)
 		delay(1);
@@ -138,7 +145,7 @@ extern __inline__ int wait_req_true(void)
  */
 extern __inline__ int wait_req_false(void)
 {
-	int	timeout = 25000;
+	int	timeout = 250000;
 
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ) && --timeout)
 		delay(1);
@@ -326,6 +333,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->phase     = NR_PHASE;
 	reqp->msgout    = MSG_NOOP;
 	reqp->status    = SCSGOOD;
+	reqp->message   = 0xff;
 	reqp->link      = NULL;
 	reqp->xs        = xs;
 	reqp->targ_id   = xs->sc_link->target;
@@ -677,7 +685,6 @@ ncr_ctrl_intr(sc)
 struct ncr_softc *sc;
 {
 	int	itype;
-	int	dma_done;
 
 	while (scsi_ipending()) {
 		scsi_idisable();
@@ -686,6 +693,7 @@ struct ncr_softc *sc;
 				reselect(sc);
 			else {
 #ifdef REAL_DMA
+			    int	dma_done;
 			    if (!(dma_done = dma_ready())) {
 				transfer_dma(connected, connected->phase, 0);
 				return;
@@ -1239,10 +1247,19 @@ u_int	msg;
 			PID("hmessage9");
 			return (-1);
 		default: 
-			ncr_tprint(reqp, "Unknown message %x\n", msg);
+			if ((msg & 0x80) && !(msg & 0x18)) {	/* IDENTIFY */
+				PID("hmessage10");
+				ack_message();
+				return (0);
+			} else {
+				ncr_tprint(reqp,
+					   "Unknown message %x.  Rejecting.\n",
+					   msg);
+				nack_message(reqp, MSG_MESSAGE_REJECT);
+			}
 			return (-1);
 	}
-	PID("hmessage10");
+	PID("hmessage11");
 	return (-1);
 }
 
@@ -1260,7 +1277,7 @@ struct ncr_softc *sc;
 	u_char	msg;
 	u_char	target_mask;
 	int	abort = 0;
-	SC_REQ	*tmp = NULL, *prev;
+	SC_REQ	*tmp, *prev;
 
 	PID("reselect1");
 	target_mask = GET_5380_REG(NCR5380_DATA) & ~SC_HOST_ID;
@@ -1308,6 +1325,7 @@ struct ncr_softc *sc;
 	if (len || !MSG_ISIDENTIFY(msg)) {
 		ncr_aprint(sc, "Expecting IDENTIFY, got 0x%x\n", msg);
 		abort = 1;
+		tmp = NULL;
 	}
 	else {
 	    /*
