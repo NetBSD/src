@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.13 2005/02/18 21:05:50 dsl Exp $
+#	$NetBSD: EB7500ATX,v 1.14 2005/03/11 06:51:48 matt Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.13 $"
+#ident		"EB7500ATX-$Revision: 1.14 $"
 
 # estimated number of users
 maxusers	32
@@ -251,7 +251,7 @@ audio*		at vidcaudio0
 
 rsbus0	at mainbus?
 
-rside*	at rsbus? 		# eb7500atx build in ide
+wdc*	at rsbus? 		# eb7500atx build in ide
 atabus* at ata?
 wd*	at atabus? drive ?
 atapibus* at atapi?
