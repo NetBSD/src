@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.13 2002/09/27 03:34:22 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.14 2002/09/27 03:46:12 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -65,14 +65,14 @@ ENTRY(_rtld_start, 0)
  * hence the `optimization' to avoid the callg opportunistically.
  */
 ALTENTRY(_rtld_bind_start)
-	pushr	$0xbf		/* save R0-R5,R7 */
-	movq	28(%sp),%r0	/* get addresses of plt.got & reloc index */
+	pushr	$0x3f		/* save R0-R5 */
+	movq	24(%sp),%r0	/* get addresses of plt.got & reloc index */
 	pushl	(%r1)		/* push relocation index */
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
-	movl	%r0,32(%sp)	/* save return address onto stack */
+	movl	%r0,28(%sp)	/* save return address onto stack */
 	bicw3	6(%fp),(%r0),%r0/* does the entry mask save any additional regs */
-	popr	$0xbf		/* restore R0-R5,R7 (cond flags not modified) */
+	popr	$0x3f		/* restore R0-R5 (cond flags not modified) */
 	bneq	4f		/* yes? do it the hard way */
 	addl2	$4,%sp		/* no? skip past plt.got on stack */
 	addl2	$2,(%sp)		/*    skip past the mask */
