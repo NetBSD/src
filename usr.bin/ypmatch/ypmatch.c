@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypmatch.c,v 1.2 1993/05/16 02:49:03 deraadt Exp $";
+static char rcsid[] = "$Id: ypmatch.c,v 1.3 1994/03/18 18:07:10 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ struct ypalias {
 	{ "passwd", "passwd.byname" },
 	{ "group", "group.byname" },
 	{ "networks", "networks.byaddr" },
-	{ "hosts", "hosts.byaddr" },
+	{ "hosts", "hosts.byname" },
 	{ "protocols", "protocols.bynumber" },
 	{ "services", "services.byname" },
 	{ "aliases", "mail.aliases" },
