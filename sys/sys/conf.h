@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.93 2001/12/02 10:36:33 augustss Exp $	*/
+/*	$NetBSD: conf.h,v 1.94 2001/12/02 12:17:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -378,12 +378,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_usbdev_init(c,n)	cdev__ocrwip_init(c,n)
 #define	cdev_ugen_init(c,n)	cdev__ocrwip_init(c,n)
 #define cdev_midi_init(c,n)	cdev__ocrwip_init(c,n)
-
-/* open, close, read, write, ioctl, poll */
-#define cdev_ir_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev,\
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+#define cdev_ir_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, ioctl, poll, mmap */
 #define	cdev_fb_init(c,n)	cdev__ocipm_init(c,n)
