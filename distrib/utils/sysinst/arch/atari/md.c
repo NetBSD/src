@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2002/04/25 20:16:08 leo Exp $ */
+/*	$NetBSD: md.c,v 1.4 2002/08/02 05:11:31 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,6 +107,8 @@ make_bsd_partitions(void)
 
 	/* We _always_ have a root partition */
 	bsdlabel[PART_ROOT].pi_fstype = FS_BSDFFS;
+	bsdlabel[PART_ROOT].pi_bsize  = 8192;
+	bsdlabel[PART_ROOT].pi_fsize  = 1024;
 
 	/* Whole disk partition */
 	bsdlabel[PART_RAW].pi_offset = 0;
