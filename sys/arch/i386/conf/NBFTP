@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.22 2000/06/11 02:41:10 mycroft Exp $
+#	$NetBSD: NBFTP,v 1.22.2.1 2001/04/25 09:05:31 he Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -61,7 +61,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
