@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.18 2001/11/15 07:03:34 lukem Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.19 2001/12/07 08:07:57 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.18 2001/11/15 07:03:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.19 2001/12/07 08:07:57 onoe Exp $");
 
 #include "opt_pcibios.h"
 
@@ -98,7 +98,7 @@ struct pciintr_link_map {
 	SIMPLEQ_ENTRY(pciintr_link_map) list;
 };
 
-pciintr_icu_tag_t pciintr_icu_tag = NULL;
+pciintr_icu_tag_t pciintr_icu_tag;
 pciintr_icu_handle_t pciintr_icu_handle;
 
 #ifdef PCIBIOS_IRQS_HINT
@@ -139,6 +139,8 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371SB_ISA,
 	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_LPC,
+	  piix_init },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BAM_LPC,
 	  piix_init },
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
