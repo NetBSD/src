@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.5 2000/08/28 00:45:59 eeh Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.6 2002/05/07 01:34:21 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -33,7 +33,8 @@
 #include "SYS.h"
 
 #ifdef PIC
-
+#ifdef BIGPIC
+	
 ENTRY(sigsetjmp)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
 	set	_C_LABEL(setjmp), %o2	! if (%o1 != 0) goto _setjmp;
@@ -55,6 +56,32 @@ ENTRY(siglongjmp)
 	 nop
 	unimp 0
 
+#else
+	
+ENTRY(sigsetjmp)
+	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
+	cmp	%o1, 0
+	bne,a	1f
+	 ldx	[%g1 + _C_LABEL(setjmp)], %g1	! if (%o1 != 0) goto _setjmp;
+	ldx	[%g1 + _C_LABEL(_setjmp)], %g1	! else goto __setjmp;
+1:	
+	jmp %g1
+	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
+
+
+ENTRY(siglongjmp)
+	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
+	cmp	%o2, 0
+	ld	[%o0 + 0x48],%o2	! jmpbuf[JBLEN]
+	bne,a	1f
+	 ldx	[%g1 + _C_LABEL(longjmp)], %g1	! if (%o2 != 0) goto _longjmp;
+	ldx	[%g1 + _C_LABEL(_longjmp)], %g1	! else goto __longjmp;
+1:	
+	jmp %g1
+	 nop
+	unimp 0
+
+#endif /* BIGPIC */
 #else /* PIC */
 
 ENTRY(sigsetjmp)
