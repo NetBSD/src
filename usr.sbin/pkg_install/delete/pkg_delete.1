@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.9 1999/03/07 11:58:28 mycroft Exp $
+.\" $NetBSD: pkg_delete.1,v 1.10 1999/03/08 00:20:21 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd March 3rd, 1999
+.Dd March 8rd, 1999
 .Dt pkg_delete 1
 .Os FreeBSD 2.0
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl vDdnFfO
+.Op Fl vDdnFfOrR
 .Bk -words
 .Op Fl p Ar prefix
 .Ek
@@ -97,6 +97,14 @@ first builds a list of all packages that require (directly and indirectly)
 the one being deleted.  It then deletes these packages using 
 .Nm pkg_delete
 with the given options before deleting the user specified package.
+.It Fl R
+Like the
+.Fl r
+option, this does a recursive delete. The
+.Fl R
+option deletes the given package and any packages required by
+it, unless some other package still needs them. This can be used
+to delete a package and all the packages it needs. 
 .It Fl d
 Remove empty directories created by file cleanup.  By default, only
 files/directories explicitly listed in a package's contents (either as
@@ -205,5 +213,6 @@ refined it for
 .Nx
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, etc. 
+wildcard dependency processing, pkgdb, recursive "down"
+delete, etc. 
 .El

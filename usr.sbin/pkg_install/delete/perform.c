@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.16 1999/03/03 20:12:06 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.17 1999/03/08 00:20:21 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.16 1999/03/03 20:12:06 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.17 1999/03/08 00:20:21 hubertf Exp $");
 #endif
 #endif
 
@@ -70,14 +70,20 @@ typedef struct _rec_del_t {
 TAILQ_HEAD(_rec_del_head_t, _rec_del_t);
 typedef struct _rec_del_head_t rec_del_head_t;
 
-rec_del_t *alloc_rec_del(char *);
-rec_del_t *find_on_queue(rec_del_head_t *, char *);
-void free_rec_del(rec_del_t *);
-int recurse_require_find(rec_del_t *);
-int require_find(char *, char *);
-int require_delete(char *);
-void require_print(int);
-int undepend(const char *deppkgname, char *pkg2delname);
+/* In which direction to search in require_find() */
+typedef enum {
+    FIND_UP, FIND_DOWN
+} rec_find_t;
+
+static rec_del_t *alloc_rec_del(const char *);
+static rec_del_t *find_on_queue(rec_del_head_t *, const char *);
+static void free_rec_del(rec_del_t *);
+static int require_find_recursive_up(rec_del_t *);
+static int require_find_recursive_down(rec_del_t *, package_t *);
+static int require_find(char *, rec_find_t);
+static int require_delete(char *, int);
+static void require_print(void);
+static int undepend(const char *deppkgname, char *pkg2delname);
 
 static char LogDir[FILENAME_MAX];
 static char linebuf[FILENAME_MAX];
@@ -85,8 +91,8 @@ static char pkgdir[FILENAME_MAX];
 
 static package_t Plist;
 
-rec_del_head_t rdfindq;
-rec_del_head_t rddelq;
+static rec_del_head_t rdfindq;
+static rec_del_head_t rddelq;
 
 static void
 sanity_check(char *pkg)
@@ -168,7 +174,7 @@ undepend(const char *deppkgname, char *pkg2delname)
 
 /* add a package to the recursive delete list */
 rec_del_t *
-alloc_rec_del(char *pkgname)
+alloc_rec_del(const char *pkgname)
 {
     rec_del_t *rdp;
 
@@ -187,7 +193,7 @@ free_rec_del(rec_del_t *rdp)
 }
 
 rec_del_t *
-find_on_queue(rec_del_head_t *qp, char *name)
+find_on_queue(rec_del_head_t *qp, const char *name)
 {
     rec_del_t *rdp;
 
@@ -198,13 +204,20 @@ find_on_queue(rec_del_head_t *qp, char *name)
 }
 
 
-/* delete from 'home' all packages on rec_del_list */
+/* delete from directory 'home' all packages on rec_del_list
+ * if tryall is set, ignore errors from pkg_delete */
 int
-require_delete(char *home)
+require_delete(char *home, int tryall)
 {
     rec_del_t *rdp;
     int rv, fail;
     char *tmp;
+    int oldcwd;
+
+    /* save cwd */
+    oldcwd=open(".", O_RDONLY, 0);
+    if (oldcwd == -1)
+	err(1, "cannot open \".\"");
 
     (void)snprintf(pkgdir, sizeof(pkgdir), "%s",
 	(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
@@ -215,7 +228,7 @@ require_delete(char *home)
     for (; rdp; rdp = TAILQ_NEXT(rdp, rd_link)) {
 	/* go to the db dir */
 	if (chdir(pkgdir) == FAIL) {
-	    warnx("unable to change directory to %s, deinstall failed",
+	    warnx("unable to change directory to %s, deinstall failed (1)",
 		pkgdir);
 	    fail = 1;
 	    break;
@@ -229,7 +242,7 @@ require_delete(char *home)
 
 	/* return home for execution of command */
 	if (chdir(home) == FAIL) {
-	    warnx("unable to change directory to %s! deinstall failed", home);
+	    warnx("unable to change directory to %s, deinstall failed (2)", home);
 	    fail = 1;
 	    break;
 	}
@@ -252,7 +265,7 @@ require_delete(char *home)
 		rdp->rd_name);
 
 	/* check for delete failure */
-	if (rv) {
+	if (rv && !tryall) {
 	    fail = 1;
 	    warnx("had problem removing %s%s", rdp->rd_name,
 		Force ? ", continuing" : "");
@@ -268,17 +281,18 @@ require_delete(char *home)
     }
 
     /* return to the log dir */
-    if (chdir(LogDir) == FAIL) {
-	warnx("unable to change directory to %s! deinstall failed", LogDir);
+    if (fchdir(oldcwd) == FAIL) {
+	warnx("unable to change to previous directory, deinstall failed");
 	fail = 1;
     }
 
     return (fail);
 }
 
-/* recursively find all packages, return 1 on errors */
+/* recursively find all packages "up" the tree (follow +REQUIRED_BY)
+ * return 1 on errors */
 int
-recurse_require_find(rec_del_t *thisrdp)
+require_find_recursive_up(rec_del_t *thisrdp)
 {
     rec_del_head_t reqq;
     rec_del_t *rdp = NULL;
@@ -328,13 +342,11 @@ recurse_require_find(rec_del_t *thisrdp)
 	TAILQ_REMOVE(&reqq, rdp, rd_link);
 
 	/* find direct required requires */
-	if (recurse_require_find(rdp))
+	if (require_find_recursive_up(rdp))
 	    goto fail;
 
-	/*
-	 * all requires taken care of, add to tail of delete queue
-	 * if not already there
-	 */
+	/* all requires taken care of, add to tail of delete queue
+	 * if not already there */
 	if (find_on_queue(&rddelq, rdp->rd_name))
 	    free_rec_del(rdp);
 	else
@@ -354,8 +366,107 @@ fail:
     return (1);
 }
 
+/* recursively find all packages "down" the tree (follow @pkgdep)
+ * return 1 on errors */
 int
-require_find(char *home, char *pkg)
+require_find_recursive_down(rec_del_t *thisrdp, package_t *plist)
+{
+    plist_t *p;
+    rec_del_t *rdp, *rdp2;
+    rec_del_head_t reqq;
+    int rc, fail=0;
+
+    /* see if we are on the find queue -- circular dependency */
+    if ((rdp = find_on_queue(&rdfindq, thisrdp->rd_name))) {
+	warnx("circular dependency found for pkg %s", rdp->rd_name);
+	return (1);
+    }
+
+    TAILQ_INIT(&reqq);
+
+    /* width-first scan */
+    /* first enqueue all @pkgdep's to rddelq, then (further below)
+     * go in recursively */
+    for (p = plist->head; p ; p = p->next) {
+	switch(p->type) {
+	case PLIST_PKGDEP:
+	    rdp = alloc_rec_del(p->name);
+	    TAILQ_INSERT_TAIL(&reqq, rdp, rd_link);
+
+	    rdp2 = find_on_queue(&rddelq, p->name);
+	    if (rdp2)
+		TAILQ_REMOVE(&rddelq, rdp2, rd_link);
+	    rdp = alloc_rec_del(p->name);
+	    TAILQ_INSERT_TAIL(&rddelq, rdp, rd_link);
+	    
+	    break;
+	default:
+	    break;
+	}
+    }
+
+    while ((rdp = TAILQ_FIRST(&reqq))) {
+	FILE *cfile;
+	package_t rPlist;
+	char *tmp;
+	plist_t *p;
+
+	/* remove a direct req from our queue */
+	TAILQ_REMOVE(&reqq, rdp, rd_link);
+	
+	/* Reset some state */
+	rPlist.head = NULL;
+	rPlist.tail = NULL;
+
+	/* prepare for recursion */
+	chdir((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+	chdir(rdp->rd_name);
+	sanity_check(rdp->rd_name);
+	
+	cfile = fopen(CONTENTS_FNAME, "r");
+	if (!cfile) {
+	    warn("unable to open '%s' file", CONTENTS_FNAME);
+	    fail=1;
+	    goto fail;
+	}
+	/* If we have a prefix, add it now */
+	if (Prefix)
+	    add_plist(&rPlist, PLIST_CWD, Prefix);
+	read_plist(&rPlist, cfile);
+	fclose(cfile);
+	p = find_plist(&rPlist, PLIST_CWD);
+	if (!p) {
+	    warnx("package '%s' doesn't have a prefix", rdp->rd_name);
+	    fail=1;
+	    goto fail;
+	}
+	
+	/* put ourselves on the top of the find queue */
+	TAILQ_INSERT_HEAD(&rdfindq, thisrdp, rd_link);
+
+	rc=require_find_recursive_down(rdp, &rPlist);
+	if (rc) {
+	    fail=1;
+	    goto fail;
+	}
+	
+	/* take ourselves off the find queue */
+	TAILQ_REMOVE(&rdfindq, thisrdp, rd_link);
+	free_rec_del(rdp);
+    }
+
+ fail:
+    /* Clean out reqq */
+    while ((rdp = TAILQ_FIRST(&reqq))) {
+	TAILQ_REMOVE(&reqq, rdp, rd_link);
+	free_rec_del(rdp);
+    }
+    
+    return fail;
+}
+
+int
+require_find(char *pkg, rec_find_t updown)
 {
     rec_del_t *rdp;
     int rv;
@@ -364,27 +475,29 @@ require_find(char *home, char *pkg)
     TAILQ_INIT(&rddelq);
 
     rdp = alloc_rec_del(pkg);
-    rv = recurse_require_find(rdp);
+    switch (updown) {
+    case FIND_UP:
+	rv = require_find_recursive_up(rdp);
+	break;
+    case FIND_DOWN:
+	rv = require_find_recursive_down(rdp, &Plist);
+	break;
+    }
     free_rec_del(rdp);
 
     return (rv);
 }
 
 void
-require_print(int del)
+require_print(void)
 {
     rec_del_t *rdp;
 
     /* print all but last -- deleting if requested */
-    if (del) {
-	while ((rdp = TAILQ_FIRST(&rddelq))) {
-	    TAILQ_REMOVE(&rddelq, rdp, rd_link);
-	    fprintf(stderr, "\t%s\n", rdp->rd_name);
-	    free_rec_del(rdp);
-	}
-    } else {
-	for (rdp = TAILQ_FIRST(&rddelq); rdp; rdp = TAILQ_NEXT(rdp, rd_link))
-	    fprintf(stderr, "\t%s\n", rdp->rd_name);
+    while ((rdp = TAILQ_FIRST(&rddelq))) {
+	TAILQ_REMOVE(&rddelq, rdp, rd_link);
+	fprintf(stderr, "\t%s\n", rdp->rd_name);
+	free_rec_del(rdp);
     }
 }
 
@@ -416,20 +529,24 @@ pkg_do(char *pkg)
 	return 1;
     }
     if (!isemptyfile(REQUIRED_BY_FNAME)) {
-	if (!Recurse)
+	/* This package is required by others
+	 * Either nuke them (-r), or stop.
+	 */
+	if (!Recurse_up)
 		warnx("package `%s' is required by other packages:", pkg);
 	else if (Verbose)
-		printf("building list of packages that require `%s'"
+		printf("Building list of packages that require `%s'"
 		    " to deinstall\n", pkg);
-	if (require_find(home, pkg)) {
-		if (!Force || Recurse)
+	if (require_find(pkg, FIND_UP)) {
+		if (!Force || Recurse_up)
 			return (1);
 	}
-	if (!Recurse) {
-	    require_print(1);
+	chdir(LogDir); /* CWD was changed by require_find() */
+	if (!Recurse_up) {
+	    require_print();
 	    return 1;
 	} else
-	    require_delete(home);
+	    require_delete(home, 0);
     }
     sanity_check(LogDir);
     cfile = fopen(CONTENTS_FNAME, "r");
@@ -495,6 +612,16 @@ pkg_do(char *pkg)
 	if (!Fake)
 	    findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			     p->name, undepend, pkg);
+    }
+    if (Recurse_down) {
+	/* Also remove the packages further down, now that there's
+	 * (most likely) nothing left which requires them. */
+	if (Verbose)
+	    printf("Building list of packages that `%s' required\n", pkg);
+	if (require_find(pkg, FIND_DOWN))
+	    return (1);
+	
+	require_delete(home, 1);
     }
     return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: delete.h,v 1.3 1999/02/26 10:49:30 chopps Exp $ */
+/* $NetBSD: delete.h,v 1.4 1999/03/08 00:20:21 hubertf Exp $ */
 
 /* from FreeBSD Id: delete.h,v 1.4 1997/02/22 16:09:35 peter Exp */
 
@@ -30,8 +30,7 @@ extern char	*ProgramPath;
 extern Boolean	NoDeInstall;
 extern Boolean	CleanDirs;
 extern Boolean	Force;
-extern Boolean	Recurse;
-extern char	*Directory;
-extern char	*PkgName;
+extern Boolean	Recurse_up;
+extern Boolean	Recurse_down;
 
 #endif	/* _INST_DELETE_H_INCLUDE */
