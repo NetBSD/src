@@ -1,4 +1,4 @@
-.\"	$NetBSD: finger.1,v 1.11 1999/03/22 18:16:37 garbled Exp $
+.\"	$NetBSD: finger.1,v 1.12 2002/09/12 01:31:41 kim Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd user information lookup program
 .Sh SYNOPSIS
 .Nm
-.Op Fl lmpshog
+.Op Fl lmpshog8
 .Op Ar user ...
 .Op Ar user@host ...
 .Sh DESCRIPTION
@@ -148,6 +148,13 @@ option is supplied.
 All name matching performed by
 .Nm
 is case insensitive.
+.It Fl 8
+Pass through 8-bit data.  This option is intended for enabling 8-bit
+data output in the
+.Xr fingerd 8
+service.  Using this from the command line is
+.Em dangerous ,
+as the output data may include control characters for your terminal.
 .El
 .Pp
 If no options are specified,
