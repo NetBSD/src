@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.15 1995/03/26 19:23:12 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.16 1995/05/24 20:52:27 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -179,28 +179,49 @@ si_match(parent, vcf, args)
 {
 	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
-	int x;
-
-	/* Allow default address for OBIO only. */
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		if (ca->ca_paddr == -1)
-			ca->ca_paddr = OBIO_NCR_SCSI;
-		break;
-	case BUS_VME16:
-		if (ca->ca_paddr == -1)
-			return (0);
-		break;
-	default:
-		return (0);
-	}
+	int x, probe_addr;
 
 	/* Default interrupt priority always splbio==2 */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
+	if ((cpu_machine_id == SUN3_MACH_50) ||
+	    (cpu_machine_id == SUN3_MACH_60) )
+	{
+		/* Sun3/50 or Sun3/60 have only OBIO "si" */
+		if (ca->ca_bustype != BUS_OBIO)
+			return(0);
+		if (ca->ca_paddr == -1)
+			ca->ca_paddr = OBIO_NCR_SCSI;
+		/* OK... */
+	} else {
+		/* Other Sun3 models may have VME "si" or "sc" */
+		if (ca->ca_bustype != BUS_VME16)
+			return (0);
+		if (ca->ca_paddr == -1)
+			return (0);
+		/* OK... */
+	}
+
+	/* Make sure there is something there... */
 	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1);
-    return (x != -1);
+	if (x == -1)
+		return (0);
+
+	/*
+	 * If this is a VME SCSI board, we have to determine whether
+	 * it is an "sc" (Sun2) or "si" (Sun3) SCSI board.  This can
+	 * be determined using the fact that the "sc" board occupies
+	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
+	 */
+	if (ca->ca_bustype == BUS_VME16) {
+		/* Note, the "si" board should NOT respond here. */
+		x = bus_peek(ca->ca_bustype, ca->ca_paddr + 0x801, 1);
+		if (x != -1)
+			return(0);
+	}
+
+    return (1);
 }
 
 static void
