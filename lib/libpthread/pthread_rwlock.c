@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.5 2003/03/08 08:03:35 lukem Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.6 2003/11/24 23:54:13 cl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.5 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.6 2003/11/24 23:54:13 cl Exp $");
 
 #include <errno.h>
 
@@ -417,13 +417,13 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 		}
 	}
 
-	pthread_spinunlock(self, &rwlock->ptr_interlock);
-
 	if (writer != NULL)
 		pthread__sched(self, writer);
 	else
 		pthread__sched_sleepers(self, &blockedq);
 	
+	pthread_spinunlock(self, &rwlock->ptr_interlock);
+
 	return 0;
 }
 
