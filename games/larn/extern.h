@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1999/10/04 23:27:02 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2001/02/05 00:57:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -127,7 +127,7 @@ int openhelp __P((void));
 /* io.c */
 void setupvt100 __P((void));
 void clearvt100 __P((void));
-int getchar __P((void));
+int lgetchar __P((void));
 void scbr __P((void));
 void sncbr __P((void));
 void newgame __P((void));

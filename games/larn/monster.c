@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.6 1998/08/30 09:19:38 veego Exp $	*/
+/*	$NetBSD: monster.c,v 1.7 2001/02/05 00:57:33 christos Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.6 1998/08/30 09:19:38 veego Exp $");
+__RCSID("$NetBSD: monster.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -233,16 +233,16 @@ cast()
 	}
 	lprcat(eys);
 	--c[SPELLS];
-	while ((a = getchar()) == 'D') {
+	while ((a = lgetchar()) == 'D') {
 		seemagic(-1);
 		cursors();
 		lprcat(eys);
 	}
 	if (a == '\33')
 		goto over;	/* to escape casting a spell	 */
-	if ((b = getchar()) == '\33')
+	if ((b = lgetchar()) == '\33')
 		goto over;	/* to escape casting a spell	 */
-	if ((d = getchar()) == '\33') {
+	if ((d = lgetchar()) == '\33') {
 over:		lprcat(aborted);
 		c[SPELLS]++;
 		return;
@@ -996,7 +996,7 @@ dirsub(x, y)
 	int    i;
 	lprcat("\nIn What Direction? ");
 	for (i = 0;;)
-		switch (getchar()) {
+		switch (lgetchar()) {
 		case 'b':
 			i++;
 		case 'n':
@@ -1894,7 +1894,7 @@ genmonst()
 	int    i, j;
 	cursors();
 	lprcat("\nGenocide what monster? ");
-	for (i = 0; (!isalpha(i)) && (i != ' '); i = getchar());
+	for (i = 0; (!isalpha(i)) && (i != ' '); i = lgetchar());
 	lprc(i);
 	for (j = 0; j < MAXMONST; j++)	/* search for the monster type */
 		if (monstnamelist[j] == i) {	/* have we found it? */

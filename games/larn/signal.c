@@ -1,14 +1,14 @@
-/*	$NetBSD: signal.c,v 1.6 1997/10/18 20:03:50 christos Exp $	*/
+/*	$NetBSD: signal.c,v 1.7 2001/02/05 00:57:34 christos Exp $	*/
 
 /* "Larn is copyrighted 1986 by Noah Morgan.\n" */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signal.c,v 1.6 1997/10/18 20:03:50 christos Exp $");
+__RCSID("$NetBSD: signal.c,v 1.7 2001/02/05 00:57:34 christos Exp $");
 #endif	/* not lint */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "header.h"
@@ -131,7 +131,9 @@ sigpanic(sig)
 {
 	char            buf[128];
 	signal(sig, SIG_DFL);
-	sprintf(buf, "\nLarn - Panic! Signal %d received [SIG%s]", sig, sys_signame[sig]);
+	snprintf(buf, sizeof(buf),
+	    "\nLarn - Panic! Signal %d received [SIG%s]", sig,
+	    sys_signame[sig]);
 	write(2, buf, strlen(buf));
 	sleep(2);
 	sncbr();

@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.6 1997/10/18 20:03:20 christos Exp $	*/
+/*	$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,22 +23,20 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.6 1997/10/18 20:03:20 christos Exp $");
+__RCSID("$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
 #endif /* not lint */
 
 #include <string.h>
 #include <unistd.h>
 #include "header.h"
 #include "extern.h"
-extern int      score[], srcount, dropflag;
-extern int      random;		/* the random number seed			 */
-extern short    playerx, playery, lastnum, level;
-extern u_char   cheat;
-extern char     monstnamelist[], logname[];
-extern char     lastmonst[], *what[], *who[];
+extern int      score[], dropflag;
+extern int      random;		/* the random number seed		*/
+extern char     *what[], *who[];
 extern char     winner[];
-extern u_char   monstlevel[];
-extern char     sciv[SCORESIZE + 1][26][2], *potionname[], *scrollname[];
+extern char     sciv[SCORESIZE + 1][26][2];
+extern char    *password;
+
 /*
 	***********
 	RAISE LEVEL
@@ -435,7 +433,7 @@ quit()
 	strcpy(lastmonst, "");
 	lprcat("\n\nDo you really want to quit?");
 	while (1) {
-		i = getchar();
+		i = lgetchar();
 		if (i == 'y') {
 			died(300);
 			return;
@@ -466,7 +464,7 @@ more()
 	lprcat("\n  --- press ");
 	standout("space");
 	lprcat(" to continue --- ");
-	while (getchar() != ' ');
+	while (lgetchar() != ' ');
 }
 
 /*
@@ -808,10 +806,10 @@ gettokstr(str)
 {
 	int    i, j;
 	i = 50;
-	while ((getchar() != '"') && (--i > 0));
+	while ((lgetchar() != '"') && (--i > 0));
 	i = 36;
 	while (--i > 0) {
-		if ((j = getchar()) != '"')
+		if ((j = lgetchar()) != '"')
 			*str++ = j;
 		else
 			i = 0;
@@ -820,7 +818,7 @@ gettokstr(str)
 	i = 50;
 	if (j != '"')
 		/* if end due to too long, then find closing quote */
-		while ((getchar() != '"') && (--i > 0));
+		while ((lgetchar() != '"') && (--i > 0));
 }
 
 /*
@@ -833,7 +831,6 @@ getpassword()
 {
 	int    i, j;
 	char  *gpwp;
-	extern char    *password;
 	scbr();			/* system("stty -echo cbreak"); */
 	gpwp = gpwbuf;
 	lprcat("\nEnter Password: ");
@@ -861,7 +858,7 @@ getyn()
 	int    i;
 	i = 0;
 	while (i != 'y' && i != 'n' && i != '\33')
-		i = getchar();
+		i = lgetchar();
 	return (i);
 }
 

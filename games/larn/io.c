@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.10 2000/05/24 14:20:29 blymn Exp $	*/
+/*	$NetBSD: io.c,v 1.11 2001/02/05 00:57:33 christos Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -7,7 +7,7 @@
  * 
  * setupvt100() 	Subroutine to set up terminal in correct mode for game
  * clearvt100()  	Subroutine to clean up terminal when the game is over
- * getchar() 		Routine to read in one character from the terminal
+ * lgetchar() 		Routine to read in one character from the terminal
  * scbr()			Function to set cbreak -echo for the terminal
  * sncbr()			Function to set -cbreak echo for the terminal
  * newgame() 		Subroutine to save the initial time and seed rnd()
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.10 2000/05/24 14:20:29 blymn Exp $");
+__RCSID("$NetBSD: io.c,v 1.11 2001/02/05 00:57:33 christos Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -164,10 +164,10 @@ clearvt100()
 }
 
 /*
- *	getchar() 	Routine to read in one character from the terminal
+ *	lgetchar() 	Routine to read in one character from the terminal
  */
 int
-getchar()
+lgetchar()
 {
 	char            byt;
 #ifdef EXTRA

@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.15 2000/05/22 12:42:46 blymn Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2000/05/22 12:42:46 blymn Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -100,7 +100,8 @@ main(argc, argv)
 	strcpy(savefilename, ptr);
 	strcat(savefilename, "/Larn.sav");	/* save file name in home
 						 * directory */
-	sprintf(optsfile, "%s/.larnopts", ptr);	/* the .larnopts filename */
+	snprintf(optsfile, sizeof(optsfile), "%s/.larnopts", ptr);
+	/* the .larnopts filename */
 
 	/*
 	 *	now malloc the memory for the dungeon
@@ -1272,7 +1273,7 @@ whatitem(str)
 	lprintf("\nWhat do you want to %s [* for all] ? ", str);
 	i = 0;
 	while (i > 'z' || (i < 'a' && i != '*' && i != '\33' && i != '.'))
-		i = getchar();
+		i = lgetchar();
 	if (i == '\33')
 		lprcat(" aborted");
 	return (i);
@@ -1289,7 +1290,7 @@ readnum(mx)
 	int    i;
 	unsigned long amt = 0;
 	sncbr();
-	if ((i = getchar()) == '*')
+	if ((i = lgetchar()) == '*')
 		amt = mx;	/* allow him to say * for all gold */
 	else
 		while (i != '\n') {
@@ -1300,7 +1301,7 @@ readnum(mx)
 			}
 			if ((i <= '9') && (i >= '0') && (amt < 99999999))
 				amt = amt * 10 + i - '0';
-			i = getchar();
+			i = lgetchar();
 		}
 	scbr();
 	return (amt);
