@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.52 2004/03/30 06:00:13 oki Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.53 2004/04/21 18:40:40 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.52 2004/03/30 06:00:13 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.53 2004/04/21 18:40:40 itojun Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -230,7 +230,8 @@ pppoe_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct pppoe_softc));
 
-	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
+	snprintf(sc->sc_sppp.pp_if.if_xname, sizeof(sc->sc_sppp.pp_if.if_xname),
+	    "pppoe%d", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
 	sc->sc_sppp.pp_if.if_mtu = PPPOE_MAXMTU;
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;

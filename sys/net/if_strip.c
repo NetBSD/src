@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.51 2004/01/19 16:12:51 atatat Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.52 2004/04/21 18:40:41 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.51 2004/01/19 16:12:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.52 2004/04/21 18:40:41 itojun Exp $");
 
 #include "strip.h"
 
@@ -342,7 +342,8 @@ stripattach(n)
 
 	for (sc = strip_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "strip%d", i++);
+		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
+		    "strip%d", i++);
 		callout_init(&sc->sc_timo_ch);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
@@ -1965,8 +1966,9 @@ RecvErr(msg, sc)
 		} else if (*ptr >= 32 && *ptr <= 126)
 			*p++ = *ptr;
 		else {
-			sprintf(p, "\\%02x", *ptr);
-			p+= 3;
+			snprintf(p, sizeof(pkt_text) - (p - pkt_text),
+			    "\\%02x", *ptr);
+			p += 3;
 		}
 		ptr++;
 	}

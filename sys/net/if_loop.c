@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.49 2003/11/13 01:48:13 jonathan Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.50 2004/04/21 18:40:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.49 2003/11/13 01:48:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.50 2004/04/21 18:40:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -158,7 +158,7 @@ loopattach(n)
 
 	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
-		sprintf(ifp->if_xname, "lo%d", i);
+		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "lo%d", i);
 		ifp->if_softc = NULL;
 		ifp->if_mtu = LOMTU;
 		ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
