@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2000/09/13 15:00:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2000/09/24 12:32:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -245,20 +246,8 @@ initppc(startkernel, endkernel, args)
 	bootpath = args;
 	while (*++args && *args != ' ');
 	if (*args) {
-		*args++ = 0;
-		while (*args) {
-			switch (*args++) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			}
-		}
+		for(*args++ = 0; *args; args++)
+			BOOT_FLAG(*args, boothowto);
 	}
 
 #ifdef DDB

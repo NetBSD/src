@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2000/07/29 20:06:29 jdolecek Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2000/09/24 12:32:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
 
@@ -118,20 +119,7 @@ getbootdev(howto)
 				return;
 			if (c == '-')
 				while ((c = *++ptr) && c != ' ')
-					switch (c) {
-					case 'a':
-						*howto |= RB_ASKNAME;
-						continue;
-					case 'b':
-						*howto |= RB_HALT;
-						continue;
-					case 'd':
-						*howto |= RB_KDB;
-						continue;
-					case 's':
-						*howto |= RB_SINGLE;
-						continue;
-					}
+					BOOT_FLAG(c, *howto);
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');

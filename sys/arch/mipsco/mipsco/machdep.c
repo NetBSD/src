@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2000/09/16 09:18:01 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2000/09/24 12:32:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2000/09/16 09:18:01 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2000/09/24 12:32:36 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2000/09/16 09:18:01 wdk Exp $");
 #include <machine/prom.h>
 #include <dev/clock_subr.h>
 #include <dev/cons.h>
+
+#include <sys/boot_flag.h>
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -207,7 +209,7 @@ mach_init(argc, argv, envp, bim, bip)
 	caddr_t kernend, v;
 	vsize_t size;
 	char *cp;
-	int i;
+	int i, howto;
 	extern char edata[], end[];
 	char *bi_msg;
 #ifdef DDB
@@ -285,31 +287,16 @@ mach_init(argc, argv, envp, bim, bip)
 	boothowto = RB_SINGLE;
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
-			switch (*cp) {
-			case 'a': /* askname */
-				boothowto |= RB_ASKNAME;
-				break;
+			/* Ignore superfluous '-', if there is one */
+			if (*cp == '-')
+				continue;
 
-#if defined(KGDB) || defined(DDB)
-			case 'd': /* break into the kernel debugger ASAP */
-				boothowto |= RB_KDB;
-				break;
-#endif
-
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
-			case 's': /* single-user (default) */
-				boothowto |= RB_SINGLE;
-				break;
-
-			case '-': /* Ignore superfluous '-' */
-				break;
-
-			default:
+			howto = 0;
+			BOOT_FLAG(*cp, howto);
+			if (! howto)
 				printf("bootflag '%c' not recognised\n", *cp);
-			}
+			else
+				boothowto |= howto;
 		}
 	}
 

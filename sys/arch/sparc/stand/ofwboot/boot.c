@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2000/08/20 14:58:37 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2000/09/24 12:32:39 jdolecek Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <sys/exec_elf.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <sys/boot_flag.h>
 
 #include <machine/cpu.h>
 
@@ -149,22 +150,16 @@ parseargs(str, howtop)
 	
 	*cp++ = 0;
 	while (*cp) {
+		BOOT_FLAG(*cp, *howtop);
+		/* handle specialties */
 		switch (*cp++) {
-		case 'a':
-			*howtop |= RB_ASKNAME;
-			break;
-		case 's':
-			*howtop |= RB_SINGLE;
-			break;
 		case 'd':
-			*howtop |= RB_KDB;
 			if (!debug) debug = 1;
 			break;
 		case 'D':
 			debug = 2;
 			break;
-		case 'v':
-			if (!debug) debug = 1;
+		default:
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/10/25 14:01:29 kleink Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2000/09/24 12:32:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/exec_elf.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -138,21 +139,9 @@ parseargs(str, howtop)
 	if (!*cp)
 		return;
 	
-	*cp++ = 0;
-	while (*cp) {
-		switch (*cp++) {
-		case 'a':
-			*howtop |= RB_ASKNAME;
-			break;
-		case 's':
-			*howtop |= RB_SINGLE;
-			break;
-		case 'd':
-			*howtop |= RB_KDB;
-			debug = 1;
-			break;
-		}
-	}
+	*cp++ = '\0';
+	while (*cp)
+		BOOT_FLAG(*cp++, *howtop);
 }
 
 static void

@@ -1,4 +1,5 @@
-$NetBSD: version,v 1.3 1999/02/15 04:38:06 sakamoto Exp $
+$NetBSD: version,v 1.4 2000/09/24 12:32:34 jdolecek Exp $
 
 1.1:		Boot program for BeBox; initial revision
 1.2:		check BUS FREQ, add clock information
+1.3:		Support verbose/quiet boot.

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8 2000/07/12 21:05:39 jdolecek Exp $
+$NetBSD: version,v 1.9 2000/09/24 12:32:35 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,4 @@ is taken as the current.
 2.5:	Support ustarfs boot.
 2.6:	Support ELF boot.
 2.7:	Support on-the-fly switching of console devices.
+2.8:	Support verbose/quiet boot.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.11 2000/07/20 03:44:52 deberg Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.12 2000/09/24 12:32:35 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -43,7 +43,6 @@
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 
-#include <hpcmips/hpcmips/machdep.h>	/* hpcmips_verbose */
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
@@ -63,19 +62,19 @@ int	vrgiu_debug = VRGIUDEBUG_CONF;
 #define DDUMP_IOSETTING(flag, sc) \
 		if (vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
 #define	VPRINTF(flag, arg) \
-		if (hpcmips_verbose || vrgiu_debug & flag) printf arg;
+		if (bootverbose || vrgiu_debug & flag) printf arg;
 #define VDUMP_IO(flag, sc) \
-		if (hpcmips_verbose || vrgiu_debug & flag) vrgiu_dump_io(sc);
+		if (bootverbose || vrgiu_debug & flag) vrgiu_dump_io(sc);
 #define VDUMP_IOSETTING(flag, sc) \
-		if (hpcmips_verbose || vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
+		if (bootverbose || vrgiu_debug & flag) vrgiu_dump_iosetting(sc);
 #else
 #define	DPRINTF(flag, arg)
 #define DDUMP_IO(flag, sc)
 #define DDUMP_IOSETTING(flag, sc)
-#define	VPRINTF(flag, arg) if (hpcmips_verbose) printf arg;
-#define VDUMP_IO(flag, sc) if (hpcmips_verbose) vrgiu_dump_io(sc);
+#define	VPRINTF(flag, arg) if (bootverbose) printf arg;
+#define VDUMP_IO(flag, sc) if (bootverbose) vrgiu_dump_io(sc);
 #define VDUMP_IOSETTING(flag, sc) \
-			if (hpcmips_verbose) vrgiu_dump_iosetting(sc);
+			if (bootverbose) vrgiu_dump_iosetting(sc);
 #endif
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)

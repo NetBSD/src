@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2000/09/13 15:00:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2000/09/24 12:32:32 jdolecek Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -549,6 +549,14 @@ mach_init(argc, argv, envv)
 
 			case 's': /* use serial console */
 				com_console = 1;
+				break;
+
+			case 'q': /* boot quietly */
+				boothowto |= AB_QUIET;
+				break;
+
+			case 'v': /* boot verbosely */
+				boothowto |= AB_VERBOSE;
 				break;
 			}
 

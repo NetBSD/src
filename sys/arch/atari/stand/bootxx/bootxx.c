@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1998/02/10 10:25:08 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4 2000/09/24 12:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -42,6 +42,7 @@ start:
 #include <string.h>
 #include <libkern.h>
 #include <kparamb.h>
+#include <sys/boot_flag.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <machine/cpu.h>
@@ -65,7 +66,7 @@ bootxx(readsector, disklabel, autoboot)
 
 	bzero(edata, end - edata);
 
-	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.3 $)\n\n");
+	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.4 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
@@ -193,9 +194,8 @@ usr_info(od)
 				od->boothowto &= ~RB_SINGLE;
 			else if (c == 'b')
 				od->boothowto |= RB_ASKNAME;
-			else if (c == 'd')
-				od->boothowto |= RB_KDB;
-			else return(-1);
+			else
+				BOOT_FLAG(c, od->boothowto);
 			break;
 		  case '.':
 			od->ostype = p;

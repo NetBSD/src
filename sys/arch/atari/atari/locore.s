@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2000/08/20 21:50:07 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2000/09/24 12:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -777,7 +777,7 @@ _C_LABEL(esym):	.long	0
 
 	.globl	_C_LABEL(bootversion)
 _C_LABEL(bootversion):
-	.word	0x0002			|  Glues kernel/installboot/loadbsd
+	.word	0x0003			|  Glues kernel/installboot/loadbsd
 					|    and other bootcode together.
 start:
 	movw	#PSL_HIGHIPL,sr		| No interrupts

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.6 2000/07/29 20:06:30 jdolecek Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.7 2000/09/24 12:32:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -36,23 +36,12 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <machine/prom.h>
+#include <sys/boot_flag.h>
 
 #include "stand.h"
 #include "libsa.h"
 
 #define KERNEL_NAME "netbsd"
-
-struct flags {
-	char c;
-	short bit;
-} bf[] = {
-	{ 'a', RB_ASKNAME },
-	{ 'b', RB_HALT },
-	{ 'y', RB_NOSYM },
-	{ 'd', RB_KDB },
-	{ 'm', RB_MINIROOT },
-	{ 's', RB_SINGLE },
-};
 
 void
 parse_args(filep, flagp, partp)
@@ -61,7 +50,7 @@ int *flagp;
 int *partp;
 {
 	char *name = KERNEL_NAME, *ptr;
-	int i, howto = 0, part = 0;
+	int howto = 0, part = 0;
 	char c;
 
 	if (bugargs.arg_start != bugargs.arg_end) {
@@ -91,12 +80,8 @@ int *partp;
 					*ptr++ = 0;
 				continue;
 			}
-			while ((c = *++ptr) && c != ' ') {
-				for (i = 0; i < sizeof(bf)/sizeof(bf[0]); i++)
-					if (bf[i].c == c) {
-						howto |= bf[i].bit;
-					}
-			}
+			while ((c = *++ptr) && c != ' ')
+				BOOT_FLAG(c, howto);
 		}
 	}
 	*flagp = howto;

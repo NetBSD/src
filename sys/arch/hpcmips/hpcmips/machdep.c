@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2000/09/13 15:00:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2000/09/24 12:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2000/09/13 15:00:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2000/09/24 12:32:34 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2000/09/13 15:00:18 thorpej Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/boot_flag.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -130,9 +131,7 @@ char	cpu_name[40];			/* set cpu depend xx_init() */
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-/* verbose boot message */
-int	hpcmips_verbose = 0;
-#define VPRINTF(arg)	if (hpcmips_verbose) printf arg;
+#define VPRINTF(arg)	if (bootverbose) printf arg;
 
 /* maps for VM objects */
 vm_map_t exec_map = NULL;
@@ -321,22 +320,6 @@ mach_init(argc, argv, bi)
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
-			case 's': /* single-user */
-				boothowto |= RB_SINGLE;
-				break;
-
-			case 'd': /* break into the kernel debugger ASAP */
-				boothowto |= RB_KDB;
-				break;
-
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
-			case 'a': /* ask for names */
-				boothowto |= RB_ASKNAME;
-				break;
-
 			case 'h': /* XXX, serial console */
 				bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
 				break;
@@ -353,8 +336,8 @@ mach_init(argc, argv, bi)
 #endif
 				cp += strlen(cp);
 				break;
-			case 'v': /* verbose for hpcmips */
-				hpcmips_verbose = 1;
+			default:
+				BOOT_FLAG(*cp, boothowto);
 				break;
 			}
 		}
@@ -486,7 +469,7 @@ cpu_startup()
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
-	if (hpcmips_verbose) {
+	if (bootverbose) {
 		/* show again when verbose mode */
 		printf("total memory banks = %d\n", mem_cluster_cnt);
 		for (i = 0; i < mem_cluster_cnt; i++) {

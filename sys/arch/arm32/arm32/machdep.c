@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2000/09/13 15:00:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2000/09/24 12:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -936,6 +936,15 @@ parse_mi_bootargs(args)
 			memory_disc_size = 2048*1024;
 	}
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+
+	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_QUIET;
+	if (get_bootconf_option(args, "verbose", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_VERBOSE;
 }
 
 /* End of machdep.c */
