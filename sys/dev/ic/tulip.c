@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.15 1999/09/20 19:52:31 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.16 1999/09/21 00:14:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1332,7 +1332,7 @@ tlp_init(sc)
 	 * XXX What about read-multiple/read-line/write-line on
 	 * XXX the 21140 and up?
 	 */
-	sc->sc_busmode = BUSMODE_BAR | BUSMODE_PBL_DEFAULT;
+	sc->sc_busmode = BUSMODE_BAR;
 	switch (sc->sc_cacheline) {
 	default:
 		/*
@@ -1352,10 +1352,10 @@ tlp_init(sc)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
-		sc->sc_busmode |= BUSMODE_PNIC_MBO;
+		sc->sc_busmode |= BUSMODE_PBL_16LW | BUSMODE_PNIC_MBO;
 		break;
 	default:
-		/* Nothing. */
+		sc->sc_busmode |= BUSMODE_PBL_DEFAULT;
 		break;
 	}
 #if BYTE_ORDER == BIG_ENDIAN
@@ -1511,6 +1511,11 @@ tlp_init(sc)
 	(*sc->sc_filter_setup)(sc);
 
 	/*
+	 * Set the current media.
+	 */
+	(void) (*sc->sc_mediasw->tmsw_set)(sc);
+
+	/*
 	 * Start the receive process.
 	 */
 	TULIP_WRITE(sc, CSR_RXPOLL, RXPOLL_RPD);
@@ -1525,13 +1530,6 @@ tlp_init(sc)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	/*
-	 * Set the media.  We must do this after the transmit process is
-	 * running, since we may actually have to transmit packets on
-	 * our board to test link integrity.
-	 */
-	(void) (*sc->sc_mediasw->tmsw_set)(sc);
 
  out:
 	if (error)
@@ -2024,8 +2022,25 @@ tlp_filter_setup(sc)
 	 * writing OPMODE will start the transmit and receive processes
 	 * in motion.
 	 */
-	if (ifp->if_flags & IFF_RUNNING)
-		tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+	if (ifp->if_flags & IFF_RUNNING) {
+		/*
+		 * Actually, some chips seem to need a really hard
+		 * kick in the head for this to work.  The genuine
+		 * DEC chips can just be idled, but some of the
+		 * clones seem to REALLY want a reset here.  Doing
+		 * the reset will end up here again, but with
+		 * IFF_RUNNING cleared.
+		 */
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_82C168:
+		case TULIP_CHIP_82C169:
+			tlp_init(sc);
+			return;
+
+		default:
+			tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+		}
+	}
 
 	sc->sc_opmode &= ~(OPMODE_PR|OPMODE_PM);
 
@@ -2738,8 +2753,6 @@ void
 tlp_pnic_preinit(sc)
 	struct tulip_softc *sc;
 {
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
-	int media = ife->ifm_media;
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
 		/*
@@ -2749,29 +2762,10 @@ tlp_pnic_preinit(sc)
 		sc->sc_opmode |= OPMODE_PS;
 	} else {
 		/*
-		 * ENDEC/PCS/Nway mode; set according to media type.
+		 * ENDEC/PCS/Nway mode; enable the Tx backoff counter.
 		 */
-		if (IFM_SUBTYPE(media) == IFM_AUTO)
-			media = sc->sc_mii.mii_media_active;
-		switch (IFM_SUBTYPE(media)) {
-		case IFM_10_T:
-			/* Nothing. */
-			break;
-
-		case IFM_100_TX:
-		case IFM_100_T4:
-			sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR;
-			break;
-		}
-	}
-
-	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-
-	/*
-	 * If not using MII, enable the Tx backoff counter.
-	 */
-	if ((sc->sc_flags & TULIPF_HAS_MII) == 0)
 		sc->sc_opmode |= OPMODE_PNIC_TBEN;
+	}
 }
 
 /*****************************************************************************
