@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:06:18 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -29,7 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 
@@ -41,81 +40,90 @@
 #include <dosfile.h>
 
 struct devsw devsw[] = {
-  { "disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl },
+	{"disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl},
 };
-int ndevs = sizeof(devsw)/sizeof(struct devsw);
+int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
 static struct fs_ops dosfs = {
-  dos_open, dos_close, dos_read, dos_write, dos_seek, dos_stat
+	dos_open, dos_close, dos_read, dos_write, dos_seek, dos_stat
 };
 static struct fs_ops ufsfs = {
-  ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
+	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
 };
 
-struct fs_ops file_system[] = {
-  { 0 },
+struct fs_ops   file_system[] = {
+	{0},
 };
-int nfsys = 1;
+int  nfsys = 1;
 
 static struct {
-    char *name;
-    int biosdev;
-} biosdevtab[] = {
-    {"fd", 0},
-    {"wd", 0x80},
-    {"sd", 0x80},
-    {"hd", 0x80}
+	char           *name;
+	int             biosdev;
+}               biosdevtab[] = {
+	{
+		"fd", 0
+	},
+	{
+		"wd", 0x80
+	},
+	{
+		"sd", 0x80
+	},
+	{
+		"hd", 0x80
+	}
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
 static int
 dev2bios(devname, unit, biosdev)
-char *devname;
-unsigned int unit;
-int *biosdev;
+	char           *devname;
+	unsigned int    unit;
+	int            *biosdev;
 {
-    int i;
+	int             i;
 
-    for(i = 0; i < NUMBIOSDEVS; i++)
-	if(!strcmp(devname, biosdevtab[i].name)) {
-	    *biosdev = biosdevtab[i].biosdev + unit;
-	    if(unit >= 4)  /* ??? */
-		return(EUNIT);
-	    return(0);
-	}
-    return(ENXIO);
+	for (i = 0; i < NUMBIOSDEVS; i++)
+		if (!strcmp(devname, biosdevtab[i].name)) {
+			*biosdev = biosdevtab[i].biosdev + unit;
+			if (unit >= 4)	/* ??? */
+				return (EUNIT);
+			return (0);
+		}
+	return (ENXIO);
 }
 
 int
 devopen(f, fname, file)
-struct open_file *f;
-const char *fname;
-char **file;
+	struct open_file *f;
+	const char     *fname;
+	char          **file;
 {
-    char *devname;
-    char *fsmode;
-    unsigned int unit, partition;
-    int biosdev;
-    int error;
-    struct devsw *dp;
+	char           *devname;
+	char           *fsmode;
+	unsigned int    unit, partition;
+	int             biosdev;
+	int             error;
+	struct devsw   *dp;
 
-    if((error = parsebootfile(fname, &fsmode, &devname, &unit, &partition, (const char**)file)))
-	return(error);
+	if ((error = parsebootfile(fname, &fsmode, &devname, &unit,
+	    &partition, (const char **) file)))
+		return (error);
 
-    if(!strcmp(fsmode, "dos")){
-	file_system[0] = dosfs; /* structure assignment! */
-	f->f_flags |= F_NODEV; /* handled by DOS */
-	return(0);
-    } else if(!strcmp(fsmode, "ufs")) {
-	if((error = dev2bios(devname, unit, &biosdev)))
-	    return(error);
-	file_system[0] = ufsfs; /* structure assignment! */
-	dp = &devsw[0]; /* must be biosdisk */
-	f->f_dev = dp;
-	return(biosdiskopen(f, biosdev, partition));
-    } else {
-	printf("no file system\n");
-	return(ENXIO);
-    }
-    /* NOTREACHED */
+	if (!strcmp(fsmode, "dos")) {
+		file_system[0] = dosfs;	/* structure assignment! */
+		f->f_flags |= F_NODEV;	/* handled by DOS */
+		return (0);
+	} else if (!strcmp(fsmode, "ufs")) {
+		if ((error = dev2bios(devname, unit, &biosdev)))
+			return (error);
+		file_system[0] = ufsfs;	/* structure assignment! */
+		dp = &devsw[0];	/* must be biosdisk */
+		f->f_dev = dp;
+		return (biosdiskopen(f, biosdev, partition));
+	} else {
+		printf("no file system\n");
+		return (ENXIO);
+	}
+	/* NOTREACHED */
 }
