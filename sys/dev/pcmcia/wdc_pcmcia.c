@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.75 2004/08/10 03:54:26 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.76 2004/08/10 05:22:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.75 2004/08/10 03:54:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.76 2004/08/10 05:22:33 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -293,8 +293,10 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
 
-	if (wdc_pcmcia_enable(self, 1)) {
-		aprint_error("%s: enable failed\n", self->dv_xname);
+	error = wdc_pcmcia_enable(self, 1);
+	if (error) {
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
 		goto fail;
 	}
 
