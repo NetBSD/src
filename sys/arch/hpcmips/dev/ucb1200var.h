@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200var.h,v 1.2 2000/01/12 14:56:22 uch Exp $ */
+/*	$NetBSD: ucb1200var.h,v 1.3 2000/02/27 16:37:51 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -42,3 +42,8 @@ struct ucb1200_attach_args {
 void	ucb1200_state_install __P((struct device*, int (*)__P((void*)), void*, int));
 int	ucb1200_state_idle __P((struct device*));
 
+struct ucbio_attach_args {
+	tx_chipset_tag_t uia_tc;	
+	int uia_port;
+	int uia_id;
+};
