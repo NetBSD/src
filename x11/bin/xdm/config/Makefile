@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/05 12:21:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2004/05/12 03:58:48 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,11 @@ DEFAULTVT=	# defined empty
 .endif
 
 CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=${DEFAULTVT}
-CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${X11LIBDIR}/xdm -DXDMLOGDIR=/var/log \
-				-DXDMPIDDIR=/var/run -DSU="su -m"
+CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${X11LIBDIR}/xdm \
+				-DXDMLOGDIR=/var/log \
+				-DXDMAUTHDIR=${XDMVARDIR} \
+				-DXDMPIDDIR=/var/run \
+				-DSU="su -m"
 
 FILES=			GiveConsole TakeConsole XFree86.xpm XFree86bw.xpm \
 			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/04/29 01:30:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2004/05/12 03:58:48 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ CPPFLAGS.resource.c=	\
 	-DDEF_SYSTEM_SHELL=\"/bin/sh\" \
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
 	-DDEF_XDM_CONFIG=\"${X11LIBDIR}/xdm/xdm-config\" \
-	-DDEF_AUTH_DIR=\"${X11LIBDIR}/xdm\" \
+	-DDEF_AUTH_DIR=\"${XDMVARDIR}\" \
 	-DDEF_GREETER_LIB=\"${X11LIBDIR}/xdm/libXdmGreet.so\"
 
 LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
