@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1996/12/16 16:17:13 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -243,7 +243,8 @@ zsc_attach(parent, self, aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int zsc_unit, channel;
-	int reset, s, chip;
+	int reset, s;
+	int chip = 0;	/* XXX quiet bogus gcc warning */
 
 	if (!zsinited) zs_init();
 	zsinited = 2;
@@ -354,7 +355,8 @@ zstty_mdattach(zsc, zst, cs, tp)
 		 */
 		cs->cs_clocks[1].clk = mac68k_machine.print_dcd_clk;
 		cs->cs_clocks[2].clk = mac68k_machine.print_cts_clk;
-	}
+	} else
+		theflags = 0;
 
 	if (cs->cs_clocks[1].clk)
 		zst->zst_hwflags |= ZS_HWFLAG_IGDCD;
