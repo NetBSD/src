@@ -1,16 +1,16 @@
-#	$NetBSD: sup.au.netbsd.org,v 1.5 1999/02/16 08:22:19 abs Exp $
+#	$NetBSD: sup.au.netbsd.org,v 1.6 2003/07/26 20:17:32 salo Exp $
 #
-# Example supfile for sup.au.netbsd.org.
+# Example supfile for sup.au.NetBSD.org.
 #
 
-current release=allsrc host=sup.au.netbsd.org hostbase=/ftp \
+current release=allsrc host=sup.au.NetBSD.org hostbase=/ftp \
     base=/usr prefix=/usr backup use-rel-suffix compress
 
-current release=doc host=sup.au.netbsd.org hostbase=/ftp \
+current release=doc host=sup.au.NetBSD.org hostbase=/ftp \
     base=/usr prefix=/usr backup use-rel-suffix compress
 
-current release=pkgsrc host=sup.au.netbsd.org hostbase=/ftp \
+current release=pkgsrc host=sup.au.NetBSD.org hostbase=/ftp \
     base=/usr prefix=/usr backup use-rel-suffix compress delete
 
-current release=xsrc host=sup.au.netbsd.org hostbase=/ftp \
+current release=xsrc host=sup.au.NetBSD.org hostbase=/ftp \
     base=/usr prefix=/usr backup use-rel-suffix compress
