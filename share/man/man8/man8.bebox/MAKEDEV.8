@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.6 2001/04/16 08:11:17 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.7 2001/05/27 21:18:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,7 +161,8 @@ Wscons keyboard events, see
 .It Terminal ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar com#
-Standard PC COM ports
+Standard PC COM ports, see
+.Xr com 4
 . It Ar tty#
 Alias for PC COM ports, this is what the system really wants, see
 .Xr tty 4
