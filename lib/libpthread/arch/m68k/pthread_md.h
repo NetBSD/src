@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.1 2001/11/18 23:35:20 scw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/19 20:24:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,6 +60,6 @@ pthread__sp(void)
  * Usable stack space below the ucontext_t. 
  * See comment in pthread_switch.S about STACK_SWITCH.
  */
-#define STACKSPACE	32	/* room for 8 integer values */
+#define STACKSPACE	12	/* room for 3 integer values */
 
 #endif /* _LIB_PTHREAD_M68K_MD_H */
