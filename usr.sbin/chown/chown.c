@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$NetBSD: chown.c,v 1.11 1997/10/06 13:28:00 enami Exp $";
+static char *rcsid = "$NetBSD: chown.c,v 1.12 1997/10/11 03:14:12 enami Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -249,7 +249,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-R [-H | -L | -P]] [-f] %s file ...\n",
+	    "usage: %s [-R [-H | -L | -P]] [-fh] %s file ...\n",
 	    myname, ischown ? "[owner][:group]" : "group");
 	exit(1);
 }
