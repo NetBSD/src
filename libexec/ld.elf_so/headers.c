@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.9 2001/04/25 12:24:50 kleink Exp $	 */
+/*	$NetBSD: headers.c,v 1.10 2002/07/10 15:12:34 fredette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -66,6 +66,7 @@ _rtld_digest_dynamic(obj)
 	Elf_Sword	plttype = DT_REL;
 	Elf_Addr        relsz = 0, relasz = 0;
 	Elf_Addr	pltrelsz = 0;
+	Elf_Addr	init = 0, fini = 0;
 
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
 		switch (dynp->d_tag) {
@@ -198,13 +199,11 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_INIT:
-			obj->init = (void (*) __P((void)))
-			    (obj->relocbase + dynp->d_un.d_ptr);
+			init = dynp->d_un.d_ptr;
 			break;
 
 		case DT_FINI:
-			obj->fini = (void (*) __P((void)))
-			    (obj->relocbase + dynp->d_un.d_ptr);
+			fini = dynp->d_un.d_ptr;
 			break;
 
 		case DT_DEBUG:
@@ -245,6 +244,22 @@ _rtld_digest_dynamic(obj)
 		obj->pltrellim = 0;
 		obj->pltrelalim = (const Elf_Rela *)((caddr_t)obj->pltrela + pltrelsz);
 	}
+
+#if defined(RTLD_LOADER) && defined(__HAVE_FUNCTION_DESCRIPTORS)
+	if (init != 0)
+		obj->init = (void (*) __P((void)))
+		    _rtld_function_descriptor_alloc(obj, NULL, init);
+	if (fini != 0)
+		obj->fini = (void (*) __P((void)))
+		    _rtld_function_descriptor_alloc(obj, NULL, fini);
+#else
+	if (init != 0)
+		obj->init = (void (*) __P((void)))
+		    (obj->relocbase + init);
+	if (fini != 0)
+		obj->fini = (void (*) __P((void)))
+		    (obj->relocbase + fini);
+#endif
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(&obj->rpaths, obj->strtab +
