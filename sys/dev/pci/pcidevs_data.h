@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.630 2004/07/15 13:11:37 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.631 2004/07/17 20:05:03 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.631 2004/07/15 13:09:21 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.632 2004/07/17 20:04:32 mycroft Exp 
  */
 
 /*
@@ -5695,13 +5695,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
 	    0,
 	    "Intersil",
-	    "Intersil PRISM2.5 Mini-PCI WLAN",
+	    "PRISM2.5 Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_P54,
 	    0,
 	    "Intersil",
-	    "Intersil PRISM-54 Mini-PCI WLAN",
+	    "PRISM-54 Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
