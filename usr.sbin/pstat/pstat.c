@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.70 2002/02/22 11:25:37 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.71 2002/02/23 01:06:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.70 2002/02/22 11:25:37 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.71 2002/02/23 01:06:41 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ char	*memf	= NULL;
 kvm_t	*kd;
 
 struct {
-	int m_flag;
+	u_int m_flag;
 	const char *m_name;
 } mnt_flags[] = {
 	{ MNT_RDONLY, "rdonly" },
@@ -144,6 +144,11 @@ struct {
 	{ MNT_UNMOUNT, "unmount" },
 	{ MNT_WANTRDWR, "wantrdwr" },
 	{ 0 }
+};
+
+struct flagbit_desc {
+	u_int fd_flags;
+	char fd_mark;
 };
 
 #define	SVAR(var) __STRING(var)	/* to force expansion */
@@ -182,6 +187,7 @@ struct {
 
 void	filemode __P((void));
 int	getfiles __P((char **, int *));
+int	getflags __P((const struct flagbit_desc *, char *, u_int));
 struct mount *
 	getmnt __P((struct mount *));
 char *	kinfo_vnodes __P((int *));
@@ -194,7 +200,6 @@ void	nfs_header __P((void));
 int	nfs_print __P((struct vnode *, int));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *));
-void	ufs_getflags __P((struct vnode *, struct inode *, char *));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *, int));
 int	ext2fs_print __P((struct vnode *, int));
@@ -291,12 +296,14 @@ main(argc, argv)
 		ttymode();
 	if (swapflag || totalflag)
 		list_swap(0, kflag, 0, totalflag, 1);
-	exit (0);
+	exit(0);
 }
 
 #define	VPTRSZ  sizeof(struct vnode *)
 #define	VNODESZ sizeof(struct vnode)
-#define	PTRSTRWIDTH ((int)sizeof(void *) * 2)
+#define	PTRSTRWIDTH ((int)sizeof(void *) * 2) /* Width of resulting string
+						 when pointer is printed
+						 in hexadecimal. */
 
 void
 vnodemode()
@@ -365,6 +372,43 @@ vnodemode()
 	free(e_vnodebase);
 }
 
+int
+getflags(fd, p, flags)
+	const struct flagbit_desc *fd;
+	char *p;
+	u_int flags;
+{
+	char *q = p;
+
+	if (flags == 0) {
+		*p++ = '-';
+		*p = '\0';
+		return (0);
+	}
+
+	for (; fd->fd_flags != 0; fd++)
+		if ((flags & fd->fd_flags) != 0)
+			*p++ = fd->fd_mark;
+	*p = '\0';
+	return (p - q);
+}
+
+const struct flagbit_desc vnode_flags[] = {
+	{ VROOT,	'R' },
+	{ VTEXT,	'T' },
+	{ VSYSTEM,	'S' },
+	{ VISTTY,	'I' },
+	{ VEXECMAP,	'E' },
+	{ VXLOCK,	'L' },
+	{ VXWANT,	'W' },
+	{ VBWAIT,	'B' },
+	{ VALIASED,	'A' },
+	{ VDIROP,	'D' },
+	{ VLAYER,	'Y' },
+	{ VONWORKLST,	'O' },
+	{ 0,		'\0' },
+};
+
 void
 vnode_header()
 {
@@ -378,9 +422,8 @@ vnode_print(avnode, vp)
 	struct vnode *avnode;
 	struct vnode *vp;
 {
-	char *type, flags[16];
-	char *fp = flags;
-	int flag, ovflw;
+	char *type, flags[sizeof(vnode_flags) / sizeof(vnode_flags[0])];
+	int ovflw;
 
 	/*
 	 * set type
@@ -410,34 +453,7 @@ vnode_print(avnode, vp)
 	/*
 	 * gather flags
 	 */
-	flag = vp->v_flag;
-	if (flag & VROOT)
-		*fp++ = 'R';
-	if (flag & VTEXT)
-		*fp++ = 'T';
-	if (flag & VSYSTEM)
-		*fp++ = 'S';
-	if (flag & VISTTY)
-		*fp++ = 'I';
-	if (flag & VEXECMAP)
-		*fp++ = 'E';
-	if (flag & VXLOCK)
-		*fp++ = 'L';
-	if (flag & VXWANT)
-		*fp++ = 'W';
-	if (flag & VBWAIT)
-		*fp++ = 'B';
-	if (flag & VALIASED)
-		*fp++ = 'A';
-	if (flag & VDIROP)
-		*fp++ = 'D';
-	if (flag & VLAYER)
-		*fp++ = 'Y';
-	if (flag & VONWORKLST)
-		*fp++ = 'O';
-	if (flag == 0)
-		*fp++ = '-';
-	*fp = '\0';
+	(void)getflags(vnode_flags, flags, vp->v_flag);
 
 	ovflw = 0;
 	PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)avnode);
@@ -450,45 +466,20 @@ vnode_print(avnode, vp)
 	return (ovflw);
 }
 
-void
-ufs_getflags(vp, ip, flags)
-	struct vnode *vp;
-	struct inode *ip;
-	char *flags;
-{
-	int flag;
-
-	/*
-	 * XXX need to to locking state.
-	 */
-
-	flag = ip->i_flag;
-	if (flag & IN_ACCESS)
-		*flags++ = 'A';
-	if (flag & IN_CHANGE)
-		*flags++ = 'C';
-	if (flag & IN_UPDATE)
-		*flags++ = 'U';
-	if (flag & IN_MODIFIED)
-		*flags++ = 'M';
-	if (flag & IN_ACCESSED)
-		*flags++ = 'a';
-	if (flag & IN_RENAME)
-		*flags++ = 'R';
-	if (flag & IN_SHLOCK)
-		*flags++ = 'S';
-	if (flag & IN_EXLOCK)
-		*flags++ = 'E';
-	if (flag & IN_CLEANING)
-		*flags++ = 'c';
-	if (flag & IN_ADIROP)
-		*flags++ = 'D';
-	if (flag & IN_SPACECOUNTED)
-		*flags++ = 's';
-	if (flag == 0)
-		*flags++ = '-';
-	*flags = '\0';
-}
+const struct flagbit_desc ufs_flags[] = {
+	{ IN_ACCESS,	'A' },
+	{ IN_CHANGE,	'C' },
+	{ IN_UPDATE,	'U' },
+	{ IN_MODIFIED,	'M' },
+	{ IN_ACCESSED,	'a' },
+	{ IN_RENAME,	'R' },
+	{ IN_SHLOCK,	'S' },
+	{ IN_EXLOCK,	'E' },
+	{ IN_CLEANING,	'c' },
+	{ IN_ADIROP,	'D' },
+	{ IN_SPACECOUNTED, 's' },
+	{ 0,		'\0' },
+};
 
 void
 ufs_header()
@@ -503,20 +494,27 @@ ufs_print(vp, ovflw)
 	int ovflw;
 {
 	struct inode inode, *ip = &inode;
-	char buf[16], *name;
+	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
+	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
+	char *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
-	ufs_getflags(vp, ip, buf);
+
+	/*
+	 * XXX need to to locking state.
+	 */
+
+	(void)getflags(ufs_flags, flags, ip->i_flag);
 	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
-	PRWORD(ovflw, " %*s", 6, 1, buf);
+	PRWORD(ovflw, " %*s", 6, 1, flags);
 	type = ip->i_ffs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode)) {
 		if (usenumflag ||
 		    (name = devname(ip->i_ffs_rdev, type)) == NULL) {
-			snprintf(buf, sizeof(buf), "%d,%d",
+			snprintf(dev, sizeof(dev), "%d,%d",
 			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
-			name = buf;
+			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
 	} else
@@ -530,26 +528,47 @@ ext2fs_print(vp, ovflw)
 	int ovflw;
 {
 	struct inode inode, *ip = &inode;
-	char buf[16], *name;
+	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
+	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
+	char *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
-	ufs_getflags(vp, ip, buf);
+
+	/*
+	 * XXX need to to locking state.
+	 */
+
+	(void)getflags(ufs_flags, flags, ip->i_flag);
 	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
-	PRWORD(ovflw, " %*s", 6, 1, buf);
+	PRWORD(ovflw, " %*s", 6, 1, flags);
 	type = ip->i_e2fs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode)) {
 		if (usenumflag ||
 		    (name = devname(ip->i_e2fs_rdev, type)) == NULL) {
-			snprintf(buf, sizeof(buf), "%d,%d",
+			snprintf(dev, sizeof(dev), "%d,%d",
 			    major(ip->i_e2fs_rdev), minor(ip->i_e2fs_rdev));
-			name = buf;
+			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
 	} else
 		PRWORD(ovflw, " %*u", 8, 1, (u_int)ip->i_e2fs_size);
 	return (0);
 }
+
+const struct flagbit_desc nfs_flags[] = {
+	{ NFLUSHWANT,	'W' },
+	{ NFLUSHINPROG,	'P' },
+	{ NMODIFIED,	'M' },
+	{ NWRITEERR,	'E' },
+	{ NQNFSNONCACHE, 'X' },
+	{ NQNFSWRITE,	'O' },
+	{ NQNFSEVICTED,	'G' },
+	{ NACC,		'A' },
+	{ NUPD,		'U' },
+	{ NCHG,		'C' },
+	{ 0,		'\0' },
+};
 
 void
 nfs_header()
@@ -564,41 +583,18 @@ nfs_print(vp, ovflw)
 	int ovflw;
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
-	char buf[16], *flags = buf;
-	int flag;
+	char flags[sizeof(nfs_flags) / sizeof(nfs_flags[0])];
+	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
 	struct vattr va;
 	char *name;
 	mode_t type;
 
 	KGETRET(VTONFS(vp), &nfsnode, sizeof(nfsnode), "vnode's nfsnode");
-	flag = np->n_flag;
-	if (flag & NFLUSHWANT)
-		*flags++ = 'W';
-	if (flag & NFLUSHINPROG)
-		*flags++ = 'P';
-	if (flag & NMODIFIED)
-		*flags++ = 'M';
-	if (flag & NWRITEERR)
-		*flags++ = 'E';
-	if (flag & NQNFSNONCACHE)
-		*flags++ = 'X';
-	if (flag & NQNFSWRITE)
-		*flags++ = 'O';
-	if (flag & NQNFSEVICTED)
-		*flags++ = 'G';
-	if (flag & NACC)
-		*flags++ = 'A';
-	if (flag & NUPD)
-		*flags++ = 'U';
-	if (flag & NCHG)
-		*flags++ = 'C';
-	if (flag == 0)
-		*flags++ = '-';
-	*flags = '\0';
+	(void)getflags(nfs_flags, flags, np->n_flag);
 
 	KGETRET(np->n_vattr, &va, sizeof(va), "vnode attr");
 	PRWORD(ovflw, " %*ld", 7, 1, (long)va.va_fileid);
-	PRWORD(ovflw, " %*s", 6, 1, buf);
+	PRWORD(ovflw, " %*s", 6, 1, flags);
 	switch (va.va_type) {
 	case VCHR:
 		type = S_IFCHR;
@@ -608,9 +604,9 @@ nfs_print(vp, ovflw)
 		type = S_IFBLK;
 	device:
 		if (usenumflag || (name = devname(va.va_rdev, type)) == NULL) {
-			(void)snprintf(buf, sizeof(buf), "%d,%d",
+			(void)snprintf(dev, sizeof(dev), "%d,%d",
 			    major(va.va_rdev), minor(va.va_rdev));
-			name = buf;
+			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
 		break;
@@ -805,10 +801,7 @@ ttymode()
 	}
 }
 
-struct {
-	int flag;
-	char val;
-} ttystates[] = {
+const struct flagbit_desc ttystates[] = {
 	{ TS_ISOPEN,	'O'},
 	{ TS_DIALOUT,	'>'},
 	{ TS_CARR_ON,	'C'},
@@ -832,10 +825,11 @@ void
 ttyprt(tp)
 	struct tty *tp;
 {
-	int i, j;
-	pid_t pgid;
-	char *name, state[20], buffer;
+	char state[sizeof(ttystates) / sizeof(ttystates[0]) + 1];
 	struct linesw t_linesw;
+	char *name, buffer;
+	pid_t pgid;
+	int n;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
 		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev));
@@ -844,14 +838,11 @@ ttyprt(tp)
 	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
 	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc,
 	    tp->t_hiwat, tp->t_lowat, tp->t_column);
-	for (i = j = 0; ttystates[i].flag; i++)
-		if (tp->t_state&ttystates[i].flag)
-			state[j++] = ttystates[i].val;
-	if (tp->t_wopen)
-		state[j++] = 'W';
-	if (j == 0)
-		state[j++] = '-';
-	state[j] = '\0';
+	n = getflags(ttystates, state, tp->t_state);
+	if (tp->t_wopen) {
+		state[n++] = 'W';
+		state[n] = '\0';
+	}
 	(void)printf("%-6s %8lX", state, (u_long)tp->t_session);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
@@ -870,12 +861,25 @@ ttyprt(tp)
 	(void)putchar('\n');
 }
 
+const struct flagbit_desc filemode_flags[] = {
+	{ FREAD,	'R' },
+	{ FWRITE,	'W' },
+	{ FAPPEND,	'A' },
+#ifdef FSHLOCK	/* currently gone */
+	{ FSHLOCK,	'S' },
+	{ FEXLOCK,	'X' },
+#endif
+	{ FASYNC,	'I' },
+	{ 0,		'\0' },
+};
+
 void
 filemode()
 {
 	struct file *fp;
 	struct file *addr;
-	char *buf, flagbuf[16], *fbp;
+	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
+	char *buf;
 	int len, maxfile, nfile;
 	static char *dtypes[] = { "???", "inode", "socket" };
 
@@ -903,23 +907,8 @@ filemode()
 			continue;
 		(void)printf("%lx ", (long)addr);
 		(void)printf("%-8.8s", dtypes[fp->f_type]);
-		fbp = flagbuf;
-		if (fp->f_flag & FREAD)
-			*fbp++ = 'R';
-		if (fp->f_flag & FWRITE)
-			*fbp++ = 'W';
-		if (fp->f_flag & FAPPEND)
-			*fbp++ = 'A';
-#ifdef FSHLOCK	/* currently gone */
-		if (fp->f_flag & FSHLOCK)
-			*fbp++ = 'S';
-		if (fp->f_flag & FEXLOCK)
-			*fbp++ = 'X';
-#endif
-		if (fp->f_flag & FASYNC)
-			*fbp++ = 'I';
-		*fbp = '\0';
-		(void)printf("%6s  %3d", flagbuf, fp->f_count);
+		(void)getflags(filemode_flags, flags, fp->f_flag);
+		(void)printf("%6s  %3d", flags, fp->f_count);
 		(void)printf("  %3d", fp->f_msgcount);
 		(void)printf("  %8.1lx", (long)fp->f_data);
 		if (fp->f_offset < 0)
