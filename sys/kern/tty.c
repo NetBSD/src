@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.72 1996/06/04 13:59:10 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.73 1996/06/06 15:31:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2095,6 +2095,9 @@ ttymalloc()
 
 /*
  * Free a tty structure and its buffers.
+ *
+ * Be sure to call tty_detach() for any tty that has been
+ * tty_attach()ed.
  */
 void
 ttyfree(tp)
@@ -2104,6 +2107,5 @@ ttyfree(tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	tty_detach(tp);
 	FREE(tp, M_TTYS);
 }
