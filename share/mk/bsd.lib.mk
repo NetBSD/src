@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.134 1998/04/15 12:07:10 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.135 1998/04/17 13:34:55 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -238,12 +238,12 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 .if (${OBJECT_FMT} == "ELF")
-	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	rm -f lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
-	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
+	    lib${LIB}.so.${SHLIB_MAJOR}
+	rm -f lib${LIB}.so
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
+	    lib${LIB}.so
 .endif
 
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
