@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.1 2003/09/13 22:22:30 christos Exp $
+.\"	$NetBSD: timer_settime.2,v 1.2 2003/09/13 22:31:04 kleink Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .In time.h
 .Ft int
-.Fn timer_settime "timer_t timerid" "int flags" "const struct itimerspec *tim" "struct itimerspec *otim"
+.Fn timer_settime "timer_t timerid" "int flags" "const struct itimerspec * restrict tim" "struct itimerspec * restrict otim"
 .Ft int
 .Fn timer_gettime "timer_t timerid" "struct itimerspec *tim"
 .Ft int 
