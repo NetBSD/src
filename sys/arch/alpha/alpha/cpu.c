@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.52 2000/06/29 09:02:53 mrg Exp $ */
+/* $NetBSD: cpu.c,v 1.53 2000/07/03 21:21:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2000/06/29 09:02:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2000/07/03 21:21:26 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -124,40 +124,27 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
-static char *ev4minor[] = {
-	"pass 2 or 2.1", "pass 3", 0
-}, *lcaminor[] = {
+static const char *lcaminor[] = {
 	"",
-	"21066 pass 1 or 1.1", "21066 pass 2",
-	"21068 pass 1 or 1.1", "21068 pass 2",
-	"21066A pass 1", "21068A pass 1", 0
-}, *ev5minor[] = {
-	"", "pass 2, rev BA or 2.2, rev CA", "pass 2.3, rev DA or EA",
-	"pass 3", "pass 3.2", "pass 4", 0
-}, *ev45minor[] = {
-	"", "pass 1", "pass 1.1", "pass 2", 0
-}, *ev56minor[] = {
-	"", "pass 1", "pass 2", 0
-}, *ev6minor[] = {
-	"pass 1", "pass 2", "pass 2.2", "pass 2.3", "pass 3", 0
-}, *pca56minor[] = {
-	"", "pass 1", 0
+	"21066", "21066",
+	"21068", "21068",
+	"21066A", "21068A", 0
 };
 
 struct cputable_struct {
 	int	cpu_major_code;
-	char	*cpu_major_name;
-	char	**cpu_minor_names;
+	const char *cpu_major_name;
+	const char **cpu_minor_names;
 } cpunametable[] = {
 	{ PCS_PROC_EV3,		"EV3",		NULL		},
-	{ PCS_PROC_EV4,		"21064",	ev4minor	},
+	{ PCS_PROC_EV4,		"21064",	NULL		},
 	{ PCS_PROC_SIMULATION,	"Sim",		NULL		},
 	{ PCS_PROC_LCA4,	"LCA",		lcaminor	},
-	{ PCS_PROC_EV5,		"21164",	ev5minor	},
-	{ PCS_PROC_EV45,	"21064A",	ev45minor	},
-	{ PCS_PROC_EV56,	"21164A",	ev56minor	},
-	{ PCS_PROC_EV6,		"21264",	ev6minor	},
-	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	},
+	{ PCS_PROC_EV5,		"21164",	NULL		},
+	{ PCS_PROC_EV45,	"21064A",	NULL		},
+	{ PCS_PROC_EV56,	"21164A",	NULL		},
+	{ PCS_PROC_EV6,		"21264",	NULL		},
+	{ PCS_PROC_PCA56,	"PCA56",	NULL		},
 	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
 	{ PCS_PROC_EV67,	"21264A",	NULL		},
 };
@@ -215,7 +202,7 @@ cpuattach(parent, self, aux)
 	struct cpu_softc *sc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
 	int i;
-	char **s;
+	const char **s;
 	struct pcs *p;
 #ifdef DEBUG
 	int needcomma;
@@ -246,13 +233,13 @@ cpuattach(parent, self, aux)
 					goto recognized;
 				}
 			}
-			printf(" (unknown minor type %d)\n", minor);
 			goto recognized;
 		}
 	}
-	printf("UNKNOWN CPU TYPE (%d:%d)\n", major, minor);
+	printf("UNKNOWN CPU TYPE (%d:%d)", major, minor);
 
 recognized:
+	printf("\n");
 
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
 		cpu_implver = alpha_implver();
