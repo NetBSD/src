@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854reg.h,v 1.3 1998/09/06 21:39:33 pk Exp $ */
+/*	$NetBSD: lsi64854reg.h,v 1.4 1998/09/21 21:26:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,13 @@
 #define L64854_REG_CNT_MASK	0x00ffffff	/*   only 24 bits */
 #define L64854_REG_ENBAR	12		/* ENET Base register */
 #define L64854_REG_TEST		12		/* SCSI Test register */
+#define L64854_REG_HCR		16		/* PP Hardware Configuration */
+#define L64854_REG_OCR		18		/* PP Operation Configuration */
+#define L64854_REG_DR		20		/* PP Data register */
+#define L64854_REG_TCR		21		/* PP Transfer Control */
+#define L64854_REG_OR		22		/* PP Output register */
+#define L64854_REG_IR		23		/* PP Input register */
+#define L64854_REG_ICR		24		/* PP Interrupt Control */
 
 
 /*
