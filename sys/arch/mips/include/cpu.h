@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2001/01/11 21:08:18 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2001/01/14 00:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -183,8 +183,8 @@ struct clockframe {
 
 #define aston()		(astpending = 1)
 
-extern int astpending;	/* need to trap before returning to user mode */
-extern int want_resched;	/* resched() was called */
+extern __volatile int astpending;	/* AST pending on return to user mode */
+extern int want_resched;		/* resched() was called */
 #ifdef MIPS3
 extern u_int	mips_L2CacheSize;
 extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */

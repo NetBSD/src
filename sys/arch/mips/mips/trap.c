@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154 2001/01/11 18:44:29 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.155 2001/01/14 00:10:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2001/01/11 18:44:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2001/01/14 00:10:29 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2001/01/11 18:44:29 thorpej Exp $");
 #include <sys/kgdb.h>
 #endif
 
-int astpending;
+__volatile int astpending;
 int want_resched;
 
 const char *trap_type[] = {
@@ -691,23 +691,34 @@ ast(pc)
 	unsigned pc;		/* program counter where to continue */
 {
 	struct proc *p = curproc;
+	int sig;
 
-	uvmexp.softs++;
-	astpending = 0;
+	while (astpending) {
+		uvmexp.softs++;
+		astpending = 0;
 
-	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
-		ADDUPROF(p);
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
+		}
+
+		/* Take pending signals. */
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+
+		if (want_resched) {
+			/*
+			 * We are being preempted.
+			 */
+			preempt(NULL);
+
+			/* Running again; take any new pending signals. */
+			while ((sig = CURSIG(p)) != 0)
+				postsig(sig);
+		}
+
+		userret(p);
 	}
-
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-	}
-
-	userret(p);
 }
 
 /*
