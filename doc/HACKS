@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.22 2003/11/05 00:50:05 mrg Exp $
+# $NetBSD: HACKS,v 1.23 2003/11/06 00:37:14 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -114,6 +114,18 @@ port	vax
 		tries to range-check byte offsets when it doesn't have
 		sufficient information to make that decision.
 		Workaround uses `brw' instead of `brb' instruction.
+	kcah
+
+	hack	vax gcc 2.95.3 -Wuninitialized workarounds
+	cdate	6 Nov 2003
+	who	he
+	file	sys/dev/bi/if_ni.c : 1.22
+	file	sys/arch/vax/vax/ctu.c : 1.20
+	descr
+		Workaround for gcc 2.95.3 failing to detect that certain
+		variables will be initialized; so that this code compiles
+		with -Wuninitialized.  Should be reviewed and possibly
+		reverted when gcc 3.3.2 is ready for vax.
 	kcah
 
 
