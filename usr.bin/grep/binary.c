@@ -1,3 +1,5 @@
+/* 	$NetBSD: binary.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -23,8 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: binary.c,v 1.1.1.1 2004/01/02 14:58:45 cjep Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: binary.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
+#endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -32,24 +38,25 @@
 
 #include "grep.h"
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 128
 
 int
 bin_file(FILE *f)
 {
-	char		buf[BUFFER_SIZE];
-	int		i, m;
+	char buf[BUFFER_SIZE];
+	int i, m;
 
-	if (fseek(f, SEEK_SET, 0) == -1)
+	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
 	if ((m = (int)fread(buf, 1, BUFFER_SIZE, f)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]))
-			return 1;
-
+		if (!isprint(buf[i]) && !isspace(buf[i]) && 
+		    buf[i] != line_endchar)
+			return 1; 
+	
 	rewind(f);
 	return 0;
 }
@@ -57,17 +64,18 @@ bin_file(FILE *f)
 int
 gzbin_file(gzFile *f)
 {
-	char		buf[BUFFER_SIZE];
-	int		i, m;
+	char buf[BUFFER_SIZE];
+	int i, m;
 
-	if (gzseek(f, SEEK_SET, 0) == -1)
+	if (gzseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = (int)gzread(f, buf, BUFFER_SIZE)) == 0)
+	if ((m = gzread(f, buf, BUFFER_SIZE)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]))
+		if (!isprint(buf[i]) && !isspace(buf[i]) &&
+		    buf[i] != line_endchar)
 			return 1;
 
 	gzrewind(f);
@@ -78,10 +86,10 @@ int
 mmbin_file(mmf_t *f)
 {
 	int i;
-	
 	/* XXX knows too much about mmf internals */
-	for (i = 0; i < BUFFER_SIZE && i < f->len; i++)
-		if (!isprint(f->base[i]))
+	for (i = 0; i < BUFFER_SIZE && i < f->len - 1; i++)
+		if (!isprint(f->base[i]) && !isspace(f->base[i]) &&
+		    f->base[i] != line_endchar) 
 			return 1;
 	mmrewind(f);
 	return 0;
