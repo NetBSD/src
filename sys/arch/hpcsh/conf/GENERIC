@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2002/01/27 13:23:17 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.17 2002/02/01 17:52:55 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,7 +32,6 @@ options		KLOADER_DEBUG
 
 options 	SH7709A			# 133MHz
 options 	SH7709A_BROKEN_IPR
-options 	PCLOCK=22000000		# 22MHz
 
 options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2001/07/22 14:20:13 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2002/02/01 17:52:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -89,7 +89,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Primitive clock interrupt routines.
  */
 
-#include "opt_pclock.h"
 #include "wdog.h"
 
 #include <sys/param.h>
@@ -100,6 +99,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <dev/clock_subr.h>
 
+#include <sh3/pclock.h>
 #include <sh3/rtcreg.h>
 #include <sh3/tmureg.h>
 #include <sh3/wdogvar.h>

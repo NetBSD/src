@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.18 2001/06/12 15:17:20 wiz Exp $ */
+/* $NetBSD: scif.c,v 1.19 2002/02/01 17:52:56 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -104,7 +104,6 @@
  */
 
 #include "opt_kgdb.h"
-#include "opt_pclock.h"
 #include "opt_scif.h"
 
 #include <sys/param.h>
@@ -121,6 +120,7 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <sh3/pclock.h>
 #include <sh3/scifreg.h>
 #include <sh3/tmureg.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.19 2001/09/28 11:59:53 chs Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.20 2002/02/01 17:52:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,11 @@
 #include <uvm/uvm_extern.h>
 
 char cpu_model[120];
+
+/* 
+ * if PCLOCK isn't defined in config file, use this.
+ */
+int sh3_pclock;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
