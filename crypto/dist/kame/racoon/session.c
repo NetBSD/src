@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: session.c,v 1.2 2003/07/12 09:37:12 itojun Exp $");
+__RCSID("$NetBSD: session.c,v 1.3 2003/11/04 04:30:38 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -329,6 +329,11 @@ check_flushsa()
 	int n;
 
 	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);
+	if (buf == NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		    "pfkey_dump_sadb: returned nothing.\n");
+		return;
+	}
 
 	msg = (struct sadb_msg *)buf->v;
 	end = (struct sadb_msg *)(buf->v + buf->l);
