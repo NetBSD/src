@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.26 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.27 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth1.c,v 1.59 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: auth1.c,v 1.26 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.27 2005/02/13 18:14:04 christos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -81,7 +81,13 @@ do_authloop(Authctxt *authctxt)
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
 	    PRIVSEP(auth_password(authctxt, ""))) {
-		auth_log(authctxt, 1, "without authentication", "");
+#ifdef USE_PAM
+		if (options.use_pam && (PRIVSEP(do_pam_account())))
+#endif
+		{
+			auth_log(authctxt, 1, "without authentication", "");
+			return;
+		}
 		return;
 	}
 
@@ -216,6 +222,12 @@ do_authloop(Authctxt *authctxt)
 		    !auth_root_allowed(get_authname(type)))
 			authenticated = 0;
 
+#ifdef USE_PAM
+		if (options.use_pam && authenticated &&
+		    !PRIVSEP(do_pam_account()))
+			authenticated = 0;
+#endif
+
 		/* Log before sending the reply */
 		auth_log(authctxt, authenticated, get_authname(type), info);
 
@@ -264,6 +276,11 @@ do_authentication(Authctxt *authctxt)
 
 	setproctitle("%s%s", authctxt->valid ? user : "unknown",
 	    use_privsep ? " [net]" : "");
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		PRIVSEP(start_pam(authctxt));
+#endif
 
 	/*
 	 * If we are not running as root, the user must have the same uid as

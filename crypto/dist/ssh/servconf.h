@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.17 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: servconf.h,v 1.18 2005/02/13 18:14:04 christos Exp $	*/
 /*	$OpenBSD: servconf.h,v 1.70 2004/06/24 19:30:54 djm Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ typedef struct {
 
 	char   *authorized_keys_file;	/* File containing public keys */
 	char   *authorized_keys_file2;
+	int	use_pam;		/* Enable auth via PAM */
 }       ServerOptions;
 
 void	 initialize_server_options(ServerOptions *);
