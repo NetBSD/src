@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.11 2003/07/17 11:44:27 hannken Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.12 2003/08/27 23:13:51 fvdl Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -238,6 +238,7 @@
 #define BGE_ASICREV_BCM5704_A0		0x20000000
 #define BGE_ASICREV_BCM5704_A1		0x20010000
 #define BGE_ASICREV_BCM5704_A2		0x20020000
+#define BGE_ASICREV_BCM5704_A3		0x20030000
 #define BGE_ASICREV_BCM5705_A0		0x30000000
 #define BGE_ASICREV_BCM5705_A1		0x30010000
 #define BGE_ASICREV_BCM5705_A2		0x30020000
