@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: mi,v 1.8 2004/03/06 20:46:30 heas Exp $
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
@@ -2125,4 +2125,3 @@
 ./usr/X11R6/man/cat3/gluTessProperty.0
 ./usr/X11R6/man/cat3/gluTessVertex.0
 ./usr/X11R6/man/cat3/gluUnProject.0
-./usr/X11R6/man/cat4/via.0
