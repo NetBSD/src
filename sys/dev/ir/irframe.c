@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.2 2001/12/02 16:29:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -208,28 +208,20 @@ int
 irframewrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct irframe_softc *sc;
-	u_int8_t buf[MAX_IRDA_FRAME];
-	size_t n;
-	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
-	n = uio->uio_resid;
-	if (n > MAX_IRDA_FRAME)
-		return (EINVAL);
-	error = uiomove(buf, n, uio);
-	if (error)
-		return (error);
-	return (sc->sc_methods->im_write(sc->sc_handle, buf, n));
+	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
 
 int
 irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
+	void *vaddr = addr;
 	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
@@ -245,8 +237,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_SET_PARAMS:
-		error = sc->sc_methods->im_set_params(sc->sc_handle,
-		    (void *)addr);
+		error = sc->sc_methods->im_set_params(sc->sc_handle, vaddr);
 		break;
 
 	case IRDA_RESET_PARAMS:
@@ -254,13 +245,11 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_GET_SPEEDMASK:
-		error = sc->sc_methods->im_get_speeds(sc->sc_handle,
-		    (int *)addr);
+		error = sc->sc_methods->im_get_speeds(sc->sc_handle, vaddr);
 		break;
 
 	case IRDA_GET_TURNAROUNDMASK:
-		error = sc->sc_methods->im_get_turnarounds(sc->sc_handle,
-		    (int *)addr);
+		error = sc->sc_methods->im_get_turnarounds(sc->sc_handle,vaddr);
 		break;
 
 	default:
@@ -274,8 +263,6 @@ int
 irframepoll(dev_t dev, int events, struct proc *p)
 {
 	struct irframe_softc *sc;
-	int revents;
-	int s;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
@@ -283,31 +270,10 @@ irframepoll(dev_t dev, int events, struct proc *p)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
 
-	revents = 0;
-	s = splir();
-	if (events & (POLLIN | POLLRDNORM))
-		if (sc->sc_rdframes > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-
-#if 0
-	/* How about write? */
-	if (events & (POLLOUT | POLLWRNORM))
-		if (???)
-			revents |= events & (POLLOUT | POLLWRNORM);
-#endif
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_rdsel);
-
-#if 0
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->sc_wrsel);
-#endif
-	}
-
-	splx(s);
-	return (revents);
+	if (sc->sc_methods->im_poll != NULL)
+		return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
+	else
+		return (0);
 }
 
 void
