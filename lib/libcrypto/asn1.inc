@@ -1,4 +1,4 @@
-#	$NetBSD: asn1.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: asn1.inc,v 1.1.1.1.2.1 2000/06/22 06:55:03 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/asn1
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/asn1
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/asn1
 
 SRCS+= a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c a_bmp.c \

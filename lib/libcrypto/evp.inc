@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: evp.inc,v 1.1.1.1.2.1 2000/06/22 06:55:04 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/evp
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/evp
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/evp
 
 SRCS+=	encode.c digest.c evp_enc.c evp_key.c \
 	e_ecb_d.c e_cbc_d.c e_cfb_d.c e_ofb_d.c \
