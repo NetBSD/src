@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.28 1996/10/13 03:21:44 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.29 1996/10/15 06:41:48 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -180,7 +180,7 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += USPACE;
 
 	if (nextpa > high[0]) {
-		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
+		printf("Failure in NetBSD boot; nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
 		printf("You're hosed!  Try booting with 32-bit addressing ");
 		printf("enabled in the memory control panel.\n");
@@ -571,7 +571,6 @@ bootstrap_mac68k(tc)
 	mac68k_vidphys = videoaddr;
 
 	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
-
 		if (mac68k_machine.do_graybars)
 			printf("Getting mapping from MMU.\n");
 		(void) get_mapping();
