@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.3 2003/09/25 17:59:04 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.4 2003/10/27 16:14:22 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /*
  * Like printf, only we print to a buffer and advance it.
@@ -71,35 +72,41 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
  */
 /*VARARGS*/
 protected void
-file_error(struct magic_set *ms, const char *f, ...)
+file_error(struct magic_set *ms, int error, const char *f, ...)
 {
 	va_list va;
 	/* Only the first error is ok */
 	if (ms->haderr)
-	    return;
+		return;
 	va_start(va, f);
-	(void) vsnprintf(ms->o.buf, ms->o.size, f, va);
-	ms->haderr++;
+	(void)vsnprintf(ms->o.buf, ms->o.size, f, va);
 	va_end(va);
+	if (error > 0) {
+		size_t len = strlen(ms->o.buf);
+		(void)snprintf(ms->o.buf + len, ms->o.size - len, " (%s)",
+		    strerror(error));
+	}
+	ms->haderr++;
+	ms->error = error;
 }
 
 
 protected void
 file_oomem(struct magic_set *ms)
 {
-	file_error(ms, "%s", strerror(errno));
+	file_error(ms, errno, "cannot allocate memory");
 }
 
 protected void
 file_badseek(struct magic_set *ms)
 {
-	file_error(ms, "Error seeking (%s)", strerror(errno));
+	file_error(ms, errno, "error seeking");
 }
 
 protected void
 file_badread(struct magic_set *ms)
 {
-	file_error(ms, "Error reading (%s)", strerror(errno));
+	file_error(ms, errno, "error reading");
 }
 
 protected int
@@ -130,10 +137,47 @@ protected int
 file_reset(struct magic_set *ms)
 {
 	if (ms->mlist == NULL) {
-		file_error(ms, "No magic files loaded");
+		file_error(ms, 0, "no magic files loaded");
 		return -1;
 	}
 	ms->o.ptr = ms->o.buf;
 	ms->haderr = 0;
+	ms->error = -1;
 	return 0;
+}
+
+protected const char *
+file_getbuffer(struct magic_set *ms)
+{
+	char *nbuf, *op, *np;
+	size_t nsize;
+
+	if (ms->haderr)
+		return NULL;
+
+	if (ms->flags & MAGIC_RAW)
+		return ms->o.buf;
+
+	nsize = ms->o.len * 4 + 1;
+	if (ms->o.psize < nsize) {
+		if ((nbuf = realloc(ms->o.pbuf, nsize)) == NULL) {
+			file_oomem(ms);
+			return NULL;
+		}
+		ms->o.psize = nsize;
+		ms->o.pbuf = nbuf;
+	}
+
+	for (np = ms->o.pbuf, op = ms->o.buf; *op; op++) {
+		if (isprint((unsigned char)*op)) {
+			*np++ = *op;	
+		} else {
+			*np++ = '\\';
+			*np++ = ((*op >> 6) & 3) + '0';
+			*np++ = ((*op >> 3) & 7) + '0';
+			*np++ = ((*op >> 0) & 7) + '0';
+		}
+	}
+	*np = '\0';
+	return ms->o.pbuf;
 }

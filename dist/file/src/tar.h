@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.1.1.1 2003/03/25 22:30:22 pooka Exp $	*/
+/*	$NetBSD: tar.h,v 1.1.1.2 2003/10/27 16:14:25 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -39,11 +39,11 @@
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
  *
- * Id: tar.h,v 1.6 2003/03/23 21:16:26 christos Exp # checkin only
+ * Id: tar.h,v 1.7 2003/10/14 19:29:56 christos Exp # checkin only
  */
 
 /*
- * Kludge for handling systems that can't cope with multiple
+ * Kludge for handling systems that cannot cope with multiple
  * external definitions of a variable.  In ONE routine (tar.c),
  * we #define TAR_EXTERN to null; here, we set it to "extern" if
  * it is not already set.

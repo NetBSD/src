@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.3 2003/09/25 17:59:10 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.4 2003/10/27 16:14:25 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -47,9 +47,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: softmagic.c,v 1.60 2003/06/10 18:28:37 christos Exp")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.63 2003/10/15 01:51:24 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.3 2003/09/25 17:59:10 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.4 2003/10/27 16:14:25 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -321,7 +321,7 @@ mprint(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 		break;
 
 	default:
-		file_error(ms, "invalid m->type (%d) in mprint()", m->type);
+		file_error(ms, 0, "invalid m->type (%d) in mprint()", m->type);
 		return -1;
 	}
 	return(t);
@@ -593,7 +593,7 @@ mconvert(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 	case FILE_REGEX:
 		return 1;
 	default:
-		file_error(ms, "invalid type %d in mconvert()", m->type);
+		file_error(ms, 0, "invalid type %d in mconvert()", m->type);
 		return 0;
 	}
 }
@@ -640,6 +640,40 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 		memset(p, 0, sizeof(union VALUETYPE));
 		if (offset < nbytes)
 			memcpy(p, s + offset, nbytes - offset);
+	}
+
+	/* Verify we have enough data to match magic type */
+	switch (m->type) {
+		case FILE_BYTE:
+			if (nbytes < (offset + 1)) /* should alway be true */
+				return 0;
+			break;
+
+		case FILE_SHORT:
+		case FILE_BESHORT:
+		case FILE_LESHORT:
+			if (nbytes < (offset + 2))
+				return 0;
+			break;
+
+		case FILE_LONG:
+		case FILE_BELONG:
+		case FILE_LELONG:
+		case FILE_DATE:
+		case FILE_BEDATE:
+		case FILE_LEDATE:
+		case FILE_LDATE:
+		case FILE_BELDATE:
+		case FILE_LELDATE:
+			if (nbytes < (offset + 4))
+				return 0;
+			break;
+
+		case FILE_STRING:
+		case FILE_PSTRING:
+			if (nbytes < (offset + m->vallen))
+				return 0;
+			break;
 	}
 
 	if ((ms->flags & MAGIC_DEBUG) != 0) {
@@ -1080,7 +1114,7 @@ mcheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 		if (rc) {
 			free(p->buf);
 			regerror(rc, &rx, errmsg, sizeof(errmsg));
-			file_error(ms, "regex error %d, (%s)", rc, errmsg);
+			file_error(ms, 0, "regex error %d, (%s)", rc, errmsg);
 			return -1;
 		} else {
 			rc = regexec(&rx, p->buf, 0, 0, 0);
@@ -1089,7 +1123,7 @@ mcheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 		}
 	}
 	default:
-		file_error(ms, "invalid type %d in mcheck()", m->type);
+		file_error(ms, 0, "invalid type %d in mcheck()", m->type);
 		return -1;
 	}
 
@@ -1163,7 +1197,8 @@ mcheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 
 	default:
 		matched = 0;
-		file_error(ms, "can't happen: invalid relation `%c'", m->reln);
+		file_error(ms, 0, "cannot happen: invalid relation `%c'",
+		    m->reln);
 		return -1;
 	}
 
