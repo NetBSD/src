@@ -41,3 +41,4 @@ filer:/       1.1T     1.1T     -172G   117%    /filer
 /dev/ld0g     1.2T     749G      312G    70%    /anon-root
 /dev/ld0g     1.2T     1.2T     -125G   111%    /anon-root
 /dev/ld0g     1.2T     1.2T     -187G   117%    /anon-root
+/dev/strpct    20T      10T       10T    50%    /strpct
