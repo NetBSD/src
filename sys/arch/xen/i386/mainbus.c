@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2005/03/10 22:10:11 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2005/03/10 22:10:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,14 +135,14 @@ union mainbus_attach_args {
  */
 int	isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
-#if NISA > 0
+#if XXXNISA > 0
 struct isabus_attach_args mba_iba = {
 	"isa",
 	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 	&isa_bus_dma_tag,
 	&x86_isa_chipset
 };
-#endif /* NISA */
+#endif /* XXXNISA */
 
 /*
  * Same as above, but for EISA.
@@ -203,7 +203,7 @@ mainbus_attach(parent, self, aux)
 	mpbios_present = mpbios_probe(self);
 #endif
 
-#if NPCI > 0
+#if XXXNPCI > 0
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
@@ -299,7 +299,7 @@ mainbus_attach(parent, self, aux)
 	 * XXX 'found'.  However, because of the structure of the code,
 	 * XXX that's not currently possible.
 	 */
-#if NPCI > 0
+#if XXXNPCI > 0
 	if (pci_mode != 0) {
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
@@ -347,7 +347,7 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-#if NISA > 0
+#if XXXNISA > 0
 	if (isa_has_been_seen == 0)
 		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif

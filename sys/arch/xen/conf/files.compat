@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.5 2005/03/09 22:39:20 bouyer Exp $
+#	$NetBSD: files.compat,v 1.6 2005/03/11 20:39:39 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -15,8 +15,6 @@ defflag opt_xen.h		XEN
 defflag	ioapic.h		XXXIOAPIC
 defflag	lapic.h			XXXLAPIC
 defflag	apm.h			XXXAPM
-defflag	pci.h			XXXPCI
-defflag	isa.h			XXXISA
 defflag	eisa.h			XXXEISA
 defflag	isadma.h		XXXISADMA
 defflag	mca.h			XXXMCA
