@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2002/09/25 22:21:23 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.47 2003/01/18 06:55:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -174,7 +174,7 @@ vunmapbuf(bp, len)
 #endif
 
 #ifdef DEBUG
-char cpu_forkname[] = "cpu_fork()";
+char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
 
 /*
@@ -196,31 +196,34 @@ char cpu_forkname[] = "cpu_fork()";
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	register struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct pcb *opcb = &p1->p_addr->u_pcb;
-	struct pcb *npcb = &p2->p_addr->u_pcb;
+	struct pcb *opcb = &l1->l_addr->u_pcb;
+	struct pcb *npcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
-	extern struct proc proc0;
+	extern struct lwp lwp0;
 
 	/*
-	 * Save all user registers to p1's stack or, in the case of
+	 * Save all user registers to l1's stack or, in the case of
 	 * user registers and invalid stack pointers, to opcb.
-	 * We then copy the whole pcb to p2; when switch() selects p2
+	 * We then copy the whole pcb to l2; when switch() selects l2
 	 * to run, it will run at the `proc_trampoline' stub, rather
 	 * than returning at the copying code below.
 	 *
-	 * If process p1 has an FPU state, we must copy it.  If it is
+	 * If process l1 has an FPU state, we must copy it.  If it is
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-	if (p1 == curproc) {
+#ifdef NOTDEF_DEBUG
+	printf("cpu_lwp_fork()\n");
+#endif
+	if (l1 == curlwp) {
 		write_user_windows();
 
 		/*
@@ -231,8 +234,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		opcb->pcb_cwp = getcwp();
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
-		panic("cpu_fork: curproc");
+	else if (l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */
@@ -241,27 +244,27 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	opcb->lastcall = NULL;
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-       	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc) {
-			savefpstate(p1->p_md.md_fpstate);
-			fpproc = NULL;
+       	if (l1->l_md.md_fpstate) {
+		if (l1 == fplwp) {
+			savefpstate(l1->l_md.md_fpstate);
+			fplwp = NULL;
 		}
-		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
-		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
+		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
-		p2->p_md.md_fpstate = NULL;
+		l2->l_md.md_fpstate = NULL;
 
-	if (p1->p_flag & P_32)
-		p2->p_flag |= P_32;
+	if (l1->l_proc->p_flag & P_32)
+		l2->l_proc->p_flag |= P_32;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
 	 * out of the kernel. (The trap frame invariably resides at
 	 * the tippity-top of the u. area.)
 	 */
-	tf2 = p2->p_md.md_tf = (struct trapframe *)
+	tf2 = l2->l_md.md_tf = (struct trapframe *)
 			((long)npcb + USPACE - sizeof(*tf2));
 
 	/* Copy parent's trapframe */
@@ -273,6 +276,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
 
+#if 0
+	/* XXX not needed if pc/npc adjusted in syscall */
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G7RFLAG) {
 		/* jmp %g2 (or %g7, deprecated) on success */
@@ -288,6 +293,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		 */
 		/*tf2->tf_psr &= ~PSR_C;   -* success */
 	}
+#endif
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
@@ -301,18 +307,18 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-
 	/* Need to create a %tstate if we're forking from proc0 */
-	if (p1 == &proc0)
+	if (l1 == &lwp0)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 	else
-		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT); 
+
 
 #ifdef NOTDEF_DEBUG
-	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
+	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
 	       (struct trapframe *)((int)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
-	printf("cpu_fork: tstate=%x:%x pc=%x:%x npc=%x:%x rsp=%x\n",
+	printf("cpu_lwp_fork: tstate=%x:%x pc=%x:%x npc=%x:%x rsp=%x\n",
 	       (long)(tf2->tf_tstate>>32), (long)tf2->tf_tstate, 
 	       (long)(tf2->tf_pc>>32), (long)tf2->tf_pc,
 	       (long)(tf2->tf_npc>>32), (long)tf2->tf_npc, 
@@ -320,6 +326,25 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	Debugger();
 #endif
 }
+
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
+
+
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+
+	npcb->pcb_pc = (long)proc_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
+}	
 
 /*
  * cpu_exit is called as the last action during exit.
@@ -330,19 +355,20 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  * run.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
 	register struct fpstate64 *fs;
 
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
+		if (l == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(p);
+	switchexit(l, proc);
 	/* NOTREACHED */
 }
 
@@ -351,8 +377,8 @@ cpu_exit(p)
  * (should this be defined elsewhere?  machdep.c?)
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
@@ -367,57 +393,57 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Copy important fields over. */
-	md_core.md_tf.tf_tstate = p->p_md.md_tf->tf_tstate;
-	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
-	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
-	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
-	md_core.md_tf.tf_tt = p->p_md.md_tf->tf_tt;
-	md_core.md_tf.tf_pil = p->p_md.md_tf->tf_pil;
-	md_core.md_tf.tf_oldpil = p->p_md.md_tf->tf_oldpil;
+	md_core.md_tf.tf_tstate = l->l_md.md_tf->tf_tstate;
+	md_core.md_tf.tf_pc = l->l_md.md_tf->tf_pc;
+	md_core.md_tf.tf_npc = l->l_md.md_tf->tf_npc;
+	md_core.md_tf.tf_y = l->l_md.md_tf->tf_y;
+	md_core.md_tf.tf_tt = l->l_md.md_tf->tf_tt;
+	md_core.md_tf.tf_pil = l->l_md.md_tf->tf_pil;
+	md_core.md_tf.tf_oldpil = l->l_md.md_tf->tf_oldpil;
 
-	md_core.md_tf.tf_global[0] = p->p_md.md_tf->tf_global[0];
-	md_core.md_tf.tf_global[1] = p->p_md.md_tf->tf_global[1];
-	md_core.md_tf.tf_global[2] = p->p_md.md_tf->tf_global[2];
-	md_core.md_tf.tf_global[3] = p->p_md.md_tf->tf_global[3];
-	md_core.md_tf.tf_global[4] = p->p_md.md_tf->tf_global[4];
-	md_core.md_tf.tf_global[5] = p->p_md.md_tf->tf_global[5];
-	md_core.md_tf.tf_global[6] = p->p_md.md_tf->tf_global[6];
-	md_core.md_tf.tf_global[7] = p->p_md.md_tf->tf_global[7];
+	md_core.md_tf.tf_global[0] = l->l_md.md_tf->tf_global[0];
+	md_core.md_tf.tf_global[1] = l->l_md.md_tf->tf_global[1];
+	md_core.md_tf.tf_global[2] = l->l_md.md_tf->tf_global[2];
+	md_core.md_tf.tf_global[3] = l->l_md.md_tf->tf_global[3];
+	md_core.md_tf.tf_global[4] = l->l_md.md_tf->tf_global[4];
+	md_core.md_tf.tf_global[5] = l->l_md.md_tf->tf_global[5];
+	md_core.md_tf.tf_global[6] = l->l_md.md_tf->tf_global[6];
+	md_core.md_tf.tf_global[7] = l->l_md.md_tf->tf_global[7];
 
-	md_core.md_tf.tf_out[0] = p->p_md.md_tf->tf_out[0];
-	md_core.md_tf.tf_out[1] = p->p_md.md_tf->tf_out[1];
-	md_core.md_tf.tf_out[2] = p->p_md.md_tf->tf_out[2];
-	md_core.md_tf.tf_out[3] = p->p_md.md_tf->tf_out[3];
-	md_core.md_tf.tf_out[4] = p->p_md.md_tf->tf_out[4];
-	md_core.md_tf.tf_out[5] = p->p_md.md_tf->tf_out[5];
-	md_core.md_tf.tf_out[6] = p->p_md.md_tf->tf_out[6];
-	md_core.md_tf.tf_out[7] = p->p_md.md_tf->tf_out[7];
+	md_core.md_tf.tf_out[0] = l->l_md.md_tf->tf_out[0];
+	md_core.md_tf.tf_out[1] = l->l_md.md_tf->tf_out[1];
+	md_core.md_tf.tf_out[2] = l->l_md.md_tf->tf_out[2];
+	md_core.md_tf.tf_out[3] = l->l_md.md_tf->tf_out[3];
+	md_core.md_tf.tf_out[4] = l->l_md.md_tf->tf_out[4];
+	md_core.md_tf.tf_out[5] = l->l_md.md_tf->tf_out[5];
+	md_core.md_tf.tf_out[6] = l->l_md.md_tf->tf_out[6];
+	md_core.md_tf.tf_out[7] = l->l_md.md_tf->tf_out[7];
 
 #ifdef DEBUG
-	md_core.md_tf.tf_local[0] = p->p_md.md_tf->tf_local[0];
-	md_core.md_tf.tf_local[1] = p->p_md.md_tf->tf_local[1];
-	md_core.md_tf.tf_local[2] = p->p_md.md_tf->tf_local[2];
-	md_core.md_tf.tf_local[3] = p->p_md.md_tf->tf_local[3];
-	md_core.md_tf.tf_local[4] = p->p_md.md_tf->tf_local[4];
-	md_core.md_tf.tf_local[5] = p->p_md.md_tf->tf_local[5];
-	md_core.md_tf.tf_local[6] = p->p_md.md_tf->tf_local[6];
-	md_core.md_tf.tf_local[7] = p->p_md.md_tf->tf_local[7];
+	md_core.md_tf.tf_local[0] = l->l_md.md_tf->tf_local[0];
+	md_core.md_tf.tf_local[1] = l->l_md.md_tf->tf_local[1];
+	md_core.md_tf.tf_local[2] = l->l_md.md_tf->tf_local[2];
+	md_core.md_tf.tf_local[3] = l->l_md.md_tf->tf_local[3];
+	md_core.md_tf.tf_local[4] = l->l_md.md_tf->tf_local[4];
+	md_core.md_tf.tf_local[5] = l->l_md.md_tf->tf_local[5];
+	md_core.md_tf.tf_local[6] = l->l_md.md_tf->tf_local[6];
+	md_core.md_tf.tf_local[7] = l->l_md.md_tf->tf_local[7];
 
-	md_core.md_tf.tf_in[0] = p->p_md.md_tf->tf_in[0];
-	md_core.md_tf.tf_in[1] = p->p_md.md_tf->tf_in[1];
-	md_core.md_tf.tf_in[2] = p->p_md.md_tf->tf_in[2];
-	md_core.md_tf.tf_in[3] = p->p_md.md_tf->tf_in[3];
-	md_core.md_tf.tf_in[4] = p->p_md.md_tf->tf_in[4];
-	md_core.md_tf.tf_in[5] = p->p_md.md_tf->tf_in[5];
-	md_core.md_tf.tf_in[6] = p->p_md.md_tf->tf_in[6];
-	md_core.md_tf.tf_in[7] = p->p_md.md_tf->tf_in[7];
+	md_core.md_tf.tf_in[0] = l->l_md.md_tf->tf_in[0];
+	md_core.md_tf.tf_in[1] = l->l_md.md_tf->tf_in[1];
+	md_core.md_tf.tf_in[2] = l->l_md.md_tf->tf_in[2];
+	md_core.md_tf.tf_in[3] = l->l_md.md_tf->tf_in[3];
+	md_core.md_tf.tf_in[4] = l->l_md.md_tf->tf_in[4];
+	md_core.md_tf.tf_in[5] = l->l_md.md_tf->tf_in[5];
+	md_core.md_tf.tf_in[6] = l->l_md.md_tf->tf_in[6];
+	md_core.md_tf.tf_in[7] = l->l_md.md_tf->tf_in[7];
 #endif
-	if (p->p_md.md_fpstate) {
-		if (p == fpproc) {
-			savefpstate(p->p_md.md_fpstate);
-			fpproc = NULL;
+	if (l->l_md.md_fpstate) {
+		if (l == fplwp) {
+			savefpstate(l->l_md.md_fpstate);
+			fplwp = NULL;
 		}
-		md_core.md_fpstate = *p->p_md.md_fpstate;
+		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 
 		      sizeof(md_core.md_fpstate));
@@ -427,13 +453,13 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l->l_proc);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l->l_proc);
 	if (!error)
 		chdr->c_nseg++;
 

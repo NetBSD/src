@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.24 2002/09/25 22:21:22 thorpej Exp $ */
+/*	$NetBSD: genassym.c,v 1.25 2003/01/18 06:55:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -119,14 +119,17 @@ main()
 	def("PADDRT", sizeof(paddr_t));
 
 	/* proc fields and values */
-	off("P_ADDR", struct proc, p_addr);
 	off("P_STAT", struct proc, p_stat);
-	off("P_WCHAN", struct proc, p_wchan);
 	off("P_VMSPACE", struct proc, p_vmspace);
 	off("P_PID", struct proc, p_pid);
-	off("P_FPSTATE", struct proc, p_md.md_fpstate);
-	def("SRUN", SRUN);
-	def("SONPROC", SONPROC);
+
+	/* lwp fields and values */
+	off("L_ADDR", struct proc, l_addr);
+	off("L_STAT", struct proc, l_stat);
+	off("L_WCHAN", struct proc, l_wchan);
+	off("L_FPSTATE", struct proc, l_md.md_fpstate);
+	def("SRUN", LSRUN);
+	def("SONPROC", LSONPROC);
 
 	/* user struct stuff */
 	siz("USIZ", struct user); /* Needed for redzone calculations */
@@ -148,10 +151,10 @@ main()
 	off("V_FAULTS", struct uvmexp, faults);
 
 	/* CPU info structure */
-	off("CI_CURPROC", struct cpu_info, ci_curproc);
+	off("CI_CURLWP", struct cpu_info, ci_curlwp);
 	off("CI_CPCB", struct cpu_info, ci_cpcb);
 	off("CI_NEXT", struct cpu_info, ci_next);
-	off("CI_FPPROC", struct cpu_info, ci_fpproc);
+	off("CI_FPLWP", struct cpu_info, ci_fplwp);
 	off("CI_NUMBER", struct cpu_info, ci_number);
 	off("CI_UPAID", struct cpu_info, ci_upaid);
 	off("CI_SPINUP", struct cpu_info, ci_spinup);
