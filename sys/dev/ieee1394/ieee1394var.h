@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.15 2002/02/27 05:04:28 jmc Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.16 2002/11/22 16:20:20 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,8 +47,7 @@ struct ieee1394_node;
  * requisite reference counting.
  */
 struct ieee1394_abuf {
-	struct ieee1394_softc *ab_req;		/* requestor */
-	struct ieee1394_softc *ab_resp;		/* response */
+	struct ieee1394_softc *ab_req;		/* requestee */
 	u_int32_t *ab_data;
 	struct uio *ab_uio;
 	u_int64_t ab_addr;
@@ -57,33 +56,32 @@ struct ieee1394_abuf {
 	u_int32_t ab_length; 
 	u_int32_t ab_retlen;			/* length returned from read. */
 	u_int32_t ab_retries;
+	u_int8_t ab_subok;
+	
 	void (*ab_cb)(struct ieee1394_abuf *, int);
 	void *ab_cbarg;
 };
 
 struct ieee1394_callbacks {
-	void (*cb1394_busreset)(struct ieee1394_softc *);
-	void (*cb1394_at_queue)(struct ieee1394_softc *, int type,
-	    struct ieee1394_abuf *);
-	void (*cb1394_at_done)(struct ieee1394_softc *, 
-	    struct ieee1394_abuf *);
+	void (*sc1394_reset)(struct ieee1394_softc *, void *);
+	void *sc1394_resetarg;
+	int (*sc1394_read)(struct ieee1394_abuf *);
+	int (*sc1394_write)(struct ieee1394_abuf *);
+	int (*sc1394_inreg)(struct ieee1394_abuf *, int);
+	int (*sc1394_unreg)(struct ieee1394_abuf *, int);
 };
 
 struct ieee1394_attach_args {
 	char name[7]; 
 	u_int8_t uid[8];
 	u_int16_t nodeid;
-	int (*read)(struct ieee1394_abuf *);
-	int (*write)(struct ieee1394_abuf *);
-	int (*inreg)(struct ieee1394_abuf *, int);
-	int (*unreg)(struct ieee1394_abuf *, int);
 };    
 
 struct ieee1394_softc {
 	struct device sc1394_dev;
 	struct device *sc1394_if; /* Move to fwohci level. */
 	
-	const struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
+	struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
 	u_int32_t *sc1394_configrom;
 	u_int32_t sc1394_configrom_len;  /* quadlets. */
 	u_int32_t sc1394_max_receive;
