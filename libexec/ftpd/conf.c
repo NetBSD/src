@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1998/09/06 10:39:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $");
+__RCSID("$NetBSD: conf.c,v 1.15 1998/09/06 10:39:40 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $");
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <setjmp.h>
 #include <string.h>
 #include <stringlist.h>
 #include <syslog.h>
@@ -58,9 +59,11 @@ __RCSID("$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-struct ftpclass curclass;
 static char *strend __P((const char *, char *));
 static int filetypematch __P((char *, int));
+
+struct ftpclass curclass;
+
 
 /*
  * Parse the configuration file, looking for the named class, and

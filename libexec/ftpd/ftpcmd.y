@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.21 1998/09/05 17:33:00 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.22 1998/09/06 10:39:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.21 1998/09/05 17:33:00 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.22 1998/09/06 10:39:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,23 +75,6 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.21 1998/09/05 17:33:00 lukem Exp $");
 
 #include "extern.h"
 
-extern	struct sockaddr_in data_dest;
-extern	int logged_in;
-extern	struct passwd *pw;
-extern	int guest;
-extern	int logging;
-extern	int type;
-extern	int form;
-extern	int debug;
-extern  int pdata;
-extern	char hostname[], remotehost[];
-extern	char proctitle[];
-extern	int usedefault;
-extern  int transflag;
-extern  char tmpline[];
-extern	struct ftpclass curclass;
-extern	struct sockaddr_in his_addr;
-
 off_t	restart_point;
 
 static	int cmd_type;
@@ -99,6 +82,7 @@ static	int cmd_form;
 static	int cmd_bytesz;
 char	cbuf[512];
 char	*fromname;
+int	hasyyerrored;
 
 %}
 
@@ -142,7 +126,7 @@ cmd_list
 	: /* empty */
 	| cmd_list cmd
 		{
-			fromname = (char *) 0;
+			fromname = NULL;
 			restart_point = (off_t) 0;
 		}
 	| cmd_list rcmd
@@ -161,20 +145,23 @@ cmd
 		}
 	| PORT check_login SP host_port CRLF
 		{
-			/* be paranoid, if told so */
+			if ($2) {
+					/* be paranoid, if told so */
 			if (curclass.checkportcmd &&
 			    ((ntohs(data_dest.sin_port) < IPPORT_RESERVED) ||
 			    memcmp(&data_dest.sin_addr, &his_addr.sin_addr,
 			    sizeof(data_dest.sin_addr)) != 0)) {
-				reply(500, "Illegal PORT command rejected");
-				return (NULL);
+				reply(500,
+				    "Illegal PORT command rejected");
+			} else {
+				usedefault = 0;
+				if (pdata >= 0) {
+					(void) close(pdata);
+					pdata = -1;
+				}
+				reply(200, "PORT command successful.");
 			}
-			usedefault = 0;
-			if (pdata >= 0) {
-				(void) close(pdata);
-				pdata = -1;
 			}
-			reply(200, "PORT command successful.");
 		}
 	| PASV check_login CRLF
 		{
@@ -254,7 +241,7 @@ cmd
 	| RETR check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
-				retrieve((char *) 0, $4);
+				retrieve(NULL, $4);
 			if ($4 != NULL)
 				free($4);
 		}
@@ -319,7 +306,7 @@ cmd
 			if (fromname) {
 				renamecmd(fromname, $3);
 				free(fromname);
-				fromname = (char *) 0;
+				fromname = NULL;
 			} else {
 				reply(503, "Bad sequence of commands.");
 			}
@@ -343,7 +330,7 @@ cmd
 		}
 	| HELP CRLF
 		{
-			help(cmdtab, (char *) 0);
+			help(cmdtab, NULL);
 		}
 	| HELP SP STRING CRLF
 		{
@@ -356,7 +343,7 @@ cmd
 				if (*cp)
 					help(sitetab, cp);
 				else
-					help(sitetab, (char *) 0);
+					help(sitetab, NULL);
 			} else
 				help(cmdtab, $3);
 		}
@@ -390,7 +377,7 @@ cmd
 		}
 	| SITE SP HELP CRLF
 		{
-			help(sitetab, (char *) 0);
+			help(sitetab, NULL);
 		}
 	| SITE SP HELP SP STRING CRLF
 		{
@@ -464,16 +451,7 @@ cmd
 		}
 	| SYST CRLF
 		{
-#ifdef unix
-#ifdef BSD
-			reply(215, "UNIX Type: L%d Version: BSD-%d",
-				NBBY, BSD);
-#else /* BSD */
-			reply(215, "UNIX Type: L%d", NBBY);
-#endif /* BSD */
-#else /* unix */
-			reply(215, "UNKNOWN Type: L%d", NBBY);
-#endif /* unix */
+			reply(215, "UNIX Type: L%d %s", NBBY, version);
 		}
 
 		/*
@@ -505,8 +483,7 @@ cmd
 			if ($2 && $4 != NULL) {
 				struct stat stbuf;
 				if (stat($4, &stbuf) < 0)
-					reply(550, "%s: %s",
-					    $4, strerror(errno));
+					perror_reply(550, $4);
 				else if (!S_ISREG(stbuf.st_mode)) {
 					reply(550, "%s: not a plain file.", $4);
 				} else {
@@ -539,14 +516,14 @@ rcmd
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
 				fromname = renamefrom($4);
-				if (fromname == (char *) 0 && $4) {
+				if (fromname == NULL && $4) {
 					free($4);
 				}
 			}
 		}
 	| REST SP byte_size CRLF
 		{
-			fromname = (char *) 0;
+			fromname = NULL;
 			restart_point = $3;	/* XXX $3 is only "int" */
 			reply(350, "Restarting at %qd. %s", restart_point,
 			    "Send STORE or RETRIEVE to initiate transfer.");
@@ -742,6 +719,7 @@ check_login
 			else {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
+				hasyyerrored = 1;
 			}
 		}
 	;
@@ -749,23 +727,23 @@ check_login
 check_modify
 	: /* empty */
 		{
-			if (logged_in)  {
-				if (curclass.modify) {
+			if (logged_in) {
+				if (curclass.modify)
 					$$ = 1;
-				} else {
+				else {
 					reply(502,
 					"No permission to use this command.");
 					$$ = 0;
+					hasyyerrored = 1;
 				}
 			} else {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
+				hasyyerrored = 1;
 			}
 		}
 
 %%
-
-extern jmp_buf errcatch;
 
 #define	CMD	0	/* beginning of command */
 #define	ARGS	1	/* expect miscellaneous arguments */
@@ -971,14 +949,14 @@ yylex()
 	static int cpos, state;
 	char *cp, *cp2;
 	struct tab *p;
-	int n, errored;
+	int n;
 	char c;
 
 	for (;;) {
-		errored = 0;
 		switch (state) {
 
 		case CMD:
+			hasyyerrored = 0;
 			(void) signal(SIGALRM, toolong);
 			(void) alarm(curclass.timeout);
 			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
@@ -1006,7 +984,6 @@ yylex()
 			if (p != 0) {
 				if (p->implemented == 0) {
 					nack(p->name);
-					errored = 1;
 					break;
 				}
 				state = p->state;
@@ -1031,7 +1008,6 @@ yylex()
 			if (p != 0) {
 				if (p->implemented == 0) {
 					nack(p->name);
-					errored = 1;
 					break;
 				}
 				state = p->state;
@@ -1184,18 +1160,31 @@ yylex()
 			reply(501, "'%s' command does not take any arguments.",
 			    cbuf);
 			cbuf[cpos] = c;
-			errored = 1;
 			break;
 
 		default:
 			fatal("Unknown state in scanner.");
 		}
-		if (!errored)
-			yyerror((char *) 0);
+		yyerror(NULL);
 		state = CMD;
 		longjmp(errcatch, 0);
 		/* NOTREACHED */
 	}
+}
+
+/* ARGSUSED */
+void
+yyerror(s)
+	char *s;
+{
+	char *cp;
+
+	if (hasyyerrored)
+		return;
+	if ((cp = strchr(cbuf,'\n')) != NULL)
+		*cp = '\0';
+	reply(500, "'%s': command not understood.", cbuf);
+	hasyyerrored = 1;
 }
 
 void
@@ -1328,3 +1317,4 @@ sizecmd(filename)
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
 	}
 }
+

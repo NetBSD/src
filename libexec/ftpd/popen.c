@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.10 1998/06/19 22:59:01 kleink Exp $	*/
+/*	$NetBSD: popen.c,v 1.11 1998/09/06 10:39:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.10 1998/06/19 22:59:01 kleink Exp $");
+__RCSID("$NetBSD: popen.c,v 1.11 1998/09/06 10:39:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: popen.c,v 1.10 1998/06/19 22:59:01 kleink Exp $");
 
 #include <errno.h>
 #include <glob.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
