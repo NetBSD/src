@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.17 2004/01/14 09:35:33 agc Exp $ */
+.\" $NetBSD: user.8,v 1.18 2005/02/05 15:26:50 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
-.Op Fl r Ar low..high
+.Op Fl r Ar lowuid..highuid
 .Nm
 .Cm add
 .Op Fl Smov
@@ -60,7 +60,7 @@
 .Op Fl k Ar skel-dir
 .Op Fl L Ar login-class
 .Op Fl p Ar password
-.Op Fl r Ar low..high
+.Op Fl r Ar lowuid..highuid
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user

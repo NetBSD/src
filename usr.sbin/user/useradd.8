@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.28 2004/01/14 09:35:33 agc Exp $ */
+.\" $NetBSD: useradd.8,v 1.29 2005/02/05 15:26:50 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -48,7 +48,7 @@
 .Op Fl L Ar login-class
 .Op Fl k Ar skel-dir
 .Oo
-.Fl r Ar low Ns Li .. Ns Ar high
+.Fl r Ar lowuid Ns Li .. Ns Ar highuid
 .Oc
 .Op Fl s Ar shell
 .Nm
@@ -65,7 +65,7 @@
 .Op Fl L Ar login-class
 .Op Fl p Ar password
 .Oo
-.Fl r Ar low Ns Li .. Ns Ar high
+.Fl r Ar lowuid Ns Li .. Ns Ar highuid
 .Oc
 .Op Fl s Ar shell
 .Op Fl u Ar uid
@@ -146,7 +146,7 @@ See
 .Xr login.conf 5
 for more information on user login classes.
 .It Xo
-.Fl r Ar low Ns Li .. Ns Ar high
+.Fl r Ar lowuid Ns Li .. Ns Ar highuid
 .Xc
 sets the low and high bounds of uid ranges for new users. A new user
 can only be created if there are uids which can be assigned from one

@@ -1,4 +1,4 @@
-.\" $NetBSD: groupadd.8,v 1.10 2005/02/05 10:43:14 jmmv Exp $ */
+.\" $NetBSD: groupadd.8,v 1.11 2005/02/05 15:26:50 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nm
 .Op Fl ov
 .Op Fl g Ar gid
-.Op Fl r Ar low Ns Li .. Ns Ar high
+.Op Fl r Ar lowgid Ns Li .. Ns Ar highgid
 .Ar group
 .Sh DESCRIPTION
 The
@@ -53,7 +53,7 @@ The options are as follows:
 gives the numeric group identifier to be used for the new group.
 .It Fl o
 allow the new group to have a gid which is already in use for another group.
-.It Fl r Ar low Ns Li .. Ns Ar high
+.It Fl r Ar lowgid Ns Li .. Ns Ar highgid
 sets the low and high bounds of a gid range for new groups.
 A new group can only be created if there are gids which can be assigned
 inside the range.
