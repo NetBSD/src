@@ -1,4 +1,5 @@
-/* $NetBSD: ioc.c,v 1.5 2001/01/07 14:28:02 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.6 2001/01/07 15:36:34 bjh21 Exp $ */
+
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.5 2001/01/07 14:28:02 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.6 2001/01/07 15:36:34 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -221,19 +222,6 @@ ioc_ctl_write(struct device *self, u_int value, u_int mask)
 }
 
 /*
- * Interrupt handling
- */
-
-struct irq_handler *
-ioc_irq_establish(struct device *self, int irq, int level,
-    int (*handler)(void *), void *cookie)
-{
-	/* struct ioc_softc *sc = (void *)self; */
-
-	return irq_establish(irq, level, handler, cookie);
-}
-
-/*
  * Find out if an interrupt line is currently active
  */
 
@@ -373,16 +361,15 @@ cpu_initclocks(void)
 	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(self, 0, t0_count);
-	sc->sc_clkirq = ioc_irq_establish(self, IOC_IRQ_TM0, IPL_CLOCK,
-					  ioc_irq_clock, NULL);
+	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
+	    NULL);
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
 		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
 		setstatclockrate(stathz);
-		sc->sc_sclkirq = ioc_irq_establish(self, IOC_IRQ_TM1,
-						   IPL_STATCLOCK,
+		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
 						   ioc_irq_statclock, NULL);
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",
