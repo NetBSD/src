@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.10 1999/05/18 21:38:07 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.11 1999/05/19 19:59:04 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -295,6 +295,10 @@ fbrcons_init(fb)
 	rc->rc_ops = &ri->ri_ops;
 	rc->rc_cookie = ri;
 	rc->rc_bell = fb_bell;
+	rc->rc_maxcol = ri->ri_cols;
+	rc->rc_maxrow = ri->ri_rows;
+	rc->rc_width = ri->ri_emuwidth;
+	rc->rc_height = ri->ri_emuheight;
 	rcons_init(rc);
 
 	/* Hook up virtual console */
