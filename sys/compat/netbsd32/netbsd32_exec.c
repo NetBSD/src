@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.21 2000/06/28 15:39:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.22 2000/11/13 21:32:18 jdolecek Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@ const char netbsd32_emul_path[] = "/emul/netbsd32";
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
 extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
-extern char *netbsd32_syscallnames[];
+extern const char * const netbsd32_syscallnames[];
 #endif
 void *netbsd32_copyargs __P((struct exec_package *, struct ps_strings *,
 	void *, void *));
