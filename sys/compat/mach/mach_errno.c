@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.13 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.14 2003/12/09 17:10:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.13 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.14 2003/12/09 17:10:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -155,7 +155,9 @@ mach_msg_error(args, error)
 	mach_set_trailer(rep, *msglen);
 
 #ifdef DEBUG_MACH
-	printf("failure in kernel handler for msg id %d\n", req->msgh_id);
+	if (error != 0)
+		printf("failure in kernel service %d (err %x, native %d)\n", 
+		    req->msgh_id, (int)rep->rep_retval, error);
 #endif
 	return 0;
 }
@@ -174,6 +176,11 @@ mach_iokit_error(args, error)
 
 	rep->rep_retval = error;
 
+#ifdef DEBUG_MACH
+	if (error != 0)
+		printf("failure in kernel service %d (Mach err %x)\n", 
+		    req->msgh_id, error);
+#endif
 	mach_set_trailer(rep, *msglen);
 
 	return 0;
