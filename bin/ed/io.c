@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.5 2000/04/04 17:07:29 thorpej Exp $	*/
+/*	$NetBSD: io.c,v 1.6 2000/04/17 23:37:30 christos Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-__RCSID("$NetBSD: io.c,v 1.5 2000/04/04 17:07:29 thorpej Exp $");
+__RCSID("$NetBSD: io.c,v 1.6 2000/04/17 23:37:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,6 +327,9 @@ put_tty_line(s, l, n, gflag)
 {
 	int col = 0;
 	char *cp;
+#ifndef BACKWARDS
+	int lc = 0;
+#endif
 
 	if (gflag & GNP) {
 		printf("%ld\t", n);
