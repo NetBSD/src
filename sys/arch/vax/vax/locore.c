@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.53 2000/11/21 05:49:08 chs Exp $	*/
+/*	$NetBSD: locore.c,v 1.54 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -219,7 +219,14 @@ _start(struct rpb *prpb)
 #if VAX680
 	case VAX_BTYP_680:
 		dep_call = &ka680_calls;
-		strcpy(cpu_model,"VAX 4000/500");
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_675:
+			strcpy(cpu_model,"VAX 4000/400"); break;
+		case VAX_STYP_680:
+			strcpy(cpu_model,"VAX 4000/500"); break;
+		default:
+			strcpy(cpu_model,"unknown NVAX");
+		}
 		break;
 #endif
 #if VAX8200

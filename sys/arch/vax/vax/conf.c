@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.50 2000/12/30 20:15:02 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.51 2001/01/28 21:01:53 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -155,6 +155,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
+#include "smg.h"
 #include "wskbd.h"
 #if NSMG > 0
 #if NWSKBD > 0
@@ -173,11 +174,11 @@ smgcngetc(dev_t dev)
 
 cons_decl(gen);
 cons_decl(dz);
+cons_decl(idz);
 cons_decl(qd);
 cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
-#include "smg.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
@@ -187,8 +188,11 @@ struct	consdev constab[]={
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
+#endif
+#if VAX53
+	cons_init(idz),	/* DZ11-like serial console on VAX/MicroVAX */
 #endif
 #if VAX650 || VAX630
 #if NQV
