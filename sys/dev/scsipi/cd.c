@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.143 2001/01/08 02:03:48 fvdl Exp $	*/
+/*	$NetBSD: cd.c,v 1.144 2001/01/19 22:47:46 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ void	cdminphys __P((struct buf *));
 void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
 void	cdgetdisklabel __P((struct cd_softc *));
 void	cddone __P((struct scsipi_xfer *));
+int	cd_interpret_sense __P((struct scsipi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
 void	lba2msf __P((u_long, u_char *, u_char *, u_char *));
 u_long	msf2lba __P((u_char, u_char, u_char));
@@ -140,7 +141,7 @@ extern struct cfdriver cd_cd;
 struct dkdriver cddkdriver = { cdstrategy };
 
 struct scsipi_device cd_switch = {
-	NULL,			/* use default error handler */
+	cd_interpret_sense,	/* use our error handler first */
 	cdstart,		/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
 	cddone,			/* deal with stats at interrupt time */
@@ -721,6 +722,44 @@ cddone(xs)
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif
 	}
+}
+
+int cd_interpret_sense(xs)
+	struct scsipi_xfer *xs;
+{
+	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct cd_softc *cd = sc_link->device_softc;
+	int retval = SCSIRET_CONTINUE;
+
+	/*
+	 * If it isn't a extended or extended/deferred error, let
+	 * the generic code handle it.
+	 */
+	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
+	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+		return (retval);
+	}
+
+	/*
+	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Logical Unit
+	 * Is In The Process of Becoming Ready" (Sense code 0x04,0x01), then
+	 * wait a bit for the drive to spin up
+	 */
+
+	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    sense->add_sense_code == 0x4 &&
+	    sense->add_sense_code_qual == 0x01)	{
+		/*
+		 * Sleep for 5 seconds to wait for the drive to spin up
+		 */
+
+		SC_DEBUG(sc_link, SDEV_DB1, ("Waiting 5 sec for CD "
+						"spinup\n"));
+		tsleep(cd, PRIBIO, "cd_spinup", hz * 5);
+		retval = SCSIRET_RETRY;
+	}
+	return (retval);
 }
 
 void
