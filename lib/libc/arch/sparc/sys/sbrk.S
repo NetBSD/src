@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: sbrk.s,v 1.3 92/07/02 00:56:49 torek Exp
- * $Id: sbrk.S,v 1.1 1993/10/07 00:22:24 cgd Exp $
+ * $Id: sbrk.S,v 1.2 1994/02/10 20:16:01 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -52,6 +52,21 @@ curbrk:	.long	_end
 	.text
 
 ENTRY(sbrk)
+#ifdef PIC
+	PIC_PROLOGUE(%o5,%o4)
+	ld	[%o5 + curbrk], %o2
+	ld	[%o2], %o3			! %o3 = old break
+	add	%o3, %o0, %o4			! %o4 = new break
+	mov	%o4, %o0			! copy for syscall
+	mov	SYS_break, %g1
+	t	ST_SYSCALL			! break(new_break)
+	bcc,a	1f				! if success,
+	 mov	%o3, %o0			!    set return value
+	ERROR()
+1:
+	retl					! and update curbrk
+	 st	%o4, [%o2]
+#else
 	sethi	%hi(curbrk), %o2
 	ld	[%o2 + %lo(curbrk)], %o3	! %o3 = old break
 	add	%o3, %o0, %o4			! %o4 = new break
@@ -64,3 +79,4 @@ ENTRY(sbrk)
 1:
 	retl					! and update curbrk
 	 st	%o4, [%o2 + %lo(curbrk)]
+#endif

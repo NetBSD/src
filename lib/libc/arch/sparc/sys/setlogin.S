@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: setlogin.s,v 1.1 91/07/06 13:06:00 torek Exp
- * $Id: setlogin.S,v 1.2 1993/12/18 01:08:23 jtc Exp $
+ * $Id: setlogin.S,v 1.3 1994/02/10 20:16:03 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -47,6 +47,13 @@
 	.globl	___logname_valid		/* in getlogin() */
 
 SYSCALL(setlogin)
+#ifdef PIC
+	PIC_PROLOGUE(%g1,%g2)
+	ld	[%g1 + ___logname_valid], %g1
+	retl
+	 st	%g0, [%g1]
+#else
 	sethi	%hi(___logname_valid), %g1
 	retl
 	 st	%g0, [%g1 + %lo(___logname_valid)]
+#endif
