@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.26 2003/08/05 13:26:13 jmmv Exp $ */
+/* $NetBSD: style,v 1.27 2003/09/27 21:17:31 simonb Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.26 2003/08/05 13:26:13 jmmv Exp $");
+__RCSID("$NetBSD: style,v 1.27 2003/09/27 21:17:31 simonb Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -161,7 +161,7 @@ struct foo {
 	unsigned int baz:1,	/* Bitfield; line up entries if desired */
 		     fuz:5,
 		     zap:2;
-	u_int8_t flag;
+	uint8_t flag;
 };
 struct foo *foohead;		/* Head of global foo list */
 
