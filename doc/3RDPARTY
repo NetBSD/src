@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.95 2003/05/13 05:07:32 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.96 2003/05/15 07:42:29 grant Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -272,7 +272,7 @@ See also nawk entry below.
 
 Package:	gcc
 Version:	2.95.3
-Current Vers:	3.2.3
+Current Vers:	3.3
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
