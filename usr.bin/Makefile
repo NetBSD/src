@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.57 1995/10/09 12:05:42 pk Exp $
+#	$Id: Makefile,v 1.58 1995/10/22 16:54:40 pk Exp $
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
 	compress crontab ctags cut dirname du \
-	env error expand false file find finger fmt fold fpr from \
+	eject env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
 	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave lex locate \
 	lock logger login logname look lorder m4 machine mail make man mesg \
@@ -23,9 +23,6 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 # Don't use the standard tool chain on the alpha.
 .if (${MACHINE_ARCH} != "alpha")
 SUBDIR+= ar gprof nm ranlib size strip
-.endif
-.if (${MACHINE_ARCH} == "sparc")
-SUBDIR+= fdeject
 .endif
 
 .include <bsd.subdir.mk>
