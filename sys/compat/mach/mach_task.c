@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.20 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_task.c,v 1.21 2003/01/24 21:37:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.20 2003/01/21 04:06:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.21 2003/01/24 21:37:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,7 @@ mach_task_get_special_port(args)
 	struct mach_right *mr;
 	int error;
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -144,7 +144,7 @@ mach_ports_lookup(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	msp[0] = MACH_PORT_DEAD;
 	msp[3] = MACH_PORT_DEAD;
 	msp[5] = MACH_PORT_DEAD;
@@ -208,7 +208,7 @@ mach_task_set_special_port(args)
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -240,7 +240,7 @@ mach_task_set_special_port(args)
 		{
 			struct darwin_emuldata *ded;
 
-			ded = l->l_emuldata;
+			ded = l->l_proc->p_emuldata;
 			if (ded->ded_fakepid == 1) {
 				mach_bootstrap_port = med->med_bootstrap;
 #ifdef DEBUG_DARWIN

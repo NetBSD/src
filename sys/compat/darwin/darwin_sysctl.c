@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.9 2003/01/22 17:47:03 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.10 2003/01/24 21:37:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.9 2003/01/22 17:47:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.10 2003/01/24 21:37:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.9 2003/01/22 17:47:03 christos E
 #include <sys/mount.h> 
 #include <sys/proc.h> 
 #include <sys/sysctl.h> 
+#include <sys/sa.h> 
 
 #include <sys/syscallargs.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.20 2003/01/22 17:47:47 christos Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.21 2003/01/24 21:37:02 manu Exp $ */
 
 /*
  * System call numbers.

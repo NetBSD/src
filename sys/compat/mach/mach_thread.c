@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.13 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.14 2003/01/24 21:37:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.13 2003/01/21 04:06:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.14 2003/01/24 21:37:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,8 +191,8 @@ mach_copy_right(l1, l2)
 	struct mach_emuldata *med2;
 	struct mach_right *mr;
 
-	med1 = (struct mach_emuldata *)l1->l_emuldata;
-	med2 = (struct mach_emuldata *)l2->l_emuldata;
+	med1 = (struct mach_emuldata *)l1->l_proc->p_emuldata;
+	med2 = (struct mach_emuldata *)l2->l_proc->p_emuldata;
 
 	/* Undo what mach_e_proc_init did */
 	if (--med2->med_bootstrap->mp_refcount == 0)
