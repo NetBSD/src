@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.190 2002/11/19 04:16:02 simonb Exp $
+.\"	$NetBSD: options.4,v 1.191 2002/11/29 04:25:38 junyoung Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -789,6 +789,13 @@ servers.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
+.It Cd options NEW_BUFQ_STRATEGY
+Enable experimental buffer queue strategy for disk I/O.
+It gives higher priority to read requests over write requests, and thereby
+improves the overall system responsiveness considerably under heavy disk
+I/O load.
+.Em NOTE :
+It's not yet proven to be stable, so use it at your own risk.
 .It Cd options LKM
 Enable loadable kernel modules.
 See
