@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.13 2002/10/05 16:10:41 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.14 2002/10/05 22:45:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.13 2002/10/05 16:10:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.14 2002/10/05 22:45:46 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -54,14 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.13 2002/10/05 16:10:41 oster Exp $
 static void 
 compact_stat_entry(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
     int i);
-static void crunch_list(RF_ReconMap_t * mapPtr, RF_ReconMapListElem_t * listPtr);
+static void crunch_list(RF_ReconMapListElem_t * listPtr);
 static RF_ReconMapListElem_t *
 MakeReconMapListElem(RF_SectorNum_t startSector,
     RF_SectorNum_t stopSector, RF_ReconMapListElem_t * next);
 static void 
-FreeReconMapListElem(RF_ReconMap_t * mapPtr,
-    RF_ReconMapListElem_t * p);
-static void update_size(RF_ReconMap_t * mapPtr, int size);
+FreeReconMapListElem(RF_ReconMapListElem_t * p);
 #if 0
 static void PrintList(RF_ReconMapListElem_t * listPtr);
 #endif
@@ -99,9 +97,6 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 
 	(void) memset((char *) p->status, 0,
 	    num_rus * sizeof(RF_ReconMapListElem_t *));
-
-	p->size = sizeof(RF_ReconMap_t) + num_rus * sizeof(RF_ReconMapListElem_t *);
-	p->maxSize = p->size;
 
 	rc = rf_mutex_init(&p->mutex);
 	if (rc) {
@@ -154,7 +149,6 @@ rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
 				/* insert at front of list */
 
 				mapPtr->status[i] = MakeReconMapListElem(startSector, RF_MIN(stopSector, last_in_RU), (p == RU_NOTHING) ? NULL : p);
-				update_size(mapPtr, sizeof(RF_ReconMapListElem_t));
 
 			} else {/* general case */
 				do {	/* search for place to insert */
@@ -162,7 +156,7 @@ rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
 					p = p->next;
 				} while (p && (p->startSector < startSector));
 				pt->next = MakeReconMapListElem(startSector, RF_MIN(stopSector, last_in_RU), p);
-				update_size(mapPtr, sizeof(RF_ReconMapListElem_t));
+
 			}
 			compact_stat_entry(raidPtr, mapPtr, i);
 		}
@@ -200,20 +194,19 @@ compact_stat_entry(raidPtr, mapPtr, i)
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
 	RF_ReconMapListElem_t *p = mapPtr->status[i];
 
-	crunch_list(mapPtr, p);
+	crunch_list(p);
 
 	if ((p->startSector == i * sectorsPerReconUnit) &&
 	    (p->stopSector == i * sectorsPerReconUnit + 
 			      sectorsPerReconUnit - 1)) {
 		mapPtr->status[i] = RU_ALL;
 		mapPtr->unitsLeft--;
-		FreeReconMapListElem(mapPtr, p);
+		FreeReconMapListElem(p);
 	}
 }
 
 static void 
-crunch_list(mapPtr, listPtr)
-	RF_ReconMap_t *mapPtr;
+crunch_list(listPtr)
 	RF_ReconMapListElem_t *listPtr;
 {
 	RF_ReconMapListElem_t *pt, *p = listPtr;
@@ -226,7 +219,7 @@ crunch_list(mapPtr, listPtr)
 		if (pt->stopSector >= p->startSector - 1) {
 			pt->stopSector = RF_MAX(pt->stopSector, p->stopSector);
 			pt->next = p->next;
-			FreeReconMapListElem(mapPtr, p);
+			FreeReconMapListElem(p);
 			p = pt->next;
 		} else {
 			pt = p;
@@ -263,16 +256,9 @@ MakeReconMapListElem(
  *-------------------------------------------------------------------------*/
 
 static void 
-FreeReconMapListElem(mapPtr, p)
-	RF_ReconMap_t *mapPtr;
+FreeReconMapListElem(p)
 	RF_ReconMapListElem_t *p;
 {
-	int     delta;
-
-	if (mapPtr) {
-		delta = 0 - (int) sizeof(RF_ReconMapListElem_t);
-		update_size(mapPtr, delta);
-	}
 	RF_Free(p, sizeof(*p));
 }
 /*---------------------------------------------------------------------------
@@ -331,15 +317,6 @@ rf_UnitsLeftToReconstruct(mapPtr)
 {
 	RF_ASSERT(mapPtr != NULL);
 	return (mapPtr->unitsLeft);
-}
-/* updates the size fields of a status descriptor */
-static void 
-update_size(mapPtr, size)
-	RF_ReconMap_t *mapPtr;
-	int     size;
-{
-	mapPtr->size += size;
-	mapPtr->maxSize = RF_MAX(mapPtr->size, mapPtr->maxSize);
 }
 
 #if 0
