@@ -52,6 +52,20 @@
 #undef	CC1_SPEC
 #define	CC1_SPEC	"-mno-multiple"
 
+/* Provide a LINK_SPEC approriate for NetBSD. */
+#undef	LINK_SPEC
+#define LINK_SPEC " \
+  %{O*:-O3} %{!O*:-O1}						\
+  %{assert*}							\
+  %{shared:-shared}						\
+  %{!shared:							\
+    -dc -dp							\
+    %{!nostdlib:%{!r*:%{!e*:-e _start}}}			\
+    %{!static:							\
+      %{rdynamic:-export-dynamic}				\
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
+
 /* XXX Sort of a mix of ../netbsd.h and sysv4.h  --thorpej@netbsd.org
    Provide a CPP_SPEC appropriate for NetBSD.  Currently we just deal with
    the GCC option `-posix' and the calling convention definition.  */
