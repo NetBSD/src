@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.8 2001/10/23 17:32:35 thorpej Exp $
+#	$NetBSD: Makefile.arm,v 1.9 2001/10/23 18:57:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -38,12 +38,12 @@ S!=		cd ../../../..; pwd
 
 ARM32=		$S/arch/arm32
 ARM=		$S/arch/arm
-THISARM=	$S/arch/${TARGET_MACHINE}
+THISARM=	$S/arch/${MACHINE}
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I./include -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} \
-		-D_KERNEL -D_KERNEL_OPT -D${TARGET_MACHINE}
+		-D_KERNEL -D_KERNEL_OPT -D${MACHINE}
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 
@@ -59,8 +59,8 @@ LINKENTRY?=	-e start
 LINKFLAGS=	-Ttext ${LOADADDRESS} ${LINKENTRY} ${EXTRA_LINKFLAGS}
 STRIPFLAGS=	-g
 
-.if exists($S/arch/${TARGET_MACHINE}/conf/Makefile.${TARGET_MACHINE}.inc)
-.include	"$S/arch/${TARGET_MACHINE}/conf/Makefile.${TARGET_MACHINE}.inc"
+.if exists($S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc)
+.include	"$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
 .endif
 
 %INCLUDES
@@ -199,10 +199,10 @@ include-dir:
 	@rm -rf include
 	@mkdir -p include/arm
 .if (${S} == "../../../..")
-	@(cd include/arm; ln -s ../../$S/arch/${TARGET_MACHINE}/include ${TARGET_MACHINE})
+	@(cd include/arm; ln -s ../../$S/arch/${MACHINE}/include ${MACHINE})
 	@(cd include; ln -s ../$S/arch/arm/include machine)
 .else
-	@ln -s $S/arch/${TARGET_MACHINE}/include include/arm/${TARGET_MACHINE}
+	@ln -s $S/arch/${MACHINE}/include include/arm/${MACHINE}
 	@ln -s $S/arch/arm/include include/machine
 .endif
 .endif
