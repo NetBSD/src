@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.36 1996/11/07 21:04:36 cgd Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.37 1997/03/13 03:36:59 perry Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1038,6 +1038,11 @@ pc532
 # ./usr/share/man/cat8/pc532
 ..
 
+# ./usr/share/man/cat8/pmax
+pmax
+# ./usr/share/man/cat8/pmax
+..
+
 # ./usr/share/man/cat8/sparc
 sparc
 # ./usr/share/man/cat8/sparc
@@ -1213,6 +1218,11 @@ mac68k
 # ./usr/share/man/man8/pc532
 pc532
 # ./usr/share/man/man8/pc532
+..
+
+# ./usr/share/man/man8/pmax
+pmax
+# ./usr/share/man/man8/pmax
 ..
 
 # ./usr/share/man/man8/sparc
