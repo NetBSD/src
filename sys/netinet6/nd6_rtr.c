@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.41 2003/05/16 16:19:45 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.42 2003/05/16 16:57:35 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.41 2003/05/16 16:19:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.42 2003/05/16 16:57:35 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,15 +436,8 @@ nd6_rtmsg(cmd, rt)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
-		/*
-		 * XXX If called during if_detach(), TAILQ_FIRST(if_addrlist)
-		 * could be NULL.  This is not a common case, but as nd6_rtmsg()
-		 * will be called during if_detach(), we need to check for the
-		 * case.
-		 */
-		if (TAILQ_FIRST(&rt->rt_ifp->if_addrlist))
-			info.rti_info[RTAX_IFP] =
-			    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
+		info.rti_info[RTAX_IFP] =
+		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
