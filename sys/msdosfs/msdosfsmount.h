@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfsmount.h,v 1.1 1993/08/13 11:35:41 cgd Exp $
+ *	$Id: msdosfsmount.h,v 1.2 1994/03/27 09:08:58 cgd Exp $
  */
 
 /*
@@ -124,7 +124,8 @@ int msdosfs_mount __P((struct mount * mp, char *path, caddr_t data, struct namei
 int msdosfs_start __P((struct mount * mp, int flags, struct proc * p));
 int msdosfs_unmount __P((struct mount * mp, int mntflags, struct proc * p));
 int msdosfs_root __P((struct mount * mp, struct vnode ** vpp));
-int msdosfs_quotactl __P((struct mount * mp, int cmds, int uid	/* should be uid_t */, caddr_t arg, struct proc * p));
+int msdosfs_quotactl __P((struct mount * mp, int cmds, uid_t uid, caddr_t arg,
+	struct proc * p));
 int msdosfs_statfs __P((struct mount * mp, struct statfs * sbp, struct proc * p));
 int msdosfs_sync __P((struct mount * mp, int waitfor));
 int msdosfs_fhtovp __P((struct mount * mp, struct fid * fhp, struct vnode ** vpp));
