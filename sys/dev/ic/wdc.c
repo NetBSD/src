@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.170 2004/01/03 23:59:58 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.171 2004/01/07 22:03:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.170 2004/01/03 23:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.171 2004/01/07 22:03:56 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -242,8 +242,10 @@ wdc_drvprobe(struct wdc_channel *chp)
 	delay(5000);
 
 	for (i = 0; i < 2; i++) {
+		/* XXX This should be done by other code. */
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
+
 		/*
 		 * Init error counter so that an error withing the first xfers
 		 * will trigger a downgrade
