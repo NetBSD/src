@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.11 1994/03/09 07:58:39 mycroft Exp $
+ *	$Id: icu.h,v 1.12 1994/03/13 00:46:04 cgd Exp $
  */
 
 /*
@@ -53,6 +53,7 @@
 extern	unsigned imen;		/* interrupt mask enable */
 extern	unsigned cpl;		/* current priority level mask */
 
+extern	unsigned highmask;	/* group of interrupts masked with splhigh() */
 extern	unsigned clockmask;	/* group of interrupts masked with splclock() */
 extern	unsigned ttymask;	/* group of interrupts masked with spltty() */
 extern	unsigned biomask;	/* group of interrupts masked with splbio() */
