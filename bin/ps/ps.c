@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ps.c	5.43 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: ps.c,v 1.8 1993/08/01 18:59:06 mycroft Exp $";
+static char rcsid[] = "$Id: ps.c,v 1.9 1993/10/07 00:46:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,7 +88,11 @@ char   o1[] = "pid";
 char   o2[] = "tt state time command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] =
+#ifdef NEWVM
+	"pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
+#else
 	"pid state time sl re pagein vsz rss lim tsiz trs %cpu %mem command";
+#endif
 
 main(argc, argv)
 	int argc;
