@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.16 2003/01/14 02:18:55 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.17 2003/01/15 16:04:09 wiz Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -170,7 +170,7 @@ MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
-MLINKS+=_lwp_suspend.2 _lwp_create.2
+MLINKS+=_lwp_suspend.2 _lwp_continue.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
