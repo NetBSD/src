@@ -1,31 +1,39 @@
-	$NetBSD: README,v 1.5 1994/11/25 19:08:04 ragge Exp $
+	$NetBSD: README,v 1.6 1995/02/13 00:40:36 ragge Exp $
 
 Some information and status of VAX port:
 
-It now runs multi-user on 11/750 with not to much problem.
-There are still lots of bugs, and some unimplemented things.
-Things that needs to be done:
+It now runs multi-user on 11/750 without problem, but still requires
+4.3BSD Reno binaries (nothing in userspace fixed yet). Hopefully
+most bugs in memory and trap handling are found, I haven't had a
+crash for nearly a month... 
+Note: VAX port is still for unix hackers only.
 
-- Repair pmap, something maps wrong sometimes.
-- Fix doublemapping of kernel stack in user space.
-- Set right security permissions of everything (Usch!)
-- Setup autoconfiguring, and make it work.
-- Write boot stuff.
-- Fix DELUA support (currently broken). Probably easy.
+Devices supported in kernel and _known_ to work:
+VAX 11/750 CPU with 2-14MB of memory.
+One or more DEUNA/DELUA Ethernet cards.
+One or more UDA50 MSCP disk controllers.
+RA81, RA82 or RA90 disks on UDA50.
 
-Currently supported hardware:
-VAX 11/750 with at least 3MB memory.
-UDA50 (or compatible) disc controller.
-MSCP-device for UDA50 (RA81 or something).
+Things _not_ written in kernel yet:
+User level profiling & debugging support.
+Kernel profiling.
+sysctl() calls.
+Kernel debugger support, DDB (But that is not so important).
+Autoconfiguration of Unibus devices is working, but it's a mess
+internally. I will clean this up someday when I get docs on UDA50/MSCP.
 
-We are developing on 11/750's with Massbuss disks, because of the ease to share
-disks between computers, but have root filesystem on an RA81 on an UDA50.
-In the future we have the possibility to try it out on almost all VAX cpu
-types, ka730, ka780, ka420, ka630, ka650, ka8200, ka8600 and ka8800. Phew :)
+/boot program is written, but it only supports Massbuss disks
+so far. UDA routines will be written soon, boot blocks also.
 
 I have only included relevant files from old berkeley VAX distributions.
 If you want to look at other files get them from nearest ftp site with
 an 4.4BSD distribution, or from ftp.luth.se:/pub/unix/4_4bsd_l directory.
+
+We who have done parts of this is:
+	Joachim Isaksson, first pmap and lots of help with gcc functionality.
+	Mattias Gr|nlund, locore assembler and interrupt handling.
+	Mattias ]slund, lots of help and ideas everywhere.
+	Anders Magnusson, that's me, who put things together and wrote the rest.
 
 /ragge@ludd.luth.se
 
