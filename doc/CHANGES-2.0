@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.350 2004/07/23 15:50:56 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.351 2004/07/23 18:13:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6002,4 +6002,12 @@ sys/kern/sys_pipe.c				1.58
 	PRIBIO -> PSOCK. This emulates the pre-sys_pipe behavior, and avoids 
 	including processes blocked on pipe I/O in the load average.
 	[mycroft, ticket #689]
+
+usr.bin/audio/common/auconv.h			1.3
+usr.bin/audio/record/record.c			1.37-1.38
+
+	Fix fencepost errors in the conversion functions (making them a bit
+	more like the kernel versions).
+	Convert 8-bit signed linear data to unsigned for .wav files.
+	[mycroft, ticket #690]
 
