@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.3 1999/04/22 10:27:16 drochner Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.4 1999/07/15 18:00:27 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -307,7 +307,7 @@ EtherInit(myadr)
 #endif
 	for (excard = &excards[0]; excard->did != -1; excard++) {
 #ifdef _STANDALONE
-		if (pcifinddev(0x10b7, excard->did, &mytag))
+		if (pcifinddev(0x10b7, excard->did, &mytag) == 0)
 			goto found;
 #else
 		if (id == (0x10b7 | (excard->did << 16)))
