@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isoclns.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
+/*	$NetBSD: print-isoclns.c,v 1.4 2002/03/11 10:43:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -32,7 +32,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-isoclns.c,v 1.36 2002/01/10 09:33:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isoclns.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
+__RCSID("$NetBSD: print-isoclns.c,v 1.4 2002/03/11 10:43:33 simonb Exp $");
 #endif
 #endif
 
@@ -683,8 +683,8 @@ static int isis_print (const u_char *p, u_int length)
 
     u_char pdu_type, max_area, type, len, tmp, alen, subl, subt, tslen, ttslen;
     const u_char *optr, *pptr, *tptr;
-    u_short packet_len,pdu_len;
-    u_int i,j,bit_length,byte_length,metric;
+    u_short packet_len,pdu_len,time_remain;
+    u_int i,j,bit_length,byte_length,metric,ra,rr;
     u_char prefix[4]; /* copy buffer for ipv4 prefixes */
 #ifdef INET6
     u_char prefix6[16]; /* copy buffer for ipv6 prefixes */
@@ -1254,7 +1254,8 @@ static int isis_print (const u_char *p, u_int length)
 		      return (1);		  
 		    printf(" (%u)",*tptr);  /* no subTLV decoder supported - just print out subTLV length */
 		    i-=*tptr;
-		    tptr+=*tptr++;
+		    tptr = tptr + *tptr;
+		    tptr++;
 		}
 
 		i-=(5+byte_length);
@@ -1301,7 +1302,8 @@ static int isis_print (const u_char *p, u_int length)
 		      return (1);		  
 		    printf(" (%u)",*tptr); /* no subTLV decoder supported - just print out subTLV length */
 		    i-=*tptr;
-		    tptr+=*tptr++;
+		    tptr = tptr + *tptr;
+		    tptr++;
 		}
 
 		i-=(6+byte_length);
@@ -1521,10 +1523,12 @@ static int isis_print (const u_char *p, u_int length)
 		    if (!TTEST2(*tptr, 3))
 			goto trunctlv;
 		    
+	    ra = ISIS_MASK_RESTART_RA(*tptr);
+	    rr = ISIS_MASK_RESTART_RR(*tptr);
+	    tptr++;
+	    time_remain = EXTRACT_16BITS(tptr);
 	    printf("\n\t\t\tRestart Request bit %s, Restart Acknowledgement bit %s\n\t\t\tRemaining holding time: %us",
-                   ISIS_MASK_RESTART_RR(*tptr) ? "set" : "clear",
-		   ISIS_MASK_RESTART_RA(*tptr++) ? "set" : "clear",
-		   EXTRACT_16BITS(tptr));
+                   rr ? "set" : "clear", ra ? "set" : "clear", time_remain);
 
 	    break;
 
