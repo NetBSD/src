@@ -1,0 +1,1145 @@
+/*	$NetBSD: msg.mi.de,v 1.1 2004/02/29 18:46:43 jschauma Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MI Message catalog -- German, machine independent */
+
+message usage
+{Benutzung: sysinst [-r Release] [-f Definitionsdatei]
+}
+
+message sysinst_message_language
+{Installation messages in German}
+
+message Yes {Ja}
+message No {Nein}
+message All {Alle(s)}
+message Some {Einige}
+message None {Kein(e)}
+message none {kein(e)}
+message OK {OK}
+message ok {ok}
+message On {An}
+message Off {Aus}
+message unchanged {unverändert}
+
+message install
+{installieren}
+
+message reinstall
+{Sets erneut installieren für}
+
+message upgrade
+{upgrade (aufrüsten)}
+
+message hello
+{Willkommen zu Sysinst, dem Installationswerkzeug von NetBSD-@@VERSION@@.
+Dieses menübasierte Programm ist dazu konzipiert Ihnen dabei zu helfen NetBSD
+auf eine Festplatte zu installieren oder aber eine bereits bestehende
+Installation von NetBSD upzugraden (aufzurüsten) - mit minimalem Aufwand.
+In den folgenden Menüs können Sie mit Hilfe von Buchstaben (a, b, c, ...) die
+verschiedenen Menüeinträge anwählen. Alternativ können Sie durch Drücken von
+CTRL+N/CTRL+P den nächsten/vorhergehenden Eintrag anspringen. Die Cursor- und
+Bildlauftasten (Page-up/Page-down) sollten ebenfalls funktionieren.
+Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
+
+}
+
+message thanks
+{Danke, dass Sie NetBSD benutzen!
+
+}
+
+message installusure
+{Sie haben sich dazu entschieden NetBSD auf Ihre Festplatte zu installieren.
+Diese Prozedur verändert Informationen auf Ihrer Festplatte. Hier angekommen
+sollten Sie bereits eine vollständige Datensicherung gemacht haben! 
+Dieser Vorgang wird die folgenden Schritte durchführen:
+	a) Partitionieren Ihrer Disk
+	b) Erstellen eines neuen BSD Dateisystems
+	c) Laden und Installieren der Distributionssets (Kernel + Basissystem)
+	d) Grundlegendes Konfigurieren des Systems
+
+(Nachdem Sie Angaben zur Partitionierung ihrer Disk gemacht haben - doch bevor
+diese verändert wird - erhalten Sie die Möglichkeit diese Prozedur abzubrechen.)
+
+Wollen Sie weiterfahren?
+}
+
+message upgradeusure
+{Ok, gehen wir zum Upgraden (Aufrüsten) Ihres auf der Festplatte befindlichen
+NetBSD Systems über. Hier angekommen sollten Sie bereits eine vollständige 
+Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich upgraden (aufrüsten)?
+(Dies ist die letzte Warnung bevor diese Prozedur damit beginnt Ihre
+Festplatte(n) zu modifizieren.)
+}
+
+message reinstallusure
+{Ok, packen wir die NetBSD Distributionssets (Kernel + Basissystem) auf eine
+bootfähige Festplatte aus. Diese Prozedur lädt und entpackt die Sets auf
+eine im Vorfeld partitionierte und bootfähige Disk aus. Es werden weder
+Disks gelabelt, Bootblöcke upgegraded (aufgerüstet) noch bestehende
+Konfigurationen gesichert. (Beenden Sie und wählen Sie 'Installation' oder
+'Upgrade' im Falle, dass Sie diese Optionen wünschen.) Hier angekommen sollten
+Sie bereits eine 'Installation' oder ein 'Upgrade' gemacht haben. 
+
+Wollen Sie die NetBSD Distributionssets wirklich erneut installieren?
+(Dies ist die letzte Warnung bevor diese Prozedur damit beginnt Ihre
+Festplatte(n) zu modifizieren.)
+}
+
+
+message nodisk
+{Ich kann keine für NetBSD nutzbare Festplatten finden. Sie werden zum
+Hauptmenü zurückbefördert.
+}
+
+message onedisk
+{Ich habe nur eine Disk, %s, gefunden. Ich gehe somit davon aus, dass Sie
+NetBSD darauf %s möchten. 
+}
+
+message ask_disk
+{Auf welche Disk möchten Sie NetBSD installieren? }
+
+message Available_disks
+{Verfügbare Disks}
+
+message cylinders
+{Zylinder}
+
+message heads
+{Köpfe}
+
+message sectors
+{Sektoren}
+
+message fs_isize
+{Durchschnittliche Dateigrösse (in Bytes)}
+
+message mountpoint
+{Mountpoint (oder 'kein'))}
+
+message cylname
+{Zyl}
+
+message secname
+{Sek}
+
+message megname
+{MB}
+
+message layout
+{NetBSD benutzt einen BSD Disklabel, um den NetBSD Teil der Disk in
+mehrere BSD Partitionen zu zerlegen. Sie müssen jetzt Ihren BSD Disklabel
+aufsetzen.
+
+Sie können einen simplen Texteditor verwenden, um die Grösse der NetBSD
+Partitionen zu definieren, oder aber die bestehenden Partitionen mit Grösse
+und Inhalt belassen.
+
+Ihnen wird folglich die Möglichkeit gegeben alle Felder des Disklabels zu
+verändern.
+
+Der NetBSD Teil Ihrer Disk ist %d Megabytes gross.
+Eine volle Installation benötigt mindestens %d Megabytes - ohne X Sets 
+(grafische Schnittstelle zum Benutzer) - und %d Megabytes falls diese auch
+miteinbezogen werden.
+}
+
+message sizechoice
+{Sie haben gewählt Partitionsgrössen festzulegen (entweder für den BSD
+Disklabel, oder bei anderen Plattformen, für MBR Slices (MBR Partitionen)).
+Zunächst müssen Sie eine Grösseneinheit auswählen. Wählen Sie Megabytes, so
+werden effektive Partitionsgrössen festgesetzt, die nahe Ihrer Grössenangabe
+liegen - ausgerichtet nach Zylindergrenzen. Bei modernen ZBR Disks variieren
+die Zylindergrössen durchgehend, so dass kein grosser Verlass auf die
+genauen Grenzen der Zylinder besteht. Bei älteren Disks dagegen ist es am
+effizientesten sich Partitionsgrössen auszusuchen, die exakt ein Vielfaches
+der aktuellen Zylindergrösse ausmachen.
+}
+
+message defaultunit
+{Solange Sie nicht 'M' (Megabytes), 'G' (Gigabytes), 'c' (Zylinder) oder
+'s' (Sektoren) ihrer Zahleneingabe anhängen, wird sowohl bei Grössen als auch
+Offsets (Versatz) von %s ausgegangen.
+}
+
+message ptnsizes
+{Sie können jetzt die Grössen der Systempartitionen verändern. Per Vorgabe
+wird der ganze Speicherplatz der Rootpartition gutgeschrieben; allerdings
+mögen Sie separate Partitionen definieren wollen, so z.B. /usr (zusätzliche
+Systemdateien), /var (Log- bzw. Protokolldateien und anderes) oder /home
+(der Anwender persönliche Verzeichnisse).
+
+Verbleibender freier Speicherplatz wird jener Partition angehängt, die
+mit einem '+' markiert ist.
+}
+
+message ptnheaders
+{
+       MB         Zylinder   Sektoren   Dateisystem
+}
+
+message askfsmount
+{Mountpount?}
+
+message askfssize
+{Grösse für %s in %s?}
+
+message askunits
+{Verändern der Grösseneinheiten (Sektoren/Zylinder/MB)}
+
+message NetBSD_partition_cant_change
+{NetBSD Partition}
+
+message Whole_disk_cant_change
+{Ganze Disk}
+
+message Boot_partition_cant_change
+{Boot Partition}
+
+message add_another_ptn
+{Hinzufügen einer benutzerdefinierten Partition}
+
+message fssizesok
+{Akzeptieren der Partitionsgrössen. Freier Speicherplatz %d %s, %d freie
+Partitionen.}
+
+message fssizesbad
+{Reduzieren der Partitionsgrössen um %d %s (%d Sektoren).}
+
+message startoutsidedisk
+{Der Startwert, den Sie angegeben haben, liegt nach dem Ende des Disk. 
+}
+
+message endoutsidedisk
+{Mit diesem Wert liegt das Ende der Partition nach dem Ende der Disk. 
+Die Grösse ihrer Partition wurde auf %d %s runtergesetzt.
+
+Drücken Sie die Eingabetaste um fortzufahren.
+}
+
+message fspart
+{Nachfolgend sehen Sie ihre BSD Disklabel Partitionen:
+(Dies ist die letzte Chance diese zu ändern.)
+
+}
+
+/* XXX translate + align */
+message fspart_header
+{   Start %3s   End %3s  Size %3s FS type    Newfs Mount Mount point
+  --------- --------- --------- ---------- ----- ----- -----------
+}
+
+message fspart_row
+{%9d %9d %9d %-10s %-5s %-5s %s}
+
+message show_all_unused_partitions
+{Anzeigen aller unbenutzten Partitionen}
+
+message partition_sizes_ok
+{Partitionsgrössen OK)}
+
+message edfspart
+{Die gegenwärtigen Werte für die Partition '%c' sind unten angezeigt.
+Wählen Sie das Feld, dass Sie ändern möchten: 
+
+                          MB Zylinder   Sektoren
+	             ------- --------- ---------
+}
+
+message fstype_fmt
+{        Dateisystemtyp: %9s}
+
+message start_fmt
+{         Start: %9u %8u%c %9u}
+
+message size_fmt
+{          Grösse: %9u %8u%c %9u}
+
+message end_fmt
+{           Ende: %9u %8u%c %9u}
+
+message bsize_fmt
+{    Blockgrösse: %9d bytes}
+
+message fsize_fmt
+{ Fragmentgrösse: %9d bytes}
+
+/* XXX Inodes - translate */
+message isize_fmt
+{ Durschschnittliche Dateigrösse: %9d Bytes (Als Anzahl der Inodes)}
+message isize_fmt_dflt
+{ Durchschnittliche Dateigrösse:         4 Fragmente}
+
+message newfs_fmt
+{         Neues Dateisystem (newfs): %9s}
+
+message mount_fmt
+{         Mount: %9s} /* XXX translate */
+
+message mount_options_fmt
+{ Mountoptionen: } /* XXX translate */
+
+message mountpt_fmt
+{   Mountpoint: %9s} /* XXX translate */
+
+message toggle
+{Wählen sie}	/* XXX translate */
+
+message restore
+{Ursprüngliche Werte wiederherstellen}
+
+message Select_the_type
+{Wählen Sie den Dateisystemtyp aus}
+
+message other_types
+{Andere Dateisystemtypen}
+
+message label_size
+{%s
+Spezielle Werte, die für die Grössenangaben eingegeben werden können:
+    -1:   bis zum Ende des NetBSD Teils der Disk gehen
+   a-%c:   das Ende für diese Partition da ansetzen, wo Partition X beginnt
+
+Grösse (%s)}
+
+message label_offset
+{%s
+Spezielle Werte, die für den Offsetwert (Versatz) angegeben werden können:
+    -1:   dort ansetzen, wo der NetBSD Teil der Disk beginnt 
+   a-%c:   am Ende der vorhergehenden Partition starten (a, b, ..., %c) 
+
+start (%s)}
+
+message invalid_sector_number
+{Ungültige Sektorennummer
+}
+
+message Select_file_system_block_size
+{Wählen Sie die Blockgrösse des Dateisystems aus}
+
+message Select_file_system_fragment_size
+{Wählen Sie die Fragmentgrösse des Dateisystems aus}
+
+message packname
+{Bitte geben Sie Ihrer NetBSD Disk einen Namen}
+
+message lastchance
+{Ok, wir sind nun bereit NetBSD auf ihre Festplatte (%s) zu installieren. Noch
+wurde nichts geschrieben. Dies ist Ihre letzte Chance diesen Prozess zu beenden.
+
+Sollen Sie weiterfahren?
+
+}
+
+message disksetupdone
+{Ok, der erste Teil der Prozedur ist fertiggestellt. Sysinst hat auf das
+Ziellaufwerk einen Disklabel geschrieben, es weiter formatiert (newfs'ed) und
+auf Fehler überprüft (fsck'ed), dies entsprechend für jede Partition, die Sie
+definiert haben. 
+
+Der nächste Schritt besteht darin die Distributionssets (Basissystem + Kernel)
+zu laden und dann zu entpacken.
+
+Drücken Sie die Eingabetaste um fortzufahren.
+}
+
+message disksetupdoneupdate
+{Ok, der erste Teil der Prozedur ist fertiggestellt. Sysinst hat auf das
+Ziellaufwerk einen Disklabel geschrieben, es weiter formatiert (newfs'ed) und
+auf Fehler überprüft (fsck'ed), dies entsprechend für jede Partition, die Sie
+definiert haben. 
+
+Der nächste Schritt besteht darin die Distributionssets (Basissystem + Kernel)
+zu laden und dann zu entpacken.
+
+Drücken Sie die Eingabetaste um fortzufahren.
+}
+
+message openfail
+{Konnte %s nicht öffnen, die Fehlermeldung lautet: %s.
+}
+
+/* XXX translate */
+message statfail
+{Kann Eigenschaften von %s nicht lesen, die Fehlermeldung lautet: %s.
+}
+
+message unlink_fail
+{Ich konnte %s nicht löschen, die Fehermeldung lautet: %s.
+}
+
+message rename_fail
+{Ich konnte %s nicht auf %s umbenennen, die Fehlermeldung lautet: %s.
+}
+
+message deleting_files
+{Es gehört zur Prozedur dieses Upgrades (Aufrüstens) folgendes zu löschen:
+}
+
+message deleting_dirs
+{Es gehört zur Prozedur dieses Upgrades (Aufrüstens) folgende Verzeichnisse
+zu löschen (ich werde solche, die noch Dateien enthalten, umbenennen):
+}
+
+message renamed_dir
+{Das Verzeichnis %s wurde zu %s umbenannt, weil es nicht leer war.
+}
+
+/* XXX translate */
+message cleanup_warn
+{Das 'Cleanup' (Säubern: Löschen nicht weiter benötigter Dateien) der bestehenden
+Installation ist fehlgeschlagen. Dadurch mag das Extrahieren des Sets ebenfalls
+fehlschlagen.
+}
+
+/* XXX translate */
+message nomount
+{Bei der Partition %c handelt es sich nicht um ein 4.2BSD oder msdos
+Dateisystem, so dass diese keinen Mountpoint hat.
+}
+
+/* XXX translate */
+message mountfail
+{Das Mounten der Gerätedatei /dev/%s%c auf %s ist fehlgeschlagen.
+}
+
+message extractcomplete
+{Das Extrahieren der ausgewählten Sets für NetBSD-@@VERSION@@ ist abgeschlossen.
+Das System ist somit fähig von der ausgewählten Partition aufzustarten. Um die
+Installation zu vervollständigen gibt Ihnen sysinst die Möglichkeit eine
+grundlegende Konfiguration vorzunehmen. 
+}
+
+message instcomplete
+{Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Das System
+sollte via Festplatte aufstarten können. Beachten Sie die INSTALL Anleitung, um 
+über weiteres Konfigurieren zu erfahren. Auch die afterboot(8) Manpage ist
+weiterzuempfehlen; diese enthält eine Liste mit Punkten, die nach dem ersten
+vollständigen Boot geprüft werden sollten.
+
+Zumindest aber sollten Sie die /etc/rc.conf entsprechend Ihren Bedürfnissen
+konfigurieren. Werfen Sie einen Blick in /etc/defaults/rc.conf rein, wo Sie
+die Standardwerte (Vorgaben) für diese Datei finden.
+}
+
+/* XXX translate */
+message upgrcomplete
+{Die Installation von NetBSD-@@VERSION@@ ist jetzt fertiggestellt. Sie müssen
+nun die Anweisungen im INSTALL Dokument beachten, damit Ihr System -
+entsprechend Ihrer Situation - neu konfiguriert werden kann.
+Lesen Sie (erneut) die afterboot(8) Manpage, da diese seit ihrem letzten
+Upgrade (Aufrüstung) bzw. Installation zusätzliche Angaben enthalten mag. Ihr
+altes /etc wurde als /etc.old gesichert.
+
+Sie sollten wenigstens rc.conf ändern; dort gilt es rc_configured=NO auf
+rc_configured=YES umzustellen, da das System sonst nur bis zum Single User
+Modus (Einbenutzermodus) aufstartet.
+}
+
+
+message unpackcomplete
+{Das Entpacken der zusätzlichen Releasesets von NetBSD-@@VERSION@@ ist nun
+beendet. Das Entpacken der Sets hat /etc verändert. Bestehende /etc.old
+Verzeichnisse - erstellt von Upgrade (Aufrüstung) Prozeduren - wurden nicht
+modifiziert. Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
+Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
+Manpage mag ebenfalls nützlich sein.
+  
+Zumindest müssen sie die rc.conf editieren, so dass die gewünschten Dienste
+gestartet werden. Vergessen sie nicht rc_configured=NO auf rc_configured=YES
+umzustellen. 
+}
+
+/* XXX translate */
+message distmedium
+{Ihre Disk ist nun für die Installation der Kernel- und Distributionssets
+bereit. Wie in Ihrem INSTALL Dokument vermerkt, haben Sie nun mehrere Optionen.
+Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein, der Zugriff auf
+solche Maschinen hat. Wenn Sie zu diesem Zeitpunkt noch nicht bereit sind diese
+Installation abzuschliessen, können Sie 'kein' auswählen, wodurch Sie zum
+Hauptmenü zurückbefördert werden. Sobald Sie zu einem späteren Zeitpunkt bereit
+dazu sind, können Sie "Upgrade" (Aufrüsten) - im Hauptmenü - anwählen, wodurch
+Sie die Installation fertigstellen können.
+}
+
+message distset
+{Die NetBSD Distribution ist in Kollektionen von Distributionssets aufgeteilt.
+Es gibt einige grundlegende Sets, die für alle Installationen notwendig sind, 
+sowie deren andere, die nicht für alle Installationen installiert werden müssen.
+Es bleibt Ihnen überlassen, ob Sie alle Sets (volle Installation) installieren
+möchten oder bei den optionalen Sets doch lieber einiges weglassen möchten.
+}
+
+message ftpsource
+{
+Nachfolgend sehen Sie die für den Aufbau der FTP Verbindung benutzen Daten.
+Ist der Benutzer "ftp", so ist kein Passwort notwendig.
+
+/* XXX translate */
+Host:		%s
+Verzeichnis:	%s
+Benutzer:	%s
+Passwort:	%s
+Proxy:		%s
+}
+
+/* XXX translate */
+message host
+{Host}
+
+message dir
+{Verzeichnis}
+
+message user
+{Benutzer}
+
+message passwd
+{Passwort}
+
+message proxy
+{Proxy}
+
+message email
+{E-Mail Adresse}
+
+message dev
+{Gerät}
+
+/* XXX translate */
+message nfssource
+{Geben Sie den NFS Host samt Verzeichnis an, wo die Distribution zu finden ist.
+Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten und NFS mountbar 
+sein muss.
+
+Host:		%s
+Verzeichnis:	%s
+}
+
+message nfsbadmount
+{Das Verzeichnis %s:%s konnte nicht gemountet werden.}
+
+message cdromsource
+{Geben Sie das zu benutzende CDROM Gerät und dessen entsprechendes Verzeichnis 
+an, wo die Distribution zu finden ist.
+Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten muss.
+
+Gerät:		%s
+Verzeichnis:	%s
+}
+
+/* XXX translate */
+message localfssource
+{Geben Sie das ungemountete lokale Gerät und dessen entsprechendes Verzeichnis
+an, wo die Distribution zu finden ist.
+Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten muss.
+
+Gerät:		%s 
+Dateisystem:	%s 
+Verzeichnis:	%s
+}
+
+message localdir
+{Geben Sie das Verzeichnis des bereits gemounteten lokalen Geräts an, wo die
+Distribution zu finden ist.
+
+Verzeichnis:	%s
+}
+
+message filesys
+{Dateisystem}
+
+message cdrombadmount
+{Das CDROM konnte via Gerät %s nicht gemountet werden.}
+
+message localfsbadmount
+{%s konnte via dem lokalen Gerät %s nicht gemountet werden.}
+
+message badlocalsetdir
+{%s ist kein Verzeichnis.}
+
+message badsetdir
+{Die unerlässlichen etc.tgz und base.tgz Sets sind in %s nicht zu finden.
+and base.tgz. Sind Sie sicher, dass Sie das richtige Verzeichnis angegeben
+haben?}
+
+message nonet
+{Ich kann kein Netzwerkgerät finden, welches mit NetBSD verwendet werden kann.
+Sie werden zum vorhergehenden Menü zurückbefördert.
+}
+
+message netup
+{Die folgenden Netzwerkgeräte sind aktiviert: %s 
+Hat eines davon Zugriff auf die benötigten Server?}
+
+message asknetdev
+{Ich habe die folgenden Netzwerkgeräte gefunden: %s
+\nWelches Gerät soll ich nutzen?}
+
+message badnet
+{Sie haben keines der angezeigten Netzwerkgeräte ausgewählt. Bitte versuchen Sie
+es erneut. Die folgenden Netzwerkgeräte sind verfügbar: %s
+\nWelches Gerät soll ich nutzen?}
+
+message netinfo
+{Um das Netzwerk nutzen zu können, brauchen wir folgende Angaben:
+
+}
+
+message net_domain
+{Ihre DNS Domäne}
+
+message net_host
+{Ihren Hostnamen}
+
+message net_ip
+{Ihre IPv4 Adresse}
+
+message net_mask
+{Ihre IPv4 Netzmaske}
+
+message net_namesrv6
+{Ihren IPv6 Nameserver}
+
+message net_namesrv
+{Ihren IPv4 Nameserver}
+
+message net_defroute
+{Ihren IPv4 Gateway}
+
+message net_media
+{Der Medientyp (meda type) Ihrer Netzwerkkarte}
+
+/* XXX translate */
+message netok
+{Nachfolgend sehen Sie die Werte, die Sie eingegeben haben. Sind diese OK?
+
+DNS Domäne:		%s 
+Hostname:		%s 
+Hauptnetzwerkgerät:	%s 
+Host IP Adresse:	%s 
+Netzmaske:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Medientyp (meda type):	%s 
+}
+
+message netokv6
+{
+IPv6 Autokonfiguration:	%s 
+IPv6 Nameserver:	%s 
+}
+
+/* XXX translate */
+message netagain
+{Bitte geben Sie erneut die Informationen über Ihr Netzwerk an. Diese werden
+auch als Vorgabe beibehalten.
+
+}
+
+message wait_network
+{
+Bitte warten Sie während die Netzwerkgeräte initialisiert werden.
+}
+
+message resolv
+{Konnte /etc/resolv.conf nicht erstellen. Installation abgebrochen.
+}
+
+message realdir
+{Konnte nicht in das Verzeichnis %s: %s wechseln. Installation abgebrochen.
+}
+
+message ftperror_cont
+{Ftp (das Programm) hat einen Fehler gefunden. Drücken Sie die Eingabetaste, um
+forzufahren.}
+
+message ftperror
+{Ftp konnte eine Datei nicht runterladen. Wollen Sie es erneut versuchen?}
+
+message distdir
+{Welches Verzeichnis soll ich für %s nutzen?}
+
+message delete_dist_files
+{Wollen Sie die NetBSD Sets von %s löschen?
+(Sie können diese auch dazu beibehalten ein weiteres System aufzusetzen oder zu
+erneuern.)}
+
+message verboseextract
+{Was wollen Sie während des Extrahierens sehen?
+}
+
+message notarfile
+{Das Release Set %s existiert nicht.
+
+Soll ich mit dem Extrahieren dennoch weiterfahren?}
+
+message endtarok
+{Alle Distributionssets wurden erfolgreich entpackt.}
+
+message endtar
+{Beim Entpacken der Distributionssets sind Probleme aufgetreten.
+Ihre Installation ist somit unvollständig.
+
+Sie haben %d Distributionssets ausgewählt. %d derer konnten nicht gefunden
+werden während %d - nach dem Auftreten eines Fehlers - übersprungen wurden.
+Von den %d, die ich zu entpacken versucht habe, sind %d erfolgreich und %d
+mit Fehler entpackt worden.
+
+Die Installation ist abgebrochen. Bitte prüfen Sie die Bezugsquellen ihrer
+Distribution und ziehen Sie in Betracht die Sets ab Hauptmenü erneut zu
+installieren.}
+
+message abort
+{Ihre Auswahl macht keine NetBSD Installation möglich. Installation abgebrochen.
+}
+
+message abortinst
+{Die Distribution konnte nicht geladen werden. Sie müssen manuell fortfahren.
+Installation abgebrochen.
+}
+
+message abortupgr
+{Die Distribution konnte nicht geladen werden. Sie müssen manuell fortfahren.
+Upgrade (Aufrüsten) abgebrochen.
+}
+
+message abortunpack
+{Das Entpacken der zusätzlichen Sets schlug fehl. Sie müssen entweder manuell
+fortfahren oder eine andere Bezugsquelle für die Release Sets angeben und es
+erneut versuchen.
+}
+
+message createfstab
+{Es besteht ein grosses Problem! Konnte /mnt/etc/fstab nicht erstellen. Der
+Vorgang wird abgebrochen.
+}
+
+
+message noetcfstab
+{Hilfe! Die /etc/fstab konnte im Ziellaufwerk %s nicht gefunden werden. Das
+Upgrade (Aufrüsten) wird abgebrochen.
+}
+
+message badetcfstab
+{Hilfe! Es besteht eine fehlerhafte /etc/fstab im Ziellaufwerk %s. Das Upgrade
+(Aufrüsten) wird abgebrochen.
+}
+
+message etc_oldexists
+{Ich kann /etc nicht als /etc.old sichern, weil das Ziellaufwerk bereits über
+eine /etc.old verfügt. Bitte korrigieren Sie dies bevor Sie weiterfahren.
+
+Eine Möglichkeit ist es eine Shell vom Werkzeugemenü (Utilities) zu starten,
+wodurch Sie den Inhalt der /etc.old prüfen können. Gehört die /etc.old zu
+einem früheren Upgrade (Aufrüsten), so können Sie diese mit rm -f /etc.old
+löschen und danach das System neustarten. Gehört die /etc.old aber zu einem 
+aktuellen, nicht vervollständigten Upgrade (Aufrüsten), so können Sie /etc
+mit mv /etc.old /etc überschreiben und das begonnene Upgrade (Aufrüsten) 
+fortsetzen. 
+
+Breche Upgrade (Aufrüsten) ab.}
+
+message X_oldexists
+{Ich kann /usr/X11R6/bin/X nicht als /usr/X11R6/bin/X.old sichern, da letztere
+Datei bereits vorhanden ist. Bitte korrigieren Sie dies bevor Sie weiterfahren.
+
+Eine Möglichkeit ist es eine Shell vom Werkzeugemenü (Utilities) zu starten,
+wodurch sie die /usr/X11R6/bin/X.old prüfen können. Gehört diese zu
+einem früheren Upgrade (Aufrüsten), so können Sie diese mit rm -f 
+/usr/X11R6/bin/x.old löschen und danach das System neustarten. Gehört die 
+/usr/X11R6/bin/X.old aber zu einem aktuellen, nicht vervollständigten Upgrade 
+(Aufrüsten), so können Sie die /usr/X11R6/bin/X mit mv /usr/X11R6/bin/X.old
+/usr/X11R6/bin/X überschreiben und das begonnene Upgrade (Aufrüsten) fortsetzen.
+
+Breche Upgrade (Aufrüsten) ab.}
+
+message netnotup
+{Beim Aufsetzen des Netzwerks ist ein Problem aufgetreten. Entweder war Ihr
+Gateway oder Ihr Nameserver durch Pingen nicht erreichbar. Wollen Sie Ihr
+Netzwerk erneut konfigurieren? ("Nein" ermöglicht es Ihnen fortzufahren oder aber
+die Installation abzubrechen.)
+}
+
+message netnotup_continueanyway
+{Wollen sie den Installationsprozess dennoch fortführen? Sie können sich auch
+später um das Netzwerk kümmern. ("Nein" bricht die Installation ab.)
+}
+
+message makedev
+{Erstelle Gerätedateien in /dev ...
+}
+
+message badfs
+{Es scheint als ist /dev/%s%c kein BSD Dateisystem, andernfalls schlug die
+Prüfung des Dateisystems (fsck) fehl. Das Upgrade (Aurüsten) wurde abgebrochen.
+(Fehlernummer %d.)
+}
+
+message badmount
+{Ihr Dateisystem bei /dev/%s%c konnte nicht erfolgreich gemountet werden. Das
+Upgrade (Aufrüsten) wurde abgebrochen.}
+
+/* XXX Missverständnis? */
+message rootmissing
+{ in / wird %s vermisst.
+}
+
+/* XXX suboptimal? */
+message badroot
+{Ein Test zur Prüfung Ihrer neuen Ordnerstruktur in / schlug fehl. Sind Sie
+sicher, dass Sie alle benötigten Sets installiert haben? 
+}
+
+message fddev
+{Welches Diskettenlaufwerk wollen Sie nutzen? }
+
+message fdmount
+{Bitte mounten Sie die Diskette, welche die Datei "%s" enthält. }
+
+message fdnotfound
+{Ich konnte die Datei "%s" nicht finden. Bitte mounten Sie die entsprechende 
+Diskette.
+Wenn dies die letzte Disk des Sets war, so drücken Sie "Set fertig", um beim
+nächsten Set anzusetzen - falls ein weiteres vorhanden ist.}
+
+message fdremount
+{Die Diskette konnte nicht erfolgreich gemountet werden.
+
+Sie sollten: 
+
+Erneut probieren, die Diskette mit der Datei "%s" zu mounten.
+
+Keine weiteren Dateien für dieses Set mehr laden, stattdessen beim nächsten
+Set ansetzen - falls ein weiteres vorhanden.
+
+Keine weiteren Sets mehr ab dem Diskettenlaufwerk laden und die Installation
+abbrechen.
+}
+
+message mntnetconfig
+{Sind die Netzwerkangaben, die Sie gemacht haben, passabel für den regulären
+Gebrauch? Sollen diese in /etc abgelegt werden?}
+
+message cur_distsets
+{Nachfolgend die Liste der Distributionssets, die zur Nutzung kommen.
+
+}
+
+message cur_distsets_header
+{   Distributionsset         Ausgewählt
+   ------------------------ ----------
+}
+
+message set_base
+{Basisset}
+
+message set_system
+{Systemkonfiguration (/etc)}
+
+message set_compiler
+{Kompillierungswerkzeuge}
+
+message set_games
+{Spiele}
+
+/* XXX Viel Anglizismus ;) */
+message set_man_pages
+{Online Manualseiten}
+
+message set_misc
+{Verschiedenes}
+
+/* XXX suboptimal? (könnte missverstanden werden) */
+message set_text_tools
+{Textverarbeitung}
+
+message set_X11
+{X11 Sets}
+
+/* XXX suboptimal? (Anglizismen) */
+message set_X11_base
+{X11 Basis und Clients}
+
+message set_X11_etc
+{X11 Konfiguration}
+
+message set_X11_fonts
+{X11 Schriften}
+
+/* XXX suboptimal? */
+message set_X11_servers
+{X11 Server}
+
+/* XXX suboptinmal? */
+message set_X_contrib
+{X Zusätzliche Clients}
+
+message set_X11_prog
+{X11 Programmierung}
+
+message set_X11_misc
+{X11 Verschiedenes}
+
+message cur_distsets_row
+{%-27s %3s\n}
+
+message select_all
+{Alle der oben angezeigten Sets auswählen}
+
+message select_none
+{Alle der oben angezeigten Sets abwählen}
+
+message install_selected_sets
+{Installieren der ausgewählten Sets}
+
+message tarerror
+{Beim Extrahieren der Datei %s ist ein Fehler aufgetreten. Das bedeutet, dass
+nicht alle Dateien korrekt extrahiert wurden und Ihr System somit nicht
+vollständig sein wird.
+
+Mit dem Extrahieren der Sets fortfahren?}
+
+message must_be_one_root
+{Eine der Partitionen muss dafür markiert sein auf '/' gemountet zu werden.}
+
+message partitions_overlap
+{Die Partitionen %c und %c überlappen sind.}
+
+message edit_partitions_again
+{
+
+Sie können entweder die Partitionstabelle manuell editieren oder aber zum
+Hauptmenü zurückbefördert werden.
+
+Wollen Sie die Partitionstabelle erneut editieren?}
+
+
+/* XXX suboptimal? */
+message not_regular_file
+{Die Konfigurationsdatei %s ist keine reguläre Datei.\n}
+
+message out_of_memory
+{Wir haben keinen freien Arbeitsspeicher mehr (malloc fehlgeschlagen).\n}
+
+message config_open_error
+{Konnte Konfigurationsdatei %s nicht öffnen.\n}
+
+message config_read_error
+{Konnte Konfigurationsdatei %s nicht lesen.\n}
+
+message cmdfail
+{Das Kommando
+	%s
+hat fehlgeschlagen. Ich kann nicht weiterfahren.}
+
+message upgradeparttype
+{Die einzige für NetBSD nutzbare Partition ist eine des alten
+NetBSD/386BSD/FreeBSD Typs. Wollen Sie den Typ dieser Partition zum neuen
+nur-NetBSD Partitionstyp abändern?}
+
+message choose_timezone
+{Bitte wählen Sie die für Sie passende Zeitzone von der unteren Liste aus.
+Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
+die Taste 'x' gefolgt von der Eingabetaste, um die Zeitzonenauswahl zu beenden.
+
+ Vorgabe:	%s
+ Ausgewählt:	%s
+ Lokale Zeit:	%s %s
+}
+
+message tz_back
+{ Zurück zur Hauptliste der Zeitzonen.}
+
+message choose_crypt
+{Bitte wählen Sie den gewünschten Ver-/Entschlüsselungsalgorythmus (Cipher).
+NetBSD kann dafür konfiguriert werden entweder DES, MD5 oder Blowfish zu
+benutzen.
+
+Das traditionelle DES System ist mit den meisten anderen UNIX artigen
+Betriebssystemen kompatibel, allerdings werden nur die ersten 8 Zeichen eines
+jeden Passworts berücksichtigt. Das MD5 und Blowfish System erlaubt längere
+Passwörter, einige finden dies sei auch sicherer.
+
+Wenn Sie ein Netzwerk haben und planen NIS zu nutzen, so berücksichtigen Sie
+die Fähigkeiten Ihrer anderen Maschinen, die an das Netzwerk angeschlossen sind.
+
+Wenn Sie am Upgraden (Aufrüsten) sind und die bestehende Konfiguration nicht
+zu verändern wünschen, so wählen Sie "Nicht verändern".
+}
+
+message swapactive
+{Das Laufwerk, das Sie ausgewählt haben, verfügt über eine Swappartition, die
+gegenwärtig auch benutzt wird sofern Ihr System zuwenig Arbeitsspeicher hat.
+Weil Sie dabei sind dieses Laufwerk erneut zu partitionieren wird diese
+Swappartition jetzt abgestellt, weshalb Sie mit Swapfehlern zu rechnen haben.
+Sollte solch ein Fehler auftreten, so starten Sie ihr System neu und probieren
+Sie es erneut.}
+
+message swapdelfailed
+{Beim Versuch die Swappartition des Laufwerks, das Sie für die Installation
+von NetBSD ausgewählt haben, zu deaktivieren hat Sysinst einen Fehler
+verursacht. Bitte starten Sie das System neu.}
+
+message rootpw
+{Das Rootpassword für das neu installierte System wurde noch nicht gesetzt, ist
+somit leer. Möchten Sie jetzt ein Rootpasswort für das System setzen?}
+
+message rootsh
+{Sie können jetzt die Standardshell (Vorgabe) für den Rootanwender auswählen.
+Die Vorgabe sieht dafür die /bin/csh vor, doch vielleicht mögen Sie eine
+andere wollen.}
+
+message postuseexisting
+{
+Vergessen Sie nicht alle Mountpoints für jedes Dateisystem, das gemountet
+werden soll, zu prüfen. Drücken Sie die Eingabetaste um fortzufahren.
+}
+
+message no_root_fs
+{
+Es ist kein Rootdateisystem (Wurzelverzeichnis) definiert. Zumindest müssen Sie
+ein Mountpoint mit "/" definieren.
+
+Drücken Sie die Eingabetaste um fortzufahren.
+}
+
+message Pick_an_option {Wählen Sie eine an- oder abzuschaltende Option.}
+message Scripting {Skripting}
+message Logging {Logging}
+
+message Status  { Status: }
+message Command {Kommando: }
+/* XXX suboptimal? */
+message Running {Wird ausgeführt}
+message Finished {Beendet}
+message Command_failed {Kommando fehlgeschlagen}
+/* XXX suboptimal? */
+message Command_ended_on_signal {Kommando beendet mit Signal}
+
+message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationssystem}
+message Exit_Install_System {Beende Installationssystem}
+message Install_NetBSD_to_hard_disk {NetBSD auf die Festplatte installieren}
+message Upgrade_NetBSD_on_a_hard_disk {Upgrade einer bestehenden NetBSD Installation}
+message Re_install_sets_or_install_additional_sets {Erneutes Installieren der Sets oder zusätzliche Sets installieren}
+message Reboot_the_computer {Computer neustarten}
+message Utility_menu {Werkzeugemenü (Utilities)}
+message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Werkzeuge (Utilities)}
+message Run_bin_sh {Ausführen von /bin/sh}
+message Set_timezone {Setzen der Zeitzone}
+message Configure_network {Netzwerkkonfiguration}
+message Partition_a_disk {Partitionieren eines Laufwerks}
+message Logging_functions {Protokollierungsfunktionen (Logging)}
+message Halt_the_system {System herunterfahren}
+message yes_or_no {Ja oder Nein?}
+message Hit_enter_to_continue {Drücken Sie die Eingabetaste um fortzufahren.}
+/* XXX sinnvoll? */
+message Choose_your_installation {Wählen Sie ihre Installation}
+message Set_Sizes {Grössen der NetBSD Partitionen setzen}
+message Use_Existing {Bereits bestehende Partitionsgrössen belassen}
+/* XXX suboptimal? */
+message Choose_your_size_specifier {Wählen Sie ihre Grösseneinheit}
+message Megabytes {Megabytes}
+message Cylinders {Zylinder}
+message Sectors {Sektoren}
+message Select_medium {Medium auswählen}
+message ftp {FTP}
+message nfs {NFS}
+message cdrom {CDROM}
+message floppy {Diskette}
+message local_fs {Ungemountetes Dateisysytem}
+message local_dir {Lokales Verzeichnis}
+/* XXX sinnvoll? */
+message Select_your_distribution {Wählen Sie ihre Distribution}
+message Full_installation {Volle Installation}
+message Custom_installation {Benutzerdefinierte Installation}
+message Change {Verändern}
+message hidden {** versteckt **}
+message Host {Host}
+message Directory {Verzeichnis}
+message User {Benutzer}
+message Password {Passwort}
+message Proxy {Proxy}
+/* XXX suboptimal? */
+message Get_Distribution {Distribution laden}
+message Continue {Fortfahren}
+message What_do_you_want_to_do {Was möchten Sie tun?}
+message Try_again {Versuchen Sie es erneut}
+/* XXX suboptimal? */
+message Give_up {Abbrechen}
+message Ignore_continue_anyway {Ignorieren und dennoch weiterfahren}
+message Set_finished {Set fertiggestellt}
+message Abort_install {Installation abbrechen}
+message Password_cipher {Passwort Cipher}
+message DES {DES}
+message MD5 {MD5}
+message Blowfish_2_7_round {Blowfish mit 2^7 Runden}
+message do_not_change {Nicht verändern}
+message Device {Gerät}
+message File_system {Dateisystem}
+message Change_directory_path {Verändern des Verzeichnispfades}
+message Select_IPv6_DNS_server {  Auswählen eines IPv6 DNS Servers}
+message other {Andere(r) }
+message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
+message Perform_DHCP_autoconfiguration {DHCP automatisch konfigurieren?}
+/* XXX 'Muschel' ist einfach zu hart ;) */
+message Root_shell {Root Shell}
+/* XXX argh */
+message Select_set_extraction_verbosity {Wählen Sie was Sie während des Extrahierens sehen möchten}
+message Progress_bar_recommended {Balkenbasierte Fortschrittsanzeige (empfohlen)
+}
+/* XXX Was besseres rum? */
+message Silent {Ruhig! ;) (schnell)}
+message Verbose_file_name_listing_slow {Auflisten aller installierten Dateien (langsam))}
+
+.if AOUT2ELF
+message aoutfail
+{Das Verzeichnis, wohin die alten gemeinsamen (shared) a.out Bibliotheken
+hinverschoben werden sollten konnte nicht erstellt werden. Bitte starten Sie
+erneut die Upgrade (Aufrüsten) Prozedur und stellen Sie sicher, dass alle
+Dateisysteme gemountet sind.}
+
+message emulbackup
+{Entweder war das /emul/aout oder das /emul Verzeichnis ein symbolischer 
+Verweis, der zu einem nicht-gemounteten Dateisystem zeigte. Es wurde mit einer
+'.old' (alt) Erweiterung gezeichnet. Sobald ihr upgegradetes (aufgerüstetes) 
+System gestartet ist müssen Sie das neu erstellte /emul/aout mit dem alten 
+Verzeichnis abgleichen.
+}
+.endif
