@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.10 2004/03/02 02:24:02 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.10 2004/03/02 02:24:02 thorpej Exp $");
 
 /*
  * IPsec controller part.
@@ -299,9 +299,6 @@ static int
 ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
     struct secpolicy *sp, int dir)
 {
-
-	if (sp != NULL && sp->policy == IPSEC_POLICY_ENTRUST)
-		panic("ipsec_fillpcbcache: ENTRUST");
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
