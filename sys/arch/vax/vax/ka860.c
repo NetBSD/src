@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.2 1996/03/08 12:32:54 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.3 1996/04/08 18:32:45 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -50,6 +51,16 @@
 #include <machine/ioa.h>
 
 struct	ioa *ioa; 
+
+/* XXX These are in autoconf.c also */
+void	ka86_conf __P((struct device *, struct device *, void *));
+int	ka86_clock __P((void));
+void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
+void	ka86_memerr __P((void));
+int	ka86_mchk __P((caddr_t));
+void    ka86_steal_pages __P((void));
+
+void	crlattach __P((void));
 
 /*
  * 8600 memory register (MERG) bit definitions
@@ -101,16 +112,19 @@ struct	ioa *ioa;
 \7CHE_TAG_PE\6CHE_TAG_W_PE\5CHE_WRTN_BIT\4NXM\3CP-IO_BUF_ERR\2MBOX_LOCK"
 
 /* enable CRD reports */
-ka86_memenable()
+void
+ka86_memenable(sa, dev)
+	struct sbi_attach_args *sa; /* XXX */
+	struct device *dev;
 {
-
 	mtpr(mfpr(PR_MERG) & ~M8600_ICRD, PR_MERG);
 }
 
 /* log CRD errors */
+void
 ka86_memerr()
 {
-	register int reg11;	/* known to be r11 below */
+	register int reg11 = 0;	/* known to be r11 below */
 	int mdecc, mear, mstat1, mstat2, array;
 
 	/*
@@ -197,6 +211,7 @@ struct mc8600frame {
 };
 
 /* machine check */
+int
 ka86_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -239,6 +254,7 @@ ka86_mchk(cmcf)
 	return (MCHK_PANIC);
 }
 
+void
 ka86_steal_pages()
 {
 	extern  vm_offset_t avail_start, virtual_avail;
@@ -265,8 +281,6 @@ ka86_steal_pages()
 	    (u_int)NEXA8600 + NNEX8600 * NEXSIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)&nexus[NNEXSBI], (u_int)NEXB8600,
 	    (u_int)NEXB8600 + NNEX8600 * NEXSIZE, VM_PROT_READ|VM_PROT_WRITE);
- 
-	return 0;
 }
 
 struct ka86 {

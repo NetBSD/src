@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.8 1996/03/17 22:56:20 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.9 1996/04/08 18:32:55 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,16 +32,21 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <machine/ka750.h>
 #include <machine/pmap.h>
 #include <machine/sid.h>
+#include <machine/cpu.h>
 
 struct nexus *nexus;
 
-static int sbi_attached = 0;
+static	int sbi_print __P((void *, char *));
+	int sbi_match __P((struct device *, void *, void *));
+	void sbi_attach __P((struct device *, struct device *, void*));
+
 
 struct bp_conf {
 	char *type;
@@ -75,8 +80,7 @@ sbi_print(aux, name)
 int
 sbi_match(parent, cf, aux)
 	struct  device  *parent;
-	struct  cfdata  *cf;
-	void    *aux;
+	void    *cf, *aux;
 {
 	struct bp_conf *bp = aux;
 
@@ -90,9 +94,8 @@ sbi_attach(parent, self, aux)
 	struct  device  *parent, *self;
 	void    *aux;
 {
-	void *nisse;
-	u_int nextype, nexnum, maxnex, minnex;
-	struct sbi_attach_args sa;
+	u_int 	nexnum, maxnex, minnex;
+	struct	sbi_attach_args sa;
 
 	switch (cpunumber) {
 #ifdef VAX730
@@ -132,6 +135,9 @@ sbi_attach(parent, self, aux)
 		printf(": SBI780\n");
 		break;
 #endif
+	default:
+		maxnex = 0; /* Leave it */
+		break;
 	}
 
 	/*
