@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.23 1997/05/09 07:50:33 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 1997/05/09 13:32:12 mycroft Exp $
 
 .include "../../Makefile.inc"
-.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 CFLAGS += -I${.CURDIR} -I.
 LDADD += -lcurses -ltermcap -lcrypt
 DPADD += ${LIBCURSES} ${LIBTERMCAP} ${LIBCRYPT}
 
-SRCS += api.c api_bsd.c api_exch.c apilib.c asc_disp.OUT asc_ebc.c astosc.OUT \
-	astosc.c commands.c dctype.c disp_asc.OUT disp_asc.c ebc_disp.c \
-	function.c genbsubs.c genget.c globals.c inbound.c kbd.OUT main.c \
-	map3270.c network.c oia.c options.c outbound.c ring.c sys_bsd.c \
-	system.c telnet.c termin.c terminal.c termout.c tn3270.c utilities.c
+SRCS=	api.c api_bsd.c api_exch.c apilib.c asc_ebc.c astosc.c commands.c \
+	dctype.c disp_asc.c ebc_disp.c function.c genbsubs.c genget.c \
+	globals.c inbound.c main.c map3270.c network.c oia.c options.c \
+	outbound.c ring.c sys_bsd.c system.c telnet.c termin.c terminal.c \
+	termout.c tn3270.c utilities.c
+DPSRCS=	asc_disp.OUT astosc.OUT disp_asc.OUT kbd.OUT
 
 PROG = tn3270
 
@@ -69,4 +69,3 @@ ${MKHITS}:
 .PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
 .PATH: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet
 .PATH: ${.CURDIR}/../../../lib/libtelnet
-
