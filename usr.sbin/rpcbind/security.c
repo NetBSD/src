@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.1 2000/06/02 23:15:42 fvdl Exp $	*/
+/*	$NetBSD: security.c,v 1.2 2000/06/04 04:51:50 thorpej Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -10,6 +10,7 @@
 #include <rpc/pmap_prot.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <util.h>
 #include <syslog.h>
