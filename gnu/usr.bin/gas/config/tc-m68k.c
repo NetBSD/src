@@ -530,7 +530,7 @@ static char alt_notend_table[256];
 							    alt_notend_table[(unsigned char)(s[1])])))
 
 #if 0
-#define mklower(c)	(isupper(c) ? tolower(c) : c)
+#define mklower(c)	(isupper((unsigned char)(c)) ? tolower((unsigned char)(c)) : (c))
 #endif
 
 /* Handle the extra arg for fix_new when doing PIC */
@@ -1229,7 +1229,7 @@ char *instring;
 	
 	if (p == instring) {
 		the_ins.error = "No operator";
-		the_ins.opcode[0] = NULL;
+		the_ins.opcode[0] = 0;
 		/* the_ins.numo=1; */
 		return;
 	}
@@ -1244,7 +1244,7 @@ char *instring;
 	
 	if (opcode == NULL) {
 		the_ins.error = "Unknown operator";
-		the_ins.opcode[0] = NULL;
+		the_ins.opcode[0] = 0;
 		/* the_ins.numo=1; */
 		return;
 	}
@@ -2894,7 +2894,6 @@ void
 	*slak;
 	register char *retval = 0;		/* empty string, or error msg text */
 	register unsigned int i;
-	register char c;
 	
 	if ((op_hash = hash_new()) == NULL)
 	    as_fatal("Virtual memory exhausted");
@@ -2927,7 +2926,7 @@ void
 	}
 	
 	for (i = 0; i < sizeof(mklower_table) ; i++)
-	    mklower_table[i] = (isupper(c = (char) i)) ? tolower(c) : c;
+	    mklower_table[i] = (isupper(i)) ? tolower(i) : i;
 	
 	for (i = 0 ; i < sizeof(notend_table) ; i++) {
 		notend_table[i] = 0;
