@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.1 1999/06/21 16:23:00 ragge Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.2 1999/08/14 11:31:48 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -53,9 +53,9 @@
 #include <arch/vax/uba/uba_common.h>
 
 /* Some CMI-specific defines */
-#define	UBASIZE		(UBAPAGES * VAX_NBPG)
-#define UMEM750(i)     	(0xfc0000-(i)*0x40000)
-#define	UIOPAGE(x)	(UMEM750(x) + ((UBAPAGES + UBAIOPAGES) * VAX_NBPG))
+#define	UBASIZE		((UBAPAGES + UBAIOPAGES) * VAX_NBPG)
+#define UMEM750(i)     	(0xfc0000 - (i) * UBASIZE)
+#define	UIOPAGE(x)	(UMEM750(x) + (UBAPAGES * VAX_NBPG))
 
 /*
  * The DW780 and DW750 are quite similar to their function from
