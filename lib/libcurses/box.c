@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.8 1997/07/22 07:36:24 mikel Exp $	*/
+/*	$NetBSD: box.c,v 1.9 1998/02/03 19:12:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.8 1997/07/22 07:36:24 mikel Exp $");
+__RCSID("$NetBSD: box.c,v 1.9 1998/02/03 19:12:16 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -51,11 +51,11 @@ __RCSID("$NetBSD: box.c,v 1.8 1997/07/22 07:36:24 mikel Exp $");
  */
 int
 box(win, vert, hor)
-	register WINDOW *win;
+	WINDOW *win;
 	int vert, hor;
 {
-	register int endy, endx, i;
-	register __LDATA *fp, *lp;
+	int endy, endx, i;
+	__LDATA *fp, *lp;
 
 	endx = win->maxx;
 	endy = win->maxy - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_vm86.c,v 1.2 1997/07/30 23:13:40 jtc Exp $	*/
+/*	$NetBSD: i386_vm86.c,v 1.3 1998/02/03 19:12:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 int
 i386_vm86(vmcp)
-	register struct vm86_struct *vmcp;
+	struct vm86_struct *vmcp;
 {
 
 	return sysarch(I386_VM86, (char *)vmcp);

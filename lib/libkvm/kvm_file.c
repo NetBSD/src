@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.8 1997/08/15 17:52:45 drochner Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.9 1998/02/03 19:12:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.8 1997/08/15 17:52:45 drochner Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.9 1998/02/03 19:12:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ kvm_deadfiles(kd, op, arg, filehead_o, nfiles)
 	int buflen = kd->arglen, n = 0;
 	struct file *fp;
 	struct filelist filehead;
-	register char *where = kd->argspc;
+	char *where = kd->argspc;
 
 	/*
 	 * first copyout filehead

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.6 1997/10/20 12:49:50 ragge Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.7 1998/02/03 19:12:45 perry Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	register struct vmstate *vm;
+	struct vmstate *vm;
 	struct stat st;
 	struct nlist nlist[2];
 
@@ -116,7 +116,7 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	register int end;
+	int end;
 
 	if (va < KERNBASE) {
 		_kvm_err(kd, 0, "invalid address (%x<%x)", va, KERNBASE);

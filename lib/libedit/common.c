@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 1997/07/06 18:25:23 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.5 1998/02/03 19:12:38 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.4 1997/07/06 18:25:23 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.5 1998/02/03 19:12:38 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -456,7 +456,7 @@ ed_digit(el, c)
 protected el_action_t
 ed_argument_digit(el, c)
     EditLine *el;
-    register int c;
+    int c;
 {
     if (!isdigit(c))
 	return CC_ERROR;
