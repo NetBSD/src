@@ -1,7 +1,7 @@
-#!/bin/sh -
+#!/usr/bin/sed -nf
 #
-# Copyright (c) 1988 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1988, 1993, 1994
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,11 +31,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)makewhatis.sed	5.5 (Berkeley) 4/17/91
+#	@(#)makewhatis.sed	8.4 (Berkeley) 4/3/94
 #
 
-/(\([a-zA-Z0-9]*\).*UNIX Programmer's Manual/ {
-	s;.*(\([a-zA-Z0-9]*\).*UNIX.*;\1;
+/^[a-zA-Z][a-zA-Z0-9\._+\-]*(\([a-zA-Z0-9\._+\-]*\).*/ {
+	s;^[a-zA-Z0-9\._+\-]*(\([a-zA-Z0-9\._+\-]*\).*;\1;
 	h
 	d
 }
@@ -56,8 +56,9 @@
 	x
 	s;\n;;g
 	/-/!d
+	s;.;;g
 	s;\([a-z][A-z]\)-[	 ][	 ]*;\1;
-	s;\([a-zA-Z0-9,]\)[	 ][	 ]*;\1 ;g
-	s;[^a-zA-Z0-9]*\([a-zA-Z0-9]*\)[^a-zA-Z0-9]*\(.*\) - \(.*\);\2 (\1) - \3;
+	s;\([a-zA-Z0-9,\._+\-]\)[	 ][	 ]*;\1 ;g
+	s;[^a-zA-Z0-9\._+\-]*\([a-zA-Z0-9\._+\-]*\)[^a-zA-Z0-9\._+\-]*\(.*\) - \(.*\);\2 (\1) - \3;
 	p
 	q
