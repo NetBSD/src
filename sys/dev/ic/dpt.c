@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.1 1999/10/19 17:47:36 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.2 1999/10/19 20:10:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.1 1999/10/19 17:47:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.2 1999/10/19 20:10:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,8 +375,7 @@ dpt_init(sc, intrstr)
 		chan->chan_ntargets = ec->ec_maxtarget + 1;
 		chan->chan_nluns = ec->ec_maxlun + 1;
 		chan->chan_id = sc->sc_hbaid[i];
-
-		(void) config_found(&sc->sc_dv, chan, scsiprint);
+		config_found(&sc->sc_dv, chan, scsiprint);
 	}
 }
 
