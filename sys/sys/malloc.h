@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	8.3 (Berkeley) 1/12/94
- *	$Id: malloc.h,v 1.16 1994/05/19 03:39:39 mycroft Exp $
+ *	$Id: malloc.h,v 1.17 1994/05/19 03:45:17 cgd Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -193,7 +193,6 @@
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, \
 	"temp",		/* 84 M_TEMP */ \
 }
 
