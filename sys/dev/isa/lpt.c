@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34 1996/03/17 13:40:29 cgd Exp $	*/
+/*	$NetBSD: lpt.c,v 1.35 1996/03/18 09:14:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -268,7 +268,7 @@ lptattach(parent, self, aux)
 	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
 		    lptintr, sc);
 }
 
