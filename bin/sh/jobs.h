@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)jobs.h	5.1 (Berkeley) 3/7/91
- *	$Id: jobs.h,v 1.4 1993/08/01 18:58:26 mycroft Exp $
+ *	@(#)jobs.h	8.1 (Berkeley) 5/31/93
  */
 
 /* Mode argument to forkshell.  Don't change FORK_FG or FORK_BG. */
@@ -76,6 +75,7 @@ struct job {
 };
 
 extern short backgndpid;	/* pid of last background process */
+extern int job_warning;		/* user was warned about stopped jobs */
 
 
 #ifdef __STDC__
@@ -84,12 +84,14 @@ void showjobs(int);
 struct job *makejob(union node *, int);
 int forkshell(struct job *, union node *, int);
 int waitforjob(struct job *);
+char *commandtext(union node *);
 #else
 void setjobctl();
 void showjobs();
 struct job *makejob();
 int forkshell();
 int waitforjob();
+char *commandtext();
 #endif
 
 #if ! JOBS

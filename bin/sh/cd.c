@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cd.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: cd.c,v 1.5 1993/08/01 18:58:22 mycroft Exp $";
+static char sccsid[] = "@(#)cd.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -71,12 +70,8 @@ STATIC char *getcomponent();
 
 
 char *curdir;			/* current working directory */
+char *prevdir;			/* previous working directory */
 STATIC char *cdcomppath;
-
-#if UDIR
-extern int didudir;		/* set if /u/logname expanded */
-#endif
-
 
 int
 cdcmd(argc, argv)  char **argv; {
@@ -85,17 +80,32 @@ cdcmd(argc, argv)  char **argv; {
 	char *p;
 	struct stat statb;
 	char *padvance();
+	int print = 0;
 
 	nextopt(nullstr);
 	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
 		error("HOME not set");
+	if (dest[0] == '-' && dest[1] == '\0') {
+		dest = prevdir ? prevdir : curdir;
+		print = 1;
+	}
 	if (*dest == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
 	while ((p = padvance(&path, dest)) != NULL) {
 		if (stat(p, &statb) >= 0
-		 && (statb.st_mode & S_IFMT) == S_IFDIR
-		 && docd(p, strcmp(p, dest)) >= 0)
-			return 0;
+		 && (statb.st_mode & S_IFMT) == S_IFDIR) {
+			if (!print) {
+				/*
+				 * XXX - rethink
+				 */
+				if (p[0] == '.' && p[1] == '/')
+					p += 2;
+				print = strcmp(p, dest);
+			}
+			if (docd(p, print) >= 0)
+				return 0;
+
+		}
 	}
 	error("can't cd to %s", dest);
 }
@@ -116,10 +126,6 @@ STATIC int
 docd(dest, print)
 	char *dest;
 	{
-#if UDIR
-	if (didudir)
-		print = 1;
-#endif
 	INTOFF;
 	if (chdir(dest) < 0) {
 		INTON;
@@ -127,10 +133,8 @@ docd(dest, print)
 	}
 	updatepwd(dest);
 	INTON;
-#ifdef not
 	if (print && iflag)
 		out1fmt("%s\n", stackblock());
-#endif
 	return 0;
 }
 
@@ -151,10 +155,6 @@ docd(dest, print)
 	int i;
 
 	TRACE(("docd(\"%s\", %d) called\n", dest, print));
-#if UDIR
-	if (didudir)
-		print = 1;
-#endif
 
 top:
 	cdcomppath = dest;
@@ -223,10 +223,8 @@ top:
 	}
 	updatepwd(p);
 	INTON;
-#ifdef not
 	if (print && iflag)
 		out1fmt("%s\n", p);
-#endif
 	return 0;
 }
 #endif /* SYMLINKS */
@@ -299,9 +297,12 @@ updatepwd(dir)
 	if (new == stackblock())
 		STPUTC('/', new);
 	STACKSTRNUL(new);
-	if (curdir)
-		ckfree(curdir);
+	INTOFF;
+	if (prevdir)
+		ckfree(prevdir);
+	prevdir = curdir;
 	curdir = savestr(stackblock());
+	INTON;
 }
 
 
@@ -348,10 +349,7 @@ getpwd() {
 			close(pip[1]);
 		}
 		execl("/bin/pwd", "pwd", (char *)0);
-		/* error("Cannot exec /bin/pwd");*/
-		out2str("Cannot exec /bin/pwd\n");		/* 22 Aug 92*/
-		flushall();
-		_exit(1);
+		error("Cannot exec /bin/pwd");
 	}
 	close(pip[1]);
 	pip[1] = -1;

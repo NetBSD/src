@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)error.h	5.1 (Berkeley) 3/7/91
- *	$Id: error.h,v 1.4 1993/08/01 18:58:32 mycroft Exp $
+ *	@(#)error.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

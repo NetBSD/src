@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,9 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nodes.c.pat	5.2 (Berkeley) 3/8/91
- *
- *	$Header: /cvsroot/src/bin/sh/nodes.c.pat,v 1.3 1993/03/23 00:28:55 cgd Exp $
+ *	@(#)nodes.c.pat	8.1 (Berkeley) 5/31/93
  */
 
 /*

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)options.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: options.c,v 1.4 1993/08/01 18:58:04 mycroft Exp $";
+static char sccsid[] = "@(#)options.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include "shell.h"
@@ -66,9 +65,11 @@ char *minusc;			/* argument to -c option */
 #ifdef __STDC__
 STATIC void options(int);
 STATIC void setoption(int, int);
+STATIC void minus_o(char *, int);
 #else
 STATIC void options();
 STATIC void setoption();
+STATIC void minus_o();
 #endif
 
 
@@ -81,23 +82,23 @@ void
 procargs(argc, argv)
 	char **argv;
 	{
-	char *p;
+	int i;
 
 	argptr = argv;
 	if (argc > 0)
 		argptr++;
-	for (p = optval ; p < optval + sizeof optval - 1 ; p++)
-		*p = 2;
+	for (i = 0; i < NOPTS; i++)
+		optlist[i].val = 2;
 	options(1);
 	if (*argptr == NULL && minusc == NULL)
 		sflag = 1;
 	if (iflag == 2 && sflag == 1 && isatty(0) && isatty(1))
 		iflag = 1;
-	if (jflag == 2)
-		jflag = iflag;
-	for (p = optval ; p < optval + sizeof optval - 1 ; p++)
-		if (*p == 2)
-			*p = 0;
+	if (mflag == 2)
+		mflag = iflag;
+	for (i = 0; i < NOPTS; i++)
+		if (optlist[i].val == 2)
+			optlist[i].val = 0;
 	arg0 = argv[0];
 	if (sflag == 0 && minusc == NULL) {
 		commandname = arg0 = *argptr++;
@@ -109,11 +110,15 @@ procargs(argc, argv)
 		shellparam.nparam++;
 		argptr++;
 	}
-	setinteractive(iflag);
-	setjobctl(jflag);
+	optschanged();
 }
 
 
+optschanged() {
+	setinteractive(iflag);
+	histedit();
+	setjobctl(mflag);
+}
 
 /*
  * Process shell options.  The global variable argptr contains a pointer
@@ -162,26 +167,60 @@ options(cmdline) {
 #ifdef NOHACK
 				break;
 #endif
+			} else if (c == 'o') {
+				minus_o(*argptr, val);
+				if (*argptr)
+					argptr++;
 			} else {
 				setoption(c, val);
 			}
 		}
-		if (! cmdline)
-			break;
 	}
 }
 
+STATIC void
+minus_o(name, val)
+	char *name;
+	int val;
+{
+	int i;
+
+	if (name == NULL) {
+		out1str("Current option settings\n");
+		for (i = 0; i < NOPTS; i++)
+			out1fmt("%-16s%s\n", optlist[i].name,
+				optlist[i].val ? "on" : "off");
+	} else {
+		for (i = 0; i < NOPTS; i++)
+			if (equal(name, optlist[i].name)) {
+				setoption(optlist[i].letter, val);
+				return;
+			}
+		error("Illegal option -o %s", name);
+	}
+}
+			
 
 STATIC void
 setoption(flag, val)
 	char flag;
 	int val;
 	{
-	register char *p;
+	int i;
 
-	if ((p = strchr(optchar, flag)) == NULL)
-		error("Illegal option -%c", flag);
-	optval[p - optchar] = val;
+	for (i = 0; i < NOPTS; i++)
+		if (optlist[i].letter == flag) {
+			optlist[i].val = val;
+			if (val) {
+				/* #%$ hack for ksh semantics */
+				if (flag == 'V')
+					Eflag = 0;
+				else if (flag == 'E')
+					Vflag = 0;
+			}
+			return;
+		}
+	error("Illegal option -%c", flag);
 }
 
 
@@ -190,10 +229,12 @@ setoption(flag, val)
 INCLUDE "options.h"
 
 SHELLPROC {
-	char *p;
+	int i;
 
-	for (p = optval ; p < optval + sizeof optval ; p++)
-		*p = 0;
+	for (i = 0; i < NOPTS; i++)
+		optlist[i].val = 0;
+	optschanged();
+
 }
 #endif
 
@@ -255,7 +296,7 @@ shiftcmd(argc, argv)  char **argv; {
 	if (argc > 1)
 		n = number(argv[1]);
 	if (n > shellparam.nparam)
-		n = shellparam.nparam;
+		error("can't shift that many");
 	INTOFF;
 	shellparam.nparam -= n;
 	for (ap1 = shellparam.p ; --n >= 0 ; ap1++) {
@@ -280,8 +321,7 @@ setcmd(argc, argv)  char **argv; {
 		return showvarscmd(argc, argv);
 	INTOFF;
 	options(0);
-	setinteractive(iflag);
-	setjobctl(jflag);
+	optschanged();
 	if (*argptr != NULL) {
 		setparam(argptr);
 	}
@@ -350,6 +390,10 @@ out:
 }
 
 /*
+ * XXX - should get rid of.  have all builtins use getopt(3).  the
+ * library getopt must have the BSD extension static variable "optreset"
+ * otherwise it can't be used within the shell safely.
+ *
  * Standard option processing (a la getopt) for builtin routines.  The
  * only argument that is passed to nextopt is the option string; the
  * other arguments are unnecessary.  It return the character, or '\0' on

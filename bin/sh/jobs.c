@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)jobs.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: jobs.c,v 1.7 1993/08/06 21:50:16 mycroft Exp $";
+static char sccsid[] = "@(#)jobs.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include "shell.h"
@@ -50,17 +49,16 @@ static char rcsid[] = "$Id: jobs.c,v 1.7 1993/08/06 21:50:16 mycroft Exp $";
 #include "jobs.h"
 #include "options.h"
 #include "trap.h"
+#include "signames.h"
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include "redir.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
-#include <unistd.h>
 #ifdef BSD
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -85,7 +83,6 @@ STATIC void freejob(struct job *);
 STATIC int procrunning(int);
 STATIC int dowait(int, struct job *);
 STATIC int waitproc(int, int *);
-STATIC char *commandtext(union node *);
 #else
 STATIC void restartjob();
 STATIC struct job *getjob();
@@ -93,12 +90,10 @@ STATIC void freejob();
 STATIC int procrunning();
 STATIC int dowait();
 STATIC int waitproc();
-STATIC char *commandtext();
 #endif
 
 
- 
-#if JOBS
+
 /*
  * Turn job control on and off.
  *
@@ -111,31 +106,36 @@ MKINIT int jobctl;
 
 void
 setjobctl(on) {
+#ifdef OLD_TTY_DRIVER
 	int ldisc;
+#endif
 
 	if (on == jobctl || rootshell == 0)
 		return;
 	if (on) {
 		do { /* while we are in the background */
 			if (ioctl(2, TIOCGPGRP, (char *)&initialpgrp) < 0) {
-				out2str("ash: can't access tty; job control turned off\n");
-				jflag = 0;
+				out2str("sh: can't access tty; job control turned off\n");
+				mflag = 0;
 				return;
 			}
 			if (initialpgrp == -1)
-				initialpgrp = getpgrp();
-			else if (initialpgrp != getpgrp()) {
+				initialpgrp = getpgrp(0);
+			else if (initialpgrp != getpgrp(0)) {
 				killpg(initialpgrp, SIGTTIN);
 				continue;
 			}
 		} while (0);
+#ifdef OLD_TTY_DRIVER
 		if (ioctl(2, TIOCGETD, (char *)&ldisc) < 0 || ldisc != NTTYDISC) {
-			out2str("ash: need new tty driver to run job control; job control turned off\n");
-			jflag = 0;
+			out2str("sh: need new tty driver to run job control; job control turned off\n");
+			mflag = 0;
 			return;
 		}
+#endif
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
+		setsignal(SIGTTIN);
 		setpgrp(0, rootpid);
 		ioctl(2, TIOCSPGRP, (char *)&rootpid);
 	} else { /* turning job control off */
@@ -143,10 +143,10 @@ setjobctl(on) {
 		ioctl(2, TIOCSPGRP, (char *)&initialpgrp);
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
+		setsignal(SIGTTIN);
 	}
 	jobctl = on;
 }
-#endif
 
 
 #ifdef mkinit
@@ -272,8 +272,8 @@ showjobs(change) {
 				if ((i & 0xFF) == 0177)
 					i >>= 8;
 #endif
-				if ((i & 0x7F) < NSIG && sys_siglist[i & 0x7F])
-					scopy(sys_siglist[i & 0x7F], s);
+				if ((i & 0x7F) <= MAXSIG && sigmesg[i & 0x7F])
+					scopy(sigmesg[i & 0x7F], s);
 				else
 					fmtstr(s, 64, "Signal %d", i & 0x7F);
 				if (i & 0x80)
@@ -536,7 +536,7 @@ forkshell(jp, n, mode)
 		clear_traps();
 #if JOBS
 		jobctl = 0;		/* do job control only in root shell */
-		if (wasroot && mode != FORK_NOJOB && jflag) {
+		if (wasroot && mode != FORK_NOJOB && mflag) {
 			if (jp == NULL || jp->nprocs == 0)
 				pgrp = getpid();
 			else
@@ -552,8 +552,8 @@ forkshell(jp, n, mode)
 		} else if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0)
-			    && ! fd0_redirected_p ()) {
+			if ((jp == NULL || jp->nprocs == 0) &&
+			    ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
@@ -563,8 +563,8 @@ forkshell(jp, n, mode)
 		if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0)
-			    && ! fd0_redirected_p ()) {
+			if ((jp == NULL || jp->nprocs == 0) &&
+			    ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
@@ -578,7 +578,7 @@ forkshell(jp, n, mode)
 		}
 		return pid;
 	}
-	if (rootshell && mode != FORK_NOJOB && jflag) {
+	if (rootshell && mode != FORK_NOJOB && mflag) {
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
@@ -626,7 +626,7 @@ waitforjob(jp)
 	register struct job *jp;
 	{
 #if JOBS
-	int mypgrp = getpgrp();
+	int mypgrp = getpgrp(0);
 #endif
 	int status;
 	int st;
@@ -736,8 +736,8 @@ dowait(block, job)
 			if (status == SIGTSTP && rootshell && iflag)
 				outfmt(out2, "%%%d ", job - jobtab + 1);
 #endif
-			if (status < NSIG && sys_siglist[status])
-				out2str(sys_siglist[status]);
+			if (status <= MAXSIG && sigmesg[status])
+				out2str(sigmesg[status]);
 			else
 				outfmt(out2, "Signal %d", status);
 			if (core)
@@ -809,7 +809,7 @@ waitproc(block, status)
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
-	return wait3((int *)status, flags, (struct rusage *)NULL);
+	return wait3(status, flags, (struct rusage *)NULL);
 #else
 #ifdef SYSV
 	int (*save)();
@@ -830,7 +830,30 @@ waitproc(block, status)
 #endif
 }
 
+/*
+ * return 1 if there are stopped jobs, otherwise 0
+ */
+int job_warning = 0;
+int
+stoppedjobs()
+{
+	register int jobno;
+	register struct job *jp;
 
+	if (job_warning)
+		return (0);
+	for (jobno = 1, jp = jobtab; jobno <= njobs; jobno++, jp++) {
+		if (jp->used == 0)
+			continue;
+		if (jp->state == JOBSTOPPED) {
+			out2str("You have stopped jobs.\n");
+			job_warning = 2;
+			return (1);
+		}
+	}
+
+	return (0);
+}
 
 /*
  * Return a string identifying a command (to be printed by the
@@ -840,15 +863,16 @@ waitproc(block, status)
 STATIC char *cmdnextc;
 STATIC int cmdnleft;
 STATIC void cmdtxt(), cmdputs();
+#define MAXCMDTEXT	200
 
-STATIC char *
+char *
 commandtext(n)
 	union node *n;
 	{
 	char *name;
 
-	cmdnextc = name = ckmalloc(50);
-	cmdnleft = 50 - 4;
+	cmdnextc = name = ckmalloc(MAXCMDTEXT);
+	cmdnleft = MAXCMDTEXT - 4;
 	cmdtxt(n);
 	*cmdnextc = '\0';
 	return name;
@@ -865,6 +889,8 @@ cmdtxt(n)
 	int i;
 	char s[2];
 
+	if (n == NULL)
+		return;
 	switch (n->type) {
 	case NSEMI:
 		cmdtxt(n->nbinary.ch1);

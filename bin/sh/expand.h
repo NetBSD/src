@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)expand.h	5.1 (Berkeley) 3/7/91
- *	$Id: expand.h,v 1.4 1993/08/01 18:58:29 mycroft Exp $
+ *	@(#)expand.h	8.1 (Berkeley) 5/31/93
  */
 
 struct strlist {
@@ -47,6 +46,16 @@ struct arglist {
 	struct strlist *list;
 	struct strlist **lastp;
 };
+
+/*
+ * expandarg() flags
+ */
+#define EXP_FULL	0x1	/* perform word splitting & file globbing */
+#define EXP_TILDE	0x2	/* do normal tilde expansion */
+#define	EXP_VARTILDE	0x4	/* expand tildes in an assignment */
+#define	EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
+#define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
+
 
 #ifdef __STDC__
 union node;

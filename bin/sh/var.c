@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)var.c	5.3 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: var.c,v 1.4 1993/08/01 18:57:58 mycroft Exp $";
+static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -71,6 +70,7 @@ struct varinit {
 #if ATTY
 struct var vatty;
 #endif
+struct var vhistsize;
 struct var vifs;
 struct var vmail;
 struct var vmpath;
@@ -86,6 +86,7 @@ const struct varinit varinit[] = {
 #if ATTY
 	{&vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY="},
 #endif
+	{&vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE="},
 	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
 	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
 	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
@@ -102,7 +103,7 @@ const struct varinit varinit[] = {
 
 struct var *vartab[VTABSIZE];
 
-STATIC void unsetvar __P((char *));
+STATIC int unsetvar __P((char *));
 STATIC struct var **hashvar __P((char *));
 STATIC int varequal __P((char *, char *));
 
@@ -153,7 +154,7 @@ initvar() {
 		vpp = hashvar("PS1=");
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = getuid() ? "PS1=$ " : "PS1=# ";
+		vps1.text = geteuid() ? "PS1=$ " : "PS1=# ";
 		vps1.flags = VSTRFIXED|VTEXTFIXED;
 	}
 }
@@ -187,7 +188,7 @@ setvar(name, val, flags)
 	}
 	namelen = p - name;
 	if (isbad)
-		error("%.*s: is read only", namelen, name);
+		error("%.*s: bad variable name", namelen, name);
 	len = namelen + 2;		/* 2 is space for '=' and '\0' */
 	if (val == NULL) {
 		flags |= VUNSET;
@@ -237,6 +238,8 @@ setvareq(s, flags)
 			vp->text = s;
 			if (vp == &vmpath || (vp == &vmail && ! mpathset()))
 				chkmail(1);
+			if (vp == &vhistsize)
+				sethistsize();
 			INTON;
 			return;
 		}
@@ -492,8 +495,8 @@ mklocal(name)
 	INTOFF;
 	lvp = ckmalloc(sizeof (struct localvar));
 	if (name[0] == '-' && name[1] == '\0') {
-		lvp->text = ckmalloc(sizeof optval);
-		bcopy(optval, lvp->text, sizeof optval);
+		lvp->text = ckmalloc(sizeof optlist);
+		bcopy(optlist, lvp->text, sizeof optlist);
 		vp = NULL;
 	} else {
 		vpp = hashvar(name);
@@ -534,10 +537,10 @@ poplocalvars() {
 		localvars = lvp->next;
 		vp = lvp->vp;
 		if (vp == NULL) {	/* $- saved */
-			bcopy(lvp->text, optval, sizeof optval);
+			bcopy(lvp->text, optlist, sizeof optlist);
 			ckfree(lvp->text);
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
-			unsetvar(vp->text);
+			(void)unsetvar(vp->text);
 		} else {
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
@@ -568,12 +571,27 @@ setvarcmd(argc, argv)  char **argv; {
 
 unsetcmd(argc, argv)  char **argv; {
 	char **ap;
+	int i;
+	int flg_func = 0;
+	int flg_var = 0;
+	int ret = 0;
 
-	for (ap = argv + 1 ; *ap ; ap++) {
-		unsetfunc(*ap);
-		unsetvar(*ap);
+	while ((i = nextopt("vf")) != '\0') {
+		if (i == 'f')
+			flg_func = 1;
+		else
+			flg_var = 1;
 	}
-	return 0;
+	if (flg_func == 0 && flg_var == 0)
+		flg_var = 1;
+			
+	for (ap = argptr; *ap ; ap++) {
+		if (flg_func)
+			ret |= unsetfunc(*ap);
+		if (flg_var)
+			ret |= unsetvar(*ap);
+	}
+	return ret;
 }
 
 
@@ -581,7 +599,7 @@ unsetcmd(argc, argv)  char **argv; {
  * Unset the specified variable.
  */
 
-STATIC void
+STATIC int
 unsetvar(s)
 	char *s;
 	{
@@ -591,11 +609,11 @@ unsetvar(s)
 	vpp = hashvar(s);
 	for (vp = *vpp ; vp ; vpp = &vp->next, vp = *vpp) {
 		if (varequal(vp->text, s)) {
+			if (vp->flags & VREADONLY)
+				return (1);
 			INTOFF;
-			if (*(strchr(vp->text, '=') + 1) != '\0'
-			 || vp->flags & VREADONLY) {
+			if (*(strchr(vp->text, '=') + 1) != '\0')
 				setvar(s, nullstr, 0);
-			}
 			vp->flags &=~ VEXPORT;
 			vp->flags |= VUNSET;
 			if ((vp->flags & VSTRFIXED) == 0) {
@@ -605,9 +623,11 @@ unsetvar(s)
 				ckfree(vp);
 			}
 			INTON;
-			return;
+			return (0);
 		}
 	}
+
+	return (1);
 }
 
 

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)eval.c	5.3 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: eval.c,v 1.6 1993/09/09 01:05:19 cgd Exp $";
+static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -61,6 +60,7 @@ static char rcsid[] = "$Id: eval.c,v 1.6 1993/09/09 01:05:19 cgd Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "myhistedit.h"
 #include <signal.h>
 
 
@@ -194,8 +194,10 @@ evaltree(n, flags)
 	{
 	if (n == NULL) {
 		TRACE(("evaltree(NULL) called\n"));
-		return;
+		exitstatus = 0;
+		goto out;
 	}
+	displayhist = 1;	/* show history substitutions done with fc */
 	TRACE(("evaltree(0x%x: %d) called\n", (int)n, n->type));
 	switch (n->type) {
 	case NSEMI:
@@ -258,6 +260,11 @@ evaltree(n, flags)
 		defun(n->narg.text, n->narg.next);
 		exitstatus = 0;
 		break;
+	case NNOT:
+		evaltree(n->nnot.com, EV_TESTED);
+		exitstatus = !exitstatus;
+		break;
+
 	case NPIPE:
 		evalpipe(n);
 		break;
@@ -326,7 +333,7 @@ evalfor(n)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next) {
-		expandarg(argp, &arglist, 1);
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
 		if (evalskip)
 			goto out;
 	}
@@ -365,7 +372,7 @@ evalcase(n, flags)
 
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
-	expandarg(n->ncase.expr, &arglist, 0);
+	expandarg(n->ncase.expr, &arglist, EXP_TILDE);
 	for (cp = n->ncase.cases ; cp && evalskip == 0 ; cp = cp->nclist.next) {
 		for (patp = cp->nclist.pattern ; patp ; patp = patp->narg.next) {
 			if (casematch(patp, arglist.list->text)) {
@@ -426,7 +433,7 @@ expredir(n)
 		 || redir->type == NAPPEND) {
 			struct arglist fn;
 			fn.lastp = &fn.list;
-			expandarg(redir->nfile.fname, &fn, 0);
+			expandarg(redir->nfile.fname, &fn, EXP_TILDE | EXP_REDIR);
 			redir->nfile.expfname = fn.list->text;
 		}
 	}
@@ -521,10 +528,10 @@ evalbackcmd(n, result)
 	result->buf = NULL;
 	result->nleft = 0;
 	result->jp = NULL;
-	/* No command inside the backqotes, so do nothing. */
+	exitstatus = 0;
 	if (n == NULL)
-		;
-	else if (n->type == NCMD) {
+		goto out;
+	if (n->type == NCMD) {
 		evalcommand(n, EV_BACKCMD, result);
 	} else {
 		if (pipe(pip) < 0)
@@ -544,6 +551,7 @@ evalbackcmd(n, result)
 		result->fd = pip[0];
 		result->jp = jp;
 	}
+out:
 	popstackmark(&smark);
 	TRACE(("evalbackcmd done: fd=%d buf=0x%x nleft=%d jp=0x%x\n",
 		result->fd, result->buf, result->nleft, result->jp));
@@ -595,11 +603,11 @@ evalcommand(cmd, flags, backcmd)
 				p++;
 			} while (is_in_name(*p));
 			if (*p == '=') {
-				expandarg(argp, &varlist, 0);
+				expandarg(argp, &varlist, EXP_VARTILDE);
 				continue;
 			}
 		}
-		expandarg(argp, &arglist, 1);
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
 		varflag = 0;
 	}
 	*arglist.lastp = NULL;
@@ -609,8 +617,11 @@ evalcommand(cmd, flags, backcmd)
 	for (sp = arglist.list ; sp ; sp = sp->next)
 		argc++;
 	argv = stalloc(sizeof (char *) * (argc + 1));
-	for (sp = arglist.list ; sp ; sp = sp->next)
+
+	for (sp = arglist.list ; sp ; sp = sp->next) {
+		TRACE(("evalcommand arg: %s\n", sp->text));
 		*argv++ = sp->text;
+	}
 	*argv = NULL;
 	lastarg = NULL;
 	if (iflag && funcnest == 0 && argc > 0)
@@ -776,6 +787,7 @@ cmddone:
 			if (e != EXERROR || cmdentry.u.index == BLTINCMD
 					       || cmdentry.u.index == DOTCMD
 					       || cmdentry.u.index == EVALCMD
+					       || cmdentry.u.index == HISTCMD
 					       || cmdentry.u.index == EXECCMD)
 				exraise(e);
 			FORCEINTON;
@@ -903,9 +915,6 @@ returncmd(argc, argv)  char **argv; {
 	return ret;
 }
 
-falsecmd(argc, argv)  char **argv; {
-	return 1;
-}
 
 truecmd(argc, argv)  char **argv; {
 	return 0;
@@ -915,11 +924,8 @@ truecmd(argc, argv)  char **argv; {
 execcmd(argc, argv)  char **argv; {
 	if (argc > 1) {
 		iflag = 0;		/* exit on error */
-		setinteractive(0);
-#if JOBS
-		jflag = 0;
-		setjobctl(0);
-#endif
+		mflag = 0;
+		optschanged();
 		shellexec(argv + 1, environment(), pathval(), 0);
 
 	}

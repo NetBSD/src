@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)output.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: output.c,v 1.6 1994/05/04 23:45:04 jtc Exp $";
+static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -71,7 +70,7 @@ static char rcsid[] = "$Id: output.c,v 1.6 1994/05/04 23:45:04 jtc Exp $";
 
 
 struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
-struct output errout = {NULL, 0, NULL, 100, 2, 0};
+struct output errout = {NULL, 0, NULL, 100, 2, 0};;
 struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
 struct output *out1 = &output;
 struct output *out2 = &errout;
@@ -116,7 +115,7 @@ open_mem(block, length, file)
 
 void
 out1str(p)
-	const char *p;
+	char *p;
 	{
 	outstr(p, out1);
 }
@@ -124,7 +123,7 @@ out1str(p)
 
 void
 out2str(p)
-	const char *p;
+	char *p;
 	{
 	outstr(p, out2);
 }
@@ -132,11 +131,13 @@ out2str(p)
 
 void
 outstr(p, file)
-	register const char *p;
+	register char *p;
 	register struct output *file;
 	{
 	while (*p)
 		outc(*p++, file);
+	if (file == out2)
+		flushout(file);
 }
 
 
@@ -227,6 +228,15 @@ out1fmt(char *fmt, ...) {
 	va_end(ap);
 }
 
+void
+dprintf(char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
 fmtstr(char *outbuf, int length, char *fmt, ...) {
@@ -275,6 +285,19 @@ out1fmt(va_alist)
 	va_end(ap);
 }
 
+void
+dprintf(va_alist)
+	va_dcl
+	{
+	va_list ap;
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
 fmtstr(va_alist)
