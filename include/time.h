@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.16 1998/07/26 12:55:17 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.17 1998/07/26 12:58:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,7 +87,7 @@ struct tm {
 	int	tm_yday;	/* days since January 1 [0-365] */
 	int	tm_isdst;	/* Daylight Savings Time flag */
 	long	tm_gmtoff;	/* offset from CUT in seconds */
-	char	*tm_zone;	/* timezone abbreviation */
+	const char *tm_zone;	/* timezone abbreviation */
 };
 
 #include <machine/limits.h>	/* Include file containing CLK_TCK. */
