@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.h,v 1.1.1.3 1997/10/26 00:03:14 christos Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.1.1.4 1998/08/08 22:05:34 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@
  * MACROS AND CONSTANTS:
  */
 
-#define HLFSD_VERSION	"hlfsd 1.1 (March 4, 1997)"
+#define HLFSD_VERSION	"hlfsd 1.1 (March 4, 1997-1998)"
 #define PERS_SPOOLMODE	0755
 #define OPEN_SPOOLMODE	01777
 #define DOTSTRING	"."
@@ -65,10 +65,28 @@
  * They must always be unique, and should never match what a UID
  * could be.
  * They used to be -1 and -2, respectively.
+ *
+ * I used to cast these to (uid_t) but it failed to compile
+ * with /opt/SUNWspro/bin/cc because uid_t is long, while struct fattr's
+ * uid field is u_int.  Then it failed to compile on some linux systems
+ * which define uid_t to be unsigned short, so I used the lowest common
+ * size which is unsigned short.
  */
-#define ROOTID		((uid_t) ((unsigned int) ~0) - 1)
-#define SLINKID		((uid_t) ((unsigned int) ~0) - 2)
-#define INVALIDID	((uid_t) ((unsigned int) ~0) - 3)
+#ifdef EXPERIMENTAL_UID_SIZE
+#define UID_SHIFT	30
+# define ROOTID		((1 << UID_SHIFT) - 1)
+# define SLINKID	((1 << UID_SHIFT) - 2)
+# define INVALIDID	((1 << UID_SHIFT) - 3)
+#else /* not EXPERIMENTAL_UID_SIZE */
+/*
+ * XXX: this will cause problems to systems with UIDs greater than
+ * MAX_UNSIGNED_SHORT-3.
+ */
+# define ROOTID		(((unsigned short) ~0) - 1)
+# define SLINKID	(((unsigned short) ~0) - 2)
+# define INVALIDID	(((unsigned short) ~0) - 3)
+#endif /* not EXPERIMENTAL_UID_SIZE */
+
 
 #define DOTCOOKIE	1
 #define DOTDOTCOOKIE	2
@@ -82,12 +100,6 @@
 #define DEFAULT_HLFS_GROUP	"hlfs"	/* Group name for special hlfs_gid */
 
 #define PROGNAMESZ	(MAXHOSTNAMELEN - 5)
-
-#ifdef MNT2_NFS_OPT_SYMTTL
-# define SYMTTL_ATTR_CACHE_VALUE  0
-#else /* MNT2_NFS_OPT_SYMTTL */
-# define SYMTTL_ATTR_CACHE_VALUE  1	/* was 1, but why? */
-#endif /* MNT2_NFS_OPT_SYMTTL */
 
 #ifdef HAVE_SYSLOG
 # define DEFAULT_LOGFILE "syslog"
@@ -110,18 +122,18 @@ typedef struct username2uid_t username2uid_t;
  * STRUCTURES:
  */
 struct uid2home_t {
-  uid_t uid;
+  uid_t uid;			/* XXX: with or without UID_OFFSET? */
   pid_t child;
-  char *home;
-  char *uname;
+  char *home;			/* really allocated */
+  char *uname;			/* an xref ptr to username2uid_t->username */
   u_long last_access_time;
   int last_status;		/* 0=used $HOME/.hlfsspool; !0=used alt dir */
 };
 
 struct username2uid_t {
-  char *username;
-  uid_t uid;
-  char *home;
+  char *username;		/* really allocated */
+  uid_t uid;			/* XXX: with or without UID_OFFSET? */
+  char *home;			/* an xref ptr to uid2home_t->home */
 };
 
 /*
@@ -138,8 +150,8 @@ extern char *mailbox(int, char *);
 extern char *passwdfile;
 extern char *slinkname;
 extern char mboxfile[];
+extern gid_t hlfs_gid;
 extern int cache_interval;
-extern int hlfs_gid;
 extern int noverify;
 extern int serverpid;
 extern int sys_nerr;
@@ -150,7 +162,7 @@ extern nfstime startup;
 extern uid2home_t *plt_search(int);
 extern username2uid_t *untab;	/* user name table */
 extern void fatal(char *);
-extern void init_homedir(void);
+extern void plt_init(void);
 extern void hlfsd_init_filehandles(void);
 
 #if defined(DEBUG) || defined(DEBUG_PRINT)

@@ -1,10 +1,561 @@
-$NetBSD: am-utils.info-4,v 1.1.1.2 1997/10/26 00:03:44 christos Exp $
+$NetBSD: am-utils.info-4,v 1.1.1.3 1998/08/08 22:05:40 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Amq -M-option,  Next: Amq -p option,  Prev: Amq -m option,  Up: Controlling Amd
+
+Amq `-M' option
+---------------
+
+   The `-M' option passes a new map entry to Amd and waits for it to be
+evaluated, possibly causing a mount.  For example, the following
+command would cause `/home/toytown' on host `toytown' to be mounted
+locally on `/mnt/toytown'.
+
+     amq -M '/mnt/toytown type:=nfs;rfs:=/home/toytown;rhost:=toytown;fs:=${key}'
+
+   Amd applies some simple security checks before allowing this
+operation.  The check tests whether the incoming request is from a
+privileged UDP port on the local machine.  "Permission denied" is
+returned if the check fails.
+
+   This option is very insecure as it is vulnerable to attacks such as
+IP Spoofing.  In other words, it is relatively easy for an attacker who
+really wants to, to make your Amd process mount any filesystem from the
+Internet!  Therefore, the *complete* code which supports the `-M'
+option in Amd and Amq is turned off by default.  To turn it on, you
+have to reconfigure am-utils with `configure --enable-amq-mount'.
+Think twice before doing so, and use this option only if you absolutely
+need to.
+
+   A future release of Amd will include code to allow the mount(8)
+command to mount automount points:
+
+     mount -t amd /vol hesiod.vol
+
+   This will then allow Amd to be controlled from the standard system
+filesystem mount list.
+
+
+File: am-utils.info,  Node: Amq -p option,  Next: Amq -P-option,  Prev: Amq -M-option,  Up: Controlling Amd
+
+Amq `-p' option
+---------------
+
+   Return the process ID of the remote or locally running Amd.  Useful
+when you need to send a signal to the local Amd process, and would
+rather not have to search through the process table.  This option is
+used in the `ctl-amd' script.
+
+
+File: am-utils.info,  Node: Amq -P-option,  Next: Amq -s option,  Prev: Amq -p option,  Up: Controlling Amd
+
+Amq `-P' option
+---------------
+
+   Contact an alternate running Amd that had registered itself on a
+different RPC PROGRAM_NUMBER and apply all other operations to that
+instance of the automounter.  This is useful when you run multiple
+copies of Amd, and need to manage each one separately.  If not
+specified, Amq will use the default program number for Amd, 300019.
+For security reasons, the only alternate program numbers Amd can use
+range from 300019 to 300029, inclusive.
+
+   For example, to kill an alternate running Amd:
+
+     kill `amq -p -P 300020`
+
+
+File: am-utils.info,  Node: Amq -s option,  Next: Amq -T option,  Prev: Amq -P-option,  Up: Controlling Amd
+
+Amq `-s' option
+---------------
+
+   The `-s' option displays global statistics.  If any other options
+are specified or any filesystems named then this option is ignored.
+For example:
+
+     requests  stale     mount     mount     unmount
+     deferred  fhandles  ok        failed    failed
+     1054      1         487       290       7017
+
+`Deferred requests'
+     are those for which an immediate reply could not be constructed.
+     For example, this would happen if a background mount was required.
+
+`Stale filehandles'
+     counts the number of times the kernel passes a stale filehandle to
+     Amd.  Large numbers indicate problems.
+
+`Mount ok'
+     counts the number of automounts which were successful.
+
+`Mount failed'
+     counts the number of automounts which failed.
+
+`Unmount failed'
+     counts the number of times a filesystem could not be unmounted.
+     Very large numbers here indicate that the time between unmount
+     attempts should be increased.
+
+
+File: am-utils.info,  Node: Amq -T option,  Next: Amq -U-option,  Prev: Amq -s option,  Up: Controlling Amd
+
+Amq `-T' option
+---------------
+
+   The `-T' option causes the Amq to contact Amd using the TCP
+transport only (connection oriented).  Normally, Amq will use TCP
+first, and if that failed, will try UDP.
+
+
+File: am-utils.info,  Node: Amq -U-option,  Next: Amq -u option,  Prev: Amq -T option,  Up: Controlling Amd
+
+Amq `-U' option
+---------------
+
+   The `-U' option causes the Amq to contact Amd using the UDP
+transport only (connectionless).  Normally, Amq will use TCP first, and
+if that failed, will try UDP.
+
+
+File: am-utils.info,  Node: Amq -u option,  Next: Amq -v option,  Prev: Amq -U-option,  Up: Controlling Amd
+
+Amq `-u' option
+---------------
+
+   The `-u' option causes the time-to-live interval of the named mount
+points to be expired, thus causing an unmount attempt.  This is the only
+safe way to unmount an automounted filesystem.  It is not possible to
+unmount a filesystem which has been mounted with the `nounmount' flag.
+
+
+File: am-utils.info,  Node: Amq -v option,  Next: Other Amq options,  Prev: Amq -u option,  Up: Controlling Amd
+
+Amq `-v' option
+---------------
+
+   The `-v' option displays the version of Amd in a similar way to
+Amd's `-v' option.
+
+
+File: am-utils.info,  Node: Other Amq options,  Prev: Amq -v option,  Up: Controlling Amd
+
+Other Amq options
+-----------------
+
+   Two other operations are implemented.  These modify the state of Amd
+as a whole, rather than any particular filesystem.  The `-x' and `-D'
+options have exactly the same effect as Amd's corresponding command
+line options.
+
+   When Amd receives a `-x' flag it limits the log options being
+modified to those which were not enabled at startup.  This prevents a
+user turning *off* any logging option which was specified at startup,
+though any which have been turned on since then can still be turned
+off.  The `-D' option has a similar behavior.
+
+
+File: am-utils.info,  Node: FSinfo,  Next: Hlfsd,  Prev: Run-time Administration,  Up: Top
+
+FSinfo
+******
+
+   XXX: this chapter should be reviewed by someone knowledgeable with
+fsinfo.
+
+* Menu:
+
+* FSinfo Overview::                 Introduction to FSinfo.
+* Using FSinfo::                    Basic concepts.
+* FSinfo Grammar::                  Language syntax, semantics and examples.
+* FSinfo host definitions::         Defining a new host.
+* FSinfo host attributes::          Definable host attributes.
+* FSinfo filesystems::              Defining locally attached filesystems.
+* FSinfo static mounts::            Defining additional static mounts.
+* FSinfo automount definitions::
+* FSinfo Command Line Options::
+* FSinfo errors::
+
+
+File: am-utils.info,  Node: FSinfo Overview,  Next: Using FSinfo,  Prev: FSinfo,  Up: FSinfo
+
+FSinfo overview
+===============
+
+   FSinfo is a filesystem management tool.  It has been designed to
+work with Amd to help system administrators keep track of the ever
+increasing filesystem namespace under their control.
+
+   The purpose of FSinfo is to generate all the important standard
+filesystem data files from a single set of input data.  Starting with a
+single data source guarantees that all the generated files are
+self-consistent.  One of the possible output data formats is a set of
+Amd maps which can be used amongst the set of hosts described in the
+input data.
+
+   FSinfo implements a declarative language.  This language is
+specifically designed for describing filesystem namespace and physical
+layouts.  The basic declaration defines a mounted filesystem including
+its device name, mount point, and all the volumes and access
+permissions.  FSinfo reads this information and builds an internal map
+of the entire network of hosts.  Using this map, many different data
+formats can be produced including `/etc/fstab', `/etc/exports', Amd
+mount maps and `/etc/bootparams'.
+
+
+File: am-utils.info,  Node: Using FSinfo,  Next: FSinfo Grammar,  Prev: FSinfo Overview,  Up: FSinfo
+
+Using FSinfo
+============
+
+   The basic strategy when using FSinfo is to gather all the
+information about all disks on all machines into one set of
+declarations.  For each machine being managed, the following data is
+required:
+
+   * Hostname
+
+   * List of all filesystems and, optionally, their mount points.
+
+   * Names of volumes stored on each filesystem.
+
+   * NFS export information for each volume.
+
+   * The list of static filesystem mounts.
+
+   The following information can also be entered into the same
+configuration files so that all data can be kept in one place.
+
+   * List of network interfaces
+
+   * IP address of each interface
+
+   * Hardware address of each interface
+
+   * Dumpset to which each filesystem belongs
+
+   * and more ...
+
+   To generate Amd mount maps, the automount tree must also be defined
+(*note FSinfo automount definitions::.).  This will have been designed
+at the time the volume names were allocated.  Some volume names will
+not be automounted, so FSinfo needs an explicit list of which volumes
+should be automounted.
+
+   Hostnames are required at several places in the FSinfo language.  It
+is important to stick to either fully qualified names or unqualified
+names.  Using a mixture of the two will inevitably result in confusion.
+
+   Sometimes volumes need to be referenced which are not defined in the
+set of hosts being managed with FSinfo.  The required action is to add a
+dummy set of definitions for the host and volume names required.  Since
+the files generated for those particular hosts will not be used on them,
+the exact values used is not critical.
+
+
+File: am-utils.info,  Node: FSinfo Grammar,  Next: FSinfo host definitions,  Prev: Using FSinfo,  Up: FSinfo
+
+FSinfo grammar
+==============
+
+   FSinfo has a relatively simple grammar.  Distinct syntactic
+constructs exist for each of the different types of data, though they
+share a common flavor.  Several conventions are used in the grammar
+fragments below.
+
+   The notation, list(xxx), indicates a list of zero or more xxx's.
+The notation, opt(xxx), indicates zero or one xxx.  Items in double
+quotes, eg "host", represent input tokens.  Items in angle brackets, eg
+<HOSTNAME>, represent strings in the input.  Strings need not be in
+double quotes, except to differentiate them from reserved words.
+Quoted strings may include the usual set of C "\" escape sequences with
+one exception: a backslash-newline-whitespace sequence is squashed into
+a single space character.  To defeat this feature, put a further
+backslash at the start of the second line.
+
+   At the outermost level of the grammar, the input consists of a
+sequence of host and automount declarations.  These declarations are
+all parsed before they are analyzed.  This means they can appear in any
+order and cyclic host references are possible.
+
+     fsinfo      : list(fsinfo_attr) ;
+     
+     fsinfo_attr : host | automount ;
+
+* Menu:
+
+* FSinfo host definitions::
+* FSinfo automount definitions::
+
+
+File: am-utils.info,  Node: FSinfo host definitions,  Next: FSinfo host attributes,  Prev: FSinfo Grammar,  Up: FSinfo
+
+FSinfo host definitions
+=======================
+
+   A host declaration consists of three parts: a set of machine
+attribute data, a list of filesystems physically attached to the
+machine, and a list of additional statically mounted filesystems.
+
+     host        : "host" host_data list(filesystem) list(mount) ;
+
+   Each host must be declared in this way exactly once.  Such things as
+the hardware address, the architecture and operating system types and
+the cluster name are all specified within the "host data".
+
+   All the disks the machine has should then be described in the "list
+of filesystems".  When describing disks, you can specify what "volname"
+the disk/partition should have and all such entries are built up into a
+dictionary which can then be used for building the automounter maps.
+
+   The "list of mounts" specifies all the filesystems that should be
+statically mounted on the machine.
+
+* Menu:
+
+* FSinfo host attributes::
+* FSinfo filesystems::
+* FSinfo static mounts::
+
+
+File: am-utils.info,  Node: FSinfo host attributes,  Next: FSinfo filesystems,  Prev: FSinfo host definitions,  Up: FSinfo host definitions
+
+FSinfo host attributes
+======================
+
+   The host data, "host_data", always includes the "hostname".  In
+addition, several other host attributes can be given.
+
+     host_data   : <HOSTNAME>
+                 | "{" list(host_attrs) "}" <HOSTNAME>
+                 ;
+     
+     host_attrs  : host_attr "=" <STRING>
+                 | netif
+                 ;
+     
+     host_attr   : "config"
+                 | "arch"
+                 | "os"
+                 | "cluster"
+                 ;
+
+   The "hostname" is, typically, the fully qualified hostname of the
+machine.
+
+   Examples:
+
+     host dylan.doc.ic.ac.uk
+     
+     host {
+         os = hpux
+         arch = hp300
+     } dougal.doc.ic.ac.uk
+
+   The options that can be given as host attributes are shown below.
+
+* Menu:
+
+* netif Option:         FSinfo host netif:
+* config Option:        FSinfo host config:
+* arch Option:          FSinfo host arch:
+* os Option:            FSinfo host os:
+* cluster Option:       FSinfo host cluster:
+
+
+File: am-utils.info,  Node: FSinfo host netif,  Next: FSinfo host config,  Up: FSinfo host attributes
+
+netif Option
+------------
+
+   This defines the set of network interfaces configured on the machine.
+The interface attributes collected by FSinfo are the IP address, subnet
+mask and hardware address.  Multiple interfaces may be defined for
+hosts with several interfaces by an entry for each interface.  The
+values given are sanity checked, but are currently unused for anything
+else.
+
+     netif       : "netif" <STRING> "{" list(netif_attrs) "}" ;
+     
+     netif_attrs : netif_attr "=" <STRING> ;
+     
+     netif_attr  : "inaddr" | "netmask" | "hwaddr" ;
+
+   Examples:
+
+     netif ie0 {
+         inaddr  = 129.31.81.37
+         netmask = 0xfffffe00
+         hwaddr  = "08:00:20:01:a6:a5"
+     }
+     
+     netif ec0 { }
+
+
+File: am-utils.info,  Node: FSinfo host config,  Next: FSinfo host arch,  Prev: FSinfo host netif,  Up: FSinfo host attributes
+
+config Option
+-------------
+
+   This option allows you to specify configuration variables for the
+startup scripts (`rc' scripts).  A simple string should immediately
+follow the keyword.
+
+   Example:
+
+     config "NFS_SERVER=true"
+     config "ZEPHYR=true"
+
+   This option is currently unsupported.
+
+
+File: am-utils.info,  Node: FSinfo host arch,  Next: FSinfo host os,  Prev: FSinfo host config,  Up: FSinfo host attributes
+
+arch Option
+-----------
+
+   This defines the architecture of the machine.  For example:
+
+     arch = hp300
+
+   This is intended to be of use when building architecture specific
+mountmaps, however, the option is currently unsupported.
+
+
+File: am-utils.info,  Node: FSinfo host os,  Next: FSinfo host cluster,  Prev: FSinfo host arch,  Up: FSinfo host attributes
+
+os Option
+---------
+
+   This defines the operating system type of the host.  For example:
+
+     os = hpux
+
+   This information is used when creating the `fstab' files, for
+example in choosing which format to use for the `fstab' entries within
+the file.
+
+
+File: am-utils.info,  Node: FSinfo host cluster,  Prev: FSinfo host os,  Up: FSinfo host attributes
+
+cluster Option
+--------------
+
+   This is used for specifying in which cluster the machine belongs.
+For example:
+
+     cluster = "theory"
+
+   The cluster is intended to be used when generating the automount
+maps, although it is currently unsupported.
+
+
+File: am-utils.info,  Node: FSinfo filesystems,  Next: FSinfo static mounts,  Prev: FSinfo host attributes,  Up: FSinfo host definitions
+
+FSinfo filesystems
+==================
+
+   The list of physically attached filesystems follows the machine
+attributes.  These should define all the filesystems available from this
+machine, whether exported or not.  In addition to the device name,
+filesystems have several attributes, such as filesystem type, mount
+options, and `fsck' pass number which are needed to generate `fstab'
+entries.
+
+     filesystem  : "fs" <DEVICE> "{" list(fs_data) "}" ;
+     
+     fs_data     : fs_data_attr "=" <STRING>
+                 | mount
+                 ;
+     
+     fs_data_attr
+                 : "fstype" | "opts" | "passno"
+                 | "freq" | "dumpset" | "log"
+                 ;
+
+   Here, <DEVICE> is the device name of the disk (for example,
+`/dev/dsk/2s0').  The device name is used for building the mount maps
+and for the `fstab' file.  The attributes that can be specified are
+shown in the following section.
+
+   The FSinfo configuration file for `dylan.doc.ic.ac.uk' is listed
+below.
+
+     host dylan.doc.ic.ac.uk
+     
+     fs /dev/dsk/0s0 {
+             fstype = swap
+     }
+     
+     fs /dev/dsk/0s0 {
+             fstype = hfs
+             opts = rw,noquota,grpid
+             passno = 0;
+             freq = 1;
+             mount / { }
+     }
+     
+     fs /dev/dsk/1s0 {
+             fstype = hfs
+             opts = defaults
+             passno = 1;
+             freq = 1;
+             mount /usr {
+                     local {
+                             exportfs "dougal eden dylan zebedee brian"
+                             volname /nfs/hp300/local
+                     }
+             }
+     }
+     
+     fs /dev/dsk/2s0 {
+             fstype = hfs
+             opts = defaults
+             passno = 1;
+             freq = 1;
+             mount default {
+                     exportfs "toytown_clients hangers_on"
+                     volname /home/dylan/dk2
+             }
+     }
+     
+     fs /dev/dsk/3s0 {
+             fstype = hfs
+             opts = defaults
+             passno = 1;
+             freq = 1;
+             mount default {
+                     exportfs "toytown_clients hangers_on"
+                     volname /home/dylan/dk3
+             }
+     }
+     
+     fs /dev/dsk/5s0 {
+             fstype = hfs
+             opts = defaults
+             passno = 1;
+             freq = 1;
+             mount default {
+                     exportfs "toytown_clients hangers_on"
+                     volname /home/dylan/dk5
+             }
+     }
+
+* Menu:
+
+* fstype Option:        FSinfo filesystems fstype:
+* opts Option:          FSinfo filesystems opts:
+* passno Option:        FSinfo filesystems passno:
+* freq Option:          FSinfo filesystems freq:
+* mount Option:         FSinfo filesystems mount:
+* dumpset Option:       FSinfo filesystems dumpset:
+* log Option:           FSinfo filesystems log:
 
 
 File: am-utils.info,  Node: FSinfo filesystems fstype,  Next: FSinfo filesystems opts,  Up: FSinfo filesystems
@@ -308,7 +859,7 @@ belongs, or to the type of output if only one file is produced.
 Dumpsets and the `bootparams' file are in the latter class.  To put the
 output into a subdirectory simply put a `/' at the end of the prefix,
 making sure that the directory has already been made before running
-`fsinfo'.
+Fsinfo.
 
 * Menu:
 
@@ -367,7 +918,7 @@ the destination machine and will be placed into a filename `dumpsets',
 prefixed by this string.  The `dumpsets' file is for use by Imperial
 College's local backup system.
 
-   For example, to create a dumpsets file in the directory `generic',
+   For example, to create a `dumpsets' file in the directory `generic',
 then you would use the following:
 
      fsinfo -d generic/ ...
@@ -641,7 +1192,7 @@ unknown mount attribute
      Occurs if an unrecognized keyword is found while parsing the list
      of static mounts.
 
-unknown volname VOLUME automounted [ on <name> ]
+unknown volname VOLUME automounted [ on name ]
      Occurs if VOLUME is used in a definition of an automount map but
      the volume name has not been declared during the host filesystem
      definitions.
@@ -663,25 +1214,27 @@ Hlfsd
    Hlfsd is a daemon which implements a filesystem containing a
 symbolic link to subdirectory within a user's home directory, depending
 on the user which accessed that link.  It was primarily designed to
-redirect incoming mail to users' home directories, so that it can read
-from anywhere.  It was designed and implemented by Erez Zadok and
-Alexander Dupuy, at the Computer Science Department of Columbia
-University.
+redirect incoming mail to users' home directories, so that it can be
+read from anywhere.  It was designed and implemented by
+Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>, at the Computer Science Department
+(http://www.cs.columbia.edu/) of Columbia University (http://www.columbia.edu/).  A
+paper (http://www.cs.columbia.edu/~ezk/research/hlfsd/hlfsd.html) on
+Hlfsd was presented at the Usenix LISA VII conference in 1993.
 
    Hlfsd operates by mounting itself as an NFS server for the directory
 containing linkname, which defaults to `/hlfs/home'.  Lookups within
-that directory are handled by `hlfsd', which uses the password map to
+that directory are handled by Hlfsd, which uses the password map to
 determine how to resolve the lookup.  The directory will be created if
 it doesn't already exist.  The symbolic link will be to the accessing
 user's home directory, with subdir appended to it.  If not specified,
 subdir defaults to `.hlfsdir'.  This directory will also be created if
 it does not already exist.
 
-   A SIGTERM sent to `hlfsd' will cause it to shutdown.  A SIGHUP will
+   A `SIGTERM' sent to Hlfsd will cause it to shutdown.  A `SIGHUP' will
 flush the internal caches, and reload the password map.  It will also
 close and reopen the log file, to enable the original log file to be
-removed or rotated.  A SIGUSR1 will cause it to dump its internal table
-of user IDs and home directories to the file `/tmp/hlfsddump'.
+removed or rotated.  A `SIGUSR1' will cause it to dump its internal
+table of user IDs and home directories to the file `/tmp/hlfsddump'.
 
 * Menu:
 
@@ -713,7 +1266,7 @@ applications, but these were underutilized, in large part due to the
 inconvenience of not being able to read mail on those machines.  (No
 home directories were located on these designated CPU-servers, since we
 did not want NFS service for users' home directories to have to compete
-with intensive jobs.  At the same time, we discouraged users from
+with CPU-intensive jobs.  At the same time, we discouraged users from
 running demanding applications on their home machines.)
 
    Many different solutions have been proposed to allow users to read
@@ -744,27 +1297,27 @@ to a subdirectory of the invoking user's home directory, and named
 symbolic links to users' mailbox files.
 
    The Hlfsd server finds out the UID of the process that is accessing
-its mount point, and resolves the pathname component home as a symbolic
-link to a subdirectory within the home directory given by the UID's
-entry in the password file.  If the GID of the process that attempts to
-access a mailbox file is a special one (called HLFS_GID), then the
-server maps the name of the *next* pathname component directly to the
-user's mailbox.  This is necessary so that access to a mailbox file by
-users other than the owner can succeed.  The server has safety features
-in case of failures such as hung filesystems or home directory
+its mount point, and resolves the pathname component `home' as a
+symbolic link to a subdirectory within the home directory given by the
+UID's entry in the password file.  If the GID of the process that
+attempts to access a mailbox file is a special one (called HLFS_GID),
+then the server maps the name of the *next* pathname component directly
+to the user's mailbox.  This is necessary so that access to a mailbox
+file by users other than the owner can succeed.  The server has safety
+features in case of failures such as hung filesystems or home directory
 filesystems that are inaccessible or full.
 
    On most of our machines, mail gets delivered to the directory
 `/var/spool/mail'. Many programs, including UAs, depend on that path.
 Hlfsd creates a directory `/mail', and mounts itself on top of that
-directory.  Hlfsd implements the path name component called home,
+directory.  Hlfsd implements the path name component called `home',
 pointing to a subdirectory of the user's home directory.  We have made
 `/var/spool/mail' a symbolic link to `/mail/home', so that accessing
 `/var/spool/mail' actually causes access to a subdirectory within a
 user's home directory.
 
    The following table shows an example of how resolving the pathname
-`/var/mail/NAME' to `/users/ezk/.mailspool/NAME'.
+`/var/mail/NAME' to `/users/ezk/.mailspool/NAME' proceeds.
 
 Resolving Component  Pathname left to resolve  Value if symbolic link  
 /                    var/mail/NAME                                     
@@ -817,472 +1370,4 @@ they find themselves logging in on multiple hosts at once, performing
 several tasks concurrently.  They ask to be able to read their mail on
 any host on the network, not just the one designated as their "mail
 home".
-
-
-File: am-utils.info,  Node: Centralized Mail Spool Directory,  Next: Distributed Mail Spool Service,  Prev: Single-Host Mail Spool Directory,  Up: Background to Mail Delivery
-
-Centralized Mail Spool Directory
---------------------------------
-
-   A popular method for providing mail readability from any host is to
-have all mail delivered to a mail spool directory on a designated
-"mail-server" which is exported via NFS to all of the hosts on the
-network.  Configuring such a system is relatively easy.  On most
-systems, the bulk of the work is a one-time addition to one or two
-configuration files in `/etc'.  The file-server's spool directory is
-then hard-mounted across every machine on the local network.  In small
-environments with only a handful of hosts this can be an acceptable
-solution.  In our department, with a couple of hundred active hosts and
-thousands of mail messages processed daily, this was deemed completely
-unacceptable, as it introduced several types of problems:
-
-Scalability and Performance
-     As more and more machines get added to the network, more mail
-     traffic has to go over NFS to and from the mail-server. Users like
-     to run mail-watchers, and read their mail often. The stress on the
-     shared infrastructure increases with every user and host added;
-     loads on the mail server would most certainly be high since all
-     mail delivery goes through that one machine.(1)  This leads to
-     lower reliability and performance.  To reduce the number of
-     concurrent connections between clients and the server host, some
-     SAs have resorted to automounting the mail-spool directory.  But
-     this solution only makes things worse: since users often run mail
-     watchers, and many popular applications such as `trn', `emacs',
-     `csh' or `ksh' check periodically for new mail, the automounted
-     directory would be effectively permanently mounted.  If it gets
-     unmounted automatically by the automounter program, it is most
-     likely to get mounted shortly afterwards, consuming more I/O
-     resources by the constant cycle of mount and umount calls.
-
-Reliability
-     The mail-server host and its network connectivity must be very
-     reliable.  Worse, since the spool directory has to be
-     hard-mounted,(2) many processes which access the spool directory
-     (various shells, `login', `emacs', etc.)  would be hung as long as
-     connectivity to the mail-server is severed. To improve
-     reliability, SAs may choose to backup the mail-server's spool
-     partition several times a day.  This may make things worse since
-     reading or delivering mail while backups are in progress may cause
-     backups to be inconsistent; more backups consume more backup-media
-     resources, and increase the load on the mail-server host.
-
-   ---------- Footnotes ----------
-
-   (1)  Delivery via NFS-mounted filesystems may require usage of
-`rpc.lockd' and `rpc.statd' to provide distributed file-locking, both
-of which are widely regarded as unstable and unreliable.  Furthermore,
-this will degrade performance, as local 5processes as well as remote
-`nfsd' processes are kept busy.
-
-   (2) No SA in their right minds would soft-mount read/write
-partitions -- the chances for data loss are too great.
-
-
-File: am-utils.info,  Node: Distributed Mail Spool Service,  Next: Why Deliver Into the Home Directory?,  Prev: Centralized Mail Spool Directory,  Up: Background to Mail Delivery
-
-Distributed Mail Spool Service
-------------------------------
-
-   Despite the existence of a few systems that support delivery to
-users' home directories, mail delivery to home directories hasn't
-caught on.  We believe the main reason is that there are too many
-programs that "know" where mailbox files reside.  Besides the obvious
-(the delivery program `/bin/mail' and mail readers like `/usr/ucb/Mail',
-`mush', `mm', etc.), other programs that know mailbox location are
-login, from, almost every shell, `xbiff', `xmailbox', and even some
-programs not directly related to mail, such as `emacs' and `trn'.
-Although some of these programs can be configured to look in different
-directories with the use of environment variables and other resources,
-many of them cannot.  The overall porting work is significant.
-
-   Other methods that have yet to catch on require the use of a special
-mail-reading server, such as IMAP or POP.  The main disadvantage of
-these systems is that UAs need to be modified to use these services --
-a long and involved task.  That is why they are not popular at this
-time.
-
-   Several other ideas have been proposed and even used in various
-environments.  None of them is robust.  They are mostly very
-specialized, inflexible, and do not extend to the general case.  Some of
-the ideas are plain bad, potentially leading to lost or corrupt mail:
-
-automounters
-     Using an automounter such as Amd to provide a set of symbolic links
-     from the normal spool directory to user home directories is not
-     sufficient.  UAs rename, unlink, and recreate the mailbox as a
-     regular file, therefore it must be a real file, not a symbolic
-     link.  Furthermore, it must reside in a real directory which is
-     writable by the UAs and MTAs.  This method may also require
-     populating `/var/spool/mail' with symbolic links and making sure
-     they are updated.  Making Amd manage that directory directly
-     fails, since many various lock files need to be managed as well.
-     Also, Amd does not provide all of the NFS operations which are
-     required to write mail such as write, create, remove, and unlink.
-
-$MAIL
-     Setting this variable to an automounted directory pointing to the
-     user's mail spool host only solves the problem for those programs
-     which know and use $MAIL.  Many programs don't, therefore this
-     solution is partial and of limited flexibility.  Also, it requires
-     the SAs or the users to set it themselves -- an added level of
-     inconvenience and possible failures.
-
-/bin/mail
-     Using a different mail delivery agent could be the solution.  One
-     such example is `hdmail'.  However, `hdmail' still requires
-     modifying all UAs, the MTA's configuration, installing new
-     daemons, and changing login scripts.  This makes the system less
-     upgradable or compatible with others, and adds one more
-     complicated system for SAs to deal with.  It is not a complete
-     solution because it still requires each user have their $MAIL
-     variable setup correctly, and that every program use this variable.
-
-
-File: am-utils.info,  Node: Why Deliver Into the Home Directory?,  Prev: Distributed Mail Spool Service,  Up: Background to Mail Delivery
-
-Why Deliver Into the Home Directory?
-------------------------------------
-
-   There are several major reasons why SAs might want to deliver mail
-directly into the users' home directories:
-
-Location
-     Many mail readers need to move mail from the spool directory to the
-     user's home directory.  It speeds up this operation if the two are
-     on the same filesystem.  If for some reason the user's home
-     directory is inaccessible, it isn't that useful to be able to read
-     mail, since there is no place to move it to.  In some cases,
-     trying to move mail to a non-existent or hung filesystem may
-     result in mail loss.
-
-Distribution
-     Having all mail spool directories spread among the many more
-     filesystems minimizes the chances that complete environments will
-     grind to a halt when a single server is down.  It does increase
-     the chance that there will be someone who is not able to read
-     their mail when a machine is down, but that is usually preferred
-     to having no one be able to read their mail because a centralized
-     mail server is down.  The problem of losing some mail due to the
-     (presumably) higher chances that a user's machine is down is
-     minimized in HLFS.
-
-Security
-     Delivering mail to users' home directories has another advantage --
-     enhanced security and privacy.  Since a shared system mail spool
-     directory has to be world-readable and searchable, any user can see
-     whether other users have mail, when they last received new mail,
-     or when they last read their mail.  Programs such as `finger'
-     display this information, which some consider an infringement of
-     privacy.  While it is possible to disable this feature of `finger'
-     so that remote users cannot see a mailbox file's status, this
-     doesn't prevent local users from getting the information.
-     Furthermore, there are more programs which make use of this
-     information.  In shared environments, disabling such programs has
-     to be done on a system-wide basis, but with mail delivered to
-     users' home directories, users less concerned with privacy who do
-     want to let others know when they last received or read mail can
-     easily do so using file protection bits.  Lastly, on systems that
-     do not export their NFS filesystem with anon=0, superusers are
-     less likely to snoop around others' mail, as they become "nobodies"
-     across NFS .
-
-   In summary, delivering mail to home directories provides users the
-functionality sought, and also avoids most of the problems just
-discussed.
-
-
-File: am-utils.info,  Node: Using Hlfsd,  Prev: Background to Mail Delivery,  Up: Hlfsd
-
-Using Hlfsd
-===========
-
-* Menu:
-
-* Controlling Hlfsd::
-* Hlfsd Options::
-* Hlfsd Files::
-
-
-File: am-utils.info,  Node: Controlling Hlfsd,  Next: Hlfsd Options,  Prev: Using Hlfsd,  Up: Using Hlfsd
-
-Controlling Hlfsd
------------------
-
-   Much the same way Amd is controlled by `ctl-amd', so does Hlfsd get
-controlled by the `ctl-hlfsd' script:
-
-ctl-hlfsd start
-     Start a new Hlfsd.
-
-ctl-hlfsd stop
-     Stop a running Hlfsd.
-
-ctl-hlfsd restart
-     Stop a running Hlfsd, wait for 10 seconds, and then start a new
-     one.  It is hoped that within 10 seconds, the previously running
-     Hlfsd terminate properly; otherwise, starting a second one could
-     cause system lockup.
-
-   For example, on our systems, we start Hlfsd within `ctl-hlfsd' as
-follows on Solaris 2 systems:
-
-     hlfsd -a /var/alt_mail -x all -l /var/log/hlfsd /mail/home .mailspool
-
-   The directory `/var/alt_mail' is a directory in the root partition
-where alternate mail will be delivered into, when it cannot be delivered
-into the user's home directory.
-
-   Normal mail gets delivered into `/var/mail', but on our systems,
-that is a symbolic link to `/mail/home'.  `/mail' is managed by Hlfsd,
-which creates a dynamic symlink named `home', pointing to the
-subdirectory `.mailspool' *within* the accessing user's home directory.
-This results in mail which normally should go to `/var/mail/$USER', to
-go to `$HOME/.mailspool/$USER'.
-
-   Hlfsd does not create the `/var/mail' symlink.  This needs to be
-created (manually) once on each host, by the system administrators, as
-follows:
-
-     mv /var/mail /var/alt_mail
-     ln -s /mail/home /var/mail
-
-
-File: am-utils.info,  Node: Hlfsd Options,  Next: Hlfsd Files,  Prev: Controlling Hlfsd,  Up: Using Hlfsd
-
-Hlfsd Options
--------------
-
--a ALT_DIR
-     Alternate directory.  The name of the directory to which the
-     symbolic link returned by Hlfsd will point, if it cannot access
-     the home directory of the user.  This defaults to `/var/hlfs'.
-     This directory will be created if it doesn't exist.  It is
-     expected that either users will read these files, or the system
-     administrators will run a script to resend this "lost mail" to its
-     owner.
-
--c CACHE-INTERVAL
-     Caching interval.  Hlfsd will cache the validity of home
-     directories for this interval, in seconds.  Entries which have
-     been verified within the last CACHE-INTERVAL seconds will not be
-     verified again, since the operation could be expensive, and the
-     entries are most likely still valid.  After the interval has
-     expired, Hlfsd will re-verify the validity of the user's home
-     directory, and reset the cache time-counter.  The default value
-     for CACHE-INTERVAL is 300 seconds (5 minutes).
-
--f
-     Force fast startup.  This option tells Hlfsd to skip startup-time
-     consistency checks such as existence of mount directory, alternate
-     spool directory, symlink to be hidden under the mount directory,
-     their permissions and validity.
-
--g GROUP
-     Set the special group HLFS_GID to GROUP.  Programs such as
-     `/usr/ucb/from' or `/usr/sbin/in.comsat', which access the
-     mailboxes of other users) must be setgid HLFS_GID to work
-     properly.  The default group is `hlfs'.  If no group is provided,
-     and there is no group `hlfs', this feature is disabled.
-
--h
-     Help.  Print a brief help message, and exit.
-
--i RELOAD-INTERVAL
-     Map-reloading interval.  Each RELOAD-INTERVAL seconds, Hlfsd will
-     reload the password map.  Hlfsd needs the password map for the
-     UIDs and home directory pathnames.  Hlfsd schedules a SIGALRM to
-     reload the password maps.  A SIGHUP sent to Hlfsd will force it to
-     reload the maps immediately.  The default value for
-     RELOAD-INTERVAL is 900 seconds (15 minutes.)
-
--l LOGFILE
-     Specify a log file to which Hlfsd will record events.  If LOGFILE
-     is the string `syslog' then the log messages will be sent to the
-     system log daemon by syslog(3), using the LOG_DAEMON facility.
-     This is also the default.
-
--n
-     No verify.  Hlfsd will not verify the validity of the symbolic link
-     it will be returning, or that the user's home directory contains
-     sufficient disk-space for spooling.  This can speed up Hlfsd at the
-     cost of possibly returning symbolic links to home directories
-     which are not currently accessible or are full.  By default, Hlfsd
-     validates the symbolic-link in the background.  The "-n" option
-     overrides the meaning of the "-c" option, since no caching is
-     necessary.
-
--o MOUNT-OPTIONS
-     Mount options.  Mount options which Hlfsd will use to mount itself
-     on top of DIRNAME.  By default, MOUNT-OPTIONS is set to `ro',
-     unless M_CACHE is defined, in which case it is set to `ro,nocache'.
-
--p
-     Print PID.  Outputs the process-id of Hlfsd to standard output
-     where it can be saved into a file.
-
--v
-     Version.  Displays version information to standard error.
-
--x LOG-OPTIONS
-     Specify run-time logging options.  The options are a comma
-     separated list chosen from: fatal, error, user, warn, info, map,
-     stats, all.
-
--C
-     Force Hlfsd to run on systems that cannot turn off the NFS
-     attribute-cache.  Use of this option on those systems is
-     discouraged, as it may result in loss or misdelivery of mail.  The
-     option is ignored on systems that can turn off the attribute-cache.
-
--D LOG-OPTIONS
-     Select from a variety of debugging options.  Prefixing an option
-     with the string `no' reverses the effect of that option.  Options
-     are cumulative.  The most useful option is `all'.  Since this
-     option is only used for debugging other options are not documented
-     here.  A fuller description is available in the program source.  A
-     SIGUSR1 sent to Hlfsd will cause it to dump its internal password
-     map to the file `/tmp/hlfsdump'.
-
--P PASSWORD-FILE
-     Read the user-name, user-id, and home directory information from
-     the file PASSWORD-FILE.  Normally, Hlfsd will use getpwent(3) to
-     read the password database.  This option allows you to override the
-     default database, and is useful if you want to map users' mail
-     files to a directory other than their home directory.  Only the
-     username, uid, and home-directory fields of the file PASSWORD-FILE
-     are read and checked.  All other fields are ignored.  The file
-     PASSWORD-FILE must otherwise be compliant with Unix System 7
-     colon-delimited format passwd(4).
-
-
-File: am-utils.info,  Node: Hlfsd Files,  Prev: Hlfsd Options,  Up: Using Hlfsd
-
-Hlfsd Files
------------
-
-   The following files are used by Hlfsd:
-
-`/hlfs'
-     directory under which Hlfsd mounts itself and manages the symbolic
-     link `home'.
-
-`.hlfsdir'
-     default sub-directory in the user's home directory, to which the
-     `home' symbolic link returned by Hlfsd points.
-
-`/var/hlfs'
-     directory to which `home' symbolic link returned by Hlfsd points
-     if it is unable to verify the that user's home directory is
-     accessible.
-
-   For discussion on other files used by Hlfsd, *note lostaltmail::. and
-*note lostaltmail.conf-sample::..
-
-
-File: am-utils.info,  Node: Assorted Tools,  Next: Examples,  Prev: Hlfsd,  Up: Top
-
-Assorted Tools
-**************
-
-   The following are additional utilities and scripts included with
-am-utils, and get installed.
-
-* Menu:
-
-* am-eject::
-* amd.conf-sample::
-* amd2ldif::
-* amd2sun::
-* ctl-amd::
-* ctl-hlfsd::
-* expn::
-* fix-amd-map::
-* fixmount::
-* fixrmtab::
-* lostaltmail::
-* lostaltmail.conf-sample::
-* mk-amd-map::
-* wait4amd::
-* wait4amd2die::
-* wire-test::
-
-
-File: am-utils.info,  Node: am-eject,  Next: amd.conf-sample,  Prev: Assorted Tools,  Up: Assorted Tools
-
-am-eject
-========
-
-   A shell script unmounts a floppy or CD-ROM that is automounted, and
-then attempts to eject the removable device.
-
-
-File: am-utils.info,  Node: amd.conf-sample,  Next: amd2ldif,  Prev: am-eject,  Up: Assorted Tools
-
-amd.conf-sample
-===============
-
-   A sample Amd configuration file. *note Amd Configuration File::..
-
-
-File: am-utils.info,  Node: amd2ldif,  Next: amd2sun,  Prev: amd.conf-sample,  Up: Assorted Tools
-
-amd2ldif
-========
-
-   A script to convert Amd maps to LDAP input files.  Use it as follows
-
-     amd2ldif mapname base < amd.mapfile > mapfile.ldif
-
-
-File: am-utils.info,  Node: amd2sun,  Next: ctl-amd,  Prev: amd2ldif,  Up: Assorted Tools
-
-amd2sun
-=======
-
-   A script to convert Amd maps to Sun Automounter maps.  Use it as
-follows
-
-     amd2sun < amd.mapfile > auto_mapfile
-
-
-File: am-utils.info,  Node: ctl-amd,  Next: ctl-hlfsd,  Prev: amd2sun,  Up: Assorted Tools
-
-ctl-amd
-=======
-
-   A script to start, stop, or restart Amd.  Use it as follows:
-
-ctl-amd start
-     Start a new Amd process.
-
-ctl-amd stop
-     Stop the running Amd.
-
-ctl-amd restart
-     Stop the running Amd (if any), safely wait for it to terminate, and
-     then start a new process -- only if the previous one died cleanly.
-
-   *Note Run-time Administration:: for more details.
-
-
-File: am-utils.info,  Node: ctl-hlfsd,  Next: expn,  Prev: ctl-amd,  Up: Assorted Tools
-
-ctl-hlfsd
-=========
-
-   A script for controlling Hlfsd, much the same way `ctl-amd' controls
-Amd.  Use it as follows:
-
-ctl-hlfsd start
-     Start a new Hlfsd process.
-
-ctl-hlfsd stop
-     Stop the running Hlfsd.
-
-ctl-hlfsd restart
-     Stop the running Hlfsd (if any), wait for 10 seconds for it to
-     terminate, and then start a new process -- only if the previous one
-     died cleanly.
-
-   *Note Hlfsd:: for more details.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amu.h,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: amfs_link.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -40,41 +40,104 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amu.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * Id: amfs_link.c,v 5.2.2.1 1992/02/09 15:09:04 jsp beta 
  *
  */
 
-#ifndef _AMU_H
-#define _AMU_H
+/*
+ * Symbol-link file system
+ */
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
+
 
 /*
- * Decide what maximum level of NFS server to try and mount with.
+ * Ops structures
  */
-#ifdef HAVE_FS_NFS3
-# define NFS_VERS_MAX NFS_VERSION3
-#else /* not HAVE_FS_NFS3 */
-# define NFS_VERS_MAX NFS_VERSION
-#endif /* not HAVE_FS_NFS3 */
+am_ops amfs_link_ops =
+{
+  "link",
+  amfs_link_match,
+  0,				/* amfs_link_init */
+  amfs_auto_fmount,
+  amfs_link_fmount,
+  amfs_auto_fumount,
+  amfs_link_fumount,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
+  0,				/* amfs_link_readlink */
+  0,				/* amfs_link_mounted */
+  0,				/* amfs_link_umounted */
+  find_amfs_auto_srvr,
+  0
+};
 
-/* some systems like ncr2 do not define this in <rpcsvc/mount.h> */
-#ifndef MNTPATHLEN
-# define MNTPATHLEN 1024
-#endif /* not MNTPATHLEN */
-#ifndef MNTNAMLEN
-# define MNTNAMLEN 255
-#endif /* not MNTNAMLEN */
 
 /*
- * external definitions for building libamu.a
+ * SFS needs a link.
  */
-extern voidp amqproc_null_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_p *amqproc_mnttree_1(amq_string *argp, CLIENT *rqstp);
-extern voidp amqproc_umnt_1(amq_string *argp, CLIENT *rqstp);
-extern amq_mount_stats *amqproc_stats_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_list *amqproc_export_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
-extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
-extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+char *
+amfs_link_match(am_opts *fo)
+{
 
-#endif /* not _AMU_H */
+  if (!fo->opt_fs) {
+    plog(XLOG_USER, "link: no fs specified");
+    return 0;
+  }
+
+  /*
+   * Bug report (14/12/89) from Jay Plett <jay@princeton.edu>
+   * If an automount point has the same name as an existing
+   * link type mount Amd hits a race condition and either hangs
+   * or causes a symlink loop.
+   *
+   * If fs begins with a '/' change the opt_fs & opt_sublink
+   * fields so that the fs option doesn't end up pointing at
+   * an existing symlink.
+   *
+   * If sublink is nil then set sublink to fs
+   * else set sublink to fs / sublink
+   *
+   * Finally set fs to ".".
+   */
+  if (*fo->opt_fs == '/') {
+    char *fullpath;
+    char *link = fo->opt_sublink;
+    if (link) {
+      if (*link == '/')
+	fullpath = strdup(link);
+      else
+	fullpath = str3cat((char *) 0, fo->opt_fs, "/", link);
+    } else {
+      fullpath = strdup(fo->opt_fs);
+    }
+
+    if (fo->opt_sublink)
+      XFREE(fo->opt_sublink);
+    fo->opt_sublink = fullpath;
+    fo->opt_fs = str3cat(fo->opt_fs, ".", fullpath, "");
+  }
+
+  return strdup(fo->opt_fs);
+}
+
+
+int
+amfs_link_fmount(mntfs *mf)
+{
+  /*
+   * Wow - this is hard to implement! :-)
+   */
+  return 0;
+}
+
+
+int
+amfs_link_fumount(mntfs *mf)
+{
+  return 0;
+}
