@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.24 2000/03/23 07:01:27 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.25 2000/03/25 21:37:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -287,7 +287,6 @@ again:
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
-			nblks = ata_bio->nblks;
 	    		/* Init the DMA channel. */
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
