@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2001/01/14 06:08:24 christos Exp $
+#	$NetBSD: Makefile,v 1.176 2001/01/21 15:03:22 itojun Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -104,9 +104,6 @@ BIN1+=	etc.${MACHINE_ARCH}/ld.so.conf
 .if exists(etc.${MACHINE_ARCH}/ttyaction)
 BIN1+=	etc.${MACHINE_ARCH}/ttyaction
 .endif
-
-# IPv6
-BIN1+=	rtadvd.conf
 
 # -rw-rw-r--
 BIN2+=	motd
