@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2002/10/13 12:11:36 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2002/10/20 02:26:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -115,7 +115,10 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 	if (pdp == NULL)
 		pdp = &temp;
 
+	/* XXX Emulate 'struct device' of mainbus for cfparent_match() */
 	pdp->dv_cfdata = pcfp;
+	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
+	pdp->dv_unit = 0;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
