@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.6 1998/07/04 22:18:18 jonathan Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.7 1998/07/07 00:48:13 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -161,7 +161,7 @@ cpu_reboot(howto, bootstr)
  */
 vm_offset_t
 initarm(ofw_handle)
-    ofw_handle_t ofw_handle;
+	ofw_handle_t ofw_handle;
 {
 	set_cpufuncs();
 
@@ -277,7 +277,7 @@ process_kernel_args(void)
  *  Move this into common OFW module? -JJK
  */
 void
-ofrootfound()
+ofrootfound(void)
 {
 	int node;
 	struct ofbus_attach_args aa;

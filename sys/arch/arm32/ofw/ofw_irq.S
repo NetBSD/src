@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.5 1998/07/06 01:04:17 mark Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.6 1998/07/07 00:48:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 27/09/94
  */
 
+#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 #include "opt_uvm.h"
 
