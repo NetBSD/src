@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $	*/
+/*	$NetBSD: extract.c,v 1.22 2000/07/24 20:09:15 dmcmahill Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $");
+__RCSID("$NetBSD: extract.c,v 1.22 2000/07/24 20:09:15 dmcmahill Exp $");
 #endif
 #endif
 
@@ -34,15 +34,24 @@ __RCSID("$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $");
 #include "add.h"
 
 #define TAR_ARGS	" cf - "
+#define TARX_CMD	"|" TAR_CMD " xf - -C "
 
-#define TOOBIG(str) ((strlen(str) + 22 + strlen(home) + where_count > maxargs) \
-		|| (strlen(str) + 6 + strlen(home) + perm_count > maxargs))
+/* 
+ * This macro is used to determine if the 'where_args'  buffer is big enough to add the
+ * current string (usually a filename) plus some extra commands (the contents of TARX_CMD, and
+ * the directory name stored in 'Directory').
+ * 
+ * The string " 'str'" will be added so we need room for the string plus 3 chars plus the other arguments.
+ * 
+ * In addition, we will add " 'srt'" to the perm_args buffer so we need to ensure that there is room
+ * for that.
+ */
+#define TOOBIG(str) ((strlen(str) + 3 + strlen(TARX_CMD) + strlen(Directory) + where_count  >= maxargs) \
+		|| (strlen(str) + 3 + perm_count >= maxargs))
 
 #define PUSHOUT(todir) /* push out string */				\
         if (where_count > sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1) {	\
-		    strcat(where_args, "|");				\
-		    strcat(where_args, TAR_CMD);			\
-		    strcat(where_args, " xf - -C ");			\
+		    strcat(where_args, TARX_CMD);			\
 		    strcat(where_args, todir);				\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
@@ -50,9 +59,8 @@ __RCSID("$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $");
 				(u_long)strlen(where_args), TAR_CMD,	\
 				where_args);				\
 		    }							\
-		    strcpy(where_args, TAR_CMD);			\
-		    strcat(where_args, TAR_ARGS);			\
-		    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS)-2;	\
+		    strcpy(where_args, TAR_CMD TAR_ARGS);		\
+		    where_count = strlen(where_args);			\
 	}								\
 	if (perm_count) {						\
 		    apply_perms(todir, perm_args);			\
@@ -110,10 +118,19 @@ extract_plist(char *home, package_t *pkg)
 		cleanup(0);
 		errx(2, "can't get argument list space");
 	}
-	strcpy(where_args, TAR_CMD);
-	strcat(where_args, TAR_ARGS);
-	where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS) - 2;
+	strcpy(where_args, TAR_CMD TAR_ARGS);
+	/*
+	 * we keep track of how many characters are stored in 'where_args' with 'where_count'.
+	 * Note this doesn't include the trailing null character.
+	 */
+	where_count = strlen(where_args);
+
 	perm_args[0] = 0;
+	/*
+	 * we keep track of how many characters are stored in 'perm__args' with 'perm_count'.
+	 * Note this doesn't include the trailing null character.
+	 */
+	perm_count = 0;
 
 	last_chdir = 0;
 	preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
@@ -198,6 +215,7 @@ extract_plist(char *home, package_t *pkg)
 					if (p->name[0] == '/' || TOOBIG(p->name)) {
 						PUSHOUT(Directory);
 					}
+					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
 					add_count = snprintf(&perm_args[perm_count], maxargs - perm_count, "'%s' ", p->name);
 					if (add_count > maxargs - perm_count) {
 						cleanup(0);
@@ -212,12 +230,14 @@ extract_plist(char *home, package_t *pkg)
 					} else if (p->name[0] == '/' || TOOBIG(p->name)) {
 						PUSHOUT(Directory);
 					}
+					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
 					add_count = snprintf(&where_args[where_count], maxargs - where_count, " '%s'", p->name);
 					if (add_count > maxargs - where_count) {
 						cleanup(0);
 						errx(2, "oops, miscounted strings!");
 					}
 					where_count += add_count;
+					/* note, if the following line is modified, TOOBIG must be adjusted accordingly */
 					add_count = snprintf(&perm_args[perm_count],
 					    maxargs - perm_count,
 					    "'%s' ", p->name);
