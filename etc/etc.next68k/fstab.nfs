@@ -1,4 +1,0 @@
-#	$NetBSD: fstab.nfs,v 1.1 1998/06/09 09:10:38 dbj Exp $
-#
-nfs-server:/export/root/next68k	/       nfs     rw,auto 0 0
-#nfs-server:/export/swap/mynext	none	swap sw,nfsmntpt=/swap 0 0

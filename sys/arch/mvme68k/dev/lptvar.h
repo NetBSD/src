@@ -1,11 +1,11 @@
-/*	$NetBSD: pccvar.h,v 1.3.10.1 1999/01/30 21:58:43 scw Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.1.2.1 1999/01/30 21:58:42 scw Exp $ */
 
 /*-
- * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,37 +37,29 @@
  */
 
 /*
- * Autoconfiguration definitions for the MVME-147 Peripheral Channel
- * Controller.
+ * Common front-end for mvme68k parallel printer ports
  */
 
-/*
- * Structure used to describe a device for autoconfiguration purposes.
- */
-struct pcc_device {
-	char	*pcc_name;	/* name of device (e.g. "clock") */
-	u_long	pcc_offset;	/* offset from PCC base */
-	int	pcc_bytes;	/* size of badaddr check */
+#ifndef __mvme68k_lptvar_h
+#define __mvme68k_lptvar_h
+
+struct lpt_funcs {
+	void	(*lf_hook_int) __P((void *, int (*)__P((void *)), void *));
+	void	(*lf_open) __P((void *, int));
+	void	(*lf_close) __P((void *));
+	void	(*lf_iprime) __P((void *));
+	void	(*lf_speed) __P((void *, int));
+	int	(*lf_notrdy) __P((void *, int));
+	void	(*lf_wrdata) __P((void *, u_char));
 };
 
-/*
- * Structure used to attach PCC devices.
- */
-struct pcc_attach_args {
-	char	*pa_name;	/* name of device */
-	u_long	pa_offset;	/* offset from PCC base */
-	int	pa_ipl;		/* interrupt level */
+#define	LPT_STROBE_FAST	0
+#define LPT_STROBE_SLOW	1
+
+
+struct lpt_attach_args {
+	struct lpt_funcs	*pa_funcs;
+	void			*pa_arg;
 };
 
-/* Shorthand for locators. */
-#include "locators.h"
-#define pcccf_ipl	cf_loc[PCCCF_IPL]
-
-#if NPCC
-void	pccintr_establish __P((int, int (*)(void *), int, void *));
-void	pccintr_disestablish __P((int));
-#endif
-#if NPCCTWO
-void	pcctwointr_establish __P((int, int (*)(void *), int, void *));
-void	pcctwointr_disestablish __P((int));
-#endif
+#endif	/* __mvme68k_lptvar_h */

@@ -1,9 +1,0 @@
-#	$NetBSD: Makefile.sequencer,v 1.1 1998/06/12 23:22:52 cgd Exp $
-
-aic7xxx_seq.h: aic7xxx_asm aic7xxx.seq
-	./aic7xxx_asm -o ${.TARGET} aic7xxx.seq
-
-aic7xxx_asm: aic7xxx_asm.o
-	${CC} -o $@ aic7xxx_asm.o
-
-aic7xxx_asm.o: aic7xxx_asm.c

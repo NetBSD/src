@@ -1,7 +1,0 @@
-./sbin/edlabel
-./usr/mdec/bootxx
-./usr/mdec/installboot
-./usr/mdec/netboot
-./usr/mdec/tapeboot
-./usr/mdec/ufsboot
-./usr/sbin/eeprom
