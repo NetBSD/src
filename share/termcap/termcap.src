@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.55 2000/04/27 18:55:32 mycroft Exp $
+#	$NetBSD: termcap.src,v 1.56 2000/04/27 22:16:52 mycroft Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -906,9 +906,13 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 # These are micro-minimal and probably need to be redone for real
 # after the manner of the pcvt entries.
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
+	:Co#16:NC#32:pa#256:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
 	:co#80:li#25:tc=vt220:
 
 wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:\
+	:Co#16:NC#32:pa#256:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
 	:co#80:li#25:km:tc=vt220:
 
 #### FreeBSD console entries
