@@ -1,0 +1,28 @@
+/* 
+ *
+ * $NetBSD: README,v 1.1 2002/12/12 12:51:37 masuda Exp $
+ * README Copyright (C) Yoshihiro Masuda  2002
+ * <masuda@tcp-ip.or.jp>
+ *
+ */
+
+
+This port support OpenBlockS type S and R those are using IBM's
+PPC405GP that is sold from PlatHome.  Since old OpenBlockS is using
+MPC860 instead of 405GP, thus the port is separated.  Although
+userland binary may be compatible.
+
+Since this hardware is very similar to walnut(maybe a lots of IBM405
+based products are similar), I will have taken from or will be linking
+to a lots of code of walnut.
+
+
+
+/*
+ * $Log: README,v $
+ * Revision 1.1  2002/12/12 12:51:37  masuda
+ * Description file for OpenBlockS S and R.
+ * Those products are shipped from Plat'Home Inc.
+ * See http://www.plathome.co.jp/
+ *
+ */
