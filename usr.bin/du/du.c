@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.19 2002/09/28 21:14:03 provos Exp $	*/
+/*	$NetBSD: du.c,v 1.20 2003/04/18 13:16:50 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.19 2002/09/28 21:14:03 provos Exp $");
+__RCSID("$NetBSD: du.c,v 1.20 2003/04/18 13:16:50 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,14 +80,14 @@ main(argc, argv)
 	FTSENT *p;
 	int64_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, ch, cflag, kmflag, notused, rval, sflag;
+	int Hflag, Lflag, Pflag, aflag, ch, cflag, gkmflag, notused, rval, sflag;
 	char **save;
 
 	save = argv;
-	Hflag = Lflag = Pflag = aflag = cflag = kmflag = sflag = 0;
+	Hflag = Lflag = Pflag = aflag = cflag = gkmflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPachkmrsx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPacghkmrsx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -107,16 +107,20 @@ main(argc, argv)
 		case 'c':
 			cflag = 1;
 			break;
+		case 'g':
+			blocksize = 1024 * 1024 * 1024;
+			gkmflag = 1;
+			break;
 		case 'h':
 			hflag = 1;
 			break;
 		case 'k':
 			blocksize = 1024;
-			kmflag = 1;
+			gkmflag = 1;
 			break;
 		case 'm':
 			blocksize = 1024 * 1024;
-			kmflag = 1;
+			gkmflag = 1;
 			break; 
 		case 'r':
 			break;
@@ -169,7 +173,7 @@ main(argc, argv)
 		argv[1] = NULL;
 	}
 
-	if (!kmflag)
+	if (!gkmflag)
 		(void)getbsize(&notused, &blocksize);
 	blocksize /= 512;
 
@@ -275,6 +279,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-chkmrx] [file ...]\n");
+		"usage: du [-H | -L | -P] [-a | -s] [-cghkmrx] [file ...]\n");
 	exit(1);
 }
