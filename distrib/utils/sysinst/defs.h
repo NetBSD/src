@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.111 2004/03/26 19:55:13 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.112 2004/04/18 21:34:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,8 +138,9 @@ deconst(const void *p)
 /* Types */
 typedef struct distinfo {
 	const char	*name;
-	int		set;
+	uint		set;
 	const char	*desc;
+	const char	*marker_file;	/* set assumed installed if exists */
 } distinfo;
 
 typedef struct _partinfo {
@@ -365,7 +366,7 @@ void	cd_dist_dir(const char *);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void	ask_verbose_dist(void);
-int 	get_and_unpack_sets(msg, msg);
+int 	get_and_unpack_sets(int, msg, msg);
 int	sanity_check(void);
 int	set_timezone(void);
 int	set_crypt_type(void);

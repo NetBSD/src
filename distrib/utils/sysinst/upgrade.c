@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.44 2003/12/28 05:30:47 christos Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.45 2004/04/18 21:34:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,6 +87,7 @@ do_upgrade(void)
 	if (save_X())
 		return;
 
+#if 0
 	/*
 	 * Move target /etc -> target /etc.old so existing configuration
 	 * isn't overwritten by upgrade.
@@ -95,6 +96,7 @@ do_upgrade(void)
 		merge_X();
 		return;
 	}
+#endif
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
@@ -109,17 +111,20 @@ do_upgrade(void)
 	wclear(stdscr);
 	wrefresh(stdscr);
 
-	if (get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr) != 0)
+	if (get_and_unpack_sets(1, MSG_upgrcomplete, MSG_abortupgr) != 0)
 		return;
 
+#if 0
 	/* Copy back any files we should restore after the upgrade.*/
 	if (sets_installed & SET_ETC)
 		merge_etc();
+#endif
 	merge_X();
 
 	sanity_check();
 }
 
+#if 0
 /*
  * save target /etc files.
  * if target /etc.old exists, print a warning message and give up.
@@ -197,10 +202,11 @@ restore_etc(void)
 
 	tp = target_prefix();
 	run_program(0, "mv -f %s/etc.old/* %s/etc", tp, tp);
-	run_program(0, "rmdir  %s/etc.old", tp);
+	/* rmdir isn't in our root, chroot and use the one in the target */
+	run_program(RUN_CHROOT, "rmdir /etc.old");
 	etc_saved = 0;
 }
-
+#endif
 
 /*
  * Save X symlink to X.old so it can be recovered later
@@ -285,7 +291,7 @@ do_reinstall_sets(void)
 		return;
 
 	/* Unpack the distribution. */
-	if (get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack) != 0)
+	if (get_and_unpack_sets(0, MSG_unpackcomplete, MSG_abortunpack) != 0)
 		return;
 
 	sanity_check();
