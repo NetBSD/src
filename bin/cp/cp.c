@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.24 1998/08/19 01:29:11 thorpej Exp $	*/
+/*	$NetBSD: cp.c,v 1.25 1998/10/08 17:43:24 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.24 1998/08/19 01:29:11 thorpej Exp $");
+__RCSID("$NetBSD: cp.c,v 1.25 1998/10/08 17:43:24 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ __RCSID("$NetBSD: cp.c,v 1.24 1998/08/19 01:29:11 thorpej Exp $");
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, iflag, pflag, rflag;
+int Rflag, iflag, pflag, rflag, fflag;
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -129,10 +129,12 @@ main(argc, argv)
 			Rflag = 1;
 			break;
 		case 'f':
+			fflag = 1;
 			iflag = 0;
 			break;
 		case 'i':
 			iflag = isatty(fileno(stdin));
+			fflag = 0;
 			break;
 		case 'p':
 			pflag = 1;
@@ -242,11 +244,12 @@ main(argc, argv)
 				type = FILE_TO_FILE;
 		} else
 			type = FILE_TO_FILE;
-	} else
+	} else {
 		/*
 		 * Case (2).  Target is a directory.
 		 */
 		type = FILE_TO_DIR;
+	}
 
 	exit (copy(argv, type, fts_options));
 	/* NOTREACHED */
@@ -279,8 +282,6 @@ copy(argv, type, fts_options)
 		case FTS_DC:			/* Warn, continue. */
 			warnx("%s: directory causes a cycle", curr->fts_path);
 			rval = 1;
-			continue;
-		case FTS_DP:			/* Ignore, continue. */
 			continue;
 		}
 
@@ -379,33 +380,52 @@ copy(argv, type, fts_options)
 				rval = 1;
 				break;
 			}
-			/*
-			 * If the directory doesn't exist, create the new
-			 * one with the from file mode plus owner RWX bits,
-			 * modified by the umask.  Trade-off between being
-			 * able to write the directory (if from directory is
-			 * 555) and not causing a permissions race.  If the
-			 * umask blocks owner writes, we fail..
-			 */
-			if (dne) {
-				if (mkdir(to.p_path, 
-				    curr->fts_statp->st_mode | S_IRWXU) < 0)
+
+                        /*
+                         * Directories get noticed twice:
+                         *  In the first pass, create it if needed.
+                         *  In the second pass, after the children have been copied, set the permissions.
+                         */
+			if (curr->fts_info == FTS_D) /* First pass */
+			{
+				/*
+				 * If the directory doesn't exist, create the new
+				 * one with the from file mode plus owner RWX bits,
+				 * modified by the umask.  Trade-off between being
+				 * able to write the directory (if from directory is
+				 * 555) and not causing a permissions race.  If the
+				 * umask blocks owner writes, we fail..
+				 */
+				if (dne) {
+					if (mkdir(to.p_path, 
+					    curr->fts_statp->st_mode | S_IRWXU) < 0)
+						err(1, "%s", to.p_path);
+				} else if (!S_ISDIR(to_stat.st_mode)) {
+					errno = ENOTDIR;
 					err(1, "%s", to.p_path);
-			} else if (!S_ISDIR(to_stat.st_mode)) {
-				errno = ENOTDIR;
-				err(1, "%s", to.p_path);
+				}
 			}
-			/*
-			 * If not -p and directory didn't exist, set it to be
-			 * the same as the from directory, umodified by the 
-                         * umask; arguably wrong, but it's been that way 
-                         * forever.
-			 */
-			if (pflag && setfile(curr->fts_statp, 0))
-				rval = 1;
-			else if (dne)
-				(void)chmod(to.p_path, 
-				    curr->fts_statp->st_mode);
+			else if (curr->fts_info == FTS_DP) /* Second pass */
+			{
+	                        /*
+				 * If not -p and directory didn't exist, set it to be
+				 * the same as the from directory, umodified by the 
+                        	 * umask; arguably wrong, but it's been that way 
+                        	 * forever.
+				 */
+				if (pflag && setfile(curr->fts_statp, 0))
+					rval = 1;
+				else if (dne)
+					(void)chmod(to.p_path, 
+					    curr->fts_statp->st_mode);
+			}
+			else
+                        {
+                        	warnx("directory %s encountered when not expected.", curr->fts_path);
+                        	rval = 1;
+                                break;
+                        }
+
 			break;
 		case S_IFBLK:
 		case S_IFCHR:
