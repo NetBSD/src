@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.8 1999/05/23 17:59:39 ad Exp $ */
+/*	$NetBSD: rcons.h,v 1.9 1999/08/26 20:48:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,14 +46,7 @@
 #ifndef _RCONS_H_
 #define _RCONS_H_ 1
 
-/* Default color values */
 #include "opt_rcons.h"
-#ifndef RASTERCONSOLE_FGCOL
-#define RASTERCONSOLE_FGCOL	WSCOL_WHITE
-#endif
-#ifndef RASTERCONSOLE_BGCOL
-#define RASTERCONSOLE_BGCOL	WSCOL_BLACK
-#endif
 
 /* Avoid dragging in dev/wscons/wsdisplayvar.h */
 struct wsdisplay_emulops;
@@ -69,6 +62,10 @@ struct rconsole {
 	u_int	rc_height;		/* height in pixels */
 	u_int	rc_row;			/* emulator row */
 	u_int	rc_col;			/* emulator column */
+
+	/* These may be overridden in the kernel config file. */
+	int	rc_deffgcolor;		/* default fg color */
+	int	rc_defbgcolor;		/* default bg color */
 
 	/* Bits maintained by the raster routines */
 	u_int	rc_bits;		/* see defines below */
