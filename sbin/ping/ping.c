@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.43 1998/11/06 16:52:42 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.44 1999/02/24 19:31:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.43 1998/11/06 16:52:42 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.44 1999/02/24 19:31:38 jwise Exp $");
 #endif
 
 #include <stdio.h>
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: ping.c,v 1.43 1998/11/06 16:52:42 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <math.h>
 #include <string.h>
 #include <err.h>
 #ifdef sgi
@@ -186,6 +187,7 @@ struct timeval interval_tv;
 double tmin = 999999999.0;
 double tmax = 0.0;
 double tsum = 0.0;			/* sum of all times */
+double tsumsq = 0.0;
 double maxwait = 0.0;
 
 #ifdef SIGINFO
@@ -843,6 +845,7 @@ pr_pack(u_char *buf,
 			(void) memcpy(&tv, icp->icmp_data, sizeof(tv));
 			triptime = diffsec(&last_rx, &tv);
 			tsum += triptime;
+			tsumsq += triptime * triptime;
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
@@ -1106,10 +1109,14 @@ summary(int header)
 	}
 	(void)printf("\n");
 	if (nreceived && (pingflags & F_TIMING)) {
-		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
-			     tmin*1000.0,
-			     (tsum/(nreceived+nrepeats))*1000.0,
-			     tmax*1000.0);
+		double n = nreceived + nrepeats;
+		double avg = (tsum / n);
+		double variance = (tsumsq / (n - (avg * avg)));
+
+		printf("round-trip min/avg/max/stddev = "
+			"%.3f/%.3f/%.3f/%.3f ms\n",
+			tmin * 1000.0, avg * 1000.0,
+			tmax * 1000.0, sqrt(variance * 1000.0));
 		if (pingflags & F_FLOOD) {
 			double r = diffsec(&last_rx, &first_rx);
 			double t = diffsec(&last_tx, &first_tx);
