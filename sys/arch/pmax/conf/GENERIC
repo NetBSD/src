@@ -2,15 +2,15 @@
 # Distribition miniroot kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.5 1996/10/02 06:41:13 jonathan Exp $
+# 	$NetBSD: GENERIC,v 1.6 1996/10/13 05:40:45 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	64
 
-options		CPU_R3000		# R2000/R3000 support
-options		CPU_R2000		# R2000/R3000 support bug workaround
-options		CPU_MIPS1		# R2000/R3000 support (new)
+options		MIPS1			# R2000/R3000 support (new)
+#options	MIPS3			# R4000/R4400 support (not finished)
+
 
 # Support for specific models of DECstation
 options		DS3100			# PMAX (kn01) DECstation 2100, 3100
@@ -70,18 +70,17 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 
 # NetBSD backwards compatibility
-#options	COMPAT_10	# note: no pmax support in NetBSD-1.0
-#options	EXEC_AOUT	# a.out used in pre- netbsd-1.1 pmax snapshots
-#options	COMPAT_11
-options		COMPAT_12
+#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
+#options	COMPAT_11	# NetBSD 1.1,
+options		COMPAT_12	# Netbsd 1.2 reboot()
 
 
 # pmax specific
 options		COMPAT_ULTRIX	# ultrix compatibility
-options		EXEC_ECOFF	# ultrix compatibility
+options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options		"HZ=256"	# RTC rate required
 
-# Note that these do not work in the same kernel, yet.
+# Note that this configuration is unlikely to work, yet...
 #config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
 config		gennetbsd	swap generic
 
@@ -91,21 +90,21 @@ config		gennetbsd	swap generic
 ########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
-include		"arch/pmax/conf/tc.std"
+include 	"arch/pmax/conf/tc.std"
 
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
-include		"arch/pmax/conf/builtin.ioasic"
+include 	"arch/pmax/conf/builtin.ioasic"
 
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
-include		"arch/pmax/conf/builtin.maxine"
+include 	"arch/pmax/conf/builtin.maxine"
 
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices.
 # (KN02 has turbochannel but no	IOASIC).
-include		"arch/pmax/conf/builtin.3max"
+include 	"arch/pmax/conf/builtin.3max"
 
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
-include		"arch/pmax/conf/builtin.3100"
+include 	"arch/pmax/conf/builtin.3100"
 
 ########################################################################
 # SCSI configuration                                                   #
@@ -116,8 +115,8 @@ oldscsibus*	at asc?
 #
 # SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
 #
-include		"arch/pmax/conf/scsi.pmax"
-#include	"arch/pmax/conf/mi.scsi"	# not yet supported on DECstations
+include 	"arch/pmax/conf/scsi.pmax"
+#include	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
 ########################################################################
@@ -126,7 +125,6 @@ include		"arch/pmax/conf/scsi.pmax"
 
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device   ppp              2      # serial-line IP ports
-pseudo-device	strip		 2	# Metricom  Ricochet IP encapsulation
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
@@ -135,4 +133,4 @@ pseudo-device   ccd             4       # concatenated disks
 
 #pseudo-device	ether			# From old config. what does it mean?
 pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
-pseudo-device	fb		3	# up to 3 framebuffers
+pseudo-device	fb		1	# up to 3 framebuffers
