@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.15 1996/07/09 00:53:55 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.16 1996/07/09 04:18:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -187,7 +187,7 @@ LEAF(rei, 1)					/* XXX should be NESTED */
 1:	SETGP(pv)
 
 	ldq	s1, TF_PS(sp)			/* get the saved PS */
-	and	s1, ALPHA_PSL_IPL, t0		/* look at the saved IPL */
+	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
 	bne	t0, Lrestoreregs		/* != 0: can't do AST or SIR */
 
 	/* see if we can do an SIR */
@@ -203,7 +203,7 @@ Lchkast:
 	CONST(ALPHA_PSL_IPL_0, a0)		/* drop IPL to zero*/
 	call_pal PAL_OSF1_swpipl
 
-	and	s1, ALPHA_PSL_U, t0		/* are we returning to user? */
+	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
 	beq	t0, Lrestoreregs		/* no: just return */
 
 	ldq	t2, astpending			/* AST pending? */
@@ -870,7 +870,7 @@ sw1:
 	ldq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
 	ldq	ra, U_PCB_CONTEXT+(7 * 8)(t0)		/* restore ra */
 	ldq	a0, U_PCB_CONTEXT+(8 * 8)(t0)		/* restore ipl */
-	and	a0, ALPHA_PSL_IPL, a0
+	and	a0, ALPHA_PSL_IPL_MASK, a0
 	call_pal PAL_OSF1_swpipl
 
 	CONST(1, v0)				/* possible ret to savectx() */
