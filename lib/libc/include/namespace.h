@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.22 1998/10/14 19:13:02 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.23 1998/10/14 19:41:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 #define drand48			_drand48
 #define endfsent		_endfsent
 #define endgrent		_endgrent
+#define endhostent		_endhostent
 #define endnetent		_endnetent
 #define endnetgrent		_endnetgrent
 #define endprotoent		_endprotoent
@@ -276,6 +277,7 @@
 #define setfsent		_setfsent
 #define setgrent		_setgrent
 #define setgroupent		_setgroupent
+#define sethostent		_sethostent
 #define sethostname		_sethostname
 #define setlogmask		_setlogmask
 #define setmode			_setmode
