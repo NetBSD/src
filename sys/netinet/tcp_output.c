@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.68 2001/07/26 21:47:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.69 2001/07/31 00:57:45 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -169,7 +169,11 @@ extern struct mbuf *m_copypack();
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
-static __inline void
+static
+#ifndef GPROF
+__inline
+#endif
+void
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 {
 #ifdef INET
@@ -1064,6 +1068,7 @@ send:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
+			tcpstat.tcps_selfquench++;
 #ifdef INET
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);
