@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.60 2001/01/14 05:41:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.60 2001/01/14 05:41:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.60 2001/01/14 05:41:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1599,11 +1599,19 @@ ParseAddCmd(gnp, cmd)
 	(void)Lst_AtEnd(gn->commands, cmd);
 	ParseMark(gn);
     } else {
+#ifdef notyet
+	/* XXX: We cannot do this until we fix the tree */
 	(void)Lst_AtEnd(gn->commands, cmd);
 	Parse_Error (PARSE_WARNING,
 		     "overriding commands for target \"%s\" ignored; "
 		     "previous commands defined at %s: %d",
 		     gn->name, gn->fname, gn->lineno);
+#else
+	Parse_Error (PARSE_WARNING,
+		     "ignoring commands for target \"%s\" ignored; "
+		     "previous commands defined at %s: %d",
+		     gn->name, gn->fname, gn->lineno);
+#endif
     }
     return(0);
 }
