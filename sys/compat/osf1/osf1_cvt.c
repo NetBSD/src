@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.5 1999/05/05 00:57:43 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.6 1999/05/10 05:58:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -306,6 +306,38 @@ const struct emul_flags_xtab osf1_wait_options_xtab[] = {
     {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
     {	0								}
 };
+
+int
+osf1_cvt_msghdr_xopen_to_native(omh, bmh)
+	const struct osf1_msghdr_xopen *omh;
+	struct msghdr *bmh;
+{
+	unsigned long leftovers;
+
+	memset(bmh, 0, sizeof bmh);
+	bmh->msg_name = omh->msg_name;		/* XXX sockaddr translation */
+	bmh->msg_namelen = omh->msg_namelen;
+	bmh->msg_iov = NULL;			/* iovec xlation separate */
+	bmh->msg_iovlen = omh->msg_iovlen;
+
+	/* XXX we don't translate control messages (yet) */
+	if (bmh->msg_control != NULL || bmh->msg_controllen != 0)
+{
+printf("osf1_cvt_msghdr_xopen_to_native: control\n");
+		return (EINVAL);
+}
+
+        /* translate flags */
+        bmh->msg_flags = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
+            omh->msg_flags, &leftovers);
+        if (leftovers != 0)
+{
+printf("osf1_cvt_msghdr_xopen_to_native: leftovers 0x%lx\n", leftovers);
+                return (EINVAL);
+}
+
+	return (0);
+}
 
 int
 osf1_cvt_pathconf_name_to_native(oname, bnamep)
