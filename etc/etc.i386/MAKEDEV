@@ -57,7 +57,7 @@
 #
 # Printers:
 #	lpt*	stock lp
-#	lpa*	interruptless lp			(XXX - installed)
+#	lpa*	interruptless lp
 #
 # Call units:
 #
@@ -270,13 +270,11 @@ vnd*)
 	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
-lpa*)						# (XXX - installed)
+lpa*)
 	unit=`expr $i : 'lpa\(.*\)'`
-	chr=25
-	rm -f lpa$unit lpa${unit}p
-	mknod lpa${unit}        c $chr `expr $unit + 0`
-	mknod lpa${unit}p       c $chr `expr $unit + 32`
-	chown root.wheel lpa${unit} lpa${unit}p
+	rm -f lpa$unit
+	mknod lpa$unit c 16 `expr $unit + 128`
+	chown root.wheel lpa$unit
 	;;
 
 lpt*)
