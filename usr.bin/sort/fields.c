@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.11 2002/12/24 13:20:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.11 2002/12/24 13:20:25 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -58,9 +58,6 @@ __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 		
 static u_char *enterfield __P((u_char *, u_char *, struct field *, int));
 static u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
-
-extern struct coldesc clist[(ND+1)*2];
-extern int ncols;
 
 #define DECIMAL '.'
 #define OFFSET 128
