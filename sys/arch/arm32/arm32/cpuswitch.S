@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuswitch.S,v 1.14 1997/02/04 07:12:30 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.15 1997/02/10 03:50:53 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -46,25 +46,12 @@
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/iomd.h>
 
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
-
-/*
- * PULLFRAME - macro to pull a trap frame from the stack in the current mode
- * Since the current mode is used, the SVC R14 field is ignored.
- */
-
-#define PULLFRAME \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
- 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
- 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
 
 #undef IRQdisable
 #undef IRQenable
