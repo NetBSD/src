@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.52 2002/05/03 00:18:31 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.53 2002/05/28 20:20:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52 2002/05/03 00:18:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.53 2002/05/28 20:20:49 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -910,7 +910,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * may trash the first few outgoing packets if the
 	 * PCI bus is saturated.
 	 */
-	sc->sc_tx_drain_thresh = 512 / 32;
+	sc->sc_tx_drain_thresh = 1504 / 32;
 
 	/*
 	 * Initialize the Rx FIFO drain threshold.
