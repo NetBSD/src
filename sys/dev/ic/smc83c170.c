@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.19 1999/08/03 17:25:51 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.20 1999/08/25 22:44:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -412,7 +412,8 @@ epic_start(ifp)
 		 * auto-pad, so we have to do this ourselves.
 		 */
 		txd->et_control = ET_TXCTL_LASTDESC | ET_TXCTL_FRAGLIST;
-		txd->et_txlength = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+		txd->et_txlength = max(m0->m_pkthdr.len,
+		    ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 		/*
 		 * If this is the first descriptor we're enqueueing,
