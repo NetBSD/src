@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.7 1997/09/02 13:18:15 thorpej Exp $ */
+/* $NetBSD: in_cksum.c,v 1.8 2001/04/29 03:29:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -39,12 +39,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 1997/09/02 13:18:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2001/04/29 03:29:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 /*
  * Checksum routine for Internet Protocol family headers
@@ -86,12 +89,8 @@ union q_util {
 	u_int64_t q;
 };
 
-u_int64_t	in_cksumdata __P((caddr_t buf, int len));
-
-u_int64_t
-in_cksumdata(buf, len)
-	register caddr_t buf;
-	register int len;
+static u_int64_t
+in_cksumdata(register caddr_t buf, register int len)
 {
 	const u_int32_t *lw = (u_int32_t *) buf;
 	u_int64_t sum = 0;
@@ -172,9 +171,7 @@ in_cksumdata(buf, len)
 }
 
 int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(register struct mbuf *m, register int len)
 {
 	register u_int64_t sum = 0;
 	register int mlen = 0;
@@ -191,9 +188,62 @@ in_cksum(m, len)
 			mlen = len;
 		addr = mtod(m, caddr_t);
 		if ((clen ^ (long) addr) & 1)
-		    sum += in_cksumdata(addr, mlen) << 8;
+			sum += in_cksumdata(addr, mlen) << 8;
 		else
-		    sum += in_cksumdata(addr, mlen);
+			sum += in_cksumdata(addr, mlen);
+
+		clen += mlen;
+		len -= mlen;
+	}
+	REDUCE16;
+	return (~sum & 0xffff);
+}
+
+int
+in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
+{
+	register u_int64_t sum = 0;
+	register int mlen = 0;
+	register int clen = 0;
+	register caddr_t addr;
+	union q_util q_util;
+	union l_util l_util; 
+	struct ipovly ipov;
+
+	/* pseudo header */
+	if (off < sizeof(struct ipovly))
+		panic("in4_cksum: offset too short");
+	if (m->m_len < sizeof(struct ip))
+		panic("in4_cksum: bad mbuf chain");
+
+	memset(&ipov, 0, sizeof(ipov));
+
+	ipov.ih_len = htons(len);
+	ipov.ih_pr = nxt;
+	ipov.ih_src = mtod(m, struct ip *)->ip_src;
+	ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+
+	sum += in_cksumdata((caddr_t) &ipov, sizeof(ipov));
+
+	/* skip over unnecessary part */
+	while (m != NULL && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+
+	for (; m && len; m = m->m_next, off = 0) {
+		if (m->m_len == 0)
+			continue;
+		mlen = m->m_len - off;
+		if (len < mlen)
+			mlen = len;
+		addr = mtod(m, caddr_t) + off;
+		if ((clen ^ (long) addr) & 1)
+			sum += in_cksumdata(addr, mlen) << 8;
+		else
+			sum += in_cksumdata(addr, mlen);
 
 		clen += mlen;
 		len -= mlen;
