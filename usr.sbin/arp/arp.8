@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.16 2003/08/07 11:25:12 agc Exp $
+.\"	$NetBSD: arp.8,v 1.17 2004/11/17 14:54:47 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,6 +81,13 @@ flag.  If used with
 instead of a
 .Ar hostname ,
 it will delete all arp entries.
+.It Fl f
+Causes the file
+.Ar filename
+to be read and multiple entries to be set in the
+.Tn ARP
+tables.  Entries
+in the file should be of the form
 .It Fl n
 Show network addresses as numbers (normally
 .Nm
@@ -105,13 +112,6 @@ server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
-.It Fl f
-Causes the file
-.Ar filename
-to be read and multiple entries to be set in the
-.Tn ARP
-tables.  Entries
-in the file should be of the form
 .Pp
 .Bd -filled -offset indent -compact
 .Ar hostname ether_addr
