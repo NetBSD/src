@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.109 1994/11/22 03:24:53 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.110 1994/11/22 05:34:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -179,8 +179,8 @@ static void wderror __P((void *, struct buf *, char *));
 int wdcwait __P((struct wdc_softc *, int));
 /* ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
    command is aborted. */
-#define	wait_for_drq(d)		wdcwait(d, WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ)
-#define	wait_for_ready(d)	wdcwait(d, WDCS_READY | WDCS_SEEKCMPLT)
+#define	wait_for_drq(d)		wdcwait(d, WDCS_DRDY | WDCS_DSC | WDCS_DRQ)
+#define	wait_for_ready(d)	wdcwait(d, WDCS_DRDY | WDCS_DSC)
 #define	wait_for_unbusy(d)	wdcwait(d, 0)
 
 /*
@@ -278,7 +278,7 @@ wdprobe(parent, match, aux)
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
 		return 0;
 	
-	if (wdcommandshort(wdc, drive, WDCC_RESTORE) != 0 ||
+	if (wdcommandshort(wdc, drive, WDCC_RECAL) != 0 ||
 	    wait_for_ready(wdc) != 0)
 		return 0;
 
@@ -298,10 +298,10 @@ wdattach(parent, self, aux)
 
 	wd_get_parms(wd);
 	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec <",
-	    (wd->sc_params.wdp_fixedcyl + wd->sc_params.wdp_removcyl) *
+	    wd->sc_params.wdp_cylinders *
 	    (wd->sc_params.wdp_heads * wd->sc_params.wdp_sectors) /
 	    (1048576 / DEV_BSIZE),
-	    (wd->sc_params.wdp_fixedcyl + wd->sc_params.wdp_removcyl),
+	    wd->sc_params.wdp_cylinders,
 	    wd->sc_params.wdp_heads,
 	    wd->sc_params.wdp_sectors,
 	    DEV_BSIZE);
@@ -757,14 +757,14 @@ wdcintr(wdc)
 		goto done;
 	}
 
-	if (wdc->sc_status & WDCS_ECCCOR)
+	if (wdc->sc_status & WDCS_CORR)
 		wderror(wd, bp, "soft ecc");
     
 	/* If this was a read, fetch the data. */
 	if (bp->b_flags & B_READ) {
 		/* Ready to receive data? */
-		if ((wdc->sc_status & (WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ))
-		    != (WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ)) {
+		if ((wdc->sc_status & (WDCS_DRDY | WDCS_DSC | WDCS_DRQ))
+		    != (WDCS_DRDY | WDCS_DSC | WDCS_DRQ)) {
 			wderror(wd, NULL, "wdcintr: read intr before drq");
 			wdcunwedge(wdc);
 			return 1;
@@ -910,8 +910,7 @@ wdgetdisklabel(wd)
 	wd->sc_dk.dk_label.d_secsize = DEV_BSIZE;
 	wd->sc_dk.dk_label.d_ntracks = wd->sc_params.wdp_heads;
 	wd->sc_dk.dk_label.d_nsectors = wd->sc_params.wdp_sectors;
-	wd->sc_dk.dk_label.d_ncylinders =
-	    wd->sc_params.wdp_fixedcyl + wd->sc_params.wdp_removcyl /*+- 1*/;
+	wd->sc_dk.dk_label.d_ncylinders = wd->sc_params.wdp_cylinders;
 	wd->sc_dk.dk_label.d_secpercyl =
 	    wd->sc_dk.dk_label.d_ntracks * wd->sc_dk.dk_label.d_nsectors;
 
@@ -979,8 +978,8 @@ wdcontrol(wd)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
     
 	switch (wd->sc_state) {
-	case RECAL:			/* Set SDH, step rate, do restore. */
-		if (wdcommandshort(wdc, wd->sc_drive, WDCC_RESTORE) != 0) {
+	case RECAL:			/* Set SDH, step rate, do recal. */
+		if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0) {
 			wderror(wd, NULL, "wdcontrol: wdcommandshort failed");
 			wdcunwedge(wdc);
 			return 0;
@@ -1044,15 +1043,18 @@ wdcommand(wd, command, cylin, head, sector, count)
 	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
 
 	/* Wait for it to become ready to accept a command. */
-	if (command == WDCC_IDC)
+	if (command == WDCC_IDP)
 		stat = wait_for_unbusy(wdc);
 	else
-		stat = wdcwait(wdc, WDCS_READY);
+		stat = wdcwait(wdc, WDCS_DRDY);
 	if (stat < 0)
 		return -1;
     
 	/* Load parameters. */
-	outb(iobase+wd_precomp, wd->sc_dk.dk_label.d_precompcyl / 4);
+	if (wd->sc_dk.dk_label.d_type == DTYPE_ST506)
+		outb(iobase+wd_precomp, wd->sc_dk.dk_label.d_precompcyl / 4);
+	else
+		outb(iobase+wd_features, 0);
 	outb(iobase+wd_cyl_lo, cylin);
 	outb(iobase+wd_cyl_hi, cylin >> 8);
 	outb(iobase+wd_sector, sector);
@@ -1075,7 +1077,7 @@ wdcommandshort(wdc, drive, command)
 	/* Select drive. */
 	outb(iobase+wd_sdh, WDSD_IBM | (drive << 4));
 
-	if (wdcwait(wdc, WDCS_READY) < 0)
+	if (wdcwait(wdc, WDCS_DRDY) < 0)
 		return -1;
 
 	outb(iobase+wd_command, command);
@@ -1084,7 +1086,7 @@ wdcommandshort(wdc, drive, command)
 }
 
 /*
- * Issue IDC to drive to tell it just what geometry it is to be.
+ * Issue IDP to drive to tell it just what geometry it is to be.
  */
 static int
 wdsetctlr(wd)
@@ -1098,7 +1100,7 @@ wdsetctlr(wd)
 	    wd->sc_dk.dk_label.d_nsectors);
 #endif
     
-	if (wdcommand(wd, WDCC_IDC, wd->sc_dk.dk_label.d_ncylinders,
+	if (wdcommand(wd, WDCC_IDP, wd->sc_dk.dk_label.d_ncylinders,
 	    wd->sc_dk.dk_label.d_ntracks - 1, 0, wd->sc_dk.dk_label.d_nsectors)
 	    != 0) {
 		wderror(wd, NULL, "wdsetctlr: geometry upload failed");
@@ -1109,7 +1111,7 @@ wdsetctlr(wd)
 }
 
 /*
- * Issue READP to drive to ask it what it is.
+ * Issue IDENTIFY to drive to ask it what it is.
  */
 int
 wd_get_parms(wd)
@@ -1119,7 +1121,7 @@ wd_get_parms(wd)
 	int i;
 	char tb[DEV_BSIZE];
     
-	if (wdcommandshort(wdc, wd->sc_drive, WDCC_READP) != 0 ||
+	if (wdcommandshort(wdc, wd->sc_drive, WDCC_IDENTIFY) != 0 ||
 	    wait_for_drq(wdc) != 0) {
 		/*
 		 * We `know' there's a drive here; just assume it's old.
@@ -1130,10 +1132,12 @@ wd_get_parms(wd)
 
 		strncpy(wd->sc_params.wdp_model, "unknown",
 		    sizeof wd->sc_params.wdp_model);
-		wd->sc_params.wdp_fixedcyl = 1024;
-		wd->sc_params.wdp_removcyl = 0;
+		wd->sc_params.wdp_config = WD_CFG_FIXED;
+		wd->sc_params.wdp_cylinders = 1024;
 		wd->sc_params.wdp_heads = 8;
 		wd->sc_params.wdp_sectors = 17;
+		wd->sc_params.wdp_buftype = WD_BUF_SINGLEPORTSECTOR;
+		wd->sc_params.wdp_capabilities = 0;
 	} else {
 		/* Obtain parameters. */
 		insw(wdc->sc_iobase+wd_data, tb, sizeof(tb) / sizeof(short));
@@ -1153,8 +1157,8 @@ wd_get_parms(wd)
 
 #if 0
 	printf("gc %x cyl %d trk %d sec %d type %d sz %d model %s\n",
-	    wp->wdp_config, wp->wdp_fixedcyl + wp->wdp_removcyl, wp->wdp_heads,
-	    wp->wdp_sectors, wp->wdp_cntype, wp->wdp_cnsbsz, wp->wdp_model);
+	    wp->wdp_config, wp->wdp_cylinders, wp->wdp_heads, wp->wdp_sectors,
+	    wp->wdp_buftype, wp->wdp_bufsize, wp->wdp_model);
 #endif
     
 	/* XXX sometimes possibly needed */
@@ -1414,7 +1418,7 @@ wddump(dev)
 	wddoingadump = 1;
 
 	/* Recalibrate. */
-	if (wdcommandshort(wdc, wd->sc_drive, WDCC_RESTORE) != 0 ||
+	if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0 ||
 	    wait_for_ready(wdc) != 0 || wdsetctlr(wd) != 0 ||
 	    wait_for_ready(wdc) != 0) {
 		wderror(wd, NULL, "wddump: recal failed");
@@ -1600,7 +1604,7 @@ wdcwait(wdc, mask)
 
 	for (;;) {
 		wdc->sc_status = status = inb(iobase+wd_status);
-		if ((status & WDCS_BUSY) == 0 && (status & mask) == mask)
+		if ((status & WDCS_BSY) == 0 && (status & mask) == mask)
 			break;
 		if (++timeout > WDCNDELAY)
 			return -1;
