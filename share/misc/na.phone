@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.9 1997/04/17 07:02:33 mikel Exp $
+#	$NetBSD: na.phone,v 1.10 1997/10/15 00:34:46 fair Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
@@ -111,6 +111,7 @@
 406::Montana:MT
 407:Orlando:Florida:FL
 408:San Jose:California:CA
+408:Santa Cruz:California:CA
 408:Sunnyvale:California:CA
 409:Beaumont:Texas:TX
 409:Galveston:Texas:TX
@@ -126,6 +127,7 @@
 414:Milwaukee:Wisconsin:WI
 414:Racine:Wisconsin:WI
 415:San Francisco:California:CA
+415:San Rafael:California:CA
 416:Toronto:Ontario:ON
 417:Joplin:Missouri:MO
 417:Springfield:Missouri:MO
@@ -154,8 +156,8 @@
 508:Worcester:Massachusetts:MA
 509:Pullman:Washington:WA
 509:Walla Walla:Washington:WA
-510:Oakland:California:CA
 510:Berkeley:California:CA
+510:Oakland:California:CA
 512:Austin:Texas:TX
 512:Corpus Christi:Texas:TX
 513:Cincinnati:Ohio:OH
@@ -223,6 +225,9 @@
 619:San Diego:California:CA
 630:Aurora:Illinois:IL
 630:Chicago:Illinois:IL
+650:Mountain View:California:CA
+650:Palo Alto:California:CA
+650:Redwood City:California:CA
 664::Montserrat:
 701::North Dakota:ND
 702::Nevada:NV
