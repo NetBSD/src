@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.27 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: tip.c,v 1.28 2004/11/04 07:29:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.27 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: tip.c,v 1.28 2004/11/04 07:29:09 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -417,7 +417,7 @@ tipin()
 			gch = getchar()&STRIP_PAR;
 		bol = any(gch, value(EOL));
 		if (boolean(value(RAISE)) && islower((unsigned char)gch))
-			gch = toupper(gch);
+			gch = toupper((unsigned char)gch);
 		xpwrite(FD, &gch, 1);
 		if (boolean(value(HALFDUPLEX)))
 			printf("%c", gch);
