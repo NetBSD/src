@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 2001/06/23 08:08:04 itojun Exp $	*/
 /*	$OpenBSD: misc.c,v 1.8 2001/05/11 14:59:56 markus Exp $	*/
 
 /*
@@ -132,6 +132,8 @@ pwcopy(struct passwd *pw)
 	copy->pw_gecos = xstrdup(pw->pw_gecos);
 	copy->pw_uid = pw->pw_uid;
 	copy->pw_gid = pw->pw_gid;
+	copy->pw_expire = pw->pw_expire;
+	copy->pw_change = pw->pw_change;
 	copy->pw_class = xstrdup(pw->pw_class);
 	copy->pw_dir = xstrdup(pw->pw_dir);
 	copy->pw_shell = xstrdup(pw->pw_shell);
