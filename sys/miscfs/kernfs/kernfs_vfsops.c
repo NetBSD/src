@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.30 1997/09/10 13:44:20 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.31 1998/02/18 07:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -332,6 +332,13 @@ kernfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
+
+struct vnodeopv_desc *kernfs_vnodeopv_descs[] = {
+	&kernfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops kernfs_vfsops = {
 	MOUNT_KERNFS,
 	kernfs_mount,
@@ -345,4 +352,6 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	NULL,				/* vfs_mountroot */
+	kernfs_vnodeopv_descs,
 };

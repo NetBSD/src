@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.67 1998/01/30 22:44:15 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.68 1998/02/18 07:05:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -80,6 +80,22 @@ static int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 /*
  * nfs vfs operations.
  */
+
+extern struct vnodeopv_desc nfsv2_vnodeop_opv_desc;
+extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
+#ifdef FIFO
+extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
+#endif
+
+struct vnodeopv_desc *nfs_vnodeopv_descs[] = {
+	&nfsv2_vnodeop_opv_desc,
+	&spec_nfsv2nodeop_opv_desc,
+#ifdef FIFO
+	&fifo_nfsv2nodeop_opv_desc,
+#endif
+	NULL,
+};
+
 struct vfsops nfs_vfsops = {
 	MOUNT_NFS,
 	nfs_mount,
@@ -94,6 +110,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vptofh,
 	nfs_vfs_init,
 	nfs_mountroot,
+	nfs_vnodeopv_descs,
 #ifdef notyet
 	nfs_sysctl
 #endif

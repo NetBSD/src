@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.51 1997/11/17 15:36:58 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.52 1998/02/18 07:05:49 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -92,6 +92,13 @@ static int update_mp __P((struct mount *, struct msdosfs_args *));
 
 #define ROOTNAME "root_device"
 
+extern struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
+
+struct vnodeopv_desc *msdosfs_vnodeopv_descs[] = {
+	&msdosfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops msdosfs_vfsops = {
 	MOUNT_MSDOS,
 	msdosfs_mount,
@@ -105,7 +112,8 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_fhtovp,
 	msdosfs_vptofh,
 	msdosfs_init,
-	msdosfs_mountroot
+	msdosfs_mountroot,
+	msdosfs_vnodeopv_descs,
 };
 
 static int
