@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.9 1996/05/05 06:16:37 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.10 1996/05/19 22:27:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,22 +43,43 @@
  */
 
 #define CARD_NAME_LEN	64
-/* per display info */
-struct grf_softc {
+
+/*
+ * State info, per hardware instance.
+ */
+struct grfbus_softc {
 	struct	device	sc_dev;
 	nubus_slot	sc_slot;
 
-	char		card_name[CARD_NAME_LEN];
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
-	u_int32_t	g_flags;	/* software flags		*/
-	u_int32_t	g_type;		/* index into grfdev		*/
 	u_int16_t	card_id;	/* DrHW value for nubus cards	*/
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
-	int		(*g_mode) __P((struct grf_softc *, int, void *));
+};
+
+/*
+ * State info, per grf instance.
+ */
+struct grf_softc {
+	struct	device sc_dev;		/* device glue */
+
+	int	sc_flags;		/* software flags */
+	struct	grfmode *sc_grfmode;	/* forwarded ... */
+	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
-	caddr_t		(*g_phys) __P((struct grf_softc *, vm_offset_t));
+	int	(*sc_mode) __P((struct grf_softc *, int, void *));
 					/* map virtual addr to physical addr */
-	caddr_t		g_data;		/* device dependent data	*/
+	caddr_t	(*sc_phys) __P((struct grf_softc *, vm_offset_t));
+};
+
+/*
+ * Attach grf and ite semantics to Mac video hardware.
+ */
+struct grfbus_attach_args {
+	char	*ga_name;		/* name of semantics to attach */
+	struct	grfmode *ga_grfmode;	/* forwarded ... */
+	nubus_slot	*ga_slot;
+	int	(*ga_mode) __P((struct grf_softc *, int, void *));
+	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
 };
 
 typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vm_offset_t addr));
@@ -121,3 +142,8 @@ int	grfoff __P((dev_t dev));
 int	grfaddr __P((struct grf_softc *gp, register int off));
 int	grfmap __P((dev_t dev, caddr_t *addrp, struct proc *p));
 int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
+
+void	grf_establish __P((struct grfbus_softc *,
+	    int (*)(struct grf_softc *, int, void *),
+	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
+int	grfbusprint __P((void *, char *));

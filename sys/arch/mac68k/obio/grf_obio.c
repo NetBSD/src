@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.11 1996/05/05 06:16:32 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.12 1996/05/19 22:27:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,8 +60,12 @@ static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 static int	grfiv_match __P((struct device *, void *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
-struct cfattach grf_iv_ca = {
-	sizeof(struct grf_softc), grfiv_match, grfiv_attach
+struct cfdriver intvid_cd = {
+	NULL, "intvid", DV_DULL
+};
+
+struct cfattach intvid_ca = {
+	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
 };
 
 static int
@@ -83,16 +87,14 @@ grfiv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct grf_softc	*sc;
+	struct grfbus_softc	*sc;
 	struct grfmode		*gm;
 
-	sc = (struct grf_softc *) self;
+	sc = (struct grfbus_softc *) self;
 
 	sc->card_id = 0;
 
-	strcpy(sc->card_name, "Internal video");
-	sc->g_mode = grfiv_mode;
-	sc->g_phys = grfiv_phys;
+	printf(": Internal Video\n");
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
@@ -107,16 +109,8 @@ grfiv_attach(parent, self, aux)
 	gm->fbbase = (caddr_t) mac68k_vidlog;
 	gm->fboff = 0;
 
-	sc->g_flags = GF_ALIVE;
-
-	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
-
-	if (sc->curr_mode.psize == 1)
-		printf("monochrome");
-	else
-		printf("%d color", 1 << sc->curr_mode.psize);
-
-	printf(" %s display\n", sc->card_name);
+	/* Perform common video attachment. */
+	grf_establish(sc, grfiv_mode, grfiv_phys);
 }
 
 static int

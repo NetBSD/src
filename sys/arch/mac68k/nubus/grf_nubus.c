@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.10 1996/05/06 03:27:20 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.11 1996/05/19 22:27:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,8 +60,12 @@ static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 static int	grfmv_match __P((struct device *, void *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
-struct cfattach grf_mv_ca = {
-	sizeof(struct grf_softc), grfmv_match, grfmv_attach
+struct cfdriver macvid_cd = {
+	NULL, "macvid", DV_DULL
+};
+
+struct cfattach macvid_ca = {
+	sizeof(struct grfbus_softc), grfmv_match, grfmv_attach
 };
 
 static void
@@ -95,9 +99,9 @@ grfmv_intr(vsc, slot)
 	int	slot;
 {
 	caddr_t			 slotbase;
-	struct grf_softc	*sc;
+	struct grfbus_softc	*sc;
 
-	sc = (struct grf_softc *) vsc;
+	sc = (struct grfbus_softc *) vsc;
 	slotbase = (caddr_t) sc->sc_slot.virtual_base;
 	slotbase[0xa0000] = zero;
 }
@@ -116,18 +120,18 @@ extern	u_short	mac68k_vrsrc_vec[];
 }
 
 static int
-grfmv_match(pdp, match, aux)
-	struct device *pdp;
-	void *match, *aux;
+grfmv_match(parent, self, aux)
+	struct device *parent;
+	void *self, *aux;
 {
-	struct grf_softc	*sc;
+	struct grfbus_softc	*sc;
 	nubus_slot	*slot = (nubus_slot *) aux;
 	nubus_dir	dir, *dirp, *dirp2;
 	nubus_dirent	dirent, *direntp;
 	nubus_type	slottype;
 	int		vrsrc;
 
-	sc = (struct grf_softc *) match;
+	sc = (struct grfbus_softc *) self;	/* XXX: indirect brokenness */
 	dirp = &dir;
 	direntp = &dirent;
 	nubus_get_main_dir(slot, dirp);
@@ -181,21 +185,21 @@ grfmv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct grf_softc	*sc;
+	struct grfbus_softc	*sc;
 	struct image_data image_store, image;
+	struct		grfmode *gm;
+	char		cardname[CARD_NAME_LEN];
 	nubus_dirent	dirent;
 	nubus_dir	mode_dir;
 	int		mode;
-	u_long		base;
 
-	sc = (struct grf_softc *) self;
-
-	sc->g_mode = grfmv_mode;
-	sc->g_phys = grfmv_phys;
+	sc = (struct grfbus_softc *) self;
+	gm = &sc->curr_mode;
 
 	mode = NUBUS_RSRC_FIRSTMODE;
 	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
-		printf("grf probe failed to get board rsrc.\n");
+		printf("\n%s: probe failed to get board rsrc.\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -203,49 +207,42 @@ grfmv_attach(parent, self, aux)
 
 	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
 	    <= 0) {
-		printf("grf probe failed to get mode dir.\n");
+		printf("\n%s: probe failed to get mode dir.\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t) &image_store,
 				sizeof(struct image_data)) <= 0) {
-		printf("grf probe failed to get indirect mode data.\n");
+		printf("\n%s: probe failed to get indirect mode data.\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	load_image_data((caddr_t) &image_store, &image);
 
-	base = sc->sc_slot.virtual_base;
+	gm->mode_id = mode;
+	gm->fbbase = (caddr_t) (sc->sc_slot.virtual_base + image.offset);
+	gm->fboff = image.offset;
+	gm->rowbytes = image.rowbytes;
+	gm->width = image.right - image.left;
+	gm->height = image.bottom - image.top;
+	gm->fbsize = sc->curr_mode.height * sc->curr_mode.rowbytes;
+	gm->hres = image.hRes;
+	gm->vres = image.vRes;
+	gm->ptype = image.pixelType;
+	gm->psize = image.pixelSize;
 
-	sc->curr_mode.mode_id = mode;
-	sc->curr_mode.fbbase = (caddr_t) (base + image.offset);
-	sc->curr_mode.fboff = image.offset;
-	sc->curr_mode.rowbytes = image.rowbytes;
-	sc->curr_mode.width = image.right - image.left;
-	sc->curr_mode.height = image.bottom - image.top;
-	sc->curr_mode.fbsize = sc->curr_mode.height * sc->curr_mode.rowbytes;
-	sc->curr_mode.hres = image.hRes;
-	sc->curr_mode.vres = image.vRes;
-	sc->curr_mode.ptype = image.pixelType;
-	sc->curr_mode.psize = image.pixelSize;
-
-	strncpy(sc->card_name, nubus_get_card_name(&sc->sc_slot),
+	strncpy(cardname, nubus_get_card_name(&sc->sc_slot),
 		CARD_NAME_LEN);
+	cardname[CARD_NAME_LEN-1] = '\0';
 
-	sc->card_name[CARD_NAME_LEN-1] = '\0';
+	printf(": %s\n", cardname);
 
 	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
 
-	sc->g_flags = GF_ALIVE;
-
-	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
-
-	if (sc->curr_mode.psize == 1)
-		printf("monochrome");
-	else
-		printf("%d color", 1 << sc->curr_mode.psize);
-
-	printf(" %s display\n", sc->card_name);
+	/* Perform common video attachment. */
+	grf_establish(sc, grfmv_mode, grfmv_phys);
 }
 
 static int
@@ -273,6 +270,6 @@ grfmv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;
 {
-	return (caddr_t) (NUBUS_SLOT_TO_PADDR(gp->sc_slot.slot) +
-				(addr - gp->sc_slot.virtual_base));
+	return (caddr_t) (NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot) +
+				(addr - gp->sc_slot->virtual_base));
 }
