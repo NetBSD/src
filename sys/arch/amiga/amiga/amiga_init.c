@@ -63,12 +63,12 @@ u_int Z2MEMSIZE;			/* XXX */
 caddr_t	INTREQRaddr, INTREQWaddr;
 /* pre-initialize these variables, so we can access the hardware while
    running un-mapped. */
-caddr_t	CIAAbase = 0xbfe001, CIABbase = 0xbfd000;
+caddr_t	CIAAbase = (caddr_t)0xbfe001, CIABbase = (caddr_t)0xbfd000;
 volatile struct Custom *CUSTOMbase = (volatile struct Custom *) 0xdff000;
 
 struct Mem_List *mem_list;
 
-void *chipmem_start = 0x400, *chipmem_end;
+void *chipmem_start = (void *)0x400, *chipmem_end;
 
 void *z2mem_start, *z2mem_end;		/* XXX */
 int use_z2_mem = 0;			/* XXX */
@@ -161,7 +161,7 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
 
   machineid = id;
 
-  chipmem_end = chipram_size;
+  chipmem_end = (void *)chipram_size;
 
   /* the kernel ends at end(), plus the ConfigDev structures we placed 
      there in the loader. Correct for this now. */
@@ -181,7 +181,7 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
         continue;
       if (mem_list->mem_seg[i].mem_start == fastram_start)
         continue;
-      z2mem_start = mem_list->mem_seg[i].mem_start;
+      z2mem_start = (void *)mem_list->mem_seg[i].mem_start;
       Z2MEMSIZE = mem_list->mem_seg[i].mem_size;
       z2mem_end = z2mem_start + mem_list->mem_seg[i].mem_size;
       break;
@@ -280,7 +280,7 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
          sg_proto += AMIGA_040PTSIZE, pg_proto += AMIGA_PAGE_SIZE)
       {
         *sg++ = sg_proto;
-        if (pg_proto < (u_int *) pstart)
+        if (pg_proto < pstart)
           *pg++ = pg_proto;
         else if (pg < (u_int *) (Sysptmap_pa + AMIGA_PAGE_SIZE))
           *pg++ = PG_NV;
@@ -299,7 +299,7 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
     pg_proto = pagetable_pa | PG_RW | PG_CI | PG_V;
     /* map so many segs */
     for (sg = (u_int *) Sysseg_pa, pg = (u_int *) Sysptmap_pa; 
-         sg_proto < (u_int *) pstart;
+         sg_proto < pstart;
          sg_proto += AMIGA_PAGE_SIZE, pg_proto += AMIGA_PAGE_SIZE)
       {
         *sg++ = sg_proto;
@@ -399,7 +399,7 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
     }
   if (z2mem_end) {				/* XXX */
     pg_proto = (u_int) z2mem_start | PG_RW | PG_V;	/* XXX */
-    while (pg_proto < z2mem_end)		/* XXX */
+    while (pg_proto < (u_int) z2mem_end)		/* XXX */
       {						/* XXX */
         *pg++ = pg_proto;			/* XXX */
         pg_proto += AMIGA_PAGE_SIZE;		/* XXX */
@@ -490,12 +490,12 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   }						/* XXX */
   else						/* XXX */
     CIAADDR     = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
-  ZORRO2ADDR  = CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
+  ZORRO2ADDR  = (caddr_t) CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
   CIAADDR    += AMIGA_PAGE_SIZE/2; /* not on 8k boundery :-( */
 
   /* just setup the custom chips address, other addresses (like SCSI on
      A3000, clock, etc.) moved to device drivers where they belong */
-  CUSTOMADDR  = ZORRO2ADDR - ZORRO2BASE + CUSTOMBASE;
+  CUSTOMADDR  = (u_int) ZORRO2ADDR - ZORRO2BASE + CUSTOMBASE;
 
 #if 0
   CUSTOMADDR  = CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
@@ -537,8 +537,8 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   }
 
   /* to make life easier in locore.s, set these addresses explicitly */
-  CIAAbase = CIAADDR + 0x1001;	/* CIA-A is at odd addresses ! */
-  CIABbase = CIAADDR;
+  CIAAbase = (caddr_t) CIAADDR + 0x1001;	/* CIA-A is at odd addresses ! */
+  CIABbase = (caddr_t) CIAADDR;
   CUSTOMbase = (volatile struct Custom *) CUSTOMADDR;
   INTREQRaddr = (caddr_t) & custom.intreqr;
   INTREQWaddr = (caddr_t) & custom.intreq;

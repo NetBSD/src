@@ -571,7 +571,7 @@ find_devs()
          Add the IDE controller when that information becomes available.
 	 */
   
-      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_pa	      	  = (caddr_t) 0xdc0000;
       hw->hw_size	  = NBPG;
       hw->hw_kva	  = zorro2map (0xdc0000);
       hw->hw_manufacturer = MANUF_BUILTIN;
@@ -589,7 +589,7 @@ find_devs()
 	 boot again... */
       *magic_reset_reg   |= 0x80;
 
-      hw->hw_pa		  = 0xdd0000;
+      hw->hw_pa		  = (caddr_t) 0xdd0000;
       hw->hw_size	  = NBPG;
       hw->hw_kva	  = zorro2map (0xdd0000);
       hw->hw_manufacturer = MANUF_BUILTIN;
@@ -598,7 +598,7 @@ find_devs()
       hw->hw_serno	  = 0;
       hw++;
   
-      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_pa	      	  = (caddr_t) 0xdc0000;
       hw->hw_size	  = NBPG;
       hw->hw_kva	  = zorro2map (0xdc0000);
       hw->hw_manufacturer = MANUF_BUILTIN;
@@ -610,7 +610,7 @@ find_devs()
   else
     {
       /* what about other Amigas? Oh well.. */
-      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_pa	      	  = (caddr_t) 0xdc0000;
       hw->hw_size	  = NBPG;
       hw->hw_kva	  = zorro2map (0xdc0000);
       hw->hw_manufacturer = MANUF_BUILTIN;
@@ -622,7 +622,7 @@ find_devs()
 
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t) CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_FLOPPY;
   hw->hw_type	      = B_BUILTIN | C_FLOPPY;
@@ -631,7 +631,7 @@ find_devs()
   
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t) CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_KEYBOARD;
   hw->hw_type	      = B_BUILTIN | D_KEYBOARD;
@@ -640,7 +640,7 @@ find_devs()
   
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t) CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_PPORT;
   hw->hw_type	      = B_BUILTIN | D_PPORT;
@@ -649,7 +649,7 @@ find_devs()
   
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t) CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_DISPLAY;
   hw->hw_type	      = B_BUILTIN | D_BITMAP;
@@ -658,7 +658,7 @@ find_devs()
 
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_kva	      = (caddr_t) CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_RS232;
   hw->hw_type	      = B_BUILTIN | D_COMMSER;
