@@ -1,35 +1,21 @@
-#	$NetBSD: Makefile.inc,v 1.6 1999/02/06 05:27:42 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1999/02/09 19:21:53 tv Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
 
-TOP=	${.CURDIR}/../../..
-dist=	${TOP}/dist
-srcdir=	${dist}/binutils
-BFDOBJ!=cd ${TOP}/lib/bfd; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common \
+		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include \
+		-DHAVE_CONFIG_H
+DPADD+=		${LIBCOMMONDIR}/libcommon.a ${BFDOBJ}/libbfd_pic.a
+LDADD+=		-L${LIBCOMMONDIR} -lcommon -L${BFDOBJ} -lbfd
 
-.PATH:	${srcdir}
+DIST=		${.CURDIR}/../../../dist
+.if !make(print-objdir)
+BFDOBJ!=	cd ${.CURDIR}/../../../lib/libbfd && ${MAKE} print-objdir
+LIBCOMMONDIR!=	cd ${.CURDIR}/../common && ${MAKE} print-objdir
+.endif
 
-.include <bsd.own.mk>
-TARGET=${MACHINE_GNU_ARCH}--netbsd
-
-INCLS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common
-
-INCLS+=	-I${BFDOBJ}
-INCLS+=	-I${dist}/bfd
-INCLS+=	-I${dist}/binutils
-INCLS+=	-I${dist}/include
-
-CPPFLAGS+=${INCLS} -DHAVE_CONFIG_H
-
-LIBCOMMONDIR != cd ${.CURDIR}/../common; \
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-LIBCOMMON= ${LIBCOMMONDIR}/libcommon.a
-COMMONLIB= -L${LIBCOMMONDIR} -lcommon
-
-DPADD=	${LIBCOMMON} ${BFDOBJ}/libbfd.a
-LDADD=	${COMMONLIB} -L${BFDOBJ} -lbfd
+.PATH: ${DIST}/binutils
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
