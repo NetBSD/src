@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/05/04 02:44:22 simonb Exp $
+#	$NetBSD: Makefile,v 1.10 1999/05/06 20:50:13 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -15,7 +15,7 @@ KERN=		${.CURDIR}/../../../sys/arch/pmax/compile/RAMDISK/netbsd
 RAMDISK!=	cd ${.CURDIR}/../ramdisk; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 		${MAKE} -s -f-
-CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}
+CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
 
 VND_DEV=	/dev/${VND}
 VND_RDEV=	/dev/r${VND}
