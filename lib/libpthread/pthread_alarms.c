@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.1 2002/01/28 18:42:16 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.2 2002/01/30 22:18:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ pthread__alarm_process(pthread_t self, void *arg)
 
 	gettimeofday(&tv, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
-	
+
+	PTQ_INIT(&runq);
 	pthread_spinlock(self, &pthread_alarmqlock);
 	
 	iterator = PTQ_FIRST(&pthread_alarmqueue);
