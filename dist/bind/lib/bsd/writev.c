@@ -1,7 +1,7 @@
-/*	$NetBSD: writev.c,v 1.1.1.1.4.2 2002/07/01 17:15:58 he Exp $	*/
+/*	$NetBSD: writev.c,v 1.1.1.1.4.3 2003/11/27 17:54:38 cyber Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: writev.c,v 8.5 1999/10/13 16:39:21 vixie Exp";
+static const char rcsid[] = "Id: writev.c,v 8.5.18.1 2003/06/02 06:08:28 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -33,6 +33,7 @@ __writev(int fd, struct iovec *iov, int iovlen)
 	if (statbuf.st_mode & S_IFSOCK) {
 		struct msghdr   mesg;		
 
+		memset(&mesg, 0, sizeof(mesg));
 		mesg.msg_name = 0;
 		mesg.msg_namelen = 0;
 		mesg.msg_iov = iov;
