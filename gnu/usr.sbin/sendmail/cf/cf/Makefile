@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/08/26 04:24:58 hubertf Exp $
+#	$NetBSD: Makefile,v 1.13 2000/09/23 13:53:43 simonb Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -52,9 +52,9 @@ clean cleandir distclean:
 realdepend:
 
 distribution: netbsd-proto.cf
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
 	    netbsd-proto.cf ${DESTDIR}/etc/mail/sendmail.cf
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
 	    netbsd-proto-IPv4only.cf ${DESTDIR}/etc/mail/sendmail-IPv4only.cf
 
 # this is overkill, but....

@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.16 1999/08/21 06:27:29 simonb Exp $
+#	$NetBSD: Makefile,v 1.17 2000/09/23 13:53:43 simonb Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -54,6 +54,6 @@ ${DESTDIR}${MELIB}/revisions: .MADE
 .endif
 
 ${DESTDIR}${MELIB}/revisions: revisions
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	${INSTALL} ${INSTPRIV} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.ALLSRC} ${.TARGET}
 

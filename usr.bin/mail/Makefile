@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/07/05 03:30:07 enami Exp $
+#	$NetBSD: Makefile,v 1.17 2000/09/23 13:53:42 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR+= USD.doc
 .endif
 
 distribution:
-	cd ${.CURDIR}/misc; ${INSTALL} ${INSTPRIV} -c -o root -g wheel \
+	cd ${.CURDIR}/misc; ${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel \
 	    -m 644 ${EFILES} ${DESTDIR}/etc
 
 .include <bsd.prog.mk>
