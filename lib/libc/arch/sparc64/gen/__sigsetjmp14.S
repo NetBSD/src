@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.4 2000/08/28 00:45:59 eeh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.5 2002/05/07 01:34:21 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -33,45 +33,76 @@
 #include "SYS.h"
 
 #ifdef PIC
+#ifdef BIGPIC
+	
+ENTRY(__sigsetjmp14)
+	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
+	st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
+	sethi	%hi(_C_LABEL(__setjmp14)), %o2
+	sethi	%hi(_C_LABEL(_setjmp)), %o3
+	or	%o2, %lo(_C_LABEL(__setjmp14)), %o2
+	or	%o3, %lo(_C_LABEL(_setjmp)), %o3
+	brnz	%o1, 1f	
+	 ldx	[%g1+%o3], %o3		! if (%o1 != 0) goto _setjmp;
+	ldx	[%g1+%o2], %o3		! else goto __setjmp;
+1:
+	jmp	%o3
+	 nop
+	
+ENTRY(__siglongjmp14)
+	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
+	ld	[%o0+0x48], %o2		! jmpbuf[JBLEN]
+	sethi	%hi(_C_LABEL(__longjmp14)), %o3 
+	sethi	%hi(_C_LABEL(_longjmp)), %o4
+	or	%o3, %lo(_C_LABEL(__longjmp14)), %o3
+	or	%o4, %lo(_C_LABEL(_longjmp)), %o4
+	brnz,a	%o2, 1f	
+	 ldx	[%g1+%o4], %o4		! if (%o2 != 0) goto _longjmp;
+	ldx	[%g1+%o3], %o4		! else goto __longjmp;
+1:
+	jmp	%o4	
+	 nop
+	unimp 0
+#else
 
 ENTRY(__sigsetjmp14)
-	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
-	cmp %o1,0
-	st %o1,[%o0+0x48]		! jmpbuf[JBLEN]
-	bne,a 1f
-	 ldx [%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto _setjmp;
-	ldx [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
+	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
+	cmp	%o1,0
+	st	%o1,[%o0+0x48]			! jmpbuf[JBLEN]
+	bne,a	1f
+	 ldx	[%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto _setjmp;
+	ldx	[%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
 1:
 	jmp %g1
 	 nop
 
 ENTRY(__siglongjmp14)
-	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
-	ld [%o0+0x48],%o2		! jmpbuf[JBLEN]
-	cmp %o2,0
-	bne,a 1f
-	 ldx [%g1+_C_LABEL(__longjmp14)], %g1	 ! if (%g2 != 0) goto _longjmp;
-	ldx [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
+	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
+	ld	[%o0+0x48],%o2			! jmpbuf[JBLEN]
+	cmp	%o2,0
+	bne,a	1f
+	 ldx	[%g1+_C_LABEL(__longjmp14)], %g1 ! if (%g1 != 0) goto _longjmp;
+	ldx	[%g1+_C_LABEL(_longjmp)], %g1	! else goto __longjmp;
 1:
 	jmp %g1
 	 nop
 	unimp 0
-
+#endif /* BIGPIC */
 #else /* PIC */
 
 ENTRY(__sigsetjmp14)
-	cmp %o1,0
-	be _C_LABEL(_setjmp)
-	 st %o1,[%o0+0x48]		! jmpbuf[JBLEN]
-	ba,a _C_LABEL(__setjmp14)
+	cmp	%o1,0
+	be	_C_LABEL(_setjmp)
+	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
+	ba,a	_C_LABEL(__setjmp14)
 	unimp 0
 
 ENTRY(__siglongjmp14)
-	ld [%o0+0x48],%g1
-	cmp %g1,0
-	be _C_LABEL(_longjmp)
+	ld	[%o0+0x48],%g1
+	cmp	%g1,0
+	be	_C_LABEL(_longjmp)
 	 nop
-	ba,a _C_LABEL(__longjmp14)
+	ba,a	_C_LABEL(__longjmp14)
 	unimp 0
 
 #endif /* PIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/23 07:35:44 thorpej Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2002/05/07 01:34:22 eeh Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ ENTRY(__clone)
 	call	%l0 		! Call the clone's entry point.
 	 nop
 
-	CALL(_C_LABEL(_exit))
+	JUMP(_exit)
 	/* NOTREACHED */
 
 2:	ret

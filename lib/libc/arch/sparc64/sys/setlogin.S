@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.3 2000/07/21 03:14:15 eeh Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.4 2002/05/07 01:34:22 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)setlogin.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setlogin.S,v 1.3 2000/07/21 03:14:15 eeh Exp $")
+	RCSID("$NetBSD: setlogin.S,v 1.4 2002/05/07 01:34:22 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -54,11 +54,18 @@
 
 SYSCALL(setlogin)
 #ifdef PIC
+#ifdef BIGPIC
 	PIC_PROLOGUE(%o1,%o2)
 	set	_C_LABEL(__logname_valid), %o2
 	ldx	[%o1 + %o2], %o1
 	retl
 	 st	%g0, [%o1]
+#else
+	PIC_PROLOGUE(%o1,%o2)
+	ldx	[%o1 + _C_LABEL(__logname_valid)], %o1
+	retl
+	 st	%g0, [%o1]
+#endif
 #else
 	/* Dunno what model we're using so we need to use full addresses */
 	sethi	%hh(_C_LABEL(__logname_valid)), %o1
