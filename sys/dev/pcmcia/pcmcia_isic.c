@@ -33,7 +33,7 @@
  *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.2 2001/01/18 22:14:02 martin Exp $ 
+ *	$Id: pcmcia_isic.c,v 1.3 2001/01/19 20:04:07 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -118,6 +118,10 @@ static const struct isic_pcmcia_card_entry card_list[] = {
 	CARD_TYPEP_ELSAMLIMC, isic_attach_elsaisdnmc },
     {	PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
     	{ "ELSA AG, Aachen", "MicroLink ISDN/MC ", NULL, NULL },
+        "ELSA MicroLink ISDN/MC", PCMCIA_FUNCTION_NETWORK,
+	CARD_TYPEP_ELSAMLIMC, isic_attach_elsaisdnmc },
+    {	PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+    	{ "ELSA AG (Aachen, Germany)", "MicroLink ISDN/MC ", NULL, NULL },
         "ELSA MicroLink ISDN/MC", PCMCIA_FUNCTION_NETWORK,
 	CARD_TYPEP_ELSAMLIMC, isic_attach_elsaisdnmc },
 #endif
