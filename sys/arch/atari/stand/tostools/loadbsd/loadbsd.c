@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.6 1995/05/05 16:39:14 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.7 1995/05/28 10:56:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$Revision: 1.6 $";
+char version[] = "$Revision: 1.7 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -214,10 +214,19 @@ void get_sys_info()
 {
 	long	stck;
 	long	*jar;
+	OSH	*oshdr;
 
 	kparam.cputype = 0;
 
 	stck = Super(0);
+
+	/*
+	 * Some GEMDOS versions use a different year-base in the RTC.
+	 */
+	oshdr = *ADDR_OSHEAD;
+	oshdr = oshdr->os_beg;
+	if((oshdr->os_version >= 0x0300) && (oshdr->os_version < 0x0306))
+		kparam.cputype |= ATARI_CLKBROKEN;
 
 	if(kparam.stmem_size <= 0)
 		kparam.stmem_size  = *ADDR_PHYSTOP;
