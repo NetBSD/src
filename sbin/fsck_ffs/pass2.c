@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.31 2002/05/06 19:37:51 agc Exp $	*/
+/*	$NetBSD: pass2.c,v 1.32 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.31 2002/05/06 19:37:51 agc Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.32 2002/09/28 20:11:06 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,26 +154,26 @@ pass2()
 			continue;
 		if (inp->i_isize < MINDIRSIZE) {
 			direrror(inp->i_number, "DIRECTORY TOO SHORT");
-			inp->i_isize = roundup(MINDIRSIZE, DIRBLKSIZ);
+			inp->i_isize = roundup(MINDIRSIZE, dirblksiz);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
 				dp->di_size = iswap64(inp->i_isize);
 				inodirty();
 			} else
 				markclean = 0;
-		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
+		} else if ((inp->i_isize & (dirblksiz - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
 			if (usedsoftdep)
 				pfatal("%s %s: LENGTH %lld NOT MULTIPLE OF %d",
 					"DIRECTORY", pathbuf,
-					(long long)inp->i_isize, DIRBLKSIZ);
+					(long long)inp->i_isize, dirblksiz);
 			else
 				pwarn("%s %s: LENGTH %lld NOT MULTIPLE OF %d",
 					"DIRECTORY", pathbuf,
-					(long long)inp->i_isize, DIRBLKSIZ);
+					(long long)inp->i_isize, dirblksiz);
 			if (preen)
 				printf(" (ADJUSTED)\n");
-			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
+			inp->i_isize = roundup(inp->i_isize, dirblksiz);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
 				dp->di_size = iswap64(inp->i_isize);
