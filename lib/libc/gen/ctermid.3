@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctermid.3,v 1.6 1998/02/05 18:46:00 perry Exp $
+.\"	$NetBSD: ctermid.3,v 1.7 1998/04/28 19:02:14 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,10 +62,8 @@ The argument
 .Ar buf
 is assumed to point to an array at least
 .Dv L_ctermid
-(as defined in the include
-file
-.Aq .Pa stdio.h )
-bytes long.
+bytes long (as defined in the include file
+.Aq Pa stdio.h ) .
 .Pp
 The current implementation simply returns
 .Ql /dev/tty .
@@ -84,14 +82,13 @@ The current implementation detects no error conditions.
 .Xr ttyname 3
 .Sh STANDARDS
 The
-.Xr ctermid
+.Fn ctermid
 function conforms to
 .St -p1003.1-90 .
 .Sh BUGS
 By default the
 .Fn ctermid
-function
-writes all information to an internal static object.
+function writes all information to an internal static object.
 Subsequent calls to
 .Fn ctermid
 will modify the same object.
