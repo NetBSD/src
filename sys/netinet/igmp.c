@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.38 2004/04/26 01:31:56 matt Exp $	*/
+/*	$NetBSD: igmp.c,v 1.39 2004/11/13 19:17:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.38 2004/04/26 01:31:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.39 2004/11/13 19:17:50 christos Exp $");
 
 #include "opt_mrouting.h"
 
@@ -425,8 +425,10 @@ igmp_joingroup(inm)
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 	    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0) {
 		report_type = rti_fill(inm);
-		if (report_type == 0)
+		if (report_type == 0) {
+			splx(s);
 			return ENOMEM;
+		}
 		igmp_sendpkt(inm, report_type);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
