@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.8 2002/11/01 19:26:24 jdolecek Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.9 2002/11/12 19:01:18 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.8 2002/11/01 19:26:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.9 2002/11/12 19:01:18 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.8 2002/11/01 19:26:24 jdolecek Exp $
 #include <sys/malloc.h>
 
 #include <sys/syscall.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
@@ -103,7 +106,16 @@ exec_mach_copyargs(struct proc *p, struct exec_package *pack,
 {
 	size_t len;
 	size_t zero = 0;
+	int pagelen = PAGE_SIZE;
 	int error;
+
+	*stackp -= 16;
+
+	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
+		DPRINTF(("mach: copyout pagelen failed\n"));
+		return error;
+	}
+	*stackp += sizeof(pagelen);
 
 	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
