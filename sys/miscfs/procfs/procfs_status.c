@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_status.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_status.c,v 1.2 1994/01/09 19:44:06 ws Exp $
+ *	$Id: procfs_status.c,v 1.3 1994/01/10 20:47:39 ws Exp $
  */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ pfs_dostatus(curp, p, pfs, uio)
 	xlen = ps - psbuf;
 	xlen -= uio->uio_offset;
 	ps = psbuf + uio->uio_offset;
-	xlen = min(xlen, uio->uio_resid);
+	xlen = imin(xlen, uio->uio_resid);
 	if (xlen <= 0)
 		error = 0;
 	else
