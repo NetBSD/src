@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.8 2000/05/03 17:09:14 itojun Exp $
+.\"	$NetBSD: postinstall,v 1.9 2000/05/05 19:05:30 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,7 +212,7 @@ symlink to the appropriate file under
 .Pa /usr/share/zoneinfo .
 .It
 Edit
-.Pa /etc/aliases
+.Pa /etc/mail/aliases
 to forward root mail to the right place (run
 .Xr newaliases 1
 afterwards.)
