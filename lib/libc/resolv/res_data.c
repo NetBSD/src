@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.2 2004/05/20 17:34:17 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.3 2004/05/20 19:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -275,7 +275,7 @@ res_querydomain(const char *name,
 int
 res_opt(int a, u_char *b, int c, int d)
 {
-	return res_nopt(_res, a, b, c, d);
+	return res_nopt(&_res, a, b, c, d);
 }
 
 const char *

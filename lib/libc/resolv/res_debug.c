@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.2 2004/05/20 17:39:55 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.3 2004/05/20 19:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -494,7 +494,7 @@ const struct res_sym __p_rcode_syms[] = {
 
 int
 sym_ston(const struct res_sym *syms, const char *name, int *success) {
-	for ((void)NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (strcasecmp (name, syms->name) == 0) {
 			if (success)
 				*success = 1;
@@ -697,7 +697,7 @@ static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 /* takes an XeY precision/size value, returns a string representation. */
 static const char *
 precsize_ntoa(prec)
-	u_int8_t prec;
+	u_int32_t prec;
 {
 	static char retbuf[sizeof "90000000.00"];	/* XXX nonreentrant */
 	unsigned long val;

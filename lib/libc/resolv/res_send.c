@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.2 2004/05/20 17:59:43 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.3 2004/05/20 19:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -155,7 +155,7 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		inp = (const struct sockaddr_in *)(void *)sa;
+		inp = (const struct sockaddr_in *)(const void *)sa;
 		for (ns = 0;  ns < statp->nscount;  ns++) {
 			srv = (struct sockaddr_in *)(void *)get_nsaddr(statp, (size_t)ns);
 			if (srv->sin_family == inp->sin_family &&
@@ -168,7 +168,7 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 	case AF_INET6:
 		if (EXT(statp).ext == NULL)
 			break;
-		in6p = (const struct sockaddr_in6 *)(void *)sa;
+		in6p = (const struct sockaddr_in6 *)(const void *)sa;
 		for (ns = 0;  ns < statp->nscount;  ns++) {
 			srv6 = (struct sockaddr_in6 *)(void *)get_nsaddr(statp, (size_t)ns);
 			if (srv6->sin6_family == in6p->sin6_family &&
@@ -572,8 +572,8 @@ send_vc(res_state statp,
 	const u_char *buf, int buflen, u_char *ans, int anssiz,
 	int *terrno, int ns)
 {
-	const HEADER *hp = (const HEADER *) buf;
-	HEADER *anhp = (HEADER *) ans;
+	const HEADER *hp = (const HEADER *)(const void *)buf;
+	HEADER *anhp = (HEADER *)(void *)ans;
 	struct sockaddr *nsap;
 	int nsaplen;
 	int truncating, connreset, resplen, n;
@@ -836,7 +836,7 @@ send_dg(res_state statp,
 	if (seconds <= 0)
 		seconds = 1;
 	now = evNowTime();
-	timeout = evConsTime((long)seconds, 0);
+	timeout = evConsTime((long)seconds, 0L);
 	finish = evAddTime(now, timeout);
 	goto nonow;
  wait:
@@ -847,7 +847,7 @@ send_dg(res_state statp,
 	if (evCmpTime(finish, now) > 0)
 		timeout = evSubTime(finish, now);
 	else
-		timeout = evConsTime(0L, 0);
+		timeout = evConsTime(0L, 0L);
 	n = pselect(s + 1, &dsmask, NULL, NULL, &timeout, NULL);
 	if (n == 0) {
 		Dprint(statp->options & RES_DEBUG, (stdout, ";; timeout\n"));
