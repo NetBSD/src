@@ -24,11 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: delay.s,v 1.1 1994/05/04 05:39:44 gwr Exp $
+ *	$Id: delay.s,v 1.2 1994/07/19 02:39:18 gwr Exp $
  */
 
 | These two routines depend on the variable "cpuspeed"
 | which should be set to the CPU clock rate in MHz.
+| XXX - Currently this is set in sun3_startup.c based on the
+| CPU model but this should be determined at run time...
 	.data
 	.even
 	.globl	_cpuspeed
@@ -57,6 +59,7 @@ Ldelay:
 | delay2us()
 | Delay for at least 2.2 uS. (for the ZS driver).
 | This actually takes about 2.4 uS.  Just right.
+| XXX - Need to make this work for any cpuspeed.
 	.even
 .globl _delay2us	
 _delay2us:
@@ -68,7 +71,6 @@ _delay2us:
 	jle	Lrts
 	subql	#5,d0	| d0=cpuspeed-25
 	jle	Lrts
-	|XXX - Do any Sun3 CPUs go faster than 25 MHz?
 	subql	#5,d0	| d0=cpuspeed-30
 	nop ; nop
 Lrts:	rts
