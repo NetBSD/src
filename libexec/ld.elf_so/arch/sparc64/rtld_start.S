@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2001/04/25 12:24:51 kleink Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2001/08/14 20:16:38 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -152,23 +152,6 @@ _rtld_bind_start_0:	# (obj, reloff)
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
 	 mov	%l5, %o1
 
-/* XXXXXXXXXX DEBUG */
-	mov	%o0, %l7
-	
-	mov	%i0, %o0
-	mov	%i1, %o1
-	mov	%i2, %o2
-	mov	%i3, %o3
-	mov	%i4, %o4
-	mov	%i5, %o5
-
-	jmpl	%l7, %o7
-	 nop
-	
-	ret
-	 restore	%o0, %g0, %o0
-/* XXXXXXXXXX END DEBUG */
-	
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
 #endif	
