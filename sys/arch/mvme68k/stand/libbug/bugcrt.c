@@ -1,4 +1,4 @@
-/*	$NetBSD: bugcrt.c,v 1.1 2000/07/24 18:39:41 jdolecek Exp $	*/
+/*	$NetBSD: bugcrt.c,v 1.2 2000/11/30 22:26:27 scw Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -8,9 +8,15 @@
 struct mvmeprom_args bugargs = { 1 };	/* not in BSS */
 
 	asm (".text");
+
 	asm (".long _start-0x10");
 	asm (".long _start");
+
+#ifndef __ELF__
 start()
+#else
+_start()
+#endif
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
 	register int ctrl_lun asm (MVMEPROM_REG_CTRLLUN);
@@ -42,7 +48,7 @@ start()
 	if ( bugargs.arg_end )
 		*bugargs.arg_end = 0;
 
-	bzero(&edata, (int)&end-(int)&edata);
+	memset(&edata, 0, (int)&end-(int)&edata);
 	id = mvmeprom_getbrdid();
 	bugargs.cputyp = id->model;
 	main();
