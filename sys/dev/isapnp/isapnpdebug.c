@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.3 1997/04/10 07:02:53 mikel Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.4 1997/08/03 08:12:23 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -221,8 +221,8 @@ isapnp_print_attach(pa)
 {
 	int i;
 
-	printf("Found %s %s %s ", pa->ipa_devident,
-	    pa->ipa_devlogic, pa->ipa_devclass);
+	printf("Found <%s, %s, %s, %s> ", pa->ipa_devident,
+	    pa->ipa_devlogic, pa->ipa_devcompat, pa->ipa_devclass);
 	isapnp_print_dep_start("", pa->ipa_pref);
 
 	for (i = 0; i < pa->ipa_nio; i++)

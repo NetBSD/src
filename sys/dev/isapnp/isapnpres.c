@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.6 1997/04/10 07:02:58 mikel Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.7 1997/08/03 08:12:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -123,6 +123,8 @@ isapnp_newconf(dev)
 	    sizeof(conf->ipa_devident));
 	memcpy(conf->ipa_devlogic, dev->ipa_devlogic,
 	    sizeof(conf->ipa_devlogic));
+	memcpy(conf->ipa_devcompat, dev->ipa_devcompat,
+	    sizeof(conf->ipa_devcompat));
 	memcpy(conf->ipa_devclass, dev->ipa_devclass,
 	    sizeof(conf->ipa_devclass));
 
@@ -244,6 +246,12 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 	case ISAPNP_TAG_COMPAT_DEV_ID:
 		(void) isapnp_id_to_vendor(str, buf);
 		DPRINTF(("Compatible device id %s\n", str));
+
+		if (*dev == NULL)
+			return -1;
+
+		if (*(*dev)->ipa_devcompat == '\0')
+			COPY((*dev)->ipa_devcompat, str);
 		return 0;
 
 	case ISAPNP_TAG_DEP_START:
