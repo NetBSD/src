@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.4.2.1 1997/10/23 19:58:29 mellon Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.4.2.2 1997/10/27 20:00:53 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -878,6 +878,7 @@ ext2fs_vget(mp, ino, vpp)
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
 		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
+		bzero(ip->i_e2fs_blocks, sizeof(ip->i_e2fs_blocks));
 	}
 
 	/*
