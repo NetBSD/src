@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.17 2003/12/29 05:36:19 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.18 2003/12/29 05:48:13 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.17 2003/12/29 05:36:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.18 2003/12/29 05:48:13 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -42,42 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.17 2003/12/29 05:36:19 oster Ex
  * Shared stuff
  */
 
-#if 0
-int 
-_rf_create_managed_lkmgr_mutex(listp, m, file, line)
-	RF_ShutdownList_t **listp;
-RF_DECLARE_LKMGR_MUTEX(*m)
-	char   *file;
-	int     line;
-{
-	int     rc, rc1;
-
-	rc = rf_lkmgr_mutex_init(m);
-	if (rc)
-		return (rc);
-	rc = _rf_ShutdownCreate(listp, mutex_destroyer, (void *) m, file, line);
-	if (rc) {
-		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
-		rc1 = rf_lkmgr_mutex_destroy(m);
-		if (rc1) {
-			RF_ERRORMSG1("RAIDFRAME: Error %d destroying mutex\n", rc1);
-		}
-	}
-	return (rc);
-}
-#endif
-int 
-_rf_create_managed_cond(listp, c, file, line)
-	RF_ShutdownList_t **listp;
-RF_DECLARE_COND(*c)
-	char   *file;
-	int     line;
-{
-
-	c = 0;
-	return (0);
-}
-
 int 
 _rf_init_managed_threadgroup(listp, g, file, line)
 	RF_ShutdownList_t **listp;
@@ -85,12 +49,9 @@ _rf_init_managed_threadgroup(listp, g, file, line)
 	char   *file;
 	int     line;
 {
-	int     rc;
 
 	rf_mutex_init(&g->mutex);
-	rc = _rf_create_managed_cond(listp, &g->cond, file, line);
-	if (rc)
-		return (rc);
+	g->cond = 0;
 	g->created = g->running = g->shutdown = 0;
 	return (0);
 }
