@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.46 2000/03/22 14:49:32 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.47 2000/03/22 14:56:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -595,13 +595,14 @@ createde(dep, ddep, depp, cnp)
 	struct denode **depp;
 	struct componentname *cnp;
 {
-	int error;
-	u_long dirclust, diroffset;
+	int error, rberror;
+	u_long dirclust, clusoffset, oldlen=0;
+	u_long fndoffset, havecnt=0, wcnt=1;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
 	daddr_t bn;
-	int blsize;
+	int blsize, i;
 
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
@@ -617,12 +618,13 @@ createde(dep, ddep, depp, cnp)
 	 * case.
 	 */
 	if (ddep->de_fndoffset >= ddep->de_FileSize) {
-		diroffset = ddep->de_fndoffset + sizeof(struct direntry)
+		u_long needlen = ddep->de_fndoffset + sizeof(struct direntry)
 		    - ddep->de_FileSize;
-		dirclust = de_clcount(pmp, diroffset);
+		dirclust = de_clcount(pmp, needlen);
+		oldlen = ddep->de_FileSize;
 		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
 			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED, NULL);
-			return error;
+			goto err_norollback;
 		}
 
 		/*
@@ -639,15 +641,15 @@ createde(dep, ddep, depp, cnp)
 	error = pcbmap(ddep, de_cluster(pmp, ddep->de_fndoffset),
 		       &bn, &dirclust, &blsize);
 	if (error)
-		return error;
-	diroffset = ddep->de_fndoffset;
+		goto err_norollback;
+	clusoffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
-		diroffset &= pmp->pm_crbomask;
+		clusoffset &= pmp->pm_crbomask;
 	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
-		return error;
+		goto err_norollback;
 	}
-	ndep = bptoep(pmp, bp, ddep->de_fndoffset);
+	ndep = bptoep(pmp, bp, clusoffset);
 
 	DE_EXTERNALIZE(ndep, dep);
 
@@ -658,44 +660,52 @@ createde(dep, ddep, depp, cnp)
 		u_int8_t chksum = winChksum(ndep->deName);
 		const u_char *un = (const u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
-		int cnt = 1;
+		u_long havecnt;
 
-		while (--ddep->de_fndcnt >= 0) {
-			if (!(ddep->de_fndoffset & pmp->pm_crbomask)) {
+		fndoffset = ddep->de_fndoffset;
+		havecnt = ddep->de_fndcnt + 1;
+
+		for(; wcnt < havecnt; wcnt++) {
+			if ((fndoffset & pmp->pm_crbomask) == 0) {
+				/* we should never get here if ddep is root
+				 * directory */
+
 				if ((error = bwrite(bp)) != 0)
-					return error;
+					goto rollback;
 
-				ddep->de_fndoffset -= sizeof(struct direntry);
+				fndoffset -= sizeof(struct direntry);
 				error = pcbmap(ddep,
-					       de_cluster(pmp,
-							  ddep->de_fndoffset),
+					       de_cluster(pmp, fndoffset),
 					       &bn, 0, &blsize);
 				if (error)
-					return error;
+					goto rollback;
 
 				error = bread(pmp->pm_devvp, bn, blsize,
 					      NOCRED, &bp);
 				if (error) {
 					brelse(bp);
-					return error;
+					goto rollback;
 				}
-				ndep = bptoep(pmp, bp, ddep->de_fndoffset);
+				ndep = bptoep(pmp, bp,
+						fndoffset & pmp->pm_crbomask);
 			} else {
 				ndep--;
-				ddep->de_fndoffset -= sizeof(struct direntry);
+				fndoffset -= sizeof(struct direntry);
 			}
-			if (!unix2winfn(un, unlen, (struct winentry *)ndep, cnt++, chksum))
+			if (!unix2winfn(un, unlen, (struct winentry *)ndep,
+						wcnt, chksum))
 				break;
 		}
 	}
 
 	if ((error = bwrite(bp)) != 0)
-		return error;
+		goto rollback;
 
 	/*
 	 * If they want us to return with the denode gotten.
 	 */
 	if (depp) {
+		u_long diroffset = clusoffset;
 		if (dep->de_Attributes & ATTR_DIRECTORY) {
 			dirclust = dep->de_StartCluster;
 			if (FAT32(pmp) && dirclust == pmp->pm_rootdirblk)
@@ -709,6 +719,62 @@ createde(dep, ddep, depp, cnp)
 	}
 
 	return 0;
+
+    rollback:
+	/*
+	 * Mark all slots modified so far as deleted. Note that we
+	 * can't just call removede(), since directory is not in
+	 * consistent state.
+	 */
+	fndoffset = ddep->de_fndoffset;
+	rberror = pcbmap(ddep, de_cluster(pmp, fndoffset),
+	       &bn, NULL, &blsize);
+	if (rberror)
+		goto err_norollback;
+	if ((rberror = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
+		brelse(bp);
+		goto err_norollback;
+	}
+	ndep = bptoep(pmp, bp, clusoffset);
+
+	havecnt = ddep->de_fndcnt + 1;
+	for(i=wcnt; i <= havecnt; i++) {
+		printf("rolling back %d\n", i);
+		/* mark entry as deleted */
+		ndep->deName[0] = SLOT_DELETED;
+
+		if ((fndoffset & pmp->pm_crbomask) == 0) {
+			/* we should never get here if ddep is root
+			 * directory */
+
+			if ((rberror = bwrite(bp)) != 0)
+				goto err_norollback;
+
+			fndoffset -= sizeof(struct direntry);
+			rberror = pcbmap(ddep,
+				       de_cluster(pmp, fndoffset),
+				       &bn, 0, &blsize);
+			if (rberror)
+				goto err_norollback;
+
+			rberror = bread(pmp->pm_devvp, bn, blsize,
+				      NOCRED, &bp);
+			if (rberror) {
+				brelse(bp);
+				goto err_norollback;
+			}
+			ndep = bptoep(pmp, bp, fndoffset);
+		} else {
+			ndep--;
+			fndoffset -= sizeof(struct direntry);
+		}
+	}
+
+	/* ignore any further error */
+	(void) bwrite(bp);
+
+    err_norollback:
+	return error;
 }
 
 /*
