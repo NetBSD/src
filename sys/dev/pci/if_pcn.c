@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.18 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.18 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -181,14 +181,14 @@ struct pcn_rxsoft {
 /*
  * Description of Rx FIFO watermarks for various revisions.
  */
-const char *pcn_79c970_rcvfw[] = {
+const char * const pcn_79c970_rcvfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"128 bytes",
 	NULL,
 };
 
-const char *pcn_79c971_rcvfw[] = {
+const char * const pcn_79c971_rcvfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"112 bytes",
@@ -198,21 +198,21 @@ const char *pcn_79c971_rcvfw[] = {
 /*
  * Description of Tx start points for various revisions.
  */
-const char *pcn_79c970_xmtsp[] = {
+const char * const pcn_79c970_xmtsp[] = {
 	"8 bytes",
 	"64 bytes",
 	"128 bytes",
 	"248 bytes",
 };
 
-const char *pcn_79c971_xmtsp[] = {
+const char * const pcn_79c971_xmtsp[] = {
 	"20 bytes",
 	"64 bytes",
 	"128 bytes",
 	"248 bytes",
 };
 
-const char *pcn_79c971_xmtsp_sram[] = {
+const char * const pcn_79c971_xmtsp_sram[] = {
 	"44 bytes",
 	"64 bytes",
 	"128 bytes",
@@ -222,14 +222,14 @@ const char *pcn_79c971_xmtsp_sram[] = {
 /*
  * Description of Tx FIFO watermarks for various revisions.
  */
-const char *pcn_79c970_xmtfw[] = {
+const char * const pcn_79c970_xmtfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"128 bytes",
 	NULL,
 };
 
-const char *pcn_79c971_xmtfw[] = {
+const char * const pcn_79c971_xmtfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"108 bytes",
@@ -288,13 +288,13 @@ struct pcn_softc {
 	struct evcnt sc_ev_txcopy;	/* Tx copies required */
 #endif /* PCN_EVENT_COUNTERS */
 
-	const char **sc_rcvfw_desc;	/* Rx FIFO watermark info */
+	const char * const *sc_rcvfw_desc;	/* Rx FIFO watermark info */
 	int sc_rcvfw;
 
-	const char **sc_xmtsp_desc;	/* Tx start point info */
+	const char * const *sc_xmtsp_desc;	/* Tx start point info */
 	int sc_xmtsp;
 
-	const char **sc_xmtfw_desc;	/* Tx FIFO watermark info */
+	const char * const *sc_xmtfw_desc;	/* Tx FIFO watermark info */
 	int sc_xmtfw;
 
 	int sc_flags;			/* misc. flags; see below */
