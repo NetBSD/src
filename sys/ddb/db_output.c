@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.11 1996/03/30 22:28:45 christos Exp $	*/
+/*	$NetBSD: db_output.c,v 1.12 1996/03/31 21:42:42 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -387,6 +387,12 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'o':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 8;
+			goto number;
+		case 'p':
+			*bp++ = '0';
+			*bp++ = 'x';
+			ul = (u_long) va_arg(ap, void *);
+			base = 16;
 			goto number;
 		case 'u':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
