@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.h,v 1.7 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.h,v 1.8 2004/03/04 03:02:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,7 +40,6 @@ struct RF_MCPair_s {
 	RF_DECLARE_MUTEX(mutex)
 	RF_DECLARE_COND(cond)
 	int     flag;
-	RF_MCPair_t *next;
 };
 #define RF_WAIT_MCPAIR(_mcp) \
 	ltsleep(&((_mcp)->cond), PRIBIO, "mcpair", 0, &((_mcp)->mutex))
