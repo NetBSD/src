@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25.2.4 1999/12/18 00:01:53 he Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.5 2000/01/15 17:52:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_vfree_desc, lfs_vfree },			/* vfree */
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
-	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc lfs_specop_opv_desc =
@@ -379,15 +379,59 @@ lfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 		} */ *ap = v;
-	int ret;
+        struct vattr *vap = ap->a_vap;
+        struct vnode **vpp = ap->a_vpp;
+        struct inode *ip;
+        int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if((error=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return error;
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_mknod(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+            ap->a_dvp, vpp, ap->a_cnp);
+
+	/* Either way we're done with the dirop at this point */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mknod");
-	return (ret);
+
+        if (error)
+		return (error);
+
+        ip = VTOI(*vpp);
+        ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+        if (vap->va_rdev != VNOVAL) {
+                /*
+                 * Want to be able to use this to make badblock
+                 * inodes, so don't truncate the dev number.
+                 */
+#if 0
+                ip->i_ffs_rdev = ufs_rw32(vap->va_rdev,
+                    UFS_MPNEEDSWAP((*vpp)->v_mount));
+#else
+                ip->i_ffs_rdev = vap->va_rdev;
+#endif
+        }
+	/*
+	 * Call fsync to write the vnode so that we don't have to deal with
+	 * flushing it when it's marked VDIROP|VXLOCK.
+	 *
+	 * XXX KS - If we can't flush we also can't call vgone(), so must
+	 * return.  But, that leaves this vnode in limbo, also not good.
+	 * Can this ever happen (barring hardware failure)?
+	 */
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, curproc)) != 0)
+		return (error);
+        /*
+         * Remove inode so that it will be reloaded by VFS_VGET and
+         * checked to see if it is an alias of an existing entry in
+         * the inode cache.
+         */
+	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
+	VOP_UNLOCK(*vpp,0);
+	lfs_vunref(*vpp);
+        (*vpp)->v_type = VNON;
+        vgone(*vpp);
+        *vpp = 0;
+        return (0);
 }
 
 int
