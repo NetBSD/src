@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1996/03/17 01:47:02 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1996/04/10 17:38:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
@@ -150,8 +151,10 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
+#ifdef notyet
 static void	clock_startintr __P((void *));
 static void	clock_stopintr __P((void *));
+#endif
 
 volatile struct chiptime *Mach_clock_addr;
 
@@ -166,8 +169,6 @@ clockmatch(parent, cfdata, aux)
 #ifdef notdef /* XXX */
 	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
 #endif
-	register volatile struct chiptime *c;
-	int vec, ipl;
 	int nclocks;
 
 	if (parent->dv_cfdata->cf_driver != &ioasic_cd &&
@@ -195,8 +196,10 @@ clockattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register volatile struct chiptime *c;
 	struct confargs *ca = aux;
+#ifndef pmax
+	register volatile struct chiptime *c;
+#endif
 
 	Mach_clock_addr = (struct chiptime *)
 		MACH_PHYS_TO_UNCACHED(ca->ca_addr);
@@ -210,7 +213,7 @@ clockattach(parent, self, aux)
 	
 	c = Mach_clock_addr;
 	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 #endif
 
 #ifdef notyet /*XXX*/ /*FIXME*/
@@ -246,7 +249,7 @@ cpu_initclocks()
 	c = Mach_clock_addr;
 	c->rega = REGA_TIME_BASE | SELECTED_RATE;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();		/* Alpha needs this */
+	wbflush();		/* Alpha needs this */
 
 	/*
 	 * Reset tickadj to ntp's idea of what it should be
@@ -332,7 +335,7 @@ inittodr(base)
 	while ((c->rega & REGA_UIP) == 1) {
 		splx(s);
 		DELAY(10);
-		s = splx();
+		s = splclock();
 	}
 
 	sec = c->sec;
@@ -384,7 +387,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 bad:
@@ -411,6 +414,7 @@ resettodr()
 	dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
+	t = t2;
 	year = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
@@ -444,9 +448,9 @@ resettodr()
 	s = splclock();
 	t = c->regd;				/* reset VRT */
 	c->regb = REGB_SET_TIME | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 	c->rega = 0x70;				/* reset time base */
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	c->sec = sec;
 	c->min = min;
@@ -455,18 +459,18 @@ resettodr()
 	c->day = day;
 	c->mon = mon;
 	c->year = year;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	c->rega = REGA_TIME_BASE | SELECTED_RATE;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 	splx(s);
 #ifdef	DEBUG_CLOCK
 	printf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
 #endif
 
 	c->nvram[48*4] |= 1;		/* Set PROM time-valid bit */
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*XXX*/

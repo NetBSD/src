@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 1996/04/04 06:26:00 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 1996/04/10 17:38:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,11 +33,17 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 
+
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+
 #include "pmaxtype.h"
 #include "nameglue.h"
+
 #include "kn01.h"
+#include <pmax/pmax/kn01var.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -61,6 +67,9 @@ void	mb_intr_establish __P((struct confargs *ca,
 			       intr_arg_t val ));
 void	mb_intr_disestablish __P((struct confargs *));
 
+/*
+ * Declarations of Potential child busses and how to configure them.
+ */
 /* KN01 has devices directly on the system bus */
 void	kn01_intr_establish __P((struct device *parent, void *cookie,
 				 int level,
@@ -68,6 +77,9 @@ void	kn01_intr_establish __P((struct device *parent, void *cookie,
 			       intr_arg_t val ));
 void	kn01_intr_disestablish __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
+
+void	config_tcbus __P((struct device *parent, int cputype,
+	int	(*printfn) __P((void *, char *)) ));
 
 
 static int
@@ -98,47 +110,39 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	register struct device *mb = self;
 	struct confargs nca;
-	struct pcs *pcsp;
-	int i, cpuattachcnt;
+
 	extern int cputype, ncpus;
 
 	printf("\n");
 
 	/*
-	 * Try to find and attach all of the CPUs in the machine.
+	 * if we ever support multi-CPU DEcstations (5800 family),
+	 * the Alpha port's mainbus.c has an example of attaching
+	 * multiple CPUs.
+	 *
+	 * For now, we only have one. Attach it directly.
 	 */
-	cpuattachcnt = 0;
+	/*nca.ca_name = "cpu";*/
+	bcopy("cpu", nca.ca_name, sizeof(nca.ca_name));
+	nca.ca_slot = 0;
+	nca.ca_offset = 0;
+	nca.ca_addr = 0;
+	config_found(mb, &nca, mbprint);
 
-#ifdef notyet	/* alpha code */
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		struct pcs *pcsp;
-
-		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-		    (i * hwrpb->rpb_pcs_size));
-		if ((pcsp->pcs_flags & PCS_PP) == 0)
-			continue;
-
-		nca.ca_name = "cpu";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_addr = 0;
-		if (config_found(self, &nca, mbprint) != NULL)
-			cpuattachcnt++;
-	}
-
-	if (ncpus != cpuattachcnt)
-		printf("WARNING: %d cpus in machine, %d attached\n",
-			ncpus, cpuattachcnt);
-#endif
 
 #if	defined(DS_5000) || defined(DS5000_240) || defined(DS_5000_100) || \
 	defined(DS_5000_25)
 
 	if (cputype == DS_3MAXPLUS || cputype == DS_3MAX ||
 	    cputype == DS_3MIN || cputype == DS_MAXINE) {
-		config_tcbus(self, &nca, mbprint);
+		/*
+		 * This system might have a turbochannel.
+		 * Call the TC subr code to look for one
+		 * and if found, to configure it.
+		 */
+		config_tcbus(mb, 0 /* XXX */, mbprint);
 	}
 #endif /*Turbochannel*/
 
@@ -148,12 +152,12 @@ mbattach(parent, self, aux)
 	 * optional framebuffer.
 	 */
 #if 1 /*defined(DS3100)*/
+
 	/* XXX mipsmate: just a guess */
 	if (cputype == DS_PMAX || cputype == DS_MIPSMATE) {
-		kn01_attach(self, (void*)0, aux);
+		kn01_attach(mb, (void*)0, aux);
 	}
 #endif /*DS3100*/
-
 }
 
 
@@ -174,7 +178,7 @@ struct confargs kn01_devs[KN01_MAXDEVS] = {
 	 */
 	{ "nvram",	6,   0,  (u_int)KV(0x86400000),	  -1, },
 #endif
-	0
+	{ "", 0, 0 }
 };
 
 /*
