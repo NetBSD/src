@@ -1,8 +1,11 @@
-/*	$NetBSD: linux_util.h,v 1.6 1998/09/05 14:50:26 christos Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.7 1998/10/01 03:54:36 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Christos Zoulas.
@@ -64,8 +67,8 @@
  *
  */
 
-#ifndef	_LINUX_UTIL_H_
-#define	_LINUX_UTIL_H_
+#ifndef	_COMMON_LINUX_UTIL_H_
+#define	_COMMON_LINUX_UTIL_H_
 
 #include <compat/common/compat_util.h>
 
@@ -80,4 +83,4 @@ extern const char linux_emul_path[];
 #define LINUX_CHECK_ALT_CREAT(p, sgp, path) \
     CHECK_ALT_CREAT(p, sgp, linux_emul_path, path)
 
-#endif /* !_LINUX_UTIL_H_ */
+#endif /* !_COMMON_LINUX_UTIL_H_ */
