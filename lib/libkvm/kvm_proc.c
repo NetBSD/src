@@ -656,7 +656,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			 * the string space.
 			 */
 			off = kd->argspc - op;
-			for (pp = kd->argv; pp < argv; ++pp)
+			for (pp = kd->argv; pp < argv; pp++)
 				*pp += off;
 			ap += off;
 			np += off;
