@@ -41,17 +41,17 @@
 #define HAVE_LONG_LONG 1
 
 /* Define to `unsigned char' if standard headers don't define.  */
-#define uint8_t unsigned char
+/* #define uint8_t unsigned char */
 
 /* Define to `unsigned short' if standard headers don't define.  */
-#define uint16_t unsigned short
+/* #define uint16_t unsigned short */
 
 /* Define to `unsigned int' if standard headers don't define.  */
-#define uint32_t unsigned int
+/* #define uint32_t unsigned int */
 
 /* Define to `unsigned long long', if available, or `unsigned long', if
    standard headers don't define.  */
-#define uint64_t unsigned long long
+/* #define uint64_t unsigned long long */
 
 /* The number of bytes in a uint8_t.  */
 #define SIZEOF_UINT8_T 1
