@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
+.\"	$NetBSD: yp.8,v 1.10 1996/08/09 14:40:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -74,6 +74,33 @@
 .Oc
 .Nm ypwhich
 .Fl x
+.Pp
+.Nm ypserv
+.Op Fl a Ar aclfile
+.Op Fl d
+.Op Fl x
+.Pp
+.Nm yppush
+.Op Fl d Ar domainname
+.Op Fl h Ar hostname
+.Op Fl v
+.Ar mapname
+.Pp
+.Nm ypxfr
+.Op Fl bcf
+.Op Fl d Ar domain
+.Op Fl h Ar host
+.Op Fl s Ar domain
+.Op Fl C Ar tid prog ipadd port
+.Ar mapname
+.Pp
+.Nm yptest
+.Pp
+.Nm rpc.yppasswdd
+.Op Fl -noshell
+.Op Fl -nogecos
+.Op Fl -nopw
+.Op Fl m Ar arg1 arg2 ...
 .Sh DESCRIPTION
 The
 .Nm YP
@@ -93,16 +120,12 @@ maps.
 .Pp
 The
 .Nm YP 
-subsystem is started automatically in
-.Pa /etc/rc
-if the directory
-.Pa /var/yp
-exists.
+subsystem is conditionally started in
+.Pa /etc/rc .
+See the
+.Pa /etc/netstart
+file for configuration variables.
 .Sh BUGS
-Only
-.Nm YP
-client functionality exists, there is no ypserv (yet).
-.Pp
 If
 .Xr ypbind
 cannot find a server, the system behaves the same way as Sun's code:
@@ -117,9 +140,15 @@ it hangs.
 .Xr yppoll 8 , 
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
+.Xr ypserv 8 ,
+.Xr yppush 8 ,
+.Xr ypxfr 8 .
+.Xr yptest 8 ,
 .Xr ypclnt 3
 .Sh HISTORY
-This free
+The
 .Nm YP
-subsystem was written from scratch by Theo de Raadt to be compatible
-to Sun's implementation.
+client subsystem was originally written by Theo de Raadt
+to be compatible with Sun's implementation.  The
+.Nm YP
+server suite was originally written by Mats O Jansson.
