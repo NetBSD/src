@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.2 1997/10/09 13:19:26 oki Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.3 1997/10/09 13:26:18 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,8 @@ struct	grf_lockpage {
 	u_char	gl_locks[GRFMAXLCK];
 };
 #define gl_lockslot gl_locks[0]
+
+struct grf_softc;
 
 /*
  * Static configuration info for display types
