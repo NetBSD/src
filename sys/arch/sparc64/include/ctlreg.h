@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.14 2000/06/02 22:56:33 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.15 2000/06/07 09:16:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -538,7 +538,7 @@
 })
 #else
 #define	lduha(loc, asi) ({ \
-	register int _lduha_v, _loc_hi; \
+	register int _lduha_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
 	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1; " \
 " or %0,%2,%0; wrpr %1,8,%%pstate; lduha [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
@@ -625,7 +625,7 @@
 	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1;" \
 " andn %2,0x1f,%0; stxa %%g0,[%0] %5; wrpr %1,8,%%pstate; sllx %3,32,%0;" \
-" or %0,%2,%0; membar #Sync; ldswa [%0]%%asi,%0; wrpr %1,0,%pstate" : \
+" or %0,%2,%0; membar #Sync; ldswa [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
 		"=&r" (_lda_v), "=&r" (_pstate) : \
 		"r" ((long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
@@ -643,7 +643,7 @@
 	register int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
 	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
-" wrpr %1,8,%%pstate; or %0,%2,%0; lda [%0]%%asi,%0; wrpr %1,0,%pstate" : \
+" wrpr %1,8,%%pstate; or %0,%2,%0; lda [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
 		"=&r" (_lda_v), "=&r" (_pstate) : \
 		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lda_v; \
@@ -752,7 +752,7 @@
 #define	ldda(loc, asi) ({ \
 	register long long _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1" \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
 " or %0,%2,%0; wrpr %1,8,%%pstate; ldda [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
 		"=&r" (_lda_v), "=&r" (_pstate) : \
 		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
@@ -773,7 +773,7 @@
 #define	ldxa(loc, asi) ({ \
 	register long _ldxa_lo, _ldxa_hi, _loc_hi; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %2,32,%0; rdpr %%pstate,%1" \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %2,32,%0; rdpr %%pstate,%1;" \
 " or %0,%1,%0; wrpr %1,8,%%pstate; ldxa [%0]%%asi,%0; wrpr %1,0,%%pstate;" \
 " srlx %0,32,%1; srl %0,0,%0;" : \
 	    "=&r" (_ldxa_lo), "=&r" (_ldxa_hi) : \
