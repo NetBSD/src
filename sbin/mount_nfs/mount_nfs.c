@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.9 1995/03/28 17:22:28 jtc Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.10 1995/05/21 15:17:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.9 1995/03/28 17:22:28 jtc Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.10 1995/05/21 15:17:13 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,24 +426,22 @@ getnfsargs(spec, nfsargsp)
 	 * Handle an internet host address and reverse resolve it if
 	 * doing Kerberos.
 	 */
-	if (isdigit(*hostp)) {
-		if ((saddr.sin_addr.s_addr = inet_addr(hostp)) == -1) {
-			warnx("bad net address %s", hostp);
-			return (0);
-		}
+	if (inet_aton(hostp, &saddr.sin_addr) != 0) {
 		if ((nfsargsp->flags & NFSMNT_KERB)) {
-		    if ((hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
-			 sizeof (u_long), AF_INET)) == (struct hostent *)0) {
-			warnx("can't reverse resolve net address");
-			return (0);
-		    }
-		    memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
+			if ((hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
+			    sizeof (u_long), AF_INET)) == (struct hostent *)0) {
+				warnx("can't reverse resolve net address");
+				return (0);
+			}
 		}
-	} else if ((hp = gethostbyname(hostp)) == NULL) {
-		warnx("can't get net id for host");
-		return (0);
-	} else
+	} else {
+		hp = gethostbyname(hostp);
+		if (hp == NULL) {
+			warnx("can't get net id for host");
+			return (0);
+		}
 		memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
+	}
 #ifdef KERBEROS
 	if (nfsargsp->flags & NFSMNT_KERB) {
 		strncpy(inst, hp->h_name, INST_SZ);
