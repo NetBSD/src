@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/13 20:18:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ SRCS=		clientattrib.c compsize.c dispatch.c eval.c g_render.c \
 		glxext.c indirect_init.c pixel.c pixelstore.c \
 		render2.c renderpix.c single2.c singlepix.c vertarr.c xfont.c
 
-CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
-		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/lib/GL/include \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
 		${X11FLAGS.THREADLIB} -DGLXEXT -DGLX_USE_MESA
