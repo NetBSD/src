@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.188 2004/01/02 12:01:39 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.189 2004/02/26 02:34:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.188 2004/01/02 12:01:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.189 2004/02/26 02:34:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -245,8 +245,8 @@ static struct timeval tcp_rst_ppslim_last;
 #ifdef INET6
 #define ND6_HINT(tp) \
 do { \
-	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 \
-	 && tp->t_in6pcb->in6p_route.ro_rt) { \
+	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 && \
+	    tp->t_in6pcb->in6p_route.ro_rt) { \
 		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
 	} \
 } while (/*CONSTCOND*/ 0)
@@ -394,6 +394,7 @@ tcp_reass(tp, th, m, tlen)
 			p->ipqe_len += pkt_len;
 			p->ipqe_flags |= pkt_flags;
 			m_cat(p->ipqe_m, m);
+			m = NULL;
 			tiqe = p;
 			TAILQ_REMOVE(&tp->timeq, p, ipqe_timeq);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_appendtail);
@@ -508,8 +509,8 @@ tcp_reass(tp, th, m, tlen)
 		 * merge the fragment and segment then treat as
 		 * a longer received packet.
 		 */
-		if (SEQ_LT(q->ipqe_seq, pkt_seq)
-		    && SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
+		if (SEQ_LT(q->ipqe_seq, pkt_seq) &&
+		    SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
 			int overlap = q->ipqe_seq + q->ipqe_len - pkt_seq;
 #ifdef TCPREASS_DEBUG
 			printf("tcp_reass[%p]: trim starting %d bytes of %u:%u(%u)\n",
@@ -532,8 +533,8 @@ tcp_reass(tp, th, m, tlen)
 		 * received packet.  The packet will then be
 		 * contatentated with this fragment a bit later.
 		 */
-		if (SEQ_GT(q->ipqe_seq, pkt_seq)
-		    && SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
+		if (SEQ_GT(q->ipqe_seq, pkt_seq) &&
+		    SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
 			int overlap = pkt_seq + pkt_len - q->ipqe_seq;
 #ifdef TCPREASS_DEBUG
 			printf("tcp_reass[%p]: trim trailing %d bytes of %u:%u(%u)\n",
@@ -562,11 +563,10 @@ tcp_reass(tp, th, m, tlen)
 			m_cat(m, q->ipqe_m);
 			TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-			if (tiqe == NULL) {
-			    tiqe = q;
-			} else {
-			    pool_put(&ipqent_pool, q);
-			}
+			if (tiqe == NULL)
+				tiqe = q;
+			else
+				pool_put(&ipqent_pool, q);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
@@ -588,11 +588,10 @@ tcp_reass(tp, th, m, tlen)
 	  free_ipqe:
 		TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-		if (tiqe == NULL) {
-		    tiqe = q;
-		} else {
-		    pool_put(&ipqent_pool, q);
-		}
+		if (tiqe == NULL)
+			tiqe = q;
+		else
+			pool_put(&ipqent_pool, q);
 	}
 
 #ifdef TCP_REASS_COUNTERS
