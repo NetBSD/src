@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.37 2003/06/14 02:40:42 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.38 2003/06/14 08:09:48 tsutsui Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,14 +7,14 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32		# estimated number of users
 
 # Platform support
 options 	PLATFORM_ACER_PICA_61		# PICA, NEC ImageRISCstation
-options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
-options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
+options 	PLATFORM_DESKTECH_ARCSTATION_I	# DeskStation rPC44
+options 	PLATFORM_DESKTECH_TYNE		# DeskStation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
 options 	PLATFORM_NEC_J96A		# NEC Express 5800/240 EISA R4K
 options 	PLATFORM_NEC_JC94		# NEC Express 5800/230 PCI R4K
@@ -203,11 +203,11 @@ jazzisabr*	at mainbus0	# Jazz-(E)ISA bus bridge.
 isa*		at jazzisabr?
 
 # PLATFORM_DESKTECH_ARCSTATION_I
-arcsisabr*	at mainbus0	# DESKstation rPC44 ISA host bridge.
+arcsisabr*	at mainbus0	# DeskStation rPC44 ISA host bridge.
 isa*		at arcsisabr?
 
 # PLATFORM_DESKTECH_TYNE
-tyneisabr*	at mainbus0	# DESKstation Tyne ISA host bridge.
+tyneisabr*	at mainbus0	# DeskStation Tyne ISA host bridge.
 isa*		at tyneisabr?
 
 #isadma0 	at isa?

@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.21 2002/09/18 02:43:55 lukem Exp $
+#	$NetBSD: ARCTIC,v 1.22 2003/06/14 08:09:48 tsutsui Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -11,8 +11,8 @@ include		"arch/arc/conf/std.arc"
 maxusers	32		# estimated number of users
 
 # Platform support
-options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
-options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
+options 	PLATFORM_DESKTECH_ARCSTATION_I	# DeskStation rPC44
+options 	PLATFORM_DESKTECH_TYNE		# DeskStation Tyne
 
 # Misc. arc-specific options
 options 	PCCONS_FORCE_WORD	# Max out at 16bit accesses to the
@@ -132,11 +132,11 @@ cpu*		at mainbus0
 #### ISA bus devices
 
 # PLATFORM_DESKTECH_ARCSTATION_I
-arcsisabr*	at mainbus0	# DESKstation rPC44 ISA host bridge.
+arcsisabr*	at mainbus0	# DeskStation rPC44 ISA host bridge.
 isa*		at arcsisabr?
 
 # PLATFORM_DESKTECH_TYNE
-tyneisabr*	at mainbus0	# DESKstation Tyne ISA host bridge.
+tyneisabr*	at mainbus0	# DeskStation Tyne ISA host bridge.
 isa*		at tyneisabr?
 
 #isadma0 	at isa?

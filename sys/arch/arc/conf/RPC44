@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.1 2002/12/04 08:14:30 imp Exp $
+# $NetBSD: RPC44,v 1.2 2003/06/14 08:09:48 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,12 +22,12 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
 # Platform support
-options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
+options 	PLATFORM_DESKTECH_ARCSTATION_I	# DeskStation rPC44
 
 # Standard system options
 
@@ -153,7 +153,7 @@ mainbus0	at root
 cpu*		at mainbus0
 
 # PLATFORM_DESKTECH_ARCSTATION_I
-arcsisabr*	at mainbus0	# DESKstation rPC44 ISA host bridge.
+arcsisabr*	at mainbus0	# DeskStation rPC44 ISA host bridge.
 isa*		at arcsisabr?
 #isadma0 	at isa? 			# bogus?
 timer0		at isa? port 0x40 irq 0
