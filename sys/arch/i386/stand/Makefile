@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 1997/03/14 02:54:14 perry Exp $
+#	$NetBSD: Makefile,v 1.9 1999/03/12 16:07:58 sommerfe Exp $
 
-SUBDIR=		biosboot installboot
+SUBDIR=		biosboot biosboot_ser installboot
 SUBDIR+=	dosboot
 #SUBDIR+=	genprom netboot
 

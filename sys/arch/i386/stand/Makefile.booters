@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.18 1999/02/07 18:25:54 tron Exp $
+#	$NetBSD: Makefile.booters,v 1.19 1999/03/12 16:07:58 sommerfe Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -61,7 +61,7 @@ LDFLAGS=-N -M -e _start
 .endif
 
 vers.o: version
-	sh ${I386_STAND_DIR}/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	sh ${I386_STAND_DIR}/newvers.sh ${.ALLSRC} ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
 ${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
