@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.34 1999/06/16 20:10:07 is Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.35 1999/06/16 20:43:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.34 1999/06/16 20:10:07 is Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.35 1999/06/16 20:43:48 is Exp $");
 #endif
 #endif
 
@@ -1478,7 +1478,7 @@ frag_err()
 {
         int i;
 
-        if (nextmtu > 0) {
+        if (nextmtu > 0 && nextmtu < packlen) {
                 Printf("\nfragmentation required and DF set, "
 		     "next hop MTU = %d\n",
                         nextmtu);
@@ -1490,9 +1490,12 @@ frag_err()
                         }
                 }
         } else {
+                Printf("\nfragmentation required and DF set. ");
+		if (nextmtu)
+			Printf("\nBogus next hop MTU = %d > last MTU = %d. ",
+			    nextmtu, packlen);
                 packlen = *mtuptr++;
-                Printf("\nfragmentation required and DF set, "
-		    "trying new MTU = %d\n", packlen);
+		Printf("Trying new MTU = %d\n", packlen);
         }
 	outudp->uh_ulen =
 	    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
