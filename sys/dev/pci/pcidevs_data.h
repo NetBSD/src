@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.436 2002/05/28 17:46:24 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.437 2002/06/02 18:37:25 seb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp 
+ *	NetBSD: pcidevs,v 1.434 2002/06/02 18:32:11 seb Exp 
  */
 
 /*
@@ -6242,6 +6242,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI2040 PCI-to-DSP Bridge",
+	},
+	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-800L",
 	},
 	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
