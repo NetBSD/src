@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.23 2004/03/17 17:54:25 christos Exp $	*/
+/*	$NetBSD: lock.c,v 1.24 2004/07/13 11:55:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.23 2004/03/17 17:54:25 christos Exp $");
+__RCSID("$NetBSD: lock.c,v 1.24 2004/07/13 11:55:02 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [-p] [-t timeout]\n", getprogname());
+			    "usage: %s [-np] [-t timeout]\n", getprogname());
 			exit(1);
 		}
 	timeout.tv_sec = (int)sectimeout * 60;
