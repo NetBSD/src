@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36.4.2 1999/07/01 23:23:18 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.36.4.3 1999/08/02 21:43:53 thorpej Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -52,7 +52,7 @@
 
 #undef NO_VCACHE		/* Map w/D$ disabled */
 #undef TRAPTRACE		/* Keep history of all traps (may watchdog) */
-#define FLTRACE			/* Keep history of all page faults only */
+#undef FLTRACE			/* Keep history of all page faults only */
 #define TRAPSTATS		/* Count traps */
 #undef TRAPS_USE_IG		/* Use Interrupt Globals for trap handling */
 #undef LOCKED_PCB		/* Lock current proc's PCB in MMU */
@@ -62,7 +62,7 @@
 #define PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #undef PMAP_PHYS_PAGE		/* Don't use block ld/st for pmap copy/zero */
 #define DCACHE_BUG		/* Clear D$ line before loads from ASI_PHYS */
-#undef NO_TSB			/* Don't use TSB */
+#define NO_TSB			/* Don't use TSB */
 #undef TICK_IS_TIME		/* Keep %tick synchronized with time */
 	
 #include "opt_ddb.h"

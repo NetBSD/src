@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7.4.1 1999/06/21 01:02:33 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.7.4.2 1999/08/02 21:43:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -347,7 +347,7 @@ static __inline int name() \
 
 SPL(spl0, 0)
 
-SPLHOLD(splsoftint, 1)
+SPL(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
 

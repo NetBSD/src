@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31.2.2.2.1 1999/06/21 01:04:11 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.31.2.2.2.2 1999/08/02 21:49:40 thorpej Exp $
 
 #
 #	GENERIC
@@ -125,6 +125,7 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
+options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
 #options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
@@ -166,11 +167,11 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	PPP_BSDCOMP	# Add BSD compression to ppp device
-#options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
-#options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+options 	PPP_BSDCOMP	# Add BSD compression to ppp device
+options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
+options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
 
 

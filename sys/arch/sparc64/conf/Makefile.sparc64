@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.8.4.1 1999/06/21 01:02:28 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.8.4.2 1999/08/02 21:43:51 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,8 @@ OS!=uname -s
 .if (${OS} == "NetBSD")
 USE_GENASSYM?=	no
 .else
-USE_GENASSYM?=	yes
+USE_GENASSYM?=	no
+AWK=nawk
 .endif
 
 .if exists(/usr/ccs/bin/ld)
@@ -66,6 +67,8 @@ CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext f8000000 -e start >lderr
 #STRIPFLAGS=	-d
+
+%INCLUDES
 
 ### find out what to use for libkern
 KERN_AS=	obj
@@ -113,8 +116,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif
