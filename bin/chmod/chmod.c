@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chmod.c	8.8 (Berkeley) 4/1/94";*/
-static char *rcsid = "$Id: chmod.c,v 1.10 1994/09/20 04:08:23 mycroft Exp $";
+static char *rcsid = "$Id: chmod.c,v 1.11 1995/01/15 05:50:26 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,14 +159,15 @@ done:	argv += optind;
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
-			if (Rflag)		/* Change it at FTS_DP. */
-				continue;
-			fts_set(ftsp, p, FTS_SKIP);
+			if (!Rflag)
+				fts_set(ftsp, p, FTS_SKIP);
 			break;
 		case FTS_DNR:			/* Warn, chmod, continue. */
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = 1;
 			break;
+		case FTS_DP:			/* Already changed at FTS_D. */
+			continue;
 		case FTS_ERR:			/* Warn, continue. */
 		case FTS_NS:
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
