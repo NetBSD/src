@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.7 2002/10/02 05:30:41 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.8 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -139,9 +139,9 @@ mc_attach(parent, self, aux)
 	}
 
 	/* allocate memory for transmit buffer and mark it non-cacheable */
-	sc->sc_txbuf = malloc(NBPG, M_DEVBUF, M_WAITOK);
+	sc->sc_txbuf = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_txbuf_phys = kvtop(sc->sc_txbuf);
-	memset(sc->sc_txbuf, 0, NBPG);
+	memset(sc->sc_txbuf, 0, PAGE_SIZE);
 
 	/*
 	 * allocate memory for receive buffer and mark it non-cacheable
@@ -151,9 +151,9 @@ mc_attach(parent, self, aux)
 	 * memory. If it's not, suggest reducing the number of buffers
 	 * to 2, which will fit in one 4K page.
 	 */
-	sc->sc_rxbuf = malloc(MC_NPAGES * NBPG, M_DEVBUF, M_WAITOK);
+	sc->sc_rxbuf = malloc(MC_NPAGES * PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_rxbuf_phys = kvtop(sc->sc_rxbuf);
-	memset(sc->sc_rxbuf, 0, MC_NPAGES * NBPG);
+	memset(sc->sc_rxbuf, 0, MC_NPAGES * PAGE_SIZE);
 
 	if ((int)sc->sc_txbuf & PGOFSET)
 		printf("txbuf is not page-aligned\n");

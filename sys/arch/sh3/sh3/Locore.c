@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.16 2003/03/20 17:45:14 tsutsui Exp $	*/
+/*	$NetBSD: Locore.c,v 1.17 2003/04/02 02:56:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ sh3_switch_setup(struct lwp *l)
 
 	vpn = (u_int32_t)l->l_addr;
 	vpn &= ~PGOFSET;
-	for (i = 0; i < UPAGES; i++, vpn += NBPG, md_upte++) {
+	for (i = 0; i < UPAGES; i++, vpn += PAGE_SIZE, md_upte++) {
 		pte = __pmap_kpte_lookup(vpn);
 		KDASSERT(pte && *pte != 0);
 
@@ -208,7 +208,7 @@ sh4_switch_setup(struct lwp *l)
 	vpn = (u_int32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	e = SH4_UTLB_ENTRY - UPAGES;
-	for (i = 0; i < UPAGES; i++, e++, vpn += NBPG) {
+	for (i = 0; i < UPAGES; i++, e++, vpn += PAGE_SIZE) {
 		pte = __pmap_kpte_lookup(vpn);
 		KDASSERT(pte && *pte != 0);
 		/* Address array */
