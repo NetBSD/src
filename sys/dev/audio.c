@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.132 2000/12/25 00:01:39 jmc Exp $	*/
+/*	$NetBSD: audio.c,v 1.133 2000/12/29 10:00:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2991,6 +2991,7 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 		
 	case AUDIO_MIXER_DEVINFO:
 		DPRINTF(("AUDIO_MIXER_DEVINFO\n"));
+		((mixer_devinfo_t *)addr)->un.v.delta = 0; /* default */
 		error = hw->query_devinfo(sc->hw_hdl, (mixer_devinfo_t *)addr);
 		break;
 
