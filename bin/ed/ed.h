@@ -224,7 +224,7 @@ int getkey __P((void));
 char *getlhs __P((int));
 int getline __P((void));
 int getlist __P((void));
-int getmark __P((int));
+long getmark __P((int));
 long getnum __P((int));
 long getone __P((void));
 line_t *getlp __P((long));
