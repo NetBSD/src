@@ -1,4 +1,4 @@
-.\"	$NetBSD: ns.3,v 1.9 2001/07/08 20:18:36 jdolecek Exp $
+.\"	$NetBSD: ns.3,v 1.10 2001/09/16 02:23:09 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ address conversion routines
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <netns/ns.h>
-.Ft struct ns_addr 
+.Ft struct ns_addr
 .Fn ns_addr "const char *cp"
 .Ft char *
 .Fn ns_ntoa "struct ns_addr ns"
@@ -71,7 +71,7 @@ notation in common use in the Xerox Development Environment:
 .Ed
 .Pp
 Trailing zero fields are suppressed, and each number is printed in hexadecimal,
-in a format suitable for input to 
+in a format suitable for input to
 .Fn ns_addr .
 Any fields lacking super-decimal digits will have a
 trailing
