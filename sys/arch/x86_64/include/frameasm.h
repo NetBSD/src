@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.6 2003/01/26 14:12:10 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.7 2003/03/05 23:56:01 fvdl Exp $	*/
 
 #ifndef _X86_64_MACHINE_FRAMEASM_H
 #define _X86_64_MACHINE_FRAMEASM_H
@@ -71,8 +71,18 @@
 99:	addq	$48,%rsp		; \
 	iretq
 
+#define INTR_RECURSE_HWFRAME \
+	movq	%rsp,%r10		; \
+	movl	%ss,%r11d		; \
+	pushq	%r11			; \
+	pushq	%r10			; \
+	pushfq				; \
+	movl	%cs,%r11d		; \
+	pushq	%r11			; \
+	pushq	%r13			;
 
-#define CHECK_ASTPENDING(reg)	movq	_C_LABEL(curlwp)(%rip),reg	; \
+
+#define CHECK_ASTPENDING(reg)	movq	CPUVAR(CURLWP),reg		; \
 				cmpq	$0, reg				; \
 				je	99f				; \
 				movq	L_PROC(reg), reg		; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.3 2002/05/28 23:07:35 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.4 2003/03/05 23:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -156,16 +156,25 @@ struct region_descriptor {
 } __attribute__((packed));
 
 #ifdef _KERNEL
+#if 0
 extern struct sys_segment_descriptor *ldt;
+#endif
 extern struct gate_descriptor *idt;
 extern char *gdtstore;
+extern char *ldtstore;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int));
+void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
+void unsetgate __P((struct gate_descriptor *));
 void setregion __P((struct region_descriptor *, void *, u_int16_t));
 void set_sys_segment __P((struct sys_segment_descriptor *, void *, size_t,
 			  int, int, int));
 void set_mem_segment __P((struct mem_segment_descriptor *, void *, size_t,
 			  int, int, int, int, int));
+int idt_vec_alloc __P((int, int));
+void idt_vec_set __P((int, void (*)(void)));
+void idt_vec_free __P((int));
+void cpu_init_idt __P((void));
+
 #endif /* _KERNEL */
 
 #endif /* !_LOCORE */
@@ -271,10 +280,10 @@ void set_mem_segment __P((struct mem_segment_descriptor *, void *, size_t,
 
 #define GDT_SYS_OFFSET	(NGDT_MEM << 3)
 
-#define GDT_ADDR_MEM(i)	\
-    ((struct mem_segment_descriptor *)(gdtstore + ((i) << 3)))
-#define GDT_ADDR_SYS(i)	\
-   ((struct sys_segment_descriptor *)(gdtstore + (((i) << 4) + SYSSEL_START)))
+#define GDT_ADDR_MEM(s,i)	\
+    ((struct mem_segment_descriptor *)((s) + ((i) << 3)))
+#define GDT_ADDR_SYS(s,i)	\
+   ((struct sys_segment_descriptor *)((s) + (((i) << 4) + SYSSEL_START)))
 
 /*
  * Byte offsets in the Local Descriptor Table (LDT)

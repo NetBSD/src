@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2002/11/23 13:23:41 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2003/03/05 23:56:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,6 +63,17 @@
 #include <machine/cpu.h>
 #include <machine/bootinfo.h>
 
+#include "ioapic.h"
+#include "lapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
+
+#if NLAPIC > 0
+#include <machine/i82489var.h>
+#endif
+
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
 static void findroot __P((void));
@@ -91,17 +102,26 @@ cpu_configure()
 	bios32_init();
 #endif
 
+	x86_64_proc0_tss_ldt_init();
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+#ifdef INTRDEBUG
+	intr_printconfig();
+#endif
+
+#if NIOAPIC > 0
+	lapic_set_lvt();
+	ioapic_enable();
+#endif
+
+#ifdef MULTIPROCESSOR
+	cpu_init_idle_pcbs();
+#endif
 
 	spl0();
-
-	/* Set up proc0's TSS and LDT (after the FPU is configured). */
-	x86_64_proc0_tss_ldt_init();
+	lcr8(0);
 
 	/* XXX Finish deferred buffer cache allocation. */
 	x86_64_bufinit();

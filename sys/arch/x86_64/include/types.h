@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2003/01/26 00:05:38 fvdl Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2003/03/05 23:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,5 +67,7 @@ typedef int			register32_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define __HAVE_RAS
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_CPU_MAXPROC
 
 #endif	/* _MACHTYPES_H_ */

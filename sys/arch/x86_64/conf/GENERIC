@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2003/02/27 19:22:48 perseant Exp $
+# $NetBSD: GENERIC,v 1.8 2003/03/05 23:55:58 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/x86_64/conf/std.x86_64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -201,6 +201,10 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+
+options 	MPBIOS
+cpu* 		at mainbus?
+ioapic* 	at mainbus? apid ?
 
 #apm0	at mainbus0			# Advanced power management
 

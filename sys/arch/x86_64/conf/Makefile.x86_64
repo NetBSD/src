@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.12 2002/11/29 19:52:02 fvdl Exp $
+#	$NetBSD: Makefile.x86_64,v 1.13 2003/03/05 23:56:00 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -45,10 +45,11 @@ KERN_AS=	obj
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o vector.o copy.o microtime.o
+MD_OBJS=	locore.o vector.o copy.o microtime.o spl.o
 MD_CFILES=
 MD_SFILES=	${X86_64}/x86_64/locore.S ${X86_64}/x86_64/vector.S \
 		${X86_64}/x86_64/copy.S ${X86_64}/x86_64/microtime.S \
+		${X86_64}/x86_64/spl.S
 
 locore.o: ${X86_64}/x86_64/locore.S assym.h
 	${NORMAL_S}
@@ -60,6 +61,9 @@ copy.o: ${X86_64}/x86_64/copy.S assym.h
 	${NORMAL_S}
 
 microtime.o: ${X86_64}/x86_64/microtime.S assym.h
+	${NORMAL_S}
+
+spl.o: ${X86_64}/x86_64/spl.S assym.h
 	${NORMAL_S}
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.14 2003/02/19 00:37:33 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.15 2003/03/05 23:56:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,8 +80,8 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
-	if (fpulwp == l)
-		fpudrop();
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l, 0);
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
@@ -353,8 +353,7 @@ process_read_fpregs32(struct lwp *l, struct fpreg32 *regs)
 	struct oldfsave frame;
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		if (fpulwp == l)
-			__asm__("fnsave %0" : "=m" (frame));
+		fpusave_lwp(l, 1);
 	} else {
 		memset(&frame, 0, sizeof(*regs));
 		frame.fs_control = __NetBSD_NPXCW__;

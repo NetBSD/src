@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2003/01/26 00:05:38 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2003/03/05 23:56:08 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2003/01/26 00:05:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 2003/03/05 23:56:08 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2003/01/26 00:05:38 fvdl Exp $");
 #include <sys/user.h> 
 
 #include <machine/db_machdep.h>
+#include <machine/frame.h>
+#include <machine/trap.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
@@ -42,34 +44,36 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2003/01/26 00:05:38 fvdl Exp $");
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
+#define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
+
 /*
  * Machine register set.
  */
 const struct db_variable db_regs[] = {
-	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
-	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
-	{ "fs",		(long *)&ddb_regs.tf_fs,     FCN_NULL },
-	{ "gs",		(long *)&ddb_regs.tf_gs,     FCN_NULL },
-	{ "rdi",	(long *)&ddb_regs.tf_rdi,    FCN_NULL },
-	{ "rsi",	(long *)&ddb_regs.tf_rsi,    FCN_NULL },
-	{ "rbp",	(long *)&ddb_regs.tf_rbp,    FCN_NULL },
-	{ "rbx",	(long *)&ddb_regs.tf_rbx,    FCN_NULL },
-	{ "rdx",	(long *)&ddb_regs.tf_rdx,    FCN_NULL },
-	{ "rcx",	(long *)&ddb_regs.tf_rcx,    FCN_NULL },
-	{ "rax",	(long *)&ddb_regs.tf_rax,    FCN_NULL },
-	{ "r8",		(long *)&ddb_regs.tf_r8,    FCN_NULL },
-	{ "r9",		(long *)&ddb_regs.tf_r9,    FCN_NULL },
-	{ "r10",	(long *)&ddb_regs.tf_r10,    FCN_NULL },
-	{ "r11",	(long *)&ddb_regs.tf_r11,    FCN_NULL },
-	{ "r12",	(long *)&ddb_regs.tf_r12,    FCN_NULL },
-	{ "r13",	(long *)&ddb_regs.tf_r13,    FCN_NULL },
-	{ "r14",	(long *)&ddb_regs.tf_r14,    FCN_NULL },
-	{ "r15",	(long *)&ddb_regs.tf_r15,    FCN_NULL },
-	{ "rip",	(long *)&ddb_regs.tf_rip,    FCN_NULL },
-	{ "cs",		(long *)&ddb_regs.tf_cs,     FCN_NULL },
-	{ "rflags",	(long *)&ddb_regs.tf_rflags, FCN_NULL },
-	{ "rsp",	(long *)&ddb_regs.tf_rsp,    FCN_NULL },
-	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
+	{ "ds",		dbreg(ds),     FCN_NULL },
+	{ "es",		dbreg(es),     FCN_NULL },
+	{ "fs",		dbreg(fs),     FCN_NULL },
+	{ "gs",		dbreg(gs),     FCN_NULL },
+	{ "rdi",	dbreg(rdi),    FCN_NULL },
+	{ "rsi",	dbreg(rsi),    FCN_NULL },
+	{ "rbp",	dbreg(rbp),    FCN_NULL },
+	{ "rbx",	dbreg(rbx),    FCN_NULL },
+	{ "rdx",	dbreg(rdx),    FCN_NULL },
+	{ "rcx",	dbreg(rcx),    FCN_NULL },
+	{ "rax",	dbreg(rax),    FCN_NULL },
+	{ "r8",		dbreg(r8),     FCN_NULL },
+	{ "r9",		dbreg(r9),     FCN_NULL },
+	{ "r10",	dbreg(r10),    FCN_NULL },
+	{ "r11",	dbreg(r11),    FCN_NULL },
+	{ "r12",	dbreg(r12),    FCN_NULL },
+	{ "r13",	dbreg(r13),    FCN_NULL },
+	{ "r14",	dbreg(r14),    FCN_NULL },
+	{ "r15",	dbreg(r15),    FCN_NULL },
+	{ "rip",	dbreg(rip),    FCN_NULL },
+	{ "cs",		dbreg(cs),     FCN_NULL },
+	{ "rflags",	dbreg(rflags), FCN_NULL },
+	{ "rsp",	dbreg(rsp),    FCN_NULL },
+	{ "ss",		dbreg(ss),     FCN_NULL },
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 

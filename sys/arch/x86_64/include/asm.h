@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 2003/02/26 21:29:34 fvdl Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 2003/03/05 23:56:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,7 +52,7 @@
 # define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
-#define CVAR(x)		x(%rip)
+#define CVAROFF(x,y)		(_C_LABEL(x)+y)(%rip)
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y

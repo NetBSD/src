@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10 2003/03/05 23:56:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -162,7 +162,10 @@ syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+	KERNEL_PROC_LOCK(l);
 	error = (*callp->sy_call)(l, argp, rval);
+	KERNEL_PROC_UNLOCK(l);
+
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -259,12 +262,16 @@ syscall_fancy(frame)
 		}
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	KERNEL_PROC_LOCK(l);
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, argp, rval);
+	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -307,9 +314,14 @@ child_return(arg)
 	tf->tf_rax = 0;
 	tf->tf_rflags &= ~PSL_C;
 
+	KERNEL_PROC_UNLOCK(l);
+
 	userret(l);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(l);
+	}
 #endif
 }

@@ -1,4 +1,39 @@
-/*	$NetBSD: vector.S,v 1.18 2003/01/30 02:05:00 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.19 2003/03/05 23:56:13 fvdl Exp $	*/
+
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,35 +71,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Slightly adapted for NetBSD/x86_64 by fvdl@wasabisystems.com. A bit
- * of a minimal effort port, as this file will very likely have to
- * be redone for the real hardware (but no specs are available for that
- * yet).
- */
 #include "opt_ddb.h"
-
-#include "assym.h"
-
-#include <sys/errno.h>
-#include <sys/syscall.h>
+#include "opt_multiprocessor.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
-#include <machine/param.h>
-#include <machine/frameasm.h>
-#include <dev/isa/isareg.h>
+#include <machine/i8259.h>
+#include <machine/i82093reg.h>
+#include <machine/i82489reg.h>
 #include <machine/asm.h>
-#include <machine/trap.h>
+#include <machine/frameasm.h>
 #include <machine/segments.h>
-
+#include <machine/trap.h>
+#include <machine/intr.h>
+#include <machine/psl.h>
 
 #include <net/netisr.h>
 
-/*
- * XXX definition should not be here.
- */
-#define IRQ_SLAVE	2
+#include "ioapic.h"
+#include "lapic.h"
+#include "assym.h"
 
 /*****************************************************************************/
 
@@ -105,7 +131,8 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-	movq	_C_LABEL(curlwp)(%rip),%rdi
+	sti
+	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
 IDTVEC(trap08)
@@ -122,6 +149,7 @@ IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
+IDTVEC(intrspurious)
 IDTVEC(trap0f)
 	iretq
 IDTVEC(trap10)
@@ -192,9 +220,10 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
+	sti
 calltrap:
 #ifdef DIAGNOSTIC
-	movl	_C_LABEL(cpl)(%rip),%ebx
+	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
@@ -211,218 +240,26 @@ calltrap:
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	_C_LABEL(cpl)(%rip),%ebx
+1:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f,%rdi
-	movl	_C_LABEL(cpl)(%rip),%esi
+	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 #ifdef DDB
 	int	$3
 #endif /* DDB */
-	movl	%ebx,_C_LABEL(cpl)(%rip)
+	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
 
-IDTVEC(syscall32)
-	sysret		/* go away please */
 
-/*
- * syscall insn entry. This currently isn't much faster, but
- * it can be made faster in the future.
- */
-IDTVEC(syscall)
-	swapgs
-	movq	%r15,CPUVAR(SCRATCH)
-	movq	_C_LABEL(curpcb)(%rip),%r15
-	movq	PCB_RSP0(%r15),%r15
-	xchgq	%r15,%rsp
-	sti
+#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
 
-	/*
-	 * XXX don't need this whole frame, split of the
-	 * syscall frame and trapframe is needed.
-	 * First, leave some room for the trapno, error,
-	 * ss:rsp, etc, so that all GP registers can be
-	 * saved. Then, fill in the rest.
-	 */
-	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
-	pushq	%r15
-	subq	$(TF_RSP-TF_TRAPNO),%rsp
-	movq	CPUVAR(SCRATCH),%r15
-	subq	$32,%rsp
-	INTR_SAVE_GPRS
-	movw	%fs,TF_FS(%rsp)
-	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
-	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rcx,TF_RIP(%rsp)
-	movq	$2,TF_ERR(%rsp)
-	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
-
-	movq    _C_LABEL(curlwp)(%rip),%r14
-	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
-	movq	L_PROC(%r14),%r15
-	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
-	call	*P_MD_SYSCALL(%r15)
-1:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%r11)
-	je	2f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	1b
-2:
-	sti
-	testl	$MDP_IRET, L_MD_FLAGS(%r14)
-	jne	iret_return;
-syscall_return:
-#ifdef DIAGNOSTIC
-	cmpl	$0,_C_LABEL(cpl)(%rip)
-	jne	3f
-#endif
-	/*
-	 * XXX interrupts off longer than they should be here.
-	 */
-	cli
-	swapgs
-	movw	TF_ES(%rsp),%es
-	movw	TF_FS(%rsp),%fs
-	movw	TF_GS(%rsp),%gs
-	INTR_RESTORE_GPRS
-	addq	$48,%rsp
-	popq	%rcx	/* return rip */
-	addq	$8,%rsp
-	popq	%r11	/* flags as set by sysret insn */
-	movq	(%rsp),%rsp
-	sysretq
-
-#ifdef DIAGNOSTIC
-3:	movabsq	$4f, %rdi
-	movl	TF_RAX(%rsp),%esi
-	movl	TF_RDI(%rsp),%edx
-	movl	%ebx,%ecx
-	movl	_C_LABEL(cpl)(%rip),%r8d
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$0,_C_LABEL(cpl)(%rip)
-	jmp	1b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
-#endif
-
-
-NENTRY(proc_trampoline)
-	movq	$0,_C_LABEL(cpl)(%rip)
-	movq	%r13,%rdi
-	call	*%r12
-	INTRFASTEXIT
-	/* NOTREACHED */
-
-NENTRY(child_trampoline)
-	movq	$0,_C_LABEL(cpl)(%rip)
-	movq	%r13,%rdi
-	call	*%r12
-	jmp	syscall_return
-
-/*
- * Old call gate entry for syscall. XXXfvdl: only needed if we're
- * going to support running old NetBSD or ibcs2 binaries, etc,
- * on NetBSD/x86_64.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushfq
-	popq	8(%rsp)
-	pushq	$7		# size of instruction for restart
-	jmp	osyscall1
-
-/*
- * Trap gate entry for int $80 syscall, also used by sigreturn.
- */
-IDTVEC(osyscall)
-	pushq	$2		# size of instruction for restart
-osyscall1:
-	pushq	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	movq	_C_LABEL(curlwp)(%rip),%rdx	# get pointer to curproc
-	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
-	movq	L_PROC(%rdx),%rdx
-	call	*P_MD_SYSCALL(%rdx)
-_C_LABEL(osyscall_return):
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%r11)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-iret_return:
-#ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-1:	cmpl	$0,_C_LABEL(cpl)(%rip)
-	jne	3f
-	INTRFASTEXIT
-3:	sti
-	movabsq	$4f, %rdi
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$0,_C_LABEL(cpl)(%rip)
-	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
-
-
-/*
- * XXXfvdl these are currently still the i386 ISA-like handling functions.
- * The first generation of Hammers is specified to have an "APIC-like"
- * interrupt controller, so it is likely that the local APIC code as
- * used by the SMP code can be shared in the future.
- */
-
-#define	IRQ_BIT(irq_num)	(1 << ((irq_num) & 7))
-#define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
-
-#define	ACK1(irq_num) \
-	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
-	outb	%al,$IO_ICU1
-
-#define	ACK2(irq_num) \
-	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
-	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
-	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
-	outb	%al,$IO_ICU1
-
-#define	MASK(irq_num, icu) \
-	movb	(_C_LABEL(imen) + IRQ_BYTE(irq_num))(%rip),%al		;\
-	orb	$IRQ_BIT(irq_num),%al					;\
-	movb	%al,(_C_LABEL(imen) + IRQ_BYTE(irq_num))(%rip)		;\
-	outb	%al,$(icu+1)
-#define	UNMASK(irq_num, icu) \
-	cli								;\
-	movb	(_C_LABEL(imen) + IRQ_BYTE(irq_num))(%rip),%al		;\
-	andb	$~IRQ_BIT(irq_num),%al					;\
-	movb	%al,(_C_LABEL(imen) + IRQ_BYTE(irq_num))(%rip)		;\
-	outb	%al,$(icu+1)						;\
-	sti
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -433,7 +270,7 @@ iret_return:
  * only needs a few bits.  Xdoreti() needs a trap frame for handling ASTs, but
  * it could easily convert the frame on demand.
  *
- * The direct costs of setting up a trap frame are two pushl's (error code and
+ * The direct costs of setting up a trap frame are two pushq's (error code and
  * trap number), an addl to get rid of these, and pushing and popping the
  * callee-saved registers %esi, %edi, %ebx, and %ebp twice.
  *
@@ -441,368 +278,431 @@ iret_return:
  * decide the ipending case with less overhead, e.g., by avoiding loading the
  * segment registers.
  *
- * XXX
- * Should we do a cld on every system entry to avoid the requirement for
- * scattered cld's?
- */
-
-	.globl	_C_LABEL(isa_strayintr)
-	.globl	_C_LABEL(osyscall_return)
-
-/*
- * Normal vectors.
- *
- * We cdr down the intrhand chain, calling each handler with its appropriate
- * argument (0 meaning a pointer to the frame, for clock interrupts).
- *
- * The handler returns one of three values:
- *   0 - This interrupt wasn't for me.
- *   1 - This interrupt was for me.
- *  -1 - This interrupt might have been for me, but I don't know.
- * If there are no handlers, or they all return 0, we flags it as a `stray'
- * interrupt.  On a system with level-triggered interrupts, we could terminate
- * immediately when one of them returns 1; but this is a PC.
- *
- * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 
 #define MY_COUNT _C_LABEL(uvmexp)
 
-#ifdef __STDC__
-#define XINTR(irq_num)		Xintr ## irq_num
-#define XHOLD(irq_num)		Xhold ## irq_num
-#define XSTRAY(irq_num)		Xstray ## irq_num
+/* XXX See comment in locore.s */
+#ifdef __ELF__
+#define	XINTR(name,num)		Xintr_/**/name/**/num
 #else
-#define	XINTR(irq_num)		Xintr/**/irq_num
-#define	XHOLD(irq_num)		Xhold/**/irq_num
-#define	XSTRAY(irq_num)		Xstray/**/irq_num
+#define	XINTR(name,num)		_Xintr_/**/name/**/num
 #endif
 
-#ifdef __STDC__
-#define XRESUME_VEC(irq_num)                                            \
-	ALIGN_TEXT; .globl Xresume ## irq_num; Xresume ## irq_num:
-#define XRECURSE_VEC(irq_num)                                           \
-	ALIGN_TEXT; .globl Xrecurse ## irq_num; Xrecurse ## irq_num:
-#define XSTRAY_VEC(irq_num)                                             \
-	ALIGN_TEXT; .globl Xstray ## irq_num; Xstray ## irq_num:
-#define XHOLD_VEC(irq_num)                                              \
-	ALIGN_TEXT; .globl Xhold ## irq_num; Xhold ## irq_num:
+#if NLAPIC > 0
+#ifdef MULTIPROCESSOR
+IDTVEC(recurse_lapic_ipi)
+	INTR_RECURSE_HWFRAME
+	pushq	$0		
+	pushq	$T_ASTFLT
+	INTRENTRY		
+IDTVEC(resume_lapic_ipi)
+	cli
+	jmp	1f
+IDTVEC(intr_lapic_ipi)
+	pushq	$0		
+	pushq	$T_ASTFLT
+	INTRENTRY		
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_IPI,%ebx
+	jae	2f
+1:
+	incl	CPUVAR(IDEPTH)
+	movl	$IPL_IPI,CPUVAR(ILEVEL)
+        sti
+	pushq	%rbx
+	call	_C_LABEL(x86_ipi_handler)
+	jmp	_C_LABEL(Xdoreti)
+2:
+	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
+	sti
+	INTRFASTEXIT
+
+#if defined(DDB)
+IDTVEC(intrddb)
+1:
+	INTRENTRY
+	movl	$0xff,%eax
+	movq	%rax,%cr8
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	sti
+	call	_C_LABEL(ddb_ipi)
+	xorl	%eax,%eax
+	movq	%rax,%cr8
+	iretq
+	jmp	1b
+#endif /* DDB */
+#endif /* MULTIPROCESSOR */
+	
+	/*
+	 * Interrupt from the local APIC timer.
+	 */
+IDTVEC(recurse_lapic_ltimer)
+	INTR_RECURSE_HWFRAME
+	pushq	$0		
+	pushq	$T_ASTFLT
+	INTRENTRY		
+IDTVEC(resume_lapic_ltimer)
+	cli
+	jmp	1f
+IDTVEC(intr_lapic_ltimer)
+	pushq	$0		
+	pushq	$T_ASTFLT
+	INTRENTRY		
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_CLOCK,%ebx
+	jae	2f
+1:
+	incl	CPUVAR(IDEPTH)
+	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
+	sti
+	pushq	%rbx
+	xorq	%rdi,%rdi
+	call	_C_LABEL(lapic_clockintr)
+	jmp	_C_LABEL(Xdoreti)
+2:
+	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
+	sti
+	INTRFASTEXIT
+#endif /* NLAPIC > 0 */
+
+#ifdef MULTIPROCESSOR
+#define LOCK_KERNEL	call _C_LABEL(x86_intlock)
+#define UNLOCK_KERNEL	call _C_LABEL(x86_intunlock)
 #else
-#define XRESUME_VEC(irq_num)                                            \
- 	ALIGN_TEXT; .globl Xresume/**/irq_num; Xresume/**/irq_num:
-#define XRECURSE_VEC(irq_num)                                           \
- 	ALIGN_TEXT; .globl Xrecurse/**/irq_num; Xrecurse/**/irq_num:
-#define XSTRAY_VEC(irq_num)                                             \
-	ALIGN_TEXT; .globl Xstray/**/irq_num; Xstray/**/irq_num:
-#define XHOLD_VEC(irq_num)                                              \
-	ALIGN_TEXT; .globl Xhold/**/irq_num; Xhold/**/irq_num:
-#endif /* __STDC__ */
+#define LOCK_KERNEL
+#define UNLOCK_KERNEL
+#endif
+
+#define voidop(num)
 
 
-#define	INTR(irq_num, icu, ack) \
-XRESUME_VEC(irq_num)							;\
-	cli								;\
-	jmp	1f							;\
-XRECURSE_VEC(irq_num)							;\
-	movq	%rsp,%r10						;\
-	movl	%ss,%r11d						;\
-	pushq	%r11							;\
-	pushq	%r10							;\
-	pushfq								;\
-	movl	%cs,%r11d						;\
-	pushq	%r11							;\
-	pushq	%r12							;\
-	cli								;\
-XINTR(irq_num):								;\
+/*
+ * This macro defines the generic stub code. Its arguments modifiy it
+ * for specific PICs.
+ */
+
+#define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_check) \
+IDTVEC(recurse_/**/name/**/num)						;\
+	INTR_RECURSE_HWFRAME						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	MAKE_FRAME							;\
-	MASK(irq_num, icu)		/* mask it in hardware */	;\
-	ack(irq_num)			/* and allow other intrs */	;\
-	incl	(MY_COUNT+V_INTR)(%rip)		/* statistical info */	;\
-	leaq	_C_LABEL(cpl)(%rip),%rdi				;\
-	testb	$IRQ_BIT(irq_num),IRQ_BYTE(irq_num)(%rdi)		;\
-	jnz	XHOLD(irq_num)		/* currently masked; hold it */	;\
-1:	movl	_C_LABEL(cpl)(%rip),%eax /* cpl to restore on exit */	;\
-	pushq	%rax							;\
-	leaq	_C_LABEL(intrmask)(%rip),%rdi				;\
-	orl	((irq_num) * 4)(%rdi),%eax				;\
-	movl	%eax,_C_LABEL(cpl)(%rip) /* add in this intr's mask */	;\
-	sti				/* safe to take intrs now */	;\
-	leaq	_C_LABEL(intrhand)(%rip),%rdi				;\
-	movq	((irq_num) * 8)(%rdi),%rbx	/* head of chain */	;\
-	testq	%rbx,%rbx						;\
-	jz	XSTRAY(irq_num)		/* no handlers; we're stray */	;\
-	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
-	leaq	_C_LABEL(intrcnt)(%rip),%rdi				;\
-	incq	(8*(irq_num))(%rdi)	/* XXX */			;\
-7:	movq	IH_ARG(%rbx),%rdi	/* get handler arg */		;\
-	testq	%rdi,%rdi						;\
-	jnz	4f							;\
-	movq	%rsp,%rdi		/* 0 means frame pointer */	;\
-4:	call	*IH_FUN(%rbx)		/* call it */			;\
-	STRAY_INTEGRATE			/* maybe he claimed it */	;\
-	incl	IH_COUNT(%rbx)		/* count the intrs */		;\
+IDTVEC(resume_/**/name/**/num)						\
+	movl	%ebx,%r13d						;\
+	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
+	movl	IS_MAXLEVEL(%r14),%ebx					;\
+	jmp	1f							;\
+IDTVEC(intr_/**/name/**/num)						;\
+	pushq	$0			/* dummy error code */		;\
+	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	INTRENTRY							;\
+	movq	CPUVAR(ISOURCES) + (num) * 8, %r14		;\
+	mask(num)		/* mask it in hardware */	;\
+	early_ack(num)			/* and allow other intrs */	;\
+	testq	%r14,%r14						;\
+	jz	9f			/* stray */			;\
+	movl	IS_MAXLEVEL(%r14),%ebx					;\
+	movl	CPUVAR(ILEVEL),%r13d					;\
+	cmpl	%ebx,%r13d						;\
+	jae	10f			/* currently masked; hold it */	;\
+	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incq	IS_EVCNT(%r14)						;\
+1:									\
+	pushq	%r13							;\
+	movl	%ebx,CPUVAR(ILEVEL)					;\
+	sti								;\
+	incl	CPUVAR(IDEPTH)						;\
+	movq	IS_HANDLERS(%r14),%rbx					;\
+	LOCK_KERNEL							;\
+6:									\
+	movl	IH_LEVEL(%rbx),%r12d					;\
+	cmpl	%r13d,%r12d						;\
+	jle	7f							;\
+	movq	IH_ARG(%rbx),%rdi					;\
+	movl	%r12d,CPUVAR(ILEVEL)					;\
+	call	*IH_FUN(%rbx)		/* call it */			;\
+	level_check(num)						;\
 	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
-	jnz	7b							;\
-	STRAY_TEST			/* see if it's a stray */	;\
-5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
+	jnz	6b							;\
+5:									\
+	UNLOCK_KERNEL							;\
+	unmask(num)			/* unmask it in hardware */	;\
+	late_ack(num)							;\
+	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-XSTRAY_VEC(irq_num)							;\
-	movq	$irq_num,%rdi						;\
-	call	_C_LABEL(isa_strayintr)					;\
-	leaq	_C_LABEL(strayintrcnt)(%rip),%rdi			;\
-	incq	(8*(irq_num))(%rdi)					;\
-	jmp	5b							;\
-XHOLD_VEC(irq_num)							;\
-	leaq	_C_LABEL(ipending)(%rip),%rdi				;\
-	orb	$IRQ_BIT(irq_num),IRQ_BYTE(irq_num)(%rdi)		;\
+7:									\
+	UNLOCK_KERNEL							;\
+	orl     $(1 << num),CPUVAR(IPENDING)				;\
+	late_ack(num)							;\
+	sti								;\
+	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
+10:									\
+	orl     $(1 << num),CPUVAR(IPENDING)				;\
+	late_ack(num)							;\
+	sti								;\
+	INTRFASTEXIT							;\
+9:									\
+	unmask(num)							;\
+	late_ack(num)							;\
+	sti								;\
 	INTRFASTEXIT
 
-#if defined(DEBUG) && defined(notdef)
-#define	STRAY_INITIALIZE \
-	xorl	%esi,%esi
-#define	STRAY_INTEGRATE \
-	orl	%eax,%esi
-#define	STRAY_TEST \
-	testl	%esi,%esi						;\
-	jz	XSTRAY(irq_num)
-#else /* !DEBUG */
-#define	STRAY_INITIALIZE
-#define	STRAY_INTEGRATE
-#define	STRAY_TEST
-#endif /* DEBUG */
+#define ICUADDR IO_ICU1
 
-#ifdef DDB
-#define	MAKE_FRAME \
-	leaq	-16(%rsp),%rbp
-#else /* !DDB */
-#define	MAKE_FRAME
-#endif /* DDB */
+INTRSTUB(legacy,0,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,1,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,2,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,3,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,4,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,5,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,6,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,7,i8259_asm_ack1,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+#undef ICUADDR
+#define ICUADDR IO_ICU2
 
-INTR(0, IO_ICU1, ACK1)
-INTR(1, IO_ICU1, ACK1)
-INTR(2, IO_ICU1, ACK1)
-INTR(3, IO_ICU1, ACK1)
-INTR(4, IO_ICU1, ACK1)
-INTR(5, IO_ICU1, ACK1)
-INTR(6, IO_ICU1, ACK1)
-INTR(7, IO_ICU1, ACK1)
-INTR(8, IO_ICU2, ACK2)
-INTR(9, IO_ICU2, ACK2)
-INTR(10, IO_ICU2, ACK2)
-INTR(11, IO_ICU2, ACK2)
-INTR(12, IO_ICU2, ACK2)
-INTR(13, IO_ICU2, ACK2)
-INTR(14, IO_ICU2, ACK2)
-INTR(15, IO_ICU2, ACK2)
+INTRSTUB(legacy,8,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,9,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,10,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,11,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,12,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,13,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,14,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,15,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
+    voidop)
+
+#if NIOAPIC > 0
+INTRSTUB(ioapic,0,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,1,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,2,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,3,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,4,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,5,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,6,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,7,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,8,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,9,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,10,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,11,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,12,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,13,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,14,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,15,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,16,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,17,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,18,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,19,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,20,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,21,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,22,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,23,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,24,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,25,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,26,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,27,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,28,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,29,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,30,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+INTRSTUB(ioapic,31,ioapic_asm_ack,voidop,voidop,voidop,voidop)
+#endif
+
+.globl _C_LABEL(i8259_stubs)
+_C_LABEL(i8259_stubs):
+	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
+	.quad _C_LABEL(Xresume_legacy0)
+	.quad _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
+	.quad _C_LABEL(Xresume_legacy1)
+	.quad _C_LABEL(Xintr_legacy2), _C_LABEL(Xrecurse_legacy2)
+	.quad _C_LABEL(Xresume_legacy2)
+	.quad _C_LABEL(Xintr_legacy3), _C_LABEL(Xrecurse_legacy3)
+	.quad _C_LABEL(Xresume_legacy3)
+	.quad _C_LABEL(Xintr_legacy4), _C_LABEL(Xrecurse_legacy4)
+	.quad _C_LABEL(Xresume_legacy4)
+	.quad _C_LABEL(Xintr_legacy5), _C_LABEL(Xrecurse_legacy5)
+	.quad _C_LABEL(Xresume_legacy5)
+	.quad _C_LABEL(Xintr_legacy6), _C_LABEL(Xrecurse_legacy6)
+	.quad _C_LABEL(Xresume_legacy6)
+	.quad _C_LABEL(Xintr_legacy7), _C_LABEL(Xrecurse_legacy7)
+	.quad _C_LABEL(Xresume_legacy7)
+	.quad _C_LABEL(Xintr_legacy8), _C_LABEL(Xrecurse_legacy8)
+	.quad _C_LABEL(Xresume_legacy8)
+	.quad _C_LABEL(Xintr_legacy9), _C_LABEL(Xrecurse_legacy9)
+	.quad _C_LABEL(Xresume_legacy9)
+	.quad _C_LABEL(Xintr_legacy10), _C_LABEL(Xrecurse_legacy10)
+	.quad _C_LABEL(Xresume_legacy10)
+	.quad _C_LABEL(Xintr_legacy11), _C_LABEL(Xrecurse_legacy11)
+	.quad _C_LABEL(Xresume_legacy11)
+	.quad _C_LABEL(Xintr_legacy12), _C_LABEL(Xrecurse_legacy12)
+	.quad _C_LABEL(Xresume_legacy12)
+	.quad _C_LABEL(Xintr_legacy13), _C_LABEL(Xrecurse_legacy13)
+	.quad _C_LABEL(Xresume_legacy13)
+	.quad _C_LABEL(Xintr_legacy14), _C_LABEL(Xrecurse_legacy14)
+	.quad _C_LABEL(Xresume_legacy14)
+	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
+	.quad _C_LABEL(Xresume_legacy15)
+
+#if NIOAPIC > 0
+.globl _C_LABEL(ioapic_stubs)
+_C_LABEL(ioapic_stubs):
+	.quad _C_LABEL(Xintr_ioapic0), _C_LABEL(Xrecurse_ioapic0)
+	.quad _C_LABEL(Xresume_ioapic0)
+	.quad _C_LABEL(Xintr_ioapic1), _C_LABEL(Xrecurse_ioapic1)
+	.quad _C_LABEL(Xresume_ioapic1)
+	.quad _C_LABEL(Xintr_ioapic2), _C_LABEL(Xrecurse_ioapic2)
+	.quad _C_LABEL(Xresume_ioapic2)
+	.quad _C_LABEL(Xintr_ioapic3), _C_LABEL(Xrecurse_ioapic3)
+	.quad _C_LABEL(Xresume_ioapic3)
+	.quad _C_LABEL(Xintr_ioapic4), _C_LABEL(Xrecurse_ioapic4)
+	.quad _C_LABEL(Xresume_ioapic4)
+	.quad _C_LABEL(Xintr_ioapic5), _C_LABEL(Xrecurse_ioapic5)
+	.quad _C_LABEL(Xresume_ioapic5)
+	.quad _C_LABEL(Xintr_ioapic6), _C_LABEL(Xrecurse_ioapic6)
+	.quad _C_LABEL(Xresume_ioapic6)
+	.quad _C_LABEL(Xintr_ioapic7), _C_LABEL(Xrecurse_ioapic7)
+	.quad _C_LABEL(Xresume_ioapic7)
+	.quad _C_LABEL(Xintr_ioapic8), _C_LABEL(Xrecurse_ioapic8)
+	.quad _C_LABEL(Xresume_ioapic8)
+	.quad _C_LABEL(Xintr_ioapic9), _C_LABEL(Xrecurse_ioapic9)
+	.quad _C_LABEL(Xresume_ioapic9)
+	.quad _C_LABEL(Xintr_ioapic10), _C_LABEL(Xrecurse_ioapic10)
+	.quad _C_LABEL(Xresume_ioapic10)
+	.quad _C_LABEL(Xintr_ioapic11), _C_LABEL(Xrecurse_ioapic11)
+	.quad _C_LABEL(Xresume_ioapic11)
+	.quad _C_LABEL(Xintr_ioapic12), _C_LABEL(Xrecurse_ioapic12)
+	.quad _C_LABEL(Xresume_ioapic12)
+	.quad _C_LABEL(Xintr_ioapic13), _C_LABEL(Xrecurse_ioapic13)
+	.quad _C_LABEL(Xresume_ioapic13)
+	.quad _C_LABEL(Xintr_ioapic14), _C_LABEL(Xrecurse_ioapic14)
+	.quad _C_LABEL(Xresume_ioapic14)
+	.quad _C_LABEL(Xintr_ioapic15), _C_LABEL(Xrecurse_ioapic15)
+	.quad _C_LABEL(Xresume_ioapic15)
+	.quad _C_LABEL(Xintr_ioapic16), _C_LABEL(Xrecurse_ioapic16)
+	.quad _C_LABEL(Xresume_ioapic16)
+	.quad _C_LABEL(Xintr_ioapic17), _C_LABEL(Xrecurse_ioapic17)
+	.quad _C_LABEL(Xresume_ioapic17)
+	.quad _C_LABEL(Xintr_ioapic18), _C_LABEL(Xrecurse_ioapic18)
+	.quad _C_LABEL(Xresume_ioapic18)
+	.quad _C_LABEL(Xintr_ioapic19), _C_LABEL(Xrecurse_ioapic19)
+	.quad _C_LABEL(Xresume_ioapic19)
+	.quad _C_LABEL(Xintr_ioapic20), _C_LABEL(Xrecurse_ioapic20)
+	.quad _C_LABEL(Xresume_ioapic20)
+	.quad _C_LABEL(Xintr_ioapic21), _C_LABEL(Xrecurse_ioapic21)
+	.quad _C_LABEL(Xresume_ioapic21)
+	.quad _C_LABEL(Xintr_ioapic22), _C_LABEL(Xrecurse_ioapic22)
+	.quad _C_LABEL(Xresume_ioapic22)
+	.quad _C_LABEL(Xintr_ioapic23), _C_LABEL(Xrecurse_ioapic23)
+	.quad _C_LABEL(Xresume_ioapic23)
+	.quad _C_LABEL(Xintr_ioapic24), _C_LABEL(Xrecurse_ioapic24)
+	.quad _C_LABEL(Xresume_ioapic24)
+	.quad _C_LABEL(Xintr_ioapic25), _C_LABEL(Xrecurse_ioapic25)
+	.quad _C_LABEL(Xresume_ioapic25)
+	.quad _C_LABEL(Xintr_ioapic26), _C_LABEL(Xrecurse_ioapic26)
+	.quad _C_LABEL(Xresume_ioapic26)
+	.quad _C_LABEL(Xintr_ioapic27), _C_LABEL(Xrecurse_ioapic27)
+	.quad _C_LABEL(Xresume_ioapic27)
+	.quad _C_LABEL(Xintr_ioapic28), _C_LABEL(Xrecurse_ioapic28)
+	.quad _C_LABEL(Xresume_ioapic28)
+	.quad _C_LABEL(Xintr_ioapic29), _C_LABEL(Xrecurse_ioapic29)
+	.quad _C_LABEL(Xresume_ioapic29)
+	.quad _C_LABEL(Xintr_ioapic30), _C_LABEL(Xrecurse_ioapic30)
+	.quad _C_LABEL(Xresume_ioapic30)
+	.quad _C_LABEL(Xintr_ioapic31), _C_LABEL(Xrecurse_ioapic31)
+	.quad _C_LABEL(Xresume_ioapic31)
+#endif
 
 /*
- * These tables are used by the ISA configuration code.
+ * Symbols that vmstat -i wants, even though they're not used.
  */
-/* interrupt service routine entry points */
-IDTVEC(intr)
-	.quad	_C_LABEL(Xintr0), _C_LABEL(Xintr1)
-	.quad	_C_LABEL(Xintr2), _C_LABEL(Xintr3)
-	.quad	_C_LABEL(Xintr4), _C_LABEL(Xintr5)
-	.quad	_C_LABEL(Xintr6), _C_LABEL(Xintr7)
-	.quad	_C_LABEL(Xintr8), _C_LABEL(Xintr9)
-	.quad	_C_LABEL(Xintr10), _C_LABEL(Xintr11)
-	.quad	_C_LABEL(Xintr12), _C_LABEL(Xintr13)
-	.quad	_C_LABEL(Xintr14), _C_LABEL(Xintr15)
-
-/*
- * These tables are used by Xdoreti() and Xspllower().
- */
-/* resume points for suspended interrupts */
-IDTVEC(resume)
-	.quad	_C_LABEL(Xresume0), _C_LABEL(Xresume1)
-	.quad	_C_LABEL(Xresume2), _C_LABEL(Xresume3)
-	.quad	_C_LABEL(Xresume4), _C_LABEL(Xresume5)
-	.quad	_C_LABEL(Xresume6), _C_LABEL(Xresume7)
-	.quad	_C_LABEL(Xresume8), _C_LABEL(Xresume9)
-	.quad	_C_LABEL(Xresume10), _C_LABEL(Xresume11)
-	.quad	_C_LABEL(Xresume12), _C_LABEL(Xresume13)
-	.quad	_C_LABEL(Xresume14), _C_LABEL(Xresume15)
-	/* for soft interrupts */
-	.quad	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.quad	_C_LABEL(Xsoftserial), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
-/* fake interrupts to resume from splx() */
-IDTVEC(recurse)
-	.quad	_C_LABEL(Xrecurse0), _C_LABEL(Xrecurse1)
-	.quad	_C_LABEL(Xrecurse2), _C_LABEL(Xrecurse3)
-	.quad	_C_LABEL(Xrecurse4), _C_LABEL(Xrecurse5)
-	.quad	_C_LABEL(Xrecurse6), _C_LABEL(Xrecurse7)
-	.quad	_C_LABEL(Xrecurse8), _C_LABEL(Xrecurse9)
-	.quad	_C_LABEL(Xrecurse10), _C_LABEL(Xrecurse11)
-	.quad	_C_LABEL(Xrecurse12), _C_LABEL(Xrecurse13)
-	.quad	_C_LABEL(Xrecurse14), _C_LABEL(Xrecurse15)
-	/* for soft interrupts */
-	.quad	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.quad	_C_LABEL(Xsoftserial), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
-
-
-/* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-
-	/* Names */
+.globl	_C_LABEL(intrnames)
 _C_LABEL(intrnames):
-	.asciz	"irq0", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
-_C_LABEL(strayintrnames):
-	.asciz	"stray0", "stray1", "stray2", "stray3"
-	.asciz	"stray4", "stray5", "stray6", "stray7"
-	.asciz	"stray8", "stray9", "stray10", "stray11"
-	.asciz	"stray12", "stray13", "stray14", "stray15"
+.globl	_C_LABEL(eintrnames)
 _C_LABEL(eintrnames):
 
-	/* And counters */
-	.data
-	.align 64
-
+.globl	_C_LABEL(intrcnt)
 _C_LABEL(intrcnt):
-	.quad	0, 0, 0, 0, 0, 0, 0, 0
-	.quad	0, 0, 0, 0, 0, 0, 0, 0
-_C_LABEL(strayintrcnt):
-	.quad	0, 0, 0, 0, 0, 0, 0, 0
-	.quad	0, 0, 0, 0, 0, 0, 0, 0
+.globl	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
-
-	.text
-
-
-	.data
-	.globl	_C_LABEL(imen),_C_LABEL(cpl),_C_LABEL(ipending)
-	.globl	_C_LABEL(netisr)
-_C_LABEL(imen):
-	.long	0xffff		# interrupt mask enable (all off)
-
-	.text
-
-#if defined(PROF) || defined(GPROF)
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	$-1,%eax
-	xchgl	%eax,_C_LABEL(cpl)(%rip)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movl	%edi,_C_LABEL(cpl)(%rip)
-	testl	%edi,%edi
-	jnz	_C_LABEL(Xspllower)
-	ret
-#endif /* PROF || GPROF */
-	
-/*
- * Process pending interrupts.
- *
- * Important registers:
- *   ebx - cpl
- *   r12 - address to resume loop at
- *   r13 - scratch for Xsoftnet
- */
-IDTVEC(spllower)
-	pushq	%rbx
-	pushq	%r12
-	pushq	%r13
-	movl	_C_LABEL(cpl)(%rip),%ebx	# save priority
-	leaq	1f(%rip),%r12			# address to resume loop at
-1:	movl	%ebx,%eax
-	notl	%eax
-	andl	_C_LABEL(ipending)(%rip),%eax
-	jz	2f
-	bsfl	%eax,%eax
-	btrl	%eax,_C_LABEL(ipending)(%rip)
-	jnc	1b
-	leaq	_C_LABEL(Xrecurse)(%rip),%rdi
-	jmp	*(%rdi,%rax,8)
-2:	popq	%r13
-	popq	%r12
-	popq	%rbx
-	ret
-
-/*
- * Handle return from interrupt after device handler finishes.
- *
- * Important registers:
- *   ebx - cpl to restore
- *   r12 - address to resume loop at
- *   r13 - scratch for Xsoftnet
- */
-IDTVEC(doreti)
-	popq	%rbx			# get previous priority
-	movl	%ebx,_C_LABEL(cpl)(%rip)
-	leaq	1f(%rip),%r12		# address to resume loop at
-1:	movl	%ebx,%eax
-	notl	%eax
-	andl	_C_LABEL(ipending)(%rip),%eax
-	jz	2f
-	bsfl    %eax,%eax               # slow, but not worth optimizing
-	btrl    %eax,_C_LABEL(ipending)(%rip)
-	jnc     1b			# some intr cleared the in-memory bit
-	leaq	_C_LABEL(Xresume)(%rip),%rdi
-	jmp	*(%rdi,%rax,8)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%r11)
-	je	3f
-	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
-4:	CLEAR_ASTPENDING(%r11)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-3:	INTRFASTEXIT
-
 
 /*
  * Soft interrupt handlers
  */
 
 IDTVEC(softserial)
-	leaq	_C_LABEL(imask)(%rip),%rdi
-	movl	(IPL_SOFTSERIAL * 4)(%rdi),%eax
-	movl	%eax,_C_LABEL(cpl)(%rip)
-#include "com.h"
-#if NCOM > 0
-	call	_C_LABEL(comsoft)
+	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	incl	CPUVAR(IDEPTH)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(x86_softintlock)
 #endif
-	movl	%ebx,_C_LABEL(cpl)(%rip)
-	jmp	*%r12
+	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
+	incq	IS_EVCNT(%r12)
+	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
+	call	_C_LABEL(softintr_dispatch)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintunlock)
+#endif
+	decl	CPUVAR(IDEPTH)
+	jmp	*%r13
 
 IDTVEC(softnet)
-	movl	(_C_LABEL(imask) + IPL_SOFTNET * 4)(%rip),%eax
-	movl	%eax,_C_LABEL(cpl)(%rip)
-	xorl	%r13d,%r13d
-	xchgl	_C_LABEL(netisr)(%rip),%r13d
+	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	incl	CPUVAR(IDEPTH)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintlock)
+#endif
+	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
+	incq    IS_EVCNT(%r12)
 
+	xorq	%r12,%r12
+	xchgl	_C_LABEL(netisr),%r12d
+
+	/* XXX Do the legacy netisrs here for now. */
 #define DONETISR(s, c) \
 	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%r13d	;\
+	testl	$(1 << s),%r12d	;\
 	jz	1f		;\
 	call	_C_LABEL(c)	;\
 1:
-
 #include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-	movl	%ebx,_C_LABEL(cpl)(%rip)
-	jmp	*%r12
+	
+	movl	$X86_SOFTINTR_SOFTNET,%edi
+	call	_C_LABEL(softintr_dispatch)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintunlock)	
+#endif
+	decl	CPUVAR(IDEPTH)
+	jmp	*%r13
 
 IDTVEC(softclock)
-	leaq	_C_LABEL(imask)(%rip),%rdi
-	movl	(IPL_SOFTCLOCK * 4)(%rdi),%eax
-	movl	%eax,_C_LABEL(cpl)(%rip)
-	call	_C_LABEL(softclock)
-	movl	%ebx,_C_LABEL(cpl)(%rip)
-	jmp	*%r12
+	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	incl	CPUVAR(IDEPTH)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintlock)
+#endif
+	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
+	incq	IS_EVCNT(%r12)
+
+	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
+	call	_C_LABEL(softintr_dispatch)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintunlock)		
+#endif
+	decl	CPUVAR(IDEPTH)
+	jmp	*%r13

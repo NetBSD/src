@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.S,v 1.2 2002/08/25 18:10:33 thorpej Exp $	*/
+/*	$NetBSD: microtime.S,v 1.3 2003/03/05 23:56:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,6 +37,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
 
+#include "assym.h"
+
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) & 7))
 #define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
@@ -58,8 +60,7 @@ ENTRY(i8254_microtime)
 	inb	$IO_TIMER1+TIMER_CNTR0,%al	# %al has MSB
 
 	# save state of IIR in ICU, and of ipending, for later perusal
-	leaq	_C_LABEL(ipending)(%rip),%rsi
-	movb	IRQ_BYTE(0)(%rsi),%cl # %cl is interrupt pending
+	movb	CPUVAR(IPENDING) + IRQ_BYTE(0),%cl
 	
 	# save the current value of _time
 	movq	_C_LABEL(time)(%rip),%r8	# get time.tv_sec

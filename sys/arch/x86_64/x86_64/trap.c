@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2003/01/30 22:45:20 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2003/03/05 23:56:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +90,7 @@
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/ras.h>
 #include <sys/reboot.h>
 #include <sys/pool.h>
 
@@ -180,6 +182,7 @@ trap(frame)
 	void *resume;
 	caddr_t onfault;
 	int error;
+	uint64_t cr2;
 
 	uvmexp.traps++;
 
@@ -232,7 +235,7 @@ trap(frame)
 		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
 		       " %lx cpl %x rsp %lx\n",
 		    type, frame.tf_err, (u_long)frame.tf_rip, frame.tf_cs,
-		    frame.tf_rflags, rcr2(), cpl, frame.tf_rsp);
+		    frame.tf_rflags, rcr2(), curcpu()->ci_ilevel, frame.tf_rsp);
 
 		/* panic("trap"); */
 		cpu_reboot(RB_HALT, NULL);
@@ -312,7 +315,9 @@ copyfault:
 #ifdef DEBUG
 		frame_dump(&frame);
 #endif
+		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
@@ -322,31 +327,39 @@ copyfault:
 #ifdef DEBUG
 		frame_dump(&frame);
 #endif
+		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			KERNEL_PROC_LOCK(l);
 			ADDUPROF(p);
+			KERNEL_PROC_UNLOCK(l);
 		}
 		/* Allow a forced task switch. */
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt(NULL);
 		goto out;
 
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
+		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGKILL, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 	}
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
+		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, SIGFPE, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
@@ -357,25 +370,39 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == NULL)
 			goto we_re_toast;
+#ifdef LOCKDEBUG
+		if (simple_lock_held(&sched_lock))
+			goto we_re_toast;
+#endif
 		/*
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
 		 */
 		if (pcb->pcb_onfault == fusuintrfailure)
 			goto copyefault;
-		/* FALLTHROUGH */
+#ifdef MULTIPROCESSOR
+		if ((l->l_flag & L_BIGLOCK) == 0)
+			goto we_re_toast;
+#endif
+		cr2 = rcr2();
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddr_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm;
 		register struct vm_map *map;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 		unsigned long nss;
 
+		cr2 = rcr2();
+		KERNEL_PROC_LOCK(l);
+faultcommon:
+		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
-		va = trunc_page((vaddr_t)rcr2());
+		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -428,8 +455,11 @@ copyfault:
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
-			if (type == T_PAGEFLT)
+			if (type == T_PAGEFLT) {
+				KERNEL_UNLOCK();
 				return;
+			}
+			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
 		if (error == EACCES) {
@@ -437,8 +467,10 @@ copyfault:
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
+			if (pcb->pcb_onfault != 0) {
+				KERNEL_UNLOCK();
 				goto copyfault;
+			}
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
@@ -459,6 +491,10 @@ copyfault:
 #endif
 			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
+		if (type == T_PAGEFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(l);
 		break;
 	}
 
@@ -477,7 +513,12 @@ copyfault:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		(*p->p_emul->e_trapsignal)(l, SIGTRAP, type &~ T_USER);
+		if ((p->p_nras == 0) ||
+		    (ras_lookup(p, (caddr_t)frame.tf_rip) == (caddr_t)-1)) {
+			KERNEL_PROC_LOCK(l);
+			(*p->p_emul->e_trapsignal)(l, SIGTRAP, type &~ T_USER);
+			KERNEL_PROC_UNLOCK(l);
+		}
 		break;
 
 #if	NISA > 0
@@ -497,7 +538,7 @@ copyfault:
 #endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 
-		if (isa_nmi() != 0)
+		if (x86_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;
@@ -520,12 +561,16 @@ startlwp(void *arg)
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
+
 	userret(l);
 }
 
 void
 upcallret(struct lwp *l)
 {
+	KERNEL_PROC_UNLOCK(l);
+
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 2002/07/10 01:54:00 fvdl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 2003/03/05 23:56:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct pcb {
 	int	pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	unsigned pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
 };
@@ -125,9 +126,5 @@ struct pcb {
 struct md_coredump {
 	long	md_pad[8];
 };    
-
-#ifdef _KERNEL
-struct pcb *curpcb;		/* our current running pcb */
-#endif
 
 #endif /* _X86_64_PCB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: tss.h,v 1.2 2003/03/05 23:56:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _X86_64_TSS_H_
+#define _X86_64_TSS_H_
+
 /*
  * TSS structure. Since TSS hw switching is not supported in long
  * mode, this is mainly there for the I/O permission map in
@@ -54,3 +57,5 @@ struct x86_64_tss {
 	u_int16_t	tss_reserved6;
 	u_int16_t	tss_iobase;
 } __attribute__((packed));
+
+#endif /* _X86_64_TSS_H_ */

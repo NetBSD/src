@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2003/03/05 23:56:09 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -121,6 +121,8 @@
 #include "opt_lockdebug.h"
 
 #include "assym.h"
+#include "lapic.h"
+#include "ioapic.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -134,16 +136,36 @@
 #include <machine/bootinfo.h>
 #include <machine/frameasm.h>
 
+#if NLAPIC > 0
+#include <machine/i82489reg.h>
+#endif
+
 /*
  * override user-land alignment before including asm.h
  */
-#define	ALIGN_DATA	.align	4
-#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
+#define	ALIGN_DATA	.align	8
+#define ALIGN_TEXT	.align 16,0x90
 #define _ALIGN_TEXT	ALIGN_TEXT
 
 #include <machine/asm.h>
 
+#if defined(MULTIPROCESSOR)
+        
+#define SET_CURLWP(lwp,cpu)			\
+	movq	CPUVAR(SELF),cpu	;	\
+	movq	lwp,CPUVAR(CURLWP)      ;	\
+	movq	cpu,L_CPU(lwp)
+        
+#else
+
+#define SET_CURLWP(lwp,tcpu)		movq	lwp,CPUVAR(CURLWP)
+#define GET_CURLWP(reg)			movq	CPUVAR(CURLWP),reg
+
+#endif
+
+#define GET_CURPCB(reg)			movq	CPUVAR(CURPCB),reg      
+#define SET_CURPCB(reg)			movq	reg,CPUVAR(CURPCB)
+        
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
@@ -155,11 +177,27 @@
  */
 	.data
 
+#if NLAPIC > 0 
+	.align  NBPG
+	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id), _C_LABEL(lapic_tpr)
+_C_LABEL(local_apic):
+	.space  LAPIC_ID
+_C_LABEL(lapic_id):
+	.long   0x00000000
+	.space  LAPIC_TPRI-(LAPIC_ID+4)
+_C_LABEL(lapic_tpr):
+	.space  LAPIC_PPRI-LAPIC_TPRI
+_C_LABEL(lapic_ppr):
+	.space  LAPIC_ISR-LAPIC_PPRI 
+_C_LABEL(lapic_isr):
+	.space  NBPG-LAPIC_ISR
+#endif
+
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(curpcb),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
@@ -190,6 +228,8 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
+	.globl	gdt64
+
 gdt64:
 	.word	gdt64_end-gdt64_start
 	.quad	_RELOC(gdt64_start)
@@ -219,47 +259,7 @@ tmpstk:
 
 	.text
 	.globl	_C_LABEL(kernel_text)
-	.set	_C_LABEL(kernel_text),KERNTEXTOFF+VAR32_SIZE
-	.globl	_C_LABEL(var32_frob)
-_C_LABEL(var32_frob):
-_reloc_boothowto:	.long	_RELOC(boothowto)
-_reloc_bootinfo:	.long	_RELOC(bootinfo)
-_reloc_biosextmem:	.long	_RELOC(biosextmem)
-_reloc_biosbasemem:	.long	_RELOC(biosbasemem)
-_reloc_cpuid_level:	.long	_RELOC(cpuid_level)
-_reloc_cpu_vendor:	.long	_RELOC(cpu_vendor)
-_reloc_cpu_id:		.long	_RELOC(cpu_id)
-_reloc_cpu_feature:	.long	_RELOC(cpu_feature)
-_reloc_cpu_brand_id:	.long	_RELOC(cpu_brand_id)
-_reloc_tmpstk:		.long	_RELOC(tmpstk)
-_reloc_end:		.long	_RELOC(end)
-_reloc_etext:		.long	_RELOC(etext)
-_reloc_esym:		.long	_RELOC(esym)
-_reloc_PTDpaddr:	.long	_RELOC(PTDpaddr)
-_reloc_gdt64:		.long	_RELOC(gdt64)
-_reloc_farjmp64:	.long	_RELOC(farjmp64)
-
-#define RELOC_boothowto		0
-#define RELOC_bootinfo		4
-#define RELOC_biosextmem	8
-#define RELOC_biosbasemem	12
-#define RELOC_cpuid_level	16
-#define RELOC_cpu_vendor	20
-#define RELOC_cpu_id		24
-#define RELOC_cpu_feature	28
-#define RELOC_cpu_brand_id	32
-#define RELOC_tmpstk		36
-#define RELOC_end		40
-#define RELOC_etext		44
-#define RELOC_esym		48
-#define RELOC_PTDpaddr		52
-#define RELOC_gdt64		56
-#define RELOC_farjmp64		60
-
-	.space VAR32_SIZE - (. - _C_LABEL(var32_frob))
-
-#define GET_RELOC_ADDR(var) \
-    movl $(KERNTEXTOFF-KERNBASE),%ebp ; movl RELOC_/**/var(%ebp),%ebp
+	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
 .code32
 
@@ -271,14 +271,12 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
 	 */
 	movl	4(%esp),%eax
-	GET_RELOC_ADDR(boothowto)
-	movl	%eax, (%ebp)
+	movl	%eax,RELOC(boothowto)
 	movl	12(%esp),%eax
-
 	testl	%eax, %eax
 	jz	1f
 	movl	(%eax), %ebx		/* number of entries */
-	GET_RELOC_ADDR(bootinfo)
+	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp, %edx
 	addl	$BOOTINFO_MAXSIZE,%ebp
 	movl	%ebx, (%edx)
@@ -310,7 +308,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	popl	%eax
 	popl	%esi
 	popl	%edi
-	GET_RELOC_ADDR(bootinfo)
+	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp, %edx
 	subl	%ebx, (%edx)		/* correct number of entries */
 1:
@@ -319,18 +317,18 @@ start:	movw	$0x1234,0x472			# warm boot
 	testl	%eax,%eax
 	jz	1f
 	addl	$KERNBASE_LO,%eax
-1: 	GET_RELOC_ADDR(esym)
+1: 	movl	$RELOC(esym),%ebp
 	movl	%eax,(%ebp)
 	movl	$KERNBASE_HI,4(%ebp)
 
-	GET_RELOC_ADDR(biosextmem)
+	movl	$RELOC(biosextmem),%ebp
 	movl	(%ebp),%eax
 	testl	%eax,%eax
 	jnz	1f
 	movl	20(%esp),%eax
 	movl	%eax,(%ebp)
 1:
-	GET_RELOC_ADDR(biosbasemem)
+	movl	$RELOC(biosbasemem),%ebp
 	movl	(%ebp),%eax
 	testl	%eax,%eax
 	jnz	1f
@@ -344,9 +342,8 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	xorl	%eax,%eax
 	cpuid
-	GET_RELOC_ADDR(cpuid_level)
-	movl	%eax,(%ebp)
-	GET_RELOC_ADDR(cpu_vendor)
+	movl	%eax,RELOC(cpuid_level)
+	movl	$RELOC(cpu_vendor),%ebp
 	movl	%ebx,(%ebp)
 	movl	%edx,4(%ebp)
 	movl	%ecx,8(%ebp)
@@ -354,15 +351,12 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	movl	$1,%eax
 	cpuid
-	GET_RELOC_ADDR(cpu_id)
-	movl	%eax,(%ebp)		# store cpu_id and features
-	GET_RELOC_ADDR(cpu_feature)
-	movl	%edx,(%ebp)
+	movl	%eax,RELOC(cpu_id)
+	movl	%edx,RELOC(cpu_feature)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
-	GET_RELOC_ADDR(cpu_brand_id)
-	movl	%ebx,(%ebp)
+	movl	%ebx,RELOC(cpu_brand_id)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
@@ -376,8 +370,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * Oops, the gdt is in the carcass of the boot program so clearing
 	 * the rest of memory is still not possible.
 	 */
-	GET_RELOC_ADDR(tmpstk)
-	movl	%ebp,%esp		# bootstrap stack end location
+	movl	$RELOC(tmpstk),%esp
 
 /*
  * Virtual address space of kernel:
@@ -417,12 +410,10 @@ start:	movw	$0x1234,0x472			# warm boot
 
 
 	/* Find end of kernel image. */
-	GET_RELOC_ADDR(end)
-	movl	%ebp,%edi
+	movl	$RELOC(end),%edi
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
-	GET_RELOC_ADDR(esym)
-	movl	(%ebp),%eax
+	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE_LO,%eax	/* XXX */
@@ -449,8 +440,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * with it anyway, since we can't load it in 32 bit mode. So use
 	 * the bottom 32 bits.
 	 */
-	GET_RELOC_ADDR(etext)
-	movl	%ebp,%edx		/* should be $RELOC */
+	movl	$RELOC(etext),%edx
 	addl	$PGOFSET,%edx
 	andl	$~PGOFSET,%edx
 
@@ -537,7 +527,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 
 	/* Save phys. addr of PTD, for libkvm. */
-	GET_RELOC_ADDR(PTDpaddr)
+	movl	$RELOC(PTDpaddr),%ebp
 	movl	%esi,(%ebp)
 	movl	$0,4(%ebp)
 
@@ -582,11 +572,9 @@ compat:
 	 * in it to do that.
 	 */
 
-	GET_RELOC_ADDR(gdt64)
-	movl	%ebp,%eax
+	movl	$RELOC(gdt64),%eax
 	lgdt	(%eax)
-	GET_RELOC_ADDR(farjmp64)
-	movl	%ebp,%eax
+	movl	$RELOC(farjmp64),%eax
 	ljmp	*(%eax)
 
 .code64
@@ -784,13 +772,13 @@ ENTRY(cpu_switch)
 	movq	%rdi,%r13
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 * This also insures that schedcpu() will move the old lwp to
 	 * the correct queue if it happens to get called from the spllower()
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	movq	$0,_C_LABEL(curlwp)(%rip)
+	movq	$0,CPUVAR(CURLWP)
 
 
 	/*
@@ -839,7 +827,7 @@ ENTRY(cpu_switch)
 	movq	CPUVAR(IDLE_PCB),%r12
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
-	movq	$0,_C_LABEL(curlwp)(%rip)
+	movq	$0,CPUVAR(CURLWP)
 
 	/* Restore the idle context (avoid interrupts) */
 	cli
@@ -866,8 +854,7 @@ ENTRY(cpu_switch)
 	movl	PCB_CR0(%r12),%ecx
 	movq	%rcx,%cr0
 
-	/* Record new pcb. */
-	movq	%r12,_C_LABEL(curpcb)(%rip)
+	SET_CURPCB(%r12)
 
 	xorq	%r13,%r13
 	sti
@@ -876,7 +863,7 @@ idle_unlock:
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
-	movl	$0,_C_LABEL(cpl)(%rip)
+	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
 	jmp	idle_start
 idle_zero:
@@ -898,11 +885,7 @@ idle_start:
 	cmpl	$0,_C_LABEL(sched_whichqs)(%rip)
 	jz	idle_loop
 idle_exit:
-#ifdef MULTIPROCESSOR
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-#else
-	movl	$-1,_C_LABEL(cpl)(%rip)
-#endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_lock_idle)
 #endif
@@ -937,7 +920,7 @@ switch_dequeue:
 
 3:	/* We just did it. */
 	xorq	%rax,%rax
-	movl	%eax,_C_LABEL(want_resched)(%rip)
+	movl	%eax,CPUVAR(RESCHED)
 switch_resume:
 #ifdef DIAGNOSTIC
 	cmpq	%rax,L_WCHAN(%r12)
@@ -951,11 +934,7 @@ switch_resume:
 
 	/* Record new lwp. */
 	movb	$LSONPROC,L_STAT(%r12)	# l->l_stat = SONPROC
-#ifdef MULTIPROCESSOR
-	...	(see i386)
-#else
-	movq	%r12,_C_LABEL(curlwp)(%rip)
-#endif
+	SET_CURLWP(%r12,%rcx)
 
 	/* Skip context switch if same lwp. */
 	movl	$1,%eax
@@ -1009,7 +988,11 @@ switch_exited:
 #endif
 
 	/* Load TSS info. */
+#ifdef MULTIPROCESSOR
+	movq    CPUVAR(GDT),%rax
+#else   
 	movq	_C_LABEL(gdtstore)(%rip),%rax
+#endif
 	movl	L_MD_TSS_SEL(%r12),%edx
 
 	/* Switch TSS. Reset "task busy" flag before */
@@ -1028,16 +1011,12 @@ switch_restored:
 	movq	PCB_FPCPU(%r13),%r8
 	cmpq	CPUVAR(SELF),%r8
 	jz	1f
-	orl	$CRO_TS,%ecx
+	orl	$CR0_TS,%ecx
+1:
 #endif
 	movq	%rcx,%cr0
 
-#ifdef MULTIPROCESSOR
-	...
-#else
-	/* Record new pcb. */
-	movq	%r13,_C_LABEL(curpcb)(%rip)
-#endif
+	SET_CURPCB(%r13)
 
 	/* Interrupts are okay again. */
 	sti
@@ -1045,7 +1024,7 @@ switch_restored:
 /*
  *  Check for restartable atomic sequences (RAS)
  */
-	movq	_C_LABEL(curlwp)(%rip), %r12
+	movq	CPUVAR(CURLWP),%r12
 	movq	L_PROC(%r12),%rdi
 	cmpl	$0,P_NRAS(%rdi)
 	je	1f
@@ -1063,10 +1042,9 @@ switch_return:
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 
-	movl	$0,_C_LABEL(cpl)(%rip)
+	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
-
-	movl	$-1,_C_LABEL(cpl)(%rip)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 
 	popq	%r15
 	popq	%r14
@@ -1087,7 +1065,7 @@ ENTRY(cpu_switchto)
 	movq	%rdi,%r13
 	movq	%rsi,%r12
 
-	movq	$0,_C_LABEL(curlwp)(%rip)
+	movq	$0,CPUVAR(CURLWP)
 
 	xorq	%rax,%rax
 	jmp	switch_resume
@@ -1103,7 +1081,7 @@ ENTRY(cpu_switchto)
 ENTRY(switch_exit)
 #ifdef MULTIPROCESSOR
 	movq	CPUVAR(IDLE_PCB),%r8
-	movl	CPUVAR(IDLE_TSS_SEL),%rdx
+	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #else
 	leaq	_C_LABEL(lwp0)(%rip),%r9
 	movq	L_ADDR(%r9),%r8
@@ -1111,7 +1089,7 @@ ENTRY(switch_exit)
 #endif
 
 	/* In case we fault... */
-	movq	$0,_C_LABEL(curlwp)(%rip)
+	movq	$0,CPUVAR(CURLWP)
 
 	cli
 
@@ -1120,7 +1098,11 @@ ENTRY(switch_exit)
 	movq	PCB_RBP(%r8),%rbp
 
 	/* Load TSS info. */
+#ifdef MULTIPROCESSOR
+	movq	CPUVAR(GDT),%rax
+#else
 	movq	_C_LABEL(gdtstore)(%rip),%rax
+#endif
 
 	/* Switch address space. */
 	movq	PCB_CR3(%r8),%rcx
@@ -1137,7 +1119,7 @@ ENTRY(switch_exit)
 	movq	%rcx,%cr0
 
 	/* Record new pcb. */
-	movq	%r8,_C_LABEL(curpcb)(%rip)
+	SET_CURPCB(%r8)
 
 	/* Interrupts are okay again. */
 	sti
@@ -1152,7 +1134,7 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	xorq	%r13,%r13
-	movq	%r13,_C_LABEL(curlwp)(%rip)
+	movq	%r13, CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
@@ -1165,3 +1147,174 @@ ENTRY(savectx)
 	movq	%rbp,PCB_RBP(%rdi)
 
 	ret
+
+IDTVEC(syscall32)
+	sysret		/* go away please */
+
+/*
+ * syscall insn entry. This currently isn't much faster, but
+ * it can be made faster in the future.
+ */
+IDTVEC(syscall)
+	swapgs
+	movq	%r15,CPUVAR(SCRATCH)
+	movq	CPUVAR(CURPCB),%r15
+	movq	PCB_RSP0(%r15),%r15
+	xchgq	%r15,%rsp
+	sti
+
+	/*
+	 * XXX don't need this whole frame, split of the
+	 * syscall frame and trapframe is needed.
+	 * First, leave some room for the trapno, error,
+	 * ss:rsp, etc, so that all GP registers can be
+	 * saved. Then, fill in the rest.
+	 */
+	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
+	pushq	%r15
+	subq	$(TF_RSP-TF_TRAPNO),%rsp
+	movq	CPUVAR(SCRATCH),%r15
+	subq	$32,%rsp
+	INTR_SAVE_GPRS
+	movw	%fs,TF_FS(%rsp)
+	movw	%gs,TF_GS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
+	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
+	movq	%rcx,TF_RIP(%rsp)
+	movq	$2,TF_ERR(%rsp)
+	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
+
+	movq	CPUVAR(CURLWP),%r14
+	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
+	movq	L_PROC(%r14),%r15
+	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
+	call	*P_MD_SYSCALL(%r15)
+1:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%r11)
+	je	2f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%r11)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	1b
+2:
+	sti
+	testl	$MDP_IRET, L_MD_FLAGS(%r14)
+	jne	iret_return;
+syscall_return:
+#ifdef DIAGNOSTIC
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	jne	3f
+#endif
+	/*
+	 * XXX interrupts off longer than they should be here.
+	 */
+	cli
+	swapgs
+	movw	TF_ES(%rsp),%es
+	movw	TF_FS(%rsp),%fs
+	movw	TF_GS(%rsp),%gs
+	INTR_RESTORE_GPRS
+	addq	$48,%rsp
+	popq	%rcx	/* return rip */
+	addq	$8,%rsp
+	popq	%r11	/* flags as set by sysret insn */
+	movq	(%rsp),%rsp
+	sysretq
+
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	CPUVAR(ILEVEL),%r8d
+	xorq	%rax,%rax
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	jmp	1b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+#endif
+
+
+NENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(proc_trampoline_mp)
+#endif
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	movq	%r13,%rdi
+	call	*%r12
+	INTRFASTEXIT
+	/* NOTREACHED */
+
+NENTRY(child_trampoline)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(proc_trampoline_mp)
+#endif
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	movq	%r13,%rdi
+	call	*%r12
+	jmp	syscall_return
+
+	.globl  _C_LABEL(osyscall_return)
+
+/*
+ * Old call gate entry for syscall. XXXfvdl: only needed if we're
+ * going to support running old NetBSD or ibcs2 binaries, etc,
+ * on NetBSD/x86_64.
+ */
+IDTVEC(oosyscall)
+	/* Set rflags in trap frame. */
+	pushfq
+	popq	8(%rsp)
+	pushq	$7		# size of instruction for restart
+	jmp	osyscall1
+
+/*
+ * Trap gate entry for int $80 syscall, also used by sigreturn.
+ */
+IDTVEC(osyscall)
+	pushq	$2		# size of instruction for restart
+osyscall1:
+	pushq	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	sti
+	movq	CPUVAR(CURLWP),%rdx
+	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
+	movq	L_PROC(%rdx),%rdx
+	call	*P_MD_SYSCALL(%rdx)
+_C_LABEL(osyscall_return):
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%r11)
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%r11)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+iret_return:
+#ifndef DIAGNOSTIC
+1:	INTRFASTEXIT
+#else /* DIAGNOSTIC */
+1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	jne	3f
+	INTRFASTEXIT
+3:	sti
+	movabsq	$4f, %rdi
+	xorq	%rax,%rax
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	jmp	2b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+#endif /* DIAGNOSTIC */
