@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.16 2003/05/30 22:33:58 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.17 2003/05/30 23:08:13 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.16 2003/05/30 22:33:58 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.17 2003/05/30 23:08:13 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -55,7 +55,7 @@ static void copy_till(LINENUM);
 static void spew_output(void);
 static void dump_line(LINENUM);
 static bool patch_match(LINENUM, LINENUM, LINENUM);
-static bool similar(char *, char *, int);
+static bool similar(char *, char *, size_t);
 int main(int, char *[]);
 
 /* TRUE if -E was specified on command line.  */
@@ -321,6 +321,7 @@ main(int argc, char *argv[])
 	set_signals(1);
     }
     my_exit(failtotal);
+    /* NOTREACHED */
 }
 
 /* Prepare to find the next patch to do in the patch file. */
@@ -871,7 +872,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 /* Do two lines match with canonicalized white space? */
 
 static bool
-similar(char *a, char *b, int len)
+similar(char *a, char *b, size_t len)
 {
     while (len) {
 	if (isspace((unsigned char)*b)) {/* whitespace (or \n) to match? */
