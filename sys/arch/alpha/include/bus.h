@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.40 2000/06/26 04:55:22 simonb Exp $ */
+/* $NetBSD: bus.h,v 1.41 2000/07/31 22:47:08 briggs Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -453,6 +453,35 @@ do {									\
 	__abs_copy(4, u_int32_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 	__abs_copy(8, u_int64_t, (t), (h1), (o1), (h2), (o2), (c))
+
+/*
+ * Bus stream operations--defined in terms of non-stream counterparts
+ */
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+#define	bus_space_read_stream_8 bus_space_read_8
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+#define	bus_space_read_multi_stream_8 bus_space_read_multi_8
+#define bus_space_read_region_stream_1 bus_space_read_region_1
+#define bus_space_read_region_stream_2 bus_space_read_region_2
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+#define	bus_space_read_region_stream_8 bus_space_read_region_8
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+#define	bus_space_write_stream_8 bus_space_write_8
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
+#define	bus_space_write_multi_stream_8 bus_space_write_multi_8
+#define bus_space_write_region_stream_1 bus_space_write_region_1
+#define bus_space_write_region_stream_2 bus_space_write_region_2
+#define bus_space_write_region_stream_4 bus_space_write_region_4
+#define	bus_space_write_region_stream_8	bus_space_write_region_8
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.29 2000/06/26 04:55:44 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.30 2000/07/31 22:43:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@
  */
 #define	I386_BUS_SPACE_IO	0	/* space is i/o space */
 #define I386_BUS_SPACE_MEM	1	/* space is mem space */
+
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
 
 /*
  * Bus address and size types
@@ -226,8 +228,14 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	  ((t) == I386_BUS_SPACE_IO ? (inl((h) + (o))) :		\
 	    (*(volatile u_int32_t *)((h) + (o)))))
 
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
+#define	bus_space_read_stream_8(t, h, o)	\
+		!!! bus_space_read_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -300,8 +308,14 @@ do {									\
 	}								\
 } while (0)
 
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
+#define	bus_space_read_multi_stream_8	\
+		!!! bus_space_read_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -411,8 +425,14 @@ do {									\
 	}								\
 } while (0)
 
+#define bus_space_read_region_stream_1 bus_space_read_region_1
+#define bus_space_read_region_stream_2 bus_space_read_region_2
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
+#define	bus_space_read_region_stream_8	\
+		!!! bus_space_read_region_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -450,8 +470,14 @@ do {									\
 		((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
 } while (0)
 
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
+#define	bus_space_write_stream_8	\
+		!!! bus_space_write_stream_8 not implemented !!!
 #endif
 
 /*
@@ -521,9 +547,15 @@ do {									\
 	}								\
 } while (0)
 
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
+
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 			!!! bus_space_write_multi_8 unimplemented !!!
+#define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
+			!!! bus_space_write_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -632,9 +664,15 @@ do {									\
 	}								\
 } while (0)
 
+#define bus_space_write_region_stream_1 bus_space_write_region_1
+#define bus_space_write_region_stream_2 bus_space_write_region_2
+#define bus_space_write_region_stream_4 bus_space_write_region_4
+
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
 			!!! bus_space_write_region_8 unimplemented !!!
+#define	bus_space_write_region_stream_8				\
+			!!! bus_space_write_region_stream_8 unimplemented !!!
 #endif
 
 /*
