@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.14 1997/11/05 22:46:05 mhitch Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.15 1997/11/05 23:32:50 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -541,4 +541,10 @@ in regular operation and do you want it installed in /etc? }
 message cur_distsets
 {The following is the list of distribution sets that will be used.
 
+}
+
+message tarerror
+{There was an error in extracting the file %s.  That means some files
+were not extracted correctly and your system will not be complete.
+CR to continue
 }
