@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)parser.c	5.3 (Berkeley) 4/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.6 1993/07/07 01:11:59 jtc Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.7 1993/07/15 22:12:02 jtc Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -1125,9 +1125,12 @@ parsebackq: {
 	if (!oldstyle && (readtoken() != TRP))
 		synexpect(TRP);
 	(*nlpp)->n = n;
-	/* Start reading from old file again.  */
-	if (oldstyle)
+	/* Start reading from old file again, and clear tokpushback since
+	   any pushed back token from the string is no longer relevant.  */
+	if (oldstyle) {
 		popfile();
+		tokpushback = 0;
+	}
 	while (stackblocksize() <= savelen)
 		growstackblock();
 	STARTSTACKSTR(out);
