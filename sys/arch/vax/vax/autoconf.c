@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 2000/05/21 20:18:49 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.54 2000/05/22 15:38:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -168,6 +168,7 @@ struct	cfattach mainbus_ca = {
 static int ubtest(void *);
 static int jmfr(char *, struct device *, int);
 static int booted_qe(struct device *, void *);
+static int booted_le(struct device *, void *);
 static int booted_ze(struct device *, void *);
 static int booted_sd(struct device *, void *);
 static int booted_rl(struct device *, void *);
@@ -177,6 +178,7 @@ static int booted_de(struct device *, void *);
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
+	booted_le,
 	booted_ze,
 	booted_de,
 #if NSD > 0 || NCD > 0
@@ -244,6 +246,14 @@ booted_de(struct device *dev, void *aux)
 	return 1;
 }
 #endif /* NDE */
+
+int
+booted_le(struct device *dev, void *aux)
+{
+	if (jmfr("le", dev, BDEV_LE))
+		return 0;
+	return 1;
+}
 
 int
 booted_ze(struct device *dev, void *aux)
