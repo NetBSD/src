@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1997/04/07 05:34:39 cgd Exp $
+# $NetBSD: Makefile,v 1.5 1997/05/04 01:49:14 mjacob Exp $
 
 # Makefile for alpha tags file and boot blocks
 
@@ -8,14 +8,18 @@ NOMAN=	noman
 SUBDIR=	stand
 
 TALPHA=	../alpha/tags
-SALPHA=	../alpha/alpha/*.[ch] ../alpha/include/*.h ../alpha/tc/*.[ch]
+SA0=	../alpha/alpha/pmap.old.h ../alpha/alpha/pmap.old.c
+SA1=	../alpha/alpha/*.[ch]
+SALPHA=	${SA0} ${SA1} ../alpha/include/*.h ../alpha/pci/*.[ch] \
+	../alpha/tlsb/*.[ch] ../alpha/tc/*.[ch]
 AALPHA=	../alpha/alpha/*.S
 
 # Directories in which to place alpha tags links
 DALPHA=	tc include
+.include "../../kern/Make.tags.inc"
 
-tags:
-	-ctags -dtf ${TALPHA} ${COMM} ${SALPHA}
+tags:	FRC
+	-ctags -wdtf ${TALPHA} ${COMM} ${SALPHA}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AALPHA} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TALPHA}
@@ -28,3 +32,5 @@ links:
 obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
+
+FRC:
