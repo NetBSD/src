@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.6 1995/08/20 18:17:11 leo Exp $
+#	$NetBSD: GENERIC,v 1.7 1995/09/30 12:48:16 leo Exp $
 #
 # Generic atari
 #
@@ -34,6 +34,7 @@ options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
 options		NULLFS		# Loopback filesystem
 options		MSDOSFS		# MSDOS filesystem
+options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
 options		FIFO		# FIFO operations on vnodes
 
