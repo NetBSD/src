@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.4 1998/02/22 14:57:31 christos Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.5 1999/01/22 12:43:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -92,8 +92,8 @@ static struct option option[] =
 	},
 #if 1
 	{ 'd', BOOL, OPT_OFF, &be_helpful, NULL,
-		{ "Be helpful in prompts",
-		"Be less helpful in prompts", 
+		{ "Be less helpful in prompts",
+		"Be helpful in prompts", 
 		NULL }
 	},
 #else
