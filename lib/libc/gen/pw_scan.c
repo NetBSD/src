@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.15 2005/01/19 19:13:38 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.16 2005/01/19 22:40:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.15 2005/01/19 19:13:38 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.16 2005/01/19 22:40:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -60,15 +60,14 @@ __RCSID("$NetBSD: pw_scan.c,v 1.15 2005/01/19 19:13:38 christos Exp $");
 #endif /* ! HAVE_NBTOOL_CONFIG_H */
 
 static int
-gettime(time_t *t, const char *p, int *flags, int dowarn, int flag)
+gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 {
 	long l;
 	char *ep;
 
 	if (*p == '\0') {
-		if (flags)
-			*flags |= flag;
-		*t = 0;
+		*flags |= flag;
+		*res = 0;
 		return 1;
 	}
 	l = strtol(p, &ep, 0);
@@ -81,7 +80,7 @@ gettime(time_t *t, const char *p, int *flags, int dowarn, int flag)
 		goto done;
 	}
 
-	*t = (time_t)l;
+	*res = (time_t)l;
 	return 1;
 done:
 	if (dowarn) {
@@ -99,8 +98,7 @@ getid(unsigned long *res, const char *p, int *flags, int dowarn, int flag)
 	char *ep;
 
 	if (*p == '\0') {
-		if (flags)
-			*flags |= flag;
+		*flags |= flag;
 		*res = 0;
 		return 1;
 	}
@@ -136,17 +134,20 @@ pw_scan( char *bp, struct passwd *pw, int *flags)
 {
 	unsigned long id;
 	int root, inflags;
-	int dowarn = !(inflags & _PASSWORD_NOWARN);
+	int dowarn;
 	const char *p, *sh;
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(pw != NULL);
 
-	inflags = 0;
 	if (flags) {
 		inflags = *flags;
 		*flags = 0;
+	} else {
+		inflags = 0;
+		flags = &inflags;
 	}
+	dowarn = !(inflags & _PASSWORD_NOWARN);
 
 	if (!(pw->pw_name = strsep(&bp, ":")))		/* login */
 		goto fmt;
@@ -190,8 +191,7 @@ pw_scan( char *bp, struct passwd *pw, int *flags)
 		pw->pw_class = __UNCONST("");
 		pw->pw_change = 0;
 		pw->pw_expire = 0;
-		if (flags)
-			*flags |= (_PASSWORD_NOCHG | _PASSWORD_NOEXP);
+		*flags |= (_PASSWORD_NOCHG | _PASSWORD_NOEXP);
 	} else {
 		pw->pw_class = strsep(&bp, ":");	/* class */
 		if (!(p = strsep(&bp, ":")))		/* change */
