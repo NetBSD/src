@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.4 1996/05/15 23:23:50 jtc Exp $	*/
+/*	$NetBSD: vipw.c,v 1.5 1997/10/17 14:31:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,14 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
+#else
+__RCSID("$NetBSD: vipw.c,v 1.5 1997/10/17 14:31:13 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +60,7 @@ static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #include <util.h>
 
 void	copyfile __P((int, int));
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
@@ -67,7 +72,7 @@ main(argc, argv)
 	struct stat begin, end;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF) {
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		case '?':
 		default:
