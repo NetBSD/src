@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.41 1998/04/20 20:41:05 frueauf Exp $	*/
+/*	$NetBSD: ite.c,v 1.41.8.1 2000/08/14 14:24:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -526,10 +526,12 @@ itefilter(stat, c)
 	static int capsmode = 0;
 	static int metamode = 0;
 	char code, *str;
-	struct tty *kbd_tty = kbd_ite->tty;
+	struct tty *kbd_tty;
 
-	if (kbd_tty == NULL)
+	if (kbd_ite == NULL || kbd_ite->tty == NULL)
 		return;
+
+	kbd_tty = kbd_ite->tty;
 
 	switch (c & 0xFF) {
 	case KBD_CAPSLOCK:
