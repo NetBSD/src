@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.3 2001/03/15 06:10:54 chs Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.4 2001/03/16 04:05:15 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -798,7 +798,7 @@ svr4_32_sys_break(p, v, retval)
 			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
 		if (error) {
-			uprintf("sbrk: grow failed, return = %d\n", rv);
+			uprintf("sbrk: grow failed, return = %d\n", error);
 			return error;
 		}
 		vm->vm_dsize += btoc(diff);
