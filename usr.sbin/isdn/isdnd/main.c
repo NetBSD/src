@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: main.c,v 1.4 2002/03/30 07:12:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -641,7 +641,7 @@ isdnrdhdl(void)
 		switch(hp->type)
 		{
 			case MSG_CONNECT_IND:				
-				msg_connect_ind((msg_connect_ind_t *)msg_rd_buf);
+				msg_connect_ind((msg_connect_ind_t *)msg_rd_buf, len);
 				break;
 				
 			case MSG_CONNECT_ACTIVE_IND:
