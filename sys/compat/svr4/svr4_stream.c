@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.16 1996/08/30 23:06:34 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.17 1996/10/28 08:46:37 fvdl Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -263,7 +263,7 @@ clean_pipe(p, path)
 	SCARG(&la, path) = stackgap_alloc(&sg, l);
 	SCARG(&la, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = copyout((char *) path, SCARG(&la, path), l)) != 0)
+	if ((error = copyout(path, SCARG(&la, path), l)) != 0)
 		return error;
 
 	if ((error = sys_lstat(p, &la, &retval)) != 0)
@@ -335,7 +335,7 @@ netaddr_to_sockaddr_in(sain, sc)
 	const struct svr4_netaddr_in *na;
 
 
-	na = SVR4_ADDROF(sc);
+	na = SVR4_C_ADDROF(sc);
 	bzero(sain, sizeof(*sain));
 	sain->sin_len = sizeof(*sain);
 	sain->sin_family = na->family;
@@ -355,7 +355,7 @@ netaddr_to_sockaddr_un(saun, sc)
 	char *dst, *edst = &saun->sun_path[sizeof(saun->sun_path) - 1];
 	const char *src;
 
-	na = SVR4_ADDROF(sc);
+	na = SVR4_C_ADDROF(sc);
 	bzero(saun, sizeof(*saun));
 	saun->sun_family = na->family;
 	for (src = na->path, dst = saun->sun_path; (*dst++ = *src++) != '\0'; )
