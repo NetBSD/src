@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 1995/02/05 15:46:58 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 1995/02/08 14:54:12 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1155,7 +1155,6 @@ ENTRY(copystr)
  * Fetch an int from the user's address space.
  */
 ENTRY(fuword)
-ALTENTRY(fuiword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_fusufault
@@ -1199,7 +1198,6 @@ ENTRY(fuswintr)
  * Fetch a byte from the user's address space.
  */
 ENTRY(fubyte)
-ALTENTRY(fuibyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_fusufault
@@ -1234,7 +1232,6 @@ ENTRY(fusubail)
  * Store an int in the user's address space.
  */
 ENTRY(suword)
-ALTENTRY(suiword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_fusufault
@@ -1352,7 +1349,6 @@ ENTRY(suswintr)
  * Store a byte in the user's address space.
  */
 ENTRY(subyte)
-ALTENTRY(suibyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_fusufault
