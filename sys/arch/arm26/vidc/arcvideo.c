@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.4 2000/08/25 10:37:58 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,10 +39,11 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.4 2000/08/25 10:37:58 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/reboot.h>	/* For bootverbose */
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -169,7 +170,9 @@ arcvideo_attach(parent, self, aux)
 		sc->sc_ioc = ioc_cd.cd_devs[0];
 		sc->sc_irq = ioc_irq_establish(sc->sc_ioc, IOC_IRQ_IR, IPL_TTY,
 					       arcvideo_intr, self);
-		printf("VSYNC interrupts at %s", irq_string(sc->sc_irq));
+		if (bootverbose)
+			printf("VSYNC interrupts at %s",
+			    irq_string(sc->sc_irq));
 	} else
 #endif /* NIOC > 0 */
 		printf("no VSYNC sensing");

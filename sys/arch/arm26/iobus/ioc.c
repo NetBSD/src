@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.3 2000/10/14 23:41:04 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.4 2000/12/23 21:49:13 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,11 +32,12 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.3 2000/10/14 23:41:04 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.4 2000/12/23 21:49:13 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>	/* For bootverbose */
 #include <sys/systm.h>
 
 #include <machine/bus.h>
@@ -404,16 +405,18 @@ cpu_initclocks()
 	ioc_counter_start(self, 0, t0_count);
 	sc->sc_clkirq = ioc_irq_establish(self, IOC_IRQ_TM0, IPL_CLOCK,
 					  ioc_irq_clock, NULL);
-	printf("%s: %d Hz clock interrupting at %s\n",
-	       self->dv_xname, hz, irq_string(sc->sc_clkirq));
+	if (bootverbose)
+		printf("%s: %d Hz clock interrupting at %s\n",
+		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
 		setstatclockrate(stathz);
 		sc->sc_sclkirq = ioc_irq_establish(self, IOC_IRQ_TM1,
 						   IPL_STATCLOCK,
 						   ioc_irq_statclock, NULL);
-		printf("%s: %d Hz statclock interrupting at %s\n",
-		       self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
+		if (bootverbose)
+			printf("%s: %d Hz statclock interrupting at %s\n",
+			    self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
 	}
 }
 
