@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2000/06/23 12:18:48 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 2001/05/03 20:53:44 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -211,5 +211,17 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
+
+/*
+ * Macros to hide shortcomings in the 68010.
+ */
+#ifndef __mc68010__
+#define	EXTBL(reg)					\
+	extbl	reg
+#else	/* __mc68010__ */
+#define	EXTBL(reg)					\
+	extw	reg		;			\
+	extl	reg
+#endif	/* __mc68010__ */
 
 #endif /* _M68K_ASM_H_ */
