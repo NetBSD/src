@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.25 2005/01/21 12:32:18 yamt Exp $
+#	$NetBSD: files.cardbus,v 1.26 2005/01/29 21:59:53 jonathan Exp $
 #
 # files.cardbus
 #
@@ -87,6 +87,13 @@ file	dev/cardbus/rbus_ppb.c		rbus_ppb
 #
 attach	rtk at cardbus with rtk_cardbus
 file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
+
+#
+# Realtek 8169
+#
+attach	re at cardbus with re_cardbus
+file	dev/cardbus/if_re_cardbus.c	re_cardbus
+
 
 #
 # Advansys SCSI controller.
