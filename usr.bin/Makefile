@@ -15,7 +15,7 @@ SUBDIR=	ar awk biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	cpio crontab ctags cut diff diff3 dirname du egrep elvis elvisrecover \
 	env expand false fgrep file find finger fmt fold from fstat ftp \
-	g++ gas gcc gdb grep groff groups head hexdump id join \
+	g++ gas gcc gdb gprof grep groff groups head hexdump id join \
 	ktrace last ld leave lex locate lock logger \
 	login logname lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr more netstat nfsstat nice nm nohup pagesize \
