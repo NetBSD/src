@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.6 2000/01/07 10:50:14 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.7 2000/02/22 01:37:11 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -239,6 +239,12 @@ u_int scif_rbuf_lowat = (SCIF_RING_SIZE * 3) / 4;
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int scifconscflag = CONMODE;
 
+#ifdef SCIFCN_SPEED
+unsigned int scifcn_speed = SCIFCN_SPEED;
+#else
+unsigned int scifcn_speed = 9600;
+#endif
+
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
@@ -291,7 +297,7 @@ WaitFor(mSec)
 	SHREG_TSTR |= TSTR_STR2;
 
 	/* wait for under flag ON of channel2 */
-	while ((SHREG_TCR2 & 0x0100) == 0)
+	while ((SHREG_TCR2 & TCR_UNF) == 0)
 		;
 
 	/* stop channel2 */
@@ -317,13 +323,16 @@ InitializeScif(bps)
 #else
 	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST;
 #endif
-	/*Serial Mode Register */
+	/* Serial Mode Register */
 	SHREG_SCSMR2 = 0x00;	/* 8bit,NonParity,Even,1Stop */
 
-	/*Bit Rate Register */
-	SHREG_SCBRR2 = divrnd(PCLOCK, 32 * bps) -1;
+	/* Bit Rate Register */
+	SHREG_SCBRR2 = divrnd(PCLOCK, 32 * bps) - 1;
 
-	/*wait 1mSec, because Send/Recv must begin 1 bit period after BRR is set. */
+	/*
+	 * wait 1mSec, because Send/Recv must begin 1 bit period after
+	 * BRR is set.
+	 */
 	WaitFor(1);
 
 #if 0
@@ -335,7 +344,7 @@ InitializeScif(bps)
 	/* Send permission, Recieve permission ON */
 	SHREG_SCSCR2 = SCSCR2_TE | SCSCR2_RE;
 
-	/*Serial Status Register */
+	/* Serial Status Register */
 	SHREG_SCSSR2 &= SCSSR2_TDFE;	/* Clear Status */
 }
 
@@ -360,7 +369,7 @@ PutcScif(c)
 	/* clear ready flag */
 	SHREG_SCSSR2 &= ~(SCSSR2_TDFE | SCSSR2_TEND);
 
-	if (c == '\n'){
+	if (c == '\n') {
 		while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
 			;
 
@@ -450,11 +459,11 @@ GetStrScif(s, size)
 	int size;
 {
 
-	for (; size ; size--){
+	for (; size ; size--) {
 		*s = GetcScif();
 		if (*s & 0x80)
 			return -1;
-		if (*s == CR){
+		if (*s == CR) {
 			*s = 0;
 			break;
 		}
@@ -831,7 +840,7 @@ scifopen(dev, flag, mode, p)
 		 */
 		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
-			t.c_ospeed = SCIFCN_SPEED;	/* XXX (msaitoh) */
+			t.c_ospeed = scifcn_speed;	/* XXX (msaitoh) */
 			t.c_cflag = scifconscflag;
 		} else {
 			t.c_ospeed = TTYDEF_SPEED;
@@ -1327,159 +1336,152 @@ scifintr(arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	do {
-
-		ssr2 = SHREG_SCSSR2;
-		if (ISSET(ssr2, SCSSR2_BRK)) {
-			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
+	ssr2 = SHREG_SCSSR2;
+	if (ISSET(ssr2, SCSSR2_BRK)) {
+		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
 #if defined(DDB) || defined(KGDB)
 #ifdef DDB
-			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
-				console_debugger();
-				continue;
-			}
+		if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
+			console_debugger();
+		}
 #endif
 #ifdef KGDB
-			if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
-				kgdb_connect(1);
-				continue;
-			}
+		if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
+			kgdb_connect(1);
+		}
 #endif
 #endif /* DDB || KGDB */
-			continue;
+	}
+	count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
+	if (count != 0) {
+		while ((cc > 0) && (count > 0)) {
+			put[0] = SHREG_SCFRDR2;
+			put[1] = (u_char)(SHREG_SCSSR2 & 0x00ff);
+
+			SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+
+			put += 2;
+			if (put >= end)
+				put = sc->sc_rbuf;
+			cc--;
+			count--;
 		}
-		count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
-		if (count != 0) {
-			while ((cc > 0) && (count > 0)){
-				put[0] = SHREG_SCFRDR2;
-				put[1] = (u_char)(SHREG_SCSSR2 & 0x00ff);
 
-				SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+		/*
+		 * Current string of incoming characters ended because
+		 * no more data was available or we ran out of space.
+		 * Schedule a receive event if any data was received.
+		 * If we're out of space, turn off receive interrupts.
+		 */
+		sc->sc_rbput = put;
+		sc->sc_rbavail = cc;
+		if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+			sc->sc_rx_ready = 1;
 
-				put += 2;
-				if (put >= end)
-					put = sc->sc_rbuf;
-				cc--;
-				count--;
-			}
-
-			/*
-			 * Current string of incoming characters ended because
-			 * no more data was available or we ran out of space.
-			 * Schedule a receive event if any data was received.
-			 * If we're out of space, turn off receive interrupts.
-			 */
-			sc->sc_rbput = put;
-			sc->sc_rbavail = cc;
-			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
-				sc->sc_rx_ready = 1;
-
-			/*
-			 * See if we are in danger of overflowing a buffer. If
-			 * so, use hardware flow control to ease the pressure.
-			 */
-			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
-			    cc < sc->sc_r_hiwat) {
-				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+		/*
+		 * See if we are in danger of overflowing a buffer. If
+		 * so, use hardware flow control to ease the pressure.
+		 */
+		if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
+		    cc < sc->sc_r_hiwat) {
+			SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 #if 0
-				scif_hwiflow(sc);
+			scif_hwiflow(sc);
 #endif
-			}
-
-			/*
-			 * If we're out of space, disable receive interrupts
-			 * until the queue has drained a bit.
-			 */
-			if (!cc) {
-				SHREG_SCSCR2 &= ~SCSCR2_RIE;
-			}
-		} else {
-			if (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR)) {
-				SHREG_SCSCR2 &= ~(SCSCR2_TIE | SCSCR2_RIE);
-				continue;
-			}
 		}
 
-#if 0
-		msr = bus_space_read_1(iot, ioh, scif_msr);
-		delta = msr ^ sc->sc_msr;
-		sc->sc_msr = msr;
-		if (ISSET(delta, sc->sc_msr_mask)) {
-			SET(sc->sc_msr_delta, delta);
+		/*
+		 * If we're out of space, disable receive interrupts
+		 * until the queue has drained a bit.
+		 */
+		if (!cc) {
+			SHREG_SCSCR2 &= ~SCSCR2_RIE;
+		}
+	} else {
+		if (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR)) {
+			SHREG_SCSCR2 &= ~(SCSCR2_TIE | SCSCR2_RIE);
+		}
+	}
 
-			/*
-			 * Pulse-per-second clock signal on edge of DCD?
-			 */
-			if (ISSET(delta, sc->sc_ppsmask)) {
-				struct timeval tv;
-			    	if (ISSET(msr, sc->sc_ppsmask) ==
-				    sc->sc_ppsassert) {
-					/* XXX nanotime() */
-					microtime(&tv);
-					TIMEVAL_TO_TIMESPEC(&tv,
-					    &sc->ppsinfo.assert_timestamp);
-					if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
-						timespecadd(&sc->ppsinfo.assert_timestamp,
+#if 0
+	msr = bus_space_read_1(iot, ioh, scif_msr);
+	delta = msr ^ sc->sc_msr;
+	sc->sc_msr = msr;
+	if (ISSET(delta, sc->sc_msr_mask)) {
+		SET(sc->sc_msr_delta, delta);
+
+		/*
+		 * Pulse-per-second clock signal on edge of DCD?
+		 */
+		if (ISSET(delta, sc->sc_ppsmask)) {
+			struct timeval tv;
+			if (ISSET(msr, sc->sc_ppsmask) ==
+			    sc->sc_ppsassert) {
+				/* XXX nanotime() */
+				microtime(&tv);
+				TIMEVAL_TO_TIMESPEC(&tv,
+						    &sc->ppsinfo.assert_timestamp);
+				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
+					timespecadd(&sc->ppsinfo.assert_timestamp,
 						    &sc->ppsparam.assert_offset,
 						    &sc->ppsinfo.assert_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.assert_timestamp);
-	}
+					TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.assert_timestamp);
+				}
 
 #ifdef PPS_SYNC
-					if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
-						hardpps(&tv, tv.tv_usec);
+				if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
+					hardpps(&tv, tv.tv_usec);
 #endif
-					sc->ppsinfo.assert_sequence++;
-					sc->ppsinfo.current_mode =
-					    sc->ppsparam.mode;
+				sc->ppsinfo.assert_sequence++;
+				sc->ppsinfo.current_mode =
+					sc->ppsparam.mode;
 
-				} else if (ISSET(msr, sc->sc_ppsmask) ==
-				    sc->sc_ppsclear) {
-					/* XXX nanotime() */
-					microtime(&tv);
-					TIMEVAL_TO_TIMESPEC(&tv,
-					    &sc->ppsinfo.clear_timestamp);
-					if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
-						timespecadd(&sc->ppsinfo.clear_timestamp,
+			} else if (ISSET(msr, sc->sc_ppsmask) ==
+				   sc->sc_ppsclear) {
+				/* XXX nanotime() */
+				microtime(&tv);
+				TIMEVAL_TO_TIMESPEC(&tv,
+						    &sc->ppsinfo.clear_timestamp);
+				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
+					timespecadd(&sc->ppsinfo.clear_timestamp,
 						    &sc->ppsparam.clear_offset,
 						    &sc->ppsinfo.clear_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.clear_timestamp);
-	}
+					TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.clear_timestamp);
+				}
 
 #ifdef PPS_SYNC
-					if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
-						hardpps(&tv, tv.tv_usec);
+				if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
+					hardpps(&tv, tv.tv_usec);
 #endif
-					sc->ppsinfo.clear_sequence++;
-					sc->ppsinfo.current_mode =
-					    sc->ppsparam.mode;
-				}
+				sc->ppsinfo.clear_sequence++;
+				sc->ppsinfo.current_mode =
+					sc->ppsparam.mode;
 			}
-
-			/*
-			 * Stop output immediately if we lose the output
-			 * flow control signal or carrier detect.
-			 */
-			if (ISSET(~msr, sc->sc_msr_mask)) {
-				sc->sc_tbc = 0;
-				sc->sc_heldtbc = 0;
-#ifdef SCIF_DEBUG
-				if (scif_debug)
-					scifstatus(sc, "scifintr  ");
-#endif
-			}
-
-			sc->sc_st_check = 1;
 		}
+
+		/*
+		 * Stop output immediately if we lose the output
+		 * flow control signal or carrier detect.
+		 */
+		if (ISSET(~msr, sc->sc_msr_mask)) {
+			sc->sc_tbc = 0;
+			sc->sc_heldtbc = 0;
+#ifdef SCIF_DEBUG
+			if (scif_debug)
+				scifstatus(sc, "scifintr  ");
 #endif
-	} while (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR));
+		}
+
+		sc->sc_st_check = 1;
+	}
+#endif
 
 	/*
 	 * Done handling any receive interrupts. See if data can be
 	 * transmitted as well. Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
-	if (((SHREG_SCFDR2 & SCFDR2_TXCNT) >> 8) != 16){ /* XXX (msaitoh) */
+	if (((SHREG_SCFDR2 & SCFDR2_TXCNT) >> 8) != 16) { /* XXX (msaitoh) */
 		/*
 		 * If we've delayed a parameter change, do it now, and restart
 		 * output.
@@ -1570,13 +1572,7 @@ scifcninit(cp)
 	struct consdev *cp;
 {
 
-	InitializeScif(SCIFCN_SPEED);
-
-#if 0
-	scif_intr_init(); 	/* XXX msaitoh */
-#endif
-
-	scif_puts("scif initialized.\n\r");
+	InitializeScif(scifcn_speed);
 }
 
 #define scif_getc GetcScif
