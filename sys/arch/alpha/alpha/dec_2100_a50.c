@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.11 1996/08/27 16:28:08 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.12 1996/09/17 19:46:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -148,7 +148,7 @@ dec_2100_a50_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found;
+	static int found, initted, scsiboot, netboot;
 	static struct device *pcidev, *scsidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
@@ -157,6 +157,15 @@ dec_2100_a50_device_register(dev, aux)
 
 	if (found)
 		return;
+
+	if (!initted) {
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+#if 0
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+#endif
+		initted =1;
+	}
 
 	if (pcidev == NULL) {
 		if (strcmp(cd->cd_name, "pci"))
@@ -175,7 +184,7 @@ dec_2100_a50_device_register(dev, aux)
 		}
 	}
 
-	if (scsidev == NULL) {
+	if (scsiboot && (scsidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -194,9 +203,10 @@ dec_2100_a50_device_register(dev, aux)
 		}
 	}
 
-	if (!strcmp(cd->cd_name, "sd") ||
-	    !strcmp(cd->cd_name, "st") ||
-	    !strcmp(cd->cd_name, "cd")) {
+	if (scsiboot &&
+	    (!strcmp(cd->cd_name, "sd") ||
+	     !strcmp(cd->cd_name, "st") ||
+	     !strcmp(cd->cd_name, "cd"))) {
 		struct scsibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -227,5 +237,25 @@ dec_2100_a50_device_register(dev, aux)
 		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
+	}
+
+	if (netboot) {
+		if (parent != pcidev)
+			return;
+		else {
+			struct pci_attach_args *pa = aux;
+
+			if (b->slot != pa->pa_device)
+				return;
+
+			/* XXX function? */
+	
+			booted_device = dev;
+#if 0
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+			found = 1;
+			return;
+		}
 	}
 }
