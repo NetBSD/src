@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: ufs_lockf.c,v 1.4 1993/05/22 09:01:16 cgd Exp $
+ *	$Id: ufs_lockf.c,v 1.4.2.1 1993/07/21 14:33:21 cgd Exp $
  */
 
 #include "param.h"
@@ -543,11 +543,16 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 #endif /* LOCKF_DEBUG */
 	start = lock->lf_start;
 	end = lock->lf_end;
+asm("foo1:");
 	while (lf != NOLOCKF) {
+asm("foo5:");
 		if (((type & SELF) && lf->lf_id != lock->lf_id) ||
 		    ((type & OTHERS) && lf->lf_id == lock->lf_id)) {
+asm("foo2:");
 			*prev = &lf->lf_next;
+asm("foo3:");
 			*overlap = lf = lf->lf_next;
+asm("foo4:");
 			continue;
 		}
 #ifdef LOCKF_DEBUG
