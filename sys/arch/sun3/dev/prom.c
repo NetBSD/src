@@ -165,10 +165,10 @@ int promioctl(dev, cmd, data, flag, p)
     prom_sc = UNIT_TO_PROM_SC(unit);
     tp = prom_sc->sc_tty;
 
-    error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+    error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
     if (error >= 0)
 	return error;
-    error = ttioctl(tp, cmd, data, flag);
+    error = ttioctl(tp, cmd, data, flag, p);
     if (error >= 0)
 	return error;
     return ENOTTY;

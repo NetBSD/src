@@ -44,46 +44,46 @@
  * with VAXen, SUNs, and others that handle and benefit from them.
  * This reasoning is dubious.
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/syslog.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/device.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef RMP
-#include "netrmp/rmp.h"
-#include "netrmp/rmp_var.h"
+#include <netrmp/rmp.h>
+#include <netrmp/rmp_var.h>
 #endif
 
-#include "machine/autoconf.h"
+#include <machine/autoconf.h>
 
 #include "if_lereg.h"
 
 #if NBPFILTER > 0
-#include "../net/bpf.h"
-#include "../net/bpfdesc.h"
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #include "if_le.h"
@@ -91,8 +91,8 @@
 
 int	ledebug = 0;		/* console error messages */
 
-int	leintr(), leioctl(), ether_output();
-void lestart(), leinit();
+int	leintr(), leioctl(), ether_output(), lestart();
+void    leinit();
 struct	mbuf *leget();
 extern	struct ifnet loif;
 
@@ -295,7 +295,7 @@ void leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
-void lestart(ifp)
+int lestart(ifp)
 	struct ifnet *ifp;
 {
 	register struct le_softc *le = lecd.cd_devs[ifp->if_unit];
@@ -304,10 +304,10 @@ void lestart(ifp)
 	int len;
 
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
-		return;
+		return 0;
 	IF_DEQUEUE(&le->sc_if.if_snd, m);
 	if (m == 0)
-		return;
+		return 0;
 	len = leput(le->sc_r2->ler2_tbuf[0], m);
 #if NBPFILTER > 0
 	/*
@@ -322,6 +322,7 @@ void lestart(ifp)
 	tmd->tmd2 = -len;
 	tmd->tmd1_bits = LE_OWN | LE_STP | LE_ENP;
 	le->sc_if.if_flags |= IFF_OACTIVE;
+	return 0;
 }
 
 leintr(unit)
@@ -776,7 +777,7 @@ leioctl(ifp, cmd, data)
 		    (ifp->if_flags & IFF_RUNNING)) {
 			le->sc_iflags = ifp->if_flags;
 			lereset(ifp->if_unit);
-			lestart(ifp);
+			(void) lestart(ifp);
 		}
 		break;
 
