@@ -88,6 +88,10 @@ struct symbol
 #ifdef TC_SYMFIELD_TYPE
   TC_SYMFIELD_TYPE sy_tc;
 #endif
+
+#ifdef TARGET_SYMBOL_FIELDS
+  TARGET_SYMBOL_FIELDS
+#endif
 };
 
 #ifdef BFD_ASSEMBLER
