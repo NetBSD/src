@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.16 1996/10/10 23:31:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -36,9 +36,12 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
+
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -72,6 +75,8 @@ struct scsi_device uk_switch = {
 	NULL,
 };
 
+cdev_decl(uk);
+
 int
 ukmatch(parent, match, aux)
 	struct device *parent;
@@ -104,16 +109,18 @@ ukattach(parent, self, aux)
 	sc_link->device_softc = uk;
 	sc_link->openings = 1;
 
-	printf("\n");
-	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
+	kprintf("\n");
+	kprintf("%s: unknown device\n", uk->sc_dev.dv_xname);
 }
 
 /*
  * open the device.
  */
 int
-ukopen(dev)
+ukopen(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	int unit;
 	struct uk_softc *uk;
@@ -135,7 +142,7 @@ ukopen(dev)
 	 * Only allow one at a time
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
-		printf("%s: already open\n", uk->sc_dev.dv_xname);
+		kprintf("%s: already open\n", uk->sc_dev.dv_xname);
 		return EBUSY;
 	}
 
@@ -150,8 +157,10 @@ ukopen(dev)
  * occurence of an open device
  */
 int
-ukclose(dev)
+ukclose(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
