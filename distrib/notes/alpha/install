@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.5 1998/05/11 20:04:47 ross Exp $	
+	$NetBSD: install,v 1.6 1998/05/12 00:00:18 ross Exp $	
 
 0. Introduction
 
@@ -6,10 +6,10 @@
     If you do have problems, don't despair; most complications you
     might encounter are very easy to fix. We strongly suggest you
     join the port-alpha list (see the section on mailing lists on
-    http://www.netbsd.org) and ask questions there.
-    Also, please report any problems you've solved by
-    using the mailing list or by running send-pr(1) so that they
-    can be fixed for the next release.
+    http://www.netbsd.org) and ask questions there.  Also, please
+    report any problems you've encountered or solved by using the
+    mailing list or by running send-pr(1) so that they can be fixed
+    for the next release.
         
 1. General
 
@@ -70,7 +70,7 @@
 
     2.The second stage bootstrap uses further information in the BOOTP
     packet that the console received to find the NFS server and path
-    and retreive the kernel (the file /netbsd). After loading the
+    and retrieve the kernel (the file /netbsd). After loading the
     kernel into memory, it executes it.
 
     3.The kernel probes and configures the devices, and then sends
@@ -369,7 +369,11 @@
     and possibly `defaultroute', and add an ifconfig_int for your
     interface <int>, along the lines of
 
-        ifconfig_de0="inet myname.my.dom 123.45.67.89 netmask 255.255.255.0"
+        ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+
+    or, if you have myname.my.dom in /etc/hosts:
+
+        ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
 
     You will also want either to run named or add an /etc/resolv.conf
     file (`man resolv.conf' for information on this), use `vipw' to add

@@ -1,8 +1,8 @@
-	$NetBSD: upgrade,v 1.5 1998/05/09 04:02:07 ross Exp $	
+	$NetBSD: upgrade,v 1.6 1998/05/12 00:00:18 ross Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
-to interdepencies in the various components.
+to interdependencies in the various components.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
