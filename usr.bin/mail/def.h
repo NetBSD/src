@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.10 1997/10/19 05:03:12 lukem Exp $	*/
+/*	$NetBSD: def.h,v 1.11 1998/04/02 10:31:09 kleink Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.10 1997/10/19 05:03:12 lukem Exp $
+ *	$NetBSD: def.h,v 1.11 1998/04/02 10:31:09 kleink Exp $
  */
 
 /*
@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include "pathnames.h"
 
