@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.56 2004/03/11 11:48:16 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.57 2004/03/11 11:50:43 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.56 2004/03/11 11:48:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.57 2004/03/11 11:50:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -479,6 +479,75 @@ softdep_freequeue_process(void)
 		softdep_free(wk, wk->wk_type);
 		ACQUIRE_LOCK(&lk);
 	}
+}
+
+static char emerginoblk[MAXBSIZE];
+static int emerginoblk_inuse;
+static const struct buf *emerginoblk_origbp;
+static struct simplelock emerginoblk_slock = SIMPLELOCK_INITIALIZER;
+
+static __inline void *
+inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
+    size_t size)
+{
+	void *vp;
+	int s;
+
+	KASSERT(inodedep->id_savedino1 == NULL);
+
+	if (curproc != uvm.pagedaemon_proc)
+		return malloc(size, M_INODEDEP, M_WAITOK);
+
+	vp = malloc(size, M_INODEDEP, M_NOWAIT);
+	if (vp)
+		return vp;
+
+	s = splbio();
+	simple_lock(&emerginoblk_slock);
+	while (emerginoblk_inuse && emerginoblk_origbp != origbp)
+		ltsleep(&emerginoblk_inuse, PVM, "emdino", 0,
+		    &emerginoblk_slock);
+	emerginoblk_origbp = origbp;
+	emerginoblk_inuse++;
+	KASSERT(emerginoblk_inuse <= sizeof(emerginoblk) /
+	    MIN(sizeof(struct ufs1_dinode), sizeof(struct ufs2_dinode)));
+	simple_unlock(&emerginoblk_slock);
+	splx(s);
+
+	KASSERT(inodedep->id_savedino1 == NULL);
+
+	vp = emerginoblk +
+	    size * ino_to_fsbo(inodedep->id_fs, inodedep->id_ino);
+	KASSERT((void *)&emerginoblk[0] <= vp);
+	KASSERT(vp < (void *)&emerginoblk[MAXBSIZE]);
+
+	return vp;
+}
+
+static __inline void
+inodedep_freedino(struct inodedep *inodedep)
+{
+	void *vp = inodedep->id_savedino1;
+
+	inodedep->id_savedino1 = NULL;
+	KASSERT(vp != NULL);
+	if (__predict_false((void *)&emerginoblk[0] <= vp &&
+	    vp < (void *)&emerginoblk[MAXBSIZE])) {
+		int s;
+
+		KASSERT(emerginoblk_inuse > 0);
+		s = splbio();
+		simple_lock(&emerginoblk_slock);
+		emerginoblk_inuse--;
+		if (emerginoblk_inuse == 0)
+			wakeup(&emerginoblk_inuse);
+		simple_unlock(&emerginoblk_slock);
+		splx(s);
+
+		return;
+	}
+
+	free(vp, M_INODEDEP);
 }
 
 /*
@@ -2355,8 +2424,7 @@ check_inode_unwritten(inodedep)
 	if (inodedep->id_state & ONWORKLIST)
 		WORKLIST_REMOVE(&inodedep->id_list);
 	if (inodedep->id_savedino1 != NULL) {
-		FREE(inodedep->id_savedino1, M_INODEDEP);
-		inodedep->id_savedino1 = NULL;
+		inodedep_freedino(inodedep);
 	}
 	if (free_inodedep(inodedep) == 0)
 		panic("check_inode_unwritten: busy inode");
@@ -3517,8 +3585,8 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 	if ((inodedep->id_state & DEPCOMPLETE) == 0) {
 		if (inodedep->id_savedino1 != NULL)
 			panic("initiate_write_inodeblock: already doing I/O");
-		MALLOC(inodedep->id_savedino1, struct ufs1_dinode *,
-		    sizeof(struct ufs1_dinode), M_INODEDEP, M_WAITOK);
+		inodedep->id_savedino1 = inodedep_allocdino(inodedep, bp,
+		    sizeof(struct ufs1_dinode));
 		*inodedep->id_savedino1 = *dp;
 		bzero((caddr_t)dp, sizeof(struct ufs1_dinode));
 		return;
@@ -3657,8 +3725,8 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	if ((inodedep->id_state & DEPCOMPLETE) == 0) {
 		if (inodedep->id_savedino2 != NULL)
 			panic("initiate_write_inodeblock_ufs2: I/O underway");
-		MALLOC(inodedep->id_savedino2, struct ufs2_dinode *,
-		    sizeof(struct ufs2_dinode), M_INODEDEP, M_WAITOK);
+		inodedep->id_savedino2 = inodedep_allocdino(inodedep, bp,
+		    sizeof(struct ufs2_dinode));
 		*inodedep->id_savedino2 = *dp;
 		bzero((caddr_t)dp, sizeof(struct ufs2_dinode));
 		return;
@@ -4144,8 +4212,7 @@ handle_written_inodeblock(inodedep, bp)
 			*dp1 = *inodedep->id_savedino1;
 		else
 			*dp2 = *inodedep->id_savedino2;
-		FREE(inodedep->id_savedino1, M_INODEDEP);
-		inodedep->id_savedino1 = NULL;
+		inodedep_freedino(inodedep);
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;
 		bdirty(bp);
