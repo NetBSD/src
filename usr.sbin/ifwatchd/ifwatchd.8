@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.18 2003/07/04 12:44:12 wiz Exp $
+.\" $NetBSD: ifwatchd.8,v 1.19 2003/07/04 12:48:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,9 +50,10 @@
 .Ar ifname(s)
 .Sh DESCRIPTION
 .Nm
-is used to monitor dynamic interfaces (for example PPP interfaces) for address
-changes.  Sometimes these interfaces are accompanied by a daemon program, which
-can take care of running any necessary scripts (like
+is used to monitor dynamic interfaces (for example PPP interfaces)
+for address changes.
+Sometimes these interfaces are accompanied by a daemon program,
+which can take care of running any necessary scripts (like
 .Xr pppd 8
 or
 .Xr isdnd 8 ) ,
@@ -60,22 +61,25 @@ but sometimes the interfaces run completely autonomously (like
 .Xr pppoe 4 ) .
 .Pp
 .Nm
-provides a generic way to watch this type of changes.  It works by monitoring
-the routing socket and interpreting
+provides a generic way to watch this type of changes.
+It works by monitoring the routing socket and interpreting
 .Ql RTM_NEWADDR
 .Pq address added
 and
 .Ql RTM_DELADDR
 .Pq address deleted
-messages.  It does not need special privileges to do this.  The scripts called
-for up or down events are run with the same user id as
+messages.
+It does not need special privileges to do this.
+The scripts called for up or down events are run with the same user
+id as
 .Nm
 is run.
 .Pp
 The following options are available:
 .Bl -tag -width indent
 .It Fl A Ar arrival-script
-Specify the command to invoke on arrival of new interfaces (like PCMCIA cards).
+Specify the command to invoke on arrival of new interfaces (like
+PCMCIA cards).
 .It Fl D Ar departure-script
 Specify the command to invoke when an interface departs (for example
 a PCMCIA card is removed.)
@@ -87,29 +91,36 @@ events (or: deletion of an address from an interface).
 Show the synopsis.
 .It Fl i
 Inhibit a call to the up-script on startup for all watched interfaces
-already marked up. If this option is not given,
+already marked up.
+If this option is not given,
 .Nm
-will check all watched interfaces on startup whether they are already marked
-up and, if they are, call the up-script with appropriate parameters.
+will check all watched interfaces on startup whether they are
+already marked up and, if they are, call the up-script with
+appropriate parameters.
 .Pp
-Since ifwatchd typically is started late in the system boot sequence, some
-of the monitored interfaces may already have come up when it finally starts,
-but their up-scripts have not been called. By default
+Since ifwatchd typically is started late in the system boot sequence,
+some of the monitored interfaces may already have come up when it
+finally starts, but their up-scripts have not been called.
+By default
 .Nm
-calls them on startup to account for this (and make the scripts easier.)
+calls them on startup to account for this (and make the scripts
+easier.)
 .It Fl q
 Be quiet and don't log non-error messages to syslog.
 .It Ar ifname(s)
-The name of the interface to watch.  Multiple interfaces may be specified.
+The name of the interface to watch.
+Multiple interfaces may be specified.
 Events for other interfaces are ignored.
 .It Fl u Ar up-script
 Specify the command to invoke on
 .Dq interface up
 events (or: addition of an address to an interface).
 .It Fl v
-Run in verbose debug mode and do not detach from the controlling terminal.
-Output verbose progress messages and flag errors ignored during normal
-operation. Adding more
+Run in verbose debug mode and do not detach from the controlling
+terminal.
+Output verbose progress messages and flag errors ignored during
+normal operation.
+Adding more
 .Fl v
 increases the verbosity.
 .Em You do not want to use this option in
@@ -118,30 +129,33 @@ increases the verbosity.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 # ifwatchd -u /etc/ppp/ip-up -d /etc/ppp/ip-down pppoe0
-
 .Ed
-If your pppoe0 interface is your main connection to the internet, the typical
-use of the up/down scripts is to add and remove a default route. This is
-an example for an up script doing this:
+.Pp
+If your pppoe0 interface is your main connection to the internet,
+the typical use of the up/down scripts is to add and remove a
+default route.
+This is an example for an up script doing this:
 .Bd -literal -offset indent
 #! /bin/sh
 /sbin/route add default $5
-
 .Ed
-As described below the fifth command line parameter will contain the peer
-address of the pppoe link. The corresponding ip-down script is:
+.Pp
+As described below the fifth command line parameter will contain
+the peer address of the pppoe link.
+The corresponding ip-down script is:
 .Bd -literal -offset indent
 #! /bin/sh
 /sbin/route delete default $5
-
 .Ed
-Note that this is not a good idea if you have pppoe0 configured to connect
-only on demand (via the link1 flag), but works well for all permanent connected
-cases. Use
+.Pp
+Note that this is not a good idea if you have pppoe0 configured to
+connect only on demand (via the link1 flag), but works well for
+all permanent connected cases.
+Use
 .Bd -literal -offset indent
 ! /sbin/route add default -iface 0.0.0.1
-
 .Ed
+.Pp
 in your
 .Pa /etc/ifconfig.pppoe0
 file in the on-demand case.
@@ -149,9 +163,9 @@ file in the on-demand case.
 The invoked scripts get passed these parameters:
 .Bl -tag -width destination
 .It Ar ifname
-The name of the interface this change is for (this allows to share the same
-script for multiple interfaces watched and dispatching on the interface name
-in the script).
+The name of the interface this change is for (this allows to share
+the same script for multiple interfaces watched and dispatching on
+the interface name in the script).
 .It Ar tty
 Dummy parameter for compatibility with
 .Xr pppd 8
@@ -163,13 +177,15 @@ Dummy parameter for compatibility with
 which will always be
 .Em 9600 .
 .It Ar address
-The new address if this is an up event, or the no longer valid old address
-if this is a down event.
+The new address if this is an up event, or the no longer valid old
+address if this is a down event.
 .Pp
-The format of the address depends on the address family, for IPv4 it is the
-usual dotted quad notation, for IPv6 the colon separated standard notation.
+The format of the address depends on the address family, for IPv4
+it is the usual dotted quad notation, for IPv6 the colon separated
+standard notation.
 .It Ar destination
-For point to point interfaces, this is the remote address of the interface.
+For point to point interfaces, this is the remote address of the
+interface.
 For other interfaces it is the broadcast address.
 .El
 .Sh ERRORS
@@ -194,8 +210,10 @@ The program was written by
 .An Martin Husemann
 .Aq martin@NetBSD.org .
 .Sh CAVEATS
-Due to the nature of the program a lot of stupid errors can not easily be
-caught in advance without removing the provided facility for advanced uses.
-For example typing errors in the interface name can not be detected by
-checking against the list of installed interfaces, because
-it is possible for a pcmcia card with the name given to be inserted later.
+Due to the nature of the program a lot of stupid errors can not
+easily be caught in advance without removing the provided facility
+for advanced uses.
+For example typing errors in the interface name can not be detected
+by checking against the list of installed interfaces, because it
+is possible for a pcmcia card with the name given to be inserted
+later.
