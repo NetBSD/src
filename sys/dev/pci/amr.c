@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.21 2004/09/02 21:12:42 he Exp $	*/
+/*	$NetBSD: amr.c,v 1.22 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.21 2004/09/02 21:12:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.22 2004/09/13 12:55:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.21 2004/09/02 21:12:42 he Exp $");
 #include <dev/pci/amrreg.h>
 #include <dev/pci/amrvar.h>
 
+#include "locators.h"
+
 void	amr_attach(struct device *, struct device *, void *);
 void	amr_ccb_dump(struct amr_softc *, struct amr_ccb *);
 void	*amr_enquire(struct amr_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
@@ -102,7 +104,8 @@ int	amr_intr(void *);
 int	amr_match(struct device *, struct cfdata *, void *);
 int	amr_print(void *, const char *);
 void	amr_shutdown(void *);
-int	amr_submatch(struct device *, struct cfdata *, void *);
+int	amr_submatch(struct device *, struct cfdata *,
+		     const locdesc_t *, void *);
 void	amr_teardown(struct amr_softc *);
 void	amr_thread(void *);
 void	amr_thread_create(void *);
@@ -255,6 +258,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
         struct amr_ccb *ac;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	aprint_naive(": RAID controller\n");
 
@@ -459,8 +464,12 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		if (amr->amr_drive[j].al_size == 0)
 			continue;
 		amra.amra_unit = j;
-		amr->amr_drive[j].al_dv = config_found_sm(&amr->amr_dv, &amra,
-		    amr_print, amr_submatch);
+
+		ldesc->len = 1;
+		ldesc->locs[AMRCF_UNIT] = j;
+
+		amr->amr_drive[j].al_dv = config_found_sm_loc(&amr->amr_dv,
+			"amr", ldesc, &amra, amr_print, amr_submatch);
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
@@ -530,14 +539,15 @@ amr_print(void *aux, const char *pnp)
  * Match a sub-device.
  */
 int
-amr_submatch(struct device *parent, struct cfdata *cf, void *aux)
+amr_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct amr_attach_args *amra;
 
 	amra = (struct amr_attach_args *)aux;
 
-	if (cf->amracf_unit != AMRCF_UNIT_DEFAULT &&
-	    cf->amracf_unit != amra->amra_unit)
+	if (cf->cf_loc[AMRCF_UNIT] != AMRCF_UNIT_DEFAULT &&
+	    cf->cf_loc[AMRCF_UNIT] != ldesc->locs[AMRCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

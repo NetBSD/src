@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.22 2004/09/13 12:55:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.22 2004/09/13 12:55:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,8 @@ USB_ATTACH(uftdi)
 			   USBDEV(sc->sc_dev));
 
 	DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 

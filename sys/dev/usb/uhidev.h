@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.4 2004/09/13 12:55:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-
-#include "locators.h"
-#define uhidevcf_reportid cf_loc[UHIDBUSCF_REPORTID]
-#define UHIDEV_UNK_REPORTID UHIDBUSCF_REPORTID_DEFAULT
 
 struct uhidev_softc {
 	USBBASEDEVICE sc_dev;		/* base device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.3 2003/06/13 05:57:31 thorpej Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.4 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef _IC_ICPVAR_H_
 #define _IC_ICPVAR_H_
-
-#include "locators.h"
 
 #include <dev/ic/icp_ioctl.h>
 
@@ -236,8 +234,6 @@ extern gdt_statist_t icp_stats;
 struct icp_attach_args {
 	int		icpa_unit;
 };
-
-#define	icpacf_unit	cf_loc[ICPCF_UNIT]
 
 #define	ICPA_UNIT_SCSI	100
 

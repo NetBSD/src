@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.7 2003/07/08 10:06:29 itojun Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.8 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -121,8 +121,6 @@ typedef struct cardslot_softc *cardslot_t;
 #define	CARDSLOT_EVENT_REMOVAL_CB	3
 
 #define IS_CARDSLOT_INSERT_REMOVE_EV(x) (0 <= (x) && (x) <= 3)
-
-#include "locators.h"
 
 void cardslot_event_throw __P((cardslot_t, int));
 

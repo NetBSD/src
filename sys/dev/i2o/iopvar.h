@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.13 2003/12/09 19:43:54 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.14 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef _I2O_IOPVAR_H_
 #define	_I2O_IOPVAR_H_
-
-#include "locators.h"
 
 /*
  * Transfer descriptor.
@@ -164,7 +162,6 @@ struct iop_attach_args {
 	int	ia_class;		/* device class */
 	int	ia_tid;			/* target ID */
 };
-#define	iopcf_tid	cf_loc[IOPCF_TID]		/* TID */
 
 void	iop_init(struct iop_softc *, const char *);
 int	iop_intr(void *);

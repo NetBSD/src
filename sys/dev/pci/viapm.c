@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.11 2004/07/25 18:04:52 christos Exp $	*/
+/*	$NetBSD: viapm.c,v 1.12 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.11 2004/07/25 18:04:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.12 2004/09/13 12:55:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,13 +106,6 @@ viapm_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-static int
-viapm_submatch(struct device * parent, struct cfdata * cf, void *aux)
-{
-
-	return config_match(parent, cf, aux);
-}
-
 static void
 viapm_attach(struct device * parent, struct device * self, void *aux)
 {
@@ -137,17 +130,17 @@ viapm_attach(struct device * parent, struct device * self, void *aux)
 	 */
 	vaa.va_type = VIAPM_POWER;
 	vaa.va_offset = 0x40;
-	config_found_sm(self, &vaa, viapm_print, viapm_submatch);
+	config_found_ia(self, "viapm", &vaa, viapm_print);
 #endif
 
 	vaa.va_type = VIAPM_HWMON;
 	vaa.va_offset = 0x70;
-	config_found_sm(self, &vaa, viapm_print, viapm_submatch);
+	config_found(self, "viapm", &vaa, viapm_print);
 
 #if 0
 	vaa.va_type = VIAPM_SMBUS;
 	vaa.va_offset = 0x93;
-	config_found_sm(self, &vaa, viapm_print, viapm_submatch);
+	config_found(self, "viapm", &vaa, viapm_print);
 #endif
 }
 

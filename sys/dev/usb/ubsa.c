@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.9 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.10 2004/09/13 12:55:49 drochner Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.9 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.10 2004/09/13 12:55:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,8 @@ USB_ATTACH(ubsa)
 	DPRINTF(("ubsa: in = 0x%x, out = 0x%x, intr = 0x%x\n",
 	    uca.bulkin_no, uca.bulkout_no, sc->sc_intr_number));
 
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 

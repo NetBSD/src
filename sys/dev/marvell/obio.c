@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2004/09/08 20:08:46 drochner Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2004/09/08 20:08:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2004/09/13 12:55:48 drochner Exp $");
 
 #include "opt_marvell.h"
 
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2004/09/08 20:08:46 drochner Exp $");
 #ifdef DEBUG
 #include <sys/systm.h>	/* for Debugger() */
 #endif
+
+#include "locators.h"
 
 static int obio_cfprint(void *, const char *);
 static int obio_cfmatch(struct device *, struct cfdata *, void *);
@@ -109,7 +111,7 @@ obio_cfprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s", oa->oa_name, pnp);
 	}
 	aprint_normal(" offset %#x size %#x", oa->oa_offset, oa->oa_size);
-	if (oa->oa_irq != OBIO_UNK_IRQ)
+	if (oa->oa_irq != OBIOCF_IRQ_DEFAULT)
 		aprint_normal(" irq %d", oa->oa_irq);
 
 	return (UNCONF);
@@ -125,9 +127,9 @@ obio_cfsearch(struct device *parent, struct cfdata *cf,
 
 	oa.oa_name = cf->cf_name;
 	oa.oa_memt = sc->sc_memt;
-	oa.oa_offset = cf->obiocf_offset;
-	oa.oa_size = cf->obiocf_size;
-	oa.oa_irq = cf->obiocf_irq;
+	oa.oa_offset = cf->cf_loc[OBIOCF_OFFSET];
+	oa.oa_size = cf->cf_loc[OBIOCF_SIZE];
+	oa.oa_irq = cf->cf_loc[OBIOCF_IRQ];
 
 	if (config_match(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_cfprint);

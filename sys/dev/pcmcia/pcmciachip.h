@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.8 2004/08/11 00:18:20 mycroft Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.9 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -33,9 +33,6 @@
 #define	_PCMCIA_PCMCIACHIP_H_
 
 #include <machine/bus.h>
-#ifdef _KERNEL_OPT
-#include "locators.h"
-#endif
 
 struct pcmcia_function;
 struct pcmcia_mem_handle;
@@ -149,9 +146,6 @@ struct pcmciabus_attach_args {
 	bus_addr_t iobase;		/* start i/o space allocation here */
 	bus_size_t iosize;		/* size of the i/o space range */
 };
-
-#define	pcmciabuscf_controller	cf_loc[PCMCIABUSCF_CONTROLLER]
-#define	pcmciabuscf_socket	cf_loc[PCMCIABUSCF_SOCKET]
 
 /* interfaces for the chipset to call pcmcia */
 
