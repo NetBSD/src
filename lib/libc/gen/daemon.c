@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon.c,v 1.5 1997/07/13 18:53:49 christos Exp $	*/
+/*	$NetBSD: daemon.c,v 1.6 1997/07/19 19:43:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: daemon.c,v 1.5 1997/07/13 18:53:49 christos Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.6 1997/07/19 19:43:59 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <fcntl.h>
 #include <paths.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int
 daemon(nochdir, noclose)
@@ -72,8 +72,8 @@ daemon(nochdir, noclose)
 		(void)dup2(fd, STDIN_FILENO);
 		(void)dup2(fd, STDOUT_FILENO);
 		(void)dup2(fd, STDERR_FILENO);
-		if (fd > 2)
-			(void)close (fd);
+		if (fd > STDERR_FILENO)
+			(void)close(fd);
 	}
 	return (0);
 }
