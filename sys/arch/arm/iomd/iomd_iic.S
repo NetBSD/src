@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_iic.S,v 1.1 2001/10/05 22:27:40 reinoud Exp $	*/
+/*	$NetBSD: iomd_iic.S,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -92,11 +92,7 @@ ENTRY(iic_set_state)
 	/* Preserve non-IIC bits */
 
 	bic	r3, r3, #0x00000003
-#ifdef RC7500
-	and	r3, r3, #0x000000ff
-#else
 /*	orr	r3, r3, #0x000000c0*/
-#endif
 
 	/* Set the IIC clock and data bits */
 
@@ -160,11 +156,7 @@ ENTRY(iic_set_state_and_ack)
 	/* Preserve non-IIC bits */
 
 	bic	r3, r3, #0x00000003
-#ifdef RC7500
-	and	r3, r3, #0x000000ff
-#else
 /*	orr	r3, r3, #0x000000c0*/
-#endif
 
 	/* Set the IIC clock and data bits */
 

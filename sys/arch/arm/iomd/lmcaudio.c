@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.1 2001/10/05 22:27:41 reinoud Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -189,12 +189,7 @@ lmcaudio_probe(parent, cf, aux)
 		return(0);
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-#ifdef RC7500
-		sdma_channel = IRQ_SDMA;
-		return(1);
-#else
 		return(0);
-#endif
 	default:
 		printf("lmcaudio: Unknown IOMD id=%04x", id);
 		break;
