@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/08/01 18:28:48 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/01/04 05:38:31 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -624,7 +624,7 @@ load(db, argv)
 	}
 	(void)printf("loading %s...\n", argv[1]);
 
-	for (cnt = 1; (lp = fgetline(fp, &len)) != NULL; ++cnt) {
+	for (cnt = 1; (lp = fgetln(fp, &len)) != NULL; ++cnt) {
 		if (recno) {
 			key.data = &cnt;
 			key.size = sizeof(recno_t);
