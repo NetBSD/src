@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.117 2001/06/02 18:09:23 chs Exp $	 */
+/* $NetBSD: machdep.c,v 1.118 2001/06/30 12:54:33 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -219,12 +219,14 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
