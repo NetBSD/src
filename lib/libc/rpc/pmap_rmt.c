@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.24 2000/01/22 22:19:18 mycroft Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.25 2000/02/18 08:26:01 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.24 2000/01/22 22:19:18 mycroft Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.25 2000/02/18 08:26:01 itojun Exp $");
 #endif
 #endif
 
@@ -207,6 +207,8 @@ getbroadcastnets(addrs, sock, buf)
 	struct sockaddr_in *sin;
         char *cp, *cplim;
         int i = 0;
+	size_t siz;
+	char ifrbuf[8192];
 
 	_DIAGASSERT(addrs != NULL);
 	_DIAGASSERT(buf != NULL);
@@ -220,20 +222,32 @@ getbroadcastnets(addrs, sock, buf)
 #define max(a, b) (a > b ? a : b)
 #define size(p)	max((p).sa_len, sizeof(p))
 	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = buf; cp < cplim;
-			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
+	for (cp = buf; cp < cplim; cp += siz) {
 		ifr = (struct ifreq *)(void *)cp;
+		memcpy(ifrbuf, ifr, sizeof(*ifr));
+		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		if (siz < sizeof(ifr->ifr_addr))
+			siz = sizeof(ifr->ifr_addr);
+		siz += sizeof (ifr->ifr_name);
+		if (siz > sizeof(ifrbuf)) {
+			/* ifr too big */
+			break;
+		}
+		memcpy(ifrbuf, ifr, siz);
+		ifr = (struct ifreq *)ifrbuf;
+
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
 		ifreq = *ifr;
-                if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-                        warn("getbroadcastnets: ioctl (get interface flags)");
-                        continue;
-                }
-                if ((ifreq.ifr_flags & IFF_BROADCAST) &&
+		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
+			warn("getbroadcastnets: ioctl (get interface flags)");
+			continue;
+		}
+		if ((ifreq.ifr_flags & IFF_BROADCAST) &&
 		    (ifreq.ifr_flags & IFF_UP)) {
 			sin = (struct sockaddr_in *)(void *)&ifr->ifr_addr;
 #ifdef SIOCGIFBRDADDR   /* 4.3BSD */
+			ifreq = *ifr;
 			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
 				addrs[i++] =
 				    inet_makeaddr(inet_netof(sin->sin_addr),
