@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.89 2003/01/27 04:29:26 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.90 2003/01/27 04:55:10 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3091,7 +3091,7 @@ sys/dev/usb/uscanner.c				1.35-1.37
 sys/dev/usb/usbdevs.h				1.255.2.1-1.255.2.2 (regen)
 sys/dev/usb/usbdevs_data.h			1.256.2.1-1.256.2.2 (regen)
 
-	Add Epson 1660.  From kerm/19767, Neil Short.
+	Add Epson 1660.
 	Add Epson Perfection 1260 scanner.
 	[tron, ticket #1074]
 
@@ -3104,23 +3104,23 @@ etc/etc.amiga/MAKEDEV				1.80-1.82
 distrib/amiga/miniroot/Makefile.inc		1.12-1.13
 
 	Create device nodes for 2nd and 3rd CD drive
-	Increase inode density - we were running out of inodes mid-install after
-	adding more cd and st devices.
+	Increase inode density - we were running out of inodes mid-install 
+	after adding more cd and st devices.
 	[is, ticket #1076]
 
 sys/dev/usb/ustir.c				1.2-1.3
 sys/dev/usb/ustir.c				1.9-1.10
 
-	This device has a single FIFO shared by both incoming and outgoing data.
-	If a series of outputs are delivered to the device before the kernel 
-	thread has polled for input data, any input data will be lost.  As a
-	counter measure, always force an input check between outputs.
+	This device has a single FIFO shared by both incoming and outgoing 
+	data. If a series of outputs are delivered to the device before the 
+	kernel thread has polled for input data, any input data will be lost.
+	As a counter measure, always force an input check between outputs.
 	[dsainty, ticket #1078]
 
 sys/dev/usb/uhci.c				1.165-1.167
 
-	Be somewhat more persuasive about enabling the port on a port reset. USB
-	protocol dictates that the port enable must be implied by the port 
+	Be somewhat more persuasive about enabling the port on a port reset. 
+	USB protocol dictates that the port enable must be implied by the port 
 	reset. To implement this on (at least) the VIA VT83C572 this means we 
 	need to wait around tweaking the chip state until the port actually 
 	transitions to enabled (or the device goes away).  Likely fixes 
@@ -3134,7 +3134,6 @@ sbin/route/route.c				1.57-1.58
 	permit DNS names to address portion.  they will be considered as 
 	RTF_HOST if specified as destination (as there's no getnetbyname in 
 	IPv6).
-
 	[fredb, ticket #1080]
 
 sys/conf/Makefile.kern.inc			1.24-1.25
@@ -3166,7 +3165,7 @@ usr.bin/patch/patch.c				1.12-1.13
 
 share/termcap/termcap.src			1.73-1.74
 
-	Add cygwin alias for pcansi. Okayed by jdc.
+	Add cygwin alias for pcansi.
 	[wiz, ticket #1113]
 
 sys/arch/vax/boot/boot/Makefile			1.27-1.28,1.29-1.30
@@ -3180,12 +3179,12 @@ sys/arch/vax/conf/Makefile.vax                  1.69-1.70
 
 sys/arch/amiga/dev/idesc.c			1.51-1.52
 
-	Compiles and works (tested on my A1200) again
+	Compiles and works again.
 	[lonewolf, ticket #1101]
 
 distrib/amiga/miniroot/install.md		1.19-1.20
 
-	Make it work more than one time. The old behaviour was very annoying.
+	Make it work more than one time.
 	[is, ticket #1071]
 
 sys/dev/pci/agp.c				1.15-1.16
@@ -3202,10 +3201,33 @@ sys/dev/pci/agp_i810.c				1.12-1.13
 sys/net/if_ethersubr.c				1.101-1.102
 sys/net/if_spppvar.h				1.5-1.6
 
-	Fix typo: realy -> really.  Okay'ed by wiz.
+	Fix typo: realy -> really.
 	[jmmv, ticket #1102]
 
 usr.sbin/user/useradd.8				1.22-1.23
 
 	Fix typo in first form synopsis: -k does not require -r.
 	[jmmv, ticket 1103]
+
+sys/dev/ic/seeq8005.c				1.34-1.35
+
+	Use a properly zero'd buffer to pad the packet to ETHER_MIN_LEN
+	[bouyer, ticket #1087]
+
+sys/dev/ic/sgec.c				1.19-1.21
+
+	Zero out the remaining of last mbuf when padding the packet to 
+	ETHER_MIN_LEN
+	[bouyer, ticket #1088]
+
+sys/dev/isa/if_eg.c				1.60-1.61
+
+	Zero out the NIC memory when padding packet to 
+	ETHER_MIN_LEN-ETHER_CRC_LEN
+	[bouyer, ticket #1089]
+
+sys/dev/isa/if_el.c				1.69-1.70
+
+	Zero out the NIC memory when padding packet to 
+	ETHER_MIN_LEN-ETHER_CRC_LEN
+	[bouyer, ticket #1090]
