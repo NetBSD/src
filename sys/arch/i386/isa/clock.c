@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1994/11/04 19:01:39 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 1995/01/03 01:30:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -280,7 +280,7 @@ cpu_initclocks()
 	clockhand.ih_fun = clockintr;
 	clockhand.ih_arg = 0;
 	clockhand.ih_level = IPL_CLOCK;
-	intr_establish(0, &clockhand);
+	intr_establish(0, IST_PULSE, &clockhand);
 }
 
 void

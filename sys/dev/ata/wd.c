@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.122 1994/12/14 15:23:49 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.123 1995/01/03 01:31:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -278,7 +278,7 @@ wdcattach(parent, self, aux)
 	wdc->sc_ih.ih_fun = wdcintr;
 	wdc->sc_ih.ih_arg = wdc;
 	wdc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &wdc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &wdc->sc_ih);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);
