@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.75 1998/08/04 19:21:26 ragge Exp $
+#	$NetBSD: bsd.own.mk,v 1.76 1998/08/07 20:31:56 frueauf Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -64,7 +64,7 @@ STRIPFLAG?=	-s
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
-SYS_INCLUDE= 	symlinks
+#SYS_INCLUDE= 	symlinks
 
 # XXX The next two are temporary until the transition to UVM is complete.
 
