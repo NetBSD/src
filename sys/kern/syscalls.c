@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.156 2005/02/19 22:19:02 matt Exp $ */
+/* $NetBSD: syscalls.c,v 1.157 2005/02/25 19:55:18 matt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.156 2005/02/19 22:19:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.157 2005/02/25 19:55:18 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -508,6 +508,6 @@ const char *const syscallnames[] = {
 	"extattr_list_fd",			/* 370 = extattr_list_fd */
 	"extattr_list_file",			/* 371 = extattr_list_file */
 	"extattr_list_link",			/* 372 = extattr_list_link */
-	"#373 (unimplemented sys_pselect)",		/* 373 = unimplemented sys_pselect */
-	"#374 (unimplemented sys_pollts)",		/* 374 = unimplemented sys_pollts */
+	"pselect",			/* 373 = pselect */
+	"pollts",			/* 374 = pollts */
 };

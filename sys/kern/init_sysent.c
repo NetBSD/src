@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.161 2005/02/19 22:19:02 matt Exp $ */
+/* $NetBSD: init_sysent.c,v 1.162 2005/02/25 19:55:18 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.161 2005/02/19 22:19:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.162 2005/02/25 19:55:18 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -990,10 +990,10 @@ struct sysent sysent[] = {
 	    sys_extattr_list_file },		/* 371 = extattr_list_file */
 	{ 4, s(struct sys_extattr_list_link_args), 0,
 	    sys_extattr_list_link },		/* 372 = extattr_list_link */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 373 = unimplemented sys_pselect */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 374 = unimplemented sys_pollts */
+	{ 6, s(struct sys_pselect_args), 0,
+	    sys_pselect },			/* 373 = pselect */
+	{ 4, s(struct sys_pollts_args), 0,
+	    sys_pollts },			/* 374 = pollts */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 375 = filler */
 	{ 0, 0, 0,
