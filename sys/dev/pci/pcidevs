@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.499 2003/01/24 05:18:56 thorpej Exp $
+$NetBSD: pcidevs,v 1.500 2003/01/24 05:33:12 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1835,6 +1835,8 @@ product PROLAN NE2KETHER 0x1980 Ethernet
 
 /* Promise products */
 product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA66_0 0x0d38 Ultra66/ATA Bus Master IDE Accelerator
+product PROMISE MBULTRA133 0x1275 MBUltra133/ATA Bus Master IDE Accelerator
 product PROMISE SATA150TX2PLUS 0x3376 Serial ATA/150 TX2plus Bus Master IDE Accelerator
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA33	0x4d33	Ultra33/ATA Bus Master IDE Accelerator
@@ -1845,6 +1847,7 @@ product PROMISE ULTRA133TX2 0x5275 Ultra133TX2/ATA Bus Master IDE Accelerator
 product PROMISE DC5030 0x5300	DC5030
 product PROMISE ULTRA100TX2v2 0x6268 Ultra100TX2v2/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA133TX2v2 0x6269 Ultra133TX2v2/ATA Bus Master IDE Accelerator
+product PROMISE FASTTRAK133LITE 0x7275 Fasttrak133 Lite Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
