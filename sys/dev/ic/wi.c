@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.66 2002/04/04 17:43:31 jdolecek Exp $	*/
+/*	$NetBSD: wi.c,v 1.67 2002/04/05 00:54:51 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.66 2002/04/04 17:43:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.67 2002/04/05 00:54:51 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -148,16 +148,18 @@ static int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 struct wi_card_ident wi_card_ident[] = {
 	/* CARD_ID	CARD_NAME	FIRM_TYPE */
-	{ WI_NIC_LUCENT_ID,	WI_NIC_LUCENT_STR,	WI_LUCENT },
-	{ WI_NIC_EVB2_ID,	WI_NIC_EVB2_STR,	WI_INTERSIL },
-	{ WI_NIC_HWB3763_ID,	WI_NIC_HWB3763_STR,	WI_INTERSIL },
-	{ WI_NIC_HWB3163_ID,	WI_NIC_HWB3163_STR,	WI_INTERSIL },
-	{ WI_NIC_HWB3163B_ID,	WI_NIC_HWB3163B_STR,	WI_INTERSIL },
-	{ WI_NIC_EVB3_ID,	WI_NIC_EVB3_STR,	WI_INTERSIL },
-	{ WI_NIC_HWB1153_ID,	WI_NIC_HWB1153_STR,	WI_INTERSIL },
-	{ WI_NIC_P2_SST_ID,	WI_NIC_P2_SST_STR,	WI_INTERSIL },
-	{ WI_NIC_EVB2_SST_ID,	WI_NIC_EVB2_SST_STR,	WI_INTERSIL },
-	{ WI_NIC_3842_EVA_ID,	WI_NIC_3842_EVA_STR,	WI_INTERSIL },
+	{ WI_NIC_LUCENT_ID,		WI_NIC_LUCENT_STR,	WI_LUCENT },
+	{ WI_NIC_SONY_ID,		WI_NIC_SONY_STR,	WI_LUCENT },
+	{ WI_NIC_LUCENT_EMB_ID,		WI_NIC_LUCENT_EMB_STR,	WI_LUCENT },
+	{ WI_NIC_EVB2_ID,		WI_NIC_EVB2_STR,	WI_INTERSIL },
+	{ WI_NIC_HWB3763_ID,		WI_NIC_HWB3763_STR,	WI_INTERSIL },
+	{ WI_NIC_HWB3163_ID,		WI_NIC_HWB3163_STR,	WI_INTERSIL },
+	{ WI_NIC_HWB3163B_ID,		WI_NIC_HWB3163B_STR,	WI_INTERSIL },
+	{ WI_NIC_EVB3_ID,		WI_NIC_EVB3_STR,	WI_INTERSIL },
+	{ WI_NIC_HWB1153_ID,		WI_NIC_HWB1153_STR,	WI_INTERSIL },
+	{ WI_NIC_P2_SST_ID,		WI_NIC_P2_SST_STR,	WI_INTERSIL },
+	{ WI_NIC_EVB2_SST_ID,		WI_NIC_EVB2_SST_STR,	WI_INTERSIL },
+	{ WI_NIC_3842_EVA_ID,		WI_NIC_3842_EVA_STR,	WI_INTERSIL },
 	{ WI_NIC_3842_PCMCIA_AMD_ID,	WI_NIC_3842_PCMCIA_STR,	WI_INTERSIL },
 	{ WI_NIC_3842_PCMCIA_SST_ID,	WI_NIC_3842_PCMCIA_STR,	WI_INTERSIL },
 	{ WI_NIC_3842_PCMCIA_ATM_ID,	WI_NIC_3842_PCMCIA_STR,	WI_INTERSIL },
@@ -1983,7 +1985,7 @@ wi_get_id(sc)
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
 
-	sc->sc_firmware_type = NULL;
+	sc->sc_firmware_type = WI_NOTYPE;
 	for (id = wi_card_ident; id->card_name != NULL; id++) {
 		if (le16toh(ver.wi_ver[0]) == id->card_id) {
 			printf("%s", id->card_name);
@@ -1991,7 +1993,7 @@ wi_get_id(sc)
 			break;
 		}
 	}
-	if (!sc->sc_firmware_type) {
+	if (sc->sc_firmware_type == WI_NOTYPE) {
 		if (le16toh(ver.wi_ver[0]) & 0x8000) {
 			printf("Unknown PRISM2 chip");
 			sc->sc_firmware_type = WI_INTERSIL;
@@ -2001,16 +2003,18 @@ wi_get_id(sc)
 		}
 	}
 
-	/* get primary firmware version */
-	memset(&ver, 0, sizeof(ver));
-	ver.wi_type = WI_RID_PRI_IDENTITY;
-	ver.wi_len = 5;
-	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
-	LE16TOH(ver.wi_ver[1]);
-	LE16TOH(ver.wi_ver[2]);
-	LE16TOH(ver.wi_ver[3]);
-	sc->sc_pri_firmware_ver = ver.wi_ver[2] * 10000 +
-	    ver.wi_ver[3] * 100 + ver.wi_ver[1];
+	/* get primary firmware version (Only Prism chips) */
+	if (sc->sc_firware_type != WI_LUCENT) {
+		memset(&ver, 0, sizeof(ver));
+		ver.wi_type = WI_RID_PRI_IDENTITY;
+		ver.wi_len = 5;
+		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+		LE16TOH(ver.wi_ver[1]);
+		LE16TOH(ver.wi_ver[2]);
+		LE16TOH(ver.wi_ver[3]);
+		sc->sc_pri_firmware_ver = ver.wi_ver[2] * 10000 +
+		    ver.wi_ver[3] * 100 + ver.wi_ver[1];
+	}
 
 	/* get station firmware version */
 	memset(&ver, 0, sizeof(ver));
