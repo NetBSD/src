@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.16 2001/08/13 23:16:11 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.17 2001/08/20 23:10:51 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -47,6 +47,8 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
+
+#include "fiq.h"
 	
 fp	.req	r11
 ip	.req	r12
@@ -127,7 +129,9 @@ Lfiqhandler:
 	.global _C_LABEL(fiqhandler)
 	.set	_C_LABEL(fiqhandler), . - _C_LABEL(page0)
 	subs	pc, lr, #4
+#if NFIQ > 0
 	.org	Lfiqhandler + 0x100
+#endif
 
 Lreset_target:
 	.word	reset_entry
@@ -374,6 +378,30 @@ ENTRY(set_r13_irq)
 	MODE_CHANGE_NOP
 	movs	r15, lr
 
+#if NFIQ > 0
+/* LINTSTUB: Func: void fiq_setregs(const struct fiq_regs *) */
+ENTRY(fiq_setregs)
+	/* We assume that there's no need to disable FIQs while we work. */
+	mov	r1, r15
+	bic	r2, r1, #R15_MODE
+	teqp	r2, #R15_MODE_FIQ
+	MODE_CHANGE_NOP
+	ldmia	r0, {r8-r13}
+	teqp	r1, #0
+	MODE_CHANGE_NOP
+	mov	r15, lr	
+/* LINTSTUB: Func: void fiq_getregs(struct fiq_regs *) */
+ENTRY(fiq_getregs)
+	mov	r1, r15
+	bic	r2, r1, #R15_MODE
+	teqp	r2, #R15_MODE_FIQ
+	MODE_CHANGE_NOP
+	stmia	r0, {r8-r13}
+	teqp	r1, #0
+	MODE_CHANGE_NOP
+	mov	r15, lr
+#endif
+
 	/*
 	 * These are grotty, and very non-APCS.  The CPU interrupt status
 	 * is part of the state that's restored on function exit, so the
@@ -470,4 +498,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.16 2001/08/13 23:16:11 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.17 2001/08/20 23:10:51 bjh21 Exp $")
