@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.2 1996/08/10 01:29:43 thorpej Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.3 1996/08/10 02:37:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #else
-static char rcsid[] = "$NetBSD: rdisc.c,v 1.2 1996/08/10 01:29:43 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rdisc.c,v 1.3 1996/08/10 02:37:41 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -660,6 +660,8 @@ send_rdisc(union ad_u *p,
 
 
 	bzero(&sin, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
 	sin.sin_addr.s_addr = dst;
 	flags = MSG_DONTROUTE;
 
