@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.4 2004/07/23 21:03:33 manu Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.5 2004/07/23 21:34:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.4 2004/07/23 21:03:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.5 2004/07/23 21:34:01 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ darwin_ifaddrs(af, dst, sizep)
 					continue;
 				if (ifa->ifa_addr->sa_family > AF_MAX)
 					continue;
-				if (ifa->ifa_addr->sa_family == 0);
+				if (ifa->ifa_addr->sa_family == 0)
 					continue;
 			}
 
