@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.13 2001/06/12 20:16:24 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.14 2001/06/14 23:09:23 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.13 2001/06/12 20:16:24 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.14 2001/06/14 23:09:23 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -271,28 +271,28 @@ int
 podloader_readbyte(struct podulebus_attach_args *pa, u_int addr)
 {
 
-	return podloader_call(0, addr, pa->pa_sync_h, pa->pa_loader, 0);
+	return podloader_call(0, addr, pa->pa_sync_base, pa->pa_loader, 0);
 }
 
 void
 podloader_writebyte(struct podulebus_attach_args *pa, u_int addr, int val)
 {
 
-	podloader_call(val, addr, pa->pa_sync_h, pa->pa_loader, 1);
+	podloader_call(val, addr, pa->pa_sync_base, pa->pa_loader, 1);
 }
 
 void
 podloader_reset(struct podulebus_attach_args *pa)
 {
 
-	podloader_call(0, 0, pa->pa_sync_h, pa->pa_loader, 2);
+	podloader_call(0, 0, pa->pa_sync_base, pa->pa_loader, 2);
 }
 
 int
 podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
 {
 
-	return podloader_call(r0, r1, pa->pa_sync_h, pa->pa_loader, 3);
+	return podloader_call(r0, r1, pa->pa_sync_base, pa->pa_loader, 3);
 }
 
 void
