@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.26 2003/05/22 07:06:53 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.27 2003/05/25 19:53:07 fair Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 15, 2003
+.Dd May 25, 2003
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -510,9 +510,10 @@ An example for
 host myclient {
 	hardware ethernet 8:0:20:7:c5:c7;
 	fixed-address myclient;		# client's assigned IP address
-	option root-path "/export/myclient/root";
-	option swap-server myserver;
 	filename "myclient.netboot";	# secondary bootstrap
+	next-server myserver;		# NFS server
+	option swap-server myserver;
+	option root-path "/export/myclient/root";
 }
 .Ed
 .Pp
@@ -541,6 +542,12 @@ The
 .Tn DHCP
 parameters required for network bootstrapping a system will vary
 from platform to platform, as dictated by each system's firmware.
+In particular, because the
+.Tn DHCP
+is extensible, some hardware vendors have specified
+.Tn DHCP
+options to return information to requesting clients that are specific
+to that platform.
 Please see your platform's
 .Xr boot 8
 for details.
