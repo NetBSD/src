@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.85 2004/04/17 10:13:13 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.86 2004/04/17 23:45:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.85 2004/04/17 10:13:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.86 2004/04/17 23:45:40 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -339,15 +339,6 @@ turbosparc_cache_enable()
 #endif /* SUN4M || SUN4D */
 
 
-/* XXX - should inline */
-void
-cache_flush(base, len)
-	caddr_t base;
-	u_int len;
-{
-	cpuinfo.cache_flush(base, len, getcontext());
-}
-
 /*
  * Note: the sun4 & sun4c the cache flush functions ignore the `ctx'
  * parameter. This can be done since the pmap operations that need
@@ -503,10 +494,9 @@ sun4_vcache_flush_page_hw(va, ctx)
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
-sun4_cache_flush(base, len, ctx)
+sun4_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 	int i, ls, baseoff;
 	char *p;
@@ -540,7 +530,7 @@ sun4_cache_flush(base, len, ctx)
 	cachestats.cs_ra[min(i, MAXCACHERANGE)]++;
 #endif
 
-	if (i < CACHE_FLUSH_MAGIC) {
+	if (__predict_true(i < CACHE_FLUSH_MAGIC)) {
 		/* cache_flush_page, for i pages */
 		p = (char *)((int)base & ~baseoff);
 		if (CACHEINFO.c_hwflush) {
@@ -557,19 +547,20 @@ sun4_cache_flush(base, len, ctx)
 
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
-	if (i == 1)
-		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
-	else {
-		if (HASSUN4_MMU3L) {
-			baseoff = (u_int)base & RGOFSET;
-			i = (baseoff + len + RGOFSET) >> RGSHIFT;
-			if (i == 1)
-				sun4_vcache_flush_region(VA_VREG(base), ctx);
-			else
-				sun4_vcache_flush_context(ctx);
-		} else
-			sun4_vcache_flush_context(ctx);
+	if (__predict_true(i == 1)) {
+		sun4_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), 0);
+		return;
 	}
+
+	if (HASSUN4_MMU3L) {
+		baseoff = (u_int)base & RGOFSET;
+		i = (baseoff + len + RGOFSET) >> RGSHIFT;
+		if (i == 1)
+			sun4_vcache_flush_region(VA_VREG(base), 0);
+		else
+			sun4_vcache_flush_context(0);
+	} else
+		sun4_vcache_flush_context(0);
 }
 
 
@@ -694,7 +685,7 @@ srmmu_vcache_flush_page(va, ctx)
 	 * functions will not always cross flush it in the MP case (because
 	 * may not be active on this CPU) we flush the TLB entry now.
 	 */
-	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS)
+	/*if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) -- more work than it's worth */
 		sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
 
 #endif
@@ -711,56 +702,60 @@ srmmu_cache_flush_all()
 	srmmu_vcache_flush_context(0);
 }
 
+void
+srmmu_vcache_flush_range(int va, int len, int ctx)
+{
+	int i, ls, offset;
+	char *p;
+	int octx;
+
+	/* Compute # of cache lines covered by this range */
+	ls = CACHEINFO.c_linesize;
+	offset = va & (ls - 1);
+	i = (offset + len + ls - 1) >> CACHEINFO.c_l2linesize;
+	p = (char *)(va & -ls);
+
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
+	for (; --i >= 0; p += ls)
+		sta(p, ASI_IDCACHELFP, 0);
+
+#if defined(MULTIPROCESSOR)
+	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+		/*
+		 * See hypersparc comment in srmmu_vcache_flush_page().
+		 */
+		offset = va & PGOFSET;
+		i = (offset + len + PGOFSET) >> PGSHIFT;
+
+		va = va & ~PGOFSET;
+		for (; --i >= 0; va += PAGE_SIZE)
+			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+	}
+#endif
+	setcontext4m(octx);
+	trapon();
+	return;
+}
+
 /*
  * Flush a range of virtual addresses (in the current context).
- * The first byte is at (base&~PGOFSET) and the last one is just
- * before byte (base+len).
  *
  * We choose the best of (context,segment,page) here.
  */
 
-#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
-
 void
-srmmu_cache_flush(base, len, ctx)
+srmmu_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
-	int i, ls, baseoff;
-	char *p;
+	int ctx = getcontext4m();
+	int i, baseoff;
 
-	if (len < PAGE_SIZE) {
-		int octx;
-		/* less than a page, flush just the covered cache lines */
-		ls = CACHEINFO.c_linesize;
-		baseoff = (int)base & (ls - 1);
-		i = (baseoff + len + ls - 1) >> CACHEINFO.c_l2linesize;
-		p = (char *)((int)base & -ls);
-		octx = getcontext4m();
-		trapoff();
-		setcontext4m(ctx);
-		for (; --i >= 0; p += ls)
-			sta(p, ASI_IDCACHELFP, 0);
-#if defined(MULTIPROCESSOR)
-		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-			/*
-			 * See hypersparc comment in srmmu_vcache_flush_page().
-			 * Just flush both possibly touched pages
-			 * from the TLB.
-			 */
-			int va = (int)base & ~0xfff;
-			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
-			sta((va+4096) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
-		}
-#endif
-		setcontext4m(octx);
-		trapon();
-		return;
-	}
 
 	/*
-	 * Figure out how much must be flushed.
+	 * Figure out the most efficient way to flush.
 	 *
 	 * If we need to do CACHE_FLUSH_MAGIC pages,  we can do a segment
 	 * in the same number of loop iterations.  We can also do the whole
@@ -775,62 +770,54 @@ srmmu_cache_flush(base, len, ctx)
 	 * segments), but I did not want to debug that now and it is
 	 * not clear it would help much.
 	 *
-	 * (XXX the magic number 16 is now wrong, must review policy)
 	 */
-	baseoff = (int)base & PGOFSET;
-	i = (baseoff + len + PGOFSET) >> PGSHIFT;
 
-	cachestats.cs_nraflush++;
-#ifdef notyet
-	cachestats.cs_ra[min(i, MAXCACHERANGE)]++;
-#endif
-
-	if (i < CACHE_FLUSH_MAGIC) {
-		int octx;
-		/* cache_flush_page, for i pages */
-		p = (char *)((int)base & ~baseoff);
-		ls = CACHEINFO.c_linesize;
-		i <<= PGSHIFT - CACHEINFO.c_l2linesize;
-		octx = getcontext4m();
-		trapoff();
-		setcontext4m(ctx);
-		for (; --i >= 0; p += ls)
-			sta(p, ASI_IDCACHELFP, 0);
+	if (__predict_true(len < CACHEINFO.c_totalsize)) {
 #if defined(MULTIPROCESSOR)
-		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-			/* Just flush the segment(s) from the TLB */
-			/* XXX - assumes CACHE_FLUSH_MAGIC <= NBPSG */
-			int va = (int)base & ~SGOFSET;
-			sta(va | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
-			sta((va+NBPSG) | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
-		}
+		FXCALL3(cpuinfo.sp_vcache_flush_range,
+			cpuinfo.ft_vcache_flush_range,
+			(int)base, len, ctx, CPUSET_ALL);
+#else
+		cpuinfo.sp_vcache_flush_range((int)base, len, ctx);
 #endif
-		setcontext4m(octx);
-		trapon();
 		return;
 	}
+
+	cachestats.cs_nraflush++;
+
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
-	if (i == 1)
+	if (__predict_true(i == 1)) {
+#if defined(MULTIPROCESSOR)
+		FXCALL3(cpuinfo.sp_vcache_flush_segment,
+			cpuinfo.ft_vcache_flush_segment,
+			VA_VREG(base), VA_VSEG(base), ctx, CPUSET_ALL);
+#else
 		srmmu_vcache_flush_segment(VA_VREG(base), VA_VSEG(base), ctx);
-	else {
-		baseoff = (u_int)base & RGOFSET;
-		i = (baseoff + len + RGOFSET) >> RGSHIFT;
-		p = (char *)VA_VREG(base);
-		while (i--) {
-			srmmu_vcache_flush_region((int)p, ctx);
-			p += NBPRG;
-		}
+#endif
+		return;
+	}
+
+	baseoff = (u_int)base & RGOFSET;
+	i = (baseoff + len + RGOFSET) >> RGSHIFT;
+	while (i--) {
+#if defined(MULTIPROCESSOR)
+		FXCALL2(cpuinfo.sp_vcache_flush_region,
+		       cpuinfo.ft_vcache_flush_region,
+		       VA_VREG(base), ctx, CPUSET_ALL);
+#else
+		srmmu_vcache_flush_region(VA_VREG(base), ctx);
+#endif
+		base += NBPRG;
 	}
 }
 
 int ms1_cacheflush_magic = 0;
 #define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
 void
-ms1_cache_flush(base, len, ctx)
+ms1_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 	/*
 	 * Although physically tagged, we still need to flush the
@@ -924,10 +911,9 @@ cypress_cache_flush_all()
 
 
 void
-viking_cache_flush(base, len, ctx)
+viking_cache_flush(base, len)
 	caddr_t base;
 	u_int len;
-	int ctx;
 {
 }
 
@@ -1077,15 +1063,5 @@ smp_vcache_flush_context(ctx)
 {
 	FXCALL1(cpuinfo.sp_vcache_flush_context, cpuinfo.ft_vcache_flush_context,
 		ctx, CPUSET_ALL);
-}
-
-void
-smp_cache_flush(va, size, ctx)
-	caddr_t va;
-	u_int size;
-	int ctx;
-{
-
-	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */
