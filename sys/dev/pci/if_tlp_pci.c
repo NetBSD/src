@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.62 2002/03/26 07:57:17 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.63 2002/04/03 20:52:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.62 2002/03/26 07:57:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.63 2002/04/03 20:52:42 thorpej Exp $");
 
 #include "opt_tlp.h"
 
@@ -205,6 +205,8 @@ void	tlp_pci_cobalt_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 void	tlp_pci_algor_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
+void	tlp_pci_netwinder_21142_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
 
 void	tlp_pci_adaptec_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
@@ -244,6 +246,7 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_cobalt_21142_quirks,	{ 0x00, 0x10, 0xe0 } },
 	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
+	{ tlp_pci_netwinder_21142_quirks,{ 0x00, 0x10, 0x57 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -761,8 +764,15 @@ tlp_pci_attach(parent, self, aux)
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0)
-				goto cant_cope;
+			if (tlp_parse_old_srom(sc, enaddr) == 0) {
+				/*
+				 * One last try: just copy the address
+				 * from offset 20 and try to look
+				 * up quirks.
+				 */
+				memcpy(enaddr, &sc->sc_srom[20],
+				    ETHER_ADDR_LEN);
+			}
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -1384,4 +1394,36 @@ unknown:
 		printf("%s: unknown Adaptec/Cogent board ID 0x%04x/0x%04x\n",
 		    sc->sc_dev.dv_xname, id1, id2);
 	}
+}
+
+void	tlp_pci_netwinder_21142_reset(struct tulip_softc *);
+
+void
+tlp_pci_netwinder_21142_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Netwinders just use MII-on_SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+	sc->sc_reset = tlp_pci_netwinder_21142_reset;
+}
+
+void
+tlp_pci_netwinder_21142_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	/*
+	 * Reset the PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN, 0x0821 << 16);
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, 0x0000 << 16);
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, 0x0001 << 16);
+	delay(10);
 }
