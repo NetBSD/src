@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.29 2003/07/22 03:21:21 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.30 2003/07/22 08:54:29 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.29 2003/07/22 03:21:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.30 2003/07/22 08:54:29 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -240,6 +240,7 @@ esp_schedule(algo, sav)
 	if (error) {
 		ipseclog((LOG_ERR, "esp_schedule %s: error %d\n",
 		    algo->name, error));
+		bzero(sav->sched, sav->schedlen);
 		free(sav->sched, M_SECA);
 		sav->sched = NULL;
 		sav->schedlen = 0;
