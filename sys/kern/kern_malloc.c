@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.93 2005/01/01 21:08:02 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.94 2005/01/13 11:49:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.93 2005/01/01 21:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.94 2005/01/13 11:49:09 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -799,16 +799,7 @@ kmeminit_nkmempages(void)
 		return;
 	}
 
-	/*
-	 * We use the following (simple) formula:
-	 *
-	 *	- Starting point is physical memory / 4.
-	 *
-	 *	- Clamp it down to NKMEMPAGES_MAX.
-	 *
-	 *	- Round it up to NKMEMPAGES_MIN.
-	 */
-	npages = physmem / 4;
+	npages = physmem;
 
 	if (npages > NKMEMPAGES_MAX)
 		npages = NKMEMPAGES_MAX;
