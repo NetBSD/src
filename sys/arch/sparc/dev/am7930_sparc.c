@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.41 1998/08/28 08:57:38 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.42 1998/08/29 20:44:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,9 +36,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

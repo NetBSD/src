@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 1998/08/29 20:32:10 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 1998/08/29 20:44:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
