@@ -45,7 +45,8 @@
 # Call units:
 #
 # Special purpose devices:
-#	bpf*	packet filter				(XXX - not yet)
+#	bpf*	packet filter
+#	tuy*	network tunnel driver
 #	lkm	loadable kernel modules interface	(XXX - not yet)
 #
 
@@ -57,13 +58,13 @@ case $i in
 
 all)
 	sh MAKEDEV std sd0 sd1 sd2 st0 st1
-	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7 pty0
+	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7 pty0 pty1
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 vnd0 vnd1
 	sh MAKEDEV local
 # Unknown which of the following will eventually be done ....
 #	sh MAKEDEV ch0 cd0 cd1
-#	sh MAKEDEV mcd0 vnd0 vnd1 vnd2 vnd3 
-#	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 lkm
-#	sh MAKEDEV mms0 lms0
+#	sh MAKEDEV mcd0 
+#	sh MAKEDEV mms0 lms0 lkm
 	;;
 
 std)
@@ -91,10 +92,14 @@ std)
 	;;
 
 
-sd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
-	name=sd; blk=0; chr=3;
+sd*|vnd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	case $i in
+	sd*) name=sd; blk=0; chr=3;;
+	vnd*) name=vnd; blk=5; chr=13;;
+	esac
 	rm -f $name$unit? r$name$unit?
+	echo unit=$unit
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
@@ -232,24 +237,21 @@ st*)
 #	umask 77
 #	;;
 
-# vnode disk driver ???
-vnd*)
-	unit=`expr $i : '...\(.*\)'`
-	name=vnd; blk=5; chr=13
-	rm -f ${name}${unit}c r${name}${unit}c
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-	chgrp operator ${name}${unit}c r${name}${unit}c
-	chmod 640 ${name}${unit}c r${name}${unit}c
+bpf*)
+	unit=`expr $i : 'bpf\(.*\)'`
+	rm -f bpf$unit
+	mknod bpf$unit c 14 $unit
+	chown root.wheel bpf$unit
 	;;
 
-#bpf*)
-#	unit=`expr $i : 'bpf\(.*\)'`
-#	rm -f bpf$unit
-#	mknod bpf$unit c 23 $unit
-#	chown root.wheel bpf$unit
-#	;;
-#
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 15 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
+	;;
+
 #lkm)
 #	rm -f lkm
 #	mknod lkm c 28 0
