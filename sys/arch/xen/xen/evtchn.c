@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.1.2.4 2005/01/31 17:21:16 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.1.2.5 2005/03/08 19:31:39 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.4 2005/01/31 17:21:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.5 2005/03/08 19:31:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -438,7 +438,8 @@ pirq_notify(int irq)
 
 #endif /* DOM0OPS */
 
-int bind_evtchn_to_irq(int evtchn)
+int
+bind_evtchn_to_irq(int evtchn)
 {
 	int irq;
 
@@ -459,11 +460,34 @@ int bind_evtchn_to_irq(int evtchn)
 }
 
 int
+unbind_evtchn_to_irq(int evtchn)
+{
+	int irq;
+
+	simple_lock(&irq_mapping_update_lock);
+
+	irq = evtchn_to_irq[evtchn];
+	if (irq == -1) {
+		return ENOENT;
+	}
+	irq_bindcount[irq]--;
+	if (irq_bindcount[irq] == 0) {
+		evtchn_to_irq[evtchn] = -1;
+		irq_to_evtchn[irq] = -1;
+	}
+
+	simple_unlock(&irq_mapping_update_lock);
+    
+	return irq;
+}
+
+int
 event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 {
 	struct intrsource *isp;
 	struct intrhand *ih;
 	struct cpu_info *ci;
+	char evtname[16];
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
@@ -502,8 +526,9 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 		isp->is_handlers = ih;
 		isp->is_pic = &xenev_pic;
 		ci->ci_isources[irq] = isp;
+		snprintf(evtname, sizeof(evtname), "irq%d", irq);
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    ci->ci_dev->dv_xname, "xenev");
+		    ci->ci_dev->dv_xname, evtname);
 	} else {
 		isp = ci->ci_isources[irq];
 		ih->ih_next = isp->is_handlers;
@@ -512,6 +537,37 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 
 	intr_calculatemasks(ci);
 
+	return 0;
+}
+
+int
+event_remove_handler(int irq, ev_handler_t handler, void *arg)
+{
+	struct intrsource *isp;
+	struct intrhand *ih;
+	struct intrhand **ihp;
+	struct cpu_info *ci = &cpu_info_primary;
+
+	isp = ci->ci_isources[irq];
+	if (isp == NULL)
+		return ENOENT;
+
+	for (ihp = &isp->is_handlers, ih = isp->is_handlers;
+	    ih != NULL;
+	    ihp = &ih->ih_next, ih = ih->ih_next) {
+		if (ih->ih_fun == handler && ih->ih_arg == arg)
+			break;
+	}
+	if (ih == NULL)
+		return ENOENT;
+	*ihp = ih->ih_next;
+	FREE(ih, M_DEVBUF);
+	if (isp->is_handlers == NULL) {
+		evcnt_detach(&isp->is_evcnt);
+		FREE(isp, M_DEVBUF);
+		ci->ci_isources[irq] = NULL;
+	}
+	intr_calculatemasks(ci);
 	return 0;
 }
 
