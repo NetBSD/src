@@ -1,4 +1,4 @@
-/*	$NetBSD: syscalls.c,v 1.78 1998/03/27 13:09:53 kleink Exp $	*/
+/*	$NetBSD: syscalls.c,v 1.79 1998/05/02 18:33:20 christos Exp $	*/
 
 /*
  * System call names.
@@ -328,7 +328,7 @@ char *syscallnames[] = {
 	"#238 (unimplemented timer_gettime)",		/* 238 = unimplemented timer_gettime */
 	"#239 (unimplemented timer_getoverrun)",		/* 239 = unimplemented timer_getoverrun */
 	"nanosleep",			/* 240 = nanosleep */
-	"#241 (unimplemented)",		/* 241 = unimplemented */
+	"#241 (unimplemented fktrace)",		/* 241 = unimplemented fktrace */
 	"#242 (unimplemented)",		/* 242 = unimplemented */
 	"#243 (unimplemented)",		/* 243 = unimplemented */
 	"#244 (unimplemented)",		/* 244 = unimplemented */
@@ -374,4 +374,10 @@ char *syscallnames[] = {
 	"__posix_fchown",			/* 284 = __posix_fchown */
 	"__posix_lchown",			/* 285 = __posix_lchown */
 	"getsid",			/* 286 = getsid */
+	"#287 (unimplemented)",		/* 287 = unimplemented */
+#ifdef KTRACE
+	"fktrace",			/* 288 = fktrace */
+#else
+	"#288 (unimplemented)",		/* 288 = unimplemented */
+#endif
 };
