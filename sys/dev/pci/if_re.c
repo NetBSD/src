@@ -1,3 +1,4 @@
+/*	$NetBSD: if_re.c,v 1.3 2004/05/30 03:51:48 toshii Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
