@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.5 2002/08/31 08:42:00 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.6 2002/09/04 14:01:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -284,11 +284,47 @@ ENTRY_NOPROFILE(splraise)
  *                         r2           r3            r4
  */
 ENTRY(copyout)
-	pta/l	_C_LABEL(copyin), tr0
-	or	r2, r63, r0		/* Swap r2 and r3 */
-	or	r3, r63, r2
-	or	r0, r63, r2
-	blink	tr0, r63
+	ptabs/l	r18, tr0
+	pta/u	Lcopyexit, tr1
+	movi	EFAULT, r5		/* Assume there was a problem */
+	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
+
+#ifndef _LP64
+	LDSC32(VM_MAX_ADDRESS, r0)
+#else
+	LDSC64(VM_MAX_ADDRESS, r0)
+#endif
+	bgtu/u	r3, r0, tr1		/* Bomb if uaddr isn't in user space */
+	add	r4, r3, r1		/* Check end of destination buffer */
+	bgtu/u	r1, r0, tr1		/* Bomb if not in user space */
+	bgtu/u	r3, r1, tr1		/* Also bomb if uaddr+len wraps */
+
+#ifndef _LP64
+	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+#else
+	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+#endif
+	bgtu/u	r0, r2, tr1		/* Bomb if kaddr isn't a kernel addr */
+	add	r4, r2, r1		/* Check end of source buffer */
+	bgtu/u	r0, r1, tr1		/* Bomb if not in kernel space */
+	bgtu/u	r2, r1, tr1		/* Also bomb if kaddr+len wraps */
+
+	pta/u	Lcopyerr, tr2
+	getcon	kcr0, r0		/* Fetch cpu_info */
+	gettr	tr2, r1
+	LDPTR	r0, CI_CURPCB, r0
+	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
+
+	movi	0, r1
+	pta/l	1f, tr1
+
+1:	ldx.b	r2, r1, r0		/* Copy (XXX: SLOWWWWWWW!!) */
+	stx.b	r3, r1, r0
+	addi	r1, 1, r1
+	bgt/l	r4, r1, tr1
+	movi	0, r5			/* No error! */
+	blink	tr2, r63
+
 
 
 /******************************************************************************
@@ -298,9 +334,9 @@ ENTRY(copyout)
  */
 ENTRY(copyin)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lcopyexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
+	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
 	LDSC32(VM_MAX_ADDRESS, r0)
@@ -308,7 +344,7 @@ ENTRY(copyin)
 	LDSC64(VM_MAX_ADDRESS, r0)
 #endif
 	bgtu/u	r2, r0, tr1		/* Bomb if uaddr isn't in user space */
-	add	r4, r2, r1		/* Check end of destination buffer */
+	add	r4, r2, r1		/* Check end of source buffer */
 	bgtu/u	r1, r0, tr1		/* Bomb if not in user space */
 	bgtu/u	r2, r1, tr1		/* Also bomb if uaddr+len wraps */
 
@@ -318,7 +354,7 @@ ENTRY(copyin)
 	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
 #endif
 	bgtu/u	r0, r3, tr1		/* Bomb if kaddr isn't a kernel addr */
-	add	r4, r3, r1		/* Check end of source buffer */
+	add	r4, r3, r1		/* Check end of destination buffer */
 	bgtu/u	r0, r1, tr1		/* Bomb if not in kernel space */
 	bgtu/u	r3, r1, tr1		/* Also bomb if kaddr+len wraps */
 
@@ -353,11 +389,44 @@ Lcopyexit:
  *                            r2           r3            r4           r5
  */
 ENTRY(copyoutstr)
-	pta/l	_C_LABEL(copyinstr), tr0
-	or	r2, r63, r0		/* Swap r2 and r3 */
-	or	r3, r63, r2
-	or	r0, r63, r2
-	blink	tr0, r63
+	ptabs/u	r18, tr0
+	pta/u	Lcopystrerr, tr3
+	movi	EFAULT, r6		/* Assume the worst */
+	movi	0, r7
+	bge/u	r63, r4, tr3		/* Return EFAULT if len <= 0 */
+
+#ifndef _LP64
+	LDSC32(VM_MAX_ADDRESS, r0)
+#else
+	LDSC64(VM_MAX_ADDRESS, r0)
+#endif
+	bgtu/u	r3, r0, tr3		/* Bomb if uaddr isn't in user space */
+
+#ifndef _LP64
+	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+#else
+	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+#endif
+	bgtu/u	r0, r2, tr3		/* Bomb if kaddr isn't a kernel addr */
+
+	getcon	kcr0, r0		/* Fetch cpu_info */
+	gettr	tr3, r1
+	LDPTR	r0, CI_CURPCB, r0
+	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopystrerr */
+
+	pta/u	2f, tr2			/* Success path */
+	pta/l	1f, tr1			/* Loop */
+
+1:	beq/u	r4, r7, tr2		/* Oops, ENAMETOOLONG */
+	ldx.b	r2, r7, r0
+	stx.b	r3, r7, r0
+	addi	r7, 1, r7
+	bne/l	r0, r63, tr1		/* Back until we find the NUL byte */
+
+2:	sub	r4, r7, r0
+	movi	ENAMETOOLONG, r6	/* Assume failed */
+	cmvne	r0, r63, r6		/* Success if we didn't exceed len */
+	blink	tr3, r63
 
 
 /******************************************************************************
@@ -367,9 +436,10 @@ ENTRY(copyoutstr)
  */
 ENTRY(copyinstr)
 	ptabs/u	r18, tr0
-	pta/u	Lcopystrexit, tr3
+	pta/u	Lcopystrerr, tr3
 	movi	EFAULT, r6		/* Assume the worst */
 	movi	0, r7
+	bge/u	r63, r4, tr3		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
 	LDSC32(VM_MAX_ADDRESS, r0)
@@ -377,9 +447,6 @@ ENTRY(copyinstr)
 	LDSC64(VM_MAX_ADDRESS, r0)
 #endif
 	bgtu/u	r2, r0, tr3		/* Bomb if uaddr isn't in user space */
-	add	r4, r2, r1		/* Check end of destination buffer */
-	bgtu/u	r1, r0, tr3		/* Bomb if not in user space */
-	bgtu/u	r2, r1, tr3		/* Also bomb if uaddr+len wraps */
 
 #ifndef _LP64
 	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
@@ -387,11 +454,10 @@ ENTRY(copyinstr)
 	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
 #endif
 	bgtu/u	r0, r3, tr3		/* Bomb if kaddr isn't a kernel addr */
-	add	r4, r3, r1		/* Check end of source buffer */
+	add	r4, r3, r1		/* Check end of destination buffer */
 	bgtu/u	r0, r1, tr3		/* Bomb if not in kernel space */
 	bgtu/u	r3, r1, tr3		/* Also bomb if kaddr+len wraps */
 
-	pta/u	Lcopystrexit, tr3
 	getcon	kcr0, r0		/* Fetch cpu_info */
 	gettr	tr3, r1
 	LDPTR	r0, CI_CURPCB, r0
@@ -414,7 +480,6 @@ Lcopystrerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r63	/* Clear pcb_onfault */
-Lcopystrexit:
 	or	r6, r63, r2		/* Grab return code */
 	beq/u	r5, r63, tr0		/* Just return if "done" == NULL */
 	STPTR	r5, 0, r7		/* NOTE: sizeof(size_t) = sizeof(ptr) */
@@ -424,11 +489,13 @@ Lcopystrexit:
 
 /******************************************************************************
  *
- * int copystr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+ * int copystr(const void *ksrc, void *kdst, size_t len, size_t *done)
  *                         r2           r3            r4           r5
  */
 ENTRY(copystr)
 	ptabs/u	r18, tr0
+	movi	ENAMETOOLONG, r6	/* Assume failed */
+	bge/u	r63, r4, tr0		/* Return ENAMETOOLONG if len <= 0 */
 	movi	0, r1
 	pta/u	2f, tr2			/* Success path */
 	pta/l	1f, tr1			/* Loop */
@@ -438,7 +505,6 @@ ENTRY(copystr)
 	addi	r1, 1, r1
 	bne/l	r0, r63, tr1		/* Back until we find the NUL byte */
 2:	sub	r4, r1, r0
-	movi	ENAMETOOLONG, r6	/* Assume failed */
 	cmvne	r0, r63, r6		/* Success if we didn't exceed len */
 	or	r6, r63, r2		/* Grab return code */
 	beq/u	r5, r63, tr0		/* Just return if "done" == NULL */
@@ -454,9 +520,9 @@ ENTRY(copystr)
  */
 ENTRY(kcopy)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lkcopyexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
+	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
 	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
@@ -507,7 +573,6 @@ Lkcopyexit:
 ENTRY(subyte)
 ALTENTRY(suibyte)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lsubexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -543,7 +608,6 @@ Lsubexit:
 ENTRY(susword)
 ALTENTRY(suisword)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lsusexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -571,15 +635,14 @@ Lsusexit:
 
 /******************************************************************************
  *
- * int suword(void *base, short c)
- * int suiword(void *base, short c)
+ * int suword(void *base, long)
+ * int suiword(void *base, long)
  *
- * Store u_int32_t `c' to user address space `base', returning EFAULT on error.
+ * Store long `c' to user address space `base', returning EFAULT on error.
  */
 ENTRY(suword)
 ALTENTRY(suiword)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lsuwexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -594,7 +657,7 @@ ALTENTRY(suiword)
 	LDPTR	r0, CI_CURPCB, r0
 	LDPTR	r0, PCB_ONFAULT, r8
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
-	st.l	r2, 0, r3
+	STPTR	r2, 0, r3
 	movi	0, r5			/* No error! */
 Lsuwerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
@@ -615,7 +678,6 @@ Lsuwexit:
 ENTRY(fubyte)
 ALTENTRY(fuibyte)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lfubexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -630,9 +692,7 @@ ALTENTRY(fuibyte)
 	LDPTR	r0, CI_CURPCB, r0
 	LDPTR	r0, PCB_ONFAULT, r8
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
-	movi	0, r3
-	ld.b	r2, 0, r3
-	or	r3, r63, r5
+	ld.ub	r2, 0, r5
 Lfuberr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
@@ -652,7 +712,6 @@ Lfubexit:
 ENTRY(fusword)
 ALTENTRY(fuisword)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lfusexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -667,9 +726,7 @@ ALTENTRY(fuisword)
 	LDPTR	r0, CI_CURPCB, r0
 	LDPTR	r0, PCB_ONFAULT, r8
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
-	movi	0, r3
-	ld.w	r2, 0, r3
-	or	r3, r63, r5
+	ld.uw	r2, 0, r5
 Lfuserr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
@@ -681,15 +738,14 @@ Lfusexit:
 
 /******************************************************************************
  *
- * int fuword(void *base)
- * int fuiword(void *base)
+ * long fuword(void *base)
+ * long fuiword(void *base)
  *
- * Fetch a u_int32_t from user address space `base', returning -1 on error.
+ * Fetch a long from user address space `base', returning -1 on error.
  */
 ENTRY(fuword)
 ALTENTRY(fuiword)
 	ptabs/l	r18, tr0
-	bgt/u	r63, r4, tr0		/* Just return if len == 0 */
 	pta/u	Lfuwexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -704,11 +760,7 @@ ALTENTRY(fuiword)
 	LDPTR	r0, CI_CURPCB, r0
 	LDPTR	r0, PCB_ONFAULT, r8
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
-	ld.l	r2, 0, r3
-	movi	0, r5
-	shori	65535, r5
-	shori	65535, r5
-	and	r3, r5, r5
+	LDPTR	r2, 0, r5		/* XXX: Should we really sign-extend? */
 Lfuwerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
