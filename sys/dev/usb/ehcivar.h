@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.7 2001/11/18 00:39:46 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.8 2001/11/19 02:57:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,6 +100,8 @@ typedef struct ehci_softc {
 	ehci_soft_qh_t *sc_bulk_head;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+
+	struct lock sc_doorbell_lock;
 
 	usb_callout_t sc_tmo_pcd;
 
