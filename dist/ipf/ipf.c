@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.2 1999/12/11 23:33:07 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -290,10 +290,12 @@ char	*name, *file;
 				else {
 #ifdef	USE_QUAD_T
 					printf("hits %qd bytes %qd ",
+						(long long)fr->fr_hits,
+						(long long)fr->fr_bytes);
 #else
 					printf("hits %ld bytes %ld ",
-#endif
 						fr->fr_hits, fr->fr_bytes);
+#endif
 					printfr(fr);
 				}
 			} else if ((opts & OPT_REMOVE) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.2 1999/12/11 23:33:07 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -215,7 +215,8 @@ int opts;
 		apr.apr_p, apr.apr_ref, apr.apr_flags);
 	printf("\t\tproto %d flags %#x bytes ", ap.aps_p, ap.aps_flags);
 #ifdef	USE_QUAD_T
-	printf("%qu pkts %qu", ap.aps_bytes, ap.aps_pkts);
+	printf("%qu pkts %qu", (unsigned long long)ap.aps_bytes,
+		(unsigned long long)ap.aps_pkts);
 #else
 	printf("%lu pkts %lu", ap.aps_bytes, ap.aps_pkts);
 #endif
@@ -356,7 +357,8 @@ int fd, opts;
 					i, nat.nat_flags);
 #ifdef	USE_QUAD_T
 				printf("bytes %qu pkts %qu",
-					nat.nat_bytes, nat.nat_pkts);
+					(unsigned long long)nat.nat_bytes,
+					(unsigned long long)nat.nat_pkts);
 #else
 				printf("bytes %lu pkts %lu",
 					nat.nat_bytes, nat.nat_pkts);

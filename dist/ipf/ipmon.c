@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2 1999/12/11 23:33:07 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -401,10 +401,12 @@ int	blen;
 	if (nl->nl_type == NL_EXPIRE) {
 #ifdef	USE_QUAD_T
 		(void) sprintf(t, " Pkts %qd Bytes %qd",
+				(long long)nl->nl_pkts,
+				(long long)nl->nl_bytes);
 #else
 		(void) sprintf(t, " Pkts %ld Bytes %ld",
-#endif
 				nl->nl_pkts, nl->nl_bytes);
+#endif
 		t += strlen(t);
 	}
 
@@ -478,10 +480,12 @@ int	blen;
 	if (sl->isl_type != ISL_NEW) {
 #ifdef	USE_QUAD_T
 		(void) sprintf(t, " Pkts %qd Bytes %qd",
+				(long long)sl->isl_pkts,
+				(long long)sl->isl_bytes);
 #else
 		(void) sprintf(t, " Pkts %ld Bytes %ld",
-#endif
 				sl->isl_pkts, sl->isl_bytes);
+#endif
 		t += strlen(t);
 	}
 
