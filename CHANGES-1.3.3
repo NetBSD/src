@@ -118,3 +118,18 @@ sys/arch/amiga/amiga/machdep.c			patch
 
   Fix execution of SunOS binaries by reverting a patch mistakenly
   included in 1.3.1 (PR#5782).  (is)
+
+usr.sbin/rarpd/mkarp.c				1.2
+
+  Set the length of arp entries, so that the kernel accepts them
+  (PR#4835).  (christos)
+
+distrib/utils/sysinst/arch/i386/fdisk.c		patch
+
+  Eliminates a gratious call to fdisk to initialize the mbr.
+  If the mbr already contained valid code and a partition table,
+  these were overridden by this fdisk call.  If the mbr wasn't
+  valid yet, fdisk would initialize the code and partition table
+  anyway the first time it writes anything to the disk, and fdisk
+  will be called at least once in any case, to set the active
+  partition.  (ws)
