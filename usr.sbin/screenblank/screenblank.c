@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.14 2001/11/01 19:06:08 augustss Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.15 2001/11/06 22:56:02 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.14 2001/11/01 19:06:08 augustss Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.15 2001/11/06 22:56:02 augustss Exp $");
 #endif
 
 #include <sys/types.h>
@@ -269,7 +269,7 @@ add_dev(const char *path, int isfb)
 	struct dev_stat *dsp;
 	struct stat sb;
 
-	/* Make sure we can open the device. */
+	/* Make sure we can stat the device. */
 	if (stat(path, &sb) == -1) {
 		warn("Can't stat `%s'", path);
 		return;
