@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.31 1996/11/24 13:32:53 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.32 1996/12/23 08:37:07 matthias Exp $ */
 
 /*
  * Copyright (c) 1996 Phil Budne.
@@ -72,7 +72,9 @@
 #include "scnreg.h"
 #include "scnvar.h"
 
-int     scnprobe __P((struct device *, void *, void *));
+int scn_soft_rts = 1;
+
+int     scnprobe __P((struct device *, struct cfdata *, void *));
 void    scnattach __P((struct device *, struct device *, void *));
 int     scnparam __P((struct tty *, struct termios *));
 void    scnstart __P((struct tty *));
@@ -85,6 +87,7 @@ void    scncnputc __P((dev_t, int));
 void	scncnpollc __P((dev_t, int));
 int	scninit __P((dev_t, int));
 void	scncnreinit __P((void *));
+int     scnhwiflow __P((struct tty *, int));
 
 struct cfattach scn_ca = {sizeof(struct scn_softc), scnprobe, scnattach};
 struct cfdriver scn_cd = {NULL, "scn", DV_TTY, NULL, 0};
@@ -110,7 +113,8 @@ int     scnmajor;
 #define SOFTC(UNIT) scn_cd.cd_devs[(UNIT)]
 
 static void scnintr __P((void *));
-static void scnrxintr __P((int));
+static void scnrxintr __P((void *));
+static int scn_rxintr __P((struct scn_softc *, int));
 static void scnsoft __P((void *));
 
 /*
@@ -120,51 +124,8 @@ static void scnsoft __P((void *));
  */
 /* #define SCN_TIMING */
 
-/*
- * EXPERIMENTAL:
- *
- * Use a hardware based software interrupt for ringbuf drain.
- * search for IR_SCNSOFT for full description.
- */
-/* #define SCN_HSOFT */
-
-#ifdef SCN_HSOFT
-/*
- * "hard" softint! number.  IR14/G7 line (pin 4) used as SELECT
- * output, so we're free to use it's position in IPND.
- *
- * The last (lowest prio) h/w int line is 13, so this is the lowest
- * priority interrupt (will not be serviced until no h/w interrupts
- * are being requested).
- *
- * *BUT* it will be serviced sooner than a softintr() softint. This
- * scheme allows the softint to occur so long as the the ipl does
- * not mask it out. The interrupt is registered as IPL_TTY since it
- * calls the line discipline l_rint to process new characters.
- */
-#define IR_SCNSOFT	14	/* IR14/G7; used as SELECT output */
-
-/*
- * ICU IPND register;
- * induce h/w interrupt condition atomicly by poking magic value
- * into IPND (Interrupt pending register).
- */
-#define IPND_SET	0x80
-#define IPND_CLR	0x00
-
-#if IR_SCNSOFT < 8
-#define setsoftscn()	ICUB(IPND) = (IPND_SET + IR_SCNSOFT)
-#else
-#define setsoftscn()	ICUB(IPND+1) = (IPND_SET + IR_SCNSOFT)
-#endif
-
-#else
-
-/* here for software softint */
 static int scnsir = -1;		/* s/w intr number */
 #define setsoftscn()	softintr(scnsir)
-
-#endif
 
 #ifdef SCN_TIMING
 static struct timeval tstart;
@@ -240,9 +201,10 @@ struct speedtab scnspeedtab[] = {
 	{9600, SP_BOTH + 11},
 	{19200, SP_GRP1 + 12},
 	{38400, SP_GRP0 + 12},
-/*	{115200, SP_BOTH + 14 },	/* 11/4/95; dave says CLK/2 on IP4! */
+/*	{115200, SP_BOTH + 14},		/* 11/4/95; dave says CLK/2 on IP4! */
 	{-1, -1}
 };
+
 /*
  * minor unit bit decode:
  * CxxxUUU
@@ -269,10 +231,10 @@ int     scnkgdb = -1;
 /* Debug routine to print out the scn line structures. */
 void
 print_scn(unit)
-	int     unit;
+	int unit;
 {
 	struct scn_softc *sc = SOFTC(unit);
-	int     channel = unit & 1;
+	int channel = unit & 1;
 	printf("\nline frame overrun parity break\n");
 	printf("tty%1d f=%2d o=%2d p=%2d b=%2d in=%x, out=%x grp=%d\n",
 	    unit, sc->framing_errors, sc->overrun_errors,
@@ -285,7 +247,7 @@ print_scn(unit)
 static struct speedtab *
 getspeedcode(sc, speed)
 	struct scn_softc *sc;
-	int     speed;
+	int speed;
 {
 	register struct speedtab *sp;
 
@@ -302,22 +264,22 @@ getspeedcode(sc, speed)
 /* Set various line control parameters for RS232 I/O. */
 static int
 scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
-	int     unit;		/* which rs line */
-	int     in_speed;	/* input speed: 110, 300, 1200, etc */
-	int     out_speed;	/* output speed: 110, 300, 1200, etc */
-	char    new_mr1;	/* new bits for MR1 */
-	char    new_mr2;	/* new bits for MR2 */
+	int unit;	/* which rs line */
+	int in_speed;	/* input speed: 110, 300, 1200, etc */
+	int out_speed;	/* output speed: 110, 300, 1200, etc */
+	char new_mr1;	/* new bits for MR1 */
+	char new_mr2;	/* new bits for MR2 */
 
 {
 	register struct scn_softc *sc;
-	char    mr1_val, mr2_val;
+	char mr1_val, mr2_val;
 	struct speedtab *sp;
-	int     sp_grp, sp_both;
-	char    set_speed;	/* Non zero if we need to set the speed. */
-	int     channel;	/* Used for ease of access. */
-	int     in_code;
-	int     out_code;
-	int     s;
+	int sp_grp, sp_both;
+	char set_speed;		/* Non zero if we need to set the speed. */
+	int channel;		/* Used for ease of access. */
+	int in_code;
+	int out_code;
+	int s;
 
 	/* Get the speed codes. */
 	sp = getspeedcode(sc, in_speed);
@@ -399,13 +361,11 @@ scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
 	sc->chbase[CH_CR] = CR_CMD_MR1;
 	RECOVER();
 	mr1_val = sc->chbase[CH_MR];
-	RECOVER();
 	mr2_val = sc->chbase[CH_MR];
 	if (mr1_val != new_mr1 || mr2_val != new_mr2) {
 		sc->chbase[CH_CR] = CR_CMD_MR1;
 		RECOVER();
 		sc->chbase[CH_MR] = new_mr1;
-		RECOVER();
 		sc->chbase[CH_MR] = new_mr2;
 	}
 	if (set_speed) {
@@ -419,7 +379,6 @@ scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
 				acr |= ACR_BRG;	/* yes; select alternate
 						 * group!! */
 			sc->duart->base[DU_ACR] = acr;
-			RECOVER();
 		}
 		sc->chbase[CH_CSR] = ((in_code & 0xf) << 4) | (out_code & 0xf);
 	}
@@ -432,11 +391,11 @@ scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
 int
 scnprobe(parent, cf, aux)
 	struct device *parent;
-	void   *cf;
-	void   *aux;
+	struct cfdata *cf;
+	void *aux;
 {				/* system dependant data struct */
-	int     unit = ((struct cfdata *) cf)->cf_unit;
-	int	mr1;
+	int unit = cf->cf_unit;
+	int mr1;
 	register volatile u_char *ch_base;
 
 	/* The pc532 doesn't have more then 8 lines. */
@@ -451,16 +410,13 @@ scnprobe(parent, cf, aux)
 	ch_base[CH_CR] = CR_CMD_MR1;
 	RECOVER();
 	mr1 = ch_base[CH_MR] ^ 0x80;
-	RECOVER();
 	ch_base[CH_CR] = CR_CMD_MR1;
 	RECOVER();
 	ch_base[CH_MR] = mr1;
-	RECOVER();
 	ch_base[CH_CR] = CR_CMD_MR1;
 	RECOVER();
 	if (ch_base[CH_MR] != mr1)
 		return(0);
-	RECOVER();
 	if (ch_base[CH_MR] == mr1)
 		return(0);
 	return(1);
@@ -475,7 +431,7 @@ scn_rxenable(sc)
 	struct scn_softc *sc;
 {
 	struct duart_info *dp;
-	int     channel;
+	int channel;
 
 	dp = sc->duart;
 	channel = sc->unit & 1;
@@ -493,7 +449,7 @@ scn_rxdisable(sc)
 	struct scn_softc *sc;
 {
 	struct duart_info *dp;
-	int     channel;
+	int channel;
 
 	dp = sc->duart;
 	channel = sc->unit & 1;
@@ -517,12 +473,13 @@ scnattach(parent, self, aux)
 	u_char  unit;
 	u_char  duart;
 	register struct scn_softc *sc;
-	int     s;
+	int s;
 	register volatile u_char *ch_base;
 	register volatile u_char *duart_base;
-	long    scn_first_adr;
-	int     channel;
-	int     speed;
+	long scn_first_adr;
+	int channel;
+	int speed;
+	char duart_flags = 0;
 
 	sc = (void *) self;
 	unit = self->dv_unit;	/* sc->scn_dev.dv_unit ??? */
@@ -554,10 +511,78 @@ scnattach(parent, self, aux)
 	/* XXX could be done by autoconfig "print" subr w/ addr in cfdata!! */
 	printf(" addr 0x%x", (unsigned int) ch_base);
 
+
+
 	if (channel == 0) {
+		char *duart_type;
+		/* Probe DUART type */
+		unsigned char mr1, mr2;
+		s = spltty();
+		if(unit == scnconsole) {
+			ch_base[CH_CR] = CR_DIS_TX;
+			delay(5 * 10000);
+		}
+		ch_base[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+		mr1 = ch_base[CH_MR];
+		mr2 = ch_base[CH_MR];
+		ch_base[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+		ch_base[CH_MR] = 1;
+		ch_base[CH_MR] = 0;
+		ch_base[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+		if (ch_base[CH_MR] == 1) {
+			/* MR 2 selected */
+			ch_base[CH_CR] = CR_CMD_MR0;
+			RECOVER();
+			/* if 2681, MR2 still selected */
+			ch_base[CH_MR] = 1;
+			ch_base[CH_CR] = CR_CMD_MR1;
+			RECOVER();
+			ch_base[CH_MR] = 0; /* MR1 */
+			ch_base[CH_MR] = 0; /* MR2 */
+			ch_base[CH_CR] = CR_CMD_MR0;
+			RECOVER();
+			/* if 2681, MR2 still selected */
+			if((ch_base[CH_MR] & 1) == 1) {
+				duart_type = "SCN26C92";
+				duart_flags |= SCN_HW_26C92;
+			} else {
+				ch_base[CH_CR] = CR_CMD_RTS_OFF; /* 2681 treats as MR1 Select */
+				RECOVER();
+				ch_base[CH_MR] = 1;
+				ch_base[CH_MR] = 0;
+				ch_base[CH_CR] = CR_CMD_RTS_OFF;
+				RECOVER();
+				if (ch_base[CH_MR] == 1) {
+					duart_type = "SCN2681";
+				} else {
+					duart_type = "SCC2692";
+					duart_flags |= SCN_HW_2692;
+				}
+			}
+		} else {
+			duart_type = "Unknown";
+		}
+
+		/* If a 2681, the CR_CMD_MR0 is interpreted as a TX_RESET */
+		if(unit == scnconsole) {
+			ch_base[CH_CR] = CR_ENA_TX;
+			RECOVER();
+		}
+		ch_base[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+		ch_base[CH_MR] = mr1;
+		ch_base[CH_MR] = mr2;
+		splx(s);
+	    
 		/* Arg 0 is special, so we must pass "unit + 1" */
-		intr_establish(scnints[duart], scnintr,
-		    (void *) (unit + 1), "scn", IPL_TTY, FALLING_EDGE);
+		intr_establish(scnints[duart], scnintr, (void *) (unit + 1),
+			       "scn", IPL_TTY, IPL_ZERO, LOW_LEVEL);
+
+		printf(", Duart: %s", duart_type);
+
 
 		/* print for both channels?? */
 		printf(", irq %d", scnints[duart]);
@@ -566,8 +591,8 @@ scnattach(parent, self, aux)
 		 * IPL_ZERO is the right priority for the rx interrupt.
 		 * Only splhigh() should disable rxints.
 		 */
-		intr_establish(rxints[duart], (void (*) (void *)) scnrxintr,
-		    (void *) (unit + 1), "scnrx", IPL_ZERO, FALLING_EDGE);
+		intr_establish(rxints[duart], scnrxintr, (void *) (unit + 1),
+			       "scnrx", IPL_ZERO, IPL_RTTY, LOW_LEVEL);
 
 		/* print for both channels?? */
 		printf(", %d", rxints[duart]);
@@ -581,8 +606,8 @@ scnattach(parent, self, aux)
 		sc->duart = malloc(sizeof(struct duart_info), M_DEVBUF, M_NOWAIT);
 		if (sc->duart == NULL)
 			panic("scn%d: memory allocation for duart structure failed", unit);
-
-		sc->duart->base = duart_base;
+  		sc->duart->base = duart_base;
+		sc->duart->hwflags = duart_flags;
 		sc->sc_op_rts = OP_RTSA;
 		sc->sc_op_dtr = OP_DTRA;
 		sc->sc_ip_cts = IP_CTSA;
@@ -617,7 +642,6 @@ scnattach(parent, self, aux)
          */
 
 	s = spltty();
-
 	/* RTS off... */
 	SCN_OP_BIC(sc, sc->sc_op_rts);	/* "istop" */
 
@@ -636,9 +660,7 @@ scnattach(parent, self, aux)
 
 	/* No receiver control of RTS. */
 	ch_base[CH_MR] = 0;
-	RECOVER();
 	ch_base[CH_MR] = 0;
-	RECOVER();
 
 	/* Initialize the uart structure if this is channel A. */
 	if (channel == 0) {
@@ -671,21 +693,11 @@ scnattach(parent, self, aux)
 		sc->duart->acr_bits |= ACR_DELTA_DCDB;	/* Set CD int */
 	}
 
-#ifdef SCN_HSOFT
-	if (unit == 0) {
-		/* "hard" soft int: calls tty code, hence IPL_TTY */
-
-		/* LOW_LEVEL seems to work; tried FALLING_EDGE, hung on kermit
-		 * downloads */
-		intr_establish(IR_SCNSOFT, scnsoft, NULL, "softscn",
-		    IPL_TTY, LOW_LEVEL);
-	}
-#else
 	if (scnsir == -1) {
 		/* software intr: calls tty code, hence IPL_TTY */
-		scnsir = intr_establish(SOFTINT, scnsoft, NULL, "softscn", IPL_TTY, 0);
+		scnsir = intr_establish(SOFTINT, scnsoft, NULL,
+				"softscn", IPL_TTY, IPL_TTY, 0);
 	}
-#endif
 
 	duart_base[DU_ACR] =
 	    (sc->duart->speed_grp ? ACR_BRG : 0) | sc->duart->acr_bits;
@@ -733,16 +745,17 @@ scnattach(parent, self, aux)
 /* ARGSUSED */
 int
 scnopen(dev, flag, mode, p)
-	dev_t   dev;
-	int	flag;
-	int	mode;
+	dev_t dev;
+	int flag;
+	int mode;
 	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = DEV_UNIT(dev);
 	register struct scn_softc *sc;
-	int     error = 0;
-	int     s;
+	int error = 0;
+	int hwset = 0;
+	int s;
 
 	if (unit >= scn_cd.cd_ndevs)
 		return ENXIO;
@@ -759,13 +772,18 @@ scnopen(dev, flag, mode, p)
 
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
+	tp->t_hwiflow = scnhwiflow;
 	tp->t_dev = dev;
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = SCNDEF_CFLAG;
+
+		sc->sc_rx_blocked = 0;
+
 		if (sc->scn_swflags & SCN_SW_CLOCAL)
 			tp->t_cflag |= CLOCAL;
 		if (sc->scn_swflags & SCN_SW_CRTSCTS)
@@ -783,6 +801,7 @@ scnopen(dev, flag, mode, p)
 
 		/* enable reciever interrupts */
 		scn_rxenable(sc);
+		hwset = 1;
 
 		/* set carrier state; */
 		if ((sc->scn_swflags & SCN_SW_SOFTCAR) ||	/* check ttyflags */
@@ -859,7 +878,8 @@ scnopen(dev, flag, mode, p)
 	splx(s);
 
 	error = (*linesw[tp->t_line].l_open) (dev, tp);
-	if (error) {
+	if (error && hwset) {
+		scn_rxdisable(sc);
 		SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
 	}
 	return (error);
@@ -869,14 +889,17 @@ scnopen(dev, flag, mode, p)
 /*ARGSUSED*/
 int
 scnclose(dev, flag, mode, p)
-	dev_t   dev;
-	int	flag;
-	int	mode;
+	dev_t dev;
+	int flag;
+	int mode;
 	struct proc *p;
 {
 	register int unit = DEV_UNIT(dev);
 	register struct scn_softc *sc = SOFTC(unit);
 	register struct tty *tp = sc->scn_tty;
+
+	if ((tp->t_state & TS_ISOPEN) == 0)
+	        return 0;
 
 	(*linesw[tp->t_line].l_close) (tp, flag);
 
@@ -887,8 +910,7 @@ scnclose(dev, flag, mode, p)
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			scn_rxdisable(sc);
 		}
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_cflag & HUPCL) && (sc->scn_swflags & SCN_SW_SOFTCAR) == 0) {
 		SCN_OP_BIC(sc, sc->sc_op_dtr);
 		/* hold low for 1 second */
 		(void) tsleep((caddr_t)sc, TTIPRI, ttclos, hz);
@@ -908,9 +930,9 @@ scnclose(dev, flag, mode, p)
 
 int
 scnread(dev, uio, flag)
-	dev_t   dev;
+	dev_t dev;
 	struct uio *uio;
-	int	flag;
+	int flag;
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	register struct tty *tp = sc->scn_tty;
@@ -920,9 +942,9 @@ scnread(dev, uio, flag)
 
 int
 scnwrite(dev, uio, flag)
-	dev_t   dev;
+	dev_t dev;
 	struct uio *uio;
-	int	flag;
+	int flag;
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	register struct tty *tp = sc->scn_tty;
@@ -932,7 +954,7 @@ scnwrite(dev, uio, flag)
 
 struct tty *
 scntty(dev)
-	dev_t   dev;
+	dev_t dev;
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 
@@ -944,7 +966,7 @@ static __inline void
 dcd_int(sc, tp, new)
 	struct scn_softc *sc;
 	struct tty *tp;
-	u_char	new;
+	u_char new;
 {
 	if (sc->scn_swflags & SCN_SW_SOFTCAR)
 		return;
@@ -960,13 +982,9 @@ dcd_int(sc, tp, new)
 #endif
 
 /* XXX set some flag to have some lower (soft) int call line discipline? */
-
-	if (new == 0)		/* DCD inverted */
-		(*linesw[(u_char) tp->t_line].l_modem) (tp, 1);
-	else
-		if (!(*linesw[(u_char) tp->t_line].l_modem) (tp, 0)) {
-			SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
-		}
+	if (!(*linesw[(u_char) tp->t_line].l_modem) (tp, new == 0? 1: 0)) {
+	      SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
+	}
 }
 
 /*
@@ -974,9 +992,9 @@ dcd_int(sc, tp, new)
  */
 static void
 scnoverrun(unit, ptime, what)
-	int     unit;
-	long	*ptime;
-	char	*what;
+	int unit;
+	long *ptime;
+	char *what;
 {
 	if (*ptime != time.tv_sec) {
 		*ptime = time.tv_sec;
@@ -984,11 +1002,35 @@ scnoverrun(unit, ptime, what)
 	}
 }
 
+/*
+ * Try to block or unblock input using hardware flow-control.
+ * This is called by kern/tty.c if MDMBUF|CRTSCTS is set, and
+ * if this function returns non-zero, the TS_TBLOCK flag will
+ * be set or cleared according to the "stop" arg passed.
+ */
+int
+scnhwiflow(tp, stop)
+	struct tty *tp;
+	int stop;
+{
+	int unit = DEV_UNIT(tp->t_dev);
+	struct scn_softc *sc = SOFTC(unit);
+	int s = splrtty();
+
+	if (!stop) {
+		if (sc->sc_rbput - sc->sc_rbget - 1) {
+			setsoftscn();
+		}
+	}
+	splx(s);
+	return 1;
+}
+
 static void
 scnintr(arg)
 	void *arg;
 {
-	int     line1 = (int)arg;	/* NOTE: line _ONE_ */
+	int line1 = (int)arg;	/* NOTE: line _ONE_ */
 	register struct scn_softc *sc0 = SOFTC(line1 - 1);
 	register struct scn_softc *sc1 = SOFTC(line1);
 
@@ -997,9 +1039,9 @@ scnintr(arg)
 
 	register struct duart_info *duart = sc0->duart;
 
-	char    rs_work;
-	u_char  rs_stat;
-	u_char  rs_ipcr;
+	char rs_work;
+	u_char rs_stat;
+	u_char rs_ipcr;
 
 	do {
 		/* Loop to pick up ALL pending interrupts for device. */
@@ -1067,115 +1109,87 @@ scnintr(arg)
  * THIS ROUTINE SHOULD BE KEPT AS CLEAN AS POSSIBLE!!
  * IT'S A CANDIDATE FOR RECODING IN ASSEMBLER!!
  */
-static void
-scnrxintr(line1)
-	int     line1;
-{				/* NOTE: line _ONE_ */
+static int
+scn_rxintr(sc, line)
+     struct scn_softc *sc;
+     int line;
+{
 	register char sr;
-	register int i;
-	int     line0 = line1 - 1;
-	register struct scn_softc *sc0 = SOFTC(line0);
-	register struct scn_softc *sc1 = SOFTC(line1);
-	int     work;
-
-/* XXX include SR_OVERRUN? should not be needed?! */
-#define SR_INPUT (SR_RX_RDY|SR_PARITY|SR_FRAME|SR_BREAK|SR_OVERRUN)
-
-/*
- * macro to check if current line is console, and break seen; call
- * debuger.  less efficient here than in scnsoft() (single place to
- * test), but rxintr isn't masked by spltty (and thus splimp)!
- */
-#if defined(DDB)
-# define DDB_CHECK(L, SR, SRP) \
-	do { \
-		if ((L) == scnconsole && ((SR) & SR_BREAK)) { \
-			Debugger(); \
-			SR = *(SRP); \
-		} \
-	} while (0)
-#else
-# define DDB_CHECK(L, SR, SRP)	/* NOOP */
-#endif
-#if defined(KGDB)
-# define KGDB_CHECK(L, SR, SRP) \
-	do { \
-		if ((L) == scnkgdb && ((SR) & SR_RX_RDY)) { \
-			kgdb_connect(1); \
-			SR = *(SRP); \
-		} \
-	} while (0)
-#else
-# define KGDB_CHECK(L, SR, SRP)	/* NOOP */
-#endif
-#define DB_CHECK(L, SR, SRP) do { \
-		DDB_CHECK(L, SR, SRP); KGDB_CHECK(L, SR, SRP); \
-	} while (0)
+	register int i, n, put;
+	int work;
 
 	work = 0;
-	i = sc0->sc_rbput;
-	while (1) {
-		sr = sc0->chbase[CH_SR];
-		DB_CHECK(line0, sr, &sc0->chbase[CH_SR]);
-		if ((sr & SR_INPUT) == 0)
-			break;
-		work++;
-		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
-		RECOVER();
-		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-		RECOVER();
-		sr = sc0->chbase[CH_SR];
-		DB_CHECK(line0, sr, &sc0->chbase[CH_SR]);
-		if ((sr & SR_INPUT) == 0)
-			break;
-		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
-		RECOVER();
-		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-		RECOVER();
-		sr = sc0->chbase[CH_SR];
-		DB_CHECK(line0, sr, &sc0->chbase[CH_SR]);
-		if ((sr & SR_INPUT) == 0 || work > 10)
-			break;
-		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
-		RECOVER();
-		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-	}
-	sc0->sc_rbput = i;
+	i = sc->sc_rbput;
+	while (work <= 10) {
+#define SCN_GETCH(SC) \
+		sr = (SC)->chbase[CH_SR]; \
+		if ((sr & SR_RX_RDY) == 0) \
+			break; \
+		if (sr & (SR_PARITY | SR_FRAME | SR_BREAK | SR_OVERRUN)) \
+			goto exception; \
+		work++; \
+		(SC)->sc_rbuf[i++ & SCN_RING_MASK] = (SC)->chbase[CH_DAT]
 
-#ifdef KGDB
-	if (line1 < scn_cd.cd_ndevs) {
-#endif
-		i = sc1->sc_rbput;
-		while (1) {
-			sr = sc1->chbase[CH_SR];
-			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-			if ((sr & SR_INPUT) == 0)
-				break;
-			work++;
-			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-			RECOVER();
-			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-			RECOVER();
-			sr = sc1->chbase[CH_SR];
-			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-			if ((sr & SR_INPUT) == 0)
-				break;
-			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-			RECOVER();
-			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-			RECOVER();
-			sr = sc1->chbase[CH_SR];
-			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-			if ((sr & SR_INPUT) == 0 || work > 10)
-				break;
-			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-			RECOVER();
-			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		SCN_GETCH(sc); SCN_GETCH(sc); SCN_GETCH(sc);
+			
+		continue;
+	exception:
+#if defined(DDB)
+		if (line == scnconsole && (sr & SR_BREAK)) {
+			Debugger();
+			sr = sc->chbase[CH_SR];
 		}
-		sc1->sc_rbput = i;
-#ifdef KGDB
-	}
 #endif
+#if defined(KGDB)
+		if (line == scnkgdb && (sr & SR_RX_RDY)) {
+			kgdb_connect(1);
+			sr = sc->chbase[CH_SR];
+		}
+#endif
+		work++;
+		sc->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc->chbase[CH_DAT];
+		sc->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		RECOVER();
+	}
+	/*
+	 * If ring is getting too full, try to block input.
+	 */
+	n = i - sc->sc_rbget;
+	if (sc->sc_rbhiwat && (n > sc->sc_rbhiwat)) {
+		/* If not CRTSCTS sc_rbhiwat is such that this
+		 *  never happens
+		 */
+		if (scn_soft_rts)
+			SCN_OP_BIC(sc, sc->sc_op_rts);
+		else
+			scn_rxdisable(sc);
+		sc->sc_rx_blocked = 1;
+	}
+	sc->sc_rbput = i;
+
+	return work;
+}
+
+static void
+scnrxintr(arg)
+	void *arg;
+{
+	register char sr;
+	register int i;
+	int work = 0;
+	int line1 = (int)arg;	/* NOTE: line _ONE_ */
+	int line0 = line1 - 1;
+	register struct scn_softc *sc0 = SOFTC(line0);
+	register struct scn_softc *sc1 = SOFTC(line1);
+
+	if (scn_soft_rts || !sc0->sc_rx_blocked)
+		work = scn_rxintr(sc0, line0);
+	if (scn_soft_rts || !sc1->sc_rx_blocked
+#ifdef KGDB
+	    && line1 < scn_cd.cd_ndevs
+#endif
+	    )
+		work += scn_rxintr(sc1, (int)line1);
 
 	if (work > 0) {
 		setsoftscn();	/* trigger s/w intr */
@@ -1205,10 +1219,9 @@ scnrxintr(line1)
  */
 static void
 scnsoft(arg)
-	void   *arg;
+	void *arg;
 {
-	int     unit;
-	int     s;
+	int unit;
 #ifdef SCN_TIMING
 	struct timeval tend;
 	u_long  t;
@@ -1222,7 +1235,6 @@ scnsoft(arg)
 	scn_jitter[t]++;
 #endif
 
-	s = spltty();		/* needed? just around l_rint?? */
 	for (unit = 0; unit < scn_cd.cd_ndevs; unit++) {
 		register struct scn_softc *sc;
 		register struct tty *tp;
@@ -1236,6 +1248,11 @@ scnsoft(arg)
 			continue;
 		}
 #endif
+		if (tp == NULL || tp->t_state & TS_TBLOCK) {
+			continue;
+		}
+
+
 		get = sc->sc_rbget;
 
 		/* NOTE: fetch from rbput is atomic */
@@ -1259,6 +1276,10 @@ scnsoft(arg)
 			while (--n >= 0) {
 				register int c, sr;
 
+				if (tp->t_state & TS_TBLOCK) {
+					sc->sc_rbget = get;
+					goto done;
+				}
 				/* Race to keep ahead of incoming interrupts. */
 				c = sc->sc_rbuf[get++ & SCN_RING_MASK];
 
@@ -1285,18 +1306,29 @@ scnsoft(arg)
 					c = TTY_FE | 0;
 				}
 				(*linesw[tp->t_line].l_rint) (c, tp);
+
+				if (sc->sc_rx_blocked && n < SCN_RING_THRESH) {
+					int	s = splrtty();
+					sc->sc_rx_blocked = 0;
+					if (scn_soft_rts)
+						SCN_OP_BIS(sc, sc->sc_op_rts);
+					else
+						scn_rxenable(sc);
+					splx(s);
+				}
+					
 			}
 			sc->sc_rbget = get;
 		}
+	done:
 	}
-	splx(s);
 }
 
 /* Convert TIOCM_xxx bits to output port bits. */
 static unsigned char
 opbits(sc, tioc_bits)
 	struct scn_softc *sc;
-	int     tioc_bits;
+	int tioc_bits;
 {
 	return ((((tioc_bits) & TIOCM_DTR) ? sc->sc_op_dtr : 0) |
 	    (((tioc_bits) & TIOCM_RTS) ? sc->sc_op_rts : 0));
@@ -1304,10 +1336,10 @@ opbits(sc, tioc_bits)
 
 int
 scnioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
-	int	cmd;
+	dev_t dev;
+	int cmd;
 	caddr_t	data;
-	int	flag;
+	int flag;
 	struct proc *p;
 {
 	register int unit = DEV_UNIT(dev);
@@ -1446,12 +1478,11 @@ scnparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int     cflag = t->c_cflag;
-	int     unit = DEV_UNIT(tp->t_dev);
-	char    mr1, mr2;
-	int     error;
+	int cflag = t->c_cflag;
+	int unit = DEV_UNIT(tp->t_dev);
+	char mr1, mr2;
+	int error;
 	struct scn_softc *sc = SOFTC(unit);
-
 
 	/* Is this a hang up? */
 	if (t->c_ospeed == B0) {
@@ -1496,8 +1527,13 @@ scnparam(tp, t)
 	if (cflag & CCTS_OFLOW)
 		mr2 |= MR2_TXCTS;
 
-	if (cflag & CRTS_IFLOW)
-		mr1 |= MR1_RXRTS;
+	if (cflag & CRTS_IFLOW) {
+		if(!scn_soft_rts)
+			mr1 |= MR1_RXRTS;
+		sc->sc_rbhiwat = SCN_RING_HIWAT;
+	} else {
+		sc->sc_rbhiwat = 0;
+	}
 
 	error = scn_config(unit, t->c_ispeed, t->c_ospeed, mr1, mr2);
 
@@ -1514,8 +1550,8 @@ void
 scnstart(tp)
 	struct tty *tp;
 {
-	int     s, c;
-	int     unit = DEV_UNIT(tp->t_dev);
+	int s, c;
+	int unit = DEV_UNIT(tp->t_dev);
 	struct scn_softc *sc = SOFTC(unit);
 
 	s = spltty();
@@ -1535,7 +1571,6 @@ scnstart(tp)
 	if (sc->chbase[CH_SR] & SR_TX_RDY) {
 		c = getc(&tp->t_outq);
 		sc->chbase[CH_DAT] = c;
-		RECOVER();
 
 		/* Enable transmit interrupts. */
 		sc->duart->base[DU_IMR] = (sc->duart->imr_int_bits |= sc->sc_tx_int);
@@ -1551,9 +1586,9 @@ out:
 void
 scnstop(tp, flag)
 	struct tty *tp;
-	int     flag;
+	int flag;
 {
-	int     s = spltty();
+	int s = spltty();
 
 	if (tp->t_state & TS_BUSY) {
 		if ((tp->t_state & TS_TTSTOP) == 0)
@@ -1593,10 +1628,10 @@ scncnprobe(cp)
 
 void
 scncnreinit(v)
-	void	*v;
+	void *v;
 {
-	dev_t	dev = (dev_t)v;
-	int     unit = DEV_UNIT(dev);
+	dev_t dev = (dev_t)v;
+	int unit = DEV_UNIT(dev);
 	volatile u_char *du_base = DUADDR(dev);
 
 	du_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
@@ -1613,11 +1648,11 @@ scncninit(cp)
 /* Used by scncninit and kgdb startup. */
 int
 scninit(dev, rate)
-	dev_t   dev;
-	int     rate;
+	dev_t dev;
+	int rate;
 {
 	volatile u_char *du_base = DUADDR(dev);
-	int     unit = DEV_UNIT(dev);
+	int unit = DEV_UNIT(dev);
 
 	du_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
 	scn_config(unit, rate, rate, MR1_PNONE | MR1_BITS8, MR2_STOP1);
@@ -1629,14 +1664,13 @@ scninit(dev, rate)
  */
 int
 scncngetc(dev)
-	dev_t   dev;
+	dev_t dev;
 {
 	volatile u_char *ch_base = CHADDR(dev);
-	char    c;
-	int     s = spltty();
+	char c;
+	int s = spltty();
 
-	while ((ch_base[CH_SR] & SR_RX_RDY) == 0)
-		RECOVER();
+	while ((ch_base[CH_SR] & SR_RX_RDY) == 0);
 	c = ch_base[CH_DAT];
 
 	splx(s);
@@ -1646,8 +1680,8 @@ scncngetc(dev)
 /* The pc532 does not turn off console polling. */
 void
 scncnpollc(dev, on)
-	dev_t   dev;
-	int     on;
+	dev_t dev;
+	int on;
 {
 }
 
@@ -1656,23 +1690,44 @@ scncnpollc(dev, on)
  */
 void
 scncnputc(dev, c)
-	dev_t   dev;
-	char    c;
+	dev_t dev;
+	char c;
 {
 	volatile u_char *ch_base = CHADDR(dev);
 	volatile u_char *du_base = DUADDR(dev);
-	int     s = spltty();
+	int s = spltty();
 
 	if (c == '\n')
 		scncnputc(dev, '\r');
 
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
-		RECOVER();
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
 	ch_base[CH_DAT] = c;
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
-		RECOVER();
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
 	du_base[DU_ISR];
 
 	splx(s);
 }
+
+void scn_ei(enabled)
+     int enabled;
+{
+	/* Ideas: to make this go faster, precompute addresses and bits to
+	 * set when channel is opened, blocked or unblocked or closed. Do
+         * both channels of DUART at once.
+	 */
+	int unit;
+	for (unit = 0; unit < scn_cd.cd_ndevs; unit++) {
+		register struct scn_softc *sc;
+
+		sc = SOFTC(unit);
+		if (!sc->sc_rx_blocked && sc->scn_swflags & SCN_SW_CRTSCTS) {
+			if (enabled) {
+				SCN_OP_BIS(sc, sc->sc_op_rts);
+			} else {
+				SCN_OP_BIC(sc, sc->sc_op_rts);	/* "istop" */
+			}
+		}
+	}
+}
+
 #endif
