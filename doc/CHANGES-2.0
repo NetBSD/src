@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.419 2004/08/30 08:41:18 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.420 2004/08/30 08:57:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6910,4 +6910,26 @@ usr.bin/sed/compile.c				1.29-1.30
 
 	Make patterns larger than _POSIX2_LINE_MAX*2-1 work.
 	[manu, ticket #795]
+
+sys/dev/raidframe/rf_disks.c			1.54
+
+	rf_CheckLabels() needs to die, but for now, we patch it by setting
+	fatal_error when too_fatal is set, and by setting fatal_error in a
+	couple other critical cases.
+	[oster, ticket #797]
+
+sys/dev/raidframe/rf_dagdegrd.c			1.22
+sys/dev/raidframe/rf_dagffwr.c			1.28
+sys/dev/raidframe/rf_raid0.c			1.11
+
+	Correct some RF_ASSERTS() that were missed when fixing memory issues
+	with this code.  Thanks to palle at lyckegaard.dk for pointing them
+	out. Addresses PR#26776 (but doesn't use all the suggested fixes).
+	[oster, ticket #798]
+
+sys/miscfs/procfs/procfs_linux.c		1.17,1.18 via patch
+
+	Fix process used for /proc/<pid>/stat contents - it should be process
+	<pid>, not the current process looking at the information
+	[jdolecek, ticket #799]
 
