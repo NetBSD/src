@@ -1,4 +1,4 @@
-/*	$NetBSD: snmp.c,v 1.6 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: snmp.c,v 1.7 2002/08/01 03:40:34 itojun Exp $	*/
 
 #include "defs.h"
 #include <netinet/in_var.h>
@@ -9,7 +9,7 @@
 #define MROUTED
 #include "snmpd/snmp_vars.h"
 
-    u_short dest_port = 0;
+    in_port_t dest_port = 0;
     int sdlen = 0;
 
 struct addrCache {
@@ -27,7 +27,7 @@ static struct addrCache addrCache[10];
  */
 int /* returns: 0 on success, true on error */
 snmp_init(dest_port)
-    u_short dest_port;
+    in_port_t dest_port;
 {
    u_long myaddr;
    int ret;
