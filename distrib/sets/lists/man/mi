@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.296 2000/12/29 02:41:56 itojun Exp $
+# $NetBSD: mi,v 1.297 2000/12/30 13:11:35 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -367,6 +367,7 @@
 ./usr/share/man/cat1/units.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
+./usr/share/man/cat1/usbhidaction.0
 ./usr/share/man/cat1/usbhidctl.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uucp.0
@@ -1806,6 +1807,7 @@
 ./usr/share/man/man1/units.1
 ./usr/share/man/man1/unvis.1
 ./usr/share/man/man1/uptime.1
+./usr/share/man/man1/usbhidaction.1
 ./usr/share/man/man1/usbhidctl.1
 ./usr/share/man/man1/users.1
 ./usr/share/man/man1/uucp.1
