@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2.2.1 1998/10/29 02:34:30 cgd Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -61,7 +63,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: main.c,v 1.2 1997/04/13 10:52:14 mrg Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2.2.1 1998/10/29 02:34:30 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -678,8 +680,8 @@ LookupHost(string, putToFile)
      *	 optional output file name.
      *
      */
+    sscanf(string, " " NAME_LEN_STR, host);	/* removes white space */
 
-    sscanf(string, " %s", host);	/* removes white space */
     if (!putToFile) {
 	filePtr = stdout;
     } else {
@@ -740,7 +742,7 @@ LookupHostWithServer(string, putToFile)
 
     curHostValid = FALSE;
 
-    sscanf(string, " %s %s", host, server);
+    sscanf(string, " " NAME_LEN_STR " " NAME_LEN_STR, host, server);
     if (!putToFile) {
 	filePtr = stdout;
     } else {
