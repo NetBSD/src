@@ -1,4 +1,4 @@
-/* $NetBSD: blockio.S,v 1.2 1996/06/03 21:21:33 mark Exp $ */
+/* $NetBSD: blockio.S,v 1.3 1996/08/21 19:19:44 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -116,20 +116,11 @@ _outsw:
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-#ifdef notyet
-
-/*
- * The optimised routines have not been tested yet and I don't feel
- * like testing the new write code on 2.8 Gig of valuable data.
- * Need to wait until I hang another HD on my machine
- */
-
 /* If the destination address and the size is word aligned, do it fast */
 
 	tst	r2, #0x00000001
 	tsteq	r1, #0x00000003
 	beq	fastoutsw
-#endif
 
 /* Non aligned outsw */
 
@@ -148,7 +139,6 @@ outswloop:
 
 	mov	pc, lr
 
-#ifdef notyet
 /* Word aligned outsw */
 
 fastoutsw:
@@ -158,20 +148,19 @@ fastoutswloop:
 	ldr	r3, [r1], #0x0004
 
 	mov	r4, r3, lsl #16
-	orr	r4, r4, lsr #16
+	orr	r4, r4, r4, lsr #16
 	str	r4, [r0]
 
 	mov	r4, r3, lsr #16
-	orr	r4, r4, lsl #16
+	orr	r4, r4, r4, lsl #16
 	str	r4, [r0]
 
 	subs	r2, r2, #0x00000002
-	bgt	outswloop
+	bgt	fastoutswloop
 
 	ldmfd	sp!, {r4}
 
 	mov	pc, lr
-#endif
 
 	.global	_insw16
 /*
@@ -189,9 +178,9 @@ _insw16:
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address and the size is word aligned, do it fast */
+/* If the destination address is word aligned and the size suitably aligned, do it fast */
 
-	tst	r2, #0x0000000f
+	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
 
 	bne	_insw
@@ -234,12 +223,6 @@ insw16loop:
 	mov	pc, lr
 
 
-#ifdef notyet
-/*
- * The optimised routines have not been tested yet and I don't feel
- * like testing the new write code on 2.8 Gig of valuable data.
- * Need to wait until I hang another HD on my machine
- */
 	.global	_outsw16
 /*
  * Writes short ints (16 bits) from a block of memory to an I/O address
@@ -254,56 +237,55 @@ _outsw16:
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address and the size is word aligned, do it fast */
+/* If the destination address is word aligned and the size suitably aligned, do it fast */
 
-	tst	r2, #0x0000000f
+	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
 
 	bne	_outsw
 
 /* Word aligned outsw */
 
-	stmfd	r13!, {r4-r8}
+	stmfd	r13!, {r4-r7}
 
 outsw16loop:
-	ldmia	r1!, {r4-r8}
+	ldmia	r1!, {r4-r7}
 
 	mov	r3, r4, lsl #16
-	orr	r3, r3, lsr #16
+	orr	r3, r3, r3, lsr #16
 	str	r3, [r0]
 
 	mov	r3, r4, lsr #16
-	orr	r3, r4, lsl #16
+	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
 	mov	r3, r5, lsl #16
-	orr	r3, r3, lsr #16
+	orr	r3, r3, r3, lsr #16
 	str	r3, [r0]
 
 	mov	r3, r5, lsr #16
-	orr	r3, r4, lsl #16
+	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
 	mov	r3, r6, lsl #16
-	orr	r3, r3, lsr #16
+	orr	r3, r3, r3, lsr #16
 	str	r3, [r0]
 
 	mov	r3, r6, lsr #16
-	orr	r3, r4, lsl #16
+	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
 	mov	r3, r7, lsl #16
-	orr	r3, r3, lsr #16
+	orr	r3, r3, r3, lsr #16
 	str	r3, [r0]
 
 	mov	r3, r7, lsr #16
-	orr	r3, r4, lsl #16
+	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
 	subs	r2, r2, #0x00000008
 	bgt	outsw16loop
 
-	ldmfd	sp!, {r4-r8}
+	ldmfd	sp!, {r4-r7}
 
 	mov	pc, lr
-#endif
