@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.10 2003/02/24 18:45:35 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.11 2003/02/25 09:09:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -33,6 +33,10 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_smb.c,v 1.3 2001/12/10 08:09:46 obrien Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.11 2003/02/25 09:09:31 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
