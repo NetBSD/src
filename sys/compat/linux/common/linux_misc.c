@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.68 2000/03/28 23:57:33 simonb Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.69 2000/03/30 11:27:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -561,7 +561,7 @@ linux_sys_getdents(p, v, retval)
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
-	register struct dirent *bdp;
+	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */

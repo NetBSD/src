@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8 2000/03/18 23:45:41 erh Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.9 2000/03/30 11:27:16 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	struct linux_rt_sigframe *sfp, sigframe;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
@@ -212,7 +212,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	struct linux_sigframe *sfp, sigframe;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
@@ -312,8 +312,8 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf = p->p_md.md_tf;
+	struct proc *p = curproc;
+	struct trapframe *tf = p->p_md.md_tf;
 	struct linux_emuldata *edp;
 
 	/* Setup the signal frame (and part of the trapframe) */

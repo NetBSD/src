@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.13 2000/03/28 23:57:33 simonb Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.14 2000/03/30 11:27:16 augustss Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -135,8 +135,8 @@ ibcs2_sys_statfs(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) fstype;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -168,7 +168,7 @@ ibcs2_sys_fstatfs(p, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -195,8 +195,8 @@ ibcs2_sys_statvfs(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -227,7 +227,7 @@ ibcs2_sys_fstatvfs(p, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */

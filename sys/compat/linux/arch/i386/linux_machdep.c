@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.48 2000/03/30 11:27:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ linux_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	setregs(p, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
@@ -140,8 +140,8 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 
@@ -247,7 +247,7 @@ linux_sys_sigreturn(p, v, retval)
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 	sigset_t mask;
 
 	/*

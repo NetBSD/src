@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.8 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.9 2000/03/30 11:24:16 augustss Exp $	*/
 
 /*
  * 
@@ -117,7 +117,7 @@ coda_alloc(void)
  */
 void
 coda_free(cp)
-     register struct cnode *cp;
+     struct cnode *cp;
 {
 
     CNODE_NEXT(cp) = coda_freelist;
@@ -316,7 +316,7 @@ void
 coda_checkunmounting(mp)
 	struct mount *mp;
 {	
-	register struct vnode *vp, *nvp;
+	struct vnode *vp, *nvp;
 	struct cnode *cp;
 	int count = 0, bad = 0;
 loop:

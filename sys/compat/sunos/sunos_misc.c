@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.103 2000/03/28 23:57:34 simonb Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.104 2000/03/30 11:27:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -447,7 +447,7 @@ sunos_sys_sigpending(p, v, retval)
 
 int     
 sunos_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -596,15 +596,15 @@ out:
 
 int
 sunos_sys_mmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_mmap_args *uap = v;
+	struct sunos_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
-	register struct filedesc *fdp;
-	register struct file *fp;
-	register struct vnode *vp;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -653,11 +653,11 @@ sunos_sys_mmap(p, v, retval)
 
 int
 sunos_sys_mctl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_mctl_args *uap = v;
+	struct sunos_sys_mctl_args *uap = v;
 
 	switch (SCARG(uap, func)) {
 	case MC_ADVISE:		/* ignore for now */
@@ -675,7 +675,7 @@ sunos_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_setsockopt_args *uap = v;
+	struct sunos_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -945,8 +945,8 @@ sunos_sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_statfs_args *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -974,7 +974,7 @@ sunos_sys_fstatfs(p, v, retval)
 	struct sunos_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */

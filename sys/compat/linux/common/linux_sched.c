@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.4 1999/12/04 21:58:05 tron Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.5 2000/03/30 11:27:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ linux_sys_sched_setparam(cp, v, retval)
 	} */ *uap = v;
 	int error;
 	struct linux_sched_param lp;
-	register struct proc *p;
+	struct proc *p;
 
 /*
  * We only check for valid parameters and return afterwards.
@@ -128,7 +128,7 @@ linux_sys_sched_setparam(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -154,7 +154,7 @@ linux_sys_sched_getparam(cp, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */ *uap = v;
-	register struct proc *p;
+	struct proc *p;
 	struct linux_sched_param lp;
 
 /*
@@ -164,7 +164,7 @@ linux_sys_sched_getparam(cp, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -194,7 +194,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 	} */ *uap = v;
 	int error;
 	struct linux_sched_param lp;
-	register struct proc *p;
+	struct proc *p;
 
 /*
  * We only check for valid parameters and return afterwards.
@@ -208,7 +208,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -239,7 +239,7 @@ linux_sys_sched_getscheduler(cp, v, retval)
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 	} */ *uap = v;
-	register struct proc *p;
+	struct proc *p;
 
 	*retval = -1;
 /*
@@ -247,7 +247,7 @@ linux_sys_sched_getscheduler(cp, v, retval)
  */
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.19 1999/09/07 18:20:18 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.20 2000/03/30 11:27:20 augustss Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ svr4_decode_cmd(cmd, dir, c, num, argsiz)
 
 int
 svr4_sys_ioctl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

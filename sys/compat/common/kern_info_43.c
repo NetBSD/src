@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.10 2000/03/28 23:57:31 simonb Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.11 2000/03/30 11:27:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -152,7 +152,7 @@ compat_43_sys_getkerninfo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_getkerninfo_args /* {
+	struct compat_43_sys_getkerninfo_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) where;
 		syscallarg(int *) size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.35 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.36 2000/03/30 11:27:20 augustss Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ native_to_svr4_sigaltstack(bss, sss)
 
 int
 svr4_sys_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -308,7 +308,7 @@ svr4_sys_sigaction(p, v, retval)
 
 int 
 svr4_sys_sigaltstack(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -344,7 +344,7 @@ svr4_sys_sigaltstack(p, v, retval)
  */
 int
 svr4_sys_signal(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -405,7 +405,7 @@ svr4_sys_signal(p, v, retval)
 
 int
 svr4_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -462,7 +462,7 @@ svr4_sys_sigprocmask(p, v, retval)
 
 int
 svr4_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -491,7 +491,7 @@ svr4_sys_sigpending(p, v, retval)
 
 int
 svr4_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -514,7 +514,7 @@ svr4_sys_sigsuspend(p, v, retval)
 
 int
 svr4_sys_pause(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -524,7 +524,7 @@ svr4_sys_pause(p, v, retval)
 
 int
 svr4_sys_kill(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -604,7 +604,7 @@ svr4_setcontext(p, uc)
 
 int 
 svr4_sys_context(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
