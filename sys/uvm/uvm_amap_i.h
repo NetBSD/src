@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.14 1999/09/12 01:17:34 chs Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.14.12.1 2002/09/05 04:37:39 itojun Exp $	*/
 
 /*
  *
@@ -207,13 +207,15 @@ amap_ref(entry, flags)
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
 	amap_lock(amap);
-	amap->am_ref++;
 	if (flags & AMAP_SHARED)
 		amap->am_flags |= AMAP_SHARED;
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
 	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
 		amap_pp_establish(amap);
+#endif
+	amap->am_ref++;
+#ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (flags & AMAP_REFALL)
 			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, 1);

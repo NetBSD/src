@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.17.4.1 2002/09/04 03:40:50 itojun Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.17.4.2 2002/09/05 04:37:40 itojun Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -68,6 +68,8 @@
 
 #ifndef _UVM_UVM_MAP_I_H_
 #define _UVM_UVM_MAP_I_H_
+
+#include "opt_uvmhist.h"
 
 /*
  * uvm_map_i.h
@@ -195,6 +197,16 @@ MAP_INLINE void
 uvm_map_reference(map)
 	vm_map_t map;
 {
+	if (__predict_false(map == NULL)) {
+#ifdef DIAGNOSTIC
+		printf("uvm_map_reference: reference to NULL map\n");
+#ifdef DDB
+		Debugger();
+#endif
+#endif
+		return;
+	}
+
 	simple_lock(&map->ref_lock);
 	map->ref_count++; 
 	simple_unlock(&map->ref_lock);
@@ -213,9 +225,20 @@ uvm_map_deallocate(map)
 {
 	int c;
 
+	if (__predict_false(map == NULL)) {
+#ifdef DIAGNOSTIC
+		printf("uvm_map_deallocate: reference to NULL map\n");
+#ifdef DDB
+		Debugger();
+#endif
+#endif
+		return;
+	}
+
 	simple_lock(&map->ref_lock);
 	c = --map->ref_count;
 	simple_unlock(&map->ref_lock);
+
 	if (c > 0) {
 		return;
 	}
@@ -226,6 +249,7 @@ uvm_map_deallocate(map)
 
 	uvm_unmap(map, map->min_offset, map->max_offset);
 	pmap_destroy(map->pmap);
+
 	FREE(map, M_VMMAP);
 }
 
