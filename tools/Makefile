@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.51 2002/05/28 21:56:05 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.52 2002/06/05 02:21:49 thorpej Exp $
 
 .include <bsd.own.mk>
 
-# XXX We can't currently build the toolchain for x86-64.
-.if ${MACHINE_ARCH} != "x86_64"
+# XXX We can't currently build the toolchain for ns32k or x86-64.
+.if ${MACHINE_ARCH} != "ns32k" && ${MACHINE_ARCH} != "x86_64"
 TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
 .endif
 
