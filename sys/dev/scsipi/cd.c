@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.121 1999/02/08 16:33:18 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.122 1999/02/10 12:29:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -428,9 +428,11 @@ cdstrategy(bp)
 		goto bad;
 	}
 	/*
-	 * The transfer must be a whole number of blocks.
+	 * The transfer must be a whole number of blocks, offset must not
+	 * be negative.
 	 */
-	if ((bp->b_bcount % cd->sc_dk.dk_label->d_secsize) != 0) {
+	if ((bp->b_bcount % cd->sc_dk.dk_label->d_secsize) != 0 ||
+	    bp->b_blkno < 0 ) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.24 1998/12/08 00:19:27 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.25 1999/02/10 12:29:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -335,6 +335,13 @@ ssstrategy(bp)
 
 	SC_DEBUG(ss->sc_link, SDEV_DB1,
 	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+
+	/* If negative offset, error */
+	if (bp->b_blkno < 0) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EINVAL;
+		goto done;
+	}
 
 	if (bp->b_bcount > ss->sio.scan_window_size)
 		bp->b_bcount = ss->sio.scan_window_size;
