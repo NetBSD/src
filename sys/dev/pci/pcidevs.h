@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.157 1999/09/01 11:42:32 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.158 1999/09/08 21:34:33 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.150 1999/09/01 11:40:42 drochner Exp 
+ *	NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp 
  */
 
 /*
@@ -994,7 +994,7 @@
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 
 /* Lite-On products */
-#define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
+#define	PCI_PRODUCT_LITEON_82C168	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
