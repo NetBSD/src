@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200 2004/02/23 21:18:50 jandberg Exp $
+# $NetBSD: GENERIC,v 1.201 2004/06/16 15:07:39 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.201 $"
 
 
 maxusers	8
@@ -458,6 +458,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support

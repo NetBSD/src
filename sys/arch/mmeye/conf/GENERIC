@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52 2003/10/18 08:30:14 lukem Exp $
+# $NetBSD: GENERIC,v 1.53 2004/06/16 15:07:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	16		# estimated number of users
 
@@ -196,6 +196,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2003/10/25 13:21:13 simonb Exp $
+# $NetBSD: GENERIC,v 1.32 2004/06/16 15:07:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -142,6 +142,7 @@ ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 #pseudo-device	sl		2	# SLIP interfaces
 #pseudo-device	ppp		2	# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2004/01/04 16:19:44 wiz Exp $
+# $NetBSD: GENERIC,v 1.94 2004/06/16 15:07:42 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	8
 
@@ -474,6 +474,7 @@ pseudo-device	bridge
 ## Pseudo ttys, required for network logins and programs like screen.
 
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
