@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.3 1997/07/20 17:42:01 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.4 1998/03/29 04:39:03 mrg Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -680,7 +680,8 @@ static void
 x_bs(c)
 	int c;
 {
-	register i;
+	int i;
+
 	i = x_size(c);
 	while (i--)
 		x_e_putc('\b');
@@ -690,7 +691,8 @@ static int
 x_size_str(cp)
 	register char *cp;
 {
-	register size = 0;
+	int size = 0;
+
 	while (*cp)
 		size += x_size(*cp++);
 	return size;
@@ -1480,7 +1482,7 @@ x_init_emacs()
 		for (j = 0; j < X_TABSZ; j++)
 			x_tab[i][j] = XFUNC_error;
 	for (i = 0; i < NELEM(x_defbindings); i++)
-		x_tab[x_defbindings[i].xdb_tab][x_defbindings[i].xdb_char]
+		x_tab[(int)x_defbindings[i].xdb_tab][(int)x_defbindings[i].xdb_char]
 			= x_defbindings[i].xdb_func;
 
 	x_atab = (char *(*)[X_TABSZ]) alloc(sizeofN(*x_atab, X_NTABS), AEDIT);
