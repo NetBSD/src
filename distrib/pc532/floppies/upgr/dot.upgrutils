@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.upgrutils,v 1.2 1995/09/26 21:25:19 phil Exp $
+#	$NetBSD: dot.upgrutils,v 1.3 1998/01/06 04:45:33 perry Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
