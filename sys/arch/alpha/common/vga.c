@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.8 1997/09/02 13:18:49 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.9 1997/09/25 01:31:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.8 1997/09/02 13:18:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.9 1997/09/25 01:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ struct wscons_emulfuncs vga_emulfuncs = {
 	vga_erasecols,
 	vga_copyrows,
 	vga_eraserows,
+	1,				/* skip 1 row per scroll */
 };
 
 static int	vgaprint __P((void *, const char *));
