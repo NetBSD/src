@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.5 1997/06/03 10:19:45 kleink Exp $	*/
+/*	$NetBSD: strptime.c,v 1.6 1997/07/13 20:26:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: strptime.c,v 1.5 1997/06/03 10:19:45 kleink Exp $";
+__RCSID("$NetBSD: strptime.c,v 1.6 1997/07/13 20:26:53 christos Exp $");
 #endif
 
 #include <sys/localedef.h>

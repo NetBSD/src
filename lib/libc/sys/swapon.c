@@ -1,4 +1,4 @@
-/*	$NetBSD: swapon.c,v 1.1 1997/06/12 22:39:19 mrg Exp $	*/
+/*	$NetBSD: swapon.c,v 1.2 1997/07/13 20:25:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -34,12 +34,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
 #include <vm/vm_swap.h>
+#include <unistd.h>
 
 int
 swapon(name)
-	char *name;
+	const char *name;
 {
 
 	return (swapctl(SWAP_ON, name, 0));
