@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.52.4.1 2002/12/11 18:14:47 he Exp $	*/
+/*	$NetBSD: route.c,v 1.52.4.2 2003/06/17 11:55:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.52.4.1 2002/12/11 18:14:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.52.4.2 2003/06/17 11:55:08 msaitoh Exp $");
 
 #include "opt_ns.h"
 
@@ -918,7 +918,7 @@ rt_timer_queue_change(rtq, timeout)
 }
 
 void
-rt_timer_queue_destroy(rtq, destroy)
+rt_timer_queue_remove_all(rtq, destroy)
 	struct rttimer_queue *rtq;
 	int destroy;
 {
@@ -933,8 +933,18 @@ rt_timer_queue_destroy(rtq, destroy)
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
 		else
-			printf("rt_timer_queue_destroy: rtq_count reached 0\n");
+			printf("rt_timer_queue_remove_all: "
+			    "rtq_count reached 0\n");
 	}
+}
+
+void
+rt_timer_queue_destroy(rtq, destroy)
+	struct rttimer_queue *rtq;
+	int destroy;
+{
+
+	rt_timer_queue_remove_all(rtq, destroy);
 
 	LIST_REMOVE(rtq, rtq_link);
 
