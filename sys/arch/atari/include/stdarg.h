@@ -1,4 +1,3 @@
-/*	$NetBSD: stdarg.h,v 1.1.1.1 1995/03/26 07:12:06 leo Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.2 1999/01/22 14:12:07 mycroft Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/stdarg.h>
