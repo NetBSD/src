@@ -36,9 +36,6 @@
 
 #define ISSET(exp, bit) (((exp) & (bit)) == (bit))
 
-#define ATOX(c) \
-    (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10) ))
-
 #define LALIGN(a) \
     ((a) > 0 ? ((a) &~ (sizeof(long) - 1)) : sizeof(long))
 
