@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.13 2005/01/20 15:59:40 xtraeme Exp $
+# $NetBSD: Makefile,v 1.14 2005/01/20 16:39:23 xtraeme Exp $
 # edlabel (Edit Disk LABEL)
 
 NOMAN=	# defined
-WARNS=	2
 
 .if (${MACHINE} == "sun3") || (${MACHINE} == "sun3x") || \
     (${MACHINE} == "atari") || (${MACHINE} == "sparc") || \
