@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.9 1998/12/30 03:05:29 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.10 1999/01/27 06:08:29 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -305,7 +305,12 @@ next_dma_setup_cont_regs(nd)
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP, 0xdeadbeef);
 	}
 
-#if 0
+#if 1 /* 0xfeedbeef in these registers leads to instability.  it will
+			 * panic after a short while with 0xfeedbeef in the DD_START and DD_STOP
+			 * registers.  I suspect that an unexpected hardware restart
+			 * is cycling the bogus values into the active registers.  Until
+			 * that is understood, we seed these with the same as DD_START and DD_STOP
+			 */
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START, 
 			bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_START));
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP,
@@ -340,7 +345,7 @@ next_dma_setup_curr_regs(nd)
 
 		}
 
-#if 0
+#if 1 /* See comment in next_dma_setup_cont_regs() above */
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF));
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
@@ -365,7 +370,7 @@ next_dma_setup_curr_regs(nd)
 
 		}
 
-#if 0
+#if 1  /* See comment in next_dma_setup_cont_regs() above */
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF));
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
@@ -642,7 +647,8 @@ nextdma_intr(arg)
 		next_dma_setup_cont_regs(nd);
 
 		if (!(state & DMACSR_ENABLE)) {
-			DPRINTF(("Unexpected DMA shutdownn, restarting."));
+
+			DPRINTF(("Unexpected DMA shutdown, restarting\n"));
 
 			if (nd->_nd_map_cont) {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
