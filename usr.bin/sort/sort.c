@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.31 2002/12/24 14:55:46 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.32 2002/12/24 14:58:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.31 2002/12/24 14:55:46 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.32 2002/12/24 14:58:57 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -91,7 +91,6 @@ const char *tmpdir;	/* where temporary files should be put */
 static void cleanup __P((void));
 static void onsignal __P((int));
 static void usage __P((const char *));
-static void many_files __P((void));
 
 int main __P((int argc, char **argv));
 
@@ -122,7 +121,6 @@ main(argc, argv)
 	SINGL_FLD = SEP_FLAG = 0;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
 	ftpos = fldtab;
-	many_files();
 
 	fixit(&argc, argv);
 	if (!(tmpdir = getenv("TMPDIR")))
@@ -324,17 +322,4 @@ usage(msg)
 	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinrsS] [-t char] ");
 	(void)fprintf(stderr, "[-R char] [-k keydef] ... [files]\n");
 	exit(2);
-}
-
-static void
-many_files()
-{
-#if 0
-	struct rlimit rlp_many_files[1];
-
-	if (getrlimit(RLIMIT_NOFILE, rlp_many_files) == 0) {
-		rlp_many_files->rlim_cur = rlp_many_files->rlim_max;
-		setrlimit(RLIMIT_NOFILE, rlp_many_files);
-	}
-#endif
 }
