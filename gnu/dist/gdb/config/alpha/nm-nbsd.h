@@ -40,6 +40,10 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define GDB_TARGET_HAS_SHARED_LIBS
 
+/* Supply our own version of child_resume() in alphanbsd-nat.c */
+
+#define	CHILD_RESUME
+
 #ifdef HAVE_LINK_H
 #include "elf/common.h"
 #include "solib.h"              /* Support for shared libraries. */
