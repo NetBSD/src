@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.84 2003/12/03 19:44:42 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.85 2004/01/14 06:58:18 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -504,7 +504,7 @@ collection. It should be replaced by a simple
 .Dq DEPENDS
 definition.
 .It DEPENDS
-A list of prerequisite packages. The format of this entry is
+A list of pre-requisite packages. The format of this entry is
 .Dq pkgname:dir .
 If the
 .Dq pkgname
@@ -515,6 +515,25 @@ installed from the source package in
 A list of other ports this package conflicts with. Use this for packages
 that install identical set of files. The format of this entry is
 .Dq pkgname .
+.It RECOMMENDED
+A list of recommended versions of pre-requisite packages.
+This should be used together with
+.Dq DEPENDS
+to denote which version of a pre-requisite is required and
+which version is recommended.
+The format of this entry is
+.Dq pkgname:dir ,
+the same as for
+.Dq DEPENDS .
+.It IGNORE_RECOMMENDED
+If this is set to 
+.Dq NO
+(the default), then RECOMMENDED pre-requisites will be turned into
+dependencies.
+If set to
+.Dq YES ,
+recommendations will be ignored and a warning will be printed that
+packages created with this option are not suitable for distribution.
 .It EXTRACT_CMD
 Command for extracting archive.  The default is
 .Xr tar 1 .
