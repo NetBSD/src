@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 2000/06/04 19:14:30 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5 2000/06/09 05:42:01 soda Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -41,15 +41,15 @@ typedef struct arc_isa_bus *isa_chipset_tag_t;
  *      However, the cpu executes an instruction every 7.5ns
  *      so the bus is much slower so it doesn't matter, really.
  */
-#define isa_outb(x,y)   outb(arc_bus_io.bus_base + (x), y)
-#define isa_inb(x)      inb(arc_bus_io.bus_base + (x))
+#define isa_outb(x,y)   outb(arc_bus_io.bs_vbase + (x)- arc_bus_io.bs_start, y)
+#define isa_inb(x)      inb(arc_bus_io.bs_vbase + (x) - arc_bus_io.bs_start)
  
 struct arc_isa_bus {
         void    *ic_data;
 
         void    (*ic_attach_hook)(struct device *, struct device *,
                     struct isabus_attach_args *);
-	const struct evcnt *(*ic_intr_evcnt)(void *, int);
+	const struct evcnt *(*ic_intr_evcnt)(isa_chipset_tag_t, int);
         void    *(*ic_intr_establish)(isa_chipset_tag_t, int, int, int,
                     int (*)(void *), void *);
         void    (*ic_intr_disestablish)(isa_chipset_tag_t, void *);
@@ -62,7 +62,7 @@ struct arc_isa_bus {
 #define isa_attach_hook(p, s, a)                             /*           \
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a)) */
 #define	isa_intr_evcnt(c, i)					\
-    (*(c)->ic_intr_evcnt)((c)->ic_v, (i))
+    (*(c)->ic_intr_evcnt)((c)->ic_data, (i))
 #define isa_intr_establish(c, i, t, l, f, a)                         \
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a))
 #define isa_intr_disestablish(c, h)                                     \

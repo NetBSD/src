@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.5 2000/03/06 21:36:06 thorpej Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.6 2000/06/09 05:41:56 soda Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -61,8 +61,10 @@ static struct systypes {
 } sys_types[] = {
 #ifdef arc
     { NULL,		"PICA-61",			ACER_PICA_61 },
-    { NULL,		"NEC-R94",			ACER_PICA_61 },
+    { NULL,		"NEC-R94",			NEC_R94 },
+    { NULL,		"NEC-RA'94",			NEC_RAx94 },
     { NULL,		"NEC-RD94",			NEC_RD94 },
+    { NULL,		"NEC-R96",			NEC_R96 },
     { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
