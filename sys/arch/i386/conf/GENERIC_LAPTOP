@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.95 2004/06/07 15:33:52 kochi Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.96 2004/06/08 12:46:11 kochi Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32		# estimated number of users
 
@@ -217,7 +217,7 @@ apm0	at mainbus0			# Advanced power management
 
 # Basic Bus Support
 
-# Advanced Control and Power Interface
+# Advanced Configuration and Power Interface
 
 #acpi0 		at mainbus0
 #options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
