@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.51 2003/06/19 02:29:50 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.52 2003/06/19 02:40:45 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -655,3 +655,10 @@ usr.bin/vi/vi/v_txt.c				1.11
 	will be released just before it is actually used to create a new one.
 	This fixes PR#21797.
 	[aymeric, ticket #1320]
+
+sys/net/if.c					1.118 (via patch)
+
+	AF_LINK sockaddr has to be attached to ifp->if_addrlist until the end,
+	as many of the code assumes that TAILQ_FIRST(ifp->if_addrlist) is
+	non-null.
+	[itojun, ticket #1290]
