@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.145 2001/02/04 17:05:16 ad Exp $
+# $NetBSD: ALPHA,v 1.146 2001/03/30 14:47:48 minoura Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.145 $"
+ident		"ALPHA-$Revision: 1.146 $"
 
 maxusers 32
 
@@ -274,15 +274,19 @@ tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
+yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
+audio*	at	yds?
 
 opl*	at	eso?
 #opl*	at	sv?
+opl*	at	yds?
 
 mpu*	at	eso?
+mpu*	at	yds?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
