@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2001/06/10 07:56:36 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2001/06/15 06:27:07 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -785,6 +785,7 @@ pmap_release(pmap_t pm)
 	if (!pm->pm_sr[0])
 		panic("pmap_release");
 	i = VSID_TO_HASH(pm->pm_sr[0]);
+	i &= (NPMAPS-1);
 	j = i % (sizeof usedsr[0] * 8);
 	i /= sizeof usedsr[0] * 8;
 	usedsr[i] &= ~(1 << j);
