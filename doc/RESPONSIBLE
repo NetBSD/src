@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.29 2003/05/03 20:50:27 perry Exp $
+#	$NetBSD: RESPONSIBLE,v 1.30 2003/05/03 21:01:54 perry Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -168,6 +168,10 @@ atari		leo
 bebox		sakamoto
 cats		chris
 cobalt		soren
+evbarm		thorpej
+evbmips		simonb
+evbppc		scw
+evbsh5		scw
 hp300		thorpej
 hp700		fredette
 hpcmips		takemura
