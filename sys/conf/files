@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.417 2001/01/21 13:50:58 takemura Exp $
+#	$NetBSD: files,v 1.418 2001/02/02 04:39:35 tv Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -843,9 +843,9 @@ file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c
 file miscfs/genfs/genfs_vnops.c
-file miscfs/genfs/layer_subr.c
-file miscfs/genfs/layer_vfsops.c
-file miscfs/genfs/layer_vnops.c
+file miscfs/genfs/layer_subr.c		nullfs | overlay | umapfs
+file miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
+file miscfs/genfs/layer_vnops.c		nullfs | overlay | umapfs
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
 file miscfs/nullfs/null_vfsops.c	nullfs
@@ -858,7 +858,7 @@ file miscfs/procfs/procfs_cmdline.c	procfs
 file miscfs/procfs/procfs_ctl.c		procfs
 file miscfs/procfs/procfs_fpregs.c
 file miscfs/procfs/procfs_linux.c	procfs
-file miscfs/procfs/procfs_map.c
+file miscfs/procfs/procfs_map.c		procfs
 file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
 file miscfs/procfs/procfs_regs.c
@@ -952,7 +952,7 @@ file netinet/in_gif.c			gif & inet
 file netinet/in_pcb.c			inet
 file netinet/in_proto.c			inet
 file netinet/ip_auth.c			ipfilter		needs-flag
-file netinet/ip_ecn.c			inet | inet6
+file netinet/ip_ecn.c			ipsec | gif | stf
 file netinet/ip_encap.c			inet | inet6
 file netinet/ip_fil.c			ipfilter
 file netinet/ip_flow.c			inet & gateway
