@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.22 2002/09/11 02:46:43 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.23 2002/11/25 23:37:08 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.22 2002/09/11 02:46:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.23 2002/11/25 23:37:08 simonb Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -263,7 +263,6 @@ gre_mobile_input(m, va_alist)
 	struct gre_softc *sc;
 	int hlen,s;
 	va_list ap;
-	u_char osrc = 0;
 	int msiz;
 
 	va_start(ap,m);
@@ -280,7 +279,6 @@ gre_mobile_input(m, va_alist)
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	if(ntohs(mip->mh.proto) & MOB_H_SBIT) {
-		osrc = 1;
 		msiz = MOB_H_SIZ_L;
 		mip->mi.ip_src.s_addr = mip->mh.osrc;
 	} else {
