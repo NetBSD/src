@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.6 2001/03/03 02:04:55 onoe Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.7 2001/03/12 23:27:54 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -201,6 +201,9 @@
 	OHCI_CSR_WRITE(sc, OHCI_REG_SYNC_RX_DMA_BASE + 32*(ctx) + (reg), val)
 #define	OHCI_SYNC_RX_DMA_READ(sc, ctx, reg) \
 	OHCI_CSR_READ(sc, OHCI_REG_SYNC_RX_DMA_BASE + 32*(ctx) + (reg))
+
+#define	OHCI_BITVAL(val, name) \
+	((((val) & name##_MASK) >> name##_BITPOS))
 
 /* OHCI_REG_Version
  */
