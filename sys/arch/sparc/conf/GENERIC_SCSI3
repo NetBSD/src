@@ -1,7 +1,9 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.31 1996/08/09 10:30:23 mrg Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.32 1996/10/02 07:11:47 mrg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
+
+include "arch/sparc/conf/std.sparc"
 
 # Options for variants of the Sun SPARC architecure.
 # At least one is required.
@@ -41,6 +43,7 @@ options		COMPAT_10	# NetBSD 1.0 binary compatibility
 options		COMPAT_11	# NetBSD 1.1 binary compatibility
 options		COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options		COMPAT_SVR4	# SunOS 5.x binary compatibility
+options		EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 
 # Filesystem options
 options		FFS		# Berkeley Fast Filesystem
