@@ -837,7 +837,7 @@
 			 (const_int 0)))
    (set (match_operand:SI 0 "s_register_operand" "=&r,&r")
 	(mult:SI (match_dup 2) (match_dup 1)))]
-  ""
+  "!arm_is_xscale"
   "mul%?s\\t%0, %2, %1"
 [(set_attr "conds" "set")
  (set_attr "type" "mult")])
@@ -849,7 +849,7 @@
 			  (match_operand:SI 1 "s_register_operand" "%?r,0"))
 			 (const_int 0)))
    (clobber (match_scratch:SI 0 "=&r,&r"))]
-  ""
+  "!arm_is_xscale"
   "mul%?s\\t%0, %2, %1"
 [(set_attr "conds" "set")
  (set_attr "type" "mult")])
@@ -877,7 +877,7 @@
    (set (match_operand:SI 0 "s_register_operand" "=&r,&r,&r,&r")
 	(plus:SI (mult:SI (match_dup 2) (match_dup 1))
 		 (match_dup 3)))]
-  ""
+  "!arm_is_xscale"
   "mla%?s\\t%0, %2, %1, %3"
 [(set_attr "conds" "set")
  (set_attr "type" "mult")])
@@ -891,7 +891,7 @@
 			  (match_operand:SI 3 "s_register_operand" "?r,r,0,0"))
 			 (const_int 0)))
    (clobber (match_scratch:SI 0 "=&r,&r,&r,&r"))]
-  ""
+  "!arm_is_xscale"
   "mla%?s\\t%0, %2, %1, %3"
 [(set_attr "conds" "set")
  (set_attr "type" "mult")])
@@ -942,6 +942,41 @@
    (clobber (match_scratch:SI 3 "=&r,&r"))]
   "arm_fast_multiply"
   "umull%?\\t%3, %0, %2, %1"
+[(set_attr "type" "mult")])
+
+(define_insn "mulhisi3"
+  [(set (match_operand:SI 0 "s_register_operand" "=r")
+	(mult:SI (sign_extend:SI
+		  (match_operand:HI 1 "s_register_operand" "%r"))
+		 (sign_extend:SI
+		  (match_operand:HI 2 "s_register_operand" "r"))))]
+  "arm_is_xscale"
+  "smulbb%?\\t%0, %1, %2"
+  [(set_attr "type" "mult")]
+)
+
+(define_insn "*mulhisi3addsi"
+  [(set (match_operand:SI 0 "s_register_operand" "=r")
+	(plus:SI (match_operand:SI 1 "s_register_operand" "r")
+		 (mult:SI (sign_extend:SI
+			   (match_operand:HI 2 "s_register_operand" "%r"))
+			  (sign_extend:SI
+			   (match_operand:HI 3 "s_register_operand" "r")))))]
+  "arm_is_xscale"
+  "smlabb%?\\t%0, %2, %3, %1"
+  [(set_attr "type" "mult")]
+)
+
+(define_insn "*mulhidi3adddi"
+  [(set (match_operand:DI 0 "s_register_operand" "=r")
+	(plus:DI
+	 (match_operand:DI 1 "s_register_operand" "0")
+	 (mult:DI (sign_extend:DI
+		   (match_operand:HI 2 "s_register_operand" "%r"))
+		  (sign_extend:DI
+		   (match_operand:HI 3 "s_register_operand" "r")))))]
+  "arm_is_xscale"
+  "smlalbb%?\\t%Q0, %R0, %2, %3"
 [(set_attr "type" "mult")])
 
 (define_insn "mulsf3"
