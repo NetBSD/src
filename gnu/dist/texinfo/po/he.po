@@ -5,7 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: texinfo 4.2\n"
-"POT-Creation-Date: 2003-01-24 13:32-0800\n"
+"Report-Msgid-Bugs-To: bug-texinfo@gnu.org\n"
+"POT-Creation-Date: 2003-06-10 13:52-0700\n"
 "PO-Revision-Date: 2002-04-03 12:31+0300\n"
 "Last-Translator: Eli Zaretskii <eliz@gnu.org>\n"
 "Language-Team: Hebrew <eliz@gnu.org>\n"
@@ -146,73 +147,73 @@ msgstr "וז הקסיפל םיילוש תורעה גצה"
 msgid "---------- Footnotes ----------"
 msgstr "---------- Footnotes ----------"
 
-#: info/indices.c:175
+#: info/indices.c:176
 msgid "Look up a string in the index for this file"
 msgstr "הז ץבוק לש סקדניאב תזורחמ שפח"
 
-#: info/indices.c:205
+#: info/indices.c:206
 msgid "Finding index entries..."
 msgstr "...םיסקדניאה לכ תא קרוס"
 
-#: info/indices.c:212
+#: info/indices.c:213
 msgid "No indices found."
 msgstr ".סקדניא ףא אצמנ אל"
 
-#: info/indices.c:222
+#: info/indices.c:223
 msgid "Index entry: "
 msgstr "Index entry: "
 
-#: info/indices.c:332
+#: info/indices.c:333
 msgid ""
 "Go to the next matching index item from the last `\\[index-search]' command"
 msgstr "הנורחא `\\[index-search]' תדוקפמ תזורחמ םאותה ףסונ סקדניא טירפ שפח"
 
-#: info/indices.c:342
+#: info/indices.c:343
 msgid "No previous index search string."
 msgstr ".סקדניאב שופיחל תמדוק תזורחמ ןיא"
 
-#: info/indices.c:349
+#: info/indices.c:350
 msgid "No index entries."
 msgstr ".סקדניא יטירפ ואצמנ אל"
 
-#: info/indices.c:382
+#: info/indices.c:383
 #, c-format
 msgid "No %sindex entries containing \"%s\"."
 msgstr ".\"%s\" תזורחמ םיליכמה סקדניא יטירפ%s ןיא"
 
-#: info/indices.c:383
+#: info/indices.c:384
 msgid "more "
 msgstr " רתוי"
 
-#: info/indices.c:393
+#: info/indices.c:394
 msgid "CAN'T SEE THIS"
 msgstr "!תואריהל ךירצ וניאש טסקט"
 
-#: info/indices.c:429
+#: info/indices.c:430
 #, c-format
 msgid "Found \"%s\" in %s. (`\\[next-index-match]' tries to find next.)"
 msgstr "(.דוע אוצמל הסני `\\[next-index-match]') .\"%s\" טירפ %s-ב יתאצמ"
 
-#: info/indices.c:549
+#: info/indices.c:550
 #, c-format
 msgid "Scanning indices of \"%s\"..."
 msgstr "...\"%s\" לש םיסקדניאה לכ תא קרוס"
 
-#: info/indices.c:603
+#: info/indices.c:604
 #, c-format
 msgid "No available info files have \"%s\" in their indices."
 msgstr ".ולש סקדניאב \"%s\" ליכמ ןאכ םינקתומהמ Info ץבוק ףא"
 
-#: info/indices.c:632
+#: info/indices.c:633
 msgid "Grovel all known info file's indices for a string and build a menu"
 msgstr ""
 "תאצמש הממ טירפת הנבו תזורחמ םהב שפח ,םיעודי Info יצבק לש םיסקדניאה לכב טטח"
 
-#: info/indices.c:636
+#: info/indices.c:637
 msgid "Index apropos: "
 msgstr "Index apropos: "
 
-#: info/indices.c:666
+#: info/indices.c:667
 #, c-format
 msgid ""
 "\n"
@@ -221,12 +222,12 @@ msgstr ""
 "\n"
 "* Menu: (תומיאתמה תואקספהו \"%s\" םיליכמה סקדניא יטירפ)\n"
 
-#: info/info.c:260 info/infokey.c:884
+#: info/info.c:265 info/infokey.c:883
 msgid "Try --help for more information.\n"
 msgstr ".רתוי בר עדימ תגצהל --help הסנ\n"
 
-#: info/info.c:279 info/infokey.c:139 makeinfo/makeinfo.c:698
-#: util/install-info.c:1252 util/texindex.c:346
+#: info/info.c:284 info/infokey.c:138 makeinfo/makeinfo.c:707
+#: util/install-info.c:1225 util/texindex.c:343
 #, c-format
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
@@ -239,17 +240,17 @@ msgstr ""
 "         .GNU General Public License ןוישרה יאנתל םאתהב\n"
 "           .COPYING ץבוקב ונייע ,ולא םינינעב טוריפ רתיל\n"
 
-#: info/info.c:462
+#: info/info.c:467
 #, c-format
 msgid "no index entries found for `%s'\n"
 msgstr "`%s' תזורחמ םיליכמה סקדניא יטירפ ןיא\n"
 
-#: info/info.c:555
+#: info/info.c:562
 msgid "  -b, --speech-friendly        be friendly to speech synthesizers.\n"
 msgstr ""
 "      .רוביד זתנסמל ומיאתהל ידכ ךסמל הביתכ ןפוא הנש -b, --speech-friendly\n"
 
-#: info/info.c:562
+#: info/info.c:569
 #, c-format
 msgid ""
 "Usage: %s [OPTION]... [MENU-ITEM...]\n"
@@ -324,8 +325,8 @@ msgstr ""
 "                           ,bug-texinfo@gnu.org-ל הלקת יחוויד חולשל אנ\n"
 "                   .help-texinfo@gnu.org-ל ןוידל םיאשונו תויללכ תולאשו\n"
 
-#: info/info.c:598 info/infokey.c:903 makeinfo/makeinfo.c:479
-#: util/install-info.c:428 util/texindex.c:294
+#: info/info.c:605 info/infokey.c:902 makeinfo/makeinfo.c:483
+#: util/install-info.c:401 util/texindex.c:291
 msgid ""
 "\n"
 "Email bug reports to bug-texinfo@gnu.org,\n"
@@ -337,72 +338,72 @@ msgstr ""
 "               .help-texinfo@gnu.org-ל ןוידל םיאשונו תויללכ תולאשו\n"
 "         .http://www.gnu.org/software/texinfo/ :Texinfo לש תיבה ףד"
 
-#: info/info.c:632
+#: info/info.c:639
 #, c-format
 msgid "Cannot find node `%s'."
 msgstr ".האצמנ אל `%s' הקסיפ"
 
-#: info/info.c:633
+#: info/info.c:640
 #, c-format
 msgid "Cannot find node `(%s)%s'."
 msgstr ".האצמנ אל `%s' ץבוקב `%s' הקסיפ"
 
-#: info/info.c:634
+#: info/info.c:641
 msgid "Cannot find a window!"
 msgstr "!ןולח ףא אצמנ אל"
 
-#: info/info.c:635
+#: info/info.c:642
 msgid "Point doesn't appear within this window's node!"
 msgstr "!הז ןולחב תגצומה הקסיפב אצמנ וניא ןמסה"
 
-#: info/info.c:636
+#: info/info.c:643
 msgid "Cannot delete the last window."
 msgstr ".דיחי ןולח קוחמל ןתינ אל"
 
-#: info/info.c:637
+#: info/info.c:644
 msgid "No menu in this node."
 msgstr ".םיטירפת ןיא וז הקסיפב"
 
-#: info/info.c:638
+#: info/info.c:645
 msgid "No footnotes in this node."
 msgstr ".םיילוש תורעה ןיא וז הקסיפב"
 
-#: info/info.c:639
+#: info/info.c:646
 msgid "No cross references in this node."
 msgstr ".םירושיק ןיא וז הקסיפב"
 
-#: info/info.c:640
+#: info/info.c:647
 #, c-format
 msgid "No `%s' pointer for this node."
 msgstr ".%sל היינפה ןיא וז הקסיפב"
 
-#: info/info.c:641
+#: info/info.c:648
 #, c-format
 msgid "Unknown Info command `%c'; try `?' for help."
 msgstr ".הרזע תלבקל `?' הסנ ;Info-ל תרכומ הניא `%c' הדוקפ"
 
-#: info/info.c:642
+#: info/info.c:649
 #, c-format
 msgid "Terminal type `%s' is not smart enough to run Info."
 msgstr ".Info ץירהל ידכ ויד ללכושמ וניא `%s' גוסמ גצ"
 
-#: info/info.c:643
+#: info/info.c:650
 msgid "You are already at the last page of this node."
 msgstr ".וז הקסיפ לש ןורחאה דומעב רבכ ה/תא"
 
-#: info/info.c:644
+#: info/info.c:651
 msgid "You are already at the first page of this node."
 msgstr ".וז הקסיפ לש ןושארה דומעב רבכ ה/תא"
 
-#: info/info.c:645
+#: info/info.c:652
 msgid "Only one window."
 msgstr ".דחא ןולח קר םייק"
 
-#: info/info.c:646
+#: info/info.c:653
 msgid "Resulting window would be too small."
 msgstr ".ידמ רתוי ןטק היה ןולחה"
 
-#: info/info.c:647
+#: info/info.c:654
 msgid "Not enough room for a help window, please delete a window."
 msgstr ".והשלכ ןולח קוחמל אנ ;הרזע ןולח גיצהל םוקמ קיפסמ ןיא"
 
@@ -823,91 +824,91 @@ msgstr ".%s הדוקפה תא ליעפי %s"
 msgid "There is no function named `%s'"
 msgstr ".תמייק הניא `%s' םשב היצקנופ"
 
-#: info/infokey.c:164
+#: info/infokey.c:163
 msgid "incorrect number of arguments"
 msgstr "יוגש הדוקפל םיטנמוגראה רפסמ"
 
-#: info/infokey.c:194
+#: info/infokey.c:193
 #, c-format
 msgid "cannot open input file `%s'"
 msgstr "`%s' טלק ץבוק תחיתפב הלקת"
 
-#: info/infokey.c:207
+#: info/infokey.c:206
 #, c-format
 msgid "cannot create output file `%s'"
 msgstr "`%s' טלפ ץבוק תריציב הלקת"
 
-#: info/infokey.c:217
+#: info/infokey.c:216
 #, c-format
 msgid "error writing to `%s'"
 msgstr "`%s'-ל הביתכב הלקת"
 
-#: info/infokey.c:222
+#: info/infokey.c:221
 #, c-format
 msgid "error closing output file `%s'"
 msgstr "`%s' טלפ ץבוק תריגסב הלקת"
 
-#: info/infokey.c:443
+#: info/infokey.c:442
 msgid "key sequence too long"
 msgstr "ידמ הכורא םישקמ תרדס"
 
-#: info/infokey.c:521
+#: info/infokey.c:520
 msgid "missing key sequence"
 msgstr "הרסח םישקמ תרדס"
 
-#: info/infokey.c:600
+#: info/infokey.c:599
 msgid "NUL character (\\000) not permitted"
 msgstr "רוסא (\\000) קיר ותב שומישה"
 
-#: info/infokey.c:629
+#: info/infokey.c:628
 #, c-format
 msgid "NUL character (^%c) not permitted"
 msgstr "רוסא (^%c) קיר ותב שומישה"
 
-#: info/infokey.c:652
+#: info/infokey.c:651
 msgid "missing action name"
 msgstr "הדוקפ םש רסח"
 
-#: info/infokey.c:667 info/infokey.c:733
+#: info/infokey.c:666 info/infokey.c:732
 msgid "section too long"
 msgstr "ידמ ךורא קלח"
 
-#: info/infokey.c:673
+#: info/infokey.c:672
 #, c-format
 msgid "unknown action `%s'"
 msgstr "העודי הנניא `%s' הדוקפ"
 
-#: info/infokey.c:682
+#: info/infokey.c:681
 msgid "action name too long"
 msgstr "ידמ ךורא הדוקפ םש"
 
-#: info/infokey.c:694
+#: info/infokey.c:693
 #, c-format
 msgid "extra characters following action `%s'"
 msgstr "`%s' הדוקפל ךשמהב םירתוימ םיות"
 
-#: info/infokey.c:704
+#: info/infokey.c:703
 msgid "missing variable name"
 msgstr "הנתשמה םש רסח"
 
-#: info/infokey.c:712
+#: info/infokey.c:711
 msgid "missing `=' immediately after variable name"
 msgstr "הנתשמה םש ירחא דימ `=' רסח"
 
-#: info/infokey.c:719
+#: info/infokey.c:718
 msgid "variable name too long"
 msgstr "ידמ ךורא הנתשמה םש"
 
-#: info/infokey.c:741
+#: info/infokey.c:740
 msgid "value too long"
 msgstr "ידמ ךורא ךרע"
 
-#: info/infokey.c:875
+#: info/infokey.c:874
 #, c-format
 msgid "\"%s\", line %u: "
 msgstr "\"%s\" ץבוקב %u הרושב "
 
-#: info/infokey.c:891
+#: info/infokey.c:890
 #, c-format
 msgid ""
 "Usage: %s [OPTION]... [INPUT-FILE]\n"
@@ -971,11 +972,11 @@ msgid ""
 "Invalid infokey file `%s' (bad section code) -- run infokey to update it"
 msgstr "ונוכדע ךרוצל infokey ץרה -- (יוגש קלח דוק) ןיקת וניא `%s' infokey ץבוק"
 
-#: info/infomap.c:1723
+#: info/infomap.c:1722
 msgid "Bad data in infokey file -- some key bindings ignored"
 msgstr "הנלעפת אל תודחא םישקמ תורדגה -- infokey ץבוקב םייוגש םינותנ"
 
-#: info/infomap.c:1774
+#: info/infomap.c:1773
 msgid "Bad data in infokey file -- some var settings ignored"
 msgstr "ףקותב אל תודחא םינתשמ תורדגה -- infokey ץבוקב םייוגש םינותנ"
 
@@ -1049,7 +1050,7 @@ msgstr "תונולחה דחאב םדוק תגצה התוא הקסיפ רחב"
 msgid "Select visited node: "
 msgstr "Select visited node: "
 
-#: info/nodemenu.c:331 info/session.c:2235
+#: info/nodemenu.c:331 info/session.c:2290
 #, c-format
 msgid "The reference disappeared! (%s)."
 msgstr "!םלענ (%s) רושיקה לש דעיה"
@@ -1079,7 +1080,7 @@ msgstr "הרושה ףוסל ןמס זזה"
 msgid "Move to the start of the line"
 msgstr "הזז סמן לתחילת השורה"
 
-#: info/session.c:885 makeinfo/node.c:1365
+#: info/session.c:885 makeinfo/node.c:1371
 msgid "Next"
 msgstr "Next הדש"
 
@@ -1274,132 +1275,132 @@ msgstr "טירפתהמ הז ףיעסב רחב"
 msgid "There aren't %d items in this menu."
 msgstr ".םיפיעס %d ןיא הז טירפתב"
 
-#: info/session.c:2148
+#: info/session.c:2203
 #, c-format
 msgid "Menu item (%s): "
 msgstr "Menu item (%s): "
 
-#: info/session.c:2150
+#: info/session.c:2205
 msgid "Menu item: "
 msgstr "Menu item: "
 
-#: info/session.c:2155
+#: info/session.c:2210
 #, c-format
 msgid "Follow xref (%s): "
 msgstr "Follow xref (%s): "
 
-#: info/session.c:2157
+#: info/session.c:2212
 msgid "Follow xref: "
 msgstr "Follow xref: "
 
-#: info/session.c:2280
+#: info/session.c:2335
 msgid "Read a menu item and select its node"
 msgstr "המיאתמה הקסיפל רובעו טירפתמ ףיעס םש ארק"
 
-#: info/session.c:2288
+#: info/session.c:2343
 msgid "Read a footnote or cross reference and select its node"
 msgstr "המיאתמה הקסיפל רובעו רושיק וא הרעה לש םש ארק"
 
-#: info/session.c:2294
+#: info/session.c:2349
 msgid "Move to the start of this node's menu"
 msgstr "וז הקסיפב טירפתה תליחתל ןמס זזה"
 
-#: info/session.c:2318
+#: info/session.c:2373
 msgid "Visit as many menu items at once as possible"
 msgstr "הז טירפתמ םיפיעס לש רשפאה לככ בר רפסמ גצה"
 
-#: info/session.c:2346
+#: info/session.c:2401
 msgid "Read a node name and select it"
 msgstr "הילא רובעו הקסיפ לש םש ארק"
 
-#: info/session.c:2401 info/session.c:2405
+#: info/session.c:2456 info/session.c:2460
 msgid "Goto node: "
 msgstr "Goto node: "
 
-#: info/session.c:2471
+#: info/session.c:2527
 #, c-format
 msgid "No menu in node `%s'."
 msgstr ".םיטירפת `%s' ןיא הקסיפב"
 
-#: info/session.c:2516
+#: info/session.c:2572
 #, c-format
 msgid "No menu item `%s' in node `%s'."
 msgstr ".`%s' ףיעס ןיא `%s' הקסיפ לש טירפתב"
 
-#: info/session.c:2546
+#: info/session.c:2602
 #, c-format
 msgid "Unable to find node referenced by `%s' in `%s'."
 msgstr ".`%s' ףיעסב הילא רשקמ `%s'-ב טירפתה רשא הקסיפ יתאצמ אל"
 
-#: info/session.c:2597
+#: info/session.c:2653
 msgid "Read a list of menus starting from dir and follow them"
 msgstr "םהירחא בוקעו dir-מ הליחתמה טירפת יפיעס תרדיס ארק"
 
-#: info/session.c:2599
+#: info/session.c:2655
 msgid "Follow menus: "
 msgstr "Follow menus: "
 
-#: info/session.c:2797
+#: info/session.c:2853
 msgid "Find the node describing program invocation"
 msgstr "תינכתה ץירהל דציכ תראתמה הקסיפה תא אצמ"
 
-#: info/session.c:2799
+#: info/session.c:2855
 #, c-format
 msgid "Find Invocation node of [%s]: "
 msgstr "Find Invocation node of [%s]: "
 
-#: info/session.c:2837
+#: info/session.c:2893
 msgid "Read a manpage reference and select it"
 msgstr "ותוא גצהו manpage-ל היינפה ארק"
 
-#: info/session.c:2841
+#: info/session.c:2897
 msgid "Get Manpage: "
 msgstr "Get Manpage: "
 
-#: info/session.c:2871
+#: info/session.c:2927
 msgid "Select the node `Top' in this file"
 msgstr "הז ךמסמב (`Top') תישארה הקסיפל רובע"
 
-#: info/session.c:2877
+#: info/session.c:2933
 msgid "Select the node `(dir)'"
 msgstr "`(dir)' הקסיפל רובע"
 
-#: info/session.c:2897
+#: info/session.c:2953
 #, c-format
 msgid "Kill node (%s): "
 msgstr "Kill node (%s): "
 
-#: info/session.c:2951
+#: info/session.c:3007
 #, c-format
 msgid "Cannot kill node `%s'"
 msgstr "`%s' הקסיפ קלסל תורשפא ןיא"
 
-#: info/session.c:2961
+#: info/session.c:3017
 msgid "Cannot kill the last node"
 msgstr "הדיחי הקסיפ קלסל תורשפא ןיא"
 
-#: info/session.c:3047
+#: info/session.c:3103
 msgid "Select the most recently selected node"
 msgstr "הגצוהש הנורחאה הקסיפל רוזח"
 
-#: info/session.c:3053
+#: info/session.c:3109
 msgid "Kill this node"
 msgstr "וז הקסיפ קלס"
 
-#: info/session.c:3061
+#: info/session.c:3117
 msgid "Read the name of a file and select it"
 msgstr "ותוא גצהו ץבוק לש םש ארק"
 
-#: info/session.c:3065
+#: info/session.c:3121
 msgid "Find file: "
 msgstr "Find file: "
 
-#: info/session.c:3082
+#: info/session.c:3138
 #, c-format
 msgid "Cannot find `%s'."
 msgstr ".אצמנ אל `%s' ץבוק"
 
-#: info/session.c:3127 info/session.c:3248
+#: info/session.c:3183 info/session.c:3304
 #, c-format
 msgid "Could not create output file `%s'."
 msgstr ".`%s' טלפ ץבוק תריציב הלקת"
@@ -1407,165 +1408,165 @@ msgstr ".`%s' טלפ ץבוק תריציב הלקת"
 # Note that this needs to make sense when displayed to the _right_ of
 # the translated "Writing node foo..." and  "Printing node foo...",
 # no matter whether the following word is masculine or feminine!
-#: info/session.c:3140 info/session.c:3265 info/session.c:3326
+#: info/session.c:3196 info/session.c:3321 info/session.c:3382
 msgid "Done."
 msgstr "ב החלצה"
 
 # No ellipsis because that would look awkward when the translation of
 # "Done." is appended.
-#: info/session.c:3196
+#: info/session.c:3252
 #, c-format
 msgid "Writing node %s..."
 msgstr "`%s' הקסיפ טלפ"
 
-#: info/session.c:3274
+#: info/session.c:3330
 msgid "Pipe the contents of this node through INFO_PRINT_COMMAND"
 msgstr "INFO_PRINT_COMMAND ךרד וז הקסיפ ןכות ספדה"
 
-#: info/session.c:3310
+#: info/session.c:3366
 #, c-format
 msgid "Cannot open pipe to `%s'."
 msgstr ".`%s'-ל קיפא תחיתפב הלקת"
 
 # No ellipsis because that would look awkward when the translation of
 # "Done." is appended.
-#: info/session.c:3316
+#: info/session.c:3372
 #, c-format
 msgid "Printing node %s..."
 msgstr "%s הקסיפ תספדה"
 
-#: info/session.c:3558
+#: info/session.c:3614
 #, c-format
 msgid "Searching subfile %s ..."
 msgstr "... %s ץבוק-תת קרוס"
 
-#: info/session.c:3610
+#: info/session.c:3666
 msgid "Read a string and search for it case-sensitively"
 msgstr "תוישירב תובשחתה ךות התוא שפחו תזורחמ ארק"
 
-#: info/session.c:3617
+#: info/session.c:3673
 msgid "Read a string and search for it"
 msgstr "התוא שפחו תזורחמ ארק"
 
-#: info/session.c:3625
+#: info/session.c:3681
 msgid "Read a string and search backward for it"
 msgstr "הרוחא התוא שפחו תזורחמ ארק"
 
-#: info/session.c:3667
+#: info/session.c:3723
 #, c-format
 msgid "%s%sfor string [%s]: "
 msgstr "%s%sfor string [%s]: "
 
 # The following 4 are untranslated because they are used with the
 # format string above in a prompt, and we don't translate prompts.
-#: info/session.c:3668
+#: info/session.c:3724
 msgid "Search backward"
 msgstr "Search backward"
 
-#: info/session.c:3668
+#: info/session.c:3724
 msgid "Search"
 msgstr "Search"
 
-#: info/session.c:3669
+#: info/session.c:3725
 msgid " case-sensitively "
 msgstr " case-sensitively "
 
-#: info/session.c:3669
+#: info/session.c:3725
 msgid " "
 msgstr " "
 
-#: info/session.c:3709
+#: info/session.c:3765
 msgid "Search failed."
 msgstr ".האצמנ אל תזורחמה"
 
-#: info/session.c:3727
+#: info/session.c:3783
 msgid "Repeat last search in the same direction"
 msgstr "ןוויכ ותואב ןורחא שופיח לע רוזח"
 
-#: info/session.c:3730 info/session.c:3740
+#: info/session.c:3786 info/session.c:3796
 msgid "No previous search string"
 msgstr "ןורחא שופיחמ תזורחמ ןיא"
 
-#: info/session.c:3737
+#: info/session.c:3793
 msgid "Repeat last search in the reverse direction"
 msgstr "ךופה ןוויכב ןורחא שופיח לע רוזח"
 
-#: info/session.c:3755 info/session.c:3761
+#: info/session.c:3811 info/session.c:3817
 msgid "Search interactively for a string as you type it"
 msgstr "התוא ה/דילקמ ה/תאש ידכ ךות תזורחמ שפח"
 
-#: info/session.c:3855
+#: info/session.c:3912
 msgid "I-search backward: "
 msgstr "I-search backward: "
 
-#: info/session.c:3857
+#: info/session.c:3914
 msgid "I-search: "
 msgstr "I-search: "
 
 # Untranslated because is used with the I-search: prompt.
-#: info/session.c:3882
+#: info/session.c:3939 info/session.c:3941
 msgid "Failing "
 msgstr "Failing "
 
-#: info/session.c:4346
+#: info/session.c:4405
 msgid "Move to the previous cross reference"
 msgstr "םדוקה רושיקל ןמס זזה"
 
-#: info/session.c:4355
+#: info/session.c:4414
 msgid "Move to the next cross reference"
 msgstr "אבה רושיקל ןמס זזה"
 
-#: info/session.c:4365
+#: info/session.c:4424
 msgid "Select reference or menu item appearing on this line"
 msgstr "תיחכונה הרושב עיפומה טירפתמ ףיעס וא רושיק רחא בוקע"
 
-#: info/session.c:4387
+#: info/session.c:4446
 msgid "Cancel current operation"
 msgstr "תיחכונ הלועפ לטב"
 
-#: info/session.c:4394
+#: info/session.c:4453
 msgid "Quit"
 msgstr "לטוב"
 
-#: info/session.c:4403
+#: info/session.c:4462
 msgid "Move the cursor to a specific line of the window"
 msgstr "הז ןולחב תמיוסמ הרושל ןמס זזה"
 
-#: info/session.c:4435
+#: info/session.c:4494
 msgid "Redraw the display"
 msgstr "הגוצת שדח"
 
-#: info/session.c:4472
+#: info/session.c:4531
 msgid "Quit using Info"
 msgstr "Info תינכותמ אצ"
 
-#: info/session.c:4485
+#: info/session.c:4544
 msgid "Run command bound to this key's lowercase variant"
 msgstr "הז שקמ לש תונטק תויתוא תסריגל הרושקה הדוקפ לעפה"
 
-#: info/session.c:4497
+#: info/session.c:4556
 #, c-format
 msgid "Unknown command (%s)."
 msgstr ".(%s) תרכומ-יתלב הדוקפ"
 
-#: info/session.c:4500
+#: info/session.c:4559
 msgid "\"\" is invalid"
 msgstr "\"\" היוגש הדוקפ"
 
-#: info/session.c:4501
+#: info/session.c:4560
 #, c-format
 msgid "\"%s\" is invalid"
 msgstr "\"%s\" היוגש הדוקפ"
 
-#: info/session.c:4719
+#: info/session.c:4778
 msgid "Add this digit to the current numeric argument"
 msgstr "יחכונ ירמונ טנמוגראל וז הרפס ףסוה"
 
-#: info/session.c:4728
+#: info/session.c:4787
 msgid "Start (or multiply by 4) the current numeric argument"
 msgstr "4-ב םייק ךרע לופכ וא ,ירמונ טנמוגרא לש הדלקה לחתה"
 
-#: info/session.c:4743
+#: info/session.c:4802
 msgid "Internally used by \\[universal-argument]"
 msgstr "וז הדוקפב שמתשמ \\[universal-argument]"
 
@@ -1714,149 +1715,154 @@ msgstr "%s תינכת רובע יעמשמ-דח וניא `-W %s' ןייפאמ\n"
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s תינכת רובע טנמוגרא לבקמ וניא `-W %s' ןייפאמ\n"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:531
 msgid "January"
 msgstr "ראוני"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:531
 msgid "February"
 msgstr "ראורבפ"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:531
 msgid "March"
 msgstr "ץרמ"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:531
 msgid "April"
 msgstr "לירפא"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:531
 msgid "May"
 msgstr "יאמ"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:532
 msgid "June"
 msgstr "ינוי"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:532
 msgid "July"
 msgstr "ילוי"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:532
 msgid "August"
 msgstr "טסוגוא"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:532
 msgid "September"
 msgstr "רבמטפס"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:532
 msgid "October"
 msgstr "רבוטקוא"
 
-#: makeinfo/cmds.c:525
+#: makeinfo/cmds.c:533
 msgid "November"
 msgstr "רבמבונ"
 
-#: makeinfo/cmds.c:525
+#: makeinfo/cmds.c:533
 msgid "December"
 msgstr "רבמצד"
 
-#: makeinfo/cmds.c:667
+#: makeinfo/cmds.c:675
 #, c-format
 msgid "unlikely character %c in @var"
 msgstr "@var ךותב %c ריבס-יתלב ות"
 
-#: makeinfo/cmds.c:710
+#: makeinfo/cmds.c:718
 msgid "@sc argument all uppercase, thus no effect"
 msgstr "טקפא לכ @sc-ל ןיא ןכל ,תולודג תויתואב ולוכ @sc לש טנמוגרא"
 
-#: makeinfo/cmds.c:768
+#: makeinfo/cmds.c:776
 #, c-format
 msgid "`{' expected, but saw `%c'"
 msgstr "%c אצמנ ךא ,`{' ל\"צ"
 
-#: makeinfo/cmds.c:808
+#: makeinfo/cmds.c:816
 msgid "end of file inside verb block"
 msgstr "verb ךותב ץבוק ףוס"
 
-#: makeinfo/cmds.c:816
+#: makeinfo/cmds.c:824
 #, c-format
 msgid "`}' expected, but saw `%c'"
 msgstr "%c אצמנ ךא ,`}' ל\"צ"
 
-#: makeinfo/cmds.c:984
+#: makeinfo/cmds.c:992
 #, c-format
 msgid "%c%s is obsolete"
 msgstr "ןשוימ וניה %c%s"
 
-#: makeinfo/cmds.c:1063
+#: makeinfo/cmds.c:1078
 #, c-format
 msgid "@sp requires a positive numeric argument, not `%s'"
 msgstr "`%s' אל ,יבויח רפסמ אוהש טנמוגרא שרוד @sp"
 
-#: makeinfo/cmds.c:1400 makeinfo/cmds.c:1426 makeinfo/footnote.c:81
+#: makeinfo/cmds.c:1415 makeinfo/cmds.c:1442 makeinfo/cmds.c:1470
+#: makeinfo/footnote.c:81
 #, c-format
 msgid "Bad argument to %c%s"
 msgstr "%c%s-ל יוגש טנמוגרא"
 
-#: makeinfo/cmds.c:1410 makeinfo/makeinfo.c:4171
+#: makeinfo/cmds.c:1426 makeinfo/makeinfo.c:4291
 msgid "asis"
 msgstr "אוהש ומכ"
 
-#: makeinfo/cmds.c:1412 makeinfo/makeinfo.c:4173
+#: makeinfo/cmds.c:1428 makeinfo/cmds.c:1456 makeinfo/makeinfo.c:4293
 msgid "none"
 msgstr "ןיא"
 
-#: makeinfo/defun.c:87
+#: makeinfo/cmds.c:1454
+msgid "insert"
+msgstr ""
+
+#: makeinfo/defun.c:88
 msgid "Missing `}' in @def arg"
 msgstr "@def לש טנמוגראב `}' רסח"
 
 # It would be hilarious to translate those...
-#: makeinfo/defun.c:371
+#: makeinfo/defun.c:373
 msgid "Function"
 msgstr "Function"
 
-#: makeinfo/defun.c:374
+#: makeinfo/defun.c:376
 msgid "Macro"
 msgstr "Macro"
 
-#: makeinfo/defun.c:377
+#: makeinfo/defun.c:379
 msgid "Special Form"
 msgstr "Special Form"
 
-#: makeinfo/defun.c:381
+#: makeinfo/defun.c:383
 msgid "Variable"
 msgstr "Variable"
 
-#: makeinfo/defun.c:384
+#: makeinfo/defun.c:386
 msgid "User Option"
 msgstr "User Option"
 
-#: makeinfo/defun.c:388
+#: makeinfo/defun.c:390
 msgid "Instance Variable"
 msgstr "Instance Variable"
 
-#: makeinfo/defun.c:392
+#: makeinfo/defun.c:394
 msgid "Method"
 msgstr "Method"
 
-#: makeinfo/defun.c:472 makeinfo/defun.c:476 makeinfo/defun.c:630
-#: makeinfo/defun.c:646 makeinfo/defun.c:686
+#: makeinfo/defun.c:474 makeinfo/defun.c:478 makeinfo/defun.c:632
+#: makeinfo/defun.c:648 makeinfo/defun.c:688
 msgid "of"
 msgstr "of"
 
-#: makeinfo/defun.c:480 makeinfo/defun.c:484 makeinfo/defun.c:488
-#: makeinfo/defun.c:639 makeinfo/defun.c:691
+#: makeinfo/defun.c:482 makeinfo/defun.c:486 makeinfo/defun.c:490
+#: makeinfo/defun.c:641 makeinfo/defun.c:693
 msgid "on"
 msgstr "on"
 
-#: makeinfo/defun.c:732
-#, c-format
-msgid "Must be in `%s' insertion to use `%sx'"
+#: makeinfo/defun.c:731
+#, fuzzy, c-format
+msgid "Must be in `@%s' environment to use `@%s'"
 msgstr "`%s' ךותב קרו ךא שומישב רתומ `%sx'"
 
-#: makeinfo/files.c:448
+#: makeinfo/files.c:447
 #, c-format
 msgid "%s: getwd: %s, %s\n"
 msgstr "%s תינכתב %s-ו %s רובע האיגש לע חוויד getwd/getcwd\n"
@@ -1883,15 +1889,25 @@ msgstr "םיילוש תורעה ךותב םיילוש תורעהב הכימת ןיא"
 msgid "Footnotes"
 msgstr "םיילוש תורעה"
 
-#: makeinfo/html.c:44
+#: makeinfo/html.c:47
 msgid "Untitled"
 msgstr "תרתוכ אלל"
 
-#: makeinfo/html.c:163
+#: makeinfo/html.c:192
+#, c-format
+msgid "%s: could not open --css-file: %s"
+msgstr ""
+
+#: makeinfo/html.c:267
+#, c-format
+msgid "%s:%d: --css-file ended in comment"
+msgstr ""
+
+#: makeinfo/html.c:362
 msgid "[unexpected] no html tag to pop"
 msgstr ""
 
-#: makeinfo/html.c:369
+#: makeinfo/html.c:570
 #, fuzzy, c-format
 msgid "[unexpected] invalid node name: `%s'"
 msgstr "`%s' :יוגש (node) הקסיפ םש"
@@ -1906,141 +1922,145 @@ msgstr "`%s' רכומ-יתלב סקדניא"
 msgid "Info cannot handle `:' in index entry `%s'"
 msgstr "`%s' סקדניא טירפב `:' ללגב לשכיי Info"
 
-#: makeinfo/index.c:396
+#: makeinfo/index.c:401
 #, c-format
 msgid "Index `%s' already exists"
 msgstr "רדגומ רבכ `%s' סקדניא"
 
-#: makeinfo/index.c:439
+#: makeinfo/index.c:444
 #, c-format
 msgid "Unknown index `%s' and/or `%s' in @synindex"
 msgstr "רכומ-יתלב סקדניא וניה @synindex-ב `%s' וא `%s'"
 
-#: makeinfo/index.c:666
+#: makeinfo/index.c:680
 #, c-format
 msgid "Unknown index `%s' in @printindex"
 msgstr "@printindex-ב `%s' רכומ-יתלב סקדניא"
 
-#: makeinfo/index.c:709
+#: makeinfo/index.c:723
 #, c-format
 msgid "Entry for index `%s' outside of any node"
 msgstr "הקסיפ לכל ץוחמ רדגומ `%s' סקדניא טירפ"
 
-#: makeinfo/index.c:712 makeinfo/index.c:751
+#: makeinfo/index.c:726 makeinfo/index.c:767
 msgid "(outside of any node)"
 msgstr "(הקסיפ לכל ץוחמ)"
 
-#: makeinfo/insertion.c:201
+#: makeinfo/insertion.c:144
+msgid "@item not allowed in argument to @itemize"
+msgstr ""
+
+#: makeinfo/insertion.c:214
 msgid "Broken-Type in insertion_type_pname"
 msgstr "insertion_type_pname-ב יוגש type"
 
-#: makeinfo/insertion.c:276
+#: makeinfo/insertion.c:289
 msgid "Enumeration stack overflow"
 msgstr "@enumerate-ב תינסחמ תשילג"
 
-#: makeinfo/insertion.c:308
+#: makeinfo/insertion.c:321
 #, c-format
 msgid "lettering overflow, restarting at %c"
 msgstr "%c-ב שדחמ ליחתמ ,ולצונ תויתואה לכ"
 
-#: makeinfo/insertion.c:581
+#: makeinfo/insertion.c:594
 #, c-format
 msgid "%s requires an argument: the formatter for %citem"
 msgstr "%s תארוהב %citem רובע בוציע תטיש :טנמוגרא שרדנ"
 
-#: makeinfo/insertion.c:741
+#: makeinfo/insertion.c:760
 #, c-format
 msgid "`@end' expected `%s', but saw `%s'"
 msgstr "`%s' אצמנ םלוא ,`%s' ל\"צ `@end' ירחא"
 
-#: makeinfo/insertion.c:988
+#: makeinfo/insertion.c:1012
 #, c-format
 msgid "No matching `%cend %s'"
 msgstr "םאות `%cend %s' רסח"
 
-#: makeinfo/insertion.c:1153
+#: makeinfo/insertion.c:1177
 #, c-format
 msgid "%s requires letter or digit"
 msgstr "הרפס וא תוא שרוד %s"
 
-#: makeinfo/insertion.c:1233
+#: makeinfo/insertion.c:1257
 msgid "end of file inside verbatim block"
 msgstr "verbatim ךותב ץבוק ףוס"
 
-#: makeinfo/insertion.c:1412
+#: makeinfo/insertion.c:1436
 msgid "@menu seen before first @node, creating `Top' node"
 msgstr "`Top' תקסיפ רצוי ,הנושארה הקסיפה ינפל אצמנ @menu"
 
-#: makeinfo/insertion.c:1413
+#: makeinfo/insertion.c:1437
 msgid ""
 "perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
 msgstr "?@ifinfo םוקמב @ifnottex-ב תפקומ תויהל התיה הכירצ @top תקסיפ יכ ןכתייה"
 
-#: makeinfo/insertion.c:1425
+#: makeinfo/insertion.c:1449
 msgid "@detailmenu seen before first node, creating `Top' node"
 msgstr "`Top' תקסיפ רצוי ,הנושארה הקסיפה ינפל אצמנ @detailmenu"
 
-#: makeinfo/insertion.c:1440
+#: makeinfo/insertion.c:1464
 #, c-format
 msgid "Unmatched `%c%s'"
 msgstr "גוז-ןב ול ןיאש `%c%s'"
 
-#: makeinfo/insertion.c:1447
+#: makeinfo/insertion.c:1471
 #, c-format
 msgid "`%c%s' needs something after it"
 msgstr "וירחא אוביש והשמ ךירצ `%c%s'"
 
-#: makeinfo/insertion.c:1453
+#: makeinfo/insertion.c:1477
 #, c-format
 msgid "Bad argument to `%s', `%s', using `%s'"
 msgstr "`%s'-ל טנמוגראכ םיאתמ וניא `%s'-ש םושמ `%s'-ב יתשמתשה"
 
-#: makeinfo/insertion.c:1549
+#: makeinfo/insertion.c:1573
 #, c-format
 msgid "@%s not meaningful inside `@%s' block"
 msgstr "`@%s' ךותב @%s-ל תועמשמ ןיא"
 
-#: makeinfo/insertion.c:1558
+#: makeinfo/insertion.c:1582
 #, c-format
 msgid "@itemx not meaningful inside `%s' block"
 msgstr "`%s' ךותב @itemx-ל תועמשמ ןיא"
 
-#: makeinfo/insertion.c:1742
+#: makeinfo/insertion.c:1767
 #, c-format
 msgid "%c%s found outside of an insertion block"
 msgstr "הסנכה קולב לכל ץוחמ %c%s אצמנ"
 
-#: makeinfo/lang.c:330
+#: makeinfo/lang.c:452
 #, c-format
 msgid "%s is not a valid ISO 639 language code"
 msgstr "ISO 639 י\"ע םירכומה ןושלה ינמיסמ דחא וניא %s"
 
-#: makeinfo/lang.c:383
-#, c-format
-msgid "unrecogized encoding name `%s'"
+#: makeinfo/lang.c:505
+#, fuzzy, c-format
+msgid "unrecognized encoding name `%s'"
 msgstr "`%s' רכומ-יתלב דודיק םש"
 
-#: makeinfo/lang.c:386
+#: makeinfo/lang.c:508
 #, c-format
 msgid "sorry, encoding `%s' not supported"
 msgstr "ךמתנ וניא `%s' דודיק ,םירעטצמ"
 
-#: makeinfo/lang.c:415
+#: makeinfo/lang.c:537
 #, c-format
 msgid "invalid encoded character `%s'"
 msgstr "`%s' יוגש דדוקמ ות"
 
-#: makeinfo/lang.c:509
+#: makeinfo/lang.c:631
 #, c-format
 msgid "%s is an invalid ISO code, using %c"
 msgstr "יוגש ISO דוק וניה %s יכ %c-ב שמתשמ"
 
-#: makeinfo/lang.c:694
+#: makeinfo/lang.c:816
 #, c-format
 msgid "%c%s expects `i' or `j' as argument, not `%c'"
 msgstr "`j' וא `i' תויהל בייח רשא ,%c%s לש טנמוגרא תויהל םיאתמ וניא `%c'"
 
-#: makeinfo/lang.c:698
+#: makeinfo/lang.c:820
 #, c-format
 msgid "%c%s expects a single character `i' or `j' as argument"
 msgstr "טנמוגראכ `j' וא `i' דיחי ות לבקמ %c%s"
@@ -2055,56 +2075,56 @@ msgstr "םדןק רדגוה רבכ `%s' ורקאמ"
 msgid "here is the previous definition of `%s'"
 msgstr "הנושארל רדגוה `%s' ןאכ"
 
-#: makeinfo/macro.c:355
-#, c-format
-msgid "\\ in macro expansion followed by `%s' instead of \\ or parameter name"
+#: makeinfo/macro.c:364
+#, fuzzy, c-format
+msgid "\\ in macro expansion followed by `%s' instead of parameter name"
 msgstr "רטמרפ םש וא \\ םוקמב ,ורקאמ תבחרהב \\ תובקעב `%s'"
 
-#: makeinfo/macro.c:403
+#: makeinfo/macro.c:411
 #, c-format
 msgid "Macro `%s' called on line %d with too many args"
 msgstr "ידמ םיבר םיטנמוגרא תללוכ `%s' ורקאמל %d הרושב התליחתש האירק"
 
-#: makeinfo/macro.c:594
+#: makeinfo/macro.c:602
 #, c-format
 msgid "%cend macro not found"
 msgstr "אצמנ אל %cend macro"
 
-#: makeinfo/macro.c:632
+#: makeinfo/macro.c:640
 msgid "@quote-arg only useful for single-argument macros"
 msgstr "דיחי טנמוגרא לעב ורקאמ ךותב קר ישומיש @quote-arg"
 
-#: makeinfo/macro.c:668
+#: makeinfo/macro.c:676
 #, c-format
 msgid "mismatched @end %s with @%s"
 msgstr "@end %s תא םאות וניא @%s"
 
 # Not translated because Emacs recognizes warningsby this template.
-#: makeinfo/makeinfo.c:319
+#: makeinfo/makeinfo.c:317
 #, c-format
 msgid "%s:%d: warning: "
 msgstr "%s:%d: warning: "
 
-#: makeinfo/makeinfo.c:342
+#: makeinfo/makeinfo.c:340
 msgid "Too many errors!  Gave up.\n"
 msgstr ".םיידי יתמרה  !תאיגש ידמ רתוי\n"
 
-#: makeinfo/makeinfo.c:353 makeinfo/makeinfo.c:2051
+#: makeinfo/makeinfo.c:351 makeinfo/makeinfo.c:2093
 #, c-format
 msgid "Misplaced %c"
 msgstr "ומוקמב וניאש %c"
 
-#: makeinfo/makeinfo.c:373
+#: makeinfo/makeinfo.c:371
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr ".`%s --help' הסנ רתי טורפל\n"
 
-#: makeinfo/makeinfo.c:376
+#: makeinfo/makeinfo.c:374
 #, c-format
 msgid "Usage: %s [OPTION]... TEXINFO-FILE...\n"
 msgstr "%s [םינייפאמ]... TEXINFO-ץבוק... :שומישה ןפוא\n"
 
-#: makeinfo/makeinfo.c:379
+#: makeinfo/makeinfo.c:377
 msgid ""
 "Translate Texinfo source documentation to various other formats, by default\n"
 "Info files suitable for reading online with Emacs or standalone GNU Info.\n"
@@ -2112,7 +2132,7 @@ msgstr ""
 " לדחמ תרירבכ ,םירחא םינוש םיטמרופל Texinfo רוקמ תפשב דועית םגרת\n"
 ".GNU Info  תינכת וא Emacs תרזעב האירקל םימיאתמה Info יצבק רציימ \n"
 
-#: makeinfo/makeinfo.c:383
+#: makeinfo/makeinfo.c:381
 #, c-format
 msgid ""
 "General options:\n"
@@ -2136,7 +2156,7 @@ msgstr ""
 "                    .תינכתה תלועפ לע טורפ גצה  -v, --verbose\n"
 "               .אצו הנכתה תסריג יבגל עדימ גצה      --version\n"
 
-#: makeinfo/makeinfo.c:397
+#: makeinfo/makeinfo.c:395
 #, fuzzy, no-wrap
 msgid ""
 "Output format selection (default is to produce Info):\n"
@@ -2149,7 +2169,7 @@ msgstr ""
 "              .Info םוקמב HTML טמרופב טלפ ןכה      --html\n"
 "               .Info םוקמב XML טמרופב טלפ ןכה      --xml\n"
 
-#: makeinfo/makeinfo.c:404
+#: makeinfo/makeinfo.c:402
 msgid ""
 "General output options:\n"
 "  -E, --macro-expand FILE   output macro-expanded source to FILE.\n"
@@ -2175,7 +2195,7 @@ msgstr ""
 "               .טלפ ץבוקב תואקסיפו םיקרפ ררפס      --number-sections\n"
 "     .(HTML טלפ םא היקית) FILE ץבוקל טלפ בותכ  -o, --output=FILE\n"
 
-#: makeinfo/makeinfo.c:418
+#: makeinfo/makeinfo.c:416
 #, c-format
 msgid ""
 "Options for Info and plain text:\n"
@@ -2206,14 +2226,22 @@ msgstr ""
 "      .רוקמב התיהש יפכ הזזה לע רומש ,`asis'\n"
 "     .(%d ח\"מרב) NUM לדוגב םיצבק-תתל Info קלח      --split-size=NUM\n"
 
-#: makeinfo/makeinfo.c:436
+#: makeinfo/makeinfo.c:433
+msgid ""
+"Options for HTML:\n"
+"      --css-include=FILE        include FILE in HTML <style> output;\n"
+"                                  read stdin if FILE is -.\n"
+msgstr ""
+
+#: makeinfo/makeinfo.c:439
+#, fuzzy
 msgid ""
 "Input file options:\n"
-"      --commands-in-node-names   allow @ commands in node names.\n"
-"  -D VAR                         define the variable VAR, as with @set.\n"
-"  -I DIR                         append DIR to the @include search path.\n"
-"  -P DIR                         prepend DIR to the @include search path.\n"
-"  -U VAR                         undefine the variable VAR, as with @clear.\n"
+"      --commands-in-node-names  allow @ commands in node names.\n"
+"  -D VAR                        define the variable VAR, as with @set.\n"
+"  -I DIR                        append DIR to the @include search path.\n"
+"  -P DIR                        prepend DIR to the @include search path.\n"
+"  -U VAR                        undefine the variable VAR, as with @clear.\n"
 msgstr ""
 "                                                     :טלק יצבק לש םינייפאמ\n"
 "          .תואקסיפה תומשב @ תדוקפב שומיש השרה     --commands-in-node-names\n"
@@ -2222,7 +2250,7 @@ msgstr ""
 "       .@include לש שופיח תמישר שארב DIR ףסוה  -P DIR\n"
 "      .@clear תדוקפב ומכ ,VAR הנתשמ תרדגה לטב  -U VAR\n"
 
-#: makeinfo/makeinfo.c:445
+#: makeinfo/makeinfo.c:448
 #, fuzzy
 msgid ""
 "Conditional processing in input:\n"
@@ -2247,19 +2275,21 @@ msgstr ""
 "                 .@ifplaintext-ב טסכט דבעת לא       --no-ifplaintext\n"
 "                .@tex-ו @iftex-ב טסכט דבעת לא       --no-iftex\n"
 
-#: makeinfo/makeinfo.c:459
+#: makeinfo/makeinfo.c:462
+#, fuzzy
 msgid ""
 "  The defaults for the @if... conditionals depend on the output format:\n"
 "  if generating HTML, --ifhtml is on and the others are off;\n"
 "  if generating Info, --ifinfo is on and the others are off;\n"
 "  if generating plain text, --ifplaintext is on and the others are off;\n"
+"  if generating XML, --ifxml is on and the others are off.\n"
 msgstr ""
 "                       :טלפה טמרופב היולת @if... תוינתה רובע לדחמה תרירב\n"
 "                ;םילעפומ םניא רתיה לכו לעפומ --ifhtml  ,HTML אוה טלפה םא\n"
 "        .םילעפומ םניא רתיה לכו לעפומ --ifinfo  ,טסכט וא Info אוה טלפה םא\n"
 "           .םילעפומ םניא רתיה לכו לעפומ --ifplaintext  ,טסכט אוה טלפה םא\n"
 
-#: makeinfo/makeinfo.c:466
+#: makeinfo/makeinfo.c:470
 #, fuzzy
 msgid ""
 "Examples:\n"
@@ -2285,167 +2315,172 @@ msgstr ""
 "             תואקסיפ רורפס םע Info טלפ  makeinfo --number-sections foo.texi\n"
 "   היהיש לככ לודג ,דיחי ץבוקב Info טלפ  makeinfo --no-split foo.texi\n"
 
-#: makeinfo/makeinfo.c:579 makeinfo/makeinfo.c:602 makeinfo/makeinfo.c:664
-#: makeinfo/makeinfo.c:685
+#: makeinfo/makeinfo.c:588 makeinfo/makeinfo.c:611 makeinfo/makeinfo.c:673
+#: makeinfo/makeinfo.c:694
 #, c-format
 msgid "%s: %s arg must be numeric, not `%s'.\n"
 msgstr ".%s ןייפאמ רובע %s י\"ע שרדנכ ,ירמונ טנמוגרא וניא `%s'\n"
 
-#: makeinfo/makeinfo.c:592
+#: makeinfo/makeinfo.c:601
 #, c-format
 msgid "Couldn't open macro expansion output `%s'"
 msgstr "`%s' ורקאמ תובחרה טלפ תחיתפב הלקת"
 
-#: makeinfo/makeinfo.c:595
+#: makeinfo/makeinfo.c:604
 msgid "Cannot specify more than one macro expansion output"
 msgstr "ורקאמה תובחרה טלפל דחא ץבוק קר ןייצל ןתינ"
 
-#: makeinfo/makeinfo.c:633
+#: makeinfo/makeinfo.c:642
 #, c-format
 msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
 msgstr ""
 "%s: `%s' אל ,`asis'/`none'/ירמונ תויהל --paragraph-indent לש טנמוגרא לע\n"
 
-#: makeinfo/makeinfo.c:674
+#: makeinfo/makeinfo.c:683
 #, c-format
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgstr ""
 "%s: `%s' אל ,`end' וא `separate' תויהל --footnote-style לש טנמוגרא לע\n"
 
-#: makeinfo/makeinfo.c:733
+#: makeinfo/makeinfo.c:742
 #, c-format
 msgid "%s: missing file argument.\n"
 msgstr ".ץבוק םש רסח %s תינכתל\n"
 
-#: makeinfo/makeinfo.c:921
+#: makeinfo/makeinfo.c:931
 #, c-format
 msgid "Expected `%s'"
 msgstr "`%s' יופצ היה ןאכ"
 
-#: makeinfo/makeinfo.c:1388
+#: makeinfo/makeinfo.c:1396
 msgid "File exists, but is not a directory"
 msgstr "הציחמ ונניאש םייק ץבוק אצמנ"
 
-#: makeinfo/makeinfo.c:1389
+#: makeinfo/makeinfo.c:1397
 #, c-format
 msgid "Can't create directory `%s': %s"
 msgstr "`%s' היקית תריציב (%s) הלקת"
 
-#: makeinfo/makeinfo.c:1437
+#: makeinfo/makeinfo.c:1445
 #, c-format
 msgid "No `%s' found in `%s'"
 msgstr "`%s' אצמנ אל `%s' ץבוקב"
 
-#: makeinfo/makeinfo.c:1519
+#: makeinfo/makeinfo.c:1527
 #, c-format
 msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
 msgstr "%s: .םשל ןווכמ טלפש םושמ וטמשוי ינקת טלפ ץורעל ורקאמ תובחרה\n"
 
-#: makeinfo/makeinfo.c:1549
+#: makeinfo/makeinfo.c:1557
 #, c-format
 msgid "Making %s file `%s' from `%s'.\n"
 msgstr ".%s טמרופב `%s'-ל `%s' ץבוק דבעמ\n"
 
-#: makeinfo/makeinfo.c:1584
+#: makeinfo/makeinfo.c:1592
 #, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr "This is %s, produced by makeinfo version %s from %s.\n"
 
-#: makeinfo/makeinfo.c:1606
+#: makeinfo/makeinfo.c:1614
 #, c-format
 msgid ""
 "%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
 msgstr "%s: .ורמשל --force-ב שמתשה ;תולקת בקע קחמיי `%s' ורקאמ תובחרה ץבוק\n"
 
-#: makeinfo/makeinfo.c:1650
+#: makeinfo/makeinfo.c:1669
 #, c-format
 msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
 msgstr "%s: .ורמשל --force-ב שמתשה ;תולקת בקע קחמיי `%s' טלפ ץבוק\n"
 
-#: makeinfo/makeinfo.c:1878
+#: makeinfo/makeinfo.c:1920
 #, c-format
 msgid "Unknown command `%s'"
 msgstr "`%s' תרכומ-יתלב הארוה"
 
-#: makeinfo/makeinfo.c:1900
+#: makeinfo/makeinfo.c:1942
 #, c-format
 msgid "Use braces to give a command as an argument to @%s"
 msgstr "םילסלוסמ םיירגוסב ךרוצ שי ,@%s-ל טנמוגרא היהת הארוהש ידכ"
 
-#: makeinfo/makeinfo.c:2093
-#, c-format
-msgid "%c%s expected `{...}'"
+#: makeinfo/makeinfo.c:2135
+#, fuzzy, c-format
+msgid "%c%s expected braces"
 msgstr "`{...}'-ל הפיצ %c%s"
 
-#: makeinfo/makeinfo.c:2123
+#: makeinfo/makeinfo.c:2165
 msgid "Unmatched }"
 msgstr "גוז-ןב ול ןיאש }"
 
-#: makeinfo/makeinfo.c:2173
+#: makeinfo/makeinfo.c:2215
 msgid "NO_NAME!"
 msgstr "NO_NAME!"
 
-#: makeinfo/makeinfo.c:2194
+#: makeinfo/makeinfo.c:2236
 #, c-format
 msgid "%c%s missing close brace"
 msgstr "%c%s-ל רסח ינמי רגוס"
 
-#: makeinfo/makeinfo.c:2991
+#: makeinfo/makeinfo.c:3054
 msgid "First argument to cross-reference may not be empty"
 msgstr "קיר תויהל לוכי וניא רושיק לש ןושאר טנמוגרא"
 
-#: makeinfo/makeinfo.c:3051 makeinfo/makeinfo.c:3269 makeinfo/xml.c:1422
+#: makeinfo/makeinfo.c:3114 makeinfo/makeinfo.c:3332 makeinfo/xml.c:1423
 msgid "see "
 msgstr "see "
 
-#: makeinfo/makeinfo.c:3051
+#: makeinfo/makeinfo.c:3114
 msgid "See "
 msgstr "See "
 
-#: makeinfo/makeinfo.c:3197
+#: makeinfo/makeinfo.c:3260
 #, c-format
 msgid "`.' or `,' must follow cross reference, not %c"
 msgstr "%c אלו `,' וא `.' אובל ךירצ רושיק ירחא"
 
-#: makeinfo/makeinfo.c:3245
+#: makeinfo/makeinfo.c:3308
 msgid "First argument to @inforef may not be empty"
 msgstr "קיר תויהל לוכי וניא @inforef לש ןושאר טנמוגרא"
 
-#: makeinfo/makeinfo.c:3454
+#: makeinfo/makeinfo.c:3540
 #, c-format
 msgid "@image file `%s' (for HTML) not readable: %s"
 msgstr "(HTML רובע שרדנ) @image רובע `%s' ץבוק תאירקב (%s) הלקת"
 
-#: makeinfo/makeinfo.c:3467
-#, c-format
-msgid "No `%s.png' or `.jpg', and no extension supplied"
-msgstr "תרחא תמויס הניוצ אלו ואצמנ אל .jpg-ו `%s.png'"
+#: makeinfo/makeinfo.c:3546
+#, fuzzy, c-format
+msgid "No such file `%s'"
+msgstr "`%s' אצמנ אל `%s' ץבוקב"
 
-#: makeinfo/makeinfo.c:3517
+#: makeinfo/makeinfo.c:3632
 #, c-format
 msgid "@image file `%s' (for text) unreadable: %s"
 msgstr "(טסכט רובע שרדנ) @image רובע `%s' ץבוק תאירקב (%s) הלקת"
 
-#: makeinfo/makeinfo.c:3524
+#: makeinfo/makeinfo.c:3641
 msgid "@image missing filename argument"
 msgstr "@image תארוהב רסח ץבוק םש"
 
-#: makeinfo/makeinfo.c:3721
+#: makeinfo/makeinfo.c:3839
+#, c-format
+msgid "undefined flag: %s"
+msgstr ""
+
+#: makeinfo/makeinfo.c:3840
 #, c-format
 msgid "{No value for `%s'}"
 msgstr "{No value for `%s'}"
 
-#: makeinfo/makeinfo.c:3775
+#: makeinfo/makeinfo.c:3895
 #, c-format
 msgid "%c%s requires a name"
 msgstr "םש שרוד %c%s"
 
-#: makeinfo/makeinfo.c:3881
+#: makeinfo/makeinfo.c:4001
 #, c-format
 msgid "Reached eof before matching @end %s"
 msgstr "םאות @end %s ינפל רמגנ טלק ץבוק"
 
-#: makeinfo/makeinfo.c:4112
+#: makeinfo/makeinfo.c:4232
 #, c-format
 msgid "`%.40s...' is too long for expansion; not expanded"
 msgstr "בחרוי אל ;וביחרהל ידכמ ךורא `%.40s...'"
@@ -2503,7 +2538,7 @@ msgstr "`%s' הקסיפב (%c%s ןוגכ) קוסיפ תארוהב ךרוצ שי"
 msgid "No node name specified for `%c%s' command"
 msgstr "הקסיפ םש אלל `%c%s' הארוה"
 
-#: makeinfo/node.c:862 makeinfo/node.c:1083
+#: makeinfo/node.c:862 makeinfo/node.c:1089
 #, c-format
 msgid "Anchor `%s' and node `%s' map to the same file name"
 msgstr "ץבוק םש ותואל תומגרותמ `%s' רושיק תיותו `%s' הקסיפ"
@@ -2512,7 +2547,7 @@ msgstr "ץבוק םש ותואל תומגרותמ `%s' רושיק תיותו `%s' הקסיפ"
 msgid "This @anchor command ignored; references to it will not work"
 msgstr "ולעפי אל וז תיות לא םירושיק ;עצובת אל וז @anchor תארוה"
 
-#: makeinfo/node.c:867 makeinfo/node.c:1086
+#: makeinfo/node.c:867 makeinfo/node.c:1092
 msgid "Rename this anchor or use the `--no-split' option"
 msgstr "`--no-split' ןייפאמב שמתשה וא תיותה םש הנש"
 
@@ -2529,80 +2564,80 @@ msgstr "Node:"
 msgid "Next:"
 msgstr "Next:"
 
-#: makeinfo/node.c:947
+#: makeinfo/node.c:948
 msgid "Previous:"
 msgstr "Previous:"
 
-#: makeinfo/node.c:957
+#: makeinfo/node.c:959
 msgid "Up:"
 msgstr "Up:"
 
-#: makeinfo/node.c:1080
+#: makeinfo/node.c:1086
 #, c-format
 msgid "Anchors `%s' and `%s' map to the same file name"
 msgstr "ץבוק םש ותואל תומגרותמ `%s-ו `%s' רושיק תויות"
 
-#: makeinfo/node.c:1085
+#: makeinfo/node.c:1091
 msgid "@anchor command ignored; references to it will not work"
 msgstr "ולעפי אל וז תיות לא םירושיק ;עצובת אל @anchor תארוה"
 
-#: makeinfo/node.c:1285
+#: makeinfo/node.c:1291
 #, fuzzy, c-format
 msgid "%s reference to nonexistent node `%s' (perhaps incorrect sectioning?)"
 msgstr "%sב `%s' תמייק הנניאש הקסיפל היינפה"
 
-#: makeinfo/node.c:1302
+#: makeinfo/node.c:1308
 msgid "Menu"
 msgstr "טירפת"
 
-#: makeinfo/node.c:1304
+#: makeinfo/node.c:1310
 msgid "Cross"
 msgstr "רושיק"
 
-#: makeinfo/node.c:1388
+#: makeinfo/node.c:1394
 #, fuzzy, c-format
 msgid "Next field of node `%s' not pointed to (perhaps incorrect sectioning?)"
 msgstr "הרזח העיבצמ הניא `%s' הקסיפ לש Next הדשב הקסיפה"
 
-#: makeinfo/node.c:1391
+#: makeinfo/node.c:1397
 #, c-format
 msgid "This node (%s) has the bad Prev"
 msgstr "יוגש Prev הדש תלעב איה (%s) וז הקסיפ"
 
-#: makeinfo/node.c:1403
+#: makeinfo/node.c:1409
 msgid "Prev"
 msgstr "Prev הדש"
 
-#: makeinfo/node.c:1446
+#: makeinfo/node.c:1452
 #, c-format
 msgid "Prev field of node `%s' not pointed to"
 msgstr "הרזח העיבצמ הניא `%s' הקסיפ לש Prev הדשב הקסיפה"
 
-#: makeinfo/node.c:1450
+#: makeinfo/node.c:1456
 #, c-format
 msgid "This node (%s) has the bad Next"
 msgstr "יוגש Next הדש תלעב איה (%s) וז הקסיפ"
 
-#: makeinfo/node.c:1462
+#: makeinfo/node.c:1468
 #, c-format
 msgid "`%s' has no Up field (perhaps incorrect sectioning?)"
 msgstr ""
 
-#: makeinfo/node.c:1465
+#: makeinfo/node.c:1471
 msgid "Up"
 msgstr "Up הדש"
 
-#: makeinfo/node.c:1531
+#: makeinfo/node.c:1537
 #, c-format
 msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
 msgstr "הרזחב עיבצמש טירפת ףיעס ןיא לבא ,`%s' לע עיבצמ `%s' הקסיפ לש Up הדש"
 
-#: makeinfo/node.c:1560
+#: makeinfo/node.c:1566
 #, c-format
 msgid "node `%s' has been referenced %d times"
 msgstr "`%s' הקסיפל םירושיק %d יתרפס"
 
-#: makeinfo/node.c:1574
+#: makeinfo/node.c:1580
 #, c-format
 msgid "unreferenced node `%s'"
 msgstr "רושיק ףא ןיא `%s' הקסיפל"
@@ -2612,27 +2647,27 @@ msgstr "רושיק ףא ןיא `%s' הקסיפל"
 msgid "Appendix %c "
 msgstr "Appendix %c "
 
-#: makeinfo/sectioning.c:356 makeinfo/sectioning.c:448
+#: makeinfo/sectioning.c:361 makeinfo/sectioning.c:456
 #, c-format
 msgid "Internal error (search_sectioning) \"%s\"!"
 msgstr "!\"%s\" (search_sectioning) תימינפ הנכות תלקת"
 
-#: makeinfo/sectioning.c:506
+#: makeinfo/sectioning.c:514
 #, c-format
 msgid "%c%s is obsolete; use %c%s instead"
 msgstr "%c%s-ב שמתשהל ףידע ;תנשוימ הניה %c%s הארוה"
 
-#: makeinfo/sectioning.c:522
+#: makeinfo/sectioning.c:530
 #, c-format
 msgid "Node with %ctop as a section already exists"
 msgstr "םדוק הרדגוה רבכ %ctop םע הקסיפ"
 
-#: makeinfo/sectioning.c:530
+#: makeinfo/sectioning.c:538
 #, c-format
 msgid "Here is the %ctop node"
 msgstr "%ctop תקסיפ לש םוקמה והז"
 
-#: makeinfo/sectioning.c:547
+#: makeinfo/sectioning.c:554
 #, c-format
 msgid "%ctop used before %cnode, defaulting to %s"
 msgstr "ימצעב @node יתפסוה ,%cnode ינפל %ctop-ב השמתשה %s הקסיפ"
@@ -2660,21 +2695,17 @@ msgstr "@image רובע `%s' ץבוק תאירקב (%s) הלקת"
 msgid "%s: warning: "
 msgstr "%s: warning: "
 
-#: util/install-info.c:178 util/install-info.c:191
-msgid "virtual memory exhausted"
-msgstr "ילאטריוה ןורכזה רמגנ"
-
-#: util/install-info.c:234
+#: util/install-info.c:207
 #, c-format
 msgid " for %s"
 msgstr " for %s"
 
-#: util/install-info.c:388
+#: util/install-info.c:361
 #, c-format
 msgid "\tTry `%s --help' for a complete list of options.\n"
 msgstr ".םינייפאמ לש האלמ המישר תלבקל `%s --help' הסנ\n"
 
-#: util/install-info.c:396
+#: util/install-info.c:369
 #, c-format
 msgid ""
 "Usage: %s [OPTION]... [INFO-FILE [DIR-FILE]]\n"
@@ -2740,7 +2771,7 @@ msgstr ""
 "                      .אצו תינכתה תסריג לע עדימ גצה   --version\n"
 "\n"
 
-#: util/install-info.c:451
+#: util/install-info.c:424
 #, fuzzy, c-format
 msgid ""
 "This is the file .../info/dir, which contains the\n"
@@ -2775,97 +2806,97 @@ msgstr ""
 "\n"
 "* Menu:\n"
 
-#: util/install-info.c:476
+#: util/install-info.c:449
 #, c-format
 msgid "%s: could not read (%s) and could not create (%s)\n"
 msgstr "%s ץבוק לש (%s) האירקב ןהו (%s) הריציב ןה הלקת\n"
 
-#: util/install-info.c:567
+#: util/install-info.c:540
 #, c-format
 msgid "%s: empty file"
 msgstr "קיר וניה %s ץבוק"
 
-#: util/install-info.c:894 util/install-info.c:934
+#: util/install-info.c:867 util/install-info.c:907
 msgid "START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"
 msgstr "םאות END-INFO-DIR-ENTRY אלל START-INFO-DIR-ENTRY"
 
-#: util/install-info.c:929
+#: util/install-info.c:902
 msgid "END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"
 msgstr "םאות START-INFO-DIR-ENTRY אלל END-INFO-DIR-ENTRY"
 
-#: util/install-info.c:1178 util/install-info.c:1188
+#: util/install-info.c:1151 util/install-info.c:1161
 #, c-format
 msgid "%s: Specify the Info directory only once.\n"
 msgstr ".דבלב תחא םעפ %s-ל Info תייקית ןייצל ןתינ\n"
 
-#: util/install-info.c:1223
+#: util/install-info.c:1196
 #, c-format
 msgid "%s: Specify the Info file only once.\n"
 msgstr ".דבלב תחא םעפ %s-ל Info ץבוק ןייצל ןתינ\n"
 
-#: util/install-info.c:1272
+#: util/install-info.c:1245
 #, c-format
 msgid "excess command line argument `%s'"
 msgstr "`%s' רתוימ טנמוגרא"
 
-#: util/install-info.c:1276
+#: util/install-info.c:1249
 msgid "No input file specified; try --help for more information."
 msgstr ".הרזע תלבקל --help הסנ ;טלק ץבוק ןויצ ןיא"
 
-#: util/install-info.c:1279
+#: util/install-info.c:1252
 msgid "No dir file specified; try --help for more information."
 msgstr ".הרזע תלבקל --help הסנ ;dir ץבוק ןויצ ןיא"
 
-#: util/install-info.c:1301
+#: util/install-info.c:1274
 #, c-format
 msgid "no info dir entry in `%s'"
 msgstr "`%s'-ב ישאר טירפת יפיעס ןיא"
 
-#: util/install-info.c:1416
+#: util/install-info.c:1389
 #, c-format
 msgid "menu item `%s' already exists, for file `%s'"
 msgstr "`%s' ףיעס ישארה טירפתב םייק רבכ `%s' ץבוקל"
 
-#: util/install-info.c:1439
+#: util/install-info.c:1412
 #, c-format
 msgid "no entries found for `%s'; nothing deleted"
 msgstr "קחמנ אל םולכ ;`%s' רובע טירפת יפיעס ואצמנ אל"
 
-#: util/texindex.c:253
+#: util/texindex.c:250
 msgid "display this help and exit"
 msgstr "תינכתהמ אצו הז הרזע ךסמ גצה"
 
-#: util/texindex.c:255
+#: util/texindex.c:252
 msgid "keep temporary files around after processing"
 msgstr "דוביעה ךלהמב םירצונה םיינמז םיצבק קחמת לא"
 
-#: util/texindex.c:257
+#: util/texindex.c:254
 msgid "do not keep temporary files around after processing (default)"
 msgstr "(ח\"מרב) דוביעה ךלהמב םירצונה םיינמז םיצבק קחמ"
 
-#: util/texindex.c:259
+#: util/texindex.c:256
 msgid "send output to FILE"
 msgstr "FILE ץבוקל טלפ הנפה"
 
-#: util/texindex.c:261
+#: util/texindex.c:258
 msgid "display version information and exit"
 msgstr "אצו תינכתה תסריג לע עדימ גצה"
 
-#: util/texindex.c:272
+#: util/texindex.c:269
 #, c-format
 msgid "Usage: %s [OPTION]... FILE...\n"
 msgstr "%s [OPTION]... FILE... :שומישה ןפוא\n"
 
-#: util/texindex.c:273
+#: util/texindex.c:270
 msgid "Generate a sorted index for each TeX output FILE.\n"
 msgstr ".TeX י\"ע בתכנש FILE ץבוק לכל ןייוממ סקדניא ןכה\n"
 
-#: util/texindex.c:276
+#: util/texindex.c:273
 #, c-format
 msgid "Usually FILE... is specified as `foo.%c%c' for a document `foo.texi'.\n"
 msgstr ".`foo.%c%c' םשב םיארקנ `foo.texi' ךמסמ רובע FILE יצבק ללכ ךרדב\n"
 
-#: util/texindex.c:278
+#: util/texindex.c:275
 msgid ""
 "\n"
 "Options:\n"
@@ -2873,31 +2904,35 @@ msgstr ""
 "\n"
 "                                                :םינייפאמ\n"
 
-#: util/texindex.c:910 util/texindex.c:944 util/texindex.c:1020
-#: util/texindex.c:1048
+#: util/texindex.c:904 util/texindex.c:938 util/texindex.c:1014
+#: util/texindex.c:1042
 #, c-format
 msgid "%s: not a texinfo index file"
 msgstr "texinfo לש סקדניא ץבוק וניא `%s'"
 
-#: util/texindex.c:1005
+#: util/texindex.c:999
 #, c-format
 msgid "failure reopening %s"
 msgstr "%s לש תשדוחמ החיתפב הלקת"
 
-#: util/texindex.c:1261
+#: util/texindex.c:1255
 #, c-format
 msgid "No page number in %s"
 msgstr "דומע רפסמ ןיא %s-ב"
 
-#: util/texindex.c:1333
+#: util/texindex.c:1327
 #, c-format
 msgid "entry %s follows an entry with a secondary name"
 msgstr "ינשמ םש לעב טירפ תובקעב אב %s טירפ"
 
-#: util/texindex.c:1671
-#, c-format
-msgid "%s; for file `%s'.\n"
-msgstr ".%s הלקת התרק `%s' ץבוקב\n"
+#~ msgid "virtual memory exhausted"
+#~ msgstr "ילאטריוה ןורכזה רמגנ"
+
+#~ msgid "No `%s.png' or `.jpg', and no extension supplied"
+#~ msgstr "תרחא תמויס הניוצ אלו ואצמנ אל .jpg-ו `%s.png'"
+
+#~ msgid "%s; for file `%s'.\n"
+#~ msgstr ".%s הלקת התרק `%s' ץבוקב\n"
 
 #~ msgid "`%s' has no Up field"
 #~ msgstr "Up הדש ןיא `%s'-ל"
