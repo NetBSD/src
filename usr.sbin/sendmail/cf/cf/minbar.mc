@@ -35,10 +35,10 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-# Mailer configuration for zhadum.netbsd.org (a.k.a. cvs.netbsd.org).
+# Mailer configuration for minbar.netbsd.org (a.k.a. cvs.fi.netbsd.org).
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: zhadum.mc,v 1.4 1998/10/15 10:24:27 mycroft Exp $')
+VERSIONID(`$NetBSD: minbar.mc,v 1.1 1998/10/15 10:24:27 mycroft Exp $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
