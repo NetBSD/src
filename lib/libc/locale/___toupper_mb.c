@@ -1,4 +1,4 @@
-/*	$NetBSD: ___toupper_mb.c,v 1.4 2002/03/17 22:14:25 tshiozak Exp $	*/
+/*	$NetBSD: ___toupper_mb.c,v 1.5 2002/11/11 01:03:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ___toupper_mb.c,v 1.4 2002/03/17 22:14:25 tshiozak Exp $");
+__RCSID("$NetBSD: ___toupper_mb.c,v 1.5 2002/11/11 01:03:22 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
@@ -49,7 +49,7 @@ wint_t
 ___toupper_mb(c)
 	wint_t c;
 {
-	int x;
+	uint32_t x;
 	_RuneRange *rr = &_CurrentRuneLocale->rl_mapupper_ext;
 	_RuneEntry *re = rr->rr_rune_ranges;
 
