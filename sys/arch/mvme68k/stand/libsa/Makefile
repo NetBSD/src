@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 1998/08/01 11:22:52 scw Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:47 lukem Exp $
 
 LIB=sa
 
 CLEANFILES+=SRT0.o 
 
-NOPIC=nopic
-NOPROFILE=noprofile
+MKPIC=no
+MKPROFILE=no
 
 # Logically src/sys
 S=${.CURDIR}/../../../..

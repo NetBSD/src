@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/27 17:22:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:55:00 lukem Exp $
 #	install these sources in /usr/share/sendmail
 #
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILESDIR=/usr/share/sendmail
 FILES=README
 

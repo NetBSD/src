@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/01/30 12:23:10 simonb Exp $
+#	$NetBSD: Makefile,v 1.11 1999/02/13 02:54:48 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -13,9 +13,9 @@ SRCS+=	bzero.c disklabel.c dkcksum.c open.c
 .PATH:	$S/lib/libsa $S/lib/libkern
 
 # set up for standalone library compiation (turn off PIC)
-NOPROFILE=noprofile
-NOPIC	 =nopic
-NOLINT	 =nolint
+MKPROFILE=no
+MKPIC=	no
+MKLINT=	no
 
 # only needed during build - prevent installation of library
 libinstall::

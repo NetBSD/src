@@ -2,7 +2,7 @@ PROG=	playvt
 SRCS=	playvt.c
 DEMOS=	chardemo.vt colors.vt sgr.vt
 DEMOS+=	outerlimit.vt twzone.vt cowscene.vt xmas.vt
-NOMAN=
+MKMAN=	no
 
 all: $(DEMOS) $(PROG)
 

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/09 07:50:06 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/13 02:54:22 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-NOOBJ=	noobj
+MKOBJ=	no
 SCRIPTS=wargames.sh
 
 .include <bsd.prog.mk>

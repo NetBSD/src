@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 1997/10/22 01:42:36 lukem Exp $
+# $NetBSD: Makefile,v 1.6 1999/02/13 02:54:18 lukem Exp $
 # Build a "small init" (i.e. for boot media)
 
 PROG=	init
-NOMAN=	
+MKMAN=	no
 
 # Need -lutil for: logout, logwtmp, login_tty
 DPADD=	${LIBUTIL}

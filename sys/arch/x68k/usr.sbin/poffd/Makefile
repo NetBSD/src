@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1997/06/22 07:09:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:51 lukem Exp $
 
 PROG=	poffd
-NOMAN=	yes
+MKMAN=	no
 #BINOWN=	root
 #BINGRP=	operator
 #BINMODE=4550

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 1998/09/27 17:22:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:56 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=	msgc
 SRCS=	msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
@@ -8,7 +10,7 @@ YHEADER=1
 LDADD+=	-ll
 DPADD+=	${LIBL}
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES= msg_sys.def
 FILESDIR= /usr/share/misc
 .endif

@@ -5,7 +5,7 @@ KEYCAPSRC=	keycap.src
 CPPFLAGS+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
 SRCS	=	keycap.c
 
-NOMAN=	yes
+MKMAN=	no
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${CAPDIR} ]; then mkdir ${DESTDIR}${CAPDIR};fi

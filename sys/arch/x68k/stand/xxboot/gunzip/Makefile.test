@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.test,v 1.1 1998/09/01 20:03:46 itohy Exp $
+#	$NetBSD: Makefile.test,v 1.2 1999/02/13 02:54:50 lukem Exp $
 #
 #	Makefile for test
 
 PROG= zcat
 SRCS= main.c unzip.c inflate.c
-NOMAN= noman
+MKMAN=	no
 CFLAGS= -Wall -O -fomit-frame-pointer -DBOOT -DTEST
 LDFLAGS= -static -N
 

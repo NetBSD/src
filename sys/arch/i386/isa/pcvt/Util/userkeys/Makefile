@@ -1,5 +1,5 @@
 PROG=		vt220keys
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>

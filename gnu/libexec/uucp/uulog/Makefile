@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/25 09:31:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:24 lukem Exp $
 #
 # Makefile for uulog
 
@@ -11,7 +11,7 @@ DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\"
 
-NOMAN=		noman
+MKMAN=		no
 
 .include <bsd.prog.mk>
 .PATH: $(.CURDIR)/../common_sources

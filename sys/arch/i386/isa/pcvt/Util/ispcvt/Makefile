@@ -1,6 +1,6 @@
 PROG=	ispcvt
 
-NOMAN=	yes
+MKMAN=	no
 
 BINDIR=	/usr/sbin
 

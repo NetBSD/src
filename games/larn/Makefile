@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/09/29 07:33:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:21 lukem Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -55,6 +55,8 @@
 # NOLOG
 #	Turn off logging.
 
+.include <bsd.own.mk>
+
 PROG=	larn
 MAN=	larn.6
 CPPFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
@@ -65,7 +67,7 @@ DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn

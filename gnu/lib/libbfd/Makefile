@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/11 17:37:34 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:22 lukem Exp $
 
 LIB=		bfd
 
-NOLINT=		nolint (GNU source)
-NOMAN=
-NOPROFILE=
-NOLINKLIB=
+MKLINT=		no
+MKMAN=		no
+MKPROFILE=	no
+MKLINKLIB=	no
 
-# for NOPIC, BFD_SLIM, BFD_UNIFIED
+# for MKPIC, BFD_SLIM, BFD_UNIFIED
 .include <bsd.own.mk>
 
 # XXX BFD_UNIFIED should go away if benchmarking shows minor to no difference
-.if defined(NOPIC) || !defined(BFD_UNIFIED)
+.if ${MKPIC} == "no" || !defined(BFD_UNIFIED)
 BFD_SLIM=
 .endif
 

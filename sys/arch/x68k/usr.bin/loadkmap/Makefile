@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/04 16:39:55 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:50 lukem Exp $
 # Makefile for loadkmap
 
 PROG=		loadkmap
-NOMAN=		yes
+MKMAN=		no
 FILES=		ascii_kmap jis_kmap
 FILESDIR=	/usr/share/keymaps/x68k
 
