@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.2 2004/09/04 23:33:07 lukem Exp $
+.\"	$NetBSD: postconf.5,v 1.3 2004/11/13 05:45:10 heas Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -2527,10 +2527,10 @@ Look up the "user@domain.tld" address without the optional
 address extension.
 .IP \(bu
 Look up the "user+extension" address local part when the
-recipient domain equals $myorigin, $mydestination, $inet_interfaces
+sender domain equals $myorigin, $mydestination, $inet_interfaces
 or $proxy_interfaces.
 .IP \(bu
-Look up the "user" address local part when the recipient domain
+Look up the "user" address local part when the sender domain
 equals $myorigin, $mydestination, $inet_interfaces or $proxy_interfaces.
 .IP \(bu
 Look up the "@domain.tld" part.
@@ -3549,9 +3549,8 @@ The recipient domain matches $mydestination, $inet_interfaces
 or $proxy_interfaces, but the recipient is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 .IP \(bu
-The recipient domain matches $virtual_alias_maps but the
-recipient is not listed in $virtual_alias_maps, and $virtual_alias_maps
-is not null.
+The recipient domain matches $virtual_alias_domains but the
+recipient is not listed in $virtual_alias_maps.
 .IP \(bu
 The recipient domain matches $virtual_mailbox_domains but the
 recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
@@ -3572,9 +3571,8 @@ The sender domain matches $mydestination, $inet_interfaces or
 $proxy_interfaces, but the recipient is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 .IP \(bu
-The sender domain matches $virtual_alias_maps but the recipient
-is not listed in $virtual_alias_maps, and $virtual_alias_maps is
-not null.
+The sender domain matches $virtual_alias_domains but the recipient
+is not listed in $virtual_alias_maps.
 .IP \(bu
 The sender domain matches $virtual_mailbox_domains but the
 recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps

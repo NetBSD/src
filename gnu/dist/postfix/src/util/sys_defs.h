@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.14 2004/07/28 23:19:42 heas Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.15 2004/11/13 05:45:33 heas Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -340,6 +340,8 @@ extern int opterr;
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
 #define UNIX_DOMAIN_CONNECT_BLOCKS_FOR_ACCEPT
+#define STRCASECMP_IN_STRINGS_H
+#define SET_H_ERRNO(err) (set_h_errno(err))
 #endif
 
 #ifdef UW21				/* UnixWare 2.1.x */
@@ -1158,6 +1160,14 @@ typedef int pid_t;
 #define __MAXINT__(T) ((T) (((((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ ((T) -1))))
 #ifndef OFF_T_MAX
 #define OFF_T_MAX __MAXINT__(off_t)
+#endif
+
+ /*
+  * Setting globals like h_errno can be problematic when Postfix is linked
+  * with multi-threaded libraries.
+  */
+#ifndef SET_H_ERRNO
+#define SET_H_ERRNO(err) (h_errno = (err))
 #endif
 
  /*
