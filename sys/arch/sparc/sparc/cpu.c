@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.59 1997/10/02 04:23:09 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.60 1997/11/22 03:13:57 tv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,6 +75,9 @@
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
+
+int		 foundfpu;
+struct proc	*fpproc;
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));

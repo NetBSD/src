@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 1997/11/19 23:03:47 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.23 1997/11/22 03:13:58 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,8 @@
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #endif
+
+union sir	sir;
 
 void	strayintr __P((struct clockframe *));
 int	soft01intr __P((void *));
