@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.27 1999/06/05 04:12:31 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.28 1999/06/07 15:25:19 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -221,7 +221,7 @@ vm_map_lock_try(map)
 	boolean_t rv;
 
 	if (map->flags & VM_MAP_INTRSAFE)
-		rv = simple_lock_try(&map->lock.lk_intrlock);
+		rv = simple_lock_try(&map->lock.lk_interlock);
 	else
 		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT, NULL) == 0);
 
