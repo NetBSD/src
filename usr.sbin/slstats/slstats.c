@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.9 1997/10/17 13:38:08 lukem Exp $	*/
+/*	$NetBSD: slstats.c,v 1.10 1997/10/18 11:38:26 lukem Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slstats.c,v 1.9 1997/10/17 13:38:08 lukem Exp $");
+__RCSID("$NetBSD: slstats.c,v 1.10 1997/10/18 11:38:26 lukem Exp $");
 #endif
 
 #define INET
@@ -173,7 +173,7 @@ u_char	signalled;			/* set if alarm goes off "early" */
 void
 intpr()
 {
-	register int line = 0;
+	int line = 0;
 	int oldmask;
 	struct sl_softc *sc, *osc;
 	u_long addr;
@@ -181,7 +181,7 @@ intpr()
 	addr = nl[N_SOFTC].n_value + unit * sizeof(struct sl_softc);
 	sc = (struct sl_softc *)malloc(AMT);
 	osc = (struct sl_softc *)malloc(AMT);
-	bzero((char *)osc, AMT);
+	memset((char *)osc, 0, AMT);
 
 	while (1) {
 		if (kvm_read(kd, addr, (char *)sc, AMT) != AMT)
@@ -236,7 +236,7 @@ intpr()
 		sigsetmask(oldmask);
 		signalled = 0;
 		(void)alarm(interval);
-		bcopy((char *)sc, (char *)osc, AMT);
+		memmove((char *)osc, (char *)sc, AMT);
 	}
 }
 
