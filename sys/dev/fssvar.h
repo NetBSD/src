@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.3 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.4 2004/02/14 00:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -117,6 +117,11 @@ struct fss_get {
 	(1 << (sc)->sc_bs_bshift)
 
 typedef enum {
+	FSS_READ,
+	FSS_WRITE
+} fss_io_type;
+
+typedef enum {
 	FSS_CACHE_FREE	= 0,		/* Cache entry is free */
 	FSS_CACHE_BUSY	= 1,		/* Cache entry is read from device */
 	FSS_CACHE_VALID	= 2		/* Cache entry contains valid data */
@@ -143,6 +148,7 @@ struct fss_softc {
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
 	dev_t		sc_bdev;	/* Underlying block device */
+	struct vnode	*sc_mount_vp;	/* Underlying spec vnode */
 	struct vnode	*sc_bs_vp;	/* Our backing store */
 	off_t		sc_bs_size;	/* Its size in bytes */
 	int		sc_bs_bshift;	/* Shift of backing store block */
@@ -153,7 +159,6 @@ struct fss_softc {
 	u_int32_t	sc_clcount;	/* # clusters in file system */
 	u_int8_t	*sc_copied;	/* Map of clusters already copied */
 	long		sc_clresid;	/* Bytes in last cluster */
-	int		sc_cowcount;	/* Number of cow in progress */
 	int		sc_cache_size;	/* Number of entries in sc_cache */
 	struct fss_cache *sc_cache;	/* Cluster cache */
 	struct bufq_state sc_bufq;	/* Transfer queue */
@@ -165,37 +170,7 @@ struct fss_softc {
 	u_int32_t	*sc_indir_data;	/* Current indir cluster data */
 };
 
-struct fss_softc fss_softc[NFSS];
-
-void fss_copy_on_write(struct fss_softc *, struct buf *);
 int fss_umount_hook(struct mount *, int);
-
-/*
- * Check if this buf needs to be copied on write.
- * Unroll the loop for small NFSS.
- */
-static inline void
-fss_cow_hook(struct buf *bp)
-{
-	int i;
-
-	if (bp->b_flags & B_READ)
-		return;
-
-	if (NFSS <= 4) {
-		if (__predict_false(fss_softc[0].sc_bdev == bp->b_dev ||
-		    (NFSS > 1 && fss_softc[1].sc_bdev == bp->b_dev) ||
-		    (NFSS > 2 && fss_softc[2].sc_bdev == bp->b_dev) ||
-		    (NFSS > 3 && fss_softc[3].sc_bdev == bp->b_dev)))
-			for (i = 0; i < NFSS; i++)
-				if (fss_softc[i].sc_bdev == bp->b_dev)
-					fss_copy_on_write(&fss_softc[i], bp);
-	} else {
-		for (i = 0; i < NFSS; i++)
-			if (__predict_false(fss_softc[i].sc_bdev == bp->b_dev))
-				fss_copy_on_write(&fss_softc[i], bp);
-	}
-}
 
 #endif /* _KERNEL */
 
