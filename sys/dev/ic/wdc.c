@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.86 2000/04/04 09:25:51 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.87 2000/04/04 12:43:13 bouyer Exp $ */
 
 
 /*
@@ -128,6 +128,7 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
+#define DEBUG_DELAY  0x40
 #ifdef WDCDEBUG
 int wdcdebug_mask = 0;
 int wdc_nxfer = 0;
@@ -847,15 +848,20 @@ wdcwait(chp, mask, bits, timeout)
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
 		if (++time > timeout) {
-			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
-			    "error %x (mask 0x%x bits 0x%x)\n", status,
+			WDCDEBUG_PRINT(("wdcwait: timeout (time=%d), "
+			    "status %x error %x (mask 0x%x bits 0x%x)\n",
+			    time, status,
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 				wd_error), mask, bits),
-			    DEBUG_STATUS | DEBUG_PROBE);
+			    DEBUG_STATUS | DEBUG_PROBE | DEBUG_DELAY);
 			return -1;
 		}
 		delay(WDCDELAY);
 	}
+#ifdef WDCDEBUG
+	if (time > 0 && (wdcdebug_mask & DEBUG_DELAY))
+		printf("wdcwait: did busy-wait, time=%d\n", time);
+#endif
 	if (status & WDCS_ERR)
 		chp->ch_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 		    wd_error);
