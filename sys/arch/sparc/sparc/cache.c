@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.39 1998/10/08 22:27:33 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.40 1998/10/09 10:48:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -715,6 +715,22 @@ hypersparc_cache_flush_all()
 	hypersparc_pure_vcache_flush();
 }
 
+void
+cypress_cache_flush_all()
+{
+
+	extern char kernel_text[];
+	char *p;
+	int i, ls;
+
+	/* Fill the cache with known read-only content */
+	p = (char *)kernel_text;
+	ls = CACHEINFO.c_linesize;
+	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	for (; --i >= 0; p += ls)
+		(*(volatile char *)p);
+}
+
 
 void
 viking_cache_flush(base, len)
@@ -811,6 +827,7 @@ srmmu_pcache_flush_line(va, pa)
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
  */
+#define simple_lock(x)
 void
 smp_vcache_flush_page(va)
 	int va;
