@@ -1,10 +1,10 @@
-/* $NetBSD: perform.c,v 1.2 1997/06/05 12:59:27 agc Exp $ */
+/* $NetBSD: perform.c,v 1.3 1997/10/11 22:25:16 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.41 1997/02/22 16:09:20 peter Exp";
 #else
-static const char *rcsid = "$NetBSD: perform.c,v 1.2 1997/06/05 12:59:27 agc Exp $";
+static const char *rcsid = "$NetBSD: perform.c,v 1.3 1997/10/11 22:25:16 hubertf Exp $";
 #endif
 #endif
 
@@ -242,7 +242,7 @@ pkg_do(char *pkg)
 		    if (cp) {
 			if (Verbose)
 			    printf("Loading it from %s.\n", cp);
-			if (vsystem("pkg_add %s", cp)) {
+			if (vsystem("pkg_add %s%s", Verbose ? "-v " : "", cp)) {
 			    whinge("Autoload of dependency `%s' failed%s", cp, Force ? " (proceeding anyway)" : "!");
 			    if (!Force)
 				++code;
