@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop_pci.c,v 1.1 2002/04/21 22:52:06 bouyer Exp $	*/
+/*	$NetBSD: esiop_pci.c,v 1.2 2002/04/23 20:41:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.1 2002/04/21 22:52:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.2 2002/04/23 20:41:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.22 2002/04/23 17:33:28 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.23 2002/04/23 20:41:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.22 2002/04/23 17:33:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.23 2002/04/23 20:41:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
