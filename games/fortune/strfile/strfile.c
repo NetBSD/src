@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.16 1999/12/30 01:32:33 simonb Exp $	*/
+/*	$NetBSD: strfile.c,v 1.17 2000/01/13 16:19:36 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.16 1999/12/30 01:32:33 simonb Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.17 2000/01/13 16:19:36 jsm Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -107,10 +107,6 @@ __RCSID("$NetBSD: strfile.c,v 1.16 1999/12/30 01:32:33 simonb Exp $");
 			if (ptr == NULL) \
 				die("out of space"); \
 		} while (0)
-
-#ifdef NO_VOID
-# define	void	char
-#endif
 
 typedef struct {
 	char	first;
