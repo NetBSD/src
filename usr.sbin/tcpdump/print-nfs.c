@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.15 2001/01/28 10:05:06 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.16 2001/05/15 05:59:13 assar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.15 2001/01/28 10:05:06 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.16 2001/05/15 05:59:13 assar Exp $");
 #endif
 #endif
 
@@ -1496,7 +1496,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 	case NFSPROC_ACCESS:
 		printf(" access");
 		dp = parserep(rp, length);
-		if (!(dp = parsestatus(dp, &er)))
+		if (!dp || !(dp = parsestatus(dp, &er)))
 			break;
 		if (vflag)
 			printf(" attr:");
