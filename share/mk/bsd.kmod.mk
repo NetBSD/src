@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.14 1997/05/07 17:06:19 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.15 1997/05/07 17:17:20 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -55,7 +55,7 @@ beforedepend: machine
 #
 # define various install targets
 #
-if !target(kmodinstall)
+.if !target(kmodinstall)
 kmodinstall:: ${DESTDIR}${KMODDIR}/${PROG}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${KMODDIR}/${PROG}
