@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.23 1998/01/03 01:13:10 thorpej Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.23.4.1 1998/01/27 02:11:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,19 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PMAP_
-#define	_MACHINE_PMAP_
-
 /*
  * Physical map structures exported to the VM code.
+ * XXX - Does user-level code really see this struct?
  */
 
 struct pmap {
-	int             	pm_refcount;	/* pmap reference count */
+	unsigned char   	*pm_segmap; 	/* soft copy of segmap */
+	int             	pm_ctxnum;	/* MMU context number */
 	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	int             	pm_refcount;	/* reference count */
 	int             	pm_version;
-	int             	pm_ctxnum;
-	unsigned char   	*pm_segmap;
 };
 
 typedef struct pmap *pmap_t;
@@ -99,4 +97,3 @@ extern segsz_t pmap_wired_pages(pmap_t);
 #define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
 #endif	/* _KERNEL */
-#endif	/* _MACHINE_PMAP_ */
