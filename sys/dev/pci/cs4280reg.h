@@ -1,8 +1,7 @@
-/*	$NetBSD: cs4280reg.h,v 1.1 1999/12/13 20:19:25 augustss Exp $	*/
-/*	$Tera: cs4280reg.h,v 1.2 1999/12/13 09:01:57 tacha Exp $	*/
+/*	$NetBSD: cs4280reg.h,v 1.2 2000/01/14 14:39:13 augustss Exp $	*/
 
 /*
- * Copyright (c) 1999 Tatoku Ogaito.  All rights reserved.
+ * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -91,6 +90,9 @@
 #define  SERC2_SI1F_ADC    0x00000004
 #define  SERC2_SI1F_SPDIF  0x00000006
 
+#define CS4280_SERBSP      0x43c
+#define  SERBSP_FSP_MASK   0x0000000f
+
 #define CS4280_SERBST      0x440
 #define  SERBST_RRDY       0x00000001
 #define  SERBST_WBSY       0x00000002
@@ -152,12 +154,35 @@
 #define CS4280_CFGI	   0x4b0        /* Configuration Interface Register */
 
 #define CS4280_SERACC      0x4d8
-#define SERACC_CTYPE_MASK  0x00000001
-#define SERACC_CTYPE_1_03  0x00000000
-#define SERACC_CTYPE_2_0   0x00000001
-#define SERACC_TWO_CODECS  0x00000002
-#define SERACC_MDM         0x00000004
-#define SERACC_HSP         0x00000008
+#define  SERACC_CTYPE_MASK 0x00000001
+#define  SERACC_CTYPE_1_03 0x00000000
+#define  SERACC_CTYPE_2_0  0x00000001
+#define  SERACC_TWO_CODECS 0x00000002
+#define  SERACC_MDM        0x00000004
+#define  SERACC_HSP        0x00000008
+
+/* Midi Port */
+#define CS4280_MIDCR       0x490        /* MIDI Control Register */
+#define  MIDCR_TXE         0x00000001   /* MIDI Transmit Enable */
+#define  MIDCR_RXE         0x00000002   /* MIDI Receive Enable */
+#define  MIDCR_RIE         0x00000004   /* MIDI Receive Interrupt Enable */
+#define  MIDCR_TIE         0x00000008   /* MIDI Transmit Interrupt Enable */
+#define  MIDCR_MLB         0x00000010   /* MIDI Loop Back Enable */
+#define  MIDCR_MRST        0x00000020   /* MIDI Reset */
+#define  MIDCR_MASK        0x0000003f
+#define CS4280_MIDSR       0x494        /* Host MIDI Status Register */
+#define  MIDSR_TBF         0x00000001   /* Transmit Buffer Full */
+#define  MIDSR_RBE         0x00000002   /* Receive Buffer Empty */
+#define CS4280_MIDWP       0x498        /* MIDI Write Port */
+#define  MIDWP_MASK        0x000000ff
+#define CS4280_MIDRP       0x49c        /* MIDI Read Port */
+#define  MIDRP_MASK        0x000000ff
+
+/* Joy Stick Port */
+#define CS4280_JSPT        0x480        /* Joystick Poll/Trigger Register */
+#define CS4280_JSCTL       0x484        /* Joystick Control Register */
+#define CS4280_JSC1        0x488        /* Joystick Coordinate Register 1 */
+#define CS4280_JSC2        0x48c        /* Joystick Coordinate Register 2 */
 
 
 /* BA1 */
@@ -207,26 +232,6 @@
 #define CS4280_CGC        0x0138	/* Capture Group Count */
 #define  CGC_MASK         0x0000ffff
 #define CS4280_CVOL       0x02f8	/* Capture Volume */
-
-#define CS4280_MIDCR      0x0490        /* MIDI Control Register */
-#define  MIDCR_TXE        0x00000001    /* MIDI Transmit Enable */
-#define  MIDCR_RXE        0x00000002    /* MIDI Receive Enable */
-#define  MIDCR_RIE        0x00000004    /* MIDI Receive Interrupt Enable */
-#define  MIDCR_TIE        0x00000008    /* MIDI Transmit Interrupt Enable */
-#define  MIDCR_MLB        0x00000010    /* MIDI Loop Back Enable */
-#define  MIDCR_MRST       0x00000020    /* MIDI Reset */
-#define  MIDCR_MASK       0x0000003f
-#define CS4280_MIDSR      0x0494        /* Host MIDI Status Register */
-#define  MIDSR_TBF        0x00000001    /* Transmit Buffer Full */
-#define  MIDSR_RBE        0x00000002    /* Receive Buffer Empty */
-#define CS4280_MIDWP      0x0498        /* MIDI Write Port */
-#define  MIDWP_MASK       0x000000ff
-#define CS4280_MIDRP      0x049c        /* MIDI Read Port */
-
-#define CS4280_JSPT       0x0480        /* Joystick Poll/Trigger Register */
-#define CS4280_JSCTL      0x0484        /* Joystick Control Register */
-#define CS4280_JSC1       0x0488        /* Joystick Coordinate Register 1 */
-#define CS4280_JSC2       0x048c        /* Joystick Coordinate Register 2 */
 
 /* Processor Registers */
 #define CS4280_SPCR       0x30000	/* Processor Control Register */
