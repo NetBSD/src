@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1.c,v 1.10 1994/09/23 14:27:14 mycroft Exp $";
+static char *rcsid = "$Id: pass1.c,v 1.11 1994/09/23 23:49:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,10 +101,8 @@ checkinode(inumber, idesc)
 	dp = getnextinode(inumber);
 	mode = dp->di_mode & IFMT;
 	if (mode == 0) {
-		if (bcmp((char *)dp->di_db, (char *)zino.di_db,
-			NDADDR * sizeof(daddr_t)) ||
-		    bcmp((char *)dp->di_ib, (char *)zino.di_ib,
-			NIADDR * sizeof(daddr_t)) ||
+		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
+		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%lu", inumber);
 			if (reply("CLEAR") == 1) {

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/19/94";*/
-static char *rcsid = "$Id: route.c,v 1.8 1994/09/23 14:28:02 mycroft Exp $";
+static char *rcsid = "$Id: route.c,v 1.9 1994/09/23 23:51:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -917,9 +917,9 @@ ns_print(sns)
 		return (mybuf);
 	}
 
-	if (bcmp((char *)ns_bh, (char *)work.x_host.c_host, 6) == 0)
+	if (memcmp(ns_bh, work.x_host.c_host, 6) == 0)
 		host = "any";
-	else if (bcmp((char *)ns_nullh, (char *)work.x_host.c_host, 6) == 0)
+	else if (memcmp(ns_nullh, work.x_host.c_host, 6) == 0)
 		host = "*";
 	else {
 		q = work.x_host.c_host;
