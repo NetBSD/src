@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.18.2.3 1994/04/15 01:54:43 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.18.2.4 1994/04/15 06:28:04 cgd Exp $
  */
 
 /*
@@ -155,7 +155,7 @@ smmap(p, uap, retval)				/* XXX SHOULD BE mmap() */
 	 * Size is implicitly rounded to a page boundary.
 	 */
 	addr = (vm_offset_t) uap->addr;
-	if ((flags & MAP_FIXED) && (addr & page_mask) || uap->len < 0)
+	if ((flags & MAP_FIXED) && (addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
 	if ((flags & MAP_FIXED) && (addr + size > VM_MAXUSER_ADDRESS))
@@ -349,7 +349,7 @@ msync(p, uap, retval)
 		printf("msync(%d): addr %x len %x\n",
 		       p->p_pid, uap->addr, uap->len);
 #endif
-	if (((int)uap->addr & page_mask) || uap->len < 0)
+	if (((int)uap->addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	addr = oaddr = (vm_offset_t)uap->addr;
 	osize = (vm_size_t)uap->len;
@@ -420,7 +420,7 @@ munmap(p, uap, retval)
 		       p->p_pid, uap->addr, uap->len);
 #endif
 	addr = (vm_offset_t) uap->addr;
-	if ((addr & page_mask) || uap->len < 0)
+	if ((addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
 	if (size == 0)
@@ -473,7 +473,7 @@ mprotect(p, uap, retval)
 		       p->p_pid, uap->addr, uap->len, uap->prot);
 #endif
 	addr = (vm_offset_t) uap->addr;
-	if ((addr & page_mask) || uap->len < 0)
+	if ((addr & PAGE_MASK) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) uap->len;
 	/*

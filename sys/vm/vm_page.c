@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.12.2.2 1994/04/15 04:24:30 cgd Exp $
+ *	$Id: vm_page.c,v 1.12.2.3 1994/04/15 06:28:07 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -96,11 +96,6 @@ int		vm_page_bucket_count = 0;	/* How big is array? */
 int		vm_page_hash_mask;		/* Mask for hash function */
 simple_lock_data_t	bucket_lock;		/* lock for all buckets XXX */
 
-/* XXX XXX XXX */
-vm_size_t	page_size  = 4096;
-vm_size_t	page_mask  = 4095;
-int		page_shift = 12;
-
 struct pglist	vm_page_queue_free;
 struct pglist	vm_page_queue_active;
 struct pglist	vm_page_queue_inactive;
@@ -118,6 +113,8 @@ vm_offset_t	last_phys_addr;
 u_long		first_page;
 int		vm_page_count;
 #endif /* MACHINE_NONCONTIG */
+vm_size_t	page_mask;
+int		page_shift;
 
 /*
  *	vm_set_page_size:
@@ -131,13 +128,14 @@ int		vm_page_count;
 void
 vm_set_page_size()
 {
-	page_mask = page_size - 1;
 
-	if ((page_mask & page_size) != 0)
+	if (cnt.v_page_size == 0)
+		cnt.v_page_size = DEFAULT_PAGE_SIZE;
+	page_mask = cnt.v_page_size - 1;
+	if ((page_mask & cnt.v_page_size) != 0)
 		panic("vm_set_page_size: page size not a power of two");
-
 	for (page_shift = 0; ; page_shift++)
-		if ((1 << page_shift) == page_size)
+		if ((1 << page_shift) == cnt.v_page_size)
 			break;
 }
 
@@ -394,7 +392,7 @@ vm_page_startup(start, end, vaddr)
 	last_page  = first_page + npages - 1;
 
 	first_phys_addr = ptoa(first_page);
-	last_phys_addr  = ptoa(last_page) + page_mask;
+	last_phys_addr  = ptoa(last_page) + PAGE_MASK;
 
 	/*
 	 *	Validate these addresses.
@@ -438,12 +436,17 @@ pmap_steal_memory(size)
 	vm_size_t	size;
 {
 	vm_offset_t	addr, vaddr, paddr;
-	
+
+#ifdef i386	/* XXX i386 calls pmap_steal_memory before vm_mem_init() */
+	if (cnt.v_page_size == 0)		/* XXX */
+		vm_set_page_size();
+#endif
+
 	/*
 	 *	We round the size to an integer multiple.
 	 */
 	
-	size = (size + 3) &~ 3;
+	size = (size + 3) &~ 3; /* XXX */
 	
 	/*
 	 *	If this is the first call to pmap_steal_memory,

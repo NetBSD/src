@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.10.2.2 1994/04/15 04:24:33 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.10.2.3 1994/04/15 06:28:09 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -210,7 +210,7 @@ vm_pageout_scan()
 				pmap_page_protect(VM_PAGE_TO_PHYS(m),
 						  VM_PROT_NONE);
 				m->flags |= PG_BUSY;
-				cnt.v_pgpgout++;
+				cnt.v_pageouts++;
 
 				/*
 				 *	Try to collapse the object before
