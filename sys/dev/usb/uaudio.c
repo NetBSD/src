@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.15 2000/01/06 21:13:55 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.16 2000/01/16 09:32:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -209,6 +209,9 @@ static void		uaudio_add_selector __P((struct uaudio_softc *sc,
 			    usb_descriptor_t *v, usb_descriptor_t **dps));
 static void		uaudio_add_feature __P((struct uaudio_softc *sc,
 			    usb_descriptor_t *v, usb_descriptor_t **dps));
+static void		uaudio_add_processing_updown
+			    __P((struct uaudio_softc *sc,
+			         usb_descriptor_t *v, usb_descriptor_t **dps));
 static void		uaudio_add_processing __P((struct uaudio_softc *sc,
 			    usb_descriptor_t *v, usb_descriptor_t **dps));
 static void		uaudio_add_extension __P((struct uaudio_softc *sc,
@@ -887,6 +890,46 @@ uaudio_add_feature(sc, v, dps)
 }
 
 void
+uaudio_add_processing_updown(sc, v, dps)
+	struct uaudio_softc *sc;
+	usb_descriptor_t *v;
+	usb_descriptor_t **dps;
+{
+	struct usb_audio_processing_unit *d = 
+	    (struct usb_audio_processing_unit *)v;
+	struct usb_audio_processing_unit_1 *d1 =
+	    (struct usb_audio_processing_unit_1 *)&d->baSourceId[d->bNrInPins];
+	struct usb_audio_processing_unit_updown *ud =
+	    (struct usb_audio_processing_unit_updown *)
+		&d1->bmControls[d1->bControlSize];
+	struct mixerctl mix;
+	int i;
+
+	DPRINTFN(2,("uaudio_add_processing_updown: bUnitId=%d bNrModes=%d\n",
+		    d->bUnitId, ud->bNrModes));
+
+	if (!(d1->bmControls[0] & UA_PROC_MASK(UD_MODE_SELECT_CONTROL))) {
+		DPRINTF(("uaudio_add_processing_updown: no mode select\n"));
+		return;
+	}
+
+	mix.wIndex = MAKE(d->bUnitId, sc->sc_ac_iface);
+	mix.nchan = 1;
+	mix.wValue[0] = MAKE(UD_MODE_SELECT_CONTROL, 0);
+	mix.class = -1;
+	mix.type = MIX_ON_OFF;	/* XXX */
+	mix.ctlunit = "";
+	sprintf(mix.ctlname, "pro%d-mode", d->bUnitId);
+
+	for (i = 0; i < ud->bNrModes; i++) {
+		DPRINTFN(2,("uaudio_add_processing_updown: i=%d bm=0x%x\n",
+			    i, UGETW(ud->waModes[i])));
+		/* XXX */
+	}
+	uaudio_mixer_add_ctl(sc, &mix);
+}
+
+void
 uaudio_add_processing(sc, v, dps)
 	struct uaudio_softc *sc;
 	usb_descriptor_t *v;
@@ -915,6 +958,8 @@ uaudio_add_processing(sc, v, dps)
 
 	switch(ptype) {
 	case UPDOWNMIX_PROCESS:
+		uaudio_add_processing_updown(sc, v, dps);
+		break;
 	case DOLBY_PROLOGIC_PROCESS:
 	case P3D_STEREO_EXTENDER_PROCESS:
 	case REVERBATION_PROCESS:
