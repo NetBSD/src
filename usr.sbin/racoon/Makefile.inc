@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/08/27 14:46:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/09/18 03:54:36 lukem Exp $
 
-.include <bsd.own.mk>		# for MKDYNAMICROOT definition
+.include <bsd.own.mk>		# for NETBSDSRCDIR & MKDYNAMICROOT definition
 
 # point top of your KAME tree by ${KAMEROOT}
-LIBPFKEYSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/libipsec
-RACOONSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/racoon
-TCPDUMPSRCDIR=	${.CURDIR}/../../../dist/tcpdump
+LIBPFKEYSRCDIR=	${NETBSDSRCDIR}/crypto/dist/kame/libipsec
+RACOONSRCDIR=	${NETBSDSRCDIR}/crypto/dist/kame/racoon
+TCPDUMPSRCDIR=	${NETBSDSRCDIR}/dist/tcpdump
 
 ETCDIR?=	/etc/racoon
 FILESDIR?=	/usr/share/examples/racoon
