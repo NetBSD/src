@@ -1,4 +1,4 @@
-/*	$NetBSD: db_defs.h,v 1.1.1.1.8.2 2002/07/01 17:14:08 he Exp $	*/
+/*	$NetBSD: db_defs.h,v 1.1.1.1.8.3 2002/11/14 14:40:39 itojun Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
@@ -80,7 +80,7 @@
  */
 
 	/* max length of data in RR data field */
-#define MAXDATA		(2*MAXDNAME + 5*INT32SZ)
+#define MAXDATA		(3*MAXDNAME + 5*INT32SZ)
 
 	/* max length of data in a TXT RR segment */
 #define MAXCHARSTRING 255
