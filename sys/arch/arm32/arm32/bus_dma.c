@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 1998/07/17 21:09:59 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 1998/08/17 22:28:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -67,9 +67,8 @@
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 
-int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, bus_dma_segment_t *, int, vm_offset_t *,
-	    int *, int));
+int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));
 int	_bus_dma_inrange __P((bus_dma_segment_t *, int, bus_addr_t));
 
 /*
@@ -181,8 +180,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		return (EINVAL);
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-	    t->_ranges, t->_nranges, &lastaddr, &seg, 1);
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	    &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -230,9 +229,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer(map, m->m_data, m->m_len,
-		    NULL, flags, t->_ranges, t->_nranges, &lastaddr, &seg,
-		    first);
+		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -300,8 +298,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
 		addr = (caddr_t)iov[i].iov_base + offset;
 
-		error = _bus_dmamap_load_buffer(map, addr, minlen,
-		    p, flags, t->_ranges, t->_nranges, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
+		    p, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		offset = 0;
@@ -639,15 +637,13 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(map, buf, buflen, p, flags, ranges, nranges, lastaddrp,
-    segp, first)
+_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_dma_segment_t *ranges;
-	int nranges;
 	vm_offset_t *lastaddrp;
 	int *segp;
 	int first;
@@ -680,8 +676,8 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, ranges, nranges, lastaddrp,
 		/*
 		 * Make sure we're in an allowed DMA range.
 		 */
-		if (ranges != NULL &&
-		    _bus_dma_inrange(ranges, nranges, curaddr) == 0)
+		if (t->_ranges != NULL &&
+		    _bus_dma_inrange(t->_ranges, t->_nranges, curaddr) == 0)
 			return (EINVAL);
 
 		/*
