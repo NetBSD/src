@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.133 2005/02/20 20:54:52 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.134 2005/02/26 17:36:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -808,8 +808,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			}
 			/* chroot 'cos no rmdir in install fs */
 			run_program(RUN_CHROOT | RUN_SILENT | RUN_ERROR_OK,
-					"/bin/rmdir %s/%s",
-					target_prefix(), dist_dir);
+					"/bin/rmdir %s", dist_dir);
 		}
 	}
 
