@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.7 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: systemsw.c,v 1.8 2003/05/29 02:22:51 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -159,6 +159,7 @@ cpu_intr_triv(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 void
 cpu_setsoftintr_triv(void)
 {
+
 	panic("cpu_setsoftintr_triv");
 }
 
