@@ -1,5 +1,5 @@
-#	$NetBSD: list,v 1.1 1999/03/12 18:36:52 ragge Exp $
+#	$NetBSD: list,v 1.1.2.1 2000/11/04 19:42:52 he Exp $
 
 # copy the kernel
-COPY	${OBJDIR}/netbsd.ram.gz	netbsd.gz
+SPECIAL	gzip -c -9 < ${KERNOBJDIR}/INSTALL/netbsd > netbsd
 COPY	${DESTDIR}/boot		boot
