@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.12 1994/03/28 06:16:21 chopps Exp $
+ *	$Id: ser.c,v 1.13 1994/03/30 17:24:36 chopps Exp $
  */
 
 #include "ser.h"
@@ -48,6 +48,7 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
 
 #include <amiga/dev/device.h>
 #include <amiga/dev/serreg.h>
@@ -55,7 +56,6 @@
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
-#include <amiga/amiga/dlists.h>
 #include <amiga/amiga/cc.h>
 
 int	serprobe();

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.5 1994/02/17 09:10:59 chopps Exp $
+ *	$Id: view.c,v 1.6 1994/03/30 17:24:37 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <amiga/dev/device.h>
 
@@ -56,7 +57,6 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 
-#include <amiga/amiga/dlists.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>

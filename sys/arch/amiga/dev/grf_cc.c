@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_cc.c,v 1.9 1994/02/13 21:10:26 chopps Exp $
+ *	$Id: grf_cc.c,v 1.10 1994/03/30 17:24:31 chopps Exp $
  */
 
 #include "grf.h"
@@ -15,12 +15,12 @@
 #include <vm/vm_param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
+
 #include <machine/cpu.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
-#include <amiga/amiga/dlists.h>
-
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_ccreg.h>

@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.11 1994/02/17 09:10:46 chopps Exp $
+ *	$Id: ite_cc.c,v 1.12 1994/03/30 17:24:34 chopps Exp $
  */
 
 #include "ite.h"
@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/queue.h>
 #include <dev/cons.h>
 
 #include "ite.h"
@@ -21,9 +22,7 @@
 #include <amiga/dev/iteioctl.h>
 #include <machine/cpu.h>
 
-#include <amiga/amiga/dlists.h>
 #include <amiga/amiga/cc.h>
-
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>
