@@ -34,18 +34,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)abs.s	5.2 (Berkeley) 12/17/90
- *	$Id: labs.S,v 1.4 1994/03/12 01:48:28 jtc Exp $
+ *	$Id: labs.S,v 1.5 1994/03/16 17:40:25 jtc Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$Id: labs.S,v 1.4 1994/03/12 01:48:28 jtc Exp $")
+RCSID("$Id: labs.S,v 1.5 1994/03/16 17:40:25 jtc Exp $")
 #endif
 
 ENTRY(labs)
 	movl	4(%esp),%eax
-	cmpl	$0,%eax
-	jge	1f
+	testl	%eax,%eax
+	jns	1f
 	negl	%eax
 1:	ret
