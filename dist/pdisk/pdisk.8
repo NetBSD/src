@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.4 2002/09/09 11:29:56 dbj Exp $
+.\"	$NetBSD: pdisk.8,v 1.5 2002/09/09 11:33:31 wiz Exp $
 .Dd August 19, 2002
 .Os
 .Dt PDISK 8
@@ -7,15 +7,15 @@
 .Nd Apple partition table editor
 .Sh SYNOPSIS
 .Nm
-.Op Fl acdhilLfrv
+.Op Fl acdfhilLrv
 .Op Fl -abbr
 .Op Fl -compute_size
 .Op Fl -debug
+.Op Fl -fname
 .Op Fl -help
 .Op Fl -interactive
 .Op Fl -list Ar name
 .Op Fl -logical
-.Op Fl -fname
 .Op Fl -readonly
 .Op Fl -version
 .Op Ar device ...
@@ -27,7 +27,7 @@ It does not support the Intel/DOS partitioning scheme supported by
 .Xr fdisk 8 .
 .Pp
 Supported options are:
-.Bl -tag -width "--compute_size" -compact
+.Bl -tag -width "--compute_sizeXX" -compact
 .It Fl a
 .It Fl -abbr
 Abbreviate the partition types shown in the partition list.
@@ -44,6 +44,9 @@ a new command
 .Sq x
 to the editing commands that accesses an eclectic bunch of
 undocumented functionality.
+.It Fl f
+.It Fl -fname
+Show HFS volume names instead of partition name when available.
 .It Fl h
 .It Fl -help
 Prints a short help message.
@@ -66,9 +69,6 @@ lists the partition tables for the specified
 .It Fl L
 .It Fl -logical
 Show partition limits in logical blocks.  Default is physical blocks.
-.It Fl f
-.It Fl -fname
-Show HFS volume names instead of partition name when available
 .It Fl r
 .It Fl -readonly
 Prevents
@@ -202,5 +202,6 @@ The
 option has not been heavily tested.
 .Pp
 .Nm
-cannot create NetBSD partitions.  This is being worked on.
-.Pp
+cannot create
+.Nx
+partitions.  This is being worked on.
