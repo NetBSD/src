@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.63 1994/11/18 22:03:10 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.64 1994/11/18 22:25:12 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -141,7 +141,7 @@ static int ed_intr[] = { 9, 3, 5, 7, 10, 11, 15, 4 };
 /*
  * Interrupt conversion table for 585/790 Combo.
  */
-static int ed_790_intr[] = { -1, 9, 3, 5, 7, 10, 11, 15 };
+static int ed_790_intr[] = { IRQUNK, 9, 3, 5, 7, 10, 11, 15 };
 	
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
