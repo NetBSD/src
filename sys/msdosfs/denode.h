@@ -13,16 +13,16 @@
  * 
  * October 1992
  * 
- *	$Id: denode.h,v 1.2 1993/09/07 15:41:31 ws Exp $
+ *	$Id: denode.h,v 1.3 1994/03/03 00:51:31 paulus Exp $
  */
 
 /*
  * This is the pc filesystem specific portion of the vnode structure. To
  * describe a file uniquely the de_dirclust, de_diroffset, and
- * de_de.deStartCluster fields are used.  de_dirclust contains the cluster
+ * de_StartCluster fields are used.  de_dirclust contains the cluster
  * number of the directory cluster containing the entry for a file or
  * directory.  de_diroffset is the index into the cluster for the entry
- * describing a file or directory.  de_de.deStartCluster is the number of
+ * describing a file or directory.  de_StartCluster is the number of
  * the first cluster of the file or directory.  Now to describe the quirks
  * of the pc filesystem. - Clusters 0 and 1 are reserved. - The first
  * allocatable cluster is 2. - The root directory is of fixed size and all
@@ -105,7 +105,14 @@ struct denode {
 	struct lockf *de_lockf;	/* byte level lock list */
 	long de_spare0;		/* current lock holder */
 	long de_spare1;		/* lock wanter */
-	struct direntry de_de;	/* the actual directory entry */
+	/* the next two fields must be contiguous in memory... */
+	u_char de_Name[8];	/* name, from directory entry */
+	u_char de_Extension[3];	/* extension, from directory entry */
+	u_char de_Attributes;	/* attributes, from directory entry */
+	u_short de_Time;	/* creation time */
+	u_short de_Date;	/* creation date */
+	u_short de_StartCluster; /* starting cluster of file */
+	u_long de_FileSize;	/* size of file in bytes */
 	struct fatcache de_fc[FC_SIZE];	/* fat cache */
 };
 
@@ -122,17 +129,26 @@ struct denode {
 #define	DEMOD		0x0080	/* denode wants to be written back to disk */
 
 /*
- * Shorthand macros used to reference fields in the direntry contained in
- * the denode structure.
+ * Transfer directory entries between internal and external form.
+ * dep is a struct denode * (internal form),
+ * dp is a struct direntry * (external form).
  */
-#define	de_Name		de_de.deName
-#define	de_Extension	de_de.deExtension
-#define	de_Attributes	de_de.deAttributes
-#define	de_Reserved	de_de.deReserved
-#define	de_Time		de_de.deTime
-#define	de_Date		de_de.deDate
-#define	de_StartCluster	de_de.deStartCluster
-#define	de_FileSize	de_de.deFileSize
+#define DE_INTERNALIZE(dep, dp)			\
+	(bcopy((dp)->deName, (dep)->de_Name, 11),	\
+	 (dep)->de_Attributes = (dp)->deAttributes,	\
+	 (dep)->de_Time = getushort((dp)->deTime),	\
+	 (dep)->de_Date = getushort((dp)->deDate),	\
+	 (dep)->de_StartCluster = getushort((dp)->deStartCluster), \
+	 (dep)->de_FileSize = getulong((dp)->deFileSize))
+
+#define DE_EXTERNALIZE(dp, dep)				\
+	(bcopy((dep)->de_Name, (dp)->deName, 11),	\
+	 (dp)->deAttributes = (dep)->de_Attributes,	\
+	 putushort((dp)->deTime, (dep)->de_Time),	\
+	 putushort((dp)->deDate, (dep)->de_Date),	\
+	 putushort((dp)->deStartCluster, (dep)->de_StartCluster), \
+	 putulong((dp)->deFileSize, (dep)->de_FileSize))
+
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
@@ -151,8 +167,7 @@ struct denode {
 #define	DETIMES(dep, t) \
 	if (dep->de_flag & DEUPD) { \
 		(dep)->de_flag |= DEMOD; \
-		unix2dostime(t, (union dosdate *)&dep->de_Date, \
-			(union dostime *)&dep->de_Time); \
+		unix2dostime(t, &dep->de_Date, &dep->de_Time); \
 		(dep)->de_flag &= ~DEUPD; \
 	}
 

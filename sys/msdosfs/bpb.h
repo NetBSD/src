@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: bpb.h,v 1.1 1993/08/13 11:35:30 cgd Exp $
+ *	$Id: bpb.h,v 1.2 1994/03/03 00:51:30 paulus Exp $
  */
 
 /*
@@ -57,15 +57,29 @@ struct bpb50 {
  * and longs are just character arrays of the appropriate length.  This is
  * because the compiler forces shorts and longs to align on word or
  * halfword boundaries.
+ *
+ * XXX The little-endian code here assumes that the processor can access
+ * 16-bit and 32-bit quantities on byte boundaries.  If this is not true,
+ * use the macros for the big-endian case.
  */
 #include <machine/endian.h>
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN		/* && can do unaligned accesses */
 #define	getushort(x)	*((u_short *)(x))
 #define	getulong(x)	*((u_long *)(x))
 #define	putushort(p, v)	(*((u_short *)(p)) = (v))
 #define	putulong(p, v)	(*((u_long *)(p)) = (v))
-#else
 
+#else
+#define getushort(x)	(((u_char *)(x))[0] + (((u_char *)(x))[1] << 8))
+#define getulong(x)	(((u_char *)(x))[0] + (((u_char *)(x))[1] << 8) \
+			 + (((u_char *)(x))[2] << 16)	\
+			 + (((u_char *)(x))[3] << 24))
+#define putushort(p, v)	(((u_char *)(p))[0] = (v),	\
+			 ((u_char *)(p))[1] = (v) >> 8)
+#define putulong(p, v)	(((u_char *)(p))[0] = (v),	\
+			 ((u_char *)(p))[1] = (v) >> 8, \
+			 ((u_char *)(p))[2] = (v) >> 16,\
+			 ((u_char *)(p))[3] = (v) >> 24)
 #endif
 
 /*
