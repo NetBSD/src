@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2000/05/27 16:33:04 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.54 2000/05/29 20:00:55 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -123,18 +123,14 @@ userret(p, frame, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-#if defined(MULTIPROCESSOR)
 	if (curcpu()->ci_want_resched) {
-#else
-	if (want_resched) {
-#endif
 		/*
 		 * We are being preempted.
 		 */
 		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
-	} /* } */
+	}
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
