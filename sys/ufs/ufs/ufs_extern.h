@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.2 1994/06/29 06:47:25 cgd Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.3 1994/12/13 20:16:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -81,6 +81,12 @@ int	 ufs_inactive __P((struct vop_inactive_args *));
 int	 ufs_init __P((void));
 int	 ufs_ioctl __P((struct vop_ioctl_args *));
 int	 ufs_islocked __P((struct vop_islocked_args *));
+#ifdef NFSSERVER
+int	 lease_check __P((struct vop_lease_args *));
+#define	 ufs_lease_check lease_check
+#else
+#define	 ufs_lease_check ((int (*) __P((struct vop_lease_args *)))nullop)
+#endif
 int	 ufs_link __P((struct vop_link_args *));
 int	 ufs_lock __P((struct vop_lock_args *));
 int	 ufs_lookup __P((struct vop_lookup_args *));

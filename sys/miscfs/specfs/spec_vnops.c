@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.20 1994/11/14 06:07:45 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.21 1994/12/13 20:14:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spec_vnops.c	8.6 (Berkeley) 4/9/94
+ *	@(#)spec_vnops.c	8.8 (Berkeley) 11/21/94
  */
 
 #include <sys/param.h>
@@ -73,6 +73,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_setattr_desc, spec_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_select_desc, spec_select },		/* select */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
@@ -178,7 +179,7 @@ spec_open(ap)
 		}
 		VOP_UNLOCK(vp);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR,
-					      ap->a_p, ap->a_fp);
+		    ap->a_p, ap->a_fp);
 		VOP_LOCK(vp);
 		return (error);
 
@@ -199,7 +200,7 @@ spec_open(ap)
 		if (error = vfs_mountedon(vp))
 			return (error);
 		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK,
-					      ap->a_p, ap->a_fp));
+		    ap->a_p, ap->a_fp));
 	}
 	return (0);
 }

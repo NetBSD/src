@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.27 1994/11/14 06:02:06 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.28 1994/12/13 20:16:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vnode.h	8.7 (Berkeley) 2/4/94
+ *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
  */
 
 #include <sys/queue.h>
@@ -110,6 +110,7 @@ struct vnode {
 #define	VROOT		0x0001	/* root of its file system */
 #define	VTEXT		0x0002	/* vnode is a pure text prototype */
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
+#define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VBWAIT		0x0400	/* waiting for output to complete */
@@ -224,16 +225,6 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
 #define	LEASE_READ	0x1		/* Check lease for readers */
 #define	LEASE_WRITE	0x2		/* Check lease for modifiers */
 
-#ifdef NFSCLIENT
-void	lease_check __P((struct vnode *vp, struct proc *p,
-	    struct ucred *ucred, int flag));
-void	lease_updatetime __P((int deltat));
-#define	LEASE_CHECK(vp, p, cred, flag)	lease_check((vp), (p), (cred), (flag))
-#define	LEASE_UPDATETIME(dt)		lease_updatetime(dt)
-#else
-#define	LEASE_CHECK(vp, p, cred, flag)
-#define	LEASE_UPDATETIME(dt)
-#endif /* NFSCLIENT */
 #endif /* KERNEL */
 
 
@@ -388,7 +379,7 @@ int 	vn_closefile __P((struct file *fp, struct proc *p));
 int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
 	    struct proc *p));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode,
-		     struct file *fp));
+	    struct file *fp));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, int *aresid, struct proc *p));
