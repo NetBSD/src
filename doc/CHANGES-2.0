@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.338 2004/07/15 16:01:41 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.339 2004/07/15 21:44:25 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5488,3 +5488,291 @@ bin/pax/tar.c					1.57
 	Fix a bug in "tar --exclude" handling.
 	[hubertf, ticket #654]
 
+sys/arch/sgimips/mace/mace.c			1.2-1.3
+
+	Make sure shared interrupts are properly handled.  Makes
+	com0/com1/lpt0 on mace work if more than one is configured.
+	[tsutsui, ticket #657]
+
+lib/libc/gen/popen.3				1.14-1.15
+
+	Add a STANDARDS section; fixes PR#25957.
+	[kleink, ticket #658]
+
+sys/dev/sbus/tcx.c				1.16
+
+	Make this compile with the TCX_CG8 option turned on,
+	fixes PR#26269.
+	[pk, ticket #659]
+
+etc/defaults/rc.conf				1.61
+etc/rc.d/savecore				1.6
+share/man/man5/rc.conf.5			1.89
+
+	Make the directory into which crash dumps are saved into
+	something that can be controlled via rc.conf.  The default
+	is, of course, /var/crash.
+	[atatat, ticket #660]
+
+sys/arch/i386/conf/Makefile.i386		1.136
+sys/conf/Makefile.kern.inc			1.55
+
+	Make uudecode into a tool which can be used to build a
+	kernel and redo the athhal-elf.o handling to take advantage
+	of it.  This means that bsd.files.mk is no longer included
+	by Makefile.i386 so CFLAGS will not be duplicated.
+	[atatat, ticket #661]
+
+etc/defaults/rc.conf				1.62
+etc/rc.d/sendmail				1.17
+gnu/usr.sbin/sendmail/cf/cf/netbsd-msp.mc	1.3
+gnu/usr.sbin/sendmail/cf/cf/netbsd-proto.mc	1.12
+share/man/man5/rc.conf.5			1.90
+share/man/man8/afterboot.8			1.11
+
+	Change the default settings for sendmail:
+	1) The stock sendmail.cf will only listen on the loopback
+	   interface
+	2) The stock submit.cf specifically connects to "localhost.",
+	   which should be less susceptible to being confused or
+	   looking confused.
+	3) The SMTP listener starts by default, if needed.  The
+	   setting in /etc/default/rc.conf is still "no", but
+	   rc.d/sendmail detects the default setting and will change
+	   it to "yes" if need is determined.
+	"Need" is defined as "nothing else seems to have been
+	changed about the mail configuration but we would like
+	locally originated and locally destined mail to be delivered".
+	If you change e.g. mailer.conf to point to postfix or some
+	other MTA, sendmail will not start.
+	[atatat, ticket #662]
+
+sys/arch/acorn26/conf/FOURMEG			1.14
+sys/arch/acorn26/conf/GENERIC			1.22
+sys/arch/acorn32/conf/EB7500ATX			1.6
+sys/arch/acorn32/conf/GENERIC			1.43
+sys/arch/acorn32/conf/INSTALL			1.24
+sys/arch/acorn32/conf/LOWMEM_WSCONS		1.25
+sys/arch/acorn32/conf/NC			1.25
+sys/arch/acorn32/conf/NC_WSCONS			1.30
+sys/arch/acorn32/conf/RPC_WSCONS		1.29
+sys/arch/algor/conf/P4032			1.23
+sys/arch/algor/conf/P5064			1.28
+sys/arch/algor/conf/P6032			1.22
+sys/arch/alpha/conf/ALPHA			1.193
+sys/arch/alpha/conf/BASIL			1.25
+sys/arch/alpha/conf/FRAU-FARBISSINA		1.30
+sys/arch/alpha/conf/GENERIC			1.247
+sys/arch/alpha/conf/INSTALL			1.80
+sys/arch/alpha/conf/RAWHIDE			1.19
+sys/arch/amd64/conf/GENERIC			1.28
+sys/arch/amd64/conf/SIMICS			1.8
+sys/arch/amiga/conf/AMIGA			regenerate
+sys/arch/amiga/conf/DRACO			regenerate
+sys/arch/amiga/conf/GENERIC			regenerate
+sys/arch/amiga/conf/GENERIC.in			1.24
+sys/arch/amiga/conf/INSTALL			regenerate
+sys/arch/amiga/conf/MDINSTALL			1.17
+sys/arch/amiga/conf/WSCONS			regenerate
+sys/arch/arc/conf/ARCTIC			1.27
+sys/arch/arc/conf/GENERIC			1.104
+sys/arch/arc/conf/M403				1.25
+sys/arch/arc/conf/MIMORI			1.27
+sys/arch/arc/conf/PCCONS			1.35
+sys/arch/arc/conf/PICA				1.40
+sys/arch/arc/conf/RAMDISK			1.48
+sys/arch/arc/conf/RPC44				1.7
+sys/arch/atari/conf/ATARITT			regenerate
+sys/arch/atari/conf/BOOT			regenerate
+sys/arch/atari/conf/BOOTX			regenerate
+sys/arch/atari/conf/FALCON			regenerate
+sys/arch/atari/conf/GENERIC.in			1.39
+sys/arch/atari/conf/HADES			regenerate
+sys/arch/atari/conf/MILAN-ISAIDE		regenerate
+sys/arch/atari/conf/MILAN-PCIIDE		regenerate
+sys/arch/bebox/conf/GENERIC			1.74
+sys/arch/bebox/conf/INSTALL			1.27
+sys/arch/cats/conf/GENERIC			1.67
+sys/arch/cats/conf/INSTALL			1.38
+sys/arch/cesfic/conf/GENERIC			1.26
+sys/arch/cobalt/conf/GENERIC			1.61
+sys/arch/dreamcast/conf/GENERIC			1.44
+sys/arch/evbarm/conf/ADI_BRH			1.19
+sys/arch/evbarm/conf/INTEGRATOR			1.26
+sys/arch/evbarm/conf/IQ31244			1.15
+sys/arch/evbarm/conf/IQ80310			1.37
+sys/arch/evbarm/conf/IQ80321			1.32
+sys/arch/evbarm/conf/IXDP425			1.5
+sys/arch/evbarm/conf/IXM1200			1.8
+sys/arch/evbarm/conf/NAPPI			1.10
+sys/arch/evbarm/conf/SMDK2410			1.9
+sys/arch/evbarm/conf/SMDK2800			1.14
+sys/arch/evbarm/conf/TEAMASA_NPWR		1.34
+sys/arch/evbarm/conf/TEAMASA_NPWR_FC		1.2
+sys/arch/evbarm/conf/ZAO425			1.13
+sys/arch/evbmips/conf/MALTA			1.20
+sys/arch/evbppc/conf/EV64260			1.13
+sys/arch/evbppc/conf/EXPLORA451			1.5
+sys/arch/evbppc/conf/OPENBLOCKS266		1.9
+sys/arch/evbppc/conf/WALNUT			1.12
+sys/arch/evbsh3/conf/COMPUTEX7750		1.21
+sys/arch/evbsh3/conf/COMPUTEXEVB		1.23
+sys/arch/evbsh3/conf/CQREEKSH3			1.24
+sys/arch/evbsh3/conf/KZSH401			1.21
+sys/arch/evbsh5/conf/CAYMAN			1.14
+sys/arch/evbsh5/conf/SIMULATOR			1.9
+sys/arch/hp300/conf/GENERIC			1.103
+sys/arch/hp300/conf/INSTALL			1.15
+sys/arch/hp700/conf/GENERIC			1.27
+sys/arch/hp700/conf/SMALL			1.3
+sys/arch/hpcarm/conf/IPAQ			1.29
+sys/arch/hpcarm/conf/JORNADA720			1.35
+sys/arch/hpcmips/conf/GENERIC			1.153
+sys/arch/hpcmips/conf/LCARD			1.3
+sys/arch/hpcmips/conf/LROUTER			1.19
+sys/arch/hpcmips/conf/MPC303			1.27
+sys/arch/hpcmips/conf/NULLCONF			1.19
+sys/arch/hpcmips/conf/TX3912			1.53
+sys/arch/hpcmips/conf/TX3922			1.56
+sys/arch/hpcmips/conf/VR41XX			1.19
+sys/arch/hpcsh/conf/GENERIC			1.41 via patch
+sys/arch/hpcsh/conf/HPW650PA			1.15
+sys/arch/i386/conf/DELPHI			1.37 via patch
+sys/arch/i386/conf/DISKLESS			1.98 via patch
+sys/arch/i386/conf/GENERIC			1.622
+sys/arch/i386/conf/GENERIC_LAPTOP		1.106 via patch
+sys/arch/i386/conf/GENERIC_PS2TINY		1.30 via patch
+sys/arch/i386/conf/GENERIC_TINY			1.69 via patch
+sys/arch/i386/conf/INSTALL			1.244
+sys/arch/i386/conf/INSTALL_LAPTOP		1.62
+sys/arch/i386/conf/INSTALL_SMALL		1.106 via patch
+sys/arch/i386/conf/INSTALL_TINY			1.80 via patch
+sys/arch/i386/conf/IOPENER			1.46 via patch
+sys/arch/i386/conf/LAMB				1.37
+sys/arch/i386/conf/NET4501			1.26
+sys/arch/i386/conf/SWINGER			1.50 via patch
+sys/arch/i386/conf/VIRTUALPC			1.7
+sys/arch/ibmnws/conf/GENERIC			1.8
+sys/arch/luna68k/conf/GENERIC			1.48
+sys/arch/mac68k/conf/GENERIC			1.147
+sys/arch/mac68k/conf/GENERICSBC			1.32
+sys/arch/mac68k/conf/INSTALL			1.28
+sys/arch/mac68k/conf/INSTALLSBC			1.19
+sys/arch/mac68k/conf/SMALLRAM			1.9
+sys/arch/macppc/conf/GENERIC			1.180
+sys/arch/macppc/conf/INSTALL			1.77
+sys/arch/macppc/conf/POWERMAC			1.40
+sys/arch/mipsco/conf/GENERIC			1.37
+sys/arch/mipsco/conf/INSTALL			1.13
+sys/arch/mipsco/conf/RC3230			1.16
+sys/arch/mmeye/conf/GENERIC			1.58
+sys/arch/mmeye/conf/MMEYE			1.23
+sys/arch/mmeye/conf/MMTA			1.23
+sys/arch/mmeye/conf/MMTAICE			1.24
+sys/arch/mmeye/conf/MMTAROMNEW			1.24
+sys/arch/mvme68k/conf/GENERIC			1.48
+sys/arch/mvme68k/conf/RAMDISK			1.21
+sys/arch/mvme68k/conf/VME147			1.44
+sys/arch/mvme68k/conf/VME162			1.17
+sys/arch/mvme68k/conf/VME167			1.21
+sys/arch/mvme68k/conf/VME172			1.17
+sys/arch/mvme68k/conf/VME177			1.17
+sys/arch/mvmeppc/conf/MVME1600			1.11
+sys/arch/netwinder/conf/GENERIC			1.51
+sys/arch/news68k/conf/GENERIC			1.53
+sys/arch/news68k/conf/GENERIC_TINY		1.27
+sys/arch/news68k/conf/INSTALL			1.25
+sys/arch/news68k/conf/LIBERO			1.23
+sys/arch/news68k/conf/NEWS1200			1.23
+sys/arch/newsmips/conf/DEJIKO			1.11
+sys/arch/newsmips/conf/GENERIC			1.68
+sys/arch/newsmips/conf/INSTALL			1.21
+sys/arch/newsmips/conf/WAPIKO			1.23
+sys/arch/next68k/conf/GENERIC			1.78
+sys/arch/next68k/conf/SLAB			1.21
+sys/arch/ofppc/conf/BRIQ			1.11
+sys/arch/ofppc/conf/GENERIC			1.68
+sys/arch/pc532/conf/BULLBOX			1.15
+sys/arch/pc532/conf/DUMMY			1.22
+sys/arch/pc532/conf/GENERIC			1.41
+sys/arch/pc532/conf/INSTALL			1.32
+sys/arch/pc532/conf/KLONDIKE			1.26
+sys/arch/pc532/conf/SALMON			1.20
+sys/arch/pc532/conf/STEELHEAD			1.35
+sys/arch/pdp10/conf/GENERIC			1.6
+sys/arch/playstation2/conf/AGATE		1.8
+sys/arch/playstation2/conf/DEBUG		1.11
+sys/arch/playstation2/conf/GENERIC		1.6
+sys/arch/playstation2/conf/RAMDISK		1.9
+sys/arch/pmax/conf/GENERIC			1.120
+sys/arch/pmax/conf/INSTALL			1.53
+sys/arch/pmax/conf/WSCONS			1.5
+sys/arch/pmppc/conf/INSTALL			1.11
+sys/arch/pmppc/conf/PMPPC			1.18
+sys/arch/prep/conf/GENERIC			1.81
+sys/arch/prep/conf/INSTALL			1.28
+sys/arch/prep/conf/NATSUMI			1.26
+sys/arch/sandpoint/conf/GENERIC.sandpoint	1.16
+sys/arch/sbmips/conf/GENERIC			1.29
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.19
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.13
+sys/arch/shark/conf/GENERIC			1.32
+sys/arch/shark/conf/INSTALL			1.14
+sys/arch/shark/conf/OFWGENCFG			1.12
+sys/arch/sparc/conf/BILL-THE-CAT		1.25
+sys/arch/sparc/conf/GENERIC			1.161 via patch
+sys/arch/sparc/conf/INSTALL			1.42
+sys/arch/sparc/conf/KRUPS			1.22
+sys/arch/sparc/conf/MRCOFFEE			1.3
+sys/arch/sparc/conf/TADPOLE3GX			1.20
+sys/arch/sparc64/conf/GENERIC32			1.85
+sys/arch/sparc64/conf/NONPLUS			1.41
+sys/arch/sparc64/conf/POWEROFSEVEN.inc		1.25
+sys/arch/sparc64/conf/SPLODE			1.24
+sys/arch/sun2/conf/DISKLESS			1.17
+sys/arch/sun2/conf/FOURMEG			1.18
+sys/arch/sun2/conf/GENERIC			1.32
+sys/arch/sun2/conf/INSTALL			1.17
+sys/arch/sun2/conf/RAMDISK			1.18
+sys/arch/sun2/conf/VME				1.10
+sys/arch/sun3/conf/DISKLESS			1.43
+sys/arch/sun3/conf/DISKLESS3X			1.30
+sys/arch/sun3/conf/FOUR_TTYS			1.36
+sys/arch/sun3/conf/GENERIC			1.107
+sys/arch/sun3/conf/GENERIC3X			1.64
+sys/arch/sun3/conf/INSTALL			1.23
+sys/arch/sun3/conf/INSTALL3X			1.22
+sys/arch/sun3/conf/KGDB				1.36
+sys/arch/sun3/conf/KGDB3X			1.38
+sys/arch/sun3/conf/RAMDISK			1.37
+sys/arch/sun3/conf/RAMDISK3X			1.24
+sys/arch/vax/conf/GENERIC			1.124
+sys/arch/vax/conf/INSTALL			1.32
+sys/arch/x68k/conf/GENERIC			1.99
+sys/arch/x68k/conf/INSTALL			1.58
+sys/arch/xen/conf/GENERIC			1.14
+sys/arch/xen/conf/XEN				1.11
+
+	Add "options SYSCTL_INCLUDE_DESCR" to a lot of configurations,
+	but commented out in most of them.
+	[atatat, ticket #663]
+
+include/math.h					1.38 via patch
+lib/libm/Makefile				1.64
+lib/libm/shlib_version				patch
+lib/libm/man/round.3				1.1-1.3 (new)
+lib/libm/src/s_round.c				1.1 (new)
+lib/libm/src/s_roundf.c				1.1 (new)
+distrib/sets/lists/comp/mi			1.713
+distrib/sets/lists/base/shl.mi			patch
+
+	Add C99 functions round(3) and roundf(3).
+	Bump the teeny version number for libm.
+	[junyoung, ticket #664]
+
+sys/dev/pci/if_wm.c				1.73
+
+	The Intel i82547EI gigabit Ethernet controller isn't really
+	a PCI device.  So instead of trying to find and print the
+	PCI bus properties mark it as a CSA device.
+	[tron, ticket #665]
