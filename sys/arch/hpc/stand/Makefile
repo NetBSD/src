@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/03/19 08:07:22 jmc Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2004/06/22 07:54:31 tron Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -55,7 +55,7 @@ clean:
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
 	rm -f hpcboot/hpcboot.plg
 # compile directory
-	rm -rf compile/ARMDebug compile/ARMRelease			\
+	-rm -rf compile/ARMDebug compile/ARMRelease			\
 	compile/SH*Debug compile/SH*Release				\
 	compile/MIPSDebug compile/MIPSRelease
 	find . -name "hpcboot.exe" -print |xargs rm -f
