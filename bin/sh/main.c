@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: main.c,v 1.13 1994/06/11 16:12:06 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.14 1994/08/03 16:25:26 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -159,10 +159,11 @@ state1:
 	} 
 state2:
 	state = 3;
-	if ((shinit = lookupvar("ENV")) != NULL &&
-	     *shinit != '\0') {
-		state = 3;
-		read_profile(shinit);
+	if (getuid() == geteuid() && getgid() == getegid()) {
+		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
+			state = 3;
+			read_profile(shinit);
+		}
 	}
 state3:
 	state = 4;
