@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.3 1997/10/19 07:42:52 augustss Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.4 1997/11/19 14:19:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -167,6 +167,12 @@ gus_isapnp_attach(parent, self, aux)
 	if (!gus_0)
 		return;
 
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n", 
+		       sc->sc_dev.dv_xname);
+		return;
+	}
+
 	gussc = sc;
 
 	sc->sc_iot = ipa->ipa_iot;
@@ -214,12 +220,6 @@ gus_isapnp_attach(parent, self, aux)
          */
 	sc->iw_cd = &guspnp_cd;
 	sc->iw_hw_if = &guspnp_hw_if;
-
-	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
-		       sc->sc_dev.dv_xname);
-		return;
-	}
 
 	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	       ipa->ipa_devclass);
