@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.1 2000/09/18 20:51:15 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.2 2000/09/21 22:20:38 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -33,9 +33,16 @@
  * SUCH DAMAGE.
  */
 /*
- * SEEQ 8005 device driver
+ * seeq8005.c - SEEQ 8005 device driver
  */
-
+/*
+ * This driver currently supports the following chip:
+ * SEEQ 8005 Advanced Ethernet Data Link Controller
+ */
+/*
+ * This driver is based on the arm32 ea(4) driver, hence the names of many
+ * of the functions.
+ */
 /*
  * Bugs/possible improvements:
  *	- Does not currently support DMA
@@ -51,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.1 2000/09/18 20:51:15 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.2 2000/09/21 22:20:38 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -193,10 +200,21 @@ void
 seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	
-	/* Print out some information for the user. */
+	u_int id;
 
-	printf(": address %s", ether_sprintf(myaddr));
+	printf(" address %s", ether_sprintf(myaddr));
+
+	/* Get the product ID */
+	
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
+			  EA_BUFCODE_PRODUCTID);
+	id = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EA_8005_BUFWIN);
+
+	if ((id & 0xf0) == 0xa0) {
+		sc->sc_flags |= SEEQ8005_80C04;
+		printf(", SEEQ 80C04 rev %02x", id);
+	} else
+		printf(", SEEQ 8005");
 
 	/* Stop the board. */
 
@@ -224,11 +242,10 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	/* Should test the RAM */
-
-	ea_ramtest(sc);
-
 	printf("\n");
+
+	/* Test the RAM */
+	ea_ramtest(sc);
 }
 
 
@@ -243,7 +260,6 @@ ea_ramtest(struct seeq8005_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int loop;
 	u_int sum = 0;
-	char pbuf[9];
 
 /*	dprintf(("ea_ramtest()\n"));*/
 
@@ -335,11 +351,9 @@ ea_ramtest(struct seeq8005_softc *sc)
 
 	/* Report */
 
-	if (sum == 0) {
-		format_bytes(pbuf, sizeof(pbuf), EA_BUFFER_SIZE);
-		printf(", %s buffer RAM", pbuf);
-	} else
-		printf(", buffer RAM failed self test, %d faults", sum);
+	if (sum > 0)
+		printf("%s: buffer RAM failed self test, %d faults\n",
+		       sc->sc_dev.dv_xname, sum);
 }
 
 

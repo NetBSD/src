@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.1 2000/09/18 20:51:15 bjh21 Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.2 2000/09/21 22:20:38 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -42,14 +42,18 @@
 
 struct seeq8005_softc {
 	struct device sc_dev;
+	/* These fields should be initialised by the board driver. */
 	bus_space_tag_t sc_iot;		/* I/O base addr */
 	bus_space_handle_t sc_ioh;
+	/* These fields are used internally by the seeq8005 driver. */
 	struct ethercom sc_ethercom;	/* Ethernet common */
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
 	int sc_command;			/* Current command bits */
 	u_int sc_rx_ptr;		/* Receive buffer pointer */
 	u_int sc_tx_ptr;		/* Transmit buffer pointer */
+	u_int sc_flags;			/* Assorted flags: */
+#define SEEQ8005_80C04	0x01		/*   Chip is actually an 80C04. */
 };
 
 extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *);
