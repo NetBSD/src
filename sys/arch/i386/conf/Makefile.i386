@@ -1,5 +1,5 @@
 # 	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.i386,v 1.44 1994/06/15 02:13:47 deraadt Exp $
+#	$Id: Makefile.i386,v 1.45 1994/06/15 16:46:39 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -28,6 +28,7 @@ CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld
 TOUCH=	touch -f -c
+AWK=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -159,9 +160,7 @@ param.c: $S/conf/param.c
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
 
-vnode_if.c: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
-vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
