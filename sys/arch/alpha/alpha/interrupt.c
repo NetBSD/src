@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	    {
 		u_long pending_ipis, bit;
 
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
+
 #if 0
 		printf("CPU %lu got IPI\n", cpu_id);
 #endif
@@ -190,6 +192,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		if (ci->ci_cpuid == hwrpb->rpb_primary_cpu_id &&
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
+
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 	    }
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
@@ -197,6 +201,12 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
+		/*
+		 * We don't increment the interrupt depth for the
+		 * clock interrupt, since it is *sampled* from
+		 * the clock interrupt, so if we did, all system
+		 * time would be counted as interrupt time.
+		 */
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
 		if (CPU_IS_PRIMARY(ci) == 0)
@@ -223,11 +233,13 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
@@ -236,9 +248,11 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		if (CPU_IS_PRIMARY(ci) == 0)
 			return;
 #endif
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
 		uvmexp.intrs++;
 		if (platform.iointr)
 			(*platform.iointr)(framep, a1);
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 
 	case ALPHA_INTR_PERF:	/* performance counter interrupt */
