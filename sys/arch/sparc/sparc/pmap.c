@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.191 2001/04/24 04:31:11 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.192 2001/05/26 10:22:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,6 +57,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
