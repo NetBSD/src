@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2000/12/04 16:01:19 fvdl Exp $ */
+/*	$NetBSD: db_interface.c,v 1.48 2000/12/04 20:40:07 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -657,26 +657,26 @@ db_dump_pcb(addr, have_addr, count, modif)
 	for (i=0; i<pcb->pcb_nsaved; i++) {
 		db_printf("win %d: at %llx local, in\n", i, 
 			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_local[0],
-			  pcb->pcb_rw[i].rw_local[1],
-			  pcb->pcb_rw[i].rw_local[2],
-			  pcb->pcb_rw[i].rw_local[3]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_local[4],
-			  pcb->pcb_rw[i].rw_local[5],
-			  pcb->pcb_rw[i].rw_local[6],
-			  pcb->pcb_rw[i].rw_local[7]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_in[0],
-			  pcb->pcb_rw[i].rw_in[1],
-			  pcb->pcb_rw[i].rw_in[2],
-			  pcb->pcb_rw[i].rw_in[3]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_in[4],
-			  pcb->pcb_rw[i].rw_in[5],
-			  pcb->pcb_rw[i].rw_in[6],
-			  pcb->pcb_rw[i].rw_in[7]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[7]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[7]);
 	}
 }
 
