@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.3.2.1 1999/04/05 19:11:42 sommerfe Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.3.2.2 1999/04/28 18:43:44 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -163,8 +163,14 @@ unionread:
 
 		eofflag = 0;
 
+		/* XXX un-break adosfs */
+		VOP_UNLOCK(cvp, 0);
+
 		error = VOP_READDIR(pvp, &uio, p->p_ucred, &eofflag, 0, 0);
 
+		/* XXX not handling lock failures here.. */
+		(void) vn_lock(cvp, LK_EXCLUSIVE | LK_RETRY);
+		
 		off = uio.uio_offset;
 
 		/*
