@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lpt.4,v 1.6 1996/10/04 01:58:58 explorer Exp $
+.\"	$Id: lpt.4,v 1.7 1996/10/04 02:03:14 explorer Exp $
 .\"
 .Dd August 6, 1993
 .Dt LPT 4 i386
@@ -45,14 +45,14 @@ This driver provides access to parallel ports.  The bits in the minor
 number select various features of the driver.  If no IRQ is
 specified in the kernel configuration, only the polling device may be used.
 .Pp
-.Bl -column BIT "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
-.It Sy Pa Bit	Function
+.Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
+.It Sy Pa "Minor Bit"	Function
 .It 128	Use the interruptless driver. (polling)
 .It  64	Do not initialize the device on the port.
 .It  32	Automatic LF on CR.
 .El
 .Sh FILES
-.Bl -tag -width Pa -compact
+.Bl -tag -width "/dev/lpt0xx" -compact
 .It Pa /dev/lpt0
 first interrupt-driven parallel port device
 .It Pa /dev/lpa0
