@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.232 2003/09/13 02:52:05 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.233 2003/09/13 03:44:20 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -17,6 +17,8 @@ COPTS+=    ${COPTS.lib${LIB}}
 CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}
 CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
 LDADD+=     ${LDADD.lib${LIB}}
+LDFLAGS+=   ${LDFLAGS.lib${LIB}}
+LDSTATIC+=  ${LDSTATIC.lib${LIB}}
 
 ##### Build and install rules
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
