@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.9.2.1 1999/10/19 17:39:42 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.9.2.2 2000/11/20 09:59:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,11 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #define	SDRETRIES	4
 
 struct sd_ops;
@@ -81,7 +86,7 @@ struct sd_softc {
 		u_long	rot_rate;	/* rotational rate, in RPM */
 	} params;
 
-	struct buf buf_queue;
+	struct buf_queue buf_queue;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
 	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */

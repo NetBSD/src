@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.69.2.3 1999/11/01 22:54:19 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.69.2.4 2000/11/20 09:59:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ scsi_change_def(periph, flags)
 
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, 100000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, 100000, NULL, flags));
 }
 
 /*

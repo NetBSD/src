@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.5 2000/02/04 23:01:54 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.6 2000/11/20 09:59:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/proc.h>
 #include <sys/kthread.h>
 
-#include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapi_all.h>
@@ -57,12 +56,6 @@ const struct scsipi_periphsw atapi_probe_periphsw = {
 	NULL,
 };
 
-struct atapibus_softc {
-	struct device sc_dev;
-	struct scsipi_channel *sc_channel;	/* our scsipi_channel */
-	struct ata_drive_datas *sc_drvs;	/* array supplied by adapter */
-};
-
 int	atapibusmatch __P((struct device *, struct cfdata *, void *));
 void	atapibusattach __P((struct device *, struct device *, void *));
 int	atapibusactivate __P((struct device *, enum devact));
@@ -70,10 +63,7 @@ int	atapibusdetach __P((struct device *, int flags));
 
 int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 
-int	atapiprint __P((void *, const char *));
-
 int	atapi_probe_bus __P((struct atapibus_softc *, int));
-void	atapi_probe_device __P((struct atapibus_softc *, int ));
 
 struct cfattach atapibus_ca = {
 	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach,
@@ -83,14 +73,6 @@ struct cfattach atapibus_ca = {
 extern struct cfdriver atapibus_cd;
 
 int atapibusprint __P((void *, const char *));
-
-const struct scsipi_bustype atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	atapi_kill_pending,
-};
 
 struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
@@ -107,6 +89,8 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "FX320S", "", "q01"},			PQUIRK_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "GCD-R580B", "", "1.00"},		PQUIRK_LITTLETOC},
+	{{T_CDROM, T_REMOV,
+	 "HITACHI CDR-7730", "", "0008a"},      PQUIRK_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA CR-574", "", "1.02"},	PQUIRK_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
@@ -164,23 +148,6 @@ atapibussubmatch(parent, cf, aux)
 		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
-
-#if 0
-void
-atapi_fixquirk(periph)
-	struct scsipi_link *ad_link;
-{
-	struct ataparams *id = &ad_link->id;
-	struct atapi_quirk_inquiry_pattern *quirk;
-
-	/*
-	 * Clean up the model name, serial and revision numbers.
-	 */
-	btrim(id->model, sizeof(id->model));
-	btrim(id->serial_number, sizeof(id->serial_number));
-	btrim(id->firmware_revision, sizeof(id->firmware_revision));
-}
-#endif
 
 void
 atapibusattach(parent, self, aux)
@@ -288,6 +255,7 @@ atapi_probe_bus(sc, target)
 	struct scsipi_channel *chan = sc->sc_channel;
 	int maxtarget, mintarget;
 	int error;
+	struct atapi_adapter *atapi_adapter;
 
 	if (target == -1) {
 		maxtarget = 1;
@@ -300,129 +268,69 @@ atapi_probe_bus(sc, target)
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		return (error);
+	atapi_adapter = (struct atapi_adapter*)chan->chan_adapter;
 	for (target = mintarget; target <= maxtarget; target++)
-		atapi_probe_device(sc, target);
+		atapi_adapter->atapi_probe_device(sc, target);
 	scsipi_adapter_delref(chan->chan_adapter);
 	return (0);
 }
 
-void
-atapi_probe_device(sc, target)
+void *
+atapi_probe_device(sc, target, periph, sa)
 	struct atapibus_softc *sc;
 	int target;
+	struct scsipi_periph *periph;
+	struct scsipibus_attach_args *sa;
 {
 	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	struct ataparams ids;
-	struct ataparams *id = &ids;
-	struct ata_drive_datas *drvp = &sc->sc_drvs[target];
 	struct scsi_quirk_inquiry_pattern *finger;
-	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
 	int priority, quirks;
-	char serial_number[21], model[41], firmware_revision[9];
 
-	/* skip if already attached */
-	if (scsipi_lookup_periph(chan, target, 0) != NULL)
-		return;
+	finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
+	    &sa->sa_inqbuf, (caddr_t)atapi_quirk_patterns,
+	    sizeof(atapi_quirk_patterns) /
+	        sizeof(atapi_quirk_patterns[0]),
+	    sizeof(atapi_quirk_patterns[0]), &priority);
 
-	if (wdc_atapi_get_params(chan, target,
-	    XS_CTL_POLL|XS_CTL_NOSLEEP, id) == 0) {
-#ifdef ATAPI_DEBUG_PROBE
-		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
-		    sc->sc_dev.dv_xname, target,
-		    id->atap_config & ATAPI_CFG_CMD_MASK,
-		    id->atap_config & ATAPI_CFG_DRQ_MASK);
-#endif
-		periph = malloc(sizeof(*periph), M_DEVBUF, M_NOWAIT);
-		if (periph == NULL) {
-			printf("%s: unable to allocate periph for drive %d\n",
-			    sc->sc_dev.dv_xname, target);
-			return;
-		}
-		memset(periph, 0, sizeof(*periph));
+	if (finger != NULL)
+		quirks = finger->quirks;
+	else
+		quirks = 0;
 
-		periph->periph_dev = NULL;
-		periph->periph_channel = chan;
-		periph->periph_switch = &atapi_probe_periphsw;
+	/*
+	 * Now apply any quirks from the table.
+	 */
+	periph->periph_quirks |= quirks;
 
+	if ((cf = config_search(atapibussubmatch, &sc->sc_dev,
+	    sa)) != 0) {
+		scsipi_insert_periph(chan, periph);
 		/*
-		 * Start with one command opening.  The periph
-		 * driver will grow this if it knows it can
-		 * take advantage of it.
+		 * XXX Can't assign periph_dev here, because we'll
+		 * XXX need it before config_attach() returns.  Must
+		 * XXX assign it in periph driver.
 		 */
-		periph->periph_openings = 1;
-		periph->periph_active = 0;
-
-		periph->periph_target = target;
-		periph->periph_lun = 0;
-
-		TAILQ_INIT(&periph->periph_xferq);
-
-#ifdef SCSIPI_DEBUG
-		if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_ATAPI &&
-		    SCSIPI_DEBUG_TARGET == target)
-			periph->periph_dbflags |= SCSIPI_DEBUG_FLAGS;
-#endif
-
-		periph->periph_type = ATAPI_CFG_TYPE(id->atap_config);
-		if (id->atap_config & ATAPI_CFG_REMOV)
-			periph->periph_flags |= PERIPH_REMOVABLE;
-
-		sa.sa_periph = periph;
-		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
-		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
-		    T_REMOV : T_FIXED;
-		scsipi_strvis(model, 40, id->atap_model, 40);
-		scsipi_strvis(serial_number, 20, id->atap_serial, 20);
-		scsipi_strvis(firmware_revision, 8, id->atap_revision, 8);
-		sa.sa_inqbuf.vendor = model;
-		sa.sa_inqbuf.product = serial_number;
-		sa.sa_inqbuf.revision = firmware_revision;
-
-		finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
-		    &sa.sa_inqbuf, (caddr_t)atapi_quirk_patterns,
-		    sizeof(atapi_quirk_patterns) /
-		        sizeof(atapi_quirk_patterns[0]),
-		    sizeof(atapi_quirk_patterns[0]), &priority);
-
-		if (finger != NULL)
-			quirks = finger->quirks;
-		else
-			quirks = 0;
-
-		/*
-		 * Determine the operating mode capabilities of the device.
-		 */
-		if ((id->atap_config & ATAPI_CFG_CMD_MASK) == ATAPI_CFG_CMD_16)
-			periph->periph_cap |= PERIPH_CAP_CMD16;
-		/* XXX This is gross. */
-		periph->periph_cap |= (id->atap_config & ATAPI_CFG_DRQ_MASK);
-
-		/*
-		 * Now apply any quirks from the table.
-		 */
-		periph->periph_quirks |= quirks;
-
-		if ((cf = config_search(atapibussubmatch, &sc->sc_dev,
-		    &sa)) != 0) {
-			scsipi_insert_periph(chan, periph);
-			/*
-			 * XXX Can't assign periph_dev here, because we'll
-			 * XXX need it before config_attach() returns.  Must
-			 * XXX assign it in periph driver.
-			 */
-			drvp->drv_softc = config_attach(&sc->sc_dev, cf, &sa,
-			    atapibusprint);
-			wdc_probe_caps(drvp);
-			return;
-		} else {
-			atapibusprint(&sa, sc->sc_dev.dv_xname);
-			printf(" not configured\n");
-			free(periph, M_DEVBUF);
-			return;
-		}
+		return config_attach(&sc->sc_dev, cf, sa,
+		    atapibusprint);
+	} else {
+		atapibusprint(&sa, sc->sc_dev.dv_xname);
+		printf(" not configured\n");
+		free(periph, M_DEVBUF);
+		return NULL;
 	}
+}
+
+int
+atapiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct ata_atapi_attach *aa_link = aux;
+	if (pnp)
+		printf("atapibus at %s", pnp);
+	printf(" channel %d", aa_link->aa_channel);
+	return (UNCONF);
 }
 
 int

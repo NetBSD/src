@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26.2.2 1999/11/01 22:54:21 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.26.2.3 2000/11/20 09:59:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -97,6 +97,8 @@ struct scsipi_inquiry_pattern ss_patterns[] = {
 	 "HP      ", "C1130A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C5110A          ", ""},
+	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "C7670A          ", ""},
 };
 
 int
@@ -140,6 +142,8 @@ ssattach(parent, self, aux)
 	periph->periph_dev = &ss->sc_dev;
 	periph->periph_switch = &ss_switch;
 
+	printf("\n");
+
 	/*
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
@@ -156,9 +160,7 @@ ssattach(parent, self, aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	ss->buf_queue.b_active = 0;
-	ss->buf_queue.b_actf = 0;
-	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
+	BUFQ_INIT(&ss->buf_queue);
 	ss->flags &= ~SSF_AUTOCONF;
 }
 
@@ -283,7 +285,7 @@ void
 ssminphys(bp)
 	struct buf *bp;
 {
-	register struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
 
 	(*periph->periph_channel->chan_adapter->adapt_minphys)(bp);
@@ -335,7 +337,6 @@ ssstrategy(bp)
 	struct buf *bp;
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
-	struct buf *dp;
 	int s;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
@@ -364,11 +365,7 @@ ssstrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	dp = &ss->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
+	BUFQ_INSERT_TAIL(&ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -407,7 +404,7 @@ ssstart(periph)
 	struct scsipi_periph *periph;
 {
 	struct ss_softc *ss = (void *)periph->periph_dev;
-	register struct buf *bp, *dp;
+	struct buf *bp;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ssstart "));
 	/*
@@ -425,14 +422,9 @@ ssstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		dp = &ss->buf_queue;
-		if ((bp = dp->b_actf) == NULL)
+		if ((bp = BUFQ_FIRST(&ss->buf_queue)) == NULL)
 			return;
-		if ((dp = bp->b_actf) != NULL)
-			dp->b_actb = bp->b_actb;
-		else
-			ss->buf_queue.b_actb = bp->b_actb;
-		*bp->b_actb = dp;
+		BUFQ_REMOVE(&ss->buf_queue, bp);
 
 		if (ss->special && ss->special->read) {
 			(ss->special->read)(ss, bp);
@@ -501,8 +493,6 @@ ssioctl(dev, cmd, addr, flag, p)
 		break;
 #endif
 	default:
-		if (SSMODE(dev) != MODE_CONTROL)
-			return (ENOTTY);
 		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
 		    flag, p));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.3 1999/11/01 22:54:20 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.4 2000/11/20 09:59:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,8 +117,7 @@ const struct scsipi_periphsw sd_switch = {
 };
 
 /*
- * The routine called by the low level scsi routine when it discovers
- * a device suitable for this driver.
+ * Attach routine common to atapi & scsi.
  */
 void
 sdattach(parent, sd, periph, ops)
@@ -132,6 +131,8 @@ sdattach(parent, sd, periph, ops)
 	char pbuf[9];
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
+
+	BUFQ_INIT(&sd->buf_queue);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -158,7 +159,7 @@ sdattach(parent, sd, periph, ops)
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
 
-#if !defined(i386) && !defined(vax)
+#ifdef __BROKEN_DK_ESTABLISH
 	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
 #endif
 
@@ -268,8 +269,8 @@ sddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = sd->buf_queue.b_actf) != NULL) {
-		sd->buf_queue.b_actf = bp->b_actf;
+	while ((bp = BUFQ_FIRST(&sd->buf_queue)) != NULL) {
+		BUFQ_REMOVE(&sd->buf_queue, bp);
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
@@ -281,7 +282,7 @@ sddetach(self, flags)
 
 	splx(s);
 
-	/* Nuke the the vnodes for any open instances */
+	/* Nuke the vnodes for any open instances */
 	mn = SDMINOR(self->dv_unit, 0);
 	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
 	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
@@ -532,6 +533,9 @@ sdclose(dev, flag, fmt, p)
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 		}
 
+		if (! (periph->periph_flags & PERIPH_KEEP_LABEL))
+			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
+
 		scsipi_wait_drain(periph);
 
 		scsipi_prevent(periph, PR_ALLOW,
@@ -558,6 +562,8 @@ sdstrategy(bp)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
+	struct disklabel *lp;
+	daddr_t blkno;
 	int s;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
@@ -574,11 +580,14 @@ sdstrategy(bp)
 			bp->b_error = ENODEV;
 		goto bad;
 	}
+
+	lp = sd->sc_dk.dk_label;
+
 	/*
 	 * The transfer must be a whole number of blocks, offset must not be
 	 * negative.
 	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0 ||
+	if ((bp->b_bcount % lp->d_secsize) != 0 ||
 	    bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -594,9 +603,23 @@ sdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (SDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
+	    bounds_check_with_label(bp, lp,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	if (lp->d_secsize >= DEV_BSIZE)
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	else
+		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
+ 
+	if (SDPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[SDPART(bp->b_dev)].p_offset;
+ 
+	bp->b_rawblkno = blkno;
 
 	s = splbio();
 
@@ -606,7 +629,7 @@ sdstrategy(bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	disksort(&sd->buf_queue, bp);
+	disksort_blkno(&sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -650,14 +673,12 @@ sdstart(periph)
 	struct sd_softc *sd = (void *)periph->periph_dev;
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
-	struct buf *dp;
 	struct scsipi_rw_big cmd_big;
 #if NSD_SCSIBUS > 0
 	struct scsi_rw cmd_small;
 #endif
 	struct scsipi_generic *cmdp;
-	int flags, blkno, nblks, cmdlen, error;
-	struct partition *p;
+	int nblks, cmdlen, error, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
 	/*
@@ -678,10 +699,9 @@ sdstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		dp = &sd->buf_queue;
-		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
+		if ((bp = BUFQ_FIRST(&sd->buf_queue)) == NULL)
 			return;
-		dp->b_actf = bp->b_actf;
+		BUFQ_REMOVE(&sd->buf_queue, bp);
 
 		/*
 		 * If the device has become invalid, abort all the
@@ -697,16 +717,9 @@ sdstart(periph)
 		}
 
 		/*
-		 * We have a buf, now we should make a command
-		 *
-		 * First, translate the block to absolute and put it in terms
-		 * of the logical blocksize of the device.
+		 * We have a buf, now we should make a command.
 		 */
-		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-		if (SDPART(bp->b_dev) != RAW_PART) {
-			p = &lp->d_partitions[SDPART(bp->b_dev)];
-			blkno += p->p_offset;
-		}
+
 		nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 #if NSD_SCSIBUS > 0
@@ -714,8 +727,9 @@ sdstart(periph)
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
 		 */
-		if (((blkno & 0x1fffff) == blkno) &&
+		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) &&
+		    !(periph->periph_quirks & PQUIRK_ONLYBIG) &&
 		    scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_SCSI) {
 			/*
 			 * We can fit in a small cdb.
@@ -723,7 +737,7 @@ sdstart(periph)
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
-			_lto3b(blkno, cmd_small.addr);
+			_lto3b(bp->b_rawblkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
@@ -736,7 +750,7 @@ sdstart(periph)
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
-			_lto4b(blkno, cmd_big.addr);
+			_lto4b(bp->b_rawblkno, cmd_big.addr);
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsipi_generic *)&cmd_big;
@@ -791,7 +805,7 @@ sddone(xs)
 	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
 #if NRND > 0
-		rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+		rnd_add_uint32(&sd->rnd_source, xs->bp->b_rawblkno);
 #endif
 	}
 }
@@ -863,15 +877,13 @@ sdioctl(dev, cmd, addr, flag, p)
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdioctl 0x%lx ", cmd));
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (ENODEV);
-
 	/*
 	 * If the device is not valid, some IOCTLs can still be
 	 * handled on the raw partition. Check this here.
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
 		switch (cmd) {
+		case DIOCKLABEL:
 		case DIOCWLABEL:
 		case DIOCLOCK:
 		case DIOCEJECT:
@@ -924,6 +936,13 @@ sdioctl(dev, cmd, addr, flag, p)
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
 		return (error);
+
+	case DIOCKLABEL:
+		if (*(int *)addr)
+			periph->periph_flags |= PERIPH_KEEP_LABEL;
+		else
+			periph->periph_flags &= ~PERIPH_KEEP_LABEL;
+		return (0);
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
@@ -1094,7 +1113,7 @@ sd_reassign_blocks(sd, blkno)
 	return (scsipi_command(sd->sc_periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
-	    XS_CTL_DATA_OUT));
+	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 /*
@@ -1139,7 +1158,8 @@ sd_interpret_sense(xs)
 			printf("%s: waiting for pack to spin up...\n",
 			    sd->sc_dev.dv_xname);
 			scsipi_periph_freeze(periph, 1);
-			timeout(scsipi_periph_timed_thaw, periph, 5 * hz);
+			callout_reset(&periph->periph_callout,
+			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;
 		} else if ((sense->add_sense_code_qual == 0x2) &&
 		    (periph->periph_quirks & PQUIRK_NOSTARTUNIT) == 0) {
@@ -1201,7 +1221,6 @@ sdsize(dev)
 	return (size);
 }
 
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define SD_DUMP_NOT_TRUSTED if you just want to watch */
 static struct scsipi_xfer sx;
 static int sddoingadump;
@@ -1246,6 +1265,9 @@ sddump(dev, blkno, va, size)
 	/* Check for acceptable drive number. */
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/* Make sure it was initialized. */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) != 0)
@@ -1323,16 +1345,3 @@ sddump(dev, blkno, va, size)
 	sddoingadump = 0;
 	return (0);
 }
-#else	/* __BDEVSW_DUMP_NEW_TYPE */
-int
-sddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return (ENXIO);
-}
-#endif	/* __BDEVSW_DUMP_NEW_TYPE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.25.2.2 1999/11/01 22:54:18 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.25.2.3 2000/11/20 09:59:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -36,7 +36,7 @@
  * Written by Ian Dall <ian.dall@dsto.defence.gov.au> Feb 3, 1997
  *
  * Acknowledgement: Thanks are due to Philip L. Budne <budd@cs.bu.edu>
- * who reverse engineered the the EA41x. In developing this code,
+ * who reverse engineered the EA41x. In developing this code,
  * Phil's userland daemon "etherd", was refered to extensively in lieu
  * of accurate documentation for the device.
  *
@@ -68,6 +68,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
@@ -184,6 +185,10 @@ struct se_softc {
 	struct device sc_dev;
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 	struct scsipi_periph *sc_periph;/* contains our targ, lun, etc. */
+
+	struct callout sc_ifstart_ch;
+	struct callout sc_recv_ch;
+
 	char *sc_tbuf;
 	char *sc_rbuf;
 	int protos;
@@ -266,9 +271,9 @@ static __inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
-	register u_int16_t *a = (u_int16_t *) one;
-	register u_int16_t *b = (u_int16_t *) two;
-	register u_int16_t diff;
+	u_int16_t *a = (u_int16_t *) one;
+	u_int16_t *b = (u_int16_t *) two;
+	u_int16_t diff;
 
 	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
 
@@ -309,6 +314,10 @@ seattach(parent, self, aux)
 
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
+
+	callout_init(&sc->sc_ifstart_ch);
+	callout_init(&sc->sc_recv_ch);
+
 
 	/*
 	 * Store information needed to contact our base driver
@@ -471,7 +480,7 @@ se_ifstart(ifp)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic *)&send_cmd, sizeof(send_cmd),
 	    sc->sc_tbuf, len, SERETRIES,
-	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_DATA_OUT);
+	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_OUT);
 	if (error) {
 		printf("%s: not queued, error %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -505,7 +514,8 @@ sedone(xs)
 	if(IS_SEND(cmd)) {
 		if (xs->error == XS_BUSY) {
 			printf("se: busy, retry txmit\n");
-			timeout(se_delayed_ifstart, ifp, hz);
+			callout_reset(&sc->sc_ifstart_ch, hz,
+			    se_delayed_ifstart, ifp);
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			/* the generic scsipi_done will call
@@ -518,7 +528,8 @@ sedone(xs)
 		/* scsipi_free_xs will call start. Harmless. */
 		if (error) {
 			/* Reschedule after a delay */
-			timeout(se_recv, (void *)sc, se_poll);
+			callout_reset(&sc->sc_recv_ch, se_poll,
+			    se_recv, (void *)sc);
 		} else {
 			int n, ntimeo;
 			n = se_read(sc, xs->data, xs->datalen - xs->resid);
@@ -543,7 +554,8 @@ sedone(xs)
 				 * after the next send.  */
 				sc->sc_flags |= SE_NEED_RECV;
 			else {
-				timeout(se_recv, (void *)sc, ntimeo);
+				callout_reset(&sc->sc_recv_ch, ntimeo,
+				    se_recv, (void *)sc);
   			}
 		}
 	}
@@ -567,9 +579,9 @@ se_recv(v)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic *)&recv_cmd, sizeof(recv_cmd),
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
-	    XS_CTL_NOSLEEP|XS_CTL_DATA_IN);
+	    XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_IN);
 	if (error)
-		timeout(se_recv, (void *)sc, se_poll);
+		callout_reset(&sc->sc_recv_ch, se_poll, se_recv, (void *)sc);
 }
 
 /*
@@ -636,12 +648,11 @@ bad:
  */
 static int
 se_read(sc, data, datalen)
-	register struct se_softc *sc;
+	struct se_softc *sc;
 	char *data;
 	int datalen;
 {
 	struct mbuf *m;
-	struct ether_header *eh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int n;
 
@@ -684,30 +695,13 @@ se_read(sc, data, datalen)
 		}
 		ifp->if_ipackets++;
 
-		/* We assume that the header fit entirely in one mbuf. */
-		eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 		/*
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-
-			/* Note that the interface cannot be in
-			 * promiscuous mode if there are no BPF
-			 * listeners.  And if we are in promiscuous
-			 * mode, we have to check if this packet is
-			 * really ours.
-			 */
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-			    ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
-				m_freem(m);
-				goto next_packet;
-			}
-		}
 #endif
 
 		/* Pass the packet up. */
@@ -772,7 +766,8 @@ se_add_proto(sc, proto)
 	_lto2b(sizeof(data), add_proto_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic *) &add_proto_cmd, sizeof(add_proto_cmd),
-	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
+	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL,
+	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	return (error);
 }
 
@@ -788,7 +783,8 @@ se_get_addr(sc, myaddr)
 	_lto2b(ETHER_ADDR_LEN, get_addr_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic *) &get_addr_cmd, sizeof(get_addr_cmd),
-	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_IN);
+	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
+	    XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	printf("%s: ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(myaddr));
 	return (error);
@@ -974,7 +970,7 @@ se_stop(sc)
 {
 
 	/* Don't schedule any reads */
-	untimeout(se_recv, sc);
+	callout_stop(&sc->sc_recv_ch);
 
 	/* How can we abort any scsi cmds in progress? */
 }
@@ -985,11 +981,11 @@ se_stop(sc)
  */
 static int
 se_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct se_softc *sc = ifp->if_softc;
+	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -1018,7 +1014,7 @@ se_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -1233,7 +1229,7 @@ seioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
 	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, p));
 }

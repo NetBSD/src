@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.7 2000/02/04 23:01:54 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.8 2000/11/20 09:59:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -437,9 +437,11 @@ scsipi_get_xs(periph, flags)
 	SC_DEBUG(periph, SCSIPI_DB3, ("returning\n"));
 
 	if (xs != NULL) {
+		callout_init(&xs->xs_callout);
 		memset(xs, 0, sizeof(*xs));
 		xs->xs_periph = periph;
 		xs->xs_control = flags;
+		xs->xs_status = 0;
 		s = splbio();
 		TAILQ_INSERT_TAIL(&periph->periph_xferq, xs, device_q);
 		splx(s);
@@ -603,6 +605,7 @@ scsipi_periph_timed_thaw(arg)
 {
 	struct scsipi_periph *periph = arg;
 
+	callout_stop(&periph->periph_callout);
 	scsipi_periph_thaw(periph, 1);
 
 	/*
@@ -649,6 +652,7 @@ scsipi_kill_pending(periph)
 	if (TAILQ_FIRST(&periph->periph_xferq) != NULL)
 		panic("scsipi_kill_pending");
 #endif
+	scsipi_wait_drain(periph);
 }
 
 /*
@@ -821,7 +825,7 @@ scsipi_interpret_sense(xs)
 		}
 
 #ifdef SCSIVERBOSE
-		if ((xs->xs_control & XS_CTL_SILENT) == 0)
+		if (key && (xs->xs_control & XS_CTL_SILENT) == 0)
 			scsipi_print_sense(xs, 0);
 #else
 		if (key) {
@@ -864,6 +868,24 @@ scsipi_interpret_sense(xs)
 	 * Not code 70, just report it
 	 */
 	default:
+#if    defined(SCSIDEBUG) || defined(DEBUG)
+	{
+		static char *uc = "undecodable sense error";
+		int i;
+		u_int8_t *cptr = (u_int8_t *) sense;
+		scsipi_printaddr(periph);
+		if (xs->cmd == &xs->cmdstore) {
+			printf("%s for opcode 0x%x, data=",
+			    uc, xs->cmdstore.opcode);
+		} else {
+			printf("%s, data=", uc);
+		}
+		for (i = 0; i < sizeof (sense); i++)
+			printf(" 0x%02x", *(cptr++) & 0xff);
+		printf("\n");
+	}
+#else
+
 		scsipi_printaddr(periph);
 		printf("Sense Error Code 0x%x",
 			sense->error_code & SSD_ERRCODE);
@@ -874,6 +896,7 @@ scsipi_interpret_sense(xs)
 			    _3btol(usense->block));
 		}
 		printf("\n");
+#endif
 		return (EIO);
 	}
 }
@@ -900,7 +923,8 @@ scsipi_size(periph, flags)
 	 */
 	if (scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-	    2, 20000, NULL, flags | XS_CTL_DATA_IN) != 0) {
+	    SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0) {
 		scsipi_printaddr(periph);
 		printf("could not get size\n");
 		return (0);
@@ -930,7 +954,7 @@ scsipi_test_unit_ready(periph, flags)
 
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, 10000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, 10000, NULL, flags));
 }
 
 /*
@@ -953,7 +977,7 @@ scsipi_inquire(periph, inqbuf, flags)
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
-	    2, 10000, NULL, XS_CTL_DATA_IN | flags));
+	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags));
 }
 
 /*
@@ -977,7 +1001,7 @@ scsipi_prevent(periph, type, flags)
 
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, 5000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, 5000, NULL, flags));
 }
 
 /*
@@ -1002,7 +1026,8 @@ scsipi_start(periph, type, flags)
 
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, (type & SSS_START) ? 60000 : 10000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000,
+	    NULL, flags));
 }
 
 /*
@@ -1218,7 +1243,8 @@ scsipi_complete(xs)
 				delay(1000000);
 			else {
 				scsipi_periph_freeze(periph, 1);
-				timeout(scsipi_periph_timed_thaw, periph, hz);
+				callout_reset(&periph->periph_callout,
+				    hz, scsipi_periph_timed_thaw, periph);
 			}
 			error = ERESTART;
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.18.2.3 1999/11/01 22:54:21 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.18.2.4 2000/11/20 09:59:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -96,7 +96,7 @@ scanjet_attach(ss, sa)
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
-	printf("\n%s: ", ss->sc_dev.dv_xname);
+	printf("%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model (which determines nothing yet) */
 
@@ -322,7 +322,7 @@ scanjet_ctl_write(ss, buf, size)
 	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | XS_CTL_DATA_OUT));
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 
@@ -348,7 +348,7 @@ scanjet_ctl_read(ss, buf, size)
 	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | XS_CTL_DATA_IN));
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
 }
 
 
@@ -454,9 +454,9 @@ scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
 {
 	int error;
-	static char *wfail = "%s: interrogate write failed\n";
-	static char *rfail = "%s: interrogate read failed\n";
-	static char *dfail = "%s: bad data returned\n";
+	static const char *wfail = "%s: interrogate write failed\n";
+	static const char *rfail = "%s: interrogate read failed\n";
+	static const char *dfail = "%s: bad data returned\n";
 	char escape_codes[20];
 	char response[20];
 	char *p;
