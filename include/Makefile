@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.42 1994/06/22 00:21:37 cgd Exp $
+#	$Id: Makefile,v 1.43 1994/06/22 15:09:35 mycroft Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -66,16 +66,13 @@ copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
-		cd ../sys; \
 		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
-		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
 	done
-	@-for i in ${LSUBDIRS}; do \
-		rm -rf ${DESTDIR}/usr/include/$$i; \
-		cd ../sys; \
-		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
-		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
-	done
+# This would be simpler if we didn't care whether netiso/xebec gets installed.
+	cd ../sys; \
+	pax -rw -pa -L `find ${LDIRS} '(' -type d -path '*/*' -prune ')' -o \
+	    '(' -type f -name '*.h' -print ')'; \
+	    find ${LSUBDIRS} -type f -name '*.h' -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/machine
 	cd ../sys/arch/${MACHINE}/include; \
