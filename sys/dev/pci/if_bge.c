@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.59 2004/03/06 17:42:43 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.60 2004/03/10 18:46:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.59 2004/03/06 17:42:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.60 2004/03/10 18:46:10 drochner Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2578,7 +2578,7 @@ bge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 
 		if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
