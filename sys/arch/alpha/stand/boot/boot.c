@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1995/02/16 02:32:53 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1995/06/28 00:58:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #include <machine/prom.h>
 
 #include "../../include/coff.h"
-#define KERNEL
+#define _KERNEL
 #include "../../include/pte.h"
 
 static int aout_exec __P((int, struct exec *, u_int64_t *));
@@ -135,9 +135,7 @@ main(argc, argv, envp)
 		} else
 			(void)printf("Boot: %s %s\n", boot_file, boot_flags);
 
-		reset_twiddle();
 		if (!loadfile(boot_file, &entry)) {
-			reset_twiddle();
 
 printf("calling %lx with %lx, %lx, %lx, %lx, %lx\n", entry,
 ffp_save, ptbr_save, KERNEL_ARGC, kernel_argv, NULL);
@@ -169,14 +167,12 @@ loadfile(fname, entryp)
 	/* Open the file. */
 	rval = 1;
 	if ((fd = open(fname, 0)) < 0) {
-		reset_twiddle();
 		(void)printf("open error: %d\n", errno);
 		goto err;
 	}
 
 	/* Read the exec header. */
 	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		reset_twiddle();
 		(void)printf("read error: %d\n", errno);
 		goto err;
 	}
@@ -187,8 +183,6 @@ loadfile(fname, entryp)
 	    coff_exec(fd, &hdr.coff, entryp);
 
 err:
-	reset_twiddle();
-
 #ifndef SMALL
 	if (fd >= 0)
 		(void)close(fd);
@@ -208,7 +202,6 @@ aout_exec(fd, aout, entryp)
 
 	/* Check the magic number. */
 	if (N_GETMAGIC(*aout) != OMAGIC) {
-		reset_twiddle();
 		(void)printf("bad magic: %o\n", N_GETMAGIC(*aout));
 		return (1);
 	}
@@ -216,18 +209,14 @@ aout_exec(fd, aout, entryp)
 	/* Read in text, data. */
 	(void)printf("%lu+%lu", aout->a_text, aout->a_data);
 	if (lseek(fd, (off_t)N_TXTOFF(*aout), SEEK_SET) < 0) {
-		reset_twiddle();
 		(void)printf("lseek: %d\n", errno);
 		return (1);
 	}
 	sz = aout->a_text + aout->a_data;
-	if (read(fd, aout->a_entry, sz) != sz) {
-		reset_twiddle();
+	if (read(fd, (void *)aout->a_entry, sz) != sz) {
 		(void)printf("read text/data: %d\n", errno);
 		return (1);
 	}
-
-	reset_twiddle();
 
 	/* Zero out bss. */
 	if (aout->a_bss != 0) {
@@ -252,28 +241,24 @@ coff_exec(fd, coff, entryp)
 {
 
 	/* Read in text. */
-	reset_twiddle();
 	(void)printf("%lu", coff->a.tsize);
 	(void)lseek(fd, N_COFFTXTOFF(coff->f, coff->a), 0);
-	if (read(fd, coff->a.text_start, coff->a.tsize) != coff->a.tsize) {
-		reset_twiddle();
+	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
+	    coff->a.tsize) {
 		(void)printf("read text: %d\n", errno);
 		return (1);
 	}
 
 	/* Read in data. */
 	if (coff->a.dsize != 0) {
-		reset_twiddle();
 		(void)printf("+%lu", coff->a.dsize);
-		if (read(fd,
-		    coff->a.data_start, coff->a.dsize) != coff->a.dsize) {
-			reset_twiddle();
+		if (read(fd, (void *)coff->a.data_start, coff->a.dsize) !=
+		    coff->a.dsize) {
 			(void)printf("read data: %d\n", errno);
 			return (1);
 		}
 	}
 
-	reset_twiddle();
 
 	/* Zero out bss. */
 	if (coff->a.bsize != 0) {
@@ -292,26 +277,4 @@ coff_exec(fd, coff, entryp)
 	(void)printf("\n");
 	*entryp = coff->a.entry;
 	return (0);
-}
-
-static int tw_on;
-static int tw_pos;
-static char tw_chars[] = "|/-\\";
-
-reset_twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	tw_on = 0;
-	tw_pos = 0;
-}
-
-twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	else
-		tw_on = 1;
-	putchar(tw_chars[tw_pos++]);
-	tw_pos %= (sizeof(tw_chars) - 1);
 }
