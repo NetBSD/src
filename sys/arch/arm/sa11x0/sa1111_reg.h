@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_reg.h,v 1.2 2002/01/08 11:36:52 rjs Exp $	*/
+/*	$NetBSD: sa1111_reg.h,v 1.3 2002/12/18 04:09:31 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ARM_SA11X0_SA1111_REG_H
+#define _ARM_SA11X0_SA1111_REG_H
+
+
 /* Interrupt Controller */
 
 /* number of interrupt bits */
@@ -43,6 +47,14 @@
 
 /* System Bus Interface */
 #define SACCSBI_SKCR		0x0000
+#define  SKCR_PLLBYPASS  	(1<<0)
+#define  SKCR_RCLKEN    	(1<<1)
+#define  SKCR_SLEEP     	(1<<2)
+#define  SKCR_DOZE		(1<<3)
+#define  SKCR_VCOOFF		(1<<4)
+#define  SKCR_RDYEN		(1<<7)
+#define  SKCR_SELAC		(1<<8)	/* AC Link or I2S */
+#define  SKCR_NOEEN		(1<<12)	/* Enable nOE */
 #define SACCSBI_SMCR		0x0004
 #define SACCSBI_SKID		0x0008
 
@@ -86,3 +98,31 @@
 #define SACCGPIOC_SDR		0x1028
 #define SACCGPIOC_SSR		0x102C
 
+#define SACC_KBD0		0x0a00
+#define SACC_KBD1		0x0c00
+
+#define SACCKBD_CR		0x00
+#define  KBDCR_FKC		(1<<0) /* Force MSCLK/TPCLK low */
+#define  KBDCR_FKD		(1<<1) /* Force MSDATA/TPDATA low */
+#define  KBDCR_ENA		(1<<3) /* Enable */
+#define SACCKBD_STAT		0x04
+#define  KBDSTAT_KBC		(1<<0) /* KBCLK pin value */
+#define  KBDSTAT_KBD		(1<<1) /* KBDATA pin value */
+#define  KBDSTAT_RXP		(1<<2) /* Parity */
+#define  KBDSTAT_ENA		(1<<3) /* Enable */
+#define  KBDSTAT_RXB		(1<<4) /* Rx busy */
+#define  KBDSTAT_RXF		(1<<5) /* Rx full */
+#define  KBDSTAT_TXB		(1<<6) /* Tx busy */
+#define  KBDSTAT_TXE		(1<<7) /* Tx empty */
+#define  KBDSTAT_STP		(1<<8) /* Stop bit error */
+#define SACCKBD_DATA		0x08
+#define SACCKBD_CLKDIV		0x0c
+#define  KBDCLKDIV_DIV8		0
+#define  KBDCLKDIV_DIV4		1
+#define  KBDCLKDIV_DIV2		2
+#define SACCKBD_CLKPRECNT	0x10
+#define SACCKBD_KBDITR		0x14 /* Interrupt test */
+
+#define SACCKBD_SIZE  		0x18
+
+#endif /* _ARM_SA11X0_SA1111_REG_H */
