@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.69 2000/03/01 12:49:35 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.70 2000/03/22 06:10:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1497,7 +1497,7 @@ ip_mloopback(ifp, m, dst)
 	struct mbuf *copym;
 
 	copym = m_copy(m, 0, M_COPYALL);
-        if (copym != NULL
+	if (copym != NULL
 	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
 		copym = m_pullup(copym, sizeof(struct ip));
 	if (copym != NULL) {
