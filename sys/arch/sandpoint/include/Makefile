@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.13 2002/11/26 23:30:28 lukem Exp $
 
-KDIR=	/sys/arch/sandpoint/include
 INCSDIR= /usr/include/sandpoint
 
 INCS=   ansi.h aout_machdep.h asm.h \

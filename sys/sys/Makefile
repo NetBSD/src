@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.47 2002/10/29 12:31:25 blymn Exp $
+#	$NetBSD: Makefile,v 1.48 2002/11/26 23:30:34 lukem Exp $
 
-KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \

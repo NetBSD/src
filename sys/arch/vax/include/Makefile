@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.19 2002/08/07 05:16:16 briggs Exp $
+#	$NetBSD: Makefile,v 1.20 2002/11/26 23:30:25 lukem Exp $
 
-KDIR=	/sys/arch/vax/include
 INCSDIR= /usr/include/vax
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 2001/09/15 20:36:48 chs Exp $
+#	$NetBSD: Makefile,v 1.8 2002/11/26 23:30:35 lukem Exp $
 
-KDIR=	/sys/uvm
 INCSDIR= /usr/include/uvm
 
 INCS=	uvm.h uvm_amap.h uvm_amap_i.h uvm_anon.h uvm_aobj.h uvm_device.h \
