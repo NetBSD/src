@@ -1,0 +1,92 @@
+.\"	$NetBSD: fsck.8,v 1.12 1996/09/11 20:27:13 christos Exp $
+.\"
+.\" Copyright (c) 1980, 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd March 27, 1994
+.Dt FSCK 8
+.Os NetBSD 1
+.Sh NAME
+.Nm fsck
+.Nd file system consistency check and interactive repair
+.Sh SYNOPSIS
+.Nm fsck
+.Op Fl dvpyn
+.Op Fl t Ar fstype 
+.Op Fl o Ar fsoptions 
+.Nm fsck
+.Op Fl dvyn
+.Op Fl t Ar fstype 
+.Op Fl o Ar fsoptions 
+.Ar special | node ...
+.Sh DESCRIPTION
+The
+.Nm fsck
+command invokes filesystem-specific programs to check the 
+the special devices listed in the 
+.Xr fstab 5
+file or in the command line for consistency.
+The options are as follows:
+.Bl -tag -width indent
+.It Fl d
+Debugging mode. Just print the commands without executing them.
+.It Fl n
+Causes
+.Nm fsck
+to assume no as the answer to all operator questions, except "CONTINUE?".
+.It Fl o Ar fsoptions
+List of comma separated file system specific options, in the same format
+as
+.Xr mount 8
+.It Fl p
+Enter preen mode.
+.It Fl t Ar fstype
+Invoke fsck only in the comma separated list of filesystem types. If the
+list starts with no
+then invoke fsck the the filesystem types that are not specified in the list.
+.It Fl v
+Print the commands before executing them.
+.It Fl y
+Causes
+.Nm fsck
+to assume yes
+as the answer to all operator questions.
+.Sh FILES
+.Bl -tag -width /etc/fstab -compact
+.It Pa /etc/fstab
+file system table
+.El
+.Sh SEE ALSO
+.Xr mount 8 ,
+.Xr fstab 5 ,
+.Xr fsck_msdos 8 ,
+.Xr fsck_ffs 8
