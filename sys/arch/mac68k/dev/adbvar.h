@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.11 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.12 1998/10/26 07:06:41 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -71,7 +71,6 @@ void	adb_kbd_asmcomplete __P((void));
 void	adb_ms_asmcomplete __P((void));
 void	extdms_complete __P((void));
 
-#ifndef MRG_ADB
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x0	/* don't know */
 #define ADB_HW_II		0x1	/* Mac II series */
@@ -80,6 +79,7 @@ void	extdms_complete __P((void));
 #define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
 #define	MAX_ADB_HW		4	/* Number of ADB hardware types */
 
+#ifndef MRG_ADB
 /* adb_direct.c */
 int	adb_poweroff __P((void));
 int	CountADBs __P((void));
