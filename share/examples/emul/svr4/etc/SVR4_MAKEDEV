@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.4 1999/04/06 02:51:49 tv Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.5 1999/04/19 14:46:27 kleink Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -42,7 +42,17 @@
 #	wabi		Windows emulation; /dev/null for now
 #
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
+MACHINE=${MACHINE:-`/usr/bin/uname -m`}
 umask 77
+
+case $MACHINE in
+i386)		major=43;;
+sparc)		major=43;;
+*)
+		echo $MACHINE: unsupported machine >&2
+		exit 1
+		;;
+esac
 
 for i
 do
@@ -59,7 +69,7 @@ all)
 
 ptmx)
 	rm -f $i
-	mknod $i		c 43 10
+	mknod $i		c $major 10
 	chown bin.bin $i
 	chmod 666 $i
 	;;
@@ -88,7 +98,7 @@ pts*)
 
 tcp)
 	rm -f $i
-	mknod $i		c 43 35
+	mknod $i		c $major 35
 	chown bin.bin $i
 	chmod 666 $i
 	;;
@@ -96,35 +106,35 @@ tcp)
 
 udp)
 	rm -f $i
-	mknod $i		c 43 36
+	mknod $i		c $major 36
 	chown bin.bin $i
 	chmod 666 $i
 	;;
 
 rawip)
 	rm -f $i
-	mknod $i		c 43 37
+	mknod $i		c $major 37
 	chown bin.bin $i
 	chmod 666 $i
 	;;
 
 ticlts)
 	rm -f $i
-	mknod $i		c 43 38
+	mknod $i		c $major 38
 	chown bin.bin $i
 	chmod 666 $i
 	;;
 
 ticotsord)
 	rm -f $i
-	mknod $i		c 43 39
+	mknod $i		c $major 39
 	chown bin.bin $i
 	chmod 666 $i
 	;;
 
 ticots)
 	rm -f $i
-	mknod $i		c 43 40
+	mknod $i		c $major 40
 	chown bin.bin $i
 	chmod 666 $i
 	;;
@@ -132,13 +142,19 @@ ticots)
 
 wabi)
 	rm -f $i
-	mknod $i		c 3 2	# /dev/null
+	case $MACHINE in
+	sparc)
+		mknod $i	c 3 2;;	# /dev/null
+	i386)
+		mknod $i	c 2 2;;	# /dev/null
+	esac
 	chown bin.bin $i
 	chmod 666 $i
 	;;
 
 *)
-	echo $i: unknown device
+	echo $i: unknown device 2>&1
+	exit 1
 	;;
 esac
 done
