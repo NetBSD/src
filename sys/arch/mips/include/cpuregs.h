@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.16 1998/10/01 00:42:37 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.17 1998/12/04 10:32:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -291,7 +291,7 @@
 #define MIPS3_CONFIG_DB		0x00000010	/* Primary D-cache line size */
 #define MIPS3_CONFIG_IB		0x00000020	/* Primary I-cache line size */
 #define MIPS3_CONFIG_CACHE_L1_LSIZE(config, bit) \
-	(((config) & (bit)) ? 0x10 : 0x20)
+	(((config) & (bit)) ? 32 : 16)
 
 #define MIPS3_CONFIG_DC_MASK	0x000001c0	/* Primary D-cache size */
 #define MIPS3_CONFIG_DC_SHIFT	6	
