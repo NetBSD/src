@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.201 2004/05/27 12:55:07 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.202 2004/06/16 23:55:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.201 2004/05/27 12:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.202 2004/06/16 23:55:30 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -936,8 +936,10 @@ nfs_lookup(v)
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 				cnp->cn_flags |= SAVENAME;
 			if ((!lockparent || !(flags & ISLASTCN)) &&	
-			     newvp != dvp)
+			     newvp != dvp) {
 				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
