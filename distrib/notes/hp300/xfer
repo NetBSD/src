@@ -14,7 +14,7 @@ To prepare for installing via a tape:
 	appear on the tape before any other files.  To copy
 	this onto tape, use a command like the following:
 
-		dd if=SYS_INST of=<tape_device>
+		dd if=SYS_INST of=<tape_device> obs=20b conv=osync
 
 	Note that not all HP BOOTROMs support booting from
 	SCSI tapes.
