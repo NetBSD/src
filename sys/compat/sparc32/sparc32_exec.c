@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_exec.c,v 1.7 1998/09/09 23:36:15 thorpej Exp $	*/
+/*	$NetBSD: sparc32_exec.c,v 1.8 1998/09/09 23:37:27 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -127,7 +127,7 @@ exec_sparc32_makecmds(p, epp)
 		break;
 	default:
 		/* Invalid magic */
-		error = EINVAL;
+		error = ENOEXEC;
 		break;
 	}
 
