@@ -1,4 +1,4 @@
-/*	$NetBSD: getdevmajor.c,v 1.2 2004/12/16 04:07:01 christos Exp $ */
+/*	$NetBSD: getdevmajor.c,v 1.3 2004/12/16 04:37:25 atatat Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getdevmajor.c,v 1.2 2004/12/16 04:07:01 christos Exp $");
+__RCSID("$NetBSD: getdevmajor.c,v 1.3 2004/12/16 04:37:25 atatat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -54,7 +54,7 @@ __weak_alias(getdevmajor,_getdevmajor)
 dev_t
 getdevmajor(const char *name, mode_t type)
 {
-        struct kinfo_drivers kd[200], *kd = kdp;
+	struct kinfo_drivers kd[200], *kdp = &kd[0];
 	int rc, i;
 	size_t sz = sizeof(kd);
 	dev_t n = (dev_t)~0;
@@ -78,16 +78,16 @@ getdevmajor(const char *name, mode_t type)
 
 	rc = sz / sizeof(*kdp);
 
-	for (l = 0; l < rc; l++) {
-		if (strcmp(name, kdp[l].d_name) == 0) {
+	for (i = 0; i < rc; i++) {
+		if (strcmp(name, kdp[i].d_name) == 0) {
 			if (type == S_IFCHR)
-				n = kdp[l].d_cmajor;
+				n = kdp[i].d_cmajor;
 			else
-				n = kdp[l].d_bmajor;
+				n = kdp[i].d_bmajor;
 			break;
 		}
 	}
-	if (l >= rc)
+	if (i >= rc)
 		errno = ENOENT;
 
   out:
