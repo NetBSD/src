@@ -1,23 +1,17 @@
 #
-#  Tested on Dynix 3.2.0.
+#  This Makefile is designed to work on the old "make" program.  It does
+#  not use the obj subdirectory.  It also does not install documentation
+#  automatically -- think of it as a quick start for sites that have the
+#  old make program (I recommend that you get and port the new make if you
+#  are going to be doing any signficant work on sendmail).
 #
-#	From Jim Davis <jdavis@cs.arizona.edu>.
+#	NCR 3000 support from Kevin Darcy <kevin@tech.mis.cfc.com>.
 #
-#     ``There is no strtol in libc (well there is in the 'att universe'
-#	libc, but I couldn't figure out how to link that in), so I
-#	got the Chris Torek strtol.c from bsd-sources on uunet and
-#	compiled that.  There is no native ndbm either; I couldn't
-#	get db 1.72 to pass it's regression test, so I used gdbm-1.7
-#	instead.  I compiled it with gcc 1.40a.  The -lseq is to pick
-#	up getopt.''
+#	@(#)Makefile.NCR3000	8.2 (Berkeley) 4/16/94
 #
-#	@(#)Makefile.Dynix	8.3 (Berkeley) 4/11/94
-#
-
-CC= gcc
 
 # use O=-O (usual) or O=-g (debugging)
-O=	-O -g
+O=	-O
 
 # define the database mechanisms available for map & alias lookups:
 #	-DNDBM -- use new DBM
@@ -29,33 +23,33 @@ O=	-O -g
 DBMDEF=	-DNDBM
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=
+ENVDEF=	-DNCR3000
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=
+INCDIRS=-I/usr/ucbinclude
 
 # loader options
 LDOPTS=
 
 # library directories
-LIBDIRS=
+LIBDIRS=-L/usr/ucblib
 
 # libraries required on your system
-LIBS=	-lseq -lgdbm
+LIBS=	-lsocket -lc -lelf -lucb -ldbm -lnet -lnsl
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
-BINDIR=	${DESTDIR}/usr/lib
+BINDIR=	${DESTDIR}/usr/ucblib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
-STDIR=	${DESTDIR}/usr/lib
+STDIR=	${DESTDIR}/var/ucblib
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/usr/lib
+HFDIR=	${DESTDIR}/usr/ucblib
 
 # additional .o files needed
-OBJADD=strtol.o
+OBJADD=
 
 ###################  end of user configuration flags  ######################
 
@@ -69,8 +63,8 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
-BINGRP=	staff # no kmem group,
-BINMODE=4555  # so not setgid
+BINGRP=	kmem
+BINMODE=6555
 
 ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
 
@@ -93,14 +87,16 @@ newaliases.0: newaliases.1
 sendmail.0: sendmail.8
 	${NROFF} -mandoc sendmail.8 > sendmail.0
 
+INSTALL=install
+
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 mailq.0 newaliases.0 sendmail.0

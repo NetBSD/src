@@ -7,6 +7,8 @@
 #
 #  This has been tested on SCO.
 #
+#	@(#)Makefile.SCO	8.4 (Berkeley) 4/12/94
+#
 
 # use O=-O (usual) or O=-g (debugging)
 O=	-O
@@ -44,7 +46,7 @@ STDIR=	${DESTDIR}/usr/lib
 HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
-OBJADD=	fsync.o
+OBJADD=	
 
 ###################  end of user configuration flags  ######################
 
@@ -61,21 +63,26 @@ BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
 
-ALL=	sendmail aliases.0 newaliases.0 sendmail.0
+ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
 
 all: ${ALL}
 
 sendmail: ${BEFORE} ${OBJS}
 	${CC} -o sendmail ${OBJS} ${LIBDIRS} ${LIBS}
 
+NROFF=	nroff -h
+
 aliases.0: aliases.5
-	nroff -h -mandoc aliases.5 > aliases.0
+	${NROFF} -mandoc aliases.5 > aliases.0
+
+mailq.0: mailq.1
+	${NROFF} -mandoc mailq.1 > mailq.0
 
 newaliases.0: newaliases.1
-	nroff -h -mandoc newaliases.1 > newaliases.0
+	${NROFF} -mandoc newaliases.1 > newaliases.0
 
 sendmail.0: sendmail.8
-	nroff -h -mandoc sendmail.8 > sendmail.0
+	${NROFF} -mandoc sendmail.8 > sendmail.0
 
 install: install-sendmail install-docs
 
@@ -87,10 +94,10 @@ install-sendmail: sendmail
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
-install-docs: aliases.0 newaliases.0 sendmail.0
+install-docs: aliases.0 mailq.0 newaliases.0 sendmail.0
 
 clean:
-	rm -f ${OBJS} sendmail aliases.0 newaliases.0 sendmail.0
+	rm -f ${OBJS} sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
 
 # dependencies
 #   gross overkill, and yet still not quite enough....

@@ -1,25 +1,25 @@
 #
-#  Tested on Dynix 3.2.0.
+#  This makefile is for clipper-based Intergraph systems running CLIX.
+#  It and the defines supporting it in the source tree should be considered
+#  alpha-quality and used at own risk.
 #
-#	From Jim Davis <jdavis@cs.arizona.edu>.
+#  Porting done for CICNet, Inc., on behalf the Michigan State Department
+#  of Natural Resources.
 #
-#     ``There is no strtol in libc (well there is in the 'att universe'
-#	libc, but I couldn't figure out how to link that in), so I
-#	got the Chris Torek strtol.c from bsd-sources on uunet and
-#	compiled that.  There is no native ndbm either; I couldn't
-#	get db 1.72 to pass it's regression test, so I used gdbm-1.7
-#	instead.  I compiled it with gcc 1.40a.  The -lseq is to pick
-#	up getopt.''
+#  --Paul Southworth <pauls@cic.net>
 #
-#	@(#)Makefile.Dynix	8.3 (Berkeley) 4/11/94
+#	@(#)Makefile.CLIX	8.1 (Berkeley) 4/12/94
 #
 
-CC= gcc
+# make sure the shell constructs below use the right shell
+SHELL=	/bin/sh
 
 # use O=-O (usual) or O=-g (debugging)
-O=	-O -g
+O=	-O
 
-# define the database mechanisms available for map & alias lookups:
+CC=	gcc
+
+# define the database mechanism used for alias lookups:
 #	-DNDBM -- use new DBM
 #	-DNEWDB -- use new Berkeley DB
 #	-DNIS -- include NIS support
@@ -29,21 +29,18 @@ O=	-O -g
 DBMDEF=	-DNDBM
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=
+ENVDEF=	-DCLIX
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=
-
-# loader options
-LDOPTS=
+INCDIRS= -I/usr/include
 
 # library directories
 LIBDIRS=
 
 # libraries required on your system
-LIBS=	-lseq -lgdbm
+LIBS=	-lnsl -lbsd
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/lib
@@ -55,7 +52,7 @@ STDIR=	${DESTDIR}/usr/lib
 HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
-OBJADD=strtol.o
+OBJADD= getusershell.o
 
 ###################  end of user configuration flags  ######################
 
@@ -67,17 +64,18 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
 	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
+LINKS=	${DESTDIR}/usr/bin/newaliases ${DESTDIR}/usr/bin/mailq
 BINOWN=	root
-BINGRP=	staff # no kmem group,
-BINMODE=4555  # so not setgid
+BINGRP=	mail
+BINMODE=6555
+INSTALL=cp
 
-ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
+ALL=	sendmail # aliases.0 mailq.0 newaliases.0 sendmail.0
 
 all: ${ALL}
 
 sendmail: ${BEFORE} ${OBJS}
-	${CC} -o sendmail ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+	${CC} -o sendmail ${OBJS} ${LIBDIRS} ${LIBS}
 
 NROFF=	nroff -h
 
@@ -93,20 +91,24 @@ newaliases.0: newaliases.1
 sendmail.0: sendmail.8
 	${NROFF} -mandoc sendmail.8 > sendmail.0
 
-install: install-sendmail install-docs
+install: install-sendmail #install-docs
 
 install-sendmail: sendmail
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	#${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	${INSTALL} sendmail ${BINDIR}
+	chmod ${BINMODE} ${BINDIR}/sendmail
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-	    ${STDIR}/sendmail.st
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
+	#${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	#    ${STDIR}/sendmail.st
+	${INSTALL} /dev/null ${STDIR}/sendmail.st
+	#${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
+	${INSTALL} sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 mailq.0 newaliases.0 sendmail.0
 
 clean:
-	rm -f ${OBJS} sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
+	rm -f ${OBJS} sendmail #aliases.0 mailq.0 newaliases.0 sendmail.0
 
 # dependencies
 #   gross overkill, and yet still not quite enough....
