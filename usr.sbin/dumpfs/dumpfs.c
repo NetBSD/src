@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.13 1997/09/16 03:13:18 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.14 1997/10/17 00:21:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: dumpfs.c,v 1.13 1997/09/16 03:13:18 lukem Exp $";
+__RCSID("$NetBSD: dumpfs.c,v 1.14 1997/10/17 00:21:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,7 @@ long	dev_bsize = 1;
 
 int	dumpfs __P((char *));
 int	dumpcg __P((char *, int, int));
+int	main __P((int, char **));
 void	pbits __P((void *, int));
 void	usage __P((void));
 
@@ -86,7 +87,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fstab *fs;
+	struct fstab *fs;
 	int ch, eval;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
@@ -137,7 +138,7 @@ dumpfs(name)
 	if (afs.fs_postblformat != FS_42POSTBLFMT) {
 		i++;
 		if (afs.fs_inodefmt >= FS_44INODEFMT) {
-			int max, siz;
+			int max;
 
 			i++;
 			max = afs.fs_maxcontig;
@@ -311,11 +312,11 @@ dumpcg(name, fd, c)
 
 void
 pbits(vp, max)
-	register void *vp;
+	void *vp;
 	int max;
 {
-	register int i;
-	register char *p;
+	int i;
+	char *p;
 	int count, j;
 
 	for (count = i = 0, p = vp; i < max; i++)

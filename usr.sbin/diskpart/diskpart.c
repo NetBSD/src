@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94"; */
-static char rcsid[] = "$NetBSD: diskpart.c,v 1.8 1997/06/21 09:07:09 lukem Exp $";
+#if 0
+static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
+#else
+__RCSID("$NetBSD: diskpart.c,v 1.9 1997/10/17 00:16:55 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -113,9 +116,10 @@ int	badsecttable = 126;	/* # sectors */
 int	pflag;			/* print device driver partition tables */
 int	dflag;			/* print disktab entry */
 
+int	gettype __P((const char *, char **));
+int	main __P((int, char **));
 struct disklabel *promptfordisk __P((const char *));
 void	usage __P((void));
-int	gettype __P((const char *, char **));
 
 int
 main(argc, argv)
