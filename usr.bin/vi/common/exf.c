@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.11 2003/01/06 20:30:41 wiz Exp $	*/
+/*	$NetBSD: exf.c,v 1.11.2.1 2004/04/08 21:22:46 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: exf.c,v 1.11 2003/01/06 20:30:41 wiz Exp $");
+__RCSID("$NetBSD: exf.c,v 1.11.2.1 2004/04/08 21:22:46 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,8 @@ file_init(sp, frp, rcv_name, flags)
 	 */
 	if (F_ISSET(frp, FR_RECOVER)) {
 		F_CLR(frp, FR_RECOVER);
-		return (rcv_read(sp, frp));
+		if (rcv_read(sp, frp) == 0)
+			return 0;
 	}
 
 	/*
