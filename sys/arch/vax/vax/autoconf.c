@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2000/06/01 02:28:11 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60 2000/06/04 18:02:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -370,14 +370,14 @@ booted_hp(struct device *dev, void *aux)
 	if (jmfr("mba", dev, BDEV_HP) == 0) {
 		struct sbi_attach_args *sa = aux;
 
-		mbaaddr = kvtophys(sa->nexaddr);
+		mbaaddr = kvtophys(sa->sa_ioh);
 		return 0;
 	}
 
 	if (jmfr("hp", dev, BDEV_HP))
 		return 0;
 
-	if (((struct mba_attach_args *)aux)->unit != rpb.unit)
+	if (((struct mba_attach_args *)aux)->ma_unit != rpb.unit)
 		return 0;
 
 	if (mbaaddr != rpb.adpphy)
