@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1996/03/17 01:24:30 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1996/03/27 22:18:44 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -329,6 +329,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih.ih_func = fdcintr;
 	fdc->sc_ih.ih_arg = fdc;
 	fdc->sc_ih.ih_level = IPL_BIO;
+	fdc->sc_ih.ih_name = "fdc";
 	if (irq_claim(mb->mb_irq, &fdc->sc_ih))
 		panic("Cannot claim IRQ %d for fdc%d\n", mb->mb_irq, parent->dv_unit);
 
@@ -461,8 +462,8 @@ fd_nvtotype(fdc, nvraminfo, drive)
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
 	switch (type) {
-	case 0x00 :
-		return NULL;
+/*	case 0x00 :
+		return NULL;*/
 	case 0x10 :
 		return &fd_types[0];
 	default:
@@ -726,7 +727,7 @@ out_fdc(iobase, x)
 }
 
 int
-Fdopen(dev, flags)
+fdopen(dev, flags)
 	dev_t dev;
 	int flags;
 {
@@ -1302,7 +1303,7 @@ load_ramdisc_from_floppy(rd, dev)
 
 	s = spl0();
 
-	if (Fdopen(bp->b_dev, 0) != 0) {
+	if (fdopen(bp->b_dev, 0) != 0) {
 		brelse(bp);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
