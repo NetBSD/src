@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.6 1998/04/13 12:15:56 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.7 1998/06/20 18:49:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -411,7 +411,7 @@ qdcnprobe(cndev)
 	                /* The KA630 isn't using a QDSS as the console,
 	                 * so we won't either */
 		        return;
-	} else if (vax_boardtype != VAX_BTYP_650)
+	} else /* if (vax_boardtype != VAX_BTYP_650) */
                 /* 
 		 * The KA640, 650 and 655 should also support a QDSS.
 		 * Otherwise, it shouldn't be there so apply artificial
