@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.3 1993/11/13 02:26:57 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/02/17 01:22:23 jtc Exp $";
 #endif
 
 #include "getopt.h"
@@ -141,7 +141,8 @@ char **argv;
 	extern int optind;
 	extern int opterr;
 	extern char *optarg;
-	char *optlist = "+F:f:v:W:";
+	const char *optlist = "+F:f:v:W:m:";
+	int stopped_early = 0;
 
 #ifdef __EMX__
 	_response(&argc, &argv);
@@ -175,7 +176,6 @@ char **argv;
 	Nnull_string->flags = (PERM|STR|STRING|NUM|NUMBER);
 
 	/* Set up the special variables */
-
 	/*
 	 * Note that this must be done BEFORE arg parsing else -F
 	 * breaks horribly 
@@ -227,6 +227,19 @@ char **argv;
 			pre_assign(optarg);
 			break;
 
+		case 'm':
+			/*
+			 * Research awk extension.
+			 *	-mf=nnn		set # fields, gawk ignores
+			 *	-mr=nnn		set record length, ditto
+			 */
+			if (do_lint)
+				warning("-m[fr] option irrelevant");
+			if ((optarg[0] != 'r' && optarg[0] != 'f')
+			    || optarg[1] != '=')
+				warning("-m option usage: -m[fn]=nnn");
+			break;
+
 		case 'W':       /* gawk specific options */
 			gawk_option(optarg);
 			break;
@@ -259,6 +272,14 @@ char **argv;
 			break;
 #endif
 
+		case 0:
+			/*
+			 * getopt_long found an option that sets a variable
+			 * instead of returning a letter. Do nothing, just
+			 * cycle around for the next one.
+			 */
+			break;
+
 		case '?':
 		default:
 			/*
@@ -275,6 +296,7 @@ char **argv;
 			if (! do_posix
 			    && (optopt == 0 || strchr(optlist, optopt) == NULL)) {
 				optind--;
+				stopped_early = 1;
 				goto out;
 			} else if (optopt)
 				/* Use 1003.2 required message format */
@@ -302,7 +324,7 @@ out:
 		output_is_tty = 1;
 	/* No -f or --source options, use next arg */
 	if (numfiles == -1) {
-		if (optind > argc - 1)	/* no args left */
+		if (optind > argc - 1 || stopped_early) /* no args left or no program */
 			usage(1);
 		srcfiles[++numfiles].stype = CMDLINE;
 		srcfiles[numfiles].val = argv[optind];
@@ -342,16 +364,15 @@ static void
 usage(exitval)
 int exitval;
 {
-	char *opt1 = " -f progfile [--]";
-#if defined(MSDOS) || defined(OS2)
-	char *opt2 = " [--] \"program\"";
+	const char *opt1 = " -f progfile [--]";
+#if defined(MSDOS) || defined(OS2) || defined(VMS)
+	const char *opt2 = " [--] \"program\"";
 #else
-	char *opt2 = " [--] 'program'";
+	const char *opt2 = " [--] 'program'";
 #endif
-	char *regops = " [POSIX or GNU style options]";
+	const char *regops = " [POSIX or GNU style options]";
 
-	version();
-	fprintf(stderr, "Usage: %s%s%s file ...\n\t%s%s%s file ...\n",
+	fprintf(stderr, "Usage:\t%s%s%s file ...\n\t%s%s%s file ...\n",
 		myname, regops, opt1, myname, regops, opt2);
 
 	/* GNU long options info. Gack. */
@@ -359,12 +380,13 @@ int exitval;
 	fputs("\t-f progfile\t\t--file=progfile\n", stderr);
 	fputs("\t-F fs\t\t\t--field-separator=fs\n", stderr);
 	fputs("\t-v var=val\t\t--assign=var=val\n", stderr);
+	fputs("\t-m[fr]=val\n", stderr);
 	fputs("\t-W compat\t\t--compat\n", stderr);
 	fputs("\t-W copyleft\t\t--copyleft\n", stderr);
 	fputs("\t-W copyright\t\t--copyright\n", stderr);
 	fputs("\t-W help\t\t\t--help\n", stderr);
 	fputs("\t-W lint\t\t\t--lint\n", stderr);
-#if 0
+#ifdef NOSTALGIA
 	fputs("\t-W nostalgia\t\t--nostalgia\n", stderr);
 #endif
 #ifdef DEBUG
@@ -399,7 +421,6 @@ GNU General Public License for more details.\n\
 along with this program; if not, write to the Free Software\n\
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n";
 
-	version();
 	fputs(blurb_part1, stderr);
 	fputs(blurb_part2, stderr);
 	fputs(blurb_part3, stderr);
@@ -411,7 +432,8 @@ cmdline_fs(str)
 char *str;
 {
 	register NODE **tmp;
-	int len = strlen(str);
+	/* int len = strlen(str); *//* don't do that - we want to
+	                               avoid mismatched types */
 
 	tmp = get_lhs(FS_node, (Func_ptr *) 0);
 	unref(*tmp);
@@ -428,7 +450,7 @@ char *str;
 		if (do_unix && ! do_posix)
 			str[0] = '\t';
 	}
-	*tmp = make_str_node(str, len, SCAN);	/* do process escapes */
+	*tmp = make_str_node(str, strlen(str), SCAN); /* do process escapes */
 	set_FS();
 }
 
@@ -460,9 +482,9 @@ char **argv;
  */
 struct varinit {
 	NODE **spec;
-	char *name;
+	const char *name;
 	NODETYPE type;
-	char *strval;
+	const char *strval;
 	AWKNUM numval;
 	Func_ptr assign;
 };
@@ -493,9 +515,10 @@ init_vars()
 	register struct varinit *vp;
 
 	for (vp = varinit; vp->name; vp++) {
-		*(vp->spec) = install(vp->name,
+		*(vp->spec) = install((char *) vp->name,
 		  node(vp->strval == 0 ? make_number(vp->numval)
-				: make_string(vp->strval, strlen(vp->strval)),
+				: make_string((char *) vp->strval,
+					strlen(vp->strval)),
 		       vp->type, (NODE *) NULL));
 		if (vp->assign)
 			(*(vp->assign))();
@@ -731,6 +754,8 @@ static void
 version()
 {
 	fprintf(stderr, "%s, patchlevel %d\n", version_string, PATCHLEVEL);
+	/* per GNU coding standards, exit successfully, do nothing else */
+	exit(0);
 }
 
 /* this mess will improve in 2.16 */
