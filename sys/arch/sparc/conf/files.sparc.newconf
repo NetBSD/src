@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.2 1993/10/15 05:59:28 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.3 1993/10/27 18:09:38 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -31,10 +31,10 @@ file	arch/sparc/sbus/sbus.c		sbus
 # scsi driver and associated stuff
 define	scsi { target = -1 }
 device	tg at scsi { drive = -1 }
-file	dev/scsi/scsi_subr.c	scsi
+file	arch/sparc/scsi/scsi_subr.c	scsi
 
 device	sd at tg: disk
-file	dev/scsi/sd.c		sd needs-flag
+file	arch/sparc/scsi/sd.c		sd needs-flag
 
 # device st at tg: tape	-- not yet
 
