@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.52 2000/07/24 03:32:31 sommerfeld Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.53 2000/07/27 11:36:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1042,15 +1042,7 @@ icmp_ratelimit(dst, type, code)
 	const int code;			/* not used at this moment */
 {
 	static struct timeval icmperrratelim_last;
-	struct in_ifaddr *ia;
 
-	/*
-	 * Don't rate-limit if it's for us!  
-	 */
-	INADDR_TO_IA(*dst, ia);
-	if (ia != NULL)
-		return 0;
-	
 	/* PPS limit */
 	if (!ppsratecheck(&icmperrppslim_last, &icmperrpps_count,
 	    icmperrppslim)) {
