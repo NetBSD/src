@@ -284,3 +284,7 @@ Mondo patch 2:
 
 [ cron ] Fix possible buffer overflow, from Rick Byers <rickb@iaw.on.ca>,
 PR #3293.
+
+[ dmesg ] Don't get stuck in an infinite loop if the msgbuf index is 0
+or 1, from enami tsugutomo <enami@ba2.so-net.or.jp>, PR #3285.
+
