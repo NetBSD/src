@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.16 1993/08/01 19:26:22 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.1 1993/09/24 08:57:19 mycroft Exp $
  */
 
 /*
@@ -317,7 +317,7 @@ stminphys(struct buf *bp)
  * The transfer is described by a buf and will include
  * only one physical transfer.
  */
-int
+void
 ststrategy(struct buf *bp)
 {
 	struct st_data *st;
