@@ -1,7 +1,7 @@
-/*	$NetBSD: ascvar.h,v 1.2 1997/02/11 07:47:37 scottr Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.3 1997/02/24 05:47:34 scottr Exp $	*/
 
 /*
- * Copyright (c) 1995 Allen Briggs.  All rights reserved.
+ * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,9 +13,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Allen Briggs.
+ *      This product includes software developed by Scott Reynolds for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
