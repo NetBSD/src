@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.43.2.3 2001/03/29 09:57:41 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.43.2.4 2001/04/23 19:05:39 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -198,7 +198,7 @@ siop_scsipi_request(chan, req, arg)
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
 	struct siop_acb *acb;
-	struct siop_softc *sc;
+	struct siop_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int flags, s;
 
 	switch (req) {
