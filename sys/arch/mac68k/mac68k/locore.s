@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.21 1994/07/10 16:58:08 briggs Exp $
+ *	$Id: locore.s,v 1.22 1994/07/31 08:19:46 lkestel Exp $
  */
 
 #include "assym.s"
@@ -781,14 +781,17 @@ _Umap:		.long	0
 | Scratch memory.  Careful when messing with these...
 longscratch:	.long	0
 longscratch2:	.long	0
-macos_crp1:	.long	0
-macos_crp2:	.long	0
-macos_tc:	.long	0
-macos_tt0:	.long	0
-macos_tt1:	.long	0
+pte_tmp:	.long	0  | for get_pte()
+_macos_crp1:	.long	0
+_macos_crp2:	.long	0
+_macos_tc:	.long	0
+_macos_tt0:	.long	0
+_macos_tt1:	.long	0
 _bletch:	.long	0
 _esym:		.long	0
 		.globl	_kstack, _Umap, _esym, _bletch
+		.globl	_macos_crp1, _macos_crp2, _macos_tc
+		.globl	_macos_tt0, _macos_tt1
 
 /*
  * Initialization
@@ -857,7 +860,7 @@ start:
 	.globl	_initenv, _getenvvars	| in machdep.c
 	.globl	_setmachdep		| in machdep.c
 	.globl	_printenvvars
-	.globl	_mmudebug, _gothere, _getphysical
+	.globl	_gothere, _getphysical
 
 	movl	a1, sp@-		| Address of buffer
 	movl	d4, sp@-		| Some flags... (probably not used)
@@ -870,6 +873,7 @@ start:
 	jbsr	_setmachdep		| Set some machine-dep stuff
 
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
+	jbsr	_consinit		| XXX Should only be if graybar on
 
 	tstl	_cpu040
 	beq	Lstartnot040		| It's not an '040
@@ -913,103 +917,36 @@ Lisa68020:
 	movl	#MMU_68851, _mmutype	| 68020, implies 68851, or crash.
 Lmmufigured:
 
-| LAK: (1/2/94) We need to find out if the MMU is already on.  If it is
+| LAK: (7/25/94) We need to find out if the MMU is already on.  If it is
 |  not, fine.  If it is, then we must get at it because it tells us a lot
 |  of information, such as our load address (_load_addr) and the video
-|  physical address.  The MacOS page maps are not mapped into our
-|  virtual space, so we must use the TT0 register to get to them.
-|  Of course, "gas" does not know about the "tt0" register, so we
-|  must hand-assemble the instruction.
+|  physical address, not to mention how the memory banks are setup.
+|  All this is only applicable to '030s.
 
-	lea	macos_tc,a0
+	lea	_macos_tc,a0
 	pmove	tc,a0@
 	btst	#31,a0@			| Bit #31 is Enabled bit
 	jeq	mmu_off
 
-| LAK: MMU is on; find out how it is mapped.  MacOS uses the CRP.
-
+| MMU is on; if not '030, then just turn it off
 	tstl	_mmutype		| ttx instructions will break 68851
-	jgt	LnocheckTT
-	lea	macos_tt0,a0		| save it for later inspection
-	.long	0xF0100A00		| pmove tt0,a0@
-	lea	macos_tt1,a0		| save it for later inspection
-	.long	0xF0100E00		| pmove tt1,a0@
-LnocheckTT:
-	jbsr	_gray_bar		| 2 - Finished storing MacOS TTs
+	jne	Lnoremap		| not '030 -- skip all this
 
-	lea		macos_crp1,a0
-	pmove	crp,a0@			| Save MacOS 
-	tstl	_mmutype		| ttx instructions will break 68851
-	| Assume that 68851 maps are in ROMs, which we can already read.
-	jgt	LnosetTT
-					| This next line gets the second
-					| long word of the RP, the address...
-	movl	macos_crp2,d0		| address of root table
-	andl	#0xFF000000,d0		| fix up for tt0 register
-	orl		#0x00018600,d0
-	movl	d0,longscratch
-	lea		longscratch,a0
-	.long	0xF0100800		| pmove a0@,tt0
-
-LnosetTT:
-	jbsr	_gray_bar		| 3 - Finished setting TT0 for PTs
-
-	movl	#0,a0			| address to test (logical 0)
-	ptestr	#0,a0@,#7,a1		| puts last pte in a1
-	pmove	psr,longscratch2
-	movl	a1,macos_crp1		| save it for later inspection
-#if 0
-	movl	a1@,macos_crp2		| save it for later inspection
-	movl	a0,sp@-			| push test address
-	movw	longscratch2,sp@-	| push status word,
-	movw	#0,sp@-
-	movl	a1@,sp@-		| PTE,
-	movl	macos_tc,sp@-		| and TC
-	jbsr	_getphysical		| in machdep.c
-	addl	#16,sp			| physical address in d0
+| find out how it is mapped
+	jbsr	_get_mapping		| in machdep; returns logical 0 in d0
 	movl	d0,_load_addr		| this is our physical load address
-	jbsr	_gray_bar		| (not drawn) - got phys load addr
+	jra	Ldoneremap
 
-	movl	_videoaddr,a0		| get logical address of video
-	ptestr	#0,a0@,#7,a1		| puts last pte in a1
-	pmove	psr,longscratch2
-	movl	a1,macos_crp1		| save it for later inspection
-	movl	a1@,macos_crp2		| save it for later inspection
-	movl	a0,sp@-			| push test address
-	movw	longscratch2,sp@-	| push status word,
-	movw	#0,sp@-
-	movl	a1@,sp@-		| PTE,
-	movl	macos_tc,sp@-		| and TC
-	jbsr	_getphysical		| in machdep.c
-	addl	#16,sp			| physical address in d0
-	movl	d0,_bletch		| this is physical addr of video
-#endif
-
-	jbsr	_gray_bar		| 4 - got CRP, got phys load & video
-
-| This next part is cool because on the machines we currently work
-| on, the physical and logical load addresses are both 0.  This is
-| why the CI works without external video, but to load at Bank B,
-| we will have to leave the MMU on.
-| (Or have a phys=log jump point.  Sounds like sci-fi, doesn't it?)
-| -BG
-|
-| Turn off the MMU
-#if !defined(IICI)
+Lnoremap:
+	| If not on '030, then just turn off the MMU cuase we don't need it.
 	lea	longscratch,a0
 	movl	#0,a0@
 	pmove	a0@,tc
-#endif
 
-	jbsr	_gray_bar		| 5 - Turned off MMU
-|	jbsr	_macserinit
+Ldoneremap:
+	jbsr	_gray_bar		| 5 - Handled MMU
 
 	jbsr	_gray_bar		| 6 - Initialized serial, no interrupts
-	movl	longscratch2, sp@-
-	movl	macos_crp1, sp@-
-	movl	macos_crp2, sp@-
-	jbsr	_mmudebug
-	lea	sp@(12), sp
 
 mmu_off:
 
@@ -1279,14 +1216,12 @@ Lipt4:
 
 	jbsr	_gray_bar		| 11 - progress
 /* LAK: Initialize external IO PTE in kernel PT (this is the nubus space) */
-/* This section wasn't here at all.  How did they initialize their EIO */
-/* space? (BARF) */
 	movl	_Sysptsize,d0		| initial system PT size (pages)
 	addl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG,d0 | start of nubus PT
 	movl	#PGSHIFT,d1		| PT to bytes
 	lsll	d1,d0			| # of page tables
 	movl	d0,a0
-	addl	sp@+,a0			| + start of kernel PT = start of IO
+	addl	sp@,a0			| + start of kernel PT = start of IO
 	movl	a0,a2			| ptr to end of PTEs to init
 	addl	#NBMAPSIZE*4,a2		| # of PTE to initialize
 	movl	#NBBASE,d1		| Start of IO space
@@ -1297,6 +1232,27 @@ Lipt5:
 	addl	#NBPG,d1		| increment page frame number
 	cmpl	a2,a0			| done yet?
 	jcs	Lipt5			| no, keep going
+
+#ifdef MACHINE_NONCONTIG
+	/*
+	 * LAK: (7/30/94) If the MMU was on when we booted and we're on
+	 *  an '030, then we have information about how MacOS had mapped
+	 *  the NuBus space.  This function re-maps NuBus the same way
+	 *  so we can use internal video.  At the same time, it remaps
+	 *  the kernel pages in case we were split between banks (e.g.,
+	 *  on a IIsi with internal video plugged out).
+	 *
+	 *  This is the first function in this part of locore that we
+	 *  took out to C instead of writing in assembly.  I hope we
+	 *  can take more out, cause all this stuff is pretty unreadable.
+	 */
+
+	movl	sp@,a0			| can I do this in one step?
+	movl	a0,sp@-			| address of start of kernel PT
+	jbsr	_remap_MMU
+	addl	#4,sp
+#endif
+	addl	#4,sp			| pop start of PT address
 
 /*
  * Setup page table for process 0.
@@ -1345,98 +1301,6 @@ Lclru1:
 
 	jbsr	_gray_bar		| 12 - progress
 
-
-#if defined(MACHINE_NONCONTIG)
-	jmp	foobar3
-foobar1:
-/*
- * LAK: Before we enable the MMU, we check to see if it is already
- *  on.  If it is, then MacOS must have mapped memory in some way;
- *  all of the page tables that we just created are wrong, and
- *  we must re-map them properly.  To do this, we walk through
- *  our new page tables, find the physical address of each
- *  of the logital addresses we've set up, and stick this physical
- *  address in our page maps.  We've also got to do some fancy
- *  register-tweaking to enable the MMU.
- */
-
-	movl	#1,sp@-
-	movl	#2,sp@-
-	movl	#3,sp@-
-	jbsr	_mmudebug
-	addl	#12,sp
-
-	pmove	tc,a2@			| get the current tc
-
-	movl	a2@,sp@-
-	movl	a2@,sp@-
-	movl	a2@,sp@-
-	jbsr	_mmudebug
-	addl	#12,sp
-
-	pmove	tc,a2@			| get the current tc
-	btst	#31,a2@			| check enable bit
-	jeq	MMUoff			| if off, proceed as normal
-	jbsr	_remap_MMU		| if on, remap everything
-
-	clrl	d2			| logical address
-	movl	_Sysseg,a3		| go through system segment map
-	movl	a3,a4			| a4 = end of map
-	addl	NBPG,a4
-remap_more:
-	cmpl	a3,a4			| go until end of system seg map
-	jge	done_remap
-	movl	a3@,d3			| get system segment entry
-	btst	#1,d3			| check valid flag
-	jeq	skip_segment		| skip entire segment if not valid
-	andl	#0xFFFFFFF0,d5		| mask off DT bits and such
-	movl	d3,a5			| start inner loop of segment
-	movl	a5,a6			| a6 = end of page table
-	addl	NBPG,a6
-remap_more_pt:
-	cmpl	a5,a6			| go until end of page table
-	jge	done_remap_pt
-	movl	a5@,d3			| get page table entry
-	btst	#0,d3			| test valid bit
-	jeq	skip_page		| if not, don't do anything
-	andl	#0x000000FF,d3		| keep DT bits and such
-	movl	d2,a1			| move logical address
-
-	movl	d2,sp@-
-	movl	d2,sp@-
-	movl	d2,sp@-
-	jbsr	_mmudebug
-	addl	#12,sp
-
-	ptestr	#1,a1@,#7,a0		| get physical address
-	movl	a0,d0
-	orl	d3,d0			| replace DT bits and such
-	movl	d0,a5@			| and fix page table entry
-skip_page:
-	addl	#NBPG,d2
-	addl	#4,a5
-	jmp	remap_more_pt
-done_remap_pt:
-	jmp	dont_skip_segment
-skip_segment:
-	addl	#(NBPG*1000),d2
-dont_skip_segment:
-	addl	#4,a3
-	jmp	remap_more
-
-done_remap:
-
-MMUoff:
-	movl	#4,sp@-
-	movl	#5,sp@-
-	movl	#6,sp@-
-	jbsr	_mmudebug
-	addl	#12,sp
-
-	jmp	foobar2
-foobar3:
-#endif  /* MACHINE_NONCONTIG */
-
 	.globl	_dump_pmaps
 |	jbsr	_dump_pmaps
 
@@ -1455,11 +1319,14 @@ foobar3:
 	jbsr	_gray_bar		| #15
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
 
-	movl	#8,sp@-
-	movl	#9,sp@-
-	movl	a1,sp@-
-	jbsr	_mmudebug
-	lea	sp@(12),sp
+| LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
+	tstl	_mmutype		| ttx instructions will break 68851
+	jne	LnokillTT
+	lea	longscratch,a0
+	movl	#0, a0@
+	.long	0xF0100800		| movl a0@,tt0
+	.long	0xF0100C00		| movl a0@,tt1
+LnokillTT:
 
 	jbsr	_gray_bar		| #16
 /* BARF: A line which was here enabled the FPE and i-cache */
@@ -1467,21 +1334,7 @@ foobar3:
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 
-| LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
-	tstl	_mmutype		| ttx instructions will break 68851
-	jgt	LnokillTT
-	lea	longscratch,a0
-	movl	#0, a0@
-	.long	0xF0100800		| movl a0@,tt0
-	.long	0xF0100C00		| movl a0@,tt1
-LnokillTT:
-
 	jbsr	_gray_bar		| #17
-	movl	#5, sp@-
-	movl	#6, sp@-
-	movl	#7, sp@-
-	jbsr	_mmudebug
-	lea	sp@(12), sp
 
 	pflusha				| make sure it's clean
 
@@ -1497,6 +1350,10 @@ foobar2:
  * Should be running mapped from this point on
  */
 /* init mem sizes */
+/*
+ * XXX LAK: we should get rid of maxmem and physmem entirely now that
+ * we use noncontig.
+ */
 	movl	lastpage,d1		| last page of ram from MacOS
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
@@ -1512,7 +1369,6 @@ foobar2:
  * LAK: We do have PA == VA, but we'll leave things the way they
  *      are for now.
  */
-	.globl	_avail_start
 	lea	tmpstk,sp		| temporary stack
 	movl	_load_addr,sp@-		| phys load address
 	addl	_load_addr,a4		| need physical address
@@ -2659,12 +2515,271 @@ _doboot:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
+	| XXX Turning off the MMU here causes the PC to be nowhere for IIci
+	| and IIsi machines.  Not turning off the MMU causes an MMU fault.
 	lea	longscratch,a0		| make sure we have real memory
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
 	pmove	a0@,tc			| disable MMU
 	/* LAK: Reboot here... */
 	movl	#0x40800090,a1		| address of ROM
 	jra	a1@			| jump to ROM to reset machine
+
+	/*
+	 * LAK: (7/24/94) This routine was added so that the
+	 *  C routine that runs at startup can figure out how MacOS
+	 *  had mapped memory.  We want to keep the same mapping so
+	 *  that when we set our MMU pointer, the PC doesn't point
+	 *  in the middle of nowhere.
+	 *
+	 * long get_pte(void *addr, unsigned long pte[2], unsigned short *psr)
+	 *
+	 *  Takes "addr" and looks it up in the current MMU pages.  Puts
+	 *  the PTE of that address in "pte" and the result of the
+	 *  search in "psr".  "pte" should be 2 longs in case it is
+	 *  a long-format entry.
+	 *
+	 *  One possible problem here is that setting the tt register
+	 *  may screw something up if, say, the address returned by ptest
+	 *  in a0 has msb of 0.
+	 *
+	 *  Returns -1 on error, 0 if pte is a short-format pte, or
+	 *  1 if pte is a long-format pte.
+	 *
+	 *  Be sure to only call this routine if the MMU is enabled.  This
+	 *  routine is probably more general than it needs to be -- it
+	 *  could simply return the physical address (replacing
+	 *  get_physical() in machdep).
+	 *
+	 *  "gas" does not understand the tt0 register, so we must hand-
+	 *  assemble the instructions.
+	 */
+	.globl	_get_pte
+_get_pte:
+	addl	#-4,sp		| make temporary space
+	movl	sp@(8),a0	| logical address to look up
+	movl	#0,a1		| clear in case of failure
+	ptestr	#1,a0@,#7,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	movl	sp@(16),a0	| where to store the psr
+	movw	d1,a0@		| send back to caller
+	andw	#0xc400,d1	| if bus error, exceeded limit, or invalid
+	jne	get_pte_fail1	| leave now
+	tstl	a1		| check address we got back
+	jeq	get_pte_fail2	| if 0, then was not set -- fail
+
+	| enable tt0
+	movl	a1,d0
+	movl	d0,pte_tmp1	| save for later
+	andl	#0xff000000,d0	| keep msb
+	orl	#0x00008707,d0	| enable tt for reading and writing
+	movl	d0,longscratch
+	lea	longscratch,a0
+	.long	0xf0100800	| pmove a0@,tt0
+
+	| send first long back to user
+	movl	sp@(12),a0	| address of where to put pte
+	movl	a1@,d0		|
+	movl	d0,a0@		| first long
+
+	andl	#3,d0		| dt bits of pte
+	cmpl	#1,d0		| should be 1 if page descriptor
+	jne	get_pte_fail3	| if not, get out now
+
+	movl	sp@(16),a0	| addr of stored psr
+	movw	a0@,d0		| get psr again
+	andw	#7,d0		| number of levels it found
+	addw	#-1,d0		| find previous level
+	movl	sp@(8),a0	| logical address to look up
+	movl	#0,a1		| clear in case of failure
+
+	cmpl	#0,d0
+	jeq	pte_level_zero
+	cmpl	#1,d0
+	jeq	pte_level_one
+	cmpl	#2,d0
+	jeq	pte_level_two
+	cmpl	#3,d0
+	jeq	pte_level_three
+	cmpl	#4,d0
+	jeq	pte_level_four
+	cmpl	#5,d0
+	jeq	pte_level_five
+	cmpl	#6,d0
+	jeq	pte_level_six
+	jra	get_pte_fail4	| really should have been one of these...
+
+pte_level_zero:
+	| must get CRP to get length of entries at first level
+	lea	longscratch,a0	| space for two longs
+	pmove	crp,a0@		| save root pointer
+	movl	a0@,d0		| load high long
+	jra	pte_got_parent
+pte_level_one:
+	ptestr	#1,a0@,#1,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_level_two:
+	ptestr	#1,a0@,#2,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_level_three:
+	ptestr	#1,a0@,#3,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_level_four:
+	ptestr	#1,a0@,#4,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_level_five:
+	ptestr	#1,a0@,#5,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_level_six:
+	ptestr	#1,a0@,#6,a1	| search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+
+pte_got_it:
+	andw	#0xc400,d1	| if bus error, exceeded limit, or invalid
+	jne	get_pte_fail5	| leave now
+	tstl	a1		| check address we got back
+	jeq	get_pte_fail6	| if 0, then was not set -- fail
+
+	| change tt0
+	movl	a1,d0
+	andl	#0xff000000,d0	| keep msb
+	orl	#0x00008707,d0	| enable tt for reading and writing
+	movl	d0,longscratch
+	lea	longscratch,a0
+	.long	0xF0100800	| pmove a0@,tt0
+
+	movl	a1@,d0		| get pte of parent
+	movl	d0,_macos_tt0	| XXX for later analysis (kill this line)
+pte_got_parent:
+	andl	#3,d0		| dt bits of pte
+	cmpl	#2,d0		| child is short-format descriptor
+	jeq	short_format
+	cmpl	#3,d0		| child is long-format descriptor
+	jne	get_pte_fail7
+
+	| long_format -- we must go back, change the tt, and get the
+	|  second long.  The reason we didn't do this in the first place
+	|  is that the first long might have been the last long of RAM.
+
+	movl	pte_tmp1@,a1	| get address of our original pte
+	addl	#4,a1		| address of ite second long
+
+	| change tt0 back
+	movl	a1,d0
+	andl	#0xff000000,d0	| keep msb
+	orl	#0x00008707,d0	| enable tt for reading and writing
+	movl	d0,longscratch
+	lea	longscratch,a0
+	.long	0xF0100800	| pmove a0@,tt0
+
+	movl	sp@(12),a0	| address of return pte
+	movl	a1@,a0@(4)	| write in second long
+
+	movl	#1,d0		| return long-format
+	jra	get_pte_success
+
+short_format:
+	movl	#0,d0		| return short-format
+	jra	get_pte_success
+
+get_pte_fail:
+	movl	#-1,d0		| return failure
+
+get_pte_success:
+	clrl	d1		| disable tt
+	movl	d1,longscratch
+	lea	longscratch,a0
+	.long	0xF0100800	| pmove a0@,tt0
+
+	addl	#4,sp		| return temporary space
+	rts
+
+get_pte_fail1:
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail2:
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail3:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail4:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail5:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail6:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail7:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail8:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail9:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
+get_pte_fail10:
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jbsr	_printstar
+	jra	get_pte_fail
 
 	.data
 	.globl	_sanity_check
