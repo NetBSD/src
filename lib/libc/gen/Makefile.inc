@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.48 1994/06/26 16:24:55 jtc Exp $
+#	$Id: Makefile.inc,v 1.49 1994/06/28 04:34:24 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -56,7 +56,7 @@ MAN3+=	alarm.0 clock.0 confstr.0 ctermid.0 ctime.0 ctype.0 \
 	getbsize.0 getcap.0 getcwd.0 getdomainname.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 \
 	getgrouplist.0 gethostname.0 getloadavg.0 \
-	getmntinfo.0 getpagesize.0 getpass.0 getpwent.0 \
+	getmntinfo.0 getnetgrent.0 getpagesize.0 getpass.0 getpwent.0 \
 	getsubopt.0 getttyent.0 getusershell.0 glob.0 \
 	initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
@@ -92,6 +92,8 @@ MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3
 MLINKS+=gethostname.3 sethostname.3
+MLINKS+=getnetgrent.3 innetgr.3 getnetgrent.3 setnetgrent.3 \
+	getnetgrent.3 endnetgrent.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 	getpwent.3 getpwuid.3 getpwent.3 setpwent.3 getpwent.3 setpwfile.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
