@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 1996/11/30 02:48:59 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,7 +71,7 @@
 #define _ENTRY(x) \
 	.text; .align 2; .globl x; .type x,@function; x:
 
-#ifdef PROF
+#ifdef GPROF
 # define _PROF_PROLOGUE	\
 	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
 #else
