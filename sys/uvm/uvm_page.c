@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.10 1998/05/05 20:51:06 kleink Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.11 1998/05/28 15:31:31 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -125,9 +125,6 @@ static struct pglist uvm_bootbucket;
  */
 
 static void uvm_pageinsert __P((struct vm_page *));
-#if !defined(PMAP_STEAL_MEMORY)
-static boolean_t uvm_page_physget __P((vm_offset_t *));
-#endif
 
 
 /*
@@ -452,7 +449,7 @@ uvm_pageboot_alloc(size)
  * => return false if out of memory.
  */
 
-static boolean_t
+boolean_t
 uvm_page_physget(paddrp)
 	vm_offset_t *paddrp;
 {
