@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)store.c	5.4 (Berkeley) 5/13/91";*/
-static char rcsid[] = "$Id: store.c,v 1.2 1993/08/01 18:54:12 mycroft Exp $";
+static char rcsid[] = "$Id: store.c,v 1.3 1994/10/21 21:26:14 mycroft Exp $";
 #endif /* not lint */
 
 /*	store.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -43,120 +43,120 @@ static int dndcount=0,dnditm=0;
 /*	this is the data for the stuff in the dnd store	*/
 int maxitm=83;	/* number of items in the dnd inventory table	*/
 struct _itm itm[90] = {
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost 		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{ 2,		0,		OLEATHER,		0,		3	},
-{ 10,		0,		OSTUDLEATHER,	0,		2	},
-{ 40,		0,		ORING,			0,		2	},
-{ 85,		0,		OCHAIN,			0,		2	},
-{ 220,		0,		OSPLINT,		0,		1	},
-{ 400,		0,		OPLATE,			0,		1	},
-{ 900,		0,		OPLATEARMOR,	0,		1	},
-{ 2600,		0,		OSSPLATE,		0,		1	},
-{ 150,		0,		OSHIELD,		0,		1	},
+{ 2,		OLEATHER,		0,		3	},
+{ 10,		OSTUDLEATHER,		0,		2	},
+{ 40,		ORING,			0,		2	},
+{ 85,		OCHAIN,			0,		2	},
+{ 220,		OSPLINT,		0,		1	},
+{ 400,		OPLATE,			0,		1	},
+{ 900,		OPLATEARMOR,		0,		1	},
+{ 2600,		OSSPLATE,		0,		1	},
+{ 150,		OSHIELD,		0,		1	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost	 	iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{ 2,		0,		ODAGGER,		0,		3	},
-{ 20,		0,		OSPEAR,			0,		3	},
-{ 80,		0,		OFLAIL,			0,		2	},
-{ 150,		0,		OBATTLEAXE,		0,		2	},
-{ 450,		0,		OLONGSWORD,		0,		2	},
-{ 1000,		0,		O2SWORD,		0,		2	},
-{ 5000,		0,		OSWORD,			0,		1	},
-{ 16500,	0,		OLANCE,			0,		1	},
-{ 6000,		0,	 OSWORDofSLASHING,	0,		0	},
-{ 10000,	0,		OHAMMER,		0,		0	},
+{ 2,		ODAGGER,		0,		3	},
+{ 20,		OSPEAR,			0,		3	},
+{ 80,		OFLAIL,			0,		2	},
+{ 150,		OBATTLEAXE,		0,		2	},
+{ 450,		OLONGSWORD,		0,		2	},
+{ 1000,		O2SWORD,		0,		2	},
+{ 5000,		OSWORD,			0,		1	},
+{ 16500,	OLANCE,			0,		1	},
+{ 6000,		OSWORDofSLASHING,	0,		0	},
+{ 10000,	OHAMMER,		0,		0	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{ 150,		0,		OPROTRING,		1,		1	},
-{ 85,		0,		OSTRRING,		1,		1	},
-{ 120,		0,		ODEXRING,		1,		1	},
-{ 120,		0,		OCLEVERRING,	1,		1	},
-{ 180,		0,		OENERGYRING,	0,		1	},
-{ 125,		0,		ODAMRING,		0,		1	},
-{ 220,		0,		OREGENRING,		0,		1	},
-{ 1000,		0,		ORINGOFEXTRA,	0,		1	},
+{ 150,		OPROTRING,		1,		1	},
+{ 85,		OSTRRING,		1,		1	},
+{ 120,		ODEXRING,		1,		1	},
+{ 120,		OCLEVERRING,		1,		1	},
+{ 180,		OENERGYRING,		0,		1	},
+{ 125,		ODAMRING,		0,		1	},
+{ 220,		OREGENRING,		0,		1	},
+{ 1000,		ORINGOFEXTRA,		0,		1	},
 
-{ 280,		0,		OBELT,			0,		1	},
+{ 280,		OBELT,			0,		1	},
 
-{ 400,		0,		OAMULET,		0,		1	},
+{ 400,		OAMULET,		0,		1	},
 
-{ 6500,		0,		OORBOFDRAGON,	0,		0	},
-{ 5500,		0,		OSPIRITSCARAB,	0,		0	},
-{ 5000,		0,		OCUBEofUNDEAD,	0,		0	},
-{ 6000,		0,		ONOTHEFT,		0,		0	},
+{ 6500,		OORBOFDRAGON,		0,		0	},
+{ 5500,		OSPIRITSCARAB,		0,		0	},
+{ 5000,		OCUBEofUNDEAD,		0,		0	},
+{ 6000,		ONOTHEFT,		0,		0	},
 
-{ 590,		0,		OCHEST,			6,		1	},
-{ 200,		0,		OBOOK,			8,		1	},
-{ 10,		0,		OCOOKIE,		0,		3	},
+{ 590,		OCHEST,			6,		1	},
+{ 200,		OBOOK,			8,		1	},
+{ 10,		OCOOKIE,		0,		3	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{	20,		potionname,	OPOTION,	0,		6	},
-{	90,		potionname,	OPOTION,	1,		5	},
-{	520,	potionname,	OPOTION,	2,		1	},
-{ 	100,	potionname,	OPOTION,	3,		2	},
-{	50,		potionname,	OPOTION,	4,		2	},
-{	150,	potionname,	OPOTION,	5,		2	},
-{	70,		potionname,	OPOTION,	6,		1	},
-{	30,		potionname,	OPOTION,	7,		7	},
-{	200,	potionname,	OPOTION,	8,		1	},
-{	50,		potionname,	OPOTION,	9,		1	},
-{	80,		potionname,	OPOTION,	10,		1	},
+{ 20,		OPOTION,		0,		6	},
+{ 90,		OPOTION,		1,		5	},
+{ 520,		OPOTION,		2,		1	},
+{ 100,		OPOTION,		3,		2	},
+{ 50,		OPOTION,		4,		2	},
+{ 150,		OPOTION,		5,		2	},
+{ 70,		OPOTION,		6,		1	},
+{ 30,		OPOTION,		7,		7	},
+{ 200,		OPOTION,		8,		1	},
+{ 50,		OPOTION,		9,		1	},
+{ 80,		OPOTION,		10,		1	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{	30,		potionname,	OPOTION,	11,		3	},
-{	20,		potionname,	OPOTION,	12,		5	},
-{	40,		potionname,	OPOTION,	13,		3	},
-{	35,		potionname,	OPOTION,	14,		2	},
-{	520,	potionname,	OPOTION,	15,		1	},
-{	90,		potionname,	OPOTION,	16,		2	},
-{	200,	potionname,	OPOTION,	17,		2	},
-{	220,	potionname,	OPOTION,	18,		4	},
-{	80,		potionname,	OPOTION,	19,		6	},
-{	370,	potionname,	OPOTION,	20,		3	},
-{	50,		potionname,	OPOTION,	22,		1	},
-{	150,	potionname,	OPOTION,	23,		3	},
+{ 30,		OPOTION,		11,		3	},
+{ 20,		OPOTION,		12,		5	},
+{ 40,		OPOTION,		13,		3	},
+{ 35,		OPOTION,		14,		2	},
+{ 520,		OPOTION,		15,		1	},
+{ 90,		OPOTION,		16,		2	},
+{ 200,		OPOTION,		17,		2	},
+{ 220,		OPOTION,		18,		4	},
+{ 80,		OPOTION,		19,		6	},
+{ 370,		OPOTION,		20,		3	},
+{ 50,		OPOTION,		22,		1	},
+{ 150,		OPOTION,		23,		3	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{ 100,	scrollname,		OSCROLL,	0,		2	},
-{ 125,	scrollname,		OSCROLL,	1,		2	},
-{ 60,	scrollname,		OSCROLL,	2,		4	},
-{ 10,	scrollname,		OSCROLL,	3,		4	},
-{ 100,	scrollname,		OSCROLL,	4,		3	},
-{ 200,	scrollname,		OSCROLL,	5,		2	},
-{ 110,	scrollname,		OSCROLL,	6,		1	},
-{ 500,	scrollname,		OSCROLL,	7,		2	},
-{ 200,	scrollname,		OSCROLL,	8,		2	},
-{ 250,	scrollname,		OSCROLL,	9,		4	},
-{ 20,	scrollname,		OSCROLL,	10,		5	},
-{ 30,	scrollname,		OSCROLL,	11,		3	},
+{ 100,		OSCROLL,		0,		2	},
+{ 125,		OSCROLL,		1,		2	},
+{ 60,		OSCROLL,		2,		4	},
+{ 10,		OSCROLL,		3,		4	},
+{ 100,		OSCROLL,		4,		3	},
+{ 200,		OSCROLL,		5,		2	},
+{ 110,		OSCROLL,		6,		1	},
+{ 500,		OSCROLL,		7,		2	},
+{ 200,		OSCROLL,		8,		2	},
+{ 250,		OSCROLL,		9,		4	},
+{ 20,		OSCROLL,		10,		5	},
+{ 30,		OSCROLL,		11,		3	},
 
-/*cost	  memory 	iven name	iven arg   how
-  gp	 pointer	  iven[]	ivenarg[]  many */
+/*cost 		iven name		iven arg   how
+  gp		  iven[]		ivenarg[]  many */
 
-{ 340,	scrollname,		OSCROLL,	12,		1	},
-{ 340,	scrollname,		OSCROLL,	13,		1	},
-{ 300,	scrollname,		OSCROLL,	14,		2	},
-{ 400,	scrollname,		OSCROLL,	15,		2	},
-{ 500,	scrollname,		OSCROLL,	16,		2	},
-{ 1000,	scrollname,		OSCROLL,	17,		1	},
-{ 500,	scrollname,		OSCROLL,	18,		1	},
-{ 340,	scrollname,		OSCROLL,	19,		2	},
-{ 220,	scrollname,		OSCROLL,	20,		3	},
-{ 3900,	scrollname,		OSCROLL,	21,		0	},
-{ 610,	scrollname,		OSCROLL,	22,		1	},
-{ 3000,	scrollname,		OSCROLL,	23,		0	}
+{ 340,		OSCROLL,		12,		1	},
+{ 340,		OSCROLL,		13,		1	},
+{ 300,		OSCROLL,		14,		2	},
+{ 400,		OSCROLL,		15,		2	},
+{ 500,		OSCROLL,		16,		2	},
+{ 1000,		OSCROLL,		17,		1	},
+{ 500,		OSCROLL,		18,		1	},
+{ 340,		OSCROLL,		19,		2	},
+{ 220,		OSCROLL,		20,		3	},
+{ 3900,		OSCROLL,		21,		0	},
+{ 610,		OSCROLL,		22,		1	},
+{ 3000,		OSCROLL,		23,		0	}
  };
 
 /*
@@ -246,7 +246,10 @@ dndstore()
 		if (pocketfull()) handsfull(); else
 		if (c[GOLD] < itm[i].price*10) nogold(); else
 			{
-			if (itm[i].mem != 0) *itm[i].mem[itm[i].arg] = ' ';
+			if (itm[i].obj == OPOTION)
+				{ potionname[itm[i].arg] = potionhide[itm[i].arg]; }
+			else if (itm[i].obj == OSCROLL)
+				{ scrollname[itm[i].arg] = scrollhide[itm[i].arg]; }
 			c[GOLD] -= itm[i].price*10;
 			itm[i].qty--;  take(itm[i].obj,itm[i].arg);
 			if (itm[i].qty==0) dnditem(i);  nap(1001);
@@ -271,9 +274,9 @@ dnditem(i)
 	if (itm[i].qty == 0)  { lprintf("%39s","");  return; }
 	lprintf("%c) ",(i%26)+'a');
 	if (itm[i].obj == OPOTION)
-		{ lprcat("potion of "); lprintf("%s",&potionname[itm[i].arg][1]); }
+		{ lprintf("potion of%s", potionhide[itm[i].arg]); }
 	else if (itm[i].obj == OSCROLL)
-		{ lprcat("scroll of "); lprintf("%s",&scrollname[itm[i].arg][1]); }
+		{ lprintf("scroll of%s", scrollhide[itm[i].arg]); }
 	else lprintf("%s",objectname[itm[i].obj]);
 	cursor( j+31,k );  lprintf("%6d",(long)(itm[i].price*10));
 	}
