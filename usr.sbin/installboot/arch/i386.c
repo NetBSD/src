@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.1 2003/04/09 22:14:27 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.2 2003/04/15 14:22:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i386.c,v 1.1 2003/04/09 22:14:27 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.2 2003/04/15 14:22:14 dsl Exp $");
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -52,11 +52,9 @@ __RCSID("$NetBSD: i386.c,v 1.1 2003/04/09 22:14:27 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/md5.h>
 
 #include "installboot.h"
-
-/* Magic number also known by sys/arch/i386/stand/bootxx/Makefile.bootxx */
-#define BOOT_MAGIC_1	('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)
 
 int
 i386_setboot(ib_params *params)
@@ -66,6 +64,8 @@ i386_setboot(ib_params *params)
 	uint		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
+	struct i386_boot_params *bp;
+	int		i;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -76,17 +76,15 @@ i386_setboot(ib_params *params)
 	retval = 0;
 	bootstrapbuf = NULL;
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		goto done;
+	/*
+	 * There is only 8k of space in a UFSv1 partition (and ustarfs)
+	 * so ensure we don't splat over anything important.
+	 */
+	if (params->s1stat.st_size > 8192) {
+		warnx("stage1 bootstrap `%s' is larger than 8192 bytes",
+			params->stage1);
+		return 0;
 	}
-	if (params->flags & IB_STAGE2START) {
-		warnx("`-B bno' is not supported for %s",
-		    params->machine->name);
-		goto done;
-	}
-
 	/*
 	 * Allocate a buffer, with space to round up the input file
 	 * to the next block size boundary, and with space for the boot
@@ -112,10 +110,49 @@ i386_setboot(ib_params *params)
 	}
 
 	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
-	if (magic != BOOT_MAGIC_1) {
+	if (magic != X86_BOOT_MAGIC_1) {
 		warnx("Invalid magic in stage1 boostrap %x != %x",
-			magic, BOOT_MAGIC_1);
+			magic, X86_BOOT_MAGIC_1);
 		goto done;
+	}
+
+	/* Fill in any user-specified options */
+	bp = (void *)(bootstrapbuf + 512 * 2 + 8);
+	if (bp->bp_length < sizeof *bp) {
+		warnx("Patch area in stage1 bootstrap is too small");
+		goto done;
+	}
+	if (params->flags & IB_TIMEOUT)
+		bp->bp_timeout = params->timeout;
+	if (params->flags & IB_RESETVIDEO)
+		bp->bp_flags |= BP_RESET_VIDEO;
+	if (params->flags & IB_CONSPEED)
+		bp->bp_conspeed = params->conspeed;
+	if (params->flags & IB_CONSOLE) {
+		static const char *names[] = {
+			"pc", "com0", "com1", "com2", "com3",
+			"com0kbd", "com1kbd", "com2kbd", "com3kbd",
+			NULL };
+		for (i = 0; ; i++) {
+			if (names[i] == NULL) {
+				warnx("invalid console name, valid names are:");
+				fprintf(stderr, "\t%s", names[0]);
+				for (i = 1; names[i] != NULL; i++)
+					fprintf(stderr, ", %s", names[i]);
+				fprintf(stderr, "\n", names[0]);
+				goto done;
+			}
+			if (strcmp(names[i], params->console) == 0)
+				break;
+		}
+		bp->bp_consdev = i;
+	}
+	if (params->flags & IB_PASSWORD) {
+		MD5_CTX md5ctx;
+		MD5Init(&md5ctx);
+		MD5Update(&md5ctx, params->password, strlen(params->password));
+		MD5Final(bp->bp_password, &md5ctx);
+		bp->bp_flags |= BP_PASSWORD;
 	}
 
 	if (params->flags & IB_NOWRITE) {

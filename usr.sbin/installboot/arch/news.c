@@ -1,4 +1,4 @@
-/*	$NetBSD: news.c,v 1.3 2002/05/21 14:59:38 tsutsui Exp $ */
+/*	$NetBSD: news.c,v 1.4 2003/04/15 14:22:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: news.c,v 1.3 2002/05/21 14:59:38 tsutsui Exp $");
+__RCSID("$NetBSD: news.c,v 1.4 2003/04/15 14:22:14 dsl Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -79,11 +79,6 @@ news68k_clearboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 	return (shared_bbinfo_clearboot(params, &news68k_bbparams,
 	    news_copydisklabel));
 }
@@ -94,11 +89,6 @@ news68k_setboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 	return (shared_bbinfo_setboot(params, &news68k_bbparams,
 	    news_copydisklabel));
 }
@@ -123,11 +113,6 @@ newsmips_clearboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 	return (shared_bbinfo_clearboot(params, &newsmips_bbparams,
 	    news_copydisklabel));
 }
@@ -138,11 +123,6 @@ newsmips_setboot(ib_params *params)
 
 	assert(params != NULL);
 
-	if (params->flags & IB_STAGE1START) {
-		warnx("`-b bno' is not supported for %s",
-		    params->machine->name);
-		return (0);
-	}
 	return (shared_bbinfo_setboot(params, &newsmips_bbparams,
 	    news_copydisklabel));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.14 2003/04/09 22:30:59 dsl Exp $	*/
+/*	$NetBSD: machines.c,v 1.15 2003/04/15 14:22:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,19 +40,32 @@
 #include "installboot.h"
 
 struct ib_mach machines[] = {
-	{ "alpha",	alpha_parseopt,	alpha_setboot,	alpha_clearboot },
-	{ "amiga",	amiga_parseopt,	amiga_setboot,	no_clearboot },
-	{ "i386",	no_parseopt,	i386_setboot,	no_clearboot },
-	{ "macppc",	no_parseopt,	macppc_setboot,	macppc_clearboot },
-	{ "news68k",	no_parseopt,	news68k_setboot, news68k_clearboot },
-	{ "newsmips",	no_parseopt,	newsmips_setboot, newsmips_clearboot },
-	{ "pmax",	pmax_parseopt,	pmax_setboot,	pmax_clearboot },
-	{ "shark",	no_parseopt,	no_setboot,	no_clearboot },
-	{ "sparc",	no_parseopt,	sparc_setboot,	sparc_clearboot },
-	{ "sparc64",	no_parseopt,	sparc64_setboot, sparc64_clearboot },
-	{ "sun2",	no_parseopt,	sun68k_setboot,	sun68k_clearboot },
-	{ "sun3",	no_parseopt,	sun68k_setboot,	sun68k_clearboot },
-	{ "vax",	vax_parseopt,	vax_setboot,	vax_clearboot },
-	{ "x68k",	no_parseopt,	x68k_setboot,	x68k_clearboot },
+	{ "alpha",	alpha_setboot,	alpha_clearboot,
+		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM },
+	{ "amiga",	amiga_setboot,	no_clearboot,
+		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
+	{ "i386",	i386_setboot,	no_clearboot,
+		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED |
+		IB_PASSWORD | IB_TIMEOUT },
+	{ "macppc",	macppc_setboot,	macppc_clearboot,
+		IB_STAGE2START },
+	{ "news68k",	news68k_setboot, news68k_clearboot,
+		IB_STAGE2START },
+	{ "newsmips",	newsmips_setboot, newsmips_clearboot,
+		IB_STAGE2START },
+	{ "pmax",	pmax_setboot,	pmax_clearboot,
+		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
+	{ "shark",	no_setboot,	no_clearboot, },
+	{ "sparc",	sparc_setboot,	sparc_clearboot,
+		IB_STAGE2START },
+	{ "sparc64",	sparc64_setboot, sparc64_clearboot },
+	{ "sun2",	sun68k_setboot,	sun68k_clearboot,
+		IB_STAGE2START },
+	{ "sun3",	sun68k_setboot,	sun68k_clearboot,
+		IB_STAGE2START },
+	{ "vax",	vax_setboot,	vax_clearboot,
+		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
+	{ "x68k",	x68k_setboot,	x68k_clearboot,
+		IB_STAGE1START | IB_STAGE2START },
 	{ 0, 0, 0, 0 },
 };
