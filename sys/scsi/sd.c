@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.70 1995/05/03 21:38:57 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.71 1995/06/26 05:16:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -858,82 +858,75 @@ sdsize(dev)
 	return size;
 }
 
-
-#define SCSIDUMP 1
-#undef	SCSIDUMP
-#define NOT_TRUSTED 1
-
-#ifdef SCSIDUMP
-#include <vm/vm.h>
-
+#ifndef __BDEVSW_DUMP_OLD_TYPE
+/* #define SD_DUMP_NOT_TRUSTED if you just want to watch */
 static struct scsi_xfer sx;
-#define	MAXTRANSFER 8		/* 1 page at a time */
+static int sddoingadump;
 
 /*
  * dump all of physical memory into the partition specified, starting
  * at offset 'dumplo' into the partition.
  */
 int
-sddump(dev_t dev)
-{				/* dump core after a system crash */
-	register struct sd_softc *sd;	/* disk unit to do the IO */
-	int32	num;		/* number of sectors to write */
-	u_int32	unit, part;
-	int32	blkoff, blkno, nblks = MAXTRANSFER;
-	int32	nblocks;
-	char	*addr;
-	struct	scsi_rw_big cmd;
-	extern	int Maxmem;
-	static	int sddoingadump = 0;
-#define MAPTO CADDR1
-	extern	caddr_t MAPTO;	/* map the page we are about to write, here */
-	struct	scsi_xfer *xs = &sx;
+sddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
+{
+	struct sd_softc *sd;	/* disk unit to do the I/O */
+	struct disklabel *lp;	/* disk's disklabel */
+	int	unit, part;
+	int	sectorsize;	/* size of a disk sector */
+	int	nsects;		/* number of sectors in partition */
+	int	sectoff;	/* sector offset of partition */
+	int	totwrt;		/* total number of sectors left to write */
+	int	nwrt;		/* current number of sectors to write */
+	struct scsi_rw_big cmd;	/* write command */
+	struct scsi_xfer *xs;	/* ... convenience */
 	int	retval;
-	int	c;
 
-	addr = (char *) 0;	/* starting address */
-
-	/* toss any characters present prior to dump */
-	while ((c = sgetc(1)) && (c != 0x100)); /*syscons and pccons differ */
-
-	/* size of memory to dump */
-	num = Maxmem;
-	unit = SDUNIT(dev);	/* eventually support floppies? */
-	part = SDPART(dev);	/* file system */
-	/* check for acceptable drive number */
-	if (unit >= sdcd.cd_ndevs)
-		return ENXIO;
-
-	sd = sd_softc[unit];
-	if (!sd)
-		return ENXIO;
-	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
-		return ENXIO;
-
-	/* Convert to disk sectors */
-	num = (u_int32)num * NBPG / sd->sc_dk.dk_label.d_secsize;
-
-	/* check if controller active */
+	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
 		return EFAULT;
 
-	nblocks = sd->sc_dk.dk_label.d_partitions[part].p_size;
-	blkoff = sd->sc_dk.dk_label.d_partitions[part].p_offset;
-
-	/* check transfer bounds against partition size */
-	if ((dumplo < 0) || ((dumplo + num) > nblocks))
-		return EINVAL;
-
+	/* Mark as active early. */
 	sddoingadump = 1;
 
-	blkno = dumplo + blkoff;
-	while (num > 0) {
-		pmap_enter(pmap_kernel(),
-		    MAPTO,
-		    trunc_page(addr),
-		    VM_PROT_READ,
-		    TRUE);
-#ifndef	NOT_TRUSTED
+	unit = SDUNIT(dev);	/* Decompose unit & partition. */
+	part = SDPART(dev);
+
+	/* Check for acceptable drive number. */
+	if (unit >= sdcd.cd_ndevs || (sd = sdcd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	/* Make sure it was initialized. */
+	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
+		return ENXIO;
+
+	/* Convert to disk sectors.  Request must be a multiple of size. */
+	lp = &sd->sc_dk.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return EFAULT;
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || ((blkno + totwrt) > nsects))
+		return EINVAL;
+
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	xs = &sx;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef	SD_DUMP_NOT_TRUSTED
 		/*
 		 *  Fill out the scsi command
 		 */
@@ -943,8 +936,8 @@ sddump(dev_t dev)
 		cmd.addr_2 = (blkno >> 16) & 0xff;
 		cmd.addr_1 = (blkno >> 8) & 0xff;
 		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nblks >> 8) & 0xff;
-		cmd.length1 = nblks & 0xff;
+		cmd.length2 = (nwrt >> 8) & 0xff;
+		cmd.length1 = nwrt & 0xff;
 		/*
 		 * Fill out the scsi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt
@@ -958,11 +951,11 @@ sddump(dev_t dev)
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
 		xs->cmd = (struct scsi_generic *)&cmd;
 		xs->cmdlen = sizeof(cmd);
-		xs->resid = nblks * 512;
+		xs->resid = nwrt * sectorsize;
 		xs->error = XS_NOERROR;
 		xs->bp = 0;
-		xs->data = (u_char *) MAPTO;
-		xs->datalen = nblks * 512;
+		xs->data = va;
+		xs->datalen = nwrt * sectorsize;
 
 		/*
 		 * Pass all this info to the scsi driver.
@@ -970,30 +963,30 @@ sddump(dev_t dev)
 		retval = (*(sd->sc_link->adapter->scsi_cmd)) (xs);
 		if (retval != COMPLETE)
 			return ENXIO;
-#else	/* NOT_TRUSTED */
-		/* lets just talk about this first... */
-		printf("sd%d: dump addr 0x%x, blk %d\n", unit, addr, blkno);
-#endif	/* NOT_TRUSTED */
+#else	/* SD_DUMP_NOT_TRUSTED */
+		/* Let's just talk about this first... */
+		printf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif	/* SD_DUMP_NOT_TRUSTED */
 
-		if ((unsigned)addr % (1024 * 1024) == 0)
-			printf("%d ", num / 2048);
 		/* update block count */
-		num -= nblks;
-		blkno += nblks;
-		(int)addr += 512 * nblks;
-
-		/* operator aborting dump? */
-		if ((c = sgetc(1)) && (c != 0x100))
-			return EINTR;
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
+	sddoingadump = 0;
 	return 0;
 }
-#else	/* SCSIDUMP */
+#else	/* __BDEVSW_DUMP_NEW_TYPE */
 int
-sddump()
+sddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	printf("\nsddump()        -- not implemented\n");
-	delay(6000000);		/* 6 seconds */
-	return -1;
+
+	/* Not implemented. */
+	return ENXIO;
 }
-#endif	/* SCSIDUMP */
+#endif	/* __BDEVSW_DUMP_NEW_TYPE */
