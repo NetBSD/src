@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1997/10/19 04:39:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,6 @@ void	killdiv __P((void));
 ndptr	lookup __P((char *));
 void	map __P((char *, char *, char *, char *));
 void	onintr __P((int));
-void	oops __P((const char *, ...));
 void	pbnum __P((int));
 void	pbstr __P((char *));
 void	putback __P((int));
