@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.6 2000/02/02 08:05:29 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.7 2000/02/02 17:09:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -513,7 +513,7 @@ sip_attach(parent, self, aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, sip_mediachange,
 	    sip_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
