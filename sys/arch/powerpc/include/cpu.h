@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2002/07/16 23:04:20 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2002/07/28 07:02:29 chs Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -139,6 +139,10 @@ extern struct cpu_info cpu_info[];
 #define astpending		curcpu()->ci_astpending
 #define	intr_depth		curcpu()->ci_intrdepth
 
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
+
 #else
 extern struct cpu_info cpu_info_store;
 extern volatile int want_resched;
@@ -148,7 +152,27 @@ extern volatile int intr_depth;
 #define curcpu()		(&cpu_info_store)
 #define cpu_number()		0
 
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+
 #endif /* MULTIPROCESSOR */
+
+static __inline int
+mfmsr(void)
+{
+	int msr;
+
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static __inline void
+mtmsr(int msr)
+{
+
+	asm volatile ("mtmsr %0" : : "r"(msr));
+}
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
@@ -166,6 +190,7 @@ extern int cpu_printfataltraps;
 extern char cpu_model[];
 
 struct cpu_info *cpu_attach_common(struct device *, int);
+void cpu_setup(struct device *, struct cpu_info *);
 void cpu_identify(char *, size_t);
 void delay (unsigned int);
 void cpu_probe_cache(void);
@@ -202,7 +227,6 @@ extern int cpu_altivec;
 #endif
 
 void __syncicache(void *, size_t);
-
 
 /*
  * CTL_MACHDEP definitions.
