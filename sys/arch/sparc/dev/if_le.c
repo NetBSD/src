@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.13 1994/10/15 05:49:03 deraadt Exp $
+ * $Id: if_le.c,v 1.14 1994/10/15 08:57:29 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -246,8 +246,11 @@ leattach(parent, self, args)
 	 * Link into sbus, and establish interrupt handler.
 	 */
 	sc->sc_sd.sd_reset = lereset;
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype==BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+#endif /* SUN4C || SUN4M */
+
 	sc->sc_ih.ih_fun = leintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih);
