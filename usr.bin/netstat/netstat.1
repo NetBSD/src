@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.13 1997/10/19 05:50:07 lukem Exp $
+.\"	$NetBSD: netstat.1,v 1.13.2.1 1997/10/29 00:49:30 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -247,7 +247,10 @@ to the same destination.
 The use field provides a count of the number of packets
 sent using that route.  The mtu entry shows the mtu associated with
 that route.  This mtu value is used as the basis for the TCP maximum
-segment size.  A
+segment size.  The 'L' flag appended to the mtu value indicates that 
+the value is locked, and that path mtu discovery is turned off for
+that route.
+A
 .Sq -
 indicates that the mtu for this route has not been set, and a default
 TCP maximum segment size will be used.  The interface entry indicates
