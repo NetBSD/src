@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.2 2000/04/02 20:30:07 christos Exp $
+.\"	$NetBSD: getopt_long.3,v 1.3 2000/04/07 00:02:32 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,23 +56,23 @@ function provides a superset of of the functionality of
 .Xr getopt 3 .
 .Fn getopt_long
 can be used in two ways. In the first way, every long option understood
-by the program has a coresponding short option, and the option
-structure is only used to translate from long option to short
+by the program has a corresponding short option, and the option
+structure is only used to translate from long options to short
 options. When used in this fashion, 
 .Fn getopt_long
 behaves identically to 
 .Xr getopt 3 .
-This is good way to add long option processing to an existing program
+This is a good way to add long option processing to an existing program
 with the minimum of rewriting.
 .Pp
-In the second mechanism, a long option set a flag in the 
+In the second mechanism, a long option sets a flag in the 
 .Fa option
 structure passed, or will store a pointer to the command line argument
 in the 
 .Fa option 
 structure passed to it for options that take arguments. Additionally,
 the long option's argument may be specified as a single argument with
-an equal sign, e.g
+an equal sign, e.g. 
 .Bd -literal
 myprogram --myoption=somevalue
 .Ed
@@ -80,7 +80,7 @@ myprogram --myoption=somevalue
 When a long option is processed the call to 
 .Fn getopt_long
 will return 0. For this reason, long option processing without
-shortcuts are not backwards compatible with 
+shortcuts is not backwards compatible with 
 .Xr getopt 3 .
 .Pp
 It is possible to combine these methods, providing for long options
@@ -119,8 +119,8 @@ an argument to the option may be presented.
 .Pp
 If
 .Fa flag
-is non-NULL, then the integer pointed to by it will set to the value 
-in the 
+is non-NULL, then the integer pointed to by it will be set to the 
+value in the 
 .Fa val
 field. If the 
 .Fa flag 
@@ -149,7 +149,7 @@ static struct option longopts[] = {
 };
 
 bflag = 0;
-while ((ch = getopt_long(argc, argv, "bf:")) != -1)
+while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 	switch(ch) {
 	case 'b':
 		bflag = 1;
@@ -163,8 +163,8 @@ while ((ch = getopt_long(argc, argv, "bf:")) != -1)
 		break;
 	case 0:
 		if(daggerset) {
-			fprintf(stderr,"Buffy will put use her dagger"
-				       "to apply floride to dracula's teeth");
+			fprintf(stderr,"Buffy will put use her dagger to "
+				       "apply floride to dracula's teeth\en");
 		}
 		break;
 	case '?':
@@ -181,7 +181,7 @@ function first appeared in GNU libiberty. The first NetBSD implementation
 appeared in 1.5.
 .Sh IMPLEMENTATION DIFFERENCES
 .Pp
-This section describes difference between the GNU implementation
+This section describes differences to the GNU implementation
 found in glibc-2.1.3:
 .Bl -tag -width "xxx"
 .It Li o
@@ -190,9 +190,9 @@ environment variable POSIXLY_CORRECT:
 .Bl -tag -width "NetBSD"
 .It Li GNU
 ignores POSIXLY_CORRECT and returns non-options as
-arguments to option '\1'.
+arguments to option '\e1'.
 .It Li NetBSD
-honors POSIXLY_CORRECT and stop at the first non-option.
+honors POSIXLY_CORRECT and stops at the first non-option.
 .El
 .It Li o
 handling of :: in options string in presence of POSIXLY_CORRECT:
@@ -216,7 +216,7 @@ handling of --a in getopt:
 .It Li GNU
 parses this as option '-', option 'a'.
 .It Li NetBSD
-parses this as '--', and return -1 (ignoring the a).  (Because 
+parses this as '--', and returns -1 (ignoring the a).  (Because 
 the original getopt does.)
 .El
 .It Li o
@@ -254,7 +254,7 @@ long option (W; in option string):
 .It Li GNU
 returns -W with optarg set to the unknown option.
 .It Li NetBSD
-treats this as an error (unknown option) and return '?' with
+treats this as an error (unknown option) and returns '?' with
 optopt set to 0 and optarg set to NULL (as GNU's man page
 documents).
 .El
@@ -268,13 +268,6 @@ to current positions) are the same, though.  (We do fewer variable
 swaps.)
 .El
 .Sh BUGS
-The 
-.Fa optional_argument
-always eats the following argument unless the argument is included via
-the 
-.Em --option=argument 
-notation.
-.Pp
 The implementation, can completelely replace
 .Xr getopt 3 ,
 but right now we are using separate code.
