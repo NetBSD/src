@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.2 1998/06/17 20:44:16 drochner Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.3 1998/06/17 20:48:02 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -93,7 +93,7 @@ pcdisplay_putstr(id, row, col, cp, len, attr)
 		u_int16_t *m = &scr->mem[off];
 
 		for (i = 0; i < len; i++, cp++)
-			*m++ = *cp | (attr << 8);
+			*m++ = (u_char)*cp | (attr << 8);
 	}
 }
 
