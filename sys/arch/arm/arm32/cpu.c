@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 2002/10/12 21:06:46 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.44 2002/10/13 12:24:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2002/10/12 21:06:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2002/10/13 12:24:57 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -86,19 +86,21 @@ cpu_attach(struct device *dv)
 	
 	/* Get the cpu ID from coprocessor 15 */
 
-	curcpu()->ci_cpuid = cpu_id();
-	curcpu()->ci_cputype = curcpu()->ci_cpuid & CPU_ID_CPU_MASK;
-	curcpu()->ci_cpurev = curcpu()->ci_cpuid & CPU_ID_REVISION_MASK;
+	curcpu()->ci_arm_cpuid = cpu_id();
+	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_arm_cpurev =
+	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
 
-	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
+	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
+	    curcpu()->ci_arm_cpurev < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
 
 #ifdef CPU_ARM8
-	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
@@ -377,7 +379,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	enum cpu_class cpu_class;
 	int i;
 
-	cpuid = ci->ci_cpuid;
+	cpuid = ci->ci_arm_cpuid;
 
 	if (cpuid == 0) {
 		printf("Processor failed probe - no CPU ID\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.12 2002/10/12 21:06:46 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.13 2002/10/13 12:24:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.12 2002/10/12 21:06:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.13 2002/10/13 12:24:57 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	/* Set up a struct cpu_info for this CPU */
 	cpu_info[slave | HYDRA_ID_ISSLAVE] = &cpu->sc_cpuinfo;
 	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
-	cpu->sc_cpuinfo.ci_cpunum = slave | HYDRA_ID_ISSLAVE;
+	cpu->sc_cpuinfo.ci_cpuid = slave | HYDRA_ID_ISSLAVE;
 
 	if (cpu_alloc_idlepcb(&cpu->sc_cpuinfo) != 0) {
 		printf(": couldn't allocate idle PCB.\n");
