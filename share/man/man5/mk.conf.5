@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.2 1999/02/17 00:54:53 hubertf Exp $
+.\"	$NetBSD: mk.conf.5,v 1.3 1999/02/21 14:23:29 hubertf Exp $
 .\"
 .\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -154,6 +154,8 @@ The system is using the new UVM virtual memory subsystem.
 .Ss Pkgsrc system variables
 
 Please see also
+.Xr packages 7
+for more variables used internally by the package system and
 .Pa /usr/pkgsrc/mk/mk.conf.example
 for package-specific examples.
 .Bl -tag -width OBJMACHINE
@@ -163,6 +165,10 @@ installation (apart from standard "free" licenses such as Berkeley/CMU
 and GPL).
 Possible values:
 .Bl -item -compact -offset indent
+.It
+no-profit
+.It
+GPL
 .It
 shareware
 .It
@@ -196,7 +202,7 @@ Default:
 If defined, use passive mode
 .Xr ftp 1
 when fetching files.
-Default: not defined.
+Default: defined in NetBSD-current, unset else.
 .It Sy USETBL
 If defined, run raw manual pages through
 .Xr tbl 1
@@ -210,7 +216,7 @@ Directory where X11 is installed.
 Default:
 .Pa /usr/X11R6 .
 .El
-.Ss Variables only used by the packages collection
+.Ss Variables only used inside the NetBSD packages collection
 .Bl -tag -width OBJMACHINE
 .It Sy AMANDA_USER
 Used by
@@ -390,10 +396,19 @@ If defined, build in support for
 into
 .Sq xemacs.
 Default: not defined.
+.It Sy WINDOWMAKER_OPTIONS
+Options for building windowmaker package. Used to add support
+for GNONE, KDE or OPEN LOOK(tm) and to avoid redundancies with
+KDE. Possible values:
+.Sq gnome ,
+.Sq kde ,
+.Sq openlook ,
+.Sq lite .
+Default: `gnome kde'
 .It Sy WINDOWMAKER_THEMES
-Used by
+Used by the
 .Sq wm-themes
-to specify which themes to install.
+package to specify which themes to install.
 Possible values: refer to
 .Sq http://wm.themes.org .
 Default:
@@ -406,44 +421,18 @@ and
 .Sq unzip .
 Default: not defined.
 .El
-.Ss Variables to override default package repositories
-.Pp
-The following variables define a space separated list of mirror sites to
-be used instead of the defaults to retrieve packages from (usually if
-there's a closer or cheaper site).
-.Pp
-.Sq %SUBDIR%
-and
-.Sq ${DIST_SUBDIR}
-are replaced by a package specific strings.
-.Pp
-.Bl -tag -width OBJMACHINE
-.It Sy MASTER_SITE_BACKUP
-Backup sites for packages that are maintained in
-.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/${DIST_SUBDIR} .
-.It Sy MASTER_SITE_GNU
-GNU source mirror.
-.It Sy MASTER_SITE_LOCAL
-Local package source distributions that are maintained in
-.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
-.It Sy MASTER_SITE_PERL_CPAN
-Perl CPAN mirror.
-.It Sy MASTER_SITE_TEX_CTAN
-TeX CTAN mirror.
-.It Sy MASTER_SITE_SUNSITE
-sunsite.unc.edu mirror.
-.It Sy MASTER_SITE_XCONTRIB
-X Window System contributed source mirror.
-.El
 .Sh FILES
 .Bl -tag -width /etc/mk.conf
 .It Pa /etc/mk.conf
 This file.
 .It Pa /usr/pkgsrc/mk/mk.conf.example
 Further documentation of the pkgsrc overrides.
+.It Pa /usr/pkgsrc/Packages.txt
+Documentation on the packages system.
 .El
 .Sh SEE ALSO
-.Xr make 1
+.Xr make 1 ,
+.Xr packages 7
 .Sh HISTORY
 The
 .Nm
