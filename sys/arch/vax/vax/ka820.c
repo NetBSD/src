@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.30 2000/08/09 03:02:54 tv Exp $	*/
+/*	$NetBSD: ka820.c,v 1.31 2001/06/03 15:07:20 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -50,6 +50,8 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,12 +90,14 @@ static void rxcdintr(void *);
 static void vaxbierr(void *);
 #if defined(MULTIPROCESSOR)
 static void ka820_startslave(struct device *, struct cpu_info *);
+static void ka820_send_ipi(struct device *);
 static void ka820_txrx(int, char *, int);
 static void ka820_sendstr(int, char *);
 static void ka820_sergeant(int);
 static int rxchar(void);
 static void ka820_putc(int);
 static void ka820_cnintr(void);
+static void ka820_ipintr(void *);
 cons_decl(gen);
 #endif
 
@@ -111,14 +115,19 @@ struct	cpu_dep ka820_calls = {
 	0,
 	0,
 	0,
-#if defined(MULTIPROCESSOR)
-	ka820_startslave,
-#endif
 };
+
+#if defined(MULTIPROCESSOR)
+struct cpu_mp_dep ka820_mp_dep = {
+	ka820_startslave,
+	ka820_send_ipi,
+	ka820_cnintr,
+};
+#endif
 
 struct ka820_softc {
 	struct device sc_dev;
-	struct cpu_info *sc_ci;
+	struct cpu_info sc_ci;
 	int sc_binid;		/* CPU node ID */
 };
 
@@ -165,15 +174,32 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 	sc->sc_binid = ba->ba_nodenr;
 
-	if (ba->ba_nodenr != mastercpu) {
-#if defined(MULTIPROCESSOR)
-		sc->sc_ci = cpu_slavesetup(self);
-		v_putc = ka820_putc;	/* Need special console handling */
-#endif
-		return;
-	}
+	/* Allow for IPINTR */
+	bus_space_write_4(ba->ba_iot, ba->ba_ioh,
+	    BIREG_IPINTRMSK, BIIPINTR_MASK);
 
+#if defined(MULTIPROCESSOR)
+	if (ba->ba_nodenr != mastercpu) {
+		v_putc = ka820_putc;	/* Need special console handling */
+		return cpu_slavesetup(self);
+	}
+#endif
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Catch interprocessor interrupts.
+	 */
+	scb_vecalloc(KA820_INT_IPINTR, ka820_ipintr, sc, SCB_ISTACK, NULL);
+#endif
+	/*
+	 * Copy cpu_info into new position.
+	 */
+	bcopy(curcpu(), &sc->sc_ci, sizeof(struct cpu_info));
+	mtpr(&sc->sc_ci, PR_SSP);
+	proc0.p_addr->u_pcb.SSP = mfpr(PR_SSP);
+	proc0.p_cpu = curcpu();
 	curcpu()->ci_dev = self;
+
 	/* reset the console and enable the RX50 */
 	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
 	csr = ka820port_ptr->csr;
@@ -206,6 +232,9 @@ ka820_conf()
 	/* XXX - should be done somewhere else */
 	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK, NULL);
 	rx50device_ptr = (void *)vax_map_physmem(KA820_RX50ADDR, 1);
+#if defined(MULTIPROCESSOR)
+	mp_dep_call = &ka820_mp_dep;
+#endif
 }
 
 void
@@ -442,12 +471,6 @@ rxcdintr(void *arg)
 		return;
 
 #if defined(MULTIPROCESSOR)
-	if ((c & 0xff) == 0) {
-		if (curcpu()->ci_flags & CI_MASTERCPU)
-			ka820_cnintr();
-		return;
-	}
-
 	if (expect == ((c >> 8) & 0xf))
 		rxbuf[got++] = c & 0xff;
 
@@ -563,24 +586,26 @@ ka820_txrx(int id, char *fmt, int arg)
 	ka820_sergeant(id);
 }
 
+static void
+ka820_sendchr(int chr)
+{
+	/*
+	 * It seems like mtpr to TXCD sets the V flag if it fails.
+	 * Cannot check that flag in C...
+	 */
+	asm __volatile("1:;mtpr %0,$92;bvs 1b" :: "g"(chr));
+}
+
 void
 ka820_sendstr(int id, char *buf)
 {
-	register u_int utchr; /* Ends up in R11 with PCC */
+	u_int utchr;
 	int ch, i;
 
 	while (*buf) {
 		utchr = *buf | id << 8;
 
-		/*
-		 * It seems like mtpr to TXCD sets the V flag if it fails.
-		 * Cannot check that flag in C...
-		 */
-#ifdef __GNUC__
-		asm("1:;mtpr %0,$92;bvs 1b" :: "g"(utchr));
-#else
-		asm("1:;mtpr r11,$92;bvs 1b");
-#endif
+		ka820_sendchr(utchr);
 		buf++;
 		i = 30000;
 		while ((ch = rxchar()) == 0 && --i)
@@ -612,7 +637,6 @@ ka820_sergeant(int id)
 
 /*
  * Write to master console.
- * Need no locking here; done in the print functions.
  */
 static volatile int ch = 0;
 
@@ -624,7 +648,8 @@ ka820_putc(int c)
 		return;
 	}
 	ch = c;
-	mtpr(mastercpu << 8, PR_RXCD); /* Send IPI to mastercpu */
+
+	cpu_send_ipi(IPI_DEST_MASTER, IPI_SEND_CNCHAR);
 	while (ch != 0)
 		; /* Wait for master to handle */
 }
@@ -638,5 +663,19 @@ ka820_cnintr()
 	if (ch != 0)
 		gencnputc(0, ch);
 	ch = 0; /* Release slavecpu */
+}
+
+void
+ka820_send_ipi(struct device *dev)
+{
+	struct ka820_softc *sc = (void *)dev;
+
+	mtpr(1 << sc->sc_binid, PR_IPIR);
+}
+
+void
+ka820_ipintr(void *arg)
+{
+	cpu_handle_ipi();
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.9 2000/01/20 00:07:49 matt Exp $ */
+/*	$NetBSD: gencons.h,v 1.10 2001/06/03 15:07:20 ragge Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -68,4 +68,5 @@
 #define	SCB_G3T	0xdc
 
 /* Prototypes */
-void	gencnputc __P((dev_t, int));
+void	gencnputc(dev_t, int);
+void	gencnstarttx(void);
