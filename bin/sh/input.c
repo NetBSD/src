@@ -201,8 +201,8 @@ preadbuffer() {
 	flushout(&output);
 	flushout(&errout);
 retry:
-#ifndef NO_HISTORY
 	p = parsenextc = parsefile->buf;
+#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
 		int len;
