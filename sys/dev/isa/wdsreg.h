@@ -83,7 +83,22 @@ struct wds_scb {
 #define	SCB_BUFFER	0x40
 	int timeout;
 
-	struct wds_buf *buf;
+	/*
+	 * DMA maps used by the SCB.  These maps are created in
+	 * wds_init_scb().
+	 */
+
+	/*
+	 * The DMA map maps an individual SCB.  This map is permanently
+	 * loaded in wds_init_scb().
+	 */
+	bus_dmamap_t	dmamap_self;
+
+	/*
+	 * This map maps the buffer involved in the transfer.
+	 * Its contents are loaded into "scat_gath" above.
+	 */
+	bus_dmamap_t	dmamap_xfer;
 };
 
 #define WDSX_SCSICMD		0x00
