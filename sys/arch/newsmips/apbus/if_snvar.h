@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.4 2003/12/02 13:19:06 tsutsui Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.5 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -16,8 +16,8 @@
  * binary, all structures have to be accessed using macros which can
  * adjust the offsets appropriately.
  */
-#define	SWO(m, a, o, x)	(*(u_int32_t *)((u_int32_t *)(a) + (o)) = (x))
-#define	SRO(m, a, o)	(*(u_int32_t *)((u_int32_t *)(a) + (o)) & 0xffff)
+#define	SWO(m, a, o, x)	(*(uint32_t *)((uint32_t *)(a) + (o)) = (x))
+#define	SRO(m, a, o)	(*(uint32_t *)((uint32_t *)(a) + (o)) & 0xffff)
 
 /*
  * Register access macros. We use bus_space_* to talk to the Sonic
@@ -27,12 +27,12 @@
 #define	NIC_GET(sc, reg)	((sc)->sc_regbase[(reg) * 4 + 3])
 #define	NIC_PUT(sc, reg, val)	((sc)->sc_regbase[(reg) * 4 + 3] = val)
 
-#define	SONIC_GETDMA(p)	((u_int32_t)(p))
+#define	SONIC_GETDMA(p)	((uint32_t)(p))
 
-#define	SN_REGSIZE	SN_NREGS*4
+#define	SN_REGSIZE	(SN_NREGS * 4)
 
-void mips3_wbflush __P((void));
-void apbus_wbflush __P((void));
+void mips3_wbflush(void);
+void apbus_wbflush(void);
 
 static __inline void
 wbflush(void)
@@ -54,10 +54,10 @@ wbflush(void)
  */
 
 #define NRBA    4		/* # receive buffers < NRRA */
-#define RBAMASK (NRBA-1)
+#define RBAMASK (NRBA - 1)
 #define NTDA    4		/* # transmit descriptors */
 #define NRRA    8		/* # receive resource descriptors */
-#define RRAMASK (NRRA-1)	/* the reason why NRRA must be power of two */
+#define RRAMASK (NRRA - 1)	/* the reason why NRRA must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */
 
@@ -76,9 +76,9 @@ wbflush(void)
 
 typedef struct mtd {
 	void		*mtd_txp;
-	u_int32_t	mtd_vtxp;
+	uint32_t	mtd_vtxp;
 	caddr_t		mtd_buf;
-	u_int32_t	mtd_vbuf;
+	uint32_t	mtd_vbuf;
 	struct mbuf	*mtd_mbuf;
 } mtd_t;
 
@@ -91,24 +91,24 @@ struct sn_softc {
 #define sc_if	sc_ethercom.ec_if	/* network visible interface */
 
 	caddr_t		sc_hwbase;	/* hardware base address */
-	volatile u_int16_t *sc_regbase;	/* register base address */
+	volatile uint16_t *sc_regbase;	/* register base address */
 
 	int		bitmode;	/* 32 bit mode == 1, 16 == 0 */
 
-	u_int16_t	snr_dcr;	/* DCR for this instance */
-	u_int16_t	snr_dcr2;	/* DCR2 for this instance */
+	uint16_t	snr_dcr;	/* DCR for this instance */
+	uint16_t	snr_dcr2;	/* DCR2 for this instance */
 	int		slotno;		/* Slot number */
 
 	int		sc_rramark;	/* index into p_rra of wp */
 	void		*p_rra[NRRA];	/* RX resource descs */
-	u_int32_t	v_rra[NRRA];	/* DMA addresses of p_rra */
-	u_int32_t	v_rea;		/* ptr to the end of the rra space */
+	uint32_t	v_rra[NRRA];	/* DMA addresses of p_rra */
+	uint32_t	v_rea;		/* ptr to the end of the rra space */
 
 	int		sc_rxmark;	/* current hw pos in rda ring */
 	int		sc_rdamark;	/* current sw pos in rda ring */
 	int		sc_nrda;	/* total number of RDAs */
 	caddr_t		p_rda;
-	u_int32_t	v_rda;
+	uint32_t	v_rda;
 
 	caddr_t		rbuf[NRBA];
 
@@ -124,7 +124,7 @@ struct sn_softc {
 	int		mtd_pint;	/* Counter to set TXP_PINT */
 
 	void		*p_cda;
-	u_int32_t	v_cda;
+	uint32_t	v_cda;
 
 	unsigned char	*space;
 };
@@ -182,7 +182,7 @@ struct sn_softc {
 #define	TXP_FPTRHI	1	/* ptr to packet fragment HI */
 #define	TXP_FSIZE	2	/* fragment size */
 
-#define	TXP_WORDS	TXP_FRAGOFF + (FRAGMAX*TXP_FRAGSIZE) + 1	/* 1 for tlink */
+#define	TXP_WORDS	(TXP_FRAGOFF + (FRAGMAX * TXP_FRAGSIZE) + 1)	/* 1 for tlink */
 #define	TXP_SIZE(sc)	(TXP_WORDS*4)
 
 #define EOL	0x0001		/* end of list marker for link fields */
@@ -199,8 +199,8 @@ struct sn_softc {
 #define	CDA_CAMAP1	2	/* CAM Address Port 2 YY-YY-xx-xx-xx-xx */
 #define	CDA_CAMAP2	3
 #define	CDA_ENABLE	64	/* mask enabling CAM entries */
-#define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
+#define	CDA_SIZE(sc)	((4 * 16 + 1) * ((sc->bitmode) ? 4 : 2))
 
-int	snsetup __P((struct sn_softc *sc, u_int8_t *));
-int	snintr __P((void *));
-void	sn_md_init __P((struct sn_softc *));
+int	snsetup(struct sn_softc *sc, uint8_t *);
+int	snintr(void *);
+void	sn_md_init(struct sn_softc *);
