@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 1997/02/24 23:17:38 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.32 1997/02/27 08:31:17 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,14 +103,18 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11
+
+#ifndef	MCLSHIFT
+# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+# define	NMBCLUSTERS	256	/* map size, max cluster allocation */
 #endif
 #endif
 
@@ -118,7 +122,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
+# define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
 #endif
 
 /* pages ("clicks") to disk blocks */
@@ -165,7 +169,7 @@ extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 #ifndef _LOCORE
 void delay __P((int));
 void DELAY __P((int));
-#endif
-#endif
+#endif	/* !_LOCORE */
+#endif	/* _KERNEL */
 
-#endif /* !_MACHINE_PARAM_H_ */
+#endif	/* !_MACHINE_PARAM_H_ */
