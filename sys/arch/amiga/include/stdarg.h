@@ -1,6 +1,9 @@
 /*
- *	$Id: stdarg.h,v 1.4 1994/01/26 21:12:28 mw Exp $
+ *	$Id: stdarg.h,v 1.5 1994/04/10 02:06:52 chopps Exp $
  */
+#ifndef _MACHINE_STDARG_H
+#define _MACHINE_STDARG_H
 
-/* Just use the common m68k definition */
 #include <m68k/stdarg.h>
+
+#endif

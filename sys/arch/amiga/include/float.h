@@ -1,6 +1,9 @@
 /*
- *	$Id: float.h,v 1.5 1994/01/26 21:12:17 mw Exp $
+ *	$Id: float.h,v 1.6 1994/04/10 02:06:39 chopps Exp $
  */
+#ifndef _MACHINE_FLOAT_H
+#define _MACHINE_FLOAT_H
 
-/* Just use the common m68k definition */
 #include <m68k/float.h>
+
+#endif

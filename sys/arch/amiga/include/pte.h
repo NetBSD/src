@@ -38,11 +38,11 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.2 1994/02/11 07:02:47 chopps Exp $
+ *	$Id: pte.h,v 1.3 1994/04/10 02:06:48 chopps Exp $
  */
+#ifndef _MACHINE_PTE_H
+#define _MACHINE_PTE_H
 
-#ifndef _PTE_H
-#define _PTE_H
 /*
  * AMIGA hardware segment/page table entries
  */
@@ -128,4 +128,4 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
 
-#endif /* _PTE_H */
+#endif /* !_MACHINE_PTE_H */

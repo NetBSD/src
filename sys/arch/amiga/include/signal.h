@@ -1,6 +1,9 @@
 /*
- *	$Id: signal.h,v 1.2 1994/01/26 21:12:27 mw Exp $
+ *	$Id: signal.h,v 1.3 1994/04/10 02:06:51 chopps Exp $
  */
+#ifndef _MACHINE_SIGNAL_H
+#define _MACHINE_SIGNAL_H
 
-/* Just use the common m68k definition */
 #include <m68k/signal.h>
+
+#endif

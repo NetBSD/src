@@ -36,11 +36,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.5 1994/02/11 07:02:45 chopps Exp $
+ *	$Id: pmap.h,v 1.6 1994/04/10 02:06:45 chopps Exp $
  */
-
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_
+#ifndef	_MACHINE_PMAP_H
+#define	_MACHINE_PMAP_H
 
 #define AMIGA_PAGE_SIZE	NBPG
 #define AMIGA_SEG_SIZE	NBSEG
@@ -108,4 +107,4 @@ extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL
 
-#endif	_PMAP_MACHINE_
+#endif	/* !_MACHINE_PMAP_H */

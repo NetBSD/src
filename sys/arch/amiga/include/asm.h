@@ -1,5 +1,9 @@
 /*
- *	$Id: asm.h,v 1.1 1994/02/01 11:53:56 chopps Exp $
+ *	$Id: asm.h,v 1.2 1994/04/10 02:06:33 chopps Exp $
  */
+#ifndef _MACHINE_ASM_H
+#define _MACHINE_ASM_H
 
 #include <m68k/asm.h>
+
+#endif

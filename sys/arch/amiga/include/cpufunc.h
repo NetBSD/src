@@ -1,10 +1,8 @@
 /*
  * Functions to provide access to special cpu instructions.
  *
- *	$Id: cpufunc.h,v 1.4 1994/02/11 07:02:40 chopps Exp $
+ *	$Id: cpufunc.h,v 1.5 1994/04/10 02:06:35 chopps Exp $
  */
-
-#ifndef _MACHINE_CPUFUNC_H_
-#define _MACHINE_CPUFUNC_H_
-
-#endif  _MACHINE_CPUFUNC_H_
+#ifndef _MACHINE_CPUFUNC_H
+#define _MACHINE_CPUFUNC_H
+#endif  /* !_MACHINE_CPUFUNC_H */
