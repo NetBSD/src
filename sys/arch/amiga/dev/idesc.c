@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.21 1996/05/12 02:26:03 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.21.4.1 1996/05/28 20:01:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -893,8 +893,10 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		return (ideiread(ide, lba, buf, nblks));
 
 	case READ_COMMAND:
-		lba = *((long *)cbuf) & 0x000fffff;
+		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)(cbuf + 4));
+		if (nblks == 0)
+			nblks = 256;
 		return (ideiread(ide, lba, buf, nblks));
 
 	case WRITE_BIG:
@@ -903,8 +905,10 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		return (ideiwrite(ide, lba, buf, nblks));
 
 	case WRITE_COMMAND:
-		lba = *((long *)cbuf) & 0x000fffff;
+		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)(cbuf + 4));
+		if (nblks == 0)
+			nblks = 256;
 		return (ideiwrite(ide, lba, buf, nblks));
 
 	case PREVENT_ALLOW:
