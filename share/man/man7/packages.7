@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.13 1999/02/17 00:47:17 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.14 1999/02/21 14:27:44 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -19,17 +19,9 @@ packages system can set to alter the configuration of the package system,
 and individual packages.
 .Sh COMMON VARIABLES
 This section documents variables that typically apply to all packages.
+Many of these may be set in
+.Xr make.conf 5 .
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It ONLY_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will build under.
-It can be a glob-style wildcard.
-.It NOT_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will not build under.
-It can be a glob-style wildcard.
 .It ARCH
 The architecture, as returned by
 .Dq uname -m .
@@ -41,20 +33,6 @@ The operating system name, as returned by
 .It DISTDIR
 Where to get gzip'd, tarballed copies of original sources.  The default is
 .Pa ${PKGSRCDIR}/distfiles .
-.It MASTER_SITES
-Primary location(s) for distribution files if not found locally.
-.It MASTER_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in MASTER_SITES is replaced by.
-.It PATCH_SITES
-Primary location(s) for distribution patch files (see
-.Dv It PATCHFILES
-below) if not found locally.
-.It PATCH_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in PATCH_SITES is replaced by.
 .It MASTER_SITE_BACKUP
 Backup location(s) for distribution files and patch files if not found
 locally and ${MASTER_SITES}/${PATCH_SITES}.  The Defaults are
@@ -73,11 +51,6 @@ Set to path of GNU make if not in $PATH (default: gmake).
 Set to path of
 .Dq xmkmf
 if not in $PATH (default: xmkmf -a).
-.It MAINTAINER
-The e-mail address of the contact person for this package.  The default
-is packages@NetBSD.ORG.
-.It CATEGORIES
-A list of descriptive categories into which this package falls.
 .It WRKOBJDIR
 A top level directory where, if defined, the separate working
 directories will get created, and symbolically linked to from
@@ -94,6 +67,35 @@ is local to every arch.
 This section documents variables that typically apply to an individual
 package.  Non-Boolean variables without defaults are *mandatory*.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.It ONLY_FOR_ARCHS
+If set, it lists the values of MACHINE_ARCH (basic
+.Nx
+CPU types) that the package will build under.
+It can be a glob-style wildcard.
+.It NOT_FOR_ARCHS
+If set, it lists the values of MACHINE_ARCH (basic
+.Nx
+CPU types) that the package will not build under.
+It can be a glob-style wildcard.
+.It MAINTAINER
+The e-mail address of the contact person for this package.  The default
+is packages@NetBSD.ORG.
+.It CATEGORIES
+A list of descriptive categories into which this package falls.
+.It MASTER_SITES
+Primary location(s) for distribution files if not found locally.
+.It MASTER_SITE_SUBDIR
+Directory that
+.Dq %SUBDIR%
+in MASTER_SITES is replaced by.
+.It PATCH_SITES
+Primary location(s) for distribution patch files (see
+.Dv It PATCHFILES
+below) if not found locally.
+.It PATCH_SITE_SUBDIR
+Directory that
+.Dq %SUBDIR%
+in PATCH_SITES is replaced by.
 .It WRKDIR
 A temporary working directory that gets *clobbered* on clean.  The default is
 .Pa ${.CURDIR}/work .
@@ -436,6 +438,36 @@ If Motif is not present on your system, the lesstif package will be
 installed for you.
 .It MOTIFLIB	
 Set automatically to the Motif or Lesstif library name.
+.El
+.Sh PACKAGE DISTFILE REPOSITORIES
+.Pp
+The following variables allow to override the default package
+repositories, they define a space separated list of mirror sites to be
+used instead of the defaults to retrieve packages from (usually if
+there's a closer or cheaper site).
+.Pp
+.Sq %SUBDIR%
+and
+.Sq ${DIST_SUBDIR}
+are replaced by a package specific strings.
+.Pp
+.Bl -tag -width OBJMACHINE
+.It Sy MASTER_SITE_BACKUP
+Backup sites for packages that are maintained in
+.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/${DIST_SUBDIR} .
+.It Sy MASTER_SITE_GNU
+GNU source mirror.
+.It Sy MASTER_SITE_LOCAL
+Local package source distributions that are maintained in
+.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
+.It Sy MASTER_SITE_PERL_CPAN
+Perl CPAN mirror.
+.It Sy MASTER_SITE_TEX_CTAN
+TeX CTAN mirror.
+.It Sy MASTER_SITE_SUNSITE
+sunsite.unc.edu mirror.
+.It Sy MASTER_SITE_XCONTRIB
+X Window System contributed source mirror.
 .El
 .Sh SPECIAL VARIABLES
 Variables to change if you want a special behavior:
