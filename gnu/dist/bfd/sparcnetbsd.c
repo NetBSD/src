@@ -31,4 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-sparc-netbsd"
 
+#define CHOOSE_RELOC_SIZE(X) obj_reloc_entry_size (X) = RELOC_EXT_SIZE;
+
 #include "netbsd.h"
