@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetops.c,v 1.11 1997/07/13 19:46:19 christos Exp $	*/
+/*	$NetBSD: sigsetops.c,v 1.12 1998/09/26 23:53:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -40,9 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sigsetops.c,v 1.11 1997/07/13 19:46:19 christos Exp $");
+__RCSID("$NetBSD: sigsetops.c,v 1.12 1998/09/26 23:53:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define	__LIBC12_SOURCE__
 
 #include <errno.h>
 #include <signal.h>
@@ -55,7 +57,7 @@ __RCSID("$NetBSD: sigsetops.c,v 1.11 1997/07/13 19:46:19 christos Exp $");
 
 int
 sigemptyset(set)
-	sigset_t *set;
+	sigset13_t *set;
 {
 	*set = 0;
 	return (0);
@@ -63,46 +65,46 @@ sigemptyset(set)
 
 int
 sigfillset(set)
-	sigset_t *set;
+	sigset13_t *set;
 {
-	*set = ~(sigset_t)0;
+	*set = ~(sigset13_t)0;
 	return (0);
 }
 
 int
 sigaddset(set, signo)
-	sigset_t *set;
+	sigset13_t *set;
 	int signo;
 {
-	if (signo <= 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG13) {
 		errno = EINVAL;
 		return -1;
 	}
-	*set |= sigmask(signo);
+	*set |= __sigmask13(signo);
 	return (0);
 }
 
 int
 sigdelset(set, signo)
-	sigset_t *set;
+	sigset13_t *set;
 	int signo;
 {
-	if (signo <= 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG13) {
 		errno = EINVAL;
 		return -1;
 	}
-	*set &= ~sigmask(signo);
+	*set &= ~__sigmask13(signo);
 	return (0);
 }
 
 int
 sigismember(set, signo)
-	const sigset_t *set;
+	const sigset13_t *set;
 	int signo;
 {
-	if (signo <= 0 || signo >= NSIG) {
+	if (signo <= 0 || signo >= NSIG13) {
 		errno = EINVAL;
 		return -1;
 	}
-	return ((*set & sigmask(signo)) != 0);
+	return ((*set & __sigmask13(signo)) != 0);
 }
