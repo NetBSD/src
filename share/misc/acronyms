@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.17 1999/07/16 09:21:03 mycroft Exp $
+$NetBSD: acronyms,v 1.18 1999/07/16 09:24:46 christos Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -15,6 +15,7 @@ DTWT	do the wrong thing
 DWIM	do what I mean
 FWIW	for what it's worth
 FYI	for your information
+IMHO	in my humble opinion
 ISTR	I seem to recall
 L8R	later
 LOL	laughing out loud
