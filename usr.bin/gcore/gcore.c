@@ -1,4 +1,4 @@
-/*	$NetBSD: gcore.c,v 1.7 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: gcore.c,v 1.8 2005/01/09 17:47:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gcore.c,v 1.7 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: gcore.c,v 1.8 2005/01/09 17:47:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: gcore.c,v 1.7 2004/01/05 23:23:34 jmmv Exp $");
 #include <sys/proc.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <err.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -57,7 +58,8 @@ static void usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s <pid> [<pid> ...]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-c <corename>] <pid> [<pid> ...]\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -66,12 +68,15 @@ int
 main(int argc, char **argv)
 {
 	int c;
+	char *corename = NULL;
+	int corelen = 0;
 
-	while ((c = getopt(argc, argv, "o:")) != -1)
+	while ((c = getopt(argc, argv, "c:")) != -1)
 		switch (c) {
-		case 'o':
-			errx(1, "-o is not supported yet.");
-			/*NOTREACHED*/
+		case 'c':
+			corename = optarg;
+			corelen = strlen(corename);
+			break;
 		case '?':
 		default:
 			usage();
@@ -91,7 +96,7 @@ main(int argc, char **argv)
 			errx(1, "`%s' is not a number.", argv[c]);
 		if (errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN))
 			err(1, "Pid `%s'", argv[c]);
-		if (ptrace(PT_DUMPCORE, (pid_t)lval, NULL, 0) == -1)
+		if (ptrace(PT_DUMPCORE, (pid_t)lval, corename, corelen) == -1)
 			err(1, "ptrace(PT_DUMPCORE) failed");
 	}
 	return 0;
