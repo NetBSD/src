@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/06/08 23:54:23 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1997/06/10 18:49:35 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -346,10 +346,10 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
-	 * XXX Should be hp300_trunc_page(&kernel_text) instead
+	 * XXX Should be m68k_trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
-	if (vm_map_protect(kernel_map, NBPG, hp300_round_page(&etext),
+	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
