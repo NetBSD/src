@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.2 1999/05/11 02:57:58 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.3 2000/05/03 21:08:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -466,7 +466,7 @@ static const char * const lmc_status_bits[] = {
 #define	LMC_MAX_DEVICES	32
 
 #if defined(__FreeBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef int ioctl_cmd_t;
 static lmc_softc_t *tulips[LMC_MAX_DEVICES];
 #if BSD >= 199506
@@ -493,7 +493,7 @@ extern int bootverbose;
 #endif
 
 #if defined(__bsdi__)
-typedef int ifnet_ret_t;
+#define	ifnet_ret_t int
 typedef u_long ioctl_cmd_t;
 extern struct cfdriver lmccd;
 #define	LMC_UNIT_TO_SOFTC(unit)	((lmc_softc_t *)lmccd.cd_devs[unit])
@@ -508,7 +508,7 @@ extern struct cfdriver lmccd;
 #endif	/* __bsdi__ */
 
 #if defined(__NetBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
