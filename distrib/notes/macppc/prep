@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.19 2001/06/11 01:50:49 wiz Exp $
+.\"	$NetBSD: prep,v 1.20 2001/07/05 05:03:02 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -100,7 +100,17 @@ Firmware 2.4, Open Firmware 3)
 .
 (Open Firmware 3)
 .Pp
-Open Firmware 3 systems have a rewritable BootROM. Go to the
+Open Firmware 3 systems have a rewritable
+.Dq firmware ,
+also called the BootROM.  When you use an Apple
+firmware updater, it updates the BootROM.  This will 
+.Em not
+change the version of Open Firmware in your machine - it will still be
+Open Firmware 3.  The BootROM is what is first executed when you power on
+or reset your system.  The BootROM then loads Open Firmware, which boots
+your operating system.
+.Pp
+Go to the
 .Sq "Apple Software Updates"
 web site at
 .Lk http://asu.info.apple.com/
@@ -108,6 +118,13 @@ and search for
 .Sq firmware
 and install the most recent version for your model.
 .Pp
+.(Note
+If you accidentally set the 
+.Ic load-base No or Ic real-base
+Open Firmware variables and reset your machine you will, in effect,
+rewrite the BootROM with garbage, rendering your machine unbootable.  We
+recommend not doing this.
+.Note)
 .(Note
 The most recent BootROMs available (4.1.7 and 4.1.8) as of May 2001 are
 known to have some problems.  Some PowerBook G4 users find they are
@@ -267,7 +284,18 @@ Unless you use a MacOS-based utility to set
 these variables correctly, you 
 .Em will
 need to hook up a serial console temporarily to set them before you 
-can use your keyboard and screen.
+can use your keyboard and screen.  Some models (such as the Performa 54xx,
+6360, 6400, and 6500) have the 
+.Sq Modem
+serial port covered with a piece of plastic since the internal modem
+usurps that serial port.  You will either need to use Boot Variables to
+set the
+.Sq input-device
+and
+.Sq output-device
+variables to 
+.Sq ttyb
+(which is the Printer serial port) or remove the internal modem.
 .Pp
 Now would be a good time to look at the 
 .Nx*M
