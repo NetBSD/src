@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.12 1998/09/10 15:58:40 kleink Exp $	*/
+/*	$NetBSD: private.h,v 1.13 1998/10/04 19:27:55 kleink Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -29,7 +29,7 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	privatehid[] = "@(#)private.h	7.47";
+static char	privatehid[] = "@(#)private.h	7.48";
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
