@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.2 2002/06/20 23:00:51 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.3 2002/06/21 21:26:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
 #include <sys/user.h>
@@ -217,7 +219,7 @@ sh_proc0_init()
 
 	/* Setup proc0 */
 	proc0paddr = (struct user *)u;
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 	/*
 	 * u-area map:
 	 * |user| .... | ............... |
@@ -227,8 +229,8 @@ sh_proc0_init()
 	 * stack top     ... r7_bank
 	 * current stack ... r15
 	 */
-	curpcb = proc0.p_md.md_pcb = &proc0.p_addr->u_pcb;
-	curupte = proc0.p_md.md_upte;
+	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
+	curupte = lwp0.l_md.md_upte;
 
 	sf = &curpcb->pcb_sf;
 	sf->sf_r6_bank = u + NBPG;
@@ -236,7 +238,7 @@ sh_proc0_init()
 	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
 	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
-	proc0.p_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
+	lwp0.l_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
 #ifdef KSTACK_DEBUG
 	memset((char *)(u + sizeof(struct user)), 0x5a,
 	    NBPG - sizeof(struct user));
@@ -363,6 +365,50 @@ dumpsys()
 }
 
 /*
+ * void cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+ *     void *sas, void *ap, void *sp, sa_upcall_t upcall):
+ *
+ * Send an upcall to userland.
+ */
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct proc *p = l->l_proc;
+	struct trapframe *tf;
+	struct saframe *sf, frame;
+	extern char sigcode[], upcallcode[];
+
+	tf = l->l_md.md_regs;
+
+	/* Build the stack frame. */
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = upcall;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work.  Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_r4 = type;
+	tf->tf_r5 = (int) sas;
+	tf->tf_r6 = nevents;
+	tf->tf_r7 = ninterrupted;
+
+	tf->tf_spc = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
+	    ((caddr_t)upcallcode - (caddr_t)sigcode));
+	tf->tf_r15 = (int) sf;
+}
+
+/*
  * Send an interrupt to process.
  *
  * Stack is set up to allow sigcode stored
@@ -375,12 +421,13 @@ dumpsys()
 void
 sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -434,7 +481,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -460,13 +507,14 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
  * a machine fault.
  */
 int
-sys___sigreturn14(struct proc *p, void *v, register_t *retval)
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -478,7 +526,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EFAULT);
 
 	/* Restore signal context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Check for security violations. */
 	if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
@@ -517,16 +565,16 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 }
 
 void
-cpu_getmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
-	const struct trapframe *tf = p->p_md.md_regs;
+	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
 
 	/* Save register context. */
-	gr[_REG_EXPEVT] = tf->tf_trapno;
+	gr[_REG_EXPEVT] = tf->tf_expevt;
 	gr[_REG_PC]     = tf->tf_spc;
 	gr[_REG_SR]     = tf->tf_ssr;
 	gr[_REG_MACL]   = tf->tf_macl;
@@ -555,12 +603,12 @@ cpu_getmcontext(p, mcp, flags)
 }
 
 int
-cpu_setmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
@@ -600,13 +648,13 @@ cpu_setmcontext(p, mcp, flags)
  * Clear registers on exec
  */
 void
-setregs(struct proc *p, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf;
 
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	tf->tf_r0 = 0;
 	tf->tf_r1 = 0;
@@ -617,7 +665,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = (int)p->p_psstr;
+	tf->tf_r9 = (int)l->l_proc->p_psstr;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;
