@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.14 2003/08/07 16:44:57 agc Exp $	*/
+/*	$NetBSD: termcap.h,v 1.15 2005/02/04 15:52:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,28 +40,28 @@
 #include <sys/types.h>
 
 __BEGIN_DECLS
-int   tgetent	__P((char *, const char *));
-char *tgetstr	__P((const char *, char **));
-int   tgetflag	__P((const char *));
-int   tgetnum	__P((const char *));
-char *tgoto	__P((const char *, int, int));
-void  tputs	__P((const char *, int, int (*)(int)));
+int   tgetent(char *, const char *);
+char *tgetstr(const char *, char **);
+int   tgetflag(const char *);
+int   tgetnum(const char *);
+char *tgoto(const char *, int, int);
+void  tputs(const char *, int, int (*)(int));
 
 /*
  * New interface
  */
 struct tinfo;
 
-int   t_getent	__P((struct tinfo **, const char *));
-int   t_getnum  __P((struct tinfo *, const char *));
-int   t_getflag __P((struct tinfo *, const char *));
-char *t_getstr  __P((struct tinfo *, const char *, char **, size_t *));
+int   t_getent(struct tinfo **, const char *);
+int   t_getnum(struct tinfo *, const char *);
+int   t_getflag(struct tinfo *, const char *);
+char *t_getstr(struct tinfo *, const char *, char **, size_t *);
 char *t_agetstr(struct tinfo *, const char *);
 int   t_getterm(struct tinfo *, char **, size_t *);
-int   t_goto    __P((struct tinfo *, const char *, int, int, char *, size_t));
-int   t_puts    __P((struct tinfo *, const char *, int,
-		     void (*)(char, void *), void *));
-void  t_freent  __P((struct tinfo *));
+int   t_goto(struct tinfo *, const char *, int, int, char *, size_t);
+int   t_puts(struct tinfo *, const char *, int,
+	     void (*)(char, void *), void *);
+void  t_freent (struct tinfo *);
 int   t_setinfo(struct tinfo **, const char *);
 
 extern	char PC;

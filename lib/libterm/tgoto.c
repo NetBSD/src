@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.22 2003/08/07 16:44:57 agc Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.23 2005/02/04 15:52:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.22 2003/08/07 16:44:57 agc Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.23 2005/02/04 15:52:08 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,7 @@ char	*BC;
  * all other characters are ``self-inserting''.
  */
 char *
-tgoto(CM, destcol, destline)
-	const char *CM;
-	int destcol, destline;
+tgoto(const char *CM, int destcol, int destline)
 {
 	static char result[MAXRETURNSIZE];
 
@@ -95,13 +93,8 @@ tgoto(CM, destcol, destline)
  * returns 0 on success, -1 otherwise.
  */
 int
-t_goto(info, CM, destcol, destline, buffer, limit)
-	struct tinfo *info;
-	const char *CM;
-	int destcol;
-	int destline;
-	char *buffer;
-	size_t limit;
+t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
+    char *buffer, size_t limit)
 {
 	char added[10];
 	const char *cp = CM;

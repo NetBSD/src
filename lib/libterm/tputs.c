@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.21 2003/08/07 16:44:57 agc Exp $	*/
+/*	$NetBSD: tputs.c,v 1.22 2005/02/04 15:52:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.21 2003/08/07 16:44:57 agc Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.22 2005/02/04 15:52:08 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: tputs.c,v 1.21 2003/08/07 16:44:57 agc Exp $");
 #undef ospeed
 
 /* internal functions */
-int _tputs_convert __P((const char **, int));
+int _tputs_convert(const char **, int);
 
 /*
  * The following array gives the number of tens of milliseconds per
@@ -62,9 +62,7 @@ short	ospeed;
 char	PC;
 
 int
-_tputs_convert(ptr, affcnt)
-	const char **ptr;
-	int affcnt;
+_tputs_convert(const char **ptr, int affcnt)
 {
 	int i = 0;
 
@@ -107,10 +105,7 @@ _tputs_convert(ptr, affcnt)
  * used to output one character is outc.
  */
 void
-tputs(cp, affcnt, outc)
-	const char *cp;
-	int affcnt;
-	int (*outc) __P((int));
+tputs(const char *cp, int affcnt, int (*outc)(int))
 {
 	int i = 0;
 	int mspc10;
@@ -154,12 +149,8 @@ tputs(cp, affcnt, outc)
 
 
 int
-t_puts(info, cp, affcnt, outc, args)
-	struct tinfo *info;
-	const char *cp;
-	int affcnt;
-	void (*outc) __P((char, void *));
-	void *args;
+t_puts(struct tinfo *info, const char *cp, int affcnt,
+    void (*outc)(char, void *), void *args)
 {
 	int i = 0;
 	size_t limit;

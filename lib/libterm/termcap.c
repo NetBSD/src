@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.47 2004/04/23 14:49:18 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.48 2005/02/04 15:52:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.47 2004/04/23 14:49:18 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.48 2005/02/04 15:52:08 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,9 +115,7 @@ t_setinfo(struct tinfo **bp, const char *entry)
  */
 
 int
-t_getent(bp, name)
-	struct tinfo **bp;
-	const char *name;
+t_getent(struct tinfo **bp, const char *name)
 {
 	char  *p;
 	char  *cp;
@@ -273,9 +271,7 @@ out:
  * Get an entry for terminal name in buffer bp from the termcap file.
  */
 int
-tgetent(bp, name)
-	char *bp;
-	const char *name;
+tgetent(char *bp, const char *name)
 {
 	int i, plen, elen, c;
         char *ptrbuf = NULL;
@@ -322,9 +318,7 @@ tgetent(bp, name)
  * Note that we handle octal numbers beginning with 0.
  */
 int
-t_getnum(info, id)
-	struct tinfo *info;
-	const char *id;
+t_getnum(struct tinfo *info, const char *id)
 {
 	long num;
 
@@ -338,8 +332,7 @@ t_getnum(info, id)
 }
 
 int
-tgetnum(id)
-	const char *id;
+tgetnum(const char *id)
 {
 	return fbuf ? t_getnum(fbuf, id) : -1;
 }
@@ -350,9 +343,7 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
-int t_getflag(info, id)
-	struct tinfo *info;
-	const char *id;
+int t_getflag(struct tinfo *info, const char *id)
 {
 	_DIAGASSERT(info != NULL);
 	_DIAGASSERT(id != NULL);
@@ -361,8 +352,7 @@ int t_getflag(info, id)
 }
 
 int
-tgetflag(id)
-	const char *id;
+tgetflag(const char *id)
 {
 	return fbuf ? t_getflag(fbuf, id) : 0;
 }
@@ -377,11 +367,7 @@ tgetflag(id)
  * area, this is updated.
  */
 char *
-t_getstr(info, id, area, limit)
-	struct tinfo *info;
-	const char *id;
-	char **area;
-	size_t *limit;
+t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 {
 	char *s;
 	int i;
@@ -433,9 +419,7 @@ t_getstr(info, id, area, limit)
  * No checking on area overflow.
  */
 char *
-tgetstr(id, area)
-	const char *id;
-	char **area;
+tgetstr(const char *id, char **area)
 {
 	struct tinfo dummy;
 	char ids[3];
@@ -516,8 +500,7 @@ t_agetstr(struct tinfo *info, const char *id)
  *
  */
 void
-t_freent(info)
-	struct tinfo *info;
+t_freent(struct tinfo *info)
 {
 	struct tbuf *tb, *wb;
 	_DIAGASSERT(info != NULL);
@@ -540,10 +523,7 @@ t_freent(info)
  *
  */
 int
-t_getterm(info, area, limit)
-	struct tinfo *info;
-	char **area;
-	size_t *limit;
+t_getterm(struct tinfo *info, char **area, size_t *limit)
 {
 	char *endp;
 	size_t count;
