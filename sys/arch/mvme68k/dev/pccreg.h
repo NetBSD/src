@@ -1,4 +1,4 @@
-/*	$NetBSD: pccreg.h,v 1.7 2000/08/20 21:51:31 scw Exp $	*/
+/*	$NetBSD: pccreg.h,v 1.8 2001/04/14 13:53:06 scw Exp $	*/
 
 /*
  *
@@ -156,14 +156,17 @@
  * clock/timer
  */
 
-#define PCC_TIMERACK 0x80	/* ack intr */
-#define PCC_TIMER100HZ 63936	/* load value for 100Hz */
-#define PCC_TIMERCLEAR 0x0	/* reset and clear timer */
-#define PCC_TIMERSTOP  0x1	/* stop clock, but don't clear it */
-#define PCC_TIMERSTART 0x3      /* start timer */
+#define PCC_TIMERACK		0x80	/* ack intr */
+#define PCC_TIMER100HZ		63936	/* load value for 100Hz */
+#define PCC_TIMERCLEAR		0x0	/* reset and clear timer */
+#define PCC_TIMERENABLE		0x1	/* Enable clock */
+#define PCC_TIMERSTOP		0x3	/* stop clock, but don't clear it */
+#define PCC_TIMERSTART		0x7	/* start timer */
+#define PCC_TIMEROVFLSHIFT	4
 
 #define pcc_timer_hz2lim(hz)	(65536 - (160000/(hz)))
 #define pcc_timer_us2lim(us)	(65536 - (160000/(1000000/(us))))
+#define pcc_timer_cnt2us(cnt)	((((cnt) - PCC_TIMER100HZ) * 25) / 4)
 
 /*
  * serial control
