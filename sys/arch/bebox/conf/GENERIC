@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 1999/01/23 16:10:48 drochner Exp $
+#	$NetBSD: GENERIC,v 1.18 1999/07/29 10:37:16 augustss Exp $
 #
 # First try for BEBOX config file
 #
@@ -27,6 +27,7 @@ options 	COMPAT_09
 options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 
 file-system 	FFS

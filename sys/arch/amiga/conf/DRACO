@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.39 1999/07/28 05:56:07 is Exp $
+# $NetBSD: DRACO,v 1.40 1999/07/29 10:37:14 augustss Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -69,6 +69,7 @@ options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables

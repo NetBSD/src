@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.29 1999/04/30 23:34:08 cgd Exp $
+# $NetBSD: NOSY,v 1.30 1999/07/29 10:37:13 augustss Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -45,6 +45,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # OSF/1 binary compatibility
 #options 	COMPAT_OSF1

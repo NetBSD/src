@@ -1,4 +1,4 @@
-# $NetBSD: CANE,v 1.5 1999/02/18 20:39:04 thorpej Exp $
+# $NetBSD: CANE,v 1.6 1999/07/29 10:37:12 augustss Exp $
 #
 # cane.nas.nasa.gov - thorpej's Multia
 #
@@ -53,6 +53,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # System V-like message queues
 options 	SYSVMSG

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 1999/07/20 07:40:34 christos Exp $
+#	$NetBSD: GENERIC,v 1.57 1999/07/29 10:37:14 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -79,6 +79,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
 options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
