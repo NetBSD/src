@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.2 1998/10/14 12:15:10 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3 1998/10/18 09:52:16 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -53,6 +53,8 @@
 #include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/amsvar.h>
+
+#include "aed.h"
 
 /*
  * Function declarations.
@@ -300,12 +302,18 @@ kbd_processevent(event, ksc)
         new_event = *event;
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
+	kbd_intr(&new_event);
+#if NAED > 0
 	aed_input(&new_event);
+#endif
 	if (event->bytes[1] != 0xff) {
 		new_event.u.k.key = event->bytes[1];
 		new_event.bytes[0] = event->bytes[1];
 		new_event.bytes[1] = 0xff;
+		kbd_intr(&new_event);
+#if NAED > 0
 		aed_input(&new_event);
+#endif
 	}
 
 }
