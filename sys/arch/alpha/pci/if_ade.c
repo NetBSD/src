@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.4 1998/08/31 22:28:04 cgd Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.5 1998/09/23 21:17:17 ross Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -3378,11 +3378,12 @@ tulip_rx_intr(
 	    me->m_len = total_len - last_offset;
 	    eh = *mtod(ms, struct ether_header *);
 #if NBPFILTER > 0
-	    if (sc->tulip_bpf != NULL)
+	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    TULIP_BPF_TAP(sc, mtod(ms, caddr_t), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
+	    }
 #endif
 	    if ((sc->tulip_if.if_flags & IFF_PROMISC)
 		    && (eh.ether_dhost[0] & 1) == 0
@@ -5034,7 +5035,7 @@ tulip_pci_attach(
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
 #if !defined(TULIP_IOMAPPED) && defined(__FreeBSD__)
-    vm_offset_t pa_csrs;
+    paddr_t pa_csrs;
 #endif
     unsigned csroffset = TULIP_PCI_CSROFFSET;
     unsigned csrsize = TULIP_PCI_CSRSIZE;
@@ -5167,7 +5168,7 @@ tulip_pci_attach(
 #if defined(TULIP_IOMAPPED)
     retval = pci_map_port(config_id, PCI_CBIO, &csr_base);
 #else
-    retval = pci_map_mem(config_id, PCI_CBMA, (vm_offset_t *) &csr_base, &pa_csrs);
+    retval = pci_map_mem(config_id, PCI_CBMA, (vaddr_t *) &csr_base, &pa_csrs);
 #endif
     if (!retval) {
 	free((caddr_t) sc, M_DEVBUF);
@@ -5181,7 +5182,7 @@ tulip_pci_attach(
 #if defined(TULIP_IOMAPPED)
     csr_base = ia->ia_iobase;
 #else
-    csr_base = (vm_offset_t) mapphys((vm_offset_t) ia->ia_maddr, ia->ia_msize);
+    csr_base = (vaddr_t) mapphys((vaddr_t) ia->ia_maddr, ia->ia_msize);
 #endif
 #endif /* __bsdi__ */
 

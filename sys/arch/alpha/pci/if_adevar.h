@@ -1,4 +1,4 @@
-/*	$NetBSD: if_adevar.h,v 1.1 1998/01/31 01:43:42 ross Exp $	*/
+/*	$NetBSD: if_adevar.h,v 1.2 1998/09/23 21:17:18 ross Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -919,7 +919,7 @@ extern struct cfdriver ade_cd;
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
+#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 #endif	/* __NetBSD__ */
 
