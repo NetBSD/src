@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.7 2003/09/08 09:12:35 wiz Exp $
+.\"	$NetBSD: pkg_view.1,v 1.8 2003/09/08 10:17:16 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm pkg_view
-.Nd manage package views
+.Nd add and delete instances of depoted packages in views
 .Sh SYNOPSIS
 .Nm
 .Op Ar nVv
@@ -50,9 +50,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is used to add and delete packages in
+command is used to add and delete instances of depoted packages in
 .Ar stowdir
-into a
+in a
 .Ar view
 in the
 .Ar viewbase
@@ -61,16 +61,15 @@ directory.
 .Bf -emphasis
 Since the
 .Nm
-command may execute scripts or programs contained within a package file,
+command may execute scripts or programs provided by a package file,
 your system may be susceptible to ``Trojan horses'' or other subtle
 attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
 provide installable package files.
-For extra protection, use the
-.Fl M
-flag to extract the package file, and inspect its contents and scripts
-to ensure it poses no danger to your system's integrity.
+For extra protection, examine all the package control files in the
+package database directory
+.Pa ( /usr/pkg/packages/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular attention to any +INSTALL, +DEINSTALL, +REQUIRE
 or +MTREE_DIRS files, and inspect the +CONTENTS file for
 .Cm @cwd ,
@@ -82,7 +81,7 @@ and
 .Cm @unexec
 directives, and/or use the
 .Xr pkg_info 1
-command to examine the package file.
+command to examine the installed package control files.
 .Ef
 .Sh OPTIONS
 The following command-line options are supported:
@@ -90,7 +89,7 @@ The following command-line options are supported:
 .It Fl d Ar stowdir
 Set
 .Ar stowdir
-as the directory in which the installed packages can be found.
+as the directory in which the depoted packages can be found.
 If this option isn't specified, then the
 .Ar stowdir
 is taken from the value of the environment variable
@@ -106,7 +105,7 @@ Add
 .Ar ignore
 to the list of files in
 .Ar package
-that should ignored when adding or removing the package from
+that should ignored when adding or removing the package instance from
 .Ar view .
 .It Fl k Ar pkg_dbdir
 Set
@@ -118,7 +117,7 @@ taken from the value of the environment variable
 otherwise it defaults to
 .Pa /var/db/pkg .
 .It Fl n
-Don't actually execute the commands for manipulating the depoted packages.
+Don't actually execute the commands for manipulating the package instances.
 .It Fl V
 Print the version number and exit.
 .It Fl v
@@ -142,7 +141,7 @@ Set
 .Ar view
 as the directory in
 .Ar viewbase
-in which the packages should be added or removed.
+in which the package instances should be added or deleted.
 The default
 .Ar view
 is the empty view but may be overridden by the
@@ -152,15 +151,15 @@ environment variable.
 .Pp
 The following commands are supported:
 .Bl -tag -width indent
-.It Ar add
-Add the listed packages into
+.It Cm add
+Add the listed package instances into
 .Ar view .
-.It Ar check
-Check whether the listed packages are present in
+.It Cm check
+Check whether the listed package instances are present in
 .Ar view .
 If they are not present, then return 0, otherwise return 1.
-.It Ar delete
-Delete the listed packages from
+.It Cm delete
+Delete the listed package instances from
 .Ar view .
 .El
 .Sh ENVIRONMENT
@@ -194,20 +193,20 @@ otherwise it defaults to
 .It Ev PLIST_IGNORE_FILES
 This can be used to specify files in
 .Ar package
-that should ignored when adding or removing the package from
+that should ignored when adding or removing the package instance from
 .Ar view .
 .Ev PLIST_IGNORE_FILES
 is a space-separated list of shell glob patterns that match files relative
 to the
 .Ar package
-directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
+depot directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
 This is overridden by any
 .Ev _PLIST_IGNORE_FILES
 setting in a package's
 .Ar build-info-file
 (see
-.Xr pkg_create 1
-) if it exists.
+.Xr pkg_create 1 )
+if it exists.
 .It Ev PKG_VIEW
 The default view can be specified in the
 .Ev PKG_VIEW
@@ -220,14 +219,14 @@ If the package contains an
 .Ar install
 script (see
 .Xr pkg_create 1 ) ,
-then after the package is added into a view, the script is executed
-with the following arguments:
+then after the package instance is added into a view, the script is
+executed with the following arguments:
 .Bl -tag -width package
 .It Ar package
-The name of the package being installed.
+The name of the package instance being added.
 .It Cm VIEW-INSTALL
 Keyword denoting that the script is to perform any actions needed after
-the package is added to a view.
+the package instance is added to a view.
 .El
 .Pp
 If the
@@ -238,14 +237,14 @@ If the package contains an
 .Ar deinstall
 script (see
 .Xr pkg_create 1 ) ,
-then before the package is removed from a view, the script is executed
-with the following arguments:
+then before the package instance is deleted from a view, the script is
+executed with the following arguments:
 .Bl -tag -width package
 .It Ar package
-The name of the package being installed.
+The name of the package instance being deleted.
 .It Cm VIEW-DEINSTALL
 Keyword denoting that the script is to perform any actions needed before
-the package is removed from a view.
+the package instance is deleted from a view.
 .El
 .Pp
 If the
