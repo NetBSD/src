@@ -51,7 +51,30 @@ environment.
 The Future of NetBSD:
 --- ------ -- ------
 
-* Talk about NetBSD Foundation Here *
+The NetBSD Foundation was recently incorporated as a non-profit
+organization.  It's purpose is to encourage, foster and promote the
+free exchange of computer software, namely the NetBSD Operating
+System.  The corporation will allow for many things to be handled more
+smoothly than could be done with our previous informal organization.
+In particular, it provides the framework to deal with other parties
+that wish to become involved in the NetBSD Project.
+
+We believe that the NetBSD Foundation will help improve the quality 
+of NetBSD by:
+
+	* having a better organization to keep track of development
+	  efforts, including co-ordination with groups working in 
+	  related fields.
+
+	* providing a framework to receive donations of goods and
+          services and to own the resources necessary to run the
+          NetBSD Project.
+
+        * providing a better position from which to undertake
+          promotional activities.
+
+        * periodically organizing workshops for developers and other
+          interested people to discuss ongoing work.
 
 We hope to have regular releases of the full binary and source trees,
 but these are difficult to coordinate, especially with all of the
@@ -62,10 +85,8 @@ current practice of making the NetBSD-current development source
 available on a daily or nearly-daily basis.
 
 We intend to integrate free, positive changes from whatever sources
-will provide them, providing that they are well thought-out and increase
-the usability of the system.  This includes integrating the remainder of
-the 4.4BSD-Lite tape, as quickly as we can ensure that everything works
-properly.
+will provide them, providing that they are well thought-out and
+increase the usability of the system.
 
 Above all, we hope to create a stable and accessible system, and to be
 responsive to the needs and desires of NetBSD users, because it is for
@@ -276,6 +297,14 @@ a long time provided the primary FTP site for NetBSD.
 Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
+
+Alistair G. Crooks <agc@westley.demon.co.uk> has been producing tar 
+file snapshot reports for NetBSD-current users, a very valuable 
+service.
+
+Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
+386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
+recognized for it.
 
 The following people (in alphabetical order) have made donations or
 loans of hardware and/or money, to support NetBSD development, and
