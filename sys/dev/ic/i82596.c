@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.2 2004/08/26 16:56:07 jkunz Exp $ */
+/* $NetBSD: i82596.c,v 1.3 2004/10/30 18:08:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.2 2004/08/26 16:56:07 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.3 2004/10/30 18:08:37 thorpej Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -707,8 +707,9 @@ iee_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return(ifmedia_ioctl(ifp, (struct ifreq *) data, 
 		    &sc->sc_ifmedia, cmd));
 	else {
+XXXthorpej rewrite me please
 		err = ether_ioctl(ifp, cmd, data);
-		if (err == ENETRESET || 
+		if ((err == ENETRESET && (ifp->if_flags & IFF_RUNNING) != 0) || 
 		    ((ifp->if_flags & IFF_PROMISC) != 0 
 		    && (sc->sc_cf[8] & IEE_CF_8_PRM) == 0)
 		    || ((ifp->if_flags & IFF_PROMISC) == 0 
@@ -725,7 +726,8 @@ iee_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				/* Mcast setup is not defered. */
 				(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 			err = 0;
-		}
+		} else if (err == ENETRESET)
+			err = 0;
 	}
 	splx(s);
 	return(err);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.42 2004/10/26 22:52:44 heas Exp $	*/
+/*	$NetBSD: hme.c,v 1.43 2004/10/30 18:08:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.42 2004/10/26 22:52:44 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.43 2004/10/30 18:08:37 thorpej Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1386,7 +1386,8 @@ hme_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			hme_setladrf(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				hme_setladrf(sc);
 			error = 0;
 		}
 		break;

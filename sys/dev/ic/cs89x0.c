@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.14 2004/07/04 13:09:12 chris Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.15 2004/10/30 18:08:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.14 2004/07/04 13:09:12 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.15 2004/10/30 18:08:36 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1343,7 +1343,7 @@ cs_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		result = ether_ioctl(ifp, cmd, data);
 		if (result == ENETRESET) {
-			if (CS_IS_ENABLED(sc)) {
+			if (ifp->if_flags & IFF_RUNNING) {
 				/*
 				 * Multicast list has changed.  Set the
 				 * hardware filter accordingly.

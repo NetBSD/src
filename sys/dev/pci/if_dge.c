@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.6 2004/09/21 21:57:30 yamt Exp $ */
+/*	$NetBSD: if_dge.c,v 1.7 2004/10/30 18:09:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.6 2004/09/21 21:57:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.7 2004/10/30 18:09:22 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1471,7 +1471,8 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			dge_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				dge_set_filter(sc);
 			error = 0;
 		}
 		break;
