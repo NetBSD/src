@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.5 2002/10/23 00:10:30 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.6 2002/10/23 00:11:00 perry Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 # general, a .S file should have a special comment for anything with
 # something like an ENTRY designation. The special formats are:
 #
-# /* LINTSTUB: Ignore */
+# /* LINTSTUB: Empty */
 # This is used as an indicator that the file contains no stubs at
 # all. It generates a /* LINTED */ comment to quiet lint.
 #
