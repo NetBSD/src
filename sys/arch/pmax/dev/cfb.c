@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.28 1998/01/12 20:12:29 thorpej Exp $	*/
+/*	$NetBSD: cfb.c,v 1.29 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -99,8 +99,6 @@
 #include <machine/fbvar.h>
 #include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */
 
-#include <pmax/pmax/pmaxtype.h>
-
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/fbreg.h>
 
@@ -141,9 +139,6 @@ struct fbdriver cfb_driver = {
 
 int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
 extern void fbScreenInit __P((struct fbinfo *fi));
-
-
-extern int pmax_boardtype;
 
 
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */

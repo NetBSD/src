@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.11 1998/03/22 09:27:07 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.12 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -112,8 +112,6 @@ struct termios; struct dcregs;
 #include <pmax/dev/dtopvar.h>			/* dtop console I/O decls */
 #include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */
 #include <pmax/dev/dcvar.h>			/* DZ-11 chip console I/O */
-
-extern int pmax_boardtype;
 
 /*
  * Prototypes of local functions
@@ -559,7 +557,7 @@ genConfigMouse()
 	int s;
 
 	s = spltty();
-	switch (pmax_boardtype) {
+	switch (systype) {
 #if NDC_IOASIC > 0
 	case DS_3MAX:
 		dcDivertXInput = genKbdEvent;
@@ -606,7 +604,7 @@ genDeconfigMouse()
 	int s;
 
 	s = spltty();
-	switch (pmax_boardtype) {
+	switch (systype) {
 #if NDC_IOASIC > 0
 	case DS_3MAX:
 

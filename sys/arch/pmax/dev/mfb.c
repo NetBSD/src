@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.32 1998/01/12 20:12:32 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.33 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.32 1998/01/12 20:12:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.33 1998/03/31 11:32:53 jonathan Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -102,11 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.32 1998/01/12 20:12:32 thorpej Exp $");
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+
 #include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */ 
-
-
-#include <pmax/pmax/pmaxtype.h>
-
 #include <pmax/dev/mfbreg.h>
 #include <pmax/dev/fbreg.h>
 
@@ -118,7 +115,6 @@ struct fbuaccess mfbu;
 struct pmax_fbtty mfbfb;
 struct fbinfo	mfbfi;	/*XXX*/
 
-extern int pmax_boardtype;
 
 /*
  * Forward references.
