@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.9 1997/10/28 23:31:30 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.10 1997/11/04 05:58:22 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -139,6 +139,8 @@ int aha_scsi_cmd __P((struct scsipi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
 void aha_timeout __P((void *arg));
 int aha_create_ccbs __P((struct aha_softc *, void *, size_t, int));
+void aha_enqueue __P((struct aha_softc *, struct scsipi_xfer *, int));
+struct scsipi_xfer *aha_dequeue __P((struct aha_softc *));
 
 struct scsipi_adapter aha_switch = {
 	aha_scsi_cmd,
@@ -164,6 +166,47 @@ struct cfdriver aha_cd = {
 
 /* XXX Should put this in a better place. */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+
+/*
+ * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
+ * to avoid having to allocate additional resources (since we're used
+ * only during resource shortages anyhow.
+ */
+void
+aha_enqueue(sc, xs, infront)
+	struct aha_softc *sc;
+	struct scsipi_xfer *xs;
+	int infront;
+{
+
+	if (infront || sc->sc_queue.lh_first == NULL) {
+		if (sc->sc_queue.lh_first == NULL)
+			sc->sc_queuelast = xs;
+		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
+		return;
+	}
+
+	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
+	sc->sc_queuelast = xs;
+}
+
+/*
+ * Pull a scsipi_xfer off the front of the software queue.
+ */
+struct scsipi_xfer *
+aha_dequeue(sc)
+	struct aha_softc *sc;
+{
+	struct scsipi_xfer *xs;
+
+	xs = sc->sc_queue.lh_first;
+	LIST_REMOVE(xs, free_list);
+
+	if (sc->sc_queue.lh_first == NULL)
+		sc->sc_queuelast = NULL;
+
+	return (xs);
+}
 
 /*
  * aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
@@ -305,6 +348,7 @@ aha_attach(sc, apd)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
+	LIST_INIT(&sc->sc_queue);
 
 	/*
 	 * fill in the prototype scsipi_link.
@@ -863,6 +907,17 @@ aha_done(sc, ccb)
 	aha_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+
+	/*
+	 * If there are queue entries in the software queue, try to
+	 * run the first one.  We should be more or less guaranteed
+	 * to succeed, since we just freed a CCB.
+	 *
+	 * NOTE: aha_scsi_cmd() relies on our calling it with
+	 * the first entry in the queue.
+	 */
+	if ((xs = sc->sc_queue.lh_first) != NULL)
+		(void) aha_scsi_cmd(xs);
 }
 
 /*
@@ -1211,8 +1266,48 @@ aha_scsi_cmd(xs)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct aha_ccb *ccb;
 	int error, seg, flags, s;
+	int fromqueue = 0, dontqueue = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
+
+	s = splbio();		/* protect the queue */
+
+	/*
+	 * If we're running the queue from aha_done(), we've been
+	 * called with the first queue entry as our argument.
+	 */
+	if (xs == sc->sc_queue.lh_first) {
+		xs = aha_dequeue(sc);
+		fromqueue = 1;
+		goto get_ccb;
+	}
+
+	/* Polled requests can't be queued for later. */
+	dontqueue = xs->flags & SCSI_POLL;
+
+	/*
+	 * If there are jobs in the queue, run them first.
+	 */
+	if (sc->sc_queue.lh_first != NULL) {
+		/*
+		 * If we can't queue, we have to abort, since
+		 * we have to preserve order.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Swap with the first queue entry.
+		 */
+		aha_enqueue(sc, xs, 0);
+		xs = aha_dequeue(sc);
+		fromqueue = 1;
+	}
+
+ get_ccb:
 	/*
 	 * get a ccb to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -1220,9 +1315,26 @@ aha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
+		/*
+		 * If we can't queue, we lose.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Stuff ourselves into the queue, in front
+		 * if we came off in the first place.
+		 */
+		aha_enqueue(sc, xs, fromqueue);
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	splx(s);		/* done playing with the queue */
+
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
