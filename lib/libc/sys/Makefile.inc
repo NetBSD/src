@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58.2.1 1997/06/15 09:43:55 cjs Exp $
+#	$NetBSD: Makefile.inc,v 1.58.2.2 1997/06/16 00:05:20 cjs Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 .include <bsd.own.mk>	# for BUILDDIR
@@ -71,7 +71,8 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} |\
+	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -79,14 +80,14 @@ ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPFLAGS} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -100,7 +101,8 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} |\
+	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -108,14 +110,15 @@ ${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPFLAGS} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${BUILDDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} |\
+	    ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -124,7 +127,8 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} |\
+	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -133,7 +137,7 @@ ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPFLAGS} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 
@@ -142,7 +146,8 @@ ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} |\
+	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
