@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.24 1998/11/17 14:38:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.25 1998/11/19 20:08:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,18 +141,21 @@ struct scsipi_device {
 
 /*
  * These entrypoints are called by the high-end drivers to get services from
- * whatever low-end drivers they are attached to each adapter type has one of
- * these statically allocated.
+ * whatever low-end drivers they are attached to.  Each adapter instance has
+ * one of these.
  *
  *	scsipi_cmd		required
  *	scsipi_minphys		required
  *	scsipi_ioctl		optional
+ *	scsipi_enable		optional
  */
 struct scsipi_adapter {
+	int	scsipi_refcnt;
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
 	void	(*scsipi_minphys) __P((struct buf *));
 	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
 		    caddr_t, int, struct proc *));
+	int	(*scsipi_enable) __P((void *, int));
 };
 
 /*
@@ -388,6 +391,9 @@ char   *scsipi_decode_sense __P((void *, int));
 #endif
 int	scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t,
 	    int, struct proc *));
+
+int	scsipi_adapter_addref __P((struct scsipi_link *));
+void	scsipi_adapter_delref __P((struct scsipi_link *));
 
 void	show_scsipi_xs __P((struct scsipi_xfer *));
 void	show_scsipi_cmd __P((struct scsipi_xfer *));
