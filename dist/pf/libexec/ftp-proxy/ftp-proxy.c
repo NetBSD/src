@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.3 2004/06/30 13:29:43 darrenr Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.4 2004/07/01 15:44:54 darrenr Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
@@ -444,7 +444,7 @@ new_dataconn(int server)
 			exit(EX_OSERR);
 		}
 		if (listen(server_listen_socket, 5) != 0) {
-			syslog(LOG_INFO, "server socket Listen() failed (%m)");
+			syslog(LOG_INFO, "server socket listen() failed (%m)");
 			exit(EX_OSERR);
 		}
 	} else {
