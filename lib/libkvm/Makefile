@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1997/10/19 19:10:26 oki Exp $
+#	$NetBSD: Makefile,v 1.20 1997/10/19 19:15:30 oki Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .if	(${MACHINE} != "i386")   && \
@@ -33,8 +33,7 @@ MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
 .if	(${MACHINE} != "i386")   && \
 	(${MACHINE} != "pica")   && \
-	(${MACHINE} != "pmax")   && \
-	(${MACHINE} != "x68k")
+	(${MACHINE} != "pmax")
 .include <bsd.lib.mk>
 .else
 .include <bsd.prog.mk>
