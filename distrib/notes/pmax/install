@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27 2001/07/24 18:11:00 nra Exp $
+.\"	$NetBSD: install,v 1.28 2001/08/26 12:00:17 simonb Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -312,24 +312,17 @@ or
 label, you may get a
 message like:
 .Pp
-.Dl rzX: WARNING: trying Ultrix label, no disk label
+.Dl sdX: WARNING: trying Ultrix label, no disk label
 .Pp
 or when installing on an old
 .Tn Ultrix
 disk, you may get a message like:
 .Pp
-.Dl rzX: WARNING: using ULTRIX partition information
+.Dl sdX: WARNING: using ULTRIX partition information
 .Pp
 when issuing the
-.Ic "disklabel -W /dev/rrz" Ns Ar X Ns Ic "c"
+.Ic "disklabel -W /dev/rsd" Ns Ar X Ns Ic "c"
 command.  This can safely be ignored.
-.Pp
-Most other
-.Nx
-ports are similar, but use
-.Sq rsd Ns Ar X Ns Ic c
-instead of
-.Sq rrz Ns Ar X Ns Ic c .
 .Pp
 On
 .Nx Ns /i386,
