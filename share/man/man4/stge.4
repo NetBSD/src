@@ -1,4 +1,4 @@
-.\"	$NetBSD: stge.4,v 1.1 2001/07/25 00:17:20 thorpej Exp $
+.\"	$NetBSD: stge.4,v 1.2 2001/07/25 00:28:06 thorpej Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,12 @@ The
 .Nm
 device driver supports the Sundance/Tamarack TC9021 Gigabit Ethernet
 chip.
+.Pp
+The TC9021 supports IPv4/TCP/UDP checksumming in hardware.  The
+.Nm
+driver supports this feature of the chip.  See
+.Xr ifconfig 8
+for information on how to enable this feature.
 .\" .Sh DIAGNOSTICS
 .\" XXX too be done.
 .Sh SEE ALSO
@@ -64,6 +70,21 @@ The
 .Nm
 driver first appeared in
 .Nx 1.6 .
+.Sh BUGS
+The
+.Nm
+driver does not support the VLAN tag insertion/removal feature of the
+TC9021 chip.  This is primarily because the TC9021's VLAN do not have
+a useful programming interface.
+.Pp
+The
+.Nm
+driver does not yet support jumbo Ethernet frames.
+.Pp
+The
+.Nm
+driver does not yet function properly with 1000BASE-T fitted boards.
+Currently, only 1000BASE-SX boards work.
 .Sh AUTHOR
 The
 .Nm
