@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.8 1997/10/18 15:08:53 lukem Exp $	*/
+/*	$NetBSD: from.c,v 1.9 1998/12/19 16:37:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.8 1997/10/18 15:08:53 lukem Exp $");
+__RCSID("$NetBSD: from.c,v 1.9 1998/12/19 16:37:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ main(argc, argv)
 		case 's':
 			sender = optarg;
 			for (p = sender; *p; ++p)
-				if (isupper(*p))
+				if (isupper((unsigned char)*p))
 					*p = tolower(*p);
 			break;
 		case '?':
@@ -143,17 +143,17 @@ match(line, sender)
 	char ch, pch, first, *p, *t;
 
 	for (first = *sender++;;) {
-		if (isspace(ch = *line))
+		if (isspace((unsigned char)(ch = *line)))
 			return(0);
 		++line;
-		if (isupper(ch))
+		if (isupper((unsigned char)ch))
 			ch = tolower(ch);
 		if (ch != first)
 			continue;
 		for (p = sender, t = line;;) {
 			if (!(pch = *p++))
 				return(1);
-			if (isupper(ch = *t++))
+			if (isupper((unsigned char)(ch = *t++)))
 				ch = tolower(ch);
 			if (ch != pch)
 				break;
