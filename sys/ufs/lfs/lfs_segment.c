@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.93 2003/01/25 18:12:33 tron Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.94 2003/01/25 23:00:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.93 2003/01/25 18:12:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.94 2003/01/25 23:00:09 kleink Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1035,7 +1035,8 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 	
 #ifdef DEBUG
 	if (bp->b_flags & B_GATHERED) {
-		printf("lfs_gatherblock: already gathered! Ino %d, lbn %d\n",
+		printf("lfs_gatherblock: already gathered! Ino %d,"
+		       " lbn %" PRId64 "\n",
 		       sp->fip->fi_ino, bp->b_lblkno);
 		return (0);
 	}
@@ -1217,8 +1218,8 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[1]: warning: writing "
-					"ino %d lbn %" PRId64 " at 0x%x, :"
-					"was 0x0\n", ip->i_number, lbn, off);
+					"ino %d lbn %" PRId64 " at 0x%" PRIx64
+					", was 0x0\n", ip->i_number, lbn, off);
 			}
 #endif
 			if (ooff == UNWRITTEN)
@@ -1235,8 +1236,8 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[2]: warning: writing "
-					"ino %d lbn %" PRId64 " at 0x%x, was "
-					"0x0\n", ip->i_number, lbn, off);
+					"ino %d lbn %" PRId64 " at 0x%" PRIx64
+					", was 0x0\n", ip->i_number, lbn, off);
 			}
 #endif
 			if (ooff == UNWRITTEN)
@@ -1254,8 +1255,8 @@ lfs_updatemeta(struct segment *sp)
 #if DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[3]: warning: writing "
-					"ino %d lbn %" PRId64 " at 0x%x, was "
-					"0x0\n", ip->i_number, lbn, off);
+					"ino %d lbn %" PRId64 " at 0x%" PRIx64
+					", was 0x0\n", ip->i_number, lbn, off);
 			}
 #endif
 			if (ooff == UNWRITTEN)
@@ -1267,7 +1268,7 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DEBUG
 		if (daddr >= fs->lfs_lastpseg && daddr <= off) {
 			printf("lfs_updatemeta: ino %d, lbn %" PRId64 ", "
-				"addr = %x in same pseg\n",
+				"addr = %" PRIx64 " in same pseg\n",
 				VTOI(sp->vp)->i_number, sbp->b_lblkno, daddr);
 		}
 #endif
@@ -1858,7 +1859,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #if defined(DEBUG) && defined(DIAGNOSTIC)
 		if(dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno + btodb((*bpp)->b_bcount - 1))) !=
 		   dtosn(fs, dbtofsb(fs, cbp->b_blkno))) {
-			printf("block at %x (%d), cbp at %x (%d)\n",
+			printf("block at %" PRIx64 " (%" PRId64 "), "
+			       "cbp at %" PRIx64 " (%" PRId64 ")\n",
 				(*bpp)->b_blkno, dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)),
 			       cbp->b_blkno, dtosn(fs, dbtofsb(fs, cbp->b_blkno)));
 			panic("lfs_writeseg: Segment overwrite");

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.17 2003/01/24 21:55:27 fvdl Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.18 2003/01/25 23:00:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.17 2003/01/24 21:55:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.18 2003/01/25 23:00:09 kleink Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -105,7 +105,7 @@ void lfs_dumplog(void)
 
 	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
 		if (lfs_log[i].file) {
-			printf("lbn %d %s %lx %d %s\n",
+			printf("lbn %" PRId64 " %s %lx %d %s\n",
 				lfs_log[i].block,
 				lfs_log[i].op,
 				lfs_log[i].flags,
@@ -276,13 +276,14 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 	for (bpp = sp->bpp; bpp < sp->cbpp; bpp++) {
 		if ((*bpp)->b_blkno != blkno) {
 			if ((*bpp)->b_vp == devvp) {
-				printf("Oops, would misplace raw block 0x%x at "
-				       "0x%x\n",
+				printf("Oops, would misplace raw block "
+				       "0x%" PRIx64 " at 0x%" PRIx64 "\n",
 				       (*bpp)->b_blkno,
 				       blkno);
 			} else {
-				printf("%s:%d: misplace ino %d lbn %d at "
-				       "0x%x instead of 0x%x\n",
+				printf("%s:%d: misplace ino %d lbn %" PRId64
+				       " at 0x%" PRIx64 " instead of "
+				       "0x%" PRIx64 "\n",
 				       file, line,
 				       VTOI((*bpp)->b_vp)->i_number, (*bpp)->b_lblkno,
 				       blkno,

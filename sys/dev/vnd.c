@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.89 2002/11/16 08:10:48 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.90 2003/01/25 23:09:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.89 2002/11/16 08:10:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.90 2003/01/25 23:09:59 kleink Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -482,7 +482,8 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%x sz 0x%x\n",
+			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
+			       " sz 0x%x\n",
 			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
@@ -568,7 +569,7 @@ vndstart(vnd)
 		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstart(%ld): bp %p vp %p blkno 0x%x"
+			printf("vndstart(%ld): bp %p vp %p blkno 0x%" PRIx64
 				" flags %lx addr %p cnt 0x%lx\n",
 			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
 			    bp->b_flags, bp->b_data, bp->b_bcount);
@@ -597,7 +598,8 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%ld): vbp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
+		printf("vndiodone(%ld): vbp %p vp %p blkno 0x%" PRIx64
+		       " addr %p cnt 0x%lx\n",
 		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
 		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
 		    vbp->vb_buf.b_bcount);

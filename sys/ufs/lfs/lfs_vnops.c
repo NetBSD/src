@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.80 2003/01/18 09:38:20 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.81 2003/01/25 23:00:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.80 2003/01/18 09:38:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.81 2003/01/25 23:00:10 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ lfs_fsync(void *v)
 		printf("lfs_fsync: flags are 0x%x, numoutput=%d\n",
 			VTOI(vp)->i_flag, vp->v_numoutput);
 		printf("lfs_fsync: writecount=%ld\n", vp->v_writecount);
-		printf("lfs_fsync: first bp: %p, flags=0x%lx, lbn=%d\n",
+		printf("lfs_fsync: first bp: %p, flags=0x%lx, lbn=%" PRId64 "\n",
 			bp, bp->b_flags, bp->b_lblkno);
 	}
 #endif
