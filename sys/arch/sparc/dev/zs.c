@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.47 1997/04/14 21:26:29 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.48 1997/07/29 09:58:18 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1172,7 +1172,7 @@ again:
 				break;
 
 			default:
-				log(LOG_ERR, "zs%d%c: bad ZRING_TYPE (%x)\n",
+				log(LOG_ERR, "zs%d%c: bad ZRING_TYPE (0x%x)\n",
 				    unit >> 1, (unit & 1) + 'a', c);
 				break;
 			}

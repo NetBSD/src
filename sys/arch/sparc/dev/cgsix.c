@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.31 1997/05/24 20:16:09 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.32 1997/07/29 09:58:04 fair Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -529,7 +529,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 
 	default:
 #ifdef DEBUG
-		log(LOG_NOTICE, "cgsixioctl(%lx) (%s[%d])\n", cmd,
+		log(LOG_NOTICE, "cgsixioctl(0x%lx) (%s[%d])\n", cmd,
 		    p->p_comm, p->p_pid);
 #endif
 		return (ENOTTY);
@@ -762,7 +762,8 @@ cgsixmmap(dev, off, prot)
 #ifdef DEBUG
 	{
 	  register struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "cgsixmmap(%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
+	  log(LOG_NOTICE, "cgsixmmap(0x%x) (%s[%d])\n",
+		off, p->p_comm, p->p_pid);
 	}
 #endif
 	return (-1);	/* not a user-map offset */

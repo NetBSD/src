@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.36 1997/07/19 21:43:54 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.36 1997/07/19 21:43:54 pk Exp $
+ * id: $NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -471,7 +471,7 @@ xdcattach(parent, self, aux)
 		XDC_DONE(xdc, rqno, err);
 		return;
 	}
-	printf(": Xylogics 753/7053, PROM=%x.%02x.%02x\n",
+	printf(": Xylogics 753/7053, PROM=0x%x.%02x.%02x\n",
 	    ctl->eprom_partno, ctl->eprom_lvl, ctl->eprom_rev);
 	XDC_DONE(xdc, rqno, err);
 
