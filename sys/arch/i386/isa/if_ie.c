@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.11.2.1 1994/08/14 09:26:40 mycroft Exp $
+ *	$Id: if_ie.c,v 1.11.2.2 1994/10/18 20:34:09 cgd Exp $
  */
 
 /*
@@ -728,9 +728,6 @@ ietint(sc)
 		mc_setup(sc, (caddr_t)sc->xmit_cbuffs[0]);
 		sc->want_mcsetup = 0;
 	}
-
-	/* Wish I knew why this seems to be necessary... */
-	sc->xmit_cmds[0]->ie_xmit_status |= IE_STAT_COMPL;
 
 	iestart(&sc->sc_arpcom.ac_if);
 }
@@ -1570,13 +1567,13 @@ run_tdr(sc, cmd)
 	cmd->com.ie_cmd_status = 0;
 	cmd->com.ie_cmd_cmd = IE_CMD_TDR | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = 0xffff;
-	cmd->ie_tdr_time = 0;
 	
 	sc->scb->ie_command_list = MK_16(MEM, cmd);
 	cmd->ie_tdr_time = 0;
 	
-	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL))
-		result = 0x2000;
+	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
+	    !(cmd->com.ie_cmd_status & IE_STAT_OK))
+		result = 0x10000;
 	else
 		result = cmd->ie_tdr_time;
 	
@@ -1585,18 +1582,19 @@ run_tdr(sc, cmd)
 	if (result & IE_TDR_SUCCESS)
 		return;
 	
-	if (result & IE_TDR_XCVR) {
+	if (result & 0x10000)
+		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
+	else if (result & IE_TDR_XCVR)
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
-	} else if (result & IE_TDR_OPEN) {
+	else if (result & IE_TDR_OPEN)
 		printf("%s: TDR detected an open %d clocks away\n",
-		       sc->sc_dev.dv_xname, result & IE_TDR_TIME);
-	} else if (result & IE_TDR_SHORT) {
+		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+	else if (result & IE_TDR_SHORT)
 		printf("%s: TDR detected a short %d clocks away\n",
-		       sc->sc_dev.dv_xname, result & IE_TDR_TIME);
-	} else {
+		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+	else
 		printf("%s: TDR returned unknown status %x\n",
-		       sc->sc_dev.dv_xname, result);
-	}
+		    sc->sc_dev.dv_xname, result);
 }
 
 static void
@@ -1807,11 +1805,6 @@ ieinit(sc)
 		ptr = Align(ptr);
 	}
 	
-	/*
-	 * This must be coordinated with iestart() and ietint().
-	 */
-	sc->xmit_cmds[0]->ie_xmit_status = IE_STAT_COMPL;
-	
 	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING; /* tell higher levels that we are here */
 	start_receiver(sc);
 	return 0;
@@ -1882,6 +1875,7 @@ ieioctl(ifp, cmd, data)
 		break;
 		
 	case SIOCSIFFLAGS:
+		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1905,7 +1899,6 @@ ieioctl(ifp, cmd, data)
 			iestop(sc);
 			ieinit(sc);
 		}
-		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 #ifdef IEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			sc->sc_debug = IED_ALL;
