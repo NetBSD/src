@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.46 2002/02/08 07:26:16 gmcgarry Exp $	*/
+/*	$NetBSD: dca.c,v 1.47 2002/02/23 21:54:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -947,7 +947,7 @@ dcamctl(sc, bits, how)
 		bits = dca->dca_msr;
 		break;
 	}
-	(void) splx(s);
+	splx(s);
 	return (bits);
 }
 
