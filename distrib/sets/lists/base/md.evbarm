@@ -1,2 +1,0 @@
-# $NetBSD: md.evbarm,v 1.1 2001/11/25 23:34:40 thorpej Exp $
-./usr/lib/libarm32.so.0		base-sys-shlib

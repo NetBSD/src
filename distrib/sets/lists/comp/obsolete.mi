@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.64 2002/01/12 17:22:10 augustss Exp $
+# $NetBSD: obsolete.mi,v 1.65 2002/03/30 06:29:02 thorpej Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -619,6 +619,8 @@
 /usr/share/lkm/vfs/module/kernfsmod.c
 /usr/share/man/cat1/flexdoc.0
 /usr/share/man/cat1/lexdoc.0
+/usr/share/man/cat2/arm32_drain_writebuf.0
+/usr/share/man/cat2/arm32_sync_icache.0
 /usr/share/man/cat2/getdirentries.0
 /usr/share/man/cat2/swapon.0
 /usr/share/man/cat3/MD5_Init.0
@@ -707,6 +709,8 @@
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/cat9/vn_marktext.0
+/usr/share/man/man2/arm32_drain_writebuf.2
+/usr/share/man/man2/arm32_sync_icache.2
 /usr/share/man/man3/MD5_Init.3
 /usr/share/man/man3/RAND_seed.3
 /usr/share/man/man3/blowfish.3
