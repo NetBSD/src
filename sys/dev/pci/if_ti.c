@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.44 2001/11/26 02:41:20 itojun Exp $ */
+/* $NetBSD: if_ti.c,v 1.45 2002/03/20 17:32:23 eeh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.44 2001/11/26 02:41:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.45 2002/03/20 17:32:23 eeh Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1693,7 +1693,7 @@ static void ti_attach(parent, self, aux)
 		}
 	}
 	if (nolinear == 0)
-		sc->ti_vhandle = (void *)(u_long)(sc->ti_bhandle); /* XXX XXX XXX */
+		sc->ti_vhandle = bus_space_vaddr(sc->ti_btag, sc->ti_bhandle);
 	else 
 		sc->ti_vhandle = NULL;
 
