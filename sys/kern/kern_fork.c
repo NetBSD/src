@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.3 2001/11/05 19:59:03 briggs Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.4 2001/11/05 20:16:33 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -359,6 +359,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	PHOLD(l1);
 
+	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+
 	/*
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
@@ -366,8 +368,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	newlwp(l1, p2, uaddr, 0, stack, stacksize, 
 	    (func != NULL) ? func : child_return, 
 	    arg, &l2);
-
-	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
 
 	/*
 	 * BEGIN PID ALLOCATION.
