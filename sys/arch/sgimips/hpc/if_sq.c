@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.19 2003/10/30 23:05:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.19 2003/10/30 23:05:56 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -483,7 +483,7 @@ sq_start(struct ifnet *ifp)
 	u_int32_t status;
 	struct mbuf *m0, *m;
 	bus_dmamap_t dmamap;
-	int err, totlen, nexttx, firsttx, lasttx, ofree, seg;
+	int err, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -618,6 +618,7 @@ sq_start(struct ifnet *ifp)
 		}
 
 		/* Last descriptor gets end-of-packet */
+		KASSERT(lasttx != -1);
 		sc->sc_txdesc[lasttx].hdd_ctl |= HDD_CTL_EOPACKET;
 
 #if 0
@@ -671,6 +672,7 @@ sq_start(struct ifnet *ifp)
 		 * last packet we enqueued, mark it as the last
 		 * descriptor.
 		 */
+		KASSERT(lasttx != -1);
 		sc->sc_txdesc[lasttx].hdd_ctl |= (HDD_CTL_INTR |
 						  HDD_CTL_EOCHAIN);
 		SQ_CDTXSYNC(sc, lasttx, 1,
