@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $	*/
+/*	$NetBSD: roll.c,v 1.5 1997/05/23 23:09:42 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: roll.c,v 1.5 1997/05/23 23:09:42 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,10 @@ static char rcsid[] = "$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $";
  */
 
 roll(ndie, nsides)
-reg int	ndie, nsides; {
+register int	ndie, nsides; 
+{
 
-	reg int			tot;
+	register int		tot;
 	extern unsigned int	random();
 
 	tot = 0;
