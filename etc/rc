@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.112 1999/01/31 08:46:58 mrg Exp $
+#	$NetBSD: rc,v 1.113 1999/02/01 00:34:25 mrg Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -314,7 +314,7 @@ fi
 
 # if $securelevel is set, change it here, else if it is 0, change
 # it to 1 here, before we start login services.
-if [ -z "$securelevel" ]; then
+if [ -n "$securelevel" ]; then
 	echo -n 'setting securelevel: '
 	sysctl -w kern.securelevel=$securelevel
 else
