@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 1998/05/20 16:34:29 chs Exp $
+	$NetBSD: syscalls.master,v 1.11 1998/07/01 00:41:36 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -97,7 +97,7 @@
 50	NOARGS		{ int sys_setlogin(char *namebuf); }
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL		sigpending
-53	UNIMPL
+53	UNIMPL		classcntl
 54	STD		{ int osf1_sys_ioctl(int fd, int com, caddr_t data); }
 55	STD		{ int osf1_sys_reboot(int opt); }
 56	NOARGS		{ int sys_revoke(char *path); }
@@ -174,7 +174,7 @@
 			    struct sigstack *oss); }
 113	UNIMPL		old recvmsg
 114	UNIMPL		old sendmsg
-115	UNIMPL		vtrace
+115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 ; XXX
@@ -222,15 +222,15 @@
 148	UNIMPL		quotactl
 149	NOARGS		{ int compat_43_sys_quota(void); }
 150	UNIMPL		old getsockname
-151	UNIMPL
-152	UNIMPL
-153	UNIMPL
-154	UNIMPL
-155	UNIMPL
+151	UNIMPL		pread
+152	UNIMPL		pwrite
+153	UNIMPL		pid_block
+154	UNIMPL		pid_unblock
+155	UNIMPL		signal_urti
 156	STD		{ int osf1_sys_sigaction(int signum, \
 			    struct osf1_sigaction *nsa, \
 			    struct osf1_sigaction *osa); }
-157	UNIMPL
+157	UNIMPL		sigwaitprim
 158	UNIMPL		nfssvc
 159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
@@ -317,16 +317,16 @@
 236	UNIMPL		waitid
 237	UNIMPL		priocntlset
 238	UNIMPL		sigsendset
-239	UNIMPL
+239	UNIMPL		set_speculative
 240	UNIMPL		msfs_syscall
 241	UNIMPL		sysinfo
 242	UNIMPL		uadmin
 243	UNIMPL		fuser
-244	UNIMPL
-245	UNIMPL
-246	UNIMPL
-247	UNIMPL
-248	UNIMPL		
+244	UNIMPL		proplist_syscall
+245	UNIMPL		ntp_adjtime
+246	UNIMPL		ntp_gettime
+247	UNIMPL		pathconf
+248	UNIMPL		fpathconf
 249	UNIMPL
 250	UNIMPL		uswitch
 251	STD		{ int osf1_sys_usleep_thread(struct timeval *sleep, \
@@ -334,10 +334,11 @@
 252	UNIMPL		audcntl
 253	UNIMPL		audgen
 254	UNIMPL		sysfs
-255	UNIMPL
+255	UNIMPL		subsys_info
 256	UNIMPL		getsysinfo
 257	STD		{ int osf1_sys_setsysinfo(u_long op, caddr_t buffer, \
 			    u_long nbytes, caddr_t arg, u_long flag); }
 258	UNIMPL		afs_syscall
 259	UNIMPL		swapctl
 260	UNIMPL		memcntl
+261	UNIMPL		fdatasync
