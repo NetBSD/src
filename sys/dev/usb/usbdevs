@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.192 2001/10/25 13:43:30 augustss Exp $
+$NetBSD: usbdevs,v 1.193 2001/10/26 03:28:03 mycroft Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -664,6 +664,7 @@ product KLSI DUH3E10BTN		0x0009	10BT Ethernet adapter, in the DU-H3E
 /* Kensington products */
 product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
 product KENSINGTON TURBOBALL	0x1005	TurboBall
+product KENSINGTON ORBIT	0x1009	Orbit USB trackball
 
 /* Keyspan products */
 product KEYSPAN USA28		0x0101	USA-28 serial adapter
