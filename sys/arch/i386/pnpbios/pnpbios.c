@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.3 1999/11/15 21:50:50 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.4 1999/11/17 12:34:52 soren Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -236,7 +236,7 @@ pnpbios_attach(parent, self, aux)
 			continue;
 		}
 		if (buf[2] != node)
-			printf("node idx: called %d, got %d", node, buf[2]);
+			printf("node idx: called %d, got %d\n", node, buf[2]);
 		pnpbios_attachnode(sc, node, buf, buf[0] + (buf[1] << 8));
 	}
 	if (idx != 0xff)
