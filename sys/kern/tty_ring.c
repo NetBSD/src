@@ -45,13 +45,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	$Id: tty_ring.c,v 1.5 1993/05/18 18:19:33 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.4 1993/05/10 23:15:41 deraadt Exp $";
 
 #include "param.h"
 #include "systm.h"
 #include "buf.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 
 /*

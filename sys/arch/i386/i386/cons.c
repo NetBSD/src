@@ -35,27 +35,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cons.c	7.2 (Berkeley) 5/9/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00083
- * --------------------         -----   ----------------------
- *
- * 16 Aug 92	Pace Willisson		/dev/console redirect (xterm -C, etc.)
- * 14 Mar 93	Chris G. Demetriou	Moved pg() here from isa/pccons.c
+ *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
+ *	$Id: cons.c,v 1.4 1993/05/18 18:18:55 cgd Exp $
  */
 
 
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/file.h"
-#include "sys/conf.h"
+#include "param.h"
+#include "proc.h"
+#include "user.h"
+#include "systm.h"
+#include "buf.h"
+#include "ioctl.h"
+#include "select.h"
+#include "tty.h"
+#include "file.h"
+#include "conf.h"
 
 #include "cons.h"
 

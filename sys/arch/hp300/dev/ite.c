@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
- *	@(#)ite.c	7.6 (Berkeley) 5/16/91
+ *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
+ *	$Id: ite.c,v 1.2 1993/05/18 18:18:48 cgd Exp $
  */
 
 /*
@@ -320,11 +321,7 @@ itestart(tp)
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup(&tp->t_outq);
 		}
-		if (tp->t_wsel) {
-			selwakeup(tp->t_wsel, tp->t_state & TS_WCOLL);
-			tp->t_wsel = 0;
-			tp->t_state &= ~TS_WCOLL;
-		}
+		selwakeup(&tp->t_wsel);
 	}
 	/*
 	 * Limit the amount of output we do in one burst

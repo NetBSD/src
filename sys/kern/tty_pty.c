@@ -30,24 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         5       00094
- * --------------------         -----   ----------------------
- *
- * 11 Dec 92	Williams Jolitz		Fixed tty handling
- *
- * 28 Nov 1991	Warren Toomey		Cleaned up the use of COMPAT_43
- *					in the 386BSD kernel.	 
- * 6 Oct 1992	Holger Veit		Fixed 'hanging console' bug
- * 11 Jan 93	Julian Elischer		Fixes multiple processes on one
- *					pty bug
- * 27 Feb 93	Charles Hannum		Proper return values for ptsclose()
- *					and ptcclose()
+ *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
+ *	$Id: tty_pty.c,v 1.4 1993/05/18 18:19:32 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.3 1993/05/10 23:15:39 deraadt Exp $";
 
 /*
  * Pseudo-teletype Driver
@@ -59,6 +44,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.3 1993/05/10
 #include "param.h"
 #include "systm.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "conf.h"
 #include "file.h"
@@ -81,7 +67,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/kern/tty_pty.c,v 1.3 1993/05/10
 struct	tty pt_tty[NPTY];
 struct	pt_ioctl {
 	int	pt_flags;
-	pid_t	pt_selr, pt_selw;
+	struct selinfo pt_selr, pt_selw;
 	u_char	pt_send;
 	u_char	pt_ucntl;
 } pt_ioctl[NPTY];
@@ -236,19 +222,11 @@ ptcwakeup(tp, flag)
 	struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
 
 	if (flag & FREAD) {
-		if (pti->pt_selr) {
-			selwakeup(pti->pt_selr, pti->pt_flags & PF_RCOLL);
-			pti->pt_selr = 0;
-			pti->pt_flags &= ~PF_RCOLL;
-		}
+		selwakeup(&pti->pt_selr);
 		wakeup((caddr_t)&tp->t_out.rb_tl);
 	}
 	if (flag & FWRITE) {
-		if (pti->pt_selw) {
-			selwakeup(pti->pt_selw, pti->pt_flags & PF_WCOLL);
-			pti->pt_selw = 0;
-			pti->pt_flags &= ~PF_WCOLL;
-		}
+		selwakeup(&pti->pt_selw);
 		wakeup((caddr_t)&tp->t_raw.rb_hd);
 	}
 }
@@ -369,11 +347,7 @@ ptcread(dev, uio, flag)
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_out);
 		}
-		if (tp->t_wsel) {
-			selwakeup(tp->t_wsel, tp->t_state & TS_WCOLL);
-			tp->t_wsel = 0;
-			tp->t_state &= ~TS_WCOLL;
-		}
+		selwakeup(&tp->t_wsel);
 	}
 	return (error);
 }
@@ -433,10 +407,7 @@ ptcselect(dev, rw, p)
 		    (pti->pt_flags&PF_PKT && pti->pt_send ||
 		     pti->pt_flags&PF_UCNTL && pti->pt_ucntl))
 			return (1);
-		if (pti->pt_selr && (prev = pfind(pti->pt_selr)) && prev->p_wchan == (caddr_t)&selwait)
-			pti->pt_flags |= PF_RCOLL;
-		else
-			pti->pt_selr = p->p_pid;
+		selrecord(p, &pti->pt_selr);
 		break;
 
 
@@ -452,10 +423,7 @@ ptcselect(dev, rw, p)
 				    return (1);
 			}
 		}
-		if (pti->pt_selw && (prev = pfind(pti->pt_selw)) && prev->p_wchan == (caddr_t)&selwait)
-			pti->pt_flags |= PF_WCOLL;
-		else
-			pti->pt_selw = p->p_pid;
+		selrecord(p, &pti->pt_selw);
 		break;
 
 	}

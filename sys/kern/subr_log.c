@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_log.c	7.11 (Berkeley) 3/17/91
+ *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
+ *	$Id: subr_log.c,v 1.2 1993/05/18 18:19:20 cgd Exp $
  */
 
 /*
@@ -43,6 +44,7 @@
 #include "ioctl.h"
 #include "msgbuf.h"
 #include "file.h"
+#include "select.h"
 
 #define LOG_RDPRI	(PZERO + 1)
 
@@ -51,7 +53,7 @@
 
 struct logsoftc {
 	int	sc_state;		/* see above for possibilities */
-	struct	proc *sc_selp;		/* process waiting on select call */
+	struct selinfo sc_selp;		/* process waiting on select call */
 	int	sc_pgid;		/* process/group for async I/O */
 } logsoftc;
 
@@ -91,7 +93,7 @@ logclose(dev, flag)
 {
 	log_open = 0;
 	logsoftc.sc_state = 0;
-	logsoftc.sc_selp = 0;
+	bzero(&logsoftc.sc_selp, sizeof(logsoftc.sc_selp));
 }
 
 /*ARGSUSED*/
@@ -154,7 +156,7 @@ logselect(dev, rw, p)
 			splx(s);
 			return (1);
 		}
-		logsoftc.sc_selp = p;
+		selrecord(p, &logsoftc.sc_selp);
 		break;
 	}
 	splx(s);
@@ -167,10 +169,7 @@ logwakeup()
 
 	if (!log_open)
 		return;
-	if (logsoftc.sc_selp) {
-		selwakeup(logsoftc.sc_selp, 0);
-		logsoftc.sc_selp = 0;
-	}
+	selwakeup(&logsoftc.sc_selp);
 	if (logsoftc.sc_state & LOG_ASYNC) {
 		if (logsoftc.sc_pgid < 0)
 			gsignal(-logsoftc.sc_pgid, SIGIO); 

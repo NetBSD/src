@@ -40,6 +40,7 @@
 #include "systm.h"
 #include "conf.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "proc.h"
 #include "vnode.h"

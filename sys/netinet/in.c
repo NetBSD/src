@@ -30,11 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in.c	7.17 (Berkeley) 4/20/91
+ *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
+ *	$Id: in.c,v 1.2 1993/05/18 18:20:07 cgd Exp $
  */
 
 #include "param.h"
 #include "ioctl.h"
+#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"

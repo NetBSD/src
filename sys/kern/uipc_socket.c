@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
+ *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
+ *	$Id: uipc_socket.c,v 1.2 1993/05/18 18:19:36 cgd Exp $
  */
 
 #include "param.h"
@@ -40,6 +41,7 @@
 #include "mbuf.h"
 #include "domain.h"
 #include "kernel.h"
+#include "select.h"
 #include "protosw.h"
 #include "socket.h"
 #include "socketvar.h"
@@ -983,9 +985,5 @@ sohasoutofband(so)
 		gsignal(-so->so_pgid, SIGURG);
 	else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
 		psignal(p, SIGURG);
-	if (so->so_rcv.sb_sel) {
-		selwakeup(so->so_rcv.sb_sel, so->so_rcv.sb_flags & SB_COLL);
-		so->so_rcv.sb_sel = 0;
-		so->so_rcv.sb_flags &= ~SB_COLL;
-	}
+	selwakeup(&so->so_rcv.sb_sel);
 }

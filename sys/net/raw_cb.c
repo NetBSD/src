@@ -30,11 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)raw_cb.c	7.11 (Berkeley) 6/28/90
+ *	from: @(#)raw_cb.c	7.11 (Berkeley) 6/28/90
+ *	$Id: raw_cb.c,v 1.2 1993/05/18 18:19:59 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
+#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"
