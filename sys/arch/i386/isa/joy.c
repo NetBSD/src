@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.8 1997/10/31 07:59:52 mycroft Exp $	*/
+/*	$NetBSD: joy.c,v 1.9 1997/11/05 05:45:00 mycroft Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -101,7 +101,7 @@ joyattach(sc)
 	DELAY(10000);		/* 10 ms delay */
 	printf("%s: joystick %sconnected\n", sc->sc_dev.dv_xname,
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
-	    " not" : "");
+	    "not " : "");
 }
 
 int
