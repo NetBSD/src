@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.53 2003/08/24 21:10:47 tron Exp $ */
+/* $NetBSD: lib.h,v 1.54 2003/08/25 10:23:41 tron Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -215,6 +215,7 @@ void    save_dirs(char **c, char **p);
 void    restore_dirs(char *c, char *p);
 void    show_version(void);
 int	fexec(const char *, ...);
+int	fcexec(const char *, const char *, ...);
 
 /* String */
 char   *get_dash_string(char **);

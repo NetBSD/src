@@ -47,27 +47,30 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.1 2003/08/24 21:10:47 tron Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.2 2003/08/25 10:23:42 tron Exp $");
 #endif
 
-int
-fexec(const char *arg, ...)
-{
-	va_list		ap;
-	int		max, argc, status;
-	const char	**argv;
-	pid_t		child;
+static int	vfcexec(const char *, const char *, va_list);
 
-	max = 4;
-	argv = malloc(max * sizeof(const char *));
+static int
+vfcexec(const char *path, const char *arg, va_list ap)
+{
+	static int		max = 4;
+	static const char	**argv = NULL;
+	int			argc, status;
+	pid_t			child;
+
 	if (argv == NULL) {
-		warnx("fexec can't alloc arg space");
-		return -1;
+		argv = malloc(max * sizeof(const char *));
+		if (argv == NULL) {
+			warnx("vfcexec can't alloc arg space");
+			return -1;
+		}
 	}
+
 	argv[0] = arg;
 	argc = 1;
 
-	va_start(ap, arg);
 	do {
 		if (argc == max) {
 			const char **ptr;
@@ -75,9 +78,7 @@ fexec(const char *arg, ...)
 			max <<= 1;
 			ptr = realloc(argv, max * sizeof(const char *));
 			if (ptr == NULL) {
-				warnx("fexec can't alloc arg space");
-				free(argv);
-				va_end(ap);
+				warnx("vfcexec can't alloc arg space");
 				return -1;
 			}
 			argv = ptr;
@@ -85,26 +86,19 @@ fexec(const char *arg, ...)
 		arg = va_arg(ap, const char *);
 		argv[argc++] = arg;
 	} while (arg != NULL);
-	va_end(ap);
-
-#ifdef FEXEC_DEBUG
-	(void) printf("fexec(\"%s\"", argv[0]);
-	argc = 1;
-	while (argv[argc] != NULL)
-		(void) printf(", \"%s\"", argv[argc++]);
-	(void) printf(")\n");
-#endif
 
 	child = vfork();
-	if (child == 0) {
+	switch (child) {
+	case 0:
+		if ((path != NULL) && (chdir(path) < 0))
+			_exit(127);
+
 		(void) execvp(argv[0], (char ** const)argv);
 		_exit(127);
 		/* NOTREACHED */
-	}
-
-	free(argv);
-	if (child < 0)
+	case -1:
 		return -1;
+	}
 
 	while (waitpid(child, &status, 0) < 0) {
 		if (errno != EINTR)
@@ -115,4 +109,30 @@ fexec(const char *arg, ...)
 		return -1;
 
 	return WEXITSTATUS(status);
+}
+
+int
+fexec(const char *arg, ...)
+{
+	va_list	ap;
+	int	result;
+
+	va_start(ap, arg);
+	result = vfcexec(NULL, arg, ap);
+	va_end(ap);
+
+	return result;
+}
+
+int
+fcexec(const char *path, const char *arg, ...)
+{
+	va_list	ap;
+	int	result;
+
+	va_start(ap, arg);
+	result = vfcexec(path, arg, ap);
+	va_end(ap);
+
+	return result;
 }
