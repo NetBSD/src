@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.5 2000/12/04 11:35:46 fvdl Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.6 2001/01/27 20:18:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -633,16 +633,6 @@ rf_SstfPromote(qptr, parityStripeID, which_ru)
 	sstfq = (RF_Sstf_t *) qptr;
 
 	n = 0;
-#if 0 /* XXX fvdl -- unitialized use of variable 'r' */
-	if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
-		printf("raid%d: promote %ld %d  queues are %d,%d,%d\n",
-		       r->raidPtr->raidid, (long) parityStripeID, 
-		       (int) which_ru,
-		       sstfq->left.qlen,
-		       sstfq->right.qlen,
-		       sstfq->lopri.qlen);
-	}
-#endif
 	for (r = sstfq->lopri.queue; r; r = next) {
 		next = r->next;
 		if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
