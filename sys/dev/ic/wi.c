@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.85 2002/09/26 22:51:30 martin Exp $	*/
+/*	$NetBSD: wi.c,v 1.86 2002/09/26 23:47:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.85 2002/09/26 22:51:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.86 2002/09/26 23:47:57 martin Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2295,6 +2295,7 @@ wi_ioctl(ifp, command, data)
 			    wreq.wi_len);
 			break;
 		case WI_RID_SCAN_APS:
+			error = 0;
 			if (wreq.wi_len != 4) {
 				error = EINVAL;
 				break;
@@ -2328,6 +2329,7 @@ wi_ioctl(ifp, command, data)
 			}
 			break;
 		default:
+			error = 0;
 			/*
 			 * Filter stuff out based on what the
 			 * card can do.
