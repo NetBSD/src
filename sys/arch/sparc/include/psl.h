@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1995/02/23 19:58:16 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.6 1995/03/28 18:20:07 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
 
 #define	PIL_CLOCK	10
 
-#if defined(KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(LOCORE)
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1994/10/26 21:09:34 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 1995/03/28 18:19:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ union cpuprid {
 #define	MIPS_R6010	0x04
 #define	MIPS_R4010	0x05
 
-#ifdef KERNEL
+#ifdef _KERNEL
 union	cpuprid cpu;
 union	cpuprid fpu;
 u_int	machDataCacheSize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.6 1994/10/26 07:24:40 cgd Exp $	*/
+/*	$NetBSD: itevar.h,v 1.7 1995/03/28 18:16:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -182,7 +182,7 @@ struct ite_softc {
 #define	TABSIZE		8
 #define	TABEND(u)	(ite_tty[u]->t_winsize.ws_col - TABSIZE)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct ite_softc ite_softc[];
 extern	struct itesw itesw[];
 extern	int nitesw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.25 1995/03/27 01:22:50 gwr Exp $	*/
+/*	$NetBSD: param3.h,v 1.26 1995/03/28 18:21:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -156,8 +156,8 @@
 #ifndef LOCORE
 #define	DELAY(n)	delay(n)
 #endif
-#else	/* KERNEL */
+#else	/* _KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 
 #endif	/* MACHINE */

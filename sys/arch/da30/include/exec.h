@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.4 1994/10/26 02:33:42 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.5 1995/03/28 18:15:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -48,7 +48,7 @@ int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
  */
 #define cpu_exec_checkmid(mid) ((mid == MID_M68K) || (mid == 0)))
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 
 #define __LDPGSZ	8192
 

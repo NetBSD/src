@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1994/10/26 02:33:39 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1995/03/28 18:15:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,7 +135,7 @@ extern unsigned long allocate_sir();
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_16		2
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 #endif

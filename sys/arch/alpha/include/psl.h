@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 1995/02/13 23:07:49 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 1995/03/28 18:14:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -51,7 +51,7 @@
 #define	PSL_USERCLR	(PSL_MBZ|PSL_IPL)	/* Must be clr for user-mode */
 #define	USERMODE(ps)	((ps & PSL_U) != 0)	/* Is it user-mode? */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Translation buffer invalidation macro definitions.
  */
@@ -77,4 +77,4 @@ void alpha_mb __P((void));		/* Flush all write buffers */
 void pal_imb __P((void));		/* Sync instruction cache */
 u_int64_t pal_swpipl __P((u_int64_t));	/* write new IPL, return old */
 void pal_tbi __P((u_int64_t, void *));	/* Invalidate TLB entries */
-#endif /* KERNEL */
+#endif /* _KERNEL */

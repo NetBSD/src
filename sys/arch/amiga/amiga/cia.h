@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.h,v 1.7 1994/10/26 02:01:42 cgd Exp $	*/
+/*	$NetBSD: cia.h,v 1.8 1995/03/28 18:14:28 jtc Exp $	*/
 
 /*
  * Mach Operating System
@@ -53,7 +53,7 @@ struct CIA {
 	volatile unsigned char crb;          char padf[0xff];
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 vm_offset_t CIAAbase, CIABbase, CIAADDR;
 #define CIABASE		(0x00BFC000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: led.h,v 1.2 1994/10/26 07:25:42 cgd Exp $	*/
+/*	$NetBSD: led.h,v 1.3 1995/03/28 18:16:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992 University of Utah.
@@ -49,7 +49,7 @@
 #define	LED_DISK	0x20		/* for disk activity */
 #define	LED_PULSE	0x10		/* heartbeat */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	char *ledaddr;
 extern	int inledcontrol;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1994/10/26 08:24:39 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 1995/03/28 18:18:34 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
 /* The PSR versions ... */
 #define PSR_USR PSL_USER
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* processor level and software interrupts. */
 #ifndef LOCORE 
 int	astpending;	/* need to trap before returning to user mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14 1994/11/08 23:09:21 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.15 1995/03/28 18:17:00 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,7 +89,7 @@ struct md_coredump {
 	long	md_pad[8];
 };    
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct pcb *curpcb;		/* our current running pcb */
 #endif
 

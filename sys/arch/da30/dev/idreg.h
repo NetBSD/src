@@ -1,4 +1,4 @@
-/*	$NetBSD: idreg.h,v 1.3 1994/10/26 02:33:21 cgd Exp $	*/
+/*	$NetBSD: idreg.h,v 1.4 1995/03/28 18:15:21 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -104,7 +104,7 @@ struct idc {
 #define	IDSD_IBM	0xa0		/* forced to 512 byte sector, ecc */
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * read parameters command returns this:
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.4 1994/10/26 07:24:41 cgd Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.5 1995/03/28 18:16:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -55,7 +55,7 @@ struct kbdmap {
 
 #define KBD_DEFAULT	KBD_US		/* default type */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* XXX: ITE interface */
 char	*kbd_keymap;
 char	*kbd_shiftmap;

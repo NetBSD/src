@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1995/03/18 07:23:49 cgd Exp $ */
+/*	$NetBSD: param.h,v 1.13 1995/03/28 18:19:53 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
-#ifdef KERNEL				/* XXX */
+#ifdef _KERNEL				/* XXX */
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
 
@@ -87,7 +87,7 @@
 #define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
 #endif
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-#if defined(KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
 #define	NBPG		nbpg		/* bytes/page */
@@ -161,7 +161,7 @@ extern int nbpg, pgofset, pgshift;
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 #define	DELAY(n)	delay(n)
 #endif
@@ -169,7 +169,7 @@ extern int nbpg, pgofset, pgshift;
 #define	DELAY(n)	{ register volatile int N = (n); while (--N > 0); }
 #endif
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int cputyp;
 extern int cpumod;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1994/10/14 18:26:48 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1995/03/28 18:16:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -70,7 +70,7 @@ struct cpu_disklabel {
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct disklabel;
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #endif

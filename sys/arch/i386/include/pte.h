@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 1994/10/27 04:16:21 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 1995/03/28 18:17:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define PGEX_U		0x04	/* access from User mode (UPL) */
 
 #ifndef LOCORE
-#ifdef KERNEL
+#ifdef _KERNEL
 /* utilities defined in pmap.c */
 extern	pt_entry_t *Sysmap;
 #endif
