@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.64 1999/08/01 12:22:23 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.65 1999/08/22 12:49:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.64 1999/08/01 12:22:23 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.65 1999/08/22 12:49:00 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -455,6 +455,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	auth = location = message = NULL;
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
+	res = NULL;
 	user = pass = host = path = decodedpath = puser = ppass = NULL;
 
 #ifdef __GNUC__			/* shut up gcc warnings */
@@ -537,6 +538,9 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		if (verbose)
 			fprintf(ttyout, "Copying %s\n", decodedpath);
 	} else {				/* ftp:// or http:// URLs */
+		char *leading;
+		int hasleading;
+
 		if (proxyenv == NULL) {
 			if (urltype == HTTP_URL_T)
 				proxyenv = httpproxy;
@@ -675,7 +679,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		}
 #else
 		memset(&hints, 0, sizeof(hints));
-		hints.ai_flags = AI_CANONNAME;
+		hints.ai_flags = 0;
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = 0;
@@ -684,8 +688,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			warn(gai_strerror(error));
 			goto cleanup_fetch_url;
 		}
-		if (res->ai_canonname)
-			host = res->ai_canonname;
 
 		while (1) {
 			s = socket(res->ai_family,
@@ -724,20 +726,24 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		fin = fdopen(s, "r+");
 		/*
 		 * Construct and send the request.
-		 * Proxy requests don't want leading /.
 		 */
+		if (verbose)
+			fprintf(ttyout, "Requesting %s\n", url);
+		leading = "  (";
+		hasleading = 0;
 		if (isproxy) {
-			if (verbose)
-				fprintf(ttyout, "Requesting %s\n  (via %s)\n",
-				    url, proxyenv);
+			if (verbose) {
+				fprintf(ttyout, "%svia %s:%s", leading,
+				    host, port);
+				leading = ", ";
+				hasleading++;
+			}
 			fprintf(fin, "GET %s HTTP/1.0\r\n", path);
 			if (flushcache)
 				fprintf(fin, "Pragma: no-cache\r\n");
 		} else {
 			struct utsname unam;
 
-			if (verbose)
-				fprintf(ttyout, "Requesting %s\n", url);
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s:%s\r\n", host, port);
 			fprintf(fin, "Accept: */*\r\n");
@@ -750,16 +756,25 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
 		if (wwwauth) {
-			if (verbose)
-				fprintf(ttyout, "  (with authorization)\n");
+			if (verbose) {
+				fprintf(ttyout, "%swith authorization",
+				    leading);
+				leading = ", ";
+				hasleading++;
+			}
 			fprintf(fin, "Authorization: %s\r\n", wwwauth);
 		}
 		if (proxyauth) {
-			if (verbose)
+			if (verbose) {
 				fprintf(ttyout,
-				    "  (with proxy authorization)\n");
+				    "%swith proxy authorization", leading);
+				leading = ", ";
+				hasleading++;
+			}
 			fprintf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
 		}
+		if (verbose && hasleading)
+			fputs(")\n", ttyout);
 		fprintf(fin, "\r\n");
 		if (fflush(fin) == EOF) {
 			warn("Writing HTTP request");
@@ -1146,6 +1161,8 @@ cleanup_fetch_url:
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
+	if (res != NULL)
+		freeaddrinfo(res);
 	FREEPTR(savefile);
 	FREEPTR(user);
 	FREEPTR(pass);
