@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2004/07/05 06:31:36 martin Exp $
+# $NetBSD: GENERIC,v 1.159 2004/07/05 10:50:35 pk Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	32
 
@@ -254,8 +254,8 @@ xbox*	at sbus? slot ? offset ?
 sbus*	at xbox?
 
 ## SBus to PCMCIA bridge
-#nell*	at sbus? slot ? offset ?		# PCMCIA bridge
-#pcmcia*	at nell?
+nell*	at sbus? slot ? offset ?		# PCMCIA bridge
+pcmcia*	at nell?
 
 #### Standard system devices -- all required for a given architecture
 
