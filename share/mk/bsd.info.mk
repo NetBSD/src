@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.31 2003/07/18 08:26:07 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.32 2003/07/27 09:27:18 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -23,7 +23,7 @@ realall:	${INFOFILES}
 .SUFFIXES: .txi .texi .texinfo .info
 
 .txi.info .texi.info .texinfo.info:
-	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
+	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o ${.TARGET} ${.IMPSRC}
 
 .endif # ${MKINFO} != "no"
 
