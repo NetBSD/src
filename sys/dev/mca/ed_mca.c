@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.5 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.6 2001/05/04 12:58:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,9 @@ static void	__edstart __P((struct ed_softc*, struct buf *));
 static void	bad144intern __P((struct ed_softc *));
 static void	edworker __P((void *));
 static void	ed_spawn_worker __P((void *));
-static void	edmcadone __P((struct ed_softc *));
+static void	edmcadone __P((struct ed_softc *, struct buf *));
+static void	ed_bio __P((struct ed_softc *, int, int));
+static void	ed_bio_done __P((struct ed_softc *));
 
 static struct dkdriver eddkdriver = { edmcastrategy };
 
@@ -118,16 +120,17 @@ ed_mca_probe(parent, match, aux)
 	u_int16_t cmd_args[2];
 	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (void *) aux;
+	int found = 1;
 
 	/*
 	 * Get Device Configuration (09).
 	 */
-	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
+	cmd_args[0] = 14;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (edc_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0))
-		return (0);
+	if (edc_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0, 1))
+		found = 0;
 
-	return (1);
+	return (found);
 }
 
 static void
@@ -162,13 +165,13 @@ ed_mca_attach(parent, self, aux)
 		ed->cyl, ed->heads, ed->sectors,
 		ed->sc_capacity);
 
-	printf("%s: %u spares/cyl, %s.%s.%s.%s.%s\n",
+	printf("%s: %u spares/cyl, %s, %s, %s, %s, %s\n",
 		ed->sc_dev.dv_xname, ed->spares,
 		(ed->drv_flags & (1 << 0)) ? "NoRetries" : "Retries",
 		(ed->drv_flags & (1 << 1)) ? "Removable" : "Fixed",
 		(ed->drv_flags & (1 << 2)) ? "SkewedFormat" : "NoSkew",
 		(ed->drv_flags & (1 << 3)) ? "ZeroDefect" : "Defects",
-		(ed->drv_flags & (1 << 4)) ? "InvalidSecondary" : "SeconOK"
+		(ed->drv_flags & (1 << 4)) ? "InvalidSecondary" : "SecondaryOK"
 		);
 	
 	/* Create a DMA map for mapping individual transfer bufs */
@@ -226,6 +229,8 @@ ed_mca_attach(parent, self, aux)
 
 	config_pending_incr();
 	kthread_create(ed_spawn_worker, (void *) ed);
+
+	ed->sc_flags |= EDF_INIT;
 }
 
 void
@@ -322,9 +327,7 @@ done:
 }
 
 static void
-__edstart(ed, bp)
-	struct ed_softc *ed;
-	struct buf *bp;
+ed_bio(struct ed_softc *ed, int async, int poll)
 {
 	u_int16_t cmd_args[4];
 	int error=0;
@@ -333,23 +336,16 @@ __edstart(ed, bp)
 	u_int8_t head;
 	u_int8_t sector;
 
-	WDCDEBUG_PRINT(("__edstart %s (%s): %lu %lu %u\n", ed->sc_dev.dv_xname,
-		(bp->b_flags & B_READ) ? "read" : "write",
-		bp->b_bcount, bp->b_resid, bp->b_rawblkno),
-	    DEBUG_XFERS);
-
-	ed->sc_bp = bp;
-
 	/* Get physical bus mapping for buf. */
 	if (bus_dmamap_load(ed->sc_dmat, ed->dmamap_xfer,
-			bp->b_data, bp->b_bcount, NULL,
+			ed->sc_data, ed->sc_bcount, NULL,
 			BUS_DMA_WAITOK|BUS_DMA_STREAMING) != 0) {
 
 		/*
 		 * Use our DMA safe memory to get data to/from device.
 		 */
 		if ((error = bus_dmamap_load(ed->sc_dmat, ed->dmamap_xfer,
-			ed->sc_dmamkva, bp->b_bcount, NULL,
+			ed->sc_dmamkva, ed->sc_bcount, NULL,
 			BUS_DMA_WAITOK|BUS_DMA_STREAMING)) != 0) {
 			printf("%s: unable to load raw data for xfer, errno=%d\n",
 				ed->sc_dev.dv_xname, error);
@@ -358,35 +354,33 @@ __edstart(ed, bp)
 		ed->sc_flags |= EDF_BOUNCEBUF;
 
 		/* If data write, copy the data to our bounce buffer. */
-		if ((bp->b_flags & B_READ) == 0)
-			memcpy(ed->sc_dmamkva, bp->b_data, bp->b_bcount);
+		if (!ed->sc_read)
+			memcpy(ed->sc_dmamkva, ed->sc_data, ed->sc_bcount);
 	}
 
 	ed->sc_flags |= EDF_DMAMAP_LOADED;
 
-	track = bp->b_rawblkno / ed->sectors;
+	track = ed->sc_rawblkno / ed->sectors;
 	head = track % ed->heads;
 	cyl = track / ed->heads;
-	sector = bp->b_rawblkno % ed->sectors; 
+	sector = ed->sc_rawblkno % ed->sectors; 
 
 	WDCDEBUG_PRINT(("__edstart %s: map: %u %u %u\n", ed->sc_dev.dv_xname,
 		cyl, sector, head),
 	    DEBUG_XFERS);
 
-	/* Instrumentation. */
-	disk_busy(&ed->sc_dk);
-	ed->sc_flags |= EDF_DK_BUSY;
 	mca_disk_busy();
 
 	/* Read or Write Data command */
 	cmd_args[0] = 2;	/* Options 0000010 */
-	cmd_args[1] = bp->b_bcount / DEV_BSIZE;
+	cmd_args[1] = ed->sc_bcount / DEV_BSIZE;
 	cmd_args[2] = ((cyl & 0x1f) << 11) | (head << 5) | sector;
 	cmd_args[3] = ((cyl & 0x3E0) >> 5);
 	if (edc_run_cmd(ed->edc_softc,
-			(bp->b_flags & B_READ) ? CMD_READ_DATA : CMD_WRITE_DATA,
-			ed->sc_devno, cmd_args, 4, 1)) {
+			(ed->sc_read) ? CMD_READ_DATA : CMD_WRITE_DATA,
+			ed->sc_devno, cmd_args, 4, async, poll)) {
 		printf("%s: data i/o command failed\n", ed->sc_dev.dv_xname);
+		mca_disk_unbusy();
 		error = EIO;
 	}
 
@@ -395,13 +389,53 @@ __edstart(ed, bp)
 		ed->sc_error = error;
 }
 
+static void
+__edstart(ed, bp)
+	struct ed_softc *ed;
+	struct buf *bp;
+{
+	WDCDEBUG_PRINT(("__edstart %s (%s): %lu %lu %u\n", ed->sc_dev.dv_xname,
+		(bp->b_flags & B_READ) ? "read" : "write",
+		bp->b_bcount, bp->b_resid, bp->b_rawblkno),
+	    DEBUG_XFERS);
+
+	/* Instrumentation. */
+	disk_busy(&ed->sc_dk);
+	ed->sc_flags |= EDF_DK_BUSY;
+
+	ed->sc_data = bp->b_data;
+	ed->sc_rawblkno = bp->b_rawblkno;
+	ed->sc_bcount = bp->b_bcount;
+	ed->sc_read = bp->b_flags & B_READ;
+	ed_bio(ed, 1, 0);
+}
 
 static void
-edmcadone(ed)
+ed_bio_done(ed)
 	struct ed_softc *ed;
 {
-	struct buf *bp = ed->sc_bp;
+	/*
+	 * If read transfer finished without error and using a bounce
+	 * buffer, copy the data to buf.
+	 */
+	if (ed->sc_error == 0 && (ed->sc_flags & EDF_BOUNCEBUF) && ed->sc_read)
+		memcpy(ed->sc_data, ed->sc_dmamkva, ed->sc_bcount);
+	ed->sc_flags &= ~EDF_BOUNCEBUF;
 
+	/* Unload buf from DMA map */
+	if (ed->sc_flags & EDF_DMAMAP_LOADED) {
+		bus_dmamap_unload(ed->sc_dmat, ed->dmamap_xfer);
+		ed->sc_flags &= ~EDF_DMAMAP_LOADED;
+	}
+
+	mca_disk_unbusy();
+}
+
+static void
+edmcadone(ed, bp)
+	struct ed_softc *ed;
+	struct buf *bp;
+{
 	WDCDEBUG_PRINT(("eddone %s\n", ed->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
@@ -413,30 +447,13 @@ edmcadone(ed)
 		bp->b_resid = ed->sc_status_block[SB_RESBLKCNT_IDX] * DEV_BSIZE;
 	}
 
-	/*
-	 * If read transfer finished without error and using a bounce
-	 * buffer, copy the data to buf.
-	 */
-	if ((bp->b_flags & B_ERROR) == 0 && (ed->sc_flags & EDF_BOUNCEBUF)
-	     && (bp->b_flags & B_READ)) {
-		memcpy(bp->b_data, ed->sc_dmamkva, bp->b_bcount);
-	}
-	ed->sc_flags &= ~EDF_BOUNCEBUF;
-
-	/* Unload buf from DMA map */
-	if (ed->sc_flags & EDF_DMAMAP_LOADED) {
-		bus_dmamap_unload(ed->sc_dmat, ed->dmamap_xfer);
-		ed->sc_flags &= ~EDF_DMAMAP_LOADED;
-	}
+	ed_bio_done(ed);
 
 	/* If disk was busied, unbusy it now */
 	if (ed->sc_flags & EDF_DK_BUSY) {
 		disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid));
 		ed->sc_flags &= ~EDF_DK_BUSY;
-		mca_disk_unbusy();
 	}
-
-	ed->sc_flags &= ~EDF_IODONE;
 
 #if NRND > 0
 	rnd_add_uint32(&ed->rnd_source, bp->b_blkno);
@@ -506,7 +523,7 @@ edmcaopen(dev, flag, fmt, p)
 
 	WDCDEBUG_PRINT(("edopen\n"), DEBUG_FUNCS);
 	wd = device_lookup(&ed_cd, DISKUNIT(dev));
-	if (wd == NULL)
+	if (wd == NULL || (wd->sc_flags & EDF_INIT) == 0)
 		return (ENXIO);
 
 	if ((error = ed_lock(wd)) != 0)
@@ -898,8 +915,9 @@ edmcasize(dev)
 }
 
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
-static int wddoingadump = 0;
-static int wddumprecalibrated = 0;
+static int eddoingadump = 0;
+static int eddumprecalibrated = 0;
+static int eddumpmulti = 1;
 
 /*
  * Dump core after a system crash.
@@ -911,30 +929,28 @@ edmcadump(dev, blkno, va, size)
 	caddr_t va;
 	size_t size;
 {
-	struct ed_softc *wd;	/* disk unit to do the I/O */
+	struct ed_softc *ed;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */
 	int part; // , err;
 	int nblks;	/* total number of sectors left to write */
 
 	/* Check if recursive dump; if so, punt. */
-	if (wddoingadump)
+	if (eddoingadump)
 		return EFAULT;
-	wddoingadump = 1;
+	eddoingadump = 1;
 
-	wd = device_lookup(&ed_cd, DISKUNIT(dev));
-	if (wd == NULL)
+	ed = device_lookup(&ed_cd, DISKUNIT(dev));
+	if (ed == NULL)
 		return (ENXIO);
 
 	part = DISKPART(dev);
 
-#if 0
 	/* Make sure it was initialized. */
-	if (wd->drvp->state < READY)
+	if ((ed->sc_flags & EDF_INIT) == 0)
 		return ENXIO;
-#endif
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
-	lp = wd->sc_dk.dk_label;
+	lp = ed->sc_dk.dk_label;
 	if ((size % lp->d_secsize) != 0)
 		return EFAULT;
 	nblks = size / lp->d_secsize;
@@ -948,50 +964,34 @@ edmcadump(dev, blkno, va, size)
 	blkno += lp->d_partitions[part].p_offset;
 
 	/* Recalibrate, if first dump transfer. */
-	if (wddumprecalibrated == 0) {
-		wddumprecalibrated = 1;
+	if (eddumprecalibrated == 0) {
+		eddumprecalibrated = 1;
+		eddumpmulti = 8;
 #if 0
 		wd->drvp->state = RESET;
 #endif
 	}
   
 	while (nblks > 0) {
-#if 0
-		wd->sc_wdc_bio.blkno = blkno;
-		wd->sc_wdc_bio.flags = ATA_POLL;
-		wd->sc_wdc_bio.bcount = lp->d_secsize;
-		wd->sc_wdc_bio.databuf = va;
-#ifndef WD_DUMP_NOT_TRUSTED
-		switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-		case WDC_TRY_AGAIN:
-			panic("wddump: try again");
-			break;
-		case WDC_QUEUED:
-			panic("wddump: polled command has been queued");
-			break;
-		case WDC_COMPLETE:
-			break;
-		}
-		if (err != 0) {
-			printf("\n");
-			return err;
-		}
-#else	/* WD_DUMP_NOT_TRUSTED */
-		/* Let's just talk about this first... */
-		printf("ed%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
-		    unit, va, cylin, head, sector);
-		delay(500 * 1000);	/* half a second */
-#endif
-#endif /* 0 */
+		ed->sc_data = va;
+		ed->sc_rawblkno = blkno;
+		ed->sc_bcount = min(nblks, eddumpmulti) * lp->d_secsize;
+		ed->sc_read = 0;
+
+		ed_bio(ed, 0, 1);
+		if (ed->sc_error)
+			return (ed->sc_error);
+
+		ed_bio_done(ed);
 
 		/* update block count */
-		nblks -= 1;
-		blkno += 1;
-		va += lp->d_secsize;
+		nblks -= min(nblks, eddumpmulti);
+		blkno += min(nblks, eddumpmulti);
+		va += min(nblks, eddumpmulti) * lp->d_secsize;
 	}
 
-	wddoingadump = 0;
-	return (ESPIPE);
+	eddoingadump = 0;
+	return (0);
 }
 
 #ifdef HAS_BAD144_HANDLING
@@ -1032,7 +1032,8 @@ ed_get_params(ed)
 	 */
 	cmd_args[0] = 14;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (edc_run_cmd(ed->edc_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
+	if (edc_run_cmd(ed->edc_softc, CMD_GET_DEV_CONF, ed->sc_devno,
+	    cmd_args, 2, 0, 1))
 		return (1);
 
 	ed->spares = ed->sc_status_block[1] >> 8;
@@ -1109,21 +1110,16 @@ edworker(arg)
 			ed->sc_error = 0;
 			s = splbio();
 			__edstart(ed, bp);
-			splx(s);
 
 			/*
 			 * Wait until the command executes; edc_intr() wakes
 			 * us up.
 			 */
-			if (ed->sc_error == 0
-			    && (ed->sc_flags & EDF_IODONE) == 0) {
+			if (ed->sc_error == 0)
 				(void)tsleep(&ed->edc_softc, PRIBIO, "edwrk",0);
-				edc_cmd_wait(ed->edc_softc, ed->sc_devno, 5);
-			}
 
 			/* Handle i/o results */
-			s = splbio();
-			edmcadone(ed);
+			edmcadone(ed, bp);
 			splx(s);
 		}
 	}
