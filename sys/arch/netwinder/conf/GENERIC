@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2003/06/14 18:59:25 uwe Exp $
+# $NetBSD: GENERIC,v 1.36 2003/06/14 19:15:38 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -39,7 +39,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
+makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
 
 # FPA options
 
