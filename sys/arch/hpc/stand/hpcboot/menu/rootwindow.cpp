@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.17 2004/04/27 00:04:38 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.18 2004/08/06 17:22:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <menu/rootwindow.h>
 #include <res/resource.h>
 #include "../binary/build_number.h"
+#include <console.h>
 
 //
 // root window
@@ -371,8 +372,12 @@ RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 }
 
 void
-RootWindow::progress()
+RootWindow::progress(const char *msg)
 {
+
+	if (msg)
+		Console::Instance()->print(TEXT("[progress] %s\n"), msg);
+
 	SendMessage(_progress_bar->_window, PBM_STEPIT, 0, 0);
 }
 
