@@ -116,7 +116,7 @@ write_entries (list)
     sawdir = 0;
 
     /* open the new one and walk the list writing entries */
-    entfilename = CVSADM_ENTBAK;
+    entfilename = (char *)CVSADM_ENTBAK;
     entfile = CVS_FOPEN (entfilename, "w+");
     if (entfile == NULL)
     {
@@ -181,7 +181,7 @@ Scratch_Entry (list, fname)
     {
 	if (!noexec)
 	{
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	    entfile = open_file (entfilename, "a");
 
 	    if (fprintf (entfile, "R ") < 0)
@@ -242,7 +242,7 @@ Register (list, fname, vn, ts, options, tag, date, ts_conflict)
 
     if (!noexec)
     {
-	entfilename = CVSADM_ENTLOG;
+	entfilename = (char *)CVSADM_ENTLOG;
 	entfile = CVS_FOPEN (entfilename, "a");
 
 	if (entfile == NULL)
@@ -809,7 +809,7 @@ Subdirs_Known (entries)
 	if (!noexec)
 	{
 	    /* Create Entries.Log so that Entries_Close will do something.  */
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	    fp = CVS_FOPEN (entfilename, "a");
 	    if (fp == NULL)
 	    {
@@ -849,7 +849,7 @@ subdir_record (cmd, parent, dir)
     if (!noexec)
     {
 	if (parent == NULL)
-	    entfilename = CVSADM_ENTLOG;
+	    entfilename = (char *)CVSADM_ENTLOG;
 	else
 	{
 	    entfilename = xmalloc (strlen (parent)

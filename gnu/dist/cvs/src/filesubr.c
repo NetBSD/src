@@ -327,7 +327,7 @@ make_directories (name)
    existed.  */
 int
 mkdir_if_needed (name)
-    char *name;
+    const char *name;
 {
     if (mkdir (name, 0777) < 0)
     {
