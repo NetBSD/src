@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.7 2001/08/19 14:16:34 mrg Exp $
+# $NetBSD: md.sparc64,v 1.8 2001/10/21 23:01:36 jmc Exp $
 ./sbin/edlabel			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
 ./usr/lkm/adosfs.o		base-adosfs-lkm
@@ -27,5 +27,4 @@
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.net		base-sysutil-bin
 ./usr/mdec/installboot		base-sysutil-bin
-./usr/sbin/apmd			base-sysutil-bin
 ./usr/sbin/eeprom		base-sysutil-bin
