@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.16 2001/04/07 18:29:54 jhawk Exp $
+.\"	$NetBSD: xfer,v 1.17 2001/04/16 20:42:43 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,6 +104,27 @@ is also available that runs under
 .Tn MS Windows .
 .Pp
 .\} \" r_i386
+.
+.if r_macppc \{\
+You will need to have the correct bootable media prepared.
+See the section on
+.Sx Creating the Bootable Media
+for details.
+.Pp
+.(Note
+Some
+.Tn MacOS
+.Ic ftp
+clients default to downloading files in
+.Sq ASCII
+mode.  This will render the
+.Nx
+files useless.  Make sure to set your ftp program to download in
+.Sq binary
+mode.
+.Note)
+.Pp
+.\} \" r_macppc
 .
 .if r_news68k \{\
 .(Note
