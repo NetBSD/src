@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.20 2002/02/01 17:52:56 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.21 2002/02/03 22:28:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -420,7 +420,7 @@ setregs(p, pack, stack)
 	tf->tf_r6 = stack+4*tf->tf_r4 + 8; /* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
+	tf->tf_r9 = (int)PS_STRINGS;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;
@@ -429,8 +429,4 @@ setregs(p, pack, stack)
 	tf->tf_spc = pack->ep_entry;
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
-#ifdef TODO
-	tf->tf_r9 = (int)PS_STRINGS;
-#endif
 }
-
