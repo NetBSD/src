@@ -5,9 +5,27 @@
 #
 
 # set defaults
-MAKE="${MAKE:-make} -j 1"
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | ${MAKE} -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | ${MAKE} -s -f-`}
+for x in $(
+${MAKE:-make} -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo machine=\${MACHINE}
+	@echo machine_arch=\${MACHINE_ARCH}
+	@echo machine_cpu=\${MACHINE_CPU}
+	@echo object_fmt=\${OBJECT_FMT}
+	@echo toolchain_missing=\${TOOLCHAIN_MISSING}
+.if defined(USE_XF86_4) && (\${USE_XF86_4} != no)
+	@echo x11_version=4
+.else
+	@echo x11_version=3
+.endif
+
+EOF
+); do
+	eval $x
+done
+
+. ./sets.subr
 setd=`dirname $0`
 prefix=/
 
@@ -15,7 +33,7 @@ usage() {
 exec 1>&2
 
 echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname"
-echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]"
+echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]"
 echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
 echo "	-s setsdir	directory to find sets			[$setd]"
 echo "	-p prefix	prefix for created plist		[$prefix]"
@@ -28,7 +46,7 @@ exit 1
 while : ; do
 	case $1 in
 	-a*)
-		arch=$2; shift
+		machine_arch=$2; shift
 		;;
 	-m*)
 		machine=$2; shift
@@ -41,7 +59,6 @@ while : ; do
 		;;
 	-*)
 		usage
-		exit 1
 		;;
 	*)
 		break
@@ -53,57 +70,61 @@ if [ -n "$1" ]; then
 	setname="$1"
 else
 	usage
-	exit 1
 fi
 if [ -n "$2" ]; then
 	pkgname=$2
 else
 	usage
-	exit 1
 fi
 
-# Convert mipse[lb] to mips after processing command line arguments.
-arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
+# Determine lib type.
+if [ "$object_fmt" = "ELF" ]; then
+	shlib=elf
+else
+	shlib=aout
+fi
+stlib=$shlib
 
-# Compute toolchain  used on target cpu.
-case "$machine" in
-ns32k)	shlib=aout ;;
-*)	case "$arch" in
-	sh3)	shlib="" ;;
-	*)	shlib=elf ;;
-	esac
-esac
+# Turn off shlibs for some ports.
+if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
+	shlib=no
+fi
+lkm=yes
+# Turn off LKMs for some ports.
+if [ "$machine" = "evbppc" ]; then
+	lkm=no
+fi
 
 filename=/tmp/makeplist.$$ 
 ffilename=/tmp/makeplist.files.$$ 
 dfilename=/tmp/makeplist.dirs.$$ 
 
-echo "@cwd $prefix" > $filename 
-( 
-	cat $setd/lists/$setname/mi 
-# where does cpu get set? XXX - agc
-	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then 
-		cat $setd/lists/$setname/ad.${arch} 
-	fi 
-	if [ -f $setd/lists/$setname/md.${machine} ]; then 
-		cat $setd/lists/$setname/md.${machine} 
-	fi 
-	if [ "$shlib" != "" ]; then 
-		if [ -f $setd/lists/$setname/shl.mi ]; then 
-			cat $setd/lists/$setname/shl.mi 
-		fi 
-		if [ -f $setd/lists/$setname/shl.${shlib} ]; then 
-			cat $setd/lists/$setname/shl.${shlib} 
-		fi 
-	fi 
-)| env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u >> $filename
+list_set_files $setname | \
+env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u > $filename
 
-env FFILENAME=$ffilename DFILENAME=$dfilename awk ' 
-/^@cwd/ { prefix = $2; next } 
-{ 
-        s = sprintf("if [ -d %s%s ]; then echo @dirrm %s >> %s; else echo %s >> %s; fi", prefix, $0, $0, ENVIRON["DFILENAME"], $0, ENVIRON["FFILENAME"]); 
-        system(s); 
-}' $filename
+SELECTDIRS="-maxdepth 0 -type d"
+SELECTNONDIRS="-maxdepth 0 ! -type d"
+
+cd $prefix
+#
+# match the directories
+#
+xargs echo $SELECTDIRS < $filename | \
+while read ignore ignore ignore ignore args; do
+	[ -z "$args" ] && break 
+	find $args $SELECTDIRS
+done | awk '{ print "@dirrm " $1; }' > $dfilename
+
+#
+# match the non-directories
+#
+xargs echo $SELECTNONDIRS < $filename | \
+while read ignore ignore ignore ignore ignore args; do
+	[ -z "$args" ] && break 
+	find $args $SELECTNONDIRS
+done > $ffilename
+
+cd -
 
 echo "@cwd $prefix"
 if [ -s $ffilename ]; then
