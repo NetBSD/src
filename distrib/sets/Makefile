@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/03/22 23:15:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/31 15:49:20 bjh21 Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -13,7 +13,7 @@ all:
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-		MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
+		CKSUM=${CKSUM:Q} MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
 
 print_machine: .PHONY
 	@echo ${MACHINE}
