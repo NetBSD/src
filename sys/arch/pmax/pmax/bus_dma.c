@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32.2.1 2001/10/24 17:40:31 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.32.2.2 2001/11/12 08:14:10 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -530,7 +530,8 @@ _bus_dmamap_sync_r3k(t, map, offset, len, ops)
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
-		mips_dcache_inv_range(addr + offset, minlen);
+		mips_dcache_inv_range(
+		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
