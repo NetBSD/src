@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.23 1998/07/08 17:19:46 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.24 1998/08/01 21:12:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 
 #if defined(_KERNEL) || defined(__KVM_ALPHA_PRIVATE)
 #define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
-#define	NPTEPG		(1 << NPTEPG_SHIFT)
+#define	NPTEPG		(1L << NPTEPG_SHIFT)
 
 #define	PTEMASK		(NPTEPG - 1)
 
