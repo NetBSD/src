@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.57 1994/10/30 21:43:37 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.58 1994/11/03 22:55:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -58,9 +58,6 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#ifndef NEWCONFIG
-#include <i386/isa/isa_device.h>
-#endif
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
@@ -112,15 +109,14 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe();
+int fdcprobe __P((struct device *, void *, void *));
 #ifdef NEWCONFIG
 void fdcforceintr __P((void *));
 #endif
-void fdcattach();
-int fdcintr __P((struct fdc_softc *));
+void fdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver fdccd = {
-	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc)
+	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc), 1
 };
 
 /*
@@ -156,9 +152,7 @@ struct fd_type fd_types[] = {
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
 	struct device sc_dev;
-#ifdef NEWCONFIG
 	struct dkdevice sc_dk;
-#endif
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
@@ -176,18 +170,14 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe();
-void fdattach();
+int fdprobe __P((struct device *, void *, void *));
+void fdattach __P((struct device *, struct device *, void *));
+void fdstrategy __P((struct buf *));
 
 struct cfdriver fdcd = {
 	NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc)
 };
-
-#ifdef NEWCONFIG
-void fdstrategy __P((struct buf *));
-
 struct dkdriver fddkdriver = { fdstrategy };
-#endif
 
 struct fd_type *fd_nvtotype __P((char *, int, int));
 void fdstart __P((struct fd_softc *fd));
@@ -200,14 +190,14 @@ void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
-int fdcintr __P((struct fdc_softc *fdc));
+int fdcintr __P((void *arg));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 
 int
-fdcprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	register struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
@@ -292,10 +282,10 @@ fdcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct fdc_softc *fdc = (struct fdc_softc *)self;
+	struct fdc_softc *fdc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int type;
 	struct fdc_attach_args fa;
+	int type;
 
 	fdc->sc_iobase = ia->ia_iobase;
 	fdc->sc_drq = ia->ia_drq;
@@ -338,28 +328,20 @@ fdcattach(parent, self, aux)
 }
 
 int
-fdprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct cfdata *cf = self->dv_cfdata;
+	struct fd_softc *fd = match;
+	struct cfdata *cf = fd->sc_dev.dv_cfdata;
 	struct fdc_attach_args *fa = aux;
+	int drive = fa->fa_drive;
 	u_short iobase = fdc->sc_iobase;
 	int n;
-	int drive = fa->fa_drive;
-#ifdef NEWCONFIG
 
-#define cf_drive cf_loc[0]
-	if (cf->cf_drive != -1 && cf->cf_drive != drive)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
 		return 0;
-#undef cf_drive
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
-
-	if (id->id_physid != -1 && id->id_physid != drive)
-		return 0;
-#endif
 
 	/* select drive and turn on motor */
 	outb(iobase + fdout, drive | FDO_FRST | FDO_MOEN(drive));
@@ -413,8 +395,8 @@ fdattach(parent, self, aux)
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
-#ifdef NEWCONFIG
 	fd->sc_dk.dk_driver = &fddkdriver;
+#ifdef NEWCONFIG
 	/* XXX need to do some more fiddling with sc_dk */
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
 #endif
@@ -781,11 +763,12 @@ fdcpseudointr(arg)
 }
 
 int
-fdcintr(fdc)
-	struct fdc_softc *fdc;
+fdcintr(arg)
+	void *arg;
 {
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
+	struct fdc_softc *fdc = arg;
 	struct fd_softc *fd;
 	struct buf *bp;
 	u_short iobase = fdc->sc_iobase;

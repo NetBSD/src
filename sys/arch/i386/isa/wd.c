@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.101 1994/10/30 21:44:21 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.102 1994/11/03 22:56:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -65,9 +65,6 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#ifndef NEWCONFIG
-#include <i386/isa/isa_device.h>
-#endif
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/wdreg.h>
@@ -144,19 +141,25 @@ struct wdc_softc {
 	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
 };
 
-int wdcprobe(), wdprobe(), wdcintr();
-void wdcattach(), wdattach();
+int wdcprobe __P((struct device *, void *, void *));
+void wdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver wdccd = {
-	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc)
+	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc), 1
 };
+
+int wdprobe __P((struct device *, void *, void *));
+void wdattach __P((struct device *, struct device *, void *));
+void wdstrategy __P((struct buf *));
 
 struct cfdriver wdcd = {
 	NULL, "wd", wdprobe, wdattach, DV_DISK, sizeof(struct wd_softc)
 };
+struct dkdriver wddkdriver = { wdstrategy };
 
 void wdfinish __P((struct wd_softc *, struct buf *));
 static void wdstart __P((struct wd_softc *));
+int wdcintr __P((void *));
 static void wdcstart __P((struct wdc_softc *));
 static int wdcommand __P((struct wd_softc *, int, int, int, int, int));
 static int wdcontrol __P((struct wd_softc *));
@@ -180,11 +183,11 @@ int wdcwait __P((struct wdc_softc *, int));
  * Probe for controller.
  */
 int
-wdcprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdcprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct wdc_softc *wdc = (void *)self;
+	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
 	struct wd_softc *wd;
 	u_short iobase;
@@ -252,39 +255,31 @@ wdcattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct wdc_attach_args wa;
 
+	TAILQ_INIT(&wdc->sc_drives);
+
 	printf("\n");
 
-	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
-		(void)config_found(self, &wa, wdprint);
-
-	TAILQ_INIT(&wdc->sc_drives);
 	wdc->sc_ih.ih_fun = wdcintr;
 	wdc->sc_ih.ih_arg = wdc;
 	wdc->sc_ih.ih_level = IPL_BIO;
 	intr_establish(ia->ia_irq, &wdc->sc_ih);
+
+	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
+		(void)config_found(self, (void *)&wa, wdprint);
 }
 
 int
-wdprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct wd_softc *wd = (void *)self;
+	struct wd_softc *wd = match;
 	struct cfdata *cf = wd->sc_dev.dv_cfdata;
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
-#ifdef NEWCONFIG
 
-#define cf_drive cf_loc[0]
-	if (cf->cf_drive != -1 && cf->cf_drive != drive)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
 		return 0;
-#undef cf_drive
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
-
-	if (id->id_physid != -1 && id->id_physid != drive)
-		return 0;
-#endif
 	
 	wd->sc_drive = drive;
 
@@ -327,6 +322,7 @@ wdattach(parent, self, aux)
 			blank = 1;
 	}
 	printf(">\n");
+	wd->sc_dk.dk_driver = &wddkdriver;
 }
 
 /*
@@ -702,9 +698,10 @@ loop:
  * the next chunk if so.
  */
 int
-wdcintr(wdc)
-	struct wdc_softc *wdc;
+wdcintr(arg)
+	void *arg;
 {
+	struct wdc_softc *wdc = arg;
 	struct wd_softc *wd;
 	struct buf *bp;
 
