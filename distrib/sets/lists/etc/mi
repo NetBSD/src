@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.96 2002/04/26 15:46:13 lukem Exp $
+# $NetBSD: mi,v 1.97 2002/04/29 08:23:36 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -173,8 +173,8 @@
 ./etc/skel/.rhosts			etc-sys-etc
 ./etc/skeykeys				etc-sys-etc
 ./etc/spwd.db				etc-sys-etc
-./etc/ssh/ssh.conf			etc-secsh-etc
-./etc/ssh/sshd.conf			etc-secsh-etc
+./etc/ssh/ssh_config			etc-secsh-etc
+./etc/ssh/sshd_config			etc-secsh-etc
 ./etc/sysctl.conf			etc-sys-etc
 ./etc/syslog.conf			etc-sys-etc
 ./etc/ttys				etc-sys-etc
