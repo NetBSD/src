@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.23 2003/01/19 12:26:54 tsutsui Exp $
+#	$NetBSD: list,v 1.24 2003/02/18 15:38:53 soren Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -37,6 +37,7 @@ PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/newfs_msdos
+PROG	sbin/pdisk
 PROG	sbin/ping
 PROG	sbin/ping6
 PROG	sbin/reboot	sbin/halt
