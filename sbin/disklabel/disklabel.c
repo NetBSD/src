@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.94 2001/01/03 06:57:57 enami Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.95 2001/01/08 02:19:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.94 2001/01/03 06:57:57 enami Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.95 2001/01/08 02:19:58 fvdl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -862,8 +862,8 @@ readlabel(int f)
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) != BBSIZE)
 			err(4, "%s", specname);
-		if (!Iflag)
-			msg = "no disklabel";
+
+		msg = "no disklabel";
 		for (lp = (struct disklabel *)bootarea;
 		    lp <= (struct disklabel *)(bootarea + BBSIZE - sizeof(*lp));
 		    lp = (struct disklabel *)((char *)lp + sizeof(long))) {
@@ -875,15 +875,16 @@ readlabel(int f)
 				msg = "disk label corrupted";
 			}
 		}
-		if (msg != NULL)
+		if (msg != NULL && !Iflag)
 			errx(1, "%s", msg);
 		/*
 		 * There was no label on the disk. Get the fictious one
 		 * as a basis for initialisation.
 		 */
 		lp = makebootarea(bootarea, &lab, f);
-		if (ioctl(f, DIOCGDINFO, lp) < 0)
-			errx(1, "no disklabel");
+		if (ioctl(f, DIOCGDINFO, lp) < 0 &&
+		    ioctl(f, DIOCGDEFLABEL, lp) < 0)
+			errx(1, "could not get initial label");
 	} else {
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)
