@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 1998/12/10 17:03:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.22 1999/02/09 20:19:13 christos Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -60,31 +60,34 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int freebsd_sys_open(char *path, int flags, \
+5	STD		{ int freebsd_sys_open(const char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	STD		{ int compat_43_freebsd_sys_creat(char *path, \
+8	STD		{ int compat_43_freebsd_sys_creat(const char *path, \
 			    int mode); } ocreat
-9	STD		{ int freebsd_sys_link(char *path, char *link); }
-10	STD		{ int freebsd_sys_unlink(char *path); }
+9	STD		{ int freebsd_sys_link(const char *path, \
+			    const char *link); }
+10	STD		{ int freebsd_sys_unlink(const char *path); }
 11	OBSOL		execv
-12	STD		{ int freebsd_sys_chdir(char *path); }
+12	STD		{ int freebsd_sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
-14	STD		{ int freebsd_sys_mknod(char *path, int mode, \
+14	STD		{ int freebsd_sys_mknod(const char *path, int mode, \
 			    int dev); }
-15	STD		{ int freebsd_sys_chmod(char *path, int mode); }
-16	STD		{ int freebsd_sys_chown(char *path, int uid, int gid); }
+15	STD		{ int freebsd_sys_chmod(const char *path, int mode); }
+16	STD		{ int freebsd_sys_chown(const char *path, int uid, \
+			    int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	NOARGS		{ pid_t sys_getpid(void); }
-21	STD		{ int freebsd_sys_mount(int type, char *path, \
+21	STD		{ int freebsd_sys_mount(int type, const char *path, \
 			    int flags, caddr_t data); }
-22	STD		{ int freebsd_sys_unmount(char *path, int flags); }
+22	STD		{ int freebsd_sys_unmount(const char *path, \
+			    int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
@@ -100,15 +103,16 @@
 			    int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, caddr_t asa, \
 			    int *alen); }
-33	STD		{ int freebsd_sys_access(char *path, int flags); }
-34	STD		{ int freebsd_sys_chflags(char *path, int flags); }
+33	STD		{ int freebsd_sys_access(const char *path, int flags); }
+34	STD		{ int freebsd_sys_chflags(const char *path, \
+			    int flags); }
 35	NOARGS		{ int sys_fchflags(int fd, int flags); }
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int compat_43_freebsd_sys_stat(char *path, \
+38	STD		{ int compat_43_freebsd_sys_stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
-40	STD		{ int compat_43_freebsd_sys_lstat(char *path, \
+40	STD		{ int compat_43_freebsd_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -136,15 +140,16 @@
 			    struct sigaltstack13 *oss); }
 54	STD		{ int freebsd_sys_ioctl(int fd, u_long com, \
 			    caddr_t data); }
-55	NOARGS		{ int sys_reboot(int opt); }
-56	STD		{ int freebsd_sys_revoke(char *path); }
-57	STD		{ int freebsd_sys_symlink(char *path, char *link); }
-58	STD		{ int freebsd_sys_readlink(char *path, char *buf, \
-			    int count); }
-59	STD		{ int freebsd_sys_execve(char *path, char **argp, \
-			    char **envp); }
+55	NOARGS		{ int sys_reboot(int opt); } oreboot
+56	STD		{ int freebsd_sys_revoke(const char *path); }
+57	STD		{ int freebsd_sys_symlink(const char *path, \
+			    const char *link); }
+58	STD		{ int freebsd_sys_readlink(const char *path, \
+			    char *buf, int count); }
+59	STD		{ int freebsd_sys_execve(const char *path, \
+			    char **argp, char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
-61	STD		{ int freebsd_sys_chroot(char *path); }
+61	STD		{ int freebsd_sys_chroot(const char *path); }
 62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); } \
 			    fstat43
 63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
@@ -243,20 +248,21 @@
 			    int *fromlenaddr); } orecvfrom
 126	NOARGS		{ int sys_setreuid(int ruid, int euid); }
 127	NOARGS		{ int sys_setregid(int rgid, int egid); }
-128	STD		{ int freebsd_sys_rename(char *from, char *to); }
-129	STD		{ int compat_43_freebsd_sys_truncate(char *path, \
+128	STD		{ int freebsd_sys_rename(const char *from, \
+			    const char *to); }
+129	STD		{ int compat_43_freebsd_sys_truncate(const char *path, \
 			    long length); } otruncate
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
 			    oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
-132	STD		{ int freebsd_sys_mkfifo(char *path, int mode); }
+132	STD		{ int freebsd_sys_mkfifo(const char *path, int mode); }
 133	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	STD		{ int freebsd_sys_mkdir(char *path, int mode); }
-137	STD		{ int freebsd_sys_rmdir(char *path); }
+136	STD		{ int freebsd_sys_mkdir(const char *path, int mode); }
+137	STD		{ int freebsd_sys_rmdir(const char *path); }
 138	NOARGS		{ int sys_utimes(char *path, struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
@@ -294,13 +300,14 @@
 #endif
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int freebsd_sys_statfs(char *path, \
+157	STD		{ int freebsd_sys_statfs(const char *path, \
 			    struct statfs *buf); }
 158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
 #ifdef NFS
-161	STD		{ int freebsd_sys_getfh(char *fname, fhandle_t *fhp); }
+161	STD		{ int freebsd_sys_getfh(const char *fname, \
+			    fhandle_t *fhp); }
 #else
 161	UNIMPL		getfh
 #endif
@@ -362,13 +369,14 @@
 186	UNIMPL
 187	UNIMPL
 #endif
-188	STD		{ int freebsd_sys_stat(char *path, \
+188	STD		{ int freebsd_sys_stat(const char *path, \
 			    struct stat12 *ub); }
 189	NOARGS		{ int compat_12_sys_fstat(int fd, \
 			    struct stat12 *sb); }
-190	STD		{ int freebsd_sys_lstat(char *path, \
+190	STD		{ int freebsd_sys_lstat(const char *path, \
 			    struct stat12 *ub); }
-191	STD		{ int freebsd_sys_pathconf(char *path, int name); }
+191	STD		{ int freebsd_sys_pathconf(const char *path, \
+			    int name); }
 192	NOARGS		{ int sys_fpathconf(int fd, int name); }
 193	UNIMPL
 194	NOARGS		{ int sys_getrlimit(u_int which, struct rlimit *rlp); }
@@ -380,7 +388,7 @@
 198	NOARGS		{ int sys_nosys(void); } __syscall
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
-200	STD		{ int freebsd_sys_truncate(char *path, int pad, \
+200	STD		{ int freebsd_sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
@@ -393,10 +401,15 @@
 #else
 205	UNIMPL
 #endif
-206	UNIMPL
-207	UNIMPL
-208	UNIMPL
-209	UNIMPL
+206	NOARGS		{ int sys_futimes(int fd, const struct timeval *tptr); }
+207	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
+#if 0
+208	NOARGS		{ int sys_reboot(int opt, char *bootstr); }
+#else
+208	UNIMPL		newreboot
+#endif
+209	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
 ;
@@ -413,27 +426,60 @@
 ;
 ; Syscalls 220-239 are reserved for syscalls imported from NetBSD
 ;
-220	UNIMPL
-221	UNIMPL
-222	UNIMPL
-223	UNIMPL
-224	UNIMPL
-225	UNIMPL
-226	UNIMPL
-227	UNIMPL
-228	UNIMPL
-229	UNIMPL
-230	UNIMPL
-231	UNIMPL
-232	UNIMPL
-233	UNIMPL
-234	UNIMPL
-235	UNIMPL
-236	UNIMPL
-237	UNIMPL
-238	UNIMPL
-239	UNIMPL
-240	UNIMPL
+#ifdef SYSVSEM
+220	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
+			    union semun *arg); }
+221	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
+222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
+			    u_int nsops); }
+223	NOARGS		{ int sys_semconfig(int flag); }
+#else
+220	UNIMPL		semctl
+221	UNIMPL		semget
+222	UNIMPL		semop
+223	UNIMPL		semconfig
+#endif
+#ifdef SYSVMSG
+224	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
+			    struct msqid_ds *buf); }
+225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
+226	NOARGS		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
+			    int msgflg); }
+227	NOARGS		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
+			    long msgtyp, int msgflg); }
+#else
+224	UNIMPL		msgctl
+225	UNIMPL		msgget
+226	UNIMPL		msgsnd
+227	UNIMPL		msgrcv
+#endif
+#ifdef SYSVSHM
+228	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
+229	NOARGS		{ int sys_shmctl(int shmid, int cmd, \
+			    struct shmid_ds *buf); }
+230	NOARGS		{ int sys_shmdt(void *shmaddr); }
+231	NOARGS		{ int sys_shmget(key_t key, int size, int shmflg); }
+#else
+228	UNIMPL		shmat
+229	UNIMPL		shmctl
+230	UNIMPL		shmdt
+231	UNIMPL		shmget
+#endif
+;
+; XXXX
+232	NOARGS		{ int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec *tp); }
+233	NOARGS		{ int sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec *tp); }
+234	NOARGS		{ int sys_clock_getres(clockid_t clock_id, \
+			    struct timespec *tp); }
+235	UNIMPL		timer_create
+236	UNIMPL		timer_delete
+237	UNIMPL		timer_settime
+238	UNIMPL		timer_gettime
+239	UNIMPL		timer_getoverrun
+240	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
+			    struct timespec *rmtp); }
 241	UNIMPL
 242	UNIMPL
 243	UNIMPL
@@ -443,9 +489,96 @@
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
-250	UNIMPL
-251	UNIMPL
-252	UNIMPL
+; syscall numbers initially used in OpenBSD
+250	UNIMPL		minherit
+251	UNIMPL		rfork
+252	UNIMPL		openbsd_poll
 253	STD		{ int freebsd_sys_issetugid(void); }
-254	STD		{ int freebsd_sys_lchown(char *path, int uid, \
+254	STD		{ int freebsd_sys_lchown(const char *path, int uid, \
 			    int gid); }
+255	UNIMPL
+256	UNIMPL
+257	UNIMPL
+258	UNIMPL
+259	UNIMPL
+260	UNIMPL
+261	UNIMPL
+262	UNIMPL
+263	UNIMPL
+264	UNIMPL
+265	UNIMPL
+266	UNIMPL
+267	UNIMPL
+268	UNIMPL
+269	UNIMPL
+270	UNIMPL
+271	UNIMPL
+272	NOARGS		{ int sys_getdents(int fd, char *buf, size_t count); }
+273	UNIMPL
+274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
+275	NOARGS		{ int sys_lchown(const char *path, uid_t uid, \
+			    gid_t gid); } netbsd_lchown
+276	NOARGS		{ int sys_lutimes(const char *path, \
+			    const struct timeval *tptr); }
+277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
+278	NOARGS		{ int sys___stat13(const char *path, struct stat *ub); }
+279	NOARGS		{ int sys___fstat13(int fd, struct stat *sb); }
+280	NOARGS		{ int sys___lstat13(const char *path, struct stat *ub);}
+281	UNIMPL
+282	UNIMPL
+283	UNIMPL
+284	UNIMPL
+285	UNIMPL
+286	UNIMPL
+287	UNIMPL
+288	UNIMPL
+289	UNIMPL
+290	UNIMPL
+291	UNIMPL
+292	UNIMPL
+293	UNIMPL
+294	UNIMPL
+295	UNIMPL
+296	UNIMPL
+297	UNIMPL
+298	UNIMPL
+299	UNIMPL
+; syscall numbers for FreeBSD
+300	UNIMPL		modnext
+301	UNIMPL		modstat
+302	UNIMPL		modfnext
+303	UNIMPL		modfind
+304	UNIMPL		kldload
+305	UNIMPL		kldunload
+306	UNIMPL		kldfind
+307	UNIMPL		kldnext
+308	UNIMPL		kldstat
+309	UNIMPL		kldfirstmod
+310	UNIMPL		getsid
+311	UNIMPL		setresuid
+312	UNIMPL		setresgid
+313	UNIMPL		signanosleep
+314	UNIMPL		aio_return
+315	UNIMPL		aio_suspend
+316	UNIMPL		aio_cancel
+317	UNIMPL		aio_error
+318	UNIMPL		aio_read
+319	UNIMPL		aio_write
+320	UNIMPL		lio_listio
+321	UNIMPL		yield
+322	UNIMPL		thr_sleep
+323	UNIMPL		thr_wakeup
+324	UNIMPL		mlockall
+325	UNIMPL		munlockall
+326	UNIMPL		__getcwd
+327	UNIMPL		sched_setparam
+328	UNIMPL		sched_getparam
+329	UNIMPL		sched_setscheduler
+330	UNIMPL		sched_getscheduler
+331	UNIMPL		sched_yield
+332	UNIMPL		sched_get_priority_max
+333	UNIMPL		sched_get_priority_min
+334	UNIMPL		sched_rr_get_interval
+335	UNIMPL		utrace
+336	UNIMPL		sendfile
+337	UNIMPL		kldsym
