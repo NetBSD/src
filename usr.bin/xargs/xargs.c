@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
+/*	$NetBSD: xargs.c,v 1.8 1997/06/24 00:45:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $";
+static char rcsid[] = "$NetBSD: xargs.c,v 1.8 1997/06/24 00:45:29 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $";
 #include <err.h>
 #include "pathnames.h"
 
-int tflag, rval;
+int tflag, zflag, rval;
 
 void run __P((char **));
 void usage __P((void));
@@ -94,8 +94,11 @@ main(argc, argv)
 	nargs = 5000;
 	nline = ARG_MAX - 4 * 1024;
 	nflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "n:s:tx")) != EOF)
+	while ((ch = getopt(argc, argv, "0n:s:tx")) != -1)
 		switch(ch) {
+		case '0':
+			zflag = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			if ((nargs = atoi(optarg)) <= 0)
@@ -183,10 +186,16 @@ main(argc, argv)
 		case ' ':
 		case '\t':
 			/* Quotes escape tabs and spaces. */
-			if (insingle || indouble)
+			if (insingle || indouble || zflag)
 				goto addch;
 			goto arg2;
+		case '\0':
+			if (zflag)
+				goto arg2;
+			goto addch;
 		case '\n':
+			if (zflag)
+				goto addch;
 			/* Empty lines are skipped. */
 			if (argp == p)
 				continue;
@@ -217,16 +226,18 @@ arg2:			*p = '\0';
 			argp = p;
 			break;
 		case '\'':
-			if (indouble)
+			if (indouble || zflag)
 				goto addch;
 			insingle = !insingle;
 			break;
 		case '"':
-			if (insingle)
+			if (insingle || zflag)
 				goto addch;
 			indouble = !indouble;
 			break;
 		case '\\':
+			if (zflag)
+				goto addch;
 			/* Backslash escapes anything, is escaped by quotes. */
 			if (!insingle && !indouble && (ch = getchar()) == EOF)
 				errx(1, "backslash at EOF");
@@ -316,6 +327,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: xargs [-t] [-n number [-x]] [-s size] [utility [argument ...]]\n");
+"usage: xargs [-0t] [-n number [-x]] [-s size] [utility [argument ...]]\n");
 	exit(1);
 }
