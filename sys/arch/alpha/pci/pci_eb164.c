@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.24.16.1 2000/06/22 16:58:41 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.24.16.1 2000/06/22 16:58:41 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $
 
 #include <alpha/pci/pci_eb164.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
@@ -104,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $
 int	dec_eb164_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_eb164_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_eb164_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_eb164_intr_disestablish __P((void *, void *));
@@ -116,9 +113,6 @@ void	*dec_eb164_pciide_compat_intr_establish __P((void *, struct device *,
 #define	PCI_STRAY_MAX	5
 
 struct alpha_shared_intr *eb164_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt eb164_intr_evcnt;
-#endif
 
 bus_space_tag_t eb164_intrgate_iot;
 bus_space_handle_t eb164_intrgate_ioh;
@@ -133,11 +127,13 @@ pci_eb164_pickintr(ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_eb164_intr_map;
         pc->pc_intr_string = dec_eb164_intr_string;
+	pc->pc_intr_evcnt = dec_eb164_intr_evcnt;
         pc->pc_intr_establish = dec_eb164_intr_establish;
         pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
 
@@ -151,7 +147,7 @@ pci_eb164_pickintr(ccp)
 	for (i = 0; i < EB164_MAX_IRQ; i++)
 		eb164_intr_disable(i);	
 
-	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ);
+	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ, 8);
 	for (i = 0; i < EB164_MAX_IRQ; i++) {
 		/*
 		 * Systems with a Pyxis seem to have problems with
@@ -160,6 +156,12 @@ pci_eb164_pickintr(ccp)
 		 */
 		alpha_shared_intr_set_maxstrays(eb164_pci_intr, i,
 			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
+
+		cp = alpha_shared_intr_string(eb164_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    eb164_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "eb164", cp);
 	}
 
 #if NSIO
@@ -261,6 +263,20 @@ dec_eb164_intr_string(ccv, ih)
         return (irqstr);
 }
 
+const struct evcnt *
+dec_eb164_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
+
+	if (ih > EB164_MAX_IRQ)
+		panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx\n", ih);
+	return (alpha_shared_intr_evcnt(eb164_pci_intr, ih));
+}
+
 void *
 dec_eb164_intr_establish(ccv, ih, level, func, arg)
         void *ccv, *arg;
@@ -333,6 +349,10 @@ dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
 	    func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);
 }
@@ -348,14 +368,6 @@ eb164_iointr(framep, vec)
 		if (vec >= 0x900 + (EB164_MAX_IRQ << 4))
 			panic("eb164_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
-
-#ifdef EVCNT_COUNTERS
-		eb164_intr_evcnt.ev_count++;
-#else
-		if (EB164_MAX_IRQ != INTRCNT_EB164_IRQ_LEN)
-			panic("eb164 interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_EB164_IRQ + irq]++;
-#endif
 
 		if (!alpha_shared_intr_dispatch(eb164_pci_intr, irq)) {
 			alpha_shared_intr_stray(eb164_pci_intr, irq,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.94 2000/05/17 17:58:10 thorpej Exp $
+#	$NetBSD: files.pci,v 1.94.2.1 2000/06/22 17:07:22 minoura Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -17,6 +17,17 @@ file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+
+# Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
+# with USB.  This is a combo chip:
+#
+#	PCI-ISA bridge
+#	PCI IDE controller
+#	OHCI USB controller
+#
+# There are some common subroutines that each function needs.
+define	cy82c693
+file	dev/pci/cy82c693.c		cy82c693
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
 # device declaration in sys/conf/files
@@ -105,7 +116,7 @@ attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c	siop_pci
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: wdc_base, ata, atapi
+device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
@@ -260,6 +271,10 @@ file	dev/pci/uhci_pci.c		uhci_pci
 # OHCI USB controller
 attach	ohci at pci with ohci_pci
 file	dev/pci/ohci_pci.c		ohci_pci
+
+# OHCI IEEE 1394 controller
+attach	fwohci at pci with fwohci_pci
+file	dev/pci/fwohci_pci.c		fwohci_pci
 
 # VIA Rhine/Rhine II Fast Ethernet controllers
 device	vr: ether, ifnet, arp, mii, mii_bitbang

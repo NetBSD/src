@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.32 2000/05/02 06:43:43 augustss Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.32.2.1 2000/06/22 17:02:31 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.32 2000/05/02 06:43:43 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.32.2.1 2000/06/22 17:02:31 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.32 2000/05/02 06:43:43 augustss Exp
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
 static void	dec_maxine_cons_init __P((void));
-static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_maxine_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -254,8 +254,8 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 		mask = XINE_INTR_DTOP_RX;
 		break;
 	  case SYS_DEV_ISDN:
-		mask = (IOASIC_INTR_ISDN | IOASIC_INTR_ISDN_DS_OVRUN |
-		    IOASIC_INTR_ISDN_DS_TXLOAD | IOASIC_INTR_ISDN_DS_RXLOAD);
+		mask = (IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD |
+			IOASIC_INTR_ISDN_OVRUN);
 		break;
 	  default:
 #ifdef DIAGNOSTIC
@@ -282,7 +282,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	}							\
     } while (0)
 
-static int
+static void
 dec_maxine_intr(status, cause, pc, ipending)
 	unsigned ipending;
 	unsigned pc;
@@ -326,13 +326,13 @@ dec_maxine_intr(status, cause, pc, ipending)
 			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
 			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
-			CHECKINTR(SYS_DEV_ISDN, (IOASIC_INTR_ISDN_DS_TXLOAD | IOASIC_INTR_ISDN_DS_RXLOAD));
+			CHECKINTR(SYS_DEV_ISDN, (IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD));
 			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
 			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1); 
 			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0); 
  
-#define ERRORS	(IOASIC_INTR_ISDN|IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
-#define PTRLOAD (IOASIC_INTR_ISDN_DS_TXLOAD|IOASIC_INTR_ISDN_DS_RXLOAD|IOASIC_INTR_SCSI_PTR_LOAD)
+#define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
+#define PTRLOAD (IOASIC_INTR_ISDN_TXLOAD|IOASIC_INTR_ISDN_RXLOAD|IOASIC_INTR_SCSI_PTR_LOAD)
  
 #if 0	
 	if (can_serve & IOASIC_INTR_SCSI_PTR_LOAD) {
@@ -370,7 +370,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_2)
 		kn02ba_errintr();
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.6 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.6.2.1 2000/06/22 17:08:18 minoura Exp $	*/
 
 /*
  * Copyright 1998
@@ -141,7 +141,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	error = scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)capacity_data, ATAPI_CAP_DESC_SIZE(1), SDRETRIES, 20000,
-	    NULL, flags | XS_CTL_DATA_IN);
+	    NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: read format capacities error=%d\n",
 	    error));
@@ -187,7 +187,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	 */
 	error = atapi_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
 	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
-	    flags, SDRETRIES, 20000);
+	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 20000);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
 	if (error != 0)

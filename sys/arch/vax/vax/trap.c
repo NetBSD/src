@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2000/05/27 00:40:43 sommerfeld Exp $     */
+/*	$NetBSD: trap.c,v 1.52.2.1 2000/06/22 17:05:30 minoura Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -123,18 +123,14 @@ userret(p, frame, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-#if defined(MULTIPROCESSOR)
 	if (curcpu()->ci_want_resched) {
-#else
-	if (want_resched) {
-#endif
 		/*
 		 * We are being preempted.
 		 */
 		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
-	} /* } */
+	}
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
@@ -421,3 +417,17 @@ bad:
 		ktrsysret(p, frame->code, err, rval[0]);
 #endif
 }
+
+void
+child_return(void *arg)
+{
+        struct proc *p = arg;
+
+	userret(p, p->p_addr->u_pcb.framep, 0);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
+#endif
+}
+

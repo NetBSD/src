@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.11 1999/05/05 01:51:33 cgd Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.11.10.1 2000/06/22 17:05:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,7 @@
  */
 
 #include "opt_compat_43.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

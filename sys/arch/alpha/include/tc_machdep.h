@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.3 1999/03/19 03:12:31 cgd Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.3.16.1 2000/06/22 16:58:33 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -95,8 +95,8 @@ typedef int32_t		tc_offset_t;
  * These functions are private, and may not be called by
  * machine-independent code.
  */
-bus_space_tag_t tc_bus_mem_init __P((void *memv));
-void tc_dma_init __P((void));
+bus_space_tag_t tc_bus_mem_init(void *memv);
+void tc_dma_init(void);
 
 /*
  * Address of scatter/gather SRAM on the 3000/500-series.

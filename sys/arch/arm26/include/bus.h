@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.1 2000/05/09 21:55:58 bjh21 Exp $ */
+/* $NetBSD: bus.h,v 1.1.2.1 2000/06/22 16:59:23 minoura Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -124,5 +124,12 @@ extern void bus_space_copy_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 			     bus_space_handle_t, bus_size_t, bus_size_t);
 extern void bus_space_copy_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 			     bus_space_handle_t, bus_size_t, bus_size_t);
+
+/*
+ * bus_dma stuff.  We don't support bus_dma yet, but some drivers need
+ * this.
+ */
+
+typedef void *bus_dmamap_t;
 
 #endif /* _ARM26_BUS_H_ */

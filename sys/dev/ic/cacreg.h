@@ -1,11 +1,11 @@
-/*	$NetBSD: cacreg.h,v 1.2 2000/03/20 18:48:34 ad Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.2.2.1 2000/06/22 17:06:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.80 2000/05/07 14:03:25 martin Exp $	*/
+/*	$NetBSD: elink3.c,v 1.80.2.1 2000/06/22 17:06:41 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -528,6 +528,9 @@ epconfig(sc, chipset, enaddr)
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+
+	/* The attach is successful. */
+	sc->sc_flags |= ELINK_FLAGS_ATTACHED;
 	return (0);
 }
 
@@ -2157,6 +2160,10 @@ ep_detach(self, flags)
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & ELINK_FLAGS_ATTACHED) == 0)
+		return (0);
 
 	epdisable(sc);
 

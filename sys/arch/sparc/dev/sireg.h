@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.3 1996/01/01 22:40:58 thorpej Exp $	*/
+/*	$NetBSD: sireg.h,v 1.3.38.1 2000/06/22 17:03:57 minoura Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -18,83 +18,81 @@
  * with unions.  Also, the "sw" doesn't appear to have a FIFO.
  */
 
+#if __for_reference_only__
 /*
- * Am5380 Register map (no padding)
+ * Am5380 Register map (no padding). See dev/ic/ncr5380reg.h
  */
 struct ncr5380regs {
-	volatile u_char sci_r0;
-	volatile u_char sci_r1;
-	volatile u_char sci_r2;
-	volatile u_char sci_r3;
-	volatile u_char sci_r4;
-	volatile u_char sci_r5;
-	volatile u_char sci_r6;
-	volatile u_char sci_r7;
+	u_char r[8];
 };
 
 struct si_regs {
 	struct ncr5380regs sci;
 
 	/* DMA controller registers */
-	union {
-		struct {
-			u_short	_Dma_addrh;	/* dma address (VME only) */
-			u_short	_Dma_addrl;	/* (high word, low word)  */
-		} _si_u1_s;
-		u_int		_Dma_addr;	/* dma address (OBIO) */
-	} _si_u1;
-#define dma_addrh	_si_u1._si_u1_s._Dma_addrh
-#define dma_addrl	_si_u1._si_u1_s._Dma_addrl
-#define dma_addr	_si_u1._Dma_addr
-
-	union {
-		struct {
-			u_short	_Dma_counth;	/* dma count   (VME only) */
-			u_short	_Dma_countl;	/* (high word, low word)  */
-		} _si_u2_s;
-		u_int		_Dma_count;	/* dma count (OBIO) */
-	} _si_u2;
-#define dma_counth	_si_u2._si_u2_s._Dma_counth
-#define dma_countl	_si_u2._si_u2_s._Dma_countl
-#define dma_count	_si_u2._Dma_count
+	u_short	_Dma_addrh;	/* dma address (VME only) */
+	u_short	_Dma_addrl;	/* (high word, low word)  */
+	u_short	_Dma_counth;	/* dma count   (VME only) */
+	u_short	_Dma_countl;	/* (high word, low word)  */
 
 	u_int		si_pad0;		/* no-existent register */
 
-	union {
-		struct {
-			u_short	_Fifo_data;	/* fifo data register */
-			u_short	_Fifo_count;	/* fifo count register */
-		} _si_u4_s;
-		u_int		_Sw_csr;	/* sw control/status */
-	} _si_u4;
-#define fifo_data	_si_u4._si_u4_s._Fifo_data
-#define fifo_count	_si_u4._si_u4_s._Fifo_count
-#define sw_csr		_si_u4._Sw_csr
-
-	union {
-		struct {
-			u_short	_Si_csr;	/* si control/status */
-			u_short	_Bprh;		/* VME byte pack high */
-		} _si_u5_s;
-		u_int	_Bpr;			/* sw byte pack */
-	} _si_u5;
-#define si_csr		_si_u5._si_u5_s._Si_csr
-#define si_bprh		_si_u5._si_u5_s._Bprh
-#define sw_bpr		_si_u5._Bpr
-
-	/* The rest of these are on the VME interface only: */
-	u_short			si_bprl;	/* VME byte pack low */
-	u_short			si_iv_am;	/* bits 0-7: intr vector */
+	u_short	_Fifo_data;	/* fifo data register */
+	u_short	_Fifo_count;	/* fifo count register */
+	u_short	_Si_csr;	/* si control/status */
+	u_short	_Bprh;		/* VME byte pack high */
+	u_short	_Bprl;		/* VME byte pack low */
+	u_short	iv_am;		/* bits 0-7: intr vector */
 				/* bits 8-13: addr modifier (VME only) */
-						/* bits 14-15: unused */
-	u_short			fifo_cnt_hi;	/* high part of fifo_count (VME only) */
+				/* bits 14-15: unused */
+	u_short	fifo_cnt_hi;	/* high part of fifo_count (VME only) */
 
 	/* Whole thing repeats after 32 bytes. */
-	u_short			_space[3];
+	u_short	_space[3];
 };
 
-/* possible values for the address modifier, vme version only */
-#define VME_SUPV_DATA_24	0x3d00
+struct sw_regs {
+	struct ncr5380regs sci;
+
+	/* DMA controller registers on OBIO */
+	u_int	_Dma_addr;	/* dma address */
+	u_int	_Dma_count;	/* dma count */
+	u_int	si_pad0;	/* no-existent register */
+	u_int	_Sw_csr;	/* sw control/status */
+	u_int	_Bpr;		/* sw byte pack */
+};
+#endif
+
+/*
+ * Size of NCR5380 registers located at the bottom of the register bank
+ */
+#define NCR5380REGS_SZ	8
+
+/*
+ * Register definition for the `si' VME controller
+ */
+#define SIREG_DMA_ADDRH	(NCR5380REGS_SZ + 0)	/* DMA address, high word */
+#define SIREG_DMA_ADDRL	(NCR5380REGS_SZ + 2)	/* DMA address, low word */
+#define SIREG_DMA_CNTH	(NCR5380REGS_SZ + 4)	/* DMA count, high word */
+#define SIREG_DMA_CNTL	(NCR5380REGS_SZ + 6)	/* DMA count, low word */
+#define SIREG_FIFO_DATA	(NCR5380REGS_SZ + 12)	/* FIFO data */
+#define SIREG_FIFO_CNT	(NCR5380REGS_SZ + 14)	/* FIFO count, low word */
+#define SIREG_CSR	(NCR5380REGS_SZ + 16)	/* Control/status register */
+#define SIREG_BPRH	(NCR5380REGS_SZ + 18)	/* VME byte pack, high word */
+#define SIREG_BPRL	(NCR5380REGS_SZ + 20)	/* VME byte pack, low word */
+#define SIREG_IV_AM	(NCR5380REGS_SZ + 22)	/* bits 0-7: intr vector;
+						   bits 8-13: addr modifier */
+#define SIREG_FIFO_CNTH	(NCR5380REGS_SZ + 24)	/* FIFO count, high word */
+#define SIREG_BANK_SZ	(NCR5380REGS_SZ + 26)
+
+/*
+ * Register definition for the `sw' OBIO controller
+ */
+#define SWREG_DMA_ADDR	(NCR5380REGS_SZ + 0)
+#define SWREG_DMA_CNT	(NCR5380REGS_SZ + 4)
+#define SWREG_CSR	(NCR5380REGS_SZ + 12)
+#define SWREG_BPR	(NCR5380REGS_SZ + 16)
+#define SWREG_BANK_SZ	(NCR5380REGS_SZ + 20)
 
 /*
  * Status Register.

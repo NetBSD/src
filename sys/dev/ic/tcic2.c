@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.4 2000/05/08 19:44:34 explorer Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.4.2.1 2000/06/22 17:06:56 minoura Exp $	*/
 
 #undef	TCICDEBUG
 
@@ -531,22 +531,11 @@ tcic_init_socket(h)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-tcic_submatch(parent, match, aux)
-#else
 tcic_submatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 
 	struct pcmciabus_attach_args *paa = aux;
 	struct tcic_handle *h = (struct tcic_handle *) paa->pch;

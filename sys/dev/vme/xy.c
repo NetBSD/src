@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.23 2000/05/27 04:52:36 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.23.2.1 2000/06/22 17:08:52 minoura Exp $	*/
 
 /*
  *
@@ -79,7 +79,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>
 #endif
 
@@ -240,7 +240,7 @@ xygetdisklabel(xy, b)
 	void *b;
 {
 	char *err;
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	struct sun_disklabel *sdl;
 #endif
 
@@ -258,7 +258,7 @@ xygetdisklabel(xy, b)
 		return(XY_ERR_FAIL);
 	}
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xy->sc_dk.dk_cpulabel->cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC) {
@@ -543,7 +543,8 @@ xycattach(parent, self, aux)
 	/* link in interrupt with higher level software */
 	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
 	vme_intr_establish(ct, ih, IPL_BIO, xycintr, xyc);
-	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
+	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    xyc->sc_dev.dv_xname, "intr");
 
 	callout_init(&xyc->sc_tick_ch);
 

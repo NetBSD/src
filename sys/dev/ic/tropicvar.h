@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.6 2000/05/27 04:46:56 thorpej Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.6.2.1 2000/06/22 17:06:57 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -93,6 +93,13 @@ struct	tr_softc {
 	caddr_t  tr_sleepevent;     	/* tr event signalled on successful */
 					/* open of adapter  */
 	unsigned short exsap_station;	/* station assigned by open sap cmd */
+
+	void *sc_sdhook;
+
+	/* Power management hooks */    
+	int (*sc_enable) __P((struct tr_softc *));
+	void (*sc_disable) __P((struct tr_softc *));
+	int sc_enabled;
 };
 
 int tr_config __P((struct tr_softc *));
@@ -104,3 +111,7 @@ void tr_stop __P((struct tr_softc *));
 int tr_reset __P((struct tr_softc *));
 void tr_sleep __P((struct tr_softc *));
 int tr_setspeed __P((struct tr_softc *, u_int8_t));
+int tr_enable __P((struct tr_softc *));
+void tr_disable __P((struct tr_softc *));
+int tr_activate __P((struct device *, enum devact));
+int tr_detach __P((struct device *, int flags));

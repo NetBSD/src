@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.1 1999/11/28 00:32:29 simonb Exp $ */
+/* $NetBSD: installboot.c,v 1.1.4.1 2000/06/22 17:02:34 minoura Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/stat.h>
 #include <sys/disklabel.h>
+#include <sys/endian.h>
 #include <isofs/cd9660/iso.h>
 #include <assert.h>
 #include <err.h>
@@ -72,7 +73,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <include/dec_boot.h>
+#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 
@@ -146,7 +147,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "bootstrap: %s\n",
 		    bootstrap != NULL ? bootstrap : "to be cleared");
 	}
-	if (sizeof (struct boot_block) != BOOT_BLOCK_BLOCKSIZE)
+	if (sizeof (struct pmax_boot_block) != PMAX_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
 		    "boot_block structure badly sized (build error)");
 
@@ -169,20 +170,20 @@ main(int argc, char **argv)
 static void
 clr_bootstrap(const char *disk)
 {
-	struct boot_block bb;
+	struct pmax_boot_block bb;
 	ssize_t rv;
 	int diskfd;
 
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
-	if (bb.magic != DEC_BOOT_MAGIC) {
+	if (bb.magic != PMAX_BOOT_MAGIC) {
 		fprintf(stderr, "old boot block magic number invalid (%#x)\n",
 		    bb.magic);
 		fprintf(stderr, "boot block invalid\n");
@@ -190,12 +191,12 @@ clr_bootstrap(const char *disk)
 	}
 
 	bb.map[0].num_blocks = bb.map[0].start_block = bb.mode = 0;
-	bb.magic = DEC_BOOT_MAGIC;
+	bb.magic = htole32(PMAX_BOOT_MAGIC);
 
 	fprintf(stderr, "new boot block start sector: %#x\n",
-	    bb.map[0].start_block);
+	    le32toh(bb.map[0].start_block));
 	fprintf(stderr, "new boot block size: %#x\n",
-	    bb.map[0].num_blocks);
+	    le32toh(bb.map[0].num_blocks));
 
 	if (nowrite) {
 	    if (verbose)
@@ -206,7 +207,7 @@ clr_bootstrap(const char *disk)
 	if (verbose)
 		fprintf(stderr, "writing\n");
 	
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)
@@ -220,7 +221,7 @@ static void
 set_bootstrap(const char *disk, const char *bootstrap)
 {
 	struct stat bootstrapsb;
-	struct boot_block bb;
+	struct pmax_boot_block bb;
 	int diskfd, startblock;
 	char *bootstrapbuf;
 	size_t bootstrapsize;
@@ -238,7 +239,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
@@ -246,29 +247,29 @@ set_bootstrap(const char *disk, const char *bootstrap)
 
 	/* fill in the updated boot block fields */
 	if (append) {
-		startblock = howmany(disksb.st_size, BOOT_BLOCK_BLOCKSIZE);
+		startblock = howmany(disksb.st_size, PMAX_BOOT_BLOCK_BLOCKSIZE);
 	} else if (isoblock) {
-		startblock = isoblock * (ISO_DEFAULT_BLOCK_SIZE / BOOT_BLOCK_BLOCKSIZE);
+		startblock = isoblock * (ISO_DEFAULT_BLOCK_SIZE / PMAX_BOOT_BLOCK_BLOCKSIZE);
 	} else {
-		startblock = BOOT_BLOCK_OFFSET / BOOT_BLOCK_BLOCKSIZE + 1;
+		startblock = PMAX_BOOT_BLOCK_OFFSET / PMAX_BOOT_BLOCK_BLOCKSIZE + 1;
 	}
 
-	bb.map[0].start_block = startblock;
-	bb.map[0].num_blocks = howmany(bootstrapsize, BOOT_BLOCK_BLOCKSIZE);
-	bb.magic = DEC_BOOT_MAGIC;
-	bb.load_addr = bootstrapload;
-	bb.exec_addr = bootstrapexec;
-	bb.mode = DEC_BOOTMODE_CONTIGUOUS;
+	bb.map[0].start_block = htole32(startblock);
+	bb.map[0].num_blocks = htole32(howmany(bootstrapsize, PMAX_BOOT_BLOCK_BLOCKSIZE));
+	bb.magic = htole32(PMAX_BOOT_MAGIC);
+	bb.load_addr = htole32(bootstrapload);
+	bb.exec_addr = htole32(bootstrapexec);
+	bb.mode = htole32(PMAX_BOOTMODE_CONTIGUOUS);
 
 	if (verbose) {
 		fprintf(stderr, "bootstrap starting sector: %i\n",
-		    bb.map[0].start_block);
+		    le32toh(bb.map[0].start_block));
 		fprintf(stderr, "bootstrap sector count: %i\n",
-		    bb.map[0].num_blocks);
+		    le32toh(bb.map[0].num_blocks));
 		fprintf(stderr, "bootstrap load address: %#x\n",
-		    bb.load_addr);
+		    le32toh(bb.load_addr));
 		fprintf(stderr, "bootstrap execute address: %#x\n",
-		    bb.exec_addr);
+		    le32toh(bb.exec_addr));
 	}
 
 	if (nowrite) {
@@ -281,7 +282,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		fprintf(stderr, "writing bootstrap\n");
 
 	rv = pwrite(diskfd, bootstrapbuf, bootstrapsize,
-	     startblock * BOOT_BLOCK_BLOCKSIZE);
+	     startblock * PMAX_BOOT_BLOCK_BLOCKSIZE);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != bootstrapsize)
@@ -290,7 +291,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	if (verbose)
 		fprintf(stderr, "writing boot block\n");
 
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)

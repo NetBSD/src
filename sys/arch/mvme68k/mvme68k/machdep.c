@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2000/05/26 21:19:59 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.2.1 2000/06/22 17:01:49 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -982,7 +982,6 @@ dumpsys()
 
 	/* XXX Should save registers. */
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.8 1999/03/25 18:48:51 mrg Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.8.16.1 2000/06/22 17:10:44 minoura Exp $	*/
 
 /*
  *

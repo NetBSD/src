@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.9 1999/08/05 15:58:17 minoura Exp $
+|	$NetBSD: vectors.s,v 1.9.10.1 2000/06/22 17:05:42 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -151,7 +151,7 @@ GLOBAL(vectab)
 	VECTOR(intiotrap)	/* 96: FDC */
 	VECTOR(fdeject)		/* 97: floppy ejection */
 	VECTOR(intiotrap)	/* 98: unassigned, reserved */
-	VECTOR(partrap)		/* 99: parallel port */
+	VECTOR(intiotrap)	/* 99: parallel port */
 	VECTOR(intiotrap)	/* 100: FDC DMA */
 	VECTOR(intiotrap)	/* 101: FDC DMA (error) */
 	VECTOR(intiotrap)	/* 102: unassigned, reserved */

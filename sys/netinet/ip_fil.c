@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.53 2000/05/23 06:07:43 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.53.2.1 2000/06/22 17:09:45 minoura Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.53 2000/05/23 06:07:43 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.53.2.1 2000/06/22 17:09:45 minoura Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.9 2000/05/22 12:48:28 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.10 2000/05/25 20:16:44 darrenr Exp";
 #endif
 #endif
 
@@ -170,10 +170,6 @@ static int	write_output __P((struct ifnet *, struct mbuf *,
 #endif
 int	fr_running = 0;
 
-#if defined(__NetBSD__)
-#include <sys/callout.h>
-struct callout ipfr_slowtimer_ch;
-#endif
 #if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 struct callout_handle ipfr_slowtimer_ch;
 #endif
@@ -1115,6 +1111,19 @@ int dst;
 	m = NULL;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
+		if ((oip->ip_p == IPPROTO_ICMP) &&
+		    !(fin->fin_fi.fi_fl & FI_SHORT))
+			switch (ntohs(fin->fin_data[0]) >> 8)
+			{
+			case ICMP_ECHO :
+			case ICMP_TSTAMP :
+			case ICMP_IREQ :
+			case ICMP_MASKREQ :
+				break;
+			default :
+				return 0;
+			}
+
 # if	(BSD < 199306) || defined(__sgi)
 		avail = MLEN;
 		m = m_get(M_DONTWAIT, MT_HEADER);

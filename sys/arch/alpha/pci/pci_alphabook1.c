@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.2 1998/11/19 02:35:39 ross Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.2.18.1 2000/06/22 16:58:41 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.2 1998/11/19 02:35:39 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.2.18.1 2000/06/22 16:58:41 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.2 1998/11/19 02:35:39 ross Exp 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/intrcnt.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
@@ -96,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.2 1998/11/19 02:35:39 ross Exp 
 int     dec_alphabook1_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_alphabook1_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_alphabook1_intr_evcnt __P((void *, pci_intr_handle_t));
 void    *dec_alphabook1_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void    dec_alphabook1_intr_disestablish __P((void *, void *));
@@ -122,6 +122,7 @@ pci_alphabook1_pickintr(lcp)
 	pc->pc_intr_v = lcp;
 	pc->pc_intr_map = dec_alphabook1_intr_map;
 	pc->pc_intr_string = dec_alphabook1_intr_string;
+	pc->pc_intr_evcnt = dec_alphabook1_intr_evcnt;
 	pc->pc_intr_establish = dec_alphabook1_intr_establish;
 	pc->pc_intr_disestablish = dec_alphabook1_intr_disestablish;
 
@@ -195,6 +196,18 @@ dec_alphabook1_intr_string(lcv, ih)
 #endif
 
 	return sio_intr_string(NULL /*XXX*/, ih);
+}
+
+const struct evcnt *
+dec_alphabook1_intr_evcnt(lcv, ih)
+	void *lcv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct lca_config *lcp = lcv;
+#endif
+
+	return sio_intr_evcnt(NULL /*XXX*/, ih);
 }
 
 void *

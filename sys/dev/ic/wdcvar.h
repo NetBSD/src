@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.24 2000/04/01 14:32:22 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.24.2.1 2000/06/22 17:07:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -129,6 +130,9 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
 	void 		(*set_modes) __P((struct channel_softc *));
+
+	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
+	void		(*irqack) __P((struct channel_softc *));
 };
 
  /*

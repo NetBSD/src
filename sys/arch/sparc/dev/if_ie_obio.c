@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.14 2000/05/09 22:42:08 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.14.2.1 2000/06/22 17:03:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	/*
 	 * Allocate control & buffer memory.
 	 */
-	if ((error = bus_dmamap_create(dmatag, msize, 1, msize, NBPG,
+	if ((error = bus_dmamap_create(dmatag, msize, 1, msize, 0,
 					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
 					&sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",

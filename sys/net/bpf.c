@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.55 2000/05/12 05:58:01 jonathan Exp $	*/
+/*	$NetBSD: bpf.c,v 1.55.2.1 2000/06/22 17:09:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -163,9 +163,9 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 		break;
 
 	case DLT_FDDI:
-		sockp->sa_family = AF_UNSPEC;
-		/* XXX 4(FORMAC)+6(dst)+6(src)+3(LLC)+5(SNAP) */
-		hlen = 24;
+		sockp->sa_family = AF_LINK;
+		/* XXX 4(FORMAC)+6(dst)+6(src) */
+		hlen = 16;
 		align = 0;
 		break;
 
@@ -499,7 +499,7 @@ bpf_wakeup(d)
 	if (d->bd_async) {
 		if (d->bd_pgid > 0)
 			gsignal (d->bd_pgid, SIGIO);
-		else if ((p = pfind (-d->bd_pgid)) != NULL)
+		else if (d->bd_pgid && (p = pfind (-d->bd_pgid)) != NULL)
 			psignal (p, SIGIO);
 	}
 
@@ -518,7 +518,7 @@ bpfwrite(dev, uio, ioflag)
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
-	static struct sockaddr dst;
+	static struct sockaddr_storage dst;
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -528,7 +528,8 @@ bpfwrite(dev, uio, ioflag)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, ifp->if_mtu, &m, &dst);
+	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, ifp->if_mtu, &m,
+		(struct sockaddr *) &dst);
 	if (error)
 		return (error);
 
@@ -536,10 +537,10 @@ bpfwrite(dev, uio, ioflag)
 		return (EMSGSIZE);
 
 	if (d->bd_hdrcmplt)
-		dst.sa_family = pseudo_AF_HDRCMPLT;
+		dst.ss_family = pseudo_AF_HDRCMPLT;
 
 	s = splsoftnet();
-	error = (*ifp->if_output)(ifp, m, &dst, NULL);
+	error = (*ifp->if_output)(ifp, m, (struct sockaddr *) &dst, NULL);
 	splx(s);
 	/*
 	 * The driver frees the mbuf.

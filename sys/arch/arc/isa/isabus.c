@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.8 2000/03/23 06:34:25 thorpej Exp $	*/
+/*	$NetBSD: isabus.c,v 1.8.2.1 2000/06/22 16:59:15 minoura Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -124,6 +124,7 @@ struct isabr_softc {
 	struct	device sc_dv;
 	struct	arc_isa_bus arc_isa_cs;
 	struct	abus sc_bus;
+	struct arc_bus_dma_tag sc_dmat;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -136,6 +137,11 @@ struct cfattach isabr_ca = {
 };
 extern struct cfdriver isabr_cd;
 
+extern struct arc_bus_space arc_bus_io, arc_bus_mem;
+
+void	isabr_attach_hook __P((struct device *, struct device *,
+			struct isabus_attach_args *));
+const struct evcnt *isabr_intr_evcnt __P((isa_chipset_tag_t, int));
 void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *));
 void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
@@ -177,13 +183,17 @@ isabrattach(parent, self, aux)
 	switch(cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
-	case NEC_RD94:
+	case NEC_R94:
+	case NEC_R96:
+		jazz_bus_dma_tag_init(&sc->sc_dmat);
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
+		_bus_dma_tag_init(&sc->sc_dmat); /* XXX dedicated bounce mem */
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	case DESKSTATION_RPC44:
+		isadma_bounce_tag_init(&sc->sc_dmat);
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	default:
@@ -194,12 +204,15 @@ isabrattach(parent, self, aux)
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_ISABR;
 
+	sc->arc_isa_cs.ic_attach_hook = isabr_attach_hook;
+	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
 	iba.iba_busname = "isa";
-	iba.iba_iot = (bus_space_tag_t)&arc_bus_io;
-	iba.iba_memt = (bus_space_tag_t)&arc_bus_mem;
+	iba.iba_iot = &arc_bus_io;
+	iba.iba_memt = &arc_bus_mem;
+	iba.iba_dmat = &sc->sc_dmat;
 	iba.iba_ic = &sc->arc_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
@@ -213,8 +226,8 @@ isabrprint(aux, pnp)
 
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
-        printf(" isa_io_base 0x%x isa_mem_base 0x%x",
-		arc_bus_io.bus_base, arc_bus_mem.bus_base);
+        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx",
+		arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
         return (UNCONF);
 }
 
@@ -303,6 +316,25 @@ intr_calculatemasks()
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 	}
+}
+
+void
+isabr_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
+
+	/* Nothing to do. */
+}
+
+const struct evcnt *
+isabr_intr_evcnt(ic, irq)
+	isa_chipset_tag_t ic;
+	int irq;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*
@@ -404,7 +436,8 @@ isabr_iointr(mask, cf)
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
 
-	case NEC_RD94:
+	case NEC_R94:
+	case NEC_R96:
 		isa_vector = in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1);
 		break;
 

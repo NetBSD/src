@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.47 2000/05/27 15:28:58 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.47.2.1 2000/06/22 17:10:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  * respective subsystem header files.
  */
 
-#define CTL_MAXNAME	12	/* largest number of components supported */
+#define	CTL_MAXNAME	12	/* largest number of components supported */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -95,7 +95,7 @@ struct ctlname {
 #define	CTL_PROC	10		/* per-proc attr */
 #define	CTL_MAXID	11		/* number of valid top-level ids */
 
-#define CTL_NAMES { \
+#define	CTL_NAMES { \
 	{ 0, 0 }, \
 	{ "kern", CTLTYPE_NODE }, \
 	{ "vm", CTLTYPE_NODE }, \
@@ -135,11 +135,11 @@ struct ctlname {
 #define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
-#define KERN_RAWPARTITION	24	/* int: raw partition number */
+#define	KERN_RAWPARTITION	24	/* int: raw partition number */
 #define	KERN_NTPTIME		25	/* struct: extended-precision time */
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
-#define KERN_AUTONICETIME	27	/* int: proc time before autonice */
-#define KERN_AUTONICEVAL	28	/* int: auto nice value */
+#define	KERN_AUTONICETIME	27	/* int: proc time before autonice */
+#define	KERN_AUTONICEVAL	28	/* int: auto nice value */
 #define	KERN_RTC_OFFSET		29	/* int: offset of rtc from gmt */
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
@@ -163,9 +163,11 @@ struct ctlname {
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: cpu time counters */
-#define	KERN_MAXID		52	/* number of valid kern ids */
+#define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
+#define	KERN_MSGBUF		53	/* kernel message buffer */
+#define	KERN_MAXID		54	/* number of valid kern ids */
 
-#define CTL_KERN_NAMES { \
+#define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
 	{ "ostype", CTLTYPE_STRING }, \
 	{ "osrelease", CTLTYPE_STRING }, \
@@ -218,26 +220,22 @@ struct ctlname {
 	{ "fscale", CTLTYPE_INT }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
+	{ "sysvipc_info", CTLTYPE_STRUCT }, \
+	{ "msgbuf", CTLTYPE_STRUCT }, \
 }
-
-/*
- * KERN_PROC_ARGS subtypes
- */
-#define	KERN_PROC_ARGV		1	/* argv */
-#define	KERN_PROC_NARGV		2	/* number of strings in above */
-#define	KERN_PROC_ENV		3	/* environ */
-#define	KERN_PROC_NENV		4	/* number of strings in above */
 
 /*
  * KERN_PROC subtypes
  */
-#define KERN_PROC_ALL		0	/* everything */
-#define	KERN_PROC_PID		1	/* by process id */
-#define	KERN_PROC_PGRP		2	/* by process group id */
-#define	KERN_PROC_SESSION	3	/* by session of pid */
-#define	KERN_PROC_TTY		4	/* by controlling tty */
-#define	KERN_PROC_UID		5	/* by effective uid */
-#define	KERN_PROC_RUID		6	/* by real uid */
+#define	KERN_PROC_ALL		 0	/* everything */
+#define	KERN_PROC_PID		 1	/* by process id */
+#define	KERN_PROC_PGRP		 2	/* by process group id */
+#define	KERN_PROC_SESSION	 3	/* by session of pid */
+#define	KERN_PROC_TTY		 4	/* by controlling tty */
+#define	KERN_PROC_UID		 5	/* by effective uid */
+#define	KERN_PROC_RUID		 6	/* by real uid */
+#define	KERN_PROC_GID		 7	/* by effective gid */
+#define	KERN_PROC_RGID		 8	/* by real gid */
 
 /*
  * KERN_PROC_TTY sub-subtypes
@@ -358,8 +356,8 @@ struct kinfo_proc2 {
 	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
 
-	int16_t	p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
-	int16_t	p_acflag;		/* U_SHORT: Accounting flags. */
+	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
+	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
 
 	char	p_comm[KI_MAXCOMLEN];
 
@@ -402,6 +400,20 @@ struct kinfo_proc2 {
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
 };
 
+/*
+ * KERN_PROC_ARGS subtypes
+ */
+#define	KERN_PROC_ARGV		1	/* argv */
+#define	KERN_PROC_NARGV		2	/* number of strings in above */
+#define	KERN_PROC_ENV		3	/* environ */
+#define	KERN_PROC_NENV		4	/* number of strings in above */
+
+/*
+ * KERN_SYSVIPC_INFO subtypes
+ */
+#define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
+#define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
 
 /*
  * CTL_HW identifiers
@@ -419,7 +431,7 @@ struct kinfo_proc2 {
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
 #define	HW_MAXID	12		/* number of valid hw ids */
 
-#define CTL_HW_NAMES { \
+#define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
 	{ "machine", CTLTYPE_STRING }, \
 	{ "model", CTLTYPE_STRING }, \
@@ -520,13 +532,13 @@ struct kinfo_proc2 {
  * CTL_PROC subtype. Either a PID, or a magic value for the current proc.
  */
 
-#define PROC_CURPROC	(~((u_int)1 << 31))
+#define	PROC_CURPROC	(~((u_int)1 << 31))
 
 /*
  * CTL_PROC tree: either corename (string), or a limit
  * (rlimit.<type>.{hard,soft}, int).
  */
-#define PROC_PID_CORENAME	1
+#define	PROC_PID_CORENAME	1
 #define	PROC_PID_LIMIT		2
 #define	PROC_PID_MAXID		3
 
@@ -537,18 +549,18 @@ struct kinfo_proc2 {
 }
 
 /* Limit types from <sys/resources.h> */
-#define PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
-#define PROC_PID_LIMIT_FSIZE	(RLIMIT_FSIZE+1)
-#define PROC_PID_LIMIT_DATA	(RLIMIT_DATA+1)
-#define PROC_PID_LIMIT_STACK	(RLIMIT_STACK+1)
-#define PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
-#define PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
-#define PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
+#define	PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
+#define	PROC_PID_LIMIT_FSIZE	(RLIMIT_FSIZE+1)
+#define	PROC_PID_LIMIT_DATA	(RLIMIT_DATA+1)
+#define	PROC_PID_LIMIT_STACK	(RLIMIT_STACK+1)
+#define	PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
+#define	PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
+#define	PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
 #define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
-#define PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
-#define PROC_PID_LIMIT_MAXID 	10
+#define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
+#define	PROC_PID_LIMIT_MAXID 	10
 
-#define PROC_PID_LIMIT_NAMES { \
+#define	PROC_PID_LIMIT_NAMES { \
 	{ 0, 0 }, \
 	{ "cputime", CTLTYPE_NODE }, \
 	{ "filesize", CTLTYPE_NODE }, \
@@ -561,11 +573,11 @@ struct kinfo_proc2 {
 	{ "descriptors", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
-#define PROC_PID_LIMIT_TYPE_SOFT	1
-#define PROC_PID_LIMIT_TYPE_HARD	2
-#define PROC_PID_LIMIT_TYPE_MAXID	3
+#define	PROC_PID_LIMIT_TYPE_SOFT	1
+#define	PROC_PID_LIMIT_TYPE_HARD	2
+#define	PROC_PID_LIMIT_TYPE_MAXID	3
 
-#define PROC_PID_LIMIT_TYPE_NAMES { \
+#define	PROC_PID_LIMIT_TYPE_NAMES { \
 	{0, 0}, \
 	{ "soft", CTLTYPE_QUAD }, \
 	{ "hard", CTLTYPE_QUAD }, \
@@ -615,12 +627,11 @@ int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
-int sysctl_file __P((char *, size_t *));
 struct radix_node;
 struct walkarg;
-int sysctl_clockrate __P((char *, size_t *));
+int sysctl_clockrate __P((void *, size_t *));
 int sysctl_vnode __P((char *, size_t *, struct proc *));
-int sysctl_ntptime __P((char *, size_t *));
+int sysctl_ntptime __P((void *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif

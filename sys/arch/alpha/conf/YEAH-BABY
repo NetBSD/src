@@ -1,13 +1,9 @@
-# $NetBSD: YEAH-BABY,v 1.2 2000/05/23 02:04:31 thorpej Exp $
+# $NetBSD: YEAH-BABY,v 1.2.2.1 2000/06/22 16:58:24 minoura Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
 
 include	"arch/alpha/conf/std.alpha"
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
 
 maxusers 32
 
@@ -354,7 +350,7 @@ uhub*	at	uhub? port ?
 #wskbd*	at	ukbd? console ?
 
 # USB Generic HID devices
-#uhid*	at	uhub? port ?
+uhid*	at	uhub? port ?
 
 # USB Printers
 ulpt*	at	uhub? port ?

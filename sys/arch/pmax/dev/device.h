@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.15 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.15.2.1 2000/06/22 17:02:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,9 @@ struct pmax_scsi_device {
  * needs to execute a SCSI command.
  */
 typedef struct ScsiCmd {
+#if NXSII == 0			/* Not used for MI SCSI */
 	struct	pmax_scsi_device *sd; /* device requesting the command */
+#endif
 	int	unit;		/* unit number passed to device done routine */
 	int	flags;		/* control flags for this command (see below) */
 	int	buflen;		/* length of the data buffer in bytes */
@@ -111,6 +113,7 @@ typedef struct ScsiCmd {
 	int	cmdlen;		/* length of data in cmdbuf */
 	u_char	*cmd;		/* buffer for the SCSI command */
 	int	error;		/* compatibility hack for new scsi */
+	int	lun;		/* LUN for MI SCSI */
 	struct callout timo_ch;	/* timeout callout handle */
 } ScsiCmd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.17 1999/07/07 20:23:45 ws Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.17.10.1 2000/06/22 17:09:03 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -160,6 +160,8 @@ vmcmd_map_pagedvn(p, cmd)
         if (cmd->ev_offset & PAGE_MASK)
                 return(EINVAL);
 	if (cmd->ev_addr & PAGE_MASK)
+		return(EINVAL);
+	if (cmd->ev_len & PAGE_MASK)
 		return(EINVAL);
 
 	/*

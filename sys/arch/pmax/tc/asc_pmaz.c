@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.5 2000/03/06 03:09:43 mhitch Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.5.2.1 2000/06/22 17:02:35 minoura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.5 2000/03/06 03:09:43 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.5.2.1 2000/06/22 17:02:35 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,13 +78,6 @@ static void asc_pmaz_attach __P((struct device *, struct device *, void *));
 
 struct cfattach xasc_pmaz_ca = {
 	sizeof(struct asc_softc), asc_pmaz_match, asc_pmaz_attach
-};
-
-static struct scsipi_device asc_pmaz_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
@@ -163,8 +156,7 @@ asc_pmaz_attach(parent, self, aux)
 	}
 	asc->sc_base = (caddr_t)ta->ta_addr;	/* XXX XXX XXX */
 
-	tc_intr_establish(parent, ta->ta_cookie, IPL_BIO,
-		(int (*)(void *))ncr53c9x_intr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, IPL_BIO, ncr53c9x_intr, sc);
 	
 	sc->sc_id = 7;
 	sc->sc_freq = (ta->ta_busspeed) ? 25000000 : 12500000;
@@ -206,9 +198,7 @@ asc_pmaz_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_pmaz_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 static void

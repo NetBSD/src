@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2000/05/26 21:20:16 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.36.2.1 2000/06/22 17:04:03 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,17 +76,18 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	curcpu()		(cpuinfo.ci_self)
+#define	curproc			(curcpu()->ci_curproc)
+#define	CPU_IS_PRIMARY(ci)	((ci)->master)
+
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	0		/* XXX */
+#define	cpu_number()	(cpuinfo.cpu_no)
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));
 #endif
-
-#define	curcpu()	(&cpuinfo)
-#define	curproc		(curcpu()->ci_curproc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -218,6 +219,7 @@ int	probeget __P((caddr_t, int));
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));
 void 	proc_trampoline __P((void));
+void	switchexit __P((struct proc *));
 struct pcb;
 void	snapshot __P((struct pcb *));
 struct frame *getfp __P((void));

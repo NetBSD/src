@@ -1,4 +1,4 @@
-/*	$NetBSD: arctype.h,v 1.6 2000/03/03 12:50:19 soda Exp $	*/
+/*	$NetBSD: arctype.h,v 1.6.2.1 2000/06/22 16:59:04 minoura Exp $	*/
 /*	$OpenBSD: archtype.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 
 /*
@@ -38,11 +38,14 @@
 #define	ARC_CLASS		0x00	/* Arch class ARC */
 #define	ACER_PICA_61		0x01	/* Acer Labs Pica 61 */
 #define	MAGNUM			0x02	/* Mips MAGNUM R4000 */
-#define	NEC_RD94		0x04	/* NEC RISCstation 2250, etc. */
-#define	DESKSTATION_RPC44	0x05	/* Deskstation xxx */
-#define	DESKSTATION_TYNE	0x06	/* Deskstation xxx */
-#define	NKK_AQUARIUS		0x07	/* NKK R4{67}00 PC */
-#define	SNI_RM200		0x08	/* Siemens Nixdorf RM200 */
+#define NEC_R94			0x03	/* NEC RISCstation 2200 EISA */
+#define NEC_RAx94		0x04	/* NEC RISCstation 2200 PCI */
+#define	NEC_RD94		0x05	/* NEC RISCstation 2250 */
+#define	NEC_R96			0x06	/* NEC RISCserver 2200 */
+#define	DESKSTATION_RPC44	0x07	/* Deskstation xxx */
+#define	DESKSTATION_TYNE	0x08	/* Deskstation xxx */
+#define	NKK_AQUARIUS		0x09	/* NKK R4{67}00 PC */
+#define	SNI_RM200		0x0a	/* Siemens Nixdorf RM200 */
 
 #if 0 /* XXX */
 #define	SGI_CLASS		0x10	/* Silicon Graphics Class */

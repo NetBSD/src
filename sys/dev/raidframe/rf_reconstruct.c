@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.22 2000/03/13 23:52:36 soren Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.22.2.1 2000/06/22 17:07:57 minoura Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -435,7 +435,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			raidPtr->numFailures++;
 			raidPtr->Disks[row][col].status = rf_ds_failed;
 			raidPtr->status[row] = rf_rs_degraded;
-			rf_update_component_labels(raidPtr);
+			rf_update_component_labels(raidPtr, 
+						   RF_NORMAL_COMPONENT_UPDATE);
 		}
 
 		while (raidPtr->reconInProgress) {
@@ -699,7 +700,14 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			if (ProcessReconEvent(raidPtr, row, event))
 				reconDesc->numDisksDone++;
-			raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+			raidPtr->reconControl[row]->numRUsTotal = 
+				mapPtr->totalRUs;
+			raidPtr->reconControl[row]->numRUsComplete = 
+				mapPtr->totalRUs - 
+				rf_UnitsLeftToReconstruct(mapPtr);
+
+			raidPtr->reconControl[row]->percentComplete = 
+				(raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}

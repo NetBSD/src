@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.40 2000/05/26 21:20:26 thorpej Exp $	   */
+/*	$NetBSD: subr.s,v 1.40.2.1 2000/06/22 17:05:28 minoura Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -65,6 +65,8 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
 	addl3	$USPACE,_proc0paddr,r0		# Get kernel stack top
 	mtpr	r0,$PR_KSP			# put in IPR KSP
 	movl	r0,_Sysmap			# SPT start addr after KSP
+	movab	IFTRAP(r0),4(r0)		# Save trap address in ESP
+	mtpr	4(r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
 	movl	_proc0paddr,r0
@@ -100,6 +102,7 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
  * Signal handler code.
  */
 
+		.align	2
 		.globl	_sigcode,_esigcode
 _sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -109,10 +112,10 @@ _sigcode:	pushr	$0x3f
 		chmk	$SYS___sigreturn14
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _esigcode:
 
 #ifdef COMPAT_IBCS2
+		.align	2
 		.globl	_ibcs2_sigcode,_ibcs2_esigcode
 _ibcs2_sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -122,11 +125,11 @@ _ibcs2_sigcode:	pushr	$0x3f
 		chmk	$SYS___sigreturn14
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _ibcs2_esigcode:
 #endif /* COMPAT_IBCS2 */
 
 #ifdef COMPAT_ULTRIX
+		.align	2
 		.globl	_ultrix_sigcode,_ultrix_esigcode
 _ultrix_sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
@@ -136,28 +139,33 @@ _ultrix_sigcode:	pushr	$0x3f
 		chmk	$ULTRIX_SYS_sigreturn
 		chmk	$SYS_exit
 		halt	
-		.align	2
 _ultrix_esigcode:
 #endif
 
+		.align	2
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
-		.word	0x9f16
-		.long	_cmn_idsptch
-		.long	0
-		.long	0
+		.word	0x9f16		# jsb to absolute address
+		.long	_cmn_idsptch	# the absolute address
+		.long	0		# the callback interrupt routine
+		.long	0		# its argument
+		.long	0		# ptr to correspond evcnt struct
 _eidsptch:
 
 _cmn_idsptch:
-		movl	(sp)+,r0
-		pushl	4(r0)
-		calls	$1,*(r0)
-		popr	$0x3f
-		rei
+		movl	(sp)+,r0	# get pointer to idspvec
+		movl	8(r0),r1	# get evcnt pointer
+		beql	1f		# no ptr, skip increment
+		incl	EV_COUNT(r1)	# increment low longword
+		adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
+1:		pushl	4(r0)		# push argument
+		calls	$1,*(r0)	# call interrupt routine
+		popr	$0x3f		# pop registers
+		rei			# return from interrut
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
-		mfpr	$0x12,r0
-		mtpr	$0x1f,$0x12
+		mfpr	$PR_IPL,r0	# splhigh()
+		mtpr	$IPL_HIGH,$PR_IPL
 		movl	4(ap),r2	# First argument, the address
 		movl	8(ap),r1	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
@@ -180,26 +188,10 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 		brb	5f
 
 4:		incl	r3		# Got machine chk => addr bad
-5:		mtpr	(sp)+,$0x12
+5:		mtpr	(sp)+,$PR_IPL
 		movl	r3,r0
 		ret
 
-# Have bcopy and bzero here to be sure that system files that not gets
-# macros.h included will not complain.
-#if 0
-ENTRY(bcopy,0)
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movl	0xc(ap), r2
-	movc3	r2, (r0), (r1)
-	ret
-
-ENTRY(bzero,0)
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movc5	$0, (r0), $0, r1, (r0)
-	ret
-#endif
 #ifdef DDB
 /*
  * DDB is the only routine that uses setjmp/longjmp.
@@ -210,7 +202,7 @@ _setjmp:.word	0
 	movl	8(fp), (r0)
 	movl	12(fp), 4(r0)
 	movl	16(fp), 8(r0)
-	addl3	fp,$28,12(r0)
+	moval	28(fp),12(r0)
 	clrl	r0
 	ret
 
@@ -237,7 +229,7 @@ setrq:	.asciz	"setrunqueue"
 #endif
 1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
 	movaq	_sched_qs[r1],r2	# get address of queue
-	insque	(r0),*4(r2)		# put proc last in queue
+	insque	(r0),*PH_RLINK(r2)	# put proc last in queue
 	bbss	r1,_sched_whichqs,1f	# set queue bit.
 1:	rsb
 
@@ -250,18 +242,17 @@ JSBENTRY(Remrq)
 remrq:	.asciz	"remrunqueue"
 #endif
 1:	remque	(r0),r2
-	bneq	1f		# Not last process on queue
+	bneq	1f			# Not last process on queue
 	bbsc	r1,_sched_whichqs,1f
-1:	clrl	4(r0)		# saftey belt
+1:	clrl	P_BACK(r0)		# saftey belt
 	rsb
 
 #
 # Idle loop. Here we could do something fun, maybe, like calculating
 # pi or something.
 #
-idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
-1:	movab	_uvm,r0
-	tstl	UVM_PAGE_IDLE_ZERO(r0)
+idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
+1:	tstl	_uvm+UVM_PAGE_IDLE_ZERO
 	beql	2f
 #if 0
 	calls	$0,_uvm_pageidlezero
@@ -276,20 +267,15 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 #
 
 JSBENTRY(Swtch)
-#if defined(MULTIPROCESSOR)
-	pushl	r0
-	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
-	clrl	CI_CURPROC(r0)		# Stop process accounting
-	movl	(sp)+,r0
-#else
-	clrl	_curproc		# Stop process accounting
-#endif
-	mtpr	$0x1f,$PR_IPL		# block all interrupts
-	ffs	$0,$32,_sched_whichqs,r3	# Search for bit set
+	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
+	clrl	CI_CURPROC(r1)		# Stop process accounting
+	mtpr	$IPL_HIGH,$PR_IPL	# block all interrupts
+	ffs	$0,$32,_sched_whichqs,r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
 	movaq	_sched_qs[r3],r1	# get address of queue head
 	remque	*(r1),r2		# remove proc pointed to by queue head
+					# proc ptr is now in r2
 #ifdef DIAGNOSTIC
 	bvc	1f			# check if something on queue
 	pushab	noque
@@ -297,31 +283,31 @@ JSBENTRY(Swtch)
 noque:	.asciz	"swtch"
 #endif
 1:	bneq	2f			# more processes on queue?
-	bbsc	r3,_sched_whichqs,2f		# no, clear bit in whichqs
-2:	clrl	4(r2)			# clear proc backpointer
-	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
+	bbsc	r3,_sched_whichqs,2f	# no, clear bit in whichqs
+2:	clrl	P_BACK(r2)		# clear proc backpointer
+	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
+	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
-	pushl	r0
-	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
-	movl	r2,CI_CURPROC(r0)	# set new process running
-	clrl	CI_WANT_RESCHED(r0)	# we are now changing process
-	movl	(sp)+,r0
-#else
-	movl	r2,_curproc		# set new process running
-	clrl	_want_resched		# we are now changing process
+	movl	r1,P_CPU(r2)		# p->p_cpu = curcpu();
 #endif
+	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
+	movl	r2,CI_CURPROC(r1)	# set new process running
+	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
 	cmpl	r0,r2			# Same process?
 	bneq	1f			# No, continue
 	rsb
 1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
-	addl3	r0,$IFTRAP,pcbtrap	# Save for copy* functions.
+	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
+	mtpr	r1,$PR_ESP		# Use ESP as CPU-specific pointer
+	movl	r1,ESP(r0)		# Must save in PCB also.
+	mfpr	$PR_SSP,r1		# New process must inherit cpu_info
+	movl	r1,SSP(r0)		# Put it in new PCB
 
 #
 # Nice routine to get physical from virtual adresses.
 #
 	extzv	$9,$21,r0,r1		# extract offset
-	movl	*_Sysmap[r1],r2		# get pte
-	ashl	$9,r2,r3		# shift to get phys address.
+	ashl	$9,*_Sysmap[r1],r3
 
 #
 # Do the actual process switch. pc + psl are already on stack, from
@@ -329,6 +315,7 @@ noque:	.asciz	"swtch"
 #
 	svpctx
 	mtpr	r3,$PR_PCBB
+_tramp:	.globl	_tramp	# used to kick off multiprocessor systems.
 	ldpctx
 	rei
 
@@ -338,17 +325,17 @@ noque:	.asciz	"swtch"
 
 ENTRY(cpu_exit,0)
 	movl	4(ap),r6	# Process pointer in r6
-	mtpr	$0x18,$PR_IPL	# Block almost everything
-	addl3	$512,_scratch,sp # Change stack, and schedule it to be freed
-
-	pushl	r6		# exit2(p)
-	calls	$1,_exit2
-
-	clrl	r0		# No process to switch from
-	bicl3	$0xc0000000,_scratch,r1
-	mtpr	r1,$PR_PCBB
+	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
+	mfpr	$PR_SSP,r7	# get cpu_info ptr
+	movl	CI_EXIT(r7),r8	# scratch page address
+	movab	512(r8),sp	# change stack
+	bicl2	$0xc0000000,r8	# get physical address
+	mtpr	r8,$PR_PCBB	# new PCB
+	mtpr	r7,$PR_SSP	# In case...
+	pushl	r6
+	calls	$1,_exit2	# release last resources.
+	clrl	r0
 	brw	Swtch
-
 
 #
 # copy/fetch/store routines. 
@@ -364,22 +351,26 @@ ENTRY(copyin, 0)
 	movl	4(ap),r1
 	blss	3f		# kernel space
 	movl	8(ap),r2
-2:	movab	1f,*pcbtrap
+2:	mfpr	$PR_ESP,r3
+	movab	1f,(r3)
 	movc3	12(ap),(r1),(r2)
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r3
+	clrl	(r3)
 	ret
 
 3:	mnegl	$1,r0
 	ret
 
 ENTRY(kcopy,0)
-	movl	*pcbtrap,-(sp)
-	movab	1f,*pcbtrap
+	mfpr	$PR_ESP,r3
+	movl	(r3),-(sp)
+	movab	1f,(r3)
 	movl	4(ap),r1
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
 	clrl	r1
-1:	movl	(sp)+,*pcbtrap
+1:	mfpr	$PR_ESP,r3
+	movl	(sp)+,(r3)
 	movl	r1,r0
 	ret
 
@@ -409,7 +400,8 @@ ENTRY(copystr,0)
 	movl	12(ap),r3	# len
 	movl	16(ap),r2	# copied
 	clrl	r0
-	movab	3f,*pcbtrap	# XXX - MULTIPROCESSOR
+	mfpr	$PR_ESP,r1
+	movab	3f,(r1)
 
 	tstl	r3		# any chars to copy?
 	bneq	1f		# yes, jump for more
@@ -424,36 +416,43 @@ ENTRY(copystr,0)
 	movl	$ENAMETOOLONG,r0 # inform about too long string
 	brb	0b		# out of chars
 
-3:	clrl	*pcbtrap	# XXX - MULTIPROCESSOR
+3:	mfpr	$PR_ESP,r1
+	clrl	(r1)
 	brb	0b
 
 ENTRY(subyte,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movb	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
 ENTRY(suword,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movl	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
 ENTRY(suswintr,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movw	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
@@ -463,19 +462,14 @@ ENTRY(suswintr,0)
 ENTRY(fuswintr,0)
 	movl	4(ap),r0
 	blss	3b
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movzwl	(r0),r1
-	movab	1f,*pcbtrap
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
-#
-# data department
-#
-	.data
-
-_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
-pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
 
 /*
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
@@ -504,3 +498,10 @@ ENTRY(blkclr,R6)
 	jgtr	1b
 	movc5	$0,(r3),$0,r6,(r3)
 	ret
+
+#
+# data department
+#
+	.data
+
+_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.

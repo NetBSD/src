@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.15 2000/03/30 12:45:31 augustss Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.15.2.1 2000/06/22 17:06:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -3161,7 +3161,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	u_int32_t offset;
 	u_int32_t length;
 	int error = 0;
-	int s = 0;
 	int i;
 
 	/* 
@@ -3267,7 +3266,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (cmd == EIOCSEEPROM) {
 			printf("%s:  writing EEPROM\n", sc->sc_dev.dv_xname);
 			sc->sc_flags |= ESH_FL_EEPROM_BUSY;
-			s = spl0();
 		}
 
 		/* Do that EEPROM voodoo that you do so well... */
@@ -3317,7 +3315,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (cmd == EIOCSEEPROM) {
 			sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
 			wakeup((void *)&sc->sc_flags);
-			splx(s);
 			printf("%s:  done writing EEPROM\n", 
 			       sc->sc_dev.dv_xname);
 		}

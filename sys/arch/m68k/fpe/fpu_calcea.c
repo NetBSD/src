@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.8 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.8.10.1 2000/06/22 17:01:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -84,7 +84,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 #ifdef DEBUG_FPE
 	printf("decode_ea: register direct reg=%d\n", ea->ea_regnum);
 #endif
-    } else if (modreg == 074) {
+    } else if ((modreg & 077) == 074) {
 	/* immediate */
 	ea->ea_flags = EA_IMMED;
 	sig = fetch_immed(frame, insn, &ea->ea_immed[0]);

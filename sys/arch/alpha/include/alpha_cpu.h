@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.39 2000/04/03 01:10:17 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.39.2.1 2000/06/22 16:58:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -315,19 +315,16 @@ typedef unsigned long alpha_pt_entry_t;
 /*
  * Misc. support routines.
  */
-const char	*alpha_dsr_sysname __P((void));
+const char	*alpha_dsr_sysname(void);
 
 /*
  * Stubs for Alpha instructions normally inaccessible from C.
  */
-unsigned long	alpha_amask __P((unsigned long));
-unsigned long	alpha_implver __P((void));
-
-static __inline unsigned long alpha_rpcc __P((void))
-	__attribute__((__unused__));
+unsigned long	alpha_amask(unsigned long);
+unsigned long	alpha_implver(void);
 
 static __inline unsigned long
-alpha_rpcc()
+alpha_rpcc(void)
 {
 	unsigned long v0;
 
@@ -343,38 +340,11 @@ alpha_rpcc()
  */
 #include <machine/pal.h>
 
-void		alpha_pal_cflush __P((unsigned long));
-void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
-unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
-void		alpha_pal_wrent __P((void *, unsigned long));
-void		alpha_pal_wrvptptr __P((unsigned long));
-
-static __inline unsigned long alpha_pal_rdmces __P((void))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_rdps __P((void))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_rdusp __P((void))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_rdval __P((void))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_swpctx __P((unsigned long))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_swpipl __P((unsigned long))
-	__attribute__((__unused__));
-static __inline void alpha_pal_tbi __P((unsigned long, vaddr_t))
-	__attribute__((__unused__));
-static __inline unsigned long alpha_pal_whami __P((void))
-	__attribute__((__unused__));
-static __inline void alpha_pal_wrfen __P((unsigned long))
-	__attribute__((__unused__));
-static __inline void alpha_pal_wripir __P((unsigned long))
-	__attribute__((__unused__));
-static __inline void alpha_pal_wrusp __P((unsigned long))
-	__attribute__((__unused__));
-static __inline void alpha_pal_wrmces __P((unsigned long))
-	__attribute__((__unused__));
-static __inline void alpha_pal_wrval __P((unsigned long))
-	__attribute__((__unused__));
+void		alpha_pal_cflush(unsigned long);
+void		alpha_pal_halt(void) __attribute__((__noreturn__));
+unsigned long	_alpha_pal_swpipl(unsigned long);	/* for profiling */
+void		alpha_pal_wrent(void *, unsigned long);
+void		alpha_pal_wrvptptr(unsigned long);
 
 #define	alpha_pal_draina() __asm __volatile("call_pal %0 # PAL_draina"	\
 				: : "i" (PAL_draina) : "memory")
@@ -383,7 +353,7 @@ static __inline void alpha_pal_wrval __P((unsigned long))
 				: : "i" (PAL_imb) : "memory")
 
 static __inline unsigned long
-alpha_pal_rdmces()
+alpha_pal_rdmces(void)
 {
 	register unsigned long v0 __asm("$0");
 
@@ -397,7 +367,7 @@ alpha_pal_rdmces()
 }
 
 static __inline unsigned long
-alpha_pal_rdps()
+alpha_pal_rdps(void)
 {
 	register unsigned long v0 __asm("$0");
 
@@ -411,7 +381,7 @@ alpha_pal_rdps()
 }
 
 static __inline unsigned long
-alpha_pal_rdusp()
+alpha_pal_rdusp(void)
 {
 	register unsigned long v0 __asm("$0");
 
@@ -425,7 +395,7 @@ alpha_pal_rdusp()
 }
 
 static __inline unsigned long
-alpha_pal_rdval()
+alpha_pal_rdval(void)
 {
 	register unsigned long v0 __asm("$0");
 
@@ -482,7 +452,7 @@ alpha_pal_tbi(unsigned long op, vaddr_t va)
 }
 
 static __inline unsigned long
-alpha_pal_whami()
+alpha_pal_whami(void)
 {
 	register unsigned long v0 __asm("$0");
 

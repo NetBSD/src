@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.29 2000/05/17 02:31:13 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.29.2.1 2000/06/22 17:04:22 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -810,8 +810,16 @@ sbus_dmamap_sync(tag, map, offset, len, ops)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
-	bus_dmamap_sync(tag->_parent, map, offset, len, ops);
+	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
+		/* Flush the CPU then the IOMMU */
+		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
+		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
+	}
+	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
+		/* Flush the IOMMU then the CPU */
+		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
+		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
+	}
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 1999/12/21 16:06:31 drochner Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.6.1 2000/06/22 17:00:24 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -53,6 +53,7 @@
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
@@ -60,11 +61,6 @@
 #include "pc.h"
 #if (NPC > 0)
 #include <machine/pccons.h>
-#endif
-
-#include "vt.h"
-#if (NVT > 0)
-#include <i386/isa/pcvt/pcvt_cons.h>
 #endif
 
 #include "com.h"
@@ -146,7 +142,7 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
@@ -161,13 +157,14 @@ consinit()
 		if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
-#if (NPC > 0) || (NVT > 0)
+#if (NPC > 0)
 		pccnattach();
 #endif
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, PCKBC_KBD_SLOT);
+		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}

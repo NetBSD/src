@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.56 2000/05/27 04:52:41 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.56.2.1 2000/06/22 17:10:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -44,6 +44,7 @@
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +159,9 @@ nfs_connect(nmp, rep)
 	int s, error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
 	struct mbuf *m;
 	u_int16_t tport;
 
@@ -188,6 +192,23 @@ nfs_connect(nmp, rep)
 		if (error)
 			goto bad;
 	}
+#ifdef INET6
+	if (saddr->sa_family == AF_INET6 && (nmp->nm_flag & NFSMNT_RESVPORT)) {
+		MGET(m, M_WAIT, MT_SONAME);
+		sin6 = mtod(m, struct sockaddr_in6 *);
+		sin6->sin6_len = m->m_len = sizeof (struct sockaddr_in6);
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_addr = in6addr_any;
+		tport = IPV6PORT_RESERVED - 1;
+		sin6->sin6_port = htons(tport);
+		while ((error = sobind(so, m)) == EADDRINUSE &&
+		       --tport > IPV6PORT_RESERVED / 2)
+			sin6->sin6_port = htons(tport);
+		m_freem(m);
+		if (error)
+			goto bad;
+	}
+#endif
 
 	/*
 	 * Protocols that do not require connections may be optionally left

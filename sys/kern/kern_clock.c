@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.55 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.55.2.1 2000/06/22 17:09:05 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -398,6 +398,24 @@ initclocks()
 
 #ifdef NTP
 	switch (hz) {
+	case 1:
+		shifthz = SHIFT_SCALE - 0;
+		break;
+	case 2:
+		shifthz = SHIFT_SCALE - 1;
+		break;
+	case 4:
+		shifthz = SHIFT_SCALE - 2;
+		break;
+	case 8:
+		shifthz = SHIFT_SCALE - 3;
+		break;
+	case 16:
+		shifthz = SHIFT_SCALE - 4;
+		break;
+	case 32:
+		shifthz = SHIFT_SCALE - 5;
+		break;
 	case 60:
 	case 64:
 		shifthz = SHIFT_SCALE - 6;
@@ -416,6 +434,25 @@ initclocks()
 	case 1000:
 	case 1024:
 		shifthz = SHIFT_SCALE - 10;
+		break;
+	case 1200:
+	case 2048:
+		shifthz = SHIFT_SCALE - 11;
+		break;
+	case 4096:
+		shifthz = SHIFT_SCALE - 12;
+		break;
+	case 8192:
+		shifthz = SHIFT_SCALE - 13;
+		break;
+	case 16384:
+		shifthz = SHIFT_SCALE - 14;
+		break;
+	case 32768:
+		shifthz = SHIFT_SCALE - 15;
+		break;
+	case 65536:
+		shifthz = SHIFT_SCALE - 16;
 		break;
 	default:
 		panic("weird hz");
@@ -468,6 +505,15 @@ hardclock(frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * If we are not the primary CPU, we're not allowed to do
+	 * any more work.
+	 */
+	if (CPU_IS_PRIMARY(curcpu()) == 0)
+		return;
+#endif
 
 	/*
 	 * Increment the time-of-day.  The increment is normally just
@@ -677,17 +723,30 @@ hardclock(frame)
 		 *   obase=2
 		 *   idealhz/realhz
 		 * where `idealhz' is the next higher power of 2, and `realhz'
-		 * is the actual value.
+		 * is the actual value.  You may need to factor this result
+		 * into a sequence of 2 multipliers to get better precision.
 		 *
 		 * Likewise, the error can be calculated with (e.g. for 100Hz):
 		 *   bc -q
 		 *   scale=24
-		 *   ((1+2^-2+2^-5)*realhz-idealhz)/idealhz
-		 * (and then multiply by 100 to get %).
+		 *   ((1+2^-2+2^-5)*(1-2^-10)*realhz-idealhz)/idealhz
+		 * (and then multiply by 1000000 to get ppm).
 		 */
 		switch (hz) {
+		case 60:
+			/* A factor of 1.000100010001 gives about 15ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 4);
+				time_adj -= (-time_adj >> 8);
+			} else {
+				time_adj += (time_adj >> 4);
+				time_adj += (time_adj >> 8);
+			}
+			break;
+
 		case 96:
-			/* A factor of 1.0101010101 gives about .025% error. */
+			/* A factor of 1.0101010101 gives about 244ppm error. */
 			if (time_adj < 0) {
 				time_adj -= (-time_adj >> 2);
 				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
@@ -698,27 +757,39 @@ hardclock(frame)
 			break;
 
 		case 100:
-			/* A factor of 1.01001 gives about .1% error. */
-			if (time_adj < 0)
+			/* A factor of 1.010001111010111 gives about 1ppm
+			   error. */
+			if (time_adj < 0) {
 				time_adj -= (-time_adj >> 2) + (-time_adj >> 5);
-			else
+				time_adj += (-time_adj >> 10);
+			} else {
 				time_adj += (time_adj >> 2) + (time_adj >> 5);
-			break;
-
-		case 60:
-			/* A factor of 1.00010001 gives about .025% error. */
-			if (time_adj < 0)
-				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
-			else
-				time_adj += (time_adj >> 4) + (time_adj >> 8);
+				time_adj -= (time_adj >> 10);
+			}
 			break;
 
 		case 1000:
-			 /* A factor of 1.0000011 gives about .055% error. */
-			if (time_adj < 0)
-				time_adj -= (-time_adj >> 6) + (-time_adj >> 7);
-			else
-				time_adj += (time_adj >> 6) + (time_adj >> 7);
+			/* A factor of 1.000001100010100001 gives about 50ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 6) + (-time_adj >> 11);
+				time_adj -= (-time_adj >> 7);
+			} else {
+				time_adj += (time_adj >> 6) + (time_adj >> 11);
+				time_adj += (time_adj >> 7);
+			}
+			break;
+
+		case 1200:
+			/* A factor of 1.1011010011100001 gives about 64ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 1) + (-time_adj >> 6);
+				time_adj -= (-time_adj >> 3) + (-time_adj >> 10);
+			} else {
+				time_adj += (time_adj >> 1) + (time_adj >> 6);
+				time_adj += (time_adj >> 3) + (time_adj >> 10);
+			}
 			break;
 		}
 
@@ -1124,7 +1195,8 @@ statclock(frame)
 	struct gmonparam *g;
 	int i;
 #endif
-	static int schedclk;
+	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p;
 
 	if (CLKF_USERMODE(frame)) {
@@ -1139,9 +1211,9 @@ statclock(frame)
 		 */
 		p->p_uticks++;
 		if (p->p_nice > NZERO)
-			cp_time[CP_NICE]++;
+			spc->spc_cp_time[CP_NICE]++;
 		else
-			cp_time[CP_USER]++;
+			spc->spc_cp_time[CP_USER]++;
 	} else {
 #ifdef GPROF
 		/*
@@ -1174,23 +1246,23 @@ statclock(frame)
 		if (CLKF_INTR(frame)) {
 			if (p != NULL)
 				p->p_iticks++;
-			cp_time[CP_INTR]++;
+			spc->spc_cp_time[CP_INTR]++;
 		} else if (p != NULL) {
 			p->p_sticks++;
-			cp_time[CP_SYS]++;
+			spc->spc_cp_time[CP_SYS]++;
 		} else
-			cp_time[CP_IDLE]++;
+			spc->spc_cp_time[CP_IDLE]++;
 	}
 	pscnt = psdiv;
 
 	if (p != NULL) {
 		++p->p_cpticks;
 		/*
-		 * If no schedclock is provided, call it here at ~~12-25 Hz,
-		 * ~~16 Hz is best
+		 * If no separate schedclock is provided, call it here 
+		 * at ~~12-25 Hz, ~~16 Hz is best
 		 */
-		if(schedhz == 0)
-			if ((++schedclk & 3) == 0)
+		if (schedhz == 0)
+			if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
 				schedclock(p);
 	}
 }
@@ -1534,7 +1606,7 @@ hardpps(tvp, usec)
  */
 int
 sysctl_clockrate(where, sizep)
-	char *where;
+	void *where;
 	size_t *sizep;
 {
 	struct clockinfo clkinfo;

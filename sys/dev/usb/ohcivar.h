@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.23 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.23.2.1 2000/06/22 17:08:32 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -130,11 +130,11 @@ typedef struct ohci_softc {
 	char sc_dying;
 } ohci_softc_t;
 
-usbd_status	ohci_init __P((ohci_softc_t *));
-int		ohci_intr __P((void *));
+usbd_status	ohci_init(ohci_softc_t *);
+int		ohci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-int		ohci_detach __P((ohci_softc_t *, int));
-int		ohci_activate __P((device_ptr_t, enum devact));
+int		ohci_detach(ohci_softc_t *, int);
+int		ohci_activate(device_ptr_t, enum devact);
 #endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)

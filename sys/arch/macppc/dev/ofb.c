@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.12 2000/04/02 12:53:05 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.12.2.1 2000/06/22 17:01:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,6 +45,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+
+#include <dev/ofw/ofw_pci.h>
 
 #include <machine/bus.h>
 #include <machine/grfioctl.h>
@@ -154,6 +156,9 @@ ofbattach(parent, self, aux)
 	}
 	sc->sc_dc = dc;
 
+	OF_getprop(dc->dc_node, "assigned-addresses", sc->sc_addrs,
+	    sizeof(sc->sc_addrs));
+
 	if (dc->dc_paddr == 0) {
 		printf(": cannot map framebuffer\n");
 		return;
@@ -185,6 +190,7 @@ ofb_common_init(node, dc)
 	struct rasops_info *ri = &dc->dc_ri;
 	int32_t addr, width, height, linebytes, depth;
 
+	dc->dc_node = node;
 	if (dc->dc_ih == 0) {
 		char name[64];
 
@@ -319,11 +325,25 @@ ofb_mmap(v, offset, prot)
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
 	struct rasops_info *ri = &dc->dc_ri;
+	u_int32_t *ap = sc->sc_addrs;
+	paddr_t pa;
+	int i;
 
-	if (offset >= (ri->ri_stride * ri->ri_height) || offset < 0)
-		return -1;
+	if (offset >=0 && offset < (ri->ri_stride * ri->ri_height))
+		return dc->dc_paddr + offset;
 
-	return dc->dc_paddr + offset;
+	pa = offset;
+	for (i = 0; i < 6; i++) {
+		switch (ap[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
+		case OFW_PCI_PHYS_HI_SPACE_MEM32:
+			if (pa >= ap[2] && pa < ap[2] + ap[4])
+				return pa;
+		/* XXX I/O space? */
+		}
+		ap += 5;
+	}
+
+	return -1;
 }
 
 int

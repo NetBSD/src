@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2000/03/26 20:42:26 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49.2.1 2000/06/22 16:59:26 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -105,19 +105,21 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
-
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1;
 	struct proc *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -184,25 +186,11 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_spl = _SPL_0;
-	sf->sf_r4 = (u_int)child_return;
-	sf->sf_r5 = (u_int)p2;
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
 	pcb->pcb_sp = (u_int)sf;
 }
-
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
-
-	sf->sf_r4 = (u_int)pc;
-	sf->sf_r5 = (u_int)arg;
-}
-
 
 /*
  * cpu_exit is called as the last action during exit.

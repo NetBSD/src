@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1999/10/12 17:08:58 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.5.8.1 2000/06/22 17:02:43 minoura Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include "opt_ddb.h"
@@ -7,8 +7,15 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
-#include <machine/frame.h>
 #include <machine/db_machdep.h>
+#include <machine/frame.h>
+
+#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+#include <ddb/ddbvar.h>
 
 void
 cpu_Debugger()

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.3 2000/04/15 03:08:13 mrg Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.3.2.1 2000/06/22 17:04:19 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ cs4231_attach_ebus(parent, self, aux)
 	/* XXX what to do with the DMA registers ? */
 
 	sc->sc_ad1848.sc_ioh = bh;
-	sc->sc_dmareg = (struct apc_dma *)(bh + CS4231_REG_SIZE);
+	sc->sc_dmareg = (struct apc_dma *)(u_long)(bh + CS4231_REG_SIZE);
 
 	cs4231_init(sc);
 
@@ -145,7 +145,8 @@ cs4231_attach_ebus(parent, self, aux)
 				   ea->ea_intrs[i], 0,
 				   cs4231_intr, sc);
 
-	evcnt_attach(&sc->sc_ad1848.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_ad1848.sc_dev.dv_xname, "intr");
 	audio_attach_mi(&audiocs_hw_if, sc, &sc->sc_ad1848.sc_dev);
 }
 #endif

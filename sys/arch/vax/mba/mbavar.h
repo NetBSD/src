@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.5 2000/01/21 23:39:56 thorpej Exp $ */
+/*	$NetBSD: mbavar.h,v 1.5.2.1 2000/06/22 17:05:11 minoura Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/device.h>
+#include <machine/scb.h>
 
 #define MBCR_INIT	1
 #define	MBCR_IE		(1<<2)
@@ -77,10 +78,12 @@ enum	xfer_action {
  * Info passed do unit device driver during autoconfig.
  */
 struct	mba_attach_args {
-	int	unit;
-        int	type;
-	char	*name;
-	enum	mb_devices devtyp;
+	int	ma_unit;
+        int	ma_type;
+	char	*ma_name;
+	enum	mb_devices ma_devtyp;
+	bus_space_tag_t ma_iot;
+	bus_space_handle_t ma_ioh;
 };
 
 /*
@@ -90,11 +93,11 @@ struct	mba_attach_args {
 struct	mba_device {
 	struct	mba_device *md_back;	/* linked list of runnable devices */
 	    /* Start routine to be called by mbastart. */
-	void	(*md_start) __P((struct mba_device *));
+	void	(*md_start)(struct mba_device *);
 	    /* Routine to be called after attn intr */
-	int	(*md_attn)__P((struct mba_device *));
+	int	(*md_attn)(struct mba_device *);
 	    /* Call after xfer finish */
-	enum	xfer_action (*md_finish) __P((struct mba_device *, int, int *));
+	enum	xfer_action (*md_finish)(struct mba_device *, int, int *);
 	void	*md_softc;	/* Backpointer to this units softc. */
 	struct	mba_softc *md_mba;
 	struct	buf_queue md_q;	/* queue of I/O requests */
@@ -102,11 +105,11 @@ struct	mba_device {
 
 struct	mba_softc {
 	struct  device sc_dev;
-	struct  ivec_dsp sc_dsp;	/* Interrupt catch routine */
-	struct  mba_regs *sc_mbareg;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	struct	evcnt sc_intrcnt;
 	struct	mba_device *sc_first, *sc_last;
 	enum    sc_state sc_state;
-	int	sc_physnr;		/* Physical number of this mba */
 	struct	mba_device *sc_md[MAXMBADEV];
 };
 
@@ -117,5 +120,5 @@ struct  mbaunit {
 };
 
 /* Common prototypes */
-void	mbaqueue __P((struct mba_device *));
+void	mbaqueue(struct mba_device *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14 2000/05/26 03:34:30 jhawk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.14.2.1 2000/06/22 17:04:32 minoura Exp $ */
 
 /*
  * Mach Operating System
@@ -45,7 +45,7 @@ void db_print_window __P((u_int64_t));
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif, pr)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;

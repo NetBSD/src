@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.25 2000/02/02 09:34:52 enami Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.25.2.1 2000/06/22 17:06:47 minoura Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -168,7 +168,9 @@ struct mb86960_softc {
 	rndsource_element_t rnd_source;
 #endif
 
-	int	sc_enabled;	/* boolean; power enabled on interface */
+	u_int32_t	sc_flags;	/* misc. flags */
+#define FE_FLAGS_ENABLED	0x0001	/* power enabled on interface */
+#define FE_FLAGS_ATTACHED	0x0002	/* attach has succeeded */
 
 	int	(*sc_enable) __P((struct mb86960_softc *));
 	void	(*sc_disable) __P((struct mb86960_softc *));

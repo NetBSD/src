@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2 2000/05/24 20:27:52 eeh Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.2.2.1 2000/06/22 17:04:28 minoura Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -46,18 +46,19 @@ struct sparc_pci_chipset {
 	/* do we need any more here? */
 };
 
-void		pci_attach_hook __P((struct device *, struct device *,
-				     struct pcibus_attach_args *));
-int		pci_bus_maxdevs __P((pci_chipset_tag_t, int));
-pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
-pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
-				    pcireg_t));
-int		pci_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
-					  pci_intr_handle_t *));
-const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
-void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
-					 int, int (*)(void *), void *));
-void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+void		pci_attach_hook(struct device *, struct device *,
+				     struct pcibus_attach_args *);
+int		pci_bus_maxdevs(pci_chipset_tag_t, int);
+pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
+				    pcireg_t);
+int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
+					  pci_intr_handle_t *);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
+void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+					 int, int (*)(void *), void *);
+void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

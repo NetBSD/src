@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.3 2000/02/26 19:00:51 thorpej Exp $	*/
+/*	$NetBSD: pio.h,v 1.3.2.1 2000/06/22 16:58:31 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,12 +45,12 @@
 #error This file is for userspace only.
 #else
 struct alpha_pci_io_ops {
-	u_int8_t	(*apio_inb) __P((bus_addr_t));
-	u_int16_t	(*apio_inw) __P((bus_addr_t));
-	u_int32_t	(*apio_inl) __P((bus_addr_t));
-	void		(*apio_outb) __P((bus_addr_t, u_int8_t));
-	void		(*apio_outw) __P((bus_addr_t, u_int16_t));
-	void		(*apio_outl) __P((bus_addr_t, u_int32_t));
+	u_int8_t	(*apio_inb)(bus_addr_t);
+	u_int16_t	(*apio_inw)(bus_addr_t);
+	u_int32_t	(*apio_inl)(bus_addr_t);
+	void		(*apio_outb)(bus_addr_t, u_int8_t);
+	void		(*apio_outw)(bus_addr_t, u_int16_t);
+	void		(*apio_outl)(bus_addr_t, u_int32_t);
 };
 
 extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
@@ -61,9 +61,9 @@ extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
 
 #define	outb(addr, val)	(*alpha_pci_io_switch->apio_outb)((addr), (val))
 #define	outw(addr, val)	(*alpha_pci_io_switch->apio_outw)((addr), (val))
-#define	ouwl(addr, val)	(*alpha_pci_io_switch->apio_outl)((addr), (val))
+#define	outl(addr, val)	(*alpha_pci_io_switch->apio_outl)((addr), (val))
 
-int	alpha_pci_io_enable __P((int));
+int	alpha_pci_io_enable(int);
 #endif /* _KERNEL */
 
 #endif /* _ALPHA_PIO_H_ */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.65 2000/04/19 06:50:30 itojun Exp $
+#	$NetBSD: GENERIC,v 1.65.2.1 2000/06/22 16:59:37 minoura Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.65.2.1 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -39,19 +39,6 @@ options 	INSECURE	# disable kernel security levels
 #
 options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #options 	FPSP		# 68040 Floatingpoint support
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 #
 # Networking options

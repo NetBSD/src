@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.85 2000/04/29 21:47:14 soren Exp $
+#	$NetBSD: files.pmax,v 1.85.2.1 2000/06/22 17:02:16 minoura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -119,9 +119,11 @@ file	dev/tc/asc_tc.c			asc_tc
 
 # sii: kn01 SCSI interface
 device sii: oldscsi
-file	arch/pmax/dev/sii.c		sii needs-flag
+device  xsii: ncr53c9x,scsi
+file	arch/pmax/dev/sii.c		sii | xsii needs-flag
 attach sii at ibus with sii_ds
-file	arch/pmax/dev/sii_ds.c		sii_ds
+attach xsii at ibus with xsii_ds
+file	arch/pmax/dev/sii_ds.c		sii_ds | xsii_ds
 
 device	tz: tape
 attach	tz at oldscsibus
@@ -202,7 +204,7 @@ file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
 
 # PixelStamp graphics boards
-device	px
+device	px: rasops8
 attach	px at tc
 file	arch/pmax/dev/px.c 		px needs-flag
 

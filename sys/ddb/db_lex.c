@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.11 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.11.10.1 2000/06/22 17:06:11 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,7 @@
  * Lexical analyzer.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -114,6 +115,37 @@ db_read_token()
 }
 
 int	db_radix = 16;
+
+/*
+ * Convert the number to a string in the current radix.
+ * This replaces the non-standard %n printf() format.
+ */
+    
+char *
+db_num_to_str(val)
+db_expr_t val;
+{
+	/* 
+	 * 2 chars for "0x", 1 for a sign ("-")
+	 * up to 21 chars for a 64-bit number:
+	 *   % echo 2^64 | bc | wc -c
+	 *   21
+	 * and 1 char for a terminal NUL
+	 * 2+1+21+1 => 25
+	 */
+	static char buf[25];
+	char format[] = "%#10lZ";
+
+	if (db_radix == 16)
+		format[5] = 'x';	/* convert to %lx */
+	else if (db_radix == 8)
+		format[5] = 'o';	/* convert to %lo */
+	else
+		format[5] = 'u';	/* convert to %lu */
+
+	snprintf(buf, sizeof(buf), format, val);
+	return buf;
+}
 
 void
 db_flush_lex()

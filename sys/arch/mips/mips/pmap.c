@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97.2.1 2000/06/22 17:01:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.2.1 2000/06/22 17:01:37 minoura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -704,7 +704,7 @@ pmap_remove(pmap, sva, eva)
 
 		/* remove entries from kernel pmap */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -715,7 +715,7 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, pfn_to_vad(entry));
+			pmap_remove_pv(pmap, sva, mips_tlbpfn_to_paddr(entry));
 			if (CPUISMIPS3)
 				/* See above about G bit */
 				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -773,7 +773,7 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pmap_remove_pv(pmap, sva, pfn_to_vad(entry));
+			pmap_remove_pv(pmap, sva, mips_tlbpfn_to_paddr(entry));
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -893,7 +893,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * read-only.
 		 */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= virtual_end)
 			panic("pmap_protect: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -976,13 +976,16 @@ pmap_procwr(p, va, len)
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (CPUISMIPS3) {
+#ifdef MIPS3
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
 		MachFlushDCache(va, len);
 		MachFlushICache(MIPS_PHYS_TO_KSEG0(va &
 		    (mips_L1ICacheSize - 1)), len);
+#endif /* MIPS3 */
 	} else {
+#ifdef MIPS1
 		pt_entry_t *pte;
 		unsigned entry;
 
@@ -996,14 +999,16 @@ printf("pmap_procwr: va %lx", va);
 		if (!mips_pg_v(entry))
 			return;
 #if 0
-printf(" flush %lx", pfn_to_vad(entry) + (va & PGOFSET));
+printf(" flush %llx", (long long)mips_tlbpfn_to_paddr(entry) + (va & PGOFSET));
 #endif
-		mips1_FlushICache(MIPS_PHYS_TO_KSEG0(mips1_pfn_to_vad(entry)
+		mips1_FlushICache(
+		    MIPS_PHYS_TO_KSEG0(mips1_tlbpfn_to_paddr(entry)
 		    + (va & PGOFSET)),
 		    len);
 #if 0
 printf("\n");
 #endif
+#endif /* MIPS1 */
 	}
 }
 
@@ -1118,21 +1123,27 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef PARANOIADIAG
 	if (!pmap)
 		panic("pmap_enter: pmap");
+#endif
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(PARANOIADIAG)
 	if (pmap == pmap_kernel()) {
 #ifdef DEBUG
 		enter_stats.kernel++;
 #endif
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_enter: kva");
+			panic("pmap_enter: kva too big");
 	} else {
 #ifdef DEBUG
 		enter_stats.user++;
 #endif
 		if (va >= VM_MAXUSER_ADDRESS)
-			panic("pmap_enter: uva");
+			panic("pmap_enter: uva too big");
 	}
-	if (pa & 0x80000000)
+#endif
+#ifdef PARANOIADIAG
+#if defined(cobalt) || defined(newsmips) || defined(pmax) /* otherwise ok */
+	if (pa & 0x80000000)	/* this is not error in general. */
 		panic("pmap_enter: pa");
+#endif
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
@@ -1213,9 +1224,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pte = kvtopte(va);
 
 		if (CPUISMIPS3)
-			npte |= vad_to_pfn(pa) | MIPS3_PG_G;
+			npte |= mips_paddr_to_tlbpfn(pa) | MIPS3_PG_G;
 		else
-			npte |= vad_to_pfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
+			npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
 
 		if (wired) {
 			pmap->pm_stats.wired_count++;
@@ -1225,7 +1236,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if (mips_pg_wired(pte->pt_entry))
 			panic("pmap_enter: kernel wired");
 #endif
-		if (pfn_to_vad(pte->pt_entry) != pa) {
+		if (mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 			enter_stats.mchange++;
@@ -1274,9 +1285,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * MIPS pages in a MACH page.
 	 */
 	if (CPUISMIPS3)
-		npte |= vad_to_pfn(pa);
+		npte |= mips_paddr_to_tlbpfn(pa);
 	else
-		npte |= vad_to_pfn(pa) | MIPS1_PG_V;
+		npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V;
 
 	if (wired) {
 		pmap->pm_stats.wired_count++;
@@ -1305,7 +1316,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 
 	asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
-	if (pfn_to_vad(pte->pt_entry) != pa) {
+	if (mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
 		pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 		enter_stats.mchange++;
@@ -1449,7 +1460,7 @@ pmap_extract(pmap, va, pap)
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
 			panic("pmap_extract");
 #endif
-		pa = pfn_to_vad(kvtopte(va)->pt_entry);
+		pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
 	} else {
 		pt_entry_t *pte;
 
@@ -1457,7 +1468,7 @@ pmap_extract(pmap, va, pap)
 			return (FALSE);
 		else {
 			pte += (va >> PGSHIFT) & (NPTEPG - 1);
-			pa = pfn_to_vad(pte->pt_entry);
+			pa = mips_tlbpfn_to_paddr(pte->pt_entry);
 		}
 	}
 	pa |= va & PGOFSET;
@@ -1847,7 +1858,7 @@ pmap_set_modified(pa)
 #endif
 }
 
-vaddr_t
+paddr_t
 pmap_phys_address(ppn)
 	int ppn;
 {
@@ -1995,7 +2006,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 						entry = 0;
 				}
 				if (!mips_pg_v(entry) ||
-				    pfn_to_vad(entry) != pa)
+				    mips_tlbpfn_to_paddr(entry) != pa)
 					printf(
 		"pmap_enter: found va %lx pa %lx in pv_table but != %x\n",
 						va, pa, entry);

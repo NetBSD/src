@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.93 2000/05/26 21:31:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.93.2.1 2000/06/22 17:10:25 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,7 +55,7 @@
  *
  *	M = major version
  *	m = minor version
- *	r = release ["",A-Z but numeric]
+ *	r = release ["",A-Z,Z[A-Z] but numeric]
  *	p = patchlevel
  *
  *	So:
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  104260000	/* NetBSD 1.4Z */
+#define __NetBSD_Version__  104300000	/* NetBSD 1.4ZD */
 
 /*
  * Historical NetBSD #define
@@ -158,8 +158,10 @@
 #define	PUSER	50
 #define	MAXPRI	127		/* Priorities range from 0 through MAXPRI. */
 
-#define	PRIMASK	0x0ff
-#define	PCATCH	0x100		/* OR'd with pri for tsleep to check signals */
+#define	PRIMASK 	0x0ff
+#define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
+#define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
+				   the interlock */
 
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 

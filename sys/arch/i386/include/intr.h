@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 1999/08/05 18:08:10 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.12.1 2000/06/22 17:00:32 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #define	SIR_NET		30
 #define	SIR_SERIAL	29
 
+/* Hack for CLKF_INTR(). */
+#define	IPL_TAGINTR	28
+
 #ifndef _LOCORE
 
 volatile int cpl, ipending, astpending;
@@ -73,8 +76,7 @@ int imask[NIPL];
 extern void Xspllower __P((void));
 
 static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
+static __inline void spllower __P((int));
 static __inline void softintr __P((int));
 
 /*
@@ -95,29 +97,13 @@ splraise(ncpl)
  * interrupts are pending, call Xspllower() to process them.
  */
 static __inline void
-splx(ncpl)
-	register int ncpl;
-{
-
-	cpl = ncpl;
-	if (ipending & ~ncpl)
-		Xspllower();
-}
-
-/*
- * Same as splx(), but we return the old value of spl, for the
- * benefit of some splsoftclock() callers.
- */
-static __inline int
 spllower(ncpl)
 	register int ncpl;
 {
-	register int ocpl = cpl;
 
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		Xspllower();
-	return (ocpl);
 }
 
 /*
@@ -150,6 +136,7 @@ spllower(ncpl)
 #define	splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
+#define	splx(x)		spllower(x)
 
 /*
  * Software interrupt registration

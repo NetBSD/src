@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.4 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.4.2.1 2000/06/22 17:10:32 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -76,6 +76,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	int num, i, error;
 	u_int deallocated;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+	int unwindidx = -1;
 
 	*bpp = NULL;
 	if (bn < 0)
@@ -133,8 +134,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	allocblk = allociblk;
 	if (nb == 0) {
 		pref = ext2fs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
-			error = ext2fs_alloc(ip, lbn, pref,
-				  cred, &newb);
+		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error)
 			return (error);
 		nb = newb;
@@ -149,6 +149,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		 */
 		if ((error = bwrite(bp)) != 0)
 			goto fail;
+		unwindidx = 0;
 		allocib = &ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
 		*allocib = h2fs32(newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -158,7 +159,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 */
 	for (i = 1;;) {
 		error = bread(vp,
-			indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
+		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -167,14 +168,13 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		nb = fs2h32(bap[indirs[i].in_off]);
 		if (i == num)
 			break;
-		i += 1;
+		i++;
 		if (nb != 0) {
 			brelse(bp);
 			continue;
 		}
 		pref = ext2fs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
-		error = ext2fs_alloc(ip, lbn, pref, cred,
-				  &newb);
+		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -193,6 +193,8 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			brelse(bp);
 			goto fail;
 		}
+		if (unwindidx < 0)
+			unwindidx = i - 1;
 		bap[indirs[i - 1].in_off] = h2fs32(nb);
 		/*
 		 * If required, write synchronously, otherwise use
@@ -208,9 +210,8 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 * Get the data block, allocating if necessary.
 	 */
 	if (nb == 0) {
-		pref = ext2fs_blkpref(ip, lbn, indirs[i].in_off, &bap[0]);
-		error = ext2fs_alloc(ip, lbn, pref, cred,
-				  &newb);
+		pref = ext2fs_blkpref(ip, lbn, indirs[num].in_off, &bap[0]);
+		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -223,7 +224,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
 			clrbuf(nbp);
-		bap[indirs[i].in_off] = h2fs32(nb);
+		bap[indirs[num].in_off] = h2fs32(nb);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -241,7 +242,7 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED, &nbp);
 		if (error) {
 			brelse(nbp);
-			return (error);
+			goto fail;
 		}
 	} else {
 		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
@@ -258,11 +259,36 @@ fail:
 		ext2fs_blkfree(ip, *blkp);
 		deallocated += fs->e2fs_bsize;
 	}
-	if (allocib != NULL)
-		*allocib = 0;
+	if (unwindidx >= 0) {
+		if (unwindidx == 0) {
+			*allocib = 0;
+		} else {
+			int r;
+	
+			r = bread(vp, indirs[unwindidx].in_lbn, 
+			    (int)fs->e2fs_bsize, NOCRED, &bp);
+			if (r) {
+				panic("Could not unwind indirect block, error %d", r);
+				brelse(bp);
+			} else {
+				bap = (ufs_daddr_t *)bp->b_data;
+				bap[indirs[unwindidx].in_off] = 0;
+				if (flags & B_SYNC)
+					bwrite(bp);
+				else
+					bdwrite(bp);
+			}
+		}
+		for (i = unwindidx + 1; i <= num; i++) {
+			bp = getblk(vp, indirs[i].in_lbn, (int)fs->e2fs_bsize,
+			    0, 0);
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+		}
+	}
 	if (deallocated) {
 		ip->i_e2fs_nblock -= btodb(deallocated);
 		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
 	}
-	return error;
+	return (error);
 }

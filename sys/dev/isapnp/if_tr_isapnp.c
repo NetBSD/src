@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.3 1999/04/29 15:47:03 bad Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.3.10.1 2000/06/22 17:07:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h> 
 #include <sys/socket.h> 
 #include <sys/ioctl.h>
@@ -123,7 +124,7 @@ tr_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	sc->sc_piot = ipa->ipa_iot;

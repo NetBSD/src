@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.65 2000/05/27 04:52:36 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.65.2.1 2000/06/22 17:09:12 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,6 +70,19 @@
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+#include <sys/ipc.h>
+#endif
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
@@ -85,7 +98,12 @@ static struct sysctl_lock {
 	int	sl_locked;
 } memlock;
 
-static int sysctl_doeproc __P((int *, u_int, char *, size_t *));
+static int sysctl_file __P((void *, size_t *));
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
+#endif
+static int sysctl_msgbuf __P((void *, size_t *));
+static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
 
@@ -263,6 +281,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_PROF:
 	case KERN_MBUF:
 	case KERN_PROC_ARGS:
+	case KERN_SYSVIPC_INFO:
 		/* Not terminal. */
 		break;
 	default:
@@ -440,8 +459,16 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_CP_TIME:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, cp_time,
-		    sizeof(cp_time)));
+		/* XXXSMP: WRONG! */
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    curcpu()->ci_schedstate.spc_cp_time,
+		    sizeof(curcpu()->ci_schedstate.spc_cp_time)));
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+	case KERN_SYSVIPC_INFO:
+		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
+#endif
+	case KERN_MSGBUF:
+		return (sysctl_msgbuf(oldp, oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -911,15 +938,16 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 /*
  * Get file structures.
  */
-int
-sysctl_file(where, sizep)
-	char *where;
+static int
+sysctl_file(vwhere, sizep)
+	void *vwhere;
 	size_t *sizep;
 {
 	int buflen, error;
 	struct file *fp;
-	char *start = where;
+	char *start, *where;
 
+	start = where = vwhere;
 	buflen = *sizep;
 	if (where == NULL) {
 		/*
@@ -960,28 +988,255 @@ sysctl_file(where, sizep)
 	return (0);
 }
 
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+#define	FILL_PERM(src, dst) do { \
+		(dst)._key = (src)._key; \
+		(dst).uid = (src).uid; \
+		(dst).gid = (src).gid; \
+		(dst).cuid = (src).cuid; \
+		(dst).cgid = (src).cgid; \
+		(dst).mode = (src).mode; \
+		(dst)._seq = (src)._seq; \
+	} while (0);
+#define	FILL_MSG(src, dst) do { \
+	FILL_PERM((src).msg_perm, (dst).msg_perm); \
+	(dst).msg_qnum = (src).msg_qnum; \
+	(dst).msg_qbytes = (src).msg_qbytes; \
+	(dst)._msg_cbytes = (src)._msg_cbytes; \
+	(dst).msg_lspid = (src).msg_lspid; \
+	(dst).msg_lrpid = (src).msg_lrpid; \
+	(dst).msg_stime = (src).msg_stime; \
+	(dst).msg_rtime = (src).msg_rtime; \
+	(dst).msg_ctime = (src).msg_ctime; \
+	} while (0)
+#define	FILL_SEM(src, dst) do { \
+	FILL_PERM((src).sem_perm, (dst).sem_perm); \
+	(dst).sem_nsems = (src).sem_nsems; \
+	(dst).sem_otime = (src).sem_otime; \
+	(dst).sem_ctime = (src).sem_ctime; \
+	} while (0)
+#define	FILL_SHM(src, dst) do { \
+	FILL_PERM((src).shm_perm, (dst).shm_perm); \
+	(dst).shm_segsz = (src).shm_segsz; \
+	(dst).shm_lpid = (src).shm_lpid; \
+	(dst).shm_cpid = (src).shm_cpid; \
+	(dst).shm_atime = (src).shm_atime; \
+	(dst).shm_dtime = (src).shm_dtime; \
+	(dst).shm_ctime = (src).shm_ctime; \
+	(dst).shm_nattch = (src).shm_nattch; \
+	} while (0)
+
+static int
+sysctl_sysvipc(name, namelen, where, sizep)
+	int *name;
+	u_int namelen;
+	void *where;
+	size_t *sizep;
+{
+#ifdef SYSVMSG
+	struct msg_sysctl_info *msgsi;
+#endif
+#ifdef SYSVSEM
+	struct sem_sysctl_info *semsi;
+#endif
+#ifdef SYSVSHM
+	struct shm_sysctl_info *shmsi;
+#endif
+	size_t infosize, dssize, tsize, buflen;
+	void *buf = NULL, *buf2;
+	char *start;
+	int32_t nds;
+	int i, error, ret;
+
+	if (namelen != 1)
+		return (EINVAL);
+
+	start = where;
+	buflen = *sizep;
+
+	switch (*name) {
+	case KERN_SYSVIPC_MSG_INFO:
+#ifdef SYSVMSG
+		infosize = sizeof(msgsi->msginfo);
+		nds = msginfo.msgmni;
+		dssize = sizeof(msgsi->msgids[0]);
+		break;
+#else
+		return (EINVAL);
+#endif
+	case KERN_SYSVIPC_SEM_INFO:
+#ifdef SYSVSEM
+		infosize = sizeof(semsi->seminfo);
+		nds = seminfo.semmni;
+		dssize = sizeof(semsi->semids[0]);
+		break;
+#else
+		return (EINVAL);
+#endif
+	case KERN_SYSVIPC_SHM_INFO:
+#ifdef SYSVSHM
+		infosize = sizeof(shmsi->shminfo);
+		nds = shminfo.shmmni;
+		dssize = sizeof(shmsi->shmids[0]);
+		break;
+#else
+		return (EINVAL);
+#endif
+	default:
+		return (EINVAL);
+	}
+	/*
+	 * Round infosize to 64 bit boundary if requesting more than just
+	 * the info structure or getting the total data size.
+	 */
+	if (where == NULL || *sizep > infosize)
+		infosize = ((infosize + 7) / 8) * 8;
+	tsize = infosize + nds * dssize;
+
+	/* Return just the total size required. */
+	if (where == NULL) {
+		*sizep = tsize;
+		return (0);
+	}
+
+	/* Not enough room for even the info struct. */
+	if (buflen < infosize) {
+		*sizep = 0;
+		return (ENOMEM);
+	}
+	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
+	memset(buf, 0, min(tsize, buflen));
+
+	switch (*name) { 
+#ifdef SYSVMSG
+	case KERN_SYSVIPC_MSG_INFO:
+		msgsi = (struct msg_sysctl_info *)buf;
+		buf2 = &msgsi->msgids[0];
+		msgsi->msginfo = msginfo;
+		break;
+#endif
+#ifdef SYSVSEM
+	case KERN_SYSVIPC_SEM_INFO:
+		semsi = (struct sem_sysctl_info *)buf;
+		buf2 = &semsi->semids[0];
+		semsi->seminfo = seminfo;
+		break;
+#endif
+#ifdef SYSVSHM
+	case KERN_SYSVIPC_SHM_INFO:
+		shmsi = (struct shm_sysctl_info *)buf;
+		buf2 = &shmsi->shmids[0];
+		shmsi->shminfo = shminfo;
+		break;
+#endif
+	}
+	buflen -= infosize;
+
+	ret = 0;
+	if (buflen > 0) {
+		/* Fill in the IPC data structures.  */
+		for (i = 0; i < nds; i++) {
+			if (buflen < dssize) {
+				ret = ENOMEM;
+				break;
+			}
+			switch (*name) { 
+#ifdef SYSVMSG
+			case KERN_SYSVIPC_MSG_INFO:
+				FILL_MSG(msqids[i], msgsi->msgids[i]);
+				break;
+#endif
+#ifdef SYSVSEM
+			case KERN_SYSVIPC_SEM_INFO:
+				FILL_SEM(sema[i], semsi->semids[i]);
+				break;
+#endif
+#ifdef SYSVSHM
+			case KERN_SYSVIPC_SHM_INFO:
+				FILL_SHM(shmsegs[i], shmsi->shmids[i]);
+				break;
+#endif
+			}
+			buflen -= dssize;
+		}
+	}
+	*sizep -= buflen;
+	error = copyout(buf, start, *sizep);
+	/* If copyout succeeded, use return code set earlier. */
+	if (error == 0)
+		error = ret;
+	if (buf)
+		free(buf, M_TEMP);
+	return (error);
+}
+#endif /* SYSVMSG || SYSVSEM || SYSVSHM */
+
+static int
+sysctl_msgbuf(vwhere, sizep)
+	void *vwhere;
+	size_t *sizep;
+{
+	char *where = vwhere;
+	size_t len, maxlen = *sizep;
+	long pos;
+	int error;
+
+	/*
+	 * deal with cases where the message buffer has
+	 * become corrupted.
+	 */
+	if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+		msgbufenabled = 0;
+		return (ENXIO);
+	}
+
+	if (where == NULL) {
+		/* always return full buffer size */
+		*sizep = msgbufp->msg_bufs;
+		return (0);
+	}
+
+	error = 0;
+	maxlen = min(msgbufp->msg_bufs, maxlen);
+	pos = msgbufp->msg_bufx;
+	while (maxlen > 0) {
+		len = pos == 0 ? msgbufp->msg_bufx : msgbufp->msg_bufs - msgbufp->msg_bufx;
+		len = min(len, maxlen);
+		if (len == 0)
+			break;
+		error = copyout(&msgbufp->msg_bufc[pos], where, len);
+		if (error)
+			break;
+		where += len;
+		maxlen -= len;
+		pos = 0;
+	}
+	return (error);
+}
+
 /*
  * try over estimating by 5 procs
  */
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 
-int
-sysctl_doeproc(name, namelen, where, sizep)
+static int
+sysctl_doeproc(name, namelen, vwhere, sizep)
 	int *name;
 	u_int namelen;
-	char *where;
+	void *vwhere;
 	size_t *sizep;
 {
 	struct eproc eproc;
 	struct kinfo_proc2 kproc2;
-	struct kinfo_proc *dp = (struct kinfo_proc *)where;
+	struct kinfo_proc *dp;
 	struct proc *p;
 	const struct proclist_desc *pd;
-	char *dp2;
+	char *where, *dp2;
 	int type, op, arg, elem_size, elem_count;
 	int buflen, needed, error;
 
-	dp2 = where;
+	dp = vwhere;
+	dp2 = where = vwhere;
 	buflen = where != NULL ? *sizep : 0;
 	error = needed = 0;
 	type = name[0];
@@ -1029,6 +1284,11 @@ again:
 				continue;
 			break;
 
+		case KERN_PROC_SESSION:
+			if (p->p_session->s_sid != (pid_t)arg)
+				continue;
+			break;
+
 		case KERN_PROC_TTY:
 			if (arg == KERN_PROC_TTY_REVOKE) {
 				if ((p->p_flag & P_CONTROLT) == 0 ||
@@ -1052,6 +1312,24 @@ again:
 			if (p->p_cred->p_ruid != (uid_t)arg)
 				continue;
 			break;
+
+		case KERN_PROC_GID:
+			if (p->p_ucred->cr_gid != (uid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_RGID:
+			if (p->p_cred->p_rgid != (uid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_ALL:
+			/* allow everything */
+			break;
+
+		default:
+			error = EINVAL;
+			goto cleanup;
 		}
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
@@ -1226,12 +1504,11 @@ fill_kproc2(p, ki)
 	ki->p_pctcpu = p->p_pctcpu;
 	ki->p_swtime = p->p_swtime;
 	ki->p_slptime = p->p_slptime;
-	/*
-	 * XXX curcpu() is wrong; should be CPU process is running on.
-	 * XXX   --thorpej
-	 */
-	ki->p_schedflags = (p->p_stat == SONPROC) ?
-	    curcpu()->ci_schedstate.spc_flags : 0;
+	if (p->p_stat == SONPROC) {
+		KDASSERT(p->p_cpu != NULL);
+		ki->p_schedflags = p->p_cpu->ci_schedstate.spc_flags;
+	} else
+		ki->p_schedflags = 0;
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
@@ -1336,6 +1613,7 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	pid_t pid;
 	int nargv, type, error, i;
 	char *arg;
+	char *tmp;
 
 	if (namelen != 2)
 		return (EINVAL);
@@ -1375,10 +1653,6 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	}
 	if (where == NULL || sizep == NULL)
 		return (EINVAL);
-	/*
-	 * Allocate a temporary buffer to hold the arguments.
-	 */
-	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -1395,6 +1669,11 @@ sysctl_procargs(name, namelen, where, sizep, up)
 		return (EFAULT);
 	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
+
+	/*
+	 * Allocate a temporary buffer to hold the arguments.
+	 */
+	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Read in the ps_strings structure.
@@ -1425,16 +1704,17 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	 * Now read the address of the argument vector.
 	 */
 	switch (type) {
-	  case KERN_PROC_ARGV:
+	case KERN_PROC_ARGV:
 		/* XXX compat32 stuff here */
-		memcpy(&auio.uio_offset, (char *)&pss + p->p_psargv,
-		    sizeof(auio.uio_offset));
+		memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
 		break;
-	  case KERN_PROC_ENV:
-		memcpy(&auio.uio_offset, (char *)&pss + p->p_psenv,
-		    sizeof(auio.uio_offset));
+	case KERN_PROC_ENV:
+		memcpy(&tmp, (char *)&pss + p->p_psenv, sizeof(tmp));
 		break;
+	default:
+		return (EINVAL);
 	}
+	auio.uio_offset = (off_t)(long)tmp;
 	aiov.iov_base = &argv;
 	aiov.iov_len = sizeof(argv);
 	auio.uio_iov = &aiov;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.156 2000/04/17 14:31:22 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.156.2.1 2000/06/22 17:09:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -217,8 +217,10 @@ sys_mount(p, v, retval)
 		VOP_UNLOCK(vp, 0);
 		goto update;
 	} else {
-		if (securelevel >= 2)
+		if (securelevel >= 2) {
+			vput(vp);
 			return (EPERM);
+		}
 	}
 	/*
 	 * If the user is not root, ensure that they own the directory
@@ -308,10 +310,11 @@ update:
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM);
+	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
 	mp->mnt_flag |= SCARG(uap, flags) & (MNT_NOSUID | MNT_NOEXEC |
 	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC |
-	    MNT_NOCOREDUMP | MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM);
+	    MNT_NOCOREDUMP | MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM |
+	    MNT_SOFTDEP);
 	/*
 	 * Mount the filesystem.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.6 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.6.2.1 2000/06/22 17:08:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,21 +50,19 @@
 struct	ucom_softc;
 
 struct ucom_methods {
-	void (*ucom_get_status)__P((void *sc, int portno, 
-				    u_char *lsr, u_char *msr));
-	void (*ucom_set)__P((void *sc, int portno, int reg, int onoff));
+	void (*ucom_get_status)(void *sc, int portno, u_char *lsr, u_char *msr);
+	void (*ucom_set)(void *sc, int portno, int reg, int onoff);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
-	int (*ucom_param)__P((void *sc, int portno, struct termios *));
-	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd, 
-			      caddr_t data, int flag, struct proc *p));
-	int (*ucom_open)__P((void *sc, int portno));
-	void (*ucom_close)__P((void *sc, int portno));
-	void (*ucom_read)__P((void *sc, int portno, u_char **ptr, 
-			      u_int32_t *count));
-	void (*ucom_write)__P((void *sc, int portno, u_char *to, u_char *from,
-			       u_int32_t *count));
+	int (*ucom_param)(void *sc, int portno, struct termios *);
+	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
+			  caddr_t data, int flag, struct proc *p);
+	int (*ucom_open)(void *sc, int portno);
+	void (*ucom_close)(void *sc, int portno);
+	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
+	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
+			   u_int32_t *count);
 };
 
 /* modem control register */
@@ -107,6 +105,6 @@ struct ucom_attach_args {
 	void *arg;
 };
 
-int ucomprint __P((void *aux, const char *pnp));
-int ucomsubmatch __P((struct device *parent, struct cfdata *cf, void *aux));
-void ucom_status_change __P((struct ucom_softc *));
+int ucomprint(void *aux, const char *pnp);
+int ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux);
+void ucom_status_change(struct ucom_softc *);

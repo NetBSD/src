@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.14 2000/02/07 22:07:29 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.14.4.1 2000/06/22 17:00:32 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,15 +109,16 @@ struct isabus_attach_args;	/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
-void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
-int	isa_mem_alloc __P((bus_space_tag_t, bus_size_t, bus_size_t,
-	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
-void	isa_mem_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
+const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
+void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg);
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
+int	isa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
+	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
+void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
@@ -241,7 +242,7 @@ struct i386_isa_dma_cookie {
  */
 
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -292,6 +293,6 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
 /*
  * Miscellanous functions.
  */
-void sysbeep __P((int, int));		/* beep with the system speaker */
+void sysbeep(int, int);		/* beep with the system speaker */
 
 #endif /* _I386_ISA_MACHDEP_H_ XXX */

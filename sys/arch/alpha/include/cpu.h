@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.39 2000/05/26 21:19:24 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.39.2.1 2000/06/22 16:58:27 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -114,48 +114,48 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
-
-#if defined(MULTIPROCESSOR)
 	struct proc *ci_curproc;	/* current owner of the processor */
-#endif
 
 	/*
 	 * Private members.
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-#if defined(MULTIPROCESSOR)
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
+	struct cpu_softc *ci_softc;	/* pointer to our device */
+	u_long ci_want_resched;		/* preempt current process */
+	u_long ci_astpending;		/* AST is pending */
+	u_long ci_intrdepth;		/* interrupt trap depth */
+#if defined(MULTIPROCESSOR)
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
-	struct device *ci_dev;		/* pointer to our device */
-#endif /* MULTIPROCESSOR */
+#endif
 };
 
-#if defined(MULTIPROCESSOR)
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 
+#if defined(MULTIPROCESSOR)
 extern	u_long cpus_running;
 extern	struct cpu_info cpu_info[];
 
-#define	curcpu()	((struct cpu_info *)alpha_pal_rdval())
+#define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define	fpcurproc	curcpu()->ci_fpcurproc
-#define	curpcb		curcpu()->ci_curpcb
-
-void	cpu_boot_secondary_processors __P((void));
+void	cpu_boot_secondary_processors(void);
 #else /* ! MULTIPROCESSOR */
-extern	struct proc *fpcurproc;		/* current owner of FPU */
-extern	paddr_t curpcb;			/* PA of current HW context */
 extern	struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
 #endif /* MULTIPROCESSOR */
+
+#define	curproc		curcpu()->ci_curproc
+#define	fpcurproc	curcpu()->ci_fpcurproc
+#define	curpcb		curcpu()->ci_curpcb
 
 extern	u_long cpu_implver;		/* from IMPLVER instruction */
 extern	u_long cpu_amask;		/* from AMASK instruction */
@@ -180,35 +180,51 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)						\
 	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
+
 /*
- * XXX No way to accurately tell if we were in interrupt mode before taking
- * clock interrupt.
+ * This isn't perfect; if the clock interrupt comes in before the
+ * r/m/w cycle is complete, we won't be counted... but it's not
+ * like this stastic has to be extremely accurate.
  */
-#define	CLKF_INTR(framep)	(0)
+#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
+ *
+ * XXXSMP
+ * need_resched() needs to take a cpu_info *.
  */
-#define	need_resched()	{ want_resched = 1; aston(); }
+#define	need_resched()							\
+do {									\
+	curcpu()->ci_want_resched = 1;					\
+	aston(curcpu());						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the hp300, request an ast to send us
+ * buffer pages are invalid.  On the Alpha, request an AST to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	aston((p)->p_cpu);						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)	aston((p)->p_cpu)
 
-#define	aston()		(astpending = 1)
-
-u_int64_t astpending;		/* need to trap before returning to user mode */
-u_int64_t want_resched;		/* resched() was called */
+/*
+ * XXXSMP
+ * Should we send an AST IPI?  Or just let it handle it next time
+ * it sees a normal kernel entry?  I guess letting it happen later
+ * follows the `asynchronous' part of the name...
+ */
+#define	aston(ci)	((ci)->ci_astpending = 1)
 #endif /* _KERNEL */
 
 /*
@@ -240,7 +256,7 @@ struct reg;
 struct rpb;
 struct trapframe;
 
-int	badaddr	__P((void *, size_t));
+int	badaddr(void *, size_t);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

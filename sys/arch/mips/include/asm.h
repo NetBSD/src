@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 1999/04/24 08:10:33 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.22.10.1 2000/06/22 17:01:26 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,21 +62,26 @@
 
 /*
  * Define -pg profile entry code.
- * XXX assume .set noreorder for kernel, .set reorder for user code.
+ * Must always be noreorder, must never use a macro instruction
+ * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
  */
-#define _KERN_MCOUNT		\
-	.set	noat;		\
-	move	$1,$31;		\
-	jal	_mcount;	\
-	subu	sp,sp,8;	\
-	.set at
+#define _KERN_MCOUNT						\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	sw	t9,-4(sp);					\
+	move	AT,ra;						\
+	lui	t9,%hi(_mcount); 				\
+	addiu	t9,t9,%lo(_mcount);				\
+	jalr	t9;						\
+	subu	sp,sp,16;					\
+	lw	t9,4(sp);					\
+	addiu	sp,sp,8;					\
+	addiu	t9,t9,36;					\
+	.set	pop;					
 
 #ifdef GPROF
-# if defined(_KERNEL) || defined(_LOCORE)
-#  define MCOUNT _KERN_MCOUNT
-# else
-#  define MCOUNT .set noreorder; _KERN_MCOUNT ;  .set reorder;
-# endif
+#define MCOUNT _KERN_MCOUNT
 #else
 #define	MCOUNT
 #endif

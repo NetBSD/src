@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.17 2000/05/11 15:26:23 jhawk Exp $ */
+/* $NetBSD: pnpbios.c,v 1.17.2.1 2000/06/22 17:01:06 minoura Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -70,7 +70,12 @@ int	pnpbiosverbose = 0;
 #endif
 
 #ifdef PNPBIOSDEBUG
-#define	DPRINTF(x) printf x
+#ifdef PNPBIOSDEBUG_VALUE
+int	pnpbiosdebug = PNPBIOSDEBUG_VALUE;
+#else
+int	pnpbiosdebug = 1;
+#endif
+#define	DPRINTF(x) if (pnpbiosdebug) printf x
 #else
 #define	DPRINTF(x)
 #endif

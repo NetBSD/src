@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.23 2000/05/23 21:36:43 matt Exp $ */
+/*	$NetBSD: hp.c,v 1.23.2.1 2000/06/22 17:05:09 minoura Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,9 @@
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
 #include <sys/reboot.h>
+#include <sys/conf.h>
 
+#include <machine/bus.h>
 #include <machine/trap.h>
 #include <machine/pte.h>
 #include <machine/mtpr.h>
@@ -62,54 +64,49 @@
 #include <vax/mba/mbareg.h>
 #include <vax/mba/hpreg.h>
 
+#include "ioconf.h"
 #include "locators.h"
-
-#define	HPMASK 0xffff
 
 struct	hp_softc {
 	struct	device	sc_dev;
 	struct	disk sc_disk;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	struct	mba_device sc_md;	/* Common struct used by mbaqueue. */
 	int	sc_wlabel;		/* Disklabel area is writable */
-	int	sc_physnr;		/* Physical disk number */
 };
 
-int     hpmatch __P((struct device *, struct cfdata *, void *));
-void    hpattach __P((struct device *, struct device *, void *));
-void	hpstrategy __P((struct buf *));
-void	hpstart __P((struct mba_device *));
-int	hpattn __P((struct mba_device *));
-enum	xfer_action hpfinish __P((struct mba_device *, int, int *));
-int	hpopen __P((dev_t, int, int));
-int	hpclose __P((dev_t, int, int));
-int	hpioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	hpdump __P((dev_t, caddr_t, caddr_t, size_t));
-int	hpread __P((dev_t, struct uio *));
-int	hpwrite __P((dev_t, struct uio *));
-int	hpsize __P((dev_t));
+int     hpmatch(struct device *, struct cfdata *, void *);
+void    hpattach(struct device *, struct device *, void *);
+void	hpstart(struct mba_device *);
+int	hpattn(struct mba_device *);
+enum	xfer_action hpfinish(struct mba_device *, int, int *);
+bdev_decl(hp);
+cdev_decl(hp);
 
 struct	cfattach hp_ca = {
 	sizeof(struct hp_softc), hpmatch, hpattach
 };
 
-extern struct cfdriver hp_cd;
+#define HP_WCSR(reg, val) \
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))
+#define HP_RCSR(reg) \
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh, (reg))
+
 
 /*
  * Check if this is a disk drive; done by checking type from mbaattach.
  */
 int
-hpmatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+hpmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	mba_attach_args *ma = aux;
 
 	if (cf->cf_loc[MBACF_DRIVE] != MBACF_DRIVE_DEFAULT &&
-	    cf->cf_loc[MBACF_DRIVE] != ma->unit)
+	    cf->cf_loc[MBACF_DRIVE] != ma->ma_unit)
 		return 0;
 
-	if (ma->devtyp != MB_RP)
+	if (ma->ma_devtyp != MB_RP)
 		return 0;
 
 	return 1;
@@ -120,9 +117,7 @@ hpmatch(parent, cf, aux)
  * If the on-disk label can't be read; we lose.
  */
 void
-hpattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+hpattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	hp_softc *sc = (void *)self;
 	struct	mba_softc *ms = (void *)parent;
@@ -130,6 +125,8 @@ hpattach(parent, self, aux)
 	struct  mba_attach_args *ma = aux;
 	char	*msg;
 
+	sc->sc_iot = ma->ma_iot;
+	sc->sc_ioh = ma->ma_ioh;
 	/*
 	 * Init the common struct for both the adapter and its slaves.
 	 */
@@ -140,9 +137,8 @@ hpattach(parent, self, aux)
 	sc->sc_md.md_attn = hpattn;		/* Disk attention routine */
 	sc->sc_md.md_finish = hpfinish;		/* Disk xfer finish routine */
 
-	ms->sc_md[ma->unit] = &sc->sc_md;	/* Per-unit backpointer */
+	ms->sc_md[ma->ma_unit] = &sc->sc_md;	/* Per-unit backpointer */
 
-	sc->sc_physnr = ma->unit;
 	/*
 	 * Init and attach the disk structure.
 	 */
@@ -170,8 +166,7 @@ hpattach(parent, self, aux)
 
 
 void
-hpstrategy(bp)
-	struct buf *bp;
+hpstrategy(struct buf *bp)
 {
 	struct	hp_softc *sc;
 	struct	buf *gp;
@@ -209,12 +204,9 @@ done:
  * Start transfer on given disk. Called from mbastart().
  */
 void
-hpstart(md)
-	struct	mba_device *md;
+hpstart(struct	mba_device *md)
 {
 	struct	hp_softc *sc = md->md_softc;
-	struct	mba_regs *mr = md->md_mba->sc_mbareg;
-	volatile struct	hp_regs *hr;
 	struct	disklabel *lp = sc->sc_disk.dk_label;
 	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 	unsigned bn, cn, sn, tn;
@@ -225,8 +217,6 @@ hpstart(md)
 	disk_busy(&sc->sc_disk);
 	sc->sc_disk.dk_seek++;
 
-	hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
-
 	bn = bp->b_rawblkno;
 	if (bn) {
 		cn = bn / lp->d_secpercyl;
@@ -236,18 +226,16 @@ hpstart(md)
 	} else
 		cn = sn = tn = 0;
 
-	hr->hp_dc = cn;
-	hr->hp_da = (tn << 8) | sn;
+	HP_WCSR(HP_DC, cn);
+	HP_WCSR(HP_DA, (tn << 8) | sn);
 	if (bp->b_flags & B_READ)
-		hr->hp_cs1 = HPCS_READ;		/* GO */
+		HP_WCSR(HP_CS1, HPCS_READ);
 	else
-		hr->hp_cs1 = HPCS_WRITE;
+		HP_WCSR(HP_CS1, HPCS_WRITE);
 }
 
 int
-hpopen(dev, flag, fmt)
-	dev_t	dev;
-	int	flag, fmt;
+hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -280,9 +268,7 @@ hpopen(dev, flag, fmt)
 }
 
 int
-hpclose(dev, flag, fmt)
-	dev_t	dev;
-	int	flag, fmt;
+hpclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -308,12 +294,7 @@ hpclose(dev, flag, fmt)
 }
 
 int
-hpioctl(dev, cmd, addr, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	addr;
-	int	flag;
-	struct	proc *p;
+hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
@@ -352,7 +333,6 @@ hpioctl(dev, cmd, addr, flag, p)
 		break;
 
 	default:
-		printf("hpioctl: command %x\n", (unsigned int)cmd);
 		return ENOTTY;
 	}
 	return 0;
@@ -363,40 +343,38 @@ hpioctl(dev, cmd, addr, flag, p)
  * Return info about what-to-do-now.
  */
 enum xfer_action
-hpfinish(md, mbasr, attn)
-	struct	mba_device *md;
-	int	mbasr, *attn;
+hpfinish(struct mba_device *md, int mbasr, int *attn)
 {
 	struct	hp_softc *sc = md->md_softc;
 	struct	buf *bp = BUFQ_FIRST(&md->md_q);
-	volatile struct  mba_regs *mr = md->md_mba->sc_mbareg;
-	volatile struct	hp_regs *hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
-	int	er1, er2;
-	volatile int bc; /* to get GCC read whole longword */
+	int er1, er2, bc;
 	unsigned byte;
 
-	er1 = hr->hp_er1 & HPMASK;
-	er2 = hr->hp_er2 & HPMASK;
-	hr->hp_er1 = hr->hp_er2 = 0;
+	er1 = HP_RCSR(HP_ER1);
+	er2 = HP_RCSR(HP_ER2);
+	HP_WCSR(HP_ER1, 0);
+	HP_WCSR(HP_ER2, 0);
+
 hper1:
 	switch (ffs(er1) - 1) {
 	case -1:
-		hr->hp_er1 = 0;
+		HP_WCSR(HP_ER1, 0);
 		goto hper2;
 		
 	case HPER1_DCK: /* Corrected? data read. Just notice. */
-		bc = mr->mba_bc;
+		bc = bus_space_read_4(md->md_mba->sc_iot,
+		    md->md_mba->sc_ioh, MBA_BC);
 		byte = ~(bc >> 16);
 		diskerr(buf, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
 		    btodb(bp->b_bcount - byte), sc->sc_disk.dk_label);
 		er1 &= ~(1<<HPER1_DCK);
-		er1 &= HPMASK;
 		break;
 
 	default:
 		printf("drive error :%s er1 %x er2 %x\n",
 		    sc->sc_dev.dv_xname, er1, er2);
-		hr->hp_er1 = hr->hp_er2 = 0;
+		HP_WCSR(HP_ER1, 0);
+		HP_WCSR(HP_ER2, 0);
 		goto hper2;
 	}
 	goto hper1;
@@ -416,17 +394,13 @@ hper2:
  * Non-data transfer interrupt; like volume change.
  */
 int
-hpattn(md)
-	struct	mba_device *md;
+hpattn(struct mba_device *md)
 {
 	struct	hp_softc *sc = md->md_softc;
-	struct	mba_softc *ms = (void *)sc->sc_dev.dv_parent;
-	struct  mba_regs *mr = ms->sc_mbareg;
-	struct  hp_regs *hr = (void *)&mr->mba_md[sc->sc_dev.dv_unit];
 	int	er1, er2;
 
-        er1 = hr->hp_er1 & HPMASK;
-        er2 = hr->hp_er2 & HPMASK;
+        er1 = HP_RCSR(HP_ER1);
+        er2 = HP_RCSR(HP_ER2);
 
 	printf("%s: Attention! er1 %x er2 %x\n",
 		sc->sc_dev.dv_xname, er1, er2);
@@ -435,8 +409,7 @@ hpattn(md)
 
 
 int
-hpsize(dev)
-	dev_t	dev;
+hpsize(dev_t dev)
 {
 	int	size, unit = DISKUNIT(dev);
 	struct  hp_softc *sc;
@@ -452,27 +425,19 @@ hpsize(dev)
 }
 
 int
-hpdump(dev, a1, a2, size)
-	dev_t	dev;
-	caddr_t	a1, a2;
-	size_t	size;
+hpdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
-	printf("hpdump: Not implemented yet.\n");
 	return 0;
 }
 
 int
-hpread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+hpread(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (physio(hpstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-hpwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+hpwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
 }

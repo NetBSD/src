@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.35 2000/05/23 10:16:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.35.2.1 2000/06/22 17:08:14 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ scsipi_get_xs(sc_link, flags)
 	if (xs != NULL) {
 		callout_init(&xs->xs_callout);
 		xs->xs_control = flags;
+		xs->xs_status = 0;
 		TAILQ_INSERT_TAIL(&sc_link->pending_xfers, xs, device_q);
 		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 	}
@@ -464,7 +465,8 @@ scsipi_size(sc_link, flags)
 	 */
 	if (scsipi_command(sc_link, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-	    SCSIPIRETRIES, 20000, NULL, flags | XS_CTL_DATA_IN) != 0) {
+	    SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0) {
 		sc_link->sc_print_addr(sc_link);
 		printf("could not get size\n");
 		return (0);
@@ -777,14 +779,14 @@ sc_err1(xs, async)
 		if (xs->retries) {
 			if ((xs->xs_control & XS_CTL_POLL) != 0)
 				delay(1000000);
-			else if ((xs->xs_control &
+			else if (!async && (xs->xs_control &
 			    (XS_CTL_NOSLEEP|XS_CTL_DISCOVERY)) == 0)
 				tsleep(&lbolt, PRIBIO, "scbusy", 0);
 			else
 #if 0
 				timeout(scsipi_requeue, xs, hz);
 #else
-				goto lose;
+				goto retry;
 #endif
 		}
 	case XS_TIMEOUT:
@@ -796,7 +798,6 @@ sc_err1(xs, async)
 			return (ERESTART);
 		}
 	case XS_DRIVER_STUFFUP:
-	lose:
 		error = EIO;
 		break;
 

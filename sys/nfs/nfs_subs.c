@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.75 2000/03/30 12:51:16 augustss Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.75.2.1 2000/06/22 17:10:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,7 @@
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
+#include "opt_inet.h"
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -1398,7 +1399,7 @@ void
 nfs_init()
 {
 
-#if !defined(alpha) && defined(DIAGNOSTIC)
+#if !defined(alpha) && !defined(_LP64) && defined(DIAGNOSTIC)
 	/*
 	 * Check to see if major data structures haven't bloated.
 	 */
@@ -2228,11 +2229,18 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 
 	if (!(exflags & (MNT_EXNORESPORT|MNT_EXPUBLIC))) {
 		saddr = mtod(nam, struct sockaddr_in *);
-		if (saddr->sin_family == AF_INET &&
+		if ((saddr->sin_family == AF_INET) &&
 		    ntohs(saddr->sin_port) >= IPPORT_RESERVED) {
 			vput(*vpp);
 			return (NFSERR_AUTHERR | AUTH_TOOWEAK);
 		}
+#ifdef INET6
+		if ((saddr->sin_family == AF_INET6) &&
+		    ntohs(saddr->sin_port) >= IPV6PORT_RESERVED) {
+			vput(*vpp);
+			return (NFSERR_AUTHERR | AUTH_TOOWEAK);
+		}
+#endif
 	}
 	/*
 	 * Check/setup credentials.
@@ -2301,6 +2309,18 @@ netaddr_match(family, haddr, nam)
 		    inetaddr->sin_addr.s_addr == haddr->had_inetaddr)
 			return (1);
 		break;
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin6_1, *sin6_2;
+
+		sin6_1 = mtod(nam, struct sockaddr_in6 *);
+		sin6_2 = mtod(haddr->had_nam, struct sockaddr_in6 *);
+		if (sin6_1->sin6_family == AF_INET6 &&
+		    IN6_ARE_ADDR_EQUAL(&sin6_1->sin6_addr, &sin6_2->sin6_addr))
+			return 1;
+	    }
+#endif
 #ifdef ISO
 	case AF_ISO:
 	    {

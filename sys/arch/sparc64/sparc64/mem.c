@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1999/12/04 21:21:36 ragge Exp $ */
+/*	$NetBSD: mem.c,v 1.10.2.1 2000/06/22 17:04:37 minoura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,8 +59,8 @@
 
 #include <vm/vm.h>
 
-extern vaddr_t prom_vstart;
-extern vaddr_t prom_vend;
+vaddr_t prom_vstart = 0xf000000;
+vaddr_t prom_vend = 0xf0100000;
 caddr_t zeropage;
 
 /*ARGSUSED*/
@@ -210,7 +210,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
 				c = min(iov->iov_len, 4096);
-#if 0		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
+#if 1		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
 			} else if (v >= prom_vstart && v < prom_vend &&
 				   uio->uio_rw == UIO_READ) {
 				/* Allow read-only access to the PROM */
@@ -232,20 +232,6 @@ mmrw(dev, uio, flags)
 			return (0);
 
 /* XXX should add sbus, etc */
-
-#if defined(SUN4)
-		/*
-		 * minor device 11 (/dev/eeprom) is the old-style
-		 * (a'la Sun 3) EEPROM.
-		 */
-		case 11:
-			if (cputyp == CPU_SUN4)
-				error = eeprom_uio(uio);
-			else
-				error = ENXIO;
-
-			break;
-#endif /* SUN4 */
 
 		/*
 		 * minor device 12 (/dev/zero) is source of nulls on read,

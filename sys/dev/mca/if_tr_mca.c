@@ -1,12 +1,11 @@
-/* $NetBSD: if_tr_mca.c,v 1.1 2000/05/11 15:42:04 jdolecek Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.1.2.1 2000/06/22 17:07:14 minoura Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * Copyright (c) 1998, 1999 Gregory McGarry.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gregory McGarry <g.mcgarry@qut.edu.au>.
+ * by Gregory McGarry <g.mcgarry@ieee.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,6 +102,8 @@ tr_mca_attach(parent, self, aux)
 	bus_space_handle_t pioh, mmioh, sramh;
 	int iobase, irq, sram_size, sram_addr, rom_addr;
 	int pos2, pos3, pos4, pos5;
+
+	printf("\n");
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);

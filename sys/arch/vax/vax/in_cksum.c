@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1996/10/13 03:35:40 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4.36.1 2000/06/22 17:05:22 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -64,19 +64,17 @@
 #define ADDWORD	{sum += *(u_short *)w;}
 
 int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(struct mbuf *m, int len)
 {
-	register u_char *w;
-	register u_int sum = 0;
-	register int mlen = 0;
+	u_int8_t *w;
+	u_int32_t sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	for (;m && len; m = m->m_next) {
 		if ((mlen = m->m_len) == 0)
 			continue;
-		w = mtod(m, u_char *);
+		w = mtod(m, u_int8_t *);
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
@@ -86,13 +84,13 @@ in_cksum(m, len)
 		 * Ensure that we're aligned on a word boundary here so
 		 * that we can do 32 bit operations below.
 		 */
-		if ((3 & (long)w) != 0) {
+		if ((3 & (intptr_t) w) != 0) {
 			REDUCE;
-			if ((1 & (long)w) != 0) {
+			if ((1 & (intptr_t) w) != 0) {
 				ADDBYTE;
 				ADVANCE(1);
 			}
-			if ((2 & (long)w) != 0) {
+			if ((2 & (intptr_t) w) != 0) {
 				ADDWORD;
 				ADVANCE(2);
 			}
@@ -149,4 +147,3 @@ in_cksum(m, len)
 	ADDCARRY;
 	return (sum ^ 0xffff);
 }
-

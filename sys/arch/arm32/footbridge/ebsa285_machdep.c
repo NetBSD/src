@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.11 2000/03/24 17:05:31 ws Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.11.2.1 2000/06/22 16:59:27 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -191,6 +191,7 @@ extern void dumpsys		__P((void));
 
 #include "pckbc.h"
 #if (NPCKBC > 0)
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
 
@@ -855,7 +856,7 @@ consinit(void)
 		vga_cnattach(&footbridge_pci_io_bs_tag,
 		    &footbridge_pci_mem_bs_tag, - 1, 0);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, PCKBC_KBD_SLOT);
+		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
 #endif	/* NPCKBC */
 	}
 #endif	/* NVGA */

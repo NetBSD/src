@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.3 1999/11/21 15:01:50 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.3.2.1 2000/06/22 17:08:06 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ bppwrite(dev, uio, flags)
 	int s;
 
 	/*
-	 * Wait until the DMA engibe is free.
+	 * Wait until the DMA engine is free.
 	 */
 	s = splbpp();
 	while ((sc->sc_flags & BPP_LOCKED) != 0) {
@@ -344,14 +344,18 @@ bppwrite(dev, uio, flags)
 					  L64854_REG_TCR, tcr);
 
 			/* Enable DMA */
+			s = splbpp();
 			DMA_GO(lsi);
 			error = tsleep(sc, PZERO|PCATCH, "bppdma", 0);
+			splx(s);
 			if (error != 0)
 				goto out;
 
 			/* Bail out if bottom half reported an error */
 			if ((error = sc->sc_error) != 0)
 				goto out;
+
+			len -= size;
 		}
 	}
 

@@ -1,9 +1,10 @@
-/*	$NetBSD: keydb.c,v 1.2 2000/02/06 12:49:50 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.2.2.1 2000/06/22 17:10:12 minoura Exp $	*/
+/*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,8 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* KAME Id: keydb.c,v 1.58 2000/01/17 14:11:16 itojun Exp */
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -138,9 +137,14 @@ keydb_freesecasvar(p)
 {
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	p->refcnt--;
-	if (p->refcnt == 0)
+	/* negative refcnt will cause panic intentionally */
+	if (p->refcnt <= 0)
 		keydb_delsecasvar(p);
 	splx(s);
 }

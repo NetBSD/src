@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1999/09/17 19:59:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32.10.1 2000/06/22 16:59:24 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -60,6 +60,7 @@
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
 extern void	ofrootfound __P((void));
+extern void	ofw_device_register __P((struct device *, void *aux));
 extern void	startrtclock __P((void));
 #endif
 
@@ -70,8 +71,8 @@ extern void	startrtclock __P((void));
 
 #include "podulebus.h"
 
-static	struct device *booted_device;
-static	int booted_partition;
+struct device *booted_device;
+int booted_partition;
 
 extern dev_t dumpdev;
 
@@ -79,7 +80,7 @@ void dumpconf __P((void));
 void isa_intr_init __P((void));
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name, struct device **devpp, int *partp));
+static void get_device __P((char *name));
 static void set_root_device __P((void));
 #endif
 
@@ -87,18 +88,13 @@ static void set_root_device __P((void));
 /* Decode a device name to a major and minor number */
 
 static void
-get_device(name, devpp, partp)
+get_device(name)
 	char *name;
-	struct device **devpp;
-	int *partp;
 {
 	int loop, unit, part;
 	char buf[32], *cp;
 	struct device *dv;
 
-	*devpp = NULL;
-	*partp = 0;
-    
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
@@ -122,8 +118,8 @@ get_device(name, devpp, partp)
 			for (dv = alldevs.tqh_first; dv != NULL;
 			    dv = dv->dv_list.tqe_next) {
 				if (strcmp(buf, dv->dv_xname) == 0) {
-					*devpp = dv;
-					*partp = part;
+					booted_device = dv;
+					booted_partition = part;
 					return;
 				}
 			}
@@ -140,12 +136,12 @@ set_root_device()
 	char *ptr;
             
 	if (boot_file)
-		get_device(boot_file, &booted_device, &booted_partition);
+		get_device(boot_file);
 	if (boot_args) {
 		ptr = strstr(boot_args, "root=");
 		if (ptr) {
 			ptr += 5;
-			get_device(ptr, &booted_device, &booted_partition);
+			get_device(ptr);
 		}
 	}
 }
@@ -222,4 +218,12 @@ cpu_configure()
 	(void)spl0();
 }
 
+void
+device_register(struct device *dev, void *aux)
+{
+#if defined(OFWGENCFG) || defined(SHARK)
+	/* Temporary for SHARK! */
+	ofw_device_register(dev, aux);
+#endif
+}
 /* End of autoconf.c */

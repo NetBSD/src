@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.2.1 2000/06/22 17:01:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,10 @@
  */
 int	cpuspeed = 10;	/* approx # instr per usec. */
 
-void	findroot __P((struct device **, int *));
+struct device *booted_device;
+int booted_partition;
+
+static void findroot __P((void));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -117,10 +120,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	       booted_device ? booted_device->dv_xname : "<unknown>");
@@ -134,18 +134,10 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
  * Attempt to find the device from which we were booted.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot()
 {
 	int ctlr, unit, part, type;
 	struct device *dv;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
 
 	if (BOOTDEV_MAG(bootdev) != 5)	/* NEWS-OS's B_DEVMAGIC */
 		return;
@@ -168,8 +160,8 @@ findroot(devpp, partp)
 			if (sdv->sc_link[ctlr][0] == NULL)
 				continue;
 
-			*devpp = sdv->sc_link[ctlr][0]->device_softc;
-			*partp = part;
+			booted_device = sdv->sc_link[ctlr][0]->device_softc;
+			booted_partition = part;
 			return;
 		}
 	}

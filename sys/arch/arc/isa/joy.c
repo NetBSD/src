@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2 2000/02/22 11:26:03 soda Exp $	*/
+/*	$NetBSD: joy.c,v 1.2.2.1 2000/06/22 16:59:16 minoura Exp $	*/
 /*	NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp 	*/
 
 /*-
@@ -80,7 +80,7 @@ struct joy_softc {
 	int	timeout[2];
 };
 
-int		joyprobe __P((struct device *, void *, void *));
+int		joyprobe __P((struct device *, struct cfdata *, void *));
 int		joyread __P((dev_t dev, struct uio *uio, int flag));
 int		joyioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 void		joyattach __P((struct device *, struct device *, void *));
@@ -92,15 +92,13 @@ struct cfattach joy_ca = {
 	sizeof(struct joy_softc), joyprobe, joyattach
 };
 
-struct cfdriver joy_cd = {
-	NULL, "joy", DV_DULL
-};
-
+extern struct cfdriver joy_cd;
 
 int
 joyprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 #ifdef WANT_JOYSTICK_CONNECTED

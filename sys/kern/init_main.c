@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.168 2000/05/26 21:20:29 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.168.2.1 2000/06/22 17:09:04 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
+#include "opt_syscall_debug.h"
 
 #include "rnd.h"
 
@@ -197,6 +198,7 @@ main()
 	 */
 	p = &proc0;
 	curproc = p;
+	p->p_cpu = curcpu();
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -240,6 +242,7 @@ main()
 	 */
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
 	proclist_unlock_write(s);
 
 	p->p_pgrp = &pgrp0;
@@ -396,9 +399,8 @@ main()
 	 * wait for us to inform it that the root file system has been
 	 * mounted.
 	 */
-	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
+	if (fork1(p, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-	cpu_set_kpc(initproc, start_init, initproc);
 
 	/*
 	 * Create any kernel threads who's creation was deferred because
@@ -463,11 +465,12 @@ main()
 	 * munched in mi_switch() after the time got set.
 	 */
 	proclist_lock_read();
-	s = splclock();		/* so we can read time */
+	s = splhigh();		/* block clock and statclock */
 	for (p = LIST_FIRST(&allproc); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
-		p->p_stats->p_start = curcpu()->ci_schedstate.spc_runtime =
-		    mono_time = boottime = time;
+		p->p_stats->p_start = mono_time = boottime = time;
+		if (p->p_cpu != NULL)
+			p->p_cpu->ci_schedstate.spc_runtime = time;
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.30 2000/05/27 04:52:31 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.30.2.1 2000/06/22 17:04:47 minoura Exp $	*/
 
 /*
  *
@@ -425,7 +425,8 @@ xycattach(parent, self, aux)
 	/* link in interrupt with higher level software */
 	isr_add_vectored(xycintr, (void *)xyc,
 	                 ca->ca_intpri, ca->ca_intvec);
-	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
+	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    xyc->sc_dev.dv_xname, "intr");
 
 	callout_init(&xyc->sc_tick_ch);
 

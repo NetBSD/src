@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2000/01/19 13:13:14 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16.2.1 2000/06/22 16:59:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -222,6 +222,14 @@ isa_intr_alloc(ic, mask, type, irq)
 		}
 	}
 	return (1);
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

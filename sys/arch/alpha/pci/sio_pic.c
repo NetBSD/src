@@ -1,7 +1,7 @@
-/* $NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $ */
+/* $NetBSD: sio_pic.c,v 1.25.2.1 2000/06/22 16:58:44 minoura Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25.2.1 2000/06/22 16:58:44 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,13 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $")
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/cy82c693reg.h>
+#include <dev/pci/cy82c693var.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/pci/siovar.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 
@@ -107,14 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $")
 
 bus_space_tag_t sio_iot;
 pci_chipset_tag_t sio_pc;
-bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
+bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2;
 
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
 static struct alpha_shared_intr *sio_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt sio_intr_evcnt;
-#endif
 
 #ifndef STRAY_MAX
 #define	STRAY_MAX	5
@@ -143,6 +139,8 @@ void		sio_intr_shutdown __P((void *));
 int		i82378_setup_elcr __P((void));
 u_int8_t	i82378_read_elcr __P((int));
 void		i82378_write_elcr __P((int, u_int8_t));
+
+bus_space_handle_t sio_ioh_elcr;
 
 int
 i82378_setup_elcr()
@@ -187,6 +185,8 @@ i82378_write_elcr(elcr, val)
 int		cy82c693_setup_elcr __P((void));
 u_int8_t	cy82c693_read_elcr __P((int));
 void		cy82c693_write_elcr __P((int, u_int8_t));
+
+const struct cy82c693_handle *sio_cy82c693_handle;
 
 int
 cy82c693_setup_elcr()
@@ -233,12 +233,7 @@ cy82c693_setup_elcr()
 		    device);
 #endif
 
-		/*
-		 * The CY82C693's ELCR registers are accessed indirectly
-		 * via (IO_ICU1 + 2) (address) and (IO_ICU1 + 3) (data).
-		 */
-		sio_ioh_elcr = sio_ioh_icu1;
-
+		sio_cy82c693_handle = cy82c693_init(sio_iot);
 		sio_read_elcr = cy82c693_read_elcr;
 		sio_write_elcr = cy82c693_write_elcr;
 
@@ -256,8 +251,7 @@ cy82c693_read_elcr(elcr)
 	int elcr;
 {
 
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
-	return (bus_space_read_1(sio_iot, sio_ioh_elcr, 0x03));
+	return (cy82c693_read(sio_cy82c693_handle, CONFIG_ELCR1 + elcr));
 }
 
 void
@@ -266,8 +260,7 @@ cy82c693_write_elcr(elcr, val)
 	u_int8_t val;
 {
 
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x03, val);
+	cy82c693_write(sio_cy82c693_handle, CONFIG_ELCR1 + elcr, val);
 }
 
 /******************** ELCR access function configuration ********************/
@@ -342,13 +335,14 @@ sio_intr_setup(pc, iot)
 	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
+	char *cp;
 	int i;
 
 	sio_iot = iot;
 	sio_pc = pc;
 
-	if (bus_space_map(sio_iot, IO_ICU1, IO_ICUSIZE, 0, &sio_ioh_icu1) ||
-	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2))
+	if (bus_space_map(sio_iot, IO_ICU1, 2, 0, &sio_ioh_icu1) ||
+	    bus_space_map(sio_iot, IO_ICU2, 2, 0, &sio_ioh_icu2))
 		panic("sio_intr_setup: can't map ICU I/O ports");
 
 	for (i = 0; sio_elcr_setup_funcs[i] != NULL; i++)
@@ -368,13 +362,18 @@ sio_intr_setup(pc, iot)
 	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
-	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
+	sio_intr = alpha_shared_intr_alloc(ICU_LEN, 8);
 
 	/*
 	 * set up initial values for interrupt enables.
 	 */
 	for (i = 0; i < ICU_LEN; i++) {
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
+
+		cp = alpha_shared_intr_string(sio_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
+		    EVCNT_TYPE_INTR, NULL, "isa", cp);
 
 		switch (i) {
 		case 0:
@@ -442,6 +441,18 @@ sio_intr_string(v, irq)
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
+}
+
+const struct evcnt *
+sio_intr_evcnt(v, irq)
+	void *v;
+	int irq;
+{
+
+	if (irq == 0 || irq >= ICU_LEN || irq == 2)
+		panic("sio_intr_evcnt: bogus isa irq 0x%x\n", irq);
+
+	return (alpha_shared_intr_evcnt(sio_intr, irq));
 }
 
 void *
@@ -526,16 +537,6 @@ sio_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 	if (irq > ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);
-#endif
-
-#ifdef EVCNT_COUNTERS
-	sio_intr_evcnt.ev_count++;
-#else
-#ifdef DEBUG
-	if (ICU_LEN != INTRCNT_ISA_IRQ_LEN)
-		panic("sio interrupt counter sizes inconsistent");
-#endif
-	intrcnt[INTRCNT_ISA_IRQ + irq]++;
 #endif
 
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))

@@ -9,6 +9,7 @@
 #include <machine/psl.h>
 #include <machine/intr.h>
 
+#include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.3 2000/04/19 08:44:33 haya Exp $
+#	$NetBSD: SWINGER,v 1.3.4.1 2000/06/22 17:00:19 minoura Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.3 $"
+#ident 		"SWINGER-$Revision: 1.3.4.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -116,19 +116,6 @@ options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -271,9 +258,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -359,7 +345,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -410,7 +397,8 @@ scsibus* at bha?
 #scsibus* at esp?
 #scsibus* at isp?
 ##scsibus* at nca?
-scsibus* at ncr?
+#scsibus* at ncr?
+scsibus* at siop?
 #scsibus* at pcscp?
 #scsibus* at sea?
 #scsibus* at uha?
@@ -536,7 +524,7 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 #wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-#xe*	at pcmcia? function ?		# Xircom PCMCIA cards
+#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
@@ -661,22 +649,22 @@ ugen*	at uhub? port ?
 
 # Plug-and-Play BIOS and attached devices
 
-pnpbios0 at mainbus0
+pnpbios* at mainbus?
 
 # mainboard audio chips
-#ess*	at pnpbios0 index ?	# ESS AudioDrive
-#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*	at pnpbios0 index ?	# OPL3-SA3
+#ess*	at pnpbios? index ?	# ESS AudioDrive
+#sb*	at pnpbios? index ?	# NeoMagic 256AV in sb mode
+#wss*	at pnpbios? index ?	# NeoMagic 256AV in wss mode
+#ym*	at pnpbios? index ?	# OPL3-SA3
 
 # com port
-com*	at pnpbios0 index ?
+com*	at pnpbios? index ?
 
 # parallel port
-lpt*	at pnpbios0 index ?
+lpt*	at pnpbios? index ?
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
+#pciide* at pnpbios? index ?
 
 
 # Audio Devices
@@ -687,7 +675,6 @@ lpt*	at pnpbios0 index ?
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -730,7 +717,6 @@ audio*	at eap?
 #audio*	at guspnp?
 #audio*	at pas?
 audio*	at sb?
-#audio*	at sbl?
 #audio*	at sp?
 #audio*	at sv?
 audio*	at uaudio?
@@ -770,7 +756,6 @@ midi*	at sb?			# SB1 MIDI port
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

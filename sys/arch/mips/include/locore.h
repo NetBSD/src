@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.33 2000/05/23 04:21:40 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.33.2.1 2000/06/22 17:01:27 minoura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -55,8 +55,8 @@ void mips1_SetPID   __P((int pid));
 void mips1_TBIA __P((int));
 void mips1_TBIAP __P((int));
 void mips1_TBIS __P((vaddr_t));
-void mips1_TBRPL __P((vaddr_t, vaddr_t, paddr_t));
-int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+void mips1_TBRPL __P((vaddr_t, vaddr_t, unsigned int));
+int mips1_TLBUpdate __P((u_int, u_int));
 
 void mips1_wbflush __P((void));
 void mips1_proc_trampoline __P((void));
@@ -72,29 +72,25 @@ void mips3_SetPID  __P((int pid));
 void mips3_TBIA __P((int));
 void mips3_TBIAP __P((int));
 void mips3_TBIS __P((vaddr_t));
-void mips3_TBRPL __P((vaddr_t, vaddr_t, paddr_t));
-int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+void mips3_TBRPL __P((vaddr_t, vaddr_t, unsigned int));
+int mips3_TLBUpdate __P((u_int, u_int));
 struct tlb;
 void mips3_TLBRead __P((int, struct tlb *));
-#if 0
-void mips3_TLBWriteIndexedVPS __P((u_int index, struct tlb *tlb));
-void mips3_TLBWriteIndexed __P((u_int index, u_int high,
-				u_int lo0, u_int lo1));
-#endif
 void mips3_SetWIRED __P((int));
 void mips3_wbflush __P((void));
 void mips3_proc_trampoline __P((void));
 void mips3_cpu_switch_resume __P((void));
 
-void mips5200_FlushCache  __P((void));
-void mips5200_FlushDCache __P((vaddr_t addr, vaddr_t len));
-void mips5200_HitFlushDCache __P((vaddr_t, int));
-void mips5200_FlushICache __P((vaddr_t addr, vaddr_t len));
+void mips3_FlushCache_2way  __P((void));
+void mips3_FlushDCache_2way __P((vaddr_t addr, vaddr_t len));
+void mips3_HitFlushDCache_2way __P((vaddr_t, int));
+void mips3_FlushICache_2way __P((vaddr_t addr, vaddr_t len));
 
+u_int32_t mips3_read_config __P((void));
 u_int32_t mips3_cycle_count __P((void));
 u_int32_t mips3_write_count __P((u_int32_t));
 u_int32_t mips3_read_compare __P((void));
-u_int32_t mips3_read_config __P((void));
+void mips3_write_config __P((u_int32_t));
 void mips3_write_compare __P((u_int32_t));
 void mips3_write_xcontext_upper __P((u_int32_t));
 void mips3_clearBEV __P((void));
@@ -112,7 +108,7 @@ typedef struct  {
 	void (*setTLBpid)  __P((int pid));
 	void (*TBIAP)	__P((int));
 	void (*TBIS)	__P((vaddr_t));
-	void (*TBRPL)	__P((vaddr_t, vaddr_t, paddr_t));
+	void (*TBRPL)	__P((vaddr_t, vaddr_t, unsigned int));
 	int  (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
 	void (*wbflush) __P((void));
 } mips_locore_jumpvec_t;
@@ -136,11 +132,11 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 extern long *mips_locoresw[];
 
 #if defined(MIPS3) && !defined (MIPS1)
-#if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_5200)
-#define MachFlushCache		mips5200_FlushCache
-#define MachFlushDCache		mips5200_FlushDCache
-#define MachHitFlushDCache	mips5200_HitFlushDCache
-#define MachFlushICache		mips5200_FlushICache
+#if	defined(MIPS3_5200)
+#define MachFlushCache		mips3_FlushCache_2way
+#define MachFlushDCache		mips3_FlushDCache_2way
+#define MachHitFlushDCache	mips3_HitFlushDCache_2way
+#define MachFlushICache		mips3_FlushICache_2way
 #else
 #define MachFlushCache		mips3_FlushCache
 #if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_4100)

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.225 2000/05/27 11:40:05 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.225.2.1 2000/06/22 17:07:31 minoura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp 
+ *	NetBSD: pcidevs,v 1.236 2000/06/16 08:13:25 soren Exp 
  */
 
 /*
@@ -133,7 +133,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BFX,
 	    0,
 	    "3Com",
-	    "3c905B-FX 10/100 Ethernet",
+	    "3c905B-FX 100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CTX,
@@ -218,6 +218,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -584,6 +590,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "79c970 PCnet-PCI LANCE Ethernet",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME,
+	    0,
+	    "Advanced Micro Devices",
+	    "79c978 PCnet-PCI Home",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
@@ -1168,6 +1180,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI0647",
 	},
 	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648,
+	    0,
+	    "CMD Technology",
+	    "PCI0648",
+	},
+	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,
 	    0,
 	    "CMD Technology",
@@ -1630,10 +1648,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RoadRunner Gig-E Interface",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO1,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 1 PCI Audio Accelerator",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2,
 	    0,
 	    "ESS Technology Inc",
-	    "Maestro 2",
+	    "Maestro 2 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
@@ -1645,7 +1669,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
 	    0,
 	    "ESS Technology Inc",
-	    "Maestro 2E",
+	    "Maestro 2E PCI Audio Accelerator",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 3 PCI Audio Accelerator",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3MODEM,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 3 Modem",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
@@ -2545,19 +2581,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
 	    0,
 	    "NEC",
-	    "uPD72872 IEEE 1394 OHCI PCI Controller",
+	    "uPD72872 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
 	    0,
 	    "NEC",
-	    "uPD72870 IEEE 1394 OHCI PCI Controller",
+	    "uPD72870 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
 	    0,
 	    "NEC",
-	    "uPD72871 IEEE 1394 OHCI PCI Controller",
+	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
@@ -2578,10 +2614,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicMedia 256AV VGA",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_VGA,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256ZX VGA",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
 	    0,
 	    "Neomagic",
 	    "MagicMedia 256AV Audio",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256ZX Audio",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
@@ -2732,6 +2780,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Opti",
 	    "82C558",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568,
+	    0,
+	    "Opti",
+	    "82C568",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568,
+	    0,
+	    "Opti",
+	    "82D568",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621,
@@ -3064,6 +3124,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Trio3D/2X",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D,
+	    0,
+	    "S3",
+	    "Savage3D",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D_MV,
+	    0,
+	    "S3",
+	    "Savage3D+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4,
+	    0,
+	    "S3",
+	    "Savage4",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
 	    0,
 	    "S3",
@@ -3074,6 +3152,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "ViRGE/MXP",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX_MV,
+	    0,
+	    "S3",
+	    "Savage/MX+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX,
+	    0,
+	    "S3",
+	    "Savage/MX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX_MV,
+	    0,
+	    "S3",
+	    "Savage/IX+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX,
+	    0,
+	    "S3",
+	    "Savage/IX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE2000,
+	    0,
+	    "S3",
+	    "Savage2000",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
@@ -3271,13 +3379,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
 	    0,
 	    "Sony",
-	    "CXD1947A FireWire Host Controller",
+	    "CXD1947A IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD32222,
 	    0,
 	    "Sony",
-	    "CXD3222 OHCI i.LINK(IEEE 1394) PCI controller",
+	    "CXD3222 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
@@ -3289,13 +3397,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
 	    0,
 	    "Sun Microsystems",
-	    "SPARC Ebus",
+	    "PCIO Ebus2",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
 	    0,
 	    "Sun Microsystems",
-	    "SUNW,hme compatible Ethernet",
+	    "PCIO Happy Meal Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
@@ -3376,10 +3484,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TVP4020 Permedia 2",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCILYNX,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV21,
 	    0,
 	    "Texas Instruments",
-	    "LYNX FireWire Host Controller",
+	    "TSB12LV21 IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV22 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV23 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -3520,6 +3646,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Fast Infrared Type O",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade i7",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
 	    0,
 	    "Trident Microsystems",
@@ -3542,6 +3674,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "CYBER 9397",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397DVD,
+	    0,
+	    "Trident Microsystems",
+	    "CYBER 9397DVD",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9525,
@@ -3578,6 +3716,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
+	    0,
+	    "Triones Technologies",
+	    "HPT366/370 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
@@ -3748,6 +3892,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT8371 (Apollo KX133) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4,
+	    0,
+	    "VIA Technologies",
+	    "VT8501 MVP4 System Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA Technologies",
@@ -3902,6 +4052,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8371 (Apollo KX133) PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8501 PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
@@ -6949,6 +7105,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_3WARE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "3ware",
 	    NULL,
 	},
 	{

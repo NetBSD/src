@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.11 2000/05/08 13:25:35 augustss Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.11.2.1 2000/06/22 17:07:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 /*
  * driver for generic unknown PHYs
  */
+
+#include "opt_mii.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2000/05/27 00:40:40 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.12.2.1 2000/06/22 17:03:51 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -48,6 +48,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
@@ -566,16 +567,16 @@ syscall(frame)
 }
 
 void
-child_return(p, p2, p3, p4, frame)
-	struct proc *p;
-	int p2, p3, p4;	/* dummy param */
-	struct trapframe frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	frame.tf_r0 = 0;
-	frame.tf_ssr |= PSL_TBIT; /* This indicates no error. */
+	tf->tf_r0 = 0;
+	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
-	userret(p, frame.tf_spc, 0);
+	userret(p, tf->tf_spc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

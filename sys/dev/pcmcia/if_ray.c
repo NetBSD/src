@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.19.2.1 2000/06/22 17:07:44 minoura Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -157,7 +157,9 @@ struct ray_softc {
 	void				*sc_ih;
 	void				*sc_sdhook;
 	void				*sc_pwrhook;
-	int				sc_resumeinit;
+	int				sc_flags;	/*. misc flags */
+#define RAY_FLAGS_RESUMEINIT	0x0001
+#define RAY_FLAGS_ATTACHED	0x0002	/* attach has succeeded */
 	int				sc_resetloop;
 
 	struct callout			sc_check_ccs_ch;
@@ -581,8 +583,9 @@ ray_attach(parent, self, aux)
 	strncpy(sc->sc_dnwid, RAY_DEF_NWID, sizeof(sc->sc_dnwid));
 	strncpy(sc->sc_cnwid, RAY_DEF_NWID, sizeof(sc->sc_dnwid));
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
-	sc->sc_countrycode = sc->sc_dcountrycode = RAY_PID_COUNTRY_CODE_DEFAULT;
-	sc->sc_resumeinit = 0;
+	sc->sc_countrycode = sc->sc_dcountrycode =
+	    RAY_PID_COUNTRY_CODE_DEFAULT;
+	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
 
 	callout_init(&sc->sc_check_ccs_ch);
 	callout_init(&sc->sc_check_scheduled_ch);
@@ -594,7 +597,8 @@ ray_attach(parent, self, aux)
 	 * attach the interface
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
-	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,sc->sc_version);
+	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,
+	    sc->sc_version);
 	if (sc->sc_version != SC_BUILD_4)
 		printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
 		    sc->sc_xname, ep->e_rates[0], ep->e_rates[1],
@@ -632,6 +636,8 @@ ray_attach(parent, self, aux)
 	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
 
+	/* The attach is successful. */
+	sc->sc_flags |= RAY_FLAGS_ATTACHED;
 	return;
 fail:
 	/* disable the card */
@@ -688,6 +694,10 @@ ray_detach(self, flags)
 	sc = (struct ray_softc *)self;
 	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
+
+	/* Succeed now if there is no work to do. */
+	if ((sc->sc_flags & RAY_FLAGS_ATTACHED) == 0)
+	    return (0);
 
 	if (ifp->if_flags & IFF_RUNNING)
 		ray_disable(sc);
@@ -794,7 +804,7 @@ ray_init(sc)
 	sc->sc_running = 0;
 	sc->sc_txfree = RAY_CCS_NTX;
 	sc->sc_checkcounters = 0;
-	sc->sc_resumeinit = 0;
+	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
 
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
@@ -916,13 +926,13 @@ ray_power(why, arg)
 	sc = arg;
 	switch (why) {
 	case PWR_RESUME:
-		if (sc->sc_resumeinit)
+		if ((sc->sc_flags & RAY_FLAGS_RESUMEINIT))
 			ray_init(sc);
 		break;
 	case PWR_SUSPEND:
 		if ((sc->sc_if.if_flags & IFF_RUNNING)) {
 			ray_stop(sc);
-			sc->sc_resumeinit = 1;
+			sc->sc_flags |= RAY_FLAGS_RESUMEINIT;
 		}
 		break;
 	case PWR_STANDBY:

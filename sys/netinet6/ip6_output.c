@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_output.c,v 1.21 2000/05/19 20:09:27 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.104 2000/05/19 19:10:07 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.21.2.1 2000/06/22 17:10:02 minoura Exp $	*/
+/*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -174,8 +174,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
 
-#define MAKE_EXTHDR(hp,mp)						\
-    {									\
+#define MAKE_EXTHDR(hp, mp)						\
+    do {								\
 	if (hp) {							\
 		struct ip6_ext *eh = (struct ip6_ext *)(hp);		\
 		error = ip6_copyexthdr((mp), (caddr_t)(hp), 		\
@@ -183,8 +183,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		if (error)						\
 			goto freehdrs;					\
 	}								\
-    }
-
+    } while (0)
+	
 	bzero(&exthdrs, sizeof(exthdrs));
 	if (opt) {
 		/* Hop-by-Hop options header */
@@ -206,7 +206,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
-		goto bad;
+		goto freehdrs;
 	}
 
 	error = 0;
@@ -218,7 +218,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		 * This packet is just discarded.
 		 */
 		ipsec6stat.out_polvio++;
-		goto bad;
+		goto freehdrs;
 
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
@@ -231,7 +231,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			/* XXX should be panic ? */
 			printf("ip6_output: No IPsec request specified.\n");
 			error = EINVAL;
-			goto bad;
+			goto freehdrs;
 		}
 		needipsec = 1;
 		break;
@@ -322,8 +322,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			ip6->ip6_nxt = IPPROTO_DSTOPTS;
 		}
 
-#define MAKE_CHAIN(m,mp,p,i)\
-    {\
+#define MAKE_CHAIN(m, mp, p, i)\
+    do {\
 	if (m) {\
 		if (!hdrsplit) \
 			panic("assumption failed: hdr not split"); \
@@ -334,7 +334,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		(mp)->m_next = (m);\
 		(mp) = (m);\
 	}\
-    }
+    } while (0)
 		/*
 		 * result: IPv6 hbh dest1 rthdr dest2 payload
 		 * m will point to IPv6 header.  mprev will point to the
@@ -1171,7 +1171,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 		;
 
 	if ((mlast->m_flags & M_EXT) == 0 &&
-	    M_TRAILINGSPACE(mlast) < sizeof(struct ip6_frag)) {
+	    M_TRAILINGSPACE(mlast) >= sizeof(struct ip6_frag)) {
 		/* use the trailing space of the last mbuf for the fragment hdr */
 		*frghdrp =
 			(struct ip6_frag *)(mtod(mlast, caddr_t) + mlast->m_len);
@@ -1214,6 +1214,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 		case PRCO_SETOPT:
 			switch (optname) {
 			case IPV6_PKTOPTIONS:
+				/* m is freed in ip6_pcbopts */
 				return(ip6_pcbopts(&in6p->in6p_outputopts,
 						   m, so));
 			case IPV6_HOPOPTS:
@@ -2099,11 +2100,46 @@ ip6_mloopback(ifp, m, dst)
 	register struct mbuf *m;
 	register struct sockaddr_in6 *dst;
 {
-	struct	mbuf *copym;
+	struct mbuf *copym;
+	struct ip6_hdr *ip6;
 
 	copym = m_copy(m, 0, M_COPYALL);
-	if (copym != NULL)
-		(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
+	if (copym == NULL)
+		return;
+
+	/*
+	 * Make sure to deep-copy IPv6 header portion in case the data
+	 * is in an mbuf cluster, so that we can safely override the IPv6
+	 * header portion later.
+	 */
+	if ((copym->m_flags & M_EXT) != 0 ||
+	    copym->m_len < sizeof(struct ip6_hdr)) {
+		copym = m_pullup(copym, sizeof(struct ip6_hdr));
+		if (copym == NULL)
+			return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (copym->m_len < sizeof(*ip6)) {
+		m_freem(copym);
+		return;
+	}
+#endif
+
+#ifndef FAKE_LOOPBACK_IF
+	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
+#else
+	if (1)
+#endif
+	{
+		ip6 = mtod(copym, struct ip6_hdr *);
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = 0;
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = 0;
+	}
+
+	(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
 }
 
 /*

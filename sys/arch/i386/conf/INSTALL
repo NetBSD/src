@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.144 2000/05/09 00:28:22 hubertf Exp $
+#	$NetBSD: INSTALL,v 1.144.2.1 2000/06/22 17:00:17 minoura Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,7 +15,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
+options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
@@ -212,9 +212,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -293,7 +292,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (new driver)
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -339,7 +339,8 @@ scsibus* at bha?
 scsibus* at dpt?
 scsibus* at isp?
 #scsibus* at nca?
-scsibus* at ncr?
+#scsibus* at ncr?
+scsibus* at siop?
 scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at uha?
@@ -464,6 +465,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
@@ -611,7 +613,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 # Joysticks
 
@@ -641,7 +642,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

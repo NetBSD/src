@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2000/04/18 16:25:59 mhitch Exp $	 */
+/*	$NetBSD: clock.c,v 1.33.2.1 2000/06/22 17:05:19 minoura Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,21 +43,13 @@
 #include <machine/cpu.h>
 #include <machine/uvax.h>
 
-#include "opt_vax750.h"
-#include "opt_vax780.h"
-#include "opt_vax630.h"
-#include "opt_vax650.h"
-#include "opt_vax670.h"
-#include "opt_vax8500.h"
-#include "opt_vax8200.h"
-#include "opt_vax410.h"
-#include "opt_vax43.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
+#include "opt_cputype.h"
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));
+
+struct evcnt clock_intrcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -187,6 +179,7 @@ cpu_initclocks()
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	evcnt_attach_static(&clock_intrcnt);
 }
 
 /*
@@ -225,7 +218,7 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650
+#if VAX750 || VAX780 || VAX8600 || VAX650 || VAX660 || VAX670 || VAX680
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument

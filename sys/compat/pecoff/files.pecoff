@@ -1,0 +1,4 @@
+#	$NetBSD: files.pecoff,v 1.2.4.2 2000/06/22 17:05:53 minoura Exp $
+#
+
+file	compat/pecoff/pecoff_exec.c	compat_pecoff

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.1 2000/05/25 22:12:01 is Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.1.2.1 2000/06/22 16:59:02 minoura Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -52,7 +52,6 @@ int dk_match __P((char *name));
 
 void ofrootfound __P((void));
 
-extern	struct device *booted_device;
 extern	int booted_partition;
 
 #endif	/* _MACHINE_POWERPC_H_ */

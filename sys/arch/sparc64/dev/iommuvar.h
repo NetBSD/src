@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.4 2000/05/17 02:31:13 eeh Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.4.2.1 2000/06/22 17:04:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -57,7 +57,6 @@ void	iommu_init __P((char *, struct iommu_state *, int));
 void	iommu_reset __P((struct iommu_state *));
 void    iommu_enter __P((struct iommu_state *, vaddr_t, int64_t, int));
 void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));
-int	iommu_flush __P((struct iommu_state *));
 
 int	iommu_dvmamap_load __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));

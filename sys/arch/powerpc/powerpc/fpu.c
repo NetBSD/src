@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 1999/12/07 15:14:57 danw Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2.2.1 2000/06/22 17:02:44 minoura Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/user.h>
 
 #include <machine/fpu.h>

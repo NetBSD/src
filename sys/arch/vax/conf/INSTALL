@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 2000/05/17 21:19:49 matt Exp $
+#	$NetBSD: INSTALL,v 1.4.2.1 2000/06/22 17:05:01 minoura Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -150,11 +150,11 @@ mt*		at mscpbus? drive?	# MSCP tape
 
 # SCSI controllers.
 asc0		at vsbus0 csr 0x200c0080 # VS4000/{60,VLC} SCSI-controller
-asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-controller
-ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
-ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
+#asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-controller
+si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
+si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
 scsibus*	at asc?
-scsibus*	at ncr?
+scsibus*	at si?
 
 # SCSI devices
 sd*		at scsibus? target? lun?
@@ -188,8 +188,6 @@ lkc0		at dz0			# Keyboard LK201
 pseudo-device   loop	1
 pseudo-device   pty	8
 #pseudo-device	bpfilter 8	# Not supported by de yet.
-pseudo-device	sl	2
-pseudo-device	ppp	2
 #pseudo-device	tun	2
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	tb	1

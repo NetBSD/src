@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.207.2.1 2000/06/22 16:58:17 minoura Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,16 +70,10 @@
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_netbsd.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207.2.1 2000/06/22 16:58:17 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,49 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $"
 #include <machine/conf.h>
 #include <machine/ieeefp.h>
 
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#include "arp.h"
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
@@ -176,16 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $"
 #endif
 
 #include <machine/alpha.h>
-#include <machine/intrcnt.h>
-
-#include "com.h"
-#if NCOM > 0
-extern void comsoft __P((void));
-#endif
-#include "zsc_ioasic.h"
-#if NZSC_IOASIC > 0
-extern void zs_ioasic_softintr __P((void));
-#endif
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -202,6 +143,8 @@ int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
+
+int	bootdev_debug = 0;	/* patchable, or from DDB */
 
 /*
  * XXX We need an address to which we can assign things so that they
@@ -254,7 +197,6 @@ int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
-void	netintr __P((void));
 void	printregs __P((struct reg *));
 
 void
@@ -273,9 +215,12 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	vaddr_t kernstart, kernend;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vsize_t size;
+	cpuid_t cpu_id;
+	struct cpu_info *ci;
 	char *p;
 	caddr_t v;
-	char *bootinfo_msg;
+	const char *bootinfo_msg;
+	const struct cpuinit *c;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
 
@@ -288,13 +233,18 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
+	cpu_id = cpu_number();
+
 #if defined(MULTIPROCESSOR)
 	/*
 	 * Set our SysValue to the address of our cpu_info structure.
 	 * Secondary processors do this in their spinup trampoline.
 	 */
-	alpha_pal_wrval((u_long)&cpu_info[alpha_pal_whami()]);
+	alpha_pal_wrval((u_long)&cpu_info[cpu_id]);
 #endif
+
+	ci = curcpu();
+	ci->ci_cpuid = cpu_id;
 
 	/*
 	 * Get critical system information (if possible, from the
@@ -407,11 +357,12 @@ nobootinfo:
 		 */
 		cputype = -cputype;
 	}
-	if (cputype >= ncpuinit) {
+	c = platform_lookup(cputype);
+	if (c == NULL) {
 		platform_not_supported();
 		/* NOTREACHED */
 	}
-	(*cpuinit[cputype].init)();
+	(*c->init)();
 	strcpy(cpu_model, platform.model);
 
 	/*
@@ -424,7 +375,7 @@ nobootinfo:
 	/* Paranoid sanity checking */
 
 	/* We should always be running on the primary. */
-	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());
+	assert(hwrpb->rpb_primary_cpu_id == cpu_id);
 
 	/*
 	 * On single-CPU systypes, the primary should always be CPU 0,
@@ -708,14 +659,16 @@ nobootinfo:
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
-#if defined(MULTIPROCESSOR)
 	/*
-	 * Initialize the primary CPU's idle PCB to proc0's, until
-	 * autoconfiguration runs (it will get its own idle PCB there).
+	 * Initialize the primary CPU's idle PCB to proc0's.  In a
+	 * MULTIPROCESSOR configuration, each CPU will later get
+	 * its own idle PCB when autoconfiguration runs.
 	 */
-	curcpu()->ci_idle_pcb = &proc0paddr->u_pcb;
-	curcpu()->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
-#endif
+	ci->ci_idle_pcb = &proc0paddr->u_pcb;
+	ci->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
+
+	/* Indicate that proc0 has a CPU. */
+	proc0.p_cpu = ci;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -1293,7 +1246,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
@@ -1811,66 +1763,15 @@ setregs(p, pack, stack)
 }
 
 void
-netintr()
-{
-	int n, s;
-
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-#define	DONETISR(bit, fn)						\
-	do {								\
-		if (n & (1 << (bit)))					\
-			fn();						\
-	} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-void
-do_sir()
-{
-	u_int64_t n;
-
-	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
-#define	COUNT_SOFT	uvmexp.softs++
-
-#define	DO_SIR(bit, fn)							\
-		do {							\
-			if (n & (bit)) {				\
-				COUNT_SOFT;				\
-				fn;					\
-			}						\
-		} while (0)
-
-		DO_SIR(SIR_NET, netintr());
-		DO_SIR(SIR_CLOCK, softclock());
-#if NCOM > 0
-		DO_SIR(SIR_SERIAL, comsoft());
-#endif
-#if NZSC_IOASIC > 0
-		DO_SIR(SIR_SERIAL, zs_ioasic_softintr());
-#endif
-
-#undef COUNT_SOFT
-#undef DO_SIR
-	}
-}
-
-int
 spl0()
 {
 
 	if (ssir) {
 		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
-		do_sir();
+		softintr_dispatch();
 	}
 
-	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
+	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.20 2000/03/20 03:49:22 tsutsui Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.20.2.1 2000/06/22 17:07:09 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,13 +137,6 @@ void	esp_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach esp_isa_ca = {
 	sizeof(struct esp_isa_softc), esp_isa_match, esp_isa_attach
-};
-
-struct scsipi_device esp_isa_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 int esp_isa_debug = 0;	/* ESP_SHOWTRAC | ESP_SHOWREGS | ESP_SHOWMISC */
@@ -401,7 +394,7 @@ esp_isa_attach(parent, self, aux)
 	}
 
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    (int (*)(void *))ncr53c9x_intr, esc);
+	    ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -419,9 +412,7 @@ esp_isa_attach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &esp_isa_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

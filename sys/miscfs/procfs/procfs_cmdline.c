@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.7 2000/05/16 13:45:25 simonb Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.7.2.1 2000/06/22 17:09:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -105,8 +105,10 @@ procfs_docmdline(curp, p, pfs, uio)
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+		free(arg, M_TEMP);
 		return (EFAULT);
+	}
 	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 

@@ -1,0 +1,52 @@
+$NetBSD: IMPLEMENTATION,v 1.1.4.2 2000/06/22 17:07:06 minoura Exp $
+
+At time point in time, there are 3 controller drivers planned:
+
+	fwochi		IEEE 1394 OHCI Controller (PCI & CardBus)
+	fwlynx		TI TSB12LV21 (found B&W G3s)
+	fwsony		Sony CXD1947A (found on Sony Vaio laptops)
+
+(Though as of this time, Sony has declined to release documentation
+about the CXD1947A).
+
+The device heirarchy will look like (using fwohci as the example):
+
+#
+# The controller driver.  Handles the device-specific 1394 functions.
+#
+fwohci*	at pci? dev ? function ?
+#
+# This is the actual controller-independent device.  It has two
+# parts: a netif (e.g interface fw0) and access via a character
+# device of /dev/fwN.  Access to isochronous service will be via
+# the character device.  Control of the firewire will also be via
+# the character device.
+#
+fw* at fwohci?
+#
+# For each remote 1394 device on the 1394 bus, there will be a corresponding
+# fwnode.  If a 1394 device offers any supported services, they will be
+# a child of corresponding fwnode.  A particular fwnode can be tied to a
+# specific device by specifing its nodeid as its identifier (XXX this
+# is a 64 bit quantity and locators used by config must be 32 bit integers).
+#
+fwnode* at fw? nodeid ?
+#
+# One of the services that a node might offer is access to SCSI devices via
+# SBP-2.  As decsribed above, this mean a scsibus is a child of fwnode.
+#
+scsibus* at fwnode?
+
+
+Note that with advent of highly mobile storage devices, the need for 
+signatures or other mechanisms to identity disks indepentend of their
+localtion in the device hierarchy is sorely needed.
+
+fwohci0 at pci1 dev 12 function 0: NEC uPD72870 IEEE 1394 OHCI Host Controller (rev. 0x01)
+fwohci0: interrupting at isa irq 15
+fwohci0: OHCI 1.0
+fw0 at fwohci0: Id 00:d0:f5:20:00:00:5e:84, 400Mb/s, 1024 byte packets max
+fw0: isochronous channels: 16 transmit, 16 receive
+fwnode0 at fw0: Id xx:xx:xx:xx:xx:xx:xx:xx
+
+The first time 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.6 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: dma.h,v 1.6.2.1 2000/06/22 16:59:11 minoura Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -30,19 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- *	The R4030 system has four dma channels capable of scatter/gather
- *	and full memory addressing. The maximum transfer length is 1Mb.
- *	Dma snopes the L2 cache so no precaution is required. However
- *	if L1 cache is cached 'write back' the processor is responible
- *	for flushing/invalidating it.
- *
- *	The dma mapper has up to 4096 page descriptors.
- */
-
-#define	PICA_TL_BASE	0xa0008000	/* Base of tl register area */
-#define	PICA_TL_SIZE	0x00008000	/* Size of tl register area */
 
 /*
  *  Hardware dma registers.
@@ -83,26 +70,7 @@ typedef volatile struct {
 #define	R4030_DMA_ENAB_ME_IE	0x200	/* Memory error int enable */
 #define	R4030_DMA_ENAB_TL_IE	0x400	/* Translation limit int enable */
 
-#define	R4030_DMA_COUNT_MASK	0x00fffff /* Byte count mask */
-#define	R4030_DMA_PAGE_NUM	0xffff000 /* Address page number */
-#define	R4030_DMA_PAGE_OFFS	0x0000fff /* Address page offset */
-#define	R4030_DMA_PAGE_SIZE	0x0001000 /* Address page size */
-
-
-/*
- *  Dma TLB entry
- */
-
-typedef union dma_pte {
-	struct {
-	    paddr_t	lo_addr;	/* Low part of translation addr */
-	    paddr_t	hi_addr;	/* High part of translation addr */
-	} entry;
-	struct bbb {
-	    union dma_pte *next;	/* Next free translation entry */
-	    int		size;		/* Number of consecutive free entrys */
-	} queue;
-} dma_pte_t;
+#define	R4030_DMA_COUNT_MASK	0x000fffff /* Byte count mask */
 
 /*
  *  Structure used to control dma.
@@ -116,7 +84,7 @@ typedef struct dma_softc {
 	bus_addr_t	next_va;	/* Value to program into dma regs */
 	int		next_size;	/* Value to program into dma regs */
 	int		mode;		/* Mode register value and direction */
-	dma_pte_t	*pte_base;	/* Pointer to dma tlb array */
+	jazz_dma_pte_t	*pte_base;	/* Pointer to dma tlb array */
 	int		pte_size;	/* Size of pte allocated pte array */
 	pDmaReg		dma_reg;	/* Pointer to dma registers */
 	int		sc_active;	/* Active flag */
@@ -136,9 +104,6 @@ typedef struct dma_softc {
 #define	DMA_TO_DEV	0
 #define	DMA_FROM_DEV	1
 
-#define	dma_page_offs(x)	((int)(x) & R4030_DMA_PAGE_OFFS)
-#define dma_page_round(x)	(((int)(x) + R4030_DMA_PAGE_OFFS) & R4030_DMA_PAGE_NUM)
-
 #define	DMA_RESET(r)		((r->reset)(r))
 #define	DMA_START(a, b, c, d)	((a->start)(a, b, c, d))
 #define	DMA_MAP(a, b, c, d)	((a->map)(a, b, c, d))
@@ -156,4 +121,3 @@ void picaDmaFlush __P((struct dma_softc *, char *, size_t, int));
 void asc_dma_init __P((struct dma_softc *));
 void fdc_dma_init __P((struct dma_softc *));
 void sn_dma_init __P((struct dma_softc *, int));
-

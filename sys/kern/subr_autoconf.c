@@ -1,4 +1,38 @@
-/*	$NetBSD: subr_autoconf.c,v 1.50 2000/03/28 17:30:10 augustss Exp $	*/
+/* $NetBSD: subr_autoconf.c,v 1.50.2.1 2000/06/22 17:09:14 minoura Exp $ */
+
+/*
+ * Copyright (c) 1996, 2000 Christopher G. Demetriou
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +80,10 @@
  *	@(#)subr_autoconf.c	8.3 (Berkeley) 5/17/94
  */
 
+#include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.50.2.1 2000/06/22 17:09:14 minoura Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -76,13 +114,13 @@ struct matchinfo {
 	int	pri;
 };
 
-static char *number __P((char *, int));
-static void mapply __P((struct matchinfo *, struct cfdata *));
+static char *number(char *, int);
+static void mapply(struct matchinfo *, struct cfdata *);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
 	struct device *dc_dev;
-	void (*dc_func) __P((struct device *));
+	void (*dc_func)(struct device *);
 };
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
@@ -90,8 +128,8 @@ TAILQ_HEAD(deferred_config_head, deferred_config);
 struct deferred_config_head deferred_config_queue;
 struct deferred_config_head interrupt_config_queue;
 
-static void config_process_deferred __P((struct deferred_config_head *,
-	struct device *));
+static void config_process_deferred(struct deferred_config_head *,
+	struct device *);
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
@@ -102,7 +140,7 @@ __volatile int config_pending;		/* semaphore for mountroot */
  * Configure the system's hardware.
  */
 void
-configure()
+configure(void)
 {
 
 	TAILQ_INIT(&deferred_config_queue);
@@ -138,9 +176,7 @@ configure()
  * a few times and we want to keep the code small.
  */
 static void
-mapply(m, cf)
-	struct matchinfo *m;
-	struct cfdata *cf;
+mapply(struct matchinfo *m, struct cfdata *cf)
 {
 	int pri;
 
@@ -171,10 +207,7 @@ mapply(m, cf)
  * can be ignored).
  */
 struct cfdata *
-config_search(fn, parent, aux)
-	cfmatch_t fn;
-	struct device *parent;
-	void *aux;
+config_search(cfmatch_t fn, struct device *parent, void *aux)
 {
 	struct cfdata *cf;
 	short *p;
@@ -204,10 +237,7 @@ config_search(fn, parent, aux)
  * This is much like config_search, but there is no parent.
  */
 struct cfdata *
-config_rootsearch(fn, rootname, aux)
-	cfmatch_t fn;
-	char *rootname;
-	void *aux;
+config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 	short *p;
@@ -231,7 +261,7 @@ config_rootsearch(fn, rootname, aux)
 	return (m.match);
 }
 
-static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
+static const char *msgs[3] = { "", " not configured\n", " unsupported\n" };
 
 /*
  * The given `aux' argument describes a device that has been found
@@ -242,11 +272,8 @@ static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(parent, aux, print, submatch)
-	struct device *parent;
-	void *aux;
-	cfprint_t print;
-	cfmatch_t submatch;
+config_found_sm(struct device *parent, void *aux, cfprint_t print,
+    cfmatch_t submatch)
 {
 	struct cfdata *cf;
 
@@ -261,9 +288,7 @@ config_found_sm(parent, aux, print, submatch)
  * As above, but for root devices.
  */
 struct device *
-config_rootfound(rootname, aux)
-	char *rootname;
-	void *aux;
+config_rootfound(const char *rootname, void *aux)
 {
 	struct cfdata *cf;
 
@@ -275,9 +300,7 @@ config_rootfound(rootname, aux)
 
 /* just like sprintf(buf, "%d") except that it works from the end */
 static char *
-number(ep, n)
-	char *ep;
-	int n;
+number(char *ep, int n)
 {
 
 	*--ep = 0;
@@ -293,17 +316,14 @@ number(ep, n)
  * Attach a found device.  Allocates memory for device variables.
  */
 struct device *
-config_attach(parent, cf, aux, print)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-	cfprint_t print;
+config_attach(struct device *parent, struct cfdata *cf, void *aux,
+	cfprint_t print)
 {
 	struct device *dev;
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
-	char *xunit;
+	const char *xunit;
 	int myunit;
 	char num[10];
 
@@ -359,7 +379,7 @@ config_attach(parent, cf, aux, print)
 	else {
 		printf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
-			(void) (*print)(aux, (char *)0);
+			(void) (*print)(aux, NULL);
 	}
 
 	/* put this device in the devices array */
@@ -427,9 +447,7 @@ config_attach(parent, cf, aux, print)
  * open to run and unwind their stacks.
  */
 int
-config_detach(dev, flags)
-	struct device *dev;
-	int flags;
+config_detach(struct device *dev, int flags)
 {
 	struct cfdata *cf;
 	struct cfattach *ca;
@@ -550,8 +568,7 @@ config_detach(dev, flags)
 }
 
 int
-config_activate(dev)
-	struct device *dev;
+config_activate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -569,8 +586,7 @@ config_activate(dev)
 }
 
 int
-config_deactivate(dev)
-	struct device *dev;
+config_deactivate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -592,9 +608,7 @@ config_deactivate(dev)
  * of its parent's devices have been attached.
  */
 void
-config_defer(dev, func)
-	struct device *dev;
-	void (*func) __P((struct device *));
+config_defer(struct device *dev, void (*func)(struct device *))
 {
 	struct deferred_config *dc;
 
@@ -624,9 +638,7 @@ config_defer(dev, func)
  * are enabled.
  */
 void
-config_interrupts(dev, func)
-	struct device *dev;
-	void (*func) __P((struct device *));
+config_interrupts(struct device *dev, void (*func)(struct device *))
 {
 	struct deferred_config *dc;
 
@@ -660,9 +672,8 @@ config_interrupts(dev, func)
  * Process a deferred configuration queue.
  */
 static void
-config_process_deferred(queue, parent)
-	struct deferred_config_head *queue;
-	struct device *parent;
+config_process_deferred(struct deferred_config_head *queue,
+    struct device *parent)
 {
 	struct deferred_config *dc, *ndc;
 
@@ -681,14 +692,14 @@ config_process_deferred(queue, parent)
  * Manipulate the config_pending semaphore.
  */
 void
-config_pending_incr()
+config_pending_incr(void)
 {
 
 	config_pending++;
 }
 
 void
-config_pending_decr()
+config_pending_decr(void)
 {
 
 #ifdef DIAGNOSTIC
@@ -701,34 +712,53 @@ config_pending_decr()
 }
 
 /*
- * Attach an event.  These must come from initially-zero space (see
- * commented-out assignments below), but that occurs naturally for
- * device instance variables.
+ * Attach a statically-initialized event.  The type and string pointers
+ * are already set up.
  */
 void
-evcnt_attach(dev, name, ev)
-	struct device *dev;
-	const char *name;
-	struct evcnt *ev;
+evcnt_attach_static(struct evcnt *ev)
+{
+	int len;
+
+	len = strlen(ev->ev_group);
+#ifdef DIAGNOSTIC
+	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+		panic("evcnt_attach_static: group length (%s)", ev->ev_group);
+#endif
+	ev->ev_grouplen = len;
+
+	len = strlen(ev->ev_name);
+#ifdef DIAGNOSTIC
+	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+		panic("evcnt_attach_static: name length (%s)", ev->ev_name);
+#endif
+	ev->ev_namelen = len;
+
+	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+}
+
+/*
+ * Attach a dynamically-initialized event.  Zero it, set up the type
+ * and string pointers and then act like it was statically initialized.
+ */
+void
+evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
+    const char *group, const char *name)
 {
 
-#ifdef DIAGNOSTIC
-	if (strlen(name) >= sizeof(ev->ev_name))
-		panic("evcnt_attach");
-#endif
-	/* ev->ev_next = NULL; */
-	ev->ev_dev = dev;
-	/* ev->ev_count = 0; */
-	strcpy(ev->ev_name, name);
-	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+	memset(ev, 0, sizeof *ev);
+	ev->ev_type = type;
+	ev->ev_parent = parent;
+	ev->ev_group = group;
+	ev->ev_name = name;
+	evcnt_attach_static(ev);
 }
 
 /*
  * Detach an event.
  */
 void
-evcnt_detach(ev)
-	struct evcnt *ev;
+evcnt_detach(struct evcnt *ev)
 {
 
 	TAILQ_REMOVE(&allevents, ev, ev_list);

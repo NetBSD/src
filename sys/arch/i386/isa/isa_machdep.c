@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.46 2000/05/11 16:38:13 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.46.2.1 2000/06/22 17:00:35 minoura Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -342,7 +342,7 @@ intr_calculatemasks()
 		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
@@ -438,6 +438,14 @@ isa_intr_alloc(ic, mask, type, irq)
 	*irq = bestirq;
 
 	return (0);
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2000/05/26 21:19:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.14.2.1 2000/06/22 16:59:53 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -81,7 +81,6 @@
 	and	r15, r9		; \
 	cmp/eq	r8, r9		; \
 	bt	1f		; /* If already kernel mode then jump */ \
-	nop			; \
 	ldc	r15, r2_bank	; \
 	mov.l	3f, r8		; /* 3f = Kernel Stack */ \
 	mov.l	@r8, r15	; /* Change to Kernel Stack */ \
@@ -321,7 +320,6 @@ start1:
 	add	#4, r3
 	dt	r0		/* decrement and Test */
 	bf	1b
-	nop
 	/* kernel image copy end */
 
 	mov.l	LXstart_in_RAM, r0
@@ -509,7 +507,6 @@ ENTRY(idle)
 	mov	r0, r14
 	tst	r0, r0
 	bf	sw1
-	nop
 	ESTI
 
 	sleep
@@ -604,7 +601,7 @@ switch_error:
 #endif
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -626,7 +623,6 @@ ENTRY(cpu_switch)
 	mov.l	@r12, r12
 	tst	r12, r12
 	bt	1f
-	nop
 
 	/* Save stack pointers. */
 	mov	r12, r4
@@ -774,7 +770,6 @@ sw1:	mov	#1, r1
 	stc	r0_bank, r0
 	cmp/eq	r0, r8		/* linked to self (i.e. nothing queued)? */
 	bf	10f
-	nop
 	mov.l	XL_switch_error, r0
 	jmp	@r0
 	nop
@@ -849,7 +844,6 @@ sw1:	mov	#1, r1
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	11f
-	nop
 
 	mov	r8, r4
 	add	#P_STAT, r4
@@ -861,7 +855,6 @@ sw1:	mov	#1, r1
 	mov	#SRUN, r1
 	cmp/eq	r0, r1
 	bt	11f
-	nop
 
 	mov.l	XL_switch_error, r0
 	jmp	@r0
@@ -886,6 +879,8 @@ XL_switch_error:
 	xor	r0, r0
 	mov.l	r0, @r1		/* r8->p_back = 0 */
 
+	/* p->p_cpu initialized in fork1() for single-processor */
+
 	/* Process now running on a processor. */
 	mov	#P_STAT, r0
 	mov	#SONPROC, r1
@@ -907,7 +902,6 @@ XL_switch_error:
 	/* If old process exited, don't bother. */
 	tst	r12, r12
 	bt	switch_exited
-	nop
 
 	/*
 	 * Second phase: save old context.
@@ -1179,7 +1173,6 @@ NENTRY(exphandler)
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
 	mov	r15, r0
@@ -1190,7 +1183,6 @@ NENTRY(exphandler)
 	shld	r2, r1
 	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
-	nop
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
@@ -1231,7 +1223,6 @@ NENTRY(tlbmisshandler)
 	mov.l	XL_splimit3, r0
 	cmp/hs	r15, r0
 	bf	100f
-	nop
 	mov.l	XL_splimit_low3, r0
 	cmp/hs	r0, r15
 	bf	100f
@@ -1455,7 +1446,6 @@ XL_splimit_low2:	.long	0x80000000
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_check_ipending, r0
 	jsr	@r0
@@ -1463,7 +1453,6 @@ XL_splimit_low2:	.long	0x80000000
 
 	tst	r0, r0
 	bf	7b
-	nop
 
 2:	/* Check for ASTs on exit to user mode. */
 	ECLI
@@ -1471,7 +1460,6 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
-	nop
 
 	/* If trap occurred in kernel , skip AST proc */
 	mov	r15, r0
@@ -1482,7 +1470,6 @@ XL_splimit_low2:	.long	0x80000000
 	shld	r2, r1
 	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
-	nop
 5:	xor	r0, r0
 	mov.l	XXL_astpending, r1
 	mov.l	r0, @r1
@@ -1539,7 +1526,6 @@ Xrestart:
 
 	tst	r0, r0
 	bt	1f
-	nop
 
 	mov.l	XL_restart, r1
 	mov.l	XL_Xrecurse, r0

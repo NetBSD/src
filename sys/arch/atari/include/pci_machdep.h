@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 1999/03/19 03:35:59 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4.16.1 2000/06/22 16:59:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -46,7 +46,7 @@ typedef int	pci_intr_handle_t;
 typedef struct	{
 	int		ipl;	/* ipl requested			*/
 	int		imask;	/* bitmask for MFP-register		*/
-	int		(*ifunc) __P((void *));	/* function to call	*/
+	int		(*ifunc)(void *);	/* function to call	*/
 	void		*iarg;	/* argument for 'ifunc'			*/
 	struct intrhand	*ihand;	/* save this for disestablishing	*/
 } pci_intr_info_t;
@@ -54,18 +54,18 @@ typedef struct	{
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook __P((struct device *, struct device *,
-			struct pcibus_attach_args *));
-int		pci_bus_maxdevs __P((pci_chipset_tag_t, int));
-pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
-pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
-			pcireg_t));
-int		pci_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
-			pci_intr_handle_t *));
-const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
-void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
-			int, int (*)(void *), void *));
-void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+void		pci_attach_hook(struct device *, struct device *,
+			struct pcibus_attach_args *);
+int		pci_bus_maxdevs(pci_chipset_tag_t, int);
+pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
+			pci_intr_handle_t *);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
+void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+			int, int (*)(void *), void *);
+void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 #endif /* _ATARI_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2000/05/27 02:16:25 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.2.1 2000/06/22 16:59:46 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -525,6 +525,8 @@ cpu_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_5;
 	}
 
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
 	/* 'softnet' interrupt */
 	if (ipending & MIPS_SOFT_INT_MASK_1) {
 		clearsoftnet();
@@ -539,6 +541,4 @@ cpu_intr(status, cause, pc, ipending)
 		intrcnt[SOFTCLOCK_INTR]++;
 		softclock();
 	}
-
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }

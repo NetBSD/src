@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.35 2000/03/19 06:07:05 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.35.2.1 2000/06/22 17:01:13 minoura Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -65,11 +65,7 @@ extern void	adb_jadbproc __P((void));
  */
 int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
-#if 1
-int	adb_debug = 0xff;
-#else
 int	adb_debug = 0;		/* Output debugging messages */
-#endif
 #endif /* ADB_DEBUG */
 
 extern struct	mac68k_machine_S mac68k_machine;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.27 2000/05/26 03:34:27 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.27.2.1 2000/06/22 17:01:11 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -472,7 +472,7 @@ findregs(sp, addr)
  *	Frame tracing.
  */
 void
-db_stack_trace_cmd(addr, have_addr, count, modif, pr)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;

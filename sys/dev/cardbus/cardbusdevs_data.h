@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.7 2000/04/13 10:13:12 joda Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.7.2.1 2000/06/22 17:06:21 minoura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.9 2000/04/13 10:12:46 joda Exp 
+ *	NetBSD: cardbusdevs,v 1.10 2000/06/06 17:21:42 soren Exp 
  */
 
 /*
@@ -43,19 +43,19 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575TX,
 	    0,
 	    "3Com",
-	    "3c575 100Base-TX",
+	    "3c575-TX",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575BTX,
 	    0,
 	    "3Com",
-	    "3c575B 100Base-TX",
+	    "3c575B-TX",
 	},
 	{
-	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE575CT,
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575CTX,
 	    0,
 	    "3Com",
-	    "3CCFE575CT 100Base-TX",
+	    "3c575C-TX",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.17 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: INSTALL_TINY,v 1.17.4.1 2000/06/22 17:00:18 minoura Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -204,9 +204,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?

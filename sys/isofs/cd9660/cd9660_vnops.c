@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.57 2000/03/30 12:13:31 augustss Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.57.2.1 2000/06/22 17:09:01 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,6 +62,7 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 /*
  * Structure for reading directories
@@ -552,6 +553,7 @@ cd9660_readdir(v)
 			isofntrans(ep->name,idp->current.d_namlen,
 				   idp->current.d_name, &namelen,
 				   imp->iso_ftype == ISO_FTYPE_9660,
+				   (imp->im_flags & ISOFSMNT_NOCASETRANS) == 0,
 				   isonum_711(ep->flags)&4,
 				   imp->im_joliet_level);
 			switch (idp->current.d_name[0]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.45 2000/05/27 04:52:33 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.45.2.1 2000/06/22 17:05:16 minoura Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -60,11 +60,10 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/trap.h>
 #include <machine/frame.h>
 
 #include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/qbus/ubavar.h>
 
 volatile int /* rbr, rcvec,*/ svec;
 
@@ -154,7 +153,9 @@ dw780_attach(parent, self, aux)
 
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc->uh_dev.dv_unit, SCB_ISTACK);
+		    sc->uh_dev.dv_unit, SCB_ISTACK, &sc->uh_intrcnt);
+	evcnt_attach_dynamic(&sc->uh_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->uh_dev.dev_xname, "intr");
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
@@ -214,8 +215,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + sc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512 + vec * 4);
-		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
+		struct ivec_dsp *ivec = &scb_vec[vec / 4];
+		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
 
@@ -464,21 +465,21 @@ ubastray(arg)
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	struct	uba_softc *sc = uba_cd.cd_devs[arg];
-	int	vektor;
+	int	vector;
 
 	rbr = mfpr(PR_IPL);
 #ifdef DW780
 	if (sc->uh_type == DW780)
-		vektor = svec >> 2;
+		vector = svec >> 2;
 	else
 #endif
-		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+		vector = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
 
 	if (cold) {
 #ifdef DW780
 		if (sc->uh_type != DW780)
 #endif
-			rcvec = vektor;
+			rcvec = vector;
 	} else 
 		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
@@ -864,7 +865,6 @@ ubasearch(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 		
-	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);

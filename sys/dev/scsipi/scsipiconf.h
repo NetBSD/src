@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.40 2000/04/02 17:25:53 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.40.2.1 2000/06/22 17:08:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -147,7 +147,9 @@ struct scsipi_device {
  *	scsipi_minphys		required
  *	scsipi_ioctl		optional
  *	scsipi_enable		optional
+ *	scsipi_getgeom		optional
  */
+struct disk_parms;
 struct scsipi_adapter {
 	int	scsipi_refcnt;		/* adapter reference count */
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
@@ -155,6 +157,8 @@ struct scsipi_adapter {
 	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
 		    caddr_t, int, struct proc *));
 	int	(*scsipi_enable) __P((void *, int));
+	int	(*scsipi_getgeom) __P((struct scsipi_link *,
+		    struct disk_parms *, u_long));
 };
 
 /*
@@ -201,12 +205,13 @@ struct scsipi_link {
 #define SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
 #define SDEV_NOSTARTUNIT	0x0080	/* Do not issue START UNIT requests */
 #define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
-#define ADEV_CDROM		0x0200	/* device is a CD-ROM */
+#define SDEV_CDROM		0x0200	/* device is a CD-ROM */
 #define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */
 #define ADEV_NOCAPACITY		0x0800	/* no READ_CD_CAPACITY command */
 #define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
 #define ADEV_NODOORLOCK		0x2000	/* device can't lock door */
 #define ADEV_NOSENSE		0x4000	/* device can't handle request sense */
+#define SDEV_ONLYBIG		0x8000	/* only use SCSI_{READ,WRITE}_BIG */
 
 	struct	scsipi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
@@ -324,6 +329,7 @@ struct scsipi_xfer {
 #define	XS_CTL_URGENT		0x00008000	/* urgent operation */
 #define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
 #define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
+#define	XS_CTL_DATA_ONSTACK	0x00040000	/* data is alloc'ed on stack */
 
 /*
  * scsipi_xfer status flags
@@ -378,17 +384,6 @@ struct scsi_quirk_inquiry_pattern {
 };
 
 /*
- * Macro to issue a SCSI command.  Treat it like a function:
- *
- *	int scsipi_command __P((struct scsipi_link *link,
- *	    struct scsipi_generic *scsipi_cmd, int cmdlen,
- *	    u_char *data_addr, int datalen, int retries,
- *	    int timeout, struct buf *bp, int flags));
- */
-#define	scsipi_command(l, c, cl, da, dl, r, t, b, f)			\
-	(*(l)->scsipi_cmd)((l), (c), (cl), (da), (dl), (r), (t), (b), (f))
-
-/*
  * Default number of retries, used for generic routines.
  */
 #define SCSIPIRETRIES 4
@@ -401,6 +396,9 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init __P((void));
+int	scsipi_command __P((struct scsipi_link *,
+	    struct scsipi_generic *, int, u_char *, int,
+	    int, int, struct buf *, int));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
 char	*scsipi_dtype __P((int));

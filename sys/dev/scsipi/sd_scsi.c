@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.12 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.12.2.1 2000/06/22 17:08:18 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,10 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	struct sd_scsibus_mode_sense_data *scsipi_sense;
 	int page, flags;
 {
-	struct scsi_mode_sense scsipi_cmd;
+	struct scsi_mode_sense sense_cmd;
+	struct scsi_mode_sense_big sensebig_cmd;
+	struct scsipi_generic *cmd;
+	int len;
 
 	/*
 	 * Make sure the sense buffer is clean before we do
@@ -169,18 +172,29 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 */
 	bzero(scsipi_sense, sizeof(*scsipi_sense));
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = page;
-	scsipi_cmd.length = 0x20;
+	if (sd->sc_link->quirks & SDEV_ONLYBIG) {
+		memset(&sensebig_cmd, 0, sizeof(sensebig_cmd));
+		sensebig_cmd.opcode = SCSI_MODE_SENSE_BIG;
+		sensebig_cmd.page = page;
+		_lto2b(0x20, sensebig_cmd.length);
+		cmd = (struct scsipi_generic *)&sensebig_cmd;
+		len = sizeof(sensebig_cmd); 
+	} else {
+		memset(&sense_cmd, 0, sizeof(sense_cmd));
+		sense_cmd.opcode = SCSI_MODE_SENSE;
+		sense_cmd.page = page;
+		sense_cmd.length = 0x20;
+		cmd = (struct scsipi_generic *)&sense_cmd;
+		len = sizeof(sense_cmd); 
+	}
 	/*
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
 	return (scsipi_command(sd->sc_link,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
+	    cmd, len, (u_char *)scsipi_sense, sizeof(*scsipi_sense),
+	    SDRETRIES, 6000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK));
 }
 
 static int
@@ -213,7 +227,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	if ((error = scsipi_command(sd->sc_link,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
-	    6000, NULL, flags | XS_CTL_DATA_IN)) != 0)
+	    6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK)) != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
@@ -242,6 +256,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
+	struct scsipi_link *link = sd->sc_link;
 	u_long sectors;
 	int page;
 	int error;
@@ -257,7 +272,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
 	    flags)) == 0) {
-		SC_DEBUG(sd->sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
 		    scsipi_sense.pages.rigid_geometry.nheads,
@@ -281,7 +296,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = scsipi_size(sd->sc_link, flags);
+		sectors = scsipi_size(link, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -306,7 +321,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
+	if ((link->quirks & SDEV_NOMODESENSE) == 0) {
 		if (error == 0)
 			printf("%s: mode sense (%d) returned nonsense",
 			    sd->sc_dev.dv_xname, page);
@@ -315,17 +330,24 @@ fake_it:
 			    sd->sc_dev.dv_xname);
 		printf("; using fictitious geometry\n");
 	}
-	/*
-	 * use adaptec standard fictitious geometry
-	 * this depends on which controller (e.g. 1542C is
-	 * different. but we have to put SOMETHING here..)
-	 */
-	sectors = scsipi_size(sd->sc_link, flags);
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (64 * 32);
-	dp->blksize = 512;
+
+	sectors = scsipi_size(link, flags);
 	dp->disksize = sectors;
+	dp->blksize = 512;
+
+	/* Try calling driver's method for figuring out geometry. */
+	if (link->adapter->scsipi_getgeom == NULL ||
+	    !(*link->adapter->scsipi_getgeom)(link, dp, sectors)) {
+		/*
+		 * Use adaptec standard fictitious geometry
+		 * this depends on which controller (e.g. 1542C is
+		 * different. but we have to put SOMETHING here..)
+		 */
+		dp->heads = 64;
+		dp->sectors = 32;
+		dp->cyls = sectors / (64 * 32);
+	}
+
 	return (SDGP_RESULT_OK);
 }
 

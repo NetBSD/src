@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.21 2000/05/08 21:57:59 uch Exp $
+#	$NetBSD: TX3912,v 1.21.2.1 2000/06/22 17:00:03 minoura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -72,17 +72,6 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
-
-# Pull in config fragments for kernel crypto.  Use only one of these,
-# and adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.20 2000/05/22 15:05:39 uch Exp $ */
+/* $Id: platid_mask.h,v 1.20.2.1 2000/06/22 17:00:07 minoura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -448,4 +448,24 @@ extern platid_t platid_mask_MACH_IBM_WORKPAD_Z50;
 extern platid_t platid_mask_MACH_IBM_WORKPAD_26011AU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define IBM_WORKPAD_26011AU ((int)&platid_mask_MACH_IBM_WORKPAD_26011AU)
+#endif
+extern platid_t platid_mask_MACH_VADEM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VADEM ((int)&platid_mask_MACH_VADEM)
+#endif
+extern platid_t platid_mask_MACH_VADEM_CLIO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VADEM_CLIO ((int)&platid_mask_MACH_VADEM_CLIO)
+#endif
+extern platid_t platid_mask_MACH_VADEM_CLIO_C;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VADEM_CLIO_C ((int)&platid_mask_MACH_VADEM_CLIO_C)
+#endif
+extern platid_t platid_mask_MACH_VADEM_CLIO_C1000;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VADEM_CLIO_C1000 ((int)&platid_mask_MACH_VADEM_CLIO_C1000)
+#endif
+extern platid_t platid_mask_MACH_VADEM_CLIO_C1050;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VADEM_CLIO_C1050 ((int)&platid_mask_MACH_VADEM_CLIO_C1050)
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.4 1999/02/20 18:26:13 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.4.16.1 2000/06/22 17:06:51 minoura Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -36,9 +36,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

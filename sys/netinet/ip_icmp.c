@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.46 2000/05/22 12:08:43 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.46.2.1 2000/06/22 17:09:47 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -146,6 +146,7 @@ int	icmpmaskrepl = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
+int	icmpreturndatabytes = 8;
 
 #if 0
 static int	ip_next_mtu __P((int, int));
@@ -217,7 +218,7 @@ icmp_error(n, type, code, dest, destifp)
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(8, oip->ip_len - oiplen);
+	icmplen = oiplen + min(icmpreturndatabytes, oip->ip_len - oiplen);
 	m->m_len = icmplen + ICMP_MINLEN;
 	MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
@@ -244,7 +245,7 @@ icmp_error(n, type, code, dest, destifp)
 	HTONS(oip->ip_off);
 	HTONS(oip->ip_len);
 	icp->icmp_code = code;
-	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
+	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
 	nip = &icp->icmp_ip;
 
 	/*
@@ -258,11 +259,16 @@ icmp_error(n, type, code, dest, destifp)
 	m->m_pkthdr.len = m->m_len;
 	m->m_pkthdr.rcvif = n->m_pkthdr.rcvif;
 	nip = mtod(m, struct ip *);
-	bcopy((caddr_t)oip, (caddr_t)nip, sizeof(struct ip));
-	nip->ip_len = m->m_len;
+	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
-	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_tos = 0;
+	nip->ip_len = m->m_len;
+	/* ip_id set in ip_output */
+	nip->ip_off = 0;
+	/* ip_ttl set in icmp_reflect */
+	nip->ip_p = IPPROTO_ICMP;
+	nip->ip_src = oip->ip_src;
+	nip->ip_dst = oip->ip_dst;
 	icmp_reflect(m);
 
 freeit:
@@ -795,40 +801,50 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int arg, error, s;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	switch (name[0]) {
+	switch (name[0])
+	{
 	case ICMPCTL_MASKREPL:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl);
+		break;
 	case ICMPCTL_ERRRATELIMIT:
-	    {
-		int rate_usec, error, s;
-
 		/*
 		 * The sysctl specifies the rate in usec-between-icmp,
 		 * so we must convert from/to a timeval.
 		 */
-		rate_usec = (icmperrratelim.tv_sec * 1000000) +
+		arg = (icmperrratelim.tv_sec * 1000000) +
 		    icmperrratelim.tv_usec;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &arg);
 		if (error)
-			return (error);
-		if (rate_usec < 0)
-			return (EINVAL);
-		s = splsoftnet();
-		icmperrratelim.tv_sec = rate_usec / 1000000;
-		icmperrratelim.tv_usec = rate_usec % 1000000;
-		splx(s);
-
-		return (0);
-	    }
+			break;
+		if (arg >= 0) {
+			s = splsoftnet();
+			icmperrratelim.tv_sec = arg / 1000000;
+			icmperrratelim.tv_usec = arg % 1000000;
+			splx(s);
+		} else
+			error = EINVAL;
+		break;
+	case ICMPCTL_RETURNDATABYTES:
+		arg = icmpreturndatabytes;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &arg);
+		if (error)
+			break;
+		if ((arg >= 8) || (arg <= 512))
+			icmpreturndatabytes = arg;
+		else
+			error = EINVAL;
+		break;
 	default:
-		return (ENOPROTOOPT);
+		error = ENOPROTOOPT;
+		break;
 	}
-	/* NOTREACHED */
+	return error;
 }
 
 static void

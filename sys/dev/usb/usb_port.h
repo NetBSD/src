@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.31 2000/04/27 15:26:50 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.31.2.1 2000/06/22 17:08:43 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -96,16 +96,18 @@ typedef struct callout usb_callout_t;
 #define usb_kthread_create1	kthread_create1
 #define usb_kthread_create	kthread_create
 
+typedef int usb_malloc_type;
+
 #define Ether_ifattach ether_ifattach
 #define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
 
 #define logprintf printf
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
-void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
-int __CONCAT(dname,_detach) __P((struct device *, int)); \
-int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+int __CONCAT(dname,_match)(struct device *, struct cfdata *, void *); \
+void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
+int __CONCAT(dname,_detach)(struct device *, int); \
+int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
@@ -204,6 +206,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	config_pending_incr()
 #define	config_pending_decr()
 
+typedef int usb_malloc_type;
+
 #define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
@@ -230,7 +234,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define change_sign16_le change_sign16
 
 #define realloc usb_realloc
-void *usb_realloc __P((void *, u_int, int, int));
+void *usb_realloc(void *, u_int, int, int);
 
 extern int cold;
 
@@ -255,10 +259,10 @@ typedef char usb_callout_t;
 #define usb_uncallout(h, f, d) untimeout((f), (d))
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match) __P((struct device *, void *, void *)); \
-void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
-int __CONCAT(dname,_detach) __P((struct device *, int)); \
-int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+int __CONCAT(dname,_match)(struct device *, void *, void *); \
+void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
+int __CONCAT(dname,_detach)(struct device *, int); \
+int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 struct cfdriver __CONCAT(dname,_cd) = { \
 	NULL, #dname, DV_DULL \
@@ -364,6 +368,8 @@ typedef struct callout_handle usb_callout_t;
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+typedef struct malloc_type *usb_malloc_type;
 
 #define USB_DECLARE_DRIVER_INIT(dname, init) \
 Static device_probe_t __CONCAT(dname,_match); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.7 2000/03/03 12:32:43 soda Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.7.2.1 2000/06/22 16:59:06 minoura Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -364,6 +364,7 @@ LEAF(mips3_TLBWriteIndexedVPS)
 	nop
 	lw	a2, 8(a1)
 	lw	a3, 12(a1)
+	dmfc0	v0, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
 
 	dmtc0	a2, MIPS_COP_0_TLB_LO0		# Set up entry low0.
@@ -384,7 +385,7 @@ LEAF(mips3_TLBWriteIndexedVPS)
 
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
 	nop
-	dmtc0	zero, MIPS_COP_0_TLB_PG_MASK	# Default mask value.
+	dmtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips3_TLBWriteIndexedVPS)

@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.4 2000/05/26 15:13:44 dante Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.4.2.1 2000/06/22 17:06:31 minoura Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -79,14 +79,12 @@
 /******************************************************************************/
 
 /*
- * Create a set of Carriers and add them to the free list.  Called once
- * by adw_init().  We return the number of Carriers successfully created.
+ * Initialize a set of Carriers and add them to the free list.
  */
-int
-AdwInitCarriers(carr_dmap, carriers, freelist)
+ADW_CARRIER *
+AdwInitCarriers(carr_dmap, carriers)
 	bus_dmamap_t	carr_dmap;
 	ADW_CARRIER	*carriers;
-	ADW_CARRIER	**freelist;
 {
 	ADW_CARRIER	*carr;
 	u_int32_t	carr_next = NULL;
@@ -102,8 +100,7 @@ AdwInitCarriers(carr_dmap, carriers, freelist)
 		carr->next_ba = carr_next;
 		carr_next = carr->carr_ba;
 	}
-	*freelist = carr;
-	return (i);
+	return (carr);
 }
 
 

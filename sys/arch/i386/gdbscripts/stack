@@ -1,0 +1,108 @@
+# $NetBSD: stack,v 1.2.4.2 2000/06/22 17:00:21 minoura Exp $
+
+# Copyright (c) 2000 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by John A. Hawkinson.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
+# Follow an i386 kernel stack trace.
+# This code makes presumptions about the way frames look, consistent
+# with arch/i386/i386/db_trace.c. It also steals algorithms from there.
+
+# Output looks like:
+#
+#  0xc03049cb <cpu_reboot+99>(0x100,0x0,0xc04fd728,0x0,0x6)
+#	      at 0xc01bc97d <panic+197> (frame at 0xc5633bd0)
+#
+# In this case, the initial hex number and offset should be disregarded,
+# and it should be interprted as if it were:
+#
+#  cpu_reboot(0x100,0x0,0xc04fd728,0x0,0x6)
+#	      at 0xc01bc97d <panic+197> (frame at 0xc5633bd0)
+#
+# due to limitations of gdb scripting.
+
+define stacktrace
+  set $frame=$arg0
+  set $retaddr=$arg1
+
+  while ($frame != 0)
+    set $callpc = $retaddr
+    set $retaddr = *(long*)($frame+sizeof(long*))
+
+    set $inst=*(long*)$retaddr
+    if (($inst & 0xff) == 0x59)
+# (popl %ecx)
+	set $narg=1
+    else if (($inst & 0xffff) == 0xc483)
+# (addl %n, %esp)
+	   set $narg = (($inst >> 16) & 0xff) / 4
+         else
+	   set $narg = 5
+    end
+
+    set $argp = $frame+sizeof(long*)+sizeof(int)
+    printf "  "
+    output/a $callpc
+    printf "("
+    while ($narg != 0)
+      printf "0x%lx", *(long*)$argp
+      set $argp = $argp+sizeof(long*)
+      set $narg = $narg-1
+      if ($narg != 0)
+	printf ","
+      end
+    end
+    printf ")\n             at "
+    output/a $retaddr
+    printf " (frame at %#x)\n", $frame
+
+    set $frame=*(long*)$frame
+  end
+end
+
+document stacktrace
+  ==> (gdb) stacktrace FP IP
+  print a backtrace of all stack frames, starting at frame pointer FP,
+  and instruction pointer IP.
+end
+
+define stack
+  stacktrace $ebp $eip
+end
+
+document stack
+  => (gdb) stack
+  Print a backtrace of all strack frames, starting at the current $ebp
+  and $eip.
+end

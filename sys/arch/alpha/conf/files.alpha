@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.113 2000/04/23 16:47:46 thorpej Exp $
+# $NetBSD: files.alpha,v 1.113.2.1 2000/06/22 16:58:24 minoura Exp $
 #
 # alpha-specific configuration info
 
@@ -26,6 +26,7 @@ defopt	DEC_1000A	# Corelle etc:	AlphaServer 800 and 1000A
 defopt	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 defopt	DEC_EB66	# EB66:		21066 Evaluation Board
 defopt	DEC_6600	# EV6		Various EV6 Systems
+defopt	API_UP1000	# EV6		Alpha Processor, Inc. UP1000
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
@@ -208,17 +209,14 @@ file	arch/alpha/tc/tcds_dma.c	asc
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 
-#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
-
 #
 # ISA Bus devices
 #
 
-#device	ibus at mainbus { }
-#device	jcombo at ibus: isabus
-#device	jeisa at ibus: eisabus
-
 file	arch/alpha/isa/isa_machdep.c	isa
+
+define	isadma_bounce
+file	arch/alpha/isa/isadma_bounce.c	isadma_bounce
 
 include "dev/pckbc/files.pckbc"
 
@@ -246,6 +244,23 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 
 include "dev/eisa/files.eisa"
 
+device	jensenio {[port = -1]}: eisabus, isabus, isadma_bounce
+attach	jensenio at mainbus
+file	arch/alpha/jensenio/jensenio.c		 jensenio
+file	arch/alpha/jensenio/jensenio_bus_intio.c jensenio
+file	arch/alpha/jensenio/jensenio_bus_io.c	 jensenio
+file	arch/alpha/jensenio/jensenio_bus_mem.c	 jensenio
+file	arch/alpha/jensenio/jensenio_dma.c	 jensenio
+file	arch/alpha/jensenio/jensenio_intr.c	 jensenio
+
+attach	com at jensenio with com_jensenio
+file	arch/alpha/jensenio/com_jensenio.c	com_jensenio
+
+attach	lpt at jensenio with lpt_jensenio
+file	arch/alpha/jensenio/lpt_jensenio.c	lpt_jensenio
+
+attach	pckbc at jensenio with pckbc_jensenio
+file	arch/alpha/jensenio/pckbc_jensenio.c	pckbc_jensenio
 
 #
 # PCI Bus support
@@ -293,6 +308,14 @@ file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
 file	arch/alpha/pci/dwlpx_pci.c	dwlpx
+
+device	irongate: pcibus, isadma_bounce
+attach	irongate at mainbus
+file	arch/alpha/pci/irongate.c		irongate
+file	arch/alpha/pci/irongate_bus_io.c	irongate
+file	arch/alpha/pci/irongate_bus_mem.c	irongate
+file	arch/alpha/pci/irongate_dma.c		irongate
+file	arch/alpha/pci/irongate_pci.c		irongate
 
 device	lca: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	lca at mainbus
@@ -351,8 +374,10 @@ file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
 #file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
 
 # CPU support files
+file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500
+file	arch/alpha/pci/pci_up1000.c	api_up1000
 file	arch/alpha/pci/pci_a12.c	avalon_a12
 file	arch/alpha/pci/pci_alphabook1.c	dec_alphabook1
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
@@ -377,9 +402,9 @@ file	arch/alpha/pci/pci_6600.c	dec_6600
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio: isabus, alpha_shared_intr
+device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
-device	pceb: isabus, eisabus
+device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
@@ -416,10 +441,12 @@ device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
 attach	mcclock at gbus with mcclock_tlsb
+attach	mcclock at jensenio with mcclock_jensenio
 file	arch/alpha/alpha/mcclock.c	mcclock
 file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
 file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
+file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 
 
 #
@@ -469,6 +496,7 @@ file	arch/alpha/alpha/dec_eb66.c		dec_eb66
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
 file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae
 file	arch/alpha/alpha/dec_kn300.c		dec_kn300
+file	arch/alpha/alpha/api_up1000.c		api_up1000
 file	arch/alpha/alpha/avalon_a12.c		avalon_a12
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a
 file	arch/alpha/alpha/dec_6600.c		dec_6600

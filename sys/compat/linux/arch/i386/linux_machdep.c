@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.49 2000/05/15 01:12:07 jhawk Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.49.2.1 2000/06/22 17:05:47 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -82,15 +82,8 @@
 #include <machine/vmparam.h>
 
 /*
- * To see whether pcvt is configured (for virtual console ioctl calls).
+ * To see whether wscons is configured (for virtual console ioctl calls).
  */
-#ifndef NVT
-#include "vt.h"
-#endif
-#if NVT > 0
-#include <arch/i386/isa/pcvt/pcvt_ioctl.h>
-#endif
-
 #include "wsdisplay.h"
 #if (NWSDISPLAY > 0)
 #include <sys/ioctl.h>
@@ -452,10 +445,6 @@ dev_t
 linux_fakedev(dev)
 	dev_t dev;
 {
-#if (NVT > 0)
-	if (major(dev) == NETBSD_PCCONS_MAJOR)
-		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
-#endif
 #if (NWSDISPLAY > 0)
 	if (major(dev) == NETBSD_WSCONS_MAJOR)
 		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
@@ -559,12 +548,10 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-#if (NVT > 0) || (NWSDISPLAY > 0)
+#if (NWSDISPLAY > 0)
 	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
-#endif
-#if (NWSDISPLAY > 0)
 	struct kbentry kbe;
 #endif
 
@@ -573,7 +560,7 @@ linux_machdepioctl(p, v, retval)
 	com = SCARG(uap, com);
 
 	switch (com) {
-#if (NVT > 0) || (NWSDISPLAY > 0)
+#if (NWSDISPLAY > 0)
 	case LINUX_KDGKBMODE:
 		com = KDGKBMODE;
 		break;
@@ -638,8 +625,6 @@ linux_machdepioctl(p, v, retval)
 	case LINUX_VT_WAITACTIVE:
 		com = VT_WAITACTIVE;
 		break;
-#endif
-#if (NWSDISPLAY > 0)
 	case LINUX_VT_GETSTATE:
 		com = VT_GETSTATE;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: picabus.c,v 1.11 2000/03/03 12:50:21 soda Exp $	*/
+/*	$NetBSD: picabus.c,v 1.11.2.1 2000/06/22 16:59:20 minoura Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -46,6 +46,7 @@
 #include <arc/pica/pica.h>
 #include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
+#include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/dev/dma.h>
 
 struct pica_softc {
@@ -113,13 +114,13 @@ struct pica_dev acer_pica_61_cpu[] = {
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
-	{{ NULL,	4, NULL, },
-	   0, pica_intrnull, (void *)NULL, },
+	{{ "vga",	4, NULL, },
+	   0, pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ "sonic",	5, 0, },
 	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
 	{{ "asc",	6, 0, },
 	   PICA_SYS_LB_IE_SCSI,  pica_intrnull, (void *)PICA_SYS_SCSI, },
-	{{ "pc",	7, 0, },
+	{{ "pckbd",	7, 0, },
 	   PICA_SYS_LB_IE_KBD,	 pica_intrnull, (void *)PICA_SYS_KBD, },
 	{{ "pms",	8, NULL, },
 	   PICA_SYS_LB_IE_MOUSE, pica_intrnull, (void *)PICA_SYS_KBD, },
@@ -140,7 +141,7 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
-	{{ "fb",        4, 0, },
+	{{ "vxl",       4, 0, },
 	   PICA_SYS_LB_IE_VIDEO, pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ "sonic",	5, 0, },
 	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
@@ -189,8 +190,10 @@ struct pica_dev *pica_cpu_devs[] = {
         NULL,                   /* Unused */
         acer_pica_61_cpu,       /* Acer PICA */
 	mips_magnum_r4000_cpu,	/* Mips MAGNUM R4000 */
-	NULL,
-	nec_rd94_cpu,		/* NEC RISCstation 2250, etc. */
+	nec_rd94_cpu,		/* NEC-R94 */
+	nec_rd94_cpu,		/* NEC-RA'94 */
+	nec_rd94_cpu,		/* NEC-RD94 */
+	nec_rd94_cpu,		/* NEC-R96 */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
@@ -237,7 +240,10 @@ picaattach(parent, self, aux)
 	case MAGNUM:
 		set_intr(MIPS_INT_MASK_1, pica_iointr, 2);
 		break;
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		set_intr(MIPS_INT_MASK_1, rd94_iointr, 2);
 		break;
 	}
@@ -307,7 +313,10 @@ pica_intr_establish(ca, handler, val)
 		case MAGNUM:
 			set_intr(MIPS_INT_MASK_4, pica_clkintr, 1);
 			break;
+		case NEC_R94:
+		case NEC_RAx94:
 		case NEC_RD94:
+		case NEC_R96:
 			set_intr(MIPS_INT_MASK_3, rd94_clkintr, 1);
 			break;
 		}
@@ -329,7 +338,10 @@ pica_intr_establish(ca, handler, val)
 		out16(PICA_SYS_LB_IE, local_int_mask);
 		break;
 
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		/* XXX: I don't know why, but firmware does. */
 		if (in32(0xe0000560) != 0)
 			out16(RD94_SYS_LB_IE+2, local_int_mask);

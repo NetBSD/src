@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.3 1999/02/13 09:44:50 dbj Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.3.16.1 2000/06/22 17:02:00 minoura Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -160,10 +160,7 @@ xe_attach(parent, self, aux)
   isrlink_autovec(xe_rint, sc, NEXT_I_IPL(NEXT_I_ENETR), 1);
   INTR_ENABLE(NEXT_I_ENETR);
 
-  {
-    extern struct device *booted_device;
-    booted_device = &(sc->sc_dev);
-  }
+  booted_device = &(sc->sc_dev);
 }
 
 

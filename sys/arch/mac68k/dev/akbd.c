@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.7 2000/03/19 07:37:58 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.7.2.1 2000/06/22 17:01:13 minoura Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -141,6 +141,9 @@ akbdattach(parent, self, aux)
 	u_char buffer[9];
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
+	int wskbd_eligible;
+
+	wskbd_eligible = 1;
 #endif
 
 	sc->origaddr = aa_args->origaddr;
@@ -175,10 +178,16 @@ akbdattach(parent, self, aux)
 			printf("Mouseman (non-EMP) pseudo keyboard\n");
 			adbinfo.siServiceRtPtr = (Ptr)0;
 			adbinfo.siDataAreaAddr = (Ptr)0;
+#if NWSKBD > 0
+			wskbd_eligible = 0;
+#endif /* NWSKBD > 0 */
 		} else if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x21) {
 			printf("Trackman (non-EMP) pseudo keyboard\n");
 			adbinfo.siServiceRtPtr = (Ptr)0;
 			adbinfo.siDataAreaAddr = (Ptr)0;
+#if NWSKBD > 0
+			wskbd_eligible = 0;
+#endif /* NWSKBD > 0 */
 		} else {
 			printf("extended keyboard\n");
 #ifdef notyet  
@@ -206,6 +215,9 @@ akbdattach(parent, self, aux)
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
+#if NWSKBD > 0
+		wskbd_eligible = 0;
+#endif /* NWSKBD > 0 */
 		break;
 	case ADB_ADJKBD:
 		printf("adjustable keyboard\n");
@@ -239,6 +251,9 @@ akbdattach(parent, self, aux)
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
+#if NWSKBD > 0
+		wskbd_eligible = 0;
+#endif /* NWSKBD > 0 */
 		break;
 	}
 	error = SetADBInfo(&adbinfo, sc->adbaddr);
@@ -248,7 +263,7 @@ akbdattach(parent, self, aux)
 #endif
 
 #if NWSKBD > 0
-	a.console = akbd_is_console();
+	a.console = wskbd_eligible && akbd_is_console();
 	a.keymap = &akbd_keymapdata;
 	a.accessops = &akbd_accessops;
 	a.accesscookie = sc;
@@ -321,7 +336,8 @@ kbd_processevent(event, ksc)
 	if (adb_polling || !aed_input(&new_event))
 #endif
 #if NWSKBD > 0
-		kbd_intr(&new_event);
+		if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
+			kbd_intr(&new_event);
 #else
 		/* do nothing */ ;
 #endif
@@ -333,7 +349,8 @@ kbd_processevent(event, ksc)
 		if (adb_polling || !aed_input(&new_event))
 #endif
 #if NWSKBD > 0
-			kbd_intr(&new_event);
+			if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
+				kbd_intr(&new_event);
 #else
 			/* do nothing */ ;
 #endif
@@ -456,8 +473,10 @@ int
 akbd_is_console()
 {
 	extern struct mac68k_machine_S mac68k_machine;
+	static int akbd_console_initted = 0;
 
-	return ((mac68k_machine.serial_console & 0x03) == 0);
+	return ((mac68k_machine.serial_console & 0x03) == 0) &&
+	    (++akbd_console_initted == 1);
 }
 
 int

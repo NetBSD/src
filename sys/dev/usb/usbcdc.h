@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.6 2000/04/27 15:26:50 augustss Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.6.2.1 2000/06/22 17:08:45 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uWord		bcdCDC;
-} usb_cdc_header_descriptor_t;
+} UPACKED usb_cdc_header_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
@@ -67,7 +67,7 @@ typedef struct {
 #define USB_CDC_CM_DOES_CM		0x01
 #define USB_CDC_CM_OVER_DATA		0x02
 	uByte		bDataInterface;
-} usb_cdc_cm_descriptor_t;
+} UPACKED usb_cdc_cm_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
@@ -78,7 +78,7 @@ typedef struct {
 #define USB_CDC_ACM_HAS_LINE		0x02
 #define USB_CDC_ACM_HAS_BREAK		0x04
 #define USB_CDC_ACM_HAS_NETWORK_CONN	0x08
-} usb_cdc_acm_descriptor_t;
+} UPACKED usb_cdc_acm_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
@@ -86,7 +86,7 @@ typedef struct {
 	uByte		bDescriptorSubtype;
 	uByte		bMasterInterface;
 	uByte		bSlaveInterface[1];
-} usb_cdc_union_descriptor_t;
+} UPACKED usb_cdc_union_descriptor_t;
 
 #define UCDC_SEND_ENCAPSULATED_COMMAND	0x00
 #define UCDC_GET_ENCAPSULATED_RESPONSE	0x01
@@ -108,7 +108,7 @@ typedef struct {
 	uWord	wState;
 #define UCDC_IDLE_SETTING		0x0001
 #define UCDC_DATA_MULTIPLEXED		0x0002
-} usb_cdc_abstract_state_t;
+} UPACKED usb_cdc_abstract_state_t;
 #define UCDC_ABSTRACT_STATE_LENGTH 2
 
 typedef struct {
@@ -124,7 +124,7 @@ typedef struct {
 #define UCDC_PARITY_MARK		3
 #define UCDC_PARITY_SPACE		4
 	uByte	bDataBits;
-} usb_cdc_line_state_t;
+} UPACKED usb_cdc_line_state_t;
 #define UCDC_LINE_STATE_LENGTH 7
 
 typedef struct {
@@ -143,7 +143,7 @@ typedef struct {
 	uWord	wIndex;
 	uWord	wLength;
 	uByte	data[16];
-} usb_cdc_notification_t;
+} UPACKED usb_cdc_notification_t;
 #define UCDC_NOTIFICATION_LENGTH 8
 
 #endif /* _USBCDC_H_ */

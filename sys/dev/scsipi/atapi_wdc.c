@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.35 2000/05/15 08:48:25 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.35.2.1 2000/06/22 17:08:08 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -467,6 +467,9 @@ wdc_atapi_intr(chp, xfer, irq)
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
+
 	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
 		ata_dmaerr(drvp);
@@ -847,6 +850,8 @@ piomode:
 		errstring = "piomode";
 		if (wait_for_unbusy(chp, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR) {
 			if (drvp->PIO_mode < 3) {
 				drvp->PIO_mode = 3;
@@ -873,6 +878,8 @@ piomode:
 		errstring = "dmamode";
 		if (wait_for_unbusy(chp, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR)
 			goto error;
 	/* fall through */

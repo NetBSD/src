@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.8 1998/06/08 06:55:54 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.8.22.1 2000/06/22 17:07:19 minoura Exp $	*/
 
 /*
  * cy_pci.c
@@ -52,10 +52,15 @@ cy_map_pci(pap, iotp, iohp, iosizep, memtp, memhp, memsizep)
 
 	/* Map mem (if possible).  Expected mem type depends on board ID.  */
 	expected = PCI_MAPREG_TYPE_MEM;
-	if (PCI_PRODUCT(pap->pa_id) == PCI_PRODUCT_CYCLADES_CYCLOMY_1)
+	switch (PCI_PRODUCT(pap->pa_id)) {
+	case PCI_PRODUCT_CYCLADES_CYCLOMY_1:
+	case PCI_PRODUCT_CYCLADES_CYCLOM4Y_1:
+	case PCI_PRODUCT_CYCLADES_CYCLOM8Y_1:
 		expected |= PCI_MAPREG_MEM_TYPE_32BIT_1M;
-	else
+		break;
+	default:
 		expected |= PCI_MAPREG_MEM_TYPE_32BIT;
+	}
 	memh_valid = (pci_mapreg_map(pap, 0x18, expected, 0,
 	    memtp, memhp, NULL, memsizep) == 0);
 
@@ -96,8 +101,11 @@ cy_match_pci(parent, match, aux)
 
 	switch (PCI_PRODUCT(pap->pa_id)) {
 	case PCI_PRODUCT_CYCLADES_CYCLOMY_1:
-		break;
 	case PCI_PRODUCT_CYCLADES_CYCLOMY_2:
+	case PCI_PRODUCT_CYCLADES_CYCLOM4Y_1:
+	case PCI_PRODUCT_CYCLADES_CYCLOM4Y_2:
+	case PCI_PRODUCT_CYCLADES_CYCLOM8Y_1:
+	case PCI_PRODUCT_CYCLADES_CYCLOM8Y_2:
 		break;
 	default:
 		return 0;
@@ -141,6 +149,7 @@ cy_attach_pci(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 	bus_size_t iosize, memsize;
 	const char *intrstr;
+	int plx_ver;
 
 	sc->sc_bustype = CY_BUSTYPE_PCI;
 
@@ -180,7 +189,18 @@ cy_attach_pci(parent, self, aux)
 	/* attach the hardware */
 	cy_attach(parent, self, aux);
 
+	plx_ver = bus_space_read_1(memt, memh, CY_PLX_VER) & 0x0f;
+
 	/* Enable PCI card interrupts */
-	bus_space_write_2(iot, ioh, CY_PCI_INTENA,
-	    bus_space_read_2(iot, ioh, CY_PCI_INTENA) | 0x900);
+	switch (plx_ver) {
+	case CY_PLX_9050:
+		bus_space_write_2(iot, ioh, CY_PCI_INTENA_9050,
+		    bus_space_read_2(iot, ioh, CY_PCI_INTENA_9050) | 0x40);
+		break;
+	case CY_PLX_9060:
+	case CY_PLX_9080:
+	default:
+		bus_space_write_2(iot, ioh, CY_PCI_INTENA,
+		    bus_space_read_2(iot, ioh, CY_PCI_INTENA) | 0x900);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.34 2000/05/08 20:09:44 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.34.2.1 2000/06/22 17:09:16 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	/*
 	 * Check arguments and construct default values.
 	 */
-	if (!powerof2(pagesz) || pagesz > PAGE_SIZE)
+	if (!powerof2(pagesz))
 		panic("pool_init: page size invalid (%lx)\n", (u_long)pagesz);
 
 	if (alloc == NULL && release == NULL) {
@@ -425,6 +425,11 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
+	size = ALIGN(size);
+	if (size >= pagesz)
+		panic("pool_init: pool item size (%lu) too large",
+		      (u_long)size);
+
 	/*
 	 * Initialize the pool structure.
 	 */
@@ -436,7 +441,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_maxpages = UINT_MAX;
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
-	pp->pr_size = ALIGN(size);
+	pp->pr_size = size;
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_mtype = mtype;
@@ -589,7 +594,8 @@ _pool_get(pp, flags, file, line)
 	}
 #endif
 
-	if (__predict_false(curproc == NULL && (flags & PR_WAITOK) != 0))
+	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
+			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
 
 	simple_lock(&pp->pr_slock);
@@ -1019,6 +1025,9 @@ pool_prime_page(pp, storage)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int s, n;
+
+	if (((u_long)cp & (pp->pr_pagesz - 1)) != 0)
+		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);

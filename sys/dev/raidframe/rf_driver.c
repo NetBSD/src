@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.34 2000/03/07 02:28:05 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.34.2.1 2000/06/22 17:07:54 minoura Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -267,9 +267,16 @@ rf_Shutdown(raidPtr)
 	}
 	RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
 
+	/* Wait for any parity re-writes to stop... */
+	while (raidPtr->parity_rewrite_in_progress) {
+		printf("Waiting for parity re-write to exit...\n");
+		tsleep(&raidPtr->parity_rewrite_in_progress, PRIBIO,
+		       "rfprwshutdown", 0);
+	}
+
 	raidPtr->valid = 0;
 
-	rf_final_update_component_labels(raidPtr);
+	rf_update_component_labels(raidPtr, RF_FINAL_COMPONENT_UPDATE);
 
 	rf_UnconfigureVnodes(raidPtr);
 
@@ -715,7 +722,7 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	raidPtr->numFailures++;
 	raidPtr->Disks[row][col].status = rf_ds_dist_spared;
 	raidPtr->status[row] = rf_rs_reconfigured;
-	rf_update_component_labels(raidPtr);
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	/* install spare table only if declustering + distributed sparing
 	 * architecture. */
 	if (raidPtr->Layout.map->flags & RF_BD_DECLUSTERED)
@@ -739,7 +746,7 @@ rf_FailDisk(
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
 	raidPtr->status[frow] = rf_rs_degraded;
-	rf_update_component_labels(raidPtr);
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	if (initRecon)
 		rf_ReconstructFailedDisk(raidPtr, frow, fcol);
@@ -778,12 +785,12 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	if (raidPtr->waiting_for_quiescence) {
 		raidPtr->access_suspend_release = 0;
 		while (!raidPtr->access_suspend_release) {
-			printf("Suspending: Waiting for Quiesence\n");
+			printf("Suspending: Waiting for Quiescence\n");
 			WAIT_FOR_QUIESCENCE(raidPtr);
 			raidPtr->waiting_for_quiescence = 0;
 		}
 	}
-	printf("Quiesence reached..\n");
+	printf("Quiescence reached..\n");
 
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 	return (raidPtr->waiting_for_quiescence);

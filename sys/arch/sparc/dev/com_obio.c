@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.4 1999/11/21 15:23:01 pk Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.4.2.1 2000/06/22 17:03:54 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,7 +188,8 @@ com_obio_attach(parent, self, aux)
 	if (sa->sa_nintr != 0) {
 		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri,
 					 0, comintr, sc);
-		evcnt_attach(&osc->osc_com.sc_dev, "intr", &osc->osc_intrcnt);
+		evcnt_attach_dynamic(&osc->osc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    osc->osc_com.sc_dev.dv_xname, "intr");
 	}
 
 	/*

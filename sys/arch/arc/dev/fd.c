@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.21 2000/05/16 05:45:45 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.21.2.1 2000/06/22 16:59:11 minoura Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -100,6 +100,7 @@
 
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
 #include <arc/dev/fdreg.h>
+#include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/dev/dma.h>
 
 #include "locators.h"

@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.74 2000/05/02 08:03:53 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.74.2.1 2000/06/22 17:02:15 minoura Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.74.2.1 $"
 
 maxusers	64
 
@@ -72,19 +72,6 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP         # FFS soft updates support.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
 # Networking options
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
@@ -143,9 +130,8 @@ ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
 scc*	at	ioasic? offset ?	# Z85C30
-bba0	at	ioasic? offset ?	# MAXINE audio
+bba*	at	ioasic? offset ?	# MAXINE baseboard audio
 audio*	at	bba?
-#isdn	at	ioasic? offset ?	# MAXINE ISDN (not supported)
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
@@ -178,6 +164,7 @@ ibus0	at	mainbus0
 pm*	at	ibus0 addr ?		# 3100 onboard fb
 le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
 sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
+#xsii*	at	ibus0 addr ?		#  [ MI SCSI version ]
 
 #########################################################################
 # SCSI configuration							#
@@ -189,7 +176,7 @@ oldscsibus*	at asc?
 include 	"arch/pmax/conf/scsi.pmax"
 
 # MI SCSI configuration 
-#include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
+#include 	"arch/pmax/conf/mi.scsi"
 
 #########################################################################
 # Pseudo-devices							#

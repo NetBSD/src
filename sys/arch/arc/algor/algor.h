@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.h,v 1.3 2000/02/22 11:25:56 soda Exp $	*/
+/*	$NetBSD: algor.h,v 1.3.2.1 2000/06/22 16:59:03 minoura Exp $	*/
 /*	$OpenBSD: algor.h,v 1.4 1998/03/16 09:38:23 pefo Exp $ */
 
 /*
@@ -146,7 +146,7 @@ struct algor_int_desc {
 };
 
 int algor_intrnull __P((void *));
-void *algor_pci_intr_establish __P((int, int, intr_handler_t, void *, void *));
+void *algor_pci_intr_establish __P((int, int, intr_handler_t, void *));
 void algor_pci_intr_disestablish __P((void *));
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.48 2000/04/11 04:37:50 chs Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.48.2.1 2000/06/22 17:09:03 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

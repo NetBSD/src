@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.49 2000/05/08 18:22:29 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.49.2.1 2000/06/22 17:00:22 minoura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -186,6 +186,11 @@ int	apm_enabled = 1;
 int	apm_force_64k_segments = 1;
 #else
 int	apm_force_64k_segments = 0;
+#endif
+#ifdef APM_ALLOW_BOGUS_SEGMENTS
+int	apm_allow_bogus_segments = 1;
+#else
+int	apm_allow_bogus_segments = 0;
 #endif
 #ifdef APM_NO_IDLE
 int	apm_do_idle = 0;
@@ -1153,11 +1158,17 @@ apmattach(parent, self, aux)
 		}
 	}
 	if (!apm_data_seg_ok && apm_bogus_bios) {
-		DPRINTF(APMDEBUG_ATTACH,
-		    ("bogus bios data seg location, ignoring\n%s: ",
-		    apmsc->sc_dev.dv_xname));
-		apminfo.apm_data_seg_base = 0;
-		apminfo.apm_data_seg_len = 0;
+		if (apm_allow_bogus_segments) {
+			DPRINTF(APMDEBUG_ATTACH,
+			    ("bogus bios data seg location, continuing\n%s: ",
+			    apmsc->sc_dev.dv_xname));
+		} else {
+			DPRINTF(APMDEBUG_ATTACH,
+			    ("bogus bios data seg location, ignoring\n%s: ",
+			    apmsc->sc_dev.dv_xname));
+			apminfo.apm_data_seg_base = 0;
+			apminfo.apm_data_seg_len = 0;
+		}
 		apm_data_seg_ok = 1;		/* who are we kidding?! */
 	}
 	if (!apm_data_seg_ok) {

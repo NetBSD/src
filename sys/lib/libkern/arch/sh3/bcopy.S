@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 2000/04/20 13:52:35 msaitoh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1.2.1 2000/06/22 17:09:27 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,59 +29,219 @@
 
 #include <machine/asm.h>
 
-#if defined(MEMCOPY) || defined(MEMMOVE)
-#define	DST	r4
-#define	SRC	r5
-#else
-#define	SRC	r4
-#define	DST	r5
-#endif
-#define	LEN	r6
+#define	REG_SRC	r4
+#define	REG_DST	r5
+#define	REG_LEN	r6
 
-
-#ifdef MEMCOPY
 ENTRY(memcpy)
-#else
-#ifdef MEMMOVE
-ENTRY(memmove)
-#else
-ENTRY(bcopy)
-#endif
-#endif
-	cmp/hi	DST,SRC
-	bf	bcopy_overlap
+ALTENTRY(memmove)
+	mov	r4,r0		/* memcpy(dst,src,len) -> bcopy(src,dst,len) */
+	mov	r5,r4
+	mov	r0,r5
+	/* fall through */
 
-	tst	LEN,LEN
-	bt	9f
+ALTENTRY(bcopy)
+	cmp/eq	REG_DST,REG_SRC	/* if ( src == dst ) return; */
+	bt/s	bcopy_return
+	cmp/hi	REG_DST,REG_SRC
+	bf/s	bcopy_overlap
+
+	mov	REG_SRC,r0
+	xor	REG_DST,r0
+	and	#3,r0
+	mov	r0,r1
+	tst	r0,r0		/* (src ^ dst) & 3         */
+	bf/s	word_align
+
+longword_align:
+	tst	REG_LEN,REG_LEN	/* if ( len==0 ) return;   */
+	bt/s	bcopy_return
+
+
+	mov	REG_SRC,r0
+	tst	#1,r0		/* if ( src & 1 )          */
+	bt	1f
+	mov.b	@REG_SRC+,r0	/*    *dst++ = *src++;     */
+	add	#-1,REG_LEN
+	mov.b	r0,@REG_DST
+	add	#1,REG_DST
 1:
-	mov.b	@SRC+,r0
-	mov.b	r0,@DST
 
-	add	#-1,LEN
-	tst	LEN,LEN
+
+	mov	#1,r0
+	cmp/hi	r0,REG_LEN	/* if ( (len > 1) &&       */
+	bf/s	1f
+	mov	REG_SRC,r0
+	tst	#2,r0		/*      (src & 2) {        */
+	bt	1f
+	mov.w	@REG_SRC+,r0	/*        *((unsigned short*)dst)++ = *((unsigned short*)src)++; */
+	add	#-2,REG_LEN	/*        len -= 2;                                              */
+	mov.w	r0,@REG_DST
+	add	#2,REG_DST	/* }                       */
+1:
+
+
+	mov	#3,r1
+	cmp/hi	r1,REG_LEN	/* while ( len > 3 ) {     */
+	bf/s	no_align_delay
+	tst	REG_LEN,REG_LEN
+2:
+	mov.l	@REG_SRC+,r0	/*   *((unsigned long*)dst)++ = *((unsigned long*)src)++;        */
+	add	#-4,REG_LEN	/*   len -= 4;                                                   */
+	mov.l	r0,@REG_DST
+	cmp/hi	r1,REG_LEN
+	bt/s	2b
+	add	#4,REG_DST	/* }                       */
+
+	bra	no_align_delay
+	tst	REG_LEN,REG_LEN
+
+
+word_align:
+	mov	r1,r0
+	tst	#1,r0
+	bf/s	no_align_delay
+	tst	REG_LEN,REG_LEN	/* if ( len == 0 ) return; */
+	bt	bcopy_return
+
+
+	mov	REG_SRC,r0	/* if ( src & 1 )          */
+	tst	#1,r0
+	bt	1f
+	mov.b	@REG_SRC+,r0	/*    *dst++ = *src++;     */
+	add	#-1,REG_LEN
+	mov.b	r0,@REG_DST
+	add	#1,REG_DST
+1:
+
+
+	mov	#1,r1
+	cmp/hi	r1,REG_LEN	/* while ( len > 1 ) {     */
+	bf/s	no_align_delay
+	tst	REG_LEN,REG_LEN
+2:
+	mov.w	@REG_SRC+,r0	/*   *((unsigned short*)dst)++ = *((unsigned short*)src)++;      */
+	add	#-2,REG_LEN	/*   len -= 2;                                                   */
+	mov.w	r0,@REG_DST
+	cmp/hi	r1,REG_LEN
+	bt/s	2b
+	add	#2,REG_DST	/* }                       */
+
+
+no_align:
+	tst	REG_LEN,REG_LEN	/* while ( len!= ) {       */
+no_align_delay:
+	bt	bcopy_return
+1:
+	mov.b	@REG_SRC+,r0	/*    *dst++ = *src++;     */
+	add	#-1,REG_LEN	/*    len--;               */
+	mov.b	r0,@REG_DST
+	tst	REG_LEN,REG_LEN
 	bf/s	1b
-	add	#1,DST
-
-9:
-	rts	
+	add	#1,REG_DST	/* }                       */
+bcopy_return:
+	rts
 	nop
 
-bcopy_overlap:
-	add	LEN,SRC
-	add	LEN,DST
 
-	tst	LEN,LEN
+bcopy_overlap:
+	add	REG_LEN,REG_SRC
+	add	REG_LEN,REG_DST
+
+	mov	REG_SRC,r0
+	xor	REG_DST,r0
+	and	#3,r0
+	mov	r0,r1
+	tst	r0,r0		/* (src ^ dst) & 3         */
+	bf/s	ov_word_align
+
+ov_longword_align:
+	tst	REG_LEN,REG_LEN	/* if ( len==0 ) return;   */
+	bt/s	bcopy_return
+
+
+	mov	REG_SRC,r0
+	tst	#1,r0		/* if ( src & 1 )          */
+	bt	1f
+	add	#-1,REG_SRC	/*    *--dst = *--src;     */
+	mov.b	@REG_SRC,r0
+	mov.b	r0,@-REG_DST
+	add	#-1,REG_LEN
+1:
+
+
+	mov	#1,r0
+	cmp/hi	r0,REG_LEN	/* if ( (len > 1) &&       */
+	bf/s	1f
+	mov	REG_SRC,r0
+	tst	#2,r0		/*      (src & 2) {        */
+	bt	1f
+	add	#-2,REG_SRC	/*        *--((unsigned short*)dst) = *--((unsigned short*)src); */
+	mov.w	@REG_SRC,r0
+	add	#-2,REG_LEN	/*        len -= 2;                                              */
+	mov.w	r0,@-REG_DST	/* }                       */
+1:
+
+
+	mov	#3,r1
+	cmp/hi	r1,REG_LEN	/* while ( len > 3 ) {     */
+	bf/s	ov_no_align_delay
+	tst	REG_LEN,REG_LEN
+2:
+	add	#-4,REG_SRC
+	mov.l	@REG_SRC,r0	/*   *((unsigned long*)dst)++ = *((unsigned long*)src)++;        */
+	add	#-4,REG_LEN	/*   len -= 4;                                                   */
+	cmp/hi	r1,REG_LEN
+	bt/s	2b
+	mov.l	r0,@-REG_DST	/* }                       */
+
+	bra	ov_no_align_delay
+	tst	REG_LEN,REG_LEN
+
+
+ov_word_align:
+	mov	r1,r0
+	tst	#1,r0
+	bf/s	ov_no_align_delay
+	tst	REG_LEN,REG_LEN	/* if ( len == 0 ) return; */
+	bt	bcopy_return
+
+
+	mov	REG_SRC,r0	/* if ( src & 1 )          */
+	tst	#1,r0
+	bt	1f
+	add	#-1,REG_SRC
+	mov.b	@REG_SRC,r0	/*    *--dst = *--src;     */
+	add	#-1,REG_LEN
+	mov.b	r0,@-REG_DST
+1:
+
+
+	mov	#1,r1
+	cmp/hi	r1,REG_LEN	/* while ( len > 1 ) {     */
+	bf/s	ov_no_align_delay
+	tst	REG_LEN,REG_LEN
+2:
+	add	#-2,REG_SRC
+	mov.w	@REG_SRC,r0	/*   *--((unsigned short*)dst) = *--((unsigned short*)src);      */
+	add	#-2,REG_LEN	/*   len -= 2;                                                   */
+	cmp/hi	r1,REG_LEN
+	bt/s	2b
+	mov.w	r0,@-REG_DST	/* }                       */
+
+
+ov_no_align:
+	tst	REG_LEN,REG_LEN	/* while ( len!= ) {       */
+ov_no_align_delay:
 	bt	9f
 1:
-	add	#-1,SRC
-	mov.b	@SRC,r0
-
-	add	#-1,LEN
-	tst	LEN,LEN
+	add	#-1,REG_SRC
+	mov.b	@REG_SRC,r0	/*    *--dst = *--src;     */
+	add	#-1,REG_LEN	/*    len--;               */
+	tst	REG_LEN,REG_LEN
 	bf/s	1b
-	mov.b	r0,@-DST
-
+	mov.b	r0,@-REG_DST	/* }                       */
 9:
-	rts	
+	rts
 	nop
 

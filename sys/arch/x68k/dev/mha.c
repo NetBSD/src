@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.20 2000/04/30 16:06:20 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.20.2.1 2000/06/22 17:05:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -328,6 +328,8 @@ mhaattach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 
 	tmpsc = sc;	/* XXX */
+
+	printf (": Mankai Mach-2 Fast SCSI Host Adaptor\n");
 
 	SPC_TRACE(("mhaattach  "));
 	sc->sc_state = SPC_INIT;

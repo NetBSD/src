@@ -1,10 +1,10 @@
-/*	$NetBSD: ah_output.c,v 1.8 2000/03/21 23:53:30 itojun Exp $	*/
-/*	$KAME: ah_output.c,v 1.17 2000/03/09 08:54:48 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.8.2.1 2000/06/22 17:09:53 minoura Exp $	*/
+/*	$KAME: ah_output.c,v 1.21 2000/05/29 08:05:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -194,7 +194,7 @@ ah4_output(m, isr)
 #endif
 
 	if (m->m_len != hlen)
-		panic("ah4_output: assumption failed (first mbuf length)"); 
+		panic("ah4_output: assumption failed (first mbuf length)");
 	if (M_LEADINGSPACE(m->m_next) < ahlen) {
 		struct mbuf *n;
 		MGET(n, M_DONTWAIT, MT_DATA);
@@ -290,10 +290,11 @@ ah4_output(m, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah4_calccksum(m, (caddr_t)ahsumpos, algo, sav);
+	error = ah4_calccksum(m, (caddr_t)ahsumpos, plen, algo, sav);
 	if (error) {
 		ipseclog((LOG_ERR,
 		    "error after ah4_calccksum, called from ah4_output"));
+		m_freem(m);
 		m = NULL;
 		ipsecstat.out_inval++;
 		return error;
@@ -460,7 +461,7 @@ ah6_output(m, nexthdrp, md, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah6_calccksum(m, (caddr_t)ahsumpos, algo, sav);
+	error = ah6_calccksum(m, (caddr_t)ahsumpos, plen, algo, sav);
 	if (error) {
 		ipsec6stat.out_inval++;
 		m_freem(m);

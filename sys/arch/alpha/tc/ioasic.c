@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.29.2.1 2000/06/22 16:58:46 minoura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,20 +68,18 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.29.2.1 2000/06/22 16:58:46 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -120,13 +118,14 @@ struct ioasic_dev ioasic_devs[] = {
 	{ "TOY_RTC ", IOASIC_SLOT_8_START, C(IOASIC_DEV_BOGUS),
 	  0, },
 	{ "AMD79c30", IOASIC_SLOT_9_START, C(IOASIC_DEV_ISDN),
-	  IOASIC_INTR_ISDN,  },
+	  IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD,  },
 };
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
 struct ioasicintr {
 	int	(*iai_func) __P((void *));
 	void	*iai_arg;
+	struct evcnt iai_evcnt;
 } ioasicintrs[IOASIC_NCOOKIES];
 
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
@@ -167,6 +166,8 @@ ioasicattach(parent, self, aux)
 	u_long ssr;
 #endif
 	u_long i, imsk;
+	const struct evcnt *pevcnt;
+	char *cp;
 
 	ioasicfound = 1;
 
@@ -202,9 +203,17 @@ ioasicattach(parent, self, aux)
 	/*
 	 * Set up interrupt handlers.
 	 */
+	pevcnt = tc_intr_evcnt(parent, ta->ta_cookie);
 	for (i = 0; i < IOASIC_NCOOKIES; i++) {
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
+
+		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		if (cp == NULL)
+			panic("ioasicattach");
+		sprintf(cp, "slot %lu", i);
+		evcnt_attach_dynamic(&ioasicintrs[i].iai_evcnt,
+		    EVCNT_TYPE_INTR, pevcnt, self->dv_xname, cp);
 	}
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
@@ -306,16 +315,11 @@ ioasic_intr(val)
 
 		sir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
-#ifdef EVCNT_COUNTERS
-	/* No interrupt counting via evcnt counters */ 
-	XXX BREAK HERE XXX
-#else /* !EVCNT_COUNTERS */
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_IOASIC + slot]++
-#endif /* EVCNT_COUNTERS */ 
+#define	INCRINTRCNT(slot)	ioasicintrs[slot].iai_evcnt.ev_count++
 
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits)						\
-		if (sir & bits) {					\
+		if (sir & (bits)) {					\
 			ifound = 1;					\
 			INCRINTRCNT(slot);				\
 			(*ioasicintrs[slot].iai_func)			\
@@ -324,7 +328,7 @@ ioasic_intr(val)
 		CHECKINTR(IOASIC_DEV_SCC0, IOASIC_INTR_SCC_0);
 		CHECKINTR(IOASIC_DEV_SCC1, IOASIC_INTR_SCC_1);
 		CHECKINTR(IOASIC_DEV_LANCE, IOASIC_INTR_LANCE);
-		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN);
+		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
 
 		gifound |= ifound;
 	} while (ifound);

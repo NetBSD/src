@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.33 2000/05/27 00:55:42 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.33.2.1 2000/06/22 17:06:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -362,6 +362,10 @@ fxp_attach(sc)
 	if (sc->sc_powerhook == NULL) 
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
+
+	/* The attach is successful. */
+	sc->sc_flags |= FXPF_ATTACHED;
+
 	return;
 
 	/*
@@ -1957,6 +1961,10 @@ fxp_detach(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & FXPF_ATTACHED) == 0)
+		return (0);
 
 	/* Unhook our tick handler. */
 	callout_stop(&sc->sc_callout);

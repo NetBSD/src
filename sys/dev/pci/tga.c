@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.23 2000/04/20 05:25:20 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.23.2.1 2000/06/22 17:07:38 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -58,6 +58,9 @@
 
 #ifdef __alpha__
 #include <machine/pte.h>
+#endif
+#ifdef __mips__
+#include <mips/pte.h>
 #endif
 
 int	tgamatch __P((struct device *, struct cfdata *, void *));
@@ -204,6 +207,9 @@ tga_getdevconfig(memt, pc, tag, dc)
 #ifdef __alpha__
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 #endif
+#ifdef arc
+	bus_space_paddr(memt, dc->dc_memh, &dc->dc_paddr);
+#endif
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, 
 						TGA_MEM_CREGS, TGA_CREGS_SIZE,
@@ -349,7 +355,7 @@ tgaattach(parent, self, aux)
 	u_int8_t rev;
 	int console;
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(arc)
 	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
 #else
 	console = 0;
@@ -605,12 +611,18 @@ tga_mmap(v, offset, prot)
 
 	/* XXX NEW MAPPING CODE... */
 
-#ifdef __alpha__
+#if defined(__alpha__)
 	struct tga_softc *sc = v;
 
 	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
+#elif defined(__mips__)
+	struct tga_softc *sc = v;
+
+	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
+		return -1;
+	return mips_btop(sc->sc_dc->dc_paddr + offset);
 #else
 	return (-1);
 #endif

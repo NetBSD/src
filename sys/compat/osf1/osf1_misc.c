@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.53 2000/03/28 23:57:33 simonb Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.53.2.1 2000/06/22 17:05:52 minoura Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

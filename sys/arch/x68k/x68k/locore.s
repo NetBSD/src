@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 2000/05/26 21:20:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.57.2.1 2000/06/22 17:05:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -515,40 +515,6 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 ENTRY_NOPROFILE(kbdtimer)
 	rte
 
-ENTRY_NOPROFILE(audiotrap)
-#if 0
-#if NADPCM > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(audiointr)
-	INTERRUPT_RESTOREREG
-#endif
-#endif
-	addql	#1,_C_LABEL(intrcnt)+44
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
-ENTRY_NOPROFILE(partrap)
-#if NPAR > 0
-	INTERRUPT_SAVEREG
-	movel	#1,sp@-
-	jbsr	_C_LABEL(parintr)
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+48
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
-ENTRY_NOPROFILE(audioerrtrap)
-#if NADPCM > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(audioerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+32
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
 ENTRY_NOPROFILE(powtrap)
 #include "pow.h"
 #if NPOW > 0
@@ -556,7 +522,7 @@ ENTRY_NOPROFILE(powtrap)
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+	addql	#1,_C_LABEL(intrcnt)+48
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -569,7 +535,7 @@ ENTRY_NOPROFILE(com0trap)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+52
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -581,7 +547,7 @@ ENTRY_NOPROFILE(com1trap)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+52
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -1139,6 +1105,7 @@ Lsw1:
 	bclr	d0,d1			| no, clear bit
 	movl	d1,_C_LABEL(sched_whichqs)
 Lsw2:
+	/* p->p_cpu initialized in fork1() for single-processor */
 	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
@@ -1568,7 +1535,6 @@ GLOBAL(intrnames)
 	.asciz	"clock"
 	.asciz	"scsi"
 	.asciz	"audio"
-	.asciz	"ppi"
 	.asciz	"pow"
 	.asciz	"com"
 	.space	200

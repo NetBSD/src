@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.5 1999/12/08 04:46:40 jonb Exp $
+#	$NetBSD: BULLBOX,v 1.5.2.1 2000/06/22 17:02:09 minoura Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -41,13 +41,6 @@ options		SETUIDSCRIPTS
 options		NFSSERVER		# Network File System server
 #options	QUOTA			# file system quotas
 options		SOFTDEP			# FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work.
-
-prefix ../domestic/sys
-cinclude "conf/files.crypto-us"
-prefix
 
 # networking options
 options		GATEWAY			# packet forwarding

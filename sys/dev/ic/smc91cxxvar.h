@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.7 2000/02/02 16:04:42 itojun Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.7.2.1 2000/06/22 17:06:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,7 +55,10 @@ struct smc91cxx_softc {
 	/* Power management hooks and state. */
 	int	(*sc_enable) __P((struct smc91cxx_softc *));
 	void	(*sc_disable) __P((struct smc91cxx_softc *));
-	int	sc_enabled;
+	u_int32_t	sc_flags;	/* misc. flags*/
+#define SMC_FLAGS_ENABLED	0x0001
+#define SMC_FLAGS_ATTACHED	0x0002		/* attach was successful */
+
 
 #if NRND > 0
 	rndsource_element_t rnd_source;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.1 2000/05/11 16:38:13 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.1.2.1 2000/06/22 17:00:33 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ extern struct i386_bus_dma_tag mca_bus_dma_tag;
 /* set to 1 if MCA bus is detected */
 extern int MCA_system;
 
-int	mca_nmi __P((void));
+int	mca_nmi(void);
 
 /*
  * Types provided to machine-independent MCA code.
@@ -56,14 +56,15 @@ typedef int mca_intr_handle_t;
  */
 struct mcabus_attach_args;
 
-void	mca_attach_hook __P((struct device *, struct device *,
-		struct mcabus_attach_args *));
-void	*mca_intr_establish __P((mca_chipset_tag_t, mca_intr_handle_t,
-		int, int (*)(void *), void *));
-void	mca_intr_disestablish __P((mca_chipset_tag_t, void *));
-int	mca_conf_read __P((mca_chipset_tag_t, int, int));
-void	mca_conf_write __P((mca_chipset_tag_t, int, int, int));
-void	mca_busprobe __P((void));
+void	mca_attach_hook(struct device *, struct device *,
+		struct mcabus_attach_args *);
+const struct evcnt *mca_intr_evcnt(mca_chipset_tag_t, mca_intr_handle_t);
+void	*mca_intr_establish(mca_chipset_tag_t, mca_intr_handle_t,
+		int, int (*)(void *), void *);
+void	mca_intr_disestablish(mca_chipset_tag_t, void *);
+int	mca_conf_read(mca_chipset_tag_t, int, int);
+void	mca_conf_write(mca_chipset_tag_t, int, int, int);
+void	mca_busprobe(void);
 
 /* MCA register addresses for IBM PS/2 */
 

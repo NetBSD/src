@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.27 2000/05/02 04:41:04 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.27.2.1 2000/06/22 17:10:23 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@ struct simplelock {
 };
 
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, 0, NULL, 0, \
-				  { NULL, NULL }, 0 }
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0,	\
+				  0, { NULL, NULL }, 0 }
 #else
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
@@ -269,6 +269,8 @@ struct lock {
 #define	LK_NOPROC	((pid_t) -1)
 #define	LK_NOCPU	((cpuid_t) -1)
 
+#ifdef _KERNEL
+
 struct proc;
 
 void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
@@ -308,5 +310,7 @@ void	simple_lock_freecheck __P((void *, void *));
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)		/* nothing */
 #endif
+
+#endif /* _KERNEL */
 
 #endif /* _SYS_LOCK_H_ */

@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.3 1999/01/31 07:02:34 dbj Exp $        */
+/*      $NetBSD: rtc.c,v 1.3.16.1 2000/06/22 17:02:03 minoura Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -46,6 +46,8 @@
 
 #include <dev/clock_subr.h>
 
+#include <next68k/next68k/rtc.h>
+
 #include <next68k/dev/clockreg.h>
 
 /* #define RTC_DEBUG */
@@ -54,7 +56,6 @@ void rtc_init __P((void));
 u_char rtc_read __P((u_char));
 void rtc_write __P((u_char, u_char));
 void rtc_print __P((void));
-void poweroff __P((void));
 time_t getsecs __P((void));
 void setsecs __P((time_t));
 

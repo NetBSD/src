@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.25 2000/05/25 16:33:14 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.25.2.1 2000/06/22 16:58:23 minoura Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -46,20 +46,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocol suite

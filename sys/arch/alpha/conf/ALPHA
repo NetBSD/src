@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.124 2000/05/25 16:33:13 mycroft Exp $
+# $NetBSD: ALPHA,v 1.124.2.1 2000/06/22 16:58:23 minoura Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.124 $"
+ident		"ALPHA-$Revision: 1.124.2.1 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -25,6 +25,7 @@ options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 options 	DEC_EB66	# EB66:		21066 Evaluation Board
 options 	DEC_6600	# EV6:		264DP OEM Board
+options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -60,19 +61,6 @@ options 	QUOTA		# User and group quotas for the FFS
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -197,6 +185,7 @@ fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 # PCI host bus adapter support
 apecs*	at	mainbus?
 cia*	at	mainbus?
+irongate* at	mainbus?
 lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
@@ -205,6 +194,7 @@ tsp*	at	tsc?
 # PCI bus support
 pci*	at	apecs?
 pci*	at	cia?
+pci*	at	irongate?
 pci*	at	lca?
 pci*	at	ppb?
 pci*	at	dwlpx?
@@ -221,6 +211,7 @@ ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.8 1999/11/08 10:10:25 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.8.2.1 2000/06/22 17:08:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -602,6 +602,13 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 		DPRINTF(("wsmuxdoioctl: save rawkbd = %d\n", sc->sc_rawkbd));
 		break;
 #endif
+	case FIOASYNC:
+		sc->sc_events.async = *(int *)data != 0;
+		return (0);
+	case TIOCSPGRP:
+		if (*(int *)data != sc->sc_events.io->p_pgid)
+			return (EPERM);
+		return (0);
 	default:
 		break;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.28 1999/03/15 05:28:07 nisimura Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.28.16.1 2000/06/22 16:58:49 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.28 1999/03/15 05:28:07 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.28.16.1 2000/06/22 16:58:49 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,7 @@ tcds_dma_intr(sc)
 	}
 
 	resid = 0;
-	if (!sc->sc_iswrite &&
+	if (!sc->sc_ispullup &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		DELAY(1);
@@ -190,12 +190,12 @@ tcds_dma_intr(sc)
 	    tcl, tcm, tch, trans, resid));
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    (sc->sc_iswrite ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+	    (sc->sc_ispullup ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 
 	/*
 	 * Clean up unaligned DMAs into main memory.
 	 */
-	if (sc->sc_iswrite) {
+	if (sc->sc_ispullup) {
 		/* Handle unaligned starting address, length. */
 		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud0);
 		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
@@ -257,7 +257,7 @@ tcds_dma_intr(sc)
 		return 0;
 
 	/* and again */
-	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, sc->sc_iswrite);
+	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, sc->sc_ispullup);
 	return 1;
 #endif
 	return 0;
@@ -281,10 +281,10 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
-	sc->sc_iswrite = datain;
+	sc->sc_ispullup = datain;
 
 	NCR_DMA(("tcds_dma %d: start %d@%p,%d\n", sc->sc_slot,
-		(int)*sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+		(int)*sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_ispullup));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -306,7 +306,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    (sc->sc_iswrite ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+	    (sc->sc_ispullup ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_sda,

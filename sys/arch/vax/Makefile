@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.2.22.1 2000/06/22 17:04:52 minoura Exp $
 #
-SUBDIR=	include boot
+SUBDIR=	include boot stand/installboot
 
 .include <bsd.subdir.mk>

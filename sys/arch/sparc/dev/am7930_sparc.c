@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.45 1999/11/21 15:23:01 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.45.2.1 2000/06/22 17:03:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -246,7 +246,8 @@ am7930_sparc_attach(sc, pri)
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }

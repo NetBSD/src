@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.12 1999/12/30 16:35:25 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.12.2.1 2000/06/22 17:04:32 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,6 +125,7 @@ main()
 	off("P_PID", struct proc, p_pid);
 	off("P_FPSTATE", struct proc, p_md.md_fpstate);
 	def("SRUN", SRUN);
+	def("SONPROC", SONPROC);
 
 	/* user struct stuff */
 	siz("USIZ", struct user); /* Needed for redzone calculations */
@@ -142,6 +143,20 @@ main()
 	off("V_INTR", struct uvmexp, intrs);
 	off("V_FAULTS", struct uvmexp, faults);
 
+	/* CPU info structure */
+	off("CI_CURPROC", struct cpu_info, ci_curproc);
+	off("CI_CPCB", struct cpu_info, ci_cpcb);
+	off("CI_NEXT", struct cpu_info, ci_next);
+	off("CI_FPPROC", struct cpu_info, ci_fpproc);
+	off("CI_NUMBER", struct cpu_info, ci_number);
+	off("CI_UPAID", struct cpu_info, ci_upaid);
+	off("CI_SPINUP", struct cpu_info, ci_spinup);
+	off("CI_INITSTACK", struct cpu_info, ci_initstack);
+	off("CI_PADDR", struct cpu_info, ci_paddr);
+	def("CURPROC", (CPUINFO_VA+CI_CURPROC));
+	def("CPCB", (CPUINFO_VA+CI_CPCB));
+	def("FPPROC", (CPUINFO_VA+CI_FPPROC));
+
 	/* FPU state */
 	off("FS_REGS", struct fpstate64, fs_regs);
 	off("FS_FSR", struct fpstate64, fs_fsr);
@@ -150,9 +165,9 @@ main()
 	off("FS_QUEUE", struct fpstate64, fs_queue);
 	siz("FS_SIZE", struct fpstate64);
 	def("FSR_QNE", FSR_QNE);
-	def("FPRS_FEF",FPRS_FEF);
-	def("FPRS_DU",FPRS_DU);
-	def("FPRS_DL",FPRS_DL);
+	def("FPRS_FEF", FPRS_FEF);
+	def("FPRS_DU", FPRS_DU);
+	def("FPRS_DL", FPRS_DL);
 
 	/* system calls */
 	def("SYS___sigreturn14", SYS___sigreturn14);
@@ -215,45 +230,6 @@ main()
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
 	siz("IH_SIZE", struct intrhand);
-	
-#ifdef notyet
-	/* ZSCC interrupt fields */
-	off("ZSC_A", struct zs_softc, sc_a);
-	off("ZSC_B", struct zs_softc, sc_b);
-/*	off("ZL_WREG", struct zs_line, zl_wreg); */
-	off("ZL_TBC", struct zs_line, zl_tbc);
-	off("ZL_TBA", struct zs_line, zl_tba);
-	off("ZL_RBPUT", struct zs_line, zl_rbput);
-	off("ZL_RBUF", struct zs_line, zl_rbuf);
-	def("ZSRR1_DO_bit", ffs(ZSRR1_DO) - 1);
-#endif
-#ifdef notyet
-	/* audio trap handler fields */
-	off("AU_AMD", struct auio, au_amd);
-	off("AU_RDATA", struct auio, au_rdata);
-	off("AU_REND", struct auio, au_rend);
-	off("AU_PDATA", struct auio, au_pdata);
-	off("AU_PEND", struct auio, au_pend);
-	off("AU_EVCNT", struct auio, au_intrcnt.ev_count);
-
-	off("AMD_IR", struct amd7930, ir);
-	off("AMD_BBRB", struct amd7930, bbrb);
-	off("AMD_BBTB", struct amd7930, bbtb);
-#endif
-/*	def("PROM_BASE", PROM_BASE); */
-
-	off("PV_NODEOPS", struct promvec, pv_nodeops);
-	off("PV_HALT", struct promvec, pv_halt);
-	off("PV_EVAL", struct promvec, pv_fortheval.v0_eval);
-	off("PV_ROMVEC_VERS", struct promvec, pv_romvec_vers);
-
-	off("NO_NEXTNODE", struct nodeops, no_nextnode);
-	off("NO_GETPROP", struct nodeops, no_getprop);
-
-#if 0
-	off("OLDMON_PRINTF", struct om_vector, printf);
-	off("OLDMON_HALT", struct om_vector, exitToMon);
-#endif
 
 	/* floppy trap handler fields */
 	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);

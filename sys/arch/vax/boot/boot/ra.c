@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.6 2000/05/21 09:45:54 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.6.2.1 2000/06/22 17:04:56 minoura Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,6 +85,7 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 #ifdef DEV_DEBUG
 	printf("raopen: adapter %d ctlr %d unit %d part %d\n", 
 	    adapt, ctlr, unit, part);
+	printf("raopen: csrbase %x nexaddr %x\n", csrbase, nexaddr);
 #endif
 	bzero(&ralabel, sizeof(struct disklabel));
 	bzero((void *)&uda, sizeof(struct uda));
@@ -118,10 +119,19 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		*ra_ip = 0; /* Start init */
 		bootrpb.csrphy = csrbase;
 	} else {
-		paddr_t kdaddr = (paddr_t)nexaddr;
+		paddr_t kdaddr;
 		volatile int *w;
 		volatile int i = 10000;
 
+		if (askname == 0) {
+			nexaddr = bootrpb.csrphy;
+			dunit = bootrpb.unit;
+		} else {
+			nexaddr = (bootrpb.csrphy & ~(NODESIZE - 1)) + KDB_IP;
+			bootrpb.csrphy = nexaddr;
+		}
+
+		kdaddr = nexaddr & ~(NODESIZE - 1);
 		ra_ip = (short *)(kdaddr + KDB_IP);
 		ra_sa = (short *)(kdaddr + KDB_SA);
 		ra_sw = (short *)(kdaddr + KDB_SW);

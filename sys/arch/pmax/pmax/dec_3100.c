@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.29 2000/04/11 12:05:35 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.29.2.1 2000/06/22 17:02:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -96,7 +96,7 @@ static void	dec_3100_bus_reset __P((void));
 
 static void	dec_3100_cons_init __P((void));
 static void	dec_3100_errintr __P((void));
-static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -173,7 +173,7 @@ dec_3100_cons_init()
 	}							\
     } while (0)
 
-static int
+static void
 dec_3100_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
@@ -206,7 +206,7 @@ dec_3100_intr(status, cause, pc, ipending)
 		dec_3100_errintr();
 		intrcnt[ERROR_INTR]++;
 	}
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

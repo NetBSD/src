@@ -1,4 +1,4 @@
-/* $NetBSD: spl.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: spl.h,v 1.1.2.1 2000/06/22 16:59:23 minoura Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -55,11 +55,9 @@
 #define IPL_HIGH	12
 #define NIPL		IPL_HIGH + 1
 
-#define spl0()		splx(IPL_NONE)
 #define splsoftnet()	raisespl(IPL_SOFTNET)
-#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
-#define spllowersoftclock() lowerspl(IPL_SOFTCLOCK)
 #define splsoft()	splsoftnet()
+#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
 #define splbio()	raisespl(IPL_BIO)
 #define splnet()	raisespl(IPL_NET)
 #define spltty()	raisespl(IPL_TTY)
@@ -67,25 +65,28 @@
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splclock()	raisespl(IPL_CLOCK)
 #define splstatclock()	raisespl(IPL_STATCLOCK)
-#define splhigh()	splx(IPL_HIGH)
+#define splhigh()	raisespl(IPL_HIGH)
+
+#define spl0()			lowerspl(IPL_NONE)
+#define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
+#define splx(s)			lowerspl(s)
 
 #define signotify(p)	setsoftast()
 
 #ifdef _KERNEL
 #ifndef ASSEMBLER
-extern int raisespl __P((int));
-extern int lowerspl __P((int));
-extern int splx __P((int));
+extern int raisespl(int);
+extern void lowerspl(int);
 
-void setsoftnet	__P((void));
-void setsoftast	__P((void));
-void setsoftclock __P((void));
-void setsoftintr __P((u_int intrmask));
+void setsoftnet(void);
+void setsoftast(void);
+void setsoftclock(void);
+void setsoftintr(u_int intrmask);
 
 extern int current_spl_level; /* XXX tautological name */
 
-void need_resched __P((void));
-void need_proftick __P((struct proc *));
+void need_resched(void);
+void need_proftick(struct proc *);
 
 #endif /* ASSEMBLER */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioa.h,v 1.6 2000/01/24 02:40:32 matt Exp $	*/
+/*	$NetBSD: ioa.h,v 1.6.2.1 2000/06/22 17:05:06 minoura Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -58,7 +58,7 @@
  *								*
  ****************************************************************/
 
-#include "opt_vax8600.h"
+#include "opt_cputype.h"
 #if VAX8600
 #define	MAXNIOA		4
 #define	NIOA8600	2

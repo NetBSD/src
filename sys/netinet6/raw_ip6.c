@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.22 2000/03/01 12:49:50 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.24 2000/02/28 15:44:12 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.22.2.1 2000/06/22 17:10:05 minoura Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.28 2000/05/28 23:25:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -629,6 +629,16 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
+
+		/*
+		 * we don't support mapped address here, it would confuse
+		 * users so reject it
+		 */
+		if (IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr)) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+
 		if ((ifnet.tqh_first == 0) ||
 		   (addr->sin6_family != AF_INET6) ||
 		   (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&

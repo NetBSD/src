@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 2000/03/31 14:51:49 soren Exp $	*/
+/*	$NetBSD: bus.c,v 1.2.2.1 2000/06/22 16:59:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ bus_space_map(t, bpa, size, flags, bshp)
 	bus_space_handle_t *bshp;
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
-
 
 	if (cacheable)
 		*bshp = MIPS_PHYS_TO_KSEG0(bpa);

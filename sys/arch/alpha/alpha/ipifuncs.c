@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.10 2000/05/23 05:12:54 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.10.2.1 2000/06/22 16:58:15 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2000/05/23 05:12:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.2.1 2000/06/22 16:58:15 minoura Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2000/05/23 05:12:54 thorpej Exp $"
 #include <machine/atomic.h>
 #include <machine/alpha_cpu.h>
 #include <machine/cpu.h>
+#include <machine/cpuvar.h>
 #include <machine/intr.h>
 #include <machine/rpb.h>
 
@@ -86,7 +87,7 @@ alpha_send_ipi(cpu_id, ipimask)
 
 #ifdef DIAGNOSTIC
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_dev == NULL)
+	    cpu_info[cpu_id].ci_softc == NULL)
 		panic("alpha_sched_ipi: bogus cpu_id");
 #endif
 
@@ -106,7 +107,7 @@ alpha_broadcast_ipi(ipimask)
 	u_long i;
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (cpu_info[i].ci_dev == NULL)
+		if (cpu_info[i].ci_softc == NULL)
 			continue;
 		alpha_send_ipi(i, ipimask);
 	}
@@ -121,7 +122,8 @@ alpha_ipi_halt()
 	/* Disable interrupts. */
 	(void) splhigh();
 
-	printf("%s: shutting down...\n", cpu_info[cpu_id].ci_dev->dv_xname);
+	printf("%s: shutting down...\n",
+	    cpu_info[cpu_id].ci_softc->sc_dev.dv_xname);
 	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
 
 	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
@@ -162,5 +164,5 @@ void
 alpha_ipi_ast()
 {
 
-	aston();
+	aston(curcpu());
 }

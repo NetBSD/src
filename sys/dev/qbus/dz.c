@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.22 2000/04/30 11:46:49 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.22.2.1 2000/06/22 17:07:49 minoura Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -58,9 +58,6 @@
 #endif
 
 #include <machine/bus.h>
-#include <machine/pte.h>
-#include <machine/trap.h>
-#include <machine/cpu.h>
 
 #include <dev/qbus/dzreg.h>
 #include <dev/qbus/dzvar.h>
@@ -113,10 +110,10 @@ static struct speedtab dzspeedtab[] =
   {      -1,	-1		}
 };
 
-static	void	dzstart(struct tty *);
-static	int	dzparam(struct tty *, struct termios *);
+static void	dzstart(struct tty *);
+static int	dzparam(struct tty *, struct termios *);
 static unsigned	dzmctl(struct dz_softc *, int, int, int);
-static	void	dzscan(void *);
+static void	dzscan(void *);
 cdev_decl(dz);
 
 /*
@@ -130,7 +127,7 @@ struct callout dzscan_ch;
 #define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
 
 void
-dzattach(struct dz_softc *sc)
+dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt)
 {
 	int n;
 
@@ -145,6 +142,11 @@ dzattach(struct dz_softc *sc)
 
 	for (n = 0; n < sc->sc_type; n++)
 		sc->sc_dz[n].dz_tty = ttymalloc();
+
+	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
+		sc->sc_dev.dv_xname, "rintr");
+	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
+		sc->sc_dev.dv_xname, "tintr");
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 

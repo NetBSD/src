@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.12 2000/05/24 20:27:52 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.12.2.1 2000/06/22 17:04:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -84,7 +84,7 @@ static void psycho_get_intmap __P((int, struct psycho_interrupt_map **, int *));
 static void psycho_get_intmapmask __P((int, struct psycho_interrupt_map_mask *));
 
 /* IOMMU support */
-static void psycho_iommu_init __P((struct psycho_softc *));
+static void psycho_iommu_init __P((struct psycho_softc *, int));
 
 /*
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
@@ -244,7 +244,7 @@ sabre_init(sc, pba)
 	struct psycho_pbm *pp;
 	bus_space_handle_t bh;
 	u_int64_t csr;
-	int node;
+	unsigned int node;
 	int sabre_br[2], simba_br[2];
 
 	/* who? said a voice, incredulous */
@@ -295,7 +295,7 @@ sabre_init(sc, pba)
 	for (node = firstchild(sc->sc_node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 		char *model, who;
-		struct psycho_registers *regs;
+		struct psycho_registers *regs = NULL;
 		int nregs, fn;
 
 		if (strcmp(name, ROM_PCI_NAME) != 0)
@@ -362,8 +362,32 @@ sabre_init(sc, pba)
 
 	printf("\n");
 
+
+	/* 
+	 * SABRE seems to be buggy.  It only appears to work with 128K IOTSB.
+	 * I have tried other sizes but they just don't seem to work.  Maybe
+	 * more testing is needed.
+	 *
+	 * The PROM reserves a certain amount of RAM for an IOTSB.  The
+	 * problem is that it's not necessarily the full 128K.  So we'll free
+	 * this space up and let iommu_init() allocate a full mapping.
+	 *
+	 * (Otherwise we would need to change the iommu code to handle a
+	 * preallocated TSB that may not cover the entire DVMA address
+	 * space...
+	 *
+	 * The information about this memory is shared between the
+	 * `virtual-dma' property, which describes the base and size of the
+	 * virtual region, and the IOMMU base address register which is the
+	 * only known pointer to the RAM.  To free up the memory you need to
+	 * read the base addres register and then calculate the size by taking
+	 * the virtual size and dividing it by 1K to get the size in bytes.
+	 * This range can then be freed up by calling uvm_page_physload().
+	 * 
+	 */
+
 	/* and finally start up the IOMMU ... */
-	psycho_iommu_init(sc);
+	psycho_iommu_init(sc, 7);
 
 	/*
 	 * get us a config space tag, and punch in the physical address
@@ -512,7 +536,13 @@ psycho_init(sc, pba)
 	 * macros to provide the proper ASI based on the bus tag.
 	 */
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO_A) {
-		psycho_iommu_init(sc);
+		/*
+		 * We should calculate a TSB size based on amount of RAM
+		 * and number of bus controllers.
+		 *
+		 * For the moment, 32KB should be more than enough.
+		 */
+		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map2(sc->sc_bustag,
@@ -628,19 +658,20 @@ psycho_get_intmapmask(node, immp)
  * initialise the IOMMU..
  */
 void
-psycho_iommu_init(sc)
+psycho_iommu_init(sc, tsbsize)
 	struct psycho_softc *sc;
+	int tsbsize;
 {
 	char *name;
 
 	/* punch in our copies */
 	sc->sc_is.is_bustag = sc->sc_bustag;
 	sc->sc_is.is_iommu = &sc->sc_regs->psy_iommu;
-	/* IIi does not have streaming buffers */
-	if (sc->sc_mode != PSYCHO_MODE_SABRE)
-		sc->sc_is.is_sb = &sc->sc_regs->psy_iommu_strbuf;
-	else
+
+	if (getproplen(sc->sc_node, "no-streaming-cache") < 0)
 		sc->sc_is.is_sb = 0;
+	else
+		sc->sc_is.is_sb = &sc->sc_regs->psy_iommu_strbuf;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -648,8 +679,7 @@ psycho_iommu_init(sc)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
-	/* XXX XXX XXX FIX ME tsbsize XXX XXX XXX */
-	iommu_init(name, &sc->sc_is, 0);
+	iommu_init(name, &sc->sc_is, tsbsize);
 }
 
 /*
@@ -1025,8 +1055,17 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamap_sync(t, &sc->sc_is, map, offset, len, ops);
-	bus_dmamap_sync(t->_parent, map, offset, len, ops);
+	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
+		/* Flush the CPU then the IOMMU */
+		bus_dmamap_sync(t->_parent, map, offset, len, ops);
+		iommu_dvmamap_sync(t, &sc->sc_is, map, offset, len, ops);
+	}
+	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
+		/* Flush the IOMMU then the CPU */
+		iommu_dvmamap_sync(t, &sc->sc_is, map, offset, len, ops);
+		bus_dmamap_sync(t->_parent, map, offset, len, ops);
+	}
+
 }
 
 int

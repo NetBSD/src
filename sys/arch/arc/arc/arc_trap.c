@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.12 2000/04/15 22:01:14 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.12.2.1 2000/06/22 16:59:04 minoura Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -133,7 +133,10 @@ set_intr(mask, int_hand, prio)
 		out32(R4030_SYS_EXT_IMASK,
 		    cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
 		break;
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		out32(RD94_SYS_EXT_IMASK,
 		    cpu_int_mask & (~MIPS_INT_MASK_3 >> 10));
 		break;

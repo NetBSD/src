@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.12 2000/03/30 12:45:37 augustss Exp $	*/
+/*	$NetBSD: dl.c,v 1.12.2.1 2000/06/22 17:07:49 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/scb.h>
 
 #include <dev/qbus/ubavar.h>
 
@@ -105,25 +104,27 @@
 
 struct dl_softc {
 	struct device	sc_dev;
+	struct evcnt	sc_rintrcnt;
+	struct evcnt	sc_tintrcnt;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct tty	*sc_tty;
 };
 
-static	int	dl_match __P((struct device *, struct cfdata *, void *));
-static	void	dl_attach __P((struct device *, struct device *, void *));
-static	void	dlrint __P((void *));
-static	void	dlxint __P((void *));
-static	void	dlstart __P((struct tty *));
-static	int	dlparam __P((struct tty *, struct termios *));
-static	void	dlbrk __P((struct dl_softc *, int));
-struct	tty *	dltty __P((dev_t));
-	int	dlopen __P((dev_t, int, int, struct proc *));
-	int	dlclose __P((dev_t, int, int, struct proc *));
-	int	dlread __P((dev_t, struct uio *, int));
-	int	dlwrite __P((dev_t, struct uio *, int));
-	int	dlioctl __P((dev_t, int, caddr_t, int, struct proc *));
-	void	dlstop __P((struct tty *, int));
+static	int	dl_match (struct device *, struct cfdata *, void *);
+static	void	dl_attach (struct device *, struct device *, void *);
+static	void	dlrint (void *);
+static	void	dlxint (void *);
+static	void	dlstart (struct tty *);
+static	int	dlparam (struct tty *, struct termios *);
+static	void	dlbrk (struct dl_softc *, int);
+struct	tty *	dltty (dev_t);
+	int	dlopen (dev_t, int, int, struct proc *);
+	int	dlclose (dev_t, int, int, struct proc *);
+	int	dlread (dev_t, struct uio *, int);
+	int	dlwrite (dev_t, struct uio *, int);
+	int	dlioctl (dev_t, unsigned long, caddr_t, int, struct proc *);
+	void	dlstop (struct tty *, int);
 
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
@@ -140,10 +141,7 @@ struct cfattach dl_ca = {
 /* then complete the housecleaning for full operation */
 
 static int
-dl_match (parent, cf, aux)
-	struct device * parent;
-	struct cfdata *cf;
-	void *aux;
+dl_match (struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 
@@ -199,9 +197,7 @@ dl_match (parent, cf, aux)
 }
 
 static void
-dl_attach (parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dl_attach (struct device *parent, struct device *self, void *aux)
 {
 	struct dl_softc *sc = (void *)self;
 	struct uba_attach_args *ua = aux;
@@ -220,8 +216,14 @@ dl_attach (parent, self, aux)
 	tty_attach(sc->sc_tty);
 
 	/* Now register the TX & RX interrupt handlers */
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dlxint, sc);
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dlrint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dlxint, sc, &sc->sc_tintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
+		dlrint, sc, &sc->sc_rintrcnt);
+	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "rintr");
+	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "tintr");
 
 	printf("\n");
 }
@@ -229,53 +231,53 @@ dl_attach (parent, self, aux)
 /* Receiver Interrupt Handler */
 
 static void
-dlrint(arg)
-	void *arg;
+dlrint(void *arg)
 {
-	struct	dl_softc *sc = arg;
-	struct tty *tp;
-	int cc;
-	unsigned c;
+	struct dl_softc *sc = arg;
 
 	if (DL_READ_WORD(DL_UBA_RCSR) & DL_RCSR_RX_DONE) {
+		struct tty *tp = sc->sc_tty;
+		unsigned c;
+		int cc;
+
 	        c = DL_READ_WORD(DL_UBA_RBUF);
 		cc = c & 0xFF;
-		tp = sc->sc_tty;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 			return;
 		}
 
-		if (c & DL_RBUF_OVERRUN_ERR)
+		if (c & DL_RBUF_OVERRUN_ERR) {
 			/*
 			 * XXX: This should really be logged somwhere
 			 * else where we can afford the time.
 			 */
 			log(LOG_WARNING, "%s: rx overrun\n",
 			    sc->sc_dev.dv_xname);
+		}
 		if (c & DL_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
 		if (c & DL_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
 		(*linesw[tp->t_line].l_rint)(cc, tp);
-	} else
+#if defined(DIAGNOSTIC)
+	} else {
 		log(LOG_WARNING, "%s: stray rx interrupt\n",
 		    sc->sc_dev.dv_xname);
-	return;
+#endif
+	}
 }
 
 /* Transmitter Interrupt Handler */
 
 static void
-dlxint(arg)
-	void *arg;
+dlxint(void *arg)
 {
 	struct dl_softc *sc = arg;
-	struct tty *tp;
-	
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
+
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 	if (tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
@@ -286,14 +288,11 @@ dlxint(arg)
 }
 
 int
-dlopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dlopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
-	int unit;
 	struct dl_softc *sc;
+	int unit;
 
 	unit = minor(dev);
 
@@ -328,18 +327,10 @@ dlopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dlclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dlclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct dl_softc *sc;
-	struct tty *tp;
-	int unit;
-
-	unit = minor(dev);
-	sc = dl_cd.cd_devs[unit];
-      	tp = sc->sc_tty;
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 
@@ -350,53 +341,30 @@ dlclose(dev, flag, mode, p)
 }
 
 int
-dlread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+dlread(dev_t dev, struct uio *uio, int flag)
 {
-	struct tty *tp;
-	struct dl_softc *sc;
-	int unit;
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
 
-	unit = minor(dev);
-	sc = dl_cd.cd_devs[unit];
-	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
 int
-dlwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+dlwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct tty *tp;
-	struct dl_softc *sc;
-	int unit;
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
 
-	unit = minor(dev);
-	sc = dl_cd.cd_devs[unit];
-	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
 int
-dlioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-        int cmd;
-        caddr_t data;
-        int flag;
-        struct proc *p;
+dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct dl_softc *sc;
-        struct tty *tp;
-        int unit;
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+        struct tty *tp = sc->sc_tty;
         int error;
 
-	unit = minor(dev);
-	sc = dl_cd.cd_devs[unit];
-	tp = sc->sc_tty;
 
         error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
         if (error >= 0)
@@ -427,46 +395,29 @@ dlioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-dltty(dev)
-	dev_t dev;
+dltty(dev_t dev)
 {
-	struct dl_softc* sc;
-	
-	sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+
 	return sc->sc_tty;
 }
 
 void
-dlstop(tp, flag)
-	struct tty *tp;
-	int flag;
+dlstop(struct tty *tp, int flag)
 {
-	struct dl_softc *sc;
-	int unit, s;
+	int s = spltty();
 
-	unit = minor(tp->t_dev);
-	sc = dl_cd.cd_devs[unit];
-
-	s = spltty();
-
-	if (tp->t_state & TS_BUSY)
-                if (!(tp->t_state & TS_TTSTOP))
-                        tp->t_state |= TS_FLUSH;
+	if ((tp->t_state & (TS_BUSY|TS_TTSTOP)) == TS_BUSY)
+		tp->t_state |= TS_FLUSH;
         splx(s);
 }
 
 static void
-dlstart(tp)
-	struct tty *tp;
+dlstart(struct tty *tp)
 {
-	struct dl_softc *sc;
-	int unit;
-	int s;
+	struct dl_softc *sc = dl_cd.cd_devs[minor(tp->t_dev)];
+	int s = spltty();
 
-	unit = minor(tp->t_dev);
-	sc = dl_cd.cd_devs[unit];
-
-	s = spltty();
         if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
                 goto out;
         if (tp->t_outq.c_cc <= tp->t_lowat) {
@@ -491,9 +442,7 @@ out:
 
 /*ARGSUSED*/
 static int
-dlparam(tp, t)
-        struct tty *tp;
-        struct termios *t;
+dlparam(struct tty *tp, struct termios *t)
 {
 	/*
 	 * All this kind of stuff (speed, character format, whatever)
@@ -504,9 +453,7 @@ dlparam(tp, t)
 }
 
 static void
-dlbrk(sc, state)
-	struct dl_softc *sc;
-	int state;
+dlbrk(struct dl_softc *sc, int state)
 {
 	int s = spltty();
 

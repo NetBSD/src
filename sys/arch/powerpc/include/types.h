@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 1998/08/13 02:10:39 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.8.20.1 2000/06/22 17:02:41 minoura Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -70,5 +70,7 @@ typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
 typedef	int32_t			register_t;
+
+#define __HAVE_CPU_COUNTER
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25 1999/08/28 09:19:04 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.25.10.1 2000/06/22 17:01:58 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -145,13 +145,6 @@ int esp_dma_nest = 0;
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_intio, espattach_intio
-};
-
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -397,17 +390,15 @@ espattach_intio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), 0);
+	isrlink_autovec(ncr53c9x_intr, sc, NEXT_I_IPL(NEXT_I_SCSI), 0);
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

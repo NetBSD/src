@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/06/13 17:21:18 kim Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2000/06/22 17:01:08 minoura Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -22,6 +22,7 @@ CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_AUTO -DDIRECT_SERIAL
 #CPPFLAGS+= -DDIRECT_SERIAL -DCOMCONS_KEYPRESS -DCONSPEED=57600
 
 CPPFLAGS+= -DPASS_BIOSGEOM
+CPPFLAGS+= -DPASS_MEMMAP
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.2 2000/03/15 02:08:29 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.2.2.1 2000/06/22 17:06:34 minoura Exp $	*/
 
 /*       
  * Product specific probe and attach routines for: 
@@ -161,7 +161,7 @@ check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)
 
 	if (!have_seeprom) {
 		if (bootverbose)
-			printf("%s: No SEEPROM available.\n", ahc_name(ahc));
+			printf("%s: No SEEPROM available\n", ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
 	} else {
 		/*
@@ -585,13 +585,13 @@ acquire_seeprom(struct ahc_softc *ahc, struct seeprom_descriptor *sd)
 
 	/*
 	 * Request access of the memory port.  When access is
-	 * granted, SEERDY will go high.  We use a 1 second
-	 * timeout which should be near 1 second more than
+	 * granted, SEERDY will go high.  We use a 100 msec
+	 * timeout which should be near 100 msecs more than
 	 * is needed.  Reason: after the chip reset, there
 	 * should be no contention.
 	 */
 	SEEPROM_OUTB(sd, sd->sd_MS);
-	wait = 1000;  /* 1 second timeout in msec */
+	wait = 100;  /* 100 msec timeout */
 	while (--wait && ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0)) {
 		DELAY(1000);  /* delay 1 msec */
 	}

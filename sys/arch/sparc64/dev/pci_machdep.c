@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2000/05/24 20:27:52 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7.2.1 2000/06/22 17:04:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,9 +31,6 @@
 /*
  * functions expected by the MI PCI code.
  */
-
-#undef DEBUG
-#define DEBUG
 
 #ifdef DEBUG
 #define SPDB_CONF	0x01
@@ -205,11 +202,15 @@ pci_attach_hook(parent, self, pba)
 			intr = (intr & ~PCI_INTERRUPT_LINE_MASK) |
 			       (pp->pp_intmap[i].child_intr & PCI_INTERRUPT_LINE_MASK);
 			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; gonna write %x to intreg", intr));
-
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; reread %x from intreg", intr));
 			break;
 		}
+
+		/* enable mem & dma if not already */
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE);
+
 
 		/* clean up */
 		if (pr)
@@ -306,21 +307,10 @@ pci_conf_read(pc, tag, reg)
 	if (confaddr_ok(sc, tag) == 0) {
 		val = (pcireg_t)~0;
 	} else {
-#if 0
-		u_int32_t data;
-
-		data = probeget(sc->sc_configaddr + tag + reg,
-				bus_type_asi[sc->sc_configtag->type], 4);
-		if (data == -1)
-			val = (pcireg_t)~0;
-		else
-			val = (pcireg_t)data;
-#else
 		membar_sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
 		    tag + reg);
 		membar_sync();
-#endif
 	}
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -345,15 +335,9 @@ pci_conf_write(pc, tag, reg, data)
 	if (confaddr_ok(sc, tag) == 0)
 		panic("pci_conf_write: bad addr");
 		
-#if 0
-	probeset(sc->sc_configaddr + tag + reg,
-		 bus_type_asi[sc->sc_configtag->type],
-		 4, data);
-#else
 	membar_sync();
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
 	membar_sync();
-#endif
 }
 
 /*
@@ -374,7 +358,8 @@ pci_intr_map(pc, tag, pin, line, ihp)
 	 * UltraSPARC IIi PCI does not use PCI_INTERRUPT_REG, but we have
 	 * used this space for our own purposes...
 	 */
-	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", (long)tag, pin, line));
+	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", 
+		(long)tag, pin, line));
 #if 1
 	if (line == 255) {
 		*ihp = -1;
@@ -408,6 +393,16 @@ pci_intr_string(pc, ih)
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.25 1999/09/30 22:59:52 thorpej Exp $	*/
+/*	$NetBSD: flsc.c,v 1.25.10.1 2000/06/22 16:58:57 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -76,13 +76,6 @@ int	flscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach flsc_ca = {
 	sizeof(struct flsc_softc), flscmatch, flscattach
-};
-
-struct scsipi_device flsc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -213,7 +206,7 @@ flscattach(parent, self, aux)
 	/*
 	 * Configure interrupts.
 	 */
-	fsc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	fsc->sc_isr.isr_intr = ncr53c9x_intr;
 	fsc->sc_isr.isr_arg  = sc;
 	fsc->sc_isr.isr_ipl  = 2;
 	add_isr(&fsc->sc_isr);
@@ -223,9 +216,7 @@ flscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &flsc_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 1999/05/28 07:23:38 nisimura Exp $	*/
+/*	$NetBSD: pte.h,v 1.8.10.1 2000/06/22 17:01:31 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS1_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS1_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips1_pfn_to_vad((vaddr_t)(x))
-#define	vad_to_pfn(x)		mips1_vad_to_pfn((x))
+#define	mips_tlbpfn_to_paddr(x)		mips1_tlbpfn_to_paddr((vaddr_t)(x))
+#define	mips_paddr_to_tlbpfn(x)		mips1_paddr_to_tlbpfn((x))
 #endif /* mips1 */
 
 
@@ -122,8 +122,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS3_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS3_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips3_pfn_to_vad((vaddr_t)(x))
-#define	vad_to_pfn(x)		mips3_vad_to_pfn((x))
+#define	mips_tlbpfn_to_paddr(x)		mips3_tlbpfn_to_paddr((vaddr_t)(x))
+#define	mips_paddr_to_tlbpfn(x)		mips3_paddr_to_tlbpfn((x))
 #endif /* mips3 */
 
 /* MIPS1 and MIPS3 */
@@ -140,11 +140,11 @@ static __inline unsigned int
     mips_pg_ropage_bit(void),
     mips_pg_cwpage_bit(void),
     mips_pg_rwpage_bit(void),
-    mips_pg_global_bit(void),
-    PTE_TO_PADDR(unsigned int entry);
+    mips_pg_global_bit(void);
+static __inline paddr_t PTE_TO_PADDR(unsigned int pte);
 
-static __inline vaddr_t pfn_to_vad(unsigned int x);
-static __inline int vad_to_pfn(vaddr_t x);
+static __inline paddr_t mips_tlbpfn_to_paddr(unsigned int pfn);
+static __inline unsigned int mips_paddr_to_tlbpfn(paddr_t pa);
 
 
 static __inline int
@@ -230,7 +230,7 @@ mips_pg_wired_bit()
 	return (MIPS1_PG_WIRED);
 }
 
-static __inline unsigned int
+static __inline paddr_t
 PTE_TO_PADDR(pte)
 	unsigned int pte;
 {
@@ -249,22 +249,22 @@ PAGE_IS_RDONLY(pte, va)
 	return (MIPS1_PAGE_IS_RDONLY(pte, va));
 }
 
-static __inline vaddr_t
-pfn_to_vad(x)
-	unsigned int x;
+static __inline paddr_t
+mips_tlbpfn_to_paddr(pfn)
+	unsigned int pfn;
 {
 	if (CPUISMIPS3)
-		return (mips3_pfn_to_vad(x));
-	return (mips1_pfn_to_vad(x));
+		return (mips3_tlbpfn_to_paddr(pfn));
+	return (mips1_tlbpfn_to_paddr(pfn));
 }
 
-static __inline int
-vad_to_pfn(x)
-	vaddr_t x;
+static __inline unsigned int
+mips_paddr_to_tlbpfn(pa)
+	paddr_t pa;
 {
 	if (CPUISMIPS3)
-		return (mips3_vad_to_pfn(x));
-	return (mips1_vad_to_pfn(x));
+		return (mips3_paddr_to_tlbpfn(pa));
+	return (mips1_paddr_to_tlbpfn(pa));
 }
 #endif
 

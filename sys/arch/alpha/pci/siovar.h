@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.8 1998/05/23 21:36:33 ross Exp $ */
+/* $NetBSD: siovar.h,v 1.8.22.1 2000/06/22 16:58:44 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,11 +31,8 @@ void	sio_intr_setup __P((pci_chipset_tag_t, bus_space_tag_t));
 void	sio_iointr __P((void *framep, unsigned long vec));
 
 const char *sio_intr_string __P((void *, int));
+const struct evcnt *sio_intr_evcnt __P((void *, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *));
 void	sio_intr_disestablish __P((void *, void *));
 int	sio_intr_alloc __P((void *, int, int, int *));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt sio_intr_evcnt;
-#endif

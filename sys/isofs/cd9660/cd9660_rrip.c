@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.20 2000/03/30 12:13:31 augustss Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.20.2.1 2000/06/22 17:08:58 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -300,7 +300,7 @@ cd9660_rrip_defname(v, ana)
 
 	isofntrans(isodir->name, isonum_711(isodir->name_len),
 		   ana->outbuf, ana->outlen,
-		   1, isonum_711(isodir->flags) & 4,
+		   1, 0, isonum_711(isodir->flags) & 4,
 		   ana->imp->im_joliet_level);
 	switch (ana->outbuf[0]) {
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.11 2000/04/27 15:26:50 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.11.2.1 2000/06/22 17:08:43 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -52,4 +52,4 @@ struct usbd_quirks {
 
 extern struct usbd_quirks usbd_no_quirk;
 
-struct usbd_quirks *usbd_find_quirk __P((usb_device_descriptor_t *));
+struct usbd_quirks *usbd_find_quirk(usb_device_descriptor_t *);

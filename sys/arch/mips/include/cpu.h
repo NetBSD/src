@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2000/05/26 21:19:55 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40.2.1 2000/06/22 17:01:27 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -184,10 +184,10 @@ int	kdbpeek __P((vaddr_t));
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
 void	mips_init_msgbuf __P((void));
+void	savefpregs __P((struct proc *));
+void	loadfpregs __P((struct proc *));
 
 /* locore.S */
-void	savefpregs __P((struct proc *));
-void	switchfpregs __P((struct proc *, struct proc *));
 int	badaddr __P((void *, size_t));
 
 /* mips_machdep.c */

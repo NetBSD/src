@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.21 2000/05/04 08:19:01 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.21.2.1 2000/06/22 17:00:14 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -209,7 +209,7 @@ static char z50_keytrans[] = {
 /*58*/ 221,  42,  29,  29,  56,  56,  54, IGN,	/* menu Ls Lc Rc La Ra Rs - */
 };
 
-/* Sharp Tripad PV6000 */
+/* Sharp Tripad PV6000 and VADEM CLIO */
 static char tripad_keytrans[] = {
 /*00*/  42,  15,  41,  16,   1,   2, 104, 221,	/* lsh tab ` q esc 1 WIN - */
 /*08*/  29,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
@@ -347,11 +347,15 @@ vrkiu_initkeymap(void)
 		char *keytrans;
 		kbd_t layout;
 	} table[] = {
-		{ &platid_mask_MACH_NEC_MCR_520A,
-		  mobilepro_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCR_500A,
 		  mobilepro750c_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_520A,
+		  mobilepro_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_530A,
+		  mobilepro_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCR_700A,
+		  mobilepro_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_730A,
 		  mobilepro_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCR_MPRO700,
 		  mobilepro_keytrans, KB_US },
@@ -360,6 +364,8 @@ vrkiu_initkeymap(void)
 		{ &platid_mask_MACH_IBM_WORKPAD_Z50,
 		  z50_keytrans, KB_US },
 		{ &platid_mask_MACH_SHARP_TRIPAD,
+		  tripad_keytrans, KB_US },
+		{ &platid_mask_MACH_VADEM_CLIO_C,
 		  tripad_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCCS,
 		  mccs_keytrans, KB_JP },

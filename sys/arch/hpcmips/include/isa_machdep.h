@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2000/03/05 04:34:06 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.2.1 2000/06/22 17:00:06 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -41,10 +41,11 @@ typedef struct hpcmips_isa_chipset *isa_chipset_tag_t;
 /*
  * Functions provided to machine-independent ISA code.
  */
-void isa_attach_hook __P((struct device*, struct device*, struct isabus_attach_args*));
-int isa_intr_alloc __P((isa_chipset_tag_t, int, int, int*));
-void *isa_intr_establish __P((isa_chipset_tag_t, int, int, int, int (*)(void *), void*));
-void isa_intr_disestablish __P((isa_chipset_tag_t, void*));
+void isa_attach_hook(struct device*, struct device*, struct isabus_attach_args*);
+int isa_intr_alloc(isa_chipset_tag_t, int, int, int*);
+const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
+void *isa_intr_establish(isa_chipset_tag_t, int, int, int, int (*)(void *), void*);
+void isa_intr_disestablish(isa_chipset_tag_t, void*);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))

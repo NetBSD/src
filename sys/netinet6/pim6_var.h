@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.7 2000/01/06 15:46:11 itojun Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.7.2.1 2000/06/22 17:10:05 minoura Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -60,10 +60,10 @@ int pim6_input __P((struct mbuf **, int*, int));
 /*
  * Names for PIM sysctl objects
  */
-#define PIMCTL_STATS		1	/* statistics (read-only) */
-#define PIMCTL_MAXID		2
+#define PIM6CTL_STATS		1	/* statistics (read-only) */
+#define PIM6CTL_MAXID		2
 
-#define PIMCTL_NAMES { \
+#define PIM6CTL_NAMES { \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.21 2000/03/26 10:32:52 nisimura Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.21.2.1 2000/06/22 16:58:47 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,18 +29,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.21 2000/03/26 10:32:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.21.2.1 2000/06/22 16:58:47 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -108,6 +106,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 struct tcintr {
 	int	(*tci_func) __P((void *));
 	void	*tci_arg;
+	struct evcnt tci_evcnt;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
 u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
@@ -115,6 +114,7 @@ u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
 void
 tc_3000_500_intr_setup()
 {
+	char *cp;
 	u_long i;
 
 	/*
@@ -133,7 +133,28 @@ tc_3000_500_intr_setup()
         for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
+
+		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		if (cp == NULL)
+			panic("tc_3000_500_intr_setup");
+		sprintf(cp, "slot %lu", i);
+		evcnt_attach_dynamic(&tc_3000_500_intr[i].tci_evcnt,
+		    EVCNT_TYPE_INTR, NULL, "tc", cp);
         }
+}
+
+const struct evcnt *
+tc_3000_500_intr_evcnt(tcadev, cookie)
+	struct device *tcadev;
+	void *cookie;
+{
+	u_long dev = (u_long)cookie;
+
+#ifdef DIAGNOSTIC
+	/* XXX bounds-check cookie. */
+#endif
+
+	return (&tc_3000_500_intr[dev].tci_evcnt);
 }
 
 void
@@ -220,12 +241,7 @@ tc_3000_500_iointr(framep, vec)
 
 		ifound = 0;
 
-#ifdef EVCNT_COUNTERS
-	/* No interrupt counting via evcnt counters */ 
-	XXX BREAK HERE XXX
-#else /* !EVCNT_COUNTERS */
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN15 + slot]++
-#endif /* EVCNT_COUNTERS */ 
+#define	INCRINTRCNT(slot)	tc_3000_500_intr[slot].tci_evcnt.ev_count++
 
 #define	CHECKINTR(slot)							\
 		if (ir & tc_3000_500_intrbits[slot]) {			\

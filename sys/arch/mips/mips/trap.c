@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.132.2.1 2000/06/22 17:01:37 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132.2.1 2000/06/22 17:01:37 minoura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $"
 #include "opt_natm.h"
 #include "opt_ktrace.h"
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -391,7 +392,6 @@ trap(status, cause, vaddr, opc, frame)
 	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
-	extern struct proc *fpcurproc;
 	extern void fswintrberr __P((void));
 
 	uvmexp.traps++;
@@ -430,7 +430,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (KERNLAND(vaddr)) {
 			pt_entry_t *pte;
 			unsigned entry;
-			vaddr_t pa;
+			paddr_t pa;
 
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
@@ -446,9 +446,10 @@ trap(status, cause, vaddr, opc, frame)
 			pte->pt_entry = entry;
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
-			pa = pfn_to_vad(entry);
+			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
-				printf("ktlbmod: va %x pa %lx\n", vaddr, pa);
+				printf("ktlbmod: va %x pa %llx\n",
+				    vaddr, (long long)pa);
 				panic("ktlbmod: unmanaged page");
 			}
 			pmap_set_modified(pa);
@@ -459,7 +460,7 @@ trap(status, cause, vaddr, opc, frame)
 	    {
 		pt_entry_t *pte;
 		unsigned entry;
-		vaddr_t pa;
+		paddr_t pa;
 		pmap_t pmap;
 
 		pmap  = p->p_vmspace->vm_map.pmap;
@@ -480,9 +481,10 @@ trap(status, cause, vaddr, opc, frame)
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
-		pa = pfn_to_vad(entry);
+		pa = mips_tlbpfn_to_paddr(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
-			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
+			printf("utlbmod: va %x pa %llx\n",
+			    vaddr, (long long)pa);
 			panic("utlbmod: unmanaged page");
 		}
 		pmap_set_modified(pa);
@@ -668,16 +670,19 @@ trap(status, cause, vaddr, opc, frame)
 			break; /* SIGNAL */
 		}
 #ifndef SOFTFLOAT
-		switchfpregs(fpcurproc, p);
-#endif
+		{
+		struct frame *f;
+
+		f = (struct frame *)p->p_md.md_regs;
+		savefpregs(fpcurproc);  		/* yield FPA */
+		loadfpregs(p);          		/* load FPA */
 		fpcurproc = p;
-#ifdef SOFTFLOAT
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
-#else
-		((struct frame *)p->p_md.md_regs)->f_regs[SR]
-			|= MIPS_SR_COP_1_BIT;
-#endif
 		p->p_md.md_flags |= MDP_FPUSED;
+		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
+		}
+#else
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+#endif
 		userret(p, opc, sticks);
 		return; /* GEN */
 	case T_FPE+T_USER:

@@ -1,4 +1,5 @@
-/*	$NetBSD: btl.c,v 1.4 2000/03/23 06:34:25 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.4.2.1 2000/06/22 16:59:13 minoura Exp $	*/
+/*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
 #define integrate

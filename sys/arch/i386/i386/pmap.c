@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2000/05/19 04:34:40 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90.2.1 2000/06/22 17:00:27 minoura Exp $	*/
 
 /*
  *
@@ -421,11 +421,13 @@ static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
 static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
+#if 0
 static boolean_t	 pmap_transfer_ptes __P((struct pmap *,
 					 struct pmap_transfer_location *,
 					 struct pmap *,
 					 struct pmap_transfer_location *,
 					 int, boolean_t));
+#endif
 static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *,
 						struct pv_entry *));
@@ -2945,6 +2947,7 @@ pmap_collect(pmap)
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 }
 
+#if 0
 /*
  * pmap_transfer: transfer (move or copy) mapping from one pmap
  * 	to another.
@@ -3409,6 +3412,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 /*
  * defined as macro call to pmap_transfer in pmap.h
  */
+#endif
 
 /*
  * pmap_enter: enter a mapping into a pmap
@@ -3647,6 +3651,7 @@ pmap_growkernel(maxkvaddr)
 
 			if (uvm_page_physget(&ptaddr) == FALSE)
 				panic("pmap_growkernel: out of memory");
+			pmap_zero_page(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
 				ptaddr | PG_RW | PG_V;

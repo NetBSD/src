@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2000/05/19 18:54:32 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24.2.1 2000/06/22 17:05:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -60,10 +60,7 @@
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
-	struct	buf *bp;
-	struct	disklabel *lp;
-	int	wlabel;
+bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[2].p_offset;
@@ -110,11 +107,8 @@ bad:
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -157,10 +151,8 @@ readdisklabel(dev, strat, lp, osdep)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_long openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -199,11 +191,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -233,8 +222,7 @@ done:
  * disk type encoding scheme for most of its disks.
  */   
 void  
-disk_printtype(unit, type)
-	int unit, type;
+disk_printtype(int unit, int type)
 {
 	printf(" drive %d: %c%c", unit, (int)MSCP_MID_CHAR(2, type),
 	    (int)MSCP_MID_CHAR(1, type));
@@ -249,16 +237,13 @@ disk_printtype(unit, type)
  * also map it in.
  */
 void
-disk_reallymapin(bp, map, reg, flag)
-	struct buf *bp;
-	struct pte *map;
-	int reg, flag;
+disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 {
 	struct proc *p;
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	struct pcb *pcb;
-	int pfnum, npf, o, i;
+	int pfnum, npf, o;
 	caddr_t addr;
 
 	o = (int)bp->b_data & VAX_PGOFSET;
@@ -279,21 +264,6 @@ disk_reallymapin(bp, map, reg, flag)
 		pte = uvtopte(addr, pcb);
 	}
 
-	/*
-	 * When we are doing DMA to user space, be sure that all pages
-	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
-	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-	 */
-	for (i = 0; i < (npf - 1); i++) {
-		if ((pte + i)->pg_pfn == 0) {
-			int rv;
-			rv = uvm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG, 0,
-			    VM_PROT_READ|VM_PROT_WRITE);
-			if (rv)
-				panic("DMA to nonexistent page, %d", rv);
-		}
-	}
 	if (map) {
 		io = &map[reg];
 		while (--npf > 0) {

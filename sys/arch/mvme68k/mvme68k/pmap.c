@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2000/03/26 20:42:32 kleink Exp $        */
+/*	$NetBSD: pmap.c,v 1.41.2.1 2000/06/22 17:01:49 minoura Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -889,7 +889,7 @@ pmap_remove(pmap, sva, eva)
 
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
-		nssva = m68k_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -1016,7 +1016,7 @@ pmap_protect(pmap, sva, eva, prot)
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
-		nssva = m68k_trunc_seg(sva) + HP_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*

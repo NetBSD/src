@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1999/09/17 20:04:45 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.10.1 2000/06/22 17:02:07 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 #include <machine/powerpc.h>
 
 void configure __P((void));
-void findroot __P((void));
+static void findroot __P((void));
 
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */

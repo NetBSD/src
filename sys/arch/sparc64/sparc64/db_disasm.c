@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2000/05/25 19:57:35 jhawk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.6.2.1 2000/06/22 17:04:31 minoura Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -40,7 +40,9 @@
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
 
+#ifndef V9
 #define V9
+#endif
 /*
  * All Sparc instructions are 32-bits, with the one exception being
  * the set instruction which is actually a macro which expands into

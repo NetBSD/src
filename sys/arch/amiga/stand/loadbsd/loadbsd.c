@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.23 1997/11/01 06:49:18 lukem Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.23.22.1 2000/06/22 16:58:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -421,7 +421,7 @@ main(argc, argv)
 			err(20, "Insufficient Chip Memory for kernel");
 		}
 		Z_flag = 1;
-		printf("*** Loading from %08lx to Chipmem ***\n");
+		printf("*** Loading from %08lx to Chipmem ***\n", kp);
 	}
 
 	/*
@@ -604,7 +604,7 @@ get_cpuid()
 
 	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if (cpuid & 0xffff0000) {
-		if ((cpuid & 0xff000000) == 0x7D)
+		if ((cpuid >> 24) == 0x7D)
 			return;
 
 		switch (cpuid >> 16) {

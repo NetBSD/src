@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.41 2000/05/23 11:39:58 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.41.2.1 2000/06/22 17:04:09 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -83,6 +83,8 @@ struct extent *iommu_dvmamap;
 int	iommu_print __P((void *, const char *));
 void	iommu_attach __P((struct device *, struct device *, void *));
 int	iommu_match __P((struct device *, struct cfdata *, void *));
+
+static void iommu_copy_prom_entries __P((struct iommu_softc *));
 
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
@@ -169,15 +171,15 @@ iommu_attach(parent, self, aux)
 #if defined(SUN4M)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	int node;
 	bus_space_handle_t bh;
-	u_int pbase, pa;
-	int i, mmupcrsave, s;
-	iopte_t *tpte_p;
-	extern u_int *kernel_iopte_table;
-	extern u_int kernel_iopte_table_pa;
+	int node;
+	int i, s;
+	u_int iopte_table_pa;
+	struct pglist mlist;
+	u_int size;
+	vm_page_t m;
+	vaddr_t va;
 
-/*XXX-GCC!*/mmupcrsave=0;
 	iommu_sc = sc;
 	/*
 	 * XXX there is only one iommu, for now -- do not know how to
@@ -189,14 +191,10 @@ iommu_attach(parent, self, aux)
 	}
 	node = ma->ma_node;
 
-#if 0
-	if (ra->ra_vaddr)
-		sc->sc_reg = (struct iommureg *)ca->ca_ra.ra_vaddr;
-#else
 	/*
 	 * Map registers into our space. The PROM may have done this
 	 * already, but I feel better if we have our own copy. Plus, the
-	 * prom doesn't map the entire register set
+	 * prom doesn't map the entire register set.
 	 *
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
@@ -213,7 +211,6 @@ iommu_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_reg = (struct iommureg *)bh;
-#endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
@@ -221,59 +218,44 @@ iommu_attach(parent, self, aux)
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = getpropint(node, "page-size", NBPG),
-	sc->sc_range = (1 << 24) <<
-	    ((sc->sc_reg->io_cr & IOMMU_CTL_RANGE) >> IOMMU_CTL_RANGESHFT);
-#if 0
-	sc->sc_dvmabase = (0 - sc->sc_range);
-#endif
-	pbase = (sc->sc_reg->io_bar & IOMMU_BAR_IBA) <<
-			(14 - IOMMU_BAR_IBASHFT);
 
 	/*
-	 * Now we build our own copy of the IOMMU page tables. We need to
-	 * do this since we're going to change the range to give us 64M of
-	 * mappings, and thus we can move DVMA space down to 0xfd000000 to
-	 * give us lots of space and to avoid bumping into the PROM, etc.
-	 *
-	 * XXX Note that this is rather messy.
+	 * Allocate memory for I/O pagetables.
+	 * This takes 64K of contiguous physical memory to map 64M of
+	 * DVMA space (starting at IOMMU_DVMA_BASE).
+	 * The table must be aligned on a (-IOMMU_DVMA_BASE/pagesize)
+	 * boundary (i.e. 64K for 64M of DVMA space).
 	 */
-	sc->sc_ptes = (iopte_t *) kernel_iopte_table;
+
+	size = ((0 - IOMMU_DVMA_BASE) / sc->sc_pagesize) * sizeof(iopte_t);
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
+			    size, 0, &mlist, 1, 0) != 0)
+		panic("iommu_attach: no memory");
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("iommu_attach: no memory");
+
+	sc->sc_ptes = (iopte_t *)va;
+
+	m = TAILQ_FIRST(&mlist);
+	iopte_table_pa = VM_PAGE_TO_PHYS(m);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		va += NBPG;
+	}
 
 	/*
-	 * Now discache the page tables so that the IOMMU sees our
-	 * changes.
+	 * Copy entries from current IOMMU table.
+	 * XXX - Why do we need to do this?
 	 */
-	kvm_uncache((caddr_t)sc->sc_ptes,
-	    (((0 - IOMMU_DVMA_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
-
-	/*
-	 * Ok. We've got to read in the original table using MMU bypass,
-	 * and copy all of its entries to the appropriate place in our
-	 * new table, even if the sizes are different.
-	 * This is pretty easy since we know DVMA ends at 0xffffffff.
-	 *
-	 * XXX: PGOFSET, NBPG assume same page size as SRMMU
-	 */
-	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
-		/* set MMU AC bit */
-		sta(SRMMU_PCR, ASI_SRMMU,
-		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
-	}
-
-	for (tpte_p = &sc->sc_ptes[((0 - IOMMU_DVMA_BASE)/NBPG) - 1],
-	     pa = (u_int)pbase - sizeof(iopte_t) +
-		   ((u_int)sc->sc_range/NBPG)*sizeof(iopte_t);
-	     tpte_p >= &sc->sc_ptes[0] && pa >= (u_int)pbase;
-	     tpte_p--, pa -= sizeof(iopte_t)) {
-
-		IOMMU_FLUSHPAGE(sc,
-			     (tpte_p - &sc->sc_ptes[0])*NBPG + IOMMU_DVMA_BASE);
-		*tpte_p = lda(pa, ASI_BYPASS);
-	}
-	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
-		/* restore mmu after bug-avoidance */
-		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
-	}
+	iommu_copy_prom_entries(sc);
 
 	/*
 	 * Now we can install our new pagetable into the IOMMU
@@ -284,14 +266,15 @@ iommu_attach(parent, self, aux)
 	/* calculate log2(sc->sc_range/16MB) */
 	i = ffs(sc->sc_range/(1 << 24)) - 1;
 	if ((1 << i) != (sc->sc_range/(1 << 24)))
-		panic("bad iommu range: %d\n",i);
+		panic("iommu: bad range: %d\n", i);
 
 	s = splhigh();
 	IOMMU_FLUSHALL(sc);
 
+	/* Load range and physical address of PTEs */
 	sc->sc_reg->io_cr = (sc->sc_reg->io_cr & ~IOMMU_CTL_RANGE) |
 			  (i << IOMMU_CTL_RANGESHFT) | IOMMU_CTL_ME;
-	sc->sc_reg->io_bar = (kernel_iopte_table_pa >> 4) & IOMMU_BAR_IBA;
+	sc->sc_reg->io_bar = (iopte_table_pa >> 4) & IOMMU_BAR_IBA;
 
 	IOMMU_FLUSHALL(sc);
 	splx(s);
@@ -334,6 +317,63 @@ iommu_attach(parent, self, aux)
 #endif
 }
 
+static void
+iommu_copy_prom_entries(sc)
+	struct iommu_softc *sc;
+{
+	u_int pbase, pa;
+	u_int range;
+	iopte_t *tpte_p;
+	u_int pagesz = sc->sc_pagesize;
+	int use_ac = (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc);
+	u_int mmupcr_save;
+
+	/*
+	 * We read in the original table using MMU bypass and copy all
+	 * of its entries to the appropriate place in our new table,
+	 * even if the sizes are different.
+	 * This is pretty easy since we know DVMA ends at 0xffffffff.
+	 */
+
+	range = (1 << 24) <<
+	    ((sc->sc_reg->io_cr & IOMMU_CTL_RANGE) >> IOMMU_CTL_RANGESHFT);
+
+	pbase = (sc->sc_reg->io_bar & IOMMU_BAR_IBA) <<
+			(14 - IOMMU_BAR_IBASHFT);
+
+	if (use_ac) {
+		/*
+		 * Set MMU AC bit so we'll still read from the cache
+		 * in by-pass mode.
+		 */
+		mmupcr_save = lda(SRMMU_PCR, ASI_SRMMU);
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save | VIKING_PCR_AC);
+	} else
+		mmupcr_save = 0; /* XXX - avoid GCC `unintialized' warning */
+
+	/* Flush entire IOMMU TLB before messing with the in-memory tables */
+	IOMMU_FLUSHALL(sc);
+
+	/*
+	 * tpte_p = top of our PTE table
+	 * pa     = top of current PTE table
+	 * Then work downwards and copy entries until we hit the bottom
+	 * of either table.
+	 */
+	for (tpte_p = &sc->sc_ptes[((0 - IOMMU_DVMA_BASE)/pagesz) - 1],
+	     pa = (u_int)pbase + (range/pagesz - 1)*sizeof(iopte_t);
+	     tpte_p >= &sc->sc_ptes[0] && pa >= (u_int)pbase;
+	     tpte_p--, pa -= sizeof(iopte_t)) {
+
+		*tpte_p = lda(pa, ASI_BYPASS);
+	}
+
+	if (use_ac) {
+		/* restore mmu after bug-avoidance */
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save);
+	}
+}
+
 void
 iommu_enter(dva, pa)
 	bus_addr_t dva;
@@ -360,8 +400,8 @@ iommu_enter(dva, pa)
  * iommu_clear: clears mappings created by iommu_enter
  */
 void
-iommu_remove(va, len)
-	bus_addr_t va;
+iommu_remove(dva, len)
+	bus_addr_t dva;
 	bus_size_t len;
 {
 	struct iommu_softc *sc = iommu_sc;
@@ -369,22 +409,22 @@ iommu_remove(va, len)
 	bus_addr_t base = sc->sc_dvmabase;
 
 #ifdef DEBUG
-	if (va < base)
-		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
+	if (dva < base)
+		panic("iommu_remove: va 0x%lx not in DVMA space", (long)dva);
 #endif
 
 	while ((long)len > 0) {
 #ifdef notyet
 #ifdef DEBUG
-		if ((sc->sc_ptes[atop(va - base)] & IOPTE_V) == 0)
-			panic("iommu_clear: clearing invalid pte at va 0x%lx",
-			      (long)va);
+		if ((sc->sc_ptes[atop(dva - base)] & IOPTE_V) == 0)
+			panic("iommu_remove: clearing invalid pte at dva 0x%lx",
+			      (long)dva);
 #endif
 #endif
-		sc->sc_ptes[atop(va - base)] = 0;
-		IOMMU_FLUSHPAGE(sc, va);
+		sc->sc_ptes[atop(dva - base)] = 0;
+		IOMMU_FLUSHPAGE(sc, dva);
 		len -= pagesz;
-		va += pagesz;
+		dva += pagesz;
 	}
 }
 

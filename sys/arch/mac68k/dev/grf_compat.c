@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.2 2000/02/14 07:01:46 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.2.2.1 2000/06/22 17:01:13 minoura Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -238,7 +238,9 @@ grfioctl(dev, cmd, data, flag, p)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
+#if defined(GRF_COMPAT) || (NGRF > 0)
 	struct grfinfo *gd;
+#endif /* GRF_COMPAT || (NGRF > 0) */
 	struct grfmode *gm;
 	int unit = GRFUNIT(dev);
 	int rv;
@@ -253,6 +255,7 @@ grfioctl(dev, cmd, data, flag, p)
 	dc = sc->mfb_sc->sc_dc;
 
 	switch (cmd) {
+#if defined(GRF_COMPAT) || (NGRF > 0)
 	case GRFIOCGINFO:
 		gd = (struct grfinfo *)data;
 		memset(gd, 0, sizeof(struct grfinfo));
@@ -267,6 +270,7 @@ grfioctl(dev, cmd, data, flag, p)
 		gd->gd_dheight    = dc->dc_raster.height;
 		rv = 0;
 		break;
+#endif /* GRF_COMPAT || (NGRF > 0) */
 
 	case GRFIOCON:
 	case GRFIOCOFF:
@@ -274,6 +278,7 @@ grfioctl(dev, cmd, data, flag, p)
 		rv = 0;
 		break;
 
+#if defined(GRF_COMPAT) || (NGRF > 0)
 	case GRFIOCMAP:
 		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, p);
 		break;
@@ -281,6 +286,7 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCUNMAP:
 		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, p);
 		break;
+#endif /* GRF_COMPAT || (NGRF > 0) */
 
 	case GRFIOCGMODE:
 		gm = (struct grfmode *)data;

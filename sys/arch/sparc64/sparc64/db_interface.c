@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2000/05/25 19:57:35 jhawk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.32.2.1 2000/06/22 17:04:32 minoura Exp $ */
 
 /*
  * Mach Operating System
@@ -186,10 +186,12 @@ kdb_trap(type, tf)
 	default:
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
+			OF_enter();
 			db_error("Faulted in DDB; continuing...\n");
 			OF_enter();
 			/*NOTREACHED*/
 		}
+		db_recover = 1;
 	}
 
 	/* Should switch to kdb`s own stack here. */
@@ -277,11 +279,17 @@ db_write_bytes(addr, size, data)
 	register char	*data;
 {
 	register char	*dst;
+	extern vaddr_t ktext;
+	extern paddr_t ktextp;
 
 	dst = (char *)addr;
 	while (size-- > 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS))
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			*dst = *data;
+		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
+			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
+			/* Read Only mapping -- need to do a bypass access */
+			stba(dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
 		else
 			subyte(dst, *data);
 		dst++, data++;
@@ -416,7 +424,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 {
 	extern struct pmap kernel_pmap_;
 	int i, j, full = 0;
-	int64_t data;
+	u_int64_t data;
 
 	{
 		register char c, *cp = modif;
@@ -428,10 +436,10 @@ db_pmap_kernel(addr, have_addr, count, modif)
 		/* lookup an entry for this VA */
 		
 		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
-			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%lx\n",
+			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
 				  (void *)addr, (u_long)va_to_seg(addr), 
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
-				  (u_long)data);
+				  (u_quad_t)data);
 		} else {
 			db_printf("No mapping for %p\n", addr);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.5 2000/01/11 12:59:45 pk Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.5.2.1 2000/06/22 17:03:55 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,13 +77,6 @@ int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_obio_ca = {
 	sizeof(struct esp_softc), espmatch_obio, espattach_obio
-};
-
-static struct scsipi_device esp_obio_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -261,17 +254,14 @@ espattach_obio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(esc->sc_bustag,
-			   oba->oba_pri, 0,
-			   (int(*)__P((void*)))ncr53c9x_intr, sc);
+	bus_intr_establish(esc->sc_bustag, oba->oba_pri, 0, ncr53c9x_intr, sc);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_obio_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;

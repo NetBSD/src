@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.11 2000/03/28 05:14:04 simonb Exp $	*/
+/*	$NetBSD: sem.h,v 1.11.2.1 2000/06/22 17:10:27 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,26 +136,47 @@ struct sem_undo {
 		int	un_id;		/* semid */
 	} un_ent[1];			/* undo entries */
 };
+#endif /* _KERNEL */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * semaphore info struct
  */
 struct seminfo {
-	int	semmap,		/* # of entries in semaphore map */
-		semmni,		/* # of semaphore identifiers */
-		semmns,		/* # of semaphores in system */
-		semmnu,		/* # of undo structures in system */
-		semmsl,		/* max # of semaphores per id */
-		semopm,		/* max # of operations per semop call */
-		semume,		/* max # of undo entries per process */
-		semusz,		/* size in bytes of undo structure */
-		semvmx,		/* semaphore maximum value */
-		semaem;		/* adjust on exit max value */
+	int32_t	semmap;		/* # of entries in semaphore map */
+	int32_t	semmni;		/* # of semaphore identifiers */
+	int32_t	semmns;		/* # of semaphores in system */
+	int32_t	semmnu;		/* # of undo structures in system */
+	int32_t	semmsl;		/* max # of semaphores per id */
+	int32_t	semopm;		/* max # of operations per semop call */
+	int32_t	semume;		/* max # of undo entries per process */
+	int32_t	semusz;		/* size in bytes of undo structure */
+	int32_t	semvmx;		/* semaphore maximum value */
+	int32_t	semaem;		/* adjust on exit max value */
 };
-extern struct seminfo seminfo;
 
-/* internal "mode" bits */
+/* Warning: 64-bit structure padding is needed here */
+struct semid_ds_sysctl {
+	struct	ipc_perm_sysctl sem_perm;
+	int16_t	sem_nsems;
+	int16_t	pad2;
+	int32_t	pad3;
+	time_t	sem_otime;
+	time_t	sem_ctime;
+};
+struct sem_sysctl_info {
+	struct	seminfo seminfo;
+	struct	semid_ds_sysctl semids[1];
+};
+
+/*
+ * Internal "mode" bits.  The first of these is used by ipcs(1), and so
+ * is defined outside the kernel as well.
+ */
 #define	SEM_ALLOC	01000	/* semaphore is allocated */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#ifdef _KERNEL
 #define	SEM_DEST	02000	/* semaphore will be destroyed on last detach */
 
 /*
@@ -191,11 +212,12 @@ extern struct seminfo seminfo;
 /*
  * Structures allocated in machdep.c
  */
-struct	semid_ds *sema;		/* semaphore id pool */
-struct	__sem *sem;		/* semaphore pool */
-struct	map *semmap;		/* semaphore allocation map */
-struct	sem_undo *semu_list;	/* list of active undo structures */
-int	*semu;			/* undo structure pool */
+extern struct seminfo seminfo;
+extern struct semid_ds *sema;		/* semaphore id pool */
+extern struct __sem *sem;		/* semaphore pool */
+extern struct map *semmap;		/* semaphore allocation map */
+extern struct sem_undo *semu_list;	/* list of active undo structures */
+extern int *semu;			/* undo structure pool */
 
 /*
  * Macro to find a particular sem_undo vector
@@ -231,9 +253,6 @@ void	seminit __P((void));
 void	semexit __P((struct proc *));
 
 int	semctl1 __P((struct proc *, int, int, int, void *, register_t *));
-
-void	semid_ds14_to_native __P((struct semid_ds14 *, struct semid_ds *));
-void	native_to_semid_ds14 __P((struct semid_ds *, struct semid_ds14 *));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.90 2000/05/07 01:38:36 tsarna Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.90.2.1 2000/06/22 17:10:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -636,7 +636,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
 	}
-	vfs_getnewfsid(mp, MOUNT_NFS);
+	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
 
 	if (argp->flags & NFSMNT_NQNFS)

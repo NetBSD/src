@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.14 2000/05/05 20:59:22 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.14.2.1 2000/06/22 17:10:38 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,7 +181,9 @@ lfs_segunlock(fs)
 	struct mount *mp;
 	extern int lfs_dirvcount;
 	
-	if (fs->lfs_seglock == 1) {
+	sp = fs->lfs_sp;
+
+	if (fs->lfs_seglock == 1 && !(sp->seg_flags & SEGM_PROT)) {
 
 		mp = fs->lfs_ivnode->v_mount;
 		/*
@@ -211,23 +213,19 @@ lfs_segunlock(fs)
 				goto loop;
 			if (vp->v_type == VNON)
 				continue;
-			if(vp->v_flag & VDIROP) {
-				/* No vref, it has one from before */
+			if ((vp->v_flag & VDIROP) &&
+			    !(VTOI(vp)->i_flag & IN_ADIROP)) {
 				--lfs_dirvcount;
 				vp->v_flag &= ~VDIROP;
 				wakeup(&lfs_dirvcount);
-				if(vp->v_usecount == 1) {
-					/* vrele may call VOP_INACTIVE */
-					fs->lfs_unlockvp = vp;
-					vrele(vp);
-					fs->lfs_unlockvp = NULL;
-				} else
-					lfs_vunref(vp);
-
+				fs->lfs_unlockvp = vp;
+				vrele(vp);
+				fs->lfs_unlockvp = NULL;
 			}
 		}
+	}
 
-		sp = fs->lfs_sp;
+	if (fs->lfs_seglock == 1) {
 		sync = sp->seg_flags & SEGM_SYNC;
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {

@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.11 2000/03/13 23:52:26 soren Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.11.2.1 2000/06/22 16:58:49 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,6 +40,7 @@ struct tcds_slotconfig {
 
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
+	struct evcnt sc_evcnt;			/* intr. count */
 
 	/*
 	 * Sets of bits in TCDS CIR and IMER that enable/check
@@ -65,7 +66,7 @@ struct tcds_slotconfig {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
 	int	sc_active;                      /* DMA active ? */
-	int	sc_iswrite;			/* DMA into main memory? */
+	int	sc_ispullup;			/* DMA into main memory? */
 	size_t	sc_dmasize;
 	caddr_t	*sc_dmaaddr;
 	size_t	*sc_dmalen;

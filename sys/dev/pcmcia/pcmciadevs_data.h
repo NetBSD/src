@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.89 2000/05/11 19:24:36 is Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.89.2.1 2000/06/22 17:07:48 minoura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp 
+ *	NetBSD: pcmciadevs,v 1.93 2000/06/13 02:18:00 soren Exp 
  */
 
 /*-
@@ -115,6 +115,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com/Megahertz 3CCFEM556BI Ethernet/Modem"	},
 	},
 	{
+	    PCMCIA_VENDOR_COMPAQ2, PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100,
+	    PCMCIA_CIS_COMPAQ2_CPQ_10_100,
+	    0,
+	    "Compaq",
+	    "Compaq Netelligent 10/100 Ethernet"	},
+	},
+	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
 	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
 	    0,
@@ -189,28 +196,35 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_IBM_3270,
 	    0,
 	    "IBM Corporation",
-	    "3270 Emulation"	},
+	    "IBM 3270 Emulation"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
 	    "IBM Corporation",
-	    "National Semiconductor InfoMover"	},
+	    "IBM InfoMover"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_5250,
 	    PCMCIA_CIS_IBM_5250,
 	    0,
 	    "IBM Corporation",
-	    "5250 Emulation"	},
+	    "IBM 5250 Emulation"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_TROPIC,
 	    PCMCIA_CIS_IBM_TROPIC,
 	    0,
 	    "IBM Corporation",
-	    "Token Ring 4/16"	},
+	    "IBM Token Ring 4/16"	},
+	},
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
+	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
+	    0,
+	    "IBM Corporation",
+	    "IBM PCMCIA Portable CD-ROM Drive"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
@@ -224,14 +238,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY,
 	    0,
 	    "IBM Corporation",
-	    "Wireless LAN Entry"	},
-	},
-	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
-	    0,
-	    "IBM Corporation",
-	    "PCMCIA Portable CD-ROM Drive"	},
+	    "IBM Wireless LAN Entry"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
@@ -241,11 +248,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM EtherJet Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_EEPRO100,
+	    PCMCIA_CIS_INTEL_EEPRO100,
+	    0,
+	    "Intel",
+	    "Intel EtherExpress PRO/100"	},
+	},
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
 	    PCMCIA_CIS_IODATA_PCLATE,
 	    0,
 	    "I-O DATA",
 	    "I-O DATA PCLA/TE"	},
+	},
+	{
+	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
+	    PCMCIA_CIS_FARALLON_SKYLINE,
+	    0,
+	    "Farallon Communications",
+	    "SkyLINE Wireless"	},
 	},
 	{
 	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH,
@@ -332,6 +353,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Nokia C020 WLAN Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_TR,
+	    PCMCIA_CIS_OLICOM_TR,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4"	},
+	},
+	{
 	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
 	    PCMCIA_CIS_PANASONIC_KXLC002,
 	    0,
@@ -416,45 +444,52 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK LAC-CF010"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,
-	    PCMCIA_CIS_TDK_XIR_CE_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE,
+	    PCMCIA_CIS_XIRCOM_CE,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CEM_10,
-	    PCMCIA_CIS_TDK_XIR_CEM_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE2,
+	    PCMCIA_CIS_XIRCOM_CE2,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
+	    "Xircom CreditCard Ethernet II"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE3,
+	    PCMCIA_CIS_XIRCOM_CE3,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard 10/100 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM,
+	    PCMCIA_CIS_XIRCOM_CEM,
+	    0,
+	    "Xircom",
 	    "Xircom CreditCard Ethernet + Modem"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10,
-	    PCMCIA_CIS_TDK_XIR_PS_CE2_10,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM28,
+	    PCMCIA_CIS_XIRCOM_CEM28,
 	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard CE2 Ethernet"	},
+	    "Xircom",
+	    "Xircom CreditCard Ethernet + Modem 28"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE3_10_100,
-	    PCMCIA_CIS_TDK_XIR_CE3_10_100,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CNW_801,
+	    PCMCIA_CIS_XIRCOM_CNW_801,
 	    0,
-	    "TDK Corporation",
-	    "Xircom CreditCard CE3 10/100 Ethernet"	},
-	},
-	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_801,
-	    PCMCIA_CIS_TDK_XIR_CNW_801,
-	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Netwave (Canada)"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_802,
-	    PCMCIA_CIS_TDK_XIR_CNW_802,
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CNW_802,
+	    PCMCIA_CIS_XIRCOM_CNW_802,
 	    0,
-	    "TDK Corporation",
+	    "Xircom",
 	    "Xircom CreditCard Netwave (US)"	},
 	},
 	{
@@ -871,6 +906,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_OLICOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Olicom",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_ADAPTEC, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -945,6 +987,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_FARALLON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Farallon Communications",
 	    NULL,
 	},
 	{

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.66 2000/05/08 19:46:12 ragge Exp $
+#	$NetBSD: GENERIC,v 1.66.2.1 2000/06/22 17:05:01 minoura Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.66.2.1 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -13,6 +13,7 @@ options 	"VAX8200"
 options 	"VAX780"
 options 	"VAX750"
 options 	"VAX630"	# MV II
+#options	"VAX640"	# MV 3400
 options 	"VAX650"	# MV III, 3600, 3800, 3900
 options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
@@ -29,26 +30,13 @@ maxusers	8
 
 # Kernel compiled-in symbolic debugger & system call tracer
 #makeoptions	DEBUG="-g"
-#options 	DDB
+options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
 #options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Network support
 #options 	GATEWAY
@@ -117,7 +105,7 @@ sbi0		at mainbus0		# SBI, master bus on 11/780.
 cmi0		at mainbus0		# 11/750 internal bus.
 bi0		at mainbus0		# VAX 8200 
 vsbus0		at mainbus0		# All VAXstations
-ibus0		at mainbus0		# All Microvax
+ibus0		at mainbus0		# All MicroVAX
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
 
@@ -127,10 +115,10 @@ ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
-ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
+si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
-ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
+si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
@@ -140,6 +128,7 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
+le0		at ibus0		# LANCE ethernet (MV3400)
 #dz0		at ibus0		# VAX 4000/105A serial lines
 #shac0		at ibus0 		# DSSI controller
 
@@ -147,9 +136,8 @@ ze0		at ibus0 		# SGEC on-board ethernet
 cpu*		at bi? node?		# KA820/KA825 cpu
 mem*		at bi? node?		# Memory subsystems
 #uba*		at bi? node?		# DWBUA BI-Unibus adapter
-#ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
-#kdb*		at bi? node?		# KDB50 MSCP disk ctlr
-#mscpbus*	at kdb?
+ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
+kdb*		at bi? node?		# KDB50 MSCP disk ctlr
 
 # CMI (VAX 11/750)
 mem*		at cmi? tr?		# Memory subsystems
@@ -173,7 +161,7 @@ mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
 #qv0		at uba? csr 0177400	# Monochrome graphics
-#de0		at uba? csr 0174510	# DELUA/DEUNA
+de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
@@ -184,7 +172,7 @@ rl*		at rlc? drive?		# RL01/RL02 disk drive
 # MSCP devices
 mscpbus*	at uda?
 mscpbus*	at mtc?
-#mscpbus*	at kdb?
+mscpbus*	at kdb?
 
 ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
@@ -195,7 +183,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 
 # SCSI devices
 scsibus*	at asc?
-scsibus*	at ncr?
+scsibus*	at si?
 
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?

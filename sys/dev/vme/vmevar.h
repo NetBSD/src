@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.7 2000/02/25 10:33:12 drochner Exp $ */
+/* $NetBSD: vmevar.h,v 1.7.2.1 2000/06/22 17:08:50 minoura Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -71,6 +71,7 @@ typedef struct vme_chipset_tag {
 			      void *));
 
 	int (*vct_int_map) __P((void *, int, int, vme_intr_handle_t *));
+	const struct evcnt *(*vct_int_evcnt) __P((void *, vme_intr_handle_t));
 	void *(*vct_int_establish) __P((void *, vme_intr_handle_t, int,
 					int (*)(void *), void *));
 	void (*vct_int_disestablish) __P((void *, void *));
@@ -118,6 +119,8 @@ typedef struct vme_chipset_tag {
  */
 #define vme_intr_map(vc, level, vector, handlep) \
   (*((vc)->vct_int_map))((vc)->cookie, (level), (vector), (handlep))
+#define vme_intr_evcnt(vc, handle) \
+  (*((vc)->vct_int_evcnt))((vc)->cookie, (handle))
 #define vme_intr_establish(vc, handle, prio, func, arg) \
   (*((vc)->vct_int_establish))((vc)->cookie, \
                         (handle), (prio), (func), (arg))

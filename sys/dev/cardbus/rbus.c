@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.7 2000/05/26 06:32:56 haya Exp $	*/
+/*	$NetBSD: rbus.c,v 1.7.2.1 2000/06/22 17:06:22 minoura Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -93,7 +93,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	bus_addr_t boundary, search_addr;
 	int val;
 	bus_addr_t result;
-	int exflags = EX_FAST | EX_NOWAIT;
+	int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
 	DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
 	    addr, size, mask, align));
@@ -118,6 +118,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 		 */
 		if (substart < rbt->rb_ext->ex_start
 		    || subend > rbt->rb_ext->ex_end) {
+			DPRINTF(("rbus: out of range\n"));
 			return 1;
 		}
 
@@ -149,12 +150,15 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 				val = extent_alloc_subregion(rbt->rb_ext,
 				    search_addr, search_addr + size, size,
 				    align, 0, exflags, (u_long *)&result);
+				DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
+				    search_addr, search_addr + size, align));
 				if (val == 0) {
 					break;
 				}
 			}
 			if (val != 0) {
 				/* no space found */
+				DPRINTF(("rbus: no space found\n"));
 				return 1;
 			}
 		}
@@ -172,6 +176,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
 	} else {
 		/* error!! */
+		DPRINTF(("rbus: no rbus type\n"));
 		return 1;
 	}
 	return 1;

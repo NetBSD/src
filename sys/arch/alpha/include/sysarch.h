@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.4 2000/02/26 18:53:12 thorpej Exp $ */
+/* $NetBSD: sysarch.h,v 1.4.2.1 2000/06/22 16:58:33 minoura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ struct alpha_pci_conf_readwrite_args {
 
 #ifdef _KERNEL
 extern	u_int alpha_bus_window_count[];
-extern	int (*alpha_bus_get_window) __P((int, int,
-	    struct alpha_bus_space_translation *));
+extern	int (*alpha_bus_get_window)(int, int,
+	    struct alpha_bus_space_translation *);
 extern	struct alpha_pci_chipset *alpha_pci_chipset;
 #else
 struct alpha_bus_window {
@@ -92,18 +92,18 @@ struct alpha_bus_window {
 	struct alpha_bus_space_translation abw_abst;
 };
 
-int	alpha_bus_getwindows __P((int, struct alpha_bus_window **));
-int	alpha_bus_mapwindow __P((struct alpha_bus_window *));
-void	alpha_bus_unmapwindow __P((struct alpha_bus_window *));
+int	alpha_bus_getwindows(int, struct alpha_bus_window **);
+int	alpha_bus_mapwindow(struct alpha_bus_window *);
+void	alpha_bus_unmapwindow(struct alpha_bus_window *);
 
-void	*alpha_pci_mem_map __P((bus_addr_t, bus_size_t, int,
-	    struct alpha_bus_space_translation *));
-void	alpha_pci_mem_unmap __P((void *addr, bus_size_t));
+void	*alpha_pci_mem_map(bus_addr_t, bus_size_t, int,
+	    struct alpha_bus_space_translation *);
+void	alpha_pci_mem_unmap(void *addr, bus_size_t);
 
-u_int32_t alpha_pci_conf_read __P((u_int, u_int, u_int, u_int));
-void	alpha_pci_conf_write __P((u_int, u_int, u_int, u_int, u_int32_t));
+u_int32_t alpha_pci_conf_read(u_int, u_int, u_int, u_int);
+void	alpha_pci_conf_write(u_int, u_int, u_int, u_int, u_int32_t);
 
-int	sysarch __P((int, void *));
+int	sysarch(int, void *);
 #endif /* _KERNEL */
 
 #endif /* !_ALPHA_SYSARCH_H_ */

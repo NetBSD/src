@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.8 1999/09/30 22:59:52 thorpej Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.8.10.1 2000/06/22 16:58:55 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,13 +68,6 @@ int	bzivscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach bzivsc_ca = {
 	sizeof(struct bzivsc_softc), bzivscmatch, bzivscattach
-};
-
-struct scsipi_device bzivsc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -233,7 +226,7 @@ bzivscattach(parent, self, aux)
 	/*
 	 * Configure interrupts.
 	 */
-	bsc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	bsc->sc_isr.isr_intr = ncr53c9x_intr;
 	bsc->sc_isr.isr_arg  = sc;
 	bsc->sc_isr.isr_ipl  = 2;
 	add_isr(&bsc->sc_isr);
@@ -241,9 +234,7 @@ bzivscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &bzivsc_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

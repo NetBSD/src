@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2000/05/26 21:19:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.14.2.1 2000/06/22 17:01:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -85,7 +85,6 @@
 	and	r15, r9		; \
 	cmp/eq	r8, r9		; \
 	bt	1f		; /* If already kernel mode then jump */ \
-	nop			; \
 	ldc	r15, r2_bank	; \
 	mov.l	3f, r8		; /* 3f = Kernel Stack */ \
 	mov.l	@r8, r15	; /* Change to Kernel Stack */ \
@@ -325,7 +324,6 @@ start1:
 	add	#4, r3
 	dt	r0		/* decrement and Test */
 	bf	1b
-	nop
 	/* kernel image copy end */
 
 	mov.l	LXstart_in_RAM, r0
@@ -474,7 +472,6 @@ ENTRY(idle)
 	mov	r0, r14
 	tst	r0, r0
 	bf	sw1
-	nop
 	ESTI
 
 	sleep
@@ -565,7 +562,7 @@ XL_panic:
 #endif
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -768,6 +765,8 @@ XL_switch_error:
 	/* Isolate process.  XXX Is this necessary? */
 	xor	r0, r0
 	mov.l	r0, @(P_BACK, r8)	/* r8->p_back = 0 */
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Process now running on a processor. */
 	mov	#P_STAT, r0

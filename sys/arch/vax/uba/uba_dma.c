@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.3 2000/02/29 17:42:32 matt Exp $ */
+/* $NetBSD: uba_dma.c,v 1.3.2.1 2000/06/22 17:05:17 minoura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,11 +108,16 @@ uba_dma_init(sc)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Map in Unibus map registers.
+	 * Map in Unibus map registers, if not mapped in already.
 	 */
-	pte = (struct pte *)vax_map_physmem(sc->uv_addr, sc->uv_size/VAX_NBPG);
-	if (pte == 0)
-		panic("uba_dma_init");
+	if (sc->uv_uba) {
+		pte = sc->uv_uba->uba_map;
+	} else {
+		pte = (struct pte *)vax_map_physmem(sc->uv_addr,
+		    sc->uv_size/(VAX_NBPG/sizeof(struct pte)));
+		if (pte == 0)
+			panic("uba_dma_init");
+	}
 	/*
 	 * Initialize the SGMAP.
 	 */

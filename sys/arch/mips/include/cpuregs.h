@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.32 2000/05/23 04:21:39 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.32.2.1 2000/06/22 17:01:27 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -324,7 +324,7 @@
 #define MIPS3_CONFIG_CACHE_L2_LSIZE(config) \
 	(0x10 << (((config) & MIPS3_CONFIG_SB_MASK) >> MIPS3_CONFIG_SB_SHIFT))
 
-/* write back data rate */
+/* Write back data rate */
 #define MIPS3_CONFIG_EP_MASK	0x0f000000
 #define MIPS3_CONFIG_EP_SHIFT	24
 
@@ -565,7 +565,7 @@
 
 #define MIPS3_TLB_NUM_TLB_ENTRIES	48
 #define MIPS_R4300_TLB_NUM_TLB_ENTRIES	32
-#define MIPS3_TLB_WIRED_ENTRIES		8	/* XXX gross XXX */
+#define MIPS3_TLB_WIRED_UPAGES		2
 
 
 /*

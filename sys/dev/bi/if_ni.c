@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.2 2000/04/16 09:55:39 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.2.2.1 2000/06/22 17:06:19 minoura Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -121,6 +121,7 @@
 
 struct	ni_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
+	struct evcnt	sc_intrcnt;	/* Interrupt coounting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
@@ -247,7 +248,10 @@ niattach(parent, self, aux)
 	sc->sc_ioh = ba->ba_ioh;
 	sc->sc_dmat = ba->ba_dmat;
 
-	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, niintr, sc);
+	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
+		niintr, sc, &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->sc_dev.dv_xname, "intr");
 
 	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb, 
 	    (paddr_t *)&sc->sc_pgvppqb);

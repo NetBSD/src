@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.46 1999/12/03 22:48:24 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.46.4.1 2000/06/22 17:00:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -364,7 +364,7 @@ opms_pckbc_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       opmsinput, sc);
+			       opmsinput, sc, sc->sc_dev.dv_xname);
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;

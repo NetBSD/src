@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.3 2000/02/01 18:33:22 soren Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.3.2.1 2000/06/22 17:01:06 minoura Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -105,8 +105,10 @@ com_pnpbios_attach(parent, self, aux)
 	/*
 	 * if the chip isn't something we recognise skip it.
 	 */
-	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0)
+	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
+		printf(": com probe failed\n");
 		return;
+	}
 
 	sc->sc_frequency = 115200 * 16;
 

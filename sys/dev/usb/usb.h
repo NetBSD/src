@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.48 2000/04/27 15:26:49 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.48.2.1 2000/06/22 17:08:42 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -76,28 +76,35 @@ MALLOC_DECLARE(M_USBHC);
 /*
  * The USB records contain some unaligned little-endian word
  * components.  The U[SG]ETW macros take care of both the alignment
- * and endian problem and should always be used to access 16 bit
+ * and endian problem and should always be used to access non-byte
  * values.
  */
 typedef u_int8_t uByte;
 typedef u_int8_t uWord[2];
+typedef u_int8_t uDWord[4];
+
+#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
+
+#if 1
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
 #define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
-#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
-typedef u_int8_t uDWord[4];
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
 #define USETDW(w,v) ((w)[0] = (u_int8_t)(v), \
 		     (w)[1] = (u_int8_t)((v) >> 8), \
 		     (w)[2] = (u_int8_t)((v) >> 16), \
 		     (w)[3] = (u_int8_t)((v) >> 24))
+#else
 /* 
  * On little-endian machines that can handle unanliged accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
-#if 0
 #define UGETW(w) (*(u_int16_t *)(w))
 #define USETW(w,v) (*(u_int16_t *)(w) = (v))
+#define UGETDW(w) (*(u_int32_t *)(w))
+#define USETDW(w,v) (*(u_int32_t *)(w) = (v))
 #endif
+
+#define UPACKED __attribute__((__packed__))
 
 typedef struct {
 	uByte		bmRequestType;
@@ -105,7 +112,7 @@ typedef struct {
 	uWord		wValue;
 	uWord		wIndex;
 	uWord		wLength;
-} usb_device_request_t;
+} UPACKED usb_device_request_t;
 
 #define UT_WRITE		0x00
 #define UT_READ			0x80
@@ -174,7 +181,7 @@ typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
-} usb_descriptor_t;
+} UPACKED usb_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
@@ -192,7 +199,7 @@ typedef struct {
 	uByte		iProduct;
 	uByte		iSerialNumber;
 	uByte		bNumConfigurations;
-} usb_device_descriptor_t;
+} UPACKED usb_device_descriptor_t;
 #define USB_DEVICE_DESCRIPTOR_SIZE 18
 
 typedef struct {
@@ -208,7 +215,7 @@ typedef struct {
 #define UC_REMOTE_WAKEUP	0x20
 	uByte		bMaxPower; /* max current in 2 mA units */
 #define UC_POWER_FACTOR 2
-} usb_config_descriptor_t;
+} UPACKED usb_config_descriptor_t;
 #define USB_CONFIG_DESCRIPTOR_SIZE 9
 
 typedef struct {
@@ -221,7 +228,7 @@ typedef struct {
 	uByte		bInterfaceSubClass;
 	uByte		bInterfaceProtocol;
 	uByte		iInterface;
-} usb_interface_descriptor_t;
+} UPACKED usb_interface_descriptor_t;
 #define USB_INTERFACE_DESCRIPTOR_SIZE 9
 
 typedef struct {
@@ -248,14 +255,14 @@ typedef struct {
 #define UE_GET_ISO_TYPE(a)	((a) & UE_ISO_TYPE)
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
-} usb_endpoint_descriptor_t;
+} UPACKED usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
 
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bString[127];
-} usb_string_descriptor_t;
+} UPACKED usb_string_descriptor_t;
 #define USB_MAX_STRING_LEN 128
 #define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
 
@@ -299,7 +306,7 @@ typedef struct {
 #define UHD_NOT_REMOV(desc, i) \
     (((desc)->DeviceRemovable[(i)/8] >> ((i) % 8)) & 1)
 	/* deprecated */ uByte		PortPowerCtrlMask[1];
-} usb_hub_descriptor_t;
+} UPACKED usb_hub_descriptor_t;
 #define USB_HUB_DESCRIPTOR_SIZE 9 /* includes deprecated PortPowerCtrlMask */
 
 typedef struct {
@@ -309,14 +316,14 @@ typedef struct {
 #define UDS_REMOTE_WAKEUP		0x0002
 /* Endpoint status flags */
 #define UES_HALT			0x0001
-} usb_status_t;
+} UPACKED usb_status_t;
 
 typedef struct {
 	uWord		wHubStatus;
 #define UHS_LOCAL_POWER			0x0001
 #define UHS_OVER_CURRENT		0x0002
 	uWord		wHubChange;
-} usb_hub_status_t;
+} UPACKED usb_hub_status_t;
 
 typedef struct {
 	uWord		wPortStatus;
@@ -333,7 +340,7 @@ typedef struct {
 #define UPS_C_SUSPEND			0x0004
 #define UPS_C_OVERCURRENT_INDICATOR	0x0008
 #define UPS_C_PORT_RESET		0x0010
-} usb_port_status_t;
+} UPACKED usb_port_status_t;
 
 /* Device class codes */
 #define UDCLASS_AUDIO		0x00

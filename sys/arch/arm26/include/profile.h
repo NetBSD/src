@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: profile.h,v 1.1.2.1 2000/06/22 16:59:23 minoura Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -39,9 +39,9 @@
 #define	MCOUNT								\
 	__asm__(".text");						\
 	__asm__(".align	0");						\
-	__asm__(".type	mcount,%function");				\
-	__asm__(".global	mcount");				\
-	__asm__("mcount:");						\
+	__asm__(".type	__mcount,%function");				\
+	__asm__(".global	__mcount");				\
+	__asm__("__mcount:");						\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
@@ -60,7 +60,7 @@
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm__("bl	__mcount");					\
+	__asm__("bl	_mcount");					\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
@@ -71,6 +71,6 @@
  * Note that we assume splhigh() and splx() cannot call mcount()
  * recursively.
  */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER	int_off()
+#define	MCOUNT_EXIT	int_on()
 #endif /* _KERNEL */

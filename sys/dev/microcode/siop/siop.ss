@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.6 2000/05/25 10:10:54 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.6.2.1 2000/06/22 17:07:14 minoura Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -232,11 +232,11 @@ get_extmsgdata:
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
 	INT int_extmsgdata;
 
-; script used for the sheduler: when a slot is free the JUMP points to
+; script used for the scheduler: when a slot is free the JUMP points to
 ; the next slot so that instructions for this slot are not run.
 ; once the CPU has set up the slot variables (DSA address) it changes
 ; the JUMP address to 0 (so that it'll jump to the next instruction) and
-; this command will be processed next time the sheduler is executed.
+; this command will be processed next time the scheduler is executed.
 ; When the target has been successfully selected the script changes the jump
 ; addr back to the next slot, so that it's ignored the next time.
 ;

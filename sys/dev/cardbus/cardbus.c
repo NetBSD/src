@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.25 2000/04/17 09:16:38 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.25.2.1 2000/06/22 17:06:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -103,21 +103,11 @@ struct cfdriver cardbus_cd = {
 
 
 STATIC int
-#if defined __BROKEN_INDIRECT_CONFIG
-cardbusmatch(parent, match, aux)
-     struct device *parent;
-     void *match;
-     void *aux;
-#else
 cardbusmatch(parent, cf, aux)
      struct device *parent;
      struct cfdata *cf;
      void *aux;
-#endif
 {
-#if defined __BROKEN_INDIRECT_CONFIG
-  struct cfdata *cf = match;
-#endif
   struct cbslot_attach_args *cba = aux;
 
   if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
@@ -558,22 +548,11 @@ cardbus_attach_card(sc)
 
 
 static int
-#ifdef __BROKEN_INDIRECT_CONFIG
-cardbussubmatch(parent, match, aux)
-#else
 cardbussubmatch(parent, cf, aux)
-#endif
      struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-     void *match;
-#else
      struct cfdata *cf;
-#endif
      void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-  struct cfdata *cf = match;
-#endif
   struct cardbus_attach_args *ca = aux;
 
   if (cf->cardbuscf_dev != CARDBUS_UNK_DEV &&

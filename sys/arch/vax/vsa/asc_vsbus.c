@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.14.2.1 2000/06/22 17:05:32 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_vax46.h"
+#include "opt_cputype.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14.2.1 2000/06/22 17:05:32 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $");
 
 struct asc_vsbus_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* Must be first */
+	struct evcnt sc_intrcnt;		/* count interrupts */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_bsh;		/* bus space handle */
 	bus_space_handle_t sc_dirh;		/* scsi direction handle */
@@ -106,13 +107,6 @@ static void asc_vsbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_vsbus_ca = {
 	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
-};
-
-static struct scsipi_device asc_vsbus_dev = {
-	NULL,			/* Use the default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* use the default done handler */
 };
 
 /*
@@ -273,7 +267,9 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freq /= 1000000;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
-	    &asc->sc_ncr53c9x, SCB_ISTACK);
+	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
+	evcnt_attach_dynamic(&asc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -310,9 +306,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_vsbus_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*

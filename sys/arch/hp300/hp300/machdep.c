@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2000/05/26 21:19:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139.2.1 2000/06/22 16:59:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -923,9 +923,6 @@ dumpsys()
 	/* XXX initialized here because of gcc lossage */
 	maddr = lowram;
 	pg = 0;
-
-	/* Don't put dump messages in msgbuf. */
-	msgbufenabled = 0;
 
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)

@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.3 2000/05/23 05:01:56 thorpej Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.3.2.1 2000/06/22 16:58:23 minoura Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.3 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.3.2.1 $"
 
 maxusers 64
 
@@ -53,19 +53,6 @@ file-system	FDESC		# File descriptor file system (/dev/fd)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -424,5 +411,5 @@ pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
