@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.16 1999/05/05 01:51:36 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.17 2000/08/21 02:33:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -329,7 +329,7 @@ osf1_sys_sigprocmask(p, v, retval)
 
 	osf1_cvt_sigset_to_native(&oss, &bss);
 
-	(void) splhigh();
+	(void) splsched();	/* XXXSMP */
 
 	switch (SCARG(uap, how)) {
 	case OSF1_SIG_BLOCK:
