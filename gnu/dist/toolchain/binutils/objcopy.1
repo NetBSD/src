@@ -175,6 +175,7 @@ objcopy [ \-F \fIbfdname\fR | \-\-target=\fIbfdname\fR ]
         [ \-\-strip-symbols=\fIfilename\fR ]
         [ \-\-keep-global-symbols=\fIfilename\fR ]
         [ \-\-localize-symbols=\fIfilename\fR ]
+        [ \-\-redefine-syms-file=\fIfilename\fR ]
         [ \-\-weaken-symbols=\fIfilename\fR ]
         [ \-v | \-\-verbose ] [ \-V | \-\-version ]  [ \-\-help ]
         \fIinfile\fR [\fIoutfile\fR]
@@ -513,6 +514,12 @@ Apply \fB\*(--localize-symbol\fR option to each symbol listed in the file
 \&\fIfilename\fR.  \fIfilename\fR is simply a flat file, with one symbol
 name per line.  Line comments may be introduced by the hash character.
 This option may be given more than once.
+.Ip "\f(CW\*(C`\-\-redefine\-syms\-file=\f(CIfilename\f(CW\*(C'\fR" 4
+.IX Item "--redefine-syms-file=filename"
+Apply \fB\*(--redefine-sym\fR option to each symbol listed in the file
+\&\fIfilename\fR.  \fIfilename\fR is simply a flat file, with two symbol
+names per line separated by white space.  Line comments may be introduced
+by the hash character.  This option may be given more than once.
 .Ip "\f(CW\*(C`\-\-weaken\-symbols=\f(CIfilename\f(CW\*(C'\fR" 4
 .IX Item "--weaken-symbols=filename"
 Apply \fB\*(--weaken-symbol\fR option to each symbol listed in the file

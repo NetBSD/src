@@ -902,6 +902,7 @@ objcopy [ -F @var{bfdname} | --target=@var{bfdname} ]
         [ --strip-symbols=@var{filename} ]
         [ --keep-global-symbols=@var{filename} ]
         [ --localize-symbols=@var{filename} ]
+        [ --redefine-syms-file=@var{filename} ]
         [ --weaken-symbols=@var{filename} ]
         [ -v | --verbose ] [ -V | --version ]  [ --help ]
         @var{infile} [@var{outfile}]
@@ -1211,6 +1212,12 @@ Apply @samp{--localize-symbol} option to each symbol listed in the file
 @var{filename}.  @var{filename} is simply a flat file, with one symbol
 name per line.  Line comments may be introduced by the hash character.
 This option may be given more than once.
+
+@item --redefine-syms-file=@var{filename}
+Apply @samp{--redefine-sym} option to each symbol listed in the file
+@var{filename}.  @var{filename} is simply a flat file, with two symbol
+names per line separated by white space.  Line comments may be introduced
+by the hash character.  This option may be given more than once.
 
 @item --weaken-symbols=@var{filename}
 Apply @samp{--weaken-symbol} option to each symbol listed in the file
