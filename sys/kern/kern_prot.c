@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.38 1996/12/22 10:21:08 cgd Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.39 1997/03/27 06:14:03 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -226,6 +226,7 @@ sys_setsid(p, v, retval)
  *
  * caller does setpgid(targpid, targpgid)
  *
+ * pgid must be in valid range (EINVAL)
  * pid must be caller or child of caller (ESRCH)
  * if a child
  *	pid must be in same session (EPERM)
@@ -252,6 +253,9 @@ sys_setpgid(curp, v, retval)
 	SCARG(uap, pid)  = (short) SCARG(uap, pid);		/* XXX */
 	SCARG(uap, pgid) = (short) SCARG(uap, pgid);		/* XXX */
 #endif
+
+	if (SCARG(uap, pgid) < 0)
+		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
 		if ((targp = pfind(SCARG(uap, pid))) == 0 || !inferior(targp))
