@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.28 2004/02/13 11:36:12 wiz Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.29 2004/08/06 15:13:45 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.28 2004/02/13 11:36:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.29 2004/08/06 15:13:45 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -226,8 +226,6 @@ void consinit		__P((void));
 u_int cpu_get_control	__P((void));
 
 void ixdp_ixp12x0_cc_setup(void);
-
-extern int db_trapper(u_int, u_int, trapframe_t *, int);
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -762,13 +760,7 @@ initarm(void *arg)
 #endif
 
 #ifdef DDB
-	{
-		static struct undefined_handler uh;
-
-		uh.uh_handler = db_trapper;
-		install_coproc_handler_static(0, &uh);
-	}
-
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
