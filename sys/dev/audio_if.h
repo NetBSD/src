@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.38 2001/10/03 20:48:41 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.39 2002/03/07 14:37:02 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -51,6 +51,18 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;				/* coding space change */
+	/*
+	 * The following four members represent what format is used in a
+	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
+	 * channels, the audio framework may adjust data.  Encoding and
+	 * precision are converted in sw_code().
+	 * set_param() should set correct values to them if no conversion is
+	 * neede.
+	 */
+	u_long	hw_sample_rate;
+	u_int	hw_encoding;
+	u_int	hw_precision;
+	u_int	hw_channels;
 };
 
 /* The default audio mode: 8 kHz mono ulaw */

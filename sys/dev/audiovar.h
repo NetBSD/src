@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.20 1999/09/09 10:24:45 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.21 2002/03/07 14:37:02 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
  */
+
+#include "auconv.h"		/* for AUDIO_MAX_CHANNELS */
 
 /*
  * Initial/default block duration is both configurable and patchable.
@@ -111,6 +113,19 @@ struct audio_softc {
 	/* Ring buffers, separate for record and play. */
 	struct	audio_ringbuffer sc_rr; /* Record ring */
 	struct	audio_ringbuffer sc_pr; /* Play ring */
+
+#define MAX_SAMPLE_SIZE	(AUDIO_MAX_CHANNELS * 24 / 8) /* 6channels x 24bit precision */
+	int	sc_input_fragment_length;
+	u_char	sc_input_fragment[MAX_SAMPLE_SIZE];
+	int	sc_pconvbuffer_size;
+	u_char	*sc_pconvbuffer;
+	struct auconv_context sc_pconv;
+
+	int	sc_rconvbuffer_size;
+	int	sc_rconvbuffer_begin;
+	int	sc_rconvbuffer_end;
+	u_char	*sc_rconvbuffer;
+	struct auconv_context sc_rconv;
 
 	u_char	sc_blkset;	/* Blocksize has been set */
 
