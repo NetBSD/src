@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/06/18 21:09:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/15 02:31:13 cgd Exp $
 
 PROG=	ipcs
 BINGRP=	kmem
