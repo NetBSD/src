@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.12 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.13 2003/03/23 16:55:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.12 2003/03/03 21:16:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.13 2003/03/23 16:55:54 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRbadformat:
 		    case ERRrmuns:
 			return EINVAL;
+		    case ERRnofiles:
 		    case ERRbadfile:
 		    case ERRbadpath:
 		    case ERRremcd:
@@ -227,9 +228,6 @@ smb_maperror(int eclass, int eno)
 			return ENXIO;
 		    case ERRdiffdevice:
 			return EXDEV;
-		    case ERRnofiles:
-			return 0;	/* eeof ? */
-			return ETXTBSY;
 		    case ERRlock:
 			return EDEADLK;
 		    case ERRfilexists:
