@@ -1,4 +1,4 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/7/93
+#	@(#)Makefile	8.2 (Berkeley) 9/21/96
 
 PROG=	mailstats
 MAN=	mailstats.8
