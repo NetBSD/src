@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.47 2001/07/26 05:47:37 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.48 2001/10/16 02:42:36 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -595,6 +595,10 @@ rtrequest1(req, info, ret_nrt)
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
 			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
+		}
+		if (rt->rt_parent) {
+			rt->rt_parent->rt_refcnt--;
+			rt->rt_parent = NULL;
 		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
