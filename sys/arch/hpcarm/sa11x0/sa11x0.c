@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.8 2001/04/17 17:12:40 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.9 2001/05/01 12:36:54 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -224,7 +224,7 @@ sa11x0_search(parent, cf, aux)
         sa.sa_memsize = cf->cf_loc[SAIPCF_MEMSIZE];
         sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 
-        if (((*cf->cf_attach->ca_match)(parent, cf, &sa) == sc->sc_pri))
+        if ((*cf->cf_attach->ca_match)(parent, cf, &sa) > 0)
                 config_attach(parent, cf, &sa, sa11x0_print);
 
         return 0;
