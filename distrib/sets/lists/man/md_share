@@ -3,6 +3,7 @@
 ./usr/share/man/cat4/amiga/bah.0
 ./usr/share/man/cat4/amiga/console.0
 ./usr/share/man/cat4/amiga/ed.0
+./usr/share/man/cat4/amiga/es.0
 ./usr/share/man/cat4/amiga/gtsc.0
 ./usr/share/man/cat4/amiga/intro.0
 ./usr/share/man/cat4/amiga/ite.0
@@ -59,6 +60,8 @@
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wd.0
+./usr/share/man/cat4/pc532/lpt.0
+./usr/share/man/cat4/pc532/plip.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgsix.0
 ./usr/share/man/cat4/sparc/cgthree.0
@@ -134,6 +137,8 @@
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/boot_hp300.0
 ./usr/share/man/cat8/boot_i386.0
+./usr/share/man/cat8/boot_mac68k.0
+./usr/share/man/cat8/boot_pmax.0
 ./usr/share/man/cat8/boot_sparc.0
 ./usr/share/man/cat8/boot_tahoe.0
 ./usr/share/man/cat8/boot_vax.0
