@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.38 2004/04/18 14:12:05 lukem Exp $	*/
+/*	$NetBSD: queue.h,v 1.39 2004/04/18 14:25:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -171,6 +171,7 @@ struct {								\
 #define	LIST_FIRST(head)		((head)->lh_first)
 #define	LIST_NEXT(elm, field)		((elm)->field.le_next)
 
+
 /*
  * Singly-linked List definitions.
  */
@@ -190,13 +191,6 @@ struct {								\
 /*
  * Singly-linked List functions.
  */
-#define	SLIST_EMPTY(head)	((head)->slh_first == NULL)
-#define	SLIST_FIRST(head)	((head)->slh_first)
-#define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
-
-#define	SLIST_FOREACH(var, head, field)					\
-	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
-
 #define	SLIST_INIT(head) do {						\
 	(head)->slh_first = NULL;					\
 } while (/*CONSTCOND*/0)
@@ -210,8 +204,6 @@ struct {								\
 	(elm)->field.sle_next = (head)->slh_first;			\
 	(head)->slh_first = (elm);					\
 } while (/*CONSTCOND*/0)
-
-#define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
 
 #define	SLIST_REMOVE_HEAD(head, field) do {				\
 	(head)->slh_first = (head)->slh_first->field.sle_next;		\
@@ -229,6 +221,17 @@ struct {								\
 		    curelm->field.sle_next->field.sle_next;		\
 	}								\
 } while (/*CONSTCOND*/0)
+
+#define	SLIST_FOREACH(var, head, field)					\
+	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
+
+/*
+ * Singly-linked List access methods.
+ */
+#define	SLIST_EMPTY(head)	((head)->slh_first == NULL)
+#define	SLIST_FIRST(head)	((head)->slh_first)
+#define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
+
 
 /*
  * Singly-linked Tail queue declarations.
@@ -296,11 +299,13 @@ struct {								\
 		(var);							\
 		(var) = ((var)->field.stqe_next))
 
+/*
+ * Singly-linked Tail queue access methods.
+ */
 #define	STAILQ_EMPTY(head)	((head)->stqh_first == NULL)
-
 #define	STAILQ_FIRST(head)	((head)->stqh_first)
-
 #define	STAILQ_NEXT(elm, field)	((elm)->field.stqe_next)
+
 
 /*
  * Simple queue definitions.
@@ -374,6 +379,7 @@ struct {								\
 #define	SIMPLEQ_EMPTY(head)		((head)->sqh_first == NULL)
 #define	SIMPLEQ_FIRST(head)		((head)->sqh_first)
 #define	SIMPLEQ_NEXT(elm, field)	((elm)->field.sqe_next)
+
 
 /*
  * Tail queue definitions.
@@ -482,6 +488,16 @@ struct {								\
 	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
 } while (/*CONSTCOND*/0)
 
+#define	TAILQ_FOREACH(var, head, field)					\
+	for ((var) = ((head)->tqh_first);				\
+		(var);							\
+		(var) = ((var)->field.tqe_next))
+
+#define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
+	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
+		(var);							\
+		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
+
 /*
  * Tail queue access methods.
  */
@@ -494,15 +510,6 @@ struct {								\
 #define	TAILQ_PREV(elm, headname, field) \
 	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 
-#define	TAILQ_FOREACH(var, head, field)					\
-	for ((var) = ((head)->tqh_first);				\
-		(var);							\
-		(var) = ((var)->field.tqe_next))
-
-#define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
-	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
-		(var);							\
-		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
 
 /*
  * Circular queue definitions.
@@ -601,4 +608,5 @@ struct {								\
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
 #define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
 #define	CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
+
 #endif	/* !_SYS_QUEUE_H_ */
