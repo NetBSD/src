@@ -480,6 +480,7 @@ extern const bfd_target armpe_little_vec;
 extern const bfd_target armpe_big_vec;
 extern const bfd_target armpei_little_vec;
 extern const bfd_target armpei_big_vec;
+extern const bfd_target armnetbsd_vec;
 extern const bfd_target b_out_vec_big_host;
 extern const bfd_target b_out_vec_little_host;
 extern const bfd_target bfd_elf64_alpha_vec;
@@ -722,6 +723,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&armpe_big_vec,
 	&armpei_little_vec,
 	&armpei_big_vec,
+	&armnetbsd_vec,
 	&icoff_big_vec,
 	&icoff_little_vec,
 	&ieee_vec,

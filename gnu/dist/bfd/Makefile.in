@@ -271,6 +271,8 @@ BFD32_BACKENDS_CFILES = \
 	aout-sparcle.c \
 	aout0.c \
 	aout32.c \
+	aoutarm32.c \
+	armnetbsd.c \
 	bout.c \
 	cf-i386lynx.c \
 	cf-m68klynx.c \
@@ -922,6 +924,9 @@ aout0.o: aout0.c aoutf1.h $(INCDIR)/aout/sun4.h libaout.h \
 aout32.o: aout32.c aoutx.h $(INCDIR)/bfdlink.h libaout.h \
   $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def \
   $(INCDIR)/aout/ar.h
+armnetbsd.o: armnetbsd.c netbsd.h libaout.h $(INCDIR)/bfdlink.h \
+  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 bout.o: bout.c $(INCDIR)/bfdlink.h genlink.h $(INCDIR)/bout.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def libaout.h
 cf-i386lynx.o: cf-i386lynx.c coff-i386.c $(INCDIR)/coff/i386.h \

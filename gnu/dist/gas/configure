@@ -792,6 +792,7 @@ for this_target in $target $canon_targets ; do
       arm-*-coff)           fmt=coff ;;
       arm-*-riscix*)        fmt=aout ;;
       arm-*-pe)             fmt=coff targ=armcoff em=pe ;;
+      arm-*-netbsd*)        fmt=aout em=nbsd bfd_gas=yes ;;
 
       d10v-*-*)		    fmt=elf bfd_gas=yes ;;
 

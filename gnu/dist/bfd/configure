@@ -2002,6 +2002,7 @@ do
     a_out_adobe_vec)		tb="$tb aout-adobe.o aout32.o" ;;
     armcoff_little_vec)		tb="$tb coff-arm.o cofflink.o " ;;
     armcoff_big_vec)		tb="$tb coff-arm.o cofflink.o " ;;
+    armnetbsd_vec)		tb="$tb armnetbsd.o aoutarm32.o " ;;
     armpe_little_vec)		tb="$tb pe-arm.o cofflink.o " ;;
     armpe_big_vec)		tb="$tb pe-arm.o cofflink.o " ;;
     armpei_little_vec)		tb="$tb pei-arm.o cofflink.o " ;;
