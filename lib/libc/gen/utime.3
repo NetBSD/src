@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)utime.3	6.3 (Berkeley) 4/19/91
-.\"	$Id: utime.3,v 1.2 1993/07/30 08:40:30 mycroft Exp $
+.\"     @(#)utime.3	6.3 (Berkeley) 4/19/91
 .\"
-.Dd April 19, 1991
+.Dd August 13, 1993
 .Dt UTIME 3
 .Os BSD 4
 .Sh NAME
@@ -43,23 +42,43 @@
 .Ft int
 .Fn utime "const char *file" "const struct utimbuf *timep"
 .Sh DESCRIPTION
-.Bf -symbolic
-This interface is obsoleted by utimes(2) .
-It is available from the compatibility library, libcompat.
-.Ef
-.Pp
-.Sh DESCRIPTION
 The
 .Fn utime
-function sets the access and modification times of the named file from
-the structures in the argument array
-.Fa timep .
+function sets the access and modification times of the named file.
 .Pp
-The calling process's effective user ID must match the owner of the
-file or must be the super-user.
+If
+.Fa timep
+is
+.Dv NULL ,
+the access and modification times are set to the current time.
+The calling process must be the owner of the file or have permission to 
+write the file.
+.Pp
+If 
+.Fa timep
+is 
+.Pf non- Dv NULL ,
+.Fa time 
+is assumed to be a pointer to a utimbuf structure, as defined in 
+.Aq Pa utime.h :
+.Bd -literal -offset indent
+struct utimbuf {
+	time_t actime;          /* Access time */
+	time_t modtime;         /* Modification time */
+} ;
+.Ed
+.Pp
+The access time is set to the value of the actime member, and the modification
+time is set to the value of the modtime member.  The times are measured in
+seconds since 0 hours, 0 minutes, 0 seconds, January 1, 1970, Coordinated 
+Universal Time.
+The calling process must be the owner of the file or be the super-user.
+.Pp
+In either case, the inode-change-time of the file is set to the current 
+time.
 .Sh SEE ALSO
-.Xr utimes 2 ,
-.Xr stat 2
+.Xr stat 2 ,
+.Xr utimes 2
 .Sh HISTORY
 A
 .Fn utime
