@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.34 2000/05/28 05:49:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.35 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,31 +107,6 @@ unsigned maxsmap = MAXSSIZ;	/* kern_resource.c: RLIMIT_STACK max */
 int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 				/* XXX: see uvm_kernacc */
 
-
-/*
- * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
- */
-
-void
-uvm_sleep(event, slock, canintr, msg, timo)
-	void *event;
-	struct simplelock *slock;
-	boolean_t canintr;
-	const char *msg;
-	int timo;
-{
-	int s, pri;
-
-	pri = PVM;
-	if (canintr)
-		pri |= PCATCH;
-
-	s = splhigh();
-	if (slock != NULL)
-		simple_unlock(slock);
-	(void) tsleep(event, pri, msg, timo);
-	splx(s);
-}
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
