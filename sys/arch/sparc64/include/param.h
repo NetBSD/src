@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2000/02/11 19:30:29 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.17 2000/05/22 02:35:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,6 +248,8 @@ extern int mmumod;
  * extra memory references they'll generate.
  */
 
+#define CPU_ISSUN4U	(1)
+#define CPU_ISSUN4MOR4U	(1)
 #define CPU_ISSUN4M	(0)
 #define CPU_ISSUN4C	(0)
 #define CPU_ISSUN4	(0)
