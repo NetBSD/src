@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.3 1996/04/08 18:32:41 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.4 1996/07/20 18:14:55 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -131,13 +131,6 @@ uvaxIII_steal_pages()
 	subtyp = *jon;
 }
 
-int
-uvaxIII_clock()
-{
-	mtpr(0x40, PR_ICCS); /* Start clock and enable interrupt */
-	return 1;
-}
-
 void
 uvaxIII_memerr()
 {
@@ -241,9 +234,9 @@ uvaxIII_mchk(cmcf)
 	}
 	if (time.tv_sec - i < 7) {
 		ka650discache();
-		printf(" parity error:  cacheing disabled\n");
+		printf(" parity error:	cacheing disabled\n");
 	} else {
-		printf(" parity error:  flushing cache\n");
+		printf(" parity error:	flushing cache\n");
 		ka650encache();
 	}
 	/*
