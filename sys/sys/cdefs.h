@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.42.10.1 2003/01/01 17:20:07 tron Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.42.10.2 2004/04/20 06:21:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -209,7 +209,7 @@
 #ifdef __lint__
 #define	__RENAME(x)	__symbolrename(x)
 #else
- #error "No function renaming possible"
+#error "No function renaming possible"
 #endif /* __lint__ */
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
