@@ -1,5 +1,4 @@
-#define ACPI_BUT_DEBUG
-/*	$NetBSD: acpi_button.c,v 1.7 2003/04/17 01:22:21 thorpej Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.8 2003/04/17 01:26:41 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.7 2003/04/17 01:22:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.8 2003/04/17 01:26:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
