@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.1 1998/08/29 21:42:04 pk Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.2 1998/08/31 11:13:10 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,10 +69,10 @@ struct lsi64854_softc {
 };
 
 #define L64854_GCSR(sc)	\
-	(bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CSR))
+	(bus_space_read_4((sc)->sc_bustag, (sc)->sc_regs, L64854_REG_CSR))
 
 #define L64854_SCSR(sc, csr)	\
-	bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CSR, csr)
+	bus_space_write_4((sc)->sc_bustag, (sc)->sc_regs, L64854_REG_CSR, csr)
 
 
 /*
