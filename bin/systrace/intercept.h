@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.11 2003/08/02 14:24:30 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.12 2003/08/02 14:29:33 provos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -184,6 +184,7 @@ struct intercept_pid *intercept_getpid(pid_t);
 int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
+char *normalize_filename(int, pid_t, char *, int);
 char *intercept_filename(int, pid_t, void *, int);
 void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
