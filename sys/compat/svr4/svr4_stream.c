@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.3 1995/01/10 00:04:06 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.4 1995/02/01 01:37:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -269,6 +269,11 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 	switch (cmd) {
 	case SVR4_I_NREAD:
 		DPRINTF(("I_NREAD\n"));
+		{
+		    int nread = 0;	/* XXX: is that FIONREAD? */
+		    if ((error = copyout(&nread, dat, sizeof(nread))) != 0)
+			    return error;
+		}
 		return 0;
 
 	case SVR4_I_PUSH:
