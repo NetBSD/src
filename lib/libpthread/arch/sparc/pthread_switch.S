@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2003/09/07 01:54:47 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/07 02:08:31 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,10 +67,10 @@
 	ld	[pt + PT_TRAPUC], tmp					; \
 	tst	tmp							; \
 	bnz	1f							; \
-	nop								; \
+	 clr	[pt + PT_TRAPUC]					; \
 	ld	[pt + PT_UC], tmp					; \
 1:	add	tmp, -STACK_ALIGN(STACKSPACE + CONTEXTSIZE), %sp	; \
-	st	%g0, [pt + PT_TRAPUC]
+
 	
 /*
  * void	pthread__switch(pthread_t self, pthread_t next);
