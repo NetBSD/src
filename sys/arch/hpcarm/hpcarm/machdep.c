@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/02/23 03:48:11 ichiro Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/02/25 15:45:23 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -85,9 +85,6 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
-extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
@@ -906,17 +903,6 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
-	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
-	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
-		memory_disc_size = integer;
-		memory_disc_size *= 1024;
-		if (memory_disc_size < 32*1024)
-			memory_disc_size = 32*1024;
-		if (memory_disc_size > 2048*1024)
-			memory_disc_size = 2048*1024;
-	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))

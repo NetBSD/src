@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.4 2001/02/24 21:43:02 reinoud Exp $
+#	$NetBSD: files.hpcarm,v 1.5 2001/02/25 15:45:23 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,7 +24,7 @@ defopt	XSERVER
 define todservice {}
 
 # Memory disk driver
-file	arch/hpcarm/dev/md_hooks.c		md & memory_disk_hooks
+file	dev/md_root.c				memory_disk_hooks
 major   {md = 18}
 
 # Standard keyboard driver
