@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.634 2004/07/27 00:13:11 rumble Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.635 2004/07/27 01:01:17 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.635 2004/07/27 00:12:10 rumble Exp 
+ *	NetBSD: pcidevs,v 1.636 2004/07/27 01:01:00 christos Exp 
  */
 
 /*
@@ -2888,6 +2888,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "USB Controller",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_ASMC,
+	    0,
+	    "Compaq",
+	    "Advanced Systems Management Controller",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB_MEDIAGX,
