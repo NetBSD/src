@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.14 2001/01/11 15:10:46 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.15 2001/01/12 19:41:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.14 2001/01/11 15:10:46 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.15 2001/01/12 19:41:13 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -68,12 +68,7 @@ u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
  * weight tables.  Gweights is one of ascii, Rascii..
  * modified to weight rec_d = 0 (or 255)
  */
-extern u_char gweights[NBINS];
 u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
-/*
- * masks of ignored characters.  Alltable is 256 ones
- */
-u_char dtable[NBINS], itable[NBINS], alltable[NBINS];
 int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
 struct coldesc clist[(ND+1)*2];
 int ncols = 0;
@@ -127,11 +122,11 @@ main(argc, argv)
 			break;
 		case 'd': case 'f': case 'i': case 'n': case 'r':
 			tmp |= optval(ch, 0);
-			if (tmp & R && tmp & F)
+			if ((tmp & R) && (tmp & F))
 				fldtab->weights = RFtable;
 			else if (tmp & F)
 				fldtab->weights = Ftable;
-			else if(tmp & R)
+			else if (tmp & R)
 				fldtab->weights = Rascii;
 			fldtab->flags |= tmp;
 			break;
@@ -225,10 +220,12 @@ main(argc, argv)
 		optind--;
 	} else
 		filelist.names = (const char * const *) &argv[optind];
+
 	if (SINGL_FLD)
 		get = makeline;
 	else
 		get = makekey;
+
 	if (cflag) {
 		order(&filelist, get, fldtab);
 		/* NOT REACHED */
@@ -300,7 +297,7 @@ usage(msg)
 {
 	if (msg)
 		(void)fprintf(stderr, "sort: %s\n", msg);
-	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinr] [-t char] ");
+	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinrsS] [-t char] ");
 	(void)fprintf(stderr, "[-T char] [-k keydef] ... [files]\n");
 	exit(2);
 }
