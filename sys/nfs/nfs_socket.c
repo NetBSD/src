@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.31 1996/10/13 01:39:07 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.32 1997/01/31 02:58:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -400,7 +400,7 @@ nfs_send(so, nam, top, rep)
 	return (error);
 }
 
-#ifdef NFSCLIENT
+#ifdef NFS
 /*
  * Receive a Sun RPC Request/Reply. For SOCK_DGRAM, the work is all
  * done by soreceive(), but for SOCK_STREAM we must deal with the Record
@@ -1066,7 +1066,7 @@ nfsmout:
 	free((caddr_t)rep, M_NFSREQ);
 	return (error);
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 /*
  * Generate the rpc reply header
