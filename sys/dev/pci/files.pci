@@ -1,0 +1,17 @@
+#	$NetBSD: files.pci,v 1.1 1995/04/17 07:46:10 cgd Exp $
+#
+# Config.new file and device description for machine-independent PCI code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+# ports should define their own "device pci" line (like the one below,
+# but with the correct bus attachment).
+
+#device	pci at root {[bus = -1], [dev = -1]}
+file	dev/pci/pci.c			pci
+
+device	ncr at pci: scsi
+file	dev/pci/ncr.c			ncr
+
+device	de at pci: ether, ifnet
+file	dev/pci/if_de.c			de
