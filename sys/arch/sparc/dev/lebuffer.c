@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.2 1997/03/23 22:54:26 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -90,8 +90,7 @@ lebufattach(parent, self, aux)
 
 	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
 		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
-			     ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 
 	/*
 	 * This device's "register space" is just a buffer where the

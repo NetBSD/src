@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.6 1996/12/10 22:55:02 pk Exp $ */
+/*	$NetBSD: power.c,v 1.7 1997/05/24 20:16:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -90,7 +90,7 @@ powerattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	power_reg = mapdev(ra->ra_reg, 0, 0, sizeof(long), ca->ca_bustype);
+	power_reg = mapiodev(ra->ra_reg, 0, sizeof(long));
 
 	printf("\n");
 }
