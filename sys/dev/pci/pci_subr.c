@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.48 2002/03/22 20:03:20 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.49 2002/05/03 16:08:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.48 2002/03/22 20:03:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.49 2002/05/03 16:08:36 nathanw Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1202,11 +1202,11 @@ pci_conf_print(
 		    hdrtype);
 	printf("\n");
 
-#ifdef _KERNEL
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
 	pci_conf_print_regs(regs, endoff, 256);
 	printf("\n");
+#ifdef _KERNEL
 	if (printfn)
 		(*printfn)(pc, tag, regs);
 	else
