@@ -1,0 +1,8 @@
+# $NetBSD: std.sh3,v 1.1 1999/09/13 10:31:07 itojun Exp $
+#
+# standard, required NetBSD/sh3 'options'
+
+machine sh3
+
+#options PMAP_NEW	# UVM's new pmap interface
+options EXEC_SCRIPT	# exec #! scripts
