@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.7 1999/05/15 18:46:27 sommerfeld Exp $	*/
+/*	$NetBSD: subr.c,v 1.8 1999/05/15 19:05:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.7 1999/05/15 18:46:27 sommerfeld Exp $");
+__RCSID("$NetBSD: subr.c,v 1.8 1999/05/15 19:05:13 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -71,7 +71,7 @@ arrayify(e_length, e_array, header)
 		array[listindex] = errorp;
 		errorp->error_position = listindex;
 	}
-	array[listindex] = (Eptr)0;
+	array[listindex] = NULL;
 	*e_length = listlength;
 	*e_array = array;
 }
@@ -141,7 +141,7 @@ lastchar(string)
 	char	*string;
 {
 	int	length;
-	if (string == 0) return('\0');
+	if (string == NULL) return('\0');
 	length = strlen(string);
 	if (length >= 1)
 		return(string[length-1]);
@@ -164,7 +164,7 @@ next_lastchar(string)
 	char	*string;
 {
 	int	length;
-	if (string == 0) return('\0');
+	if (string == NULL) return('\0');
 	length = strlen(string);
 	if (length >= 2)
 		return(string[length - 2]);
@@ -345,7 +345,7 @@ wordvbuild(string, r_wordc, r_wordv)
 	for (wordcount = 0, cp = string; *cp; wordcount++){
 		while (*cp  && isspace((unsigned char)*cp))
 			cp++;
-		if (*cp == 0)
+		if (*cp == '\0')
 			break;
 		while (*cp && !isspace((unsigned char)*cp))
 			cp++;
@@ -354,7 +354,7 @@ wordvbuild(string, r_wordc, r_wordv)
 	for (cp=string,wordindex=0; wordcount; wordindex++,--wordcount){
 		while (*cp && isspace((unsigned char)*cp))
 			cp++;
-		if (*cp == 0)
+		if (*cp == '\0')
 			break;
 		wordv[wordindex] = cp;
 		while(*cp && !isspace((unsigned char)*cp))
@@ -363,7 +363,7 @@ wordvbuild(string, r_wordc, r_wordv)
 	}
 	if (wordcount != 0)
 		errx(6, "Initial miscount of the number of words in a line");
-	wordv[wordindex] = (char *)0;
+	wordv[wordindex] = NULL;
 #ifdef FULLDEBUG
 	for (wordcount = 0; wordcount < wordindex; wordcount++)
 		printf("Word %d = \"%s\"\n", wordcount, wordv[wordcount]);
@@ -386,7 +386,7 @@ wordvcmp(wordv1, wordc, wordv2)
 	int	back;
 
 	for (i = 0; i < wordc; i++){
-		if (wordv1[i] == 0 || wordv2[i] == 0)
+		if (wordv1[i] == NULL || wordv2[i] == NULL)
 			return(-1);
 		if ((back = strcmp(wordv1[i], wordv2[i])) != NULL)
 			return(back);
@@ -410,7 +410,7 @@ wordvsplice(emptyhead, wordc, wordv)
 
 	nwordv = (char **)Calloc(nwordc, sizeof (char *));
 	for (i = 0; i < emptyhead; i++)
-		nwordv[i] = 0;
+		nwordv[i] = NULL;
 	for(i = emptyhead; i < nwordc; i++){
 		nwordv[i] = wordv[i-emptyhead];
 	}
