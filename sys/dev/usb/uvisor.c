@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.2 2000/03/31 13:08:02 hubertf Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.3 2000/04/05 11:12:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #ifdef UVISOR_DEBUG
 #define DPRINTF(x)	if (uvisordebug) printf x
 #define DPRINTFN(n,x)	if (uvisordebug>(n)) printf x
-int uvisordebug = 10;
+int uvisordebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -152,7 +152,7 @@ USB_MATCH(uvisor)
 		     uaa->vendor, uaa->product));
 
 	if (uaa->vendor == USB_VENDOR_HANDSPRING &&
-	    uaa->product & USB_PRODUCT_HANDSPRING_VISOR)
+	    uaa->product == USB_PRODUCT_HANDSPRING_VISOR)
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
@@ -193,12 +193,15 @@ USB_ATTACH(uvisor)
 	printf("%s: %s\n", devname, devinfo);
 
 	id = usbd_get_interface_descriptor(iface);
-	sc->sc_iface = iface;
-	sc->sc_udev = dev;
 
+	sc->sc_udev = dev;
+	sc->sc_iface = iface;
+
+	uca.device = dev;
+	uca.iface = iface;
 	uca.methods = &uvisor_methods;
 	uca.arg = sc;
-	uca.iface = iface;
+	uca.portno = UCOM_UNK_PORTNO;
 
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -240,8 +243,7 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 
-	uca.portno = UCOM_UNK_PORTNO;
-	DPRINTF(("uvisor: in=%d out=%d\n", uca.bulkin, uca.bulkout));
+	DPRINTF(("uvisor: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -318,7 +320,7 @@ uvisor_init(sc)
 		char *string;
 
 		np = UGETW(coninfo.num_ports);
-		printf("%s: Number of ports: %d", USBDEVNAME(sc->sc_dev), np);
+		printf("%s: Number of ports: %d\n", USBDEVNAME(sc->sc_dev), np);
 		for (i = 0; i < np; ++i) {
 			switch (coninfo.connections[i].port_function_id) {
 			case UVISOR_FUNCTION_GENERIC:
@@ -337,8 +339,9 @@ uvisor_init(sc)
 				string = "unknown";
 				break;	
 			}
-			printf("%s: port %d, is for %s", USBDEVNAME(sc->sc_dev),
-			    coninfo.connections[i].port, string);
+			printf("%s: port %d, is for %s\n",
+			    USBDEVNAME(sc->sc_dev), coninfo.connections[i].port,
+			    string);
 		}
 	}
 #endif
@@ -367,6 +370,9 @@ uvisor_close(addr, portno)
 	usb_device_request_t req;
 	struct uvisor_connection_info coninfo; /* XXX ? */
 	int actlen;
+
+	if (sc->sc_dying)
+		return;
 
 	req.bmRequestType = UT_READ_VENDOR_ENDPOINT; /* XXX read? */
 	req.bRequest = UVISOR_CLOSE_NOTIFICATION;
