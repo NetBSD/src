@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.28 2000/09/23 04:35:54 augustss Exp $
+.\" $NetBSD: usb.4,v 1.29 2000/09/23 20:26:48 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ value of 1.
 includes machine-independent
 .Tn USB
 drivers, sorted by driver name:
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width uscanner -offset indent
 .It aue
 driver for ADMtek AN986 Pegasus USB Ethernet.
 .It cue
@@ -144,6 +144,10 @@ mouse driver.
 driver for
 .Tn Prolific
 host-to-host adapter.
+.It urio
+driver for the
+.Tn Diamond
+Rio 500 MP3 player.
 .It uscanner
 driver for some USB scanners.
 .It uvisor
@@ -395,6 +399,7 @@ specifications can be found at:
 .Xr umass 4 ,
 .Xr ums 4 ,
 .Xr upl 4 ,
+.Xr urio 4 ,
 .Xr uscanner 4 ,
 .Xr uvisor 4 ,
 .Xr usb 3 ,
