@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.11 1995/09/27 03:38:57 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.12 1995/09/30 19:42:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -411,6 +411,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 			pending_5380_count -= resid;
 		}
 
+		long_data = (u_int32_t *) pending_5380_data;
+
 		/*
 		 * Get ready to start the transfer.
 		 */
@@ -419,7 +421,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 
 		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
-		long_data = (u_int32_t *) pending_5380_data;
 
 #define R4	*long_data++ = *long_drq++
 		while ( count >= 512 ) {
@@ -483,6 +484,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 			pending_5380_count -= resid;
 		}
 
+		long_data = (u_int32_t *) pending_5380_data;
+
 		/*
 		 * Get ready to start the transfer.
 		 */
@@ -491,7 +494,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 
 		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
-		long_data = (u_int32_t *) pending_5380_data;
 
 #define W4	*long_drq++ = *long_data++
 		while ( count >= 64 ) {
