@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/06 19:30:11 jhawk Exp $
+#	$NetBSD: Makefile,v 1.9 2001/10/05 22:54:51 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -28,4 +28,6 @@ FILES= msg_sys.def
 FILESDIR= /usr/share/misc
 .endif
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
