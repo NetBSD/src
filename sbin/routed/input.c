@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.26 2000/03/02 20:58:55 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.27 2001/03/10 23:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)input.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: input.c,v 1.26 2000/03/02 20:58:55 christos Exp $");
-#endif
-
 #include "defs.h"
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: input.c,v 1.27 2001/03/10 23:52:45 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.23 ");
+#ident "Revision: 2.23 "
+#endif
 
 static void input(struct sockaddr_in *, struct interface *, struct interface *,
 		  struct rip *, int);
@@ -494,7 +496,8 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		if (from->sin_port != ntohs(RIP_PORT)) {
 			msglim(&bad_router, FROM_NADDR,
 			       "    discard RIP response from unknown port"
-			       " %d", from->sin_port);
+			       " %d on %s",
+			       ntohs(from->sin_port), naddr_ntoa(FROM_NADDR));
 			return;
 		}
 

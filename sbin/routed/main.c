@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2001/01/15 13:19:12 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2001/03/10 23:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,16 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93";
-#define __COPYRIGHT(a) char copyright[] = a;
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.27 2001/01/15 13:19:12 itojun Exp $");
-#endif
-__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-
 #include "defs.h"
 #include "pathnames.h"
 #ifdef sgi
@@ -51,6 +41,18 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
+
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
+	    "The Regents of the University of California."
+	    "  All rights reserved.\n");
+#ifdef __NetBSD__
+__RCSID("$NetBSD: main.c,v 1.28 2001/03/10 23:52:45 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.24 ");
+#ident "Revision: 2.24 "
+#endif
 
 #if defined(__NetBSD__)
 #include <util.h>
@@ -83,7 +85,9 @@ time_t	now_expire;
 time_t	now_garbage;
 
 struct timeval next_bcast;		/* next general broadcast */
-struct timeval no_flash = {EPOCH+SUPPLY_INTERVAL};  /* inhibit flash update */
+struct timeval no_flash = {		/* inhibit flash update */
+	EPOCH+SUPPLY_INTERVAL, 0
+};
 
 struct timeval flush_kern_timer;
 
@@ -222,7 +226,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.19");
+			msglog("version 2.24");
 			break;
 
 		default:
