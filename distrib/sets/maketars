@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.43 2003/09/30 05:07:40 lukem Exp $
+# $NetBSD: maketars,v 1.44 2003/10/16 14:20:20 dsl Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -113,10 +113,8 @@ SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 es=0
 cleanup()
 {
+	es=$?
 	/bin/rm -rf $SDIR
-	if [ $es -gt 255 ] ; then
-		es=255
-	fi
 	exit $es
 }
 trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
@@ -126,7 +124,7 @@ if [ -n "$metalog" ]; then
 	(
 		cat ${etcdir}/mtree/NetBSD.dist
 		echo "/unset all"
-		cat $metalog
+		cat $metalog 2>/dev/null
 	) | ${MTREE} -C -k all -N ${etcdir} > $SDIR/metalog
 	rv=$?
 	if [ $rv -ne 0 ]; then
