@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.43 1995/01/13 14:47:10 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.44 1995/01/18 04:20:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -984,6 +984,8 @@ ahb_scsi_cmd(xs)
 	ecb->sense_ptr = KVTOPHYS(&ecb->ecb_sense);
 	ecb->req_sense_length = sizeof(ecb->ecb_sense);
 	ecb->status = KVTOPHYS(&ecb->ecb_status);
+	ecb->ecb_status.host_stat = 0x00;
+	ecb->ecb_status.target_stat = 0x00;
 
 	if (xs->datalen && (flags & SCSI_RESET) == 0) {
 		ecb->data_addr = KVTOPHYS(ecb->ahb_dma);
