@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.36 2000/06/12 20:51:39 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.36 2000/06/12 20:51:39 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -215,10 +215,8 @@ doupdate(void)
 	int	 dnum;
 
 	/* Check if we need to restart ... */
-	if (__endwin) {
-		__endwin = 0;
+	if (__endwin)
 		__restartwin();
-	}
 
 	if (curwin)
 		win = curscr;
