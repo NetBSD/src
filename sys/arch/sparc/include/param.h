@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1995/03/28 18:19:53 jtc Exp $ */
+/*	$NetBSD: param.h,v 1.14 1995/06/26 06:56:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,21 +137,17 @@ extern int nbpg, pgofset, pgshift;
 #define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-#define	dtob(x)	((x) << DEV_BSHIFT)
+/* pages ("clicks") to disk blocks */
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)	((x) << PGSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
-/* bytes to pages */
-#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-
-#define	btodb(bytes)		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)		/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
+/* bytes to disk blocks */
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
