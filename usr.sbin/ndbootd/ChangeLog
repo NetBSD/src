@@ -1,3 +1,12 @@
+Wed May 23 02:35:49 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* configure.in: Bumped the version.
+	* ndbootd.c: Changed many debugging printfs to compile quietly on the
+	alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
+
+	* config/ndbootd-bpf.c: Changed many debugging printfs to compile quietly on the
+	alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
+
 Tue May 22 13:13:24 2001  Matthew Fredette  <fredette@alum.mit.edu>
 
 	* Release 0.3 out.
