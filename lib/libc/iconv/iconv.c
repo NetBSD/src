@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.1 2003/06/27 05:21:53 tshiozak Exp $	*/
+/*	$NetBSD: iconv.c,v 1.2 2003/07/01 09:42:17 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.1 2003/06/27 05:21:53 tshiozak Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.2 2003/07/01 09:42:17 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <paths.h>
+#include <sys/queue.h>
 
 #include <iconv.h>
 
@@ -43,6 +44,7 @@ __RCSID("$NetBSD: iconv.c,v 1.1 2003/06/27 05:21:53 tshiozak Exp $");
 #include <citrus/citrus_types.h>
 #include <citrus/citrus_module.h>
 #include <citrus/citrus_esdb.h>
+#include <citrus/citrus_hash.h>
 #include <citrus/citrus_iconv.h>
 
 #define ISBADF(_h_)	(!(_h_) || (_h_) == (iconv_t)-1)
@@ -65,7 +67,7 @@ _iconv_open(const char *out, const char *in)
 		return ((iconv_t)-1);
 	}
 
-	return ((iconv_t)handle);
+	return ((iconv_t)(void *)handle);
 }
 
 int
@@ -76,7 +78,7 @@ _iconv_close(iconv_t handle)
 		return (-1);
 	}
 
-	_citrus_iconv_close((struct _citrus_iconv *)handle);
+	_citrus_iconv_close((struct _citrus_iconv *)(void *)handle);
 
 	return (0);
 }
@@ -93,7 +95,8 @@ _iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
 	}
 
 	err = _citrus_iconv_convert(
-		(struct _citrus_iconv *)handle, in, szin, out, szout, 0, &ret);
+		(struct _citrus_iconv *)(void *)handle, in, szin, out, szout,
+		0, &ret);
 	if (err) {
 		errno = err;
 		ret = (size_t)-1;
@@ -115,7 +118,7 @@ __iconv(iconv_t handle, const char **in, size_t *szin, char **out,
 	}
 
 	err = _citrus_iconv_convert(
-		(struct _citrus_iconv *)handle, in, szin, out, szout,
+		(struct _citrus_iconv *)(void *)handle, in, szin, out, szout,
 		flags, &ret);
 	if (invalids)
 		*invalids = ret;
