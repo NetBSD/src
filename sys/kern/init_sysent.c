@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.145 2003/09/10 16:44:12 christos Exp $ */
+/* $NetBSD: init_sysent.c,v 1.146 2003/09/11 14:00:21 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.145 2003/09/10 16:44:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.146 2003/09/11 14:00:21 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"

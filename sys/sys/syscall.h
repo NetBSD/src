@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.138 2003/09/10 16:44:13 christos Exp $ */
+/* $NetBSD: syscall.h,v 1.139 2003/09/11 14:00:22 christos Exp $ */
 
 /*
  * System call numbers.
@@ -31,6 +31,7 @@
 /* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage *" */
 #define	SYS_wait4	7
 
+/* syscall: "compat_43_ocreat" ret: "int" args: "const char *" "mode_t" */
 #define	SYS_compat_43_ocreat	8
 
 /* syscall: "link" ret: "int" args: "const char *" "const char *" */
@@ -61,11 +62,18 @@
 /* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
 #define	SYS_getfsstat	18
 
+/* syscall: "compat_43_olseek" ret: "long" args: "int" "long" "int" */
 #define	SYS_compat_43_olseek	19
 
+#ifdef COMPAT_43
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	SYS_getpid	20
 
+#else
+/* syscall: "getpid" ret: "pid_t" args: */
+#define	SYS_getpid	20
+
+#endif
 /* syscall: "mount" ret: "int" args: "const char *" "const char *" "int" "void *" */
 #define	SYS_mount	21
 
@@ -75,9 +83,15 @@
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	SYS_setuid	23
 
+#ifdef COMPAT_43
 /* syscall: "getuid" ret: "uid_t" args: */
 #define	SYS_getuid	24
 
+#else
+/* syscall: "getuid" ret: "uid_t" args: */
+#define	SYS_getuid	24
+
+#endif
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	SYS_geteuid	25
 
@@ -117,11 +131,13 @@
 /* syscall: "kill" ret: "int" args: "int" "int" */
 #define	SYS_kill	37
 
+/* syscall: "compat_43_stat43" ret: "int" args: "const char *" "struct stat43 *" */
 #define	SYS_compat_43_stat43	38
 
 /* syscall: "getppid" ret: "pid_t" args: */
 #define	SYS_getppid	39
 
+/* syscall: "compat_43_lstat43" ret: "int" args: "const char *" "struct stat43 *" */
 #define	SYS_compat_43_lstat43	40
 
 /* syscall: "dup" ret: "int" args: "int" */
@@ -136,15 +152,26 @@
 /* syscall: "profil" ret: "int" args: "caddr_t" "size_t" "u_long" "u_int" */
 #define	SYS_profil	44
 
+#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "ktrace" ret: "int" args: "const char *" "int" "int" "int" */
 #define	SYS_ktrace	45
 
+#else
 				/* 45 is excluded ktrace */
+#endif
+/* syscall: "compat_13_sigaction13" ret: "int" args: "int" "const struct sigaction13 *" "struct sigaction13 *" */
 #define	SYS_compat_13_sigaction13	46
 
+#ifdef COMPAT_43
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	SYS_getgid	47
 
+#else
+/* syscall: "getgid" ret: "gid_t" args: */
+#define	SYS_getgid	47
+
+#endif
+/* syscall: "compat_13_sigprocmask13" ret: "int" args: "int" "int" */
 #define	SYS_compat_13_sigprocmask13	48
 
 /* syscall: "__getlogin" ret: "int" args: "char *" "size_t" */
@@ -156,13 +183,16 @@
 /* syscall: "acct" ret: "int" args: "const char *" */
 #define	SYS_acct	51
 
+/* syscall: "compat_13_sigpending13" ret: "int" args: */
 #define	SYS_compat_13_sigpending13	52
 
+/* syscall: "compat_13_sigaltstack13" ret: "int" args: "const struct sigaltstack13 *" "struct sigaltstack13 *" */
 #define	SYS_compat_13_sigaltstack13	53
 
 /* syscall: "ioctl" ret: "int" args: "int" "u_long" "..." */
 #define	SYS_ioctl	54
 
+/* syscall: "compat_12_oreboot" ret: "int" args: "int" */
 #define	SYS_compat_12_oreboot	55
 
 /* syscall: "revoke" ret: "int" args: "const char *" */
@@ -183,12 +213,16 @@
 /* syscall: "chroot" ret: "int" args: "const char *" */
 #define	SYS_chroot	61
 
+/* syscall: "compat_43_fstat43" ret: "int" args: "int" "struct stat43 *" */
 #define	SYS_compat_43_fstat43	62
 
+/* syscall: "compat_43_ogetkerninfo" ret: "int" args: "int" "char *" "int *" "int" */
 #define	SYS_compat_43_ogetkerninfo	63
 
+/* syscall: "compat_43_ogetpagesize" ret: "int" args: */
 #define	SYS_compat_43_ogetpagesize	64
 
+/* syscall: "compat_12_msync" ret: "int" args: "caddr_t" "size_t" */
 #define	SYS_compat_12_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
@@ -202,6 +236,7 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	SYS_sstk	70
 
+/* syscall: "compat_43_ommap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
 #define	SYS_compat_43_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
@@ -236,17 +271,22 @@
 /* syscall: "setitimer" ret: "int" args: "int" "const struct itimerval *" "struct itimerval *" */
 #define	SYS_setitimer	83
 
+/* syscall: "compat_43_owait" ret: "int" args: */
 #define	SYS_compat_43_owait	84
 
+/* syscall: "compat_12_oswapon" ret: "int" args: "const char *" */
 #define	SYS_compat_12_oswapon	85
 
 /* syscall: "getitimer" ret: "int" args: "int" "struct itimerval *" */
 #define	SYS_getitimer	86
 
+/* syscall: "compat_43_ogethostname" ret: "int" args: "char *" "u_int" */
 #define	SYS_compat_43_ogethostname	87
 
+/* syscall: "compat_43_osethostname" ret: "int" args: "char *" "u_int" */
 #define	SYS_compat_43_osethostname	88
 
+/* syscall: "compat_43_ogetdtablesize" ret: "int" args: */
 #define	SYS_compat_43_ogetdtablesize	89
 
 /* syscall: "dup2" ret: "int" args: "int" "int" */
@@ -270,15 +310,19 @@
 /* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	SYS_connect	98
 
+/* syscall: "compat_43_oaccept" ret: "int" args: "int" "caddr_t" "int *" */
 #define	SYS_compat_43_oaccept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	SYS_getpriority	100
 
+/* syscall: "compat_43_osend" ret: "int" args: "int" "caddr_t" "int" "int" */
 #define	SYS_compat_43_osend	101
 
+/* syscall: "compat_43_orecv" ret: "int" args: "int" "caddr_t" "int" "int" */
 #define	SYS_compat_43_orecv	102
 
+/* syscall: "compat_13_sigreturn13" ret: "int" args: "struct sigcontext13 *" */
 #define	SYS_compat_13_sigreturn13	103
 
 /* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
@@ -291,18 +335,25 @@
 #define	SYS_listen	106
 
 				/* 107 is obsolete vtimes */
+/* syscall: "compat_43_osigvec" ret: "int" args: "int" "struct sigvec *" "struct sigvec *" */
 #define	SYS_compat_43_osigvec	108
 
+/* syscall: "compat_43_osigblock" ret: "int" args: "int" */
 #define	SYS_compat_43_osigblock	109
 
+/* syscall: "compat_43_osigsetmask" ret: "int" args: "int" */
 #define	SYS_compat_43_osigsetmask	110
 
+/* syscall: "compat_13_sigsuspend13" ret: "int" args: "int" */
 #define	SYS_compat_13_sigsuspend13	111
 
+/* syscall: "compat_43_osigstack" ret: "int" args: "struct sigstack *" "struct sigstack *" */
 #define	SYS_compat_43_osigstack	112
 
+/* syscall: "compat_43_orecvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	SYS_compat_43_orecvmsg	113
 
+/* syscall: "compat_43_osendmsg" ret: "int" args: "int" "caddr_t" "int" */
 #define	SYS_compat_43_osendmsg	114
 
 				/* 115 is obsolete vtrace */
@@ -331,6 +382,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
 #define	SYS_fchmod	124
 
+/* syscall: "compat_43_orecvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
 #define	SYS_compat_43_orecvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
@@ -342,8 +394,10 @@
 /* syscall: "rename" ret: "int" args: "const char *" "const char *" */
 #define	SYS_rename	128
 
+/* syscall: "compat_43_otruncate" ret: "int" args: "const char *" "long" */
 #define	SYS_compat_43_otruncate	129
 
+/* syscall: "compat_43_oftruncate" ret: "int" args: "int" "long" */
 #define	SYS_compat_43_oftruncate	130
 
 /* syscall: "flock" ret: "int" args: "int" "int" */
@@ -374,16 +428,22 @@
 /* syscall: "adjtime" ret: "int" args: "const struct timeval *" "struct timeval *" */
 #define	SYS_adjtime	140
 
+/* syscall: "compat_43_ogetpeername" ret: "int" args: "int" "caddr_t" "int *" */
 #define	SYS_compat_43_ogetpeername	141
 
+/* syscall: "compat_43_ogethostid" ret: "int32_t" args: */
 #define	SYS_compat_43_ogethostid	142
 
+/* syscall: "compat_43_osethostid" ret: "int" args: "int32_t" */
 #define	SYS_compat_43_osethostid	143
 
+/* syscall: "compat_43_ogetrlimit" ret: "int" args: "int" "struct orlimit *" */
 #define	SYS_compat_43_ogetrlimit	144
 
+/* syscall: "compat_43_osetrlimit" ret: "int" args: "int" "const struct orlimit *" */
 #define	SYS_compat_43_osetrlimit	145
 
+/* syscall: "compat_43_okillpg" ret: "int" args: "int" "int" */
 #define	SYS_compat_43_okillpg	146
 
 /* syscall: "setsid" ret: "int" args: */
@@ -392,14 +452,20 @@
 /* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
 #define	SYS_quotactl	148
 
+/* syscall: "compat_43_oquota" ret: "int" args: */
 #define	SYS_compat_43_oquota	149
 
+/* syscall: "compat_43_ogetsockname" ret: "int" args: "int" "caddr_t" "int *" */
 #define	SYS_compat_43_ogetsockname	150
 
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 /* syscall: "nfssvc" ret: "int" args: "int" "void *" */
 #define	SYS_nfssvc	155
 
+#else
 				/* 155 is excluded nfssvc */
+#endif
+/* syscall: "compat_43_ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	SYS_compat_43_ogetdirentries	156
 
 /* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
@@ -411,24 +477,39 @@
 /* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
 #define	SYS_getfh	161
 
+/* syscall: "compat_09_ogetdomainname" ret: "int" args: "char *" "int" */
 #define	SYS_compat_09_ogetdomainname	162
 
+/* syscall: "compat_09_osetdomainname" ret: "int" args: "char *" "int" */
 #define	SYS_compat_09_osetdomainname	163
 
+/* syscall: "compat_09_ouname" ret: "int" args: "struct outsname *" */
 #define	SYS_compat_09_ouname	164
 
 /* syscall: "sysarch" ret: "int" args: "int" "void *" */
 #define	SYS_sysarch	165
 
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
+/* syscall: "compat_10_osemsys" ret: "int" args: "int" "int" "int" "int" "int" */
 #define	SYS_compat_10_osemsys	169
 
+#else
 				/* 169 is excluded 1.0 semsys */
+#endif
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
+/* syscall: "compat_10_omsgsys" ret: "int" args: "int" "int" "int" "int" "int" "int" */
 #define	SYS_compat_10_omsgsys	170
 
+#else
 				/* 170 is excluded 1.0 msgsys */
+#endif
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
+/* syscall: "compat_10_oshmsys" ret: "int" args: "int" "int" "int" "int" */
 #define	SYS_compat_10_oshmsys	171
 
+#else
 				/* 171 is excluded 1.0 shmsys */
+#endif
 /* syscall: "pread" ret: "ssize_t" args: "int" "void *" "size_t" "int" "off_t" */
 #define	SYS_pread	173
 
@@ -438,10 +519,13 @@
 /* syscall: "ntp_gettime" ret: "int" args: "struct ntptimeval *" */
 #define	SYS_ntp_gettime	175
 
+#if defined(NTP) || !defined(_KERNEL)
 /* syscall: "ntp_adjtime" ret: "int" args: "struct timex *" */
 #define	SYS_ntp_adjtime	176
 
+#else
 				/* 176 is excluded ntp_adjtime */
+#endif
 /* syscall: "setgid" ret: "int" args: "gid_t" */
 #define	SYS_setgid	181
 
@@ -451,6 +535,7 @@
 /* syscall: "seteuid" ret: "int" args: "uid_t" */
 #define	SYS_seteuid	183
 
+#if defined(LFS) || !defined(_KERNEL)
 /* syscall: "lfs_bmapv" ret: "int" args: "fsid_t *" "struct block_info *" "int" */
 #define	SYS_lfs_bmapv	184
 
@@ -463,14 +548,19 @@
 /* syscall: "lfs_segwait" ret: "int" args: "fsid_t *" "struct timeval *" */
 #define	SYS_lfs_segwait	187
 
+#else
 				/* 184 is excluded lfs_bmapv */
 				/* 185 is excluded lfs_markv */
 				/* 186 is excluded lfs_segclean */
 				/* 187 is excluded lfs_segwait */
+#endif
+/* syscall: "compat_12_stat12" ret: "int" args: "const char *" "struct stat12 *" */
 #define	SYS_compat_12_stat12	188
 
+/* syscall: "compat_12_fstat12" ret: "int" args: "int" "struct stat12 *" */
 #define	SYS_compat_12_fstat12	189
 
+/* syscall: "compat_12_lstat12" ret: "int" args: "const char *" "struct stat12 *" */
 #define	SYS_compat_12_lstat12	190
 
 /* syscall: "pathconf" ret: "long" args: "const char *" "int" */
@@ -485,6 +575,7 @@
 /* syscall: "setrlimit" ret: "int" args: "int" "const struct rlimit *" */
 #define	SYS_setrlimit	195
 
+/* syscall: "compat_12_getdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	SYS_compat_12_getdirentries	196
 
 /* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "long" "off_t" */
@@ -526,6 +617,8 @@
 /* syscall: "poll" ret: "int" args: "struct pollfd *" "u_int" "int" */
 #define	SYS_poll	209
 
+#if defined(LKM) || !defined(_KERNEL)
+#else	/* !LKM */
 				/* 210 is excluded lkmnosys */
 				/* 211 is excluded lkmnosys */
 				/* 212 is excluded lkmnosys */
@@ -536,6 +629,9 @@
 				/* 217 is excluded lkmnosys */
 				/* 218 is excluded lkmnosys */
 				/* 219 is excluded lkmnosys */
+#endif	/* !LKM */
+#if defined(SYSVSEM) || !defined(_KERNEL)
+/* syscall: "compat_14___semctl" ret: "int" args: "int" "int" "int" "union __semun *" */
 #define	SYS_compat_14___semctl	220
 
 /* syscall: "semget" ret: "int" args: "key_t" "int" "int" */
@@ -547,10 +643,14 @@
 /* syscall: "semconfig" ret: "int" args: "int" */
 #define	SYS_semconfig	223
 
+#else
 				/* 220 is excluded compat_14_semctl */
 				/* 221 is excluded semget */
 				/* 222 is excluded semop */
 				/* 223 is excluded semconfig */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
+/* syscall: "compat_14_msgctl" ret: "int" args: "int" "int" "struct msqid_ds14 *" */
 #define	SYS_compat_14_msgctl	224
 
 /* syscall: "msgget" ret: "int" args: "key_t" "int" */
@@ -562,13 +662,17 @@
 /* syscall: "msgrcv" ret: "ssize_t" args: "int" "void *" "size_t" "long" "int" */
 #define	SYS_msgrcv	227
 
+#else
 				/* 224 is excluded compat_14_msgctl */
 				/* 225 is excluded msgget */
 				/* 226 is excluded msgsnd */
 				/* 227 is excluded msgrcv */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
 /* syscall: "shmat" ret: "void *" args: "int" "const void *" "int" */
 #define	SYS_shmat	228
 
+/* syscall: "compat_14_shmctl" ret: "int" args: "int" "int" "struct shmid_ds14 *" */
 #define	SYS_compat_14_shmctl	229
 
 /* syscall: "shmdt" ret: "int" args: "const void *" */
@@ -577,10 +681,12 @@
 /* syscall: "shmget" ret: "int" args: "key_t" "size_t" "int" */
 #define	SYS_shmget	231
 
+#else
 				/* 228 is excluded shmat */
 				/* 229 is excluded compat_14_shmctl */
 				/* 230 is excluded shmdt */
 				/* 231 is excluded shmget */
+#endif
 /* syscall: "clock_gettime" ret: "int" args: "clockid_t" "struct timespec *" */
 #define	SYS_clock_gettime	232
 
@@ -620,6 +726,7 @@
 /* syscall: "__sigtimedwait" ret: "int" args: "const sigset_t *" "siginfo_t *" "struct timespec *" */
 #define	SYS___sigtimedwait	244
 
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 /* syscall: "_ksem_init" ret: "int" args: "unsigned int" "semid_t *" */
 #define	SYS__ksem_init	247
 
@@ -647,6 +754,7 @@
 /* syscall: "_ksem_destroy" ret: "int" args: "semid_t" */
 #define	SYS__ksem_destroy	255
 
+#else
 				/* 247 is excluded sys__ksem_init */
 				/* 248 is excluded sys__ksem_open */
 				/* 249 is excluded sys__ksem_unlink */
@@ -656,6 +764,7 @@
 				/* 253 is excluded sys__ksem_trywait */
 				/* 254 is excluded sys__ksem_getvalue */
 				/* 255 is excluded sys__ksem_destroy */
+#endif
 /* syscall: "__posix_rename" ret: "int" args: "const char *" "const char *" */
 #define	SYS___posix_rename	270
 
@@ -710,10 +819,13 @@
 /* syscall: "__clone" ret: "pid_t" args: "int" "void *" */
 #define	SYS___clone	287
 
+#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "fktrace" ret: "int" args: "const int" "int" "int" "int" */
 #define	SYS_fktrace	288
 
+#else
 				/* 288 is excluded ktrace */
+#endif
 /* syscall: "preadv" ret: "ssize_t" args: "int" "const struct iovec *" "int" "int" "off_t" */
 #define	SYS_preadv	289
 
@@ -732,8 +844,15 @@
 /* syscall: "__sigsuspend14" ret: "int" args: "const sigset_t *" */
 #define	SYS___sigsuspend14	294
 
+#if defined(__HAVE_SIGINFO)
+/* syscall: "compat_16___sigreturn14" ret: "int" args: "struct sigcontext *" */
 #define	SYS_compat_16___sigreturn14	295
 
+#else
+/* syscall: "__sigreturn14" ret: "int" args: "struct sigcontext *" */
+#define	SYS___sigreturn14	295
+
+#endif
 /* syscall: "__getcwd" ret: "int" args: "char *" "size_t" */
 #define	SYS___getcwd	296
 
@@ -749,18 +868,27 @@
 /* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs *" */
 #define	SYS_fhstatfs	300
 
+#if defined(SYSVSEM) || !defined(_KERNEL)
 /* syscall: "____semctl13" ret: "int" args: "int" "int" "int" "..." */
 #define	SYS_____semctl13	301
 
+#else
 				/* 301 is excluded ____semctl13 */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
 /* syscall: "__msgctl13" ret: "int" args: "int" "int" "struct msqid_ds *" */
 #define	SYS___msgctl13	302
 
+#else
 				/* 302 is excluded __msgctl13 */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
 /* syscall: "__shmctl13" ret: "int" args: "int" "int" "struct shmid_ds *" */
 #define	SYS___shmctl13	303
 
+#else
 				/* 303 is excluded __shmctl13 */
+#endif
 /* syscall: "lchflags" ret: "int" args: "const char *" "u_long" */
 #define	SYS_lchflags	304
 
