@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.3 1995/06/18 01:34:01 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.4 1995/07/27 00:29:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -171,7 +171,6 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAP_REG_END			0x28
 
 #define	PCI_MAP_MEMORY				0x00000000
-#define	PCI_MAP_IO				0x00000001
 
 #define	PCI_MAP_MEMORY_TYPE_32BIT		0x00000000
 #define	PCI_MAP_MEMORY_TYPE_32BIT_1M		0x00000002
@@ -179,6 +178,10 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAP_MEMORY_TYPE_MASK		0x00000006
 #define	PCI_MAP_MEMORY_CACHABLE			0x00000008
 #define	PCI_MAP_MEMORY_ADDRESS_MASK		0xfffffff0
+
+#define	PCI_MAP_IO				0x00000001
+
+#define	PCI_MAP_IO_ADDRESS_MASK			0xfffffffe
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.

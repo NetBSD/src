@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 1995/06/18 02:36:41 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16 1995/07/27 00:30:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -271,8 +271,21 @@ pci_map_io(tag, reg, iobasep)
 	int reg;
 	int *iobasep;
 {
+	pcireg_t address;
+	int iobase;
 
-	panic("pci_map_io: not implemented");
+	if (reg < PCI_MAP_REG_START || reg >= PCI_MAP_REG_END || (reg & 3))
+		panic("pci_map_io: bad request");
+
+	address = pci_conf_read(tag, reg);
+
+	if ((address & PCI_MAP_IO) == 0)
+		panic("pci_map_io: attempt to memory map a memory region");
+
+	iobase = address & PCI_MAP_IO_ADDRESS_MASK;
+	*iobasep = iobase;
+
+	return 0;
 }
 
 int
@@ -304,7 +317,7 @@ pci_map_mem(tag, reg, vap, pap)
 	mask = pci_conf_read(tag, reg);
 	pci_conf_write(tag, reg, address);
 
-	if (address & PCI_MAP_IO)
+	if ((address & PCI_MAP_IO) != 0)
 		panic("pci_map_mem: attempt to memory map an I/O region");
 
 	switch (address & PCI_MAP_MEMORY_TYPE_MASK) {
