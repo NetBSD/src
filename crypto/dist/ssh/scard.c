@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.1.1.2 2001/11/07 06:20:12 itojun Exp $	*/
+/*	$NetBSD: scard.c,v 1.2 2001/12/13 15:53:54 he Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *

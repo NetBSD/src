@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.h,v 1.1.1.3 2001/09/27 02:01:02 itojun Exp $	*/
+/*	$NetBSD: sshpty.h,v 1.2 2001/12/13 15:53:54 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

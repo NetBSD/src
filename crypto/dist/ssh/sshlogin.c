@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.1.1.2 2001/04/10 07:14:22 itojun Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.2 2001/12/13 15:53:54 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
