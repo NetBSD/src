@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.15.2.4 2002/06/10 17:44:53 tv Exp $ */
+.\" $NetBSD: useradd.8,v 1.15.2.5 2002/06/19 00:06:48 lukem Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -77,21 +77,24 @@ utility adds a user to the system, creating and
 populating a home directory if necessary.
 Any skeleton files will be provided
 for the new user if they exist in the
-.Pa /etc/skel
-directory.
+.Ar skel-dir
+directory (see the
+.Fl k
+option).
 Default values for
 the base directory,
 the time of password expiry,
-seconds until password change,
+the time of account expiry,
 primary group,
 the skeleton directory,
 the range from which the uid will be allocated,
 and default login shell
 can be provided in the
 .Pa /etc/usermgmt.conf
-file.
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
 .Pp
-The first format of the command shown above (utilising the
+The first form of the command shown above (utilising the
 .Fl D
 option)
 sets and displays the defaults for the
@@ -104,9 +107,7 @@ without any further options,
 will show the current defaults which
 will be used by the
 .Nm
-utility.  Additionally, if running as root and the
-.Pa /etc/usermgmt.conf
-file does not exist, it is created using the default values.
+utility.
 Together with one of the options shown for the first version
 of the command,
 .Fl D
@@ -155,8 +156,9 @@ sets the default login shell for new users.
 .El
 .Pp
 In the second form of the command,
-after setting any defaults, and then values from that file,
-the command line options are processed:
+after setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl G Ar secondary-group
 is the secondary group to which the user will be added in the
@@ -164,16 +166,20 @@ is the secondary group to which the user will be added in the
 file.
 .It Fl b Ar base-directory
 is the base directory name, in which the user's new home
-directory will be created, should the -m option be specified.
+directory will be created, should the
+.Fl m
+option be specified.
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
 is the home directory which will be created and populated for the user,
-should the -m option be specified.
+should the
+.Fl m
+option be specified.
 .It Fl e Ar expiry-time
-sets the default time at which the current password will expire for new
+sets the time at which the current password will expire for new
 users.
 It should be entered in the form
 .Dq month day year ,
@@ -184,6 +190,11 @@ A value of 0 can be used to disable this feature.
 See
 .Xr passwd 5
 for more details.
+.It Fl f Ar inactive-time
+sets the time at which new user accounts will expire.
+Also see the
+.Fl e
+option above.
 .It Fl g Ar gid | name | Li =uid
 gives the group name or identifier to be used for the new user's primary group.
 If this is
