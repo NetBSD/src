@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.11 2000/10/10 19:12:49 is Exp $	*/
+/*	$NetBSD: optimize.c,v 1.12 2000/11/19 13:18:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.11 2000/10/10 19:12:49 is Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.12 2000/11/19 13:18:03 itojun Exp $");
 #endif
 #endif
 
@@ -1488,6 +1488,8 @@ opt_blks(root, do_stmts)
 
 	init_val();
 	maxlevel = root->level;
+
+	find_inedges(root);
 	for (i = maxlevel; i >= 0; --i)
 		for (p = levels[i]; p; p = p->link)
 			opt_blk(p, do_stmts);
@@ -1505,6 +1507,8 @@ opt_blks(root, do_stmts)
 			opt_j(&p->ef);
 		}
 	}
+
+	find_inedges(root);
 	for (i = 1; i <= maxlevel; ++i) {
 		for (p = levels[i]; p; p = p->link) {
 			or_pullup(p);
@@ -1584,7 +1588,6 @@ opt_loop(root, do_stmts)
 		find_levels(root);
 		find_dom(root);
 		find_closure(root);
-		find_inedges(root);
 		find_ud(root);
 		find_edom(root);
 		opt_blks(root, do_stmts);
