@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.444 2004/09/13 17:38:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.445 2004/09/14 03:48:54 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7322,3 +7322,9 @@ sys/conf/Makefile.kern.inc			1.57
 	.text section in the first place.
 	[chs, ticket #843]
 
+
+sys/arch/amd64/conf/INSTALL_ACPI		1.10
+sys/arch/amd64/conf/INSTALL			1.18
+
+	Remove some devices (sync with i386).
+	[fvdl, ticket #845]
