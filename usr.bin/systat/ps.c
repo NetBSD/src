@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.1 1999/02/21 21:48:07 jwise Exp $  */
+/*      $NetBSD: ps.c,v 1.1.2.1 1999/10/12 19:57:40 he Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -219,7 +219,8 @@ tty2str(kp)
 	if (e->e_tdev == NODEV || (ttyname = devname(e->e_tdev, S_IFCHR)) == NULL)
 		strcpy(ttystr, "??");
 	else {
-		if (strncmp(ttyname, "tty", 3) == 0)
+		if (strncmp(ttyname, "tty", 3) == 0 ||
+		    strncmp(ttyname, "dty", 3) == 0)
 			ttyname += 3;
 		sprintf(ttystr, "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
 	}
