@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.18 2001/11/05 15:10:25 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.19 2003/03/08 07:47:49 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -26,6 +26,9 @@
  *	READ --- Return the number of the read side file descriptor
  *	WRITE --- Return the number of the write side file descriptor
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rmtlib.c,v 1.19 2003/03/08 07:47:49 lukem Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */

@@ -1,9 +1,12 @@
-/* $NetBSD: inflate.c,v 1.7 2002/05/29 18:15:18 christos Exp $ */
+/* $NetBSD: inflate.c,v 1.8 2003/03/08 07:42:35 lukem Exp $ */
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: inflate.c,v 1.8 2003/03/08 07:42:35 lukem Exp $");
 
 #include "zutil.h"
 #include "infblock.h"
