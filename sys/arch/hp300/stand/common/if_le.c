@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1997/02/04 03:52:28 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.1.12.1 1997/12/26 22:30:34 scottr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -607,10 +607,16 @@ le_put(desc, pkt, len)
 	if (cdm->flags & LE_ONE)
 		le_stats[unit].collisions++;
 	if (cdm->flags & LE_MORE)
-		le_stats[unit].collisions+=2;
+		le_stats[unit].collisions += 2;
 	if (cdm->flags & LE_ERR) {
-		printf("le%d: transmit error, error = 0x%x\n", unit,
-			cdm->mcnt);
+		if (cdm->mcnt & LE_UFLO)
+			printf("le%d: transmit underflow\n", unit);
+		if (cdm->mcnt & LE_LCOL)
+			le_stats[unit].collisions++;
+		if (cdm->mcnt & LE_LCAR)
+			printf("le%d: lost carrier\n", unit);
+		if (cdm->mcnt & LE_RTRY)
+			le_stats[unit].collisions += 16;
 		return -1;
 	}
 #ifdef LE_DEBUG
