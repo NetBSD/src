@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.10 2002/01/09 20:54:40 reinoud Exp $
+#	$NetBSD: Makefile.acorn32,v 1.11 2002/01/25 17:22:35 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -17,7 +17,6 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH?=arm32
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
