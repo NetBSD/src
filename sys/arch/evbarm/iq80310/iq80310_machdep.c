@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.3 2001/11/08 03:28:53 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.4 2001/11/08 04:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -686,7 +686,7 @@ initarm(void)
 	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
 
 #ifdef VERBOSE_INIT_ARM
-	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
+	printf("Mapping 80312 0x%08lx -> 0x%08lx @ 0x%08lx\n",
 	    I80312_PMMR_BASE,
 	    I80312_PMMR_BASE + I80312_PMMR_SIZE - 1,
 	    IQ80310_80312_VBASE);
