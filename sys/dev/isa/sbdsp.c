@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.20 1996/02/20 04:19:24 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.21 1996/02/20 11:15:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1251,7 +1251,7 @@ sbdsp_mixer_set_port(addr, cp)
 		case SB_MASTER_VOL:
 			switch (cp->un.value.num_channels) {
 			case 1:
-				gain = SBP_AGAIN_TO_SBGAIN(cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+				gain = sbdsp_mono_vol(SBP_AGAIN_TO_SBGAIN(cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]));
 				break;
 			case 2:
 				if (!ISSBPROCLASS(sc))
