@@ -1,7 +1,8 @@
-/*	$OpenBSD: key.h,v 1.9 2001/01/29 01:58:16 niklas Exp $	*/
+/*	$NetBSD: key.h,v 1.1.1.1.2.3 2001/12/10 23:53:30 he Exp $	*/
+/*	$OpenBSD: key.h,v 1.17 2001/09/17 19:27:15 stevesk Exp $	*/
 
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,40 +37,45 @@ enum types {
 	KEY_DSA,
 	KEY_UNSPEC
 };
+enum fp_type {
+	SSH_FP_SHA1,
+	SSH_FP_MD5
+};
+enum fp_rep {
+	SSH_FP_HEX,
+	SSH_FP_BUBBLEBABBLE
+};
+
+/* key is stored in external hardware */
+#define KEY_FLAG_EXT		0x0001
+
 struct Key {
-	int	type;
+	int	 type;
+	int	 flags;
 	RSA	*rsa;
 	DSA	*dsa;
 };
 
-Key	*key_new(int type);
-Key	*key_new_private(int type);
-void	key_free(Key *k);
-int	key_equal(Key *a, Key *b);
-char	*key_fingerprint(Key *k);
-char	*key_type(Key *k);
-int	key_write(Key *key, FILE *f);
-int	key_read(Key *key, char **cpp);
-u_int	key_size(Key *k);
+Key	*key_new(int);
+Key	*key_new_private(int);
+void	 key_free(Key *);
+int	 key_equal(Key *, Key *);
+char	*key_fingerprint(Key *, enum fp_type, enum fp_rep);
+char	*key_type(Key *);
+int	 key_write(Key *, FILE *);
+int	 key_read(Key *, char **);
+u_int	 key_size(Key *);
 
-Key	*key_generate(int type, u_int bits);
-Key	*key_from_private(Key *k);
-int	key_type_from_name(char *name);
+Key	*key_generate(int, u_int);
+Key	*key_from_private(Key *);
+int	 key_type_from_name(char *);
 
-Key	*key_from_blob(char *blob, int blen);
-int	key_to_blob(Key *key, u_char **blobp, u_int *lenp);
-char	*key_ssh_name(Key *k);
+Key	*key_from_blob(u_char *, int);
+int	 key_to_blob(Key *, u_char **, u_int *);
+char	*key_ssh_name(Key *);
+int	 key_names_valid2(const char *);
 
-int
-key_sign(
-    Key *key,
-    u_char **sigp, int *lenp,
-    u_char *data, int datalen);
-
-int
-key_verify(
-    Key *key,
-    u_char *signature, int signaturelen,
-    u_char *data, int datalen);
+int	 key_sign(Key *, u_char **, int *, u_char *, int);
+int	 key_verify(Key *, u_char *, int, u_char *, int);
 
 #endif
