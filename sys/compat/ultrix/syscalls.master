@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1994/06/29 06:30:40 cgd Exp $
+	$NetBSD: syscalls.master,v 1.5 1994/08/01 14:15:06 glass Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -293,5 +293,5 @@
 253	UNIMPL	0 audgen
 254	UNIMPL	0 startcpu
 255	UNIMPL	0 stopcpu
-256	UNIMPL	0 ultrix_getsysinfo
-257	UNIMPL	0 ultrix_setsysinfo
+256	STD	5 ultrix_getsysinfo
+257	STD	5 ultrix_setsysinfo
