@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.61.2.6 2004/08/13 03:55:01 jmc Exp $	*/
+/*	$NetBSD: fil.c,v 1.61.2.7 2004/08/23 06:05:51 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.6 2004/08/13 03:55:01 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.7 2004/08/23 06:05:51 tron Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -5581,7 +5581,8 @@ int len;
 #   endif
 		{
 #   ifdef HAVE_M_PULLDOWN
-			m = m_pulldown(m, 0, len, NULL);
+			if (m_pulldown(m, 0, len, NULL) == NULL)
+				m = NULL;
 #   else
 			FREE_MB_T(m);
 			m = NULL;
