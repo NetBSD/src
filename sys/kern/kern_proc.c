@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.1 2001/03/05 22:49:41 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.2 2001/07/09 22:37:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ struct pool pstats_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
 struct pool sadata_pool;
+struct pool saupcall_pool;
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -215,6 +216,9 @@ procinit()
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
 	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
+	    "saupcpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
 
 }

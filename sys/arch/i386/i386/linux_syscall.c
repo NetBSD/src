@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.15.4.2 2001/06/21 19:25:30 nathanw Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.15.4.3 2001/07/09 22:37:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE

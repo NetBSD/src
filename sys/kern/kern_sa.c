@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.1 2001/03/05 22:49:41 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.2 2001/07/09 22:37:30 nathanw Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,54 +190,30 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sd = p->p_sa;
+	struct sadata_upcall *s;
 
-	stack_t st;
-	struct sa_t self_sa, e_sa, int_sa;
-	struct sa_t *list[3];
-	int nsas = 1, eflag = 0, intflag = 0;
-
-	DPRINTFN(2, ("sa_upcall(type: %d pid: %d.%d)", type, p->p_pid, l->l_lid));
+	l->l_flag &= L_SA; /* XXX prevent recursive upcalls if we sleep for 
+			      memory */
+	s = pool_get(&saupcall_pool, PR_WAITOK);
+	l->l_flag |= L_SA;
 
 	/* Grab a stack */
 	if (!sd->sa_nstacks)
 		return (ENOMEM);
+	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
 
-	st = sd->sa_stacks[--sd->sa_nstacks];
-	self_sa.sa_id = l->l_lid;
-	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
-	self_sa.sa_sig = sig;
-	self_sa.sa_code = code;
+	s->sau_type = type;
+	s->sau_sig = sig;
+	s->sau_code = code;
+	s->sau_event = event;
+	s->sau_interrupted = interrupted;
 
-	list[0] = &self_sa;
-
-	if (event) {
-		DPRINTFN(2, (" (event: .%d)", event->l_lid));
-		e_sa.sa_context = cpu_stashcontext(event);
-		e_sa.sa_id = event->l_lid;
-		e_sa.sa_cpu = 0; /* XXX event ->l_cpu; */
-		e_sa.sa_sig = 0;
-		e_sa.sa_code = 0;
-		list[nsas++] = &e_sa;
-		eflag = 1;
-	}
+	LIST_INSERT_HEAD(&sd->sa_upcalls, s, sau_next);
+	l->l_flag |= L_SA_UPCALL;
 	
-	if (interrupted) {
-		DPRINTFN(2, (" (interrupted: .%d)", interrupted->l_lid));
-		int_sa.sa_context = cpu_stashcontext(interrupted);
-		int_sa.sa_id = interrupted->l_lid;
-		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
-		int_sa.sa_sig = 0;
-		int_sa.sa_code = 0;
-		list[nsas++] = &int_sa;
-		intflag=1;
-	}
-	DPRINTFN(2, ("\n"));
-	PHOLD(l);
-	cpu_upcall(l, &st, type, eflag, intflag, list);
-	PRELE(l);
-
 	return (0);
 }
+
 
 /* 
  * Called by tsleep(). Block current LWP and switch to another.
