@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/07/10 11:31:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/08 01:40:23 simonb Exp $
 
 NOMAN=	# defined
 
@@ -28,7 +28,11 @@ DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEB
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
 CFLAGS+=	 -ffreestanding -nostdinc ${INCLUDES} ${DEFS}
+# XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 PROG=	boot
 SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c

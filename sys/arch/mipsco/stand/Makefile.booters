@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.5 2002/11/16 08:48:13 wdk Exp $
+#	$NetBSD: Makefile.booters,v 1.6 2003/10/08 01:40:22 simonb Exp $
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -7,6 +7,12 @@ MIPSCO=	${S}/arch/mipsco
 .PATH:	${.CURDIR}/../common
 
 BINMODE?= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend: machine-links

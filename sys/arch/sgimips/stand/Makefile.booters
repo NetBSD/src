@@ -1,9 +1,15 @@
-# $NetBSD: Makefile.booters,v 1.8 2002/12/23 19:31:24 pooka Exp $
+# $NetBSD: Makefile.booters,v 1.9 2003/10/08 01:40:23 simonb Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
 BINMODE?=	444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY: machine-links
 beforedepend: machine-links

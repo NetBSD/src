@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/09/30 18:58:39 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2003/10/08 01:40:23 simonb Exp $
 
 NOMAN= # defined
 
@@ -38,6 +38,12 @@ CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 OBJDUMP?= objdump
 STRIPFLAG=
 BINMODE= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 RELOC= 0x800000
 HEAD_SIZE= `${OBJDUMP} -h ${.OBJDIR}/${PROG} | grep \.text | awk '{print $$6}'`

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.1 2002/05/05 11:46:29 isaki Exp $
+#	$NetBSD: Makefile.booters,v 1.2 2003/10/08 01:40:23 simonb Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -14,3 +14,8 @@ CLEANFILES+=	machine ${MACHINE_ARCH}
 
 beforedepend:	machine-links
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
