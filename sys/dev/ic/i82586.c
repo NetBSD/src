@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.38 2001/07/07 05:35:39 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.39 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.38 2001/07/07 05:35:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.39 2001/07/07 15:59:37 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -252,7 +252,7 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = i82586_start;
 	ifp->if_ioctl = i82586_ioctl;
@@ -1858,7 +1858,7 @@ again:
 		if (sc->mcast_count >= IE_MAXMCAST)
 			goto again; /* Just in case */
 
-		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);
+		memcpy(&sc->mcast_addrs[sc->mcast_count], enm->enm_addrlo, 6);
 		sc->mcast_count++;
 		ETHER_NEXT_MULTI(step, enm);
 	}

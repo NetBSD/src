@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.33 2001/06/14 05:44:27 itojun Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.34 2001/07/07 15:59:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ smc91cxx_attach(sc, myea)
 	    ether_sprintf(myea));
 
 	/* Initialize the ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = smc91cxx_start;
 	ifp->if_ioctl = smc91cxx_ioctl;
@@ -1108,7 +1108,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl), 
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ETHER_ADDR_LEN);
 			}
 
