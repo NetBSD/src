@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/11/29 16:49:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.7 2005/03/24 05:24:20 rtr Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -16,6 +16,10 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
 	xf86Mode.c xf86Option.c xf86VidMode.c xf86fbman.c xf86xv.c \
 	xf86xvmc.c xf86cmap.c xf86PM.c xf86Versions.c xf86Debug.c \
 	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
+
+.if ${MACHINE} == "sparc64"
+SRCS+=	xf86sbusBus.c
+.endif
 
 # Rebuild xf86Build.h on every make
 #
