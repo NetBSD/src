@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.7 2003/10/25 14:36:50 simonb Exp $
+#	$NetBSD: files.pb1000,v 1.8 2003/10/25 22:34:57 simonb Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
@@ -35,7 +35,13 @@ file	arch/evbmips/alchemy/dev/aupcmcia.c	aupcmcia
 # Machine-independent SCSI drivers
 include "dev/scsipi/files.scsipi"
 
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
+
+# Machine-independent WS console drivers
+include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
+
 # Machine-independent USB device support
 include "dev/usb/files.usb"
 
