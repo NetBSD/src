@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1996/10/02 18:07:20 ws Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -65,6 +65,7 @@ void	 pagein __P((KINFO *, VARENT *));
 void	 parsefmt __P((char *));
 void	 pcpu __P((KINFO *, VARENT *));
 void	 pmem __P((KINFO *, VARENT *));
+void	 pnice __P((KINFO *, VARENT *));
 void	 pri __P((KINFO *, VARENT *));
 void	 printheader __P((void));
 void	 pvar __P((KINFO *, VARENT *));
