@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.9 1998/10/27 19:49:37 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.10 1998/10/27 22:30:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/pci/if_ne_pcireg.h>
 
 struct ne_pci_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
