@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.17 2001/04/06 09:51:53 he Exp $
+.\"	$NetBSD: main,v 1.61.2.18 2001/04/06 11:17:14 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,8 +246,8 @@ has been updated to deal with a security issue (SA2000-017).
 .It
 A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
 .It
-The Linux emulation has been enhanced to prepare for the support
-of using the Linux version of VMware.
+The Linux emulation has been enhanced to prepare for the future
+support of using the Linux version of VMware.
 .It
 IP checksumming speed has been improved on i386 compared to 1.5 by
 about 10%.
