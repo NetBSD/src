@@ -1,4 +1,4 @@
-/*	$NetBSD: userptr.c,v 1.8 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: userptr.c,v 1.9 2003/03/09 01:08:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -25,6 +25,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: userptr.c,v 1.9 2003/03/09 01:08:48 lukem Exp $");
 
 #include <menu.h>
 #include <stdlib.h>

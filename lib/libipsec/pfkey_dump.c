@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.11 2002/06/27 14:39:47 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.12 2003/03/09 01:03:55 lukem Exp $	*/
 /*	$KAME: pfkey_dump.c,v 1.37 2002/05/14 10:50:56 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pfkey_dump.c,v 1.12 2003/03/09 01:03:55 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

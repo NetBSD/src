@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.7 2000/07/30 02:38:36 itojun Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.8 2003/03/09 01:03:55 lukem Exp $	*/
 /*	$KAME: ipsec_strerror.c,v 1.7 2000/07/30 00:45:12 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ipsec_strerror.c,v 1.8 2003/03/09 01:03:55 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

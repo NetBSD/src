@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.4 2002/06/27 14:39:47 itojun Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.5 2003/03/09 01:03:54 lukem Exp $	*/
 /*	$KAME: ipsec_dump_policy.c,v 1.12 2001/11/13 12:38:47 jinmei Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ipsec_dump_policy.c,v 1.5 2003/03/09 01:03:54 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
