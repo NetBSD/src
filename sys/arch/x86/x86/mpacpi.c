@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.4 2003/05/15 21:31:59 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.5 2003/05/29 20:22:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -793,7 +793,7 @@ mpacpi_find_interrupts(void *self)
 		return 0;
 
 	/*
-	 * Switch us into APIC mode by evaluating the _PIC(1).
+	 * Switch us into APIC mode by evaluating _PIC(1).
 	 * Needs to be done now, since it has an effect on
 	 * the interrupt information we're about to retrieve.
 	 */
@@ -819,3 +819,53 @@ mpacpi_find_interrupts(void *self)
 			mpacpi_print_intr(&mp_intrs[i]);
 	return 0;
 }
+
+#if NPCI > 0
+
+/*
+ * These are the same as their MPBIOS equivalents, but might not be someday.
+ */
+int
+mpacpi_pci_attach_hook(struct device *parent, struct device *self,
+		       struct pcibus_attach_args *pba)
+{
+	struct mp_bus *mpb;
+
+#ifdef MPBIOS
+	if (mpbios_scanned != 0 || mpacpi_nioapic == 0)
+		return ENOENT;
+#endif
+
+	if (pba->pba_bus >= mp_nbus)
+		return EINVAL;
+
+	mpb = &mp_busses[pba->pba_bus];
+	if (strcmp(mpb->mb_name, "pci"))
+		return EINVAL;
+
+	mpb->mb_configured = 1;
+	return 0;
+}
+
+int
+mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
+	        cfprint_t print)
+{
+	int i;
+	struct mp_bus *mpb;
+	struct pci_attach_args;
+
+	for (i = 0; i < mp_nbus; i++) {
+		mpb = &mp_busses[i];
+		if (mpb->mb_name == NULL)
+			continue;
+		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
+			printf("configuring bus %d\n", i);
+			pba->pba_bus = i;
+			config_found(self, pba, print);
+		}
+	}
+	return 0;
+}
+
+#endif
