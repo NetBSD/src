@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.46 2002/04/12 18:50:33 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.47 2002/05/03 16:45:23 rjs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -162,12 +162,10 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
-#ifdef CPU_SA110
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
-extern unsigned int sa110_cache_clean_addr;
-extern unsigned int sa110_cache_clean_size;
-static vaddr_t sa110_cc_base;
-#endif	/* CPU_SA110 */
+extern unsigned int sa1_cache_clean_addr;
+extern unsigned int sa1_cache_clean_size;
+static vaddr_t sa1_cc_base;
 
 /* Non-buffered non-cachable memory needed to enter idle mode */
 extern vaddr_t sa11x0_idle_mem;
@@ -456,24 +454,22 @@ initarm(argc, argv, bi)
 	 * XXX Actually, we only need virtual space and don't need
 	 * XXX physical memory for sa110_cc_base and sa11x0_idle_mem.
 	 */
-#ifdef CPU_SA110
 	/*
 	 * XXX totally stuffed hack to work round problems introduced
 	 * in recent versions of the pmap code. Due to the calls used there
 	 * we cannot allocate virtual memory during bootstrap.
 	 */
 	for(;;) {
-		alloc_pages(sa110_cc_base, 1);
-		if (! (sa110_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
+		alloc_pages(sa1_cc_base, 1);
+		if (! (sa1_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
 			break;
 	}
 	{
 		vaddr_t dummy;
 		alloc_pages(dummy, CPU_SA110_CACHE_CLEAN_SIZE / NBPG - 1);
 	}
-	sa110_cache_clean_addr = sa110_cc_base;
-	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
-#endif	/* CPU_SA110 */
+	sa1_cache_clean_addr = sa1_cc_base;
+	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 
 	alloc_pages(sa11x0_idle_mem, 1);
 
@@ -599,10 +595,8 @@ initarm(argc, argv, bi)
 	pmap_map_entry(l1pagetable, SACOM3_BASE, SACOM3_HW_BASE,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
-#ifdef CPU_SA110
-	pmap_map_chunk(l1pagetable, sa110_cache_clean_addr, 0xe0000000,
+	pmap_map_chunk(l1pagetable, sa1_cache_clean_addr, 0xe0000000,
 	    CPU_SA110_CACHE_CLEAN_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
 	 * Once this is done we will be running with the REAL kernel page
@@ -672,10 +666,8 @@ initarm(argc, argv, bi)
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 
-#ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
-#endif	/* CPU_SA110 */
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
@@ -748,7 +740,6 @@ fakecninit()
 }
 #endif
 
-#ifdef CPU_SA110
 
 /*
  * For optimal cache cleaning we need two 16K banks of
@@ -768,14 +759,13 @@ rpc_sa110_cc_setup(void)
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
-		pte = vtopte(sa110_cc_base + loop);
+		pte = vtopte(sa1_cc_base + loop);
 		*pte = L2_S_PROTO | kaddr |
 		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	}
-	sa110_cache_clean_addr = sa110_cc_base;
-	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
+	sa1_cache_clean_addr = sa1_cc_base;
+	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
-#endif	/* CPU_SA110 */
 
 #ifdef BOOT_DUMP
 void dumppages(char *start, int nbytes)
