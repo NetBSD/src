@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.27 2002/12/11 13:50:14 joda Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.28 2003/01/05 22:47:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -178,6 +178,9 @@
 #define	MSR_BBL_CR_TRIG		0x11a	/* PII+ only */
 #define	MSR_BBL_CR_BUSY		0x11b	/* PII+ only */
 #define	MSR_BBL_CR_CTR3		0x11e	/* PII+ only */
+#define	MSR_SYSENTER_CS		0x174 	/* PII+ only */
+#define	MSR_SYSENTER_ESP	0x175 	/* PII+ only */
+#define	MSR_SYSENTER_EIP	0x176   /* PII+ only */
 #define MSR_MCG_CAP		0x179
 #define MSR_MCG_STATUS		0x17a
 #define MSR_MCG_CTL		0x17b
