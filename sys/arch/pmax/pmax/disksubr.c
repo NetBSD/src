@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.4 1999/12/09 19:33:45 drochner Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.5 2000/03/14 09:39:33 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -146,22 +146,20 @@ readdisklabel(dev, strat, lp, osdep)
 	/* ULTRIX disklabel resides at the end of superblock area */
 	ulp = (struct pt *)(bp->b_un.b_addr + DEV_BSIZE - sizeof(struct pt));
 	if (ulp->pt_magic == PT_MAGIC) {
-#if MAXPARTITIONS < 8 /* XXX can't happen */
 		lp->d_npartitions = MAXPARTITIONS;
-#else
-		lp->d_npartitions = 8;
-#endif
-		for (i = 0; i < lp->d_npartitions; i++) {
+		i = 0;
+		do {
 			lp->d_partitions[i].p_size
 				= ulp->pt_part[i].pi_nblocks;
 			lp->d_partitions[i].p_offset
 				= ulp->pt_part[i].pi_blkoff;
 			lp->d_partitions[i].p_fsize = 1024;
 			lp->d_partitions[i].p_fstype = FS_BSDFFS;
-		}
-		strncpy(lp->d_packname, "ULTRIX native", 16);
+			i += 1;
+		} while (i < lp->d_npartitions);
+		lp->d_magic = PT_MAGIC;
+		lp->d_npartitions = i;
 		lp->d_partitions[1].p_fstype = FS_SWAP;
-		lp->d_checksum = dkcksum(lp);
 		goto done;
 	}
 	msg = "no disk label";
@@ -261,19 +259,19 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
+	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */ 
+	/* XXX should also protect bootstrap in first 8K */
 	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
-	/* beyond partition? */ 
+	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		/* if exactly at end of disk, return an EOF */
 		if (bp->b_blkno == maxsz) {

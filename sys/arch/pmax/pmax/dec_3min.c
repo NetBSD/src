@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.7.4.18 2000/02/03 09:34:45 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.7.4.19 2000/03/14 09:39:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.18 2000/02/03 09:34:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.19 2000/03/14 09:39:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,10 @@ static void dec_3min_bus_reset __P((void));
 static void dec_3min_device_register __P((struct device *, void *));
 static void dec_3min_cons_init __P((void));
 static int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void dec_3min_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
 static unsigned kn02ba_clkread __P((void));
-
-void kn02ba_wbflush __P((void));
+static void kn02ba_wbflush __P((void));
 
 #ifdef MIPS3
 static unsigned latched_cycle_cnt;
@@ -138,6 +139,7 @@ dec_3min_init()
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
+	platform.intr_establish = dec_3min_intr_establish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ba_clkread;
 
@@ -199,9 +201,10 @@ dec_3min_init()
 	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
 }
 
-void
+static void
 dec_3min_bus_reset()
 {
+
 	/* clear any memory error condition */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
@@ -210,7 +213,7 @@ dec_3min_bus_reset()
 	kn02ba_wbflush();
 }
 
-void
+static void
 dec_3min_cons_init()
 {
 	int kbd, crt, screen;
@@ -238,28 +241,92 @@ dec_3min_cons_init()
 	zs_ioasic_cnattach(ioasic_base, 0x180000, 1);
 }
 
-void
+static void
 dec_3min_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
+
 	panic("dec_3min_device_register unimplemented");
 }
 
+static void
+dec_3min_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	unsigned mask;
+
+	switch ((int)cookie) {
+		/* slots 0-2 don't interrupt through the IOASIC. */
+	case SYS_DEV_OPT0:
+		mask = MIPS_INT_MASK_0;
+		break;
+	case SYS_DEV_OPT1:
+		mask = MIPS_INT_MASK_1;
+		break;
+	case SYS_DEV_OPT2:
+		mask = MIPS_INT_MASK_2;
+		break;
+
+	case SYS_DEV_SCSI:
+		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
+			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
+		break;
+	case SYS_DEV_LANCE:
+		mask = IOASIC_INTR_LANCE;
+		break;
+	case SYS_DEV_SCC0:
+		mask = IOASIC_INTR_SCC_0;
+		break;
+	case SYS_DEV_SCC1:
+		mask = IOASIC_INTR_SCC_1;
+		break;
+	default:
+#ifdef DIAGNOSTIC
+		printf("warning: enabling unknown intr %x\n", (int)cookie);
+#endif
+		return;
+	}
+
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
+
+	switch ((int)cookie) {
+	case SYS_DEV_OPT0:
+	case SYS_DEV_OPT1:
+	case SYS_DEV_OPT2:
+		/* it's an option slot */
+		{
+		int s = splhigh();
+		s |= mask;
+		splx(s);
+		}
+		return;
+	}
+	mask = *(u_int32_t *)(ioasic_base + IOASIC_IMSK) | mask;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = mask;
+	kn02ba_wbflush();
+}
 
 #define	CHECKINTR(slot, bits)					\
+    do {							\
 	if (can_serve & (bits)) {				\
 		ifound = 1;					\
 		intrcnt[slot] += 1;				\
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
+	}							\
+    } while (0)
 
 /*
  * XXX XXX
  * following is under development and never works.
  * XXX XXX
  */
-int
+static int
 dec_3min_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -277,13 +344,14 @@ dec_3min_intr(cpumask, pc, status, cause)
 		u_int32_t intr, tcintr, imsk, can_serve, xxxintr;
 
 		tcintr = 0;
+#if 0
 		if (cpumask & MIPS_INT_MASK_0)
 			tcintr |= KMIN_INTR_TC_0;
 		if (cpumask & MIPS_INT_MASK_1)
 			tcintr |= KMIN_INTR_TC_1;
 		if (cpumask & MIPS_INT_MASK_2)
 			tcintr |= KMIN_INTR_TC_2;
-
+#endif
 		do {
 			ifound = 0;
 			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
@@ -315,9 +383,11 @@ dec_3min_intr(cpumask, pc, status, cause)
 			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
 			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
 			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+#if 0
 			CHECKINTR(SYS_DEV_OPT2, KMIN_INTR_TC_2);
 			CHECKINTR(SYS_DEV_OPT1, KMIN_INTR_TC_1);
 			CHECKINTR(SYS_DEV_OPT0, KMIN_INTR_TC_0);
+#endif
 
 			if (warned > 0 && !(can_serve & KMIN_INTR_PSWARN)) {
 				printf("%s\n", "Power supply ok now.");
@@ -361,7 +431,7 @@ dec_3min_intr(cpumask, pc, status, cause)
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-void
+static void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_IMSK */
@@ -369,7 +439,7 @@ kn02ba_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 
-unsigned
+static unsigned
 kn02ba_clkread()
 {
 #ifdef MIPS3
@@ -385,9 +455,6 @@ kn02ba_clkread()
 #endif
 	return 0;
 }
-
-#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
-#define C(x)	(void *)(x)
 
 static struct tc_slotdesc tc_kmin_slots[] = {
     { KV(KMIN_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
@@ -405,7 +472,7 @@ struct tcbus_attach_args kmin_tc_desc = {	/* global not a const */
 	TC_SPEED_12_5_MHZ,
 	KMIN_TC_NSLOTS, tc_kmin_slots,
 	1, tc_ioasic_builtins,
-	ioasic_intr_establish, ioasic_intr_disestablish,
+	NULL, NULL,
 	NULL,
 };
 
@@ -420,9 +487,11 @@ struct ioasic_dev kmin_ioasic_devs[] = {
 	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},
 	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), KMIN_INTR_CLOCK,	},
 	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
+#if 0
 	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  KMIN_INTR_TC_0	},
 	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  KMIN_INTR_TC_1	},
 	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  KMIN_INTR_TC_2	},
+#endif
 };
 int kmin_builtin_ndevs = 5;
 int kmin_ioasic_ndevs = sizeof(kmin_ioasic_devs)/sizeof(kmin_ioasic_devs[0]);

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.9.2.21 2000/02/03 09:34:44 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.9.2.22 2000/03/14 09:39:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.21 2000/02/03 09:34:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.22 2000/03/14 09:39:32 nisimura Exp $");
 #include <sys/param.h>
 
 #include <sys/systm.h>
@@ -104,13 +104,15 @@ static void dec_3maxplus_device_register __P((struct device *, void *));
 static int  dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void dec_3maxplus_memerr __P ((void));
 static unsigned kn03_clkread __P((void));
+static void kn03_wbflush __P((void));
 
-void kn03_wbflush __P((void));
 static unsigned latched_cycle_cnt;
 
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tcfb_cnattach __P((int));
+extern void ioasic_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -137,6 +139,7 @@ dec_3maxplus_init()
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 	platform.iointr = dec_3maxplus_intr;
+	platform.intr_establish = ioasic_intr_establish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
@@ -241,13 +244,14 @@ dec_3maxplus_device_register(dev, aux)
 	panic("dec_3maxplus_device_register unimplemented");
 }
 
-
-#define	CHECKINTR(slot, bits)					\
+#define	CHECKINTR(vvv, bits)					\
+    do {							\
 	if (can_serve & (bits)) {				\
 		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
 static int
 dec_3maxplus_intr(cpumask, pc, status, cause)
@@ -376,7 +380,7 @@ dec_3maxplus_memerr()
 	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
 }
 
-void
+static void
 kn03_wbflush()
 {
 	/* read once IOASIC SLOT 0 */
@@ -416,9 +420,6 @@ kn03_clkread()
 	return usec;
 }
 
-#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
-#define C(x)	(void *)(x)
-
 static struct tc_slotdesc tc_kn03_slots[] = {
     { KV(KN03_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
     { KV(KN03_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
@@ -435,7 +436,7 @@ struct tcbus_attach_args kn03_tc_desc = {	/* global not a const */
 	TC_SPEED_25_MHZ,
 	KN03_TC_NSLOTS, tc_kn03_slots,
 	1, tc_ioasic_builtins,
-	ioasic_intr_establish, ioasic_intr_disestablish,
+	NULL, NULL,
 	NULL,
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.16 2000/02/03 09:34:44 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.17 2000/03/14 09:39:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.16 2000/02/03 09:34:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.17 2000/03/14 09:39:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ static void dec_3max_device_register __P((struct device *, void *));
 static int  dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void kn02_intr_establish __P((struct device *, void *, int,
 		int (*)(void *), void *));
-static void kn02_intr_disestablish __P((struct device *, void *));
 static void dec_3max_memerr __P((void));
 
 extern void kn02_wbflush __P((void));
@@ -136,6 +135,7 @@ dec_3max_init()
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
 	platform.iointr = dec_3max_intr;
+	platform.intr_establish = dec_3max_intr_establish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -222,54 +222,48 @@ static const struct {
 	int cookie;
 	int intrbit;
 } kn02intrs[] = {
-	{ SYS_DEV_SCC0,  KN02_IP_DZ },
-	{ SYS_DEV_LANCE, KN02_IP_LANCE },
+	{ SYS_DEV_OPT0,	 KN02_IP_SLOT0 },
+	{ SYS_DEV_OPT1,	 KN02_IP_SLOT1 },
+	{ SYS_DEV_OPT2,	 KN02_IP_SLOT2 },
 	{ SYS_DEV_SCSI,	 KN02_IP_SCSI },
-	{ SYS_DEV_OPT0,  KN02_IP_SLOT0 },
-	{ SYS_DEV_OPT1,  KN02_IP_SLOT1 },
-	{ SYS_DEV_OPT2,  KN02_IP_SLOT2 },
+	{ SYS_DEV_LANCE, KN02_IP_LANCE },
+	{ SYS_DEV_SCC0,	 KN02_IP_DZ },
 };
 
 static void
-kn02_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
+kn02_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
 	int level;
-	int (*func) __P((void *));
+	int (*handler) __P((void *));
+	void *arg;
 {
-	int dev, i;
+	int i;
 	u_int32_t csr;
 
-	dev = (int)cookie;
-
 	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
-		if (kn02intrs[i].cookie == dev)
+		if (kn02intrs[i].cookie == (int)cookie)
 			goto found;
 	}
-	panic("intr_establish: invalid cookie %d", dev);
+	panic("intr_establish: invalid cookie %d", (int)cookie);
 
 found:
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 
-	iplmask[level] |= (kn02intrs[i].intrbit << 16);
+	i = kn02intrs[i].intrbit << KN02_CSR_IOINTEN_SHIFT;
+	iplmask[level] |= i;
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
-	csr |= (kn02intrs[i].intrbit << 16);
+	csr |= i;
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 }
 
-static void
-kn02_intr_disestablish(dev, cookie)
-	struct device *dev;
-	void *cookie;
-{
-}
-
-#define	CALLINTR(slot) do {					\
+#define	CALLINTR(vvv)						\
+	do {							\
 		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	} while (0)
 
 static int
@@ -363,9 +357,6 @@ dec_3max_memerr()
 	dec_mtasic_err(erradr, errsyn, csr & KN02_CSR_BNK32M);
 }
 
-#define	KV(x)	MIPS_PHYS_TO_KSEG1(x)
-#define	C(x)	(void *)(x)
-
 static struct tc_slotdesc tc_kn02_slots[] = {
     { KV(KN02_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
     { KV(KN02_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
@@ -384,8 +375,8 @@ static const struct tc_builtin tc_kn02_builtins[] = {
 };
 
 static struct ibus_attach_args kn02sys_devs[] = {
-	{ "mc146818",	KV(KN02_SYS_CLOCK), C(SYS_DEV_BOGUS), },
-	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
+	{ "mc146818",	SYS_DEV_BOGUS,	KV(KN02_SYS_CLOCK),	0, },
+	{ "dc",  	SYS_DEV_SCC0,	KV(KN02_SYS_DZ),	0, },
 };
 
 struct tcbus_attach_args kn02_tc_desc = { /* global not a const */
@@ -393,7 +384,7 @@ struct tcbus_attach_args kn02_tc_desc = { /* global not a const */
 	TC_SPEED_25_MHZ,
 	KN02_TC_NSLOTS, tc_kn02_slots,
 	3, tc_kn02_builtins,
-	kn02_intr_establish, kn02_intr_disestablish,
+	NULL, NULL,
 	NULL,
 };
 
@@ -406,9 +397,9 @@ struct cfattach kn02sys_ca = {
 
 static int
 kn02sys_match(parent, cfdata, aux)
-        struct device *parent;
-        struct cfdata *cfdata;
-        void *aux;
+	struct device *parent;
+	struct cfdata *cfdata;
+	void *aux;
 
 {
 	struct tc_attach_args *ta = aux;
@@ -420,18 +411,16 @@ kn02sys_match(parent, cfdata, aux)
 
 static void
 kn02sys_attach(parent, self, aux)
-        struct device *parent;
-        struct device *self;
-        void *aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	struct tc_softc *sc = (void *)parent;
 	struct ibus_dev_attach_args ida;
-   
+
 	ida.ida_busname = "ibus"; 
 	ida.ida_devs = kn02sys_devs;
 	ida.ida_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
-	ida.ida_establish = sc->sc_intr_establish;
-	ida.ida_disestablish = sc->sc_intr_disestablish;
 
 	ibusattach(parent, self, &ida);
 }

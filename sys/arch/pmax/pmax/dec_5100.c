@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.2.4.17 2000/02/03 09:34:45 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.2.4.18 2000/03/14 09:39:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,13 +31,12 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.17 2000/02/03 09:34:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.18 2000/03/14 09:39:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/termios.h>
-#include <dev/cons.h>
+#include <sys/kernel.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -57,7 +56,6 @@ static void dec_5100_device_register __P((struct device *, void *));
 static int  dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void dec_5100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
-void dec_5100_intr_disestablish __P((struct device *, void *));
 static void dec_5100_memerr __P((void));
 
 extern void kn230_wbflush __P((void));
@@ -90,6 +88,7 @@ dec_5100_init()
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
+	platform.intr_establish = dec_5100_intr_establish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -135,9 +134,9 @@ dec_5100_cons_init()
 	 * FIFO depth * character time,
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
-	DELAY(160000000 / 9600);
+	DELAY(160000000 / 9600);	/* XXX */
 
-	dc_cnattach(KN01_SYS_DZ, 0);
+	dc_cnattach(KN230_SYS_DZ0, 0);
 }
 
 static void
@@ -145,6 +144,7 @@ dec_5100_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
+
 	panic("dec_5100_device_register unimplemented");
 }
 
@@ -161,37 +161,27 @@ static const struct {
 static u_int32_t kn230imsk;
 
 void
-dec_5100_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
+dec_5100_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
 	void *cookie, *arg;
 	int level;
-	int (*func) __P((void *));
+	int (*handler) __P((void *));
 {
-	int dev, i;
 
-	dev = (int)cookie;
-
-	for (i = 0; i < sizeof(kn230intrs)/sizeof(kn230intrs[0]); i++) {
-		if (kn230intrs[i].cookie == dev)
-			goto found;
-	}
-	panic("intr_establish: invalid cookie %d", dev);
-
-found:
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 
 	iplmask[level] |= kn230intrs[i].intrbit;
 	kn230imsk |= kn230intrs[i].intrbit;
 }
 
-void
-dec_5100_intr_disestablish(dev, cookie)
-	struct device *dev;
-	void *cookie;
-{
-	printf("dec_5100_intr_distestablish: not implemented\n");
-}
+#define	CALLINTR(vvv, bits) 					\
+    do {							\
+	if ((icsr & (bits)) && intrtabl[vvv].ih_func) {		\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
 static int
 dec_5100_intr(cpumask, pc, status, cause)
@@ -226,22 +216,17 @@ dec_5100_intr(cpumask, pc, status, cause)
 	/* allow clock interrupt posted when enabled */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-#define	CHECKINTR(slot, bits) 					\
-	if (icsr & (bits)) {					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
-
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr &= kn230imsk;	
-	if (cpumask & (MIPS_INT_MASK_0 | MIPS_INT_MASK_1)) {
-		CHECKINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
-		CHECKINTR(SYS_DEV_OPT0, KN230_CSR_INTR_OPT0);
-		CHECKINTR(SYS_DEV_OPT1, KN230_CSR_INTR_OPT1);
-		CHECKINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
-		CHECKINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
+	if (cpumask & MIPS_INT_MASK_0) {
+		CALLINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
+		CALLINTR(SYS_DEV_OPT0, KN230_CSR_INTR_OPT0);
+		CALLINTR(SYS_DEV_OPT1, KN230_CSR_INTR_OPT1);
 	}
-#undef CHECKINTR
+	if (cpumask & MIPS_INT_MASK_1) {
+		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
+		CALLINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
+	}
 
 	if (cpumask & MIPS_INT_MASK_3) {
 		dec_5100_memerr();
@@ -263,7 +248,6 @@ static void
 dec_5100_memerr()
 {
 	u_int32_t icsr;
-	extern int cold;
 
 	/* read icsr and clear error  */
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
@@ -294,6 +278,7 @@ int
 _splraise_kn230(lvl)
 	int lvl;
 {
+
 	oldiplmask[lvl] = kn230imsk;
 	kn230imsk &= ~iplmask[lvl];
 	return lvl;
@@ -303,6 +288,7 @@ int
 _spllower_kn230(lvl)
 	int lvl;
 {
+
 	oldiplmask[lvl] = kn230imsk;
 	kn230imsk = iplmask[IPL_HIGH] &~ iplmask[lvl];
 	return lvl;
@@ -312,6 +298,7 @@ int
 _splrestore_kn230(lvl)
 	int lvl;
 {
+
 	if (lvl > IPL_HIGH)
 		_splset(MIPS_SR_INT_IE | lvl);
 	else
