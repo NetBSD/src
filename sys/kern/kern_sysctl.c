@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.123 2003/01/18 10:06:31 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.124 2003/02/02 20:33:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.123 2003/01/18 10:06:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.124 2003/02/02 20:33:09 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -636,6 +636,22 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		return (error);
 	    }
+	case KERN_POSIX_THREADS:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_POSIX_SEMAPHORES:	/* XXX _POSIX_VERSION */
+#ifdef P1003_1B_SEMAPHORE
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+#else		
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+	case KERN_POSIX_BARRIERS:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_POSIX_TIMERS:		/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_POSIX_SPIN_LOCKS:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_POSIX_READER_WRITER_LOCKS:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
 
 	default:
 		return (EOPNOTSUPP);
