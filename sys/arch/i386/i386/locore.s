@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.77.2.2 1994/08/03 23:38:23 mycroft Exp $
+ *	$Id: locore.s,v 1.77.2.3 1994/10/06 03:40:09 mycroft Exp $
  */
 
 /*
@@ -243,24 +243,35 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
 	movw	$0x0078,_cpu_vendor-KERNBASE+4
 
-#ifndef notdef
+#ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
 	invd
 	movb	$CCR0,%al		# Configuration Register index (CCR0)
 	outb	%al,$0x22
 	inb	$0x23,%al
-	orb	$CCR0_NC1,%al
+	orb	$(CCR0_NC1|CCR0_BARB),%al
+	movb	%al,%ah
+	movb	$CCR0,%al
+	outb	%al,$0x22
+	movb	%ah,%al
 	outb	%al,$0x23
 	invd
-#else
+#else /* CYRIX_CACHE_WORKS */
 	/* Set cache parameters */
 	invd				# Start with guaranteed clean cache
-#ifdef CYRIX_CACHE_WORKS
 	movb	$CCR0,%al		# Configuration Register index (CCR0)
 	outb	%al,$0x22
 	inb	$0x23,%al
 	andb	$~CCR0_NC0,%al
+#ifndef CYRIX_CACHE_REALLY_WORKS
+	orb	$(CCR0_NC1|CCR0_BARB),%al
+#else
 	orb	$CCR0_NC1,%al
+#endif
+	movb	%al,%ah
+	movb	$CCR0,%al
+	outb	%al,$0x22
+	movb	%ah,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 1	*/
 	movb	$(NCR1+2),%al
@@ -286,14 +297,8 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	%cr0,%eax
 	andl	$~(CR0_CD|CR0_NW),%eax
 	movl	%eax,%cr0
-#else
-	/* disable caching in CR0 */
-	movl	%cr0,%eax
-	orl	$CR0_CD,%eax
-	movl	%eax,%cr0
-#endif
 	invd
-#endif /* notdef */
+#endif /* CYRIX_CACHE_WORKS */
 
 	jmp	2f
 
@@ -570,21 +575,6 @@ reloc_gdt:
 1:
 #endif
 
-#ifdef notdef
-	cmp	$CPU_486DLC,_cpu
-	jne	1f
-	pushl	$2f
-	call	_printf
-	addl	$4,%esp
-	jmp	1f
-#ifdef CYRIX_CACHE_WORKS
-2:	.asciz	"WARNING: CYRIX 486DLC CACHE ENABLED.\n"
-#else
-2:	.asciz	"WARNING: CYRIX 486DLC CACHE DISABLED BY DEFAULT.\n"
-#endif
-1:
-#endif /* notdef */
-
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -810,7 +800,6 @@ ENTRY(copyout)
 	addl	%ebx,%ecx
 	decl	%ecx
 	shrl	$PGSHIFT,%ecx
-	incl	%ecx
 
 	/* Compute PTE offset for start address. */
 	movl	%edi,%edx
@@ -837,7 +826,7 @@ ENTRY(copyout)
 
 2:	incl	%edx
 	decl	%ecx
-	jnz	1b			# check next page
+	jns	1b			# check next page
 #endif /* I386_CPU */
 
 3:	/* bcopy(%esi, %edi, %ebx); */
@@ -966,17 +955,15 @@ ENTRY(copyoutstr)
 	cld
 
 3:	subl	%ecx,%edx		# predecrement total count
-	incl	%ecx
 
 3:	decl	%ecx
-	jz	4f
+	js	4f
 	lodsb
 	stosb
 	testb	%al,%al
 	jnz	3b
 
 	/* Success -- 0 byte reached. */
-	decl	%ecx
 	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
@@ -1471,11 +1458,11 @@ ENTRY(setrunqueue)
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
 	leal	_qs(,%edx,8),%edx	# locate q hdr
-	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	P_BACK(%edx),%ecx
+	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	%eax,P_BACK(%edx)
-	movl	%ecx,P_BACK(%eax)
 	movl	%eax,P_FORW(%ecx)
+	movl	%ecx,P_BACK(%eax)
 	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$2f
@@ -1491,19 +1478,23 @@ ENTRY(setrunqueue)
 ENTRY(remrq)
 	pushl	%esi
 	movl	8(%esp),%esi
+#ifdef DIAGNOSTIC
 	movzbl	P_PRIORITY(%esi),%eax
 	shrl	$2,%eax
-#ifdef DIAGNOSTIC
 	btl	%eax,_whichqs
 	jnc	1f
 #endif /* DIAGNOSTIC */
 	movl	P_FORW(%esi),%ecx	# unlink process
 	movl	P_BACK(%esi),%edx
-	movl	%edx,P_BACK(%ecx)
 	movl	%ecx,P_FORW(%edx)
-	movl	$0,P_BACK(%esi)	# zap reverse link to indicate off list
+	movl	%edx,P_BACK(%ecx)
+	movl	$0,P_BACK(%esi)		# zap reverse link to indicate off list
 	cmpl	%edx,%ecx		# q still has something?
 	jne	2f
+#ifndef DIAGNOSTIC
+	movzbl	P_PRIORITY(%esi),%eax
+	shrl	$2,%eax
+#endif
 	btrl	%eax,_whichqs		# no; clear bit
 2:	popl	%esi
 	ret
@@ -1579,22 +1570,20 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
-	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
+	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
 	je	_switch_error		# not possible
 #endif /* DIAGNOSTIC */
 	movl	P_FORW(%edi),%edx
 	movl	%edx,P_FORW(%eax)
-
-	cmpl	%edx,%eax		# q empty
-	jne	3f
-	btrl	%ebx,%ecx		# yes, clear to indicate empty
-
-3:	movl	P_BACK(%edi),%eax
 	movl	%eax,P_BACK(%edx)
 
+	cmpl	%edx,%eax		# q empty?
+	jne	3f
+
+	btrl	%ebx,%ecx		# yes, clear to indicate empty
 	movl	%ecx,_whichqs		# update q status
 
-	/* We just did it. */
+3:	/* We just did it. */
 	xorl	%eax,%eax
 	movl	%eax,_want_resched
 
@@ -2063,3 +2052,80 @@ IDTVEC(syscall)
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
+
+/*
+ * bzero (void *b, size_t len)
+ *	write len zero bytes to the string b.
+ */
+
+ENTRY(bzero)
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp),%edi
+	movl	16(%esp),%ecx
+
+	cld				/* set fill direction forward */
+	xorl	%eax,%eax		/* set fill data to 0 */
+
+	/*
+	 * if the string is too short, it's really not worth the overhead
+	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * unaligned set.
+	 */
+	cmpl	$0x0f,%ecx
+	jle	9f
+
+	movl	%edi,%edx		/* compute misalignment */
+	negl	%edx
+	andl	$3,%edx
+	movl	%ecx,%ebx
+	subl	%edx,%ebx
+
+	movl	%edx,%ecx		/* zero until word aligned */
+	rep
+	stosb
+
+#if defined(I486_CPU)
+#if defined(I386_CPU) || defined(I586_CPU)
+	cmpl	$CPUCLASS_486,_cpu_class
+	jne	8f
+#endif
+
+	movl	%ebx,%ecx
+	shrl	$6,%ecx
+	jz	8f
+	andl	$63,%ebx
+1:	movl	%eax,(%edi)
+	movl	%eax,4(%edi)
+	movl	%eax,8(%edi)
+	movl	%eax,12(%edi)
+	movl	%eax,16(%edi)
+	movl	%eax,20(%edi)
+	movl	%eax,24(%edi)
+	movl	%eax,28(%edi)
+	movl	%eax,32(%edi)
+	movl	%eax,36(%edi)
+	movl	%eax,40(%edi)
+	movl	%eax,44(%edi)
+	movl	%eax,48(%edi)
+	movl	%eax,52(%edi)
+	movl	%eax,56(%edi)
+	movl	%eax,60(%edi)
+	addl	$64,%edi
+	decl	%ecx
+	jnz	1b
+#endif
+
+8:	movl	%ebx,%ecx		/* zero by words */
+	shrl	$2,%ecx
+	andl	$3,%ebx
+	rep
+	stosl
+
+7:	movl	%ebx,%ecx		/* zero remainder bytes */
+9:	rep
+	stosb
+
+	popl	%ebx
+	popl	%edi
+	ret

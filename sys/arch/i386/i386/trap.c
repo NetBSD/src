@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.48.2.2 1994/08/15 22:25:07 mycroft Exp $
+ *	$Id: trap.c,v 1.48.2.3 1994/10/06 03:43:00 mycroft Exp $
  */
 
 /*
@@ -499,11 +499,16 @@ syscall(frame)
 #endif
 #ifdef COMPAT_IBCS2
 	case EMUL_IBCS2_COFF:
+	case EMUL_IBCS2_XOUT:
 		nsys = nibcs2_sysent;
 		callp = ibcs2_sysent;
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
 		break;
+#endif
+#ifdef DIAGNOSTIC
+	default:
+		panic("invalid p_emul %d", p->p_emul);
 #endif
 	}
 
