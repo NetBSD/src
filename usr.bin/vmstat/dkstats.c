@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.19 2002/11/16 15:59:32 itojun Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.20 2003/06/11 17:26:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/sched.h>
-#include <sys/dkstat.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/disk.h>
