@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2000/08/30 23:51:54 jhawk Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/27 20:29:14 leo Exp $
 
-SUBDIR= libtos loadbsd aptck chg_pid rawwrite
+SUBDIR= libtos loadbsd aptck chg_pid file2swp rawwrite
 
 .PHONY: all clean install
 
