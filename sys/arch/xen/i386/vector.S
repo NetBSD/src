@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.5 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.6 2005/03/11 15:45:54 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -844,6 +844,7 @@ _C_LABEL(eintrcnt):
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	STI(%eax)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
@@ -862,6 +863,7 @@ IDTVEC(softserial)
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	STI(%eax)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
@@ -893,6 +895,7 @@ IDTVEC(softnet)
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	STI(%eax)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
