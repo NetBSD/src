@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.8 1998/07/17 21:09:59 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.9 1998/08/03 13:09:01 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ bus_dmamap_load_uio(t, map, uio, flags)
 
 		addr = (caddr_t)iov[i].iov_base + offset;
 
-		error = _bus_dmamap_load_buffer(map, addr, minlen,
+		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    p, flags, &lastaddr, &seg, first);
 		first = 0;
 
