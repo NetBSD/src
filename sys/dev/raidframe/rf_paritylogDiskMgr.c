@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.9 2000/01/14 04:03:52 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10 2000/01/15 01:57:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -73,7 +73,7 @@ AcquireReintBuffer(pool)
 			pool->availBuffersIndex = 0;
 		RF_UNLOCK_MUTEX(pool->mutex);
 	} else {
-		RF_PANIC();	/* should never happen in currect config,
+		RF_PANIC();	/* should never happen in correct config,
 				 * single reint */
 		RF_WAIT_COND(pool->cond, pool->mutex);
 	}
@@ -382,9 +382,14 @@ ReintegrateRegion(
 	RF_PhysDiskAddr_t *rrd_pda, *prd_pda, *pwr_pda;
 	caddr_t parityBuffer, regionBuffer = NULL;
 
-	/* Reintegrate a region (regionID). 1. acquire region and parity
-	 * buffers 2. read log from disk 3. read parity from disk 4. apply log
-	 * to parity 5. apply core log to parity 6. write new parity to disk
+	/* Reintegrate a region (regionID). 
+	 *
+	 * 1. acquire region and parity buffers 
+	 * 2. read log from disk 
+	 * 3. read parity from disk 
+	 * 4. apply log to parity 
+	 * 5. apply core log to parity 
+	 * 6. write new parity to disk
 	 * 
 	 * BLOCKING */
 
