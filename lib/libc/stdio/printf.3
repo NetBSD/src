@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.12 1998/08/29 08:32:34 lukem Exp $
+.\"	$NetBSD: printf.3,v 1.13 1998/09/14 21:10:18 tv Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -350,6 +350,9 @@ argument.
 .It
 The optional character
 .Cm q ,
+or alternatively two consecutive
+.Cm l
+(ell) characters,
 specifying that a following
 .Cm d ,
 .Cm i ,
@@ -359,13 +362,13 @@ specifying that a following
 or
 .Cm X
 conversion corresponds to a
-.Em quad int
+.Em quad_t
 or
-.Em unsigned quad int
+.Em u_quad_t
 argument, or that a following
 .Cm n
 conversion corresponds to a pointer to a
-.Em quad int
+.Em quad_t
 argument.
 .It
 The character
