@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.34 2001/11/01 16:06:59 tron Exp $	*/
+/*	$NetBSD: getch.c,v 1.35 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.34 2001/11/01 16:06:59 tron Exp $");
+__RCSID("$NetBSD: getch.c,v 1.35 2001/12/02 09:14:21 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -48,9 +48,6 @@ __RCSID("$NetBSD: getch.c,v 1.34 2001/11/01 16:06:59 tron Exp $");
 #include <stdio.h>
 #include "curses.h"
 #include "curses_private.h"
-
-/* defined in setterm.c */
-extern struct tinfo *_cursesi_genbuf;
 
 #define DEFAULT_DELAY 2			/* default delay for timeout() */
 
@@ -67,7 +64,6 @@ extern struct tinfo *_cursesi_genbuf;
  */
 
 /* private data structures for holding the key definitions */
-typedef struct keymap keymap_t;
 typedef struct key_entry key_entry_t;
 
 struct key_entry {
@@ -277,10 +273,6 @@ static const struct tcdata tc[] = {
 /* Number of TC entries .... */
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
-/* The root keymap */
-
-static keymap_t *base_keymap;
-
 /* prototypes for private functions */
 static key_entry_t *add_new_key(keymap_t *current, char chr, int key_type,
 				int symbol);
@@ -288,6 +280,33 @@ static keymap_t		*new_keymap(void);	/* create a new keymap */
 static key_entry_t	*new_key(void);		/* create a new key entry */
 static wchar_t		inkey(int to, int delay);
 
+/*
+ * Free the storage associated with the given keymap
+ */
+void
+_cursesi_free_keymap(keymap_t *map)
+{
+	int i;
+
+	  /* check for, and free, child keymaps */
+	for (i = 0; i < MAX_CHAR; i++) {
+		if (map->mapping[i] >= 0) {
+			if (map->key[map->mapping[i]]->type == KEYMAP_MULTI)
+				_cursesi_free_keymap(
+					map->key[map->mapping[i]]->value.next);
+		}
+	}
+
+	  /* now free any allocated keymap structs */
+	for (i = 0; i < map->count; i += KEYMAP_ALLOC_CHUNK) {
+		free(map->key[i]);
+	}
+	
+	free(map->key);
+	free(map);
+}
+
+				
 /*
  * Add a new key entry to the keymap pointed to by current.  Entry
  * contains the character to add to the keymap, type is the type of
@@ -372,14 +391,13 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
  *
  */
 void
-__init_getch(void)
+__init_getch(SCREEN *screen)
 {
 	char entry[1024], *p;
 	int     i, j, length, key_ent;
 	size_t limit;
 	key_entry_t *tmp_key;
 	keymap_t *current;
-	char *cp;
 #ifdef DEBUG
 	int k;
 #endif
@@ -388,19 +406,20 @@ __init_getch(void)
 	state = INKEY_NORM;
 
 	/* init the base keymap */
-	base_keymap = new_keymap();
+	screen->base_keymap = new_keymap();
 
 	/* key input buffer pointers */
 	start = end = working = 0;
 
 	/* now do the termcap snarfing ... */
+
 	for (i = 0; i < num_tcs; i++) {
 		p = entry;
 		limit = 1023;
-		cp = t_getstr(_cursesi_genbuf, tc[i].name, &p, &limit);
-		if (cp != NULL) {
-			current = base_keymap;	/* always start with
-						 * base keymap. */
+		if (t_getstr(screen->cursesi_genbuf, tc[i].name,
+			     &p, &limit) != NULL) {
+			current = screen->base_keymap;	/* always start with
+							 * base keymap. */
 			length = (int) strlen(entry);
 #ifdef DEBUG
 			__CTRACE("Processing termcap entry %s, sequence ",
@@ -507,7 +526,8 @@ inkey(int to, int delay)
 {
 	wchar_t		 k;
 	int              c;
-	keymap_t	*current = base_keymap;
+	keymap_t	*current = _cursesi_screen->base_keymap;
+	FILE            *infd = _cursesi_screen->infd;
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
@@ -517,7 +537,7 @@ reread:
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
 			if ((c = getchar()) == EOF) {
-				clearerr(stdin);
+				clearerr(infd);
 				return ERR;
 			}
 			
@@ -557,8 +577,8 @@ reread:
 			}
 
 			c = getchar();
-			if (ferror(stdin)) {
-				clearerr(stdin);
+			if (ferror(infd)) {
+				clearerr(infd);
 				return ERR;
 			}
 			
@@ -569,9 +589,9 @@ reread:
 #ifdef DEBUG
 			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
-			if (feof(stdin)) {	/* inter-char timeout,
+			if (feof(infd)) {	/* inter-char timeout,
 						 * start backing out */
-				clearerr(stdin);
+				clearerr(infd);
 				if (start == end)
 					/* no chars in the buffer, restart */
 					goto reread;
@@ -678,6 +698,7 @@ wgetch(WINDOW *win)
 {
 	int inp, weset;
 	int c;
+	FILE *infd = _cursesi_screen->infd;
 
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
@@ -735,14 +756,14 @@ wgetch(WINDOW *win)
 		}
 
 		c = getchar();
-		if (feof(stdin)) {
-			clearerr(stdin);
+		if (feof(infd)) {
+			clearerr(infd);
 			__restore_termios();
 			return ERR;	/* we have timed out */
 		}
 		
-		if (ferror(stdin)) {
-			clearerr(stdin);
+		if (ferror(infd)) {
+			clearerr(infd);
 			inp = ERR;
 		} else {
 			inp = c;
@@ -783,5 +804,5 @@ wgetch(WINDOW *win)
 int
 ungetch(int c)
 {
-	return ((ungetc(c, stdin) == EOF) ? ERR : OK);
+	return ((ungetc(c, _cursesi_screen->infd) == EOF) ? ERR : OK);
 }
