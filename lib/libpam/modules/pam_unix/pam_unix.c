@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.5.2.1 2005/03/19 17:53:16 tron Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.5.2.2 2005/04/04 17:55:36 tron Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.5.2.1 2005/03/19 17:53:16 tron Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.5.2.2 2005/04/04 17:55:36 tron Exp $");
 #endif
 
 
@@ -85,18 +85,20 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 	login_cap_t *lc;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	int retval;
 	const char *pass, *user, *realpw;
+	char pwbuf[1024];
 
 	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF)) {
-		pwd = getpwnam(getlogin());
+		(void) getpwnam_r(getlogin(), &pwres, pwbuf, sizeof(pwbuf),
+				  &pwd);
 	} else {
 		retval = pam_get_user(pamh, &user, NULL);
 		if (retval != PAM_SUCCESS)
 			return (retval);
 		PAM_LOG("Got user: %s", user);
-		pwd = getpwnam(user);
+		(void) getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd);
 	}
 
 	if (pwd != NULL) {
@@ -143,18 +145,20 @@ PAM_EXTERN int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct timeval now;
 	login_cap_t *lc;
 	time_t warntime;
 	int retval;
 	const char *user;
+	char pwbuf[1024];
 
 	retval = pam_get_user(pamh, &user, NULL);
 	if (retval != PAM_SUCCESS)
 		return (retval);
 
-	if (user == NULL || (pwd = getpwnam(user)) == NULL)
+	if (user == NULL ||
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_SERVICE_ERR);
 
 	PAM_LOG("Got user: %s", user);
@@ -403,24 +407,25 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	const char *user, *passwd_db, *new_pass, *old_pass, *p;
 	int retval, tries, min_pw_len = 0, pw_expiry = 0;
 	char salt[_PASSWORD_LEN+1];
+	char old_pwbuf[1024];
 #ifdef YP
 	char *domain;
 	int r;
 #endif
 
 	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF))
-		pwd = getpwnam(getlogin());
+		(void) getpwnam_r(getlogin(), &old_pwd, old_pwbuf,
+				  sizeof(old_pwbuf), &pwd);
 	else {
 		retval = pam_get_user(pamh, &user, NULL);
 		if (retval != PAM_SUCCESS)
 			return (retval);
-		pwd = getpwnam(user);
+		(void) getpwnam_r(user, &old_pwd, old_pwbuf,
+				  sizeof(old_pwbuf), &pwd);
 	}
 
 	if (pwd == NULL)
 		return (PAM_AUTHTOK_RECOVERY_ERR);
-
-	old_pwd = *pwd;
 
 	PAM_LOG("Got user: %s", user);
 

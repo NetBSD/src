@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.6 2005/02/26 18:25:28 thorpej Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.6.2.1 2005/04/04 17:55:36 tron Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.6 2005/02/26 18:25:28 thorpej Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.6.2.1 2005/04/04 17:55:36 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -110,13 +110,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	krb5_principal princ;
 	krb5_ccache ccache;
 	krb5_get_init_creds_opt opts;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	int retval;
 	void *ccache_data;
 	const char *user, *pass;
 	const void *sourceuser, *service;
 	char *principal, *princ_name, *ccache_name, luser[32], *srvdup;
 	char password_prompt[80];
+	char pwbuf[1024];
 
 	retval = pam_get_user(pamh, &user, USER_PROMPT);
 	if (retval != PAM_SUCCESS)
@@ -223,13 +224,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		PAM_LOG("PAM_USER Redone");
 	}
 
-	pwd = getpwnam(user);
-	if (pwd == NULL) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 		retval = PAM_USER_UNKNOWN;
 		goto cleanup2;
 	}
 
-	PAM_LOG("Done getpwnam()");
+	PAM_LOG("Done getpwnam_r()");
 
 	/* Get a TGT */
 	memset(&creds, 0, sizeof(krb5_creds));
@@ -349,12 +349,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	krb5_creds creds;
 	krb5_ccache ccache_temp, ccache_perm;
 	krb5_cc_cursor cursor;
-	struct passwd *pwd = NULL;
+	struct passwd *pwd = NULL, pwres;
 	int retval;
 	const char *cache_name, *q;
 	const void *user;
 	void *cache_data;
 	char *cache_name_buf = NULL, *p;
+	char pwbuf[1024];
 
 	uid_t euid;
 	gid_t egid;
@@ -412,13 +413,12 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the uid. This should exist. */
-	pwd = getpwnam(user);
-	if (pwd == NULL) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 		retval = PAM_USER_UNKNOWN;
 		goto cleanup3;
 	}
 
-	PAM_LOG("Done getpwnam()");
+	PAM_LOG("Done getpwnam_r()");
 
 	/* Avoid following a symlink as root */
 	if (setegid(pwd->pw_gid)) {
