@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.5 2001/10/18 06:14:33 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.6 2001/10/18 06:28:18 thorpej Exp $ */
 
 /*
  * 
@@ -119,7 +119,7 @@ gem_attach_pci(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;
 	struct gem_softc *sc = &gsc->gsc_gem;
-	pci_intr_handle_t intrhandle;
+	pci_intr_handle_t ih;
 	const char *intrstr;
 	char devinfo[256];
 
@@ -128,7 +128,7 @@ gem_attach_pci(parent, self, aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	sc->sc_pci = 1; /* XXXXX should all be done in bus_dma. */
+	sc->sc_pci = 1;		/* XXX */
 
 #define PCI_GEM_BASEADDR	(PCI_MAPREG_START + 0x00)
 
@@ -137,7 +137,7 @@ gem_attach_pci(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_bustag, &sc->sc_h, NULL, NULL) != 0)
 	{
-		printf("%s: could not map gem registers\n",
+		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -168,31 +168,24 @@ gem_attach_pci(parent, self, aux)
 	}
 #endif /* macppc */
 
-	sc->sc_burst = 16;	/* XXX */
-
-	/*
-	 * call the main configure
-	 */
-	gem_config(sc);
-
-	if (pci_intr_map(pa, &intrhandle) != 0) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;	/* bus_unmap ? */
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		return;
 	}	
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	gsc->gsc_ih = pci_intr_establish(pa->pa_pc,
-	    intrhandle, IPL_NET, gem_intr, sc);
-	if (gsc->gsc_ih != NULL) {
-		printf("%s: using %s for interrupt\n",
-		    sc->sc_dev.dv_xname,
-		    intrstr ? intrstr : "unknown interrupt");
-	} else {
-		printf("%s: couldn't establish interrupt",
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	gsc->gsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, gem_intr, sc);
+	if (gsc->gsc_ih == NULL) {
+		printf("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	/*
+	 * call the main configure
+	 */
+	gem_config(sc);
 }
