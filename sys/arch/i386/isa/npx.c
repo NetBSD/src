@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.45 1995/08/06 06:05:28 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.46 1995/08/06 17:59:10 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -100,9 +100,9 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-int npxdna __P((void));
+int npxdna __P((struct proc *));
 void npxexit __P((void));
-void npxinit __P((void));
+void npxinit __P((struct proc *));
 int npxintr __P((void *));
 static int npxprobe1 __P((struct isa_attach_args *));
 void npxsave __P((void));
@@ -493,18 +493,18 @@ npxsave1()
  * saved state.
  */
 int
-npxdna()
+npxdna(p)
+	struct proc *p;
 {
-	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 
 	if (npx_type == NPX_NONE) {
 		iprintf(("Emul"));
 		return (0);
 	}
 
-	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
 		iprintf(("Init"));
-		npxinit();
+		npxinit(p);
 		return (1);
 	}
 
@@ -512,10 +512,11 @@ npxdna()
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxdna: masked");
 #endif
+	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	if (npxproc != 0) {
 #ifdef DIAGNOSTIC
-		if (npxproc == curproc)
+		if (npxproc == p)
 			panic("npxdna: same process");
 #endif
 		iprintf(("Save"));
@@ -533,8 +534,7 @@ npxdna()
 	 * fnsave are broken, so our treatment breaks fnclex if it is the
 	 * first FPU instruction after a context switch.
 	 */
-	pcb->pcb_cr0 &= ~CR0_TS;
-	npxproc = curproc;
+	npxproc = p;
 	frstor(&pcb->pcb_savefpu);
 	return (1);
 }
@@ -546,6 +546,7 @@ void
 npxdrop()
 {
 
+	stts();
 	npxproc->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	npxproc = 0;
 }
@@ -582,7 +583,8 @@ npxsave()
  * ignored.
  */
 void
-npxinit()
+npxinit(p)
+	struct proc *p;
 {
 	static u_short control = __INITIAL_NPXCW__;
 
@@ -590,8 +592,10 @@ npxinit()
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxinit: masked");
 #endif
-	lcr0(curproc->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS);
-	if (npxproc != 0 && npxproc != curproc)
+	p->p_md.md_flags |= MDP_USEDFPU;
+	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	clts();
+	if (npxproc != 0 && npxproc != p)
 		npxsave1();
 	else {
 		npx_nointr = 1;
@@ -599,7 +603,6 @@ npxinit()
 		fwait();
 		npx_nointr = 0;
 	}
-	npxproc = curproc;
-	npxproc->p_md.md_flags |= MDP_USEDFPU;
+	npxproc = p;
 	fldcw(&control);
 }
