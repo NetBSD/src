@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.66 2002/11/02 07:25:20 perry Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.67 2002/11/24 11:37:55 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.66 2002/11/02 07:25:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.67 2002/11/24 11:37:55 scw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -378,7 +378,7 @@ lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 int
 lockstatus(struct lock *lkp)
 {
-	int s, lock_type = 0;
+	int s = 0, lock_type = 0;
 
 	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags, s);
 	if (lkp->lk_exclusivecount != 0)
@@ -480,7 +480,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	cpuid_t cpu_id;
 	struct proc *p = curproc;
 	int lock_shutdown_noblock = 0;
-	int s;
+	int s = 0;
 
 	error = 0;
 
