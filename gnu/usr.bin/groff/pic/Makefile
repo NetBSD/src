@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/04/19 14:41:34 wiz Exp $
+#	$NetBSD: Makefile,v 1.13 2001/11/12 17:09:46 tv Exp $
 
 .include "../Makefile.lib"
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${DIST}
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 
-CLEANFILES+=	pic.cc pic.tab.h
+CLEANFILES+=	pic.cc pic_tab.h
 
 lex.o:	pic.cc
 
