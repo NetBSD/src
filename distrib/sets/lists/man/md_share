@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.71 1999/11/28 03:13:22 simonb Exp $
+# $NetBSD: md_share,v 1.72 1999/11/28 16:14:34 veego Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -115,6 +115,7 @@
 ./usr/share/man/cat4/i386/omms.0
 ./usr/share/man/cat4/i386/opms.0
 ./usr/share/man/cat4/i386/pcvt.0
+./usr/share/man/cat4/i386/pnpbios.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -289,6 +290,7 @@
 ./usr/share/man/cat8/pc532/makedev.0
 ./usr/share/man/cat8/pmax/MAKEDEV.0
 ./usr/share/man/cat8/pmax/boot.0
+./usr/share/man/cat8/pmax/installboot.0
 ./usr/share/man/cat8/pmax/makedev.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/boot.0
@@ -438,6 +440,7 @@
 ./usr/share/man/man4/i386/omms.4
 ./usr/share/man/man4/i386/opms.4
 ./usr/share/man/man4/i386/pcvt.4
+./usr/share/man/man4/i386/pnpbios.4
 ./usr/share/man/man4/i386/speaker.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
