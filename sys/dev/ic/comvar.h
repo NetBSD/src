@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.18 1997/10/19 14:26:23 fvdl Exp $	*/
+/*	$NetBSD: comvar.h,v 1.18.2.1 1997/11/04 23:19:55 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,19 +52,12 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 #define	COM_HW_KGDB	0x80
 
 /* Buffer size for character buffer */
-#define RXBUFSIZE 2048			/* More than enough.. */
-#define RXBUFMASK (RXBUFSIZE - 1)	/* Only iff previous is a power of 2 */
-#define RXHIWAT   ((RXBUFSIZE * 1) / 4)
-#define	RXLOWAT	  ((RXBUFSIZE * 3) / 4)
+#define	COM_RING_SIZE	2048
 
 struct com_softc {
 	struct device sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
-
-	int sc_overflows;
-	int sc_floods;
-	int sc_errors;
 
 	int sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
@@ -73,25 +66,25 @@ struct com_softc {
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_hayespioh;
 
-	u_char sc_hwflags;
-	u_char sc_swflags;
-	int sc_fifolen;
+	u_int sc_overflows,
+	      sc_floods,
+	      sc_errors;
 
-	u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr, sc_mcr_active, sc_lcr,
-	       sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
-	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
+	int sc_hwflags,
+	    sc_swflags;
+	u_int sc_fifolen;
 
-	int sc_r_hiwat;
-	int sc_r_lowat;
- 	volatile u_int sc_rbget;
- 	volatile u_int sc_rbput;
-	volatile u_int sc_rbavail;
- 	u_char sc_rbuf[RXBUFSIZE];
-	u_char sc_lbuf[RXBUFSIZE];
+	u_int sc_r_hiwat,
+	      sc_r_lowat;
+	u_char *volatile sc_rbget,
+	       *volatile sc_rbput;
+ 	volatile u_int sc_rbavail;
+	u_char *sc_rbuf,
+	       *sc_ebuf;
 
  	u_char *sc_tba;
- 	int sc_tbc,
-	    sc_heldtbc;
+ 	u_int sc_tbc,
+	      sc_heldtbc;
 
 	volatile u_char sc_rx_flags,
 #define	RX_TTY_BLOCKED		0x01
@@ -106,6 +99,10 @@ struct com_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
+	volatile u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr,
+	    sc_mcr_active, sc_lcr, sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
+	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
+
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
