@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.21 1998/12/24 03:57:45 marc Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.22 1999/05/09 18:48:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ struct ep_pcmcia_product {
 	  PCMCIA_STR_3COM_3CXEM556 },
 
 	{ PCMCIA_PRODUCT_3COM_3C574,	ELINK_CHIPSET_ROADRUNNER,
-	  ELINK_FLAGS_MII,			0,
+	  ELINK_FLAGS_MII,		0,
 	  PCMCIA_STR_3COM_3C574 },
 
 	{ 0,				0,
@@ -349,14 +349,15 @@ ep_pcmcia_attach(parent, self, aux)
 		break;
 	}
 
-	sc->bustype = ELINK_BUS_PCMCIA;
-
 	epp = ep_pcmcia_lookup(pa);
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
 	printf(": %s\n", epp->epp_name);
-	
+
+	sc->bustype = ELINK_BUS_PCMCIA;
+	sc->ep_flags = epp->epp_flags;
+
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 
