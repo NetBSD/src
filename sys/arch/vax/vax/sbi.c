@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.6 1996/03/02 13:45:48 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.7 1996/03/07 23:22:56 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -81,8 +81,8 @@ sbi_match(parent, cf, aux)
 	struct bp_conf *bp = aux;
 
 	if (strcmp(bp->type, "sbi"))
-		return 1;
-	return 0;
+		return 0;
+	return 1;
 }
 
 void
@@ -91,7 +91,7 @@ sbi_attach(parent, self, aux)
 	void    *aux;
 {
 	void *nisse;
-	u_int nextype, nexnum, maxnex;
+	u_int nextype, nexnum, maxnex, minnex;
 	struct sbi_attach_args sa;
 
 	switch (cpunumber) {
@@ -139,7 +139,8 @@ sbi_attach(parent, self, aux)
 	 * in different ways (if they identifies themselves at all).
 	 * We have to fake identifying depending on different CPUs.
 	 */
-	for (nexnum = 0; nexnum < maxnex; nexnum++) {
+	minnex = self->dv_unit * maxnex;
+	for (nexnum = minnex; nexnum < minnex + maxnex; nexnum++) {
 		volatile int tmp;
 
 		if (badaddr((caddr_t)&nexus[nexnum], 4))

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.23 1996/03/02 13:45:45 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.24 1996/03/07 23:22:53 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -60,8 +60,6 @@ static	void	free_pv_entry();
 #define	ISTACK_SIZE (4 * NBPG)
 #define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
 
-
-
 struct pmap kernel_pmap_store;
 
 static int prot_array[]={ PG_NONE, PG_RO,   PG_RW,   PG_RW,
@@ -72,7 +70,8 @@ static int kernel_prot[]={ PG_NONE, PG_KR, PG_KW, PG_KW,
 
 static pv_entry_t   pv_head = NULL;
 static unsigned int pv_count = 0;
-
+pv_entry_t      pv_table;               /* array of entries,
+                                           one per LOGICAL page */
 unsigned *pte_cmap;
 void 	*scratch;
 
