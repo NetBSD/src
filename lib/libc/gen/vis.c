@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)vis.c	5.6 (Berkeley) 2/5/92";*/
-static char rcsid[] = "$Id: vis.c,v 1.3 1993/07/30 07:57:54 mycroft Exp $";
+static char rcsid[] = "$Id: vis.c,v 1.4 1993/08/03 22:48:35 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ vis(dst, c, flag, nextc)
 	int c, nextc;
 	register int flag;
 {
-	if ((u_int)c <= UCHAR_MAX && isgraph(c) ||
+	if ((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
 	   ((flag & VIS_TAB) == 0 && c == '\t') ||
 	   ((flag & VIS_NL) == 0 && c == '\n') ||
@@ -172,14 +172,16 @@ strvisx(dst, src, len, flag)
 	register size_t len;
 	int flag;
 {
-	char *start = dst;
+	register char c;
+	char *start;
 
-	while (len > 1) {
-		dst = vis(dst, *src, flag, *(src+1));
-		len--;
+	for (start = dst; len > 1; len--) {
+		c = *src;
+		dst = vis(dst, c, flag, *++src);
 	}
 	if (len)
 		dst = vis(dst, *src, flag, '\0');
+	*dst = '\0';
 
 	return (dst - start);
 }
