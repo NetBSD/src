@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.21 2003/11/25 22:36:32 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.22 2003/11/27 16:30:54 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -203,9 +203,24 @@ struct pthread_lock_ops {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-#define PT_STACKSIZE_LG	18
-#define PT_STACKSIZE	(1<<(PT_STACKSIZE_LG)) 
-#define PT_STACKMASK	(PT_STACKSIZE-1)
+#ifdef PT_FIXEDSTACKSIZE_LG
+
+#define	PT_STACKSIZE_LG	PT_FIXEDSTACKSIZE_LG 
+#define	PT_STACKSIZE	(1<<(PT_STACKSIZE_LG)) 
+#define	PT_STACKMASK	(PT_STACKSIZE-1)
+
+#else  /* PT_FIXEDSTACKSIZE_LG */
+
+extern	int		pt_stacksize_lg;
+extern	size_t		pt_stacksize;
+extern	vaddr_t		pt_stackmask;
+
+#define	PT_STACKSIZE_LG	pt_stacksize_lg
+#define	PT_STACKSIZE	pt_stacksize
+#define	PT_STACKMASK	pt_stackmask
+
+#endif /* PT_FIXEDSTACKSIZE_LG */
+
 
 #define PT_UPCALLSTACKS	16
 
