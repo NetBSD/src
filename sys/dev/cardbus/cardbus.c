@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.2 1999/10/15 06:41:27 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.3 1999/10/15 10:59:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 and 1998 HAYAKAWA Koichi.  All rights reserved.
@@ -149,8 +149,8 @@ cardbusattach(parent, self, aux)
   sc->sc_cacheline = cba->cba_cacheline;
   sc->sc_lattimer = cba->cba_lattimer;
 
-  printf(" bus %d device %d\n", sc->sc_bus, sc->sc_device);
-  printf("cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,sc->sc_lattimer);
+  printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
+  printf(" cacheline 0x%x, lattimer 0x%x\n", sc->sc_cacheline,sc->sc_lattimer);
 
   sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
   sc->sc_memt = cba->cba_memt;	/* CardBus MEM space tag */
@@ -516,7 +516,9 @@ cardbus_function_disable(ct)
  */
 
 static u_int8_t *decode_tuple __P((u_int8_t *));
+#ifdef CARDBUS_DEBUG
 static char *tuple_name __P((int));
+#endif
 
 static int
 decode_tuples(tuple, buflen)
@@ -546,16 +548,21 @@ decode_tuple(tuple)
 {
   u_int8_t type;
   u_int8_t len;
+#ifdef CARDBUS_DEBUG
   int i;
+#endif
 
   type = tuple[0];
   len = tuple[1] + 2;
 
+#ifdef CARDBUS_DEBUG
   printf("tuple: %s len %d\n", tuple_name(type), len);
+#endif
   if (CISTPL_END == type) {
     return NULL;
   }
 
+#ifdef CARDBUS_DEBUG
   for (i = 0; i < len; ++i) {
     if (i % 16 == 0) {
       printf("  0x%2x:", i);
@@ -568,11 +575,13 @@ decode_tuple(tuple)
   if (i % 16 != 0) {
     printf("\n");
   }
+#endif
 
   return tuple + len;
 }
 
 
+#ifdef CARDBUS_DEBUG
 static char *
 tuple_name(type)
      int type;
@@ -607,3 +616,4 @@ tuple_name(type)
     return "Reserved";
   }
 }
+#endif
