@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.71 2001/01/15 16:33:31 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72 2001/01/17 00:30:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -217,6 +217,7 @@ slattach()
 		sc->sc_fastq.ifq_maxlen = 32;
 		IFQ_SET_READY(&sc->sc_if.if_snd);
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
