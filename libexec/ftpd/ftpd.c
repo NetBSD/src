@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.69 1999/08/25 16:23:52 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.70 1999/09/30 18:12:34 tron Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.69 1999/08/25 16:23:52 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.70 1999/09/30 18:12:34 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -628,9 +628,11 @@ checkuser(fname, name, def, nofile)
 
 	while (fgets(line, sizeof(line), fd) != NULL)  {
 		glob = strtok(line, " \t\n");
-		if (glob[0] == '#')
+		if (glob == NULL || glob[0] == '#')
 			continue;
 		perm = strtok(NULL, " \t\n");
+		if (perm == NULL)
+			continue;
 		if (fnmatch(glob, name, 0) == 0)  {
 			if (perm != NULL &&
 			    ((strcasecmp(perm, "allow") == 0) ||
