@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.14 1995/05/24 13:12:12 hpeyerl Exp $	*/
+/*	$NetBSD: sd.c,v 1.15 1995/06/02 17:51:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.14 1995/05/24 13:12:12 hpeyerl Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.15 1995/06/02 17:51:21 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1038,7 +1038,7 @@ sdioctl(dev, cmd, data, flag, p)
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-				return (EBADF);
+			return (EBADF);
 		if (*(int *)data)
 			sc->sc_flags |= SDF_WLABEL;
 		else
