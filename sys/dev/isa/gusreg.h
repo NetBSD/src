@@ -1,4 +1,4 @@
-/* $NetBSD: gusreg.h,v 1.3 1996/02/05 02:22:10 jtc Exp $ */
+/* $NetBSD: gusreg.h,v 1.4 1997/03/19 06:45:23 mikel Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -242,17 +242,16 @@
  * Codec/Mixer registers
  */
 
-/* all these get +4 more in ad1848, sigh. */
-#define GUS_MAX_CODEC_BASE		0x108
-#define GUS_DAUGHTER_CODEC_BASE		0x52C
-#define GUS_DAUGHTER_CODEC_BASE2	0x600
-#define GUS_DAUGHTER_CODEC_BASE3	0xE7C
-#define GUS_DAUGHTER_CODEC_BASE4	0xF3C
+#define GUS_MAX_CODEC_BASE		0x10C
+#define GUS_DAUGHTER_CODEC_BASE		0x530
+#define GUS_DAUGHTER_CODEC_BASE2	0x604
+#define GUS_DAUGHTER_CODEC_BASE3	0xE80
+#define GUS_DAUGHTER_CODEC_BASE4	0xF40
 
-#define GUS_CODEC_SELECT	4	/* base + 0 */
-#define GUS_CODEC_DATA		5	/* base + 1 */
-#define GUS_CODEC_STATUS	6	/* base + 2 */
-#define GUS_CODEC_PIO		7	/* base + 3 */
+#define GUS_CODEC_SELECT	0
+#define GUS_CODEC_DATA		1
+#define GUS_CODEC_STATUS	2
+#define GUS_CODEC_PIO		3
 
 #define GUS_MAX_CTRL		0x106
 #define	GUS_MAX_BASEBITS	0xf	/* sets middle nibble of 3X6 */

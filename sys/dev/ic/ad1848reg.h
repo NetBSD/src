@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.2 1997/03/13 08:34:49 mikel Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.3 1997/03/19 06:45:21 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -42,10 +42,10 @@
 #define AD1848_BASE_VALID(base)	(((base) & 0x003) == 0)
 
 /* AD1848 direct registers */
-#define AD1848_IADDR		0x04
-#define AD1848_IDATA		0x05
-#define AD1848_STATUS		0x06
-#define AD1848_PIO		0x07
+#define AD1848_IADDR		0x00
+#define AD1848_IDATA		0x01
+#define AD1848_STATUS		0x02
+#define AD1848_PIO		0x03
 
 /* Gain constants  */
 #define GAIN_0			0x00

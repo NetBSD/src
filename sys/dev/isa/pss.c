@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.19 1997/03/13 08:34:51 mikel Exp $	*/
+/*	$NetBSD: pss.c,v 1.20 1997/03/19 06:45:24 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -72,6 +72,9 @@
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/pssreg.h>
+
+/* XXX Default WSS base */
+#define WSS_BASE_ADDRESS 0x0530
 
 /*
  * Mixer devices
@@ -785,7 +788,7 @@ pss_found:
     sc->sc_iobase = iobase;
 
     /* Clear WSS config */
-    pss_setaddr(WSS_BASE_ADDRESS, sc->sc_iobase+PSS_WSS_CONFIG);
+    pss_setaddr(WSS_BASE_ADDRESS, sc->sc_iobase+PSS_WSS_CONFIG); /* XXX! */
     outb(WSS_BASE_ADDRESS+WSS_CONFIG, 0);
 
     /* Clear config registers (POR reset state) */
@@ -858,7 +861,7 @@ spprobe(parent, match, aux)
     u_char bits;
     int i;
 
-    sc->sc_iobase = cf->cf_iobase;
+    sc->sc_iobase = cf->cf_iobase + WSS_CODEC;
     
     /* Set WSS io address */
     pss_setaddr(sc->sc_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
