@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2003/09/06 17:44:39 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2003/10/16 22:56:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int bus, int pin, int *handle);
+int intr_find_mpmapping(int, int, int *, void *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif

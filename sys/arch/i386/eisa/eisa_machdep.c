@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.19 2003/05/08 12:05:34 fvdl Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.20 2003/10/16 22:56:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.19 2003/05/08 12:05:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.20 2003/10/16 22:56:30 fvdl Exp $");
 
 #include "ioapic.h"
 
@@ -166,8 +166,8 @@ eisa_intr_map(ec, irq, ihp)
 #if NIOAPIC > 0
 
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_eisa_bus, irq, ihp) == 0 ||
-		    intr_find_mpmapping(mp_isa_bus, irq, ihp) == 0) {
+		if (intr_find_mpmapping(mp_eisa_bus, irq, ihp, NULL) == 0 ||
+		    intr_find_mpmapping(mp_isa_bus, irq, ihp, NULL) == 0) {
 			*ihp |= irq;
 			return 0;
 		} else
