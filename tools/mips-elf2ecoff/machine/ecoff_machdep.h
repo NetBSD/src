@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.1 2002/02/23 21:32:28 gmcgarry Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.2 2002/03/23 17:13:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -34,14 +34,18 @@
  * SUCH DAMAGE.
  */
 
+typedef u_int16_t	ECOFF_USHORT;
+typedef u_int32_t	ECOFF_UINT;
+typedef u_int32_t	ECOFF_ULONG;
+
 #define ECOFF_LDPGSZ 4096
 
 #define ECOFF_PAD
 
 #define ECOFF_MACHDEP \
-        u_long gprmask; \
-        u_long cprmask[4]; \
-        u_long gp_value
+        ECOFF_ULONG gprmask; \
+        ECOFF_ULONG cprmask[4]; \
+        ECOFF_ULONG gp_value
 #ifdef _KERNEL
 #include <mips/cpu.h>		/* mips CPU architecture levels */
 #define _MIPS3_OK() CPUISMIPS3
