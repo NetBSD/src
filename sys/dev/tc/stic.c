@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.24 2003/06/29 22:30:54 fvdl Exp $	*/
+/*	$NetBSD: stic.c,v 1.25 2003/10/27 07:07:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.24 2003/06/29 22:30:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.25 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1314,7 +1314,7 @@ int
 stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 #define	cc (&si->si_cursor)
-	u_int v, index, count, icount;
+	u_int v, index = 0, count = 0, icount = 0;
 	struct stic_screen *ss;
 	int s;
 

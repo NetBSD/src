@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.16 2003/10/23 23:52:16 mycroft Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.17 2003/10/27 07:07:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.16 2003/10/23 23:52:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.17 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 	  struct proc *p)
 {
 	struct stic_xinfo *sxi;
-	volatile u_int32_t *ptr;
+	volatile u_int32_t *ptr = NULL;
 	int rv, s;
 
 	switch (cmd) {
