@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.6 2001/07/15 16:32:40 fredette Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.7 2001/08/17 00:24:09 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -824,10 +824,25 @@ new:
 out:
 		splx(s);
 		return;
+
 	case ADAPTER_REQ_GROW_RESOURCES:
-	case ADAPTER_REQ_SET_XFER_MODE:
-		/* not supported */
+		/* XXX Not supported. */
 		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
+		/*
+		 * We don't support Sync, Wide, or Tagged Queueing.
+		 * Just callback now, to report this.
+		 */
+		struct scsipi_xfer_mode *xm = arg;
+
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		return;
+	    }
 	}
 }
 
