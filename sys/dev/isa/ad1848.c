@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.30 1997/05/31 15:30:22 jtk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.31 1997/06/06 23:43:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -81,6 +81,7 @@
 #include <sys/buf.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -287,7 +288,8 @@ ad1848_forceintr(sc)
      * it is needed (and you pay the latency).  Also, you might
      * never need the buffer anyway.)
      */
-    isa_dmastart(DMAMODE_READ, &dmabuf, 1, sc->sc_drq);
+    isa_dmastart(sc->sc_isa, sc->sc_drq, &dmabuf, 1, NULL,
+	DMAMODE_READ, BUS_DMA_NOWAIT);
 
     ad_write(sc, SP_LOWER_BASE_COUNT, 0);
     ad_write(sc, SP_UPPER_BASE_COUNT, 0);
@@ -494,6 +496,23 @@ ad1848_attach(sc)
     struct audio_params xparams;
     
     sc->sc_locked = 0;
+
+    if (sc->sc_drq != -1) {
+	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq, MAXPHYS /* XXX */,
+	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		printf("ad1848_attach: can't create map for drq %d\n",
+		    sc->sc_drq);
+		return;
+	}
+    }
+    if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
+	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAXPHYS /* XXX */,
+	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		printf("ad1848_attach: can't creape map for drq %d\n",
+		    sc->sc_recdrq);
+		return;
+	}
+    }
 
     /* Initialize the ad1848... */
     for (i = 0; i < 16; i++)
@@ -1470,7 +1489,8 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     sc->sc_dma_flags = DMAMODE_READ;
     sc->sc_dma_bp = p;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(DMAMODE_READ, p, cc, sc->sc_recdrq);
+    isa_dmastart(sc->sc_isa, sc->sc_recdrq, p, cc, NULL,
+	DMAMODE_READ, BUS_DMA_NOWAIT);
 
     if (sc->precision == 16)
 	cc >>= 1;
@@ -1524,7 +1544,8 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     sc->sc_dma_flags = DMAMODE_WRITE;
     sc->sc_dma_bp = p;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_drq);
+    isa_dmastart(sc->sc_isa, sc->sc_drq, p, cc, NULL,
+	DMAMODE_WRITE, BUS_DMA_NOWAIT);
     
     if (sc->precision == 16)
 	cc >>= 1;
@@ -1568,7 +1589,7 @@ ad1848_intr(arg)
 	/* ACK DMA read because it may be in a bounce buffer */
 	/* XXX Do write to mask DMA ? */
 	if (sc->sc_dma_flags & DMAMODE_READ)
-	    isa_dmadone(sc->sc_dma_flags, sc->sc_dma_bp, sc->sc_dma_cnt - 1, sc->sc_recdrq);
+	    isa_dmadone(sc->sc_isa, sc->sc_recdrq);
 	(*sc->sc_intr)(sc->sc_arg);
 	retval = 1;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.25 1997/05/09 22:16:43 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.26 1997/06/06 23:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -75,6 +75,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -293,6 +294,7 @@ wssattach(parent, self, aux)
     int err;
     
     sc->sc_ad1848.sc_recdrq = ia->ia_drq;
+    sc->sc_ad1848.sc_isa = parent;
 
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);

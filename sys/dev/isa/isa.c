@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.94 1997/01/26 03:49:28 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.95 1997/06/06 23:43:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -40,6 +40,7 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmareg.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int isamatch __P((struct device *, void *, void *));
@@ -107,13 +108,25 @@ isaattach(parent, self, aux)
 
 	sc->sc_iot = iba->iba_iot;
 	sc->sc_memt = iba->iba_memt;
+	sc->sc_dmat = iba->iba_dmat;
 	sc->sc_ic = iba->iba_ic;
+
+	/*
+	 * Map the registers used by the ISA DMA controller.
+	 */
+	if (bus_space_map(sc->sc_iot, IO_DMA1, DMA1_IOSIZE, 0, &sc->sc_dma1h))
+		panic("isaattach: can't map DMA controller #1");
+	if (bus_space_map(sc->sc_iot, IO_DMA2, DMA2_IOSIZE, 0, &sc->sc_dma2h))
+		panic("isaattach: can't map DMA controller #2");
+	if (bus_space_map(sc->sc_iot, IO_DMAPG, 0xf, 0, &sc->sc_dmapgh))
+		panic("isaattach: can't map DMA page registers");
 
 	/*
 	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
 	 */
-	if (bus_space_map(sc->sc_iot, 0x84, 1, 0, &sc->sc_delaybah))
+	if (bus_space_subregion(sc->sc_iot, sc->sc_dmapgh, 0x04, 1,
+	    &sc->sc_delaybah))
 		panic("isaattach: can't map `delay port'");	/* XXX */
 
 	TAILQ_INIT(&sc->sc_subdevs);
@@ -164,6 +177,7 @@ isascan(parent, match)
 
 	ia.ia_iot = sc->sc_iot;
 	ia.ia_memt = sc->sc_memt;
+	ia.ia_dmat = sc->sc_dmat;
 	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
@@ -192,6 +206,7 @@ isasearch(parent, cf, aux)
 	do {
 		ia.ia_iot = sc->sc_iot;
 		ia.ia_memt = sc->sc_memt;
+		ia.ia_dmat = sc->sc_dmat;
 		ia.ia_ic = sc->sc_ic;
 		ia.ia_iobase = cf->cf_loc[0];
 		ia.ia_iosize = 0x666;

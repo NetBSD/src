@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.36 1996/10/13 01:38:08 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.37 1997/06/06 23:44:10 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -65,6 +65,7 @@
 #include <vm/vm_param.h>
 
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
@@ -259,6 +260,13 @@ wtattach(parent, self, aux)
 		printf(": type <Wangtek>\n");
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
+
+	if (isa_dmamap_create(parent, sc->chan, MAXPHYS,
+	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		printf("%s: can't set up ISA DMA map\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wtintr, sc);
@@ -691,10 +699,10 @@ wtintr(arg)
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* If reading short block, copy the internal buffer
 		 * to the user memory. */
-		isa_dmadone(sc->dmaflags, sc->buf, sc->bsize, sc->chan);
+		isa_dmadone(sc->sc_dev.dv_parent, sc->chan);
 		bcopy(sc->buf, sc->dmavaddr, sc->dmatotal - sc->dmacount);
 	} else
-		isa_dmadone(sc->dmaflags, sc->dmavaddr, sc->bsize, sc->chan);
+		isa_dmadone(sc->sc_dev.dv_parent, sc->chan);
 
 	/*
 	 * On exception, check for end of file and end of volume.
@@ -879,9 +887,11 @@ wtdma(sc)
 	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* Reading short block; do it through the internal buffer. */
-		isa_dmastart(sc->dmaflags, sc->buf, sc->bsize, sc->chan);
+		isa_dmastart(sc->sc_dev.dv_parent, sc->chan, sc->buf,
+		    sc->bsize, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 	} else
-		isa_dmastart(sc->dmaflags, sc->dmavaddr, sc->bsize, sc->chan);
+		isa_dmastart(sc->sc_dev.dv_parent, sc->chan, sc->dmavaddr,
+		    sc->bsize, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 }
 
 /* start i/o operation */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.26 1997/05/09 22:16:38 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.27 1997/06/06 23:43:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -49,6 +49,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -419,6 +420,8 @@ pasattach(parent, self, aux)
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
+
+	sc->sc_sbdsp.sc_isa = parent;
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
 	    sc->rev);
