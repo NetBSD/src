@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.45 2002/10/13 21:14:28 chris Exp $	*/
+/*	$NetBSD: cpu.c,v 1.45.2.1 2002/10/19 15:12:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2002/10/13 21:14:28 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45.2.1 2002/10/19 15:12:52 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -78,6 +78,11 @@ cpu_attach(struct device *dv)
 	int usearmfpe;
 
 	usearmfpe = 1;	/* when compiled in, its enabled by default */
+
+#ifdef MULTIPROCESSOR
+	if (curcpu()->ci_idlepcb == NULL)
+		cpu_alloc_idlepcb(curcpu());
+#endif
 
 	curcpu()->ci_dev = dv;
 
