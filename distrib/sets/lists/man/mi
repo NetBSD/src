@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.252 2000/06/20 01:28:45 minoura Exp $
+# $NetBSD: mi,v 1.253 2000/06/20 04:31:45 enami Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -476,7 +476,6 @@
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/nele.0
-./usr/share/man/cat4/netconfig.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
 ./usr/share/man/cat4/ns.0
@@ -515,7 +514,6 @@
 ./usr/share/man/cat4/rmidi.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
-./usr/share/man/cat4/rpc.0
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/rtk.0
 ./usr/share/man/cat4/sb.0
@@ -661,6 +659,7 @@
 ./usr/share/man/cat5/monthly.conf.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/named.conf.0
+./usr/share/man/cat5/netconfig.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
@@ -1494,7 +1493,6 @@
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/nele.4
-./usr/share/man/man4/netconfig.4
 ./usr/share/man/man4/netintro.4
 ./usr/share/man/man4/networking.4
 ./usr/share/man/man4/ns.4
@@ -1533,7 +1531,6 @@
 ./usr/share/man/man4/rmidi.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
-./usr/share/man/man4/rpc.4
 ./usr/share/man/man4/rtfps.4
 ./usr/share/man/man4/rtk.4
 ./usr/share/man/man4/sb.4
@@ -1679,6 +1676,7 @@
 ./usr/share/man/man5/monthly.conf.5
 ./usr/share/man/man5/motd.5
 ./usr/share/man/man5/named.conf.5
+./usr/share/man/man5/netconfig.5
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
