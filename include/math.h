@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.34.2.1 2004/07/15 20:56:40 he Exp $	*/
+/*	$NetBSD: math.h,v 1.34.2.2 2004/07/16 20:32:10 he Exp $	*/
 
 /*
  * ====================================================
@@ -230,7 +230,6 @@ double	logb __P((double));
 double	nextafter __P((double, double));
 double	remainder __P((double, double));
 double	rint __P((double));
-double	round __P((double));
 double	scalb __P((double, double));
 #endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
@@ -255,6 +254,9 @@ double	scalb __P((double, double));
 
 /* 7.12.3.6 int signbit(real-floating x) */
 #define	signbit(__x)	__fpmacro_unary_floating(signbit, __x)
+
+double	round __P((double));
+float	roundf __P((float));
 
 #endif /* !_ANSI_SOURCE && ... */
 
@@ -380,7 +382,6 @@ float	significandf __P((float));
 float	copysignf __P((float, float));
 int	ilogbf __P((float));
 float	rintf __P((float));
-float	roundf __P((float));
 float	scalbnf __P((float, int));
 
 /*
