@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.59 2000/03/14 22:42:49 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.60 2000/05/09 00:25:27 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,6 +80,7 @@ before this procedure!  This procedure will do the following things:
 
 (After you enter the partition information but before your disk is
 changed, you will have the opportunity to quit this procedure.)
+
 Shall we continue?
 }
 
@@ -255,7 +256,9 @@ message packname
 message lastchance
 {Ok, we are now ready to install NetBSD on your hard disk.  Nothing has been
 written yet.  This is your last chance to quit this process before anything
-gets changed.  Shall we continue?
+gets changed.  
+
+Shall we continue?
 }
 
 message disksetupdone
