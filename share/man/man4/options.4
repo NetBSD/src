@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.30 1997/10/08 10:12:21 mycroft Exp $
+.\"	$NetBSD: options.4,v 1.30.2.1 1997/10/28 01:03:55 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -771,14 +771,9 @@ the remote end would not respond.
 This option turns on the packet filter interface hooks.  See
 .Xr pfil 9
 for details.
-.It Cd options IPFILTER
-This option enables the IP filtering on the packet level using the
-ip-filter package.  This option requires that the
-.Em PFIL_HOOKS
-option also be included.
 .It Cd options IPFILTER_LOG
 This option, in conjunction with
-.Em IPFILTER ,
+.Em pseudo-device ipfilter ,
 enables logging of IP packets using ip-filter.
 .It Cd options IPFILTER_DEFAULT_BLOCK
 This option sets the default policy of ip-filter.  If it is set,
