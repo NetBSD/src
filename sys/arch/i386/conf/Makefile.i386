@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.108 2000/12/17 15:52:41 jdolecek Exp $
+#	$NetBSD: Makefile.i386,v 1.109 2001/01/08 21:46:36 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -30,7 +30,7 @@ SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
 
-COPTS?=	-O2
+COPTS?=	-O2 -march=i686 -pipe
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
