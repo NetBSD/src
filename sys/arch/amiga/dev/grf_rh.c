@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.24 1996/10/13 03:07:05 christos Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.25 1996/12/23 09:10:07 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1525,7 +1525,7 @@ static struct MonDef *current_mon;	/* EVIL */
 int  rh_mode     __P((struct grf_softc *, u_long, void *, u_long, int));
 void grfrhattach __P((struct device *, struct device *, void *));
 int  grfrhprint  __P((void *, const char *));
-int  grfrhmatch  __P((struct device *, void *, void *));
+int  grfrhmatch  __P((struct device *, struct cfdata *, void *));
 
 struct cfattach grfrh_ca = {
 	sizeof(struct grf_softc), grfrhmatch, grfrhattach
@@ -1538,12 +1538,12 @@ struct cfdriver grfrh_cd = {
 static struct cfdata *cfdata;
 
 int
-grfrhmatch(pdp, match, auxp)
+grfrhmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 #ifdef RETINACONSOLE
-	struct cfdata *cfp = match;
 	static int rhconunit = -1;
 #endif
 	struct zbus_args *zap;

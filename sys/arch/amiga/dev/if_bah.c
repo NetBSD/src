@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.24 1996/11/18 09:08:29 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.25 1996/12/23 09:10:15 veego Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -175,7 +175,7 @@ struct bah_softc {
 #endif
 };
 
-int	bah_zbus_match __P((struct device *, void *, void *));
+int	bah_zbus_match __P((struct device *, struct cfdata *, void *));
 void	bah_zbus_attach __P((struct device *, struct device *, void *));
 void	bah_init __P((struct bah_softc *));
 void	bah_reset __P((struct bah_softc *));
@@ -202,9 +202,10 @@ struct cfdriver bah_cd = {
 };
 
 int
-bah_zbus_match(parent, match, aux)
+bah_zbus_match(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap = aux;
 

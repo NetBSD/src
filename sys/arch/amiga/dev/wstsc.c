@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.17 1996/12/10 21:27:29 thorpej Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.18 1996/12/23 09:10:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,7 +48,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void wstscattach __P((struct device *, struct device *, void *));
-int wstscmatch __P((struct device *, void *, void *));
+int wstscmatch __P((struct device *, struct cfdata *, void *));
 
 int wstsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -97,9 +97,10 @@ struct cfdriver wstsc_cd = {
  * if this a Supra WordSync board
  */
 int
-wstscmatch(pdp, match, auxp)
+wstscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

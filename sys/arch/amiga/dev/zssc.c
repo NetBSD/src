@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.21 1996/12/10 21:27:30 thorpej Exp $	*/
+/*	$NetBSD: zssc.c,v 1.22 1996/12/23 09:10:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,7 +51,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void zsscattach __P((struct device *, struct device *, void *));
-int  zsscmatch __P((struct device *, void *, void *));
+int  zsscmatch __P((struct device *, struct cfdata *, void *));
 int  zssc_dmaintr __P((void *));
 #ifdef DEBUG
 void zssc_dump __P((void));
@@ -87,9 +87,10 @@ struct cfdriver zssc_cd = {
  * if we are an PPI Zeus
  */
 int
-zsscmatch(pdp, match, auxp)
+zsscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

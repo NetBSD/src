@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.19 1996/10/22 16:59:56 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.20 1996/12/23 09:10:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -67,7 +67,7 @@
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	grfcvmatch  __P((struct device *, void *, void *));
+int	grfcvmatch  __P((struct device *, struct cfdata *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
 int	grfcvprint  __P((void *, const char *));
 
@@ -293,12 +293,12 @@ cv_has_4mb(fb)
 }
 
 int
-grfcvmatch(pdp, match, auxp)
+grfcvmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 #ifdef CV64CONSOLE
-	struct cfdata *cfp = match;
 	static int cvcons_unit = -1;
 #endif
 	struct zbus_args *zap;

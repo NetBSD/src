@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.22 1996/10/13 03:06:59 christos Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -60,7 +60,7 @@
 
 #include "view.h" 
 
-int grfccmatch __P((struct device *, void *, void *));
+int grfccmatch __P((struct device *, struct cfdata *, void *));
 int grfccprint __P((void *, const char *));
 void grfccattach __P((struct device *, struct device *, void *));
 void grf_cc_on __P((struct grf_softc *));
@@ -83,11 +83,11 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfccmatch(pdp, match, auxp)
+grfccmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 	static int ccconunit = -1;
 	char *mainbus_name = auxp;
 

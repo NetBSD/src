@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.20 1996/12/10 21:27:25 thorpej Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.21 1996/12/23 09:10:21 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,7 +49,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void ivscattach __P((struct device *, struct device *, void *));
-int ivscmatch __P((struct device *, void *, void *));
+int ivscmatch __P((struct device *, struct cfdata *, void *));
 
 int ivsc_intr __P((void *));
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
@@ -95,9 +95,10 @@ struct cfdriver ivsc_cd = {
  * if this is an IVS board
  */
 int
-ivscmatch(pdp, match, auxp)
+ivscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 
