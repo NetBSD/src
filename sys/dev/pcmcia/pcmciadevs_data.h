@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.45 1999/08/14 13:43:27 tron Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.46 1999/08/24 17:48:31 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.42 1999/08/14 13:43:03 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp 
  */
 
 /*-
@@ -360,6 +360,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "SMC EXCard 10 PCMCIA"	},
 	},
 	{
+	    PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_CNETPC,
+	    PCMCIA_CIS_CONTEC_CNETPC,
+	    0,
+	    "Contec",
+	    "Contec C-NET(PC)C"	},
+	},
+	{
+	    PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
+	    PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
+	    0,
+	    "Allied Telesis K.K.",
+	    "Allied Telesis LA-PCM"	},
+	},
+	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
 	    0,
@@ -605,10 +619,24 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_CONTEC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Contec",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COREGA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Corega K.K.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ALLIEDTELESIS, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Allied Telesis K.K.",
 	    NULL,
 	},
 	{
