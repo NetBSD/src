@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.64 2000/11/02 07:04:46 msaitoh Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.65 2000/11/02 07:15:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -215,6 +215,11 @@ struct ne2000dev {
       PCMCIA_CIS_DLINK_DE650,
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
+    { PCMCIA_STR_MELCO_LPC2_TX,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_MELCO_LPC2_TX,
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_DL10019 },
+
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
@@ -338,6 +343,16 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_NDC_ND5100_E,
       0, -1, { 0x00, 0x80, 0xc6 } },
+
+    { PCMCIA_STR_TELECOMDEVICE_TCD_HPC100,
+      PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
+      PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_STR_MACNICA_ME1_JEIDA,
+      PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
+      PCMCIA_CIS_MACNICA_ME1_JEIDA,
+      0, 0x00b8, { 0x08, 0x00, 0x42 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
