@@ -1,4 +1,4 @@
-# $Id: TDR2,v 1.1 1993/11/28 08:42:31 deraadt Exp $
+# $Id: TDR2,v 1.2 1993/12/02 11:10:42 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -8,7 +8,6 @@ options               TIMEZONE=480, DST=1
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options		NEWCONFIG
 options		DEBUG, DIAGNOSTIC	# extra kernel debugging
 #options	KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
