@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.32.4.3 2000/10/06 07:00:37 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.32.4.4 2000/10/30 22:36:33 tv Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -1169,7 +1169,15 @@ in6_ifscrub(ifp, ia)
 {
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
 		return;
-	if (ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT))
+
+	/*
+	 * We should check the existence of dstaddr, because link-local
+	 * addresses can be configured without particular destinations
+	 * even on point-to-point or loopback interfaces.
+	 * In this case, kernel would panic in rtinit()...
+	 */
+	if (ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT) &&
+	    (ia->ia_ifa.ifa_dstaddr != NULL))
 		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
 	else
 		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, 0);
