@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: pxe.c,v 1.2 2002/02/16 16:52:11 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -230,6 +230,8 @@ pxe_netif_probe(struct netif *nif, void *machdep_hint)
 {
 	t_PXENV_UDP_OPEN *uo = (void *) pxe_command_buf;
 
+	pxe_init();
+
 	if (pxe_call == NULL)
 		return (1);
 
@@ -242,6 +244,7 @@ pxe_netif_probe(struct netif *nif, void *machdep_hint)
 	if (uo->status != PXENV_STATUS_SUCCESS) {
 		printf("pxe_netif_probe: PXENV_UDP_OPEN failed: 0x%x\n",
 		    uo->status);
+		pxe_fini();
 		return (1);
 	}
 
@@ -291,6 +294,8 @@ pxe_netif_end(struct netif *nif)
 	if (uc->status != PXENV_STATUS_SUCCESS)
 		printf("pxe_netif_end: PXENV_UDP_CLOSE failed: 0x%x\n",
 		    uc->status);
+
+	pxe_fini();
 }
 
 /*****************************************************************************

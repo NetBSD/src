@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2002/02/16 16:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -97,8 +97,6 @@ print_banner(void)
 	int base = getbasemem();
 	int ext = getextmem();
 
-__asm __volatile(".globl breakme; breakme:");
-
 	printf("\n"
 	       ">> %s, Revision %s\n"
 	       ">> (%s, %s)\n"
@@ -117,8 +115,6 @@ main(void)
 	gateA20();
 
 	print_banner();
-
-	pxe_init();
 
 	printf("Press return to boot now, any other key for boot menu\n");
 	printf("Starting in ");
