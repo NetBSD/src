@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.12 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: quit.c,v 1.13 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.12 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: quit.c,v 1.13 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ extern char *tempQuit, *tempResid;
  * The "quit" command.
  */
 int
-quitcmd(v)
-	void *v;
+quitcmd(void *v)
 {
 	/*
 	 * If we are sourcing, then return 1 so execute() can handle it.
@@ -76,7 +75,7 @@ quitcmd(v)
  * Remove the system mailbox, if none saved there.
  */
 void
-quit()
+quit(void)
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
@@ -379,8 +378,7 @@ newmail:
  * Incorporate the any new mail that we found.
  */
 int
-writeback(res)
-	FILE *res;
+writeback(FILE *res)
 {
 	struct message *mp;
 	int p, c;
@@ -441,7 +439,7 @@ writeback(res)
  * file from the temporary.  Save any new stuff appended to the file.
  */
 void
-edstop()
+edstop(void)
 {
 	int gotcha, c;
 	struct message *mp;
