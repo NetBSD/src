@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.45 2000/11/03 15:01:10 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.46 2000/11/05 02:53:20 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -97,15 +97,29 @@ rcons_connect (info)
 	struct fbinfo *info;
 {
 	static struct rasops_info ri;
-	int cookie;
+	int cookie, epwf, bior;
 
-	/* TC mfb has special needs; 8-bits per pel, but monochrome */
-	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
+	/* XXX */
+	switch (info->fi_type.fb_boardtype) {
+	case PMAX_FBTYPE_MFB:
 		ri.ri_depth = 8;
 		ri.ri_flg = RI_CLEAR | RI_FORCEMONO;
-	} else {
+		epwf = 0;
+		bior = WSDISPLAY_FONTORDER_L2R;
+		break;
+	case PMAX_FBTYPE_PM_MONO:
+	case PMAX_FBTYPE_PM_COLOR:
 		ri.ri_depth = info->fi_type.fb_depth;
 		ri.ri_flg = RI_CLEAR;
+		epwf = 1;
+		bior = WSDISPLAY_FONTORDER_R2L;
+		break;
+	default:
+		ri.ri_depth = info->fi_type.fb_depth;
+		ri.ri_flg = RI_CLEAR;
+		epwf = (ri.ri_depth != 8);
+		bior = WSDISPLAY_FONTORDER_L2R;
+		break;
 	}
 
 	ri.ri_width = info->fi_type.fb_width;
@@ -115,9 +129,13 @@ rcons_connect (info)
 
 	wsfont_init();
 
-	/* Choose 'Gallant' font if this is an 8-bit display */
-	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) > 0)
-		wsfont_lock(cookie, &ri.ri_font, WSDISPLAY_FONTORDER_L2R, 
+	if (epwf)
+		cookie = wsfont_find(NULL, 8, 0, 0);
+	else
+		cookie = wsfont_find("Gallant", 0, 0, 0);
+
+	if (cookie > 0)
+		wsfont_lock(cookie, &ri.ri_font, bior,
 		    WSDISPLAY_FONTORDER_L2R);
 
 	/* Get operations set and set framebugger colormap */
