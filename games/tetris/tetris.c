@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.13 2000/01/01 10:15:17 jsm Exp $	*/
+/*	$NetBSD: tetris.c,v 1.14 2000/01/21 02:10:57 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 
 #include <sys/time.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -159,10 +160,8 @@ main(argc, argv)
 		case 'l':
 			level = atoi(optarg);
 			if (level < MINLEVEL || level > MAXLEVEL) {
-				(void)fprintf(stderr,
-				    "tetris: level must be from %d to %d\n",
-				    MINLEVEL, MAXLEVEL);
-				exit(1);
+				errx(1, "level must be from %d to %d",
+				     MINLEVEL, MAXLEVEL);
 			}
 			break;
 		case 'p':
@@ -187,10 +186,7 @@ main(argc, argv)
 	for (i = 0; i <= 5; i++) {
 		for (j = i+1; j <= 5; j++) {
 			if (keys[i] == keys[j]) {
-				(void)fprintf(stderr,
-				    "%s: duplicate command keys specified.\n",
-				    argv[0]);
-				exit (1);
+				errx(1, "duplicate command keys specified.");
 			}
 		}
 		if (keys[i] == ' ')
