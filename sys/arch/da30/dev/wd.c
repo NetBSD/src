@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.4 1994/10/26 02:33:30 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.5 1995/04/10 08:13:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -1236,30 +1236,6 @@ wdclose(dev, flags, fmt)
 #endif
 	/*if (du->dk_open == 0) du->dk_state = CLOSED ; does not work */
 	return(0);
-}
-
-int
-wdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	struct wfdsoftc *dv;
-
-	dv = (struct wfdsoftc *) wd_cfd(dev)->cd_devs[wdunit(dev)];
-	return raw_disk_io(dev, uio, dv->wfd_drive.dk_dd.d_secsize);
-}
-
-int
-wdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	struct wfdsoftc *dv;
-
-	dv = (struct wfdsoftc *) wd_cfd(dev)->cd_devs[wdunit(dev)];
-	return raw_disk_io(dev, uio, dv->wfd_drive.dk_dd.d_secsize);
 }
 
 wdioctl(dev, cmd, addr, flag, p)
