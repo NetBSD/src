@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.176 2001/05/29 01:02:39 chs Exp $	*/
+/*	$NetBSD: sd.c,v 1.177 2001/06/01 08:39:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1333,7 +1333,7 @@ sddump(dev, blkno, va, size)
 	chan = periph->periph_channel;
 
 	/* Make sure it was initialized. */
-	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) != 0)
+	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 		return (ENXIO);
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
