@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.12 1999/04/26 05:35:08 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.13 1999/04/30 05:24:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -242,19 +242,27 @@ const struct emul_flags_xtab osf1_sigaltstack_flags_rxtab[] = {
     {	0								},
 };
 
-void
+int
 osf1_to_bsd_sigaltstack(oss, bss)
 	const struct osf1_sigaltstack *oss;
 	struct sigaltstack *bss;
 {
+	unsigned long leftovers;
 
 	bss->ss_sp = oss->ss_sp;
 	bss->ss_size = oss->ss_size;
 
         /* translate flags */
 	bss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_xtab,
-            oss->ss_flags, NULL);
-	/* XXX error if we can't translate */
+            oss->ss_flags, &leftovers);
+
+	if (leftovers != 0) {
+		printf("osf1_to_bsd_sigaltstack: leftovers = 0x%lx\n",
+		    leftovers);
+		return (EINVAL);
+	}
+
+	return (0);
 }
 
 void
@@ -347,7 +355,8 @@ osf1_sys_sigaltstack(p, v, retval)
 		nbss = stackgap_alloc(&sg, sizeof(struct sigaltstack));
 		if ((error = copyin(noss, &tmposs, sizeof(tmposs))) != 0)
 			return error;
-		osf1_to_bsd_sigaltstack(&tmposs, &tmpbss);
+		if ((error = osf1_to_bsd_sigaltstack(&tmposs, &tmpbss)) != 0)
+			return error;
 		if ((error = copyout(&tmpbss, nbss, sizeof(tmpbss))) != 0)
 			return error;
 	} else
