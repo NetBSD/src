@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.150 1999/07/12 15:18:20 kleink Exp $
+# $NetBSD: mi,v 1.151 1999/07/19 09:16:34 kleink Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -681,6 +681,7 @@
 ./usr/share/man/cat8/lastlogin.0
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lfs_cleanerd.0
+./usr/share/man/cat8/link.0
 ./usr/share/man/cat8/lmcctl.0
 ./usr/share/man/cat8/lockd.0
 ./usr/share/man/cat8/lpc.0
@@ -851,6 +852,7 @@
 ./usr/share/man/cat8/ttyflags.0
 ./usr/share/man/cat8/tunefs.0
 ./usr/share/man/cat8/umount.0
+./usr/share/man/cat8/unlink.0
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/usbdevs.0
 ./usr/share/man/cat8/uucico.0
@@ -1815,6 +1817,7 @@
 ./usr/share/man/man8/lastlogin.8
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/lfs_cleanerd.8
+./usr/share/man/man8/link.8
 ./usr/share/man/man8/lmcctl.8
 ./usr/share/man/man8/lockd.8
 ./usr/share/man/man8/lpc.8
@@ -1985,6 +1988,7 @@
 ./usr/share/man/man8/ttyflags.8
 ./usr/share/man/man8/tunefs.8
 ./usr/share/man/man8/umount.8
+./usr/share/man/man8/unlink.8
 ./usr/share/man/man8/update.8
 ./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/uucico.8
