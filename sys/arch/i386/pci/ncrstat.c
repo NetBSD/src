@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrstat.c,v 1.4 1994/10/27 04:21:37 cgd Exp $	*/
+/*	$NetBSD: ncrstat.c,v 1.5 1994/11/18 22:04:48 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -478,7 +478,7 @@ do_info(void)
 	printf ("\n");
 #ifndef __NetBSD__
 	if (ncr.imask) {
-		u_short v;
+		int v;
 		printf ("Interrupt vector is");
 		if (ncr.imask & (ncr.imask-1))
 			printf (" one of the following:");

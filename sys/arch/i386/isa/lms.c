@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.16 1994/11/03 23:17:39 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.17 1994/11/18 22:03:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -58,7 +58,7 @@ struct lms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	u_short sc_iobase;	/* I/O port base */
+	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	LMS_OPEN	0x01	/* device is open */
 #define	LMS_ASLP	0x02	/* waiting for mouse data */
@@ -82,7 +82,7 @@ lmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/* Configure and check for port present. */
 	outb(iobase + LMS_CONFIG, 0x91);
@@ -111,7 +111,7 @@ lmsattach(parent, self, aux)
 {
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	printf("\n");
 
@@ -275,7 +275,7 @@ int
 lmsintr(sc)
 	struct lms_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	u_char hi, lo, buttons, changed;
 	char dx, dy;
 	u_char buffer[5];

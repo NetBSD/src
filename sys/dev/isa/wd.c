@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.106 1994/11/04 23:30:15 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.107 1994/11/18 22:03:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -135,7 +135,7 @@ struct wdc_softc {
 #define	WDCF_ERROR	0x00008	/* processing a disk error */
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
-	u_short	sc_iobase;	/* i/o port base */
+	int	sc_iobase;	/* i/o port base */
 	int	sc_errors;	/* count of errors during current transfer */
 	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
 };
@@ -189,7 +189,7 @@ wdcprobe(parent, match, aux)
 {
 	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
-	u_short iobase;
+	int iobase;
 
 	wdc->sc_iobase = iobase = ia->ia_iobase;
 
@@ -994,7 +994,7 @@ wdcommand(wd, command, cylin, head, sector, count)
 	int cylin, head, sector, count;
 {
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
-	u_short iobase = wdc->sc_iobase;
+	int iobase = wdc->sc_iobase;
 	int stat;
     
 	/* Select drive. */
@@ -1027,7 +1027,7 @@ wdcommandshort(wdc, drive, command)
 	int drive;
 	int command;
 {
-	u_short iobase = wdc->sc_iobase;
+	int iobase = wdc->sc_iobase;
 
 	/* Select drive. */
 	outb(iobase+wd_sdh, WDSD_IBM | (drive << 4));
@@ -1478,7 +1478,7 @@ static int
 wdcreset(wdc)
 	struct wdc_softc *wdc;
 {
-	u_short iobase = wdc->sc_iobase;
+	int iobase = wdc->sc_iobase;
 
 	/* Reset the device. */
 	outb(iobase+wd_ctlr, WDCTL_RST | WDCTL_IDS);
@@ -1545,7 +1545,7 @@ wdcwait(wdc, mask)
 	struct wdc_softc *wdc;
 	int mask;
 {
-	u_short iobase = wdc->sc_iobase;
+	int iobase = wdc->sc_iobase;
 	int timeout = 0;
 	u_char status;
 	extern int cold;
