@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.40 2003/11/25 20:47:27 jdolecek Exp $ */
+/* $NetBSD: pnpbios.c,v 1.41 2004/07/04 06:18:26 mycroft Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.40 2003/11/25 20:47:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.41 2004/07/04 06:18:26 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ static void
 pnpbios_enumerate(sc)
 	struct pnpbios_softc *sc;
 {
-	int res, num, i, size, idx;
+	int res, num, i, size, idx, dynidx;
 	struct pnpdevnode *dn;
 	u_int8_t *buf;
 
@@ -429,44 +429,38 @@ pnpbios_enumerate(sc)
 
 	idx = 0;
 	for (i = 0; i < num && idx != 0xff; i++) {
-		int node = idx;
-		int dynidx;
-
 		DPRINTF(("%s: getting info for index %d\n",
-		    sc->sc_dev.dv_xname, node));
+		    sc->sc_dev.dv_xname, idx));
+
+		dynidx = idx;
 
 		res = pnpbios_getnode(PNP_CF_DEVCONF_STATIC, &idx, buf, size);
 		if (res) {
 			printf("%s: index %d error %d "
 			    "getting static configuration\n",
-			    sc->sc_dev.dv_xname, node, res);
+			    sc->sc_dev.dv_xname, idx, res);
 			continue;
 		}
 		dn = (struct pnpdevnode *)buf;
-		if (dn->dn_handle != node)
-			printf("%s: node index mismatch (static): "
-			    "requested %d, got %d\n", sc->sc_dev.dv_xname,
-			    node, dn->dn_handle);
-		if (!pnpbios_attachnode(sc, node, buf, dn->dn_size, 1)) {
-			DPRINTF(("%s index %d: no match from static config\n",
-			    sc->sc_dev.dv_xname, node));
+		if (!pnpbios_attachnode(sc, dn->dn_handle, buf, dn->dn_size, 1)) {
+			DPRINTF(("%s handle %d: no match from static config\n",
+			    sc->sc_dev.dv_xname, dn->dn_handle));
 			continue;
 		}
-		dynidx = node;
-		res = pnpbios_getnode(PNP_CF_DEVCONF_DYNAMIC, &dynidx, buf,
-		    size);
+
+		res = pnpbios_getnode(PNP_CF_DEVCONF_DYNAMIC, &dynidx, buf, size);
 		if (res) {
 			printf("%s: index %d error %d "
 			    "getting dynamic configuration\n",
-			    sc->sc_dev.dv_xname, node, res);
+			    sc->sc_dev.dv_xname, dynidx, res);
 			continue;
 		}
 		dn = (struct pnpdevnode *)buf;
-		if (dn->dn_handle != node)
-			printf("%s: node index mismatch (dynamic): "
-			    "requested %d, got %d\n", sc->sc_dev.dv_xname,
-			    node, dn->dn_handle);
-		pnpbios_attachnode(sc, node, buf, dn->dn_size, 0);
+		if (!pnpbios_attachnode(sc, dn->dn_handle, buf, dn->dn_size, 0)) {
+			DPRINTF(("%s handle %d: no match from dynamic config\n",
+			    sc->sc_dev.dv_xname, dn->dn_handle));
+			continue;
+		}
 	}
 	if (i != num)
 		printf("%s: got only %d nodes\n", sc->sc_dev.dv_xname, i);
