@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.6 1997/09/27 22:44:23 is Exp $	*/
+/*	$NetBSD: conf.h,v 1.7 1998/10/10 02:00:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -88,3 +88,5 @@ cdev_decl(view);
 
 bdev_decl(sw);
 cdev_decl(sw);
+
+cdev_decl(scsibus);
