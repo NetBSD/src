@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 1996/05/19 21:24:14 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 1996/05/19 21:41:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -44,24 +44,32 @@
 
 /*
  * Checksum routine for Internet Protocol family headers
- *    (Portable Alpha ersion).
+ *    (Portable Alpha version).
  *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
  */
 
 #define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
-#define REDUCE32 {q_util.q = sum; sum = q_util.l[0] + q_util.l[1];}
-#define REDUCE16 {q_util.q = sum; l_util.l = q_util.s[0] + q_util.s[1] + q_util.s[2] + q_util.s[3]; \
-			sum = l_util.s[0] + l_util.s[1]; \
-			ADDCARRY(sum);}
+#define REDUCE32							  \
+    {									  \
+	q_util.q = sum;							  \
+	sum = q_util.l[0] + q_util.l[1];				  \
+    }
+#define REDUCE16							  \
+    {									  \
+	q_util.q = sum;							  \
+	l_util.l = q_util.s[0] + q_util.s[1] + q_util.s[2] + q_util.s[3]; \
+	sum = l_util.s[0] + l_util.s[1];				  \
+	ADDCARRY(sum);							  \
+    }
 
 static const u_int32_t in_masks[] = {
-	/* 0 bytes */	/* 1 bytes */	/* 2 bytes */	/* 3 bytes */
-	0x00000000,	0x000000FF,	0x0000FFFF,	0x00FFFFFF,	/* offset 0 */
-	0x00000000,	0x0000FF00,	0x00FFFF00,	0xFFFFFF00,	/* offset 1 */
-	0x00000000,	0x00FF0000,	0xFFFF0000,	0xFFFF0000,	/* offset 2 */
-	0x00000000,	0xFF000000,	0xFF000000,	0xFF000000,	/* offset 3 */
+	/*0 bytes*/ /*1 byte*/	/*2 bytes*/ /*3 bytes*/
+	0x00000000, 0x000000FF, 0x0000FFFF, 0x00FFFFFF,	/* offset 0 */
+	0x00000000, 0x0000FF00, 0x00FFFF00, 0xFFFFFF00,	/* offset 1 */
+	0x00000000, 0x00FF0000, 0xFFFF0000, 0xFFFF0000,	/* offset 2 */
+	0x00000000, 0xFF000000, 0xFF000000, 0xFF000000,	/* offset 3 */
 };
 
 union l_util {
@@ -109,12 +117,18 @@ in_cksumdata(buf, len)
 	offset = 32 - (0x1f & (long) lw);
 	if (offset < 32 && len > offset) {
 		len -= offset;
-		if (4 & offset)
-			sum += (u_int64_t) lw[0], lw += 1;
-		if (8 & offset)
-			sum += (u_int64_t) lw[0] + lw[1], lw += 2;
-		if (16 & offset)
-			sum += (u_int64_t) lw[0] + lw[1] + lw[2] + lw[3], lw += 4;
+		if (4 & offset) {
+			sum += (u_int64_t) lw[0];
+			lw += 1;
+		}
+		if (8 & offset) {
+			sum += (u_int64_t) lw[0] + lw[1];
+			lw += 2;
+		}
+		if (16 & offset) {
+			sum += (u_int64_t) lw[0] + lw[1] + lw[2] + lw[3];
+			lw += 4;
+		}
 	}
 #endif
 	/*
@@ -164,7 +178,7 @@ in_cksum(m, len)
 	union q_util q_util;
 	union l_util l_util;
 
-	for (;m && len; m = m->m_next) {
+	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		mlen = m->m_len;
