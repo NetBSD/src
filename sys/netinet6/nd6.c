@@ -893,7 +893,14 @@ nd6_rtrequest(req, rt, sa)
 			ln->ln_expire = time_second;
 		}
 		rt->rt_flags |= RTF_LLINFO;
+#if 0
 		insque(ln, &llinfo_nd6);
+#else
+		ln->ln_next = llinfo_nd6.ln_next;
+		llinfo_nd6.ln_next = ln;
+		ln->ln_prev = &llinfo_nd6;
+		ln->ln_next->ln_prev = ln;
+#endif
 
 		/*
 		 * check if rt_key(rt) is one of my address assigned
@@ -938,7 +945,13 @@ nd6_rtrequest(req, rt, sa)
 		if (!ln)
 			break;
 		nd6_inuse--;
+#if 0
 		remque(ln);
+#else
+		ln->ln_next->ln_prev = ln->ln_prev;
+		ln->ln_prev->ln_next = ln->ln_next;
+		ln->ln_prev = NULL;
+#endif
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
