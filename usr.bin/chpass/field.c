@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.6 1998/07/26 15:13:14 mycroft Exp $	*/
+/*	$NetBSD: field.c,v 1.7 1998/08/10 23:21:05 kim Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.6 1998/07/26 15:13:14 mycroft Exp $");
+__RCSID("$NetBSD: field.c,v 1.7 1998/08/10 23:21:05 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,9 +220,7 @@ p_gecos(p, pw, ep)
 	ENTRY *ep;
 {
 
-	if (!*p)
-		ep->save = "";
-	else if (!(ep->save = strdup(p))) {
+	if (!(ep->save = strdup(p))) {
 		warnx("can't save entry");
 		return (1);
 	}

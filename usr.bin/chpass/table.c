@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 1997/10/18 12:49:10 lukem Exp $	*/
+/*	$NetBSD: table.c,v 1.5 1998/08/10 23:21:05 kim Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: table.c,v 1.4 1997/10/18 12:49:10 lukem Exp $");
+__RCSID("$NetBSD: table.c,v 1.5 1998/08/10 23:21:05 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,10 +57,10 @@ ENTRY list[] = {
 	{ "class",		p_class,  1,   5, e1,   },
 	{ "change",		p_change, 1,   6, NULL, },
 	{ "expire",		p_expire, 1,   6, NULL, },
-	{ "full name",		p_gecos,  0,   9, e2,   },
-	{ "office phone",	p_gecos,  0,  12, e2,   },
-	{ "home phone",		p_gecos,  0,  10, e2,   },
-	{ "location",		p_gecos,  0,   8, e2,   },
+	{ "full name",		p_gecos,  0,   9, e2,   ""},
+	{ "office phone",	p_gecos,  0,  12, e2,   ""},
+	{ "home phone",		p_gecos,  0,  10, e2,   ""},
+	{ "location",		p_gecos,  0,   8, e2,   ""},
 	{ "home directory",	p_hdir,   1,  14, e1,   },
 	{ "shell",		p_shell,  0,   5, e1,   },
 	{ NULL, 0, },
