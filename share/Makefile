@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/7/91
-#	$NetBSD: Makefile,v 1.4 1997/10/13 11:19:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/17 10:48:48 mrg Exp $
+#	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
 
