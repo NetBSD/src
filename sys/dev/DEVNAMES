@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.88 2001/12/29 14:24:54 augustss Exp $
+#	$NetBSD: DEVNAMES,v 1.89 2002/01/01 23:12:19 augustss Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -101,6 +101,7 @@ auxiotwo		sparc
 auxreg			sparc
 avmebus			atari
 awi			MI		
+az			MI		
 bah			MI		
 bandit			macppc
 bba			MI
@@ -561,6 +562,7 @@ lkkbd			alpha
 lkkbd			vax
 lkms			vax
 lm			MI		
+lm700x			MI
 lmc			MI		
 lmcaudio		arm32
 lms			bebox
@@ -676,6 +678,7 @@ mms			bebox
 mms			i386
 moxa			MI
 mpu			MI		
+mr			MI
 ms			amiga
 ms			amigappc
 ms			news68k
@@ -865,6 +868,8 @@ qn			amigappc
 qsphy			MI		
 qv			vax
 ra			MI		
+radio			MI		
+radio			MI		Attribute
 rambo			mipsco
 rapide			arm32
 rasops1			MI		Attribute
@@ -885,6 +890,8 @@ rk			vax
 rl			vax
 rlc			vax
 rpckbd			arm32
+rt			MI
+rtii			MI
 rtc			arm26
 rtc			arm32
 rtc			pc532
@@ -944,6 +951,7 @@ sfas			arm32		Attribute
 sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
+sf2r			MI
 shb			evbsh3
 shb			mmeye
 shpcic			evbsh3
@@ -1005,6 +1013,7 @@ tctrl			sparc
 tcx			sparc
 tcx			sparc64
 te			vax
+tea5757			MI
 tga			MI		
 ti			MI		
 timer			news68k
