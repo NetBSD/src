@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.21 1997/01/30 09:55:45 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.22 1997/01/30 22:11:19 scottr Exp $
 #
 # hp300-specific configuration info
 
@@ -111,15 +111,18 @@ file	arch/hp300/dev/hpib.c		hpibbus
 device	ct: tape
 attach	ct at hpibbus
 file	arch/hp300/dev/ct.c		ct needs-flag
+major	{ct = 0}
 
 device	mt: tape
 attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
+major	{mt = 1}
 
 device	rd: disk
 attach	rd at hpibbus
 file	arch/hp300/dev/rd.c		rd needs-flag
 file	arch/hp300/dev/rd_compat.c	rd		# XXX
+major	{rd = 2}
 
 device	ppi
 attach	ppi at hpibbus
@@ -135,6 +138,7 @@ device	sd: disk
 attach	sd at oscsi
 file	arch/hp300/dev/sd.c		sd needs-flag
 file	arch/hp300/dev/sd_compat.c	sd		# XXX
+major	{sd = 4}
 
 device	st: tape
 attach	st at oscsi
@@ -177,6 +181,8 @@ file	dev/cons.c
 file	dev/cninit.c
 
 file	kludge_for_in_proto.c			hy needs-flag
+
+major	{vnd = 6}
 
 #
 # HP-UX binary compatibility
