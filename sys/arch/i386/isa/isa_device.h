@@ -62,6 +62,7 @@ struct isa_device {
 	int	id_unit;	/* unit number */
 	int	id_flags;	/* flags */
 	int	id_physid;	/* eg. scsi id if needed */
+	int	id_masunit;	/* for biotab_dktp, the master unit number */
 	int	id_alive;	/* device is present */
 };
 
