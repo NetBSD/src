@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.22 2002/04/09 01:57:34 thorpej Exp $	*/
+/*	$NetBSD: readline.c,v 1.23 2002/10/27 20:24:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.22 2002/04/09 01:57:34 thorpej Exp $");
+__RCSID("$NetBSD: readline.c,v 1.23 2002/10/27 20:24:28 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -219,6 +219,11 @@ rl_initialize(void)
 
 	/* for proper prompt printing in readline() */
 	el_rl_prompt = strdup("");
+	if (el_rl_prompt == NULL) {
+		history_end(h);
+		el_end(e);
+		return -1;
+	}
 	el_set(e, EL_PROMPT, _get_prompt);
 	el_set(e, EL_SIGNAL, 1);
 
@@ -283,6 +288,8 @@ readline(const char *prompt)
 	if (strcmp(el_rl_prompt, prompt) != 0) {
 		free(el_rl_prompt);
 		el_rl_prompt = strdup(prompt);
+		if (el_rl_prompt == NULL)
+			return NULL;
 	}
 	/* get one line from input stream */
 	ret = el_gets(e, &count);
@@ -291,6 +298,8 @@ readline(const char *prompt)
 		int lastidx;
 
 		buf = strdup(ret);
+		if (buf == NULL)
+			return NULL;
 		lastidx = count - 1;
 		if (buf[lastidx] == '\n')
 			buf[lastidx] = '\0';
@@ -334,6 +343,8 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 	size_t size, i;
 
 	result = malloc((size = 16));
+	if (result == NULL)
+		return NULL;
 	temp = str;
 	with_len = strlen(with);
 	what_len = strlen(what);
@@ -344,8 +355,14 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 			i = new - temp;
 			add = i + with_len;
 			if (i + add + 1 >= size) {
+				char *nresult;
 				size += add + 1;
-				result = realloc(result, size);
+				nresult = realloc(result, size);
+				if (nresult == NULL) {
+					free(result);
+					return NULL;
+				}
+				result = nresult;
 			}
 			(void) strncpy(&result[len], temp, i);
 			len += i;
@@ -355,8 +372,14 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 		} else {
 			add = strlen(temp);
 			if (len + add + 1 >= size) {
+				char *nresult;
 				size += add + 1;
-				result = realloc(result, size);
+				nresult = realloc(result, size);
+				if (nresult == NULL) {
+					free(result);
+					return NULL;
+				}
+				result = nresult;
 			}
 			(void) strcpy(&result[len], temp);	/* safe */
 			len += add;
@@ -499,6 +522,8 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 		cmd++;
 
 	line = strdup(event_data);
+	if (line == NULL)
+		return NULL;
 	for (; *cmd; cmd++) {
 		if (*cmd == ':')
 			continue;
@@ -525,23 +550,36 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 				delim = *(++cmd), cmd++;
 				size = 16;
 				what = realloc(from, size);
+				if (what == NULL) {
+					free(from);
+					return NULL;
+				}
 				len = 0;
 				for (; *cmd && *cmd != delim; cmd++) {
 					if (*cmd == '\\'
 					    && *(cmd + 1) == delim)
 						cmd++;
-					if (len >= size)
-						what = realloc(what,
+					if (len >= size) {
+						char *nwhat;
+						nwhat = realloc(what,
 						    (size <<= 1));
+						if (nwhat == NULL) {
+							free(what);
+							return NULL;
+						}
+						what = nwhat;
+					}
 					what[len++] = *cmd;
 				}
 				what[len] = '\0';
 				from = what;
 				if (*what == '\0') {
 					free(what);
-					if (search)
+					if (search) {
 						from = strdup(search);
-					else {
+						if (from == NULL)
+							return NULL;
+					} else {
 						from = NULL;
 						return (-1);
 					}
@@ -552,12 +590,22 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 
 				size = 16;
 				with = realloc(to, size);
+				if (with == NULL) {
+					free(to);
+					return -1;
+				}
 				len = 0;
 				from_len = strlen(from);
 				for (; *cmd && *cmd != delim; cmd++) {
 					if (len + from_len + 1 >= size) {
+						char *nwith;
 						size += from_len + 1;
-						with = realloc(with, size);
+						nwith = realloc(with, size);
+						if (nwith == NULL) {
+							free(with);
+							return -1;
+						}
+						with = nwith;
 					}
 					if (*cmd == '&') {
 						/* safe */
@@ -623,14 +671,21 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 	}
 
 	cmdsize = 1, cmdlen = 0;
-	tempcmd = malloc(cmdsize);
+	if ((tempcmd = malloc(cmdsize)) == NULL)
+		return NULL;
 	for (i = start; start <= i && i <= end; i++) {
 		int arr_len;
 
 		arr_len = strlen(arr[i]);
 		if (cmdlen + arr_len + 1 >= cmdsize) {
+			char *ntempcmd;
 			cmdsize += arr_len + 1;
-			tempcmd = realloc(tempcmd, cmdsize);
+			ntempcmd = realloc(tempcmd, cmdsize);
+			if (ntempcmd == NULL) {
+				free(tempcmd);
+				return NULL;
+			}
+			tempcmd = ntempcmd;
 		}
 		(void) strcpy(&tempcmd[cmdlen], arr[i]);	/* safe */
 		cmdlen += arr_len;
@@ -663,6 +718,8 @@ history_expand(char *str, char **output)
 		rl_initialize();
 
 	*output = strdup(str);	/* do it early */
+	if (*output == NULL)
+		return NULL;
 
 	if (str[0] == history_subst_char) {
 		/* ^foo^foo2^ is equivalent to !!:s^foo^foo2^ */
@@ -675,8 +732,14 @@ history_expand(char *str, char **output)
 	}
 #define	ADD_STRING(what, len) 						\
 	{								\
-		if (idx + len + 1 > size)				\
-			result = realloc(result, (size += len + 1));	\
+		if (idx + len + 1 > size) {				\
+			char *nresult = realloc(result, (size += len + 1));\
+			if (nresult == NULL) {				\
+				free(*output);				\
+				return NULL;				\
+			}						\
+			result = nresult;				\
+		}							\
 		(void)strncpy(&result[idx], what, len);			\
 		idx += len;						\
 		result[idx] = '\0';					\
@@ -790,11 +853,21 @@ history_tokenize(const char *str)
 		}
 
 		if (result_idx + 2 >= size) {
+			char **nresult;
 			size <<= 1;
-			result = realloc(result, size * sizeof(char *));
+			nresult = realloc(result, size * sizeof(char *));
+			if (nresult == NULL) {
+				free(result);
+				return NULL;
+			}
+			result = nresult;
 		}
 		len = i - start;
 		temp = malloc(len + 1);
+		if (temp == NULL) {
+			free(result);
+			return NULL;
+		}
 		(void) strncpy(temp, &str[start], len);
 		temp[len] = '\0';
 		result[result_idx++] = temp;
@@ -1158,11 +1231,15 @@ tilde_expand(char *txt)
 		return (strdup(txt));
 
 	temp = strchr(txt + 1, '/');
-	if (temp == NULL)
+	if (temp == NULL) {
 		temp = strdup(txt + 1);
-	else {
+		if (temp == NULL)
+			return NULL;
+	} else {
 		len = temp - txt + 1;	/* text until string after slash */
 		temp = malloc(len);
+		if (temp == NULL)
+			return NULL;
 		(void) strncpy(temp, txt + 1, len - 2);
 		temp[len - 2] = '\0';
 	}
@@ -1176,6 +1253,8 @@ tilde_expand(char *txt)
 	txt += len;
 
 	temp = malloc(strlen(pass->pw_dir) + 1 + strlen(txt) + 1);
+	if (temp == NULL)
+		return NULL;
 	(void) sprintf(temp, "%s/%s", pass->pw_dir, txt);
 
 	return (temp);
@@ -1206,22 +1285,43 @@ filename_completion_function(const char *text, int state)
 		}
 		temp = strrchr(text, '/');
 		if (temp) {
+			char *nptr;
 			temp++;
-			filename = realloc(filename, strlen(temp) + 1);
+			nptr = realloc(filename, strlen(temp) + 1);
+			if (nptr == NULL) {
+				free(filename);
+				return NULL;
+			}
+			filename = nptr;
 			(void) strcpy(filename, temp);
 			len = temp - text;	/* including last slash */
-			dirname = realloc(dirname, len + 1);
+			nptr = realloc(dirname, len + 1);
+			if (nptr == NULL) {
+				free(filename);
+				return NULL;
+			}
+			dirname = nptr;
 			(void) strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
 			filename = strdup(text);
+			if (filename == NULL)
+				return NULL;
 			dirname = NULL;
 		}
 
 		/* support for ``~user'' syntax */
 		if (dirname && *dirname == '~') {
+			char *nptr;
 			temp = tilde_expand(dirname);
-			dirname = realloc(dirname, strlen(temp) + 1);
+			if (temp == NULL)
+				return NULL;
+			nptr = realloc(dirname, strlen(temp) + 1);
+			if (nptr == NULL) {
+				free(dirname);
+				return NULL;
+			}
+			dirname = nptr;
 			(void) strcpy(dirname, temp);	/* safe */
 			free(temp);	/* no longer needed */
 		}
@@ -1259,6 +1359,8 @@ filename_completion_function(const char *text, int state)
 #endif
 		    ((dirname) ? strlen(dirname) : 0) + 1 + 1;
 		temp = malloc(len);
+		if (temp == NULL)
+			return NULL;
 		(void) sprintf(temp, "%s%s",
 		    dirname ? dirname : "", entry->d_name);	/* safe */
 
@@ -1332,15 +1434,22 @@ completion_matches(const char *text, CPFunction *genfunc)
 	match_list_len = 1;
 	while ((retstr = (*genfunc) (text, matches)) != NULL) {
 		if (matches + 1 >= match_list_len) {
+			char **nmatch_list;
 			match_list_len <<= 1;
-			match_list = realloc(match_list,
+			nmatch_list = realloc(match_list,
 			    match_list_len * sizeof(char *));
+			if (nmatch_list == NULL) {
+				free(match_list);
+				return NULL;
+			}
+			match_list = nmatch_list;
+
 		}
 		match_list[++matches] = retstr;
 	}
 
 	if (!match_list)
-		return (char **) NULL;	/* nothing found */
+		return NULL;	/* nothing found */
 
 	/* find least denominator and insert it to match_list[0] */
 	which = 2;
@@ -1354,14 +1463,24 @@ completion_matches(const char *text, CPFunction *genfunc)
 	}
 
 	retstr = malloc(max_equal + 1);
+	if (retstr == NULL)
+		return NULL;
 	(void) strncpy(retstr, match_list[1], max_equal);
 	retstr[max_equal] = '\0';
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	if (matches + 1 >= match_list_len)
-		match_list = realloc(match_list,
+	if (matches + 1 >= match_list_len) {
+		char **nmatch_list;
+		nmatch_list = realloc(match_list,
 		    (match_list_len + 1) * sizeof(char *));
+		if (nmatch_list == NULL) {
+			free(match_list);
+			return NULL;
+		}
+		match_list = nmatch_list;
+	}
+
 	match_list[matches + 1] = (char *) NULL;
 
 	return (match_list);
