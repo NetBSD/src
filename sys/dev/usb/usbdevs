@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.78 2000/02/13 23:10:02 augustss Exp $
+$NetBSD: usbdevs,v 1.79 2000/02/17 16:30:11 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -403,6 +403,7 @@ product PLX TESTBOARD		0x9060	test board
 /* Primax products */
 product PRIMAX COMFORT		0x4d01	Comfort
 product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
+product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
