@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2003/08/07 16:28:54 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2003/10/25 04:07:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2003/08/07 16:28:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2003/10/25 04:07:28 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -136,7 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2003/08/07 16:28:54 agc Exp $");
 #include <machine/adrsmap.h>
 #include <machine/machConst.h>
 #include <machine/intr.h>
-#include <newsmips/newsmips/clockreg.h>
 #include <newsmips/newsmips/machid.h>
 #include <dev/cons.h>
 
@@ -164,6 +163,10 @@ int mem_cluster_cnt;
 
 struct idrom idrom;
 void (*readmicrotime) __P((struct timeval *tvp));
+void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
+void (*enable_intr) __P((void));
+void (*disable_intr) __P((void));
+void (*enable_timer) __P((void));
 
 /*
  *  Local functions.

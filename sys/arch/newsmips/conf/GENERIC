@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2003/10/24 15:58:31 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.62 2003/10/25 04:07:28 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	16
 
@@ -128,7 +128,7 @@ cpu0	at mainbus0
 hb0	at mainbus0			# Hyper-bus on news3400
 ap0	at mainbus0			# APbus on news5000
 
-mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
+mkclock0 at hb0 addr 0xbff40000		# MK48T02 realtime clock
 mkclock0 at ap?				#
 
 le0	at hb0 addr 0xbff80000 level 1	# on-board LANCE Ethernet

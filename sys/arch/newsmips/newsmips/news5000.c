@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.11 2003/07/15 02:59:31 lukem Exp $	*/
+/*	$NetBSD: news5000.c,v 1.12 2003/10/25 04:07:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.11 2003/07/15 02:59:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.12 2003/10/25 04:07:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ static void news5000_level0_intr(void);
 
 static void news5000_enable_intr(void);
 static void news5000_disable_intr(void);
+static void news5000_enable_timer(void);
 static void news5000_readmicrotime(struct timeval *);
 static void news5000_readidrom(u_char *);
 
@@ -214,6 +215,14 @@ news5000_disable_intr(void)
 }
 
 static void
+news5000_enable_timer(void)
+{
+
+	/* enable timer interrpt */
+	*(volatile u_int32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
+}
+
+static void
 news5000_readmicrotime(tvp)
 	struct timeval *tvp;
 {
@@ -250,6 +259,7 @@ news5000_init(void)
 
 	enable_intr = news5000_enable_intr;
 	disable_intr = news5000_disable_intr;
+	enable_timer = news5000_enable_timer;
 
 	news5000_readidrom((u_char *)&idrom);
 	readmicrotime = news5000_readmicrotime;
