@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.56 2002/05/14 20:03:53 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.57 2002/11/24 08:43:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.56 2002/05/14 20:03:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.57 2002/11/24 08:43:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -412,6 +412,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
 	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
+
+	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 
 	uvm_vnp_setsize(vp, 0);
 	*vpp = vp;
