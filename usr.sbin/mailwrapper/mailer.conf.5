@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.4 2000/08/18 01:49:43 itojun Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.5 2000/08/18 07:27:59 itojun Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -55,9 +55,11 @@ The second member of each pair is the name of the program to
 actually execute when the first name is invoked. The file may also
 contain comments, denoted by a # mark in the first column of any line.
 .Sh EXAMPLES
-The following is an example of how to set up an
+The following is an example of how to set up
 .Nm
-for traditional sendmail invocation behavior.
+for traditional
+.Xr sendmail 8
+invocation behavior.
 .Bd -literal
 # Execute the "real" sendmail program, named /usr/libexec/sendmail/sendmail
 sendmail	/usr/libexec/sendmail/sendmail
@@ -68,8 +70,10 @@ hoststat	/usr/libexec/sendmail/sendmail
 purgestat	/usr/libexec/sendmail/sendmail
 .Ed
 .Pp
-This example shows how to invoke the "postfix" program in
-place of sendmail.
+This example shows how to invoke the
+.Sy postfix
+MTA suite in place of
+.Xr sendmail 8 .
 .Bd -literal
 # Emulate sendmail using postfix
 sendmail	/usr/libexec/postfix/sendmail
