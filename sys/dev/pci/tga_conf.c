@@ -1,4 +1,4 @@
-/* $NetBSD: tga_conf.c,v 1.3 2000/03/12 05:32:29 nathanw Exp $ */
+/* $NetBSD: tga_conf.c,v 1.4 2000/04/02 18:59:32 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,9 @@
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 
+#include <dev/ic/bt485var.h>
+#include <dev/ic/bt463var.h>
+
 #undef KB
 #define KB		* 1024
 #undef MB
@@ -43,6 +46,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_01 */
 	{
 		"T8-01",
+		bt485_funcs,
 		8,
 		4 MB,
 		2 KB,
@@ -52,6 +56,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_02 */
 	{
 		"T8-02",
+		bt485_funcs,
 		8,
 		4 MB,
 		4 KB,
@@ -61,6 +66,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_22 */
 	{
 		"T8-22",
+		bt485_funcs,
 		8,
 		8 MB,
 		4 KB,
@@ -70,6 +76,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_44 */
 	{
 		"T8-44",
+		bt485_funcs,
 		8,
 		16 MB,
 		4 KB,
@@ -79,6 +86,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_04 */
 	{
 		"T32-04",
+		bt463_funcs,
 		32,
 		16 MB,
 		8 KB,
@@ -88,6 +96,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_08 */
 	{
 		"T32-08",
+		bt463_funcs,
 		32,
 		16 MB,
 		16 KB,
@@ -97,6 +106,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_88 */
 	{
 		"T32-88",
+		bt463_funcs,
 		32,
 		32 MB,
 		16 KB,
