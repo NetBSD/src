@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.87 2000/02/01 18:49:03 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.88 2000/03/24 02:02:03 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -293,7 +293,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	t0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
@@ -371,7 +371,7 @@ sw1:
 	move	a3, v0				# BDSLOT: a3 = ASID
 
 	REG_PROLOGUE
-	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -425,7 +425,7 @@ LEAF(savectx)
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_S	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
@@ -450,7 +450,7 @@ LEAF(setjmp)
 	REG_S	sp, SF_REG_SP(a0)
 	REG_S	s8, SF_REG_S8(a0)
 	REG_S	ra, SF_REG_RA(a0)
-	REG_S	v0, SF_REG_ST(a0)
+	REG_S	v0, SF_REG_SR(a0)
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
@@ -458,7 +458,7 @@ END(setjmp)
 
 LEAF(longjmp)
 	REG_PROLOGUE
-	REG_L	v0, SF_REG_ST(a0)
+	REG_L	v0, SF_REG_SR(a0)
 	REG_L	ra, SF_REG_RA(a0)
 	REG_L	s0, SF_REG_S0(a0)
 	REG_L	s1, SF_REG_S1(a0)
