@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2004/07/03 12:49:21 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2004/07/06 16:20:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2004/07/03 12:49:21 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2004/07/06 16:20:43 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,9 @@ mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 	if (locator != MAINBUSCF_ID_DEFAULT &&
 	    !platid_match(&platid, PLATID_DEREFP(locator)))
 		return (0);
+
+	if (strcmp(cf->cf_name, "cpu") == 0)
+		return 0;
 
 	if (strcmp(cf->cf_name, "hpcapm") == 0)
 		return 0;
