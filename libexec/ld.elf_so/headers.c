@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.15 2002/09/26 20:27:50 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.16 2002/10/04 18:50:43 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -285,8 +285,6 @@ _rtld_digest_phdr(phdr, phnum, entry)
 
 		case PT_PHDR:
 			assert((const Elf_Phdr *) ph->p_vaddr == phdr);
-			obj->phdr = (const Elf_Phdr *) ph->p_vaddr;
-			obj->phsize = ph->p_memsz;
 			break;
 
 		case PT_INTERP:
