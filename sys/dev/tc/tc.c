@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.35 2003/01/01 00:10:25 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.36 2003/09/26 17:17:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35 2003/01/01 00:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.36 2003/09/26 17:17:47 tsutsui Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -193,8 +193,7 @@ tcprint(aux, pnp)
 		tc_devinfo(ta->ta_modname, devinfo);
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
-	aprint_normal(" slot %d offset 0x%lx", ta->ta_slot,
-	    (long)ta->ta_offset);
+	aprint_normal(" slot %d offset 0x%x", ta->ta_slot, ta->ta_offset);
 	return (UNCONF);
 }
 
