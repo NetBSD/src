@@ -4,11 +4,9 @@ from the original BOOTP server created by Bill Croft at Stanford.
 This version merges all the enhancements and bug-fixes from the
 NetBSD, Columbia, and other versions.
 
-If you have problems or questions about this version, send email to:
-	gwr@mc.com (Gordon W. Ross)
+Please direct questions, comments, and bug reports to the list:
+	<bootp@andrew.cmu.edu>
 
-For general questions about BOOTP, send email to the list:
-	bootp@andrew.cmu.edu
 You can subscribe to this mailing list by sending mail to:
 	bootp-request@andrew.cmu.edu
 (The body of the message should contain: "Add <your-address>")
@@ -91,9 +89,11 @@ Pittsburgh, PA  15213
 [ Contents description by file: ]
 
 Announce*	Text of release announcements
+Changes  	Change history, reverse chronological
 Installation	Instructions for building and installing
 Makefile*	for "make"
 README		This file
+ToDo		Things not yet done
 bootp.h		The protocol header file
 bootpd.8	Manual page for bootpd, boopgw
 bootpd.c	BOOTP server main module

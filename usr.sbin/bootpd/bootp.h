@@ -23,8 +23,8 @@ SOFTWARE.
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1395.
  *
- * from: bootp.h,v 1.3+ 1991/11/01 10:02:29 ww0n Exp ww0n
- * $Id: bootp.h,v 1.1.1.1 1994/06/27 21:25:48 gwr Exp $
+ * $Id: bootp.h,v 1.2 1994/08/22 22:14:40 gwr Exp $
+ *
  *
  * This file specifies the "implementation-independent" BOOTP protocol
  * information which is common to both client and server.
@@ -46,7 +46,7 @@ struct bootp {
     unsigned char    bp_hops;			/* gateway hops */
     unsigned int32   bp_xid;			/* transaction ID */
     unsigned short   bp_secs;			/* seconds since boot began */
-    unsigned short   bp_unused;
+    unsigned short   bp_flags;			/* RFC1532 broadcast, etc. */
     struct in_addr   bp_ciaddr;			/* client IP address */
     struct in_addr   bp_yiaddr;			/* 'your' IP address */
     struct in_addr   bp_siaddr;			/* server IP address */
@@ -121,6 +121,9 @@ struct bootp {
 #define TAG_NIS_DOMAIN		((unsigned char)  40)
 #define TAG_NIS_SERVER		((unsigned char)  41)
 #define TAG_NTP_SERVER		((unsigned char)  42)
+/* DHCP maximum message size. */
+#define TAG_MAX_MSGSZ		((unsigned char)  57)
+
 /* XXX - Add new tags here */
 
 

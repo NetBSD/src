@@ -138,9 +138,6 @@ OBJ_TEST= bootptest.o print-bootp.o getif.o getether.o \
 bootptest: $(OBJ_TEST)
 	$(CC) -o $@ $(OBJ_TEST) $(SYSLIBS)
 
-print-bootp.o : print-bootp.c
-	$(CC) $(CFLAGS) -DBOOTPTEST -c $<
-
 # This is just for testing the lookup functions.
 TRYLOOK= trylook.o lookup.o report.o $(STRERROR)
 trylook : $(TRYLOOK)
