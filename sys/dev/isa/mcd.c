@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.39 1995/06/26 05:37:11 cgd Exp $	*/
+/*	$NetBSD: mcd.c,v 1.40 1995/07/05 02:32:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -508,6 +508,24 @@ loop:
 	s = splbio();
 	(void) mcdintr(sc);
 	splx(s);
+}
+
+int
+mcdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+mcdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
