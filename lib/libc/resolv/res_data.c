@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.5 2004/05/21 15:35:05 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.6 2004/05/21 16:03:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: res_data.c,v 1.1.206.2 2004/03/16 12:34:18 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.5 2004/05/21 15:35:05 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.6 2004/05/21 16:03:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: res_data.c,v 1.5 2004/05/21 15:35:05 christos Exp $");
 
 #include "port_after.h"
 
+#if 0
 #ifdef __weak_alias
 __weak_alias(res_init,_res_init)
 __weak_alias(res_mkquery,_res_mkquery)
@@ -61,6 +62,7 @@ __weak_alias(res_search,_res_search)
 __weak_alias(res_querydomain,__res_querydomain)
 __weak_alias(res_opt,_res_opt)
 __weak_alias(hostalias,__hostalias)
+#endif
 #endif
 
 #undef _res
