@@ -1,6 +1,8 @@
+/*	$NetBSD: talk_ctl.h,v 1.3 1994/12/09 02:14:28 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)talk_ctl.h	5.6 (Berkeley) 3/1/91
- *	$Id: talk_ctl.h,v 1.2 1993/08/01 18:07:56 mycroft Exp $
+ *	@(#)talk_ctl.h	8.1 (Berkeley) 6/6/93
  */
 
 extern	struct sockaddr_in daemon_addr;
