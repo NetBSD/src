@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.73 2003/02/25 20:35:38 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.74 2003/04/10 21:34:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.73 2003/02/25 20:35:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.74 2003/04/10 21:34:12 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -192,8 +192,8 @@ genfs_eopnotsupp(void *v)
 }
 
 /*
- * Called when an fs doesn't support a particular vop but the vop needs to
- * vrele, vput, or vunlock passed in vnodes.
+ * Called when an fs doesn't support a particular vop.
+ * This takes care to vrele, vput, or vunlock passed in vnodes.
  */
 int
 genfs_eopnotsupp_rele(void *v)
@@ -203,7 +203,7 @@ genfs_eopnotsupp_rele(void *v)
 		/ * other random data follows, presumably * /
 	} */ *ap = v;
 	struct vnodeop_desc *desc = ap->a_desc;
-	struct vnode *vp;
+	struct vnode *vp, *vp_last = NULL;
 	int flags, i, j, offset;
 
 	flags = desc->vdesc_flags;
@@ -212,9 +212,20 @@ genfs_eopnotsupp_rele(void *v)
 			break;	/* stop at end of list */
 		if ((j = flags & VDESC_VP0_WILLPUT)) {
 			vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+
+			/* Skip if NULL */
+			if (!vp)
+				continue;
+
 			switch (j) {
 			case VDESC_VP0_WILLPUT:
-				vput(vp);
+				/* Check for dvp == vp cases */
+				if (vp == vp_last)
+					vrele(vp);
+				else {
+					vput(vp);
+					vp_last = vp;
+				}
 				break;
 			case VDESC_VP0_WILLUNLOCK:
 				VOP_UNLOCK(vp, 0);
