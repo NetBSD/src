@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.6 1996/04/26 22:44:00 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.7 1996/05/07 00:55:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -161,7 +161,7 @@ static void host2ie  __P(( struct ie_softc *sc, void *src, u_long dest, int size
 static void ie2host  __P(( struct ie_softc *sc, u_long src, void *dest, int size ));
 static void iezero   __P(( struct ie_softc *sc, u_long p, int size ));
 void        iereset  __P(( struct ie_softc *sc ));
-void        iewatchdog __P(( int unit ));
+void        iewatchdog __P(( struct ifnet *ifp ));
 int         ieioctl  __P(( struct ifnet *ifp, u_long cmd, caddr_t data ));
 void        iestart  __P(( struct ifnet *ifp ));
 int 	    iestop   __P(( struct ie_softc *sc ));
@@ -456,8 +456,8 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* Fill in my application form to attach to the inet system */
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ie_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -593,7 +593,7 @@ iezero ( struct ie_softc *sc, u_long p, int size )
 int
 ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
 {
-    struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+    struct ie_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
 /*    struct ifreq *ifr = (struct ifreq *)data;*/
     int s;
@@ -681,9 +681,9 @@ iereset( struct ie_softc *sc )
  */
 
 void
-iewatchdog ( int unit )
+iewatchdog ( struct ifnet *ifp )
 {
-    struct ie_softc *sc = ie_cd.cd_devs[unit];
+    struct ie_softc *sc = ifp->if_softc;
 
     /* WOOF WOOF */
     log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname );
@@ -1449,7 +1449,7 @@ iexmit ( struct ie_softc *sc )
 void
 iestart( struct ifnet *ifp )
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
