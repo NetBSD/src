@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.5 2000/08/08 02:11:05 jeffs Exp $ */
+/* $NetBSD: vgavar.h,v 1.6 2000/08/14 20:14:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -137,12 +137,8 @@ static inline void _vga_gdc_write(vh, reg, val)
 
 int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
 void	vga_common_attach __P((struct device *, bus_space_tag_t,
-			       bus_space_tag_t, int));
-#ifdef arc
-void	vga_extended_attach __P((struct device *, bus_space_tag_t,
-				 bus_space_tag_t, int,
-				 paddr_t (*) __P((void *, off_t, int))));
-#endif
+			       bus_space_tag_t, int,
+			       paddr_t (*)(void *, off_t, int)));
 int	vga_is_console __P((bus_space_tag_t, int));
 
 int	vga_cnattach __P((bus_space_tag_t, bus_space_tag_t, int, int));
