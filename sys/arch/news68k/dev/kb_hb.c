@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.2 2002/09/27 20:34:09 thorpej Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.3 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -54,9 +54,8 @@ void	kb_hb_init(struct kb_softc *);
 int	kb_hb_intr(void *);
 int	kb_hb_cnattach(void);
 
-const struct cfattach kb_hb_ca = {
-	sizeof(struct kb_softc), kb_hb_match, kb_hb_attach
-};
+CFATTACH_DECL(kb_hb, sizeof(struct kb_softc),
+    kb_hb_match, kb_hb_attach, NULL, NULL);
 
 struct console_softc kb_hb_conssc;
 
