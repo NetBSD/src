@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.4 2001/03/19 22:20:30 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.5 2001/03/19 22:24:17 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.3 2001/03/19 22:20:05 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.4 2001/03/19 22:23:58 jdolecek Exp 
  */
 
 /*-
@@ -153,6 +153,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x63CA,	"HP 27246 Ethernet Adapter" },
     { 0x6406,	"AT&T GIS 8-Port Serial Controller/MC" },
     { 0x6407,	"Stargate Adapter" },
+    { 0x6410,	"ATI AT1720T" },
     { 0x64B6,	"Thomas-Conrad ARC-CARD/MC" },
     { 0x64B7,	"Thomas-Conrad TCNS/MC" },
     { 0x651B,	"Racore Token-Ring Adapter" },
