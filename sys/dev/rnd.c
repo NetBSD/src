@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.28 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rnd.c,v 1.29 2002/10/07 02:38:41 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.28 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.29 2002/10/07 02:38:41 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -285,9 +285,16 @@ rndattach(int num)
 void
 rnd_init(void)
 {
+#ifdef __HAVE_CPU_COUNTER
+	u_int32_t c;
+#endif
 
 	if (rnd_ready)
 		return;
+
+#ifdef __HAVE_CPU_COUNTER
+	c = rnd_counter();
+#endif
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
@@ -297,6 +304,16 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 
+#ifdef __HAVE_CPU_COUNTER
+	/* Mix *something*, *anything* into the pool to help it get started. 
+	 * However, it's not safe for rnd_counter to call microtime() yet, so 
+	 * we can only do this on platforms with a cpu counter.
+	 * XXX more things to add would be nice.
+	 */ 
+	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+	c = rnd_counter();
+	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+#endif
 	rnd_ready = 1;
 
 #ifdef RND_VERBOSE
