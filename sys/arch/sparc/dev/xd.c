@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.30 1997/03/10 23:01:44 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.31 1997/05/24 20:16:34 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.30 1997/03/10 23:01:44 pk Exp $
+ * id: $NetBSD: xd.c,v 1.31 1997/05/24 20:16:34 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -390,8 +390,7 @@ xdcattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(struct xdc), ca->ca_bustype);
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct xdc));
 
 	xdc->xdc = (struct xdc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;

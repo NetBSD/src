@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.32 1996/12/10 22:54:52 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -220,11 +220,11 @@ cgthreeattach(parent, self, args)
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
-						ramsize, ca->ca_bustype);
+					       ramsize);
 	}
 	sc->sc_fbc = (volatile struct fbcontrol *)
 	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
-		     sizeof(struct fbcontrol), ca->ca_bustype);
+		     sizeof(struct fbcontrol));
 
 	/* Transfer video magic to board, if it's not running */
 	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
@@ -449,5 +449,5 @@ cgthreemmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off) | PMAP_NC);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.4 1997/03/13 04:07:48 cgd Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.5 1997/05/24 20:16:27 pk Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -133,8 +133,7 @@ isp_sbus_attach(parent, self, aux)
 		sbc->sbus_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
 	} else {
 		sbc->sbus_reg = (volatile u_char *)
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
-		    ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 	}
 	sbc->sbus_node = ca->ca_ra.ra_node;
 

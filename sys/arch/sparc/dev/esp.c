@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.66 1997/02/27 01:16:19 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.67 1997/05/24 20:16:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -236,8 +236,7 @@ espattach(parent, self, aux)
 		esc->sc_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
 	else {
 		esc->sc_reg = (volatile u_char *)
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
-		    ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 	}
 
 	/* Other settings */

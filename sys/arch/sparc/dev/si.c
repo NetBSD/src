@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.35 1997/03/14 19:57:20 cjs Exp $	*/
+/*	$NetBSD: si.c,v 1.36 1997/05/24 20:16:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -349,8 +349,8 @@ si_attach(parent, self, args)
 		    (ca->ca_bustype == BUS_OBIO) ? sw_options : si_options;
 
 	/* Map the controller registers. */
-	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
-	    sizeof(struct si_regs), ca->ca_bustype);
+	regs = (struct si_regs *)
+		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
 
 	/*
 	 * Fill in the prototype scsi_link.

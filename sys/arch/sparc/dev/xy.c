@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.20 1996/12/10 22:55:07 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.21 1997/05/24 20:16:37 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.20 1996/12/10 22:55:07 pk Exp $
+ * id: $NetBSD: xy.c,v 1.21 1997/05/24 20:16:37 pk Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -329,8 +329,7 @@ xycattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(struct xyc), ca->ca_bustype);
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct xyc));
 
 	xyc->xyc = (struct xyc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
