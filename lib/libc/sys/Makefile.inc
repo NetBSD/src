@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.104 2000/06/26 06:33:05 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.105 2000/07/07 08:20:50 itohy Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -6,8 +6,9 @@
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
-	sbrk.S __semctl.S setlogin.S shmctl.S sigaction.S sigpending.S \
-	sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S syscall.S
+	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
+	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
+	syscall.S
 SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
@@ -60,7 +61,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
 	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
-	setsid.o setsockopt.o settimeofday.o setuid.o shmat.o \
+	setsid.o setsockopt.o settimeofday.o setuid.o \
 	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
 	socket.o socketpair.o __stat13.o statfs.o \
