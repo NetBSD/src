@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.8 1995/08/17 02:57:38 mycroft Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.9 1996/02/13 22:14:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -49,9 +49,11 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #include <netns/ns_pcb.h>
+#include <netns/ns_var.h>
 
 struct	ns_addr zerons_addr;
 
+int
 ns_pcballoc(so, head)
 	struct socket *so;
 	struct nspcb *head;
@@ -68,6 +70,7 @@ ns_pcballoc(so, head)
 	return (0);
 }
 	
+int
 ns_pcbbind(nsp, nam)
 	register struct nspcb *nsp;
 	struct mbuf *nam;
@@ -118,6 +121,7 @@ noname:
  * If don't have a local address for this socket yet,
  * then pick one.
  */
+int
 ns_pcbconnect(nsp, nam)
 	struct nspcb *nsp;
 	struct mbuf *nam;
@@ -218,6 +222,7 @@ ns_pcbconnect(nsp, nam)
 	return (0);
 }
 
+void
 ns_pcbdisconnect(nsp)
 	struct nspcb *nsp;
 {
@@ -227,6 +232,7 @@ ns_pcbdisconnect(nsp)
 		ns_pcbdetach(nsp);
 }
 
+void
 ns_pcbdetach(nsp)
 	struct nspcb *nsp;
 {
@@ -240,6 +246,7 @@ ns_pcbdetach(nsp)
 	free(nsp, M_PCB);
 }
 
+void
 ns_setsockaddr(nsp, nam)
 	register struct nspcb *nsp;
 	struct mbuf *nam;
@@ -254,6 +261,7 @@ ns_setsockaddr(nsp, nam)
 	sns->sns_addr = nsp->nsp_laddr;
 }
 
+void
 ns_setpeeraddr(nsp, nam)
 	register struct nspcb *nsp;
 	struct mbuf *nam;
@@ -275,10 +283,12 @@ ns_setpeeraddr(nsp, nam)
  * Also pass an extra paramter via the nspcb. (which may in fact
  * be a parameter list!)
  */
+void
 ns_pcbnotify(dst, errno, notify, param)
 	register struct ns_addr *dst;
 	long param;
-	int errno, (*notify)();
+	int errno;
+	void (*notify) __P((struct nspcb *));
 {
 	register struct nspcb *nsp, *oinp;
 	int s = splimp();
@@ -306,6 +316,7 @@ ns_pcbnotify(dst, errno, notify, param)
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
  */
+void
 ns_rtchange(nsp)
 	struct nspcb *nsp;
 {
@@ -325,6 +336,7 @@ struct nspcb *
 ns_pcblookup(faddr, lport, wildp)
 	struct ns_addr *faddr;
 	u_short lport;
+	int wildp;
 {
 	register struct nspcb *nsp, *match = 0;
 	int matchwild = 3, wildcard;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.6 1995/03/26 20:36:17 jtc Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.7 1996/02/13 22:13:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -47,5 +47,18 @@ struct	idpstat {
 };
 
 #ifdef _KERNEL
-struct	idpstat	idpstat;
+struct nspcb;
+struct mbuf;
+struct socket;
+struct idpstat	idpstat;
+
+void idp_input __P((struct mbuf *, ...));
+void idp_abort __P((struct nspcb *));
+void idp_drop __P((struct nspcb *, int));
+int idp_output __P((struct mbuf *, ...));
+int idp_ctloutput __P((int, struct socket *, int , int, struct mbuf **));
+int idp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		    struct mbuf *));
+int idp_raw_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+			struct mbuf *));
 #endif
