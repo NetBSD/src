@@ -1,4 +1,4 @@
-/* $NetBSD: beep.h,v 1.2 1996/03/14 23:11:04 mark Exp $ */
+/*	$NetBSD: beep.h,v 1.2.12.1 1997/10/15 05:34:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) Mark Brinicombe 1995 All rights reserved

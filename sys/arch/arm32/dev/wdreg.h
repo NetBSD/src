@@ -1,4 +1,4 @@
-/*	$NetBSD: wdreg.h,v 1.2 1997/02/04 02:04:55 mark Exp $	*/
+/*	$NetBSD: wdreg.h,v 1.2.2.1 1997/10/15 05:32:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.8.8.1 1997/08/23 07:07:56 thorpej Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.8.8.2 1997/10/15 05:31:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,7 +50,7 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 #else	/* MINIROOTSIZE */
 
-extern u_int memory_disc_size;		/* from machdep.c */
+u_int memory_disc_size = 0;		/* set by machdep.c */
 static struct md_conf *bootmd = NULL;
 
 extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));

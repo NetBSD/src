@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1997/02/04 06:10:48 mark Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.8.1 1997/10/15 05:34:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,17 +53,6 @@
 #endif	/* !_LOCORE */
 #include <machine/psl.h>
 
-/*
- * If we are not an ARM6 then we MUST use late aborts as only the ARM6
- * supports early aborts.
- * For the ARM6 we will use early abort unless otherwise configured
- * This reduces the overheads of LDR/STR aborts and no correction is required.
- */
-
-#if defined(CPU_ARM7) && !defined(CPU_LATE_ABORT)
-#error "option CPU_LATE_ABORT is required for ARM7 configurations"
-#endif
-
 #if defined(CPU_ARM7500) && !defined(CPU_ARM7)
 #error "option CPU_ARM7 is required with CPU_ARM7500"
 #endif
@@ -100,10 +89,10 @@
 #define PSR_C_bit (1 << 29)	/* carry */
 #define PSR_V_bit (1 << 28)	/* overflow */
 
-#define I32_bit (1 << 7)
-#define F32_bit (1 << 6)
+#define I32_bit (1 << 7)	/* IRQ disable */
+#define F32_bit (1 << 6)	/* FIQ disable */
 
-#define PSR_MODE	0x0000001f
+#define PSR_MODE	0x0000001f	/* mode mask */
 #define PSR_USR32_MODE	0x00000010
 #define PSR_FIQ32_MODE	0x00000011
 #define PSR_IRQ32_MODE	0x00000012
@@ -114,6 +103,23 @@
 
 #define PSR_IN_USR_MODE(psr)	(!((psr) & 3))		/* XXX */
 #define PSR_IN_32_MODE(psr)	((psr) & PSR_32_MODE)
+
+/*
+ * ARM Instructions
+ *
+ *       3 3 2 2 2                              
+ *       1 0 9 8 7                                                     0
+ *      +-------+-------------------------------------------------------+
+ *      | cond  |              instruction dependant                    |
+ *      |c c c c|                                                       |
+ *      +-------+-------------------------------------------------------+
+ */
+
+#define INSN_SIZE		4		/* Always 4 bytes */
+#define INSN_COND_MASK		0xf0000000	/* Condition mask */
+#define INSN_COND_AL		0xe0000000	/* Always condition */
+
+/* Some of the definitions below need cleaning up for V3/V4 architectures */
 
 #define CPU_ID_DESIGNER_MASK	0xff000000
 #define CPU_ID_ARM_LTD		0x41000000
@@ -140,15 +146,12 @@
 #define CPU_CONTROL_SYST_ENABLE 0x0100
 #define CPU_CONTROL_ROM_ENABLE	0x0200
 #define CPU_CONTROL_CPCLK	0x0400
+#define CPU_CONTROL_BPRD_ENABLE 0x0800
 #define CPU_CONTROL_IC_ENABLE   0x1000
 
-/* StrongARM has separate instruction and data caches */
-
-#ifdef CPU_SA
-#define CPU_CONTROL_IDC_ENABLE	(CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE)
-#else
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
-#endif	/* CPU_SA */
+
+/* Fault status register definitions */
 
 #define FAULT_TYPE_MASK 0x0f
 #define FAULT_USER      0x10
@@ -174,20 +177,20 @@
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr_all ; \
-	orr	r0, r0, #(I32_bit | F32_bit) ; \
+	orr	r0, r0, #(I32_bit) ; \
 	msr	cpsr_all, r0 ; \
 	ldmfd	sp!, {r0}
 
 #define IRQenable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr_all ; \
-	bic	r0, r0, #(I32_bit | F32_bit) ; \
+	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_all, r0 ; \
 	ldmfd	sp!, {r0}		
 
 #else
-#define IRQdisable SetCPSR(I32_bit | F32_bit, I32_bit | F32_bit);
-#define IRQenable SetCPSR(I32_bit | F32_bit, 0);
+#define IRQdisable SetCPSR(I32_bit, I32_bit);
+#define IRQenable SetCPSR(I32_bit, 0);
 #endif	/* _LOCORE */
 
 /*
@@ -231,6 +234,17 @@ extern int current_intr_depth;
  */
 
 #define signotify(p)            setsoftast()
+
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_DEBUG		1	/* int: misc kernel debug control */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "debug", CTLTYPE_INT }, \
+}    
 
 #endif /* !_ARM32_CPU_H_ */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spl.S,v 1.2 1996/06/03 21:21:39 mark Exp $ */
+/*	$NetBSD: spl.S,v 1.2.10.1 1997/10/15 05:27:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -43,6 +43,7 @@
 
 #include "assym.h"
 #include <machine/psl.h>
+#include <machine/asm.h>
 
 sp	.req	r13
 lr	.req	r14
@@ -60,8 +61,7 @@ Lspl_masks:
 Lspl_mask:
 	.word	_spl_mask
 
-	.global	_raisespl
-_raisespl:
+ENTRY(raisespl)
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
@@ -81,8 +81,7 @@ _raisespl:
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 
-	.global	_lowerspl
-_lowerspl:
+ENTRY(lowerspl)
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
@@ -102,8 +101,7 @@ _lowerspl:
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 
-	.global	_splx
-_splx:
+ENTRY(splx)
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
@@ -120,5 +118,5 @@ _splx:
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_irq_setmasks		/* Update the actual masks */
+	bl	_dosoftints		/* Process any pending softints */
 	ldmfd	sp!, {r0, pc}		/* Exit */
-

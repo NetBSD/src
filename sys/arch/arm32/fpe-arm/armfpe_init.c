@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.13 1997/07/08 19:41:30 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.13.2.1 1997/10/15 05:33:33 thorpej Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -73,12 +73,12 @@ u_int arm_fpe_core_workspace;
  */
  
 static char *exception_errors[] = {
-	"Floating point invalid operation",
-	"Floating point division by zero (0)",
-	"Floating point overflow",
-	"Floating point underflow",
-	"Floating point operation inexact",
-	"Floating point major faliure... core fault trapped... not good!"
+	"invalid operation",
+	"division by zero (0)",
+	"overflow",
+	"underflow",
+	"operation inexact",
+	"major faliure... core fault trapped... not good!"
 };
 
 
@@ -246,10 +246,10 @@ arm_fpe_exception(exception, fpframe, frame)
 	struct trapframe *frame;
 {
 	if (exception >= 0 && exception < 6)
-		printf("fpe exception: %d - %s\n", exception,
-		    exception_errors[exception]);
+		printf("fpe exception: %s (%d)\n",
+		    exception_errors[exception], exception);
 	else
-		printf("fpe exception: %d - unknown\n", exception);
+		printf("fpe exception: unknown (%d)\n", exception);
 
 	trapsignal(curproc, SIGFPE, exception << 8);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.9 1997/01/26 01:30:51 mark Exp $ */
+/*	$NetBSD: irqhandler.h,v 1.9.8.1 1997/10/15 05:36:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,12 @@
  * Created      : 30/09/94
  */
 
+#ifndef _ARM32_IRQHANDLER_H_
+#define _ARM32_IRQHANDLER_H_
+
+#ifndef _LOCORE
 #include <sys/types.h>
+#endif /* _LOCORE */
 
 /* Define the IRQ bits */
 
@@ -152,6 +157,7 @@
 #endif	/* RC7500 */
 #else	/* CPU_ARM7500 */
 
+#ifdef	RISCPC
 /*#define IRQ_PRINTER	0x00*/
 #define IRQ_RESERVED0	0x01
 /*#define IRQ_FLOPPYIDX	0x02*/
@@ -187,6 +193,7 @@
 #define IRQ_EXPCARD5	0x1D
 #define IRQ_EXPCARD6	0x1E
 #define IRQ_EXPCARD7	0x1F
+#endif	/* RISCPC */
 
 #endif	/* CPU_ARM7500 */
 
@@ -197,12 +204,13 @@
 #define IRQMASK_SOFTNET	(1 << IRQ_SOFTNET)
 #define IRQ_SOFTCLOCK	IRQ_RESERVED1	/* Emulated */
 #define IRQMASK_SOFTCLOCK	(1 << IRQ_SOFTCLOCK)
-#define IRQ_SOFTPLIP	IRQ_RESERVED2	/* Emulated */
-#define IRQMASK_SOFTPLIP	(1 << IRQ_SOFTPLIP)
+#define IRQMASK_ALLSOFT (IRQMASK_SOFTNET | IRQMASK_SOFTCLOCK)
 
 #define IRQ_INSTRUCT	-1
 #define NIRQS		0x20
 
+#include <machine/intr.h>
+#if 0
 /* Define the various Interrupt Priority Levels */
 
 /* Interrupt Priority Levels are not mutually exclusive. */
@@ -214,7 +222,8 @@
 #define IPL_IMP        4	/* memory allocation */
 #define IPL_NONE       5
 
-#define IRQ_LEVELS     6
+#define IPL_LEVELS     6
+#endif
 
 #ifndef _LOCORE
 typedef struct irqhandler {
@@ -230,14 +239,14 @@ typedef struct irqhandler {
 } irqhandler_t;
 
 #ifdef _KERNEL
-extern u_int irqmasks[IRQ_LEVELS];
+extern u_int irqmasks[IPL_LEVELS];
 extern irqhandler_t *irqhandlers[NIRQS];
 
 void irq_init __P((void));
 int irq_claim __P((int, irqhandler_t *));
 int irq_release __P((int, irqhandler_t *));
 void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
-void intr_release __P((void *ih));
+int intr_release __P((void *ih));
 void irq_setmasks __P((void));
 void disable_irq __P((int));
 void enable_irq __P((int));
@@ -267,5 +276,7 @@ int fiq_claim __P((fiqhandler_t *));
 int fiq_release __P((fiqhandler_t *));
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
+
+#endif	/* _ARM32_IRQHANDLER_H_ */
 
 /* End of irqhandler.h */

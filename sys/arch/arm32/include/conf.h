@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 1997/01/26 01:36:56 mark Exp $	*/
+/*	$NetBSD: conf.h,v 1.1.10.1 1997/10/15 05:34:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -111,7 +111,7 @@ cdev_decl(physcon);
 cdev_decl(vidcvideo);
 cdev_decl(com);
 cdev_decl(lpt);
-cdev_decl(quadmouse);
+cdev_decl(qms);
 cdev_decl(pms);
 cdev_decl(beep);
 cdev_decl(kbd);

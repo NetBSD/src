@@ -1,4 +1,4 @@
-/* $NetBSD: undefined.c,v 1.6 1996/10/15 02:14:21 mark Exp $ */
+/*	$NetBSD: undefined.c,v 1.6.10.1 1997/10/15 05:28:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,7 +43,6 @@
  * Created      : 06/01/95
  */
 
-#define CONTINUE_AFTER_RESET_BUG
 #define FAST_FPE
 
 #include <sys/types.h>
@@ -70,7 +69,7 @@ extern int want_resched;
 
 undef_handler_t undefined_handlers[MAX_COPROCS];
 
-u_int disassemble __P((u_int));
+extern u_int disassemble __P((u_int));
 
 
 int
@@ -121,7 +120,6 @@ undefinedinstruction(frame)
 	trapframe_t *frame;
 {
 	struct proc *p;
-/*	struct pcb *pcb;*/
 	u_int fault_pc;
 	int fault_instruction;
 	int s;
@@ -134,34 +132,37 @@ undefinedinstruction(frame)
 		enable_interrupts(I32_bit);
 #endif
     
-/* Update vmmeter statistics */
+	/* Update vmmeter statistics */
     
 	cnt.v_trap++;
          
-	fault_pc = frame->tf_pc - 4;
+	fault_pc = frame->tf_pc - INSN_SIZE;
 
-/* Should use fuword() here .. but in the interests of squeezing every bit
- * of speed we will just use ReadWord(). We know the instruction can be
- * read as was just executed so this will never fail unless the kernel
- * is screwed up in which case it does not really matter does it ?
- */
+	/*
+	 * Should use fuword() here .. but in the interests of squeezing every
+	 * bit of speed we will just use ReadWord(). We know the instruction
+	 * can be read as was just executed so this will never fail unless the
+	 * kernel is screwed up in which case it does not really matter does
+	 * it ?
+	 */
 
 	fault_instruction = ReadWord(fault_pc);
 
-/* Check for coprocessor instruction */
+	/* Check for coprocessor instruction */
 
-/*
- * According to the datasheets you only need to look at bit 27 of the instruction
- * to tell the difference between and undefined instruction and a
- * coprocessor instruction following an undefined instruction trap.
- */
+	/*
+	 * According to the datasheets you only need to look at bit 27 of the
+	 * instruction to tell the difference between and undefined
+	 * instruction and a coprocessor instruction following an undefined
+	 * instruction trap.
+	 */
 
 	if ((fault_instruction & (1 << 27)) != 0)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
 	else
 		coprocessor = 0;
 		
-/* Get the current proc structure or proc0 if there is none */
+	/* Get the current proc structure or proc0 if there is none */
 
 	if ((p = curproc) == 0)
 		p = &proc0;
@@ -169,38 +170,22 @@ undefinedinstruction(frame)
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		sticks = p->p_sticks;
                   
-/* Modify the fault_code to reflect the USR/SVC state at time of fault */
+	/* Modify the fault_code to reflect the USR/SVC state at time of fault */
 
 		fault_code = FAULT_USER;
 		p->p_md.md_regs = frame;
 	} else
 		fault_code = 0;
 
-#if 0
-/* can't use curpcb, as it might be NULL; and we have p in a register anyway */
+	/* OK this is were we do something about the instruction */
 
-    pcb = &p->p_addr->u_pcb;
-    if (pcb == 0)
-      {
-        panic("no pcb ... we're toast !\n");
-      }
-#endif
-
-/* OK this is were we do something about the instruction */
-
-/* Check for coprocessor instruction */
-
-/*
-	s = splhigh();
-    	printf("Coprocessor number %d instruction fault\n", coprocessor);
-	(void)splx(s);
-*/
+	/* Check for coprocessor instruction */
 
 	/* Special cases */
 
-	if (coprocessor == 0 && fault_instruction == USER_BREAKPOINT
+	if (coprocessor == 0 && fault_instruction == GDB_BREAKPOINT
 	    && fault_code == FAULT_USER) {
-		frame->tf_pc -= 4;	/* Adjust to point to the BP */
+		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
 		trapsignal(curproc, SIGTRAP, 0);
 	} else if ((undefined_handlers[coprocessor](fault_pc, fault_instruction,
 	    frame, fault_code)) != 0) {
@@ -220,7 +205,8 @@ undefinedinstruction(frame)
 			printf("MRC/MCR\n");
 			disassemble(fault_pc);
 		}
-		else if (fault_instruction != 0xe7ffffff) {
+		else if ((fault_instruction & ~INSN_COND_MASK)
+		    != (KERNEL_BREAKPOINT & ~INSN_COND_MASK)) {
 			printf("Undefined instruction\n");
 			disassemble(fault_pc);
 		}
@@ -229,7 +215,9 @@ undefinedinstruction(frame)
         
 		if ((fault_code & FAULT_USER) == 0) {
 			printf("Undefined instruction in kernel: Heavy man !\n");
-			postmortem(frame);
+#ifdef DDB
+			Debugger();
+#endif	/* DDB */
 		}
 
 		trapsignal(p, SIGILL, fault_instruction);
@@ -239,12 +227,11 @@ undefinedinstruction(frame)
 		return;
 
 #ifdef FAST_FPE
-/* Optimised exit code */
-
+	/* Optimised exit code */
 	{
 		int sig;
 
-/* take pending signals */
+		/* take pending signals */
 
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
@@ -252,20 +239,20 @@ undefinedinstruction(frame)
 
 		p->p_priority = p->p_usrpri;
 
-/*
- * Check for reschedule request, at the moment there is only
- * 1 ast so this code should always be run
- */
+		/*
+		 * Check for reschedule request, at the moment there is only
+		 * 1 ast so this code should always be run
+		 */
 
 		if (want_resched) {
-        /*
-         * Since we are curproc, a clock interrupt could
-         * change our priority without changing run queues
-         * (the running process is not kept on a run queue).
-         * If this happened after we setrunqueue ourselves but
-         * before we switch()'ed, we might not be on the queue
-         * indicated by our priority
-         */
+			/*
+			 * Since we are curproc, a clock interrupt could
+			 * change our priority without changing run queues
+			 * (the running process is not kept on a run queue).
+			 * If this happened after we setrunqueue ourselves but
+			 * before we switch()'ed, we might not be on the queue
+			 * indicated by our priority
+			 */
 	
 		        s = splstatclock();
 			setrunqueue(p);
@@ -279,29 +266,23 @@ undefinedinstruction(frame)
 			}
 		}
 
-/*
- * The profiling bit is commented out at the moment. This can be reinstated
- * later on. Currently addupc_task is not written.
- */
+		/*
+		 * The profiling bit is commented out at the moment. This
+		 * can be reinstated later on. Currently addupc_task is
+		 * not written.
+		 */
 
 		if (p->p_flag & P_PROFIL) {
 			extern int psratio;
-			addupc_task(p, frame->tf_pc, (int)(p->p_sticks - sticks) * psratio );
+			addupc_task(p, frame->tf_pc,
+			    (int)(p->p_sticks - sticks) * psratio);
 		}
 
 		curpriority = p->p_priority;
 	}
 
 #else
-#ifdef VALIDATE_TRAPFRAME
-	validate_trapframe(frame, 5);
-#endif
-
 	userret(p, frame->tf_pc, sticks);
-
-#ifdef VALIDATE_TRAPFRAME
-	validate_trapframe(frame, 5);
-#endif
 #endif
 }
 
@@ -310,19 +291,12 @@ void
 resethandler(frame)
 	trapframe_t *frame;
 {
-	postmortem(frame);
-
-#ifdef CONTINUE_AFTER_RESET_BUG
-	printf("Branch throuh zero\n");
-	printf("The system should now be considered very unstable :-)\n");
-	sigexit(curproc, SIGILL);
-
-#ifdef VALIDATE_TRAPFRAME
-	validate_trapframe(frame, 4);
-#endif
-#else
+#ifdef DDB
+	printf("Branch through zero\n");
+	printf("Trap frame at %p\n", frame);
+	Debugger();
+#endif	/* DDB */
 	panic("Branch to never-never land (zero)..... were dead\n");
-#endif
 }
 
 /* End of undefined.c */

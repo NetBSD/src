@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 1997/07/17 02:28:39 mark Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7.2.1 1997/10/15 05:34:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -38,6 +38,7 @@
 #include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
+#include <machine/trap.h>
 
 /* end of mangling */
 
@@ -54,9 +55,11 @@ db_regs_t		ddb_regs;	/* register state */
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
 
-#define	BKPT_INST	(0xe7ffffff)	/* breakpoint instruction */
-#define	BKPT_SIZE	(4)		/* size of breakpoint inst */
+#define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
+#define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
+
+/*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->ddb_tf.tf_pc -= BKPT_SIZE)*/
 
 #define T_BREAKPOINT			(1)
 
@@ -69,10 +72,10 @@ db_regs_t		ddb_regs;	/* register state */
 #define	inst_branch(ins)	(((ins) & 0x0f000000) == 0x0a000000)
 #define inst_load(ins)		0
 #define inst_store(ins)		0
-#define inst_unconditional_flow_transfer(ins)	(((ins) & 0xf0000000) == 0xe0000000)
+#define inst_unconditional_flow_transfer(ins)	(((ins) & INSN_COND_MASK) == INSN_COND_AL)
 
-#define getreg_val		(0)
-#define next_instr_address(pc, bd)	(pc + 4)
+#define getreg_val			(0)
+#define next_instr_address(pc, bd)	(pc + INSN_SIZE)
 
 #define DB_MACHINE_COMMANDS
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bootconfig.h,v 1.3 1996/10/14 22:30:19 mark Exp $ */
+/*	$NetBSD: bootconfig.h,v 1.3.10.1 1997/10/15 05:34:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -50,6 +50,9 @@ typedef struct _PhysMem {
 	u_int pages;
 } PhysMem;
 
+#if defined(_KERNEL) && (defined(RISCPC) || defined(RC7500))
+
+#define DRAM_BLOCKS	4
 typedef struct _BootConfig {
 	u_int kernvirtualbase;
 	u_int kernphysicalbase;
@@ -67,7 +70,7 @@ typedef struct _BootConfig {
 	u_int height;
 	u_int bitsperpixel;
 
-	PhysMem dram[4];
+	PhysMem dram[DRAM_BLOCKS];
 	PhysMem vram[1];
 
 	u_int dramblocks;
@@ -86,9 +89,19 @@ typedef struct _BootConfig {
 
 #define BOOTCONFIG_MAGIC 0x42301068
 
-#ifdef _KERNEL
 extern BootConfig bootconfig;
+#endif	/* _KERNEL && (RISCPC || RC7500) */
+
+#ifdef _KERNEL
+#define BOOTOPT_TYPE_BOOLEAN		0
+#define BOOTOPT_TYPE_STRING		1
+#define BOOTOPT_TYPE_INT		2
+#define BOOTOPT_TYPE_BININT		3
+#define BOOTOPT_TYPE_HEXINT		4
+#define BOOTOPT_TYPE_MASK		7
+
+int get_bootconf_option __P((char *string, char *option, int type, void *result));
 extern char *boot_args;
-#endif
+#endif	/* _KERNEL */
 
 /* End of bootconfig.h */
