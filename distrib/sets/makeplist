@@ -66,31 +66,54 @@ fi
 arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
 
 # Compute toolchain  used on target cpu.
-if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "sparc64" -o "$arch" = "i386" -o "$arch" = "arm" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
-	shlib=elf
-else
-	if [ "$arch" = "sh3" ]; then
-		shlib=
-	else
-		shlib=aout
-	fi
-fi
+case "$machine" in
+ns32k)	shlib=aout ;;
+*)	case "$arch" in
+	sh3)	shlib="" ;;
+	*)	shlib=elf ;;
+	esac
+esac
+
+filename=/tmp/makeplist.$$ 
+ffilename=/tmp/makeplist.files.$$ 
+dfilename=/tmp/makeplist.dirs.$$ 
+
+echo "@cwd $prefix" > $filename 
+( 
+	cat $setd/lists/$setname/mi 
+# where does cpu get set? XXX - agc
+	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then 
+		cat $setd/lists/$setname/ad.${arch} 
+	fi 
+	if [ -f $setd/lists/$setname/md.${machine} ]; then 
+		cat $setd/lists/$setname/md.${machine} 
+	fi 
+	if [ "$shlib" != "" ]; then 
+		if [ -f $setd/lists/$setname/shl.mi ]; then 
+			cat $setd/lists/$setname/shl.mi 
+		fi 
+		if [ -f $setd/lists/$setname/shl.${shlib} ]; then 
+			cat $setd/lists/$setname/shl.${shlib} 
+		fi 
+	fi 
+)| env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u >> $filename
+
+env FFILENAME=$ffilename DFILENAME=$dfilename awk ' 
+/^@cwd/ { prefix = $2; next } 
+{ 
+        s = sprintf("if [ -d %s%s ]; then echo @dirrm %s >> %s; else echo %s >> %s; fi", prefix, $0, $0, ENVIRON["DFILENAME"], $0, ENVIRON["FFILENAME"]); 
+        system(s); 
+}' $filename
 
 echo "@cwd $prefix"
-(
-	cat $setd/lists/$setname/mi
-	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
-		cat $setd/lists/$setname/ad.${arch}
-	fi
-	if [ -f $setd/lists/$setname/md.${machine} ]; then
-		cat $setd/lists/$setname/md.${machine}
-	fi
-	if [ "$shlib" != "" ]; then
-		if [ -f $setd/lists/$setname/shl.mi ]; then
-			cat $setd/lists/$setname/shl.mi
-		fi
-		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
-			cat $setd/lists/$setname/shl.${shlib}
-		fi
-	fi
-)| env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u
+if [ -s $ffilename ]; then
+	cat $ffilename
+fi
+if [ -s $dfilename ]; then
+        sort -r $dfilename
+fi
+
+rm -f $filename $ffilename $dfilename
+
+exit 0
+
