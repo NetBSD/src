@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.4 1995/08/21 03:42:11 mycroft Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -146,6 +146,16 @@ struct linux_tms {
 struct linux_utimbuf {
 	linux_time_t l_actime;
 	linux_time_t l_modtime;
+};
+
+struct linux___sysctl {
+	int          *name;
+	int           namelen;
+	void         *old;
+	size_t       *oldlenp;
+	void         *new;
+	size_t        newlen;
+	unsigned long __unused[4];
 };
 
 #endif /* !_LINUX_TYPES_H */
