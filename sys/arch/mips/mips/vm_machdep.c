@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 2000/01/20 22:18:57 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 2000/03/14 14:08:55 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2000/01/20 22:18:57 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2000/03/14 14:08:55 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ kvtophys(kva)
 		return phys;
 	}
 	if (kva >= MIPS_KSEG1_START)
-		return MIPS_KSEG0_TO_PHYS(kva);
+		return MIPS_KSEG1_TO_PHYS(kva);
 
 	if (kva >= MIPS_KSEG0_START)
 		return MIPS_KSEG0_TO_PHYS(kva);
