@@ -1,12 +1,13 @@
-#	$NetBSD: files.evbppc,v 1.1 2002/12/09 12:15:52 scw Exp $
+#	$NetBSD: files.evbppc,v 1.2 2003/03/04 07:50:57 matt Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16
 
 maxusers 2 8 64
 
-file	arch/evbppc/evbppc/bus_dma.c
-file	arch/evbppc/evbppc/evbppc_machdep.c
+file	arch/evbppc/evbppc/bus_dma.c		ppc_ibm4xx
+file	arch/evbppc/evbppc/disksubr.c		disk
+file	arch/evbppc/evbppc/evbppc_machdep.c	ppc_ibm4xx
 file	arch/evbppc/evbppc/procfs_machdep.c
 
 file	dev/cons.c

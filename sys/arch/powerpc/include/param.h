@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2003/02/03 05:15:53 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2003/03/04 07:50:58 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
 #define	_POWERPC_PARAM_H
 
 #ifdef	_KERNEL
+#if defined(_KERNEL_OPT)
+#include "opt_ppcarch.h"
+#endif
 #ifndef	_LOCORE
 #include <machine/cpu.h>
 #endif	/* _LOCORE */
@@ -51,9 +54,15 @@
 
 #define	ALIGNBYTES		(sizeof(double) - 1)
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
+#ifdef PPC_IBM4XX
+#define	PGSHIFT		14	/* Use 16KB to reduce TLB thrashing */
+#define	UPAGES		1
+#else
 #define	PGSHIFT		12
+#define	UPAGES		4
+#endif
 #define	NBPG		(1 << PGSHIFT)	/* Page size */
 #define	PGOFSET		(NBPG - 1)
 
@@ -64,7 +73,6 @@
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
 
-#define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 
 #ifndef	MSGBUFSIZE
