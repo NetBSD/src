@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.1 2000/12/11 23:16:50 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.2 2000/12/11 23:58:55 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -824,7 +824,6 @@ struct an_softc	{
         struct an_ltv_key	an_perm_keys;
 	int			an_tx_rate;
 	int			an_rxmode;
-	int			an_gone;
 	int			an_if_flags;
 	u_int8_t		an_txbuf[1536];
 	struct an_tx_ring_data	an_rdata;

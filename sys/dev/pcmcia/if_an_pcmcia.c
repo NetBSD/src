@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.1 2000/12/11 23:16:50 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.2 2000/12/11 23:58:56 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+
+#ifdef INET
+#define	ANCACHE		/* XXX: should be defined elsewhere */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

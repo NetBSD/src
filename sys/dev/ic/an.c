@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.1 2000/12/11 23:16:50 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.2 2000/12/11 23:58:55 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -215,7 +215,6 @@ int an_attach(sc)
 	struct ifmediareq imr;
 #endif
 
-	sc->an_gone = 0;
 	sc->an_associated = 0;
 
 	/* Reset the NIC. */
@@ -526,7 +525,7 @@ int an_intr(xsc)
 
 	sc = (struct an_softc*)xsc;
 
-	if (sc->an_gone)
+	if (!sc->sc_enabled)
 		return 0;
 
 	ifp = &sc->arpcom.ec_if;
@@ -632,7 +631,7 @@ static int an_cmd(sc, cmd, val)
 static void an_reset(sc)
 	struct an_softc		*sc;
 {
-	if (sc->an_gone)
+	if (!sc->sc_enabled)
 		return;
         
 	an_cmd(sc, AN_CMD_ENABLE, 0);
@@ -975,11 +974,6 @@ static int an_ioctl(ifp, command, data)
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
 
-	if (sc->an_gone) {
-		error = ENODEV;
-		goto out;
-	}
-
 	switch(command) {
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & sc->an_if_flags &
@@ -1152,7 +1146,7 @@ static int an_init_tx_ring(sc)
 	int			i;
 	int			id;
 
-	if (sc->an_gone)
+	if (!sc->sc_enabled)
 		return (0);
 
 	for (i = 0; i < AN_TX_RING_CNT; i++) {
@@ -1173,9 +1167,6 @@ static int an_init(ifp)
 	struct ifnet *ifp;
 {
 	struct an_softc		*sc = (struct an_softc *)ifp->if_softc;
-
-	if (sc->an_gone)
-		return ENXIO;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		an_stop(ifp, 0);
@@ -1271,7 +1262,7 @@ static void an_start(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->an_gone)
+	if (!sc->sc_enabled)
 		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1357,7 +1348,8 @@ void an_stop(ifp, disable)
 	struct an_softc		*sc = (struct an_softc *)ifp->if_softc;
 	int			i;
 
-	if (sc->an_gone)
+	callout_stop(&sc->an_stat_ch);
+	if (!sc->sc_enabled)
 		return;
 
 	an_cmd(sc, AN_CMD_FORCE_SYNCLOSS, 0);
@@ -1367,11 +1359,9 @@ void an_stop(ifp, disable)
 	for (i = 0; i < AN_TX_RING_CNT; i++)
 		an_cmd(sc, AN_CMD_DEALLOC_MEM, sc->an_rdata.an_tx_fids[i]);
 
-	callout_stop(&sc->an_stat_ch);
-
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
-	if (disable && sc->sc_enabled) {
+	if (disable) {
 		if (sc->sc_disable)
 			(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
@@ -1386,7 +1376,7 @@ static void an_watchdog(ifp)
 	struct an_softc		*sc;
 
 	sc = ifp->if_softc;
-	if (sc->an_gone)
+	if (!sc->sc_enabled)
 		return;
 
 	printf("%s: device timeout\n", sc->an_dev.dv_xname);
