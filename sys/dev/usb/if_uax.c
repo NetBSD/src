@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.4 2003/02/16 17:40:05 augustss Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.5 2003/04/21 16:38:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.4 2003/02/16 17:40:05 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.5 2003/04/21 16:38:34 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -197,7 +197,9 @@ struct uax_softc {
 };
 
 Static const struct usb_devno uax_devs[] = {
+	{ USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172 },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100},
+	{ USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120 },
 };
 #define uax_lookup(v, p) ((struct uax_type *)usb_lookup(uax_devs, v, p))
 
