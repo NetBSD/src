@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.8 2003/05/14 18:28:05 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.9 2003/05/15 23:35:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.8 2003/05/14 18:28:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.9 2003/05/15 23:35:37 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,6 +100,8 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int maxoutcount;
+	int error;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_scalaro()\n");
@@ -115,61 +117,122 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
 
-	/*
-	 * XXX this is ugly, but we don't really know what we are doing here.
-	 */
-	if (req->req_in[0] == 0x00000003) {
-#ifdef DEBUG_MACH
-		printf("flavor 1\n");
+	maxoutcount = req->req_in[req->req_incount];
+
+	switch (req->req_selector) {
+	case DARWIN_IOFBCREATESHAREDCURSOR: {
+		/* Create the shared memory containing cursor information */
+#if 0 /* Avoid warning for unused vars */
+		int shmemvers = req->req_in[0]; /* 0x2 */
+		int maxwidth = req->req_in[1];	/* 0x20 */
+		int maxheight = req->req_in[2]; /* 0x20 */
 #endif
-		rep->rep_outcount = 1;
+		size_t memsize;
+		vaddr_t kvaddr;
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBCREATESHAREDCURSOR\n");
+#endif
+		if (darwin_ioframebuffer_shmem == NULL) {
+			memsize = 
+			    round_page(sizeof(*darwin_ioframebuffer_shmem));
+
+			darwin_ioframebuffer_shmem = uao_create(memsize, 0);
+
+			error = uvm_map(kernel_map, &kvaddr, memsize,
+			    darwin_ioframebuffer_shmem, 0, PAGE_SIZE,
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+			if (error != 0) {
+				uao_detach(darwin_ioframebuffer_shmem);
+				darwin_ioframebuffer_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			if ((error = uvm_map_pageable(kernel_map, kvaddr,
+			    kvaddr + memsize, FALSE, 0)) != 0) {
+				uao_detach(darwin_ioframebuffer_shmem);
+				darwin_ioframebuffer_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			darwin_ioframebuffer_shmeminit(kvaddr);
+		}
+
+		/* No output, the zone is mapped during another call */
 		rep->rep_outcount = 0;
+		break;
 	}
 
-	/* Called from main() */
-	if ((req->req_selector == 0) && (req->req_in[0] == 0x2) &&
-	    (req->req_in[1] == 0x20) && (req->req_in[2] == 0x20) &&
-	    (req->req_in[req->req_incount] >= 0)) {
-#ifdef DEBUG_MACH
-		printf("flavor 2\n");
-#endif
-		rep->rep_outcount = 0;
-	}
+	case DARWIN_IOFBGETCURRENTDISPLAYMODE: {
+		/* Get current display mode and depth. No input args */
 
-	/* called from IOFramebufferServerOpen() */
-	if ((req->req_selector == 0x2) && 
-	    (req->req_in[req->req_incount] >= 2)) {
-#ifdef DEBUG_MACH
-		printf("flavor 3\n");
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBGETCURRENTDISPLAYMODE\n");
 #endif
+		if (maxoutcount < 2)	
+			return mach_msg_error(args, EINVAL);
+
 		rep->rep_outcount = 2;
-		rep->rep_out[0] = 0x2e;
-		rep->rep_out[1] = 2;
+		rep->rep_out[0] = 0x2e; /* mode XXX */
+		rep->rep_out[1] = 2; /* depth  (0=>8b 1=>15b 2=>24b) */
+		break;
 	}
 
-	/* IOFBRebuild gives this */
-	if ((req->req_selector == 0x12) && (req->req_in[0] == 0x6d726466) &&
-	    (req->req_in[req->req_incount] >= 1)) {
-#ifdef DEBUG_MACH
-		printf("flavor 4\n");
+	case DARWIN_IOFBGETATTRIBUTE: {
+		/* Get attribute value */
+		char *name = (char *)&req->req_in[0];
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBGETATTRIBUTE\n");
 #endif
-		rep->rep_outcount = 1;
-		rep->rep_out[0] = 0;
+
+		/* We only heard about the mrdf attribute. What is it? */
+		if (memcmp(name, "mrdf", 4) == 0) {
+			if (maxoutcount < 1)	
+				return mach_msg_error(args, EINVAL);
+
+			rep->rep_outcount = 1;
+			rep->rep_out[0] = 0; /* XXX */
+		} else {
+#ifdef DEBUG_DARWIN
+			printf("Unknown attribute %c%c%c%c\n", 
+			    req->req_in[0], req->req_in[1], 
+			    req->req_in[2], req->req_in[3]);
+#endif
+			return mach_msg_error(args, EINVAL);
+		}
+		break;
 	}
 
-	/* IOFBGetFramebufferInformationForAperture() gives this */
-	if ((req->req_selector == 0x8) && (req->req_in[0] == 0x0) &&
-	    (req->req_in[req->req_incount] >= 1)) {
-#ifdef DEBUG_MACH
-		printf("flavor 5\n");
+	case DARWIN_IOFBGETVRAMMAPOFFSET: {
+#if 0 /* Avoid warning for unused vars */
+		darwin_iopixelaperture aperture; /* 0 XXX Current aperture? */
 #endif
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBGETVRAMMAPOFFSET\n");
+#endif
+		if (maxoutcount < 1)	
+			return mach_msg_error(args, EINVAL);
+
 		rep->rep_outcount = 1;
-		rep->rep_out[0] = 0x00801000;
+		rep->rep_out[0] = 0x00801000; /* XXX */
+		break;
 	}
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
-
 	*msglen = sizeof(*rep) - ((16 - rep->rep_outcount) * sizeof(int));
 	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+
 	return 0;
 }
 
@@ -180,6 +243,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 	mach_io_connect_method_scalari_structo_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structo_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int maxoutcount;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_structo()\n");
@@ -195,134 +259,104 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
 
-	/*
-	 * XXX this is ugly, but we don't really know what we are doing here.
-	 */
-	/* IOFBGetPixelInformation gives this */
-	if ((req->req_selector == 1) && (req->req_incount == 3) &&
-	    (req->req_in[0] == 0x2e) && 
-	    (req->req_in[1] == 0x0) &&
-	    (req->req_in[2] == 0x0) && 
-	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
-#ifdef DEBUG_MACH
-		printf("flavor 1\n");
+	maxoutcount = req->req_in[req->req_incount];
+
+	switch(req->req_selector) {
+	case DARWIN_IOFBGETPIXELINFORMATION: {
+		/* Get bit per pixel, etc... */
+#if 0 /* Avoid warning for unused vars */
+		darwin_iodisplaymodeid displaymode = req->req_in[0]; /* 0x2e */
 #endif
-		rep->rep_outcount = req->req_in[req->req_incount];
-		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
-		rep->rep_out[2] = 0x4;
-		rep->rep_out[11] = 0x8;
-		rep->rep_out[19] = 0x1;
-		rep->rep_out[23] = 0x8;
-		rep->rep_out[27] = 0xff;
-		rep->rep_out[88] = 0x50;
-		rep->rep_out[89] = 0x50;
-		rep->rep_out[90] = 0x50;
-		rep->rep_out[91] = 0x50;
-		rep->rep_out[92] = 0x50;
-		rep->rep_out[93] = 0x50;
-		rep->rep_out[94] = 0x50;
-		rep->rep_out[95] = 0x50;
+		darwin_ioindex depth = req->req_in[1]; /* 0 or 1 */
+#if 0 /* Avoid warning for unused vars */
+		darwin_iopixelaperture aperture = req->req_in[2]; /* 0 */
+#endif
+		darwin_iopixelinformation *pixelinfo;
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBGETPIXELINFORMATION\n");
+#endif
+		pixelinfo = (darwin_iopixelinformation *)&rep->rep_out[0];
+
+		if (maxoutcount < sizeof(*pixelinfo))
+			return mach_msg_error(args, EINVAL);
+
+		/* 
+		 * darwin_iopixelinformation is shorter than the buffer
+		 * usually supplied, but Darwin still returns the whole buffer 
+		 */
+		rep->rep_outcount = maxoutcount; 
+		memset(pixelinfo, 0, maxoutcount * sizeof(int));
+
+		switch (depth) {
+		case 0: /* 8 bpp */
+			pixelinfo->bytesperrow = 0x400; 
+			pixelinfo->bytesperplane = 0;
+			pixelinfo->bitsperpixel = 0x8;
+			pixelinfo->pixeltype = DARWIN_IOFB_CLUTPIXELS;
+			pixelinfo->componentcount = 1;
+			pixelinfo->bitspercomponent = 8;
+			pixelinfo->componentmasks[0] = 0x000000ff;
+			memcpy(&pixelinfo->pixelformat, "PPPPPPPP", 8);
+			pixelinfo->flags = 0;
+			pixelinfo->activewidth = 0;
+			pixelinfo->activeheight = 0;
+			break;
+
+		case 1: /* 15 bpp */
+			pixelinfo->bytesperrow = 0x800;
+			pixelinfo->bytesperplane = 0;
+			pixelinfo->bitsperpixel = 0x10;
+			pixelinfo->pixeltype = DARWIN_IOFB_RGBDIRECTPIXELS;
+			pixelinfo->componentcount = 3;
+			pixelinfo->bitspercomponent = 5;
+			pixelinfo->componentmasks[0] = 0x00007c00; /* Red */
+			pixelinfo->componentmasks[1] = 0x000003e0; /* Green */
+			pixelinfo->componentmasks[2] = 0x0000001f; /* Blue */
+			memcpy(&pixelinfo->pixelformat, "-RRRRRGGGGGBBBBB", 16);
+			pixelinfo->flags = 0;
+			pixelinfo->activewidth = 0;
+			pixelinfo->activeheight = 0;
+			break;
+
+		case 2: /* 24 bpp */
+			pixelinfo->bytesperrow = 0x1000;
+			pixelinfo->bytesperplane = 0;
+			pixelinfo->bitsperpixel = 0x20;
+			pixelinfo->pixeltype = DARWIN_IOFB_RGBDIRECTPIXELS;
+			pixelinfo->componentcount = 3;
+			pixelinfo->bitspercomponent = 8;
+			pixelinfo->componentmasks[0] = 0x00ff0000; /* Red */
+			pixelinfo->componentmasks[1] = 0x0000ff00; /* Green */
+			pixelinfo->componentmasks[2] = 0x000000ff; /* Blue */
+			memcpy(&pixelinfo->pixelformat, 
+			    "--------RRRRRRRRGGGGGGGGBBBBBBBB", 32);
+			pixelinfo->flags = 0;
+			pixelinfo->activewidth = 0;
+			pixelinfo->activeheight = 0;
+			break;
+
+		default:
+			printf("unknown depth %d\n", depth);
+			break;
+		}
+			    
+		/* Probably useless */
 		rep->rep_out[158] = 0x4;
 		rep->rep_out[162] = 0x3;
+
+		break;
 	}
 
-	/* IOFBGetPixelInformation gives this too */
-	if ((req->req_selector == 1) && (req->req_incount == 3) &&
-	    (req->req_in[0] == 0x2e) && 
-	    (req->req_in[1] == 0x1) &&
-	    (req->req_in[2] == 0x0) && 
-	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
-#ifdef DEBUG_MACH
-		printf("flavor 1\n");
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
 #endif
-		rep->rep_outcount = req->req_in[req->req_incount];
-		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
-		rep->rep_out[2] = 0x8;
-		rep->rep_out[11] = 0x10;
-		rep->rep_out[15] = 0x2;
-		rep->rep_out[19] = 0x3;
-		rep->rep_out[23] = 0x5;
-		rep->rep_out[26] = 0x7c;
-		rep->rep_out[30] = 0x3;
-		rep->rep_out[31] = 0xe0;
-		rep->rep_out[35] = 0x1f;
-		rep->rep_out[88] = 0x2d;
-		rep->rep_out[89] = 0x52;
-		rep->rep_out[90] = 0x52;
-		rep->rep_out[91] = 0x52;
-		rep->rep_out[92] = 0x52;
-		rep->rep_out[93] = 0x52;
-		rep->rep_out[94] = 0x47;
-		rep->rep_out[95] = 0x47;
-		rep->rep_out[96] = 0x47;
-		rep->rep_out[97] = 0x47;
-		rep->rep_out[98] = 0x47;
-		rep->rep_out[99] = 0x42;
-		rep->rep_out[99] = 0x42;
-		rep->rep_out[100] = 0x42;
-		rep->rep_out[101] = 0x42;
-		rep->rep_out[102] = 0x42;
-		rep->rep_out[103] = 0x42;
-		rep->rep_out[158] = 0x4;
-		rep->rep_out[162] = 0x3;
+		return mach_msg_error(args, EINVAL);
+		break;	
 	}
 
-	/* IOFBGetPixelInformation gives this too */
-	if ((req->req_selector == 1) && (req->req_incount == 3) &&
-	    (req->req_in[0] == 0x2e) && 
-	    (req->req_in[1] == 0x2) &&
-	    (req->req_in[2] == 0x0) && 
-	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
-#ifdef DEBUG_MACH
-		printf("flavor 3\n");
-#endif
-		rep->rep_outcount = req->req_in[req->req_incount];
-		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
-		rep->rep_out[2] = 0x10;
-		rep->rep_out[11] = 0x20;
-		rep->rep_out[15] = 0x2;
-		rep->rep_out[19] = 0x3;
-		rep->rep_out[23] = 0x8;
-		rep->rep_out[25] = 0xff;
-		rep->rep_out[30] = 0xff;
-		rep->rep_out[35] = 0x1f;
-		rep->rep_out[88] = 0x2d;
-		rep->rep_out[89] = 0x2d;
-		rep->rep_out[90] = 0x2d;
-		rep->rep_out[91] = 0x2d;
-		rep->rep_out[92] = 0x2d;
-		rep->rep_out[93] = 0x2d;
-		rep->rep_out[94] = 0x2d;
-		rep->rep_out[95] = 0x2d;
-		rep->rep_out[96] = 0x52;
-		rep->rep_out[97] = 0x52;
-		rep->rep_out[98] = 0x52;
-		rep->rep_out[99] = 0x52;
-		rep->rep_out[100] = 0x52;
-		rep->rep_out[101] = 0x52;
-		rep->rep_out[102] = 0x52;
-		rep->rep_out[103] = 0x52;
-		rep->rep_out[104] = 0x47;
-		rep->rep_out[105] = 0x47;
-		rep->rep_out[106] = 0x47;
-		rep->rep_out[107] = 0x47;
-		rep->rep_out[108] = 0x47;
-		rep->rep_out[109] = 0x47;
-		rep->rep_out[110] = 0x47;
-		rep->rep_out[111] = 0x47;
-		rep->rep_out[112] = 0x42;
-		rep->rep_out[113] = 0x42;
-		rep->rep_out[114] = 0x42;
-		rep->rep_out[115] = 0x42;
-		rep->rep_out[116] = 0x42;
-		rep->rep_out[117] = 0x42;
-		rep->rep_out[118] = 0x42;
-		rep->rep_out[119] = 0x42;
-		rep->rep_out[158] = 0x4;
-		rep->rep_out[162] = 0x3;
-	}
 	rep->rep_out[rep->rep_outcount + 7] = 8; /* XXX Trailer */
-
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
 	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
 	return 0;
@@ -365,37 +399,17 @@ darwin_ioframebuffer_connect_map_memory(args)
 	size_t memsize;
 	size_t len;
 	vaddr_t pvaddr;
-	vaddr_t kvaddr;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_map_memory()\n");
 #endif
 	switch (req->req_memtype) {
 	case DARWIN_IOFRAMEBUFFER_CURSOR_MEMORY:
+		if (darwin_ioframebuffer_shmem == NULL) 
+			return mach_msg_error(args, error);
+
 		len = sizeof(struct darwin_ioframebuffer_shmem);
 		memsize = round_page(len);
-		if (darwin_ioframebuffer_shmem == NULL) {
-			darwin_ioframebuffer_shmem = uao_create(memsize, 0);
-
-			error = uvm_map(kernel_map, &kvaddr, memsize,
-			    darwin_ioframebuffer_shmem, 0, PAGE_SIZE,
-			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
-			if (error != 0) {
-				uao_detach(darwin_ioframebuffer_shmem);
-				darwin_ioframebuffer_shmem = NULL;
-				return mach_msg_error(args, error);
-			}
-
-			if ((error = uvm_map_pageable(kernel_map, kvaddr,
-			    kvaddr + memsize, FALSE, 0)) != 0) {
-				uao_detach(darwin_ioframebuffer_shmem);
-				darwin_ioframebuffer_shmem = NULL;
-				return mach_msg_error(args, error);
-			}
-
-			darwin_ioframebuffer_shmeminit(kvaddr);
-		}
 
 		uao_reference(darwin_ioframebuffer_shmem);
 		pvaddr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, memsize);
