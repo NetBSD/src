@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.94 2003/10/21 02:43:37 fvdl Exp $	*/
+/*	$NetBSD: inetd.c,v 1.95 2004/01/25 10:00:17 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.94 2003/10/21 02:43:37 fvdl Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.95 2004/01/25 10:00:17 cube Exp $");
 #endif
 #endif /* not lint */
 
@@ -1698,6 +1698,7 @@ skip(char **cpp)
 {
 	char *cp = *cpp;
 	char *start;
+	char quote;
 
 	if (*cpp == NULL)
 		return (NULL);
@@ -1717,8 +1718,21 @@ again:
 		return (NULL);
 	}
 	start = cp;
-	while (*cp && *cp != ' ' && *cp != '\t')
-		cp++;
+	quote = '\0';
+	while (*cp && (quote || (*cp != ' ' && *cp != '\t'))) {
+		if (*cp == '\'' || *cp == '"') {
+			if (quote && *cp != quote)
+				cp++;
+			else {
+				if (quote)
+					quote = '\0';
+				else
+					quote = *cp;
+				memmove(cp, cp+1, strlen(cp));
+			}
+		} else
+			cp++;
+	}
 	if (*cp != '\0')
 		*cp++ = '\0';
 	*cpp = cp;
