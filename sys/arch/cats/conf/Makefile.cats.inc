@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.cats.inc,v 1.12 2002/11/21 02:05:08 chris Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.13 2003/01/03 02:34:49 thorpej Exp $
+
+CPPFLAGS+=	-D${MACHINE}
 
 .if (${OBJECT_FMT} == "ELF")
 # Need to convert the kernel from ELF to a.out so that the firmware
