@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.c,v 1.1.2.2 2000/09/23 18:11:10 sommerfeld Exp $ */
+/* $NetBSD: mtrr.c,v 1.1.2.3 2001/01/04 04:44:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -275,6 +275,6 @@ mtrr_init_cpu(struct cpu_info *ci)
 {
 	i686_mtrr_reload(0);
 #if 0
-	mtrr_dump(ci->ci_dev.dv_xname);
+	mtrr_dump(ci->ci_dev->dv_xname);
 #endif
 }

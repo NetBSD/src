@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.8 2000/12/31 17:45:51 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.9 2001/01/04 04:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ i386_ipi_halt(struct cpu_info *ci)
 {
 	disable_intr();
 
-	printf("%s: shutting down\n", ci->ci_dev.dv_xname);
+	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
 		asm volatile("hlt");
 	}
@@ -99,7 +99,7 @@ void
 i386_ipi_flush_fpu(struct cpu_info *ci)
 {
 #if 0
-	printf("%s: flush_fpu ipi\n", ci->ci_dev.dv_xname);
+	printf("%s: flush_fpu ipi\n", ci->ci_dev->dv_xname);
 #endif
 	npxsave_cpu(ci, 0);
 }
@@ -108,7 +108,7 @@ void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {
 #if 0
-	printf("%s: synch_fpu ipi\n", ci->ci_dev.dv_xname);
+	printf("%s: synch_fpu ipi\n", ci->ci_dev->dv_xname);
 #endif
 	npxsave_cpu(ci, 1);
 }
@@ -137,8 +137,8 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
 		    ipimask,
-		    curcpu()->ci_dev.dv_xname,
-		    ci->ci_dev.dv_xname);
+		    curcpu()->ci_dev->dv_xname,
+		    ci->ci_dev->dv_xname);
 	}
 	
 }
@@ -197,7 +197,7 @@ i386_ipi_handler(void)
 	pending = i386_atomic_testset_ul(&ci->ci_ipis, 0);
 
 #if 0
-	printf("%s: pending IPIs: %x\n", ci->ci_dev.dv_xname, pending);
+	printf("%s: pending IPIs: %x\n", ci->ci_dev->dv_xname, pending);
 #endif
 
 	for (bit = 0; bit < I386_NIPI && pending; bit++) {
