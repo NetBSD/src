@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.39 2003/05/08 13:34:07 christos Exp $
+#	$NetBSD: bsd.dep.mk,v 1.40 2003/05/08 20:39:00 christos Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -17,7 +17,7 @@ MKDEP?=		mkdep
 .if defined(SRCS)
 __acpp_flags=	-traditional-cpp
 .NOPATH:	.depend
-.if empty(_HOST_CYGWIN)
+.if empty(HOST_CYGWIN)
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
