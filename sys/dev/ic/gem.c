@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.2 2001/10/01 23:39:57 eeh Exp $ */
+/*	$NetBSD: gem.c,v 1.3 2001/10/01 23:55:00 eeh Exp $ */
 
 /*
  * 
@@ -32,9 +32,6 @@
 /*
  * Driver for Sun GEM ethernet controllers.
  */
-
-#define	GEM_DEBUG
-int gem_opdebug = 0;
 
 #include "bpfilter.h"
 
@@ -446,7 +443,6 @@ gem_stop(struct ifnet *ifp, int disable)
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct gem_txsoft *txs;
 
-if (gem_opdebug) printf("in stop %d\n", disable);
 	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
 
 	callout_stop(&sc->sc_tick_ch);
@@ -726,7 +722,6 @@ gem_init(struct ifnet *ifp)
 
 	/* step 1 & 2. Reset the Ethernet Channel */
 	gem_stop(ifp, 0);
-if (gem_opdebug) printf("in init\n");
 	gem_reset(sc);
 	DPRINTF(sc, ("%s: gem_init: restarting\n", sc->sc_dev.dv_xname));
 
@@ -956,9 +951,6 @@ gem_start(ifp)
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
 
-if (gem_opdebug) printf("in start free %x next %x kick %x\n", 
-sc->sc_txfree, sc->sc_txnext, 	
-bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
@@ -1148,28 +1140,8 @@ bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 		 */
 		DPRINTF(sc, ("%s: gem_start: kicking tx %d\n",
 			sc->sc_dev.dv_xname, nexttx));
-if (gem_opdebug) {
-	int i;
-	int64_t pa;
-	i = bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK);
-	printf("GEM_TX_KICK %x GEM_TX_DATA_PTR %llx GEM_TX_RING_PTR %llx\n",
-		i, 
-		(long long)bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_DATA_PTR),
-		(long long)bus_space_read_8(sc->sc_bustag, sc->sc_h, GEM_TX_RING_PTR));
-	printf("descriptor %d: ", (i = lasttx));
-	printf("gd_flags: 0x%016llx\t", (long long)
-		GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-		pa = GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr);
-	printf("gd_addr: 0x%016llx\n", (long long) pa);
-	printf("GEM_TX_CONFIG %x GEM_MAC_XIF_CONFIG %x GEM_MAC_TX_CONFIG %x\n", 
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_CONFIG),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_XIF_CONFIG),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_TX_CONFIG));
-}
 		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK,
 			sc->sc_txnext);
-if (gem_opdebug) printf("gem_start: txkick %x\n", 
-	bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1503,35 +1475,14 @@ gem_intr(v)
 	bus_space_handle_t seb = sc->sc_h;
 	u_int32_t status;
 	int r = 0;
-
+#ifdef GEM_DEBUG
 	char bits[128];
+#endif
 
 	status = bus_space_read_4(t, seb, GEM_STATUS);
 	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
 		sc->sc_dev.dv_xname, (status>>19),
 		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
-if (gem_opdebug) printf("%s: gem_intr: cplt %x status %s\n",
-	sc->sc_dev.dv_xname, (status>>19),
-	bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
-if (gem_opdebug && (status & GEM_INTR_TX_DONE)) {
-	int i;
-	int64_t pa;
-	i = bus_space_read_4(t, seb, GEM_TX_KICK);
-	printf("GEM_TX_KICK %x GEM_TX_DATA_PTR %llx GEM_TX_RING_PTR %llx\n",
-		i, (long long)bus_space_read_4(t, seb, GEM_TX_DATA_PTR),
-		(long long)bus_space_read_8(t, seb, GEM_TX_RING_PTR));
-	printf("descriptor %d: ", --i);
-	printf("gd_flags: 0x%016llx\t", (long long)
-		GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-		pa = GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr);
-	printf("gd_addr: 0x%016llx\n", (long long) pa);
-	printf("GEM_TX_CONFIG %x GEM_MAC_XIF_CONFIG %x GEM_MAC_TX_CONFIG %x "
-		"GEM_MAC_TX_STATUS %x\n",
-		bus_space_read_4(t, seb, GEM_TX_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_XIF_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_TX_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_TX_STATUS));
-}
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
@@ -1700,15 +1651,17 @@ gem_mii_statchg(dev)
 	struct device *dev;
 {
 	struct gem_softc *sc = (void *)dev;
+#ifdef GEM_DEBUG
 	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
-	int phy = sc->sc_phys[instance];
+#endif
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_h;
 	u_int32_t v;
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n", phy);
+		printf("gem_mii_statchg: status change: phy = %d\n", 
+			sc->sc_phys[instance];);
 #endif
 
 
