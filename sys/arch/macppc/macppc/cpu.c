@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2003/07/15 02:43:32 lukem Exp $	*/
+/*	$NetBSD: cpu.c,v 1.35 2003/08/08 07:15:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2003/07/15 02:43:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2003/08/08 07:15:20 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -217,10 +217,8 @@ cpu_spinup(self, ci)
 	cp += USPACE;
 	cpu_info[1].ci_idle_pcb = pcb;
 
-	cpu_info[1].ci_intstk = cp + 8192;
-	cp += 8192;
-	cpu_info[1].ci_spillstk = cp + 4096;
-	cp += 4096;
+	cpu_info[1].ci_intstk = cp + INTSTK;
+	cp += INTSTK;
 
 	/*
 	 * Initialize the idle stack pointer, reserving space for an
