@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1996/06/21 21:51:15 briggs Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 1996/09/12 20:39:19 scottr Exp $	*/
 
 #ifndef PSL_C
 #include <m68k/psl.h>
@@ -44,6 +44,7 @@
 #define	splclock()	spl2()	/* disallow clock (and other) interrupts */
 #define	splstatclock()	spl2()	/* ditto */
 #define	splzs()		spl4()	/* disallow serial hw interrupts */
+#define	spladb()	spl7()	/* disallow adb interrupts */
 #define	splhigh()	spl7()	/* disallow everything */
 #define	splsched()	spl7()	/* disallow scheduling */
 
