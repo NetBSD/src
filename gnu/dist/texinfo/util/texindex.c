@@ -1,10 +1,10 @@
-/*	$NetBSD: texindex.c,v 1.1.1.3 2003/01/17 14:54:37 wiz Exp $	*/
+/*	$NetBSD: texindex.c,v 1.1.1.4 2003/02/13 08:50:57 wiz Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
-   Id: texindex.c,v 1.6 2002/11/05 19:33:07 karl Exp
+   Id: texindex.c,v 1.7 2003/01/19 18:47:15 karl Exp
 
    Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -349,7 +349,7 @@ decode_command (argc, argv)
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-                  "2002");
+                  "2003");
               xexit (0);
             }
           else if ((strcmp (arg, "--keep") == 0) ||

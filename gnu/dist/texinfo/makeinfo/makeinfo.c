@@ -1,10 +1,10 @@
-/*	$NetBSD: makeinfo.c,v 1.1.1.3 2003/01/17 14:54:35 wiz Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.1.1.4 2003/02/13 08:50:56 wiz Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
-   Id: makeinfo.c,v 1.14 2002/11/13 00:34:10 karl Exp
+   Id: makeinfo.c,v 1.17 2003/01/19 18:44:28 karl Exp
 
-   Copyright (C) 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 
+   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -376,7 +376,7 @@ usage (exit_value)
   else
   {
     printf (_("Usage: %s [OPTION]... TEXINFO-FILE...\n"), progname);
-    printf ("\n");
+    puts ("\n");
 
     puts (_("\
 Translate Texinfo source documentation to various other formats, by default\n\
@@ -393,17 +393,17 @@ General options:\n\
   -v, --verbose               explain what is being done.\n\
       --version               display version information and exit.\n"),
             max_error_level, reference_warning_limit);
-     printf ("\n");
+    puts ("\n");
 
      /* xgettext: no-wrap */
-     puts (_("\
+    puts (_("\
 Output format selection (default is to produce Info):\n\
       --docbook             output DocBook XML rather than Info.\n\
       --html                output HTML rather than Info.\n\
       --xml                 output Texinfo XML rather than Info.\n\
 "));
 
-     puts (_("\
+    puts (_("\
 General output options:\n\
   -E, --macro-expand FILE   output macro-expanded source to FILE.\n\
                             ignoring any @setfilename.\n\
@@ -417,7 +417,7 @@ General output options:\n\
   -o, --output=FILE         output to FILE (directory if split HTML),\n\
 "));
 
-     printf (_("\
+    printf (_("\
 Options for Info and plain text:\n\
       --enable-encoding       output accented and special characters in\n\
                                 Info output based on @documentencoding.\n\
@@ -432,10 +432,10 @@ Options for Info and plain text:\n\
       --split-size=NUM        split Info files at size NUM (default %d).\n"),
              fill_column, paragraph_start_indent,
              DEFAULT_SPLIT_SIZE);
-  }
-  printf ("\n");
 
-     puts (_("\
+    puts ("\n");
+
+    puts (_("\
 Input file options:\n\
       --commands-in-node-names   allow @ commands in node names.\n\
   -D VAR                         define the variable VAR, as with @set.\n\
@@ -444,7 +444,7 @@ Input file options:\n\
   -U VAR                         undefine the variable VAR, as with @clear.\n\
 "));
 
-     puts (_("\
+    puts (_("\
 Conditional processing in input:\n\
   --ifhtml          process @ifhtml and @html even if not generating HTML.\n\
   --ifinfo          process @ifinfo even if not generating Info.\n\
@@ -458,14 +458,14 @@ Conditional processing in input:\n\
   --no-ifxml        do not process @ifxml and @xml text.\n\
 "));
 
-     puts (_("\
+    puts (_("\
   The defaults for the @if... conditionals depend on the output format:\n\
   if generating HTML, --ifhtml is on and the others are off;\n\
   if generating Info, --ifinfo is on and the others are off;\n\
   if generating plain text, --ifplaintext is on and the others are off;\n\
 "));
 
-  fputs (_("\
+    fputs (_("\
 Examples:\n\
   makeinfo foo.texi                     write Info to foo's @setfilename\n\
   makeinfo --html foo.texi              write HTML to @setfilename\n\
@@ -478,10 +478,12 @@ Examples:\n\
   makeinfo --no-split foo.texi          write one Info file however big\n\
 "), stdout);
 
-  puts (_("\n\
+    puts (_("\n\
 Email bug reports to bug-texinfo@gnu.org,\n\
 general questions and discussion to help-texinfo@gnu.org.\n\
 Texinfo home page: http://www.gnu.org/software/texinfo/"));
+
+  } /* end of full help */
 
   xexit (exit_value);
 }
@@ -699,7 +701,7 @@ main (argc, argv)
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-                  "2002");
+                  "2003");
           xexit (0);
           break;
 
@@ -784,7 +786,20 @@ For more information about these matters, see the files named COPYING.\n"),
 
 /* Hacking tokens and strings.  */
 
-/* Return the next token as a string pointer.  We cons the string. */
+/* Return the next token as a string pointer.  We cons the string.  This
+   `token' means simply a command name.  */
+
+/* = is so @alias works.  ^ and _ are so macros can be used in math mode
+   without a space following.  Possibly we should simply allow alpha, to
+   be compatible with TeX.  */
+#define COMMAND_CHAR(c) (!cr_or_whitespace(c) \
+                         && (c) != '{' \
+                         && (c) != '}' \
+                         && (c) != '=' \
+                         && (c) != '_' \
+                         && (c) != '^' \
+                         )
+
 char *
 read_token ()
 {
@@ -808,7 +823,7 @@ read_token ()
 
   for (i = 0; ((input_text_offset != input_text_length)
                && (character = curchar ())
-               && command_char (character));
+               && COMMAND_CHAR (character));
        i++, input_text_offset++);
   result = xmalloc (i + 1);
   memcpy (result, &input_text[input_text_offset - i], i);

@@ -1,9 +1,9 @@
 #! /bin/sh
 # texi2dvi --- produce DVI (or PDF) files from Texinfo (or LaTeX) sources.
-# Id: texi2dvi,v 1.10 2002/11/14 21:10:37 karl Exp
+# Id: texi2dvi,v 1.14 2003/02/05 00:42:33 karl Exp
 #
 # Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001,
-# 2002 Free Software Foundation, Inc.
+# 2002, 2003 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,12 +27,12 @@
 # the `--debug' option when making a bug report.
 
 # This string is expanded by rcs automatically when this file is checked out.
-rcs_revision='Revision: 1.10'
+rcs_revision='Revision: 1.14'
 rcs_version=`set - $rcs_revision; echo $2`
 program=`echo $0 | sed -e 's!.*/!!'`
-version="texi2dvi (GNU Texinfo 4.3) $rcs_version
+version="texi2dvi (GNU Texinfo 4.5) $rcs_version
 
-Copyright (C) 2002 Free Software Foundation, Inc.
+Copyright (C) 2003 Free Software Foundation, Inc.
 There is NO warranty.  You may redistribute this software
 under the terms of the GNU General Public License.
 For more information about these matters, see the files named COPYING."
@@ -107,6 +107,9 @@ fi
 
 # Pacify verbose cds.
 CDPATH=${ZSH_VERSION+.}$path_sep
+
+# In case someone crazy insists on using grep -E.
+: ${EGREP=egrep}
 
 # Save this so we can construct a new TEXINPUTS path for each file.
 TEXINPUTS_orig="$TEXINPUTS"
@@ -308,7 +311,7 @@ for command_line_filename in ${1+"$@"}; do
 
   # If the COMMAND_LINE_FILENAME is not absolute (e.g., --debug.tex),
   # prepend `./' in order to avoid that the tools take it as an option.
-  echo "$command_line_filename" | egrep '^(/|[A-z]:/)' >/dev/null \
+  echo "$command_line_filename" | $EGREP '^(/|[A-z]:/)' >/dev/null \
   || command_line_filename="./$command_line_filename"
 
   # See if the file exists.  If it doesn't we're in trouble since, even
@@ -409,7 +412,7 @@ for command_line_filename in ${1+"$@"}; do
   # Otherwise, guess from the file extension.
   if test -n "$set_language"; then
     language=$set_language
-  elif sed 1q "$command_line_filename" | fgrep 'input texinfo' >/dev/null; then
+  elif sed 1q "$command_line_filename" | grep 'input texinfo' >/dev/null; then
     language=texinfo
   else
     language=
@@ -592,7 +595,7 @@ for command_line_filename in ${1+"$@"}; do
     # subdirs, since texi2dvi does not try to compare xref files in
     # subdirs.  Performing xref files test is still good since LaTeX
     # does not report changes in xref files.
-    if fgrep "Rerun to get" "$filename_noext.log" >/dev/null 2>&1; then
+    if grep "Rerun to get" "$filename_noext.log" >/dev/null 2>&1; then
       finished=
     fi
 
