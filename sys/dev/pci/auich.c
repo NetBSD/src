@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.45 2003/10/22 15:57:33 manu Exp $	*/
+/*	$NetBSD: auich.c,v 1.46 2003/10/23 05:25:29 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.45 2003/10/22 15:57:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.46 2003/10/23 05:25:29 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ struct auich_softc {
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pt;
 #endif
-	int sc_ignore_codecready;
 	/* SiS 7012 hack */
 	int  sc_sample_size;
 	int  sc_sts_reg;
@@ -327,33 +326,25 @@ static const struct auich_devtype {
 	int	product;
 	const char *name;
 	const char *shortname;
-	int	quirks;
-#define QUIRK_IGNORE_CODEC_READY	0x01
-#define QUIRK_IGNORE_CODEC_READY_MAYBE	0x02
 } auich_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
 	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
-	    "i82801AB (ICH0) AC-97 Audio",	"ICH0",
-	    QUIRK_IGNORE_CODEC_READY_MAYBE },
+	    "i82801AB (ICH0) AC-97 Audio",	"ICH0" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
-	    "i82801BA (ICH2) AC-97 Audio",	"ICH2",
-	    QUIRK_IGNORE_CODEC_READY_MAYBE },
+	    "i82801BA (ICH2) AC-97 Audio",	"ICH2" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
 	    "i82440MX AC-97 Audio",		"440MX" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
 	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4",
-	    QUIRK_IGNORE_CODEC_READY_MAYBE },
+	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
-	    "i82801EB (ICH5) AC-97 Audio",   "ICH5",
-	    QUIRK_IGNORE_CODEC_READY },
+	    "i82801EB (ICH5) AC-97 Audio",   "ICH5" },
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97 Audio",		"nForce-MCP",
-	    QUIRK_IGNORE_CODEC_READY },
+	    "nForce MCP AC-97 Audio",		"nForce-MCP" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
 	    "nForce2 MCP-T AC-97 Audio",	"nForce-MCP-T" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
@@ -401,7 +392,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	const char *intrstr;
 	const struct auich_devtype *d;
-	u_int32_t status;
 
 	aprint_naive(": Audio controller\n");
 
@@ -467,10 +457,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sample_size = 2;
 	}
 
-	if (d->quirks & QUIRK_IGNORE_CODEC_READY) {
-		sc->sc_ignore_codecready = TRUE;
-	}
-
 	/* Workaround for a 440MX B-stepping erratum */
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
 	if (d->vendor == PCI_VENDOR_INTEL
@@ -486,6 +472,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
 
+#if 0
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
@@ -499,6 +486,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
+#endif
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
@@ -535,12 +523,6 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 	int i;
 	uint32_t status;
 
-	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
-	if (!sc->sc_ignore_codecready && !(status & ICH_PCR)) {
-		printf("auich_read_codec: codec is not ready (0x%x)\n", status);
-		*val = 0xffff;
-		return -1;
-	}
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
@@ -571,11 +553,6 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 	int i;
 
 	DPRINTF(ICH_DEBUG_CODECIO, ("auich_write_codec(%x, %x)\n", reg, val));
-	if (!sc->sc_ignore_codecready
-	    && !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR)) {
-		printf("auich_write_codec: codec is not ready.");
-		return -1;
-	}
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
@@ -615,9 +592,11 @@ auich_reset_codec(void *v)
 	for (i = 500000; i-- &&
 	       !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR);
 	     DELAY(1));					/*       or ICH_SCR? */
-	if (!sc->sc_ignore_codecready && (i <= 0))
+#if 0
+	if (i <= 0)
 		printf("%s: auich_reset_codec: time out\n", 
 		    sc->sc_dev.dv_xname);
+#endif
 }
 
 int
