@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.12 2000/04/23 16:38:53 matt Exp $ */
+/*	$NetBSD: vsbus.h,v 1.12.4.1 2000/06/28 13:32:56 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,8 @@ struct	vsbus_attach_args {
 	short	va_br;			/* Interrupt level */
 	short	va_cvec;		/* Interrupt vector address */
 	u_char	va_maskno;		/* Interrupt vector in mask */
+	vaddr_t	va_dmaaddr;		/* DMA area address */
+	vsize_t	va_dmasize;		/* DMA area size */
 	bus_space_tag_t va_iot;
 	bus_dma_tag_t va_dmat;
 };
@@ -79,15 +81,26 @@ struct	vsbus_softc {
 	u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
 	vaddr_t	sc_vsregs;	/* Where the VS_REGS are mapped */
+	vaddr_t sc_dmaaddr;	/* Mass storage virtual DMA area */
+	vsize_t sc_dmasize;	/* Size of the DMA area */
+
 	struct vax_bus_dma_tag sc_dmatag;
 	struct vax_sgmap sc_sgmap;
 };
 
+struct vsbus_dma {
+	SIMPLEQ_ENTRY(vsbus_dma) vd_q;
+	void (*vd_go)(void *);
+	void *vd_arg;
+};
+
 #ifdef _KERNEL
-void	vsbus_dma_init __P((struct vsbus_softc *, unsigned ptecnt));
-u_char	vsbus_setmask __P((int));
-void	vsbus_clrintr __P((int));
-void	vsbus_copytoproc __P((struct proc *, caddr_t, caddr_t, int));
-void	vsbus_copyfromproc __P((struct proc *, caddr_t, caddr_t, int));
+void	vsbus_dma_init(struct vsbus_softc *, unsigned ptecnt);
+u_char	vsbus_setmask(int);
+void	vsbus_clrintr(int);
+void	vsbus_copytoproc(struct proc *, caddr_t, caddr_t, int);
+void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
+void	vsbus_dma_start(struct vsbus_dma *);
+void	vsbus_dma_intr(void);
 #endif
 #endif /* _VAX_VSBUS_H_ */
