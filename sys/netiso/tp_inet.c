@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.16 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.17 1999/12/24 05:01:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ SOFTWARE.
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #include "opt_iso.h"
 
 #ifdef INET
@@ -481,6 +482,9 @@ tpip_output_dg(m0, va_alist)
 	}
 #endif
 
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif
 	error = ip_output(m, (struct mbuf *) 0, ro, IP_ALLOWBROADCAST, NULL);
 
 #ifdef ARGO_DEBUG
