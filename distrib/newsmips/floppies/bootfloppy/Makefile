@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/21 23:23:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2002/02/21 15:07:38 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -66,6 +66,17 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
+
+.ifndef RELEASEDIR
+release:
+	@echo set RELEASEDIR first!
+	@false
+.else
+release:
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
+.endif
 
 clean cleandir distclean:
 	rm -f *.core ${IMAGE} ${CLEANFILES}
