@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.5 2000/05/14 18:20:11 dante Exp $ */
+/*	$NetBSD: ses.c,v 1.6 2000/05/22 16:52:03 thorpej Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -281,7 +281,6 @@ ses_device_type(sa)
 	struct scsipibus_attach_args *sa;
 {
 	struct scsipi_inquiry_data *inqp = sa->sa_inqptr;
-	int length;
  
 	if (inqp == NULL)
 		return (SES_NONE);
@@ -608,6 +607,7 @@ ses_type(inqp)
 	if (STRNCMP((char *)&inqp->vendor_specific[8], "SAF-TE",
 			SAFTE_LEN - 2) == 0) {
 		return (SES_SAFT);
+	}
 
 	return (SES_NONE);
 }
