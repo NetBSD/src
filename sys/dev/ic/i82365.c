@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.17 1998/12/20 17:53:28 nathanw Exp $	*/
+/*	$NetBSD: i82365.c,v 1.18 1998/12/25 16:50:08 msaitoh Exp $	*/
 
 #define	PCICDEBUG
 
@@ -667,7 +667,7 @@ pcic_detach_card(h, flags)
 {
 
 	if (!(h->flags & PCIC_FLAG_CARDP))
-		panic("pcic_attach_card: already detached");
+		panic("pcic_detach_card: already detached");
 
 	h->flags &= ~PCIC_FLAG_CARDP;
 
