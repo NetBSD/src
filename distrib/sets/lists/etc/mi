@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69 2000/10/01 06:12:25 lukem Exp $
+# $NetBSD: mi,v 1.70 2000/10/14 01:33:04 wiz Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -107,6 +107,7 @@
 ./etc/rc.d/mrouted
 ./etc/rc.d/named
 ./etc/rc.d/network
+./etc/rc.d/newsyslog
 ./etc/rc.d/nfsd
 ./etc/rc.d/nfslocking
 ./etc/rc.d/ntpd
