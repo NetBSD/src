@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.757 2005/01/11 01:00:49 joff Exp $
+#	$NetBSD: mi,v 1.758 2005/01/21 04:47:23 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -16,13 +16,13 @@
 ./usr/bin/fgen					comp-util-bin
 ./usr/bin/flex					comp-c-bin
 ./usr/bin/flex++				comp-cxx-bin
-./usr/bin/fort77				comp-fortran-bin
+./usr/bin/fort77				comp-fortran-bin	gcccmds
 ./usr/bin/fpr					comp-fortran-bin
 ./usr/bin/g++					comp-cxx-bin		gcccmds
 ./usr/bin/g77					comp-fortran-bin	gcccmds
 ./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
-./usr/bin/gcov					comp-debug-bin
+./usr/bin/gcov					comp-debug-bin		gcccmds
 ./usr/bin/gdb					comp-debug-bin		gdb
 ./usr/bin/genclass				comp-obsolete		obsolete
 ./usr/bin/gettext				comp-c-bin
