@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.89 2004/09/13 12:22:52 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.90 2005/01/26 21:49:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.89 2004/09/13 12:22:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.90 2005/01/26 21:49:00 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -699,4 +699,28 @@ pci_dma64_available(struct pci_attach_args *pa)
                         return 1;
 #endif
         return 0;
+}
+
+void
+pci_conf_capture(pci_chipset_tag_t pc, pcitag_t tag,
+		  struct pci_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pcs->reg[off] = pci_conf_read(pc, tag, (off * 4));
+
+	return;
+}
+
+void
+pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
+		  struct pci_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+
+	return;
 }
