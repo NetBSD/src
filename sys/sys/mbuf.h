@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.65 2002/05/02 16:22:45 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.66 2002/06/22 05:37:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ void	m_adj __P((struct mbuf *, int));
 void	m_cat __P((struct mbuf *,struct mbuf *));
 int	m_mballoc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
-void	m_copydata __P((struct mbuf *,int,int,caddr_t));
+void	m_copydata __P((struct mbuf *, int, int, caddr_t));
 void	m_freem __P((struct mbuf *));
 void	m_reclaim __P((void *, int));
 void	mbinit __P((void));
