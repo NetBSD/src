@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.12 1996/09/30 23:18:43 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.13 1996/10/02 05:30:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,11 +32,6 @@
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
-
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)	/* XXX should die */
-#undef EXEC_ELF32					/* XXX should die */
-#define EXEC_ELF32					/* XXX should die */
-#endif							/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/systm.h>
