@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.7 1993/12/20 22:44:44 pk Exp $
+ * $Id: warnings.c,v 1.8 1993/12/23 09:37:43 pk Exp $
  */
 
 #include <sys/param.h>
@@ -652,10 +652,6 @@ do_file_warnings (entry, outfile)
 #endif
 			continue;
 		}
-
-		if (undefined_global_sym_count == 0)
-			/* No undefined symbols in rel files */
-			continue;
 
 		dont_allow_symbol_name = 0;
 
