@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 2002/05/10 15:25:13 uch Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 2003/01/18 06:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -108,6 +108,31 @@ struct sigcontext {
 
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
+
+/*
+ * The following macros are used to convert from a ucontext to sigcontext,
+ * and vice-versa.  This is for building a sigcontext to deliver to old-style
+ * signal handlers, and converting back (in the event the handler modifies
+ * the context).
+ */
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	memcpy(&(sc)->sc_pr, &(uc)->uc_mcontext.__gregs[_REG_PR],	\
+	    17 * sizeof(unsigned int));					\
+	(sc)->sc_spc    = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(sc)->sc_ssr    = (uc)->uc_mcontext.__gregs[_REG_SR];		\
+	(sc)->sc_expevt = (uc)->uc_mcontext.__gregs[_REG_EXPEVT];	\
+	(sc)->sc_err    = 0;	/* XXX */				\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	memcpy(&(uc)->uc_mcontext.__gregs[_REG_PR], &(sc)->sc_pr,	\
+	    17 * sizeof(unsigned int));					\
+	(uc)->uc_mcontext.__gregs[_REG_PC]     = (sc)->sc_spc;		\
+	(uc)->uc_mcontext.__gregs[_REG_SR]     = (sc)->sc_ssr;		\
+	(uc)->uc_mcontext.__gregs[_REG_EXPEVT] = (sc)->sc_expevt;	\
+} while (/*CONSTCOND*/0)
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_SH3_SIGNAL_H_ */

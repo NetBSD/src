@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2002/05/09 12:31:19 uch Exp $	*/
+/*	$NetBSD: userret.h,v 1.4 2003/01/18 06:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,10 +46,24 @@
 #define	_SH3_USERRET_H_
 
 static __inline void
-userret(struct proc *p)
+userret(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
+	int sig;
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Take pending signals. */
+	while ((sig = CURSIG(l)) != 0)
+		postsig(sig);
+
+	/* Invoke per-process kernel-exit handling, if any. */
+	if (p->p_userret)
+		(*p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 #endif /* !_SH3_USERRET_H_ */
