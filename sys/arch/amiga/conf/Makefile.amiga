@@ -24,7 +24,7 @@
 AS=	as ${DEBUG}
 CC=	gcc ${DEBUG}
 CPP=	/lib/cpp -traditional
-LD=	ld.old
+LD=	kernel-ld 
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/amiga/gmon.ex
 
