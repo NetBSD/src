@@ -1,5 +1,5 @@
 /* Prepare TeX index dribble output into an actual index.
-   $Id: texindex.c,v 1.1.1.1 1999/02/11 03:57:24 tv Exp $
+   $Id: texindex.c,v 1.2 2000/11/01 02:06:25 itojun Exp $
 
    Copyright (C) 1987, 91, 92, 96, 97, 98 Free Software Foundation, Inc.
 
@@ -176,9 +176,11 @@ main (argc, argv)
   setlocale (LC_ALL, "");
 #endif
 
+#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   /* Describe the kind of sorting to do. */
   /* The first keyfield uses the first braced field and folds case. */

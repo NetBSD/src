@@ -1,5 +1,5 @@
 /* system.h: System-dependent declarations.  Include this first.
-   $Id: system.h,v 1.1.1.1 1999/02/11 03:57:17 tv Exp $
+   $Id: system.h,v 1.2 2000/11/01 02:06:24 itojun Exp $
 
    Copyright (C) 1997 Free Software Foundation, Inc.
 
@@ -37,7 +37,9 @@
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
+#ifdef HAVE_LIBINTL_H
 #include <libintl.h>
+#endif
 
 /* Don't use bcopy!  Use memmove if source and destination may overlap,
    memcpy otherwise.  */

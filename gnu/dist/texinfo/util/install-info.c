@@ -1,5 +1,5 @@
 /* install-info -- create Info directory entry(ies) for an Info file.
-   $Id: install-info.c,v 1.1.1.1 1999/02/11 03:57:24 tv Exp $
+   $Id: install-info.c,v 1.2 2000/11/01 02:06:25 itojun Exp $
 
    Copyright (C) 1996, 97, 98 Free Software Foundation, Inc.
 
@@ -437,9 +437,11 @@ main (argc, argv)
   setlocale (LC_ALL, "");
 #endif
 
+#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   while (1)
     {

@@ -85,10 +85,10 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Define to 1 if NLS is requested.  */
-#define ENABLE_NLS 1
+/* #undef ENABLE_NLS */
 
 /* Define as 1 if you have catgets and don't want to use GNU gettext.  */
-#define HAVE_CATGETS 1
+/* #undef HAVE_CATGETS */
 
 /* Define as 1 if you have gettext and don't want to use GNU gettext.  */
 /* #undef HAVE_GETTEXT */
@@ -247,9 +247,14 @@
 #define HAVE_LIBZ 1
 
 /* For gettext (NLS) */
+#ifdef ENABLE_NLS
 #include <libintl.h>
 #define _(String) gettext (String)
 #define N_(String) (String)
+#else
+#define _(String) (String)
+#define N_(String) (String)
+#endif
 
 
 /* Leave that blank line there!!  Autoheader needs it.

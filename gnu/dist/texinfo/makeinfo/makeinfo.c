@@ -1,5 +1,5 @@
 /* Makeinfo -- convert Texinfo source files into Info files.
-   $Id: makeinfo.c,v 1.2 1999/02/19 04:15:20 itohy Exp $
+   $Id: makeinfo.c,v 1.3 2000/11/01 02:06:24 itojun Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96, 97, 98
    Free Software Foundation, Inc.
@@ -948,9 +948,11 @@ main (argc, argv)
   setlocale (LC_MESSAGES, "");
 #endif
 
+#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   /* Parse argument flags from the input line. */
   while ((c = getopt_long (argc, argv, "D:e:E:f:I:o:p:P:r:s:U:V",

@@ -1,5 +1,5 @@
 /* info.c -- Display nodes of Info files in multiple windows.
-   $Id: info.c,v 1.2 1999/02/11 13:31:26 tv Exp $
+   $Id: info.c,v 1.3 2000/11/01 02:06:24 itojun Exp $
 
    Copyright (C) 1993, 96, 97, 98 Free Software Foundation, Inc.
 
@@ -126,9 +126,11 @@ main (argc, argv)
   setlocale (LC_ALL, "");
 #endif
 
+#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   while (1)
     {
