@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.129 2002/09/28 09:53:08 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.130 2002/11/14 20:30:40 ragge Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -354,33 +354,34 @@ compat_13_sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
 	struct trapframe *scf;
-	struct sigcontext13 *cntx;
+	struct sigcontext13 *ucntx;
+	struct sigcontext13 ksc;
 	sigset_t mask;
 
 	scf = p->p_addr->u_pcb.framep;
-	cntx = SCARG(uap, sigcntxp);
-	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+	ucntx = SCARG(uap, sigcntxp);
+	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 
 	/* Compatibility mode? */
-	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (cntx->sc_ps & PSL_CM)) {
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (cntx->sc_onstack & SS_ONSTACK)
+	if (ksc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	native_sigset13_to_sigset(&cntx->sc_mask, &mask);
+	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-	scf->fp = cntx->sc_fp;
-	scf->ap = cntx->sc_ap;
-	scf->pc = cntx->sc_pc;
-	scf->sp = cntx->sc_sp;
-	scf->psl = cntx->sc_ps;
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 #endif
@@ -395,31 +396,32 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct trapframe *scf;
-	struct sigcontext *cntx;
+	struct sigcontext *ucntx;
+	struct sigcontext ksc;
 
 	scf = p->p_addr->u_pcb.framep;
-	cntx = SCARG(uap, sigcntxp);
+	ucntx = SCARG(uap, sigcntxp);
 
-	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 	/* Compatibility mode? */
-	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (cntx->sc_ps & PSL_CM)) {
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
-	if (cntx->sc_onstack & 01)
+	if (ksc.sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &cntx->sc_mask, 0);
+	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
 
-	scf->fp = cntx->sc_fp;
-	scf->ap = cntx->sc_ap;
-	scf->pc = cntx->sc_pc;
-	scf->sp = cntx->sc_sp;
-	scf->psl = cntx->sc_ps;
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 
