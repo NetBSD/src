@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.19 1998/08/31 18:43:30 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.20 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -52,6 +52,7 @@
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
+#include <machine/scb.h>
 #include <machine/../vax/gencons.h>
 
 static	struct tty *gencn_tty[4];
@@ -271,7 +272,6 @@ gencnprobe(cndev)
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
 		cndev->cn_pri = CN_NORMAL;
-		maxttys = (vax_cputype == VAX_TYP_8SS ? 4 : 1);
 	} else
 		cndev->cn_pri = CN_DEAD;
 }
@@ -280,6 +280,19 @@ void
 gencninit(cndev)
 	struct	consdev *cndev;
 {
+	/* Allocate interrupt vectors */
+	scb_vecalloc(SCB_G0R, gencnrint, 0, SCB_ISTACK);
+	scb_vecalloc(SCB_G0T, gencntint, 0, SCB_ISTACK);
+	if (vax_cputype == VAX_TYP_8SS) {
+		maxttys = 4;
+		scb_vecalloc(SCB_G1R, gencnrint, 1, SCB_ISTACK);
+		scb_vecalloc(SCB_G1T, gencntint, 1, SCB_ISTACK);
+		scb_vecalloc(SCB_G2R, gencnrint, 2, SCB_ISTACK);
+		scb_vecalloc(SCB_G2T, gencntint, 2, SCB_ISTACK);
+		scb_vecalloc(SCB_G3R, gencnrint, 3, SCB_ISTACK);
+		scb_vecalloc(SCB_G3T, gencntint, 3, SCB_ISTACK);
+	}
+	mtpr(0, PR_TBIA); /* ??? */
 }
 
 void

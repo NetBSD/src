@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.12 1999/01/06 14:54:45 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.13 1999/01/19 21:04:49 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -78,6 +78,7 @@ struct	cpu_dep ka43_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	7,	/* 7.6 VUP */
+	2,	/* SCB pages */
 };
 
 /*

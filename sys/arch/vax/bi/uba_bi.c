@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.2 1999/01/01 21:43:17 ragge Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.3 1999/01/19 21:04:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -157,7 +157,6 @@ uba_bi_attach(parent, self, aux)
 	sc->uh_ubainit = bua_init;
 /*	sc->uh_type not used */
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)&scb[1 + allocvec++];
 	sc->uh_mr = BUA(sc->uh_uba)->bn_map;
 
 #ifdef notdef
@@ -177,7 +176,7 @@ uba_bi_attach(parent, self, aux)
 	BUA(sc->uh_uba)->bn_biic.bi_intrdes = ba->ba_intcpu;
 	BUA(sc->uh_uba)->bn_biic.bi_csr = 
 	    (BUA(sc->uh_uba)->bn_biic.bi_csr&~BICSR_ARB_MASK) | BICSR_ARB_HIGH;
-	BUA(sc->uh_uba)->bn_vor = (int)sc->uh_iarea - (int)&scb[0];
+	BUA(sc->uh_uba)->bn_vor = VAX_NBPG + (VAX_NBPG * allocvec++);
 
 	uba_attach(sc, BUA(sc->uh_uba)->bn_biic.bi_sadr + UBAPAGES * VAX_NBPG);
 }

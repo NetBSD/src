@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.12 1999/01/01 21:43:19 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.13 1999/01/19 21:04:49 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,7 @@ struct	cpu_dep ka630_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	1,      /* ~VUPS */
+	2,	/* SCB pages */
 	ka630_halt,
 	ka630_reboot,
 	ka630_clrf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.20 1998/10/18 18:51:30 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.21 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -80,8 +80,6 @@ struct	uba_softc {
 	void	(**uh_reset) __P((int));/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
-	struct	ivec_dsp *uh_idsp;	/* Interrupt dispatch area */
-	u_int	*uh_iarea;		/* Interrupt vector array */
 	short	uh_mrwant;		/* someone is waiting for map reg */
 	short	uh_bdpwant;		/* someone awaits bdp's */
 	int	uh_bdpfree;		/* free bdp's */
@@ -98,11 +96,9 @@ struct	uba_softc {
 	void	(*uh_afterscan) __P((struct uba_softc *));
 	void	(*uh_ubainit) __P((struct uba_softc *));
 	void	(*uh_ubapurge) __P((struct uba_softc *, int));
-#ifdef DW780
-	struct	ivec_dsp uh_dw780;	/* Interrupt handles for DW780 */
-#endif
 	short	uh_nr;			/* Unibus sequential number */
 	short	uh_nbdp;		/* # of BDP's */
+	int	uh_ibase;		/* Base address for vectors */
 };
 
 #define	UAMSIZ	100
@@ -177,7 +173,6 @@ struct ubinfo {
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
 void	uba_attach __P((struct uba_softc *, unsigned long));
-void    ubasetvec __P((struct device *, int, void (*) __P((int))));
 int	uballoc __P((struct uba_softc *, caddr_t, int, int));
 void	ubarelse __P((struct uba_softc *, int *));
 int	ubaqueue __P((struct uba_unit *, struct buf *));

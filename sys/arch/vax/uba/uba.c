@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.39 1999/01/01 21:43:18 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.40 1999/01/19 21:04:48 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -66,11 +66,13 @@
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-volatile int rbr, rcvec, svec;
+volatile int /* rbr, rcvec,*/ svec;
 
 static	int ubasearch __P((struct device *, struct cfdata *, void *));
 static	int ubaprint __P((void *, const char *));
+#if 0
 static	void ubastray __P((int));
+#endif
 static	void ubainitmaps __P((struct uba_softc *));
 
 extern struct cfdriver uba_cd;
@@ -130,6 +132,7 @@ dw780_attach(parent, self, aux)
 	struct uba_softc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
 	int ubaddr = sa->type & 3;
+	int i;
 
 	printf(": DW780\n");
 
@@ -146,15 +149,12 @@ dw780_attach(parent, self, aux)
 	sc->uh_ubainit = dw780_init;
 	sc->uh_type = DW780;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + VAX_NBPG + ubaddr * VAX_NBPG;
+	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
-	bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
-	sc->uh_dw780.pushlarg = sc->uh_dev.dv_unit;
-	sc->uh_dw780.hoppaddr = uba_dw780int;
-	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum]
-	    = scb->scb_nexvec[2][sa->nexnum]
-	    = scb->scb_nexvec[3][sa->nexnum] = &sc->uh_dw780;
+	for (i = 0; i < 4; i++)
+		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
+		    sc->uh_dev.dv_unit, SCB_ISTACK);
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
@@ -206,18 +206,20 @@ uba_dw780int(uba)
 	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
-	svec = ur->uba_brrvr[br - 0x14];
-	if (svec <= 0) {
-		ubaerror(sc, &br, (int *)&svec);
+	vec = ur->uba_brrvr[br - 0x14];
+	if (vec <= 0) {
+		ubaerror(sc, &br, (int *)&vec);
 		if (svec == 0)
 			return;
 	}
-	vec = svec >> 2;
 	if (cold)
-		rcvec = vec;
-	func = sc->uh_idsp[vec].hoppaddr;
-	arg = sc->uh_idsp[vec].pushlarg;
-	(*func)(arg);
+		scb_fake(vec + sc->uh_ibase, br);
+	else {
+		struct ivec_dsp *scb_vec = (void *)scb + 512;
+		func = scb_vec[vec/4].hoppaddr;
+		arg = scb_vec[vec/4].pushlarg;
+		(*func)(arg);
+	}
 }
 
 void
@@ -347,7 +349,6 @@ dw750_attach(parent, self, aux)
 	sc->uh_ubainit = dw750_init;
 	sc->uh_type = DW750;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
 	uba_attach(sc, UMEM750(ubaddr) + (UBAPAGES * VAX_NBPG));
@@ -424,7 +425,6 @@ qba_attach(parent, self, aux)
 	sc->uh_ubainit = qba_init;
 	sc->uh_type = QBA;
 	sc->uh_memsize = QBAPAGES;
-	sc->uh_iarea = (void *)scb + VAX_NBPG;
 	/*
 	 * Map in the UBA page map into kernel space. On other UBAs,
 	 * the map registers are in the bus IO space.
@@ -468,6 +468,7 @@ struct	cfattach uba_dw730_ca = {
 	sizeof(struct uba_softc), dw730_match, dw730_attach
 };
 #endif
+#if 0
 /* 
  * Stray interrupt vector handler, used when nowhere else to go to.
  */
@@ -496,7 +497,7 @@ ubastray(arg)
 		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
 }
-
+#endif
 /*
  * Do transfer on device argument.  The controller
  * and uba involved are implied by the device.
@@ -806,7 +807,6 @@ uba_attach(sc, iopagephys)
 	unsigned long iopagephys;
 {
 	vm_offset_t	mini, maxi;
-	extern	struct	ivec_dsp idsptch;
 
 	/*
 	 * Set last free interrupt vector for devices with
@@ -816,31 +816,6 @@ uba_attach(sc, iopagephys)
 	sc->uh_lastiv = 0x200;
 	SIMPLEQ_INIT(&sc->uh_resq);
 
-	/*
-	 * Create interrupt dispatchers for this uba.
-	 */
-#define NO_IVEC 128
-	{
-		vm_offset_t	iarea;
-		int	i;
-
-#if defined(UVM)
-		iarea = uvm_km_valloc(kernel_map,
-		    NO_IVEC * sizeof(struct ivec_dsp));
-#else
-		iarea = kmem_alloc(kernel_map,
-		    NO_IVEC * sizeof(struct ivec_dsp));
-#endif
-		sc->uh_idsp = (struct ivec_dsp *)iarea;
-
-		for (i = 0; i < NO_IVEC; i++) {
-			bcopy(&idsptch, &sc->uh_idsp[i],
-			    sizeof(struct ivec_dsp));
-			sc->uh_idsp[i].pushlarg = sc->uh_dev.dv_unit;
-			sc->uh_idsp[i].hoppaddr = ubastray;
-			sc->uh_iarea[i] = (unsigned int)&sc->uh_idsp[i];
-		}
-	}
 	/*
 	 * Allocate place for unibus memory in virtual space.
 	 * This is done with kmem_suballoc() but after that
@@ -889,7 +864,7 @@ ubasearch(parent, cf, aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
-	int	i;
+	int	i, vec, br;
 
 	ua.ua_addr = (caddr_t)((int)sc->uh_iopage + ubdevreg(cf->cf_loc[0]));
 	ua.ua_reset = NULL;
@@ -897,7 +872,7 @@ ubasearch(parent, cf, aux)
 	if (badaddr(ua.ua_addr, 2) || (sc->uh_errchk ? (*sc->uh_errchk)(sc):0))
 		goto forgetit;
 
-	rcvec = 0x200;
+	scb_vecref(0, 0); /* Clear vector ref */
 	i = (*cf->cf_attach->ca_match) (parent, cf, &ua);
 
 	if (sc->uh_errchk)
@@ -906,11 +881,13 @@ ubasearch(parent, cf, aux)
 	if (i == 0)
 		goto forgetit;
 
-	if (rcvec == 0 || rcvec == 0x200)
+	i = scb_vecref(&vec, &br);
+	if (i == 0)
+		goto fail;
+	if (vec == 0)
 		goto fail;
 		
-	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
-	sc->uh_idsp[rcvec].pushlarg = cf->cf_unit;
+	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);
@@ -928,37 +905,20 @@ ubasearch(parent, cf, aux)
 			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
 		}
 	}
-	ua.ua_br = rbr;
-	ua.ua_cvec = rcvec;
+	ua.ua_br = br;
+	ua.ua_cvec = vec;
 	ua.ua_iaddr = cf->cf_loc[0];
 
 	config_attach(parent, cf, &ua, ubaprint);
 	return 0;
 
 fail:
-	printf("%s%d at %s csr %o %s\n", cf->cf_driver->cd_name, cf->cf_unit,
-	    parent->dv_xname, cf->cf_loc[0], 
-	    rcvec ? "didn't interrupt\n" : "zero vector\n");
+	printf("%s%d at %s csr %o %s\n",
+	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 
 forgetit:
 	return 0;
-}
-
-/*
- * Called when a device needs more than one interrupt vector.
- * (Like DHU11, DMF32). Argument is the device's softc, vector
- * number and a function pointer to the interrupt catcher.
- */
-void
-ubasetvec(dev, vec, func)
-	struct	device *dev;
-	int	vec;
-	void	(*func) __P((int));
-{
-	struct	uba_softc *sc = (void *)dev->dv_parent;
-
-	sc->uh_idsp[vec].hoppaddr = func;
-	sc->uh_idsp[vec].pushlarg = dev->dv_unit;
 }
 
 /*
@@ -972,6 +932,6 @@ ubaprint(aux, uba)
 	struct uba_attach_args *ua = aux;
 
 	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
-	    ua->ua_cvec << 2, ua->ua_br);
+	    ua->ua_cvec & 511, ua->ua_br);
 	return UNCONF;
 }

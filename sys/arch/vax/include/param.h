@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.34 1999/01/01 21:43:18 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.35 1999/01/19 21:04:48 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -160,7 +160,7 @@
  * For now though just use DEV_BSIZE.
  */
 
-// #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 #ifdef _KERNEL
 #ifndef lint
