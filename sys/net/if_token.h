@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.1 1999/03/22 22:22:52 bad Exp $	*/
+/*	$NetBSD: if_token.h,v 1.2 1999/03/28 17:13:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,4 +123,4 @@ int     token_output __P((struct ifnet *,
 
 #endif
 
-#endif _NET_IF_TOKEN_H_
+#endif /* !_NET_IF_TOKEN_H_ */
