@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.3 2004/05/07 13:52:37 cl Exp $	*/
+/*	$NetBSD: vector.S,v 1.4 2004/05/07 14:15:11 cl Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -547,6 +547,9 @@ XENINTRSTUB(xenev,2,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
 XENINTRSTUB(xenev,3,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
 XENINTRSTUB(xenev,4,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
 XENINTRSTUB(xenev,5,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
+XENINTRSTUB(xenev,6,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
+XENINTRSTUB(xenev,7,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
+XENINTRSTUB(xenev,8,hypervisor_asm_ack,voidop,voidop,voidop,voidop)
 
 .globl _C_LABEL(xenev_stubs)
 _C_LABEL(xenev_stubs):
@@ -562,6 +565,12 @@ _C_LABEL(xenev_stubs):
 	.long _C_LABEL(Xresume_xenev4)
 	.long _C_LABEL(Xintr_xenev5), _C_LABEL(Xrecurse_xenev5)
 	.long _C_LABEL(Xresume_xenev5)
+	.long _C_LABEL(Xintr_xenev6), _C_LABEL(Xrecurse_xenev6)
+	.long _C_LABEL(Xresume_xenev6)
+	.long _C_LABEL(Xintr_xenev7), _C_LABEL(Xrecurse_xenev7)
+	.long _C_LABEL(Xresume_xenev7)
+	.long _C_LABEL(Xintr_xenev8), _C_LABEL(Xrecurse_xenev8)
+	.long _C_LABEL(Xresume_xenev8)
 	
 #ifndef XEN
 .globl _C_LABEL(i8259_stubs)
