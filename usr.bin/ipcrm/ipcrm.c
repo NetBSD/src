@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.7 1998/12/19 17:04:11 christos Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.8 1999/08/25 05:12:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: ipcrm.c,v 1.7 1998/12/19 17:04:11 christos Exp $
+ * $NetBSD: ipcrm.c,v 1.8 1999/08/25 05:12:15 thorpej Exp $
  */
 
 #include <stdio.h>
@@ -93,14 +93,13 @@ int semrm(key, id)
     key_t key;
     int id;
 {
-    union semun arg;
 
     if (key) {
 	id = semget(key, 0, 0);
 	if (id == -1)
 	    return -1;
     }
-    return semctl(id, 0, IPC_RMID, arg);
+    return semctl(id, 0, IPC_RMID, NULL);
 }
 
 void not_configured()
