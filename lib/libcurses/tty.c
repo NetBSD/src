@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.13 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.14 2000/04/12 21:36:02 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.13 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.14 2000/04/12 21:36:02 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: tty.c,v 1.13 2000/04/11 13:57:10 blymn Exp $");
 #include <unistd.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * In general, curses should leave tty hardware settings alone (speed, parity,
@@ -384,6 +385,32 @@ nonl()
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, curt) ? ERR : OK);
 }
 
+int
+intrflush(win, bf)	/*ARGSUSED*/
+	WINDOW	*win;
+	bool	 bf;
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	if (bf) {
+		rawt.c_lflag &= ~NOFLSH;
+		cbreakt.c_lflag &= ~NOFLSH;
+		__baset.c_lflag &= ~NOFLSH;
+	} else {
+		rawt.c_lflag |= NOFLSH;
+		cbreakt.c_lflag |= NOFLSH;
+		__baset.c_lflag |= NOFLSH;
+	}
+
+	__pfast = 1;
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, curt) ? ERR : OK);
+}
+
 void
 __startwin()
 {
@@ -430,6 +457,19 @@ flushinp()
 {
 	(void) fpurge(stdin);
 	return (OK);
+}
+
+int
+def_shell_mode()
+{
+	return (tcgetattr(STDIN_FILENO, &__orig_termios) ? ERR : OK);
+}
+
+int
+reset_shell_mode()
+{
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
 }
 
 /*
