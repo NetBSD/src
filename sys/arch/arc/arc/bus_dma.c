@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10.2.1 2001/10/24 17:36:17 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10.2.2 2001/11/13 19:49:12 thorpej Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -464,9 +464,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * Since we're dealing with a virtually-indexed, write-back
 	 * cache, we need to do the following things:
 	 *
-	 *	PREREAD -- Invalidate D-cache.  We do it here, because
-	 *	we might have to use an Index op, which would mean a
-	 *	write-back.
+	 *	PREREAD -- Invalidate D-cache.  Note we might have
+	 *	to also write-back here if we have to use an Index
+	 *	op, or if the buffer start/end is not cache-line aligned.
 	 *
 	 *	PREWRITE -- Write-back the D-cache.  If we have to use
 	 *	an Index op, we also have to invalidate.  Note that if
@@ -550,7 +550,11 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			break;
 
 		case BUS_DMASYNC_PREREAD:
+#if 1
+			mips_dcache_wbinv_range(addr + offset, minlen);
+#else
 			mips_dcache_inv_range(addr + offset, minlen);
+#endif
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
