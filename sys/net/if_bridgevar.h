@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.3 2003/03/19 10:34:34 bouyer Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.4 2003/07/08 07:13:50 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -301,9 +301,9 @@ struct bridge_softc {
 
 extern const uint8_t bstp_etheraddr[];
 
-void	bridge_ifdetach(struct ifnet *ifp);
+void	bridge_ifdetach(struct ifnet *);
 
-int	bridge_output(struct ifnet *ifp, struct mbuf *, struct sockaddr *,
+int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
