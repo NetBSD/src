@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.1.1.9 2002/03/08 01:20:43 itojun Exp $	*/
-/*	$OpenBSD: compat.h,v 1.30 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: compat.h,v 1.1.1.10 2002/04/22 07:37:25 itojun Exp $	*/
+/*	$OpenBSD: compat.h,v 1.32 2002/04/10 08:21:47 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -53,6 +53,8 @@
 #define SSH_BUG_OPENFAILURE	0x00020000
 #define SSH_BUG_DERIVEKEY	0x00040000
 #define SSH_BUG_DUMMYCHAN	0x00100000
+#define SSH_BUG_EXTEOF		0x00200000
+#define SSH_BUG_K5USER		0x00400000
 
 void     enable_compat13(void);
 void     enable_compat20(void);

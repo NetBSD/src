@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.1.1.8 2002/03/08 01:20:46 itojun Exp $	*/
-/*	$OpenBSD: key.h,v 1.18 2002/02/24 19:14:59 markus Exp $	*/
+/*	$NetBSD: key.h,v 1.1.1.9 2002/04/22 07:37:29 itojun Exp $	*/
+/*	$OpenBSD: key.h,v 1.19 2002/03/18 17:23:31 markus Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -59,6 +59,7 @@ struct Key {
 Key	*key_new(int);
 Key	*key_new_private(int);
 void	 key_free(Key *);
+Key	*key_demote(Key *);
 int	 key_equal(Key *, Key *);
 char	*key_fingerprint(Key *, enum fp_type, enum fp_rep);
 char	*key_type(Key *);

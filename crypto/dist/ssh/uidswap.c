@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.7 2002/03/08 01:21:46 itojun Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.1.1.8 2002/04/22 07:38:00 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: uidswap.c,v 1.19 2001/12/19 07:18:56 deraadt Exp $");
+RCSID("$OpenBSD: uidswap.c,v 1.20 2002/04/01 21:50:51 stevesk Exp $");
 
 #include "log.h"
 #include "uidswap.h"
@@ -72,7 +72,6 @@ temporarily_use_uid(struct passwd *pw)
 	/* Set the effective uid to the given (unprivileged) uid. */
 	if (setgroups(user_groupslen, user_groups) < 0)
 		fatal("setgroups: %.100s", strerror(errno));
-	pw->pw_gid = pw->pw_gid;
 	if (setegid(pw->pw_gid) < 0)
 		fatal("setegid %u: %.100s", (u_int) pw->pw_gid,
 		    strerror(errno));
