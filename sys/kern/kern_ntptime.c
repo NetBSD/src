@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.18 2002/03/17 11:10:43 simonb Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.19 2002/03/17 11:15:49 simonb Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.18 2002/03/17 11:10:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.19 2002/03/17 11:15:49 simonb Exp $");
 
 #include "opt_ntp.h"
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.18 2002/03/17 11:10:43 simonb Exp
 #include <machine/cpu.h>
 
 #ifdef NTP
-
 /*
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
@@ -98,8 +97,6 @@ extern long pps_calcnt;		/* calibration intervals */
 extern long pps_errcnt;		/* calibration errors */
 extern long pps_stbcnt;		/* stability limit exceeded */
 #endif /* PPS_SYNC */
-
-
 
 /*ARGSUSED*/
 /*
@@ -186,7 +183,6 @@ sys_ntp_gettime(p, v, retval)
 	}
 	return(error);
 }
-
 
 /* ARGSUSED */
 /*
@@ -304,8 +300,6 @@ ntp_adjtime1(ntv, v, retval)
 	return error;
 }
 
-
-
 /*
  * return information about kernel precision timekeeping
  */
@@ -385,9 +379,7 @@ sysctl_ntptime(where, sizep)
 #endif /* notyet */
 	return (sysctl_rdstruct(where, sizep, NULL, &ntv, sizeof(ntv)));
 }
-
 #else /* !NTP */
-
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
@@ -396,7 +388,7 @@ sys_ntp_gettime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+
 	return(ENOSYS);
 }
-
 #endif /* !NTP */
