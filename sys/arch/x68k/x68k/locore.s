@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1998/09/09 00:09:19 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1998/09/09 16:42:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1179,7 +1179,6 @@ Lenab2:
 	jra	Lnocache0
 Lnocache0:
 /* final setup for C code */
-	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.7 1998/08/22 14:38:38 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.8 1998/09/09 16:42:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -374,7 +374,9 @@ mhaattach(parent, self, aux)
 	CMR = CMD_SET_UP_REG;	/* setup reg cmd. */
 
 	SPC_TRACE(("waiting for intr..."));
-	while(!sc->sc_spcinitialized);
+	while (!(SSR & SS_IREQUEST))
+	  delay(10);
+	mhaintr	(sc->sc_dev.dv_unit);
 
 	tmpsc = NULL;
 
