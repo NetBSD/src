@@ -1,7 +1,7 @@
-/*	$NetBSD: gdt.c,v 1.9 1997/10/09 08:53:16 jtc Exp $	*/
+/*	$NetBSD: gdt.c,v 1.9.2.1 1997/11/13 07:48:20 mellon Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,11 +49,10 @@
 #define	MINGDTSIZ	512
 #define	MAXGDTSIZ	8192
 
-union descriptor *dynamic_gdt = gdt;
-int gdt_size = NGDT;		/* total number of GDT entries */
-int gdt_count = NGDT;		/* number of GDT entries in use */
-int gdt_next = NGDT;		/* next available slot for sweeping */
-int gdt_free = GNULL_SEL;	/* next free slot; terminated with GNULL_SEL */
+int gdt_size;		/* total number of GDT entries */
+int gdt_count;		/* number of GDT entries in use */
+int gdt_next;		/* next available slot for sweeping */
+int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 int gdt_flags;
 #define	GDT_LOCKED	0x1
@@ -122,30 +121,30 @@ gdt_compact()
 		pcb = &p->p_addr->u_pcb;
 		oslot = IDXSEL(pcb->pcb_tss_sel);
 		if (oslot >= gdt_count) {
-			while (dynamic_gdt[slot].sd.sd_type != SDT_SYSNULL) {
+			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
 				if (++slot >= gdt_count)
 					panic("gdt_compact botch 1");
 			}
-			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
+			gdt[slot] = gdt[oslot];
+			gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
 		}
 		oslot = IDXSEL(pcb->pcb_ldt_sel);
 		if (oslot >= gdt_count) {
-			while (dynamic_gdt[slot].sd.sd_type != SDT_SYSNULL) {
+			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
 				if (++slot >= gdt_count)
 					panic("gdt_compact botch 2");
 			}
-			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
+			gdt[slot] = gdt[oslot];
+			gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
 		}
 	}
 	for (; slot < gdt_count; slot++)
-		if (dynamic_gdt[slot].gd.gd_type == SDT_SYSNULL)
+		if (gdt[slot].gd.gd_type == SDT_SYSNULL)
 			panic("gdt_compact botch 3");
 	for (slot = gdt_count; slot < gdt_size; slot++)
-		if (dynamic_gdt[slot].gd.gd_type != SDT_SYSNULL)
+		if (gdt[slot].gd.gd_type != SDT_SYSNULL)
 			panic("gdt_compact botch 4");
 	gdt_next = gdt_count;
 	gdt_free = GNULL_SEL;
@@ -160,17 +159,20 @@ gdt_init()
 	size_t max_len, min_len;
 	struct region_descriptor region;
 
-	max_len = MAXGDTSIZ * sizeof(union descriptor);
-	min_len = MINGDTSIZ * sizeof(union descriptor);
+	max_len = MAXGDTSIZ * sizeof(gdt[0]);
+	min_len = MINGDTSIZ * sizeof(gdt[0]);
+
 	gdt_size = MINGDTSIZ;
+	gdt_count = NGDT;
+	gdt_next = NGDT;
+	gdt_free = GNULL_SEL;
 
-	dynamic_gdt = (union descriptor *)kmem_alloc_pageable(kernel_map,
-	    max_len);
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt,
-	    (vm_offset_t)dynamic_gdt + min_len, FALSE);
-	bcopy(gdt, dynamic_gdt, NGDT * sizeof(union descriptor));
+	gdt = (union descriptor *)kmem_alloc_pageable(kernel_map, max_len);
+	vm_map_pageable(kernel_map, (vm_offset_t)gdt,
+	    (vm_offset_t)gdt + min_len, FALSE);
+	bcopy(static_gdt, gdt, NGDT * sizeof(gdt[0]));
 
-	setregion(&region, dynamic_gdt, max_len - 1);
+	setregion(&region, gdt, max_len - 1);
 	lgdt(&region);
 }
 
@@ -179,12 +181,12 @@ gdt_grow()
 {
 	size_t old_len, new_len;
 
-	old_len = gdt_size * sizeof(union descriptor);
+	old_len = gdt_size * sizeof(gdt[0]);
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + old_len,
-	    (vm_offset_t)dynamic_gdt + new_len, FALSE);
+	vm_map_pageable(kernel_map, (vm_offset_t)gdt + old_len,
+	    (vm_offset_t)gdt + new_len, FALSE);
 }
 
 void
@@ -192,12 +194,12 @@ gdt_shrink()
 {
 	size_t old_len, new_len;
 
-	old_len = gdt_size * sizeof(union descriptor);
+	old_len = gdt_size * sizeof(gdt[0]);
 	gdt_size >>= 1;
 	new_len = old_len >> 1;
 
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + new_len,
-	    (vm_offset_t)dynamic_gdt + old_len, TRUE);
+	vm_map_pageable(kernel_map, (vm_offset_t)gdt + new_len,
+	    (vm_offset_t)gdt + old_len, TRUE);
 }
 
 /*
@@ -217,17 +219,14 @@ gdt_get_slot()
 
 	if (gdt_free != GNULL_SEL) {
 		slot = gdt_free;
-		gdt_free = dynamic_gdt[slot].gd.gd_selector;
+		gdt_free = gdt[slot].gd.gd_selector;
 	} else {
 		if (gdt_next != gdt_count)
 			panic("gdt_get_slot botch 1");
 		if (gdt_next >= gdt_size) {
 			if (gdt_size >= MAXGDTSIZ)
 				panic("gdt_get_slot botch 2");
-			if (dynamic_gdt == gdt)
-				gdt_init();
-			else
-				gdt_grow();
+			gdt_grow();
 		}
 		slot = gdt_next++;
 	}
@@ -248,7 +247,7 @@ gdt_put_slot(slot)
 	gdt_lock();
 	gdt_count--;
 
-	dynamic_gdt[slot].gd.gd_type = SDT_SYSNULL;
+	gdt[slot].gd.gd_type = SDT_SYSNULL;
 	/* 
 	 * shrink the GDT if we're using less than 1/4 of it.
 	 * Shrinking at that point means we'll still have room for
@@ -259,7 +258,7 @@ gdt_put_slot(slot)
 		gdt_compact();
 		gdt_shrink();
 	} else {
-		dynamic_gdt[slot].gd.gd_selector = gdt_free;
+		gdt[slot].gd.gd_selector = gdt_free;
 		gdt_free = slot;
 	}
 
@@ -273,7 +272,7 @@ tss_alloc(pcb)
 	int slot;
 
 	slot = gdt_get_slot();
-	setsegment(&dynamic_gdt[slot].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
+	setsegment(&gdt[slot].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
 }
@@ -295,8 +294,7 @@ ldt_alloc(pcb, ldt, len)
 	int slot;
 
 	slot = gdt_get_slot();
-	setsegment(&dynamic_gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0,
-	    0);
+	setsegment(&gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
 	pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
 }
 
