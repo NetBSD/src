@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.6 1999/04/19 21:47:49 kleink Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.7 1999/12/10 06:04:01 itohy Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -53,6 +53,7 @@ i386)		major=43;;
 mac68k)		major=44;;
 mvme68k)	major=38;;
 next68k)	major=44;;
+news68k)	major=75;;
 sparc)		major=43;;
 sun3)		major=83;;
 x68k)		major=42;;
@@ -160,6 +161,7 @@ wabi)
 	next68k)
 	x68k)
 		mknod $i	c 2 2;;	# /dev/null
+	news68k)
 	sparc)
 	sun3)
 		mknod $i	c 3 2;;	# /dev/null
