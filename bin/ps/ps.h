@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.21 2003/08/07 09:05:25 agc Exp $	*/
+/*	$NetBSD: ps.h,v 1.22 2004/03/27 12:09:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,7 +60,7 @@ typedef struct var {
 #define	ALIAS	0x20		/* entry is alias for 'header' */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc) __P((void *, struct varent *, int));
+	void	(*oproc)(void *, struct varent *, int);
 	/*
 	 * The following (optional) elements are hooks for passing information
 	 * to the generic output routine: pvar (that which prints simple
