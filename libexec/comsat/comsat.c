@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.28 2004/07/10 00:00:58 enami Exp $	*/
+/*	$NetBSD: comsat.c,v 1.29 2004/07/10 04:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.28 2004/07/10 00:00:58 enami Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.29 2004/07/10 04:00:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ onalrm(int signo)
 			newtime = statbf.st_mtime;
 #endif
 #ifdef SUPPORT_UTMPX
-	if (stat(_PATH_UTMP, &statbf) != -1)
+	if (stat(_PATH_UTMPX, &statbf) != -1)
 		if (statbf.st_mtime > newtime)
 			newtime = statbf.st_mtime;
 #endif
