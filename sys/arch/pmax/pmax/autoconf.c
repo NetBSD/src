@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1998/03/25 07:43:12 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/03/25 07:43:12 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/03/26 03:12:05 thorpej Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -78,8 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/03/25 07:43:12 jonathan Exp $
  */
 int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 30;	/* approx # instr per usec. */
-extern	tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
+/*
+ * XXX This should really be in a tcasic driver, or something.
+ * XXX But right now even the 3100 code uses it.
+ */
+tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
 void configure_scsi __P((void));
