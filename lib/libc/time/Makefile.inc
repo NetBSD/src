@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/03/31 18:29:21 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2001/03/31 19:00:56 kleink Exp $
 
 .PATH: ${.CURDIR}/time
 
@@ -16,4 +16,5 @@ MLINKS+=ctime.3 ctime_r.3	\
 	ctime.3 localtime.3	\
 	ctime.3 localtime_r.3	\
 	ctime.3 mktime.3	\
+	tzset.3 daylight.3	\
 	tzset.3 tzsetwall.3
