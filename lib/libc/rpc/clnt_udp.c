@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.8 1997/07/21 14:08:26 jtc Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.9 1998/01/23 14:44:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.8 1997/07/21 14:08:26 jtc Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.9 1998/01/23 14:44:23 lukem Exp $");
 #endif
 #endif
 
@@ -369,6 +369,20 @@ send_again:
 		}  /* end of unsuccessful completion */
 	}  /* end of valid reply message */
 	else {
+		/*
+		 * It's possible for xdr_replymsg() to fail partway
+		 * through its attempt to decode the result from the
+		 * server. If this happens, it will leave the reply
+		 * structure partially populated with dynamically
+		 * allocated memory. (This can happen if someone uses
+		 * clntudp_bufcreate() to create a CLIENT handle and
+		 * specifies a receive buffer size that is too small.)
+		 * This memory must be free()ed to avoid a leak.
+		 */
+		int op = reply_xdrs.x_op;
+		reply_xdrs.x_op = XDR_FREE;
+		xdr_replymsg(&reply_xdrs, &reply_msg);
+		reply_xdrs.x_op = op;
 		cu->cu_error.re_status = RPC_CANTDECODERES;
 	}
 	return (cu->cu_error.re_status);
