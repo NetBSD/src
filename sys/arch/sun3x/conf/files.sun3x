@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.9 1997/02/18 15:13:13 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.10 1997/02/19 23:40:30 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -90,6 +90,7 @@ file arch/sun3x/dev/eeprom.c		eeprom
 device clock
 attach clock at obio
 file arch/sun3x/sun3x/clock.c		clock
+file dev/clock_subr.c			clock
 
 device memerr
 attach memerr at obio
