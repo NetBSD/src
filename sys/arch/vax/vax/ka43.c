@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.4 1997/02/19 10:04:14 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.5 1997/04/18 18:53:38 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,18 +49,20 @@
 #include <machine/uvax.h>
 #include <machine/ka43.h>
 #include <machine/clock.h>
-#include <machine/ka650.h>	/* cache ??? */
-
-#define xtrace(x)
 
 void	ka43_conf __P((struct device*, struct device*, void*));
 void	ka43_steal_pages __P((void));
 
-void	ka43_memerr __P((void));
 int	ka43_mchk __P((caddr_t));
+void	ka43_memerr __P((void));
 
-struct	ka43_clock *ka43_clkptr;
+int	ka43_clear_errors __P((void));
 
+int	ka43_cache_init __P((void));	/* "int mapen" as argument? */
+int	ka43_cache_reset __P((void));
+int	ka43_cache_enable __P((void));
+int	ka43_cache_disable __P((void));
+int	ka43_cache_invalidate __P((void));
 
 static struct uc_map ka43_map[] = {
 	{ KA43_CFGTST,		KA43_CFGTST,	4,		0 },
@@ -88,200 +90,229 @@ struct	cpu_dep ka43_calls = {
 	ka43_mchk,
 	ka43_memerr,
 	ka43_conf,
-	ka43_clkread,
-	ka43_clkwrite,
-	4,
+	chip_clkread,
+	chip_clkwrite,
+	7,	/* 7.6 VUP */
 	(void*)KA43_INTREQ,
 	(void*)KA43_INTCLR,
 	(void*)KA43_INTMSK,
 	ka43_map,
 };
 
-#define CH1_BITS \
-	"\020\015BCHIT\014BUSERR\013PPERR\012DPERR\011TPERR\010TRAP1" \
-	"\007TRAP2\006INTR\005HIT\004REFRESH\003FLUSH\002ENABLE\001FORCEHIT"
+/*
+ * ka43_steal_pages() is called with MMU disabled, after that call MMU gets
+ * enabled. Thus we initialize these four pointers with physical addresses,
+ * but before leving ka43_steal_pages() we reset them to virtual addresses.
+ */
+struct	ka43_cpu   *ka43_cpu	= (void*)KA43_CPU_BASE;
 
-#define CH2_BITS \
-	"\020\010TPE\007DPE\006MISS\005DIRTY\004CERR\003LERR\002SERR\001ENAB"
+u_int	*ka43_creg = (void*)KA43_CH2_CREG;
+u_int	*ka43_ctag = (void*)KA43_CT2_BASE;
 
-void
-ka43_memerr()
-{
-	int mapen;
-	int *ch2reg;
+#define KA43_MC_RESTART	0x00008000	/* Restart possible*/
+#define KA43_PSL_FPDONE	0x00010000	/* First Part Done */
 
-	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
+struct ka43_mcframe {		/* Format of RigelMAX machine check frame: */
+	int	mc43_bcnt;	/* byte count, always 24 (0x18) */
+	int	mc43_code;	/* machine check type code and restart bit */
+	int	mc43_addr;	/* most recent (faulting?) virtual address */
+	int	mc43_viba;	/* contents of VIBA register */
+	int	mc43_sisr;	/* ICCS bit 6 and SISR bits 15:0 */
+	int	mc43_istate;	/* internal state */
+	int	mc43_sc;	/* shift count register */
+	int	mc43_pc;	/* trapped PC */
+	int	mc43_psl;	/* trapped PSL */
+};
 
-	mapen = mfpr(PR_MAPEN);
-	if (mapen) 
-		ch2reg = (void*)uvax_phys2virt(KA43_CH2_CREG);
-	else 
-		ch2reg = (void*)KA43_CH2_CREG;
-	printf("secondary cache status: %b\n", *ch2reg, CH2_BITS);
-}
-
-static char *mcc43[] = {
-	"no error (0)",
-	"FPA signalled protocoll error",
-	"FPA signalled illegal opcode",
-	"FPA detected parity error",
-	"FPA returned unknown status",
-	"FPA result has parity error",
-	"unused (6)",
+static char *ka43_mctype[] = {
+	"no error (0)",			/* Code 0: No error */
+	"FPA: protocol error",		/* Code 1-5: FPA errors */
+	"FPA: illegal opcode",
+	"FPA: operand parity error",
+	"FPA: unknown status",
+	"FPA: result parity error",
+	"unused (6)",			/* Code 6-7: Unused */
 	"unused (7)",
-	"MMU error (TLB miss)",
+	"MMU error (TLB miss)",		/* Code 8-9: MMU errors */
 	"MMU error (TLB hit)",
-	"HW interrupt at unused IPL",
-	"impossible microcode state",
+	"HW interrupt at unused IPL",	/* Code 10: Interrupt error */
+	"MOVCx impossible state",	/* Code 11-13: Microcode errors */
 	"undefined trap code (i-box)",
 	"undefined control store address",
-	"unused (14)",
+	"unused (14)",			/* Code 14-15: Unused */
 	"unused (15)",
-	"PC tag or data parity error",
-	"data bus parity error",
-	"data bus error (NXM)",
-	"undefined data bus state",
+	"PC tag or data parity error",	/* Code 16: Cache error */
+	"data bus parity error",	/* Code 17: Read error */
+	"data bus error (NXM)",		/* Code 18: Write error */
+	"undefined data bus state",	/* Code 19: Bus error */
 };
+#define MC43_MAX	19
+
+static int ka43_error_count = 0;
 
 int
 ka43_mchk(addr)
 	caddr_t addr;
 {
-	struct {
-	  int bcount;	/* byte count (0x18) */
-	  int mcc;	/* "R"-flag and machine check code */
-	  int mrva;	/* most recent virtual address */
-	  int viba;	/* contents of VIBA register */
-	  int sisr;	/* ICCS bit 6 and SISR bits 15:0 */
-	  int isd;	/* internal state */
-	  int scr;	/* shift count register */
-	  int pc;	/* program counter */
-	  int psl;	/* processor status longword */
-	} *p = (void*)addr;
+	register struct ka43_mcframe *mcf = (void*)addr;
 
-	printf("machine check: 0x%x\n", p->mcc);
-	printf("reason: %s\n", mcc43[p->mcc & 0xff]);
+	mtpr(0x00, PR_MCESR);	/* Acknowledge the machine check */
+	printf("machine check %d (0x%x)\n", mcf->mc43_code, mcf->mc43_code);
+	printf("reason: %s\n", ka43_mctype[mcf->mc43_code & 0xff]);
+	if (++ka43_error_count > 10) {
+		printf("error_count exceeded: %d\n", ka43_error_count);
+		return (-1);
+	}
 
-	printf("bcount:0x%x, check-code:0x%x, virtaddr:0x%x\n",
-	       p->bcount, p->mcc, p->mrva);
-	printf("pc:0x%x, psl:0x%x, viba: %x, state: %x\n",
-	       p->pc, p->psl, p->viba, p->isd);
+	/*
+	 * If either the Restart flag is set or the First-Part-Done flag
+	 * is set, and the TRAP2 (double error) bit is not set, the the
+	 * error is recoverable.
+	 */
+	if (mfpr(PR_PCSTS) & KA43_PCS_TRAP2) {
+		printf("TRAP2 (double error) in ka43_mchk.\n");
+		panic("unrecoverable state in ka43_mchk.\n");
+		return (-1);
+	}
+	if ((mcf->mc43_code & KA43_MC_RESTART) || 
+	    (mcf->mc43_psl & KA43_PSL_FPDONE)) {
+		printf("ka43_mchk: recovering from machine-check.\n");
+		ka43_cache_reset();	/* reset caches */
+		return (0);		/* go on; */
+	}
 
+	/*
+	 * Unknown error state, panic/halt the machine!
+	 */
+	printf("ka43_mchk: unknown error state!\n");
 	return (-1);
 }
 
+void
+ka43_memerr()
+{
+	/*
+	 * Don\'t know what to do here. So just print some messages
+	 * and try to go on...
+	 */
+	printf("memory error!\n");
+	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
+	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+}
+
 int
-ka43_setup(uc,flags)
-	struct uvax_calls *uc;
-	int flags;
+ka43_cache_init()
 {
-	uc->uc_name = "ka43";
-
-	uc->uc_physmap = ka43_map;
+	return (ka43_cache_reset());
 }
 
-ka43_discache()
+int
+ka43_clear_errors()
 {
-	int *ctag;
-	int *creg;
-	int mapen;
-	int i;
+	int val = *ka43_creg;
+	val |= KA43_SESR_SERR | KA43_SESR_LERR | KA43_SESR_CERR;
+	*ka43_creg = val;
+}
 
-	xtrace(("ka43_discache()\n"));
+int
+ka43_cache_reset()
+{
+	/*
+	 * resetting primary and secondary caches is done in three steps:
+	 *	1. disable both caches
+	 *	2. manually clear secondary cache
+	 *	3. enable both caches
+	 */
+	ka43_cache_disable();
+	ka43_cache_invalidate();
+	ka43_cache_enable();
+
+	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
+	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+	printf("cpu status: parctl=0x%x, hltcod=0x%x\n", 
+	       ka43_cpu->parctl, ka43_cpu->hltcod);
+
 	return (0);
-
-	/*
-	 * first disable primary cache
-	 */
-#if 0
-	mtpr(0, PR_PCSTS);
-	mtpr(0, PR_PCERR);
-	mtpr(0, PR_PCIDX);
-	mtpr(0, PR_PCTAG);
-#else
-	i = mfpr(PR_PCSTS);
-	mtpr((i & ~2), PR_PCSTS);
-	printf("pcsts: %x --> %x\n", i, mfpr(PR_PCSTS));
-#endif
-	/*
-	 * now secondary cache
-	 */
-	mapen = mfpr(PR_MAPEN);
-	if (mapen) {
-		ctag = (void*)uvax_phys2virt(KA43_CT2_BASE);
-		creg = (void*)uvax_phys2virt(KA43_CH2_CREG);
-	} else {
-		ctag = (void*)KA43_CT2_BASE;
-		creg = (void*)KA43_CH2_CREG;
-	}
-	i = *creg;
-	*creg = (i & ~1);
-	printf("creg: %x --> %x\n", i, *creg);
-	
-	xtrace(("ka43_discache() done.\n"));
 }
 
-ka43_encache()
+int
+ka43_cache_disable()
 {
-	int *ctag;
-	int *creg;
-	int mapen;
-	int i;
-
-	xtrace(("ka43_encache()\n"));
-
-	ka43_discache();
+	int i, val;
 
 	/*
-	 * first enable primary cache
+	 * first disable primary cache and clear error flags
 	 */
-	printf("P-0");
-	i = mfpr(PR_PCSTS);
-	mtpr((i & ~2), PR_PCSTS);
-	mtpr(0, PR_PCSTS);
-	printf("P-1");
-#if 1
-	mtpr(KA43_PCS_ENABLE | KA43_PCS_FLUSH | KA43_PCS_REFRESH, PR_PCSTS);
-#else
-	mtpr(KA43_PCS_ENABLE, PR_PCSTS);
-#endif
-	printf("P-2");
+	mtpr(KA43_PCS_REFRESH, PR_PCSTS);	/* disable primary cache */
+	val = mfpr(PR_PCSTS);
+	mtpr(val, PR_PCSTS);			/* clear error flags */
 
 	/*
-	 * now secondary cache
+	 * now disable secondary cache and clear error flags
 	 */
-	mapen = mfpr(PR_MAPEN);
-	if (mapen) {
-		ctag = (void*)uvax_phys2virt(KA43_CT2_BASE);
-		creg = (void*)uvax_phys2virt(KA43_CH2_CREG);
-	} else {
-		ctag = (void*)KA43_CT2_BASE;
-		creg = (void*)KA43_CH2_CREG;
+	val = *ka43_creg & ~KA43_SESR_CENB;	/* BICL !!! */
+	*ka43_creg = val;			/* disable secondary cache */
+	val = KA43_SESR_SERR | KA43_SESR_LERR | KA43_SESR_CERR;
+	*ka43_creg = val;			/* clear error flags */
+
+	return (0);
+}
+
+int
+ka43_cache_invalidate()
+{
+	int i, val;
+
+	val = KA43_PCTAG_PARITY;	/* clear valid flag, set parity bit */
+	for (i = 0; i < 256; i++) {	/* 256 Quadword entries */
+		mtpr(i*8, PR_PCIDX);	/* write index of tag */
+		mtpr(val, PR_PCTAG);	/* write value into tag */
 	}
-	printf("ctag: %x, creg: %x\n", ctag, creg);
-	printf("S-1");
-	i = *creg;
-	printf("creg=[%x] ", *creg);
-#if 0
-	*creg = (i & ~1);
-	printf("creg=[%x] ", *creg);
-	printf("S-2");
-	for (i = 0; i < KA43_CT2_SIZE; i += 4)		/* Quadword entries */
-		ctag[i/4] = 0;				/* reset lower half */
-	printf("S-3");
-	i = *creg;
-	printf("creg=[%x] ", *creg);
-	*creg = (i & ~1);
-	printf("creg=[%x] ", *creg);
-	printf("S-4");
-	/* *creg = 1; */
-	printf("S-5");
-#endif
-	xtrace(("ka43_encache() done.\n"));
+	val = KA43_PCS_FLUSH | KA43_PCS_REFRESH;
+	mtpr(val, PR_PCSTS);		/* flush primary cache */
 
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
-	printf("secondary cache status: %b\n", *creg, CH2_BITS);
+	/*
+	 * Rigel\'s secondary cache doesn\'t implement a valid-flag.
+	 * Thus we initialize all entries with out-of-range/dummy
+	 * addresses which will never be referenced (ie. never hit).
+	 * After enabling cache we also access 128K of memory starting
+	 * at 0x00 so that secondary cache will be filled with these
+	 * valid addresses...
+	 */
+	val = 0xff;
+	/* if (memory > 28 MB) val = 0x55; */
+	printf("clearing tags...\n");
+	for (i = 0; i < KA43_CT2_SIZE; i+= 4) {	/* Quadword entries ?? */
+		ka43_ctag[i/4] = val;		/* reset upper and lower */
+	}
+
+	return (0);
+}
+
+
+int
+ka43_cache_enable()
+{
+	volatile char *membase = (void*)0x80000000;	/* physical 0x00 */
+	int i, val;
+
+	val = KA43_PCS_FLUSH | KA43_PCS_REFRESH;
+	mtpr(val, PR_PCSTS);		/* flush primary cache */
+
+	/*
+	 * now we enable secondary cache and access first 128K of memory
+	 * so that secondary cache gets really initialized and holds
+	 * valid addresses/data...
+	 */
+	*ka43_creg = KA43_SESR_CENB;	/* enable secondary cache */
+	for (i=0; i<128*1024; i++) {
+		val += membase[i];	/* some dummy operation... */
+	}
+
+	val = KA43_PCS_ENABLE | KA43_PCS_REFRESH;
+	mtpr(val, PR_PCSTS);		/* enable primary cache */
+
+	return (0);
 }
 
 void
@@ -301,12 +332,18 @@ ka43_conf(parent, self, aux)
 
 	printf(": %s\n", cpu_model);
 
-	ka43_encache();
+	/*
+	 * ka43_conf() gets called with MMU enabled, now it's save to
+	 * init/reset the caches.
+	 */
+	ka43_cache_init();
 }
 
 
 /*
- *
+ * The interface for communication with the LANCE ethernet controller
+ * is setup in the xxx_steal_pages() routine. We decrease highest
+ * available address by 64K and use this area as communication buffer.
  */
 u_long le_iomem;		/* base addr of RAM -- CPU's view */
 u_long le_ioaddr;		/* base addr of RAM -- LANCE's view */
@@ -315,51 +352,10 @@ void
 ka43_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
-	int	junk;
+        extern  short *clk_page;
+        extern  int clk_adrshift, clk_tweak;
+	int	junk, val;
 	int	i;
-	struct {
-	  u_long     :2;
-	  u_long data:8;
-	  u_long     :22;
-	} *p;
-	int *srp;	/* Scratch Ram */
-	int *pctl;	/* parity control register */
-	char *q = (void*)&srp;
-	char line[20];
-
-	ka43_encache();
-
-	pctl = (void*)KA43_PARCTL;
-	printf("parctl: 0x%x\n", *pctl);
-#if 0
-	*pctl = KA43_PCTL_DPEN | KA43_PCTL_CPEN;
-#else
-	*pctl = KA43_PCTL_CPEN;
-#endif
-	panic("No support for ka43");
-#if 0
-	printf("new value for parctl: ");
-	gets(line);
-#endif
-	*pctl = *line - '0';
-	printf("parctl: 0x%x\n", *pctl);
-
-	srp = NULL;
-	p = (void*)KA43_SCR;
-	for (i=0; i<4; i++) {
-	  printf("p[%d] = %x, ", i, p[i].data);
-	  q[i]	= p[i].data;
-	}
-	p = (void*)KA43_SCRLEN;
-	printf("\nlen = %d\n", p->data);
-	printf("srp = 0x%x\n", srp);
-
-	for (i=0; i<0x2; i++) {
-	  printf("%x:0x%x ", i*4, srp[i]);
-	  if ((i & 0x07) == 0x07)
-	    printf("\n");
-	}
-	printf("\n");
 
 	printf ("ka43_steal_pages: avail_end=0x%x\n", avail_end);
 
@@ -371,38 +367,63 @@ ka43_steal_pages()
 	 */
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
 
+        clk_adrshift = 1;       /* Addressed at long's... */
+        clk_tweak = 2;          /* ...and shift two */
+        MAPVIRT(clk_page, 2);
+        pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA43_WAT_BASE,
+            (vm_offset_t)KA43_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+
+#if 0
 	/*
 	 * At top of physical memory there are some console-prom and/or
 	 * restart-specific data. Make this area unavailable.
 	 */
-#if 1
-	avail_end -= 10 * NBPG;
+	avail_end -= 64 * NBPG;		/* scratch RAM ??? */
+	avail_end = 0x00FC0000;		/* XXX: for now from ">>> show mem" */
+
+This is no longer neccessary since the memsize in RPB does not include
+these unavailable pages. Only valid/available pages are counted in RPB.
+
 #endif
 
 	/*
 	 * If we need to map physical areas also, we can decrease avail_end
 	 * (the highest available memory-address), copy the stuff into the
-	 * gap between and use pmap_map to map it...
+	 * gap between and use pmap_map to map it. This is done for LANCE's
+	 * 64K communication area.
 	 *
 	 * Don't use the MAPPHYS macro here, since this uses and changes(!)
 	 * the value of avail_start. Use MAPVIRT even if it's name misleads.
 	 */
-	avail_end &= ~0xffff;
-	avail_end -= (64 * 1024);
+	avail_end -= (64 * 1024);	/* reserve 64K */
+	avail_end &= ~0xffff;		/* force proper (quad?) alignment */
 
-	avail_end = 0xf00000;
-	le_ioaddr = 0xf40000;
-
+	/*
+	 * Oh holy shit! It took me over one year(!) to find out that
+	 * the 3100/76 has to use diag-mem instead of physical memory
+	 * for communication with LANCE (using phys-mem results in
+	 * parity errors and mchk exceptions with code 17 (0x11)).
+	 *
+	 * Many thanks to Matt Thomas, without his help it could have
+	 * been some more years...  ;-)
+	 */
+	le_ioaddr = avail_end | KA43_DIAGMEM;	/* ioaddr in diag-mem!!! */
 	MAPVIRT(le_iomem, (64 * 1024)/NBPG);
 	pmap_map((vm_offset_t)le_iomem, le_ioaddr, le_ioaddr + 0xffff,
 		 VM_PROT_READ|VM_PROT_WRITE);
 
-	if (1 || le_ioaddr > 0xffffff) {
-		le_ioaddr &= 0xffffff;
-		*pctl |= KA43_PCTL_DMA;
-	}
-	printf("le_iomem: %x, le_ioaddr: %x, parctl:%x\n",
-	       le_iomem, le_ioaddr, *pctl);
+	/*
+	 * if LANCE\'s io-buffer is above 16 MB, then the appropriate flag
+	 * in the parity control register has to be set (it works as an
+	 * additional address bit). In any case, don\'t enable CPEN and
+	 * DPEN in the PARCTL register, somewhow they are internally managed
+	 * by the RIGEL chip itself!?!
+	 */
+	val = ka43_cpu->parctl & 0x03;	/* read the old value */
+	if (le_ioaddr & (1 << 24))	/* if RAM above 16 MB */
+		val |= KA43_PCTL_DMA;	/* set LANCE DMA flag */
+	ka43_cpu->parctl = val;		/* and write new value */
+	le_ioaddr &= 0xffffff;		/* Lance uses 24-bit addresses */
 
 	/*
 	 * now map in anything listed in ka43_map...
@@ -412,33 +433,22 @@ ka43_steal_pages()
 	/*
 	 * Clear restart and boot in progress flags in the CPMBX. 
 	 */
-	((struct ka43_clock*)ka43_clkptr)->cpmbx = 
-	    ((struct ka43_clock*)ka43_clkptr)->cpmbx & 0xF0;
+	((struct ka43_clock *)KA43_WAT_BASE)->cpmbx =
+	    ((struct ka43_clock *)KA43_WAT_BASE)->cpmbx & 0xF0;
 
+#if 0
 	/*
-	 * Enable memory parity error detection and clear error bits.
+	 * Clear all error flags, not really neccessary here, this will
+	 * be done by ka43_cache_init() anyway...
 	 */
-	((struct ka43_cpu *)KA43_CPU_BASE)->ka43_mser = 0x01; 
-	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
+	ka43_clear_errors();
+#endif
 
 	/*
 	 * MM is not yet enabled, thus we still used the physical addresses,
 	 * but before leaving this routine, we need to reset them to virtual.
 	 */
-	ka43_clkptr = (void*)uvax_phys2virt(KA43_WAT_BASE);
+	ka43_cpu    = (void*)uvax_phys2virt(KA43_CPU_BASE);
+	ka43_creg   = (void*)uvax_phys2virt(KA43_CH2_CREG);
+	ka43_ctag   = (void*)uvax_phys2virt(KA43_CT2_BASE);
 }
-
-/*
- * define what we need and overwrite the uVAX_??? names
- */
-
-#define NEED_UVAX_GENCLOCK
-#define NEED_UVAX_PROTOCLOCK
-
-#define uVAX_clock	ka43_clock
-#define uVAX_clkptr	ka43_clkptr
-#define uVAX_clkread	ka43_clkread
-#define uVAX_clkwrite	ka43_clkwrite
-#define uVAX_genclock	ka43_genclock
-
-#include <arch/vax/vax/uvax_proto.c>
