@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.1.1.2 1994/01/11 19:11:11 jtc Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.1.1.3 1994/01/12 18:37:40 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -27,7 +27,6 @@ static char rcsid[] = "$Id: entry.c,v 1.1.1.2 1994/01/11 19:11:11 jtc Exp $";
 
 
 #include "cron.h"
-#include "externs.h"
 
 
 typedef	enum ecode {

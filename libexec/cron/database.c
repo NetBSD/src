@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: database.c,v 1.1.1.2 1994/01/11 19:11:03 jtc Exp $";
+static char rcsid[] = "$Id: database.c,v 1.1.1.3 1994/01/12 18:37:31 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -24,7 +24,6 @@ static char rcsid[] = "$Id: database.c,v 1.1.1.2 1994/01/11 19:11:03 jtc Exp $";
 
 
 #include "cron.h"
-#include "externs.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -66,9 +65,7 @@ load_database(old_db)
 		syscron_stat.st_mtime = 0;
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
-	 * the database.  Note that if /etc/passwd changes (like, someone's
-	 * UID/GID/HOME/SHELL, we won't see it.  Maybe we should
-	 * keep an mtime for the passwd file?  HINT
+	 * the database.
 	 *
 	 * Note that old_db->mtime is initialized to 0 in main(), and
 	 * so is guaranteed to be different than the stat() mtime the first
@@ -230,8 +227,6 @@ process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
 	if (u != NULL) {
 		/* if crontab has not changed since we last read it
 		 * in, then we can just use our existing entry.
-		 * XXX - note that we do not check for changes in the
-		 * passwd entry (uid, home dir, etc).
 		 */
 		if (u->mtime == statbuf->st_mtime) {
 			Debug(DLOAD, (" [no change, using old data]"))
@@ -250,6 +245,7 @@ process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
 		Debug(DLOAD, (" [delete old data]"))
 		unlink_user(old_db, u);
 		free_user(u);
+		log_it(fname, getpid(), "RELOAD", tabname);
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {

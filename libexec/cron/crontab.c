@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.1.1.2 1994/01/11 19:10:56 jtc Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.1.1.3 1994/01/12 18:37:20 jtc Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -29,7 +29,6 @@ static char rcsid[] = "$Id: crontab.c,v 1.1.1.2 1994/01/11 19:10:56 jtc Exp $";
 
 
 #include "cron.h"
-#include "externs.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -45,7 +44,7 @@ static char rcsid[] = "$Id: crontab.c,v 1.1.1.2 1994/01/11 19:10:56 jtc Exp $";
 #endif
 
 
-static	int		Pid;
+static	PID_T		Pid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
 static	char		Filename[MAX_FNAME];
 static	FILE		*NewCrontab;
@@ -291,10 +290,11 @@ static void
 edit_cmd() {
 	char		n[MAX_FNAME], *editor;
 	FILE		*f;
-	int		ch, t, x, pid;
+	int		ch, t, x;
 	struct stat	statbuf;
 	time_t		mtime;
 	WAIT_T		waiter;
+	PID_T		pid, xpid;
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
 	NewCrontab = NULL;
@@ -407,10 +407,10 @@ edit_cmd() {
 	}
 
 	/* parent */
-	x = wait(&waiter);
-	if (x != pid) {
+	xpid = wait(&waiter);
+	if (xpid != pid) {
 		fprintf(stderr, "%s: wrong PID (%d != %d) from \"%s\"\n",
-			ProgramName, x, pid, editor);
+			ProgramName, xpid, pid, editor);
 		goto fatal;
 	}
 	if (WIFEXITED(waiter) && WEXITSTATUS(waiter)) {
