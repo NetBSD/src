@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: rune.c,v 1.6 2001/01/21 03:49:02 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: rune.c,v 1.6 2001/01/21 03:49:02 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -383,6 +383,16 @@ _Read_CTypeAsRune(fp)
 		if (x > len)
 			continue;
 
+		/*
+		 * TWEAKS!
+		 * - many of old locale file declarations do not have
+		 *   proper _B in many cases.
+		 * - isprint() declaration in ctype.h incorrectly uses _B.
+		 *   _B means "isprint but !isgraph", not "isblank" with the
+		 *   incorrect declaration.
+		 * - _X and _CTYPE_X have negligible difference in meaning.
+		 */
+
 		if (new_ctype[1 + x] & _U)
 			rl->__runetype[x] |= _CTYPE_U;
 		if (new_ctype[1 + x] & _L)
@@ -395,9 +405,19 @@ _Read_CTypeAsRune(fp)
 			rl->__runetype[x] |= _CTYPE_P;
 		if (new_ctype[1 + x] & _C)
 			rl->__runetype[x] |= _CTYPE_C;
-		if (new_ctype[1 + x] & _X)
+		/* derived flag bits, duplicate of ctype.h */
+		if (new_ctype[1 + x] & (_U | _L))
+			rl->__runetype[x] |= _CTYPE_A;
+		if (new_ctype[1 + x] & (_N | _X))
 			rl->__runetype[x] |= _CTYPE_X;
+		if (new_ctype[1 + x] & (_P|_U|_L|_N))
+			rl->__runetype[x] |= _CTYPE_G;
+		/* we don't really trust _B in the file.  see above. */
 		if (new_ctype[1 + x] & _B)
+			rl->__runetype[x] |= _CTYPE_B;
+		if ((new_ctype[1 + x] & (_P|_U|_L|_N)) || x == ' ')
+			rl->__runetype[x] |= (_CTYPE_R | _CTYPE_SW1);
+		if (x == ' ' || x == '\t')
 			rl->__runetype[x] |= _CTYPE_B;
 
 		/* XXX may fail on non-8bit encoding only */
