@@ -33,10 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
-static char *rcsid = "$Id: errlist.c,v 1.3 1994/12/12 22:42:07 jtc Exp $";
+static char *rcsid = "$Id: errlist.c,v 1.3.2.1 1995/02/17 10:40:28 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-const char *const _sys_errlist[] = {
+#include "namespace.h"
+
+const char *const sys_errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
 	"Operation not permitted",		/*  1 - EPERM */
 	"No such file or directory",		/*  2 - ENOENT */
@@ -136,4 +138,7 @@ const char *const _sys_errlist[] = {
 	"Function not implemented",		/* 78 - ENOSYS */
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
 };
-int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
+int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };
+
+__weak_reference(_sys_errlist,sys_errlist);
+__weak_reference(_sys_nerr,sys_nerr);
