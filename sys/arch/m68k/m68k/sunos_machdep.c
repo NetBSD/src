@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.16 1998/10/01 20:41:29 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.17 1998/10/25 21:58:25 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,7 +179,7 @@ sunos_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sunos_sendsig(%d): sig %d scp %p sc_sp %x\n",
-		       p->p_pid, sig, &fp->sf_sc,kfp.sf_sc.sc_sp);
+		       p->p_pid, sig, &fp->sf_sc,kf.sf_sc.sc_sp);
 #endif
 
 	/* have the user-level trampoline code sort out what registers it
