@@ -1,4 +1,4 @@
-.\"	$NetBSD: puc.4,v 1.5 1999/03/16 01:19:17 garbled Exp $
+.\"	$NetBSD: puc.4,v 1.6 1999/07/03 05:38:05 cgd Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -59,7 +59,14 @@ The driver currently supports the following cards:
 .Bl -tag -width -offset indent -compact
 .It Tn "Dolphin 4014 (dual parallel)"
 .It Tn "Dolphin 4035 (dual serial)"
-.It Tn "SIIG CyberSerial PCI (single serial)"
+.It Tn "SIIG Cyber 2P1S PCI (dual parallel and single serial)"
+.It Tn "SIIG Cyber 2S1P PCI (dual serial and single parallel)"
+.It Tn "SIIG Cyber 4S PCI (quad serial)"
+.It Tn "SIIG Cyber I/O PCI (single serial and single parallel)"
+.It Tn "SIIG Cyber Parallel Dual PCI (dual parallel)"
+.It Tn "SIIG Cyber Parallel PCI (single parallel)"
+.It Tn "SIIG Cyber Serial Dual PCI (dual serial)"
+.It Tn "SIIG Cyber Serial PCI (single serial)"
 .It Tn "VScom PCI-800 (8 port serial, probably OEM)"
 .El
 .Pp
@@ -69,9 +76,6 @@ The driver does not support the cards:
 .It Tn "Dolphin 4006 (single parallel)"
 .It Tn "Dolphin 4025 (single serial)"
 .It Tn "Dolphin 4078 (dual serial and single parallel)"
-.It Tn "SIIG CyberParallel PCI (single parallel)"
-.It Tn "SIIG CyberParallel Dual PCI (dual parallel)"
-.It Tn "SIIG Cyber 2S1P PCI (dual serial and single parallel)"
 .El
 .Pp
 but support for them (and for similar cards) should be trivial to add.
