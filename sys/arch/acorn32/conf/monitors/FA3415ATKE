@@ -1,0 +1,259 @@
+# Modefile written by !MakeModes version 0.26 (14th December 1994)
+
+file_format:1
+monitor_title:Mitsubishi FA3415ATKE
+DPMS_state:0
+
+# 240 x 352 (70Hz)
+startmode
+mode_name:
+x_res:240
+y_res:352
+pixel_rate:9440
+h_timings:20,16,8,240,8,8
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 320 x 250 (50Hz)
+startmode
+mode_name:
+x_res:320
+y_res:250
+pixel_rate:8000
+h_timings:36,30,44,320,44,38
+v_timings:3,16,20,250,20,3
+sync_pol:0
+endmode
+
+# 320 x 256 (50Hz)
+startmode
+mode_name:
+x_res:320
+y_res:256
+pixel_rate:8000
+h_timings:36,30,44,320,44,38
+v_timings:3,16,17,256,17,3
+sync_pol:0
+endmode
+
+# 320 x 480 (60Hz)
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:12587
+h_timings:42,14,12,320,12,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 360 x 480 (60Hz)
+startmode
+mode_name:
+x_res:360
+y_res:480
+pixel_rate:16783
+h_timings:64,46,16,360,16,30
+v_timings:2,32,0,480,0,11
+sync_pol:0
+endmode
+
+# 384 x 288 (70Hz)
+startmode
+mode_name:
+x_res:384
+y_res:288
+pixel_rate:18881
+h_timings:68,16,66,384,66,0
+v_timings:2,58,32,288,32,37
+sync_pol:2
+endmode
+
+# 480 x 352 (70Hz)
+startmode
+mode_name:480 x 352
+x_res:480
+y_res:352
+pixel_rate:18881
+h_timings:68,16,18,480,18,0
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 640 x 200 (60Hz)
+startmode
+mode_name:
+x_res:640
+y_res:200
+pixel_rate:16000
+h_timings:72,146,16,640,16,130
+v_timings:3,34,0,200,0,25
+sync_pol:0
+endmode
+
+# 640 x 250 (50Hz)
+startmode
+mode_name:
+x_res:640
+y_res:250
+pixel_rate:16000
+h_timings:72,62,88,640,88,74
+v_timings:3,16,20,250,20,3
+sync_pol:0
+endmode
+
+# 640 x 256 (50Hz)
+startmode
+mode_name:
+x_res:640
+y_res:256
+pixel_rate:16000
+h_timings:72,62,88,640,88,74
+v_timings:3,16,17,256,17,3
+sync_pol:0
+endmode
+
+# 640 x 352 (60Hz)
+startmode
+mode_name:
+x_res:640
+y_res:352
+pixel_rate:16783
+h_timings:76,20,16,640,16,0
+v_timings:3,9,0,352,0,0
+sync_pol:2
+endmode
+
+# 640 x 480 (60Hz)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:25175
+h_timings:94,22,22,640,22,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 640 x 480 (73Hz)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:31500
+h_timings:40,120,8,640,8,16
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 640 x 512 (50Hz)
+startmode
+mode_name:640x512 (50 Hz
+x_res:640
+y_res:512
+pixel_rate:24000
+h_timings:56,92,20,640,20,68
+v_timings:3,18,0,512,0,1
+sync_pol:0
+endmode
+
+# 768 x 288 (50Hz)
+startmode
+mode_name:
+x_res:768
+y_res:288
+pixel_rate:16000
+h_timings:76,66,16,768,16,82
+v_timings:3,19,0,288,0,2
+sync_pol:0
+endmode
+
+# 800 x 600 (56Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:36000
+h_timings:72,114,14,800,14,10
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (60Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:40000
+h_timings:128,64,24,800,24,16
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 896 x 352 (70Hz)
+startmode
+mode_name:896x352 (75 Hz)
+x_res:896
+y_res:352
+pixel_rate:30000
+h_timings:118,38,50,896,20,0
+v_timings:3,9,0,352,0,20
+sync_pol:2
+endmode
+
+# 1056 x 250 (50Hz)
+startmode
+mode_name:
+x_res:1056
+y_res:250
+pixel_rate:24000
+h_timings:108,72,106,1056,106,88
+v_timings:3,16,20,250,20,3
+sync_pol:0
+endmode
+
+# 1056 x 256 (50Hz)
+startmode
+mode_name:
+x_res:1056
+y_res:256
+pixel_rate:24000
+h_timings:108,72,106,1056,106,88
+v_timings:3,16,17,256,17,3
+sync_pol:0
+endmode
+
+# 1280 x 480 (60Hz)
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:50350
+h_timings:188,44,44,1280,44,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+# 1600 x 600 (56Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:72000
+h_timings:144,236,20,1600,20,28
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (60Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:80000
+h_timings:256,130,46,1600,46,34
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# End
