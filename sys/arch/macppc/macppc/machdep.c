@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1999/05/07 22:20:38 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1999/05/13 23:37:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,25 +88,15 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 
-#include <dev/cons.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_pci.h>
-
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
+#include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
 
-#include <dev/usb/usb.h>
-#include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wscons_callbacks.h>
 
-#include <dev/usb/uhcireg.h>
-#include <dev/usb/uhcivar.h>
-
-#include <dev/usb/ohcireg.h>
-#include <dev/usb/ohcivar.h>
+#include <dev/usb/ukbdvar.h>
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -128,6 +118,10 @@ char *bootpath;
 paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
+
+int	ofkbd_ihandle;
+int	ofkbd_cngetc __P((dev_t));
+void	ofkbd_cnpollc __P((dev_t, int));
 
 int msgbufmapped = 0;
 
@@ -1131,10 +1125,7 @@ cninit()
 
 #if NOFB > 0
 	if (strcmp(type, "display") == 0) {
-		u_int32_t pciclass, reg, bus, device, function;
-		const char *usbstr;
-		int stdin, i;
-		pcitag_t tag;
+		int stdin;
 
 		/*
 		 * Attach the console output now (so we can see
@@ -1185,149 +1176,45 @@ cninit()
 		}
 
 		/*
-		 * Initialize the PCI chipsets; can't map configuration
-		 * space registers yet!
+		 * We're not an ADB keyboard; must be USB.  Unfortunately,
+		 * we have a few problems:
+		 *
+		 *	(1) The stupid Macintosh firmware uses a
+		 *	    `psuedo-hid' (yes, they even spell it
+		 *	    incorrectly!) which apparently merges
+		 *	    all USB keyboard input into a single
+		 *	    input stream.  Because of this, we can't
+		 *	    actually determine which USB controller
+		 *	    or keyboard is really the console keyboard!
+		 *
+		 *	(2) Even if we could, USB requires a lot of
+		 *	    the kernel to be running in order for it
+		 *	    to work.
+		 *
+		 * So, what we do is this:
+		 *
+		 *	(1) Tell the ukbd driver that it is the console.
+		 *	    At autoconfiguration time, it will attach the
+		 *	    first USB keyboard instance as the console
+		 *	    keyboard.
+		 *
+		 *	(2) Until then, so that we have _something_, we
+		 *	    use the OpenFirmware I/O facilities to read
+		 *	    the keyboard.
 		 */
-		pci_init(0);
-
-		/*
-		 * We're not an ADB keyboard; must be USB.  The parent
-		 * node is pointing at the root hub.  We need to traverse
-		 * back until we find the USB controller.
-		 */
-		while (strcmp(type, "usb") != 0) {
-			node = OF_parent(node);
-			if (node == 0) {
-				printf("WARNING: unable to find USB "
-				    "controller\n");
-				return;
-			}
-			bzero(type, sizeof(type));
-			l = OF_getprop(node, "name", type, sizeof(type));
-			if (l == -1 || l >= sizeof(type) - 1) {
-				printf("WARNING: bad `name' property "
-				    "searching for USB controller\n");
-				return;
-			}
-		}
-
-		/*
-		 * `node' is now pointing at the USB controller.
-		 * We must determine the type and location of this
-		 * controller.
-		 */
-		if (OF_getprop(node, "class-code", &pciclass, sizeof(pciclass))
-		    != sizeof(pciclass)) {
-			printf("WARNING: unable to get PCI class code of "
-			    "USB controller\n");
-			return;
-		}
-
-		/*
-		 * The first address cell of the `reg' property will contain
-		 * bus/device/function information.
-		 */
-		if (OF_getprop(node, "reg", &reg, sizeof(reg)) <= 0) {
-			printf("WARNING: unable to get PCI location of "
-			    "USB controller\n");
-			return;
-		}
-
-		if (PCI_CLASS(pciclass) != PCI_CLASS_SERIALBUS) {
-			printf("WARNING: USB controller is not `serial bus' "
-			    "class\n");
-			return;
-		}
-
-		if (PCI_SUBCLASS(pciclass) != PCI_SUBCLASS_SERIALBUS_USB) {
-			printf("WARNING: USB controller is not `usb' "
-			    "subclass\n");
-			return;
-		}
-
-		switch (PCI_INTERFACE(pciclass)) {
-		case PCI_INTERFACE_UHCI:
-			usbstr = "UHCI";
-			break;
-
-		case PCI_INTERFACE_OHCI:
-			usbstr = "OHCI";
-			break;
-
-		default:
-			printf("WARNING: unknown USB controller interface\n");
-			return;
-		}
-
-		bus = (reg & OFW_PCI_PHYS_HI_BUSMASK) >>
-		    OFW_PCI_PHYS_HI_BUSSHIFT;
-		device = (reg & OFW_PCI_PHYS_HI_DEVICEMASK) >>
-		    OFW_PCI_PHYS_HI_DEVICESHIFT;
-		function = (reg & OFW_PCI_PHYS_HI_FUNCTIONMASK) >>
-		    OFW_PCI_PHYS_HI_FUNCTIONSHIFT;
-
-		printf("console keyboard type: USB on %s at %d,%d,%d\n",
-		    usbstr, bus, device, function);
-
-		/*
-		 * Locate the PCI bridge we're on, and create the tag
-		 * for the USB driver.
-		 */
-		for (i = 0; i < sizeof(pci_bridges) / sizeof(pci_bridges[0]);
-		     i++) {
-			if (pci_bridges[i].present &&
-			    pci_bridges[i].bus == bus)
-				break;
-		}
-		if (i == sizeof(pci_bridges) / sizeof(pci_bridges[0])) {
-			printf("WARNING: can't locate USB controller's "
-			    "PCI bridge\n");
-			return;
-		}
-
-		tag = pci_make_tag(pci_bridges[i].pc, bus, device, function);
-
 #if NUKBD > 0
-		/*
-		 * XXX We can't attach the USB keyboard just yet.  We
-		 * XXX must defer it until autoconfiguration, because
-		 * XXX the USB code must be able to use memory allocation,
-		 * XXX DMA, etc.
-		 * XXX
-		 * XXX THIS SHOULD BE FIXED SOME DAY!
-		 */
+		printf("console keyboard type: USB\n");
+		ukbd_cnattach();
 #else
 		panic("ukbd support not in kernel");
 #endif
 
-		switch (PCI_INTERFACE(pciclass)) {
-		case PCI_INTERFACE_UHCI:
-#if NUHCI > 0
-		    {
-			extern void uhci_pci_has_console __P((pcitag_t));
-
-			uhci_pci_has_console(tag);
-		    }
-#else
-			panic("uhci support not in kernel");
-#endif
-			break;
-
-		case PCI_INTERFACE_OHCI:
-#if NOHCI > 0
-		    {
-			extern void ohci_pci_has_console __P((pcitag_t));
-
-			ohci_pci_has_console(tag);
-		    }
-#else
-			panic("ohci support not in kernel");
-#endif
-			break;
-
-		default:
-			panic("cninit: impossible");
-		}
+		/*
+		 * XXX This is a little gross, but we don't get to
+		 * XXX call wskbd_cnattach() twice.
+		 */
+		ofkbd_ihandle = stdin;
+		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc);
 	}
 #endif /* NOFB > 0 */
 
@@ -1359,4 +1246,30 @@ cninit()
 
 nocons:
 	return;
+}
+
+/*
+ * Bootstrap console keyboard routines, using OpenFirmware I/O.
+ */
+int
+ofkbd_cngetc(dev)
+	dev_t dev;
+{
+	u_char c = '\0';
+	int l;
+
+	do {
+		l = OF_read(ofkbd_ihandle, &c, 1);
+	} while (l != 1);
+
+	return (c);
+}
+
+void
+ofkbd_cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+
+	/* Nothing to do; always polled. */
 }
