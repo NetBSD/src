@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.21 2000/08/27 00:21:46 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.22 2001/01/02 04:03:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -42,10 +42,10 @@ ffs(int reg)
 {
 	register int val;
 
-	__asm__ __volatile ("ffs	$0,$32,%1,%0
-			bneq	1f
-			mnegl	$1,%0
-		1:	incl	%0"
+	__asm__ __volatile ("ffs $0,$32,%1,%0
+			bneq 1f
+			mnegl $1,%0
+		1:	incl %0"
 			: "=&r" (val)
 			: "r" (reg) );
 	return	val;
@@ -63,37 +63,37 @@ _remque(void *p)
 static __inline__ void 
 _insque(void *p, void *q)
 {
-	__asm__ __volatile ("insque (%0), (%1)"
+	__asm__ __volatile ("insque (%0),(%1)"
 			:
 			: "r" (p),"r" (q)
 			: "memory" );
 }
 
 static __inline__ void *
-memcpy(void *toe, const void *from, size_t len)
+memcpy(void *to, const void *from, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+	__asm__ __volatile ("movc3 %0,%1,%2"
 			:
-			: "r" (len),"r" (from),"r"(toe)
+			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	return toe;
+	return to;
 }
 static __inline__ void *
-memmove(void *toe, const void *from, size_t len)
+memmove(void *to, const void *from, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+	__asm__ __volatile ("movc3 %0,%1,%2"
 			:
-			: "r" (len),"r" (from),"r"(toe)
+			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	return toe;
+	return to;
 }
 
 static __inline__ void
-bcopy(const void *from, void *toe, size_t len)
+bcopy(const void *from, void *to, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+	__asm__ __volatile ("movc3 %0,%1,%2"
 			:
-			: "r" (len),"r" (from),"r"(toe)
+			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 }
 
@@ -105,9 +105,9 @@ memset(void *block, int c, size_t len)
 	if (len > 65535)
 		blkclr(block, len);
 	else {
-		__asm__ __volatile ("movc5 $0,(%0),%2,%1,(%0)"
+		__asm__ __volatile ("movc5 $0,(sp),%2,%1,%0"
 			:
-			: "r" (block), "r" (len), "r"(c)
+			: "m" (*(char *)block), "g" (len), "g" (c)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return block;
@@ -119,9 +119,9 @@ bzero(void *block, size_t len)
 	if (len > 65535)
 		blkclr(block, len);
 	else {
-		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
+		__asm__ __volatile ("movc5 $0,(sp),$0,%1,%0"
 			:
-			: "r" (block), "r" (len)
+			: "m" (*(char *)block), "g" (len)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 }
