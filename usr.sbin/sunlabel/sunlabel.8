@@ -1,4 +1,4 @@
-.\" $NetBSD: sunlabel.8,v 1.1 2002/01/15 00:57:27 wiz Exp $
+.\" $NetBSD: sunlabel.8,v 1.2 2002/01/15 01:58:45 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,47 +42,49 @@
 .Nd read or modify a SunOS disk label
 .Sh SYNOPSIS
 .Nm
-.Op Fl disk Ar device
-.Op Fl fixmagic
-.Op Fl fixsum
-.Op Fl new
-.Op Fl q
-.Ar device
+.Op Fl d Ar device
+.Op Fl mnqs
+.Op Ar device
 .Sh DESCRIPTION
 .Nm
 reads or modifies a
 .Tn Sun disk label on
 .Ar device .
+Either
+.Ar device
+or
+.Fl d Ar device
+must be specified on the command line.
 .Nm
 only reads/writes the first 512 bytes of
 .Ar device .
 .Pp
 The supported options are:
 .Bl -tag -width "-disk device" -offset indent
-.It Fl disk Ar device
+.It Fl d Ar device
 Use
 .Ar device
 as target for the operations (in case
 .Ar device
 would start with a dash
 .Pq Sq \&- ) .
-.It Fl fixmagic
+.It Fl m
 Ignore an incorrect magic number in the disk label.
-.It Fl fixsum
-Ignore checksum errors when reading the label.
-.It Fl new
+.It Fl n
 Synthesize a new label rather than reading what is there.
 .It Fl q
 Quiet mode - don't print unnecessary babble (currently
 this suppresses the
 .Dq sunlabel>
 prompt).
+.It Fl s
+Ignore checksum errors when reading the label.
 .El
 .Pp
 Note that
-.Fl fixmagic
+.Fl m
 is dangerous, especially when combined with
-.Fl fixsum ,
+.Fl s ,
 since it will then happily believe whatever garbage it may
 find in the label.  When using these flags, all values should be
 checked carefully, both those printed by
@@ -147,7 +149,7 @@ values as printed by the
 .Ic L
 command; in particular, if they are zero (which they will initially be
 if
-.Fl new
+.Fl n
 is used), this syntax is not very useful.  Some additional strings are
 accepted.  For the
 .Ar <cylno>
