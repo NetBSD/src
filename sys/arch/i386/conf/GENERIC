@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.345 2000/05/28 21:12:00 jhawk Exp $
+#	$NetBSD: GENERIC,v 1.346 2000/05/28 21:46:04 jhawk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.345 $"
+#ident 		"GENERIC-$Revision: 1.346 $"
 
 maxusers	32		# estimated number of users
 
@@ -158,7 +158,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-
+#options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
