@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.49.2.1 2002/03/26 17:20:11 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.49.2.2 2002/04/06 16:08:24 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ void	sbus_attach __P((struct device *, struct device *, void *));
 
 
 struct cfattach sbus_ca = {
-	sizeof(struct sbus_softc), sbus_match, sbus_attach
+	-sizeof(struct sbus_softc), sbus_match, sbus_attach
 };
 
 extern struct cfdriver sbus_cd;
@@ -229,7 +229,8 @@ sbus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct device *dev = aux;
+	struct mainbus_attach_args *ma = DEV_PRIVATE(dev);
 
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
@@ -243,7 +244,7 @@ sbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct sbus_softc *sc = (struct sbus_softc *)DEV_PRIVATE(self);
 	struct mainbus_attach_args *ma = aux;
 	struct intrhand *ih;
 	int ipl;
@@ -404,7 +405,7 @@ sbus_setup_attach_args(parent, bustag, dmatag, node, sa)
 	int	error;
 	int n;
 
-	dev = dev_config_create(parent, 1);
+	dev = dev_config_create(parent, 0);
 	if (!dev) 
 		return (NULL);
 	bzero(sa, sizeof(struct sbus_attach_args));
@@ -584,7 +585,7 @@ sbus_establish(sd, dev)
 		if (strncmp(curdev->dv_xname, "sbus", 4) == 0)
 			break;
 	}
-	sc = (struct sbus_softc *) curdev;
+	sc = (struct sbus_softc *)DEV_PRIVATE(curdev);
 
 	sd->sd_dev = dev;
 	sd->sd_bchain = sc->sc_sbdev;
@@ -599,8 +600,8 @@ sbusreset(sbus)
 	int sbus;
 {
 	register struct sbusdev *sd;
-	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
-	struct device *dev;
+	struct device *dev = sbus_cd.cd_devs[sbus];
+	struct sbus_softc *sc = DEV_PRIVATE(dev);
 
 	printf("reset %s:", sc->sc_dev.dv_xname);
 	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
