@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.17 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.18 2004/04/21 23:19:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.17 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.18 2004/04/21 23:19:49 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -110,9 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.17 2004/04/19 05:16:46 matt Exp $");
 #include <netccitt/pk_extern.h>
 
 #include <machine/stdarg.h>
-
-#include <netiso/if_cons.c>
-
 
 /*
  * CALLED FROM:
@@ -189,10 +186,10 @@ tpcons_ctlinput(int cmd, struct sockaddr *siso, void *v)
 					printf("FAKE ACK seq 0x%x cdt 1\n", seq);
 				}
 #endif
-				E.TP_ATTR(AK_TPDU).e_cdt = 1;
-				E.TP_ATTR(AK_TPDU).e_seq = seq;
-				E.TP_ATTR(AK_TPDU).e_subseq = 0;
-				E.TP_ATTR(AK_TPDU).e_fcc_present = 0;
+				E.ev_union.EV_AK_TPDU.e_cdt = 1;
+				E.ev_union.EV_AK_TPDU.e_seq = seq;
+				E.ev_union.EV_AK_TPDU.e_subseq = 0;
+				E.ev_union.EV_AK_TPDU.e_fcc_present = 0;
 				error = DoEvent(AK_TPDU);
 				if (error) {
 					tpcb->tp_sock->so_error = error;
@@ -238,7 +235,7 @@ tpcons_input(struct mbuf *m, ...)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpcons_input before tp_input(m 0x%x)\n", m);
+		printf("tpcons_input before tp_input(m %p)\n", m);
 		dump_buf(m, 12 + m->m_len);
 	}
 #endif
@@ -277,7 +274,7 @@ tpcons_output(struct mbuf *m0, ...)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
 		printf(
-		  "tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
+		  "tpcons_output(isop=%p, m=%p, len=%#x socket=%p\n",
 		       isop, m0, datalen, isop->isop_socket);
 	}
 #endif
