@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.5 1997/10/18 13:18:58 lukem Exp $	*/
+/*	$NetBSD: tree.c,v 1.6 1998/11/06 23:06:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: tree.c,v 1.5 1997/10/18 13:18:58 lukem Exp $");
+__RCSID("$NetBSD: tree.c,v 1.6 1998/11/06 23:06:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,15 +118,17 @@ add_node(node, cur_node)
 				fprintf(stderr, "Duplicate entry in files %s and %s: %s (Warning only)\n", node->file, cur_node->file, node->entry);
 		cur_node->been_warned = YES;
 	}
-	else if (dif < 0)
+	else if (dif < 0) {
 		if (cur_node->left)
 			add_node(node, cur_node->left);
 		else
 			cur_node->left = node;
-	else if (cur_node->right)
-		add_node(node, cur_node->right);
-	else
-		cur_node->right = node;
+	} else {
+		if (cur_node->right)
+			add_node(node, cur_node->right);
+		else
+			cur_node->right = node;
+	}
 }
 
 static void
