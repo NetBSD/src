@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.10 1999/02/25 20:21:33 dante Exp $	*/
+/*	$NetBSD: adv.c,v 1.11 1999/03/04 20:16:56 dante Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -503,7 +503,7 @@ adv_init(sc)
 			printf("unknown warning %d\n", warn);
 		}
 	}
-	sc->isr_callback = (ulong) adv_narrow_isr_callback;
+	sc->isr_callback = (ASC_CALLBACK) adv_narrow_isr_callback;
 
 	if (!(sc->overrun_buf = adv_alloc_overrunbuf(sc->sc_dev.dv_xname,
 						     sc->sc_dmat))) {

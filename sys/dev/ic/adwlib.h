@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.4 1999/02/23 20:18:16 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.5 1999/03/04 20:15:53 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -686,6 +686,8 @@ typedef struct adw_dvc_cfg {
 #define	CCB_HASH_SHIFT	9
 #define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
+typedef int (* ADW_CALLBACK) (int);
+
 typedef struct adw_softc {
 
 	struct device		sc_dev;
@@ -707,15 +709,15 @@ typedef struct adw_softc {
 
 	u_int32_t		sc_flags;	/* see below sc_flags values */
 
+	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdvISR() */
+	ADW_CALLBACK	sbreset_callback; /* pointer to function, called in AdvISR() */
 	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
-	ulong		isr_callback;	/* pointer to function, called in AdvISR() */
-	ulong		sbreset_callback; /* pointer to function, called in AdvISR() */
 	u_int16_t	wdtr_able;	/* try WDTR for a device */
 	u_int16_t	sdtr_able;	/* try SDTR for a device */
 	u_int16_t	ultra_able;	/* try SDTR Ultra speed for a device */
 	u_int16_t	tagqng_able;	/* try tagged queuing with a device */
-	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
 	u_int16_t	start_motor;	/* start motor command allowed */
+	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
 	u_int8_t	scsi_reset_wait; /* delay in seconds after scsi bus reset */
 	u_int8_t	chip_no; 	/* should be assigned by caller */
 	u_int8_t	max_host_qng;	/* maximum number of Q'ed command allowed */
