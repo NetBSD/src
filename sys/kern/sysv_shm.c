@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.30 1995/06/24 20:34:21 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.31 1995/06/29 11:43:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -234,7 +234,8 @@ shmat(p, uap, retval)
 			return EINVAL;
 	} else {
 		/* This is just a hint to vm_mmap() about where to put it. */
-		attach_va = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+		attach_va =
+		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	}
 	error = vm_mmap(&p->p_vmspace->vm_map, &attach_va, size, prot,
 	    VM_PROT_DEFAULT, flags, (caddr_t)(long)SCARG(uap, shmid), 0);
