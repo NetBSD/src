@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.284 2000/11/08 12:03:06 wiz Exp $
+# $NetBSD: mi,v 1.285 2000/11/08 19:54:12 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -599,7 +599,9 @@
 ./usr/share/man/cat4/inphy.0
 ./usr/share/man/cat4/intersil7170.0
 ./usr/share/man/cat4/ioat.0
+./usr/share/man/cat4/iop.0
 ./usr/share/man/cat4/iophy.0
+./usr/share/man/cat4/iopsp.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipf.0
@@ -2019,7 +2021,9 @@
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/intersil7170.4
 ./usr/share/man/man4/ioat.4
+./usr/share/man/man4/iop.4
 ./usr/share/man/man4/iophy.4
+./usr/share/man/man4/iopsp.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ip6.4
 ./usr/share/man/man4/ipf.4
