@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2000/07/07 15:11:45 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2000/09/24 09:45:55 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.9 2000/07/07 15:11:45 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2000/09/24 09:45:55 bjh21 Exp $");
 #endif
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ static	char *system = NULL;
 #include <machine/eeprom.h>
 
 #include "defs.h"
+#include "pathnames.h"
 
 struct	keytabent eekeytab[] = {
 	{ "hwupdate",		0x10,	ee_hwupdate },
@@ -106,8 +107,8 @@ static	void usage __P((void));
 static	int getcputype __P((void));
 #endif /* __sparc__ */
 
-char	*path_eeprom = "/dev/eeprom";
-char	*path_openprom = "/dev/openprom";
+char	*path_eeprom = _PATH_EEPROM;
+char	*path_openprom = _PATH_OPENPROM;
 int	fix_checksum = 0;
 int	ignore_checksum = 0;
 int	update_checksums = 0;
