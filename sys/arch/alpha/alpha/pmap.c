@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.138 2000/08/13 18:22:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.139 2000/08/13 18:41:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2000/08/13 18:22:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2000/08/13 18:41:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1510,7 +1510,7 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 		PMAP_UNLOCK(pmap);
 	}
 
-	if (needisync)
+	if (needisync)			/* XXXSMP */
 		alpha_pal_imb();
 
 	simple_unlock(&pvh->pvh_slock);
@@ -2728,7 +2728,7 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
 
-	if (needisync) {
+	if (needisync) {		/* XXXSMP */
 		alpha_pal_imb();
 #if defined(MULTIPROCESSOR) && 0
 		alpha_broadcast_ipi(ALPHA_IPI_IMB);
@@ -3096,7 +3096,7 @@ pmap_pv_alloc(void)
 				 */
 				if (pmap_remove_mapping(pvpmap, pv->pv_va,
 				    pte, FALSE, cpu_id, &prmt))
-					alpha_pal_imb();
+					alpha_pal_imb();	/* XXXSMP */
 
 				/* Unlock everything and return. */
 				simple_unlock(&pvpmap->pm_slock);
@@ -3590,7 +3590,7 @@ pmap_ptpage_steal(pmap_t pmap, int usage, paddr_t *pap)
 
 		PMAP_UNLOCK(spmap);
 
-		if (needisync) {
+		if (needisync) {		/* XXXSMP */
 			alpha_pal_imb();
 #if defined(MULTIPROCESSOR) && 0
 			alpha_broadcast_ipi(ALPHA_IPI_IMB);
