@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.19.4.2 1999/08/02 22:56:41 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.19.4.3 1999/08/06 12:55:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1456,7 +1456,10 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, ext2fs_truncate },	/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+	{ &vop_balloc_desc, ext2fs_balloc },		/* balloc */
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2fs_vnodeop_p, ext2fs_vnodeop_entries };
@@ -1506,7 +1509,7 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2fs_specop_p, ext2fs_specop_entries };
@@ -1556,7 +1559,7 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };
