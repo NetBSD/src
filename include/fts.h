@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.7 1997/10/22 00:53:48 fvdl Exp $	*/
+/*	$NetBSD: fts.h,v 1.8 1997/11/04 23:36:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,13 +135,13 @@ FTS	*fts_open __P((char * const *, int,
 FTSENT	*fts_read __P((FTS *));
 int	 fts_set __P((FTS *, FTSENT *, int));
 #else
-FTSENT	*fts_children __P((FTS *, int))		__RENAME("__fts_children13");
-int	 fts_close __P((FTS *))			__RENAME("__fts_close13");
+FTSENT	*fts_children __P((FTS *, int))		__RENAME(__fts_children13);
+int	 fts_close __P((FTS *))			__RENAME(__fts_close13);
 FTS	*fts_open __P((char * const *, int,
 	    int (*)(const FTSENT **, const FTSENT **)))
-						__RENAME("__fts_open13");
-FTSENT	*fts_read __P((FTS *))			__RENAME("__fts_read13");
-int	 fts_set __P((FTS *, FTSENT *, int))	__RENAME("__fts_set13");
+						__RENAME(__fts_open13);
+FTSENT	*fts_read __P((FTS *))			__RENAME(__fts_read13);
+int	 fts_set __P((FTS *, FTSENT *, int))	__RENAME(__fts_set13);
 #endif
 __END_DECLS
 
