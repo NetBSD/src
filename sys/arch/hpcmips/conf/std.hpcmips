@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcmips,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $
+#	$NetBSD: std.hpcmips,v 1.2 1999/09/25 17:13:27 uch Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -9,7 +9,6 @@ cpu* at mainbus0
 options	SWAPPAGER	# paging
 options VNODEPAGER	# mmap() of files
 options DEVPAGER	# mmap() of devices
-options	MIPS3_FLUSH	# support CPU without L2 cache
 
 # Standard exec-package options
 options		EXEC_ELF32		# native exec format
