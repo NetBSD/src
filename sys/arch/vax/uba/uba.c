@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.14 1996/02/02 18:59:34 mycroft Exp $      */
+/*      $NetBSD: uba.c,v 1.15 1996/02/02 22:57:43 mycroft Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -491,7 +491,8 @@ ubasetup(uban, bp, flags)
 	if ((bp->b_flags & B_PHYS) == 0)
 		pte = (struct pte *)kvtopte(bp->b_un.b_addr);
 	else {
-		u_int *hej, i;
+		struct pte *hej;
+		u_int i;
 
 		rp = bp->b_proc;
 		v = btop((u_int)bp->b_un.b_addr&0x3fffffff);
@@ -506,7 +507,7 @@ ubasetup(uban, bp, flags)
 		else
 			hej = rp->p_vmspace->vm_pmap.pm_pcb->P1BR;
 
-		pte = (struct pte *)&hej[v];
+		pte = &hej[v];
 		for (i = 0; i < (npf - 1); i++) {
 			if ((pte + i)->pg_pfn == 0) {
 				int rv;
