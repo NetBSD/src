@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.2 1996/03/17 01:06:31 thorpej Exp $	*/
+/*	$NetBSD: cia.c,v 1.3 1996/04/12 04:40:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -51,12 +51,9 @@
 int	ciamatch __P((struct device *, void *, void *));
 void	ciaattach __P((struct device *, struct device *, void *));
 
-struct cfattach cia_ca = {
-	sizeof(struct cia_softc), ciamatch, ciaattach
-};
-
-struct cfdriver cia_cd = {
-	NULL, "cia", DV_DULL
+struct cfdriver ciacd = {
+	NULL, "cia", ciamatch, ciaattach, DV_DULL,
+	    sizeof(struct cia_softc)
 };
 
 static int	ciaprint __P((void *, char *pnp));
@@ -76,7 +73,7 @@ ciamatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a CIA. */
-	if (strcmp(ca->ca_name, cia_cd.cd_name) != 0)
+	if (strcmp(ca->ca_name, ciacd.cd_name) != 0)
 		return (0);
 
 	if (ciafound)
