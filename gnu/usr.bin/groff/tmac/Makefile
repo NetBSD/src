@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2003/07/01 13:48:24 wiz Exp $
+# $NetBSD: Makefile,v 1.17 2003/07/01 13:58:37 wiz Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -78,5 +78,6 @@ $f-s: $f
 .endfor
 
 FILES+=	${NORMALFILES}
+.endif
 
 .include <bsd.prog.mk>
