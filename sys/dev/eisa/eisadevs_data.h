@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.12 1997/02/16 20:10:31 jonathan Exp 
+ *	NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp 
  */
 
 /*
@@ -179,6 +179,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "SMC8010",
+	    EISA_PRODUCT_SMC8010,
+	},
+	{
+	    0,
+	    "SMC0110",
+	    EISA_PRODUCT_SMC0110,
+	},
+	{
+	    0,
 	    "USC0240",
 	    EISA_PRODUCT_USC0240,
 	},
@@ -216,6 +226,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "ETI",
 	    "Microdyne",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "SMC",
+	    "Standard Microsystems Corp.",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
