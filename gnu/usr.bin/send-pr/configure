@@ -172,7 +172,7 @@ test -n "$verbose" && echo "	setting PASSWD to ${PASSWD}"
 
 
 GNATS_SITE=netbsd
-GNATS_ADDR=gnats-bugs@NetBSD.ORG
+GNATS_ADDR=gnats-bugs@gnats.netbsd.org
 SUBMITTER=net
 DEFAULT_ORGANIZATION=
 DEFAULT_RELEASE=
