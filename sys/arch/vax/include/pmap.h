@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.20 1997/11/02 14:25:20 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.21 1997/11/05 04:23:41 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -106,12 +106,12 @@ extern	struct pmap kernel_pmap_store;
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)				\
-	asm("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
+	__asm__("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
 	    movc3 $1024,(r0),(r1)"				\
 	    :: "r"(src),"r"(dst):"r0","r1","r2","r3","r4","r5");
 
 #define pmap_zero_page(phys)					\
-	asm("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$1024,(r0)" \
+	__asm__("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$1024,(r0)" \
 	    :: "r"(phys): "r0","r1","r2","r3","r4","r5");
 
 /* Prototypes */

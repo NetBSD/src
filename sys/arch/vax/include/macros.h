@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.12 1997/11/03 20:00:27 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.13 1997/11/05 04:23:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@
 static __inline__ int ffs(int reg){
 	register int val;
 
-	asm __volatile ("ffs	$0,$32,%1,%0
+	__asm__ __volatile ("ffs	$0,$32,%1,%0
 			bneq	1f
 			mnegl	$1,%0
 		1:	incl    %0"
@@ -51,27 +51,27 @@ static __inline__ int ffs(int reg){
 }
 
 static __inline__ void _remque(void*p){
-	asm __volatile ("remque (%0),%0;clrl 4(%0)"
+	__asm__ __volatile ("remque (%0),%0;clrl 4(%0)"
 			:
 			: "r" (p)
 			: "memory" );
 }
 
 static __inline__ void _insque(void*p, void*q) {
-        asm __volatile ("insque (%0), (%1)"
+        __asm__ __volatile ("insque (%0), (%1)"
                         :
                         : "r" (p),"r" (q)
                         : "memory" );
 }
 
 #define	bitset(bitnr,var)				\
-({	asm __volatile ("bbss %0,%1,1f;1:;"		\
+({	__asm__ __volatile ("bbss %0,%1,1f;1:;"		\
 			:				\
 			: "g" (bitnr), "g" (var));	\
 })
 
 #define	bitclear(bitnr,var)				\
-({      asm __volatile ("bbsc %0,%1,1f;1:;"             \
+({      __asm__ __volatile ("bbsc %0,%1,1f;1:;"             \
                         :                               \
                         : "g" (bitnr), "g" (var));      \
 })
@@ -79,7 +79,7 @@ static __inline__ void _insque(void*p, void*q) {
 #define	bitisset(bitnr,var)				\
 ({							\
 	register int val;                               \
-	asm __volatile ("clrl %0;bbc %1,%2,1f;incl %0;1:;" \
+	__asm__ __volatile ("clrl %0;bbc %1,%2,1f;incl %0;1:;" \
 			: "=g" (val)			\
 			: "g" (bitnr), "g" (var));	\
 	val;						\
@@ -88,20 +88,20 @@ static __inline__ void _insque(void*p, void*q) {
 #define bitisclear(bitnr,var)                                \
 ({                                                      \
         register int val;                               \
-        asm __volatile ("clrl %0;bbs %1,%2,1f;incl %0;1:;" \
+        __asm__ __volatile ("clrl %0;bbs %1,%2,1f;incl %0;1:;" \
                         : "=g" (val)                    \
                         : "g" (bitnr), "g" (var));      \
 	val;						\
 })
 static __inline__ void bcopy(const void*from, void*toe, u_int len) {
-	asm __volatile ("movc3 %0,(%1),(%2)"
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
 			: "r" (len),"r" (from),"r"(toe)
 			:"r0","r1","r2","r3","r4","r5");
 }
 
 static __inline__ void bzero(void*block, u_int len){
-	asm __volatile ("movc5 $0,(%0),$0,%1,(%0)"
+	__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
 			:
 			: "r" (block), "r" (len)
 			:"r0","r1","r2","r3","r4","r5");
@@ -110,7 +110,7 @@ static __inline__ void bzero(void*block, u_int len){
 static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
 	register ret;
 
-	asm __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
+	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
 			: "=r" (ret)
 			: "r" (b1), "r" (b2), "r" (len)
 			: "r0","r1","r2","r3" );
@@ -121,7 +121,7 @@ static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
 static __inline__ int locc(int mask, char *cp,u_int size){
 	register ret;
 
-	asm __volatile("locc %1,%2,(%3);movl r0,%0"
+	__asm__ __volatile("locc %1,%2,(%3);movl r0,%0"
 			: "=r" (ret)
 			: "r" (mask),"r"(size),"r"(cp)
 			: "r0","r1" );
@@ -133,7 +133,7 @@ static __inline__ int
 scanc(u_int size, const u_char *cp, const u_char *table, int mask){
 	register ret;
 
-	asm __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
+	__asm__ __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
 			: "=g"(ret)
 			: "r"(size),"r"(cp),"r"(table),"r"(mask)
 			: "r0","r1","r2","r3" );
@@ -143,7 +143,7 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask){
 static __inline__ int skpc(int mask, size_t size, u_char *cp){
 	register ret;
 
-	asm __volatile("skpc %1,%2,(%3);movl r0,%0"
+	__asm__ __volatile("skpc %1,%2,(%3);movl r0,%0"
 			: "=g"(ret)
 			: "r"(mask),"r"(size),"r"(cp)
 			: "r0","r1" );
@@ -151,28 +151,28 @@ static __inline__ int skpc(int mask, size_t size, u_char *cp){
 }
 #if 0
 static __inline__ int imin(int a, int b){
-	asm __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
+	__asm__ __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
 			: "=r"(a)
 			: "r"(a),"r"(b) );
 	return a;
 }
 
 static __inline__ int imax(int a, int b){
-        asm __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
+        __asm__ __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
                         : "=r"(a)
                         : "r"(a),"r"(b) );
         return a;
 }
 
 static __inline__ int min(int a, int b){
-        asm __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
+        __asm__ __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
                         : "=r"(a)
                         : "r"(a),"r"(b) );
         return a;
 }
 
 static __inline__ int max(int a, int b){
-        asm __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
+        __asm__ __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
                         : "=r"(a)
                         : "r"(a),"r"(b) );
         return a;
@@ -180,7 +180,7 @@ static __inline__ int max(int a, int b){
 #endif
 
 static __inline__ void blkcpy(const void*from, void*to, u_int len) {
-	asm __volatile("
+	__asm__ __volatile("
 			movl    %0,r1
 			movl    %1,r3
 			movl	%2,r6
@@ -197,7 +197,7 @@ static __inline__ void blkcpy(const void*from, void*to, u_int len) {
 }
 
 static __inline__ void blkclr(void *blk, int len) {
-	asm __volatile("
+	__asm__ __volatile("
 			movl	%0, r3
 			movl	%1, r6
 			jbr	2f
@@ -213,12 +213,12 @@ static __inline__ void blkclr(void *blk, int len) {
 }
 
 #define	setrunqueue(p)	\
-	asm __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
 
 #define	remrunqueue(p)	\
-	asm __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
 
 #define	cpu_switch(p) \
-	asm __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
+	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
 	    ::"g"(p):"r0","r1","r2","r3");
 #endif	/* _VAX_MACROS_H_ */
