@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.3 1995/10/13 20:18:30 pk Exp $
+#	$NetBSD: install.sh,v 1.4 1995/10/31 23:24:29 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -35,7 +35,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.0A
+VERSION=1.1
 ROOTDISK=""				# filled in below
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
 FQDN=""					# domain name
@@ -59,6 +59,25 @@ isin() {
 	return 1
 }
 
+rmel() {
+# remove first argument from list formed by the remaining arguments
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		if [ "$_a" != "$1" ]; then echo "$1"; fi
+		shift
+	done
+}
+
+twiddle()
+{
+	while : ; do
+		sleep 1; echo -n "/";
+		sleep 1; echo -n "-";
+		sleep 1; echo -n "\\";
+		sleep 1; echo -n "|";
+	 done > /dev/tty & echo $!
+}
+
 set_terminal() {
 	echo -n "Specify terminal type [sun]: "
 	getresp "sun"
@@ -71,7 +90,7 @@ set_terminal() {
 #
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | grep "^sd.*at scsibus" | cut -d" " -f1
+	dmesg | egrep "(^sd[0-9]|^x[dy][0-9])" | cut -d" " -f1 | sort | uniq
 }
 
 md_get_cddevs() {
@@ -149,7 +168,8 @@ labelmoredisks() {
 You may label the following disks:
 
 __labelmoredisks_1
-	echo "$_DKDEVS" | grep -v "${ROOTDISK}"
+	_DKDEV=`rmel "${ROOTDISK}"`
+	echo $_DKDEVS
 	echo	""
 	echo -n	"Label which disk? [done] "
 	getresp "done"
@@ -158,10 +178,8 @@ __labelmoredisks_1
 			;;
 
 		*)
-			if echo "$_DKDEVS" | grep -v "${ROOTDISK}" | \
-				grep "^$resp" > /dev/null ; then
-				# XXX CODE ME
-				echo "Yup, it exists."
+			if echo "$_DKDEVS" | grep "^$resp" > /dev/null ; then
+				disklabel -e $resp
 			else
 				echo ""
 				echo "The disk $resp does not exist."
@@ -221,6 +239,9 @@ __configurenetwork_1
 		*)
 			if isin $resp $_IFS ; then
 				_interface_name=$resp
+
+				# remove from list
+				_IFS=`rmel $resp "$_IFS"`
 
 				# Get IP address
 				resp=""		# force one iteration
@@ -493,6 +514,7 @@ install_nfs() {
 	esac
 
 	# Mount the server
+	mkdir /mnt2 > /dev/null 2>&1
 	if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} \
 	    /mnt2 ; then
 		echo "Cannot mount NFS server.  Aborting."
@@ -631,23 +653,17 @@ __get_timezone_1
 }
 
 echo	""
-echo	"Welcome to the NetBSD ${VERSION} installation program."
+echo	"Welcome to the NetBSD/sparc ${VERSION} installation program."
 cat << \__welcome_banner_1
 
-This program is designed to help you put NetBSD on your hard disk,
+This program is designed to help you put NetBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
 
-In particular, you will need to know some reasonably detailed
-information about your disk's geometry.  This program can determine
-some limited information about certain specific types of HP-IB disks.
-If you have SCSI disks, however, prior knowledge of disk geometry
-is absolutely essential.
-
-As with anything which modifies your hard disk's contents, this
+As with anything which modifies your disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
-to make sure your hard drive is backed up before beginning the
+to make sure your data is backed up before beginning the
 installation process.
 
 Default answers are displyed in brackets after the questions.
@@ -656,6 +672,7 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_1
+
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
@@ -694,7 +711,7 @@ case $rval in
 		cat << \__disklabel_not_present_1
 
 FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
+label the disk before continuing.
 
 __disklabel_not_present_1
 		exit
@@ -704,7 +721,7 @@ __disklabel_not_present_1
 		cat << \__disklabel_corrupted_1
 
 FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
+re-label the disk before continuing.
 
 __disklabel_corrupted_1
 		exit
@@ -720,7 +737,7 @@ cat << \__disklabel_notice_1
 You have already placed a disklabel onto the target root disk.
 However, due to the limitations of the standalone program used
 you may want to edit that label to change partition type information.
-You will be given the opporunity to do that now.  Note that you may
+You will be given the opportunity to do that now.  Note that you may
 not change the size or location of any presently open partition.
 
 __disklabel_notice_1
@@ -976,7 +993,7 @@ echo	""
 
 		# If not the root filesystem, make sure the mount
 		# point is present.
-		if [ "X{$_mp}" != X"/mnt" ]; then
+		if [ "X${_mp}" != X"/mnt" ]; then
 			mkdir -p $_mp
 		fi
 
@@ -1003,22 +1020,28 @@ fi
 # Ask the user which media to load the distribution from.
 cat << \__install_sets_1
 
-It is now time to extract the installation sets onto the hard disk.
+It is now time to extract the installation sets onto the disk.
 Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-if [ -f /base.tar.gz ]; then
+
+ALLSETS="base comp etc games man misc text"
+UPGRSETS="base comp games man misc text"
+RELDIR=
+
+if [ -f $RELDIR/base.tar.gz ]; then
 	echo -n	"Install from sets in the current root filesystem? [y] "
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
-			for _f in /*.tar.gz; do
+			for _f in $ALLSETS; do
 				echo -n "Install $_f ? [y]"
 				getresp "y"
 				case "$resp" in
 				y*|Y*)
-					cat $_f | (cd /mnt; tar -zxvpf -)
+					cat $RELDIR/${_f}.tar.gz |
+						(cd /mnt; tar -zxvpf -)
 					_yup=X
 					;;
 				*)
@@ -1091,13 +1114,15 @@ get_timezone
 		fi
 	done
 
-	echo -n "Installing timezone link..."
+	echo "Installing timezone link for $TZ ..."
 	rm -f /mnt/etc/localtime
 	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
 
 	echo -n "Making devices..."
+	pid=`twiddle`
 	cd /mnt/dev
 	sh MAKEDEV all
+	kill $pid
 	echo "done."
 
 	echo "Copying kernel..."
@@ -1107,16 +1132,39 @@ get_timezone
 )
 
 # Unmount all filesystems and check their integrity.
-umount -a
-echo "Checking filesystem integrity..."
-fsck -pf
+(
+	_devs=""
+	_mps=""
+	# maintain reverse order
+	while read line; do
+		_devs="`echo $line | awk '{print $1}'` ${_devs}"
+		_mps="`echo $line | awk '{print $2}'` ${_mps}"
+	done
+	echo -n "Umounting filesystems... "
+	for _mp in ${_mps}; do
+		echo -n "${_mp} "
+		umount ${_mp}
+	done
+	echo "Done."
+
+	echo "Checking filesystem integrity..."
+	for _dev in ${_devs}; do
+		echo  "${_dev}"
+		fsck -f ${_dev}
+	done
+	echo "Done."
+) < /tmp/fstab.shadow
+
+##umount -a
+##echo "Checking filesystem integrity..."
+##fsck -pf
 
 #md_installboot_xxx
 
 cat << \__congratulations_1
 
-CONGRATULATIONS!  You have successfully installed NetBSD on your hard disk!
-To boot the installed system, enter halt at the command prompt.  Once the
+CONGRATULATIONS!  You have successfully installed NetBSD on your disk!
+To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
