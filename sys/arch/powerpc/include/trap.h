@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6.2.1 2002/03/16 15:59:17 jdolecek Exp $	*/
+/*	$NetBSD: trap.h,v 1.6.2.2 2002/06/23 17:39:42 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,6 +96,7 @@
 #define EXC_ALI_OPCODE_INDICATOR(dsisr) ((dsisr >> 10) & 0x7f)
 #define EXC_ALI_LFD	0x09
 #define EXC_ALI_STFD	0x0b
+#define EXC_ALI_DCBZ	0x5f
 
 /* Macros to extract register information */
 #define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */

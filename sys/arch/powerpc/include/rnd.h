@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.1 2000/06/11 16:32:45 tsubai Exp $	*/
+/*	$NetBSD: rnd.h,v 1.1.10.1 2002/06/23 17:39:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -35,14 +35,34 @@
 
 #ifdef _KERNEL
 
+#include <powerpc/spr.h>
+
 #define cpu_hascounter() 1
 
 static __inline u_int32_t
 cpu_counter(void)
 {
-	u_int32_t rv;
+	u_int32_t rv, rtcu, scratch;
 
-	__asm __volatile ("mftb %0" : "=r"(rv));
+	__asm __volatile (
+	    "mfpvr	%0		\n"
+	    "srwi	%0,%0,16	\n"
+	    "cmpwi	%0,%3		\n"
+	    "bne	1f		\n"	/* branch if 601 */
+	    "lis	%0,0x77		\n"
+	    "ori	%0,%0,0x3594	\n"	/* 7.8125e6 */
+	    "mfspr	%2,%4		\n"
+	    "mullw	%2,%2,%0	\n"
+	    "mfspr	%0,%5		\n"
+	    "srwi	%0,%0,7		\n"
+	    "add	%1,%2,%0	\n"
+	    "b		2f		\n"
+	    "1:				\n"
+	    "mftb	%1		\n"
+	    "2:				\n"
+	    : "=r"(scratch), "=r"(rv), "=r"(rtcu)
+	    : "n"(MPC601), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
+
 	return rv;
 }
 

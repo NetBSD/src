@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.6.2 2002/01/10 19:47:36 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.6.3 2002/06/23 17:39:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -737,7 +737,7 @@ void bus_space_destroy(bus_space_tag_t);
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
-#define	PLAYSTATION2_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define	PLAYSTATION2_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.14 2002/06/18 21:05:02 jdolecek Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.15 2002/06/23 17:33:32 jdolecek Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
@@ -12,34 +12,23 @@ items todo from bill sommerfeld/thorpej:
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
 
 	- Test-compile the following ports:
-		- acorn26	(still arm26, check aftermerge)
-		- cats		(aftermerge - isa_machdep.c missing)
-		- evbarm	(aftermerge)
-		- evbmips	(config prob, revisit aftermerge)
-		- evbsh3	(compile prob, revisit aftermerge)
-		- hpcarm	(compile prob, revisit aftermerge)
-		- hpcsh		(compile prob, revisit aftermerge)
-		- mvme68k	(config prob, revisit aftermerge)
-		- netwinder	(compile problems - missing arm/footbr/isadma)
+		- evbsh3	XXX link fails - missing symbols, unrelated to kq
 		- pc532			XXX not xcompile capable
-		- pmppc		(aftermerge)
-		- sandpoint	(compile prob unrelated to kq, aftermerge)
-		- sbmips	(aftermerge)
-		- shark		(aftermerge)
+		- shark		(missing kqfilter hook - opms)
 		- sparc		(missing kqfilter hooks)
-		- sparc64	(compile problem, revisit aftermerge)
-		- sun2		(config incorrect, revisit aftermerge)
+		- sparc64	(missing kqfilter hooks)
+		- sun2		(missing kqfilter hooks - fb, bw)
 		- sun3		(missing kqfilter hooks)
-		- walnut	(compile problems with obsol walnut/clock.c,
-				 revisit aftermerge)
-		- x68k		(compile problem with dev/ic/msm6258.c,
-				 revisit aftermerge)
+		- x68k		(missing kqfilter hook - ite)
 
 done:
 	- test compiled following ports:
-		acorn32 algor alpha arc atari bebox cesfic cobalt dreamcast
-		i386 hp300 hpcmips luna68k mac68k macppc mipsco
-		mmeye news68k newsmips next68k ofppc pmax prep sgimips vax
+		acorn26 acorn32 algor alpha arc atari bebox cats cesfic
+		cobalt dreamcast evbarm evbmips
+		i386 hp300 hpcarm hpcmips hpcsh luna68k mac68k macppc
+		mipsco mmeye mvme68k mvmeppc news68k netwinder newsmips
+		next68k ofppc pmax pmppc prep
+		sandpoint sbmips sgimips vax walnut
 	- name->id lookup
 	- why is union kn_ptr not just a void *? (added p_opaque)
 	- need more comments in kern_event.c

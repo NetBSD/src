@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.6 2001/06/15 21:56:06 dbj Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.6.2.1 2002/06/23 17:38:57 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -292,11 +292,11 @@ nextdisplay_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		printf("nextdisplay_ioctl: wsdisplayio_scursor\n");
-		return ENOTTY;
+		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_SCURPOS:
 		printf("nextdisplay_ioctl: wsdisplayio_scurpos\n");
-		return ENOTTY;
+		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_GINFO:
 	case WSDISPLAYIO_GETCMAP:
@@ -307,10 +307,10 @@ nextdisplay_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 		printf("nextdisplay_ioctl: listed but unsupported ioctl\n");
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 static paddr_t
@@ -386,7 +386,7 @@ nextdisplay_load_font(v, cookie, font)
 	void *cookie;
 	struct wsdisplay_font *font;
 {
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int

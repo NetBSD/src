@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.88.2.2 2002/01/10 19:39:57 thorpej Exp $
+#	$NetBSD: files.atari,v 1.88.2.3 2002/06/23 17:35:14 jdolecek Exp $
 
 maxpartitions 16
 
@@ -249,7 +249,6 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 include "compat/ossaudio/files.ossaudio"
 
 # network devices MII bus
-include "dev/mii/files.mii"
 
 # Wscons related includes
 include	"dev/pckbc/files.pckbc"

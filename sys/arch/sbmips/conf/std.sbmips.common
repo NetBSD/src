@@ -1,0 +1,12 @@
+# $NetBSD: std.sbmips.common,v 1.1.8.2 2002/06/23 17:40:04 jdolecek Exp $
+
+machine sbmips mips
+
+options MIPS64
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80001000"
+
+include	"arch/mips/conf/files.sibyte"

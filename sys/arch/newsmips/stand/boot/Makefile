@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.8.1 2002/01/10 19:47:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8.8.2 2002/06/23 17:38:52 jdolecek Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -18,8 +18,9 @@ COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 
 LDFLAGS= -x -N -Ttext a0700000 -e _start
-CFLAGS= -Os -G 0 -mno-abicalls -Wall
+CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
 
+CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I${COMMON} -I${S}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.2.4 2002/03/16 15:59:26 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.5 2002/06/23 17:40:01 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -114,9 +114,6 @@ struct vm_map *phys_map = NULL;
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
-
 struct pcb *curpcb;
 struct pmap *curpm;
 struct proc *fpuproc;
@@ -127,8 +124,6 @@ struct bat battable[16];
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-int astpending;
 
 char *bootpath;
 unsigned char *eumb_base;
@@ -356,7 +351,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);

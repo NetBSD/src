@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.15.28.2 2002/01/10 19:42:54 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.15.28.3 2002/06/23 17:36:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /*
  * Graphics routines for TOPCAT and CATSEYE frame buffers
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.15.28.3 2002/06/23 17:36:07 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -182,7 +185,7 @@ topcat_intio_match(parent, match, aux)
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
 
-	if (strcmp("fb      ",ia->ia_modname) != 0)
+	if (strcmp("fb",ia->ia_modname) != 0)
 		return (0);
 
 	if (badaddr((caddr_t)ia->ia_addr))

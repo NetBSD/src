@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.37.22.3 2002/02/11 20:06:56 jdolecek Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.37.22.4 2002/06/23 17:34:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.37.22.3 2002/02/11 20:06:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.37.22.4 2002/06/23 17:34:27 jdolecek Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -1028,7 +1028,7 @@ rt_mode(struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int
@@ -1063,7 +1063,7 @@ rt_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 		return (rt_blank(gp, (int *)data));
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 #ifdef BANKEDDEVPAGER

@@ -1,0 +1,8 @@
+# $NetBSD: std.hp700,v 1.1.2.2 2002/06/23 17:36:17 jdolecek Exp $
+#
+# standard, required NetBSD/hp700 'options'
+
+machine	hp700 hppa
+
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts

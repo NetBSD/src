@@ -1,0 +1,21 @@
+#	$NetBSD: files.altq,v 1.1.8.2 2002/06/23 17:33:33 jdolecek Exp $
+
+defflag	opt_altq_enabled.h	ALTQ
+defflag opt_altq.h		ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_BLUE
+				ALTQ_FLOWVALVE ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC
+				ALTQ_CDNR ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
+
+file	altq/altq_conf.c	altq
+file	altq/altq_afmap.c	altq
+file	altq/altq_blue.c	altq
+file	altq/altq_cbq.c		altq
+file	altq/altq_cdnr.c	altq
+file	altq/altq_fifoq.c	altq
+file	altq/altq_hfsc.c	altq
+file	altq/altq_localq.c	altq
+file	altq/altq_priq.c	altq
+file	altq/altq_red.c		altq
+file	altq/altq_rio.c		altq
+file	altq/altq_rmclass.c	altq
+file	altq/altq_subr.c	altq
+file	altq/altq_wfq.c		altq

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.4.2 2002/01/10 19:43:08 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.4.3 2002/06/23 17:36:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Generic soft interrupt implementation for hp300.
  * Based heavily on the alpha implementation by Jason Thorpe.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.4.3 2002/06/23 17:36:14 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +145,8 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 
 	hsi = &hp300_soft_intrs[ipl];
 
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
+	MALLOC(sih, struct hp300_soft_intrhand *,
+	   sizeof(struct hp300_soft_intrhand), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
 		sih->sih_intrhead = hsi;
 		sih->sih_fn = func;

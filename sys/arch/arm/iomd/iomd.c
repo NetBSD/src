@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.2.2.2 2002/01/10 19:38:01 thorpej Exp $	*/
+/*	$NetBSD: iomd.c,v 1.2.2.3 2002/06/23 17:34:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -285,13 +285,13 @@ iomdattach(parent, self, aux)
 	switch (sc->sc_id) {
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-		/* Attach pms device */
+		/* Attach opms device */
 
-		if (bus_space_subregion(iot, ioh, IOMD_MSDATA, 8, &ia.ia_pms.pa_ioh))
-			panic("%s: Cannot map pms registers\n", self->dv_xname);
-		ia.ia_pms.pa_name = "pms";
-		ia.ia_pms.pa_iot = iot;
-		ia.ia_pms.pa_irq = IRQ_MSDRX;
+		if (bus_space_subregion(iot, ioh, IOMD_MSDATA, 8, &ia.ia_opms.pa_ioh))
+			panic("%s: Cannot map opms registers\n", self->dv_xname);
+		ia.ia_opms.pa_name = "opms";
+		ia.ia_opms.pa_iot = iot;
+		ia.ia_opms.pa_irq = IRQ_MSDRX;
 		config_found(self, &ia, iomdprint);
 		break;
 	case RPC600_IOMD_ID:

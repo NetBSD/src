@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2002/01/10 19:46:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2002/06/23 17:38:44 jdolecek Exp $
 
 KDIR=	/sys/arch/news68k/include
 INCSDIR= /usr/include/news68k

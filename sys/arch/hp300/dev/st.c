@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.28.8.1 2002/01/10 19:43:00 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.28.8.2 2002/06/23 17:36:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,6 +109,9 @@
 /*
  * support for the block device not implemented 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.28.8.2 2002/06/23 17:36:11 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.3.2.3 2002/02/11 20:07:44 jdolecek Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.3.2.4 2002/06/23 17:35:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ integrator_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
-				*ptep = ((*ptep) & (~PT_C | PT_B));
+				*ptep &= ~(L2_C | L2_B);
 				tlb_flush();
 			}
 #ifdef DEBUG_DMA
@@ -395,7 +395,7 @@ integrator_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return arm_byte_to_page((u_long)CM_ALIAS_TO_LOCAL(segs[i].ds_addr) + off);
+		return arm_btop((u_long)CM_ALIAS_TO_LOCAL(segs[i].ds_addr) + off);
 	}
 
 	/* Page not found. */
@@ -568,7 +568,6 @@ integrator_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rse
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

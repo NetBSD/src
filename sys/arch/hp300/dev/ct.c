@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.26.2.1 2002/01/10 19:42:49 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.26.2.2 2002/06/23 17:36:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@
  *	merge with cs80 disk driver
  *	finish support of 9145
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.26.2.2 2002/06/23 17:36:05 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

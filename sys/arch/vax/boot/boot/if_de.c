@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.1 2000/05/21 20:17:44 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.1.10.1 2002/06/23 17:42:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -218,7 +218,7 @@ retry:
 	dc->dc_rrent[crx].r_flags = RFLG_OWN;
 	dc->dc_rrent[crx].r_lenerr = 0;
 #ifdef DEV_DEBUG
-	printf("Got packet: len %d idx %d maxlen %d\n", len, crx, maxlen);
+	printf("Got packet: len %d idx %d maxlen %ld\n", len, crx, maxlen);
 #endif
 	if (++crx == NRCV)
 		crx = 0;
@@ -238,7 +238,7 @@ de_put(struct iodesc *desc, void *pkt, size_t len)
 	if ((csr0 = DE_RCSR(DE_PCSR0)) & PCSR0_INTR)
 		DE_WHIGH(csr0 >> 8);
 #ifdef DEV_DEBUG
-	printf("de_put: len %d\n", len);
+	printf("de_put: len %ld\n", len);
 #endif
 retry:
 	if (to-- == 0)

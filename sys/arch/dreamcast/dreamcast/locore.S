@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2.8.2 2002/03/16 15:57:24 jdolecek Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.8.3 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,12 +38,9 @@
 
 #include <sh3/asm.h>
 #include <sh3/locore.h>
-#include <sh3/trapreg.h>
+#include <sh3/exception.h>
 #include <sh3/mmu_sh4.h>
 #include <sh3/cache_sh4.h>
-
-/* bootstrap stack is near upper address of RAM. don't increase MSGBUFSIZE */	
-#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
 
 /*
  * void start(void) __attribute__((__noreturn__)):
@@ -88,85 +85,11 @@ NENTRY(start)
 	/* NOTREACHED */	
 	.align	2
 _L.dreamcast_startup:	.long	_C_LABEL(dreamcast_startup)	
-_L.bootstrap_stack:	.long	INIT_STACK		
+_L.bootstrap_stack:	.long	_C_LABEL(start)
 _L.sh4_icache_sync_all:	.long	_C_LABEL(sh4_icache_sync_all)
 _L.CCR:			.long	SH4_CCR	
 _L.CCRconfig:		.long	0x00000909	
 _L.MMUCR:		.long	SH4_MMUCR
-
-/*
- * void interrupt_exp(int, int, int, int, stuct trapframe)
- *    __attribute__((__noreturn__)):
- *	on entry, SR.BL = 1, SR_RB = 0, all regsiters are saved,
- *	stack is already setuped.	
- */
-	.align	2
-recurse:
-	stc	sr, r4
-	ldc	r5, spc	
-	ldc	r4, ssr
-	RECURSEENTRY
-	bra	1f
-	 nop
-NENTRY(interrupt_exp)
-1:
-	MOV	(INTEVT, r0)
-	mov.l	@r0,	r0
-	mov.l	r0, @(TF_TRAPNO, r15)	/* trapframe->tf_trapno = INTEVT */
-	__INTR_MASK(r0, r1)		/* mask all interrupt */
-	__EXCEPTION_UNBLOCK(r0, r1)	/* enable exception for TLB handling */
-	mov.l	_L.intrhandler, r0
-	jsr	@r0
- 	 nop
-	tst	r0,	r0	/* intrhandler() == 0, fast intr return */
-	bt	2f
-
-	mov.l	_L.check_ipending, r0
-	jsr	@r0
-	 nop
-	tst	r0,	r0
-	bf	1b		/* handle pending interrupt. */
-
-	/* Check for ASTs on exit to user mode. */
-	mov.l	_L.ast,	r0
-	jsr	@r0
-	 mov	r15,	r4
-2:	
-	EXCEPTION_RETURN
-	/* NOTREACHED */
-	.align	2
-REG_SYMBOL(INTEVT)
-_L.intrhandler:		.long	_C_LABEL(intrhandler)
-_L.ast:			.long	_C_LABEL(ast)
-
-NENTRY(Xspllower)
-	sts.l	pr,	@-r15
-
-restart:
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
-	mov.l	_L.check_ipending, r0
-	jsr	@r0
-	 nop
-	tst	r0,	r0
-	bt	1f
-
-	mov.l	_L.restart, r5 
-	mov.l	_L.recurse, r0
-	jmp	@r0
-	 nop
-
-1:
-	__INTR_UNMASK(r0, r1)
-	lds.l	@r15+,	pr
-	rts
-	 nop
-
-	.align	2
-_L.check_ipending:	.long	_C_LABEL(check_ipending)
-_L.recurse:		.long	recurse
-_L.restart:		.long	restart
-
 	.data
 	.align	2
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)

@@ -1,6 +1,7 @@
-/*	$NetBSD: param.h,v 1.5.4.1 2002/03/16 15:59:38 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.5.4.2 2002/06/23 17:40:41 jdolecek Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -42,9 +43,17 @@
  * SuperH dependent constants.
  */
 
+#ifndef _SH3_PARAM_H_
+#define	_SH3_PARAM_H_
+
 #if defined(_KERNEL) && !defined(_LOCORE)
-#include <machine/cpu.h>
+#include <sh3/cpu.h>
 #endif
+
+/* NetBSD/sh3 is 4KB page */
+#define	PGSHIFT			12
+#define	NBPG			(1 << PGSHIFT)
+#define	PGOFSET			(NBPG - 1)
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -57,14 +66,9 @@
  * (within reasonable limits).
  *
  */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
-
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG - 1)	/* byte offset into page */
-#define	NPTEPG		(NBPG / (sizeof(pt_entry_t)))
+#define	ALIGNBYTES		(sizeof(int) - 1)
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
@@ -74,11 +78,18 @@
 /*
  * u-space.
  */
-#define	UPAGES		4		/* pages of u-area */
+#define	UPAGES		3		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+#if UPAGES == 1
+#error "too small u-area"
+#elif UPAGES == 2
+#define	P1_STACK	/* kernel stack is P1-area */
+#else
+#undef	P1_STACK	/* kernel stack is P3-area */
+#endif
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*
@@ -127,23 +138,4 @@
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define	sh3_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
-#define	sh3_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
-#define	sh3_btod(x)		((unsigned)(x) >> PDSHIFT)
-#define	sh3_dtob(x)		((unsigned)(x) << PDSHIFT)
-#define	sh3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define	sh3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	sh3_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define	sh3_ptob(x)		((unsigned)(x) << PGSHIFT)
+#endif /* !_SH3_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.6.4.1 2002/03/16 15:58:17 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.6.4.2 2002/06/23 17:37:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,5 @@ cdev_decl(pc);
 cdev_decl(mms);
 
 cdev_decl(lms);
-
-cdev_decl(pms);
 
 cdev_decl(joy);

@@ -1,10 +1,12 @@
 
-#	$NetBSD: KLONDIKE,v 1.19.4.2 2002/02/11 20:08:48 jdolecek Exp $
+#	$NetBSD: KLONDIKE,v 1.19.4.3 2002/06/23 17:39:04 jdolecek Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8			# estimated number of users
 
@@ -25,6 +27,7 @@ options 	LKM			# loadable kernel modules
 options 	INSECURE		# allow lkms in multiuser mode
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	SCSIVERBOSE		# verbose SCSI error messages
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # compatibility options

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdboot.s,v 1.4.42.1 2001/09/13 01:13:25 thorpej Exp $	*/
+/*	$NetBSD: wdboot.s,v 1.4.42.2 2002/06/23 17:35:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -33,12 +33,12 @@
 #include "xxboot.h"
 
 #ifdef __ELF__
-	.globl	_start, main, fill, end
+	.globl	_start, main, fill
 
 	.text
 _start:
 #else
-	.globl	start, main, fill, end
+	.globl	start, main, fill
 
 	.text
 start:

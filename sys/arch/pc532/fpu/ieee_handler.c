@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.11 2001/02/05 10:42:40 chs Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.11.4.1 2002/06/23 17:39:05 jdolecek Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -86,6 +86,7 @@
 # define ns532_round_page(addr) (((addr) + NBPG - 1) & ~(NBPG - 1))
 #endif
 
+
 static void get_fstate(state *state) {
   asm("sfsr %0" : "=g" (state->FSR));
   asm("movl f0, %0" : "=m" (state->LREG(0)));
@@ -131,6 +132,15 @@ int ieee_sig(int sig, int code, struct sigcontext *scp)
 #endif /* KERNEL */
 
 int ieee_handler_debug = 0;
+
+const union t_conv infty =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0, mantissa2: 0}};
+
+const union t_conv snan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x40000, mantissa2: 0}};
+
+const union t_conv qnan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x80000, mantissa2: 0}};
 
 #define COPYIN(U,K,N) ({if (copyin((AT)U, (AT)K, N) != 0) longjmp(copyin_buffer.copyfail, 1);0;})
 
@@ -494,8 +504,8 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
       state->SP -= op->size;
       addr =  state->SP;
       break;
-    default:
-      /* Keep gcc quit */
+    default: ;
+      /* Keep gcc quiet */
     }
     break;
   case 0x18:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.4.2 2002/01/10 19:37:45 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.4.3 2002/06/23 17:34:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -58,7 +58,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifdef arm26
+#ifdef acorn26
 #include <machine/machdep.h>
 #endif
 
@@ -94,7 +94,7 @@ ast(struct trapframe *tf)
 {
 	struct proc *p = curproc;
 
-#ifdef arm26
+#ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();

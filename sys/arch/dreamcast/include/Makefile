@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2002/03/16 15:57:25 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2002/06/23 17:35:36 jdolecek Exp $
 
 KDIR=	/sys/arch/dreamcast/include
 INCSDIR= /usr/include/dreamcast
@@ -13,11 +13,11 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	limits.h lock.h \
-	math.h mmeye.h \
+	math.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
-	setjmp.h shbvar.h signal.h stdarg.h \
-	trap.h types.h \
+	setjmp.h signal.h stdarg.h \
+	types.h \
 	varargs.h vmparam.h
 
 .include <bsd.kinc.mk>

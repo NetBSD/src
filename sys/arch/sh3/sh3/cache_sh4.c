@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.3.4.2 2002/03/16 15:59:40 jdolecek Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.3.4.3 2002/06/23 17:40:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,6 +64,15 @@ void
 sh4_cache_config()
 {
 	u_int32_t r;
+
+	/*
+	 * For now, P0, U0, P3 write-through P1 write-through
+	 * XXX will be obsoleted.
+	 */
+	sh4_icache_sync_all();
+	RUN_P2;
+	_reg_write_4(SH4_CCR, 0x0000090b);
+	RUN_P1;
 
 	r = _reg_read_4(SH4_CCR);
 
@@ -209,7 +218,7 @@ sh4_dcache_wbinv_range(vaddr_t va, vsize_t sz)
 {
 	vaddr_t eva = round_line(va + sz);
 	va = trunc_line(va);
-	
+
 	while (va < eva) {
 		__asm__ __volatile__("ocbp @%0" : : "r"(va));
 		va += 32;

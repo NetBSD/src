@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.1 2000/11/06 15:00:28 tsubai Exp $	*/
+/*	$NetBSD: xafb.c,v 1.1.6.1 2002/06/23 17:38:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -279,7 +279,7 @@ xafb_ioctl(v, cmd, data, flag, p)
 
 	/* case WSDISPLAYIO_SVIDEO: */
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 paddr_t

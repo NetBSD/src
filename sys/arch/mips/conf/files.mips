@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.30.4.3 2002/03/16 15:58:33 jdolecek Exp $
+#	$NetBSD: files.mips,v 1.30.4.4 2002/06/23 17:38:00 jdolecek Exp $
 #
 
 defflag	opt_cputype.h		NOFPU	# and the rest...
@@ -26,7 +26,6 @@ file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/cpu_exec.c
 file	arch/mips/mips/kgdb_machdep.c		kgdb
 file	arch/mips/mips/mem.c
-file	arch/mips/mips/mips_mcclock.c		mcclock	# CPU speed via mcclock
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/syscall.c		# syscalls
 file	arch/mips/mips/trap.c			# interrupt, trap handlers
@@ -46,7 +45,6 @@ file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
 file	arch/mips/mips/in_cksum.c		inet
-file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 file	arch/mips/mips/fpemu.c			softfloat

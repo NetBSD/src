@@ -1,4 +1,4 @@
-/*	$Id: readufs.h,v 1.1.6.2 2002/01/10 19:50:29 thorpej Exp $	*/
+/*	from Id: readufs.h,v 1.7 2002/01/26 15:55:51 itohy Exp 	*/
 
 /*
  * Written by ITOH, Yasufumi (itohy@netbsd.org)
@@ -21,7 +21,6 @@ struct ufs_info {
 #endif
 	} fstype;
 	int (*get_inode) __P((ino_t ino, struct dinode *dibuf));
-	int iblkshift;
 
 	/* superblock information */
 	u_int32_t bsize;	/* fs block size */
@@ -41,11 +40,14 @@ struct ufs_info {
 #endif
 #ifdef USE_LFS
 		struct {
+			u_int32_t version;	/* LFS version # */
 			ufs_daddr_t idaddr;	/* ifile inode disk address */
-			u_int32_t inopb;	/* inodes per block */
+			u_int32_t inopb;	/* inodes per block (v1) */
+						/* inodes per frag (v2) */
 			u_int32_t ifpb;		/* inode addrs / ifile block */
-			u_int32_t cleansz;	/* cleaner info size in block */
-			u_int32_t segtabsz;	/* segement tab size in block */
+			u_int32_t ioffset;	/* start of inode in ifile */
+						/* (in sector) */
+			u_int32_t ibsize;	/* size of inode block */
 		} u_lfs;
 #endif
 	} fs_u;
@@ -54,7 +56,7 @@ struct ufs_info {
 extern struct ufs_info	ufs_info;
 #define ufs_get_inode(ino, di)	((*ufs_info.get_inode)((ino), (di)))
 
-void RAW_READ __P((void *buf, u_int32_t blkpos, size_t bytelen));
+void RAW_READ __P((void *buf, ufs_daddr_t blkpos, size_t bytelen));
 
 size_t ufs_read __P((struct dinode *di, void *buf, unsigned off, size_t count));
 ino_t ufs_lookup __P((ino_t dirino, const char *fn));

@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.2.2.2 2002/01/10 19:38:23 thorpej Exp $ */
+/* $NetBSD: wsqms.c,v 1.2.2.3 2002/06/23 17:34:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -140,7 +140,7 @@ wsqms_ioctl(cookie, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 
@@ -163,11 +163,6 @@ wsqms_intr(arg)
 	b = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
 	if ((x != sc->lastx) || (y != sc->lasty) || (b != sc->lastb)) {
-		/* save old values */
-		sc->lastx = x;
-		sc->lasty = y;
-		sc->lastb = b;
-
 		/* do we have to bound x and y ? => yes */
 		if (x < -MAX_XYREG) x = -MAX_XYREG;
 		if (x >  MAX_XYREG) x =  MAX_XYREG;
@@ -178,8 +173,15 @@ wsqms_intr(arg)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, x);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, y);
 
+		wsmouse_input(sc->sc_wsmousedev, b, x - sc->lastx, y - sc->lasty, 0,
+				WSMOUSE_INPUT_DELTA);
 		wsmouse_input(sc->sc_wsmousedev, b, x, y, 0,
 				WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+
+		/* save old values */
+		sc->lastx = x;
+		sc->lasty = y;
+		sc->lastb = b;
 	};
 
 	return (0);	/* pass on */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.27.22.1 2002/02/11 20:06:55 jdolecek Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.27.22.2 2002/06/23 17:34:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.22.1 2002/02/11 20:06:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.22.2 2002/06/23 17:34:25 jdolecek Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -931,7 +931,7 @@ cv_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 
@@ -981,7 +981,7 @@ cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 	    case GRFIOCBLANK:
 		return (cv_blank (gp, (int *)data));
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 

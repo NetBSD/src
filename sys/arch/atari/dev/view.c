@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.2 2002/06/17 18:48:26 jdolecek Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.3 2002/06/23 17:35:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -393,7 +393,7 @@ struct proc	*p;
 		error = view_set_colormap(vu, (colormap_t *)data);
 		break;
 	default:
-		error = EINVAL;
+		error = EPASSTHROUGH;
 		break;
 	}
 	return(error);

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.2.6.1 2001/08/03 04:10:47 lukem Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.2.6.2 2002/06/23 17:34:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2.6.1 2001/08/03 04:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2.6.2 2002/06/23 17:34:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -357,7 +357,7 @@ dec_2100_a500_pic_intr_map(struct pci_attach_args *pa,
 		return (1);
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	if (device > 8) {
 		printf("dec_2100_a500_pic_intr_map: bad device %d\n",
 		    device);
@@ -393,7 +393,7 @@ dec_2100_a500_icic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return (1);
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	switch (device) {
 	case 0:		/* on-board Ethernet */
 		irq = 24;

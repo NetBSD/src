@@ -1,7 +1,7 @@
-/*	$NetBSD: ip22.c,v 1.5.4.2 2002/03/16 15:59:32 jdolecek Exp $	*/
+/*	$NetBSD: ip22.c,v 1.5.4.3 2002/06/23 17:40:32 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2001 Rafal K. Boni
+ * Copyright (c) 2001, 2002 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputype.h"
 #include "opt_machtypes.h"
 
 #ifdef IP22
@@ -43,24 +44,25 @@
 
 #include <mips/cache.h>
 
+u_int32_t next_clk_intr;
+u_int32_t missed_clk_intrs;
+static unsigned long last_clk_intr;
+
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
+static struct evcnt mips_spurint_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
+
 static u_int32_t iocwrite;	/* IOC write register: read-only */
 static u_int32_t iocreset;	/* IOC reset register: read-only */
-
-static unsigned long last_clk_intr;
-
-static unsigned long ticks_per_hz;
-static unsigned long ticks_per_usec;
-
 
 void		ip22_init(void);
 void 		ip22_bus_reset(void);
 int 		ip22_local0_intr(void);
 int		ip22_local1_intr(void);
 int 		ip22_mappable_intr(void *);
-void 		ip22_intr(u_int, u_int, u_int, u_int);
+void		ip22_intr(u_int, u_int, u_int, u_int);
 void		ip22_intr_establish(int, int, int (*)(void *), void *);
 
 unsigned long 	ip22_clkread(void);
@@ -171,15 +173,21 @@ ip22_init(void)
 
 	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps,
 				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
-	printf("CPU clock speed = %lu.%02luMhz\n", cps / (1000000 / hz),
-						(cps % (1000000 / hz) / 100));
 
 	platform.clkread = ip22_clkread;
 
-	ticks_per_hz = cps;
-	ticks_per_usec = cps * hz / 1000000;
+	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
+	curcpu()->ci_cpu_freq = 2 * cps * hz;
+	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
+	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	evcnt_attach_static(&mips_int5_evcnt);
+	evcnt_attach_static(&mips_spurint_evcnt);
+
+	printf("CPU clock speed = %lu.%02luMhz\n", 
+				curcpu()->ci_cpu_freq / 1000000,
+			    	(curcpu()->ci_cpu_freq / 10000) % 100);
 }
 
 void
@@ -189,6 +197,10 @@ ip22_bus_reset(void)
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc) = 0;
 }
 
+/*
+ * NB: Do not re-enable interrupts here -- reentrancy here can cause all
+ * sorts of Bad Things(tm) to happen, including kernel stack overflows.
+ */
 void
 ip22_intr(status, cause, pc, ipending)
 	u_int32_t status;
@@ -196,6 +208,7 @@ ip22_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
+	u_int32_t newcnt;
 	struct clockframe cf;
 
 	/* Tickle Indy/I2 MC watchdog timer */
@@ -203,7 +216,21 @@ ip22_intr(status, cause, pc, ipending)
 
 	if (ipending & MIPS_INT_MASK_5) {
 		last_clk_intr = mips3_cp0_count_read();
-		mips3_cp0_compare_write(last_clk_intr + ticks_per_hz);
+
+		next_clk_intr += curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_clk_intr);
+		newcnt = mips3_cp0_count_read();
+
+		/* 
+		 * Missed one or more clock interrupts, so let's start 
+		 * counting again from the current value.
+		 */
+		if ((next_clk_intr - newcnt) & 0x80000000) {
+		    missed_clk_intrs++;
+
+		    next_clk_intr = newcnt + curcpu()->ci_cycles_per_hz;
+		    mips3_cp0_compare_write(next_clk_intr);
+		}
 
 		cf.pc = pc;
 		cf.sr = status;
@@ -235,7 +262,8 @@ ip22_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	if (cause & status & MIPS_HARD_INT_MASK) 
+		mips_spurint_evcnt.ev_count++;
 }
 
 int
@@ -398,10 +426,11 @@ ip22_intr_establish(level, ipl, handler, arg)
 unsigned long
 ip22_clkread(void)
 {
-	unsigned long diff = mips3_cp0_count_read();
+	uint32_t res, count;
 
-	diff -= last_clk_intr;
-	return (diff / ticks_per_usec);
+	count = mips3_cp0_count_read() - last_clk_intr;
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
+	return (res);
 }
 
 unsigned long
@@ -456,11 +485,22 @@ ip22_cache_init(struct device *self)
 	/*
 	 * If we don't have an R4000-style cache, then initialize the
 	 * IP22 SysAD L2 cache.
+	 *
+	 * XXX: For now we disable the SysAD cache on R4600/R5k systems,
+	 * as there's no code to drive it; also make sure to clear the
+	 * flags used by the generic MIPS code so it doesn't attempt to
+	 * use the L2.
 	 */
-	if (mips_sdcache_line_size == 0) {
-		/* XXX */
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_R4600:
+#ifndef ENABLE_MIPS_R3NKK
+	case MIPS_R5000:
+#endif
+		mips_sdcache_size = 0;
+		mips_sdcache_line_size = 0;
 		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
 		ip22_sdcache_disable();
+		break;
 	}
 }
 

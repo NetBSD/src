@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.22.4.1 2001/08/03 04:10:46 lukem Exp $ */
+/* $NetBSD: dwlpx.c,v 1.22.4.2 2002/06/23 17:34:13 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.22.4.1 2001/08/03 04:10:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.22.4.2 2002/06/23 17:34:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,7 @@ dwlpxattach(parent, self, aux)
 	    alphabus_dma_get_tag(&sc->dwlpx_cc.cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &sc->dwlpx_cc.cc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, dwlpxprint);

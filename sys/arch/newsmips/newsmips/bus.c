@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.7.2.2 2002/01/10 19:47:01 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.7.2.3 2002/06/23 17:38:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -772,7 +772,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

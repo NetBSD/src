@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2002/03/16 16:00:21 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2002/06/23 17:43:14 jdolecek Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.

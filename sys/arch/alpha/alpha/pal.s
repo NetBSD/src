@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.14 1999/12/02 22:08:04 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.14.8.1 2002/06/23 17:34:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.14 1999/12/02 22:08:04 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.14.8.1 2002/06/23 17:34:08 jdolecek Exp $");
 
 inc2:	.stabs	__FILE__,132,0,0,inc2; .loc	1 __LINE__
 /*
@@ -92,7 +92,7 @@ LEAF(alpha_pal_cflush,1)
  * alpha_pal_halt: Halt the processor. [PRIVILEGED]
  */
 	.text
-LEAF(alpha_pal_halt,0)
+LEAF_NOPROFILE(alpha_pal_halt,0)
 	call_pal PAL_halt
 	br	zero,alpha_pal_halt	/* Just in case */
 	RET
@@ -139,7 +139,7 @@ LEAF_NOPROFILE(_alpha_pal_swpipl,1)
  *	a1	vector selector
  */
 	.text
-LEAF(alpha_pal_wrent,2)
+LEAF_NOPROFILE(alpha_pal_wrent,2)
 	call_pal PAL_OSF1_wrent
 	RET
 	END(alpha_pal_wrent)
@@ -151,7 +151,7 @@ LEAF(alpha_pal_wrent,2)
  *	a0	new virtual page table pointer
  */
 	.text
-LEAF(alpha_pal_wrvptptr,1)
+LEAF_NOPROFILE(alpha_pal_wrvptptr,1)
 	call_pal PAL_OSF1_wrvptptr
 	RET
 	END(alpha_pal_wrvptptr)

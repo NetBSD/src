@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.1.4.2 2002/01/10 19:42:05 thorpej Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.1.4.3 2002/06/23 17:35:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -48,6 +48,8 @@
 /* Proto types for all the bus_space structure functions */
 
 bs_protos(ifpga);
+bs_protos(generic);
+bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 bs_map_proto(ifpga_mem);
 bs_unmap_proto(ifpga_mem);
@@ -77,39 +79,39 @@ struct bus_space ifpga_bs_tag = {
 	ifpga_bs_barrier,
 
 	/* read (single) */
-	ifpga_bs_r_1,
-	ifpga_bs_r_2,
-	ifpga_bs_r_4,
+	generic_bs_r_1,
+	generic_armv4_bs_r_2,
+	generic_bs_r_4,
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	ifpga_bs_rm_1,
-	ifpga_bs_rm_2,
-	ifpga_bs_rm_4,
+	generic_bs_rm_1,
+	generic_armv4_bs_rm_2,
+	generic_bs_rm_4,
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	bs_notimpl_bs_rr_1,
-	ifpga_bs_rr_2,
-	ifpga_bs_rr_4,
+	generic_armv4_bs_rr_2,
+	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	ifpga_bs_w_1,
-	ifpga_bs_w_2,
-	ifpga_bs_w_4,
+	generic_bs_w_1,
+	generic_armv4_bs_w_2,
+	generic_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	ifpga_bs_wm_1,
-	ifpga_bs_wm_2,
-	ifpga_bs_wm_4,
+	generic_bs_wm_1,
+	generic_armv4_bs_wm_2,
+	generic_bs_wm_4,
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	bs_notimpl_bs_wr_1,
-	ifpga_bs_wr_2,
-	ifpga_bs_wr_4,
+	generic_armv4_bs_wr_2,
+	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -120,13 +122,13 @@ struct bus_space ifpga_bs_tag = {
 
 	/* set region */
 	bs_notimpl_bs_sr_1,
-	ifpga_bs_sr_2,
+	generic_armv4_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	ifpga_bs_c_2,
+	generic_armv4_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.18.2.5 2002/03/16 15:57:57 jdolecek Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18.2.6 2002/06/23 17:36:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -268,7 +268,6 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-		fb->hf_order_flags = HPCFB_REVORDER_WORD;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;
@@ -288,7 +287,6 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 		break;
 
 	case 8:
-		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;
@@ -549,7 +547,7 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t
@@ -622,8 +620,8 @@ plumvideo_clut_default(struct plumvideo_softc *sc)
 	    bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	{
-		const u_int8_t compo6[6] = { 0,  51, 102, 153, 204, 255 };
-		const u_int32_t ansi_color[16] = {
+		static const u_int8_t compo6[6] = { 0, 51, 102, 153, 204, 255 };
+		static const u_int32_t ansi_color[16] = {
 			0x000000, 0xff0000, 0x00ff00, 0xffff00,
 			0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
 			0x000000, 0x800000, 0x008000, 0x808000,

@@ -1,0 +1,16 @@
+#	$NetBSD: std.pmppc,v 1.1.4.2 2002/06/23 17:39:16 jdolecek Exp $
+#
+# standard, required NetBSD/pmppc 'options'
+
+machine		pmppc powerpc
+
+options 	PPC_MPC6XX	# Artesyn PMPPC uses Motorola PPC750 CPUs
+makeoptions 	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+
+# Executable support:
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	TEXTADDR=0x40000
+
+makeoptions 	NEED_BINARY=1

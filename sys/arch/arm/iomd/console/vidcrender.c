@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.4.2.2 2002/01/10 19:38:28 thorpej Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.4.2.3 2002/06/23 17:34:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -714,7 +714,7 @@ vidcrender_mmap(vc, offset, nprot)
 {
 	if ((u_int)offset >= videomemory.vidm_size)
 		return (-1);
-	return(arm_byte_to_page(((videomemory.vidm_pbase) + (offset))));
+	return(arm_btop(((videomemory.vidm_pbase) + (offset))));
 }
 
 extern void vidcrendermc_render __P(( unsigned char *addr, unsigned char *fontaddr,
@@ -1494,8 +1494,9 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
 		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-		error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-		return 0;
+		if (error != EPASSTHROUGH)
+			return (error);
+		return ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		break;
 
 	case CONSOLE_RESETSCREEN:
@@ -1545,7 +1546,7 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
  		return 0;
 	}
 	}
-	return -1;
+	return (EPASSTHROUGH);
 }
 
 int

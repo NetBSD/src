@@ -1,10 +1,12 @@
-#	$NetBSD: MDINSTALL,v 1.4.4.3 2002/03/16 15:55:48 jdolecek Exp $
+#	$NetBSD: MDINSTALL,v 1.4.4.4 2002/06/23 17:34:23 jdolecek Exp $
 
 #
 # INSTALL kernel for ramdisk installation
 #
 
 include "arch/amiga/conf/std.amiga"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -54,6 +56,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #
@@ -65,7 +68,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
@@ -104,6 +107,11 @@ options 	GRF_AGA		# AGA Chip Set
 options 	GRF_AGA_VGA	# AGA VGAONLY timing
 options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
+
+# select a font for the console according to the character set and keymap
+# you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and do not need option setting
@@ -278,6 +286,6 @@ config	netbsd root on ? type ?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2048	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2048	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk [ramdisk]

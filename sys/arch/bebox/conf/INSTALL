@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.12.2.4 2002/03/16 15:57:00 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.12.2.5 2002/06/23 17:35:25 jdolecek Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -13,7 +15,7 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 		MEMORY_DISK_HOOKS
 options 		MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 		MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 		MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
@@ -28,7 +30,8 @@ options 		MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KTRACE
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43
@@ -109,7 +112,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 #siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at siop?

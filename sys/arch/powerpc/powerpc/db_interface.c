@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11.2.3 2002/03/16 15:59:18 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.11.2.4 2002/06/23 17:39:46 jdolecek Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -38,7 +38,7 @@
 
 int	db_active = 0;
 
-extern label_t *db_recover;
+db_regs_t ddb_regs;
 
 void ddb_trap(void);				/* Call into trap_subr.S */
 int ddb_trap_glue(struct trapframe *);		/* Called from trap_subr.S */

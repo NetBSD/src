@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163.2.4 2002/03/16 15:55:44 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163.2.5 2002/06/23 17:34:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.4 2002/03/16 15:55:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.5 2002/06/23 17:34:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.4 2002/03/16 15:55:44 jdolecek E
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -73,9 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.4 2002/03/16 15:55:44 jdolecek E
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <sys/exec.h>
+
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
+
+#include <sys/exec_aout.h>
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -139,6 +142,7 @@ struct vm_map *phys_map = NULL;
 caddr_t	msgbufaddr;
 paddr_t msgbufpa;
 
+int	machineid;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -168,6 +172,14 @@ struct cpu_info cpu_info_store;
  * DMA transfer lengths.
  */
 int	ser_open_speed;
+
+#ifdef DRACO
+vaddr_t DRCCADDR;
+
+volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
+volatile u_int8_t *draco_misc;
+volatile struct drioct *draco_ioct;
+#endif
 
  /*
  * Console initialization: called early on from main,
@@ -386,7 +398,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

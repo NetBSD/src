@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.25.16.2 2002/02/11 20:06:54 jdolecek Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.25.16.3 2002/06/23 17:34:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.25.16.2 2002/02/11 20:06:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.25.16.3 2002/06/23 17:34:25 jdolecek Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -160,7 +160,7 @@ unsigned char clconscolors[3][3] = {	/* background, foreground, hilite */
 
 int	cltype = 0;		/* Picasso, Spectrum or Piccolo */
 int	cl_64bit = 0;		/* PiccoloSD64 or PicassoIV */
-unsigned char pass_toggle;	/* passthru status tracker */
+unsigned char cl_pass_toggle;	/* passthru status tracker */
 
 /*
  * because all 542x-boards have 2 configdev entries, one for
@@ -730,7 +730,7 @@ cl_mode(gp, cmd, arg, a2, a3)
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int
@@ -774,7 +774,7 @@ cl_ioctl(gp, cmd, data)
                 return (cl_blank(gp, (int *)data));
 
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int
@@ -1216,7 +1216,7 @@ cl_toggle(gp, wopp)
 
 	ba = gp->g_regkva;
 
-	if (pass_toggle) {
+	if (cl_pass_toggle) {
 		RegOffpass(ba);
 	} else {
 		RegOnpass(ba);
@@ -1802,7 +1802,7 @@ RegOnpass(ba)
 			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) & 0xdf);
 		break;
 	}
-	pass_toggle = 1;
+	cl_pass_toggle = 1;
 	delay(200000);
 }
 
@@ -1826,7 +1826,7 @@ RegOffpass(ba)
 			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x20);
 		break;
 	}
-	pass_toggle = 0;
+	cl_pass_toggle = 0;
 	delay(200000);
 }
 

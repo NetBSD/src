@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.12.26.1 2002/02/11 20:06:43 jdolecek Exp $	*/
+/*	$NetBSD: cc.c,v 1.12.26.2 2002/06/23 17:34:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.26.1 2002/02/11 20:06:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.26.2 2002/06/23 17:34:20 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.26.1 2002/02/11 20:06:43 jdolecek Exp $"
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include "audio.h"
+
+vaddr_t CUSTOMADDR, CUSTOMbase;
 
 #if defined (__GNUC__)
 #define INLINE inline

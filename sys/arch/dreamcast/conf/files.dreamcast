@@ -1,7 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.11.2.3 2002/03/16 15:57:23 jdolecek Exp $
-#
-# new style config file for dreamcast
-#
+#	$NetBSD: files.dreamcast,v 1.11.2.4 2002/06/23 17:35:33 jdolecek Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 8
@@ -18,7 +15,6 @@ include "dev/pci/files.pci"
 file	arch/dreamcast/dreamcast/conf.c
 file	arch/dreamcast/dreamcast/machdep.c
 file	arch/dreamcast/dreamcast/autoconf.c
-file	arch/dreamcast/dreamcast/procfs_machdep.c	procfs
 file	arch/dreamcast/dreamcast/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c				disk
 
@@ -53,10 +49,13 @@ device	mainbus: mainbus
 attach	mainbus at root
 file	arch/dreamcast/dreamcast/mainbus.c	mainbus
 
-include "arch/dreamcast/conf/files.shbus"
+device cpu
+attach cpu at mainbus
+file	arch/sh3/sh3/cpu.c			cpu
 
-# network devices MII bus
-include "dev/mii/files.mii"
+include	"arch/sh3/conf/files.shb"
+
+file arch/dreamcast/dreamcast/sysasic.c		shb
 
 device maple { [port = -1], [subunit = -1] }
 attach maple at shb

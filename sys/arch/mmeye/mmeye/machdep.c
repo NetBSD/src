@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.2.2 2002/03/16 15:58:49 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.2.3 2002/06/23 17:38:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -95,18 +95,17 @@
 #include <sh3/bscreg.h>
 #include <sh3/cpgreg.h>
 #include <sh3/cache_sh3.h>
-#include <dev/cons.h>
+#include <sh3/exception.h>
+
 #include <machine/bus.h>
 #include <machine/mmeye.h>
+#include <machine/intr.h>
+
+#include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* mmeye */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
-
-paddr_t msgbuf_paddr;
-extern paddr_t avail_start, avail_end;
-
-#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
 void initSH3 __P((void *));
 void LoadAndReset __P((char *));
@@ -115,7 +114,10 @@ void consinit __P((void));
 void sh3_cache_on __P((void));
 void InitializeBsc(void);
 
-extern char start[], etext[], edata[], end[];
+struct mmeye_intrhand {
+	void *intc_ih;
+	int irq;
+} mmeye_intrhand[_INTR_N];
 
 /*
  * Machine-dependent startup code
@@ -126,7 +128,7 @@ void
 cpu_startup()
 {
 
-	sh3_startup();
+	sh_startup();
 }
 
 /*
@@ -222,14 +224,9 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
+	extern char edata[], end[];
 	vaddr_t kernend;
-	vsize_t sz;
 
-	kernend = sh3_round_page(end);
-#ifdef DDB
-	/* XXX Currently symbol table size is not passed to the kernel. */
-	kernend += 0x40000;					/* XXX */
-#endif
 	/* Clear bss */
 	memset(edata, 0, end - edata);
 
@@ -241,36 +238,38 @@ initSH3(void *pc)	/* XXX return address */
 #else
 #warning "unknown product"
 #endif
-	/* Initialize proc0 and enable MMU. */
-	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
-
-	/* Number of pages of physmem addr space */
-	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
-
-	/* avail_start is first available physical memory address */
-	avail_start = kernend + sz;
-	avail_end = IOM_RAM_END + 1;
-
 	consinit();
+
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+#ifdef DDB
+	/* XXX Currently symbol table size is not passed to the kernel. */
+	kernend += 0x40000;					/* XXX */
+#endif
+
+	/* Load memory to UVM */
+	physmem = atop(IOM_RAM_SIZE);
+	uvm_page_physload(
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		VM_FREELIST_DEFAULT);
+
+	/* Initialize proc0 u-area */
+	sh_proc0_init();
+
+	/* Initialize pmap and start to address translation */
+	pmap_bootstrap();
+
 #ifdef DDB
 	ddb_init(1, end, end + 0x40000);			/* XXX */
 #endif
-
-	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
-
 	/*
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
 	__asm __volatile (
 		"jmp	@%0;"
-		"mov	%1, r15" :: "r"(pc), "r"(proc0.p_addr->u_pcb.kr15));
+		"mov	%1, r15"
+		:: "r"(pc),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 }
 
 /*
@@ -287,64 +286,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-}
-
-int
-bus_space_map(t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
-{
-	*bshp = (bus_space_handle_t)addr;
-
-	return 0;
-}
-
-int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
-{
-
-	*nbshp = bsh + offset;
-	return (0);
-}
-
-int
-sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-	       bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	*bshp = *bpap = rstart;
-
-	return (0);
-}
-
-void
-sh_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-
-}
-
-void
-sh_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-
 }
 
 /*
@@ -619,3 +560,83 @@ Send16550(int c)
 	}
 }
 #endif /* sh3_tmp */
+
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int s, evtcode;
+
+	evtcode = _reg_read_4(SH3_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+	}
+}
+
+void *
+mmeye_intr_establish(int irq, int trigger, int level, int (*func)(void *),
+    void *arg)
+{
+	struct mmeye_intrhand *mh = &mmeye_intrhand[irq];
+
+	mh->intc_ih = intc_intr_establish(0x200 + (irq << 5), IST_LEVEL, level,
+	    func, arg);
+	mh->irq = irq;
+
+	MMTA_IMASK |= (1 << (15 - irq));
+
+	return ((void *)irq);
+}
+
+void
+mmeye_intr_disestablish(void *ih)
+{
+	struct mmeye_intrhand *mh = ih;
+
+	MMTA_IMASK &= ~(1 << (15 - mh->irq));
+
+	intc_intr_disestablish(mh->intc_ih);
+}
+
+int
+bus_space_map(t, addr, size, flags, bshp)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	bus_size_t size;
+	int flags;
+	bus_space_handle_t *bshp;
+{
+	*bshp = (bus_space_handle_t)addr;
+
+	return 0;
+}
+
+int
+sh_memio_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+
+	*nbshp = bsh + offset;
+	return (0);
+}

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.6.4.3 2002/03/16 15:59:58 jdolecek Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.6.4.4 2002/06/23 17:42:13 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,12 +32,6 @@
 #define _MACHINE_PCI_MACHDEP_H_
 
 /*
- * We want to contro both device & function probe order.
- */
-#define		__PCI_BUS_DEVORDER
-#undef		__PCI_DEV_FUNCORDER
-
-/*
  * Forward declarations.
  */
 struct pci_attach_args;
@@ -52,7 +46,6 @@ typedef u_int pci_intr_handle_t;
 struct sparc_pci_chipset {
 	void			*cookie;	/* psycho_pbm, but sssh! */
 	int			rootnode;	/* PCI controller */
-	int			curnode;	/* Current OFW node */
 };
 
 /* 
@@ -66,6 +59,9 @@ struct sparc_pci_chipset {
 
 #define	PCITAG_NODE(x)		(int)(((x)>>32)&0xffffffff)
 #define	PCITAG_OFFSET(x)	((x)&0xffffffff)
+#define	PCITAG_BUS(t)		((PCITAG_OFFSET(t)>>16)&0xff)
+#define	PCITAG_DEV(t)		((PCITAG_OFFSET(t)>>11)&0x1f)
+#define	PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)
 #define	PCITAG_CREATE(n,b,d,f)	(((u_int64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
 typedef u_int64_t pcitag_t; 
@@ -73,14 +69,10 @@ typedef u_int64_t pcitag_t;
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
-#ifdef __PCI_BUS_DEVORDER
-int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
-#endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
+		    int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);
@@ -90,5 +82,9 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 					 int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+int		pci_enumerate_bus(struct pci_softc *,
+		    int (*match)(struct pci_attach_args *),
+		    struct pci_attach_args *);
 
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

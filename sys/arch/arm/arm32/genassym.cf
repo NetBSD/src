@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.6 2002/03/16 15:56:03 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.7 2002/06/23 17:34:45 jdolecek Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,11 +57,10 @@ endif
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
-define	PROCESS_PAGE_TBLS_BASE	PROCESS_PAGE_TBLS_BASE
+define	PTE_BASE		PTE_BASE
 
 define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
-define	PDSHIFT			PDSHIFT
 
 define	P_TRACED		P_TRACED
 define	P_PROFIL		P_PROFIL

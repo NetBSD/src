@@ -1,0 +1,229 @@
+# $NetBSD: files.acorn26,v 1.2.6.2 2002/06/23 17:33:38 jdolecek Exp $
+
+# Copyright (c) 1997, 1998, 2000 Ben Harris
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# This file is part of NetBSD/acorn26 -- a port of NetBSD to ARM2/3 machines.
+
+maxpartitions 8
+maxusers 2 8 64
+
+# Display current IPL in screen border
+defflag FLASHYTHING
+
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+include "dev/ata/files.ata"
+major	{ wd = 4 }
+include "dev/scsipi/files.scsipi"
+major	{ sd = 5 }
+major	{ cd = 6 }
+
+define fiq
+
+# CPU
+#device	cpu { }
+attach	cpu at root with cpu_root
+file	arch/acorn26/acorn26/cpu.c		cpu
+
+# Floating-point unit
+device	fpu
+attach	fpu at cpu
+defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
+file	arch/acorn26/acorn26/fpu.c		fpu		needs-flag
+file	arch/acorn26/acorn26/fpu_asm.S		fpu
+
+# I/O bus (on the far side of the address and data latches)
+device iobus { base = -1 }
+attach iobus at root
+file	arch/acorn26/iobus/iobus.c		iobus
+
+# 82C710/1 on A5000 etc will be at iobus0 base 0x00010000 (and 0x00012000???)
+
+# I/O controller (Albion) (usually at iobus0 base 0x00200000)
+device	ioc { [bank = -1], [offset = 0] }
+attach	ioc at iobus
+file	arch/acorn26/iobus/ioc.c		ioc		needs-flag
+file	arch/acorn26/ioc/ioc_fiq_util.S		fiq		needs-flag
+
+# I^2C bus (bit-banged through IOC control register)
+device	iic { addr = -1 }
+attach	iic at ioc
+file	arch/acorn26/ioc/iic.c			iic
+
+# PCF8583 I^2C Clock/calendar/RAM
+device	rtc
+attach	rtc at iic
+file	arch/acorn26/ioc/rtc.c			rtc
+file	dev/clock_subr.c			rtc
+
+# DS2401 Silicon Serial Number
+device	ssn
+attach	ssn at ioc
+file	arch/acorn26/ioc/ssn.c			ssn
+
+# I/O Extension Block (usually at ioc0 bank 5)
+device	ioeb { [offset = -1] }
+attach	ioeb at ioc
+file	arch/acorn26/ioc/ioeb.c			ioeb		needs-flag
+
+# Latches (random internal use) (usually at ioc0 bank 5)
+device	latches
+attach	latches at ioc
+file	arch/acorn26/ioc/latches.c		latches
+
+# On-board keyboard interface
+device	arckbd { }
+attach	arckbd at ioc
+device	arcwskbd: wskbddev
+attach	arcwskbd at arckbd
+device	arcwsmouse: wsmousedev
+attach	arcwsmouse at arckbd
+file	arch/acorn26/ioc/arckbd.c		arckbd | arcwskbd | arcwsmouse
+								needs-flag
+file	arch/acorn26/ioc/arckbdmap.c		arckbd
+
+# On-board WD 1772 floppy controller (usually at bank 1 irq 12 fiq 0/1)
+# Not to be confused with fdc, which will be the PC-style one on A5k etc.
+device	wfdc {drive = -1}
+attach	wfdc at ioc
+device	wf: disk
+attach	wf at wfdc
+# Steal code from arch/atari/dev/fd{.c,reg.h}
+#major	{...}
+
+# Econet module (Motorola 6854) (usually at bank 2 fiq 2)
+device	eca: fiq, eco, ifnet
+attach	eca at ioc
+file	arch/acorn26/ioc/if_eca.c		eca		needs-flag
+file	arch/acorn26/ioc/if_eca_fiq.S		eca
+
+# On-board Rockwell 6551 serial (usually at bank 3 irq 10/1)
+device	rs: tty
+attach	rs at ioc
+file	arch/acorn26/acorn26/rscons.c		rs needs-flag
+
+# On-board printer port (usually at bank 5 addr 0x10 irq 0/2)
+device	arcpp
+attach	arcpp at ioc
+file	arch/acorn26/ioc/arcpp.c		arcpp		needs-flag
+
+
+# Podule interface (podules listed later) (usually at bank 4 irq 13 fiq 6)
+#  Unix backplanes also use bank 6
+#  MEMC podules also use the iobus directly
+device	unixbp
+attach	unixbp at ioc
+
+# NB: files.podulebus must come after unixbp is defined, to get the
+# attachments in the right order.
+include "dev/podulebus/files.podulebus"
+attach	podulebus at ioc
+file	arch/acorn26/podulebus/podulebus.c	podulebus
+file	arch/acorn26/podulebus/podloader_asm.S	podloader	needs-flag
+file	arch/acorn26/podulebus/unixbp.c		unixbp		needs-flag
+
+# Acorn ST506 interface (usually at bank 5 irq 11, or sometimes on a podule)
+device	hdc { drive = -1 }
+attach	hdc at ioc with hdc_ioc
+attach	hdc at podulebus with hdc_podulebus
+device	hd: disk
+attach	hd at hdc
+#major	{hd = ?}
+
+# VIDC/MEMC audio/video subsystems.
+device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev
+attach	arcvideo at root
+file	arch/acorn26/vidc/arcvideo.c		arcvideo	needs-flag
+
+device	arcaudio: audiobus
+attach	arcaudio at root
+
+###
+# 82C7xx Universal Peripheral Controller
+#
+
+# This section belongs in sys/conf/files, but some ports have their own
+# "lpt" devices, so it has to stay here.
+device	lpt
+file	dev/ic/lpt.c				lpt		needs-flag
+attach	lpt at upc with lpt_upc
+file	dev/ic/lpt_upc.c			lpt_upc
+
+# This section belongs here
+attach	upc at iobus with upc_iobus
+file	arch/acorn26/iobus/upc_iobus.c		upc_iobus
+
+###
+# Assorted podules
+#
+
+# i-cubed EtherLAN 100, 200 and 500
+device	eh: ether, ifnet, arp, dp8390nic, podloader
+attach	eh at podulebus
+file	arch/acorn26/podulebus/if_eh.c		eh
+
+# PowerROM test driver
+device	powerrom: podloader
+attach	powerrom at podulebus
+file	arch/acorn26/podulebus/powerrom.c	powerrom
+
+# Memory disk for installation (or ROM versions?)
+file	dev/md_root.c				memory_disk_hooks
+major	{ md = 1 }
+
+####
+# Other files
+#
+
+#file	dev/cons.c
+file	dev/cninit.c
+
+file	arch/acorn26/acorn26/db_interface.c		ddb
+file	arch/acorn26/acorn26/db_machdep.c		ddb
+
+file	arch/acorn26/acorn26/start.c
+file	arch/acorn26/acorn26/autoconf.c
+file	arch/acorn26/acorn26/bus.c
+file	arch/acorn26/acorn26/conf.c
+file	arch/acorn26/acorn26/cons_machdep.c
+file	arch/acorn26/acorn26/copyinout.S
+file	arch/acorn26/acorn26/except.c
+file	arch/acorn26/acorn26/irq.c
+file	arch/acorn26/acorn26/Locore.c
+file	arch/acorn26/acorn26/machdep.c
+file	arch/acorn26/acorn26/mem.c
+file	arch/acorn26/acorn26/pmap.c
+#file	arch/acorn26/acorn26/rscons.c
+file 	arch/acorn26/acorn26/softintr.c
+file	arch/acorn26/acorn26/stubs.c
+file	arch/acorn26/acorn26/sys_machdep.c
+file	arch/acorn26/acorn26/vm_machdep.c
+
+file	arch/arm/arm/disksubr.c				disk
+file	arch/arm/arm/disksubr_acorn.c			disk
+file	arch/arm/arm/disksubr_mbr.c			disk

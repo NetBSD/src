@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.2.2 2001/08/25 06:15:35 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.2.3 2002/06/23 17:38:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
 #if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
 #if NVMETWO == 0
 #include <dev/vme/vmevar.h>
-#include <mvme68k/dev/mvmebus.h>
-#include <mvme68k/dev/vme_twovar.h>
+#include <dev/mvme/mvmebus.h>
+#include <dev/mvme/vme_twovar.h>
 #endif
 #endif
 
@@ -179,6 +179,25 @@ mainbus_attach(parent, self, args)
 	}
 
 	for (i = 0; devices[i].md_name != NULL; ++i) {
+		/*
+		 * On mvme162 and up, if the kernel config file had no vmetwo0
+		 * device, we have to do some manual initialisation on the
+		 * VMEChip2 to get local interrupts working (ABORT switch,
+		 * hardware assisted soft interrupts).
+		 */
+#if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
+#if NVMETWO == 0
+		if (devices[i].md_offset == MAINBUS_VMETWO_OFFSET
+#if defined(MVME147)
+		    && machineid != MVME_147
+#endif
+		    ) {
+			(void) vmetwo_probe(&_mainbus_space_tag,
+			    intiobase_phys + MAINBUS_VMETWO_OFFSET);
+			continue;
+		}
+#endif
+#endif
 		ma.ma_name = devices[i].md_name;
 		ma.ma_dmat = &_mainbus_dma_tag;
 		ma.ma_bust = &_mainbus_space_tag;
@@ -187,23 +206,6 @@ mainbus_attach(parent, self, args)
 		(void) config_found(self, &ma, mainbus_print);
 	}
 
-	/*
-	 * On mvme162 and up, if the kernel config file had no vmetwo0
-	 * device, we have to do some manual initialisation on the
-	 * VMEChip2 to get local interrupts working (ABORT switch,
-	 * hardware assisted soft interrupts).
-	 */
-#if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
-#if NVMETWO == 0
-#if defined(MVME147)
-	if (machineid != MVME_147)
-#endif
-	{
-		(void) vmetwo_probe(&_mainbus_space_tag,
-		    intiobase_phys + MAINBUS_VMETWO_OFFSET);
-	}
-#endif
-#endif
 
 	/*
 	 * Attach the memory controllers on mvme162->mvme177.

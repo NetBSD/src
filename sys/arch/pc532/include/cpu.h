@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2001/06/14 22:56:57 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.1 2002/06/23 17:39:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@
  *   modified from 386 code for the pc532 by Phil Nelson (12/92)
  */
 
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/frame.h>
 

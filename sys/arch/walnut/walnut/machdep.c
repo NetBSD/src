@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.2.3 2002/03/16 16:00:21 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.4 2002/06/23 17:43:14 jdolecek Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/properties.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -120,9 +121,6 @@ char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
-
 struct pcb *curpcb;
 struct pmap *curpm;
 struct proc *fpuproc;		/* XXX - shouldn't need this on fpu-less CPUs */
@@ -132,8 +130,6 @@ extern struct user *proc0paddr;
 char bootpath[256];
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
-
-int msgbufmapped = 0;
 
 #ifdef DDB
 void *startsym, *endsym;
@@ -151,6 +147,7 @@ struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
 
 int fake_mapiodev = 1;
 struct board_cfg_data board_data;
+struct propdb *board_info = NULL;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
@@ -471,6 +468,26 @@ cpu_startup(void)
 	 * Set up the buffers.
 	 */
 	bufinit();
+
+	/*
+	 * Set up the board properties database.
+	 */
+	if (!(board_info = propdb_create("board info")))
+		panic("Cannot create board info database");
+
+	if (board_info_set("mem-size", &board_data.mem_size, 
+		sizeof(&board_data.mem_size), PROP_CONST, 0))
+		panic("setting mem-size");
+	if (board_info_set("emac-mac-addr", &board_data.mac_address_local, 
+		sizeof(&board_data.mac_address_local), PROP_CONST, 0))
+		panic("setting emac-mac-addr");
+	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
+		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
+		panic("setting sip0-mac-addr");
+	if (board_info_set("processor-frequency", &board_data.processor_speed, 
+		sizeof(&board_data.processor_speed), PROP_CONST, 0))
+		panic("setting processor-frequency");
+
 }
 
 

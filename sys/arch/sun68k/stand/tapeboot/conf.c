@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/06/14 12:57:16 fredette Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.1 2002/06/23 17:42:53 jdolecek Exp $	*/
 
 #include <stand.h>
 #include <rawfs.h>
@@ -17,4 +17,6 @@ struct devsw devsw[] = {
 };
 int	ndevs = 1;
 
+#ifdef DEBUG
 int debug;
+#endif /* DEBUG */

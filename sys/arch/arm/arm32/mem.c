@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.2.5 2002/03/16 15:56:04 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.2.6 2002/06/23 17:34:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1.2.5 2002/03/16 15:56:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1.2.6 2002/06/23 17:34:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -204,5 +204,5 @@ mmmmap(dev, off, prot)
 	if (off >= ctob(physmem) &&
 	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return -1;
-	return arm_byte_to_page(off);
+	return arm_btop(off);
 }

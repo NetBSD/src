@@ -1,4 +1,4 @@
-/*	$NetBSD: promboot.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: promboot.c,v 1.1.2.1 2002/06/23 17:42:51 jdolecek Exp $	*/
 
 
 #include <sys/param.h>
@@ -9,7 +9,9 @@
 #include "stand.h"
 #include "libsa.h"
 
+#ifdef DEBUG
 int 	debug = 0;
+#endif /* DEBUG */
 int 	prom_boothow;
 char *	prom_bootfile;
 char	prom_bootdev[32];
@@ -61,15 +63,19 @@ prom_get_boot_info()
 				break;
 			case 'd':
 				prom_boothow |= RB_KDB;
+#ifdef DEBUG
 				debug++;
+#endif /* DEBUG */
 				break;
 			}
 		}
 	}
 
+#ifdef DEBUG
 	if (debug) {
 		printf("Debug level %d - enter c to continue...", debug);
 		/* This will print "\nAbort at ...\n" */
 		breakpoint();
 	}
+#endif /* DEBUG */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.2.4.2 2002/01/10 19:43:58 thorpej Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.2.4.3 2002/06/23 17:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.
@@ -48,6 +48,8 @@ __NOTIMPL(free)
 __NOTIMPL(vaddr)
 __NOTIMPL(mmap)
 __NOTIMPL(barrier)
+__NOTIMPL(peek)
+__NOTIMPL(poke)
 __NOTIMPL(r_1)
 __NOTIMPL(r_2)
 __NOTIMPL(r_4)

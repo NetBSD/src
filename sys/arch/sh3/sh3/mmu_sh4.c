@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.2.4.2 2002/03/16 15:59:42 jdolecek Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.2.4.3 2002/06/23 17:40:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,10 +39,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <sh3/pte.h>	/* NetBSD/sh3 specific PTE */
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
 
-#define SH4_MMU_HAZARD	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop;")
+#define	SH4_MMU_HAZARD	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop;")
 
 extern __inline__ void __sh4_itlb_invalidate_all(void);
 
@@ -59,7 +60,7 @@ __sh4_itlb_invalidate_all()
 void
 sh4_mmu_start()
 {
-	
+
 	/* Zero clear all TLB entry */
 	_reg_write_4(SH4_MMUCR, 0);	/* zero wired entry */
 	sh_tlb_invalidate_all();
@@ -67,9 +68,12 @@ sh4_mmu_start()
 	/* Set current ASID to 0 */
 	sh_tlb_set_asid(0);
 
-	/* Single virtual memory mode. User can't access store queue */
-	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SV |
-	    SH4_MMUCR_SQMD);
+	/*
+	 * User can't access store queue
+	 * make wired entry for u-area.
+	 */
+	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SQMD |
+	    (SH4_UTLB_ENTRY - UPAGES) << SH4_MMUCR_URB_SHIFT);
 
 	SH4_MMU_HAZARD;
 }
@@ -86,19 +90,19 @@ sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 	_reg_write_4(SH4_PTEH, asid);
 
 	/* Associative write(UTLB/ITLB). not required ITLB invalidate. */
-	RUN_P2;	
+	RUN_P2;
 	_reg_write_4(SH4_UTLB_AA | SH4_UTLB_A, va); /* Clear D, V */
 	RUN_P1;
 	/* Restore ASID */
 	_reg_write_4(SH4_PTEH, pteh);
 }
- 
+
 void
 sh4_tlb_invalidate_asid(int asid)
 {
 	u_int32_t a;
 	int e;
-	
+
 	/* Invalidate entry attribute to ASID */
 	RUN_P2;
 	for (e = 0; e < SH4_UTLB_ENTRY; e++) {
@@ -116,11 +120,11 @@ sh4_tlb_invalidate_all()
 {
 	u_int32_t a;
 	int e, eend;
-	
+
 	/* If non-wired entry limit is zero, clear all entry. */
 	a = _reg_read_4(SH4_MMUCR) & SH4_MMUCR_URB_MASK;
 	eend = a ? (a >> SH4_MMUCR_URB_SHIFT) : SH4_UTLB_ENTRY;
-	
+
 	RUN_P2;
 	for (e = 0; e < eend; e++) {
 		a = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
@@ -131,15 +135,33 @@ sh4_tlb_invalidate_all()
 }
 
 void
-sh4_tlb_reset()
+sh4_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 {
-	/* 
-	 * SH4 MMUCR reserved bit 
-	 *   read:  unknown.
-	 *   write: must be 0.
-	 */
-	_reg_write_4(SH4_MMUCR,
-	    (_reg_read_4(SH4_MMUCR) & SH4_MMUCR_MASK) | SH4_MMUCR_TI);
+	u_int32_t oasid;
+	u_int32_t ptel;
 
-	SH4_MMU_HAZARD;
+	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
+
+	/* Save old ASID */
+	oasid = _reg_read_4(SH4_PTEH) & SH4_PTEH_ASID_MASK;
+
+	/* Invalidate old entry (if any) */
+	sh4_tlb_invalidate_addr(asid, va);
+
+	_reg_write_4(SH4_PTEH, asid);
+	/* Load new entry */
+	_reg_write_4(SH4_PTEH, (va & ~PGOFSET) | asid);
+	ptel = pte & PG_HW_BITS;
+	if (pte & _PG_PCMCIA) {
+		_reg_write_4(SH4_PTEA,
+		    (pte >> _PG_PCMCIA_SHIFT) & SH4_PTEA_SA_MASK);
+	} else {
+		_reg_write_4(SH4_PTEA, 0);
+	}
+	_reg_write_4(SH4_PTEL, ptel);
+	__asm__ __volatile__("ldtlb; nop");
+
+	/* Restore old ASID */
+	if (asid != oasid)
+		_reg_write_4(SH4_PTEH, oasid);
 }

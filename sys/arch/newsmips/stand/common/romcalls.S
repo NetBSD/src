@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.2 1999/12/17 07:33:20 tsubai Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.2.12.1 2002/06/23 17:38:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -34,8 +34,8 @@
 	.align	2
 	.set	noreorder
 
-	.globl	halt
-halt:
+	.globl	rom_halt
+rom_halt:
 	addu	sp, sp, -16
 	li	a0, 8		# RB_HALT
 	sw	a0, 0(sp)
@@ -117,7 +117,6 @@ rom_write:
 	j	ra
 	nop
 
-
 	.globl	rom_lseek
 rom_lseek:
 	addu	sp, sp, -32
@@ -128,6 +127,25 @@ rom_lseek:
 	sw	a2, 24(sp)
 
 	li	a0, SYS_lseek
+	addu	a1, sp, 16
+	syscall
+	nop
+
+	lw	ra, 28(sp)
+	addu	sp, sp, 32
+	j	ra
+	nop
+
+	.globl	rom_ioctl
+rom_ioctl:
+	addu	sp, sp, -32
+	sw	ra, 28(sp)
+
+	sw	a0, 16(sp)
+	sw	a1, 20(sp)
+	sw	a2, 24(sp)
+
+	li	a0, SYS_ioctl
 	addu	a1, sp, 16
 	syscall
 	nop

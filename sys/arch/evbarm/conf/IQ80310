@@ -1,9 +1,11 @@
-#	$NetBSD: IQ80310,v 1.9.2.3 2002/03/16 15:57:26 jdolecek Exp $
+#	$NetBSD: IQ80310,v 1.9.2.4 2002/06/23 17:35:37 jdolecek Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
 
 include	"arch/evbarm/conf/std.iq80310"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -17,9 +19,10 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 # For StrongARM systems
-options 	CPU_XSCALE	# Support the XScale core
+options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+options 	XSCALE_CCLKCFG=9	# 733MHz
 
 # Architecture options
 
@@ -98,7 +101,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is on connector J9 ("com0") at
@@ -116,6 +119,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

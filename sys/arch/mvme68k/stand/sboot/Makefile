@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.1 2002/03/16 15:58:58 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11.4.2 2002/06/23 17:38:24 jdolecek Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
@@ -8,25 +8,20 @@
 COMPILE.s= $(CC) -x assembler-with-cpp -traditional-cpp \
 	$(ASFLAGS) $(CPPFLAGS) $(INCPATH) -c -o $*.o
 
-RELOC=	0x4000
-SRCS=	start.s clock.c console.c etherfun.c le_poll.c oc_cksum.s sboot.c
+RELOC=		0x4000
+SRCS=		start.s clock.c console.c etherfun.c le_poll.c \
+		oc_cksum.s sboot.c
 SRTOBJ=
 PROG=		sboot
-PROGNAME=	sboot.srec
 LIBS=		${LIBSA}
 DPADD=		${LIBS}
-CLEANFILES+=	srec sboot.srec
+CLEANFILES+=	sboot.srec
 
 PROGDEPENDS=	${OBJS} ${LIBS}
 PROGLINKOBJS=	${OBJS} ${LIBS}
 
-sboot.srec:	${PROG} srec
-	${OBJCOPY} -O binary ${.OBJDIR}/sboot
-	${.OBJDIR}/srec 4 0x4000 ${.OBJDIR}/sboot \
-	> ${.TARGET} < ${.OBJDIR}/sboot
-
-srec: srec.c
-	${HOST_CC} ${COPTS} ${.IMPSRC} -o ${.TARGET}
+sboot.srec:	${PROG}
+	${OBJCOPY} -O srec ${.OBJDIR}/sboot ${.TARGET}
 
 .include "../Makefile.booters"
 

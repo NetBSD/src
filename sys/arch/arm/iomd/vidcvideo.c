@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.2.2.3 2002/03/16 15:56:14 jdolecek Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.2.2.4 2002/06/23 17:34:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2.2.3 2002/03/16 15:56:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2.2.4 2002/06/23 17:34:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,37 +58,17 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2.2.3 2002/03/16 15:56:14 jdolecek E
 
 #include <uvm/uvm_extern.h>
 #include <arm/arm32/pmap.h>
+#include <arm/cpufunc.h>
 #include <machine/intr.h>
 
 /* for vidc_mode ... needs to be MI indepenent one day */
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/vidc20config.h>
+#include <arm/iomd/vidcvideo.h>
 #include <machine/bootconfig.h>
-extern videomemory_t videomemory;
-
-#define machine_btop(x) arm_byte_to_page(x)
-#define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
 
 /* FOR DEBUG */
 extern videomemory_t videomemory;
-
-struct fb_devconfig {
-	vaddr_t dc_vaddr;		/* memory space virtual base address */
-	paddr_t dc_paddr;		/* memory space physical base address */
-	vsize_t dc_size;		/* size of slot memory */
-	int	dc_wid;			/* width of frame buffer */
-	int	dc_ht;			/* height of frame buffer */
-	int	dc_log2_depth;		/* log2 of bits per pixel */
-	int	dc_depth;		/* depth, bits per pixel */
-	int	dc_rowbytes;		/* bytes in a FB scan line */
-	vaddr_t	dc_videobase;		/* base of flat frame buffer */
-	int	dc_blanked;		/* currently has video disabled */
-	void   *dc_hwscroll_cookie;	/* cookie for hardware scroll */
-
-	struct vidc_mode   mode_info;
-	struct rasops_info rinfo;
-};
-
 
 struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
@@ -110,16 +90,40 @@ struct hwcursor32 {
 };
 
 
-struct vidcvideo_softc {
-	struct device sc_dev;
-	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcmap256 sc_cmap;	/* software copy of colormap */
-	struct hwcursor32 sc_cursor;	/* software copy of cursor */
-	int sc_curenb;			/* cursor sprite enabled */
-	int sc_changed;			/* need update of hardware */
+struct fb_devconfig {
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
+	vsize_t dc_size;		/* size of slot memory */
+	int	dc_wid;			/* width of frame buffer */
+	int	dc_ht;			/* height of frame buffer */
+	int	dc_log2_depth;		/* log2 of bits per pixel */
+	int	dc_depth;		/* depth, bits per pixel */
+	int	dc_rowbytes;		/* bytes in a FB scan line */
+	vaddr_t	dc_videobase;		/* base of flat frame buffer */
+	int	dc_blanked;		/* currently has video disabled */
+	void   *dc_hwscroll_cookie;	/* cookie for hardware scroll */
+
+	int	dc_curenb;		/* is cursor sprite enabled ?	*/
+	int	dc_changed;		/* need update of hardware	*/
+	int	dc_writeback_delay;	/* Screenarea write back vsync counter */
 #define	WSDISPLAY_CMAP_DOLUT	0x20
 #define WSDISPLAY_VIDEO_ONOFF	0x40
-	int nscreens;
+#define WSDISPLAY_WB_COUNTER	0x80
+
+	struct hwcmap256	dc_cmap;/* software copy of colormap	*/
+	struct hwcursor32	dc_cursor;/* software copy of cursor	*/
+
+	struct vidc_mode	mode_info;
+	struct rasops_info	rinfo;
+
+	struct wsdisplay_emulops orig_ri_ops;	/* Rasops functions for deligation */
+};
+
+
+struct vidcvideo_softc {
+	struct device sc_dev;
+	struct fb_devconfig *sc_dc;	/* device configuration		*/
+	int nscreens;			/* number of screens configured */
 };
 
 
@@ -181,6 +185,7 @@ static const struct wsdisplay_accessops vidcvideo_accessops = {
 	0 /* load_font */
 };
 
+
 /* Function prototypes */
 int         vidcvideo_cnattach __P((vaddr_t));
 static void vidcvideo_colourmap_and_cursor_init __P((struct fb_devconfig *));
@@ -195,9 +200,11 @@ static void vidcvideo_getdevconfig __P((vaddr_t, struct fb_devconfig *));
 static int  vidcvideointr __P((void *));
 static void vidcvideo_config_wscons __P((struct fb_devconfig *));
 
+
 /* Acceleration function prototypes */
 static void vv_copyrows __P((void *, int, int, int));
 static void vv_eraserows __P((void *, int, int, long));
+static void vv_putchar __P((void *c, int row, int col, u_int uc, long attr));
 
 
 static int
@@ -217,7 +224,7 @@ vidcvideo_getdevconfig(dense_addr, dc)
 	struct fb_devconfig *dc;
 {
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr);
+	(void) pmap_extract(pmap_kernel(), dc->dc_vaddr, &(dc->dc_paddr));
 
 	vidcvideo_getmode(&dc->mode_info);
 
@@ -265,7 +272,10 @@ vidcvideo_getdevconfig(dense_addr, dc)
 	dc->rinfo.ri_width  = dc->dc_wid;
 	dc->rinfo.ri_height = dc->dc_ht;
 	dc->rinfo.ri_stride = dc->dc_rowbytes;
-	dc->rinfo.ri_hw	    = NULL;
+	dc->rinfo.ri_hw	    = dc;		/* link back */
+
+	/* intitialise miscelanious */
+	dc->dc_writeback_delay = 0;
 }
 
 
@@ -303,9 +313,19 @@ vidcvideo_config_wscons(dc)
 		dc->rinfo.ri_width / dc->rinfo.ri_font->fontwidth
 	);
 
-	/* XXX add our accelerated functions */
+	/*
+	 * Provide a hook for the acceleration functions and make a copy of the
+	 * original rasops functions for passing on calls
+	 */
+	dc->rinfo.ri_hw = dc;
+	memcpy(&(dc->orig_ri_ops), &(dc->rinfo.ri_ops), sizeof(struct wsdisplay_emulops));
+
+	/* add our accelerated functions */
 	dc->rinfo.ri_ops.eraserows = vv_eraserows;
 	dc->rinfo.ri_ops.copyrows  = vv_copyrows;
+
+	/* add the extra activity measuring functions; they just delegate on */
+	dc->rinfo.ri_ops.putchar   = vv_putchar;
 
 	/* XXX shouldn't be global */
 	vidcvideo_stdscreen.nrows = dc->rinfo.ri_rows;
@@ -325,23 +345,21 @@ vidcvideo_attach(parent, self, aux)
 	void *aux;
 {
 	struct vidcvideo_softc *sc = (struct vidcvideo_softc *)self;
+	struct fb_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
+	long defattr;
 	int index;
 
 	vidcvideo_init();
 	if (sc->nscreens == 0) {
-		if (vidcvideo_is_console) {
-			sc->sc_dc = &vidcvideo_console_dc;
-		} else {
-			printf(" : non console vidcvideo fb ... can't cope with this\n");
-			return;
-			/*
-			 * sc->sc_dc = (struct fb_devconfig *)
-			 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
-			 * vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
-			 */
+		sc->sc_dc = &vidcvideo_console_dc;
+		if (!vidcvideo_is_console) {
+			printf(" : non console (no kbd yet) ");
+			vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
+			vidcvideo_config_wscons(sc->sc_dc);
+			(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 		};
 		sc->nscreens = 1;
 	} else {
@@ -349,12 +367,14 @@ vidcvideo_attach(parent, self, aux)
 			return;
 	};
 
+	dc = sc->sc_dc;
+
 	vidcvideo_printdetails();
-	printf(": using %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_depth);
+	printf(": using %d x %d, %dbpp\n", dc->dc_wid, dc->dc_ht,
+	    dc->dc_depth);
 
 	/* initialise rasops */
-	cm = &sc->sc_cmap;
+	cm = &dc->dc_cmap;
 	p = rasops_cmap;
 	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
 		cm->r[index] = p[0];
@@ -363,17 +383,20 @@ vidcvideo_attach(parent, self, aux)
 	}
 
 	/* what does these do ? */
-	sc->sc_cursor.cc_magic.x = CX_MAGIC_X;
-	sc->sc_cursor.cc_magic.y = CX_MAGIC_Y;
+	dc->dc_cursor.cc_magic.x = CX_MAGIC_X;
+	dc->dc_cursor.cc_magic.y = CX_MAGIC_Y;
 
 	/* set up interrupt flags */
-	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
+	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
 
-	/* set up a link in the rasops structure to our softc for acceleration stuff */
-	sc->sc_dc->rinfo.ri_hw = sc;
+	/*
+	 * Set up a link in the rasops structure to our device config
+	 * for acceleration stuff
+	 */
+	dc->rinfo.ri_hw = sc->sc_dc;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
-	intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, sc);
+	intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, dc);
 
 	waa.console = (vidcvideo_is_console ? 1 : 0);
 	waa.scrdata = &vidcvideo_screenlist;
@@ -403,9 +426,9 @@ vidcvideoioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
-		wsd_fbip->height = sc->sc_dc->dc_ht;
-		wsd_fbip->width = sc->sc_dc->dc_wid;
-		wsd_fbip->depth = sc->sc_dc->dc_depth;
+		wsd_fbip->height = dc->dc_ht;
+		wsd_fbip->width  = dc->dc_wid;
+		wsd_fbip->depth  = dc->dc_depth;
 		wsd_fbip->cmsize = CMAP_SIZE;
 #undef fbt
 		return (0);
@@ -419,7 +442,7 @@ vidcvideoioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		state = *(int *)data;
 		dc->dc_blanked = (state == WSDISPLAYIO_VIDEO_OFF);
-		sc->sc_changed |= WSDISPLAY_VIDEO_ONOFF;
+		dc->dc_changed |= WSDISPLAY_VIDEO_ONOFF;
 		/* done on video blank */
 		return (0);
 
@@ -429,12 +452,12 @@ vidcvideoioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_GCURPOS:
-		*(struct wsdisplay_curpos *)data = sc->sc_cursor.cc_pos;
+		*(struct wsdisplay_curpos *)data = dc->dc_cursor.cc_pos;
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
+		dc->dc_changed |= WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -457,9 +480,10 @@ vidcvideoioctl(v, cmd, data, flag, p)
 			vidcvideo_hwscroll_back(dc->dc_hwscroll_cookie);
 		};
 		vidcvideo_progr_scroll();
+
 		return (0);
 	}
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 
@@ -473,7 +497,8 @@ vidcvideommap(v, offset, prot)
 
 	if (offset >= sc->sc_dc->dc_size || offset < 0)
 		return (-1);
-	return machine_btop(sc->sc_dc->dc_paddr + offset);
+
+	return arm_btop(sc->sc_dc->dc_paddr + offset);
 }
 
 
@@ -486,17 +511,26 @@ vidcvideo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	long *attrp;
 {
 	struct vidcvideo_softc *sc = v;
+	struct fb_devconfig *dc = sc->sc_dc;
 	long defattr;
 
-	if (sc->nscreens > 0)
+	/*
+	 * One and just only one for now :( ... if the vidcconsole is not the
+	 * console then this makes one wsconsole screen free for use !
+	 */
+	if ((sc->nscreens > 1) || vidcvideo_is_console)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
+	/* Add the screen to wscons to control */
+	*cookiep = &dc->rinfo;
 	*curxp = 0;
 	*curyp = 0;
-	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
+	vidcvideo_getdevconfig(videomemory.vidm_vbase, dc);
+	vidcvideo_config_wscons(dc);
+	(*dc->rinfo.ri_ops.alloc_attr)(&dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
+	
 	return (0);
 }
 
@@ -550,21 +584,29 @@ static int
 vidcvideointr(arg)
 	void *arg;
 {
-	struct vidcvideo_softc *sc = arg;
-	int v;
+	struct fb_devconfig *dc = arg;
+	int v, cleared = 0;
 
-	v = sc->sc_changed;
+	v = dc->dc_changed;
 	if (v == 0)
 		return (1);
 
+	if (v & WSDISPLAY_WB_COUNTER) {
+	    	dc->dc_writeback_delay--;
+		if (dc->dc_writeback_delay == 0) {
+		    	cpu_dcache_wb_range(dc->dc_vaddr, dc->dc_size);
+			cleared |= WSDISPLAY_WB_COUNTER;
+		};
+	}
+
 	if (v & WSDISPLAY_CMAP_DOLUT) {
-		struct hwcmap256 *cm = &sc->sc_cmap;
+		struct hwcmap256 *cm = &dc->dc_cmap;
 		int index;
 
-		if (sc->sc_dc->dc_depth == 4) {
+		if (dc->dc_depth == 4) {
 			/* palette for 4 bpp is different from 8bpp */
 			vidcvideo_write(VIDC_PALREG, 0x00000000);
-			for (index=0; index < 1<<sc->sc_dc->dc_depth; index++)
+			for (index=0; index < (1 << dc->dc_depth); index++)
 				vidcvideo_write(VIDC_PALETTE,
 					VIDC_COL(cm->r[index],
 						 cm->g[index],
@@ -572,8 +614,8 @@ vidcvideointr(arg)
 			;
 		};
 
-		if (sc->sc_dc->dc_depth == 8) {
-			/* XXX dunno what to do in less than 8bpp */
+		if (dc->dc_depth == 8) {
+			/* dunno what to do in more than 8bpp */
 			/* palettes only make sense in 8bpp and less modes on VIDC */
 			vidcvideo_write(VIDC_PALREG, 0x00000000);
 			for (index = 0; index < CMAP_SIZE; index++) {
@@ -582,22 +624,26 @@ vidcvideointr(arg)
 		 		);
 			};
 		};
+		cleared |= WSDISPLAY_CMAP_DOLUT;
 	}
 
 	if (v & WSDISPLAY_VIDEO_ONOFF) {
-		vidcvideo_blank(sc->sc_dc->dc_blanked);
+		vidcvideo_blank(dc->dc_blanked);
+		cleared |= WSDISPLAY_VIDEO_ONOFF;
 	};
 
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
 		int x, y;
-		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+		x = dc->dc_cursor.cc_pos.x - dc->dc_cursor.cc_hot.x;
+		y = dc->dc_cursor.cc_pos.y - dc->dc_cursor.cc_hot.y;
 
 		vidcvideo_updatecursor(x, y);
+		cleared |= WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT;
 	};
 
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
-		vidcvideo_enablecursor(sc->sc_curenb);
+		vidcvideo_enablecursor(dc->dc_curenb);
+		cleared |= WSDISPLAY_CURSOR_DOCUR;
 	};
 
 
@@ -674,7 +720,8 @@ vidcvideointr(arg)
 	}
 #endif /* XXX snip XXX */
 
-	sc->sc_changed = 0;
+	dc->dc_changed ^= cleared;
+
 	return (1);
 }
 
@@ -727,9 +774,9 @@ get_cmap(sc, p)
 	    !uvm_useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
 
-	copyout(&sc->sc_cmap.r[index], p->red, count);
-	copyout(&sc->sc_cmap.g[index], p->green, count);
-	copyout(&sc->sc_cmap.b[index], p->blue, count);
+	copyout(&sc->sc_dc->dc_cmap.r[index], p->red, count);
+	copyout(&sc->sc_dc->dc_cmap.g[index], p->green, count);
+	copyout(&sc->sc_dc->dc_cmap.b[index], p->blue, count);
 
 	return (0);
 }
@@ -740,6 +787,7 @@ set_cmap(sc, p)
 	struct vidcvideo_softc *sc;
 	struct wsdisplay_cmap *p;
 {
+    	struct fb_devconfig *dc = sc->sc_dc;
 	u_int index = p->index, count = p->count;
 
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
@@ -750,10 +798,10 @@ set_cmap(sc, p)
 	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
 
-	copyin(p->red, &sc->sc_cmap.r[index], count);
-	copyin(p->green, &sc->sc_cmap.g[index], count);
-	copyin(p->blue, &sc->sc_cmap.b[index], count);
-	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
+	copyin(p->red, &dc->dc_cmap.r[index], count);
+	copyin(p->green, &dc->dc_cmap.g[index], count);
+	copyin(p->blue, &dc->dc_cmap.b[index], count);
+	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
 
@@ -763,7 +811,8 @@ set_cursor(sc, p)
 	struct vidcvideo_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-#define	cc (&sc->sc_cursor)
+#define	cc (&dc->dc_cursor)
+    	struct fb_devconfig *dc = sc->sc_dc;
 	u_int v, index, count, icount;
 
 	v = p->which;
@@ -787,7 +836,7 @@ set_cursor(sc, p)
 	}
 
 	if (v & WSDISPLAY_CURSOR_DOCUR) 
-		sc->sc_curenb = p->enable;
+		dc->dc_curenb = p->enable;
 	if (v & WSDISPLAY_CURSOR_DOPOS)
 		set_curpos(sc, &p->pos);
 	if (v & WSDISPLAY_CURSOR_DOHOT)
@@ -804,7 +853,7 @@ set_cursor(sc, p)
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_mask, icount);
 	}
-	sc->sc_changed |= v;
+	dc->dc_changed |= v;
 
 	return (0);
 #undef cc
@@ -816,7 +865,7 @@ get_cursor(sc, p)
 	struct vidcvideo_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 
@@ -836,8 +885,8 @@ set_curpos(sc, curpos)
 		x = 0;
 	else if (x > dc->dc_wid)
 		x = dc->dc_wid;
-	sc->sc_cursor.cc_pos.x = x;
-	sc->sc_cursor.cc_pos.y = y;
+	dc->dc_cursor.cc_pos.x = x;
+	dc->dc_cursor.cc_pos.y = y;
 }
 
 
@@ -898,3 +947,20 @@ static void vv_eraserows(id, startrow, nrows, attr)
 	bzero(src, height);
 }
 
+
+static void vv_putchar(id, row, col, uc, attr)
+    	void *id;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+    	struct rasops_info *ri = id;
+	struct fb_devconfig *dc = (struct fb_devconfig *) (ri->ri_hw);
+
+	/* delay the write back operation of the screen area */
+	dc->dc_writeback_delay = SCREEN_WRITE_BACK_DELAY;
+	dc->dc_changed |= WSDISPLAY_WB_COUNTER;
+
+	/* just delegate */
+	dc->orig_ri_ops.putchar(id, row, col, uc, attr);
+}

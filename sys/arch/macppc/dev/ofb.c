@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.23.2.2 2001/08/25 06:15:31 thorpej Exp $	*/
+/*	$NetBSD: ofb.c,v 1.23.2.3 2002/06/23 17:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -348,7 +348,7 @@ ofb_ioctl(v, cmd, data, flag, p)
 		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 paddr_t

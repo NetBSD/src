@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243.2.3 2002/01/10 19:44:40 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.2.4 2002/06/23 17:37:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -704,10 +704,12 @@ begin:
 	call 	_C_LABEL(main)
 
 /*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * detailed section 9 man page, too, explaining the proc_trampoline.
- * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
+ * void proc_trampoline(void);
+ * This is a trampoline function pushed onto the stack of a newly created
+ * process in order to do some additional setup.  The trampoline is entered by
+ * cpu_switch()ing to the process, so we abuse the callee-saved registers used
+ * by cpu_switch() to store the information about the stub to call.
+ * NOTE: This function does not have a normal calling sequence!
  */
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
@@ -719,11 +721,6 @@ NENTRY(proc_trampoline)
 
 /*****************************************************************************/
 
-/*
- * XXX No section 9 man page for sigcode or esigcode. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -777,13 +774,6 @@ ENTRY(fillw)
 	popl	%edi
 	ret
 
-/*
- * XXX No section 9 man page for kcopy. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * so far as I can tell it is used only in one function in the MI kernel,
- * but it still counts.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * int kcopy(const void *from, void *to, size_t len);
  * Copy len bytes, abort on fault.
@@ -1363,7 +1353,8 @@ ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curpcb),%ecx
+	movl	_C_LABEL(curproc),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -1518,7 +1509,8 @@ ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curpcb),%ecx
+	movl	_C_LABEL(curproc),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
@@ -1599,22 +1591,26 @@ ENTRY(subyte)
 
 /*
  * void lgdt(struct region_descriptor *rdp);
- * Change the global descriptor table.
- * XXX should there be an MD section 9 man page for this?
- *     or even just a better comment? --Perry, May 7, 2001
+ * Load a new GDT pointer (and do any necessary cleanup).
+ * XXX It's somewhat questionable whether reloading all the segment registers
+ * is necessary, since the actual descriptor data is not changed except by
+ * process creation and exit, both of which clean up via task switches.  OTOH,
+ * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt(struct region_descriptor *rdp) */
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
-	/* Flush the prefetch q. */
+	/* Flush the prefetch queue. */
 	jmp	1f
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%ds
 	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
 	movw	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
@@ -1622,14 +1618,12 @@ NENTRY(lgdt)
 	pushl	%eax
 	lret
 
+/*****************************************************************************/
 
 /*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel setjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
+ * These functions are primarily used by DDB.
  */
+
 /* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
@@ -1643,13 +1637,6 @@ ENTRY(setjmp)
 	xorl	%eax,%eax		# return (0);
 	ret
 
-/*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel longjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
- */
 /* LINTSTUB: Func: void longjmp (label_t *l) */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
@@ -2096,20 +2083,7 @@ ENTRY(savectx)
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- *
- * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
- * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
-
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#ifdef __ELF__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-#else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#endif
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
@@ -2359,7 +2333,6 @@ ipkdbrestore:
 	pushl	%ecx
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
 NENTRY(ipkdbfbyte)
 	pushl	%ebp
@@ -2372,7 +2345,6 @@ faultexit:
 	popl	%ebp
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
 NENTRY(ipkdbsbyte)
 	pushl	%ebp
@@ -2396,7 +2368,6 @@ fault:
 /*
  * Old call gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xosyscall[1]; */
 IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
@@ -2408,7 +2379,6 @@ IDTVEC(osyscall)
 /*
  * Trap gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xsyscall[1]; */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.2.2.2 2002/02/11 20:09:24 jdolecek Exp $
+#	$NetBSD: Makefile.x86_64,v 1.2.2.3 2002/06/23 17:43:26 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -31,8 +31,9 @@ GENASSYM=	${X86_64}/x86_64/genassym.cf
 ##
 ## (2) compile settings
 ##
+COPTS=		-O
 CPPFLAGS+=	-Dx86_64
-CFLAGS+=	-mcmodel=large
+CFLAGS+=	-mcmodel=kernel
 CFLAGS+=	-mno-red-zone
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
@@ -64,7 +65,7 @@ microtime.o: ${X86_64}/x86_64/microtime.S assym.h
 ##
 ## (5) link settings
 ##
-TEXTADDR?=	0xffff800000100000
+TEXTADDR?=	0xffffffff80100000
 LINKFLAGS_NORMAL=	-X
 KERN_LDSCRIPT?= kern.ldscript
 LINKFORMAT=	-T ${X86_64}/conf/${KERN_LDSCRIPT}

@@ -1,8 +1,10 @@
-# $NetBSD: INSTALL,v 1.55.2.4 2002/03/16 15:55:40 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.55.2.5 2002/06/23 17:34:10 jdolecek Exp $
 #
 # Alpha INSTALL kernel.
 
 include	"arch/alpha/conf/std.alpha"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -14,7 +16,7 @@ options 	DDB
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_SIZE=9300	# 4 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=9300	# 4 Megabytes
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -71,6 +73,7 @@ options 	COMPAT_14
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
@@ -166,7 +169,6 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
-de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
@@ -192,10 +194,6 @@ sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 

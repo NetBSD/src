@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.7.2.3 2002/03/16 15:56:08 jdolecek Exp $	*/
+/*	$NetBSD: armreg.h,v 1.7.2.4 2002/06/23 17:34:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -183,12 +183,16 @@
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
 #define	CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
+#define CPU_ID_ARM1022ES	0x4105a220
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
-#define CPU_ID_I80200		0x69052000 /* XScale core */
+#define CPU_ID_IXP1200		0x6901c120
+#define CPU_ID_80200		0x69052000
 #define CPU_ID_PXA250		0x69052100
 #define CPU_ID_PXA210		0x69052120
+#define	CPU_ID_80321_400	0x69052420
+#define	CPU_ID_80321_600	0x69052430
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
@@ -204,7 +208,38 @@
 
 /*
  * Post-ARM3 CP15 registers:
+ *
+ *	1	Control register
+ *
+ *	2	Translation Table Base
+ *
+ *	3	Domain Access Control
+ *
+ *	4	Reserved
+ *
+ *	5	Fault Status
+ *
+ *	6	Fault Address
+ *
+ *	7	Cache/write-buffer Control
+ *
+ *	8	TLB Control
+ *
+ *	9	Cache Lockdown
+ *
+ *	10	TLB Lockdown
+ *
+ *	11	Reserved
+ *
+ *	12	Reserved
+ *
+ *	13	Process ID (for FCSE)
+ *
+ *	14	Reserved
+ *
+ *	15	Implementation Dependent
  */
+
 /* Some of the definitions below need cleaning up for V3/V4 architectures */
 
 /* CPU control register (CP15 register 1) */
@@ -226,6 +261,14 @@
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
+
+/* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
+#define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
+#define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
+#define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
+#define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
+#define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
+#define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
 /* Cache type register definitions */
 #define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
@@ -265,6 +308,12 @@
 #define FAULT_DOMAIN_P  0x0b /* Domain -- Page */
 #define FAULT_PERM_S    0x0d /* Permission -- Section */
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
+
+/*
+ * Address of the vector page, low and high versions.
+ */
+#define	ARM_VECTORS_LOW		0x00000000
+#define	ARM_VECTORS_HIGH	0xffff0000
 
 /*
  * ARM Instructions

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89.2.3 2002/02/11 20:09:18 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.89.2.4 2002/06/23 17:42:59 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.89.2.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.89.2.4 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -128,6 +130,7 @@ options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile
@@ -200,18 +203,18 @@ mba*		at sbi? tr?		# Massbus adapters
 hp*		at mba? drive?		# RM/RP disk drives
 
 # Devices on Unibus/Qbus adapters
-uda0		at uba?	csr 0172150	# UDA50/RQDX?
-uda1		at uba?	csr 0160334
-mtc0		at uba? csr 0174500	# Tape MSCP ctlr
+uda*		at uba?	csr 0172150	# UDA50/RQDX?
+uda*		at uba?	csr 0160334
+mtc*		at uba? csr 0174500	# Tape MSCP ctlr
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
 #qv0		at uba? csr 0177400	# Monochrome graphics
-de0		at uba? csr 0174510	# DELUA/DEUNA
-qe0		at uba? csr 0174440	# DEQNA/DELQA
-dhu0		at uba? csr 0160440	# DHU-11
-dz0		at uba? csr 0160100	# DZ-11
-dl0		at uba? csr 0176500	# DL-11
-rlc0		at uba? csr 0174400	# RL11/RLV11 controller
+de*		at uba? csr 0174510	# DELUA/DEUNA
+qe*		at uba? csr 0174440	# DEQNA/DELQA
+dhu*		at uba? csr 0160440	# DHU-11
+dz*		at uba? csr 0160100	# DZ-11
+dl*		at uba? csr 0176500	# DL-11
+rlc*		at uba? csr 0174400	# RL11/RLV11 controller
 rl*		at rlc? drive?		# RL01/RL02 disk drive
 
 # MSCP devices

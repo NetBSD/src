@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_machdep.h,v 1.4 2000/08/02 11:32:41 msaitoh Exp $	*/
+/*	$NetBSD: coff_machdep.h,v 1.4.4.1 2002/06/23 17:40:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -31,24 +31,24 @@
  */
 
 #ifndef _SH3_COFF_MACHDEP_H_
-#define _SH3_COFF_MACHDEP_H_
+#define	_SH3_COFF_MACHDEP_H_
 
 /* f_magic flags */
-#define COFF_MAGIC_SH3_BIG	0x500
-#define COFF_MAGIC_SH3_LITTLE	0x550
+#define	COFF_MAGIC_SH3_BIG	0x500
+#define	COFF_MAGIC_SH3_LITTLE	0x550
 
 /* magic */
-#define COFF_OMAGIC	0444	/* text not write-protected; data seg
+#define	COFF_OMAGIC	0444	/* text not write-protected; data seg
 				   is contiguous with text */
-#define COFF_NMAGIC	0410	/* text is write-protected; data starts
+#define	COFF_NMAGIC	0410	/* text is write-protected; data starts
 				   at next seg following text */
-#define COFF_ZMAGIC	0000	/* text and data segs are aligned for
+#define	COFF_ZMAGIC	0000	/* text and data segs are aligned for
 				   direct paging */
-#define COFF_SMAGIC	0443	/* shared lib */
+#define	COFF_SMAGIC	0443	/* shared lib */
 
-#define COFF_LDPGSZ 4096
+#define	COFF_LDPGSZ 4096
 
-#define COFF_SEGMENT_ALIGNMENT(fp, ap) \
+#define	COFF_SEGMENT_ALIGNMENT(fp, ap)					\
     (((fp)->f_flags & COFF_F_EXEC) == 0 ? 4 : 16)
 
 #ifndef _BYTE_ORDER
@@ -56,23 +56,23 @@
 #endif
 
 #if _BYTE_ORDER == BIG_ENDIAN
-#define COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_BIG)
+#define	COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_BIG)
 #endif
 #if _BYTE_ORDER == LITTLE_ENDIAN
-#define COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_LITTLE)
+#define	COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_LITTLE)
 #endif
 
-#define IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28)
-#define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 128)
+#define	IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28)
+#define	IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 128)
 
 #ifdef DEBUG_COFF
-#define DPRINTF(a)      printf a;
+#define	DPRINTF(a)      printf a;
 #else
-#define DPRINTF(a)
+#define	DPRINTF(a)
 #endif
 
-#define COFF_ES_SYMNMLEN	8
-#define COFF_ES_SYMENTSZ	18
+#define	COFF_ES_SYMNMLEN	8
+#define	COFF_ES_SYMENTSZ	18
 
 struct external_syment {
 	union {

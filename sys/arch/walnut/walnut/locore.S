@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2.2.1 2002/01/10 19:50:14 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.2.2 2002/06/23 17:43:14 jdolecek Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -83,9 +83,9 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
+#include <machine/dcr.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/dcr.h>
 #include <powerpc/ibm4xx/pmap.h>
 
 /*
@@ -99,10 +99,6 @@
 /*
  * Globals
  */
-GLOBAL(startsym)
-	.long	0			/* start symbol table */
-GLOBAL(endsym)
-	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
 
@@ -600,7 +596,8 @@ ENTRY(memcpy)
 	dcba	0,r3		/* Allocate another line */
 #else
 	.long	0x7c071dec	/* dcba	r7,r3 */
-#endif	bgt	0b
+#endif	
+	bgt	0b
 1:
 	mtxer	r5		/* Store byte count */
 	lswx	r24,0,r4	/* Load up to 32 bytes */

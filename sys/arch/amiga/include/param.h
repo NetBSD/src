@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39 2000/02/11 19:25:14 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.39.8.1 2002/06/23 17:34:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * spl functions; all are normally done in-line

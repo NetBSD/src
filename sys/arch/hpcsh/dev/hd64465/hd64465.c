@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.1.8.2 2002/03/16 15:58:06 jdolecek Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.1.8.3 2002/06/23 17:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,15 +39,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/boot_flag.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <sh3/shbvar.h>
-
 #include <machine/debug.h>
 
+#include <sh3/intcreg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
 #include <hpcsh/dev/hd64465/hd64465reg.h>
 #include <hpcsh/dev/hd64465/hd64465intcreg.h>
@@ -71,42 +69,12 @@ STATIC const struct hd64465_module {
 #define HD64465_NMODULE							\
 	(sizeof hd64465_modules / sizeof(struct hd64465_module))
 
-STATIC struct hd64465_intr_entry {
-	int (*func)(void *);
-	void *arg;
-	int priority;
-	const u_int16_t bit;
-} hd64465_intr_entry[] = {
-#define IRQ_ENTRY(x)	[HD64465_IRQ_ ## x] = { 0, 0, 0, HD64465_ ## x }
-	IRQ_ENTRY(PS2KB),
-	IRQ_ENTRY(PCC0),
-	IRQ_ENTRY(PCC1),
-	IRQ_ENTRY(AFE),
-	IRQ_ENTRY(GPIO),
-	IRQ_ENTRY(TMU0),
-	IRQ_ENTRY(TMU1),
-	IRQ_ENTRY(KBC),
-	IRQ_ENTRY(PS2MS),
-	IRQ_ENTRY(IRDA),
-	IRQ_ENTRY(UART),
-	IRQ_ENTRY(PPR),
-	IRQ_ENTRY(SCDI),
-	IRQ_ENTRY(OHCI),
-	IRQ_ENTRY(ADC)
-#undef IRQ_ENTRY
-};
-#define HD64465_IRQ_MAX							\
-	(sizeof hd64465_intr_entry / sizeof(struct hd64465_intr_entry))
-
-STATIC struct hd64465 {
-	int attached;
-	u_int16_t imask;
-} hd64465;
-
 STATIC int hd64465_match(struct device *, struct cfdata *, void *);
 STATIC void hd64465_attach(struct device *, struct device *, void *);
 STATIC int hd64465_print(void *, const char *);
-STATIC int hd64465_intr(void *);
+#ifdef DEBUG
+STATIC void hd64465_info(void);
+#endif
 
 struct cfattach hd64465if_ca = {
 	sizeof(struct device), hd64465_match, hd64465_attach
@@ -115,9 +83,6 @@ struct cfattach hd64465if_ca = {
 int
 hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-
-	if (hd64465.attached++)	
-		return (0);	/* only one instance */
 
 	if (strcmp("hd64465if", cf->cf_driver->cd_name))
 		return (0);
@@ -133,19 +98,27 @@ hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 hd64465_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct shb_attach_args *ia = aux;
 	const struct hd64465_module *module;
 	struct hd64465_attach_args ha;
 	u_int16_t r;
 	int i;
 
 	printf("\n");
+#ifdef DEBUG
+	if (bootverbose)
+		hd64465_info();
+#endif
 
 	r = hd64465_reg_read_2(HD64465_SRR);
 	printf("%s: HITACHI HD64465 rev. %d.%d\n", self->dv_xname,
 	    (r >> 8) & 0xff, r & 0xff);
 
-	hd64465_intr_disable();
+	/* Mask all interrupt */
+	hd64465_reg_write_2(HD64465_NIMR, 0xffff);
+	/* Edge trigger mode to clear pending interrupt. */
+	hd64465_reg_write_2(HD64465_NITR, 0xffff);
+	/* Clear pending interrupt */
+	hd64465_reg_write_2(HD64465_NIRR, 0x0000);
 
 	/* Attach all sub modules */
 	for (i = 0, module = hd64465_modules; i < HD64465_NMODULE;
@@ -155,8 +128,6 @@ hd64465_attach(struct device *parent, struct device *self, void *aux)
 		ha.ha_module_id = i;
 		config_found(self, &ha, hd64465_print);
 	}	
-
-	shb_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, hd64465_intr, self);
 }
 
 int
@@ -171,39 +142,28 @@ hd64465_print(void *aux, const char *pnp)
 }
 
 void *
-hd64465_intr_establish(enum hd64465_irq irq, int mode, int level,
+hd64465_intr_establish(int irq, int mode, int level,
     int (*func)(void *), void *arg)
 {
-	struct hd64465_intr_entry *entry = &hd64465_intr_entry[irq];
-	u_int16_t r, bit;
+	u_int16_t r;
 	int s;
 
 	s = splhigh();
-
-	entry->func = func;
-	entry->arg = arg;
-	entry->priority = level;
-
-	bit = entry->bit;
-
 	/* Trigger type */
 	r = hd64465_reg_read_2(HD64465_NITR);
 	switch (mode) {
 	case IST_PULSE:
 		/* FALLTHROUGH */
 	case IST_EDGE:
-		r |= bit;
+		r |= irq;
 		break;
 	case IST_LEVEL:
-		r &= ~bit;
+		r &= ~irq;
 		break;
 	}
 	hd64465_reg_write_2(HD64465_NITR, r);
 
-	/* Enable interrupt */
-	hd64465.imask &= ~bit;
-	hd64465_reg_write_2(HD64465_NIMR, hd64465.imask);
-
+	hd6446x_intr_establish(irq, mode, level, func, arg);
 	splx(s);
 
 	return (void *)irq;
@@ -212,74 +172,13 @@ hd64465_intr_establish(enum hd64465_irq irq, int mode, int level,
 void
 hd64465_intr_disestablish(void *handle)
 {
-	int irq = (int)handle;
-	struct hd64465_intr_entry *entry = &hd64465_intr_entry[irq];
-	int s;
-	
-	s = splhigh();	
 
-	/* disable interrupt */
-	hd64465.imask |= entry->bit;
-	hd64465_reg_write_2(HD64465_NIMR, hd64465.imask);
-
-	entry->func = 0;
-
-	splx(s);
-}
-
-int
-hd64465_intr(void *arg)
-{
-	struct hd64465_intr_entry *entry = hd64465_intr_entry;
-	u_int16_t cause;
-	int i;
-
-	cause = hd64465_reg_read_2(HD64465_NIRR) & ~hd64465.imask;
-	hd64465_reg_write_2(HD64465_NIRR, 0);
-
-	for (i = 0; i < HD64465_IRQ_MAX; i++, entry++) {
-		if (entry->func == 0)
-			continue;
-		if (cause & entry->bit)
-			(*entry->func)(entry->arg);
-	}
-
-	__dbg_heart_beat(HEART_BEAT_BLUE);
-
-	return (0);
-}
-
-void
-hd64465_intr_disable()
-{
-
-	/* Mask all interrupt */
-	hd64465.imask = 0xffff;
-	hd64465_reg_write_2(HD64465_NIMR, 0xffff);
-
-	/* Edge trigger mode */
-	hd64465_reg_write_2(HD64465_NITR, 0xffff);
-	/* Clear pending interrupt */
-	hd64465_reg_write_2(HD64465_NIRR, 0x0000);
-}
-
-void
-hd64465_intr_mask()
-{
-
-	hd64465_reg_write_2(HD64465_NIMR, 0xffff);
-}
-
-void
-hd64465_intr_unmask()
-{
-
-	hd64465_reg_write_2(HD64465_NIMR, hd64465.imask);
+	hd6446x_intr_disestablish(handle);
 }
 
 /* For the sake of Windows CE reboot clearly. */
 void
-hd64465_intr_reboot()
+hd64465_shutdown()
 {
 
 	/* Enable all interrupt */
@@ -287,4 +186,18 @@ hd64465_intr_reboot()
 
 	/* Level trigger mode */
 	hd64465_reg_write_2(HD64465_NITR, 0x0000);
+}
+
+void
+hd64465_info()
+{
+	u_int16_t r;
+
+	dbg_bit_print_msg(_reg_read_2(SH4_ICR), "SH4_ICR");
+	r = hd64465_reg_read_2(HD64465_NIMR);
+	dbg_bit_print_msg(r, "NIMR");
+	r = hd64465_reg_read_2(HD64465_NIRR);
+	dbg_bit_print_msg(r, "NIRR");
+	r = hd64465_reg_read_2(HD64465_NITR);
+	dbg_bit_print_msg(r, "NITR");
 }

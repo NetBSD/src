@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: panic.c,v 1.1.2.1 2002/06/23 17:42:51 jdolecek Exp $	*/
 
 
 #include <machine/stdarg.h>
@@ -12,8 +12,8 @@ panic(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
-	printf("\n");
+	putchar('\n');
 	va_end(ap);
 	breakpoint();
-	exit();
+	exit(0);
 }

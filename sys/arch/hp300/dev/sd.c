@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.2.2 2002/03/16 15:57:34 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.2.3 2002/06/23 17:36:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * SCSI CCS (Command Command Set) disk driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.2.3 2002/06/23 17:36:10 jdolecek Exp $");                                                  
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -631,13 +634,15 @@ sdlblkstrat(bp, bsize)
 	int bsize;
 {
 	struct sd_softc *sc = sd_cd.cd_devs[sdunit(bp->b_dev)];
-	struct buf *cbp = (struct buf *)malloc(sizeof(struct buf),
-							M_DEVBUF, M_WAITOK);
-	caddr_t cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
+	struct buf *cbp;
+	caddr_t cbuf;
 	int bn, resid;
 	caddr_t addr;
 
-	memset((caddr_t)cbp, 0, sizeof(*cbp));
+	MALLOC(cbp, struct buf *, sizeof(struct buf), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
+
 	cbp->b_proc = curproc;		/* XXX */
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.21.2.1 2001/09/13 01:14:44 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.21.2.2 2002/06/23 17:42:25 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ svr4_setregs(p, epp, stack)
 
 	setregs(p, epp, stack);
 	
-	/* This should be the exit function, not PS_STRINGS. */
+	/* This should be the exit function, not p->p_psstr. */
 	tf->tf_global[1] = (vaddr_t)0;
 }
 
@@ -363,7 +363,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = native_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 	/*
@@ -622,7 +622,6 @@ svr4_trap(type, p)
 {
 	int n;
 	struct trapframe64 *tf = p->p_md.md_tf;
-	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
 		return 0;

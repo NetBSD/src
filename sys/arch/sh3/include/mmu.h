@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.3.8.2 2002/03/16 15:59:38 jdolecek Exp $	*/
+/*	$NetBSD: mmu.h,v 1.3.8.3 2002/06/23 17:40:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,141 +37,66 @@
  */
 
 #ifndef _SH3_MMU_H_
-#define _SH3_MMU_H_
+#define	_SH3_MMU_H_
 
 /*
  * Initialize routines.
- *	sh_mmu_init		Assign function vector, and register addresses.
- *				Don't access hardware.
+ *	sh_mmu_init		Assign function vector. Don't access hardware.
  *				Call as possible as first.
  *	sh_mmu_start		Reset TLB entry, set default ASID, and start to
- *				translate address. 
+ *				translate address.
  *				Call after exception vector was installed.
  *
  * TLB access ops.
- *	sh_tlb_invalidate_addr	invalidate TLB entris for given 
+ *	sh_tlb_invalidate_addr	invalidate TLB entris for given
  *				virtual addr with ASID.
  *	sh_tlb_invalidate_asid	invalidate TLB entries for given ASID.
- *	sh_tlb_invalidate_all	invalidate all non-wired TLB entries. //sana
- *	sh_tlb_reset		invalidate all TLB entries.
- *	sh_tlb_set_asid		set ASID to PTEH
- *
- * Page table acess ops. (for current NetBSD/sh3 implementation)
+ *	sh_tlb_invalidate_all	invalidate all non-wired TLB entries.
+ *	sh_tlb_set_asid		set ASID.
+ *	sh_tlb_update		load new PTE to TLB.
  *
  */
 
-extern void sh_mmu_init(void);
-extern void sh_mmu_information(void);
+void sh_mmu_init(void);
+void sh_mmu_information(void);
 
 extern void (*__sh_mmu_start)(void);
-extern void sh3_mmu_start(void);
-extern void sh4_mmu_start(void);
-#define sh_mmu_start()			(*__sh_mmu_start)()
+void sh3_mmu_start(void);
+void sh4_mmu_start(void);
+#define	sh_mmu_start()			(*__sh_mmu_start)()
 
-extern void sh_tlb_set_asid(int);
-
+/*
+ * TLB access ops.
+ */
 extern void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
 extern void (*__sh_tlb_invalidate_asid)(int);
 extern void (*__sh_tlb_invalidate_all)(void);
-extern void (*__sh_tlb_reset)(void);
-extern void sh3_tlb_invalidate_addr(int, vaddr_t);
-extern void sh3_tlb_invalidate_asid(int);
-extern void sh3_tlb_invalidate_all(void);
-extern void sh3_tlb_reset(void);
-extern void sh4_tlb_invalidate_addr(int, vaddr_t);
-extern void sh4_tlb_invalidate_asid(int);
-extern void sh4_tlb_invalidate_all(void);
-extern void sh4_tlb_reset(void);
+extern void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
+void sh_tlb_set_asid(int);
+void sh3_tlb_invalidate_addr(int, vaddr_t);
+void sh3_tlb_invalidate_asid(int);
+void sh3_tlb_invalidate_all(void);
+void sh3_tlb_update(int, vaddr_t, u_int32_t);
+void sh4_tlb_invalidate_addr(int, vaddr_t);
+void sh4_tlb_invalidate_asid(int);
+void sh4_tlb_invalidate_all(void);
+void sh4_tlb_update(int, vaddr_t, u_int32_t);
+
 #if defined(SH3) && defined(SH4)
-#define sh_tlb_invalidate_addr(a, va)	(*__sh_tlb_invalidate_addr)(a, va)
-#define sh_tlb_invalidate_asid(a)	(*__sh_tlb_invalidate_asid)(a)
-#define sh_tlb_invalidate_all()		(*__sh_tlb_invalidate_all)()
-#define sh_tlb_reset()			(*__sh_tlb_reset)()
+#define	sh_tlb_invalidate_addr(a, va)	(*__sh_tlb_invalidate_addr)(a, va)
+#define	sh_tlb_invalidate_asid(a)	(*__sh_tlb_invalidate_asid)(a)
+#define	sh_tlb_invalidate_all()		(*__sh_tlb_invalidate_all)()
+#define	sh_tlb_update(a, pte)		(*__sh_tlb_update)(a, pte)
 #elif defined(SH3)
-#define sh_tlb_invalidate_addr(a, va)	sh3_tlb_invalidate_addr(a, va)
-#define sh_tlb_invalidate_asid(a)	sh3_tlb_invalidate_asid(a)
-#define sh_tlb_invalidate_all()		sh3_tlb_invalidate_all()
-#define sh_tlb_reset()			sh3_tlb_reset()
+#define	sh_tlb_invalidate_addr(a, va)	sh3_tlb_invalidate_addr(a, va)
+#define	sh_tlb_invalidate_asid(a)	sh3_tlb_invalidate_asid(a)
+#define	sh_tlb_invalidate_all()		sh3_tlb_invalidate_all()
+#define	sh_tlb_update(a, va, pte)	sh3_tlb_update(a, va, pte)
 #elif defined(SH4)
-#define sh_tlb_invalidate_addr(a, va)	sh4_tlb_invalidate_addr(a, va)
-#define sh_tlb_invalidate_asid(a)	sh4_tlb_invalidate_asid(a)
-#define sh_tlb_invalidate_all()		sh4_tlb_invalidate_all()
-#define sh_tlb_reset()			sh4_tlb_reset()
+#define	sh_tlb_invalidate_addr(a, va)	sh4_tlb_invalidate_addr(a, va)
+#define	sh_tlb_invalidate_asid(a)	sh4_tlb_invalidate_asid(a)
+#define	sh_tlb_invalidate_all()		sh4_tlb_invalidate_all()
+#define	sh_tlb_update(a, va, pte)	sh4_tlb_update(a, va, pte)
 #endif
 
-/*
- * MMU and page table entry access ops.
- */ 
-#if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_PTEH;
-extern u_int32_t __sh_TTB;
-extern u_int32_t __sh_TEA;
-#define SH_PTEH		(*(__volatile__ u_int32_t *)__sh_PTEH)
-#define SH_TTB		(*(__volatile__ u_int32_t *)__sh_TTB)
-#define SH_TEA		(*(__volatile__ u_int32_t *)__sh_TEA)
-
-#elif defined(SH3)
-#define SH_PTEH		(*(__volatile__ u_int32_t *)SH3_PTEH)
-#define SH_TTB		(*(__volatile__ u_int32_t *)SH3_TTB)
-#define SH_TEA		(*(__volatile__ u_int32_t *)SH3_TEA)
-
-#elif defined(SH4)
-#define SH_PTEH		(*(__volatile__ u_int32_t *)SH4_PTEH)
-#define SH_TTB		(*(__volatile__ u_int32_t *)SH4_TTB)
-#define SH_TEA		(*(__volatile__ u_int32_t *)SH4_TEA)
-#endif
-
-extern void (*__sh_mmu_pte_setup)(vaddr_t, u_int32_t);
-extern void sh3_mmu_pte_setup(vaddr_t, u_int32_t);
-extern void sh4_mmu_pte_setup(vaddr_t, u_int32_t);
-#if defined(SH3) && defined(SH4)
-#define SH_MMU_PTE_SETUP(v, pte)	(*__sh_mmu_pte_setup)((v), (pte))
-#elif defined(SH3)
-#define SH_MMU_PTE_SETUP(v, pte)	sh3_mmu_pte_setup((v), (pte))
-#elif defined(SH4)
-#define SH_MMU_PTE_SETUP(v, pte)	sh4_mmu_pte_setup((v), (pte))
-#endif
-
-/*
- * SH3 port access pte from P1, SH4 port access it from P2. 
- */
-extern u_int32_t (*__sh_mmu_pd_area)(u_int32_t);
-extern u_int32_t __sh3_mmu_pd_area(u_int32_t);
-extern u_int32_t __sh4_mmu_pd_area(u_int32_t);
-#if defined(SH3) && defined(SH4)
-#define SH_MMU_PD_AREA(x)		__sh_mmu_pd_area(x)
-#elif defined(SH3)
-#define SH_MMU_PD_AREA(x)		(x)
-#elif defined(SH4)
-#define SH_MMU_PD_AREA(x)		SH3_P1SEG_TO_P2SEG(x)
-#endif
-
-/*
- * TTB stores pte entry start address.
- */
-extern u_int32_t (*__sh_mmu_ttb_read)(void);
-extern void (*__sh_mmu_ttb_write)(u_int32_t);
-extern u_int32_t sh3_mmu_ttb_read(void);
-extern void sh3_mmu_ttb_write(u_int32_t);
-extern u_int32_t sh4_mmu_ttb_read(void);
-extern void sh4_mmu_ttb_write(u_int32_t);
-#if defined(SH3) && defined(SH4)
-#define SH_MMU_TTB_READ()	(*__sh_mmu_ttb_read)()
-#define SH_MMU_TTB_WRITE(x)	(*__sh_mmu_ttb_write)(x)
-#elif defined(SH3)
-#define SH_MMU_TTB_READ()	sh3_mmu_ttb_read()
-#define SH_MMU_TTB_WRITE(x)	sh3_mmu_ttb_write(x)
-#elif defined(SH4)
-#define SH_MMU_TTB_READ()	sh4_mmu_ttb_read()
-#define SH_MMU_TTB_WRITE(x)	sh4_mmu_ttb_write(x)
-#endif
-
-/*
- * some macros for pte access.
- */
-#define SH_MMU_PD_TOP()		((u_long *)SH_MMU_PD_AREA(SH_MMU_TTB_READ()))
-#define SH_MMU_PDE(pd, i)	((u_long *)SH_MMU_PD_AREA((pd)[(i)]))
-
-#include <sh3/mmu_sh3.h>
-#include <sh3/mmu_sh4.h>
 #endif /* !_SH3_MMU_H_ */

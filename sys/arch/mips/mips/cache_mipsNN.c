@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.1.4.2 2002/03/16 15:58:37 jdolecek Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.1.4.3 2002/06/23 17:38:03 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -155,6 +155,42 @@ mipsNN_icache_sync_range_32(vaddr_t va, vsize_t size)
 }
 
 void
+mipsNN_icache_sync_range_index_16_2way(vaddr_t va, vsize_t size)
+{
+	vaddr_t w2va, eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
+
+	va = trunc_line16(va);
+	w2va = va + mips_picache_way_size;
+	eva = round_line16(va + size);
+
+	mips_dcache_wbinv_range_index(va, (eva - va));
+
+	while ((eva - va) >= (16 * 16)) {
+		cache_r4k_op_16lines_16_2way(va, w2va,
+		    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		va   += (16 * 16);
+		w2va += (16 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va,   CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		va   += 16;
+		w2va += 16;
+	}
+
+	SYNC;
+}
+
+void
 mipsNN_icache_sync_range_index_16_4way(vaddr_t va, vsize_t size)
 {
 	vaddr_t w2va, w3va, w4va, eva;
@@ -193,6 +229,42 @@ mipsNN_icache_sync_range_index_16_4way(vaddr_t va, vsize_t size)
 		w2va += 16;
 		w3va += 16;
 		w4va += 16;
+	}
+
+	SYNC;
+}
+
+void
+mipsNN_icache_sync_range_index_32_2way(vaddr_t va, vsize_t size)
+{
+	vaddr_t w2va, eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
+
+	va = trunc_line32(va);
+	w2va = va + mips_picache_way_size;
+	eva = round_line32(va + size);
+
+	mips_dcache_wbinv_range_index(va, (eva - va));
+
+	while ((eva - va) >= (16 * 32)) {
+		cache_r4k_op_16lines_32_2way(va, w2va,
+		    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		va   += (16 * 32);
+		w2va += (16 * 32);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va,   CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		va   += 32;
+		w2va += 32;
 	}
 
 	SYNC;
@@ -335,6 +407,40 @@ mipsNN_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
+mipsNN_pdcache_wbinv_range_index_16_2way(vaddr_t va, vsize_t size)
+{
+	vaddr_t w2va, eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+
+	va = trunc_line16(va);
+	w2va = va + mips_pdcache_way_size;
+	eva = round_line16(va + size);
+
+	while ((eva - va) >= (16 * 16)) {
+		cache_r4k_op_16lines_16_2way(va, w2va,
+		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		va   += (16 * 16);
+		w2va += (16 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		va   += 16;
+		w2va += 16;
+	}
+
+	SYNC;
+}
+
+void
 mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 {
 	vaddr_t w2va, w3va, w4va, eva;
@@ -348,7 +454,7 @@ mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
 	va = trunc_line16(va);
-	w2va = va + mips_pdcache_way_size;
+	w2va = va   + mips_pdcache_way_size;
 	w3va = w2va + mips_pdcache_way_size;
 	w4va = w3va + mips_pdcache_way_size;
 	eva = round_line16(va + size);
@@ -377,6 +483,40 @@ mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 }
 
 void
+mipsNN_pdcache_wbinv_range_index_32_2way(vaddr_t va, vsize_t size)
+{
+	vaddr_t w2va, eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+
+	va = trunc_line32(va);
+	w2va = va + mips_pdcache_way_size;
+	eva = round_line32(va + size);
+
+	while ((eva - va) >= (16 * 32)) {
+		cache_r4k_op_16lines_32_2way(va, w2va,
+		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		va   += (16 * 32);
+		w2va += (16 * 32);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		va   += 32;
+		w2va += 32;
+	}
+
+	SYNC;
+}
+ 
+void
 mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 {
 	vaddr_t w2va, w3va, w4va, eva;
@@ -394,7 +534,7 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
 
 	va = trunc_line32(va);
-	w2va = va + mips_pdcache_way_size;
+	w2va = va   + mips_pdcache_way_size;
 	w3va = w2va + mips_pdcache_way_size;
 	w4va = w3va + mips_pdcache_way_size;
 	eva = round_line32(va + size);

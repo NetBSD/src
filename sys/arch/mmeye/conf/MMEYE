@@ -1,9 +1,11 @@
-#	$NetBSD: MMEYE,v 1.7.4.3 2002/03/16 15:58:46 jdolecek Exp $
+#	$NetBSD: MMEYE,v 1.7.4.4 2002/06/23 17:38:12 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16		# estimated number of users
 
@@ -25,6 +27,7 @@ options 	HZ=50		# clock interrupt generates every 1/HZ sec
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -101,6 +104,6 @@ pseudo-device	pty			# pseudo-terminals
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 #pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,10 +1,12 @@
-# $NetBSD: TCWSCONS,v 1.21.4.4 2002/03/16 15:55:41 jdolecek Exp $
+# $NetBSD: TCWSCONS,v 1.21.4.5 2002/06/23 17:34:10 jdolecek Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"TCWSCONS-$Revision: 1.21.4.4 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"TCWSCONS-$Revision: 1.21.4.5 $"
 
 maxusers 32
 
@@ -87,6 +89,7 @@ options 	LKM
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

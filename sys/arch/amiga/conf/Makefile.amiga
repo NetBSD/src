@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.94.2.1 2002/01/10 19:37:16 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.94.2.2 2002/06/23 17:34:23 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -38,14 +38,11 @@ CMACHFLAGS=	-m68020
 CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-
-.SUFFIXES: .o .g
-
-.g.o: ; echo This is a dummy rule and should not be executed.
-
-NORMAL_G=	gspa -c tmscode < $< > $*.c && \
-		${CC} -c ${CFLAGS} ${CPPFLAGS} ${PROF} $*.c
+.endif
 
 ##
 ## (3) libkern and compat

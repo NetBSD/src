@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1999/12/09 14:53:22 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.12.1 2002/06/23 17:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -29,13 +29,14 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include <machine/romcall.h>
 
 #ifdef BOOT_DEBUG
-# define DPRINTF printf
+# define DPRINTF(x) printf x
 #else
-# define DPRINTF while (0) printf
+# define DPRINTF(x)
 #endif
 
 int dkopen __P((struct open_file *, ...));
@@ -48,7 +49,9 @@ struct devsw devsw[] = {
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
+	    ustarfs_seek, ustarfs_stat }
 };
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
@@ -66,14 +69,14 @@ devopen(f, fname, file)
 	char devname[32];
 	char *cp;
 
-	DPRINTF("devopen: %s\n", fname);
+	DPRINTF(("devopen: %s\n", fname));
 
 	strcpy(devname, fname);
 	cp = strchr(devname, ')') + 1;
 	*cp = 0;
 	fd = rom_open(devname, 0);
 
-	DPRINTF("devname = %s, fd = %d\n", devname, fd);
+	DPRINTF(("devname = %s, fd = %d\n", devname, fd));
 	if (fd == -1)
 		return -1;
 
@@ -89,7 +92,7 @@ devopen(f, fname, file)
 int
 dkopen(struct open_file *f, ...)
 {
-	DPRINTF("dkopen\n");
+	DPRINTF(("dkopen\n"));
 	return 0;
 }
 
@@ -99,7 +102,7 @@ dkclose(f)
 {
 	struct romdev *dev = f->f_devdata;
 
-	DPRINTF("dkclose\n");
+	DPRINTF(("dkclose\n"));
 	rom_close(dev->fd);
 	return 0;
 }

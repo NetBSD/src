@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.12.2.2 2002/02/11 20:09:16 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.12.2.3 2002/06/23 17:42:35 jdolecek Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -8,6 +8,8 @@
 #
 
 include "arch/sun3/conf/std.sun3"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"	# Optimise for space. Implies -O2
 
@@ -27,6 +29,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

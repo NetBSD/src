@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.3 2001/06/27 02:59:27 fredette Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.3.2.1 2002/06/23 17:42:29 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -164,7 +164,6 @@ bwtwoattach_any(parent, self, aux)
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = ma->ma_bustag;
-	sc->sc_btype = (bus_type_t)0;
 	sc->sc_paddr = ma->ma_paddr;
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;

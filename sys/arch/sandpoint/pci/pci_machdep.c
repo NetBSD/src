@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.2.3 2002/01/10 19:48:20 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.2.4 2002/06/23 17:40:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/openpicreg.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -206,7 +207,33 @@ pci_intr_map(pa, ihp)
 	if (line == 255) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
+	}
+#if defined(OPENPIC_SERIAL_MODE)
+	if (line == 11) {
+		switch (pin) {
+		case PCI_INTERRUPT_PIN_A:
+			*ihp = SANDPOINT_INTR_WINBOND_A;
+			break;
+		case PCI_INTERRUPT_PIN_B:
+			*ihp = SANDPOINT_INTR_WINBOND_B;
+			break;
+		case PCI_INTERRUPT_PIN_C:
+			*ihp = SANDPOINT_INTR_WINBOND_C;
+			break;
+		case PCI_INTERRUPT_PIN_D:
+			*ihp = SANDPOINT_INTR_WINBOND_D;
+			break;
+		default:
+			printf("pci_intr_map: bad interrupt line %d,%c\n",
+				line, pin + '@');
+			goto bad;
+			break;
+		}
+			*ihp = SANDPOINT_INTR_WINBOND_C;
 	} else {
+#else
+	if (1) {
+#endif
 		/*
 		 * Sandpoint has 4 PCI slots.
 		 * Sandpoint rev. X2 has them in a weird order.  Counting
@@ -219,23 +246,23 @@ pci_intr_map(pa, ihp)
 		 * based numbering scheme where Motorola's is usually 1-based.
 		 */
 		if (line < 13 || line > 16) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			printf("pci_intr_map: bad interrupt line %d,%c\n",
+				line, pin + '@');
 			goto bad;
 		}
-	}
-	/*
-	 * In the PCI configuration code, we simply assign the dev
-	 * number to the interrupt line.  We extract it here for the
-	 * interrupt, but subtract off the lowest dev (13) to get
-	 * the IRQ.
-	 */
+
+		/*
+		 * In the PCI configuration code, we simply assign the dev
+		 * number to the interrupt line.  We extract it here for the
+		 * interrupt, but subtract off the lowest dev (13) to get
+		 * the IRQ.
+		 */
 #if defined(OPENPIC_SERIAL_MODE)
-	line -= 11;
+		*ihp = line - 11;
 #else
-	line -= 13;
+		*ihp = line - 13;
 #endif
-	
-	*ihp = line;
+	}
 	return 0;
 
 bad:

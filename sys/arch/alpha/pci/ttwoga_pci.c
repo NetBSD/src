@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_pci.c,v 1.1 2000/12/21 20:51:55 thorpej Exp $ */
+/* $NetBSD: ttwoga_pci.c,v 1.1.6.1 2002/06/23 17:34:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.1 2000/12/21 20:51:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.1.6.1 2002/06/23 17:34:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ttwoga_conf_read(void *cpv, pcitag_t tag, int offset)
 	paddr_t addr;
 	u_int64_t old_hae3;
 
-	alpha_pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
+	pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
 
 	addr = b ? tag : ttwoga_make_type0addr(d, f);
 	if (addr == (paddr_t)-1)
@@ -208,7 +208,7 @@ ttwoga_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	paddr_t addr;
 	u_int64_t old_hae3;
 
-	alpha_pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
+	pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
 
 	addr = b ? tag : ttwoga_make_type0addr(d, f);
 	if (addr == (paddr_t)-1)

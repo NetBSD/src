@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.5.2.1 2001/09/13 01:13:34 thorpej Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.5.2.2 2002/06/23 17:35:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -505,7 +505,6 @@ gaps_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/*
 	 * Allocate the pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, avail_start, avail_end - PAGE_SIZE,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

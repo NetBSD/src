@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.48.2.5 2002/03/16 15:59:55 jdolecek Exp $
+#	$NetBSD: files.sparc64,v 1.48.2.6 2002/06/23 17:42:04 jdolecek Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -26,7 +26,7 @@ file ufs/lfs/lfs_debug.c	compile-with "${NOOPT_C}"
 #
 
 define mainbus {}
-device mainbus: pcibus, mainbus
+device mainbus: mainbus
 attach mainbus at root
 
 device pcons
@@ -54,9 +54,6 @@ include "dev/ata/files.ata"
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
@@ -105,6 +102,9 @@ file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
 
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
+
+# PCMCIA bus (references fdc)
+include "dev/pcmcia/files.pcmcia"
 
 #
 # Console related stuff

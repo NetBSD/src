@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.4.2.3 2002/03/16 15:55:27 jdolecek Exp $ */
+/* $NetBSD: podulebus.c,v 1.4.2.4 2002/06/23 17:33:57 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.4.2.3 2002/03/16 15:55:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.4.2.4 2002/06/23 17:33:57 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -239,7 +239,7 @@ poduleexamine(podule, dev, slottype)
 	struct device *dev;
 	int slottype;
 {
-	struct podule_list *pod_list;
+	struct manufacturer_description *man_desc;
 	struct podule_description *pod_desc;
 
 	/* Test to see if the podule is present */
@@ -271,30 +271,32 @@ poduleexamine(podule, dev, slottype)
 					podulechunkdirectory(podule);
 
 				/* Do we know this manufacturer ? */
-				pod_list = known_podules;
-				while (pod_list->description) {
-					if (pod_list->manufacturer_id == podule->manufacturer)
+				man_desc = known_manufacturers;
+				while (man_desc->description) {
+					if (man_desc->manufacturer_id ==
+					    podule->manufacturer)
 						break;
-					++pod_list;
+					++man_desc;
 				}
-				if (!pod_list->description)
+				if (!man_desc->description)
 					printf("man=%04x   : ", podule->manufacturer);
 				else
-					printf("%s : ", pod_list->description);
+					printf("%s : ", man_desc->description);
 
 				/* Do we know this product ? */
 
-				pod_desc = pod_list->products;
+				pod_desc = known_podules;
 				while (pod_desc->description) {
 					if (pod_desc->product_id == podule->product)
 						break;
 					++pod_desc;
 				}
-				if (!pod_desc->description) {
-					printf("prod=%04x : ", podule->product);
-					printf("%s\n", podule->description);
-				} else
-					printf("%s : %s\n", pod_desc->description, podule->description);
+				if (!pod_desc->description)
+					printf("prod=%04x : ",
+					    podule->product);
+				else
+					printf("%s : ", pod_desc->description);
+				printf("%s\n", podule->description);
 			}
 		}
 	}
@@ -453,7 +455,7 @@ podulebusattach(parent, self, aux)
 		int loop1;
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
-		    loop1 += L1_SEC_SIZE)
+		    loop1 += L1_S_SIZE)
 		pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
 		    EASI_BASE + loop1, EASI_HW_BASE + loop1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);

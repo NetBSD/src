@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.h,v 1.1.6.2 2002/01/10 19:36:20 thorpej Exp $	*/
+/*	$NetBSD: mouse.h,v 1.1.6.3 2002/06/23 17:33:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) Mark Brinicombe 1996 All rights reserved
@@ -37,7 +37,7 @@
 #define MOUSE_BUTTON_LEFT   0x40
 */
 
-/* Used in pms.c */
+/* Used in opms.c */
 
 #define BUTSTATMASK	0x07	/* Any mouse button down if any bit set */
 #define BUTCHNGMASK	0x38	/* Any mouse button changed if any bit set */

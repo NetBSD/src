@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128.2.3 2002/03/16 15:58:15 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128.2.4 2002/06/23 17:37:26 jdolecek Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128.2.3 2002/03/16 15:58:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128.2.4 2002/06/23 17:37:26 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -817,7 +817,8 @@ pmap_bootstrap(kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE); pte++;
+	virtual_avail += round_page(MSGBUFSIZE);
+	pte += i386_btop(round_page(MSGBUFSIZE));
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
@@ -2740,6 +2741,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off, error;
+	int ptpdelta, wireddelta, resdelta;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
@@ -2785,15 +2787,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap_valid_entry(opte)) {
 
 		/*
-		 * first, update pm_stats.  resident count will not
-		 * change since we are replacing/changing a valid
-		 * mapping.  wired count might change...
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
 		 */
 
+		resdelta = 0;
 		if (wired && (opte & PG_W) == 0)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
 		else if (!wired && (opte & PG_W) != 0)
-			pmap->pm_stats.wired_count--;
+			wireddelta = -1;
+		else
+			wireddelta = 0;
+		ptpdelta = 0;
 
 		/*
 		 * is the currently mapped PA the same as the one we
@@ -2849,17 +2855,20 @@ pmap_enter(pmap, va, pa, prot, flags)
 		}
 	} else {	/* opte not valid */
 		pve = NULL;
-		pmap->pm_stats.resident_count++;
+		resdelta = 1;
 		if (wired)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
+		else
+			wireddelta = 0;
 		if (ptp)
-			ptp->wire_count++;      /* count # of valid entrys */
+			ptpdelta = 1;
+		else
+			ptpdelta = 0;
 	}
 
 	/*
-	 * at this point pm_stats has been updated.   pve is either NULL
-	 * or points to a now-free pv_entry structure (the latter case is
-	 * if we called pmap_remove_pv above).
+	 * pve is either NULL or points to a now-free pv_entry structure
+	 * (the latter case is if we called pmap_remove_pv above).
 	 *
 	 * if this entry is to be on a pvlist, enter it now.
 	 */
@@ -2892,6 +2901,10 @@ enter_now:
 	 * at this point pvh is !NULL if we want the PG_PVLIST bit set
 	 */
 
+	pmap->pm_stats.resident_count += resdelta;
+	pmap->pm_stats.wired_count += wireddelta;
+	if (ptp)
+		ptp->wire_count += ptpdelta;
 	npte = pa | protection_codes[prot] | PG_V;
 	if (pvh)
 		npte |= PG_PVLIST;

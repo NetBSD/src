@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4.4.1 2002/03/16 15:59:43 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.4.2 2002/06/23 17:40:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -42,34 +42,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/signal.h>
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
 
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
-#if 0 /* unused */
-	struct sys_sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(void *) parms;
-	} */ *uap = v;
-#endif
+	struct sys_sysarch_args __attribute__((__unused__)) *uap = v;
 
 	return (ENOSYS);
 }

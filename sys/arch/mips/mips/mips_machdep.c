@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.118.2.3 2002/03/16 15:58:41 jdolecek Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.118.2.4 2002/06/23 17:38:05 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118.2.3 2002/03/16 15:58:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118.2.4 2002/06/23 17:38:05 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -231,7 +231,7 @@ struct pridtab {
  *  - All MIPS3+ have a count register.  MIPS_HAS_CLOCK in <mips/cpu.h>
  *    will need to be revised if this is false.
  */
-#define	MIPS32_FLAGS	CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV
+#define	MIPS32_FLAGS	CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_USE_WAIT
 #define	MIPS64_FLAGS	MIPS32_FLAGS	/* same as MIPS32 flags (for now) */
 
 static const struct pridtab *mycpu;
@@ -247,20 +247,25 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
 	/*
-	 * rev 0x00 and 0x30 are R4000, 0x40 and 0x50 are R4400.
+	 * rev 0x00 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
 	 * should we allow ranges and use 0x00 - 0x3f for R4000 and
 	 * 0x40 - 0xff for R4400?
 	 */
 	{ 0, MIPS_R4000, MIPS_REV_R4000_A,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4000_B,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4000 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_A,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_B,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_C,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R4400 CPU"	},
 
 	{ 0, MIPS_R3LSI, -1,			CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"LSI Logic R3000 derivative" },
@@ -275,7 +280,8 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R4300, -1,			CPU_ARCH_MIPS3, 32,
 	  CPU_MIPS_R4K_MMU,			"NEC VR4300 CPU"	},
 	{ 0, MIPS_R4600, -1,			CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"QED R4600 Orion CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
+						"QED R4600 Orion CPU"	},
 	{ 0, MIPS_R4700, -1,			CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"QED R4700 Orion CPU"	},
 
@@ -304,9 +310,11 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_TX3900, MIPS_REV_TX3927,	CPU_ARCH_MIPS1, 64,
 	  0,					"Toshiba TX3927 CPU"	},
 	{ 0, MIPS_R5000, -1,			CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R5000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
+						"MIPS R5000 CPU"	},
 	{ 0, MIPS_RM5200, -1,			CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV,	"QED RM5200 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_USE_WAIT,			"QED RM5200 CPU"	},
 
 	/* XXX
 	 * The rm7000 rev 2.0 can have 64 tlbs, and has 6 extra interrupts.  See
@@ -314,7 +322,8 @@ static const struct pridtab cputab[] = {
 	 * for more details.
 	 */
 	{ 0, MIPS_RM7000, -1,			CPU_ARCH_MIPS4, 48,
-	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV,	"QED RM7000 CPU"	},
+	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_USE_WAIT,			"QED RM7000 CPU"	},
 
 	/* 
 	 * IDT RC32300 core is a 32 bit MIPS2 processor with
@@ -346,18 +355,18 @@ static const struct pridtab cputab[] = {
 #endif
 
 	{ MIPS_PRID_CID_MTI, MIPS_4Kc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4Kc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4KEc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1,	-1, 0,
-	  MIPS32_FLAGS,				"4KSc"			},
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1,	-1, 0,
-	  MIPS64_FLAGS,				"5Kc"			},
+	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R1, -1, -1, 0,
-	  MIPS32_FLAGS,				"Au1000 (Rev 1)"	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R2, -1, -1, 0,
-	  MIPS32_FLAGS,				"Au1000 (Rev 2)" 	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2)" 	},
 
 	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, 0,
@@ -499,7 +508,7 @@ mips3_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* !MIPS3_5900 */
 
@@ -548,7 +557,7 @@ r5900_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS3_5900 */
 #endif /* MIPS3 */
@@ -620,7 +629,7 @@ mips32_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS32 */
 
@@ -697,7 +706,7 @@ mips64_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS64 */
 
@@ -728,7 +737,6 @@ mips_vector_init(void)
 
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
-//printf("test 0x%x 0x%x 0x%x with 0x%x 0x%x 0x%x (%s - isa %d)\n", MIPS_PRID_CID(cpu_id), MIPS_PRID_IMPL(cpu_id), MIPS_PRID_REV(cpu_id), ct->cpu_cid, ct->cpu_pid, ct->cpu_rev, ct->cpu_name, ct->cpu_isa);
 		if (MIPS_PRID_CID(cpu_id) != ct->cpu_cid ||
 		    MIPS_PRID_IMPL(cpu_id) != ct->cpu_pid)
 			continue;
@@ -794,8 +802,9 @@ mips_vector_init(void)
 	/*
 	 * Check cpu-specific flags.
 	 */
-	mips_has_r4k_mmu = mycpu->cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = !(mycpu->cpu_flags & CPU_MIPS_NO_LLSC);
+	mips_cpu_flags = mycpu->cpu_flags;
+	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
+	mips_has_llsc = !(mips_cpu_flags & CPU_MIPS_NO_LLSC);
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
@@ -868,39 +877,15 @@ mips_vector_init(void)
 		cpu_reboot(RB_HALT, NULL);
 	}
 
+/* XXX simonb: ugg, another ugly #ifdef check... */
+#if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
 	/*
 	 * Install power-saving idle routines.
 	 */
-	switch (MIPS_PRID_CID(cpu_id)) {
-	case MIPS_PRID_CID_PREHISTORIC:
-		switch (MIPS_PRID_IMPL(cpu_id)) {
-#if defined(MIPS3) && !defined(MIPS3_5900)
-		case MIPS_RM5200:
-		case MIPS_RM7000:
-		    {
-			void rm52xx_idle(void);
-
-			CPU_IDLE = (long *) rm52xx_idle;
-			break;
-		    }
-#endif /* MIPS3 && !MIPS3_5900 */
-		default:
-			/* Nothing. */
-			break;
-		}
-#if defined(MIPS32) || defined(MIPS64)
-	default:
-	    {
-		/*
-		 * XXX: wait is valid on all mips32/64, but do we
-		 *	always want to use it?
-		 */
-		void mipsNN_idle(void);
-
-		CPU_IDLE = (long *) mipsNN_idle;
-	    }
-#endif
-	}
+	if ((mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
+	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
+		CPU_IDLE = (long *)mips_wait_idle;
+#endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 }
 
 void
@@ -1073,7 +1058,7 @@ setregs(p, pack, stack)
 	f->f_regs[A0] = (int) stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)PS_STRINGS;
+	f->f_regs[A3] = (int)p->p_psstr;
 
 	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;

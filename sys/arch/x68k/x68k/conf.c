@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26.2.2 2002/01/10 19:50:44 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.26.2.3 2002/06/23 17:43:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -101,16 +101,16 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_pow_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_bell_init(c,n)	cdev__oci_init(c,n)
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -229,11 +229,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 40: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 41: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 42: svr4 net pseudo-device */
-	cdev_i4b_init(NI4B, i4b),		/* 43: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 44: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 45: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 46: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 47: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 43: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 44: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 45: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 46: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 47: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl), /* 48: settimeofday driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

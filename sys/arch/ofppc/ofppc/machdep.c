@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65.2.4 2002/01/10 19:47:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65.2.5 2002/06/23 17:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,8 +84,6 @@ struct proc *fpuproc;
 extern struct user *proc0paddr;
 
 struct bat battable[16];
-
-int astpending;
 
 char *bootpath;
 
@@ -266,7 +264,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
@@ -286,7 +284,6 @@ initppc(startkernel, endkernel, args)
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 

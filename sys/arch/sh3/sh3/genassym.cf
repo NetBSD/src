@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.8.2 2002/03/16 15:59:41 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.1.8.3 2002/06/23 17:40:51 jdolecek Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,13 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/signal.h>
 include <sys/mbuf.h>
+include <uvm/uvm_extern.h>
 include <sh3/pcb.h>
 include <sh3/locore.h>
+include <sh3/proc.h>
 
 define	TF_SIZE			sizeof(struct trapframe)
-define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
+define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
 define	TF_UBC			offsetof(struct trapframe, tf_ubc)
 define	TF_SPC			offsetof(struct trapframe, tf_spc)
 define	TF_SSR			offsetof(struct trapframe, tf_ssr)
@@ -70,10 +72,23 @@ define	P_BACK			offsetof(struct proc, p_back)
 define	P_FORW			offsetof(struct proc, p_forw)
 define	P_STAT			offsetof(struct proc, p_stat)
 define	P_WCHAN			offsetof(struct proc, p_wchan)
+define	P_MD			offsetof(struct proc, p_md)
 
-define	PCB_PAGEDIRREG		offsetof(struct pcb, pageDirReg)
-define	PCB_R15			offsetof(struct pcb, r15)
-define	PCB_KR15		offsetof(struct pcb, kr15)
+define	MD_UPTE			offsetof(struct mdproc, md_upte)
+define	MD_PCB			offsetof(struct mdproc,	md_pcb)
+
+define	SF_SIZE			sizeof(struct switchframe)
+define	SF_SR			offsetof(struct switchframe, sf_sr)
+define	SF_R15			offsetof(struct switchframe, sf_r15)
+define	SF_R14			offsetof(struct switchframe, sf_r14)
+define	SF_R13			offsetof(struct switchframe, sf_r13)
+define	SF_R12			offsetof(struct switchframe, sf_r12)
+define	SF_R10			offsetof(struct switchframe, sf_r10)
+define	SF_R9			offsetof(struct switchframe, sf_r9)
+define	SF_R8			offsetof(struct switchframe, sf_r8)
+define	SF_PR			offsetof(struct switchframe, sf_pr)
+define	SF_R6_BANK		offsetof(struct switchframe, sf_r6_bank)
+define	SF_R7_BANK		offsetof(struct switchframe, sf_r7_bank)
 
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)
@@ -82,6 +97,8 @@ define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
 # can't include sys/proc.h directly.
 define	SONPROC			SONPROC
 define	SRUN			SRUN
+
+define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
 #
 # in_cksum.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3.2.3 2002/03/16 16:00:05 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.2.4 2002/06/23 17:42:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,7 +66,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/db_machdep.h>
 #include <machine/endian.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -75,6 +74,11 @@
 
 #include <sun2/sun2/fc.h>
 #include <sun2/sun2/machdep.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36.2.3 2002/02/11 20:08:45 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.36.2.4 2002/06/23 17:38:49 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.36.2.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.36.2.4 $"
 
 maxusers	16
 
@@ -43,6 +45,7 @@ options 	SYSVSHM			# System V shared memory
 options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
@@ -148,9 +151,9 @@ fb0	at hb0 addr 0x88000000		# frame buffer
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
 
-#dmac*	at ap?				# dmac3
-#spifi*	at ap?				# SPIFI SCSI
-#scsibus* at spifi?
+dmac*	at ap?				# dmac3
+spifi*	at ap?				# SPIFI SCSI
+scsibus* at spifi?
 
 xafb*	at ap?
 kb0	at ap?

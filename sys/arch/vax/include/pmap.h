@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46.2.3 2002/03/16 16:00:14 jdolecek Exp $	   */
+/*	$NetBSD: pmap.h,v 1.46.2.4 2002/06/23 17:43:01 jdolecek Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -74,17 +74,13 @@ struct pm_share {
 
 typedef struct pmap {
 	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
-	short		 pm_count;	/* reference count */
-	short		 pm_flags;
-#define	PM_ACTIVE	1		/* Process connected to pmap */
-	struct pte	*pm_p0base;	/* Pointer to saved ptes */
+	int		 pm_count;	/* reference count */
 	struct pm_share	*pm_share;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
 	u_char		*pm_pref;	/* pte reference count array */
-	struct pte	*pm_p1base;	/* Number of pages wired */
 	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
 } *pmap_t;
@@ -100,6 +96,8 @@ struct pv_entry {
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };
+
+extern	struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
@@ -117,6 +115,7 @@ extern	struct pmap kernel_pmap_store;
 #define pmap_kernel()			(&kernel_pmap_store)
 
 #endif	/* _KERNEL */
+
 
 /*
  * Real nice (fast) routines to get the virtual address of a physical page
@@ -163,6 +162,62 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return (FALSE);
 }
 
+boolean_t pmap_clear_modify_long(struct pv_entry *);
+boolean_t pmap_clear_reference_long(struct pv_entry *);
+boolean_t pmap_is_modified_long(struct pv_entry *);
+void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
+void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+
+__inline static boolean_t
+pmap_clear_reference(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+
+	pv->pv_attr &= ~PG_V;
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		rv |= pmap_clear_reference_long(pv);
+	return rv;
+}
+
+__inline static boolean_t
+pmap_clear_modify(struct vm_page *pg)
+{
+	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_M) != 0;
+
+	pv->pv_attr &= ~PG_M;
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		rv |= pmap_clear_modify_long(pv);
+	return rv;
+}
+
+__inline static boolean_t
+pmap_is_modified(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	if (pv->pv_attr & PG_M)
+		return 1;
+	else
+		return pmap_is_modified_long(pv);
+}
+
+__inline static void
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+{
+	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		pmap_page_protect_long(pv, prot);
+}
+
+__inline static void
+pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
+{
+	if (pmap->pm_p0lr != 0 || pmap->pm_p1lr != 0x200000 ||
+	    (start & KERNBASE) != 0)
+		pmap_protect_long(pmap, start, end, prot);
+}
 
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)

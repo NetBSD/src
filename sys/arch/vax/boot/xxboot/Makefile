@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.2 2002/03/16 16:00:12 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.10.2.3 2002/06/23 17:42:58 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -16,11 +16,13 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 	-DLIBSA_NO_TWIDDLE -DLIBSA_SINGLE_DEVICE=rom \
 	-DLIBSA_NO_COMPAT_UFS \
 	-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_CLOSE \
-	-DLIBSA_NO_FS_WRITE -DLIBSA_NO_FS_SEEK
+	-DLIBSA_NO_FS_WRITE -DLIBSA_NO_FS_SEEK \
+	-DNEED_UFS -DNEED_CD9660
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 
-CFLAGS=	-Os
+CFLAGS=	-Os -ffreestanding
+LIBC=
 
 SA_AS=	library
 .include "${S}/lib/libsa/Makefile.inc"
@@ -39,10 +41,12 @@ machine-links:
 .NOPATH: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
 .endif
+CLEANFILES+= ${PROG}.out
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
+	${SIZE} ${PROG}.out
 	${OBJCOPY} -O binary ${PROG}.out ${PROG}
 
 .include <bsd.prog.mk>

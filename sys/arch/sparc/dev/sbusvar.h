@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.9 1998/09/19 15:49:50 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.9.26.1 2002/06/23 17:41:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,5 +100,13 @@ struct sbus_softc {
 	int	*sc_intr2ipl;		/* Interrupt level translation */
 	int	*sc_intr_compat;	/* `intr' property to sbus compat */
 };
+
+/*
+ * Macro to convert a PROM virtual address to a bus_space_handle_t.
+ */
+#define	sbus_promaddr_to_handle(tag, promaddr, hp)	\
+	do {						\
+		*(hp) = (bus_space_handle_t)(promaddr);	\
+	} while (0)
 
 #endif /* _SBUS_VAR_SPARC_H */

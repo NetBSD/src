@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2001/04/25 17:53:14 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.1 2002/06/23 17:37:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ static void
 findbootdev()
 {
 	struct device *dv;
-	int major, unit, i;
+	int major, unit, controller, i;
 	char buf[32];
 
 	booted_device = NULL;
@@ -130,9 +130,21 @@ findbootdev()
 
 	unit = B_UNIT(bootdev);
 
-	bootdev &= ~(B_UNITMASK << B_UNITSHIFT);
-	unit = target_to_unit(-1, unit, 0);
-	bootdev |= (unit << B_UNITSHIFT);
+	switch (major) {
+	case 4: /* SCSI drive */
+		bootdev &= ~(B_UNITMASK << B_UNITSHIFT); /* XXX */
+		unit = target_to_unit(-1, unit, 0);
+		bootdev |= (unit << B_UNITSHIFT); /* XXX */
+		break;
+	case 22: /* IDE drive */
+		/*
+		 * controller(=channel=buses) uses only IDE drive.
+		 * Here, controller always is 0.
+		 */
+		controller = B_CONTROLLER(bootdev);
+		unit = unit + (controller<<1);
+		break;
+	}
 
 	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
@@ -169,8 +181,9 @@ extern	struct cfdriver		scsibus_cd;
 			if (scsibus_cd.cd_devs[bus]) {
 				scsi = (struct scsibus_softc *)
 						scsibus_cd.cd_devs[bus];
-				if (scsi->sc_channel->chan_periphs[target][lun]) {
-					periph = scsi->sc_channel->chan_periphs[target][lun];
+				periph = scsipi_lookup_periph(scsi->sc_channel,
+				    target, lun);
+				if (periph != NULL) {
 					sc_dev = (struct device *)
 							periph->periph_dev;
 					return sc_dev->dv_unit;
@@ -185,8 +198,9 @@ extern	struct cfdriver		scsibus_cd;
 	}
 	if (scsibus_cd.cd_devs[bus]) {
 		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
-		if (scsi->sc_channel->chan_periphs[target][lun]) {
-			periph = scsi->sc_channel->chan_periphs[target][lun];
+		periph = scsipi_lookup_periph(scsi->sc_channel,
+		    target, lun);
+		if (periph != NULL) {
 			sc_dev = (struct device *) periph->periph_dev;
 			return sc_dev->dv_unit;
 		}

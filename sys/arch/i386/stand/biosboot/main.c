@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2001/07/05 00:58:45 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.28.2.1 2002/06/23 17:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -329,7 +329,7 @@ command_quit(arg)
 	reboot();
 	/* Note: we shouldn't get to this point! */
 	panic("Could not reboot!");
-	exit();
+	exit(0);
 }
 
 void

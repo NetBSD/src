@@ -1,6 +1,7 @@
-/*	$NetBSD: db_interface.c,v 1.60.2.2 2002/02/11 20:09:11 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.60.2.3 2002/06/23 17:42:16 jdolecek Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
@@ -163,14 +164,14 @@ const struct db_variable db_regs[] = {
 	{ "o5", (long *)&DDB_TF->tf_out[5], FCN_NULL, },
 	{ "o6", (long *)&DDB_TF->tf_out[6], FCN_NULL, },
 	{ "o7", (long *)&DDB_TF->tf_out[7], FCN_NULL, },
-	{ "l0", (long *)&DDB_TF->tf_local[0], FCN_NULL, },
-	{ "l1", (long *)&DDB_TF->tf_local[1], FCN_NULL, },
-	{ "l2", (long *)&DDB_TF->tf_local[2], FCN_NULL, },
-	{ "l3", (long *)&DDB_TF->tf_local[3], FCN_NULL, },
-	{ "l4", (long *)&DDB_TF->tf_local[4], FCN_NULL, },
-	{ "l5", (long *)&DDB_TF->tf_local[5], FCN_NULL, },
-	{ "l6", (long *)&DDB_TF->tf_local[6], FCN_NULL, },
-	{ "l7", (long *)&DDB_TF->tf_local[7], FCN_NULL, },
+	{ "l0", (long *)&DDB_FR->fr_local[0], FCN_NULL, },
+	{ "l1", (long *)&DDB_FR->fr_local[1], FCN_NULL, },
+	{ "l2", (long *)&DDB_FR->fr_local[2], FCN_NULL, },
+	{ "l3", (long *)&DDB_FR->fr_local[3], FCN_NULL, },
+	{ "l4", (long *)&DDB_FR->fr_local[4], FCN_NULL, },
+	{ "l5", (long *)&DDB_FR->fr_local[5], FCN_NULL, },
+	{ "l6", (long *)&DDB_FR->fr_local[6], FCN_NULL, },
+	{ "l7", (long *)&DDB_FR->fr_local[7], FCN_NULL, },
 	{ "i0", (long *)&DDB_FR->fr_arg[0], FCN_NULL, },
 	{ "i1", (long *)&DDB_FR->fr_arg[1], FCN_NULL, },
 	{ "i2", (long *)&DDB_FR->fr_arg[2], FCN_NULL, },
@@ -217,8 +218,6 @@ const struct db_variable db_regs[] = {
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-extern label_t	*db_recover;
-
 int	db_active = 0;
 
 extern char *trap_type[];
@@ -245,6 +244,7 @@ void db_traptrace __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watch __P((db_expr_t, int, db_expr_t, char *));
+void db_pm_extract __P((db_expr_t, int, db_expr_t, char *));
 
 static void db_dump_pmap __P((struct pmap*));
 static void db_print_trace_entry __P((struct traptrace *, int));
@@ -589,6 +589,23 @@ db_pmap_kernel(addr, have_addr, count, modif)
 	}
 }
 
+void
+db_pm_extract(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	if (have_addr) {
+		paddr_t pa;
+
+		if (pmap_extract(pmap_kernel(), addr, &pa))
+			db_printf("pa = %llx\n", (long long)pa);
+		else
+			db_printf("%p not found\n", (void *)addr);
+	} else
+		db_printf("pmap_extract: no address\n");
+}
 
 void
 db_pmap_cmd(addr, have_addr, count, modif)
@@ -912,7 +929,11 @@ db_traptrace(addr, have_addr, count, modif)
 }
 
 /* 
- * Use physical or virtual watchpoint registers -- ugh
+ * Use physical or virtul watchpoint registers -- ugh
+ *
+ * UltraSPARC I and II have both a virtual and physical
+ * watchpoint register.  They are controlled by the LSU 
+ * control register.  
  */
 void
 db_watch(addr, have_addr, count, modif)
@@ -922,38 +943,85 @@ db_watch(addr, have_addr, count, modif)
 	char *modif;
 {
 	int phys = 0;
+	int read = 0;
+	int width = 8; /* Default to 8 bytes */
+	int64_t mask = 0xff;
 
-#define WATCH_VR	(1L<<22)
-#define WATCH_VW	(1L<<21)
-#define WATCH_PR	(1L<<24)
-#define WATCH_PW	(1L<<23)
-#define WATCH_PM	(((u_int64_t)0xffffL)<<33)
-#define WATCH_VM	(((u_int64_t)0xffffL)<<25)
+#define	WATCH_VR	(1L<<22)
+#define	WATCH_VW	(1L<<21)
+#define	WATCH_PR	(1L<<24)
+#define	WATCH_PW	(1L<<23)
+#define	WATCH_PM_SHIFT	33
+#define	WATCH_PM	(((u_int64_t)0xffffL)<<WATCH_PM_SHIFT)
+#define	WATCH_VM_SHIFT	25
+#define	WATCH_VM	(((u_int64_t)0xffffL)<<WATCH_VM_SHIFT)
 
 	{
 		register char c, *cp = modif;
 		if (modif)
 			while ((c = *cp++) != 0)
-				if (c == 'p')
+				switch (c) {
+				case 'p':
+					/* Physical watchpoint */
 					phys = 1;
+					break;
+				case 'r':
+					/* Trap reads too */
+					read = 1;
+					break;
+				case 'b':
+					width = 1;
+					mask = 0x1 << (addr & 0x7);
+					break;
+				case 'h':
+					width = 2;
+					mask = 0x3 << (addr & 0x6);
+					break;
+				case 'l':
+					width = 4;
+					mask = 0x7 << (addr & 0x4);
+					break;
+				case 'L':
+					width = 8;
+					mask = 0xf;
+					break;
+				default:
+					break;
+				}
 	}
+
 	if (have_addr) {
 		/* turn on the watchpoint */
 		int64_t tmp = ldxa(0, ASI_MCCR);
 		
 		if (phys) {
-			tmp &= ~(WATCH_PM|WATCH_PR|WATCH_PW);
+			tmp &= ~WATCH_PM;
+			tmp |= WATCH_PW | (mask << WATCH_PM_SHIFT);
+			if (read) tmp |= WATCH_PR;
+
 			stxa(PHYSICAL_WATCHPOINT, ASI_DMMU, addr);
+			db_printf("Setting physical watchpoint to %llx-%llx\n",
+				(long long)addr, (long long)addr + width);
 		} else {
-			tmp &= ~(WATCH_VM|WATCH_VR|WATCH_VW);
+			tmp &= ~WATCH_VM;
+			tmp |= WATCH_VW | (mask << WATCH_VM_SHIFT);
+			if (read) tmp |= WATCH_VR;
+
 			stxa(VIRTUAL_WATCHPOINT, ASI_DMMU, addr);
+			db_printf("Setting virtual watchpoint to %llx-%llx\n",
+				(long long)addr, (long long)addr + width);
 		}
 		stxa(0, ASI_MCCR, tmp);
 	} else {
 		/* turn off the watchpoint */
 		int64_t tmp = ldxa(0, ASI_MCCR);
-		if (phys) tmp &= ~(WATCH_PM);
-		else tmp &= ~(WATCH_VM);
+		if (phys) {
+			tmp &= ~(WATCH_PM|WATCH_PR|WATCH_PW);
+			db_printf("Disabling physical watchpoint\n");
+		} else {
+			tmp &= ~(WATCH_VM|WATCH_VR|WATCH_VW);
+			db_printf("Disabling virtual watchpoint\n");
+		}
 		stxa(0, ASI_MCCR, tmp);
 	}
 }
@@ -987,6 +1055,7 @@ const struct db_command db_machine_command_table[] = {
 #if NESP_SBUS
 	{ "esp",	db_esp,		0,	0 },
 #endif
+	{ "extract",	db_pm_extract,	0,	0 },
 	{ "fpstate",	db_dump_fpstate,0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
+/*	$NetBSD: emul.c,v 1.8.2.1 2002/06/23 17:42:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #include <machine/instr.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <sparc64/sparc64/cpuvar.h>
 
 #define DEBUG_EMUL
 #ifdef DEBUG_EMUL
@@ -434,6 +433,7 @@ emulinstr(pc, tf)
 
 	switch (code.i_op3.i_op3) {
 	case IOP3_FLUSH:
+		printf("emulinstr: we can't execute a cache flush???");
 /*		cpuinfo.cache_flush((caddr_t)(rs1 + rs2), 4); XXX */
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5.4.1 2002/03/16 15:59:04 jdolecek Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.4.2 2002/06/23 17:38:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -67,13 +67,21 @@ readdisklabel(dev, strat, lp, osdep)
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
+	int i;
 
+	/* minimal requirements for archtypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = 0x1fffffff;
+	lp->d_partitions[i].p_offset = 0;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;

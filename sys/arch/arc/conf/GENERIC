@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.5 2002/03/16 15:55:56 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.47.2.6 2002/06/23 17:34:39 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.47.2.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.47.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -54,6 +56,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -295,19 +298,14 @@ scsibus* 	at siop?
 trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
 scsibus*	at trm?
 
-#de*		at pci? dev ? function ?
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 ne*		at pci? dev ? function ?	# NE2000-compatible
 pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-rtk*		at pci? dev ? function ?	# Tealtek 8129/8139
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
-tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -357,8 +355,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6.4.1 2002/03/16 15:59:41 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6.4.2 2002/06/23 17:40:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -70,7 +70,7 @@ const struct db_variable db_regs[] = {
 	{ "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
 };
 
-const struct db_variable * const db_eregs = 
+const struct db_variable * const db_eregs =
 	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void

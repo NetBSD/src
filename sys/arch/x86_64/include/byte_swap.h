@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1.2.1 2002/01/10 19:50:49 thorpej Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.1.2.2 2002/06/23 17:43:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #ifndef _X86_64_BYTE_SWAP_H_
 #define	_X86_64_BYTE_SWAP_H_
 
+#include <sys/types.h>
 
 static __inline u_int32_t __byte_swap_long_variable(u_int32_t);
 static __inline u_int16_t __byte_swap_word_variable(u_int16_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43 2001/05/30 12:28:51 mrg Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.43.2.1 2002/06/23 17:41:55 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -322,7 +322,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = native_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 	/*
@@ -539,7 +539,6 @@ svr4_trap(type, p)
 {
 	int n;
 	struct trapframe *tf = p->p_md.md_tf;
-	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
 		return 0;

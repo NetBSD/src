@@ -1,0 +1,15 @@
+#	$NetBSD: std.shark,v 1.1.14.2 2002/06/23 17:40:57 jdolecek Exp $
+#
+# standard NetBSD/shark options
+
+machine	shark arm
+
+options 	EXEC_AOUT
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+# XXX
+options 	OFW

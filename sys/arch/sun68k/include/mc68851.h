@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.1 2001/06/14 12:57:11 fredette Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.1.2.1 2002/06/23 17:42:47 jdolecek Exp $	*/
 
 /*
  * XXX - this is an awful hack that lets libsa/sun3x.h 

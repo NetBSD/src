@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.14.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
+/*	$NetBSD: txcom.c,v 1.14.2.2 2002/06/23 17:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -932,12 +932,12 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int s, err;
 
 	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (err >= 0) {
+	if (err != EPASSTHROUGH) {
 		return err;
 	}
 
 	err = ttioctl(tp, cmd, data, flag, p);
-	if (err >= 0) {
+	if (err != EPASSTHROUGH) {
 		return err;
 	}
 
@@ -947,7 +947,7 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	default:
-		err = ENOTTY;
+		err = EPASSTHROUGH;
 		break;
 
 	case TIOCSBRK:

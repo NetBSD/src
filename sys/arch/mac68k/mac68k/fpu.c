@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.24.30.1 2002/01/10 19:45:39 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24.30.2 2002/06/23 17:37:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 /*
  * FPU type; emulator uses FPU_NONE
  */
-int     fputype;
 
 extern label_t *nofault;
 

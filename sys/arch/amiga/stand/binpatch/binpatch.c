@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.7.28.1 2002/02/11 20:07:09 jdolecek Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.7.28.2 2002/06/23 17:34:34 jdolecek Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -22,55 +22,54 @@
 #endif
 
 
-static char synusage[] = "
-NAME
-\t%s - Allows the patching of BSD binaries
-SYNOPSIS
-\t%s [-HELP]
-\t%s [-b|-w|-l] -s symbol[[[index]][=value]] binary
-\t%s [-b|-w|-l] [-o offset] -s symbol [-r value] binary
-\t%s [-b|-w|-l] [-o offset] -a address [-r value] binary
-";
-static char desusage[] = "DESCRIPTION
-\tAllows the patching of BSD binaries, for example,a distributed
-\tkernel. Recient additions allows the user to index into an array
-\tand assign a value. Binpatch has internal variables to allow
-\tyou to test it on itself under NetBSD.
-OPTIONS
-\t-a  patch variable by specifying address in hex
-\t-b  symbol or address to be patched is 1 byte
-\t-l  symbol or address to be patched is 4 bytes  (default)
-\t-o  offset to begin patching value relative to symbol or address
-\t-r  replace value, and print out previous value to stdout
-\t-s  patch variable by specifying symbol name. Use '[]'
-\t    to specify the 'index'. If '-b, -w or -l' not specified
-\t    then index value is used like an offset. Also can use '='
-\t    to assign value
-\t-w  symbol or address to be patched is 2 bytes
-EXAMPLES
-\tThis should print 100 (this is a nice reality check...)
-\t\tbinpatch -l -s _hz netbsd
-\tNow it gets more advanced, replace the value:
-\t\tbinpatch -l -s _sbic_debug -r 1 netbsd
-\tNow patch a variable at a given 'index' not offset,
-\tunder NetBSD you must use '', under AmigaDos CLI '' is optional.:
-\t\tbinpatch -w -s '_vieww[4]' -r 0 a.out
-\tsame as
-\t\tbinpatch -w -o 8 -s _vieww -r 0 a.out
-\tAnother example of using []
-\t\tbinpatch -s '_viewl[4]' -r 0 a.out
-\tsame as
-\t\tbinpatch -o 4 -s _viewl -r 0 a.out
-\tOne last example using '=' and []
-\t\tbinpatch -w -s '_vieww[4]=2' a.out
-\tSo if the kernel is not finding your drives, you could enable
-\tall available debugging options, helping to shed light on that problem.
-\t\tbinpatch -l -s _sbic_debug -r 1 netbsd	scsi-level
-\t\tbinpatch -l -s _sddebug -r 1 netbsd	sd-level (disk-driver)
-\t\tbinpatch -l -s _acdebug -r 1 netbsd	autoconfig-level
-SEE ALSO
-\tbinpatch.c binpatch(1)
-";
+static char synusage[] =
+"NAME\n"
+"\t%s - Allows the patching of BSD binaries\n"
+"SYNOPSIS\n"
+"\t%s [-HELP]\n"
+"\t%s [-b|-w|-l] -s symbol[[[index]][=value]] binary\n"
+"\t%s [-b|-w|-l] [-o offset] -s symbol [-r value] binary\n"
+"\t%s [-b|-w|-l] [-o offset] -a address [-r value] binary\n";
+static char desusage[] =
+"DESCRIPTION\n"
+"\tAllows the patching of BSD binaries, for example,a distributed\n"
+"\tkernel. Recient additions allows the user to index into an array\n"
+"\tand assign a value. Binpatch has internal variables to allow\n"
+"\tyou to test it on itself under NetBSD.\n"
+"OPTIONS\n"
+"\t-a  patch variable by specifying address in hex\n"
+"\t-b  symbol or address to be patched is 1 byte\n"
+"\t-l  symbol or address to be patched is 4 bytes  (default)\n"
+"\t-o  offset to begin patching value relative to symbol or address\n"
+"\t-r  replace value, and print out previous value to stdout\n"
+"\t-s  patch variable by specifying symbol name. Use '[]'\n"
+"\t    to specify the 'index'. If '-b, -w or -l' not specified\n"
+"\t    then index value is used like an offset. Also can use '='\n"
+"\t    to assign value\n"
+"\t-w  symbol or address to be patched is 2 bytes\n"
+"EXAMPLES\n"
+"\tThis should print 100 (this is a nice reality check...)\n"
+"\t\tbinpatch -l -s _hz netbsd\n"
+"\tNow it gets more advanced, replace the value:\n"
+"\t\tbinpatch -l -s _sbic_debug -r 1 netbsd\n"
+"\tNow patch a variable at a given 'index' not offset,\n"
+"\tunder NetBSD you must use '', under AmigaDos CLI '' is optional.:\n"
+"\t\tbinpatch -w -s '_vieww[4]' -r 0 a.out\n"
+"\tsame as\n"
+"\t\tbinpatch -w -o 8 -s _vieww -r 0 a.out\n"
+"\tAnother example of using []\n"
+"\t\tbinpatch -s '_viewl[4]' -r 0 a.out\n"
+"\tsame as\n"
+"\t\tbinpatch -o 4 -s _viewl -r 0 a.out\n"
+"\tOne last example using '=' and []\n"
+"\t\tbinpatch -w -s '_vieww[4]=2' a.out\n"
+"\tSo if the kernel is not finding your drives, you could enable\n"
+"\tall available debugging options, helping to shed light on that problem.\n"
+"\t\tbinpatch -l -s _sbic_debug -r 1 netbsd	scsi-level\n"
+"\t\tbinpatch -l -s _sddebug -r 1 netbsd	sd-level (disk-driver)\n"
+"\t\tbinpatch -l -s _acdebug -r 1 netbsd	autoconfig-level\n"
+"SEE ALSO\n"
+"\tbinpatch.c binpatch(1)\n";
 
 extern char *optarg;
 extern int optind;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.4 1998/09/02 19:17:13 matthias Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.4.26.1 2002/06/23 17:39:05 jdolecek Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -111,11 +111,11 @@ enum op_class {op_class_read, op_class_write, op_class_rmw, op_class_addr};
 
 enum op_where_tag { op_where_register, op_where_memory, op_where_immediate };
 
-static const union t_conv infty = {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0, mantissa2: 0}};
+extern const union t_conv infty;
 
-static const union t_conv snan = {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x40000, mantissa2: 0}};
+extern const union t_conv snan;
 
-static const union t_conv qnan = {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x80000, mantissa2: 0}};
+extern const union t_conv qnan;
 
 struct operand {
   enum op_type type;

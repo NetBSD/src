@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.11 2001/07/09 12:06:35 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.11.2.1 2002/06/23 17:35:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -439,7 +439,7 @@ struct proc		*p;
 		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, NOPROC);
 		break;
 	default:
-		error = -1;
+		error = EPASSTHROUGH;
 		break;
 	}
 	return (error);

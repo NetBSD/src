@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.h,v 1.1.6.2 2002/01/10 19:38:22 thorpej Exp $ */
+/* $NetBSD: vidcvideo.h,v 1.1.6.3 2002/06/23 17:34:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,9 +35,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Definitions for wscons attachment on the VIDC wscons driver
  *
  */
 
+
+/* lazy screen write back configuration */
+#define SCREEN_WRITE_BACK_DELAY		5
+
+
+/* Definitions for wscons attachment on the VIDC wscons driver */
 extern int    vidcvideo_cnattach  __P((vaddr_t));
 

@@ -1,0 +1,32 @@
+#	$NetBSD: files.hppa,v 1.2.2.2 2002/06/23 17:37:03 jdolecek Exp $
+#
+#	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
+#
+# hppa-specific configuration info
+
+file	arch/hppa/hppa/db_interface.c		ddb
+file	arch/hppa/hppa/db_disasm.c		ddb
+file	arch/hppa/hppa/db_memrw.c		ddb | kgdb
+file	arch/hppa/hppa/fpu.c
+file	arch/hppa/hppa/kgdb_hppa.c		kgdb
+file	arch/hppa/hppa/hppa_machdep.c
+file	arch/hppa/hppa/pmap.c
+file	arch/hppa/hppa/process_machdep.c
+file	arch/hppa/hppa/sig_machdep.c
+file	arch/hppa/hppa/trap.c
+file	arch/hppa/hppa/vm_machdep.c
+file	arch/hppa/hppa/in_cksum.c		inet
+file	arch/hppa/hppa/procfs_machdep.c		procfs
+file	netinet/in4_cksum.c			inet
+file	netns/ns_cksum.c			ns
+
+#
+# Compatibility
+#
+include "compat/hpux/files.hpux"
+file	arch/hp700/hp700/hpux_machdep.c		compat_hpux
+include "compat/osf1/files.osf1"
+file	arch/hp700/hp700/osf1_machdep.c		compat_osf1
+include	"compat/linux/files.linux"
+include "compat/ossaudio/files.ossaudio"
+file	arch/hp700/hp700/linux_machdep.c		compat_linux

@@ -1,4 +1,4 @@
-/* $NetBSD: sh_opcode.h,v 1.2 2000/08/02 11:32:43 msaitoh Exp $ */
+/* $NetBSD: sh_opcode.h,v 1.2.4.1 2002/06/23 17:40:43 jdolecek Exp $ */
 
 typedef union {
 	unsigned word;
@@ -145,18 +145,18 @@ struct {
 #endif
 } InstFmt;
 
-#define OP_BF	0x8b
-#define OP_BFS	0x8f
-#define OP_BT	0x89
-#define OP_BTS	0x8d
-#define OP_BRA	0xa
-#define OP_BSR	0xb
-#define OP1_BRAF	0x0
-#define OP2_BRAF	0x23
-#define OP1_BSRF	0x0
-#define OP2_BSRF	0x03
-#define OP1_JMP	0x4
-#define OP2_JMP	0x2b
-#define OP1_JSR	0x4
-#define OP2_JSR	0x0b
-#define OP_RTS	0xffff
+#define	OP_BF	0x8b
+#define	OP_BFS	0x8f
+#define	OP_BT	0x89
+#define	OP_BTS	0x8d
+#define	OP_BRA	0xa
+#define	OP_BSR	0xb
+#define	OP1_BRAF	0x0
+#define	OP2_BRAF	0x23
+#define	OP1_BSRF	0x0
+#define	OP2_BSRF	0x03
+#define	OP1_JMP	0x4
+#define	OP2_JMP	0x2b
+#define	OP1_JSR	0x4
+#define	OP2_JSR	0x0b
+#define	OP_RTS	0xffff

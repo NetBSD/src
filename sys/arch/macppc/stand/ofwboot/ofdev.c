@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5.4.2 2001/08/25 06:15:32 thorpej Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5.4.3 2002/06/23 17:37:59 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include "hfs.h"
 #include "ofdev.h"
@@ -59,34 +60,42 @@ filename(str, ppart)
 	char savec;
 	int dhandle;
 	char devtype[16];
-	
+
 	lp = str;
 	devtype[0] = 0;
 	*ppart = 0;
 	for (cp = str; *cp; lp = cp) {
 		/* For each component of the path name... */
-		while (*++cp && *cp != '/');
+		while (*++cp && *cp != '/')
+			;
 		savec = *cp;
 		*cp = 0;
 		/* ...look whether there is a device with this name */
 		dhandle = OF_finddevice(str);
 		*cp = savec;
 		if (dhandle == -1) {
-			/* if not, lp is the delimiter between device and path */
+			/*
+			 * if not, lp is the delimiter between device and path
+			 */
 			/* if the last component was a block device... */
 			if (!strcmp(devtype, "block")) {
 				/* search for arguments */
 				for (cp = lp;
-				     --cp >= str && *cp != '/' && *cp != ':';);
+				    --cp >= str && *cp != '/' && *cp != ':';)
+					;
 				if (cp >= str && *cp == ':') {
 					/* found arguments */
-					for (cp = lp; *--cp != ':' && *cp != ',';);
-					if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS)
+					for (cp = lp;
+					    *--cp != ':' && *cp != ',';)
+						;
+					if (*++cp >= 'a' &&
+					    *cp <= 'a' + MAXPARTITIONS)
 						*ppart = *cp;
 				}
 			}
 			return lp;
-		} else if (OF_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
+		} else if (OF_getprop(dhandle, "device_type", devtype,
+		    sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
 	return 0;
@@ -104,14 +113,14 @@ strategy(devdata, rw, blk, size, buf, rsize)
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
 	int n;
-	
+
 	if (rw != F_READ)
 		return EPERM;
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
-	
+
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
-	
+
 	for (;;) {
 		if (OF_seek(dev->handle, pos) < 0)
 			break;
@@ -131,7 +140,7 @@ devclose(of)
 	struct open_file *of;
 {
 	struct of_dev *op = of->f_devdata;
-	
+
 	if (op->type == OFDEV_NET)
 		net_close(op);
 	OF_call_method("dma-free", op->handle, 2, 0, op->dmabuf, MAXPHYS);
@@ -154,6 +163,10 @@ static struct fs_ops file_system_ufs = {
 static struct fs_ops file_system_hfs = {
 	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
 };
+static struct fs_ops file_system_ustarfs = {
+	ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
+	    ustarfs_stat
+};
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	    cd9660_stat
@@ -162,7 +175,7 @@ static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
 };
 
-struct fs_ops file_system[3];
+struct fs_ops file_system[4];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -177,7 +190,7 @@ get_long(p)
 	const void *p;
 {
 	const unsigned char *cp = p;
-	
+
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
@@ -197,11 +210,11 @@ search_label(devp, off, buf, lp, off0)
 	int i;
 	u_long poff;
 	static int recursion;
-	
+
 	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
 	    || read != DEV_BSIZE)
 		return ERDLAB;
-	
+
 	if (buf[510] != 0x55 || buf[511] != 0xaa)
 		return ERDLAB;
 
@@ -296,7 +309,10 @@ devopen(of, name, file)
 		return ENXIO;
 #if 0
 	if (!strcmp(buf, "block"))
-		/* For block devices, indicate raw partition (:0 in OpenFirmware) */
+		/*
+		 * For block devices, indicate raw partition
+		 * (:0 in OpenFirmware)
+		 */
 		strcat(fname, ":0");
 #endif
 	if ((handle = OF_open(fname)) == -1)
@@ -321,7 +337,10 @@ devopen(of, name, file)
 
 		if (error == ERDLAB) {
 			if (partition)
-				/* User specified a parititon, but there is none */
+				/*
+				 * User specified a parititon,
+				 * but there is none
+				 */
 				goto bad;
 			/* No, label, just use complete disk */
 			ofdev.partoff = 0;
@@ -329,13 +348,14 @@ devopen(of, name, file)
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
 		}
-		
+
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_ufs;
-		file_system[1] = file_system_cd9660;
-		file_system[2] = file_system_hfs;
-		nfsys = 3;
+		file_system[1] = file_system_ustarfs;
+		file_system[2] = file_system_cd9660;
+		file_system[3] = file_system_hfs;
+		nfsys = 4;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.1.2.6 2002/03/16 15:56:05 jdolecek Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.2.7 2002/06/23 17:34:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -105,7 +105,7 @@ cpu_dumpconf()
 
 /* This should be moved to machdep.c */
 
-extern pagehook_t page_hook0;
+extern char *memhook;		/* XXX */
 
 /*
  * Doadump comes here after turning off memory management and
@@ -143,7 +143,7 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	blkno = dumplo;
-	dumpspace = page_hook0.va;
+	dumpspace = (vaddr_t) memhook;
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

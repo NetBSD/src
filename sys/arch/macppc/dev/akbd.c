@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.14.2.3 2002/03/16 15:58:30 jdolecek Exp $	*/
+/*	$NetBSD: akbd.c,v 1.14.2.4 2002/06/23 17:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -465,7 +465,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	}
 	/* kbdioctl(...); */
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 extern int adb_polling;
@@ -504,18 +504,45 @@ kbd_intr(arg)
 {
 	adb_event_t *event = arg;
 	int key;
+#ifdef CAPS_IS_CONTROL
+	static int shift;
+#endif
 
 	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
 	key = event->u.k.key;
 
+#ifdef CAPS_IS_CONTROL
+	/*
+	 * Caps lock is weird. The key sequence generated is:
+	 * press:   down(57) [57]  (LED turns on)
+	 * release: up(127)  [255]
+	 * press:   up(127)  [255]
+	 * release: up(57)   [185] (LED turns off)
+	 */
+	if ((key == 57) || (key == 185))
+		shift = 0;
+	
+	if (key == 255) {
+		if (shift == 0) {
+			key = 185;
+			shift = 1;
+		} else {
+			key = 57;
+			shift = 0;
+		}
+	}
+#endif
+
 	switch (key) {
+#ifndef CAPS_IS_CONTROL
 	case 57:	/* Caps Lock pressed */
 	case 185:	/* Caps Lock released */
 		key = ADBK_KEYDOWN(ADBK_KEYVAL(key));
 		kbd_passup(sc,key);
 		key = ADBK_KEYUP(ADBK_KEYVAL(key));
 		break;
+#endif
 	case 245:
 		if (pcmcia_soft_eject)
 			pm_eject_pcmcia(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.24.2.4 2002/03/16 15:58:02 jdolecek Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.24.2.5 2002/06/23 17:36:56 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -363,8 +363,9 @@ void
 vrgiu_dump_io(struct vrgiu_softc *sc)
 {
 
-	dbg_bit_print(vrgiu_regread_4(sc, GIUPIOD_REG));
-	dbg_bit_print(vrgiu_regread_4(sc, GIUPODAT_REG));
+	dbg_bit_display(vrgiu_regread_4(sc, GIUPODAT_REG));
+	dbg_bit_display(vrgiu_regread_4(sc, GIUPIOD_REG));
+	printf("\n");
 }
 
 void
@@ -379,8 +380,9 @@ vrgiu_diff_io()
 
 	if (opreg[0] != preg[0] || opreg[1] != preg[1]) {
 		printf("giu data: ");
-		dbg_bit_print(preg[0]);
-		dbg_bit_print(preg[1]);
+		dbg_bit_display(preg[1]);
+		dbg_bit_display(preg[0]);
+		printf("\n");
 	}
 	opreg[0] = preg[0];
 	opreg[1] = preg[1];

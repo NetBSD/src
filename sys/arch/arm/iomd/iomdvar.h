@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdvar.h,v 1.1.6.2 2002/01/10 19:38:08 thorpej Exp $	*/
+/*	$NetBSD: iomdvar.h,v 1.1.6.3 2002/06/23 17:34:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -70,10 +70,10 @@ struct qms_attach_args {
 };
 
 /*
- * Attach args for pms device
+ * Attach args for opms device
  */
 
-struct pms_attach_args {
+struct opms_attach_args {
 	const char		*pa_name;	/* device name*/
 	bus_space_tag_t		pa_iot;		/* Bus tag */
 	bus_space_handle_t	pa_ioh;		/* Bus handle */
@@ -110,7 +110,7 @@ struct iic_attach_args {
 
 union iomd_attach_args {
 	struct kbd_attach_args		ia_kbd;
-	struct pms_attach_args		ia_pms;
+	struct opms_attach_args		ia_opms;
 	struct qms_attach_args		ia_qms;
 	struct iic_attach_args		ia_iic;
 	struct clk_attach_args		ia_clk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.2.8.2 2002/03/16 15:59:36 jdolecek Exp $	*/
+/*	$NetBSD: cache.h,v 1.2.8.3 2002/06/23 17:40:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@
  * SH7750  I$ D$ line-size entry way
  *         8K 8/16K 32B     256   1    write-through/back selectable
  *
- * 
+ *
  * Cache operations.
- * 
+ *
  * There are some rules that must be followed:
  *
  *	I-cache Synch (all or range):
@@ -100,27 +100,22 @@
  *	sh_dcache_inv_range	Invalidate D-cache range
  *
  *	sh_dcache_wb_range	Write-back D-cache range
- *	
- *	If I/D unified cache (SH3), I-cache ops are writeback invalidate 
+ *
+ *	If I/D unified cache (SH3), I-cache ops are writeback invalidate
  *	operation.
  *	If write-through mode, sh_dcache_wb_range is no-operation.
  *
  */
 
 #ifndef _SH3_CACHE_H_
-#define _SH3_CACHE_H_
+#define	_SH3_CACHE_H_
 
 #ifdef _KERNEL
-#define COMPAT_OLD_CACHE_FLUSH //XXX
-#ifdef COMPAT_OLD_CACHE_FLUSH
-#define cacheflush()	sh_dcache_wbinv_all()
-#endif /* COMPAT_OLD_CACHE_FLUSH */
-
 struct sh_cache_ops {
 	void (*_icache_sync_all)(void);
 	void (*_icache_sync_range)(vaddr_t, vsize_t);
 	void (*_icache_sync_range_index)(vaddr_t, vsize_t);
-		  
+
 	void (*_dcache_wbinv_all)(void);
 	void (*_dcache_wbinv_range)(vaddr_t, vsize_t);
 	void (*_dcache_wbinv_range_index)(vaddr_t, vsize_t);
@@ -129,7 +124,7 @@ struct sh_cache_ops {
 };
 
 /* Cache configurations */
-#define sh_cache_enable_unified		sh_cache_enable_icache
+#define	sh_cache_enable_unified		sh_cache_enable_icache
 extern int sh_cache_enable_icache;
 extern int sh_cache_enable_dcache;
 extern int sh_cache_write_through;
@@ -137,7 +132,7 @@ extern int sh_cache_write_through_p0_u0_p3;
 extern int sh_cache_write_through_p1;
 extern int sh_cache_ways;
 extern int sh_cache_unified;
-#define sh_cache_size_unified		sh_cache_size_icache
+#define	sh_cache_size_unified		sh_cache_size_icache
 extern int sh_cache_size_icache;
 extern int sh_cache_size_dcache;
 extern int sh_cache_line_size;
@@ -179,6 +174,20 @@ extern struct sh_cache_ops sh_cache_ops;
 
 void sh_cache_init(void);
 void sh_cache_information(void);
+
+#if defined(SH3) && defined(SH4)
+#define	SH_HAS_VIRTUAL_ALIAS	CPU_IS_SH4
+#define	SH_HAS_UNIFIED_CACHE	CPU_IS_SH3
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#elif defined(SH3)
+#define	SH_HAS_VIRTUAL_ALIAS	0
+#define	SH_HAS_UNIFIED_CACHE	1
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#elif defined(SH4)
+#define	SH_HAS_VIRTUAL_ALIAS	1
+#define	SH_HAS_UNIFIED_CACHE	0
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#endif
 
 #endif /* _KERNEL */
 #endif /* _SH3_CACHE_H_ */

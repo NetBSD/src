@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.1.8.2 2002/03/16 15:58:54 jdolecek Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.1.8.3 2002/06/23 17:38:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -60,18 +60,21 @@
 #include <dev/mvme/vme_tworeg.h>
 #include <dev/mvme/vme_twovar.h>
 
+
+static void vmetwoisrlink(void *, int (*)(void *), void *,
+	int, int, struct evcnt *);
+static void vmetwoisrunlink(void *, int);
+static struct evcnt *vmetwoisrevcnt(void *, int);
+
+#if NVMETWO > 0
+
 int vmetwo_match __P((struct device *, struct cfdata *, void *));
 void vmetwo_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vmetwo_ca = {
 	sizeof(struct vmetwo_softc), vmetwo_match, vmetwo_attach
 };
-struct cfdriver vmetwo_cd;
-
-static void vmetwoisrlink(void *, int (*)(void *), void *,
-	int, int, struct evcnt *);
-static void vmetwoisrunlink(void *, int);
-static struct evcnt *vmetwoisrevcnt(void *, int);
+extern struct cfdriver vmetwo_cd;
 
 
 /* ARGSUSED */
@@ -129,11 +132,20 @@ vmetwo_attach(parent, self, aux)
 	/* Initialise stuff for the common vme_two back-end */
 	sc->sc_mvmebus.sc_bust = ma->ma_bust;
 	sc->sc_mvmebus.sc_dmat = ma->ma_dmat;
+
+	vmetwo_init(sc);
+}
+
+#endif	/* NVMETWO > 0 */
+
+void
+vmetwo_md_intr_init(sc)
+	struct vmetwo_softc *sc;
+{
+
 	sc->sc_isrlink = vmetwoisrlink;
 	sc->sc_isrunlink = vmetwoisrunlink;
 	sc->sc_isrevcnt = vmetwoisrevcnt;
-
-	vmetwo_init(sc);
 }
 
 /* ARGSUSED */

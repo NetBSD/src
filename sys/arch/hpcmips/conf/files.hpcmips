@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.59.2.4 2002/03/16 15:57:56 jdolecek Exp $
+#	$NetBSD: files.hpcmips,v 1.59.2.5 2002/06/23 17:36:50 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -58,10 +58,11 @@ file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
 
-file	arch/hpc/hpc/kloader.c
-file	arch/hpcmips/hpcmips/kloader_machdep.c
-file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx
-file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx
+file	arch/hpc/hpc/kloader.c			kloader
+file	arch/hpcmips/hpcmips/kloader_machdep.c	kloader
+file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx & kloader
+file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx & kloader
+defflag	opt_kloader.h			KLOADER
 defflag	debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
@@ -160,6 +161,10 @@ device vrpiu: wsmousedev
 attach vrpiu at vripif: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
 
+device vrdsiu_mouse: wsmousedev
+attach vrdsiu_mouse at vripif
+file arch/hpcmips/vr/vrdsiu_mouse.c		vrdsiu_mouse
+
 attach ohci at vripif with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
 
@@ -177,12 +182,17 @@ file arch/hpcmips/dev/mq200debug.c		mqvideo
 file arch/hpcmips/dev/mq200machdep.c		mqvideo
 
 attach mqvideo at pci with mqvideo_pci
-file arch/hpcmips/pci/mq200_pci.c		mqvideo_pci
+file arch/hpcmips/dev/mq200_pci.c		mqvideo_pci
 
 device ite8181video: hpcfbif, hpccmap
 attach ite8181video at vripif with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
+
+defflag opt_vrc4172pci.h	VRC4172PCI_MCR700_SUPPORT
+device vrc4172pci: pcibus
+attach vrc4172pci at vripif
+file arch/hpcmips/vr/vrc4172pci.c		vrc4172pci
 
 device vrc4172pwm
 attach vrc4172pwm at vripif
@@ -358,9 +368,6 @@ device	fd: disk
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
-# network devices MII bus
-include "dev/mii/files.mii"
-
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
 # needs to be before its isa and pci attachments.  This answer is
@@ -411,3 +418,8 @@ file arch/hpcmips/vr/vrdmaau.c	vrdmaau
 device vrdcu
 attach vrdcu at vripif
 file arch/hpcmips/vr/vrdcu.c	vrdcu
+
+# Audio Interface Unit
+device vraiu: audiobus
+attach vraiu at vripif
+file arch/hpcmips/vr/vraiu.c	vraiu

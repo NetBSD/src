@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.5 2001/05/21 15:55:04 uch Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.5.2.1 2002/06/23 17:36:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,10 +112,14 @@ STYLE WS_CHILD
 	EDITTEXT	IDC_OPT_AUTO_INPUT, 55, 0, 24, 15,
 		WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT
 	AUTOCHECKBOX	"Auto Boot",		IDC_OPT_AUTO,	5, 0,  50, 12
-	AUTOCHECKBOX	"Reverse Video",	IDC_OPT_VIDEO,	5, 15, 80, 12
-	AUTOCHECKBOX	"Pause Before Boot",	IDC_OPT_PAUSE,	5, 30, 80, 12
-	AUTOCHECKBOX	"Load Debug Info",	IDC_OPT_DEBUG,	5, 45, 80, 12
-	AUTOCHECKBOX	"Safety Message",	IDC_OPT_SAFETY,	5, 60, 80, 12 
+	AUTOCHECKBOX	"Reverse Video",	IDC_OPT_VIDEO,	5, 14, 80, 12
+	AUTOCHECKBOX	"Pause Before Boot",	IDC_OPT_PAUSE,	5, 26, 80, 12
+	AUTOCHECKBOX	"Load Debug Info",	IDC_OPT_DEBUG,	5, 38, 80, 12
+	AUTOCHECKBOX	"Safety Message",	IDC_OPT_SAFETY,	5, 50, 80, 12 
+	LTEXT		"Extra Kernel Options:"		-1, 5, 62, 80, 12
+	EDITTEXT	IDC_OPT_EXTKOPT		5, 74, 120, 12,
+		WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
+		ES_LEFT | ES_AUTOHSCROLL
 }
 
 WConsole DIALOG DISCARDABLE 0, 0, 0, 0

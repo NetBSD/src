@@ -1,18 +1,20 @@
 #
-# $NetBSD: HADES,v 1.31.2.2 2002/02/11 20:07:30 jdolecek Exp $
+# $NetBSD: HADES,v 1.31.2.3 2002/06/23 17:35:14 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
 
 #This configuration file is for a generic Medusa-Hades
 
 #Generic atari
 
 include "arch/atari/conf/std.hades"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -128,6 +130,7 @@ options 	SYSVSEM			# System V semaphores
 
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -135,6 +138,7 @@ options 	DIAGNOSTIC		# Add additional error checking code
 
 options 	SCSIVERBOSE		# human readable SCSI error messages
 
+options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 
@@ -152,7 +156,8 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-options 	STATCLOCK		# Separate {stat,prof}clock
+#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+#options 	STATCLOCK	        # Separate {stat,prof}clock
 
 #Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -163,7 +168,9 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
+
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
@@ -190,6 +197,22 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+
+#MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+#PCI network interfaces
+#If unsure, check the port-atari page for tested cards.
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+
+#This is the only tested audio card at the moment.
+
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
 
 #Hardware options for GENERIC are in the various machine type specific files
 

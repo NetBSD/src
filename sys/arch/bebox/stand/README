@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 1999/06/28 02:19:37 sakamoto Exp $
+$NetBSD: README,v 1.1.18.1 2002/06/23 17:35:26 jdolecek Exp $
 
 contents
 	boot:	     NetBSD/bebox booter.
@@ -17,9 +17,9 @@ boot:
 
 		serial:		CPPFLAGS+= -DCONS_SERIAL ...
 
-	if change CPPFLAGS after make, use 'make remake' to remake.
+	if change CPPFLAGS after make, use 'make cleandir' before 'make'.
 
-	boot can read/exec kernel on ffs(floppy disk),cd9660(floppy disk),
+	boot can read/exec kernel on ffs(floppy disk), cd9660(floppy disk),
 	attached image by elf2pef.
 
 
@@ -42,16 +42,9 @@ mkbootimage:
 
 Example of making bootable floppy disk:
 	% cd /sys/arch/bebox/stand
-	% make
-		cross compile environment:
-			do the following method instead of make,
-			% (cd boot; ppc-make)
-			% (cd elf2pef; make)
-			% (cd mkbootimage; make)
-	% elf2pef/elf2pef boot/boot /tmp/boot.pef
-		to attach kernel:
-			% gzip -c ../compile/GENERIC/netbsd > /tmp/netbsd.gz
-			% elf2pef/elf2pef boot/boot /tmp/boot.pef /tmp/netbsd.gz
+	% $(TOOLDIR)/bin/nbmake-bebox
+	% gzip -c ../compile/GENERIC/netbsd > /tmp/netbsd.gz
+	% elf2pef/elf2pef boot/boot /tmp/boot.pef /tmp/netbsd.gz
 	[insert formatted floppy disk]
 	% mkbootimage/mkbootimage /tmp/boot.pef > /dev/rfd0a
 

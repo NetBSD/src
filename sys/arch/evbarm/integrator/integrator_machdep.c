@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.6.2.4 2002/03/16 15:57:27 jdolecek Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.6.2.5 2002/06/23 17:35:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -357,7 +357,6 @@ initarm(bootinfo)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern char page0[], page0_end[];
 	extern int etext asm ("_etext");
 	extern int end asm ("_end");
 	pv_addr_t kernel_l1pt;
@@ -556,12 +555,12 @@ initarm(bootinfo)
 	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
-		if ((physical_freestart & (PD_SIZE - 1)) == 0
+		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
+			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
 		} else {
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
-			    PT_SIZE / NBPG);
+			    L2_TABLE_SIZE / NBPG);
 			++loop1;
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
@@ -569,7 +568,7 @@ initarm(bootinfo)
 	}
 
 	/* This should never be able to happen but better confirm that. */
-	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (PD_SIZE-1)) != 0)
+	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory\n");
 
 	/*
@@ -580,7 +579,7 @@ initarm(bootinfo)
 	alloc_pages(systempage.pv_pa, 1);
 
 	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, PT_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -621,11 +620,12 @@ initarm(bootinfo)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(l1pagetable, PTE_BASE,
 	    &kernel_ptpt);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
@@ -682,7 +682,7 @@ initarm(bootinfo)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -694,36 +694,33 @@ initarm(bootinfo)
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_map_entry(l1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
+		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
-	/*
-	 * Map the system page in the kernel page table for the bottom 1Meg
-	 * of the virtual memory map.
-	 */
+	/* Map the vector page. */
 #if 1
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download
 	   the cache-clean code there.  */
-	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #else
-	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 	/* Map the core memory needed before autoconfig */
 	loop = 0;
@@ -735,7 +732,7 @@ initarm(bootinfo)
 		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
 		    l1_sec_table[loop].va);
 #endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
+		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
 			pmap_map_section(l1pagetable,
 			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
@@ -783,8 +780,7 @@ initarm(bootinfo)
 	/* Right set up the vectors at the bottom of page 0 */
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
-	/* We have modified a text page so sync the icache */
-	cpu_icache_sync_all();
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -928,59 +924,3 @@ consinit(void)
 #endif
 	panic("No serial console configured");
 }
-
-#if 0
-static bus_space_handle_t kcom_base = (bus_space_handle_t) (DC21285_PCI_IO_VBASE + CONCOMADDR);
-
-u_int8_t footbridge_bs_r_1(void *, bus_space_handle_t, bus_size_t);
-void footbridge_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-
-#define	KCOM_GETBYTE(r)		footbridge_bs_r_1(0, kcom_base, (r))
-#define	KCOM_PUTBYTE(r,v)	footbridge_bs_w_1(0, kcom_base, (r), (v))
-
-static int
-kcomcngetc(dev_t dev)
-{
-	int stat, c;
-
-	/* block until a character becomes available */
-	while (!ISSET(stat = KCOM_GETBYTE(com_lsr), LSR_RXRDY))
-		;
-
-	c = KCOM_GETBYTE(com_data);
-	stat = KCOM_GETBYTE(com_iir);
-	return c;
-}
-
-/*
- * Console kernel output character routine.
- */
-static void
-kcomcnputc(dev_t dev, int c)
-{
-	int timo;
-
-	/* wait for any pending transmission to finish */
-	timo = 150000;
-	while (!ISSET(KCOM_GETBYTE(com_lsr), LSR_TXRDY) && --timo)
-		continue;
-
-	KCOM_PUTBYTE(com_data, c);
-
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(KCOM_GETBYTE(com_lsr), LSR_TXRDY) && --timo)
-		continue;
-}
-
-static void
-kcomcnpollc(dev_t dev, int on)
-{
-}
-
-struct consdev kcomcons = {
-	NULL, NULL, kcomcngetc, kcomcnputc, kcomcnpollc, NULL,
-	NODEV, CN_NORMAL
-};
-
-#endif

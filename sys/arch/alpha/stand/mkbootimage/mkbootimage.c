@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.4 2001/02/19 22:48:58 cgd Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.4.4.1 2002/06/23 17:34:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>				/* XXX for roundup, howmany */
 #include <sys/stat.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <assert.h>
 #include <err.h>
@@ -55,7 +56,7 @@ int
 main(int argc, char **argv)
 {
 	struct stat insb;
-	struct boot_block *bb;
+	struct alpha_boot_block *bb;
 	const char *infile, *outfile;
 	char *outbuf;
 	size_t outbufsize;
@@ -93,9 +94,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "output file: %s\n",
 		    outfile != NULL ? outfile : "<stdout>");
 	}
-	if (sizeof (struct boot_block) != BOOT_BLOCK_BLOCKSIZE)
+	if (sizeof (struct alpha_boot_block) != ALPHA_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
-		    "boot_block structure badly sized (build error)");
+		    "alpha_boot_block structure badly sized (build error)");
 
 	/* Open the input file and check it out */
 	if ((infd = open(infile, O_RDONLY)) == -1)
@@ -110,8 +111,8 @@ main(int argc, char **argv)
 	 * to the next block size boundary, and with space for the boot
 	 * block. 
 	 */
-	outbufsize = roundup(insb.st_size, BOOT_BLOCK_BLOCKSIZE);
-	outbufsize += sizeof (struct boot_block);
+	outbufsize = roundup(insb.st_size, ALPHA_BOOT_BLOCK_BLOCKSIZE);
+	outbufsize += sizeof (struct alpha_boot_block);
 
 	outbuf = malloc(outbufsize);
 	if (outbuf == NULL)
@@ -119,7 +120,8 @@ main(int argc, char **argv)
 	memset(outbuf, 0, outbufsize);
 
 	/* read the file into the buffer, leaving room for the boot block */
-	rv = read(infd, outbuf + sizeof (struct boot_block), insb.st_size);
+	rv = read(infd, outbuf + sizeof (struct alpha_boot_block),
+	    insb.st_size);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", infile);
 	else if (rv != insb.st_size)
@@ -127,11 +129,11 @@ main(int argc, char **argv)
 	(void)close(infd);
 
 	/* fill in the boot block fields, and checksum the boot block */
-	bb = (struct boot_block *)outbuf;
-	bb->bb_secsize = howmany(insb.st_size, BOOT_BLOCK_BLOCKSIZE);
+	bb = (struct alpha_boot_block *)outbuf;
+	bb->bb_secsize = howmany(insb.st_size, ALPHA_BOOT_BLOCK_BLOCKSIZE);
 	bb->bb_secstart = 1;
 	bb->bb_flags = 0;
-	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
+	ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 
 	if (verbose) {
 		fprintf(stderr, "starting sector: %qu\n",

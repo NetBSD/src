@@ -1,9 +1,11 @@
-# $NetBSD: GENERIC3X,v 1.40.2.3 2002/02/11 20:09:16 jdolecek Exp $
+# $NetBSD: GENERIC3X,v 1.40.2.4 2002/06/23 17:42:35 jdolecek Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3x"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
@@ -21,6 +23,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

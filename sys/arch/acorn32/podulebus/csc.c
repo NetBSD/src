@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.2.2.2 2002/01/10 19:36:32 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.2.2.3 2002/06/23 17:33:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ cscmatch(pdp, cf, auxp)
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
 	/* Look for the card */
-	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI2, -1))
+	if (pa->pa_product == PODULE_CUMANA_SCSI2)
 		return 1;
 
 	/* PowerROM */

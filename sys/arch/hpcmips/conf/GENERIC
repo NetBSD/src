@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92.2.4 2002/03/16 15:57:55 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.92.2.5 2002/06/23 17:36:47 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.92.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.92.2.5 $"
 
 maxusers	16
 
@@ -32,6 +34,7 @@ options 	VR4121			# NEC VR4121
 options 	VR4122			# NEC VR4122
 options 	VR4131			# NEC VR4131
 options 	TX392X			# Toshiba TX3922
+options 	KLOADER
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -62,7 +65,8 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
@@ -80,7 +84,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
@@ -101,12 +105,14 @@ options 	INET6		# IPV6
 # NetBSD backwards compatibility
 options 	COMPAT_43
 
+options 	LKM		# loadable kernel modules
+
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 
 # compile options
-makeoptions	DEFGP="-G 14"
+makeoptions	DEFGP="-G 10"
 
 config		netbsd		root on ? type ?
 
@@ -132,10 +138,10 @@ apmdev0	at hpcapm0			# APM
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
-mqvideo0 at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
+mqvideo*	at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
 hpcfb*		at	mqvideo?
 
-ite8181video0 at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
+ite8181video*	at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
 hpcfb*		at	ite8181video?
 
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_430
@@ -242,6 +248,7 @@ vrisab0 at vrgiu? platform NEC_MCCS
 vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
 isa0	at vrisab0
 pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
+vrdsiu_mouse0 at vr4102ip? platform IBM_WORKPAD addr 0x0b0001a0 size 0x20 unit VRDSIU
 #
 # Freestyle
 # Button to GPIO port # mapping
@@ -279,8 +286,8 @@ options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
 # Fujitsu INTERTOP CX300
 #
-pwctl0	at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
-vrisab2	at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+pwctl0	at vrgiu? platform FUJITSU_INTERTOP_IT300 id PWCTL_COM0 port 15
+vrisab2	at vrgiu? platform FUJITSU_INTERTOP_IT300 isaportoffset 0x1000000
 isa2	at vrisab2
 pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 
@@ -319,15 +326,18 @@ vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a 
 vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_PENCENTRA_130
+pci*	at vrc4172pci?
+hpcioman5 at vrc4172gpio0 platform FUJITSU_PENCENTRA_130
+hpcin*	at hpcioman5 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 
 #
 # SigmarionII
 #
 com*	at vrgiu? platform NEC_MCR_SIGMARION2 addr 0x0b600000 port 8
-vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
+vrisab6       at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf7800000 isamemoffset 0xfa000000
 isa6	at vrisab6
-ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
-#wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+pcic0 at isa6 port 0x3e0 iomem 0x10000 iosiz 0x4000 irq 0x00090003
 hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
 hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
 
@@ -337,6 +347,28 @@ hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
 hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 connect 1
+
+#
+# Fujitsu INTERTOP CX310
+#
+vrc4172gpio0 at vrgiu? platform FUJITSU_INTERTOP_IT310 addr 0x15001080 size 0x4a port 10
+vrisab8	at vrc4172gpio0 isaportoffset 0x1000000
+isa8	at vrisab8
+pcic0	at isa8 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_INTERTOP_IT310
+pci*	at vrc4172pci?
+hpcioman8 at vrc4172gpio0 platform FUJITSU_INTERTOP_IT310
+hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
+
+#
+# MC-R700 and Mobile Pro 800
+#
+options	VRC4172PCI_MCR700_SUPPORT
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700A
+hpcioman9 at vrgiu? platform NEC_MCR_700
+hpcioman9 at vrgiu? platform NEC_MCR_700A
+hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 
 #
 # Sharp Telios HC-AJ1, HC-VJ1C
@@ -402,6 +434,7 @@ hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
 wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
+wsmouse*	at	vrdsiu_mouse? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
 
@@ -420,6 +453,9 @@ vrpiu* at vrc4173bcu? addr 0x0a0 size 0x20 addr2 0x0c0 size2 0x20 unit VRPIU	# V
 # PCI USB controllers
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 #options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
+
+# miscellaneous PCI devices
+mqvideo*	at pci? dev ? function ?	# MQ200 video
 
 # PCMCIA bus support
 pcmcia* at plumpcmcia? controller ? socket ?
@@ -502,6 +538,9 @@ umidi* at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# MII/PHY support
+ukphy*	at mii? phy ?		# generic unknown PHYs
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

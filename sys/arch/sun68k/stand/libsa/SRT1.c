@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.1 2001/06/14 12:57:13 fredette Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.1.2.1 2002/06/23 17:42:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ _start()
 		sun3_init();
 
 	main(0);
-	exit();
+	exit(0);
 }
 
 void
@@ -123,7 +123,7 @@ chain_to(func)
 	 */
 	chain_to_func = func;
 	ICIA();
-	exit();
+	exit(0);
 }
 
 /*

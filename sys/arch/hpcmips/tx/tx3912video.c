@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.23.2.2 2002/03/16 15:57:59 jdolecek Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.23.2.3 2002/06/23 17:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tx3912video_softc *sc = (void *)self;
 	struct video_chip *chip;
-	const char *depth_print[] = { 
+	static const char *const depth_print[] = { 
 		[TX3912_VIDEOCTRL1_BITSEL_MONOCHROME] = "monochrome",
 		[TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE] = "2bit greyscale",
 		[TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE] = "4bit greyscale",
@@ -287,7 +287,6 @@ tx3912video_hpcfbinit(sc)
 		fb->hf_u.hf_gray.hf_flags = 0;
 		break;
 	case 8:
-		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;
@@ -607,7 +606,7 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t
@@ -704,7 +703,7 @@ void
 tx3912video_clut_install(void *ctx, struct rasops_info *ri)
 {
 	struct tx3912video_softc *sc = ctx;
-	const int system_cmap[0x10] = {
+	static const int system_cmap[0x10] = {
 		TX3912VIDEO_BLACK,
 		TX3912VIDEO_RED,
 		TX3912VIDEO_GREEN,

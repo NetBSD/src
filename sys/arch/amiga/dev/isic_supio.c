@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.7.2.1 2002/02/11 20:07:00 jdolecek Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.7.2.2 2002/06/23 17:34:28 jdolecek Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.1 2002/02/11 20:07:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.2 2002/06/23 17:34:28 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.1 2002/02/11 20:07:00 jdolecek 
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/hscx.h>
@@ -83,19 +85,19 @@ extern const struct isdn_layer1_bri_driver isic_std_driver;
 /*static*/ int isic_supio_match(struct device *, struct cfdata *, void *);
 /*static*/ void isic_supio_attach(struct device *, struct device *, void *);
 
-/*static*/ u_int8_t aster_read_reg(struct l1_softc *sc, int what,
+/*static*/ u_int8_t aster_read_reg(struct isic_softc *sc, int what,
 		bus_size_t offs);
-/*static*/ void aster_write_reg(struct l1_softc *sc, int what,
+/*static*/ void aster_write_reg(struct isic_softc *sc, int what,
 	bus_size_t offs, u_int8_t data);
-/*static*/ void aster_read_fifo(struct l1_softc *sc, int what,
+/*static*/ void aster_read_fifo(struct isic_softc *sc, int what,
 	void *buf, size_t size);
-/*static*/ void aster_write_fifo(struct l1_softc *sc, int what,
+/*static*/ void aster_write_fifo(struct isic_softc *sc, int what,
 	const void *data, size_t size);
 
-static int supio_isicattach(struct l1_softc *sc, char *);
+static int supio_isicattach(struct isic_softc *sc, char *);
 
 struct isic_supio_softc {
-	struct l1_softc	sc_isic;
+	struct isic_softc	sc_isic;
 	struct isr		sc_isr;
 	struct bus_space_tag	sc_bst;
 };
@@ -124,7 +126,7 @@ int isic_supio_ipl = 2;
 isic_supio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isic_supio_softc *ssc = (void *)self;
-	struct l1_softc *sc = &ssc->sc_isic;
+	struct isic_softc *sc = &ssc->sc_isic;
 	struct supio_attach_args *sap = aux;
 
 	bus_space_tag_t bst;
@@ -135,7 +137,6 @@ isic_supio_attach(struct device *parent, struct device *self, void *aux)
 	/* setup parameters */
 	sc->sc_cardtyp = CARD_TYPEP_BLMASTER;
 	sc->sc_num_mappings = 3;
-	sc->sc_unit = sc->sc_dev.dv_unit;	/* XXX ??? */
 
 	/* create io mappings */
 	MALLOC_MAPS(sc);
@@ -202,7 +203,7 @@ isic_supiointr(void *p)
 #endif
 
 /*static*/ void
-aster_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+aster_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what].t;
 	bus_space_handle_t h = sc->sc_maps[what].h;
@@ -212,7 +213,7 @@ aster_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 }
 
 /*static*/ void
-aster_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+aster_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what].t;
 	bus_space_handle_t h = sc->sc_maps[what].h;
@@ -222,7 +223,7 @@ aster_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 }
 
 /*static*/ u_int8_t
-aster_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+aster_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
         bus_space_tag_t t = sc->sc_maps[what].t;
         bus_space_handle_t h = sc->sc_maps[what].h;
@@ -232,7 +233,7 @@ aster_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 }
 
 /*static*/ void
-aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+aster_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
         bus_space_tag_t t = sc->sc_maps[what].t;
 	bus_space_handle_t h = sc->sc_maps[what].h;
@@ -256,7 +257,7 @@ aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 #define	TERMFMT	"\n"
 
 int
-supio_isicattach(struct l1_softc *sc, char *cardname)
+supio_isicattach(struct isic_softc *sc, char *cardname)
 {
   	static char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
@@ -350,8 +351,7 @@ supio_isicattach(struct l1_softc *sc, char *cardname)
 	/* init higher protocol layers */
 
 	/* MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp); */
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname,
-		cardname, &isic_std_driver);
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 
 	/* announce chip versions */
 

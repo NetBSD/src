@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_start.S,v 1.1.4.2 2002/03/16 15:57:28 jdolecek Exp $	*/
+/*	$NetBSD: iq80310_start.S,v 1.1.4.3 2002/06/23 17:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -78,8 +78,8 @@ _C_LABEL(iq80310_start):
 	add	r0, pc, #(Ltable - . - 8)
 	ldr	r0, [r0]			/* r0 = &l1table */
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000			/* advance by 1MB */
 	mov	r1, #0x1000			/* 4096MB */
 1:
@@ -94,8 +94,8 @@ _C_LABEL(iq80310_start):
 	add	r0, pc, #(Ltable - . - 8)	/* r0 = &l1table */
 	ldr	r0, [r0]
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	orr	r3, r3, #0xa0000000
 	add	r0, r0, #(0xc00 * 4)		/* offset to 0xc00xxxxx */
 	mov	r1, #0x40			/* 64MB */
@@ -117,6 +117,10 @@ _C_LABEL(iq80310_start):
 	mov	r0, #1
 	mcr	p15, 0, r0, c3, c0, 0
 
+	/* Get ready to jump to the "real" kernel entry point... */
+	add	r0, pc, #(Lstart - . - 8)
+	ldr	r0, [r0]
+
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0
 	orr	r2, r2, #CPU_CONTROL_MMU_ENABLE
@@ -126,9 +130,10 @@ _C_LABEL(iq80310_start):
 	nop
 	nop
 
-	/* ...and now we jump to the "real" kernel entry point! */
-	add	r0, pc, #(Lstart - . - 8)
-	ldr	pc, [r0]
+	/* CPWAIT sequence to make sure the MMU is on... */
+	mrc	p15, 0, r2, c2, c0, 0	/* arbitrary read of CP15 */
+	mov	r2, r2			/* force it to complete */
+	mov	pc, r0			/* leap to kernel entry point! */
 
 Ltable:
 	.word	0xa0004000

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12.2.4 2002/01/10 19:37:34 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.12.2.5 2002/06/23 17:34:37 jdolecek Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -252,7 +252,7 @@ initppc(startkernel, endkernel)
 	/*
 	 * Initialize pmap module
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 }
 
 
@@ -597,7 +597,7 @@ identifycpu()
 {
 	register int pvr, hid1;
 	char *mach, *pup, *cpu;
-	const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
+	static const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
 			30, 55, 40, 50, 15, 60, 35, 0};
 	const char *p5type_p = (const char *)0xf00010;
 	int cpuclock, busclock;

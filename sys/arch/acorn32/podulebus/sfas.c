@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.3.2.3 2002/02/11 20:06:38 jdolecek Exp $	*/
+/*	$NetBSD: sfas.c,v 1.3.2.4 2002/06/23 17:33:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -69,9 +69,6 @@
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/sfasreg.h>
 #include <acorn32/podulebus/sfasvar.h>
-
-/* Externs */
-extern pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 void sfasinitialize __P((struct sfas_softc *));
 void sfas_minphys   __P((struct buf *bp));
@@ -206,8 +203,8 @@ sfasinitialize(dev)
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = pmap_pte(pmap_kernel(), (vm_offset_t)dev->sc_bump_va);
-	*pte &= ~(PT_C | PT_B);
+	pte = vtopte((vaddr_t) dev->sc_bump_va);
+	*pte &= ~(L2_C | L2_B);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 

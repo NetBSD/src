@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.3 2002/02/11 20:09:14 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.6.2.4 2002/06/23 17:42:27 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,9 @@
 
 include 	"arch/sun2/conf/std.sun2"
 
-#ident 		"GENERIC-$Revision: 1.6.2.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.6.2.4 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -44,6 +46,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.1 2002/03/16 15:57:05 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.2 2002/06/23 17:35:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,6 @@ extern vaddr_t virtual_avail;
  * Declare these as initialized data so we can patch them.
  */
 caddr_t	msgbufaddr;
-int	msgbufmapped;		/* set when safe to use msgbuf */
 /*int	maxmem;*/			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -385,7 +384,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

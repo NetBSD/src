@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.4.2 2002/02/11 20:07:10 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.22.4.3 2002/06/23 17:34:34 jdolecek Exp $
 
 ### what we need:
 
@@ -20,7 +20,7 @@ BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
-COBJS+=  ufs.o ustarfs.o panic.o vers.o
+COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o memcmp.o strerror.o sprintf.o subr_prf.o
@@ -43,10 +43,6 @@ DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 realall: machine m68k ${FILES}
 
-# Copy boot.amiga to / as well.
-afterinstall:
-	cp -p ${DESTDIR}${BINDIR}/boot.amiga ${DESTDIR}/
-
 CLEANFILES += boot.amiga x.out xxstart.o libboot.a vers.c machine m68k
 
 .include <bsd.prog.mk>
@@ -61,7 +57,7 @@ AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
 COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
-CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
+CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:
 	${CC} ${CFLAGS} -S $< -o $*.s
@@ -73,7 +69,7 @@ CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 .S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 boot.amiga: x.out
-	${RELOC2BB} -S 32768 x.out $@ || ${NM} -u x.out
+	${RELOC2BB} -S x.out $@ || ${NM} -u x.out
 
 x.out: xxstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>

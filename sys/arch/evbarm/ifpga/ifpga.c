@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.5.2.3 2002/02/11 20:07:42 jdolecek Exp $ */
+/*	$NetBSD: ifpga.c,v 1.5.2.4 2002/06/23 17:35:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -52,7 +52,6 @@
 
 #include <arm/cpufunc.h>
 
-#include "opt_cputypes.h"
 #include "opt_pci.h"
 #include "pci.h"
 
@@ -343,6 +342,7 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_dmat = &ifpga_pci_bus_dma_tag;
 	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pci_pba.pba_bus = 0;
+	pci_pba.pba_bridgetag = NULL;
 	
 	config_found(self, &pci_pba, ifpga_pci_print);
 #endif

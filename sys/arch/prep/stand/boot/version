@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5.2.2 2002/01/10 19:48:16 thorpej Exp $
+$NetBSD: version,v 1.5.2.3 2002/06/23 17:39:55 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 1.3:		loadfile() update:  ELF symbols no longer need backward seeks.
 1.4:		loadfile() update to avoid backwards seeks for ELF Program
 		Headers.
+1.5:		Support MPC601.

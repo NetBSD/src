@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5.2.2 2002/03/16 15:59:27 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.5.2.3 2002/06/23 17:40:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 35;
+int zs_major = 0;
 
 #define PCLK		3672000	 /* PCLK pin input clock rate */
 
@@ -173,6 +173,7 @@ struct cfattach zsc_hpc_ca = {
 	sizeof(struct zsc_softc), zs_hpc_match, zs_hpc_attach
 };
 
+cdev_decl(zs);
 extern struct	cfdriver zsc_cd;
 
 static int	zshard __P((void *));
@@ -332,6 +333,9 @@ zs_hpc_attach(parent, self, aux)
 	zsc->sc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
 	cpu_intr_establish(haa->ha_irq, IPL_TTY, zshard, NULL);
 
+	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
+			     self->dv_xname, "intr");
+
 	/*
 	 * Set the master interrupt enable and interrupt vector.
 	 * (common to both channels, do it on A)
@@ -370,14 +374,19 @@ zshard(arg)
 	void *arg;
 {
 	register struct zsc_softc *zsc;
-	register int unit, rval, softreq;
+	register int rr3, unit, rval, softreq;
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
-		rval |= zsc_intr_hard(zsc);
+
+		zsc->zsc_intrcnt.ev_count++;
+		while ((rr3 = zsc_intr_hard(zsc))) {
+			rval |= rr3;
+		}
+
 		softreq = zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
 		if (softreq && (zssoftpending == 0)) {
@@ -708,6 +717,13 @@ zscninit(cn)
 		panic("zscninit with ARCS console not set to serial!\n");
 
 	cons_port = consdev[7] - '0';
+
+	/*
+	 * Initialize the zstty console device major (needed by cnopen)
+	 */
+	for (zs_major = 0; zs_major < nchrdev; zs_major++)
+		if (cdevsw[zs_major].d_open == zsopen)
+			break;
 
 	cn->cn_dev = makedev(zs_major, cons_port);
 	cn->cn_pri = CN_REMOTE;

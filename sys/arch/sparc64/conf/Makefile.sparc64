@@ -1,4 +1,14 @@
-# 	$NetBSD: Makefile.sparc64,v 1.37.2.2 2002/01/10 19:49:11 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.37.2.3 2002/06/23 17:42:03 jdolecek Exp $
+
+#=========================================================================
+#
+#			***** WARNING ******
+#
+# ANYONE WHO CHANGES THIS MAKEFILE AND DOES NOT TEST BOTH A 32-BIT
+# AND 64-BIT KERNEL WILL BE SHOT.
+#
+#=========================================================================
+
 
 # Makefile for NetBSD
 #
@@ -17,8 +27,11 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-# Default to 32-bit.  Set the MACHINE_ARCH accordingly, using either
-# the 32-bit or 64-bit toolchain.
+# Default to 32-bit.  Set the MACHINE_ARCH accordingly.
+#
+# You must also be using the correct toolchain or the kernel build
+# will fail.
+#
 LP64?=	no
 .if ${LP64} == "yes"
 MACHINE_ARCH=sparc64
@@ -39,16 +52,29 @@ GENASSYM=	${SPARC64}/sparc64/genassym.cf
 ##
 ## (2) compile settings
 ##
-CPPFLAGS+=	-Dsparc64
+CPPFLAGS+=	-Dsparc64 -D__sparc64__
 .if ${LP64} == "yes"
-CPPFLAGS+=	-D_LP64
-.endif
-CFLAGS+=	-Wa,-Av9a -mno-fpu
+# 64-bit kernels
+CPPFLAGS+=	-D_LP64 -Wa,-Av9a
+AFLAGS+=	-Wa,-Av9a
 .if defined(PROF)
-# We need to run the compiler in medlow memory model.
+# Profiling is only supported in the medium low memory model.
+CFLAGS+=	-mcmodel=medlow
+.else
+# Since the kernel resides in the lower 32 bits, use medium low for now anyway.
 CFLAGS+=	-mcmodel=medlow
 .endif
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp -Wa,-Av9a
+.else
+# 32-bit kernels
+CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
+AFLAGS+=	-Wa,-Av8plusa
+.endif
+CFLAGS+=	-mno-fpu
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -O0 -c $<
 

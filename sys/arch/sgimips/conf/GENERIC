@@ -1,0 +1,254 @@
+#	$NetBSD: GENERIC,v 1.5.4.2 2002/06/23 17:40:26 jdolecek Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+#
+#
+# NOTE!
+# 
+# Don't use this config file directly, instead use GENERIC_<machine>,
+# where <machine> depends on the type of machine you have.
+
+include		"arch/sgimips/conf/std.sgimips"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.5.4.2 $"
+
+maxusers	32
+
+# CPU related options
+#options 	IP20		# Indigo R4k
+options 	IP22		# Indy / Indigo2
+options 	IP32		# O2
+
+options 	MIPS3		# MIPS3 support
+options 	MIPS3_5200
+options 	MIPS3_L2CACHE_ABSENT
+
+# Standard system options
+#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+#options 	INSECURE	# disable kernel security levels
+
+#options 	NTP		# NTP phase/frequence locked loop
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+options 	SYSVSHM		# System V shared memory
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+#options 	LKM		# loadable kernel modules (XXX: working?)
+
+#options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEV=0x2301		# KGDB port - this is Serial(1)
+#options 	KGDB_DEVRATE=19200	# KGDB Baud Rate
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+# Compatibility options
+options 	COMPAT_15	# NetBSD 1.5,
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+options 	COMPAT_IRIX	# binary compatibility with IRIX
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
+file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+
+# File system options
+options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+options 	SOFTDEP		# FFS soft updates support.
+options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	SCSIVERBOSE	# human readable SCSI error messages
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT
+#options 	MEMORY_DISK_SERVER=0
+#options 	MINIROOTSIZE=8192
+
+#options 	SCSI_DELAY=5
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+# Main bus and CPU
+mainbus0 	at root
+cpu0 		at mainbus?
+
+# O2 busses
+crime0 		at mainbus0 addr 0x14000000
+mace0 		at mainbus0 addr 0x1f000000
+macepci0 	at mace0 offset 0x080000 intr 7
+pci0 		at macepci0 bus 0
+
+# MACE devices
+mec0 		at mace0 offset 0x280000 intr 3
+pckbc0		at mace0 offset 0x320000 intr 5
+lpt0 		at mace0 offset 0x380000 intr 4
+com0 		at mace0 offset 0x390000 intr 4
+com1 		at mace0 offset 0x398000 intr 4
+mcclock0	at mace0 offset 0x3a0000
+
+# PCI network devices
+#tlp* 		at pci? dev ? function ?
+ne* 		at pci? dev ? function ?
+#fxp* 		at pci? dev ? function ?
+#inphy*		at mii? phy ?
+#nsphy*		at mii? phy ?
+
+# O2 SCSI
+ahc0 		at pci0 dev 1 function ?
+ahc1 		at pci0 dev 2 function ?
+
+scsibus0 	at ahc0 channel ?
+scsibus1 	at ahc1 channel ?
+
+sd*     at scsibus? target ? lun ?	# SCSI disks
+st*     at scsibus? target ? lun ?	# SCSI tapes
+cd*     at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*     at scsibus? target ? lun ?	# SCSI changer devices
+ss*     at scsibus? target ? lun ?	# SCSI scanners
+ses*    at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*     at scsibus? target ? lun ?	# unknown SCSI
+
+#pckbd*		at pckbc?
+#pms*		at pckbc?
+#pmsi*		at pckbc?
+#wskbd*		at pckbd? console ?
+#wsmouse* 	at pms? mux 0
+#wsmouse* 	at pmsi? mux 0
+#wsdisplay* 	at foofb? console ?
+
+# Indy / Indigo^2
+imc0 		at mainbus0 addr 0x1fa00000
+gio0 		at imc0
+eisa0 		at imc0
+
+hpc0 		at gio? addr 0x1fb80000
+hpc1 		at gio? addr 0x1fb00000
+hpc2 		at gio? addr 0x1f980000
+
+# HPC devices
+sq* 		at hpc0 offset ?
+wdsc* 		at hpc0 offset ?
+dsclock*	at hpc0 offset ?
+
+#
+# As always, the zs chip is wired funny, so channel 1 is actually the
+# first serial port and channel 0 is the second.
+#
+zsc* 		at hpc0 offset ?
+zstty*		at zsc? channel ?
+
+#pbus0		at hpc0
+#pckbc0 	at pbus0 device ?
+
+scsibus*	at wdsc?		# HPC SCSI
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd		4	# disk-like interface to files
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	sl		2	# Serial Line IP
+pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	rnd			# /dev/random and in-kernel generator
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.30 2000/12/13 18:13:07 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.30.4.1 2002/06/23 17:36:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.30.4.1 2002/06/23 17:36:14 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 

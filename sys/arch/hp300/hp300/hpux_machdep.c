@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.4.1 2002/01/10 19:43:03 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.4.2 2002/06/23 17:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
 /*
  * Machinde-dependent bits for HP-UX binary compatibility.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.4.2 2002/06/23 17:36:12 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

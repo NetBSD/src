@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121.2.4 2002/03/16 15:59:44 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.121.2.5 2002/06/23 17:41:40 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.121.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.121.2.5 $"
 
 maxusers	32
 
@@ -80,12 +82,13 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 

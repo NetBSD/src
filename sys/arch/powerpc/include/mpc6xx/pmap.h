@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2001/06/28 20:31:37 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.2.1 2002/06/23 17:39:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,7 +73,16 @@ extern struct pmap kernel_pmap_;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend);
+/*
+ * pmap_bootstrap interface
+ */
+struct segtab {
+	sr_t	st_sr[16];	/* SR contents */
+	int	st_mask;	/* st_sr allocation bitmask */
+};
+
+void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend,
+    const struct segtab *);
 boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
 boolean_t pmap_query_bit (struct vm_page *, int);
 boolean_t pmap_clear_bit (struct vm_page *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.6 1997/12/29 07:15:10 scottr Exp $	*/
+/*	$NetBSD: inst.c,v 1.6.28.1 2002/06/23 17:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
-#include <a.out.h>
 
 #include <lib/libsa/stand.h>
 
@@ -177,12 +176,12 @@ dsklabel()
 	char block[DEV_BSIZE], diskname[64];
 	extern struct open_file files[];
 
-	printf("
-You will be asked several questions about your disk, most of which
-require prior knowledge of the disk's geometry.  There is no easy way
-for the system to provide this information for you.  If you do not have
-this information, please consult your disk's manual or another
-informative source.\n\n");
+	printf(
+"You will be asked several questions about your disk, most of which\n"
+"require prior knowledge of the disk's geometry.  There is no easy way\n"
+"for the system to provide this information for you.  If you do not have\n"
+"this information, please consult your disk's manual or another\n"
+"informative source.\n\n");
 
 	/* Error message printed by opendisk() */
 	if (opendisk("Disk to label?", diskname, sizeof(diskname),
@@ -429,8 +428,8 @@ disklabel_edit(lp)
 		lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
 	GETNUM("Total sectors? [%d] ", lp->d_secperunit);
 
-	printf("
-Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
+	printf(
+"Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
 
 	lp->d_npartitions = MAXPARTITIONS;
 	for (i = 0; i < lp->d_npartitions; ++i) {
@@ -760,7 +759,7 @@ bootmini()
 	howto = RB_SINGLE;	/* _Always_ */
 
 	printf("booting: %s -s\n", bootname);
-	exec(bootname, lowram, howto);
+	exec_hp300(bootname, (u_long)lowram, howto);
 	printf("boot: %s\n", strerror(errno));
 }
 

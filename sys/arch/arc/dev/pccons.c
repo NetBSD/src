@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.27.2.1 2002/01/10 19:37:42 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.27.2.2 2002/06/23 17:34:40 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -695,10 +695,10 @@ pcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
@@ -760,7 +760,7 @@ pcioctl(dev, cmd, data, flag, p)
 		return 0;
 
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.3 1997/10/09 09:06:50 jtc Exp $
+$NetBSD: diodevs,v 1.3.30.1 2002/06/23 17:36:06 jdolecek Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ device MISC2		0x09	1	98287A keyboard
 device MISC3		0x0a	1	HP98635A floating point accelerator
 device MISC4		0x0b	1	timer
 device MISC5		0x12	1	98640A
+device AUDIO		0x13	1	digital audio
 device MISC6		0x16	1	98659A
 device MISC7		0x19	1	237 display
 device MISC8		0x1a	4	quad-wide card

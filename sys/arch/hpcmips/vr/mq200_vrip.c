@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.4.2.2 2002/02/11 20:08:12 jdolecek Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.4.2.3 2002/06/23 17:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -39,6 +39,7 @@
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/dev/mq200var.h>
+#include <hpcmips/dev/mq200reg.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
 #include <dev/hpc/bivideovar.h>     
@@ -93,8 +94,8 @@ mq200_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_baseaddr = va->va_addr;
 	sc->sc_iot = va->va_iot;
-	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0,
-			  &sc->sc_ioh)) {
+	if (bus_space_map(va->va_iot, va->va_addr + MQ200_REGADDR,
+	    va->va_size - MQ200_REGADDR, 0, &sc->sc_ioh)) {
 		printf(": can't map bus space\n");
 		return;
 	}

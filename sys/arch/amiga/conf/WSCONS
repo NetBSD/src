@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.1.2.2 2002/03/16 15:55:49 jdolecek Exp $
+# $NetBSD: WSCONS,v 1.1.2.3 2002/06/23 17:34:23 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.176 2002/03/04 13:24:08 sommerfeld Exp $
+# Created from: #NetBSD: GENERIC,v 1.180 2002/05/30 19:45:15 thorpej Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,9 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.1.2.2 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident  		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -34,11 +36,11 @@ options 	RTC_OFFSET=0
 options 	DRACO
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# MC68060 with an OS ROM up to (at least)
-				# V40 (OS3.1) and want to boot with the
-				# bootblock.
-				# You do not need this if you have a DraCo,
-				# have no 68060 or NEVER use the bootblock
+				#MC68060 with an OS ROM up to (at least)
+				#V40 (OS3.1) and want to boot with the
+				#bootblock.
+				#You do not need this if you have a DraCo,
+				#have no 68060 or NEVER use the bootblock
 options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
@@ -107,7 +109,7 @@ options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
+				#immutable) behave as system flags.
 
 #Compatibility options for various existing systems
 
@@ -144,6 +146,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 
 options 	NTP		# NTP phase/frequency locked loop
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -156,19 +159,18 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
-				# first bank of RAM. (default: unlimited)
+				#first bank of RAM. (default: unlimited)
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
-
+				#per 16 MB (1<<24 bytes) of RAM
+				#uncomment and decrease this, or uncomment and
+				#increase NKPTADD if you get "out of PT pages"
+				#panics.
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
 #options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
@@ -196,6 +198,11 @@ options 	GRF_AGA_VGA	# AGA VGAONLY timing
 options 	GRF_SUPER72	# AGA Super-72
 
 #options 	KFONT_8X11	# 8x11 font
+
+#select a font for the console according to the character set and keymap
+#you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
 
 #This is how you would tell the kernel the A2410 oscillator frequencies:
 #The used frequencies are the defaults, and do not need option setting
@@ -229,7 +236,7 @@ options	FONT_VT220L8x10
 
 #grfrh0		at zbus0		# retina III
 
-#grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+#grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 #grful0		at zbus0		# A2410
 #grfcv0		at zbus0		# CyberVision 64
 #grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
@@ -282,7 +289,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 wskbd0		at kbd0 console ?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.1.4.2 2002/01/10 19:47:08 thorpej Exp $	*/
+/*	$NetBSD: firepower.c,v 1.1.4.3 2002/06/23 17:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -243,6 +243,7 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = &cp->c_dmat_pci;
 	pba.pba_pc = &cp->c_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found(self, &pba, firepower_print);

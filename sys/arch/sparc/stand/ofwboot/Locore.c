@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.8.1 2002/06/23 17:42:01 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ _start(vpd, res, openfirm, arg, argl)
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
 	setup();
 	main(arg, argl);
-	exit();
+	exit(0);
 }
 #endif
 

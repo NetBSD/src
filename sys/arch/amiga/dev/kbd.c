@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35.4.2 2002/02/11 20:07:02 jdolecek Exp $ */
+/*	$NetBSD: kbd.c,v 1.35.4.3 2002/06/23 17:34:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.4.2 2002/02/11 20:07:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.4.3 2002/06/23 17:34:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,8 +768,11 @@ kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return 0;
 	}
 
-	/* We are supposed to return -1 to wscons if we didn't understand */
-	return (-1);
+	/*
+	 * We are supposed to return EPASSTHROUGH to wscons if we didn't
+	 * understand.
+	 */
+	return (EPASSTHROUGH);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.5 2001/05/30 15:24:26 lukem Exp $ */
+/* $NetBSD: a12dc.c,v 1.5.2.1 2002/06/23 17:34:05 jdolecek Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5 2001/05/30 15:24:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.2.1 2002/06/23 17:34:05 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.5 $");
+	printf(": driver %s\n", "$Revision: 1.5.2.1 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -363,13 +363,9 @@ a12dcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return error;
-
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 int

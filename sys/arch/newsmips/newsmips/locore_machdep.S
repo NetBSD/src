@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.7 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.7.8.1 2002/06/23 17:38:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@
 	.set	noreorder
 
 LEAF(to_monitor)
-	li	v0, MIPS_SR_BOOT_EXC_VEC	# no interrupt and
+	li	v0, MIPS_SR_BEV			# no interrupt and
 	mtc0	v0, MIPS_COP_0_STATUS_REG	# boot strap exception vector
 	nop
 	nop

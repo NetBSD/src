@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.4 2002/03/16 15:58:05 jdolecek Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.5 2002/06/23 17:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461var.h>
-#include <hpcsh/dev/hd64461/hd64461intcvar.h>
+#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciavar.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
@@ -310,7 +310,7 @@ hd64461pcmcia_event_thread(void *arg)
 				break;
 			}
 			s = splhigh();
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe, pe_link);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe_link);
 			pe->__queued = 0;
 		}
 		splx(s);
@@ -398,11 +398,11 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 		    ch->ch_iosize);
 		fixup_sh3_pcmcia_area(ch->ch_iot);
 
-		hd64461_intr_establish(HD64461_IRQ_PCC0, IST_LEVEL, IPL_TTY,
+		hd6446x_intr_establish(HD64461_INTC_PCC0, IST_LEVEL, IPL_TTY,
 		    hd64461pcmcia_channel0_intr, ch);
 	} else {
 		hd64461_set_bus_width(CHANNEL_1, PCMCIA_WIDTH_IO16);
-		hd64461_intr_establish(HD64461_IRQ_PCC1, IST_EDGE, IPL_TTY,
+		hd6446x_intr_establish(HD64461_INTC_PCC1, IST_EDGE, IPL_TTY,
 		    hd64461pcmcia_channel1_intr, ch);
 	}
 
@@ -534,9 +534,11 @@ hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 		/* set level mode */
 		r &= ~HD64461_PCC0CSCIER_P0IREQE_MASK;
 		r |= HD64461_PCC0CSCIER_P0IREQE_LEVEL;
+		hd6446x_intr_priority(HD64461_INTC_PCC0, ipl);
 	} else {
 		/* READY-pin LOW to HIGH changes generates interrupt */
 		r |= HD64461_PCC1CSCIER_P1RE;
+		hd6446x_intr_priority(HD64461_INTC_PCC1, ipl);
 	}
 	hd64461_reg_write_1(cscier, r);
 
@@ -559,8 +561,10 @@ hd64461pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	if (channel == CHANNEL_0) {
 		r &= ~HD64461_PCC0CSCIER_P0IREQE_MASK;
 		r |= HD64461_PCC0CSCIER_P0IREQE_NONE;
+		hd6446x_intr_priority(HD64461_INTC_PCC0, IPL_TTY);
 	} else {
 		r &= ~HD64461_PCC1CSCIER_P1RE;
+		hd6446x_intr_priority(HD64461_INTC_PCC1, IPL_TTY);
 	}
 	hd64461_reg_write_1(cscier, r);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2.8.1 2002/03/16 15:59:43 jdolecek Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2.8.2 2002/06/23 17:40:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -89,15 +89,9 @@ int
 process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
-#if 0
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	regs->r_spc = pcb->spc;
-	regs->r_ssr = pcb->ssr;
-#else
 	regs->r_spc = tf->tf_spc;
 	regs->r_ssr = tf->tf_ssr;
-#endif
 	regs->r_macl = tf->tf_macl;
 	regs->r_mach = tf->tf_mach;
 	regs->r_pr = tf->tf_pr;
@@ -163,18 +157,9 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
-#ifdef TODO
-	struct trapframe *tf = process_frame(p);
-
-	if (sstep)
-		tf->tf_eflags |= PSL_T;
-	else
-		tf->tf_eflags &= ~PSL_T;
-#else
 
 	if (sstep)
 		return (EINVAL);
-#endif
 
 	return (0);
 }

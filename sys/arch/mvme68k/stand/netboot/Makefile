@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2002/03/16 15:58:58 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2002/06/23 17:38:22 jdolecek Exp $
 
 DEFS= -DSUN_BOOTPARAMS
 
 SRCS=   boot.c conf.c devopen.c
 SRCS+=	if_ie.c if_le.c
-PROG=	netboot.tmp
+PROG=	netboot
 LIBS=	${LIBSA} ${LIBBUG}
 DPADD=	${LIBS}
 CLEANFILES+= netboot.bin
 
 netboot.bin: ${PROG}
-	${OBJCOPY} -O binary ${.OBJDIR}/netboot.tmp $@
+	${OBJCOPY} -O binary ${.OBJDIR}/netboot ${.TARGET}
 
 .include "../Makefile.booters"
 

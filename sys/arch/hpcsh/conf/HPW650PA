@@ -1,9 +1,11 @@
-#	$NetBSD: HPW650PA,v 1.5.4.2 2002/03/16 15:58:04 jdolecek Exp $
+#	$NetBSD: HPW650PA,v 1.5.4.3 2002/06/23 17:36:57 jdolecek Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
 
 include 	"arch/hpcsh/conf/std.hpcsh"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 
@@ -13,7 +15,7 @@ options		KLOADER_DEBUG
 options		SH4			# SH7750V 128MHz
 options 	PCLOCK=32000000		# 32MHz
 
-options		INTERRUPT_MONITOR
+options		HPC_DEBUG_INTERRUPT_MONITOR
 options		HPC_DEBUG_LCD
 
 options 	DDB			# in-kernel debugger
@@ -24,6 +26,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
@@ -54,13 +57,14 @@ options 	WS_KERNEL_BG=WSCOL_BLUE
 #
 mainbus0 at root
 
+cpu*		at mainbus?
+shb*		at mainbus?
 bivideo*	at mainbus0
+
 hpcfb*		at bivideo?
 wsdisplay*	at hpcfb?
 
-shb0		at mainbus?
-
-hd64465if*	at shb0 irq 11
+hd64465if*	at shb?
 com*		at hd64465if?
 hd64465pcmcia*	at hd64465if?
 

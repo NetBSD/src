@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.1.2.2 2002/01/10 19:37:51 thorpej Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.1.2.3 2002/06/23 17:34:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -343,9 +343,10 @@ fcomioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) !=
+	    EPASSTHROUGH)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
@@ -361,7 +362,7 @@ fcomioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 struct tty *

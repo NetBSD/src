@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.2.2.2 2002/01/10 19:41:22 thorpej Exp $
+#	$NetBSD: Makefile.cesfic,v 1.2.2.3 2002/06/23 17:35:31 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,11 @@ GENASSYM=	${CESFIC}/cesfic/genassym.cf
 WEAK_POINTERS=	yes
 CWARNFLAGS+=	-Wno-format
 CFLAGS+=	-msoft-float
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp -Wa,-m68030 -Wa,-m68851 -Wa,-m68040
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp -Wa,-m68030 -Wa,-m68851 -Wa,-m68040
+.endif
 
 ##
 ## (3) libkern and compat

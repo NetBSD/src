@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.22.3 2002/03/16 15:56:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.8.22.4 2002/06/23 17:35:21 jdolecek Exp $
 
 LIB=	sa
 
@@ -24,7 +24,7 @@ SRCS=	consio.S diskio.c
 SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
 
 # stand routines
-SRCS+=	alloc.c bcopy.c exec.c getfile.c gets.c globals.c panic.c \
+SRCS+=	alloc.c bcopy.c exec.c files.c getfile.c gets.c globals.c panic.c \
 	memcpy.c printf.c strerror.c subr_prf.c twiddle.c 
 
 # io routines
@@ -50,13 +50,13 @@ S_MACHSA=${S}/arch/atari/stand/libsa
 
 .PATH:  ${S_SA} ${S_KERN}
 
-.if !make(obj)
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
 	@([ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH})
 .NOPATH: machine m68k
-CLEANFILES+= machine m68k
 .endif
+CLEANFILES+= machine m68k
 
 # only needed during build
 libinstall::

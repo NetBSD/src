@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.2 2002/03/16 16:00:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.20.2.3 2002/06/23 17:42:55 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -10,13 +10,15 @@ WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
+LIBC=
 
-CLEANFILES+=${PROG} ${PROG}.mop vers.c
+CFLAGS+=-ffreestanding
+CLEANFILES+=${PROG} ${PROG}.sym vers.c
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK
 #CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
 #	-DRPC_DEBUG -DRARP_DEBUG -DPARANOID
-BINDIR=	/
+BINDIR=	
 MDEC_DIR=/usr/mdec
 
 SA_AS=	library
@@ -56,20 +58,11 @@ vers.c: ${.CURDIR}/version
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-.if ${OBJECT_FMT} != "ELF"
-	/usr/sbin/mopa.out ${PROG}.sym ${PROG}.mop
-.endif
 	${STRIP} -o ${PROG} ${PROG}.sym
 	${SIZE} ${PROG}
 
 install:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-		${PROG} ${DESTDIR}${BINDIR}
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-		${PROG} ${DESTDIR}${MDEC_DIR}
-.if ${OBJECT_FMT} != "ELF"
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-		${PROG}.mop ${DESTDIR}${MDEC_DIR}
-.endif
+		${PROG} ${DESTDIR}${MDEC_DIR}/${PROG}
 
 .include <bsd.prog.mk>

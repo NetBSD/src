@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.6.34.1 2002/02/11 20:06:55 jdolecek Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.6.34.2 2002/06/23 17:34:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -433,4 +433,3 @@ RGfx(ba, idx)
 }
 
 #endif /* _GRF_RHREG_H */
-

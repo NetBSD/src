@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196.2.5 2002/03/16 15:59:54 jdolecek Exp $ */
+/*	$NetBSD: pmap.c,v 1.196.2.6 2002/06/23 17:41:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3672,7 +3672,6 @@ pmap_alloc_cpu(sc)
 	/* The region, segment and page table we need fit in one page */
 	size = ctxsize + pagesz;
 
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
 			    alignment, 0, &mlist, 1, 0) != 0)
 		panic("pmap_alloc_cpu: no memory");
@@ -5763,7 +5762,7 @@ pmap_kremove4_4c(va, len)
 		KASSERT(pmeg != seginval);
 		setcontext4(0);
 		/* decide how to flush cache */
-		npg = (endva - va) >> PGSHIFT;
+		npg = (nva - va) >> PGSHIFT;
 		if (npg > PMAP_RMK_MAGIC) {
 			/* flush the whole segment */
 			perpage = 0;

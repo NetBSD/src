@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.1.8.2 2002/03/16 15:59:23 jdolecek Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.1.8.3 2002/06/23 17:39:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,6 +38,8 @@
  * up a few function pointers to access the correct method directly.
  */
 
+#include "opt_openpic.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -52,6 +54,10 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+#if defined(OPENPIC)
+#include <powerpc/openpic.h>
+#endif /* OPENPIC */
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -60,6 +66,8 @@
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
 #define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
+
+#define	PCI_CBIO		0x10
 
 void prep_pci_indirect_attach_hook(struct device *, struct device *,
     struct pcibus_attach_args *);
@@ -98,8 +106,31 @@ prep_pci_indirect_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 
-	if (pba->pba_bus == 0)
-		printf(": indirect configuration space access");
+	if (pba->pba_bus != 0)
+		return;
+
+	printf(": indirect configuration space access");
+
+#if defined(OPENPIC)
+	if (openpic_base) {
+		pci_chipset_tag_t pc;
+		pcitag_t tag;
+		pcireg_t id, address;
+
+		pc = pba->pba_pc;
+		tag = pci_make_tag(pc, 0, 13, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+		if (PCI_VENDOR(id) == PCI_VENDOR_IBM
+		    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
+			address = pci_conf_read(pc, tag, PCI_CBIO);
+			if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
+				address &= PCI_MAPREG_MEM_ADDR_MASK;
+				openpic_base = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
+			}
+		}
+	}
+#endif /* OPENPIC */
 }
 
 pcitag_t

@@ -1,0 +1,81 @@
+#	$NetBSD: Makefile.booters,v 1.2.2.2 2002/06/23 17:38:38 jdolecek Exp $
+
+S?=		${.CURDIR}/../../../..
+MDEC_DIR?=	/usr/mdec
+RELOC?=		0x3F0000
+COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes
+DEFS?= 
+STRIPFLAG?=
+
+NOMAN=  # defined
+NOMAN=	# defined
+NOLINT= # defined
+NOLINT=	# defined
+NOPIC=	# defined
+NOPROFILE=# defined
+NOLINT=# defined
+
+INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
+        -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
+CFLAGS= -nostdinc -D_STANDALONE \
+	-DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY ${INCPATH} ${DEFS}
+BINDIR= ${MDEC_DIR}
+
+.if exists(${.CURDIR}/version)
+SRCS+= vers.c
+CLEANFILES+= vers.c
+
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvmeppc"
+.endif
+
+CLEANFILES+= machine powerpc
+
+machine :
+	-rm -f ${.TARGET}
+	ln -s $S/arch/mvmeppc/include machine
+
+powerpc :
+	-rm -f ${.TARGET}
+	ln -s $S/arch/powerpc/include powerpc
+
+.if defined(LIB)
+
+lib${LIB}.a:: machine powerpc ${OBJS}
+beforedepend:	machine powerpc
+
+.else
+
+PROGDEPENDS?=	${SRTOBJ} ${OBJS} ${LIBS}
+PROGLINKOBJS?=	${PROGDEPENDS}
+
+${PROG}: machine powerpc ${PROGDEPENDS}
+	${LD} -N -Ttext ${RELOC} -o $@ ${PROGLINKOBJS}
+
+.include <bsd.own.mk>
+
+LIB_SA_DIR=	${.CURDIR}/../libsa
+LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
+LIBSA=${LIBSA_DIR}/libsa.a
+
+.PHONY: ${LIBSA}
+${LIBSA}:
+	@echo making sure libsa is up to date...
+	@cd ${LIB_SA_DIR} && ${MAKE}
+
+SRTOBJ?= ${LIBSA_DIR}/srt0.o
+.PHONY: ${SRTOBJ}
+${SRTOBJ}:
+	@echo making sure srt0 is up to date...
+	@cd ${LIB_SA_DIR} && ${MAKE} srt0.o
+
+#WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
+#WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}
+#WRTVID=${WRTVID_DIR}/wrtvid
+#
+#.PHONY: ${WRTVID}
+#${WRTVID}:
+#	@echo making sure the wrtvid is up to date...
+#	@(cd ${WRTVID_BOOT_DIR}; ${MAKE} dependall)
+#
+.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.4 2000/01/09 15:34:43 ad Exp $	*/
+/* $NetBSD: locore.h,v 1.4.8.1 2002/06/23 17:39:12 jdolecek Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,10 +20,10 @@
 
 #include <mips/locore.h>
 
-void	CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
-	     volatile u_short *dst, int length));
-void	CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
+void	CopyToBuffer(u_short *src, 	/* NB: must be short aligned */
+	     volatile u_short *dst, int length);
+void	CopyFromBuffer(volatile u_short *src, char *dst, int length);
 
-void	kn230_wbflush __P((void));
+void	kn230_wbflush(void);
 
 #endif	/* !_PMAX_LOCORE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.76.2.4 2002/02/11 20:08:28 jdolecek Exp $	*/
+/*	$NetBSD: npx.c,v 1.76.2.5 2002/06/23 17:37:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.76.2.4 2002/02/11 20:08:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.76.2.5 2002/06/23 17:37:30 jdolecek Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -133,11 +133,20 @@ npxdna_notset(struct proc *p)
 	panic("npxdna vector not initialized");
 }
 
+static int
+npxdna_empty(struct proc *p)
+{
+
+	/* raise a DNA TRAP, math_emulate would take over eventually */
+	IPRINTF(("Emul"));
+	return 0; 
+}
+
 int	(*npxdna_func)(struct proc *) = npxdna_notset;
 
-int	npxdna_s87(struct proc *);
+static int	npxdna_s87(struct proc *);
 #ifdef I686_CPU
-int	npxdna_xmm(struct proc *);
+static int	npxdna_xmm(struct proc *);
 #endif /* I686_CPU */
 void	npxexit(void);
 
@@ -249,6 +258,11 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	idt[NRSVIDT + irq].gd = save_idt_npxintr;
 	idt[16].gd = save_idt_npxtrap;
 	write_eflags(save_eflags);
+
+	if (rv == NPX_NONE) {
+		/* No FPU. Handle it here, npxattach won't be called */
+		npxdna_func = npxdna_empty;
+	}
 
 	return (rv);
 }
@@ -446,7 +460,7 @@ npxsave1(void)
  * saved state.
  */
 #ifdef I686_CPU
-int
+static int
 npxdna_xmm(struct proc *p)
 {
 
@@ -485,14 +499,9 @@ npxdna_xmm(struct proc *p)
 }
 #endif /* I686_CPU */
 
-int
+static int
 npxdna_s87(struct proc *p)
 {
-
-	if (npx_type == NPX_NONE) {
-		IPRINTF(("Emul"));
-		return (0);
-	}
 
 #ifdef DIAGNOSTIC
 	if (cpl != 0 || npx_nointr != 0)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24.2.4 2002/03/16 15:58:46 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.24.2.5 2002/06/23 17:38:12 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.24.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.24.2.5 $"
 
 maxusers	16		# estimated number of users
 
@@ -52,6 +54,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -140,18 +143,15 @@ mainbus0 at root
 
 shb*	at mainbus?
 
-# WatchDog Timer
-#wdog0 at shb? port 0xffffff84
-
-com0	at shb? port 0xa4000000 irq 11
-com1	at shb? port 0xa4000008 irq 12
+com0	at mainbus?
+com1	at mainbus?
 
 # SH PCMCIA controllers
-shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
-shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
+mmeyepcmcia0	at mainbus?
+mmeyepcmcia1	at mainbus?
 
 # PCMCIA bus support
-pcmcia*	at shpcic? controller ? socket ?
+pcmcia*	at mmeyepcmcia? controller ? socket ?
 
 com*	at pcmcia? function ?		# Modems and serial cards
 wdc*	at pcmcia? function ?
@@ -199,4 +199,4 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks

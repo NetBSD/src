@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32.2.1 2002/01/10 19:40:04 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.2.2 2002/06/23 17:35:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -171,6 +171,7 @@ void		*auxp;
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= &pci_bus_dma_tag;
 	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
@@ -611,6 +612,21 @@ pci_make_tag(pc, bus, device, function)
 	int bus, device, function;
 {
 	return ((bus << 16) | (device << 11) | (function << 8));
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = (tag >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag >> 8) & 0x7;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.8.4.1 2002/01/10 19:37:47 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.8.4.2 2002/06/23 17:34:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -46,12 +46,11 @@
 
 #define FAST_FPE
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8.4.1 2002/01/10 19:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8.4.2 2002/06/23 17:34:43 jdolecek Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -74,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8.4.1 2002/01/10 19:37:47 thorpej Ex
 
 #include <arch/arm/arm/disassem.h>
 
-#ifdef arm26
+#ifdef acorn26
 #include <machine/machdep.h>
 #endif
 
@@ -157,9 +156,12 @@ undefinedinstruction(trapframe_t *frame)
 	int fault_code;
 	int coprocessor;
 	struct undefined_handler *uh;
+#ifdef VERBOSE_ARM32
+	int s;
+#endif
 
 	/* Enable interrupts if they were enabled before the exception. */
-#ifdef arm26
+#ifdef acorn26
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
@@ -167,7 +169,7 @@ undefinedinstruction(trapframe_t *frame)
 		enable_interrupts(I32_bit);
 #endif
 
-#ifndef arm26
+#ifndef acorn26
 	frame->tf_pc -= INSN_SIZE;
 #endif
 

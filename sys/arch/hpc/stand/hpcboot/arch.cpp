@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.2.2 2002/03/16 15:57:49 jdolecek Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.2.3 2002/06/23 17:36:43 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ Architecture::setupBootInfo(Loader &loader)
 	_boot_arg = reinterpret_cast <struct BootArgs *>(v);
 
 	_boot_arg->argc = menu.setup_kernel_args(v + sizeof(struct BootArgs),
-	    p + sizeof(struct BootArgs));
+	    p + sizeof(struct BootArgs),
+	    _mem->getTaggedPageSize() - sizeof(struct BootArgs));
 	_boot_arg->argv = ptokv(p + sizeof(struct BootArgs));
 	menu.setup_bootinfo(_boot_arg->bi);
 	_boot_arg->bi.bi_cnuse = _cons->getBootConsole();

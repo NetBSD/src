@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2000/12/04 18:44:51 scw Exp $ */
+/*	$NetBSD: bootxx.c,v 1.6.4.1 2002/06/23 17:38:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 #include "bootxx.h"
 
 int copyboot __P((struct open_file *, u_long *));
-void main __P((void));
 
 /*
  * Boot device is derived from ROM provided information.
@@ -71,7 +70,9 @@ extern daddr_t 	block_table[];
 
 extern		char bootprog_name[], bootprog_rev[];
 
-void
+int main(void);
+
+int
 main()
 {
 	struct open_file	f;

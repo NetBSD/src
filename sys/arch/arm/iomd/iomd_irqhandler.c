@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.4.2.2 2002/01/10 19:38:06 thorpej Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.4.2.3 2002/06/23 17:34:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -70,8 +70,6 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-extern void zero_page_readonly	__P((void));
-extern void zero_page_readwrite	__P((void));
 extern void set_spl_masks	__P((void));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: custom.h,v 1.11 1999/09/25 21:47:04 is Exp $	*/
+/*	$NetBSD: custom.h,v 1.11.16.1 2002/06/23 17:34:21 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -201,7 +201,7 @@ struct Custom {
 /* Custom chips as seen by the kernel */
 #ifdef _KERNEL
 #ifndef _LOCORE
-vaddr_t CUSTOMADDR, CUSTOMbase;
+extern vaddr_t CUSTOMADDR, CUSTOMbase;
 #define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
 #endif
 #define custom (*((volatile struct Custom *)CUSTOMbase))

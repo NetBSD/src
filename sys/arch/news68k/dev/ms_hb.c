@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.1 2001/01/25 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.1.6.1 2002/06/23 17:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -187,5 +187,5 @@ ms_hb_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return -1;
+	return EPASSTHROUGH;
 }

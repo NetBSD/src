@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.c,v 1.1.6.2 2002/03/16 15:59:41 jdolecek Exp $	*/
+/*	$NetBSD: devreg.c,v 1.1.6.3 2002/06/23 17:40:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,11 +34,13 @@
  */
 
 #include <sys/param.h>
+
+#include <sh3/exception.h>
 #include <sh3/cache_sh3.h>
 #include <sh3/cache_sh4.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
-#include <sh3/trapreg.h>
+
 #include <sh3/ubcreg.h>
 #include <sh3/rtcreg.h>
 #include <sh3/tmureg.h>
@@ -96,10 +98,10 @@ u_int32_t __sh_TCNT2;
 u_int32_t __sh_TCR2;
 u_int32_t __sh_TCPR2;
 
-#define SH3REG(x)	__sh_ ## x = SH3_ ## x
-#define SH4REG(x)	__sh_ ## x = SH4_ ## x
+#define	SH3REG(x)	__sh_ ## x = SH3_ ## x
+#define	SH4REG(x)	__sh_ ## x = SH4_ ## x
 
-#define SHREG(x)							\
+#define	SHREG(x)							\
 do {									\
 /* Exception */								\
 SH ## x ## REG(TRA);							\
@@ -159,7 +161,7 @@ sh_devreg_init()
 
 	if (CPU_IS_SH3)
 		SHREG(3);
-	
+
 	if (CPU_IS_SH4)
 		SHREG(4);
 

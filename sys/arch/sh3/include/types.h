@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5.2.1 2002/03/16 15:59:40 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.5.2.2 2002/06/23 17:40:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_SH3_TYPES_H_
+#define	_SH3_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sh3/int_types.h>
@@ -60,6 +60,9 @@ typedef unsigned long	vsize_t;
 
 typedef int		register_t;
 
-#define	__BROKEN_CONFIG_UNIT_USAGE
+#define	__SWAP_BROKEN
+#define	__HAVE_AST_PERPROC
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__BROKEN_CONFIG_UNIT_USAGE	/* scif, sci driver */
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* !_SH3_TYPES_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: va-sh.h,v 1.4 2000/08/02 11:32:43 msaitoh Exp $ */
+/* $NetBSD: va-sh.h,v 1.4.4.1 2002/06/23 17:40:45 jdolecek Exp $ */
 
 /* This is just like the default gvarargs.h
    except for differences described below.  */
@@ -6,7 +6,7 @@
 /* Define __gnuc_va_list.  */
 
 #ifndef __GNUC_VA_LIST
-#define __GNUC_VA_LIST
+#define	__GNUC_VA_LIST
 
 #include <machine/endian.h>
 
@@ -40,7 +40,7 @@ typedef void *__gnuc_va_list;
 
 #ifdef __SH3E__
 
-#define va_start(AP, LASTARG) \
+#define	va_start(AP, LASTARG) \
 __extension__ \
   ({ \
      AP.__va_next_fp = (__va_freg *) __builtin_saveregs (); \
@@ -54,19 +54,19 @@ __extension__ \
 
 #else /* ! SH3E */
 
-#define va_start(AP, LASTARG) 						\
+#define	va_start(AP, LASTARG) 						\
  (AP = ((__gnuc_va_list) __builtin_next_arg (LASTARG)))
 
 #endif /* ! SH3E */
 
 #else /* _VARARGS_H */
 
-#define va_alist  __builtin_va_alist
-#define va_dcl    int __builtin_va_alist;...
+#define	va_alist  __builtin_va_alist
+#define	va_dcl    int __builtin_va_alist;...
 
 #ifdef __SH3E__
 
-#define va_start(AP) \
+#define	va_start(AP) \
 __extension__ \
   ({ \
      AP.__va_next_fp = (__va_freg *) __builtin_saveregs (); \
@@ -81,7 +81,7 @@ __extension__ \
 
 #else /* ! SH3E */
 
-#define va_start(AP)  AP=(char *) &__builtin_va_alist
+#define	va_start(AP)  AP=(char *) &__builtin_va_alist
 
 #endif /* ! SH3E */
 
@@ -115,19 +115,19 @@ enum __va_type_classes {
 	__lang_type_class
 };
 #endif
-#define va_end(pvar)	((void)0)
+#define	va_end(pvar)	((void)0)
 
 #ifndef _BYTE_ORDER
 #error Define _BYTE_ORDER!
 #endif
 
 #if _BYTE_ORDER == LITTLE_ENDIAN
-#define __LITTLE_ENDIAN_P 1
+#define	__LITTLE_ENDIAN_P 1
 #else
-#define __LITTLE_ENDIAN_P 0
+#define	__LITTLE_ENDIAN_P 0
 #endif
 
-#define __SCALAR_TYPE(TYPE)					\
+#define	__SCALAR_TYPE(TYPE)					\
   ((TYPE) == __integer_type_class				\
    || (TYPE) == __char_type_class				\
    || (TYPE) == __enumeral_type_class)
@@ -145,7 +145,7 @@ enum __va_type_classes {
   * unnecessary.
   */
 
-#define __va_arg_sh1(AP, TYPE) __extension__ 				\
+#define	__va_arg_sh1(AP, TYPE) __extension__ 				\
 __extension__								\
 ({(sizeof (TYPE) == 1							\
    ? ({union {TYPE t; char c;} __t;					\
@@ -165,10 +165,10 @@ __extension__								\
 
 #ifdef __SH3E__
 
-#define __PASS_AS_FLOAT(TYPE_CLASS, SIZE) \
+#define	__PASS_AS_FLOAT(TYPE_CLASS, SIZE) \
   (TYPE_CLASS == __real_type_class && SIZE == 4)
 
-#define va_arg(pvar, TYPE)					\
+#define	va_arg(pvar, TYPE)					\
 __extension__							\
 ({int __type = __builtin_classify_type (* (TYPE *) 0);		\
   void * __result_p;						\
@@ -198,11 +198,11 @@ __extension__							\
 
 #else /* ! SH3E */
 
-#define va_arg(AP, TYPE) __va_arg_sh1((AP), TYPE)
+#define	va_arg(AP, TYPE) __va_arg_sh1((AP), TYPE)
 
 #endif /* SH3E */
 
 /* Copy __gnuc_va_list into another variable of this type.  */
-#define __va_copy(dest, src) (dest) = (src)
+#define	__va_copy(dest, src) (dest) = (src)
 
 #endif /* defined (_STDARG_H) || defined (_VARARGS_H) */

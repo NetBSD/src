@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $ */
+/* $NetBSD: cia_pci.c,v 1.25.4.1 2002/06/23 17:34:13 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.25.4.1 2002/06/23 17:34:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ cia_conf_read(cpv, tag, offset)
 	alpha_pal_draina();	
 
 	/* secondary if bus # != 0 */
-	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_cfg = REGVAL(CIA_CSR_CFG);
@@ -223,7 +223,7 @@ cia_conf_write(cpv, tag, offset, data)
 #endif
 
 	/* secondary if bus # != 0 */
-	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_cfg = REGVAL(CIA_CSR_CFG);

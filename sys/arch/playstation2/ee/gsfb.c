@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.1.6.3 2002/03/16 15:59:09 jdolecek Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.1.6.4 2002/06/23 17:39:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -522,7 +522,7 @@ int
 _gsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 
-	return (ENOTTY); /* Inappropriate ioctl for device */
+	return (EPASSTHROUGH); /* Inappropriate ioctl for device */
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.2 2002/03/16 15:58:47 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11.2.3 2002/06/23 17:38:14 jdolecek Exp $
 
 KDIR=	/sys/arch/mmeye/include
 INCSDIR= /usr/include/mmeye
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	math.h mmeye.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
-	setjmp.h shbvar.h signal.h stdarg.h \
+	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h
 

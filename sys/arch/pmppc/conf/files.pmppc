@@ -1,0 +1,90 @@
+#	$NetBSD: files.pmppc,v 1.3.2.2 2002/06/23 17:39:16 jdolecek Exp $
+#
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	arch/pmppc/pmppc/autoconf.c
+file	arch/pmppc/pmppc/bus_space.c
+file	arch/pmppc/pmppc/clock.c
+file	arch/pmppc/pmppc/conf.c
+file	arch/pmppc/pmppc/disksubr.c		disk
+file	arch/pmppc/pmppc/extintr.c
+file	arch/pmppc/pmppc/machdep.c
+file	arch/pmppc/pmppc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/bus_dma.c
+
+# General files
+file	dev/cons.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+major	{wd = 0}
+
+#
+# Memory Disk for install floppy
+#
+file dev/md_root.c	memory_disk_hooks
+major	{md = 17}
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
+file arch/powerpc/powerpc/linux_trap.c		compat_linux
+
+#
+# System bus types
+#
+define	mainbus { [addr=-1], [irq=-1] }
+device	mainbus: mainbus, pcibus
+attach	mainbus at root
+device	cpu
+attach	cpu at mainbus
+file	arch/pmppc/pmppc/mainbus.c		mainbus | cpu	needs-flag
+
+attach	cs at mainbus with cs_mainbus
+file	arch/pmppc/dev/if_cs_mainbus.c		cs_mainbus
+
+device	rtc
+attach	rtc at mainbus
+file	arch/pmppc/dev/ds17485.c		rtc
+
+device	flash
+attach	flash at mainbus
+file	arch/pmppc/dev/flash.c			flash
+
+attach	cpc at mainbus with cpc_mainbus
+file	arch/pmppc/dev/cpc_mainbus.c		cpc_mainbus
+
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+file	arch/pmppc/pci/pci_machdep.c		pci
+
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/pmppc/pci/pchb.c			pchb
+
+include	"dev/usb/files.usb"
+
+include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
+

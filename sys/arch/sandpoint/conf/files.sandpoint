@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.7.2.2 2002/01/10 19:48:19 thorpej Exp $
+#	$NetBSD: files.sandpoint,v 1.7.2.3 2002/06/23 17:39:58 jdolecek Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -85,9 +85,6 @@ file	arch/sandpoint/pci/pchb.c		pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/sandpoint/pci/pcib.c		pcib
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 #
 # ISA and mixed ISA+PCI drivers

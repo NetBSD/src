@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.6 2002/03/16 15:59:24 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.7 2002/06/23 17:39:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,31 +71,6 @@
 
 #include <dev/cons.h>
 
-#include "gten.h"
-#if (NGTEN > 0)
-#include <machine/gtenvar.h>
-#endif
-
-/* Implied by gten support. */
-#if (NGTEN > 0)
-#include <dev/pci/pcivar.h>
-#endif
-
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/isa/isareg.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#endif
-
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
@@ -113,9 +88,6 @@ void initppc __P((u_long, u_long, u_int, void *));
 void dumpsys __P((void));
 void strayintr __P((int));
 int lcsplx __P((int));
-
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
 
 /*
  * Global variables used here and there
@@ -146,8 +118,6 @@ paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
 paddr_t avail_end;			/* XXX temporary */
-
-void install_extint __P((void (*)(void)));
 
 RESIDUAL *res;
 RESIDUAL resdata;
@@ -355,7 +325,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * external interrupt handler install
 	 */
-	install_extint(*platform->ext_intr);
+	(*platform->init_intr)();
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -371,7 +341,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
 	ddb_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
@@ -388,29 +358,6 @@ mem_regions(mem, avail)
 
 	*mem = physmemr;
 	*avail = availmemr;
-}
-
-void
-install_extint(handler)
-	void (*handler) __P((void));
-{
-	extern u_char extint[];
-	extern u_long extsize;
-	extern u_long extint_call;
-	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
-
-#ifdef DIAGNOSTIC
-	if (offset > 0x1ffffff)
-		panic("install_extint: too far away");
-#endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
-	extint_call = (extint_call & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
-	__syncicache((void *)&extint_call, sizeof extint_call);
-	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
 /*
@@ -582,75 +529,6 @@ lookup_bootinfo(type)
 		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
 
 	return (NULL);
-}
-
-/*
- * consinit
- * Initialize system console.
- */
-void
-consinit()
-{
-	struct btinfo_console *consinfo;
-	static int initted = 0;
-#if (NGTEN > 0)
-	struct prep_pci_chipset pc;
-#endif
-
-	if (initted)
-		return;
-	initted = 1;
-
-	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
-	if (!consinfo)
-		panic("not found console information in bootinfo");
-
-#if (NPFB > 0)
-	if (!strcmp(consinfo->devname, "fb")) {
-		pfb_cnattach(consinfo->addr);
-#if (NPCKBC > 0)
-		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
-#endif
-		return;
-	}
-#endif
-
-#if (NVGA > 0) || (NGTEN > 0)
-	if (!strcmp(consinfo->devname, "vga")) {
-#if (NGTEN > 0)
-		(*platform->pci_get_chipset_tag)(&pc);
-#endif
-#if (NGTEN > 0)
-		if (!gten_cnattach(&pc, &prep_mem_space_tag))
-			goto dokbd;
-#endif
-#if (NVGA > 0)
-		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag,
-				-1, 1))
-			goto dokbd;
-#endif
-dokbd:
-#if (NPCKBC > 0)
-		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
-#endif
-		return;
-	}
-#endif /* VGA | GTEN */
-
-#if (NCOM > 0)
-	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = &prep_isa_io_space_tag;
-
-		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
-		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
-			panic("can't init serial console");
-
-		return;
-	}
-#endif
-	panic("invalid console device %s", consinfo->devname);
 }
 
 void

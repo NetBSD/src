@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.15.28.1 2002/01/10 19:42:52 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.15.28.2 2002/06/23 17:36:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@
  *       HP 987x0 graphics systems.  "Gator" is not used for high res mono.
  *       (as in 9837 Gator systems)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.15.28.2 2002/06/23 17:36:07 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -176,7 +179,7 @@ gbox_intio_match(parent, match, aux)
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
 
-	if (strcmp("fb      ",ia->ia_modname) != 0)
+	if (strcmp("fb",ia->ia_modname) != 0)
 		return (0);
 
 	if (badaddr((caddr_t)ia->ia_addr))

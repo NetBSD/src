@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.12 2001/06/05 05:18:36 thorpej Exp $	*/
+/*	$NetBSD: akbd.c,v 1.12.2.1 2002/06/23 17:37:43 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -503,7 +503,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	}
 	/* kbdioctl(...); */
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static int polledkey;

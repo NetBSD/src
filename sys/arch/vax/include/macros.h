@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.23.2.1 2002/03/16 16:00:14 jdolecek Exp $	*/
+/*	$NetBSD: macros.h,v 1.23.2.2 2002/06/23 17:43:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -361,15 +361,15 @@ static __inline__ int __attribute__((__unused__))
 insqti(void *entry, void *header) {
 	register int ret;
 
-	__asm__ __volatile("
-			mnegl $1,%0;
-			insqti (%1),(%2);
-			bcs 1f;			# failed insert
-			beql 2f;		# jump if first entry
-			movl $1,%0;
-			brb 1f;
-		2:	clrl %0;
-			1:;"
+	__asm__ __volatile(
+		"	mnegl $1,%0;"
+		"	insqti (%1),(%2);"
+		"	bcs 1f;"		/* failed insert */
+		"	beql 2f;"		/* jump if first entry */
+		"	movl $1,%0;"
+		"	brb 1f;"
+		"2:	clrl %0;"
+		"	1:;"
 			: "=&g"(ret)
 			: "r"(entry), "r"(header)
 			: "memory");
@@ -386,15 +386,15 @@ static __inline__ void * __attribute__((__unused__))
 remqhi(void *header) {
 	register void *ret;
 
-	__asm__ __volatile("
-			remqhi (%1),%0;
-			bcs 1f;			# failed interlock
-			bvs 2f;			# nothing was removed
-			brb 3f;
-		1:	mnegl $1,%0;
-			brb 3f;
-		2:	clrl %0;
-			3:;"
+	__asm__ __volatile(
+		"	remqhi (%1),%0;"
+		"	bcs 1f;"		/* failed interlock */
+		"	bvs 2f;"		/* nothing was removed */
+		"	brb 3f;"
+		"1:	mnegl $1,%0;"
+		"	brb 3f;"
+		"2:	clrl %0;"
+		"	3:;"
 			: "=&g"(ret)
 			: "r"(header)
 			: "memory");

@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.1.16.1 2002/03/16 15:59:37 jdolecek Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.1.16.2 2002/06/23 17:40:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,38 +34,49 @@
  */
 
 #ifndef _SH3_CPUTYPES_H_
-#define _SH3_CPUTYPES_H_
+#define	_SH3_CPUTYPES_H_
+
 #ifdef _KERNEL
 
-#define CPU_ARCH_SH3		3
-#define CPU_ARCH_SH4		4
+#if defined(_KERNEL_OPT)
+#include "opt_cputype.h"
+#elif defined(_LKM)
+/* If building an LKM, include both SH3 and SH4 support. */
+#define	SH3
+#define	SH4
+#endif
 
-#define CPU_PRODUCT_UNKNOWN	0
+#define	CPU_ARCH_SH3		3
+#define	CPU_ARCH_SH4		4
+
 /* SH3 series */
-#define CPU_PRODUCT_7708	1
-#define CPU_PRODUCT_7708S	2
-#define CPU_PRODUCT_7708R	3
-#define CPU_PRODUCT_7709	4
-#define CPU_PRODUCT_7709A	5
+#define	CPU_PRODUCT_7708	1
+#define	CPU_PRODUCT_7708S	2
+#define	CPU_PRODUCT_7708R	3
+#define	CPU_PRODUCT_7709	4
+#define	CPU_PRODUCT_7709A	5
+
 /* SH4 series */
-#define CPU_PRODUCT_7750	6
-#define CPU_PRODUCT_7750S	7
+#define	CPU_PRODUCT_7750	6
+#define	CPU_PRODUCT_7750S	7
 
 #ifndef _LOCORE
 extern int cpu_arch;
 extern int cpu_product;
 #if defined(SH3) && defined(SH4)
-#define CPU_IS_SH3		(cpu_arch == CPU_ARCH_SH3)
-#define CPU_IS_SH4		(cpu_arch == CPU_ARCH_SH4)
+#define	CPU_IS_SH3		(cpu_arch == CPU_ARCH_SH3)
+#define	CPU_IS_SH4		(cpu_arch == CPU_ARCH_SH4)
 #elif defined(SH3)
-#define CPU_IS_SH3		1
-#define CPU_IS_SH4		0
+#define	CPU_IS_SH3		1
+#define	CPU_IS_SH4		0
 #elif defined(SH4)
-#define CPU_IS_SH3		0
-#define CPU_IS_SH4		1
+#define	CPU_IS_SH3		0
+#define	CPU_IS_SH4		1
 #else
 #error "define SH3 and/or SH4"
 #endif
 #endif /* !_LOCORE */
+
 #endif /* _KERNEL */
+
 #endif /* !_SH3_CPUTYPES_H_ */

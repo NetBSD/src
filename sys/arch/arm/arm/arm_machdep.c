@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.1.6.2 2002/01/10 19:37:45 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.1.6.3 2002/06/23 17:34:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.1.6.2 2002/01/10 19:37:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.1.6.3 2002/06/23 17:34:42 jdolecek Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -49,6 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.1.6.2 2002/01/10 19:37:45 thorpej 
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
+
+/*
+ * The ARM architecture places the vector page at address 0.
+ * Later ARM architecture versions, however, allow it to be
+ * relocated to a high address (0xffff0000).  This is primarily
+ * to support the Fast Context Switch Extension.
+ *
+ * This variable contains the address of the vector page.  It
+ * defaults to 0; it only needs to be initialized if we enable
+ * relocated vectors.
+ */
+vaddr_t	vector_page;
 
 /*
  * Clear registers on exec
@@ -62,7 +74,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf = p->p_addr->u_pcb.pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_r0 = (u_int)PS_STRINGS;
+	tf->tf_r0 = (u_int)p->p_psstr;
 #ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
 #endif

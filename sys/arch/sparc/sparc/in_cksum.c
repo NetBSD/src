@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.11 2001/06/03 01:37:28 thorpej Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.11.2.1 2002/06/23 17:41:50 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
@@ -179,7 +179,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 		}
 
 		/*
-		 * Do as many 32 bit operattions as possible using the
+		 * Do as many 32 bit operations as possible using the
 		 * 64/32/16/8/4 macro's above, using as many as possible of
 		 * these.
 		 */

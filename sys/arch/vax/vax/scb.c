@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.13 2000/06/04 19:30:17 matt Exp $ */
+/*	$NetBSD: scb.c,v 1.13.6.1 2002/06/23 17:43:09 jdolecek Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,8 +48,8 @@
 struct scb *scb;
 struct ivec_dsp *scb_vec;
 
-static	void scb_stray __P((void *));
-static	volatile int vector, ipl, gotintr;
+void scb_stray(void *);
+static volatile int vector, ipl, gotintr;
 
 /*
  * Generates a new SCB.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2.2.2 2002/03/16 15:59:31 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.2.3 2002/06/23 17:40:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,10 +48,13 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
+#include <mips/locore.h>
 #include <dev/clock_subr.h>
 #include <sgimips/sgimips/clockvar.h>
 
 #define MINYEAR 2001 /* "today" */
+
+extern u_int32_t next_clk_intr;
 
 static struct device *clockdev;
 static const struct clockfns *clockfns;
@@ -103,9 +106,21 @@ setstatclockrate(newhz)
 void
 cpu_initclocks()
 {
-
 	if (clockfns == NULL)
 		panic("cpu_initclocks: clock device not attached");
+
+	next_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
+	mips3_cp0_compare_write(next_clk_intr);
+
+	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
+        }
 
 	(*clockfns->cf_init)(clockdev);
 }

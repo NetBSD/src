@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.4.2.2 2002/03/16 15:57:26 jdolecek Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.4.2.3 2002/06/23 17:35:37 jdolecek Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -6,6 +6,8 @@
 
 include	"arch/evbarm/conf/std.iq80310"
 options 	IOP310_TEAMASA_NPWR	# Enable Npwr support
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -19,9 +21,10 @@ options 	NTP		# NTP phase/frequency locked loop
 # CPU options
 
 # For StrongARM systems
-options 	CPU_XSCALE	# Support the XScale core
+options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+options 	XSCALE_CCLKCFG=7	# 600MHz
 
 # Architecture options
 
@@ -32,7 +35,7 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
@@ -100,7 +103,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is oriented towards the IQ80310
@@ -120,6 +123,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -136,6 +140,7 @@ options 	SYMTAB_SPACE=200000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
+config		netbsd-sd0	root on sd0 type ?
 
 # The main bus device
 mainbus0	at root
@@ -167,7 +172,8 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 #
 
 # PCI SCSI controllers
-siop0		at pci? dev ? function ?	# on-board LSI 53c1010
+esiop0		at pci? dev ? function ?	# on-board LSI 53c1010
+options 	SIOP_SYMLED
 scsibus*	at scsi?
 
 # SCSI device support
@@ -181,7 +187,7 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
-#pseudo-device	raid		4	# RAIDframe devices
+pseudo-device	raid		4	# RAIDframe devices
 #pseudo-device	ccd		4	# Concatenated disk devices
 
 # network pseudo-devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.6.4.3 2002/03/16 15:59:57 jdolecek Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.6.4.4 2002/06/23 17:42:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -47,10 +47,11 @@ struct iommu_state {
 	/* Needs to be volatile or egcs optimizes away loads */
 	volatile int64_t	is_flush[2];
 
-	/* copies of our parents state, to allow us to be self contained */
+	/* copies of our piarents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
-	struct iommureg		*is_iommu;	/* IOMMU registers */
-	struct iommu_strbuf	*is_sb[2];	/* streaming buffer(s) */
+	bus_space_handle_t	is_iommu;	/* IOMMU registers */
+	bus_space_handle_t	is_sb[2];	/* streaming buffer(s) */
+	int			is_sbvalid[2];
 };
 
 /* interfaces for PCI/SBUS code */

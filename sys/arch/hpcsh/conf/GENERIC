@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4.2.5 2002/03/16 15:58:04 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.4.2.6 2002/06/23 17:36:57 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -27,6 +27,8 @@
 
 include 	"arch/hpcsh/conf/std.hpcsh"
 
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 maxusers	32			# estimated number of users
 
 options		SH3
@@ -39,15 +41,28 @@ options		SH3
 #
 
 options 	DDB			# in-kernel debugger
+#options 	KGDB			# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#options	KGDB_DEVRATE=19200
+# HP Jornada
+#options 	"KGDB_DEVNAME=\"scif\""
+# HITACHI PERSONA (SH3)
+#options 	"KGDB_DEVNAME=\"hd64461uart\""
+# HITACHI PERSONA (SH4)
+#options 	"KGDB_DEVNAME=\"hd64465uart\""
+
+#options	HPC_DEBUG_INTERRUPT_MONITOR
+#options	KSTACK_DEBUG
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-options 	KTRACE			# system call tracing support
+#options 	KTRACE			# system call tracing support
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
@@ -58,6 +73,9 @@ options 	EXEC_ELF32	# 32-bit ELF executables
 file-system 	FFS		# UFS
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
+file-system 	UNION		# union file system
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
 
 # File system options
 
@@ -81,14 +99,16 @@ options 	WS_KERNEL_BG=WSCOL_BLUE
 #
 mainbus0 at root
 
-shb* at mainbus?
+cpu*		at mainbus?
+shb*		at mainbus?
+pfckbd*		at mainbus?
 
 #
 # Workstation Console attachments
 #
 hpcfb*		at hd64461video?
 wsdisplay*	at hpcfb?
-pfckbd*		at mainbus?
+
 hpckbd*		at pfckbd?
 wskbd*		at hpckbd? mux 1
 
@@ -98,9 +118,9 @@ wskbd*		at hpckbd? mux 1
 # Serial Devices
 # don't need to define SCICONSOLE. you can select from bootloader.
 options 	SCIFCN_SPEED=19200
-scif0 at shb? port 0xa4000008 irq 12
+scif0 at shb?
 
-hd64461if* at shb? irq 4
+hd64461if* at shb?
 hd64461pcmcia*	at hd64461if?
 hd64461video*	at hd64461if?
 
@@ -119,12 +139,8 @@ pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
 # PCMCIA network interfaces
 ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
-ukphy*	at mii? phy ?			# generic unknown PHYs
 
-# PCMCIA SCSI interfaces
-aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
-scsibus* at aic?
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCMCIA IDE disk
 # PC-Card slot

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.16.1 2002/06/23 17:35:27 jdolecek Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,6 +29,7 @@
  */
 
 #include <stand.h>
+#include <lib/libkern/libkern.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 

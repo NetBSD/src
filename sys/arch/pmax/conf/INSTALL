@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.40.2.3 2002/02/11 20:08:51 jdolecek Exp $
+# 	$NetBSD: INSTALL,v 1.40.2.4 2002/06/23 17:39:11 jdolecek Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -9,6 +9,8 @@
 #
 #
 include		"arch/pmax/conf/std.pmax"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
 
@@ -37,6 +39,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 #options 	NTP			# network time protocol

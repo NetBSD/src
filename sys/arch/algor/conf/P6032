@@ -1,11 +1,13 @@
-#	$NetBSD: P6032,v 1.1.2.3 2002/03/16 15:55:35 jdolecek Exp $
+#	$NetBSD: P6032,v 1.1.2.4 2002/06/23 17:34:04 jdolecek Exp $
 #
 # Algorithmics P-6032 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P6032-$Revision: 1.1.2.3 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"P6032-$Revision: 1.1.2.4 $"
 
 maxusers 32
 
@@ -118,7 +120,6 @@ pci*	at	bonito?
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 #cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
-#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -146,10 +147,6 @@ ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 #ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 #tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 #vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.18.4.1 2002/01/10 19:45:42 thorpej Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.18.4.2 2002/06/23 17:37:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -49,10 +49,18 @@
 	/* Return from a pascal function; pop (pbytes) number of bytes */
 	/*  passed as parameters.  Should have picked up "pascal" extension */
 	/*  to GCC... */
+#ifdef __STDC__
+#define	IMMEDIATE	#
+#define pascalret(pbytes)	\
+	movl	%sp@+,%a1		/* get PC (I hate Pascal) */ ; \
+	addl	IMMEDIATE pbytes,%sp	/* pop params (I hate Pascal) */ ; \
+	jra	%a1@			/* return (I hate Pascal) */
+#else
 #define pascalret(pbytes)	\
 	movl	%sp@+,%a1		/* get PC (I hate Pascal) */ ; \
 	addl	#pbytes,%sp		/* pop params (I hate Pascal) */ ; \
-	jra	%a1@			/* return (I hate Pascal) */ ; \
+	jra	%a1@			/* return (I hate Pascal) */
+#endif
 
 
 /*

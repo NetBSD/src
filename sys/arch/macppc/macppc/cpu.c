@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.2.4 2002/01/10 19:45:51 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.2.5 2002/06/23 17:37:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -184,7 +184,6 @@ cpu_spinup()
 	 * Allocate some contiguous pages for the idle PCB and stack
 	 * from the lowest 256MB (because bat0 always maps it va == pa).
 	 */
-	TAILQ_INIT(&mlist);
 	size += USPACE;
 	size += 8192;	/* INTSTK */
 	size += 4096;	/* SPILLSTK */

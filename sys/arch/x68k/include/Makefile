@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.19.2.1 2002/01/10 19:50:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19.2.2 2002/06/23 17:43:18 jdolecek Exp $
 
 KDIR=	/sys/arch/x68k/include
 INCSDIR= /usr/include/x68k
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h bsd_audioio.h bus.h \
+	bootinfo.h bswap.h bus.h \
 	cdefs.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \

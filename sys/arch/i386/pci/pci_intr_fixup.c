@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.14.2.3 2002/01/10 19:45:04 thorpej Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.14.2.4 2002/06/23 17:37:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.14.2.3 2002/01/10 19:45:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.14.2.4 2002/06/23 17:37:31 jdolecek Exp $");
 
 #include "opt_pcibios.h"
 
@@ -191,8 +191,7 @@ pciintr_link_lookup(link)
 {
 	struct pciintr_link_map *l;
 
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->link == link)
 			return (l);
 	}
@@ -396,8 +395,7 @@ pciintr_guess_irq()
 	/*
 	 * Stage 1: If only one IRQ is available for the link, use it.
 	 */
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_count_irq(l->bitmap, &irq) == 1) {
@@ -427,8 +425,7 @@ pciintr_link_fixup()
 	 * First stage: Attempt to connect PIRQs which aren't
 	 * yet connected.
 	 */
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 			/*
 			 * Interrupt is already connected.  Don't do
@@ -470,8 +467,7 @@ pciintr_link_fixup()
 	 * Stage 2: Attempt to connect PIRQs which we didn't
 	 * connect in Stage 1.
 	 */
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_find_lowest_irq(l->bitmap & pciirq,
@@ -495,8 +491,7 @@ pciintr_link_fixup()
 	 * Stage 3: The worst case. I need configuration hint that
 	 * user supplied a mask for the PCI irqs
 	 */
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_find_lowest_irq(
@@ -523,8 +518,7 @@ pciintr_link_route(pciirq)
 
 	*pciirq = 0;
 
-	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
-	     l = SIMPLEQ_NEXT(l, list)) {
+	SIMPLEQ_FOREACH(l, &pciintr_link_map_list, list) {
 		if (l->fixup_stage == 0) {
 			if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 				/* Appropriate interrupt was not found. */

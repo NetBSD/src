@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.56.2.1 2002/01/10 19:47:48 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56.2.2 2002/06/23 17:39:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.2.1 2002/01/10 19:47:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.2.2 2002/06/23 17:39:11 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -423,11 +423,13 @@ dtopioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = DTOP_TTY(unit);
+
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -445,7 +447,7 @@ dtopioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.1 2001/06/14 12:57:15 fredette Exp $ */
+/*	$NetBSD: promdev.c,v 1.1.2.1 2002/06/23 17:42:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -88,7 +88,7 @@ prom_iopen(si)
 
 	if (dip->d_devbytes && dip->d_stdcount) {
 		if (ctlr >= dip->d_stdcount) {
-			printf("Invalid controller number\n");
+			putstr("Invalid controller number\n");
 			return(ENXIO);
 		}
 		si->si_devaddr = dev_mapin(dip->d_devtype,
@@ -122,15 +122,19 @@ prom_iopen(si)
 		printf("prom_iopen: calling prom open...\n");
 #endif
 	error = (*ops->b_open)(si);
-	if (error != 0) {
-		printf("prom_iopen: \"%s\" error=%d\n",
-			   ops->b_desc, error);
-		return (ENXIO);
-	}
 #ifdef	DEBUG_PROM
 	if (debug)
 		printf("prom_iopen: prom open returned %d\n", error);
 #endif
+	if (error != 0) {
+#if 0	/* XXX: printf is too big for bootxx */
+		printf("prom_iopen: \"%s\" error=%d\n",
+			   ops->b_desc, error);
+#else
+		putstr("prom_iopen: prom open failed");
+#endif
+		return (ENXIO);
+	}
 
 	promdev_inuse++;
 	return (0);
