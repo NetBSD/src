@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1998/06/05 11:27:10 sakamoto Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1998/06/21 13:30:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1065,9 +1065,7 @@ pmap_enter(pm, va, pa, prot, wired)
 	pte_t pte;
 	struct pte_ovfl *po;
 	int managed;
-#if !defined(MACHINE_NEW_NONCONTIG)
 	struct mem_region *mp;
-#endif
 
 	/*
 	 * Have to remove any existing mapping first.
@@ -1089,19 +1087,18 @@ pmap_enter(pm, va, pa, prot, wired)
 
 	managed = 0;
 #if defined(MACHINE_NEW_NONCONTIG)
-	if (vm_physseg_find(atop(pa), NULL) != -1) {
+	if (vm_physseg_find(atop(pa), NULL) != -1)
 		managed = 1;
-		pte.pte_lo &= ~(PTE_I | PTE_G);
-	}
 #else
+	if (pmap_page_index(pa) != -1)
+		managed = 1;
+#endif
 	for (mp = mem; mp->size; mp++) {
 		if (pa >= mp->start && pa < mp->start + mp->size) {
-			managed = 1;
 			pte.pte_lo &= ~(PTE_I | PTE_G);
 			break;
 		}
 	}
-#endif
 	if (prot & VM_PROT_WRITE)
 		pte.pte_lo |= PTE_RW;
 	else
