@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.186 2004/08/04 18:24:11 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.187 2004/08/04 22:44:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.186 2004/08/04 18:24:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.187 2004/08/04 22:44:04 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1924,7 +1924,19 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		    chp->cmd_iohs[wd_features], 0);
 	}
 	callout_stop(&chp->ch_callout);
-	__wdccommand_done_end(chp, xfer);
+	chp->ch_queue->active_xfer = NULL;
+	if (wdc_c->flags & AT_POLL) {
+		/* enable interrupts */
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+		    WDCTL_4BIT);
+		delay(10); /* some drives need a little delay here */
+	}
+	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
+		__wdccommand_kill_xfer(chp, xfer, KILL_GONE);
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		wakeup(&chp->ch_queue->active_xfer);
+	} else 
+		__wdccommand_done_end(chp, xfer);
 }
 	
 static void
@@ -1933,13 +1945,6 @@ __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 	struct wdc_command *wdc_c = xfer->c_cmd;
 
 	wdc_c->flags |= AT_DONE;
-	if (wdc_c->flags & AT_POLL) {
-		/* enable interrupts */
-		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-		    WDCTL_4BIT);
-		delay(10); /* some drives need a little delay here */
-	}
-	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
 	if (wdc_c->flags & AT_WAIT)
 		wakeup(wdc_c);
@@ -1968,7 +1973,6 @@ __wdccommand_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
 		panic("__wdccommand_kill_xfer");
 	}
 	__wdccommand_done_end(chp, xfer);
-
 }
 
 /*
@@ -2130,26 +2134,32 @@ wdc_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
  * Must be called at splbio().
  */
 void
-wdc_kill_pending(struct wdc_channel *chp)
+wdc_kill_pending(struct ata_drive_datas *drvp)
 {
+	struct wdc_channel *chp = drvp->chnl_softc;
 	struct ata_xfer *xfer, *next_xfer;
-
-	if ((xfer = chp->ch_queue->active_xfer) != NULL) {
-		if (xfer->c_chp == chp) {
-			callout_stop(&chp->ch_callout);
-			chp->ch_queue->active_xfer = NULL;
-			(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
-		}
-	}
+	int s = splbio();
 
 	for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 	    xfer != NULL; xfer = next_xfer) {
 		next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-		if (xfer->c_chp != chp)
+		if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
 			continue;
 		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
 	}
+
+	while ((xfer = chp->ch_queue->active_xfer) != NULL) {
+		if (xfer->c_chp == chp && xfer->c_drive == drvp->drive) {
+			drvp->drive_flags |= DRIVE_WAITDRAIN;
+			(void) tsleep(&chp->ch_queue->active_xfer,
+			    PRIBIO, "atdrn", 0);
+		} else {
+			/* no more xfer for us */
+			break;
+		}
+	}
+	splx(s);
 }
 
 static void
