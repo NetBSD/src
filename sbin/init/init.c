@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.65 2004/08/13 17:11:49 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.66 2004/08/13 17:19:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.65 2004/08/13 17:11:49 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.66 2004/08/13 17:19:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ __RCSID("$NetBSD: init.c,v 1.65 2004/08/13 17:11:49 mycroft Exp $");
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
 
+const struct timespec dtrtime = {.tv_sec = 0, .tv_nsec = 250000};
 
 #if defined(RESCUEDIR)
 #define	INIT_BSHELL	RESCUEDIR "/sh"
@@ -530,7 +531,7 @@ setctty(const char *name)
 	int fd;
 
 	(void) revoke(name);
-	sleep(2);			/* leave DTR low */
+	nanosleep(&dtrtime, NULL);	/* leave DTR low for a bit */
 	if ((fd = open(name, O_RDWR)) == -1) {
 		stall("can't open %s: %m", name);
 		_exit(1);
