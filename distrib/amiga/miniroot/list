@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2002/04/16 20:45:21 heinz Exp $
+#	$NetBSD: list,v 1.15.2.1 2002/05/29 04:58:18 lukem Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -18,8 +18,6 @@ SYMLINK	/tmp	var/tmp
 
 # various files that we need in /etc for the install
 COPY	${ARCHDIR}/disktab.shadow	etc/disktab.shadow
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
-LINK	etc/spwd.db			etc/pwd.db
 #SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
