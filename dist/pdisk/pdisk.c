@@ -30,7 +30,7 @@
 // for printf()
 #include <stdio.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__NetBSD__)
 #include <getopt.h>
 #endif
 #ifdef __linux__
