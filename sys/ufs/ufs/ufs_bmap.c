@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.30 2004/07/24 15:02:32 dbj Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.31 2004/08/15 07:19:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.30 2004/07/24 15:02:32 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.31 2004/08/15 07:19:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 
 	ip = VTOI(vp);
 	mp = vp->v_mount;
-	ump = VFSTOUFS(mp);
+	ump = ip->i_ump;
 #ifdef DIAGNOSTIC
 	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
 		panic("ufs_bmaparray: invalid arguments");

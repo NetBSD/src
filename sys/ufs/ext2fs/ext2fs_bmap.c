@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.15 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.16 2004/08/15 07:19:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.15 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.16 2004/08/15 07:19:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	ip = VTOI(vp);
 	mp = vp->v_mount;
-	ump = VFSTOUFS(mp);
+	ump = ip->i_ump;
 #ifdef DIAGNOSTIC
 	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
 		panic("ext2fs_bmaparray: invalid arguments");

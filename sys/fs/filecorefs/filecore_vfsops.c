@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.15 2004/08/15 07:19:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.14 2004/05/25 14:54:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.15 2004/08/15 07:19:54 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -371,7 +371,6 @@ filecore_mountfs(devvp, mp, p, argp)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FILECORE);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = fcdr->log2secsize;
 	mp->mnt_fs_bshift = fcmp->log2bsize;
