@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.14 1997/07/28 03:51:11 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.15 1997/08/06 23:06:04 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -404,14 +404,14 @@ getdevinfo(fp, p)
 		{ AudioNcd,		OSS_SOUND_MIXER_CD },
 		{ AudioNdac,		OSS_SOUND_MIXER_PCM },
 		{ AudioNrecord,		OSS_SOUND_MIXER_IMIX },
-		{ AudioNvolume,		OSS_SOUND_MIXER_VOLUME },
+		{ AudioNmaster,		OSS_SOUND_MIXER_VOLUME },
 		{ AudioNtreble,		OSS_SOUND_MIXER_TREBLE },
 		{ AudioNbass,		OSS_SOUND_MIXER_BASS },
 		{ AudioNspeaker,	OSS_SOUND_MIXER_SPEAKER },
 /*		{ AudioNheadphone,	?? },*/
 		{ AudioNoutput,		OSS_SOUND_MIXER_OGAIN },
 		{ AudioNinput,		OSS_SOUND_MIXER_IGAIN },
-		{ AudioNmaster,		OSS_SOUND_MIXER_SPEAKER },
+/*		{ AudioNmaster,		OSS_SOUND_MIXER_SPEAKER },*/
 /*		{ AudioNstereo,		?? },*/
 /*		{ AudioNmono,		?? },*/
 		{ AudioNfmsynth,	OSS_SOUND_MIXER_SYNTH },
@@ -568,6 +568,7 @@ oss_ioctl_mixer(p, uap, retval)
 		idat = di->caps;
 		break;
 	case OSS_SOUND_MIXER_WRITE_RECSRC:
+	case OSS_SOUND_MIXER_WRITE_R_RECSRC:
 		if (di->source == -1)
 			return EINVAL;
 		mc.dev = di->source;
@@ -620,16 +621,18 @@ oss_ioctl_mixer(p, uap, retval)
 			r = r * 100 / 255;
 			idat = l | (r << 8);
 			break;
-		} else if (OSS_MIXER_WRITE(OSS_SOUND_MIXER_FIRST) <= com &&
-			   com < OSS_MIXER_WRITE(OSS_SOUND_MIXER_NRDEVICES)) {
+		} else if ((OSS_MIXER_WRITE_R(OSS_SOUND_MIXER_FIRST) <= com &&
+			   com < OSS_MIXER_WRITE_R(OSS_SOUND_MIXER_NRDEVICES)) ||
+			   (OSS_MIXER_WRITE(OSS_SOUND_MIXER_FIRST) <= com &&
+			   com < OSS_MIXER_WRITE(OSS_SOUND_MIXER_NRDEVICES))) {
 			n = OSS_GET_DEV(com);
 			if (di->devmap[n] == -1)
 				return EINVAL;
 			error = copyin(SCARG(uap, data), &idat, sizeof idat);
 			if (error)
 				return error;
-			l = (idat & 0xff) * 255 / 100;
-			r = (idat >> 8) * 255 / 100;
+			l = ( idat       & 0xff) * 255 / 100;
+			r = ((idat >> 8) & 0xff) * 255 / 100;
 			mc.dev = di->devmap[n];
 			mc.type = AUDIO_MIXER_VALUE;
 			if (di->stereomask & (1<<n)) {
@@ -643,9 +646,16 @@ oss_ioctl_mixer(p, uap, retval)
 			error = ioctlf(fp, AUDIO_MIXER_WRITE, (caddr_t)&mc, p);
 			if (error)
 				return error;
+			if (OSS_MIXER_WRITE(OSS_SOUND_MIXER_FIRST) <= com &&
+			   com < OSS_MIXER_WRITE(OSS_SOUND_MIXER_NRDEVICES))
+				return 0;
 			goto doread;
-		} else
+		} else {
+#ifdef AUDIO_DEBUG
+			printf("oss_audio: unknown mixer ioctl %04lx\n", com);
+#endif
 			return EINVAL;
+		}
 	}
 	return copyout(&idat, SCARG(uap, data), sizeof idat);
 }
