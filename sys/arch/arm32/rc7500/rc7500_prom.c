@@ -1,4 +1,4 @@
-/* $NetBSD: rc7500_prom.c,v 1.1 1996/08/29 22:35:41 mark Exp $ */
+/*	$NetBSD: rc7500_prom.c,v 1.2 1997/10/14 10:49:53 mark Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
