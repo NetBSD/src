@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.2 2000/04/15 03:08:13 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.3 2000/07/13 06:25:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -34,7 +34,6 @@
 #ifndef FDC_C_HANDLER
 #include "assym.h"
 #include <sparc64/sparc64/intreg.h>
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/fdreg.h>
 #include <sparc64/dev/fdvar.h>
 #include <sparc64/dev/auxioreg.h>
