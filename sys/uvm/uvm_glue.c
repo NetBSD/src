@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.8 1998/04/09 00:24:05 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.9 1998/04/30 06:28:59 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -223,11 +223,12 @@ uvm_chgkprot(addr, len, rw)
  */
 
 void
-uvm_vslock(addr, len)
+uvm_vslock(p, addr, len)
+	struct proc *p;
 	caddr_t	addr;
 	u_int	len;
 {
-	uvm_fault_wire(&curproc->p_vmspace->vm_map, trunc_page(addr), 
+	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
 	    round_page(addr+len));
 }
 
@@ -239,7 +240,8 @@ uvm_vslock(addr, len)
  */
 
 void
-uvm_vsunlock(addr, len)
+uvm_vsunlock(p, addr, len)
+	struct proc *p;
 	caddr_t	addr;
 	u_int	len;
 {

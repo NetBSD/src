@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.34 1998/03/01 02:22:30 fvdl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.35 1998/04/30 06:28:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -171,9 +171,9 @@ sys___sysctl(p, v, retval)
 		memlock.sl_lock = 1;
 		if (dolock)
 #if defined(UVM)
-			uvm_vslock(SCARG(uap, old), oldlen);
+			uvm_vslock(p, SCARG(uap, old), oldlen);
 #else
-			vslock(SCARG(uap, old), oldlen);
+			vslock(p, SCARG(uap, old), oldlen);
 #endif
 		savelen = oldlen;
 	}
@@ -182,9 +182,9 @@ sys___sysctl(p, v, retval)
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
 #if defined(UVM)
-			uvm_vsunlock(SCARG(uap, old), savelen);
+			uvm_vsunlock(p, SCARG(uap, old), savelen);
 #else
-			vsunlock(SCARG(uap, old), savelen);
+			vsunlock(p, SCARG(uap, old), savelen);
 #endif
 		memlock.sl_lock = 0;
 		if (memlock.sl_want) {

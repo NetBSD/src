@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.30 1998/02/10 14:09:35 mrg Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.31 1998/04/30 06:28:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -191,9 +191,9 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			PHOLD(p);
 #if defined(UVM)
-			uvm_vslock(bp->b_data, todo);
+			uvm_vslock(p, bp->b_data, todo);
 #else
-			vslock(bp->b_data, todo);
+			vslock(p, bp->b_data, todo);
 #endif
 			vmapbuf(bp, todo);
 
@@ -226,9 +226,9 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			vunmapbuf(bp, todo);
 #if defined(UVM)
-			uvm_vsunlock(bp->b_data, todo);
+			uvm_vsunlock(p, bp->b_data, todo);
 #else
-			vsunlock(bp->b_data, todo);
+			vsunlock(p, bp->b_data, todo);
 #endif
 			PRELE(p);
 
