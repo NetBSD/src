@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.339 2001/07/28 00:33:01 pooka Exp $
+$NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1159,6 +1159,7 @@ product IMS 8849	0x8849	8849
 product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
+product INTEL 80312		0x030d	80310 I/O Companion Chip
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
@@ -1244,6 +1245,7 @@ product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
+product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
 product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
 product INTEL 82371SB_USB	0x7020	82371SB USB Host Controller (PIIX3)
