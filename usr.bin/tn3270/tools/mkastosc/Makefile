@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 1999/07/14 21:36:37 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.9.10.1 2002/12/01 12:19:19 he Exp $
 
 HOSTPROG=	mkastosc
+HOST_CPPFLAGS+=	-DHOST_TOOL
 SRCS=	mkastosc.c dohits.c asc_ebc.c ebc_disp.c
 
 HOST_CPPFLAGS+=-I${.CURDIR}/../mkhits
