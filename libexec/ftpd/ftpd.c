@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.82 2000/01/08 11:09:56 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.83 2000/01/08 11:14:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.82 2000/01/08 11:09:56 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.83 2000/01/08 11:14:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -933,7 +933,7 @@ skip:
 		if (! EMPTYSTR(curclass.limitfile))
 			(void)format_file(conffilename(curclass.limitfile),530);
 		reply(530,
-		    "User %s access denied, connection limit of %d reached",
+		    "User %s access denied, connection limit of %d reached.",
 		    pw->pw_name, curclass.limit);
 		syslog(LOG_NOTICE,
 	"Maximum connection limit of %d for class %s reached, login refused",
