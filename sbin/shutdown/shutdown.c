@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.36 2000/07/20 17:33:57 jdolecek Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.37 2000/07/25 18:59:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.36 2000/07/20 17:33:57 jdolecek Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.37 2000/07/25 18:59:44 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: shutdown.c,v 1.36 2000/07/20 17:33:57 jdolecek Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/syslog.h>
-#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -91,11 +90,7 @@ struct interval {
 #undef M
 #undef S
 
-/* time to wait for rc.shutdown to finish - 5 minutes by default */
-#define RCSHUTDOWN_TIMEOUT		(5 * 60)	
-
 static time_t offset, shuttime;
-static int rcshutdown_timeout = RCSHUTDOWN_TIMEOUT;
 static int dofast, dohalt, doreboot, killflg, mbuflen, nofork, nosync, dodump;
 static int dopowerdown;
 static const char *whom;
@@ -127,7 +122,7 @@ main(argc, argv)
 	if (geteuid())
 		errx(1, "NOT super-user");
 #endif
-	while ((ch = getopt(argc, argv, "?DdfhknprT:")) != -1)
+	while ((ch = getopt(argc, argv, "Ddfhknpr")) != -1)
 		switch (ch) {
 		case 'd':
 			dodump = 1;
@@ -152,11 +147,6 @@ main(argc, argv)
 			break;
 		case 'r':
 			doreboot = 1;
-			break;
-		case 'T':
-			rcshutdown_timeout = (int) strtol(optarg, &endp, 10);
-			if (*endp != '\0' || rcshutdown_timeout <= 0)
-				errx(1, "invalid timeout value - must be positive number");
 			break;
 		case '?':
 		default:
@@ -492,58 +482,10 @@ getoffset(timearg)
 void
 dorcshutdown()
 {
-	pid_t rc_pid, outpid;
-	time_t end_time;
-	int status;
-
 	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
-
-	rc_pid = fork();
-	switch (rc_pid) {
-	case -1:
-		/* error forking */
-		warn("dorcshutdown: fork");
-		break;
-	case 0:
-		/* child */
-		execl("/bin/sh", "sh", "-c", __CONCAT(". ", _PATH_RCSHUTDOWN),
-				NULL);
-		err(1, "exec of '/bin/sh -c \". %s\" failed",
-			_PATH_RCSHUTDOWN);
-		/* NOTREACHED */
-		break;
-	default:
-		/* parent */
-		end_time = time(NULL) + rcshutdown_timeout;
-		outpid = 0;
-		do {
-			outpid = waitpid(rc_pid, &status, WNOHANG);
-			if (outpid == rc_pid) {
-				/* child exited */
-				break;
-			} else if (outpid == 0) {
-				/* child not terminated yet */
-				sleep(2);
-			} else {
-				/* an error occurred */
-				warn("dorcshutdown: waitpid");
-				break;
-			}
-		} while(time(NULL) < end_time);
-
-		/* if rc.shutdown didn't exit within timeout, print warning */
-		if (outpid == 0) {
-			warnx("%s didn't exit within timeout %ds, killed",
-				 _PATH_RCSHUTDOWN, rcshutdown_timeout);
-		}
-
-		/* if child did not exit voluntarily, kill it now */
-		if (outpid != rc_pid)
-			(void) kill(rc_pid, SIGKILL);
-	}
-
-	(void)printf("\r\nDone running shutdown hooks.\r\n");
+	(void)system(__CONCAT(". ", _PATH_RCSHUTDOWN));
 	(void)sleep(5);		/* Give operator a chance to abort this. */
+	(void)printf("\r\nDone running shutdown hooks.\r\n");
 }
 
 #define	FSMSG	"fastboot file for fsck\n"
@@ -605,6 +547,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: shutdown [-Ddfhknpr] [-T timeout] time [message ... | -]\n");
+	    "usage: shutdown [-Ddfhknpr] time [message ... | -]\n");
 	exit(1);
 }
