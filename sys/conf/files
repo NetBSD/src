@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.65 1995/08/17 18:50:34 cgd Exp $
+#	$NetBSD: files,v 1.66 1995/08/19 00:46:15 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -11,11 +11,8 @@ define	audio
 define	mulaw
 
 # net device attributes - we have generic code for ether and arc.
-# we should have imp but right now it is a pseudo-device.
 define	ether
 define	arc
-# define	imp
-pseudo-device imp
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -199,9 +196,6 @@ file netccitt/pk_output.c		ccitt
 file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
-file netimp/if_imp.c			imp			needs-count
-file netimp/if_imphost.c		imp			needs-count
-file netimp/raw_imp.c			imp			needs-count
 file netinet/if_ether.c			ether
 file netinet/igmp.c			inet
 file netinet/in.c			inet
