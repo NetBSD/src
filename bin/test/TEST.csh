@@ -1,7 +1,8 @@
-#	@(#)TEST.csh	5.1 (Berkeley) 6/8/92
+#	$NetBSD: TEST.csh,v 1.2 1995/03/21 07:03:59 cgd Exp $
+#	@(#)TEST.csh	5.2 (Berkeley) 4/30/93
 
-alias t './test \!*; echo $status'
-#alias t 'test \!*; echo $status'
+#alias t '/usr/src/bin/test/obj/test \!*; echo $status'
+alias t '/bin/test \!*; echo $status'
 
 echo 't -b /dev/ttyp2'
 t -b /dev/ttyp2
