@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.18 2002/02/13 09:46:03 martti Exp $
+#	$NetBSD: ttys,v 1.19 2002/03/13 19:38:05 jandberg Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -16,6 +16,13 @@ ttye4	"/usr/libexec/getty Pc"		vt220	off secure 	# a2410
 ttye5	"/usr/libexec/getty Pc"		vt220	off secure 	# CyberVision64
 ttye6	"/usr/libexec/getty Pc"		vt220	off secure 	# Domino, Merlin, oMniBus
 ttye7	"/usr/libexec/getty Pc"		vt220	off secure 	# CyberVision64/3D
+#
+# wscons virtual terminals:
+#
+ttyE0	"/usr/libexec/getty Pc"		vt220	off secure
+ttyE1	"/usr/libexec/getty Pc"		vt220	off secure
+ttyE2	"/usr/libexec/getty Pc"		vt220	off secure
+ttyE3	"/usr/libexec/getty Pc"		vt220	off secure
 #
 # Amiga internal serial port:
 #
