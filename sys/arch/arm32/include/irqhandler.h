@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.4 1996/03/28 21:29:32 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.5 1996/06/03 21:57:52 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -158,6 +158,8 @@ typedef struct irqhandler {
 #define IRQMASK_SOFTNET	(1 << IRQ_SOFTNET)
 #define IRQ_SOFTCLOCK	IRQ_RESERVED1	/* Emulated */
 #define IRQMASK_SOFTCLOCK	(1 << IRQ_SOFTCLOCK)
+#define IRQ_SOFTPLIP	IRQ_RESERVED2	/* Emulated */
+#define IRQMASK_SOFTPLIP	(1 << IRQ_SOFTPLIP)
 
 #define IRQ_INSTRUCT	-1
 #define NIRQS		0x20
