@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.101 2003/10/19 03:53:33 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.102 2003/10/19 14:23:02 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -25,6 +25,7 @@ _MKSHECHO=	echo
 .endif
 _MKMSGBUILD=	${_MKMSG} "  build  ${.TARGET}"
 _MKMSGCREATE=	${_MKMSG} " create  ${.TARGET}"
+_MKMSGCREATE.m=	${_MKMSG} " create "
 _MKMSGCOMPILE=	${_MKMSG} "compile  ${.TARGET}"
 _MKMSGFORMAT=	${_MKMSG} " format  ${.TARGET}"
 _MKMSGINSTALL=	${_MKMSG} "install  ${.TARGET}"
