@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.271 2002/03/05 03:51:23 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.272 2002/03/05 03:53:58 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -149,6 +149,30 @@ TSORT=		${TOOLDIR}/bin/nbtsort -q
 UUDECODE=	${TOOLDIR}/bin/nbuudecode
 YACC=		${TOOLDIR}/bin/nbyacc
 ZIC=		${TOOLDIR}/bin/nbzic
+
+
+# Targets to check if DESTDIR or RELEASEDIR is provided
+#
+.if !target(check_DESTDIR)
+check_DESTDIR: .PHONY .NOTMAIN
+.if !defined(DESTDIR)
+	@echo "setenv DESTDIR before doing that!"
+	@false
+.else
+	@true
+.endif
+.endif
+
+.if !target(check_RELEASEDIR)
+check_RELEASEDIR: .PHONY .NOTMAIN
+.if !defined(RELEASEDIR)
+	@echo "setenv RELEASEDIR before doing that!"
+	@false
+.else
+	@true
+.endif
+.endif
+
 
 # Make sure DESTDIR is set, so that builds with these tools always
 # get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
@@ -395,29 +419,6 @@ MKNLS:=		no
 MKBFD:=	no
 MKGDB:=	no
 MKGCC:=	no
-.endif
-
-
-# Helper targets
-#
-.if !target(check_DESTDIR)
-check_DESTDIR: .PHONY .NOTMAIN
-.if !defined(DESTDIR)
-	@echo "setenv DESTDIR before doing that!"
-	@false
-.else
-	@true
-.endif
-.endif
-
-.if !target(check_RELEASEDIR)
-check_RELEASEDIR: .PHONY .NOTMAIN
-.if !defined(RELEASEDIR)
-	@echo "setenv RELEASEDIR before doing that!"
-	@false
-.else
-	@true
-.endif
 .endif
 
 .endif		# _BSD_OWN_MK_
