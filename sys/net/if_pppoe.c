@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.13 2001/12/16 11:40:52 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.14 2001/12/16 23:53:31 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.13 2001/12/16 11:40:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.14 2001/12/16 23:53:31 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -667,10 +667,14 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		 * Prevent running re-establishment timers overriding
 		 * administrators choice.
 		 */
-		if ((ifr->ifr_flags & IFF_UP) == 0) {
+		if ((ifr->ifr_flags & IFF_UP) == 0
+		     && sc->sc_state >= PPPOE_STATE_PADI_SENT
+		     && sc->sc_state < PPPOE_STATE_SESSION) {
 			callout_stop(&sc->sc_timeout);
+			sc->sc_state = PPPOE_STATE_INITIAL;
 			sc->sc_padi_retried = 0;
 			sc->sc_padr_retried = 0;
+			memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 		}
 	}
 	/* FALLTHROUGH */
