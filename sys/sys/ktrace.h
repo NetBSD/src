@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30 2003/06/29 22:32:25 fvdl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.31 2003/07/16 22:42:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -55,12 +55,12 @@
  * ktrace record header
  */
 struct ktr_header {
-	int	ktr_len;		/* length of buf */
+	int	ktr_len;		/* length of ktr_buf */
 	short	ktr_type;		/* trace record type */
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
 	struct	timeval ktr_time;	/* timestamp */
-	caddr_t	ktr_buf;
+	const void *ktr_buf;
 };
 
 /*
@@ -174,6 +174,13 @@ struct ktr_mmsg {
 };
 
 /*
+ * KTR_EXEC_ARG, KTR_EXEC_ENV - Arguments and environment from exec
+ */
+#define KTR_EXEC_ARG		10
+#define KTR_EXEC_ENV		11
+	/* record contains arg/env string */
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -186,6 +193,8 @@ struct ktr_mmsg {
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define	KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_MMSG	(1<<KTR_MMSG)
+#define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
+#define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -215,6 +224,7 @@ void ktrsyscall(struct proc *, register_t, register_t,
 void ktrsysret(struct proc *, register_t, int, register_t *);
 void ktruser(struct proc *, const char *, void *, size_t, int);
 void ktrmmsg(struct proc *, const void *, size_t);
+void ktrkmem(struct proc *, int, const void *, size_t);
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
 

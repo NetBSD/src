@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169 2003/06/29 22:31:19 fvdl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.170 2003/07/16 22:42:48 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169 2003/06/29 22:31:19 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.170 2003/07/16 22:42:48 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -465,6 +465,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 				error = E2BIG;
 			goto bad;
 		}
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_EXEC_ARG))
+			ktrkmem(p, KTR_EXEC_ARG, dp, len - 1);
+#endif
 		dp += len;
 		cpp++;
 		argc++;
@@ -484,6 +488,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 					error = E2BIG;
 				goto bad;
 			}
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_EXEC_ENV))
+				ktrkmem(p, KTR_EXEC_ENV, dp, len - 1);
+#endif
 			dp += len;
 			cpp++;
 			envc++;
