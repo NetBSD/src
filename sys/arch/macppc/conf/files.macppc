@@ -1,6 +1,8 @@
+#	$NetBSD: files.macppc,v 1.16 1998/11/28 20:59:26 thorpej Exp $
 #
-# First try for macppc-specific configuration info
-#
+# macppc-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16
 
 maxusers 2 8 64
