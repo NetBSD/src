@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 1995/04/21 09:15:23 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 1995/04/21 21:56:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -650,37 +650,8 @@ boot(howto)
 	}
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release inodes held by texts before update.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-		sync(&proc0, (void *)0, (int *)0);
-		/*
-		 * Unmount filesystems
-		 */
-		if (panicstr == 0)
-			vfs_unmountall();
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			delay(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
+		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
