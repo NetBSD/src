@@ -23,7 +23,7 @@ fpsetsticky(sticky)
 	sfsr(old);
 
 	new = old;
-	new &= ~ebits;
+	new &= ebits;
 	new |= (sticky & ebits) << 1;
 
 	lfsr(new);
