@@ -1,4 +1,4 @@
-.\"	$NetBSD: iswalnum.3,v 1.1 2000/12/22 02:03:33 itojun Exp $
+.\"	$NetBSD: iswalnum.3,v 1.2 2000/12/22 02:13:26 itojun Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -60,16 +60,27 @@
 .Fd #include <wctype.h>
 .Ft int
 .Fn iswalnum "wint_t wc"
+.Ft int
 .Fn iswalpha "wint_t wc"
+.Ft int
 .Fn iswblank "wint_t wc"
+.Ft int
 .Fn iswcntrl "wint_t wc"
+.Ft int
 .Fn iswdigit "wint_t wc"
+.Ft int
 .Fn iswgraph "wint_t wc"
+.Ft int
 .Fn iswlower "wint_t wc"
+.Ft int
 .Fn iswprint "wint_t wc"
+.Ft int
 .Fn iswpunct "wint_t wc"
+.Ft int
 .Fn iswspace "wint_t wc"
+.Ft int
 .Fn iswupper "wint_t wc"
+.Ft int
 .Fn iswxdigit "wint_t wc"
 .Sh DESCRIPTION
 The functions are character classification utility functions,
