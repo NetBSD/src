@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.4 1994/02/01 11:52:22 chopps Exp $
+ *	$Id: par.c,v 1.5 1994/02/11 05:02:43 chopps Exp $
  */
 
 /*
@@ -380,11 +380,12 @@ again:
 }
 
 int
-parioctl(dev, cmd, data, flag)
-     dev_t dev;
-     int cmd;
-     caddr_t data;
-     int flag;
+parioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
   struct par_softc *sc = &par_softc[UNIT(dev)];
   struct parparam *pp, *upp;

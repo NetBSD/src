@@ -124,7 +124,7 @@ extern int ststart (int unit);
 extern int stgo (int unit);
 extern int stfinish (int unit, struct st_softc *sc, struct buf *bp);
 extern int stdump (dev_t dev);
-extern int stioctl (dev_t dev, int cmd, caddr_t data, int flag);
+extern int stioctl (dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
 extern int stintr (int unit, int stat);
 extern int stcommand (dev_t dev, u_int command, int cnt);
 extern int sterror (int unit, struct st_softc *sc, int stat);
@@ -1073,11 +1073,12 @@ stdump(dev)
 }
 
 /*ARGSUSED*/
-stioctl(dev, cmd, data, flag)
+stioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data; 
 	int flag;
+	struct proc *p;
 {
 	register struct st_softc *sc = &st_softc[UNIT(dev)];
 	register int cnt;
