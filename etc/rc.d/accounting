@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.5 2001/04/25 23:20:15 lukem Exp $
+# $NetBSD: accounting,v 1.6 2001/04/29 23:57:25 lukem Exp $
 #
 
 # PROVIDE: accounting
@@ -19,7 +19,7 @@ accounting_start()
 {
 	if [ ! -f ${accounting_file} ]; then
 		echo "Creating accounting file ${accounting_file}"
-		( umask 022 ; echo -n > ${accounting_file} )
+		( umask 022 ; > ${accounting_file} )
 	fi
 	echo "Turning on accounting."
 	${accounting_command} ${accounting_file}
