@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.70 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.71 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,11 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.70 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.71 2004/08/13 04:10:49 thorpej Exp $");
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
+#ifndef ATADEBUG
+#define ATADEBUG
+#endif /* ATADEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,13 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.70 2004/08/13 03:12:59 thorpej Exp $")
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 extern int wdcdebug_wd_mask; /* inited in wd.c */
-#define WDCDEBUG_PRINT(args, level) \
+#define ATADEBUG_PRINT(args, level) \
 	if (wdcdebug_wd_mask & (level)) \
 		printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
@@ -206,7 +206,7 @@ wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	char *errstring;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
+	ATADEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_XFERS);
 
@@ -345,7 +345,7 @@ _wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 	int nblks;
 	int dma_flags = 0;
 
-	WDCDEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
+	ATADEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 
@@ -557,7 +557,7 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int drv_err;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
+	ATADEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 
@@ -700,7 +700,7 @@ wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
 		panic("wdc_ata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
-	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 }
 
@@ -711,7 +711,7 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	int drive = xfer->c_drive;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
+	ATADEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive, 
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
@@ -731,9 +731,9 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wakeup(&chp->ch_queue->active_xfer);
 	}
 	ata_bio->flags |= ATA_ITSDONE;
-	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
-	WDCDEBUG_PRINT(("atastart from wdc_ata_done, flags 0x%x\n",
+	ATADEBUG_PRINT(("atastart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }
