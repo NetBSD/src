@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.84 2003/10/10 06:10:53 grog Exp $
+#	$NetBSD: Makefile,v 1.85 2003/12/07 21:57:22 matt Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck ncheck
+
+.include <bsd.own.mk>
 
 SUBDIR=	atactl badsect bim brconfig ccdconfig cgdconfig disklabel dkctl \
 	dmesg edlabel fastboot fdisk fsck fsirand ifconfig init ldconfig \
@@ -36,7 +38,9 @@ SUBDIR+= mount_umap
 SUBDIR+= mount_union
 
 # IPv6
+.if (${MKINET6} != "no")
 SUBDIR+= ping6 rtsol
+.endif
 
 # IPsec
 SUBDIR+= setkey
