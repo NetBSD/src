@@ -1,6 +1,8 @@
-/* $NetBSD: conf.h,v 1.1 1997/04/07 05:52:34 cgd Exp $ */
-
-/* XXX PLACEHOLDER.  Needs to be cleaned up. */
+/* $NetBSD: conf.h,v 1.2 1998/03/02 07:44:18 ross Exp $ */
 
 #include <sys/conf.h>
 #include <machine/cpuconf.h>
+
+cdev_decl(a12dc);
+cdev_decl(scc);
+cdev_decl(prom);			/* XXX */
