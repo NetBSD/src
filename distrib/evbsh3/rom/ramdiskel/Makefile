@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/10/26 04:53:57 garbled Exp $
+#	$NetBSD: Makefile,v 1.3 2000/11/01 07:57:57 garbled Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -19,7 +19,7 @@ IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 SUDO=		sudo
-CRUNCHGEN=	/usr/local/bin/sh-crunchgen
+CRUNCHGEN?=	/usr/local/bin/sh-crunchgen
 DISKLABEL=	${SUDO} disklabel
 MOUNT=		${SUDO} mount
 MTREE=		${SUDO} mtree

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/08/30 23:51:52 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/11/01 07:58:01 garbled Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,6 +16,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 DISKTYPE=	miniroot
 BOOTDISKTYPE=	bootroot
@@ -58,7 +60,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen ${CRUNCHCONF}
+	${CRUNCHGEN} ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk

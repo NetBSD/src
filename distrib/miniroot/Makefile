@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2000/08/30 23:51:50 jhawk Exp $
+#	$NetBSD: Makefile,v 1.36 2000/11/01 07:57:59 garbled Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -34,6 +34,8 @@ MTREE=		${.CURDIR}/mtree.conf
 ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 			-o root -g wheel -m ${NONBINMODE} 
 
+CRUNCHGEN?=	crunchgen
+
 .ifndef DESTDIR
 all:
 	@echo setenv DESTDIR before making a miniroot!
@@ -67,7 +69,7 @@ ${CBIN}.conf: ${LISTS}
 	awk -f ${.CURDIR}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${CRUNCHGEN} -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
