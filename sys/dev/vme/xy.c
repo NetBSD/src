@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.5 1998/02/04 00:39:50 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.6 1998/02/04 00:54:27 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,6 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.5 1998/02/04 00:39:50 thorpej Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -177,6 +176,7 @@ int	xycmatch __P((struct device *, struct cfdata *, void *));
 void	xycattach __P((struct device *, struct device *, void *));
 int	xymatch __P((struct device *, struct cfdata *, void *));
 void	xyattach __P((struct device *, struct device *, void *));
+static	int xyc_probe __P((void *, void *));
 
 static	void xydummystrat __P((struct buf *));
 int	xygetdisklabel __P((struct xy_softc *, void *));
@@ -281,6 +281,15 @@ xygetdisklabel(xy, b)
  * xycmatch: determine if xyc is present or not.   we do a
  * soft reset to detect the xyc.
  */
+int
+xyc_probe(vaddr, arg)
+	void *vaddr;
+	void *arg;
+{
+	struct xyc *xyc = vaddr;
+
+	return (xyc_unbusy(xyc, XYC_RESETUSEC) != XY_ERR_FAIL);
+}
 
 int xycmatch(parent, cf, aux)
 	struct device *parent;
@@ -290,18 +299,11 @@ int xycmatch(parent, cf, aux)
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->vma_chipset_tag;
 	bus_space_tag_t		bt = va->vma_bustag;
-	struct xyc		*xyc;
 	vme_mod_t		mod;
 
 	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D;
 
-	xyc = (struct xyc *) va->vma_reg[0];
-	if (vme_bus_probe(ct, bt, (vme_addr_t)&xyc->xyc_rsetup, 1, mod)) {
-		if (xyc_unbusy(xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
-			return(0);
-		return (1);
-	}
-	return (0);
+	return (vme_bus_probe(ct, bt, va->vma_reg[0], 1, mod, xyc_probe, 0));
 }
 
 /*
