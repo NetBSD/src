@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.73 2003/01/22 04:33:35 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.74 2003/02/24 12:57:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.73 2003/01/22 04:33:35 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.74 2003/02/24 12:57:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ char	*fromname;
 
 %union {
 	struct {
-		off_t	o;
+		LLT	ll;
 		int	i;
 	} u;
 	char   *s;
@@ -884,7 +884,7 @@ rcmd
 		{
 			if ($2) {
 				fromname = NULL;
-				restart_point = $4.o;
+				restart_point = (off_t)$4.ll;
 				reply(350,
     "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
 				    (LLT)restart_point);
@@ -1626,7 +1626,7 @@ yylex(void)
 			c = cmdp[cpos];
 			cmdp[cpos] = '\0';
 			yylval.u.i = atoi(cp);
-			yylval.u.o = strtoull(cp, (char **)NULL, 10);
+			yylval.u.ll = STRTOLL(cp, (char **)NULL, 10);
 			cmdp[cpos] = c;
 			return (NUMBER);
 		}
