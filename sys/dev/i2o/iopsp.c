@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.6 2001/04/01 15:02:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ static int	iopsp_match(struct device *, struct cfdata *, void *);
 static void	iopsp_minphys(struct buf *);
 static int	iopsp_rescan(struct iopsp_softc *);
 static int	iopsp_reconfig(struct device *);
-static int	iopsp_scsi_abort(struct iopsp_softc *, int, struct iop_msg *);
 static int	iopsp_scsi_cmd(struct scsipi_xfer *);
 
 static struct scsipi_device iopsp_dev = {
@@ -417,12 +416,9 @@ iopsp_rescan(struct iopsp_softc *sc)
 		printf("%s: bus rescan failed (error %d)\n",
 		    sc->sc_dv.dv_xname, rv);
 
-	if ((rv = iop_lct_get(iop)) != 0)
-		goto done;
+	if ((rv = iop_lct_get(iop)) == 0)
+		rv = iopsp_reconfig(&sc->sc_dv);
 
-	/* Rebuild the target/LUN -> TID map, release lock, and return. */
-	rv = iopsp_reconfig(&sc->sc_dv);
- done:
 	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
 	return (rv);
 }
@@ -438,7 +434,7 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 	struct iop_msg *im;
 	struct iop_softc *iop;
 	struct i2o_scsi_scb_exec *mf;
-	int error, flags, tid, imf;
+	int error, flags, tid;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc_link = xs->sc_link;
@@ -458,7 +454,7 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 	/* Need to reset the target? */
 	if ((flags & XS_CTL_RESET) != 0) {
 		if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
-		    sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
+		    sc->sc_ii.ii_ictx, 1, 30*1000) != 0) {
 #ifdef I2ODEBUG
 			printf("%s: reset failed\n", sc->sc_dv.dv_xname);
 #endif
@@ -472,8 +468,8 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 		panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
 #endif
 
-	imf = (flags & (XS_CTL_POLL | XS_CTL_NOSLEEP)) != 0 ? IM_POLL : 0;
-	im = iop_msg_alloc(iop, &sc->sc_ii, imf);
+	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL_INTR | IM_NOSTATUS |
+	    ((flags & XS_CTL_POLL) != 0 ? IM_POLL : 0));
 	im->im_dvcontext = xs;
 
 	mf = (struct i2o_scsi_scb_exec *)mb;
@@ -512,30 +508,18 @@ iopsp_scsi_cmd(struct scsipi_xfer *xs)
 			mf->flags |= I2O_SCB_FLAG_XFER_FROM_DEVICE;
 	}
 
-	if ((flags & XS_CTL_POLL) == 0) {
-		if (iop_msg_post(iop, im, mb, 0)) {
-			if (xs->datalen != 0)
-				iop_msg_unmap(iop, im);
-			iop_msg_free(iop, im);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
-		}
-		return (SUCCESSFULLY_QUEUED);
-	}
-
 	if (iop_msg_post(iop, im, mb, xs->timeout)) {
-		scsi_print_addr(xs->sc_link);
-		printf("timeout; aborting command\n");
-		if (iopsp_scsi_abort(sc, tid, im)) {
-			scsi_print_addr(xs->sc_link);
-			printf("abort failed\n");
-		}
+		if (xs->datalen != 0)
+			iop_msg_unmap(iop, im);
+		iop_msg_free(iop, im);
 		xs->error = XS_DRIVER_STUFFUP;
+		return (COMPLETE);
 	}
 
-	return (COMPLETE);
+	return (SUCCESSFULLY_QUEUED);
 }
 
+#ifdef notyet
 /*
  * Abort the specified I2O_SCSI_SCB_EXEC message and its associated SCB.
  */
@@ -562,6 +546,7 @@ iopsp_scsi_abort(struct iopsp_softc *sc, int atid, struct iop_msg *aim)
 	iop_msg_free(iop, im);
 	return (rv);
 }
+#endif
 
 /*
  * We have a message which has been processed and replied to by the IOP -
@@ -579,6 +564,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	sc = (struct iopsp_softc *)dv;
 	xs = (struct scsipi_xfer *)im->im_dvcontext;
 	iop = (struct iop_softc *)dv->dv_parent;
+	rb = reply;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("iopsp_intr\n"));
 
@@ -586,8 +572,6 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = xs->datalen;
 	} else {
-		rb = reply;
-
 		if (rb->hbastatus != I2O_SCSI_DSC_SUCCESS) {
 			switch (rb->hbastatus) {
 			case I2O_SCSI_DSC_ADAPTER_BUSY:

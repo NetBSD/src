@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.13 2001/04/01 15:02:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -1219,6 +1219,8 @@ iop_systab_set(struct iop_softc *sc)
 {
 	struct i2o_exec_sys_tab_set *mf;
 	struct iop_msg *im;
+	bus_space_handle_t bsh;
+	bus_addr_t boo;
 	u_int32_t mema[2], ioa[2];
 	int rv;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
@@ -1233,11 +1235,32 @@ iop_systab_set(struct iop_softc *sc)
 	mf->iopid = (sc->sc_dv.dv_unit + 2) << 12;
 	mf->segnumber = 0;
 
-	/* XXX This is questionable, but better than nothing... */
-	mema[0] = le32toh(sc->sc_status.currentprivmembase);
-	mema[1] = le32toh(sc->sc_status.currentprivmemsize);
-	ioa[0] = le32toh(sc->sc_status.currentpriviobase);
-	ioa[1] = le32toh(sc->sc_status.currentpriviosize);
+	mema[1] = sc->sc_status.desiredprivmemsize;
+	ioa[1] = sc->sc_status.desiredpriviosize;
+
+	if (mema[1] != 0) {
+		rv = bus_space_alloc(sc->sc_bus_memt, 0, 0xffffffff,
+		    le32toh(mema[1]), PAGE_SIZE, 0, 0, &boo, &bsh);
+		mema[0] = htole32(boo);
+		if (rv != 0) {
+			printf("%s: can't alloc priv mem space, err = %d\n",
+			    sc->sc_dv.dv_xname, rv);
+			mema[0] = 0;
+			mema[1] = 0;
+		}
+	}
+
+	if (ioa[1] != 0) {
+		rv = bus_space_alloc(sc->sc_bus_iot, 0, 0xffff,
+		    le32toh(ioa[1]), 0, 0, 0, &boo, &bsh);
+		ioa[0] = htole32(boo);
+		if (rv != 0) {
+			printf("%s: can't alloc priv i/o space, err = %d\n",
+			    sc->sc_dv.dv_xname, rv);
+			ioa[0] = 0;
+			ioa[1] = 0;
+		}
+	}
 
 	PHOLD(curproc);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1);
@@ -1460,7 +1483,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		/* Notify the initiator. */
 		if ((im->im_flags & IM_WAIT) != 0)
 			wakeup(im);
-		else if ((im->im_flags & IM_POLL) == 0)
+		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL)
 			(*ii->ii_intr)(ii->ii_dv, im, rb);
 	} else {
 		/*
@@ -1572,8 +1595,6 @@ iop_msg_free(struct iop_softc *sc, struct iop_msg *im)
 #ifdef I2ODEBUG
 	if ((im->im_flags & IM_ALLOCED) == 0)
 		panic("iop_msg_free: wrapper not allocated");
-	if ((im->im_flags & IM_REPLIED) == 0)
-		printf("iop_msg_free: message was not replied to");
 #endif
 
 	im->im_flags = 0;
@@ -1746,9 +1767,8 @@ iop_msg_map_bio(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 			mb[off] |= I2O_SGL_DATA_OUT;
 	} else {
 		p = mb + off;
+		nsegs = dm->dm_nsegs;
 
-		if (dm->dm_nsegs < nsegs)
-			nsegs = dm->dm_nsegs;
 		if (out)
 			flg = I2O_SGL_SIMPLE | I2O_SGL_DATA_OUT;
 		else
@@ -1818,6 +1838,10 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 	u_int32_t mfa;
 	int s;
 
+	/* ZZZ */
+	if ((mb[0] >> 16) > IOP_MAX_MSG_SIZE / 4)
+		panic("iop_post: frame too large");
+
 	s = splbio();	/* XXX */
 
 	/* Allocate a slot with the IOP. */
@@ -1836,7 +1860,7 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 
 	/* Copy out the message frame. */
 	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, mb[0] >> 16);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, mb[0] >> 16,
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, (mb[0] >> 14) & ~3,
 	    BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
