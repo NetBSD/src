@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.49 1999/07/02 12:45:32 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.50 1999/07/02 21:02:05 fvdl Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -773,7 +773,9 @@ send:
 #endif
 	default:	/*pacify gcc*/
 		ip = NULL;
+#ifdef INET6
 		ip6 = NULL;
+#endif
 		th = NULL;
 		break;
 	}

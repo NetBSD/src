@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.68 1999/07/02 12:45:32 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.69 1999/07/02 21:02:05 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -447,7 +447,9 @@ tcp_respond(tp, template, m, ack, seq, flags)
 #endif
 		default:	/*pacify gcc*/
 			ip = NULL;
+#ifdef INET6
 			ip6 = NULL;
+#endif
 			th = NULL;
 			break;
 		}
