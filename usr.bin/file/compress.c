@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.12 2002/06/14 19:05:18 wiz Exp $	*/
+/*	$NetBSD: compress.c,v 1.13 2002/07/09 14:59:53 pooka Exp $	*/
 
 /*
  * compress routines:
@@ -15,8 +15,6 @@
 #include <unistd.h>
 #endif
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -27,9 +25,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: compress.c,v 1.23 2002/05/16 18:57:10 christos Exp ")
+FILE_RCSID("@(#)Id: compress.c,v 1.25 2002/07/03 18:26:37 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.12 2002/06/14 19:05:18 wiz Exp $");
+__RCSID("$NetBSD: compress.c,v 1.13 2002/07/09 14:59:53 pooka Exp $");
 #endif
 #endif
 

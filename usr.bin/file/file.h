@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.27 2002/06/14 19:05:19 wiz Exp $	*/
+/*	$NetBSD: file.h,v 1.28 2002/07/09 14:59:54 pooka Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.39 2002/05/16 18:45:56 christos Exp 
+ * @(#)Id: file.h,v 1.43 2002/07/03 18:57:52 christos Exp 
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -33,12 +33,26 @@
 
 #include <inttypes.h>
 
+#ifndef __linux__
+#define _LARGEFILE_SOURCE
+#define _LARGEFILE64_SOURCE 
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <errno.h>
+#include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+/* Do this here and now, because struct stat gets re-defined on solaris */
+#include <sys/stat.h>
+
 #ifndef HOWMANY
-# define HOWMANY 16384		/* how much of the file to look at */
+# define HOWMANY 65536		/* how much of the file to look at */
 #endif
 #define MAXMAGIS 4096		/* max entries in /etc/magic */
 #define MAXDESC	50		/* max leng of text description */
@@ -118,9 +132,6 @@ struct mlist {
 	uint32_t nmagic;		/* number of entries in array */
 	struct mlist *next, *prev;
 };
-
-#include <errno.h>
-#include <stdio.h>
 
 extern int   apprentice(const char *, int);
 extern int   ascmagic(unsigned char *, int);
