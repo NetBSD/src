@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.4.1 1999/06/07 04:25:35 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.2 1999/06/22 02:29:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -145,6 +145,11 @@ READ(v)
 #else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
+#if 0
+		else if (doclusterread)
+			error = cluster_read(vp,
+			    ip->i_ffs_size, lbn, size, NOCRED, &bp);
+#endif
 		else if (lbn - 1 == vp->v_lastr) {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
@@ -343,8 +348,13 @@ WRITE(v)
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize)
-			bawrite(bp);
-		else
+#if 0
+			if (doclusterwrite)
+				cluster_write(bp, ip->i_ffs_size);
+			else
+#endif
+				bawrite(bp);
+                else
 			bdwrite(bp);
 #endif
 		if (error || xfersize == 0)
