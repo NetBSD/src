@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.3 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.4 2000/04/16 05:48:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -132,6 +132,6 @@ winsdelln(WINDOW *win, int lines)
 			__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	}
 	if (win->orig != NULL)
-		__id_subwins(win);
+		__id_subwins(win->orig);
 	return (OK);
 }
