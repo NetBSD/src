@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.12 1998/10/04 23:38:55 thorpej Exp $	*/
+/*	$NetBSD: vectors.s,v 1.13 1998/10/18 04:42:17 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -41,7 +41,11 @@
 	.globl	_badtrap
 	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
 	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
-	.globl	_trap0,_trap1,_trap2,_trap15
+	.globl	_trap0
+#ifdef COMPAT_13
+	.globl	_trap1
+#endif
+	.globl	_trap2,_trap15
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12
 
