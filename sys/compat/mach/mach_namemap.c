@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.31 2003/06/03 20:09:37 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.32 2003/09/06 23:52:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.31 2003/06/03 20:09:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.32 2003/09/06 23:52:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,6 +132,7 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 3414, mach_task_get_exception_ports, "task_get_exception_ports" },
 	{ 3418, mach_semaphore_create, "semaphore_create" },
 	{ 3419, mach_semaphore_destroy, "semaphore_destroy" },
+	{ 3612, mach_thread_info, "thread_info" },
 	{ 3616, mach_thread_policy, "thread_policy" },
 	{ 3800, mach_vm_region, "vm_region" },
 	{ 3801, mach_vm_allocate, "vm_allocate" },
@@ -141,6 +142,7 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 3808, mach_vm_copy, "vm_copy" },
 	{ 3810, mach_vm_msync, "vm_msync" },
 	{ 3812, mach_vm_map, "vm_map" },
+	{ 3824, mach_vm_region_64, "vm_region_64" }, /* XXX */
 	{ 3825, mach_vm_make_memory_entry, "vm_make_memory_entry" },
 	{ 0, NULL, NULL },
 };
