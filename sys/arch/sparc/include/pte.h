@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 1995/05/08 17:47:26 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.10 1995/06/25 21:35:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -260,3 +260,45 @@ struct pte {
 /* static __inline int PG_VALID(void *va) {
 	register int t = va; t >>= PG_VSHIFT; return (t == 0 || t == -1);
 } */
+
+#if defined(SUN4M)
+
+/*
+ * Reference MMU PTE bits.
+ */
+#define SRPTE_PPN_MASK	0x07ffff00
+#define SRPTE_PPN_SHIFT	8
+#define SRPTE_CACHEABLE	0x00000080		/* Page is cacheable */
+#define SRPTE_MOD	0x00000040		/* Page is modified */
+#define SRPTE_REF	0x00000020		/* Page is referenced */
+#define SRPTE_ACCMASK	0x0000001c		/* Access rights mask */
+#define SRPTE_ACCSHIFT	2			/* Access rights shift */
+#define SRPTE_TYPEMASK	0x00000003		/* PTE Type */
+#define SRPTE_PTE	0x00000002		/* A PTE */
+#define SRPTE_PTE	0x00000001		/* A PTP */
+
+/*
+ * Reference MMU access permission bits.
+ *  format (stolen from Amoeba): SRACC_sssuuu,
+ *	where <sss> denote the supervisor rights
+ *	and <uuu> denote the user rights
+ */
+#define SRACC_R__R__	0
+#define SRACC_RW_RW_	1
+#define SRACC_R_XR_X	2
+#define SRACC_RWXRWX	3
+#define SRACC___X__X	4
+#define SRACC_RW_R__	5
+#define SRACC_R_X___	6
+#define SRACC_RWX___	7
+
+/*
+ * IOMMU PTE bits.
+ */
+#define IOPTE_PPN_MASK	0x07ffff00
+#define IOPTE_PPN_SHIFT	8
+#define IOPTE_RSVD	0x000000f1
+#define IOPTE_WRITE	0x00000004
+#define IOPTE_VALID	0x00000002
+
+#endif /* SUN4M */

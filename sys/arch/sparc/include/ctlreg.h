@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.7 1995/04/13 13:41:02 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.8 1995/06/25 21:35:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@
 #define ASI_IDCACHELFR	0x12	/* ms2 only: flush i&d cache line (reg) */
 #define ASI_IDCACHELFC	0x13	/* ms2 only: flush i&d cache line (ctxt) */
 #define ASI_IDCACHELFU	0x14	/* ms2 only: flush i&d cache line (user) */
-#define ASI_SRMMUTLB	0x20	/* sun ref mmu bypass, ie. direct tlb access */
+#define ASI_BYPASS	0x20	/* sun ref mmu bypass, ie. direct phys access */
 #define ASI_ICACHECLR	0x36	/* ms1 only: instruction cache flash clear */
 #define ASI_DCACHECLR	0x37	/* ms1 only: data cache clear */
 #define ASI_DCACHEDIAG	0x39	/* data cache diagnostic register access */
@@ -170,18 +170,33 @@
 /*
  * Bits in system enable register.
  */
-#define	SYSEN_DVMA	0x20		/* enable dvma */
-#define	SYSEN_CACHE	0x10		/* enable cache */
-#define	SYSEN_IOCACHE	0x40		/* enable IO cache */
-#define	SYSEN_RESET	0x04		/* reset the hardware */
-#define	SYSEN_RESETVME	0x02		/* reset the VME bus */
+#define	SYSEN_DVMA	0x20		/* Enable dvma */
+#define	SYSEN_CACHE	0x10		/* Enable cache */
+#define	SYSEN_IOCACHE	0x40		/* Enable IO cache */
+#define	SYSEN_RESET	0x04		/* Reset the hardware */
+#define	SYSEN_RESETVME	0x02		/* Reset the VME bus */
 #endif
 
 #if defined(SUN4M)
-#define SRMMU_PCR	0x00000000	/* processor control register */
-#define SRMMU_CXTPTR	0x00000100	/* context table pointer register */
-#define SRMMU_CXR	0x00000200	/* context register */
-#define SRMMU_SFSTAT	0x00000300	/* syncronous fault status reg */
-#define SRMMU_SFADDR	0x00000400	/* syncronous fault address reg */
+#define SRMMU_PCR	0x00000000	/* Processor control register */
+#define SRMMU_CXTPTR	0x00000100	/* Context table pointer register */
+#define SRMMU_CXR	0x00000200	/* Context register */
+#define SRMMU_SFSTAT	0x00000300	/* Synchronous fault status reg */
+#define SRMMU_SFADDR	0x00000400	/* Synchronous fault address reg */
 #define SRMMU_TLBCTRL	0x00001000	/* TLB replacement control reg */
+
+/* Synchronous Fault Status Register bits */
+#define SFSR_CS		0x00010000	/* Control Space error */
+#define SFSR_PERR	0x00006000	/* Parity error code */
+#define SFSR_TO		0x00000800	/* S-Bus timeout */
+#define SFSR_BE		0x00000400	/* S-Bus bus error */
+#define SFSR_LVL	0x00000300	/* Pagetable level causing the fault */
+#define SFSR_AT		0x000000e0	/* Access type */
+#define SFSR_FT		0x0000001c	/* Fault type */
+#define SFSR_FAV	0x00000002	/* Fault Address is valid */
+#define SFSR_OW		0x00000001	/* Overwritten with new fault */
+
+/* TLB Replacement Control Register bits */
+#define TLBC_DISABLE	0x00000020	/* Disable replacement counter */
+#define TLBC_RCNTMASK	0x0000001f	/* Replacement counter (0-31) */
 #endif
