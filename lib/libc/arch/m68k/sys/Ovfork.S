@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: Ovfork.S,v 1.3 1994/01/27 14:45:52 mycroft Exp $"
+	.asciz "$Id: Ovfork.S,v 1.4 1994/01/27 15:00:49 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -64,10 +64,8 @@ ENTRY(vfork)
 	movl	#SYS_vfork,d0
 	trap	#0
 	jcs	err
-	tstl	d1		/* child process ? */
-	jeq	parent
-	clrl	d0
-parent:
+	subql	#1,d1	/* from 1 to 0 in child, 0 to -1 in parent */
+	andl	d1,d0
 	jmp	a0@
 err:
 	.globl	_errno
