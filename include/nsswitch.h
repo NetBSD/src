@@ -1,3 +1,5 @@
+/*	$NetBSD: nsswitch.h,v 1.1.4.2 1997/05/23 20:31:42 lukem Exp $	*/
+
 /*-
  * Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org> 
  * All rights reserved.
