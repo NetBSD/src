@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.10 1999/01/20 15:59:00 hubertf Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.11 1999/03/18 23:57:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.10 1999/01/20 15:59:00 hubertf Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.11 1999/03/18 23:57:11 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -69,6 +69,7 @@ static int decode __P((void));
 static void usage __P((void));
 int main __P((int, char **));
 
+int pflag;
 char *filename;
 
 int
@@ -76,12 +77,19 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int rval;
+	int ch, rval;
 
 	setlocale(LC_ALL, "");
 
-	while (getopt(argc, argv, "") != -1)
-		usage();
+	pflag = 0;
+	while ((ch = getopt(argc, argv, "p")) != -1)
+		switch (ch) {
+		case 'p':
+			pflag = 1;
+			break;
+		default:
+			usage();
+		}
 	argc -= optind;
 	argv += optind;
 
@@ -163,8 +171,8 @@ decode()
 	}
 
 	/* create output file, set mode */
-	if (!freopen(fn, "w", stdout) ||
-	    fchmod(fileno(stdout), mode&0666)) {
+	if (!pflag && (!freopen(buf, "w", stdout) ||
+	    fchmod(fileno(stdout), mode & 0666))) { 
 		warnx("%s: %s", fn, filename);
 		return(1);
 	}
@@ -216,6 +224,6 @@ decode()
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: uudecode [file ...]\n");
+	(void)fprintf(stderr, "usage: uudecode [ -p ] [ file ... ]\n");
 	exit(1);
 }
