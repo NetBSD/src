@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pass2.c	8.2 (Berkeley) 2/27/94";*/
-static char *rcsid = "$Id: pass2.c,v 1.9 1994/12/05 20:15:59 cgd Exp $";
+/*static char sccsid[] = "from: @(#)pass2.c	8.6 (Berkeley) 10/27/94";*/
+static char *rcsid = "$Id: pass2.c,v 1.10 1994/12/28 00:03:53 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,6 +108,10 @@ pass2()
 		errexit("BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
 	}
 	statemap[ROOTINO] = DFOUND;
+	if (newinofmt) {
+		statemap[WINO] = FSTATE;
+		typemap[WINO] = DT_WHT;
+	}
 	/*
 	 * Sort the directory list into disk block order.
 	 */
@@ -241,15 +245,15 @@ pass2check(idesc)
 		proto.d_type = 0;
 	proto.d_namlen = 1;
 	(void)strcpy(proto.d_name, ".");
-#if BYTE_ORDER == LITTLE_ENDIAN
-	if (!newinofmt) {
-		u_char tmp;
+#	if BYTE_ORDER == LITTLE_ENDIAN
+		if (!newinofmt) {
+			u_char tmp;
 
-		tmp = proto.d_type;
-		proto.d_type = proto.d_namlen;
-		proto.d_namlen = tmp;
-	}
-#endif
+			tmp = proto.d_type;
+			proto.d_type = proto.d_namlen;
+			proto.d_namlen = tmp;
+		}
+#	endif
 	entrysize = DIRSIZ(0, &proto);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
@@ -366,6 +370,14 @@ chk2:
 	if (dirp->d_ino > maxino) {
 		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
 		n = reply("REMOVE");
+	} else if (newinofmt &&
+		   ((dirp->d_ino == WINO && dirp->d_type != DT_WHT) ||
+		    (dirp->d_ino != WINO && dirp->d_type == DT_WHT))) {
+		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
+		dirp->d_ino = WINO;
+		dirp->d_type = DT_WHT;
+		if (reply("FIX") == 1)
+			ret |= ALTERED;
 	} else {
 again:
 		switch (statemap[dirp->d_ino]) {
