@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.15 2003/03/24 15:03:58 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.16 2003/03/24 15:07:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,14 +31,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb_smb.c,v 1.7 2002/09/16 10:50:38 bp Exp
+ * FreeBSD: src/sys/netsmb/smb_smb.c,v 1.10 2003/02/19 05:47:38 imp Exp
  */
 /*
  * various SMB requests. Most of the routines merely packs data into mbufs.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.15 2003/03/24 15:03:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.16 2003/03/24 15:07:52 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ again:
 		 pp = "";
 		 plen = 1;
 		 unipp = &smb_unieol;
-		 uniplen = sizeof(smb_unieol);
+		 uniplen = 0;
 	}
 	smb_rq_wstart(rqp);
 	mbp = &rqp->sr_rq;
