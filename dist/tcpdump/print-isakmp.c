@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.4 2004/04/12 03:53:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.29 2001/10/26 03:41:29 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.4 2004/04/12 03:53:20 itojun Exp $");
 #endif
 #endif
 
@@ -1062,6 +1062,11 @@ isakmp_sub_print(u_char np, struct isakmp_gen *ext, u_char *ep,
 	while (np) {
 		safememcpy(&e, ext, sizeof(e));
 
+		if (ntohs(ext->len) > 0x1000 || ntohs(ext->len) == 0) {
+			printf("invalid length=%ud", ntohs(ext->len));
+			cp = ep + 1;
+			break;
+		}
 		if (ep < (u_char *)ext + ntohs(e.len)) {
 			printf(" [|%s]", NPSTR(np));
 			cp = ep + 1;
