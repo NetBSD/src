@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.18 2003/03/09 01:09:50 lukem Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.19 2004/11/18 14:02:42 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.18 2003/03/09 01:09:50 lukem Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.19 2004/11/18 14:02:42 kent Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -546,6 +546,7 @@ getdevinfo(int fd)
 	static struct audiodevinfo devcache = { 0 };
 	struct audiodevinfo *di = &devcache;
 	struct stat sb;
+	int mlen, dlen;
 
 	/* Figure out what device it is so we can check if the
 	 * cached data is valid.
@@ -575,9 +576,16 @@ getdevinfo(int fd)
 			break;
 		switch(mi.type) {
 		case AUDIO_MIXER_VALUE:
-			for(dp = devs; dp->name; dp++)
-		    		if (strcmp(dp->name, mi.label.name) == 0)
+			for(dp = devs; dp->name; dp++) {
+				if (strcmp(dp->name, mi.label.name) == 0)
 					break;
+				dlen = strlen(dp->name);
+				mlen = strlen(mi.label.name);
+				if (dlen < mlen
+				    && mi.label.name[mlen-dlen-1] == '.'
+				    && strcmp(dp->name, mi.label.name + mlen - dlen) == 0)
+					break;
+			}
 			if (dp->code >= 0) {
 				di->devmap[dp->code] = i;
 				di->rdevmap[i] = dp->code;

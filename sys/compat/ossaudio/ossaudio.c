@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.45 2003/06/29 22:29:41 fvdl Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.46 2004/11/18 14:02:42 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.45 2003/06/29 22:29:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.46 2004/11/18 14:02:42 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -632,6 +632,7 @@ getdevinfo(fp, p)
 	struct vattr va;
 	static struct audiodevinfo devcache = { 0 };
 	struct audiodevinfo *di = &devcache;
+	int mlen, dlen;
 
 	/* 
 	 * Figure out what device it is so we can check if the
@@ -665,9 +666,16 @@ getdevinfo(fp, p)
 			break;
 		switch(mi.type) {
 		case AUDIO_MIXER_VALUE:
-			for(dp = devs; dp->name; dp++)
-		    		if (strcmp(dp->name, mi.label.name) == 0)
+			for(dp = devs; dp->name; dp++) {
+				if (strcmp(dp->name, mi.label.name) == 0)
 					break;
+				dlen = strlen(dp->name);
+				mlen = strlen(mi.label.name);
+				if (dlen < mlen
+				    && mi.label.name[mlen-dlen-1] == '.'
+				    && strcmp(dp->name, mi.label.name + mlen - dlen) == 0)
+					break;
+			}
 			if (dp->code >= 0) {
 				di->devmap[dp->code] = i;
 				di->rdevmap[i] = dp->code;
