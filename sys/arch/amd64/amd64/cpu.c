@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2004/02/13 11:36:20 wiz Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2004/02/19 17:18:38 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2004/02/19 17:18:38 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -699,4 +699,7 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_FSBASE, 0);
 	wrmsr(MSR_GSBASE, (u_int64_t)ci);
 	wrmsr(MSR_KERNELGSBASE, 0);
+
+	if (cpu_feature & CPUID_NOX)
+		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }

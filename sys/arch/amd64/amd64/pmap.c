@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2004/02/19 17:18:38 drochner Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2004/02/19 17:18:38 drochner Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -899,6 +899,7 @@ pmap_bootstrap(kva_start)
 	pt_entry_t *pte;
 	int i;
 	unsigned long p1i;
+	pt_entry_t pg_nx = (cpu_feature & CPUID_NOX ? PG_NX : 0);
 
 	/*
 	 * set up our local static global vars that keep track of the
@@ -914,13 +915,14 @@ pmap_bootstrap(kva_start)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
+	protection_codes[VM_PROT_NONE] = pg_nx;			/* --- */
 	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
+	protection_codes[VM_PROT_READ] = PG_RO | pg_nx;		/* -r- */
 	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW;		/* w-- */
+	protection_codes[VM_PROT_WRITE] = PG_RW | pg_nx;	/* w-- */
 	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW;	/* wr- */
+	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pg_nx;
+								/* wr- */
 	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
 
 	/*
@@ -2226,7 +2228,7 @@ pmap_extract(pmap, va, pap)
 #ifdef LARGEPAGES
 	if (pde & PG_PS) {
 		if (pap != NULL)
-			*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			*pap = (pde & PG_LGFRAME) | (va & 0x1fffff);
 		return (TRUE);
 	}
 #endif
@@ -2234,7 +2236,7 @@ pmap_extract(pmap, va, pap)
 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			*pap = (pte & PG_FRAME) | (va & 0xfff);
 		return (TRUE);
 	}
 
