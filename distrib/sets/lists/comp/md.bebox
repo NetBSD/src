@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.8 2000/04/29 03:46:27 thorpej Exp $
+# $NetBSD: md.bebox,v 1.9 2000/06/26 15:49:48 kleink Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
@@ -23,6 +23,7 @@
 ./usr/include/bebox/frame.h	comp-c-include
 ./usr/include/bebox/ieee.h	comp-c-include
 ./usr/include/bebox/ieeefp.h	comp-c-include
+./usr/include/bebox/int_types.h	comp-c-include
 ./usr/include/bebox/intr.h	comp-c-include
 ./usr/include/bebox/ipkdb.h	comp-c-include
 ./usr/include/bebox/kcore.h	comp-c-include

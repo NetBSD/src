@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.5 2000/04/29 03:46:29 thorpej Exp $
+# $NetBSD: md.news68k,v 1.6 2000/06/26 15:49:55 kleink Exp $
 ./usr/include/news68k	comp-c-include
 ./usr/include/news68k/_G_config.h	comp-c-include
 ./usr/include/news68k/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/news68k/frame.h	comp-c-include
 ./usr/include/news68k/ieee.h	comp-c-include
 ./usr/include/news68k/ieeefp.h	comp-c-include
+./usr/include/news68k/int_types.h	comp-c-include
 ./usr/include/news68k/intr.h	comp-c-include
 ./usr/include/news68k/kcore.h	comp-c-include
 ./usr/include/news68k/limits.h	comp-c-include

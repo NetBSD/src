@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.5 2000/04/29 03:46:26 thorpej Exp $
+# $NetBSD: md.arc,v 1.6 2000/06/26 15:49:46 kleink Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/arc/float.h		comp-c-include
 ./usr/include/arc/ieee.h		comp-c-include
 ./usr/include/arc/ieeefp.h		comp-c-include
+./usr/include/arc/int_types.h		comp-c-include
 ./usr/include/arc/kcore.h		comp-c-include
 ./usr/include/arc/kdbparam.h		comp-c-include
 ./usr/include/arc/limits.h		comp-c-include

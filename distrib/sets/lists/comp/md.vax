@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.14 2000/06/03 05:36:56 matt Exp $
+# $NetBSD: md.vax,v 1.15 2000/06/26 15:50:03 kleink Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/vax/float.h	comp-c-include
 ./usr/include/vax/frame.h	comp-c-include
 ./usr/include/vax/ibcs2_machdep.h	comp-c-include
+./usr/include/vax/int_types.h	comp-c-include
 ./usr/include/vax/ioa.h	comp-c-include
 ./usr/include/vax/ka410.h	comp-c-include
 ./usr/include/vax/ka420.h	comp-c-include

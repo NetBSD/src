@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.37 2000/04/29 03:46:31 thorpej Exp $
+# $NetBSD: md.sun3,v 1.38 2000/06/26 15:50:02 kleink Exp $
 ./usr/include/sun3	comp-c-include
 ./usr/include/sun3/_G_config.h	comp-c-include
 ./usr/include/sun3/ansi.h	comp-c-include
@@ -24,6 +24,7 @@
 ./usr/include/sun3/idprom.h	comp-c-include
 ./usr/include/sun3/ieee.h	comp-c-include
 ./usr/include/sun3/ieeefp.h	comp-c-include
+./usr/include/sun3/int_types.h	comp-c-include
 ./usr/include/sun3/kbd.h	comp-c-include
 ./usr/include/sun3/kbio.h	comp-c-include
 ./usr/include/sun3/kcore.h	comp-c-include
