@@ -633,6 +633,7 @@
 ./usr/include/histedit.h
 ./usr/include/history.h
 ./usr/include/ieeefp.h
+./usr/include/inttypes.h
 ./usr/include/iso646.h
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
@@ -938,6 +939,7 @@
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
 ./usr/include/sys/gmon.h
+./usr/include/sys/inttypes.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ioctl_compat.h
