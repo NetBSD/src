@@ -1,4 +1,4 @@
-#	$NetBSD: std.amiga,v 1.15 1999/01/16 20:07:37 chuck Exp $
+#	$NetBSD: std.amiga,v 1.16 1999/03/24 06:06:09 mrg Exp $
 
 # standard amiga information
 
@@ -9,12 +9,6 @@ mainbus0	at root
 clock0	at mainbus0
 kbd0	at mainbus0
 zbus0	at mainbus0
-
-options 	SWAPPAGER		# paging
-options 	VNODEPAGER		# mmap() of files
-options 	DEVPAGER		# mmap() of devices
-
-options		UVM
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT

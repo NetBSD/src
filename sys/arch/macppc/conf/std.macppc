@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.5 1999/03/15 02:26:10 tsubai Exp $
+#	$NetBSD: std.macppc,v 1.6 1999/03/24 06:06:10 mrg Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -11,12 +11,4 @@ options 	EXEC_ELF32	# (native) ELF32 binary support
 options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
 options 	EXEC_SCRIPT	# shell script support
 
-# VM pager support
-# XXX Not with UVM; garbage-collect these eventually.
-options 	SWAPPAGER	# paging; REQUIRED
-options 	VNODEPAGER	# mmap() of files; REQUIRED
-options 	DEVPAGER	# mmap() of devices; REQUIRED
-
-# UVM is the standard VM system on NetBSD/powerpc.
-options 	UVM		# New UVM VM system
 #options 	PMAP_NEW	# UVM's new pmap interface
