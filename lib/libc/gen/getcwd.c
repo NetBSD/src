@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.34 2005/01/06 23:43:32 simonb Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.35 2005/01/23 01:00:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.34 2005/01/06 23:43:32 simonb Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.35 2005/01/23 01:00:51 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,15 +59,6 @@ __RCSID("$NetBSD: getcwd.c,v 1.34 2005/01/06 23:43:32 simonb Exp $");
 #ifdef __weak_alias
 __weak_alias(getcwd,_getcwd)
 __weak_alias(realpath,_realpath)
-#endif
-
-#define	ISDOT(dp) \
-	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
-	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
-
-
-#if defined(__SVR4) || defined(__svr4__)
-#define d_fileno d_ino
 #endif
 
 /*
@@ -205,44 +196,36 @@ err2:	(void)close(fd);
 }
 
 char *
-getcwd(pt, size)
-	char *pt;
-	size_t size;
+getcwd(char *pt, size_t size)
 {
-	size_t ptsize, bufsize;
-	int len;
-	
+	char *npt;
+
 	/*
-	 * If no buffer specified by the user, allocate one as necessary.
-	 * If a buffer is specified, the size has to be non-zero.  The path
-	 * is built from the end of the buffer backwards.
+	 * If a buffer is specified, the size has to be non-zero.
 	 */
-	if (pt) {
-		ptsize = 0;
-		if (!size) {
+	if (pt != NULL) {
+		if (size == 0) {
+			/* __getcwd(pt, 0) results ERANGE. */
 			errno = EINVAL;
 			return (NULL);
 		}
-		bufsize = size;
-	} else {
-		if ((pt = malloc(ptsize = 1024 - 4)) == NULL)
-			return (NULL);
-		bufsize = ptsize;
+		if (__getcwd(pt, size) >= 0)
+			return (pt);
+		return (NULL);
 	}
-	for (;;) {
-		len = __getcwd(pt, bufsize);
-		if ((len < 0) && (size == 0) && (errno == ERANGE)) {
-			if (ptsize > (MAXPATHLEN*4))
-				return NULL;
-			if ((pt = realloc(pt, ptsize *= 2)) == NULL)
-				return NULL;
-			bufsize = ptsize;
-			continue;
-		}
-		break;
-	}
-	if (len < 0)
-		return NULL;
-	else
-		return pt;
+
+	/*
+	 * If no buffer specified by the user, allocate one as necessary.
+	 */
+	size = 1024 >> 1;
+	do {
+		if ((npt = realloc(pt, size <<= 1)) == NULL)
+			break;
+		pt = npt;
+		if (__getcwd(pt, size) >= 0)
+			return (pt);
+	} while (size <= MAXPATHLEN * 4 && errno == ERANGE);
+
+	free(pt);
+	return (NULL);
 }
