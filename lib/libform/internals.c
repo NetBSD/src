@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.20 2001/06/23 13:34:01 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.21 2001/06/28 11:38:19 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -83,6 +83,8 @@ static int
 split_line(FIELD *field, unsigned pos);
 static void
 bump_lines(FIELD *field, int pos, int amt, bool do_len);
+static bool
+check_dynamic_size(FIELD *field);
 
 
 /*
@@ -162,6 +164,34 @@ bump_lines(FIELD *field, int pos, int amt, bool do_len)
 #endif
 		field->lines[i].start += amt;
 		field->lines[i].end += amt;
+	}
+}
+
+/*
+ * Check the sizing of the dynamic field, if the maximum size is set then
+ * check that the number of rows or columns does not exceed the set
+ * maximum.  The decision to check the rows or columns is made on the basis
+ * of how many rows are in the field - one row means the max applies to
+ * the number of columns otherwise it applies to the number of rows.  If
+ * the row/column count is less than the maximum then return TRUE.
+ *
+ */
+bool
+check_dynamic_size(FIELD *field)
+{
+	if (field->max == 0) /* unlimited */
+		return TRUE;
+
+	if (field->rows == 1) {
+		if (field->buffers[0].length >= field->max)
+			return FALSE;
+		else
+			return TRUE;
+	} else {
+		if (field->row_count > field->max)
+			return FALSE;
+		else
+			return TRUE;
 	}
 }
 
@@ -1042,7 +1072,7 @@ _formi_draw_page(FORM *form)
 int
 _formi_add_char(FIELD *field, unsigned int pos, char c)
 {
-	char *new;
+	char *new, old_c;
 	unsigned int new_size;
 	int status;
 
@@ -1094,9 +1124,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		if ((((field->opts & O_STATIC) == O_STATIC) &&
 		     (field->buffers[0].length >= (field->cols * field->rows))) ||
 		    (((field->opts & O_STATIC) != O_STATIC) &&
-/*XXXXX this is wrong - should check max row or col */
-		     ((field->max > 0) &&
-		      (field->buffers[0].length >= field->max))))
+		     (check_dynamic_size(field) == FALSE)))
 			return E_REQUEST_DENIED;
 		
 		if (field->buffers[0].length + 1
@@ -1116,7 +1144,8 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		      &field->buffers[0].string[pos + 1],
 		      field->buffers[0].length - pos + 1);
 	}
-	
+
+	old_c = field->buffers[0].string[pos];
 	field->buffers[0].string[pos] = c;
 	if (pos >= field->buffers[0].length) {
 		  /* make sure the string is terminated if we are at the
@@ -1138,13 +1167,31 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 
 	  /* wrap the field, if needed */
 	status = _formi_wrap_field(field, pos);
-	if (status != E_OK) {
-		  /* wrap failed for some reason, back out the char insert */
-		bcopy(&field->buffers[0].string[pos + 1],
-		      &field->buffers[0].string[pos],
-		      field->buffers[0].length - pos);
-		field->buffers[0].length--;
-		bump_lines(field, (int) pos, -1, TRUE);
+	
+	  /*
+	   * check the wrap worked or that we have not exceeded the
+	   * max field size - this can happen if the field is re-wrapped
+	   * and the row count is increased past the set limit.
+	   */
+	if ((status != E_OK) || (check_dynamic_size(field) == FALSE)) {
+		if ((field->overlay == 0)
+		    || ((field->overlay == 1)
+			&& (pos >= field->buffers[0].length))) {
+			  /*
+			   * wrap failed for some reason, back out the
+			   * char insert
+			   */
+			bcopy(&field->buffers[0].string[pos + 1],
+			      &field->buffers[0].string[pos],
+			      field->buffers[0].length - pos);
+			field->buffers[0].length--;
+			bump_lines(field, (int) pos, -1, TRUE);
+		} else if (field->overlay == 1) {
+			  /* back out character overlay */
+			field->buffers[0].string[pos] = old_c;
+		}
+		
+		_formi_wrap_field(field, ((pos > 0)? pos - 1 : 0));
 	} else {
 		field->buf0_status = TRUE;
 		if ((field->rows + field->nrows) == 1) {
@@ -1164,11 +1211,14 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 					- field->cursor_ypos - 1;
 			} else
 				field->cursor_ypos = new_size;
-			
-			field->cursor_xpos = pos
-				- field->lines[field->cursor_ypos
-					      + field->start_line].start + 1;
 
+			if ((field->lines[new_size].start) <= (pos + 1)) {
+				field->cursor_xpos = pos
+					- field->lines[new_size].start + 1;
+			} else {
+				field->cursor_xpos = 0;
+			}
+			
 			  /*
 			   * Annoying corner case - if we are right in
 			   * the bottom right corner of the field we
@@ -1185,7 +1235,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	}
 	
 #ifdef DEBUG
-	assert((field->cursor_xpos < 400000)
+	assert((field->cursor_xpos <= field->cols)
 	       && (field->cursor_ypos < 400000)
 	       && (field->start_line < 400000));
 	       
@@ -1413,6 +1463,7 @@ _formi_manipulate_field(FORM *form, int c)
 		
 	case REQ_BEG_LINE:
 		cur->cursor_xpos = 0;
+		cur->start_char = 0;
 		break;
 			
 	case REQ_END_FIELD:
@@ -1559,8 +1610,10 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_INS_CHAR:
-		_formi_add_char(cur, cur->start_char + cur->cursor_xpos,
-				cur->pad);
+		if ((status = _formi_add_char(cur, cur->start_char
+					      + cur->cursor_xpos,
+					      cur->pad)) != E_OK)
+			return status;
 		break;
 		
 	case REQ_INS_LINE:
