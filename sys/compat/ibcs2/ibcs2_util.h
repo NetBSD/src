@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_util.h,v 1.3 1996/10/10 17:51:55 christos Exp $	*/
+/*	$NetBSD: ibcs2_util.h,v 1.4 1996/10/13 00:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -36,7 +36,7 @@
 #include <compat/common/compat_util.h>
 
 #ifdef DEBUG_IBCS2
-#define DPRINTF(a)      kprintf a;
+#define DPRINTF(a)      printf a;
 #else
 #define DPRINTF(a)
 #endif

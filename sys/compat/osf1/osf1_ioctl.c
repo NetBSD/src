@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.4 1996/10/10 17:51:58 christos Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.5 1996/10/13 00:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -116,7 +116,7 @@ osf1_sys_ioctl(p, v, retval)
 	}
 #ifdef SYSCALL_DEBUG
 	if (scdebug)
-		kprintf(
+		printf(
 		    "OSF/1 IOCTL: group = %c, cmd = %d, len = %d, dir = %s\n",
 		    group, cmd, len, dirstr);
 #endif
