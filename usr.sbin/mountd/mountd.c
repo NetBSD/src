@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.59 2000/02/03 09:59:22 enami Exp $	 */
+/* $NetBSD: mountd.c,v 1.60 2000/02/15 04:51:56 enami Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.59 2000/02/03 09:59:22 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.60 2000/02/15 04:51:56 enami Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1715,10 +1715,11 @@ mount_export(dirp, dirplen, fsb, mntargs)
 			break;
 
 		*cp-- = savedc;
-		/* back up over the last component */
+		/* back up over the last component. */
 		while (cp > dirp && *cp != '/')
 			cp--;
-		while (cp > dirp && *(cp - 1) != '/')
+		/* skip over the slashes except the very first one (root). */
+		while (cp > dirp && *cp == '/')
 			cp--;
 		if (cp == dirp) {
 			if (debug)
@@ -1726,8 +1727,8 @@ mount_export(dirp, dirplen, fsb, mntargs)
 			errno = 0;	/* This is not a system error. XXX */
 			goto out;	/* Don't restore the savedc. */
 		}
-		/* Now, cp points the first slash. */
-		savedc = *cp;
+		/* Now, cp points the character just before a slash. */
+		savedc = *++cp;
 		*cp = '\0';
 	}
 
