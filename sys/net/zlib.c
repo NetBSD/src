@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $	*/
+/*	$NetBSD: zlib.c,v 1.14 2001/10/14 00:39:09 simonb Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $
+ * $Id: zlib.c,v 1.14 2001/10/14 00:39:09 simonb Exp $
  */
 
 /* 
@@ -662,7 +662,7 @@ typedef struct config_s {
    compress_func func;
 } config;
 
-const local config configuration_table[10] = {
+local const config configuration_table[10] = {
 /*      good lazy nice chain */
 /* 0 */ {0,    0,  0,    0, deflate_stored},  /* store only */
 /* 1 */ {4,    4,  8,    4, deflate_fast}, /* maximum speed, no lazy matches */
