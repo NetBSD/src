@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.10.2.4 2004/12/18 09:31:27 skrll Exp $	*/
+/*	$NetBSD: scif.c,v 1.10.2.5 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.4 2004/12/18 09:31:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.5 2005/01/24 08:59:40 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -755,7 +755,7 @@ scif_iflush(struct scif_softc *sc)
 }
 
 int
-scifopen(dev_t dev, int flag, int mode, struct proc *p)
+scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SCIFUNIT(dev);
 	struct scif_softc *sc;
@@ -785,7 +785,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -871,7 +871,7 @@ bad:
 }
 
 int
-scifclose(dev_t dev, int flag, int mode, struct proc *p)
+scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -908,12 +908,12 @@ scifwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-scifpoll(dev_t dev, int events, struct proc *p)
+scifpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -926,7 +926,7 @@ sciftty(dev_t dev)
 }
 
 int
-scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -936,11 +936,11 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -962,7 +962,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5.2.5 2005/01/24 08:35:53 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5.2.6 2005/01/24 08:59:40 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.5 2005/01/24 08:35:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.6 2005/01/24 08:59:40 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -613,11 +613,11 @@ key_sockaddr(struct socket *so, struct sockaddr **nam)
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, p)
+key_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
@@ -639,7 +639,7 @@ key_usrreq(so, req, m, nam, control, p)
 		key_freereg(so);
 	}
 
-	error = raw_usrreq(so, req, m, nam, control, p);
+	error = raw_usrreq(so, req, m, nam, control, l);
 	m = control = NULL;	/* reclaimed in raw_usrreq */
 	kp = (struct keycb *)sotorawcb(so);
 	if (req == PRU_ATTACH && kp) {

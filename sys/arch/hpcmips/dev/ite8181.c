@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.18.6.4 2004/12/18 09:31:03 skrll Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.18.6.5 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.18.6.4 2004/12/18 09:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.18.6.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,7 +120,7 @@ static int	ite8181_ema_read_1(struct ite8181_softc *, int);
 static void	ite8181_power(int, void *);
 static int	ite8181_hardpower(void *, int, long, void *);
 static int	ite8181_fbinit(struct hpcfb_fbconf *);
-static int	ite8181_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	ite8181_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	ite8181_mmap(void *, off_t offset, int);
 static void	ite8181_erase_cursor(struct ite8181_softc *);
 static int	ite8181_lcd_power(struct ite8181_softc *, int);
@@ -628,12 +628,12 @@ ite8181_fbinit(struct hpcfb_fbconf *fb)
 }
 
 int
-ite8181_ioctl(v, cmd, data, flag, p)
+ite8181_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ite8181_softc *sc = (struct ite8181_softc *)v;
 	struct hpcfb_fbconf *fbconf;

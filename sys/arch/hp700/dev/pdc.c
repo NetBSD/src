@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.8.6.2 2004/12/18 09:31:02 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.8.6.3 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8.6.2 2004/12/18 09:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8.6.3 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ pdcattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pdcopen(dev_t dev, int flag, int mode, struct proc *p)
+pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct pdc_softc *sc;
@@ -195,7 +195,8 @@ pdcopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag)) {
+	} else if ((tp->t_state&TS_XCLUDE) &&
+		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) {
 		splx(s);
 		return EBUSY;
 	} else
@@ -212,7 +213,7 @@ pdcopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-pdcclose(dev_t dev, int flag, int mode, struct proc *p)
+pdcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -257,16 +258,16 @@ pdcwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-pdcpoll(dev_t dev, int events, struct proc *p)
+pdcpoll(dev_t dev, int events, struct lwp *l)
 {  
 	struct pdc_softc *sc = pdc_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }  
 
 int
-pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	int error;
@@ -277,10 +278,10 @@ pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENXIO;
 
 	tp = sc->sc_tty;
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error >= 0)
 		return error;
 

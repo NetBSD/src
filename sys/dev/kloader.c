@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.1.2.4 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: kloader.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.1.2.4 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $");
 
 #include "debug_kloader.h"
 
@@ -93,7 +93,7 @@ struct kloader {
 };
 
 #define	BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
-#define	KLOADER_PROC	(&proc0)
+#define	KLOADER_LWP	(&lwp0)
 STATIC struct kloader kloader;
 
 #define	ROUND4(x)	(((x) + 3) & ~3)
@@ -596,10 +596,10 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct nameidata nid;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, l);
 
 	if (namei(&nid) != 0) {
 		PRINTF("namei failed (%s)\n", filename);
@@ -617,23 +617,23 @@ kloader_open(const char *filename)
 void
 kloader_close()
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct vnode *vp = kloader.vp;
 
 	VOP_UNLOCK(vp, 0);
-	vn_close(vp, FREAD, p->p_ucred, p);
+	vn_close(vp, FREAD, l->l_proc->p_ucred, l);
 }
 
 int
 kloader_read(size_t ofs, size_t size, void *buf)
 {
-	struct proc *p = KLOADER_PROC;
+	struct lwp *l = KLOADER_LWP;
 	struct vnode *vp = kloader.vp;
 	size_t resid;
 	int error;
 
 	error = vn_rdwr(UIO_READ, vp, buf, size, ofs, UIO_SYSSPACE,
-	    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
+	    IO_NODELOCKED | IO_SYNC, l->l_proc->p_ucred, &resid, NULL);
 
 	if (error)
 		PRINTF("read error.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.21.6.4 2004/12/18 09:31:03 skrll Exp $	*/
+/*	$NetBSD: mq200.c,v 1.21.6.5 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.4 2004/12/18 09:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.4 2004/12/18 09:31:03 skrll Exp $")
 static void	mq200_power(int, void *);
 static int	mq200_hardpower(void *, int, long, void *);
 static int	mq200_fbinit(struct hpcfb_fbconf *);
-static int	mq200_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	mq200_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	mq200_mmap(void *, off_t offset, int);
 static void	mq200_update_powerstate(struct mq200_softc *, int);
 void	mq200_init_backlight(struct mq200_softc *, int);
@@ -462,12 +462,12 @@ mq200_fbinit(struct hpcfb_fbconf *fb)
 }
 
 int
-mq200_ioctl(v, cmd, data, flag, p)
+mq200_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mq200_softc *sc = (struct mq200_softc *)v;
 	struct hpcfb_fbconf *fbconf;

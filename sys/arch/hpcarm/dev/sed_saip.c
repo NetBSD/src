@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.12.6.4 2004/12/18 09:31:02 skrll Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.12.6.5 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.12.6.4 2004/12/18 09:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.12.6.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.12.6.4 2004/12/18 09:31:02 skrll Exp 
  */
 int	sed1356match(struct device *, struct cfdata *, void *);
 void	sed1356attach(struct device *, struct device *, void *);
-int	sed1356_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	sed1356_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	sed1356_mmap(void *, off_t, int);
 
 
@@ -338,7 +338,7 @@ sed1356_update_powerstate(struct sed1356_softc *sc, int updates)
 }
 
 int
-sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)v;
 	struct hpcfb_fbconf *fbconf;
