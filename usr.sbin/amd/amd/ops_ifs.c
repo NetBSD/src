@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_ifs.c,v 1.1.1.1 1997/07/24 21:21:43 christos Exp $
+ * $Id: ops_ifs.c,v 1.2 1997/07/24 23:16:59 christos Exp $
  *
  */
 

@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,8 +36,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clock.c	8.1 (Berkeley) 6/6/93
- *	$Id: clock.c,v 1.3 1994/06/13 20:47:05 mycroft Exp $
+ *      %W% (Berkeley) %G%
+ *
+ * $Id: clock.c,v 1.4 1997/07/24 23:16:22 christos Exp $
+ *
  */
 
 /*
@@ -50,22 +53,29 @@
  * 2.  not obvious that a list is too slow for Amd.
  */
 
-#include "am.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
+
 
 typedef struct callout callout;
 struct callout {
-	callout	*c_next;		/* List of callouts */
-	void	(*c_fn)();		/* Function to call */
-	voidp	c_closure;		/* Closure to pass to call */
-	time_t	c_time;			/* Time of call */
-	int	c_id;			/* Unique identifier */
+  callout *c_next;		/* List of callouts */
+  void (*c_fn) ();		/* Function to call */
+  voidp c_closure;		/* Closure to pass to call */
+  time_t c_time;		/* Time of call */
+  int c_id;			/* Unique identifier */
 };
 
-static callout callouts;		/* List of pending callouts */
-static callout *free_callouts;		/* Cache of free callouts */
-static int nfree_callouts;		/* Number on free list */
-static int callout_id;			/* Next free callout identifier */
-time_t next_softclock;			/* Time of next call to softclock() */
+static callout callouts;	/* List of pending callouts */
+static callout *free_callouts;	/* Cache of free callouts */
+static int nfree_callouts;	/* Number on free list */
+static int callout_id;		/* Next free callout identifier */
+
+time_t next_softclock;		/* Time of next call to softclock() */
+
 
 /*
  * Number of callout slots we keep on the free list
@@ -75,165 +85,161 @@ time_t next_softclock;			/* Time of next call to softclock() */
 /*
  * Global assumption: valid id's are non-zero.
  */
-#define	CID_ALLOC()	(++callout_id)
-#define	CID_UNDEF	(0)
+#define	CID_ALLOC(struct )	(++callout_id)
+#define	CID_UNDEF		(0)
 
-static callout *alloc_callout(P_void);
-static callout *alloc_callout()
+
+static callout *
+alloc_callout(void)
 {
-	callout *cp = free_callouts;
-	if (cp) {
-		--nfree_callouts;
-		free_callouts = free_callouts->c_next;
-		return cp;
-	}
-	return ALLOC(callout);
+  callout *cp = free_callouts;
+
+  if (cp) {
+    --nfree_callouts;
+    free_callouts = free_callouts->c_next;
+    return cp;
+  }
+  return ALLOC(struct callout);
 }
 
-static void free_callout P((callout *cp));
-static void free_callout(cp)
-callout *cp;
+
+static void
+free_callout(callout *cp)
 {
-	if (nfree_callouts > CALLOUT_FREE_SLOP) {
-		free((voidp) cp);
-	} else {
-		cp->c_next = free_callouts;
-		free_callouts = cp;
-		nfree_callouts++;
-	}
+  if (nfree_callouts > CALLOUT_FREE_SLOP) {
+    free((voidp) cp);
+  } else {
+    cp->c_next = free_callouts;
+    free_callouts = cp;
+    nfree_callouts++;
+  }
 }
+
 
 /*
  * Schedule a callout.
  *
  * (*fn)(closure) will be called at clocktime() + secs
  */
-int timeout P((unsigned int secs, void (*fn)(), voidp closure));
-int timeout(secs, fn, closure)
-unsigned int secs;
-void (*fn)();
-voidp closure;
+int
+timeout(u_int secs, void (*fn) (), voidp closure)
 {
-	callout *cp, *cp2;
-	time_t t = clocktime() + secs;
+  callout *cp, *cp2;
+  time_t t = clocktime() + secs;
 
-	/*
-	 * Allocate and fill in a new callout structure
-	 */
-	callout *cpnew = alloc_callout();
-	cpnew->c_closure = closure;
-	cpnew->c_fn = fn;
-	cpnew->c_time = t;
-	cpnew->c_id = CID_ALLOC();
+  /*
+   * Allocate and fill in a new callout structure
+   */
+  callout *cpnew = alloc_callout();
+  cpnew->c_closure = closure;
+  cpnew->c_fn = fn;
+  cpnew->c_time = t;
+  cpnew->c_id = CID_ALLOC(struct );
 
-	if (t < next_softclock)
-		next_softclock = t;
+  if (t < next_softclock)
+    next_softclock = t;
 
-	/*
-	 * Find the correct place in the list
-	 */
-	for (cp = &callouts; cp2 = cp->c_next; cp = cp2)
-		if (cp2->c_time >= t)
-			break;
+  /*
+   * Find the correct place in the list
+   */
+  for (cp = &callouts; (cp2 = cp->c_next); cp = cp2)
+    if (cp2->c_time >= t)
+      break;
 
-	/*
-	 * And link it in
-	 */
-	cp->c_next = cpnew;
-	cpnew->c_next = cp2;
+  /*
+   * And link it in
+   */
+  cp->c_next = cpnew;
+  cpnew->c_next = cp2;
 
-	/*
-	 * Return callout identifier
-	 */
-	return cpnew->c_id;
+  /*
+   * Return callout identifier
+   */
+  return cpnew->c_id;
 }
+
 
 /*
  * De-schedule a callout
  */
-void untimeout P((int id));
-void untimeout(id)
-int id;
+void
+untimeout(int id)
 {
-	callout *cp, *cp2;
-	for (cp = &callouts; cp2 = cp->c_next; cp = cp2) {
-		if (cp2->c_id == id) {
-			cp->c_next = cp2->c_next;
-			free_callout(cp2);
-			break;
-		}
-	}
+  callout *cp, *cp2;
+  for (cp = &callouts; (cp2 = cp->c_next); cp = cp2) {
+    if (cp2->c_id == id) {
+      cp->c_next = cp2->c_next;
+      free_callout(cp2);
+      break;
+    }
+  }
 }
+
 
 /*
  * Reschedule after clock changed
  */
-void reschedule_timeouts P((time_t now, time_t then));
-void reschedule_timeouts(now, then)
-time_t now;
-time_t then;
+void
+reschedule_timeouts(time_t now, time_t then)
 {
-	callout *cp;
+  callout *cp;
 
-	for (cp = callouts.c_next; cp; cp = cp->c_next) {
-		if (cp->c_time >= now && cp->c_time <= then) {
-			plog(XLOG_WARNING, "job %d rescheduled to run immediately", cp->c_id);
+  for (cp = callouts.c_next; cp; cp = cp->c_next) {
+    if (cp->c_time >= now && cp->c_time <= then) {
+      plog(XLOG_WARNING, "job %d rescheduled to run immediately", cp->c_id);
 #ifdef DEBUG
-			dlog("rescheduling job %d back %d seconds",
-				cp->c_id, cp->c_time - now);
-#endif
-			next_softclock = cp->c_time = now;
-		}
-	}
+      dlog("rescheduling job %d back %d seconds", cp->c_id, cp->c_time - now);
+#endif /* DEBUG */
+      next_softclock = cp->c_time = now;
+    }
+  }
 }
+
 
 /*
  * Clock handler
  */
-int softclock(P_void);
-int softclock()
+int
+softclock(void)
 {
-	time_t now;
-	callout *cp;
+  time_t now;
+  callout *cp;
 
-	do {
-		if (task_notify_todo)
-			do_task_notify();
+  do {
+    if (task_notify_todo)
+      do_task_notify();
 
-		now = clocktime();
+    now = clocktime();
 
-		/*
-		 * While there are more callouts waiting...
-		 */
-		while ((cp = callouts.c_next) && cp->c_time <= now) {
-			/*
-			 * Extract first from list, save fn & closure and
-			 * unlink callout from list and free.
-			 * Finally call function.
-			 *
-			 * The free is done first because
-			 * it is quite common that the
-			 * function will call timeout()
-			 * and try to allocate a callout
-			 */
-			void (*fn)() = cp->c_fn;
-			voidp closure = cp->c_closure;
+    /*
+     * While there are more callouts waiting...
+     */
+    while ((cp = callouts.c_next) && cp->c_time <= now) {
+      /*
+       * Extract first from list, save fn & closure and
+       * unlink callout from list and free.
+       * Finally call function.
+       *
+       * The free is done first because
+       * it is quite common that the
+       * function will call timeout()
+       * and try to allocate a callout
+       */
+      void (*fn) () = cp->c_fn;
+      voidp closure = cp->c_closure;
 
-			callouts.c_next = cp->c_next;
-			free_callout(cp);
-#ifdef DEBUG
-			/*dlog("Calling %#x(%#x)", fn, closure);*/
-#endif /* DEBUG */
-			(*fn)(closure);
-		}
+      callouts.c_next = cp->c_next;
+      free_callout(cp);
+      (*fn) (closure);
+    }
 
-	} while (task_notify_todo);
+  } while (task_notify_todo);
 
-	/*
-	 * Return number of seconds to next event,
-	 * or 0 if there is no event.
-	 */
-	if (cp = callouts.c_next)
-		return cp->c_time - now;
-	return 0;
+  /*
+   * Return number of seconds to next event,
+   * or 0 if there is no event.
+   */
+  if ((cp = callouts.c_next))
+    return cp->c_time - now;
+  return 0;
 }

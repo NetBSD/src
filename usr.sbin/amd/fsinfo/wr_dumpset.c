@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,52 +36,61 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wr_dumpset.c	8.1 (Berkeley) 6/6/93
- *	$Id: wr_dumpset.c,v 1.3 1994/06/13 20:50:27 mycroft Exp $
+ *      %W% (Berkeley) %G%
+ *
+ * $Id: wr_dumpset.c,v 1.4 1997/07/24 23:18:37 christos Exp $
+ *
  */
 
-#include "../fsinfo/fsinfo.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <fsi_data.h>
+#include <fsinfo.h>
 
-static int write_dumpset_info(ef, q)
-FILE *ef;
-qelem *q;
+
+static int
+write_dumpset_info(FILE *ef, qelem *q)
 {
-	int errors = 0;
-	disk_fs *dp;
+  int errors = 0;
+  disk_fs *dp;
 
-	ITER(dp, disk_fs, q) {
-		if (dp->d_dumpset) {
-			fprintf(ef, "%s\t%s:%-30s\t# %s\n",
-				dp->d_dumpset,
-				dp->d_host->h_lochost ?
-				dp->d_host->h_lochost :
-				dp->d_host->h_hostname,
-				dp->d_mountpt,
-				dp->d_dev);
-		}
-	}
-	return errors;
+  ITER(dp, disk_fs, q) {
+    if (dp->d_dumpset) {
+      fprintf(ef, "%s\t%s:%-30s\t# %s\n",
+	      dp->d_dumpset,
+	      dp->d_host->h_lochost ?
+	      dp->d_host->h_lochost :
+	      dp->d_host->h_hostname,
+	      dp->d_mountpt,
+	      dp->d_dev);
+    }
+  }
+  return errors;
 }
 
-int write_dumpset(q)
-qelem *q;
+
+int
+write_dumpset(qelem *q)
 {
-	int errors = 0;
+  int errors = 0;
 
-	if (dumpset_pref) {
-		FILE *ef = pref_open(dumpset_pref, "dumpsets", info_hdr, "exabyte dumpset");
-		if (ef) {
-			host *hp;
-			ITER(hp, host, q) {
-				if (hp->h_disk_fs) {
-					errors += write_dumpset_info(ef, hp->h_disk_fs);
-				}
-			}
-			errors += pref_close(ef);
-		} else {
-			errors++;
-		}
+  if (dumpset_pref) {
+    FILE *ef = pref_open(dumpset_pref, "dumpsets", info_hdr, "exabyte dumpset");
+    if (ef) {
+      host *hp;
+
+      ITER(hp, host, q) {
+	if (hp->h_disk_fs) {
+	  errors += write_dumpset_info(ef, hp->h_disk_fs);
 	}
+      }
+      errors += pref_close(ef);
+    } else {
+      errors++;
+    }
+  }
 
-	return errors;
+  return errors;
 }
