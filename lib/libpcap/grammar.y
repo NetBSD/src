@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.7 1999/10/25 16:39:37 is Exp $	*/
+/*	$NetBSD: grammar.y,v 1.8 2001/01/19 09:02:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: grammar.y,v 1.56 96/11/02 21:54:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.7 1999/10/25 16:39:37 is Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.8 2001/01/19 09:02:40 kleink Exp $");
 #endif
 #endif
 
@@ -114,7 +114,7 @@ pcap_parse()
 
 %token  DST SRC HOST GATEWAY
 %token  NET MASK PORT LESS GREATER PROTO PROTOCHAIN BYTE
-%token  ARP RARP IP TCP UDP ICMP IGMP IGRP PIM
+%token  ARP RARP IP TCP UDP ICMP IGMP IGRP PIM VRRP
 %token  ATALK DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
@@ -263,6 +263,7 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| IGMP			{ $$ = Q_IGMP; }
 	| IGRP			{ $$ = Q_IGRP; }
 	| PIM			{ $$ = Q_PIM; }
+	| VRRP			{ $$ = Q_VRRP; }
 	| ATALK			{ $$ = Q_ATALK; }
 	| DECNET		{ $$ = Q_DECNET; }
 	| LAT			{ $$ = Q_LAT; }
