@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.57 2004/07/07 08:41:34 mycroft Exp $
+#	$NetBSD: files.x68k,v 1.58 2004/08/01 14:32:48 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -209,6 +209,7 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 include "compat/ossaudio/files.ossaudio"
 
 # USB support
+include "dev/wscons/files.wscons"
 include "dev/usb/files.usb"
 
 include "arch/x68k/conf/majors.x68k"
