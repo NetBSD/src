@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdvar.h,v 1.2 2001/01/21 22:45:58 marcus Exp $	*/
+/*	$NetBSD: mkbdvar.h,v 1.3 2002/03/25 18:59:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -50,5 +50,5 @@ struct mkbd_softc {
 	struct mkbd_condition sc_condition;
 };
 
-int	mkbd_cnattach __P((void));
+int	mkbd_cnattach(void);
 
