@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.296 2001/01/15 23:29:28 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.297 2001/01/17 20:56:47 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.291 2001/01/17 20:55:47 thorpej Exp 
  */
 
 /*
@@ -1119,7 +1119,9 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82452	0x1000		/* Pro/1000 */
+#define	PCI_PRODUCT_INTEL_82452	0x1000		/* PRO/1000 Gigabit Ethernet (i82452) */
+#define	PCI_PRODUCT_INTEL_LIVENGOOD	0x1001		/* PRO/1000 Gigabit Ethernet (LIVENGOOD) */
+#define	PCI_PRODUCT_INTEL_82452_SC	0x1003		/* PRO/1000 Gigabit Ethernet (i82452-SC) */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
