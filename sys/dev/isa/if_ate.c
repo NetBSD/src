@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.32 2002/09/28 17:18:28 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.33 2002/09/28 18:19:08 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.32 2002/09/28 17:18:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.33 2002/09/28 18:19:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.32 2002/09/28 17:18:28 tsutsui Exp $");
 #include <dev/ic/ate_subr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
 
 int	ate_match __P((struct device *, struct cfdata *, void *));
 void	ate_attach __P((struct device *, struct device *, void *));
