@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.61 1999/11/29 12:54:00 itojun Exp $
+$NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,6 +192,7 @@ vendor DIGITAL			-1 	Digital Equipment Corporation
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking Technology
 vendor AMBICOM			-1	AmbiCom Inc
+vendor EPSON			-1	Seiko Epson Corporation
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -216,3 +217,4 @@ product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. 
 product SVEC LANCARD	{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
+product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL } Epson EEN10B
