@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.479 2002/09/12 17:18:50 joda Exp $
+#	$NetBSD: mi,v 1.480 2002/09/19 10:47:47 ragge Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -690,7 +690,6 @@
 ./usr/include/sys/cdefs_elf.h		comp-c-include
 ./usr/include/sys/cdio.h		comp-c-include
 ./usr/include/sys/chio.h		comp-c-include
-./usr/include/sys/clist.h		comp-c-include
 ./usr/include/sys/clockctl.h		comp-c-include
 ./usr/include/sys/conf.h		comp-c-include
 ./usr/include/sys/core.h		comp-c-include
