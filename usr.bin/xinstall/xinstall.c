@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.55 2001/10/28 23:43:19 perry Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.56 2001/10/29 00:25:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.55 2001/10/28 23:43:19 perry Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.56 2001/10/29 00:25:44 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,10 +400,12 @@ install(char *from_name, char *to_name, u_int flags)
 	char		*p, tmpl[MAXPATHLEN], *oto_name;
 
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
-		if (stat(from_name, &from_sb))
-			err(1, "%s", from_name);
-		if (!S_ISREG(from_sb.st_mode))
-			errx(1, "%s: not a regular file", from_name);
+		if (!dolink) {
+			if (stat(from_name, &from_sb))
+				err(1, "%s", from_name);
+			if (!S_ISREG(from_sb.st_mode))
+				errx(1, "%s: not a regular file", from_name);
+		}
 		/* Build the target path. */
 		if (flags & DIRECTORY) {
 			(void)snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
