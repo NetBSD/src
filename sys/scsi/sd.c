@@ -124,7 +124,7 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	 * request must specify this.
 	 */
 	sd_get_parms(unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
-	printf("sd%d at %s%d targ %d lun %d: %dMB cyl %d head %d sec %d byte/sec %d\n",
+	printf("sd%d at %s%d targ %d lun %d: %dMB %d cyl, %d head, %d sec, %d byte/sec\n",
 		unit, sw->name, masunit, targ, lun,
 		(dp->cyls*dp->heads*dp->sectors*dp->secsiz)/ (1024*1024),
 		dp->cyls, dp->heads, dp->sectors, dp->secsiz);
