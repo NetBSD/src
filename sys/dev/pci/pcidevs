@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.82 1998/09/22 22:59:02 mark Exp $
+$NetBSD: pcidevs,v 1.83 1998/09/26 16:16:23 dante Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -594,7 +594,7 @@ product ADP2 7896	0x005f	AIC-7896/7
 product ADVSYS 1200A	0x1100
 product ADVSYS 1200B	0x1200
 product ADVSYS ULTRA	0x1300	ABP-930/40UA
-product ADVSYS 2300	0x2300
+product ADVSYS WIDE	0x2300	ABP-940UW
 
 /* Alliance products */
 product ALLIANCE AT24	0x6424	AT24
