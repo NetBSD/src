@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.11 1998/07/26 19:43:14 mycroft Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.12 1998/07/27 16:43:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.11 1998/07/26 19:43:14 mycroft Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.12 1998/07/27 16:43:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ ls_list(arcn, now)
 	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
-	char *timefrmt;
+	const char *timefrmt;
 
 	/*
 	 * if not verbose, just print the file name
@@ -183,7 +183,7 @@ ls_tty(arcn)
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
-	char *timefrmt;
+	const char *timefrmt;
 
 	if (ltmfrmt == NULL) {
 		/*

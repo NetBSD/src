@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.22 1998/04/01 13:54:44 kleink Exp $	*/
+/*	$NetBSD: date.c,v 1.23 1998/07/27 16:43:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.22 1998/04/01 13:54:44 kleink Exp $");
+__RCSID("$NetBSD: date.c,v 1.23 1998/07/27 16:43:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ time_t tval;
 int retval, nflag;
 
 int main __P((int, char *[]));
-static void setthetime __P((char *));
+static void setthetime __P((const char *));
 static void badformat __P((void));
 static void usage __P((void));
 
@@ -134,12 +134,12 @@ main(argc, argv)
 
 void
 setthetime(p)
-	char *p;
+	const char *p;
 {
 	struct tm *lt;
 	struct timeval tv;
-	char *dot, *t;
-	int yearset;
+	const char *dot, *t;
+	int yearset, len;
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit(*t))
@@ -154,15 +154,18 @@ setthetime(p)
 	lt = localtime(&tval);
 
 	if (dot != NULL) {			/* .ss */
-		*dot++ = '\0';
-		if (strlen(dot) != 2)
+		len = strlen(dot);
+		if (len != 3)
 			badformat();
+		++dot;
 		lt->tm_sec = ATOI2(dot);
-	} else
+	} else {
+		len = 0;
 		lt->tm_sec = 0;
+	}
 
 	yearset = 0;
-	switch (strlen(p)) {
+	switch (strlen(p) - len) {
 	case 12:				/* cc */
 		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
 		yearset = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7 1998/07/26 19:43:14 mycroft Exp $	*/
+/*	$NetBSD: cache.c,v 1.8 1998/07/27 16:43:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cache.c,v 1.7 1998/07/26 19:43:14 mycroft Exp $");
+__RCSID("$NetBSD: cache.c,v 1.8 1998/07/27 16:43:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,12 +250,13 @@ name_uid(uid, frc)
 		if (ptr == NULL)
 			return("");
 		ptr->uid = uid;
-		ptr->valid = INVALID;
 #		ifdef NET2_STAT
-		(void)sprintf(ptr->name, "%u", uid);
+		(void)snprintf(ptr->name, UNMLEN, "%u", uid);
 #		else
-		(void)sprintf(ptr->name, "%lu", (long) uid);
+		(void)snprintf(ptr->name, UNMLEN, "%lu", (long) uid);
 #		endif
+		ptr->name[UNMLEN-1] = '\0';
+		ptr->valid = INVALID;
 		if (frc == 0)
 			return("");
 	} else {
@@ -327,12 +328,13 @@ name_gid(gid, frc)
 		if (ptr == NULL)
 			return("");
 		ptr->gid = gid;
-		ptr->valid = INVALID;
 #		ifdef NET2_STAT
-		(void)sprintf(ptr->name, "%u", gid);
+		(void)snprintf(ptr->name, GNMLEN, "%u", gid);
 #		else
-		(void)sprintf(ptr->name, "%lu", (long) gid);
+		(void)snprintf(ptr->name, GNMLEN, "%lu", (long) gid);
 #		endif
+		ptr->name[GNMLEN-1] = '\0';
+		ptr->valid = INVALID;
 		if (frc == 0)
 			return("");
 	} else {
