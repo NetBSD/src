@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.5 1996/03/03 16:49:00 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.6 1996/10/05 05:22:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -764,7 +764,6 @@ void
 hypercninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 
 	/*
@@ -780,15 +779,9 @@ hypercninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &hyper_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &hyper_itesw);
 }
 
 #endif /* NITE > 0 */
