@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.12 2000/06/17 06:56:20 soda Exp $
+$NetBSD: TODO,v 1.13 2000/06/17 09:18:39 soda Exp $
 
 To do list (not in any particular order).
 
@@ -29,13 +29,6 @@ To do list (not in any particular order).
 
 	-   interrupt handling?
 
-    o	NEC RISCstation 2250 support
-
-	-   provide static storage for bus_space extent for kernel early stage
-
-	-   make PCI framebuffer as console.
-	    wired map framebuffer memory for kernel early stage.
-
     o	repair DeskStation support
 
 	-   requires bounce buffer bus_dma for Tyne
@@ -49,7 +42,6 @@ To do list (not in any particular order).
    o	sysinst
 
    o	install notes
-	do not forget about legal notice for pefo and openbsd.
 
    o	www: diskless HOW-TO port-arc specific part.
 
@@ -80,6 +72,8 @@ To do list (not in any particular order).
 	-   try to interporate HZ; may be possible for R4030/R4230 system
 	    or 'hardclock() by R4000' system.  Clock resolution of 100Hz
 	    without any interporation is substandard
+
+	-   remove UADDR
 
     o	overblocking on interrupt handler, and related problems
 
@@ -169,8 +163,9 @@ To do list (not in any particular order).
 
     o	intrcnt[] name cleanup
 
-    o	implement NCR 53c700(?) driver for NEC RISCserver 2200
-	based on amiga siop driver?
+    o	implement NCR 53c700(?) driver for NEC RISCserver 2200,
+	RISCstation 2200 and RISCstation 2250.
+	based on MI siop driver?
 
     o	audio driver
 
@@ -192,8 +187,6 @@ To do list (not in any particular order).
 
     o	and missing MI devices
 		ses?, lkm, vcoda, ...
-
-    o	way to specify serial console
 
     o	bus_dmamap_sync: Hit_Invalidate and Hit_Write_Back cache operation
 
