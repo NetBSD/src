@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1994/10/26 08:46:59 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1994/11/28 04:43:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -591,11 +591,8 @@ bad:
 	return(-1);
 }
 
-
-
-
-
-static int mtoupper(int c)
+static int
+mtoupper(int c)
 {
 	if (( c>='a' ) && ( c<='z') )
 		return ( c-'a' + 'A' );
@@ -604,11 +601,20 @@ static int mtoupper(int c)
 
 }
 
-static char *mstr2upper(char *str)
+static char *
+mstr2upper(char *str)
 {
 	char *p;
+
 	for(p=str;*p;p++)
 		*p=mtoupper(*p);
-
 	return str;
+}
+
+void
+dk_establish(dk, dev)
+	struct dkdevice	*dk;
+	struct device	*dev;
+{
+	/* Empty for now. -- XXX */
 }
