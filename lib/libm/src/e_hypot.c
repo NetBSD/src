@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_hypot.c,v 1.5 1994/08/10 20:30:55 jtc Exp $";
+static char rcsid[] = "$Id: e_hypot.c,v 1.6 1994/08/18 23:05:24 jtc Exp $";
 #endif
 
 /* __ieee754_hypot(x,y)
@@ -57,7 +57,7 @@ static char rcsid[] = "$Id: e_hypot.c,v 1.5 1994/08/10 20:30:55 jtc Exp $";
 #endif
 {
 	double a=x,b=y,t1,t2,y1,y2,w;
-	int j,k,ha,hb;
+	int32_t j,k,ha,hb;
 
 	GET_HIGH_WORD(ha,x);
 	ha &= 0x7fffffff;
@@ -70,7 +70,7 @@ static char rcsid[] = "$Id: e_hypot.c,v 1.5 1994/08/10 20:30:55 jtc Exp $";
 	k=0;
 	if(ha > 0x5f300000) {	/* a>2**500 */
 	   if(ha >= 0x7ff00000) {	/* Inf or NaN */
-	       unsigned int low;
+	       u_int32_t low;
 	       w = a+b;			/* for sNaN */
 	       GET_LOW_WORD(low,a);
 	       if(((ha&0xfffff)|low)==0) w = a;
@@ -85,7 +85,7 @@ static char rcsid[] = "$Id: e_hypot.c,v 1.5 1994/08/10 20:30:55 jtc Exp $";
 	}
 	if(hb < 0x20b00000) {	/* b < 2**-500 */
 	    if(hb <= 0x000fffff) {	/* subnormal b or 0 */	
-	        unsigned int low;
+	        u_int32_t low;
 		GET_LOW_WORD(low,b);
 		if((hb|low)==0) return a;
 		t1=0;
@@ -119,7 +119,7 @@ static char rcsid[] = "$Id: e_hypot.c,v 1.5 1994/08/10 20:30:55 jtc Exp $";
 	    w  = sqrt(t1*y1-(w*(-w)-(t1*y2+t2*b)));
 	}
 	if(k!=0) {
-	    unsigned int high;
+	    u_int32_t high;
 	    t1 = 1.0;
 	    GET_HIGH_WORD(high,t1);
 	    SET_HIGH_WORD(t1,high+(k<<20));

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_cosh.c,v 1.4 1994/08/10 20:30:41 jtc Exp $";
+static char rcsid[] = "$Id: e_cosh.c,v 1.5 1994/08/18 23:05:15 jtc Exp $";
 #endif
 
 /* __ieee754_cosh(x)
@@ -52,8 +52,8 @@ static double one = 1.0, half=0.5, huge = 1.0e300;
 #endif
 {	
 	double t,w;
-	int ix;
-	unsigned lx;
+	int32_t ix;
+	u_int32_t lx;
 
     /* High word of |x|. */
 	GET_HIGH_WORD(ix,x);
@@ -82,7 +82,7 @@ static double one = 1.0, half=0.5, huge = 1.0e300;
     /* |x| in [log(maxdouble), overflowthresold] */
 	GET_LOW_WORD(lx,x);
 	if (ix<0x408633CE || 
-	      (ix==0x408633ce)&&(lx<=(unsigned)0x8fb9f87d)) {
+	      (ix==0x408633ce)&&(lx<=(u_int32_t)0x8fb9f87d)) {
 	    w = __ieee754_exp(half*fabs(x));
 	    t = half*w;
 	    return t*w;

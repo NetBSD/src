@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_powf.c,v 1.1 1994/08/10 20:31:17 jtc Exp $";
+static char rcsid[] = "$Id: e_powf.c,v 1.2 1994/08/18 23:05:54 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -66,8 +66,8 @@ ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 {
 	float z,ax,z_h,z_l,p_h,p_l;
 	float y1,t1,t2,r,s,t,u,v,w;
-	int i,j,k,yisint,n;
-	int hx,hy,ix,iy,is;
+	int32_t i,j,k,yisint,n;
+	int32_t hx,hy,ix,iy,is;
 
 	GET_FLOAT_WORD(hx,x);
 	GET_FLOAT_WORD(hy,y);
@@ -129,7 +129,7 @@ ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 	}
     
     /* (x<0)**(non-int) is NaN */
-	if(((((unsigned)hx>>31)-1)|yisint)==0) return (x-x)/(x-x);
+	if(((((u_int32_t)hx>>31)-1)|yisint)==0) return (x-x)/(x-x);
 
     /* |y| is huge */
 	if(iy>0x4d000000) { /* if |y| > 2**27 */
@@ -200,7 +200,7 @@ ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 	}
 
 	s = one; /* s (sign of result -ve**odd) = -1 else = 1 */
-	if(((((unsigned)hx>>31)-1)|(yisint-1))==0)
+	if(((((u_int32_t)hx>>31)-1)|(yisint-1))==0)
 	    s = -one;	/* (-ve)**(odd int) */
 
     /* split up y into y1+y2 and compute (y1+y2)*(t1+t2) */

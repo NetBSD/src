@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_cos.c,v 1.5 1994/08/10 20:31:34 jtc Exp $";
+static char rcsid[] = "$Id: k_cos.c,v 1.6 1994/08/18 23:06:08 jtc Exp $";
 #endif
 
 /*
@@ -73,7 +73,7 @@ C6  = -1.13596475577881948265e-11; /* 0xBDA8FAE9, 0xBE8838D4 */
 #endif
 {
 	double a,hz,z,r,qx;
-	int ix;
+	int32_t ix;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;			/* ix = |x|'s high word*/
 	if(ix<0x3e400000) {			/* if x < 2**27 */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_fmod.c,v 1.5 1994/08/10 20:30:47 jtc Exp $";
+static char rcsid[] = "$Id: e_fmod.c,v 1.6 1994/08/18 23:05:21 jtc Exp $";
 #endif
 
 /* 
@@ -36,8 +36,8 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	double x,y ;
 #endif
 {
-	int n,hx,hy,hz,ix,iy,sx,i;
-	unsigned lx,ly,lz;
+	int32_t n,hx,hy,hz,ix,iy,sx,i;
+	u_int32_t lx,ly,lz;
 
 	EXTRACT_WORDS(hx,lx,x);
 	EXTRACT_WORDS(hy,ly,y);
@@ -52,7 +52,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	if(hx<=hy) {
 	    if((hx<hy)||(lx<ly)) return x;	/* |x|<|y| return x */
 	    if(lx==ly) 
-		return Zero[(unsigned)sx>>31];	/* |x|=|y| return x*0*/
+		return Zero[(u_int32_t)sx>>31];	/* |x|=|y| return x*0*/
 	}
 
     /* determine ix = ilogb(x) */
@@ -106,7 +106,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    if(hz<0){hx = hx+hx+(lx>>31); lx = lx+lx;}
 	    else {
 	    	if((hz|lz)==0) 		/* return sign(x)*0 */
-		    return Zero[(unsigned)sx>>31];
+		    return Zero[(u_int32_t)sx>>31];
 	    	hx = hz+hz+(lz>>31); lx = lz+lz;
 	    }
 	}
@@ -115,7 +115,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 
     /* convert back to floating value and restore the sign */
 	if((hx|lx)==0) 			/* return sign(x)*0 */
-	    return Zero[(unsigned)sx>>31];	
+	    return Zero[(u_int32_t)sx>>31];	
 	while(hx<0x00100000) {		/* normalize x */
 	    hx = hx+hx+(lx>>31); lx = lx+lx;
 	    iy -= 1;
@@ -126,7 +126,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	} else {		/* subnormal output */
 	    n = -1022 - iy;
 	    if(n<=20) {
-		lx = (lx>>n)|((unsigned)hx<<(32-n));
+		lx = (lx>>n)|((u_int32_t)hx<<(32-n));
 		hx >>= n;
 	    } else if (n<=31) {
 		lx = (hx<<(32-n))|(lx>>n); hx = sx;

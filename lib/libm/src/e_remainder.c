@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_remainder.c,v 1.5 1994/08/10 20:31:24 jtc Exp $";
+static char rcsid[] = "$Id: e_remainder.c,v 1.6 1994/08/18 23:06:00 jtc Exp $";
 #endif
 
 /* __ieee754_remainder(x,p)
@@ -40,8 +40,8 @@ static double zero = 0.0;
 	double x,p;
 #endif
 {
-	int hx,hp;
-	unsigned sx,lx,lp;
+	int32_t hx,hp;
+	u_int32_t sx,lx,lp;
 	double p_half;
 
 	EXTRACT_WORDS(hx,lx,x);

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_atan2.c,v 1.5 1994/08/10 20:30:35 jtc Exp $";
+static char rcsid[] = "$Id: e_atan2.c,v 1.6 1994/08/18 23:05:08 jtc Exp $";
 #endif
 
 /* __ieee754_atan2(y,x)
@@ -64,8 +64,8 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 #endif
 {  
 	double z;
-	int k,m,hx,hy,ix,iy;
-	unsigned lx,ly;
+	int32_t k,m,hx,hy,ix,iy;
+	u_int32_t lx,ly;
 
 	EXTRACT_WORDS(hx,lx,x);
 	ix = hx&0x7fffffff;
@@ -118,7 +118,7 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 	switch (m) {
 	    case 0: return       z  ;	/* atan(+,+) */
 	    case 1: {
-	    	      unsigned int zh;
+	    	      u_int32_t zh;
 		      GET_HIGH_WORD(zh,z);
 		      SET_HIGH_WORD(z,zh ^ 0x80000000);
 		    }
