@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.583 2003/06/20 07:06:48 jdc Exp $
+#	$NetBSD: mi,v 1.584 2003/06/25 10:38:02 tshiozak Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -924,7 +924,16 @@
 ./usr/lib/i18n/libGBK2K.a	comp-i18n-lib
 ./usr/lib/i18n/libISO2022.a	comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.a	comp-i18n-lib
+./usr/lib/i18n/libUTF1632.a	comp-i18n-lib
 ./usr/lib/i18n/libUTF8.a	comp-i18n-lib
+./usr/lib/i18n/iconv_none.a	comp-i18n-lib
+./usr/lib/i18n/iconv_std.a	comp-i18n-lib
+./usr/lib/i18n/mapper_646.a	comp-i18n-lib
+./usr/lib/i18n/mapper_none.a	comp-i18n-lib
+./usr/lib/i18n/mapper_parallel.a	comp-i18n-lib
+./usr/lib/i18n/mapper_serial.a	comp-i18n-lib
+./usr/lib/i18n/mapper_std.a	comp-i18n-lib
+./usr/lib/i18n/mapper_zone.a	comp-i18n-lib
 ./usr/lib/libasn1.a		comp-krb5-lib
 ./usr/lib/libasn1_p.a		comp-krb5-proflib
 ./usr/lib/libbsdmalloc.a	comp-c-lib
