@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.1.1.1 2001/01/06 13:00:26 martin Exp $ 
+ *	$Id: rc_config.c,v 1.2 2001/01/07 09:00:49 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -305,32 +305,32 @@ set_isppp_auth(int entry)
 	{
 		if(cep->ppp_expect_auth == AUTH_NONE)
 		{
-			spr.defs.myauth.proto = 0;
+			spr.defs.hisauth.proto = 0;
 		}
 		else if ((cep->ppp_expect_auth == AUTH_CHAP 
 			  || cep->ppp_expect_auth == AUTH_PAP)
 			 && cep->ppp_expect_name[0] != 0
 			 && cep->ppp_expect_password[0] != 0)
 		{
-			spr.defs.myauth.proto = cep->ppp_expect_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
-			strncpy(spr.defs.myauth.name, cep->ppp_expect_name, AUTHNAMELEN);
-			strncpy(spr.defs.myauth.secret, cep->ppp_expect_password, AUTHKEYLEN);
+			spr.defs.hisauth.proto = cep->ppp_expect_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
+			strncpy(spr.defs.hisauth.name, cep->ppp_expect_name, AUTHNAMELEN);
+			strncpy(spr.defs.hisauth.secret, cep->ppp_expect_password, AUTHKEYLEN);
 		}
 	}
 	if (cep->ppp_send_auth != AUTH_UNDEF)
 	{
 		if(cep->ppp_send_auth == AUTH_NONE)
 		{
-			spr.defs.hisauth.proto = 0;
+			spr.defs.myauth.proto = 0;
 		}
 		else if ((cep->ppp_send_auth == AUTH_CHAP 
 			  || cep->ppp_send_auth == AUTH_PAP)
 			 && cep->ppp_send_name[0] != 0
 			 && cep->ppp_send_password[0] != 0)
 		{
-			spr.defs.hisauth.proto = cep->ppp_send_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
-			strncpy(spr.defs.hisauth.name, cep->ppp_send_name, AUTHNAMELEN);
-			strncpy(spr.defs.hisauth.secret, cep->ppp_send_password, AUTHKEYLEN);
+			spr.defs.myauth.proto = cep->ppp_send_auth == AUTH_PAP ? PPP_PAP : PPP_CHAP;
+			strncpy(spr.defs.myauth.name, cep->ppp_send_name, AUTHNAMELEN);
+			strncpy(spr.defs.myauth.secret, cep->ppp_send_password, AUTHKEYLEN);
 
 			if(cep->ppp_auth_flags & AUTH_REQUIRED)
 				spr.defs.hisauth.flags &= ~AUTHFLAG_NOCALLOUT;
