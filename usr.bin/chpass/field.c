@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.4 1997/10/18 12:49:00 lukem Exp $	*/
+/*	$NetBSD: field.c,v 1.5 1998/07/05 14:26:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.4 1997/10/18 12:49:00 lukem Exp $");
+__RCSID("$NetBSD: field.c,v 1.5 1998/07/05 14:26:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ p_login(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!*p) {
 		warnx("empty login field");
 		return (1);
@@ -93,6 +94,7 @@ p_passwd(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!*p)
 		pw->pw_passwd = "";	/* "NOLOGIN"; */
 	else if (!(pw->pw_passwd = strdup(p))) {
@@ -171,6 +173,7 @@ p_class(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!*p)
 		pw->pw_class = "";
 	else if (!(pw->pw_class = strdup(p))) {
@@ -188,6 +191,7 @@ p_change(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!atot(p, &pw->pw_change))
 		return (0);
 	warnx("illegal date for change field");
@@ -201,6 +205,7 @@ p_expire(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!atot(p, &pw->pw_expire))
 		return (0);
 	warnx("illegal date for expire field");
@@ -214,6 +219,7 @@ p_gecos(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!*p)
 		ep->save = "";
 	else if (!(ep->save = strdup(p))) {
@@ -230,6 +236,7 @@ p_hdir(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
+
 	if (!*p) {
 		warnx("empty home directory field");
 		return (1);
