@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.37 1999/07/26 05:20:49 cgd Exp $
+#	$NetBSD: Makefile.x68k,v 1.38 1999/09/24 15:31:52 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68030
 .else
-CMACHFLAGS=	-m68060
+CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
