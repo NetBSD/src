@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pswrap,v 1.2 2003/11/08 13:57:30 lukem Exp $
+#	$NetBSD: Makefile.pswrap,v 1.3 2005/03/20 23:11:19 rtr Exp $
 
 .SUFFIXES: .psw .c .h
 
@@ -11,9 +11,9 @@ ${PSWRAP}:
 .psw.c: ${PSWRAP}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${PSWRAP} -a -o ${.TARGET} ${.IMPSRC}
+	${PSWRAP} -a -o ${.TARGET} -h ${.TARGET:.c=.h} ${.IMPSRC}
 
 .psw.h: ${PSWRAP}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${PSWRAP} -a -h ${.TARGET} ${.IMPSRC} >/dev/null
+	${PSWRAP} -a -f ${.TARGET} -h ${.TARGET} ${.IMPSRC} >/dev/null
