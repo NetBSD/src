@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.5 1994/12/13 20:51:56 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.6 1994/12/14 13:03:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_vnops.c	8.5 (Berkeley) 12/30/93
+ *	@(#)lfs_vnops.c	8.8 (Berkeley) 8/10/94
  */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
 	{ &vop_create_desc, ufs_create },		/* create */
+	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
@@ -427,12 +428,9 @@ lfs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime.ts_sec = ip->i_atime.ts_sec;
-	vap->va_atime.ts_nsec = ip->i_atime.ts_nsec;
-	vap->va_mtime.ts_sec = ip->i_mtime.ts_sec;
-	vap->va_mtime.ts_nsec = ip->i_mtime.ts_nsec;
-	vap->va_ctime.ts_sec = ip->i_ctime.ts_sec;
-	vap->va_ctime.ts_nsec = ip->i_ctime.ts_nsec;
+	vap->va_atime = ip->i_atime;
+	vap->va_mtime = ip->i_mtime;
+	vap->va_ctime = ip->i_ctime;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.6 1994/10/28 19:31:07 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.7 1994/12/14 13:03:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_inode.c	8.5 (Berkeley) 12/30/93
+ *	@(#)ffs_inode.c	8.8 (Berkeley) 10/19/94
  */
 
 #include <sys/param.h>

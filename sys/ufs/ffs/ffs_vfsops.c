@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.8 1994/10/28 20:20:18 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.9 1994/12/14 13:03:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_vfsops.c	8.8 (Berkeley) 4/18/94
+ *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
  */
 
 #include <sys/param.h>
@@ -153,6 +153,7 @@ ffs_mount(mp, path, data, ndp, p)
 	register struct fs *fs;
 	u_int size;
 	int error, flags;
+	mode_t accessmode;
 
 	if (error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args)))
 		return (error);
@@ -177,8 +178,23 @@ ffs_mount(mp, path, data, ndp, p)
 			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
 		if (error)
 			return (error);
-		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR))
+		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+			/*
+			 * If upgrade to read-write by non-root, then verify
+			 * that user has necessary permissions on the device.
+			 */
+			if (p->p_ucred->cr_uid != 0) {
+				devvp = ump->um_devvp;
+				VOP_LOCK(devvp);
+				if (error = VOP_ACCESS(devvp, VREAD | VWRITE,
+				    p->p_ucred, p)) {
+					VOP_UNLOCK(devvp);
+					return (error);
+				}
+				VOP_UNLOCK(devvp);
+			}
 			fs->fs_ronly = 0;
+		}
 		if (args.fspec == 0) {
 			/*
 			 * Process export requests.
@@ -202,6 +218,21 @@ ffs_mount(mp, path, data, ndp, p)
 	if (major(devvp->v_rdev) >= nblkdev) {
 		vrele(devvp);
 		return (ENXIO);
+	}
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		VOP_LOCK(devvp);
+		if (error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p)) {
+			vput(devvp);
+			return (error);
+		}
+		VOP_UNLOCK(devvp);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = ffs_mountfs(devvp, mp, p);
@@ -350,14 +381,18 @@ ffs_mountfs(devvp, mp, p)
 	register struct ufsmount *ump;
 	struct buf *bp;
 	register struct fs *fs;
-	dev_t dev = devvp->v_rdev;
+	dev_t dev;
 	struct partinfo dpart;
 	caddr_t base, space;
 	int blks;
-	int error, i, size;
-	int ronly;
+	int error, i, size, ronly;
+	int32_t *lp;
+	struct ucred *cred;
 	extern struct vnode *rootvp;
+	u_int64_t maxfilesize;					/* XXX */
 
+	dev = devvp->v_rdev;
+	cred = p ? p->p_ucred : NOCRED;
 	/*
 	 * Disallow multiple mounts of the same device.
 	 * Disallow mounting of a device that is currently in use
@@ -368,20 +403,20 @@ ffs_mountfs(devvp, mp, p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if (error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0))
+	if (error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0))
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p))
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
 
 	bp = NULL;
 	ump = NULL;
-	if (error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp))
+	if (error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, cred, &bp))
 		goto out;
 	fs = (struct fs *)bp->b_data;
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
@@ -407,16 +442,17 @@ ffs_mountfs(devvp, mp, p)
 	fs->fs_ronly = ronly;
 	if (ronly == 0)
 		fs->fs_fmod = 1;
-	blks = howmany(fs->fs_cssize, fs->fs_fsize);
-	base = space = malloc((u_long)fs->fs_cssize, M_UFSMNT,
-	    M_WAITOK);
+	size = fs->fs_cssize;
+	blks = howmany(size, fs->fs_fsize);
+	if (fs->fs_contigsumsize > 0)
+		size += fs->fs_ncg * sizeof(int32_t);
+	base = space = malloc((u_long)size, M_UFSMNT, M_WAITOK);
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
-			NOCRED, &bp);
-		if (error) {
+		if (error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
+		    cred, &bp)) {
 			free(base, M_UFSMNT);
 			goto out;
 		}
@@ -425,6 +461,11 @@ ffs_mountfs(devvp, mp, p)
 		space += size;
 		brelse(bp);
 		bp = NULL;
+	}
+	if (fs->fs_contigsumsize > 0) {
+		fs->fs_maxcluster = lp = (int32_t *)space;
+		for (i = 0; i < fs->fs_ncg; i++)
+			*lp++ = fs->fs_contigsumsize;
 	}
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
@@ -441,11 +482,15 @@ ffs_mountfs(devvp, mp, p)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specflags |= SI_MOUNTEDON;
 	ffs_oldfscompat(fs);
+	ump->um_savedmaxfilesize = fs->fs_maxfilesize;		/* XXX */
+	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;	/* XXX */
+	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
+		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	return (0);
 out:
 	if (bp)
 		brelse(bp);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -479,15 +524,6 @@ ffs_oldfscompat(fs)
 		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
 		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
 	}							/* XXX */
-#ifndef KLUGE_BEGONE
-	{
-		u_int64_t maxfilesize;
-
-		maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
-		if (fs->fs_maxfilesize > maxfilesize)
-			fs->fs_maxfilesize = maxfilesize;
-	}
-#endif
 	return (0);
 }
 
@@ -502,7 +538,7 @@ ffs_unmount(mp, mntflags, p)
 {
 	register struct ufsmount *ump;
 	register struct fs *fs;
-	int error, flags, ronly;
+	int error, flags;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE) {
@@ -514,9 +550,8 @@ ffs_unmount(mp, mntflags, p)
 		return (error);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	ronly = !fs->fs_ronly;
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
-	error = VOP_CLOSE(ump->um_devvp, ronly ? FREAD : FREAD|FWRITE,
+	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vrele(ump->um_devvp);
 	free(fs->fs_csp[0], M_UFSMNT);
@@ -836,40 +871,29 @@ ffs_sbupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct fs *fs = mp->um_fs;
+	register struct fs *dfs, *fs = mp->um_fs;
 	register struct buf *bp;
 	int blks;
 	caddr_t space;
 	int i, size, error = 0;
-	struct fs *cfs;
 
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
 	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
-	cfs = (struct fs *)bp->b_data;
 	/* Restore compatibility to old file systems.		   XXX */
+	dfs = (struct fs *)bp->b_data;				/* XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		cfs->fs_nrpos = -1;				/* XXX */
+		dfs->fs_nrpos = -1;				/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		int32_t *lp, tmp;				/* XXX */
 								/* XXX */
-		lp = (int32_t *)&cfs->fs_qbmask;		/* XXX */
+		lp = (int32_t *)&dfs->fs_qbmask;		/* XXX */
 		tmp = lp[4];					/* XXX */
 		for (i = 4; i > 0; i--)				/* XXX */
 			lp[i] = lp[i-1];			/* XXX */
 		lp[0] = tmp;					/* XXX */
 	}							/* XXX */
-#ifndef KLUGE_BEGONE
-	{
-		u_int64_t sizepb = fs->fs_bsize;		/* XXX */
-								/* XXX */
-		cfs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1; /* XXX */
-		for (i = 0; i < NIADDR; i++) {			/* XXX */
-			sizepb *= NINDIR(fs);			/* XXX */
-			cfs->fs_maxfilesize += sizepb;		/* XXX */
-		}						/* XXX */
-	}
-#endif
+	dfs->fs_maxfilesize = mp->um_savedmaxfilesize;		/* XXX */
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else

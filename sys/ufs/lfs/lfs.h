@@ -1,5 +1,3 @@
-/*	$NetBSD: lfs.h,v 1.4 1994/11/17 16:58:41 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs.h	8.3 (Berkeley) 9/23/93
+ *	@(#)lfs.h	8.5 (Berkeley) 7/8/94
  */
 
 #define	LFS_LABELPAD	8192		/* LFS label size */
@@ -61,9 +59,10 @@ struct segusage {
 	u_int32_t su_lastmod;		/* SEGUSE last modified timestamp */
 	u_int16_t su_nsums;		/* number of summaries in segment */
 	u_int16_t su_ninos;		/* number of inode blocks in seg */
-#define	SEGUSE_ACTIVE		0x1	/* segment is currently being written */
-#define	SEGUSE_DIRTY		0x2	/* segment has data in it */
-#define	SEGUSE_SUPERBLOCK	0x4	/* segment contains a superblock */
+
+#define	SEGUSE_ACTIVE		0x01	/* segment is currently being written */
+#define	SEGUSE_DIRTY		0x02	/* segment has data in it */
+#define	SEGUSE_SUPERBLOCK	0x04	/* segment contains a superblock */
 	u_int32_t su_flags;
 };
 
@@ -77,7 +76,7 @@ struct finfo {
 	u_int32_t fi_nblocks;		/* number of blocks */
 	u_int32_t fi_version;		/* version number */
 	u_int32_t fi_ino;		/* inode number */
-	int32_t	  fi_blocks[1];		/* array of logical block numbers */
+	daddr_t	  fi_blocks[1];		/* array of logical block numbers */
 };
 
 /* On-disk and in-memory super block. */
@@ -141,24 +140,26 @@ struct lfs {
 #define	LFS_MAXNUMSB		10	/* superblock disk offsets */
 	daddr_t	  lfs_sboffs[LFS_MAXNUMSB];
 
+/* Checksum -- last valid disk field. */
 	u_int32_t lfs_cksum;		/* checksum for superblock checking */
 
 /* These fields are set at mount time and are meaningless on disk. */
-	struct	segment *lfs_sp;	/* current segment being written */
-	struct	vnode *lfs_ivnode;	/* vnode for the ifile */
-	u_long	 lfs_seglock;		/* single-thread the segment writer */
-	pid_t	 lfs_lockpid;		/* pid of lock holder */
-	u_long	 lfs_iocount;		/* number of ios pending */
-	u_long	 lfs_writer;		/* don't allow any dirops to start */
-	u_long	 lfs_dirops;		/* count of active directory ops */
-	u_long	 lfs_doifile;		/* Write ifile blocks on next write */
-	u_long	 lfs_nactive;		/* Number of segments since last ckp */
-	u_int8_t lfs_fmod;		/* super block modified flag */
-	u_int8_t lfs_clean;		/* file system is clean flag */
-	u_int8_t lfs_ronly;		/* mounted read-only flag */
-	u_char	 lfs_fsmnt[MNAMELEN];	/* name mounted on */
+	struct segment *lfs_sp;		/* current segment being written */
+	struct vnode *lfs_ivnode;	/* vnode for the ifile */
+	u_long	  lfs_seglock;		/* single-thread the segment writer */
+	pid_t	  lfs_lockpid;		/* pid of lock holder */
+	u_long	  lfs_iocount;		/* number of ios pending */
+	u_long	  lfs_writer;		/* don't allow any dirops to start */
+	u_long	  lfs_dirops;		/* count of active directory ops */
+	u_long	  lfs_doifile;		/* Write ifile blocks on next write */
+	u_long	  lfs_nactive;		/* Number of segments since last ckp */
+	int8_t	  lfs_fmod;		/* super block modified flag */
+	int8_t	  lfs_clean;		/* file system is clean flag */
+	int8_t	  lfs_ronly;		/* mounted read-only flag */
+	int8_t	  lfs_flags;		/* currently unused flag */
+	u_char	  lfs_fsmnt[MNAMELEN];	/* name mounted on */
 
-	int32_t	 pad[40];		/* round to 512 bytes */
+	int32_t	  lfs_pad[40];		/* round to 512 bytes */
 };
 
 /*
@@ -218,6 +219,7 @@ struct segsum {
 	u_int32_t ss_create;		/* creation time stamp */
 	u_int16_t ss_nfinfo;		/* number of file info structures */
 	u_int16_t ss_ninos;		/* number of inodes in summary */
+
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
 	u_int16_t ss_flags;		/* used for directory operations */
@@ -284,9 +286,8 @@ struct segsum {
  * the segment usage table, plus an ifile page.
  */
 #define LFS_FITS(fs, db)						\
-	((int32_t)((db + ((fs)->lfs_uinodes + INOPB((fs))) /		\
-	    INOPB((fs)) + fsbtodb(fs, 1) +				\
-	    LFS_SUMMARY_SIZE / DEV_BSIZE +				\
+	((int32_t)((db + ((fs)->lfs_uinodes + INOPB((fs))) / 		\
+	INOPB((fs)) + fsbtodb(fs, 1) + LFS_SUMMARY_SIZE / DEV_BSIZE +	\
 	(fs)->lfs_segtabsz)) < (fs)->lfs_avail)
 
 /* Determine if a buffer belongs to the ifile */
@@ -307,23 +308,24 @@ typedef struct block_info {
 
 /* In-memory description of a segment about to be written. */
 struct segment {
-	struct lfs	*fs;		/* file system pointer */
+	struct lfs	 *fs;		/* file system pointer */
 	struct buf	**bpp;		/* pointer to buffer array */
 	struct buf	**cbpp;		/* pointer to next available bp */
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
-	struct buf	*ibp;		/* buffer pointer to inode page */
-	struct finfo	*fip;		/* current fileinfo pointer */
-	struct vnode	*vp;		/* vnode being gathered */
+	struct buf	 *ibp;		/* buffer pointer to inode page */
+	struct finfo	 *fip;		/* current fileinfo pointer */
+	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */
 	u_int32_t ninodes;		/* number of inodes in this segment */
 	u_int32_t seg_bytes_left;	/* bytes left in segment */
 	u_int32_t sum_bytes_left;	/* bytes left in summary block */
 	u_int32_t seg_number;		/* number of this segment */
 	daddr_t  *start_lbp;		/* beginning lbn for this set */
+
 #define	SEGM_CKP	0x01		/* doing a checkpoint */
 #define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */
 #define	SEGM_SYNC	0x04		/* wait for segment */
-	u_int8_t  seg_flags;		/* run-time flags for this segment */
+	u_int16_t seg_flags;		/* run-time flags for this segment */
 };
 
 #define ISSPACE(F, BB, C)						\
@@ -340,18 +342,18 @@ struct segment {
 #ifdef DOSTATS
 /* Statistics Counters */
 struct lfs_stats {
-	int	blocktot;
-	int	cleanblocks;
-	int	flush_invoked;
-	int	ncheckpoints;
-	int	nsync_writes;
-	int	nwrites;
-	int	pcleanwrites;
-	int	psegwrites;
-	int	psyncwrites;
-	int	segsused;
-	int	wait_exceeded;
-	int	write_exceeded;
+	u_int	segsused;
+	u_int	psegwrites;
+	u_int	psyncwrites;
+	u_int	pcleanwrites;
+	u_int	blocktot;
+	u_int	cleanblocks;
+	u_int	ncheckpoints;
+	u_int	nwrites;
+	u_int	nsync_writes;
+	u_int	wait_exceeded;
+	u_int	write_exceeded;
+	u_int	flush_invoked;
 };
 extern struct lfs_stats lfs_stats;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.4 1994/10/30 21:50:13 cgd Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.5 1994/12/14 13:03:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_vnops.c	8.3 (Berkeley) 9/21/93
+ *	@(#)mfs_vnops.c	8.5 (Berkeley) 7/28/94
  */
 
 #include <sys/param.h>
@@ -304,13 +304,7 @@ mfs_reclaim(ap)
 	} */ *ap;
 {
 	register struct vnode *vp = ap->a_vp;
-#if 0 /* XXX */
-	int error;
 
-	error = ufs_reclaim(vp);
-	if (error)
-		return (error);
-#endif
 	FREE(vp->v_data, M_MFSNODE);
 	vp->v_data = NULL;
 	return (0);

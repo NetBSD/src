@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.3 1994/09/20 06:45:17 cgd Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.4 1994/12/14 13:03:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_cksum.c	8.1 (Berkeley) 6/11/93
+ *	@(#)lfs_cksum.c	8.2 (Berkeley) 10/9/94
  */
 
 #include <sys/types.h>
