@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.13 1999/05/07 14:49:56 drochner Exp $	*/
+/*	$NetBSD: net.h,v 1.14 2003/03/19 17:19:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -73,22 +73,14 @@ extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];
 extern	char bootfile[FNAME_SIZE];
 extern	char hostname[FNAME_SIZE];
-extern	int hostnamelen;
-extern	char domainname[FNAME_SIZE];
-extern	int domainnamelen;
-extern	char ifname[IFNAME_SIZE];
 
 /* All of these are in network order. */
 extern	struct in_addr myip;
 extern	struct in_addr rootip;
-extern	struct in_addr swapip;
 extern	struct in_addr gateip;
-extern	struct in_addr nameip;
 extern	n_long netmask;
 
 extern	int debug;			/* defined in the machdep sources */
-
-extern struct iodesc sockets[SOPEN_MAX];
 
 /* ARP/RevARP functions: */
 u_char	*arpwhohas __P((struct iodesc *, struct in_addr));
