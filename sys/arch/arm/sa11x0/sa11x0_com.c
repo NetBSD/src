@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.13 2002/11/04 06:24:38 itohy Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.14 2003/03/07 13:30:35 rjs Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ struct platid_data sacom_platid_table[] = {
 
 struct consdev sacomcons = {
 	NULL, NULL, sacomcngetc, sacomcnputc, sacomcnpollc, NULL,
-	NODEV, CN_NORMAL
+	NULL, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef CONMODE
