@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.22 1998/02/21 22:57:44 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.23 1998/04/10 20:29:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -285,7 +285,7 @@ beep_generate()
 #endif /* NBEEP */
 
 
-int current_spl_level = _SPL_0;
+int current_spl_level = _SPL_HIGH;
 u_int spl_masks[_SPL_LEVELS];
 
 int safepri = _SPL_0;
