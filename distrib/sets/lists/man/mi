@@ -184,6 +184,7 @@
 ./usr/share/man/cat1/pawd.0
 ./usr/share/man/cat1/pax.0
 ./usr/share/man/cat1/pkg_add.0
+./usr/share/man/cat1/pkg_admin.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
@@ -310,12 +311,6 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
-./usr/share/man/cat3/dlclose.0
-./usr/share/man/cat3/dlctl.0
-./usr/share/man/cat3/dlerror.0
-./usr/share/man/cat3/dlfcn.0
-./usr/share/man/cat3/dlopen.0
-./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat4/aha.0
 ./usr/share/man/cat4/ahb.0
 ./usr/share/man/cat4/ahc.0
@@ -509,6 +504,7 @@
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
+./usr/share/man/cat5/nsswitch.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
@@ -682,6 +678,7 @@
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nfsiod.0
+./usr/share/man/cat8/nis.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/ntpdate.0
@@ -1262,6 +1259,7 @@
 ./usr/share/man/man1/pawd.1
 ./usr/share/man/man1/pax.1
 ./usr/share/man/man1/pkg_add.1
+./usr/share/man/man1/pkg_admin.1
 ./usr/share/man/man1/pkg_create.1
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
@@ -1388,12 +1386,6 @@
 ./usr/share/man/man1/zgrep.1
 ./usr/share/man/man1/zmore.1
 ./usr/share/man/man1/znew.1
-./usr/share/man/man3/dlclose.3
-./usr/share/man/man3/dlctl.3
-./usr/share/man/man3/dlerror.3
-./usr/share/man/man3/dlfcn.3
-./usr/share/man/man3/dlopen.3
-./usr/share/man/man3/dlsym.3
 ./usr/share/man/man4/aha.4
 ./usr/share/man/man4/ahb.4
 ./usr/share/man/man4/ahc.4
@@ -1587,6 +1579,7 @@
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
+./usr/share/man/man5/nsswitch.conf.5
 ./usr/share/man/man5/passwd.5
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/printcap.5
@@ -1760,6 +1753,7 @@
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
 ./usr/share/man/man8/nfsiod.8
+./usr/share/man/man8/nis.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nslookup.8
 ./usr/share/man/man8/ntpdate.8
