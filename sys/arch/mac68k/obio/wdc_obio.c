@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.8 2003/12/14 15:31:23 fredb Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.9 2003/12/31 02:47:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8 2003/12/14 15:31:23 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.9 2003/12/31 02:47:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,9 @@ static u_long	IDEBase = 0x50f1a000;
 
 struct wdc_obio_softc {
 	struct  wdc_softc sc_wdcdev;
-	struct  channel_softc *wdc_chanptr;
+	struct  channel_softc wdc_chanlist[1];
 	struct  channel_softc wdc_channel;
+	struct	channel_queue wdc_chqueue;
 	void    *sc_ih;
 };
 
@@ -230,19 +231,13 @@ wdc_obio_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = chp;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
-	chp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	chp->ch_queue = &sc->wdc_chqueue;
 
-	if (chp->ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
-			sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
-	}
-	
 	printf("\n");
 
 	wdcattach(chp);
