@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2002/02/17 19:53:44 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2002/02/17 20:41:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -116,7 +116,7 @@ fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
 	u_int fpsr;
     
 	__asm __volatile("stmfd sp!, {r0};"
-	    ".word 0xee300110;"
+	    "rfs r0;"
 	    "mov %0, r0;"
 	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
@@ -196,7 +196,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	undefined_test = 0;
 
 	__asm __volatile("stmfd sp!, {r0};"
-	    ".word 0xee300110;"
+	    "rfs r0;"
 	    "mov %0, r0;"
 	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
