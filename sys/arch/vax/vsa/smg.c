@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.9 1998/11/19 15:38:25 mrg Exp $ */
+/*	$NetBSD: smg.c,v 1.10 1998/11/29 15:04:56 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -455,7 +455,7 @@ smgcninit(cndev)
 	extern void lkccninit __P((struct consdev *));
 	extern int lkccngetc __P((dev_t));
 	/* Clear screen */
-	blkclr(sm_addr, 128*864);
+	memset(sm_addr, 0, 128*864);
 
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
