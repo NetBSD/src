@@ -1,11 +1,10 @@
-# $NetBSD: md.news68k,v 1.13 2002/04/27 10:22:36 tsutsui Exp $
+# $NetBSD: md.news68k,v 1.14 2002/05/21 16:20:03 tsutsui Exp $
 ./usr/include/news68k	comp-c-include
 ./usr/include/news68k/_G_config.h	comp-c-include
 ./usr/include/news68k/ansi.h	comp-c-include
 ./usr/include/news68k/aout_machdep.h	comp-c-include
 ./usr/include/news68k/asm.h	comp-c-include
 ./usr/include/news68k/autoconf.h	comp-c-include
-./usr/include/news68k/bbinfo.h	comp-c-include
 ./usr/include/news68k/bswap.h	comp-c-include
 ./usr/include/news68k/cdefs.h	comp-c-include
 ./usr/include/news68k/cpu.h	comp-c-include
