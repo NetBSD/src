@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.61 1999/04/21 22:14:15 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.62 1999/11/17 09:34:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -445,6 +445,7 @@ vndstrategy(bp)
 		nbp->vb_buf.b_vp = NULLVP;
 		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
+		LIST_INIT(&nbp->vb_buf.b_dep);
 		if (bp->b_dirtyend == 0) {
 			nbp->vb_buf.b_dirtyoff = 0;
 			nbp->vb_buf.b_dirtyend = sz;
