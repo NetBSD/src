@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.32 1999/06/26 00:08:15 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.33 1999/06/26 15:21:17 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.32 1999/06/26 00:07:35 augustss Exp 
+ *	aNetBSD: usbdevs,v 1.33 1999/06/26 15:20:53 tron Exp 
  */
 
 /*
@@ -78,7 +78,7 @@
 #define	USB_VENDOR_AGILER	0x056e		/* Elecom Co., Ltd. */
 #define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corporation */
 #define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
-#define	USB_VENDOR_LOGITECH	0x05ac		/* Apple Computer */
+#define	USB_VENDOR_LOGITECH	0x05ac		/* Logitech */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
