@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.12 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13 2005/03/11 15:51:25 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.12 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13 2005/03/11 15:51:25 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -521,6 +521,8 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 
 		sc->sc_evtchn = status->evtchn;
 		sc->sc_irq = bind_evtchn_to_irq(sc->sc_evtchn);
+		aprint_verbose("%s: using irq %d\n", sc->sc_dev.dv_xname,
+		    sc->sc_irq);
 		event_set_handler(sc->sc_irq, &xen_network_handler, sc, IPL_NET);
 		hypervisor_enable_irq(sc->sc_irq);
 		xennet_driver_count_connected();
