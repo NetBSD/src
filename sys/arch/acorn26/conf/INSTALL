@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 2002/04/24 19:50:25 bjh21 Exp $
+# $NetBSD: INSTALL,v 1.2 2002/07/05 13:06:46 abs Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -102,7 +102,8 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	INSECURE
 
 # Reduce kernel size a little
-options 	VNODE_OP_NOINLINE
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # NFS boot options
 #options 	NFS_BOOT_DHCP		# superset of BOOTP
