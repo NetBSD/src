@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13 1993/08/04 00:42:51 mycroft Exp $
+ *	$Id: clock.c,v 1.14 1993/09/21 13:09:10 brezak Exp $
  */
 /* 
  * Mach Operating System
@@ -231,13 +231,13 @@ yeartoday(int year)
 	return((year%4) ? 365 : 366);
 }
 
-static int
+int
 hexdectodec(char n)
 {
 	return(((n>>4)&0x0F)*10 + (n&0x0F));
 }
 
-static char
+char
 dectohexdec(int n)
 {
 	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
@@ -308,8 +308,7 @@ resettodr()
 
 	ospl = splclock();
 	if (rtcget(&rtclk)) {
-		splx(ospl);
-		return;
+                bzero(&rtclk, sizeof(rtclk));
 	}
 	splx(ospl);
 
