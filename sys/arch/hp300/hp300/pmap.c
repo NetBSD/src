@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1998/12/21 09:02:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1999/01/08 05:15:43 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1827,8 +1827,10 @@ pmap_zero_page(phys)
 
 	zeropage(CADDR1);
 
+#ifdef DEBUG
 	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
+#endif
 
 	splx(s);
 }
@@ -1875,11 +1877,13 @@ pmap_copy_page(src, dst)
 
 	copypage(CADDR1, CADDR2);
 
+#ifdef DEBUG
 	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
 
 	*caddr2_pte = PG_NV;
 	TBIS((vaddr_t)CADDR2);
+#endif
 
 	splx(s);
 }
