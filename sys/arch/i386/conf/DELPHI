@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.20 2002/07/22 11:06:00 wiz Exp $
+#	$NetBSD: DELPHI,v 1.21 2002/08/02 05:26:45 ichiro Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.20 $"
+ident 		"DELPHI-$Revision: 1.21 $"
 
 maxusers	64		# estimated number of users
 
@@ -497,7 +497,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
-#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #xe*	at pcmcia? function ?		# Xircom PCMCIA cards
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
