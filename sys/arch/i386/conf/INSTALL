@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.186 2002/03/10 19:56:42 lukem Exp $
+#	$NetBSD: INSTALL,v 1.187 2002/03/29 04:53:31 ichiro Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -555,6 +555,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -603,6 +604,7 @@ scsibus* at umass? channel ?
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices
 
