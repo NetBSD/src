@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2003/10/06 22:53:47 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2003/10/08 19:58:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2003/10/06 22:53:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2003/10/08 19:58:54 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -316,7 +316,7 @@ copyfault:
 		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
-		memset(&ksi, 0, sizeof (ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -344,7 +344,7 @@ copyfault:
 		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
-		memset(&ksi, 0, sizeof (ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -376,7 +376,7 @@ copyfault:
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		memset(&ksi, 0, sizeof (ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGKILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
@@ -386,7 +386,7 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		memset(&ksi, 0, sizeof (ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
@@ -506,7 +506,7 @@ faultcommon:
 			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
-		memset(&ksi, 0, sizeof (ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		if (error == EACCES) {
@@ -565,7 +565,7 @@ faultcommon:
 #endif
 		if ((p->p_nras == 0) ||
 		    (ras_lookup(p, (caddr_t)frame->tf_rip) == (caddr_t)-1)) {
-			memset(&ksi, 0, sizeof (ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
 			if (type == (T_BPTFLT|T_USER))
