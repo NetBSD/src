@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.1.1 1999/12/12 10:57:57 veego Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.2 2000/03/30 13:25:03 augustss Exp $	*/
 
 /*
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
@@ -62,8 +62,8 @@ nat_t *nat;
 u_short ipf_rcmd_atoi(ptr)
 char *ptr;
 {
-	register char *s = ptr, c;
-	register u_short i = 0;
+	char *s = ptr, c;
+	u_short i = 0;
 
 	while ((c = *s++) && isdigit(c)) {
 		i *= 10;

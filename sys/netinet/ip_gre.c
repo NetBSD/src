@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.10 2000/03/30 13:24:59 augustss Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ gre_input(m, va_alist)
         va_dcl
 #endif
 {
-	register int hlen,ret;
+	int hlen,ret;
 	va_list ap;
 
 	va_start(ap, m);
@@ -144,9 +144,9 @@ gre_input(m, va_alist)
 int
 gre_input2(struct mbuf *m ,int hlen,u_char proto)
 {
-	register struct greip *gip = mtod(m, struct greip *);
-	register int s;
-	register struct ifqueue *ifq;
+	struct greip *gip = mtod(m, struct greip *);
+	int s;
+	struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_short flags;
 
@@ -235,11 +235,11 @@ gre_mobile_input(m, va_alist)
         va_dcl
 #endif
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct mobip_h *mip = mtod(m, struct mobip_h *);
-	register struct ifqueue *ifq;
+	struct ip *ip = mtod(m, struct ip *);
+	struct mobip_h *mip = mtod(m, struct mobip_h *);
+	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	register int hlen,s;
+	int hlen,s;
 	va_list ap;
 	u_char osrc=0;
 	int msiz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.8 2000/02/06 12:49:50 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.9 2000/03/30 13:03:58 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,13 +73,13 @@ struct pfkeystat pfkeystat;
  */
 int
 key_usrreq(so, req, m, nam, control, p)
-	register struct socket *so;
+	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register int error = 0;
-	register struct keycb *kp = (struct keycb *)sotorawcb(so);
+	int error = 0;
+	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
 	s = splsoftnet();

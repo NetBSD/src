@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.28 2000/02/01 21:29:15 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.29 2000/03/30 13:25:01 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.28 2000/02/01 21:29:15 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.29 2000/03/30 13:25:01 augustss Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.2.2.12 2000/01/24 12:43:40 darrenr Exp";
@@ -205,8 +205,8 @@ u_short *sp;
 u_32_t n;
 int len;
 {
-	register u_short sumshort;
-	register u_32_t sum1;
+	u_short sumshort;
+	u_32_t sum1;
 
 	if (!n)
 		return;
@@ -231,8 +231,8 @@ u_short *sp;
 u_32_t n;
 int len;
 {
-	register u_short sumshort;
-	register u_32_t sum1;
+	u_short sumshort;
+	u_32_t sum1;
 
 	if (!n)
 		return;
@@ -289,7 +289,7 @@ int cmd;
 caddr_t data;
 int mode;
 {
-	register ipnat_t *nat, *nt, *n = NULL, **np = NULL;
+	ipnat_t *nat, *nt, *n = NULL, **np = NULL;
 	int error = 0, ret, k;
 	ipnat_t natd;
 	u_32_t i, j;
@@ -561,7 +561,7 @@ int mode;
 static void nat_delete(natd)
 struct nat *natd;
 {
-	register struct nat **natp, *nat;
+	struct nat **natp, *nat;
 	struct ipnat *ipn;
 
 	for (natp = natd->nat_hstart[0]; (nat = *natp);
@@ -614,8 +614,8 @@ struct nat *natd;
  */
 static int nat_flushtable()
 {
-	register nat_t *nat, **natp;
-	register int j = 0;
+	nat_t *nat, **natp;
+	int j = 0;
   
 	/*
 	 * ALL NAT mappings deleted, so lets just make the deletions
@@ -643,7 +643,7 @@ static int nat_flushtable()
  */
 static int nat_clearlist()
 {
-	register ipnat_t *n, **np = &nat_list;
+	ipnat_t *n, **np = &nat_list;
 	int i = 0;
 
 	if (nat_rules != NULL)
@@ -681,7 +681,7 @@ fr_info_t *fin;
 u_int flags;
 int direction;
 {
-	register u_32_t sum1, sum2, sumd, l;
+	u_32_t sum1, sum2, sumd, l;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
 	nat_t *nat, **natp, *natl = NULL;
 	struct in_addr in, inb;
@@ -1151,13 +1151,13 @@ u_int *nflags;
  */
 nat_t *nat_inlookup(ifp, flags, p, src, mapdst, ports)
 void *ifp;
-register u_int flags, p;
+u_int flags, p;
 struct in_addr src , mapdst;
 u_32_t ports;
 {
-	register u_short sport, mapdport;
-	register nat_t *nat;
-	register int nflags;
+	u_short sport, mapdport;
+	nat_t *nat;
+	int nflags;
 	u_int hv;
 
 	mapdport = ports >> 16;
@@ -1190,13 +1190,13 @@ u_32_t ports;
  */
 nat_t *nat_outlookup(ifp, flags, p, src, dst, ports)
 void *ifp;
-register u_int flags, p;
+u_int flags, p;
 struct in_addr src , dst;
 u_32_t ports;
 {
-	register u_short sport, dport;
-	register nat_t *nat;
-	register int nflags;
+	u_short sport, dport;
+	nat_t *nat;
+	int nflags;
 	u_int hv;
 
 	sport = ports & 0xffff;
@@ -1227,11 +1227,11 @@ u_32_t ports;
  */
 nat_t *nat_maplookup(ifp, flags, src, dst)
 void *ifp;
-register u_int flags;
+u_int flags;
 struct in_addr src , dst;
 {
-	register nat_t *nat;
-	register int oflags;
+	nat_t *nat;
+	int oflags;
 	u_int hv;
 
 	hv = NAT_HASH_FN(src.s_addr, ipf_nattable_sz);
@@ -1254,7 +1254,7 @@ struct in_addr src , dst;
  * Lookup the NAT tables to search for a matching redirect
  */
 nat_t *nat_lookupredir(np)
-register natlookup_t *np;
+natlookup_t *np;
 {
 	u_32_t ports;
 	nat_t *nat;
@@ -1281,8 +1281,8 @@ int ip_natout(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	register ipnat_t *np = NULL;
-	register u_32_t ipa;
+	ipnat_t *np = NULL;
+	u_32_t ipa;
 	tcphdr_t *tcp = NULL;
 	u_short nflags = 0, sport = 0, dport = 0, *csump = NULL;
 	struct ifnet *ifp;
@@ -1471,9 +1471,9 @@ int ip_natin(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	register struct in_addr src;
-	register struct in_addr in;
-	register ipnat_t *np;
+	struct in_addr src;
+	struct in_addr in;
+	ipnat_t *np;
 	u_int nflags = 0, natadd = 1, hv, msk;
 	struct ifnet *ifp = fin->fin_ifp;
 	tcphdr_t *tcp = NULL;
@@ -1673,7 +1673,7 @@ void ip_natunload()
  */
 void ip_natexpire()
 {
-	register struct nat *nat, **natp;
+	struct nat *nat, **natp;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
@@ -1703,9 +1703,9 @@ void ip_natexpire()
 void ip_natsync(ifp)
 void *ifp;
 {
-	register ipnat_t *n;
-	register nat_t *nat;
-	register u_32_t sum1, sum2, sumd;
+	ipnat_t *n;
+	nat_t *nat;
+	u_32_t sum1, sum2, sumd;
 	struct in_addr in;
 	ipnat_t *np;
 	void *ifp2;

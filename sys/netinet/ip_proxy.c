@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.19 1999/12/12 11:11:18 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.20 2000/03/30 13:25:03 augustss Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.19 1999/12/12 11:11:18 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.20 2000/03/30 13:25:03 augustss Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.2.2.1 1999/09/19 12:18:19 darrenr Exp ";
 #endif
@@ -149,7 +149,7 @@ ip_t *ip;
 fr_info_t *fin;
 nat_t *nat;
 {
-	register ap_session_t *aps;
+	ap_session_t *aps;
 
 	if (!apr || (apr->apr_flags & APR_DELETE) || (ip->ip_p != apr->apr_p))
 		return NULL;

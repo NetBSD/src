@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.46 2000/03/24 22:40:11 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.47 2000/03/30 13:24:57 augustss Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.46 2000/03/24 22:40:11 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.47 2000/03/30 13:24:57 augustss Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -611,7 +611,7 @@ int mode;
 void fr_forgetifp(ifp)
 void *ifp;
 {
-	register frentry_t *f;
+	frentry_t *f;
 
 	WRITE_ENTER(&ipf_mutex);
 	for (f = ipacct[0][fr_active]; (f != NULL); f = f->fr_next)
@@ -641,8 +641,8 @@ int req;
 int set;
 caddr_t data;
 {
-	register frentry_t *fp, *f, **fprev;
-	register frentry_t **ftail;
+	frentry_t *fp, *f, **fprev;
+	frentry_t **ftail;
 	frentry_t frd;
 	frdest_t *fdp;
 	frgroup_t *fg = NULL;
@@ -872,7 +872,7 @@ int ioflag;
 int IPL_EXTERN(read)(dev, uio)
 #  endif
 dev_t dev;
-register struct uio *uio;
+struct uio *uio;
 # endif /* __sgi */
 {
 # ifdef IPFILTER_LOG
@@ -1037,7 +1037,7 @@ struct in_addr dst;
 	      (char *)&icmp->icmp_ip + sizeof(*oip), 8);	/* 64 bits */
 # ifndef	sparc
 	{
-	register u_short	__iplen, __ipoff;
+	u_short	__iplen, __ipoff;
 	ip_t *ip = &icmp->icmp_ip;
 
 	__iplen = ip->ip_len;
@@ -1076,9 +1076,9 @@ iplinit()
 
 
 size_t mbufchainlen(m0)
-register struct mbuf *m0;
+struct mbuf *m0;
 {
-	register size_t len = 0;
+	size_t len = 0;
 
 	for (; m0; m0 = m0->m_next)
 		len += m0->m_len;
@@ -1091,9 +1091,9 @@ struct mbuf *m0;
 fr_info_t *fin;
 frdest_t *fdp;
 {
-	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
-	register struct route *ro;
+	struct ip *ip, *mhip;
+	struct mbuf *m = m0;
+	struct route *ro;
 	int len, off, error = 0, hlen;
 	struct sockaddr_in *dst;
 	struct route iproute;
