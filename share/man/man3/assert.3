@@ -48,11 +48,11 @@ macro tests the given
 and if it is false,
 the calling process is terminated.
 A
-diagnostic message is written to the
+diagnostic message is written to
 .Em stderr
-and the function
-.Xr _exit 2
-is called effectively terminating the program.
+and the
+.Xr abort 3
+function is called, effectively terminating the program.
 .Pp
 If
 .Ar expression
@@ -76,11 +76,11 @@ if
 .Ar expression
 is false:
 .Bd -literal -offset indent
-"assertion \e"%s\e" failed: file \e"%s\e", line %d\n", \e
+"assertion \e"%s\e" failed: file \e"%s\e", line %d\en", \e
 		    "expression", __FILE__, __LINE__);
 .Ed
-.Sh HISTORY
+.Sh STANDARDS
 The
 .Fn assert
-function is
-.Ud .
+macro conforms to
+.St -ansiC .
