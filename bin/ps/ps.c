@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ps.c	5.43 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.4 1993/03/23 00:26:40 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.5 1993/06/01 01:38:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-static int needuser, needcomm;
+static int needuser, needcomm, needenv;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
@@ -124,13 +124,16 @@ main(argc, argv)
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "aCghjLlM:mN:O:o:p:rSTt:uvW:wx")) != EOF)
+	    "aCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != EOF)
 		switch((char)ch) {
 		case 'a':
 			all = 1;
 			break;
 		case 'C':
 			rawcpu = 1;
+			break;
+		case 'e':
+			needenv = 1;
 			break;
 		case 'g':
 			break;	/* no-op */
@@ -352,9 +355,11 @@ saveuser(ki)
 		err("%s", strerror(errno));
 	up = kvm_getu(ki->ki_p);
 	/*
-	 * save arguments if needed
+	 * save arguments and environment if needed
 	 */
 	ki->ki_args = needcomm ? strdup(kvm_getargs(ki->ki_p, up)) : NULL;
+	ki->ki_env = needenv ? strdup(kvm_getenv(ki->ki_p, up)) : NULL;
+
 	if (up != NULL) {
 		ki->ki_u = usp;
 		/*
