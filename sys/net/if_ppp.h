@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.10 1996/02/13 22:00:21 christos Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
@@ -111,6 +111,8 @@ struct ifpppcstatsreq {
 #define PPPIOCGNPMODE	_IOWR('t', 76, struct npioctl) /* get NP mode */
 #define PPPIOCSNPMODE	_IOW('t', 75, struct npioctl)  /* set NP mode */
 #define PPPIOCGIDLE	_IOR('t', 74, struct ppp_idle) /* get idle time */
+#define PPPIOCSPASS	_IOW('t', 71, struct bpf_program) /* set pass filter */
+#define PPPIOCSACTIVE	_IOW('t', 70, struct bpf_program) /* set active filt */
 
 /* PPPIOC[GS]MTU are alternatives to SIOC[GS]IFMTU, used under Ultrix */
 #define PPPIOCGMTU	_IOR('t', 73, int)	/* get interface MTU */
@@ -126,16 +128,12 @@ struct ifpppcstatsreq {
 #if !defined(ifr_mtu)
 #define ifr_mtu	ifr_ifru.ifru_metric
 #endif
+
 #ifdef _KERNEL
 void pppattach __P((void));
-struct ppp_softc *pppalloc __P((pid_t));
-void pppdealloc __P((struct ppp_softc *));
-int pppioctl __P((struct ppp_softc *, u_long, caddr_t, int, struct proc *));
 int pppsioctl __P((struct ifnet *, u_long, caddr_t));
 int pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		   struct rtentry *));
-struct mbuf *ppp_dequeue __P((struct ppp_softc *));
 void pppintr __P((void));
-void ppppktin __P((struct ppp_softc *, struct mbuf *, int));
 #endif
 #endif /* _IF_PPP_H_ */
