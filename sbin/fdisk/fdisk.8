@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.20 1999/09/21 12:09:25 simonb Exp $
+.\"	$NetBSD: fdisk.8,v 1.21 1999/10/11 01:04:57 hubertf Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -167,8 +167,11 @@ write anything to the disk.
 .Pp
 The
 .Fl i
-explicitly requests initialization of the master boot code,
-even if the magic number in the first sector is ok.
+explicitly requests initialization of the master boot code
+(similar to what
+.Nm fdisk /mbr
+does under MSDOS), 
+even if the magic number in the first sector is ok. 
 The partition table is left alone by this (but see above).
 .Pp
 You can use
