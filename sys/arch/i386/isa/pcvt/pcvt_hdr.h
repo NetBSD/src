@@ -1196,7 +1196,7 @@ extern u_char		*saved_charsets[NVGAFONTS];
 extern void bcopyb(void *from, void *to, u_int length);
 #endif
 
-#if !PCVT_FREEBSD || (PCVT_FREEBSD < 200)
+#if (PCVT_FREEBSD > 0 && PCVT_FREEBSD < 200) || (PCVT_NETBSD > 0 && PCVT_NETBSD <= 110)
 extern void fillw(U_short value, void *addr, u_int length);
 #endif
 
