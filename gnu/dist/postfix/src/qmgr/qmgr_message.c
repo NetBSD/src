@@ -112,6 +112,7 @@
 #include <mail_addr_find.h>
 #include <opened.h>
 #include <resolve_local.h>
+#include <verp_sender.h>
 
 /* Client stubs. */
 
@@ -151,6 +152,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->warn_offset = 0;
     message->warn_time = 0;
     message->rcpt_offset = 0;
+    message->verp_delims = 0;
     qmgr_rcpt_list_init(&message->rcpt_list);
     return (message);
 }
@@ -302,6 +304,16 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    if (message->warn_offset == 0) {
 		message->warn_offset = curr_offset;
 		message->warn_time = atol(start);
+	    }
+	} else if (rec_type == REC_TYPE_VERP) {
+	    if (message->verp_delims == 0) {
+		if (verp_delims_verify(start) != 0) {
+		    msg_warn("%s: bad VERP record content: \"%s\"",
+			     message->queue_id, start);
+		} else {
+		    message->single_rcpt = 1;
+		    message->verp_delims = mystrdup(start);
+		}
 	    }
 	}
     } while (rec_type > 0 && rec_type != REC_TYPE_END);
@@ -737,6 +749,8 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
     myfree(message->queue_name);
     if (message->sender)
 	myfree(message->sender);
+    if (message->verp_delims)
+	myfree(message->verp_delims);
     if (message->errors_to)
 	myfree(message->errors_to);
     if (message->return_receipt)
