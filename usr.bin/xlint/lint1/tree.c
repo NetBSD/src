@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.11 1995/10/02 17:37:02 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.11 1995/10/02 17:37:02 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3261,13 +3261,14 @@ parg(n, tp, tn)
 	tnode_t	*tn;		/* argument */
 {
 	tnode_t	*ln;
+	int	warn;
 
 	ln = xcalloc(1, sizeof (tnode_t));
 	ln->tn_type = tduptyp(tp);
 	ln->tn_type->t_const = 0;
 	ln->tn_lvalue = 1;
 	if (typeok(FARG, n, ln, tn)) {
-		if (tp->t_tspec != tn->tn_type->t_tspec)
+		if (!eqtype(tp, tn->tn_type, 1, 0, (warn = 0, &warn)) || warn)
 			tn = convert(FARG, n, tp, tn);
 	}
 	free(ln);
