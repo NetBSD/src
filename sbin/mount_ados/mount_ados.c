@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ados.c,v 1.6 1997/09/15 04:15:05 lukem Exp $	*/
+/*	$NetBSD: mount_ados.c,v 1.7 1997/09/16 12:23:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.6 1997/09/15 04:15:05 lukem Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.7 1997/09/16 12:23:34 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -89,7 +89,7 @@ main(argc, argv)
 			set_mask = 1;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case '?':
 		default:
