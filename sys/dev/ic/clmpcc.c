@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.4.2.2 1999/09/10 23:32:12 he Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.4.2.3 1999/11/21 15:15:45 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -965,7 +965,7 @@ clmpcc_set_params(ch)
 	u_char r1;
 	u_char r2;
 
-	if ( ch->ch_tcor && ch->ch_tbpr ) {
+	if ( ch->ch_tcor || ch->ch_tbpr ) {
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_TCOR);
 		r2 = clmpcc_rdreg(sc, CLMPCC_REG_TBPR);
 		/* Only write Tx rate if it really has changed */
@@ -975,7 +975,7 @@ clmpcc_set_params(ch)
 		}
 	}
 
-	if ( ch->ch_rcor && ch->ch_rbpr ) {
+	if ( ch->ch_rcor || ch->ch_rbpr ) {
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_RCOR);
 		r2 = clmpcc_rdreg(sc, CLMPCC_REG_RBPR);
 		/* Only write Rx rate if it really has changed */
@@ -1114,7 +1114,7 @@ clmpcc_rxintr(arg)
 		 * further receive timeout interrupts.
 		 */
 		reg = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
-		clmpcc_wrreg(sc, CLMPCC_REG_COR4, reg & CLMPCC_COR4_FIFO_MASK);
+		clmpcc_wrreg(sc, CLMPCC_REG_COR4, reg & ~CLMPCC_COR4_FIFO_MASK);
 		reg = clmpcc_rdreg(sc, CLMPCC_REG_IER);
 		clmpcc_wrreg(sc, CLMPCC_REG_IER, reg & ~CLMPCC_IER_RET);
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
