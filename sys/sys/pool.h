@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.26 2001/06/05 18:51:03 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 
 #ifdef _KERNEL
 #define	__POOL_EXPOSE
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "opt_pool.h"
 #endif
 
 #ifdef __POOL_EXPOSE
