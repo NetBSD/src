@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.15 1996/09/27 01:34:51 thorpej Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.16 1997/04/13 13:45:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.15 1996/09/27 01:34:51 thorpej Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.16 1997/04/13 13:45:02 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,6 @@ static char rcsid[] = "$NetBSD: traceroute.c,v 1.15 1996/09/27 01:34:51 thorpej 
 #include <unistd.h>
 
 #define Fprintf (void)fprintf
-#define Sprintf (void)sprintf
 #define Printf (void)printf
 
 #define	HEADERSIZE	(sizeof(struct ip) + lsrrlen + sizeof(struct udphdr) + sizeof(struct packetdata))
@@ -830,8 +829,9 @@ inetname(in)
 	} else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
-		Sprintf(line, "%lu.%lu.%lu.%lu", C(in.s_addr >> 24),
-			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
+		(void)snprintf(line, sizeof line, "%lu.%lu.%lu.%lu",
+		    C(in.s_addr >> 24), C(in.s_addr >> 16), C(in.s_addr >> 8),
+		    C(in.s_addr));
 	}
 	return (line);
 }
