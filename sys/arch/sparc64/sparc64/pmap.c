@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2000/06/19 23:30:36 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2000/06/24 04:38:20 eeh Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -432,7 +432,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	vaddr_t va;
 	u_int64_t phys_msgbuf;
 	paddr_t newkp;
-	vaddr_t newkv, firstaddr;
+	vaddr_t newkv, firstaddr, intstk;
 	vsize_t kdsize, ktsize;
 #ifdef DEBUG
 	int opmapdebug = pmapdebug;
@@ -1070,12 +1070,15 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			VM_FREELIST_DEFAULT);
 	}
 
+#if 0
 	/* finally, free up any space that valloc did not use */
+	prom_unmap_virt((vaddr_t)ekdatap, (kdatap + (4*MEG)) - ekdatap);
 	if (ekdatap < (kdatap + (4*MEG))) {
 		uvm_page_physload(atop(ekdatap), atop(kdatap + (4*MEG)),
 			atop(ekdatap), atop(kdatap + (4*MEG)),
 			VM_FREELIST_DEFAULT);
 	}
+#endif
 
 #ifdef BOOT_DEBUG
 	/* print out mem list */
@@ -1150,7 +1153,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		0 /* No ALIAS */,
 		1 /* valid */,
 		0 /* IE */);
-	data |= TLB_L|TLB_NFO;
+	data |= TLB_NFO;
 	pmap_enter_kpage(NULL, data);
 #ifdef BOOT1_DEBUG
 	prom_printf("Done inserting mesgbuf into pmap_kernel()\r\n");
@@ -1210,10 +1213,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 
 		while (vmmap < u0[1]) {
 			int64_t data;
-			vaddr_t va = (vaddr_t)vmmap;
 
 			pmap_get_page(&pa);
-			prom_map_phys(pa, NBPG, va, -1);
+			prom_map_phys(pa, NBPG, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				TLB_8K,
 				pa,
@@ -1223,7 +1225,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 				FORCE_ALIAS /* ALIAS -- Disable D$ */,
 				1 /* valid */,
 				0 /* IE */);
-			pmap_enter_kpage(va, data);
+			pmap_enter_kpage(vmmap, data);
 			vmmap += NBPG;
 		}
 #ifdef BOOT1_DEBUG
@@ -1234,9 +1236,10 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef DIAGNOSTIC
 		vmmap += NBPG; /* redzone -- XXXX do we need one? */
 #endif
-		if ((vmmap ^ CPUINFO_VA) & VA_ALIAS_MASK) 
+		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
 			vmmap += NBPG; /* Matchup virtual color for D$ */
-		cpus = (struct cpu_info *)vmmap;
+		intstk = vmmap;
+		cpus = (struct cpu_info *)(vmmap+EINTSTACK-INTSTACK);
 
 #ifdef BOOT1_DEBUG
 	prom_printf("Inserting cpu_info into pmap_kernel() at %p\r\n", cpus);
@@ -1245,9 +1248,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		pa = cpu0paddr;
 		for (i=0; i<8; i++) {
 			int64_t data;
-			vaddr_t va = (vaddr_t)vmmap;
 
-			prom_map_phys(pa, NBPG, va, -1);
+			prom_map_phys(pa, NBPG, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				TLB_8K,
 				pa,
@@ -1257,7 +1259,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 				FORCE_ALIAS /* ALIAS -- Disable D$ */,
 				1 /* valid */,
 				0 /* IE */);
-			pmap_enter_kpage(va, data);
+			pmap_enter_kpage(vmmap, data);
 			vmmap += NBPG;
 			pa += NBPG;
 		}
@@ -1266,7 +1268,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 
 		/* Initialize our cpu_info structure */
-		bzero(cpus, 8*NBPG);
+		bzero(intstk, 8*NBPG);
 		cpus->ci_next = NULL; /* Redundant, I know. */
 		cpus->ci_curproc = &proc0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
@@ -1304,8 +1306,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 void
 pmap_init()
 {
-	u_int64_t pagesize;
-	u_int64_t pte;
 	vm_page_t m;
 	paddr_t pa;
 	psize_t size;
