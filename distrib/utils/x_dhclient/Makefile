@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/06 18:53:33 mellon Exp $
+#	$NetBSD: Makefile,v 1.9 2001/08/03 14:15:48 drochner Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -6,7 +6,7 @@ CPPFLAGS+=	-DCLIENT_PATH='"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
 
 LDSTATIC?=	-static
 
-RSRCDIR= ${.CURDIR}/../../../usr.sbin/dhcp
+RSRCDIR= ${.CURDIR}/../../../dist/dhcp
 .PATH: ${RSRCDIR}/client ${RSRCDIR}/common ${RSRCDIR}/dst ${RSRCDIR}/omapip
 .NOPATH: ${PROG}
 
