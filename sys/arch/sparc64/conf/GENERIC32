@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.73 2003/10/18 08:30:14 lukem Exp $
+# 	$NetBSD: GENERIC32,v 1.74 2003/10/27 05:34:48 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	64
 
@@ -53,6 +53,8 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support 
+
 
 ## Loadable kernel module support; still under development.
 options 	LKM
