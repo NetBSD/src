@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.17 2001/05/28 01:09:55 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.18 2001/08/08 16:49:54 david Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.17 2001/05/28 01:09:55 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.18 2001/08/08 16:49:54 david Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ void	alarmcatch(int);
 struct fstab *allocfsent(struct fstab *);
 int	datesort(const void *, const void *);
 static	void sendmes(char *, char *);
+extern  gid_t egid;
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -219,12 +220,16 @@ broadcast(char	*message)
 	if (!notify || gp == NULL)
 		return;
 
+	/* Restore 'tty' privs for the child's use only. */	
+	setegid(egid);
 	switch (pid = fork()) {
 	case -1:
+		setegid(getgid());
 		return;
 	case 0:
 		break;
 	default:
+		setegid(getgid());
 		while (wait(&s) != pid)
 			continue;
 		return;
