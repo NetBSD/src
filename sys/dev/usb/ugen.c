@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.9 1999/01/03 01:03:22 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.10 1999/01/07 02:22:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/device.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
@@ -422,7 +421,8 @@ ugenread(dev, uio, flag)
 		if (reqh == 0)
 			return (ENOMEM);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
-			DPRINTFN(1, ("ugenread: transfer %d bytes\n", n));
+			DPRINTFN(1, ("ugenread: start transfer %d bytes\n",n));
+			tn = n;
 			r = usbd_bulk_transfer(reqh, sce->pipeh, 0, buf, 
 					       &tn, "ugenrb");
 			if (r != USBD_NORMAL_COMPLETION) {
@@ -432,6 +432,7 @@ ugenread(dev, uio, flag)
 					error = EIO;
 				break;
 			}
+			DPRINTFN(1, ("ugenread: got %d bytes\n", tn));
 			error = uiomove(buf, tn, uio);
 			if (error || tn < n)
 				break;
@@ -453,7 +454,7 @@ ugenwrite(dev, uio, flag)
 {
 	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 	int endpt = UGENENDPOINT(dev);
-	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
+	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	size_t n;
 	int error = 0;
 	char buf[UGEN_BBSIZE];
