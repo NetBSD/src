@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.1 2002/07/05 13:31:30 scw Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.2 2002/07/10 11:05:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/setjmp.h>
 
 #define _O(n)	((n)*8)
 
@@ -111,7 +112,7 @@ ENTRY_NOPROFILE(_longjmp)
 	ld.q	r2, _O(_JB_R33), r33
 	ld.q	r2, _O(_JB_R34), r34
 	ld.q	r2, _O(_JB_R35), r35
-	ld.q	r2, _O(_JB_R40), r44
+	ld.q	r2, _O(_JB_R44), r44
 	ld.q	r2, _O(_JB_R45), r45
 	ld.q	r2, _O(_JB_R46), r46
 	ld.q	r2, _O(_JB_R47), r47
