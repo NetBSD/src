@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.16 2001/05/03 21:01:10 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.17 2001/05/06 15:09:58 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.15 2001/04/23 22:04:13 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.16 2001/05/03 21:00:46 he Exp 
  */
 
 /*
@@ -856,6 +856,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GI",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXLAGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Rage XL AGP 2x",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
 	    0,
 	    "ATI Technologies",
@@ -1084,6 +1090,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "64310",
 	},
 	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69000,
+	    0,
+	    "Chips and Technologies",
+	    "69000",
+	},
+	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65545,
 	    0,
 	    "Chips and Technologies",
@@ -1202,6 +1214,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CS4280 CrystalClear Audio Interface",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
+	    0,
+	    "Cirrus Logic",
+	    "CS4281 CrystalClear Audio Interface",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
@@ -2845,13 +2863,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875,
 	    0,
 	    "Symbios Logic",
-	    "53c875",
+	    "53c875/876",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510,
 	    0,
 	    "Symbios Logic",
 	    "53c1510",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895A,
+	    0,
+	    "Symbios Logic",
+	    "53c895A",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010,
+	    0,
+	    "Symbios Logic",
+	    "53c1010",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
@@ -3728,6 +3758,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 7016 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_EMP,
+	    0,
+	    "Silicon Motion",
+	    "Lynx EM+",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_E,
