@@ -1,4 +1,4 @@
-/* $NetBSD: modf.c,v 1.1 2000/12/29 20:13:50 bjh21 Exp $ */
+/* $NetBSD: ieee754_modf.c,v 1.1 2002/02/19 13:08:13 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -40,8 +40,7 @@
  * Beware signedness when doing subtraction, and also operand size!
  */
 double
-modf(val, iptr)
-	double val, *iptr;
+modf(double val, double *iptr)
 {
 	union doub {
 		double v;
