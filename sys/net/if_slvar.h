@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *	$Id: if_slvar.h,v 1.5 1993/05/20 03:06:03 cgd Exp $
+ *	$Id: if_slvar.h,v 1.6 1993/12/10 13:24:25 cgd Exp $
  */
 
 #ifndef _NET_IF_SLVAR_H_
@@ -63,13 +63,13 @@ struct sl_softc {
 	caddr_t	sc_bpf;
 };
 
-/* visible flags */
-#define	SC_COMPRESS	0x0002		/* compress TCP traffic */
-#define	SC_NOICMP	0x0004		/* supress ICMP traffic */
-#define	SC_AUTOCOMP	0x0008		/* auto-enable TCP compression */
-/* internal flags (should be separate) */
-#define	SC_ERROR	0x08000		/* had an input error - 30 Aug 92*/
-#define	SC_ABORT	0x10000		/* have been sent an abort request */
+/* internal flags */
+#define	SC_ERROR	0x0001		/* had an input error */
+
+/* definitions for interface "LINK" flags */
+#define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
+#define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
+#define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 /* this stuff doesn't belong here... */
 #define	SLIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
