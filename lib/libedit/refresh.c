@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.12 2000/01/20 22:56:21 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.13 2000/02/19 09:08:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.12 2000/01/20 22:56:21 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.13 2000/02/19 09:08:16 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -753,7 +753,7 @@ re_update_line(el, old, new, i)
     else
 	fx = 0;
 
-    if (sx < 0) {
+    if (sx < 0 && (ose - old) + fx < el->el_term.t_size.h) {
 	ELRE_DEBUG(1,(__F, "second diff delete at %d...\r\n", (ose - old) + fx),);
 	/*
 	 * Check if we have stuff to delete
@@ -786,7 +786,8 @@ re_update_line(el, old, new, i)
 	    ELRE_DEBUG(1,(__F, "but with nothing left to save\r\n"),);
 	    term_overwrite(el, nse, (nls - nse));
 	    ELRE_DEBUG(1,(__F, "cleareol %d\n", (oe - old) - (ne - new)),);
-	    term_clear_EOL(el, (oe - old) - (ne - new));
+	    if ((oe - old) - (ne - new) != 0)
+		term_clear_EOL(el, (oe - old) - (ne - new));
 	}
     }
 
