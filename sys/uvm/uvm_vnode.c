@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.8 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.9 1998/03/11 01:37:40 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1953,21 +1953,29 @@ uvm_vnp_sync(mp)
 
 		/* attempt to gain reference */
 		while ((got_lock = simple_lock_try(&uvn->u_obj.vmobjlock)) ==
-		    FALSE && (uvn->u_flags & UVM_VNODE_BLOCKED) == 0)
+		    						FALSE && 
+				(uvn->u_flags & UVM_VNODE_BLOCKED) == 0)
 			/* spin */ ;
 
 		/*
-		 * we will exit the loop if we were unable to get the lock and
-		 * we detected that the vnode was "blocked" ... if it is
-		 * blocked then it must be a dying vnode.   since dying vnodes
-		 * are in the process of being flushed out we can safely skip
-		 * it.
+		 * we will exit the loop if either if the following are true:
+		 *  - we got the lock [always true if NCPU == 1]
+		 *  - we failed to get the lock but noticed the vnode was
+		 * 	"blocked" -- in this case the vnode must be a dying
+		 *	vnode, and since dying vnodes are in the process of
+		 *	being flushed out, we can safely skip this one
+		 *
+		 * we want to skip over the vnode if we did not get the lock,
+		 * or if the vnode is already dying (due to the above logic).
 		 *
 		 * note that uvn must already be valid because we found it on
 		 * the wlist (this also means it can't be ALOCK'd).
 		 */
-		if (!got_lock)
-			continue;
+		if (!got_lock || (uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
+			if (got_lock)
+				simple_unlock(&uvn->u_obj.vmobjlock);
+			continue;		/* skip it */
+		}
 		
 		/*
 		 * gain reference.   watch out for persisting uvns (need to
