@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.13 1999/10/16 07:17:43 christos Exp $
+#	$NetBSD: na.phone,v 1.13.6.1 2001/03/22 02:51:33 he Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #	From: http://www.teltronics.com/nanp2.html
 201:New Jersey (USA):Hackensack, Morristown, Newark and Jersey City:NJ
@@ -90,7 +90,7 @@
 415:California (USA):San Francisco:CA
 416:Ontario (Canada):Toronto:ON
 417:Missouri (USA):Joplin, Springfield:MO
-418:Quebec (Canada):Quebec:PQ
+418:Quebec (Canada):Quebec:QC
 419:Ohio (USA):Toledo:OH
 423:Tennessee (USA):Chattanooga:TN
 424*:California (USA):Beverly Hills, Gardena:CA
@@ -99,14 +99,14 @@
 440:Ohio (USA):Ashtabula, Lorain, Westlake:OH
 443:Maryland (USA):Baltimore, Towson:MD
 441:Bermuda (Caribbean):all locations:
-450:Quebec (Canada):area outside Montreal:PQ
+450:Quebec (Canada):area outside Montreal:QC
 469*:Texas (USA):Dallas:TX
 473:Grenada (Caribbean):all locations:
 480:Arizona (USA):suburban areas east of Phoenix:AZ
 484*:Pennsylvania (USA):Allentown, Bethlehem, Reading:PA
 #
 500::Personal Communications Services:
-501:Arkansas (USA):all locations:AK
+501:Arkansas (USA):all locations:AR
 502:Kentucky (USA):Louisville:KY
 503:Oregon (USA):Portland and Salem:OR
 504:Louisiana (USA):New Orleans:LA
@@ -118,7 +118,7 @@
 510:California (USA):Oakland:CA
 512:Texas (USA):Austin:TX
 513:Ohio (USA):Cincinnati, Dayton:OH
-514:Quebec (Canada):Montreal:QT
+514:Quebec (Canada):Montreal:QC
 515:Iowa (USA):Des Moines:IA
 516:New York (USA):Nassau County:NY
 517:Michigan (USA):Lansing, Saginaw:MI
@@ -235,7 +235,7 @@
 816:Missouri (USA):Kansas City 
 817:Texas (USA):Arlington, Fort Worth:IL
 818:California (USA):Burbank, Pasadena, Van Nuys:CA
-819:Quebec (Canada):Sherbrooke, Trois Rivieres:PQ
+819:Quebec (Canada):Sherbrooke, Trois Rivieres:QC
 828:North Carolina (USA):Asheville, Hendersonville:NC
 830:Texas (USA):Fredericksburg, New Braunfels, Uvalde:TX 
 831:California (USA):Monterey, Salinas:CA
@@ -250,7 +250,8 @@
 864:South Carolina (USA):Greenville, Spartanburg:SC 
 865*:Tennessee (USA):Knoxville:TN
 866*::Toll Free:
-867:Yukon/Northwest Territories (Canada):all locations:YT
+867:Yukon (Canada):all locations:YT
+867:Northwest Territories (Canada):all locations:NT
 868:Trinidad and Tobago (Caribbean):all locations:
 869:St. Kitts/Nevis (Caribbean):all locations:
 870:Arkansas (USA):Jonesboro, Pine Bluff, Texarkana:AR
