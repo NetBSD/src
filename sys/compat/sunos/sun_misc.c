@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.25 1994/06/06 06:57:59 deraadt Exp $
+ * $Id: sun_misc.c,v 1.26 1994/06/08 11:19:04 mycroft Exp $
  */
 
 /*
@@ -355,7 +355,8 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, NULL, 0))
+	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0,
+	    0))
 		goto out;
 	inp = buf;
 	outp = uap->buf;
