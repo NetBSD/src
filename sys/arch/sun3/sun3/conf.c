@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1995/01/26 23:21:29 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1995/03/10 02:22:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -49,6 +49,14 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+
+/*
+ * You may notice that this file uses the traditional method for
+ * initializing the bdevsw and cdevsw entries.  I don't like the
+ * way hp300/conf.c does it because the macros hide way too much
+ * important information.  (In fact, some using it have suffered
+ * from incorrect *devsw entries as a result 8^) -gwr
+ */
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -493,6 +501,40 @@ struct	tty *pt_tty[];
 #define	ptsstop		ndef_stop
 #endif
 
+/* Frame Buffer (/dev/fb) */
+decl_open(fbopen);
+decl_close(fbclose);
+decl_ioctl(fbioctl);
+decl_mmap(fbmap);
+
+/* BW2 frame buffer (/dev/bwtwo) */
+#include "bwtwo.h"
+#if NBWTWO > 0
+decl_open(bw2open);
+decl_close(bw2close);
+decl_ioctl(bw2ioctl);
+decl_mmap(bw2map);
+#else
+#define bw2open  ndef_open
+#define bw2close ndef_close
+#define bw2ioctl ndef_ioctl
+#define bw2map  ndef_mmap
+#endif
+
+/* CG4 frame buffer (/dev/cgfour) */
+#include "cgfour.h"
+#if NCGFOUR > 0
+decl_open(cg4open);
+decl_close(cg4close);
+decl_ioctl(cg4ioctl);
+decl_mmap(cg4map);
+#else
+#define cg4open  ndef_open
+#define cg4close ndef_close
+#define cg4ioctl ndef_ioctl
+#define cg4map  ndef_mmap
+#endif
+
 /* Berkeley Packet Filter -- XXX should be generic device */
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -610,7 +652,9 @@ struct cdevsw	cdevsw[] =
 		ptcselect, nsup_mmap, nsup_strategy },
 
 	/* 22: /dev/fb indirect driver */
-	cdev_notdef,
+	{	fbopen, fbclose, nsup_read, nsup_write,
+		fbioctl, null_stop, null_reset, nsup_ttys,
+		seltrue, fbmap, nsup_strategy },
 
 	/* 23: old sun ropc (unused) */
 	/* File descriptors (/dev/std{in,out,err}) */
@@ -628,7 +672,9 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef,
 
  	/* 27: /dev/bwtwo */
-	cdev_notdef,
+	{	bw2open, bw2close, nsup_read, nsup_write,
+		bw2ioctl, null_stop, null_reset, nsup_ttys,
+		seltrue, bw2map, nsup_strategy },
 
 	/* 28: /dev/vpc (Systech VPC-2200 versatec/centronics) */
 	cdev_notdef,
@@ -668,8 +714,10 @@ struct cdevsw	cdevsw[] =
 	/* 38: (pc) */
 	cdev_notdef,
 
-	/* 39: Sun cg4 board */
-	cdev_notdef,
+	/* 39: /dev/cgfour* (Sun cg4 board) */
+	{	cg4open, cg4close, nsup_read, nsup_write,
+		cg4ioctl, null_stop, null_reset, nsup_ttys,
+		seltrue, cg4map, nsup_strategy },
 
 	cdev_notdef,	/* 40: (sni) */
 	cdev_notdef,	/* 41: (sun dump) */
@@ -835,6 +883,7 @@ conf_init()
 
 #if NZS > 1
 int kdcnprobe(), kdcninit(), kdcngetc(), kdcnputc();
+void kdcnpollc();
 #endif
 #if NPROM > 0
 int promcnprobe(), promcninit(), promcngetc(), promcnputc();
@@ -847,7 +896,7 @@ extern void nullcnpollc();
 
 struct	consdev constab[] = {
 #if NZS > 1
-	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, nullcnpollc },
+	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, kdcnpollc },
 #endif
 #if	NZS
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
