@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2000/04/10 01:40:51 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.35 2000/05/11 02:24:36 hubertf Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -625,4 +625,5 @@ disp_bootsel(part, mbsp)
 		msg_table_add(MSG_bootsel_row,
 		    i, get_partname(i), mbs->nametab[i]);
 	}
+	msg_display_add(MSG_newline);
 }
