@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.30 2000/08/14 07:00:08 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.31 2000/10/16 05:13:13 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -99,7 +99,7 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	ISP_1000_RISC_CODE,
-	BIU_BURST_ENABLE
+	BIU_BURST_ENABLE|BIU_SBUS_CONF1_FIFO_32
 };
 
 struct isp_sbussoftc {
