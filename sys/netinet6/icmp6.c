@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.4 1999/07/06 08:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1156,13 +1156,15 @@ icmp6_reflect(m, off)
 		/* sanity checks */
 		if (off < sizeof(struct ip6_hdr)) {
 			printf("sanity fail: off=%x, sizeof(ip6)=%x in %s:%d\n",
-			       off, sizeof(struct ip6_hdr), __FILE__, __LINE__);
+			       (unsigned int)off,
+			       (unsigned int)sizeof(struct ip6_hdr),
+			       __FILE__, __LINE__);
 			goto bad;
 		}
 		siz = off - sizeof(struct ip6_hdr);
 		if (plen < siz) {
 			printf("sanity fail: siz=%x, payloadlen=%x in %s:%d\n",
-			       siz, plen, __FILE__, __LINE__);
+			       (unsigned int)siz, plen, __FILE__, __LINE__);
 			goto bad;
 		}
 		IP6_EXTHDR_CHECK(m, 0, off, /*nothing*/);

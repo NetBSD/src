@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.5 1999/07/06 08:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -693,11 +693,11 @@ add_m6fc(mfccp)
 
 			if (nstl++)
 				log(LOG_ERR,
-				    "add_m6fc: %s o %s g %s p %x dbx %x\n",
+				    "add_m6fc: %s o %s g %s p %x dbx %p\n",
 				    "multiple kernel entries",
 				    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 				    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
-				    mfccp->mf6cc_parent, (u_int)rt->mf6c_stall);
+				    mfccp->mf6cc_parent, rt->mf6c_stall);
 
 #ifdef MRT6DEBUG
 			if (mrt6debug & DEBUG_MFC)
