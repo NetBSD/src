@@ -1,6 +1,4 @@
-/*	$NetBSD: ibus_5100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $	*/
-
-/*	$NetBSD: ibus_5100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $	*/
+/*	$NetBSD: ibus_5100.c,v 1.5 1999/06/29 21:00:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_5100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_5100.c,v 1.5 1999/06/29 21:00:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
