@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.22 1996/11/28 16:29:59 jtk Exp $
+$NetBSD: pcidevs,v 1.23 1997/01/01 14:56:19 veego Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -554,8 +554,9 @@ product ITT AGX016	0x0001	AGX016
 product LEADTEK S3_805	0x0000	S3 805
 
 /* Matrox products */
-product MATROX ATLAS		0x0518	MGA-2 Atlas PX2085
 product MATROX IMPRESSION	0x0d10	MGA Impression
+product MATROX ATLAS		0x0518	MGA-2 Atlas PX2085
+product MATROX MILLENIUM	0x0519	MGA Millenium 2064W
 
 /* Mylex products */
 product MYLEX 960P	0x0001	RAID controller

@@ -559,8 +559,9 @@
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 
 /* Matrox products */
-#define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA-2 Atlas PX2085 */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
+#define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA-2 Atlas PX2085 */
+#define	PCI_PRODUCT_MATROX_MILLENIUM	0x0519		/* MGA Millenium 2064W */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* RAID controller */
