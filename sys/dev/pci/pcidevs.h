@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.506 2003/02/02 18:53:16 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.507 2003/02/03 11:00:53 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.503 2003/02/02 18:52:40 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.504 2003/02/03 11:00:26 joda Exp 
  */
 
 /*
@@ -1991,10 +1991,10 @@
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
-#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* SiS 630 Host Bridge */
+#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
-#define	PCI_PRODUCT_SIS_651	0x0650		/* SiS 651 Host Bridge */
+#define	PCI_PRODUCT_SIS_651	0x0651		/* SiS 651 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
 #define	PCI_PRODUCT_SIS_745	0x0745		/* SiS 745 Host Bridge */
@@ -2002,8 +2002,10 @@
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
+#define	PCI_PRODUCT_SIS_6325	0x6325		/* 6325 AGP VGA */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
+#define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB 2.0 host controller */
 #define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* SiS 7012 AC-97 Sound */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
