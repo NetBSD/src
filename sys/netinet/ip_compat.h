@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.22 2001/03/26 06:13:12 mike Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.23 2001/04/12 19:41:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -361,7 +361,6 @@ typedef struct {
 #  define	IWCOPYPTR	iwcopyptr
 #  define	FREE_MB_T(m)	freemsg(m)
 #  define	SPL_NET(x)	;
-#  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
 #  ifdef sparc
@@ -516,7 +515,6 @@ extern	vm_map_t	kmem_map;
 #  define	SPL_X(x)	(void) splx(x)
 # else
 #  if !SOLARIS && !defined(linux)
-#   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
@@ -538,7 +536,6 @@ extern	vm_map_t	kmem_map;
 # define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
-# define	SPL_IMP(x)	;
 # undef		SPL_X
 # define	SPL_X(x)	;
 # define	KMALLOC(a,b)	(a) = (b)malloc(sizeof(*a))
@@ -881,7 +878,6 @@ typedef	struct	uio	{
 #  include <linux/netdevice.h>
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
-#  define	SPL_IMP(x)
  
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)
