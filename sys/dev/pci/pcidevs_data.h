@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.471 2002/09/19 18:53:01 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.472 2002/09/20 15:03:22 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.469 2002/09/19 18:50:45 nathanw Exp 
+ *	NetBSD: pcidevs,v 1.470 2002/09/20 14:59:58 pooka Exp 
  */
 
 /*
@@ -1286,6 +1286,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ASIX Electronics",
 	    "AX88140A 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
+	    0,
+	    "Asustek Computer",
+	    "Asustek ISDN",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -2732,6 +2738,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Domex",
 	    "DMX-3191D",
+	},
+	{
+	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
+	    0,
+	    "Dynalink",
+	    "Dynalink IS64PH ISDN Adapter",
 	},
 	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
@@ -7906,6 +7918,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "W89C940F Ethernet",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692,
+	    0,
+	    "Winbond Electronics",
+	    "W6692 ISDN",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    0,
 	    "Xircom",
@@ -7993,6 +8011,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HAUPPAUGE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Hauppauge Computer Works",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DYNALINK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Dynalink",
 	    NULL,
 	},
 	{
