@@ -1,4 +1,4 @@
-/*	$NetBSD: __dn_comp.c,v 1.2 1997/04/22 18:53:16 cgd Exp $	*/
+/*	$NetBSD: __dn_comp.c,v 1.3 1997/07/17 21:27:33 thorpej Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -15,9 +15,11 @@ __indr_reference(__dn_comp,dn_comp);
 #include <netinet/in.h>
 #include <resolv.h>
 
-extern int __dn_comp __P((const char *, u_char *, int, u_char **, u_char **));
+/* XXX THIS IS A MESS!  SEE <resolv.h> XXX */
 
 #undef dn_comp
+int	dn_comp __P((const char *, u_char *, int, u_char **, u_char **));
+
 int
 dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 	const char *exp_dn;
