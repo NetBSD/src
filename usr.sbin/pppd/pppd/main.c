@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.6 1993/11/10 01:34:22 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.7 1993/11/28 23:39:35 paulus Exp $";
 #endif
 
 #define SETSID
@@ -30,6 +30,14 @@ static char rcsid[] = "$Id: main.c,v 1.6 1993/11/10 01:34:22 paulus Exp $";
 #include <syslog.h>
 #include <netdb.h>
 #include <utmp.h>
+
+/*
+ * If REQ_SYSOPTIONS is defined to 1, pppd will not run unless
+ * /etc/ppp/options exists.
+ */
+#ifndef	REQ_SYSOPTIONS
+#define REQ_SYSOPTIONS	0
+#endif
 
 #ifdef STREAMS
 #undef SGTTY
@@ -225,7 +233,7 @@ main(argc, argv)
   
     progname = *argv;
 
-    if (!options_from_file(_PATH_SYSOPTIONS) ||
+    if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS) ||
 	!options_from_user() ||
 	!parse_args(argc-1, argv+1))
 	die(1);
