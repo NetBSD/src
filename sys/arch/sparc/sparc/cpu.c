@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.76 1998/09/30 18:38:57 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.77 1998/10/08 22:14:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -93,7 +93,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
 
 int	ncpu;
-struct	cpu_info *cpus[_MAXNCPU];
+struct	cpu_info **cpus;
 #define CPU_MID2CPUNO(mid) ((mid) - 8)
 
 
@@ -245,12 +245,11 @@ cpu_attach(parent, self, aux)
 	void *aux;
 {
 static	struct cpu_softc *bootcpu;
+static	int cpu_number;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
-	struct cpu_info *cip;
+	struct cpu_info *cpi;
 	int node, mid;
-
-	ncpu++;	/* Another one */
 
 	node = ma->ma_node;
 
@@ -260,30 +259,42 @@ static	struct cpu_softc *bootcpu;
 	mid = getpropint(node, "mid", 0);
 	if (bootcpu == NULL) {
 		bootcpu = sc;
-		cip = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
-		cip->master = 1;
-		cpus[0] = cip;
+		cpus = malloc(ncpu * sizeof(cpi), M_DEVBUF, M_NOWAIT);
+		bzero(cpus, ncpu * sizeof(cpi));
+		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
+		cpi->master = 1;
 	} else {
-		cip = sc->sc_cpuinfo = alloc_cpuinfo();
+		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 	}
 
-	if (mid != 0) {
+	cpus[cpu_number] = cpi;
+	cpi->cpu_no = cpu_number++;
+	cpi->mid = mid;
+	cpi->node = node;
+
+	if (ncpu != 0) {
 		printf(": mid %d", mid);
-		cpus[CPU_MID2CPUNO(mid)] = cip;
 	}
 
-	cip->mid = mid;
-	cip->node = node;
+	getcpuinfo(cpi, node);
 
-	getcpuinfo(cip, node);
-
-	if (cip->master) {
+	if (cpi->master) {
 		cpu_setup(sc);
 		return;
 	}
 
+	cpuinfo.cache_flush = cpi->cache_flush = smp_cache_flush;
+	cpuinfo.vcache_flush_page = cpi->vcache_flush_page =
+		smp_vcache_flush_page;
+	cpuinfo.vcache_flush_segment = cpi->vcache_flush_segment =
+		smp_vcache_flush_segment;
+	cpuinfo.vcache_flush_region = cpi->vcache_flush_region =
+		smp_vcache_flush_region;
+	cpuinfo.vcache_flush_context = cpi->vcache_flush_context =
+		smp_vcache_flush_context;
+
 	/* for now use the fixed virtual addresses setup in autoconf.c */
-	cip->intreg_4m = (struct icr_pi *)
+	cpi->intreg_4m = (struct icr_pi *)
 		(PI_INTR_VA + (_MAXNBPG * CPU_MID2CPUNO(mid)));
 
 	/* Now start this CPU */
@@ -353,14 +364,14 @@ cpu_spinup(sc)
 	struct cpu_softc *sc;
 {
 #if defined(SUN4M)
-	struct cpu_info *cip = sc->sc_cpuinfo;
+	struct cpu_info *cpi = sc->sc_cpuinfo;
 	int n;
 extern void cpu_hatch __P((void));
 	caddr_t pc = (caddr_t)cpu_hatch;
 	struct openprom_addr oa;
 
 	/* Setup CPU-specific MMU tables */
-	pmap_alloc_cpu(cip);
+	pmap_alloc_cpu(cpi);
 
 	cpu_hatched = 0;
 	cpu_hatchstack = malloc(USPACE,M_TEMP, M_NOWAIT);
@@ -371,15 +382,15 @@ extern void cpu_hatch __P((void));
 	 * the PROM in a "physical address descriptor".
 	 */
 	oa.oa_space = 0;
-	oa.oa_base = (u_int32_t)cip->ctx_tbl_pa;
-	oa.oa_size = cip->mmu_ncontext * sizeof(cip->ctx_tbl[0]); /*???*/
+	oa.oa_base = (u_int32_t)cpi->ctx_tbl_pa;
+	oa.oa_size = cpi->mmu_ncontext * sizeof(cpi->ctx_tbl[0]); /*???*/
 
 	/*
 	 * Flush entire cache here, since the CPU may start with
 	 * caches off, hence no cache-coherency may be assumed.
 	 */
 	cpuinfo.cache_flush_all();
-	rom_cpustart(cip->node, &oa, 0, pc);
+	rom_cpustart(cpi->node, &oa, 0, pc);
 
 	/*
 	 * Wait for this CPU to spin up.
@@ -401,34 +412,28 @@ extern void cpu_hatch __P((void));
 void
 mp_pause_cpus()
 {
-	int i, n;
-	struct cpu_info *cip;
+	int n;
+	struct cpu_info *cpi;
 
-	for (n = 0, i = 0; i < _MAXNCPU; i++) {
-		cip = cpus[i];
-		if (cip == NULL)
+	for (n = 0; n < ncpu; n++) {
+		if ((cpi = cpus[n]) == NULL)
 			continue;
-		if (cpuinfo.mid != cip->mid)
-			rom_cpuidle(cip->node);
-		if (++n >= ncpu)
-			break;
+		if (cpuinfo.mid != cpi->mid)
+			rom_cpuidle(cpi->node);
 	}
 }
 
 void
 mp_resume_cpus()
 {
-	int i, n;
-	struct cpu_info *cip;
+	int n;
+	struct cpu_info *cpi;
 
-	for (n = 0, i = 0; i < _MAXNCPU; i++) {
-		cip = cpus[i];
-		if (cip == NULL)
+	for (n = 0; n < ncpu; n++) {
+		if ((cpi = cpus[n]) == NULL)
 			continue;
-		if (cpuinfo.mid != cip->mid)
-			rom_cpuresume(cip->node);
-		if (++n >= ncpu)
-			break;
+		if (cpuinfo.mid != cpi->mid)
+			rom_cpuresume(cpi->node);
 	}
 }
 
@@ -1361,16 +1366,33 @@ getcpuinfo(sc, node)
 		MPCOPY(cache_enable);
 		MPCOPY(get_syncflt);
 		MPCOPY(get_asyncflt);
-		MPCOPY(cache_flush);
-		MPCOPY(vcache_flush_page);
-		MPCOPY(vcache_flush_segment);
-		MPCOPY(vcache_flush_region);
-		MPCOPY(vcache_flush_context);
+		MPCOPY(sp_cache_flush);
+		MPCOPY(sp_vcache_flush_page);
+		MPCOPY(sp_vcache_flush_segment);
+		MPCOPY(sp_vcache_flush_region);
+		MPCOPY(sp_vcache_flush_context);
 		MPCOPY(pcache_flush_line);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);
 #undef MPCOPY
+		/*
+		 * Initialize both SP and MP versions of the
+		 * cache flush functions.
+		 */
+		if (ncpu > 1) {
+			sc->cache_flush = smp_cache_flush;
+			sc->vcache_flush_page = smp_vcache_flush_page;
+			sc->vcache_flush_segment = smp_vcache_flush_segment;
+			sc->vcache_flush_region = smp_vcache_flush_region;
+			sc->vcache_flush_context = smp_vcache_flush_context;
+		} else {
+			sc->cache_flush = sc->sp_cache_flush;
+			sc->vcache_flush_page = sc->sp_vcache_flush_page;
+			sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
+			sc->vcache_flush_region = sc->sp_vcache_flush_region;
+			sc->vcache_flush_context = sc->sp_vcache_flush_context;
+		}
 		return;
 	}
 	panic("Out of CPUs");

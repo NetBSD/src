@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103 1998/10/08 21:49:12 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.104 1998/10/08 22:14:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -123,6 +123,7 @@ static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
 int	search_prom __P((int, char *));
+int	find_cpus __P((void));
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -138,16 +139,34 @@ matchbyname(parent, cf, aux)
 	return (0);
 }
 
+int
+find_cpus()
+{
+	int node, n;
+
+#if defined(MULTIPROCESSOR)
+	n = 0;
+	node = findroot();
+	for (node = firstchild(node); node; node = nextsibling(node)) {
+		if (strcmp(getpropstring(node, "device_type"), "cpu") == 0)
+			n++;
+	}
+	return (n);
+#else
+	return (1);
+#endif
+}
+
 /*
  * Convert hex ASCII string to a value.  Returns updated pointer.
  * Depends on ASCII order (this *is* machine-dependent code, you know).
  */
 static char *
 str2hex(str, vp)
-	register char *str;
-	register int *vp;
+	char *str;
+	int *vp;
 {
-	register int v, c;
+	int v, c;
 
 	for (v = 0;; v = v * 16 + c, str++) {
 		c = *(u_char *)str;
@@ -259,8 +278,8 @@ bootstrap()
 	if (CPU_ISSUN4M) {
 		int node;
 		int nvaddrs, *vaddrs, vstore[10];
-		register u_int pte;
-		register int i;
+		u_int pte;
+		int i;
 		extern void setpte4m __P((u_int, u_int));
 
 		if ((node = opennode("/obio/interrupt")) == 0)
@@ -353,8 +372,8 @@ bootstrap()
 static void
 bootpath_build()
 {
-	register char *cp, *pp;
-	register struct bootpath *bp;
+	char *cp, *pp;
+	struct bootpath *bp;
 
 	/*
 	 * On SS1s, promvec->pv_v0bootargs->ba_argv[1] contains the flags
@@ -462,7 +481,7 @@ bootpath_fake(bp, cp)
 	struct bootpath *bp;
 	char *cp;
 {
-	register char *pp;
+	char *pp;
 	int v0val[3];
 
 #define BP_APPEND(BP,N,V0,V1,V2) { \
@@ -793,6 +812,8 @@ configure()
 	}
 #endif
 
+	ncpu = find_cpus();
+
 	*promvec->pv_synchook = sync_crash;
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -846,9 +867,9 @@ sync_crash()
 
 char *
 clockfreq(freq)
-	register int freq;
+	int freq;
 {
-	register char *p;
+	char *p;
 	static char buf[10];
 
 	freq /= 1000;
@@ -884,7 +905,7 @@ mbprint(aux, name)
 int
 findroot()
 {
-	register int node;
+	int node;
 
 	if ((node = rootnode) == 0 && (node = nextsibling(0)) == 0)
 		panic("no PROM root device");
@@ -899,7 +920,7 @@ findroot()
 int
 findnode(first, name)
 	int first;
-	register const char *name;
+	const char *name;
 {
 	int node;
 	char buf[32];
@@ -1055,7 +1076,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* the first early device to be configured is the cpu */
 	if (CPU_ISSUN4M) {
 		/* XXX - what to do on multiprocessor machines? */
-		register const char *cp;
+		const char *cp;
 
 		for (node = firstchild(node); node; node = nextsibling(node)) {
 			cp = getpropstringA(node, "device_type", namebuf);
@@ -1259,7 +1280,7 @@ findzs(zs)
 
 int
 makememarr(ap, max, which)
-	register struct memarr *ap;
+	struct memarr *ap;
 	int max, which;
 {
 #if defined(SUN4C) || defined(SUN4M)
@@ -1465,7 +1486,7 @@ getprop_address1(node, vpp)
  */
 int
 romgetcursoraddr(rowp, colp)
-	register int **rowp, **colp;
+	int **rowp, **colp;
 {
 	char buf[100];
 
