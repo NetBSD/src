@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1.4.2 2002/01/10 19:37:42 thorpej Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.4.3 2002/06/16 20:11:33 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -51,6 +51,7 @@
 #include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/kbdreg.h>
@@ -93,6 +94,8 @@
 extern struct cfdriver opms_cd;
 
 cdev_decl(opms);
+
+#define	LMSUNIT(dev)	(minor(dev))
 
 static __inline void pms_dev_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
@@ -158,9 +161,11 @@ opms_common_attach(sc, opms_iot, config)
 }
 
 int
-opmsopen(dev, flag)
+opmsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
@@ -198,9 +203,11 @@ opmsopen(dev, flag)
 }
 
 int
-opmsclose(dev, flag)
+opmsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -266,11 +273,12 @@ opmsread(dev, uio, flag)
 }
 
 int
-opmsioctl(dev, cmd, addr, flag)
+opmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
