@@ -1,4 +1,9 @@
-#	$NetBSD: list.crypto,v 1.1 2005/01/10 10:04:31 lukem Exp $
+#	$NetBSD: list.crypto,v 1.2 2005/01/10 10:47:36 lukem Exp $
 
 PROG	cgdconfig
-LIBS	-lcrypto
+
+SRCDIRS	usr.bin/ssh
+PROG	scp
+PROG	ssh		slogin
+
+LIBS	-lssh -lcrypto
