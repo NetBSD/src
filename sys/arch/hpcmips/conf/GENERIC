@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.10 1999/11/03 14:55:53 enami Exp $
+# 	$NetBSD: GENERIC,v 1.11 1999/11/04 04:58:25 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -27,7 +27,7 @@ options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	SCSIVERBOSE		# human readable SCSI error messages
 options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	RTC_OFFSET=-540		# JST-9
 #options 	RTC_OFFSET=480		# PST8
 options 	NTP			# network time protocol
