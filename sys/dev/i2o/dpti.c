@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.9 2002/10/23 09:13:12 jdolecek Exp $	*/
+/*	$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.9 2002/10/23 09:13:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $");
 
 #include "opt_i2o.h"
 
@@ -137,10 +137,10 @@ static struct dpt_sig dpti_sig = {
 
 void	dpti_attach(struct device *, struct device *, void *);
 int	dpti_blinkled(struct dpti_softc *);
-int	dpti_ctlrinfo(struct dpti_softc *, u_long, caddr_t);
+int	dpti_ctlrinfo(struct dpti_softc *, int, caddr_t);
 int	dpti_match(struct device *, struct cfdata *, void *);
 int	dpti_passthrough(struct dpti_softc *, caddr_t, struct proc *);
-int	dpti_sysinfo(struct dpti_softc *, u_long, caddr_t);
+int	dpti_sysinfo(struct dpti_softc *, int, caddr_t);
 
 dev_type_open(dptiopen);
 dev_type_ioctl(dptiioctl);
@@ -222,25 +222,24 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
 	struct ioctl_pt *pt;
-	int i, size, rv;
+	int i, size, rv, linux;
 
 	sc = device_lookup(&dpti_cd, minor(dev));
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
-	/*
-	 * Currently, we only take ioctls passed down from the Linux
-	 * emulation layer.
-	 */
 	if (cmd == PTIOCLINUX) {
 		pt = (struct ioctl_pt *)data;
-		cmd = pt->com;
+		size = IOCPARM_LEN(pt->com);
+		cmd = pt->com & 0xffff;
 		data = pt->data;
-	} else
-		return (ENOTTY);
+		linux = 1;
+	} else {
+		size = IOCPARM_LEN(cmd);
+		cmd = cmd & 0xffff;
+		linux = 0;
+	}
 
-	size = IOCPARM_LEN(cmd);
-
-	switch (cmd & 0xffff) {
+	switch (cmd) {
 	case DPT_SIGNATURE:
 		if (size > sizeof(dpti_sig))
 			size = sizeof(dpti_sig);
@@ -248,10 +247,10 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case DPT_CTRLINFO:
-		return (dpti_ctlrinfo(sc, cmd, data));
+		return (dpti_ctlrinfo(sc, size, data));
 
 	case DPT_SYSINFO:
-		return (dpti_sysinfo(sc, cmd, data));
+		return (dpti_sysinfo(sc, size, data));
 
 	case DPT_BLINKLED:
 		if ((i = dpti_blinkled(sc)) == -1)
@@ -266,8 +265,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case DPT_TARGET_BUSY:
 		/*
 		 * XXX This is here to stop linux_machdepioctl() from
-		 * whining about an unknown ioctl.  Really, it should be
-		 * implemented.
+		 * whining about an unknown ioctl.
 		 */
 		return (EIO);
 
@@ -275,7 +273,10 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (sc->sc_nactive++ >= 2)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
 
-		rv = dpti_passthrough(sc, data, p);
+		if (linux)
+			rv = dpti_passthrough(sc, data, p);
+		else
+			rv = dpti_passthrough(sc, *(caddr_t *)data, p);
 
 		sc->sc_nactive--;
 		wakeup_one(&sc->sc_nactive);
@@ -313,7 +314,7 @@ dpti_blinkled(struct dpti_softc *sc)
 }
 
 int
-dpti_ctlrinfo(struct dpti_softc *sc, u_long cmd, caddr_t data)
+dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 {
 	struct dpt_ctlrinfo info;
 	struct iop_softc *iop;
@@ -334,8 +335,8 @@ dpti_ctlrinfo(struct dpti_softc *sc, u_long cmd, caddr_t data)
 	info.hbaFlags = FLG_OSD_PCI_VALID | FLG_OSD_DMA | FLG_OSD_I2O;
 	info.Interrupt = 10;			/* XXX */
 
-	if (IOCPARM_LEN(cmd) > sizeof(*data)) {
-		memcpy(data, &info, min(sizeof(info), IOCPARM_LEN(cmd)));
+	if (size > sizeof(*data)) {
+		memcpy(data, &info, min(sizeof(info), size));
 		rv = 0;
 	} else
 		rv = copyout(&info, *(caddr_t *)data, sizeof(info));
@@ -344,7 +345,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, u_long cmd, caddr_t data)
 }
 
 int
-dpti_sysinfo(struct dpti_softc *sc, u_long cmd, caddr_t data)
+dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
 {
 	struct dpt_sysinfo info;
 	int rv;
@@ -419,8 +420,8 @@ dpti_sysinfo(struct dpti_softc *sc, u_long cmd, caddr_t data)
 	/*
 	 * Copy out the info structure to the user.
 	 */
-	if (IOCPARM_LEN(cmd) > sizeof(*data)) {
-		memcpy(data, &info, min(sizeof(info), IOCPARM_LEN(cmd)));
+	if (size > sizeof(*data)) {
+		memcpy(data, &info, min(sizeof(info), size));
 		rv = 0;
 	} else
 		rv = copyout(&info, *(caddr_t *)data, sizeof(info));
