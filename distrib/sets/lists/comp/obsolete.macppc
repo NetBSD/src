@@ -1,3 +1,9 @@
-# $NetBSD: obsolete.macppc,v 1.3 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: obsolete.macppc,v 1.4 2003/10/20 16:18:03 matt Exp $
 ./usr/include/macppc/_G_config.h
 ./usr/include/macppc/machine_type.h
+./usr/include/macppc/bat.h
+./usr/include/macppc/db_machdep.h
+./usr/include/macppc/ipkdb.h
+./usr/include/macppc/pio.h
+./usr/include/macppc/powerpc.h
+./usr/include/macppc/z8530var.h
