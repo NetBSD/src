@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.16 1998/08/18 07:28:24 msaitoh Exp $	*/
+/*	$NetBSD: cdio.h,v 1.17 1999/01/04 15:32:08 is Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -183,6 +183,9 @@ struct ioc_read_toc_entry {
 };
 #define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
 #define CDIOREADTOCENTRYS _IOWR('c', 5, struct ioc_read_toc_entry)
+
+/* read LBA start of a given session; 0=last, others not yet supported */
+#define CDIOREADMSADDR _IOWR('c', 6, int)
 
 struct	ioc_patch {
 	u_char	patch[4];	/* one for each channel */
