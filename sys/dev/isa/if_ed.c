@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.78 1995/07/23 16:32:33 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.79 1995/07/23 20:36:51 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1155,7 +1155,7 @@ ed_init(sc)
 	struct ed_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, s;
+	int i;
 	u_char command;
 	u_long mcaf[2];
 
@@ -1164,7 +1164,6 @@ ed_init(sc)
 	 * This init procedure is "mandatory"...don't change what or when
 	 * things happen.
 	 */
-	s = splimp();
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
@@ -1291,8 +1290,6 @@ ed_init(sc)
 
 	/* ...and attempt to start output. */
 	ed_start(ifp);
-
-	splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.75 1995/07/23 16:43:40 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.76 1995/07/23 20:37:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -350,9 +350,7 @@ epinit(sc)
 	register struct ep_softc *sc;
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int s, i;
-
-	s = splimp();
+	int i;
 
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
@@ -399,8 +397,6 @@ epinit(sc)
 
 	/* Attempt to start output, if any. */
 	epstart(ifp);
-
-	splx(s);
 }
 
 static void

@@ -1225,15 +1225,12 @@ fe_init(sc)
 	struct fe_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, s;
+	int i;
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: top of fe_init()\n", sc->sc_dev.dv_xname);
 	fe_dump(LOG_INFO, sc);
 #endif
-
-	/* Start initializing 86960. */
-	s = splimp();
 
 	/* Reset transmitter flags. */
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1374,8 +1371,6 @@ fe_init(sc)
 	log(LOG_INFO, "%s: end of fe_init()\n", sc->sc_dev.dv_xname);
 	fe_dump(LOG_INFO, sc);
 #endif
-
-	splx(s);
 }
 
 /*
