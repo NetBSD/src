@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.24 2001/10/09 13:50:29 christos Exp $
+.\"	$NetBSD: editline.3,v 1.25 2002/01/15 02:46:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,7 +174,7 @@ to execute builtin
 .Nm
 commands.
 If the command is prefixed with
-.Dq prog:
+.Dq prog :
 then
 .Fn el_parse
 will only execute the command if
@@ -380,7 +380,7 @@ and
 The builtin function can be set or restored with the special function
 name ``EL_BUILTIN_GETCFN''.
 .It Dv EL_CLIENTDATA , Fa "void *data"
-Register 
+Register
 .Fa data
 to be associated with this EditLine structure. It can be retrieved with
 the corresponding
@@ -421,7 +421,7 @@ Return non-zero if editing is enabled.
 Return a pointer to the function that read characters, which is equal to
 ``EL_BUILTIN_GETCFN'' in the case of the default builtin function.
 .It Dv EL_CLIENTDATA , Fa "void **data"
-Retrieve 
+Retrieve
 .Fa data
 previously registered with the corresponding
 .Fn el_set
@@ -623,8 +623,8 @@ and
 .Dv EL_RPROMPT .
 Jaromir Dolecek implemented the readline emulation.
 .Sh BUGS
-The tokenization functions are not publically defined in
-.Fd <histedit.h>.
+The tokenization functions are not publicly defined in
+.Fd <histedit.h> .
 .Pp
 At this time, it is the responsibility of the caller to
 check the result of the
