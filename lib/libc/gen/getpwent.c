@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.58 2004/10/05 12:09:23 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.59 2004/10/07 06:11:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.58 2004/10/05 12:09:23 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.59 2004/10/07 06:11:24 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -192,7 +192,7 @@ _pw_parse(const char *entry, struct passwd *pw, char *buf, size_t buflen,
 
 	if (strlcpy(buf, entry, buflen) >= buflen)
 		return 0;
-	flags = 0;
+	flags = _PASSWORD_NOWARN;
 	if (old)
 		flags |= _PASSWORD_OLDFMT;
 	return __pw_scan(buf, pw, &flags);
@@ -1360,6 +1360,9 @@ _nis_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 
 	*result = NULL;
 	memset(&state, 0, sizeof(state));
+	rv = _nis_start(&state);
+	if (rv != NS_SUCCESS)
+		return rv;
 	snprintf(buffer, buflen, "%u", (unsigned int)uid);
 	rv = _nis_pwscan(retval, pw, buffer, buflen,
 	    &state, PASSWD_BYUID(&state));
@@ -1421,6 +1424,9 @@ _nis_getpwnam_r(void *nsrv, void *nscb, va_list ap)
 	*result = NULL;
 	snprintf(buffer, buflen, "%s", name);
 	memset(&state, 0, sizeof(state));
+	rv = _nis_start(&state);
+	if (rv != NS_SUCCESS)
+		return rv;
 	rv = _nis_pwscan(retval, pw, buffer, buflen,
 	    &state, PASSWD_BYNAME(&state));
 	_nis_end(&state);
