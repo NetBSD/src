@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.4 2002/08/09 06:03:02 thorpej Exp $	*/
+/*	$NetBSD: copystr.S,v 1.5 2002/08/09 06:18:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -63,9 +63,9 @@ ENTRY(copystr)
 	beq	2f
 
 1:	ldrb	r4, [r0], #0x0001
-	strb	r4, [r1], #0x0001
 	add	r5, r5, #0x00000001
 	teq	r4, #0x00000000
+	strb	r4, [r1], #0x0001
 	teqne	r5, r2
 	bne	1b
 
@@ -108,9 +108,9 @@ ENTRY(copyinstr)
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrbt	r5, [r0], #0x0001
-	strb	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
+	strb	r5, [r1], #0x0001
 	teqne	r6, r2
 	bne	1b
 
@@ -155,9 +155,9 @@ ENTRY(copyoutstr)
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrb	r5, [r0], #0x0001
-	strbt	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
+	strbt	r5, [r1], #0x0001
 	teqne	r6, r2
 	bne	1b
 
