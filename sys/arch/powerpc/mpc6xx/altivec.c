@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.1 2002/07/02 15:22:47 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.2 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -61,8 +61,18 @@ enable_vec(struct proc *p)
 	 */
 	if (!(pcb->pcb_flags & PCB_ALTIVEC)) {
 		vr = pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
-		memset(vr, 0, sizeof (*vr));
 		pcb->pcb_flags |= PCB_ALTIVEC;
+		/*
+		 * Initialize the vectors with NaNs
+		 */
+		for (scratch = 0; scratch < 32; scratch++) {
+			vr->vreg[scratch][0] = 0x7FFFDEAD;
+			vr->vreg[scratch][1] = 0x7FFFDEAD;
+			vr->vreg[scratch][2] = 0x7FFFDEAD;
+			vr->vreg[scratch][3] = 0x7FFFDEAD;
+		}
+		vr->vscr = 0;
+		vr->vrsave = tf->vrsave;
 	}
 
 	/*

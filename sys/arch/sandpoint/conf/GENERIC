@@ -1,4 +1,5 @@
-# $NetBSD: GENERIC,v 1.33 2002/05/16 03:35:20 briggs Exp $
+# $NetBSD: GENERIC,v 1.34 2002/07/05 18:45:23 matt Exp $
 
 include		"arch/sandpoint/conf/GENERIC.sandpoint"
 options 	OPENPIC_SERIAL_MODE
+options 	ALTIVEC

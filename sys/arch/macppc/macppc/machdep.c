@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2002/06/19 17:01:20 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2002/07/05 18:45:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,25 +94,9 @@
 #include <machine/z8530var.h>
 #endif
 
-struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
-struct vm_map *phys_map = NULL;
-
-/*
- * Global variables used here and there
- */
-#ifndef MULTIPROCESSOR
-struct pcb *curpcb;
-struct pmap *curpm;
-struct proc *fpuproc;
-#endif
-
-extern struct user *proc0paddr;
 extern int ofmsr;
 
-struct bat battable[16];
 char bootpath[256];
-paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
 int ofkbd_ihandle;
@@ -140,103 +124,13 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	extern int trapcode, trapsize;
-	extern int alitrap, alisize;
-	extern int dsitrap, dsisize;
-	extern int isitrap, isisize;
-	extern int decrint, decrsize;
-	extern int tlbimiss, tlbimsize;
-	extern int tlbdlmiss, tlbdlmsize;
-	extern int tlbdsmiss, tlbdsmsize;
-#if defined(DDB) || defined(KGDB)
-	extern int ddblow, ddbsize;
-#endif
-#ifdef IPKDB
-	extern int ipkdblow, ipkdbsize;
-#endif
-	int exc, scratch;
-	struct mem_region *allmem, *availmem, *mp;
 	struct ofw_translations *ofmap;
 	int ofmaplen;
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci = &cpu_info[0];
-#else
-	struct cpu_info *ci = &cpu_info_store;
-#endif
 
-	asm volatile ("mtsprg 0,%0" :: "r"(ci));
-
-	/*
-	 * Initialize BAT registers to unmapped to not generate
-	 * overlapping mappings below.
-	 */
-	asm volatile ("mtibatu 0,%0" :: "r"(0));
-	asm volatile ("mtibatu 1,%0" :: "r"(0));
-	asm volatile ("mtibatu 2,%0" :: "r"(0));
-	asm volatile ("mtibatu 3,%0" :: "r"(0));
-	asm volatile ("mtdbatu 0,%0" :: "r"(0));
-	asm volatile ("mtdbatu 1,%0" :: "r"(0));
-	asm volatile ("mtdbatu 2,%0" :: "r"(0));
-	asm volatile ("mtdbatu 3,%0" :: "r"(0));
-
-	/*
-	 * Set up BAT0 to only map the lowest 256 MB area
-	 */
-	battable[0x0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0x0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
-
-	/*
-	 * Map PCI memory space.
-	 */
-	battable[0x8].batl = BATL(0x80000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
-
-	battable[0x9].batl = BATL(0x90000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
-
-	battable[0xa].batl = BATL(0xa0000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
-
-	battable[0xb].batl = BATL(0xb0000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0xb].batu = BATU(0xb0000000, BAT_BL_256M, BAT_Vs);
-
-	/*
-	 * Map obio devices.
-	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
-
-	/*
-	 * Now setup fixed bat registers
-	 *
-	 * Note that we still run in real mode, and the BAT
-	 * registers were cleared above.
-	 */
-	/* BAT0 used for initial 256 MB segment */
-	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
-		      "mtdbatl 0,%0; mtdbatu 0,%1;"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	/* BAT1 used for primary I/O 256 MB segment */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
-		      :: "r"(battable[8].batl), "r"(battable[8].batu));
-
-	/*
-	 * Set up battable to map all RAM regions.
-	 * This is here because mem_regions() call needs bat0 set up.
-	 */
-	mem_regions(&allmem, &availmem);
-	for (mp = allmem; mp->size; mp++) {
-		paddr_t pa = mp->start & 0xf0000000;
-		paddr_t end = mp->start + mp->size;
-
-		do {
-			u_int n = pa >> 28;
-
-			battable[n].batl = BATL(pa, BAT_M, BAT_PP_RW);
-			battable[n].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
-			pa += 0x10000000;
-		} while (pa < end);
-	}
+	mpc6xx_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
+	    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
+	    0xb0000000, BAT_BL_256M, 0);
+	mpc6xx_init(ext_intr);
 
 	chosen = OF_finddevice("/chosen");
 
@@ -244,81 +138,9 @@ initppc(startkernel, endkernel, args)
 	ofmap = alloca(ofmaplen);
 	save_ofmap(ofmap, ofmaplen);
 
-	proc0.p_cpu = ci;
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
-
-	curpcb = &proc0paddr->u_pcb;
-
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
 #ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
 	OF_set_callback(callback);
 #endif
-
-	/*
-	 * Set up trap vectors
-	 */
-	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
-		switch (exc) {
-		default:
-			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
-			break;
-		case EXC_EXI:
-			/*
-			 * This one is (potentially) installed during autoconf
-			 */
-			break;
-		case EXC_ALI:
-			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
-			break;
-		case EXC_DSI:
-			memcpy((void *)EXC_DSI, &dsitrap, (size_t)&dsisize);
-			break;
-		case EXC_ISI:
-			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
-			break;
-		case EXC_DECR:
-			memcpy((void *)EXC_DECR, &decrint, (size_t)&decrsize);
-			break;
-		case EXC_IMISS:
-			memcpy((void *)EXC_IMISS, &tlbimiss, (size_t)&tlbimsize);
-			break;
-		case EXC_DLMISS:
-			memcpy((void *)EXC_DLMISS, &tlbdlmiss, (size_t)&tlbdlmsize);
-			break;
-		case EXC_DSMISS:
-			memcpy((void *)EXC_DSMISS, &tlbdsmiss, (size_t)&tlbdsmsize);
-			break;
-#if defined(DDB) || defined(IPKDB) || defined(KGDB)
-		case EXC_PGM:
-		case EXC_TRC:
-		case EXC_BPT:
-#if defined(DDB) || defined(KGDB)
-			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
-#if defined(IPKDB)
-#error "cannot enable IPKDB with DDB or KGDB"
-#endif
-#else
-			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
-#endif
-			break;
-#endif /* DDB || IPKDB || KGDB */
-		}
-
-	cpu_probe_cache();
-	/*
-	 * external interrupt handler install
-	 */
-	install_extint(ext_intr);
-
-	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
-
-	/*
-	 * Now enable translation (and machine checks/recoverable interrupts).
-	 */
-	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	ofmsr &= ~PSL_IP;
 
@@ -449,138 +271,12 @@ restore_ofmap(ofmap, len)
 }
 
 /*
- * This should probably be in autoconf!				XXX
- */
-char machine[] = MACHINE;		/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-void
-install_extint(handler)
-	void (*handler) __P((void));
-{
-	extern int extint, extsize;
-	extern u_long extint_call;
-	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
-
-#ifdef	DIAGNOSTIC
-	if (offset > 0x1ffffff)
-		panic("install_extint: too far away");
-#endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
-	extint_call = (extint_call & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
-	__syncicache((void *)&extint_call, sizeof extint_call);
-	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
-}
-
-/*
  * Machine dependent startup code.
  */
 void
 cpu_startup()
 {
-	int sz, i;
-	caddr_t v;
-	vaddr_t minaddr, maxaddr;
-	int base, residual;
-	char pbuf[9];
-
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
-
-	printf("%s", version);
-	cpu_identify(NULL, 0);
-
-	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
-	printf("total memory = %s\n", pbuf);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	sz = MAXBSIZE * nbuf;
-	minaddr = 0;
-	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
-		NULL, UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	buffers = (char *)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base + 1 : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
-
-#ifndef PMAP_MAP_POOLPAGE
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
-#endif
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers.
-	 */
-	bufinit();
+	mpc6xx_startup(NULL);
 }
 
 /*
@@ -626,29 +322,6 @@ void
 dumpsys()
 {
 	printf("dumpsys: TBD\n");
-}
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet()
-{
-	extern volatile int netisr;
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
 }
 
 #include "zsc.h"
@@ -773,61 +446,6 @@ lcsplx(ipl)
 	int ipl;
 {
 	return spllower(ipl); 	/* XXX */
-}
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(addr)
-	caddr_t addr;
-{
-	vaddr_t va;
-	paddr_t pa;
-	int off;
-	extern char end[];
-
-	if (addr < end)
-		return (int)addr;
-
-	va = trunc_page((vaddr_t)addr);
-	off = (int)addr - va;
-
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
-		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
-		return (int)addr;
-	}
-
-	return((int)pa + off);
-}
-
-/*
- * Allocate vm space and mapin the I/O address
- */
-void *
-mapiodev(pa, len)
-	paddr_t pa;
-	psize_t len;
-{
-	paddr_t faddr;
-	vaddr_t taddr, va;
-	int off;
-
-	faddr = trunc_page(pa);
-	off = pa - faddr;
-	len = round_page(off + len);
-	va = taddr = uvm_km_valloc(kernel_map, len);
-
-	if (va == 0)
-		return NULL;
-
-	for (; len > 0; len -= NBPG) {
-		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
-		faddr += NBPG;
-		taddr += NBPG;
-	}
-	pmap_update(pmap_kernel());
-	return (void *)(va + off);
 }
 
 #include "akbd.h"
@@ -977,7 +595,7 @@ cninit_kd()
 	 */
 
 #if NUKBD > 0
-	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) != -1 &&
+	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) >= 0 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
 		printf("console keyboard type: USB\n");
@@ -985,7 +603,7 @@ cninit_kd()
 		goto kbd_found;
 	}
 	/* Try old method name. */
-	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &ukbd) != -1 &&
+	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &ukbd) >= 0 &&
 	    ukbd != 0 &&
 	    OF_instance_to_package(ukbd) != -1) {
 		printf("console keyboard type: USB\n");
@@ -996,7 +614,7 @@ cninit_kd()
 #endif
 
 #if NAKBD > 0
-	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
+	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) >= 0 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
 		printf("console keyboard type: ADB\n");

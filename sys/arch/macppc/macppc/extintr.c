@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.32 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: extintr.c,v 1.33 2002/07/05 18:45:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -44,6 +44,8 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+
+#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -652,11 +654,14 @@ again:
 		goto again;
 	}
 	if ((ipending & ~pcpl) & (1 << SIR_NET)) {
+		int pisr;
 		ipending &= ~(1 << SIR_NET);
 		splsoftnet();
+		pisr = netisr;
+		netisr = 0;
 		asm volatile("mtmsr %0" :: "r"(emsr));
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-		softnet();
+		softnet(pisr);
 		KERNEL_UNLOCK();
 		asm volatile("mtmsr %0" :: "r"(dmsr));
 		cpl = pcpl;
@@ -785,7 +790,7 @@ openpic_init()
 	for (irq = 0; irq < ICU_LEN; irq++)
 		openpic_disable_irq(irq);
 
-	install_extint(ext_intr_openpic);
+	mpc6xx_install_extint(ext_intr_openpic);
 }
 
 void
@@ -798,7 +803,7 @@ legacy_int_init()
 		out32rb(INT_CLEAR_REG_H, 0xffffffff);
 	}
 
-	install_extint(ext_intr);
+	mpc6xx_install_extint(ext_intr);
 }
 
 #define HEATHROW_FCR_OFFSET	0x38		/* XXX should not here */
