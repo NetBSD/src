@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.8 2003/10/29 21:50:57 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.9 2003/11/02 00:17:27 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.8 2003/10/29 21:50:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.9 2003/11/02 00:17:27 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -653,7 +653,11 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 			       IEEE80211_PS_MAX_QUEUE,
 			       ni->ni_savedq.ifq_drops);
 	} else {
+		/* Similar to ieee80211_mgmt_output, store the node in
+		 * the rcvif field.
+		 */
 		IF_ENQUEUE(&ni->ni_savedq, m);
+		m->m_pkthdr.rcvif = (void *)ni;
 	}
 }
 
