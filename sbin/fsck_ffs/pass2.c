@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.36 2003/08/07 10:04:21 agc Exp $	*/
+/*	$NetBSD: pass2.c,v 1.37 2004/07/20 15:05:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.36 2003/08/07 10:04:21 agc Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.37 2004/07/20 15:05:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ pass2()
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
 		info = inoinfo(inp->i_number);
-		inp->i_child = inp->i_sibling = inp->i_parentp = 0;
+		inp->i_child = inp->i_sibling = 0;
 		if (info->ino_state == DFOUND)
 			info->ino_state = DSTATE;
 	}
@@ -294,7 +294,6 @@ pass2()
 		    inp->i_number == ROOTINO)
 			continue;
 		pinp = getinoinfo(inp->i_parent);
-		inp->i_parentp = pinp;
 		inp->i_sibling = pinp->i_child;
 		pinp->i_child = inp;
 	}
