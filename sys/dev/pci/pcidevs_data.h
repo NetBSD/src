@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.9 2000/05/22 21:29:28 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.10 2000/06/03 18:32:19 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.7 2000/02/10 21:44:19 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.9 2000/06/03 18:31:43 he Exp 
  */
 
 /*
@@ -968,6 +968,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Y above 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_1,
+	    0,
+	    "Cyclades",
+	    "Cyclom-4Y below 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_2,
+	    0,
+	    "Cyclades",
+	    "Cyclom-4Y above 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_1,
+	    0,
+	    "Cyclades",
+	    "Cyclom-8Y below 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_2,
+	    0,
+	    "Cyclades",
+	    "Cyclom-8Y above 1M",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_1,
