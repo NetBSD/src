@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.19 2004/07/07 06:43:22 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.20 2004/08/08 05:33:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -280,6 +280,9 @@ void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 
 #define	pcmcia_mfc(sc)	(! SIMPLEQ_EMPTY(&(sc)->card.pf_head) &&	\
 		 SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
+
+void	pcmcia_socket_enable __P((struct device *));
+void	pcmcia_socket_disable __P((struct device *));
 
 void	pcmcia_function_init __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));
