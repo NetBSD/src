@@ -415,16 +415,6 @@
 ./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
 ./usr/lkm
-./usr/lkm/cd9660.o
-./usr/lkm/fdesc.o
-./usr/lkm/if_ipl.o
-./usr/lkm/kernfs.o
-./usr/lkm/mfs.o
-./usr/lkm/msdosfs.o
-./usr/lkm/nullfs.o
-./usr/lkm/portal.o
-./usr/lkm/procfs.o
-./usr/lkm/umapfs.o
 ./usr/local
 ./usr/local/bin
 ./usr/local/lib
