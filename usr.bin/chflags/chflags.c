@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.7 2000/07/08 03:14:50 enami Exp $	*/
+/*	$NetBSD: chflags.c,v 1.8 2000/08/04 08:06:57 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.7 2000/07/08 03:14:50 enami Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.8 2000/08/04 08:06:57 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,13 +70,14 @@ main(argc, argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
-	u_long clear, set;
+	u_long clear, set, newflags;
 	long val;
-	int Hflag, Lflag, Rflag, ch, fts_options, oct, rval;
+	int Hflag, Lflag, Rflag, ch, fts_options, hflag, oct, rval;
 	char *flags, *ep;
+	int (*change_flags) __P((const char *, u_long));
 
-	Hflag = Lflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPR")) != -1)
+	Hflag = Lflag = Rflag = hflag = 0;
+	while ((ch = getopt(argc, argv, "HLPRh")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -91,6 +92,9 @@ main(argc, argv)
 			break;
 		case 'R':
 			Rflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case '?':
 		default:
@@ -132,9 +136,10 @@ main(argc, argv)
 	}
 
 	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
-		err(1, "fts_open: %s", argv[0]); 
+		err(1, "fts_open");
 
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
+		change_flags = chflags;
 		switch (p->fts_info) {
 		case FTS_D:
 			if (Rflag)		/* Change it at FTS_DP. */
@@ -150,28 +155,43 @@ main(argc, argv)
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = 1;
 			continue;
-		case FTS_SL:			/* Ignore. */
-		case FTS_SLNONE:
+		case FTS_SL:			/* Ignore unless -h. */
+			/*
+			 * All symlinks we found while doing a physical
+			 * walk end up here.
+			 */
+			if (!hflag)
+				continue;
+			/*
+			 * Note that if we follow a symlink, fts_info is
+			 * not FTS_SL but FTS_F or whatever.  And we should
+			 * use lchflags only for FTS_SL and should use chflags
+			 * for others.
+			 */
+			change_flags = lchflags;
+			break;
+		case FTS_SLNONE:		/* Ignore. */
 			/*
 			 * The only symlinks that end up here are ones that
-			 * don't point to anything and ones that we found
-			 * doing a physical walk.
+			 * don't point to anything.  Note that if we are
+			 * doing a phisycal walk, we never reach here unless
+			 * we asked to follow explicitly.
 			 */
 			continue;
 		default:
 			break;
 		}
-		if (oct) {
-			if (!chflags(p->fts_accpath, set))
-				continue;
-		} else {
-			p->fts_statp->st_flags |= set;
-			p->fts_statp->st_flags &= clear;
-			if (!chflags(p->fts_accpath, p->fts_statp->st_flags))
-				continue;
+		if (oct)
+			newflags = set;
+		else {
+			newflags = p->fts_statp->st_flags;
+			newflags |= set;
+			newflags &= clear;
 		}
-		warn("%s", p->fts_path);
-		rval = 1;
+		if ((*change_flags)(p->fts_accpath, newflags)) {
+			warn("%s", p->fts_path);
+			rval = 1;
+		}
 	}
 	if (errno)
 		err(1, "fts_read");
@@ -181,7 +201,8 @@ main(argc, argv)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
-	    "usage: chflags [-R [-H | -L | -P]] flags file ...\n");
+	    "usage: chflags [-R [-H | -L | -P]] [-h] flags file ...\n");
 	exit(1);
 }
