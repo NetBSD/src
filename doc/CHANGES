@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.274 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.275 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -617,3 +617,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
 	progress(1): Allow printing custom text before (left of) the progress
 		bar. [hubertf 20040309]
+	dge(4): add support for Intel PRO/10GbE ethernet adapter.
+		[ragge 20040312]
