@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/09/20 06:20:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/10/14 11:49:52 tron Exp $
 
 NOLINT=	# defined
 NOPIC=	# defined
@@ -8,8 +8,7 @@ LIB=	sup
 
 SRCS=	scm.c scmio.c stree.c log.c supmsg.c netcrypt.c
 SRCS+=	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c \
-	nxtarg.c path.c quit.c run.c salloc.c skipto.c \
-	vprintf.c
+	nxtarg.c path.c quit.c run.c salloc.c skipto.c
 
 .PATH: ${.CURDIR}/../source
 
