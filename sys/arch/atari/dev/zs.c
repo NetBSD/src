@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1995/06/28 04:30:42 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1995/08/20 13:28:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -91,6 +91,7 @@ struct zs_softc {
     struct	zs_chanstate	zi_cs[2];  /* chan A and B software state */
 };
 
+static u_char	cb_scheduled = 0;	/* Already asked for callback? */
 /*
  * Define the registers for a closed port
  */
@@ -333,6 +334,10 @@ struct proc	*p;
 	for(;;) {
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, ZSWR5_RTS|ZSWR5_DTR, DMSET);
+
+		/* May never get a status intr. if DCD already on. -gwr */
+		if(cs->cs_zc->zc_csr & ZSRR0_DCD)
+			tp->t_state |= TS_CARR_ON;
 		if(cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
 		if(flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
@@ -466,6 +471,7 @@ dev_t	dev;
  * only the number of `reset interrupt under service' operations, not
  * the order.
  */
+
 int
 zshard(sr)
 long sr;
@@ -475,10 +481,12 @@ long sr;
 	register volatile struct zschan *zc;
 	register int			rr3, intflags = 0, v, i;
 
-	for(a = zslist; a != NULL; a = b->cs_next) {
+	do {
+	    intflags &= ~4;
+	    for(a = zslist; a != NULL; a = b->cs_next) {
 		rr3 = ZS_READ(a->cs_zc, 3);
 		if(rr3 & (ZSRR3_IP_A_RX|ZSRR3_IP_A_TX|ZSRR3_IP_A_STAT)) {
-			intflags |= 2;
+			intflags |= 4|2;
 			zc = a->cs_zc;
 			i  = a->cs_rbput;
 			if(rr3 & ZSRR3_IP_A_RX && (v = zsrint(a, zc)) != 0) {
@@ -496,7 +504,7 @@ long sr;
 			a->cs_rbput = i;
 		}
 		if(rr3 & (ZSRR3_IP_B_RX|ZSRR3_IP_B_TX|ZSRR3_IP_B_STAT)) {
-			intflags |= 2;
+			intflags |= 4|2;
 			zc = b->cs_zc;
 			i  = b->cs_rbput;
 			if(rr3 & ZSRR3_IP_B_RX && (v = zsrint(b, zc)) != 0) {
@@ -513,7 +521,8 @@ long sr;
 			}
 			b->cs_rbput = i;
 		}
-	}
+	    }
+	} while(intflags & 4);
 #undef b
 
 	if(intflags & 1) {
@@ -522,7 +531,10 @@ long sr;
 			zsshortcuts++;
 			return(zssoft(sr));
 		}
-		else add_sicallback(zssoft, 0, 0);
+		else if(!cb_scheduled) {
+			cb_scheduled++;
+			add_sicallback(zssoft, 0, 0);
+		}
 	}
 	return(intflags & 2);
 }
@@ -532,11 +544,14 @@ zsrint(cs, zc)
 register struct zs_chanstate	*cs;
 register volatile struct zschan	*zc;
 {
-	register int c = zc->zc_data;
+	register int c;
 
-	/* compose receive character and status */
-	c <<= 8;
-	c |= ZS_READ(zc, 1);
+	/*
+	 * First read the status, because read of the received char
+	 * destroy the status of this char.
+	 */
+	c = ZS_READ(zc, 1);
+	c |= (zc->zc_data << 8);
 
 	/* clear receive error & interrupt condition */
 	zc->zc_csr = ZSWR0_RESET_ERRORS;
@@ -627,6 +642,7 @@ long sr;
     register int			get, n, c, cc, unit, s;
  	     int			retval = 0;
 
+    cb_scheduled = 0;
     s = spltty();
     for(cs = zslist; cs != NULL; cs = cs->cs_next) {
 	get = cs->cs_rbget;
