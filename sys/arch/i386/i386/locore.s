@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.234 2001/03/18 02:53:09 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.235 2001/04/01 23:54:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1007,10 +1007,10 @@ ENTRY(copyout)
 	jns	1b
 
 	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 	jmp	3f
 	
 2:	/* Simulate a trap. */
-	pushl	%eax
 	pushl	%ecx
 	movl	%edi,%eax
 	shll	$PGSHIFT,%eax
@@ -1019,7 +1019,6 @@ ENTRY(copyout)
 	addl	$4,%esp			# pop argument
 	popl	%ecx
 	testl	%eax,%eax		# if not ok, return EFAULT
-	popl	%eax
 	jz	4b
 	jmp	_C_LABEL(copy_efault)
 #endif /* I386_CPU */
