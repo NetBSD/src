@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.5 2005/02/11 21:12:32 rearnsha Exp $	*/
+/*	$NetBSD: artsata.c,v 1.6 2005/02/12 10:20:50 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_pciide.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +471,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
-#ifndef PCIIDE_I31244_ENABLEDMA
+#ifdef PCIIDE_I31244_DISABLEDMA
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_31244 &&
 	    PCI_REVISION(pa->pa_class) == 0) {
 		aprint_normal(" but disabled due to rev. 0");
