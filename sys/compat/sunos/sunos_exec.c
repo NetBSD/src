@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.43 2003/12/05 21:12:43 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.44 2003/12/20 18:22:19 manu Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.43 2003/12/05 21:12:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.44 2003/12/20 18:22:19 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -80,6 +80,8 @@ const struct emul emul_sunos = {
 	sunos_esigcode,
 	&emul_sunos_object,	
 	setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.182 2003/12/06 04:16:33 atatat Exp $	*/
+/*	$NetBSD: proc.h,v 1.183 2003/12/20 18:22:16 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -121,6 +121,8 @@ struct emul {
 					    struct exec_package *));
 	void		(*e_proc_fork) __P((struct proc *, struct proc *));
 	void		(*e_proc_exit) __P((struct proc *));
+	void		(*e_lwp_fork)  __P((struct lwp *, struct lwp *));
+	void		(*e_lwp_exit)  __P((struct lwp *));
 
 #ifdef __HAVE_SYSCALL_INTERN
 	void		(*e_syscall_intern) __P((struct proc *));

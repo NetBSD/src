@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.15 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.16 2003/12/20 18:22:17 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.15 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.16 2003/12/20 18:22:17 manu Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -515,6 +515,9 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	proclist_unlock_write(s);
 
+	if (p2->p_emul->e_lwp_fork)
+		(*p2->p_emul->e_lwp_fork)(l1, l2);
+
 	return (0);
 }
 
@@ -533,6 +536,9 @@ lwp_exit(struct lwp *l)
 	DPRINTF(("lwp_exit: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	DPRINTF((" nlwps: %d nrlwps %d nzlwps: %d\n",
 	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
+
+	if (p->p_emul->e_lwp_exit)
+		(*p->p_emul->e_lwp_exit)(l);
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit
