@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.30 1998/02/12 01:53:18 cgd Exp $ */
+/* $NetBSD: autoconf.c,v 1.31 1998/10/06 21:19:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/02/12 01:53:18 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 1998/10/06 21:19:05 thorpej Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/02/12 01:53:18 cgd Exp $");
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
 
@@ -98,6 +101,19 @@ configure()
 		panic("no mainbus found");
 	(void)spl0();
 	cold = 0;
+
+	/*
+	 * Note that bootstrapping is finished, and set the HWRPB up  
+	 * to do restarts.
+	 */
+	hwrpb_restart_setup();
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Spin up any secondary CPUs.
+	 */
+	cpu_run_spinup_queue();
+#endif
 }
 
 void

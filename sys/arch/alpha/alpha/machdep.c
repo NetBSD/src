@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.151 1998/10/06 21:10:46 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.152 1998/10/06 21:19:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 1998/10/06 21:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 1998/10/06 21:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1189,20 +1189,6 @@ cpu_startup()
 	 * Configure the system.
 	 */
 	configure();
-
-	/*
-	 * Note that bootstrapping is finished, and set the HWRPB up
-	 * to do restarts.
-	 */
-	hwrpb_restart_setup();
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Spin up any secondary CPUs.
-	 */
-	cpu_run_spinup_queue();
-	Debugger();
-#endif /* MULTIPROCESSOR */
 }
 
 /*
