@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.6 2003/08/12 09:46:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.6 2003/08/12 09:46:46 tls Exp $");
 
 #include "opt_amdpm.h"
 
@@ -149,12 +149,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dev.dv_xname, i);
 			callout_init(&sc->sc_rnd_ch);
 			rnd_attach_source(&sc->sc_rnd_source,
-			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
-			    /*
-			     * We can't estimate entropy since we poll
-			     * random data periodically.
-			     */
-			    RND_FLAG_NO_ESTIMATE);
+			    sc->sc_dev.dv_xname, RND_TYPE_RNG, 0);
 #ifdef AMDPM_RND_COUNTERS
 			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
 			    NULL, sc->sc_dev.dv_xname, "rnd hits");
