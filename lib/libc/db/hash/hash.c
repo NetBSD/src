@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.12 1998/05/07 19:24:21 kleink Exp $	*/
+/*	$NetBSD: hash.c,v 1.13 1998/06/30 21:30:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.12 1998/05/07 19:24:21 kleink Exp $");
+__RCSID("$NetBSD: hash.c,v 1.13 1998/06/30 21:30:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -508,8 +508,7 @@ flush_meta(hashp)
 	whdrp = &whdr;
 	swap_header_copy(&hashp->hdr, whdrp);
 #endif
-	if ((lseek(fp, (off_t)0, SEEK_SET) == -1) ||
-	    ((wsize = write(fp, whdrp, sizeof(HASHHDR))) == -1))
+	if ((wsize = pwrite(fp, whdrp, sizeof(HASHHDR), (off_t)0)) == -1)
 		return (-1);
 	else
 		if (wsize != sizeof(HASHHDR)) {
