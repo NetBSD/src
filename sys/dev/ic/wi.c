@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.14 2001/05/20 13:14:54 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.15 2001/06/02 15:49:16 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -603,7 +603,7 @@ static int wi_read_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int16_t		*ptr;
-	int			i, len, code;
+	int			len, code;
 	struct wi_ltv_gen	*oltv, p2ltv;
 
 	if (sc->sc_prism2) {
@@ -647,8 +647,7 @@ static int wi_read_record(sc, ltv)
 
 	/* Now read the data. */
 	ptr = &ltv->wi_val;
-	for (i = 0; i < ltv->wi_len - 1; i++)
-		ptr[i] = CSR_READ_STREAM_2(sc, WI_DATA1);
+	CSR_READ_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
 
 	if (sc->sc_prism2) {
 		int v;
@@ -775,8 +774,7 @@ static int wi_write_record(sc, ltv)
 
 	/* Write data */
 	ptr = &ltv->wi_val;
-	for (i = 0; i < ltv->wi_len - 1; i++)
-		CSR_WRITE_STREAM_2(sc, WI_DATA1, ptr[i]);
+	CSR_WRITE_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
 
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
 		return(EIO);
@@ -830,15 +828,13 @@ static int wi_read_data(sc, id, off, buf, len)
 	caddr_t			buf;
 	int			len;
 {
-	int			i;
 	u_int16_t		*ptr;
 
 	if (wi_seek(sc, id, off, WI_BAP1))
 		return(EIO);
 
 	ptr = (u_int16_t *)buf;
-	for (i = 0; i < len / 2; i++)
-		ptr[i] = CSR_READ_STREAM_2(sc, WI_DATA1);
+	CSR_READ_MULTI_STREAM_2(sc, WI_DATA1, ptr, len / 2);
 
 	return(0);
 }
@@ -861,7 +857,6 @@ static int wi_write_data(sc, id, off, buf, len)
 	caddr_t			buf;
 	int			len;
 {
-	int			i;
 	u_int16_t		*ptr;
 
 #ifdef WI_HERMES_AUTOINC_WAR
@@ -872,8 +867,7 @@ again:
 		return(EIO);
 
 	ptr = (u_int16_t *)buf;
-	for (i = 0; i < (len / 2); i++)
-		CSR_WRITE_STREAM_2(sc, WI_DATA0, ptr[i]);
+	CSR_WRITE_MULTI_STREAM_2(sc, WI_DATA0, ptr, len / 2);
 
 #ifdef WI_HERMES_AUTOINC_WAR
 	CSR_WRITE_2(sc, WI_DATA0, 0x1234);
