@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.26 2004/03/21 16:29:40 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.27 2004/04/18 19:21:06 matt Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.26 2004/03/21 16:29:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.27 2004/04/18 19:21:06 matt Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -95,14 +95,13 @@ isdn_attach_isdnif(const char *devname, const char *cardname,
 	int i, l, isdnif = next_isdnif++;
 	struct isdn_l3_driver *new_ctrl;
 
-	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
-	memset(new_ctrl, 0, sizeof *new_ctrl);
+	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, M_WAITOK|M_ZERO);
 	SLIST_INSERT_HEAD(&isdnif_list, new_ctrl, l3drvq);
 	l = strlen(devname);
-	new_ctrl->devname = malloc(l + 1, M_DEVBUF, 0);
+	new_ctrl->devname = malloc(l + 1, M_DEVBUF, M_WAITOK);
 	strlcpy(new_ctrl->devname, devname, l + 1);
 	l = strlen(cardname);
-	new_ctrl->card_name = malloc(l + 1, M_DEVBUF, 0);
+	new_ctrl->card_name = malloc(l + 1, M_DEVBUF, M_WAITOK);
 	strlcpy(new_ctrl->card_name, cardname, l + 1);
 
 	new_ctrl->l3driver = l3driver;
@@ -112,7 +111,7 @@ isdn_attach_isdnif(const char *devname, const char *cardname,
 	new_ctrl->dl_est = DL_DOWN;
 	new_ctrl->nbch = nbch;
 
-	new_ctrl->bch_state = malloc(nbch * sizeof(int), M_DEVBUF, 0);
+	new_ctrl->bch_state = malloc(nbch * sizeof(int), M_DEVBUF, M_WAITOK);
 	for (i = 0; i < nbch; i++)
 		new_ctrl->bch_state[i] = BCH_ST_FREE;
 
@@ -256,8 +255,8 @@ int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driv
 {
 	struct l4_driver_desc * new_driver;
 
-	new_driver = malloc(sizeof(struct l4_driver_desc), M_DEVBUF, 0);
-	memset(new_driver, 0, sizeof(struct l4_driver_desc));
+	new_driver = malloc(sizeof(struct l4_driver_desc), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 	strncpy(new_driver->name, name, L4DRIVER_NAME_SIZ);
 	new_driver->name[L4DRIVER_NAME_SIZ-1] = 0;
 	new_driver->driver_id =	next_l4_driver_id++;
