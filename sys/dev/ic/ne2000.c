@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.15 1998/12/18 21:50:16 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.16 1999/01/18 11:51:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <net/if_ether.h>
 
+#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
