@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.8 2003/04/19 16:09:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.9 2003/07/01 17:49:57 kochi Exp $");
 
 #define __HWREGS_C__
 
@@ -513,8 +513,8 @@ AcpiSetRegister (
         ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition,
                 BitRegInfo->AccessBitMask, Value);
 
-        Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, RegisterId,
-                (UINT16) RegisterValue);
+        Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK,
+                        ACPI_REGISTER_PM1_CONTROL, (UINT16) RegisterValue);
         break;
 
 
