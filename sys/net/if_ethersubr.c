@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.85 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.86 2001/06/29 18:12:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1363,7 +1363,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    }
 #ifdef INET
 		case AF_INET:
-			if ((error = (*ifp->if_init)(ifp)) != 0)
+			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
+			    (error = (*ifp->if_init)(ifp)) != 0)
 				break;
 			arp_ifinit(ifp, ifa);
 			break;
@@ -1385,7 +1386,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    }
 #endif /* NS */
 		default:
-			error = (*ifp->if_init)(ifp);
+			if ((ifp->if_flags & IFF_RUNNING) == 0)
+				error = (*ifp->if_init)(ifp);
 			break;
 		}
 		break;
