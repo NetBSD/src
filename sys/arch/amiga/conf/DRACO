@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.4 1996/08/11 12:27:50 veego Exp $
+#	$NetBSD: DRACO,v 1.5 1996/08/26 23:39:25 mrg Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -70,6 +70,7 @@ options		MSDOSFS		# MS-DOS filesystem
 #
 # Compatability options for various existing systems
 #
+options		COMPAT_12
 #options	"COMPAT_10"	# compatability with older NetBSD release
 #options	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP

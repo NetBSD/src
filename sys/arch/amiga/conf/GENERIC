@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 1996/08/11 12:27:52 veego Exp $
+#	$NetBSD: GENERIC,v 1.60 1996/08/26 23:39:28 mrg Exp $
 
 #
 # GENERIC AMIGA
@@ -75,6 +75,7 @@ options		UNION		# union file system
 #
 # Compatability options for various existing systems
 #
+options		COMPAT_12
 options		"COMPAT_10"	# compatability with older NetBSD release
 options		"COMPAT_09"	# compatability with older NetBSD release
 options		"COMPAT_43"	# 4.3 BSD compatible system calls
