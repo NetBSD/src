@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.4 2003/12/06 14:02:40 simonb Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -91,7 +91,7 @@
 #define	SC_LOG_LEN	32
 
 PRIVATE struct scsi_args	*sc_ptrs;
-PRIVATE char			sc_cur_phase,
+PRIVATE unsigned char		sc_cur_phase,
 				sc_reset_done = 1,
 				sc_have_msg,
 				sc_accept_int,
@@ -120,6 +120,12 @@ char *scsi_errors[] = {
 };
 
 PRIVATE void sc_reset(void);
+void scCtlrSelect(int);
+PRIVATE int sc_wait_bus_free(void);
+void sc_dma_setup(int, long);
+int sc_receive(void);
+PRIVATE int sc_select(long);
+PUBLIC int scsi_interrupt(void);
 
 /*===========================================================================*
  *				exec_scsi_low				     *
@@ -269,8 +275,7 @@ sc_select(long adr)
  *===========================================================================*/
 /* SCSI interrupt handler.
  */
-PUBLIC
-int
+PUBLIC int
 scsi_interrupt(void)
 {
 	unsigned char stat2, dummy;
@@ -393,7 +398,8 @@ scsi_interrupt(void)
  *	than the first bytes read from the SCSI controller) by the
  *	pseudo-DMA loop in sc_receive().
  */
-sc_dma_setup (int dir, long adr)
+void
+sc_dma_setup(int dir, long adr)
 {
 
 	if (sc_dma_port > SC_DMA + MAX_CACHE)
@@ -437,6 +443,7 @@ sc_receive(void)
  *===========================================================================*/
 /* Select a SCSI device.
  */
+void
 scCtlrSelect(int ctlr)
 {
 	RD_ADR(ICU_IO) &= ~ICU_SCSI_BIT;	/* i/o, not port */

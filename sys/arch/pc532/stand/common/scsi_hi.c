@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_hi.c,v 1.2 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: scsi_hi.c,v 1.3 2003/12/06 14:02:40 simonb Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver
@@ -76,11 +76,15 @@ PRIVATE U8		msg_buf[MSG_LEN];
 #define	IDATA_IX	1
 PRIVATE struct scsi_args scsi_args;
 
+int sc_initialize (struct drive *);
+PRIVATE int exec_scsi_hi(const U8 *, U8 *, const U8 *, struct drive *);
+PRIVATE int get_sense(struct drive *);
+
 /*===========================================================================*
  *				sc_rdwt					     *
  *===========================================================================*/
 /* Carry out a read or write request for the SCSI disk. */
-PRIVATE int
+PUBLIC int
 sc_rdwt(int op, int block, void *ram_adr, int len, int sc_adr, int lun)
 {
 	int retries, ret;
@@ -140,7 +144,7 @@ sc_rdwt(int op, int block, void *ram_adr, int len, int sc_adr, int lun)
 /* Execute the list of initialization commands for the given drive.
  */
 int
-sc_initialize (struct drive *dp)
+sc_initialize(struct drive *dp)
 {
 	const struct cmd_desc *cp;
 
@@ -160,7 +164,7 @@ sc_initialize (struct drive *dp)
  * command and, if it fails, execute a request sense to find out why.
  */
 PRIVATE int
-exec_scsi_hi(U8 *cmd, U8 *data_in, U8 *data_out, struct drive *dp)
+exec_scsi_hi(const U8 *cmd, U8 *data_in, const U8 *data_out, struct drive *dp)
 {
 
 	scsi_args.ptr[CMD_IX] = (long)cmd;
@@ -209,7 +213,7 @@ exec_scsi_hi(U8 *cmd, U8 *data_in, U8 *data_out, struct drive *dp)
   (sense_buf[1]<<16 | sense_buf[2]<<8 | sense_buf[3])
 
 PRIVATE int
-get_sense (struct drive *dp)
+get_sense(struct drive *dp)
 {
 	U8 *p;
 

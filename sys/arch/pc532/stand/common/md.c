@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -66,7 +66,7 @@ mdstrategy(void *ss, int func, daddr_t dblk, u_int size, void *buf,
     u_int *rsize)
 {
 
-	memcpy(buf, ss + (dblk << DEV_BSHIFT), size);
+	memcpy(buf, (char *)ss + (dblk << DEV_BSHIFT), size);
 	*rsize = size;
 	return(0);
 }

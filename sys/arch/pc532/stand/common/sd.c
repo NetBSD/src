@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.4 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: sd.c,v 1.5 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,6 +89,7 @@
 #include <lib/libsa/stand.h>
 
 #include <pc532/stand/common/samachdep.h>
+#include <pc532/stand/common/so.h>
 
 struct	sd_softc {
 	int	sc_ctlr;
@@ -105,6 +106,11 @@ int debug = SD_DEBUG;
 
 #define	SDRETRY		2
 
+int	sdinit(int, int);
+void	sdreset(int, int);
+int	sdgetinfo(struct sd_softc *);
+
+int
 sdinit(int ctlr, int unit)
 {
 	struct sd_softc *ss = &sd_softc[ctlr][unit];
@@ -116,6 +122,7 @@ sdinit(int ctlr, int unit)
 	return (1);
 }
 
+void
 sdreset(int ctlr, int unit)
 {
 
@@ -123,11 +130,12 @@ sdreset(int ctlr, int unit)
 
 char io_buf[MAXBSIZE];
 
+int
 sdgetinfo(struct sd_softc *ss)
 {
 	struct disklabel *lp;
-	char *msg, *getdisklabel();
-	int sdstrategy(), i, err;
+	char *msg;
+	int i, err;
 
 	lp = &sd_softc[ss->sc_ctlr][ss->sc_unit].sc_label;
 	memset((caddr_t)lp, 0, sizeof *lp);
@@ -137,8 +145,8 @@ sdgetinfo(struct sd_softc *ss)
 	lp->d_partitions[ss->sc_part].p_offset = 0;
 	lp->d_partitions[ss->sc_part].p_size = 0x7fffffff;
 
-	if (err = sdstrategy(ss, F_READ,
-		       LABELSECTOR, DEV_BSIZE, io_buf, &i) < 0) {
+	if ((err = sdstrategy(ss, F_READ,
+		       LABELSECTOR, DEV_BSIZE, io_buf, &i)) < 0) {
 	    printf("sdgetinfo: sdstrategy error %d\n", err);
 	    return 0;
 	}
@@ -194,6 +202,7 @@ sdopen(struct open_file *f, ...)
 	return (0);
 }
 
+int
 sdclose(struct open_file *f)
 {
 	struct sd_softc *ss = f->f_devdata;
@@ -219,7 +228,7 @@ sdstrategy(void *ss_vp, int func, daddr_t dblk, u_int size, void *buf,
 	struct partition *pp = &ss->sc_label.d_partitions[part];
 	u_int nblk = size >> DEV_BSHIFT;
 	u_int blk = dblk + pp->p_offset;
-	char stat;
+	char status;
 
 	if (size == 0)
 		return(0);
@@ -234,12 +243,12 @@ sdstrategy(void *ss_vp, int func, daddr_t dblk, u_int size, void *buf,
 
 retry:
 	if (func == F_READ)
-		stat = scsi_tt_read(ctlr, unit, buf, size, blk, nblk);
+		status = scsi_tt_read(ctlr, unit, buf, size, blk, nblk);
 	else
-		stat = scsi_tt_write(ctlr, unit, buf, size, blk, nblk);
-	if (stat) {
+		status = scsi_tt_write(ctlr, unit, buf, size, blk, nblk);
+	if (status) {
 		printf("sd(%d,%d,%d): block=%x, error=0x%x\n",
-		       ctlr, unit, ss->sc_part, blk, stat);
+		       ctlr, unit, ss->sc_part, blk, status);
 		if (++ss->sc_retry > SDRETRY)
 			return(EIO);
 		goto retry;

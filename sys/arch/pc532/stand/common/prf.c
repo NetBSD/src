@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: prf.c,v 1.4 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -33,6 +33,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include <pc532/stand/common/consdefs.h>
 #include <pc532/stand/common/samachdep.h>
 
 int
