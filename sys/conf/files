@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.555 2002/10/04 18:25:51 elric Exp $
+#	$NetBSD: files,v 1.556 2002/10/04 23:04:53 elric Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -973,16 +973,16 @@ include "ufs/files.ufs"
 # kernel sources
 #
 file	crypto/arc4/arc4.c		wlan
-file	crypto/des/des_ecb.c		ipsec & ipsec_esp
-file	crypto/des/des_setkey.c		ipsec & ipsec_esp
+file	crypto/des/des_ecb.c		(ipsec & ipsec_esp) | cgd
+file	crypto/des/des_setkey.c		(ipsec & ipsec_esp) | cgd
 file	crypto/des/des_enc.c		((ipsec & ipsec_esp) | cgd) &
 					    !crypto_md_des_enc
 file    crypto/des/des_cbc.c		cgd & !crypto_md_des_cbc
 file	crypto/blowfish/bf_enc.c	((ipsec & ipsec_esp) | cgd) &
 					    !crypto_md_bf_enc
 file	crypto/blowfish/bf_cbc.c	cgd & !crypto_md_bf_cbc
-file	crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
-file	crypto/cast128/cast128.c	ipsec & ipsec_esp
+file	crypto/blowfish/bf_skey.c	(ipsec & ipsec_esp) | cgd
+file	crypto/cast128/cast128.c	(ipsec & ipsec_esp) | cgd
 file	crypto/rijndael/rijndael-alg-fst.c (ipsec & ipsec_esp) | cgd
 file	crypto/rijndael/rijndael-api-fst.c (ipsec & ipsec_esp) | cgd
 file	ddb/db_access.c			ddb | kgdb
