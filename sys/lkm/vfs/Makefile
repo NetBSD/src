@@ -1,5 +1,9 @@
-# $NetBSD: Makefile,v 1.1 1996/08/22 20:18:21 explorer Exp $
+# $NetBSD: Makefile,v 1.2 1997/07/08 16:46:24 veego Exp $
 
-SUBDIR=	isofs miscfs msdosfs ufs
+.if (${MACHINE} == "amiga")
+SUBDIR+=	adosfs
+.endif
+
+SUBDIR+=	isofs miscfs msdosfs ufs
 
 .include <bsd.subdir.mk>
