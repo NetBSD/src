@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.62 2003/08/27 15:59:55 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.63 2003/10/11 20:53:14 petrov Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.62 2003/08/27 15:59:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.63 2003/10/11 20:53:14 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -654,10 +654,8 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 			}
 #endif
 			/* Enable the interrupt */
-			vec |= INTMAP_V;
-			/* Insert IGN */
-			vec |= sc->sc_ign;
-			/* XXXX */
+			vec |= INTMAP_V | sc->sc_ign |
+				(CPU_UPAID << INTMAP_TID_SHIFT);
 			*(ih->ih_map) = vec;
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
