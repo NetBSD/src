@@ -54,7 +54,7 @@ major {st = 5}
 major {cd = 6}
 
 #
-# Generic OpenFrimware device support
+# Generic OpenFirmware device support
 #
 #include "dev/ofw/files.ofw"
 #major {ofdisk = 0}
