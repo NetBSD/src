@@ -1,14 +1,17 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.13 2000/03/30 13:24:58 augustss Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.14 2000/05/03 11:12:07 veego Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
+ *
+ * Id: ip_ftp_pxy.c,v 2.7.2.1 2000/04/30 05:13:05 darrenr Exp
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
 #endif
 
 #define	isdigit(x)	((x) >= '0' && (x) <= '9')
+#define	isupper(x)	((unsigned)((x) - 'A') <= 'Z' - 'A')
 
 #define	IPF_FTP_PROXY
 
@@ -16,17 +19,21 @@ extern	kmutex_t	ipf_rw;
 #define	IPF_MAXPORTLEN	30
 #define	IPF_MIN227LEN	39
 #define	IPF_MAX227LEN	51
+#define	IPF_FTPBUFSZ	96	/* This *MUST* be >= 53! */
 
 
 int ippr_ftp_init __P((void));
+int ippr_ftp_new __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_out __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_in __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_portmsg __P((fr_info_t *, ip_t *, nat_t *));
 int ippr_ftp_pasvmsg __P((fr_info_t *, ip_t *, nat_t *));
+int ippr_ftp_complete __P((char *, size_t));
 
 u_short ipf_ftp_atoi __P((char **));
 
 static	frentry_t	natfr;
+int	ippr_ftp_pasvonly = 0;
 
 
 /*
@@ -37,6 +44,96 @@ int ippr_ftp_init()
 	bzero((char *)&natfr, sizeof(natfr));
 	natfr.fr_ref = 1;
 	natfr.fr_flags = FR_INQUE|FR_PASS|FR_QUICK|FR_KEEPSTATE;
+	return 0;
+}
+
+
+int ippr_ftp_complete(buf, len)
+char *buf;
+size_t len;
+{
+	register char *s, c;
+	register size_t i = len;
+
+nextmsg:
+	if (i < 5)
+		return 0;
+	s = buf;
+	c = *s++;
+	i--;
+
+	if (isdigit(c)) {
+		c = *s++;
+		i--;
+		if (isdigit(c)) {
+			c = *s++;
+			i--;
+			if (isdigit(c)) {
+				c = *s++;
+				i--;
+				if (c != '-' && c != ' ')
+					return 0;
+			} else
+				return 0;
+		} else
+			return 0;
+	} else if (isupper(c)) {
+		c = *s++;
+		i--;
+		if (isupper(c)) {
+			c = *s++;
+			i--;
+			if (isupper(c)) {
+				c = *s++;
+				i--;
+				if (isupper(c)) {
+					c = *s++;
+					i--;
+					if (c != ' ' && c != '\r')
+						return 0;
+				} else if (c != ' ' && c != '\r')
+					return 0;
+			} else
+				return 0;
+		} else
+			return 0;
+	} else
+		return 0;
+
+	for (; i && (c = *s); i--, s++) {
+		if (c == '\r') {
+			if (i >= 2)
+				continue;
+			return 0;
+		}
+		if (c == '\n') {
+			if (i > 1)
+				goto nextmsg;
+		}
+		if ((i == 2) && (c != '\r'))
+			return 0;
+		else if ((i == 1) && (c != '\n'))
+			return 0;
+	}
+	return (i == 0);
+}
+
+
+int ippr_ftp_new(fin, ip, aps, nat)
+fr_info_t *fin;
+ip_t *ip;
+ap_session_t *aps;
+nat_t *nat;
+{
+	ftpinfo_t *ftp;
+
+	KMALLOC(ftp, ftpinfo_t *);
+	if (ftp == NULL)
+		return -1;
+	aps->aps_data = ftp;
+	aps->aps_psiz = sizeof(ftpinfo_t);
+
+	bzero((char *)ftp, sizeof(*ftp));
 	return 0;
 }
 
@@ -75,13 +172,14 @@ fr_info_t *fin;
 ip_t *ip;
 nat_t *nat;
 {
-	char portbuf[IPF_MAXPORTLEN + 1], newbuf[IPF_MAXPORTLEN + 1], *s;
+	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	size_t nlen = 0, dlen, olen;
 	u_short a5, a6, sp, dp;
 	u_int a1, a2, a3, a4;
 	struct in_addr swip;
 	int off, inc = 0;
+	ftpinfo_t *ftp;
 	fr_info_t fi;
 	nat_t *ipn;
 	mb_t *m;
@@ -110,7 +208,40 @@ nat_t *nat;
 		return 0;
 	portbuf[sizeof(portbuf) - 1] = '\0';
 	*newbuf = '\0';
-	if (!strncmp(portbuf, "PORT ", 5)) { 
+
+	/*
+	 * Check that a user is progressing through the login ok.
+	 */
+	ftp = nat->nat_aps->aps_data;
+	ftp->ftp_eol[1][1] = ftp->ftp_eol[1][0];
+	ftp->ftp_eol[1][0] = ippr_ftp_complete(portbuf, dlen);
+
+	ftp->ftp_seq[1][1] = ftp->ftp_seq[1][0];
+	ftp->ftp_seq[1][0] = ntohl(tcp->th_seq) + dlen;
+
+	switch (ftp->ftp_passok)
+	{
+	case 0 :
+		if (!strncmp(portbuf, "USER ", 5))
+			ftp->ftp_passok = 1;
+		break;
+	case 2 :
+		if (!strncmp(portbuf, "PASS ", 5))
+			ftp->ftp_passok = 3;
+		break;
+	}
+
+	if (ftp->ftp_eol[1][0] == 0)
+		return 0;
+
+	if ((ftp->ftp_passok != 4) || (ftp->ftp_eol[1][1] == 0) ||
+	    (ntohl(tcp->th_ack) != ftp->ftp_seq[0][0]))
+		return 0;
+
+	/*
+	 * Check for client sending out PORT message.
+	 */
+	if (!ippr_ftp_pasvonly && !strncmp(portbuf, "PORT ", 5)) { 
 		if (dlen < IPF_MINPORTLEN)
 			return 0;
 	} else
@@ -165,11 +296,15 @@ nat_t *nat;
 	a4 = a1 & 0xff;
 	a1 >>= 24;
 	olen = s - portbuf;
+	/* DO NOT change this to sprintf! */
 	(void) sprintf(newbuf, "%s %u,%u,%u,%u,%u,%u\r\n",
 		       "PORT", a1, a2, a3, a4, a5, a6);
 
 	nlen = strlen(newbuf);
 	inc = nlen - olen;
+	if ((inc + ip->ip_len) > 65535)
+		return 0;
+
 #if SOLARIS
 	for (m1 = m; m1->b_cont; m1 = m1->b_cont)
 		;
@@ -225,6 +360,12 @@ nat_t *nat;
 	 */
 	sp = htons(a5 << 8 | a6);
 	/*
+	 * Don't allow the PORT command to specify a port < 1024 due to
+	 * security crap.
+	 */
+	if (ntohs(sp) < 1024)
+		return 0;
+	/*
 	 * The server may not make the connection back from port 20, but
 	 * it is the most likely so use it here to check for a conflicting
 	 * mapping.
@@ -270,12 +411,13 @@ fr_info_t *fin;
 ip_t *ip;
 nat_t *nat;
 {
-	char portbuf[IPF_MAX227LEN + 1], newbuf[IPF_MAX227LEN + 1], *s;
+	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s;
 	int off, olen, dlen, nlen = 0, inc = 0;
 	tcphdr_t tcph, *tcp2 = &tcph;
 	struct in_addr swip, swip2;
 	u_short a5, a6, dp, sp;
 	u_int a1, a2, a3, a4;
+	ftpinfo_t *ftp;
 	tcphdr_t *tcp;
 	fr_info_t fi;
 	nat_t *ipn;
@@ -305,6 +447,43 @@ nat_t *nat;
 	portbuf[sizeof(portbuf) - 1] = '\0';
 	*newbuf = '\0';
 
+	/*
+	 * Check that a user is progressing through the login ok.
+	 * Don't put the switch in one common function because one side
+	 * should only see numeric responses and the other commands.
+	 */
+	ftp = nat->nat_aps->aps_data;
+	ftp->ftp_eol[0][1] = ftp->ftp_eol[0][0];
+	ftp->ftp_eol[0][0] = ippr_ftp_complete(portbuf, dlen);
+
+	ftp->ftp_seq[0][1] = ftp->ftp_seq[0][0];
+	ftp->ftp_seq[0][0] = ntohl(tcp->th_seq) + dlen;
+
+	switch (ftp->ftp_passok)
+	{
+	case 1 :
+		if (!strncmp(portbuf, "331", 3))
+			ftp->ftp_passok = 2;
+		else if (!strncmp(portbuf, "530", 3))
+			ftp->ftp_passok = 0;
+		break;
+	case 3 :
+		if (!strncmp(portbuf, "230", 3))
+			ftp->ftp_passok = 4;
+		break;
+	default :
+		break;
+	}
+
+	if (ftp->ftp_eol[0][0] == 0)
+		return 0;
+	if ((ftp->ftp_passok != 4) || (ftp->ftp_eol[0][1] == 0) ||
+	    (ntohl(tcp->th_ack) != ftp->ftp_seq[1][0]))
+		return 0;
+
+	/*
+	 * Check for PASV reply message.
+	 */
 	if (!strncmp(portbuf, "227 ", 4)) {
 		if (dlen < IPF_MIN227LEN)
 			return 0;
@@ -368,6 +547,9 @@ nat_t *nat;
 
 	nlen = strlen(newbuf);
 	inc = nlen - olen;
+	if ((inc + ip->ip_len) > 65535)
+		return 0;
+
 #if SOLARIS
 	for (m1 = m; m1->b_cont; m1 = m1->b_cont)
 		;
