@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.37 2003/02/03 23:47:13 thorpej Exp $	*/
+/*	$NetBSD: time.h,v 1.38 2003/04/28 23:16:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_TIME_H_
 #define	_SYS_TIME_H_
 
+#include <sys/featuretest.h>
 #include <sys/types.h>
 #ifdef _KERNEL
 #include <sys/callout.h>
@@ -234,7 +235,7 @@ void	realtimerexpire __P((void *));
 #ifndef _STANDALONE
 #include <time.h>
 
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -247,7 +248,7 @@ int	setitimer __P((int, const struct itimerval *, struct itimerval *));
 int	settimeofday __P((const struct timeval *, const struct timezone *));
 int	utimes __P((const char *, const struct timeval *));
 __END_DECLS
-#endif /* !POSIX */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #endif	/* !_STANDALONE */
 

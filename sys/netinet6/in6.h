@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.41 2002/06/08 21:22:31 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.42 2003/04/28 23:16:27 bjh21 Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -108,7 +108,7 @@
  * The range is IPPORT_RESERVEDMIN to IPPORT_RESERVEDMAX.
  */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	IPV6PORT_RESERVED	1024
 #define	IPV6PORT_ANONMIN	49152
 #define	IPV6PORT_ANONMAX	65535
@@ -139,7 +139,7 @@ struct in6_addr {
 /*
  * Socket address for IPv6
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
@@ -372,7 +372,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 /*
  * IP6 route structure
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 struct route_in6 {
 	struct	rtentry *ro_rt;
 	struct	sockaddr_in6 ro_dst;
@@ -397,7 +397,7 @@ struct route_in6 {
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
 #endif
 #define IPV6_PKTINFO		19 /* bool; send/rcv if, src/dst addr */
@@ -450,7 +450,7 @@ struct in6_pktinfo {
 #define	IPV6_PORTRANGE_HIGH	1	/* "high" - request firewall bypass */
 #define	IPV6_PORTRANGE_LOW	2	/* "low" - vouchsafe security */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Definitions for inet6 sysctl operations.
  *
@@ -591,7 +591,7 @@ struct in6_pktinfo {
 	{ "maxfrags", CTLTYPE_INT }, \
 }
 
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 struct cmsghdr;
@@ -660,7 +660,7 @@ extern	u_char	ip6_protox[];
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 #endif /* _KERNEL */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 #include <machine/ansi.h>
 
@@ -695,6 +695,6 @@ extern int inet6_rthdr_segments __P((const struct cmsghdr *));
 extern struct in6_addr *inet6_rthdr_getaddr __P((struct cmsghdr *, int));
 extern int inet6_rthdr_getflags __P((const struct cmsghdr *, int));
 __END_DECLS
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #endif /* !_NETINET6_IN6_H_ */

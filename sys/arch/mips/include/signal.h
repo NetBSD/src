@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.18 2003/01/20 16:28:13 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.19 2003/04/28 23:16:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,8 @@
 #ifndef	_MIPS_SIGNAL_H_
 #define	_MIPS_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 #include <machine/cdefs.h>	/* for API selection */
 
 #if !defined(__ASSEMBLER__)
@@ -51,8 +53,7 @@
 
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -134,7 +135,7 @@ do {									\
 		(uc)->uc_flags &= ~_UC_FPU;				\
 } while (/*CONSTCOND*/0)
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
 #if !defined(_KERNEL)

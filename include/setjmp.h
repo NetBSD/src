@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.18 2000/03/07 21:12:37 jdolecek Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.19 2003/04/28 23:16:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,7 +52,8 @@
 #else
 #endif
 
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 typedef long sigjmp_buf[_JBLEN + 1] _JB_ATTRIBUTES;
 #endif /* not ANSI */
 
@@ -71,20 +72,19 @@ void	__siglongjmp14 __P((sigjmp_buf, int));
 int	setjmp __P((jmp_buf)) __RENAME(__setjmp14);
 void	longjmp __P((jmp_buf, int)) __RENAME(__longjmp14);
 
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 int	sigsetjmp __P((sigjmp_buf, int)) __RENAME(__sigsetjmp14);
 void	siglongjmp __P((sigjmp_buf, int)) __RENAME(__siglongjmp14);
 #endif /* not ANSI */
 #endif /* __LIBC12_SOURCE__ */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	_setjmp __P((jmp_buf));
 void	_longjmp __P((jmp_buf, int));
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 void	longjmperror __P((void));
 #endif
 __END_DECLS

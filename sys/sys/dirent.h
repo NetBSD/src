@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.14 1998/05/05 21:53:38 kleink Exp $	*/
+/*	$NetBSD: dirent.h,v 1.15 2003/04/28 23:16:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -64,7 +64,7 @@ struct dirent {
 #endif
 };
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * File types
  */
@@ -83,7 +83,7 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
-#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
+#endif /* defined(_NETBSD_SOURCE) */
 
 #ifdef _KERNEL
 /*

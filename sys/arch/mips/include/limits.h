@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.17 2002/11/30 01:52:32 simonb Exp $	*/
+/*	$NetBSD: limits.h,v 1.18 2003/04/28 23:16:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,6 +38,8 @@
 #ifndef	_MIPS_LIMITS_H_
 #define	_MIPS_LIMITS_H_
 
+#include <sys/featuretest.h>
+
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	32		/* Allow 31 bit UTF2 */
 
@@ -76,21 +78,22 @@
 #define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
 #endif
 
-#if !defined(_ANSI_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #ifdef _LP64
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 #else
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+    defined(_NETBSD_SOURCE)
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
 #define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #ifdef _LP64
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 #else
@@ -110,11 +113,10 @@
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 #endif
 
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#endif /* _NETBSD_SOURCE */
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #ifdef _LP64
 #define LONG_BIT	64
 #else

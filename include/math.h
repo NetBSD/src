@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.24 2002/02/19 13:08:12 simonb Exp $	*/
+/*	$NetBSD: math.h,v 1.25 2003/04/28 23:16:13 bjh21 Exp $	*/
 
 /*
  * ====================================================
@@ -44,8 +44,8 @@ extern __const union __double_u __infinity;
  */
 #if defined(__HAVE_NANF) && \
     (!defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L))
+     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+      defined(_NETBSD_SOURCE)))
 extern __const union __float_u __nanf;
 #define	NAN		__nanf.__val
 #endif /* __HAVE_NANF && (!_ANSI_SOURCE && ....) */
@@ -53,8 +53,7 @@ extern __const union __float_u __nanf;
 /*
  * XOPEN/SVID
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	M_E		2.7182818284590452354	/* e */
 #define	M_LOG2E		1.4426950408889634074	/* log 2e */
 #define	M_LOG10E	0.43429448190325182765	/* log 10e */
@@ -71,10 +70,9 @@ extern __const union __float_u __nanf;
 
 #define	MAXFLOAT	((float)3.40282346638528860e+38)
 extern int signgam;
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
 
 #define _LIB_VERSION_TYPE enum fdversion
@@ -120,7 +118,7 @@ struct exception {
 #define	TLOSS		5
 #define	PLOSS		6
 
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 __BEGIN_DECLS
 /*
@@ -153,8 +151,7 @@ double	fabs __P((double));
 double	floor __P((double));
 double	fmod __P((double, double));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 double	erf __P((double));
 double	erfc __P((double));
 double	gamma __P((double));
@@ -169,7 +166,7 @@ double	y0 __P((double));
 double	y1 __P((double));
 double	yn __P((int, double));
 
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 double	acosh __P((double));
 double	asinh __P((double));
 double	atanh __P((double));
@@ -182,11 +179,10 @@ double	nextafter __P((double, double));
 double	remainder __P((double, double));
 double	rint __P((double));
 double	scalb __P((double, double));
-#endif /* !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500 */
-#endif /* !_ANSI_SOURCE) && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+#endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #ifndef __cplusplus
 int	matherr __P((struct exception *));
 #endif
@@ -210,21 +206,19 @@ double	cabs __P((/* struct complex { double r; double i; } */));
 #endif
 double	drem __P((double, double));
 
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || defined(_REENTRANT)
+#if defined(_NETBSD_SOURCE) || defined(_REENTRANT)
 /*
  * Reentrant version of gamma & lgamma; passes signgam back by reference
  * as the second argument; user must allocate space for signgam.
  */
 double	gamma_r __P((double, int *));
 double	lgamma_r __P((double, int *));
-#endif /* !... || _REENTRANT */
+#endif /* _NETBSD_SOURCE || _REENTRANT */
 
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	isinf __P((double));
 
 /* float versions of ANSI/POSIX functions */
@@ -302,10 +296,9 @@ float	cabsf __P((/* struct complex { float r; float i; } */));
 float	dremf __P((float, float));
 float	expm1f __P((float));
 float	log1pf __P((float));
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || defined(_REENTRANT)
+#if defined(_NETBSD_SOURCE) || defined(_REENTRANT)
 /*
  * Float versions of reentrant version of gamma & lgamma; passes
  * signgam back by reference as the second argument; user must

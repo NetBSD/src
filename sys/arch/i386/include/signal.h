@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.15 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.16 2003/04/28 23:16:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -38,10 +38,11 @@
 #ifndef _I386_SIGNAL_H_
 #define _I386_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Get the "code" values
  */
@@ -166,5 +167,5 @@ do {									\
 #define sc_pc sc_eip
 #define sc_ps sc_eflags
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_I386_SIGNAL_H_ */

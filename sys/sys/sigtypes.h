@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.2 2003/01/18 09:53:17 thorpej Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.3 2003/04/28 23:16:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,7 +58,8 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 typedef unsigned int sigset13_t;
 
@@ -128,21 +129,20 @@ struct sigaltstack13 {
 };
 #endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
 
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 typedef struct
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
                sigaltstack
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 			   {
 	void	*ss_sp;			/* signal stack base */
 	size_t	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 } stack_t;
 
-#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+#endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
 
 #endif	/* !_SYS_SIGTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.19 2003/01/18 17:12:13 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.20 2003/04/28 23:16:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,10 @@
 #ifndef _LIMITS_H_
 #define	_LIMITS_H_
 
-#if !defined(_ANSI_SOURCE)
+#include <sys/featuretest.h>
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	6
 #define	_POSIX_LINK_MAX		8
@@ -71,8 +74,8 @@
  * X/Open CAE Specifications,
  * adopted in IEEE Std 1003.1-2001 XSI.
  */
-#if !defined(_POSIX_C_SOURCE) || (_POSIX_C_SOURCE - 0) >= 200112L || \
-    defined(_XOPEN_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	_XOPEN_IOV_MAX		16
 #define	_XOPEN_NAME_MAX		256
 #define	_XOPEN_PATH_MAX		1024
@@ -91,9 +94,9 @@
 #ifndef TMP_MAX
 #define TMP_MAX			308915776	/* Legacy */
 #endif
-#endif /* !_POSIX_C_SOURCE || >= 200112L || _XOPEN_SOURCE */
+#endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#endif /* !_ANSI_SOURCE */
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>
