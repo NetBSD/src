@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/02 11:06:30 veego Exp $
+#	$NetBSD: Makefile,v 1.8 1999/03/10 18:57:06 bouyer Exp $
 
-SUBDIR= kern
+SUBDIR= kern fs
 .if exists(arch/${MACHINE})
 SUBDIR+= arch/${MACHINE}
 .endif
