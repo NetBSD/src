@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: tolower_.c,v 1.2 1993/08/26 00:45:17 jtc Exp $
+ *	$Id: tolower_.c,v 1.3 1993/09/05 22:29:50 mycroft Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-static char *rcsid = "$Id: tolower_.c,v 1.2 1993/08/26 00:45:17 jtc Exp $";
+static char *rcsid = "$Id: tolower_.c,v 1.3 1993/09/05 22:29:50 mycroft Exp $";
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
@@ -78,3 +78,10 @@ const short _C_tolower_[1 + 256] = {
 };
 
 const short *_tolower_tab_ = _C_tolower_;
+
+#undef tolower
+tolower(c)
+	int c;
+{
+	return((_tolower_tab_ + 1)[c]);
+}
