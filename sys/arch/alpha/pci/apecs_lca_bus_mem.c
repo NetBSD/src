@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_lca_bus_mem.c,v 1.2 1996/04/12 06:08:06 cgd Exp $	*/
+/*	$NetBSD: apecs_lca_bus_mem.c,v 1.3 1996/06/10 00:01:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,8 +42,22 @@
 #error Memory addresses do not match up?
 #endif
 
-#define	CHIP		apecs_lca
-#define	CHIP_D_MEM_BASE	APECS_PCI_DENSE
-#define	CHIP_S_MEM_BASE	APECS_PCI_SPARSE
+#define	CHIP	apecs_lca
+
+/* Dense memory */
+#define	CHIP_D_MEM_BASE(v)	APECS_PCI_DENSE
+#define	CHIP_D_MEM_MASK(v)	0xffffffff
+
+/* Sparse region 1 */
+#define	CHIP_S_MEM_W1_START(v)	0x00000000
+#define	CHIP_S_MEM_W1_END(v)	0x00ffffff
+#define	CHIP_S_MEM_W1_BASE(v)	APECS_PCI_SPARSE
+#define	CHIP_S_MEM_W1_MASK(v)	0x07ffffff
+
+/* Sparse region 2 */
+#define	CHIP_S_MEM_W2_START(v)	0x01000000		/* XXX from HAXR1 */
+#define	CHIP_S_MEM_W2_END(v)	0xfeffffff		/* XXX from HAXR1 */
+#define	CHIP_S_MEM_W2_BASE(v)	APECS_PCI_SPARSE
+#define	CHIP_S_MEM_W2_MASK(v)	0x07ffffff
 
 #include "pcs_bus_mem_common.c"
