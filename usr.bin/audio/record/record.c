@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.7 1999/09/23 15:41:31 dmcmahill Exp $	*/
+/*	$NetBSD: record.c,v 1.8 1999/09/27 01:58:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -84,7 +84,7 @@ main(argc, argv)
 {
 	char	*buffer;
 	size_t	len, bufsize;
-	int	ch;
+	int	ch, no_time_limit = 1;
 
 	while ((ch = getopt(argc, argv, "ab:C:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
 		switch (ch) {
@@ -150,6 +150,7 @@ main(argc, argv)
 				errx(1, "sample rate must be between 0 and 96000\n");
 			break;
 		case 't':
+			no_time_limit = 0;
 			decode_time(optarg, &record_time);
 			break;
 		case 'V':
@@ -257,7 +258,7 @@ main(argc, argv)
 	total_size = 0;
 
 	(void)gettimeofday(&start_time, NULL);
-	while (timeleft(&start_time, &record_time)) {
+	while (no_time_limit || timeleft(&start_time, &record_time)) {
 		if (read(audiofd, buffer, bufsize) != bufsize)
 			err(1, "read failed");
 		if (write(outfd, buffer, bufsize) != bufsize)
@@ -299,11 +300,10 @@ cleanup(signo)
 	exit(0);
 }
 
-sun_audioheader auh;
-
 void
 write_header()
 {
+	sun_audioheader auh;
 	struct iovec iv[3];
 	int veclen = 0, left, tlen = 0;
 
