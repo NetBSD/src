@@ -66,6 +66,21 @@ subdirectory of the NetBSD RELEASE distribution tree, and are as follows:
 		manual pages.
 		[ 0.8M gzipped, 3.1M uncompressed ]
 
+	xbin12	This set is the X11R6.1 binary and library set.  It
+		includes all the programs, fonts and libraries used
+		in the X window system, and is mandatory to use X.
+		[ 11M gzipped, 20M uncompressed ]
+
+	xcon12	This set is the X11R6.1 contributed software collection,
+		made up from programs in the contrib distribution.
+		[ ? gzipped, ? uncompressed ]
+
+	xinc12	This set is the X11R6.1 include set.
+		[ 0.3M gzipped, 2.2M uncompressed ]
+
+	xman12	This set in the X11R6.1 manual set.
+		[ 0.5M gzipped, 2.9M uncompressed ]
+
 The sparc security distribution set is named "secr12" and can be found
 in the "sparc/security" subdirectory of the NetBSD RELEASE distribution
 tree.  It contains crypt.c (the source file for the DES encryption
