@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2001/12/14 05:34:46 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.8 2001/12/28 12:21:55 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -98,6 +98,7 @@ le*		at mainbus0		# LANCE ethernet interfaces
 pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	bpfilter	16	# Berkeley packet filter
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vnd		4	# vnode pseudo-disks

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100 2001/12/14 05:34:47 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.101 2001/12/28 12:21:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 maxusers	16
 
@@ -381,6 +381,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT

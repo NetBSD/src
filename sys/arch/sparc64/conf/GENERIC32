@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.26 2001/12/05 13:29:24 mrg Exp $
+# 	$NetBSD: GENERIC32,v 1.27 2001/12/28 12:22:00 martin Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	64
 
@@ -470,6 +470,9 @@ pseudo-device	sl		2
 
 ## PPP, the successor to SLIP.  See pppd(8).
 pseudo-device	ppp		2
+
+## PPP over Ethernet (RFC 2516)
+pseudo-device	pppoe
 
 ## Starmode Radio IP, a special hardware network device.
 pseudo-device	strip		1

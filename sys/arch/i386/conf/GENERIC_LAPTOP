@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.35 2001/12/01 00:09:08 bouyer Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.36 2001/12/28 12:21:56 martin Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	32		# estimated number of users
 
@@ -744,6 +744,7 @@ pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty

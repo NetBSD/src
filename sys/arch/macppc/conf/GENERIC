@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2001/12/14 05:34:49 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.117 2001/12/28 12:21:57 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 maxusers	32
 
@@ -348,6 +348,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.32 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: GENERIC_TINY,v 1.33 2001/12/28 12:21:57 martin Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -553,6 +553,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2001/12/14 05:34:53 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.93 2001/12/28 12:22:01 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -248,6 +248,7 @@ pseudo-device	bpfilter 8		# Not supported by de yet.
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
 #pseudo-device	ppp	2
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun	2
 #pseudo-device	gre	2		# generic L3 over IP tunnel
 pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2001/12/14 05:34:51 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.94 2001/12/28 12:22:00 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.93 $"
+#ident		"GENERIC-$Revision: 1.94 $"
 
 maxusers	64
 
@@ -209,6 +209,7 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line IP ports
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT

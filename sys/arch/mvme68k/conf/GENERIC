@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2001/12/14 05:34:49 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.31 2001/12/28 12:21:58 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -88,6 +88,7 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 pseudo-device	sl
 pseudo-device	ppp 2
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

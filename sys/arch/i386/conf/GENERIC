@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.450 2001/12/24 13:47:13 augustss Exp $
+# $NetBSD: GENERIC,v 1.451 2001/12/28 12:21:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.450 $"
+#ident 		"GENERIC-$Revision: 1.451 $"
 
 maxusers	32		# estimated number of users
 
@@ -988,6 +988,7 @@ pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline

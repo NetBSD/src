@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC_TINY,v 1.7 2001/11/23 05:00:27 atatat Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.8 2001/12/28 12:21:59 martin Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC_TINY-$Revision: 1.7 $"
+#ident 		"GENERIC_TINY-$Revision: 1.8 $"
 
 maxusers	4
 
@@ -175,6 +175,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		4	# Network "tunnel" device
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter

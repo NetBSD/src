@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5 2001/12/22 23:17:35 cjep Exp $
+# $NetBSD: GENERIC,v 1.6 2001/12/28 12:21:52 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/acorn32/conf/std.acorn32"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 # estimated number of users
 maxusers	32
@@ -292,6 +292,7 @@ pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter

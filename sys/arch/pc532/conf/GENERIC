@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2001/12/14 05:34:51 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.24 2001/12/28 12:21:59 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	8			# estimated number of users
 
@@ -90,6 +90,7 @@ pseudo-device	vnd		2	# vnode devices
 pseudo-device	bpfilter	4	# packet filter
 pseudo-device	sl		1	# compressed SLIP
 pseudo-device	ppp		1	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunneling
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
