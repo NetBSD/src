@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.7 2003/07/30 15:58:39 mrg Exp $ */
+/*	$NetBSD: prompatch.c,v 1.8 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -101,10 +101,10 @@ static struct patch_entry patch_js1_obp[] = {
 static struct patch_entry patch_js1_ofw[] = {
 
 /*
- * JS1/OFW has no cpu node in the device tree.  Create one to save us a
+ * JS1/OFW has no CPU node in the device tree.  Create one to save us a
  * _lot_ of headache in cpu.c and mainbus_attach.  Mostly copied from
  * OBP2.  While clock-frequency is usually at the root node, add it
- * here for brevity as kernel checks cpu node for this property anyway.
+ * here for brevity as kernel checks CPU node for this property anyway.
  */
 { "cpu: creating node ", /* NB: space at the end is intentional */
 	"0 0 0 0 \" /\" begin-package"

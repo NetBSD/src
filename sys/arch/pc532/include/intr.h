@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2003/08/07 16:28:59 agc Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@ splraise(ncpl)
 }
 
 /*
- * Restore a value to Cur_pl (cpu interrupts will get unmasked).
+ * Restore a value to Cur_pl (CPU interrupts will get unmasked).
  *
  * NOTE: We go to the trouble of returning the old value of cpl for
  * the benefit of some splsoftclock() callers.  This extra work is

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2003/12/30 12:33:19 pk Exp $	   */
+/*	$NetBSD: pmap.c,v 1.133 2004/02/13 11:36:20 wiz Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -85,8 +85,8 @@ vaddr_t istack;
 /*
  * Scratch pages usage:
  * Page 1: initial frame pointer during autoconfig. Stack and pcb for
- *	   processes during exit on boot cpu only.
- * Page 2: cpu_info struct for any cpu.
+ *	   processes during exit on boot CPU only.
+ * Page 2: cpu_info struct for any CPU.
  * Page 3: unused
  * Page 4: unused
  */
@@ -797,7 +797,7 @@ grow_p0(struct pmap *pm, int reqlen)
 	pm->pm_p0lr = (len/PPTESZ);
 	update_pcbs(pm);
 
-	/* Remove the old after update_pcbs() (for multicpu propagation) */
+	/* Remove the old after update_pcbs() (for multi-CPU propagation) */
 	if (inuse)
 		extent_free(ptemap, p0br, p0lr*PPTESZ, EX_WAITOK);
 }

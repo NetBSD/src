@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.17 2003/12/14 01:33:15 thorpej Exp $
+#	$NetBSD: ADI_BRH,v 1.18 2004/02/13 11:36:11 wiz Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -143,7 +143,7 @@ config		netbsd-sd0	root on sd0 type ffs
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # On-board device support

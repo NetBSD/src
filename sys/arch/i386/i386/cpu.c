@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.16 2003/10/27 14:11:46 junyoung Exp $ */
+/* $NetBSD: cpu.c,v 1.17 2004/02/13 11:36:13 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2004/02/13 11:36:13 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -271,7 +271,7 @@ cpu_attach(parent, self, aux)
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
-			panic("%s: running cpu is at apic %d"
+			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
 		}
@@ -554,7 +554,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("cpu failed to start\n");
+		printf("CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -565,7 +565,7 @@ cpu_boot_secondary(ci)
 /*
  * The CPU ends up here when its ready to run
  * This is called from code in mptramp.s; at this point, we are running
- * in the idle pcb/idle stack of the new cpu.  When this function returns,
+ * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
  *
  * XXX should share some of this with init386 in machdep.c
@@ -625,7 +625,7 @@ cpu_hatch(void *v)
 #include <machine/db_machdep.h>
 
 /*
- * Dump cpu information from ddb.
+ * Dump CPU information from ddb.
  */
 void
 cpu_debug_dump(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2003/07/31 07:50:04 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2004/02/13 11:36:11 wiz Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ __start:
 	isync
 
 /*
- * Cpu detect.
+ * CPU detect.
  * 
  */
 	lis	8, 0x7FFF

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2003/07/14 23:32:32 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2003/07/14 23:32:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2004/02/13 11:36:20 wiz Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3679,7 +3679,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		if (pj == NULL) {
 			/*
 			 * Couldn't allocate a job entry.
-			 * Kill it now for this cpu, unless the failure
+			 * Kill it now for this CPU, unless the failure
 			 * was due to too many pending flushes; otherwise,
 			 * tell other cpus to kill everything..
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.26 2003/10/28 20:39:54 mycroft Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.27 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.26 2003/10/28 20:39:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.27 2004/02/13 11:36:14 wiz Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -462,7 +462,7 @@ cpu_setmcontext(l, mcp, flags)
 		/*
 		 * We only need to restore FP state right now if we're
 		 * dealing with curlwp. Otherwise, it'll be restored
-		 * (from the PCB) when this lwp is given the cpu.
+		 * (from the PCB) when this lwp is given the CPU.
 		 */
 		if (l == curlwp)
 			m68881_restore(fpf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2004/02/13 11:36:11 wiz Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -144,7 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2003/12/30 12:33:16 pk Exp $");
 #include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;		/* cpu "architecture" */
+char machine[] = MACHINE;		/* CPU "architecture" */
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -288,7 +288,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()
@@ -700,7 +700,7 @@ nmihand(frame)
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  * 
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.3 2003/10/13 18:40:16 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.4 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -279,7 +279,7 @@ void cpu_init_idt __P((void));
  * Entries in the Interrupt Descriptor Table (IDT)
  */
 #define	NIDT	256
-#define	NRSVIDT	32		/* reserved entries for cpu exceptions */
+#define	NRSVIDT	32		/* reserved entries for CPU exceptions */
 
 /*
  * Entries in the Global Descriptor Table (GDT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.160 2004/02/06 06:58:21 pk Exp $	*/
+/*	$NetBSD: tty.c,v 1.161 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.160 2004/02/06 06:58:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.161 2004/02/13 11:36:23 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2325,7 +2325,7 @@ ttyinfo(struct tty *tp)
 		    (long int)stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
-		/* Print percentage cpu. */
+		/* Print percentage CPU. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
@@ -2348,7 +2348,7 @@ ttyinfo(struct tty *tp)
  *
  *	1) Only foreground processes are eligible - implied.
  *	2) Runnable processes are favored over anything else.  The runner
- *	   with the highest cpu utilization is picked (p_estcpu).  Ties are
+ *	   with the highest CPU utilization is picked (p_estcpu).  Ties are
  *	   broken by picking the highest pid.
  *	3) The sleeper with the shortest sleep time is next.  With ties,
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
@@ -2376,7 +2376,7 @@ proc_compare(struct proc *p1, struct proc *p2)
 		return (1);
 	case BOTH:
 		/*
-		 * tie - favor one with highest recent cpu utilization
+		 * tie - favor one with highest recent CPU utilization
 		 */
 		if (p2->p_estcpu > p1->p_estcpu)
 			return (1);

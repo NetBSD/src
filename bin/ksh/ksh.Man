@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.15 2003/05/01 13:50:59 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.16 2004/02/13 11:36:08 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2428,8 +2428,8 @@ If no pipeline is given, then the user and system time used by the shell
 itself, and all the commands it has run since it was started, are reported.
 The times reported are
 the real time (elapsed time from start to finish),
-the user cpu time (time spent running in user mode)
-and the system cpu time (time spent running in kernel mode).
+the user CPU time (time spent running in user mode)
+and the system CPU time (time spent running in kernel mode).
 Times are reported to standard error; the format of the output is:
 .nf
     0.00s real     0.00s user     0.00s system
@@ -2630,7 +2630,7 @@ time.
 .IP \fB\-s\fP
 Impose a size limit of \fIn\fP kbytes on the size of the stack area.
 .IP \fB\-t\fP
-Impose a time limit of \fIn\fP cpu seconds to be used by each process.
+Impose a time limit of \fIn\fP CPU seconds to be used by each process.
 .IP \fB\-v\fP
 Impose a limit of \fIn\fP kbytes on the amount of virtual memory used;
 on some systems this is the maximum allowable virtual address (in bytes,

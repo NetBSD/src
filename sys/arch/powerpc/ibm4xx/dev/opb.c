@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.16 2003/10/06 16:15:46 scw Exp $ */
+/* $NetBSD: opb.c,v 1.17 2004/02/13 11:36:16 wiz Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.16 2003/10/06 16:15:46 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.17 2004/02/13 11:36:16 wiz Exp $");
 
 #include "locators.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.16 2003/10/06 16:15:46 scw Exp $");
 #include <powerpc/ibm4xx/ibm405gp.h>
 
 /*
- * The devices on the On-chip Peripheral Bus to the 405GP cpu.
+ * The devices on the On-chip Peripheral Bus to the 405GP CPU.
  */
 const struct opb_dev {
 	int pvr;

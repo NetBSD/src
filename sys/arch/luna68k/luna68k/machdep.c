@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36 2003/12/30 12:33:16 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.37 2004/02/13 11:36:14 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2004/02/13 11:36:14 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -803,7 +803,7 @@ luna68k_abort(cp)
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  * 
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.4 2003/09/26 22:25:21 wiz Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.5 2004/02/13 11:36:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -77,7 +77,7 @@
  *      1.11111 = Unused                (128MB on MCBUS)
  *
  * ------------------------------------------------------------
- * Cpu to PCI Address Mapping for MCBUS-PCIy Bridge on MCBUS x:
+ * CPU to PCI Address Mapping for MCBUS-PCIy Bridge on MCBUS x:
  * ------------------------------------------------------------    
  * 
  * CPU Address Range            PCI Address Range       PCI Address Space

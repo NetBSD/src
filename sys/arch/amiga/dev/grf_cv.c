@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.36 2003/11/10 08:51:51 wiz Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.37 2004/02/13 11:36:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.36 2003/11/10 08:51:51 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.37 2004/02/13 11:36:10 wiz Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -602,10 +602,10 @@ cv_boardinit(struct grf_softc *gp)
 	 */
 	vgaw(ba, ECR_ADV_FUNC_CNTL, 0x31);
 
-	/* enable color mode (bit0), cpu acess (bit1), high 64k page (bit5) */
+	/* enable color mode (bit0), CPU access (bit1), high 64k page (bit5) */
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);
 
-	/* Cpu base addr */
+	/* CPU base addr */
 	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x00);
 
 	/* Reset. This does nothing, but everyone does it:) */

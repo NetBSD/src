@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.29 2003/08/12 17:16:53 dsl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.30 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.29 2003/08/12 17:16:53 dsl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.30 2004/02/13 11:36:24 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ labeliostat(void)
 	wmove(wnd, row, 0); wclrtobot(wnd);
 	mvwaddstr(wnd, row++, INSET,
 	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
-	mvwaddstr(wnd, row++, 0, "    cpu  user|");
+	mvwaddstr(wnd, row++, 0, "    CPU  user|");
 	mvwaddstr(wnd, row++, 0, "         nice|");
 	mvwaddstr(wnd, row++, 0, "       system|");
 	mvwaddstr(wnd, row++, 0, "    interrupt|");

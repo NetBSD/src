@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 2003/12/30 12:33:16 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.16 2004/02/13 11:36:12 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -173,7 +173,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	kernend = (caddr_t)mips_round_page(end);
 	memset(edata, 0, kernend - (caddr_t)edata);
 
-	/* set cpu model info for sysctl_hw */
+	/* set CPU model info for sysctl_hw */
 	strcpy(cpu_model, "Alchemy Semiconductor Pb1000");
 
 	/* save the yamon environment pointer */
@@ -183,7 +183,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	cn_tab = &yamon_promcd;
 
 	/*
-	 * Set up the exception vectors and cpu-specific function
+	 * Set up the exception vectors and CPU-specific function
 	 * vectors early on.  We need the wbflush() vector set up
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).

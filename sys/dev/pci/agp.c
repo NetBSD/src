@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.31 2003/08/26 17:33:23 tron Exp $	*/
+/*	$NetBSD: agp.c,v 1.32 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.31 2003/08/26 17:33:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.32 2004/02/13 11:36:22 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,7 +609,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	}
 
 	/*
-	 * Flush the cpu cache since we are providing a new mapping
+	 * Flush the CPU cache since we are providing a new mapping
 	 * for these pages.
 	 */
 	agp_flush_cache();
