@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.77 2001/05/02 13:45:52 jdolecek Exp $
+# $NetBSD: md.i386,v 1.78 2001/09/10 11:05:38 fvdl Exp $
 ./dev/audio				base-sys-devlinks
 ./dev/audioctl				base-sys-devlinks
 ./dev/bktr				base-sys-devlinks
@@ -12,7 +12,7 @@
 ./usr/bin/pmc				base-util-bin
 ./usr/lib/libi386.so			base-sys-shlib
 ./usr/lib/libi386.so.0			base-sys-shlib
-./usr/lib/libi386.so.0.3		base-sys-shlib
+./usr/lib/libi386.so.0.4		base-sys-shlib
 ./usr/lib/libm387.so			base-sys-shlib
 ./usr/lib/libm387.so.0			base-sys-shlib
 ./usr/lib/libm387.so.0.0		base-sys-shlib
