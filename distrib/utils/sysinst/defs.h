@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.2 1997/10/30 06:07:47 mellon Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.3 1997/11/02 20:38:20 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,7 @@
 
 /* Round up to the next full cylinder size */
 #define NUMSEC(size,sizemult,cylsize) \
-	((sizemult == 1) ? (size) : \
+	((size == -1) ? -1 : (sizemult == 1) ? (size) : \
 	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
    
 /* Types */
@@ -110,9 +110,14 @@ EXTERN char *disktype;		/* ST506, SCSI, ... */
 /* Used in editing partitions ... BSD disklabel and others */
 EXTERN int editpart;
 
-/* Final known sizes for the NetBSD partition, NetBSD disk sizes. */
-EXTERN int ptstart, ptsize;
-EXTERN int fsdsize, fsptsize;
+/* Partition start and size in disk sectors. */
+EXTERN int ptstart, ptsize;	
+
+/* File system disk size.  File system partition size. May not include
+   full disk size. */
+EXTERN int fsdsize, fsptsize;	
+
+
 EXTERN int fsdmb;
 EXTERN int minfsdmb;
 EXTERN int partstart;
@@ -217,6 +222,8 @@ void	mnt_net_config __P((void));
 /* From run.c */
 int	collect __P((int kind, char **buffer, char *name, ...));
 int	run_prog __P((char *, ...));
+void	run_prog_or_die __P((char *, ...));
+int	run_prog_or_continue __P((char *, ...));
 
 /* from upgrade.c */
 void	do_upgrade __P((void));
@@ -224,6 +231,7 @@ void	do_upgrade __P((void));
 /* from util.c */
 void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
+void	reask_sizemult __P((void));
 int	ask_ynquestion __P((char *quest, char def, ...));
 void	extract_dist __P((void));
 void	run_makedev __P((void));
@@ -232,3 +240,16 @@ int	get_via_cdrom __P((void));
 void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
+void	make_ramdisk_dir __P((const char *path));
+
+void get_and_unpack_sets(int success_msg, int failure_msg);
+
+/* from target.c */
+void	make_target_dir __P((const char *path));
+void	append_to_target_file __P((const char *path, const char *string));
+void	echo_to_target_file __P(( const char *path, const char *string));
+void	sprintf_to_target_file __P(( const char *path, const char *fmt, ...));
+void	trunc_target_file __P((const char *path));
+int	target_chdir __P(( const char *path));
+void	target_chdir_or_die __P((const char *dir));
+int	target_already_root __P((void));
