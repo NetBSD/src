@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.145 2004/01/29 02:00:02 tsarna Exp $
+#	$NetBSD: shlib_version,v 1.146 2004/02/19 19:31:06 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -13,4 +13,4 @@
 # - infinity{,f,l}.c, math.h: __infinity -> __huge_val
 #
 major=12
-minor=111
+minor=112
