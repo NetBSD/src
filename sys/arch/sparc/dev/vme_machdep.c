@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.2 1998/02/04 01:01:14 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.3 1998/02/04 01:57:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ static int	sparc_vme4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
 static void	sparc_vme4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme4_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t));
+		    int));
 
 static int	sparc_vme4_dmamem_alloc __P((bus_dma_tag_t, bus_size_t,
 		    bus_size_t, bus_size_t, bus_dma_segment_t *,
@@ -133,7 +133,7 @@ static int	sparc_vme4m_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
 static void	sparc_vme4m_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme4m_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t));
+		    int));
 
 static int	sparc_vme4m_dmamem_alloc __P((bus_dma_tag_t, bus_size_t,
 		    bus_size_t, bus_size_t, bus_dma_segment_t *,
@@ -789,14 +789,15 @@ sparc_vme4_dmamem_free(t, segs, nsegs)
 }
 
 void
-sparc_vme4_dmamap_sync(t, map, op)
+sparc_vme4_dmamap_sync(t, map, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	int ops;
 {
-	switch (op) {
-	default:
-	}
+
+	/*
+	 * XXX Should perform cache flushes as necessary (e.g. 4/200 W/B).
+	 */
 }
 #endif /* SUN4 */
 
@@ -903,13 +904,14 @@ sparc_vme4m_dmamem_free(t, segs, nsegs)
 }
 
 void
-sparc_vme4m_dmamap_sync(t, map, op)
+sparc_vme4m_dmamap_sync(t, map, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	int ops;
 {
-	switch (op) {
-	default:
-	}
+
+	/*
+	 * XXX Should perform cache flushes as necessary.
+	 */
 }
 #endif /* SUN4M */
