@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.8 1996/09/10 22:26:51 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.9 1996/10/03 01:25:33 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -33,6 +33,7 @@ options         SYSVSEM                 # System V-style semaphores
 options         SYSVMSG                 # System V-style message queues
 options         KTRACE                  # system call tracing support
 options		"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+options 	EXEC_AOUT		# support for exec'ing a.out
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)

@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.6 1996/09/10 22:26:52 thorpej Exp $
+#	$NetBSD: BASALT,v 1.7 1996/10/03 01:25:32 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -26,6 +26,7 @@ options         SYSVSEM                 # System V semaphores
 options         SYSVMSG                 # System V message queues
 options         KTRACE                  # system call tracing support
 options		"NKMEMCLUSTERS=2048"	# # 4K pages in kernel malloc pool
+options 	EXEC_AOUT		# support for exec'ing a.out
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
