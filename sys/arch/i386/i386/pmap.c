@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1998/05/19 19:00:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 1998/07/08 05:41:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -236,6 +236,9 @@ pmap_bootstrap(virtual_start)
 {
 	vm_offset_t va;
 	pt_entry_t *pte, *junk;
+#if defined(UVM)
+	int first16q;
+#endif
 
 	/*
 	 * set the VM page size.
@@ -319,11 +322,24 @@ pmap_bootstrap(virtual_start)
 	 * [i.e. here]
 	 */
 #if defined(UVM)
+	if (avail_end < (16 * 1024 * 1024))
+		first16q = VM_FREELIST_DEFAULT;
+	else
+		first16q = VM_FREELIST_FIRST16;
+
 	if (avail_start < hole_start)
 		uvm_page_physload(atop(avail_start), atop(hole_start),
-			atop(avail_start), atop(hole_start));
-	uvm_page_physload(atop(hole_end), atop(avail_end), 
-			atop(hole_end), atop(avail_end));
+			atop(avail_start), atop(hole_start), first16q);
+	if (first16q == VM_FREELIST_FIRST16) {
+		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
+		    atop(hole_end), atop(16 * 1024 * 1024), first16q);
+		uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
+		    atop(16 * 1024 * 1024), atop(avail_end),
+		    VM_FREELIST_DEFAULT);
+	} else {
+		uvm_page_physload(atop(hole_end), atop(avail_end),
+		    atop(hole_end), atop(avail_end), first16q);
+	}
 #else
 	if (avail_start < hole_start)
 		vm_page_physload(atop(avail_start), atop(hole_start),
