@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.19 1995/06/01 22:44:41 jtc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.20 1995/06/02 18:35:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -221,7 +221,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 		*tl++ = txdr_unsigned(cr->cr_gid);
 		grpsiz = (auth_len >> 2) - 5;
 		*tl++ = txdr_unsigned(grpsiz);
-		for (i = 1; i <= grpsiz; i++)
+		for (i = 0; i < grpsiz; i++)
 			*tl++ = txdr_unsigned(cr->cr_groups[i]);
 		break;
 	case RPCAUTH_NQNFS:
