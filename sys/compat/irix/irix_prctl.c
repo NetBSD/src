@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.22 2003/11/08 21:33:35 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.23 2003/11/26 08:36:51 he Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.22 2003/11/08 21:33:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.23 2003/11/26 08:36:51 he Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -508,21 +508,21 @@ irix_sproc_child(isc)
 	/* 
 	 * Setup PC to return to the child entry point 
 	 */
-	tf->f_regs[PC] = (unsigned long)isc->isc_entry;
-	tf->f_regs[RA] = 0;
+	tf->f_regs[_R_PC] = (unsigned long)isc->isc_entry;
+	tf->f_regs[_R_RA] = 0;
 
 	/* 
 	 * Setup child arguments 
 	 */
-	tf->f_regs[A0] = (unsigned long)isc->isc_arg;
-	tf->f_regs[A1] = 0;
-	tf->f_regs[A2] = 0;
-	tf->f_regs[A3] = 0;
-	if (ptf->f_regs[S3] == (unsigned long)isc->isc_len) { 
-		tf->f_regs[S0] = ptf->f_regs[S0];
-		tf->f_regs[S1] = ptf->f_regs[S1];
-		tf->f_regs[S2] = ptf->f_regs[S2];
-		tf->f_regs[S3] = ptf->f_regs[S3];
+	tf->f_regs[_R_A0] = (unsigned long)isc->isc_arg;
+	tf->f_regs[_R_A1] = 0;
+	tf->f_regs[_R_A2] = 0;
+	tf->f_regs[_R_A3] = 0;
+	if (ptf->f_regs[_R_S3] == (unsigned long)isc->isc_len) { 
+		tf->f_regs[_R_S0] = ptf->f_regs[_R_S0];
+		tf->f_regs[_R_S1] = ptf->f_regs[_R_S1];
+		tf->f_regs[_R_S2] = ptf->f_regs[_R_S2];
+		tf->f_regs[_R_S3] = ptf->f_regs[_R_S3];
 	}
 
 	/*
