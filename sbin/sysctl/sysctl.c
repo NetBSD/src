@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.9 2004/04/26 20:00:24 jdc Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.10 2004/04/28 05:30:41 jmc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.9 2004/04/26 20:00:24 jdc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.10 2004/04/28 05:30:41 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -947,7 +947,7 @@ parse_create(char *l)
 			}
 			errno = 0;
 			addr = (void*)strtoul(value, &t, 0);
-			if (*t != '\0' || errno != 0) {
+			if (t == value || *t != '\0' || errno != 0) {
 				sysctlperror(
 				    "%s: '%s' is not a valid address\n",
 				    nname, value);
@@ -996,7 +996,7 @@ parse_create(char *l)
 			 * right?
 			 */
 			sz = strtoul(value, &t, 0);
-			if (*t != '\0' || errno != 0) {
+			if (t == value || *t != '\0' || errno != 0) {
 				sysctlperror(
 					"%s: '%s' is not a valid size\n",
 					nname, value);
@@ -1006,7 +1006,7 @@ parse_create(char *l)
 		else if (strcmp(key, "n") == 0) {
 			errno = 0;
 			q = strtoq(value, &t, 0);
-			if (*t != '\0' || errno != 0 ||
+			if (t == value || *t != '\0' || errno != 0 ||
 			    q < INT_MIN || q > UINT_MAX) {
 				sysctlperror(
 				    "%s: '%s' is not a valid mib number\n",
@@ -1089,7 +1089,7 @@ parse_create(char *l)
 		case CTLTYPE_INT:
 			errno = 0;
 			q = strtoq(data, &t, 0);
-			if (*t != '\0' || errno != 0 ||
+			if (t == data || *t != '\0' || errno != 0 ||
 				q < INT_MIN || q > UINT_MAX) {
 				sysctlperror(
 				    "%s: '%s' is not a valid integer\n",
@@ -1121,7 +1121,7 @@ parse_create(char *l)
 		case CTLTYPE_QUAD:
 			errno = 0;
 			uq = strtouq(data, &t, 0);
-			if (*t != '\0' || errno != 0) {
+			if (t == data || *t != '\0' || errno != 0) {
 				sysctlperror(
 					"%s: '%s' is not a valid quad\n",
 					nname, value);
@@ -1586,7 +1586,7 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 		sysctlperror("%s: value too large\n", value);
 		EXIT(1);
 	}
-	if (*t != '\0') {
+	if (t == value || *t != '\0') {
 		sysctlperror("%s: not a number\n", value);
 		EXIT(1);
 	}
@@ -2168,7 +2168,7 @@ proc_limit(HANDLER_ARGS)
 		else {
 			errno = 0;
 			nlim = strtouq(value, &t, 0);
-			if (*t != '\0' || errno != 0) {
+			if (t == value || *t != '\0' || errno != 0) {
 				sysctlperror("%s: '%s' is not a valid limit\n",
 					     sname, value);
 				EXIT(1);
