@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.58 2001/12/13 06:31:31 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.58 2001/12/13 06:31:31 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,10 +395,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 		printf("cylinder groups must have at least %d cylinders\n",
 			mincpg);
 		exit(25);
-	} else if (sblock.fs_cpg != cpg) {
-		if (!cpgflg)
-			printf("Warning: ");
-		else if (!mapcramped && !inodecramped)
+	} else if (sblock.fs_cpg != cpg && cpgflg) {
+		if (!mapcramped && !inodecramped)
 			exit(26);
 		if (mapcramped && inodecramped)
 			printf("Block size and bytes per inode restrict");
@@ -407,8 +405,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 		else
 			printf("Bytes per inode restrict");
 		printf(" cylinders per group to %d.\n", sblock.fs_cpg);
-		if (cpgflg)
-			exit(27);
+		exit(27);
 	}
 	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
 	/*
