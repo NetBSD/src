@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.24 2001/08/25 16:46:17 thorpej Exp $
+# $NetBSD: shl.elf,v 1.25 2001/09/13 23:15:08 thorpej Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -32,6 +32,7 @@
 ./usr/lib/libmenu.so		comp-c-lib
 ./usr/lib/libossaudio.so	comp-c-lib
 ./usr/lib/libpcap.so		comp-c-lib
+./usr/lib/libpci.so		comp-c-lib
 ./usr/lib/libposix.so		comp-c-lib
 ./usr/lib/libresolv.so		comp-c-lib
 ./usr/lib/libroken.so		comp-c-lib

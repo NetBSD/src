@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.22 2001/08/25 16:46:17 thorpej Exp $
+# $NetBSD: shl.mi,v 1.23 2001/09/13 23:15:08 thorpej Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
@@ -29,6 +29,7 @@
 ./usr/lib/libmenu_pic.a		comp-c-piclib
 ./usr/lib/libossaudio_pic.a	comp-c-piclib
 ./usr/lib/libpcap_pic.a		comp-c-piclib
+./usr/lib/libpci_pic.a		comp-c-piclib
 ./usr/lib/libposix_pic.a	comp-c-piclib
 ./usr/lib/libresolv_pic.a	comp-c-piclib
 ./usr/lib/libroken_pic.a	comp-c-piclib
