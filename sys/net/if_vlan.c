@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.43 2005/02/21 21:37:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.43 2005/02/21 21:37:22 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -850,10 +850,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		/* m contains a normal ethernet frame, the tag is in mtag */
 		tag = *(u_int *)(mtag + 1);
 		m_tag_delete(m, mtag);
-		for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
-		    ifv = LIST_NEXT(ifv, ifv_list))
-			if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
-				break;
 	} else {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
@@ -887,23 +883,12 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 			panic("vlan_input: impossible");
 #endif
 		}
-
-		for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
-		     ifv = LIST_NEXT(ifv, ifv_list))
-			if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
-				break;
-
-
-		/*
-		 * Now, remove the encapsulation header.  The original
-		 * header has already been fixed up above.
-		 */
-		if (ifv) {
-			memmove(mtod(m, caddr_t) + ifv->ifv_encaplen,
-			    mtod(m, caddr_t), sizeof(struct ether_header));
-			m_adj(m, ifv->ifv_encaplen);
-		}
 	}
+
+	for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
+	    ifv = LIST_NEXT(ifv, ifv_list))
+		if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
+			break;
 
 	if (ifv == NULL ||
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
@@ -912,6 +897,17 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_noproto++;
 		return;
 	}
+
+	/*
+	 * Now, remove the encapsulation header.  The original
+	 * header has already been fixed up above.
+	 */
+	if (mtag == NULL) {
+		memmove(mtod(m, caddr_t) + ifv->ifv_encaplen,
+		    mtod(m, caddr_t), sizeof(struct ether_header));
+		m_adj(m, ifv->ifv_encaplen);
+	}
+
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	ifv->ifv_if.if_ipackets++;
 
