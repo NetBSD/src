@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.3 1998/07/07 03:05:02 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.4 1998/07/28 04:48:04 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -197,7 +197,7 @@ sbus0	at mainbus0				# sun4c and sun4u
 # ecpp0 at pci0					# parallel port ?
 
 ## Mostek clock
-clock0	at sbus0
+clock0	at sbus0 slot ? offset ?
 #clock0	at pci0
 
 ## Timer chip
@@ -207,11 +207,11 @@ timer0	at mainbus0
 
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
-zs0	at sbus0
+zs0	at sbus0 slot ? offset ?
 zstty0	at zs0 channel 0	# ttya
 zstty1	at zs0 channel 1	# ttyb
 
-zs1	at sbus0
+zs1	at sbus0 slot ? offset ?
 kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
 
@@ -310,8 +310,8 @@ le0		at ledma0				# sun4m on-board
 #le*		at ledma?				# SBus
 #lebuffer0	at sbus? slot ? offset ?		# SBus
 #le0		at lebuffer?				# SBus
-#lebuffer*	at sbus? slot ? offset ?		# SBus
-#le*		at lebuffer?				# SBus
+lebuffer*	at sbus? slot ? offset ?		# SBus
+le*		at lebuffer?				# SBus
 
 #hme0		at sbus0 slot ? offset ?
 #network*	at pci?					# "hme" compatible
