@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.18 2000/02/27 02:35:28 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.19 2000/06/08 00:26:48 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.18 2000/02/27 02:35:28 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.19 2000/06/08 00:26:48 hubertf Exp $");
 #endif
 
 /*
@@ -465,7 +465,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	strcpy(tmpname, "/tmp/pkg.XXXXXX");
 	tfd=mkstemp(tmpname);
 	if (tfd == -1) {
-		warnx("Cannot generate temp file for ftp(1)'s ls output");
+		warnx("Cannot generate temp file for ftp(1)'s nlist output");
 		return -1; /* error */
 	}
 	close(tfd); /* We don't need the file descriptor, but will use 
@@ -477,20 +477,20 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		/* This should only happen when getting here with (only) a package
 		 * name specified to pkg_add, and PKG_PATH containing some URL.
 		 */
-		(void) snprintf(buf, sizeof(buf), "ls %s %s\n", pkg, tmpname);
+		(void) snprintf(buf, sizeof(buf), "nlist %s %s\n", pkg, tmpname);
 	} else {
 		/* replace possible version(wildcard) given with "-*".
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		(void) snprintf(buf,  sizeof(buf), "ls %*.*s*.tgz %s\n",
+		(void) snprintf(buf,  sizeof(buf), "nlist %*.*s*.tgz %s\n",
                          (int)(s-pkg), (int)(s-pkg), pkg, tmpname);
 	}
 	
 	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
 	if (rc != 226) {
 	    if (Verbose)
-		    warnx("ls failed!");
+		    warnx("nlist failed!");
 	    unlink(tmpname);	/* remove clutter */
 	    return -1;
 	}
@@ -674,11 +674,11 @@ miscstuff(const char *url)
     /* check if one more file(s) exist */
     if (0) {
 	char buf[FILENAME_MAX];
-	(void) snprintf(buf, sizeof(buf), "ls %s /tmp/xxx\n", pkg);
+	(void) snprintf(buf, sizeof(buf), "nlist %s /tmp/xxx\n", pkg);
 	rc = ftp_cmd(buf, "\n(226|550).*\n"); /* catch errors */
 	if (rc != 226) {
 	    if (Verbose)
-		warnx("ls failed!");
+		warnx("nlist failed!");
 	    return -1;
 	}
 
