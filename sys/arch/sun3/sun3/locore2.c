@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.67 1997/09/19 13:55:38 leo Exp $	*/
+/*	$NetBSD: locore2.c,v 1.68 1997/10/04 19:39:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,9 +111,6 @@ extern int physmem;
 
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
-
-extern vm_offset_t dumppage_pa;
-extern vm_offset_t dumppage_va;
 
 /* First C code called by locore.s */
 void _bootstrap __P((struct exec));
@@ -361,14 +358,6 @@ _vm_init(kehp)
 	proc0paddr = (struct user *) virtual_avail;
 	virtual_avail += UPAGES*NBPG;
 	avail_start   += UPAGES*NBPG;
-
-	/*
-	 * Virtual and physical page used by dumpsys()
-	 */
-	dumppage_va = virtual_avail;
-	dumppage_pa = avail_start;
-	virtual_avail += NBPG;
-	avail_start   += NBPG;
 
 	/*
 	 * XXX - Make sure avail_start is within the low 1M range
