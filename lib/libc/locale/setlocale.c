@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.43 2003/08/07 16:43:06 agc Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.44 2004/07/21 14:18:16 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.43 2003/08/07 16:43:06 agc Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.44 2004/07/21 14:18:16 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,12 @@ __RCSID("$NetBSD: setlocale.c,v 1.43 2003/08/07 16:43:06 agc Exp $");
 #else
 #include "ctypeio.h"
 #endif
+
+#include <citrus/citrus_namespace.h>
+#include <citrus/citrus_region.h>
+#include <citrus/citrus_lookup.h>
+
+#define _LOCALE_ALIAS_NAME	"locale.alias"
 
 /*
  * Category names for getenv()
@@ -221,11 +227,71 @@ currentlocale()
 	return (current_locale_string);
 }
 
+static int
+load_locale_sub(category, locname)
+	int category;
+	const char *locname;
+{
+	char name[PATH_MAX];
+
+	/* sanity check */
+	if (strchr(locname, '/') != NULL)
+		return -1;
+
+	(void)snprintf(name, sizeof(name), "%s/%s/%s",
+		       _PathLocale, locname, categories[category]);
+
+	switch (category) {
+	case LC_CTYPE:
+#ifdef WITH_RUNE
+		if (_xpg4_setrunelocale(__UNCONST(locname)))
+			return -1;
+		if (__runetable_to_netbsd_ctype(locname)) {
+			/* very unfortunate, but need to go to "C" locale */
+			(void)_xpg4_setrunelocale("C");
+			(void)__runetable_to_netbsd_ctype("C");
+			return -1;
+		}
+#else
+		if (!__loadctype(name))
+			return -1;
+#endif
+		break;
+
+	case LC_MESSAGES:
+		/*
+		 * XXX we don't have LC_MESSAGES support yet,
+		 * but catopen may use the value of LC_MESSAGES category.
+		 * so return successfully if locale directory is present.
+		 */
+		(void)snprintf(name, sizeof(name), "%s/%s",
+			_PathLocale, locname);
+		/* local */
+		{
+			struct stat st;
+			if (stat(name, &st) < 0)
+				return -1;
+			if (!S_ISDIR(st.st_mode))
+				return -1;
+		}
+		break;
+
+	case LC_COLLATE:
+	case LC_MONETARY:
+	case LC_NUMERIC:
+	case LC_TIME:
+		return -1;
+	}
+
+	return 0;
+}
+
 static char *
 loadlocale(category)
 	int category;
 {
-	char name[PATH_MAX];
+	char aliaspath[PATH_MAX], loccat[PATH_MAX], buf[PATH_MAX];
+	const char *alias;
 
 	_DIAGASSERT(0 < category && category < _LC_LAST);
 
@@ -265,51 +331,34 @@ loadlocale(category)
 		return current_categories[category];
 	}
 
+#if 0
 	(void)snprintf(name, sizeof(name), "%s/%s/%s",
 	    _PathLocale, new_categories[category], categories[category]);
-
-	switch (category) {
-	case LC_CTYPE:
-#ifdef WITH_RUNE
-		if (_xpg4_setrunelocale(new_categories[category]))
-			return NULL;
-		if (__runetable_to_netbsd_ctype(new_categories[category])) {
-			/* very unfortunate, but need to go to "C" locale */
-			(void)_xpg4_setrunelocale("C");
-			(void)__runetable_to_netbsd_ctype("C");
-			return NULL;
-		}
-#else
-		if (!__loadctype(name))
-			return NULL;
 #endif
-		break;
 
-	case LC_MESSAGES:
-		/*
-		 * XXX we don't have LC_MESSAGES support yet,
-		 * but catopen may use the value of LC_MESSAGES category.
-		 * so return successfully if locale directory is present.
-		 */
-		(void)snprintf(name, sizeof(name), "%s/%s",
-			_PathLocale, new_categories[category]);
-		/* local */
-		{
-			struct stat st;
-			if (stat(name, &st) < 0)
-				return NULL;
-			if (!S_ISDIR(st.st_mode))
-				return NULL;
-		}
-		break;
+	/* (1) non-aliased file */
+	if (!load_locale_sub(category, new_categories[category]))
+		goto success;
 
-	case LC_COLLATE:
-	case LC_MONETARY:
-	case LC_NUMERIC:
-	case LC_TIME:
-		return NULL;
-	}
+	/* (2) lookup locname/catname type alias */
+	(void)snprintf(aliaspath, sizeof(aliaspath),
+		       "%s/" _LOCALE_ALIAS_NAME, _PathLocale);
+	(void)snprintf(loccat, sizeof(loccat), "%s/%s",
+		       new_categories[category], categories[category]);
+	alias = _lookup_alias(aliaspath, loccat, buf, sizeof(buf),
+			      _LOOKUP_CASE_SENSITIVE);
+	if (!load_locale_sub(category, alias))
+		goto success;
 
+	/* (3) lookup locname type alias */
+	alias = _lookup_alias(aliaspath, new_categories[category],
+			      buf, sizeof(buf), _LOOKUP_CASE_SENSITIVE);
+	if (!load_locale_sub(category, alias))
+		goto success;
+
+	return NULL;
+
+success:
 	(void)strlcpy(current_categories[category],
 		new_categories[category],
 		sizeof(current_categories[category]));
