@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:22:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/23 08:45:02 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -22,8 +22,15 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc \
 		-I${XSERVERINCDIR}
 
 LDADD=	-L${XF86OSOBJDIR} -lxf86_os \
-	-L${DUMMYOBJDIR} -ldummy \
-	-li386 -lm
+	-L${DUMMYOBJDIR} -ldummy -lm
+
+.if ${MACHINE} == "i386"
+LDADD+=	-li386
+DPADD+=	${LIBI386}
+.else
+LDADD+=	-lx86_64
+DPADD+=	${LIBX86_64}
+.endif
 
 DPADD=	${LIBXF86_OS} ${LIBDUMMY} ${LIBI386} ${LIBM}
 
