@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.25 1997/03/15 18:09:24 is Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.26 1997/03/17 17:51:42 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -210,6 +210,7 @@ ed_zbus_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_char *prom;
 	int i;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	if (zap->manid == HYDRA_MANID) {
 		sc->mem_start = zap->va;
