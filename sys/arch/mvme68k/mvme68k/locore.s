@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 1997/09/28 11:31:16 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 1997/10/09 21:39:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,6 +164,7 @@ start:					| start of kernel and .text!
 	movl	0xfffe0778,a0@		| XXXCDC -- HARDWIRED HEX
 
 	/* initialize memory sizes (for pmap_bootstrap) */
+#ifndef MACHINE_NONCONTIG
 	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
@@ -174,6 +175,24 @@ start:					| start of kernel and .text!
 	subl	d0,d1			| compute amount of RAM present
 	RELOC(_physmem, a0)
 	movl	d1,a0@			| and physmem
+#else
+	/* initialise list of physical memory segments */
+	RELOC(_phys_seg_list, a0)
+	movl	a5,a0@			| phys_seg_list[0].ps_start
+	movl	0xfffe0774,d1		| End + 1 of onboard memory
+	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
+	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	0xfffe0764,d1		| Start of offboard segment
+	movl	d1,a0@(0x0c)		| phys_seg_list[1].ps_start
+	movl	0xfffe0768,d1		| End of offboard segment
+	addql	#1,d1			| +1
+	movl	d1,a0@(0x10)		| phys_seg_list[1].ps_end
+	clrl	a0@(0x14)		| phys_seg_list[1].ps_startpage
+	moveq	#PGSHIFT,d2
+	lsrl	d2,d1			| convert to page (click) number
+	RELOC(_maxmem, a0)
+	movl	d1,a0@			| save as maxmem
+#endif
 
 	jra	Lstart1
 Lnot147:

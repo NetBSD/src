@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1997/02/02 08:28:58 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.7 1997/10/09 21:39:36 scw Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -107,6 +107,10 @@
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
+
+#ifdef MACHINE_NONCONTIG
+#include <mvme68k/mvme68k/seglist.h>
+#endif
 
 #ifdef PMAPSTATS
 struct {
@@ -269,6 +273,11 @@ vm_map_t	st_map, pt_map;
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
+#ifdef MACHINE_NONCONTIG
+vm_size_t	avail_remaining;
+vm_offset_t	avail_next;
+struct phys_seg_list_t	phys_seg_list[MAX_PHYS_SEGS];
+#endif
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 vm_offset_t	vm_first_phys;	/* PA of first managed page */
@@ -341,16 +350,24 @@ pmap_bootstrap_alloc(size)
  *	system needs to map virtual memory.
  */
 void
+#ifdef MACHINE_NONCONTIG
+pmap_init()
+#else
 pmap_init(phys_start, phys_end)
 	vm_offset_t	phys_start, phys_end;
+#endif
 {
 	vm_offset_t	addr, addr2;
 	vm_size_t	s;
 	int		rv;
 
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
+	if (pmapdebug & PDB_INIT)
+#ifdef MACHINE_NONCONTIG
+		printf("pmap_init(%x, %x)\n", avail_start, avail_end);
+#else
 		printf("pmap_init(%x, %x)\n", phys_start, phys_end);
+#endif
 #endif
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -378,7 +395,7 @@ bogons:
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %x, Sysmap %x, Sysptmap %x\n",
 		       Sysseg, Sysmap, Sysptmap);
-		printf("  pstart %x, pend %x, vstart %x, vend %x\n",
+		printf("  avail_start %x, avail_end %x, vavail %x, vend %x\n",
 		       avail_start, avail_end, virtual_avail, virtual_end);
 	}
 #endif
@@ -387,7 +404,16 @@ bogons:
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
+#ifdef MACHINE_NONCONTIG
+	{
+		int i;
+		for (npages = 0, i = 0; phys_seg_list[i].ps_start; ++i)
+			npages += atop(phys_seg_list[i].ps_end -
+				       phys_seg_list[i].ps_start);
+	}
+#else
 	npages = atop(phys_end - phys_start);
+#endif
 	s = (vm_size_t) (HP_STSIZE + sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
@@ -495,10 +521,88 @@ bogons:
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
+#ifdef MACHINE_NONCONTIG
+	vm_first_phys = avail_start;
+	vm_last_phys = avail_end;
+#else
 	vm_first_phys = phys_start;
 	vm_last_phys = phys_end;
+#endif
 	pmap_initialized = TRUE;
 }
+
+#ifdef MACHINE_NONCONTIG
+unsigned int
+pmap_free_pages()
+{
+	return avail_remaining;
+}
+
+int
+pmap_next_page(addrp)
+	vm_offset_t *addrp;
+{
+	static int cur_seg = 0;
+#ifdef DEBUG
+	static int foo = 0;
+	if ( foo == 0 && pmapdebug & PDB_INIT ) {
+		int i;
+		for (i = 0; phys_seg_list[i].ps_start; i++) {
+			printf("pmap_next_page: Seg%d.start 0x%08lx, end 0x%08lx, page %d\n",
+			i, phys_seg_list[i].ps_start, phys_seg_list[i].ps_end,
+			phys_seg_list[i].ps_startpage);
+		}
+		foo = 1;
+	}
+#endif
+
+	if (phys_seg_list[cur_seg].ps_start == 0)
+		return FALSE;
+
+	if (avail_next == phys_seg_list[cur_seg].ps_end) {
+		if ( ++cur_seg >= MAX_PHYS_SEGS )
+			return FALSE;
+		avail_next = phys_seg_list[cur_seg].ps_start;
+#ifdef DEBUG
+		if (pmapdebug & PDB_INIT)
+			printf("pmap_next_page: next %lx remain %ld\n",
+		    		avail_next, avail_remaining);
+#endif
+	}
+
+	if (avail_next == 0)
+		return FALSE;
+	*addrp = avail_next;
+	avail_next += NBPG;
+	avail_remaining--;
+	return TRUE;
+}
+
+int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	struct phys_seg_list_t *s = &phys_seg_list[0];
+
+	while (s->ps_start) {
+		if (pa >= s->ps_start && pa < s->ps_end)
+			return (m68k_btop(pa - s->ps_start) + s->ps_startpage);
+		++s;
+	}
+	return -1;
+}
+
+void
+pmap_virtual_space(startp, endp)
+	vm_offset_t	*startp;
+	vm_offset_t	*endp;
+{
+	*startp = virtual_avail;
+	*endp = virtual_end;
+}
+#else
+#define pmap_page_index(pa) (pa_index(pa))
+#endif	/* MACHINE_NONCONTIG */
 
 struct pv_entry *
 pmap_alloc_pv()
