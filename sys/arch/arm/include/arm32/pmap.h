@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2002/02/05 21:14:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2002/02/06 17:32:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -137,6 +137,11 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+#define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
+
+#define	pmap_is_referenced(pg)	(((pg)->mdpage.pvh_attrs & PT_H) != 0)
+#define pmap_is_modified(pg)	(((pg)->mdpage.pvh_attrs & PT_M) != 0)
 
 #define pmap_phys_address(ppn)		(arm_page_to_byte((ppn)))
 
