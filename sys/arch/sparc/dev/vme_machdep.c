@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.43 2002/12/28 01:33:00 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.44 2003/01/03 11:57:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,17 @@ struct sparc_bus_space_tag sparc_vme_bus_tag = {
 	NULL, /* bus_subregion */
 	NULL, /* barrier */
 	NULL, /* mmap */
-	NULL  /* intr_establish */
+	NULL, /* intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL, /* read_1 */
+	NULL, /* read_2 */
+	NULL, /* read_4 */
+	NULL, /* read_8 */
+	NULL, /* write_1 */
+	NULL, /* write_2 */
+	NULL, /* write_4 */
+	NULL  /* write_8 */
+#endif
 };
 
 struct vme_chipset_tag sparc_vme_chipset_tag = {

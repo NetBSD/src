@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.59 2003/01/01 02:20:47 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.60 2003/01/03 11:57:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,16 @@ static struct sparc_bus_space_tag obio_space_tag = {
 	NULL,				/* bus_space_barrier */ 
 	obio_bus_mmap,			/* bus_space_mmap */ 
 	NULL				/* bus_intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL,				/* read_1 */
+	NULL,				/* read_2 */
+	NULL,				/* read_4 */
+	NULL,				/* read_8 */
+	NULL,				/* write_1 */
+	NULL,				/* write_2 */
+	NULL,				/* write_4 */
+	NULL,				/* write_8 */
+#endif
 }; 
 #endif
 
