@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.34 2004/08/07 17:13:27 mycroft Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.35 2004/08/21 22:48:18 thorpej Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.34 2004/08/07 17:13:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.35 2004/08/21 22:48:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,20 +96,20 @@ struct wi_pci_softc {
 	void *sc_powerhook;		/* power hook descriptor */
 };
 
-static int	wi_pci_match __P((struct device *, struct cfdata *, void *));
-static void	wi_pci_attach __P((struct device *, struct device *, void *));
-static int	wi_pci_enable __P((struct wi_softc *));
-static void	wi_pci_disable __P((struct wi_softc *));
-static void	wi_pci_reset __P((struct wi_softc *));
-static void	wi_pci_powerhook __P((int, void *));
+static int	wi_pci_match(struct device *, struct cfdata *, void *);
+static void	wi_pci_attach(struct device *, struct device *, void *);
+static int	wi_pci_enable(struct wi_softc *);
+static void	wi_pci_disable(struct wi_softc *);
+static void	wi_pci_reset(struct wi_softc *);
+static void	wi_pci_powerhook(int, void *);
 
 static const struct wi_pci_product
-	*wi_pci_lookup __P((struct pci_attach_args *));
+	*wi_pci_lookup(struct pci_attach_args *);
 
 CFATTACH_DECL(wi_pci, sizeof(struct wi_pci_softc),
     wi_pci_match, wi_pci_attach, NULL, NULL);
 
-const struct wi_pci_product {
+static const struct wi_pci_product {
 	pci_vendor_id_t		wpp_vendor;	/* vendor ID */
 	pci_product_id_t	wpp_product;	/* product ID */
 	int			wpp_chip;	/* uses other chip */
@@ -137,8 +137,7 @@ const struct wi_pci_product {
 };
 
 static int
-wi_pci_enable(sc)
-	struct wi_softc *sc;
+wi_pci_enable(struct wi_softc *sc)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
@@ -159,8 +158,7 @@ wi_pci_enable(sc)
 }
 
 static void
-wi_pci_disable(sc)
-	struct wi_softc *sc;
+wi_pci_disable(struct wi_softc *sc)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
@@ -168,8 +166,7 @@ wi_pci_disable(sc)
 }
 
 static void
-wi_pci_reset(sc)
-	struct wi_softc		*sc;
+wi_pci_reset(struct wi_softc *sc)
 {
 	int i, secs, usecs;
 
@@ -202,8 +199,7 @@ wi_pci_reset(sc)
 }
 
 static const struct wi_pci_product *
-wi_pci_lookup(pa)
-	struct pci_attach_args *pa;
+wi_pci_lookup(struct pci_attach_args *pa)
 {
 	const struct wi_pci_product *wpp;
 
@@ -216,10 +212,7 @@ wi_pci_lookup(pa)
 }
 
 static int
-wi_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -229,9 +222,7 @@ wi_pci_match(parent, match, aux)
 }
 
 static void
-wi_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = &psc->psc_wi;
@@ -399,9 +390,7 @@ wi_pci_attach(parent, self, aux)
 }
 
 static void
-wi_pci_powerhook(why, arg)
-	int why;
-	void *arg;
+wi_pci_powerhook(int why, void *arg)
 {
 	struct wi_pci_softc *psc = arg;
 	struct wi_softc *sc = &psc->psc_wi;
