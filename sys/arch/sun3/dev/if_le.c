@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 1996/04/18 00:25:25 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 1996/04/22 02:25:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -82,6 +82,12 @@ struct cfattach le_ca = {
 struct	cfdriver le_cd = {
 	NULL, "le", DV_IFNET
 };
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
 
 integrate void
 lewrcsr(sc, port, val)
