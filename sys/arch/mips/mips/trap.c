@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 1997/08/17 17:02:07 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 1997/10/17 09:35:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 1997/10/17 09:35:02 jonathan Exp $");
+
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
 #endif
@@ -62,16 +65,16 @@
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+
 #include <machine/cpu.h>
 #include <mips/trap.h>
 #include <machine/psl.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 #include <mips/pte.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>

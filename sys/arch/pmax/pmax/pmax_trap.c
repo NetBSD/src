@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.50 1997/08/17 18:13:25 mhitch Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,10 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -56,6 +60,10 @@
 #endif
 #include <net/netisr.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -63,10 +71,6 @@
 #include <machine/pte.h>
 #include <machine/mips_opcode.h>
 #include <mips/locore.h>		/* wbflush() */
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 /* XXX */
 #include <pmax/pmax/clockreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 1997/09/19 13:55:22 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 1997/10/17 09:34:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,10 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 1997/10/17 09:34:52 jonathan Exp $");
+
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/param.h>
@@ -63,6 +67,7 @@
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
