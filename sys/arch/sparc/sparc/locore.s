@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.189 2003/10/05 21:13:23 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.190 2003/10/15 07:49:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -948,7 +948,7 @@ trapbase_sun4m:
 	HARDINT4M(14)			! 1e = level 14 interrupt
 	VTRAP(15, nmi_sun4m)		! 1f = nonmaskable interrupt
 	UTRAP(0x20)
-	UTRAP(0x21)
+	VTRAP(T_TEXTERROR, memfault_sun4m)	! 21 = instr. fetch error
 	UTRAP(0x22)
 	UTRAP(0x23)
 	TRAP(T_CPDISABLED)	! 24 = coprocessor instr, EC bit off in psr
@@ -956,7 +956,7 @@ trapbase_sun4m:
 	UTRAP(0x26)
 	UTRAP(0x27)
 	TRAP(T_CPEXCEPTION)	! 28 = coprocessor exception
-	UTRAP(0x29)
+	VTRAP(T_DATAERROR, memfault_sun4m)	! 29 = data fetch error
 	UTRAP(0x2a)
 	VTRAP(T_STOREBUFFAULT, memfault_sun4m) ! 2b = SuperSPARC store buffer fault
 	UTRAP(0x2c)
