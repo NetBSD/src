@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 1998/08/16 02:01:16 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.19 1998/08/27 04:00:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -83,21 +83,12 @@ u_int arm700bugcount = 0;
 extern int usertraceback;
 
 #if NHYDRABUS > 0
-typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
-} pv_addr_t;
-
 extern pv_addr_t hydrascratch;
 #endif
 
 extern int vmem_mapdram		__P((void));
 extern int vmem_mapvram		__P((void));
 extern int vmem_cachectl	__P((int flag));
-extern void pmap_dump_pvs	__P((void));
-extern int pmap_page_attributes	__P((vm_offset_t va));
-extern void pmap_pagedir_dump	__P((void));
-extern void debug_show_all_procs	__P((int argc, char *argv[]));
 
 /* Macors to simplify the switch statement below */
 

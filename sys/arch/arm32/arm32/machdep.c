@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1998/08/26 14:51:57 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1998/08/27 04:00:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -114,12 +114,6 @@ extern int max_processes;
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
-
-/* XXX - this needs to be properly defined elsewhere */
-typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
-} pv_addr_t;
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
