@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.4 1996/06/20 07:06:36 jonathan Exp $	*/
+/*	$NetBSD: elf.c,v 1.5 1996/10/07 03:15:07 jonathan Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -75,6 +75,11 @@ static int elf_read_from __P((struct proc *, struct vnode *, u_long,
 static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
+void * elf_copyargs __P((struct exec_package *pack,
+			 struct ps_strings *arginfo,
+			 void *stack,
+			 void *argp));
+
 #define ELF_ALIGN(a, b) ((a) & ~((b) - 1))
 
 /*
@@ -98,7 +103,7 @@ struct emul emul_elf = {
 #else
 	NULL,
 #endif
-	sizeof(AuxInfo) * 8,
+	sizeof(Aux32Info) * 8,
 	elf_copyargs,
 	setregs, 
 	sigcode,
@@ -122,7 +127,7 @@ elf_copyargs(pack, arginfo, stack, argp)
 	void *nullp = NULL;
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
-	AuxInfo *a;
+	Aux32Info *a;
 	struct elf_args *ap;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
@@ -156,7 +161,7 @@ elf_copyargs(pack, arginfo, stack, argp)
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries
 	 */
-	a = (AuxInfo *) cpp;
+	a = (Aux32Info *) cpp;
 	if ((ap = (struct elf_args *) pack->ep_emul_arg)) {
 
 		a->au_id = AUX_phdr;
@@ -217,14 +222,14 @@ elf_check_header(eh, type)
 	switch (eh->e_machine) {
 	/* XXX */
 #ifdef i386
-	case Elf32_em_386:
-	case Elf32_em_486:
+	case Elf_em_386:
+	case Elf_em_486:
 #endif
 #ifdef sparc
-	case Elf32_em_sparc:
+	case Elf_em_sparc:
 #endif
 #ifdef mips
-	case Elf32_em_mips:
+	case Elf_em_mips:
 #endif
 		break;
 
@@ -272,16 +277,16 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 		diff = uaddr - *addr;
 	}
 
-	*prot |= (ph->p_flags & Elf32_pf_r) ? VM_PROT_READ : 0;
-	*prot |= (ph->p_flags & Elf32_pf_w) ? VM_PROT_WRITE : 0;
-	*prot |= (ph->p_flags & Elf32_pf_x) ? VM_PROT_EXECUTE : 0;
+	*prot |= (ph->p_flags & Elf_pf_r) ? VM_PROT_READ : 0;
+	*prot |= (ph->p_flags & Elf_pf_w) ? VM_PROT_WRITE : 0;
+	*prot |= (ph->p_flags & Elf_pf_x) ? VM_PROT_EXECUTE : 0;
 
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
 	psize = round_page(*size);
 
-	if(ph->p_flags & Elf32_pf_w) {
+	if(ph->p_flags & Elf_pf_w) {
 		psize = trunc_page(*size);
 
 #ifdef ELF_DEBUG
@@ -452,7 +457,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 				    sizeof(eh))) != 0)
 		goto bad;
 
-	if ((error = elf_check_header(&eh, Elf32_et_dyn)) != 0)
+	if ((error = elf_check_header(&eh, Elf_et_dyn)) != 0)
 		goto bad;
 
 	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
@@ -470,7 +475,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 		int prot = 0;
 
 		switch (ph[i].p_type) {
-		case Elf32_pt_load:
+		case Elf_pt_load:
 			elf_load_psection(vcset, nd.ni_vp, &ph[i], &addr,
 						&size, &prot);
 			/* Assume that the text segment is r-x only */
@@ -481,9 +486,9 @@ elf_load_file(p, path, vcset, entry, ap, last)
 			addr += size;
 			break;
 
-		case Elf32_pt_dynamic:
-		case Elf32_pt_phdr:
-		case Elf32_pt_note:
+		case Elf_pt_dynamic:
+		case Elf_pt_phdr:
+		case Elf_pt_note:
 			break;
 
 		default:
@@ -524,7 +529,7 @@ exec_elf_makecmds(p, epp)
 	if (epp->ep_hdrvalid < sizeof(Elf32_Ehdr))
 		return ENOEXEC;
 
-	if (elf_check_header(eh, Elf32_et_exec))
+	if (elf_check_header(eh, Elf_et_exec))
 		return ENOEXEC;
 
 	/*
@@ -557,7 +562,7 @@ exec_elf_makecmds(p, epp)
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
-		if (pp->p_type == Elf32_pt_interp) {
+		if (pp->p_type == Elf_pt_interp) {
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = elf_read_from(p, epp->ep_vp, pp->p_offset,
@@ -603,7 +608,7 @@ exec_elf_makecmds(p, epp)
 		pp = &ph[i];
 
 		switch (ph[i].p_type) {
-		case Elf32_pt_load:
+		case Elf_pt_load:
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 				&ph[i], &addr, &size, &prot);
 			if ((error = elf_set_segment(epp, addr, size,
@@ -620,15 +625,15 @@ exec_elf_makecmds(p, epp)
 			}
 			break;
 
-		case Elf32_pt_shlib:
+		case Elf_pt_shlib:
 			error = ENOEXEC;
 			goto bad;
 
-		case Elf32_pt_interp:
+		case Elf_pt_interp:
 			/* Already did this one */
-		case Elf32_pt_dynamic:
-		case Elf32_pt_phdr:
-		case Elf32_pt_note:
+		case Elf_pt_dynamic:
+		case Elf_pt_phdr:
+		case Elf_pt_note:
 			break;
 
 		default:
@@ -670,9 +675,11 @@ exec_elf_makecmds(p, epp)
 	} else
 		epp->ep_entry = eh->e_entry;
 
+#ifdef EXEC_AOUT
 	free((char *) ph, M_TEMP);
 	epp->ep_vp->v_flag |= VTEXT;
 	return exec_aout_setup_stack(p, epp);
+#endif	
 
 bad:
 	free((char *) ph, M_TEMP);
