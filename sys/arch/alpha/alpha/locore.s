@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.70 1999/12/03 01:13:17 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.71 1999/12/16 20:17:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.70 1999/12/03 01:13:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.71 1999/12/16 20:17:22 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -94,37 +94,24 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.70 1999/12/03 01:13:17 thorpej Exp $");
 IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
 
 /*
- * Get pointer to our cpu_info structure.  Clobbers v0, t0, t8...t11.
+ * Get various per-cpu values.  A pointer to our cpu_info structure
+ * is stored in SysValue.  These macros clobber v0, t0, t8..t11.
  */
-#define	GET_CPUINFO(reg)						\
-	/* Get our processor ID. */					\
-	call_pal PAL_OSF1_whami					;	\
-									\
-	/* Compute offset of our cpu_info. */				\
-	ldiq	reg, SIZEOF_CPU_INFO				;	\
-	mulq	reg, v0, v0					;	\
-									\
-	/* Get the address of cpu_info, and add the offset. */		\
-	lda	reg, cpu_info					;	\
-	addq	reg, v0, reg
-
-
 #define	GET_CURPROC(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_CURPROC, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPROC, reg
 
 #define	GET_FPCURPROC(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_FPCURPROC, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_FPCURPROC, reg
 
 #define	GET_CURPCB(reg)							\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_CURPCB, reg
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPCB, reg
 
-#define	GET_IDLE_THREAD(reg)						\
-	GET_CPUINFO(reg)					;	\
-	addq	reg, CPU_INFO_IDLE_THREAD, reg			;	\
-	ldq	reg, 0(reg)
+#define	GET_IDLE_PCB(reg)						\
+	call_pal PAL_OSF1_rdval					;	\
+	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
 
 #else	/* if not MULTIPROCESSOR... */
 
@@ -143,12 +130,14 @@ IMPORT(curpcb, 8)
 
 #define	GET_CURPCB(reg)		lda reg, curpcb
 
-#define	GET_IDLE_THREAD(reg)	lda reg, proc0
+#define	GET_IDLE_PCB(reg)						\
+	lda	reg, proc0					;	\
+	ldq	reg, P_MD_PCBPADDR(reg)
 #endif
 
 /*
  * Perform actions necessary to switch to a new context.  The
- * hwpcb should be in a0.  Clobbers v0, t0.
+ * hwpcb should be in a0.  Clobbers v0, t0, t8..t11, a0.
  */
 #define	SWITCH_CONTEXT							\
 	/* Make a note of the context we're running on. */		\
@@ -1023,9 +1012,8 @@ LEAF(switch_exit, 1)
 	/* save the exiting proc pointer */
 	mov	a0, s2
 
-	/* Switch to our idle thread. */
-	GET_IDLE_THREAD(a0)			/* clobbers v0, t0, t8-t11 */
-	ldq	a0, P_MD_PCBPADDR(a0)		/* phys addr of PCB */
+	/* Switch to our idle stack. */
+	GET_IDLE_PCB(a0)			/* clobbers v0, t0, t8-t11 */
 	SWITCH_CONTEXT
 
 	/*

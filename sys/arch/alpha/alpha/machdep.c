@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.188 1999/12/04 21:19:54 ragge Exp $ */
+/* $NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 1999/12/04 21:19:54 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,6 +292,14 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_wrfen(0);
 	ALPHA_TBIA();
 	alpha_pal_imb();
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Set our SysValue to the address of our cpu_info structure.
+	 * Secondary processors do this in their spinup trampoline.
+	 */
+	alpha_pal_wrval((u_long)&cpu_info[alpha_pal_whami()]);
+#endif
 
 	/*
 	 * Get critical system information (if possible, from the
@@ -717,6 +725,15 @@ nobootinfo:
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Initialize the primary CPU's idle PCB to proc0's, until
+	 * autoconfiguration runs (it will get its own idle PCB there).
+	 */
+	curcpu()->ci_idle_pcb = &proc0paddr->u_pcb;
+	curcpu()->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
+#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
