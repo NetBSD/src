@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.5 1999/12/20 16:01:31 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.6 1999/12/20 16:03:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -544,7 +544,7 @@ faith_prefix(struct sockaddr *dst)
 			break;
 		case AF_INET:
 			if (sin4->sin_addr.s_addr == dst4->sin_addr.s_addr)
-			return 0;
+				return 0;
 			break;
 		}
 	}
