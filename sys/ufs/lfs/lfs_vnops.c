@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.110 2003/07/02 13:39:03 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.111 2003/07/02 13:40:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.110 2003/07/02 13:39:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.111 2003/07/02 13:40:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1279,14 +1279,7 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
-		/* XXX simplelock fs->lfs_dirops */
-		while (fs->lfs_dirops > 0) {
-			++fs->lfs_diropwait;  
-			tsleep(&fs->lfs_writer, PRIBIO+1, "pndirop", 0);
-			--fs->lfs_diropwait; 
-		}
-		/* disallow dirops during flush */
-		fs->lfs_writer++;
+		lfs_writer_enter(fs, "pndirop");
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
@@ -1295,8 +1288,7 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
 		lfs_segunlock(fs);
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
+		lfs_writer_leave(fs);
 
 #ifdef DEBUG_LFS
 		LFS_CLEANERINFO(cip, fs, bp);
@@ -1690,12 +1682,7 @@ lfs_putpages(void *v)
 		int locked;
 
 		/* printf("putpages to clean VDIROP, flushing\n"); */
-		while (fs->lfs_dirops > 0) {
-			++fs->lfs_diropwait;
-			tsleep(&fs->lfs_writer, PRIBIO+1, "ppdirop", 0);
-			--fs->lfs_diropwait;
-		}
-		++fs->lfs_writer;
+		lfs_writer_enter(fs, "ppdirop");
 		locked = VOP_ISLOCKED(vp) && /* XXX */
 			vp->v_lock.lk_lockholder == curproc->p_pid;
 		if (locked)
@@ -1707,8 +1694,7 @@ lfs_putpages(void *v)
 		simple_lock(&vp->v_interlock);
 		if (locked)
 			VOP_LOCK(vp, LK_EXCLUSIVE);
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
+		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */
 	}
