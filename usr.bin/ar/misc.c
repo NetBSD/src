@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1997/01/09 12:40:10 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1997/10/18 11:53:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.7 1997/01/09 12:40:10 tls Exp $";
+__RCSID("$NetBSD: misc.c,v 1.8 1997/10/18 11:53:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +104,7 @@ files(argv)
 	for (list = argv; *list; ++list)
 		if (compare(*list)) {
 			p = *list;
-			for (; list[0] = list[1]; ++list)
+			for (; (list[0] = list[1]) != NULL; ++list)
 				continue;
 			return (p);
 		}
