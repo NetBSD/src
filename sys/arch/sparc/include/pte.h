@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.26 2002/12/16 16:24:40 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.27 2003/08/09 09:30:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -214,11 +214,16 @@ extern int nptesg;
 #define	VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
 #define	VA_SUN4C_VPG(va)	(((int)(va) >> 12) & 63)
 #define VA_SUN4M_VPG(va)	(((int)(va) >> 12) & 63)
+#define VA_VPG(va)	\
+	(PGSHIFT==SUN4_PGSHIFT ? VA_SUN4_VPG(va) : VA_SUN4C_VPG(va))
 
 /* virtual address to offset within page */
 #define VA_SUN4_OFF(va)       	(((int)(va)) & 0x1FFF)
 #define VA_SUN4C_OFF(va)     	(((int)(va)) & 0xFFF)
 #define VA_SUN4M_OFF(va)	(((int)(va)) & 0xFFF)
+#define VA_OFF(va)	\
+	(PGSHIFT==SUN4_PGSHIFT ? VA_SUN4_OFF(va) : VA_SUN4C_OFF(va))
+
 
 /* truncate virtual address to region base */
 #define	VA_ROUNDDOWNTOREG(va)	((int)(va) & ~RGOFSET)
@@ -242,31 +247,6 @@ extern int mmu_has_hole;
 /* Define the virtual address space hole */
 #define MMU_HOLE_START	0x20000000
 #define MMU_HOLE_END	0xe0000000
-
-#if defined(SUN4M) || defined(SUN4D)	/* Optimization: sun4m, sun4d, sun4c
-					   have same page size, so they're
-					   used interchangeably */
-#if defined(SUN4)
-#define VA_VPG(va)	(cputyp==CPU_SUN4 ? VA_SUN4_VPG(va) : VA_SUN4C_VPG(va))
-#define VA_OFF(va)	(cputyp==CPU_SUN4 ? VA_SUN4_OFF(va) : VA_SUN4C_OFF(va))
-#else
-#define VA_VPG(va)	VA_SUN4M_VPG(va)
-#define VA_OFF(va)	VA_SUN4M_OFF(va)
-#endif /* defined SUN4 */
-#else /* 4m/4d not defined */
-#if defined(SUN4) && defined(SUN4C)
-#define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
-#define VA_OFF(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_OFF(va) : VA_SUN4_OFF(va))
-#endif
-#if defined(SUN4C) && !defined(SUN4)
-#define VA_VPG(va)	VA_SUN4C_VPG(va)
-#define VA_OFF(va)	VA_SUN4C_OFF(va)
-#endif
-#if !defined(SUN4C) && defined(SUN4)
-#define	VA_VPG(va)	VA_SUN4_VPG(va)
-#define VA_OFF(va)	VA_SUN4_OFF(va)
-#endif
-#endif /* defined 4m */
 
 /* there is no `struct pte'; we just use `int'; this is for non-4M only */
 #define	PG_V		0x80000000
