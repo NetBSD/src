@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.7 1998/08/13 17:41:11 rvb Exp $	 */
+/*	$NetBSD: pcio.c,v 1.8 1999/03/12 04:14:37 sommerfe Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -82,7 +82,7 @@ int idx;
 {
 	short addr;
 	/* read in BIOS data area */
-	pvbcopy(0x400 + 2 * idx, &addr, 2);
+	pvbcopy((void *)(0x400 + 2 * idx), &addr, 2);
 	return(addr);
 }
 #endif
