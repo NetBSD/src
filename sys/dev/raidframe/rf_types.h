@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_types.h,v 1.4 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_types.h,v 1.5 1999/09/05 02:24:58 oster Exp $	*/
 /*
  * rf_types.h
  */
@@ -46,12 +46,6 @@
 #include <sys/uio.h>
 #include <sys/param.h>
 #include <sys/lock.h>
-
-/* XXX not sure about these... */
- /* #define PZERO 0 *//* actually defined in <sys/param.h> */
-#define MS_LOCK_SIMPLE 1
-
-#define TRUE 1			/* XXX why isn't this done somewhere already!! */
 
 /*
  * First, define system-dependent types and constants.
