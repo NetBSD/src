@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.17 2000/06/29 06:34:23 mrg Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.18 2001/11/05 15:01:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.17 2000/06/29 06:34:23 mrg Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.18 2001/11/05 15:01:49 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,9 +84,9 @@ kvm_deadfiles __P((kvm_t *, int, int, long, int));
  */
 /*ARGSUSED*/
 static int
-kvm_deadfiles(kd, op, arg, ofhead, nfiles)
+kvm_deadfiles(kd, op, arg, ofhead, numfiles)
 	kvm_t *kd;
-	int op, arg, nfiles;
+	int op, arg, numfiles;
 	long ofhead;
 {
 	int buflen = kd->arglen, n = 0;
@@ -121,11 +121,11 @@ kvm_deadfiles(kd, op, arg, ofhead, nfiles)
 			n++;
 		}
 	}
-	if (n != nfiles) {
+	if (n != numfiles) {
 		_kvm_err(kd, kd->program, "inconsistent nfiles");
 		return (0);
 	}
-	return (nfiles);
+	return (numfiles);
 }
 
 char *
