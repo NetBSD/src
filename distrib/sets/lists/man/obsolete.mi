@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.59 2003/02/11 10:41:56 drochner Exp $
+# $NetBSD: obsolete.mi,v 1.60 2003/02/24 13:29:56 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -26,6 +26,7 @@
 ./usr/share/man/cat4/arm32/com.0
 ./usr/share/man/cat4/arm32/ea.0
 ./usr/share/man/cat4/arm32/eb.0
+./usr/share/man/cat4/arm32/wd.0
 ./usr/share/man/cat4/atari/ahdi.0
 ./usr/share/man/cat4/ca.0
 ./usr/share/man/cat4/hp300/dcl.0
@@ -142,6 +143,7 @@
 ./usr/share/man/man4/arm32/com.4
 ./usr/share/man/man4/arm32/ea.4
 ./usr/share/man/man4/arm32/eb.4
+./usr/share/man/man4/arm32/wd.4
 ./usr/share/man/man4/ca.4
 ./usr/share/man/man4/hp300/dcl.4
 ./usr/share/man/man4/hp300/dv.4
