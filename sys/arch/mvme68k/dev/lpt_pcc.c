@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.4 2001/05/31 18:46:07 scw Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.5 2002/02/12 20:38:17 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,8 @@
 
 #include <machine/bus.h>
 
-#include <mvme68k/dev/lptvar.h>
+#include <dev/mvme/lptvar.h>
+
 #include <mvme68k/dev/lpt_pccreg.h>
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
