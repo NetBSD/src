@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.169.2.2 2000/07/26 23:15:49 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.169.2.3 2000/08/11 03:24:25 gmcgarry Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -25,7 +25,7 @@ SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
 	exists(${BSDSRCDIR}/lib/checkver)
 checkver:
 	@(cd ${.CURDIR} && \
-		${BSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
+		sh ${BSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
 		    -d ${DESTDIR}${LIBDIR} ${LIB})
 .else
 checkver:
