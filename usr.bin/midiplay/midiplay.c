@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.1 1998/08/12 21:39:12 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.2 1998/08/12 21:49:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,9 @@ usage()
 
 int showmeta = 0;
 int verbose = 0;
-u_int tempo = 400000;		/* microsec / quarter note */
+#define BASETEMPO 400000
+u_int tempo = BASETEMPO;		/* microsec / quarter note */
+u_int ttempo = 100;
 int unit = 0;
 int fd;
 
@@ -188,7 +190,7 @@ dometa(meta, p, len)
 		if (showmeta) {
 			int n = p[1];
 			int d = 1;
-			while (n > 0)
+			while (n-- > 0)
 				d *= 2;
 			printf("Time signature: %d/%d %d,%d\n",
 			       p[0], d, p[2], p[3]);
@@ -332,12 +334,12 @@ playdata(buf, tot, name)
 	 * The delay specified in TMR_WAIT_REL is specified in
 	 * sequencer time units.  The length of a unit is
 	 * 60*1000000 / (TIMEBASE * TEMPO).
-	 * Set it to 1ms/unit.
+	 * Set it to 1ms/unit (adjusted by user tempo changes).
 	 */
-	t = 1000;
+	t = 500 * ttempo / 100;
 	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
 		err(1, "SEQUENCER_TMR_TIMEBASE");
-	t = 60;
+	t = 120;
 	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
 		err(1, "SEQUENCER_TMR_TEMPO");
 	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
@@ -465,7 +467,7 @@ main(argc, argv)
 			showmeta++;
 			break;
 		case 't':
-			tempo = atoi(optarg);
+			ttempo = atoi(optarg);
 			break;
 		case 'v':
 			verbose++;
