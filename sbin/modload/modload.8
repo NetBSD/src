@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.20 2002/10/01 13:40:35 wiz Exp $
+.\" $NetBSD: modload.8,v 1.21 2002/10/10 01:57:10 simonb Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -45,6 +45,7 @@
 .Op Fl e Ar entry
 .Op Fl p Ar postinstall
 .Op Fl o Ar output_file
+.Op Fl T Ar linker_script
 .Ar input_file
 .Sh DESCRIPTION
 The
@@ -99,6 +100,8 @@ and the fourth argument is the block major device number.
 For a loadable system call, the third argument is the system call number.
 .It Fl o Ar output_file
 Specify the name of the output file that is produced by the linker.
+.It Fl T Ar linker_script
+Specify the name of the linker script use to link against the kernel.
 .El
 .Sh FILES
 .Bl -tag -width /usr/include/sys/lkm.h -compact
