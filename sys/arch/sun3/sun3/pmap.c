@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2000/10/27 13:28:54 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2000/11/24 11:57:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1833,7 +1833,7 @@ pmap_bootstrap(nextva)
 	/* Initialization for pmap_next_page() */
 	avail_next = avail_start;
 
-	PAGE_SIZE = NBPG;
+	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
 	/* after setting up some structures */
