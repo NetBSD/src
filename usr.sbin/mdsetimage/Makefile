@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/11/25 22:33:39 fvdl Exp $
+#	$NetBSD: Makefile,v 1.15 2002/12/10 17:59:41 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CPPFLAGS+=-DNLIST_ELF32
 	${MACHINE_CPU} == "arm"
 CPPFLAGS+=-DNLIST_ELF32
 CPPFLAGS+=-DNLIST_AOUT
+CPPFLAGS+=-DNLIST_ELF64
 .elif	${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 CPPFLAGS+=-DNLIST_COFF
 CPPFLAGS+=-DNLIST_ELF32
