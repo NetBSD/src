@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.90 1999/12/18 17:07:24 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.91 1999/12/20 21:26:17 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1864,3 +1864,445 @@ sys/ufs/lfs/lfs_vnops.c				1.33
   Handle the case of a vnode flush while dirops are active correctly
   in lfs_segwrite.  Also, make sure a flush is called in SET_DIROP
   before sleeping on its results.  Addresses PR#8863.
+
+sys/ufs/ffs/ffs_vfsops.c			1.56 via patch
+
+  Fix the use of an uninitialized variable.  This could be triggered
+  if the file system to be mounted is a pre-BSD4.4 one (which can
+  result in the old file system being rejected).
+
+sys/arch/i386/i386/pmap.new.c			patch
+sys/arch/i386/stand/lib/loadfile.h		patch
+sys/uvm/uvm_page.c				1.28
+
+  Allow booting of kernels which are larger than 16MB on i386.
+
+sys/dev/raidframe/rf_states.c			1.8-1.10
+sys/dev/raidframe/rf_netbsdkintf.c		1.34-1.35
+sys/dev/raidframe/rf_kintf.h			1.5
+
+  Re-work the IO throttle code.  Fixes potential panics under high
+  loads under FFS.
+
+etc/gettytab					1.15
+
+  Avoid terminal confusion by not echoing escape sequences generated
+  by keypad/function keys.  Fixes PR#8993.
+
+libexec/getty/main.c				1.29 via patch
+
+  Make room for a terminating '\0' in the username string and make
+  sure the user name passed to "login" is terminated.
+
+sys/arch/mac68k/dev/if_mc.c			1.15
+
+  Make this compile without bpf.
+
+usr.sbin/pkg_install/README			1.3
+
+  Update of the history of our pkg tools.
+
+usr.sbin/pkg_install/add/perform.c		1.40
+
+  Apply forced operation (-f switch) recursively.
+
+usr.sbin/pkg_install/add/perform.c 		1.41-1.42
+usr.sbin/pkg_install/delete/perform.c		1.29
+usr.sbin/pkg_install/info/show.c		1.19
+usr.sbin/pkg_install/lib/file.c			1.35
+usr.sbin/pkg_install/lib/lpkg.c			1.3
+usr.sbin/pkg_install/lib/str.c			1.18
+
+  A few bundled changes:
+   o fix printing of @ignore in pkg_info
+   o fix installing of local wildcard dependencies (currently unused)
+   o fix deleting of packages that depend on wildcard dependencies
+     (not currently activated)
+   o code cleanup
+
+usr.sbin/pkg_install/add/pkg_add.1	 	1.17
+
+  Fix some typos.
+
+usr.sbin/pkg_install/create/create.h		1.13-1.14
+usr.sbin/pkg_install/create/main.c 		1.15-1.16
+usr.sbin/pkg_install/create/perform.c		1.20-1.22
+usr.sbin/pkg_install/create/pkg_create.1	1.19-1.21
+usr.sbin/pkg_install/info/info.h		1.12
+usr.sbin/pkg_install/info/main.c		1.19
+usr.sbin/pkg_install/info/perform.c		1.29
+usr.sbin/pkg_install/info/pkg_info.1		1.19
+usr.sbin/pkg_install/lib/lib.h			1.27-1.28
+
+  Add code to calculate and store the size of a package in both
+  the installed version and binary packages.  The size can later
+  be queried via the pkg_info -s and -S switches, the pkg_create
+  -s swich was renamed -L.  Fixes PR#8982.
+
+usr.sbin/pkg_install/delete/main.c		1.14
+
+  Add some sanity checks on what pkgdb_retrieve() returns.
+
+usr.sbin/pkg_install/lib/file.c			1.34
+
+  Remove some old debug code.
+
+sys/netinet/ip_output.c				1.65
+
+  Avoid panic caused by shared cluster mbuf overwrite on multicast
+  packet loopback for packets with certain sizes.  Fixes PR#9020.
+
+share/man/man4/man4.i386/apm.4			1.7 via patch
+sys/arch/i386/conf/files.i386			1.144 via patch
+sys/arch/i386/i386/apmcall.s			1.7 via patch
+
+  Document APM_DISABLE_INTERRUPTS, and define it as a well-known
+  option (defopt).
+
+usr.bin/tset/tset.c				1.9
+
+  Report disabled control characters as <undef> (like stty(1) does);
+  fixes PR#9019.
+
+dist/ipf/BNF					1.1.1.1 (new)
+dist/ipf/BugReport				1.1.1.1 (new)
+dist/ipf/HISTORY				1.1.1.1 (new)
+dist/ipf/IMPORTANT				1.1.1.1 (new)
+dist/ipf/LICENCE				1.1.1.1 (new)
+dist/ipf/Makefile				1.1.1.1 (new)
+dist/ipf/README					1.1.1.1 (new)
+dist/ipf/UPGRADE_NOTICE				1.1.1.1 (new)
+dist/ipf/Y2K					1.1.1.1 (new)
+dist/ipf/facpri.c				1.1.1.1 (new)
+dist/ipf/facpri.h				1.1.1.1 (new)
+dist/ipf/fils.c					1.1-1.2 (new)
+dist/ipf/ip_lfil.c				1.1.1.1 (new)
+dist/ipf/ip_sfil.c				1.1.1.1 (new)
+dist/ipf/ipf.c					1.1-1.3 (new)
+dist/ipf/ipf.h					1.1.1.1 (new)
+dist/ipf/ipf2netbsd				1.1 (new)
+dist/ipf/ipft_ef.c				1.1.1.1 (new)
+dist/ipf/ipft_hx.c				1.1.1.1 (new)
+dist/ipf/ipft_pc.c				1.1.1.1 (new)
+dist/ipf/ipft_sn.c				1.1.1.1 (new)
+dist/ipf/ipft_td.c				1.1.1.1 (new)
+dist/ipf/ipft_tx.c				1.1.1.1 (new)
+dist/ipf/ipmon.c				1.1-1.2 (new)
+dist/ipf/ipnat.c				1.1-1.2 (new)
+dist/ipf/ipt.c					1.1.1.1 (new)
+dist/ipf/ipt.h					1.1.1.1 (new)
+dist/ipf/kmem.c					1.1.1.1 (new)
+dist/ipf/kmem.h					1.1.1.1 (new)
+dist/ipf/misc.c					1.1.1.1 (new)
+dist/ipf/mkfilters				1.1.1.1 (new)
+dist/ipf/ml_ipl.c				1.1.1.1 (new)
+dist/ipf/mln_ipl.c				1.1.1.1 (new)
+dist/ipf/natparse.c				1.1.1.1 (new)
+dist/ipf/opt.c					1.1.1.1 (new)
+dist/ipf/parse.c				1.1.1.1 (new)
+dist/ipf/pcap.h					1.1.1.1 (new)
+dist/ipf/relay.c				1.1.1.1 (new)
+dist/ipf/snoop.h				1.1.1.1 (new)
+dist/ipf/todo					1.1.1.1 (new)
+dist/ipf/FWTK/Index				1.1.1.1 (new)
+dist/ipf/FWTK/README				1.1.1.1 (new)
+dist/ipf/FWTK/README.ipfilter			1.1.1.1 (new)
+dist/ipf/FWTK/ftp-gw.diff			1.1.1.1 (new)
+dist/ipf/FWTK/fwtk-2.1-transparency.txt		1.1.1.1 (new)
+dist/ipf/FWTK/fwtk_transparent.diff		1.1.1.1 (new)
+dist/ipf/FWTK/fwtkp				1.1.1.1 (new)
+dist/ipf/FWTK/tproxy.diff			1.1.1.1 (new)
+dist/ipf/etc/protocols				1.1.1.1 (new)
+dist/ipf/etc/services				1.1.1.1 (new)
+dist/ipf/iplang/BNF				1.1.1.1 (new)
+dist/ipf/iplang/Makefile			1.1.1.1 (new)
+dist/ipf/iplang/iplang.h			1.1.1.1 (new)
+dist/ipf/iplang/iplang.tst			1.1.1.1 (new)
+dist/ipf/iplang/iplang_l.l			1.1-1.2 (new)
+dist/ipf/iplang/iplang_y.y			1.1.1.1 (new)
+dist/ipf/ipsd/Makefile				1.1.1.1 (new)
+dist/ipf/ipsd/README				1.1.1.1 (new)
+dist/ipf/ipsd/ipsd.c				1.1.1.1 (new)
+dist/ipf/ipsd/ipsd.h				1.1.1.1 (new)
+dist/ipf/ipsd/ipsdr.c				1.1.1.1 (new)
+dist/ipf/ipsd/linux.h				1.1.1.1 (new)
+dist/ipf/ipsd/sbpf.c				1.1.1.1 (new)
+dist/ipf/ipsd/sdlpi.c				1.1.1.1 (new)
+dist/ipf/ipsd/slinux.c				1.1.1.1 (new)
+dist/ipf/ipsd/snit.c				1.1.1.1 (new)
+dist/ipf/ipsd/Celler/ip_compat.h		1.1.1.1 (new)
+dist/ipf/ipsend/44arp.c				1.1.1.1 (new)
+dist/ipf/ipsend/Crashable			1.1.1.1 (new)
+dist/ipf/ipsend/Makefile			1.1.1.1 (new)
+dist/ipf/ipsend/README				1.1.1.1 (new)
+dist/ipf/ipsend/arp.c				1.1.1.1 (new)
+dist/ipf/ipsend/dlcommon.c			1.1.1.1 (new)
+dist/ipf/ipsend/dltest.h			1.1.1.1 (new)
+dist/ipf/ipsend/hpux.c				1.1.1.1 (new)
+dist/ipf/ipsend/in_var.h			1.1.1.1 (new)
+dist/ipf/ipsend/ip.c				1.1.1.1 (new)
+dist/ipf/ipsend/ip_var.h			1.1.1.1 (new)
+dist/ipf/ipsend/ipresend.1			1.1-1.2 (new)
+dist/ipf/ipsend/ipresend.c			1.1.1.1 (new)
+dist/ipf/ipsend/ipsend.1			1.1-1.2 (new)
+dist/ipf/ipsend/ipsend.5			1.1.1.1 (new)
+dist/ipf/ipsend/ipsend.c			1.1.1.1 (new)
+dist/ipf/ipsend/ipsend.h			1.1.1.1 (new)
+dist/ipf/ipsend/ipsopt.c			1.1.1.1 (new)
+dist/ipf/ipsend/iptest.1			1.1-1.2 (new)
+dist/ipf/ipsend/iptest.c			1.1.1.1 (new)
+dist/ipf/ipsend/iptests.c			1.1.1.1 (new)
+dist/ipf/ipsend/larp.c				1.1.1.1 (new)
+dist/ipf/ipsend/linux.h				1.1.1.1 (new)
+dist/ipf/ipsend/lsock.c				1.1.1.1 (new)
+dist/ipf/ipsend/resend.c			1.1.1.1 (new)
+dist/ipf/ipsend/sbpf.c				1.1.1.1 (new)
+dist/ipf/ipsend/sdlpi.c				1.1.1.1 (new)
+dist/ipf/ipsend/sirix.c				1.1.1.1 (new)
+dist/ipf/ipsend/slinux.c			1.1.1.1 (new)
+dist/ipf/ipsend/snit.c				1.1.1.1 (new)
+dist/ipf/ipsend/sock.c				1.1.1.1 (new)
+dist/ipf/ipsend/tcpip.h				1.1.1.1 (new)
+dist/ipf/ipsend/ultrix.c			1.1.1.1 (new)
+dist/ipf/ipsend/.OLD/ip_compat.h		1.1.1.1 (new)
+dist/ipf/man/Makefile				1.1.1.1 (new)
+dist/ipf/man/ipf.4				1.1.1.1 (new)
+dist/ipf/man/ipf.5				1.1-1.2 (new)
+dist/ipf/man/ipf.8				1.1.1.1 (new)
+dist/ipf/man/ipfilter.5				1.1.1.1 (new)
+dist/ipf/man/ipfstat.8				1.1-1.2 (new)
+dist/ipf/man/ipftest.1				1.1-1.2 (new)
+dist/ipf/man/ipl.4				1.1.1.1 (new)
+dist/ipf/man/ipmon.8				1.1.1.1 (new)
+dist/ipf/man/ipnat.4				1.1.1.1 (new)
+dist/ipf/man/ipnat.5				1.1-1.2 (new)
+dist/ipf/man/ipnat.8				1.1 (new)
+dist/ipf/man/mkfilters.1			1.1-1.2 (new)
+dist/ipf/perl/Ipfanaly.pl			1.1.1.1 (new)
+dist/ipf/perl/Isbgraph				1.1.1.1 (new)
+dist/ipf/perl/LICENSE				1.1.1.1 (new)
+dist/ipf/perl/Services				1.1.1.1 (new)
+dist/ipf/perl/logfilter.pl			1.1.1.1 (new)
+dist/ipf/perl/plog				1.1.1.1 (new)
+dist/ipf/rules/BASIC.NAT			1.1.1.1 (new)
+dist/ipf/rules/BASIC_1.FW			1.1.1.1 (new)
+dist/ipf/rules/BASIC_2.FW			1.1.1.1 (new)
+dist/ipf/rules/example.1			1.1.1.1 (new)
+dist/ipf/rules/example.10			1.1.1.1 (new)
+dist/ipf/rules/example.11			1.1.1.1 (new)
+dist/ipf/rules/example.12			1.1.1.1 (new)
+dist/ipf/rules/example.13			1.1.1.1 (new)
+dist/ipf/rules/example.2			1.1.1.1 (new)
+dist/ipf/rules/example.3			1.1.1.1 (new)
+dist/ipf/rules/example.4			1.1.1.1 (new)
+dist/ipf/rules/example.5			1.1.1.1 (new)
+dist/ipf/rules/example.6			1.1.1.1 (new)
+dist/ipf/rules/example.7			1.1.1.1 (new)
+dist/ipf/rules/example.8			1.1.1.1 (new)
+dist/ipf/rules/example.9			1.1.1.1 (new)
+dist/ipf/rules/example.sr			1.1.1.1 (new)
+dist/ipf/rules/firewall				1.1.1.1 (new)
+dist/ipf/rules/ftp-proxy			1.1.1.1 (new)
+dist/ipf/rules/ftppxy				1.1.1.1 (new)
+dist/ipf/rules/mediaone				1.1 (new)
+dist/ipf/rules/nat-setup			1.1.1.1 (new)
+dist/ipf/rules/nat.eg				1.1.1.1 (new)
+dist/ipf/rules/server				1.1.1.1 (new)
+dist/ipf/rules/tcpstate				1.1.1.1 (new)
+dist/ipf/samples/Makefile			1.1.1.1 (new)
+dist/ipf/samples/ipfilter-pb.gif		1.1.1.1 (new)
+dist/ipf/samples/proxy.c			1.1.1.1 (new)
+dist/ipf/samples/userauth.c			1.1.1.1 (new)
+dist/ipf/test/Makefile				1.1.1.1 (new)
+dist/ipf/test/dotest				1.1-1.2 (new)
+dist/ipf/test/hextest				1.1-1.2 (new)
+dist/ipf/test/itest				1.1-1.2 (new)
+dist/ipf/test/nattest				1.1-1.2 (new)
+dist/ipf/test/expected/f1			1.1.1.1 (new)
+dist/ipf/test/expected/f10			1.1.1.1 (new)
+dist/ipf/test/expected/f11			1.1.1.1 (new)
+dist/ipf/test/expected/f12			1.1.1.1 (new)
+dist/ipf/test/expected/f14			1.1.1.1 (new)
+dist/ipf/test/expected/f2			1.1.1.1 (new)
+dist/ipf/test/expected/f3			1.1.1.1 (new)
+dist/ipf/test/expected/f4			1.1.1.1 (new)
+dist/ipf/test/expected/f5			1.1.1.1 (new)
+dist/ipf/test/expected/f6			1.1.1.1 (new)
+dist/ipf/test/expected/f7			1.1.1.1 (new)
+dist/ipf/test/expected/f8			1.1.1.1 (new)
+dist/ipf/test/expected/f9			1.1.1.1 (new)
+dist/ipf/test/expected/i1			1.1.1.1 (new)
+dist/ipf/test/expected/i10			1.1.1.1 (new)
+dist/ipf/test/expected/i11			1.1.1.1 (new)
+dist/ipf/test/expected/i2			1.1.1.1 (new)
+dist/ipf/test/expected/i3			1.1.1.1 (new)
+dist/ipf/test/expected/i4			1.1.1.1 (new)
+dist/ipf/test/expected/i5			1.1.1.1 (new)
+dist/ipf/test/expected/i6			1.1.1.1 (new)
+dist/ipf/test/expected/i7			1.1.1.1 (new)
+dist/ipf/test/expected/i8			1.1.1.1 (new)
+dist/ipf/test/expected/i9			1.1.1.1 (new)
+dist/ipf/test/expected/n1			1.1.1.1 (new)
+dist/ipf/test/expected/n2			1.1.1.1 (new)
+dist/ipf/test/expected/n3			1.1.1.1 (new)
+dist/ipf/test/expected/n4			1.1.1.1 (new)
+dist/ipf/test/input/f1				1.1.1.1 (new)
+dist/ipf/test/input/f10				1.1.1.1 (new)
+dist/ipf/test/input/f11				1.1.1.1 (new)
+dist/ipf/test/input/f12				1.1.1.1 (new)
+dist/ipf/test/input/f13				1.1.1.1 (new)
+dist/ipf/test/input/f14				1.1.1.1 (new)
+dist/ipf/test/input/f2				1.1.1.1 (new)
+dist/ipf/test/input/f3				1.1.1.1 (new)
+dist/ipf/test/input/f4				1.1.1.1 (new)
+dist/ipf/test/input/f5				1.1.1.1 (new)
+dist/ipf/test/input/f6				1.1.1.1 (new)
+dist/ipf/test/input/f7				1.1.1.1 (new)
+dist/ipf/test/input/f8				1.1.1.1 (new)
+dist/ipf/test/input/f9				1.1.1.1 (new)
+dist/ipf/test/input/n1				1.1.1.1 (new)
+dist/ipf/test/input/n2				1.1.1.1 (new)
+dist/ipf/test/input/n3				1.1.1.1 (new)
+dist/ipf/test/input/n4				1.1.1.1 (new)
+dist/ipf/test/regress/f1			1.1.1.1 (new)
+dist/ipf/test/regress/f10			1.1.1.1 (new)
+dist/ipf/test/regress/f11			1.1.1.1 (new)
+dist/ipf/test/regress/f12			1.1.1.1 (new)
+dist/ipf/test/regress/f13			1.1.1.1 (new)
+dist/ipf/test/regress/f14			1.1.1.1 (new)
+dist/ipf/test/regress/f2			1.1.1.1 (new)
+dist/ipf/test/regress/f3			1.1.1.1 (new)
+dist/ipf/test/regress/f4			1.1.1.1 (new)
+dist/ipf/test/regress/f5			1.1.1.1 (new)
+dist/ipf/test/regress/f6			1.1.1.1 (new)
+dist/ipf/test/regress/f7			1.1.1.1 (new)
+dist/ipf/test/regress/f8			1.1.1.1 (new)
+dist/ipf/test/regress/f9			1.1.1.1 (new)
+dist/ipf/test/regress/i1			1.1.1.1 (new)
+dist/ipf/test/regress/i10			1.1.1.1 (new)
+dist/ipf/test/regress/i11			1.1.1.1 (new)
+dist/ipf/test/regress/i2			1.1.1.1 (new)
+dist/ipf/test/regress/i3			1.1.1.1 (new)
+dist/ipf/test/regress/i4			1.1.1.1 (new)
+dist/ipf/test/regress/i5			1.1.1.1 (new)
+dist/ipf/test/regress/i6			1.1.1.1 (new)
+dist/ipf/test/regress/i7			1.1.1.1 (new)
+dist/ipf/test/regress/i8			1.1.1.1 (new)
+dist/ipf/test/regress/i9			1.1.1.1 (new)
+dist/ipf/test/regress/n1			1.1.1.1 (new)
+dist/ipf/test/regress/n2			1.1.1.1 (new)
+dist/ipf/test/regress/n3			1.1.1.1 (new)
+dist/ipf/test/regress/n4			1.1.1.1 (new)
+sys/netinet/ip_rcmd_pxy.c			1.1.1.1 (new)
+sys/netinet/ip_raudio_pxy.c			1.1.1.1 (new)
+sys/netinet/ipl.h				1.1.1.1 (new)
+sys/netinet/ip_state.h				1.14
+sys/netinet/ip_state.c				1.18
+sys/netinet/ip_proxy.h				1.13
+sys/netinet/ip_proxy.c				1.19
+sys/netinet/ip_nat.h				1.16
+sys/netinet/ip_nat.c				1.26
+sys/netinet/ip_log.c				1.8
+sys/netinet/ip_ftp_pxy.c			1.12
+sys/netinet/ip_frag.h				1.13
+sys/netinet/ip_frag.c				1.15
+sys/netinet/ip_fil.h				1.32
+sys/netinet/ip_fil.c				1.35-1.38
+sys/netinet/ip_compat.h				1.17
+sys/netinet/ip_auth.h				1.5
+sys/netinet/ip_auth.c				1.12
+sys/netinet/fil.c				1.28
+sys/lkm/netinet/if_ipl/Makefile			1.11
+sys/lkm/netinet/if_ipl/ipl.h			deleted
+sys/lkm/netinet/if_ipl/mln_ipl.c		1.22
+usr.sbin/ipf/ipfilter2netbsd			deleted
+usr.sbin/ipf/ipf/LICENCE			deleted
+usr.sbin/ipf/ipf/ipf.4				deleted
+usr.sbin/ipf/ipf/ipf.5				deleted
+usr.sbin/ipf/ipf/ipf.8				deleted
+usr.sbin/ipf/ipf/ipf.c				deleted
+usr.sbin/ipf/ipf/ipf.h				deleted
+usr.sbin/ipf/ipf/ipl.4				deleted
+usr.sbin/ipf/ipf/opt.c				deleted
+usr.sbin/ipf/ipf/parse.c			deleted
+usr.sbin/ipf/ipfstat/fils.c			deleted
+usr.sbin/ipf/ipfstat/ipfstat.8			deleted
+usr.sbin/ipf/ipfstat/kmem.c			deleted
+usr.sbin/ipf/ipfstat/kmem.h			deleted
+usr.sbin/ipf/ipftest/ipft_ef.c			deleted
+usr.sbin/ipf/ipftest/ipft_hx.c			deleted
+usr.sbin/ipf/ipftest/ipft_pc.c			deleted
+usr.sbin/ipf/ipftest/ipft_sn.c			deleted
+usr.sbin/ipf/ipftest/ipft_td.c			deleted
+usr.sbin/ipf/ipftest/ipft_tx.c			deleted
+usr.sbin/ipf/ipftest/ipftest.1			deleted
+usr.sbin/ipf/ipftest/ipt.c			deleted
+usr.sbin/ipf/ipftest/ipt.h			deleted
+usr.sbin/ipf/ipftest/misc.c			deleted
+usr.sbin/ipf/ipftest/pcap.h			deleted
+usr.sbin/ipf/ipftest/snoop.h			deleted
+usr.sbin/ipf/ipmon/ipmon.8			deleted
+usr.sbin/ipf/ipmon/ipmon.c			deleted
+usr.sbin/ipf/ipnat/ipnat.4			deleted
+usr.sbin/ipf/ipnat/ipnat.5			deleted
+usr.sbin/ipf/ipnat/ipnat.8			deleted
+usr.sbin/ipf/ipnat/ipnat.c			deleted
+usr.sbin/ipf/ipresend/ipresend.1		deleted
+usr.sbin/ipf/ipresend/ipresend.c		deleted
+usr.sbin/ipf/ipresend/resend.c			deleted
+usr.sbin/ipf/ipsend/44arp.c			deleted
+usr.sbin/ipf/ipsend/ip.c			deleted
+usr.sbin/ipf/ipsend/iplang.h			deleted
+usr.sbin/ipf/ipsend/iplang.tst			deleted
+usr.sbin/ipf/ipsend/iplang_l.l			deleted
+usr.sbin/ipf/ipsend/iplang_y.y			deleted
+usr.sbin/ipf/ipsend/ipsend.1			deleted
+usr.sbin/ipf/ipsend/ipsend.5			deleted
+usr.sbin/ipf/ipsend/ipsend.c			deleted
+usr.sbin/ipf/ipsend/ipsend.h			deleted
+usr.sbin/ipf/ipsend/ipsopt.c			deleted
+usr.sbin/ipf/ipsend/sbpf.c			deleted
+usr.sbin/ipf/ipsend/tcpip.h			deleted
+usr.sbin/ipf/iptest/iptest.1			deleted
+usr.sbin/ipf/iptest/iptest.c			deleted
+usr.sbin/ipf/iptest/iptests.c			deleted
+usr.sbin/ipf/iptest/sock.c			deleted
+usr.sbin/ipf/rules/BASIC.NAT			deleted
+usr.sbin/ipf/rules/BASIC_1.FW			deleted
+usr.sbin/ipf/rules/BASIC_2.FW			deleted
+usr.sbin/ipf/rules/example.1			deleted
+usr.sbin/ipf/rules/example.10			deleted
+usr.sbin/ipf/rules/example.11			deleted
+usr.sbin/ipf/rules/example.12			deleted
+usr.sbin/ipf/rules/example.13			deleted
+usr.sbin/ipf/rules/example.2			deleted
+usr.sbin/ipf/rules/example.3			deleted
+usr.sbin/ipf/rules/example.4			deleted
+usr.sbin/ipf/rules/example.5			deleted
+usr.sbin/ipf/rules/example.6			deleted
+usr.sbin/ipf/rules/example.7			deleted
+usr.sbin/ipf/rules/example.8			deleted
+usr.sbin/ipf/rules/example.9			deleted
+usr.sbin/ipf/rules/example.sr			deleted
+usr.sbin/ipf/rules/firewall			deleted
+usr.sbin/ipf/rules/ftp-proxy			deleted
+usr.sbin/ipf/rules/ftppxy			deleted
+usr.sbin/ipf/rules/mediaone			deleted
+usr.sbin/ipf/rules/mkfilters			deleted
+usr.sbin/ipf/rules/mkfilters.1			deleted
+usr.sbin/ipf/rules/nat-setup			deleted
+usr.sbin/ipf/rules/nat.eg			deleted
+usr.sbin/ipf/rules/server			deleted
+usr.sbin/ipf/rules/tcpstate			deleted
+usr.sbin/ipf/Makefile.inc			1.6
+usr.sbin/ipf/ipf/Makefile			1.11
+usr.sbin/ipf/ipfstat/Makefile			1.12
+usr.sbin/ipf/ipftest/Makefile			1.14
+usr.sbin/ipf/ipmon/Makefile			1.14
+usr.sbin/ipf/ipnat/Makefile			1.14
+usr.sbin/ipf/ipresend/Makefile			1.13
+usr.sbin/ipf/ipsend/Makefile			1.12
+usr.sbin/ipf/iptest/Makefile			1.12
+usr.sbin/ipf/rules/Makefile			1.8
+
+  Update IPF to version 3.3.5.
