@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.3 2002/03/24 03:37:26 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.4 2002/03/31 00:38:21 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -4145,6 +4145,9 @@ force_vga_mode(void)
 static void
 getDisplayInfo(struct display_info *displayInfP)
 {
+    static char CharSet_store[64];		/* XXX */
+    static struct regspec DisplayRegs_store[8];	/* XXX */
+
     struct regspec *displayRegs;
     int regSize;
     u_int nReg, r;
@@ -4217,7 +4220,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	/* Name of character Set */
 	if ((displayInfP->charSetLen = OF_getproplen(phandle, "character-set")) > 0)
 	{
-	    displayInfP->charSet = (char *)malloc(displayInfP->charSetLen + 1, M_DEVBUF, M_NOWAIT);
+	    displayInfP->charSet = CharSet_store;
 	    displayInfP->charSetLen = OF_getprop(phandle, "character-set", 
 					     displayInfP->charSet, displayInfP->charSetLen);
 	}
@@ -4233,7 +4236,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	 */
 	if ((regSize = OF_getproplen(phandle, "reg")) > 0)
 	{
-	    displayRegs = (struct regspec *)malloc(regSize, M_DEVBUF, M_NOWAIT);
+	    displayRegs = DisplayRegs_store;
 	    if ((regSize = OF_getprop(phandle, "reg", displayRegs, regSize)) > 0)
 	    {
 		nReg = regSize / sizeof(struct regspec);
