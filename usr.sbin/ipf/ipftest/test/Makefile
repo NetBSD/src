@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:09:27 perry Exp $
-#
+#	$NetBSD: Makefile,v 1.3 1998/05/29 20:59:43 veego Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -35,5 +34,6 @@ i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11:
 	@/bin/sh ./itest $@
 
 clean:
-	/bin/rm -f 1 2 3 4 5 6 7 8 9 10 11 12 results/*
+	/bin/rm -f 1 2 3 4 5 6 7 8 9 10 11 12 14
+	/bin/rm -rf results
 	/bin/rm -f i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11
