@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 1998/08/12 05:42:45 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 1998/08/16 22:29:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -871,13 +871,6 @@ ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
 	clrw	sp@-
 	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
 	addql	#4,sp
-#if 1 /* XXX */
-	tstl	d0			| XXX hack for the MACE driver!
-	beq	normal_rei		| XXX   if we handled the interrupt,
-	INTERRUPT_RESTOREREG		| XXX   restore registers and return
-	rte				| XXX   immediately.
-normal_rei:
-#endif
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
