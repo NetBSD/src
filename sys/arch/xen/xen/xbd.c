@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.2 2004/04/24 16:47:29 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.3 2004/04/24 17:35:28 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.2 2004/04/24 16:47:29 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.3 2004/04/24 17:35:28 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -380,7 +380,7 @@ xbd_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
 
-	if (strcmp(xa->xa_busname, "xbd") == 0)
+	if (strcmp(xa->xa_device, "xbd") == 0)
 		return 1;
 	return 0;
 }
