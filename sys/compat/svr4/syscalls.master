@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 1995/08/14 00:57:13 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.12 1995/08/14 01:27:59 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SVR4).
@@ -13,15 +13,15 @@
 ;		for UNIMPL/OBSOL, name continues with comments
 
 #include <sys/param.h>
-#include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_signal.h>
-#include <compat/svr4/svr4_ucontext.h>
-#include <compat/svr4/svr4_statvfs.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
+#include <compat/svr4/svr4_statvfs.h>
 
 ; types:
 ;	STD	always included
