@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.7 1999/05/25 04:17:57 nisimura Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -57,8 +57,6 @@
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
-
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
 #include <pmax/ibus/ibusvar.h>
@@ -74,9 +72,7 @@ void		dec_5100_bus_reset __P((void));
 void		dec_5100_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_5100_intr __P((u_int mask, u_int pc,
-			      u_int statusReg, u_int causeReg));
-
+int		dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_5100_cons_init __P((void));
 void		dec_5100_device_register __P((struct device *, void *));
 
@@ -90,6 +86,10 @@ extern void kn230_wbflush __P((void));
 
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
 
 
 /*
@@ -115,15 +115,14 @@ dec_5100_os_init()
 {
 
 	/* set correct wbflush routine for this motherboard */
-	 mips_set_wbflush(kn230_wbflush);
+	mips_set_wbflush(kn230_wbflush);
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
 	mips_hardware_intr = dec_5100_intr;
 	tc_enable_interrupt = dec_5100_enable_intr; /*XXX*/
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
@@ -220,16 +219,12 @@ dec_5100_intr_disestablish(struct ibus_attach_args *ia)
  * Handle mipsmate (DECstation 5100) interrupts.
  */
 int
-dec_5100_intr(mask, pc, statusReg, causeReg)
+dec_5100_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+	unsigned status;
+	unsigned cause;
 {
-	volatile struct chiptime *c =
-	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-	struct clockframe cf;
-	int temp;
 	u_int icsr;
 
 	if (mask & MIPS_INT_MASK_4) {
@@ -240,22 +235,28 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 #endif
 	}
 
-	icsr = *((volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR));
+	icsr = *(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_2) {
-		temp = c->regc;	/* XXX clear interrupt bits */
+		struct clockframe cf;
+		struct chiptime *clk;
+		volatile int temp;
+
+		clk = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+		temp = clk->regc;	/* XXX clear interrupt bits */
+
 		cf.pc = pc;
-		cf.sr = statusReg;
+		cf.sr = status;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
 		/* keep clock interrupts enabled when we return */
-		causeReg &= ~MIPS_INT_MASK_2;
+		cause &= ~MIPS_INT_MASK_2;
 	}
 
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_2));
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 #define CALLINTR(slot, icnt) \
 	if (tc_slot_info[slot].intr) {					\
@@ -288,8 +289,7 @@ dec_5100_intr(mask, pc, statusReg, causeReg)
 		intrcnt[ERROR_INTR]++;
 	}
 
-	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		MIPS_SR_INT_IE);
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

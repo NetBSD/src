@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 1999/04/24 08:01:09 simonb Exp $ */
+/*	$NetBSD: autoconf.h,v 1.13 1999/05/26 04:23:58 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,8 +32,8 @@
  */
 
 struct confargs {
-	char	*ca_name;		/* device name */
-	int	ca_slot;		/* CPU "slot" number */
+	const char	*ca_name;		/* device name */
+	int		ca_slot;		/* CPU "slot" number */
 };
 
 typedef void	*intr_arg_t;		/* pointer to some softc */
