@@ -1,4 +1,4 @@
-/* $NetBSD: cpgreg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/*	$NetBSD: cpgreg.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -32,37 +32,16 @@
 /*
  * Clock Pulse Generator
  */
-
-#if !defined(SH4)
-
-/* SH3 definition */
-#define SHREG_FRQCR	(*(volatile unsigned short *)	0xFFFFFF80)
-
-#else
-
-/* SH4 definition */
-#define SHREG_FRQCR	(*(volatile unsigned short *)	0xffc00000)
-
-#endif
+#define SH3_FRQCR		0xffffff80	/* 16bit */
+#define SH4_FRQCR		0xffc00000	/* 16bit */
 
 /*
  * Standby Control
  */
+#define SH3_STBCR		0xffffff82	/* 8bit */
+#define SH7709_STBCR2		0xffffff88	/* 8bit */
 
-#if !defined(SH4)
-
-/* SH3 definitions */
-#define SHREG_STBCR	(*(volatile unsigned char *)	0xFFFFFF82)
-#if defined(SH7709) || defined(SH7709A)
-#define SHREG_STBCR2	(*(volatile unsigned char *)	0xffffff88)
-#endif
-
-#else
-
-/* SH4 definitions */
-#define SHREG_STBCR	(*(volatile unsigned char *)	0xffc00004)
-#define SHREG_STBCR2	(*(volatile unsigned char *)	0xffc00010)
-
-#endif
+#define SH4_STBCR		0xffc00004	/* 8bit */
+#define SH4_STBCR2		0xffc00010	/* 8bit */
 
 #endif /* !_SH3_CPGREG_H__ */

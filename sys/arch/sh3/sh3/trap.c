@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2002/02/24 18:19:43 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2002/02/28 01:56:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -204,7 +204,7 @@ trap(struct trapframe *tf)
 		/*NOTREACHED*/
 
 	case T_TRAP|T_USER:
-		if (SH_TRA == (0x000000c3 << 2)) {
+		if (_reg_read_4(SH_(TRA)) == (0x000000c3 << 2)) {
 			trapsignal(p, SIGTRAP, type &~ T_USER);
 			break;
 		} else {
@@ -499,7 +499,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 	pde_index = pdei(va);
 	pd_top = SH_MMU_PD_TOP();
 	pde = SH_MMU_PDE(pd_top, pde_index);
-	exptype = SH_EXPEVT;
+	exptype = _reg_read_4(SH_(EXPEVT));
 
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
 		(u_long)pde &= ~PGOFSET;

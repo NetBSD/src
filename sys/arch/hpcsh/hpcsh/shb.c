@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.10 2002/02/22 19:44:01 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.11 2002/02/28 01:57:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -37,7 +37,8 @@
 
 #include <net/netisr.h>
 
-#include <sh3/cpufunc.h>
+#include <sh3/trapreg.h>
+#include <sh3/intcreg.h>
 
 #include <machine/shbvar.h>
 #include <machine/autoconf.h>
@@ -58,7 +59,6 @@ int check_ipending(int, int, int, int, struct trapframe);
 void Xsoftserial(void);
 void Xsoftnet(void);
 void Xsoftclock(void);
-void __set_intr_level(u_int32_t);
 
 static int __nih;
 static struct intrhand __intr_handler[ICU_LEN];
@@ -85,40 +85,6 @@ struct cfattach shb_ca = {
 	sizeof(struct device), shbmatch, shbattach
 };
 
-/* XXX */
-#define SH3_IPRA		0xfffffee2
-#define SH3_IPRB		0xfffffee4
-#define SH3_IPRC		0xa4000016
-#define SH3_IPRD		0xa4000018
-#define SH3_IPRE		0xa400001a
-
-#define SH4_IPRA		0xffd00004
-#define SH4_IPRB		0xffd00008
-#define SH4_IPRC		0xffd0000c
-
-#define SH_SR_MD		0x40000000
-#define SH_SR_RB		0x20000000
-#define SH_SR_BL		0x10000000
-#define SH_SR_FD		0x00008000
-#define SH_SR_M			0x00000200
-#define SH_SR_IMASK		0x000000f0
-#define SH_SR_IMASK_SHIFT	4
-#define SH_SR_S			0x00000002
-#define SH_SR_T			0x00000001
-
-void
-__set_intr_level(u_int32_t m)
-{
-	u_int32_t sr;
-
-	m &= SH_SR_IMASK;
-	/* set new interrupt priority level */
-	__asm__ __volatile__("stc	sr, %0" : "=r"(sr));
-	sr &= ~SH_SR_IMASK;	
-	sr |= m;
-	__asm__ __volatile__("ldc	%0, sr" :: "r"(sr));
-}
-
 int
 shbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -142,10 +108,9 @@ shbattach(struct device *parent, struct device *self, void *aux)
 
 	config_search(shbsearch, self, NULL);
 
-#include	"sci.h"
 #include	"scif.h"
 #include	"com.h"
-#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
+#if (NSCIF > 0) || (NCOM > 0)
 	shb_intr_establish(SIR_SERIAL, IST_LEVEL, IPL_SOFTSERIAL,
 	    (int (*) (void *))Xsoftserial, NULL);
 #endif
@@ -335,9 +300,7 @@ intrhandler(int p1, int p2, int p3, int p4, /* dummy param */
 		irq_num = (irl - INTEVT_SOFT);
 	} else if (irl == INTEVT_TMU0) {
 		irq_num = TMU0_IRQ;
-	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
-		irq_num = SCI_IRQ;
-#ifdef SH4 //XXX
+#ifdef SH4
 	} else if (CPU_IS_SH4 && (irl & 0x0f00) == INTEVT_SCIF) {
 		irq_num = SCIF_IRQ;
 #endif
@@ -362,7 +325,7 @@ intrhandler(int p1, int p2, int p3, int p4, /* dummy param */
 		return (1);
 	}
 
-	__set_intr_level(0);
+	_cpu_intr_resume(0);
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -370,7 +333,7 @@ intrhandler(int p1, int p2, int p3, int p4, /* dummy param */
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
-	__set_intr_level(15);
+	_cpu_intr_suspend();
 
 	cpl = ocpl;
 
@@ -383,7 +346,6 @@ int	/* 1 = resume ihandler on return, 0 = go to fast intr return */
 check_ipending(int p1, int p2, int p3, int p4, /* dummy param */
     struct trapframe frame)
 {
-	extern u_int32_t __sh_INTEVT;	// XXX
 	int ir, i, mask;
 
  restart:
@@ -414,10 +376,10 @@ check_ipending(int p1, int p2, int p3, int p4, /* dummy param */
 		 * set interrupt event register,
 		 * this value is referenced in ihandler 
 		 */
-		_reg_write_4(__sh_INTEVT, (i << 5) + 0x200);
+		_reg_write_4(SH_(INTEVT), (i << 5) + 0x200);
 	} else {
 		/* This is software interrupt */
-		_reg_write_4(__sh_INTEVT, INTEVT_SOFT + i);
+		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i);
 	}
 
 	return (1);
@@ -427,12 +389,10 @@ check_ipending(int p1, int p2, int p3, int p4, /* dummy param */
 void
 mask_irq_sh4(int irq)
 {
+
 	switch (irq) {
 	case TMU0_IRQ:
 		_reg_write_2(SH4_IPRA, _reg_read_2(SH4_IPRA) & ~((15) << 12));
-		break;
-	case SCI_IRQ:
-		_reg_write_2(SH4_IPRB, _reg_read_2(SH4_IPRB) & ~((15) << 4));
 		break;
 	case SCIF_IRQ:
 		_reg_write_2(SH4_IPRC, _reg_read_2(SH4_IPRC) & ~((15) << 4));
@@ -457,10 +417,6 @@ unmask_irq_sh4(int irq)
 	case TMU0_IRQ:
 		_reg_write_2(SH4_IPRA,
 		    _reg_read_2(SH4_IPRA) | ((15 - irq) << 12));
-		break;
-	case SCI_IRQ:
-		_reg_write_2(SH4_IPRB,
-		    _reg_read_2(SH4_IPRB) | ((15 - irq) << 4));
 		break;
 	case SCIF_IRQ:
 		_reg_write_2(SH4_IPRC,
@@ -487,27 +443,24 @@ unmask_irq_sh4(int irq)
 #define IPRC	2
 #define IPRD	3
 #define IPRE	4
-static u_int16_t ipr[ 5 ];
+static u_int16_t ipr[5];
 
 void
 mask_irq_sh3(int irq)
 {
+
 	switch (irq) {
 	case TMU0_IRQ:
-		ipr[IPRA] &= ~((15)<<12);
+		ipr[IPRA] &= ~((15) << 12);
 		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
-	case SCI_IRQ:
-		ipr[IPRB] &= ~((15)<<4);
-		_reg_write_2(SH3_IPRB, ipr[IPRB]);
-		break;
 	case SCIF_IRQ:
-		ipr[IPRE] &= ~((15)<<4);
-		_reg_write_2(SH3_IPRE, ipr[IPRE]);
+		ipr[IPRE] &= ~((15) << 4);
+		_reg_write_2(SH7709_IPRE, ipr[IPRE]);
 		break;
 	case IRQ4_IRQ:
 		ipr[IPRD] &= ~15;
-		_reg_write_2(SH3_IPRD, ipr[IPRD]);
+		_reg_write_2(SH7709_IPRD, ipr[IPRD]);
 		break;
 	default:
 		if (irq < SHB_MAX_HARDINTR)
@@ -521,20 +474,16 @@ unmask_irq_sh3(int irq)
 
 	switch (irq) {
 	case TMU0_IRQ:
-		ipr[ IPRA ] |= ((15 - irq)<<12);
+		ipr[IPRA] |= ((15 - irq) << 12);
 		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
-	case SCI_IRQ:
-		ipr[IPRB] |= ((15 - irq)<<4);
-		_reg_write_2(SH3_IPRB, ipr[IPRB]);
-		break;
 	case SCIF_IRQ:
-		ipr[ IPRE ] |= ((15 - irq)<<4);
-		_reg_write_2(SH3_IPRE, ipr[IPRE]);
+		ipr[IPRE] |= ((15 - irq) << 4);
+		_reg_write_2(SH7709_IPRE, ipr[IPRE]);
 		break;
 	case IRQ4_IRQ:
 		ipr[IPRD] |= (15 - irq);
-		_reg_write_2(SH3_IPRD, ipr[IPRD]);
+		_reg_write_2(SH7709_IPRD, ipr[IPRD]);
 		break;
 	default:
 		if (irq < SHB_MAX_HARDINTR)
@@ -543,8 +492,7 @@ unmask_irq_sh3(int irq)
 }
 #endif /* SH3 */
 
-#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
-void scisoft(void *);
+#if (NSCIF > 0) || (NCOM > 0)
 void scifsoft(void *);
 void comsoft(void *);
 
@@ -552,9 +500,6 @@ void
 Xsoftserial(void)
 {
 
-#if (NSCI > 0)
-	scisoft(NULL);
-#endif
 #if (NSCIF > 0)
 	scifsoft(NULL);
 #endif
@@ -562,7 +507,7 @@ Xsoftserial(void)
 	comsoft(NULL);
 #endif
 }	
-#endif /* NSCI > 0 || NSCIF > 0 || NCOM > 0 */
+#endif /* NSCIF > 0 || NCOM > 0 */
 
 void
 Xsoftnet(void)

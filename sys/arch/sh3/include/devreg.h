@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.14 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: devreg.h,v 1.1 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,39 +33,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPUFUNC_H_
-#define	_SH3_CPUFUNC_H_
-
-#ifdef _KERNEL
-#ifndef _LOCORE
-
-/* Status Register */
-#define SR_MD			0x40000000
-#define SR_RB			0x20000000
-#define SR_BL			0x10000000
-#define SR_FD			0x00008000
-#define SR_M			0x00000200
-#define SR_IMASK		0x000000f0
-#define SR_IMASK_SHIFT	4
-#define SR_S			0x00000002
-#define SR_T			0x00000001
+#ifndef _SH3_DEVREG_H_
+#define _SH3_DEVREG_H_
+/*
+ * SH embeded device register defines.
+ */
 
 /*
- * CPU exception/interrupt ops.	(locore_subr.S)
+ * Access method
  */
-/* suspend/resume external interrupt (SR.IMASK) */
-u_int32_t _cpu_intr_suspend(void);
-void _cpu_intr_resume(u_int32_t);
-/* suspend/resume exception (SR.BL) */
-u_int32_t _cpu_exception_suspend(void);
-void _cpu_exception_resume(u_int32_t);
+#define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
+#define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
+#define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
+#define	_reg_write_1(a, v)						\
+	(*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v))
+#define	_reg_write_2(a, v)						\
+	(*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v))
+#define	_reg_write_4(a, v)						\
+	(*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v))
 
-/* for delay loop. */
-void _cpu_spin(u_int32_t);
+/*
+ * Register address.
+ */
+#if defined(SH3) && defined(SH4)
+#define SH_(x)		__sh_ ## x
+#elif defined(SH3)
+#define SH_(x)		SH3_ ## x
+#elif defined(SH4)
+#define SH_(x)		SH4_ ## x
+#endif
 
-/* Soft reset */
-void cpu_reset(void);
-
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
-#endif /* !_SH3_CPUFUNC_H_ */
+#ifndef _LOCORE
+/* Initialize register address for SH3 && SH4 kernel. */
+void sh_devreg_init(void);
+#endif
+#endif /* !_SH3_DEVREG_H_ */

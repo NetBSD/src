@@ -1,4 +1,4 @@
-/* $NetBSD: pfcreg.h,v 1.3 2001/02/21 14:49:53 uch Exp $ */
+/*	$NetBSD: pfcreg.h,v 1.4 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,57 +28,47 @@
 
 #ifndef _PFCREG_H_
 #define _PFCREG_H_
+#include <sh3/devreg.h>
 
 /* address definitions for pin function controller (PFC)*/
 
-#if !defined(SH4)
+#define SH3_PCTR		0xffffff76	/* 16bit */
+#define SH3_PDTR		0xffffff78	/*  8bit */
+#define SH3_SCSPTR		0xffffff7c	/*  8bit */
 
-/* SH3 definition */
+/* SH7709, SH7709A */
+#define SH7709_PACR		0xa4000100	/* 16bit */
+#define SH7709_PBCR		0xa4000102	/* 16bit */
+#define SH7709_PCCR		0xa4000104	/* 16bit */
+#define SH7709_PDCR		0xa4000106	/* 16bit */
+#define SH7709_PECR		0xa4000108	/* 16bit */
+#define SH7709_PFCR		0xa400010a	/* 16bit */
+#define SH7709_PGCR		0xa400010c	/* 16bit */
+#define SH7709_PHCR		0xa400010e	/* 16bit */
+#define SH7709_PJCR		0xa4000110	/* 16bit */
+#define SH7709_PKCR		0xa4000112	/* 16bit */
+#define SH7709_PLCR		0xa4000114	/* 16bit */
+#define SH7709_SCPCR		0xa4000116	/* 16bit */
+#define SH7709_PADR		0xa4000120	/*  8bit */
+#define SH7709_PBDR		0xa4000122	/*  8bit */
+#define SH7709_PCDR		0xa4000124	/*  8bit */
+#define SH7709_PDDR		0xa4000126	/*  8bit */
+#define SH7709_PEDR		0xa4000128	/*  8bit */
+#define SH7709_PFDR		0xa400012a	/*  8bit */
+#define SH7709_PGDR		0xa400012c	/*  8bit */
+#define SH7709_PHDR		0xa400012e	/*  8bit */
+#define SH7709_PJDR		0xa4000130	/*  8bit */
+#define SH7709_PKDR		0xa4000132	/*  8bit */
+#define SH7709_PLDR		0xa4000134	/*  8bit */
+#define SH7709_SCPDR		0xa4000136	/*  8bit */
 
-#define SHREG_PCTR	(*(volatile unsigned short *)	0xFFFFFF76)
-#define SHREG_PDTR	(*(volatile unsigned char *)	0xFFFFFF78)
-#define SHREG_SCSPTR	(*(volatile unsigned char *)	0xFFFFFF7C)
-
-#if defined(SH7709) || defined(SH7709A)
-#define SHREG_PACR	(*(volatile unsigned short *)0xa4000100)
-#define SHREG_PBCR	(*(volatile unsigned short *)0xa4000102)
-#define SHREG_PCCR	(*(volatile unsigned short *)0xa4000104)
-#define SHREG_PDCR	(*(volatile unsigned short *)0xa4000106)
-#define SHREG_PECR	(*(volatile unsigned short *)0xa4000108)
-#define SHREG_PFCR	(*(volatile unsigned short *)0xa400010a)
-#define SHREG_PGCR	(*(volatile unsigned short *)0xa400010c)
-#define SHREG_PHCR	(*(volatile unsigned short *)0xa400010e)
-#define SHREG_PJCR	(*(volatile unsigned short *)0xa4000110)
-#define SHREG_PKCR	(*(volatile unsigned short *)0xa4000112)
-#define SHREG_PLCR	(*(volatile unsigned short *)0xa4000114)
-#define SHREG_SCPCR	(*(volatile unsigned short *)0xa4000116)
-
-#define SHREG_PADR	(*(volatile unsigned char *)0xa4000120)
-#define SHREG_PBDR	(*(volatile unsigned char *)0xa4000122)
-#define SHREG_PCDR	(*(volatile unsigned char *)0xa4000124)
-#define SHREG_PDDR	(*(volatile unsigned char *)0xa4000126)
-#define SHREG_PEDR	(*(volatile unsigned char *)0xa4000128)
-#define SHREG_PFDR	(*(volatile unsigned char *)0xa400012a)
-#define SHREG_PGDR	(*(volatile unsigned char *)0xa400012c)
-#define SHREG_PHDR	(*(volatile unsigned char *)0xa400012e)
-#define SHREG_PJDR	(*(volatile unsigned char *)0xa4000130)
-#define SHREG_PKDR	(*(volatile unsigned char *)0xa4000132)
-#define SHREG_PLDR	(*(volatile unsigned char *)0xa4000134)
-#define SHREG_SCPDR	(*(volatile unsigned char *)0xa4000136)
-#endif
-
-#else
-
-/* SH4 definitions */
-
-#define SHREG_PCTRA	(*(volatile unsigned int *)	0xff80002c)
-#define SHREG_PDTRA	(*(volatile unsigned short *)	0xff800030)
-#define SHREG_PCTRB	(*(volatile unsigned int *)	0xff800040)
-#define SHREG_PDTRB	(*(volatile unsigned short *)	0xff800044)
-#define SHREG_GPIOIC	(*(volatile unsigned short *)	0xff800048)
-#define SHREG_SCSPTR1	(*(volatile unsigned char *)	0xffe0001c)
-#define SHREG_SCSPTR2	(*(volatile unsigned short *)	0xffe80020)
-
-#endif
+#define SH4_PCTRA		0xff80002c	/* 32bit */
+#define SH4_PDTRA		0xff800030	/* 16bit */
+#define SH4_PCTRB		0xff800040	/* 32bit */
+#define SH4_PDTRB		0xff800044	/* 16bit */
+#define SH4_GPIOIC		0xff800048	/* 16bit */
+#define SH4_SCSPTR1		0xffe0001c	/*  8bit */
+#define SH4_SCSPTR2		0xffe80020	/* 16bit */
 
 #endif /* _PFCREG_H_ */
+
