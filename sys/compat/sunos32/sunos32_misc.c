@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.1 2001/02/02 07:28:54 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.2 2001/02/02 13:00:29 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -217,6 +217,37 @@ sunos32_sys_access(p, v, retval)
 	return (sys_access(p, &ua, retval));
 }
 
+static __inline void sunos32_from___stat13 __P((struct stat *, struct stat43 *));
+
+static __inline void
+sunos32_from___stat13(sbp, sb32p)
+	struct stat *sbp;
+	struct stat43 *sb32p;
+{
+	sb32p->st_dev = sbp->st_dev;
+	sb32p->st_ino = sbp->st_ino;
+	sb32p->st_mode = sbp->st_mode;
+	sb32p->st_nlink = sbp->st_nlink;
+	sb32p->st_uid = sbp->st_uid;
+	sb32p->st_gid = sbp->st_gid;
+	sb32p->st_rdev = sbp->st_rdev;
+	if (sbp->st_size < (quad_t)1 << 32)
+		sb32p->st_size = sbp->st_size;
+	else
+		sb32p->st_size = -2;
+	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
+	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
+	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
+	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
+	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
+	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
+	sb32p->st_blksize = sbp->st_blksize;
+	sb32p->st_blocks = sbp->st_blocks;
+	sb32p->st_flags = sbp->st_flags;
+	sb32p->st_gen = sbp->st_gen;
+}
+
+
 int
 sunos32_sys_stat(p, v, retval)
 	struct proc *p;
@@ -224,24 +255,27 @@ sunos32_sys_stat(p, v, retval)
 	register_t *retval;
 {
 	struct sunos32_sys_stat_args *uap = v;
-	struct netbsd32_stat43 *sp32;
-	struct stat43 sb43;
-	struct stat43 *sp43 = &sb43;
-	struct compat_43_sys_stat_args ua;
-	int rv;
+	struct stat43 sb32;
+	struct stat sb;
+	struct nameidata nd;
 	caddr_t sg;
+	const char *path;
+	int error;
 
-	SUNOS32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = &sb43;
+	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
 
-	rv = compat_43_sys_stat(p, &ua, retval);
-
-	sp32 = (struct netbsd32_stat43 *)(u_long)SCARG(uap, ub);
-	netbsd32_from_stat43(sp43, sp32);
-
-	return (rv);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	sunos32_from___stat13(&sb, &sb32);
+	error = copyout((caddr_t)&sb32, (caddr_t)(u_long)SCARG(uap, ub), sizeof (sb32));
+	return (error);
 }
 
 int
@@ -251,24 +285,70 @@ sunos32_sys_lstat(p, v, retval)
 	register_t *retval;
 {
 	struct sunos32_sys_lstat_args *uap = v;
-	struct compat_43_sys_lstat_args ua;
-	struct netbsd32_stat43 *sp32;
-	struct stat43 sb43;
-	struct stat43 *sp43 = &sb43;
-	caddr_t sg = stackgap_init(p->p_emul);
-	int rv;
+	struct vnode *vp, *dvp;
+	struct stat sb, sb1;
+	struct stat43 sb32;
+	int error;
+	struct nameidata nd;
+	int ndflags;
+	const char *path;
+	caddr_t sg;
 
-	SUNOS32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = &sb43;
+	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	SUNOS32_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SUNOS32_CHECK_ALT_EXIST(p, &sg, path);
 
-	rv = compat_43_sys_stat(p, &ua, retval);
-
-	sp32 = (struct netbsd32_stat43 *)(u_long)SCARG(uap, ub);
-	netbsd32_from_stat43(sp43, sp32);
-
-	return (rv);
+	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
+again:
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path, p);
+	if ((error = namei(&nd))) {
+		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
+			/*
+			 * Should only happen on '/'. Retry without LOCKPARENT;
+			 * this is safe since the vnode won't be a VLNK.
+			 */
+			ndflags &= ~LOCKPARENT;
+			goto again;
+		}
+		return (error);
+	}
+	/*
+	 * For symbolic links, always return the attributes of its
+	 * containing directory, except for mode, size, and links.
+	 */
+	vp = nd.ni_vp;
+	dvp = nd.ni_dvp;
+	if (vp->v_type != VLNK) {
+		if ((ndflags & LOCKPARENT) != 0) {
+			if (dvp == vp)
+				vrele(dvp);
+			else
+				vput(dvp);
+		}
+		error = vn_stat(vp, &sb, p);
+		vput(vp);
+		if (error)
+			return (error);
+	} else {
+		error = vn_stat(dvp, &sb, p);
+		vput(dvp);
+		if (error) {
+			vput(vp);
+			return (error);
+		}
+		error = vn_stat(vp, &sb1, p);
+		vput(vp);
+		if (error)
+			return (error);
+		sb.st_mode &= ~S_IFDIR;
+		sb.st_mode |= S_IFLNK;
+		sb.st_nlink = sb1.st_nlink;
+		sb.st_size = sb1.st_size;
+		sb.st_blocks = sb1.st_blocks;
+	}
+	sunos32_from___stat13(&sb, &sb32);
+	error = copyout((caddr_t)&sb32, (caddr_t)(u_long)SCARG(uap, ub), sizeof (sb32));
+	return (error);
 }
 
 int
