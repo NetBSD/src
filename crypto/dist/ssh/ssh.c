@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.3 2000/11/05 20:09:08 christos Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.3 2000/11/05 20:09:08 christos Exp $");
 #endif
 
 #include "includes.h"
@@ -566,8 +566,11 @@ main(int ac, char **av)
 	if (options.hostname != NULL)
 		host = options.hostname;
 
-	/* Find canonic host name. */
-	if (strchr(host, '.') == 0) {
+	/* Find canonical host name. */
+#if 0
+	if (strchr(host, '.') == NULL)
+#endif
+	{
 		struct addrinfo hints;
 		struct addrinfo *ai = NULL;
 		int errgai;
