@@ -1,5 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 2000/12/11 18:51:55 eeh Exp $ */
-#define DEBUG
+/*	$NetBSD: vm_machdep.c,v 1.36 2000/12/17 21:41:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
