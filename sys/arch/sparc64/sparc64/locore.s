@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 2000/09/29 17:02:39 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 2000/10/01 19:13:16 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -239,8 +239,8 @@
 #define	SPLIT(r0, r1)		\
 	srl	r0, 0, r1;	\
 	srlx	r0, 32, r0
-	
-	
+
+
 /*
  * A handy macro for maintaining instrumentation counters.
  * Note that this clobbers %o0 and %o1.  Normal usage is
@@ -1548,7 +1548,7 @@ _C_LABEL(trap_trace_end):
 	stw	r3, [r2+TRACEPTR];					\
 1:
 
-		
+
 	.text
 traceit:
 	set	trap_trace, %g2
@@ -2176,7 +2176,7 @@ dmmu_write_fault:
 	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
-1:	
+1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
@@ -2329,7 +2329,7 @@ Ludata_miss:
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
-1:	
+1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
@@ -3281,7 +3281,7 @@ Lutext_miss:
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
-1:	
+1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, textfault
@@ -4336,25 +4336,25 @@ sparc_intr_retry:
 	mov	8, %l7
 
 #ifdef INTRLIST
-1:	
+1:
 	LDPTR	[%l4], %l2		! Check a slot
 	brz,pn	%l2, intrcmplt		! Empty list?
-	
+
 	 mov	%g0, %l7
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	%icc, 1b
 	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
-2:	
+2:
 	LDPTR	[%l2 + IH_CLR], %l1
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
-	
+
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
 	LDPTR	[%l2 + IH_PEND], %l7	! Clear pending flag
 	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
-	
+
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5
 	stx	%g0, [%l1]		! Clear intr source
@@ -5356,7 +5356,7 @@ print_dtlb:
 dostart:
 	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register for now
 	mov	1, %g1
-	sllx	%g1, 63, %g1	
+	sllx	%g1, 63, %g1
 	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr as well
 	/*
 	 * Startup.
@@ -5550,10 +5550,9 @@ _C_LABEL(cpu_initialize):
 	 *	%l4 = tmp
 	 *	%l5 = tmp && TLB_TAG_ACCESS
 	 *	%l6 = tmp && CTX_PRIMARY
-	 *	%l7 = routine to jump to
+	 *	%l7 = DATA_START
 	 *	%g1 = TLB Data for data segment w/o low bits
 	 *	%g2 = TLB Data for data segment w/low bits
-	 *	%g3 = DATA_START
 	 */
 
 #ifdef	NO_VCACHE
@@ -5566,7 +5565,7 @@ _C_LABEL(cpu_initialize):
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	sethi	%hi(KERNBASE), %l0		! Find our xlation
-	sethi	%hi(DATA_START), %g3
+	sethi	%hi(DATA_START), %l7
 
 	set	_C_LABEL(ktextp), %l1		! Find phys addr
 	ldx	[%l1], %l1			! The following gets ugly:	We need to load the following mask
@@ -5600,10 +5599,10 @@ _C_LABEL(cpu_initialize):
 	srlx	%l2, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%l2, 0, %o4
-	
+
 	set	1f, %o0		! Debug printf for DATA page
-	srlx	%g3, 32, %o1
-	srl	%g3, 0, %o2
+	srlx	%l7, 32, %o1
+	srl	%l7, 0, %o2
 	or	%g1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
 	srlx	%l2, 32, %o3
 	call	_C_LABEL(prom_printf)
@@ -5616,7 +5615,7 @@ _C_LABEL(cpu_initialize):
 #endif
 	set	0x400000, %l3			! Demap all of kernel dmmu text segment
 	mov	%l0, %l5
-	mov	%g3, %l6
+	mov	%l7, %l6
 	set	0x2000, %l4			! 8K page size
 	add	%l0, %l3, %l3
 0:
@@ -5635,11 +5634,14 @@ _C_LABEL(cpu_initialize):
 	brnz,pt	%o0, 1b
 	 dec	8, %o0
 
-	set	TLB_TAG_ACCESS, %l5		! Now map it back in with a locked TTE
+	! Now map it back in with a locked TTE
+	set	TLB_TAG_ACCESS, %l5
 #ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P, %l2	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=0|G=0
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=0|G=0
+	or	%l1, TTE_L|TTE_CP|TTE_P, %l2
 #else
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P, %l2
 #endif
 	set	1f, %o5
 	stxa	%l0, [%l5] ASI_DMMU		! Same for DMMU
@@ -5648,11 +5650,13 @@ _C_LABEL(cpu_initialize):
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5				! Make IMMU see this too
 #ifdef NO_VCACHE
-	or	%g1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	or	%g1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2
 #else
-	or	%g1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	or	%g1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2
 #endif
-	stxa	%g3, [%l5] ASI_DMMU		! Same for DMMU
+	stxa	%l7, [%l5] ASI_DMMU		! Same for DMMU
 	membar	#Sync				! We may need more membar #Sync in here
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Same for DMMU
 	membar	#Sync				! We may need more membar #Sync in here
@@ -5672,15 +5676,15 @@ _C_LABEL(cpu_initialize):
 	.text
 #endif
 #if 1
-	!!
-	!! Finished the DMMU, now we need to do the IMMU which is more difficult 'cause
-	!! we're execting instructions through the IMMU while we're flushing it.  We need
-	!! to remap the entire kernel to a new context, flush the entire context 0 IMMU,
-	!! map it back into context 0, switch to context 0, and flush context 1.
-	!!
-	!!
-	!!  First, map in the kernel text as context==1
-	!!
+	/*
+	 * Finished the DMMU, now we need to do the IMMU which is more
+	 * difficult because we're execting instructions through the IMMU
+	 * while we're flushing it.  We need to remap the entire kernel
+	 * to a new context, flush the entire context 0 IMMU, map it back
+	 * into context 0, switch to context 0, and flush context 1.
+	 *
+	 *  First, map in the kernel text as context==1
+	 */
 	set	TLB_TAG_ACCESS, %l5
 	or	%l1, TTE_CP|TTE_P, %l2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
 	or	%l0, 1, %l4			! Context = 1
@@ -5696,7 +5700,7 @@ _C_LABEL(cpu_initialize):
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5				! Make IMMU see this too
 
-	or	%g3, 1, %l4			! Do the data segment, too
+	or	%l7, 1, %l4			! Do the data segment, too
 	or	%g1, TTE_CP|TTE_P, %l2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync				! We may need more membar #Sync in here
@@ -5723,7 +5727,7 @@ _C_LABEL(cpu_initialize):
 	!!
 	set	0x400000, %l3			! Demap all of kernel immu segment
 	or	%l0, 0x020, %l5			! Context = Nucleus
-	or	%g3, 0x020, %g5
+	or	%l7, 0x020, %g5
 	set	0x2000, %l4			! 8K page size
 	add	%l0, %l3, %l3
 0:
@@ -5743,9 +5747,11 @@ _C_LABEL(cpu_initialize):
 	!!
 	set	TLB_TAG_ACCESS, %l5
 #ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
+	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
+	or	%l1, TTE_L|TTE_CP|TTE_P, %l2
 #else
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P, %l2
 #endif
 	set	1f, %o5
 	stxa	%l0, [%l5] ASI_IMMU		! Make IMMU point to it
@@ -6242,12 +6248,12 @@ _C_LABEL(dcache_flush_page):
 #endif
 
 	!! Try using cache_flush_phys for a change.
-	
+
 	mov	-1, %o1		! Generate mask for tag: bits [29..2]
 	srlx	%o0, 13-2, %o2	! Tag is VA bits <40:13> in bits <29:2>
 	srl	%o1, 2, %o1	! Now we have bits <29:0> set
 	andn	%o1, 3, %o1	! Now we have bits <29:2> set
-	
+
 	set	(2*NBPG), %o5
 	clr	%o4
 1:
@@ -6262,7 +6268,7 @@ _C_LABEL(dcache_flush_page):
 2:
 	brnz,pt	%o5, 1b
 	 inc	16, %o4
-	
+
 	!! Now do the I$
 	mov	-1, %o1		! Generate mask for tag: bits [35..8]
 	srlx	%o0, 13-8, %o2
@@ -6283,7 +6289,7 @@ _C_LABEL(dcache_flush_page):
 2:
 	brnz,pt	%o5, 1b
 	 inc	16, %o4
-	
+
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	membar	#Sync
@@ -6313,15 +6319,15 @@ _C_LABEL(cache_flush_virt):
 	 movrz	%o4, %o3, %o4	! If start == end we need to wrap
 
 	!! Clear from start to end
-1:	
+1:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	dec	16, %o4
-	xor	%o5, %o0, %o3	! Second way	
+	xor	%o5, %o0, %o3	! Second way
 	stxa	%g0, [%o0] ASI_ICACHE_TAG
 	stxa	%g0, [%o3] ASI_ICACHE_TAG
 	brgz,pt	%o4, 1b
 	 inc	16, %o0
-2:	
+2:
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	membar	#Sync
@@ -6330,15 +6336,15 @@ _C_LABEL(cache_flush_virt):
 
 	!! We got a hole.  Clear from start to hole
 	clr	%o4
-3:	
+3:
 	stxa	%g0, [%o4] ASI_DCACHE_TAG
 	dec	16, %o1
-	xor	%o5, %o4, %g1	! Second way	
+	xor	%o5, %o4, %g1	! Second way
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
 	stxa	%g0, [%g1] ASI_ICACHE_TAG
 	brgz,pt	%o1, 3b
 	 inc	16, %o4
-	
+
 	!! Now clear to the end.
 	sub	%o3, %o2, %o4	! Size to clear (NBPG - end)
 	ba,pt	%icc, 1b
@@ -6372,14 +6378,14 @@ _C_LABEL(cache_flush_phys):
 	!! they are shifted different amounts.  So we'll
 	!! generate a mask for bits 40-13.
 	!!
-	
+
 	mov	-1, %o2		! Generate mask for tag: bits [40..13]
 	srl	%o2, 5, %o2	! 32-5 = [27..0]
 	sllx	%o2, 13, %o2	! 27+13 = [40..13]
 
 	and	%o2, %o0, %o0	! Mask away uninteresting bits
 	and	%o2, %o1, %o1	! (probably not necessary)
-		
+
 	set	(2*NBPG), %o5
 	clr	%o4
 1:
@@ -6403,12 +6409,12 @@ _C_LABEL(cache_flush_phys):
 	bgt,pt	%icc, 3f
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
-3:	
+3:
 	membar	#StoreLoad
 	dec	16, %o5
 	brgz,pt	%o5, 1b
 	 inc	16, %o4
-	
+
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	membar	#Sync
@@ -7669,7 +7675,7 @@ ENTRY(switchexit)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
 	 nop
 #endif
-	
+
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
 	 * %hi(cpcb), but may have been clobbered in kmem_free,
@@ -7747,7 +7753,7 @@ idle:
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,pt	%o3, notidle		! Something to run
 	 nop
-	
+
 #if 0
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
@@ -7862,7 +7868,7 @@ swdebug:	.word 0
 	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
 	STPTR	%g0, [%l7 + %lo(CURPROC)]	! curproc = NULL;
-	
+
 Lsw_scan:
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
@@ -9284,7 +9290,7 @@ ENTRY(pmap_copy_page)
 #else	/* PMAP_FPSTATE */
 	ba	_C_LABEL(blast_vcache)
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-	
+
 	retl					! Any other mappings have inconsistent D$
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
 #endif	/* PMAP_FPSTATE */
@@ -9405,14 +9411,15 @@ ENTRY(pseg_get)
  *
  * In 64-bit mode:
  *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, 
+ * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
  *			paddr_t spare %o3);
  *
- * Set a pseg entry to a particular TTE value.  Returns 0 on success, 1 if it needs to fill
- * a pseg, and -1 if the address is in the virtual hole.  (NB: nobody in pmap checks for the
- * virtual hole, so the system will hang.)  Allocate a page, pass the phys addr in as the spare,
- * and try again.  If spare is not NULL it is assumed to be the address of a zeroed physical page
- * that can be used to generate a directory table or page table if needed.
+ * Set a pseg entry to a particular TTE value.  Returns 0 on success,
+ * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
+ * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
+ * Allocate a page, pass the phys addr in as the spare, and try again.
+ * If spare is not NULL it is assumed to be the address of a zeroed physical
+ * page that can be used to generate a directory table or page table if needed.
  *
  */
 ENTRY(pseg_set)
@@ -9464,7 +9471,7 @@ ENTRY(pseg_set)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:	
+2:
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
 	DLFLUSH2(%g1)
@@ -9483,7 +9490,7 @@ ENTRY(pseg_set)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:	
+2:
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
 	DLFLUSH2(%g1)
@@ -9535,8 +9542,8 @@ ENTRY(pseg_set)
  * Get the paddr for a particular TTE entry.  Returns the TTE's PA on success,
  * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
  * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
- *  Allocate a page, pass the phys addr in as the spare, and try again.  
- * If spare is not NULL it is assumed to be the address of a zeroed physical 
+ *  Allocate a page, pass the phys addr in as the spare, and try again.
+ * If spare is not NULL it is assumed to be the address of a zeroed physical
  * page that can be used to generate a directory table or page table if needed.
  *
  */
@@ -9584,7 +9591,7 @@ ENTRY(pseg_find)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:	
+2:
 	DLFLUSH(%o4,%o3)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
 	DLFLUSH2(%o3)
@@ -9603,7 +9610,7 @@ ENTRY(pseg_find)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:	
+2:
 	DLFLUSH(%o4,%o3)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
 	DLFLUSH2(%o3)
@@ -9630,7 +9637,7 @@ ENTRY(pseg_find)
 	srl	%o0, 0, %o1
 	retl						! No, generate a %o0:%o1 double
 	 srlx	%o0, 32, %o0
-	
+
 1:
 	retl
 	 mov	1, %o0
@@ -10661,7 +10668,7 @@ Lfp_finish:
 	btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 1f		! Then skip it
 	 add	%o2, 128, %o2		! Skip a block
-	
+
 
 	stda	%f0, [%o2] ASI_BLK_COMMIT_P	! f->fs_f0 = etc;
 	inc	BLOCK_SIZE, %o2
@@ -11070,7 +11077,7 @@ microtick:
 /*
  * The following code only works if %tick is synchronized with time.
  */
-2:	
+2:
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
 	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
 	rdpr	%tick, %o4					! Load usec timer value
@@ -11193,13 +11200,13 @@ Lstupid_loop:
  */
 	.data
 	.align	8
-tlimit:	
+tlimit:
 	.xword	0
 	.text
 ENTRY(next_tick)
 	rd	TICK_CMPR, %o2
 	rdpr	%tick, %o1
-	
+
 	mov	1, %o3		! Mask off high bits of these registers
 	sllx	%o3, 63, %o3
 	andn	%o1, %o3, %o1
@@ -11216,24 +11223,24 @@ ENTRY(next_tick)
 	 * We need to increment the time base by the size of %tick in
 	 * microseconds.  This will require some divides and multiplies
 	 * which can take time.  So we re-read %tick.
-	 * 
+	 *
 	 */
 
 	/* XXXXX NOT IMPLEMENTED */
 
-	
-	
-1:	
+
+
+1:
 	add	%o2, %o0, %o2
 	andn	%o2, %o3, %o4
 	brlz,pn	%o4, Ltick_ovflw
 	 cmp	%o2, %o1	! Has this tick passed?
 	blt,pn	%xcc, 1b	! Yes
 	 nop
-		
+
 	retl
 	 wr	%o2, TICK_CMPR
-	
+
 Ltick_ovflw:
 /*
  * When we get here tick_cmpr has wrapped, but we don't know if %tick
