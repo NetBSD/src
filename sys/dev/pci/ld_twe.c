@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.2 2001/01/22 17:38:23 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.3 2001/01/22 17:40:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
  */
 
 #include "rnd.h"
-#include "opt_twe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
