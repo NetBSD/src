@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.5 1999/09/05 01:57:10 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.6 1999/09/08 00:50:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -315,6 +315,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 		if (laddr == NULL)
 			break;
 		ieee802_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
+		/* invert u bit to convert EUI64 to RFC2373 interface ID. */
+		ia->ia_addr.sin6_addr.s6_addr8[8] ^= 0x02;
 		if (found_first_ifid == 0) {
 			if (in6_ifattach_getifid(ifp) == 0)
 				in6_ifattach_p2p();
