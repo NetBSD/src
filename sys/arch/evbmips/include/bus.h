@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2002/03/07 14:43:59 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2002/03/17 21:45:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -512,7 +512,7 @@ do {									\
 /*
  * Private flags stored in the DMA map.
  */
-#define	EVBMIPS_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define	EVBMIPS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
