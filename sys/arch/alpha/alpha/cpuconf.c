@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.1 1996/11/12 05:14:28 cgd Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.2 1996/11/13 23:42:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,11 +76,11 @@ const struct cpusw cpusw[] = {
 	cpu_notdef("DEC 7000 (\"Ruby\")"),	/*  3: ST_DEC_7000 */
 	cpu_init("DEC 3000/500 (\"Flamingo\")",DEC_3000_500,dec_3000_500),
 						/*  4: ST_DEC_3000_500 */
+	cpu_unknown(),				/*  5: ??? */
 	cpu_notdef("DEC 2000/300 (\"Jensen\")"),
-						/*  5: ST_DEC_2000_300 */
+						/*  6: ST_DEC_2000_300 */
 	cpu_init("DEC 3000/300 (\"Pelican\")",DEC_3000_300,dec_3000_300),
-						/*  6: ST_DEC_3000_300 */
-	cpu_unknown(),				/*  7: ??? */
+						/*  7: ST_DEC_3000_300 */
 	cpu_unknown(),				/*  8: ??? */
 	cpu_notdef("DEC 2100/A500 (\"Sable\")"),
 						/*  9: ST_DEC_2100_A500 */
