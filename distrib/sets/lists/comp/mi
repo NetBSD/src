@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.550 2003/03/25 23:59:15 pooka Exp $
+#	$NetBSD: mi,v 1.551 2003/03/30 13:15:03 he Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1619,6 +1619,10 @@
 ./usr/share/man/cat3/atoi.0	comp-c-catman
 ./usr/share/man/cat3/atol.0	comp-c-catman
 ./usr/share/man/cat3/atoll.0	comp-c-catman
+./usr/share/man/cat3/attr_get.0		comp-c-catman
+./usr/share/man/cat3/attr_off.0		comp-c-catman
+./usr/share/man/cat3/attr_on.0		comp-c-catman
+./usr/share/man/cat3/attr_set.0		comp-c-catman
 ./usr/share/man/cat3/attroff.0		comp-c-catman
 ./usr/share/man/cat3/attron.0		comp-c-catman
 ./usr/share/man/cat3/attrset.0		comp-c-catman
@@ -1744,6 +1748,7 @@
 ./usr/share/man/cat3/clrtobot.0		comp-c-catman
 ./usr/share/man/cat3/clrtoeol.0		comp-c-catman
 ./usr/share/man/cat3/color_content.0		comp-c-catman
+./usr/share/man/cat3/color_set.0		comp-c-catman
 ./usr/share/man/cat3/com_err.0	comp-c-catman
 ./usr/share/man/cat3/com_err_va.0	comp-c-catman
 ./usr/share/man/cat3/confstr.0	comp-c-catman
@@ -3115,6 +3120,10 @@
 ./usr/share/man/cat3/waddstr.0		comp-c-catman
 ./usr/share/man/cat3/warn.0	comp-c-catman
 ./usr/share/man/cat3/warnx.0	comp-c-catman
+./usr/share/man/cat3/wattr_get.0		comp-c-catman
+./usr/share/man/cat3/wattr_off.0		comp-c-catman
+./usr/share/man/cat3/wattr_on.0		comp-c-catman
+./usr/share/man/cat3/wattr_set.0		comp-c-catman
 ./usr/share/man/cat3/wattroff.0		comp-c-catman
 ./usr/share/man/cat3/wattron.0		comp-c-catman
 ./usr/share/man/cat3/wattrset.0		comp-c-catman
@@ -3124,6 +3133,7 @@
 ./usr/share/man/cat3/wclear.0		comp-c-catman
 ./usr/share/man/cat3/wclrtobot.0		comp-c-catman
 ./usr/share/man/cat3/wclrtoeol.0		comp-c-catman
+./usr/share/man/cat3/wcolor_set.0		comp-c-catman
 ./usr/share/man/cat3/wcrtomb.0	comp-c-catman
 ./usr/share/man/cat3/wcscat.0		comp-c-catman
 ./usr/share/man/cat3/wcschr.0		comp-c-catman
@@ -4674,6 +4684,10 @@
 ./usr/share/man/man3/atoi.3		comp-c-man
 ./usr/share/man/man3/atol.3		comp-c-man
 ./usr/share/man/man3/atoll.3		comp-c-man
+./usr/share/man/man3/attr_get.3		comp-c-man
+./usr/share/man/man3/attr_off.3		comp-c-man
+./usr/share/man/man3/attr_on.3		comp-c-man
+./usr/share/man/man3/attr_set.3		comp-c-man
 ./usr/share/man/man3/attroff.3		comp-c-man
 ./usr/share/man/man3/attron.3		comp-c-man
 ./usr/share/man/man3/attrset.3		comp-c-man
@@ -4799,6 +4813,7 @@
 ./usr/share/man/man3/clrtobot.3		comp-c-man
 ./usr/share/man/man3/clrtoeol.3		comp-c-man
 ./usr/share/man/man3/color_content.3		comp-c-man
+./usr/share/man/man3/color_set.3		comp-c-man
 ./usr/share/man/man3/com_err.3		comp-c-man
 ./usr/share/man/man3/com_err_va.3	comp-c-man
 ./usr/share/man/man3/confstr.3		comp-c-man
@@ -6170,6 +6185,10 @@
 ./usr/share/man/man3/waddstr.3		comp-c-man
 ./usr/share/man/man3/warn.3		comp-c-man
 ./usr/share/man/man3/warnx.3		comp-c-man
+./usr/share/man/man3/wattr_get.3		comp-c-man
+./usr/share/man/man3/wattr_off.3		comp-c-man
+./usr/share/man/man3/wattr_on.3		comp-c-man
+./usr/share/man/man3/wattr_set.3		comp-c-man
 ./usr/share/man/man3/wattroff.3		comp-c-man
 ./usr/share/man/man3/wattron.3		comp-c-man
 ./usr/share/man/man3/wattrset.3		comp-c-man
@@ -6179,6 +6198,7 @@
 ./usr/share/man/man3/wclear.3		comp-c-man
 ./usr/share/man/man3/wclrtobot.3		comp-c-man
 ./usr/share/man/man3/wclrtoeol.3		comp-c-man
+./usr/share/man/man3/wcolor_set.3		comp-c-man
 ./usr/share/man/man3/wcrtomb.3	comp-c-man
 ./usr/share/man/man3/wcscat.3		comp-c-man
 ./usr/share/man/man3/wcschr.3		comp-c-man
