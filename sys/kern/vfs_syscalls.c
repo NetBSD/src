@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.108 1997/12/21 18:50:57 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.109 1998/02/03 09:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,10 +122,10 @@ sys_mount(p, v, retval)
 	register struct vnode *vp;
 	register struct mount *mp;
 	int error, flag = 0;
-	u_long fsindex = 0;
 	char fstypename[MFSNAMELEN];
 	struct vattr va;
 	struct nameidata nd;
+	struct vfsops *vfs;
 
 	/*
 	 * Get vnode to be covered
@@ -142,6 +142,7 @@ sys_mount(p, v, retval)
 		}
 		mp = vp->v_mount;
 		flag = mp->mnt_flag;
+		vfs = mp->mnt_op;
 		/*
 		 * We only allow the filesystem to be reloaded if it
 		 * is currently mounted read-only.
@@ -212,7 +213,7 @@ sys_mount(p, v, retval)
 		 * string, we check to see if it matches one of the historic
 		 * filesystem types.
 		 */     
-		fsindex = (u_long)SCARG(uap, type);
+		u_long fsindex = (u_long)SCARG(uap, type);
 		if (fsindex >= nmountcompatnames ||
 		    mountcompatnames[fsindex] == NULL) {
 			vput(vp);
@@ -229,11 +230,7 @@ sys_mount(p, v, retval)
 	if (!strncmp(fstypename, "ufs", MFSNAMELEN))
 		strncpy(fstypename, "ffs", MFSNAMELEN);
 #endif
-	for (fsindex = 0; fsindex < nvfssw; fsindex++)
-		if (vfssw[fsindex] != NULL &&
-		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
-			break;
-	if (fsindex >= nvfssw) {
+	if ((vfs = vfs_getopsbyname(fstypename)) == NULL) {
 		vput(vp);
 		return (ENODEV);
 	}
@@ -248,14 +245,14 @@ sys_mount(p, v, retval)
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = vfssw[fsindex];
+	mp->mnt_op = vfs;
 	if ((error = vfs_lock(mp)) != 0) {
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
 		return (error);
 	}
 	/* Do this early in case we block later. */
-	vfssw[fsindex]->vfs_refcount++;
+	vfs->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
@@ -300,7 +297,7 @@ update:
 		error = VFS_START(mp, 0, p);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
-		vfssw[fsindex]->vfs_refcount--;
+		vfs->vfs_refcount--;
 		vfs_unlock(mp);
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
