@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.1 2000/01/28 15:08:38 takemura Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.2 2000/03/28 00:24:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ LEAF(vr_idle)
 	beq	t0, zero, 1b
 	nop
 1:
-	la	ra, cpu_switch1
+	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 END(vr_idle)
