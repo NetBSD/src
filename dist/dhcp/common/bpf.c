@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.8 2004/10/22 05:22:39 perry Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.9 2004/12/01 23:45:12 christos Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -66,6 +66,7 @@ static char copyright[] =
 #  endif
 # endif
 
+#include <paths.h>
 #include <netinet/in_systm.h>
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
@@ -98,11 +99,21 @@ int if_register_bpf (info)
 	struct interface_info *info;
 {
 	int sock;
-	char filename[50];
-	int b;
 	u_int bufsize;
 
 	/* Open a BPF device */
+#ifdef _PATH_BPF
+	const char *filename = _PATH_BPF;
+	sock = open (filename, O_RDWR, 0);
+	if (sock < 0)
+		log_fatal ("No bpf devices.%s%s%s",
+		       "   Please read the README",
+		       " section for your operating",
+		       " system.");
+
+#else
+	char filename[50];
+	int b;
 	for (b = 0; 1; b++) {
 #ifndef NO_SNPRINTF
 		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
@@ -125,6 +136,7 @@ int if_register_bpf (info)
 			break;
 		}
 	}
+#endif
 
 	/* Set the BPF buffer size to 32k */
 	bufsize = 32768;
