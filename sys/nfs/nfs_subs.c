@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.64 1999/02/26 23:44:47 wrstuden Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.65 1999/02/27 00:47:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2217,7 +2217,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	mp = vfs_getvfs(&fhp->fh_fsid);
 	if (!mp)
 		return (ESTALE);
-	error = VFS_CHKEXP(mp, nam, &exflags, &credanon);
+	error = VFS_CHECKEXP(mp, nam, &exflags, &credanon);
 	if (error)
 		return (error);
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
