@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.3 2000/11/01 23:57:14 eeh Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.4 2000/11/08 23:44:01 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,6 +159,7 @@ sunkbd_attach(parent, self, aux)
 	cc->cc_iclose = kbd_cc_close;
 	cc->cc_upstream = NULL;
 	if (args->kmta_consdev) {
+		char magic[4];
 
 		/*
 		 * Hookup ourselves as the console input channel
@@ -171,6 +172,12 @@ sunkbd_attach(parent, self, aux)
 		args->kmta_consdev = cn_tab;
 		k->k_isconsole = 1;
 		printf(" (console input)");
+
+		/* Set magic to "L1-A" */
+		magic[0] = KBD_L1;
+		magic[1] = KBD_A;
+		magic[2] = 0;
+		cn_set_magic(magic);
 	} else {
 		extern void kd_attach_input(struct cons_channel *);
 
