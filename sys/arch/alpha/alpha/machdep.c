@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.115 1998/03/26 02:21:46 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.116 1998/04/15 00:46:41 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 1998/03/26 02:21:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 1998/04/15 00:46:41 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,11 @@ nobootinfo:
 	/* We should always be running on the the primary. */
 	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());
 
-	/* On single-CPU systypes, the primary should always be CPU 0. */
+	/*
+	 * On single-CPU systypes, the primary should always be CPU 0,
+	 * except on Alpha 8200 systems where the CPU id is related
+	 * to the VID, which is related to the Turbo Laser node id.
+	 */
 	if (cputype != ST_DEC_21000)
 		assert(hwrpb->rpb_primary_cpu_id == 0);
 #endif
