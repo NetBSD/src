@@ -8,7 +8,7 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.8 1993/11/07 10:14:24 cgd Exp $
+#	$Id: services,v 1.9 1993/11/08 19:49:15 cgd Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp
@@ -175,3 +175,8 @@ kpasswd		761/tcp		kpwd	# Kerberos "passwd"
 #klogin		543/tcp			# Kerberos rlogin
 eklogin		2105/tcp		# Kerberos encrypted rlogin
 #kshell		544/tcp		krcmd	# Kerberos remote shell
+#
+# Unofficial but necessary (for NetBSD) services
+#
+supfilesrv	871/tcp			# SUP server
+supfiledbg	1127/tcp		# SUP debugging
