@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.83 2004/05/02 12:36:55 pk Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.84 2004/05/04 21:27:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.83 2004/05/02 12:36:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.84 2004/05/04 21:27:28 pk Exp $");
 
 #include "opt_compat_43.h"
 
@@ -660,12 +660,8 @@ struct ucred *
 crcopy(struct ucred *cr)
 {
 	struct ucred *newcr;
-	int n;
 
-	simple_lock(&cr->cr_lock);
-	n = cr->cr_ref;
-	simple_unlock(&cr->cr_lock);
-	if (n == 1)
+	if (cr->cr_ref == 1)
 		return (cr);
 
 	newcr = crget();
