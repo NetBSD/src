@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 1997/01/08 04:03:50 oki Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 1997/01/08 10:15:51 oki Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ fpu_probe()
 	 * Now, restore a NULL state to reset the FPU.
 	 */
 	fpframe[0] = fpframe[1] = 0;
-	m68881_restore(fpframe);
+	m68881_restore((struct fpframe *)fpframe);
 
 	/*
 	 * The size of a 68881 IDLE frame is 0x18
