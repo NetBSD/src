@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.34 1995/04/01 08:45:33 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.35 1995/04/01 10:27:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -288,8 +288,10 @@ mcdopen(dev, flag, fmt, p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((sc->flags & MCDF_LOADED) == 0)
-			return ENXIO;
+		if ((sc->flags & MCDF_LOADED) == 0) {
+			error = EIO;
+			goto bad3;
+		}
 	} else {
 		/*
 		 * Lock the drawer.  This will also notice any pending disk
@@ -362,6 +364,7 @@ bad:
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
 	}
 
+bad3:
 	mcdunlock(sc);
 	return error;
 }
