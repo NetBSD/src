@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1997/04/09 21:00:40 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1997/05/01 15:00:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3552,7 +3552,15 @@ int
 pmap_pa_exists(pa)
 	vm_offset_t pa;
 {
-	/* XXX - NOTYET */
+	register int i;
+
+	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
+		if ((pa >= avail_mem[i].pmem_start) &&
+			(pa <  avail_mem[i].pmem_end))
+			return (1);
+		if (avail_mem[i].pmem_next == NULL)
+			break;
+	}
 	return (0);
 }
 
