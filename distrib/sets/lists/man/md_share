@@ -96,7 +96,6 @@
 ./usr/share/man/cat4/i386/busmouse.0
 ./usr/share/man/cat4/i386/com.0
 ./usr/share/man/cat4/i386/console.0
-./usr/share/man/cat4/i386/ed.0
 ./usr/share/man/cat4/i386/fdc.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
@@ -383,7 +382,6 @@
 ./usr/share/man/man4/i386/busmouse.4
 ./usr/share/man/man4/i386/com.4
 ./usr/share/man/man4/i386/console.4
-./usr/share/man/man4/i386/ed.4
 ./usr/share/man/man4/i386/fdc.4
 ./usr/share/man/man4/i386/ie.4
 ./usr/share/man/man4/i386/intro.4
