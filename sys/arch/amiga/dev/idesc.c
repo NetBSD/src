@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.36 1999/01/10 13:35:39 tron Exp $	*/
+/*	$NetBSD: idesc.c,v 1.37 1999/03/26 07:00:37 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -73,8 +73,6 @@
  * A4000 IDE interface, emulating a SCSI controller
  */
 
-#include "idesc.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -92,11 +90,16 @@
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/atapi_all.h>
+#include <dev/ata/atareg.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
+
+#include "atapibus.h"
+#include "idesc.h"
 
 #define	b_cylin		b_resid
 
@@ -109,6 +112,7 @@ struct regs {
 #define ide_precomp		ide_error
 	char	____pad1[3];
 	volatile u_char		ide_seccnt;		/* 0a */
+#define ide_ireason		ide_seccnt	/* interrupt reason (ATAPI) */
 	char	____pad2[3];
 	volatile u_char		ide_sector;		/* 0e */
 	char	____pad3[3];
@@ -152,6 +156,24 @@ typedef volatile struct regs *ide_regmap_p;
 #define	IDEC_READP	0xec
 
 #define IDECTL_IDS	0x02		/* Interrupt disable */
+#define IDECTL_RST	0x04		/* Controller reset */
+
+/* ATAPI commands */
+#define ATAPI_NOP	0x00
+#define ATAPI_SOFT_RST	0x08
+#define ATAPI_PACKET	0xa0
+#define ATAPI_IDENTIFY	0xa1
+
+/* ATAPI ireason */
+#define IDEI_CMD	0x01		/* command(1) or data(0) */
+#define IDEI_IN		0x02		/* transfer to(1) to from(0) host */
+#define	IDEI_RELEASE	0x04		/* bus released until finished */
+
+#define	PHASE_CMDOUT	(IDES_DRQ | IDEI_CMD)
+#define	PHASE_DATAIN	(IDES_DRQ | IDEI_IN)
+#define	PHASE_DATAOUT	(IDES_DRQ)
+#define	PHASE_COMPLETED	(IDEI_IN | IDEI_CMD)
+#define	PHASE_ABORTED	(0)
 
 struct ideparams {
 	/* drive info */
@@ -194,6 +216,9 @@ struct ide_softc {
 	long	sc_blkcnt;	/* block count of active request */
 	int	sc_flags;
 #define	IDEF_ALIVE	0x01	/* it's a valid device	*/
+#define IDEF_ATAPI	0x02	/* it's an ATAPI device */
+#define IDEF_ACAPLEN	0x04
+#define	IDEF_ACAPDRQ	0x08
 	short	sc_error;
 	char	sc_drive;
 	char	sc_state;
@@ -233,6 +258,8 @@ struct idec_softc
 	int	state;
 	int	saved;
 	int	retry;
+	char	sc_status;
+	char	sc_error;
 	char	sc_stat[2];
 	struct ide_softc	sc_ide[2];
 };
@@ -253,6 +280,11 @@ void idesetdelay __P((int));
 void ide_scsidone __P((struct idec_softc *, int));
 void ide_donextcmd __P((struct idec_softc *));
 int  idesc_intr __P((void *));
+int  ide_atapi_icmd __P((struct idec_softc *, int, void *, int, void *, int));
+
+int ide_atapi_start __P((struct idec_softc *));
+int ide_atapi_intr __P((struct idec_softc *));
+void ide_atapi_done __P((struct idec_softc *));
 
 struct scsipi_device idesc_scsidev = {
 	NULL,		/* use default error handler */
@@ -274,6 +306,7 @@ struct {
 	{ 0x0002, 0x04, 0x06},	/* Reference position not found */
 	{ 0x0004, 0x05, 0x20},	/* Invalid command */
 	{ 0x0010, 0x03, 0x12},	/* ID address mark not found */
+	{ 0x0020, 0x06, 0x00},	/* Media changed */
 	{ 0x0040, 0x03, 0x11},	/* Unrecovered read error */
 	{ 0x0080, 0x03, 0x11},	/* Bad block mark detected */
 	{ 0x0000, 0x05, 0x00}	/* unknown */
@@ -354,6 +387,21 @@ idescattach(pdp, dp, auxp)
 	if (ide_debug)
 		ide_dump_regs(rp);
 #endif
+	if (idereset(sc) != 0) {
+#ifdef DEBUG_ATAPI
+		printf("\nIDE reset failed, checking ATAPI ");
+#endif
+		rp->ide_sdh = 0xb0;	/* slave */
+#ifdef DEBUG_ATAPI
+		printf(" cyl lo %x hi %x\n", rp->ide_cyl_lo, rp->ide_cyl_hi);
+#endif
+		delay(500000);
+		idereset(sc);
+	}
+#ifdef DEBUG_ATAPI
+	if (rp->ide_cyl_lo == 0x14 && rp->ide_cyl_hi == 0xeb)
+		printf(" ATAPI drive present?\n");
+#endif
 	rp->ide_error = 0x5a;
 	rp->ide_cyl_lo = 0xa5;
 	if (rp->ide_error == 0x5a || rp->ide_cyl_lo != 0xa5) {
@@ -389,8 +437,83 @@ idescattach(pdp, dp, auxp)
 	for (i = 0; i < 2; ++i) {
 		rp->ide_sdh = 0xa0 | (i << 4);
 		sc->sc_ide[i].sc_drive = i;
-		if ((rp->ide_status & IDES_READY) == 0)
-			continue;
+		if ((rp->ide_status & IDES_READY) == 0) {
+			int len;
+			struct ataparams id;
+			u_short *p = (u_short *)&id;
+
+			sc->sc_ide[i].sc_flags |= IDEF_ATAPI;
+			if (idecommand(&sc->sc_ide[i], 0, 0, 0, 0, ATAPI_SOFT_RST)
+			    != 0) {
+				printf("\nATAPI_SOFT_RESET failed for drive %d",
+				    i);
+				continue;
+			}
+			if (wait_for_unbusy(sc) != 0) {
+				printf("\nATAPI wait for unbusy failed");
+				continue;
+			}
+			if (idecommand(&sc->sc_ide[i], 0, 0, 0,
+			    sizeof(struct ataparams), ATAPI_IDENTIFY) != 0 ||
+			    wait_for_drq(sc) != 0) {
+				printf("\nATAPI_IDENTIFY failed for drive %d",
+				    i);
+				continue;
+			}
+			len = rp->ide_cyl_lo + rp->ide_cyl_hi * 256;
+#ifdef DEBUG_ATAPI
+			printf("\nATAPI_IDENTIFY returned %d/%d bytes",
+			    len, sizeof(struct ataparams));
+#endif
+			while (len) {
+				if (p < (u_short *)(&id + 1))
+					*p++ = rp->ide_data;
+				else
+					rp->ide_data;
+				len -= 2;
+			}
+			bswap(id.atap_model, sizeof(id.atap_model));
+			bswap(id.atap_serial, sizeof(id.atap_serial));
+			bswap(id.atap_revision, sizeof(id.atap_revision));
+			strncpy(sc->sc_ide[i].sc_params.idep_model, id.atap_model,
+			    sizeof(sc->sc_ide[i].sc_params.idep_model));
+			strncpy(sc->sc_ide[i].sc_params.idep_rev, id.atap_revision,
+			    sizeof(sc->sc_ide[i].sc_params.idep_rev));
+			for (len = sizeof(id.atap_model) - 1;
+			    id.atap_model[len] == ' ' && len != 0; --len)
+				;
+			if (len < sizeof(id.atap_model) - 1)
+				id.atap_model[len] = 0;
+			for (len = sizeof(id.atap_serial) - 1;
+			    id.atap_serial[len] == ' ' && len != 0; --len)
+				;
+			if (len < sizeof(id.atap_serial) - 1)
+				id.atap_serial[len] = 0;
+			for (len = sizeof(id.atap_revision) - 1;
+			    id.atap_revision[len] == ' ' && len != 0; --len)
+				;
+			if (len < sizeof(id.atap_revision) - 1)
+				id.atap_revision[len] = 0;
+			bswap((char *)&id.atap_config, sizeof(id.atap_config));
+#ifdef DEBUG_ATAPI
+			printf("\nATAPI device: type %x", ATAPI_CFG_TYPE(id.atap_config));
+			printf(" cyls %04x heads %04x",
+			    id.atap_cylinders, id.atap_heads);
+			printf(" bpt %04x bps %04x",
+			    id.__retired1[0],
+			    id.__retired2[0]);
+			printf(" drq_rem %02x", id.atap_config& 0xff);
+			printf("\n model %s rev %s ser %s", id.atap_model,
+			    id.atap_revision, id.atap_serial);
+			printf("\n cap %04x%04x sect %04x%04x",
+			    id.atap_curcapacity[0], id.atap_curcapacity[1],
+			    id.atap_capacity[0], id.atap_capacity[1]);
+#endif
+			if (id.atap_config & ATAPI_CFG_CMD_16)
+				sc->sc_ide[i].sc_flags |= IDEF_ACAPLEN;
+			if ((id.atap_config & ATAPI_CFG_DRQ_MASK) == ATAPI_CFG_IRQ_DRQ)
+				sc->sc_ide[i].sc_flags |= IDEF_ACAPDRQ;
+		}
 		sc->sc_ide[i].sc_flags |= IDEF_ALIVE;
 		rp->ide_ctlr = 0;
 	}
@@ -504,7 +627,8 @@ ide_donextcmd(dev)
 	else 
 		stat = dev->sc_stat[0];
 	
-	ide_scsidone(dev, stat);
+	if (dev->sc_xs)
+		ide_scsidone(dev, stat);
 }
 
 void
@@ -577,6 +701,8 @@ idegetsense(dev, xs)
 	struct scsipi_sense rqs;
 	struct scsipi_link *slp;
 
+	if (dev->sc_cur->sc_flags & IDEF_ATAPI)
+		return (0);
 	slp = xs->sc_link;
 	
 	rqs.opcode = REQUEST_SENSE;
@@ -610,6 +736,17 @@ int
 idereset(sc)
 	struct idec_softc *sc;
 {
+	ide_regmap_p regs=sc->sc_cregs;
+
+	regs->ide_ctlr = IDECTL_RST | IDECTL_IDS;
+	delay(1000);
+	regs->ide_ctlr = IDECTL_IDS;
+	delay(1000);
+	(void) regs->ide_error;
+	if (wait_for_unbusy(sc) < 0) {
+		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
 	return (0);
 }
 
@@ -620,34 +757,39 @@ idewait (sc, mask)
 {
 	ide_regmap_p regs = sc->sc_cregs;
 	int timeout = 0;
+	int status = sc->sc_status = regs->ide_status;
 
-	if ((regs->ide_status & IDES_BUSY) == 0 &&
-	    (regs->ide_status & mask) == mask)
+	if ((status & IDES_BUSY) == 0 && (status & mask) == mask)
 		return (0);
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idewait busy: %02x\n", regs->ide_status);
+		printf ("idewait busy: %02x\n", status);
 #endif
 	for (;;) {
-		if ((regs->ide_status & IDES_BUSY) == 0 &&
-		    (regs->ide_status & mask) == mask)
+		status = sc->sc_status = regs->ide_status;
+		if ((status & IDES_BUSY) == 0 && (status & mask) == mask)
 			break;
-		if (regs->ide_status & IDES_ERR)
+#if 0
+		if (status & IDES_ERR)
 			break;
+#endif
 		if (++timeout > 10000) {
-			printf ("idewait timeout %02x\n", regs->ide_status);
+			printf ("idewait timeout status %02x error %02x\n",
+			    status, regs->ide_error);
 			return (-1);
 		}
 		delay (1000);
 	}
-	if (regs->ide_status & IDES_ERR)
-		printf ("idewait: error %02x %02x\n", regs->ide_error,
-		    regs->ide_status);
+	if (status & IDES_ERR) {
+		sc->sc_error = regs->ide_error;
+		printf ("idewait: status %02x error %02x\n", status,
+		    sc->sc_error);
+	}
 #ifdef DEBUG
 	else if (ide_debug)
-		printf ("idewait delay %d %02x\n", timeout, regs->ide_status);
+		printf ("idewait delay %d %02x\n", timeout, status);
 #endif
-	return (regs->ide_status & IDES_ERR);
+	return (status & IDES_ERR);
 }
 
 int
@@ -667,7 +809,7 @@ idecommand (ide, cylin, head, sector, count, cmd)
 	if (wait_for_unbusy(idec) < 0)
 		return (-1);
 	regs->ide_sdh = 0xa0 | (ide->sc_drive << 4) | head;
-	if (cmd == IDEC_DIAGNOSE || cmd == IDEC_IDC)
+	if (cmd == IDEC_DIAGNOSE || cmd == IDEC_IDC || ide->sc_flags & IDEF_ATAPI)
 		stat = wait_for_unbusy(idec);
 	else
 		stat = idewait(idec, IDES_READY);
@@ -839,6 +981,14 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 	if ((ide->sc_flags & IDEF_ALIVE) == 0)
 		return (-1);
 
+	if(ide->sc_flags & IDEF_ATAPI) {
+#ifdef DEBUG
+		if (ide_debug)
+			printf("ideicmd: atapi cmd %02x\n", *((u_char *)cbuf));
+#endif
+		return (ide_atapi_icmd(dev, target, cbuf, clen, buf, len));
+	}
+
 	if (*((u_char *)cbuf) != REQUEST_SENSE)
 		ide->sc_error = 0;
 	switch (*((u_char *)cbuf)) {
@@ -852,8 +1002,8 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 			return (dev->sc_stat[0]);
 		inqbuf = (void *) buf;
 		bzero (buf, len);
-		inqbuf->device = 0;	/* XXX fixed disk */
-		inqbuf->dev_qual2 = 0;	/* XXX check RMB */
+		inqbuf->device = 0;
+		inqbuf->dev_qual2 = 0;	/* XXX check RMB? */
 		inqbuf->version = 2;
 		inqbuf->response_format = 2;
 		inqbuf->additional_length = 31;
@@ -869,7 +1019,9 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		*((long *)buf) = ide->sc_params.idep_sectors *
 		    ide->sc_params.idep_heads *
 		    ide->sc_params.idep_fixedcyl - 1;
-		*((long *)buf + 1) = 512;	/* XXX 512 byte blocks */
+		*((long *)buf + 1) = ide->sc_flags & IDEF_ATAPI ?
+		    512	:			/* XXX 512 byte blocks */
+		    2048;			/* XXX */
 		dev->sc_stat[0] = 0;
 		return (0);
 
@@ -938,8 +1090,6 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		*((u_char *) buf + 2) = sense_convert[i].scsi_sense_key;
 		*((u_char *) buf + 12) = sense_convert[i].scsi_sense_qual;
 		dev->sc_stat[0] = 0;
-printf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
-    sense_convert[i].scsi_sense_key, sense_convert[i].scsi_sense_qual);
 		return (0);
 
 	case 0x01 /*REWIND*/:
@@ -976,6 +1126,14 @@ idego(dev, xs)
 	if (ide_debug > 1)
 		printf ("ide_go: %02x\n", xs->cmd->opcode);
 #endif
+	if(ide->sc_flags & IDEF_ATAPI) {
+#ifdef DEBUG
+		if (ide_debug)
+			printf("idego: atapi cmd %02x\n", xs->cmd->opcode);
+#endif
+		dev->sc_cur = ide;
+		return (idestart(dev));
+	}
 	if (xs->cmd->opcode != SCSI_READ_COMMAND && xs->cmd->opcode != READ_BIG &&
 	    xs->cmd->opcode != SCSI_WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
 		ideicmd (dev, xs->sc_link->scsipi_scsi.target, xs->cmd, xs->cmdlen,
@@ -1020,6 +1178,8 @@ idestart(dev)
 	ide_regmap_p regs = dev->sc_cregs;
 
 	dev->sc_flags |= IDECF_ACTIVE;
+	if (ide->sc_flags & IDEF_ATAPI)
+		return(ide_atapi_start(dev));
 	blknum = ide->sc_blknum + ide->sc_skip;
 	if (ide->sc_mskip == 0) {
 		ide->sc_mbcount = ide->sc_bcount;
@@ -1092,6 +1252,8 @@ idesc_intr(arg)
 #endif
 	if ((dev->sc_flags & IDECF_ACTIVE) == 0)
 		return (1);
+	if (dev->sc_cur->sc_flags & IDEF_ATAPI)
+		return (ide_atapi_intr(dev));
 	dev->sc_flags &= ~IDECF_ACTIVE;
 	if (wait_for_unbusy(dev) < 0)
 		printf ("idesc_intr: timeout waiting for unbusy\n");
@@ -1099,7 +1261,9 @@ idesc_intr(arg)
 	if (dummy & IDES_ERR) {
 		dev->sc_stat[0] = SCSI_CHECK;
 		ide->sc_error = regs->ide_error;
-printf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
+#ifdef DEBUG
+		printf("idesc_intr: error %02x, %02x\n", ide->sc_error, dummy);
+#endif
 		ide_scsidone(dev, dev->sc_stat[0]);
 	}
 	if (dev->sc_flags & IDECF_READ) {
@@ -1127,3 +1291,349 @@ printf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
 		idestart (dev);
 	return (1);
 }	
+
+int ide_atapi_start(dev)
+	struct idec_softc *dev;
+{
+	ide_regmap_p regs = dev->sc_cregs;
+	struct scsipi_xfer *xs;
+	int clen;
+
+	if (wait_for_unbusy(dev) != 0) {
+		printf("ide_atapi_start: not ready, st = %02x\n",
+		    regs->ide_status);
+		dev->sc_stat[0] = -1;
+		ide_scsidone(dev, dev->sc_stat[0]);
+		return (-1);
+	}
+	xs = dev->sc_xs;
+	clen = dev->sc_cur->sc_flags & IDEF_ACAPLEN ? 16 : 12;
+
+	if (idecommand(dev->sc_cur, 0, 0, 0, xs->datalen, ATAPI_PACKET) != 0) {
+		printf("ide_atapi_start: send packet failed\n");
+		dev->sc_stat[0] = -1;
+		ide_scsidone(dev, dev->sc_stat[0]);
+		return(-1);
+	}
+
+	if (!(dev->sc_cur->sc_flags & IDEF_ACAPDRQ)) {
+		int i;
+		u_short *bf;
+		union {
+			struct scsipi_rw_big rw_big;
+			struct scsi_mode_sense_big md_big;
+		} cmd;
+
+		/* Wait for cmd i/o phase */
+		for (i = 20000; i > 0; --i) {
+			int phase;
+			phase = (regs->ide_ireason & (IDEI_CMD | IDEI_IN)) |
+			    (regs->ide_status & IDES_DRQ);
+			if (phase == PHASE_CMDOUT)
+				break;
+			delay(10);
+		}
+#ifdef DEBUG
+		if (ide_debug)
+			printf("atapi_start: wait for cmd i/o phase i = %d\n", i);
+#endif
+
+		bf = (u_short *)xs->cmd;
+		switch (xs->cmd->opcode) {
+		case SCSI_READ_COMMAND:
+		case SCSI_WRITE_COMMAND:
+			bzero((char *)&cmd, sizeof(cmd.rw_big));
+			cmd.rw_big.opcode = xs->cmd->opcode | 0x20;
+			cmd.rw_big.addr[3] = xs->cmd->bytes[2];
+			cmd.rw_big.addr[2] = xs->cmd->bytes[1];
+			cmd.rw_big.addr[1] = xs->cmd->bytes[0] & 0x0f;
+			cmd.rw_big.length[1] = xs->cmd->bytes[3];
+			if (xs->cmd->bytes[3] == 0)
+				cmd.rw_big.length[0] = 1;
+			bf = (u_short *)&cmd.rw_big;
+			break;
+		case SCSI_MODE_SENSE:
+		case SCSI_MODE_SELECT:
+			bzero((char *)&cmd, sizeof(cmd.md_big));
+			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
+			cmd.md_big.byte2 = xs->cmd->bytes[0];
+			cmd.md_big.page = xs->cmd->bytes[1];
+			cmd.md_big.length[1] = xs->cmd->bytes[3];
+			bf = (u_short *)&cmd.md_big;
+			break;
+		}
+		for (i = 0; i < clen; i += 2)
+			regs->ide_data = *bf++;
+	}
+
+	return (0);
+}
+
+int
+ide_atapi_icmd(dev, target, cbuf, clen, buf, len)
+	struct idec_softc *dev;
+	int target;
+	void *cbuf;
+	int clen;
+	void *buf;
+	int len;
+{
+	struct ide_softc *ide = &dev->sc_ide[target];
+	struct scsipi_xfer *xs = dev->sc_xs;
+	ide_regmap_p regs = dev->sc_cregs;
+	int i;
+	u_short *bf;
+
+	clen = dev->sc_flags & IDEF_ACAPLEN ? 16 : 12;
+	ide->sc_buf = xs->data;
+	ide->sc_bcount = xs->datalen;
+
+	if (wait_for_unbusy(dev) != 0) {
+		printf("ide_atapi_icmd: not ready, st = %02x\n",
+		    regs->ide_status);
+		dev->sc_stat[0] = -1;
+		return (-1);
+	}
+
+	if (idecommand(ide, 0, 0, 0, len, ATAPI_PACKET) != 0) {
+		printf("ide_atapi_icmd: send packet failed\n");
+		dev->sc_stat[0] = -1;
+		return(-1);
+	}
+	/* Wait for cmd i/o phase */
+	for (i = 20000; i > 0; --i) {
+		int phase;
+		phase = (regs->ide_ireason & (IDEI_CMD | IDEI_IN)) |
+		    (regs->ide_status & IDES_DRQ);
+		if (phase == PHASE_CMDOUT)
+			break;
+		delay(10);
+	}
+#ifdef DEBUG
+	if (ide_debug)
+		printf("atapi_icmd: wait for cmd i/o phase i = %d\n", i);
+#endif
+
+	for (i = 0, bf = (u_short *)cbuf; i < clen; i += 2)
+		regs->ide_data = *bf++;
+
+	/* Wait for data i/o phase */
+	for (i = 20000; i > 0; --i) {
+		int phase;
+		phase = (regs->ide_ireason & (IDEI_CMD | IDEI_IN)) |
+		    (regs->ide_status & IDES_DRQ);
+		if (phase != PHASE_CMDOUT)
+			break;
+		delay(10);
+	}
+#ifdef DEBUG
+	if (ide_debug)
+		printf("atapi_icmd: wait for data i/o phase i = %d\n", i);
+#endif
+
+	dev->sc_cur = ide;
+	while ((xs->flags & ITSDONE) == 0) {
+		ide_atapi_intr(dev);
+		for (i = 2000; i > 0; --i)
+			if ((regs->ide_status & IDES_DRQ) == 0)
+				break;
+#ifdef DEBUG
+		if (ide_debug)
+			printf("atapi_icmd: intr i = %d\n", i);
+#endif
+	}
+	return (1);
+}
+
+int
+ide_atapi_intr(dev)
+	struct idec_softc *dev;
+{
+	struct ide_softc *ide = dev->sc_cur;
+	struct scsipi_xfer *xs = dev->sc_xs;
+	ide_regmap_p regs = dev->sc_cregs;
+	u_short *bf;
+	int phase;
+	int len;
+	int status;
+	int err;
+	int ire;
+	int retries = 0;
+	union {
+		struct scsipi_rw_big rw_big;
+		struct scsi_mode_sense_big md_big;
+	} cmd;
+
+	if (wait_for_unbusy(dev) < 0) {
+		if ((regs->ide_status & IDES_ERR) == 0) {
+			printf("atapi_intr: controller busy\n");
+			return (0);
+		} else {
+			xs->error = XS_SENSE;
+			xs->sense.atapi_sense = regs->ide_error;
+			ide_atapi_done(dev);
+			return (0);
+		}
+	}
+
+again:
+	len = regs->ide_cyl_lo + 256 * regs->ide_cyl_hi;
+	status = regs->ide_status;
+	err = regs->ide_error;
+	ire = regs->ide_ireason;
+	phase = (ire & (IDEI_CMD | IDEI_IN)) | (status & IDES_DRQ);
+#ifdef DEBUG
+	if (ide_debug)
+		printf("ide_atapi_intr: len %d st %x err %x ire %x :",
+		    len, status, err, ire);
+#endif
+
+	switch(phase) {
+	case PHASE_CMDOUT:
+#ifdef DEBUG
+		if (ide_debug)
+			printf("PHASE_CMDOUT\n");
+#endif
+		len = ide->sc_flags & IDEF_ACAPLEN ? 16 : 12;
+
+		bf = (u_short *)xs->cmd;
+		switch (xs->cmd->opcode) {
+		case SCSI_READ_COMMAND:
+		case SCSI_WRITE_COMMAND:
+			bzero((char *)&cmd, sizeof(cmd.rw_big));
+			cmd.rw_big.opcode = xs->cmd->opcode | 0x20;
+			cmd.rw_big.addr[3] = xs->cmd->bytes[2];
+			cmd.rw_big.addr[2] = xs->cmd->bytes[1];
+			cmd.rw_big.addr[1] = xs->cmd->bytes[0] & 0x0f;
+			cmd.rw_big.length[1] = xs->cmd->bytes[3];
+			if (xs->cmd->bytes[3] == 0)
+				cmd.rw_big.length[0] = 1;
+			bf = (u_short *)&cmd.rw_big;
+			break;
+		case SCSI_MODE_SENSE:
+		case SCSI_MODE_SELECT:
+			bzero((char *)&cmd, sizeof(cmd.md_big));
+			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
+			cmd.md_big.byte2 = xs->cmd->bytes[0];
+			cmd.md_big.page = xs->cmd->bytes[1];
+			cmd.md_big.length[1] = xs->cmd->bytes[3];
+			bf = (u_short *)&cmd.md_big;
+			break;
+		}
+#ifdef DEBUG
+		if (ide_debug > 1) {
+			int i;
+			for (i = 0; i < len; ++i)
+				printf("%s%02x ", i == 0 ? "cmd: " : " ",
+				    *((u_char *)bf + i));
+			printf("\n");
+		}
+#endif
+		while (len > 0) {
+			regs->ide_data = *bf++;
+			len -= 2;
+		}
+		return (1);
+
+	case PHASE_DATAOUT:
+#ifdef DEBUG
+		if (ide_debug)
+			printf("PHASE_DATAOUT\n");
+#endif
+		if (ide->sc_bcount < len) {
+			printf("ide_atapi_intr: write only %ld of %d bytes\n",
+			    ide->sc_bcount, len);
+			len = ide->sc_bcount;	/* XXXXXXXXXXXXX */
+		}
+		bf = (u_short *)ide->sc_buf;
+		ide->sc_buf += len;
+		ide->sc_bcount -= len;
+		while (len > 0) {
+			regs->ide_data = *bf++;
+			len -= 2;
+		}
+		return (1);
+
+	case PHASE_DATAIN:
+#ifdef DEBUG
+		if (ide_debug)
+			printf("PHASE_DATAIN\n");
+#endif
+		if (ide->sc_bcount < len) {
+			printf("ide_atapi_intr: read only %ld of %d bytes\n",
+			    ide->sc_bcount, len);
+			len = ide->sc_bcount;	/* XXXXXXXXXXXXX */
+		}
+		bf = (u_short *)ide->sc_buf;
+		ide->sc_buf += len;
+		ide->sc_bcount -= len;
+		while (len > DEV_BSIZE) {
+			R2; R2; R2; R2; R2; R2; R2; R2;
+			R2; R2; R2; R2; R2; R2; R2; R2;
+			len -= 16 * 2;
+		}
+		while (len > 0) {
+			*bf++ = regs->ide_data;
+			len -= 2;
+		}
+		return (1);
+
+	case PHASE_ABORTED:
+	case PHASE_COMPLETED:
+#ifdef DEBUG
+		if (ide_debug)
+			printf("PHASE_COMPLETED\n");
+#endif
+		if (status & IDES_ERR) {
+			printf("ide_atapi_intr: error status %x err %x\n",
+			    status, err);
+			if (err & ~0x28) {	/* Ignore media change bits */
+				xs->error = XS_SENSE;
+				xs->sense.atapi_sense = err;
+			}
+		}
+		if (ide->sc_bcount != 0)
+			printf("ide_atapi_intr: %ld bytes remaining\n", ide->sc_bcount);
+		break;
+	default:
+		if (++retries < 500) {
+			delay(100);
+			goto again;
+		}
+		printf("ide_atapi_intr: unknown phase %x\n", phase);
+		if (status & IDES_ERR) {
+			xs->error = XS_SENSE;
+			xs->sense.atapi_sense = err;
+		} else
+			xs->error = XS_DRIVER_STUFFUP;
+	}
+	dev->sc_flags &= ~IDECF_ACTIVE;
+	ide_atapi_done(dev);
+	return (1);
+}
+
+void
+ide_atapi_done(dev)
+	struct idec_softc *dev;
+{
+	struct scsipi_xfer *xs = dev->sc_xs;
+
+	if (xs->error == XS_SENSE) {
+		int atapi_sense = xs->sense.atapi_sense;
+
+		bzero((char *)&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
+		xs->sense.scsi_sense.error_code = 0x70;
+		xs->sense.scsi_sense.flags = atapi_sense >> 4;
+		if (atapi_sense & 0x01)
+			xs->sense.scsi_sense.flags |= SSD_ILI;
+		if (atapi_sense & 0x02)
+			xs->sense.scsi_sense.flags |= SSD_EOM;
+#if 0
+		if (atapi_sense & 0x04)
+			;		/* command aborted */
+#endif
+		ide_scsidone(dev, SCSI_CHECK);
+		return;
+	}
+	ide_scsidone(dev, 0);		/* ??? */
+}
