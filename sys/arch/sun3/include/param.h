@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.47.4.2 1998/02/04 21:02:15 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.47.4.3 1998/02/05 04:21:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,12 +58,6 @@
 
 /* This is needed by ps (actually USPACE). */
 #define	UPAGES		2		/* pages of u-area */
-
-/*
- * This value is used by ps to mask down kernel pointers.
- * Show 7 hex digits so it will work on both 3 and 3X.
- */
-#define _KVA_MASK ((1<<28)-1)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef	_SUN3_
