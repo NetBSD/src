@@ -1,4 +1,4 @@
-.\" $NetBSD: boot32.8,v 1.1 2004/02/23 17:03:28 reinoud Exp $
+.\" $NetBSD: boot32.8,v 1.2 2004/02/23 19:39:48 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Ben Harris
 .\" Copyright (c) 2004 Reinoud Zandijk
@@ -44,22 +44,24 @@ is a program that runs under
 .Tn RISC OS
 and launches the
 .Nx Ns /acorn32
-kernel.  It needs to be installed in a RISC OS
-filesystem and given file type FFA (Module).  The kernel it is to load
-also needs to be stored in a
+kernel.
+It needs to be installed in a RISC OS filesystem and given file
+type FFA (Module).
+The kernel it is to load also needs to be stored in a
 .Tn RISC OS
 filesystem.
 .Pp
 It takes the following standard
-.Nx 
+.Nx
 options, which set flags in the
 .Va boothowto
-variable in the booted kernel (not all flags may be effective) :
+variable in the booted kernel (not all flags may be effective):
 .Bl -tag -width Fl
 .It Fl a
 .Pq Dv RB_ASKNAME
 Cause the kernel to prompt the user for the name of the device containing the
-root filesystem.  This also causes
+root filesystem.
+This also causes
 .Nm
 to prompt for the name of the kernel to be loaded.
 .It Fl s
@@ -89,14 +91,14 @@ or from
 .Pa netbsd
 if
 .Ar file
-is not specified.  The file must be an ELF image, and may have been compressed
-using
+is not specified.
+The file must be an ELF image, and may have been compressed using
 .Xr gzip 1 .
 .Ss Use as a module
 .Nm
-is implemented as a RISC OS relocatable module.  It can be loaded into memory
-by running
-.Ql *RMLoad boot32.
+is implemented as a RISC OS relocatable module.
+It can be loaded into memory by running
+.Ql *RMLoad boot32 .
 After this,
 .Nx
 can be booted by running
@@ -105,7 +107,7 @@ as usual, but the command will be handled by the module.
 .Pp
 It should also be possible to arrange for
 .Nm
-to be loaded from ROM (e.g. from the ROM on an expansion card), in which case
+to be loaded from ROM (e.g., from the ROM on an expansion card), in which case
 .Nx
 could be made to boot automatically by making
 .Nm
@@ -116,13 +118,12 @@ When it starts up,
 .Nm
 displays the number of 4 kilobyte memory pages it has been delegated by RISC-OS
 and gives a summary about the memory map as reported by RISC-OS followed by a
-table of physical memory ranges available to the bootloader. All this
-information is mainly for bughunting booting problems.
+table of physical memory ranges available to the bootloader.
+All this information is mainly for bughunting booting problems.
 .Pp
 It then checks its internal structures and kicks out RISC-OS, relocates all
 memory pages loaded in to their final destinations and kickstarts
-.Nm
-.
+.Nm .
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /usr/mdec/boot32,ffa
