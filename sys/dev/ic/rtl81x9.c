@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.22 2000/12/03 14:24:17 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.23 2000/12/05 11:11:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -132,7 +132,7 @@
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
 
-#if defined DEBUG
+#if defined(DEBUG)
 #define STATIC
 #else
 #define STATIC static
@@ -192,17 +192,17 @@ STATIC void rtk_eeprom_putbyte(sc, addr, addr_len)
 	/*
 	 * Feed in each bit and stobe the clock.
 	 */
-	for (i = RTK_EECMD_LEN + addr_len - 1; i >= 0; i--) {
-		if (d & (1 << i)) {
+	for (i = RTK_EECMD_LEN + addr_len; i > 0; i--) {
+		if (d & (1 << (i - 1))) {
 			EE_SET(RTK_EE_DATAIN);
 		} else {
 			EE_CLR(RTK_EE_DATAIN);
 		}
-		DELAY(100);
+		DELAY(4);
 		EE_SET(RTK_EE_CLK);
-		DELAY(150);
+		DELAY(4);
 		EE_CLR(RTK_EE_CLK);
-		DELAY(100);
+		DELAY(4);
 	}
 }
 
@@ -229,13 +229,13 @@ u_int16_t rtk_read_eeprom(sc, addr, addr_len)
 	/*
 	 * Start reading bits from EEPROM.
 	 */
-	for (i = 15; i >= 0; i--) {
+	for (i = 16; i > 0; i--) {
 		EE_SET(RTK_EE_CLK);
-		DELAY(100);
+		DELAY(4);
 		if (CSR_READ_1(sc, RTK_EECMD) & RTK_EE_DATAOUT)
-			word |= (1 << i);
+			word |= 1 << (i - 1);
 		EE_CLR(RTK_EE_CLK);
-		DELAY(100);
+		DELAY(4);
 	}
 
 	/* Turn off EEPROM access mode. */
@@ -251,11 +251,11 @@ u_int16_t rtk_read_eeprom(sc, addr, addr_len)
  * direct access PHY registers.
  */
 #define MII_SET(x)					\
-	CSR_WRITE_1(sc, RTK_MII,				\
+	CSR_WRITE_1(sc, RTK_MII,			\
 		CSR_READ_1(sc, RTK_MII) | (x))
 
 #define MII_CLR(x)					\
-	CSR_WRITE_1(sc, RTK_MII,				\
+	CSR_WRITE_1(sc, RTK_MII,			\
 		CSR_READ_1(sc, RTK_MII) & ~(x))
 
 /*
@@ -274,8 +274,6 @@ STATIC void rtk_mii_sync(sc)
 		MII_CLR(RTK_MII_CLK);
 		DELAY(1);
 	}
-
-	return;
 }
 
 /*
@@ -290,8 +288,8 @@ STATIC void rtk_mii_send(sc, bits, cnt)
 
 	MII_CLR(RTK_MII_CLK);
 
-	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-                if (bits & i) {
+	for (i = cnt; i > 0; i--) {
+                if (bits & (1 << (i - 1))) {
 			MII_SET(RTK_MII_DATAOUT);
                 } else {
 			MII_CLR(RTK_MII_DATAOUT);
@@ -309,7 +307,6 @@ STATIC void rtk_mii_send(sc, bits, cnt)
 STATIC int rtk_mii_readreg(sc, frame)
 	struct rtk_softc	*sc;
 	struct rtk_mii_frame	*frame;
-	
 {
 	int			i, ack, s;
 
@@ -322,7 +319,7 @@ STATIC int rtk_mii_readreg(sc, frame)
 	frame->mii_opcode = RTK_MII_READOP;
 	frame->mii_turnaround = 0;
 	frame->mii_data = 0;
-	
+
 	CSR_WRITE_2(sc, RTK_MII, 0);
 
 	/*
@@ -361,7 +358,7 @@ STATIC int rtk_mii_readreg(sc, frame)
 	 * need to clock through 16 cycles to keep the PHY(s) in sync.
 	 */
 	if (ack) {
-		for(i = 0; i < 16; i++) {
+		for (i = 0; i < 16; i++) {
 			MII_CLR(RTK_MII_CLK);
 			DELAY(1);
 			MII_SET(RTK_MII_CLK);
@@ -370,20 +367,19 @@ STATIC int rtk_mii_readreg(sc, frame)
 		goto fail;
 	}
 
-	for (i = 0x8000; i; i >>= 1) {
+	for (i = 16; i > 0; i--) {
 		MII_CLR(RTK_MII_CLK);
 		DELAY(1);
 		if (!ack) {
 			if (CSR_READ_2(sc, RTK_MII) & RTK_MII_DATAIN)
-				frame->mii_data |= i;
+				frame->mii_data |= 1 << (i - 1);
 			DELAY(1);
 		}
 		MII_SET(RTK_MII_CLK);
 		DELAY(1);
 	}
 
-fail:
-
+ fail:
 	MII_CLR(RTK_MII_CLK);
 	DELAY(1);
 	MII_SET(RTK_MII_CLK);
@@ -392,8 +388,8 @@ fail:
 	splx(s);
 
 	if (ack)
-		return(1);
-	return(0);
+		return (1);
+	return (0);
 }
 
 /*
@@ -402,7 +398,6 @@ fail:
 STATIC int rtk_mii_writereg(sc, frame)
 	struct rtk_softc	*sc;
 	struct rtk_mii_frame	*frame;
-	
 {
 	int			s;
 
@@ -410,7 +405,6 @@ STATIC int rtk_mii_writereg(sc, frame)
 	/*
 	 * Set up frame for TX.
 	 */
-
 	frame->mii_stdelim = RTK_MII_STARTDELIM;
 	frame->mii_opcode = RTK_MII_WRITEOP;
 	frame->mii_turnaround = RTK_MII_TURNAROUND;
@@ -442,7 +436,7 @@ STATIC int rtk_mii_writereg(sc, frame)
 
 	splx(s);
 
-	return(0);
+	return (0);
 }
 
 STATIC int rtk_phy_readreg(self, phy, reg)
@@ -451,8 +445,8 @@ STATIC int rtk_phy_readreg(self, phy, reg)
 {
 	struct rtk_softc	*sc = (void *)self;
 	struct rtk_mii_frame	frame;
-	u_int16_t		rval = 0;
-	u_int16_t		rtk8139_reg = 0;
+	int			rval = 0;
+	int			rtk8139_reg = 0;
 
 	if (sc->rtk_type == RTK_8139) {
 		if (phy != 7)
@@ -478,10 +472,10 @@ STATIC int rtk_phy_readreg(self, phy, reg)
 #if 0
 			printf("%s: bad phy register\n", sc->sc_dev.dv_xname);
 #endif
-			return(0);
+			return (0);
 		}
 		rval = CSR_READ_2(sc, rtk8139_reg);
-		return(rval);
+		return (rval);
 	}
 
 	bzero((char *)&frame, sizeof(frame));
@@ -490,7 +484,7 @@ STATIC int rtk_phy_readreg(self, phy, reg)
 	frame.mii_regaddr = reg;
 	rtk_mii_readreg(sc, &frame);
 
-	return(frame.mii_data);
+	return (frame.mii_data);
 }
 
 STATIC void rtk_phy_writereg(self, phy, reg, data)
@@ -500,7 +494,7 @@ STATIC void rtk_phy_writereg(self, phy, reg, data)
 {
 	struct rtk_softc	*sc = (void *)self;
 	struct rtk_mii_frame	frame;
-	u_int16_t		rtk8139_reg = 0;
+	int			rtk8139_reg = 0;
 
 	if (sc->rtk_type == RTK_8139) {
 		if (phy != 7)
@@ -539,8 +533,6 @@ STATIC void rtk_phy_writereg(self, phy, reg, data)
 	frame.mii_data = data;
 
 	rtk_mii_writereg(sc, &frame);
-
-	return;
 }
 
 STATIC void
@@ -608,8 +600,6 @@ STATIC void rtk_setmulti(sc)
 	CSR_WRITE_4(sc, RTK_RXCFG, rxfilt);
 	CSR_WRITE_4(sc, RTK_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, RTK_MAR4, hashes[1]);
-
-	return;
 }
 
 void rtk_reset(sc)
@@ -621,13 +611,11 @@ void rtk_reset(sc)
 
 	for (i = 0; i < RTK_TIMEOUT; i++) {
 		DELAY(10);
-		if (!(CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_RESET))
+		if ((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_RESET) == 0)
 			break;
 	}
 	if (i == RTK_TIMEOUT)
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
-
-        return;
 }
 
 /*
@@ -638,12 +626,11 @@ void
 rtk_attach(sc)
 	struct rtk_softc *sc;
 {
-
 	struct ifnet *ifp;
 	u_int16_t val;
 	u_int8_t eaddr[ETHER_ADDR_LEN];
 	int error;
-	int i,addr_len;
+	int i, addr_len;
 
 	callout_init(&sc->rtk_tick_ch);
 
@@ -669,7 +656,7 @@ rtk_attach(sc)
 	eaddr[5] = val >> 8;
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    RTK_RXBUFLEN + 32, PAGE_SIZE, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
+	    RTK_RXBUFLEN + 16, PAGE_SIZE, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate recv buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -677,20 +664,15 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg,
-	    RTK_RXBUFLEN + 32, (caddr_t *)&sc->rtk_cdata.rtk_rx_buf,
+	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_cdata.rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map recv buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
 
-	/* Leave a few bytes before the start of the RX ring buffer. */
-	sc->rtk_cdata.rtk_rx_buf_ptr = sc->rtk_cdata.rtk_rx_buf;
-	sc->rtk_cdata.rtk_rx_buf += sizeof(u_int64_t);
-
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    RTK_RXBUFLEN + 32 - sizeof(u_int64_t), 1,
-	    RTK_RXBUFLEN + 32 - sizeof(u_int64_t), 0, BUS_DMA_NOWAIT,
+	    RTK_RXBUFLEN + 16, 1, RTK_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT,
 	    &sc->recv_dmamap)) != 0) {
 		printf("%s: can't create recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -698,7 +680,7 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
-	    sc->rtk_cdata.rtk_rx_buf, RTK_RXBUFLEN + 32 - sizeof(u_int64_t),
+	    sc->rtk_cdata.rtk_rx_buf, RTK_RXBUFLEN + 16,
 	    NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -723,8 +705,8 @@ rtk_attach(sc)
 	/* Reset the adapter. */
 	rtk_reset(sc);
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	       ether_sprintf(eaddr));
+	printf("%s: Ethernet address %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(eaddr));
 
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
@@ -745,7 +727,7 @@ rtk_attach(sc)
 	sc->mii.mii_statchg = rtk_phy_statchg;
 	ifmedia_init(&sc->mii.mii_media, 0, rtk_ifmedia_upd, rtk_ifmedia_sts);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, 
-				MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {
@@ -767,7 +749,7 @@ rtk_attach(sc)
 	sc->sc_sdhook = shutdownhook_establish(rtk_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unbale to establish shutdown hook\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 	/*
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
@@ -775,21 +757,21 @@ rtk_attach(sc)
 	sc->sc_powerhook = powerhook_establish(rtk_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 	return;
-fail_4:
+ fail_4:
 	for (i = 0; i < RTK_TX_LIST_CNT; i++)
 		if (sc->snd_dmamap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->snd_dmamap[i]);
-fail_3:
+ fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf_ptr,
-	    RTK_RXBUFLEN + 32 - sizeof(u_int64_t));
-fail_1:
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	    RTK_RXBUFLEN + 16);
+ fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
-fail_0:
+ fail_0:
 	return;
 }
 
@@ -812,7 +794,7 @@ STATIC int rtk_list_tx_init(sc)
 	sc->rtk_cdata.cur_tx = 0;
 	sc->rtk_cdata.last_tx = 0;
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -826,7 +808,7 @@ rtk_activate(self, act)
 {
 	struct rtk_softc *sc = (void *) self;
 	int s, error = 0;
-	
+
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -858,7 +840,7 @@ rtk_detach(sc)
 	 */
 	if ((sc->sc_flags & RTK_ATTACHED) == 0)
 		return (0);
-	
+
 	/* Unhook our tick handler. */
 	callout_stop(&sc->rtk_tick_ch);
 
@@ -875,12 +857,12 @@ rtk_detach(sc)
 		if (sc->snd_dmamap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->snd_dmamap[i]);
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf_ptr,
-	    RTK_RXBUFLEN + 32 - sizeof(u_int64_t));
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	    RTK_RXBUFLEN + 16);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
 	powerhook_disestablish(sc->sc_powerhook);
-	
+
 	return (0);
 }
 
@@ -892,11 +874,12 @@ int
 rtk_enable(sc)
 	struct rtk_softc *sc;
 {
+
 	if (RTK_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-				sc->sc_dev.dv_xname);
-			return(EIO);
+			    sc->sc_dev.dv_xname);
+			return (EIO);
 		}
 		sc->sc_flags |= RTK_ENABLED;
 	}
@@ -911,6 +894,7 @@ void
 rtk_disable(sc)
 	struct rtk_softc *sc;
 {
+
 	if (RTK_IS_ENABLED(sc) && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~RTK_ENABLED;
@@ -951,7 +935,6 @@ rtk_power(why, arg)
 		break;
 	}
 	splx(s);
-
 }
 
 /*
@@ -1038,7 +1021,6 @@ STATIC void rtk_rxeof(sc)
 				CSR_WRITE_4(sc, RTK_RXCFG, RTK_RXCFG_CONFIG);
 				CSR_WRITE_4(sc, RTK_RXADDR,
 				    sc->recv_dmamap->dm_segs[0].ds_addr);
-				CSR_WRITE_2(sc, RTK_CURRXADDR, cur_rx - 16);
 				cur_rx = 0;
 			}
 			break;
@@ -1133,7 +1115,7 @@ STATIC void rtk_rxeof(sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
 		    cur_rx, total_len, BUS_DMASYNC_PREREAD);
 
-next_packet:
+ next_packet:
 		CSR_WRITE_2(sc, RTK_CURRXADDR, new_rx - 16);
 		cur_rx = new_rx;
 
@@ -1178,8 +1160,8 @@ STATIC void rtk_txeof(sc)
 	 */
 	do {
 		txstat = CSR_READ_4(sc, RTK_LAST_TXSTAT(sc));
-		if (!(txstat & (RTK_TXSTAT_TX_OK|
-		    RTK_TXSTAT_TX_UNDERRUN|RTK_TXSTAT_TXABRT)))
+		if ((txstat & (RTK_TXSTAT_TX_OK|
+		    RTK_TXSTAT_TX_UNDERRUN|RTK_TXSTAT_TXABRT)) == 0)
 			break;
 
 		bus_dmamap_sync(sc->sc_dmat,
@@ -1197,15 +1179,12 @@ STATIC void rtk_txeof(sc)
 			ifp->if_opackets++;
 		else {
 			ifp->if_oerrors++;
-			if ((txstat & RTK_TXSTAT_TXABRT) ||
-			    (txstat & RTK_TXSTAT_OUTOFWIN))
+			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
 		RTK_INC(sc->rtk_cdata.last_tx);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	} while (sc->rtk_cdata.last_tx != sc->rtk_cdata.cur_tx);
-
-	return;
 }
 
 int rtk_intr(arg)
@@ -1239,14 +1218,13 @@ int rtk_intr(arg)
 		if (status & RTK_ISR_RX_ERR)
 			rtk_rxeof(sc);
 
-		if ((status & RTK_ISR_TX_OK) || (status & RTK_ISR_TX_ERR))
+		if (status & (RTK_ISR_TX_OK|RTK_ISR_TX_ERR))
 			rtk_txeof(sc);
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
 			rtk_reset(sc);
 			rtk_init(ifp);
 		}
-
 	}
 
 	/* Re-enable interrupts. */
@@ -1342,7 +1320,7 @@ STATIC void rtk_start(ifp)
 			len = (ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 		CSR_WRITE_4(sc, RTK_CUR_TXADDR(sc),
-			    sc->snd_dmamap[idx]->dm_segs[0].ds_addr);
+		    sc->snd_dmamap[idx]->dm_segs[0].ds_addr);
 		CSR_WRITE_4(sc, RTK_CUR_TXSTAT(sc), RTK_TX_EARLYTHRESH | len);
 
 		RTK_INC(sc->rtk_cdata.cur_tx);
@@ -1360,8 +1338,6 @@ STATIC void rtk_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 STATIC int rtk_init(ifp)
@@ -1527,7 +1503,7 @@ STATIC int rtk_ioctl(ifp, command, data)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }
 
 STATIC void rtk_watchdog(ifp)
@@ -1542,8 +1518,6 @@ STATIC void rtk_watchdog(ifp)
 	rtk_txeof(sc);
 	rtk_rxeof(sc);
 	rtk_init(ifp);
-
-	return;
 }
 
 /*

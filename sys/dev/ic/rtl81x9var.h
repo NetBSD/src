@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.6 2000/11/30 15:52:01 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.7 2000/12/05 11:11:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -38,13 +38,11 @@
 #define RTK_RXSTAT_LEN	4
 
 struct rtk_chain_data {
-	u_int16_t		cur_rx;
 	caddr_t			rtk_rx_buf;
-	caddr_t			rtk_rx_buf_ptr;
 
 	struct mbuf		*rtk_tx_chain[RTK_TX_LIST_CNT];
-	u_int8_t		last_tx;
-	u_int8_t		cur_tx;
+	int			last_tx;
+	int			cur_tx;
 };
 
 #define RTK_INC(x)		(x = (x + 1) % RTK_TX_LIST_CNT)
@@ -89,7 +87,7 @@ struct rtk_softc {
 	struct callout		rtk_tick_ch;	/* tick callout */
 	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
-	u_int8_t		rtk_type;
+	int			rtk_type;
 	struct rtk_chain_data	rtk_cdata;
 	bus_dma_tag_t 		sc_dmat;
 	bus_dma_segment_t 	sc_dmaseg;
