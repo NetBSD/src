@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.1 1995/02/28 23:25:12 fvdl Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.2 1995/03/08 15:17:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -53,7 +53,7 @@
 #include <compat/linux/linux_signal.h>
 
 /*
- * Most of ths stuff in this file is taken from Christos' SVR4 emul
+ * Most of the stuff in this file is taken from Christos' SVR4 emul
  * code. The things that need to be done are largely the same, so
  * re-inventing the wheel doesn't make much sense.
  */
