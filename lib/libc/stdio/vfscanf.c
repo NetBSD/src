@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.9 1995/01/26 01:34:45 jtc Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.10 1995/01/27 15:20:26 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -61,23 +61,24 @@ static char *rcsid = "$Id: vfscanf.c,v 1.9 1995/01/26 01:34:45 jtc Exp $";
 #define	LONG		0x01	/* l: long or double */
 #define	LONGDBL		0x02	/* L: long double; unimplemented */
 #define	SHORT		0x04	/* h: short */
-#define	SUPPRESS	0x08	/* suppress assignment */
-#define	POINTER		0x10	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x20	/* do not skip blanks */
+#define QUAD		0x08	/* q: quad */
+#define	SUPPRESS	0x10	/* suppress assignment */
+#define	POINTER		0x20	/* weird %p pointer (`fake hex') */
+#define	NOSKIP		0x40	/* do not skip blanks */
 
 /*
  * The following are used in numeric conversions only:
  * SIGNOK, NDIGITS, DPTOK, and EXPOK are for floating point;
  * SIGNOK, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
-#define	SIGNOK		0x40	/* +/- is (still) legal */
-#define	NDIGITS		0x80	/* no digits detected */
+#define	SIGNOK		0x080	/* +/- is (still) legal */
+#define	NDIGITS		0x100	/* no digits detected */
 
-#define	DPTOK		0x100	/* (float) decimal point is still legal */
-#define	EXPOK		0x200	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x200	/* (float) decimal point is still legal */
+#define	EXPOK		0x400	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x100	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x200	/* no zero digits detected */
+#define	PFXOK		0x200	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x400	/* no zero digits detected */
 
 /*
  * Conversion types.
@@ -85,7 +86,7 @@ static char *rcsid = "$Id: vfscanf.c,v 1.9 1995/01/26 01:34:45 jtc Exp $";
 #define	CT_CHAR		0	/* %c conversion */
 #define	CT_CCL		1	/* %[...] conversion */
 #define	CT_STRING	2	/* %s conversion */
-#define	CT_INT		3	/* integer, i.e., strtol or strtoul */
+#define	CT_INT		3	/* integer, i.e., strtoq or strtouq */
 #define	CT_FLOAT	4	/* floating, i.e., strtod */
 
 #define u_char unsigned char
@@ -110,8 +111,8 @@ __svfscanf(fp, fmt0, ap)
 	register char *p0;	/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
-	int base;		/* base argument to strtol/strtoul */
-	u_long (*ccfn)();	/* conversion function (strtol/strtoul) */
+	int base;		/* base argument to strtoq/strtouq */
+	u_quad_t (*ccfn)();	/* conversion function (strtoq/strtouq) */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
 
@@ -160,14 +161,17 @@ literal:
 		case '*':
 			flags |= SUPPRESS;
 			goto again;
-		case 'l':
-			flags |= LONG;
-			goto again;
 		case 'L':
 			flags |= LONGDBL;
 			goto again;
 		case 'h':
 			flags |= SHORT;
+			goto again;
+		case 'l':
+			flags |= LONG;
+			goto again;
+		case 'q':
+			flags |= QUAD;
 			goto again;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -187,13 +191,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'd':
 			c = CT_INT;
-			ccfn = (u_long (*)())strtol;
+			ccfn = (u_quad_t (*)())strtoq;
 			base = 10;
 			break;
 
 		case 'i':
 			c = CT_INT;
-			ccfn = (u_long (*)())strtol;
+			ccfn = (u_quad_t (*)())strtoq;
 			base = 0;
 			break;
 
@@ -202,13 +206,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'o':
 			c = CT_INT;
-			ccfn = strtoul;
+			ccfn = strtouq;
 			base = 8;
 			break;
 
 		case 'u':
 			c = CT_INT;
-			ccfn = strtoul;
+			ccfn = strtouq;
 			base = 10;
 			break;
 
@@ -216,7 +220,7 @@ literal:
 		case 'x':
 			flags |= PFXOK;	/* enable 0x prefixing */
 			c = CT_INT;
-			ccfn = strtoul;
+			ccfn = strtouq;
 			base = 16;
 			break;
 
@@ -224,7 +228,7 @@ literal:
 		case 'E':
 		case 'G':
 		case 'e': 
-		case 'f':
+		case 'f': 
 		case 'g':
 			c = CT_FLOAT;
 			break;
@@ -248,7 +252,7 @@ literal:
 		case 'p':	/* pointer format is like hex */
 			flags |= POINTER | PFXOK;
 			c = CT_INT;
-			ccfn = strtoul;
+			ccfn = strtouq;
 			base = 16;
 			break;
 
@@ -273,7 +277,7 @@ literal:
 			if (isupper(c))
 				flags |= LONG;
 			c = CT_INT;
-			ccfn = (u_long (*)())strtol;
+			ccfn = (u_quad_t (*)())strtoq;
 			base = 10;
 			break;
 		}
@@ -415,7 +419,7 @@ literal:
 			continue;
 
 		case CT_INT:
-			/* scan an integer as if by strtol/strtoul */
+			/* scan an integer as if by strtoq/strtouq */
 #ifdef hardway
 			if (width == 0 || width > sizeof(buf) - 1)
 				width = sizeof(buf) - 1;
@@ -533,16 +537,18 @@ literal:
 				(void) ungetc(c, fp);
 			}
 			if ((flags & SUPPRESS) == 0) {
-				u_long res;
+				u_quad_t res;
 
 				*p = 0;
 				res = (*ccfn)(buf, (char **)NULL, base);
 				if (flags & POINTER)
 					*va_arg(ap, void **) = (void *)res;
-				else if (flags & SHORT)
-					*va_arg(ap, short *) = res;
+				else if (flags & QUAD)
+					*va_arg(ap, quad_t *) = res;
 				else if (flags & LONG)
 					*va_arg(ap, long *) = res;
+				else if (flags & SHORT)
+					*va_arg(ap, short *) = res;
 				else
 					*va_arg(ap, int *) = res;
 				nassigned++;

@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)scanf.3	6.14 (Berkeley) 1/8/93
-.\"	$Id: scanf.3,v 1.4 1995/01/26 01:34:44 jtc Exp $
+.\"	$Id: scanf.3,v 1.5 1995/01/27 15:20:25 jtc Exp $
 .\"
 .Dd January 8, 1993
 .Dt SCANF 3
@@ -164,6 +164,15 @@ and the next pointer is a pointer to
 .Em double
 (rather than
 .Em float ) .
+.It Cm q
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Em quad_t
+(rather than
+.Em int ) .
 .It Cm L
 Indicates that the conversion will be
 .Cm efg
