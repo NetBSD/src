@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1997/10/19 05:03:20 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/07/26 22:07:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.8 1997/10/19 05:03:20 lukem Exp $
+ *	$NetBSD: extern.h,v 1.9 1998/07/26 22:07:27 mycroft Exp $
  */
 
 struct name;
@@ -58,7 +58,7 @@ char	*copyin __P((char *, char **));
 char	*detract __P((struct name *, int));
 char	*expand __P((char *));
 char	*getdeadletter __P((void));
-char	*getname __P((int));
+const	char *getname __P((int));
 struct message;
 char	*hfield __P((char [], struct message *));
 FILE	*infix __P((struct header *, FILE *));
@@ -70,12 +70,12 @@ char	*readtty __P((char [], char []));
 char 	*reedit __P((char *));
 FILE	*run_editor __P((FILE *, off_t, int, int));
 char	*salloc __P((int));
-char	*savestr __P((char *));
+char	*savestr __P((const char *));
 FILE	*setinput __P((struct message *));
 char	*skin __P((char *));
 char	*skip_comment __P((char *));
 char	*snarf __P((char [], int *));
-char	*username __P((void));
+const	char *username __P((void));
 char	*value __P((char []));
 char	*vcopy __P((char []));
 char	*yankword __P((char *, char []));

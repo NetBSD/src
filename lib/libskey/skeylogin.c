@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.8 1997/06/18 19:18:30 christos Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.9 1998/07/26 21:58:46 mycroft Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -32,9 +32,6 @@
 #include "skey.h"
 
 #define	_PATH_KEYFILE	"/etc/skeykeys"
-
-char *skipspace __ARGS((char *));
-int skeylookup __ARGS((struct skey *, char *));
 
 /* Issue a skey challenge for user 'name'. If successful,
  * fill in the caller's skey structure and return 0. If unsuccessful
@@ -79,7 +76,7 @@ getskeyprompt(mp,name,prompt)
 int
 skeychallenge(mp,name, ss, sslen)
 	struct skey *mp;
-	char *name;
+	const char *name;
 	char *ss;
 	int sslen;
 {
@@ -108,7 +105,7 @@ skeychallenge(mp,name, ss, sslen)
 int
 skeylookup(mp,name)
 	struct skey *mp;
-	char *name;
+	const char *name;
 {
 	int found;
 	int len;
@@ -269,7 +266,7 @@ skeyverify(mp,response)
  
 int
 skey_haskey (username)
-	char *username;
+	const char *username;
 {
 	struct skey skey;
  
@@ -285,7 +282,7 @@ skey_haskey (username)
  */
 char *
 skey_keyinfo (username)
-	char *username;
+	const char *username;
 {
 	int i;
 	static char str [50];
@@ -310,7 +307,8 @@ skey_keyinfo (username)
  
 int
 skey_passcheck (username, passwd)
-	char *username, *passwd;
+	const char *username;
+	char *passwd;
 {
 	int i;
 	struct skey skey;
@@ -337,7 +335,7 @@ skey_passcheck (username, passwd)
  
 int
 skey_authenticate (username)
-	char *username;
+	const char *username;
 {
 	int i;
 	char pbuf[256], skeyprompt[50];

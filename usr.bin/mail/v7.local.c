@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.9 1997/10/19 05:04:02 lukem Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.10 1998/07/26 22:07:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: v7.local.c,v 1.9 1997/10/19 05:04:02 lukem Exp $");
+__RCSID("$NetBSD: v7.local.c,v 1.10 1998/07/26 22:07:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,10 +85,10 @@ demail()
 /*
  * Discover user login name.
  */
-char *
+const char *
 username()
 {
-	char *np;
+	const char *np;
 	uid_t uid;
 
 	if ((np = getenv("USER")) != NOSTR)
