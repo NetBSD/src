@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.1 1995/03/10 01:52:45 gwr Exp $ */
+/*	$NetBSD: fb.c,v 1.2 1995/04/07 02:52:28 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,20 +59,21 @@
 #include "fbvar.h"
 
 static struct fbdevice *devfb;
+static int fbpriority;
 
 /*
  * This is called by the real driver (i.e. bw2, cg3, ...)
- * to declare itself as the "default" frame buffer.
+ * to declare itself as a potential default frame buffer.
  */
 void
-fb_attach(fb)
+fb_attach(fb, newpri)
 	struct fbdevice *fb;
+	int newpri;
 {
-	if (devfb)
-		return;
-
-	devfb = fb;
-	printf("fb: using %s\n", fb->fb_name);
+	if (fbpriority < newpri) {
+		fbpriority = newpri;
+		devfb = fb;
+	}
 }
 
 int
