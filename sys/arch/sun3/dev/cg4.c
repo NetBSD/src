@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.4 1995/04/10 05:45:29 mycroft Exp $	*/
+/*	$NetBSD: cg4.c,v 1.5 1995/04/10 07:05:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ static int	cg4getcmap __P((struct fbdevice *, struct fbcmap *));
 static int	cg4putcmap __P((struct fbdevice *, struct fbcmap *));
 
 static struct fbdriver cg4fbdriver = {
-	cg4open, cg4close, cg4map, cg4gattr,
+	cg4open, cg4close, cg4,map, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
 
@@ -264,7 +264,7 @@ cg4mmap(dev, off, prot)
 	register int physbase;
 
 	if (off & PGOFSET)
-		panic("cg4map");
+		panic("cg4mmap");
 
 	if ((unsigned)off >= CG4_MMAP_SIZE)
 		return (-1);
