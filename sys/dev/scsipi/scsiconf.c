@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.179 2002/04/01 20:37:41 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.180 2002/04/15 12:40:28 joda Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.179 2002/04/01 20:37:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.180 2002/04/15 12:40:28 joda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,6 +577,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
 	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
 	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
+	 "Maxtor 4", "D040H2",           "DAH0"}, PQUIRK_NOMODESENSE},
 
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
