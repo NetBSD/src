@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.21 2000/10/27 21:40:02 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.22 2000/10/29 17:16:02 thorpej Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.21 2000/10/27 21:40:02 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.22 2000/10/29 17:16:02 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,8 @@ static int yyparse(void);
 
 %}
 %token STRING
-%left SPEC_OR SPEC_AND
+%left SPEC_OR
+%left SPEC_AND
 %left COMPARE ARITH_OPERATOR SPEC_REG
 %left LEFT_PARENT RIGHT_PARENT
 
