@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/10/30 21:31:50 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.16 2000/11/01 08:45:20 veego Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 PROG=	mount
@@ -29,6 +29,8 @@ LINKS+=	${BINDIR}/${PROG} ${BINDIR}/${p}
 
 # make mount_ufs alias for mount_ffs (this needs also support in checkname.c)
 LINKS+= ${BINDIR}/mount_ffs ${BINDIR}/mount_ufs
+
+CLEANFILES+=	checkname.c
 
 # generate checkname.c - code which runs appropriate mount_FOO() routine
 # according to program name
