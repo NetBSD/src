@@ -1,9 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/08/18 13:31:50 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1998/08/18 18:59:46 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
 
 .include <bsd.own.mk>
+
+# These architectures are Cygnus's default for enabling Haifa
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || \
+    (${MACHINE_ARCH} == "sparc")
+USE_EGCS_HAIFA=1
+.endif
 
 # gcc has files with a "rs6000" prefix for powerpc
 GNU_ARCH.powerpc=rs6000
