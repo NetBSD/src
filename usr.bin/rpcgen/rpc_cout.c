@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.18 2002/01/29 10:20:35 tv Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.19 2002/01/31 22:43:57 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -30,28 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.18 2002/01/29 10:20:35 tv Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.19 2002/01/31 22:43:57 tv Exp $");
 #endif
 #endif
 
 /*
  * rpc_cout.c, XDR routine outputter for the RPC protocol compiler
  */
-#include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
 
 static int findtype __P((definition *, char *));
 static int undefined __P((char *));

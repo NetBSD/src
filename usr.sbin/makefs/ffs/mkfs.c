@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.8 2002/01/26 13:22:17 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.9 2002/01/31 22:44:04 tv Exp $	*/
 /* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
@@ -35,11 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.8 2002/01/26 13:22:17 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.9 2002/01/31 22:44:04 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: mkfs.c,v 1.8 2002/01/26 13:22:17 lukem Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

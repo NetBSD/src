@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.21 2002/01/29 10:20:36 tv Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.22 2002/01/31 22:43:57 tv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,11 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.21 2002/01/29 10:20:36 tv Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.22 2002/01/31 22:43:57 tv Exp $");
 #endif
 #endif
 
@@ -45,28 +45,19 @@ __RCSID("$NetBSD: rpc_main.c,v 1.21 2002/01/29 10:20:36 tv Exp $");
 
 #define RPCGEN_VERSION	"199506"/* This program's version (year & month) */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <sys/types.h>
-#ifdef __TURBOC__
-#define	MAXPATHLEN	80
-#include <process.h>
-#include <dir.h>
-#else
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/file.h>
-#endif
-#include <sys/stat.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
 
 #define EXTEND	1		/* alias for TRUE */
 #define DONT_EXTEND	0	/* alias for FALSE */

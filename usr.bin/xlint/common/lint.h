@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.2 2002/01/21 19:49:51 tv Exp $	*/
+/*	$NetBSD: lint.h,v 1.3 2002/01/31 22:44:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,17 +34,13 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #else
-#define HAVE_ERR_H 1
 #define HAVE_DECL_SYS_SIGNAME 1
 #endif
 
 #include <sys/types.h>
 #include <stddef.h>
-#include <stdio.h>
-
-#if HAVE_ERR_H
 #include <err.h>
-#endif
+#include <stdio.h>
 
 #include "param.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.7 2002/01/23 02:26:21 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.8 2002/01/31 22:44:03 tv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,14 +76,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.7 2002/01/23 02:26:21 lukem Exp $");
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: walk.c,v 1.8 2002/01/31 22:44:03 tv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
 
 #include <assert.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -309,8 +308,10 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 			stbuf.st_nlink = 1;
 			stbuf.st_mtime = stbuf.st_atime =
 			    stbuf.st_ctime = start_time.tv_sec;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 			stbuf.st_mtimensec = stbuf.st_atimensec =
 			    stbuf.st_ctimensec = start_time.tv_nsec;
+#endif
 			curfsnode = create_fsnode(curnode->name, &stbuf);
 			curfsnode->parent = dirnode->parent;
 			curfsnode->first = dirnode;
@@ -393,25 +394,29 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	if (specnode->flags & F_TIME) {
 		ASEPRINT("time", "%ld",
 		    (long)dirnode->inode->st.st_mtime,
-		    (long)specnode->st_mtime);
-		dirnode->inode->st.st_mtime =		specnode->st_mtime;
-		dirnode->inode->st.st_mtimensec =	specnode->st_mtimensec;
-		dirnode->inode->st.st_atime =		specnode->st_mtime;
-		dirnode->inode->st.st_atimensec =	specnode->st_mtimensec;
+		    (long)specnode->st_mtimespec.tv_sec);
+		dirnode->inode->st.st_mtime =		specnode->st_mtimespec.tv_sec;
+		dirnode->inode->st.st_atime =		specnode->st_mtimespec.tv_sec;
 		dirnode->inode->st.st_ctime =		start_time.tv_sec;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
+		dirnode->inode->st.st_mtimensec =	specnode->st_mtimensec;
+		dirnode->inode->st.st_atimensec =	specnode->st_mtimensec;
 		dirnode->inode->st.st_ctimensec =	start_time.tv_nsec;
+#endif
 	}
 	if (specnode->flags & (F_UID | F_UNAME)) {
 		ASEPRINT("uid", "%d",
 		    dirnode->inode->st.st_uid, specnode->st_uid);
 		dirnode->inode->st.st_uid = specnode->st_uid;
 	}
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (specnode->flags & F_FLAGS) {
 		ASEPRINT("flags", "%#lX",
 		    (ulong)dirnode->inode->st.st_flags,
 		    (ulong)specnode->st_flags);
 		dirnode->inode->st.st_flags = specnode->st_flags;
 	}
+#endif
 	if (specnode->flags & F_DEV) {
 		ASEPRINT("rdev", "%#x",
 		    dirnode->inode->st.st_rdev, specnode->st_rdev);

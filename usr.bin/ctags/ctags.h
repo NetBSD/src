@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.h,v 1.4 2001/05/03 22:25:00 ross Exp $	*/
+/*	$NetBSD: ctags.h,v 1.5 2002/01/31 22:43:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,6 +34,10 @@
  *
  *	@(#)ctags.h	8.3 (Berkeley) 4/2/94
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define	bool	char
 
