@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 1999/12/12 11:20:04 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2000/01/26 02:46:36 itojun Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -18,7 +18,6 @@ CPPFLAGS+=-DRESOLVSORT -I.
 
 # IPv6
 SRCS+=	getaddrinfo.c getnameinfo.c ifname.c ip6opt.c rthdr.c vars6.c
-CPPFLAGS+=	-DINET6
 # need to revisit
 #SRCS+=	name6.c rresvport_af.c freehostent.c
 #CPPFLAGS+=	-DUSE_GETIPNODEBY
