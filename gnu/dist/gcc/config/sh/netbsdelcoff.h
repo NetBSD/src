@@ -53,7 +53,7 @@
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{!mb:-m shl} %{mrelax:-relax} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{!mb:-m shlunx} %{mrelax:-relax} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 
 /* set default to little endian */
 
