@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.21 2000/02/16 18:03:14 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -208,6 +208,8 @@ void	ifmedia_delete_instance __P((struct ifmedia *, int));
 #define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
+#define	IFM_IEEE80211_DS1	8	/* Direct Sequence 1Mbps */
+
 #define	IFM_IEEE80211_ADHOC	0x00000100	/* Operate in Adhoc mode */
 
 /*
@@ -376,6 +378,7 @@ struct ifmedia_description {
 	 */								\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1"	},		\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1"	},		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2"	},		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5"	},		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11"	},		\
