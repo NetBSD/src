@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.54.2.3 2002/06/23 17:46:21 jdolecek Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.54.2.4 2002/09/06 08:44:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.54.2.3 2002/06/23 17:46:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.54.2.4 2002/09/06 08:44:15 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -104,8 +104,6 @@ void ex_getstats __P((struct ex_softc *));
 void ex_printstats __P((struct ex_softc *));
 void ex_tick __P((void *));
 
-int ex_enable __P((struct ex_softc *));
-void ex_disable __P((struct ex_softc *));
 void ex_power __P((int, void *));
 
 static int ex_eeprom_busy __P((struct ex_softc *));
@@ -1637,6 +1635,11 @@ ex_shutdown(arg)
 	struct ex_softc *sc = arg;
 
 	ex_stop(&sc->sc_ethercom.ec_if, 1);
+	/*
+	 * Make sure the interface is powered up when we reboot,
+	 * otherwise firmware on some systems gets really confused.
+	 */
+	(void) ex_enable(sc);
 }
 
 /*

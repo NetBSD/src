@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.2.6 2002/06/23 17:51:54 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.7 2002/09/06 08:49:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -346,6 +346,13 @@ but needs own kqfilter */
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), \
 	dev_noimpl(kqfilter,enodev), 0 }
 
+/* open -- everything else handled by fileops */
+#define	cdev_clonemisc_init(c,n) { \
+	dev_init(c,n,open), dev_noimpl(close,enodev), \
+	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
+	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
+	0, seltrue, dev_noimpl(mmap,enodev) }
+
 /* (open), (close), read, write */
 #define cdev_swap_init(c,n) { \
 	dev_noimpl(open,nullop), dev_noimpl(close,nullop), \
@@ -640,6 +647,8 @@ cdev_decl(ipl);
 # define NSVR4_NET	0
 #endif
 cdev_decl(svr4_net);
+
+cdev_decl(systrace);
 
 cdev_decl(tun);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.57.2.3 2002/06/23 17:49:33 jdolecek Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.57.2.4 2002/09/06 08:48:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.57.2.3 2002/06/23 17:49:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.57.2.4 2002/09/06 08:48:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -409,7 +409,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	lname = strlen(cd->cd_name);
 	xunit = number(&num[sizeof(num)], myunit);
 	lunit = &num[sizeof(num)] - xunit;
-	if (lname + lunit >= sizeof(dev->dv_xname))
+	if (lname + lunit > sizeof(dev->dv_xname))
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */

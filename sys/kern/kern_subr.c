@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.76.2.3 2002/06/23 17:49:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.76.2.4 2002/09/06 08:47:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,10 +90,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.3 2002/06/23 17:49:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.4 2002/09/06 08:47:57 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
+#include "opt_syscall_debug.h"
+#include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.3 2002/06/23 17:49:31 jdolecek 
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
+#include <sys/systrace.h>
+#include <sys/ktrace.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -135,7 +142,7 @@ static void hook_proc_run __P((hook_list_t *, struct proc *));
 int
 uiomove(buf, n, uio)
 	void *buf;
-	int n;
+	size_t n;
 	struct uio *uio;
 {
 	struct iovec *iov;
@@ -147,8 +154,6 @@ uiomove(buf, n, uio)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
-		panic("uiomove proc");
 #endif
 	while (n > 0 && uio->uio_resid) {
 		iov = uio->uio_iov;
@@ -163,15 +168,22 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			KDASSERT(p->p_cpu != NULL);
-			KDASSERT(p->p_cpu == curcpu());
-			if (p->p_cpu->ci_schedstate.spc_flags &
+			if (curproc->p_cpu->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(NULL);
-			if (uio->uio_rw == UIO_READ)
-				error = copyout(cp, iov->iov_base, cnt);
-			else
-				error = copyin(iov->iov_base, cp, cnt);
+			if (__predict_true(p == curproc)) {
+				if (uio->uio_rw == UIO_READ)
+					error = copyout(cp, iov->iov_base, cnt);
+				else
+					error = copyin(iov->iov_base, cp, cnt);
+			} else {
+				if (uio->uio_rw == UIO_READ)
+					error = copyout_proc(p, cp,
+					    iov->iov_base, cnt);
+				else
+					error = copyin_proc(p, iov->iov_base,
+					    cp, cnt);
+			}
 			if (error)
 				return (error);
 			break;
@@ -190,6 +202,7 @@ uiomove(buf, n, uio)
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
 		cp += cnt;
+		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
 	return (error);
@@ -235,6 +248,72 @@ again:
 }
 
 /*
+ * Like copyin(), but operates on an arbitrary process.
+ */
+int
+copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	if (len == 0)
+		return (0);
+
+	iov.iov_base = kaddr;
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_resid = len;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = NULL;
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, &uio);
+	uvmspace_free(p->p_vmspace);
+
+	return (error);
+}
+
+/*
+ * Like copyout(), but operates on an arbitrary process.
+ */
+int
+copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	if (len == 0)
+		return (0);
+
+	iov.iov_base = (void *) kaddr;	/* XXX cast away const */
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_resid = len;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = NULL;
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, &uio);
+	uvmspace_free(p->p_vmspace);
+
+	return (error);
+}
+
+/*
  * General routine to allocate a hash table.
  * Allocate enough memory to hold at least `elements' list-head pointers.
  * Return a pointer to the allocated space and set *hashmask to a pattern
@@ -242,18 +321,18 @@ again:
  */
 void *
 hashinit(elements, htype, mtype, mflags, hashmask)
-	int elements;
+	u_int elements;
 	enum hashtype htype;
 	int mtype, mflags;
 	u_long *hashmask;
 {
-	long hashsize;
+	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
 	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	int i, esize;
+	size_t esize;
 	void *p;
 
-	if (elements <= 0)
+	if (elements == 0)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
@@ -271,7 +350,7 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 #endif
 	}
 
-	if ((p = malloc((u_long)hashsize * esize, mtype, mflags)) == NULL)
+	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
 		return (NULL);
 
 	switch (htype) {
@@ -330,11 +409,13 @@ hook_disestablish(list, vhook)
 #ifdef DIAGNOSTIC
 	struct hook_desc *hd;
 
-	for (hd = list->lh_first; hd != NULL; hd = hd->hk_list.le_next)
+	LIST_FOREACH(hd, list, hk_list) {
                 if (hd == vhook)
 			break;
+	}
+
 	if (hd == NULL)
-		panic("hook_disestablish: hook not established");
+		panic("hook_disestablish: hook %p not established", vhook);
 #endif
 	LIST_REMOVE((struct hook_desc *)vhook, hk_list);
 	free(vhook, M_DEVBUF);
@@ -455,8 +536,7 @@ domountroothook()
 {
 	struct hook_desc *hd;
 
-	for (hd = mountroothook_list.lh_first; hd != NULL;
-	    hd = hd->hk_list.le_next) {
+	LIST_FOREACH(hd, &mountroothook_list, hk_list) {
 		if (hd->hk_arg == (void *)root_device) {
 			(*hd->hk_fn)(hd->hk_arg);
 			return;
@@ -563,7 +643,7 @@ powerhook_disestablish(vhook)
 	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
 			goto found;
-	panic("powerhook_disestablish: hook not established");
+	panic("powerhook_disestablish: hook %p not established", vhook);
  found:
 #endif
 
@@ -660,11 +740,11 @@ setroot(bootdv, bootpartition)
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || bootdv->dv_class != DV_IFNET)) {
-		for (ifp = ifnet.tqh_first; ifp != NULL;
-		    ifp = ifp->if_list.tqe_next)
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
+		}
 		if (ifp == NULL) {
 			/*
 			 * Can't find a suitable interface; ask the
@@ -1021,8 +1101,7 @@ getdisk(str, len, defpart, devp, isdump)
 				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
 #endif
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-%c]", dv->dv_xname,
 				    'a' + MAXPARTITIONS - 1);
@@ -1123,9 +1202,9 @@ humanize_number(buf, len, bytes, suffix, divisor)
 		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
 	static const char prefixes[] = " KMGTPE";
 
-	int		i, r;
+	int		r;
 	u_int64_t	max;
-	size_t		suffixlen;
+	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
 		return (-1);
@@ -1165,4 +1244,45 @@ format_bytes(buf, len, bytes)
 			buf[nlen] = '\0';
 	}
 	return (rv);
+}
+
+int
+trace_enter(struct proc *p, register_t code, void *args, register_t rval[])
+{
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif /* SYSCALL_DEBUG */
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p, code, args);
+#endif /* KTRACE */
+
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		return systrace_enter(p, code, args, rval);
+#endif
+	return 0;
+}
+
+void
+trace_exit(struct proc *p, register_t code, void *args, register_t rval[],
+    int error)
+{
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif /* SYSCALL_DEBUG */
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
+#endif /* KTRACE */
+
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_exit(p, code, args, rval, error);
+#endif
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.45.2.4 2002/06/23 17:48:56 jdolecek Exp $ */
+/* $NetBSD: sfb.c,v 1.45.2.5 2002/09/06 08:46:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.45.2.4 2002/06/23 17:48:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.45.2.5 2002/09/06 08:46:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;	 /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -521,7 +521,7 @@ sfb_cnattach(addr)
 	ri = &sfb_console_ri;
 	ri->ri_hw = (void *)addr;
 	sfb_common_init(ri);
-	(*ri->ri_ops.alloc_attr)(&ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(&ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sfb_stdscreen, ri, 0, 0, defattr);
 	sfb_consaddr = addr;
 	return (0);
@@ -702,7 +702,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -724,7 +724,7 @@ set_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||

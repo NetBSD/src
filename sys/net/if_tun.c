@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.7 2002/03/16 16:02:08 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.8 2002/09/06 08:49:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.7 2002/03/16 16:02:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.8 2002/09/06 08:49:00 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -229,6 +229,11 @@ tunopen(dev, flag, mode, p)
 		return (ENXIO);
 
 	tp = tun_find_unit(dev);
+
+	if (!tp) {
+		(void)tun_clone_create(&tun_cloner, minor(dev));
+		tp = tun_find_unit(dev);
+	}
 
 	if (!tp)
 		return (ENXIO);

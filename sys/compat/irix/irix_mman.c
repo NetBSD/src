@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.2.4.2 2002/06/23 17:43:54 jdolecek Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.2.4.3 2002/09/06 08:43:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.2.4.2 2002/06/23 17:43:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.2.4.3 2002/09/06 08:43:05 jdolecek Exp $");
 
 #include "opt_sysv.h"
 
@@ -125,6 +125,12 @@ irix_mmap(p, addr, len, prot, flags, fd, pos, retval)
 	int bsd_flags = 0;
 	int error = 0;
 
+#ifdef DEBUG_IRIX
+	printf("irix_sys_mmap(): addr = %p, len = 0x%x, prot = 0x%x ",
+	    addr, len, prot);
+	printf("flags = 0x%x, fd = %d, pos = 0x%lx\n", flags, fd, (long)pos);
+	    
+#endif
 	if (flags & IRIX_MAP_SHARED)
 		bsd_flags |= MAP_SHARED;
 	if (flags & IRIX_MAP_PRIVATE)

@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.5.2.2 2002/06/23 17:48:52 jdolecek Exp $ */
+/*	$NetBSD: ieee1212reg.h,v 1.5.2.3 2002/09/06 08:46:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

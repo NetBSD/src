@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.118.2.4 2002/06/23 17:43:07 jdolecek Exp $	 */
+/* $NetBSD: machdep.c,v 1.118.2.5 2002/09/06 08:42:23 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -127,7 +127,7 @@ void
 cpu_startup()
 {
 	caddr_t		v;
-	int		base, residual, i, sz;
+	u_int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
 	vsize_t		size;
 	extern unsigned int avail_end;
@@ -157,7 +157,7 @@ cpu_startup()
 	 * everything true virtual addresses.
 	 */
 
-	sz = (int) allocsys(NULL, NULL);
+	sz = (u_int) allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -230,7 +230,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -409,18 +409,19 @@ struct trampframe {
 };
 
 void
-sendsig(catcher, sig, mask, code)
-	sig_t		catcher;
+sendsig(sig, mask, code)
 	int		sig;
 	sigset_t	*mask;
 	u_long		code;
 {
 	struct	proc	*p = curproc;
+	struct	sigacts *ps = p->p_sigacts;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
 	struct	trampframe *trampf, gtrampf;
 	unsigned	cursp;
 	int	onstack;
+	sig_t	catcher = SIGACTION(p, sig).sa_handler;
 
 	syscf = p->p_addr->u_pcb.framep;
 
@@ -465,7 +466,25 @@ sendsig(catcher, sig, mask, code)
 	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
 		sigexit(p, SIGILL);
 
-	syscf->pc = (int)p->p_sigctx.ps_sigcode;
+	/*
+	 * Note the trampoline version numbers are coordinated with
+	 * machine-dependent code in libc.
+	 */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:
+		syscf->pc = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		syscf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;

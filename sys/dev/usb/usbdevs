@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.173.2.7 2002/06/23 17:49:13 jdolecek Exp $
+$NetBSD: usbdevs,v 1.173.2.8 2002/09/06 08:47:13 jdolecek Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
+vendor SGI		0x065e	Silicon Graphics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
@@ -238,6 +239,7 @@ vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk Corp
+vendor JENOPTIK		0x0784  Jenoptik
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
 vendor ABL		0x0794	ABL Electronics
@@ -288,6 +290,7 @@ vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
+vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -317,6 +320,7 @@ vendor BOCASYSTEMS	0x0a43	Boca Systems
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
@@ -466,6 +470,7 @@ product ATI2 205		0xa001	USB Cable 205
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
+product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Audio-Technica products */
@@ -478,12 +483,17 @@ product AVISION 1200U		0x0268	1200U scanner
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
 product BELKIN2 F5U002		0x0002	F5U002 Parallel printer adapter
 product BELKIN SCSI		0x0115	SCSI Adaptor
+product BELKIN USB2LAN		0x0121	USB to LAN Converter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
 product BILLIONTON USBLP100	0x0987	USB100LP
 product BILLIONTON USBEL100	0x0988	USB100EL
 product BILLIONTON USBE100	0x8511	USBE100
+
+/* Broadcom products */
+product BROADCOM BCM2033	0x2000	BCM2033
+product BROADCOM BCM2033NF	0x2033	BCM2033 (no firmware)
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
@@ -494,7 +504,11 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
 product CANON S10		0x3041	PowerShot S10
-product CANON S100		0x3045	PowerShot S100
+product CANON S20		0x3043	PowerShot S20
+product CANON S100_US		0x3045	PowerShot S100
+product CANON S100_EU		0x3047	PowerShot S100
+product CANON G1		0x3048	PowerShot G1
+product CANON A20		0x304e	PowerShot A20
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
@@ -546,6 +560,7 @@ product CTX EX1300		0x9999	Ex1300 hub
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
+product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
 
 /* Daisy Technology products */
@@ -657,6 +672,7 @@ product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Genesys Logic products */
+product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 
 /* Hagiwara products */
@@ -740,6 +756,7 @@ product INSIDEOUT MT4X56USB	0x1403	OEM device
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
 product INSYSTEM ATAPI		0x0031	ATAPI adapter
+product INSYSTEM IDEUSB2	0x0060	USB2 Storage Adapter
 product INSYSTEM ISD110		0x0200	IDE adapter ISD110
 product INSYSTEM ISD105		0x0202	IDE adapter ISD105
 product INSYSTEM DRIVEV2	0x0301	Portable USB Harddrive V2
@@ -768,6 +785,9 @@ product IOMEGA ZIP250		0x0030	Zip 250
 
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
+
+/* Jenoptik products */
+product JENOPTIK JD350		0x5300  JD 350 Camera/mp3 player
 
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
@@ -865,6 +885,7 @@ product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
+product LOGITECH QUICKCAMPRO3k	0x08b0	QuickCam Pro 3000
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
@@ -977,6 +998,9 @@ product NEC HUB_B		0x55ab	hub
 /* NEC2 products */
 product NEC2 HUB2_0		0x0058	USB2.0 Hub Controller
 
+/* NEODIO products */
+product NEODIO ND5010		0x5010	Multi-format Flash Controller
+
 /* NetChip Technology Products */
 product NETCHIP TURBOCONNECT	0x1080	Turbo-Connect
 product NETCHIP CLIK40		0xa140	Clik! 40
@@ -1012,6 +1036,7 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 product PALM SERIAL		0x0080	USB Serial Adaptor
 product PALM M500		0x0001	Palm m500
 product PALM M505		0x0002	Palm m505
+product PALM M515		0x0003	Palm m515
 product PALM M125		0x0040	Palm m125
 
 /* Panasonic products */
@@ -1066,6 +1091,7 @@ product PRIMAX G2300		0x0302	G2-300 scanner
 product PRIMAX G2E3002		0x0303	G2E-300 scanner
 product PRIMAX 9600		0x0340	Colorado USB 9600 scanner
 product PRIMAX 600U		0x0341	Colorado 600u scanner
+product PRIMAX 6200		0x0345	Visioneer 6200 scanner
 product PRIMAX 19200		0x0360	Colorado USB 19200 scanner
 product PRIMAX 1200U		0x0361	Colorado 1200u scanner
 product PRIMAX G600		0x0380	G2-600 scanner
@@ -1097,10 +1123,12 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 product	RAINBOW IKEY2000	0x1200	i-Key 2000  
 
 /* Roland products */
+product	ROLAND SC8850		0x0003	RolandED SC-8850 SOUND Canvas MIDI Synth.
 product	ROLAND UM1		0x0009	UM-1 MIDI I/F
 product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
 product	ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
+product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1123,6 +1151,9 @@ product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
+
+/* SGI products */
+product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
@@ -1163,6 +1194,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
+product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
 product SMC2 2020HUB            0x2020  USB Hub
 
 /* SOHOware products */
@@ -1184,6 +1216,8 @@ product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
+product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
+product SONY CLIE_41		0x009a	Sony Clie v4.1
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
@@ -1205,6 +1239,7 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
 product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
@@ -1238,6 +1273,9 @@ product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
 
+/* Trumpion products */
+product	TRUMPION XXX1100	0x1100	XXX 1100
+
 /* Ultima products */
 product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus scanner
 
@@ -1258,6 +1296,7 @@ product VISION VC6452V002	0x0002	CPiA Camera
 /* Visioneer products */
 product VISIONEER 7600		0x0211	OneTouch 7600
 product VISIONEER 5300		0x0221	OneTouch 5300
+product VISIONEER 3000		0x0224	Scanport 3000
 product VISIONEER 6100		0x0231	OneTouch 6100
 product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100
@@ -1269,6 +1308,7 @@ product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM INTUOSA5		0x0021	Intuos A5
  
 /* Xirlink products */
+product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
 
 /* Y-E Data products */

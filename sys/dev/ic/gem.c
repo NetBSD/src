@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.11.2.4 2002/06/23 17:46:22 jdolecek Exp $ */
+/*	$NetBSD: gem.c,v 1.11.2.5 2002/09/06 08:44:17 jdolecek Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.11.2.4 2002/06/23 17:46:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.11.2.5 2002/09/06 08:44:17 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -507,7 +507,7 @@ gem_stop(struct ifnet *ifp, int disable)
 
 	/* XXX - Should we reset these instead? */
 	gem_disable_rx(sc);
-	gem_disable_rx(sc);
+	gem_disable_tx(sc);
 
 	/*
 	 * Release any queued transmit buffers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91.2.4 2002/06/23 17:50:21 jdolecek Exp $	*/
+/*	$NetBSD: if.c,v 1.91.2.5 2002/09/06 08:48:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.91.2.4 2002/06/23 17:50:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.91.2.5 2002/09/06 08:48:48 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -250,7 +250,7 @@ if_nulldrain(ifp)
 	/* Nothing. */
 }
 
-int if_index = 1;
+u_int if_index = 1;
 struct ifnet_head ifnet;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
@@ -797,7 +797,7 @@ if_clone_lookup(name, unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
-	int i;
+	size_t i;
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL;) {
 		for (cp = name, i = 0; i < ifc->ifc_namelen; i++, cp++) {
@@ -986,7 +986,7 @@ ifa_ifwithnet(addr)
 			if (sat2->sat_addr.s_net == sat->sat_addr.s_net)
 				return (ifa); /* exact match */
 			if (ifa_maybe == NULL) {
-				/* else keep the if with the rigth range */
+				/* else keep the if with the right range */
 				ifa_maybe = ifa;
 			}
 		}

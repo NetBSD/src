@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.4.4.4 2002/06/23 17:43:52 jdolecek Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4.4.5 2002/09/06 08:43:04 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/types.h> 
 #include <sys/exec.h>
 #include <sys/signal.h>
+#include <sys/queue.h>
+#include <sys/lock.h>
 #include <sys/exec_elf.h>
 
 #include <machine/vmparam.h>
@@ -53,12 +55,16 @@
 struct irix_emuldata {
 #define ied_startcopy ied_sigtramp
 	void *ied_sigtramp[SVR4_NSIG];	/* Address of signal trampoline */
-#define ied_endcopy ied_pptr	
-	struct proc *ied_pptr;	/* parent process or NULL, for SIGHUP on exit */
+#define ied_endcopy ied_termchild
+
+	int ied_termchild;	/* want SIGHUP on parent's exit */
 	int ied_procblk_count;	/* semaphore for blockproc */
-	struct proc *ied_shareparent; /* parent of the share group */
-	int ied_shareaddr;	/* VM space is shared with parent */
-	/* Only the share group parent keeps track of this: */
+				/* share group proc list head and lock */
+	struct irix_share_group *ied_share_group;
+				/* share group proc list itself */
+	LIST_ENTRY(irix_emuldata) ied_sglist;	
+	struct proc *ied_p;	/* points back to struct proc */
+	int ied_shareaddr;	/* share VM with the group */
 };
 
 /* e_flags used by IRIX for ABI selection */
@@ -75,8 +81,8 @@ int irix_check_exec __P((struct proc *p));
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux32Info), sizeof (Elf32_Addr))
 
-int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));
@@ -89,8 +95,8 @@ int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
 /* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
-int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf64_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.54.2.3 2002/02/21 20:33:08 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.54.2.4 2002/09/06 08:47:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.54.2.3 2002/02/21 20:33:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.54.2.4 2002/09/06 08:47:49 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -119,13 +119,17 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 }
 
 void
-ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
+ktrsyscall(struct proc *p, register_t code, register_t args[])
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
 	register_t *argp;
-	size_t len = sizeof(struct ktr_syscall) + argsize;
+	int argsize;
+	size_t len;
 	int i;
+
+	argsize = p->p_emul->e_sysent[code].sy_narg * sizeof (register_t);
+	len = sizeof(struct ktr_syscall) + argsize;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
@@ -656,7 +660,8 @@ ktrcanset(struct proc *callp, struct proc *targetp)
 	     target->p_ruid == target->p_svuid &&
 	     caller->p_rgid == target->p_rgid &&	/* XXX */
 	     target->p_rgid == target->p_svgid &&
-	     (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
+	     (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
+	     (targetp->p_flag & P_SUGID) == 0) ||
 	     caller->pc_ucred->cr_uid == 0)
 		return (1);
 

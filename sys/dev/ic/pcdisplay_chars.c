@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.6.4.1 2002/01/10 19:54:58 thorpej Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.6.4.2 2002/09/06 08:44:30 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.6.4.1 2002/01/10 19:54:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.6.4.2 2002/09/06 08:44:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ pcdisplay_mapchar(id, uni, index)
 	int uni;
 	unsigned int *index;
 {
-	int i;
+	u_int i;
 
 	if (uni < 128) {
 		*index = uni;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.6.8.1 2002/01/10 19:58:00 thorpej Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.6.8.2 2002/09/06 08:46:09 jdolecek Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,14 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.6.8.1 2002/01/10 19:58:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.6.8.2 2002/09/06 08:46:09 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_archs.h"
-#include "rf_threadstuff.h"
 #include "rf_shutdown.h"
-#include "rf_debugMem.h"
 #include "rf_freelist.h"
 
 static void 

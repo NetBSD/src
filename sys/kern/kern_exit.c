@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.90.2.4 2002/06/23 17:49:27 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.90.2.5 2002/09/06 08:47:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,9 +78,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.4 2002/06/23 17:49:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.5 2002/09/06 08:47:47 jdolecek Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_perfctrs.h"
+#include "opt_systrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -102,17 +104,23 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.4 2002/06/23 17:49:27 jdolecek 
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
+#if defined(PERFCTRS)
+#include <sys/pmc.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
+#include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/systrace.h>
 
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
 
 /*
  * exit --
@@ -165,6 +173,10 @@ exit1(struct proc *p, int rv)
 	p->p_sigctx.ps_sigcheck = 0;
 	callout_stop(&p->p_realit_ch);
 
+#if defined(__HAVE_RAS)
+	ras_purgeall(p);
+#endif
+
 	/*
 	 * Close open files and release open-file table.
 	 * This may block!
@@ -214,6 +226,15 @@ exit1(struct proc *p, int rv)
 	 */
 	ktrderef(p);
 #endif
+#ifdef SYSTRACE
+	systrace_sys_exit(p);
+#endif
+	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
@@ -252,6 +273,27 @@ exit1(struct proc *p, int rv)
 	}
 
 	/*
+	 * Reset p_opptr pointer of all former children which got
+	 * traced by another process and were reparented. We reset
+	 * it to NULL here; the trace detach code then reparents
+	 * the child to initproc. We only check allproc list, since
+	 * eventual former children on zombproc list won't reference
+	 * p_opptr anymore.
+	 */
+	if (p->p_flag & P_CHTRACED) {
+		struct proc *t;
+
+		proclist_lock_read();
+
+		LIST_FOREACH(t, &allproc, p_list) {
+			if (t->p_opptr == p)
+				t->p_opptr = NULL;
+		}
+
+		proclist_unlock_read();
+	}
+
+	/*
 	 * Save exit status and final rusage info, adding in child rusage
 	 * info and self times.
 	 */
@@ -264,6 +306,17 @@ exit1(struct proc *p, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
+#if PERFCTRS
+	/*
+	 * Save final PMC information in parent process & clean up.
+	 */
+	if (PMC_ENABLED(p)) {
+		pmc_save_context(p);
+		pmc_accumulate(p->p_pptr, p);
+		pmc_process_exit(p);
+	}
+#endif
 
 	/*
 	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
@@ -300,12 +353,6 @@ exit1(struct proc *p, int rv)
 	curproc = NULL;
 	limfree(p->p_limit);
 	p->p_limit = NULL;
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(p);
@@ -458,11 +505,10 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 			 * parent the exit signal.  The rest of the cleanup
 			 * will be done when the old parent waits on the child.
 			 */
-			if ((p->p_flag & P_TRACED) &&
-			    p->p_oppid != p->p_pptr->p_pid) {
-				t = pfind(p->p_oppid);
+			if ((p->p_flag & P_TRACED) && p->p_opptr != p->p_pptr){
+				t = p->p_opptr;
 				proc_reparent(p, t ? t : initproc);
-				p->p_oppid = 0;
+				p->p_opptr = NULL;
 				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				if (p->p_exitsig != 0)
 					psignal(p->p_pptr, P_EXITSIG(p));

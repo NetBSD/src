@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25.2.3 2002/06/23 17:42:12 jdolecek Exp $ */
+/*	$NetBSD: param.h,v 1.25.2.4 2002/09/06 08:41:40 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -290,12 +290,9 @@ extern int cputyp;
  */
 
 #define CPU_ISSUN4U	(1)
-#define CPU_ISSUN4MOR4U	(1)
 #define CPU_ISSUN4M	(0)
 #define CPU_ISSUN4C	(0)
 #define CPU_ISSUN4	(0)
-#define CPU_ISSUN4OR4C	(0)
-#define CPU_ISSUN4COR4M	(0)
 
 
 #define	PGSHIFT		13		/* log2(NBPG) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.6.4.1 2002/03/16 16:02:22 jdolecek Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.6.4.2 2002/09/06 08:49:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -67,6 +67,7 @@ struct mbr_partition {
 
 /* Known MBR partition types: */
 #define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
+#define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
 #define	MBR_PTYPE_386BSD	0xa5	/* 386BSD partition type */
 #define	MBR_PTYPE_FAT12		0x01	/* 12-bit FAT */
 #define	MBR_PTYPE_FAT16S	0x04	/* 16-bit FAT, less than 32M */

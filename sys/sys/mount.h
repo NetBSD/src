@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.90.2.2 2002/02/11 20:10:45 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.90.2.3 2002/09/06 08:49:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -135,7 +135,7 @@ struct mount {
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
-	qaddr_t		mnt_data;		/* private data */
+	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct proc	*mnt_unmounter;		/* who is unmounting */
 };

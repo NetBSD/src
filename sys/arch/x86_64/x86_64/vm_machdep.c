@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.4 2002/06/23 17:43:36 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.5 2002/09/06 08:42:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -66,6 +66,7 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
+#include <machine/mtrr.h>
 
 void	setredzone __P((u_short *, caddr_t));
 
@@ -189,6 +190,9 @@ cpu_exit(p)
 	/* If we were using the FPU, forget about it. */
 	if (fpuproc == p)
 		fpuproc = 0;
+
+	if (p->p_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(p);
 
 	/*
 	 * No need to do user LDT cleanup here; it's handled in

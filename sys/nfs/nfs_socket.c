@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.67.2.4 2002/06/23 17:51:48 jdolecek Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.67.2.5 2002/09/06 08:49:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.4 2002/06/23 17:51:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.5 2002/09/06 08:49:48 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2048,7 +2048,7 @@ nfsrv_getstream(slp, waitflag)
 	struct mbuf *m, **mpp;
 	char *cp1, *cp2;
 	int len;
-	struct mbuf *om, *m2, *recm = NULL;
+	struct mbuf *om, *m2, *recm;
 	u_int32_t recmark;
 
 	if (slp->ns_flag & SLP_GETSTREAM)
@@ -2093,6 +2093,9 @@ nfsrv_getstream(slp, waitflag)
 
 	    /*
 	     * Now get the record part.
+	     *
+	     * Note that slp->ns_reclen may be 0.  Linux sometimes
+	     * generates 0-length records.
 	     */
 	    if (slp->ns_cc == slp->ns_reclen) {
 		recm = slp->ns_raw;
@@ -2101,7 +2104,8 @@ nfsrv_getstream(slp, waitflag)
 	    } else if (slp->ns_cc > slp->ns_reclen) {
 		len = 0;
 		m = slp->ns_raw;
-		om = (struct mbuf *)0;
+		recm = om = NULL;
+
 		while (len < slp->ns_reclen) {
 			if ((len + m->m_len) > slp->ns_reclen) {
 				size_t left = slp->ns_reclen - len;

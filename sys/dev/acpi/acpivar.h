@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.3.8.3 2002/06/23 17:45:03 jdolecek Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.3.8.4 2002/09/06 08:43:49 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -107,6 +107,7 @@ struct acpi_softc {
 	bus_space_tag_t sc_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
 	int sc_pciflags;		/* PCI bus flags */
+	int sc_pci_bus;			/* internal PCI fixup */
 
 	void *sc_sdhook;		/* shutdown hook */
 
@@ -261,3 +262,8 @@ struct acpi_mem		*acpi_res_mem(struct acpi_resources *, int);
 struct acpi_memrange	*acpi_res_memrange(struct acpi_resources *, int);
 struct acpi_irq		*acpi_res_irq(struct acpi_resources *, int);
 struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
+
+/*
+ * power state transition
+ */
+extern ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);

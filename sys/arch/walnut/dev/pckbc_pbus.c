@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mainbus.c,v 1.1.2.3 2002/03/16 16:00:19 jdolecek Exp $	*/
+/* $NetBSD: pckbc_pbus.c,v 1.3.4.2 2002/09/06 08:42:31 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,21 +38,19 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/malloc.h> 
-#include <sys/errno.h>
-#include <sys/queue.h>
 
-#include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 #include <machine/walnut.h>
+
+#include <arch/walnut/dev/pbusvar.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
 
-struct pckbc_mainbus_softc {
+struct pckbc_pbus_softc {
 	struct pckbc_softc sc_pckbc;
 
 	// XXX void *sc_ih[PCKBC_NSLOTS];
@@ -60,23 +58,24 @@ struct pckbc_mainbus_softc {
 
 };
 
-static int	pckbc_mainbus_probe(struct device *, struct cfdata *, void *);
-static void	pckbc_mainbus_attach(struct device *, struct device *, void *);
-static void	pckbc_mainbus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-struct cfattach pckbc_mainbus_ca = {
-	sizeof(struct pckbc_mainbus_softc), pckbc_mainbus_probe, pckbc_mainbus_attach
+static int	pckbc_pbus_probe(struct device *, struct cfdata *, void *);
+static void	pckbc_pbus_attach(struct device *, struct device *, void *);
+static void	pckbc_pbus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+
+struct cfattach pckbc_pbus_ca = {
+	sizeof(struct pckbc_pbus_softc), pckbc_pbus_probe, pckbc_pbus_attach
 };
 
 int pckbcfound = 0;
 
 int
-pckbc_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
+pckbc_pbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct pbus_attach_args *paa = aux;
 
 	/* match only pckbc devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
 	return (pckbcfound < 1);
@@ -85,23 +84,23 @@ pckbc_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 struct pckbc_softc *pckbc0; /* XXX */
 
 void
-pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
+pckbc_pbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pckbc_mainbus_softc *msc = (void *)self;
+	struct pckbc_pbus_softc *msc = (void *)self;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
-	struct mainbus_attach_args *maa = aux;
+	struct pbus_attach_args *paa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
-	bus_space_tag_t iot = galaxy_make_bus_space_tag(0, 0);
-	u_long addr = maa->mb_addr;
+	bus_space_tag_t iot = paa->pb_bt;
+	u_long addr = paa->pb_addr;
 	
 	/*
 	 * Set up IRQs
 	 */
-	msc->sc_irq[PCKBC_KBD_SLOT] = maa->mb_irq;
-	msc->sc_irq[PCKBC_AUX_SLOT] = maa->mb_irq + 1;	/* XXX */
+	msc->sc_irq[PCKBC_KBD_SLOT] = paa->pb_irq;
+	msc->sc_irq[PCKBC_AUX_SLOT] = paa->pb_irq + 1;	/* XXX */
 
-	sc->intr_establish = pckbc_mainbus_intr_establish;
+	sc->intr_establish = pckbc_pbus_intr_establish;
 
 	if (pckbc_is_console(iot, addr)) {
 		t = &pckbc_consdata;
@@ -135,13 +134,13 @@ pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-pckbc_mainbus_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
+pckbc_pbus_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
-	struct pckbc_mainbus_softc *msc = (void *)sc;
+	struct pckbc_pbus_softc *msc = (void *)sc;
 	int irq = msc->sc_irq[slot];
 
 	if (slot > PCKBC_NSLOTS) {
-		printf("pckbc_mainbus_intr_establish: attempt to establish "
+		printf("pckbc_pbus_intr_establish: attempt to establish "
 		    "interrupt at slot %d\n", slot);
 		return;
 	}

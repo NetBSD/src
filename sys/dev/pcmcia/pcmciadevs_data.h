@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.6 2002/06/23 17:48:24 jdolecek Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.7 2002/09/06 08:45:49 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.172 2002/06/08 18:01:14 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -349,6 +349,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Elsa",
 	    "XI800 CF Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	    PCMCIA_CIS_ELSA_XI325_IEEE,
+	    0,
+	    "Elsa",
+	    "XI325 Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
@@ -701,6 +708,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "NewMedia BusToaster",	}
 	,
 	{
+	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TX,
+	    PCMCIA_CIS_NETGEAR_FA410TX,
+	    0,
+	    "Netgear",
+	    "Netgear FA410TX",	}
+	,
+	{
 	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
 	    PCMCIA_CIS_NETGEAR_FA410TXC,
 	    0,
@@ -734,6 +748,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Olicom",
 	    "GoCard Token Ring 16/4",	}
+	,
+	{
+	    PCMCIA_VENDOR_OSITECH, PCMCIA_PRODUCT_OSITECH_TRUMPCARD_SOD,
+	    PCMCIA_CIS_OSITECH_TRUMPCARD_SOD,
+	    0,
+	    "Ositech",
+	    "Ositech Seven of Diamonds Ethernet Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
@@ -1184,6 +1205,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "D-Link DFE-670TXD",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DYNALINK_L10C,
+	    PCMCIA_CIS_DYNALINK_L10C,
+	    0,
+	    "DynaLink",
+	    "Dynalink L10C",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
 	    PCMCIA_CIS_EIGERLABS_EPX_AA2000,
 	    0,
@@ -1618,6 +1646,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_OSITECH,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Ositech",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_DLINK_2,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2023,6 +2059,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "D-Link",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_DYNALINK,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "DynaLink",
 	    NULL,
 	},
 	{

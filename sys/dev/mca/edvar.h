@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.5.2.1 2002/01/10 19:55:58 thorpej Exp $	*/
+/*	$NetBSD: edvar.h,v 1.5.2.2 2002/09/06 08:44:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct ed_softc {
 
 	/* General disk infos */
 	struct disk sc_dk;
-	struct buf_queue sc_q;
+	struct bufq_state sc_q;
 	struct simplelock sc_q_lock;
 
 	struct edc_mca_softc *edc_softc;   /* pointer to our controller */

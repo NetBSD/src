@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.17.4.1 2001/08/03 04:12:48 lukem Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.17.4.2 2002/09/06 08:43:30 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -38,19 +38,6 @@
 
 #ifndef	_SVR4_EXEC_H_
 #define	_SVR4_EXEC_H_
-
-#ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 12, sizeof(char *))
-# define SVR4_AUX_ARGSIZ64	howmany(sizeof(Aux64Info) * 12, sizeof(char *))
-#else
-# define SVR4_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 8, sizeof(char *))
-# define SVR4_AUX_ARGSIZ64	howmany(sizeof(Aux64Info) * 8, sizeof(char *))
-#endif
-
-int svr4_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
-int svr4_copyargs64 __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
 
 /*
  * The following is horrible; there must be a better way. I need to

@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.2.2.5 2002/06/23 17:47:22 jdolecek Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.2.2.6 2002/09/06 08:44:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,13 +74,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.2.2.5 2002/06/23 17:47:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.2.2.6 2002/09/06 08:44:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

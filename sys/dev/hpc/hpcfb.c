@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.7.2.5 2002/06/23 17:46:03 jdolecek Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7.2.6 2002/09/06 08:44:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.5 2002/06/23 17:46:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.6 2002/09/06 08:44:05 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -213,7 +213,7 @@ void    hpcfb_erasecols(void *, int, int, int, long);
 void    hpcfb_redraw(void *, int, int, int);
 void    hpcfb_copyrows(void *, int, int, int);
 void    hpcfb_eraserows(void *, int, int, long);
-int     hpcfb_alloc_attr(void *, int, int, int, long *);
+int     hpcfb_allocattr(void *, int, int, int, long *);
 void    hpcfb_cursor_raw(void *, int, int, int);
 
 #ifdef HPCFB_JUMP
@@ -230,7 +230,7 @@ struct wsdisplay_emulops hpcfb_emulops = {
 	hpcfb_erasecols,
 	hpcfb_copyrows,
 	hpcfb_eraserows,
-	hpcfb_alloc_attr
+	hpcfb_allocattr
 };
 
 /*
@@ -428,8 +428,8 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
 	hpcfb_console_wsscreen.ncols = hpcfb_console_dc.dc_cols;
 	hpcfb_console_wsscreen.capabilities = hpcfb_console_dc.dc_rinfo.ri_caps;
-	hpcfb_alloc_attr(&hpcfb_console_dc,
-			 WSCOL_WHITE, WSCOL_BLACK, 0, &defattr);
+	hpcfb_allocattr(&hpcfb_console_dc,
+			WSCOL_WHITE, WSCOL_BLACK, 0, &defattr);
 	wsdisplay_cnattach(&hpcfb_console_wsscreen, &hpcfb_console_dc,
 	    0, 0, defattr);
 	hpcfbconsole = 1;
@@ -601,6 +601,8 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_GETPARAM:
 	case WSDISPLAYIO_SETPARAM:
 	case HPCFBIO_GCONF:
@@ -754,7 +756,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curxp = 0;
 	*curyp = 0;
 	*cookiep = dc; 
-	hpcfb_alloc_attr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
+	hpcfb_allocattr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
 	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
 	    __FILE__, __LINE__, dc));
 
@@ -1513,13 +1515,13 @@ hpcfb_eraserows(void *cookie, int row, int nrow, long attr)
 }
 
 /*
- * alloc_attr
+ * allocattr
  */
 int
-hpcfb_alloc_attr(void *cookie, int fg, int bg, int flags, long *attrp)
+hpcfb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct rasops_info *ri = &dc->dc_rinfo;
 
-	return (rasops_emul.alloc_attr(ri, fg, bg, flags, attrp));
+	return (rasops_emul.allocattr(ri, fg, bg, flags, attrp));
 }

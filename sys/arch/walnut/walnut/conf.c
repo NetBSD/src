@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2002/06/23 17:43:13 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.3 2002/09/06 08:42:36 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -123,6 +125,9 @@ cdev_decl(com);
 #include "cy.h"
 cdev_decl(cy);
 
+#include "pci.h"
+cdev_decl(pci);
+
 #include "isdn.h"
 #include "isdnctl.h"
 #include "isdntrc.h"
@@ -135,6 +140,11 @@ cdev_decl(isdnbchan);
 cdev_decl(isdntel);
 #include "clockctl.h"
 cdev_decl(clockctl);
+#include "kttcp.h"
+cdev_decl(kttcp);
+
+#include <dev/sysmon/sysmonconf.h>
+cdev_decl(sysmon);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -197,6 +207,14 @@ struct cdevsw cdevsw[] = {
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 57: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 58: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 59: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 60: system call tracing */
+#else
+	cdev_notdef(),			/* 60: system call tracing */
+#endif
+	cdev__oci_init(NKTTCP,kttcp),	/* 61: kernel ttcp helper */
+	cdev_sysmon_init(NSYSMON, sysmon), /* 62: System Monitor */
+	cdev_pci_init(NPCI,pci),	/* 63: PCI bus access device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -290,6 +308,10 @@ static int chrtoblktbl[] = {
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
+	/* 60 */	NODEV,
+	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 /*

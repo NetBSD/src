@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.64.2.5 2002/02/11 20:10:45 jdolecek Exp $	*/
+/*	$NetBSD: malloc.h,v 1.64.2.6 2002/09/06 08:49:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -419,7 +419,7 @@ struct kmembuckets {
  * Macro versions for the usual cases of malloc/free
  */
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM) || \
-    defined(MALLOCLOG) || defined(LOCKDEBUG)
+    defined(MALLOCLOG) || defined(LOCKDEBUG) || defined(MALLOC_NOINLINE)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), (type), (flags))
 #define	FREE(addr, type) free((caddr_t)(addr), (type))
@@ -427,34 +427,34 @@ struct kmembuckets {
 #else /* do not collect statistics */
 #define	MALLOC(space, cast, size, type, flags)				\
 do {									\
-	register struct kmembuckets *kbp = &bucket[BUCKETINDX((size))];	\
-	long s = splvm();						\
-	if (kbp->kb_next == NULL) {					\
+	register struct kmembuckets *__kbp = &bucket[BUCKETINDX((size))]; \
+	long __s = splvm();						\
+	if (__kbp->kb_next == NULL) {					\
 		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
 	} else {							\
-		(space) = (cast)kbp->kb_next;				\
-		kbp->kb_next = *(caddr_t *)(space);			\
+		(space) = (cast)__kbp->kb_next;				\
+		__kbp->kb_next = *(caddr_t *)(space);			\
 	}								\
-	splx(s);							\
+	splx(__s);							\
 } while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\
 do {									\
-	register struct kmembuckets *kbp;				\
-	register struct kmemusage *kup = btokup((addr));		\
-	long s = splvm();						\
-	if (1 << kup->ku_indx > MAXALLOCSAVE) {				\
+	register struct kmembuckets *__kbp;				\
+	register struct kmemusage *__kup = btokup((addr));		\
+	long __s = splvm();						\
+	if (1 << __kup->ku_indx > MAXALLOCSAVE) {			\
 		free((caddr_t)(addr), (type));				\
 	} else {							\
-		kbp = &bucket[kup->ku_indx];				\
-		if (kbp->kb_next == NULL)				\
-			kbp->kb_next = (caddr_t)(addr);			\
+		__kbp = &bucket[__kup->ku_indx];			\
+		if (__kbp->kb_next == NULL)				\
+			__kbp->kb_next = (caddr_t)(addr);		\
 		else							\
-			*(caddr_t *)(kbp->kb_last) = (caddr_t)(addr);	\
+			*(caddr_t *)(__kbp->kb_last) = (caddr_t)(addr);	\
 		*(caddr_t *)(addr) = NULL;				\
-		kbp->kb_last = (caddr_t)(addr);				\
+		__kbp->kb_last = (caddr_t)(addr);			\
 	}								\
-	splx(s);							\
+	splx(__s);							\
 } while(/* CONSTCOND */ 0)
 #endif /* do not collect statistics */
 

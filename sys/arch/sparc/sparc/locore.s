@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145.2.4 2002/06/23 17:41:50 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.2.5 2002/09/06 08:41:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -248,6 +248,10 @@ _mapme:
 #endif
 #endif
 
+#if !defined(SUN4D)
+sun4d_notsup:
+	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4d) cr"
+#endif
 #if !defined(SUN4M)
 sun4m_notsup:
 	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4m) cr"
@@ -2466,32 +2470,103 @@ softintr_common:
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(sparc_interrupt4m))
 #if !defined(MSIIEP)	/* "normal" sun4m */
-	mov	1, %l4
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
+	mov	1, %l4
 	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
-	sll	%l4, %l3, %l4			! test SOFTINT bit
-	andcc	%l5, %l4, %g0
-	bne	sparc_interrupt_common
+	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
+
+	btst	%l4, %l5	! has pending hw intr at this level?
+	bnz	sparc_interrupt_common
 	 nop
 
-	! a soft interrupt; clear bit in interrupt-pending register
-	sll	%l4, 16, %l5
-	st	%l5, [%l6 + ICR_PI_CLR_OFFSET]
-	b,a	softintr_common
+	! both softint pending and clear bits are in upper halfwords of
+	! their respective registers so shift the test bit in %l4 up there
+	sll	%l4, 16, %l4
+#ifdef DIAGNOSTIC
+	btst	%l4, %l5	! make sure softint pending bit is set
+	bnz	softintr_common
+	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+	/* FALLTHROUGH to sparc_interrupt4m_bogus */
+#else
+	b	softintr_common
+	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+#endif
+
 #else /* MSIIEP */
 	sethi	%hi(MSIIEP_PCIC_VA), %l6
 	mov	1, %l4
 	ld	[%l6 + PCIC_PROC_IPR_REG], %l5 ! get pending interrupts
-	sll	%l4, %l3, %l4
-	btst	%l4, %l5	!  has pending hw intr at this level?
+	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
+
+	btst	%l4, %l5	! has pending hw intr at this level?
 	bnz	sparc_interrupt_common
 	 nop
 
-	! a soft interrupt; clear its bit in softintr clear register
+#ifdef DIAGNOSTIC
+	! softint pending bits are in the upper halfword, but softint
+	! clear bits are in the lower halfword so we want the bit in %l4
+	! kept in the lower half and instead shift pending bits right
+	srl	%l5, 16, %l7
+	btst	%l4, %l7	! make sure softint pending bit is set
+	bnz	softintr_common
+	 sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+	/* FALLTHROUGH to sparc_interrupt4m_bogus */
+#else
 	b	softintr_common
 	 sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+#endif
+
 #endif /* MSIIEP */
+
+#ifdef DIAGNOSTIC
+	/*
+	 * sparc_interrupt4m detected that neither hardware nor software
+	 * interrupt pending bit is set for this interrupt.  Report this
+	 * situation, this is most probably a symptom of a driver bug.
+	 */
+sparc_interrupt4m_bogus:
+	INTR_SETUP(-CCFSZ-80)
+	std	%g2, [%sp + CCFSZ + 24]	! save registers
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	mov	%g1, %l7
+	rd	%y, %l6
+	std	%g4, [%sp + CCFSZ + 32]
+	andn	%l0, PSR_PIL, %l4	! %l4 = psr & ~PSR_PIL |
+	sll	%l3, 8, %l5		!	intlev << IPLSHIFT
+	std	%g6, [%sp + CCFSZ + 40]
+	or	%l5, %l4, %l4		!			;
+	wr	%l4, 0, %psr		! the manual claims this
+	wr	%l4, PSR_ET, %psr	! song and dance is necessary
+	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
+	sll	%l3, 2, %l5
+	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
+	ld	[%l4 + %l5], %o0
+	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
+	inc	%o0
+	st	%o0, [%l4 + %l5]
+
+	st	%fp, [%sp + CCFSZ + 16]
+
+	/* Unhandled interrupts while cold cause IPL to be raised to `high' */
+	sethi	%hi(_C_LABEL(cold)), %o0
+	ld	[%o0 + %lo(_C_LABEL(cold))], %o0
+	tst	%o0			! if (cold) {
+	bnz,a	1f			!	splhigh();
+	 or	%l0, 0xf00, %l0		! } else
+	
+	call	_C_LABEL(bogusintr)	!	strayintr(&intrframe)
+	 add	%sp, CCFSZ, %o0
+	/* all done: restore registers and go return */
+1:
+	mov	%l7, %g1
+	wr	%l6, 0, %y
+	ldd	[%sp + CCFSZ + 24], %g2
+	ldd	[%sp + CCFSZ + 32], %g4
+	ldd	[%sp + CCFSZ + 40], %g6
+	b	return_from_trap
+	 wr	%l0, 0, %psr
+#endif /* DIAGNOSTIC */
 #endif /* SUN4M */
 
 _ENTRY(_C_LABEL(sparc_interrupt44c))
@@ -3495,9 +3570,10 @@ dostart:
 	be	is_sun4
 	 nop
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 	/*
 	 * Be prepared to get OF client entry in either %o0 or %o3.
+	 * XXX Will this ever trip on sun4d?  Let's hope not!
 	 */
 	cmp	%o0, 0
 	be	is_openfirm
@@ -3513,7 +3589,7 @@ dostart:
 	 nop				! }
 
 	/*
-	 * are we on a sun4c or a sun4m?
+	 * are we on a sun4c or a sun4m or a sun4d?
 	 */
 	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
 	ld	[%o4 + NO_NEXTNODE], %o4
@@ -3535,9 +3611,15 @@ dostart:
 	cmp	%o0, 'm'
 	be	is_sun4m
 	 nop
-#endif /* SUN4C || SUN4M */
+	cmp	%o0, 'd'
+	be	is_sun4d
+	 nop
+#endif /* SUN4C || SUN4M || SUN4D */
 
-	! ``on a sun4d?!  hell no!''
+	/*
+	 * Don't know what type of machine this is; just halt back
+	 * out to the PROM.
+	 */
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3558,6 +3640,22 @@ is_sun4m:
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+	/*NOTREACHED*/
+#endif
+is_sun4d:
+#if defined(SUN4D)
+	set	trapbase_sun4m, %g6	/* XXXJRT trapbase_sun4d */
+	mov	SUN4CM_PGSHIFT, %g5
+	b	start_havetype
+	 mov	CPU_SUN4D, %g4
+#else
+	set	sun4d_notsup-KERNBASE, %o0
+	ld	[%g7 + PV_EVAL], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4d architecture is not supported
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3700,10 +3798,14 @@ no_3mmu:
 2:
 #endif /* SUN4 */
 
-#if defined(SUN4M)
-	cmp	%g4, CPU_SUN4M		! skip for sun4m!
-	bne	3f
+#if defined(SUN4M) || defined(SUN4D)
+	cmp	%g4, CPU_SUN4M
+	beq	3f
+	 nop
+	cmp	%g4, CPU_SUN4D
+	bne	4f
 
+3:
 	/*
 	 * The OBP guarantees us a 16MB mapping using a level 1 PTE at
 	 * the start of the memory bank in which we were loaded. All we
@@ -3771,8 +3873,8 @@ remap_notvik:
 	sta	%l4, [%o1] ASI_BYPASS
 	!b,a	startmap_done
 
-3:
-#endif /* SUN4M */
+4:
+#endif /* SUN4M || SUN4D */
 	! botch! We should blow up.
 
 startmap_done:
@@ -3875,7 +3977,7 @@ noplab:	 nop
 1:
 #endif
 
-#if ((defined(SUN4) || defined(SUN4C)) && defined(SUN4M))
+#if (defined(SUN4) || defined(SUN4C)) && (defined(SUN4M) || defined(SUN4D))
 
 	/*
 	 * Patch instructions at specified labels that start
@@ -3891,10 +3993,14 @@ Lgandul:	nop
 	ld	[%o0 + %lo(Lgandul)], %l0	! %l0 = NOP
 
 	cmp	%g4, CPU_SUN4M
+	beq,a	2f
+	 nop
+
+	cmp	%g4, CPU_SUN4D
 	bne,a	1f
 	 nop
 
-	! this should be automated!
+2:	! this should be automated!
 	MUNGE(NOP_ON_4M_1)
 	MUNGE(NOP_ON_4M_2)
 	MUNGE(NOP_ON_4M_3)
@@ -5913,7 +6019,7 @@ _ENTRY(_C_LABEL(cypress_get_syncflt))
 	jmp	%l7 + 8			! return to caller
 	 st	%l5, [%l4]		! => dump.sfsr
 
-#if defined(MULTIPROCESSOR) && 0 /* notyet *
+#if defined(MULTIPROCESSOR) && 0 /* notyet */
 /*
  * Read Synchronous Fault Status registers.
  * On entry: %o0 == &sfsr, %o1 == &sfar

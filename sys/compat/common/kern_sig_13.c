@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.5.8.1 2002/01/10 19:51:00 thorpej Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.5.8.2 2002/09/06 08:42:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.5.8.1 2002/01/10 19:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.5.8.2 2002/09/06 08:42:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -172,7 +172,8 @@ compat_13_sys_sigaction(p, v, retval)
 		native_sigaction13_to_sigaction(&nesa, &nbsa);
 	}
 	error = sigaction1(p, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.9.6.2 2002/01/10 19:57:54 thorpej Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9.6.3 2002/09/06 08:46:07 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.6.2 2002/01/10 19:57:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.6.3 2002/09/06 08:46:07 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -249,11 +249,12 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	/* fire off the DAG */
 	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
-
+#if 0
 	if (rf_verifyParityDebug) {
 		printf("Parity verify read dag:\n");
 		rf_PrintDAGList(rd_dag_h);
 	}
+#endif
 	RF_LOCK_MUTEX(mcpair->mutex);
 	mcpair->flag = 0;
 	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
@@ -294,10 +295,12 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
+#if 0
 		if (rf_verifyParityDebug) {
 			printf("Parity verify write dag:\n");
 			rf_PrintDAGList(wr_dag_h);
 		}
+#endif
 		RF_LOCK_MUTEX(mcpair->mutex);
 		mcpair->flag = 0;
 		rf_DispatchDAG(wr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,

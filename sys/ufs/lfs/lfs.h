@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.6.3 2002/06/23 17:52:09 jdolecek Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.6.4 2002/09/06 08:50:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -460,6 +460,7 @@ struct lfs {
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
 	struct lock lfs_freelock;
+	struct lock lfs_fraglock;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int       lfs_nadirop;		/* number of active dirop nodes */
 	long      lfs_ravail;           /* blocks pre-reserved for writing */
@@ -766,6 +767,7 @@ struct segment {
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
+	int	  ndupino;              /* number of duplicate inodes */
 };
 
 struct lfs_cluster {

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.4.3 2002/06/23 17:46:59 jdolecek Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.4.4 2002/09/06 08:44:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -32,11 +32,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /*
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+#include <dev/ic/wi_hostap.h>
 
 struct wi_softc	{
 	struct device		sc_dev;
@@ -66,6 +67,7 @@ struct wi_softc	{
 	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
 	
 	struct ifmedia		sc_media;
+	int			wi_flags;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
 	int			wi_if_flags;
@@ -82,22 +84,38 @@ struct wi_softc	{
 	u_int16_t		wi_max_sleep;
 	u_int16_t		wi_authtype;
 	u_int16_t		wi_roaming;
+	u_int16_t		wi_supprates;
 
 	struct ieee80211_nwid	wi_nodeid;
 	struct ieee80211_nwid	wi_netid;
 	struct ieee80211_nwid	wi_ibssid;
 
 	u_int16_t		wi_txbuf[1596 / 2];
-	int                     wi_has_wep;
 	int                     wi_use_wep;
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
+	u_int16_t		wi_ibss_port;
 
 	struct wi_apinfo	wi_aps[MAXAPINFO];
 	int 			wi_naps;
 	int			wi_scanning;	/* scan mode */
+
+	struct wihap_info	wi_hostap_info;
+	u_int32_t		wi_icv;
+	int			wi_icv_flag;
 };
+
+/* Values for wi_flags. */
+#define	WI_FLAGS_ATTACHED		0x0001
+#define	WI_FLAGS_INITIALIZED		0x0002
+#define	WI_FLAGS_HAS_WEP		0x0004
+#define	WI_FLAGS_HAS_IBSS		0x0008
+#define	WI_FLAGS_HAS_CREATE_IBSS	0x0010
+#define	WI_FLAGS_HAS_MOR		0x0020
+#define	WI_FLAGS_HAS_ROAMING		0x0040
+#define	WI_FLAGS_HAS_DIVERSITY		0x0080
+#define	WI_FLAGS_HAS_HOSTAP		0x0100
 
 struct wi_card_ident {
 	u_int16_t	card_id;
@@ -111,3 +129,5 @@ int	wi_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *arg));
 void	wi_power __P((struct wi_softc *, int));
 void	wi_shutdown __P((struct wi_softc *));
+
+int	wi_mgmt_xmit(struct wi_softc *, caddr_t, int);

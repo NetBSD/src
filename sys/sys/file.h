@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.28.2.2 2002/01/10 20:04:42 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.28.2.3 2002/09/06 08:49:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,6 +62,7 @@ struct file {
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
 #define	DTYPE_KQUEUE	4		/* event queue */
+#define	DTYPE_MISC	5		/* misc file descriptor type */
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */

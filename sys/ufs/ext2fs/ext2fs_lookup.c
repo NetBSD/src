@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.16.6.2 2002/06/23 17:52:06 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.16.6.3 2002/09/06 08:50:09 jdolecek Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.16.6.2 2002/06/23 17:52:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.16.6.3 2002/09/06 08:50:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	ffsdir->d_type = DT_UNKNOWN;		/* don't know more here */
 #ifdef DIAGNOSTIC
 	/*
-	 * XXX Rigth now this can't happen, but if one day
+	 * XXX Right now this can't happen, but if one day
 	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
 	 */
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2002/06/23 17:43:32 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.3 2002/09/06 08:42:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,6 +333,11 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 79: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 80: system call tracing */
+#else
+	cdev_notdef(),			/* 80: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -453,6 +459,7 @@ static int chrtoblktbl[] = {
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
 	/* 79 */	NODEV,
+	/* 80 */	NODEV,
 };
 
 /*

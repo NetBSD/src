@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11.2.3 2002/06/23 17:44:16 jdolecek Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.11.2.4 2002/09/06 08:43:17 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.3 2002/06/23 17:44:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.4 2002/09/06 08:43:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,14 +117,14 @@ linux_setregs(p, pack, stack)
  */
 
 void
-linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
-	sig_t catcher;
+linux_sendsig(sig, mask, code)  /* XXX Check me */
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct linux_sigregs frame;
 	struct linux_pt_regs linux_regs;
 	struct linux_sigcontext sc;
@@ -196,8 +196,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	save_fpu_proc(curproc);
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
 
 	/*
@@ -303,8 +302,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is sync'ed
 	 */
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	save_fpu_proc(curproc);
 
 	/*
 	 *  Restore register context.
@@ -393,8 +391,7 @@ linux_sys_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is in sync
 	 */
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	save_fpu_proc(curproc);
 
 	/*
 	 *  Restore register context.

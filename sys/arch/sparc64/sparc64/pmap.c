@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101.2.6 2002/06/23 17:42:23 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101.2.7 2002/09/06 08:41:51 jdolecek Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -296,7 +296,7 @@ int memsize;
 
 static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
 
-int avail_start, avail_end;	/* These are used by ps & family */
+paddr_t avail_start, avail_end;	/* These are used by ps & family */
 
 static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 #if notyet
@@ -1943,8 +1943,6 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 #ifdef DEBUG	     
 	enter_stats.unmanaged ++;
-#endif
-#ifdef DEBUG
 	if (pa & (PMAP_NVC|PMAP_NC)) 
 		enter_stats.ci ++;
 #endif
@@ -1973,20 +1971,18 @@ pmap_kenter_pa(va, pa, prot)
 	}
 #ifdef DEBUG
 	i = ptelookup_va(va);
-	if( pmapdebug & PDB_ENTER )
-		prom_printf("pmap_kenter_pa: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
-		prom_printf("pmap_kenter_pa: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
-			    i, &tsb[i]);
-		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
+	if (pmapdebug & PDB_ENTER)
+		prom_printf("pmap_kenter_pa: va=%08x data=%08x:%08x "
+			"tsb[%d]=%08x\r\n", va,	(int)(tte.data>>32), 
+			(int)tte.data, i, &tsb[i]);
+	if (pmapdebug & PDB_MMU_STEAL && tsb[i].data) {
+		prom_printf("pmap_kenter_pa: evicting entry tag=%x:%08x "
+			"data=%08x:%08x tsb[%d]=%08x\r\n",
+			(int)(tsb[i].tag>>32), (int)tsb[i].tag,
+			(int)(tsb[i].data>>32), (int)tsb[i].data,
+			i, &tsb[i]);
+		prom_printf("with va=%08x data=%08x:%08x tsb[%d]=%08x\r\n", 
+			va, (int)(tte.data>>32), (int)tte.data,	i, &tsb[i]);
 	}
 #endif
 #if 0
@@ -2003,15 +1999,6 @@ pmap_kenter_pa(va, pa, prot)
  *	Remove a mapping entered with pmap_kenter_pa() starting at va,
  *	for size bytes (assumed to be page rounded).
  */
-#if 0
-void
-pmap_kremove(va, size)
-	vaddr_t va;
-	vsize_t size;
-{
-	return pmap_remove(pmap_kernel(), va, va+size);
-}
-#else
 void
 pmap_kremove(va, size)
 	vaddr_t va;
@@ -2019,6 +2006,8 @@ pmap_kremove(va, size)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
+	vaddr_t flushva = va;
+	vsize_t flushsize = size;
 	int i, s, flush = 0;
 
 	ASSERT(va < INTSTACK || va > EINTSTACK);
@@ -2097,11 +2086,11 @@ pmap_kremove(va, size)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
+		cache_flush_virt(flushva, flushsize);
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 }
-#endif
 
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
@@ -2117,7 +2106,7 @@ pmap_enter(pm, va, pa, prot, flags)
 {
 	pte_t tte;
 	paddr_t pg;
-	int i, s, aliased = 0;
+	int i, s, uncached = 0;
 	pv_entry_t pv = NULL;
 	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
@@ -2153,7 +2142,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	if (IS_VM_PHYSADDR(pa)) {
 		pv = pa_to_pvh(pa);
-		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
+		uncached = (pv->pv_va & (PV_ALIAS|PV_NVC));
 #ifdef DIAGNOSTIC
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
@@ -2170,18 +2159,18 @@ pmap_enter(pm, va, pa, prot, flags)
 #ifdef DEBUG	     
 		enter_stats.unmanaged ++;
 #endif
-		aliased = 0;
+		uncached = 0;
 	}
-	if (pa & PMAP_NVC) aliased = 1;
+	if (pa & PMAP_NVC) uncached = 1;
 #ifdef NO_VCACHE
-	aliased = 1; /* Disable D$ */
+	uncached = 1; /* Disable D$ */
 #endif
 #ifdef DEBUG
 	enter_stats.ci ++;
 #endif
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		(flags & VM_PROT_WRITE), (!(pa & PMAP_NC)), 
-		aliased, 1, (pa & PMAP_LITTLE));
+		uncached, 1, (pa & PMAP_LITTLE));
 #ifdef HWREF
 	if (prot & VM_PROT_WRITE) tte.data |= TLB_REAL_W;
 #else
@@ -2231,20 +2220,17 @@ pmap_enter(pm, va, pa, prot, flags)
 	splx(s);
 	i = ptelookup_va(va);
 #ifdef DEBUG
-	if( pmapdebug & PDB_ENTER )
-		prom_printf("pmap_enter: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
-		prom_printf("pmap_enter: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
-			    i, &tsb[i]);
-		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
+	if (pmapdebug & PDB_ENTER)
+		prom_printf("pmap_enter: va=%08x data=%08x:%08x "
+			"tsb[%d]=%08x\r\n", va,	(int)(tte.data>>32), 
+			(int)tte.data, i, &tsb[i]);
+	if (pmapdebug & PDB_MMU_STEAL && tsb[i].data) {
+		prom_printf("pmap_enter: evicting entry tag=%x:%08x "
+			"data=%08x:%08x tsb[%d]=%08x\r\n",
+			(int)(tsb[i].tag>>32), (int)tsb[i].tag,
+			(int)(tsb[i].data>>32), (int)tsb[i].data, i, &tsb[i]);
+		prom_printf("with va=%08x data=%08x:%08x tsb[%d]=%08x\r\n", 
+			va, (int)(tte.data>>32), (int)tte.data, i, &tsb[i]);
 	}
 #endif
 	if (pm->pm_ctx || pm == pmap_kernel()) {
@@ -2520,16 +2506,16 @@ pmap_extract(pm, va, pap)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			pa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
-			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)pa);
-			if (pa) {
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
-				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)pa);
+			paddr_t npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)npa);
+			if (npa) {
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)npa);
 			}
-			if (pa)	{
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+			if (npa)	{
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_pte(va)], ASI_PHYS_CACHED);
 				printf(" segs[%ld][%ld][%ld]=%lx", (long)va_to_seg(va), 
-				       (long)va_to_dir(va), (long)va_to_pte(va), (long)pa);
+				       (long)va_to_dir(va), (long)va_to_pte(va), (long)npa);
 			}
 			printf(" pseg_get: %lx\n", (long)pa);
 		}
@@ -2909,9 +2895,12 @@ pmap_clear_reference(pg)
 						PV_VAMASK))
 					tsb[i].data = 0;
 /*
+ * XXX I forget if removing this was an optimization or 
+ * workaround for UBC/UVM wierdness.
+ 
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
 					pv->pv_pmap->pm_ctx);
-*/
+ */
 			}
 			if (pv->pv_va & PV_REF)
 				changed |= 1;
@@ -2920,6 +2909,7 @@ pmap_clear_reference(pg)
 		}
 	}
 	splx(s);
+	dcache_flush_page(pa);
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced(pg)) {
@@ -3285,6 +3275,7 @@ pmap_page_protect(pg, prot)
 			}
 		}
 		splx(s);
+		dcache_flush_page(pa);
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
@@ -3491,7 +3482,7 @@ pmap_enter_pv(pmap, va, pa)
 			 * XXX - I haven't seen the pages uncached since
 			 * XXX - using pmap_prefer().	mhitch
 			 */
-			if ((pv->pv_va^va)&VA_ALIAS_MASK) {
+			if ((pv->pv_va ^ va) & VA_ALIAS_MASK) {
 				pv->pv_va |= PV_ALIAS;
 				pmap_page_cache(pmap, pa, 0);
 #ifdef DEBUG
@@ -3646,7 +3637,7 @@ pmap_remove_pv(pmap, va, pa)
 	if (opv->pv_va & PV_ALIAS) {
 		opv->pv_va &= ~PV_ALIAS;
 		for (npv = opv; npv; npv = npv->pv_next) {
-			if ((npv->pv_va^opv->pv_va)&VA_ALIAS_MASK) {
+			if ((npv->pv_va ^ opv->pv_va) & VA_ALIAS_MASK) {
 				opv->pv_va |= PV_ALIAS;
 			}
 		}

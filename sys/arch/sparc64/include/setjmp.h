@@ -1,8 +1,3 @@
-/*	$NetBSD: setjmp.h,v 1.2 1998/09/22 02:48:43 eeh Exp $	*/
+/*       $NetBSD: setjmp.h,v 1.2.26.1 2002/09/06 08:41:43 jdolecek Exp $        */
 
-/*
- * machine/setjmp.h: machine dependent setjmp-related information.
- */
-
-#define	_JBLEN	14		/* size, in longs, of a jmp_buf */
-				/* A sigcontext is 10 longs */
+#include <sparc/setjmp.h>

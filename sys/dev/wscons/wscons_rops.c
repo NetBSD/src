@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.6.8.1 2002/01/10 19:59:15 thorpej Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.6.8.2 2002/09/06 08:47:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wscons_rops.c,v 1.6.8.1 2002/01/10 19:59:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_rops.c,v 1.6.8.2 2002/09/06 08:47:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -224,7 +224,7 @@ rcons_eraserows(void *id, int startrow, int nrows, long fillattr)
 }
 
 int
-rcons_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
+rcons_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
 		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))

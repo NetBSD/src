@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.23.4.2 2002/06/23 17:46:57 jdolecek Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.23.4.3 2002/09/06 08:44:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -167,6 +167,7 @@
 
 /* Subcommands for SMART (features register) */
 #define	WDSM_RD_DATA		0xd0
+#define	WDSM_RD_THRESHOLDS	0xd1
 #define	WDSM_ATTR_AUTOSAVE_EN	0xd2
 #define	WDSM_SAVE_ATTR		0xd3
 #define	WDSM_EXEC_OFFL_IMM	0xd4
@@ -174,9 +175,7 @@
 #define	WDSM_DISABLE_OPS	0xd9
 #define	WDSM_STATUS		0xda
 
-#define	WDSMART_CYL_LO		0x4f
-#define	WDSMART_CYL_HI		0xc2
-
+#define WDSMART_CYL		0xc24f
 
 /* parameters uploaded to device/heads register */
 #define	WDSD_IBM		0xa0	/* forced to 512 byte sector, ecc */

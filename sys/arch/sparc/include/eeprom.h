@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.2.46.1 2002/03/16 15:59:49 jdolecek Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.2.46.2 2002/09/06 08:40:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,7 +50,7 @@ struct eeprom {
 	u_char	eeTestArea[4];		/* Factory Defined */
 	u_short	eeWriteCount[4];	/*    ||      ||   */
 	u_char	eeChecksum[4];  	/*    ||      ||   */
-	time_t	eeLastHwUpdate; 	/*    ||      ||   */
+	u_int32_t	eeLastHwUpdate; 	/*    ||      ||   */
 
 	/* 0x14 */
 	u_char	eeInstalledMem; 	/* Megabytes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.16.8.1 2002/02/11 20:10:44 jdolecek Exp $	*/
+/*	$NetBSD: disk.h,v 1.16.8.2 2002/09/06 08:49:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -169,21 +169,6 @@ struct dkdriver {
 #define	DK_RDLABEL	3		/* label being read */
 #define	DK_OPEN		4		/* label read, drive open */
 #define	DK_OPENRAW	5		/* open without label */
-
-#ifdef DISKSORT_STATS
-/*
- * Stats from disksort().
- */
-struct disksort_stats {
-	long	ds_newhead;		/* # new queue heads created */
-	long	ds_newtail;		/* # new queue tails created */
-	long	ds_midfirst;		/* # insertions into sort list */
-	long	ds_endfirst;		/* # insertions at end of sort list */
-	long	ds_newsecond;		/* # inversions (2nd lists) created */
-	long	ds_midsecond;		/* # insertions into 2nd list */
-	long	ds_endsecond;		/* # insertions at end of 2nd list */
-};
-#endif
 
 /*
  * disklist_head is defined here so that user-land has access to it.

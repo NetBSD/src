@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.10.2.1 2002/03/16 16:01:26 jdolecek Exp $
+#	$NetBSD: files.uba,v 1.10.2.2 2002/09/06 08:45:52 jdolecek Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -71,3 +71,16 @@ file	dev/qbus/if_dmc.c			dmc
 device	ts: tape
 attach	ts at uba
 file	dev/qbus/ts.c				ts needs-flag
+
+# DMF32 on UBA
+device	dmf: tty # ifnet, ifuba
+attach	dmf at uba
+file	dev/qbus/dmf.c				dmf needs-flag
+
+# DMZ32 on UBA
+device	dmz: tty
+attach	dmz at uba
+file	dev/qbus/dmz.c				dmz needs-flag
+
+# Common code for dmf/dmz
+file	dev/qbus/dmx.c				dmf | dmz

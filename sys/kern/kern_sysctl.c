@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91.2.6 2002/09/06 08:47:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.6 2002/09/06 08:47:59 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolece
 #include "opt_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +101,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolece
 
 #ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
+#endif
+
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
@@ -327,6 +332,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	int old_autonicetime;
 	int old_vnodes;
 	dev_t consdev;
+#if NRND > 0
+	int v;
+#endif
 
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
@@ -568,6 +576,16 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    newp));
 	case KERN_MONOTONIC_CLOCK:	/* XXX _POSIX_VERSION */
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_URND:
+#if NRND > 0
+		if (rnd_extract_data(&v, sizeof(v), RND_EXTRACT_ANY) ==
+		    sizeof(v))
+			return (sysctl_rdint(oldp, oldlenp, newp, v));
+		else
+			return (EIO);	/*XXX*/
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -686,7 +704,8 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	struct rlimit alim;
 	struct plimit *newplim;
 	char *tmps = NULL;
-	int i, curlen, len;
+	size_t len, curlen;
+	u_int i;
 
 	if (namelen < 2)
 		return EINVAL;
@@ -994,9 +1013,10 @@ sysctl_rdquad(void *oldp, size_t *oldlenp, void *newp, quad_t val)
  */
 int
 sysctl_string(void *oldp, size_t *oldlenp, void *newp, size_t newlen, char *str,
-    int maxlen)
+    size_t maxlen)
 {
-	int len, error = 0, err2 = 0;
+	int error = 0, err2 = 0;
+	size_t len;
 
 	if (newp && newlen >= maxlen)
 		return (EINVAL);
@@ -1016,7 +1036,8 @@ sysctl_string(void *oldp, size_t *oldlenp, void *newp, size_t newlen, char *str,
 int
 sysctl_rdstring(void *oldp, size_t *oldlenp, void *newp, const char *str)
 {
-	int len, error = 0, err2 = 0;
+	int error = 0, err2 = 0;
+	size_t len;
 
 	if (newp)
 		return (EPERM);
@@ -1032,7 +1053,7 @@ sysctl_rdstring(void *oldp, size_t *oldlenp, void *newp, const char *str)
  */
 int
 sysctl_struct(void *oldp, size_t *oldlenp, void *newp, size_t newlen, void *sp,
-    int len)
+    size_t len)
 {
 	int error = 0;
 
@@ -1049,7 +1070,7 @@ sysctl_struct(void *oldp, size_t *oldlenp, void *newp, size_t newlen, void *sp,
  */
 int
 sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
-    int len)
+    size_t len)
 {
 	int error = 0;
 
@@ -1066,7 +1087,7 @@ sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
  */
 int
 sysctl_rdminstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
-    int len)
+    size_t len)
 {
 	int error = 0;
 
@@ -1085,7 +1106,8 @@ sysctl_rdminstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
 static int
 sysctl_file(void *vwhere, size_t *sizep)
 {
-	int buflen, error;
+	int error;
+	size_t buflen;
 	struct file *fp;
 	char *start, *where;
 
@@ -1372,13 +1394,16 @@ sysctl_doeproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	struct proc *p;
 	const struct proclist_desc *pd;
 	char *where, *dp2;
-	int type, op, arg, elem_size, elem_count;
-	int buflen, needed, error;
+	int type, op, arg;
+	u_int elem_size, elem_count;
+	size_t buflen, needed;
+	int error;
 
 	dp = vwhere;
 	dp2 = where = vwhere;
 	buflen = where != NULL ? *sizep : 0;
-	error = needed = 0;
+	error = 0;
+	needed = 0;
 	type = name[0];
 
 	if (type == KERN_PROC) {
@@ -1430,7 +1455,7 @@ again:
 			break;
 
 		case KERN_PROC_TTY:
-			if (arg == KERN_PROC_TTY_REVOKE) {
+			if (arg == (int) KERN_PROC_TTY_REVOKE) {
 				if ((p->p_flag & P_CONTROLT) == 0 ||
 				    p->p_session->s_ttyp == NULL ||
 				    p->p_session->s_ttyvp != NULL)
@@ -1744,12 +1769,12 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 {
 	struct ps_strings pss;
 	struct proc *p;
-	size_t len, upper_bound, xlen;
+	size_t len, upper_bound, xlen, i;
 	struct uio auio;
 	struct iovec aiov;
 	vaddr_t argv;
 	pid_t pid;
-	int nargv, type, error, i;
+	int nargv, type, error;
 	char *arg;
 	char *tmp;
 
@@ -1759,13 +1784,13 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	type = name[1];
 
 	switch (type) {
-	  case KERN_PROC_ARGV:
-	  case KERN_PROC_NARGV:
-	  case KERN_PROC_ENV:
-	  case KERN_PROC_NENV:
+	case KERN_PROC_ARGV:
+	case KERN_PROC_NARGV:
+	case KERN_PROC_ENV:
+	case KERN_PROC_NENV:
 		/* ok */
 		break;
-	  default:
+	default:
 		return (EINVAL);
 	}
 
@@ -1891,7 +1916,10 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 				nargv--;	/* one full string */
 		}
 
-		/* make sure we don't copyout past the end of the user's buffer */
+		/*
+		 * Make sure we don't copyout past the end of the user's
+		 * buffer.
+		 */
 		if (len + i > upper_bound)
 			i = upper_bound - len;
 

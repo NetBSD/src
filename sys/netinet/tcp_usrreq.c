@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.63.2.5 2002/06/23 17:51:03 jdolecek Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.63.2.6 2002/09/06 08:49:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.63.2.5 2002/06/23 17:51:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.63.2.6 2002/09/06 08:49:22 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -508,7 +508,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
-		sbappend(&so->so_snd, m);
+		sbappendstream(&so->so_snd, m);
 		error = tcp_output(tp);
 		break;
 
@@ -564,7 +564,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		 * of data past the urgent section.
 		 * Otherwise, snd_up should be one lower.
 		 */
-		sbappend(&so->so_snd, m);
+		sbappendstream(&so->so_snd, m);
 		tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
 		tp->t_force = 1;
 		error = tcp_output(tp);

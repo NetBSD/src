@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.2.2 2002/03/16 16:00:21 jdolecek Exp $	*/
+/* $NetBSD: pbus.c,v 1.3.4.2 2002/09/06 08:42:30 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -71,106 +71,96 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/walnut.h>
 
+#include <arch/walnut/dev/pbusvar.h>
+
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
 /*
  * The devices built in to the 405GP cpu.
  */
-const struct ppc405gp_dev {
+const struct pbus_dev {
 	const char *name;
 	bus_addr_t addr;
 	int irq;
-} ppc405gp_devs [] = {
-	{ "com",	UART0_BASE,	 0 },
-	{ "com",	UART1_BASE,	 1 },
+} pbus_devs [] = {
 	{ "dsrtc",	NVRAM_BASE,	-1 },
-	{ "emac",	EMAC0_BASE,	15 }, /* XXX: really irq 9..15 */
-	{ "gpio",	GPIO0_BASE,	-1 },
-	{ "iic",	IIC0_BASE,	 2 },
-	{ "wdog",	-1,        	-1 },
-	{ "pckbc",	KEY_MOUSE_BASE,	10 }, /* XXX: really irq x..x+1 */
-	{ "pchb",	PCIC0_BASE,	-1 },
+	{ "pckbc",	KEY_MOUSE_BASE,	25 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
 
-static int	mainbus_match(struct device *, struct cfdata *, void *);
-static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_submatch(struct device *, struct cfdata *, void *);
-static int	mainbus_print(void *, const char *);
+static int	pbus_match(struct device *, struct cfdata *, void *);
+static void	pbus_attach(struct device *, struct device *, void *);
+static int	pbus_submatch(struct device *, struct cfdata *, void *);
+static int	pbus_print(void *, const char *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
+struct cfattach pbus_ca = {
+	sizeof(struct device), pbus_match, pbus_attach
 };
 
 
 /*
- * Probe for the mainbus; always succeeds.
+ * Probe for the peripheral bus.
  */
 static int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+pbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct pbus_attach_args *pba = aux;
 
-	return 1;
+	/* match only pbus devices */
+	if (strcmp(pba->pb_name, cf->cf_driver->cd_name) != 0)
+		return (0);
+
+	return (1);
 }
 
 static int
-mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
+pbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct pbus_attach_args *pba = aux;
 
-	if (cf->cf_loc[MAINBUSCF_ADDR] != MAINBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[MAINBUSCF_ADDR] != maa->mb_addr)
+	if (cf->cf_loc[PBUSCF_ADDR] != PBUSCF_ADDR_DEFAULT &&
+	    cf->cf_loc[PBUSCF_ADDR] != pba->pb_addr)
 		return (0);
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 /*
- * Attach the mainbus.
+ * Attach the peripheral bus.
  */
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+pbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args mba;
+	struct plb_attach_args *paa = aux;
+	struct pbus_attach_args pba;
 	int i;
 #if NPCKBC > 0
 	bus_space_handle_t ioh_fpga;
-	bus_space_tag_t iot_fpga = galaxy_make_bus_space_tag(0, 0);
+	bus_space_tag_t iot_fpga = paa->plb_bt;
 	uint8_t fpga_reg;
 #endif
 
 	printf("\n");
 
-	/* Attach the CPU first */
-	mba.mb_name = "cpu";
-	mba.mb_addr = MAINBUSCF_ADDR_DEFAULT;
-	mba.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-	mba.mb_bt = galaxy_make_bus_space_tag(0, 0);
-	config_found(self, &mba, mainbus_print);
-	
-	for (i = 0; ppc405gp_devs[i].name != NULL; i++) {
-		mba.mb_name = ppc405gp_devs[i].name;
-		mba.mb_addr = ppc405gp_devs[i].addr;
-		mba.mb_irq = ppc405gp_devs[i].irq;
-		mba.mb_bt = galaxy_make_bus_space_tag(0, 0);
-		mba.mb_dmat = &galaxy_default_bus_dma_tag;
+	for (i = 0; pbus_devs[i].name != NULL; i++) {
+		pba.pb_name = pbus_devs[i].name;
+		pba.pb_addr = pbus_devs[i].addr;
+		pba.pb_irq = pbus_devs[i].irq;
+		pba.pb_bt = paa->plb_bt;
+		pba.pb_dmat = paa->plb_dmat;
 
-		(void) config_found_sm(self, &mba, mainbus_print,
-		    mainbus_submatch);
+		(void) config_found_sm(self, &pba, pbus_print, pbus_submatch);
 	}
 
 #if NPCKBC > 0
 	/* Configure FPGA */
 	if (bus_space_map(iot_fpga, FPGA_BASE, FPGA_SIZE, 0, &ioh_fpga)) {
-		printf("mainbus_attach: can't map FPGA\n");
+		printf("pbus_attach: can't map FPGA\n");
 		/* XXX - disable keyboard probe? */
 	} else {
 		/* Use separate interrupts for keyboard and mouse */
@@ -200,18 +190,17 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbus_print(void *aux, const char *pnp)
+pbus_print(void *aux, const char *pnp)
 {
-	struct mainbus_attach_args *mba = aux;
+	struct pbus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mb_name, pnp);
+		printf("%s at %s", pba->pb_name, pnp);
 
-	if (mba->mb_addr != MAINBUSCF_ADDR_DEFAULT)
-		printf(" addr 0x%08lx", mba->mb_addr);
-	if (mba->mb_irq != MAINBUSCF_IRQ_DEFAULT)
-		printf(" irq %d", mba->mb_irq);
+	if (pba->pb_addr != PBUSCF_ADDR_DEFAULT)
+		printf(" addr 0x%08lx", pba->pb_addr);
+	if (pba->pb_irq != PBUSCF_IRQ_DEFAULT)
+		printf(" irq %d", pba->pb_irq);
 
 	return (UNCONF);
 }
-

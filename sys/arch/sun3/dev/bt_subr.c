@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.2.48.2 2002/01/10 19:49:44 thorpej Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.2.48.3 2002/09/06 08:42:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@ bt_getcmap(p, cm, cmsize)
 
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 		return (EINVAL);
 	if (!useracc(p->red, count, B_WRITE) ||
 	    !useracc(p->green, count, B_WRITE) ||
@@ -101,7 +101,7 @@ bt_putcmap(p, cm, cmsize)
 
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 		return (EINVAL);
 	if (!useracc(p->red, count, B_READ) ||
 	    !useracc(p->green, count, B_READ) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: times.h,v 1.8 1995/03/26 20:24:54 jtc Exp $	*/
+/*	$NetBSD: times.h,v 1.8.46.1 2002/09/06 08:50:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,7 +61,11 @@ struct tms {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#ifdef __LIBC12_SOURCE__
 clock_t	times __P((struct tms *));
+#else
+clock_t times __P((struct tms *)) __RENAME(__times13);
+#endif
 __END_DECLS
 #endif
 #endif /* !_SYS_TIMES_H_ */

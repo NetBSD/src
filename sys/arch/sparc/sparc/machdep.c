@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181.2.6 2002/06/23 17:41:52 jdolecek Exp $ */
+/*	$NetBSD: machdep.c,v 1.181.2.7 2002/09/06 08:41:13 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -167,9 +167,8 @@ caddr_t	mdallocsys __P((caddr_t));
 void
 cpu_startup()
 {
-	unsigned i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -336,7 +335,7 @@ cpu_startup()
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate dma map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
@@ -360,7 +359,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -501,17 +500,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
 	int addr, onstack, oldsp, newsp;
 	struct sigframe sf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -601,7 +601,22 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		addr = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		addr = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	tf->tf_global[1] = (int)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -1041,8 +1056,8 @@ caddr_t addr;
 	int res;
 	int s;
 
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
+	if (CPU_ISSUN4M || CPU_ISSUN4D) {
+		printf("warning: ldcontrolb called on sun4m/sun4d\n");
 		return 0;
 	}
 
@@ -1763,6 +1778,29 @@ static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
 
+/*
+ * Generic routine to translate an address using OpenPROM `ranges'.
+ */
+int
+bus_translate_address_generic(struct openprom_range *ranges, int nranges,
+    bus_addr_t addr, bus_addr_t *addrp)
+{
+	int i, space = BUS_ADDR_IOSPACE(addr);
+
+	for (i = 0; i < nranges; i++) {
+		struct openprom_range *rp = &ranges[i];
+
+		if (rp->or_child_space != space)
+			continue;
+
+		/* We've found the connection to the parent bus. */
+		*addrp = BUS_ADDR(rp->or_parent_space,
+		    rp->or_parent_base + BUS_ADDR_PADDR(addr));
+		return (0);
+	}
+
+	return (EINVAL);
+}
 
 int
 sparc_bus_map(t, ba, size, flags, va, hp)
@@ -1777,6 +1815,16 @@ sparc_bus_map(t, ba, size, flags, va, hp)
 	unsigned int pmtype;
 static	vaddr_t iobase;
 
+	if (t->ranges != NULL) {
+		bus_addr_t addr;
+		int error;
+
+		error = bus_translate_address_generic(t->ranges, t->nranges,
+		    ba, &addr);
+		if (error)
+			return (error);
+		return (bus_space_map2(t->parent, addr, size, flags, va, hp));
+	}
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -1847,8 +1895,23 @@ sparc_bus_mmap(t, ba, off, prot, flags)
 	int		prot;
 	int		flags;
 {
-	u_int pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
-	paddr_t pa = trunc_page(BUS_ADDR_PADDR(ba) + off);
+	u_int pmtype;
+	paddr_t pa;
+
+	if (t->ranges != NULL) {
+		bus_addr_t addr;
+		int error;
+
+		error = bus_translate_address_generic(t->ranges, t->nranges,
+		    ba, &addr);
+		if (error)
+			return (-1);
+		return (bus_space_mmap(t->parent, addr, off, prot, flags));
+	}
+
+	pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
+	pa = trunc_page(BUS_ADDR_PADDR(ba) + off);
+
 	return (paddr_t)(pa | pmtype | PMAP_NC);
 }
 
@@ -1920,6 +1983,8 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
+	NULL,				/* ranges */
+	0,				/* nranges */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	sparc_bus_subregion,		/* bus_space_subregion */

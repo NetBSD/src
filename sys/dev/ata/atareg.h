@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.7.2.1 2002/02/11 20:09:39 jdolecek Exp $	*/
+/*	$NetBSD: atareg.h,v 1.7.2.2 2002/09/06 08:43:55 jdolecek Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -120,6 +120,7 @@ struct ataparams {
 #define WDC_CMD1_SEC	0x0002
 #define WDC_CMD1_SMART	0x0001
     u_int16_t	atap_cmd_set2;    	/* 83: command set supported */
+#define ATA_CMD2_SMART	0x2000
 #define WDC_CMD2_RMSN	0x0010
 #define WDC_CMD2_DM	0x0001
 #define ATA_CMD2_APM	0x0008

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.36.2.2 2002/01/10 19:48:57 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.36.2.3 2002/09/06 08:41:08 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ struct cpu_info {
 #define CPUCLS_SUN4C		5
 #endif
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 #define CPUCLS_MICROSPARC	10	/* MicroSPARC-II */
 #define CPUCLS_SUPERSPARC	11	/* Generic SuperSPARC */
 #define CPUCLS_HYPERSPARC	12	/* Ross HyperSPARC RT620 */

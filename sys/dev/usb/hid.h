@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.6.6.1 2002/01/10 19:58:49 thorpej Exp $	*/
+/*	$NetBSD: hid.h,v 1.6.6.2 2002/09/06 08:46:40 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum hid_kind { 
+enum hid_kind {
 	hid_input,
 	hid_output,
 	hid_feature,

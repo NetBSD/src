@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.1.8.2 2002/06/23 17:47:28 jdolecek Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.1.8.3 2002/09/06 08:45:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.1.8.2 2002/06/23 17:47:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.1.8.3 2002/09/06 08:45:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

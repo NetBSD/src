@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.60.2.2 2002/03/16 16:01:50 jdolecek Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.60.2.3 2002/09/06 08:48:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.60.2.2 2002/03/16 16:01:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.60.2.3 2002/09/06 08:48:04 jdolecek Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -94,7 +94,7 @@ struct pool_item_header {
 	TAILQ_HEAD(,pool_item)	ph_itemlist;	/* chunk list for this page */
 	LIST_ENTRY(pool_item_header)
 				ph_hashlist;	/* Off-page page headers */
-	int			ph_nmissing;	/* # of chunks in use */
+	unsigned int		ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 };
@@ -415,7 +415,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
-	size = ALIGN(size);
+	size = roundup(size, align);
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
 		panic("pool_init: pool item size (%lu) too large",
@@ -636,7 +636,7 @@ pool_get(struct pool *pp, int flags)
 #ifdef DIAGNOSTIC
 	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
-		panic("pool_get: must have NOWAIT");
+		panic("pool_get: %s: must have NOWAIT", pp->pr_wchan);
 
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
@@ -916,6 +916,7 @@ pool_do_put(struct pool *pp, void *v)
 #endif
 
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+	KDASSERT(ph->ph_nmissing != 0);
 	ph->ph_nmissing--;
 	pp->pr_nput++;
 	pp->pr_nitems++;
@@ -1124,6 +1125,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
+
+		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);

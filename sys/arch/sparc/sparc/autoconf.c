@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.150.2.5 2002/06/23 17:41:46 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150.2.6 2002/09/06 08:41:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -302,7 +302,7 @@ bootstrap()
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/* Map Interrupt Enable Register */
 		pmap_kenter_pa(INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
@@ -940,7 +940,7 @@ cpu_configure()
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		ienab_bis(IE_ALLIE);
 #endif
 
@@ -1123,6 +1123,29 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #else
 #define openboot_special4m	((void *)0)
 #endif
+#if defined(SUN4D)
+	static const char *const openboot_special4d[] = {
+		"",
+
+		/* ignore these (end with NULL) */
+		/*
+		 * These are _root_ devices to ignore. Others must be handled
+		 * elsewhere.
+		 */
+		"mem-unit",	/* XXX might need this for memory errors */
+		"boards",
+		"openprom",
+		"virtual-memory",
+		"memory",
+		"aliases",
+		"options",
+		"packages",
+		NULL
+	};
+#else
+#define	openboot_special4d	((void *)0)
+#endif
+
 
 	if (CPU_ISSUN4)
 		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
@@ -1168,11 +1191,14 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 /*
  * The rest of this routine is for OBP machines exclusively.
  */
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 
-	openboot_special = CPU_ISSUN4M
-				? openboot_special4m
-				: openboot_special4c;
+	if (CPU_ISSUN4D)
+		openboot_special = openboot_special4d;
+	else if (CPU_ISSUN4M)
+		openboot_special = openboot_special4m;
+	else
+		openboot_special = openboot_special4c;
 
 	node = findroot();
 
@@ -1650,6 +1676,7 @@ static struct {
 	{ "ptisp",	"isp" },
 	{ "SUNW,fdtwo",	"fdc" },
 	{ "network",	"hme" }, /* Krups */
+	{ "SUNW,hme",   "hme" },
 };
 
 static char *
@@ -1744,8 +1771,8 @@ instance_match(dev, aux, bp)
 		    "want space %#x pa %#x have space %#x pa %#x\n",
 		     bp->val[0], bp->val[1], iom->iom_reg[0].ior_iospace,
 		     iom->iom_reg[0].ior_pa));
-		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].ior_iospace &&
-		    (u_int32_t)bp->val[1] == iom->iom_reg[0].ior_pa)
+		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
+		    (u_int32_t)bp->val[1] == iom->iom_reg[0].oa_base)
 			return (1);
 		break;
 	case BUSCLASS_XDC:

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192.2.6 2002/06/23 17:49:24 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.7 2002/09/06 08:47:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.6 2002/06/23 17:49:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.7 2002/09/06 08:47:40 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.6 2002/06/23 17:49:24 jdolecek
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
+#include "opt_systrace.h"
 
 #include "rnd.h"
 
@@ -91,6 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.6 2002/06/23 17:49:24 jdolecek
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
@@ -112,6 +116,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.6 2002/06/23 17:49:24 jdolecek
 #include <machine/cpu.h>
 
 #include <uvm/uvm.h>
+
+#include <dev/cons.h>
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -165,7 +171,8 @@ main(void)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
-	int i, s, error;
+	int s, error;
+	u_int i;
 	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
@@ -180,6 +187,7 @@ main(void)
 	 * Initialize the current process pointer (curproc) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
+	simple_lock_init(&proc0.p_raslock);
 	p = &proc0;
 	curproc = p;
 	p->p_cpu = curcpu();
@@ -287,7 +295,7 @@ main(void)
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = 
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
 	    maxfiles < NOFILE ? maxfiles : NOFILE;
 
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
@@ -339,7 +347,7 @@ main(void)
 	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
 	usevnodes = (ptoa((unsigned)physmem) / 200) / sizeof(struct vnode);
-	if (usevnodes > desiredvnodes) 
+	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
@@ -389,6 +397,9 @@ main(void)
 	/* Initialize system accouting. */
 	acct_init();
 
+#ifdef SYSTRACE
+	systrace_init();
+#endif
 	/*
 	 * Initialize signal-related data structures, and signal state
 	 * for proc0.
@@ -570,8 +581,10 @@ start_init(void *arg)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	const char **pathp, *path, *slash;
+	const char *path, *slash;
 	char *ucp, **uap, *arg0, *arg1 = NULL;
+	char ipath[129];
+	int ipx, len;
 
 	/*
 	 * Now in process 1.
@@ -596,7 +609,7 @@ start_init(void *arg)
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
 	 */
 	addr = USRSTACK - PAGE_SIZE;
-	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
+	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE,
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,
@@ -604,7 +617,28 @@ start_init(void *arg)
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
 
-	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
+	ipx = 0;
+	while (1) {
+		if (boothowto & RB_ASKNAME) {
+			printf("init path");
+			if (initpaths[ipx])
+				printf(" (default %s)", initpaths[ipx]);
+			printf(": ");
+			len = cngetsn(ipath, sizeof(ipath)-1);
+			if (len == 0) {
+				if (initpaths[ipx])
+					path = initpaths[ipx++];
+				else
+					continue;
+			} else {
+				ipath[len] = '\0';
+				path = ipath;
+			}
+		} else {
+			if ((path = initpaths[ipx++]) == NULL)
+				break;
+		}
+
 		ucp = (char *)(addr + PAGE_SIZE);
 
 		/*
@@ -644,6 +678,9 @@ start_init(void *arg)
 		i = strlen(path) + 1;
 #ifdef DEBUG
 		printf("init: copying out path `%s' %d\n", path, i);
+#else
+		if (boothowto & RB_ASKNAME || path != initpaths[0])
+			printf("init: trying %s\n", path);
 #endif
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
@@ -678,8 +715,7 @@ start_init(void *arg)
 			KERNEL_PROC_UNLOCK(p);
 			return;
 		}
-		if (error != ENOENT)
-			printf("exec %s: error %d\n", path, error);
+		printf("exec %s: error %d\n", path, error);
 	}
 	printf("init: not found\n");
 	panic("no init");

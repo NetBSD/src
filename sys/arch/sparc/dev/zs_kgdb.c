@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.7.2.1 2002/01/10 19:48:48 thorpej Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7.2.2 2002/09/06 08:40:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ findzs(zs)
 #endif
 
 #if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M) {
+	if (CPU_ISSUN4C || CPU_ISSUN4M) {
 		int node;
 
 		node = firstchild(findroot());

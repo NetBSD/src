@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.4.4.5 2002/06/23 17:47:41 jdolecek Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.4.4.6 2002/09/06 08:45:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.4.5 2002/06/23 17:47:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.4.6 2002/09/06 08:45:16 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -2152,5 +2152,5 @@ pcn_mii_statchg(struct device *self)
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		pcn_bcr_write(sc, LE_BCR9, LE_B9_FDEN);
 	else
-		pcn_bcr_write(sc, LE_BCR0, 0);
+		pcn_bcr_write(sc, LE_BCR9, 0);
 }

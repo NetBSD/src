@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26.2.4 2002/06/24 07:05:00 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.26.2.5 2002/09/06 08:42:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -168,6 +168,11 @@ cdev_decl(clockctl);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "usb.h"
+cdev_decl(usb);
+#include "ugen.h"
+cdev_decl(ugen);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -227,6 +232,13 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 46: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 47: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl), /* 48: settimeofday driver */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 49: system call tracing */
+#else
+	cdev_notdef(),			/* 49: system call tracing */
+#endif
+	cdev_usb_init(NUSB, usb),	/* 50: USB controller */
+	cdev_ugen_init(NUGEN, ugen),	/* 51: USB generic driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -291,7 +303,8 @@ static int chrtoblktbl[] = {
 	/* 42 */	NODEV,		/* 43 */	NODEV,
 	/* 44 */	NODEV,		/* 45 */	NODEV,
 	/* 46 */	NODEV,		/* 47 */	NODEV,
-	/* 48 */	NODEV,
+	/* 48 */	NODEV,		/* 49 */	NODEV,
+	/* 50 */	NODEV,		/* 51 */	NODEV,
 };
 
 /*

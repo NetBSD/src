@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.33.2.7 2002/06/23 17:48:04 jdolecek Exp $ */
+/* $NetBSD: tga.c,v 1.33.2.8 2002/09/06 08:45:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.7 2002/06/23 17:48:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.8 2002/09/06 08:45:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,7 +703,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	sc->sc_dc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_dc->dc_rinfo, 
+	sc->sc_dc->dc_rinfo.ri_ops.allocattr(&sc->sc_dc->dc_rinfo, 
 		0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
@@ -775,7 +775,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 				tga_bt463_rd);
 		}
 	}
-	dcp->dc_rinfo.ri_ops.alloc_attr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
+	dcp->dc_rinfo.ri_ops.allocattr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rinfo, 0, 0, defattr);
 	
 	return(0);

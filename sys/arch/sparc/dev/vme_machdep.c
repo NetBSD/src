@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.31.2.3 2002/03/16 15:59:48 jdolecek Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.31.2.4 2002/09/06 08:40:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -394,9 +394,9 @@ vmeattach_iommu(parent, self, aux)
 	}
 
 	if (bus_space_map(ia->iom_bustag,
-			  (bus_addr_t) BUS_ADDR(ia->iom_reg[0].ior_iospace,
-						ia->iom_reg[0].ior_pa),
-			  (bus_size_t)ia->iom_reg[0].ior_size,
+			  (bus_addr_t) BUS_ADDR(ia->iom_reg[0].oa_space,
+						ia->iom_reg[0].oa_base),
+			  (bus_size_t)ia->iom_reg[0].oa_size,
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
 		panic("%s: can't map vmebusreg", self->dv_xname);
@@ -404,9 +404,9 @@ vmeattach_iommu(parent, self, aux)
 	sc->sc_reg = (struct vmebusreg *)bh;
 
 	if (bus_space_map(ia->iom_bustag,
-			  (bus_addr_t) BUS_ADDR(ia->iom_reg[1].ior_iospace,
-						ia->iom_reg[1].ior_pa),
-			  (bus_size_t)ia->iom_reg[1].ior_size,
+			  (bus_addr_t) BUS_ADDR(ia->iom_reg[1].oa_space,
+						ia->iom_reg[1].oa_base),
+			  (bus_size_t)ia->iom_reg[1].oa_size,
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
 		panic("%s: can't map vmebusvec", self->dv_xname);
@@ -418,8 +418,8 @@ vmeattach_iommu(parent, self, aux)
 	 */
 	if (bus_space_map(ia->iom_bustag,
 			  (bus_addr_t) BUS_ADDR(
-				ia->iom_reg[1].ior_iospace,
-				ia->iom_reg[1].ior_pa + VME_IOC_TAGOFFSET),
+				ia->iom_reg[1].oa_space,
+				ia->iom_reg[1].oa_base + VME_IOC_TAGOFFSET),
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
@@ -429,8 +429,8 @@ vmeattach_iommu(parent, self, aux)
 
 	if (bus_space_map(ia->iom_bustag,
 			  (bus_addr_t) BUS_ADDR(
-				ia->iom_reg[1].ior_iospace,
-				ia->iom_reg[1].ior_pa + VME_IOC_FLUSHOFFSET),
+				ia->iom_reg[1].oa_space,
+				ia->iom_reg[1].oa_base + VME_IOC_FLUSHOFFSET),
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {

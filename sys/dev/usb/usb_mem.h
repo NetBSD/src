@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.15.4.1 2002/06/23 17:49:12 jdolecek Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.15.4.2 2002/09/06 08:47:11 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 
 #elif defined(__FreeBSD__)
 
-/* 
+/*
  * FreeBSD does not have special functions for dma memory, so let's keep it
  * simple for now.
  */

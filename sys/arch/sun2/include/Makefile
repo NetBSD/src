@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2002/06/23 17:42:31 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2002/09/06 08:41:59 jdolecek Exp $
 
 KDIR=	/sys/arch/sun2/include
 INCSDIR= /usr/include/sun2
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kbd.h kbio.h kcore.h \
 	leds.h limits.h lock.h \
 	math.h mon.h \
-	param.h pcb.h pmap.h promlib.h \
+	param.h pcb.h pmap.h pmc.h promlib.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \

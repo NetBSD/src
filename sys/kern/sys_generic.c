@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.57.2.2 2002/06/23 17:49:35 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.57.2.3 2002/09/06 08:48:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.57.2.2 2002/06/23 17:49:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.57.2.3 2002/09/06 08:48:07 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -106,7 +106,8 @@ dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
 {
 	struct uio	auio;
 	struct iovec	aiov;
-	long		cnt, error;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov;
 #endif
@@ -192,7 +193,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 {
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
-	long		i, cnt, error;
+	int		i, error;
+	size_t		cnt;
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
@@ -310,7 +312,8 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 {
 	struct uio	auio;
 	struct iovec	aiov;
-	long		cnt, error;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov;
 #endif
@@ -399,7 +402,8 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 {
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
-	long		i, cnt, error;
+	int		i, error;
+	size_t		cnt;
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
@@ -762,7 +766,7 @@ selscan(struct proc *p, fd_mask *ibitp, fd_mask *obitp, int nfd,
 	int		msk, i, j, fd, n;
 	fd_mask		ibits, obits;
 	struct file	*fp;
-	static int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
+	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
 			       POLLWRNORM | POLLHUP | POLLERR,
 			       POLLRDBAND };
 

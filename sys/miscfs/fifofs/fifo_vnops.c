@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.4.3 2002/01/10 20:01:33 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.4 2002/09/06 08:48:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.3 2002/01/10 20:01:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.4 2002/09/06 08:48:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.3 2002/01/10 20:01:33 thorpej 
 struct fifoinfo {
 	struct socket	*fi_readsock;
 	struct socket	*fi_writesock;
+	long		fi_opencount;
 	long		fi_readers;
 	long		fi_writers;
 };
@@ -196,9 +197,11 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
+		fip->fi_opencount = 0;
 		wso->so_state |= SS_CANTRCVMORE;
 		rso->so_state |= SS_CANTSENDMORE;
 	}
+	fip->fi_opencount++;
 	if (ap->a_mode & FREAD) {
 		if (fip->fi_readers++ == 0) {
 			fip->fi_writesock->so_state &= ~SS_CANTSENDMORE;
@@ -264,7 +267,8 @@ fifo_read(void *v)
 	} */ *ap = v;
 	struct uio	*uio;
 	struct socket	*rso;
-	int		error, startresid;
+	int		error;
+	size_t		startresid;
 
 	uio = ap->a_uio;
 	rso = ap->a_vp->v_fifoinfo->fi_readsock;
@@ -439,7 +443,6 @@ fifo_close(void *v)
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
-	int		error1, error2;
 
 	vp = ap->a_vp;
 	fip = vp->v_fifoinfo;
@@ -451,15 +454,13 @@ fifo_close(void *v)
 		if (--fip->fi_writers == 0)
 			socantrcvmore(fip->fi_readsock);
 	}
-	if (vp->v_usecount > 1)
-		return (0);
-	error1 = soclose(fip->fi_readsock);
-	error2 = soclose(fip->fi_writesock);
-	FREE(fip, M_VNODE);
-	vp->v_fifoinfo = NULL;
-	if (error1)
-		return (error1);
-	return (error2);
+	if (--fip->fi_opencount == 0) {
+		(void) soclose(fip->fi_readsock);
+		(void) soclose(fip->fi_writesock);
+		FREE(fip, M_VNODE);
+		vp->v_fifoinfo = NULL;
+	}
+	return (0);
 }
 
 /*

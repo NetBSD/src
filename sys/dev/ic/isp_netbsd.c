@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.46.2.4 2002/06/23 17:46:37 jdolecek Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.46.2.5 2002/09/06 08:44:23 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.46.2.4 2002/06/23 17:46:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.46.2.5 2002/09/06 08:44:23 jdolecek Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -198,10 +198,12 @@ isp_config_interrupts(struct device *self)
 
 	/*
 	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
-	 * for mailbox stuff at that point.
+	 * schema which allows interrupts, so we can do tsleep/wakeup
+	 * for mailbox stuff at that point, if that's allowed.
 	 */
-	isp->isp_osinfo.no_mbox_ints = 0;
+	if (IS_FC(isp)) {
+		isp->isp_osinfo.no_mbox_ints = 0;
+	}
 }
 
 
@@ -404,6 +406,7 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 		if (isp->isp_state != ISP_INITSTATE) {
 			ENABLE_INTS(isp);
 			ISP_UNLOCK(isp);
+			isp_prt(isp, ISP_LOGERR, "isp not at init state");
 			XS_SETERR(xs, HBA_BOTCH);
 			scsipi_done(xs);
 			return;
@@ -622,6 +625,7 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 			isp_reinit(isp);
 		}
 		if (XS_NOERR(xs)) {
+			isp_prt(isp, ISP_LOGERR, "polled command timed out");
 			XS_SETERR(xs, HBA_BOTCH);
 		}
 	}
@@ -654,6 +658,10 @@ isp_done(XS_T *xs)
 				scsipi_channel_timed_thaw(&isp->isp_chanB);
 			}
 		}
+if (xs->error == XS_DRIVER_STUFFUP) {
+isp_prt(isp, ISP_LOGERR, "BOTCHED cmd for %d.%d.%d cmd 0x%x datalen %ld",
+XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), XS_CDBP(xs)[0], (long) XS_XFRLEN(xs));
+}
 		scsipi_done(xs);
 	}
 }
@@ -1100,7 +1108,17 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
                 isp_prt(isp, ISP_LOGERR,
                     "Internal Firmware Error on bus %d @ RISC Address 0x%x",
                     mbox6, mbox1);
+#ifdef	ISP_FW_CRASH_DUMP
+		if (IS_FC(isp)) {
+			if (isp->isp_osinfo.blocked == 0) {
+				isp->isp_osinfo.blocked = 1;
+				scsipi_channel_freeze(&isp->isp_chanA, 1);
+			}
+			isp_fw_dump(isp);
+		}
 		isp_reinit(isp);
+		isp_async(isp, ISPASYNC_FW_RESTART, NULL);
+#endif
 		break;
 	}
 	default:

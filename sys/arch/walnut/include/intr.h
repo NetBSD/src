@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.2 2002/03/16 16:00:20 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.3 2002/09/06 08:42:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GALAXY_INTR_H_
-#define _GALAXY_INTR_H_
+#ifndef _WALNUT_INTR_H_
+#define _WALNUT_INTR_H_
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */
@@ -76,10 +76,8 @@ struct intrhand {
 };
 
 void setsoftclock(void);
-void clearsoftclock(void);
 int  splsoftclock(void);
 void setsoftnet(void);
-void clearsoftnet(void);
 int  splsoftnet(void);
 
 void do_pending_int(void);
@@ -207,5 +205,4 @@ void softnet(void);
 void softserial(void);
 
 #endif /* !_LOCORE */
-
-#endif /* !_GALAXY_INTR_H_ */
+#endif /* !_WALNUT_INTR_H_ */

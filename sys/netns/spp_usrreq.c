@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.25.2.2 2002/06/23 17:51:44 jdolecek Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.25.2.3 2002/09/06 08:49:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.25.2.2 2002/06/23 17:51:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.25.2.3 2002/09/06 08:49:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,7 @@ update_window:
 			} /* else queue this packet; */
 		} else {
 			/*struct socket *so = cb->s_nspcb->nsp_socket;
-			if (so->so_state && SS_NOFDREF) {
+			if (so->so_state & SS_NOFDREF) {
 				ns_error(m0, NS_ERR_NOSOCK, 0);
 				(void)spp_close(cb);
 			} else
