@@ -2,7 +2,7 @@
  *
  * Module Name: evxfregn - External Interfaces, ACPI Operation Regions and
  *                         Address Spaces.
- *              $Revision: 1.3 $
+ *              xRevision: 52 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.3 2002/06/15 01:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
 
 #define __EVXFREGN_C__
 
@@ -320,8 +320,8 @@ AcpiInstallAddressSpaceHandler (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_OPREGION,
-        "Installing address handler for region %s(%X) on Device %p(%p)\n",
-        AcpiUtGetRegionName (SpaceId), SpaceId, Node, ObjDesc));
+        "Installing address handler for region %s(%X) on Device %4.4s %p(%p)\n",
+        AcpiUtGetRegionName (SpaceId), SpaceId, Node->Name.Ascii, Node, ObjDesc));
 
     /*
      * Now we can install the handler
@@ -330,7 +330,7 @@ AcpiInstallAddressSpaceHandler (
      * So, we just allocate the object for the handler and link it
      * into the list.
      */
-    HandlerObj = AcpiUtCreateInternalObject (INTERNAL_TYPE_ADDRESS_HANDLER);
+    HandlerObj = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_ADDRESS_HANDLER);
     if (!HandlerObj)
     {
         Status = AE_NO_MEMORY;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
- *              $Revision: 1.3 $
+ *              xRevision: 40 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.3 2002/06/15 01:47:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.4 2002/12/23 00:22:14 kanaoka Exp $");
 
 #define __PSTREE_C__
 
@@ -221,7 +221,7 @@ AcpiPsAppendArg (
     {
         /* Invalid opcode */
 
-        ACPI_REPORT_ERROR (("PsAppendArg: Invalid AML Opcode: 0x%2.2X\n", 
+        ACPI_REPORT_ERROR (("PsAppendArg: Invalid AML Opcode: 0x%2.2X\n",
             Op->Common.AmlOpcode));
         return;
     }

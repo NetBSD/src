@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              $Revision: 1.3 $
+ *              xRevision: 93 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.3 2002/06/15 01:47:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
 
 #define __UTDELETE_C__
 
@@ -439,7 +439,7 @@ AcpiUtUpdateRefCount (
      * Sanity check the reference count, for debug purposes only.
      * (A deleted object will have a huge reference count)
      */
-    if (Count > MAX_REFERENCE_COUNT)
+    if (Count > ACPI_MAX_REFERENCE_COUNT)
     {
 
         ACPI_DEBUG_PRINT ((ACPI_DB_WARN,
@@ -533,7 +533,7 @@ AcpiUtUpdateObjectReference (
             break;
 
 
-        case INTERNAL_TYPE_ADDRESS_HANDLER:
+        case ACPI_TYPE_LOCAL_ADDRESS_HANDLER:
 
             /* Must walk list of address handlers */
 
@@ -582,7 +582,7 @@ AcpiUtUpdateObjectReference (
             break;
 
 
-        case INTERNAL_TYPE_REGION_FIELD:
+        case ACPI_TYPE_LOCAL_REGION_FIELD:
 
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->Field.RegionObj, Action, &StateList);
@@ -593,7 +593,7 @@ AcpiUtUpdateObjectReference (
            break;
 
 
-        case INTERNAL_TYPE_BANK_FIELD:
+        case ACPI_TYPE_LOCAL_BANK_FIELD:
 
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->BankField.BankObj, Action, &StateList);
@@ -611,7 +611,7 @@ AcpiUtUpdateObjectReference (
             break;
 
 
-        case INTERNAL_TYPE_INDEX_FIELD:
+        case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->IndexField.IndexObj, Action, &StateList);
@@ -630,7 +630,7 @@ AcpiUtUpdateObjectReference (
 
 
         case ACPI_TYPE_REGION:
-        case INTERNAL_TYPE_REFERENCE:
+        case ACPI_TYPE_LOCAL_REFERENCE:
         default:
 
             /* No subobjects */
