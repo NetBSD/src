@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.191 2000/11/10 02:00:09 wiz Exp $
+# $NetBSD: mi,v 1.192 2000/11/18 06:10:11 wiz Exp $
 .
 ./altroot
 ./bin
@@ -1288,6 +1288,9 @@
 ./usr/share/zoneinfo/America/Jamaica
 ./usr/share/zoneinfo/America/Jujuy
 ./usr/share/zoneinfo/America/Juneau
+./usr/share/zoneinfo/America/Kentucky
+./usr/share/zoneinfo/America/Kentucky/Louisville
+./usr/share/zoneinfo/America/Kentucky/Monticello
 ./usr/share/zoneinfo/America/Knox_IN
 ./usr/share/zoneinfo/America/La_Paz
 ./usr/share/zoneinfo/America/Lima
@@ -1365,6 +1368,7 @@
 ./usr/share/zoneinfo/Asia/Anadyr
 ./usr/share/zoneinfo/Asia/Aqtau
 ./usr/share/zoneinfo/Asia/Aqtobe
+./usr/share/zoneinfo/Asia/Ashgabat
 ./usr/share/zoneinfo/Asia/Ashkhabad
 ./usr/share/zoneinfo/Asia/Baghdad
 ./usr/share/zoneinfo/Asia/Bahrain
@@ -1425,6 +1429,7 @@
 ./usr/share/zoneinfo/Asia/Tehran
 ./usr/share/zoneinfo/Asia/Tel_Aviv
 ./usr/share/zoneinfo/Asia/Thimbu
+./usr/share/zoneinfo/Asia/Thimphu
 ./usr/share/zoneinfo/Asia/Tokyo
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/Asia/Ulaanbaatar
@@ -1559,6 +1564,7 @@
 ./usr/share/zoneinfo/Europe/Minsk
 ./usr/share/zoneinfo/Europe/Monaco
 ./usr/share/zoneinfo/Europe/Moscow
+./usr/share/zoneinfo/Europe/Nicosia
 ./usr/share/zoneinfo/Europe/Oslo
 ./usr/share/zoneinfo/Europe/Paris
 ./usr/share/zoneinfo/Europe/Prague
