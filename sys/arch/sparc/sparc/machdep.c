@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.25 1994/06/10 14:33:10 pk Exp $
+ * $Id: machdep.c,v 1.26 1994/08/20 01:29:49 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -875,7 +875,10 @@ mapdev(phys, virt, size)
 {
 	register vm_offset_t v;
 	register void *ret;
-	static vm_offset_t iobase = IODEV_BASE;
+	static vm_offset_t iobase;
+
+	if (iobase == NULL)
+		iobase = IODEV_BASE;
 
 	size = round_page(size);
 	if (virt)
