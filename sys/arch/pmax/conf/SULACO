@@ -1,4 +1,4 @@
-#	$NetBSD: SULACO,v 1.2 1999/11/25 02:48:13 nisimura Exp $
+#	$NetBSD: SULACO,v 1.3 1999/12/31 12:21:06 ad Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
@@ -144,7 +144,7 @@ le0	at	tc? slot ? offset ?	# LANCE
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
 #tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
 #sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px0	at	tc? slot ? offset ?	# PMAG-C PX family
+px0	at	tc? slot ? offset ?	# PMAG-C,D,E,F PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
 #xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
