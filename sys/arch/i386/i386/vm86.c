@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.4 1996/02/27 22:45:04 jtc Exp $	*/
+/*	$NetBSD: vm86.c,v 1.5 1996/04/11 03:21:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,9 @@ static void fast_intxx __P((struct proc *, int));
 #define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
 #define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
 
+#define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
+#define	SS(tf)		(*(u_short *)&tf->tf_ss)
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
 
@@ -244,7 +246,7 @@ fast_intxx(p, intrno)
 	 * requested special handling, return to user space with indication
 	 * of which INT was requested.
 	 */
-	cs = tf->tf_cs;
+	cs = CS(tf);
 	if (cs == BIOSSEG || is_bitset(intrno, &u_vm86p->int_byuser[0]))
 		goto vector;
 
@@ -270,16 +272,16 @@ fast_intxx(p, intrno)
 	 * Otherwise, push flags, cs, eip, and jump to handler to
 	 * simulate direct INT call.
 	 */
-	ss = tf->tf_ss << 4;
+	ss = SS(tf) << 4;
 	sp = SP(tf);
 
 	putword(ss, sp, get_vflags(p));
-	putword(ss, sp, tf->tf_cs);
+	putword(ss, sp, CS(tf));
 	putword(ss, sp, IP(tf));
 	SP(tf) = sp;
 
 	IP(tf) = ihand.ip;
-	tf->tf_cs = ihand.cs;
+	CS(tf) = ihand.cs;
 
 	/* disable further "hardware" interrupts, turn off any tracing. */
 	VM86_EFLAGS(p) &= ~PSL_VIF;
@@ -346,9 +348,9 @@ vm86_gpfault(p, type)
 	u_char tmpbyte;
 	u_long cs, ip, ss, sp;
 
-	cs = tf->tf_cs << 4;
+	cs = CS(tf) << 4;
 	ip = IP(tf);
-	ss = tf->tf_ss << 4;
+	ss = SS(tf) << 4;
 	sp = SP(tf);
 
 	/*
@@ -386,7 +388,7 @@ vm86_gpfault(p, type)
 
 	case IRET:
 		IP(tf) = getword(ss, sp);
-		tf->tf_cs = getword(ss, sp);
+		CS(tf) = getword(ss, sp);
 	case POPF:
 		set_vflags_short(p, getword(ss, sp));
 		SP(tf) = sp;
@@ -403,7 +405,7 @@ vm86_gpfault(p, type)
 
 		case IRET:
 			IP(tf) = getdword(ss, sp);
-			tf->tf_cs = getdword(ss, sp);
+			CS(tf) = getdword(ss, sp);
 		case POPF:
 			set_vflags(p, getdword(ss, sp));
 			SP(tf) = sp;
