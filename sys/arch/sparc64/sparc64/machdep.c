@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2000/04/10 13:34:20 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.59 2000/04/22 12:03:33 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ extern	caddr_t msgbufaddr;
 int   safepri = 0;
 
 void	dumpsys __P((void));
-caddr_t	mdallocsys __P((caddr_t));
 void	stackdump __P((void));
 
 /* 
@@ -214,11 +213,10 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (long)allocsys(NULL, mdallocsys);
-printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
+	sz = (long)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for %lx bytes of tables", sz);
-	if (allocsys(v, mdallocsys) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 
         /*
@@ -296,20 +294,6 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 
 #if 0
 	pmap_redzone();
-#endif
-}
-
-caddr_t
-mdallocsys(v)
-	caddr_t v;
-{
-
-#if 0	/* XXX this is from allocsys().  we have a copy as we use nbuf */
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
 #endif
 }
 
@@ -1294,7 +1278,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr= NULL; /* UPA does not map things */
+	segs[0].ds_addr = NULL; /* UPA does not map things */
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
