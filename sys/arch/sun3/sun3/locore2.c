@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.56 1996/12/17 21:11:39 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.57 1996/12/30 21:13:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -419,19 +419,6 @@ sun3_vm_init(kehp)
 	proc0_user_pa = avail_start;
 	virtual_avail += UPAGES*NBPG;
 	avail_start   += UPAGES*NBPG;
-#if 0
-	/* Make them non-cached.
-	 * XXX - Make these non-cached at their full-time mapping address.
-	 * XXX - Still need to do that? -gwr
-	 */
-	va = (vm_offset_t) proc0paddr;
-	while (va < virtual_avail) {
-		pte = get_pte(va);
-		pte |= PG_NC;
-		set_pte(va, pte);
-		va += NBPG;
-	}
-#endif
 
 	/*
 	 * Virtual and physical page used by dumpsys()
