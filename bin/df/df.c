@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.31 1998/10/08 02:10:36 wsanchez Exp $	*/
+/*	$NetBSD: df.c,v 1.31.2.1 1999/09/26 02:03:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.31 1998/10/08 02:10:36 wsanchez Exp $");
+__RCSID("$NetBSD: df.c,v 1.31.2.1 1999/09/26 02:03:53 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,8 +297,17 @@ regetmntinfo(mntbufp, mntsize)
 			continue;
 		if (nflag)
 			mntbuf[j] = mntbuf[i];
-		else
+		else {
+			struct statfs layerbuf = mntbuf[i];
 			(void)statfs(mntbuf[i].f_mntonname, &mntbuf[j]);
+			/*
+			 * If the FS name changed, then new data is for
+			 * a different layer and we don't want it.
+			 */
+			if(memcmp(layerbuf.f_mntfromname,
+				 mntbuf[j].f_mntfromname, MNAMELEN))
+				 mntbuf[j] = layerbuf;
+		}
 		j++;
 	}
 	return (j);
