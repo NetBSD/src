@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/01/17 23:39:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2004/03/08 05:12:10 jmc Exp $
 
 INCSDIR= /usr/include/mmeye
 
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
-	trap.h types.h \
+	types.h \
 	varargs.h vmparam.h
 
 .include <bsd.kinc.mk>
