@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.45 1998/02/13 15:16:43 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.46 1998/02/17 15:07:02 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -284,6 +284,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # install		- Install the results of a build.
 # reinstall		- Install the results of a build, ignoring "already installed"
 #				  flag.
+# deinstall		- Remove the installation.
 # package		- Create a package from an _installed_ port.
 # describe		- Try to generate a one-line description for each port for
 #				  use in INDEX files and the like.
@@ -901,6 +902,8 @@ build:
 	@${IGNORECMD}
 install:
 	@${IGNORECMD}
+deinstall:
+	@${IGNORECMD}
 package:
 	@${IGNORECMD}
 .endif # IGNORE
@@ -1240,7 +1243,7 @@ _PORT_USE: .USE
 .if !defined(NO_PKG_REGISTER) && !defined(FORCE_PKG_REGISTER)
 	@if [ -d ${PKG_DBDIR}/${PKGNAME} ]; then \
 		${ECHO_MSG} "===>  ${PKGNAME} is already installed - perhaps an older version?"; \
-		${ECHO_MSG} "      If so, you may wish to \`\`pkg_delete ${PKGNAME}'' and install"; \
+		${ECHO_MSG} "      If so, you may wish to \`\`make deinstall'' and install"; \
 		${ECHO_MSG} "      this port again by \`\`make reinstall'' to upgrade it properly."; \
 		${ECHO_MSG} "      If you really wish to overwrite the old port of ${PKGNAME}"; \
 		${ECHO_MSG} "      without deleting it first, set the variable \"FORCE_PKG_REGISTER\""; \
@@ -1407,6 +1410,17 @@ checkpatch:
 reinstall:
 	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
+.endif
+
+# Deinstall
+#
+# Special target to remove installation
+
+.if !target(deinstall)
+deinstall:
+	@${ECHO_MSG} "===> Deinstalling for ${PKGNAME}"
+	@pkg_delete -f ${PKGNAME}
+	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 .endif
 
 .endif # __ARCH_OK
