@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.1 1998/11/22 22:14:35 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.2 1999/02/27 13:17:08 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ stp4020match(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp("SUNW,pcmcia", sa->sa_name) == 0);
 }
 
 /*
