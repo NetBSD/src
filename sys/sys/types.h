@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.30 1997/10/16 23:34:40 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.31 1997/11/05 21:32:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -165,8 +165,8 @@ typedef	struct fd_set {
 #define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
 #else
-#define	FD_COPY(f, t)	memcpy(t, f, sizeof(*(f)))
-#define	FD_ZERO(p)	memset(p, 0, sizeof(*(p)))
+#define	FD_COPY(f, t)	(void)memcpy(t, f, sizeof(*(f)))
+#define	FD_ZERO(p)	(void)memset(p, 0, sizeof(*(p)))
 #endif
 
 #if defined(__STDC__) && defined(_KERNEL)
