@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 1994/11/14 20:53:55 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 1995/05/24 20:23:34 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -79,9 +79,16 @@ static int db_var_short(varp, valp, op)
 
 #define	MAXINT	0x7fffffff
 
+#if 0
 #define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS && \
 			 (((vm_offset_t)(va)) < (USRSTACK - MAXSSIZ) || \
 			  ((vm_offset_t)(va)) >= USRSTACK))
+#else
+/* XXX - Slight hack... */
+extern int curpcb;
+#define	INKERNEL(va)	(((int)(va) > curpcb) && \
+			 ((int)(va) < (curpcb + USPACE)))
+#endif
 
 #define	get(addr, space) \
 		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
