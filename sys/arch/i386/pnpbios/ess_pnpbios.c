@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.5 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.6 2002/02/15 22:06:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.5 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.6 2002/02/15 22:06:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,14 @@ ess_pnpbios_match(parent, match, aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "ESS0104") && strcmp(aa->idstr, "ESS1869"))
+	if (strcmp(aa->idstr, "ESS0104") && /* 1788 */
+	    strcmp(aa->idstr, "ESS0114") && /* 1788 */
+	    strcmp(aa->idstr, "CPQAE27") && /* 1788 */
+	    strcmp(aa->idstr, "ESS1869") && /* 1869 */
+	    strcmp(aa->idstr, "CPQB0AB") && /* 1869 */
+	    strcmp(aa->idstr, "CPQB0AC") && /* 1869 */
+	    strcmp(aa->idstr, "CPQB0AD") && /* 1869 */
+	    strcmp(aa->idstr, "CPQB0F1"))   /* 1869 */
 		return (0);
 
 	return (1);
