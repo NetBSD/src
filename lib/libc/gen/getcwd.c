@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.11 1998/02/26 02:49:21 perry Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.12 1998/03/14 03:27:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.11 1998/02/26 02:49:21 perry Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.12 1998/03/14 03:27:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,44 +62,10 @@ __weak_alias(getcwd,_getcwd);
 __weak_alias(realpath,_realpath);
 #endif
 
-static char *getcwd_physical __P((char *, size_t));
-
 #define	ISDOT(dp) \
 	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
 	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 
-char *
-getcwd(pt, size)
-	char *pt;
-	size_t size;
-{
-	char *pwd;
-	size_t pwdlen;
-	dev_t dev;
-	ino_t ino;
-	struct stat s;
-
-	/* Check $PWD -- if it's right, it's fast. */
-	if ((pwd = getenv("PWD")) != NULL && pwd[0] == '/' && !stat(pwd, &s)) {
-		dev = s.st_dev;
-		ino = s.st_ino;
-		if (!stat(".", &s) && dev == s.st_dev && ino == s.st_ino) {
-			pwdlen = strlen(pwd);
-			if (size != 0) {
-				if (pwdlen + 1 > size) {
-					errno = ERANGE;
-					return (NULL);
-				}
-			} else if ((pt = malloc(pwdlen + 1)) == NULL)
-				return (NULL);
-			memmove(pt, pwd, pwdlen);
-			pt[pwdlen] = '\0';
-			return (pt);
-		}
-	}
-		
-	return (getcwd_physical(pt, size));
-}
 
 /*
  * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
@@ -177,7 +143,7 @@ loop:
 	 * Call the inernal internal version of getcwd which
 	 * does a physical search rather than using the $PWD short-cut
 	 */
-	if (getcwd_physical(resolved, MAXPATHLEN) == 0)
+	if (getcwd(resolved, MAXPATHLEN) == 0)
 		goto err1;
 
 	/*
@@ -216,8 +182,8 @@ err2:	(void)close(fd);
 	return (NULL);
 }
 
-static char *
-getcwd_physical(pt, size)
+char *
+getcwd(pt, size)
 	char *pt;
 	size_t size;
 {
