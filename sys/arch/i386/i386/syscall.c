@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2000/12/12 03:33:16 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6 2000/12/12 20:22:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ syscall_plain(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax;
+	code = frame.tf_eax & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -124,16 +124,18 @@ syscall_plain(frame)
 		break;
 	}
 
-	callp += (code & (SYS_NSYSENT - 1));
+	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		error = copyin(params, (caddr_t)args, argsize);
 		if (error)
 			goto bad;
 	}
+
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif /* SYSCALL_DEBUG */
+
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
@@ -181,7 +183,7 @@ syscall_fancy(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax;
+	code = frame.tf_eax & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -205,13 +207,14 @@ syscall_fancy(frame)
 		break;
 	}
 
-	callp += (code & (SYS_NSYSENT - 1));
+	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		error = copyin(params, (caddr_t)args, argsize);
 		if (error)
 			goto bad;
 	}
+
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif /* SYSCALL_DEBUG */
@@ -219,6 +222,7 @@ syscall_fancy(frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif /* KTRACE */
+
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);

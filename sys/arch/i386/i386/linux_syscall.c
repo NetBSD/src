@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.11 2000/12/12 03:33:16 mycroft Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.12 2000/12/12 20:22:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,10 +103,10 @@ linux_syscall_plain(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax;
+	code = frame.tf_eax & (LINUX_SYS_NSYSENT - 1);
 	callp = linux_sysent;
 
-	callp += (code & (LINUX_SYS_NSYSENT - 1));
+	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		/*
@@ -184,10 +184,10 @@ linux_syscall_fancy(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax;
+	code = frame.tf_eax & (LINUX_SYS_NSYSENT - 1);
 	callp = linux_sysent;
 
-	callp += (code & (LINUX_SYS_NSYSENT - 1));
+	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		/*
