@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.40 2002/05/28 03:04:06 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.41 2002/05/29 02:58:30 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.40 2002/05/28 03:04:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.41 2002/05/29 02:58:30 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -240,7 +240,8 @@ struct domain inet6domain =
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
       rn_inithead,
       offsetof(struct sockaddr_in6, sin6_addr) << 3,
-      sizeof(struct sockaddr_in6) };
+      sizeof(struct sockaddr_in6),
+      in6_domifattach, in6_domifdetach, };
 
 /*
  * Internet configuration info
