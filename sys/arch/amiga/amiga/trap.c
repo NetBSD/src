@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 2003/10/21 00:49:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2003/10/21 00:49:34 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,7 @@ trap(type, code, v, frame)
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 
 		userret(l, frame.f_pc, sticks);
 		return;

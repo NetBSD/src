@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2003/10/21 00:49:34 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2003/10/21 00:49:34 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -475,7 +475,7 @@ trap(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 		if (curcpu()->ci_want_resched)
-			preempt(NULL);
+			preempt(0);
 		userret(l);
 		return;
 
