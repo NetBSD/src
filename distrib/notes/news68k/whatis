@@ -1,7 +1,7 @@
-.\"	$NetBSD: whatis,v 1.3 2000/10/14 22:27:43 lukem Exp $
+.\"	$NetBSD: whatis,v 1.4 2000/10/29 14:08:08 lukem Exp $
 .
 This is the first major release of
 .Nx
 for the Sony's \*M based
-.Dq NET WORK STATION
+.Dq "NET WORK STATION"
 series of computers.

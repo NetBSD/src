@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2000/10/15 12:33:03 shin Exp $
+.\"	$NetBSD: hardware,v 1.11 2000/10/29 14:08:06 lukem Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8 MB or more of RAM.  The port supports the HPC
@@ -74,7 +74,7 @@ MobilePro 800
 MobilePro 880
 .bullet)
 .It
-IBM
+.Tn IBM
 .(bullet -compact
 WorkPad z50
 .bullet)
@@ -128,7 +128,8 @@ built-in LCD screen
 .It
 built-in keyboard
 .It
-serial port (with boot option 'h')
+serial port (with boot option
+.Sq Li h )
 .bullet)
 .It
 Storage devices

@@ -1,4 +1,4 @@
-.\"	$NetBSD: contrib,v 1.2 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: contrib,v 1.3 2000/10/29 14:08:07 lukem Exp $
 .
 .Ss Contributions
 .Pp
@@ -10,7 +10,9 @@ moral support.
 .It
 The Alice Group (Allen K. Briggs, Chris P. Caputo, Michael L. Finch,
 Bradley A. Grantham, and Lawrence A. Kesteloot), without
-whom there would be no NetBSD port for the Macintosh.
+whom there would be no
+.Nx
+port for the Macintosh.
 .It
 Steven R. Allen for keeping our snapshot distributions up-to-date.
 .It
@@ -53,7 +55,9 @@ Booter application.
 .It
 Scott Redman for lending Brad Grantham a PowerBook 160.
 .It
-Craig Ruff for assembling an '030 "pmove ttx" instruction.
+Craig Ruff for assembling an '030
+.Li "pmove ttx"
+instruction.
 .It
 Brad Salai for lending an Ethernet card to help resolve
 interrupt conflicts.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.14 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: install,v 1.15 2000/10/29 14:08:12 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,9 @@ shouldn't be too much trouble.
 There are two kind of installer for
 .Nx*M ;
 standard,
-.Dq sysinst
+.Ic sysinst
 installer, and small,
-.Dq script
+.Ic script
 installer.
 .Pp
 The former is the recommended, but it requires at least 5 MB of memory.
@@ -66,15 +66,20 @@ at boot time. If possible, you should use the parameters it prints.
 another operating system, or because your disk is old enough that the
 kernel can't figure out its geometry.)
 .Pp
-You should now be ready to install NetBSD. It might be handy for you
+You should now be ready to install
+.Nx .
+It might be handy for you
 to have a pencil, some paper, and a calculator handy.
 .Pp
 The following is a walk-through of the steps you will take while
 getting
 .Nx
 installed on your hard disk. If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question. If you wish to stop the installation, you may press Control-C
+default answer, it will be displayed in brackets
+.Pq Dq []
+after the
+question. If you wish to stop the installation, you may press
+.Key CONTROL-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 .(enum
@@ -97,28 +102,40 @@ You will then be presented with the
 kernel boot
 messages. You will want to read them, to determine your
 disk's name and geometry. Its name will be something like
-"sd0" and the geometry will be printed on a line that
+.Li sd0
+and the geometry will be printed on a line that
 begins with its name. As mentioned above, you will need your
-disk's geometry when creating NetBSD's partitions. You will
+disk's geometry when creating
+.Nx 's
+partitions. You will
 also need to know the name, to tell the install tools what
 disk to install on.
 .It
 You will be presented with a welcome message and a prompt
-asking whether you are going to "install"
+asking whether you are going to
+.Ic install
 .Nx
-or "upgrade"
-an exisiting system.  Select "install" to start installation.
+or
+.Ic upgrade
+an existing system.  Select
+.Ic install
+to start installation.
 .It
 You will be presented a prompt asking if you wish to proceed
 with the installation process.  If you wish to proceed,
-enter "y" and press return.
+enter
+.Sq Ic y
+and press
+.Key RETURN .
 .It
 The install program will then tell you which disks it can
 install on, and ask you which it should use.
 Reply with the name of your disk.
 .It
 You will then be asked to name your disk's disklabel. The
-default response is "mysd", and for most purposes it will be
+default response is
+.Sq Ic mysd ,
+and for most purposes it will be
 OK. If you choose to name it something different, make sure
 the name is a single word and contains no special characters.
 You don't need to remember this name.
@@ -127,8 +144,11 @@ You will be prompted for your disk's geometry information,
 i.e. the number of bytes per sector, cylinders on the disk,
 tracks per cylinder (heads), and sectors per track. Enter
 them when they are requested. If you make a mistake, press
-Control-C and when you get to the shell prompt, restart the
-install process by running the "install" command. Once you
+.Key CONTROL-C
+and when you get to the shell prompt, restart the
+install process by running the
+.Ic install
+command. Once you
 have entered this data, the install program will tell you the
 total size of your disk, in both sectors, and cylinders.
 Remember this number; if you're installing on the whole disk,
@@ -140,12 +160,17 @@ cylinders. If you choose to enter the information in units of
 sectors, remember that, for optimal performance, partitions
 should begin and end on cylinder boundaries. You will be
 asked about which units you wish to use, and you should reply
-with "c" for cylinders, or "s" for sectors.
+with
+.Sq Ic c
+for cylinders, or
+.Sq Ic s
+for sectors.
 .It
 You will be asked to enter the size of your
 .Nx
-root
-partition. It should be at least 20 MB, but if you are going to
+root partition
+.Pq Pa / .
+It should be at least 20 MB, but if you are going to
 be doing development, 25 MB is a more desirable size. This
 size should be expressed in units of sectors or cylinders,
 depending on which you said you wanted to use.
@@ -162,43 +187,63 @@ appropriate.
 .It
 The install program will then ask you for information about
 the rest of the partitions you want on your disk. For most
-purposes, you will want only one more partition, "/usr".
-(Machines used as servers will probably also want /var as a
+purposes, you will want only one more partition,
+.Pa /usr .
+(Machines used as servers will probably also want
+.Pa /var
+as a
 separate partition. That can be done with these installation
 tools, but is not covered here.) The install program will
 tell you how much space there is left to be allocated in the
 NetBSD area of the disk, and, if you only want one more
-partition ("/usr"), you should enter it at the prompt when the
+partition
+.Pq Pa /usr,
+you should enter it at the prompt when the
 installer asks you how large the next partition should be.
 It will then ask you for the name of the mount point for that
 partition. If you're doing a basic installation, that is
-"/usr".
+.Pa /usr .
 .It
 .Em You are now at the
 .Em point of no return .
 Nothing has been
 written to your disk yet, but if you confirm that you want to
-install NetBSD, your hard drive will be modified, and its
+install
+.Nx ,
+your hard drive will be modified, and its
 contents may be scrambled at the whim of the install program.
 This is especially likely if you have given the install
 program incorrect information. If you are sure you want to
-proceed, enter "yes" at the prompt.
+proceed, enter
+.Sq Ic yes
+at the prompt.
 .It
 The install program will now label your disk and make the file
-systems you specified. The filesystems will be initialized to
+systems you specified. The file systems will be initialized to
 contain
 .Nx
 bootstrapping binaries and configuration files.
-It will also create an /etc/fstab for your system, and mount
-all of the file systems under /mnt. (In other words, your root
-partition will be mounted on /mnt, your /usr partition on
-/mnt/usr, and so on.) There should be no errors in this
+It will also create an
+.Pa /etc/fstab
+for your system, and mount all of the file systems under
+.Pa /mnt .
+(In other words, your
+.Pa /
+(root) partition will be mounted on
+.Pa /mnt ,
+your
+.Pa /usr
+partition on
+.Pa /mnt/usr ,
+and so on.) There should be no errors in this
 section of the installation. If there are, restart from the
 beginning of the installation process.
 .It
-You will be placed at a shell prompt ("#"). The remaining
+You will be placed at a shell prompt
+.Pq Sq Li # .
+The remaining
 tasks are to copy the kernel from the kernel copy floppy to
-the hard drive's root filesystem and install the distribution
+the hard drive's root file system and install the distribution
 sets. The flow of installation differs depending on your
 hardware resources, and on what media the distribution sets
 reside.
@@ -208,27 +253,34 @@ reside.
 .Pp
 The first thing you should do is pick a temporary
 directory where the distribution files can be stored.
-To do this, enter the command "Set_tmp_dir", and enter
+To do this, enter the command
+.Ic Set_tmp_dir ,
+and enter
 the name of the temporary directory. (Don't forget
 that your disk is mounted under
 .Pa /mnt ;
 you should
 probably pick a directory under
 .Pa /mnt/usr . )
-The
-default is /mnt/usr/distrib.
+The default is
+.Pa /mnt/usr/distrib .
 .Pp
 Insert the media onto the drive. Check the device
 name of your drive from the boot message. The device
-name is something like "sd2" depending on the SCSI
+name is something like
+.Li sd2
+depending on the SCSI
 disk drives connected to your machine. Note that the
 boot message can be displayed with the command
 .Ic more /kern/msgbuf .
 .Pp
 Mount the disk on the temporary directory with a
 command like:
-.D1 Ic mount -t msdos /dev/sd2c Ar tmp_dir
-if your removable drive's name is sd2.
+.Pp
+.Dl # Ic "mount -t msdos /dev/sd2c Ar tmp_dir"
+.Pp
+if your removable drive's name is
+.Li sd2 .
 .Pp
 Run the
 .Ic Extract
@@ -241,9 +293,10 @@ distribution set, followed by the
 distribution set, and finally the
 .Sy etc
 distribution set, use the commands:
-.D1 Ic Extract base
-.D1 Ic Extract kern
-.D1 Ic Extract etc
+.Pp
+.Dl # Ic "Extract base"
+.Dl # Ic "Extract kern"
+.Dl # Ic "Extract etc"
 .Pp
 For each extraction, it will ask you if the extraction
 should be verbose. If you reply affirmatively, it
@@ -257,8 +310,10 @@ To do this, enter the command
 .Ic Set_tmp_dir ,
 and enter
 the name of the temporary directory. (Don't forget
-that if your disk is still mounted under /mnt; you
-should probably pick a directory under /mnt/usr.)
+that if your disk is still mounted under
+.Pa /mnt ;
+you should probably pick a directory under
+.Pa /mnt/usr . )
 .Pp
 After you have picked a temporary directory, enter the
 .Ic Load_fd
@@ -266,26 +321,43 @@ command, to load the distribution sets from
 your floppies.
 .Pp
 You will be asked which floppy drive to use. Enter
-"0" (zero) if you're using the first floppy drive
-(i.e. what DOS would call "A:"), or enter "1" if
-you're using the second.
+.Sq Li 0
+(zero) if you're using the first floppy drive
+(i.e. what
+.Tn MS-DOS
+would call
+.Sq Li "A:" ) ,
+or enter
+.Sq Li "1"
+(one)
+if you're using the second.
 .Pp
 You will be prompted to insert a floppy into the drive,
 to have its contents copied to your hard disk. Do so,
-and press return to begin copying. When that is done,
+and press
+.Key RETURN
+to begin copying. When that is done,
 read the remainder of the floppies that contain the
 distribution sets that you want to install, one by
 one. When the last is read, and you are being
-prompted for another, press Control-C.
+prompted for another, press
+.Key CONTROL-C .
 .Pp
-Run the "Extract" command once for each distribution
+Run the
+.Ic Extract
+command once for each distribution
 set you wish to install. For instance, if you wish to
-install the "base" distribution set, followed by the
-"kern" distribution set, and finally the "etc"
+install the
+.Sy base
+distribution set, followed by the
+.Sy kern
+distribution set, and finally the
+.Sy etc
 distribution set, use the commands:
-.D1 Ic Extract base
-.D1 Ic Extract kern
-.D1 Ic Extract etc
+.Pp
+.Dl # Ic "Extract base"
+.Dl # Ic "Extract kern"
+.Dl # Ic "Extract etc"
 .Pp
 For each extraction, it will ask you if the extraction
 should be verbose. If you reply affirmatively, it
@@ -294,12 +366,15 @@ extracted.
 .Pp
 .(Note
 If you know that you will be running low on
-disk space when installing NetBSD, you can load and
+disk space when installing
+.Nx ,
+you can load and
 extract one distribution set at a time. To do this,
 load only the floppies which contain the files for the
 first distribution set, extract them, and then change
 to the temporary directory and remove them with the
-command "rm set_name.??".
+command
+.Ic "rm set_name.??" .
 .Note)
 .Pp
 Once you are finished extracting all of the sets that
@@ -312,23 +387,35 @@ should configure your system.
 .Pp
 The first thing you should do is pick a temporary
 directory where the distribution files can be stored.
-To do this, enter the command "Set_tmp_dir", and enter
+To do this, enter the command
+.Ic Set_tmp_dir ,
+and enter
 the name of the temporary directory. (Don't forget
-that your disk is mounted under /mnt; you should
-probably pick a directory under /mnt/usr.) The
-default is /mnt/usr/distrib.
+that your disk is mounted under
+.Pa /mnt ;
+you should probably pick a directory under
+.Pa /mnt/usr . )
+The default is
+.Pa /mnt/usr/distrib .
 .Pp
 After you have picked a temporary directory, enter the
-"Load_tape" command, to load the distribution sets from
+.Ic Load_tape
+command, to load the distribution sets from
 tape.
 .Pp
 You will be asked which tape drive to use. The
-default is "rst0", which is correct if you're using
-the SCSI tape drive with the lowest SCSI ID number.
-(For the SCSI tape drive with the next lowest SCSI ID
-number, you should use "rst1", and so on.)
+default is
+.Li rst0 ,
+which is correct if you're using
+the SCSI tape drive with the lowest SCSI-ID number.
+(For the SCSI tape drive with the next lowest SCSI-ID
+number, you should use
+.Li rst1 ,
+and so on.)
 .Pp
-You will be prompted to press return when you have
+You will be prompted to press
+.Key RETURN
+when you have
 inserted the tape into the tape drive. When you do,
 the contents of the tape will be extracted into the
 temporary directory, and the names of the files being
@@ -338,23 +425,27 @@ After the tape has been extracted, to go the directory
 containing the first distribution set you wish to
 install. (Depending on how you made the tape, it's
 probably a subdirectory of the temporary directory you
-specified above.) Once there, run the "Set_tmp_dir"
+specified above.) Once there, run the
+.Ic Set_tmp_dir
 command again, and accept its default answer by
 pressing return at the prompt.
 .Pp
 Use the
 .Ic Extract
 command to extract the distribution
-set. For instance, if you're extracting the "base"
+set. For instance, if you're extracting the
+.Sy base
 set, use the command:
-.Ic Extract base
+.Ic "Extract base"
 You will be asked if you wish the extraction to be
 verbose. If you reply affirmatively, the name of each
 file being extracted will be printed.
 .Pp
 Repeat the previous two steps for each distribution
 set you wish to install. Change to the set's
-directory, run "Set_tmp_dir", and then run
+directory, run
+.Ic Set_tmp_dir ,
+and then run
 .Sy Extract Ar set_name
 to extract the set.
 .Pp
@@ -368,7 +459,9 @@ should configure your system.
 .Pp
 The first thing you should do is pick a temporary
 directory where the distribution files can be stored.
-To do this, enter the command "Set_tmp_dir", and enter
+To do this, enter the command
+.Ic Set_tmp_dir ,
+and enter
 the name of the temporary directory. (Don't forget
 that your disk is mounted under
 .Pa /mnt ;
@@ -380,8 +473,10 @@ The default is
 .Pp
 Configure the network interface.  To use SLIP, type the following
 command sequence:
-.D1 Ic slattach\ -h\ -s Ar speed Ic tty00
-.D1 Ic ifconfig\ sl0 Ar my_ipaddr peer_ipaddr
+.Pp
+.Dl # Ic "slattach -h -s Ar speed Ic tty00"
+.Dl # Ic "ifconfig sl0 Ar my_ipaddr peer_ipaddr"
+.Pp
 where
 .Ar speed
 is the network speed, and
@@ -397,8 +492,10 @@ You might have to configure the peer SLIP interface
 with similar sequence (depending on the peer system).
 .Pp
 For instance, the sequence
-.D1 Ic "slattach -h -s 38400 tty00
-.D1 Ic "ifconfig sl0 192.168.0.1 192.168.0.10
+.Pp
+.Dl # Ic "slattach -h -s 38400 tty00"
+.Dl # Ic "ifconfig sl0 192.168.0.1 192.168.0.10"
+.Pp
 configures the SLIP interface for the network between
 your machine (with IP address 192.168.0.1) and the peer
 (192.168.0.10) with speed 38400 bps. Note that IP
@@ -406,7 +503,9 @@ addresses 192.168.*.* are the private IP addresses
 described in RFC 1597.
 .Pp
 To use ethernet, do following:
-.D1 Ic ifconfig\ ne0 Ar my_ipaddr
+.Pp
+.Dl # Ic "ifconfig ne0 Ar my_ipaddr"
+.Pp
 where
 .Ar my_ipaddr
 is the numeric IP address of the machine you are going
@@ -417,8 +516,9 @@ the Neptune-X or clone.
 .Pp
 If you are NFS-mounting the distribution sets, mount
 them on the temporary directory with a command like:
-.
-.D1 mount\ -t\ nfs Ar serv_ipaddr:dist_dir tmp_dir
+.Pp
+.Dl # Ic "mount -t nfs Ar serv_ipaddr:dist_dir tmp_dir"
+.Pp
 where
 .Ar serv_ipaddr
 is the server's numeric IP address,
@@ -432,17 +532,19 @@ temporary directory.
 Once this is done, proceed as if you had loaded the
 files from tape, changing to the appropriate
 directories, running
-.Ic "Set_tmp_dir"
+.Ic Set_tmp_dir
 and running
-.Ic "Extract"
+.Ic Extract
 as appropriate.
 .Pp
 If you are retrieving the distribution sets using ftp,
 change into the temporary directory, and execute the
 command:
-.D1 Ic ftp Ar serv_ipaddr
+.Pp
+.Dl # Ic "ftp Ar serv_ipaddr"
+.Pp
 where
-.D1 Ar serv_ipaddr
+.Ar serv_ipaddr
 is once again the server's numeric
 IP address. Get the files with FTP, taking care to
 use binary mode when transferring the files.
@@ -458,15 +560,22 @@ only one set at a time, extract it, and then delete it in order to save space.
 .tag)
 .Pp
 Once you have finished extracting all of the distribution sets
-that you wish to install, and are back at the "#" prompt, you
+that you wish to install, and are back at the
+.Sq Li #
+prompt, you
 are ready to configure your system. The configuration utility
-expects that you have installed the "base" and "etc"
+expects that you have installed the
+.Sy base
+and
+.Sy etc
 distribution sets. If you have not, you will not be able to
 run it successfully (nor will you have a functional system, in
 any case). To configure your newly-installed
 .Nx
 system,
-run the command "Configure". It will ask you for the system's
+run the command
+.Ic Configure .
+It will ask you for the system's
 host name, domain name, and other network configuration
 information. It will set up your configuration files and make
 the device nodes for the newly-installed system.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.10 2000/10/10 12:55:21 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.11 2000/10/29 14:08:09 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,27 +58,40 @@ method you use.  Under the install system, extract the
 notes for how to use sysinst.
 .It
 Extract the .tgz files.
-For example, to extract base.tgz:
-.Dl Ic cd /
-.Dl Ic pax -zrvpe -f /gz.files/base.tgz
+For example, to extract
+.Pa base.tgz :
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f /gz.files/base.tgz"
 .It
 Extract all the .tgz files you want.  You should carefully
-work at upgrading /etc.  There may be changes to file formats
-depending on what version of
+work at upgrading
+.Pa /etc .
+There may be changes to file formats depending on what version of
 .Nx*M
 you are running.
 .It
 .Em Be careful if you are not running with security.
 The \*V distribution does contain support for password encryption.
-If you are upgrading from 1.0, it would be reasonable to save a
+If you are upgrading from
+.Nx 1.0
+, it would be reasonable to save a
 copy of master.passwd and remove all passwords until after you
-upgrade.  (NetBSD-1.0 did not ship with password encryption.)
+upgrade, as
+.Nx 1.0
+did not ship with password encryption.
 .It
-Place netbsd.default in / as the file netbsd.
+Place
+.Pa netbsd.default
+in
+.Pa /
+as the file
+.Pa netbsd .
 .It
-Reboot.  (Remember, detbsd.default is a 9600 console line
-kernel.  Read the last part of the new installation part of
-these notes to find out how to change your default speed.)
+Reboot.  (Remember,
+.Pa netbsd.default
+is a 9600 console line kernel.  Read the last part of the new installation
+part of these notes to find out how to change your default speed.)
 .It
 After reboot, you should make sure you check your new file systems.
 .bullet)

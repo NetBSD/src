@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: xfer,v 1.10 2000/10/29 14:08:06 lukem Exp $
 .
 Installation is supported from several media types, including:
 .Pp
@@ -17,7 +17,10 @@ you choose. The various methods are explained below.
 .(tag Tape
 .
 .It Em FTP
-It is possible, using the `install' and `upgrade'
+It is possible, using the
+.Ic install
+and
+.Ic upgrade
 programs in the miniroot, to extract the binary sets
 directly onto disk from an FTP server. This is by far
 the easiest installation method, as you may specify to
@@ -34,30 +37,37 @@ handy:
 IP Address: ftp.netbsd.org
 Login: anonymous
 Password: \*<your e-mail address\*>
-Server path: /pub/NetBSD/NetBSD-_VER/hp300/binary/sets
+Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary/sets
 .disp)
 .(Note
 If you're not using a nameserver during installation,
 you might find 204.152.184.75 handy; it's the IP address of
-ftp.netbsd.org as of October, 5, 2000.
+ftp.netbsd.org as of October, 2000.
 .Note)
 .
 .It Em NFS
 SYS_INST currently requires an NFS server from which to
 copy the miniroot.
 .(bullet
-This filesystem must be exported with root permissions,
+This file system must be exported with root permissions,
 but may be exported read-only.
 .It
-The miniroot image _must_ reside in the `root' of the
-mounted filesystem. For example, if the client system
-mounts `server:/u', then the miniroot image must reside
-in /u on the server. This is due to limitations in the
+The miniroot image
+.Em must
+reside in the
+.Sq root
+of the
+mounted file system. For example, if the client system
+mounts
+.Li server:/u ,
+then the miniroot image must reside in
+.Pa /u
+on the server. This is due to limitations in the
 file lookup code used in SYS_INST, and may be fixed in
 a future release.
 .It
 If you also wish to install the binary sets from the
-NFS server, place them in a properly exported filesystem
+NFS server, place them in a properly exported file system
 on the server. Note that these files do not suffer from
 the same placement restrictions as the miniroot.
 .bullet)
@@ -66,7 +76,8 @@ the same placement restrictions as the miniroot.
 If you wish to load SYS_INST from tape, it must
 appear on the tape before any other files. To copy
 this onto tape, use a command like the following:
-.Dl dd if=SYS_INST of=\*<tape_device\*> obs=20b conv=osync
+.Pp
+.Dl Ic "dd if=SYS_INST of=\*<tape_device\*> obs=20b conv=osync"
 .Pp
 Note that not all HP BOOTROMs support booting from
 SCSI tapes.
@@ -76,20 +87,25 @@ supported. However, it is planned for a future release.
 .Pp
 If you wish to extract binary sets onto your disk from
 tape, you must first place them on the tape. The easiest
-way to do this is with the dd(1) command. Make sure you
-use a `no-rewind-on-close' tape device. For example:
-.(disp
-for file in base.tgz etc.tgz; do
-	dd if=${file} of=/dev/nrst0
-done
-.disp)
+way to do this is with the
+.Xr dd 1
+command. Make sure you
+use a
+.Sq no-rewind-on-close
+tape device. For example:
+.Pp
+.Dl # Ic "for file in base.tgz etc.tgz; do"
+.Dl   Ic "\ \ \ \ dd if=${file} of=/dev/nrst0"
+.Dl # Ic "done"
 .Pp
 Note that depending on your tape drive, you may need to
 explicitly set the EOF marker at the end of each file.
-It may also be necessary to use the `conv=osync' argument
-to
+It may also be necessary to use the
+.Li conv=osync
+argument to
 .Xr dd 1 .
 Note that this argument is incompatible with the
-`bs=' argument. Consult the tape-related manual pages on the
+.Li bs=
+argument. Consult the tape-related manual pages on the
 system where the tapes are created for more details.
 .tag)
