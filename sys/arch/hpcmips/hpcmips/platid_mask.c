@@ -1,7 +1,7 @@
-/* $Id: platid_mask.c,v 1.20 2000/03/31 12:46:23 jun Exp $ */
+/* $Id: platid_mask.c,v 1.21 2000/05/20 05:08:53 takemura Exp $ */
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -167,6 +167,10 @@ platid_t platid_mask_MACH_NEC_MCR_430 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_430
 }};
+platid_t platid_mask_MACH_NEC_MCR_530A = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_NEC_MCR_530A
+}};
 platid_t platid_mask_MACH_NEC_MCR_7XX = {{
 	PLATID_CPU_MIPS_VR_41XX,
 	PLATID_MACH_NEC_MCR_7XX
@@ -182,6 +186,10 @@ platid_t platid_mask_MACH_NEC_MCR_700A = {{
 platid_t platid_mask_MACH_NEC_MCR_730 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_730
+}};
+platid_t platid_mask_MACH_NEC_MCR_730A = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_NEC_MCR_730A
 }};
 platid_t platid_mask_MACH_EVEREX = {{
 	PLATID_WILD,

@@ -1,7 +1,7 @@
-/*	$NetBSD: platid.def,v 1.18 2000/03/30 16:26:51 jun Exp $	*/
+/*	$NetBSD: platid.def,v 1.19 2000/05/20 05:08:53 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,10 +80,11 @@ NEC {
       CPU=MIPS_VR_4111 500 -"500"
       CPU=MIPS_VR_4121 510 -"510" 520 -"520" 520A --" MobilePro 770"
       CPU=MIPS_VR_4111 500A --" MobilePro 750c"
-      CPU=MIPS_VR_4121 530 -"530" 430 -"430"
+      CPU=MIPS_VR_4121 530 -"530" 430 -"430" 530A --" MobilePro 780"
     }
     7XX "700 series" {
-      CPU=MIPS_VR_4121 700 -"700" 700A --" MobilePro 800" 730 -"730"
+      CPU=MIPS_VR_4121 700 -"700" 700A --" MobilePro 800"
+                       730 -"730" 730A --" MobilePro 880"
     }
   }
 }
