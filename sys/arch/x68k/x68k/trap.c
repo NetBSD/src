@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1997/05/19 10:15:18 veego Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1997/06/11 08:46:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,6 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
