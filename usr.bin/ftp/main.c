@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2002/06/05 10:20:50 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.82 2002/06/05 13:51:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.81 2002/06/05 10:20:50 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.82 2002/06/05 13:51:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,7 @@ main(int argc, char *argv[])
 	int dumbterm, s, len, isupload;
 
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	ftpport = "ftp";
 	httpport = "http";
@@ -287,7 +288,11 @@ main(int argc, char *argv[])
 			break;
 
 		case '6':
+#ifdef INET6
 			family = AF_INET6;
+#else
+			warnx("INET6 support is not available; ignoring -6");
+#endif
 			break;
 
 		case 'A':
