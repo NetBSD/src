@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8.2.1 1999/04/07 16:17:57 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.8.2.2 2000/07/09 21:44:36 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -61,6 +61,12 @@ ${KERNNAME}: ${KERN} ${RAMDISK}
 
 ${GZNAME}: ${KERNNAME}
 	gzip -cv9 ${KERNNAME} > ${.TARGET}
+
+release:
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	cp -ip ${GZNAME} ${RELEASEDIR}/installation/misc
+	cp -ip ${KERNNAME} ${RELEASEDIR}/installation/misc
+	cp -ip ${MDEC}/loadbsd.x ${RELEASEDIR}/installation/misc
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
