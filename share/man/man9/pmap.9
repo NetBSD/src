@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.12 2002/02/13 08:18:48 ross Exp $
+.\"	$NetBSD: pmap.9,v 1.13 2002/03/28 18:22:20 eeh Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -308,7 +308,19 @@ be cleared is when the virtual memory system explicitly calls the
 .Fn pmap_clear_modify
 and
 .Fn pmap_clear_reference
-functions.
+functions.  These functions also need to do whatever is necessary
+to restart the collection of state information for that page, 
+including possibly calling
+.Fn pmap_page_protect
+if the 
+.Nm
+is doing modified/referenced emulation.
+.\"
+.\" Resetting ref/mod gathering inside of pmap_clear_modify() and
+.\" pmap_clear_reference began with UBC.  Pre-UBC UVM required the
+.\" opposite behavior or it would discover it modified a page trying
+.\" to write it out and get very confused.
+.\"
 .Ss STATISTICS
 The
 .Nm
