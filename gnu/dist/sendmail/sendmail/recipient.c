@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: recipient.c,v 8.231 2000/01/05 01:40:53 gshapiro Exp";
+static char id[] = "@(#)Id: recipient.c,v 8.231.16.1 2000/05/27 19:56:01 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1158,8 +1158,12 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		if (!DontInitGroups)
 		{
 			if (initgroups(user, gid) == -1)
+			{
+				rval = EAGAIN;
 				syserr("include: initgroups(%s, %d) failed",
 					user, gid);
+				goto resetuid;
+			}
 		}
 		else
 		{
@@ -1167,22 +1171,38 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 
 			gidset[0] = gid;
 			if (setgroups(1, gidset) == -1)
+			{
+				rval = EAGAIN;
 				syserr("include: setgroups() failed");
+				goto resetuid;
+			}
 		}
 
 		if (gid != 0 && setgid(gid) < -1)
+		{
+			rval = EAGAIN;
 			syserr("setgid(%d) failure", gid);
+			goto resetuid;
+		}
 		if (uid != 0)
 		{
 # if MAILER_SETUID_METHOD == USE_SETEUID
 			if (seteuid(uid) < 0)
+			{
+				rval = EAGAIN;
 				syserr("seteuid(%d) failure (real=%d, eff=%d)",
 					uid, getuid(), geteuid());
+				goto resetuid;
+			}
 # endif /* MAILER_SETUID_METHOD == USE_SETEUID */
 # if MAILER_SETUID_METHOD == USE_SETREUID
 			if (setreuid(0, uid) < 0)
+			{
+				rval = EAGAIN;
 				syserr("setreuid(0, %d) failure (real=%d, eff=%d)",
 					uid, getuid(), geteuid());
+				goto resetuid;
+			}
 # endif /* MAILER_SETUID_METHOD == USE_SETREUID */
 		}
 	}
@@ -1309,18 +1329,20 @@ resetuid:
 		{
 # if USESETEUID
 			if (seteuid(0) < 0)
-				syserr("seteuid(0) failure (real=%d, eff=%d)",
+				syserr("!seteuid(0) failure (real=%d, eff=%d)",
 					getuid(), geteuid());
 # else /* USESETEUID */
 			if (setreuid(-1, 0) < 0)
-				syserr("setreuid(-1, 0) failure (real=%d, eff=%d)",
+				syserr("!setreuid(-1, 0) failure (real=%d, eff=%d)",
 					getuid(), geteuid());
 			if (setreuid(RealUid, 0) < 0)
-				syserr("setreuid(%d, 0) failure (real=%d, eff=%d)",
+				syserr("!setreuid(%d, 0) failure (real=%d, eff=%d)",
 					RealUid, getuid(), geteuid());
 # endif /* USESETEUID */
 		}
-		(void) setgid(savedgid);
+		if (setgid(savedgid) < 0)
+			syserr("!setgid(%d) failure (real=%d eff=%d)",
+			       savedgid, getgid(), getegid());
 	}
 #endif /* HASSETREUID || USESETEUID */
 
