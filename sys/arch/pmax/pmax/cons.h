@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.4 1994/10/26 21:10:19 cgd Exp $	*/
+/*	$NetBSD: cons.h,v 1.5 1995/09/11 21:20:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,16 +40,9 @@
  *	@(#)cons.h	8.1 (Berkeley) 6/10/93
  */
 
-struct consdev {
-	int	cn_disabled;	/* If true use rom I/O routines */
-	int	cn_screen;	/* True iff console is a screen/keyboard */
-	dev_t	cn_dev;		/* major/minor of device */
-	struct	pmax_fb *cn_fb;	/* Frame buffer struct for console screen */
-	int	(*cn_getc)();	/* kernel getchar interface */
-	int	(*cn_kbdgetc)(); /* kernel keyboard getchar interface */
-	void	(*cn_putc)();	/* kernel putchar interface */
-	struct	tty *cn_tp;	/* tty structure for console device */
-};
+/*XXX*/
+
+#include <dev/cons.h>	/* should just change all our clients */
 
 /*
  * Major device numbers for possible console devices. XXX
@@ -57,3 +50,4 @@ struct consdev {
 #define	DTOPDEV		15
 #define	DCDEV		16
 #define	SCCDEV		17
+#define	RCONSDEV	85
