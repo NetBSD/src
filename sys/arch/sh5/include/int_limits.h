@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.1 2002/07/05 13:31:58 scw Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.2 2002/07/10 12:23:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,8 +147,14 @@
 
 #ifndef WCHAR_MIN /* also possibly defined in <wchar.h> */
 /* limits of wchar_t */
+#if __GNUC__ < 3
+/* Yet another non-native toolchain hack */
+#define	WCHAR_MIN	(-0x7fff-1)			/* wchar_t	  */
+#define	WCHAR_MAX	0x7fff				/* wchar_t	  */
+#else
 #define	WCHAR_MIN	(-0x7fffffff-1)			/* wchar_t	  */
 #define	WCHAR_MAX	0x7fffffff			/* wchar_t	  */
+#endif
 
 /* limits of wint_t */
 #define	WINT_MIN	(-0x7fffffff-1)			/* wint_t	  */
