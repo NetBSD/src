@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.25 2004/07/19 09:51:13 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.26 2004/07/19 09:54:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.25 2004/07/19 09:51:13 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.26 2004/07/19 09:54:19 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -968,8 +968,10 @@ check_outfile(const char *outfile, struct stat *sb)
 {
 	int ok = 1;
 
-	if (fflag == 0 && lflag == 0 && stat(outfile, sb) == 0) {
-		if (isatty(STDIN_FILENO)) {
+	if (lflag == 0 && stat(outfile, sb) == 0) {
+		if (fflag)
+			unlink(outfile);
+		else if (isatty(STDIN_FILENO)) {
 			char ans[10] = { 'n', '\0' };	/* default */
 
 			fprintf(stderr, "%s already exists -- do you wish to "
