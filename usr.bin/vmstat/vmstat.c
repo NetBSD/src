@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $ */
+/* $NetBSD: vmstat.c,v 1.66.2.1 2000/09/28 15:23:56 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.66.2.1 2000/09/28 15:23:56 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,7 +502,7 @@ printhdr()
 
 	(void)printf(" procs   memory     page%*s", 23, "");
 	if (ndrives > 0)
-		(void)printf("%s %*sfaults   cpu\n",
+		(void)printf("%s %*sfaults      cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
 		   ((ndrives > 1) ? ndrives * 3 - 4 : 0), "");
 	else
