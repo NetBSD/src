@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.12 1994/05/09 06:38:00 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.13 1994/05/16 04:50:45 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ extern	struct cfdriver fdcd;
 extern	struct cfdriver sdcd;
 #endif
 #if NCD > 0
-extern	struct cfdriver sdcd;
+extern	struct cfdriver cdcd;
 #endif
 
 struct genericconf {
