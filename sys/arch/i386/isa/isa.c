@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.27 1993/08/08 09:54:23 cgd Exp $
+ *	$Id: isa.c,v 1.28 1993/08/28 00:13:00 brezak Exp $
  */
 
 /*
@@ -64,6 +64,7 @@
 #include "i386/isa/ic/i8237.h"
 #include "i386/isa/ic/i8042.h"
 #include "i386/isa/timerreg.h"
+#include "i386/isa/spkr_reg.h"
 
 /* sorry, has to be here, no place else really suitable */
 #include "machine/pc/display.h"
@@ -631,7 +632,7 @@ sysbeepstop(int f)
 
 	/* disable counter 2 */
 	disable_intr();
-	outb(0x61, inb(0x61) & 0xFC);
+	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
 	enable_intr();
 	if (f)
 		timeout((timeout_t)sysbeepstop, (caddr_t)0, f);
@@ -659,7 +660,7 @@ sysbeep(int pitch, int period)
 		outb(TIMER_MODE, TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE);
 		outb(TIMER_CNTR2, TIMER_DIV(pitch)%256);
 		outb(TIMER_CNTR2, TIMER_DIV(pitch)/256);
-		outb(0x61, inb(0x61) | 3);	/* enable counter 2 */
+		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
 		enable_intr();
 	}
 	last_pitch = pitch;
@@ -679,6 +680,34 @@ kbc_8042cmd(int val)
 	if (val) outb(KBCMDP, val);
 	while (inb(KBSTATP)&KBS_IBF);
 	return (inb(KBDATAP));
+}
+
+/*
+ * find an ISA device in a given isa_devtab_* table, given
+ * the table to search, the expected id_driver entry, and the unit number.
+ *
+ * this function is defined in isa_device.h, and this location is debatable;
+ * i put it there because it's useless w/o, and directly operates on
+ * the other stuff in that file.
+ *
+ */
+
+struct isa_device *find_isadev(table, driverp, unit)
+	struct isa_device *table;
+	struct isa_driver *driverp;
+	int unit;
+{
+	if (driverp == NULL) /* sanity check */
+		return NULL;
+
+	while ((table->id_driver != driverp) || (table->id_unit != unit)) {
+		if (table->id_driver == 0)
+			return NULL;
+    
+		table++;
+        }
+
+	return table;
 }
 
 /*
