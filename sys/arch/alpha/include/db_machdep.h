@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.10 2000/06/08 02:57:36 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.11 2000/06/29 09:02:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/param.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/frame.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */

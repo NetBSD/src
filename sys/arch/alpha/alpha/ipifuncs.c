@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.12 2000/06/05 21:47:12 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.13 2000/06/29 09:02:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2000/06/05 21:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2000/06/29 09:02:54 mrg Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2000/06/05 21:47:12 thorpej Exp $"
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/alpha_cpu.h>
