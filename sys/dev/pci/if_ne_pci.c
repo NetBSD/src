@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ne_pci.c,v 1.4 1997/10/27 23:34:19 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.5 1998/04/10 01:28:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,6 +86,37 @@ struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
 
+struct ne_pci_compatdev {
+	pci_vendor_id_t vendor;
+	pci_product_id_t product;
+	char *name;
+};
+
+struct ne_pci_compatdev ne_pci_compatdevs[] = {
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029, "Realtek 8029" },
+	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, "Winbond 89C940F" },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
+		"VIA Technologies VT86C926" },
+	{ 0, 0, NULL },
+};
+
+char *ne_pci_lookup __P((pcireg_t));
+
+char *
+ne_pci_lookup(id)
+	pcireg_t id;
+{
+	struct ne_pci_compatdev *nc;
+
+	for (nc = ne_pci_compatdevs; nc->vendor != 0; nc++) {
+		if (PCI_VENDOR(id) == nc->vendor &&
+		    PCI_PRODUCT(id) == nc->product)
+			return (nc->name);
+	}
+
+	return (NULL);
+}
+
 /*
  * PCI constants.
  * XXX These should be in a common file!
@@ -104,19 +135,8 @@ ne_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_REALTEK_RT8029:
-			return (1);
-		}
-	}
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_WINBOND_W89C940F:
-			return (1);
-		}
-	}
+	if (ne_pci_lookup(pa->pa_id) != NULL)
+		return (1);
 
 	return (0);
 }
@@ -139,22 +159,7 @@ ne_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_REALTEK_RT8029:
-			typestr = "Realtek 8029";
-			break;
-		}
-	}
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_WINBOND_W89C940F:
-			typestr = "Winbond 89C940F";
-			break;
-		}
-	}
-
+	typestr = ne_pci_lookup(pa->pa_id);
 	if (typestr == NULL) {
 		printf(": unknown model?!\n");
 		return;
