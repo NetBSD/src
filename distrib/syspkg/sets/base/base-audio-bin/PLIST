@@ -1,7 +1,0 @@
-@cwd /
-./usr/bin/audioctl
-./usr/bin/audioplay
-./usr/bin/audiorecord
-./usr/bin/cdplay
-./usr/bin/midiplay
-./usr/bin/mixerctl
