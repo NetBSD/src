@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.10 1994/09/20 23:31:39 mycroft Exp $";
+static char *rcsid = "$Id: dir.c,v 1.11 1994/09/23 14:27:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,7 +110,7 @@ dirscan(idesc)
 	idesc->id_loc = 0;
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
 		dsize = dp->d_reclen;
-		bcopy((char *)dp, dbuf, (size_t)dsize);
+		memcpy(dbuf, dp, (size_t)dsize);
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (!newinofmt) {
 				struct direct *tdp = (struct direct *)dbuf;
@@ -135,7 +135,7 @@ dirscan(idesc)
 				}
 #			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
-			bcopy(dbuf, bp->b_un.b_buf + idesc->id_loc - dsize,
+			memcpy(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
 			dirty(bp);
 			sbdirty();
@@ -335,7 +335,7 @@ mkentry(idesc)
 		dirp->d_type = 0;
 	dirp->d_reclen = newent.d_reclen;
 	dirp->d_namlen = newent.d_namlen;
-	bcopy(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
+	memcpy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
 		/*
 		 * If the entry was split, dirscan() will only reverse the byte
@@ -380,7 +380,7 @@ linkup(orphan, parentdir)
 	char tempname[BUFSIZ];
 	extern int pass4check();
 
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	dp = ginode(orphan);
 	lostdir = (dp->di_mode & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
@@ -483,7 +483,7 @@ changeino(dir, name, newnum)
 {
 	struct inodesc idesc;
 
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
 	idesc.id_func = chgino;
 	idesc.id_number = dir;
@@ -507,7 +507,7 @@ makeentry(parent, ino, name)
 	if (parent < ROOTINO || parent >= maxino ||
 	    ino < ROOTINO || ino >= maxino)
 		return (0);
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
 	idesc.id_func = mkentry;
 	idesc.id_number = parent;
@@ -552,21 +552,21 @@ expanddir(dp, name)
 		(long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
-	bcopy(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
+	memcpy(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
 	bp = getdirblk(newblk, sblock.fs_bsize);
 	if (bp->b_errs)
 		goto bad;
-	bcopy(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
+	memcpy(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
 	     cp < &bp->b_un.b_buf[sblock.fs_bsize];
 	     cp += DIRBLKSIZ)
-		bcopy((char *)&emptydir, cp, sizeof emptydir);
+		memcpy(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	bp = getdirblk(dp->di_db[lastbn + 1],
 		(long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
-	bcopy((char *)&emptydir, bp->b_un.b_buf, sizeof emptydir);
+	memcpy(bp->b_un.b_buf, &emptydir, sizeof emptydir);
 	pwarn("NO SPACE LEFT IN %s", name);
 	if (preen)
 		printf(" (EXPANDED)\n");
@@ -610,11 +610,11 @@ allocdir(parent, request, mode)
 		freeino(ino);
 		return (0);
 	}
-	bcopy((char *)dirp, bp->b_un.b_buf, sizeof(struct dirtemplate));
+	memcpy(bp->b_un.b_buf, dirp, sizeof(struct dirtemplate));
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
 	     cp < &bp->b_un.b_buf[sblock.fs_fsize];
 	     cp += DIRBLKSIZ)
-		bcopy((char *)&emptydir, cp, sizeof emptydir);
+		memcpy(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	dp->di_nlink = 2;
 	inodirty();

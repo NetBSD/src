@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass4.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass4.c,v 1.6 1994/06/08 19:00:29 mycroft Exp $";
+static char *rcsid = "$Id: pass4.c,v 1.7 1994/09/23 14:27:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ pass4()
 	struct inodesc idesc;
 	int n;
 
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 	for (inumber = ROOTINO; inumber <= lastino; inumber++) {

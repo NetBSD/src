@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inode.c	8.4 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: inode.c,v 1.10 1994/06/14 22:50:40 mycroft Exp $";
+static char *rcsid = "$Id: inode.c,v 1.11 1994/09/23 14:27:12 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -320,8 +320,7 @@ cacheino(dp, inumber)
 	inp->i_number = inumber;
 	inp->i_isize = dp->di_size;
 	inp->i_numblks = blks * sizeof(daddr_t);
-	bcopy((char *)&dp->di_db[0], (char *)&inp->i_blks[0],
-	    (size_t)inp->i_numblks);
+	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
 		inpsort = (struct inoinfo **)realloc((char *)inpsort,
@@ -403,7 +402,7 @@ findname(idesc)
 
 	if (dirp->d_ino != idesc->id_parent)
 		return (KEEPON);
-	bcopy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
+	memcpy(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
 	return (STOP|FOUND);
 }
 
@@ -536,7 +535,7 @@ freeino(ino)
 	extern int pass4check();
 	struct dinode *dp;
 
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 	idesc.id_number = ino;

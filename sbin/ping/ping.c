@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: ping.c,v 1.8 1994/09/23 01:39:00 mycroft Exp $";
+static char *rcsid = "$Id: ping.c,v 1.9 1994/09/23 14:27:48 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -248,7 +248,7 @@ main(argc, argv)
 		usage();
 	target = *argv;
 
-	bzero((char *)&whereto, sizeof(struct sockaddr));
+	memset(&whereto, 0, sizeof(struct sockaddr));
 	to = (struct sockaddr_in *)&whereto;
 	to->sin_family = AF_INET;
 	to->sin_addr.s_addr = inet_addr(target);
@@ -259,7 +259,7 @@ main(argc, argv)
 		if (!hp)
 			errx(1, "unknown host: %s", target);
 		to->sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (caddr_t)&to->sin_addr, hp->h_length);
+		memcpy(&to->sin_addr, hp->h_addr, hp->h_length);
 		(void)strncpy(hnamebuf, hp->h_name, sizeof(hnamebuf) - 1);
 		hostname = hnamebuf;
 	}
@@ -608,7 +608,7 @@ pr_pack(buf, cc, from)
 				break;
 			}
 			old_rrlen = i;
-			bcopy((char *)cp, old_rr, i);
+			memcpy(old_rr, cp, i);
 			(void)printf("\nRR: ");
 			for (;;) {
 				l = *++cp;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dump.h	8.1 (Berkeley) 6/5/93
- *	$Id: dump.h,v 1.7 1994/06/08 18:57:33 mycroft Exp $
+ *	$Id: dump.h,v 1.8 1994/09/23 14:27:02 mycroft Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
@@ -185,8 +185,9 @@ void	sig __P((int signo));
  */
 #ifdef COMPAT
 #include <sys/file.h>
-extern char *index(), *rindex(), *strdup();
-extern char *ctime();
+#define	strchr(a,b)	index(a,b)
+#define	strrchr(a,b)	rindex(a,b)
+extern char *strdup(), *ctime();
 extern int read(), write();
 extern int errno;
 #endif

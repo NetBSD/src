@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumprmt.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dumprmt.c,v 1.7 1994/09/23 02:18:33 mycroft Exp $";
+static char *rcsid = "$Id: dumprmt.c,v 1.8 1994/09/23 14:27:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ rmtgetconn()
 		if (pwd == NULL)
 			errx(1, "who are you?");
 	}
-	if ((cp = index(rmtpeer, '@')) != NULL) {
+	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
 		if (!okname(tuser))

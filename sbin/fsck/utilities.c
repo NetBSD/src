@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: utilities.c,v 1.9 1994/06/08 19:00:33 mycroft Exp $";
+static char *rcsid = "$Id: utilities.c,v 1.10 1994/09/23 14:27:22 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,7 +281,7 @@ bread(fd, buf, blk, size)
 	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
 	errs = 0;
-	bzero(buf, (size_t)size);
+	memset(buf, 0, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
 		if (read(fd, cp, (int)secsize) != secsize) {
@@ -399,7 +399,7 @@ getpathname(namebuf, curdir, ino)
 		return;
 	}
 	busy = 1;
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
 	idesc.id_fix = IGNORE;
 	cp = &namebuf[MAXPATHLEN - 1];
@@ -423,7 +423,7 @@ getpathname(namebuf, curdir, ino)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
-		bcopy(namebuf, cp, (size_t)len);
+		memcpy(cp, namebuf, (size_t)len);
 		*--cp = '/';
 		if (cp < &namebuf[MAXNAMLEN])
 			break;
@@ -432,7 +432,7 @@ getpathname(namebuf, curdir, ino)
 	busy = 0;
 	if (ino != ROOTINO)
 		*--cp = '?';
-	bcopy(cp, namebuf, (size_t)(&namebuf[MAXPATHLEN] - cp));
+	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
 }
 
 void

@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.5 1994/09/17 05:27:11 mycroft Exp $";
+static char *rcsid = "$Id: mount_nfs.c,v 1.6 1994/09/23 14:27:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -406,14 +406,13 @@ getnfsargs(spec, nfsargsp)
 			warnx("bad ISO address");
 			return (0);
 		}
-		bzero((caddr_t)&isoaddr, sizeof (isoaddr));
-		bcopy((caddr_t)isop, (caddr_t)&isoaddr.siso_addr,
-			sizeof (struct iso_addr));
+		memset(&isoaddr, 0, sizeof (isoaddr));
+		memcpy(&isoaddr.siso_addr, isop, sizeof (struct iso_addr));
 		isoaddr.siso_len = sizeof (isoaddr);
 		isoaddr.siso_family = AF_ISO;
 		isoaddr.siso_tlen = 2;
 		isoport = htons(NFS_PORT);
-		bcopy((caddr_t)&isoport, TSEL(&isoaddr), isoaddr.siso_tlen);
+		memcpy(TSEL(&isoaddr), &isoport, isoaddr.siso_tlen);
 		hostp = delimp + 1;
 	}
 #endif /* ISO */
@@ -433,13 +432,13 @@ getnfsargs(spec, nfsargsp)
 			warnx("can't reverse resolve net address");
 			return (0);
 		    }
-		    bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
+		    memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
 		}
 	} else if ((hp = gethostbyname(hostp)) == NULL) {
 		warnx("can't get net id for host");
 		return (0);
 	} else
-		bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
+		memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
 #ifdef KERBEROS
 	if (nfsargsp->flags & NFSMNT_KERB) {
 		strncpy(inst, hp->h_name, INST_SZ);

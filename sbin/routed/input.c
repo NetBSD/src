@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)input.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: input.c,v 1.5 1994/05/13 08:04:39 mycroft Exp $";
+static char *rcsid = "$Id: input.c,v 1.6 1994/09/23 14:28:05 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -126,7 +126,7 @@ rip_input(from, rip, size)
 			n->rip_metric = htonl(n->rip_metric);
 		}
 		rip->rip_cmd = RIPCMD_RESPONSE;
-		bcopy((char *)rip, packet, size);
+		memcpy(packet, rip, size);
 		(*afp->af_output)(s, 0, from, size);
 		return;
 
