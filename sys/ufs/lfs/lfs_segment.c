@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.10 1998/03/01 02:23:24 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.11 1998/05/08 18:31:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -163,9 +163,9 @@ lfs_writevnodes(fs, mp, sp, op)
 	struct vnode *vp;
 
 /* BEGIN HACK */
-#define	VN_OFFSET	(((void *)&vp->v_mntvnodes.le_next) - (void *)vp)
-#define	BACK_VP(VP)	((struct vnode *)(((void *)VP->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	((struct vnode *)(((void *)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
 
 /* Find last vnode. */
 loop:   for (vp = mp->mnt_vnodelist.lh_first;
@@ -545,9 +545,9 @@ lfs_gather(fs, sp, vp, match)
 	s = splbio();
 /* This is a hack to see if ordering the blocks in LFS makes a difference. */
 /* BEGIN HACK */
-#define	BUF_OFFSET	(((void *)&bp->b_vnbufs.le_next) - (void *)bp)
-#define	BACK_BUF(BP)	((struct buf *)(((void *)BP->b_vnbufs.le_prev) - BUF_OFFSET))
-#define	BEG_OF_LIST	((struct buf *)(((void *)&vp->v_dirtyblkhd.lh_first) - BUF_OFFSET))
+#define	BUF_OFFSET	(((caddr_t)&bp->b_vnbufs.le_next) - (caddr_t)bp)
+#define	BACK_BUF(BP)	((struct buf *)(((caddr_t)BP->b_vnbufs.le_prev) - BUF_OFFSET))
+#define	BEG_OF_LIST	((struct buf *)(((caddr_t)&vp->v_dirtyblkhd.lh_first) - BUF_OFFSET))
 
 
 /*loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {*/
