@@ -1,5 +1,8 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:49:15 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1995/04/23 07:49:43 cgd Exp $
 
-SUBDIR+= lib libexec usr.bin games
+SUBDIR+= lib usr.bin
+.if (${MACHINE_ARCH} != "alpha")
+SUBDIR+= games libexec
+.endif
 
 .include <bsd.subdir.mk>
