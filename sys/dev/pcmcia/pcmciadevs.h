@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.174 2002/07/23 10:35:28 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.175 2002/07/23 23:12:48 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.174 2002/07/23 10:35:06 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -69,6 +69,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_QUATECH	0x0137	/* Quatech */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
+#define	PCMCIA_VENDOR_OSITECH	0x0140	/* Ositech */
 #define	PCMCIA_VENDOR_DLINK_2	0x0143	/* D-Link */
 #define	PCMCIA_VENDOR_DLINK_3	0x0149	/* D-Link */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
@@ -466,6 +467,9 @@
 #define	PCMCIA_STR_NEWMEDIA2_BUSTOASTER	"NewMedia BusToaster"
 
 /* Netgear */
+#define	PCMCIA_CIS_NETGEAR_FA410TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_FA410TX	0x0230
+#define	PCMCIA_STR_NETGEAR_FA410TX	"Netgear FA410TX"
 #define	PCMCIA_CIS_NETGEAR_FA410TXC	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA410TXC	0x4530
 #define	PCMCIA_STR_NETGEAR_FA410TXC	"Netgear FA410TXC"
@@ -487,6 +491,11 @@
 #define	PCMCIA_CIS_OLICOM_TR	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_OLICOM_TR	0x2132
 #define	PCMCIA_STR_OLICOM_TR	"GoCard Token Ring 16/4"
+
+/* Ositech Products */
+#define	PCMCIA_CIS_OSITECH_TRUMPCARD_SOD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_OSITECH_TRUMPCARD_SOD	0x0008
+#define	PCMCIA_STR_OSITECH_TRUMPCARD_SOD	"Ositech Seven of Diamonds Ethernet Card"
 
 /* Panasonic Products */
 #define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
