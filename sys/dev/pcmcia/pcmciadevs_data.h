@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.78 2000/02/09 13:33:23 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.79 2000/02/27 11:14:43 uch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -696,6 +696,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Xircom CompactCard CFE-10"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_BILLIONTON_LNT10TN,
+	    PCMCIA_CIS_BILLIONTON_LNT10TN,
+	    0,
+	    "Billionton Systems Inc.",
+	    "Billionton Systems Inc. LNT-10TN NE2000 Compatible Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1022,6 +1029,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "ICOM Inc",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BILLIONTON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Billionton Systems Inc.",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
