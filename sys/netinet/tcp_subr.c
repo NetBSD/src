@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107 2001/02/11 06:49:49 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.108 2001/03/20 20:07:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -118,6 +118,7 @@
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #if NRND > 0
+#include <sys/md5.h>
 #include <sys/rnd.h>
 #endif
 
@@ -162,6 +163,9 @@ struct in6pcb tcb6;
 int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
+#if NRND > 0
+int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
+#endif
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
@@ -804,6 +808,16 @@ tcp_newtcpcb(family, aux)
 		in6p->in6p_ppcb = (caddr_t)tp;
 	}
 #endif
+
+	/*
+	 * Initialize our timebase.  When we send timestamps, we take
+	 * the delta from tcp_now -- this means each connection always
+	 * gets a timebase of 0, which makes it, among other things,
+	 * more difficult to determine how long a system has been up,
+	 * and thus how many TCP sequence increments have occurred.
+	 */
+	tp->ts_timebase = tcp_now;
+
 	return (tp);
 }
 
@@ -1704,53 +1718,134 @@ tcp_rmx_rtt(tp)
 }
 
 tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
+#if NRND > 0
+u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
+#endif
 
 /*
  * Get a new sequence value given a tcp control block
  */
 tcp_seq
-tcp_new_iss(tp, len, addin)
-	void            *tp;
-	u_long           len;
-	tcp_seq		 addin;
+tcp_new_iss(struct tcpcb *tp, tcp_seq addin)
 {
-	tcp_seq          tcp_iss;
 
-	/*
-	 * Randomize.
-	 */
+#ifdef INET
+	if (tp->t_inpcb != NULL) {
+		return (tcp_new_iss1(&tp->t_inpcb->inp_laddr,
+		    &tp->t_inpcb->inp_faddr, tp->t_inpcb->inp_lport,
+		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr),
+		    addin));
+	}
+#endif
+#ifdef INET6
+	if (tp->t_in6pcb != NULL) {
+		return (tcp_new_iss1(&tp->t_in6pcb->in6p_laddr,
+		    &tp->t_in6pcb->in6p_faddr, tp->t_in6pcb->in6p_lport,
+		    tp->t_in6pcb->in6p_fport, sizeof(tp->t_in6pcb->in6p_laddr),
+		    addin));
+	}
+#endif
+	/* Not possible. */
+	panic("tcp_new_iss");
+}
+
+/*
+ * This routine actually generates a new TCP initial sequence number.
+ */
+tcp_seq
+tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
+    size_t addrsz, tcp_seq addin)
+{
+	static int beenhere;
+	tcp_seq tcp_iss;
+
 #if NRND > 0
-	rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
-#else
-	tcp_iss = random();
-#endif
-
 	/*
-	 * If we were asked to add some amount to a known value,
-	 * we will take a random value obtained above, mask off the upper
-	 * bits, and add in the known value.  We also add in a constant to
-	 * ensure that we are at least a certain distance from the original
-	 * value.
-	 *
-	 * This is used when an old connection is in timed wait
-	 * and we have a new one coming in, for instance.
+	 * If we haven't been here before, initialize our cryptographic
+	 * hash secret.
 	 */
-	if (addin != 0) {
-#ifdef TCPISS_DEBUG
-		printf("Random %08x, ", tcp_iss);
-#endif
-		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss += addin + TCP_ISSINCR;
-#ifdef TCPISS_DEBUG
-		printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
-#endif
-	} else {
-		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss += tcp_iss_seq;
+	if (beenhere == 0) {
+		rnd_extract_data(tcp_iss_secret, sizeof(tcp_iss_secret),
+		    RND_EXTRACT_ANY);
+		beenhere = 1;
+	}
+
+	if (tcp_do_rfc1948) {
+		MD5_CTX ctx;
+		u_int8_t hash[16];	/* XXX MD5 knowledge */
+
+		/*
+		 * Compute the base value of the ISS.  It is a hash
+		 * of (saddr, sport, daddr, dport, secret).
+		 */
+		MD5Init(&ctx);
+
+		MD5Update(&ctx, (u_char *) laddr, addrsz);
+		MD5Update(&ctx, (u_char *) &lport, sizeof(lport));
+
+		MD5Update(&ctx, (u_char *) faddr, addrsz);
+		MD5Update(&ctx, (u_char *) &fport, sizeof(fport));
+
+		MD5Update(&ctx, tcp_iss_secret, sizeof(tcp_iss_secret));
+
+		MD5Final(hash, &ctx);
+
+		memcpy(&tcp_iss, hash, sizeof(tcp_iss));
+
+		/*
+		 * Now increment our "timer", and add it in to
+		 * the computed value.
+		 *
+		 * XXX Use `addin'?
+		 * XXX TCP_ISSINCR too large to use?
+		 */
 		tcp_iss_seq += TCP_ISSINCR;
 #ifdef TCPISS_DEBUG
-		printf("ISS %08x\n", tcp_iss);
+		printf("ISS hash 0x%08x, ", tcp_iss);
 #endif
+		tcp_iss += tcp_iss_seq + addin;
+#ifdef TCPISS_DEBUG
+		printf("new ISS 0x%08x\n", tcp_iss);
+#endif
+	} else
+#endif /* NRND > 0 */
+	{
+		/*
+		 * Randomize.
+		 */
+#if NRND > 0
+		rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
+#else
+		tcp_iss = random();
+#endif
+
+		/*
+		 * If we were asked to add some amount to a known value,
+		 * we will take a random value obtained above, mask off
+		 * the upper bits, and add in the known value.  We also
+		 * add in a constant to ensure that we are at least a
+		 * certain distance from the original value.
+		 *
+		 * This is used when an old connection is in timed wait
+		 * and we have a new one coming in, for instance.
+		 */
+		if (addin != 0) {
+#ifdef TCPISS_DEBUG
+			printf("Random %08x, ", tcp_iss);
+#endif
+			tcp_iss &= TCP_ISS_RANDOM_MASK;
+			tcp_iss += addin + TCP_ISSINCR;
+#ifdef TCPISS_DEBUG
+			printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
+#endif
+		} else {
+			tcp_iss &= TCP_ISS_RANDOM_MASK;
+			tcp_iss += tcp_iss_seq;
+			tcp_iss_seq += TCP_ISSINCR;
+#ifdef TCPISS_DEBUG
+			printf("ISS %08x\n", tcp_iss);
+#endif
+		}
 	}
 
 	if (tcp_compat_42) {
@@ -1762,7 +1857,7 @@ tcp_new_iss(tp, len, addin)
 			tcp_iss &= 0x7fffffff;		/* XXX */
 	}
 
-	return tcp_iss;
+	return (tcp_iss);
 }
 
 #ifdef IPSEC

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77 2000/10/19 20:23:00 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.78 2001/03/20 20:07:52 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -220,6 +220,7 @@ struct tcpcb {
 	u_char	requested_s_scale;
 	u_int32_t ts_recent;		/* timestamp echo data */
 	u_int32_t ts_recent_age;	/* when last updated */
+	u_int32_t ts_timebase;		/* our timebase */
 	tcp_seq	last_ack_sent;
 
 /* SACK stuff */
@@ -315,6 +316,11 @@ do { \
 #endif /* _KERNEL */
 
 /*
+ * Compute the current timestamp for a connection.
+ */
+#define	TCP_TIMESTAMP(tp)	(tcp_now - (tp)->ts_timebase)
+
+/*
  * Handy way of passing around TCP option info.
  */
 struct tcp_opt_info {
@@ -352,6 +358,7 @@ struct syn_cache {
 	int sc_bucketidx;			/* our bucket index */
 	u_int32_t sc_hash;
 	u_int32_t sc_timestamp;			/* timestamp from SYN */
+	u_int32_t sc_timebase;			/* our local timebase */
 	union syn_cache_sa sc_src;
 	union syn_cache_sa sc_dst;
 	tcp_seq sc_irs;
@@ -682,7 +689,9 @@ int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
-tcp_seq  tcp_new_iss __P((void *, u_long, tcp_seq));
+tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
+tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,
+	    tcp_seq));
 
 int	 syn_cache_add __P((struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
