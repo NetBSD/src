@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.44 2002/12/16 19:46:17 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.45 2003/01/11 01:16:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.44 2002/12/16 19:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.45 2003/01/11 01:16:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,6 +653,7 @@ sa_yieldcall(void *arg)
 	sa->sa_vp = l;
 
 	sa_yield(l);
+	upcallret(l);
 }
 
 static int
