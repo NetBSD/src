@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.34 2003/01/06 20:30:38 wiz Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.35 2003/03/21 21:13:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.34 2003/01/06 20:30:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.35 2003/03/21 21:13:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int
 soo_ioctl(fp, cmd, data, p)
 	struct file *fp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	struct socket *so = (struct socket *)fp->f_data;
@@ -149,7 +149,7 @@ int
 soo_fcntl(fp, cmd, data, p)
 	struct file *fp;
 	u_int cmd;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	if (cmd == F_SETFL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.86 2003/02/27 16:04:15 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.87 2003/03/21 21:13:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.86 2003/02/27 16:04:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.87 2003/03/21 21:13:54 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -829,7 +829,7 @@ linux_machdepioctl(p, v, retval)
 	int fd;
 	struct disklabel label, *labp;
 	struct partinfo partp;
-	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;

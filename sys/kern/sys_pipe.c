@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.37 2003/03/12 23:00:03 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.38 2003/03/21 21:13:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.37 2003/03/12 23:00:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.38 2003/03/21 21:13:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,11 +135,11 @@ static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
 static int pipe_close(struct file *fp, struct proc *p);
 static int pipe_poll(struct file *fp, int events, struct proc *p);
-static int pipe_fcntl(struct file *fp, u_int com, caddr_t data,
+static int pipe_fcntl(struct file *fp, u_int com, void *data,
 		struct proc *p);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
 static int pipe_stat(struct file *fp, struct stat *sb, struct proc *p);
-static int pipe_ioctl(struct file *fp, u_long cmd, caddr_t data,
+static int pipe_ioctl(struct file *fp, u_long cmd, void *data,
 		struct proc *p);
 
 static struct fileops pipeops = {
@@ -1070,7 +1070,7 @@ int
 pipe_ioctl(fp, cmd, data, p)
 	struct file *fp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
@@ -1415,7 +1415,7 @@ static int
 pipe_fcntl(fp, cmd, data, p)
 	struct file *fp;
 	u_int cmd;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	if (cmd == F_SETFL)

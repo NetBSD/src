@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.3 2003/01/19 16:47:14 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.4 2003/03/21 21:13:55 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.3 2003/01/19 16:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.4 2003/03/21 21:13:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,7 +79,7 @@ svr4_32_fil_ioctl(fp, p, retval, fd, cmd, data)
 	int error;
 	int num;
 	struct filedesc *fdp = p->p_fd;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long, void *, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;
@@ -109,7 +109,7 @@ svr4_32_fil_ioctl(fp, p, retval, fd, cmd, data)
 		case SVR4_FIONREAD:	cmd = FIONREAD;  break;
 		}
 
-		error = (*ctl)(fp, cmd, (caddr_t) &num, p);
+		error = (*ctl)(fp, cmd,  &num, p);
 
 		if (error)
 			return error;

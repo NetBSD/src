@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.19 2003/01/20 07:18:59 simonb Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.20 2003/03/21 21:13:52 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.19 2003/01/20 07:18:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.20 2003/03/21 21:13:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -211,7 +211,7 @@ svr4_ttold_ioctl(fp, l, retval, fd, cmd, data)
 {
 	struct proc *p = l->l_proc;
 	int			error;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long, void *, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.24 2003/02/16 20:24:47 provos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.25 2003/03/21 21:13:51 dsl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.24 2003/02/16 20:24:47 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.25 2003/03/21 21:13:51 dsl Exp $");
 
 #include "opt_systrace.h"
 
@@ -80,7 +80,7 @@ int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
-int	systracef_fcntl(struct file *, u_int, caddr_t, struct proc *);
+int	systracef_fcntl(struct file *, u_int, void *, struct proc *);
 int	systracef_poll(struct file *, int, struct proc *);
 #else
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
@@ -88,7 +88,7 @@ int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_select(struct file *, int, struct proc *);
 #endif
 int	systracef_kqfilter(struct file *, struct knote *);
-int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
+int	systracef_ioctl(struct file *, u_long, void *, struct proc *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
 
@@ -277,7 +277,7 @@ systracef_write(struct file *fp, off_t *poff, struct uio *uio,
 
 /* ARGSUSED */
 int
-systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
+systracef_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 {
 	int ret = 0;
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
@@ -418,7 +418,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 #ifdef __NetBSD__
 /* ARGSUSED */
 int
-systracef_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p)
+systracef_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 {
 
 	if (cmd == FNONBLOCK || cmd == FASYNC)
