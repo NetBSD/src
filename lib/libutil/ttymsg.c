@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.20 2004/11/10 17:00:41 christos Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.21 2005/01/08 06:43:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.20 2004/11/10 17:00:41 christos Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.21 2005/01/08 06:43:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,7 +122,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 		wret = writev(fd, iov, iovcnt);
 		if (wret >= left)
 			break;
-		if (wret >= 0) {
+		if (wret > 0) {
 			left -= wret;
 			if (iov != localiov) {
 				(void)memcpy(localiov, iov,
@@ -140,6 +140,14 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 				iov->iov_len -= wret;
 			}
 			continue;
+		} else if (wret == 0) {
+			(void)snprintf(errbuf, sizeof(errbuf),
+			    "%s: failed writing %d bytes to `%s'", __func__,
+			    left, device);
+			(void) close(fd);
+			if (forked)
+				_exit(1);
+			return errbuf;
 		}
 		if (errno == EWOULDBLOCK) {
 			pid_t cpid;
