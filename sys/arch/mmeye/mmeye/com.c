@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.1 1999/09/13 10:31:01 itojun Exp $	*/
+/*	$NetBSD: com.c,v 1.2 1999/11/22 03:53:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_com.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)
