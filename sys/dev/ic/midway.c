@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.9 1996/07/11 22:48:10 chuck Exp $	*/
+/*	$NetBSD: midway.c,v 1.10 1996/07/14 19:36:56 cgd Exp $	*/
 /*	(sync'd to midway.c 1.59)	*/
 
 /*
@@ -451,7 +451,7 @@ u_int len;
     }
 
     if (sc->alburst) {
-      needalign = (((u_int) data) & sc->bestburstmask);
+      needalign = (((unsigned long) data) & sc->bestburstmask);
       if (needalign) {
 	result++;		/* alburst */
 	len = len - (sc->bestburstlen - needalign);
@@ -706,10 +706,10 @@ struct en_softc *sc;
   sc->alburst = 0;
 
   sp = (u_int8_t *) srcbuf;
-  while ((((u_int) sp) % MIDDMA_MAXBURST) != 0)
+  while ((((unsigned long) sp) % MIDDMA_MAXBURST) != 0)
     sp += 4;
   dp = (u_int8_t *) dstbuf;
-  while ((((u_int) dp) % MIDDMA_MAXBURST) != 0)
+  while ((((unsigned long) dp) % MIDDMA_MAXBURST) != 0)
     dp += 4;
 
   bestalgn = bestnotalgn = en_dmaprobe_doit(sc, sp, dp, 0);
@@ -1306,7 +1306,7 @@ struct ifnet *ifp;
       mlen = 0;
       prev = NULL;
       while (1) {
-	if ( (mtod(lastm, u_int) % sizeof(u_int32_t)) != 0 ||
+	if ( (mtod(lastm, unsigned long) % sizeof(u_int32_t)) != 0 ||
 	  ((lastm->m_len % sizeof(u_int32_t)) != 0 && lastm->m_next)) {
 	  first = (lastm == m);
 	  if (en_mfix(sc, &lastm, prev) == 0) {	/* failed? */
@@ -1480,7 +1480,7 @@ struct mbuf **mm, *prev;
 #endif
 
   d = mtod(m, u_char *);
-  off = ((u_int) d) % sizeof(u_int32_t);
+  off = ((unsigned long) d) % sizeof(u_int32_t);
 
   if (off) {
     if ((m->m_flags & M_EXT) == 0) {
@@ -1846,7 +1846,7 @@ struct en_launch *l;
 
     /* do we need to do a DMA op to align? */
     if (sc->alburst && 
-	(needalign = (((u_int) data) & sc->bestburstmask)) != 0) {
+	(needalign = (((unsigned long) data) & sc->bestburstmask)) != 0) {
       cnt = sc->bestburstlen - needalign;
       count = cnt / sizeof(u_int32_t);
       bcode = en_dmaplan[count].bcode;
@@ -2479,7 +2479,7 @@ defer:					/* defer processing */
 
     /* do we need to do a DMA op to align? */
     if (sc->alburst &&
-      (needalign = (((u_int) data) & sc->bestburstmask)) != 0) {
+      (needalign = (((unsigned long) data) & sc->bestburstmask)) != 0) {
       cnt = sc->bestburstlen - needalign;
       count = cnt / sizeof(u_int32_t);
       bcode = en_dmaplan[count].bcode;
