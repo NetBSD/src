@@ -241,11 +241,11 @@ typedef int openfile_t;
 #define ffilereaderror(e, c) ((c) < 0)
 #define cfilewrite(e, z, c) write ((e), (z), (c))
 #ifdef SEEK_SET
-#define ffileseek(e, i) (lseek ((e), (long) i, SEEK_SET) >= 0)
-#define ffilerewind(e) (lseek ((e), (long) 0, SEEK_SET) >= 0)
+#define ffileseek(e, i) (lseek ((e), (off_t) i, SEEK_SET) >= 0)
+#define ffilerewind(e) (lseek ((e), (off_t) 0, SEEK_SET) >= 0)
 #else
-#define ffileseek(e, i) (lseek ((e), (long) i, 0) >= 0)
-#define ffilerewind(e) (lseek ((e), (long) 0, 0) >= 0)
+#define ffileseek(e, i) (lseek ((e), (off_t) i, 0) >= 0)
+#define ffilerewind(e) (lseek ((e), (off_t) 0, 0) >= 0)
 #endif
 #define ffileclose(e) (close (e) >= 0)
 
