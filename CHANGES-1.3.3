@@ -159,49 +159,46 @@ sys/arch/x68k/include/vmparam.h			patch
 sys/arch/x68k/x68k/machdep.c			patch
 sys/arch/x68k/x68k/pmap_bootstrap.c		patch
 
-	Work around broken extended memory detection, by specifying
-	its start and size by hand.  (minoura)
+  Work around broken extended memory detection, by specifying
+  its start and size by hand.  (minoura)
 
 sys/arch/x68k/conf/INSTALL			patch
 
-	Enable MSDOSFS so that installation from a DOS-formatted
-	removable disk is possible.  (minoura)
+  Enable MSDOSFS so that installation from a DOS-formatted
+  removable disk is possible.  (minoura)
 
 sys/arch/x68k/dev/grf.c				patch
-
-	???  (minoura)
-
 sys/arch/x68k/dev/ite.c				patch
 
-	???  (minoura)
+  Fixed possible stray pointer access.  (minoura)
 
 sys/arch/x68k/dev/mha.c				1.4 (patch)
 
-	???  (minoura)
+  Correctly set XS_BUSY error code at device busy.  In
+  addition, change DMA transfer mode according to the model,
+  so that it runs on more models of x68k.  (minoura)
 
 sys/arch/x68k/dev/spc.c				1.14 (patch)
 
-	???  (minoura)
+  Correctly sets XS_BUSY error code at device busy.  (minoura)
 
 sys/arch/x68k/x68k/locore.s			patch
-
-	???  (minoura)
-
 sys/arch/x68k/x68k/vectors.s			1.3
 
-	???  (minoura)
+  Move vectors to the data segment, so they can be overwritten
+  on '060 systems.  (minoura)
 
 sys/arch/x68k/stand/Makefile			patch
 sys/arch/x68k/stand/writefdboot			patch
 
-	Fix bugs in the installation and operation of
-	'writefdboot.'  (minoura)
+  Fix bugs in the installation and operation of
+  'writefdboot.'  (minoura)
 
 share/man/man4/options.4			1.62
 
-	Fix typo: SHMPAXPGS -> SHMMAXPGS (PR#6178).  (frueauf)
+  Fix typo: SHMPAXPGS -> SHMMAXPGS (PR#6178).  (frueauf)
 
 bin/pax/tar.c					1.12
 
-	Fix a bug in restoring files with path names >100
-	characters.  (mycroft)
+  Fix a bug in restoring files with path names >100
+  characters.  (mycroft)
