@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.7 2002/06/02 15:50:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/dist/tcpdump/Attic/print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $ (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.7 2002/06/02 15:50:40 itojun Exp $");
 #endif
 #endif
 
