@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.9 1997/09/09 18:56:17 mycroft Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.9.2.1 1997/10/29 17:02:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -370,7 +370,7 @@ struct bha_devices {
 		u_char	opcode;
 	} cmd;
 	struct {
-		u_char	junk[8];
+		u_char	lun_map[8];
 	} reply;
 };
 
