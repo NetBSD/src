@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.1 1996/09/01 00:09:30 mycroft Exp $	*/
+/*	$NetBSD: ahb.c,v 1.2 1996/09/07 04:59:06 mycroft Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -751,8 +751,7 @@ ahb_scsi_cmd(xs)
 	ecb->opcode = ECB_SCSI_OP;
 	ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 	ecb->opt2 = sc_link->lun | ECB_NRB;
-	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length);
-	ecb->scsi_cmd_length = xs->cmdlen;
+	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length = xs->cmdlen);
 	ecb->sense_ptr = KVTOPHYS(&ecb->ecb_sense);
 	ecb->req_sense_length = sizeof(ecb->ecb_sense);
 	ecb->status = KVTOPHYS(&ecb->ecb_status);
