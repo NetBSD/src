@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 1998/09/11 16:46:34 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 1998/09/11 16:46:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -1649,7 +1649,7 @@ specialframe:
 		subr = (unsigned) splx;
  	else if (pcBetween(cpu_switch, cpu_switch_end))
 		subr = (unsigned) cpu_switch;
-	else if (pcBetween(idle, cpu_switch))	{
+	else if (pcBetween(idle, idle_end)) {
 		subr = (unsigned) idle;
 		ra = 0;
 		goto done;

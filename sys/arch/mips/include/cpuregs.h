@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.15 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.16 1998/10/01 00:42:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -502,7 +502,8 @@
 
 #define MIPS3_TLB_PHYS_PAGE_SHIFT	6
 #define MIPS3_TLB_PF_NUM		0x3fffffc0
-
+#define MIPS3_TLB_ATTR_MASK		0x00000038
+#define MIPS3_TLB_ATTR_SHIFT		3
 #define MIPS3_TLB_MOD_BIT		0x00000004
 #define MIPS3_TLB_VALID_BIT		0x00000002
 #define MIPS3_TLB_GLOBAL_BIT		0x00000001
@@ -516,7 +517,7 @@
  * 4: cacheable, coherent, write-back, exclusive (exclusive)
  * 5: cacheable, coherent, write-back, exclusive on write (sharable)
  * 6: cacheable, coherent, write-back, update on write (update)
- * 7: cacheable, ?, ?, ?, ?
+ * 7: uncached, accelerated (gather STORE operations)
  */
 #define MIPS3_TLB_ATTR_WT		0 /* IDT */
 #define MIPS3_TLB_ATTR_WT_WRITEALLOCATE	1 /* IDT */
@@ -524,7 +525,7 @@
 #define MIPS3_TLB_ATTR_WB_NONCOHERENT	3 /* R4000/R4400, IDT */
 #define MIPS3_TLB_ATTR_WB_EXCLUSIVE	4 /* R4000/R4400 */
 #define MIPS3_TLB_ATTR_WB_SHARABLE	5 /* R4000/R4400 */
-#define MIPS3_TLB_ATTR_WB_UPDATE	6 /* R4000/R4400 */
+#define MIPS4_TLB_ATTR_UNCACHED_ACCELERATED 7 /* R10000 */
 
 
 /*

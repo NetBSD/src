@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8 1998/05/19 04:11:50 simonb Exp $	*/
+/*	$NetBSD: trap.h,v 1.9 1998/10/01 00:42:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,3 +85,13 @@ extern int kdbpeek __P((vm_offset_t addr));
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
+
+#ifdef _KERNEL
+extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
+		u_int causeReg));
+#endif /* _KERNEL */
+
+#ifdef _KERNEL
+extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
+		u_int causeReg));
+#endif /* _KERNEL */
