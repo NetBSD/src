@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.559 2003/08/01 00:07:32 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.560 2003/08/01 11:55:43 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.560 2003/08/01 00:05:27 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.561 2003/08/01 11:55:03 wiz Exp 
  */
 
 /*
@@ -1864,7 +1864,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Radeon 7000/VE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_S,
 	    0,
 	    "ATI Technologies",
 	    "Radeon 9100 Series Secondary",
