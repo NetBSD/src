@@ -1,4 +1,4 @@
-.\"	$NetBSD: eeprom.8,v 1.10 2003/02/25 10:36:07 wiz Exp $
+.\"	$NetBSD: eeprom.8,v 1.11 2003/03/31 01:31:39 perry Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm eeprom
-.Nd display or modify contents of the EEPROM or OpenProm
+.Nd display or modify contents of the EEPROM or openprom
 .Sh SUN 3 SYNOPSIS
 .Nm
 .Op Fl
@@ -66,7 +66,7 @@
 .Sh DESCRIPTION
 .Nm
 provides an interface for displaying and changing the contents of the
-EEPROM or OpenProm.  Without any arguments,
+EEPROM or openprom.  Without any arguments,
 .Nm
 will list all of the known fields and their corresponding values.
 When given the name of a specific field,
@@ -74,7 +74,7 @@ When given the name of a specific field,
 will display that value or set it if the field name is followed by
 .Sq =
 and a value.  Only the super-user may modify the contents of the EEPROM
-or OpenProm.
+or openprom.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -83,13 +83,13 @@ Commands are taken from stdin and displayed on stdout.
 .It Fl c
 .Nm
 will fix incorrect checksum values and exit.  This flag is quietly ignored
-on systems with an OpenProm.
+on systems with an openprom.
 .It Fl f Ar device
 On systems with an EEPROM, use
 .Ar device
 instead of the default
 .Pa /dev/eeprom .
-On systems with an OpenProm, use
+On systems with an openprom, use
 .Ar device
 instead of the default
 .Pa /dev/openprom .
@@ -97,14 +97,14 @@ instead of the default
 If checksum values are incorrect,
 .Nm
 will ignore them and continue after displaying a warning.  This flag is
-quietly ignored on systems with an OpenProm.
+quietly ignored on systems with an openprom.
 .El
 .Pp
 The following options are valid only on the SPARC and will produce an
 error when used on a Sun 3:
 .Bl -tag -width indent
 .It Fl v
-On systems with an OpenProm, be verbose when setting a value.  Systems
+On systems with an openprom, be verbose when setting a value.  Systems
 with an EEPROM are always verbose.
 .El
 .Pp
@@ -208,17 +208,17 @@ and
 .Pa password
 fields are not currently supported.
 .Pp
-Since the OpenProm is designed such that the field names are arbitrary,
+Since the openprom is designed such that the field names are arbitrary,
 explaining them here is dubious.  Below are field names and values that
-one is likely to see on a system with an OpenProm.  NOTE: this list
+one is likely to see on a system with an openprom.  NOTE: this list
 may be incomplete or incorrect due to differences between revisions
-of the OpenProm.
+of the openprom.
 .Bl -tag -width "last-hardware-update  "
 .It sunmon-compat?
 If true, the old EEPROM-style interface will be used while in the monitor,
-rather than the OpenProm-style interface.
+rather than the openprom-style interface.
 .It selftest-#megs
-A 32-bit inteteger specifying the number of megabytes of memory to
+A 32-bit integer specifying the number of megabytes of memory to
 test upon power-up.
 .It oem-logo
 A 64bitx64bit bitmap in Sun Iconedit format.  To set the bitmap, give
@@ -256,9 +256,9 @@ field; acceptable values are
 .Sq -
 (none),
 .Sq h
-(rts/cts), and
+(RTS/CTS), and
 .Sq s
-(xon/xoff).
+(Xon/Xoff).
 .It ttya-rts-dtr-off
 If true, the system will ignore RTS/DTR.
 .It ttya-ignore-cd
@@ -331,15 +331,15 @@ If true, the system will boot and run in diagnostic mode.
 .It /dev/eeprom
 The EEPROM device on systems with an EEPROM.
 .It /dev/openprom
-The OpenProm device on systems with an OpenProm.
+The openprom device on systems with an openprom.
 .El
 .Sh BUGS
 The fields and their values are not necessarily well defined on
-systems with an OpenProm.  Your mileage may vary.
+systems with an openprom.  Your mileage may vary.
 .Pp
 There are a few fields known to exist in some revisions of the EEPROM
-and/or OpenProm that are not yet supported.  Most notable are those
-relating to password protection of the EEPROM or OpenProm.
+and/or openprom that are not yet supported.  Most notable are those
+relating to password protection of the EEPROM or openprom.
 .Pp
 Avoid gratuitously changing the contents of the EEPROM.  It has a limited
 number of write cycles.
