@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.48 2000/01/26 01:27:12 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.49 2000/02/02 10:00:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -617,24 +617,23 @@ ne_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
+#if 0
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
+	int rv;
 
-	/* Unmap our i/o windows. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+	rv = ne2000_detach(&psc->sc_ne2000);
+	if (rv == 0) {
+		/* Unmap our i/o windows. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	}
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_ne2000.sc_dp8390.sc_ec.ec_if);
-	return (0);
+	return rv;
 #else
-	return (EBUSY);
+	return EBUSY;
 #endif
 }
 
