@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.34 1998/01/20 13:11:25 drochner Exp $	*/
+/*	$NetBSD: param.h,v 1.35 1998/04/29 23:11:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,6 +115,11 @@
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_gateway.h"
+#endif /* _KERNEL && ! _LKM */
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
