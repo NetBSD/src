@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.66 2003/08/22 22:00:40 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.67 2003/08/25 00:10:27 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.66 2003/08/22 22:00:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.67 2003/08/25 00:10:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2102,11 +2102,14 @@ ip6_setpktoptions(control, opt, priv)
 		case IPV6_HOPLIMIT:
 			if (cm->cmsg_len != CMSG_LEN(sizeof(int)))
 				return (EINVAL);
+			else {
+				int t;
 
-			bcopy(CMSG_DATA(cm), &opt->ip6po_hlim,
-			    sizeof(opt->ip6po_hlim));
-			if (opt->ip6po_hlim < -1 || opt->ip6po_hlim > 255)
-				return (EINVAL);
+				bcopy(CMSG_DATA(cm), &t, sizeof(t));
+				if (t < -1 || t > 255)
+					return (EINVAL);
+				opt->ip6po_hlim = t;
+			}
 			break;
 
 		case IPV6_NEXTHOP:
@@ -2125,10 +2128,15 @@ ip6_setpktoptions(control, opt, priv)
 		case IPV6_HOPOPTS:
 			if (cm->cmsg_len < CMSG_LEN(sizeof(struct ip6_hbh)))
 				return (EINVAL);
-			opt->ip6po_hbh = (struct ip6_hbh *)CMSG_DATA(cm);
-			if (cm->cmsg_len !=
-			    CMSG_LEN((opt->ip6po_hbh->ip6h_len + 1) << 3))
-				return (EINVAL);
+			else {
+				struct  ip6_hbh *t;
+
+				t = (struct ip6_hbh *)CMSG_DATA(cm);
+				if (cm->cmsg_len !=
+				    CMSG_LEN((t->ip6h_len + 1) << 3))
+					return (EINVAL);
+				opt->ip6po_hbh = t;
+			}
 			break;
 
 		case IPV6_DSTOPTS:
@@ -2142,35 +2150,44 @@ ip6_setpktoptions(control, opt, priv)
 			 * (See RFC 2460, section 4.1)
 			 */
 			if (opt->ip6po_rthdr == NULL) {
-				opt->ip6po_dest1 =
-				    (struct ip6_dest *)CMSG_DATA(cm);
+				struct ip6_dest *t;
+
+				t = (struct ip6_dest *)CMSG_DATA(cm);
 				if (cm->cmsg_len !=
-				    CMSG_LEN((opt->ip6po_dest1->ip6d_len + 1) << 3));
+				    CMSG_LEN((t->ip6d_len + 1) << 3));
 					return (EINVAL);
+				opt->ip6po_dest1 = t;
 			}
 			else {
-				opt->ip6po_dest2 =
-				    (struct ip6_dest *)CMSG_DATA(cm);
+				struct ip6_dest *t;
+
+				t = (struct ip6_dest *)CMSG_DATA(cm);
 				if (cm->cmsg_len !=
 				    CMSG_LEN((opt->ip6po_dest2->ip6d_len + 1) << 3))
 					return (EINVAL);
+				opt->ip6po_dest2 = t;
 			}
 			break;
 
 		case IPV6_RTHDR:
 			if (cm->cmsg_len < CMSG_LEN(sizeof(struct ip6_rthdr)))
 				return (EINVAL);
-			opt->ip6po_rthdr = (struct ip6_rthdr *)CMSG_DATA(cm);
-			if (cm->cmsg_len !=
-			    CMSG_LEN((opt->ip6po_rthdr->ip6r_len + 1) << 3))
-				return (EINVAL);
-			switch (opt->ip6po_rthdr->ip6r_type) {
-			case IPV6_RTHDR_TYPE_0:
-				if (opt->ip6po_rthdr->ip6r_segleft == 0)
+			else {
+				struct ip6_rthdr *t;
+
+				t = (struct ip6_rthdr *)CMSG_DATA(cm);
+				if (cm->cmsg_len !=
+				    CMSG_LEN((t->ip6r_len + 1) << 3))
 					return (EINVAL);
-				break;
-			default:
-				return (EINVAL);
+				switch (t->ip6r_type) {
+				case IPV6_RTHDR_TYPE_0:
+					if (t->ip6r_segleft == 0)
+						return (EINVAL);
+					break;
+				default:
+					return (EINVAL);
+				}
+				opt->ip6po_rthdr = t;
 			}
 			break;
 
