@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.82 2001/03/27 18:01:59 ragge Exp $
+#       $NetBSD: files.vax,v 1.83 2001/04/28 09:38:03 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -372,7 +372,7 @@ file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/in_cksum.c		inet
-file	netinet/in4_cksum.c		inet
+file	arch/vax/vax/in4_cksum.c	inet
 file	arch/vax/vax/ns_cksum.c		ns
 file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/vax/db_machdep.c	ddb
@@ -396,7 +396,6 @@ include "compat/vax1k/files.vax1k"
 #arch/vax/if/if_css.c         optional css imp device-driver
 #arch/vax/if/if_dp.c          optional dp device-driver
 #arch/vax/if/if_ddn.c         optional ddn device-driver
-#arch/vax/if/if_dmc.c         optional dmc device-driver
 #arch/vax/if/if_dmv.c         optional dmv device-driver
 #arch/vax/if/if_ec.c          optional ec device-driver
 #arch/vax/if/if_en.c          optional en device-driver
