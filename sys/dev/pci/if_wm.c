@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.2 2002/05/02 16:33:27 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.3 2002/05/02 16:34:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,9 +36,8 @@
  */
 
 /*
- * Register description for the Intel i82542 (``Wiseman''),
- * i82543 (``Livengood''), and i82544 (``Cordova'') Gigabit
- * Ethernet chips.
+ * Device driver for the Intel i82542 (``Wiseman''), i82543 (``Livengood''),
+ * and i82544 (``Cordova'') Gigabit Ethernet chips.
  *
  * TODO (in order of importance):
  *
