@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.24 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.25 2000/01/10 03:14:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,6 +35,7 @@
  */
 
 #define ELFSIZE		32
+#include "opt_execfmt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +70,9 @@
 #include <compat/ibcs2/ibcs2_syscall.h>
 
 
+#ifdef EXEC_ELF32
 #define IBCS2_ELF_AUX_ARGSIZ	howmany(sizeof(AuxInfo) * 8, sizeof(char *))
-
+#endif
 
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
@@ -94,8 +96,10 @@ int coff_load_shlib __P((struct proc *, const char *, struct exec_package *));
 static int coff_find_section __P((struct proc *, struct vnode *, 
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
+#ifdef EXEC_ELF32
 static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 				      Elf32_Ehdr *));
+#endif
 	
 
 extern struct sysent ibcs2_sysent[];
@@ -134,6 +138,7 @@ struct emul emul_ibcs2_xout = {
 	ibcs2_esigcode,
 };
 
+#ifdef EXEC_ELF32
 struct emul emul_ibcs2_elf = {
 	"ibcs2",
 	native_to_ibcs2_errno,
@@ -148,6 +153,7 @@ struct emul emul_ibcs2_elf = {
 	ibcs2_sigcode,
 	ibcs2_esigcode,
 };
+#endif /* EXEC_ELF32 */
 
 
 /*
@@ -157,6 +163,7 @@ struct emul emul_ibcs2_elf = {
  * XXX - probably should only compare the id in the actual ELF notes struct
  */
 
+#ifdef EXEC_ELF32
 #define SCO_SIGNATURE	"\004\0\0\0\014\0\0\0\001\0\0\0SCO\0"
 
 static int
@@ -231,6 +238,7 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 	*pos = ELF32_NO_ADDR;
 	return 0;
 }
+#endif /* EXEC_ELF32 */
 
 /*
  * exec_ibcs2_coff_makecmds(): Check if it's an coff-format executable.
@@ -253,11 +261,15 @@ exec_ibcs2_coff_makecmds(p, epp)
 	struct coff_filehdr *fp = epp->ep_hdr;
 	struct coff_aouthdr *ap;
 
-	if (epp->ep_hdrvalid < COFF_HDR_SIZE)
+	if (epp->ep_hdrvalid < COFF_HDR_SIZE) {
+		DPRINTF(("ibcs2: bad coff hdr size\n"));
 		return ENOEXEC;
+	}
 
-	if (COFF_BADMAG(fp))
+	if (COFF_BADMAG(fp)) {
+		DPRINTF(("ibcs2: bad coff magic\n"));
 		return ENOEXEC;
+	}
 	
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
@@ -760,14 +772,14 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 		switch (xs[i].xs_type) {
 		case XS_TTEXT:	/* text segment */
 
-			DPRINTF(("text addr %x psize %d vsize %d off %d\n",
+			DPRINTF(("text addr %lx psize %ld vsize %ld off %ld\n",
 				 xs[i].xs_rbase, xs[i].xs_psize,
 				 xs[i].xs_vsize, xs[i].xs_filpos));
 
 			epp->ep_taddr = xs[i].xs_rbase;	/* XXX - align ??? */
 			epp->ep_tsize = xs[i].xs_vsize;
 
-			DPRINTF(("VMCMD: addr %x size %d offset %d\n",
+			DPRINTF(("VMCMD: addr %lx size %ld offset %ld\n",
 				 epp->ep_taddr, epp->ep_tsize,
 				 xs[i].xs_filpos));
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
@@ -778,14 +790,14 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 
 		case XS_TDATA:	/* data segment */
 
-			DPRINTF(("data addr %x psize %d vsize %d off %d\n",
+			DPRINTF(("data addr %lx psize %ld vsize %ld off %ld\n",
 				 xs[i].xs_rbase, xs[i].xs_psize,
 				 xs[i].xs_vsize, xs[i].xs_filpos));
 
 			epp->ep_daddr = xs[i].xs_rbase;	/* XXX - align ??? */
 			epp->ep_dsize = xs[i].xs_vsize;
 
-			DPRINTF(("VMCMD: addr %x size %d offset %d\n",
+			DPRINTF(("VMCMD: addr %lx size %ld offset %ld\n",
 				 epp->ep_daddr, xs[i].xs_psize,
 				 xs[i].xs_filpos));
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
@@ -797,7 +809,7 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 			baddr = round_page(epp->ep_daddr + xs[i].xs_psize);
 			bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 			if (bsize > 0) {
-				DPRINTF(("VMCMD: bss addr %x size %d off %d\n",
+				DPRINTF(("VMCMD: bss addr %lx size %ld off %d\n",
 					 baddr, bsize, 0));
 				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 					  bsize, baddr, NULLVP, 0,
@@ -814,7 +826,7 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	/* set up entry point */
 	epp->ep_entry = xp->x_entry;
 
-	DPRINTF(("text addr: %x size: %d data addr: %x size: %d entry: %x\n",
+	DPRINTF(("text addr: %lx size: %ld data addr: %lx size: %ld entry: %lx\n",
 		 epp->ep_taddr, epp->ep_tsize,
 		 epp->ep_daddr, epp->ep_dsize,
 		 epp->ep_entry));
