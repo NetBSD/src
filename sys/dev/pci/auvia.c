@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.36.2.1 2004/04/01 05:23:14 jmc Exp $	*/
+/*	$NetBSD: auvia.c,v 1.36.2.2 2004/09/22 20:58:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.36.2.1 2004/04/01 05:23:14 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.36.2.2 2004/09/22 20:58:15 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ struct audio_hw_if auvia_hw_if = {
 int	auvia_attach_codec(void *, struct ac97_codec_if *);
 int	auvia_write_codec(void *, u_int8_t, u_int16_t);
 int	auvia_read_codec(void *, u_int8_t, u_int16_t *);
-void	auvia_reset_codec(void *);
+int	auvia_reset_codec(void *);
 int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
 
@@ -382,7 +382,7 @@ auvia_attach_codec(void *addr, struct ac97_codec_if *cif)
 }
 
 
-void
+int
 auvia_reset_codec(void *addr)
 {
 	int i;
@@ -404,8 +404,11 @@ auvia_reset_codec(void *addr)
 	for (i = 500000; i != 0 && !(pci_conf_read(sc->sc_pc, sc->sc_pt,
 		AUVIA_PCICONF_JUNK) & AUVIA_PCICONF_PRIVALID); i--)
 		DELAY(1);
-	if (i == 0)
+	if (i == 0) {
 		printf("%s: codec reset timed out\n", sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
+	}
+	return 0;
 }
 
 
