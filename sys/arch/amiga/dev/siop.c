@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.26 1995/11/30 00:57:23 jtc Exp $	*/
+/*	$NetBSD: siop.c,v 1.27 1996/01/07 22:01:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -365,7 +365,11 @@ siop_scsidone(acb, stat)
 	if (acb == NULL || xs == NULL)
 		panic("siop_scsidone");
 #endif
-	if (slp->device_softc && 
+	/*
+	 * XXX Support old-style instrumentation for now.
+	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
+	 */
+	if (slp->device_softc &&
 	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 	/*
