@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.25 2004/12/07 23:07:31 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.26 2004/12/07 23:16:40 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -172,8 +172,8 @@ struct scsi_rw_6 {
 /*
  * XXX Does ATAPI have an equivalent?
  */
-#define	SCSI_SYNCHRONIZE_CACHE		0x35
-struct scsi_synchronize_cache {
+#define	SCSI_SYNCHRONIZE_CACHE_10	0x35
+struct scsi_synchronize_cache_10 {
 	u_int8_t opcode;
 	u_int8_t flags;
 #define	SSC_RELADR	0x01

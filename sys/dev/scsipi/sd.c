@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.231 2004/12/07 23:07:31 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.231 2004/12/07 23:07:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1960,7 +1960,7 @@ static int
 sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsi_synchronize_cache cmd;
+	struct scsi_synchronize_cache_10 cmd;
 
 	/*
 	 * If the device is SCSI-2, issue a SYNCHRONIZE CACHE.
@@ -1982,7 +1982,7 @@ sd_flush(struct sd_softc *sd, int flags)
 
 	sd->flags |= SDF_FLUSHING;
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
+	cmd.opcode = SCSI_SYNCHRONIZE_CACHE_10;
 
 	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
