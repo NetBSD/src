@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.118 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.119 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -311,6 +311,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		is now done directly into the file. [dogcow 20030304]
 	x86_64: rearrange the x86_64 code, make it share code with i386, and
 		enable MP [fvdl 20030305]
+	kernel: Report correct child cpu times. [dsl 20030305]
+	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
 	sysctl: Make hw.physmem and hw.usermem saturate if they are used
 		on a system with >=4G RAM.  [thorpej 20030306]
 	postfix: update to 2.0.6 [perry 20030308]
@@ -321,7 +323,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	amd: update to 6.1b2 [christos 20030309]
 	evbppc: Add support for the NCD Explora451 ThinClient.
 		[hannken 20030311]
-	kernel: Report correct child cpu times. [dsl 20030305]
-	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
 	kernel: New pid allocator - avoids all the searching in pfind() etc.
 		Bump version to 1.6Q.  [dsl 20030319]
