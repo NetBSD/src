@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.8 2003/10/17 12:43:08 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.8 2003/10/17 12:43:08 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,9 @@ pckbc_mace_attach(parent, self, aux)
 
 	/* XXX should be bus_space_map() */
 	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
-	    maa->maa_offset, 1, &ioh_d) ||
+	    maa->maa_offset + KBDATAP, 1, &ioh_d) ||
 	    bus_space_subregion(maa->maa_st, maa->maa_sh,
-	    maa->maa_offset + 0x20, 1, &ioh_c))
+	    maa->maa_offset + KBCMDP, 1, &ioh_c))
 		panic("pckbc_attach: couldn't map");
 
 	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK|M_ZERO);
