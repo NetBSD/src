@@ -365,14 +365,10 @@ main(argc, argv)
 	if (!(path = getenv("MAKEOBJDIR")))
 		path = _PATH_OBJDIR;
 	if (!lstat(path, &sb)) {
-		if (S_ISDIR(sb.st_mode))
-			curdir = "..";
-		else {
-			curdir = emalloc((u_int)MAXPATHLEN + 1);
-			if (!getwd(curdir)) {
-				(void)fprintf(stderr, "make: %s.\n", curdir);
-				exit(2);
-			}
+		curdir = emalloc((u_int)MAXPATHLEN + 1);
+		if (!getwd(curdir)) {
+			(void)fprintf(stderr, "make: %s.\n", curdir);
+			exit(2);
 		}
 		if (chdir(path)) {
 			(void)fprintf(stderr, "make: %s: %s.\n",
