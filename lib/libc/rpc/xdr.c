@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.4 1995/02/25 03:02:04 cgd Exp $	*/
+/*	$NetBSD: xdr.c,v 1.5 1995/04/21 21:49:29 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr.c 1.35 87/08/12";*/
 /*static char *sccsid = "from: @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr.c,v 1.4 1995/02/25 03:02:04 cgd Exp $";
+static char *rcsid = "$NetBSD: xdr.c,v 1.5 1995/04/21 21:49:29 jtc Exp $";
 #endif
 
 /*
@@ -500,14 +500,14 @@ xdr_union(xdrs, dscmp, unp, choices, dfault)
 	 */
 	for (; choices->proc != NULL_xdrproc_t; choices++) {
 		if (choices->value == dscm)
-			return ((*(choices->proc))(xdrs, unp, LASTUNSIGNED));
+			return ((*(choices->proc))(xdrs, unp));
 	}
 
 	/*
 	 * no match - execute the default xdr routine if there is one
 	 */
 	return ((dfault == NULL_xdrproc_t) ? FALSE :
-	    (*dfault)(xdrs, unp, LASTUNSIGNED));
+	    (*dfault)(xdrs, unp));
 }
 
 
