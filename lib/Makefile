@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1997/06/07 12:18:54 ragge Exp $
+#	$NetBSD: Makefile,v 1.37 1997/06/08 10:30:08 veego Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -11,22 +11,15 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
 SUBDIR+=	libkvm libkvm.old libtelnet
 .else
 
-# XXX Temporary until all ports are able to use libkvm (leo)
-.if	(${MACHINE} == "alpha")   || \
-	(${MACHINE} == "amiga")   || \
-	(${MACHINE} == "atari")   || \
-	(${MACHINE} == "hp300")   || \
-	(${MACHINE} == "mac68k" ) || \
-	(${MACHINE} == "mvme68k") || \
-	(${MACHINE} == "pc532")   || \
-	(${MACHINE} == "sparc")   || \
-	(${MACHINE} == "sun3")    || \
-	(${MACHINE} == "sun3x")   || \
-	(${MACHINE} == "powerpc") || \
-	(${MACHINE} == "vax")
-SUBDIR+=        libkvm
-.else
+# XXX Temporary until this ports are able to use libkvm (leo/veego)
+.if	(${MACHINE} == "arm32")  || \
+	(${MACHINE} == "i386")   || \
+	(${MACHINE} == "pica")   || \
+	(${MACHINE} == "pmax")   || \
+	(${MACHINE} == "x68k")
 SUBDIR+=        libkvm.old
+.else
+SUBDIR+=        libkvm
 .endif
 
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
