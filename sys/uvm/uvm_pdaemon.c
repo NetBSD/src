@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.21 2000/06/27 17:29:33 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.22 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -187,7 +187,7 @@ uvmpd_tune()
  */
 
 void
-uvm_pageout()
+uvm_pageout(void *arg)
 {
 	int npages = 0;
 	int s;
