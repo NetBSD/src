@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 1999/08/22 12:45:28 kleink Exp $
+# $NetBSD: mi,v 1.153 1999/08/23 22:32:27 thorpej Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -837,7 +837,6 @@
 ./usr/include/sys/dkbad.h
 ./usr/include/sys/dkio.h
 ./usr/include/sys/dkstat.h
-./usr/include/sys/dmap.h
 ./usr/include/sys/domain.h
 ./usr/include/sys/endian.h
 ./usr/include/sys/errno.h
