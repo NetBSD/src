@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29 2002/03/05 13:01:21 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.30 2002/03/05 14:16:11 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29 2002/03/05 13:01:21 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.30 2002/03/05 14:16:11 agc Exp $");
 #endif
 #endif
 
@@ -263,12 +263,12 @@ pkg_perform(lpkg_head_t *pkgs)
 		while (Pkgdeps) {
 			cp = strsep(&Pkgdeps, " \t\n");
 			if (*cp) {
-				add_plist(&plist, PLIST_PKGDEP, cp);
-				if (Verbose && !PlistOnly)
-					printf(" %s", cp);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), cp, note_whats_installed, installed) > 0) {
 					add_plist(&plist, PLIST_BLDDEP, installed);
 				}
+				add_plist(&plist, PLIST_PKGDEP, cp);
+				if (Verbose && !PlistOnly)
+					printf(" %s", cp);
 			}
 		}
 		if (Verbose && !PlistOnly)
