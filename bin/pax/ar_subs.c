@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.24 2003/03/31 20:06:33 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.25 2003/06/23 13:06:53 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.24 2003/03/31 20:06:33 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.25 2003/06/23 13:06:53 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ extract(void)
 			continue;
 		}
 		/*
-		 * we have a file with data here. If we can not create it, skip
+		 * we have a file with data here. If we cannot create it, skip
 		 * over the data and purge the name from hard link table
 		 */
 		if ((fd = file_creat(arcn)) < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.26 2003/03/03 11:42:36 grant Exp $	*/
+/*	$NetBSD: pax.c,v 1.27 2003/06/23 13:06:53 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.26 2003/03/03 11:42:36 grant Exp $");
+__RCSID("$NetBSD: pax.c,v 1.27 2003/06/23 13:06:53 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ main(int argc, char **argv)
 		break;
 	case APPND:
 		if (gzip_program != NULL)
-			err(1, "can not gzip while appending");
+			err(1, "cannot gzip while appending");
 		append();
 		/* 
 		 * Check if we tried to append on an empty file and
