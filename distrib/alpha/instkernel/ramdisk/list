@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 1998/10/16 00:39:38 ross Exp $
+#	$NetBSD: list,v 1.4 1998/10/29 00:37:07 ross Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -97,6 +97,6 @@ COPY	${CURDIR}/../src/upgrade.sh	upgrade
 SPECIAL chmod 755 install
 SPECIAL chmod 755 upgrade
 
-# put in the release notes too
-
-COPY	${CURDIR}/../../../notes/INSTALL.alpha	INSTALL.txt
+# someday put in the release notes too
+#
+#COPY	${CURDIR}/../../../notes/alpha/INSTALL.txt	INSTALL.txt
