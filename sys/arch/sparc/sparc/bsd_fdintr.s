@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.10 1997/03/10 23:08:32 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -70,6 +70,63 @@
 	FD_SET_SWINTR_4M;				\
 9:
 #endif
+
+! flip TC bit in auxreg
+! assumes %l6 remains unchanged between ASSERT and DEASSERT
+#define FD_ASSERT_TC_4C					\
+	sethi	%hi(AUXREG_VA), %l6;			\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	or	%l7, AUXIO4C_MB1|AUXIO4C_FTC, %l7;	\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+#define FD_DEASSERT_TC_4C				\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	andn	%l7, AUXIO4C_FTC, %l7;			\
+	or	%l7, AUXIO4C_MB1, %l7;			\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+! flip TC bit in auxreg
+#define FD_ASSERT_TC_4M					\
+	sethi	%hi(AUXREG_VA), %l6;			\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	or	%l7, AUXIO4M_MB1|AUXIO4M_FTC, %l7;	\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+#define FD_DEASSERT_TC_4M
+
+/*
+ * flip TC bit in auxreg
+ * assumes %l5 remains unchanged between ASSERT and DEASSERT
+ */
+#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
+#define FD_ASSERT_TC		FD_ASSERT_TC_4C
+#define FD_DEASSERT_TC		FD_DEASSERT_TC_4C
+#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+#define FD_ASSERT_TC		FD_ASSERT_TC_4M
+#define FD_DEASSERT_TC		FD_DEASSERT_TC_4M
+#else
+#define FD_ASSERT_TC					\
+	sethi	%hi(_cputyp), %l5;			\
+	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	 nop;						\
+	FD_ASSERT_TC_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_ASSERT_TC_4M;				\
+9:
+#define FD_DEASSERT_TC					\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	 nop;						\
+	FD_DEASSERT_TC_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_DEASSERT_TC_4M;				\
+9:
+#endif
+
 
 /* Timeout waiting for chip ready */
 #define POLL_TIMO	100000
@@ -175,11 +232,7 @@ nextc:
 	st	R_buf, [R_fdc + FDC_DATA]
 
 	! flip TC bit in auxreg
-	sethi	%hi(_auxio_reg), %l6
-	ld	[%l6 + %lo(_auxio_reg)], %l6
-	ldub	[%l6], %l7
-	or	%l7, AUXIO_MB1|AUXIO_FTC, %l7
-	stb	%l7, [%l6]
+	FD_ASSERT_TC
 
 	! we have some time to kill; anticipate on upcoming
 	! result phase.
@@ -187,12 +240,8 @@ nextc:
 	mov	-1, %l7
 	st	%l7, [R_fdc + FDC_NSTAT]	! fdc->sc_nstat = -1;
 
-	ldub	[%l6], %l7
-	andn	%l7, AUXIO_FTC, %l7
-	or	%l7, AUXIO_MB1, %l7
-	stb	%l7, [%l6]
-	b	resultphase1
-	 nop
+	FD_DEASSERT_TC
+	b,a	resultphase1
 
 spurious:
 	mov	ISTATE_SPURIOUS, %l7
