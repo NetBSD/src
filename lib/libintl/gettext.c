@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.3 2000/10/31 11:08:18 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.4 2000/10/31 16:02:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.3 2000/10/31 11:08:18 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.4 2000/10/31 16:02:52 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -336,14 +336,14 @@ mapit(path)
 		close(fd);
 		goto fail;
 	}
-	mohandle.addr = mmap(NULL, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
-	    fd, (off_t)0);
+	mohandle.addr = mmap(NULL, (size_t)st.st_size, PROT_READ,
+	    MAP_FILE | MAP_SHARED, fd, (off_t)0);
 	if (!mohandle.addr) {
 		close(fd);
 		goto fail;
 	}
 	close(fd);
-	mohandle.len = st.st_size;
+	mohandle.len = (size_t)st.st_size;
 	strlcpy(mohandle.path, path, sizeof(mohandle.path));
 
 	base = mohandle.addr;
@@ -461,24 +461,21 @@ static const char *
 lookup_bsearch(msgid)
 	const char *msgid;
 {
-	size_t l;
 	int top, bottom, middle, omiddle;
 	int n;
-
-	l = strlen(msgid);
 
 	top = 0;
 	bottom = mohandle.mo.mo_nstring;
 	omiddle = -1;
 	while (1) {
 		if (top > bottom)
-			return NULL;
+			break;
 		middle = (top + bottom) / 2;
 		/* avoid possible infinite loop, when the data is not sorted */
 		if (omiddle == middle)
-			return NULL;
+			break;
 		if (middle < 0 || middle >= mohandle.mo.mo_nstring)
-			return NULL;
+			break;
 
 		n = strcmp(msgid, mohandle.mo.mo_otable[middle].off);
 		if (n == 0)
