@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.24 1999/07/09 02:37:26 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.25 1999/07/09 06:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ needs-flag	return NEEDS_FLAG;
 object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
+prefix		return PREFIX;
 pseudo-device	return PSEUDO_DEVICE;
 root		return ROOT;
 source		return SOURCE;
@@ -217,7 +218,7 @@ include(fname, ateof, conditional)
 		setupdirs();
 	}
 
-	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
+	s = (*fname == '/') ? estrdup(fname) : sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
 		if (conditional == 0)
 			error("cannot open %s for reading: %s\n", s,
