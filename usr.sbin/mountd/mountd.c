@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.83 2003/04/17 02:41:22 lukem Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.84 2003/05/16 14:03:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.83 2003/04/17 02:41:22 lukem Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.84 2003/05/16 14:03:31 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2097,7 +2097,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				cp = dirp + dirplen - 1;
 			if (errno == EPERM) {
 				syslog(LOG_ERR,
-		    "\"%s\", line %ld: Can't change attributes for %s to %s",
+		    "\"%s\", line %ld: Can't change attributes for %s to %s: %m",
 				    line, (unsigned long)lineno,
 				    dirp, (grp->gr_type == GT_HOST) ?
 				    grp->gr_ptr.gt_addrinfo->ai_canonname :
@@ -2122,7 +2122,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				if (debug)
 					(void)fprintf(stderr, "mnt unsucc\n");
 				syslog(LOG_ERR, 
-				    "\"%s\", line %ld: Can't export %s",
+				    "\"%s\", line %ld: Can't export %s: %m",
 				    line, (unsigned long)lineno, dirp);
 				return (1);
 			}
@@ -2164,6 +2164,7 @@ get_net(cp, net, maskflg)
 	long preflen;
 	int ecode;
 
+	(void)memset(&sin, 0, sizeof(sin));
 	if ((opt_flags & OP_MASKLEN) && !maskflg) {
 		p = strchr(cp, '/');
 		*p = '\0';
