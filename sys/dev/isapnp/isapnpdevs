@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.17 1999/02/08 22:10:09 tls Exp $
+$NetBSD: isapnpdevs,v 1.18 1999/02/18 22:31:32 mycroft Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ devlogic	ne	@@@1980		OvisLink LE-8019R
 /*
  * pcic
  */
+devlogic	pcic	SCM0469		SCM SwapBox Plug and Play
 devcompat	pcic	PNP0E00		PCIC Compatible PCMCIA Bridge
 devlogic	pcic	AEI0218		Actiontec PnP PCMCIA Adapter
 
