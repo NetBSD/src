@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.3 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: INSTALL,v 1.4 2000/02/14 08:48:08 scottr Exp $
 #
 # INSTALL
 
@@ -54,13 +54,22 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Warning, these may compile large string tables into the kernel!
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
+
+# rcons options; note that 1-bit and 8-bit displays are supported by default.
+options 	RCONS_2BPP		# Support for 2-bit display
+options 	RCONS_4BPP		# Support for 4-bit display
+options 	RCONS_16BPP		# Support for 16-bit display
+
 # Mac-specific options
 #options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
-options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
 
-options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -88,19 +97,21 @@ nubus0 at mainbus?
 # Apple Desktop Bus interface
 adb0	at obio?
 aed*	at adb?				# ADB event device
-kbd*	at adb?				# ADB keyboard
-ms*	at adb?				# ADB mouse
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
 
 # Basic frame buffer support
 intvid0	at obio?			# Internal video hardware
 macvid*	at nubus?			# NuBus video card
 
 # Device-independent frame buffer interface
-grf*	at intvid?
-grf*	at macvid?
+macfb*	at intvid?
+macfb*	at macvid?
 
-# Integrated Terminal Emulator (console) support
-ite0	at grf?
+# Workstation Console devices
+wsdisplay0 at macfb? console ?
+wskbd0	at akbd? console ?
+wsmouse0 at ams?
 
 
 # Serial Devices
