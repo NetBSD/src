@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.5 1995/05/08 22:01:59 brezak Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.6 1995/07/07 02:11:56 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -62,13 +62,14 @@ struct ad1848_softc {
 	u_short sc_iobase;		/* I/O port base address */
 	u_short sc_irq;			/* interrupt */
 	u_short sc_drq;			/* DMA */
+	u_short sc_recdrq;		/* record/capture DMA */
 	
 	u_long	sc_irate;		/* Sample rate for input */
 	u_long	sc_orate;		/* ...and output */
 
 	/* We keep track of these */
-	struct ad1848_volume rec_gain, aux1_gain, aux2_gain, out_gain, mon_gain;
-	
+	struct ad1848_volume rec_gain, aux1_gain, aux2_gain, out_gain, mon_gain, line_gain, mono_gain;
+
 	u_int	encoding;		/* ulaw/linear -- keep track */
 	u_int	precision;		/* 8/16 bits */
 	
@@ -78,8 +79,9 @@ struct ad1848_softc {
 
 	/* ad1848 */
 	u_char	MCE_bit;
+	char	mic_gain_on;		/* CS4231 only */
+	char	mono_mute, aux1_mute, aux2_mute, line_mute, mon_mute;
 	char	*chip_name;
-	int	rev;
 	int	mode;
 	
 	int	speed;
@@ -149,4 +151,9 @@ int	ad1848_set_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_set_mon_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_mon_gain __P((struct ad1848_softc *, struct ad1848_volume *));
+/* Note: The mic pre-MUX gain is not a variable gain, it's 20dB or 0dB */
+int	ad1848_set_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
+int	ad1848_get_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
+void	ad1848_mute_aux1 __P((struct ad1848_softc *, int /* onoff */));
+void	ad1848_mute_aux2 __P((struct ad1848_softc *, int /* onoff */));
 #endif
