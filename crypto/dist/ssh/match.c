@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.8 2002/03/08 01:20:47 itojun Exp $	*/
+/*	$NetBSD: match.c,v 1.2 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: match.c,v 1.19 2002/03/01 13:12:10 markus Exp $");
+__RCSID("$NetBSD: match.c,v 1.2 2003/07/10 01:09:45 lukem Exp $");
 
 #include "match.h"
 #include "xmalloc.h"

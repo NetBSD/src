@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.22 2003/04/03 06:21:31 itojun Exp $	*/
+/*	$NetBSD: auth1.c,v 1.23 2003/07/10 01:09:42 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,6 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth1.c,v 1.47 2003/02/06 21:22:42 markus Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.23 2003/07/10 01:09:42 lukem Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"

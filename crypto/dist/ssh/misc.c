@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: misc.c,v 1.20 2002/12/13 10:03:15 markus Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2003/07/10 01:09:45 lukem Exp $");
 
 #include "misc.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.17 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.18 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.18 2003/07/10 01:09:46 lukem Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgexc.c,v 1.1.1.1 2003/04/03 05:57:22 itojun Exp $	*/
+/*	$NetBSD: kexgexc.c,v 1.2 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: kexgexc.c,v 1.1 2003/02/16 17:09:57 markus Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.2 2003/07/10 01:09:44 lukem Exp $");
 
 #include "xmalloc.h"
 #include "key.h"

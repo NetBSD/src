@@ -1,4 +1,4 @@
-/*	$NetBSD: mpaux.c,v 1.4 2001/04/10 08:07:58 itojun Exp $	*/
+/*	$NetBSD: mpaux.c,v 1.5 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,6 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: mpaux.c,v 1.16 2001/02/08 19:30:52 itojun Exp $");
+__RCSID("$NetBSD: mpaux.c,v 1.5 2003/07/10 01:09:45 lukem Exp $");
 
 #include <openssl/bn.h>
 #include "getput.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.7 2002/10/01 14:07:48 itojun Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.8 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: uuencode.c,v 1.16 2002/09/09 14:54:15 markus Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.8 2003/07/10 01:09:49 lukem Exp $");
 
 #include "xmalloc.h"
 #include "uuencode.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.11 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: dh.c,v 1.12 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: dh.c,v 1.23 2002/11/21 22:22:50 markus Exp $");
+__RCSID("$NetBSD: dh.c,v 1.12 2003/07/10 01:09:44 lukem Exp $");
 
 #include "xmalloc.h"
 

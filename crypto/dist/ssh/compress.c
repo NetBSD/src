@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.7 2002/04/22 07:59:39 itojun Exp $	*/
+/*	$NetBSD: compress.c,v 1.8 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: compress.c,v 1.19 2002/03/18 17:31:54 provos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.8 2003/07/10 01:09:44 lukem Exp $");
 
 #include "log.h"
 #include "buffer.h"

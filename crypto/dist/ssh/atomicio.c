@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.5 2001/05/15 15:26:07 itojun Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.6 2003/07/10 01:09:41 lukem Exp $	*/
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: atomicio.c,v 1.10 2001/05/08 22:48:07 markus Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.6 2003/07/10 01:09:41 lukem Exp $");
 
 #include "atomicio.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.20 2003/05/14 18:17:02 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.21 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh-keygen.c,v 1.104 2003/05/11 16:56:48 markus Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
