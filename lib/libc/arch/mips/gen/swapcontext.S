@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.3 2001/11/24 02:27:35 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,26 +40,21 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $")
+	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.3 2001/11/24 02:27:35 wdk Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
-	PIC_PROLOGUE(swapcontext, t9)
-
 	subu	sp, sp, CALLFRAME_SIZ
-#ifdef ABICALLS
-	.cprestore 16
-#endif
+
 	sw	ra, CALLFRAME_RA(sp)	# save ra
 	sw	a0, CALLFRAME_SIZ(sp)	# stash away oucp
-	jal	_C_LABEL(_getcontext)	# getcontext(oucp)
-	 sw	a1, CALLFRAME_SIZ+4(sp)	# stash away ucp
-	bne	v0, zero, 1f
-	 nop
+	sw	a1, CALLFRAME_SIZ+4(sp)	# stash away ucp
+	SYSTRAP(getcontext)
+	bne	a3, zero, 1f
+	 lw	ra, CALLFRAME_RA(sp)
 
 	lw	v1, CALLFRAME_SIZ(sp)	# load oucp again for adjustment
-	lw	ra, CALLFRAME_RA(sp)
 	lw	a0, CALLFRAME_SIZ+4(sp)	# load ucp
 	addiu	v0, sp, CALLFRAME_SIZ
 	REG_PROLOGUE
@@ -67,11 +62,13 @@ NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	REG_S	ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(v1)
 	REG_S	v0, (_OFFSETOF_UC_GREGS + _REG_SP * SZREG)(v1)
 	REG_EPILOGUE
-	
-	jal	_C_LABEL(setcontext)	# setcontext(ucp)
-	 nop
+
+	SYSTRAP(setcontext)
+	nop
+	/* NOTREACHED */
 1:
-	lw	ra, CALLFRAME_RA(sp)
-	j	ra
-	 addiu	sp, sp, CALLFRAME_SIZ
+	addiu	sp, sp, CALLFRAME_SIZ
+	la	t9, _C_LABEL(__cerror)
+	jr	t9
+	 nop
 END(swapcontext)
