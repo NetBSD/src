@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.26 1998/07/04 22:18:21 jonathan Exp $	*/
+/*	$NetBSD: ite.c,v 1.27 2000/01/19 13:23:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,6 @@ itematch(pdp, cfp, auxp)
 	void		*auxp;
 {
 	struct grf_softc *gp  = auxp;
-	dev_t		 itedev;
 	int		 maj;
 	
 	/*
@@ -171,20 +170,8 @@ itematch(pdp, cfp, auxp)
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == iteopen)
 			break;
-	itedev = makedev(maj, cfp->cf_unit);
 
-	/*
-	 * Try to make sure that a single ite will not be attached to
-	 * multiple grf's.
-	 * Note that the console grf is the only grf that will ever enter
-	 * here with itedev != (dev_t)-1.
-	 */
-	if (gp->g_itedev == (dev_t)-1) {
-		if (ite_confunits & (1 << ITEUNIT(itedev)))
-				return (0);
-	}
-
-	gp->g_itedev = itedev;
+	gp->g_itedev = makedev(maj, cfp->cf_unit);
 	return(1);
 }
 
