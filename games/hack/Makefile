@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.10 1993/11/08 04:45:28 cgd Exp $
+#	$Id: Makefile,v 1.11 1993/12/02 03:11:32 mycroft Exp $
 
 PROG=	hack
 CFLAGS+=-I.
@@ -30,17 +30,11 @@ makedefs: makedefs.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
-	@if [ ! -d ${DESTDIR}/var/games/hackdir ]; then \
-                /bin/rm -f ${DESTDIR}/var/games/hackdir ; \
-                mkdir -p ${DESTDIR}/var/games/hackdir ; \
-                chown games.games ${DESTDIR}/var/games/hackdir ; \
-                chmod 755 ${DESTDIR}/var/games/hackdir ; \
-        else \
-                true ; \
-        fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -d -m 755 -o games -g games ${DESTDIR}/var/games/hackdir
+	install -d -m 700 -o games -g games ${DESTDIR}/var/games/hackdir/save
+	install -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
 	    ${.CURDIR}/hh ${.CURDIR}/data ${DESTDIR}/var/games/hackdir
