@@ -1,4 +1,4 @@
-/* $NetBSD: vrc4172reg.h,v 1.1 2000/11/11 04:42:09 sato Exp $ */
+/* $NetBSD: vrc4172reg.h,v 1.2 2000/12/20 08:05:09 sato Exp $ */
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
  *
@@ -32,7 +32,7 @@
 #define VRC2_PCS_ADDR	0x15001090	/* PCS Programable chip selects */
 #define VRC2_GPIOH_ADDR	0x150010c0	/* GPIO (16..23) */
 #define VRC2_PMU_ADDR	0x15003800	/* PMU */
-#define VRC2_ICU_ADDR	0x15003708	/* ICU */
+#define VRC2_ICU_ADDR	0x15003808	/* ICU */
 #define VRC2_COM_ADDR	0x15003810	/* NS16550A compat */
 #define VRC2_PIO_ADDR	0x15003820	/* IEEE1284 parallel */
 #define VRC2_PS2_ADDR	0x15003870	/* PS/2 controler */
