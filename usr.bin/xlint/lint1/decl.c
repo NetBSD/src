@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.27 2002/01/03 05:26:53 thorpej Exp $ */
+/* $NetBSD: decl.c,v 1.28 2002/01/03 05:37:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.27 2002/01/03 05:26:53 thorpej Exp $");
+__RCSID("$NetBSD: decl.c,v 1.28 2002/01/03 05:37:39 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -493,6 +493,9 @@ tdeferr(type_t *td, tspec_t t)
 	case ULONG:
 	case UINT:
 	case INT:
+		break;
+
+	case NTSPEC:	/* this value unused */
 		break;
 	}
 

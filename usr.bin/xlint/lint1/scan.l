@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.22 2002/01/03 04:25:15 thorpej Exp $ */
+/* $NetBSD: scan.l,v 1.23 2002/01/03 05:37:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.22 2002/01/03 04:25:15 thorpej Exp $");
+__RCSID("$NetBSD: scan.l,v 1.23 2002/01/03 05:37:39 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -577,6 +577,9 @@ icon(int base)
 	case SCHAR:
 	case CHAR:
 	case UNSIGN:
+		break;
+
+	case NTSPEC:	/* this value unused */
 		break;
 	}
 
