@@ -1,4 +1,4 @@
-/*	$Id: fsck.h,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: fsck.h,v 1.1.2.1 2000/01/21 00:34:32 he Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -211,8 +211,7 @@ struct bufarea *getfileblk __P((struct lfs *, struct dinode *, ino_t));
 struct bufarea *lfs_bginode __P((ino_t));
 struct dinode *ginode __P((ino_t));
 struct dinode *lfs_ginode __P((ino_t));
-struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct dinode *));
-struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct dinode *));
+struct dinode *lfs_difind __P((struct lfs *, ino_t, struct dinode *));
 struct ifile *lfs_ientry __P((ino_t));
 struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
