@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.113 2003/08/11 19:26:04 jmc Exp $
+#	$NetBSD: build.sh,v 1.114 2003/08/16 11:46:44 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -802,7 +802,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.113 2003/08/11 19:26:04 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.114 2003/08/16 11:46:44 lukem Exp $
 #
 
 EOF
@@ -846,7 +846,7 @@ buildtools()
 getkernelconf()
 {
 	kernelconf="$1"
-	if [ "${MKOBJDIRS}" != "no" ] && [ ! -z "${makeobjdir}" ]; then
+	if [ "${MKOBJDIRS}" != "no" ]; then
 		# The correct value of KERNOBJDIR might
 		# depend on a prior "make obj" in
 		# ${KERNSRCDIR}/${KERNARCHDIR}/compile.
