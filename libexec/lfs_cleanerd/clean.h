@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.9 1999/11/09 20:33:37 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.10 2001/02/04 22:12:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,8 +113,6 @@ typedef struct fs_info {
 
 __BEGIN_DECLS
 int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t));
-void	 err __P((const int, const char *, ...));
-void	 warn __P((const char *, ...));
 int	 fs_getmntinfo __P((struct statfs **, char *, const char *));
 void	 get __P((int, off_t, void *, size_t));
 FS_INFO	*get_fs_info __P((struct statfs *, int));
