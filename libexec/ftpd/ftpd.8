@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.67 2001/10/13 13:50:18 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.68 2002/01/15 02:20:37 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,7 @@ The default is the hostname associated with the IP address that
 is listening on.
 This ability (with or without
 .Fl h ) ,
-in conjunction with 
+in conjunction with
 .Fl c Ar confdir ,
 is useful when configuring
 .Sq virtual
@@ -394,8 +394,7 @@ conventions used by
 .Xr csh 1 .
 This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
-.Sh User authentication
-.Pp
+.Ss User authentication
 .Nm
 authenticates users according to five rules.
 .Pp
@@ -495,8 +494,7 @@ then the verbose messages displayed at login and upon a
 .Sy CWD
 command are suppressed.
 .El
-.Sh Display file escape sequences
-.Pp
+.Ss Display file escape sequences
 When
 .Nm
 displays various files back to the client (such as
@@ -555,8 +553,7 @@ A
 .Dq \&%
 character.
 .El
-.Sh Setting up a restricted ftp subtree
-.Pp
+.Ss Setting up a restricted ftp subtree
 In order that system security is not breached, it is recommended
 that the
 subtrees for the
@@ -666,20 +663,20 @@ login, you can copy/link
 .Pa /sbin/nologin
 to
 .Pa /sbin/ftplogin ,
-and enter 
-.Pa /sbin/ftplogin 
+and enter
+.Pa /sbin/ftplogin
 to
 .Pa /etc/shells
 to allow logging-in via
 .Tn FTP
 into the accounts, which must have
-.Pa /sbin/ftplogin 
+.Pa /sbin/ftplogin
 as login shell.
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
 .It Pa /etc/ftpchroot
-List of normal users who should be
-.Xr chroot 2 ed.
+List of normal users whose root directory should be changed via
+.Xr chroot 2 .
 .It Pa /etc/ftpd.conf
 Configure file conversions and other settings.
 .It Pa /etc/ftpusers
@@ -705,17 +702,17 @@ Login history database.
 .Xr skey 1 ,
 .Xr who 1 ,
 .Xr getusershell 3 ,
-.Xr ftpd.conf 5 ,
 .Xr ftpchroot 5 ,
+.Xr ftpd.conf 5 ,
 .Xr ftpusers 5 ,
 .Xr syslogd 8
 .Sh STANDARDS
 .Nm
-recognizes all commands in 
-.Cm RFC 959 , 
-follows the guidelines in 
+recognizes all commands in
+.Cm RFC 959 ,
+follows the guidelines in
 .Cm RFC 1123 ,
-recognizes all commands in 
+recognizes all commands in
 .Cm RFC 2228
 (although they are not supported yet),
 and supports the extensions from
@@ -816,7 +813,7 @@ is running on a port greater than
 .Dv IPPORT_RESERVED
 and the user has logged in as a
 .Sq guest
-or 
+or
 .Sq chroot
 user.
 .It
