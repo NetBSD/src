@@ -1,3 +1,4 @@
+# $NetBSD: md.i386,v 1.50 1999/04/19 03:11:32 simonb Exp $
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/cursor

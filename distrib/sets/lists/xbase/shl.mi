@@ -1,3 +1,4 @@
+# $NetBSD: shl.mi,v 1.2 1999/04/19 03:11:36 simonb Exp $
 ./usr/X11R6/lib/libICE.so.6.3
 ./usr/X11R6/lib/libPEX5.so.6.0
 ./usr/X11R6/lib/libSM.so.6.0

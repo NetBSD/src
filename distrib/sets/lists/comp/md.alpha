@@ -1,3 +1,4 @@
+# $NetBSD: md.alpha,v 1.17 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/alpha
 ./usr/include/alpha/_G_config.h
 ./usr/include/alpha/alpha_cpu.h

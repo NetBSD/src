@@ -1,3 +1,4 @@
+# $NetBSD: md.alpha,v 1.17 1999/04/19 03:11:31 simonb Exp $
 ./usr/bin/fdformat
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o

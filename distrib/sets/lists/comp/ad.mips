@@ -1,3 +1,4 @@
+# $NetBSD: ad.mips,v 1.11 1999/04/19 03:11:33 simonb Exp $
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
 ./usr/include/mips

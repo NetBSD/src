@@ -1,3 +1,4 @@
+# $NetBSD: shl.elf,v 1.10 1999/04/19 03:11:32 simonb Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbfd.so.3
 ./usr/lib/libbz2.so.0
