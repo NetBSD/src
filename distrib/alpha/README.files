@@ -1,12 +1,13 @@
-$NetBSD: README.files,v 1.2 1995/12/21 01:04:14 cgd Exp $
+$NetBSD: README.files,v 1.3 1995/12/21 02:40:49 cgd Exp $
 
 README.files			This list.
 
-Files are organized by release, numbered by year, month, and date, in
-the form: YYMMDD
+Snapshots are organized by release, numbered by year, month, and date, in
+directories with names of the form "YYMMDD".
 
 In each directory:
 
+README_FIRST			Important last-minute notes about the snapshot.
 README				Installation notes; probably incomplete.
 STATUS				Status of NetBSD/Alpha.
 TODO.users			Things that I think users could do to help out.
