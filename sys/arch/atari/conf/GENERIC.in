@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
+#	$NetBSD: GENERIC.in,v 1.33.2.1 2004/06/30 21:03:27 jdc Exp $
 #
 # Generic atari
 #
@@ -79,6 +79,19 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
 #endif
 
 # File systems
