@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2003/07/02 16:47:53 jrf Exp $	*/
+/*	$NetBSD: main.c,v 1.82 2003/07/13 12:36:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 	last_component = strrchr(conffile, '/');
 	last_component = (last_component) ? last_component + 1 : conffile;
 	if (pflag) {
-		p  = emalloc(strlen(last_component) + 17);
+		p = emalloc(strlen(last_component) + 17);
 		(void)sprintf(p, "../compile/%s.PROF", last_component);
 		(void)addmkoption(intern("PROF"), "-pg");
 		(void)addoption(intern("GPROF"), NULL);
@@ -462,7 +462,7 @@ mksymlinks(void)
 	const char *q;
 	struct nvlist *nv;
 
-	sprintf(buf, "arch/%s/include", machine);
+	snprintf(buf, sizeof(buf), "arch/%s/include", machine);
 	p = sourcepath(buf);
 	ret = unlink("machine");
 	if (ret && errno != ENOENT)
@@ -475,7 +475,7 @@ mksymlinks(void)
 	free(p);
 
 	if (machinearch != NULL) {
-		sprintf(buf, "arch/%s/include", machinearch);
+		snprintf(buf, sizeof(buf), "arch/%s/include", machinearch);
 		p = sourcepath(buf);
 		q = machinearch;
 	} else {
@@ -494,7 +494,7 @@ mksymlinks(void)
 
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
 		q = nv->nv_name;
-		sprintf(buf, "arch/%s/include", q);
+		snprintf(buf, sizeof(buf), "arch/%s/include", q);
 		p = sourcepath(buf);
 		ret = unlink(q);
 		if (ret && errno != ENOENT)
@@ -656,12 +656,12 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 			 * lower case name will be used as the option
 			 * file name.
 			 */
-			(void) strcpy(low, "opt_");
+			(void) strlcpy(low, "opt_", sizeof(low));
 			p = low + strlen(low);
 			for (n = nv->nv_name; (c = *n) != '\0'; n++)
 				*p++ = isupper(c) ? tolower(c) : c;
 			*p = '\0';
-			strcat(low, ".h");
+			strlcat(low, ".h", sizeof(low));
 
 			name = intern(low);
 		} else {

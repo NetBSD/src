@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.33 2002/11/19 04:29:19 atatat Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.34 2003/07/13 12:36:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,8 +105,8 @@ emitcnt(struct nvlist *head)
 	struct nvlist *nv;
 	FILE *fp;
 
-	(void)sprintf(nfname, "%s.h", head->nv_name);
-	(void)sprintf(tfname, "tmp_%s", nfname);
+	(void)snprintf(nfname, sizeof(nfname), "%s.h", head->nv_name);
+	(void)snprintf(tfname, sizeof(tfname), "tmp_%s", nfname);
 
 	if ((fp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
@@ -163,7 +163,7 @@ defopts_print(const char *name, void *value, void *arg)
 	int isfsoption;
 	FILE *fp;
 
-	(void)sprintf(tfname, "tmp_%s", name);
+	(void)snprintf(tfname, sizeof(tfname), "tmp_%s", name);
 	if ((fp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
 
