@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.7 2002/05/29 14:40:31 itojun Exp $	*/
+/*	$NetBSD: advcap.c,v 1.8 2002/07/10 21:11:43 itojun Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ getent(bp, name, cp)
 	}
 	if (tf < 0) {
 		syslog(LOG_INFO,
-		       "<%s> open: %s", __FUNCTION__, strerror(errno));
+		       "<%s> open: %s", __func__, strerror(errno));
 		return (-2);
 	}
 	for (;;) {
