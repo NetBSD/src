@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.39 2002/02/11 11:44:36 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.39.10.1 2002/12/12 22:53:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -58,6 +58,8 @@
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
+
+#include <mips/cache.h>
 
 #include "vrip_common.h"
 #if NVRIP_COMMON > 0
@@ -474,6 +476,9 @@ vr_cons_init()
 #endif /* NVRKIU > 0 */
 }
 
+extern char vr_hibernate[];
+extern char evr_hibernate[];
+
 void
 vr_reboot(int howto, char *bootstr)
 {
@@ -482,13 +487,19 @@ vr_reboot(int howto, char *bootstr)
 	 */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		printf("fake powerdown\n");
-		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_HIBERNATE)));
-		__asm("nop");
-		__asm("nop");
-		__asm("nop");
-		__asm("nop");
-		__asm("nop");
-		__asm(".set reorder");
+		/*
+		 * copy vr_hibernate() to top of physical memory.
+		 */
+		memcpy((void *)MIPS_KSEG0_START, vr_hibernate,
+		   evr_hibernate - (char *)vr_hibernate);
+		/* sync I&D cache */
+		mips_dcache_wbinv_all();
+		mips_icache_sync_all();
+		/*
+		 * call vr_hibernate() at MIPS_KSEG0_START.
+		 */
+		((void (*)(void *,int))MIPS_KSEG0_START)(
+		    (void *)MIPS_KSEG0_START, ptoa(physmem));
 		/* not reach */
 		vr_reboot(howto&~RB_HALT, bootstr);
 	}
