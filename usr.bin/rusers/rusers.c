@@ -233,7 +233,8 @@ main(int argc, char *argv[])
                         usage();
                         /*NOTREACHED*/
                 }
-        
+
+        setlinebuf(stdout);
 	if (argc == optind)
 		allhosts();
 	else {
