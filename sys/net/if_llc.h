@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.8 1997/05/01 23:07:13 christos Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.9 1997/05/02 21:08:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -67,8 +67,8 @@ struct llc {
 		 * We cannot put the following fields in a structure because
 		 * the structure rounding might cause padding.
 		 */
-		u_int8_t frmr_pdu0;
-		u_int8_t frmr_pdu1;
+		u_int8_t frmr_rej_pdu0;
+		u_int8_t frmr_rej_pdu1;
 		u_int8_t frmr_control;
 		u_int8_t frmr_control_ext;
 		u_int8_t frmr_cause;
@@ -86,8 +86,8 @@ struct llc {
 };
 
 struct frmrinfo {
-	u_int8_t frmr_pdu0;
-	u_int8_t frmr_pdu1;
+	u_int8_t frmr_rej_pdu0;
+	u_int8_t frmr_rej_pdu1;
 	u_int8_t frmr_control;
 	u_int8_t frmr_control_ext;
 	u_int8_t frmr_cause;
@@ -98,10 +98,9 @@ struct frmrinfo {
 #define	llc_fid			llc_un.type_u.format_id
 #define	llc_class		llc_un.type_u.class
 #define	llc_window		llc_un.type_u.window_x2
-#define	llc_frmrinfo \
-    *((struct frmrinfo *) llc_un.type_frmr.frmr_pdu0)
-#define	llc_frmr_pdu0		llc_un.type_frmr.frmr_pdu0
-#define	llc_frmr_pdu1		llc_un.type_frmr.frmr_pdu1
+#define	llc_frmrinfo 		llc_un.type_frmr.frmr_rej_pdu0
+#define	llc_frmr_pdu0		llc_un.type_frmr.frmr_rej_pdu0
+#define	llc_frmr_pdu1		llc_un.type_frmr.frmr_rej_pdu1
 #define	llc_frmr_control	llc_un.type_frmr.frmr_control
 #define	llc_frmr_control_ext	llc_un.type_frmr.frmr_control_ext
 #define	llc_frmr_cause		llc_un.type_frmr.frmr_cause
