@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/03/05 19:17:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2002/09/18 02:51:46 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ MKDICTDIR!= cd $(.CURDIR)/mkdict; ${PRINTOBJDIR}
 MKDICT=${MKDICTDIR}/mkdict
 MKINDEXDIR!= cd $(.CURDIR)/mkindex; ${PRINTOBJDIR}
 MKINDEX=${MKINDEXDIR}/mkindex
-WORDS=${.CURDIR}/../../share/dict/web2
+WORDS=${NETBSDSRCDIR}/share/dict/web2
 DICTFILES=dictionary dictindex
 .if ${MKSHARE} != "no"
 FILES=${DICTFILES}
