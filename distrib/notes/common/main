@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.221 2002/11/25 13:11:36 jmmv Exp $
+.\"	$NetBSD: main,v 1.222 2002/11/28 16:09:08 lonewolf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1840,6 +1840,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Michael Richardson Ta Mt mcr@netbsd.org
 .It Ta Tim Rightnour Ta Mt garbled@netbsd.org
 .It Ta Gordon Ross Ta Mt gwr@netbsd.org
+.It Ta Ilpo Ruotsalainen Ta Mt lonewolf@netbsd.org
 .It Ta Heiko W. Rupp Ta Mt hwr@netbsd.org
 .It Ta David Sainty Ta Mt dsainty@netbsd.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@netbsd.org
