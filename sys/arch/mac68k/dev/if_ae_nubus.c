@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.8 1997/03/15 18:33:46 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.9 1997/03/17 20:26:01 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -260,17 +260,13 @@ ae_nubus_attach(parent, self, aux)
 		/* reset the NIC chip */
 		bus_space_write_1(bst, bsh, GC_RESET_OFFSET, 0);
 
-#ifdef AE_OLD_GET_ENADDR
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			myaddr[i] =
-			    bus_space_read_1(bst, bsh, (GC_ROM_OFFSET + i * 4));
-#else
-		if (ae_nb_get_enaddr(na, myaddr)) {
-			printf(": can't find MAC address\n");
-			break;
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+			/* Fall back to snarf directly from ROM.  Ick. */
+			for (i = 0; i < ETHER_ADDR_LEN; ++i)
+				myaddr[i] =
+				    bus_space_read_1(bst, bsh,
+				    (GC_ROM_OFFSET + i * 4));
 		}
-#endif
 
 		success = 1;
 		break;
