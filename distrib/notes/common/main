@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.254 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: main,v 1.255 2004/06/03 11:36:59 shannonjr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1891,6 +1891,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Lubomir Sedlacik Ta Mt salo@NetBSD.org
 .It Ta Christopher SEKIYA Ta Mt sekiya@NetBSD.org
 .It Ta Reed Shadgett Ta Mt dent@NetBSD.org
+.It Ta John Shannon Ta Mt shannonjr@NetBSD.org
 .It Ta Tim Shepard Ta Mt shep@NetBSD.org
 .It Ta Takeshi Shibagaki Ta Mt shiba@NetBSD.org
 .It Ta Naoto Shimazaki Ta Mt igy@NetBSD.org
