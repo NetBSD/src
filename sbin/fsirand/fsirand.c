@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.16 2001/10/26 05:56:06 lukem Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.17 2001/11/16 04:25:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.16 2001/10/26 05:56:06 lukem Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.17 2001/11/16 04:25:43 lukem Exp $");
 #endif /* lint */
+
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -49,13 +55,7 @@ __RCSID("$NetBSD: fsirand.c,v 1.16 2001/10/26 05:56:06 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/vnode.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
+#include <util.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: fsirand.c,v 1.16 2001/10/26 05:56:06 lukem Exp $");
 #include <ufs/ffs/ffs_extern.h>
 
 static void usage(void);
-static void getsblock(int, const char *, struct disklabel *, struct fs *);
+static void getsblock(int, const char *, struct fs *);
 static void fixinodes(int, struct fs *, struct disklabel *, int, long);
 static void statussig(int);
 
@@ -90,52 +90,35 @@ usage(void)
  *	Return the superblock 
  */
 static void
-getsblock(int fd, const char *name, struct disklabel *lab, struct fs *fs)
+getsblock(int fd, const char *name, struct fs *fs)
 {
-	struct partition *pp;
-	char p;
-
-	pp = NULL;
-
-	if (lab != NULL) {
-		p = name[strlen(name) - 1];
-		if (p >= 'a' && p <= 'h')
-			pp = &lab->d_partitions[p - 'a'];
-		else if (isdigit((unsigned char) p))
-			pp = &lab->d_partitions[0];
-		else
-			errx(1, "Invalid partition `%c'", p);
-
-		if (pp->p_fstype != FS_BSDFFS)
-			errx(1, "Not an FFS partition");
-	}
 
 	if (lseek(fd, (off_t) SBOFF , SEEK_SET) == (off_t) -1)
-		err(1, "Cannot seek to superblock");
+		err(1, "%s: cannot seek to superblock", name);
 
 	if (read(fd, fs, SBSIZE) != SBSIZE)
-		err(1, "Cannot read superblock");
+		err(1, "%s: cannot read superblock", name);
 
 	if (fs->fs_magic != FS_MAGIC)  {
 		if(fs->fs_magic == bswap32(FS_MAGIC)) {
 			needswap = 1;
 			ffs_sb_swap(fs, fs);
 		} else
-			errx(1, "Bad superblock magic number");
+			errx(1, "%s: bad superblock magic number", name);
 	}
 
 	if (fs->fs_ncg < 1)
-		errx(1, "Bad ncg in superblock");
+		errx(1, "%s: bad ncg in superblock", name);
 
 	if (fs->fs_cpg < 1)
-		errx(1, "Bad cpg in superblock");
+		errx(1, "%s: bad cpg in superblock", name);
 
 	if (fs->fs_ncg * fs->fs_cpg < fs->fs_ncyl ||
 	    (fs->fs_ncg - 1) * fs->fs_cpg >= fs->fs_ncyl)
-		errx(1, "Bad number of cylinders in superblock");
+		errx(1, "%s: bad number of cylinders in superblock", name);
 
 	if (fs->fs_sbsize > SBSIZE)
-		errx(1, "Superblock too large");
+		errx(1, "%s: superblock too large", name);
 }
 
 
@@ -219,16 +202,16 @@ statussig(int dummy)
 int
 main(int argc, char *argv[])
 {
-	char buf[SBSIZE];
+	const char *special;
+	char buf[SBSIZE], device[MAXPATHLEN];
 	struct fs *fs = (struct fs *) buf;
 	struct disklabel lab;
-	struct stat st;
-	int fd, c;
-	long xorval = 0;
+	long xorval;
 	char *ep;
 	struct timeval tv;
-	int Fflag, pflag;
+	int fd, c, Fflag, pflag, openflags;
 
+	xorval = 0;
 	Fflag = pflag = 0;
 
 	while ((c = getopt(argc, argv, "Fpx:")) != -1)
@@ -260,25 +243,28 @@ main(int argc, char *argv[])
 	(void) gettimeofday(&tv, NULL);
 	srandom((unsigned) tv.tv_usec);
 
-	if ((fd = open(argv[0], pflag ? O_RDONLY : O_RDWR)) == -1)
-		err(1, "Cannot open `%s'", argv[0]);
-	if (fstat(fd, &st) == -1)
-		err(1, "Cannot stat `%s'", argv[0]);
+	special = argv[0];
+	openflags = pflag ? O_RDONLY : O_RDWR;
+	if (Fflag)
+		fd = open(special, openflags);
+	else {
+		fd = opendisk(special, openflags, device, sizeof(device), 0);
+		special = device;
+	}
+	if (fd == -1)
+		err(1, "Cannot open `%s'", special);
 
 	if (Fflag) {
-		if (!S_ISREG(st.st_mode))
-			errx(1, "%s: not a regular file", argv[0]);
 		memset(&lab, 0, sizeof(lab));
 		lab.d_secsize = DEV_BSIZE;	/* XXX */
-	} else if (S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode)) {
+	} else {
 		if (ioctl(fd, DIOCGDINFO, &lab) == -1)
-			err(1, "%s: cannot get disklabel information", argv[0]);
-	} else
-		errx(1, "%s: not a block or character device", argv[0]);
+			err(1, "%s: cannot get disklabel information", special);
+	}
 
 	time(&tstart);
 	(void)signal(SIGINFO, statussig);
-	getsblock(fd, argv[0], Fflag ? NULL : &lab, fs);
+	getsblock(fd, special, fs);
 	fixinodes(fd, fs, &lab, pflag, xorval);
 
 	(void) close(fd);
