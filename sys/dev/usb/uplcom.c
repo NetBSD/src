@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.4 2001/01/23 08:15:58 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.5 2001/01/23 10:10:22 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,10 @@
  */
 
 /*
+ * Simple datasheet
+ * http://www.nisseisg.co.jp/jyouhou/_cp/@gif/2303.pdf
+ * 	(english)
+ *
  */
 
 #include <sys/param.h>
