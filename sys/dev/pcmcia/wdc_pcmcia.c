@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.73 2004/08/10 03:00:29 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.74 2004/08/10 03:03:11 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.73 2004/08/10 03:00:29 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.74 2004/08/10 03:03:11 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,7 +89,7 @@ const struct wdc_pcmcia_product {
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
 } wdc_pcmcia_products[] = {
 
-	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
+	{ PCMCIA_VENDOR_DIGITAL,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
 	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
 
