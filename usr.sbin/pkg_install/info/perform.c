@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.37.2.2 2002/07/21 04:41:56 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.37.2.3 2003/02/08 07:51:18 jmc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.37.2.2 2002/07/21 04:41:56 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37.2.3 2003/02/08 07:51:18 jmc Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ pkg_do(char *pkg)
 		if (*pkg != '/') {
 			if (!getcwd(fname, FILENAME_MAX)) {
 				cleanup(0);
-				err(1, "fatal error during execution: getcwd");
+				err(EXIT_FAILURE, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
@@ -175,6 +175,9 @@ pkg_do(char *pkg)
 		/* Start showing the package contents */
 		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
+			}
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
@@ -225,6 +228,9 @@ pkg_do(char *pkg)
 			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
+			}
 			puts(InfoPrefix);
 		}
 		free_plist(&plist);
@@ -323,8 +329,8 @@ pkg_perform(lpkg_head_t *pkghead)
 			char   *file, *pkg;
 
 			/* pkg_info -Fa => Dump pkgdb */
-			if (pkgdb_open(1) == -1) {
-				err(1, "cannot open pkgdb");
+			if (!pkgdb_open(ReadOnly)) {
+				err(EXIT_FAILURE, "cannot open pkgdb");
 			}
 			while ((file = pkgdb_iter())) {
 				pkg = pkgdb_retrieve(file);
