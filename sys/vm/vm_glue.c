@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.66 1997/02/05 08:09:46 mrg Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.67 1997/04/17 00:12:08 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -617,6 +617,12 @@ iprintf(pr, fmt, va_alist)
 		(*pr)("\t");
 	while (--i >= 0)
 		(*pr)(" ");
-	(*pr)("%:", fmt, ap);
+#ifdef __powerpc__				/* XXX */
+	if (pr != printf)			/* XXX */
+		panic("iprintf");		/* XXX */
+	vprintf(fmt, ap);			/* XXX */
+#else						/* XXX */
+	(*pr)("%:", fmt, ap);			/* XXX */
+#endif /* __powerpc__ */			/* XXX */
 	va_end(ap);
 }
