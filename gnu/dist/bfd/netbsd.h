@@ -65,6 +65,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MY_write_object_contents MY(write_object_contents)
 static boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 #define MY_text_includes_header 1
+#define MY_construct_extended_name_table \
+	_bfd_archive_bsd44_construct_extended_name_table
 
 #include "aout-target.h"
 
