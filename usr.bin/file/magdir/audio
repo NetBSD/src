@@ -242,3 +242,11 @@
 >3	byte&0xc0	0x40		joint-stereo
 >3	byte&0xc0	0x80		dual-channel
 >3	byte&0xc0	0xc0		mono
+#
+# sidfiles
+0	string		SIDPLAY\ INFOFILE	Sidplay info file
+0	string		PSID			PlaySID v2.2+ (AMIGA) sidtune
+>4	beshort		>0			w/ header v%d,
+>14	beshort		=1			single song,
+>14	beshort		>1			%d songs,
+>16	beshort		>0			default song: %d
