@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.134 2002/10/02 16:02:09 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.135 2002/11/28 15:29:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -92,6 +92,7 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
+int	cpu_arch;			/* sparc architecture version */
 
 int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
@@ -1728,17 +1729,20 @@ getcpuinfo(sc, node)
 			mmu_impl = ANY;
 			mmu_vers = ANY;
 		}
+
+		/* Get sparc architecture version */
+		cpu_arch = (node == 0)
+			? 7
+			: PROM_getpropint(node, "sparc-version", 7);
 	} else {
 		/*
 		 * Get CPU version/implementation from ROM. If not
 		 * available, assume same as boot CPU.
 		 */
-		cpu_impl = PROM_getpropint(node, "psr-implementation", -1);
-		if (cpu_impl == -1)
-			cpu_impl = cpuinfo.cpu_impl;
-		cpu_vers = PROM_getpropint(node, "psr-version", -1);
-		if (cpu_vers == -1)
-			cpu_vers = cpuinfo.cpu_vers;
+		cpu_impl = PROM_getpropint(node, "psr-implementation",
+					   cpuinfo.cpu_impl);
+		cpu_vers = PROM_getpropint(node, "psr-version",
+					   cpuinfo.cpu_vers);
 
 		/* Get MMU version/implementation from ROM always */
 		mmu_impl = PROM_getpropint(node, "implementation", -1);

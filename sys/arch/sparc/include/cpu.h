@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2002/11/26 14:36:11 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.51 2002/11/28 15:29:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,9 @@ extern int	want_resched;		/* resched() was called */
  * process as soon as possible.
  */
 #define	signotify(p)		(want_ast = 1)
+
+/* CPU architecture version */
+extern int cpu_arch;
 
 /* Number of CPUs in the system */
 extern int ncpu;
