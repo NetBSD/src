@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
+/*	$NetBSD: remote.c,v 1.6 1997/05/14 00:20:03 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $";
+static char rcsid[] = "$NetBSD: remote.c,v 1.6 1997/05/14 00:20:03 mellon Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -177,7 +177,7 @@ getremcap(host)
 	if (cgetflag("hd"))
 		setboolean(value(HALFDUPLEX), 1);
 	if (cgetflag("dc"))
-		setboolean(value(DC), 1);
+		DC = 1;
 	if (RE == NOSTR)
 		RE = (char *)"tip.record";
 	if (EX == NOSTR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
+/*	$NetBSD: hunt.c,v 1.7 1997/05/14 00:20:01 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $";
+static char rcsid[] = "$NetBSD: hunt.c,v 1.7 1997/05/14 00:20:01 mellon Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -79,8 +79,7 @@ hunt(name)
 			break;
 		if (setjmp(deadline) == 0) {
 			alarm(10);
-			FD = open(cp, (O_RDWR |
-				       (boolean(value(DC)) ? O_NONBLOCK : 0)));
+			FD = open(cp, (O_RDWR | (DC ? O_NONBLOCK : 0)));
 		}
 		alarm(0);
 		if (FD < 0) {
@@ -91,7 +90,7 @@ hunt(name)
 			struct termios cntrl;
 
 			tcgetattr(FD, &cntrl);
-			if (!boolean(value(DC)))
+			if (!DC)
 				cntrl.c_cflag |= HUPCL;
 			tcsetattr(FD, TCSAFLUSH, &cntrl);
 			ioctl(FD, TIOCEXCL, 0);
