@@ -1,30 +1,137 @@
-	$NetBSD: contents,v 1.10 1998/01/09 18:46:05 perry Exp $	
+	$NetBSD: contents,v 1.11 1998/01/14 06:50:26 scottr Exp $	
 
 The Atari-specific portion of the NetBSD _VER release is found in the
 "atari" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
 .../NetBSD-_VER/atari/
-			binary/		atari binary distribution sets;
+			SOURCE_DATE	the date, in the default format
+					produced by the date(1) command,
+					of the source that the release was
+					built from
+
+			INSTALL		these installation notes
+
+			binary/		atari system binaries;
 					see below.
 
-			floppies/	atari boot and installation
-					floppies; see below.
+			installation/	installation helper items
 
-			security/	atari security distribution;
-					see below;
+The NetBSD/atari system binaries include the NetBSD/atari binary
+distribution sets, additional kernels, and security-related system
+binaries.  The NetBSD _VER release for the atari port comprises those
+files found in the "atari/binary/sets" subdirectory of the NetBSD _VER
+distribution tree.  There are seven system distribution sets, two
+kernel distribution sets, and four X distribution sets.  The files in the
+"sets" subdirectory are as follows:
 
-			utils.netbsd/
-			utils.tos/	Miscellaneous atari
-					installation utilities; see
-					installation section, below.
+	base.tgz	The NetBSD/atari _VER base binary distribution.
+			You MUST install this distribution set.  It
+			contains the base NetBSD utilities that are
+			necessary for the system to run and be minimally
+			functional.  It includes shared library support,
+			and excludes everything described below.
+			[ 8.6M gzipped, 25.1M uncompressed ]
 
-There are three atari floppy images to be found in the "atari/floppies"
-subdirectory of the NetBSD _VER distribution.  One of them is a
-bootable TOS kernel floppy and the other two are installation floppies.
-They are described in more detail below.  There are gzipped versions
-of each available, for easier downloading.  (The gzipped version
-have the ".gz" extension added to their names.)
+	comp.tgz	The NetBSD/atari Compiler tools; all of the tools
+			relating to C and C++.  This set includes the
+			system include files (/usr/include), the linker,
+			the compiler tool chain, and the various system
+			libraries (except the shared libraries, which are
+			included as part of the base set).  This set also
+			includes the manual pages for all of the utilities
+			it contains, as well as the system call and library
+			manual pages. 
+			[ 6.2M gzipped, 21.6M uncompressed ]
+
+	etc.tgz		This distribution set contains the system
+			configuration files that reside in /etc and in
+			several other places.  This set MUST be installed
+			if you are installing the system from scratch, but
+			should NOT be used if you are upgrading.  (If you
+			are upgrading, it's recommended that you get a copy
+			of this set and CAREFULLY upgrade your
+			configuration files by hand.) 
+			[ 49K gzipped, 288K uncompressed ]
+
+	games.tgz	This set includes the games and their manual pages.
+			[ 2.8M gzipped, 7.2M uncompressed ]
+
+	kern.tgz	The NetBSD/atari _VER kernel binary.  You should
+	kern_hades.tgz	install the appropriate kernel for your system.
+	kern_x.tgz	[ 472K gzipped, 1.01M uncompressed ]
+
+	man.tgz		This set includes all of the manual pages for the
+			binaries and other software contained in the base
+			set.  Note that it does not include any of the
+			manual pages that are included in the other sets. 
+			[ 2.2M gzipped, 8.8M uncompressed ]
+
+	misc.tgz	This set includes the system dictionaries (which
+			are rather large), the typesettable document set,
+			and man pages for other architectures which happen
+			to be installed from the source tree by default. 
+			[ 2.1M gzipped, 7.6M uncompressed ]
+
+	text.tgz	This set includes NetBSD's text processing tools,
+			including groff, all related programs, and their
+			manual pages. 
+			[ 1.0M gzipped, 3.7M uncompressed ]
+
+	xbase.tgz	X clients, shared libraries, and related man pages.
+			Also includes bitmaps and miscellaneous
+			configuration files.
+			[ 2.34 M gzipped, 7.46M uncompressed ]
+
+	xcomp.tgz	Static libraries, include files (except bitmaps),
+			X config files (for xmkmf), and related man pages.
+			[ 1.57M gzipped, 6.38M uncompressed ]
+
+	xcontrib.tgz	User-contributed X binaries (e.g. xev, xload) built
+			from the X11 "contrib" sources with man pages and
+			default config files.
+			[ 178K gzipped, 661K uncompressed ]
+
+	xfont.tgz	X11 fonts.
+			[ 5.66M gzipped, 6.99M uncompressed ]
+
+	[* Note: an X server distribution set is currently not available.]
+
+The NetBSD/atari security distribution set is named "secr.tgz" and can be
+found in the "atari/binary/security" subdirectory of the NetBSD _VER
+distribution tree.  It contains the crypt libraries (for the DES encryption
+algorithm) and the binaries built from the "src/domestic" portion of the
+NetBSD source tree which depend on it.  It can only be found on those sites
+which carry the complete NetBSD distribution and that can legally obtain
+it.  (Remember, because of United States law, it may not be legal to
+distribute this set to locations outside of the United States and Canada.)
+[ 779K gzipped, 2.5M uncompressed ]
+
+The atari binary distribution sets are distributed as full .tar.gz files
+(with the extension .tgz because the software used to download the sets may
+incorrectly auto-unpack files ending in .gz and to accomodate systems which
+only support 3 character extensions to file names).  The instructions
+given for extracting the source sets work equally well for the binary sets,
+but it is worth noting that if you use that method, the files are extracted
+"below" the current directory.  That is, if you want to extract the
+binaries "into" your system, i.e. replace the system binaries with them,
+you have to run the "tar xvpf" from /.  Also note that if you upgrade or
+install this way, those programs that you are using at the time will NOT be
+replaced.  If you follow the normal installation or upgrade procedures,
+this will be taken care of for you.
+
+Additional kernels to those included in the distribution sets may be found
+in the "atari/binary/kernel" subdirectory of the NetBSD _VER distribution
+tree.  These kernels are generally named something like "netbsd.BOOT.gz"
+or some other suitable name.  Please note that these kernels are simply
+gzipped and are not in tar archives.
+
+There are three atari floppy images to be found in the
+"atari/installation/floppies" subdirectory of the NetBSD _VER
+distribution.  One of them is a bootable TOS kernel floppy and the other
+two are installation floppies.  They are described in more detail below.
+There are gzipped versions of each available, for easier downloading.
+(The gzipped version have the ".gz" extension added to their names.)
 
 Bootable Kernel floppy:
 
@@ -47,10 +154,10 @@ Installation floppy:
 	file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing GEMDOS partitions.
 
-	These floppies are named "miniroot-_SVER_S.fs.1" and "miniroot-_SVER_S.fs.2".
+	These floppies are named "miniroot.fs.1" and "miniroot.fs.2".
 
-There are also TOS utilities in the "atari/utils.tos" subdirectory, which
-you will need to get NetBSD/Atari 'up-and-running'.
+There are also TOS utilities in the "atari/installation/misc" subdirectory,
+which you will need to get NetBSD/Atari 'up-and-running'.
 
 	The "gzip.ttp" program allows you to uncompress .gz images.  The
 	usage is "gzip.ttp -d filename.gz".
@@ -72,82 +179,24 @@ you will need to get NetBSD/Atari 'up-and-running'.
 	The "loadbsd.ttp" program loads the NetBSD/Atari kernel from TOS
 	(or MiNT, MultiTOS, etc.).
 
-The NetBSD/Atari kernels are in the "atari/kernels" subdirectory.
+Note:	Each directory in the atari binary distribution also has its
+-----	own checksum files, just as the source distribution does:
 
-The NetBSD/atari binary distribution sets contain the binaries which
-comprise the NetBSD _VER release for the atari.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "atari/binary"
-subdirectory of the NetBSD _VER distribution tree, and are as follows:
+	All BSDSUM files are historic BSD checksums for the various files
+	in that directory, in the format produced by the command:
+	cksum -o 1 <file>.
 
-	base	The NetBSD/atari _VER base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 8.7M gzipped, 25.2M uncompressed ]
+	All CKSUM files are POSIX checksums for the various files in that
+	directory, in the format produced by the command: cksum <file>.
 
-	comp	The NetBSD/atari Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 6.5M gzipped, 22.9M uncompressed ]
+	All MD5 files are MD5 digests for the various files in that
+	directory, in the format produced by the command: cksum -m <file>.
 
-	etc	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 52K gzipped, 320K uncompressed ]
+	All SYSVSUM files are historic AT&T System V UNIX checksums for
+	the various files in that directory, in the format produced by
+	the command: cksum -o 2 <file>.
 
-	games	This set includes the games and their manual pages.
-		[ 2.8M gzipped, 7.2M uncompressed ]
-
-	man	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.4M gzipped, 10.0M uncompressed ]
-
-	misc	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 2.1M gzipped, 8.1M uncompressed ]
-
-	text	This set includes NetBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 960K gzipped, 3.7M uncompressed ]
-
-The atari security distribution set is named "secr" and can be found
-in the "atari/security" subdirectory of the NetBSD _VER distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, it
-may not be legal to distribute this set to locations outside of the
-United States and Canada.)  [ 740K gzipped, 2.5M uncompressed ]
-
-The atari binary distribution sets are distributed in the same form as
-the source distribution sets; catted together, the members of a set
-form a gzipped tar file.  Each atari binary distribution set also has
-its own "CKSUMS" file, just as the source distribution sets do.
-
-The instructions given for extracting the source sets work equally
-well for the binary sets, but it is worth noting that if you use that
-method, the files are extracted "below" the current directory.  That
-is, if you want to extract the binaries "into" your system, i.e.
-replace the system binaries with them, you have to run the "tar xvfp"
-from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced.  If you
-follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+	The MD5 digest is the safest checksum, followed by the POSIX
+	checksum. The other two checksums are provided only to ensure
+	that the widest possible range of system can check the integrity
+	of the release files.
