@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2000/08/13 16:48:57 itojun Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2001/03/09 18:03:55 he Exp $
 
 .include <bsd.own.mk>
 
