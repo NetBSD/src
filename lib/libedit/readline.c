@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.2 1997/10/23 22:51:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.3 1997/11/12 21:56:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.2 1997/10/23 22:51:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.3 1997/11/12 21:56:05 thorpej Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -201,7 +201,7 @@ char *
 readline(const char *prompt)
 {
 	HistEvent ev;
-	size_t count;
+	int count;
 	const char *ret;
 
 	if (e == NULL || h == NULL)
