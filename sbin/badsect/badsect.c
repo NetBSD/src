@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.14 1997/09/16 02:13:23 lukem Exp $	*/
+/*	$NetBSD: badsect.c,v 1.15 1998/03/18 16:50:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.14 1997/09/16 02:13:23 lukem Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.15 1998/03/18 16:50:12 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,9 @@ __RCSID("$NetBSD: badsect.c,v 1.14 1997/09/16 02:13:23 lukem Exp $");
 #include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
+#include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <fcntl.h>
 #include <paths.h>
@@ -86,6 +88,7 @@ struct	fs *fs;
 int	fso, fsi;
 int	errs;
 long	dev_bsize = 1;
+int needswap = 0;
 
 char buf[MAXBSIZE];
 
@@ -145,6 +148,13 @@ main(argc, argv)
 
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
+	if (fs->fs_magic != FS_MAGIC)
+		if(fs->fs_magic == bswap32(FS_MAGIC))
+			needswap = 1;
+		else
+			errx(1, "%s: bad superblock", name);
+	if (needswap)
+		ffs_sb_swap(fs, fs, 0);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
 		number = atoi(*argv);
@@ -193,14 +203,14 @@ chkuse(blkno, cnt)
 	rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize,
 	    (char *)&acg);
 
-	if (!cg_chkmagic(&acg)) {
+	if (!cg_chkmagic(&acg, needswap)) {
 		warnx("cg %d: bad magic number", cg);
 		errs++;
 		return (1);
 	}
 
 	bn = dtogd(fs, fsbn);
-	if (isclr(cg_blksfree(&acg), bn))
+	if (isclr(cg_blksfree(&acg, needswap), bn))
 		warnx("Warning: sector %d is in use", blkno);
 
 	return (0);
