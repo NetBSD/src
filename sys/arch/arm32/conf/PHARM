@@ -142,6 +142,12 @@ lpt0    at mainbus? base 0x002109e0 irq 0
 # Crude sound device
 beep0	at mainbus? base 0x00000000
 
+# IIC bus device
+iic0	at mainbus?
+
+# RTC device
+rtc0	at iic? addr 0xa0
+
 # Podule bus device
 podulebus0	at root
 

@@ -119,8 +119,7 @@ vt5     at mainbus?
 
 # IDE disk controller
 wdc0    at mainbus? base 0x002107c0 irq 9
-wd0     at wdc? drive ?
-wd1     at wdc? drive ?
+wd*     at wdc? drive ?
 
 # Floppy disk controller
 fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
@@ -144,6 +143,12 @@ lpt0    at mainbus? base 0x002109e0 irq 0
 
 # Crude sound device
 beep0	at mainbus? base 0x00000000
+
+# IIC bus device
+iic0	at mainbus?
+
+# RTC device
+rtc0	at iic? addr 0xa0
 
 # Podule bus device
 podulebus0	at root
