@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.24 1995/07/17 01:26:02 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.25 1995/07/27 04:19:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -210,11 +210,12 @@ rbv_intr(struct frame *fp)
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
 
-	intbits = via_reg(VIA2, vIFR + rIFR);	/* get interrupts pending */
-	intbits &= via_reg(VIA2, vIER + rIER);	/* only care about enabled */
+	intbits = (via_reg(VIA2, vIFR + rIFR) &= via_reg(VIA2, vIER + rIER));
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
+	if (intbits == 0) return;
+
 	via_reg(VIA2, rIFR) = intbits;
 
 	bitmsk = 0x40;
@@ -312,7 +313,7 @@ rbv_nubus_intr(int bit)
 
 try_again:
 	via_reg(VIA2, rIFR) = V2IF_SLOTINT;
-	if (ints = ((~via_reg(VIA2, rBufA)) & nubus_intr_mask)) {
+	if (ints = ((~via_reg(VIA2, rBufA)) & via_reg(VIA2, rSlotInt))) {
 		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
@@ -323,10 +324,9 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(20); /* Just a delay for the fun of it. */
-		if (cnt++ >= 2) {
+		delay(20);
+		if (cnt++ >= 2)
 			return 1;
-		}
 	}
 	goto try_again;
 }
