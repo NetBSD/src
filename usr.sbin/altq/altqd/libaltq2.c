@@ -1,5 +1,5 @@
-/*	$NetBSD: libaltq2.c,v 1.4 2001/08/22 08:52:35 itojun Exp $	*/
-/*	$KAME: libaltq2.c,v 1.4 2001/08/22 08:47:54 itojun Exp $	*/
+/*	$NetBSD: libaltq2.c,v 1.5 2002/03/05 04:11:51 itojun Exp $	*/
+/*	$KAME: libaltq2.c,v 1.6 2002/02/20 10:43:35 kjc Exp $	*/
 /*
  * Copyright (C) 1997-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -38,11 +38,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <syslog.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <string.h>
 
 #include "altq_qop.h"
@@ -63,21 +59,13 @@ log_write(int severity, int syserr, const char *format, ...)
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, format);
-#else
-	va_start(ap);
-#endif
 
 	if (severity <= l_debug) {
 		if (!daemonize) {
 			vfprintf(stderr, format, ap);
-			if (syserr != 0) {
-				if (syserr < sys_nerr)
-					fprintf(stderr, ": %s", sys_errlist[syserr]);
-				else
-					fprintf(stderr, ": errno %d", syserr);
-			}
+			if (syserr != 0)
+				fprintf(stderr, ": %s", strerror(syserr));
 			fprintf(stderr, "\n");
 		} else {
 			if (syserr == 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/11 13:15:06 enami Exp $
+#	$NetBSD: Makefile,v 1.4 2002/03/05 04:11:51 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ LIBALTQOBJ != cd ${.CURDIR}/../libaltq && ${PRINTOBJDIR}
 DPADD+=	${LIBALTQOBJ}/libaltq.a
 LDADD+=	-L${LIBALTQOBJ} -laltq
 
-DPADD+=	${LIBM}
-LDADD+=	-lm
+DPADD+=	${LIBUTIL} ${LIBM}
+LDADD+=	-lutil -lm
 
 .include <bsd.prog.mk>

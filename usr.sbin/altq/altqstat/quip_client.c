@@ -1,5 +1,5 @@
-/*	$NetBSD: quip_client.c,v 1.5 2001/12/27 13:22:01 wiz Exp $	*/
-/*	$KAME: quip_client.c,v 1.5 2001/08/20 06:41:33 kjc Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.6 2002/03/05 04:11:52 itojun Exp $	*/
+/*	$KAME: quip_client.c,v 1.7 2001/12/28 00:50:28 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
 #include <errno.h>
 #include <err.h>
 
