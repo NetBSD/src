@@ -1,4 +1,4 @@
-/*	$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $	*/
+/*	$NetBSD: mkindex.c,v 1.3 1997/10/11 02:12:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkindex.c,v 1.3 1997/10/11 02:12:23 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,8 +92,8 @@ nextword(fp, buffer, clen, rlen)
 	char *buffer;
 	int *clen, *rlen;
 {
-	register int ch, pcount;
-	register char *p, *q;
+	int ch, pcount;
+	char *p, *q;
 	static char buf[MAXWORDLEN + 1];
 	static int first = 1;
 	static int lastch = 0;
