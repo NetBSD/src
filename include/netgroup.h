@@ -1,3 +1,5 @@
+/*	$NetBSD: netgroup.h,v 1.3 1996/08/30 18:45:30 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -27,9 +29,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: netgroup.h,v 1.2 1996/04/27 18:57:51 christos Exp $
  */
+
 #ifndef _NETGROUP_H_
 #define	_NETGROUP_H_
 
