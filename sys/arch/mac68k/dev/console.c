@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.11 1994/05/06 03:34:59 briggs Exp $
+ * $Id: console.c,v 1.12 1994/06/26 13:02:45 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -58,10 +58,10 @@
  */
 
 /* Received from MacBSDBoot, stored by Locore: */
-long videoaddr;
+unsigned long videoaddr;
 long videorowbytes;
 long videobitdepth;
-char serial_boot_echo=0;
+int serial_boot_echo=0;
 
 #include "8x14.h"
 #include "6x10.h"
@@ -134,16 +134,15 @@ struct vt {
   int visible;			/* Is this vt visible (on a screen) ?	*/
 };
 
-extern long videoaddr; /* in srt0.c */
+extern unsigned long videoaddr; /* in srt0.c */
 unsigned long videosize;
 extern int gNumGrfDev;
 
-extern long videoaddr; /* in srt0.c */
 static unsigned char outbuf[OUTBUFLEN];
 static unsigned char conbuf[OUTBUFLEN];
 static int outhead = 0, outtail = 0, outlen = 0, write_ack = 0;
 static int conhead = 0, contail = 0, conlen = 0, do_conintr = 0, intr_enabled = 0;
-static unsigned char *sccaddr = (unsigned char *)0x50004000;
+static volatile unsigned char *sccaddr = NULL; /* Set in macserinit */
 static struct vt vt[NCON];
 static struct font font[NFONT]; /* for now, 0 = large, 1 = small */
 int curvt; /* Current virtual terminal -- Used by adb */
@@ -168,10 +167,20 @@ static getvideoparams()
 	  vt[i].numgrows=(videosize >>16) & 0xffff;
 
 	  vt[i].numbits=videobitdepth;
-	  vt[i].linelen=videorowbytes*videobitdepth;	/* HACK -- LAK */
+	  vt[i].linelen=videorowbytes;	/* HACK -- LAK */
 	  vt[i].screen = (unsigned char *)videoaddr;
   }
   vt[0].visible=1;
+}
+
+void
+NewScreenAddress(void)
+{
+  int	i;
+  for(i=0;i<NCON;i++)
+  {
+	  vt[i].screen = (unsigned char *)videoaddr;
+  }
 }
 
 static putpixel(struct vt *v, int xx, int yy, int c)
@@ -1709,20 +1718,31 @@ ser_intr(struct frame *fp)
 
 /* Routines to link with cons.c of standalone stuff */
 
+/* SCC initialization string from Steve Allen (wormey@eskimo.com) */
 static unsigned char ser_init_str[]={
-	9,0x64,
-	10,0,
-	11,0x50,
-	4,0x44,
-	3,0xc0,
-	5,0xea,
-	14,0x83,
-	15,0,
-	12,0x04,
-	13,0,
-	1,0xa,
-	0,0x10,
-	0,0x20,
+	 9, 0xc0,	/* hardware reset */
+	 3, 0xc0,	/* select receiver control.  Bit d0 (rx enable)
+			   must be set to 0 at this time. */
+	 5, 0xe2,	/* select transmit control.  Bit d3 (tx enable)
+			   must be set to 0 at this time. */
+	 9, 0x06,	/* select interrupt control.  Bit d3 (mie)
+			   must be set to 0 at this time. */
+	10, 0x00,	/* miscellaneous control. */
+	11, 0x50,	/* clock control. */
+	12, 0x0b,	/* time constant LB. */
+	13, 0x00,	/* time constant HB. */
+	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
+			   must be set to 0 at this time. */
+	 3, 0xc1,	/* set d0 (rx enable). */
+	 5, 0xea,	/* set d3 (tx enable). */
+	 0, 0x80,	/* reset txCRC. */
+	14, 0x83,	/* BR gen enable.  Enable DPLL. */
+	 1, 0x00,	/* make sure DMA not set. */
+	15, 0x00,	/* disable external interrupts. */
+	 0, 0x10,	/* reset ext/status twice. */
+	 0, 0x10, /* don't do intr. yet
+	 1, 0x0a,  *	 * enable rcv and xmit interrupts. *
+	 9, 0x0e,  *	 * enable master interrupt bit d3. */
 };
 
 macprobe(struct consdev *cp)
@@ -1763,8 +1783,10 @@ macprobe(struct consdev *cp)
 void
 macserinit(struct consdev *cntab)
 {
-  unsigned char *chr;
+  extern volatile unsigned char	*sccA;
+  unsigned char			*chr;
 
+  sccaddr = sccA + 2;
   if (serial_boot_echo) {
     chr = ser_init_str;
 
@@ -1774,6 +1796,14 @@ macserinit(struct consdev *cntab)
       *sccaddr = *chr++;
     }
   }
+  ddprintf("Testing... %d.\n", 1);
+}
+
+static void
+macwritestr(char *str)
+{
+	while(*str)
+		writechar(0, *str++);
 }
 
 macinit(struct consdev *cntab)
@@ -1786,7 +1816,11 @@ macinit(struct consdev *cntab)
 	conattach(NCON);
 	screen_is_cool = 1;
 
-	macserinit(cntab);
+macwritestr("initted.\n\r");
+strprintf("vt[0].numgrows", (int) vt[0].numgrows);
+strprintf("vt[0].linelen", (int) vt[0].linelen);
+
+/*	macserinit(cntab); */
 }
 
 #if 0
@@ -1895,12 +1929,11 @@ macserputchar(unsigned char c)
 {
   int delay, s;
 
-/* What was there and working before: */
-  for(delay = 1; delay < 3000 && write_ack == 0; delay++);
-  write_ack = 0;
-/* BARF */
+  if (!serial_boot_echo) return;
+
+  while (!((*sccaddr) & 0x04));
+	/* while xmit buffer !ready */
   *(sccaddr+4) = c;
-  *((unsigned char *) 0x50004004) = c;
 }
 
 void
