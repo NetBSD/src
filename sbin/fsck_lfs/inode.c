@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.18 2003/07/12 16:13:38 yamt Exp $	 */
+/* $NetBSD: inode.c,v 1.19 2003/07/13 08:13:19 itojun Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -137,8 +137,8 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb >= 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
@@ -176,8 +176,8 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 		} else {
 			if (idesc->id_type == DATA && remsize > 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
@@ -260,8 +260,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		} else {
 			if (idesc->id_type == DATA && isize > 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
