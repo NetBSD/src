@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/23 10:46:27 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/27 03:14:56 rtr Exp $
 
-SUBDIR=	mouse
+SUBDIR=	mouse calcomp citron digitaledge dmc dynapro elographics fpit \
+	hyperpen js_x kbd magellan microtouch mutouch palmax penmount \
+	spaceorb summa tek4957 void wacom
 
 .include <bsd.subdir.mk>
