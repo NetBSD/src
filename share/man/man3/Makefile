@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2000/08/03 09:49:10 ad Exp $
+#	$NetBSD: Makefile,v 1.21 2001/01/03 13:29:59 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3
+MAN=	_DIAGASSERT.3 assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 \
+	stdarg.3
 MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=queue.3 list_empty.3
 MLINKS+=queue.3 list_entry.3 queue.3 list_first.3 queue.3 list_head.3
@@ -27,8 +28,8 @@ MLINKS+=queue.3 circleq_insert_after.3 queue.3 circleq_insert_before.3
 MLINKS+=queue.3 circleq_insert_head.3 queue.3 circleq_insert_tail.3
 MLINKS+=queue.3 circleq_last.3 queue.3 circleq_next.3 queue.3 circleq_prev.3
 MLINKS+=queue.3 circleq_remove.3
-MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_copy.3
-MLINKS+=stdarg.3 va_end.3 stdarg.3 va_start.3
+MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
+	stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
 
