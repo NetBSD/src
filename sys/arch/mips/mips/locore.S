@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.75 1999/06/30 03:52:04 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.76 1999/08/16 07:53:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -455,7 +455,7 @@ LEAF(_splraise)
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
-	and	v0, v0, MIPS_INT_MASK
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(_splraise)
 
 LEAF(_spllower)
@@ -468,7 +468,7 @@ LEAF(_spllower)
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
-	and	v0, v0, MIPS_INT_MASK
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(_spllower)
 
 LEAF(_splset)
@@ -487,7 +487,7 @@ LEAF(_splget)
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	nop
 	j	ra
-	and	v0, v0, MIPS_INT_MASK
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(_splget)
 
 LEAF(_setsoftintr)
