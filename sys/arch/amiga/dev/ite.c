@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.52 2000/03/23 06:33:11 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.53 2000/05/25 19:10:04 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,9 @@
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
+#if defined(__m68k__)
 #include <amiga/amiga/isr.h>
+#endif
 #include <amiga/dev/iteioctl.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdmap.h>

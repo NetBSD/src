@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.19 1999/03/25 21:55:17 is Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.20 2000/05/25 19:18:07 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -312,6 +312,9 @@ alloc_bitmap(width, height, depth, flags)
 	 * n pages by less than another page, the user gets to write all over
 	 * the entire page.  Since you did not allocate up to a page boundry
 	 * (or more) the user writes into someone elses memory. -ch */
+#ifdef __powerpc__
+#define m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#endif
 	total_size = m68k_round_page(plane_size * depth) +	/* for length */
 	    (temp_size) + (array_size) + sizeof(bmap_t) +
 	    NBPG;		/* for alignment */
@@ -360,6 +363,10 @@ cc_load_mode(d)
 {
 	if (d) {
 		m_this_data->current_mode = d;
+#ifdef __powerpc__	/* XXX ???? */
+		custom.cop1lc = PREP_DMA_MEM(DMDATA(d)->frames[F_LONG]);
+		custom.copjmp1 = 0;
+#endif
 		return;
 	}
 	/* turn off display */
