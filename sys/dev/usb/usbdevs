@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.52 1999/10/13 09:00:21 augustss Exp $
+$NetBSD: usbdevs,v 1.53 1999/10/13 18:55:32 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
 vendor MUSTEK		0x055f	Mustek Systems Inc.
+vendor TELEX		0x0562	Telex Communications Inc.
 vendor PERACOM		0x0565	Peracom Networks Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
@@ -94,6 +95,7 @@ vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
+vendor MIDIMAN		0x0763	Midiman
 vendor SANDISK		0x0781	SanDisk Corp
 vendor SIIG		0x07cc	SIIG
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
@@ -217,6 +219,9 @@ product ATEN UC1284		0x2001	Parallel printer adapter
 /* Mustek products */
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
+/* Telex Communications products */
+product TELEX MIC1		0x0001	Enhanced USB Microphone
+
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
 
@@ -280,6 +285,9 @@ product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+
+/* Midiman products */
+product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
 
 /* SanDisk products */
 product	SANDISK IMAGEMATE	0x0001	USB ImageMate
