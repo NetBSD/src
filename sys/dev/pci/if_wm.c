@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.70 2004/05/06 10:06:50 ragge Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.71 2004/05/16 02:34:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.70 2004/05/06 10:06:50 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.71 2004/05/16 02:34:47 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -216,6 +216,7 @@ struct wm_softc {
 	int sc_flags;			/* flags; see below */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcix_offset;		/* PCIX capability register offset */
+	int sc_flowflags;		/* 802.3x flow control flags */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -266,6 +267,12 @@ struct wm_softc {
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
 
 	struct evcnt sc_ev_tu;		/* Tx underrun */
+
+	struct evcnt sc_ev_tx_xoff;	/* Tx PAUSE(!0) frames */
+	struct evcnt sc_ev_tx_xon;	/* Tx PAUSE(0) frames */
+	struct evcnt sc_ev_rx_xoff;	/* Rx PAUSE(!0) frames */
+	struct evcnt sc_ev_rx_xon;	/* Rx PAUSE(0) frames */
+	struct evcnt sc_ev_rx_macctl;	/* Rx Unsupported */
 #endif /* WM_EVENT_COUNTERS */
 
 	bus_addr_t sc_tdt_reg;		/* offset of TDT register */
@@ -298,6 +305,7 @@ struct wm_softc {
 	uint32_t sc_rctl;		/* prototype RCTL register */
 	uint32_t sc_txcw;		/* prototype TXCW register */
 	uint32_t sc_tipg;		/* prototype TIPG register */
+	uint32_t sc_fcrtl;		/* prototype FCRTL register */
 
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_anstate;		/* autonegotiation state */
@@ -332,8 +340,10 @@ do {									\
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
+#define	WM_EVCNT_ADD(ev, val)	(ev)->ev_count += (val)
 #else
 #define	WM_EVCNT_INCR(ev)	/* nothing */
+#define	WM_EVCNT_ADD(ev, val)	/* nothing */
 #endif
 
 #define	CSR_READ(sc, reg)						\
@@ -1144,13 +1154,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Determine if we should use flow control.  We should
-	 * always use it, unless we're on a i82542 < 2.1.
-	 */
-	if (sc->sc_type >= WM_T_82542_2_1)
-		sc->sc_ctrl |= CTRL_TFCE | CTRL_RFCE;
-
-	/*
 	 * Determine if we're TBI or GMII mode, and initialize the
 	 * media structures accordingly.
 	 */
@@ -1248,6 +1251,17 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_ev_tu, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "tu");
+
+	evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "tx_xoff");
+	evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "tx_xon");
+	evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rx_xoff");
+	evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rx_xon");
+	evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
 	/*
@@ -1730,6 +1744,18 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
@@ -2157,13 +2183,19 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			    sc->sc_dev.dv_xname,
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
+			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 			else
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
+			if (CSR_READ(sc, WMREG_CTRL) & CTRL_TFCE)
+				sc->sc_fcrtl |= FCRTL_XONE;
 			CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+			CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
+				      WMREG_OLD_FCRTL : WMREG_FCRTL,
+				      sc->sc_fcrtl);
 			sc->sc_tbi_linkup = 1;
 		} else {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
@@ -2192,6 +2224,14 @@ wm_tick(void *arg)
 	int s;
 
 	s = splnet();
+
+	if (sc->sc_type >= WM_T_82542_2_1) {
+		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
+		WM_EVCNT_ADD(&sc->sc_ev_tx_xon, CSR_READ(sc, WMREG_XONTXC));
+		WM_EVCNT_ADD(&sc->sc_ev_rx_xoff, CSR_READ(sc, WMREG_XOFFRXC));
+		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
+		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
+	}
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
@@ -2393,20 +2433,19 @@ wm_init(struct ifnet *ifp)
 	 *
 	 * XXX Values could probably stand some tuning.
 	 */
-	if (sc->sc_ctrl & (CTRL_RFCE|CTRL_TFCE)) {
-		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
-		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
-		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
+	CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
+	CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
+	CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
 
-		if (sc->sc_type < WM_T_82543) {
-			CSR_WRITE(sc, WMREG_OLD_FCRTH, FCRTH_DFLT);
-			CSR_WRITE(sc, WMREG_OLD_FCRTL, FCRTL_DFLT);
-		} else {
-			CSR_WRITE(sc, WMREG_FCRTH, FCRTH_DFLT);
-			CSR_WRITE(sc, WMREG_FCRTL, FCRTL_DFLT);
-		}
-		CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
+	sc->sc_fcrtl = FCRTL_DFLT;
+	if (sc->sc_type < WM_T_82543) {
+		CSR_WRITE(sc, WMREG_OLD_FCRTH, FCRTH_DFLT);
+		CSR_WRITE(sc, WMREG_OLD_FCRTL, sc->sc_fcrtl);
+	} else {
+		CSR_WRITE(sc, WMREG_FCRTH, FCRTH_DFLT);
+		CSR_WRITE(sc, WMREG_FCRTL, sc->sc_fcrtl);
 	}
+	CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
 #if 0 /* XXXJRT */
 	/* Deal with VLAN enables. */
@@ -3057,6 +3096,7 @@ static void
 wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	uint32_t ctrl;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
@@ -3070,6 +3110,11 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active |= IFM_1000_SX;
 	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
 		ifmr->ifm_active |= IFM_FDX;
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	if (ctrl & CTRL_RFCE)
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+	if (ctrl & CTRL_TFCE)
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
 }
 
 /*
@@ -3086,14 +3131,15 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	int i;
 
 	sc->sc_txcw = ife->ifm_data;
-	if (sc->sc_ctrl & CTRL_RFCE)
-		sc->sc_txcw |= ANAR_X_PAUSE_TOWARDS;
-	if (sc->sc_ctrl & CTRL_TFCE)
-		sc->sc_txcw |= ANAR_X_PAUSE_ASYM;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
+	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
+		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
 	sc->sc_txcw |= TXCW_ANE;
 
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
+
+	/* NOTE: CTRL will update TFCE and RFCE automatically. */
 
 	sc->sc_tbi_anstate = 0;
 
@@ -3113,13 +3159,19 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			    sc->sc_dev.dv_xname,
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
+			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 			else
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
+			if (CSR_READ(sc, WMREG_CTRL) & CTRL_TFCE)
+				sc->sc_fcrtl |= FCRTL_XONE;
 			CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+			CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
+				      WMREG_OLD_FCRTL : WMREG_FCRTL,
+				      sc->sc_fcrtl);
 			sc->sc_tbi_linkup = 1;
 		} else {
 			/* Link is down. */
@@ -3191,13 +3243,19 @@ wm_tbi_check_link(struct wm_softc *sc)
 		    ("%s: LINK: checklink -> up %s\n", sc->sc_dev.dv_xname,
 		    (status & STATUS_FD) ? "FDX" : "HDX"));
 		sc->sc_tctl &= ~TCTL_COLD(0x3ff);
+		sc->sc_fcrtl &= ~FCRTL_XONE;
 		if (status & STATUS_FD)
 			sc->sc_tctl |=
 			    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 		else
 			sc->sc_tctl |=
 			    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
+		if (ctrl & CTRL_TFCE)
+			sc->sc_fcrtl |= FCRTL_XONE;
 		CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+		CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
+			      WMREG_OLD_FCRTL : WMREG_FCRTL,
+			      sc->sc_fcrtl);
 		sc->sc_tbi_linkup = 1;
 	}
 
@@ -3281,7 +3339,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	    wm_gmii_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -3301,7 +3359,8 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+			   sc->sc_flowflags;
 }
 
 /*
@@ -3503,8 +3562,29 @@ static void
 wm_gmii_statchg(struct device *self)
 {
 	struct wm_softc *sc = (void *) self;
+	struct mii_data *mii = &sc->sc_mii;
 
+	sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
 	sc->sc_tctl &= ~TCTL_COLD(0x3ff);
+	sc->sc_fcrtl &= ~FCRTL_XONE;
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags) {
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
+
+	if (sc->sc_flowflags & IFM_FLOW) {
+		if (sc->sc_flowflags & IFM_ETH_TXPAUSE) {
+			sc->sc_ctrl |= CTRL_TFCE;
+			sc->sc_fcrtl |= FCRTL_XONE;
+		}
+		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
+			sc->sc_ctrl |= CTRL_RFCE;
+	}
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
@@ -3516,5 +3596,8 @@ wm_gmii_statchg(struct device *self)
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
 	}
 
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
+						 : WMREG_FCRTL, sc->sc_fcrtl);
 }
