@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.474 2004/10/01 03:42:09 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.475 2004/10/01 03:46:51 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7664,3 +7664,9 @@ share/man/man4/raid.4				1.30
 	Minor update to note a few other archs for which booting directly from
 	a RAID-1 set is supported. PR#27045.
 	[wiz, ticket #879]
+
+sys/kern/kern_sig.c				1.198
+
+	Adjust the change of rev. 1.190 so that trap signals not matching
+	the reset condition are processed properly. PR#26687
+	[jdolecek, ticket #881]
