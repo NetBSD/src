@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/01/26 23:50:56 bad Exp $
+#	$NetBSD: Makefile,v 1.4 1998/03/19 00:07:27 thorpej Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -69,6 +69,6 @@ clean cleandir:
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
+.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
