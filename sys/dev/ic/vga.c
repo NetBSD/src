@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.62 2002/07/07 07:37:50 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.63 2002/07/08 19:45:28 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.62 2002/07/07 07:37:50 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.63 2002/07/08 19:45:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,10 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	scr->pcs.type = type;
 	scr->pcs.active = existing;
 	scr->mindispoffset = 0;
-	scr->maxdispoffset = 0x8000 - type->nrows * type->ncols * 2;
+	if (vc->vc_quirks & VGA_QUIRK_NOFASTSCROLL)
+		scr->maxdispoffset = 0;
+	else
+		scr->maxdispoffset = 0x8000 - type->nrows * type->ncols * 2;
 
 	if (existing) {
 		vc->active = scr;
@@ -661,6 +664,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 
 	vc->vc_type = type;
 	vc->vc_funcs = vf;
+	vc->vc_quirks = quirks;
 
 	sc->sc_vc = vc;
 	vc->softc = sc;
@@ -699,11 +703,15 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	 * console font, so save the builtin VGA font to another font slot.
 	 * The attach() code will take care later.
 	 */
+	vga_console_vc.vc_quirks |= VGA_QUIRK_ONEFONT; /* redundant */
 	vga_copyfont01(&vga_console_vc.hdl);
 	vga_console_vc.vc_nfontslots = 1;
 #else
 	vga_console_vc.vc_nfontslots = 8;
 #endif
+	/* until we know better, assume "fast scrolling" does not work */
+	vga_console_vc.vc_quirks |= VGA_QUIRK_NOFASTSCROLL;
+
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
