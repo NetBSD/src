@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.26 1999/05/26 19:27:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.27 1999/06/04 23:38:41 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -158,6 +158,9 @@
  */
 
 vm_map_t kernel_map = NULL;
+
+struct vmi_list vmi_list;
+simple_lock_data_t vmi_list_slock;
 
 /*
  * local functions
@@ -418,7 +421,13 @@ uvm_km_init(start, end)
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
 	/*
-	 * first, init kernel memory objects.
+	 * first, initialize the interrupt-safe map list.
+	 */
+	LIST_INIT(&vmi_list);
+	simple_lock_init(&vmi_list_slock);
+
+	/*
+	 * next, init kernel memory objects.
 	 */
 
 	/* kernel_object: for pageable anonymous kernel memory */
