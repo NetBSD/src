@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isavar.h,v 1.1 2000/03/18 13:05:25 mycroft Exp $	*/
+/*	$NetBSD: nca_isavar.h,v 1.2 2000/03/18 13:17:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/bus.h>
 
-struct nca_softc {
+struct nca_isa_softc {
 	struct ncr5380_softc	sc_ncr5380;	/* glue to MI code */
 
         int             sc_active;              /* Pseudo-DMA state vars */
@@ -59,7 +59,7 @@ struct nca_softc {
 #endif
 };
 
-struct nca_probe_data {
+struct nca_isa_probe_data {
 	struct device sc_dev;
 	int sc_reg_offset;
 	int sc_host_type;
