@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/31 19:22:40 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/12/08 20:20:06 thorpej Exp $
 
-HOSTPROGNAME=	nbzic
+HOSTPROGNAME=	${_TOOL_PREFIX}zic
 HOST_SRCDIR=	usr.sbin/zic
 HOST_CPPFLAGS+=	-DNOID
 
