@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.6 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.7 2004/01/13 23:37:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.6 2003/10/31 18:32:09 brooks Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.6 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.7 2004/01/13 23:37:30 dyoung Exp $");
 #endif
 
 /*
@@ -516,7 +516,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
-			KASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
+			IASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
 				("%s: bogus xmit rate %u setup\n", __func__,
 					ni->ni_txrate));
 			if (ifp->if_flags & IFF_DEBUG) {
