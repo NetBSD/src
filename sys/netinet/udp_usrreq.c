@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.38 1996/10/16 19:33:39 ws Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.39 1996/10/25 06:35:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -446,6 +446,15 @@ udp_output(m, va_alist)
 	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
 	if (m == 0) {
 		error = ENOBUFS;
+		goto release;
+	}
+
+	/*
+	 * Compute the packet length of the IP header, and
+	 * punt if the length looks bogus.
+	 */
+	if ((len + sizeof(struct udpiphdr)) > IP_MAXPACKET) {
+		error = EMSGSIZE;
 		goto release;
 	}
 
