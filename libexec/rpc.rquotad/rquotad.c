@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.20 2003/02/14 14:55:59 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.21 2003/09/20 22:25:29 bouyer Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.20 2003/02/14 14:55:59 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.21 2003/09/20 22:25:29 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -183,6 +183,7 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	struct timeval timev;
 
 	memset((char *)&getq_args, 0, sizeof(getq_args));
+	memset((char *)&ext_getq_args, 0, sizeof(ext_getq_args));
 	switch (vers) {
 	case RQUOTAVERS:
 		if (!svc_getargs(transp, xdr_getquota_args,
