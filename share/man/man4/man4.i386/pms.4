@@ -1,4 +1,4 @@
-.\"	$NetBSD: pms.4,v 1.9 1997/03/12 06:18:58 mikel Exp $
+.\"	$NetBSD: pms.4,v 1.10 1997/09/08 03:32:55 mikel Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -44,10 +44,13 @@ protocol.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
-first PS/2 mouse device file.
+first PS/2 mouse device.
 .El
 .Sh SEE ALSO
 .Xr busmouse 4 ,
 .Xr lms 4 ,
 .Xr mms 4 .
-
+.Sh BUGS
+The
+.Nm
+device probe routine has been known to confuse some keyboard controllers.
