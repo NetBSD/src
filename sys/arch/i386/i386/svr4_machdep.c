@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.1 2001/03/05 22:49:14 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.2 2001/03/13 20:45:41 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -194,8 +194,10 @@ svr4_setmcontext(l, mc, flags)
 	u_long flags;
 {
 	register struct trapframe *tf;
-	struct proc *p = l->l_proc;
 	svr4_greg_t *r = mc->greg;
+#ifdef VM86
+	struct proc *p = l->l_proc;
+#endif
 
 #ifdef DEBUG_SVR4
 	svr4_printcontext("setmcontext", mc);
