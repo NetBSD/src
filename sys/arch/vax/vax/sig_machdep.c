@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.3 2003/09/30 21:45:09 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2003/09/30 21:45:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2003/12/11 18:34:38 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -405,7 +405,7 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 
 	/* Copy the context to the stack.  */
 	if (copyout(&uc, (char *)tramp.ucp, sizeof(uc)) != 0 ||
-	    copyout(ksi, (char *)tramp.sip, sizeof(*ksi)) != 0 ||
+	    copyout(&ksi->ksi_info, (char *)tramp.sip, sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0)
 		sigexit(l, SIGILL);
 
