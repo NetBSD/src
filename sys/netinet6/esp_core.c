@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.7 2000/08/31 07:33:05 itojun Exp $	*/
-/*	$KAME: esp_core.c,v 1.37 2000/08/31 07:27:26 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.8 2000/09/18 21:57:35 itojun Exp $	*/
+/*	$KAME: esp_core.c,v 1.41 2000/09/18 21:05:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -116,15 +116,13 @@ esp_algorithm_lookup(idx)
 	static struct esp_algorithm esp_algorithms[] = {
 		{ 8, -1, esp_descbc_mature, 64, 64, sizeof(des_key_schedule),
 			"des-cbc",
-			esp_descbc_ivlen,
-			esp_cbc_decrypt, esp_cbc_encrypt,
-			esp_des_schedule,
+			esp_descbc_ivlen, esp_cbc_decrypt,
+			esp_cbc_encrypt, esp_des_schedule,
 			esp_des_blockdecrypt, esp_des_blockencrypt, },
 		{ 8, 8, esp_cbc_mature, 192, 192, sizeof(des_key_schedule) * 3,
 			"3des-cbc",
-			esp_common_ivlen,
-			esp_cbc_decrypt, esp_cbc_encrypt,
-			esp_3des_schedule,
+			esp_common_ivlen, esp_cbc_decrypt,
+			esp_cbc_encrypt, esp_3des_schedule,
 			esp_3des_blockdecrypt, esp_3des_blockencrypt, },
 		{ 1, 0, esp_null_mature, 0, 2048, 0, "null",
 			esp_common_ivlen, esp_null_decrypt,
@@ -135,9 +133,8 @@ esp_algorithm_lookup(idx)
 			esp_blowfish_blockdecrypt, esp_blowfish_blockencrypt, },
 		{ 8, 8, esp_cbc_mature, 40, 128, sizeof(u_int32_t) * 32,
 			"cast128-cbc",
-			esp_common_ivlen,
-			esp_cbc_decrypt, esp_cbc_encrypt,
-			esp_cast128_schedule,
+			esp_common_ivlen, esp_cbc_decrypt,
+			esp_cbc_encrypt, esp_cast128_schedule,
 			esp_cast128_blockdecrypt, esp_cast128_blockencrypt, },
 	};
 
@@ -406,10 +403,16 @@ esp_blowfish_blockdecrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
+	/* HOLY COW!  BF_encrypt() takes values in host byteorder */
+	BF_LONG t[2];
 
-	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(BF_LONG) * 2);
-	BF_encrypt((BF_LONG *)d, (BF_KEY *)sav->sched, BF_DECRYPT);
+	bcopy(s, t, sizeof(t));
+	t[0] = ntohl(t[0]);
+	t[1] = ntohl(t[1]);
+	BF_encrypt(t, (BF_KEY *)sav->sched, BF_DECRYPT);
+	t[0] = htonl(t[0]);
+	t[1] = htonl(t[1]);
+	bcopy(t, d, sizeof(t));
 	return 0;
 }
 
@@ -420,10 +423,16 @@ esp_blowfish_blockencrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
+	/* HOLY COW!  BF_encrypt() takes values in host byteorder */
+	BF_LONG t[2];
 
-	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(BF_LONG) * 2);
-	BF_encrypt((BF_LONG *)d, (BF_KEY *)sav->sched, BF_ENCRYPT);
+	bcopy(s, t, sizeof(t));
+	t[0] = ntohl(t[0]);
+	t[1] = ntohl(t[1]);
+	BF_encrypt(t, (BF_KEY *)sav->sched, BF_ENCRYPT);
+	t[0] = htonl(t[0]);
+	t[1] = htonl(t[1]);
+	bcopy(t, d, sizeof(t));
 	return 0;
 }
 
