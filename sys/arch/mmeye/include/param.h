@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1999/12/04 21:20:52 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2000/02/11 19:30:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,11 +128,11 @@
 #endif
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
- */ 
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
-#endif
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
