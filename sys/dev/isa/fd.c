@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 2002/03/10 08:55:40 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.23 2002/06/26 09:47:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.22 2002/03/10 08:55:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.23 2002/06/26 09:47:08 simonb Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.22 2002/03/10 08:55:40 jdolecek Exp $");
  * XXX to eliminate a lot of code duplication for now.
  */
 #if !defined(alpha) && !defined(algor) && !defined(atari) && \
-    !defined(bebox) && !defined(i386) && !defined(prep) && \
-    !defined(sandpoint) && !defined(x86_64)
+    !defined(bebox) && !defined(evbmips) && !defined(i386) && \
+    !defined(prep) && !defined(sandpoint) && !defined(x86_64)
 #error platform not supported by this driver, yet
 #endif
 
