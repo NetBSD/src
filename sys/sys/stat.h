@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.24 1997/10/19 01:49:00 mycroft Exp $	*/
+/*	$NetBSD: stat.h,v 1.25 1997/10/19 02:21:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -110,7 +110,6 @@ struct stat {
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
-	int32_t	  st_lspare;
 	int64_t	  st_qspare[2];
 };
 
