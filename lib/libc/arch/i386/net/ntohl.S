@@ -34,18 +34,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ntohl.s	5.2 (Berkeley) 12/17/90
- *	$Id: ntohl.S,v 1.2 1993/10/21 01:40:12 jtc Exp $
+ *	$Id: ntohl.S,v 1.3 1994/03/12 01:52:15 jtc Exp $
  */
 
+#include <machine/asm.h>
+
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: ntohl.S,v 1.2 1993/10/21 01:40:12 jtc Exp $"
+RCSID("$Id: ntohl.S,v 1.3 1994/03/12 01:52:15 jtc Exp $")
 #endif
 
 /* hostorder = ntohl(netorder) */
-
-#include "DEFS.h"
-
 ENTRY(ntohl)
 	movl	4(%esp),%eax
 	xchgb	%al,%ah
