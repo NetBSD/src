@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.25 2001/11/26 00:56:33 enami Exp $	*/
+/*	$NetBSD: dd.c,v 1.26 2002/01/10 03:25:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.25 2001/11/26 00:56:33 enami Exp $");
+__RCSID("$NetBSD: dd.c,v 1.26 2002/01/10 03:25:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ static void
 dd_in(void)
 {
 	int flags;
-	uint64_t n;
+	int64_t n;
 
 	for (flags = ddflags;;) {
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
@@ -366,7 +366,7 @@ void
 dd_out(int force)
 {
 	static int warned;
-	uint64_t cnt, n, nw;
+	int64_t cnt, n, nw;
 	u_char *outp;
 
 	/*
