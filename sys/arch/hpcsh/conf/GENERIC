@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2002/02/11 17:18:35 uch Exp $
+# $NetBSD: GENERIC,v 1.19 2002/02/17 20:59:35 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -30,12 +30,11 @@ options		KLOADER_DEBUG
 #options		HD64461VIDEO_DEBUG
 #options		HD64461PCMCIA_DEBUG			
 
-options 	SH7709A			# 133MHz
-options 	SH7709A_BROKEN_IPR
+options		SH3
 
 options 	DDB			# in-kernel debugger
-#options 	DIAGNOSTIC		# extra kernel debugging checks
-#options 	DEBUG			# extra kernel debugging support
+options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=65534
 
