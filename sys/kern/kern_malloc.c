@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.26 1997/10/09 13:05:59 mycroft Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.27 1998/01/21 22:24:33 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,12 +47,81 @@
 #include <vm/vm_kern.h>
 
 #include "opt_kmemstats.h"
+#include "opt_malloclog.h"
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 const char *memname[] = INITKMEMNAMES;
+
+#ifdef MALLOCLOG
+#ifndef MALLOCLOGSIZE
+#define	MALLOCLOGSIZE	100000
+#endif
+
+struct malloclog {
+	void *addr;
+	long size;
+	int type;
+	int action;
+	const char *file;
+	long line;
+} malloclog[MALLOCLOGSIZE];
+
+long	malloclogptr;
+
+static void domlog __P((void *a, long size, int type, int action,
+	const char *file, long line));
+static void hitmlog __P((void *a));
+
+static void
+domlog(a, size, type, action, file, line)
+	void *a;
+	long size;
+	int type;
+	int action;
+	const char *file;
+	long line;
+{
+
+	malloclog[malloclogptr].addr = a;
+	malloclog[malloclogptr].size = size;
+	malloclog[malloclogptr].type = type;
+	malloclog[malloclogptr].action = action;
+	malloclog[malloclogptr].file = file;
+	malloclog[malloclogptr].line = line;
+	malloclogptr++;
+	if (malloclogptr >= MALLOCLOGSIZE)
+		malloclogptr = 0;
+}
+
+static void
+hitmlog(a)
+	void *a;
+{
+	struct malloclog *lp;
+	long l;
+
+#define	PRT \
+	if (malloclog[l].addr == a && malloclog[l].action) { \
+		lp = &malloclog[l]; \
+		printf("malloc log entry %ld:\n", l); \
+		printf("\taddr = %p\n", lp->addr); \
+		printf("\tsize = %ld\n", lp->size); \
+		printf("\ttype = %s\n", memname[lp->type]); \
+		printf("\taction = %s\n", lp->action == 1 ? "alloc" : "free"); \
+		printf("\tfile = %s\n", lp->file); \
+		printf("\tline = %ld\n", lp->line); \
+	}
+
+	for (l = malloclogptr; l < MALLOCLOGSIZE; l++)
+		PRT
+
+	for (l = 0; l < malloclogptr; l++)
+		PRT
+}
+#endif /* MALLOCLOG */
 
 #ifdef DIAGNOSTIC
 /*
@@ -95,10 +164,19 @@ struct freelist {
 /*
  * Allocate a block of memory
  */
+#ifdef MALLOCLOG
+void *
+_malloc(size, type, flags, file, line)
+	unsigned long size;
+	int type, flags;
+	const char *file;
+	long line;
+#else
 void *
 malloc(size, type, flags)
 	unsigned long size;
 	int type, flags;
+#endif /* MALLOCLOG */
 {
 	register struct kmembuckets *kbp;
 	register struct kmemusage *kup;
@@ -217,6 +295,9 @@ malloc(size, type, flags)
 		    "Data modified on freelist: word", 
 		    (long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
 		    va, size, "previous type", savedtype, kbp->kb_next);
+#ifdef MALLOCLOG
+		hitmlog(va);
+#endif
 		kbp->kb_next = NULL;
 	}
 
@@ -241,6 +322,9 @@ malloc(size, type, flags)
 		    "Data modified on freelist: word",
 		    (long)(lp - (int32_t *)va), va, size, "previous type",
 		    savedtype, *lp, WEIRD_ADDR);
+#ifdef MALLOCLOG
+		hitmlog(va);
+#endif
 		break;
 	}
 
@@ -264,6 +348,9 @@ out:
 #else
 out:
 #endif
+#ifdef MALLOCLOG
+	domlog(va, size, type, 1, file, line);
+#endif
 	splx(s);
 	return ((void *) va);
 }
@@ -271,10 +358,19 @@ out:
 /*
  * Free a block of memory allocated by malloc.
  */
+#ifdef MALLOCLOG
+void
+_free(addr, type, file, line)
+	void *addr;
+	int type;
+	const char *file;
+	long line;
+#else
 void
 free(addr, type)
 	void *addr;
 	int type;
+#endif /* MALLOCLOG */
 {
 	register struct kmembuckets *kbp;
 	register struct kmemusage *kup;
@@ -294,6 +390,9 @@ free(addr, type)
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
 	s = splimp();
+#ifdef MALLOCLOG
+	domlog(addr, 0, type, 2, file, line);
+#endif
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for returns of data that do not point to the
@@ -335,6 +434,9 @@ free(addr, type)
 			if (addr != cp)
 				continue;
 			printf("multiply freed item %p\n", addr);
+#ifdef MALLOCLOG
+			hitmlog(addr);
+#endif
 			panic("free: duplicated free");
 		}
 	}
