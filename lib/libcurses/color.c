@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.8 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.9 2000/04/27 00:26:57 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.8 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.9 2000/04/27 00:26:57 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
+
+/* the following is defined and set up in setterm.c */
+extern struct tinfo *_cursesi_genbuf;
 
 /* Maximum colours */
 #define	MAX_COLORS	64
@@ -135,39 +138,6 @@ start_color(void)
 	if (!COLORS)
 		return (ERR);
 
-	/* Set up initial 8 colours */
-	if (COLORS >= COLOR_BLACK)
-		(void) init_color(COLOR_BLACK, 0, 0, 0);
-	if (COLORS >= COLOR_RED)
-		(void) init_color(COLOR_RED, 1000, 0, 0);
-	if (COLORS >= COLOR_GREEN)
-		(void) init_color(COLOR_GREEN, 0, 1000, 0);
-	if (COLORS >= COLOR_YELLOW)
-		(void) init_color(COLOR_YELLOW, 1000, 1000, 0);
-	if (COLORS >= COLOR_BLUE)
-		(void) init_color(COLOR_BLUE, 0, 0, 1000);
-	if (COLORS >= COLOR_MAGENTA)
-		(void) init_color(COLOR_MAGENTA, 1000, 0, 1000);
-	if (COLORS >= COLOR_CYAN)
-		(void) init_color(COLOR_CYAN, 0, 1000, 1000);
-	if (COLORS >= COLOR_WHITE)
-		(void) init_color(COLOR_WHITE, 1000, 1000, 1000);
-
-	/* Initialise other colours */
-	for (i = 8; i < COLORS; i++) {
-		colors[i].red = 0;
-		colors[i].green = 0;
-		colors[i].blue = 0;
-		colors[i].flags = 0;
-	}
-
-	/* Initialise colour pairs to default (white on black) */
-	for (i = 0; i < COLOR_PAIRS; i++) {
-		pairs[i].fore = COLOR_WHITE;
-		pairs[i].back = COLOR_BLACK;
-		pairs[i].flags = 0;
-	}
-
 	/* Reset terminal colour and colour pairs. */
 	if (OC != NULL)
 		tputs(OC, 0, __cputchar);
@@ -175,7 +145,7 @@ start_color(void)
 		tputs(OP, 0, __cputchar);
 		/* Have we also switched off attributes? */
 		if (ME != NULL && !strcmp(OP, ME))
-			curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET;
+			curscr->wattr &= ~__TERMATTR;
 	}
 
 	/* Type of colour manipulation - ANSI/TEK/HP/other */
@@ -215,7 +185,7 @@ start_color(void)
 	 */
 	__nca = __NORMAL;
 	if (nc != -1) {
-		temp_nc = (attr_t) tgetnum("NC");
+		temp_nc = (attr_t) t_getnum(_cursesi_genbuf, "NC");
 		if (temp_nc & 0x0001)
 			__nca |= __STANDOUT;
 		if (temp_nc & 0x0002)
@@ -238,6 +208,40 @@ start_color(void)
 #ifdef DEBUG
 	__CTRACE ("start_color: __nca = %d\n", __nca);
 #endif
+
+	/* Set up initial 8 colours */
+	if (COLORS >= COLOR_BLACK)
+		(void) init_color(COLOR_BLACK, 0, 0, 0);
+	if (COLORS >= COLOR_RED)
+		(void) init_color(COLOR_RED, 1000, 0, 0);
+	if (COLORS >= COLOR_GREEN)
+		(void) init_color(COLOR_GREEN, 0, 1000, 0);
+	if (COLORS >= COLOR_YELLOW)
+		(void) init_color(COLOR_YELLOW, 1000, 1000, 0);
+	if (COLORS >= COLOR_BLUE)
+		(void) init_color(COLOR_BLUE, 0, 0, 1000);
+	if (COLORS >= COLOR_MAGENTA)
+		(void) init_color(COLOR_MAGENTA, 1000, 0, 1000);
+	if (COLORS >= COLOR_CYAN)
+		(void) init_color(COLOR_CYAN, 0, 1000, 1000);
+	if (COLORS >= COLOR_WHITE)
+		(void) init_color(COLOR_WHITE, 1000, 1000, 1000);
+
+	/* Initialise other colours */
+	for (i = 8; i < COLORS; i++) {
+		colors[i].red = 0;
+		colors[i].green = 0;
+		colors[i].blue = 0;
+		colors[i].flags = 0;
+	}
+
+	/* Initialise colour pairs to default (white on black) */
+	for (i = 0; i < COLOR_PAIRS; i++) {
+		pairs[i].fore = COLOR_WHITE;
+		pairs[i].back = COLOR_BLACK;
+		pairs[i].flags = 0;
+	}
+
 	return(OK);
 }
 
