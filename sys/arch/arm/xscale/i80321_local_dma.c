@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_local_dma.c,v 1.1 2002/07/25 15:00:49 thorpej Exp $	*/
+/*	$NetBSD: i80321_local_dma.c,v 1.2 2002/07/28 17:54:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -138,7 +138,6 @@ i80321_local_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -153,7 +152,6 @@ i80321_local_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 
@@ -198,6 +196,8 @@ i80321_local_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
 		map->_dm_proc = p;
 	}
 
@@ -242,6 +242,8 @@ i80321_local_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = m0;
+		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
 		map->_dm_proc = NULL;	/* always kernel */
 	}
 
@@ -302,6 +304,8 @@ i80321_local_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = uio;
+		map->_dm_buftype = ARM32_BUFTYPE_UIO;
 		map->_dm_proc = p;
 	}
 

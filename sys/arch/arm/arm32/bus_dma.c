@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13 2002/06/28 15:21:00 briggs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.14 2002/07/28 17:54:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_origbuf = NULL;
+	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -134,6 +136,8 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_origbuf = NULL;
+	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
 
 	free(map, M_DEVBUF);
@@ -170,6 +174,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
 		map->_dm_proc = p;
 	}
 #ifdef DEBUG_DMA
@@ -219,6 +225,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = m0;
+		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
 		map->_dm_proc = NULL;	/* always kernel */
 	}
 #ifdef DEBUG_DMA
@@ -278,6 +286,8 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = uio;
+		map->_dm_buftype = ARM32_BUFTYPE_UIO;
 		map->_dm_proc = p;
 	}
 	return (error);
@@ -313,7 +323,135 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_origbuf = NULL;
+	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
+}
+
+static void
+_bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
+{
+	vaddr_t addr = (vaddr_t) map->_dm_origbuf;
+
+	addr += offset;
+	len -= offset;
+
+	switch (ops) {
+	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+		cpu_dcache_wbinv_range(addr, len);
+		break;
+
+	case BUS_DMASYNC_PREREAD:
+#if 1
+		cpu_dcache_wbinv_range(addr, len);
+#else
+		cpu_dcache_inv_range(addr, len);
+#endif
+		break;
+
+	case BUS_DMASYNC_PREWRITE:
+		cpu_dcache_wb_range(addr, len);
+		break;
+	}
+}
+
+static void
+_bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
+{
+	struct mbuf *m, *m0 = map->_dm_origbuf;
+	bus_size_t minlen, moff;
+	vaddr_t maddr;
+
+	for (moff = offset, m = m0; m != NULL && len != 0;
+	     m = m->m_next) {
+		/* Find the beginning mbuf. */
+		if (moff >= m->m_len) {
+			moff -= m->m_len;
+			continue;
+		}
+
+		/*
+		 * Now at the first mbuf to sync; nail each one until
+		 * we have exhausted the length.
+		 */
+		minlen = m->m_len - moff;
+		if (len < minlen)
+			minlen = len;
+
+		maddr = mtod(m, vaddr_t);
+		maddr += moff;
+
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wbinv_range(maddr, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+#if 1
+			cpu_dcache_wbinv_range(maddr, minlen);
+#else
+			cpu_dcache_inv_range(maddr, minlen);
+#endif
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wb_range(maddr, minlen);
+			break;
+		}
+		moff = 0;
+		len -= minlen;
+	}
+}
+
+static void
+_bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
+{
+	struct uio *uio = map->_dm_origbuf;
+	struct iovec *iov;
+	bus_size_t minlen, ioff;
+	vaddr_t addr;
+
+	for (iov = uio->uio_iov, ioff = offset; len != 0; iov++) {
+		/* Find the beginning iovec. */
+		if (ioff >= iov->iov_len) {
+			ioff -= iov->iov_len;
+			continue;
+		}
+
+		/*
+		 * Now at the first iovec to sync; nail each one until
+		 * we have exhausted the length.
+		 */
+		minlen = iov->iov_len - ioff;
+		if (len < minlen)
+			minlen = len;
+
+		addr = (vaddr_t) iov->iov_base;
+		addr += ioff;
+
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wbinv_range(addr, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+#if 1
+			cpu_dcache_wbinv_range(addr, minlen);
+#else
+			cpu_dcache_inv_range(addr, minlen);
+#endif
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wb_range(addr, minlen);
+			break;
+		}
+		ioff = 0;
+		len -= minlen;
+	}
 }
 
 /*
@@ -332,9 +470,6 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	bus_size_t minlen;
-	bus_addr_t addr;
-	int i;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
@@ -391,51 +526,30 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (__predict_false(map->_dm_proc != NULL && map->_dm_proc != curproc))
 		return;
 
-	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
-		/* Find beginning segment. */
-		if (offset >= map->dm_segs[i].ds_len) {
-			offset -= map->dm_segs[i].ds_len;
-			continue;
-		}
+	switch (map->_dm_buftype) {
+	case ARM32_BUFTYPE_LINEAR:
+		_bus_dmamap_sync_linear(t, map, offset, len, ops);
+		break;
 
-		/*
-		 * Now at the first segment to sync; nail
-		 * each segment until we have exhausted the
-		 * length.
-		 */
-		minlen = len < map->dm_segs[i].ds_len - offset ?
-		    len : map->dm_segs[i].ds_len - offset;
+	case ARM32_BUFTYPE_MBUF:
+		_bus_dmamap_sync_mbuf(t, map, offset, len, ops);
+		break;
 
-		addr = map->dm_segs[i]._ds_vaddr;
+	case ARM32_BUFTYPE_UIO:
+		_bus_dmamap_sync_uio(t, map, offset, len, ops);
+		break;
 
-#ifdef DEBUG_DMA
-		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
-#endif
+	case ARM32_BUFTYPE_RAW:
+		panic("_bus_dmamap_sync: ARM32_BUFTYPE_RAW");
+		break;
 
-		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wbinv_range(addr + offset, minlen);
-			break;
+	case ARM32_BUFTYPE_INVALID:
+		panic("_bus_dmamap_sync: ARM32_BUFTYPE_INVALID");
+		break;
 
-		case BUS_DMASYNC_PREREAD:
-#if 1
-			cpu_dcache_wbinv_range(addr + offset, minlen);
-#else
-			cpu_dcache_inv_range(addr + offset, minlen);
-#endif
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wb_range(addr + offset, minlen);
-			break;
-		}
-#ifdef DEBUG_DMA
-		printf("\n");
-#endif
-		offset = 0;
-		len -= minlen;
+	default:
+		printf("unknown buffer type %d\n", map->_dm_buftype);
+		panic("_bus_dmamap_sync");
 	}
 
 	/* Drain the write buffer. */
@@ -690,7 +804,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -705,7 +818,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 
