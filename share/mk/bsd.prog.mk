@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.163 2003/01/24 02:06:37 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.164 2003/02/22 04:46:08 uwe Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -54,7 +54,7 @@ __bsd_prog_mk_system_libs?= \
 .for _n in ${__bsd_prog_mk_system_libs}
 .ifndef LIB${_n}
 LIB${_n}= ${DESTDIR}/usr/lib/lib${_n:tl}.a
-# XXX - note that ${DESTDIR} will expanded in the following rule
+# XXX - note that ${DESTDIR} will be expanded in the following rule
 .MADE: ${LIB${_n}}
 .endif
 .endfor
