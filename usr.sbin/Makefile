@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 1997/06/02 10:17:41 kleink Exp $
+#	$NetBSD: Makefile,v 1.84 1997/06/09 16:45:01 agc Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -7,12 +7,12 @@ SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest chown \
 	chroot chrtbl config cron dev_mkdb dhcp diskpart edquota gettable \
 	gspa htable inetd iostat ipf kgmon kvm_mkdb lpr lastlogin \
 	map-mbone mdconfig mdsetimage mopd mountd mrinfo mrouted mtrace \
-	mtree nfsd nfsiod named netgroup_mkdb portmap pppd pstat pwd_mkdb \
-	quot quotaon rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
-	rpc.pcnfsd rpc.statd rpc.yppasswdd rwhod sa sendmail sliplogin \
-	slstats spray sysctl syslogd tcpdchk tcpdmatch tcpdump timed \
-	traceroute trpt trsp update vipw vnconfig xntp ypbind yppoll ypserv \
-	ypset zdump zic
+	mtree nfsd nfsiod named netgroup_mkdb pkg_install portmap pppd \
+	pstat pwd_mkdb quot quotaon rarpd rbootd rdate repquota rmt \
+	rpc.bootparamd rpc.lockd rpc.pcnfsd rpc.statd rpc.yppasswdd rwhod \
+	sa sendmail sliplogin slstats spray sysctl syslogd tcpdchk tcpdmatch \
+	tcpdump timed traceroute trpt trsp update vipw vnconfig xntp ypbind \
+	yppoll ypserv ypset zdump zic
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=apm apmd bad144 dbsym eeprom grfconfig grfinfo hilinfo \
