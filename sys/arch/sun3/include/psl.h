@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1995/03/27 01:22:52 gwr Exp $	*/
+/*	$NetBSD: psl.h,v 1.7 1995/08/13 00:31:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -86,6 +86,7 @@ extern __inline__ int _spl(int new)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
 #define splsoftclock()  spl1()
+#define splsoftnet()    spl1()
 
 /* Highest block device (strategy) IPL. */
 #define splbio()        spl2()
