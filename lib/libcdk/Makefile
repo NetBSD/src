@@ -1,12 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2001/11/05 15:24:48 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 00:51:01 tv Exp $
+
 DIST=		${.CURDIR}/../../dist
-.PATH: ${DIST}/cdk
-.PATH: ${DIST}/cdk/include
-.PATH: ${DIST}/cdk/man
+.PATH:		${DIST}/cdk ${DIST}/cdk/include ${DIST}/cdk/man
 
-MKLINT= no
-
-LIB=	cdk
+LIB=		cdk
+NOLINT=		# defined
+CPPFLAGS+=	-I. -I${DIST}/cdk/include -DHAVE_CONFIG_H
 
 SRCS=	alphalist.c binding.c buttonbox.c calendar.c cdk.c cdkscreen.c \
 	debug.c dialog.c draw.c entry.c fselect.c graph.c histogram.c \
@@ -29,10 +28,6 @@ MAN=	cdk_alphalist.3 cdk_binding.3 cdk_buttonbox.3 cdk_calendar.3 \
 
 MLINKS=	cdk_cdk.3 cdk.3
 
-INCSDIR= /usr/include/cdk
-
-CPPFLAGS+= -I. \
-	-I${DIST}/cdk/include \
-	-DHAVE_CONFIG_H
+INCSDIR=	/usr/include/cdk
 
 .include <bsd.lib.mk>

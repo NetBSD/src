@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.12 2001/10/31 16:15:00 tv Exp $
+# $NetBSD: Makefile,v 1.13 2001/12/12 00:51:02 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/hdb
+.PATH:		${DIST}/heimdal/lib/hdb
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	hdb
+LIB=		hdb
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -18,14 +19,14 @@ COMPILE_ET=	${COMPILEETOBJ}/compile_et
 hdb_err.c hdb_err.h: hdb_err.et
 	${COMPILE_ET} ${DIST}/heimdal/lib/hdb/hdb_err.et
 
-ERR_FILES = hdb_err.c
+ERR_FILES=	hdb_err.c
 
-gen_files = asn1_Key.x asn1_Event.x asn1_HDBFlags.x asn1_hdb_entry.x \
-	asn1_Salt.x asn1_GENERATION.x
+gen_files=	asn1_Key.x asn1_Event.x asn1_HDBFlags.x asn1_hdb_entry.x \
+		asn1_Salt.x asn1_GENERATION.x
 
-DPSRCS=	hdb_asn1.h hdb_err.h
+DPSRCS=		hdb_asn1.h hdb_err.h
 
-BUILT_SOURCES = $(gen_files:.x=.c) hdb_err.c
+BUILT_SOURCES=	${gen_files:.x=.c} hdb_err.c
 
 SRCS=					\
 	    common.c			\
@@ -39,20 +40,19 @@ SRCS=					\
 	    print.c			\
 	    $(BUILT_SOURCES)
 
-INCS=	hdb.h hdb_err.h hdb_asn1.h hdb-protos.h hdb-private.h
-
-INCSDIR= /usr/include/krb5
+INCS=		hdb.h hdb_err.h hdb_asn1.h hdb-protos.h hdb-private.h
+INCSDIR=	/usr/include/krb5
 
 .if ${USETOOLS} != "yes"
 ASN1_COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${PRINTOBJDIR}
-ASN1_COMPILE:=${ASN1_COMPILE}/asn1_compile
+ASN1_COMPILE:=	${ASN1_COMPILE}/asn1_compile
 .endif
 
 asn1_files hdb_asn1.hx: hdb.asn1
 	${ASN1_COMPILE} ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/hdb		\
@@ -67,12 +67,13 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-$(gen_files) hdb_asn1.h: asn1_files
+${gen_files} hdb_asn1.h: asn1_files
 
 hdb_asn1.h: hdb_asn1.hx
-$(SRCS): hdb_err.h hdb_asn1.h
+${SRCS}: hdb_err.h hdb_asn1.h
 
-CLEANFILES = $(gen_files) $(BUILT_SOURCES) hdb_asn1.h hdb_asn1.hx asn1_files hdb_err.h
+CLEANFILES=	${gen_files} ${BUILT_SOURCES} \
+		hdb_asn1.h hdb_asn1.hx asn1_files hdb_err.h
 
 .include <bsd.lib.mk>
 

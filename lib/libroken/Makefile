@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.10 2001/09/17 12:34:43 assar Exp $
+# $NetBSD: Makefile,v 1.11 2001/12/12 00:51:05 tv Exp $
+
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/roken
-.PATH: ${.CURDIR}/../../include/heimdal
+.PATH:		${DIST}/heimdal/lib/roken ${.CURDIR}/../../include/heimdal
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
+NOLINT=		# defined
 
-LIB=	roken
+LIB=		roken
 
 SRCS=						\
 	base64.c				\
@@ -54,16 +54,15 @@ SRCS=						\
 	warnerr.c				\
 	write_pid.c
 
-INCS=	base64.h getarg.h parse_bytes.h parse_time.h parse_units.h \
-	resolve.h roken.h roken-common.h rtbl.h
-
-INCSDIR= /usr/include/krb5
+INCS=		base64.h getarg.h parse_bytes.h parse_time.h parse_units.h \
+		resolve.h roken.h roken-common.h rtbl.h
+INCSDIR=	/usr/include/krb5
 
 CPPFLAGS+= -I. \
 	-I${.CURDIR}/../../include/heimdal \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
 
-HOST_CPPFLAGS+= -I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
+HOST_CPPFLAGS+=	-I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
 
 .include <bsd.lib.mk>
