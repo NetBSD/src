@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.32 1994/10/20 04:22:56 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.33 1994/10/30 19:15:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -634,7 +634,7 @@ void
 trapsignal(p, signum, code)
 	struct proc *p;
 	register int signum;
-	u_int code;
+	u_long code;
 {
 	register struct sigacts *ps = p->p_sigacts;
 	int mask;
@@ -956,9 +956,9 @@ issignal(p)
 		 * Return the signal's number, or fall through
 		 * to clear it from the pending mask.
 		 */
-		switch ((int)p->p_sigacts->ps_sigact[signum]) {
+		switch ((long)p->p_sigacts->ps_sigact[signum]) {
 
-		case SIG_DFL:
+		case (long)SIG_DFL:
 			/*
 			 * Don't take default actions on system processes.
 			 */
@@ -1001,7 +1001,7 @@ issignal(p)
 				return (signum);
 			/*NOTREACHED*/
 
-		case SIG_IGN:
+		case (long)SIG_IGN:
 			/*
 			 * Masking above should prevent us ever trying
 			 * to take action on an ignored signal other
@@ -1050,7 +1050,8 @@ postsig(signum)
 	register struct proc *p = curproc;
 	register struct sigacts *ps = p->p_sigacts;
 	register sig_t action;
-	int code, mask, returnmask;
+	u_long code;
+	int mask, returnmask;
 
 #ifdef DIAGNOSTIC
 	if (signum == 0)
