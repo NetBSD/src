@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.576 2003/05/01 07:36:40 he Exp $
+# $NetBSD: mi,v 1.577 2003/05/01 15:50:00 briggs Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -539,6 +539,7 @@
 ./usr/share/man/cat4/amiga/ser.0		man-sys-catman
 ./usr/share/man/cat4/amiga/wesc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman
+./usr/share/man/cat4/amr.0			man-sys-catman
 ./usr/share/man/cat4/an.0			man-sys-catman
 ./usr/share/man/cat4/aria.0			man-sys-catman
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman
@@ -2347,6 +2348,7 @@
 ./usr/share/man/man4/amiga/ser.4		man-sys-man
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man
+./usr/share/man/man4/amr.4			man-sys-man
 ./usr/share/man/man4/an.4			man-sys-man
 ./usr/share/man/man4/aria.4			man-sys-man
 ./usr/share/man/man4/arc/intro.4		man-sys-man
