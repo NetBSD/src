@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.18 2004/03/23 14:07:42 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.19 2004/03/24 09:15:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.18 2004/03/23 14:07:42 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.19 2004/03/24 09:15:38 martin Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -382,7 +382,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 {
 	ACPI_STATUS ret;
 	ACPI_BUFFER buf;
-	int val;
+	ACPI_INTEGER val;
 	struct mpacpi_pcibus *mpr;
 
 	ret = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
@@ -427,7 +427,7 @@ static ACPI_STATUS
 mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 {
 	ACPI_STATUS ret;
-	int val;
+	ACPI_INTEGER val;
 	pcireg_t binf, class;
 	pcitag_t tag;
 	struct acpi_softc *acpi;
