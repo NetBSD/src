@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.7 1994/06/28 04:32:16 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.8 1994/06/28 04:38:40 paulus Exp $";
 #endif
 
 /*
@@ -1474,7 +1474,7 @@ void LcpLinkFailure (f)
 {
     if (f->state == OPENED) {
         syslog (LOG_NOTICE, "Excessive lack of response to LCP echo frames.");
-        lcp_lowerdown(f->unit);		/* Reset connection */
+        lcp_close(f->unit);		/* Reset connection */
     }
 }
 
