@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2 2002/09/22 10:12:48 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.3 2002/10/01 14:12:17 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -488,8 +488,8 @@ NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
 exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenSSH
-Version:	3.4 around 20020626
-Current Vers:	3.4 / portable 3.4p1
+Version:	3.5 around 20021001
+Current Vers:	3.5 / portable 3.4p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
@@ -506,6 +506,8 @@ markus is very cooperative about it):
 1.5 branch uses /etc for configuration files, while current/1.6 uses /etc/ssh.
 http://www.openbsd.org/advisories/ssh_channelalloc.txt is integrated
 manually to 1.5 branch.  version date "20020307" identifies the fix.
+http://www.openssh.com/txt/preauth.adv is integrated manually to 1.5 branch.
+veresion date "20020626" identifies the fix.
 
 Package:	OpenSSL
 Version:	0.9.6g
