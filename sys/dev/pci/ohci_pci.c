@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.10 1999/08/21 21:35:36 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.11 1999/09/04 22:00:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,16 +105,15 @@ ohci_pci_attach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_4(sc->iot, sc->ioh, 
-			  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
-
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->iot, &sc->ioh, NULL, NULL)) {
 		printf("%s: can't map mem space\n", sc->sc_bus.bdev.dv_xname);
 		return;
 	}
+
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 
 	sc->sc_dmatag = pa->pa_dmat;
 
