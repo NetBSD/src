@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.26 2004/01/03 01:40:32 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.27 2004/01/03 06:16:40 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -254,15 +254,6 @@ main(int argc, char **argv)
 		    "failed to setup for probing routers");
 		exit(1);
 		/*NOTREACHED*/
-	}
-
-	/* dump the current pid */
-	if (!once) {
-		if (pidfile(NULL) < 0) {
-			warnmsg(LOG_ERR, __func__,
-			    "failed to open a pid log file: %s",
-			    strerror(errno));
-		}
 	}
 
 	for (;;) {		/* main loop */
