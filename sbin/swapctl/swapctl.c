@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.18 2001/02/19 22:56:23 cgd Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.19 2001/11/26 15:23:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -363,9 +363,9 @@ add_swap(path, priority)
 		goto oops;
 
 	if (sb.st_mode & S_IROTH) 
-		warnx("%s is readable by the world", path);
+		warnx("WARNING: %s is readable by the world", path);
 	if (sb.st_mode & S_IWOTH)
-		warnx("%s is writable by the world", path);
+		warnx("WARNING: %s is writable by the world", path);
 
 	if (swapctl(SWAP_ON, path, priority) < 0) {
 oops:
