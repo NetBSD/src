@@ -471,6 +471,12 @@ extern int arm_fast_multiply;
 /* Nonzero if this chip supports the ARM Architecture 4 extensions */
 extern int arm_arch4;
 
+/* Nonzero if this chip supports the ARM Architecture 5 extensions */
+extern int arm_arch5;
+
+/* Nonzero if this chip supports the ARM Architecture 5E extensions */
+extern int arm_arch5e;
+
 /* Nonzero if this chip can benefit from load scheduling.  */
 extern int arm_ld_sched;
 
