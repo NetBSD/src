@@ -1,3 +1,4 @@
+# $NetBSD: md.pmax,v 1.31 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/pmax
 ./usr/include/pmax/_G_config.h
 ./usr/include/pmax/ansi.h

@@ -1,3 +1,4 @@
+# $NetBSD: shl.elf,v 1.2 1999/04/19 03:11:35 simonb Exp $
 ./usr/lib/libacl.so
 ./usr/lib/libacl.so.2
 ./usr/lib/libcom_err.so

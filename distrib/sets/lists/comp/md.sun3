@@ -1,3 +1,4 @@
+# $NetBSD: md.sun3,v 1.32 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/sun3
 ./usr/include/sun3/_G_config.h
 ./usr/include/sun3/ansi.h

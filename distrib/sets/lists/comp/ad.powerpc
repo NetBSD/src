@@ -1,3 +1,4 @@
+# $NetBSD: ad.powerpc,v 1.4 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/powerpc
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/aout_machdep.h

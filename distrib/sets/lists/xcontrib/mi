@@ -1,3 +1,4 @@
+# $NetBSD: mi,v 1.2 1999/04/19 03:11:36 simonb Exp $
 ./usr/X11R6/bin/ico
 ./usr/X11R6/bin/listres
 ./usr/X11R6/bin/showfont

@@ -1,3 +1,4 @@
+# $NetBSD: md.mvme68k,v 1.10 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/mvme68k
 ./usr/include/mvme68k/_G_config.h
 ./usr/include/mvme68k/ansi.h

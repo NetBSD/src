@@ -1,3 +1,4 @@
+# $NetBSD: md.atari,v 1.37 1999/04/19 03:11:32 simonb Exp $
 ./dev/mouse
 ./sbin/binpatch
 ./sbin/edahdi

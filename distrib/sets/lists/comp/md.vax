@@ -1,3 +1,4 @@
+# $NetBSD: md.vax,v 1.9 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/vax
 ./usr/include/vax/_G_config.h
 ./usr/include/vax/ansi.h

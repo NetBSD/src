@@ -1,3 +1,4 @@
+# $NetBSD: md.pc532,v 1.33 1999/04/19 03:11:32 simonb Exp $
 ./sbin/bim
 ./sbin/ldconfig
 ./usr/libexec/ld.so

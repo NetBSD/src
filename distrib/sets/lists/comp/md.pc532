@@ -1,3 +1,4 @@
+# $NetBSD: md.pc532,v 1.25 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/pc532
 ./usr/include/pc532/_G_config.h
 ./usr/include/pc532/ansi.h
