@@ -1,7 +1,23 @@
-/*	$NetBSD: siivar.h,v 1.7 2001/04/25 17:53:21 bouyer Exp $	*/
+/*	$NetBSD: siivar.h,v 1.8 2001/08/26 11:47:23 simonb Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
+
+/*
+ * This structure contains information that a SCSI interface controller
+ * needs to execute a SCSI command.
+ */
+typedef struct ScsiCmd {
+	int	unit;		/* unit number passed to device done routine */
+	int	flags;		/* control flags for this command (see below) */
+	int	buflen;		/* length of the data buffer in bytes */
+	char	*buf;		/* pointer to data buffer for this command */
+	int	cmdlen;		/* length of data in cmdbuf */
+	u_char	*cmd;		/* buffer for the SCSI command */
+	int	error;		/* compatibility hack for new scsi */
+	int	lun;		/* LUN for MI SCSI */
+	struct callout timo_ch;	/* timeout callout handle */
+} ScsiCmd;
 
 typedef struct scsi_state {
 	int	statusByte;	/* status byte returned during STATUS_PHASE */
@@ -32,12 +48,10 @@ typedef struct scsi_state {
 #define SII_NCMD	8
 struct siisoftc {
 	struct device sc_dev;		/* us as a device */
-#if NXSII > 0
 	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
 	ScsiCmd sc_cmd_fake[SII_NCMD];		/* XXX - hack!!! */
 	struct scsipi_xfer *sc_xs[SII_NCMD];	/* XXX - hack!!! */
-#endif
 	void *sc_buf;			/* DMA buffer (may be special mem) */
 	SIIRegs	*sc_regs;		/* HW address of SII controller chip */
 	int	sc_flags;
@@ -53,10 +67,8 @@ int	siiintr __P((void *sc));
 
 /* Machine-indepedent back-end attach entry point */
 
-#if NXSII > 0
 void	sii_scsi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
-#endif
 void	siiattach __P((struct siisoftc *));
 
 #endif	/* _SIIVAR_H */

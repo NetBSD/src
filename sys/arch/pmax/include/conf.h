@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 2000/01/09 15:34:42 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 2001/08/26 11:47:24 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -24,12 +24,6 @@ cdev_decl(mm);
 
 cdev_decl(scc);		/* pmax (also alpha m-d z8530 SCC */
 cdev_decl(dc);		/* dc7085 dz11-on-a-chip */
-
-bdev_decl(rz);		/* antique 4.4bsd/pmax SCSI disk */
-cdev_decl(rz);
-
-bdev_decl(tz);		/* antique 4.4bsd/pmax SCSI tape driver */
-cdev_decl(tz);
 
 cdev_decl(dtop);	/* Personal Decstation (MAXINE) desktop bus */
 cdev_decl(fb);		/* generic framebuffer pseudo-device */
