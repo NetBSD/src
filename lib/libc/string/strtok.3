@@ -34,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.15 2002/02/07 07:00:33 ross Exp $
+.\"	$NetBSD: strtok.3,v 1.16 2002/08/11 09:48:26 yamt Exp $
 .\"
-.Dd February 3, 1994
+.Dd August 11, 2002
 .Dt STRTOK 3
 .Os
 .Sh NAME
@@ -95,6 +95,41 @@ unlike
 it is not necessary to delineate tokenizing to a single string at a time
 when using
 .Fn strtok_r .
+.Sh EXAMPLES
+The following will construct an array of pointers to each individual word in
+the string
+.Va s :
+.Bd -literal -offset indent
+#define MAXTOKENS	128
+
+char s[512], *p, *tokens[MAXTOKENS];
+char *last;
+int i = 0;
+
+snprintf(s, sizeof(s), "cat dog horse cow");
+
+for ((p = strtok_r(s, " ", &last)); p;
+    (p = strtok_r(NULL, " ", &last)), i++) {
+	if (i < MAXTOKENS - 1)
+		tokens[i] = p;
+}
+tokens[i] = NULL;
+.Ed
+.Pp
+That is,
+.Li tokens[0]
+will point to
+.Qq cat ,
+.Li tokens[1]
+will point to
+.Qq dog ,
+.Li tokens[2]
+will point to
+.Qq horse ,
+and
+.Li tokens[3]
+will point to
+.Qq cow .
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
