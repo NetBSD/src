@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.45 1997/04/26 02:20:59 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.46 1997/05/24 05:56:06 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -23,7 +23,6 @@
 
 CC?=	cc
 LD?=	ld
-KERNLD?=	ld.old	# GNU binutils 2.7 ld can't link kernels, use 2.6
 MKDEP?=	mkdep
 STRIP?=	strip
 SIZE?=	size
@@ -41,11 +40,11 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpmax ${GP}
 CWARNFLAGS=	-Werror
+GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -Ttext 80030000 -e start
+LINKFLAGS=	-T ${MIPS}/conf/kern.ldscript -e start ${GP}
 STRIPFLAGS=	-d
-
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -84,8 +83,8 @@ SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
-SYSTEM_LD=	@echo ${KERNLD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
-		${KERNLD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
