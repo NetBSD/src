@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.8 2000/09/04 16:54:39 abs Exp $
+#	$NetBSD: Makefile,v 1.9 2000/09/04 17:00:16 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
-
-KERN=		${KERNOBJDIR}/INSTALL-SYSINST/netbsd
 
 .include "${TOP}/Makefile.inc"
 
 .include <bsd.own.mk>   # So we use /etc/mk.conf.
 .include <bsd.kernobj.mk>
+
+KERN?=		${KERNOBJDIR}/INSTALL-SYSINST/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -65,7 +65,7 @@ unconfig:
 netbsd.syram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
@@ -82,7 +82,7 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	cp netbsd.syram.gz $(RELEASEDIR)/installation/netboot
+	cp -p netbsd.syram.gz $(RELEASEDIR)/installation/bootfs/netbsd.syram.gz
 	gzip -c -9 < $(.OBJDIR)/$(IMAGE) \
 		> $(RELEASEDIR)/installation/bootfs/$(IMAGE).gz
 .endif	# RELEASEDIR check
