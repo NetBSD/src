@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.25 1997/09/19 13:55:47 leo Exp $    */
+/*      $NetBSD: param.h,v 1.26 1997/10/19 20:48:47 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -95,7 +95,7 @@
 #define USPACE  (NBPG*UPAGES)
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	(CLBYTES * 4)	/* default message buffer size */
 #endif
 
 /*
