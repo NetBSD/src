@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.100 1998/11/30 19:47:53 jtk Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.101 1998/12/05 19:02:15 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -998,6 +998,9 @@
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
 #define	PCI_PRODUCT_SGSTHOMSON_1764	0x1746		/* STG 1764X */
+
+/* Sigma Designs products */
+#define	PCI_PRODUCT_SIGMA_HOLLYWOODPLUS	0x8300		/* REALmagic Hollywood-Plus MPEG-2 Decoder */
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 */
