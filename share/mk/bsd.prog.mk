@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.156 2002/08/09 00:21:22 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.157 2002/09/08 03:59:02 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -118,16 +118,27 @@ _SUPCXX=	-lstdc++ -lm
 _CCLINK=	${CC}
 .endif
 
+.gdbinit:
+	rm -f .gdbinit
+.if defined(DESTDIR) && !empty(DESTDIR)
+	echo "set solib-absolute-prefix ${DESTDIR}" > .gdbinit
+.else
+	touch .gdbinit
+.endif
+.for __gdbinit in ${GDBINIT}
+	echo "source ${__gdbinit}" >> .gdbinit
+.endfor
+
 .if defined(DESTDIR)
 
-${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
 .endif
 
 .else
 
-${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif
@@ -143,7 +154,7 @@ MAN=	${PROG}.1
 realall: ${PROG} ${SCRIPTS}
 
 cleanprog: cleanobjs cleanextra
-	rm -f a.out [Ee]rrs mklog core *.core ${PROG}
+	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG}
 
 cleanobjs:
 .if defined(OBJS) && !empty(OBJS)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.101 2002/08/19 14:51:58 lukem Exp $
+#	$NetBSD: bsd.README,v 1.102 2002/09/08 03:59:02 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -376,7 +376,10 @@ of suffixes, consistent with the current needs of the BSD tree.
 It has eight targets:
 
 	all:
-		build the program and its manual page
+		build the program and its manual page.  This also
+		creates a GDB initialization file (.gdbinit) in
+		the objdir.  The .gdbinit file sets the shared library
+		prefix to ${DESTDIR} to facilitate cross-debugging.
 	clean:
 		remove the program, any object files and the files a.out,
 		Errs, errs, mklog, and ${PROG}.core.
@@ -413,6 +416,10 @@ CLEANFILES	Additional files to remove for the clean and cleandir targets.
 COPTS		Additional flags to the compiler when creating C objects.
 
 CPPFLAGS	Additional flags to the C pre-processor
+
+GDBINIT		List of GDB initialization files to add to "source"
+		directives in the .gdbinit file that is created in the
+		objdir.
 
 LDADD		Additional loader objects.  Usually used for libraries.
 		For example, to load with the compatibility and utility
