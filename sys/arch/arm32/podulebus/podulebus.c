@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.44 2001/07/03 20:47:23 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.45 2001/07/04 13:38:36 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -106,20 +106,18 @@ podulebusprint(aux, name)
 {
 	struct podule_attach_args *pa = aux;
 
-	if (name) {
-		printf("podule%d: ", pa->pa_podule_number);
-		return(UNCONF);
-	}
-
+	if (name)
+		printf("podule at %s", name);
 	if (pa->pa_podule->slottype == SLOT_POD)
-		printf(" [ podule %d ]", pa->pa_podule_number);
+		printf(" slot %d", pa->pa_podule_number);
 	else if (pa->pa_podule->slottype == SLOT_NET)
 		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
+#ifdef DIAGNOSTIC
 	else
 		panic("Invalid slot type\n");
+#endif
 
-	/* XXXX print flags */
-	return (QUIET);
+	return (UNCONF);
 }
 
 
