@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.4 1998/04/09 13:09:47 hannken Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.5 1998/06/15 17:48:33 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #ifndef _DEV_WSCONS_WSKSYMVAR_H_
 #define _DEV_WSCONS_WSKSYMVAR_H_
 
-#define WSKBD_STRING_LEN	8		/* Function keys, 7 chars+NUL */
-
 #ifndef _KERNEL
 #include <sys/types.h>
 #endif
@@ -71,8 +69,6 @@ void	wskbd_init_keymap __P((int, struct wscons_keymap **, int *));
 int	wskbd_load_keymap __P((kbd_t, const struct wscons_keydesc *, int,
                                struct wscons_keymap **, int *));
 keysym_t wskbd_compose_value __P((keysym_t *));
-char *	wskbd_get_string __P((keysym_t));
-int	wskbd_set_string __P((keysym_t, char *));
 
 #endif
 
