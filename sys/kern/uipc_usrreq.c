@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.22 1996/05/23 16:49:08 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.23 1996/05/23 17:07:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -228,6 +228,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 				}
 				error = unp_connect(so, nam, p);
 				if (error) {
+				die:
 					m_freem(control);
 					m_freem(m);
 					break;
