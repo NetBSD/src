@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.6 2001/07/08 16:32:12 abs Exp $
+# $NetBSD: YEAH-BABY,v 1.7 2001/07/09 15:05:23 soren Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -209,7 +209,6 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
