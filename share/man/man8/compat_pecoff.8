@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.2.2.2 2000/08/11 03:30:33 minoura Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.2.2.3 2000/12/15 05:05:36 he Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -33,102 +33,158 @@
 .Nd setup procedure for running Win32 applications (a.k.a. PEACE)
 .Sh DESCRIPTION
 .Nx
-has partial support for running Win32 application.
-This manual page describes how to run Win32 (and hopefully WinCE
+has partial support for running
+.Tn Win32
+applications.
+This manual page describes how to run
+.Tn Win32
+(and hopefully
+.Tn WinCE
 in the future) applications on
 .Nx .
-Note that PE (Portable Executable) is Microsoft extention to COFF
+Note that PE (Portable Executable) is a Microsoft extension to the
+.Tn COFF
 executable file format.
 
-.Sh BRIEF INTRODUCTION TO WIN32 API
-Win32 API is an application program interface (API) for 32-bit
-applications for Microsoft Windows 9x/NT/2000.  Win32 API is provided
-via a set of core DLLs (Dynamically Linked Libraries), including KERNEL32.DLL,
-USER32.DLL and GDI32.DLL.  
+.Sh BRIEF INTRODUCTION TO THE WIN32 API
+The
+.Tn Win32
+API is an application program interface (API) for 32-bit
+applications for Microsoft Windows 9x/Me/NT/2000.  The
+.Tn Win32
+API is provided
+via a set of core DLLs (Dynamically Linked Libraries), including
+.Pa KERNEL32.DLL , USER32.DLL
+and
+.Pa GDI32.DLL .
 .Pp
-Structure of these core DLLs and the interface between the
+The structure of these core DLLs and the interface between the
 operating system kernel and userland is implementation-dependent.
-Each implementation must provide their own core DLLs.
-Therfore, these DLLs are different between Windows 98 and Windows 2000.
+Each implementation must provide its own core DLLs.
+Therfore, these DLLs are different for
+.Tn "Windows 98"
+and
+.Tn "Windows 2000" .
 .Pp
-KERNEL32.DLL is used by all Win32 applications; it provides basic
+.Pa KERNEL32.DLL
+is used by all
+.Tn Win32
+applications; it provides basic
 kernel interface such as file access, process control, memory management etc.
 .Pp
-USER32.DLL is used by most Win32 applications; it provides basic
+.Pa USER32.DLL
+is used by most
+.Tn Win32
+applications; it provides basic
 userland functions such as GUI and messaging.
 .Pp
-GDI32.DLL provides functions to draw images and characters.
+.Pa GDI32.DLL
+provides functions to draw images and characters.
 .Pp
-SHELL32.DLL is the Windows shell support, including file association.
+.Pa SHELL32.DLL
+is the Windows shell support, including file association.
 .Pp
-COMCTL32.DLL and COMDLG.32.DLL are GUI components which are commonly
-used in many applications.  WSOCK32.DLL provides networking API.
-DDRAW.DLL is for DirectDraw.
+.Pa COMCTL32.DLL
+and
+.Pa COMDLG.32.DLL
+are GUI components which are commonly
+used in many applications.
+.Pa WSOCK32.DLL
+provides the networking API.
+.Pa DDRAW.DLL
+is for
+.Tn DirectDraw .
 .Pp
-Most of other DLLs are compatible among all the implementations and
+Most other DLLs are compatible among all the implementations and
 therefore can be shared.
 
-.Sh NETBSD SUPPORT FOR WIN32 API
+.Sh NETBSD SUPPORT FOR THE WIN32 API
 .Nx
-support for Win32 application is developed by the PEACE Project, and is
+support for
+.Tn Win32
+applications is developed by the PEACE Project, and is
 under active development.
-Currently it can run some console applications including Windows 2000
-CMD.EXE, and very few GUI applications.
+Currently it can run some console applications including the
+.Tn "Windows 2000"
+.Pa CMD.EXE
+as well as a small number of GUI applications.
 .Pp
-PEACE system consists of three parts; kernel part, dynamic loader and
-core DLLs.
+The PEACE system consists of three parts: the kernel part, the dynamic
+loader and the core DLLs.
 .Pp
-The kernel part provides loading and executing PE/COFF format 
-executable binaries, i.e. it extends
+The kernel part provides loading and executing
+.Tn PE/COFF
+format executable binaries; i.e. it extends the
 .Xr execve 2
 system call, just like other binary compatibility options.
-It is activated by enabling
+It is activated by enabling the
 .Dv COMPAT_PECOFF
-option.
+kernel option.
 .Pp
-The dynamic loader is PE/COFF version of
+The dynamic loader is the
+.Tn PE/COFF
+version of
 .Xr ld.so 1 .
 It reads the file header of the executable binary, and
 loads required DLLs.  
 .Pp
-The core DLLs implement the actual Win32 API functions described in the
+The core DLLs implement the actual
+.Tn Win32
+API functions as described in the
 previous section.  Since the kernel part does not provide
 any additional system calls and other kernel interface,
-all Win32 API functions are implemented on top of the existing
+all
+.Tn Win32
+API functions are implemented on top of the existing
 .Nx
-APIs (system calls and standard libraries such as libc and libX11).
+APIs (system calls and standard libraries such as
+.Pa libc
+and
+.Pa libX11 ) .
 
-.Sh PREPARING PEACE DYNAMIC LOADER AND CORE DLLS
+.Sh PREPARING THE PEACE DYNAMIC LOADER AND CORE DLLS
 Development snapshots of the dynamic loader can be retrieved from 
 .Pa http://chiharu.haun.org/peace/dist/peace-i386-ld.so.dll-*.gz ,
 where `*' is replaced with the snapshot date.
 Simply
 .Xr gunzip 1
-the file and copy the resultant as
+the file and copy the resulting file to
 .Pa /usr/libexec/ld.so.dll .
 .Pp
 The core DLLs can also be retrieved from
 .Pa http://chiharu.haun.org/peace/dist/peace-i386-dll-*.tgz .
-The dynamic loader searches required DLLs from the following directories;
+The dynamic loader searches for required DLLs from the following directories:
 .Bl -enum -compact
 .It
 .Pa /usr/lib
 .It
-Directories listed in the environment variable DLLPATH (separated by
-colons)
+Directories listed in the environment variable
+.Ev DLLPATH
+(separated by colons)
 .It
-Same directory where the executable is located
+The directory where the executable is located
 .El
 The core DLLs are required to be installed into
 .Pa /usr/lib ,
-in order to use CMD.EXE (or another Win32 application) as the login shell.
+in order to use
+.Pa CMD.EXE
+(or another
+.Tn Win32
+application) as the login shell.
 .Pp
-Other DLLs can be stored into arbitrary directories specified by the
-environment variable DLLPATH.  To use Windows NT/2000
+According to the development phase, some other PEACE-specific DLLs
+might be distributed separately.  Please check the announcements
+on the Web or the mailing list.
+.Pp
+Other DLLs can be stored in arbitrary directories specified by the
+environment variable
+.Ev DLLPATH .
+To use
+.Tn "Windows NT/2000"
 DLLs installed on a separate partition of the local disk directly
 for
 .Nx ,
-type
+type:
 .Bd -literal -compact -offset indent
 mount -t ntfs -o ro /dev/wd0h /nthd
 setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
@@ -136,31 +192,42 @@ setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
 (assuming csh).
 
 .Sh SEE ALSO
-.Xr config 8 , Xr options 4 ,
-.Xr execve 3 , Xr ld.so 1 ,
-.Xr mount_ntfs 8 , Xr gunzip 1
+.Xr gunzip 1 ,
+.Xr ld.so 1 ,
+.Xr execve 3 ,
+.Xr options 4 ,
+.Xr config 8 ,
+.Xr mount_ntfs 8 ,
 .Pa http://chiharu.hauN.ORG/peace/
 
 .Sh HISTORY
-Kernel support for PE/COFF appeared in
+Kernel support for
+.Tn PE/COFF
+appeared in
 .Nx 1.5 .
 
 .Sh AUTHOR
-Implementation of Win32 binary compatibility support for
+Implementation of
+.Tn Win32
+binary compatibility support for
 .Nx
 was started by Masaru Oki.
 The PEACE Project is founded by him to implement enormous number of functions
-in Win32/WinCE API.
+in the
+.Tn Win32/WinCE
+API.
 
 .Sh BUGS
 .Bl -hyphen -compact
 .It
-Currently only i386 platform is supported.
+Currently only the i386 platform is supported.
 .It
-Most functions in Win32 are missing.
+Most functions in
+.Tn Win32
+are missing.
 .It
 The dynamic loader and core DLLs are not provided in the standard
 distribution of
 .Nx .
-This is because the cross-compiler is required to build them.
+This is because a cross-compiler is required to build them.
 .El
