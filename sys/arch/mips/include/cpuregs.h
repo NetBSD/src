@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.25 1999/12/22 04:54:15 jun Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.26 1999/12/27 20:05:06 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,9 +81,11 @@
 #define MIPS_MAX_MEM_ADDR		0xbe000000
 #define MIPS_RESERVED_ADDR		0xbfc80000
 
-#define MIPS_KSEG0_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+#define MIPS_PHYS_MASK			0x1fffffff
+
+#define MIPS_KSEG0_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
-#define MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+#define MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
@@ -309,7 +311,7 @@
 /* Secondary Cache - 0: present, 1: not present */
 #define MIPS3_CONFIG_SC		0x00020000
 
-/* System Port width - 0: 64-bit, 1,2,3: reserved */
+/* System Port width - 0: 64-bit, 1: 32-bit (QED RM523x), 2,3: reserved */
 #define MIPS3_CONFIG_EW_MASK	0x000c0000
 #define MIPS3_CONFIG_EW_SHIFT	18
 
