@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.29 2005/02/28 18:04:54 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.30 2005/03/26 22:41:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.29 2005/02/28 18:04:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.30 2005/03/26 22:41:12 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1227,7 +1227,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 	printf("---[LCD]---\n");
 	/* Base Address Register */
 	r = hd64461_reg_read_2(HD64461_LCDCBAR_REG16);
-	printf("LCDCBAR Frame buffer base address (4k Byte align): 0x%08x\n",
+	printf("LCDCBAR Frame buffer base address (4KB align): 0x%08x\n",
 	    HD64461_LCDCBAR_BASEADDR(r));
 
 	/* Line Address Offset Register */
@@ -1247,7 +1247,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 	DBG_BITMASK_PRINT(r, SPON);
 	printf("\n");
 #undef	DBG_BITMASK_PRINT
-	printf("LCDCCR Display selct LCD[%c] CRT[%c]\n",
+	printf("LCDCCR Display select LCD[%c] CRT[%c]\n",
 	    i == HD64461_LCDCCR_DSPSEL_LCD_CRT ||
 	    i == HD64461_LCDCCR_DSPSEL_LCD ? 'x' : '_',
 	    i == HD64461_LCDCCR_DSPSEL_LCD_CRT ||
