@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.47 2000/12/22 22:58:59 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.48 2001/01/22 20:08:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1778,7 +1778,7 @@ netbsd32_readlink(p, v, retval)
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
 	sg = stackgap_init(p->p_emul);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(&ua, path));
 
 	return (sys_readlink(p, &ua, retval));
 }
