@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.9 1998/05/18 12:41:30 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.10 1998/07/01 19:29:22 tron Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.9 1998/05/18 12:41:30 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.10 1998/07/01 19:29:22 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,8 +276,8 @@ dologin(pw, sin)
 	struct passwd *pw;
 	struct sockaddr_in *sin;
 {
-	char line[32];
-	char remotehost[32];
+	char line[UT_LINESIZE];
+	char remotehost[UT_HOSTSIZE];
 	int wtmp, f;
 	struct hostent *hp = gethostbyaddr((char *)&sin->sin_addr,
 		sizeof (struct in_addr), AF_INET);
@@ -288,10 +288,11 @@ dologin(pw, sin)
 	} else
 		strncpy(remotehost, inet_ntoa(sin->sin_addr),
 		    sizeof (remotehost));
+	remotehost[sizeof (remotehost) - 1] = 0;
 	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 	if (wtmp >= 0) {
 		/* hack, but must be unique and no tty line */
-		sprintf(line, "uucp%.4d", getpid());
+		sprintf(line, "uu%.4d", getpid());
 		SCPYN(utmp.ut_line, line);
 		SCPYN(utmp.ut_name, pw->pw_name);
 		SCPYN(utmp.ut_host, remotehost);
