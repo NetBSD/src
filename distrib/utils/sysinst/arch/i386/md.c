@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.4.3 2000/10/20 17:32:32 tv Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.4 2000/11/01 02:25:58 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,6 +71,8 @@ static void md_upgrade_mbrtype __P((void));
 static char *get_bootmodel __P((void));
 static int move_aout_libs __P((void));
 static int handle_aout_libs(const char *dir, int op, const void *arg);
+static int is_aout_shared_lib __P((const char *));
+static void handle_aout_x_libs __P((const char *, const char *));
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -654,6 +656,72 @@ md_init()
 }
 
 /*
+ * a.out X libraries to move. These have not changed since 1.3.x
+ */
+static const char *x_libs[] = {
+	"libICE.so.6.3",
+	"libPEX5.so.6.0",
+	"libSM.so.6.0",
+	"libX11.so.6.1",
+	"libXIE.so.6.0",
+	"libXaw.so.6.1",
+	"libXext.so.6.3",
+	"libXi.so.6.0",
+	"libXmu.so.6.0",
+	"libXp.so.6.2",
+	"libXt.so.6.0",
+	"libXtst.so.6.1",
+	"liboldX.so.6.0",
+};
+
+static int
+is_aout_shared_lib(const char *name)
+{
+	struct exec ex;
+	struct stat st;
+	int fd;
+
+	if (stat(name, &st) < 0)
+		return 0;
+	if ((st.st_mode & (S_IFREG|S_IFLNK)) == 0)
+		return 0;
+
+	fd = open(name, O_RDONLY);
+	if (fd < 0) {
+		close(fd);
+		return 0;
+	}
+	if (read(fd, &ex, sizeof ex) < sizeof ex) {
+		close(fd);
+		return 0;
+	}
+	close(fd);
+	if (N_GETMAGIC(ex) != ZMAGIC ||
+	    (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
+		return 0;
+
+	return 1;
+}
+
+static void
+handle_aout_x_libs(const char *srcdir, const char *tgtdir)
+{
+	char src[MAXPATHLEN];
+	int i;
+
+	for (i = 0; i < (sizeof x_libs / sizeof (const char *)); i++) {
+		snprintf(src, MAXPATHLEN, "%s/%s", srcdir, x_libs[i]);
+		if (!is_aout_shared_lib(src))
+			continue;
+		run_prog(0, NULL, "mv -f %s %s", src, tgtdir);
+	}
+
+	/*
+	 * Don't care if it fails; X may not have been installed.
+	 */
+}
+
+/*
  * Function to count or move a.out shared libraries.
  */
 static int
@@ -661,9 +729,6 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 {
 	DIR *dd;
 	struct dirent *dp;
-	struct exec ex;
-	struct stat st;
-	int fd;
 	char *fullname;
 	const char *destdir;
 	int n;
@@ -694,25 +759,9 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 			continue;
 
 		asprintf(&fullname, "%s/%s", dir, dp->d_name);
-		if (stat(fullname, &st) < 0)
-			goto endloop;
-		if ((st.st_mode & (S_IFREG|S_IFLNK)) == 0)
-			goto endloop;
 
-	
-		fd = open(fullname, O_RDONLY);
-		if (fd < 0) {
-			close(fd);
+		if (!is_aout_shared_lib(fullname))
 			goto endloop;
-		}
-		if (read(fd, &ex, sizeof ex) < sizeof ex) {
-			close(fd);
-			goto endloop;
-		}
-		close(fd);
-		if (N_GETMAGIC(ex) != ZMAGIC ||
-		    (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
-			continue;
 
 		switch (op) {
 		case LIB_COUNT:
@@ -811,6 +860,12 @@ domove:
 	strcpy(src, target_expand("/usr/lib"));
 	n = handle_aout_libs(src, LIB_MOVE,
 	    concat_paths(prefix, "usr/lib"));
+
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
+	    concat_paths(prefix, "usr/X11R6/lib"));
+
+	strcpy(src, target_expand("/usr/X11R6/lib"));
+	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
 
 	return n;
 }
