@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.40 1993/07/18 08:23:07 andrew Exp $
+ *	$Id: machdep.c,v 1.41 1993/07/19 16:38:35 cgd Exp $
  */
 
 #include "npx.h"
@@ -66,9 +66,7 @@
 #include "sys/exec.h"
 #include "sys/vnode.h"
 
-#ifdef barely_notdef /* XXX - cgd */
 vm_map_t buffer_map;
-#endif
 extern vm_offset_t avail_end;
 
 #include "machine/cpu.h"
@@ -96,9 +94,6 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 int	msgbufmapped;		/* set when safe to use msgbuf */
-#ifndef barely_notdef /* XXX - cgd */
-extern int freebufspace;
-#endif
 
 /*
  * Machine-dependent startup code
@@ -188,21 +183,21 @@ again:
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / 10 / CLSIZE;
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
+	    if (physmem < btoc(2 * 1024 * 1024))
+		bufpages = physmem / 10 / CLSIZE;
+	    else
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
 
-	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);
+	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
 
 	if (nbuf == 0) {
 		nbuf = bufpages / 2;
-		if (nbuf < 16)
+		if (nbuf < 16) {
 			nbuf = 16;
+			/* XXX (cgd) -- broken vfs_bio currently demands this */
+			bufpages = 32;
+		}
 	}
-#ifndef barely_notdef /* XXX - cgd */
-	freebufspace = bufpages * NBPG;
-#endif
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -226,7 +221,7 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
-#ifdef barely_notdef /* XXX - cgd */
+#if 0
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -240,6 +235,10 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+	if (base >= MAXBSIZE) { /* don't want to alloc more physical mem than needed */
+		base = MAXBSIZE;
+		residual = 0;
+	}
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -256,7 +255,14 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+#else
+	/*
+	 * Allocate a submap for buffer space allocations.
+	 */
+	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+		bufpages * CLBYTES, TRUE);
 #endif
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -288,13 +294,8 @@ again:
 		callout[i-1].c_next = &callout[i];
 
 	printf("avail mem = %d\n", ptoa(vm_page_free_count));
-#ifdef barely_notdef /* XXX - cgd */
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-#else
-	printf("using %d buffers backed by %d bytes of memory\n",
-		nbuf, freebufspace);
-#endif
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
