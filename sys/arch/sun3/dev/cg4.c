@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.1 1995/03/10 01:51:03 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.2 1995/04/07 02:43:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,15 +61,17 @@
 
 #include <vm/vm.h>
 
+#include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
-#include <machine/eeprom.h>
 
 #include "fbvar.h"
 #include "btreg.h"
 #include "btvar.h"
 #include "cg4reg.h"
+
+extern unsigned char cpu_machine_id;
 
 /* per-display variables */
 struct cg4_softc {
@@ -114,13 +116,24 @@ cg4match(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	int x;
+	int paddr, x;
+
+	/* XXX - Huge hack due to lack of probe info... */
+	switch (cpu_machine_id) {
+		/* Machines that might have a cg4 (gag). */
+	case SUN3_MACH_50:
+	case SUN3_MACH_60:
+	case SUN3_MACH_110:
+		break;
+	default:
+		return (0);
+	}
 
 	if (ca->ca_paddr == -1)
 		ca->ca_paddr = 0xFF200000;
 
-	/* The peek returns -1 on bus error. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
+	paddr = ca->ca_paddr + CG4REG_PIXMAP + CG4_PIXMAP_SIZE - 8;
+	x = bus_peek(ca->ca_bustype, paddr, 1);
 	return (x != -1);
 }
 
@@ -150,7 +163,7 @@ cg4attach(parent, self, args)
 
 	fbt->fb_width = 1152;
 	fbt->fb_height = 900;
-	fbt->fb_size = CG4_FBSIZE;
+	fbt->fb_size = CG4_MMAP_SIZE;
 
 	sc->sc_phys = ca->ca_paddr;
 	sc->sc_bt = (struct bt_regs *)
@@ -176,12 +189,7 @@ cg4attach(parent, self, args)
 	bt->bt_ctrl = 0x00;	/* set test mode */
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
-	/* Is the EEPROM console set for the cg4? */
-	if ((ee_console == EE_CONS_COLOR) ||
-		(ee_console == EE_CONS_P4OPT) )
-	{
-		fb_attach(fb);
-	}
+	fb_attach(fb, 4);
 }
 
 int
@@ -241,32 +249,39 @@ cg4ioctl(dev, cmd, data, flags, p)
 int
 cg4map(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	register int off;
+	int prot;
 {
 	struct cg4_softc *sc = cgfourcd.cd_devs[minor(dev)];
-	int realoff;
+	register int physbase;
 
 	if (off & PGOFSET)
 		panic("cg4map");
 
-	realoff = off + CG4REG_OVERLAY;
-	if (off >= 0x20000) {
-		off -= 0x20000;
-		realoff += 0x1e0000;
-	}
-	if (off >= 0x20000) {
-		off -= 0x20000;
-		realoff += 0x1e0000;
-	}
-
-	if ((unsigned)off >= CG4_FBSIZE)
+	if ((unsigned)off >= CG4_MMAP_SIZE)
 		return (-1);
+
+	physbase = sc->sc_phys;
+	if (off < 0x40000) {
+		if (off < 0x20000) {
+			/* overlay plane */
+			physbase += CG4REG_OVERLAY;
+		} else {
+			/* enable plane */
+			off -= 0x20000;
+			physbase += CG4REG_ENABLE;
+		}
+	} else {
+		/* pixel map */
+		off -= 0x40000;
+		physbase += CG4REG_PIXMAP;
+	}
 
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return ((sc->sc_phys + realoff) | PMAP_NC);
+	return ((physbase + off) | PMAP_NC);
 }
 
 /*
