@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.18 2003/04/12 05:00:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.19 2003/06/29 13:35:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.18 2003/04/12 05:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.19 2003/06/29 13:35:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, l);
 		break;
 
 	case FIOASYNC:
@@ -449,7 +449,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, l);
 		break;
 
 	case FIOSETOWN:
@@ -470,7 +470,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			tmp = p1->p_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCSPGRP, (caddr_t)&tmp, p);
+			(fp, TIOCSPGRP, (caddr_t)&tmp, l);
 		break;
 
 	case FIOGETOWN:
@@ -479,7 +479,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			*(int *)data32 = ((struct socket *)fp->f_data)->so_pgid;
 			break;
 		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data32, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data32, l);
 		*(int *)data32 = -*(int *)data32;
 		break;
 
@@ -574,9 +574,9 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
-		error = netbsd32_md_ioctl(fp, com, data32, p);
+		error = netbsd32_md_ioctl(fp, com, data32, l);
 #else
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, l);
 #endif
 		break;
 	}
@@ -596,6 +596,6 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		free(memp, M_IOCTLOPS);
 
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }

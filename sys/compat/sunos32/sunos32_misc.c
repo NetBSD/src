@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.20 2003/06/28 14:21:26 darrenr Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.21 2003/06/29 13:35:42 martin Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.20 2003/06/28 14:21:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.21 2003/06/29 13:35:42 martin Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -323,7 +323,7 @@ sunos32_sys_stat(l, v, retval)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -383,18 +383,18 @@ again:
 			else
 				vput(dvp);
 		}
-		error = vn_stat(vp, &sb, p);
+		error = vn_stat(vp, &sb, l);
 		vput(vp);
 		if (error)
 			return (error);
 	} else {
-		error = vn_stat(dvp, &sb, p);
+		error = vn_stat(dvp, &sb, l);
 		vput(dvp);
 		if (error) {
 			vput(vp);
 			return (error);
 		}
-		error = vn_stat(vp, &sb1, p);
+		error = vn_stat(vp, &sb1, l);
 		vput(vp);
 		if (error)
 			return (error);
@@ -817,7 +817,7 @@ out:
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -962,7 +962,7 @@ sunos32_sys_setsockopt(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -986,7 +986,7 @@ sunos32_sys_socket_common(l, retval, type)
 		if (type == SOCK_DGRAM)
 			so->so_options |= SO_BROADCAST;
 	}
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -1137,7 +1137,7 @@ sunos32_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, l);
 	}
 	return ret;
 }
@@ -1282,7 +1282,7 @@ sunos32_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
@@ -1309,12 +1309,12 @@ sunos32_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
