@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.75 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.76 2004/01/10 17:16:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.75 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.76 2004/01/10 17:16:38 hannken Exp $");
 
 #include "fs_union.h"
 
@@ -824,42 +824,4 @@ vn_restorerecurse(vp, flags)
 
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
-}
-
-/*
- * Request a filesystem to suspend write operations.
- */
-int
-vfs_write_suspend(struct mount *mp)
-{
-	struct proc *p = curproc;	/* XXX */
-	int error;
-
-	if (mp->mnt_iflag & IMNT_SUSPEND)
-		return (0);
-	mp->mnt_iflag |= IMNT_SUSPEND;
-	if (mp->mnt_writeopcountupper > 0)
-		tsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt", 0);
-	if ((error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) != 0) {
-		vfs_write_resume(mp);
-		return (error);
-	}
-	mp->mnt_iflag |= IMNT_SUSPENDLOW;
-	if (mp->mnt_writeopcountlower > 0)
-		tsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt", 0);
-	mp->mnt_iflag |= IMNT_SUSPENDED;
-	return (0);
-}
-
-/*
- * Request a filesystem to resume write operations.
- */
-void
-vfs_write_resume(struct mount *mp)
-{
-
-	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
-		return;
-	mp->mnt_iflag &= ~(IMNT_SUSPEND | IMNT_SUSPENDLOW | IMNT_SUSPENDED);
-	wakeup(&mp->mnt_flag);
 }

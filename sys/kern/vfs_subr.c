@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.213 2003/12/30 12:33:24 pk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.214 2004/01/10 17:16:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.213 2003/12/30 12:33:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.214 2004/01/10 17:16:38 hannken Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2826,6 +2826,54 @@ vfs_reinit(void)
 			(*vfs->vfs_reinit)();
 		}
 	}
+}
+
+/*
+ * Request a filesystem to suspend write operations.
+ */
+int
+vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
+{
+	struct proc *p = curproc;	/* XXX */
+	int error;
+
+	while ((mp->mnt_iflag & IMNT_SUSPEND)) {
+		if (slptimeo < 0)
+			return EWOULDBLOCK;
+		error = tsleep(&mp->mnt_flag, slpflag, "suspwt1", slptimeo);
+		if (error)
+			return error;
+	}
+	mp->mnt_iflag |= IMNT_SUSPEND;
+
+	if (mp->mnt_writeopcountupper > 0)
+		tsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt", 0);
+
+	error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+	if (error) {
+		vfs_write_resume(mp);
+		return error;
+	}
+	mp->mnt_iflag |= IMNT_SUSPENDLOW;
+
+	if (mp->mnt_writeopcountlower > 0)
+		tsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt", 0);
+	mp->mnt_iflag |= IMNT_SUSPENDED;
+
+	return 0;
+}
+
+/*
+ * Request a filesystem to resume write operations.
+ */
+void
+vfs_write_resume(struct mount *mp)
+{
+
+	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
+		return;
+	mp->mnt_iflag &= ~(IMNT_SUSPEND | IMNT_SUSPENDLOW | IMNT_SUSPENDED);
+	wakeup(&mp->mnt_flag);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.2 2003/12/13 18:59:29 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.3 2004/01/10 17:16:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.2 2003/12/13 18:59:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.3 2004/01/10 17:16:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,7 +632,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
 	 * Activate the snapshot.
 	 */
 
-	if ((error = vfs_write_suspend(sc->sc_mount)) != 0)
+	if ((error = vfs_write_suspend(sc->sc_mount, PUSER|PCATCH, 0)) != 0)
 		goto bad;
 
 	microtime(&sc->sc_time);
