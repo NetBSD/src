@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named-bootconf.sh,v 1.4 1998/12/14 15:39:12 lukem Exp $
+# $NetBSD: named-bootconf.sh,v 1.5 1998/12/15 01:00:53 tron Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,8 +39,9 @@
 if [ ${OPTIONFILE-X} = X ]; then
 	OPTIONFILE=/tmp/.options.`date +%s`.$$
 	ZONEFILE=/tmp/.zones.`date +%s`.$$
-	export OPTIONFILE ZONEFILE
-	touch $OPTIONFILE $ZONEFILE
+	COMMENTFILE=/tmp/.comments.`date +%s`.$$
+	export OPTIONFILE ZONEFILE COMMENTFILE
+	touch $OPTIONFILE $ZONEFILE $COMMENTFILE
 	DUMP=1
 else
 	DUMP=0
@@ -49,34 +50,44 @@ fi
 while read CMD ARGS; do
 	case $CMD in
 	\; )
-		echo \# $ARGS
+		echo \# $ARGS >>$COMMENTFILE
 		;;
 	cache )
 		set - X $ARGS
 		shift
 		if [ $# -eq 2 ]; then
 			(echo ""
+			cat $COMMENTFILE
 			echo "zone \"$1\" {"
 			echo "	type hint;"
 			echo "	file \"$2\";"
 			echo "};") >>$ZONEFILE
+			rm -f $COMMENTFILE
+			touch $COMMENTFILE
 		fi
 		;;
 	directory )
 		set - X $ARGS
 		shift
-		if [ $# -eq 1 -a -d $1 ]; then
-			echo "	directory \"$1\";" >>$OPTIONFILE
+		if [ $# -eq 1 ]; then
+			(cat $COMMENTFILE
+			echo "	directory \"$1\";") >>$OPTIONFILE
+			rm -f $COMMENTFILE
+			touch $COMMENTFILE
+
 			DIRECTORY=$1
 			export DIRECTORY
 		fi
 		;; 
 	forwarders )
-		(echo "	forwarders {"
+		(cat $COMMENTFILE
+		echo "	forwarders {"
 		for ARG in $ARGS; do
 			echo "		$ARG;"
 		done
 		echo "	};") >>$OPTIONFILE
+		rm -f $COMMENTFILE
+		touch $COMMENTFILE
 		;;
 	include )
 		if [ "$ARGS" != "" ]; then
@@ -87,14 +98,18 @@ while read CMD ARGS; do
 		set - X $ARGS
 		shift
 		if [ $# -eq 2 ]; then
+			cat $COMMENTFILE >>$OPTIONFILE
 			case $1 in
 			datasize | files | transfers-in | transfers-per-ns )
 				echo "	$1 $2;" >>$OPTIONFILE
 				;;
 			esac
+			rm -f $COMMENTFILE
+			touch $COMMENTFILE
 		fi
 		;;
 	options )
+		cat $COMMENTFILE >>$OPTIONFILE
 		for ARG in $ARGS; do
 			case $ARG in
 			fake-iquery )
@@ -111,6 +126,8 @@ while read CMD ARGS; do
 				;;
 			esac
 		done
+		rm -f $COMMENTFILE
+		touch $COMMENTFILE
 		;;
 	primary|primary/* )
 		case $CMD in
@@ -125,10 +142,13 @@ while read CMD ARGS; do
 		shift
 		if [ $# -eq 2 ]; then
 			(echo ""
+			cat $COMMENTFILE
 			echo "zone \"$1\" ${class}{"
 			echo "	type master;"
 			echo "	file \"$2\";"
 			echo "};") >>$ZONEFILE
+			rm -f $COMMENTFILE
+			touch $COMMENTFILE
 		fi
 		;;
 	secondary|secondary/* )
@@ -151,6 +171,7 @@ while read CMD ARGS; do
 				PRIMARIES="$PRIMARIES $1"
 			done
 			(echo ""
+			cat $COMMENTFILE
 			echo "zone \"$ZONE\" ${class}{"
 			echo "	type slave;"
 			echo "	file \"$2\";"
@@ -160,13 +181,19 @@ while read CMD ARGS; do
 			done
 			echo "	};"
 			echo "};") >>$ZONEFILE
+			rm -f $COMMENTFILE
+			touch $COMMENTFILE
 		fi
 		;;
 	slave )
+		cat $COMMENTFILE >>$OPTIONFILE
 		echo "	forward only;" >>$OPTIONFILE
+		rm -f $COMMENTFILE
+		touch $COMMENTFILE
 		;;
 	sortlist )
-		(echo "	topology {"
+		(cat $COMMENTFILE
+		echo "	topology {"
 		for ARG in $ARGS; do
 			case $ARG in
 			*.0.0.0 )
@@ -184,9 +211,12 @@ while read CMD ARGS; do
 			esac
 		done
 		echo "	};") >>$OPTIONFILE
+		rm -f $COMMENTFILE
+		touch $COMMENTFILE
 		;;
 	tcplist | xfrnets )
-		(echo "	allow-transfer {"
+		(cat $COMMENTFILE
+		echo "	allow-transfer {"
 		for ARG in $ARGS; do
 			case $ARG in
 			*.0.0.0 )
@@ -204,20 +234,20 @@ while read CMD ARGS; do
 			esac
 		done
 		echo "	};") >>$OPTIONFILE
+		rm -f $COMMENTFILE
+		touch $COMMENTFILE
 		;;
 	esac
 done
 
 if [ $DUMP -eq 1 ]; then
-	if [ -s $OPTIONFILE ]; then
-		echo ""
-		echo "options {"
-		cat $OPTIONFILE
-		echo "};"
-	fi
-	cat $ZONEFILE
+	echo ""
+	echo "options {"
+	cat $OPTIONFILE
+	echo "};"
+	cat $ZONEFILE $COMMENTFILE
 
-	rm -f $OPTIONFILE $ZONEFILE
+	rm -f $OPTIONFILE $ZONEFILE $COMMENTFILE
 fi
 
 exit 0
