@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 2003/02/03 21:48:01 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.11 2003/03/02 01:07:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ do {									\
 	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[_REG_MSR];	\
 	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[_REG_CTR];	\
 	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[_REG_XER];	\
-	(sc)->sc_frame.mq     = 0;					\
+	(sc)->sc_frame.mq     = (uc)->uc_mcontext.__gregs[_REG_MQ];	\
 	(sc)->sc_frame.vrsave = (uc)->uc_mcontext.__vrf.__vrsave;	\
 	(sc)->sc_frame.spare  = 0;					\
 } while (/*CONSTCOND*/0)
