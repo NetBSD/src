@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.40 2003/12/28 06:06:55 dbj Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.41 2003/12/29 14:25:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.40 2003/12/28 06:06:55 dbj Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.41 2003/12/29 14:25:07 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if ((opt_flags & DFLT_CHECK) == 0)
-		opt_flags = DFLT_OPTS;
+		opt_flags |= DFLT_OPTS;
 
 	if (argc < 1)
 		usage();
