@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/08/14 15:38:31 drochner Exp $
+#	$NetBSD: Makefile,v 1.8 1997/08/14 17:00:22 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,8 +11,8 @@ SRCS= main.c devopen.c
 CLEANFILES+= ${DOSSTART} ${PROG}.sym ${PROG}.com ${PROG}.list
 
 CPPFLAGS+= -DCOMPAT_OLDBOOT -DXMS
-#uncomment to enable extended memory detection
-#CPPFLAGS+= -DEXTENDED_MEMDETECT
+#uncomment if there are problems with memory detection
+#CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall
