@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3 1998/05/11 07:46:15 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.4 1998/05/18 12:06:46 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -336,12 +336,9 @@ bus_dmamap_sync(t, map, off, len, ops)
 	bus_size_t len;
 	int ops;
 {
+#if defined(M68040) || defined(M68060)
 	int	i, pa_off, inc, seglen;
 	u_long	pa, end_pa;
-
-#if !defined(M68040) && !defined(M68060)
-	return;
-#endif
 
 	if (t == BUS_PCI_DMA_TAG)
 		pa_off = 0x80000000; /* XXX */
@@ -377,6 +374,7 @@ bus_dmamap_sync(t, map, off, len, ops)
 			}
 		}
 	}
+#endif
 }
 
 /*
