@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.12 1997/03/30 21:04:13 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.13 1997/07/30 15:45:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -74,9 +74,9 @@ struct ramd_info rd_info[RAMD_NDEV] = {
 	MAKEDISKDEV(2, 0, 2),	/* XXX: This is crap! (720Kb flop)	*/
     },
     {
-	1474560,		/*	1.44Mb in 2880 sectors		*/
+	1105920,		/*	1Mb in 2160 sectors		*/
 	RAMD_LOAD,		/* auto-load this device		*/
-	MAKEDISKDEV(2, 0, 2),	/* XXX: This is crap! (720Kb flop)	*/
+	MAKEDISKDEV(2, 0, 3),	/* XXX: This is crap! (1.44Mb flop)	*/
     }
 };
 
