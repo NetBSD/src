@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.13 1998/04/01 16:15:40 kleink Exp $	*/
+/*	$NetBSD: optr.c,v 1.13.10.1 2000/10/18 00:39:44 tv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.13 1998/04/01 16:15:40 kleink Exp $");
+__RCSID("$NetBSD: optr.c,v 1.13.10.1 2000/10/18 00:39:44 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,9 +325,9 @@ timeest()
 		deltat = tstart_writing - tnow +
 			(1.0 * (tnow - tstart_writing))
 			/ blockswritten * tapesize;
-		msg("%3.2f%% done, finished in %d:%02d\n",
-			(blockswritten * 100.0) / tapesize,
-			deltat / 3600, (deltat % 3600) / 60);
+		msg("%3.2f%% done, finished in %ld:%02ld\n",
+		    (blockswritten * 100.0) / tapesize,
+		    (long)(deltat / 3600), (long)((deltat % 3600) / 60));
 	}
 }
 
