@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/01/30 12:38:32 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/06 04:04:58 tv Exp $
 
 # XXX set MACHINE_GNU_ARCH for _<arch>.mk
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ PROG=		ld
 
 SRCS=		ldctor.c ldemul.c ldexp.c ldfile.c ldlang.c ldmain.c ldmisc.c \
 		ldver.c ldwrite.c lexsup.c mri.c ldcref.c ldgram.y ldlex.l
+DPSRCS=		ldemul-list.h
 MAN=		ld.1
 YHEADER=1
 SCRIPTDIR=	/usr/libdata
@@ -41,6 +42,13 @@ e${_EMUL_}.c: ${DIST}/ld/genscripts.sh ${DIST}/ld/emulparams/${_EMUL_}.sh
 		"" ${_EMUL_}
 .endfor
 
+ldemul-list.h:
+	@rm -f $@
+	@echo updating $@
+	@for emul in ${EMULS}; do \
+		echo "extern ld_emulation_xfer_type ld_$${emul}_emulation;" >>$@; \
+	done
+
 afterinstall:
 	pax -rw ldscripts ${DESTDIR}${SCRIPTDIR}
 
@@ -54,3 +62,5 @@ beforedepend:
 	@rm -f ${DIST}/ld/ldgram.c ${DIST}/ld/ldgram.h ${DIST}/ld/ldlex.c
 
 .include <bsd.prog.mk>
+
+${OBJS}: ldemul-list.h
