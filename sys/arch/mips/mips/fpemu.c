@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.6 2000/05/31 00:59:28 nisimura Exp $ */
+/*	$NetBSD: fpemu.c,v 1.7 2001/10/16 16:31:36 uch Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -92,6 +92,8 @@ update_pc(frame, cause)
 		frame->f_regs[PC] += 4;
 }
 
+#define LWSWC1_MAXLOOP	12
+
 void
 MachEmulateLWC1(inst, frame, cause)
 	u_int32_t inst;
@@ -101,6 +103,8 @@ MachEmulateLWC1(inst, frame, cause)
 	u_int32_t	vaddr;
 	int16_t		offset;
 	void		*t;
+	mips_reg_t	pc;
+	int		i;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
@@ -118,7 +122,39 @@ MachEmulateLWC1(inst, frame, cause)
 		return;
 	}
 
+	pc = frame->f_regs[PC];
 	update_pc(frame, cause);
+
+	if (cause & MIPS_CR_BR_DELAY)
+		return;
+
+	for (i = 1; i < LWSWC1_MAXLOOP; i++) {
+		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+			return;
+
+		inst = fuiword((u_int32_t *)frame->f_regs[PC]);
+		if (((InstFmt)inst).FRType.op != OP_LWC1)
+			return;
+
+		offset = inst & 0xFFFF;
+		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+		/* segment and alignment check */
+		if (vaddr & 0x80000003) {
+			send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+			return;
+		}
+
+		t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
+
+		if (copyin((void *)vaddr, t, 4) != 0) {
+			send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+			return;
+		}
+
+		pc = frame->f_regs[PC];
+		update_pc(frame, cause);
+	}
 }
 
 void
@@ -159,6 +195,8 @@ MachEmulateSWC1(inst, frame, cause)
 	u_int32_t	vaddr;
 	int16_t		offset;
 	void		*t;
+	mips_reg_t	pc;
+	int		i;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
@@ -176,7 +214,39 @@ MachEmulateSWC1(inst, frame, cause)
 		return;
 	}
 
+	pc = frame->f_regs[PC];
 	update_pc(frame, cause);
+
+	if (cause & MIPS_CR_BR_DELAY)
+		return;
+
+	for (i = 1; i < LWSWC1_MAXLOOP; i++) {
+		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+			return;
+
+		inst = fuiword((u_int32_t *)frame->f_regs[PC]);
+		if (((InstFmt)inst).FRType.op != OP_SWC1)
+			return;
+
+		offset = inst & 0xFFFF;
+		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+		/* segment and alignment check */
+		if (vaddr & 0x80000003) {
+			send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+			return;
+		}
+
+		t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
+
+		if (copyout(t, (void *)vaddr, 4) != 0) {
+			send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+			return;
+		}
+
+		pc = frame->f_regs[PC];
+		update_pc(frame, cause);
+	}
 }
 
 void

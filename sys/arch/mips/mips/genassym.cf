@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2001/01/16 06:01:26 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.24 2001/10/16 16:31:36 uch Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -70,6 +70,7 @@ define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
 define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)
 define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
+define	U_PCB_PPL		offsetof(struct user, u_pcb.pcb_ppl)
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
@@ -132,6 +133,7 @@ define	FRAME_MULHI		sizeof(mips_reg_t) * MULHI
 define	FRAME_BADVADDR		sizeof(mips_reg_t) * BADVADDR
 define	FRAME_CAUSE		sizeof(mips_reg_t) * CAUSE
 define	FRAME_EPC		sizeof(mips_reg_t) * PC
+define	FRAME_PPL		offsetof(struct frame, f_ppl)
 
 define	FRAME_FSR		sizeof(mips_fpreg_t) * 32
 define	FRAME_FP0		sizeof(mips_fpreg_t) * 0
@@ -200,6 +202,7 @@ define	TF_REG_SR	offsetof(struct trapframe, tf_sr)
 define	TF_REG_MULLO	offsetof(struct trapframe, tf_mullo)
 define	TF_REG_MULHI	offsetof(struct trapframe, tf_mulhi)
 define	TF_REG_EPC	offsetof(struct trapframe, tf_epc)
+define	TF_PPL		offsetof(struct trapframe, tf_ppl)
 
 define	CTXSWFRAME_SIZ	sizeof(mips_reg_t) * 12
 define	SF_REG_SR	sizeof(mips_reg_t) * 11
