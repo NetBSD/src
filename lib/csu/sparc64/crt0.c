@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.9 1999/11/02 10:03:44 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10 1999/12/30 15:34:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -59,6 +59,7 @@ __start:
 	mov	%g1, %o1			! Cleanup routine
 	clr	%o1				! XXXX
 	clr	%o2				! obj
+	ba,pt	%icc, ___start			! XXXX jump over the retl egcs 2.96 inserts
 	mov	%g1, %o3			! ps_strings XXXX
 ");
 
@@ -109,7 +110,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.9 1999/11/02 10:03:44 lukem Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 1999/12/30 15:34:47 eeh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
