@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 1998/09/11 00:16:59 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.5 1998/11/24 12:55:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -87,10 +87,7 @@ process_read_regs(p, regs)
 	regp->r_pc = tf->tf_pc;
 	regp->r_npc = tf->tf_npc;
 	regp->r_y = tf->tf_y;
-	for (i=0; i<8; i++) {
-		struct rwindow32 *rw = (struct rwindow32 *)tf->tf_out[6];
-		int32_t tmp;
-
+	for (i = 0; i < 8; i++) {
 		regp->r_global[i] = tf->tf_global[i];
 		regp->r_out[i] = tf->tf_out[i];
 	}
@@ -110,9 +107,7 @@ process_write_regs(p, regs)
 	tf->tf_pc = regp->r_pc;
 	tf->tf_npc = regp->r_npc;
 	tf->tf_y = regp->r_pc;
-	for (i=0; i<8; i++) {
-		struct rwindow32 *rw = (struct rwindow32 *)tf->tf_out[6];
-
+	for (i = 0; i < 8; i++) {
 		tf->tf_global[i] = regp->r_global[i];
 		tf->tf_out[i] = regp->r_out[i];
 	}
