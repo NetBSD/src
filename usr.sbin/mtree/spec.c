@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.27 2001/10/04 05:03:42 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.28 2001/10/05 01:03:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.27 2001/10/04 05:03:42 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.28 2001/10/05 01:03:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,25 +159,8 @@ dump_nodes(const char *dir, NODE *root)
 	char	path[MAXPATHLEN + 1];
 
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (cur->type == F_FILE) {
-			if (cur->tags) {
-				int	i;
-
-				for (i = 0; excludetags[i] != NULL; i++)
-					if (strstr(cur->tags, excludetags[i]))
-						break;
-				if (excludetags[i] != NULL)
-					continue;
-
-				for (i = 0; includetags[i] != NULL; i++)
-					if (strstr(cur->tags, includetags[i]))
-						break;
-				if (i > 0 && includetags[i] == NULL)
-					continue;
-			} else if (includetags[0] != NULL) {
-				continue;
-			}
-		}
+		if (cur->type != F_DIR && !matchtags(cur))
+			continue;
 
 		if (snprintf(path, sizeof(path), "%s%s%s",
 		    dir, *dir ? "/" : "", cur->name)
