@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_proto.c,v 1.5 2000/05/19 10:43:43 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.5.4.1 2000/10/18 02:16:21 tv Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -490,7 +490,7 @@ schedule_delayed_join(mrtentry_ptr, target)
 #endif
     
 	IF_DEBUG(DEBUG_PIM_JOIN_PRUNE)
-		log(LOG_DEBUG, 0, "Scheduling join for src %s, grp %s, delay %d",
+		log(LOG_DEBUG, 0, "Scheduling join for src %s, grp %s, delay %ld",
 		    inet6_fmt(&mrtentry_ptr->source->address.sin6_addr),
 		    inet6_fmt(&mrtentry_ptr->group->group.sin6_addr),
 		    random_delay);
