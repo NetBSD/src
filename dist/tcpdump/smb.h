@@ -1,6 +1,6 @@
-/*	$NetBSD: smb.h,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: smb.h,v 1.1.1.2 2002/02/18 09:09:06 itojun Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.5 2001/06/25 18:58:08 itojun Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.7 2002/01/17 04:38:29 guy Exp (LBL) */
 /* 
  * Copyright (C) Andrew Tridgell 1995-1999
  *
@@ -9,39 +9,7 @@
  * or later
  */
 
-#define CVAL(buf,pos) (((unsigned char *)(buf))[pos])
-#define PVAL(buf,pos) ((unsigned)CVAL(buf,pos))
-#define SCVAL(buf,pos,val) (CVAL(buf,pos) = (val))
-
-#define SVAL(buf,pos) (PVAL(buf,pos)|PVAL(buf,(pos)+1)<<8)
-#define IVAL(buf,pos) (SVAL(buf,pos)|SVAL(buf,(pos)+2)<<16)
-#define SSVALX(buf,pos,val) (CVAL(buf,pos)=(val)&0xFF,CVAL(buf,pos+1)=(val)>>8)
-#define SIVALX(buf,pos,val) (SSVALX(buf,pos,val&0xFFFF),SSVALX(buf,pos+2,val>>16))
-#define SVALS(buf,pos) ((int16)SVAL(buf,pos))
-#define IVALS(buf,pos) ((int32)IVAL(buf,pos))
-#define SSVAL(buf,pos,val) SSVALX((buf),(pos),((uint16)(val)))
-#define SIVAL(buf,pos,val) SIVALX((buf),(pos),((uint32)(val)))
-#define SSVALS(buf,pos,val) SSVALX((buf),(pos),((int16)(val)))
-#define SIVALS(buf,pos,val) SIVALX((buf),(pos),((int32)(val)))
-
-/* now the reverse routines - these are used in nmb packets (mostly) */
-#define SREV(x) ((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
-#define IREV(x) ((SREV(x)<<16) | (SREV((x)>>16)))
-
-#define RSVAL(buf,pos) SREV(SVAL(buf,pos))
-#define RIVAL(buf,pos) IREV(IVAL(buf,pos))
-#define RSSVAL(buf,pos,val) SSVAL(buf,pos,SREV(val))
-#define RSIVAL(buf,pos,val) SIVAL(buf,pos,IREV(val))
-
-#define uint16 unsigned short
-#define uint32 unsigned int
-#ifndef uchar
-#define uchar unsigned char
-#endif
-
-#ifndef MIN
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#endif
+#define SMBMIN(a,b) ((a)<(b)?(a):(b))
 
 /* the complete */
 #define SMBmkdir      0x00   /* create directory */
@@ -153,4 +121,4 @@
 #define PTR_DIFF(p1, p2) ((size_t)(((char *)(p1)) - (char *)(p2)))
 
 /* some protos */
-const uchar *fdata(const uchar *, const char *, const uchar *);
+const u_char *smb_fdata(const u_char *, const char *, const u_char *);
