@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.12 2000/07/19 03:56:38 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2000/11/01 19:37:20 thorpej Exp $
 #
 #	The rest of the lib routines are in machine/macros.h
 #
-SRCS+=	__main.c __assert.c random.S strncmp.c strncasecmp.c bswap64.S
+SRCS+=	__main.c __assert.c random.S strncmp.c strcasecmp.c \
+	strncasecmp.c bswap64.S
