@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8.2.4 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8.2.5 2004/08/13 10:20:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.4 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.5 2004/08/13 10:20:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,7 +68,7 @@ int adosfs_root __P((struct mount *, struct vnode **, struct lwp *));
 int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
+int adosfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **,
 		       struct lwp *));
 int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
