@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169 2000/06/15 04:11:18 itojun Exp $
+# $NetBSD: mi,v 1.169.2.1 2000/06/21 06:38:35 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -182,6 +182,7 @@
 ./usr/bin/colrm
 ./usr/bin/column
 ./usr/bin/comm
+./usr/bin/compile_et
 ./usr/bin/compress
 ./usr/bin/cpio
 ./usr/bin/cpp
@@ -239,7 +240,12 @@
 ./usr/bin/ipcs
 ./usr/bin/join
 ./usr/bin/jot
+./usr/bin/kdestroy
 ./usr/bin/kdump
+./usr/bin/kf
+./usr/bin/kinit
+./usr/bin/klist
+./usr/bin/kpasswd
 ./usr/bin/ktrace
 ./usr/bin/ktruss
 ./usr/bin/lam
@@ -272,6 +278,7 @@
 ./usr/bin/mesg
 ./usr/bin/midiplay
 ./usr/bin/mixerctl
+./usr/bin/mk_cmds
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
 ./usr/bin/mktemp
@@ -290,6 +297,7 @@
 ./usr/bin/nslookup
 ./usr/bin/nsupdate
 ./usr/bin/od
+./usr/bin/openssl
 ./usr/bin/page
 ./usr/bin/pagesize
 ./usr/bin/passwd
@@ -334,6 +342,7 @@
 ./usr/bin/skeyinit
 ./usr/bin/sort
 ./usr/bin/split
+./usr/bin/string2key
 ./usr/bin/su
 ./usr/bin/sum
 ./usr/bin/sysstat
@@ -458,7 +467,13 @@
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
 ./usr/libexec/getty
+./usr/libexec/hprop
+./usr/libexec/hpropd
 ./usr/libexec/identd
+./usr/libexec/kadmind
+./usr/libexec/kdc
+./usr/libexec/kfd
+./usr/libexec/kpasswdd
 ./usr/libexec/lfs_cleanerd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -582,6 +597,9 @@
 ./usr/sbin/ipresend
 ./usr/sbin/ipsend
 ./usr/sbin/iptest
+./usr/sbin/kadmin
+./usr/sbin/kstash
+./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/lastlogin
 ./usr/sbin/link
