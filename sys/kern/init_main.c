@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.152 1999/06/07 20:16:09 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.153 1999/07/06 21:44:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -409,11 +409,11 @@ main()
 	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
-	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	if (kthread_create1(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
 	/* Create process 3, the process reaper kernel thread. */
-	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
+	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
 	/* Create any other deferred kernel threads. */
