@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.3 2004/03/20 10:39:21 martin Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.4 2004/03/20 18:34:57 he Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.3 2004/03/20 10:39:21 martin Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.4 2004/03/20 18:34:57 he Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,7 @@ static __inline struct kc *kcont_dequeue_atomic(kcq_t *kcq);
 static void	kcont_worker(void * /*arg*/);
 
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 /*
  * Software-interrupt priority continuation queues.
  */
@@ -79,6 +80,7 @@ static kcq_t kcq_softserial;
 static void *kc_si_softnet;
 static void *kc_si_softclock;
 static void *kc_si_softserial;
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /*
  * Process-context continuation queue.
@@ -300,6 +302,7 @@ kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 	}
 }
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 /*
  * Trampolines for processing software-interrupt kcont queues.
  */
@@ -320,6 +323,7 @@ kcont_run_softserial(void *arg)
 {
 	kcont_run((struct kcqueue *)arg, NULL, 0, KC_IPL_DEFER_SOFTSERIAL);
 }
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /*
  * Main entrypoint for kcont worker kthreads to execute
