@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.1 1998/01/22 16:31:34 mycroft Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.2 1998/01/22 17:23:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -155,7 +155,7 @@ freebsd_sys_shmsys(p, v, retval)
 		return (EINVAL);
 
 	case 2:						/* shmdt() */
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
+		SCARG(&shmdt_args, shmaddr) = (void *)SCARG(uap, a2);
 		return (sys_shmdt(p, &shmdt_args, retval));
 
 	case 3:						/* shmget() */
