@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.5 2000/03/07 00:08:42 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.6 2000/03/09 02:02:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.5 2000/03/07 00:08:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.6 2000/03/09 02:02:12 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,18 +81,16 @@ struct asc_vsbus_softc {
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned int sc_flags;
-#define	ASC_DMAACTIVE		0x0001
-#define	ASC_ISWRITE		0x0002
+#define	ASC_FROMMEMORY		0x0001		/* Must be 1 */
+#define	ASC_DMAACTIVE		0x0002
 #define	ASC_MAPLOADED		0x0004
+	unsigned long sc_xfers;
 };
 
 #define	ASC_REG_ADR		0x0000
 #define	ASC_REG_DIR		0x000C
 #define	ASC_REG_NCR		0x0080
 #define	ASC_REG_END		0x00B0
-
-#define	ASC_TOMEMORY		0x0000
-#define	ASC_FROMMEMORY		0x0001
 
 #define	ASC_MAXXFERSIZE		65536
 #define	ASC_FREQUENCY		25000000
@@ -147,7 +145,7 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 
 	if (vax_boardtype != VAX_BTYP_46
 	   && vax_boardtype != VAX_BTYP_48
-	   && vax_boardtype != VAX_BTYP_49)
+	   /* && vax_boardtype != VAX_BTYP_49 */)
 		return 0;
 
 	ncr_regs = (volatile u_int8_t *) va->va_addr;
@@ -335,8 +333,14 @@ asc_vsbus_dma_intr(sc)
 		NCR_DMA(("asc_vsbus_intr: empty FIFO of %d ", resid));
 		DELAY(1);
 	}
-	if (asc->sc_flags & ASC_MAPLOADED)
+	if (asc->sc_flags & ASC_MAPLOADED) {
+		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+				0, asc->sc_dmasize,
+				asc->sc_flags & ASC_FROMMEMORY
+					? BUS_DMASYNC_POSTWRITE
+					: BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	}
 	asc->sc_flags &= ~ASC_MAPLOADED;
 
 	resid += (tcl = NCR_READ_REG(sc, NCR_TCL));
@@ -354,6 +358,7 @@ asc_vsbus_dma_intr(sc)
 	*asc->sc_dmalen -= trans;
 	*asc->sc_dmaaddr += trans;
 	
+	asc->sc_xfers++;
 	return 0;
 }
 
@@ -366,16 +371,16 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
 	if (datain) {
-		asc->sc_flags |= ASC_ISWRITE;
+		asc->sc_flags &= ~ASC_FROMMEMORY;
 	} else {
-		asc->sc_flags &= ~ASC_ISWRITE;
+		asc->sc_flags |= ASC_FROMMEMORY;
 	}
 	if ((vaddr_t) *asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
 		panic("asc_vsbus_dma_setup: dma address (%p) outside of kernel",
 		    *asc->sc_dmaaddr);
 
         NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
-                (int)*asc->sc_dmalen, *asc->sc_dmaaddr, (asc->sc_flags & ASC_ISWRITE)));
+                (int)*asc->sc_dmalen, *asc->sc_dmaaddr, (asc->sc_flags & ASC_FROMMEMORY)));
 	*dmasize = asc->sc_dmasize = min(*dmasize, ASC_MAXXFERSIZE);
 
 	if (asc->sc_dmasize) {
@@ -385,13 +390,14 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 				BUS_DMA_NOWAIT))
 			panic("%s: cannot load dma map", sc->sc_dev.dv_xname);
 		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
-				0, asc->sc_dmasize, datain
-					? BUS_DMASYNC_PREREAD
-					: BUS_DMASYNC_PREWRITE);
+				0, asc->sc_dmasize,
+				asc->sc_flags & ASC_FROMMEMORY
+					? BUS_DMASYNC_PREWRITE
+					: BUS_DMASYNC_PREREAD);
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh, ASC_REG_ADR,
 				  asc->sc_dmamap->dm_segs[0].ds_addr);
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh, ASC_REG_DIR,
-				  datain ? ASC_TOMEMORY : ASC_FROMMEMORY);
+				  asc->sc_flags & ASC_FROMMEMORY);
 		asc->sc_flags |= ASC_MAPLOADED;
 	}
 
@@ -411,8 +417,14 @@ asc_vsbus_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
 
-	if (asc->sc_flags & ASC_MAPLOADED)
+	if (asc->sc_flags & ASC_MAPLOADED) {
+		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+				0, asc->sc_dmasize,
+				asc->sc_flags & ASC_FROMMEMORY
+					? BUS_DMASYNC_POSTWRITE
+					: BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	}
 
 	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
