@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.10 1994/10/29 00:43:22 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.11 1994/11/14 06:10:40 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -68,6 +68,7 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_dirent.h>
+#include <compat/svr4/svr4_ulimit.h>
 
 #include <vm/vm.h>
 
@@ -588,4 +589,122 @@ svr4_times(p, uap, retval)
 	*retval = timeval_to_clock_t(t);
 
 	return copyout(&tms, SCARG(uap, tp), sizeof(tms));
+}
+
+
+int
+svr4_ulimit(p, uap, retval)
+	register struct proc 			*p;
+	register struct svr4_ulimit_args	*uap;
+	register_t 				*retval;
+{
+	switch (SCARG(uap, cmd)) {
+	case SVR4_GFILLIM:
+		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
+		return 0;
+
+	case SVR4_SFILLIM:
+		{
+			int error;
+			struct setrlimit_args srl;
+			struct rlimit krl;
+			caddr_t sg = stackgap_init();
+			struct rlimit *url = (struct rlimit *) 
+				stackgap_alloc(&sg, sizeof *url);
+
+			krl.rlim_cur = SCARG(uap, newlimit) * 512;
+			krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
+
+			error = copyout(&krl, url, sizeof(*url));
+			if (error)
+				return error;
+
+			srl.which = RLIMIT_FSIZE;
+			srl.rlp = url;
+
+			error = setrlimit(p, &srl, retval);
+			if (error)
+				return error;
+
+			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+			return 0;
+		}
+
+	case SVR4_GMEMLIM:
+		{
+			struct vmspace *vm = p->p_vmspace;
+			*retval = (long) vm->vm_daddr +
+				  p->p_rlimit[RLIMIT_DATA].rlim_cur;
+			return 0;
+		}
+
+	case SVR4_GDESLIM:
+		*retval = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		return 0;
+
+	default:
+		return ENOSYS;
+	}
+}
+
+int
+svr4_pgrpsys(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_pgrpsys_args	*uap;
+	register_t				*retval;
+{
+	int error;
+	/* XXX */ extern struct proc * pfind();
+
+	switch (SCARG(uap, cmd)) {
+	case 0:			/* getpgrp() */
+		*retval = p->p_pgrp->pg_id;
+		return 0;
+
+	case 1:			/* setpgrp() */
+		{
+			struct setpgid_args sa;
+
+			SCARG(&sa, pid) = 0;
+			SCARG(&sa, pgid) = 0;
+			if ((error = setpgid(p, &sa, retval)) != 0)
+				return error;
+			*retval = p->p_pgrp->pg_id;
+			return 0;
+		}
+
+	case 2:			/* getsid(pid) */
+		if (SCARG(uap, pid) != 0 &&
+		    (p = pfind(SCARG(uap, pid))) == NULL)
+			return ESRCH;
+		/* 
+		 * There is no notion of session id, so we use the
+		 * session pointer
+		 */
+		*retval = (register_t) p->p_session;
+		return 0;
+
+	case 3:			/* setsid() */
+		return setsid(p, NULL, retval);
+
+	case 4:			/* getpgid(pid) */
+
+		if (SCARG(uap, pid) != 0 &&
+		    (p = pfind(SCARG(uap, pid))) == NULL)
+			return ESRCH;
+		*retval = (int) p->p_pgrp->pg_id;
+		return 0;
+
+	case 5:			/* setpgid(pid, pgid); */
+		{
+			struct setpgid_args sa;
+
+			SCARG(&sa, pid) = SCARG(uap, pid);
+			SCARG(&sa, pgid) = SCARG(uap, pgid);
+			return setpgid(p, &sa, retval);
+		}
+
+	default:
+		return EINVAL;
+	}
 }
