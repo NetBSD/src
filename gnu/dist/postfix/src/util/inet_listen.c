@@ -116,5 +116,8 @@ int     inet_listen(const char *addr, int backlog, int block_mode)
 
 int     inet_accept(int fd)
 {
-    return (sane_accept(fd, (struct sockaddr *) 0, (SOCKADDR_SIZE *) 0));
+    struct sockaddr_in sin;
+    SOCKADDR_SIZE len = sizeof(sin);
+
+    return (sane_accept(fd, (struct sockaddr *) & sin, &len));
 }

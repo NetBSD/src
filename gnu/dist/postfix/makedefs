@@ -251,14 +251,18 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		SYSLIBS="-lresolv -lsocket -lnsl"
 		;;
 Rhapsody.5*|Darwin.*)
-		SYSTYPE=RHAPSODY5
+		SYSTYPE=MACOSX
 		# Use the native compiler by default
 		: ${CC=cc}
-		AWK=gawk
 		case $RELEASE in
-		 1.[0-3]) ;;
+		 1.[0-3]) AWK=gawk
+			  ;;
+		 [2-6].*) AWK=awk
+			  SYSLIBS=-flat_namespace
+			  ;;
 		       *) AWK=awk
 			  SYSLIBS=-flat_namespace
+			  CCARGS="$CCARGS -DBIND_8_COMPAT -DNO_NETINFO"
 			  ;;
 		esac
 		;;
