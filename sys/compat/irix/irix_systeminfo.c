@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.7 2003/01/22 12:58:24 rafal Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.8 2003/11/08 21:33:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.7 2003/01/22 12:58:24 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.8 2003/11/08 21:33:35 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -90,8 +90,8 @@ irix_sys_systeminfo(l, v, retval)
 	struct proc *p = l->l_proc;
 	const char *str = NULL;
 	char strbuf[BUF_SIZE + 1];
-	int error;
-	size_t len;
+	int error = 0;
+	size_t len = 0;
 	char buf[256];
 	caddr_t sg = stackgap_init(p, 0);
 
