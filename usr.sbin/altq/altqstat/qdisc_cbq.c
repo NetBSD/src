@@ -1,3 +1,4 @@
+/*	$NetBSD: qdisc_cbq.c,v 1.4 2001/08/16 07:48:10 itojun Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.4 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000

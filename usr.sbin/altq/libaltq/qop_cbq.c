@@ -1,3 +1,4 @@
+/*	$NetBSD: qop_cbq.c,v 1.3 2001/08/16 07:48:13 itojun Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.3 2000/10/18 09:15:18 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.

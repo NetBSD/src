@@ -1,3 +1,4 @@
+/*	$NetBSD: altqd.c,v 1.5 2001/08/16 07:48:08 itojun Exp $	*/
 /*	$KAME: altqd.c,v 1.3 2001/08/15 03:36:07 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt

@@ -1,3 +1,4 @@
+/*	$NetBSD: tbrconfig.c,v 1.3 2001/08/16 07:48:15 itojun Exp $	*/
 /*	$KAME: tbrconfig.c,v 1.3 2001/05/08 04:36:39 itojun Exp $	*/
 /*
  * Copyright (C) 2000
