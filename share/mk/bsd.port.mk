@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.35 1998/01/23 16:48:23 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.36 1998/01/24 23:06:33 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -25,7 +25,7 @@
 # mailing list, and any correspondece should be directed there.
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
-OpenBSD_MAINTAINER=	imp@OpenBSD.ORG
+OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 NetBSD_MAINTAINER=	agc@netbsd.org
 
 # Supported Variables and their behaviors:
