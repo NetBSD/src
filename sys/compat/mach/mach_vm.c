@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.4 2002/11/11 09:28:00 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.5 2002/11/12 05:18:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,14 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.4 2002/11/11 09:28:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.5 2002/11/12 05:18:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/mman.h>
 #include <sys/syscallargs.h>
+
  
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -67,16 +69,18 @@ mach_vm_map(p, msgh)
 
 	bzero(&rep, sizeof(rep));
 
+	DPRINTF(("vm_map(addr = %p, size = 0x%08x)\n",
+		(void *)req.req_address, req.req_size));
 	SCARG(&cup, addr) = (void *)req.req_address;
 	SCARG(&cup, len) = req.req_size;
-	SCARG(&cup, prot) = req.req_cur_protection; /* XXX */
-	SCARG(&cup, flags) = req.req_flags; /* XXX */
-	SCARG(&cup, fd) = 0; /* XXX */
-	SCARG(&cup, pos) = (off_t)req.req_offset;
+	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
+	SCARG(&cup, flags) = MAP_ANON | MAP_FIXED;
+	SCARG(&cup, fd) = -1;
+	SCARG(&cup, pos) = 0;
 	
 	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
-		rep.rep_retval = native_to_mach_errno[error];
-	
+		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+
 	rep.rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
@@ -108,8 +112,8 @@ mach_vm_deallocate(p, msgh)
 	SCARG(&cup, len) = req.req_size;
 
 	if ((error = sys_munmap(p, &cup, &rep.rep_retval)) != 0)
-		rep.rep_retval = native_to_mach_errno[error];
-	
+		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);

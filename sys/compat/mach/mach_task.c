@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.3 2002/11/11 09:28:00 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.4 2002/11/12 05:18:31 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,14 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.3 2002/11/11 09:28:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.4 2002/11/12 05:18:31 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_task.h>
 #include <compat/mach/mach_syscallargs.h>
 
@@ -86,10 +91,20 @@ mach_ports_lookup(p, msgh)
 {
 	mach_ports_lookup_request_t req;
 	mach_ports_lookup_reply_t rep;
+	struct exec_vmcmd evc;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+	
+	bzero(&evc, sizeof(evc));
+	evc.ev_addr = 0x00008000;
+	evc.ev_len = PAGE_SIZE;
+	evc.ev_prot = UVM_PROT_RW;
+	evc.ev_proc = *vmcmd_map_zero;
+
+	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+		return MACH_MSG_ERROR(msgh, &req, &rep, error);
 
 	bzero(&rep, sizeof(rep));
 
@@ -100,11 +115,12 @@ mach_ports_lookup(p, msgh)
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
-	rep.rep_init_port_set.address = (void *)0x8000; /* XXX why? */
+	rep.rep_init_port_set.address = (void *)evc.ev_addr;
 	rep.rep_init_port_set.count = 3; /* XXX why ? */
 	rep.rep_init_port_set.copy = 2; /* XXX why ? */
 	rep.rep_init_port_set.disposition = 0x11; /* XXX why? */
 	rep.rep_init_port_set.type = 2; /* XXX why? */
+	rep.rep_init_port_set_count = 3; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
