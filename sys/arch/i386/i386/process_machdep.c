@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29 1998/08/15 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30 1999/05/12 21:21:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
+
+#include <vm/vm.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -177,6 +179,7 @@ process_write_regs(p, regs)
 {
 	struct trapframe *tf = process_frame(p);
 	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -188,10 +191,10 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
-#define	verr_ldt(slot)	(slot < pcb->pcb_ldt_len && \
-			 (pcb->pcb_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 pcb->pcb_ldt[slot].sd.sd_dpl == SEL_UPL && \
-			 pcb->pcb_ldt[slot].sd.sd_p == 1)
+#define	verr_ldt(slot)	(slot < pmap->pm_ldt_len && \
+			 (pmap->pm_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
+			 pmap->pm_ldt[slot].sd.sd_dpl == SEL_UPL && \
+			 pmap->pm_ldt[slot].sd.sd_p == 1)
 #define	verr_gdt(slot)	(slot < NGDT && \
 			 (gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
 			 gdt[slot].sd.sd_dpl == SEL_UPL && \
@@ -208,11 +211,15 @@ process_write_regs(p, regs)
 		    !USERMODE(regs->r_cs, regs->r_eflags))
 			return (EINVAL);
 
+		simple_lock(&pmap->pm_lock);
+
 		if ((regs->r_gs != pcb->pcb_gs && \
 		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
 		    (regs->r_fs != pcb->pcb_fs && \
 		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
 			return (EINVAL);
+
+		simple_unlock(&pmap->pm_lock);
 
 		pcb->pcb_gs = regs->r_gs;
 		pcb->pcb_fs = regs->r_fs;
