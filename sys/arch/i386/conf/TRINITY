@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.49 1994/12/15 16:14:50 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.50 1995/01/13 13:19:34 mycroft Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -45,8 +45,8 @@ options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
 options		FFS,QUOTA	# UFS and quotas
-options		LFS		# log-structured file system
-options		MFS		# memory file system
+#options	LFS		# log-structured file system
+#options	MFS		# memory file system
 
 options		NFSCLIENT	# Network File System client
 options		NFSSERVER	# Network File System server
@@ -56,10 +56,10 @@ options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-options		PORTAL		# ?
+#options	NULLFS		# loopback file system
+#options	PORTAL		# ?
 options		PROCFS		# /proc
-options		UMAPFS		# NULLFS + uid and gid remapping
+#options	UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
 
 options		GATEWAY		# packet forwarding
@@ -158,4 +158,4 @@ pseudo-device	bpfilter 8		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vn	4		# paging to files
+#pseudo-device	vn	4		# paging to files
