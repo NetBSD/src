@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.73 2002/09/11 02:46:46 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.74 2002/09/23 05:51:15 simonb Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.73 2002/09/11 02:46:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.74 2002/09/23 05:51:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1416,7 +1416,6 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCSDEFIFACE_IN6:	/* XXX: should be implemented as a sysctl? */
 		return (nd6_setdefaultiface(ndif->ifindex));
-		break;
 	}
 	return (error);
 }

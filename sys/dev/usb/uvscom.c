@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.7 2002/09/23 05:51:23 simonb Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -435,7 +435,6 @@ uvscom_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.5 2001/11/12 15:25:23 lukem Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.6 2002/09/23 05:51:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.5 2001/11/12 15:25:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.6 2002/09/23 05:51:11 simonb Exp $");
 
 #include "opt_userconf.h"
 
@@ -817,7 +817,6 @@ userconf_parse(cmd)
 			userconf_hist_cmd('q');
 			userconf_hist_eoc();
 			return(-1);
-			break;
 		case 's':
 		default:
 			printf("Unknown command\n");

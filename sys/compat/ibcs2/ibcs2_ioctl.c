@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.25 2002/09/23 04:55:09 simonb Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.26 2002/09/23 05:51:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.25 2002/09/23 04:55:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.26 2002/09/23 05:51:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,6 @@ ibcs2_sys_ioctl(p, v, retval)
 			 p->p_pid, SCARG(uap, cmd)));
 		return ENOSYS;
 	}
-	return ENOSYS;
 }
 
 int

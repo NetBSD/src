@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.46 2002/08/10 03:37:40 minoura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47 2002/09/23 05:51:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2002/08/10 03:37:40 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2002/09/23 05:51:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -603,7 +603,6 @@ pci_bus_flags()
 			switch (PCI_PRODUCT(id)) {
 			case PCI_PRODUCT_SIS_85C496:
 				goto disable_mem;
-				break;
 			}
 			break;
 		}

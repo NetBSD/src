@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.68 2002/09/11 02:46:44 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.69 2002/09/23 05:51:13 simonb Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.68 2002/09/11 02:46:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.69 2002/09/23 05:51:13 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -2088,13 +2088,10 @@ struct in6_addr *addr;
 		switch (scope) {
 		case 0x80:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case 0xc0:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
-			break;
 		}
 	}
 
@@ -2109,16 +2106,12 @@ struct in6_addr *addr;
 		switch (scope) {
 		case IPV6_ADDR_SCOPE_NODELOCAL:
 			return IPV6_ADDR_SCOPE_NODELOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_SITELOCAL:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL;
-			break;
 		}
 	}
 
