@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.22 1993/11/08 20:24:58 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.23 1993/11/09 08:06:33 mycroft Exp $
  */
 
 
@@ -223,10 +223,10 @@ start:	movw	$0x1234,0x472	# warm boot
 #endif
 	movl	%ecx,%edi	# edi= end || esym
 	addl	$(PGOFSET),%ecx	# page align up
-	andl	$~(PGOFSET),%ecx
+	andl	$(~PGOFSET),%ecx
 	movl	%ecx,%esi	# esi=start of tables
 	subl	%edi,%ecx
-	addl	$(UPAGES+5)*NBPG,%ecx	# size of tables
+	addl	$((NKPDE+UPAGES+2)*NBPG),%ecx	# size of tables
 	
 /* clear memory for bootstrap tables */
 	xorl	%eax,%eax	# pattern
@@ -258,9 +258,9 @@ start:	movw	$0x1234,0x472	# warm boot
  */
 	movl	%esi,%ecx		# this much memory,
 	shrl	$(PGSHIFT),%ecx		# for this many pte s
-	addl	$(UPAGES+4),%ecx	# including our early context
+	addl	$(NKPDE+UPAGES+2),%ecx	# including our early context
 	movl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	lea	(4*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
+	lea	((UPAGES+2)*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
 	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
 	fillkpt
 
@@ -274,11 +274,11 @@ start:	movw	$0x1234,0x472	# warm boot
 /* map proc 0's kernel stack into user page table page */
 
 	movl	$(UPAGES),%ecx		# for this many pte s,
-	lea	(1*NBPG)(%esi),%eax	# physical address in proc 0
+	lea	(2*NBPG)(%esi),%eax	# physical address in proc 0
 	lea	(KERNBASE)(%eax),%edx
 	movl	%edx,_proc0paddr-KERNBASE	# remember VA for 0th process init
 	orl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	lea	(3*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
+	lea	(1*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
 	addl	$((NPTEPD-UPAGES)*4),%ebx
 	fillkpt
 
@@ -286,8 +286,8 @@ start:	movw	$0x1234,0x472	# warm boot
  * Construct a page table directory
  * (of page directory elements - pde's)
  */
-	/* install a pde for temporary double map of bottom of VA */
-	lea	(4*NBPG)(%esi),%eax	# physical address of kernel page table
+	/* install a pde for temporary double map of kernel text */
+	lea	((UPAGES+2)*NBPG)(%esi),%eax	# physical address of kernel page tables
 	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(%esi)		# which is where temp maps!
 
@@ -302,7 +302,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,(PTDPTDI*4)(%esi)	# which is where PTmap maps!
 
 	/* install a pde to map kernel stack for proc 0 */
-	lea	(3*NBPG)(%esi),%eax	# physical address of pt in proc 0
+	lea	(1*NBPG)(%esi),%eax	# physical address of pt in proc 0
 	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
 	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
 
@@ -390,7 +390,7 @@ reloc_gdt:
 	int	$3
 1:
 
-	lea	((NKPDE+4)*NBPG)(%esi),%esi	# skip past stack and page tables
+	lea	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
 	call	_init386		# wire 386 chip for unix operation
 	
