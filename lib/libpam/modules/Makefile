@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/12/29 22:35:35 simonb Exp $
+# $NetBSD: Makefile,v 1.5 2004/12/30 00:11:50 lukem Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -50,4 +50,7 @@ LIBDPLIBS+=	krb5	${LIB_ROOT_DIR}/libkrb5 \
 #SUBDIR+= pam_ssh
 .endif
 
+libinstall::		# disable install rule in <bsd.lib.mk>
+
+.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
