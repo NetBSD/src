@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.7 1994/06/29 06:39:39 cgd Exp $	*/
+/*	$NetBSD: iso.c,v 1.8 1995/03/08 02:16:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -412,7 +412,7 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 /* ARGSUSED */
 iso_control(so, cmd, data, ifp)
 	struct socket *so;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
 {

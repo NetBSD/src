@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.5 1994/06/29 06:40:49 cgd Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.6 1995/03/08 02:16:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -393,7 +393,7 @@ tp_usrreq(so, req, m, nam, controlp)
 			tpcb?tpcb->tp_state:0);
 	ENDTRACE
 
-	if ((u_int)tpcb == 0 && req != PRU_ATTACH) {
+	if ((u_long)tpcb == 0 && req != PRU_ATTACH) {
 		IFTRACE(D_REQUEST)
 			tptraceTPCB(TPPTusrreq, "req failed NO TPCB[", 0, 0, 0, 0);
 		ENDTRACE
@@ -406,7 +406,7 @@ tp_usrreq(so, req, m, nam, controlp)
 	case PRU_ATTACH:
 		if (tpcb) {
 			error = EISCONN;
-		} else if ((error = tp_attach(so, (int)nam)) == 0)
+		} else if ((error = tp_attach(so, (long)nam)) == 0)
 			tpcb = sototpcb(so);
 		break;
 
@@ -415,7 +415,7 @@ tp_usrreq(so, req, m, nam, controlp)
 		 *	parent (accepting) socket 
 		 */
 		if (tpcb->tp_state == TP_OPEN || tpcb->tp_state == TP_CONFIRMING) {
-			E.ATTR(T_DISC_req).e_reason = E_TP_NO_SESSION;
+			E.ATTR(T_DISC_req).e_reason = E_TP_NO_SESSION ^ TP_ERROR_MASK;
 			error = DoEvent(T_DISC_req); /* pretend it was a close() */
 			break;
 		} /* else DROP THROUGH */
@@ -438,7 +438,7 @@ tp_usrreq(so, req, m, nam, controlp)
 	case PRU_SHUTDOWN:
 		/* recv end may have been released; local credit might be zero  */
 	case PRU_DISCONNECT:
-		E.ATTR(T_DISC_req).e_reason = E_TP_NORMAL_DISC;
+		E.ATTR(T_DISC_req).e_reason = E_TP_NORMAL_DISC ^ TP_ERROR_MASK;
 		error = DoEvent(T_DISC_req);
 		break;
 
@@ -561,7 +561,7 @@ tp_usrreq(so, req, m, nam, controlp)
 				so->so_rcv.sb_cc, sbspace(&so->so_rcv),
 				so->so_rcv.sb_hiwat);
 		ENDDEBUG
-		if (((int)nam) & MSG_OOB)
+		if (((long)nam) & MSG_OOB)
 			error = DoEvent(T_USR_Xrcvd); 
 		else 
 			error = DoEvent(T_USR_rcvd); 
@@ -577,7 +577,7 @@ tp_usrreq(so, req, m, nam, controlp)
 			break;
 		}
 		/* kludge - nam is really flags here */
-		error = tp_rcvoob(tpcb, so, m, outflags, (int)nam);
+		error = tp_rcvoob(tpcb, so, m, outflags, (long)nam);
 		break;
 
 	case PRU_SEND:
