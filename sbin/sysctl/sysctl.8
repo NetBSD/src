@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.110 2004/03/24 19:11:06 snj Exp $
+.\"	$NetBSD: sysctl.8,v 1.111 2004/03/24 23:49:13 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -682,7 +682,7 @@ If any of the given parameters describes an invalid configuration,
 will emit a diagnostic message to the standard error and exit.
 .Pp
 Descriptions can be added by the super-user to any node that does not
-have one, provided that the node is not marked with with the
+have one, provided that the node is not marked with the
 .Dq PERMANENT
 flag.
 The syntax is similar to the syntax for creating new nodes with the
@@ -788,7 +788,7 @@ effect.
 .Pp
 To create the root of a new sub-tree called
 .Dq local
-add some children of to the new node, and some descriptions:
+add some children to the new node, and some descriptions:
 .Bd -literal -offset indent -compact
 sysctl -w //create=local
 sysctl -w //describe=local=my local sysctl tree
