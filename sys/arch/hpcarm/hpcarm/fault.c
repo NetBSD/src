@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.11 2001/11/22 18:34:36 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.12 2001/11/23 17:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -58,7 +58,6 @@
 #include <machine/frame.h>
 #include <arm/arm32/katelib.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
 #include <machine/irqhandler.h>
 #ifdef DDB
 #include <machine/db_machdep.h>

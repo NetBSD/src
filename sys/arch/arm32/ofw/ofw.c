@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.27 2001/03/04 19:05:57 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.28 2001/11/23 17:23:42 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -55,7 +55,6 @@
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
-#include <machine/pte.h>
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.5 2001/09/10 21:19:35 chris Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.6 2001/11/23 17:23:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -44,7 +44,6 @@
 
 #include <machine/bus.h>
 #include <machine/pmap.h>
-#include <machine/pte.h>
 
 pt_entry_t *pmap_pte(pmap_t, vm_offset_t);
 
