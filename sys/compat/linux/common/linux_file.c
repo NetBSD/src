@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.54 2002/12/11 19:30:39 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.55 2002/12/17 11:48:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.54 2002/12/11 19:30:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.55 2002/12/17 11:48:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,7 +687,7 @@ linux_sys_mknod(p, v, retval)
 
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
-		return sys_mkfifo(p, uap, retval);
+		return sys_mkfifo(p, &bma, retval);
 	} else {
 		struct sys_mknod_args bma;
 
@@ -700,7 +700,7 @@ linux_sys_mknod(p, v, retval)
 		 * upper 16bit to remove any random junk.
 		 */
 		SCARG(&bma, dev) = SCARG(uap, dev) & 0xffff;
-		return sys_mknod(p, uap, retval);
+		return sys_mknod(p, &bma, retval);
 	}
 }
 
