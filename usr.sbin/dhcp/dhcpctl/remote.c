@@ -111,13 +111,11 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 	omapi_object_t *g;
 	isc_result_t status;
 
-	m = dmalloc (sizeof *m, MDL);
-	if (!m)
-		return ISC_R_NOMEMORY;
-	memset (m, 0, sizeof *m);
-	m -> type = dhcpctl_remote_type;
-	m -> refcnt = 1;
-	rc_register_mdl (&m, m, m -> refcnt);
+	m = (dhcpctl_remote_object_t *)0;
+	status = omapi_object_allocate ((omapi_object_t **)&m,
+					dhcpctl_remote_type, 0, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
 
 	g = (omapi_object_t *)0;
 	status = omapi_generic_new (&g, MDL);

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.5 2000/09/04 23:10:50 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.1.1.6 2000/10/17 15:10:46 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -733,11 +733,24 @@ void enter_lease (lease)
 		if (comp -> subnet)
 			subnet_reference (&lease -> subnet,
 					  comp -> subnet, MDL);
-
 		lease_hash_delete (lease_ip_addr_hash,
 				   lease -> ip_addr.iabuf,
 				   lease -> ip_addr.len, MDL);
 		lease_dereference (&comp, MDL);
+	}
+
+	/* The only way a lease can get here without a subnet is if it's in
+	   the lease file, but not in the dhcpd.conf file.  In this case, we
+	   *should* keep it around until it's expired, but never reallocate it
+	   or renew it.  Currently, to maintain consistency, we are not doing
+	   this.
+	   XXX fix this so that the lease is kept around until it expires.
+	   XXX this will be important in IPv6 with addresses that become
+	   XXX non-renewable as a result of a renumbering event. */
+
+	if (!lease -> subnet) {
+		log_error ("lease %s: no subnet.", piaddr (lease -> ip_addr));
+		return;
 	}
 	lease_hash_add (lease_ip_addr_hash,
 			lease -> ip_addr.iabuf,

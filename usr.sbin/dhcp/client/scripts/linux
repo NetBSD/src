@@ -22,6 +22,13 @@
 # 4. TIMEOUT not tested. ping has a flag I don't know, and I'm suspicious
 # of the $1 in its args.
 
+function make_resolv_conf() {
+  echo search $new_domain_name >/etc/resolv.conf
+  for nameserver in $new_domain_name_servers; do
+    echo nameserver $nameserver >>/etc/resolv.conf
+  done
+}
+
 # Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
 function exit_with_hooks() {
   exit_status=$1
@@ -136,10 +143,7 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
     route add -host $alias_ip_address $interface:0
   fi
-  echo search $new_domain_name >/etc/resolv.conf
-  for nameserver in $new_domain_name_servers; do
-    echo nameserver $nameserver >>/etc/resolv.conf
-  done
+  make_resolv_conf
   exit_with_hooks 0
 fi
 
@@ -180,14 +184,7 @@ if [ x$reason = xTIMEOUT ]; then
     for router in $new_routers; do
       route add default gw $router
     done
-    echo search $new_domain_name >/etc/resolv.conf.std
-    for nameserver in $new_domain_name_servers; do
-      echo nameserver $nameserver >>/etc/resolv.conf.std
-    done
-    if [ -f /etc/resolv.conf ]; then
-      rm -f /etc/resolv.conf
-      ln /etc/resolv.conf.std /etc/resolv.conf
-    fi
+    make_resolv_conf
     exit_with_hooks 0
   fi
   ifconfig $interface inet down
