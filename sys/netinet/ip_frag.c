@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.13 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.14 1999/02/02 19:57:32 cjs Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,8 +8,12 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.14 1999/02/02 19:57:32 cjs Exp $";
+#else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19.2.6 1998/11/22 01:50:25 darrenr Exp ";
+#endif
 #endif
 
 #include <sys/errno.h>
