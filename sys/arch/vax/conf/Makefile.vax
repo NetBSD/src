@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.5 1995/02/13 00:41:56 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.6 1995/02/23 17:50:57 ragge Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -49,7 +49,8 @@ LIBKERN=        ${KERNLIB_PROF}
 
 NORMAL_C= ${CC} -O -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-NORMAL_S= ${CPP} -I. -DLOCORE ${COPTS} $< | ${AS} ${ASFLAGS} -o $*.o
+NORMAL_S= ${CC} -x assembler-with-cpp -E -I. -DLOCORE ${COPTS} $< | \
+	${AS} ${ASFLAGS} -o $*.o
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 SYSTEM_ASMS=intvec.o subr.o
