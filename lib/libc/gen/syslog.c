@@ -32,7 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)syslog.c	5.36 (Berkeley) 10/4/92";
+/*static char sccsid[] = "from: @(#)syslog.c	5.36 (Berkeley) 10/4/92";*/
+static char rcsid[] = "$Id: syslog.c,v 1.3 1993/07/30 08:23:34 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
