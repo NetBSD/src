@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.3 2003/10/15 21:40:49 itojun Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.4 2003/10/17 19:01:49 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,14 +51,16 @@ BEGIN {
 		top = ".."
 	top = top "/sys/"
 	if (system("test -d '" top "'") != 0) {
-		print "ERROR: didn't find top of kernel tree ('" top "' not a directory)" > "/dev/stderr"
+		print "ERROR: can't find top of kernel source tree ('" top "' not a directory)" > "/dev/stderr"
 		exit 1
 	}
 
 	machine = ENVIRON["MACHINE"]
-	if (!machine)
-		machine = "i386"	# XXX for testing
 	maarch = ENVIRON["MACHINE_ARCH"]
+	if (!machine || !maarch) {
+		print "ERROR: 'MACHINE' and 'MACHINE_ARCH' must be set in environment" > "/dev/stderr"
+		exit 1
+	}
 
 	# file with major definitions
 	majors[0] = "conf/majors"
@@ -74,6 +76,11 @@ BEGIN {
 	# arrays, used in template processing
 	for (m in majors) {
 		file = top majors[m]
+		if (system("test -f '" file "'") != 0) {
+			print "ERROR: can't find majors file '" file "'" > "/dev/stderr"
+			exit 1
+		}
+			
 		while (getline < file) {
 			if ($1 == "device-major") {
 				if ($3 == "char") {
@@ -119,6 +126,22 @@ BEGIN {
 	next
 }
 
+# filter the two unneeded makedisk_p* routines, leave only
+# the one used
+/^makedisk_p8\(\) {/, /^}/ {
+	if (MKDISK != "makedisk_p8")
+		next;
+}
+/^makedisk_p16\(\) {/, /^}/ {
+	if (MKDISK != "makedisk_p16")
+		next;
+}
+/^makedisk_p16high\(\) {/, /^}/ {
+	if (MKDISK != "makedisk_p16high")
+		next;
+}
+
+# special cases aside, handle normal line 
 {
 	sub("^%MD_DEVICES%", MDDEV)
 	sub("%MKDISK%", MKDISK)
