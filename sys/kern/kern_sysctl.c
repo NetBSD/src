@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.19 1996/11/14 04:47:45 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.20 1997/01/09 05:37:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -127,6 +127,11 @@ sys___sysctl(p, v, retval)
 #ifdef DEBUG
 	case CTL_DEBUG:
 		fn = debug_sysctl;
+		break;
+#endif
+#ifdef DDB
+	case CTL_DDB:
+		fn = ddb_sysctl;
 		break;
 #endif
 	default:
