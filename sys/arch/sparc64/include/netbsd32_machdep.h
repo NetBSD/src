@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.4 1999/10/11 01:57:44 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.5 1999/12/30 16:24:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,22 +34,35 @@
 /* from <arch/sparc/include/signal.h> */
 typedef u_int32_t netbsd32_sigcontextp_t;
 
-/* XXX how can this work? */
 struct netbsd32_sigcontext {
+	int		sc_onstack;	/* sigstack state to restore */
+	int		__sc_mask13;	/* signal mask to restore (old style) */
+	/* begin machine dependent portion */
+	int		sc_sp;		/* %sp to restore */
+	int		sc_pc;		/* pc to restore */
+	int		sc_npc;		/* npc to restore */
+	int		sc_tstate;	/* pstate to restore */
+	int		sc_g1;		/* %g1 to restore */
+	int		sc_o0;		/* %o0 to restore */
+	sigset_t	sc_mask;	/* signal mask to restore (new style) */
+};
+
+struct netbsd32_sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
+	int	sc_mask;		/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
 	int	sc_sp;			/* %sp to restore */
 	int	sc_pc;			/* pc to restore */
 	int	sc_npc;			/* npc to restore */
-	int	sc_psr;			/* psr to restore */
+	int	sc_psr;			/* pstate to restore */
 	int	sc_g1;			/* %g1 to restore */
 	int	sc_o0;			/* %o0 to restore */
 };
 
+struct exec_package;
 void netbsd32_setregs __P((struct proc *p, struct exec_package *pack, u_long stack));
 int netbsd32_sigreturn __P((struct proc *p, void *v, register_t *retval));
-void netbsd32_sendsig __P((sig_t catcher, int sig, sigset_t *mask, u_int32_t code));
+void netbsd32_sendsig __P((sig_t catcher, int sig, sigset_t *mask, u_long code));
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
