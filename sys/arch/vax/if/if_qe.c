@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.3 1995/06/16 15:14:05 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.4 1995/07/05 08:19:10 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -343,10 +343,10 @@ qeprobe(reg, ui)
 qeattach(ui)
 	struct uba_device *ui;
 {
-	register volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
-	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	register volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
-	register int i;
+	volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
+	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
+	int i;
 
 	ifp->if_unit = ui->ui_unit;
 	ifp->if_name = "qe";
@@ -404,15 +404,15 @@ qereset(unit, uban)
 qeinit(unit)
 	int unit;
 {
-	register volatile struct qe_softc *sc = &qe_softc[unit];
-	register struct uba_device *ui = qeinfo[unit];
-	register volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
-	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	register i;
+	volatile struct qe_softc *sc = &qe_softc[unit];
+	struct uba_device *ui = qeinfo[unit];
+	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
+	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	int i;
 	int s;
 
 	/* address not known */
-	if (ifp->if_addrlist == (struct ifaddr *)0)
+	if (ifp->if_addrlist.tqh_first == (struct ifaddr *)0)
 			return;
 	if (sc->qe_flags & QEF_RUNNING)
 		return;
@@ -537,7 +537,7 @@ qestart(ifp)
 			IF_DEQUEUE(&sc->qe_if.if_snd, m);
 			if( m == 0 ){
 				splx(s);
-				return (0);
+				return;
 			}
 			buf_addr = sc->qe_ifw[index].ifw_info;
 			len = if_ubaput(&sc->qe_uba, &sc->qe_ifw[index], m);
@@ -573,8 +573,8 @@ qestart(ifp)
 			addr->qe_xmtlist_hi = (short)(buf_addr >> 16);
 		}
 	}
-	splx( s );
-	return (0);
+	splx(s);
+	return;
 }
 
 /*
