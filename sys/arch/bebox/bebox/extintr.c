@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5 1998/01/12 04:57:10 sakamoto Exp $	*/
+/*	$NetBSD: extintr.c,v 1.6 1998/05/28 08:44:57 sakamoto Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -166,6 +166,7 @@ ext_intr()
 
 		intrcnt[irq]++;
 	}
+
 out:
 	splx(pcpl);	/* Process pendings. */
 }
@@ -389,7 +390,9 @@ do_pending_int()
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+#if 0
 	hwpend &= ~SINT_MASK;
+#endif
 	imen &= ~hwpend;
 	while (hwpend) {
 		irq = ffs(hwpend) - 1;
@@ -411,12 +414,12 @@ do_pending_int()
 		bebox_intr_mask(imen);
 	}
 
-	if (ipending & SINT_CLOCK) {
+	if ((ipending & ~pcpl) & SINT_CLOCK) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 		intrcnt[CNT_SINT_CLOCK]++;
 	}
-	if (ipending & SINT_NET) {
+	if ((ipending & ~pcpl) & SINT_NET) {
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
@@ -424,7 +427,7 @@ do_pending_int()
 		softnet(pisr);
 		intrcnt[CNT_SINT_NET]++;
 	}
-	if (ipending & SINT_SERIAL) {
+	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;
 #include "com.h"
 #if NCOM > 0

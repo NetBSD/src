@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1997/10/14 06:48:15 sakamoto Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1998/05/28 08:45:00 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,7 +58,7 @@ struct dos_partition {
 
 /* Known DOS partition types. */
 #define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-#define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
+#define DOSPTYP_NETBSD	0xa9		/* NetBSD partition type */
 #define DOSPTYP_FAT12	0x1		/* 12-bit FAT */
 #define DOSPTYP_FAT16S	0x4		/* 16-bit FAT, less than 32M */
 #define DOSPTYP_FAT16B	0x6		/* 16-bit FAT, more than 32M */

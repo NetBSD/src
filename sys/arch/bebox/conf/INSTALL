@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.10 1998/05/28 08:44:59 sakamoto Exp $
+#	$NetBSD: INSTALL,v 1.1 1998/05/28 08:44:59 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -7,54 +7,61 @@ include "arch/bebox/conf/std.bebox"
 
 maxusers	32
 
+# Enable the hooks used for initializing the root memory-disk.
+options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT	# force root on memory disk
+options		MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options		MINIROOTSIZE=3074	# size of memory disk, in blocks
+
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
 # HMAC key to be used for debugging sessions
 #options 	IPKDBKEY="\"HMAC pass phrase text\""
 #options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
-makeoptions	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
-options 	DEBUG
-options 	DIAGNOSTIC
-options 	TRAP_PANICWAIT
-options 	DDB
+#options 	DEBUG
+#options 	DIAGNOSTIC
+#options 	TRAP_PANICWAIT
+#options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	KTRACE
+#options 	KTRACE
 
 options 	TCP_COMPAT_42
-options 	COMPAT_43
-options 	COMPAT_09
+#options 	COMPAT_43
+#options 	COMPAT_09
 options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
-options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
+options		COMPAT_386BSD_MBRPART	# recognize old partition ID
 
 file-system 	FFS
+file-system	EXT2FS
 file-system 	MFS
 file-system 	NFS
 file-system 	CD9660
 file-system 	MSDOSFS
-file-system 	FDESC
+#file-system 	FDESC
 file-system 	KERNFS
-file-system 	NULLFS
-file-system 	PORTAL
-file-system 	PROCFS
-file-system 	UMAPFS
-file-system 	UNION
+#file-system 	NULLFS
+#file-system 	PORTAL
+#file-system 	PROCFS
+#file-system 	UMAPFS
+#file-system 	UNION
 
 options 	FIFO
-#options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 
 options 	INET
 
-options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+#options	NFS_BOOT_BOOTPARAM
 
-config		netbsd	root on ? type ?
+config		netbsd	root on ? type ffs
 
-pseudo-device	vnd		4
+#pseudo-device	vnd		4
+pseudo-device	md		1
 pseudo-device	loop
-pseudo-device	bpfilter	8	# packet filter
+#pseudo-device	bpfilter	8	# packet filter
 pseudo-device	pty		64
 
 #
@@ -75,7 +82,8 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
+pc0	at isa? port 0x60 irq 1		# generic PC console device
+#vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -91,15 +99,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-
-pckbc0	at isa?
-pckbd*	at pckbc?
-#psm*	at pckbc?
-#vga0	at isa?
-vga*	at pci?
-wsdisplay*	at vga? console ?
-wskbd*		at pckbd? console ?
-#wsmouse*	at psm?
 
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
@@ -123,9 +122,7 @@ ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 #ipkdbif0 at ne?
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-
-#pcppi0 at isa?
-#spkr0	at pcppi?
+#spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
