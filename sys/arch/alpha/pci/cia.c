@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.10 1996/10/10 23:51:01 christos Exp $	*/
+/*	$NetBSD: cia.c,v 1.11 1996/10/13 03:00:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -122,7 +122,7 @@ ciaattach(parent, self, aux)
 	cia_init(ccp);
 
 	/* XXX print chipset information */
-	kprintf("\n");
+	printf("\n");
 
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_KN20AA)
@@ -153,7 +153,7 @@ ciaprint(aux, pnp)
 
 	/* only PCIs can attach to CIAs; easy. */
 	if (pnp)
-		kprintf("%s at %s", pba->pba_busname, pnp);
-	kprintf(" bus %d", pba->pba_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

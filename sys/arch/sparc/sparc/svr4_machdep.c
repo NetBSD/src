@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.19 1996/10/11 00:47:33 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.20 1996/10/13 03:00:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -40,6 +40,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
@@ -74,34 +75,34 @@ svr4_printcontext(fun, uc)
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 
-	kprintf("%s at %p\n", fun, uc);
+	printf("%s at %p\n", fun, uc);
 
-	kprintf("Regs: ");
-	kprintf("PSR = %x ", r[SVR4_SPARC_PSR]);
-	kprintf("PC = %x ",  r[SVR4_SPARC_PC]);
-	kprintf("nPC = %x ", r[SVR4_SPARC_nPC]);
-	kprintf("Y = %x ",   r[SVR4_SPARC_Y]);
-	kprintf("G1 = %x ",  r[SVR4_SPARC_G1]);
-	kprintf("G2 = %x ",  r[SVR4_SPARC_G2]);
-	kprintf("G3 = %x ",  r[SVR4_SPARC_G3]);
-	kprintf("G4 = %x ",  r[SVR4_SPARC_G4]);
-	kprintf("G5 = %x ",  r[SVR4_SPARC_G5]);
-	kprintf("G6 = %x ",  r[SVR4_SPARC_G6]);
-	kprintf("G7 = %x ",  r[SVR4_SPARC_G7]);
-	kprintf("O0 = %x ",  r[SVR4_SPARC_O0]);
-	kprintf("O1 = %x ",  r[SVR4_SPARC_O1]);
-	kprintf("O2 = %x ",  r[SVR4_SPARC_O2]);
-	kprintf("O3 = %x ",  r[SVR4_SPARC_O3]);
-	kprintf("O4 = %x ",  r[SVR4_SPARC_O4]);
-	kprintf("O5 = %x ",  r[SVR4_SPARC_O5]);
-	kprintf("O6 = %x ",  r[SVR4_SPARC_O6]);
-	kprintf("O7 = %x ",  r[SVR4_SPARC_O7]);
-	kprintf("\n");
+	printf("Regs: ");
+	printf("PSR = %x ", r[SVR4_SPARC_PSR]);
+	printf("PC = %x ",  r[SVR4_SPARC_PC]);
+	printf("nPC = %x ", r[SVR4_SPARC_nPC]);
+	printf("Y = %x ",   r[SVR4_SPARC_Y]);
+	printf("G1 = %x ",  r[SVR4_SPARC_G1]);
+	printf("G2 = %x ",  r[SVR4_SPARC_G2]);
+	printf("G3 = %x ",  r[SVR4_SPARC_G3]);
+	printf("G4 = %x ",  r[SVR4_SPARC_G4]);
+	printf("G5 = %x ",  r[SVR4_SPARC_G5]);
+	printf("G6 = %x ",  r[SVR4_SPARC_G6]);
+	printf("G7 = %x ",  r[SVR4_SPARC_G7]);
+	printf("O0 = %x ",  r[SVR4_SPARC_O0]);
+	printf("O1 = %x ",  r[SVR4_SPARC_O1]);
+	printf("O2 = %x ",  r[SVR4_SPARC_O2]);
+	printf("O3 = %x ",  r[SVR4_SPARC_O3]);
+	printf("O4 = %x ",  r[SVR4_SPARC_O4]);
+	printf("O5 = %x ",  r[SVR4_SPARC_O5]);
+	printf("O6 = %x ",  r[SVR4_SPARC_O6]);
+	printf("O7 = %x ",  r[SVR4_SPARC_O7]);
+	printf("\n");
 
-	kprintf("Signal Stack: sp %p, size %d, flags %x\n",
+	printf("Signal Stack: sp %p, size %d, flags %x\n",
 	    s->ss_sp, s->ss_size, s->ss_flags);
 
-	kprintf("Flags: %lx\n", uc->uc_flags);
+	printf("Flags: %lx\n", uc->uc_flags);
 }
 #endif
 
@@ -160,13 +161,13 @@ svr4_getcontext(p, uc, mask, oonstack)
 		size_t sz = f->fp_nqel * f->fp_nqsize;
 		if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-			kprintf("getcontext: fp_queue too large\n");
+			printf("getcontext: fp_queue too large\n");
 #endif
 			return;
 		}
 		if (copyout(fps->fs_queue, f->fp_q, sz) != 0) {
 #ifdef DIAGNOSTIC
-			kprintf("getcontext: copy of fp_queue failed %d\n",
+			printf("getcontext: copy of fp_queue failed %d\n",
 			    error);
 #endif
 			return;
@@ -236,7 +237,7 @@ svr4_setcontext(p, uc)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("svr4_setcontext: %s[%d], svr4_ucontext %p\n",
+		printf("svr4_setcontext: %s[%d], svr4_ucontext %p\n",
 		    p->p_comm, p->p_pid, uc);
 #endif
 
@@ -252,7 +253,7 @@ svr4_setcontext(p, uc)
 		 * that is required; if it holds, just do it.
 		 */
 		if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0) {
-			kprintf("pc or npc are not multiples of 4!\n");
+			printf("pc or npc are not multiples of 4!\n");
 			return EINVAL;
 		}
 
@@ -292,7 +293,7 @@ svr4_setcontext(p, uc)
 		size_t sz = f->fp_nqel * f->fp_nqsize;
 		if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-			kprintf("setcontext: fp_queue too large\n");
+			printf("setcontext: fp_queue too large\n");
 #endif
 			return EINVAL;
 		}
@@ -303,7 +304,7 @@ svr4_setcontext(p, uc)
 			if ((error = copyin(f->fp_q, fps->fs_queue,
 					    f->fp_nqel * f->fp_nqsize)) != 0) {
 #ifdef DIAGNOSTIC
-				kprintf("setcontext: copy of fp_queue failed\n");
+				printf("setcontext: copy of fp_queue failed\n");
 #endif
 				return error;
 			}
@@ -445,7 +446,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	default:
 		si->si_code = 0;
 #ifdef DIAGNOSTIC
-		kprintf("sig %d code %ld\n", sig, code);
+		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
 #endif
 		break;
@@ -525,7 +526,7 @@ svr4_sendsig(catcher, sig, mask, code)
 		 */
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			kprintf("svr4_sendsig: window save or copyout error\n");
+			printf("svr4_sendsig: window save or copyout error\n");
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -626,7 +627,7 @@ svr4_sys_sysarch(p, v, retval)
 
 	switch (SCARG(uap, op)) {
 	default:
-		kprintf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
+		printf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
 }

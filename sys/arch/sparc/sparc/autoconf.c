@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 1996/10/11 00:47:09 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.63 1996/10/13 03:00:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -148,8 +148,8 @@ matchbyname(parent, vcf, aux)
 	struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
-		kprintf("WARNING: matchbyname not valid on sun4!");
-		kprintf("%s\n", cf->cf_driver->cd_name);
+		printf("WARNING: matchbyname not valid on sun4!");
+		printf("%s\n", cf->cf_driver->cd_name);
 		return (0);
 	}
 	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
@@ -263,7 +263,7 @@ bootstrap()
 			mmu_3l = 1;
 			break;
 		default:
-			kprintf("bootstrap: sun4 machine type %2x unknown!\n",
+			printf("bootstrap: sun4 machine type %2x unknown!\n",
 			    idprom.id_machine);
 			callrom();
 		}
@@ -393,7 +393,7 @@ bootstrap()
 		*((u_int *)ICR_ITR) = 0;
 
 #ifdef DEBUG
-/*		kprintf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
+/*		printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
 		       *(int*)ICR_SI_PEND);
 */
 #endif
@@ -526,7 +526,7 @@ bootpath_build()
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
 #else
-			kprintf("kernel not compiled with KGDB\n");
+			printf("kernel not compiled with KGDB\n");
 #endif
 			break;
 
@@ -561,7 +561,7 @@ bootpath_fake(bp, cp)
 
 #if defined(SUN4)
 	if (CPU_ISSUN4M) {
-		kprintf("twas brillig..\n");
+		printf("twas brillig..\n");
 		return;
 	}
 #endif
@@ -587,9 +587,9 @@ bootpath_fake(bp, cp)
 			} else {
 				BP_APPEND(bp, "vmes", -1, 0, 0);
 			}
-			ksprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
+			sprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
 			BP_APPEND(bp, tmpname,-1, v0val[0], 0);
-			ksprintf(tmpname,"%c%c", cp[0], cp[1]);
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
 			BP_APPEND(bp, tmpname,v0val[1], v0val[2], 0); /* e.g. xd */
 			return;
 		}
@@ -600,7 +600,7 @@ bootpath_fake(bp, cp)
 		 */
 		if ((cp[0] == 'i' || cp[0] == 'l') && cp[1] == 'e')  {
 			BP_APPEND(bp, "obio", -1, 0, 0);
-			ksprintf(tmpname,"%c%c", cp[0], cp[1]);
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
 			BP_APPEND(bp, tmpname, -1, 0, 0);
 			return;
 		}
@@ -646,7 +646,7 @@ bootpath_fake(bp, cp)
 				target = v0val[1] >> 2; /* old format */
 				lun    = v0val[1] & 0x3;
 			}
-			ksprintf(tmpname, "%c%c", cp[0], cp[1]);
+			sprintf(tmpname, "%c%c", cp[0], cp[1]);
 			BP_APPEND(bp, tmpname, target, lun, v0val[2]);
 			return;
 		}
@@ -694,9 +694,9 @@ bootpath_fake(bp, cp)
 		BP_APPEND(bp, "sbus", -1, 0, 0);
 		BP_APPEND(bp, "esp", -1, v0val[0], 0);
 		if (cp[1] == 'r')
-			ksprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
+			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
 		else
-			ksprintf(tmpname,"%c%c", cp[0], cp[1]);
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
 		/* XXX - is TARGET/LUN encoded in v0val[1]? */
 		target = v0val[1];
 		lun = 0;
@@ -721,17 +721,17 @@ static void
 bootpath_print(bp)
 	struct bootpath *bp;
 {
-	kprintf("bootpath: ");
+	printf("bootpath: ");
 	while (bp->name[0]) {
 		if (bp->val[0] == -1)
-			kprintf("/%s%x", bp->name, bp->val[1]);
+			printf("/%s%x", bp->name, bp->val[1]);
 		else
-			kprintf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
+			printf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
 		if (bp->val[2] != 0)
-			kprintf(":%c", bp->val[2] + 'a');
+			printf(":%c", bp->val[2] + 'a');
 		bp++;
 	}
-	kprintf("\n");
+	printf("\n");
 }
 
 
@@ -780,7 +780,7 @@ crazymap(prop, map)
 		propval = getpropstring(optionsnode, prop);
 		if (propval == NULL || strlen(propval) != 8) {
  build_default_map:
-			kprintf("WARNING: %s map is bogus, using default\n",
+			printf("WARNING: %s map is bogus, using default\n",
 				prop);
 			for (i = 0; i < 8; ++i)
 				map[i] = i;
@@ -941,12 +941,12 @@ clockfreq(freq)
 	static char buf[10];
 
 	freq /= 1000;
-	ksprintf(buf, "%d", freq / 1000);
+	sprintf(buf, "%d", freq / 1000);
 	freq %= 1000;
 	if (freq) {
 		freq += 1000;	/* now in 1000..1999 */
 		p = buf + strlen(buf);
-		ksprintf(p, "%d", freq);
+		sprintf(p, "%d", freq);
 		*p = '.';	/* now buf = %d.%3d */
 	}
 	return (buf);
@@ -961,9 +961,9 @@ mbprint(aux, name)
 	register struct confargs *ca = aux;
 
 	if (name)
-		kprintf("%s at %s", ca->ca_ra.ra_name, name);
+		printf("%s at %s", ca->ca_ra.ra_name, name);
 	if (ca->ca_ra.ra_paddr)
-		kprintf(" %saddr 0x%x", ca->ca_ra.ra_iospace ? "io" : "",
+		printf(" %saddr 0x%x", ca->ca_ra.ra_iospace ? "io" : "",
 		    (int)ca->ca_ra.ra_paddr);
 	return (UNCONF);
 }
@@ -1017,12 +1017,12 @@ romprop(rp, cp, node)
 	    strcmp(getpropstring(node, "device_type"), "hierarchical") == 0)
 		len = 0;
 	if (len % sizeof(struct rom_reg)) {
-		kprintf("%s \"reg\" %s = %d (need multiple of %d)\n",
+		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
 			cp, pl, len, sizeof(struct rom_reg));
 		return (0);
 	}
 	if (len > RA_MAXREG * sizeof(struct rom_reg))
-		kprintf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
+		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
 		    cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
 	rp->ra_node = node;
 	rp->ra_name = cp;
@@ -1036,7 +1036,7 @@ romprop(rp, cp, node)
 		len = 0;
 	}
 	if (len & 3) {
-		kprintf("%s \"address\" %s = %d (need multiple of 4)\n",
+		printf("%s \"address\" %s = %d (need multiple of 4)\n",
 		    cp, pl, len);
 		len = 0;
 	}
@@ -1046,7 +1046,7 @@ romprop(rp, cp, node)
 	if (len == -1)
 		len = 0;
 	if (len & 7) {
-		kprintf("%s \"intr\" %s = %d (need multiple of 8)\n",
+		printf("%s \"intr\" %s = %d (need multiple of 8)\n",
 		    cp, pl, len);
 		len = 0;
 	}
@@ -1054,7 +1054,7 @@ romprop(rp, cp, node)
 	/* SPARCstation interrupts are not hardware-vectored */
 	while (--len >= 0) {
 		if (rp->ra_intr[len].int_vec) {
-			kprintf("WARNING: %s interrupt %d has nonzero vector\n",
+			printf("WARNING: %s interrupt %d has nonzero vector\n",
 			    cp, len);
 			break;
 		}
@@ -1177,9 +1177,9 @@ mainbus_attach(parent, dev, aux)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
-		kprintf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
+		printf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
 #endif
-	kprintf("\n");
+	printf("\n");
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -1263,7 +1263,7 @@ mainbus_attach(parent, dev, aux)
 
 	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
 		if ((node = findnode(node0, sp)) == 0) {
-			kprintf("could not find %s in OPENPROM\n", sp);
+			printf("could not find %s in OPENPROM\n", sp);
 			panic(sp);
 		}
 		oca.ca_bustype = BUS_MAIN;
@@ -1417,7 +1417,7 @@ makememarr(ap, max, which)
 			ap[0].len = *oldpvec->memorySize;
 			break;
 		default:
-			kprintf("pre_panic: makememarr");
+			printf("pre_panic: makememarr");
 			break;
 		}
 		return (1);
@@ -1454,7 +1454,7 @@ makememarr(ap, max, which)
 		break;
 
 	default:
-		kprintf("makememarr: hope version %d PROM is like version 2\n",
+		printf("makememarr: hope version %d PROM is like version 2\n",
 		    i);
 		/* FALLTHROUGH */
 
@@ -1464,7 +1464,7 @@ makememarr(ap, max, which)
 		 * Version 2 PROMs use a property array to describe them.
 		 */
 		if (max > MAXMEMINFO) {
-			kprintf("makememarr: limited to %d\n", MAXMEMINFO);
+			printf("makememarr: limited to %d\n", MAXMEMINFO);
 			max = MAXMEMINFO;
 		}
 		if ((node = findnode(firstchild(findroot()), "memory")) == 0)
@@ -1506,7 +1506,7 @@ overflow:
 	 * Oops, there are more things in the PROM than our caller
 	 * provided space for.  Truncate any extras.
 	 */
-	kprintf("makememarr: WARNING: lost some memory\n");
+	printf("makememarr: WARNING: lost some memory\n");
 	return (i);
 #endif
 }
@@ -1528,7 +1528,7 @@ getprop(node, name, buf, bufsiz)
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		kprintf("WARNING: getprop not valid on sun4! %s\n", name);
+		printf("WARNING: getprop not valid on sun4! %s\n", name);
 		return (0);
 	}
 #endif
@@ -1537,7 +1537,7 @@ getprop(node, name, buf, bufsiz)
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
-		kprintf("node %x property %s length %d > %d\n",
+		printf("node %x property %s length %d > %d\n",
 		    node, name, len, bufsiz);
 #ifdef DEBUG
 		panic("getprop");
@@ -1652,7 +1652,7 @@ opennode(path)		/* translate phys. device path to node */
 	register int fd;
 
 	if (promvec->pv_romvec_vers < 2) {
-		kprintf("WARNING: opennode not valid on sun4! %s\n", path);
+		printf("WARNING: opennode not valid on sun4! %s\n", path);
 		return (0);
 	}
 	fd = promvec->pv_v2devops.v2_open(path);
@@ -1699,11 +1699,11 @@ romgetcursoraddr(rowp, colp)
 	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
 	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
-		ksprintf(buf,
+		sprintf(buf,
 		    "' line# >body >user %lx ! ' column# >body >user %lx !",
 		    (u_long)rowp, (u_long)colp);
 	else
-		ksprintf(buf,
+		sprintf(buf,
 		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
 		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
@@ -1806,17 +1806,17 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		kprintf("use one of:");
+		printf("use one of:");
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
-				kprintf(" %s[a-h]", dv->dv_xname);
+				printf(" %s[a-h]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				kprintf(" %s", dv->dv_xname);
+				printf(" %s", dv->dv_xname);
 #endif
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 	return (dv);
 }
@@ -1924,13 +1924,13 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			kprintf("root device ");
+			printf("root device ");
 			if (bootdv != NULL)
-				kprintf("(default %s%c)",
+				printf("(default %s%c)",
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK
 						? bp->val[2]+'a' : ' ');
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
@@ -1960,12 +1960,12 @@ setroot()
 			goto gotswap;
 		}
 		for (;;) {
-			kprintf("swap device ");
+			printf("swap device ");
 			if (bootdv != NULL)
-				kprintf("(default %s%c)",
+				printf("(default %s%c)",
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
@@ -2046,12 +2046,12 @@ gotswap:
 		mountroot = ffs_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
-		kprintf("root on %s%c\n", bootdv->dv_xname,
+		printf("root on %s%c\n", bootdv->dv_xname,
 		    (mindev & PARTITIONMASK) + 'a');
 		break;
 #endif
 	default:
-		kprintf("can't figure root, hope your kernel is right\n");
+		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
 
@@ -2107,7 +2107,7 @@ getstr(cp, size)
 		switch (c) {
 		case '\n':
 		case '\r':
-			kprintf("\n");
+			printf("\n");
 			*lp++ = '\0';
 			return (len);
 		case '\b':
@@ -2116,21 +2116,21 @@ getstr(cp, size)
 			if (len) {
 				--len;
 				--lp;
-				kprintf("\b \b");
+				printf("\b \b");
 			}
 			continue;
 		case '@':
 		case 'u'&037:
 			len = 0;
 			lp = cp;
-			kprintf("\n");
+			printf("\n");
 			continue;
 		default:
 			if (len + 1 >= size || c < ' ') {
-				kprintf("\007");
+				printf("\007");
 				continue;
 			}
-			kprintf("%c", c);
+			printf("%c", c);
 			++len;
 			*lp++ = c;
 		}
@@ -2151,7 +2151,7 @@ getdevunit(name, unit)
 	int lunit;
 
 	/* compute length of name and decimal expansion of unit number */
-	ksprintf(num, "%d", unit);
+	sprintf(num, "%d", unit);
 	lunit = strlen(num);
 	if (strlen(name) + lunit >= sizeof(fullname) - 1)
 		panic("config_attach: device name too long");

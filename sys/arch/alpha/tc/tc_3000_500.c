@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.10 1996/10/10 23:51:40 christos Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.11 1996/10/13 03:00:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -229,7 +229,7 @@ tc_3000_500_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 #define PRINTINTR(msg, bits)						\
 	if (ir & bits)							\
-		kprintf(msg);
+		printf(msg);
 		PRINTINTR("Second error occurred\n", TC_3000_500_IR_ERR2);
 		PRINTINTR("DMA buffer error\n", TC_3000_500_IR_DMABE);
 		PRINTINTR("DMA cross 2K boundary\n", TC_3000_500_IR_DMA2K);

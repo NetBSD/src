@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.39 1996/10/11 00:46:46 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.40 1996/10/13 02:59:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -173,10 +173,10 @@ lenocarrier(sc)
 		 * if so, honor that request.
 		 */
 		if (ifp->if_flags & IFF_LINK0)
-			kprintf("%s: lost carrier on UTP port\n",
+			printf("%s: lost carrier on UTP port\n",
 			       sc->sc_dev.dv_xname);
 		else if (ifp->if_flags & IFF_LINK1)
-			kprintf("%s: lost carrier on AUI port\n",
+			printf("%s: lost carrier on AUI port\n",
 			       sc->sc_dev.dv_xname);
 		else {
 			/*
@@ -184,12 +184,12 @@ lenocarrier(sc)
 			 * we have done so
 			 */
 			if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
-				kprintf("%s: no carrier on UTP port, "
+				printf("%s: no carrier on UTP port, "
 				       "switching to AUI port\n",
 				       sc->sc_dev.dv_xname);
 				lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
 			} else {
-				kprintf("%s: no carrier on AUI port, "
+				printf("%s: no carrier on AUI port, "
 				       "switching to UTP port\n",
 				       sc->sc_dev.dv_xname);
 				lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
@@ -198,7 +198,7 @@ lenocarrier(sc)
 		}
 	} else
 #endif
-		kprintf("%s: lost carrier\n",sc->sc_dev.dv_xname);
+		printf("%s: lost carrier\n",sc->sc_dev.dv_xname);
 }
 
 int
@@ -237,11 +237,11 @@ leattach(parent, self, aux)
 	extern void myetheraddr __P((u_char *));
 
 	if (ca->ca_ra.ra_nintr != 1) {
-		kprintf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
+		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
 	pri = ca->ca_ra.ra_intr[0].int_pri;
-	kprintf(" pri %d", pri);
+	printf(" pri %d", pri);
 
 	lesc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
 					      sizeof(struct lereg1),
