@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.9 1994/04/18 04:08:45 chopps Exp $
+ *	$Id: genassym.c,v 1.10 1994/05/08 05:52:19 chopps Exp $
  */
 
 #define KERNEL
@@ -65,11 +65,11 @@ main()
 	register unsigned i;
 	struct CIA *cia = (struct CIA *)0;
 
-	printf("#define\tP_LINK %d\n", &p->p_link);
-	printf("#define\tP_RLINK %d\n", &p->p_rlink);
+	printf("#define\tP_FORW %d\n", &p->p_forw);
+	printf("#define\tP_BACK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRI %d\n", &p->p_pri);
+	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tSRUN %d\n", SRUN);

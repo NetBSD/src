@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.14 1994/03/20 10:02:32 chopps Exp $
+ *	$Id: locore.s,v 1.15 1994/05/08 05:52:21 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -48,7 +48,7 @@
 #include "assym.s"
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
-#include "zeusscsi.h"	/* needed for level 6 interrupt */
+#include "zssc.h"	/* needed for level 6 interrupt */
 
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
@@ -527,7 +527,13 @@ _lev5intr:
 	addql	#1,_intrcnt+20
 	addql	#1,_cnt+V_INTR
 	moveml	d0/d1/a0/a1,sp@-
+#include "ser.h"
+#if NSER > 0
 	jsr	_ser_fastint
+#else
+	INTREQWADDR(a0)
+	movew	#INTF_RBF,a0@		| clear RBF interrupt in intreq
+#endif	
 	moveml	sp@+,d0/d1/a0/a1
 	rte
 	
@@ -1083,7 +1089,7 @@ ENTRY(longjmp)
  * _whichqs tells which of the 32 queues _qs
  * have processes in them.  Setrq puts processes into queues, Remrq
  * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
+ * other processes are on a queue related to p->p_priority, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
@@ -1099,25 +1105,25 @@ ENTRY(longjmp)
  */
 ENTRY(setrq)
 	movl	sp@(4),a0
-	tstl	a0@(P_RLINK)
+	tstl	a0@(P_BACK)
 	jeq	Lset1
 	movl	#Lset2,sp@-
 	jbsr	_panic
 Lset1:
 	clrl	d0
-	movb	a0@(P_PRI),d0
+	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
 	bset	d0,d1
 	movl	d1,_whichqs
 	lslb	#3,d0
 	addl	#_qs,d0
-	movl	d0,a0@(P_LINK)
+	movl	d0,a0@(P_FORW)
 	movl	d0,a1
-	movl	a1@(P_RLINK),a0@(P_RLINK)
-	movl	a0,a1@(P_RLINK)
-	movl	a0@(P_RLINK),a1
-	movl	a0,a1@(P_LINK)
+	movl	a1@(P_BACK),a0@(P_BACK)
+	movl	a0,a1@(P_BACK)
+	movl	a0@(P_BACK),a1
+	movl	a0,a1@(P_FORW)
 	rts
 
 Lset2:
@@ -1132,7 +1138,7 @@ Lset2:
 ENTRY(remrq)
 	movl	sp@(4),a0
 	clrl	d0
-	movb	a0@(P_PRI),d0
+	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
 	bclr	d0,d1
@@ -1141,21 +1147,21 @@ ENTRY(remrq)
 	jbsr	_panic
 Lrem1:
 	movl	d1,_whichqs
-	movl	a0@(P_LINK),a1
-	movl	a0@(P_RLINK),a1@(P_RLINK)
-	movl	a0@(P_RLINK),a1
-	movl	a0@(P_LINK),a1@(P_LINK)
+	movl	a0@(P_FORW),a1
+	movl	a0@(P_BACK),a1@(P_BACK)
+	movl	a0@(P_BACK),a1
+	movl	a0@(P_FORW),a1@(P_FORW)
 	movl	#_qs,a1
 	movl	d0,d1
 	lslb	#3,d1
 	addl	d1,a1
-	cmpl	a1@(P_LINK),a1
+	cmpl	a1@(P_FORW),a1
 	jeq	Lrem2
 	movl	_whichqs,d1
 	bset	d0,d1
 	movl	d1,_whichqs
 Lrem2:
-	clrl	a0@(P_RLINK)
+	clrl	a0@(P_BACK)
 	rts
 
 Lrem3:
@@ -1261,13 +1267,13 @@ Lswok:
 	lslb	#3,d1			| convert queue number to index
 	addl	#_qs,d1			| locate queue (q)
 	movl	d1,a1
-	cmpl	a1@(P_LINK),a1		| anyone on queue?
+	cmpl	a1@(P_FORW),a1		| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_LINK),a0			| p = q->p_link
-	movl	a0@(P_LINK),a1@(P_LINK)		| q->p_link = p->p_link
-	movl	a0@(P_LINK),a1			| q = p->p_link
-	movl	a0@(P_RLINK),a1@(P_RLINK)	| q->p_rlink = p->p_rlink
-	cmpl	a0@(P_LINK),d1		| anyone left on queue?
+	movl	a1@(P_FORW),a0			| p = q->p_forw
+	movl	a0@(P_FORW),a1@(P_FORW)		| q->p_forw = p->p_forw
+	movl	a0@(P_FORW),a1			| q = p->p_forw
+	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
+	cmpl	a0@(P_FORW),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
 	movl	_whichqs,d1
 	bset	d0,d1			| yes, reset bit
@@ -1304,7 +1310,7 @@ Lswnofpsave:
 	cmpb	#SRUN,a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	clrl	a0@(P_RLINK)		| clear back link
+	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte

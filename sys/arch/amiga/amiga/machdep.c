@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.21 1994/04/24 12:05:28 chopps Exp $
+ *	$Id: machdep.c,v 1.22 1994/05/08 05:52:24 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -94,19 +94,23 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
-
-
+#include <amiga/dev/ztwobusvar.h>
+/* 
+ * most of these can be killed by adding a server chain for 
+ * int2 (PORTS)
+ */
 #include "ite.h"
 #include "le.h"
 #include "fd.h"
-#include "a3000scsi.h"
-#include "a2091scsi.h"
-#include "gvp11scsi.h"
-#include "zeusscsi.h"
-#include "magnumscsi.h"
-#include "csa12gscsi.h"
-#include "suprascsi.h"
-#include "ivsscsi.h"
+#include "ahsc.h"
+#include "atzsc.h"
+#include "gtsc.h"
+#include "zssc.h"
+#include "mgnsc.h"
+#include "otgsc.h"
+#include "wstsc.h"
+#include "ivsc.h"
+#include "ser.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -140,8 +144,6 @@ extern	u_int lowram;
 char *cpu_type = "m68k";
 
 extern struct Mem_List *mem_list;
-extern u_int Z2MEMADDR;
-extern u_int z2mem_end;
 
 #ifdef COMPAT_SUNOS
 void sun_sendsig ();
@@ -167,13 +169,8 @@ consinit()
 		cpuspeed = MHZ_25;		/* XXX */
 
 	/* initialize custom chip interface */
-	custom_chips_init ();
+	custom_chips_init();
 		
-	/*
-         * Find what hardware is attached to this machine.
-         */
-	find_devs();
-
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -380,18 +377,13 @@ again:
 	    ptoa(cnt.v_free_count)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-#ifdef DEBUG
+	
 	/* display memory configuration passed from loadbsd */
-	printf("%d Amiga memory segments\n", mem_list->num_mem);
 	if (mem_list->num_mem > 0 && mem_list->num_mem < 16)
 		for (i = 0; i < mem_list->num_mem; i++)
-			printf ("segment %d at %08lx size %08lx\n", i,
+			printf ("memory segment %d at %08lx size %08lx\n", i,
 				mem_list->mem_seg[i].mem_start,
 				mem_list->mem_seg[i].mem_size);
-	if (Z2MEMADDR)
-		printf ("Zorro II memory mapped at %08x-%08x\n",
-		  Z2MEMADDR, z2mem_end);
-#endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -420,8 +412,8 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = stack;
+	p->p_md.md_regs[PC] = entry & ~1;
+	p->p_md.md_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -570,9 +562,9 @@ sendsig(catcher, sig, mask, code)
 
 /*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
@@ -611,9 +603,9 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -750,9 +742,9 @@ sun_sendsig(catcher, sig, mask, code)
 	register short ft;
 	int oonstack, fsize;
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -761,9 +753,9 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -883,9 +875,9 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
@@ -1010,9 +1002,9 @@ sun_sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
@@ -1248,10 +1240,12 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
+#if 0
+        if (netisr & (1 << NETISR_ARP)) {
+                netisr &= ~(1 << NETISR_ARP);
+                arpintr();
+        }
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
@@ -1384,94 +1378,99 @@ call_sicallbacks ()
 intrhand(sr)
 	int sr;
 {
-  register unsigned int ipl;
-  register unsigned short ireq;
+	register unsigned int ipl;
+	register unsigned short ireq;
 
-  ipl = (sr >> 8) & 7;
-  ireq = custom.intreqr;
+	ipl = (sr >> 8) & 7;
+	ireq = custom.intreqr;
 
-  switch (ipl) 
-    {
-    case 1:
-      if (ireq & INTF_TBE)
-	{
-	  ser_outintr ();
-	}
-      if (ireq & INTF_DSKBLK)
-	{
+	switch (ipl) {
+	case 1:
+		if (ireq & INTF_TBE) {
+#if NSER > 0
+			ser_outintr();
+#else
+			custom.intreq = INTF_TBE;
+#endif
+		}
+
+		if (ireq & INTF_DSKBLK) {
 #if NFD > 0
-	  fdintr(0);
+			fdintr(0);
 #endif
-	  custom.intreq = INTF_DSKBLK;
-	}
-      if (ireq & INTF_SOFTINT)
-	{
-	  /* first call installed callbacks, then clear the softint-bit */
-	  call_sicallbacks ();
-	  custom.intreq = INTF_SOFTINT;
-	}
-      break;
+			custom.intreq = INTF_DSKBLK;
+		}
+		if (ireq & INTF_SOFTINT) {
+			/*
+			 * first call installed callbacks, 
+			 * then clear the softint-bit
+			 */
+			call_sicallbacks();
+			custom.intreq = INTF_SOFTINT;
+		}
+		break;
 
-    case 2:
-      custom.intreq = INTF_PORTS;
-      /* dmaintr() also calls scsiintr() if the corresponding bit is set in
-         the interrupt status register of the sdmac */
-#if NA3000SCSI > 0
-      if (a3000dmaintr ())
-        break;
+	case 2:
+		/*
+		 * dmaintr() also calls scsiintr() if the
+		 * corresponding bit is set in the interrupt
+		 * status register of the sdmac
+		 */
+#if NAHSC > 0
+		if (ahsc_dmaintr())
+			goto intports_done;
 #endif
-#if NA2091SCSI > 0
-      if (a2091dmaintr ())
-	break;
+#if NATZSC > 0
+		if (atzsc_dmaintr())
+			goto intports_done;
 #endif
-#if NGVP11SCSI > 0
-      if (gvp11dmaintr ())
-	break;
+#if NGTSC > 0
+		if (gtsc_dmaintr())
+			goto intports_done;
 #endif
-#if NMAGNUMSCSI > 0
-      if (siopintr2 ())
-	break;
+#if NMGNSC > 0
+		if (siopintr2())
+			goto intports_done;
 #endif
-#if (NCSA12GSCSI + NSUPRASCSI + NIVSSCSI) > 0
-      if (sciintr ())
-	break;
+#if (NOTGSC + NWSTSC + NIVSC) > 0
+		if (sciintr())
+			goto intports_done;
 #endif
 #if NLE > 0
-      if (leintr (0))
-        break;
+		if (leintr (0))
+			goto intports_done;
 #endif
-      ciaa_intr ();
-      break;
-
+		ciaa_intr ();
+	intports_done:
+		custom.intreq = INTF_PORTS;
+		break;
     case 3: 
       /* VBL */
-      if (custom.intreqr& INTF_BLIT)  
-	  blitter_handler ();
-      if (custom.intreqr & INTF_COPER)  
-	  copper_handler ();
-      if (custom.intreqr & INTF_VERTB) 
-	  vbl_handler ();
-      break;
-
+		if (custom.intreqr& INTF_BLIT)  
+			blitter_handler();
+		if (custom.intreqr & INTF_COPER)  
+			copper_handler();
+		if (custom.intreqr & INTF_VERTB) 
+			vbl_handler();
+		break;
 #if 0
 /* now dealt with in locore.s for speed reasons */
-    case 5:
-      /* check RS232 RBF */
-      serintr (0);
+	case 5:
+		/* check RS232 RBF */
+		serintr (0);
 
-      custom.intreq = INTF_DSKSYNC;
-      break;
+		custom.intreq = INTF_DSKSYNC;
+		break;
 #endif
 
-    case 4:
-      audio_handler ();
-      break;
-      break;
-
-    default:
-      printf("intrhand: unexpected sr 0x%x, intreq = 0x%x\n", sr, ireq);
-      break;
-    }
+	case 4:
+		audio_handler();
+		break;
+	default:
+		printf("intrhand: unexpected sr 0x%x, intreq = 0x%x\n",
+		    sr, ireq);
+		break;
+	}
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.7 1994/04/05 05:46:26 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.8 1994/05/08 05:52:33 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ cpu_fork(p1, p2)
 	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
 
 	/* need to copy current frame pointer */
-	p2->p_regs = p1->p_regs;
+	p2->p_md.md_regs = p1->p_md.md_regs;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 

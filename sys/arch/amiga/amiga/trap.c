@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.14 1994/05/04 07:35:33 chopps Exp $
+ *	$Id: trap.c,v 1.15 1994/05/08 05:52:31 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -114,6 +114,8 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
+int fubail();
+int subail();
 
 static void
 userret(p, pc, oticks)
@@ -126,7 +128,7 @@ userret(p, pc, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		psig(sig);
 
-	p->p_pri = p->p_usrpri;
+	p->p_priority = p->p_usrpri;
 
 	if (want_resched) {
 		/*
@@ -145,6 +147,7 @@ userret(p, pc, oticks)
 		while ((sig = CURSIG(p)) != 0)
 			psig(sig);
 	}
+#ifdef notdef_p_stime
 	if (p->p_stats->p_prof.pr_scale) {
 		int ticks;
 		struct timeval *tv = &p->p_stime;
@@ -160,7 +163,8 @@ userret(p, pc, oticks)
 #endif
 		}
 	}
-	curpri = p->p_pri;
+#endif
+	curpriority = p->p_priority;
 }
 
 void
@@ -415,11 +419,13 @@ trap(type, code, v, frame)
 	p = curproc;
 	ucode = 0;
 	cnt.v_trap++;
+#ifdef	notdef_p_stime
 	syst = p->p_stime;
+#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
-		p->p_regs = frame.f_regs;
+		p->p_md.md_regs = frame.f_regs;
 	}
 
 #ifdef DDB
@@ -582,7 +588,8 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock(&frame.f_stackadj);
+			/* XXXX softclock(&frame.f_stackadj); */
+			softclock();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
@@ -593,7 +600,7 @@ trap(type, code, v, frame)
 		}
 		spl0();
 #ifndef PROFTIMER
-		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag & P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
 			p->p_flag &= ~P_OWEUPC;
 		}
@@ -604,6 +611,12 @@ trap(type, code, v, frame)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
+		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == subail) {
+			trapcpfault(p, &frame);
+			return;
+		}
+		/*FALLTHROUGH*/
 	case T_MMUFLT|T_USER:	/* page fault */
 		trapmmufault(type, code, v, &frame, p, &syst);
 		return;
@@ -640,9 +653,11 @@ syscall(code, frame)
 	cnt.v_syscall++;
 	
 	p = curproc;
-	p->p_regs = frame.f_regs;
+	p->p_md.md_regs = frame.f_regs;
 	p->p_md.md_flags &= ~MDP_STACKADJ;
+#ifdef notdef_p_stime
 	syst = p->p_stime;
+#endif
 	opc = frame.f_pc - 2;
 	error = 0;
 
@@ -714,7 +729,10 @@ syscall(code, frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
 #endif
-	
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD) /* XXX */
+		scdebug_call(p, code, callp->sy_narg, args);
+#endif
 	if (error == 0) {
 		rval[0] = 0;
 		rval[1] = frame.f_regs[D1];
@@ -742,6 +760,10 @@ syscall(code, frame)
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD)			 /* XXX */
+		scdebug_ret(p, code, error, rval[0]);
+#endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ)) {
