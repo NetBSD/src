@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/sys/conf/Attic/files.oldconf,v 1.9 1993/05/02 09:22:31 cgd Exp $
+#	$Id: files.oldconf,v 1.10 1993/05/20 03:29:36 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
