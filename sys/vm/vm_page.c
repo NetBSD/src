@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.35 1998/01/08 23:28:06 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.36 1998/01/09 08:50:00 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -522,7 +522,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 	struct	vm_physseg *ps;
 	int	preload, lcv, npages, x;
   
-	if (cnt.v_page_size == 0)
+	if (page_shift == 0)
 		panic("vm_page_physload: page size not set!");
 
 	/*
