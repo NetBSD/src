@@ -150,6 +150,7 @@
 ./usr/bin/dirname
 ./usr/bin/du
 ./usr/bin/egrep
+./usr/bin/eject
 ./usr/bin/env
 ./usr/bin/error
 ./usr/bin/ex
