@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 1997/10/12 18:47:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 1997/10/16 18:16:08 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -94,8 +93,9 @@
 #include <dev/cons.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_param.h>
+#include <sys/sysctl.h>
 
 #include "opt_useleds.h"
 
