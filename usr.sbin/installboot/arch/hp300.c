@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.1 2003/11/08 16:44:35 dsl Exp $ */
+/* $NetBSD: hp300.c,v 1.2 2003/11/08 22:39:07 uwe Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.1 2003/11/08 16:44:35 dsl Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.2 2003/11/08 22:39:07 uwe Exp $");
 #endif /* !__lint */
 
 #include <sys/disklabel.h>
@@ -116,9 +116,9 @@ hp300_setboot(ib_params *params)
 	 * it to the LIF filesystem.
 	 */
 	if (boot->p_size * label.d_secsize < params->s1stat.st_size) {
-		warn("BOOT partition too small (%d < %" PRId64 ")",
+		warn("BOOT partition too small (%d < %lld)",
 			boot->p_size * label.d_secsize,
-			params->s1stat.st_size);
+			(long long int)params->s1stat.st_size);
 		goto done;
 	}
 
