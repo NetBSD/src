@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.9 1999/09/14 01:07:14 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.10 1999/09/14 09:29:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,15 +98,15 @@ uhci_pci_attach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_2(sc->iot, sc->ioh, UHCI_INTR, 0);
-
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->ioh, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_bus.bdev.dv_xname);
 		return;
 	}
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	bus_space_write_2(sc->iot, sc->ioh, UHCI_INTR, 0);
 
 	sc->sc_bus.dmatag = pa->pa_dmat;
 
