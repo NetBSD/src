@@ -1,6 +1,8 @@
+/*	$NetBSD: rmt.c,v 1.8 1997/10/17 08:05:30 mrg Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rmt.c,v 1.7 1997/07/01 07:42:28 mikel Exp $";
+static char rcsid[] = "$NetBSD: rmt.c,v 1.8 1997/10/17 08:05:30 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +67,6 @@ int	tape = -1;
 
 char	*record;
 int	maxrecsize = -1;
-char	*checkbuf();
 
 #define	SSIZE	64
 char	device[SSIZE];
@@ -78,9 +79,9 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
-void	 getstring __P((char *));
 char	*checkbuf __P((char *, int));
 void	 error __P((int));
+void	 getstring __P((char *));
 
 int
 main(argc, argv)
@@ -96,7 +97,7 @@ main(argc, argv)
 		debug = fopen(*argv, "w");
 		if (debug == 0)
 			exit(1);
-		(void) setbuf(debug, (char *)0);
+		(void)setbuf(debug, (char *)0);
 	}
 top:
 	errno = 0;
@@ -108,7 +109,8 @@ top:
 	case 'O':
 		if (tape >= 0)
 			(void) close(tape);
-		getstring(device); getstring(mode);
+		getstring(device);
+		getstring(mode);
 		DEBUG2("rmtd: O %s %s\n", device, mode);
 		tape = open(device, atoi(mode),
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
@@ -125,7 +127,8 @@ top:
 		goto respond;
 
 	case 'L':
-		getstring(count); getstring(pos);
+		getstring(count);
+		getstring(pos);
 		DEBUG2("rmtd: L %s %s\n", count, pos);
 		rval = lseek(tape, (off_t)strtoq(count, NULL, 10), atoi(pos));
 		if (rval < 0)
@@ -157,13 +160,14 @@ top:
 		rval = read(tape, record, n);
 		if (rval < 0)
 			goto ioerror;
-		(void) sprintf(resp, "A%d\n", rval);
-		(void) write(STDOUT_FILENO, resp, strlen(resp));
-		(void) write(STDOUT_FILENO, record, rval);
+		(void)sprintf(resp, "A%d\n", rval);
+		(void)write(STDOUT_FILENO, resp, strlen(resp));
+		(void)write(STDOUT_FILENO, record, rval);
 		goto top;
 
 	case 'I':
-		getstring(op); getstring(count);
+		getstring(op);
+		getstring(count);
 		DEBUG2("rmtd: I %s %s\n", op, count);
 		{
 			struct mtop mtop;
@@ -184,9 +188,9 @@ top:
 			if (ioctl(tape, MTIOCGET, (char *)&mtget) < 0)
 				goto ioerror;
 			rval = sizeof (mtget);
-			(void) sprintf(resp, "A%d\n", rval);
-			(void) write(STDOUT_FILENO, resp, strlen(resp));
-			(void) write(STDOUT_FILENO, (char *)&mtget,
+			(void)sprintf(resp, "A%d\n", rval);
+			(void)write(STDOUT_FILENO, resp, strlen(resp));
+			(void)write(STDOUT_FILENO, (char *)&mtget,
 			    sizeof (mtget));
 			goto top;
 		}
@@ -197,8 +201,8 @@ top:
 	}
 respond:
 	DEBUG1("rmtd: A %d\n", rval);
-	(void) sprintf(resp, "A%d\n", rval);
-	(void) write(STDOUT_FILENO, resp, strlen(resp));
+	(void)sprintf(resp, "A%d\n", rval);
+	(void)write(STDOUT_FILENO, resp, strlen(resp));
 	goto top;
 ioerror:
 	error(errno);
@@ -249,6 +253,6 @@ error(num)
 {
 
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));
-	(void) sprintf(resp, "E%d\n%s\n", num, strerror(num));
-	(void) write(STDOUT_FILENO, resp, strlen(resp));
+	(void)sprintf(resp, "E%d\n%s\n", num, strerror(num));
+	(void)write(STDOUT_FILENO, resp, strlen(resp));
 }
