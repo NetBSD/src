@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.17 2003/04/16 13:34:42 wiz Exp $
+.\"	$NetBSD: resolver.3,v 1.18 2003/04/23 07:33:36 simonb Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -320,10 +320,9 @@ the list of labels is not updated.
 .Pp
 The
 .Fn dn_expand
-entry
-expands the compressed domain name
+entry expands the compressed domain name
 .Fa comp_dn
-to a full domain name
+to a full domain name.
 The compressed name is contained in a query or reply message;
 .Fa msg
 is a pointer to the beginning of the message.
