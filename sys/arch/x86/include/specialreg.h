@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.5 2004/02/19 17:09:39 drochner Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.6 2004/05/17 15:38:17 joda Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -148,11 +148,14 @@
  * CPUID "features" bits in %ecx
  */
 
-#define	CPUID2_TM2	0x00000080	/* Thermal Monitor 2 */
-#define	CPUID2_EST	0x00000100	/* Enhanced SpeedStep Technology */
+#define	CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
+#define	CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
+#define	CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
+#define	CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
+#define	CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define	CPUID2_CID	0x00000400	/* Context ID */
 
-#define CPUID2_FLAGS	"\20\10TM2\11EST\13CID"
+#define CPUID2_FLAGS	"\20\1SSE3\4MONITOR\5DS-CPL\10EST\11TM2\13CID"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
