@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.17 2003/08/07 16:28:34 agc Exp $	*/
+/*	$NetBSD: syscall.c,v 1.18 2003/10/27 01:17:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2003/08/07 16:28:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2003/10/27 01:17:59 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -344,7 +344,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	register_t *args, copyargs[8];
-	register_t *rval;
+	register_t *rval = NULL;	/* XXX gcc */
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
 	register_t copyrval[2];
 #endif
