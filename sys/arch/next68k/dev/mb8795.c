@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.21 2001/04/02 05:29:43 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.22 2001/04/16 14:12:12 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -312,6 +312,10 @@ mb8795_rint(sc)
 			map = sc->sc_rx_dmamap[sc->sc_rx_handled_idx];
 			m = sc->sc_rx_mb_head[sc->sc_rx_handled_idx];
 
+			m->m_pkthdr.len = m->m_len = map->dm_xfer_len;
+			m->m_flags |= M_HASFCS;
+			m->m_pkthdr.rcvif = ifp;
+
 			bus_dmamap_sync(sc->sc_rx_dmat, map,
 					0, map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
@@ -322,22 +326,16 @@ mb8795_rint(sc)
 			sc->sc_rx_mb_head[sc->sc_rx_handled_idx] = 
 					mb8795_rxdmamap_load(sc,map);
 
-			/* Punt runt packets, these may be caused by dma restarts */
-			/* @@@ assumes packet is all in first segment */
-			if (map->dm_segs[0].ds_xfer_len < ETHER_MIN_LEN) {
+			/* Punt runt packets
+			 * dma restarts create 0 length packets for example
+			 */
+			if (m->m_len < ETHER_MIN_LEN) {
 				m_freem(m);
 				continue;
 			}
 
-			/* Find receive length and chop off CRC */
-			/* @@@ assumes packet is all in first segment
-			 */
-			m->m_pkthdr.len = map->dm_segs[0].ds_xfer_len-4;
-			m->m_len = map->dm_segs[0].ds_xfer_len-4;
-
-			m->m_pkthdr.rcvif = ifp;
-
-			/* enable interrupts while we process the packet */
+			/* Find receive length, keep crc */
+			/* enable dma interrupts while we process the packet */
 			splx(s);
 
 #if defined(XE_DEBUG)
@@ -350,7 +348,15 @@ mb8795_rint(sc)
 				xe_hex_dump(mtod(m,u_char *), m->m_pkthdr.len < 255 ? m->m_pkthdr.len : 128 );
 			}
 #endif
-		
+
+#if NBPFILTER > 0
+			/*
+			 * Pass packet to bpf if there is a listener.
+			 */
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
+
 			{
 				ifp->if_ipackets++;
 
@@ -932,11 +938,6 @@ mb8795_rxdma_shutdown(arg)
 	struct mb8795_softc *sc = arg;
 
   DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",sc->sc_dev.dv_xname));
-
-#if 0
-	/* Back up the dma pointers to only those that are completed */
-	sc->sc_rx_loaded_idx = sc->sc_rx_completed_idx;
-#endif
 
 	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 }
