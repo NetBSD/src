@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.conf.5,v 1.5 2000/01/10 17:03:49 ad Exp $
+.\"	$NetBSD: daily.conf.5,v 1.6 2000/08/25 01:11:43 hubertf Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -101,6 +101,10 @@ with
 This runs the
 .Pa /etc/security
 script looking for possible security problems with the system.
+.It Sy run_skeyaudit
+This runs
+.Xr skeyaudit 8
+to notify any s/key OTP users when they are low on remaining keys.
 .El
 .Pp
 .Sh FILES
