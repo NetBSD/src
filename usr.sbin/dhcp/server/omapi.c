@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.1.1.2 2000/06/10 18:05:37 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.2 2000/06/13 15:37:16 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -59,6 +59,7 @@ static char copyright[] =
 omapi_object_type_t *dhcp_type_lease;
 omapi_object_type_t *dhcp_type_pool;
 omapi_object_type_t *dhcp_type_class;
+omapi_object_type_t *dhcp_type_host;
 #if defined (FAILOVER_PROTOCOL)
 omapi_object_type_t *dhcp_type_failover_state;
 omapi_object_type_t *dhcp_type_failover_link;
@@ -119,6 +120,22 @@ void dhcp_db_objects_setup ()
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register pool object type: %s",
+			   isc_result_totext (status));
+
+	status = omapi_object_type_register (&dhcp_type_host,
+					     "host",
+					     dhcp_host_set_value,
+					     dhcp_host_get_value,
+					     dhcp_host_destroy,
+					     dhcp_host_signal_handler,
+					     dhcp_host_stuff_values,
+					     dhcp_host_lookup, 
+					     dhcp_host_create,
+					     dhcp_host_remove, 0, 0,
+					     sizeof (struct host_decl));
+
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't register host object type: %s",
 			   isc_result_totext (status));
 
 #if defined (FAILOVER_PROTOCOL)
