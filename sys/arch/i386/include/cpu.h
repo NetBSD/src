@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.76 2001/11/17 08:21:43 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.77 2001/12/27 15:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,7 @@ struct cpu_info {
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
+	void (*ci_info) __P((int));
 };
 
 #ifdef _KERNEL
@@ -154,6 +155,7 @@ struct cpu_nocpuid_nameclass {
 	int cpu_class;
 	void (*cpu_setup) __P((void));
 	void (*cpu_cacheinfo) __P((struct cpu_info *));
+	void (*cpu_info) __P((int));
 };
 
 
@@ -166,6 +168,7 @@ struct cpu_cpuid_nameclass {
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((void));
 		void (*cpu_cacheinfo) __P((struct cpu_info *));
+		void (*cpu_info) __P((int));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
