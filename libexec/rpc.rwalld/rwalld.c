@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.8 1995/06/24 15:57:18 pk Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.9 1995/07/09 00:30:17 pk Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -142,7 +142,7 @@ wallprog_1(rqstp, transp)
 		char *wallproc_wall_1_arg;
 	} argument;
 	char *result;
-	bool_t (*xdr_argument) __P((...)), (*xdr_result) __P((...));
+	xdrproc_t xdr_argument, xdr_result;
 	char *(*local) __P((char **, struct svc_req *));
 
 	switch (rqstp->rq_proc) {
@@ -151,8 +151,8 @@ wallprog_1(rqstp, transp)
 		goto leave;
 
 	case WALLPROC_WALL:
-		xdr_argument = xdr_wrapstring;
-		xdr_result = xdr_void;
+		xdr_argument = (xdrproc_t)xdr_wrapstring;
+		xdr_result = (xdrproc_t)xdr_void;
 		local = (char *(*) __P((char **, struct svc_req *)))
 			wallproc_wall_1_svc;
 		break;
