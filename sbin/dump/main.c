@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2001/08/08 16:49:54 david Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2001/08/14 06:51:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2001/08/08 16:49:54 david Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2001/08/14 06:51:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	struct statfs *mntinfo, fsbuf;
 	char *map;
 	int ch;
-	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
+	int i, anydirskipped, bflag = 0, Tflag = 0, Fflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow, date;
 	int dirc;
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:ef:h:k:L:nr:s:ST:uWw")) != -1)
+	    "0123456789B:b:cd:eFf:h:k:L:nr:s:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -165,8 +165,12 @@ main(int argc, char *argv[])
 				ntrec = HIGHDENSITYTREC;
 			break;
 
-		case 'e':	/* eject full tapes */
+		case 'e':		/* eject full tapes */
 			eflag = 1;
+			break;
+
+		case 'F':		/* files-to-dump is an fs image */
+			Fflag = 1;
 			break;
 
 		case 'f':		/* output file */
@@ -240,7 +244,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc < 1) {
-		(void)fprintf(stderr, "Must specify disk or filesystem\n");
+		(void)fprintf(stderr,
+		    "Must specify disk or image, or file list\n");
 		exit(X_ABORT);
 	}
 
@@ -257,12 +262,14 @@ main(int argc, char *argv[])
 
 		if (lstat(argv[i], &sb) == -1)
 			quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
-		if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
+		if (Fflag || S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
 			disk = argv[i];
+			if (Fflag && !S_ISREG(sb.st_mode))
+				quit("%s is not a regular file", disk);
  multicheck:
 			if (dirc != 0)
 				quit(
-				    "Can't dump a mountpoint and a filelist\n");
+	"Can't dump a disk or image at the same time as a file list\n");
 			break;
 		}
 		if ((dt = fstabsearch(argv[i])) != NULL) {
@@ -386,6 +393,8 @@ main(int argc, char *argv[])
 			    "a subset of %s", mountpoint);
 		else
 			(void)strncpy(spcl.c_filesys, mountpoint, NAMELEN);
+	} else if (Fflag) {
+		(void)strncpy(spcl.c_filesys, "a file system image", NAMELEN);
 	} else {
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
 		    NAMELEN);
@@ -586,9 +595,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: dump [-0123456789cenu] [-B records] [-b blocksize] [-d density]",
+"usage: dump [-0123456789ceFnu] [-B records] [-b blocksize] [-d density]",
 "            [-f file] [-h level] [-k read block size] [-L label]",
-"            [-r read cache size] [-s feet] [-T date] filesystem",
+"            [-r read cache size] [-s feet] [-T date] file system",
 "       dump [-W | -w]");
 	exit(1);
 }
