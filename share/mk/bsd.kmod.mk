@@ -1,10 +1,9 @@
-#	$NetBSD: bsd.kmod.mk,v 1.51 2002/03/26 23:13:08 fredette Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.52 2002/04/06 17:49:02 jdolecek Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		cleankmod kmodinstall load unload
-beforedepend:	machine-links
 clean:		cleankmod
 realinstall:	kmodinstall
 
@@ -27,17 +26,15 @@ MAN?=		${KMOD}.4
 ##### Build rules
 realall:	${PROG}
 
-${OBJS}:	machine-links ${DPSRCS}
-.if !empty(DPSRCS)
-${DPSRCS}:	machine-links
-.endif
+${OBJS}:	${DPSRCS}
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 
 # XXX.  This should be done a better way.  It's @'d to reduce visual spew.
-machine-links:
+# XXX   .BEGIN is used to make sure the links are done before anything else.
+.BEGIN:
 	@rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
 	@rm -f ${MACHINE_CPU} && \
