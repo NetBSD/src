@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.403 2000/09/29 09:07:53 explorer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.404 2000/09/29 13:05:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -352,9 +352,7 @@ cpu_startup()
 		printf("cpu0: features %s\n", buf);
 	}
 
-	if (cpuid_level < 3 || ((cpu_feature & CPUID_PN) == 0))
-		printf("cpu0: serial number not supported or disabled\n");
-	else
+	if (cpuid_level >= 3 || ((cpu_feature & CPUID_PN) != 0))
 		printf("cpu0: serial number %08X%08X%08X\n",
 		       cpu_serial[0], cpu_serial[1], cpu_serial[2]);
 
