@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.10 1994/11/04 19:10:46 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.11 1994/11/04 19:11:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -36,7 +36,6 @@
 #include <machine/asm.h>
 #include <i386/isa/isareg.h>
 #include <i386/isa/timerreg.h>
-#include <i386/isa/icu.h>
 
 /*
  * Use a higher resolution version of microtime if HZ is not
