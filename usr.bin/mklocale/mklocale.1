@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.9 2002/12/22 13:50:37 wiz Exp $
+.\" $NetBSD: mklocale.1,v 1.10 2003/05/01 08:09:57 gmcgarry Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -46,8 +46,10 @@
 .Sh SYNOPSIS
 .Nm mklocale
 .Op Fl d
-.Ar "\*[Lt] src-file"
-.Ar "\*[Gt] language/LC_CTYPE"
+<
+.Ar "src-file"
+>
+.Ar "language/LC_CTYPE"
 .Nm mklocale
 .Op Fl d
 .Fl o
@@ -264,15 +266,16 @@ Defines runes with specific glyph width.
 takes 0 to 3.
 .It Dv CHARSET
 Controls character set for subsequent runes.
-To support
-.Xr iso2022 4
-locale definitions.
+.\" To support
+.\" .Xr iso2022 4
+.\" locale definitions.
 .El
 .Sh SEE ALSO
 .\"Xr colldef 1 ,
 .Xr setlocale 3 ,
-.Xr euc 4 ,
-.Xr utf8 4
+.\" .Xr euc 4 ,
+.\" .Xr utf8 4
+.Xr nls 7
 .Sh HISTORY
 The
 .Nm mklocale
