@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.41 1998/08/05 23:35:17 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.42 1998/08/06 02:24:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.41 1998/08/05 23:35:17 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.42 1998/08/06 02:24:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,10 +206,13 @@ void 	status __P((const u_int8_t *, int));
 void 	usage __P((void));
 
 void	domediaopt __P((char *, int));
-int	get_media_subtype __P((int, char *));
-int	get_media_options __P((int, char *));
-int	lookup_media_word __P((struct ifmedia_description *, char *));
-void	print_media_word __P((int));
+const char *get_media_type_string __P((int));
+const char *get_media_subtype_string __P((int));
+int	get_media_subtype __P((int, const char *));
+int	get_media_options __P((int, const char *));
+int	lookup_media_word __P((struct ifmedia_description *, int,
+	    const char *));
+void	print_media_word __P((int, int));
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -764,168 +767,81 @@ domediaopt(val, clear)
 		err(1, "SIOCSIFMEDIA");
 }
 
-/**********************************************************************
- * A good chunk of this is duplicated from sys/net/ifmedia.c
- **********************************************************************/
-
 struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_ethernet_descriptions[] =
-    IFM_SUBTYPE_ETHERNET_DESCRIPTIONS;
+struct ifmedia_description ifm_subtype_descriptions[] =
+    IFM_SUBTYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_ethernet_aliases[] =
-    IFM_SUBTYPE_ETHERNET_ALIASES;
+struct ifmedia_description ifm_option_descriptions[] =
+    IFM_OPTION_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_ethernet_option_descriptions[] =
-    IFM_SUBTYPE_ETHERNET_OPTION_DESCRIPTIONS;
+const char *
+get_media_type_string(mword)
+	int mword;
+{
+	struct ifmedia_description *desc;
 
-struct ifmedia_description ifm_subtype_tokenring_descriptions[] =
-    IFM_SUBTYPE_TOKENRING_DESCRIPTIONS;
+	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE(mword) == desc->ifmt_word)
+			return (desc->ifmt_string);
+	}
+	return ("<unknown type>");
+}
 
-struct ifmedia_description ifm_subtype_tokenring_aliases[] =
-    IFM_SUBTYPE_TOKENRING_ALIASES;
+const char *
+get_media_subtype_string(mword)
+	int mword;
+{
+	struct ifmedia_description *desc;
 
-struct ifmedia_description ifm_subtype_tokenring_option_descriptions[] =
-    IFM_SUBTYPE_TOKENRING_OPTION_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_fddi_descriptions[] =
-    IFM_SUBTYPE_FDDI_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_fddi_aliases[] =
-    IFM_SUBTYPE_FDDI_ALIASES;
-
-struct ifmedia_description ifm_subtype_fddi_option_descriptions[] =
-    IFM_SUBTYPE_FDDI_OPTION_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_shared_descriptions[] =
-    IFM_SUBTYPE_SHARED_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_shared_aliases[] =
-    IFM_SUBTYPE_SHARED_ALIASES;
-
-struct ifmedia_description ifm_shared_option_descriptions[] =
-    IFM_SHARED_OPTION_DESCRIPTIONS;
-
-struct ifmedia_type_to_subtype {
-	struct {
-		struct ifmedia_description *desc;
-		int alias;
-	} subtypes[5];
-	struct {
-		struct ifmedia_description *desc;
-		int alias;
-	} options[3];
-};
-
-/* must be in the same order as IFM_TYPE_DESCRIPTIONS */
-struct ifmedia_type_to_subtype ifmedia_types_to_subtypes[] = {
-	{
-		{
-			{ &ifm_subtype_shared_descriptions[0], 0 },
-			{ &ifm_subtype_shared_aliases[0], 1 },
-			{ &ifm_subtype_ethernet_descriptions[0], 0 },
-			{ &ifm_subtype_ethernet_aliases[0], 1 },
-			{ NULL, 0 },
-		},
-		{
-			{ &ifm_shared_option_descriptions[0], 0 },
-			{ &ifm_subtype_ethernet_option_descriptions[0], 1 },
-			{ NULL, 0 },
-		},
-	},
-	{
-		{
-			{ &ifm_subtype_shared_descriptions[0], 0 },
-			{ &ifm_subtype_shared_aliases[0], 1 },
-			{ &ifm_subtype_tokenring_descriptions[0], 0 },
-			{ &ifm_subtype_tokenring_aliases[0], 1 },
-			{ NULL, 0 },
-		},
-		{
-			{ &ifm_shared_option_descriptions[0], 0 },
-			{ &ifm_subtype_tokenring_option_descriptions[0], 1 },
-			{ NULL, 0 },
-		},
-	},
-	{
-		{
-			{ &ifm_subtype_shared_descriptions[0], 0 },
-			{ &ifm_subtype_shared_aliases[0], 1 },
-			{ &ifm_subtype_fddi_descriptions[0], 0 },
-			{ &ifm_subtype_fddi_aliases[0], 1 },
-			{ NULL, 0 },
-		},
-		{
-			{ &ifm_shared_option_descriptions[0], 0 },
-			{ &ifm_subtype_fddi_option_descriptions[0], 1 },
-			{ NULL, 0 },
-		},
-	},
-};
+	for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, mword) &&
+		    IFM_SUBTYPE(desc->ifmt_word) == IFM_SUBTYPE(mword))
+			return (desc->ifmt_string);
+	}
+	return ("<unknown subtype>");
+}
 
 int
 get_media_subtype(type, val)
 	int type;
-	char *val;
+	const char *val;
 {
-	struct ifmedia_description *desc;
-	struct ifmedia_type_to_subtype *ttos;
-	int rval, i;
+	int rval;
 
-	/* Find the top-level interface type. */
-	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
-	    desc->ifmt_string != NULL; desc++, ttos++)
-		if (type == desc->ifmt_word)
-			break;
-	if (desc->ifmt_string == NULL)
-		errx(1, "unknown media type 0x%x", type);
+	rval = lookup_media_word(ifm_subtype_descriptions, type, val);
+	if (rval == -1)
+		errx(1, "unknown %s media subtype: %s",
+		    get_media_type_string(type), val);
 
-	for (i = 0; ttos->subtypes[i].desc != NULL; i++) {
-		rval = lookup_media_word(ttos->subtypes[i].desc, val);
-		if (rval != -1)
-			return (rval);
-	}
-	errx(1, "unknown media subtype: %s", val);
-	/* NOTREACHED */
+	return (rval);
 }
 
 int
 get_media_options(type, val)
 	int type;
-	char *val;
+	const char *val;
 {
-	struct ifmedia_description *desc;
-	struct ifmedia_type_to_subtype *ttos;
-	char *optlist;
-	int option = 0, i, rval = 0;
+	char *optlist, *str;
+	int option, rval = 0;
 
 	/* We muck with the string, so copy it. */
 	optlist = strdup(val);
 	if (optlist == NULL)
 		err(1, "strdup");
-	val = optlist;
-
-	/* Find the top-level interface type. */
-	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
-	    desc->ifmt_string != NULL; desc++, ttos++)
-		if (type == desc->ifmt_word)
-			break;
-	if (desc->ifmt_string == NULL)
-		errx(1, "unknown media type 0x%x", type);
+	str = optlist;
 
 	/*
-	 * Look up the options in the user-provided comma-separated
-	 * list.
+	 * Look up the options in the user-provided comma-separated list.
 	 */
-	for (; (val = strtok(val, ",")) != NULL; val = NULL) {
-		for (i = 0; ttos->options[i].desc != NULL; i++) {
-			option = lookup_media_word(ttos->options[i].desc, val);
-			if (option != -1)
-				break;
-		}
-		if (option == 0)
-			errx(1, "unknown option: %s", val);
+	for (; (str = strtok(str, ",")) != NULL; str = NULL) {
+		option = lookup_media_word(ifm_option_descriptions, type, str);
+		if (option == -1)
+			errx(1, "unknown %s media option: %s",
+			    get_media_type_string(type), str);
 		rval |= option;
 	}
 
@@ -934,79 +850,47 @@ get_media_options(type, val)
 }
 
 int
-lookup_media_word(desc, val)
+lookup_media_word(desc, type, val)
 	struct ifmedia_description *desc;
-	char *val;
+	int type;
+	const char *val;
 {
 
-	for (; desc->ifmt_string != NULL; desc++)
-		if (strcasecmp(desc->ifmt_string, val) == 0)
+	for (; desc->ifmt_string != NULL; desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, type) &&
+		    strcasecmp(desc->ifmt_string, val) == 0)
 			return (desc->ifmt_word);
-
+	}
 	return (-1);
 }
 
 void
-print_media_word(ifmw)
-	int ifmw;
+print_media_word(ifmw, print_type)
+	int ifmw, print_type;
 {
 	struct ifmedia_description *desc;
-	struct ifmedia_type_to_subtype *ttos;
-	int seen_option = 0, i;
+	int seen_option = 0;
 
-	/* Find the top-level interface type. */
-	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
-	    desc->ifmt_string != NULL; desc++, ttos++)
-		if (IFM_TYPE(ifmw) == desc->ifmt_word)
-			break;
-	if (desc->ifmt_string == NULL) {
-		printf("<unknown type>");
-		return;
-	}
-
-	/*
-	 * Don't print the top-level type; it's not like we can
-	 * change it, or anything.
-	 */
-
-	/* Find subtype. */
-	for (i = 0; ttos->subtypes[i].desc != NULL; i++) {
-		if (ttos->subtypes[i].alias)
-			continue;
-		for (desc = ttos->subtypes[i].desc;
-		    desc->ifmt_string != NULL; desc++) {
-			if (IFM_SUBTYPE(ifmw) == desc->ifmt_word)
-				goto got_subtype;
-		}
-	}
-
-	/* Falling to here means unknown subtype. */
-	printf("<unknown subtype>");
-	return;
-
- got_subtype:
-	printf("%s", desc->ifmt_string);
+	if (print_type)
+		printf("%s ", get_media_type_string(ifmw));
+	printf(get_media_subtype_string(ifmw));
 
 	/* Find options. */
-	for (i = 0; ttos->options[i].desc != NULL; i++) {
-		if (ttos->options[i].alias)
-			continue;
-		for (desc = ttos->options[i].desc;
-		    desc->ifmt_string != NULL; desc++) {
-			if (ifmw & desc->ifmt_word) {
-				if (seen_option == 0)
-					printf(" <");
-				printf("%s%s", seen_option++ ? "," : "",
-				    desc->ifmt_string);
-			}
+	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
+		    (ifmw & desc->ifmt_word) != 0 &&
+		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
+			if (seen_option == 0)
+				printf(" <");
+			printf("%s%s", seen_option ? "," : "",
+			    desc->ifmt_string);
+			seen_option |= IFM_OPTIONS(desc->ifmt_word);
 		}
 	}
-	printf("%s", seen_option ? ">" : "");
+	if (seen_option)
+		printf(">");
 }
-
-/**********************************************************************
- * ...until here.
- **********************************************************************/
 
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
@@ -1063,16 +947,17 @@ status(ap, alen)
 		err(1, "SIOCGIFMEDIA");
 
 	printf("\tmedia: ");
-	print_media_word(ifmr.ifm_current);
+	print_media_word(ifmr.ifm_current, 1);
 	if (ifmr.ifm_active != ifmr.ifm_current) {
 		putchar(' ');
 		putchar('(');
-		print_media_word(ifmr.ifm_active);
+		print_media_word(ifmr.ifm_active, 0);
 		putchar(')');
 	}
+	putchar('\n');
 
 	if (ifmr.ifm_status & IFM_AVALID) {
-		printf(" status: ");
+		printf("\tstatus: ");
 		switch (IFM_TYPE(ifmr.ifm_active)) {
 		case IFM_ETHER:
 			if (ifmr.ifm_status & IFM_ACTIVE)
@@ -1088,18 +973,19 @@ status(ap, alen)
 			else
 				printf("no ring");
 			break;
-		}
-	}
-
-	putchar('\n');
-
-	if (mflag) {
-		printf("\tsupported media:");
-		for (i = 0; i < ifmr.ifm_count; i++) {
-			putchar(' ');
-			print_media_word(media_list[i]);
+		default:
+			printf("unknown");
 		}
 		putchar('\n');
+	}
+
+	if (mflag) {
+		printf("\tsupported media:\n");
+		for (i = 0; i < ifmr.ifm_count; i++) {
+			printf("\t\t");
+			print_media_word(media_list[i], 1);
+			printf("\n");
+		}
 	}
 
 	free(media_list);
