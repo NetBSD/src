@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.62 2002/10/01 04:14:13 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.63 2002/10/02 01:21:01 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1630,3 +1630,12 @@ usr.sbin/mtrace/mtrace.c			deleted
 
   Move mrouted out of basesrc, as it carries non-BSD license.
   Agreed w/ core.  Update license terms for rsrr.*, via openbsd.
+
+games/rogue/inventory.c				1.8
+games/rogue/save.c				1.8
+games/rogue/message.c				1.9
+games/rogue/rogue.h				1.13
+
+  Use correctly bounded strings when reloading a saved game.  In particular,
+  do not let the save game file "string length" exceed the amount of space
+  supplied.  As noted by <stanojr@iserver.sk> on bugtraq.  Fixes SA#2002-021.

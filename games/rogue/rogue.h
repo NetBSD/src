@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.11 1999/09/13 17:14:08 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.11.8.1 2002/10/02 01:21:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -192,9 +192,10 @@
 
 #define MAX_OPT_LEN 40
 
+#define MAX_ID_TITLE_LEN 64
 struct id {
 	short value;
-	char *title;
+	char title[MAX_ID_TITLE_LEN];
 	char *real;
 	unsigned short id_status;
 };
@@ -660,7 +661,7 @@ int	rand_percent __P((int));
 void	rand_place __P((object *));
 void	read_pack __P((object *, FILE *, boolean));
 void	read_scroll __P((void));
-void	read_string __P((char *, FILE *));
+void	read_string __P((char *, FILE *, size_t));
 void	recursive_deadend __P((short, const short *, short, short));
 boolean	reg_move __P((void));
 void	relight __P((void));
@@ -767,8 +768,9 @@ extern	boolean	sustain_strength;
 extern	boolean	trap_door;
 extern	boolean	wizard;
 extern	char	hit_message[];
-extern	char	hunger_str[];
-extern	char	login_name[];
+#define HUNGER_STR_LEN 8
+extern	char	hunger_str[HUNGER_STR_LEN];
+extern	char	login_name[MAX_OPT_LEN];
 extern	const char   *byebye_string;
 extern	const char   *curse_message;
 extern	const char   *error_file;
