@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.199 2000/03/13 23:52:26 soren Exp $ */
+/* $NetBSD: machdep.c,v 1.200 2000/03/23 01:04:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2000/03/13 23:52:26 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2000/03/23 01:04:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2000/03/13 23:52:26 soren Exp $");
 #include "com.h"
 #if NCOM > 0
 extern void comsoft __P((void));
+#endif
+#include "zsc_ioasic.h"
+#if NZSC_IOASIC > 0
+extern void zs_ioasic_softintr __P((void));
 #endif
 
 vm_map_t exec_map = NULL;
@@ -1864,6 +1868,9 @@ do_sir()
 		DO_SIR(SIR_CLOCK, softclock());
 #if NCOM > 0
 		DO_SIR(SIR_SERIAL, comsoft());
+#endif
+#if NZSC_IOASIC > 0
+		DO_SIR(SIR_SERIAL, zs_ioasic_softintr());
 #endif
 
 #undef COUNT_SOFT
