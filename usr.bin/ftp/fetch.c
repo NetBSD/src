@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.60 1999/07/02 08:07:41 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.61 1999/07/04 22:46:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.60 1999/07/02 08:07:41 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.61 1999/07/04 22:46:20 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -302,11 +302,11 @@ parse_url(url, desc, type, user, pass, host, port, path)
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		url += sizeof(HTTP_URL) - 1;
 		*type = HTTP_URL_T;
-		*port = httpport;
+		*port = strdup(httpport);
 	} else if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		url += sizeof(FTP_URL) - 1;
 		*type = FTP_URL_T;
-		*port = ftpport;
+		*port = strdup(ftpport);
 	} else if (strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		url += sizeof(FILE_URL) - 1;
 		*type = FILE_URL_T;
