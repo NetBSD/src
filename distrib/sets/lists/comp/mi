@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.748 2004/12/29 00:12:00 thorpej Exp $
+#	$NetBSD: mi,v 1.749 2005/01/02 16:09:56 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1310,6 +1310,7 @@
 ./usr/include/sys/exec_ecoff.h			comp-c-include
 ./usr/include/sys/exec_elf.h			comp-c-include
 ./usr/include/sys/exec_script.h			comp-c-include
+./usr/include/sys/extattr.h			comp-c-include
 ./usr/include/sys/extent.h			comp-c-include
 ./usr/include/sys/fcntl.h			comp-c-include
 ./usr/include/sys/fdio.h			comp-c-include
