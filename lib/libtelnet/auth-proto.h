@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.13 2005/02/06 05:53:07 perry Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.14 2005/02/19 21:55:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -98,5 +98,15 @@ void kerberos5_reply(Authenticator *, unsigned char *, int);
 int kerberos5_status(Authenticator *, char *, size_t, int);
 void kerberos5_printsub(unsigned char *, int, unsigned char *, int);
 #endif
+
+#ifdef SRA
+int sra_init(Authenticator *, int);
+int sra_send(Authenticator *);
+void sra_is(Authenticator *, unsigned char *, int);
+void sra_reply(Authenticator *, unsigned char *, int);
+int sra_status(Authenticator *, char *, size_t, int);
+void sra_printsub(unsigned char *, int, unsigned char *, int);
 #endif
+
+#endif /* AUTHENTICATION */
 #endif /* _LIBTELNET_AUTH_PROTO_H_ */
