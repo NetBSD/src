@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.7 1994/05/05 05:35:53 cgd Exp $
+ *	$Id: process_machdep.c,v 1.8 1994/05/19 06:34:54 mycroft Exp $
  */
 
 /*
@@ -84,28 +84,28 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	void *ptr;
-	struct trapframe *tp;
+	struct trapframe *tf;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	tf = ptr;
 
-	tp = ptr;
-	regs->r_es = tp->tf_es;
-	regs->r_ds = tp->tf_ds;
-	regs->r_edi = tp->tf_edi;
-	regs->r_esi = tp->tf_esi;
-	regs->r_ebp = tp->tf_ebp;
-	regs->r_ebx = tp->tf_ebx;
-	regs->r_edx = tp->tf_edx;
-	regs->r_ecx = tp->tf_ecx;
-	regs->r_eax = tp->tf_eax;
-	regs->r_eip = tp->tf_eip;
-	regs->r_cs = tp->tf_cs;
-	regs->r_eflags = tp->tf_eflags;
-	regs->r_esp = tp->tf_esp;
-	regs->r_ss = tp->tf_ss;
+	regs->r_es = tf->tf_es;
+	regs->r_ds = tf->tf_ds;
+	regs->r_edi = tf->tf_edi;
+	regs->r_esi = tf->tf_esi;
+	regs->r_ebp = tf->tf_ebp;
+	regs->r_ebx = tf->tf_ebx;
+	regs->r_edx = tf->tf_edx;
+	regs->r_ecx = tf->tf_ecx;
+	regs->r_eax = tf->tf_eax;
+	regs->r_eip = tf->tf_eip;
+	regs->r_cs = tf->tf_cs;
+	regs->r_eflags = tf->tf_eflags;
+	regs->r_esp = tf->tf_esp;
+	regs->r_ss = tf->tf_ss;
 
 	return (0);
 }
@@ -116,35 +116,35 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	void *ptr;
-	struct trapframe *tp;
+	struct trapframe *tf;
 	int eflags;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *)p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
-	tp = ptr;
+	tf = ptr;
 
 	eflags = regs->r_eflags;
 	if ((eflags & PSL_USERCLR) != 0 ||
 	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL) > (tp->tf_eflags & PSL_IOPL))
+	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
 		return (EPERM);
 
-	tp->tf_ebp = regs->r_ebp;
-	tp->tf_esp = regs->r_esp;
-	tp->tf_eip = regs->r_eip;
-	tp->tf_eflags = eflags;
-	tp->tf_eax = regs->r_eax;
-	tp->tf_ebx = regs->r_ebx;
-	tp->tf_ecx = regs->r_ecx;
-	tp->tf_edx = regs->r_edx;
-	tp->tf_esi = regs->r_esi;
-	tp->tf_edi = regs->r_edi;
-	tp->tf_cs = regs->r_cs;
-	tp->tf_ds = regs->r_ds;
-	tp->tf_es = regs->r_es;
-	tp->tf_ss = regs->r_ss;
+	tf->tf_ebp = regs->r_ebp;
+	tf->tf_esp = regs->r_esp;
+	tf->tf_eip = regs->r_eip;
+	tf->tf_eflags = eflags;
+	tf->tf_eax = regs->r_eax;
+	tf->tf_ebx = regs->r_ebx;
+	tf->tf_ecx = regs->r_ecx;
+	tf->tf_edx = regs->r_edx;
+	tf->tf_esi = regs->r_esi;
+	tf->tf_edi = regs->r_edi;
+	tf->tf_cs = regs->r_cs;
+	tf->tf_ds = regs->r_ds;
+	tf->tf_es = regs->r_es;
+	tf->tf_ss = regs->r_ss;
 
 	return (0);
 }
@@ -154,18 +154,18 @@ process_sstep(p, sstep)
 	struct proc *p;
 {
 	void *ptr;
-	struct trapframe *tp;
+	struct trapframe *tf;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	tf = ptr;
 
-	tp = ptr;
 	if (sstep)
-		tp->tf_eflags |= PSL_T;
+		tf->tf_eflags |= PSL_T;
 	else
-		tp->tf_eflags &= ~PSL_T;
+		tf->tf_eflags &= ~PSL_T;
 	
 	return (0);
 }
@@ -174,7 +174,8 @@ int
 process_fix_sstep(p)
 	struct proc *p;
 {
-	return 0;
+
+	return (0);
 }
 
 int
@@ -183,15 +184,15 @@ process_set_pc(p, addr)
 	u_int addr;
 {
 	void *ptr;
-	struct trapframe *tp;
+	struct trapframe *tf;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	tf = ptr;
 
-	tp = ptr;
-	tp->tf_eip = addr;
+	tf->tf_eip = addr;
 
 	return (0);
 }
