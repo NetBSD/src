@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.47 2003/08/22 08:24:26 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.48 2003/09/19 06:07:52 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.47 2003/08/22 08:24:26 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.48 2003/09/19 06:07:52 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -3361,7 +3361,7 @@ iff_find(struct ifc *ifcp, int type)
 void
 setindex2ifc(int idx, struct ifc *ifcp)
 {
-	int n;
+	int n, nsize;
 	struct ifc **p;
 
 	if (!index2ifc) {
@@ -3375,17 +3375,18 @@ setindex2ifc(int idx, struct ifc *ifcp)
 		memset(index2ifc, 0, sizeof(*index2ifc) * nindex2ifc);
 	}
 	n = nindex2ifc;
-	while (nindex2ifc <= idx)
-		nindex2ifc *= 2;
-	if (n != nindex2ifc) {
+	for (nsize = nindex2ifc; nsize <= idx; nsize *= 2)
+		;
+	if (n != nsize) {
 		p = (struct ifc **)realloc(index2ifc,
-		    sizeof(*index2ifc) * nindex2ifc);
+		    sizeof(*index2ifc) * nsize);
 		if (p == NULL) {
 			fatal("realloc");
 			/*NOTREACHED*/
 		}
 		memset(p + n, 0, sizeof(*index2ifc) * (nindex2ifc - n));
 		index2ifc = p;
+		nindex2ifc = nsize;
 	}
 	index2ifc[idx] = ifcp;
 }
