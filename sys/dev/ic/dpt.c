@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.1 1999/09/27 23:41:47 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.2 1999/09/28 09:18:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.1 1999/09/27 23:41:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.2 1999/09/28 09:18:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,6 @@ dpt_init(sc, intrstr)
 		
 		sc->sc_hbaid[i] = dc.dc_hba[3 - i];
 		link = &sc->sc_link[i];
-		memset(link, 0, sizeof(*link));
 		link->scsipi_scsi.channel = i;
 		link->scsipi_scsi.adapter_target = sc->sc_hbaid[i];
 		link->scsipi_scsi.max_lun = dc.dc_maxlun;
@@ -514,12 +513,14 @@ dpt_readcfg(sc, dc)
             != (HA_ST_READY|HA_ST_SEEK_COMPLETE))
             && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR))
             && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR|HA_ST_DRQ)))
-            || (dpt_wait(sc, HA_ST_BUSY, 0, 200))) {
+            || (dpt_wait(sc, HA_ST_BUSY, 0, 2000))) {
         	/* RAID drives still spinning up? */
                 if((dpt_inb(sc, HA_ERROR) != 'D')
                     || (dpt_inb(sc, HA_ERROR + 1) != 'P')
-                    || (dpt_inb(sc, HA_ERROR + 2) != 'T'))
+                    || (dpt_inb(sc, HA_ERROR + 2) != 'T')) {
+                    	printf("%s: HBA not ready\n", sc->sc_dv.dv_xname);
                         return (-1);
+		}
         }
 
 	/* 
@@ -715,7 +716,8 @@ dpt_alloc_ccb(sc, flg)
 
 /*
  * We have a CCB which has been processed by the HBA, now we look to see how 
- * the operation went. CCBs marked with CCB_PRIVATE never get to here.
+ * the operation went. CCBs marked with CCB_PRIVATE are not automatically
+ * passed here by dpt_intr().
  */
 void
 dpt_done_ccb(sc, ccb)
@@ -920,10 +922,8 @@ dpt_scsi_cmd(xs)
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
 	cp->cp_stataddr = SWAP32(sc->sc_sppa);
 	cp->cp_dispri = 1;
-	cp->cp_luntar = 0;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
-	cp->cp_quick = 0;
 	cp->cp_datain = ((flags & SCSI_DATA_IN) != 0);
 	cp->cp_dataout = ((flags & SCSI_DATA_OUT) != 0);
 	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
@@ -1114,8 +1114,6 @@ dpt_hba_inquire(sc, ei)
 
 	/* Put all the arguments into the CCB */
 	cp = &ccb->ccb_eata_cp;
-	memset(cp, 0, sizeof(*cp));
-	
 	cp->cp_ccbid = ccb->ccb_id;
 	cp->cp_id = sc->sc_hbaid[0];
 	cp->cp_lun = 0;
@@ -1123,10 +1121,8 @@ dpt_hba_inquire(sc, ei)
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
 	cp->cp_stataddr = SWAP32(sc->sc_sppa);
 	cp->cp_dispri = 1;
-	cp->cp_luntar = 0;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 0;
-	cp->cp_quick = 0;
 	cp->cp_interpret = 1;
 	cp->cp_datain = 1;
 	cp->cp_dataout = 0;
