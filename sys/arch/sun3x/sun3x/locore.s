@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1997/01/17 16:27:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1079,7 +1079,7 @@ Lswnofpsave:
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
 
-	movl	a1@(PCB_MMUCTX),a0	| get CRP phys. addr.
+	movl	a1@(PCB_MMUCRP),a0	| get CRP phys. addr.
 	pmove	a0@,crp			| load new user root pointer
 
 	| Reload registers of new process.
@@ -1266,10 +1266,7 @@ ENTRY(setvbr)
 
 /*
  * Load a new CPU Root Pointer (CRP) into the MMU.
- * Arg is the address of CRP storage (2 longwords)
- * i.e.:
- *	struct { int limit, paddr; } CRP;
- *	loadcrp(&CRP);
+ *	void	loadcrp(struct mmu_rootptr *);
  */
 ENTRY(loadcrp)
 	movl	sp@(4),a0		| arg1: &CRP
