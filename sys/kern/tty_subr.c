@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.22 2001/12/27 02:27:50 ad Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.23 2003/01/08 12:00:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.22 2001/12/27 02:27:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.23 2003/01/08 12:00:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,18 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.22 2001/12/27 02:27:50 ad Exp $");
 #define QMEM(n)		(n)
 #endif
 
-void	cinit __P((void));
 #ifdef QBITS
 void	clrbits __P((u_char *, int, int));
 #endif
-
-/*
- * Initialize clists.
- */
-void
-cinit()
-{
-}
 
 /*
  * Initialize a particular clist. Ok, they are really ring buffers,
