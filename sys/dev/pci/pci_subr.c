@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.6 1994/11/04 09:42:22 mycroft Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.7 1995/01/27 05:44:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -37,8 +37,8 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <i386/pci/pcivar.h>
-#include <i386/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
 
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));

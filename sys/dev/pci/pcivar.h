@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.3 1994/11/04 09:42:23 mycroft Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.4 1995/01/27 05:44:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -37,7 +37,14 @@
  * separated into pci_machdep.h.
  */
 
+#if (i386 != 1)
+ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+
+#if i386
 #include <i386/pci/pci_machdep.h>
+#endif
+
 
 struct pci_attach_args {
 	int pa_bus;

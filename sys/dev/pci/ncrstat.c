@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrstat.c,v 1.5 1994/11/18 22:04:48 mycroft Exp $	*/
+/*	$NetBSD: ncrstat.c,v 1.6 1995/01/27 05:44:31 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -56,7 +56,7 @@
 #include <paths.h>
 #include <limits.h>
 #include <kvm.h>
-#include <i386/pci/ncr.c>
+#include <dev/pci/ncr.c>
 
 /*
 **	used external functions
