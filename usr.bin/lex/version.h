@@ -1,1 +1,1 @@
-#define FLEX_VERSION "2.4.6"
+#define FLEX_VERSION "2.4.7"
