@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.33 2004/03/24 17:44:22 pooka Exp $
+.\"	$NetBSD: pool.9,v 1.34 2004/04/25 16:50:56 simonb Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2004
+.Dd April 25, 2004
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -119,6 +119,17 @@ in which case the default kernel memory allocator will be used.
 It can also be set to
 .Dv pool_allocator_nointr
 when the pool will never be accessed from interrupt context.
+.El
+.Pp
+The
+.Fn POOL_INIT
+macro can be used to both declare and initialize a resource pool.
+The
+.Fn POOL_INIT
+macro has the same arguments as the
+.Fn pool_init
+function and the resource pool will be initialized automatically
+during system startup.
 .El
 .Ss DESTROYING A POOL
 The function
