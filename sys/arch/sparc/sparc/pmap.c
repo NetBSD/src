@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.189 2001/04/21 23:51:20 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.190 2001/04/23 01:02:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -489,7 +489,6 @@ boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
 void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-void		(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **, int));
 void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
 void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
@@ -2727,7 +2726,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_is_modified_p 	=	pmap_is_modified4_4c;
 	pmap_is_referenced_p	=	pmap_is_referenced4_4c;
 	pmap_kenter_pa_p 	=	pmap_kenter_pa4_4c;
-	pmap_kenter_pgs_p 	=	pmap_kenter_pgs4_4c;
 	pmap_kremove_p	 	=	pmap_kremove4_4c;
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
@@ -3079,7 +3077,6 @@ pmap_bootstrap4m(void)
 	pmap_is_modified_p 	=	pmap_is_modified4m;
 	pmap_is_referenced_p	=	pmap_is_referenced4m;
 	pmap_kenter_pa_p 	=	pmap_kenter_pa4m;
-	pmap_kenter_pgs_p 	=	pmap_kenter_pgs4m;
 	pmap_kremove_p	 	=	pmap_kremove4m;
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
@@ -5526,20 +5523,6 @@ pmap_kenter_pa4_4c(va, pa, prot)
 }
 
 void
-pmap_kenter_pgs4_4c(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter4_4c(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
-}
-
-void
 pmap_kremove4_4c(va, len)
 	vaddr_t va;
 	vsize_t len;
@@ -5915,20 +5898,6 @@ pmap_kenter_pa4m(va, pa, prot)
 	vm_prot_t prot;
 {
 	pmap_enter4m(pmap_kernel(), va, pa, prot, PMAP_WIRED);
-}
-
-void
-pmap_kenter_pgs4m(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter4m(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			     VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
 }
 
 void
