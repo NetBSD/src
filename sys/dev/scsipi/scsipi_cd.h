@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.3 1997/10/01 01:19:09 enami Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.4 1998/02/13 04:19:30 enami Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -16,8 +16,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-#ifndef	_SCSI_PI_CD_H
-#define _SCSI_PI_CD_H 1
+
+#ifndef _DEV_SCSIPI_SCSIPI_CD_H_
+#define _DEV_SCSIPI_SCSIPI_CD_H_
 
 /*
  *	Define two bits always in the same place in byte 2 (flag byte)
@@ -144,4 +145,4 @@ struct cd_audio_page {
 #define	RIGHT_PORT	1
 };
 
-#endif /* _SCSI_PI_CD_H */
+#endif /* _DEV_SCSIPI_SCSIPI_CD_H_ */
