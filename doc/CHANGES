@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.236 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.237 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -541,3 +541,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sh5: Switch sh5 to the in-tree toolchain, albeit somewhat hobbled.
 		[scw 20031207]
 	cvs(1): upgrade to 1.11.10 [itojun 20031210]
+	fss(4): Add file system snapshot pseudo driver.  [hannken 20031210]
