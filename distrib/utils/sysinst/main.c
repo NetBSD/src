@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2003/06/25 15:45:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,8 +92,11 @@ main(int argc, char **argv)
 	}
 
 	/* argv processing */
-	while ((ch = getopt(argc, argv, "r:f:")) != -1)
+	while ((ch = getopt(argc, argv, "Dr:f:")) != -1)
 		switch(ch) {
+		case 'D':	/* set to get past certain errors in testing */
+			debug = 1;
+			break;
 		case 'r':
 			/* Release name other than compiled in release. */
 			strncpy(rel, optarg, SSTRSIZE);
