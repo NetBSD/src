@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.8 2002/05/20 15:00:12 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.9 2002/07/29 05:17:38 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -109,6 +109,8 @@ int
 _formi_find_pages(FORM *form);
 int
 _formi_field_choice(FORM *form, int c);
+void
+_formi_init_field_xpos(FIELD *field);
 int
 _formi_manipulate_field(FORM *form, int c);
 int
