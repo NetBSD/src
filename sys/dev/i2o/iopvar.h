@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.1 2000/11/08 19:45:31 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.2 2000/11/09 12:51:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ struct iop_softc {
 	struct i2o_status sc_status;	/* status */
 	struct iop_stat	sc_stat;	/* counters */
 	int		sc_flags;	/* IOP-wide flags */
-	int		sc_maxreplycnt;	/* reply count queue */
+	int		sc_maxreplycnt;	/* reply queue size */
 
 	SIMPLEQ_HEAD(,iop_msg) sc_queue;/* software queue */
 	int		sc_maxqueuecnt;	/* maximum # of msgs on h/w queue */
