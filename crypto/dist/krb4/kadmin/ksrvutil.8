@@ -1,4 +1,5 @@
-.\" $Id: ksrvutil.8,v 1.1.1.1 2001/09/17 12:09:52 assar Exp $
+.\" $KTH-KRB: ksrvutil.8,v 1.4 2001/10/30 16:14:26 assar Exp $
+.\" $NetBSD: ksrvutil.8,v 1.1.1.2 2002/09/12 12:22:08 joda Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
@@ -6,7 +7,7 @@
 .\"
 .Dd May 4, 1996
 .Dt KSRVUTIL 8
-.Os KTH-KRB
+.Os
 .Sh NAME
 .Nm ksrvutil 
 host kerberos keyfile (srvtab) manipulation utility
@@ -56,6 +57,8 @@ prompted for. The default principal used in the kadmin transcation is
 your root instance. This can be changed with the
 .Fl p
 option.
+.It delete
+removes a key.
 .El
 .Pp
 In all cases, the default file used is KEY_FILE as defined in krb.h

@@ -33,7 +33,8 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$Id: compat.c,v 1.1.1.2 2000/12/29 01:43:20 assar Exp $");
+__RCSID("$KTH-KRB: compat.c,v 1.7 1999/12/02 16:58:54 joda Exp $"
+      "$NetBSD: compat.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 void
 initialize_rxk_error_table(void)

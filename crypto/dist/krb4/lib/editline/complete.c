@@ -23,7 +23,8 @@
 #include <config.h>
 #include "editline.h"
 
-RCSID("$Id: complete.c,v 1.1.1.2 2000/12/29 01:43:47 assar Exp $");
+__RCSID("$KTH-KRB: complete.c,v 1.5 1999/04/10 21:01:16 joda Exp $"
+      "$NetBSD: complete.c,v 1.1.1.3 2002/09/12 12:22:12 joda Exp $");
 
 /*
 **  strcmp-like sorting predicate for qsort.

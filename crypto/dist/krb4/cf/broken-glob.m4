@@ -1,4 +1,5 @@
-dnl $Id: broken-glob.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
+dnl $KTH-KRB: broken-glob.m4,v 1.4 2001/06/19 09:59:46 assar Exp $
+dnl $NetBSD: broken-glob.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl check for glob(3)
 dnl

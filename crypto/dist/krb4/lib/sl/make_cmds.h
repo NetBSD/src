@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: make_cmds.h,v 1.1.1.3 2001/09/17 12:10:05 assar Exp $ */
+/* $KTH-KRB: make_cmds.h,v 1.3 2000/06/27 02:36:56 assar Exp $
+   $NetBSD: make_cmds.h,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $ */
 
 #ifndef __MAKE_CMDS_H__
 #define __MAKE_CMDS_H__

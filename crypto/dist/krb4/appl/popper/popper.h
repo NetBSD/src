@@ -8,7 +8,8 @@
  *
  */
 
-/* $Id: popper.h,v 1.1.1.3 2001/09/17 12:09:48 assar Exp $ */
+/* $KTH-KRB: popper.h,v 1.51 2002/07/04 13:56:12 joda Exp $
+   $NetBSD: popper.h,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $ */
 
 /* 
  *  Header file for the POP programs
@@ -273,6 +274,8 @@ typedef struct  {                               /*  POP parameter block */
 #ifdef OTP
     OtpContext		otp_ctx;		/*  OTP context */
 #endif
+    unsigned int	flags;
+#define POP_FLAG_CAPA 1
 } POP;
 
 typedef struct {                                /*  State information for 

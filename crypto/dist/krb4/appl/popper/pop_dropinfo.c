@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_dropinfo.c,v 1.1.1.2 2000/12/29 01:42:46 assar Exp $");
+__RCSID("$KTH-KRB: pop_dropinfo.c,v 1.24 1999/09/16 20:38:49 assar Exp $"
+      "$NetBSD: pop_dropinfo.c,v 1.1.1.3 2002/09/12 12:22:06 joda Exp $");
 
 #if defined(UIDL) || defined(XOVER)
 

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: rd_err.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
+__RCSID("$KTH-KRB: rd_err.c,v 1.9 1999/12/02 16:58:43 joda Exp $"
+      "$NetBSD: rd_err.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 /*
  * Given an AUTH_MSG_APPL_ERR message, "in" and its length "in_length",

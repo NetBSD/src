@@ -33,7 +33,8 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: sys_term.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
+__RCSID("$KTH-KRB: sys_term.c,v 1.104 2001/09/17 02:09:04 assar Exp $"
+      "$NetBSD: sys_term.c,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP

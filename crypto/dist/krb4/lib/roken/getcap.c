@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.1.1.2 2000/12/29 01:43:25 assar Exp $	*/
+/*	$NetBSD: getcap.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,8 @@
 #include <config.h>
 #endif
 #include "roken.h"
-RCSID("$Id: getcap.c,v 1.1.1.2 2000/12/29 01:43:25 assar Exp $");
+__RCSID("$KTH-KRB: getcap.c,v 1.7 1999/11/17 21:11:58 assar Exp $"
+      "$NetBSD: getcap.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>

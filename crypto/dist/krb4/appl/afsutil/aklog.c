@@ -66,7 +66,8 @@
 
 #include <roken.h>
 
-RCSID("$Id: aklog.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: aklog.c,v 1.29 2001/08/26 01:48:42 assar Exp $"
+      "$NetBSD: aklog.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 static int debug = 0;
 

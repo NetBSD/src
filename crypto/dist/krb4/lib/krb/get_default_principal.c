@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_default_principal.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: get_default_principal.c,v 1.15 2000/03/16 05:23:08 assar Exp $"
+      "$NetBSD: get_default_principal.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 int
 krb_get_default_principal(char *name, char *instance, char *realm)

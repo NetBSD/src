@@ -1,4 +1,5 @@
-dnl $Id: roken.m4,v 1.1.1.1 2001/09/17 12:10:07 assar Exp $
+dnl $KTH-KRB: roken.m4,v 1.3 2002/04/30 16:46:33 joda Exp $
+dnl $NetBSD: roken.m4,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl try to look for an installed roken library with sufficient stuff
 dnl
@@ -10,7 +11,7 @@ dnl AC_ROKEN(version,directory-to-try,roken-dir,fallback-library,fallback-cppfla
 AC_DEFUN(AC_ROKEN, [
 
 AC_ARG_WITH(roken,
-[  --with-roken=dir	use the roken library in dir],
+	AC_HELP_STRING([--with-roken=dir],[use the roken library in dir]),
 [if test "$withval" = "no"; then
   AC_MSG_ERROR(roken is required)
 fi])

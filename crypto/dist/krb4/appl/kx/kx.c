@@ -33,7 +33,8 @@
 
 #include "kx.h"
 
-RCSID("$Id: kx.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
+__RCSID("$KTH-KRB: kx.c,v 1.68 2001/02/20 01:44:45 assar Exp $"
+      "$NetBSD: kx.c,v 1.1.1.4 2002/09/12 12:22:07 joda Exp $");
 
 static int nchild;
 static int donep;

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: net_write.c,v 1.1.1.2 2000/12/29 01:43:27 assar Exp $");
+__RCSID("$KTH-KRB: net_write.c,v 1.4 1999/12/02 16:58:51 joda Exp $"
+      "$NetBSD: net_write.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 #endif
 
 #include <sys/types.h>

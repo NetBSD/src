@@ -34,7 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: rnd_keys.c,v 1.1.1.3 2001/09/17 12:10:01 assar Exp $");
+__RCSID("$KTH-KRB: rnd_keys.c,v 1.58 2001/08/21 15:32:07 assar Exp $"
+      "$NetBSD: rnd_keys.c,v 1.1.1.4 2002/09/12 12:22:12 joda Exp $");
 #endif
 
 #include <des.h>
