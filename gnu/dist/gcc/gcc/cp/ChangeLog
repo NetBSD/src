@@ -1,3 +1,51 @@
+2003-08-04  Release Manager
+
+	* GCC 3.3.1 Released.
+
+2003-08-04  Release Manager
+
+	* GCC 3.3.1 Released.
+
+2003-08-04  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11713
+	* search.c (setup_class_bindings): Handle conversion operators
+	specially.
+
+2003-07-24  Alexandre Oliva  <aoliva@redhat.com>
+
+	PR c++/10796
+	* decl.c (finish_enum): Make sure the underlying integer type has
+	the same precision as some full integer type.  Reverts part
+	2003-06-27's patch that didn't play any role in fixing the PR.
+
+2003-07-24  Mark Mitchell  <mark@codesourcery.com>
+
+	* cp-tree.h (convert_to_base_statically): Declare.
+	* call.c (build_special_member_call): Convert INSTANCE to the base
+	type.
+	* class.c (convert_to_base_statically): New method.
+	* init.c (construct_virtual_base): Use it.
+	* method.c (do_build_assign_ref): Fix typo in comment.
+
+2003-07-24  Kriang Lerdsuwanakij  <lerdsuwa@users.sourceforge.net>
+
+	PR c++/11513
+	* cp-tree.h (PROCESSING_REAL_TEMPLATE_DECL_P): Use current_scope.
+
+2003-07-23  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/11645
+	* cp-tree.h (accessible_base_p): Declare.
+	* call.c (build_over_call): Use it.
+	* search.c (accessible_base_p): New function, split out from ...
+	(lookup_base): ... here.
+
+2003-07-23  Nathan Sidwell  <nathan@codesourcery.com>
+
+	PR c++/11282
+	* decl.c: (reshape_init): Always advance *INITP.
+
 2003-07-19  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/11546

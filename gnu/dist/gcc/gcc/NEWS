@@ -183,7 +183,7 @@ GCC 3.2.3
   Bug Fixes
 
    This  section  lists the problem reports (PRs) from GCC's bug tracking
-   system  that  are  known  to  be fixed in the 3.2.2 release. This list
+   system  that  are  known  to  be fixed in the 3.2.3 release. This list
    might not be complete (that is, it is possible that some PRs that have
    been  fixed  are  not  listed  here), and some of the titles have been
    changed to make them more clear.
@@ -713,7 +713,7 @@ GCC 3.2
    Verbatim  copying and distribution of this entire article is permitted
    in any medium, provided this notice is preserved.
 
-   Last modified 2003-05-25 [252]Valid XHTML 1.0 
+   Last modified 2003-07-26 [252]Valid XHTML 1.0 
 
 References
 

@@ -36,8 +36,6 @@
   <li><a href="#nonbugs">Non-bugs</a></li>
   <li><a href="#missing">Missing features</a></li>
   <li><a href="#parsing">Parse errors for "simple" code</a></li>
-  <li><a href="#-O3">Optimization at <code>-O3</code> takes a
-  very long time</a></li>
   </ul>
   </li>
  </ul>
@@ -494,8 +492,10 @@ covariant returns.  This has been addressed for GCC 3.4.</dd>
 
 <h3><a name="nonbugs">Non-bugs</a></h3>
 
-<p>Here are some features that have been reported as bugs, but are
-not.</p>
+<p>This section lists several features that have been reported as bugs, but
+are not; in addition, the manual contains a section on 
+<a href="http://gcc.gnu.org/onlinedocs/gcc/C---Misunderstandings.html">Common
+Misunderstandings with GNU C++</a>.</p>
 
 <dl>
 
@@ -687,13 +687,6 @@ statements, people also frequently put the object in parentheses. The
 exact error also somewhat varies with the compiler version. The
 work-arounds proposed do not change the semantics of the program at
 all; they make them perhaps less readable.</p>
-
-<h3><a name="-O3">Optimization at <code>-O3</code> takes a
-very long time</a></h3>
-<p>At <code>-O3</code>, all functions are candidates for inlining. The
-heuristic used has some deficiencies which show up when allowed such
-freedom. This is g++ specific, as it has an earlier inliner than
-gcc.</p>
 
 </body>
 </html>

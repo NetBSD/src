@@ -1,5 +1,5 @@
-#ifndef BISON_P608_H
-# define BISON_P608_H
+#ifndef BISON_P21918_H
+# define BISON_P21918_H
 
 #ifndef YYSTYPE
 typedef union { GTY(())
@@ -104,5 +104,5 @@ typedef union { GTY(())
 
 extern YYSTYPE yylval;
 
-#endif /* not BISON_P608_H */
+#endif /* not BISON_P21918_H */
 #define YYEMPTY		-2
