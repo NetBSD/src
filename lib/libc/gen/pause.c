@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.6 1997/07/21 14:07:22 jtc Exp $	*/
+/*	$NetBSD: pause.c,v 1.7 1998/02/27 18:22:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pause.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: pause.c,v 1.6 1997/07/21 14:07:22 jtc Exp $");
+__RCSID("$NetBSD: pause.c,v 1.7 1998/02/27 18:22:51 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,5 +57,5 @@ int
 pause()
 {
 
-	return sigpause(sigblock(0L));
+	return sigpause(sigblock(0));
 }
