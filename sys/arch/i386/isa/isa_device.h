@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa_device.h	7.1 (Berkeley) 5/9/91
- *	$Id: isa_device.h,v 1.9 1994/03/29 04:34:22 mycroft Exp $
+ *	$Id: isa_device.h,v 1.10 1994/04/07 06:50:57 mycroft Exp $
  */
 
 /*
@@ -48,12 +48,10 @@ struct isa_device {
 	short	id_drq;		/* DMA request */
 	caddr_t id_maddr;	/* physical i/o memory address on bus (if any)*/
 	int	id_msize;	/* size of i/o memory */
-	int	(*id_intr)();	/* interrupt interface routine */
 	int	id_unit;	/* unit number */
 	int	id_flags;	/* flags */
 	int	id_physid;	/* eg. scsi id if needed */
 	struct	isa_device *id_parent;
-	unsigned *id_mask;	/* for devices which use an IRQ */
 	int	id_state;	/* config status */
 };
 

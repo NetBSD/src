@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.8 1994/03/29 04:35:51 mycroft Exp $
+ *	$Id: if_el.c,v 1.9 1994/04/07 06:50:46 mycroft Exp $
  */
 
 /*
@@ -74,6 +74,7 @@
  */
 struct el_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	struct arpcom sc_arpcom;	/* ethernet common */
 	u_short sc_iobase;		/* base I/O addr */
@@ -84,7 +85,7 @@ struct el_softc {
 /*
  * prototypes
  */
-int elintr __P((int));
+int elintr __P((struct el_softc *));
 static int el_init __P((struct el_softc *));
 static int el_ioctl __P((struct ifnet *, int, caddr_t));
 static int el_start __P((struct ifnet *));
@@ -183,6 +184,7 @@ elattach(parent, self, aux)
 	void *aux;
 {
 	struct el_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -236,6 +238,11 @@ elattach(parent, self, aux)
 	dprintf(("Attaching to BPF...\n"));
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	sc->sc_ih.ih_fun = elintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NET;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 
 	dprintf(("elattach() finished.\n"));
 }
@@ -477,10 +484,9 @@ el_xmit(sc, len)
  * Controller interrupt.
  */
 int
-elintr(unit)
-	int unit;
+elintr(sc)
+	register struct el_softc *sc;
 {
-	register struct el_softc *sc = elcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	int stat, rxstat, len, done;
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.19 1994/03/29 04:35:41 mycroft Exp $
+ *	$Id: clock.c,v 1.20 1994/04/07 06:50:24 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -90,6 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -97,6 +98,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/clock.h>
 #include <i386/isa/rtc.h>
 #include <i386/isa/timerreg.h>
@@ -123,12 +125,13 @@ startrtclock()
 		printf("RTC BIOS diagnostic error %b\n", s, RTCDG_BITS);
 }
 
-void
+int
 clockintr(frame)
-	clockframe frame;
+	clockframe *frame;
 {
 
-	hardclock(&frame);
+	hardclock(frame);
+	return -1;
 }
 
 int
@@ -232,18 +235,15 @@ findcpuspeed()
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
 
-/*
- * Wire clock interrupt in.
- */
-#define VEC(s)	__CONCAT(X, s)
-extern VEC(clk)();
-
 void
 enablertclock()
 {
+	static struct intrhand clockhand;
 
-	setidt(ICU_OFFSET+0, &VEC(clk), SDT_SYS386IGT, SEL_KPL);
-	INTREN(IRQ0);
+	clockhand.ih_fun = clockintr;
+	clockhand.ih_arg = 0;
+	clockhand.ih_level = IPL_CLOCK;
+	intr_establish(IRQ0, &clockhand);
 }
 
 void

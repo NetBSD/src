@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.8 1994/03/29 04:36:11 mycroft Exp $
+ *	$Id: mcd.c,v 1.9 1994/04/07 06:51:02 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -109,6 +109,7 @@ struct mcd_mbx {
 
 struct mcd_softc {
 	struct	device sc_dev;
+	struct	intrhand sc_ih;
 
 	u_short	iobase;
 	short	config;
@@ -147,7 +148,7 @@ bcd_t bin2bcd __P((int));
 void hsg2msf __P((int, bcd_t *));
 int msf2hsg __P((bcd_t *));
 int mcd_volinfo __P((struct mcd_softc *));
-int mcdintr __P((int));
+int mcdintr __P((struct mcd_softc *));
 void mcd_doread __P((int, struct mcd_mbx *));
 int mcd_setmode __P((struct mcd_softc *, int));
 int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
@@ -206,6 +207,11 @@ mcdattach(parent, self, aux)
 #endif
 	
 	sc->flags = 0;
+
+	sc->sc_ih.ih_fun = mcdintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 int
@@ -808,10 +814,9 @@ mcd_volinfo(sc)
 }
 
 int
-mcdintr(unit)
-	int unit;
+mcdintr(sc)
+	struct mcd_softc *sc;
 {
-	struct mcd_softc *sc = mcdcd.cd_devs[unit];
 	u_short iobase = sc->iobase;
 	
 	MCD_TRACE("stray interrupt xfer=0x%x\n", inb(iobase + mcd_xfer),

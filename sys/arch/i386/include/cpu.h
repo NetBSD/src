@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.14 1994/04/03 22:36:41 mycroft Exp $
+ *	$Id: cpu.h,v 1.15 1994/04/07 06:49:19 mycroft Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -70,45 +70,30 @@ typedef struct intrframe clockframe;
 #define	CLKF_INTR(framep)	(0)	/* XXX should have an interrupt stack */
 
 /*
- * Software interrupt request `register'.
- */
-int	sir;
-
-#define	SIR_AST		0
-#define	SIR_NET		1
-#define	SIR_CLOCK	2
-#define	SIR_COM		3
-
-#define	softintr(n)	(sir |= 1 << (n))
-#define	setsoftnet()	softintr(SIR_NET)
-#define	setsoftclock()	softintr(SIR_CLOCK)
-#define	setsoftcom()	softintr(SIR_COM)
-
-/*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;	/* resched() was called */
-#define	need_resched()	(want_resched = 1, softintr(SIR_AST))
+#define	need_resched()	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, softintr(SIR_AST))
-#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, softintr(SIR_AST))
+#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, setsoftast())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	softintr(SIR_AST)
+#define	signotify(p)	setsoftast()
 
 /*
  * pull in #defines for kinds of processors
  */
-#include "machine/cputypes.h"
+#include <machine/cputypes.h>
 
 struct cpu_nameclass {
 	char *cpu_name;
