@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.4 1996/12/28 23:37:53 leo Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.5 2003/05/23 21:56:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -37,6 +37,7 @@
 #define	XBIOS		14
 #define	Floprd		0x08
 #define	DMAread		0x2a
+#define	NVMaccess	0x2e
 
 #define	_membot		0x0432
 #define	_memtop		0x0436
