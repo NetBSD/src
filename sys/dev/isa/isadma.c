@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.39 1998/11/19 15:38:25 mrg Exp $	*/
+/*	$NetBSD: isadma.c,v 1.40 1999/02/22 02:32:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,10 @@ static u_int8_t dmamode[] = {
 	/* write to device/read from device */
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
+
+	/* write to device/read from device */
+	DMA37MD_READ | DMA37MD_DEMAND,
+	DMA37MD_WRITE | DMA37MD_DEMAND,
 
 	/* write to device/read from device - DMAMODE_LOOP */
 	DMA37MD_READ | DMA37MD_SINGLE | DMA37MD_LOOP,
