@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1998/04/30 21:22:01 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1998/05/01 15:30:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -196,6 +196,10 @@ pmap_debug(level)
  * pages.
  */
 
+/*
+ * Allocate a new pv_entry structure from the freelist. If the list is
+ * empty allocate a new page and fill the freelist.
+ */
 struct pv_entry *
 pmap_alloc_pv()
 {
@@ -234,6 +238,10 @@ pmap_alloc_pv()
 	}
 	return pv;
 }
+
+/*
+ * Release a pv_entry structure putting it back on the freelist.
+ */
 
 void
 pmap_free_pv(pv)
@@ -316,6 +324,9 @@ pmap_collect_pv()
 	}
 }
 
+/*
+ * Enter a new physical-virtual mapping into the pv table
+ */
 
 /*__inline*/ int
 pmap_enter_pv(pmap, va, pind, flags)
@@ -374,6 +385,10 @@ pmap_enter_pv(pmap, va, pind, flags)
 	return(0);
 }
 
+
+/*
+ * Remove a physical-virtual mapping from the pv table
+ */
 
 /* __inline*/ u_int
 pmap_remove_pv(pmap, va, pind)
@@ -438,6 +453,9 @@ pmap_remove_pv(pmap, va, pind)
 	return(flags);
 }
 
+/*
+ * Modify a physical-virtual mapping in the pv table
+ */
 
 /*__inline */ u_int
 pmap_modify_pv(pmap, va, pind, bic_mask, eor_mask)
@@ -501,6 +519,11 @@ pmap_modify_pv(pmap, va, pind, bic_mask, eor_mask)
 }
 
 
+/*
+ * Map the specified level 2 pagetable into the level 1 page table for
+ * the given pmap to cover a chunk of virtual address space starting from the
+ * address specified.
+ */
 static /*__inline*/ void
 pmap_map_in_l1(pmap, va, l2pa)
 	pmap_t pmap;
@@ -508,6 +531,7 @@ pmap_map_in_l1(pmap, va, l2pa)
 {
 	vm_offset_t ptva;
 
+	/* Calculate the index into the L1 page table */
 	ptva = (va >> PDSHIFT) & ~3;
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -515,7 +539,7 @@ pmap_map_in_l1(pmap, va, l2pa)
 		    pmap->pm_pdir, L1_PTE(l2pa), ptva);
 #endif	/* PMAP_DEBUG */
 
-	/* Wire page table into the L1 */
+	/* Map page table into the L1 */
 	pmap->pm_pdir[ptva + 0] = L1_PTE(l2pa + 0x000);
 	pmap->pm_pdir[ptva + 1] = L1_PTE(l2pa + 0x400);
 	pmap->pm_pdir[ptva + 2] = L1_PTE(l2pa + 0x800);
@@ -531,9 +555,9 @@ pmap_map_in_l1(pmap, va, l2pa)
 	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
 	    L2_PTE_NC_NB(l2pa, AP_KRW);
 
+	/* XXX should be a purge */
 	cpu_tlb_flushD();
 }
-
 
 
 /*
@@ -736,7 +760,7 @@ pmap_create(size)
  * pmap_alloc_l1pt()
  *
  * This routine allocates physical and virtual memory for a L1 page table
- * and wires in.
+ * and wires it.
  * A l1pt structure is returned to describe the allocated page table.
  *
  * This routine is allowed to fail if the required memory cannot be allocated.
@@ -920,7 +944,7 @@ pmap_allocpagedir(pmap)
 	/*
 	 * Now we get nasty. We need to map the page
 	 * directory to a standard address in the memory
-	 *  map. This means we can easily find the active
+	 * map. This means we can easily find the active
 	 * page directory. This is needed by pmap_pte to
 	 * hook in an alternate pmap's page tables.
 	 * This means that a page table is needed in each
@@ -1084,7 +1108,13 @@ pmap_release(pmap)
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
 
-	/* Free any page tables still mapped */
+	/*
+	 * Free any page tables still mapped
+	 * This is only temporay until pmap_enter can count the number
+	 * of mappings made in a page table. Then pmap_remove() can
+	 * reduce the count and free the pagetable when the count
+	 * reaches zero.
+	 */
 	for (loop = 0; loop < 0x3bf; ++loop) {
 		pte = (pt_entry_t *)(pmap->pm_vptpt + loop * 4);
 		if (*pte != 0) {
@@ -1094,14 +1124,13 @@ pmap_release(pmap)
 #endif	/* PMAP_DEBUG */
 			page = PHYS_TO_VM_PAGE(pmap_pte_pa(pte));
 			if (page == NULL)
-				panic("pmap_free_physpage: bogus physical page address");
+				panic("pmap_release: bad address for phys page");
 			vm_page_free1(page);
 		}
 	}
 	/* Free the page dir */
 	pmap_freepagedir(pmap);
 }
-
 
 
 /*
@@ -2031,7 +2060,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		struct vm_page *page;
 		vm_offset_t l2pa;
 
-		/* Allocate a page table to cover the mapping of zero page */
+		/* Allocate a page table */
 		page = vm_page_alloc1();
 
 		/* XXX should try and free up memory if alloc fails */
@@ -2882,6 +2911,13 @@ pmap_page_attributes(va)
 	return(-1);
 }
 
+
+/*
+ * pmap_collect: free resources held by a pmap
+ *
+ * => optional function.
+ * => called when a process is swapped out to free memory.
+ */
 
 void
 pmap_collect(pmap)
