@@ -1,6 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.mkshop.c - version 1.0.3 */
 
+#include <stdlib.h>
 #ifndef QUEST
 #include "hack.h"
 #include "def.mkroom.h"
@@ -21,7 +22,6 @@ register struct monst *shk;
 #ifdef WIZARD
 	/* first determine shoptype */
 	if(wizard){
-		extern char *getenv();
 		register char *ep = getenv("SHOPTYPE");
 		if(ep){
 			if(*ep == 'z' || *ep == 'Z'){

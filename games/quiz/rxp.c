@@ -77,9 +77,9 @@ typedef short Rxp_t;			/* type for regexp tokens */
 static Rxp_t rxpbuf[RXP_LINE_SZ];	/* compiled regular expression buffer */
 char rxperr[128];			/* parser error message */
 
-int	 rxp__compile __P((char *, int));
-char	*rxp__expand __P((int));
-int	 rxp__match __P((char *, int, Rxp_t *, Rxp_t *, char *));
+static int	 rxp__compile __P((char *, int));
+static char	*rxp__expand __P((int));
+static int	 rxp__match __P((char *, int, Rxp_t *, Rxp_t *, char *));
 
 int
 rxp_compile(s)

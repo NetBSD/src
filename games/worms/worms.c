@@ -60,6 +60,7 @@ static char sccsid[] = "@(#)worms.c	5.9 (Berkeley) 2/28/91";
  */
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef USG
 #include <termio.h>
 #else
@@ -179,6 +180,8 @@ static struct	worm {
 	short *xpos, *ypos;
 } *worm;
 
+char *tgetstr(), *tgoto();
+
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -195,7 +198,7 @@ main(argc, argv)
 	void onsig();
 	short **ref;
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
-	char *field, tcb[100], *mp, *malloc(), *getenv(), *tgetstr(), *tgoto();
+	char *field, tcb[100], *mp;
 	long random();
 #ifdef USG
 	struct termio sg;

@@ -57,6 +57,7 @@ static char sccsid[] = "@(#)fortune.c	5.13 (Berkeley) 4/8/91";
 # include	<sys/dir.h>
 # include	<stdio.h>
 # include	<assert.h>
+# include	<stdlib.h>
 # include	"strfile.h"
 # include	"pathnames.h"
 
@@ -925,7 +926,6 @@ get_fort()
 {
 	register FILEDESC	*fp;
 	register int		choice;
-	long random();
 
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
