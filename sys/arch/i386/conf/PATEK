@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.23 1995/01/16 12:00:53 mycroft Exp $
+#	$NetBSD: PATEK,v 1.24 1995/01/16 12:23:52 mycroft Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -103,13 +103,13 @@ pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb*	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt*	at isa? port ? irq ?
+#bt2	at isa? port ? irq ?
 #scsibus* at bt?
 #ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
@@ -117,7 +117,7 @@ scsibus* at aic?
 #scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha*	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 scsibus* at uha?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives

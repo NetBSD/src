@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.10 1995/01/16 12:00:49 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.11 1995/01/16 12:23:49 mycroft Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -105,13 +105,13 @@ mms1	at isa? port 0x238 irq 5
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb*	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt*	at isa? port ? irq ?
+#bt2	at isa? port ? irq ?
 #scsibus* at bt?
 #ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
@@ -119,7 +119,7 @@ mms1	at isa? port 0x238 irq 5
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha*	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
