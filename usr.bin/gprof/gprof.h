@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.3 1993/08/01 18:15:19 mycroft Exp $
+ *	$Id: gprof.h,v 1.4 1993/12/02 19:12:21 pk Exp $
  */
 
 #include <sys/types.h>
@@ -55,6 +55,9 @@
 #endif
 #if i386
 #   include "i386.h"
+#endif
+#if sparc
+#   include "sparc.h"
 #endif
 
 
