@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.21 1997/04/21 11:34:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.21 1997/04/21 11:34:37 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $"
 #include "extern.h"
 
 char	*lfname = "lost+found";
-int	lfmode = 01777;
+int	lfmode = 01700;
 struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
 struct	dirtemplate dirhead = {
 	0, 12, DT_DIR, 1, ".",
