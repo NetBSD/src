@@ -1,7 +1,7 @@
-/* $NetBSD: majors+minors,v 1.10 1997/10/14 09:06:52 mark Exp $ */
+/*	$NetBSD: majors+minors,v 1.11 1998/09/05 01:06:38 mark Exp $	*/
 
 /*
- * Copyright (c) 1994,1996 Mark Brinicombe.
+ * Copyright (c) 19941198 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -30,10 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * majors+minors
  *
  * list of all allocated major numbers
  *
@@ -255,16 +252,47 @@ same device driver even if the driver does not require both.
 48 B	- reserved
 48 C	- S/PDIF
 49 B	- reserved
-49 C	- reserved (generic midi device)
+49 C	- ofrom
 50 B	- reserved
-50 C	- reserved
+50 C	- smart card (/dev/scr)
 51 B	- reserved
 51 C	- reserved
 52 B	- reserved
 52 C	- random device
 53 B	- reserved
-53 C	- reserved
+53 C	- FIQ profiler
 54 B	- reserved
-54 C	- reserved
+54 C	- Footbridge diag serial 
+	  minor = 0 - /dev/fcom
 55 B	- reserved
-55 C	- reserved
+55 C	- reserved for bypass device
+56 B	- reserved
+56 C	- ISA jostick
+57 B	- reserved
+57 C	- MIDI I/O
+58 B	- reserved
+58 C	- Sequencer I/O
+59 B	- reserved
+59 C	- reserved for CODA
+60 B	- reserved
+60 C	- wsdisplay device
+61 B	- reserved
+61 C	- wskbd device
+62 B	- reserved
+62 C	- wsmouse device
+63 B	- reserved
+63 C	- reserved
+64 B	- reserved
+64 C	- USB controller
+65 B	- reserved
+65 C	- USB HID
+66 B	- reserved
+66 C	- USB printer
+67 B	- reserved
+67 C	- reserved
+68 B	- reserved
+68 C	- reserved
+69 B	- reserved
+69 C	- reserved
+
+70+ free for allocation
