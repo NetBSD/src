@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.19 2001/01/19 21:55:19 pk Exp $	*/
+/*	$NetBSD: k5login.c,v 1.20 2001/09/10 00:02:29 assar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,13 +55,14 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.19 2001/01/19 21:55:19 pk Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.20 2001/09/10 00:02:29 assar Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
 #include <krb5/krb5.h>
+#include <kerberosIV/krb.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -83,6 +84,9 @@ extern int login_krb5_forwardable_tgt;
 extern int has_ccache;
 
 static char tkt_location[MAXPATHLEN];
+#ifdef KERBEROS
+char krb4tkfile[MAXPATHLEN];
+#endif
 static krb5_creds forw_creds;
 int have_forward;
 static krb5_principal me, server;
@@ -92,6 +96,11 @@ int k5_write_creds(void);
 int k5_verify_creds(krb5_context, krb5_ccache);
 int k5login(struct passwd *, char *, char *, char *);
 void k5destroy(void);
+
+#ifdef KERBEROS
+static krb5_error_code
+krb5_to4 (struct passwd *pw, krb5_context context, krb5_ccache id);
+#endif
 
 #ifndef krb5_realm_length
 #define krb5_realm_length(r)	((r).length)
@@ -318,6 +327,58 @@ nuke_ccache_contents:
 }
 
 /*
+ * Get krb4 credentials if needed
+ */
+#ifdef KERBEROS
+static krb5_error_code
+krb5_to4 (struct passwd *pw, krb5_context context, krb5_ccache id)
+{
+	if (krb5_config_get_bool(context, NULL,
+				 "libdefaults",
+				 "krb4_get_tickets",
+				 NULL)) {
+		CREDENTIALS c;
+		krb5_creds mcred, cred;
+		krb5_error_code ret;
+		krb5_principal princ;
+
+		ret = krb5_cc_get_principal (context, id, &princ);
+		if (ret)
+			return ret;
+
+		ret = krb5_make_principal(context, &mcred.server,
+					  princ->realm,
+					  "krbtgt",
+					  princ->realm,
+					  NULL);
+		krb5_free_principal (context, princ);
+		if (ret)
+			return ret;
+
+		ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
+		if(ret == 0) {
+			ret = krb524_convert_creds_kdc(context, id, &cred, &c);
+			if(ret == 0) {
+				snprintf(krb4tkfile, sizeof(krb4tkfile),
+					 "%s%d",TKT_ROOT, getuid());
+				krb_set_tkt_string(krb4tkfile);
+				tf_setup(&c, c.pname, c.pinst);
+				if (chown(krb4tkfile, pw->pw_uid,
+					  pw->pw_gid) < 0)
+					syslog(LOG_ERR,
+					       "chown tkfile (%s): %m",
+					       krb4tkfile);
+			}
+			memset(&c, 0, sizeof(c));
+			krb5_free_creds_contents(context, &cred);
+		}
+		krb5_free_principal(context, mcred.server);
+	}
+	return 0;
+}
+#endif /* KERBEROS */
+
+/*
  * Attempt to log the user in using Kerberos authentication
  *
  * return 0 on success (will be logged in)
@@ -461,6 +522,10 @@ k5login(pw, instance, localhost, password)
 	if (k5_verify_creds(kcontext, ccache) < 0)
 		return (1);
 
+#ifdef KERBEROS
+	if ((kerror = krb5_to4(pw, kcontext, ccache)) != 0)
+	    krb5_warn(kcontext, kerror, "error converting krb4 creds");
+#endif
 
 	/* Success */
 	notickets = 0;
@@ -483,4 +548,4 @@ k5destroy()
 	if (kerror == 0)
 		(void)krb5_cc_destroy(kcontext, ccache);
 }
-#endif
+#endif /* KERBEROS5 */
