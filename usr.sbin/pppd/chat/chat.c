@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.19 2000/07/16 22:10:10 tron Exp $	*/
+/*	$NetBSD: chat.c,v 1.20 2000/09/23 22:39:33 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -84,16 +84,17 @@
  *
  */
 
+#ifndef __STDC__
+#define const
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
+static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.19 2000/07/16 22:10:10 tron Exp $");
+__RCSID("$NetBSD: chat.c,v 1.20 2000/09/23 22:39:33 christos Exp $");
 #endif
-#endif
-#ifndef __STDC__
-#define const
 #endif
 
 #include <stdio.h>

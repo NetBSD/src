@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.5 1999/08/25 02:07:41 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.6 2000/09/23 22:39:33 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -25,7 +25,7 @@
 #if 0
 #define RCSID	"Id: cbcp.c,v 1.10 1999/08/13 06:46:10 paulus Exp "
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.5 1999/08/25 02:07:41 christos Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.6 2000/09/23 22:39:33 christos Exp $");
 #endif
 #endif
 
