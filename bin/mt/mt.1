@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.12 1997/10/03 06:03:06 mikel Exp $
+.\"	$NetBSD: mt.1,v 1.13 1997/10/04 12:32:31 hannken Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,10 +125,10 @@ Set the tape density code to
 as specified in the SCSI2 specification.
 .It Cm rdspos
 Read the logical block position of the tape (not all tape
-drives support this feature).
+drives support this feature, count is ignored).
 .It Cm rdhpos
 Read the hardware block position of the tape (not all tape
-drives support this feature).
+drives support this feature, count is ignored).
 .It Cm setspos
 Set the logical block position of the tape to
 .Ar count
@@ -137,6 +137,11 @@ Set the logical block position of the tape to
 Set the hardware block position of the tape to
 .Ar count
 (not all tape drives support this feature).
+.It Cm compress
+If
+.Ar count
+is zero, disable compression.  Otherwise enable compression (not all tape
+drives support this feature).
 .El
 .Pp
 If a tape name is not specified, and the environment variable
@@ -144,7 +149,7 @@ If a tape name is not specified, and the environment variable
 is not set, then
 .Nm mt
 uses the device
-.Pa /dev/rst0 .
+.Pa /dev/nrst0 .
 .Pp
 .Nm Mt
 returns a 0 exit status when the operation(s) were successful,
@@ -162,12 +167,12 @@ argument
 .Ar tapename
 is not given.
 .Sh FILES
-.Bl -tag -width src/sys/scsipi/scsi_tape.h -compact
+.Bl -tag -width src/sys/dev/scsipi/scsi_tape.h -compact
 .It Pa /dev/rst*
 Raw SCSI tape interface
 .It Pa /dev/rmt*
 Raw magnetic tape interface
-.It Pa src/sys/scsipi/scsi_tape.h
+.It Pa src/sys/dev/scsipi/scsi_tape.h
 List of SCSI2 density codes
 .El
 .Sh SEE ALSO

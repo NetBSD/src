@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.22 1997/09/29 19:35:31 mjacob Exp $	*/
+/*	$NetBSD: mt.c,v 1.23 1997/10/04 12:32:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.22 1997/09/29 19:35:31 mjacob Exp $");
+__RCSID("$NetBSD: mt.c,v 1.23 1997/10/04 12:32:33 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,29 +71,34 @@ __RCSID("$NetBSD: mt.c,v 1.22 1997/09/29 19:35:31 mjacob Exp $");
 
 struct commands {
 	const char *c_name;		/* command */
-	int c_code;			/* ioctl code for this command */
+	int c_spcl;			/* ioctl request */
+	int c_code;			/* ioctl code for MTIOCTOP command */
 	int c_ronly;			/* open tape read-only */
 	int c_mincount;			/* min allowed count value */
 };
 
 const struct commands com[] = {
-	{ "asf",	MTASF,      1,  1 },
-	{ "blocksize",	MTSETBSIZ,  1,  0 },
-	{ "bsf",	MTBSF,      1,  1 },
-	{ "bsr",	MTBSR,      1,  1 },
-	{ "density",	MTSETDNSTY, 1,  0 },
-	{ "eof",	MTWEOF,     0,  1 },
-	{ "eom",	MTEOM,      1,  0 },
-	{ "erase",	MTERASE,    0,  0 },
-	{ "fsf",	MTFSF,      1,  1 },
-	{ "fsr",	MTFSR,      1,  1 },
-	{ "offline",	MTOFFL,     1,  0 },
-	{ "rewind",	MTREW,      1,  0 },
-	{ "rewoffl",	MTOFFL,     1,  0 },
-	{ "status",	MTNOP,      1,  0 },
-	{ "retension",	MTRETEN,    1,  0 },
-	{ "weof",	MTWEOF,     0,  1 },
-	{ "compress",	MTCMPRESS,  1,  0 },
+	{ "asf",	MTIOCTOP,     MTASF,      1,  1 },
+	{ "blocksize",	MTIOCTOP,     MTSETBSIZ,  1,  0 },
+	{ "bsf",	MTIOCTOP,     MTBSF,      1,  1 },
+	{ "bsr",	MTIOCTOP,     MTBSR,      1,  1 },
+	{ "compress",	MTIOCTOP,     MTCMPRESS,  1,  0 },
+	{ "density",	MTIOCTOP,     MTSETDNSTY, 1,  0 },
+	{ "eof",	MTIOCTOP,     MTWEOF,     0,  1 },
+	{ "eom",	MTIOCTOP,     MTEOM,      1,  0 },
+	{ "erase",	MTIOCTOP,     MTERASE,    0,  0 },
+	{ "fsf",	MTIOCTOP,     MTFSF,      1,  1 },
+	{ "fsr",	MTIOCTOP,     MTFSR,      1,  1 },
+	{ "offline",	MTIOCTOP,     MTOFFL,     1,  0 },
+	{ "rdhpos",     MTIOCRDHPOS,  0,          1,  0 },
+	{ "rdspos",     MTIOCRDSPOS,  0,          1,  0 },
+	{ "retension",	MTIOCTOP,     MTRETEN,    1,  0 },
+	{ "rewind",	MTIOCTOP,     MTREW,      1,  0 },
+	{ "rewoffl",	MTIOCTOP,     MTOFFL,     1,  0 },
+	{ "sethpos",    MTIOCHLOCATE, 0,          1,  0 },
+	{ "setspos",    MTIOCSLOCATE, 0,          1,  0 },
+	{ "status",	MTIOCGET,     MTNOP,      1,  0 },
+	{ "weof",	MTIOCTOP,     MTWEOF,     0,  1 },
 	{ NULL }
 };
 
@@ -133,105 +138,75 @@ main(argc, argv)
 	if (argc < 1 || argc > 2)
 		usage();
 
-	if (strcmp(*argv, "rdspos") == 0) {
-		count = 0;
-		spcl = MTIOCRDSPOS;
-		flags = O_RDONLY;
-	} else if (strcmp(*argv, "rdhpos") == 0) {
-		count = 0;
-		spcl = MTIOCRDHPOS;
-		flags = O_RDONLY;
-	} else if (strcmp(*argv, "setspos") == 0) {
-		spcl = MTIOCSLOCATE;
-		flags = O_RDONLY;
-		
-		++argv;
-		if ((p = *argv) != NULL) {
-			count = strtol(*argv, &p, 0);
-			if (p == *argv) {
-				fprintf(stderr, "%s: illegal block address\n", p);
-				exit(1);
-			}
-		} else {
-			fprintf(stderr, "MTIOSLOCATE: missing block address\n");
-			exit(1);
-		}
-	} else if (strcmp(*argv, "sethpos") == 0) {
-		spcl = MTIOCHLOCATE;
-		flags = O_RDONLY;
-
-		++argv;
-		if ((p = *argv) != NULL) {
-			count = strtol(*argv, &p, 0);
-			if (p == *argv) {
-				fprintf(stderr, "%s: illegal block address\n", p);
-				exit(1);
-			}
-		} else {
-			fprintf(stderr, "MTIOHLOCATE: missing block address\n");
-			exit(1);
-		}
-	} else {
-
-		len = strlen(p = *argv++);
-		for (comp = com;; comp++) {
-			if (comp->c_name == NULL)
-				errx(1, "%s: unknown command", p);
-			if (strncmp(p, comp->c_name, len) == 0)
-				break;
-		}
-
-		if (*argv) {
-			count = strtol(*argv, &p, 10);
-			if (count < comp->c_mincount || *p)
-				errx(2, "%s: illegal count", *argv);
-		} else
-			count = 1;
-		flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
-		spcl = 0;
+	len = strlen(p = *argv++);
+	for (comp = com;; comp++) {
+		if (comp->c_name == NULL)
+			errx(1, "%s: unknown command", p);
+		if (strncmp(p, comp->c_name, len) == 0)
+			break;
 	}
+
+	if (*argv) {
+		count = strtol(*argv, &p, 10);
+		if (count < comp->c_mincount || *p)
+			errx(2, "%s: illegal count", *argv);
+	} else
+		count = 1;
+
+	flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
 
 	if ((mtfd = open(tape, flags)) < 0)
 		err(2, "%s", tape);
 
-	if (spcl) {
-		int doset = (count != 0);
-		if (ioctl(mtfd, spcl, (caddr_t) &count) < 0) {
-			err(2, "%s", tape);
-		} else if (doset) {
-			printf("%s: block location set to %u\n", tape,
-				(unsigned int) count);
-		} else {
-			printf("%s: block location %u\n", tape,
-				(unsigned int) count);
-		}
-	} else if (comp->c_code == MTASF) {
-		/* If mtget.mt_fileno was implemented, We could
-		   compute the minimal seek needed to position
-		   the tape.  Until then, rewind and seek from
-		   begining-of-tape */
+	switch (comp->c_spcl) {
+	case MTIOCTOP:
+		if (comp->c_code == MTASF) {
+			/* If mtget.mt_fileno was implemented, We could
+			   compute the minimal seek needed to position
+			   the tape.  Until then, rewind and seek from
+			   begining-of-tape */
 
-		mt_com.mt_op = MTREW;
-		mt_com.mt_count = 1;
-		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
-			err(2, "%s", tape);
+			mt_com.mt_op = MTREW;
+			mt_com.mt_count = 1;
+			if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
+				err(2, "%s", tape);
 		
-		mt_com.mt_op = MTFSF;
-		mt_com.mt_count = count;
-		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
-			err(2, "%s", tape);
+			mt_com.mt_op = MTFSF;
+			mt_com.mt_count = count;
+			if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
+				err(2, "%s", tape);
 
-	} else if (comp->c_code != MTNOP) {
-		mt_com.mt_op = comp->c_code;
-		mt_com.mt_count = count;
+		} else {
+			mt_com.mt_op = comp->c_code;
+			mt_com.mt_count = count;
 
-		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
-			err(2, "%s: %s", tape, comp->c_name);
+			if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
+				err(2, "%s: %s", tape, comp->c_name);
 
-	} else {
+		}
+		break;
+
+	case MTIOCGET:
 		if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
 			err(2, "%s: %s", tape, comp->c_name);
 		status(&mt_status);
+		break;
+
+	case MTIOCRDSPOS:
+	case MTIOCRDHPOS:
+		if (ioctl(mtfd, comp->c_spcl, (caddr_t) &count) < 0)
+			err(2, "%s", tape);
+		printf("%s: block location %u\n", tape, (unsigned int) count);
+		break;
+
+	case MTIOCSLOCATE:
+	case MTIOCHLOCATE:
+		if (ioctl(mtfd, comp->c_spcl, (caddr_t) &count) < 0)
+			err(2, "%s", tape);
+		break;
+
+	default:
+		errx(1, "internal error: unknown request %d", comp->c_spcl);
 	}
 
 	exit(0);
