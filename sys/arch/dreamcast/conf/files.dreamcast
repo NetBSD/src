@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.24 2003/06/14 16:15:16 tsutsui Exp $
+#	$NetBSD: files.dreamcast,v 1.25 2003/08/24 17:33:27 marcus Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -98,5 +98,9 @@ file	arch/dreamcast/dev/g2/gapspci_pci.c		gapspci
 # LAN Adapter
 attach	mbe at g2bus with mbe_g2bus
 file	arch/dreamcast/dev/g2/if_mbe_g2.c		mbe_g2bus
+
+device	aica: audiobus, auconv, mulaw
+attach	aica at g2bus
+file	arch/dreamcast/dev/g2/aica.c			aica	needs-flag
 
 include "arch/dreamcast/conf/majors.dreamcast"

@@ -1,0 +1,23 @@
+OUTPUT_ARCH(arm)
+SECTIONS
+{
+	.text :
+	{
+		*(.text)
+		*(.text.*)
+		*(.glue_7t) *(.glue_7)
+	}
+	. = ALIGN(16);
+	.data :
+	{
+	}
+	. = ALIGN(16);
+	.sbss :
+	{
+	}
+	. = ALIGN(16);
+	.bss :
+	{
+	}
+}
+
