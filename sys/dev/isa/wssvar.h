@@ -1,7 +1,7 @@
-/*	$NetBSD: madreg.h,v 1.4 1998/01/19 22:18:27 augustss Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.1 1998/01/19 22:18:25 augustss Exp $	*/
+
 /*
- * Copyright (c) 1996 Lennart Augustsson
- * Copyright (c) 1995 Hannu Savolainen
+ * Copyright (c) 1994 John Brezak
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
  *
@@ -36,66 +36,47 @@
  */
 
 /*
- * Variations of the suppored chips.
+ * Mixer devices
  */
+#define WSS_MIC_IN_LVL		0
+#define WSS_LINE_IN_LVL		1
+#define WSS_DAC_LVL		2
+#define WSS_REC_LVL		3
+#define WSS_MON_LVL		4
+#define WSS_MIC_IN_MUTE		5
+#define WSS_LINE_IN_MUTE	6
+#define WSS_DAC_MUTE		7
 
-#define MAD_NONE	0
-#define MAD_82C928	1		/* OPTi 82C928     MAD16 */
-#define MAD_OTI601D	2		/* OAK OTI-601D    Mozart */
-#define MAD_82C929	3		/* OPTi 82C929     MAD16 Pro */
-#define MAD_82C931	4		/* OPTi 82C831     */
+#define WSS_RECORD_SOURCE	8
 
-/*
- *    Registers
- *
- *      The MAD16 occupies I/O ports 0xf8d to 0xf93 (fixed locations).
- *      All ports are inactive by default. They can be activated by
- *      writing 0xE2 or 0xE3 to the password register. The password is valid
- *      only until the next I/O read or write.
- */
+/* Classes */
+#define WSS_INPUT_CLASS		9
+#define WSS_RECORD_CLASS	10
+#define WSS_MONITOR_CLASS	11
 
-#define MAD_BASE	0xf8d
-#define MAD_NPORT	7
+struct wss_softc {
+	struct	device sc_dev;		/* base device */
+	struct	isadev sc_id;		/* ISA device */
+	void	*sc_ih;			/* interrupt vectoring */
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
+	isa_chipset_tag_t sc_ic;
 
-#define MC1_PORT	0	/* SB address, CDROM interface type, joystick */
-#define MC2_PORT	1	/* CDROM address, IRQ, DMA, plus OPL4 bit */
-#define MC3_PORT	2
-#define MC_PASSWD_REG	MC3_PORT
-#define MC4_PORT	3
-#define MC5_PORT	4
-#define MC6_PORT	5
-#define MC7_PORT	6
+	struct  ad1848_softc sc_ad1848;
+#define wss_irq    sc_ad1848.sc_irq
+#define wss_drq    sc_ad1848.sc_drq
+#define wss_recdrq sc_ad1848.sc_recdrq
 
-#define MC1_NOCD	0x00
-#define MC1_JOYDISABLE	0x01
-#define MC1_SONY	0x02
-#define MC1_MITSUMI	0x04
-#define MC1_PANASONIC	0x06
-#define MC1_SECIDE	0x08
-#define MC1_PRIMIDE	0x0a
+	int 	mic_mute, cd_mute, dac_mute;
 
-#define MC2_CDDISABLE	0x03
-#define MC2_OPL4	0x20
+	int	mad_chip_type;		/* chip type if MAD emulation of WSS */
+	int	mad_ioindex;
+	bus_space_handle_t mad_ioh;	/* MAD handle */
+	bus_space_handle_t mad_ioh1, mad_ioh2, mad_ioh3;
+};
 
-/* Possible WSS emulation ports */
-#define M_WSS_PORT0 0x530
-#define M_WSS_PORT1 0xe80
-#define M_WSS_PORT2 0xf40
-#define M_WSS_PORT3 0x604
-#define M_WSS_NPORTS 4
+void	wssattach __P((struct wss_softc *));
 
-/* Port 1 */
-#define M_WSS_PORT_SELECT(i) (0x80 | ((i) << 4))
-
-#define M_PASSWD_928	0xe2
-#define M_PASSWD_929	0xe3
-#define M_PASSWD_931	0xe4
-
-/* Regions of I/O space that the MAD occupies besides
-   WSS emulation and MAD_BASE.  Talk about waste. */
-#define MAD_REG1 0x220
-#define MAD_LEN1 16
-#define MAD_REG2 0x380
-#define MAD_LEN2 2
-#define MAD_REG3 0x388
-#define MAD_LEN3 4
+u_int	mad_read __P((struct wss_softc *, int));
+void	mad_write __P((struct wss_softc *, int, int));
+void	madattach __P((struct wss_softc *));
