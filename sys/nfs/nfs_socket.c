@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.38 1997/05/22 18:20:06 gwr Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.38.6.1 1997/09/08 23:15:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -53,6 +53,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
 #include <sys/namei.h>
@@ -1365,6 +1366,8 @@ nfs_timer(arg)
 	timeout(nfs_timer, (void *)0, nfs_ticks);
 }
 
+static const int nfsint_siglist[] = NFSINT_SIGLIST;
+
 /*
  * Test for a termination condition pending on the process.
  * This is used for NFSMNT_INT mounts.
@@ -1375,15 +1378,25 @@ nfs_sigintr(nmp, rep, p)
 	struct nfsreq *rep;
 	register struct proc *p;
 {
+	int i, bit;
 
 	if (rep && (rep->r_flags & R_SOFTTERM))
 		return (EINTR);
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
-	if (p && p->p_siglist &&
-	    (((p->p_siglist & ~p->p_sigmask) & ~p->p_sigignore) &
-	    NFSINT_SIGMASK))
+	if (p == NULL || p->p_sigacts == NULL)
+		return (0);
+	for (i = 0; i < (sizeof(nfsint_siglist) / sizeof(nfsint_siglist[0]));
+	    i++) {
+		if (SIGIGNORE(p, nfsint_siglist[i]))
+			continue;	/* signal is ignored */
+		bit = sigmask(nfsint_siglist[i]);
+		if ((p->p_siglist & bit) == 0)
+			continue;	/* signal is not pending */
+		if (p->p_sigmask & bit)
+			continue;	/* signal is masked */
 		return (EINTR);
+	}
 	return (0);
 }
 

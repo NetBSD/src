@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.45 1997/04/28 13:17:05 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.45.6.1 1997/09/08 23:10:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -127,9 +127,16 @@ exit1(p, rv)
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
 	}
-	p->p_sigignore = ~0;
+
+	/*
+	 * Note that we need to prevent signals from being delivered
+	 * to the zombie.  sigacts_free() will set p->p_sigacts to
+	 * NULL.  psignal() uses this as an indication that the
+	 * process is a zombie, and should not receive signals.
+	 */
 	p->p_siglist = 0;
 	untimeout(realitexpire, (caddr_t)p);
+	sigacts_free(p);
 
 	/*
 	 * Close open files and release open-file table.
