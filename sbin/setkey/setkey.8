@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.20 2003/07/22 03:38:14 itojun Exp $
-.\"	$KAME: setkey.8,v 1.82 2003/07/01 04:03:19 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.21 2003/07/25 10:09:38 itojun Exp $
+.\"	$KAME: setkey.8,v 1.86 2003/07/25 09:53:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 22, 2003
+.Dd July 25, 2003
 .Dt SETKEY 8
 .Os
 .\"
@@ -567,6 +567,11 @@ hmac-sha2-384	384		ah: 96bit ICV (no document)
 		384		ah-old: 128bit ICV (no document)
 hmac-sha2-512	512		ah: 96bit ICV (no document)
 		512		ah-old: 128bit ICV (no document)
+hmac-ripemd160	160		ah: 96bit ICV (RFC2857)
+				ah-old: 128bit ICV (no document)
+aes-xcbc-mac	128		ah: 96bit ICV
+				(draft-ietf-ipsec-ciph-aes-xcbc-mac-04)
+		128		ah-old: 128bit ICV (no document)
 .Ed
 .Pp
 Followings are the list of encryption algorithms that can be used as
@@ -587,7 +592,12 @@ cast128-cbc	40 to 128	rfc2451
 des-deriv	64		ipsec-ciph-des-derived-01
 3des-deriv	192		no document
 rijndael-cbc	128/192/256	draft-ietf-ipsec-ciph-aes-cbc-01
+aes-ctr		160/224/288	draft-ietf-ipsec-ciph-aes-ctr-03
 .Ed
+.Pp
+Note that the first 128 bits of a key for
+.Li aes-ctr
+will be used as AES key, and remaining 32 bits will be used as nonce.
 .Pp
 Followings are the list of compression algorithms that can be used as
 .Ar calgo
