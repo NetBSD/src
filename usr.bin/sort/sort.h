@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.17 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.18 2004/02/15 14:22:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -97,8 +97,6 @@
 #define FLD_D 2		/* ' ', '\t' default; from -t otherwise */
 #define REC_D_F 4	/* '\n' default; from -T otherwise */
 
-#define ND 10	/* limit on number of -k options. */
-
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -176,7 +174,7 @@ extern int REC_D;
 extern const char *tmpdir;
 extern int stable_sort;
 extern u_char gweights[NBINS];
-extern struct coldesc clist[(ND+1)*2];
+extern struct coldesc *clist;
 extern int ncols;
 
 void	 append(const u_char **, int, int, FILE *,
