@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.103 2002/09/17 23:18:29 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.104 2002/09/22 15:08:19 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -96,6 +96,10 @@ MKBFD		If "no", don't build libbfd, libiberty, or any of
 MKCATPAGES	If "no", don't build or install the catman pages.
 
 MKDOC		If "no", don't build or install the documentation.
+
+MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
+		don't install certain libraries in /lib, and don't
+		install the shared linker into /libexec.
 
 MKGDB		If "no", don't build gdb.
 
@@ -244,12 +248,12 @@ LIBDIR		Base path for library installation. [/usr/lib]
 
 SHLIBDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBDIR} instead of
 		${LIBDIR} as the base path for shared library installation.
-		[/usr/lib]
+		[/lib]
 
 _LIBSODIR	Set to ${SHLIBDIR} if ${USE_SHLIBDIR} is "yes",
 		otherwise set to ${LIBDIR}
 
-SHLINKDIR	Base path for shared linker. [/usr/libexec]
+SHLINKDIR	Base path for shared linker. [/libexec]
 
 LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
 
