@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.19 1993/10/28 14:29:33 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.20 1993/10/28 15:35:03 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -85,6 +85,7 @@ enum fdc_state {
 	IOTIMEDOUT,
 	DORESET,
 	RESETCOMPLETE,
+	RESETTIMEDOUT,
 	DORECAL,
 	RECALWAIT,
 	RECALTIMEDOUT,
@@ -157,11 +158,9 @@ struct fd_softc {
 	int	sc_drive;		/* unit number on this controller */
 	int	sc_flags;
 #define	FD_OPEN		0x01		/* it's open */
-#define	FD_ACTIVE	0x02		/* it's active */
-#define	FD_MOTOR	0x04		/* motor should be on */
-#define	FD_MOTOR_WAIT	0x08		/* motor coming up */
+#define	FD_MOTOR	0x02		/* motor should be on */
+#define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int	sc_skip;		/* bytes transferred so far */
-	int	sc_hddrv;
 	int	sc_track;		/* where we think the head is */
 	int	sc_nblks;		/* number of blocks tranferring */
 	daddr_t	sc_blkno;		/* starting block number */
@@ -199,21 +198,19 @@ fdcprobe(parent, cf, aux)
 	register struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 
-	/* XXX maybe search for drq? */
 	if (iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
 		return 0;
-
-	/* try a reset */
-	outb(iobase + fdout, 0);
-	delay(100);
-	outb(iobase + fdout, FDO_FRST);
 
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(fdcforceintr, aux);
 		if (ia->ia_irq == IRQNONE)
 			return 0;
-		outb(iobase + fdout, FDO_FRST);
 	}
+
+	/* reset it */
+	outb(iobase + fdout, 0);
+	delay(100);
+	outb(iobase + fdout, FDO_FRST);
 
 	ia->ia_iosize = FDC_NPORT;
 	ia->ia_msize = 0;
@@ -227,9 +224,13 @@ fdcforceintr(aux)
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 
-	/* do a seek to cyl 0 on drive 0; if there is no drive it
-	   should still generate an error */
-	outb(iobase + fdout, FDO_FRST | FDO_FDMAEN);
+	/* try a reset */
+	outb(iobase + fdout, 0);
+	delay(100);
+	outb(iobase + fdout, FDO_FRST);
+
+	/* the motor is off; this should generate an error with or
+	   without a disk drive present */
 	out_fdc(iobase, NE7CMD_SEEK);
 	out_fdc(iobase, 0);
 	out_fdc(iobase, 0);
@@ -727,6 +728,9 @@ fdcstate(fdc)
 		/* fall through */
 	    case DOSEEK:
 		if (fd->sc_track != bp->b_cylin) {
+			out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
+			out_fdc(iobase, fd->sc_type->steprate);
+			out_fdc(iobase, 6);		/* XXX head load time == 6ms */
 			out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
 			out_fdc(iobase, fd->sc_drive);	/* drive number */
 			out_fdc(iobase, bp->b_cylin);
@@ -747,7 +751,6 @@ fdcstate(fdc)
 		fd->sc_nblks = nblks;
 		head = sec / sectrac;
 		sec %= sectrac;
-		fd->sc_hddrv = (head << 2) | fd->sc_drive;
 #ifdef DIAGNOSTIC
 		{int block;
 		 block = (fd->sc_track * type->heads / type->step + head) * sectrac + sec;
@@ -758,11 +761,12 @@ fdcstate(fdc)
 #endif
 		at_dma(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
 		       fdc->sc_drq);
+		outb(iobase + fdctl, type->rate);
 		if (read)
 			out_fdc(iobase, NE7CMD_READ);	/* READ */
 		else
 			out_fdc(iobase, NE7CMD_WRITE);	/* WRITE */
-		out_fdc(iobase, fd->sc_hddrv);		/* head & unit */
+		out_fdc(iobase, (head << 2) | fd->sc_drive);
 		out_fdc(iobase, fd->sc_track);		/* track */
 		out_fdc(iobase, head);
 		out_fdc(iobase, sec + 1);		/* sector +1 */
@@ -797,6 +801,7 @@ fdcstate(fdc)
 		at_dma_abort(fdc->sc_drq);
 	    case SEEKTIMEDOUT:
 	    case RECALTIMEDOUT:
+	    case RESETTIMEDOUT:
 		return fdcretry(fdc);
 
 	    case IOCOMPLETE: /* IO DONE, post-analyze */
@@ -831,24 +836,17 @@ fdcstate(fdc)
 		set_motor(fd, 1);
 		delay(100);
 		set_motor(fd, 0);
-		outb(iobase + fdctl, fd->sc_type->rate);
 		fdc->sc_state = RESETCOMPLETE;
-#if 0 /* XXXX */
-		/* allow 1/2 second for reset to complete */
-		timeout((timeout_t)fd_pseudointr, (caddr_t)fdc, hz/2);
-#endif
+		timeout((timeout_t)fd_timeout, (caddr_t)fdc, hz/2);
 		return 0;			/* will return later */
 
 	    case RESETCOMPLETE:
+		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
 			out_fdc(iobase, NE7CMD_SENSEI);
 			(void) fdc_result(fdc);
 		}
-
-		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
-		out_fdc(iobase, fd->sc_type->steprate);
-		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
 
 		/* fall through */
 	    case DORECAL:
