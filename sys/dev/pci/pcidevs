@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.78 1998/08/26 19:59:16 drochner Exp $
+$NetBSD: pcidevs,v 1.79 1998/09/06 17:26:03 veego Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -630,7 +630,9 @@ product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 
 /* Brooktree products */
 product	BROOKTREE BT848		0x0350	Bt848 Video Capture
-product	BROOKTREE BT849		0x0351	Bt848 Video Capture
+product	BROOKTREE BT849		0x0351	Bt849 Video Capture
+product	BROOKTREE BT878		0x036e	Bt878 Video Capture
+product	BROOKTREE BT879		0x036f	Bt879 Video Capture
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
