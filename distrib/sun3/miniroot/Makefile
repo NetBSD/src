@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1998/03/17 23:03:32 gwr Exp $
+#	$NetBSD: Makefile,v 1.10 1998/05/29 17:58:53 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,8 +15,8 @@ LISTS=	${TOP}/common/${IMAGE}.list \
 	${TOP}/common/mini_bin.list \
 	${TOP}/common/mini_usr.list
 
-KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
-KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/GENERIC3X/netbsd
+KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/INSTALL/netbsd
+KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/INSTALL3X/netbsd
 
 MOUNT_POINT=	/mnt
 BDEV=		/dev/sd1b
