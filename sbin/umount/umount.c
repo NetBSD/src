@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: umount.c,v 1.9 1994/08/25 02:14:01 cgd Exp $";
+static char *rcsid = "$Id: umount.c,v 1.10 1995/01/30 16:36:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,21 +216,23 @@ umountfs(name)
 	if (!selected(type))
 		return (1);
 
-	if ((delimp = strchr(name, '@')) != NULL) {
-		hostp = delimp + 1;
-		*delimp = '\0';
-		hp = gethostbyname(hostp);
-		*delimp = '@';
-	} else if ((delimp = strchr(name, ':')) != NULL) {
-		*delimp = '\0';
-		hostp = name;
-		hp = gethostbyname(hostp);
-		name = delimp + 1;
-		*delimp = ':';
-	} else
-		hp = NULL;
-	if (!namematch(hp))
-		return (1);
+	if (!strcmp(type, MOUNT_NFS)) {
+		if ((delimp = strchr(name, '@')) != NULL) {
+			hostp = delimp + 1;
+			*delimp = '\0';
+			hp = gethostbyname(hostp);
+			*delimp = '@';
+		} else if ((delimp = strchr(name, ':')) != NULL) {
+			*delimp = '\0';
+			hostp = name;
+			hp = gethostbyname(hostp);
+			name = delimp + 1;
+			*delimp = ':';
+		} else
+			hp = NULL;
+		if (!namematch(hp))
+			return (1);
+	}
 
 	if (vflag)
 		(void)printf("%s: unmount from %s\n", name, mntpt);
@@ -242,7 +244,8 @@ umountfs(name)
 		return (1);
 	}
 
-	if ((hp != NULL) && !(fflag & MNT_FORCE)) {
+	if (!strcmp(type, MOUNT_NFS) &&
+	    (hp != NULL) && !(fflag & MNT_FORCE)) {
 		*delimp = '\0';
 		memset(&saddr, 0, sizeof(saddr));
 		saddr.sin_family = AF_INET;
