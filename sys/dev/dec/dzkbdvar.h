@@ -1,4 +1,7 @@
-/* $NetBSD: dzkbdvar.h,v 1.2 2001/03/06 07:40:52 matt Exp $ */
+/* $NetBSD: dzkbdvar.h,v 1.3 2003/01/06 21:05:37 matt Exp $ */
+
+#ifndef _DEV_DEC_DZKBDVAR_H_
+#define _DEV_DEC_DZKBDVAR_H_
 
 struct dzkm_attach_args {
 	int	daa_line;	/* Line to search */
@@ -15,3 +18,5 @@ void dzsetlpr(struct dz_linestate *, int);
 
 /* Exported functions */
 int dzkbd_cnattach(struct dz_linestate *);
+
+#endif /* _DEV_DEC_DZKBDVAR_H_ */

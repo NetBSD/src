@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.17 2002/07/16 18:03:18 hannken Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.18 2003/01/06 21:02:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
+
+#ifndef _DEV_SCSIPI_SDVAR_H_
+#define _DEV_SCSIPI_SDVAR_H_
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -120,3 +123,5 @@ void sdattach __P((struct device *, struct sd_softc *, struct scsipi_periph *,
     const struct sd_ops *));
 int sdactivate __P((struct device *, enum devact));
 int sddetach __P((struct device *, int));
+
+#endif /* _DEV_SCSIPI_SDVAR_H_ */
