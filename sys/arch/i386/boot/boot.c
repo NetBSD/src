@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.31 1996/06/18 07:47:02 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.32 1996/08/30 01:34:01 thorpej Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -77,7 +77,7 @@ extern char *version;
 extern int end;
 
 void
-boot(drive)
+netbsd_boot(drive)
 	int drive;
 {
 	int loadflags;

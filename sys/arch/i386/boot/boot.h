@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.6 1995/01/18 17:28:11 mycroft Exp $	*/
+/*	$NetBSD: boot.h,v 1.7 1996/08/30 01:34:11 thorpej Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -39,3 +39,5 @@ extern char *devs[], *name, *iodest;
 extern struct fs *fs;
 extern struct inode inode;
 extern int dosdev, unit, part, maj, boff, poff, bnum, cnt;
+
+void	netbsd_boot __P((int));

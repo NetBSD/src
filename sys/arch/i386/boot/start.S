@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.13 1996/06/18 07:17:49 mycroft Exp $	*/
+/*	$NetBSD: start.S,v 1.14 1996/08/30 01:34:15 thorpej Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -349,7 +349,7 @@ ENTRY(boot2)
 
 	movzbl	%dl, %edx	/* discard head (%dh) and random high bits */
 	pushl	%edx
-	call	_C_LABEL(boot)
+	call	_C_LABEL(netbsd_boot)
 
 stop:
 	cli
