@@ -1,4 +1,4 @@
-.\"	$NetBSD: sticky.7,v 1.3 2004/01/30 16:06:20 christos Exp $
+.\"	$NetBSD: sticky.7,v 1.4 2004/01/30 16:14:37 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,8 @@ The use of mode
 .Dv S_ISVTX
 is reserved and can be set only by the super-user.
 .Nx
-does not currently treat plain files that have the sticky bit set specially,
-but this behavior might change in the future.
+does not currently treat plain files that have the sticky bit set
+specially, but this behavior might change in the future.
 .Sh STICKY DIRECTORIES
 A directory whose
 .Dq sticky bit
@@ -72,27 +72,30 @@ See
 for details about modifying file modes.
 .Sh HISTORY
 The sticky bit first appeared in V7, and this manual page appeared
-in section 8.  It's initial use was to mark sharable executables
+in section 8.
+Its initial use was to mark sharable executables
 that were frequently used so that they would stay in swap after
-the process exited.  Sharable executables were compiled in a special
-way so their text and read-only data could be shared amongst
-processes.
+the process exited.
+Sharable executables were compiled in a special way so their text
+and read-only data could be shared amongst processes.
 .Xr vi 1
 and
 .Xr sh 1
 were such executables.
 This is where the term
 .Dq sticky
-comes from - the program would stick around stick around in swap,
-and it would not have to be fetched again from the file system. Of
-course as long as there was a copy in the swap area, the file was
-marked busy so it could not be overwritten.  On V7 this meant that
-the file could not be removed either, because busy executables
-could not be removed but this restriction was lifted on BSD releases.
+comes from - the program would stick around in swap, and it would
+not have to be fetched again from the file system.
+Of course as long as there was a copy in the swap area, the file
+was marked busy so it could not be overwritten.
+On V7 this meant that the file could not be removed either, because
+busy executables could not be removed, but this restriction was
+lifted in BSD releases.
 .Pp
-To replace such executables was a cumbersome process. One had first to
-remove the sticky bit, then execute the binary so that the copy from swap
-was flushed, overwrite the executable, and finally reset the sticky bit.
+To replace such executables was a cumbersome process.
+One had first to remove the sticky bit, then execute the binary so
+that the copy from swap was flushed, overwrite the executable, and
+finally reset the sticky bit.
 .Pp
 Later, on SunOS 4, the sticky bit got an additional meaning for
 files that had the bit set and were not executable: read and write
