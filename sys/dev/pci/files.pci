@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.124 2001/03/08 04:18:18 thorpej Exp $
+#	$NetBSD: files.pci,v 1.125 2001/03/13 07:38:05 jmc Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -327,7 +327,7 @@ file	dev/pci/fwohci_pci.c		fwohci_pci
 
 # IEEE 1394 TI "Lynx" controller
 attach	fwlynx at pci with fwlynx_pci
-file	dev/pci/fwlync.c		fwlynx_pci
+file	dev/pci/fwlynx.c		fwlynx_pci
 
 # VIA Rhine/Rhine II Fast Ethernet controllers
 device	vr: ether, ifnet, arp, mii, mii_bitbang
