@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/08/17 21:23:25 tv Exp $
+#	$NetBSD: Makefile,v 1.16 1998/08/17 22:23:37 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -39,7 +39,7 @@ SRCS+=		haifa-sched.c
 SRCS+=		sched.c
 .endif
 
-DPSRCS+=	gengenrtl.c gencheck.c
+DPSRCS+=	genrtl.h tree-check.h
 CLEANFILES+=	bitmap.lo obstack.lo print-rtl.lo rtl.lo rtlanal.lo \
 		gengenrtl gengenrtl.lo genrtl.c genrtl.h \
 		gencheck gencheck.lo tree-check.h
@@ -57,7 +57,7 @@ tree-check.h: gencheck
 genattrtab: rtlanal.lo
 
 .for _GEN_ in attrtab emit extract opinit output peep recog
-DPSRCS+=	gen${_GEN_}.c
+DPSRCS+=	insn-${_GEN_}.c
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
@@ -67,6 +67,7 @@ insn-${_GEN_}.c: gen${_GEN_}
 .endfor
 
 .for _GEN_ in attr codes config flags
+DPSRCS+=	insn-${_GEN_}.h
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
