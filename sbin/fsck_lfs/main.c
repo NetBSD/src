@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $	 */
+/* $NetBSD: main.c,v 1.20 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -51,8 +51,6 @@
 #include "fsutil.h"
 
 int returntosingle;
-
-int main(int, char *[]);
 
 static int argtoi(int, char *, char *, int);
 static int checkfilesys(const char *, char *, long, int);
@@ -301,7 +299,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr,
