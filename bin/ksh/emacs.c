@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.24 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: emacs.c,v 1.25 2004/07/07 19:46:57 mycroft Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.24 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.25 2004/07/07 19:46:57 mycroft Exp $");
 #endif
 
 
@@ -124,6 +124,7 @@ static	char    *killstack[KILLSIZE];
 static	int	killsp, killtp;
 static	int	x_curprefix;
 static	char    *macroptr;
+static	int	prompt_trunc;
 static	int	prompt_skip;
 
 static int      x_ins       ARGS((char *cp));
@@ -357,11 +358,16 @@ x_emacs(buf, len)
 	xx_cols = x_cols;
 	x_col = promptlen(prompt, &p);
 	prompt_skip = p - prompt;
+	prompt_trunc = x_col - (x_cols - 3 - MIN_EDIT_SPACE);
+	if (prompt_trunc > 0)
+		x_col -= prompt_trunc;
+	else
+		prompt_trunc = 0;
 	x_adj_ok = 1;
 	x_displen = xx_cols - 2 - x_col;
 	x_adj_done = 0;
 
-	pprompt(prompt, 0);
+	pprompt(prompt, prompt_trunc);
 
 	if (x_nextcmd >= 0) {
 		int off = source->line - x_nextcmd;
@@ -577,7 +583,7 @@ x_delete(nc, push)
 	 * there is no need to ' ','\b'.
 	 * But if we must, make sure we do the minimum.
 	 */
-	if ((i = xx_cols - 2 - x_col) > 0)
+	if ((i = x_displen) > 0)
 	{
 	  j = (j < i) ? j : i;
 	  i = j;
