@@ -1,10 +1,9 @@
 /*
- *	$Id: reg.h,v 1.8 1994/01/27 02:12:44 cgd Exp $
+ *	$Id: reg.h,v 1.9 1994/04/10 02:06:50 chopps Exp $
  */
-
-#ifndef _MACHINE_REG_H_
-#define	_MACHINE_REG_H_
+#ifndef _MACHINE_REG_H
+#define	_MACHINE_REG_H
 
 #include <m68k/reg.h>
 
-#endif /* _MACHINE_REG_H_ */
+#endif
