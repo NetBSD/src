@@ -44,6 +44,8 @@ static char sccsid[] = "@(#)histedit.c	8.1 (Berkeley) 5/31/93";
 #include <sys/param.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "shell.h"
 #include "parser.h"
 #include "var.h"

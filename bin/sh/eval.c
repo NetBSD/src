@@ -62,6 +62,7 @@ static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 5/31/93";
 #include "mystring.h"
 #include "myhistedit.h"
 #include <signal.h>
+#include <unistd.h>
 
 
 /* flags in argument to evaltree */
