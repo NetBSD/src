@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.64 2001/12/09 05:00:42 atatat Exp $
+#	$NetBSD: Makefile.arm32,v 1.65 2001/12/19 17:43:19 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -17,7 +17,6 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=arm32
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
