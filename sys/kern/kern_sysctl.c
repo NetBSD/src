@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.118 2002/11/24 11:37:56 scw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.119 2002/12/11 12:59:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.118 2002/11/24 11:37:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.119 2002/12/11 12:59:31 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -586,6 +586,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #else
 		return (EOPNOTSUPP);
 #endif
+	case KERN_LABELSECTOR:
+		return (sysctl_rdint(oldp, oldlenp, newp, LABELSECTOR));
+	case KERN_LABELOFFSET:
+		return (sysctl_rdint(oldp, oldlenp, newp, LABELOFFSET));
 	default:
 		return (EOPNOTSUPP);
 	}
