@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.1 2001/07/26 22:11:08 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.2 2001/07/27 00:00:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -34,7 +34,7 @@ ENTRY(os_writec)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	swine	OS_WriteC
+	swi	OS_WriteC
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(os_new_line)
