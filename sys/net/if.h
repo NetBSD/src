@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.11 1994/07/26 18:57:00 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.12 1994/10/19 20:57:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -69,6 +69,33 @@ struct socket;
 struct ether_header;
 
 /*
+ * Structure defining statistics and other data kept regarding a network
+ * interface.
+ */
+struct	if_data {
+	/* generic interface information */
+	u_char	ifi_type;		/* ethernet, tokenring, etc. */
+	u_char	ifi_addrlen;		/* media address length */
+	u_char	ifi_hdrlen;		/* media header length */
+	u_long	ifi_mtu;		/* maximum transmission unit */
+	u_long	ifi_metric;		/* routing metric (external only) */
+	u_long	ifi_baudrate;		/* linespeed */
+	/* volatile statistics */
+	u_long	ifi_ipackets;		/* packets received on interface */
+	u_long	ifi_ierrors;		/* input errors on interface */
+	u_long	ifi_opackets;		/* packets sent on interface */
+	u_long	ifi_oerrors;		/* output errors on interface */
+	u_long	ifi_collisions;		/* collisions on csma interfaces */
+	u_long	ifi_ibytes;		/* total number of octets received */
+	u_long	ifi_obytes;		/* total number of octets sent */
+	u_long	ifi_imcasts;		/* packets received via multicast */
+	u_long	ifi_omcasts;		/* packets sent via multicast */
+	u_long	ifi_iqdrops;		/* dropped on input, this interface */
+	u_long	ifi_noproto;		/* destined for unsupported protocol */
+	struct	timeval ifi_lastchange;	/* last updated */
+};
+
+/*
  * Structure defining a queue for a network interface.
  *
  * (Would like to call this struct ``if'', but C isn't PL/1.)
@@ -83,28 +110,7 @@ struct ifnet {
 	short	if_unit;		/* sub-unit for lower level driver */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
-	struct	if_data {
-/* generic interface information */
-		u_char	ifi_type;	/* ethernet, tokenring, etc. */
-		u_char	ifi_addrlen;	/* media address length */
-		u_char	ifi_hdrlen;	/* media header length */
-		u_long	ifi_mtu;	/* maximum transmission unit */
-		u_long	ifi_metric;	/* routing metric (external only) */
-		u_long	ifi_baudrate;	/* linespeed */
-/* volatile statistics */
-		u_long	ifi_ipackets;	/* packets received on interface */
-		u_long	ifi_ierrors;	/* input errors on interface */
-		u_long	ifi_opackets;	/* packets sent on interface */
-		u_long	ifi_oerrors;	/* output errors on interface */
-		u_long	ifi_collisions;	/* collisions on csma interfaces */
-		u_long	ifi_ibytes;	/* total number of octets received */
-		u_long	ifi_obytes;	/* total number of octets sent */
-		u_long	ifi_imcasts;	/* packets received via multicast */
-		u_long	ifi_omcasts;	/* packets sent via multicast */
-		u_long	ifi_iqdrops;	/* dropped on input, this interface */
-		u_long	ifi_noproto;	/* destined for unsupported protocol */
-		struct	timeval ifi_lastchange;/* last updated */
-	}	if_data;
+	struct	if_data if_data;	/* statistics and other data about if */
 /* procedure handles */
 	int	(*if_output)		/* output routine (enqueue) */
 		__P((struct ifnet *, struct mbuf *, struct sockaddr *,
