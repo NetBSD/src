@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.597 2003/12/14 04:58:15 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.598 2003/12/17 09:17:07 tls Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3286,6 +3286,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "DL-4000 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
+	    0,
+	    "D-Link Systems",
+	    "DGE-530T Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    0,
 	    "Distributed Processing Technology",
@@ -5582,6 +5588,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Linear Systems",
 	    "DVB Receiver",
+	},
+	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032,
+	    0,
+	    "Linksys",
+	    "EG1032 v2 Instant Gigabit Network Adapter",
+	},
+	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064,
+	    0,
+	    "Linksys",
+	    "EG1064 v2 Instant Gigabit Network Adapter",
 	},
 	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
@@ -13483,6 +13501,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GLOBALSUN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Global Sun Tech",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LINKSYS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Linksys",
 	    NULL,
 	},
 	{

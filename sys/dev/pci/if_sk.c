@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.5 2003/10/30 04:11:36 briggs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.6 2003/12/17 09:17:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -248,6 +248,9 @@ static const struct sk_product {
 	pci_product_id_t	sk_product;
 } sk_products[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
 	{ 0, 0, }
@@ -1181,6 +1184,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
 	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
 
+	/* XXX TLS It's not clear what's wrong with the Jumbo MTU
+	   XXX TLS support in this driver, so we don't enable it. */
+
+	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU;
+
 	ifp = &sc_if->sk_ethercom.ec_if;
 	ifp->if_softc = sc_if;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1189,7 +1197,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_stop = sk_stop;
 	ifp->if_init = sk_init;
 	ifp->if_watchdog = sk_watchdog;
-	ifp->if_capabilities |= ETHERCAP_VLAN_MTU;
+	ifp->if_capabilities = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	strcpy(ifp->if_xname, sc_if->sk_dev.dv_xname);
@@ -1346,6 +1354,9 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2:
 	case PCI_PRODUCT_3COM_3C940:
+	case PCI_PRODUCT_DLINK_DGE530T:
+	case PCI_PRODUCT_LINKSYS_EG1032:
+	case PCI_PRODUCT_LINKSYS_EG1064:
 		sc->sk_type = SK_YUKON;
 		break;
 	default:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sk.4,v 1.2 2003/08/30 23:15:05 wiz Exp $
+.\"	$NetBSD: sk.4,v 1.3 2003/12/17 09:17:08 tls Exp $
 .\"
 .\" Copyright (c) 2003, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,6 +102,12 @@ SK-9821 V2.0 single port, copper adapter
 SK-9843 V2.0 single port, copper adapter
 .It
 3com 3c940 single port, copper adapter
+.It
+D-Link DGE-530T single port, copper adapter
+.It
+Linksys EG1032v2 single-port, copper adapter
+.It
+Linksys EG1064v2 single-port, copper adapter
 .El
 .Pp
 The SysKonnect based adapters consist of two main components: the
@@ -221,3 +227,14 @@ driver was written by
 .Sh BUGS
 This driver is
 .Em experimental .
+.Pp
+Support for the jumbo-frame feature does not currently work with
+Marvell-based adapters under NetBSD and is disabled.
+.Pp
+Support for checksum offload is unimplemented.
+.Pp
+Performance with at least some Marvell-based adapters is poor,
+especially on loaded PCI buses or when the adapters are behind
+PCI-PCI bridges.  It is believed that this is because the Marvell
+parts have significantly less buffering than the original
+SysKonnect cards had.
