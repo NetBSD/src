@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.33 1994/09/05 01:13:10 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.34 1994/10/30 19:09:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -160,7 +160,7 @@ struct	proc {
 /* End area that is copied on creation. */
 #define	p_endcopy	p_thread
 
-	int	p_thread;	/* Id for this "thread"; Mach glue. XXX */
+	void 	*p_thread;	/* Id for this "thread"; Mach glue. XXX */
 	struct	user *p_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
