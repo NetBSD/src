@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.7 1997/09/16 12:32:23 lukem Exp $	*/
+/*	$NetBSD: activate.c,v 1.8 1997/09/21 02:35:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.7 1997/09/16 12:32:23 lukem Exp $");
+__RCSID("$NetBSD: activate.c,v 1.8 1997/09/21 02:35:40 enami Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -163,14 +163,14 @@ send_reply(so, fd, error)
 	 * Send to kernel...
 	 */
 	if ((n = sendmsg(so, &msg, MSG_EOR)) < 0)
-		syslog(LOG_ERR, "send: %s", strerror(errno));
+		syslog(LOG_ERR, "send: %m");
 #ifdef DEBUG
 	fprintf(stderr, "sent %d bytes\n", n);
 #endif
 	sleep(1);	/*XXX*/
 #ifdef notdef
 	if (shutdown(so, 2) < 0)
-		syslog(LOG_ERR, "shutdown: %s", strerror(errno));
+		syslog(LOG_ERR, "shutdown: %m");
 #endif
 	/*
 	 * Throw away the open file descriptor
@@ -194,7 +194,7 @@ activate(q, so)
 	 */
 	error = get_request(so, &pcred, key, sizeof(key));
 	if (error) {
-		syslog(LOG_ERR, "activate: recvmsg: %s", strerror(error));
+		syslog(LOG_ERR, "activate: recvmsg: %m");
 		goto drop;
 	}
 
@@ -217,9 +217,8 @@ activate(q, so)
 			fd = -1;
 		else if (fd < 0)
 			error = -1;
-	} else {
+	} else
 		error = ENOENT;
-	}
 
 	if (error >= 0)
 		send_reply(so, fd, error);
