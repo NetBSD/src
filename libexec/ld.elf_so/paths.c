@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.5 1999/08/19 23:42:15 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.6 1999/08/20 21:10:27 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -153,7 +153,7 @@ _rtld_process_hints(path_p, fname, dodebug)
 	sz = (size_t) st.st_size;
 
 	buf = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FILE, fd, 0);
-	if (p == MAP_FAILED) {
+	if (buf == MAP_FAILED) {
 		xwarn("fstat: %s", fname);
 		(void)close(fd);
 		return;
