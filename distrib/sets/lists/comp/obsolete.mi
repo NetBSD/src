@@ -1,14 +1,14 @@
-# $NetBSD: obsolete.mi,v 1.18 2000/06/13 01:00:17 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.19 2000/06/13 01:53:48 wiz Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
 /usr/include/bfd
 /usr/include/dev/ic/aic7xxxreg.h
+/usr/include/dev/ic/awictl.h
 /usr/include/dev/ic/isp_netbsd.h
 /usr/include/dev/ic/opl3sa3.h
 /usr/include/dev/isa/ahareg.h
-/usr/include/dev/isa/awictl.h
 /usr/include/dev/isa/btreg.h
 /usr/include/dev/isa/comreg.h
 /usr/include/dev/isa/comvar.h
