@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 1999/06/30 06:49:28 augustss Exp $
+#	$NetBSD: Makefile,v 1.110 1999/07/01 19:41:56 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -20,6 +20,9 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	usbdevs videomode vipw vnconfig wsconscfg wsfontload xntp \
 	ypbind yppoll ypserv ypset \
 	zdump zic
+
+# IPv6
+SUBDIR+=gifconfig
 
 .if !defined(NO_SENDMAIL)
 SUBDIR+=	sendmail
