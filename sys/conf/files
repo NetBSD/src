@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130.2.3 1997/08/23 07:12:38 thorpej Exp $
+#	$NetBSD: files,v 1.130.2.4 1997/08/27 23:18:54 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -8,7 +8,6 @@ defopt	KMEMSTATS
 defopt	TCP_RECVSPACE
 defopt	TCP_SENDSPACE
 
-
 # generic attributes
 define	disk
 define	tape
@@ -16,6 +15,7 @@ define	ifnet
 define	tty
 define	audio { }
 define	scsi { [channel = -1] }
+define  atapi {}
 
 # audio device attributes
 define	mulaw

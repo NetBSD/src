@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11.4.1 1997/08/23 07:12:27 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.11.4.2 1997/08/27 23:15:56 thorpej Exp $
 
 #
 #	GENERIC
@@ -34,7 +34,7 @@ options 	SYSVSEM			# System V-like semaphores
 options 	SYSVSHM			# System V-like memory sharing
 options 	SHMMAXPGS=1024		# 1024 pages in the defualt
 #options 	LKM			# loadable kernel modules
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # compatibility options
 #options 	COMPAT_NOMID		# old zmagic executables
