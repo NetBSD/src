@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.3 1993/07/04 02:27:14 cgd Exp $
+ *	$Id: autoconf.c,v 1.4 1993/07/07 06:26:59 cgd Exp $
  */
 
 /*
@@ -1064,13 +1064,4 @@ setroot()
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
-}
-
-strcmp(s1, s2)
-	const register char *s1, *s2;
-{
-	while (*s1 == *s2++)
-		if (*s1++=='\0')
-			return (0);
-	return (*s1 - *--s2);
 }
