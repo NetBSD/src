@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.30 1998/08/09 20:52:20 perry Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.31 1999/07/27 05:38:03 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -216,7 +216,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		/*
 		 * Stop with all reserved clusters, not just with EOF.
 		 */
-		if ((cn | ~pmp->pm_fatmask) >= CLUST_RSRVD)
+		if (cn >= (CLUST_RSRVD & pmp->pm_fatmask))
 			goto hiteof;
 		byteoffset = FATOFS(pmp, cn);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
@@ -238,15 +238,6 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		if (FAT12(pmp) && (prevcn & 1))
 			cn >>= 4;
 		cn &= pmp->pm_fatmask;
-
-		/*
-		 * Force the special cluster numbers
-		 * to be the same for all cluster sizes
-		 * to let the rest of msdosfs handle
-		 * all cases the same.
-		 */
-		if ((cn | ~pmp->pm_fatmask) >= CLUST_RSRVD)
-			cn |= ~pmp->pm_fatmask;
 	}
 
 	if (!MSDOSFSEOF(pmp, cn)) {
@@ -554,9 +545,6 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 		if (FAT12(pmp) & (cn & 1))
 			readcn >>= 4;
 		readcn &= pmp->pm_fatmask;
-		/* map reserved fat entries to same values for all fats */
-		if ((readcn | ~pmp->pm_fatmask) >= CLUST_RSRVD)
-			readcn |= ~pmp->pm_fatmask;
 		*oldcontents = readcn;
 	}
 	if (function & FAT_SET) {
@@ -901,8 +889,6 @@ freeclusterchain(pmp, cluster)
 			break;
 		}
 		cluster &= pmp->pm_fatmask;
-		if ((cluster | ~pmp->pm_fatmask) >= CLUST_RSRVD)
-			cluster |= pmp->pm_fatmask;
 	}
 	if (bp)
 		updatefats(pmp, bp, bn);

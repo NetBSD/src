@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.12 1997/11/17 15:36:36 ws Exp $	*/
+/*	$NetBSD: fat.h,v 1.13 1999/07/27 05:38:02 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -80,7 +80,7 @@
 #define	FAT16(pmp)	(pmp->pm_fatmask == FAT16_MASK)
 #define	FAT32(pmp)	(pmp->pm_fatmask == FAT32_MASK)
 
-#define	MSDOSFSEOF(pmp, cn)	((((cn) | ~(pmp)->pm_fatmask) & CLUST_EOFS) == CLUST_EOFS)
+#define	MSDOSFSEOF(pmp, cn)	((cn) == (CLUST_EOFS & (pmp)->pm_fatmask))
 
 #ifdef _KERNEL
 /*
