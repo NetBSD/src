@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.18 2003/07/10 20:43:40 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.19 2003/07/10 21:30:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.18 2003/07/10 20:43:40 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.19 2003/07/10 21:30:16 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,8 +79,6 @@ main(int argc, char *argv[])
 	char const *base;
 	off_t bytecnt = 0;	/* Byte count to split on. */
 	off_t numlines = 0;	/* Line count to split on. */
-	size_t namelen;
-	long name_max;
 
 	while ((ch = getopt(argc, argv, "0123456789b:l:a:")) != -1)
 		switch (ch) {
@@ -138,16 +136,9 @@ main(int argc, char *argv[])
 		++argv;
 	}
 
-	errno = 0;
-	if ((name_max = pathconf(".", _PC_NAME_MAX)) == -1 &&
-	    errno != 0)
-		err(EXIT_FAILURE, "pathconf");
 
 	base = (*argv != NULL) ? *argv++ : "x";
-	namelen = strlen(base) + sfxlen;
-	if (name_max != -1 && namelen > name_max)
-		errx(EXIT_FAILURE, "Output file name too long");
-	if ((fname = malloc(namelen + 1)) == NULL)
+	if ((fname = malloc(strlen(base) + sfxlen + 1)) == NULL)
 		err(EXIT_FAILURE, NULL);
 	(void)strcpy(fname, base);		/* File name prefix. */
 
