@@ -1,5 +1,5 @@
-.\"	$NetBSD: faithd.8,v 1.9 2000/07/03 08:37:20 itojun Exp $
-.\"	$KAME: faithd.8,v 1.11 2000/07/03 06:35:25 jinmei Exp $
+.\"	$NetBSD: faithd.8,v 1.10 2000/07/04 13:28:13 itojun Exp $
+.\"	$KAME: faithd.8,v 1.13 2000/07/04 13:18:54 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -38,34 +38,18 @@
 .Nm
 .Op Fl dp
 .Op Ar service Op Ar serverpath Op Ar serverargs
+.Nm ""
 .Sh DESCRIPTION
 .Nm
-provides IPv6/v4 TCP relay for the specified
-.Ar service .
+provides IPv6-to-IPv4 TCP relay.
+.Nm
+must be used on an IPv4/v6 dual stack router.
 .Pp
+When
 .Nm
-must be invoked on IPv4/v6 dual stack router.
-The router must be configured to capture all the TCP traffic
-toward reserved
-.Tn IPv6
-address prefix, by using
-.Xr route 8
-and
-.Xr sysctl 8
-commands.
-.Nm
-will daemonize itself on invocation.
-.Pp
-.Nm
-will listen to
+receives
 .Tn TCPv6
-port
-.Ar service .
-If
-.Tn TCPv6
-traffic to port
-.Ar service
-is found,
+traffic,
 .Nm
 will relay the
 .Tn TCPv6
@@ -87,20 +71,47 @@ destination address is
 the traffic will be relayed to IPv4 destination
 .Li 10.1.1.1 .
 .Pp
+To use
+.Nm
+translation service,
+an IPv6 address prefix must be reserved for mapping IPv4 addresses into.
+Kernel must be properly configured to route all the TCP connection
+toward the reserved IPv6 address prefix into the
+.Xr faith 4
+pseudo interface, by using
+.Xr route 8
+command.
+Also,
+.Xr sysctl 8
+should be used to configure
+.Dv net.inet6.ip6.keepfaith
+to
+.Dv 1 .
+.Pp
+The router must be configured to capture all the TCP traffic
+toward reserved
+.Tn IPv6
+address prefix, by using
+.Xr route 8
+and
+.Xr sysctl 8
+commands.
+.Ss Daemon mode
+When
+.Nm
+is invoked as a standalone program,
+.Nm
+will daemonize itself.
+.Nm
+will listen to
+.Tn TCPv6
+port
+.Ar service .
 If
+.Tn TCPv6
+traffic to port
 .Ar service
-is not given,
-.Li telnet
-is assumed, and
-.Nm
-will relay TCP traffic on TCP port
-.Li telnet .
-With
-.Ar service ,
-.Nm
-will work as TCP relaying daemon for specified
-.Ar service
-as described above.
+is found, it relays the connection.
 .Pp
 Since
 .Nm
@@ -125,22 +136,20 @@ You can also specify
 .Ar serverargs
 for the arguments for the local daemon.
 .Pp
-To use
+If
+.Ar service
+is not given,
+.Li telnet
+is assumed, and
 .Nm
-translation service,
-an IPv6 address prefix must be reserved for mapping IPv4 addresses into.
-Kernel must be properly configured to route all the TCP connection
-toward the reserved IPv6 address prefix into the
-.Dv faith
-pseudo interface, by using
-.Xr route 8
-command.
-Also,
-.Xr sysctl 8
-should be used to configure
-.Dv net.inet6.ip6.keepfaith
-to
-.Dv 1 .
+will relay TCP traffic on TCP port
+.Li telnet .
+With
+.Ar service ,
+.Nm
+will work as TCP relaying daemon for specified
+.Ar service
+as described above.
 .Pp
 If
 .Fl d
@@ -186,12 +195,50 @@ Inactive sessions will be disconnected in 30 minutes,
 to avoid stale sessions from chewing up resources.
 This may be inappropriate for some of the services
 .Pq should this be configurable? .
+.Ss inetd mode
+When
+.Nm
+is invoked via
+.Xr inetd 8 ,
+.Nm
+will handle connection passed from standard input.
+If it the connection endpoint is in the reserved IPv6 address prefix.
+.Nm
+will relay the connection.
+Otherwise,
+.Nm
+will invoke service-specific daemon like
+.Xr telnetd 8 ,
+by using the command argument passed from
+.Xr inetd 8 .
+.Pp
+.Nm
+determines operation mode by the local TCP port number,
+and enables special protocol handling whenever necessary/possible.
+For example, if
+.Nm
+is invoked via
+.Xr inetd 8
+on FTP port, it will operate as a FTP relay.
+.Pp
+The operation mode requires special support for
+.Nm
+in
+.Xr inetd 8 .
 .Sh EXAMPLES
 Before invoking
 .Nm Ns ,
 .Xr faith 4
 interface has to be configured properly.
-.Pp
+.Bd -literal -offset
+# sysctl -w net.inet6.ip6.accept_rtadv=0
+# sysctl -w net.inet6.ip6.forwarding=1
+# sysctl -w net.inet6.ip6.keepfaith=1
+# ifconfig faith0 up
+# route add -inet6 3ffe:501:4819:ffff:: -prefixlen 96 ::1
+# route change -inet6 3ffe:501:4819:ffff:: -prefixlen 96 -ifp faith0
+.Ed
+.Ss Daemon mode samples
 To translate
 .Li telnet
 service, and provide no local telnet service, invoke
@@ -206,7 +253,7 @@ If you would like to provide local telnet service via
 .Xr telnetd 8
 on
 .Pa /usr/libexec/telnetd ,
-user the following command line:
+use the following command line:
 .Bd -literal -offset
 # faithd telnet /usr/libexec/telnetd telnetd
 .Ed
@@ -216,7 +263,10 @@ If you would like to pass extra arguments to the local daemon:
 # faithd ftpd /usr/libexec/ftpd ftpd -l
 .Ed
 .Pp
-Here are some other examples:
+Here are some other examples.
+You may need
+.Fl p
+to translate rsh/rlogin services.
 .Bd -literal -offset
 # faithd sshd
 # faithd login /usr/libexec/rlogin rlogind
@@ -227,6 +277,29 @@ However, you should be careful when translating rlogin or rsh
 connections. See
 .Sx SECURITY NOTICE
 for more details.
+.Ss inetd mode samples
+Add the following lines into
+.Xr inetd.conf 5 .
+.\"Syntax may vary depending upon your operating system.
+.Bd -literal -offset
+telnet  stream  faith/tcp6  nowait  root  faithd  telnetd
+ftp     stream  faith/tcp6  nowait  root  faithd  ftpd -l
+ssh     stream  faith/tcp6  nowait  root  faithd  /usr/pkg/bin/sshd -i
+.Ed
+.Pp
+.Xr inetd 8
+will open listening sockets with enabling kernel TCP relay support.
+Whenever connection comes in,
+.Nm
+will be invoked by
+.Xr inetd 8 .
+If it the connection endpoint is in the reserved IPv6 address prefix.
+.Nm
+will relay the connection.
+Otherwise,
+.Nm
+will invoke service-specific daemon like
+.Xr telnetd 8 .
 .Sh RETURN VALUES
 .Nm
 exits with
@@ -268,6 +341,8 @@ IPv6 source address needs to be filtered by using packet filters.
 Documents listed in
 .Sx SEE ALSO
 have more discussions on this topic.
+Under inetd mode of operation, you can limit the connection source by using
+.Xr hosts.allow 5 .
 .\"
 .Sh HISTORY
 The

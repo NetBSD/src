@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.11 2000/06/29 01:24:11 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.19 2000/06/29 01:17:29 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.12 2000/07/04 13:28:13 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.21 2000/07/04 03:18:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -102,8 +102,11 @@ static int sockfd = 0;
 #endif
 int dflag = 0;
 static int pflag = 0;
+static int inetd = 0;
 
 int main __P((int, char **));
+static int inetd_main __P((int, char **));
+static int daemon_main __P((int, char **));
 static void play_service __P((int));
 static void play_child __P((int, struct sockaddr *));
 static int faith_prefix __P((struct sockaddr *));
@@ -123,15 +126,8 @@ static void update_myaddrs __P((void));
 static void usage __P((void));
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	struct addrinfo hints, *res;
-	int s_wld, error, i, serverargc, on = 1;
-	int family = AF_INET6;
-	int c;
-#ifdef FAITH_NS
-	char *ns;
-#endif /* FAITH_NS */
 
 	/*
 	 * Initializing stuff
@@ -142,6 +138,87 @@ main(int argc, char *argv[])
 		faithdname++;
 	else
 		faithdname = argv[0];
+
+	if (strcmp(faithdname, "faithd") != 0) {
+		inetd = 1;
+		return inetd_main(argc, argv);
+	} else
+		return daemon_main(argc, argv);
+}
+
+static int
+inetd_main(int argc, char **argv)
+{
+	char path[MAXPATHLEN];
+	struct sockaddr_storage me;
+	struct sockaddr_storage from;
+	int melen, fromlen;
+	int i;
+	int error;
+	const int on = 1;
+	char sbuf[NI_MAXSERV], snum[NI_MAXSERV];
+
+	if (strrchr(argv[0], '/') == NULL)
+		snprintf(path, sizeof(path), "%s/%s", DEFAULT_DIR, argv[0]);
+	else
+		snprintf(path, sizeof(path), "%s", argv[0]);
+
+#ifdef USE_ROUTE
+	grab_myaddrs();
+
+	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
+	if (sockfd < 0) {
+		exit_error("socket(PF_ROUTE): %s", ERRSTR);
+		/*NOTREACHED*/
+	}
+#endif
+
+	melen = sizeof(me);
+	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0)
+		exit_error("getsockname");
+	fromlen = sizeof(from);
+	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
+		exit_error("getpeername");
+	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
+	    sbuf, sizeof(sbuf), NI_NUMERICHOST) == 0)
+		service = sbuf;
+	else
+		service = DEFAULT_PORT_NAME;
+	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
+	    snum, sizeof(snum), NI_NUMERICHOST) != 0)
+		snprintf(snum, sizeof(snum), "?");
+
+	snprintf(logname, sizeof(logname), "faithd %s", snum);
+	snprintf(procname, sizeof(procname), "accepting port %s", snum);
+	openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
+
+	if (argc >= MAXARGV)
+		exit_failure("too many augments");
+	serverarg[0] = serverpath = path;
+	for (i = 1; i < argc; i++)
+		serverarg[i] = argv[i];
+	serverarg[i] = NULL;
+
+	error = setsockopt(STDIN_FILENO, SOL_SOCKET, SO_OOBINLINE, &on,
+	    sizeof(on));
+	if (error < 0)
+		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+
+	play_child(STDIN_FILENO, (struct sockaddr *)&from);
+	exit_failure("should not reach here");
+	return 0;	/*dummy!*/
+}
+
+static int
+daemon_main(int argc, char **argv)
+{
+	struct addrinfo hints, *res;
+	int s_wld, error, i, serverargc, on = 1;
+	int family = AF_INET6;
+	int c;
+#ifdef FAITH_NS
+	char *ns;
+#endif /* FAITH_NS */
 
 	while ((c = getopt(argc, argv, "dp46")) != -1) {
 		switch (c) {
@@ -198,7 +275,7 @@ main(int argc, char *argv[])
 		break;
 	default:
 		serverargc = argc - NUMARG;
-		if (serverargc > MAXARGV)
+		if (serverargc >= MAXARGV)
 			exit_error("too many augments");
 
 		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
@@ -388,10 +465,12 @@ play_child(int s_src, struct sockaddr *srcaddr)
 			 * Local service
 			 */
 			syslog(LOG_INFO, "executing local %s", serverpath);
-			dup2(s_src, 0);
-			close(s_src);
-			dup2(0, 1);
-			dup2(0, 2);
+			if (!inetd) {
+				dup2(s_src, 0);
+				close(s_src);
+				dup2(0, 1);
+				dup2(0, 2);
+			}
 			execv(serverpath, serverarg);
 			syslog(LOG_ERR, "execv %s: %s", serverpath, ERRSTR);
 			_exit(EXIT_FAILURE);
