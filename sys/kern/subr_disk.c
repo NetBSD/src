@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.12 1994/06/29 06:32:56 cgd Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.13 1995/03/29 20:57:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -61,13 +61,6 @@
  * A one-way scan is natural because of the way UNIX read-ahead blocks are
  * allocated.
  */
-
-/*
- * For portability with historic industry practice, the
- * cylinder number has to be maintained in the `b_resid'
- * field.
- */
-#define	b_cylinder	b_resid
 
 void
 disksort(ap, bp)
