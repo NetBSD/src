@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.8 1993/08/01 05:40:29 mycroft Exp $
+#	$Id: Makefile,v 1.9 1993/09/05 22:12:35 deraadt Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -11,8 +11,13 @@
 # actually call the YP functions, put -DYP on the CFLAGS line below.
 
 LIB=c
-CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS 
+CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS
 AINC=	-I${.CURDIR}/${MACHINE}
+
+.if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
+.PATH:	${.CURDIR}/${MACHINE}
+.include "${.CURDIR}/${MACHINE}/Makefile.inc"
+.endif
 
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
