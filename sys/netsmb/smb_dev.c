@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.5 2002/01/04 02:39:39 deberg Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.6 2002/01/08 19:52:16 deberg Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -180,7 +180,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
 	if (sdp && (sdp->sd_flags & NSMBFL_OPEN))
 		return EBUSY;
 	if (sdp == NULL) {
-		sdp = malloc(sizeof(*sdp), M_NSMBDEV, M_WAITOK);
+		sdp = malloc(sizeof(*sdp), M_SMBDATA, M_WAITOK);
 		smb_devtbl[minor(dev)] = (void*)sdp;
 	}
 
@@ -234,7 +234,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
 	smb_flushq(&sdp->sd_rplist);
 */
 	smb_devtbl[minor(dev)] = NULL;
-	free(sdp, M_NSMBDEV);
+	free(sdp, M_SMBDATA);
 #ifndef __NetBSD__
 	destroy_dev(dev);
 #endif
