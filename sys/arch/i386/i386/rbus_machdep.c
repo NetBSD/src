@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.14 2001/11/15 07:03:31 lukem Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.15 2003/01/20 01:29:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2001/11/15 07:03:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2003/01/20 01:29:18 simonb Exp $");
 
 #include "opt_pcibios.h"
 
@@ -77,7 +77,7 @@ rbus_tag_t
 rbus_pccbb_parent_mem(pa)
 	struct pci_attach_args *pa;
 {
-	bus_addr_t start, offset;
+	bus_addr_t start;
 	bus_size_t size;
 	struct extent *ex;
 #ifdef PCIBIOS_ADDR_FIXUP
@@ -104,7 +104,6 @@ rbus_pccbb_parent_mem(pa)
 		start = rbus_min_start;
 
 	size = ex->ex_end - start;
-	offset = 0;
   
 	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
 }
