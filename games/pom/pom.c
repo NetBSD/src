@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.8 1997/10/12 01:01:39 lukem Exp $	*/
+/*	$NetBSD: pom.c,v 1.9 1998/06/13 01:09:22 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.8 1997/10/12 01:01:39 lukem Exp $");
+__RCSID("$NetBSD: pom.c,v 1.9 1998/06/13 01:09:22 jeremy Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: pom.c,v 1.8 1997/10/12 01:01:39 lukem Exp $");
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <tzfile.h>
 
 #define	PI	  3.141592654
@@ -93,8 +94,13 @@ main(argc, argv)
 	double days, today, tomorrow;
 	int cnt;
 
-	if (gettimeofday(&tp,&tzp))
-		err(1, "gettimeofday");
+	if (argc > 1) {
+		tp.tv_sec = atoi(argv[1]);
+		tp.tv_usec = 0;
+	} else {
+		if (gettimeofday(&tp,&tzp))
+			err(1, "gettimeofday");
+	}
 	tmpt = tp.tv_sec;
 	GMT = gmtime(&tmpt);
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
