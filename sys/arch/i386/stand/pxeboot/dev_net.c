@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.1 2002/02/16 16:26:23 thorpej Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.2 2003/03/11 15:01:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,8 +70,6 @@
 #include "bootparam.h"
 #include "dev_net.h"
 
-extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
-
 static int netdev_sock = -1;
 static int netdev_opens;
 
@@ -115,24 +113,14 @@ net_open(struct open_file *f, ...)
 			error = net_getparams(netdev_sock);
 			if (error) {
 				/* getparams makes its own noise */
-				goto fail;
-			}
-			/* Get the NFS file handle (mountd). */
-			error = nfs_mount(netdev_sock, rootip, rootpath);
-			if (error) {
-				printf("net_open: NFS mount error=%d\n", error);
-				rootip.s_addr = 0;
-			fail:
 				netif_close(netdev_sock);
 				netdev_sock = -1;
 				return (error);
 			}
-			if (debug)
-				printf("net_open: NFS mount succeeded\n");
 		}
 	}
 	netdev_opens++;
-	f->f_devdata = nfs_root_node;
+	f->f_devdata = &netdev_sock;
 	return (error);
 }
 

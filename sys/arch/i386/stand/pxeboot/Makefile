@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/11/24 23:48:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/03/11 15:01:51 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,6 +15,9 @@ RELOC=		0x0
 .endif
 
 SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
+# use our own nfs implementation
+.PATH: ${.CURDIR}/../libsa
+SRCS+= nfs.c
 
 .if (${BASE} == "pxeboot_ia32")
 # Various serial line configurations
@@ -34,6 +37,7 @@ CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
 CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_DHCP
 CPPFLAGS+= -DSUPPORT_TFTP
 CPPFLAGS+= -DSUPPORT_NFS
+#CPPFLAGS+= -DNFS_NOSYMLINK
 
 CPPFLAGS+= -DPASS_MEMMAP
 
