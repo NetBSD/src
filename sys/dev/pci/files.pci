@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.126 2001/03/25 03:48:36 jmc Exp $
+#	$NetBSD: files.pci,v 1.127 2001/03/30 14:32:08 minoura Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -282,6 +282,17 @@ file	dev/pci/opl_sv.c		opl_sv
 device	cmpci { }: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
+
+# Yamaha YMF724/740/744/754 PCI audio controller
+device	yds { }: audio, auconv, mulaw, ac97
+attach	yds at pci
+file	dev/pci/yds.c			yds
+
+attach	opl at yds with opl_yds
+file	dev/pci/opl_yds.c		opl_yds
+
+attach	mpu at yds with mpu_yds
+file	dev/pci/mpu_yds.c		mpu_yds
 
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
