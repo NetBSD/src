@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.17.2.3 2002/02/28 04:13:08 nathanw Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.17.2.4 2002/02/28 20:25:04 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.3 2002/02/28 04:13:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.4 2002/02/28 20:25:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -83,8 +83,9 @@ db_trap(int type, int code)
 				db_printf("; curproc = %p,"
 				    " curproc->l_proc is NULL at\t", curproc);
 			else
-				db_printf(" in pid %d (%s) at\t", 
-				    curproc->p_pid, curproc->l_proc->p_comm);
+				db_printf(" in pid %d.%d (%s) at\t", 
+				    curproc->l_proc->p_pid, curproc->l_lid,
+				    curproc->l_proc->p_comm);
 		} else if (bkpt)
 			db_printf("Breakpoint at\t");
 		else if (watchpt)
