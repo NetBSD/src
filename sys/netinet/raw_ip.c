@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.3 1993/05/18 18:20:12 cgd Exp $
+ *	$Id: raw_ip.c,v 1.4 1993/05/21 05:27:15 cgd Exp $
  */
 
 #include "param.h"
@@ -97,9 +97,12 @@ rip_output(m, so)
 	 * If the user handed us a complete IP packet, use it.
 	 * Otherwise, allocate an mbuf for a header and fill it in.
 	 */
-	if (rp->rinp_flags & RINPF_HDRINCL)
+	if (rp->rinp_flags & RINPF_HDRINCL) {
 		ip = mtod(m, struct ip *);
-	else {
+		if (ip->ip_len > m->m_pkthdr.len)
+			return EMSGSIZE;
+		ip->ip_len = m->m_pkthdr.len;
+	} else {
 		M_PREPEND(m, sizeof(struct ip), M_WAIT);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
