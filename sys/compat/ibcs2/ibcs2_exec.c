@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.35 2000/08/11 22:21:41 matt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.36 2000/11/13 21:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -97,7 +97,7 @@ static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 	
 
 extern struct sysent ibcs2_sysent[];
-extern char *ibcs2_syscallnames[];
+extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";

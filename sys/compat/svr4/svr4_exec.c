@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.32 2000/06/28 15:39:35 mrg Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.33 2000/11/13 21:32:19 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
 const char svr4_emul_path[] = "/emul/svr4";
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
-extern char *svr4_syscallnames[];
+extern const char * const svr4_syscallnames[];
 
 struct emul emul_svr4 = {
 	"svr4",
