@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.62 2000/07/10 09:34:39 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.63 2000/07/27 11:39:08 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -692,6 +692,7 @@ The currently defined protocols and names are:
 .It tcp	newreno	integer	yes
 .It tcp	log_refused	integer	yes
 .It tcp	rstratelimit	integer	yes
+.It tcp	rstppslimit	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -831,6 +832,11 @@ Returns 1 if refused TCP connections to the host will be logged.
 This variable specifies minimum interval, in microseconds, between RSTs
 sent in response to an incoming TCP packet with no corresponding listen
 or connected socket.
+.It Li tcp.rstppslimit
+The variable specifies the maximum number of outgoing TCP RST packets,
+per second.
+TCP RST packet that exceeded the value are subject to rate limitation
+and will not go out from the node.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
