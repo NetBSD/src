@@ -135,13 +135,17 @@ fd)
 	;;
 
 wt*)
-	umask 2
-	rm -f wt0 nwt0 rwt0 nrwt0
-	mknod wt0	b 3 0
-	mknod nwt0	b 3 4
-	mknod rwt0	c 10 0
-	mknod nrwt0	c 10 4
-	chgrp operator wt0 nwt0 rwt0 nrwt0
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	wt*) name=wt;  chr=10; blk=3;;
+	esac
+	rm -f $name$unit n$name$unit r$name$unit nr$name$unit
+	mknod $name$unit	b $blk `expr $unit '*' 8 + 0`
+	mknod n$name$unit	b $blk `expr $unit '*' 8 + 4`
+	mknod r$name$unit	c $chr `expr $unit '*' 8 + 0`
+	mknod nr$name$unit	c $chr `expr $unit '*' 8 + 4`
+	chgrp operator $name$unit n$name$unit r$name$unit nr$name$unit
+	chmod 640 $name$unit n$name$unit r$name$unit nr$name$unit
 	umask 77
 	;;
 
@@ -214,22 +218,18 @@ st*)
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
+	mknod $name$unit	b $blk `expr $unit '*' 16 + 0`
+	mknod n$name$unit	b $blk `expr $unit '*' 16 + 1`
+	mknod e$name$unit	b $blk `expr $unit '*' 16 + 2`
+	mknod en$name$unit	b $blk `expr $unit '*' 16 + 3`
+	mknod r$name$unit	c $chr `expr $unit '*' 16 + 0`
+	mknod nr$name$unit	c $chr `expr $unit '*' 16 + 1`
+	mknod er$name$unit	c $chr `expr $unit '*' 16 + 2`
+	mknod enr$name$unit	c $chr `expr $unit '*' 16 + 3`
+	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	umask 77
 	;;
 
