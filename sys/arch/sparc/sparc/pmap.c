@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1995/03/12 18:56:57 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.41 1995/04/10 11:57:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -258,9 +258,8 @@ union	ctxinfo *ctx_freelist;	/* context free list */
 int	ctx_kick;		/* allocation rover when none free */
 int	ctx_kickdir;		/* ctx_kick roves both directions */
 
-/* XXX need per-cpu vpage[]s (and vmempage, unless we lock in /dev/mem) */
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
-caddr_t	vmempage;		/* one reserved MI vpage for /dev/mem */
+caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t vdumppages;		/* 32KB worth of reserved dump pages */
 
 struct pmap	kernel_pmap_store;	/* the kernel's pmap */
@@ -1473,7 +1472,7 @@ pmap_bootstrap(nmmu, nctx)
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
-	vmempage = p, p += NBPG;
+	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
 #ifdef MACHINE_NONCONTIG
