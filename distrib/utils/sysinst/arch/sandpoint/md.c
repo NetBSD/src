@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2001/10/24 19:43:40 briggs Exp $ */
+/*	$NetBSD: md.c,v 1.1.2.1 2003/01/27 06:39:02 jmc Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,7 +105,7 @@ int md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog (RUN_DISPLAY, NULL, "pax -X -r -w -pe / /mnt") != 0)
+	if (run_prog (RUN_DISPLAY, NULL, "pax -X -O -r -w -pe / /mnt") != 0)
 		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
