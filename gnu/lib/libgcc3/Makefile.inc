@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2004/03/25 07:48:34 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.6.2.1 2004/03/29 19:26:42 jdc Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -24,7 +24,8 @@ LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 .endif
 
 DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk tconfig.h
-CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
+CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h \
+		tconfig.h
 .if !empty(G_LIB1ASMFUNCS)
 CLEANFILES+=	${LIB1ASMFUNCS}
 .endif
