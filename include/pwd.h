@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.7 1995/04/29 05:30:00 cgd Exp $	*/
+/*	$NetBSD: pwd.h,v 1.8 1995/07/28 05:30:52 phil Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -8,6 +8,7 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ * Portions Copyright(C) 1995, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,6 +62,12 @@
 #define	_PASSWORD_EFMT1		'_'	/* extended encryption format */
 
 #define	_PASSWORD_LEN		128	/* max length, not counting NULL */
+
+#define _PASSWORD_NOUID		0x01	/* flag for no specified uid. */
+#define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
+#define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
+#define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
+
 #endif
 
 struct passwd {
