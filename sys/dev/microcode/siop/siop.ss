@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.7 2000/06/13 13:59:15 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.8 2000/10/06 16:31:17 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -87,6 +87,18 @@ EXTERN slot_abs_selected;
 
 EXTERN endslot_abs_reselect;
 
+EXTERN abs_find_dsa;
+ENTRY rtarget;
+ENTRY rlun;
+ENTRY rdsa0;
+ENTRY rdsa1;
+ENTRY rdsa2;
+ENTRY rdsa3;
+ENTRY rsxfer;
+ENTRY rscntl3;
+ENTRY res_nextld;
+EXTERN resel_abs_selected;
+
 PROC  siop_script:
 
 selected:
@@ -110,8 +122,8 @@ reselect:
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
 	INT int_err, WHEN NOT MSG_IN;
 	MOVE FROM t_msg_in, WHEN MSG_IN;
-	INT int_resel;
-
+	MOVE SFBR & 0x07 to SCRATCHA2; save LUN
+	JUMP abs_find_dsa;
 reselect_fail:
 	; check that host asserted SIGP, this'll clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
@@ -261,3 +273,35 @@ nextslot:	NOP; /* will be changed to the next slot entry
 
 PROC  endslot_script:
 	JUMP endslot_abs_reselect;
+
+;; script used to find the DSA after a reselect.
+;; each slot contain a target/lun identifier (when free target = 0xff, so it's
+;; ignored) used to load the appropriate DSA for this reselect
+
+PROC reselected_script:
+	MOVE SCRATCHA0 to SFBR; load ID
+rtarget:
+	JUMP REL(res_nextid), IF NOT 0xff;
+	MOVE SCRATCHA2 to SFBR; load LUN
+rlun:
+	JUMP REL(res_nextld), IF NOT 0xff;
+rdsa0:
+	MOVE 0x00 to dsa0;
+rdsa1:
+	MOVE 0x01 to dsa1;
+rdsa2:
+	MOVE 0x02 to dsa2;
+rdsa3:
+	MOVE 0x03 to dsa3;
+; the select is here to reload sxfer and scntl3 from the table. As we're
+; already reselected is always fais, and always jumps to the main script.
+	SELECT FROM t_id, resel_abs_selected;
+
+res_nextld:
+	NOP ; MOVE SCRATCHA0 to SFBR
+res_nextid:
+	NOP ; JUMP REL(res_nextid), IF NOT 0xff
+
+PROC reselected_end_script:
+	INT int_resel;
+	INT int_resel; /* need two because res_nextld and res_nextid */
