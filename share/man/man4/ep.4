@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.29 2001/06/30 16:55:03 bjh21 Exp $
+.\"	$NetBSD: ep.4,v 1.30 2001/07/27 03:01:41 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -53,7 +53,7 @@ device driver supports the 3Com Etherlink III family of Ethernet cards.
 The 3c515 is an ISA 10/100 card with DMA capability.
 The chipset is similar to that of the 3c905, with some changes to
 make it work with the more limited ISA bus address space.  This card
-is not currently supported.
+is supported, although DMA is not used.
 .Pp
 The EISA and PCI 3c59x devices use an older DMA engine which is not
 capable of multi-segment DMA.  DMA on these devices is not used.
@@ -93,18 +93,18 @@ The second class is the
 class.  This includes the 3c592, 3c579, 3c590, and 3c595.  This class also
 includes the 3c900-TPO and 3c900-COMBO; they use the
 .Dq Boomerang
-chipset, but use Vortex-style media selection.  These devices many different
-media types varying by model.  Some models have an external MII connector
-for connecting an external PHY.  This is supported by means of the "manual"
-media type.  Available media will be displayed when the device is found by
-the kernel.
+chipset, but use Vortex-style media selection.  These devices have many
+different media types varying by model.  Some models have an external MII
+connector for connecting an external PHY.  This is supported by means of the
+"manual" media type.  Available media will be displayed when the device is
+found by the kernel.
 .Pp
 The third class is the
 .Dq Boomerang
-class.  This includes the 3c905 and the 3c574.  These devices support
-media selection via MII.  The 3c905 has an internal
+class.  This includes the 3c515, 3c905, and 3c574.  These devices support
+media selection via MII.  The 3c515 and 3c905 have an
 .Xr nsphy 4 ,
-and the 3c574 an internal
+and the 3c574 has a
 .Xr tqphy 4 ,
 for this purpose. See
 .Xr ifmedia 4
@@ -119,6 +119,8 @@ Supported cards include:
 ISA 10Mbps card, in BNC and multiport variants
 .It 3c509B
 ISA Plug-and-Play 10Mbps card, in BNC and multiport variants
+.It 3c515
+ISA Plug-and-Play 10/100 card with UTP
 .It 3c529
 MCA 10Mbps card, in UTP+AUI and BNC+AUI variants
 .It 3c579
@@ -148,7 +150,7 @@ Etherlink III cards have no jumpers to set the address.
 3Com supplies software to set the address of the card in software.
 To find the card on the ISA bus, the kernel performs a complex
 scan operation at IO address 0x100.
-Beware!
+.Em Beware!
 Avoid placing other cards at that address!
 .Pp
 The 3Com configuration utilities can `autosense' the active media and
