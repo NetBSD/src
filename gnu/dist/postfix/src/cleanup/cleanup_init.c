@@ -165,11 +165,6 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     0,
 };
 
-CONFIG_BOOL_TABLE cleanup_bool_table[] = {
-    VAR_CANON_ENV_RCPT, DEF_CANON_ENV_RCPT, &var_canon_env_rcpt,
-    0,
-};
-
  /*
   * Mappings.
   */
