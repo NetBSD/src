@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.5 2001/02/24 20:17:45 uch Exp $
+#	$NetBSD: JORNADA690,v 1.6 2001/03/08 15:21:31 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -109,8 +109,8 @@ mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 wdc1	at pcmcia0 function ?
 wd*	at wdc1 channel ? drive ? flags 0x0000
 # Compact Flash slot (only memory mapped mode CF can attach) 
-#wdc0	at pcmcia1 function ?
-#wd*	at wdc0 channel ? drive ? flags 0x0000
+wdc0	at pcmcia1 function ?
+wd*	at wdc0 channel ? drive ? flags 0x0000
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
