@@ -33,14 +33,13 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)unix.c	5.11 (Berkeley) 7/1/91"; */
-static char rcsid = "$Id: unix.c,v 1.3 1993/05/20 10:41:04 cgd Exp $";
+static char rcsid[] = "$Id: unix.c,v 1.4 1993/05/20 12:03:54 cgd Exp $";
 #endif /* not lint */
 
 /*
  * Display protocol blocks in the unix domain.
  */
 #include <sys/param.h>
-#include <sys/select.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
