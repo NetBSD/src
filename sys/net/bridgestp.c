@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.2 2001/11/12 23:49:34 lukem Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.3 2003/02/03 23:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.2 2001/11/12 23:49:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.3 2003/02/03 23:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,7 +851,7 @@ bstp_initialization(struct bridge_softc *sc)
 	bstp_timer_stop(&sc->sc_tcn_timer);
 	bstp_timer_stop(&sc->sc_topology_change_timer);
 
-	if (callout_active(&sc->sc_bstpcallout) == 0)
+	if (callout_pending(&sc->sc_bstpcallout) == 0)
 		callout_reset(&sc->sc_bstpcallout, hz,
 		    bstp_tick, sc);
 

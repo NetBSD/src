@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.61 2002/11/24 10:55:03 scw Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.62 2003/02/03 23:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.61 2002/11/24 10:55:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62 2003/02/03 23:51:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -268,8 +268,6 @@ tcp_timer_rexmt(void *arg)
 
 	s = splsoftnet();
 
-	callout_deactivate(&tp->t_timer[TCPT_REXMT]);
-
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
@@ -417,8 +415,6 @@ tcp_timer_persist(void *arg)
 
 	s = splsoftnet();
 
-	callout_deactivate(&tp->t_timer[TCPT_PERSIST]);
-
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
@@ -480,8 +476,6 @@ tcp_timer_keep(void *arg)
 #endif
 
 	s = splsoftnet();
-
-	callout_deactivate(&tp->t_timer[TCPT_KEEP]);
 
 #ifdef TCP_DEBUG
 	ostate = tp->t_state;
@@ -564,8 +558,6 @@ tcp_timer_2msl(void *arg)
 #endif
 
 	s = splsoftnet();
-
-	callout_deactivate(&tp->t_timer[TCPT_2MSL]);
 
 #ifdef TCP_DEBUG
 #ifdef INET
