@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/03/22 18:10:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.32 2002/10/23 01:25:38 itojun Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -27,6 +27,7 @@ BINMODE=4555
 CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 SRCS+=	krb5_passwd.c
 
+DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
 LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
 .endif
 
