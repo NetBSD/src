@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.5 1995/12/10 10:07:01 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.6 1997/10/17 10:38:10 lukem Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -311,6 +311,7 @@ send_igmp(src, dst, type, code, group, datalen)
     struct igmp *igmp;
     int setloop;
 
+    setloop                 = 0;
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 1995/12/10 10:06:59 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 1997/10/17 10:38:03 lukem Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -240,6 +240,7 @@ extern void		config_vifs_from_file __P((void));
 
 /* inet.c */
 extern int		inet_valid_host __P((u_int32_t naddr));
+extern int		inet_valid_mask __P((u_int32_t mask));
 extern int		inet_valid_subnet __P((u_int32_t nsubnet, u_int32_t nmask));
 extern char *		inet_fmt __P((u_int32_t addr, char *s));
 extern char *		inet_fmts __P((u_int32_t addr, u_int32_t mask, char *s));
@@ -273,6 +274,7 @@ extern void 		accept_g_ack __P((u_int32_t src, u_int32_t dst, char *p,
 extern void		accept_mtrace __P((u_int32_t src, u_int32_t dst,
 					u_int32_t group, char *data, u_int no,
 					int datalen));
+extern int		find_src_grp __P((u_int32_t, u_int32_t, u_int32_t));
 
 /* kern.c */
 extern void		k_set_rcvbuf __P((int bufsize));
@@ -311,3 +313,10 @@ extern void		rsrr_clean __P((void));
 extern void		rsrr_cache_send __P((struct gtable *gt, int notify));
 extern void		rsrr_cache_clean __P((struct gtable *gt));
 #endif /* RSRR */
+
+/* vif.c */
+extern void		accept_info_reply __P((u_int32_t, u_int32_t,
+						u_char *, int));
+extern void		accept_info_request __P((u_int32_t, u_int32_t,
+						u_char *, int));
+extern void		init_installvifs __P((void));

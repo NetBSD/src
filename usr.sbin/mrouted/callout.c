@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.c,v 1.3 1995/12/10 10:06:56 mycroft Exp $	*/
+/*	$NetBSD: callout.c,v 1.4 1997/10/17 10:37:55 lukem Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -30,6 +30,8 @@ static void print_Q __P((void));
 #else
 #define	print_Q()	
 #endif
+
+int secs_remaining __P((int));
 
 void
 callout_init()
@@ -208,8 +210,9 @@ print_Q()
 	log(LOG_DEBUG,0,"(%d,%d) ", ptr->id, ptr->time);
 }
 #endif /* IGMP_DEBUG */
+
 int
-secs_remaining( timer_id)
+secs_remaining(timer_id)
     int  timer_id;
 {
     struct timeout_q  *ptr;
