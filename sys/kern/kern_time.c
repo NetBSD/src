@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.67 2003/03/10 21:49:56 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.68 2003/04/16 21:34:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.67 2003/03/10 21:49:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.68 2003/04/16 21:34:15 dsl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -413,6 +413,7 @@ settimeofday1(utv, utzp, p)
 int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
+int	time_adjusted;			/* set if an adjustment is made */
 
 /* ARGSUSED */
 int
@@ -474,6 +475,9 @@ adjtime1(delta, olddelta, p)
 	 */
 	if (ndelta < 0)
 		ntickdelta = -ntickdelta;
+	if (ndelta != 0)
+		/* We need to save the system clock time during shutdown */
+		time_adjusted |= 1;
 	s = splclock();
 	odelta = timedelta;
 	timedelta = ndelta;
