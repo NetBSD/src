@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/01/14 06:35:57 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2001/10/31 15:57:56 tv Exp $
 
 PROG=	doexec
 MKMAN=	no
@@ -14,7 +14,7 @@ GOODAOUT_LIB+= ${LIBCRT0} ${LIBCRTBEGIN}
 GOODAOUT_LIB= ${LDSTATIC}
 .endif
 
-RP=	${.OBJDIR}/${PROG}
+RP=	./${PROG}
 TD=	${.CURDIR}/tests
 OD=	${.CURDIR}/good
 
@@ -25,8 +25,8 @@ all:	${PROG} goodaout truncaout ${TESTSCRIPTS}
 
 .for x in ${TESTSCRIPTS}
 ${x}: ${TD}/${x}
-	cp ${TD}/${x} ${.OBJDIR}
-	chmod +x ${.OBJDIR}/${x}
+	cp ${TD}/${x} .
+	chmod +x ${x}
 .endfor
 
 CLEANFILES+= goodaout truncaout ${TESTSCRIPTS}
@@ -37,41 +37,41 @@ regress:	test-empty test-nonexist \
 		test-goodaout test-truncaout
 
 test-empty:	${PROG} empty
-	${RP} ${.OBJDIR}/empty | diff - ${OD}/empty
+	${RP} empty | diff - ${OD}/empty
 
 test-nonexist:	${PROG}
 	${RP} ${TD}/nonexistent | diff - ${OD}/nonexistent
 
 test-nonexistshell: ${PROG} nonexistshell
-	${RP} ${.OBJDIR}/nonexistshell | diff - ${OD}/nonexistshell
+	${RP} nonexistshell | diff - ${OD}/nonexistshell
 
 test-devnullscript: ${PROG} devnullscript
-	${RP} ${.OBJDIR}/devnullscript | diff - ${OD}/devnullscript
+	${RP} devnullscript | diff - ${OD}/devnullscript
 
 test-badinterplen: ${PROG} badinterplen
-	${RP} ${.OBJDIR}/badinterplen | diff - ${OD}/badinterplen
+	${RP} badinterplen | diff - ${OD}/badinterplen
 
 test-goodscript: ${PROG} goodscript
-	${RP} ${.OBJDIR}/goodscript | diff - ${OD}/goodscript
+	${RP} goodscript | diff - ${OD}/goodscript
 
 test-scriptarg: ${PROG} scriptarg
-	${RP} ${.OBJDIR}/scriptarg 2>&1 | diff - ${OD}/scriptarg
+	${RP} scriptarg 2>&1 | diff - ${OD}/scriptarg
 
 test-scriptarg-nospace: ${PROG} scriptarg-nospace
-	${RP} ${.OBJDIR}/scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
+	${RP} scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
 
 goodaout: ${TD}/goodaout.c
 	${LINK.c} ${GOODAOUT_LIB} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
 
 test-goodaout: ${PROG} goodaout
-	${RP} ${.OBJDIR}/goodaout | diff - ${OD}/goodaout
+	${RP} goodaout | diff - ${OD}/goodaout
 
 truncaout: goodaout
 	/bin/rm -rf truncaout
-	dd if=${.OBJDIR}/goodaout of=truncaout bs=16 count=1
+	dd if=goodaout of=truncaout bs=16 count=1
 	chmod a+x truncaout
 
 test-truncaout: ${PROG} truncaout
-	${RP} ${.OBJDIR}/truncaout | diff - ${OD}/truncaout
+	${RP} truncaout | diff - ${OD}/truncaout
 
 .include <bsd.prog.mk>
