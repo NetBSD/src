@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.3 2001/12/31 18:38:32 thorpej Exp $	*/
+/*	$NetBSD: pmc.c,v 1.4 2002/01/03 05:04:52 briggs Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 	pss0.flags = PMC_SETUP_USER;
 	pss0.counter = 0;
 	pss1.flags = PMC_SETUP_KERNEL;
-	pss0.counter = 1;
+	pss1.counter = 1;
 
 	/*
 	 * XXX should catch signals and tidy up in the parent.
