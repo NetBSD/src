@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.46 1997/07/06 22:23:37 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.47 1997/07/07 08:44:01 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -955,11 +955,11 @@ getcpuinfo(sc, node)
 		i = getpsr();
 		if (node == 0 ||
 		    (cpu_impl =
-		     getpropint(node, "psr-implementation", -1) == -1))
+		     getpropint(node, "psr-implementation", -1)) == -1)
 			cpu_impl = IU_IMPL(i);
 
 		if (node == 0 ||
-		    (cpu_vers = getpropint(node, "psr-version", -1) == -1))
+		    (cpu_vers = getpropint(node, "psr-version", -1)) == -1)
 			cpu_vers = IU_VERS(i);
 
 		if (CPU_ISSUN4M) {
