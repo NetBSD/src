@@ -1478,14 +1478,20 @@ configdoc.texi:	${DOCVER}-doc.texi
 	  || cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
 
 ldver.texi: Makefile
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ldver.texi:
 	rm -f $@
 	echo '@set VERSION $(VERSION)' > $@
 
 ld.info: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ld.info:
 	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
 	$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
 
 ld.dvi: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ld.dvi:
 	TEXINPUTS=$(top_srcdir)/../texinfo:$$TEXINPUTS \
 	  MAKEINFO="$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc" $(TEXI2DVI) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
 
@@ -1493,6 +1499,8 @@ ld.dvi: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 ld.1: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ld.texi:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
 	-($(POD2MAN) ld.pod | \

@@ -18,6 +18,8 @@ man_MANS = as.1
 info_TEXINFOS = as.texinfo 
 
 asconfig.texi: $(CONFIG).texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_asconfig.text:
 	rm -f asconfig.texi
 	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
 	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
@@ -59,11 +61,15 @@ CPU_DOCS = \
 	c-z8k.texi
 
 gasver.texi: Makefile
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gasver.texi:
 	rm -f $@
 	echo '@set VERSION $(VERSION)' > $@
 
 as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+	@echo "NOT REBUILDING $@"
 as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+	@echo "NOT REBUILDING $@"
 
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
@@ -86,6 +92,8 @@ info: $(MANS)
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_as.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
 	-($(POD2MAN) as.pod | \
