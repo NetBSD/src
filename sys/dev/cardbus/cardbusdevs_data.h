@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.8 2000/06/13 15:37:29 soren Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.8.2.1 2002/01/05 17:33:16 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10 2000/06/06 17:21:42 soren Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.1 2002/01/05 17:32:32 he Exp 
  */
 
 /*
@@ -112,10 +112,28 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "56k Modem",
 	},
 	{
+	    CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+	    0,
+	    "D-Link Systems",
+	    "DFE-690TXD 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
+	    0,
+	    "Corega",
+	    "FEther CB-TXD 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
 	    0,
 	    "Realtek Semiconductor",
 	    "8138 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, 0,
@@ -133,6 +151,24 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ADP, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Adaptec",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_DLINK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "D-Link Systems",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Corega",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ALLIEDTELESYN, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Allied Telesyn International",
 	    NULL,
 	},
 	{
