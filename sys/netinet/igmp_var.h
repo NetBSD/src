@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.15 2003/06/15 02:49:32 matt Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.16 2003/06/26 03:11:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -87,6 +87,7 @@ int	igmp_joingroup __P((struct in_multi *));
 void	igmp_leavegroup __P((struct in_multi *));
 void	igmp_fasttimo __P((void));
 void	igmp_slowtimo __P((void));
+extern void igmp_purgeif(struct ifnet *);
 #endif
 
 #endif /* _NETINET_IGMP_VAR_H_ */
