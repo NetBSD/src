@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.45 1998/10/06 00:20:45 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.46 1998/12/16 00:33:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -321,8 +321,9 @@ again:
 	if (len) {
 		if (len == txsegsize)
 			goto send;
-		if ((idle || tp->t_flags & TF_NODELAY) &&
-		    len + off >= so->so_snd.sb_cc)
+		if ((so->so_state & SS_MORETOCOME) == 0 &&
+		    ((idle || tp->t_flags & TF_NODELAY) &&
+		     len + off >= so->so_snd.sb_cc))
 			goto send;
 		if (tp->t_force)
 			goto send;
