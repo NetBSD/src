@@ -21,7 +21,7 @@
  * with *exp=0. 
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double
@@ -53,6 +53,6 @@ two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 	}
 	*eptr += (ix>>20)-1022;
 	hx = (hx&0x800fffff)|0x3fe00000;
-	*(int*)&x = hx;
+	*(n0 + (int*)&x) = hx;
 	return x;
 }

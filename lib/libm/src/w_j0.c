@@ -15,7 +15,7 @@
  * wrapper j0(double x), y0(double x)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 	double j0(double x)		/* wrapper j0 */

@@ -15,7 +15,7 @@
  * wrapper fmod(x,y)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 
 #ifdef __STDC__

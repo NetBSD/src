@@ -18,7 +18,7 @@
  * Method: call __ieee754_lgamma_r
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 extern int signgam;
 

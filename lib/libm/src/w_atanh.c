@@ -14,7 +14,7 @@
  * wrapper atanh(x)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 
 #ifdef __STDC__
