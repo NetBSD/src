@@ -34,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.12 2003/04/16 13:34:49 wiz Exp $
+.\"	$NetBSD: strcpy.3,v 1.13 2003/05/06 09:58:25 lukem Exp $
 .\"
-.Dd August 11, 2002
+.Dd May 6, 2002
 .Dt STRCPY 3
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ character).
 .Pp
 The
 .Fn strncpy
-copies not more than
+function copies not more than
 .Fa len
 characters into
 .Fa dst ,
@@ -83,9 +83,9 @@ terminating
 .Fa dst
 if
 .Fa src
-is more than
+is
 .Fa len
-characters long.
+or more characters long.
 .Sh RETURN VALUES
 The
 .Fn strcpy
