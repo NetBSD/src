@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.34 2002/10/09 20:17:00 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.35 2002/10/11 01:48:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1287,7 +1287,7 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 	return (0);
 }
 
-static void
+void
 selectattr(struct attr *a)
 {
 

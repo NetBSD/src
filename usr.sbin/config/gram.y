@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.37 2002/10/09 20:17:00 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.38 2002/10/11 01:48:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<str>	fsoptfile_opt
 %type	<str>	defopt
 %type	<list>	defopts
+%type	<str>	optdep
+%type	<list>	optdeps
 %type	<list>	defoptdeps
 %type	<str>	optfile_opt
 %type	<list>	subarches_opt subarches
@@ -301,8 +303,15 @@ deffs:
 	WORD				{ $$ = $1; };
 
 defoptdeps:
-	':' defopts			{ $$ = $2; } |
+	':' optdeps			{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
+
+optdeps:
+	optdeps ',' optdep		{ $$ = new_nx($3, $1); } |
+	optdep				{ $$ = new_n($1); };
+
+optdep:
+	WORD				{ $$ = $1; };
 
 defopts:
 	defopts defopt			{ $$ = new_nx($2, $1); } |

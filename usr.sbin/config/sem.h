@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.16 2002/10/09 20:17:00 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.17 2002/10/11 01:48:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@ struct devbase *getdevbase(const char *);
 struct deva    *getdevattach(const char *);
 struct attr    *getattr(const char *);
 void		expandattr(struct attr *, void (*)(struct attr *));
+void		selectattr(struct attr *);
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
