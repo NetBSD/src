@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 1999/01/16 20:32:25 chuck Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 1999/01/18 03:48:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,16 +51,10 @@
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * is the top (end) of the user stack.
  */
-#define	USRTEXT		0x00001000
+#define	USRTEXT		0x00001000	/* Start of user text */
 #define	USRSTACK	0x80000000	/* Start of user stack */
-#define	BTOPUSRSTACK	0x80000		/* btop(USRSTACK) */
-#define	LOWPAGES	0x00001
-#define	HIGHPAGES	0
 
 /*
  * Virtual memory related constants, all in bytes
@@ -82,13 +76,6 @@
 #endif
 
 /*
- * Sizes of the system and user portions of the system page table.
- */
-/* SYSPTSIZE IS SILLY; (really number of buffers for I/O) */
-#define	SYSPTSIZE	1228
-#define	USRPTSIZE 	1024
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * 16 pte's are enough to cover 8 disks * MAXBSIZE.
  */
@@ -103,11 +90,6 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	1024		/* 4mb */
 #endif
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
 
 /*
  * The time for a process to be blocked before being very swappable.
@@ -140,75 +122,6 @@
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
 
-/*
- * DISKRPM is used to estimate the number of paging i/o operations
- * which one can expect from a single disk controller.
- */
-#define	DISKRPM		60
-
-/*
- * Klustering constants.  Klustering is the gathering
- * of pages together for pagein/pageout, while clustering
- * is the treatment of hardware page size as though it were
- * larger than it really is.
- *
- * KLMAX gives maximum cluster size in CLSIZE page (cluster-page)
- * units.  Note that ctod(KLMAX*CLSIZE) must be <= DMMIN in dmap.h.
- * ctob(KLMAX) should also be less than MAXPHYS (in vm_swp.c)
- * unless you like "big push" panics.
- */
-
-#ifdef notdef /* XXX */
-#define	KLMAX	(4/CLSIZE)
-#define	KLSEQL	(2/CLSIZE)		/* in klust if vadvise(VA_SEQL) */
-#define	KLIN	(4/CLSIZE)		/* default data/stack in klust */
-#define	KLTXT	(4/CLSIZE)		/* default text in klust */
-#define	KLOUT	(4/CLSIZE)
-#else
-#define	KLMAX	(1/CLSIZE)
-#define	KLSEQL	(1/CLSIZE)
-#define	KLIN	(1/CLSIZE)
-#define	KLTXT	(1/CLSIZE)
-#define	KLOUT	(1/CLSIZE)
-#endif
-
-/*
- * KLSDIST is the advance or retard of the fifo reclaim for sequential
- * processes data space.
- */
-#define	KLSDIST	3		/* klusters advance/retard for seq. fifo */
-
-/*
- * Paging thresholds (see vm_sched.c).
- * Strategy of 1/19/85:
- *	lotsfree is 512k bytes, but at most 1/4 of memory
- *	desfree is 200k bytes, but at most 1/8 of memory
- */
-#define	LOTSFREE	(512 * 1024)
-#define	LOTSFREEFRACT	4
-#define	DESFREE		(200 * 1024)
-#define	DESFREEFRACT	8
-
-/*
- * There are two clock hands, initially separated by HANDSPREAD bytes
- * (but at most all of user memory).  The amount of time to reclaim
- * a page once the pageout process examines it increases with this
- * distance and decreases as the scan rate rises.
- */
-#define	HANDSPREAD	(2 * 1024 * 1024)
-
-/*
- * The number of times per second to recompute the desired paging rate
- * and poke the pagedaemon.
- */
-#define	RATETOSCHEDPAGING	4
-
-/*
- * Believed threshold (in megabytes) for which interleaved
- * swapping area is desirable.
- */
-#define	LOTSOFMEM	2
-
 #define	mapin(pte, v, pfnum, prot) \
 	(*(int *)(pte) = ((pfnum) << PG_SHIFT) | (prot), MachTLBFlushAddr(v))
 
@@ -227,9 +140,6 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
