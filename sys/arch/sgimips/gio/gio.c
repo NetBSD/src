@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.12 2003/12/15 05:26:56 lonewolf Exp $	*/
+/*	$NetBSD: gio.c,v 1.13 2004/01/10 02:26:44 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.12 2003/12/15 05:26:56 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.13 2004/01/10 02:26:44 sekiya Exp $");
 
 #include "opt_ddb.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.12 2003/12/15 05:26:56 lonewolf Exp $");
 
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
+#include <sgimips/gio/giodevs.h>
 
 #include "locators.h"
 #include "newport.h"
@@ -120,6 +121,7 @@ static int
 gio_print(void *aux, const char *pnp)
 {
 	struct gio_attach_args *ga = aux;
+	int i = 0;
 
 	if (pnp != NULL) {
 	  	int product, revision;
@@ -131,7 +133,18 @@ gio_print(void *aux, const char *pnp)
 		else
 			revision = 0;
 
-		aprint_normal("unknown product 0x%02x revision 0x%02x at %s",
+		while (gio_knowndevs[i].productid != 0) {
+			if (gio_knowndevs[i].productid == product) {
+				aprint_normal("%s", gio_knowndevs[i].product);
+				break;
+			}
+			i++;
+		}
+
+		if (gio_knowndevs[i].productid == 0)
+			aprint_normal("unknown GIO card");
+
+		aprint_normal(" (product 0x%02x revision 0x%02x) at %s",
 		    product, revision, pnp);
 	}
 
