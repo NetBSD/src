@@ -44,6 +44,8 @@ static char sccsid[] = "@(#)miscbltin.c	8.2 (Berkeley) 4/16/94";
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <ctype.h>
 #include "shell.h"
 #include "options.h"
 #include "var.h"

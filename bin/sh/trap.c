@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #include "trap.h"
 #include "mystring.h"
 #include <signal.h>
+#include <unistd.h>
 
 
 /*
