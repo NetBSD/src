@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.27 2003/10/26 07:25:33 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.28 2004/05/04 02:52:05 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -44,7 +44,7 @@ ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 #	There is a .PHONY ${CRUNCHBIN}, so check if out of date by hand
 #	Default to `.' if ${CRUNCHBIN} isn't set, to always force a rebuild.
 	[ "${.OODATE}" = ${CRUNCHBIN:U.} -a -f ${WORKBUILT} -a ${WORKBUILT} -nt ${CRUNCHBIN:U.} ]  || { \
-	echo "Building tree into ${WORKDIR}"; \
+	${_MKSHMSG} "  build " ${.CURDIR:T}/${WORKDIR}; \
 	rm -rf ${WORKDIR} ${WORKBUILT}; \
 	mkdir -m 755 ${WORKDIR} &&  \
 	${TOOL_MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW && \
@@ -66,8 +66,12 @@ cleanfsimage:
 
 .if !target(${WORKSPEC})					# {
 ${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
+	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	( for i in ${MTREECONF}; do	\
+		echo "# --" ; \
+		echo "# entries from: $$i" ; \
+		echo "#" ; \
 		cat $$i ;		\
 		echo "/unset all" ;	\
 	done ) >> ${.TARGET}.tmp
@@ -80,7 +84,7 @@ CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 .if defined(IMAGE)						# {
 ${IMAGE}: ${WORKBUILT}
 	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
-	echo "Creating image into ${.TARGET}..."; \
+	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
 	${TOOL_MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
 	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
@@ -93,6 +97,7 @@ ${IMAGE}: ${WORKBUILT}
 .endif
 
 ${IMAGE}.gz: ${IMAGE}
+	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
@@ -110,6 +115,7 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
 
 .if defined(IMAGETAR)						# {
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
+	${_MKTARGET_CREATE}
 	( cd ${WORKDIR}; \
 	  GZIP=-9 ${TOOL_PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \

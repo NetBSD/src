@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.24 2004/01/17 20:17:44 dsl Exp $
+#	$NetBSD: Makefile.mdset,v 1.25 2004/05/04 02:52:05 lukem Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -89,6 +89,7 @@ ${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
 .endif
 
 ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
+	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
@@ -103,9 +104,7 @@ _POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
 .endif
 
 ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
-	@echo "mdsetimage: ${_KERNNAME.${_K}.${_F}}"
-	@echo "      with: ${_I}"
-	@echo "      into: ${.TARGET}"
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
 	@rm -f ${.TARGET} ${.TARGET}.tmp ${.TARGET}.symbols.gz
 	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}.tmp
 	${TOOL_MDSETIMAGE} -v ${.TARGET}.tmp ${_I}
@@ -121,6 +120,7 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 .endif
 
 ${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
+	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
