@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 1997/06/10 19:33:13 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.7 1997/07/10 08:23:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,8 @@
 #define	KERNBASE	0xF8000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0xF8004000	/* start of kernel text */
 #define	KERN_END	0xFE000000	/* end of kernel virtual */
+
+#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 
