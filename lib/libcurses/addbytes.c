@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)addbytes.c	5.8 (Berkeley) 8/28/92";*/
-static char rcsid[] = "$Id: addbytes.c,v 1.5 1993/08/07 05:48:38 mycroft Exp $";
+static char rcsid[] = "$Id: addbytes.c,v 1.6 1993/08/15 16:23:57 mycroft Exp $";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$Id: addbytes.c,v 1.5 1993/08/07 05:48:38 mycroft Exp $";
 int
 waddbytes(win, bytes, count)
 	register WINDOW *win;
-	register char *bytes;
+	register const char *bytes;
 	register int count;
 {
 	static char blanks[] = "        ";
