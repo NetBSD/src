@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.139 2002/03/22 04:31:01 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.140 2002/03/24 17:09:01 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.139 2002/03/22 04:31:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.140 2002/03/24 17:09:01 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -695,18 +695,6 @@ tcp_input(m, va_alist)
 			return;
 		}
 #endif
-
-		/*
-		 * Make sure destination address is not multicast.
-		 * Source address checked in ip_input().
-		 */
-		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
-
-			/* XXX stat */
-			goto drop;
-		}
-
 		/* We do the checksum after PCB lookup... */
 		len = ip->ip_len;
 		tlen = len - toff;
@@ -1435,6 +1423,26 @@ after_listen:
 	}
 
 	switch (tp->t_state) {
+	case TCPS_LISTEN:
+		/*
+		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+		 */
+		if (m->m_flags & (M_BCAST|M_MCAST))
+			goto drop;
+		switch (af) {
+#ifdef INET6
+		case AF_INET6:
+			if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+				goto drop;
+			break;
+#endif /* INET6 */
+		case AF_INET:
+			if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+			    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+				goto drop;
+			break;
+		}
+		break;
 
 	/*
 	 * If the state is SYN_SENT:
@@ -2249,6 +2257,20 @@ dropwithreset:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
+
+	switch (af) {
+#ifdef INET6
+	case AF_INET6:
+		/* For following calls to tcp_respond */
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+			goto drop;
+		break;
+#endif /* INET6 */
+	case AF_INET:
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+			goto drop;
+	}
 
     {
 	/*
