@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 2002/07/10 10:24:16 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.3 2002/07/10 11:36:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -81,8 +81,16 @@
 #define	PIC_GOT(x)	x
 #define	PIC_GOTOFF(x)	x
 
+/*
+ * XXX: Remove underscore when we switch to native NetBSD toolchain
+ */
+#if __STDC__
+#define _C_LABEL(x)	_ ## x
+#define _ASM_LABEL(x)	_ ## x
+#else
 #define _C_LABEL(x)	_/**/x
-#define	_ASM_LABEL(x)	_/**/x
+#define _ASM_LABEL(x)	_/**/x
+#endif
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
