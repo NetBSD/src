@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.21.10.1 2000/10/22 19:04:50 tv Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.21.10.2 2000/11/03 02:35:57 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.21.10.1 2000/10/22 19:04:50 tv Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.21.10.2 2000/11/03 02:35:57 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,7 @@ struct stack_block {
 
 struct stack_block stackbase;
 struct stack_block *stackp = &stackbase;
+struct stackmark *markp;
 char *stacknxt = stackbase.space;
 int stacknleft = MINSIZE;
 int sstrnleft;
@@ -182,6 +183,8 @@ setstackmark(mark)
 	mark->stackp = stackp;
 	mark->stacknxt = stacknxt;
 	mark->stacknleft = stacknleft;
+	mark->marknext = markp;
+	markp = mark;
 }
 
 
@@ -192,6 +195,7 @@ popstackmark(mark)
 	struct stack_block *sp;
 
 	INTOFF;
+	markp = mark->marknext;
 	while (stackp != mark->stackp) {
 		sp = stackp;
 		stackp = sp->prev;
@@ -220,9 +224,11 @@ growstackblock() {
 	char *oldspace = stacknxt;
 	int oldlen = stacknleft;
 	struct stack_block *sp;
+	struct stack_block *oldstackp;
 
 	if (stacknxt == stackp->space && stackp != &stackbase) {
 		INTOFF;
+		oldstackp = stackp;
 		sp = stackp;
 		stackp = sp->prev;
 		sp = ckrealloc((pointer)sp, sizeof(struct stack_block) - MINSIZE + newlen);
@@ -230,6 +236,19 @@ growstackblock() {
 		stackp = sp;
 		stacknxt = sp->space;
 		stacknleft = newlen;
+		{
+		  /* Stack marks pointing to the start of the old block
+		   * must be relocated to point to the new block 
+		   */
+		  struct stackmark *xmark;
+		  xmark = markp;
+		  while (xmark != NULL && xmark->stackp == oldstackp) {
+		    xmark->stackp = stackp;
+		    xmark->stacknxt = stacknxt;
+		    xmark->stacknleft = stacknleft;
+		    xmark = xmark->marknext;
+		  }
+		}
 		INTON;
 	} else {
 		p = stalloc(newlen);
