@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.36 2002/04/23 20:41:13 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.37 2002/07/26 01:00:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.36 2002/04/23 20:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.37 2002/07/26 01:00:42 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -527,7 +527,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 			/*
 			 * IDE drives deassert WDCS_BSY before transfer is
 			 * complete when using DMA. Polling for DRQ to deassert
-			 * is not enouth DRQ is not required to be
+			 * is not enough DRQ is not required to be
 			 * asserted for DMA transfers, so poll for DRDY.
 			 */
 			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
