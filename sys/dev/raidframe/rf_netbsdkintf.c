@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.27 1999/08/14 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.28 1999/08/14 03:47:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -271,11 +271,22 @@ static int numraid = 0;
 /* 
  * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device. 
  * Be aware that large numbers can allow the driver to consume a lot of 
- * kernel memory, especially on writes... 
+ * kernel memory, especially on writes, and in degraded mode reads.
+ * 
+ * For example: with a stripe width of 64 blocks (32k) and 5 disks, 
+ * a single 64K write will typically require 64K for the old data, 
+ * 64K for the old parity, and 64K for the new parity, for a total 
+ * of 192K (if the parity buffer is not re-used immediately).
+ * Even it if is used immedately, that's still 128K, which when multiplied
+ * by say 10 requests, is 1280K, *on top* of the 640K of incoming data.
+ * 
+ * Now in degraded mode, for example, a 64K read on the above setup may
+ * require data reconstruction, which will require *all* of the 4 remaining 
+ * disks to participate -- 4 * 32K/disk == 128K again.
  */
 
 #ifndef RAIDOUTSTANDING
-#define RAIDOUTSTANDING   10
+#define RAIDOUTSTANDING   6
 #endif
 
 #define RAIDLABELDEV(dev)	\
