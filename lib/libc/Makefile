@@ -9,7 +9,7 @@
 # To produce a library that does YP, add -DYP to CFLAGS below.
 
 LIB=c
-CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS 
+CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS 
 AINC=	-I${.CURDIR}/${MACHINE}
 
 .include "${.CURDIR}/DB/Makefile.inc"
