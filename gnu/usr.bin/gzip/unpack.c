@@ -4,8 +4,8 @@
  * terms of the GNU General Public License, see the file COPYING.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: unpack.c,v 1.1.1.1 1993/07/09 15:47:40 jtc Exp $";
+#ifdef RCSID
+static char rcsid[] = "$Id: unpack.c,v 1.2 1993/10/15 23:05:54 jtc Exp $";
 #endif
 
 #include "tailor.h"
@@ -57,7 +57,7 @@ local int peek_bits; /* Number of peek bits currently used */
  * codes encountered in the input stream are short codes (by construction).
  * So for most codes a single lookup will be necessary.
  */
-#if 1<<MAX_PEEK > OUTBUFSIZ
+#if (1<<MAX_PEEK) > OUTBUFSIZ
     error cannot overlay prefix_len and outbuf
 #endif
 
@@ -219,7 +219,7 @@ int unpack(in, out)
 	    do {
                 len++, mask = (mask<<1)+1;
 		look_bits(peek, len, mask);
-	    } while (peek < parents[len]);
+	    } while (peek < (unsigned)parents[len]);
 	    /* loop as long as peek is a parent node */
 	}
 	/* At this point, peek is the next complete code, of len bits */
@@ -232,7 +232,7 @@ int unpack(in, out)
 
     flush_window();
     Trace((stderr, "bytes_out %ld\n", bytes_out));
-    if (orig_len != bytes_out) {
+    if (orig_len != (ulg)bytes_out) {
 	error("invalid compressed data--length error");
     }
     return OK;
