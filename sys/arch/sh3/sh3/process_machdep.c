@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 1999/09/13 10:31:32 itojun Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 2000/04/13 15:51:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -93,10 +93,17 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
+#if 0
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	regs->r_spc = pcb->spc;
 	regs->r_ssr = pcb->ssr;
+#else
+	regs->r_spc = tf->tf_spc;
+	regs->r_ssr = tf->tf_ssr;
+#endif
+	regs->r_macl = tf->tf_macl;
+	regs->r_mach = tf->tf_mach;
 	regs->r_pr = tf->tf_pr;
 	regs->r_r14 = tf->tf_r14;
 	regs->r_r13 = tf->tf_r13;
@@ -113,6 +120,7 @@ process_read_regs(p, regs)
 	regs->r_r2 = tf->tf_r2;
 	regs->r_r1 = tf->tf_r1;
 	regs->r_r0 = tf->tf_r0;
+	regs->r_r15 = tf->tf_r15;
 
 	return (0);
 }
@@ -135,6 +143,8 @@ process_write_regs(p, regs)
 	tf->tf_ssr = regs->r_ssr;
 	tf->tf_pr = regs->r_pr;
 
+	tf->tf_mach = regs->r_mach;
+	tf->tf_macl = regs->r_macl;
 	tf->tf_r14 = regs->r_r14;
 	tf->tf_r13 = regs->r_r13;
 	tf->tf_r12 = regs->r_r12;
@@ -150,6 +160,7 @@ process_write_regs(p, regs)
 	tf->tf_r2 = regs->r_r2;
 	tf->tf_r1 = regs->r_r1;
 	tf->tf_r0 = regs->r_r0;
+	tf->tf_r15 = regs->r_r15;
 
 	return (0);
 }
@@ -165,6 +176,10 @@ process_sstep(p, sstep)
 		tf->tf_eflags |= PSL_T;
 	else
 		tf->tf_eflags &= ~PSL_T;
+#else
+
+	if (sstep)
+		return (EINVAL);
 #endif
 
 	return (0);
