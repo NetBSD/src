@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.58 2003/06/14 17:01:10 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.59 2003/06/15 17:45:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -286,17 +286,8 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	vm_prot_t prot;
-	int cache;
-} l1_sec_table[] = {
+/* Static device mappings. */
+static const struct pmap_devmap iq80310_devmap[] = {
     /*
      * Map the on-board devices VA == PA so that we can access them
      * with the MMU on or off.
@@ -305,6 +296,27 @@ struct l1_sec_map {
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+    {
+	IQ80310_PIOW_VBASE,
+	I80312_PCI_XLATE_PIOW_BASE,
+	I80312_PCI_XLATE_IOSIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+    {
+	IQ80310_SIOW_VBASE,
+	I80312_PCI_XLATE_SIOW_BASE,
+	I80312_PCI_XLATE_IOSIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+    {
+	IQ80310_80312_VBASE,
+	I80312_PMMR_BASE,
+	I80312_PMMR_SIZE,
 	VM_PROT_READ|VM_PROT_WRITE,
 	PTE_NOCACHE,
     },
@@ -630,60 +642,8 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-	/*
-	 * Map devices we can map w/ section mappings.
-	 */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
-
-	/*
-	 * Map the PCI I/O spaces and i80312 registers.  These are too
-	 * small to be mapped w/ section mappings.
-	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("Mapping PIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
-	    I80312_PCI_XLATE_PIOW_BASE,
-	    I80312_PCI_XLATE_PIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
-	    IQ80310_PIOW_VBASE);
-#endif
-	pmap_map_chunk(l1pagetable, IQ80310_PIOW_VBASE,
-	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
-	    I80312_PCI_XLATE_SIOW_BASE,
-	    I80312_PCI_XLATE_SIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
-	    IQ80310_SIOW_VBASE);
-#endif
-	pmap_map_chunk(l1pagetable, IQ80310_SIOW_VBASE,
-	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Mapping 80312 0x%08lx -> 0x%08lx @ 0x%08lx\n",
-	    I80312_PMMR_BASE,
-	    I80312_PMMR_BASE + I80312_PMMR_SIZE - 1,
-	    IQ80310_80312_VBASE);
-#endif
-	pmap_map_chunk(l1pagetable, IQ80310_80312_VBASE,
-	    I80312_PMMR_BASE, I80312_PMMR_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, iq80310_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.72 2003/05/21 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.73 2003/06/15 17:45:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -150,6 +150,18 @@ union pmap_cache_state {
 #define	PMAP_CACHE_STATE_ALL	0xffffffffu
 
 /*
+ * This structure is used by machine-dependent code to describe
+ * static mappings of devices, created at bootstrap time.
+ */
+struct pmap_devmap {
+	vaddr_t		pd_va;		/* virtual address */
+	paddr_t		pd_pa;		/* physical address */
+	psize_t		pd_size;	/* size of region */
+	vm_prot_t	pd_prot;	/* protection code */
+	int		pd_cache;	/* cache attributes */
+};
+
+/*
  * The pmap structure itself
  */
 struct pmap {
@@ -252,11 +264,15 @@ void	pmap_postinit(void);
 
 void	vector_page_setprot(int);
 
+const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
+const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
+
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
+void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 

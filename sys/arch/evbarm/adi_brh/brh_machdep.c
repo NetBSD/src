@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.15 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.16 2003/06/15 17:45:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -285,17 +285,8 @@ cpu_reboot(int howto, char *bootstr)
 	cpu_reset();
 }
 
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vaddr_t	va;
-	vaddr_t	pa;
-	vsize_t	size;
-	vm_prot_t prot;
-	int cache;
-} l1_sec_table[] = {
+/* Static device mappings. */
+static const struct pmap_devmap brh_devmap[] = {
     {
 	BRH_PCI_CONF_VBASE,
 	BECC_PCI_CONF_BASE,
@@ -654,26 +645,8 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-	/*
-	 * Map devices we can map w/ section mappings.
-	 */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, brh_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
