@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.31 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.32 2003/10/20 01:53:02 chs Exp $
 
 # Variables:
 #
@@ -21,15 +21,14 @@
 
 ##### Basic targets
 .PHONY:		incinstall
-includes:	${INCS} incinstall
+.PHONY:		${DESTDIR}${INCSDIR}
+.PRECIOUS:	${DESTDIR}${INCSDIR}
+includes:	${DESTDIR}${INCSDIR} .WAIT ${INCS} incinstall
 
 ##### Install rules
 incinstall::	# ensure existence
 
 # make sure the directory is OK, and install includes.
-incinstall::	${DESTDIR}${INCSDIR}
-.PRECIOUS:	${DESTDIR}${INCSDIR}
-.PHONY:		${DESTDIR}${INCSDIR}
 
 ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
