@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.27 2001/07/07 16:13:44 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.28 2001/07/19 16:25:23 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -633,14 +633,18 @@ adv_scsipi_request(chan, req, arg)
  				error = bus_dmamap_load_uio(dmat,
  				    ccb->dmamap_xfer, (struct uio *) xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
  			} else
 #endif /* TFS */
  			{
  				error = bus_dmamap_load(dmat, ccb->dmamap_xfer,
  				    xs->data, xs->datalen, NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
  			}
  
  			switch (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.4 2001/07/07 16:13:48 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.5 2001/07/19 16:25:25 thorpej Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -317,8 +317,11 @@ iha_scsipi_request(chan, req, arg)
 		if (scb->buflen > 0) {
 			error = bus_dmamap_load(sc->sc_dmat, scb->dmap,
 			    xs->data, scb->buflen, NULL,
-			    (xs->xs_control & XS_CTL_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
+			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
 				printf("%s: error %d loading dma map\n",
@@ -850,7 +853,8 @@ tul_push_sense_request(sc, scb)
 	scb->buflen = ss->length;
 
 	err = bus_dmamap_load(sc->sc_dmat, scb->dmap,
-	    &xs->sense.scsi_sense, scb->buflen, NULL, BUS_DMA_NOWAIT);
+	    &xs->sense.scsi_sense, scb->buflen, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (err != 0) {
 		printf("iha_push_sense_request: cannot bus_dmamap_load()\n");
 		xs->error = XS_DRIVER_STUFFUP;
