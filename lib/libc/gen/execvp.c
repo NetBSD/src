@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.5 1998/02/03 18:23:42 perry Exp $	*/
+/*	$NetBSD: execvp.c,v 1.6 1998/02/26 02:26:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.5 1998/02/03 18:23:42 perry Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.6 1998/02/26 02:26:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,11 +62,13 @@ execvp(name, argv)
 	const char *name;
 	char * const *argv;
 {
-	static int memsize;
+	static size_t memsize;
 	static char **memp;
-	int cnt, lp, ln;
+	int cnt;
+	size_t lp, ln;
 	char *p;
-	int eacces = 0, etxtbsy = 0;
+	int eacces = 0;
+	unsigned int etxtbsy = 0;
 	char *bp, *cur, *path, buf[PATH_MAX];
 
 	/* "" is not a valid filename; check this before traversing PATH. */
