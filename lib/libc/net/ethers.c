@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.14.2.1 2000/10/19 18:34:33 he Exp $	*/
+/*	$NetBSD: ethers.c,v 1.14.2.2 2001/03/13 22:25:15 he Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -187,7 +187,7 @@ ether_line(l, e, hostname)
 
 #define S2(arg) #arg
 #define S1(arg) S2(arg)
-	const static char fmt[] = " %x:%x:%x:%x:%sx:%x"
+	const static char fmt[] = " %x:%x:%x:%x:%x:%x"
 	    " %" S1(MAXHOSTNAMELEN) "s\n";
 #undef S2
 #undef S1
