@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.52 2001/05/28 00:50:40 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.53 2001/06/27 12:57:47 zuntum Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -340,6 +340,11 @@ variable will be searched, if set, for a string matching the licence.
 Uses passive
 .Xr ftp 1
 to retrieve distribution files.
+.It REPLACE_PERL
+Takes a list of files and replaces each occurence of "/usr/bin/perl", "/usr/local/bin/perl"
+and "/usr/pkg/bin/perl" in the named files with the value of ${PERL5}.
+This can be used to point perl scripts to the proper interpreter that pkgsrc installs.
+Note: it looks for the listed files in ${WRKSRC}.
 .It USE_LIBTOOL
 Says that the package uses
 .Pa libtool
