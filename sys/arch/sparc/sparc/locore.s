@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 1998/09/23 11:07:28 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.97 1998/10/11 14:46:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,6 +53,7 @@
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
+#include "opt_multiprocessor.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -1140,17 +1141,17 @@ trapbase_sun4m:
 	.skip	4096
 #endif
 
-#ifdef DEBUG
+/*#ifdef DEBUG*/
 /*
  * A hardware red zone is impossible.  We simulate one in software by
  * keeping a `red zone' pointer; if %sp becomes less than this, we panic.
  * This is expensive and is only enabled when debugging.
  */
-#define	REDSIZE	(8*96)		/* some room for bouncing */
-#define	REDSTACK 2048		/* size of `panic: stack overflow' region */
+
+/* `redzone' is located in the per-CPU information zone */
+_redzone = CPUINFO_VA + CPUINFO_REDZONE
 	.data
-_redzone:
-	.word	_idle_u + REDSIZE
+#define	REDSTACK 2048		/* size of `panic: stack overflow' region */
 _redstack:
 	.skip	REDSTACK
 	.text
@@ -1169,6 +1170,14 @@ Lpanic_red:
 	set	(const) + REDSIZE, tmp1; \
 	sethi	%hi(_redzone), tmp2; \
 	st	tmp1, [tmp2 + %lo(_redzone)]
+
+	/* variant with a variable & offset */
+#define	SET_SP_REDZONE_VAR(var, offset, tmp1, tmp2) \
+	sethi	%hi(var), tmp1; \
+	ld	[tmp1 + %lo(var)], tmp1; \
+	sethi	%hi(offset), tmp2; \
+	add	tmp1, tmp2, tmp1; \
+	SET_SP_REDZONE(tmp1, tmp2)
 
 	/* check stack pointer against redzone (uses two temps) */
 #define	CHECK_SP_REDZONE(t1, t2) \
@@ -1193,12 +1202,15 @@ Lpanic_red:
 	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
 7:
 
+#define XDEBUG
+#ifdef XDEBUG
 #else
 
 #define	SET_SP_REDZONE(base, tmp)
 #define	SET_SP_REDZONE_CONST(const, t1, t2)
+#define	SET_SP_REDZONE_VAR(base, t1, t2)
 #define	CHECK_SP_REDZONE(t1, t2)
-#endif
+#endif /* DEBUG */
 
 /*
  * The window code must verify user stack addresses before using them.
@@ -1478,6 +1490,56 @@ wmask:	.skip	32			! u_char wmask[0..31];
  * go to the interrupt stack if (a) we came from user mode or (b) we
  * came from kernel mode on the kernel stack.
  */
+#ifdef MULTIPROCESSOR
+_EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
+#define	INTR_SETUP(stackspace) \
+	rd	%wim, %l4; \
+	mov	1, %l5; \
+	sll	%l5, %l0, %l5; \
+	btst	PSR_PS, %l0; \
+	bz	1f; \
+	 btst	%l5, %l4; \
+	/* came from kernel mode; cond codes still indicate trap window */ \
+	bz,a	0f; \
+	 sethi	%hi(_EINTSTACK), %l7; \
+	CALL_CLEAN_TRAP_WINDOW; \
+	sethi	%hi(_EINTSTACK), %l7; \
+0:	/* now if not intstack > %fp >= eintstack, we were on the kernel stack */ \
+	ld	[%l7 + %lo(_EINTSTACK)], %l7; \
+	cmp	%fp, %l7; \
+	bge,a	3f;			/* %fp >= eintstack */ \
+	 add	%l7, stackspace, %sp;	/* so switch to intstack */ \
+	sethi	%hi(INT_STACK_SIZE), %l6; \
+	sub	%l7, %l6, %l7; \
+	cmp	%fp, %l7; \
+	blu,a	3f;			/* %fp < intstack */ \
+	 add	%l7, stackspace, %sp;	/* so switch to intstack */ \
+	b	4f; \
+	 add	%fp, stackspace, %sp;	/* else stay on intstack */ \
+1: \
+	/* came from user mode: compute pcb_nw */ \
+	sethi	%hi(_cpcb), %l6; \
+	ld	[%l6 + %lo(_cpcb)], %l6; \
+	ld	[%l6 + PCB_WIM], %l5; \
+	and	%l0, 31, %l4; \
+	sub	%l4, %l5, %l5; \
+	set	uwtab, %l4; \
+	ldub	[%l4 + %l5], %l5; \
+	st	%l5, [%l6 + PCB_UW]; \
+	/* cond codes still indicate whether in trap window */ \
+	bz,a	2f; \
+	 sethi	%hi(_EINTSTACK), %l7; \
+	/* yes, in trap window; must save regs */ \
+	CALL_CLEAN_TRAP_WINDOW; \
+	sethi	%hi(_EINTSTACK), %l7; \
+2: \
+	ld	[%l7 + %lo(_EINTSTACK)], %l7; \
+	add	%l7, stackspace, %sp; \
+3: \
+	SET_SP_REDZONE_VAR(_EINTSTACK, -INT_STACK_SIZE, %l6, %l5); \
+4: \
+	CHECK_SP_REDZONE(%l6, %l5)
+#else /* MULTIPROCESSOR */
 #define	INTR_SETUP(stackspace) \
 	rd	%wim, %l4; \
 	mov	1, %l5; \
@@ -1518,6 +1580,7 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	SET_SP_REDZONE_CONST(_intstack, %l6, %l5); \
 4: \
 	CHECK_SP_REDZONE(%l6, %l5)
+#endif /* MULTIPROCESSOR */
 
 /*
  * Handler for making the trap window shiny clean.
@@ -2043,10 +2106,27 @@ Lslowtrap_reenter:
  * Lslowtrap_reenter above, but maybe after switching stacks....
  */
 softtrap:
+#ifdef MULTIPROCESSOR
+	/*
+	 * The interrupt stack is not at a fixed location
+	 * and %sp must be checked against both ends.
+	 */
+	sethi	%hi(_EINTSTACK), %l7
+	ld	[%l7 + %lo(_EINTSTACK)], %l7
+	cmp	%sp, %l7
+	bge	Lslowtrap_reenter
+	 EMPTY
+	set	INT_STACK_SIZE, %l6
+	sub	%l7, %l6, %l7
+	cmp	%sp, %l7
+	blu	Lslowtrap_reenter
+	 EMPTY
+#else
 	sethi	%hi(_eintstack), %l7
 	cmp	%sp, %l7
 	bge	Lslowtrap_reenter
 	 EMPTY
+#endif
 	sethi	%hi(_cpcb), %l6
 	ld	[%l6 + %lo(_cpcb)], %l6
 	set	USPACE-CCFSZ-80, %l5
