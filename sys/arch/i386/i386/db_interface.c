@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2002/11/02 01:56:14 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.39 2003/02/26 21:28:21 fvdl Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2002/11/02 01:56:14 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2003/02/26 21:28:21 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,7 +123,7 @@ db_suspend_others(void)
 	win = (ddb_cpu == cpu_me);
 	__cpu_simple_unlock(&db_lock);
 	if (win) {
-		i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 	}
 	return win;
 }
@@ -137,12 +137,12 @@ db_resume_others(void)
 	ddb_cpu = NOCPU;
 	__cpu_simple_unlock(&db_lock);
 
-	for (i=0; i<I386_MAXPROCS; i++) {
+	for (i=0; i < X86_MAXPROCS; i++) {
 		struct cpu_info *ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PAUSE)
-			i386_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+			x86_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
 	}
 
 }
@@ -327,7 +327,7 @@ ddb_suspend(struct trapframe *frame)
 
 	ci->ci_ddb_regs = &regs;
 
-	i386_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
+	x86_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
 
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
@@ -350,7 +350,7 @@ db_mach_cpu(addr, have_addr, count, modif)
 		return;
 	}
 
-	if ((addr < 0) || (addr >= I386_MAXPROCS)) {
+	if ((addr < 0) || (addr >= X86_MAXPROCS)) {
 		db_printf("%ld: cpu out of range\n", addr);
 		return;
 	}

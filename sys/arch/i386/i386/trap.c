@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.177 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.178 2003/02/26 21:28:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2003/02/26 21:28:24 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -642,13 +642,13 @@ copyfault:
 		/* machine/parity/power fail/"kitchen sink" faults */
 
 #if NMCA > 0
-		/* mca_nmi() takes care to call i386_nmi() if appropriate */
+		/* mca_nmi() takes care to call x86_nmi() if appropriate */
 		if (mca_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;
 #else /* NISA > 0 */
-		if (i386_nmi() != 0)
+		if (x86_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2003/02/05 12:18:02 nakayama Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2003/02/26 21:28:21 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ u_int32_t cpus_attached = 0;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[I386_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
 
@@ -471,7 +471,7 @@ cpu_boot_secondary_processors()
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < I386_MAXPROCS; i++) {
+	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
@@ -491,7 +491,7 @@ cpu_init_idle_pcbs()
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < I386_MAXPROCS; i++) {
+	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
@@ -757,19 +757,19 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
+		if ((error = x86_ipi_init(ci->ci_apicid)) != 0)
 			return error;
 
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
+			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
+			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.513 2003/02/19 00:18:34 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.514 2003/02/26 21:28:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.513 2003/02/19 00:18:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.514 2003/02/26 21:28:22 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -475,7 +475,7 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-	msgbuf_vaddr = uvm_km_valloc(kernel_map, i386_round_page(MSGBUFSIZE));
+	msgbuf_vaddr = uvm_km_valloc(kernel_map, x86_round_page(MSGBUFSIZE));
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
@@ -570,7 +570,7 @@ cpu_startup()
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
-	i386_bus_space_mallocok();
+	x86_bus_space_mallocok();
 }
 
 /*
@@ -2452,7 +2452,7 @@ haltsys:
 	doshutdownhooks();
 
 #ifdef MULTIPROCESSOR
-	i386_broadcast_ipi(I386_IPI_HALT);
+	x86_broadcast_ipi(X86_IPI_HALT);
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -3009,9 +3009,9 @@ initgdt(union descriptor *tgdt)
 	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUDATA_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #ifdef COMPAT_MACH
 	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
@@ -3059,7 +3059,7 @@ init386(first_avail)
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
-	i386_bus_space_init();
+	x86_bus_space_init();
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
