@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.21.2.1 2001/06/27 03:49:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.21.2.1 2001/06/27 03:49:43 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,6 +193,11 @@ get_superblock (fsp, sbp)
 	memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
 	/* close (fid); */
 
+	/* Compatibility */
+	if (sbp->lfs_version < 2) {
+		sbp->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
+	}
+
 	return (0);
 }
 
@@ -316,9 +321,14 @@ pseg_size(pseg_addr, fsp, sp)
 	FINFO *fp;
 
 	lfsp = &fsp->fi_lfs;
-	ssize = LFS_SUMMARY_SIZE
+	ssize = lfsp->lfs_sumsize
 		+ howmany(sp->ss_ninos, INOPB(lfsp)) * lfsp->lfs_bsize;
-	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
+
+	if (lfsp->lfs_version == 1)
+		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fp = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo; ++i) {
 		ssize += (fp->fi_nblocks-1) * lfsp->lfs_bsize
 			+ fp->fi_lastlength;
 		fp = (FINFO *)(&fp->fi_blocks[fp->fi_nblocks]);
@@ -380,14 +390,19 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 #ifdef DIAGNOSTIC
 		/* Verify size of summary block */
-		sumsize = sizeof(SEGSUM) +
+		sumsize = (lfsp->lfs_version == 1 ? sizeof(SEGSUM_V1) :
+							sizeof(SEGSUM)) +
 		    (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
-		for (i = 0, fip = (FINFO *)(sp + 1); i < sp->ss_nfinfo; ++i) {
+		if (lfsp->lfs_version == 1)
+			fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+		else
+			fip = (FINFO *)(sp + 1);
+		for (i = 0; i < sp->ss_nfinfo; ++i) {
 			sumsize += sizeof(FINFO) +
 			    (fip->fi_nblocks - 1) * sizeof(daddr_t);
 			fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks]);
 		}
-		if (sumsize > LFS_SUMMARY_SIZE) {
+		if (sumsize > lfsp->lfs_sumsize) {
                         syslog(LOG_ERR,
 			    "Exiting: Segment %d summary block too big: %d\n",
 			    seg, sumsize);
@@ -455,18 +470,24 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 	int db_per_block, i, j;
 	int db_frag;
 	u_long page_size;
+	struct lfs *lfsp;
 
         if(debug > 1)
             syslog(LOG_DEBUG, "FILE INFOS");
 
+	lfsp = &fsp->fi_lfs;
 	db_per_block = fsbtodb(&fsp->fi_lfs, 1);
 	page_size = fsp->fi_lfs.lfs_bsize;
-	bp = seg_buf + datobyte(fsp, psegaddr - segaddr) + LFS_SUMMARY_SIZE;
+	bp = seg_buf + datobyte(fsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
 	bip += *countp;
-	psegaddr += bytetoda(fsp, LFS_SUMMARY_SIZE);
-	iaddrp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	psegaddr += bytetoda(fsp, lfsp->lfs_sumsize);
+	iaddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--iaddrp;
-	for (fip = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo;
+	if (lfsp->lfs_version == 1)
+		fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fip = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo;
 	    ++i, fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks])) {
 
 		ifp = IFILE_ENTRY(&fsp->fi_lfs, fsp->fi_ifilep, fip->fi_ino);
@@ -545,7 +566,7 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
         if(debug > 1)
             syslog(LOG_DEBUG, "INODES:");
 
-	daddrp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	daddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
@@ -610,7 +631,7 @@ pseg_valid (fsp, ssp, addr)
 #if 0
 	/* check data/inode block(s) checksum too */
 	datap = (u_long *)malloc(nblocks * sizeof(u_long));
-	p = (caddr_t)ssp + LFS_SUMMARY_SIZE;
+	p = (caddr_t)ssp + lfsp->lfs_sumsize;
 	for (i = 0; i < nblocks; ++i) {
 		datap[i] = *((u_long *)p);
 		p += fsp->fi_lfs.lfs_bsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.30 2001/02/04 22:12:47 christos Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.30.2.1 2001/06/27 03:49:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.30 2001/02/04 22:12:47 christos Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.30.2.1 2001/06/27 03:49:42 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,7 @@ clean_loop(fsp, nsegs, options)
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
-	db_per_seg = fsbtodb(lfsp, lfsp->lfs_ssize);
+	db_per_seg = segtodb(lfsp, 1);
 	max_free_segs = fsp->fi_cip->bfree / db_per_seg + lfsp->lfs_minfreeseg;
 	
 	/* 
@@ -469,7 +469,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 	long options;
 {
 	struct seglist *segs, *sp;
-	long int to_clean, cleaned_bytes, seg_size;
+	long int to_clean, cleaned_bytes;
 	unsigned long i, j, total;
 	struct rusage ru;
 	fsid_t *fsidp;
@@ -477,7 +477,6 @@ clean_fs(fsp, cost_func, nsegs, options)
 	SEGS_AND_BLOCKS *sbp;
 
 	fsidp = &fsp->fi_statfsp->f_fsid;
-	seg_size = (1 << fsp->fi_lfs.lfs_segshift);
 
 	if ((segs =
 	    malloc(fsp->fi_lfs.lfs_nseg * sizeof(struct seglist))) == NULL) {
@@ -718,7 +717,7 @@ add_segment(fsp, slp, sbp)
 		       "add_segment: lfs_segmapv failed for segment %d", id);
 		goto out;
 	}
-	cleaner_stats.blocks_read += fsp->fi_lfs.lfs_ssize;
+	cleaner_stats.blocks_read += segtodb(lfsp, 1);
 
 	if (debug > 1)
 		syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
@@ -747,7 +746,7 @@ add_segment(fsp, slp, sbp)
 	/* XXX KS - check for misplaced blocks */
 	for(i=0; i<num_blocks; i++) {
 		if(tba[i].bi_daddr
-		   && ((char *)(tba[i].bi_bp) - seg_buf) != (tba[i].bi_daddr - seg_addr) * DEV_BSIZE
+		   && ((char *)(tba[i].bi_bp) - seg_buf) != dbtob(tba[i].bi_daddr - seg_addr)
 		   && datosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
 		{
 			if(debug > 1) {
@@ -756,7 +755,7 @@ add_segment(fsp, slp, sbp)
 				       tba[i].bi_inode,
 				       tba[i].bi_lbn,
 				       tba[i].bi_daddr,
-				       (long)seg_addr + ((char *)(tba[i].bi_bp) - seg_buf)/DEV_BSIZE);
+				       (long)seg_addr + btodb((char *)(tba[i].bi_bp) - seg_buf));
 			}
 			/*
 			 * XXX KS - have to be careful here about Inodes;
@@ -765,7 +764,7 @@ add_segment(fsp, slp, sbp)
 			 * the *right* inode, not the first one in the block.
 			 */
 			if(tba[i].bi_lbn == LFS_UNUSED_LBN) {
-				dip = (struct dinode *)(seg_buf + (tba[i].bi_daddr - seg_addr) * DEV_BSIZE);
+				dip = (struct dinode *)(seg_buf + dbtob(tba[i].bi_daddr - seg_addr));
 				for(j=INOPB(lfsp)-1;j>=0;j--) {
 					if(dip[j].di_u.inumber == tba[i].bi_inode) {
 						tba[i].bi_bp = (char *)(dip+j);
@@ -785,13 +784,12 @@ add_segment(fsp, slp, sbp)
 					}
 					err(1,"lost inode");
 				} else if (debug > 1) {
-					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x+%d",
+					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x",
 					       tba[i].bi_inode,
-					       tba[i].bi_daddr,
-					       (int)((caddr_t)(tba[i].bi_bp) - (caddr_t)(long)seg_addr) % DEV_BSIZE);
+					       tba[i].bi_daddr);
 				}
 			} else {
-				tba[i].bi_bp = seg_buf + (tba[i].bi_daddr - seg_addr) * DEV_BSIZE;
+				tba[i].bi_bp = seg_buf + dbtob(tba[i].bi_daddr - seg_addr);
 			}
 		}
 	}
@@ -878,7 +876,7 @@ clean_segments(fsp, sbp)
 
 	cleaner_stats.segs_cleaned += sbp->nsegs;
 	cleaner_stats.blocks_written += sbp->nb;
-	util = ((double)sbp->nb / fsp->fi_lfs.lfs_ssize);
+	util = ((double)sbp->nb / segtodb(&fsp->fi_lfs, 1));
 	cleaner_stats.util_tot += util;
 	cleaner_stats.util_sos += util * util;
 	if (do_small)

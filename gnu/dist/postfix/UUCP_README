@@ -1,6 +1,0 @@
-In order to receive mail via UUCP, your system needs to have an
-rmail command installed. A minimal rmail command can be found in
-the "auxiliary/rmail" directory. Install the command, mode 755, in
-a place that can be found by the UUCP "uuxqt" command.
-
-In order to send mail via UUCP, see html/faq.html.

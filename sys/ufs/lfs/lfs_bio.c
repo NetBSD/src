@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35 2000/12/03 06:43:36 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.4.1 2001/06/27 03:49:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -199,9 +199,9 @@ lfs_fits(struct lfs *fs, int db)
 {
 	int needed;
 
-	needed = db + btodb(LFS_SUMMARY_SIZE) +
+	needed = db + btodb(fs->lfs_sumsize) +
 		fsbtodb(fs, howmany(fs->lfs_uinodes + 1, INOPB(fs)) +
-			    fs->lfs_segtabsz + 1);
+			    fs->lfs_segtabsz + btodb(fs->lfs_sumsize));
 
 	if (needed >= fs->lfs_avail) {
 #ifdef DEBUG
@@ -453,7 +453,7 @@ lfs_check(vp, blkno, flags)
 	{
 		if(lfs_dostats)
 			++lfs_stats.wait_exceeded;
-#ifdef DEBUG
+#ifdef DEBUG_LFS
 		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
 			locked_queue_count, locked_queue_bytes);
 #endif
@@ -485,7 +485,8 @@ lfs_check(vp, blkno, flags)
 #ifdef MALLOCLOG
 # define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
 struct buf *
-lfs_newbuf_malloclog(vp, daddr, size, file, line)
+lfs_newbuf_malloclog(fs, vp, daddr, size, file, line)
+	struct lfs *fs;
 	struct vnode *vp;
 	ufs_daddr_t daddr;
 	size_t size;
@@ -494,7 +495,8 @@ lfs_newbuf_malloclog(vp, daddr, size, file, line)
 #else
 # define DOMALLOC(S, T, F) malloc((S), (T), (F))
 struct buf *
-lfs_newbuf(vp, daddr, size)
+lfs_newbuf(fs, vp, daddr, size)
+	struct lfs *fs;
 	struct vnode *vp;
 	ufs_daddr_t daddr;
 	size_t size;
@@ -504,7 +506,7 @@ lfs_newbuf(vp, daddr, size)
 	size_t nbytes;
 	int s;
 	
-	nbytes = roundup(size, DEV_BSIZE);
+	nbytes = roundup(size, fs->lfs_devbsize);
 	
 	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
 	bzero(bp, sizeof(struct buf));

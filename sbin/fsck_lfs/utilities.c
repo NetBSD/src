@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.7 2001/02/04 21:52:04 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.7.2.1 2001/06/27 03:49:41 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -283,7 +283,7 @@ ckfini(int markclean)
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
-	if (markclean && sblock.lfs_clean == 0) {
+	if (markclean && !(sblock.lfs_pflags & LFS_PF_CLEAN)) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
 		 */
@@ -292,7 +292,7 @@ ckfini(int markclean)
 		else if (!reply("MARK FILE SYSTEM CLEAN"))
 			markclean = 0;
 		if (markclean) {
-			sblock.lfs_clean = 1;
+			sblock.lfs_pflags |= LFS_PF_CLEAN;
 			sbdirty();
 			flush(fswritefd, &sblk);
 			if (sblk.b_bno == LFS_LABELPAD / dev_bsize) {

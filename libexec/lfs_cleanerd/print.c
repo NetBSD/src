@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2001/01/04 17:29:04 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.9.2.1 2001/06/27 03:49:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9 2001/01/04 17:29:04 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.2.1 2001/06/27 03:49:43 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 		return(-1);
 
 	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
-	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum)))) {
+	    lfsp->lfs_sumsize - sizeof(sp->ss_sumsum)))) {
 		free(datap);
 		return(-1);
 	}
@@ -108,7 +108,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 	if (flags & DUMP_INODE_ADDRS)
                 syslog(LOG_DEBUG, "    Inode addresses:");
 
-	idp = dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	idp = dp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--idp;
 	for (--dp, i = 0; i < howmany(sp->ss_ninos,INOPB(lfsp)); --dp) {
 		if (flags & DUMP_INODE_ADDRS)
@@ -119,26 +119,30 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 		*iaddrp = dp;
 	}
 
-	ddp = addr + LFS_SUMMARY_SIZE/DEV_BSIZE;
-	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
+	ddp = addr + btodb(lfsp->lfs_sumsize);
+	if (lfsp->lfs_version == 1)
+		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fp = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo; ++i) {
 		/* Add any intervening Inode blocks to our checksum array */
 		/* printf("finfo %d: ddp=%lx, *idp=%lx\n",i,ddp,*idp); */
 		while(ddp == *idp) {
 			 /* printf(" [ino %lx]",ddp); */
-			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
 			--idp;
-			ddp += lfsp->lfs_bsize/DEV_BSIZE;
+			ddp += btodb(lfsp->lfs_bsize);
 			accino++;
 		}
 		for(j=0;j<fp->fi_nblocks;j++) {
 			if(j==fp->fi_nblocks-1) {
-				size = fp->fi_lastlength/DEV_BSIZE;
+				size = btodb(fp->fi_lastlength);
 				/* printf(" %lx:%d",ddp,size); */
 			} else {
-				size = lfsp->lfs_bsize/DEV_BSIZE;
+				size = btodb(lfsp->lfs_bsize);
 				/* printf(" %lx/%d",ddp,size); */
 			}
-			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
 			ddp += size;
 		}
 		numblocks += fp->fi_nblocks;
@@ -160,7 +164,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 	while(*idp >= ddp && accino < howmany(sp->ss_ninos,INOPB(lfsp))) {
 		ddp = *idp;
 		/* printf(" [ino %lx]",ddp); */
-		datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+		datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
 		--idp;
 		accino++;
 	}
@@ -278,6 +282,6 @@ dump_super(lfsp)
 	syslog(LOG_DEBUG, "%s%d\t%s%d\t%s0x%X\t%s%d\n",
 		"nactive  ", lfsp->lfs_nactive,
 		"fmod     ", lfsp->lfs_fmod,
-		"clean    ", lfsp->lfs_clean,
+	        "pflags   ", lfsp->lfs_pflags,
 		"ronly    ", lfsp->lfs_ronly);
 }

@@ -1,5 +1,0 @@
-# $NetBSD: md.sparc,v 1.8 2000/10/05 02:27:02 tv Exp $
-./usr/X11R6/bin/constype
-./usr/X11R6/bin/kbd_mode
-./usr/X11R6/man/cat1/constype.0
-./usr/X11R6/man/cat1/kbd_mode.0

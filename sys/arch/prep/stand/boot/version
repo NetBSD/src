@@ -1,8 +1,0 @@
-$NetBSD: version,v 1.5 2001/06/19 11:56:28 nonaka Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.1:		Boot program for IBM Power Serise 830; initial revision
-1.2:		Support verbose/quiet boot.

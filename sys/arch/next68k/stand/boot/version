@@ -1,4 +1,0 @@
-$NetBSD: version,v 1.2 2001/05/12 22:35:31 chs Exp $
-
-1.1:	initial import
-1.3:	Add ELF support
