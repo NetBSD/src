@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2002/01/25 19:19:25 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.10 2002/02/05 18:26:08 thorpej Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,9 @@ include <machine/frame.h>
 include <machine/vmparam.h>
 
 define	__PROG32		1
+ifdef __ARM_FIQ_INDIRECT
+define	__ARM_FIQ_INDIRECT	1
+endif
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
