@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.44 2000/02/01 22:52:05 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.45 2000/03/06 18:55:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct	if_data {
 	struct	timeval ifi_lastchange;	/* last updated */
 };
 
-#ifdef COMPAT_14
+#if defined(_KERNEL) && defined(COMPAT_14)
 /* Pre-1.5 if_data struct */
 struct	if_data14 {
 	/* generic interface information */
@@ -166,7 +166,7 @@ struct	if_data14 {
 	u_long	ifi_noproto;		/* destined for unsupported protocol */
 	struct	timeval ifi_lastchange;	/* last updated */
 };
-#endif
+#endif /* _KERNEL && COMPAT_14 */
 
 /*
  * Structure defining a queue for a network interface.
@@ -361,7 +361,7 @@ struct if_msghdr {
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
 
-#ifdef COMPAT_14
+#if defined(_KERNEL) && defined(COMPAT_14)
 /* pre-1.5 if_msghdr (ifm_data changed) */
 struct if_msghdr14 {
 	u_short	ifm_msglen;	/* to skip over non-understood messages */
@@ -372,7 +372,7 @@ struct if_msghdr14 {
 	u_short	ifm_index;	/* index for associated ifp */
 	struct	if_data14 ifm_data; /* statistics and other data about if */
 };
-#endif
+#endif /* _KERNEL && COMPAT_14 */
 
 /*
  * Message format for use in obtaining information about interface addresses
