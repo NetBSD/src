@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.12 1997/07/02 14:39:24 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -236,7 +236,7 @@ iommu_attach(parent, self, aux)
 	IOMMU_FLUSHALL(sc);
 	splx(s);
 
-	printf(": version %x/%x, page-size %d, range %dMB\n",
+	printf(": version 0x%x/0x%x, page-size %d, range %dMB\n",
 		(sc->sc_reg->io_cr & IOMMU_CTL_VER) >> 24,
 		(sc->sc_reg->io_cr & IOMMU_CTL_IMPL) >> 28,
 		sc->sc_pagesize,
@@ -316,8 +316,8 @@ iommu_error()
 	struct iommu_softc *sc = X;
 	struct iommureg *iop = sc->sc_reg;
 
-	printf("iommu: afsr %x, afar %x\n", iop->io_afsr, iop->io_afar);
-	printf("iommu: mfsr %x, mfar %x\n", iop->io_mfsr, iop->io_mfar);
+	printf("iommu: afsr 0x%x, afar 0x%x\n", iop->io_afsr, iop->io_afar);
+	printf("iommu: mfsr 0x%x, mfar 0x%x\n", iop->io_mfsr, iop->io_mfar);
 }
 int
 iommu_alloc(va, len)

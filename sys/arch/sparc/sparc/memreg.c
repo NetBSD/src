@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.20 1997/05/24 20:16:03 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ memerr(issync, ser, sva, aer, ava)
 #if defined(SUN4)
 	case CPU_SUN4:
 		if (par_err_reg) {
-			printf("mem err: ser=%s sva=%x\n",
+			printf("mem err: ser=%s sva=0x%x\n",
 			    bitmask_snprintf(ser, SER_BITS, bits,
 			    sizeof(bits)), sva);
 			printf("parity error register = %s\n",
@@ -158,10 +158,10 @@ memerr(issync, ser, sva, aer, ava)
 
 #if defined(SUN4C)
 	case CPU_SUN4C:
-		printf("%ssync mem arr: ser=%s sva=%x ",
+		printf("%ssync mem arr: ser=%s sva=0x%x ",
 		    issync ? "" : "a", bitmask_snprintf(ser, SER_BITS,
 		    bits, sizeof(bits)), sva);
-		printf("aer=%s ava=%x\n", bitmask_snprintf(aer & 0xff,
+		printf("aer=%s ava=0x%x\n", bitmask_snprintf(aer & 0xff,
 		    AER_BITS, bits, sizeof(bits)), ava);
 		if (par_err_reg)
 			printf("parity error register = %s\n",
@@ -207,21 +207,21 @@ hardmemerr4m(issync, fsr, faddr)
 	    case 1:
 		if ((fsr & SFSR_FT) == SFSR_FT_NONE)
 		    return;
-		printf("mem err: sfsr=%s sfaddr=%x\n", bitmask_snprintf(fsr,
+		printf("mem err: sfsr=%s sfaddr=0x%x\n", bitmask_snprintf(fsr,
 		    SFSR_BITS, bits, sizeof(bits)), faddr);
 		break;
 	    case 0:
 		if (!(fsr & AFSR_AFO))
 		    return;
-		printf("async (HS) mem err: afsr=%s afaddr=%x physaddr=%x%x\n",
+		printf("async (HS) mem err: afsr=%s afaddr=0x%x physaddr=0x%x%x\n",
 		       bitmask_snprintf(fsr, AFSR_BITS, bits, sizeof(bits)),
 		       faddr, (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, faddr);
 		break;
 	    default:	/* unknown; print both decodings*/
-		printf("unknown mem err: if sync, fsr=%s fva=%x; ",
+		printf("unknown mem err: if sync, fsr=%s fva=0x%x; ",
 		    bitmask_snprintf(fsr, SFSR_BITS, bits, sizeof(bits)),
 		    faddr);
-		printf("if async, fsr=%s fa=%x pa=%x%x", bitmask_snprintf(fsr,
+		printf("if async, fsr=%s fa=0x%x pa=0x%x%x", bitmask_snprintf(fsr,
 		    AFSR_BITS, bits, sizeof(bits)), faddr,
 		    (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, faddr);
 		break;
@@ -310,10 +310,10 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		oldtype = 0;
 		addrold = sfva;
 	} else 	/* something we don't know about?!? */ {
-		printf("unknown fatal memory error, type=%d, sfsr=%s, sfva=%x",
+		printf("unknown fatal memory error, type=%d, sfsr=%s, sfva=0x%x",
 		    type, bitmask_snprintf(sfsr, SFSR_BITS, bits, sizeof(bits)),
 		    sfva);
-		printf(", afsr=%s, afaddr=%x\n", bitmask_snprintf(afsr,
+		printf(", afsr=%s, afaddr=0x%x\n", bitmask_snprintf(afsr,
 		    AFSR_BITS, bits, sizeof(bits)), afva);
 		panic("memerr4m");
 	}
