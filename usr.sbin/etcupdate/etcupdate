@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.4 2002/07/08 11:32:44 wiz Exp $
+# $NetBSD: etcupdate,v 1.5 2002/07/31 06:43:17 mrg Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ Options:
 
   -b srcdir    Location of the extracted sets
   -p pager     Which pager to use              (default: /usr/bin/more)
-  -s srcdir    Location of the source files    (default: /usr/src)
+  -s srcdir    Location of the source files    (default: /usr/src/etc)
   -t temproot  Where to store temporary files  (default: /tmp/temproot)
   -w width     Screen width                    (default: 80)
 
