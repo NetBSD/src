@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.6 2001/04/29 08:37:04 jmc Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.7 2001/05/01 04:48:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ struct ieee1394_async_nodata {
  */
 #define	CSR_BASE_HI			0x0000ffff
 #define	CSR_BASE_LO			0xf0000000
+#define CSR_BASE			0x0000fffff0000000
 
 #define	CSR_STATE_CLEAR			0x0000
 #define	CSR_STATE_SET			0x0004
