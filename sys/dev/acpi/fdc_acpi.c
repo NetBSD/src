@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.18 2003/11/03 19:03:40 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.18 2003/11/03 19:03:40 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -85,10 +85,7 @@ CFATTACH_DECL(fdc_acpi, sizeof(struct fdc_acpi_softc), fdc_acpi_match,
  */
 
 static const char * const fdc_acpi_ids[] = {
-	"PNP0700",	/* PC standard floppy disk controller */
-#if 0 /* XXX do we support this? */
-	"PNP0701",	/* Standard floppy controller for MS Device Bay Spec */
-#endif
+	"PNP07??",	/* PC standard floppy disk controller */
 	NULL
 };
 
