@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.35 2002/03/17 19:40:36 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -835,10 +835,11 @@ struct proc	*p;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
-	if(error >= 0)
+	if(error != EPASSTHROUGH)
 		return(error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if(error >= 0)
+	if(error !=EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -935,7 +936,7 @@ struct proc	*p;
 	case TIOCMBIS:
 	case TIOCMBIC:
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

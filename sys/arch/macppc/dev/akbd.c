@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.22 2002/03/12 03:40:12 wrstuden Exp $	*/
+/*	$NetBSD: akbd.c,v 1.23 2002/03/17 19:40:44 atatat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -465,7 +465,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	}
 	/* kbdioctl(...); */
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 extern int adb_polling;

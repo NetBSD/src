@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $ */
+/* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $");
 
 #include "opt_ddb.h"
 
@@ -480,10 +480,11 @@ sioioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	/* the last resort for TIOC ioctl tranversing */
@@ -519,7 +520,7 @@ sioioctl(dev, cmd, data, flag, p)
 		*(int *)data = sc->sc_flags;
 		break;
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 	return 0;
 }

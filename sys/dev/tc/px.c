@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.12 2002/01/12 16:29:30 tsutsui Exp $	*/
+/* 	$NetBSD: px.c,v 1.13 2002/03/17 19:41:02 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.12 2002/01/12 16:29:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.13 2002/03/17 19:41:02 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 		break;
 
 	default:
-		rv = ENOTTY;
+		rv = EPASSTHROUGH;
 		break;
 	}
 

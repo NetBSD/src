@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.18 2001/09/16 05:32:18 uch Exp $	*/
+/*	$NetBSD: mq200.c,v 1.19 2002/03/17 19:40:40 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -678,7 +678,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

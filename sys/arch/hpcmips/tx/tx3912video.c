@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.26 2002/03/06 15:01:06 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.27 2002/03/17 19:40:40 atatat Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -607,7 +607,7 @@ tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

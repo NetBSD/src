@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.19 2002/03/04 15:35:56 wiz Exp $ */
+/* $NetBSD: arcvideo.c,v 1.20 2002/03/17 19:40:34 atatat Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.19 2002/03/04 15:35:56 wiz Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.20 2002/03/17 19:40:34 atatat Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -424,7 +424,7 @@ arcvideo_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
 			return 0;
 		}
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static paddr_t
@@ -462,5 +462,5 @@ static int
 arcvideo_load_font(void *cookie, void *emulcookie, struct wsdisplay_font *font)
 {
 
-	return ENODEV;
+	return EPASSTHROUGH;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.13 2002/03/13 15:05:17 ad Exp $ */
+/* $NetBSD: sfbplus.c,v 1.14 2002/03/17 19:41:03 atatat Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.13 2002/03/13 15:05:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.14 2002/03/17 19:41:03 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ sfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t
@@ -804,7 +804,7 @@ get_cursor(sc, p)
 	struct sfbp_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

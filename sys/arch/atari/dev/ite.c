@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.34 2001/07/09 12:06:35 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.35 2002/03/17 19:40:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -552,10 +552,11 @@ iteioctl(dev, cmd, addr, flag, p)
 	KDASSERT(tp);
 
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, addr, flag, p);
-	if(error >= 0)
+	if(error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -619,10 +620,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		kbd_bell_gparms(&ib->volume, &ib->pitch, &ib->msec);
 		return 0;
 	}
-	error = (ip->itexx_ioctl)(ip, cmd, addr, flag, p);
-	if(error >= 0)
-		return(error);
-	return (ENOTTY);
+	return (ip->itexx_ioctl)(ip, cmd, addr, flag, p);
 }
 
 void

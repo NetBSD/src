@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.6 2001/07/22 13:34:08 wiz Exp $	*/
+/*	$NetBSD: qv.c,v 1.7 2002/03/17 19:40:51 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -704,12 +704,9 @@ qvioctl(dev, cmd, data, flag)
 	default:					/* not ours ??  */
 		tp = &qv_tty[unit];
 		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return (error);
-		error = ttioctl(tp, cmd, data, flag);
-		if (error >= 0) {
-			return (error);
-		}
+		return ttioctl(tp, cmd, data, flag);
 		break;
 	}
 	return (0);

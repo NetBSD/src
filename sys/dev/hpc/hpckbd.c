@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.6 2001/11/13 12:47:56 lukem Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.7 2002/03/17 19:40:56 atatat Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.6 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.7 2002/03/17 19:40:56 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,5 +478,5 @@ hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 #endif
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }

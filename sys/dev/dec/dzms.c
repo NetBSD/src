@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.3 2002/02/25 14:58:08 ad Exp $	*/
+/*	$NetBSD: dzms.c,v 1.4 2002/03/17 19:40:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.3 2002/02/25 14:58:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.4 2002/03/17 19:40:54 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ dzms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static int
