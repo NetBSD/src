@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2 1996/10/13 02:55:48 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 1996/10/13 19:57:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 
 typedef u_int32_t in_addr_t;
-typeded u_int16_t in_port_t;
+typedef u_int16_t in_port_t;
 
 __BEGIN_DECLS
 in_addr_t	htonl __P((in_addr_t));
