@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.27 1997/05/17 19:36:35 pk Exp $	*/
+/*	$NetBSD: mount.c,v 1.28 1997/05/31 09:27:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.27 1997/05/17 19:36:35 pk Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.28 1997/05/31 09:27:57 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		} while (*++edir != NULL);
 
 		if (errno == ENOENT)
-			warn("exec %s for %s", execname, name);
+			warnx("mount_%s not found for %s", vfstype, name);
 		exit(1);
 		/* NOTREACHED */
 	default:				/* Parent. */
