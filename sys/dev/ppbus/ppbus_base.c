@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.6 2004/02/01 17:28:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.6 2004/02/01 17:28:48 jdolecek Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h" 
@@ -49,9 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $")
 #include <dev/ppbus/ppbus_io.h>
 #include <dev/ppbus/ppbus_var.h>
 
+#ifndef DONTPROBE_1284
 /* Utility functions */
 static char * search_token(char *, int, char *);
-
+#endif
 
 /* Perform general ppbus I/O request */
 int
