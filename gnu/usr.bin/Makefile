@@ -1,16 +1,15 @@
-#	$NetBSD: Makefile,v 1.28 1995/12/20 22:33:59 mycroft Exp $
+#	$NetBSD: Makefile,v 1.29 1995/12/31 02:28:59 chopps Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
 
-.if	(${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "sparc")
+.if	(${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "vax") || (${MACHINE} == "amiga")
+SUBDIR+=        gas gcc gdb ld
+.else if	(${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "sparc")
 SUBDIR+=	gas gcc2 gdb ld
 .endif
 
-.if	(${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "vax")
-SUBDIR+=        gas gcc gdb ld
-.endif
 
 # XXX alpha still needs the /usr/bin/cpp script.
 .if (${MACHINE_ARCH} == "alpha")
