@@ -1,29 +1,13 @@
-/*	$NetBSD: optfunc.c,v 1.1.1.4 1999/04/06 05:30:35 mrg Exp $	*/
+/*	$NetBSD: optfunc.c,v 1.1.1.5 2001/07/26 12:00:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -54,12 +38,14 @@ extern int swindow;
 extern int sc_height;
 extern int secure;
 extern int dohelp;
+extern int any_display;
 extern char openquote;
 extern char closequote;
 extern char *prproto[];
 extern char *eqproto;
 extern char *hproto;
 extern IFILE curr_ifile;
+extern char version[];
 #if LOGFILE
 extern char *namelogfile;
 extern int force_logfile;
@@ -181,7 +167,7 @@ opt_k(type, s)
 	switch (type)
 	{
 	case INIT:
-		if (lesskey(s))
+		if (lesskey(s, 0))
 		{
 			parg.p_string = unquote_file(s);
 			error("Cannot use lesskey file \"%s\"", &parg);
@@ -375,10 +361,20 @@ opt__V(type, s)
 	{
 	case TOGGLE:
 	case QUERY:
-	case INIT:
 		dispversion();
-		if (type == INIT)
-			quit(QUIT_OK);
+		break;
+	case INIT:
+		/*
+		 * Force output to stdout per GNU standard for --version output.
+		 */
+		any_display = 1;
+		putstr("less ");
+		putstr(version);
+		putstr("\nCopyright (C) 2000 Mark Nudelman\n\n");
+		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
+		putstr("For information about the terms of redistribution,\n");
+		putstr("see the file named README in the less distribution.\n");
+		quit(QUIT_OK);
 		break;
 	}
 }
