@@ -93,4 +93,4 @@ echo "@cwd $prefix"
 			cat $setd/lists/$setname/shl.${shlib}
 		fi
 	fi
-)| egrep -v '^#' | egrep $pkgname\$ | awk -- '{print $1}' | sort -u
+)| env PLISTPKG=$pkgname awk -- '/^#/ { next } $2 == ENVIRON["PLISTPKG"] {sub("^\./", "", $1); print $1}' | sort -u
