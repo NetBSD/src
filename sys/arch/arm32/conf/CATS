@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.16 1999/09/13 05:19:45 mark Exp $
+#	$NetBSD: CATS,v 1.17 1999/11/19 06:25:11 jun Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -63,6 +63,7 @@ file-system	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
+#options        SOFTDEP         # FFS soft updates support
 
 # Networking options
 
@@ -119,6 +120,9 @@ options		PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options		PMAP_STATIC_L1S=128
+
+#options	XSERVER                 # also need INSECURE for now
+#options	INSECURE                # disable kernel securelevel
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
