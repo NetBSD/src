@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.47 2000/10/07 07:36:56 lukem Exp $
+#	$NetBSD: security,v 1.48 2001/01/09 17:30:29 abs Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -44,6 +44,9 @@ OUTPUT=secure7.$$
 LABELS=secure8.$$
 
 trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
+
+# Handle backup_dir not being set in .conf file
+backup_dir=${backup_dir:-/var/backups}
 
 MP=/etc/master.passwd
 
@@ -126,8 +129,8 @@ fi
 # mechanisms also print out file differences and we don't want to do
 # that because this file has encrypted passwords in it.
 #
-CUR=/var/backups/${MP##*/}.current
-BACK=/var/backups/${MP##*/}.backup
+CUR=$backup_dir/${MP##*/}.current
+BACK=$backup_dir/${MP##*/}.backup
 if [ -s $CUR ] ; then
 	if cmp -s $CUR $MP; then
 		:
@@ -487,8 +490,8 @@ if checkyesno check_devices; then
 			printf "\nUudecode is setuid.\n" >> $ERR
 		fi
 
-		CUR=/var/backups/setuid.current
-		BACK=/var/backups/setuid.backup
+		CUR=$backup_dir/setuid.current
+		BACK=$backup_dir/setuid.backup
 
 		if [ -s $CUR ] ; then
 			if cmp -s $CUR $TMP1 ; then
@@ -552,8 +555,8 @@ if checkyesno check_devices; then
 	# Display any changes in the device file list.
 	egrep '^[bc]' $LIST | sort -k11 > $TMP1
 	if [ -s $TMP1 ] ; then
-		CUR=/var/backups/device.current
-		BACK=/var/backups/device.backup
+		CUR=$backup_dir/device.current
+		BACK=$backup_dir/device.backup
 
 		if [ -s $CUR ] ; then
 			if cmp -s $CUR $TMP1 ; then
@@ -648,25 +651,25 @@ CHANGELIST=""
 #
 if checkyesno check_disklabels; then
 		# generate list of old disklabels and remove them
-	ls -1d /var/backups/disklabel.* 2>/dev/null |
+	ls -1d $backup_dir/disklabel.* 2>/dev/null |
 	    egrep -v '\.(backup|current)$' > $LABELS
 	xargs rm < $LABELS
 
 	disks=`iostat -x | sed 1d | awk '$1 !~ /^[cfm]d/ { print $1; }'`
 	for i in $disks; do
-		dlf="/var/backups/disklabel.$i"
+		dlf="$backup_dir/disklabel.$i"
 		disklabel $i > $dlf 2>/dev/null
 	done
 
 		# append list of new disklabels, sort list
-	ls -1d /var/backups/disklabel.* 2>/dev/null |
+	ls -1d $backup_dir/disklabel.* 2>/dev/null |
 	    egrep -v '\.(backup|current)$' >> $LABELS
 	sort -u -o $LABELS $LABELS
 	CHANGELIST=$LABELS
 fi
 
 # List of files that get backed up and checked for any modifications.  Each
-# file is expected to have two backups, /var/backups/file.{current,backup}.
+# file is expected to have two backups, $backup_dir/file.{current,backup}.
 # Any changes cause the files to rotate.
 #
 if checkyesno check_changelist && [ -s /etc/changelist ] ; then
@@ -675,8 +678,8 @@ fi
 
 if [ -n "$CHANGELIST" ]; then
 	for file in `egrep -hv "^#|$MP" $CHANGELIST`; do
-		CUR=/var/backups/${file##*/}.current
-		BACK=/var/backups/${file##*/}.backup
+		CUR=$backup_dir/${file##*/}.current
+		BACK=$backup_dir/${file##*/}.backup
 		if [ -f $file ]; then
 			if [ -f $CUR ] ; then
 				diff $CUR $file > $OUTPUT
