@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2003/09/18 22:40:04 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2003/09/18 22:40:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2003/10/05 09:57:47 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -124,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2003/09/18 22:40:04 cl Exp $");
 #include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <sh5/fpu.h>
 
 #include <machine/cpu.h>
 #include <machine/trap.h>
@@ -173,8 +175,7 @@ trap(struct lwp *l, struct trapframe *tf)
 	u_int traptype;
 	vaddr_t vaddr;
 	vm_prot_t ftype;
-	int sig = 0;
-	u_long ucode = 0;
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -213,8 +214,12 @@ trap(struct lwp *l, struct trapframe *tf)
 		    (uintptr_t)tf->tf_caller.r15);
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
 		if (traptype & T_USER) {
-			sig = SIGSEGV;
-			ucode = vaddr;
+			/* This shouldn't happen ... */
+			(void) memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_ILLTRP;
+			ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+			ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 			break;
 		}
 #if defined(DDB)
@@ -229,15 +234,21 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	case T_EXECPROT|T_USER:
 	case T_READPROT|T_USER:
-		sig = SIGSEGV;
-		ucode = vaddr;
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_IADDERR|T_USER:
 	case T_RADDERR|T_USER:
 	case T_WADDERR|T_USER:
-		sig = SIGBUS;
-		ucode = vaddr;
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_ADRERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_WRITEPROT:
@@ -341,15 +352,21 @@ trap(struct lwp *l, struct trapframe *tf)
 		if ((traptype & T_USER) == 0)
 			goto copyfault;
 
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_MAPERR;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
 			    (p->p_cred && p->p_ucred) ?
 			    p->p_ucred->cr_uid : -1);
-			sig = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
 		} else
-			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
-		ucode = vaddr;
+		if (rv == EACCES)
+			ksi.ksi_code = SEGV_ACCERR;
 		break;
 	    }
 
@@ -380,27 +397,74 @@ trap(struct lwp *l, struct trapframe *tf)
 		return;
 
 	case T_BREAK|T_USER:
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+		break;
+
 	case T_RESINST|T_USER:
-	case T_ILLSLOT|T_USER:
 	case T_FPUDIS|T_USER:
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
+		break;
+
+	case T_ILLSLOT|T_USER:
 	case T_SLOTFPUDIS|T_USER:
-		sig = SIGILL;
-		ucode = vaddr;
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC; /* XXX: Could do with ILL_DELAYSLOT */
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_expevt;
 		break;
 
 	case T_FPUEXC|T_USER:
-		sig = SIGFPE;
-		ucode = vaddr;	/* XXX: "code" should probably be FPSCR */
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = T_FPUEXC;
+
 #ifdef DEBUG
-		sh5_fpsave((u_int)tf->tf_state.sf_usr, &l->l_addr->u_pcb);
-		printf("trap: FPUEXC - fpscr = 0x%x\n",
-		    (u_int)l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
+		printf("trap: FPUEXC - fpscr = 0x%x\n", ksi.ksi_trap);
 #endif
+
+		switch (sh5_getfpscr() & SH5_FPSCR_CAUSE_MASK) {
+		case SH5_FPSCR_CAUSE_I:
+			ksi.ksi_code = FPE_FLTRES;
+			break;
+
+		case SH5_FPSCR_CAUSE_I | SH5_FPSCR_CAUSE_U:
+			ksi.ksi_code = FPE_FLTUND;
+			break;
+
+		case SH5_FPSCR_CAUSE_I | SH5_FPSCR_CAUSE_O:
+			ksi.ksi_code = FPE_FLTOVF;
+			break;
+
+		case SH5_FPSCR_CAUSE_Z:
+			ksi.ksi_code = FPE_FLTDIV;
+			break;
+
+		case SH5_FPSCR_CAUSE_V:
+		case SH5_FPSCR_CAUSE_E:
+		default:
+			ksi.ksi_code = FPE_FLTINV;
+			break;
+		}
+
 		/*
 		 * An FPUEXC leaves the PC pointing to the FP instruction
 		 * which caused the exception. To avoid an endless loop if
 		 * the user is ignoring or catching SIGFPE, adjust the saved
 		 * PC to skip over the offending instruction.
+		 *
+		 * XXX: The whole business of supporting IEEE754 on Sh5 needs
+		 * to be re-visited. We currently don't do anywhere near
+		 * enough work in the kernel to deal with FPU exceptions.
 		 */
 		tf->tf_state.sf_spc += 4;
 		break;
@@ -421,6 +485,22 @@ trap(struct lwp *l, struct trapframe *tf)
 		sh5_nmi_clear();
 		/*FALLTHROUGH*/
 
+	case T_TRAP|T_USER:
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLTRP;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = (int) tf->tf_state.sf_tra;	/* XXX */
+		break;
+
+	case T_DIVZERO|T_USER:
+		(void) memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
+		ksi.ksi_trap = T_DIVZERO;
+		break;
+
 #ifdef DDB
 	case T_BREAK:
 		if (kdb_trap(traptype, tf))
@@ -429,7 +509,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		goto dopanic;
 	}
 
-	trapsignal(l, sig, ucode);
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
 
@@ -440,44 +520,46 @@ void
 trapa(struct lwp *l, struct trapframe *tf)
 {
 
-#ifdef DIAGNOSTIC
-	if (!USERMODE(tf) || l == NULL) {
-		const char *pstr;
-
-		if (l == NULL)
-			pstr = "trapa: NULL lwp!";
-		else
-			pstr = "trapa: TRAPA in kernel mode!";
-
-		if (l != NULL)
-			printf("pid=%d cmd=%s, usp=0x%lx ",
-			    l->l_proc->p_pid, l->l_proc->p_comm,
-			    (uintptr_t)tf->tf_caller.r15);
-		else
-			printf("curlwp == NULL ");
-		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n",
-		    (uintptr_t)tf->tf_state.sf_spc,
-		    (u_int)tf->tf_state.sf_ssr, (u_int)tf->tf_state.sf_tra);
-		dump_trapframe(printf, "\n", tf);
-		panic(pstr);
-		/*NOTREACHED*/
-	}
-#endif
-
 	uvmexp.traps++;
 	l->l_md.md_regs = tf;
 
 	switch (tf->tf_state.sf_tra) {
 	case TRAPA_SYSCALL:
+#ifdef DIAGNOSTIC
+		if (!USERMODE(tf) || l == NULL) {
+			const char *pstr;
+
+			if (l == NULL)
+				pstr = "trapa: syscall with NULL lwp!";
+			else
+				pstr = "trapa: syscall trap in kernel mode!";
+
+			if (l != NULL)
+				printf("pid=%d cmd=%s, usp=0x%lx ",
+				    l->l_proc->p_pid, l->l_proc->p_comm,
+				    (uintptr_t)tf->tf_caller.r15);
+			else
+				printf("curlwp == NULL ");
+			printf("trapa: SPC=0x%lx, SSR=0x%x\n",
+			    (uintptr_t)tf->tf_state.sf_spc,
+			    (u_int)tf->tf_state.sf_ssr);
+			dump_trapframe(printf, "\n", tf);
+			panic(pstr);
+			/*NOTREACHED*/
+		}
+#endif
 		(l->l_proc->p_md.md_syscall)(l, tf);
+		userret(l);
 		break;
+
+	case TRAPA_DIVZERO:
+		tf->tf_state.sf_expevt = T_DIVZERO;
+		/*FALLTHROUGH*/
 
 	default:
-		trapsignal(l, SIGILL, (u_long) tf->tf_state.sf_spc);
+		trap(l, tf);
 		break;
 	}
-
-	userret(l);
 }
 
 void
@@ -714,6 +796,9 @@ trap_type(int traptype)
 		break;
 	case T_NMI:
 		t = "NMI";
+		break;
+	case T_DIVZERO:
+		t = "Integer Divide by Zero";
 		break;
 	default:
 		t = "Unknown Exception";

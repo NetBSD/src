@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.17 2003/06/23 11:01:37 martin Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.18 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -585,3 +585,27 @@ ENTRY(sh5_fprestore)
 	FPRS(r3,PCB_CTX_FPREGS_DR48,dr48,dr50,dr52,dr54)
 	FPRS(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
 	blink	tr1, r63
+
+/******************************************************************************
+ *
+ * u_int32_t sh5_getfpscr(void)
+ *
+ * Returns the current contents of the floating point status register
+ */
+ENTRY(sh5_getfpscr)
+	ptabs/l	r18, tr0
+	fgetscr	fr0
+	fmov.sl	fr0, r2
+	blink	tr0, r63
+
+/******************************************************************************
+ *
+ * void sh5_setfpscr(u_int32_t)
+ *
+ * Sets the floating point status register to the specified value
+ */
+ENTRY(sh5_setfpscr)
+	ptabs/l	r18, tr0
+	fmov.ls	r2, fr0
+	fputscr	fr0
+	blink	tr0, r63
