@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.288 2000/11/28 05:16:06 thorpej Exp $
+# $NetBSD: mi,v 1.289 2000/12/03 02:43:18 minoura Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1078,6 +1078,7 @@
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
 ./usr/share/man/cat8/compat_ultrix.0
+./usr/share/man/cat8/compat_win32.0
 ./usr/share/man/cat8/compat_xenix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
@@ -1268,6 +1269,7 @@
 ./usr/share/man/cat8/pc532/bim.0
 ./usr/share/man/cat8/pc532/makedev.0
 ./usr/share/man/cat8/pcnfsd.0
+./usr/share/man/cat8/peace.0
 ./usr/share/man/cat8/pickup.0
 ./usr/share/man/cat8/pim6dd.0
 ./usr/share/man/cat8/pim6sd.0
@@ -2503,6 +2505,7 @@
 ./usr/share/man/man8/compat_sunos.8
 ./usr/share/man/man8/compat_svr4.8
 ./usr/share/man/man8/compat_ultrix.8
+./usr/share/man/man8/compat_win32.8
 ./usr/share/man/man8/compat_xenix.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/cron.8
@@ -2693,6 +2696,7 @@
 ./usr/share/man/man8/pc532/bim.8
 ./usr/share/man/man8/pc532/makedev.8
 ./usr/share/man/man8/pcnfsd.8
+./usr/share/man/man8/peace.8
 ./usr/share/man/man8/pickup.8
 ./usr/share/man/man8/pim6dd.8
 ./usr/share/man/man8/pim6sd.8
