@@ -1,4 +1,4 @@
-/*	$NetBSD: common_extern.h,v 1.3 1998/07/26 23:14:40 mycroft Exp $	*/
+/*	$NetBSD: common_extern.h,v 1.3.2.1 2000/10/19 16:33:11 he Exp $	*/
 
 #ifndef HAVE_STRSEP
 char *strsep __P((char **, const char *));
@@ -74,7 +74,8 @@ int mark_end __P((SCR *, EXF *));
 int mark_get __P((SCR *, ARG_CHAR_T, MARK *, mtype_t));
 int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
 int mark_insdel __P((SCR *, lnop_t, recno_t));
-void msgq __P((SCR *, mtype_t, const char *, ...));
+void msgq __P((SCR *, mtype_t, const char *, ...))
+     __attribute__((__format__(__printf__, 3, 4)));
 void msgq_str __P((SCR *, mtype_t, const char *, const char *));
 void msgq_rpt __P((SCR *));
 void msgq_status __P((SCR *, recno_t, u_int));
