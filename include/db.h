@@ -39,8 +39,6 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
-#include "compat.h"
-
 #define	RET_ERROR	-1		/* Return values. */
 #define	RET_SUCCESS	 0
 #define	RET_SPECIAL	 1
