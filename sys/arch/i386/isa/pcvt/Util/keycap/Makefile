@@ -4,9 +4,8 @@ CAPPATH	=	$(CAPDIR)/keycap.pcvt
 KEYCAPSRC=	keycap.src
 CFLAGS	+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
 SRCS	=	keycap.c
-MAN3	=	keycap.${MAN3EXT}
-MAN5	=	keycap.${MAN5EXT}
-#CLEANFILES+=	keycap.0 keycap.0
+
+NOMAN=	yes
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${CAPDIR} ]; then mkdir ${DESTDIR}${CAPDIR};fi
