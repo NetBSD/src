@@ -1,5 +1,5 @@
-/*	$NetBSD: timer.h,v 1.4 2000/07/06 12:37:56 itojun Exp $	*/
-/*	$KAME: timer.h,v 1.3 2000/05/27 11:30:43 jinmei Exp $	*/
+/*	$NetBSD: timer.h,v 1.5 2002/05/21 14:22:06 itojun Exp $	*/
+/*	$KAME: timer.h,v 1.4 2002/05/15 08:43:54 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -60,6 +60,6 @@ void rtadvd_remove_timer __P((struct rtadvd_timer **));
 struct timeval * rtadvd_check_timer __P((void));
 struct timeval * rtadvd_timer_rest __P((struct rtadvd_timer *));
 void TIMEVAL_ADD __P((struct timeval *, struct timeval *,
-		      struct timeval *)); 
+		      struct timeval *));
 void TIMEVAL_SUB __P((struct timeval *, struct timeval *,
-		      struct timeval *)); 
+		      struct timeval *));
