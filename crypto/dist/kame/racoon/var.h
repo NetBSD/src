@@ -76,9 +76,9 @@ do { \
 	if (getnameinfo((x), (x)->sa_len, (y), sizeof(y), (z), sizeof(z), \
 			NIFLAGS) != 0) { \
 		if (y) \
-			strncpy((y), "(invalid)", sizeof(y)); \
+			strlcpy((y), "(invalid)", sizeof(y)); \
 		if (z) \
-			strncpy((z), "(invalid)", sizeof(z)); \
+			strlcpy((z), "(invalid)", sizeof(z)); \
 	} \
 } while (0);
 
