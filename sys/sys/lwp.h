@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.5 2001/07/13 02:33:44 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.6 2001/08/30 23:26:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_DETACHED	0x00800 /* Won't be waited for. */
 #define	L_SA		0x01000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x02000 /* SA upcall is pending */
+#define	L_BIGLOCK	0x80000	/* LWP needs kernel "big lock" to run */
 
 /*
  * Status values.

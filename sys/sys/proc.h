@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.2 2001/06/21 20:09:51 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.3 2001/08/30 23:26:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -266,7 +266,6 @@ struct proc {
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
 #define	P_32		0x40000	/* 32-bit process (used on 64-bit kernels) */
-#define	P_BIGLOCK	0x80000	/* Process needs kernel "big lock" to run */
 
 
 /*
