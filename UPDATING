@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.97 2003/10/08 04:25:43 lukem Exp $
+$NetBSD: UPDATING,v 1.98 2003/11/20 08:07:52 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,10 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20031111:
+	A newer mkdep is needed.  Error noting that is
+		cc: Ambiguous abbreviation --
 
 20031008:
 	/usr/include/sys/disklabel_mbr.h was removed.
