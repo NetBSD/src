@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.booters,v 1.2 1997/04/17 07:34:57 thorpej Exp $
+#	$NetBSD: Makefile.booters,v 1.3 1997/06/13 13:12:29 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
 BINMODE=444
 
 .PATH: ${.CURDIR}/../lib/crt/bootsect ${.CURDIR}/../lib
-BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o bios_disk.o
+BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o bios_disk.o diskbuf.o
 .PATH: ${.CURDIR}/../lib/crt/rom
 ROMSTART= start_rom.o
 .if exists(${.CURDIR}/../genprom/obj)
