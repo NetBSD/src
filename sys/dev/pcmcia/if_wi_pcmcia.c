@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.31 2002/11/25 02:32:02 thorpej Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.32 2002/12/29 12:11:45 jdc Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.31 2002/11/25 02:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.32 2002/12/29 12:11:45 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ACTIONTEC_PRISM,
 	  PCMCIA_CIS_ACTIONTEC_PRISM,
 	  PCMCIA_STR_ACTIONTEC_PRISM },
+
+	{ PCMCIA_VENDOR_DLINK_2,
+	  PCMCIA_PRODUCT_DLINK_DWL650H,
+	  PCMCIA_CIS_DLINK_DWL650H,
+	  PCMCIA_STR_DLINK_DWL650H },
 
 	{ 0,
 	  0,
