@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: chpass_c.c,v 1.1.1.1 2000/06/16 18:32:50 thorpej Exp $");
+RCSID("$Id: chpass_c.c,v 1.1.1.2 2000/08/02 19:59:15 assar Exp $");
 
 kadm5_ret_t
 kadm5_c_chpass_principal(void *server_handle, 
@@ -46,6 +46,10 @@ kadm5_c_chpass_principal(void *server_handle,
     unsigned char buf[1024];
     int32_t tmp;
     krb5_data reply;
+
+    ret = _kadm5_connect(server_handle);
+    if(ret)
+	return ret;
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL)
@@ -82,6 +86,10 @@ kadm5_c_chpass_principal_with_key(void *server_handle,
     int32_t tmp;
     krb5_data reply;
     int i;
+
+    ret = _kadm5_connect(server_handle);
+    if(ret)
+	return ret;
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL)

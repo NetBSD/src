@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,11 +33,12 @@
  */
 
 #include "compile_et.h"
-RCSID("$Id: parse.y,v 1.1.1.1 2000/06/16 18:32:20 thorpej Exp $");
+#include "lex.h"
+
+RCSID("$Id: parse.y,v 1.1.1.2 2000/08/02 20:00:26 assar Exp $");
 
 void yyerror (char *s);
-long name2number(const char *str);
-void error_message(char *, ...);
+static long name2number(const char *str);
 
 extern char *yytext;
 
@@ -134,7 +135,7 @@ statement	: INDEX NUMBER
 
 %%
 
-long
+static long
 name2number(const char *str)
 {
     const char *p;

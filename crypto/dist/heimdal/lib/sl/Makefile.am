@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:32 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -8,7 +8,7 @@ include_HEADERS = sl.h
 
 lib_LTLIBRARIES = libsl.la libss.la
 libsl_la_LDFLAGS = -version-info 1:0:1
-libss_la_LDFLAGS = -version-info 1:0:1
+libss_la_LDFLAGS = -version-info 1:1:1
 
 RENAME_SRC = roken_rename.h strtok_r.c snprintf.c
 

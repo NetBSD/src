@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: hdb_locl.h,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $ */
+/* $Id: hdb_locl.h,v 1.1.1.2 2000/08/02 19:59:13 assar Exp $ */
 
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__

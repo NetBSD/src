@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: ent_setup.c,v 1.1.1.1 2000/06/16 18:32:51 thorpej Exp $");
+RCSID("$Id: ent_setup.c,v 1.1.1.2 2000/08/02 19:59:17 assar Exp $");
 
 #define set_value(X, V) do { if((X) == NULL) (X) = malloc(sizeof(*(X))); *(X) = V; } while(0)
 #define set_null(X)     do { if((X) != NULL) free((X)); (X) = NULL; } while (0)

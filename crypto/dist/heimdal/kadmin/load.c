@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: load.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: load.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
 
 struct entry {
     char *principal;
@@ -324,6 +324,13 @@ doit(const char *filename, int merge)
 	krb5_warn(context, errno, "fopen(%s)", filename);
 	return 1;
     }
+    ret = kadm5_log_truncate (kadm_handle);
+    if (ret) {
+	fclose (f);
+	krb5_warn(context, ret, "kadm5_log_truncate");
+	return 1;
+    }
+
     if(!merge)
 	flags |= O_CREAT | O_TRUNC;
     ret = db->open(context, db, flags, 0600);

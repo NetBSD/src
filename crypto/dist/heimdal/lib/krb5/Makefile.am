@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:55 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:59:23 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -6,7 +6,7 @@ INCLUDES += $(INCLUDE_krb4)
 
 bin_PROGRAMS = verify_krb5_conf
 
-noinst_PROGRAMS = dump_config
+noinst_PROGRAMS = dump_config test_get_addrs
 
 check_PROGRAMS = n-fold-test string-to-key-test
 TESTS = n-fold-test string-to-key-test
@@ -27,10 +27,12 @@ lib_LTLIBRARIES = libkrb5.la
 ERR_FILES = krb5_err.c heim_err.c
 
 libkrb5_la_SOURCES = \
+	acl.c \
 	add_et_list.c \
 	addr_families.c \
 	address.c \
 	aname_to_localname.c \
+	appdefault.c \
 	asn1_glue.c \
 	auth_context.c \
 	build_ap_req.c \
@@ -48,6 +50,7 @@ libkrb5_la_SOURCES = \
 	creds.c \
 	crypto.c \
 	data.c \
+	eai_to_heim_errno.c \
 	expand_hostname.c \
 	fcache.c \
 	free.c \
@@ -119,7 +122,7 @@ libkrb5_la_SOURCES = \
 
 EXTRA_libkrb5_la_SOURCES = keytab_krb4.c
 
-libkrb5_la_LDFLAGS = -version-info 11:1:0
+libkrb5_la_LDFLAGS = -version-info 12:0:1
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
@@ -131,9 +134,18 @@ $(srcdir)/krb5-private.h:
 
 libkrb5_la_LIBADD = ../com_err/error.lo ../com_err/com_err.lo
 
-man_MANS = krb5.conf.5 krb5_warn.3 krb5_openlog.3 \
-	krb5_425_conv_principal.3 krb5_build_principal.3 krb5_free_principal.3 \
-	krb5_parse_name.3 krb5_sname_to_principal.3 krb5_unparse_name.3 \
+man_MANS =					\
+	krb5.conf.5				\
+	krb5_425_conv_principal.3		\
+	krb5_appdefault.3			\
+	krb5_build_principal.3			\
+	krb5_config.3				\
+	krb5_free_principal.3			\
+	krb5_openlog.3				\
+	krb5_parse_name.3			\
+	krb5_sname_to_principal.3		\
+	krb5_unparse_name.3			\
+	krb5_warn.3				\
 	verify_krb5_conf.8
 
 include_HEADERS = krb5.h krb5-protos.h krb5-private.h krb5_err.h heim_err.h

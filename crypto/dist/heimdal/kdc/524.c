@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: 524.c,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $");
+RCSID("$Id: 524.c,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $");
 
 #ifdef KRB4
 
@@ -53,10 +53,17 @@ do_524(Ticket *t, krb5_data *reply, const char *from, struct sockaddr *addr)
     unsigned char buf[MAX_KTXT_LEN + 4 * 4];
     size_t len;
     
+    if(!enable_524) {
+	ret = KRB5KDC_ERR_POLICY;
+	kdc_log(0, "Rejected ticket conversion request from %s", from);
+	goto out;
+    }
+
     principalname2krb5_principal(&sprinc, t->sname, t->realm);
     krb5_unparse_name(context, sprinc, &spn);
     server = db_fetch(sprinc);
     if(server == NULL){
+        ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
 	kdc_log(0, "Request to convert ticket from %s for unknown principal %s",
 		from, spn);
 	goto out;
@@ -144,7 +151,7 @@ do_524(Ticket *t, krb5_data *reply, const char *from, struct sockaddr *addr)
 	kdc_log(0, "Failed to encode v4 ticket (%s)", spn);
 	goto out;
     }
-    ret = get_des_key(server, &skey);
+    ret = get_des_key(server, FALSE, &skey);
     if(ret){
 	kdc_log(0, "No DES key for server (%s)", spn);
 	goto out;
@@ -175,8 +182,10 @@ out:
 	free(spn);
     if(sprinc)
 	krb5_free_principal(context, sprinc);
-    hdb_free_entry(context, server);
-    free(server);
+    if(server) {
+	hdb_free_entry(context, server);
+	free(server);
+    }
     return ret;
 }
 

@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
-RCSID("$Id: server.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: server.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
 
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
@@ -73,7 +73,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	}
 	krb5_unparse_name_fixed(context->context, princ, name, sizeof(name));
 	krb5_warnx(context->context, "%s: %s %s", client, op, name);
-	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_GET);
+	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_GET, princ);
 	if(ret){
 	    krb5_free_principal(context->context, princ);
 	    goto fail;
@@ -96,7 +96,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	    goto fail;
 	krb5_unparse_name_fixed(context->context, princ, name, sizeof(name));
 	krb5_warnx(context->context, "%s: %s %s", client, op, name);
-	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_DELETE);
+	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_DELETE, princ);
 	if(ret){
 	    krb5_free_principal(context->context, princ);
 	    goto fail;
@@ -126,7 +126,8 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	krb5_unparse_name_fixed(context->context, ent.principal, 
 				name, sizeof(name));
 	krb5_warnx(context->context, "%s: %s %s", client, op, name);
-	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_ADD);
+	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_ADD,
+					  ent.principal);
 	if(ret){
 	    kadm5_free_principal_ent(context->context, &ent);
 	    memset(password, 0, strlen(password));
@@ -156,7 +157,8 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	krb5_unparse_name_fixed(context->context, ent.principal, 
 				name, sizeof(name));
 	krb5_warnx(context->context, "%s: %s %s", client, op, name);
-	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_MODIFY);
+	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_MODIFY,
+					  ent.principal);
 	if(ret){
 	    kadm5_free_principal_ent(context, &ent);
 	    goto fail;
@@ -183,7 +185,11 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	krb5_warnx(context->context, "%s: %s %s -> %s", 
 		   client, op, name, name2);
 	ret = _kadm5_acl_check_permission(context, 
-					  KADM5_PRIV_ADD|KADM5_PRIV_DELETE);
+					  KADM5_PRIV_ADD,
+					  princ2)
+	    || _kadm5_acl_check_permission(context, 
+					   KADM5_PRIV_DELETE,
+					   princ);
 	if(ret){
 	    krb5_free_principal(context->context, princ);
 	    goto fail;
@@ -220,7 +226,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 				       princ))
 	    ret = 0;
 	else
-	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW);
+	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW, princ);
 
 	if(ret) {
 	    krb5_free_principal(context->context, princ);
@@ -283,7 +289,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 				       princ))
 	    ret = 0;
 	else
-	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW);
+	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW, princ);
 
 	if(ret) {
 	    int16_t dummy = n_key_data;
@@ -324,7 +330,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 				       princ))
 	    ret = 0;
 	else
-	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW);
+	    ret = _kadm5_acl_check_permission(context, KADM5_PRIV_CPW, princ);
 
 	if(ret) {
 	    krb5_free_principal(context->context, princ);
@@ -367,7 +373,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	}else
 	    exp = NULL;
 	krb5_warnx(context->context, "%s: %s %s", client, op, exp ? exp : "*");
-	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_LIST);
+	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_LIST, NULL);
 	if(ret){
 	    free(exp);
 	    goto fail;
@@ -413,52 +419,23 @@ v5_loop (krb5_context context,
 	 int fd)
 {
     krb5_error_code ret;
-    ssize_t n;
-    unsigned long len;
-    u_char tmp[4];
-    struct iovec iov[2];
-    krb5_data in, out, msg, reply;
+    krb5_data in, out;
 
     for (;;) {
-	n = krb5_net_read(context, &fd, tmp, 4);
-	if (n < 0)
-	    krb5_err (context, 1, errno, "krb5_net_read");
-	if (n == 0)
-	    exit (0);
-	_krb5_get_int (tmp, &len, 4);
-
-	ret = krb5_data_alloc(&in, len);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_data_alloc");
-
-	n = krb5_net_read(context, &fd, in.data, in.length);
-	if (n == 0)
-	    exit (0);
-	if(n < 0)
-	    krb5_errx(context, 1, "read error: %d", errno);
-	ret = krb5_rd_priv(context, ac, &in, &out, NULL);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_rd_priv");
+	doing_useful_work = 0;
+	if(term_flag)
+	    exit(0);
+	ret = krb5_read_priv_message(context, ac, &fd, &in);
+	if(ret == HEIM_ERR_EOF)
+	    exit(0);
+	if(ret)
+	    krb5_err(context, 1, ret, "krb5_read_priv_message");
+	doing_useful_work = 1;
+	kadmind_dispatch(kadm_handle, initial, &in, &out);
 	krb5_data_free(&in);
-	kadmind_dispatch(kadm_handle, initial, &out, &msg);
-	krb5_data_free(&out);
-	ret = krb5_mk_priv(context, ac, &msg, &reply, NULL);
-	krb5_data_free(&msg);
-	if(ret) 
-	    krb5_err(context, 1, ret, "krb5_mk_priv");
-
-	_krb5_put_int(tmp, reply.length, 4);
-
-	iov[0].iov_base = tmp;
-	iov[0].iov_len  = 4;
-	iov[1].iov_base = reply.data;
-	iov[1].iov_len  = reply.length;
-	n = writev(fd, iov, 2);
-	krb5_data_free(&reply);
-	if(n < 0)
-	    krb5_err(context, 1, errno, "writev");
-	if(n < iov[0].iov_len + iov[1].iov_len)
-	    krb5_errx(context, 1, "short write");
+	ret = krb5_write_priv_message(context, ac, &fd, &out);
+	if(ret)
+	    krb5_err(context, 1, ret, "krb5_write_priv_message");
     }
 }
 
@@ -523,10 +500,10 @@ handle_v5(krb5_context context,
     memset(&realm_params, 0, sizeof(realm_params));
 
     if(kadm_version == 1) {
-	krb5_data enc_data, params;
-	ret = krb5_read_message(context, &fd, &enc_data);
-	ret = krb5_rd_priv(context, ac, &enc_data, &params, NULL);
-	krb5_data_free(&enc_data);
+	krb5_data params;
+	ret = krb5_read_priv_message(context, ac, &fd, &params);
+	if(ret)
+	    krb5_err(context, 1, ret, "krb5_read_priv_message");
 	_kadm5_unmarshal_params(context, &params, &realm_params);
     }
 

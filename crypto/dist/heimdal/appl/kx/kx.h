@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kx.h,v 1.1.1.1 2000/06/16 18:31:43 thorpej Exp $ */
+/* $Id: kx.h,v 1.1.1.2 2000/08/02 19:58:32 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

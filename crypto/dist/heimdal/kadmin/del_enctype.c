@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: del_enctype.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: del_enctype.c,v 1.1.1.2 2000/08/02 19:58:50 assar Exp $");
 
 static void
 usage(void)

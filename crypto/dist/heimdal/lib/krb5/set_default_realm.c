@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: set_default_realm.c,v 1.1.1.1 2000/06/16 18:33:02 thorpej Exp $");
+RCSID("$Id: set_default_realm.c,v 1.1.1.2 2000/08/02 19:59:40 assar Exp $");
 
 /*
  * Convert the simple string `s' into a NULL-terminated and freshly allocated 

@@ -33,7 +33,7 @@
 
 #include "sia_locl.h"
 
-RCSID("$Id: sia.c,v 1.1.1.1 2000/06/16 18:32:42 thorpej Exp $");
+RCSID("$Id: sia.c,v 1.1.1.2 2000/08/02 20:00:25 assar Exp $");
 
 int 
 siad_init(void)

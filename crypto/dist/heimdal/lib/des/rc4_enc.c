@@ -59,7 +59,7 @@
 #include "des_locl.h"
 #include "rc4.h"
 
-RCSID("$Id: rc4_enc.c,v 1.1.1.1 2000/06/16 18:32:28 thorpej Exp $");
+RCSID("$Id: rc4_enc.c,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $");
 
 /* RC4 as implemented from a posting from
  * Newsgroups: sci.crypt

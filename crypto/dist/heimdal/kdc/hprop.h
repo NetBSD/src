@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,25 +31,31 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: hprop.h,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $ */
+/* $Id: hprop.h,v 1.1.1.2 2000/08/02 19:58:54 assar Exp $ */
 
 #ifndef __HPROP_H__
 #define __HPROP_H__
 
 #include "headers.h"
 
+struct prop_data{
+    krb5_context context;
+    krb5_auth_context auth_context;
+    int sock;
+};
+
 #define HPROP_VERSION "hprop-0.0"
 #define HPROP_NAME "hprop"
-#define HPROP_KEYTAB "FILE:/etc/hprop.keytab"
+#define HPROP_KEYTAB "HDB:"
 #define HPROP_PORT 754
 
 #ifndef NEVERDATE
 #define NEVERDATE ((1U << 31) - 1)
 #endif
 
-krb5_error_code send_priv(krb5_context, krb5_auth_context, krb5_data*, int);
-krb5_error_code recv_priv(krb5_context, krb5_auth_context, int, krb5_data*);
-krb5_error_code send_clear(krb5_context context, int fd, krb5_data data);
-krb5_error_code recv_clear(krb5_context context, int fd, krb5_data *out);
+krb5_error_code v5_prop(krb5_context, HDB*, hdb_entry*, void*);
+int mit_prop_dump(void*, const char*);
+int v4_prop(void*, Principal*);
+int v4_prop_dump(void *arg, const char*);
 
 #endif /* __HPROP_H__ */

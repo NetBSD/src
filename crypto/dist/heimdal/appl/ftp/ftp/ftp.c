@@ -32,7 +32,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID ("$Id: ftp.c,v 1.1.1.1 2000/06/16 18:31:49 thorpej Exp $");
+RCSID ("$Id: ftp.c,v 1.1.1.2 2000/08/02 19:58:36 assar Exp $");
 
 struct sockaddr_storage hisctladdr_ss;
 struct sockaddr *hisctladdr = (struct sockaddr *)&hisctladdr_ss;
@@ -200,7 +200,9 @@ login (char *host)
     }
     strlcpy(username, user, sizeof(username));
     n = command("USER %s", user);
-    if (n == CONTINUE) {
+    if (n == COMPLETE) 
+       n = command("PASS dummy"); /* DK: Compatibility with gssftp daemon */
+    else if(n == CONTINUE) {
 	if (pass == NULL) {
 	    char prompt[128];
 	    if(myname && 
@@ -620,7 +622,7 @@ sendrequest (char *cmd, char *local, char *remote, char *lmode, int printnames)
     int c, d;
     FILE *fin, *dout = 0;
     int (*closefunc) (FILE *);
-    RETSIGTYPE (*oldintr)(), (*oldintp)();
+    RETSIGTYPE (*oldintr)(int), (*oldintp)(int);
     long bytes = 0, hashbytes = HASHBYTES;
     char *rmode = "w";
 
