@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.8 1999/07/13 14:52:53 kleink Exp $
+.\"	$NetBSD: environ.7,v 1.9 2000/03/28 01:25:00 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,10 +70,19 @@ and
 .Xr ls 1 .
 .Ev BLOCKSIZE
 may be specified in units of a byte by specifying a number,
-in units of a kilobyte by specifying a number followed by ``K'' or
-``k'', in units of a megabyte by specifying a number followed by ``M''
-or ``m'' and in units of a gigabyte by specifying a number followed
-by ``G'' or ``g''.
+in units of a kilobyte by specifying a number followed by
+.Dq K
+or
+.Dq k ,
+in units of a megabyte by specifying a number followed by
+.Dq M
+or
+.Dq m
+and in units of a gigabyte by specifying a number followed
+by
+.Dq G
+or
+.Dq g .
 Sizes less than 512 bytes or greater than a gigabyte are ignored.
 .It Ev EXINIT
 A startup list of commands read by
@@ -95,7 +104,9 @@ The sequence of directories, separated by colons, searched by
 .Xr system 3 ,
 .Xr execvp 3 ,
 etc, when looking for an executable file.
-PATH is set to ``/usr/bin:/bin'' initially by
+PATH is set to
+.Dq /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+initially by
 .Xr login 1 .
 .It Ev PRINTER
 The name of the default printer to be used by
