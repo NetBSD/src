@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.2 2002/02/23 17:25:32 thorpej Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.3 2002/02/23 20:34:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -110,8 +110,6 @@ static uint32_t	get_u32(struct state *);
 static int	check_header(struct state *);
 
 /* XXX - find a suitable header for these: */
-void	*zcalloc(void *, unsigned int, unsigned int);
-void	zcfree(void *, void *);
 void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 
 /* end zlib glue defns */
@@ -231,26 +229,6 @@ readgz(struct state *s, void *buf, size_t len)
 }
 
 /* util routines for zlib */
-
-void *
-zcalloc(void *arg, unsigned int items, unsigned int size)
-{
-	void *ptr;
-	size_t sz;
-
-	sz = size * items;
-	ptr = alloc(sz);
-	if (ptr != NULL)
-		memset(ptr, 0, sz);
-	return (ptr);
-}
-
-void
-zcfree(void *arg, void *ptr)
-{
-
-	free(ptr, 0);	/* XXX works only with modified allocator */
-}
 
 void
 zmemcpy(unsigned char *dst, unsigned char *src, unsigned int len)
