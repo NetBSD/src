@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.30 1993/11/02 06:19:46 glass Exp $
+#	$Id: ALL,v 1.31 1993/11/04 09:12:30 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -130,6 +130,10 @@ disk		fd1	at fdc0 drive 1
 
 #non-scsi tape drives
 device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
+
+#non-scsi CD-ROM drives
+# Mitsumi
+device		mcd0	at isa? port 0x300 bio irq 10 vector mcdintr
 
 #scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
