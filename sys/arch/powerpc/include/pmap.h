@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 1998/01/27 09:15:59 sakamoto Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 1998/07/25 15:06:28 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,8 +71,20 @@ extern struct pmap kernel_pmap_;
 #define	pmap_phys_address(x)		(x)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
+vm_offset_t pmap_extract __P((struct pmap *, vm_offset_t));
 
-#define	vtophys(va)	((int)(pmap_extract(pmap_kernel(), (vm_offset_t)va)))
+static __inline vm_offset_t
+vtophys(va)
+	vm_offset_t va;
+{
+	vm_offset_t pa;
+
+	/* XXX should check battable */
+
+	if ((pa = pmap_extract(pmap_kernel(), va)) != 0)
+		return pa;
+	return va;
+}
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
