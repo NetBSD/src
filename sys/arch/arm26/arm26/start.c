@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.7 2000/12/27 20:43:44 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.8 2001/01/22 22:10:43 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.7 2000/12/27 20:43:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8 2001/01/22 22:10:43 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/boot.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2001/01/18 17:05:06 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2001/01/22 22:10:42 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -29,9 +29,12 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: db_trace.c,v 1.6 2001/01/22 22:10:42 bjh21 Exp $");
+
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
