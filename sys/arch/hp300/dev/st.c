@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.11 1995/08/04 08:17:43 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.12 1995/10/16 08:51:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -100,6 +100,7 @@ extern void scsifree();
 extern void scsireset();
 extern void scsi_delay();
 extern int scsi_tt_oddio();
+extern void scsi_str __P((char *, char *, size_t));
 
 extern int scsi_immed_command();
 
@@ -251,7 +252,7 @@ stident(sc, hd)
 	int unit;
 	int ctlr, slave;
 	int i, stat, inqlen;
-	char idstr[32];
+	char vendor[9], product[17], revision[5];
 	static int havest = 0;
 	struct st_inquiry {
 		struct	scsi_inquiry inqbuf;
@@ -304,53 +305,45 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 
+	bzero(vendor, sizeof(vendor));
+	bzero(product, sizeof(product));
+	bzero(revision, sizeof(revision));
 	if (st_inqbuf.inqbuf.len >= 28) {
-		bcopy((caddr_t)&st_inqbuf.inqbuf.vendor_id, (caddr_t)idstr, 28);
-		for (i = 27; i > 23; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
-		for (i = 23; i > 7; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
-		for (i = 7; i >= 0; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
-		printf("st%d: %s, %s rev %s\n", hd->hp_unit, idstr, &idstr[8],
-		       &idstr[24]);
-	} else if (inqlen == 5)
-		/* great it's a stupid device, doesn't know it's know name */
-		idstr[0] = idstr[8] = '\0';
-	else
-		idstr[8] = '\0';
+		scsi_str(st_inqbuf.inqbuf.vendor_id, vendor,
+		    sizeof(st_inqbuf.inqbuf.vendor_id));
+		scsi_str(st_inqbuf.inqbuf.product_id, product,
+		    sizeof(st_inqbuf.inqbuf.product_id));
+		scsi_str(st_inqbuf.inqbuf.rev, revision,
+		    sizeof(st_inqbuf.inqbuf.rev));
+		printf("st%d: %s, %s rev %s\n", hd->hp_unit, vendor, product,
+		    revision);
+	}
 
 	if (stat == 0xff) { 
 		printf("st%d: Cant handle this tape drive\n", hd->hp_unit);
 		goto failed;
 	}
 
-	if (bcmp("EXB-8200", &idstr[8], 8) == 0) {
+	if (bcmp("EXB-8200", product, 8) == 0) {
 		sc->sc_tapeid = MT_ISEXABYTE;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 26;
 		sc->sc_datalen[CMD_INQUIRY] = 52;
 		sc->sc_datalen[CMD_MODE_SELECT] = 17;
 		sc->sc_datalen[CMD_MODE_SENSE] = 17;
-	} else if (bcmp("VIPER 150", &idstr[8], 9) == 0 ||
-		   bcmp("VIPER 60", &idstr[8], 8) == 0) {
+	} else if (bcmp("VIPER 150", product, 9) == 0 ||
+		   bcmp("VIPER 60", product, 8) == 0) {
 		sc->sc_tapeid = MT_ISVIPER1;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("Python 25501", &idstr[8], 12) == 0) {
+	} else if (bcmp("Python 25501", product, 12) == 0) {
 		sc->sc_tapeid = MT_ISPYTHON;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("HP35450A", &idstr[8], 8) == 0) {
+	} else if (bcmp("HP35450A", product, 8) == 0) {
 		/* XXX "extra" stat makes the HP drive happy at boot time */
 		stat = scsi_test_unit_rdy(ctlr, slave, unit);
 		sc->sc_tapeid = MT_ISHPDAT;
@@ -358,18 +351,16 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("123107 SCSI", &idstr[8], 11) == 0 ||
-		   bcmp("OPEN REEL TAPE", &idstr[8], 14) == 0) {
+	} else if (bcmp("123107 SCSI", product, 11) == 0 ||
+		   bcmp("OPEN REEL TAPE", product, 14) == 0) {
 		sc->sc_tapeid = MT_ISMFOUR;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
 		sc->sc_datalen[CMD_INQUIRY] = 5;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 	} else {
-		if (idstr[8] == '\0')
-			printf("st%d: No ID, assuming Archive\n", hd->hp_unit);
-		else
-			printf("st%d: Unsupported tape device\n", hd->hp_unit);
+		printf("st%d: Unsupported tape device, faking it\n",
+		    hd->hp_unit);
 		sc->sc_tapeid = MT_ISAR;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
 		sc->sc_datalen[CMD_INQUIRY] = 5;
