@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.93 2004/01/13 08:30:34 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.94 2004/01/14 23:32:36 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.93 2004/01/13 08:30:34 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.94 2004/01/14 23:32:36 jlam Exp $");
 #endif
 #endif
 
@@ -494,7 +494,7 @@ ignore_replace_depends_check:
 							installed);
 					}
 					fexec(BINDIR "/pkg_delete", "-K", dbdir, installed, NULL);
-				} else {
+				} else if (!is_depoted_pkg) {
 					warnx("other version '%s' already installed", installed);
 
 					errc = 1;
