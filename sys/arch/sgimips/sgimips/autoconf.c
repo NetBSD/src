@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2001/11/19 17:35:15 soren Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2001/11/20 18:06:40 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -49,10 +49,10 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-struct device *booted_device = NULL;
+struct device	*booted_device = NULL;
 static struct device *booted_controller;
 static int	booted_slot, booted_unit, booted_partition;
-static char	*booted_protocol;
+static char	*booted_protocol = NULL;
 
 extern struct platform platform;
 
@@ -90,9 +90,8 @@ makebootdev(cp)
 	char *cp;
 {
 	booted_slot = booted_unit = booted_partition = 0;
-	booted_protocol = NULL;
 
-	if (booted_device != NULL)
+	if (booted_protocol != NULL)
 		return;
 
 	if (strncmp(cp, "scsi(", 5) == NULL) {
