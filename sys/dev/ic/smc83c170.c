@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.12 1999/02/17 09:11:29 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.13 1999/02/18 02:12:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -628,9 +628,11 @@ epic_ioctl(ifp, cmd, data)
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
+			 * accordingly.  Update our idea of the current media;
+			 * epic_set_mchash() needs to know what it is.
 			 */
-			epic_init(sc);
+			mii_pollstat(&sc->sc_mii);
+			epic_set_mchash(sc);
 			error = 0;
 		}
 		break;
@@ -989,11 +991,6 @@ epic_init(sc)
 	bus_space_write_4(st, sh, EPIC_LAN2, reg0);
 
 	/*
-	 * Set up the multicast hash table.
-	 */
-	epic_set_mchash(sc);
-
-	/*
 	 * Initialize receive control.  Remember the external buffer
 	 * size setting.
 	 */
@@ -1004,7 +1001,11 @@ epic_init(sc)
 		reg0 |= RXCON_PROMISCMODE;
 	bus_space_write_4(st, sh, EPIC_RXCON, reg0);
 
+	/* Set the current media. */
 	mii_mediachg(&sc->sc_mii);
+
+	/* Set up the multicast hash table. */
+	epic_set_mchash(sc);
 
 	/*
 	 * Initialize the transmit descriptor ring.  txlast is initialized
@@ -1246,6 +1247,8 @@ epic_add_rxbuf(sc, idx)
 
 /*
  * Set the EPIC multicast hash table.
+ *
+ * NOTE: We rely on a recently-updated mii_media_active here!
  */
 void
 epic_set_mchash(sc)
@@ -1277,9 +1280,10 @@ epic_set_mchash(sc)
 	if (ifp->if_flags & IFF_PROMISC)
 		goto allmulti;
 
-#if 1 /* XXX thorpej - hardware bug in 10Mb mode */
-	goto allmulti;
-#endif
+	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T) {
+		/* XXX hardware bug in 10Mbps mode. */
+		goto allmulti;
+	}
 
 	mchash[0] = mchash[1] = mchash[2] = mchash[3] = 0;
 
@@ -1411,6 +1415,12 @@ epic_statchg(self)
 	else
 		txcon &= ~(TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TXCON, txcon);
+
+	/*
+	 * There is a multicast filter bug in 10Mbps mode.  Kick the
+	 * multicast filter in case the speed changed.
+	 */
+	epic_set_mchash(sc);
 
 	/* XXX Update ifp->if_baudrate */
 }
