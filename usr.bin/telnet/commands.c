@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.52 2003/07/12 13:33:08 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.53 2003/07/12 14:29:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.52 2003/07/12 13:33:08 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.53 2003/07/12 14:29:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ makeargv(void)
     margc = 0;
     cp = line;
     if (*cp == '!') {		/* Special case shell escape */
-	strcpy(saveline, line);	/* save for shell command */
+	strlcpy(saveline, line, sizeof(saveline)); /* save for shell command */
 	*argp++ = "!";		/* No room in string to get this */
 	margc++;
 	cp++;
@@ -2263,7 +2263,7 @@ tn(int argc, char *argv[])
 	return 0;
     }
     if (argc < 2) {
-	(void) strcpy(line, "open ");
+	(void) strlcpy(line, "open ", sizeof(line));
 	printf("(to) ");
 	(void) fgets(&line[strlen(line)], sizeof(line) - strlen(line), stdin);
 	makeargv();
@@ -2305,7 +2305,7 @@ tn(int argc, char *argv[])
     if (hostp == 0)
 	goto usage;
 
-    (void) strcpy(_hostname, hostp);
+    (void) strlcpy(_hostname, hostp, sizeof(_hostname));
     if (hostp[0] == '@' || hostp[0] == '!') {
 	char *p;
 	hostname = NULL;
@@ -2696,10 +2696,10 @@ cmdrc(const char *m1, const char *m2)
     if (rcname == 0) {
 	rcname = getenv("HOME");
 	if (rcname)
-	    strcpy(rcbuf, rcname);
+	    strlcpy(rcbuf, rcname, sizeof(rcbuf));
 	else
 	    rcbuf[0] = '\0';
-	strcat(rcbuf, "/.telnetrc");
+	strlcat(rcbuf, "/.telnetrc", sizeof(rcbuf));
 	rcname = rcbuf;
     }
 
