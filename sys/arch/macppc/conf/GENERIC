@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 2002/06/25 00:29:20 itojun Exp $
+# $NetBSD: GENERIC,v 1.134 2002/06/25 00:32:24 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.133 $"
+#ident 		"GENERIC-$Revision: 1.134 $"
 
 maxusers	32
 
@@ -315,7 +315,7 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus?
+#fwnode* at fwbus? idhi ? idlo ?
 #fwscsi* at fwnode?
 #scsibus* at fwscsi?
 
