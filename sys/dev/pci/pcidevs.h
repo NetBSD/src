@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.560 2003/07/29 19:47:44 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.561 2003/08/01 00:07:32 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.559 2003/07/29 19:46:56 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.560 2003/08/01 00:05:27 jonathan Exp 
  */
 
 /*
@@ -2268,6 +2268,8 @@
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB controller */
 #define	PCI_PRODUCT_SUN_GEMNETWORK	0x2bad		/* GEM Gigabit Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
+#define	PCI_PRODUCT_SUN_5821	0x5454		/* Sun bcm5821 */
+#define	PCI_PRODUCT_SUN_SCA1K	0x5455		/* Crypto Accelerator 1000 */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
