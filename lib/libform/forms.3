@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.5 2002/02/07 09:24:09 ross Exp $
+.\"	$NetBSD: forms.3,v 1.6 2002/02/20 11:30:07 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January, 2001
+.Dd January 1, 2001
 .Dt FORMS 3
 .Os
 .Sh NAME
@@ -41,30 +41,30 @@
 .Fd #include \*[Lt]form.h\*[Gt]
 .Sh DESCRIPTION
 The
-.Xr form 3
+.Nm
 provides a terminal independent form system using the
 .Xr curses 3
 library.  Before using the
-.Xr menu 3
+.Xr menus 3
 functions the terminal must be set up by
 .Xr curses 3
 using the
 .Fn initscr
 function or similar.  Programs using
-.Xr form
+.Nm
 functions must be linked with the
 .Xr curses 3
 library
-.Xr -lcurses .
+.Fl lcurses .
 .Pp
 The
-.Xr form 3
+.Nm
 library provides facilties for defining form fields, placing a form on the
 terminal screen, assign pre and post change operations and setting the
 attributes of both the form and it's fields.
-.Sh Defining default attributes for forms and fields
+.Ss Defining default attributes for forms and fields
 The
-.Xr form 3
+.Nm
 library allows any settable attribute or option of both the form and field
 objects to be defined such that any new form or field automatically inherits
 the value as default.  Setting the default value will not affect any field or
@@ -184,7 +184,8 @@ E_CURRENT		The field is the active one on the form.
 .br
 .ne 8
 .Sh SEE ALSO
-.Xr curses 3
+.Xr curses 3 ,
+.Xr menus 3
 .Sh NOTES
 This implementation of the forms library does depart in behaviour
 subtly from the original AT \*[Am] T implementation.  Some of the more
