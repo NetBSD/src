@@ -1,0 +1,469 @@
+# Makefile.in generated automatically by automake 1.4a from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = ..
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_STRIP_FLAG =
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+
+@SET_MAKE@
+altdir = ./aux/
+host_alias = @host_alias@
+host_triplet = @host@
+AMDEP = @AMDEP@
+AMD_FS_OBJS = @AMD_FS_OBJS@
+AMD_INFO_OBJS = @AMD_INFO_OBJS@
+AMTAR = @AMTAR@
+AMU_CFLAGS = @AMU_CFLAGS@
+AMU_NFS_PROT_HEADER = @AMU_NFS_PROT_HEADER@
+AR = @AR@
+AS = @AS@
+AWK = @AWK@
+CC = @CC@
+CPP = @CPP@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
+EXEEXT = @EXEEXT@
+LEX = @LEX@
+LIBTOOL = @LIBTOOL@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+LIBTOOL_LDFLAGS = @LIBTOOL_LDFLAGS@
+LN_S = @LN_S@
+LTALLOCA = @LTALLOCA@
+LTLIBOBJS = @LTLIBOBJS@
+MAKEINFO = @MAKEINFO@
+OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
+PACKAGE = @PACKAGE@
+PERL = @PERL@
+RANLIB = @RANLIB@
+STRIP = @STRIP@
+VERSION = @VERSION@
+YACC = @YACC@
+am_utils_unmount_args = @am_utils_unmount_args@
+am_utils_unmount_call = @am_utils_unmount_call@
+install_sh = @install_sh@
+
+# Package: am-utils
+# Level: Makefile for scripts/ directory
+# Author: Erez Zadok
+
+
+sbin_SCRIPTS = \
+	am-eject	\
+	amd2ldif	\
+	amd2sun		\
+	automount2amd	\
+	ctl-amd		\
+	ctl-hlfsd	\
+	fixrmtab	\
+	fix-amd-map	\
+	lostaltmail	\
+	wait4amd	\
+	wait4amd2die
+
+
+bin_SCRIPTS = expn
+
+sysconf_DATA = amd.conf-sample lostaltmail.conf-sample
+
+# man pages
+man_MANS = amd.conf.5 automount2amd.8 expn.1
+
+EXTRA_DIST = \
+	am-eject.in		\
+	amd2ldif.in		\
+	amd2sun.in		\
+	automount2amd.in	\
+	ctl-amd.in		\
+	ctl-hlfsd.in		\
+	fixrmtab.in		\
+	fix-amd-map.in		\
+	lostaltmail.in		\
+	wait4amd.in		\
+	wait4amd2die.in		\
+	\
+	expn.in			\
+	\
+	amd.conf-sample		\
+	lostaltmail.conf-sample \
+	$(man_MANS)
+
+
+CLEANFILES = $(sbin_SCRIPTS) $(bin_SCRIPTS)
+subdir = scripts
+mkinstalldirs = $(SHELL) $(top_srcdir)/aux/mkinstalldirs
+CONFIG_HEADER = ../config.h
+CONFIG_CLEAN_FILES =  am-eject amd2ldif amd2sun automount2amd ctl-amd \
+ctl-hlfsd expn fixrmtab fix-amd-map lostaltmail wait4amd wait4amd2die
+SCRIPTS =  $(bin_SCRIPTS) $(sbin_SCRIPTS)
+
+DIST_SOURCES = 
+man1dir = $(mandir)/man1
+man5dir = $(mandir)/man5
+man8dir = $(mandir)/man8
+MANS = $(man_MANS)
+
+NROFF = nroff
+DATA =  $(sysconf_DATA)
+
+DIST_COMMON =  $(sysconf_DATA) Makefile.am Makefile.in am-eject.in \
+amd2ldif.in amd2sun.in automount2amd.in ctl-amd.in ctl-hlfsd.in expn.in \
+fix-amd-map.in fixrmtab.in lostaltmail.in wait4amd.in wait4amd2die.in
+
+
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+
+GZIP_ENV = --best
+all: all-redirect
+.SUFFIXES:
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/$(altdir)configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --altdir=$(altdir) --gnu scripts/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+am-eject: $(top_builddir)/config.status am-eject.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+amd2ldif: $(top_builddir)/config.status amd2ldif.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+amd2sun: $(top_builddir)/config.status amd2sun.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+automount2amd: $(top_builddir)/config.status automount2amd.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+ctl-amd: $(top_builddir)/config.status ctl-amd.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+ctl-hlfsd: $(top_builddir)/config.status ctl-hlfsd.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+expn: $(top_builddir)/config.status expn.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+fixrmtab: $(top_builddir)/config.status fixrmtab.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+fix-amd-map: $(top_builddir)/config.status fix-amd-map.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+lostaltmail: $(top_builddir)/config.status lostaltmail.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+wait4amd: $(top_builddir)/config.status wait4amd.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+wait4amd2die: $(top_builddir)/config.status wait4amd2die.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+install-binSCRIPTS: $(bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  f="`echo $$p|sed '$(transform)'`"; \
+	  if test -f $$p; then \
+	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/$$f"; \
+	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/$$f; \
+	  elif test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/$$f"; \
+	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/$$f; \
+	  else :; fi; \
+	done
+
+uninstall-binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  f="`echo $$p|sed '$(transform)'`"; \
+	  echo " rm -f $(DESTDIR)$(bindir)/$$f"; \
+	  rm -f $(DESTDIR)$(bindir)/$$f; \
+	done
+
+install-sbinSCRIPTS: $(sbin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(sbindir)
+	@list='$(sbin_SCRIPTS)'; for p in $$list; do \
+	  f="`echo $$p|sed '$(transform)'`"; \
+	  if test -f $$p; then \
+	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(sbindir)/$$f"; \
+	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(sbindir)/$$f; \
+	  elif test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(sbindir)/$$f"; \
+	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(sbindir)/$$f; \
+	  else :; fi; \
+	done
+
+uninstall-sbinSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sbin_SCRIPTS)'; for p in $$list; do \
+	  f="`echo $$p|sed '$(transform)'`"; \
+	  echo " rm -f $(DESTDIR)$(sbindir)/$$f"; \
+	  rm -f $(DESTDIR)$(sbindir)/$$f; \
+	done
+
+install-man1:
+	$(mkinstalldirs) $(DESTDIR)$(man1dir)
+	@list='$(man1_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst; \
+	done
+
+uninstall-man1:
+	@list='$(man1_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man1dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man1dir)/$$inst; \
+	done
+
+install-man5:
+	$(mkinstalldirs) $(DESTDIR)$(man5dir)
+	@list='$(man5_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.5*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man5dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man5dir)/$$inst; \
+	done
+
+uninstall-man5:
+	@list='$(man5_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.5*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man5dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man5dir)/$$inst; \
+	done
+
+install-man8:
+	$(mkinstalldirs) $(DESTDIR)$(man8dir)
+	@list='$(man8_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.8*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man8dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man8dir)/$$inst; \
+	done
+
+uninstall-man8:
+	@list='$(man8_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.8*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man8dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man8dir)/$$inst; \
+	done
+install-man: $(MANS)
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-man1 install-man5 install-man8
+uninstall-man:
+	@$(NORMAL_UNINSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-man1 uninstall-man5 uninstall-man8
+
+install-sysconfDATA: $(sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
+	@list='$(sysconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/$$f"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(sysconfdir)/$$f; \
+	done
+
+uninstall-sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sysconf_DATA)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(sysconfdir)/$$f"; \
+	  rm -f $(DESTDIR)$(sysconfdir)/$$f; \
+	done
+tags: TAGS
+TAGS:
+
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+distdir: $(DISTFILES)
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  if test -d $$d/$$file; then \
+	    cp -pR $$d/$$file $(distdir); \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+info-am:
+info: info-am
+dvi-am:
+dvi: dvi-am
+check-am: all-am
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-exec-am: install-binSCRIPTS install-sbinSCRIPTS \
+		install-sysconfDATA
+install-exec: install-exec-am
+
+install-data-am: install-man
+install-data: install-data-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am: uninstall-binSCRIPTS uninstall-sbinSCRIPTS uninstall-man \
+		uninstall-sysconfDATA
+uninstall: uninstall-am
+all-am: Makefile $(SCRIPTS) $(MANS) $(DATA)
+all-redirect: all-am
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
+installdirs:
+	$(mkinstalldirs)  $(DESTDIR)$(bindir) $(DESTDIR)$(sbindir) \
+		$(DESTDIR)$(mandir)/man1 $(DESTDIR)$(mandir)/man5 \
+		$(DESTDIR)$(mandir)/man8 $(DESTDIR)$(sysconfdir)
+
+
+mostlyclean-generic:
+
+clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+	-rm -f Makefile.in
+mostlyclean-am:  mostlyclean-generic
+
+mostlyclean: mostlyclean-am
+
+clean-am:  clean-generic mostlyclean-am
+
+clean: clean-am
+
+distclean-am:  distclean-generic clean-am
+	-rm -f libtool
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-generic distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-am
+
+.PHONY: uninstall-binSCRIPTS install-binSCRIPTS uninstall-sbinSCRIPTS \
+install-sbinSCRIPTS install-man1 uninstall-man1 install-man5 \
+uninstall-man5 install-man8 uninstall-man8 install-man uninstall-man \
+uninstall-sysconfDATA install-sysconfDATA tags distdir info-am info \
+dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
+install-exec install-data-am install-data install-am install \
+uninstall-am uninstall all-redirect all-am all install-strip \
+installdirs mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
