@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.457 2004/01/11 15:09:51 lukem Exp $
+# $NetBSD: mi,v 1.458 2004/01/11 23:42:27 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1253,395 +1253,395 @@
 ./usr/share/i18n				base-sysutil-share
 ./usr/share/i18n/csmapper			base-sysutil-share
 ./usr/share/i18n/csmapper/CP			base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP037%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP038%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1006%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1026%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1250%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1251%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1252%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1253%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1254%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1255%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1256%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1257%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP1258%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP273%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP274%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP275%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP277%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP278%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP280%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP281%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP284%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP285%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP290%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP297%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP420%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP423%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP424%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP437%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP500%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP737%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP775%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP850%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP851%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP852%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP855%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP856%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP857%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP860%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP861%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP862%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP863%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP864%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP865%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP868%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP869%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP870%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP871%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP874%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP875%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP880%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP891%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP903%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP904%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP905%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP918%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP932EXT%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP936EXT%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP949EXT%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/CP950%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP037.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP038.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1006.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1026.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1250.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1251.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1252.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1253.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1254.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1255.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1256.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1257.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP1258.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP273.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP274.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP275.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP277.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP278.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP280.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP281.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP284.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP285.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP290.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP297.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP420.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP423.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP424.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP437.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP500.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP737.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP775.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP850.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP851.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP852.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP855.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP856.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP857.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP860.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP861.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP862.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP863.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP864.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP865.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP868.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP869.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP870.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP871.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP874.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP875.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP880.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP891.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP903.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP904.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP905.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP918.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP932EXT.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP936EXT.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP949EXT.mps	base-sysutil-share
-./usr/share/i18n/csmapper/CP/UCS%CP950.mps	base-sysutil-share
+./usr/share/i18n/csmapper/CP/CP037%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP038%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1006%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1026%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1250%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1251%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1252%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1253%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1254%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1255%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1256%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1257%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1258%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP273%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP274%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP275%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP277%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP278%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP280%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP281%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP284%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP285%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP290%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP297%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP420%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP423%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP424%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP437%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP500%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP737%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP775%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP850%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP851%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP852%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP855%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP856%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP857%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP860%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP861%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP862%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP863%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP864%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP865%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP868%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP869%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP870%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP871%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP874%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP875%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP880%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP891%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP903%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP904%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP905%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP918%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP932EXT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP936EXT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP949EXT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP950%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP037.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP038.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1006.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1026.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1250.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1251.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1252.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1253.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1254.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1255.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1256.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1257.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1258.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP273.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP274.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP275.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP277.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP278.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP280.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP281.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP284.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP285.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP290.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP297.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP420.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP423.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP424.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP437.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP500.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP737.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP775.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP850.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP851.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP852.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP855.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP856.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP857.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP860.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP861.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP862.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP863.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP864.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP865.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP868.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP869.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP870.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP871.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP874.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP875.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP880.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP891.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP903.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP904.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP905.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP918.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP932EXT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP936EXT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP949EXT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP950.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC		base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-AT-DE%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-AT-DE-A%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-CA-FR%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-DK-NO%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-DK-NO-A%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES-A%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES-S%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FI-SE%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FI-SE-A%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FR%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-IT%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-PT%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/EBCDIC-UK%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE-A.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-CA-FR.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-DK-NO-A.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-DK-NO.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES-A.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES-S.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FI-SE-A.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FI-SE.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FR.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-IT.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-PT.mps	base-sysutil-share
-./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-UK.mps	base-sysutil-share
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-AT-DE%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-AT-DE-A%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-CA-FR%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-DK-NO%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-DK-NO-A%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES-A%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-ES-S%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FI-SE%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FI-SE-A%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-FR%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-IT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-PT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-UK%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE-A.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-CA-FR.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-DK-NO-A.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-DK-NO.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES-A.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES-S.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-ES.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FI-SE-A.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FI-SE.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-FR.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-IT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-PT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-UK.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB			base-sysutil-share
-./usr/share/i18n/csmapper/GB/GB2312%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share
+./usr/share/i18n/csmapper/GB/GB2312%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/ISO-8859		base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-10%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-11%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-13%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-14%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-15%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-16%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-2%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-3%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-4%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-5%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-6%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-7%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-8%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/ISO-8859-9%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-10.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-11.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-13.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-14.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-15.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-16.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-2.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-3.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-4.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-5.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-6.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-7.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-8.mps	base-sysutil-share
-./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-9.mps	base-sysutil-share
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-10%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-11%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-13%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-14%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-15%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-16%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-2%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-3%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-4%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-5%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-6%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-7%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-8%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/ISO-8859-9%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-10.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-11.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-13.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-14.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-15.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-16.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-2.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-3.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-4.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-5.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-6.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-7.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-8.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO-8859/UCS%ISO-8859-9.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/ISO646		base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-BASIC@1983%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-CA%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-CA2%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-CN%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-CU%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-DE%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-DK%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-ES%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-ES2%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-FR%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-FR1%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-GB%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-HU%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-IRV@1983%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-IT%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-JP%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-JP-OCR-B%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-KR%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-NO%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-NO2%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-PT%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-PT2%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-SE%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-SE2%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-US%UCS.646	base-sysutil-share
-./usr/share/i18n/csmapper/ISO646/ISO646-YU%UCS.646	base-sysutil-share
+./usr/share/i18n/csmapper/ISO646/ISO646-BASIC@1983%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-CA%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-CA2%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-CN%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-CU%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-DE%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-DK%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-ES%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-ES2%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-FR%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-FR1%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-GB%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-HU%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-IRV@1983%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-IT%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-JP%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-JP-OCR-B%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-KR%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-NO%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-NO2%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-PT%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-PT2%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-SE%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-SE2%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-US%UCS.646	base-sysutil-share	nls
+./usr/share/i18n/csmapper/ISO646/ISO646-YU%UCS.646	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS			base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0201-KANA%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0208@1990%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0208@MS%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0208UDC%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0208VDC@NEC%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0212%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0212@MS%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0212UDC%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/JISX0212VDC@IBM%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0201-KANA.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1990.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0208@MS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0208UDC.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0208VDC@NEC.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0212.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0212@MS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0212UDC.mps	base-sysutil-share
-./usr/share/i18n/csmapper/JIS/UCS%JISX0212VDC@IBM.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0201-KANA%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0208@1990%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0208@MS%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0208UDC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0208VDC@NEC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0212%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0212@MS%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0212UDC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0212VDC@IBM%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0201-KANA.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1990.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208@MS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208UDC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208VDC@NEC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212@MS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212UDC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212VDC@IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KS			base-sysutil-share
-./usr/share/i18n/csmapper/KS/KSC5601%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps	base-sysutil-share
+./usr/share/i18n/csmapper/KS/KSC5601%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC			base-sysutil-share
-./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/MISC/KOI8-U%UCS.mps	base-sysutil-share
-./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-sysutil-share
-./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps	base-sysutil-share
-./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-sysutil-share
-./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share
-./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share
-./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share
-./usr/share/i18n/csmapper/mapper.dir.db		base-sysutil-share
+./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/KOI8-U%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share	nls
+./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share	nls
+./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share	nls
+./usr/share/i18n/csmapper/mapper.dir.db		base-sysutil-share	nls
 ./usr/share/i18n/esdb				base-sysutil-share
 ./usr/share/i18n/esdb/CP			base-sysutil-share
-./usr/share/i18n/esdb/CP/CP037.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP038.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1006.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1026.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1250.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1251.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1252.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1253.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1254.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1255.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1256.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1257.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP1258.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP273.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP274.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP275.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP277.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP278.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP280.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP281.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP284.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP285.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP290.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP297.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP420.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP423.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP424.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP437.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP500.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP737.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP775.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP850.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP851.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP852.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP855.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP856.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP857.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP860.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP861.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP862.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP863.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP864.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP865.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP866.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP868.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP869.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP870.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP871.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP874.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP875.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP880.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP891.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP903.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP904.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP905.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP918.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP932.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP936.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP949.esdb		base-sysutil-share
-./usr/share/i18n/esdb/CP/CP950.esdb		base-sysutil-share
+./usr/share/i18n/esdb/CP/CP037.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP038.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1006.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1026.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1250.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1251.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1252.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1253.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1254.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1255.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1256.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1257.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1258.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP273.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP274.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP275.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP277.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP278.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP280.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP281.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP284.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP285.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP290.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP297.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP420.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP423.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP424.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP437.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP500.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP737.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP775.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP850.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP851.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP852.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP855.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP856.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP857.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP860.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP861.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP862.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP863.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP864.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP865.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP866.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP868.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP869.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP870.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP871.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP874.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP875.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP880.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP891.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP903.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP904.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP905.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP918.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP932.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP936.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP949.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP950.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC			base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE-A.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-CA-FR.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-DK-NO-A.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-DK-NO.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES-A.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES-S.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-FI-SE-A.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-FI-SE.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-FR.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-IT.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-PT.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EBCDIC/EBCDIC-UK.esdb	base-sysutil-share
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE-A.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-CA-FR.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-DK-NO-A.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-DK-NO.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES-A.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES-S.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-ES.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-FI-SE-A.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-FI-SE.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-FR.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-IT.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-PT.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-UK.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC			base-sysutil-share
-./usr/share/i18n/esdb/EUC/EUC-CN.esdb		base-sysutil-share
-./usr/share/i18n/esdb/EUC/EUC-JP-MS.esdb	base-sysutil-share
-./usr/share/i18n/esdb/EUC/EUC-JP.esdb		base-sysutil-share
-./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share
-./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share
+./usr/share/i18n/esdb/EUC/EUC-CN.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/EUC/EUC-JP-MS.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EUC/EUC-JP.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
-./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-8859			base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-1.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-10.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-11.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-13.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-14.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-15.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-16.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-3.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-4.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-5.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-6.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-7.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-8.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO-8859/ISO-8859-9.esdb	base-sysutil-share
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-1.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-10.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-11.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-13.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-14.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-15.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-16.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-3.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-4.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-5.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-6.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-7.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-8.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-8859/ISO-8859-9.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO646			base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-BASIC@1983.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-CA.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-CA2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-CN.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-CU.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-DE.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-DK.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-ES.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-ES2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-FR.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-FR1.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-GB.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-HU.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-IRV@1983.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-IT.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-JP-OCR-B.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-JP.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-KR.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-NO.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-NO2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-PT.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-PT2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-SE.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-SE2.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-US.esdb	base-sysutil-share
-./usr/share/i18n/esdb/ISO646/ISO646-YU.esdb	base-sysutil-share
+./usr/share/i18n/esdb/ISO646/ISO646-BASIC@1983.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-CA.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-CA2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-CN.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-CU.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-DE.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-DK.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-ES.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-ES2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-FR.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-FR1.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-GB.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-HU.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-IRV@1983.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-IT.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-JP-OCR-B.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-JP.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-KR.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-NO.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-NO2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-PT.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-PT2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-SE.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-SE2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-US.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO646/ISO646-YU.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC			base-sysutil-share
-./usr/share/i18n/esdb/MISC/Big5.esdb		base-sysutil-share
-./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share
-./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share
-./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-sysutil-share
-./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-sysutil-share
-./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share
+./usr/share/i18n/esdb/MISC/Big5.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF			base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-16.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-16BE.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-16LE.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-32.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-32BE.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-32LE.esdb		base-sysutil-share
-./usr/share/i18n/esdb/UTF/UTF-8.esdb		base-sysutil-share
-./usr/share/i18n/esdb/esdb.alias		base-sysutil-share
-./usr/share/i18n/esdb/esdb.alias.db		base-sysutil-share
-./usr/share/i18n/esdb/esdb.dir			base-sysutil-share
-./usr/share/i18n/esdb/esdb.dir.db		base-sysutil-share
+./usr/share/i18n/esdb/UTF/UTF-16.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-16BE.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-16LE.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-32.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-32BE.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-32LE.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-8.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/esdb.alias		base-sysutil-share	nls
+./usr/share/i18n/esdb/esdb.alias.db		base-sysutil-share	nls
+./usr/share/i18n/esdb/esdb.dir			base-sysutil-share	nls
+./usr/share/i18n/esdb/esdb.dir.db		base-sysutil-share	nls
 ./usr/share/i18n/iconv				base-sysutil-share
-./usr/share/i18n/iconv/iconv.dir		base-sysutil-share
+./usr/share/i18n/iconv/iconv.dir		base-sysutil-share	nls
 ./usr/share/info				base-texinfo-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
@@ -1678,231 +1678,231 @@
 ./usr/share/lkm/vfs/module/kernfsmod.c		base-obsolete		obsolete
 ./usr/share/locale				base-locale-share
 ./usr/share/locale/bg_BG.CP1251			base-locale-bg
-./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg
+./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg		nls
 ./usr/share/locale/ca				base-locale-ca
 ./usr/share/locale/ca_ES.ISO8859-1		base-locale-ca
-./usr/share/locale/ca_ES.ISO8859-1/LC_CTYPE	base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-1/LC_CTYPE	base-locale-ca		nls
 ./usr/share/locale/ca_ES.ISO8859-15		base-locale-ca
-./usr/share/locale/ca_ES.ISO8859-15/LC_CTYPE	base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-15/LC_CTYPE	base-locale-ca		nls
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
-./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs
+./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs	nls
 ./usr/share/locale/cs/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs
+./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs	nls
 ./usr/share/locale/cs_CZ.ISO8859-2		base-locale-cs
-./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs
+./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs		nls
 ./usr/share/locale/da				base-locale-da
 ./usr/share/locale/da/LC_MESSAGES		base-locale-da
 ./usr/share/locale/da/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/da/LC_MESSAGES/texinfo.mo	base-texinfo_locale-da
+./usr/share/locale/da/LC_MESSAGES/texinfo.mo	base-texinfo_locale-da	nls
 ./usr/share/locale/da_DK.ISO8859-1		base-locale-da
-./usr/share/locale/da_DK.ISO8859-1/LC_CTYPE	base-locale-da
+./usr/share/locale/da_DK.ISO8859-1/LC_CTYPE	base-locale-da		nls
 ./usr/share/locale/da_DK.ISO8859-15		base-locale-da
-./usr/share/locale/da_DK.ISO8859-15/LC_CTYPE	base-locale-da
+./usr/share/locale/da_DK.ISO8859-15/LC_CTYPE	base-locale-da		nls
 ./usr/share/locale/de				base-locale-de
 ./usr/share/locale/de/LC_MESSAGES		base-locale-de
-./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de
+./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de	nls
 ./usr/share/locale/de/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de
+./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de	nls
 ./usr/share/locale/de_AT			base-locale-de
 ./usr/share/locale/de_AT.ISO8859-1		base-locale-de
-./usr/share/locale/de_AT.ISO8859-1/LC_CTYPE	base-locale-de
+./usr/share/locale/de_AT.ISO8859-1/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_AT.ISO8859-15		base-locale-de
-./usr/share/locale/de_AT.ISO8859-15/LC_CTYPE	base-locale-de
+./usr/share/locale/de_AT.ISO8859-15/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_AT/LC_MESSAGES		base-locale-de
-./usr/share/locale/de_AT/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de
+./usr/share/locale/de_AT/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de	nls
 ./usr/share/locale/de_CH.ISO8859-1		base-locale-de
-./usr/share/locale/de_CH.ISO8859-1/LC_CTYPE	base-locale-de
+./usr/share/locale/de_CH.ISO8859-1/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_CH.ISO8859-15		base-locale-de
-./usr/share/locale/de_CH.ISO8859-15/LC_CTYPE	base-locale-de
+./usr/share/locale/de_CH.ISO8859-15/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-1		base-locale-de
-./usr/share/locale/de_DE.ISO8859-1/LC_CTYPE	base-locale-de
+./usr/share/locale/de_DE.ISO8859-1/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-15		base-locale-de
-./usr/share/locale/de_DE.ISO8859-15/LC_CTYPE	base-locale-de
+./usr/share/locale/de_DE.ISO8859-15/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/el				base-locale-el
 ./usr/share/locale/el/LC_MESSAGES		base-locale-el
-./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el
+./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el	nls
 ./usr/share/locale/el_GR.ISO8859-7		base-locale-el
-./usr/share/locale/el_GR.ISO8859-7/LC_CTYPE	base-locale-el
+./usr/share/locale/el_GR.ISO8859-7/LC_CTYPE	base-locale-el		nls
 ./usr/share/locale/en_AU.ISO8859-1		base-locale-en
-./usr/share/locale/en_AU.ISO8859-1/LC_CTYPE	base-locale-en
+./usr/share/locale/en_AU.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_AU.ISO8859-15		base-locale-en
-./usr/share/locale/en_AU.ISO8859-15/LC_CTYPE	base-locale-en
+./usr/share/locale/en_AU.ISO8859-15/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-1		base-locale-en
-./usr/share/locale/en_CA.ISO8859-1/LC_CTYPE	base-locale-en
+./usr/share/locale/en_CA.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-15		base-locale-en
-./usr/share/locale/en_CA.ISO8859-15/LC_CTYPE	base-locale-en
+./usr/share/locale/en_CA.ISO8859-15/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-1		base-locale-en
-./usr/share/locale/en_GB.ISO8859-1/LC_CTYPE	base-locale-en
+./usr/share/locale/en_GB.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-15		base-locale-en
-./usr/share/locale/en_GB.ISO8859-15/LC_CTYPE	base-locale-en
+./usr/share/locale/en_GB.ISO8859-15/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-1		base-locale-en
-./usr/share/locale/en_US.ISO8859-1/LC_CTYPE	base-locale-en
+./usr/share/locale/en_US.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-15		base-locale-en
-./usr/share/locale/en_US.ISO8859-15/LC_CTYPE	base-locale-en
+./usr/share/locale/en_US.ISO8859-15/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.UTF-2			base-obsolete		obsolete
 ./usr/share/locale/en_US.UTF-2/LC_CTYPE		base-obsolete		obsolete
 ./usr/share/locale/en_US.UTF-8			base-locale-en
-./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en
+./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en		nls
 ./usr/share/locale/eo				base-locale-eo
 ./usr/share/locale/eo/LC_MESSAGES		base-locale-eo
-./usr/share/locale/eo/LC_MESSAGES/grep.mo	base-util_locale-eo
-./usr/share/locale/eo/LC_MESSAGES/texinfo.mo	base-texinfo_locale-eo
+./usr/share/locale/eo/LC_MESSAGES/grep.mo	base-util_locale-eo	nls
+./usr/share/locale/eo/LC_MESSAGES/texinfo.mo	base-texinfo_locale-eo	nls
 ./usr/share/locale/es				base-locale-es
 ./usr/share/locale/es/LC_MESSAGES		base-locale-es
-./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es
+./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es	nls
 ./usr/share/locale/es/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/es_ES.ISO8859-1		base-locale-es
-./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE	base-locale-es
+./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE	base-locale-es		nls
 ./usr/share/locale/es_ES.ISO8859-15		base-locale-es
-./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE	base-locale-es
+./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE	base-locale-es		nls
 ./usr/share/locale/et				base-locale-et
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
-./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et
+./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et	nls
 ./usr/share/locale/et/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/fi_FI.ISO8859-1		base-locale-fi
-./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE	base-locale-fi
+./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE	base-locale-fi		nls
 ./usr/share/locale/fi_FI.ISO8859-15		base-locale-fi
-./usr/share/locale/fi_FI.ISO8859-15/LC_CTYPE	base-locale-fi
+./usr/share/locale/fi_FI.ISO8859-15/LC_CTYPE	base-locale-fi		nls
 ./usr/share/locale/fr				base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES		base-locale-fr
-./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr
+./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr	nls
 ./usr/share/locale/fr/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/fr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-fr
+./usr/share/locale/fr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-fr	nls
 ./usr/share/locale/fr_BE.ISO8859-1		base-locale-fr
-./usr/share/locale/fr_BE.ISO8859-1/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_BE.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_BE.ISO8859-15		base-locale-fr
-./usr/share/locale/fr_BE.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_BE.ISO8859-15/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-1		base-locale-fr
-./usr/share/locale/fr_CA.ISO8859-1/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_CA.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-15		base-locale-fr
-./usr/share/locale/fr_CA.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_CA.ISO8859-15/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-1		base-locale-fr
-./usr/share/locale/fr_CH.ISO8859-1/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_CH.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-15		base-locale-fr
-./usr/share/locale/fr_CH.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_CH.ISO8859-15/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-1		base-locale-fr
-./usr/share/locale/fr_FR.ISO8859-1/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_FR.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-15		base-locale-fr
-./usr/share/locale/fr_FR.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/fr_FR.ISO8859-15/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/gl				base-locale-gl
 ./usr/share/locale/gl/LC_MESSAGES		base-locale-gl
-./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl
+./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl	nls
 ./usr/share/locale/he				base-locale-he
 ./usr/share/locale/he/LC_MESSAGES		base-locale-he
-./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he
+./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he	nls
 ./usr/share/locale/hr				base-locale-hr
 ./usr/share/locale/hr/LC_MESSAGES		base-locale-hr
-./usr/share/locale/hr/LC_MESSAGES/grep.mo	base-util_locale-hr
-./usr/share/locale/hr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-hr
+./usr/share/locale/hr/LC_MESSAGES/grep.mo	base-util_locale-hr	nls
+./usr/share/locale/hr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-hr	nls
 ./usr/share/locale/hr_HR.ISO8859-2		base-locale-hr
-./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr
+./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr		nls
 ./usr/share/locale/hu_HU.ISO8859-2		base-locale-hu
-./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu
+./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu		nls
 ./usr/share/locale/hy_AM.ARMSCII-8		base-locale-hy
-./usr/share/locale/hy_AM.ARMSCII-8/LC_CTYPE	base-locale-hy
+./usr/share/locale/hy_AM.ARMSCII-8/LC_CTYPE	base-locale-hy		nls
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
-./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id
+./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id	nls
 ./usr/share/locale/id/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/is_IS.ISO8859-1		base-locale-is
-./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE	base-locale-is
+./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE	base-locale-is		nls
 ./usr/share/locale/is_IS.ISO8859-15		base-locale-is
-./usr/share/locale/is_IS.ISO8859-15/LC_CTYPE	base-locale-is
+./usr/share/locale/is_IS.ISO8859-15/LC_CTYPE	base-locale-is		nls
 ./usr/share/locale/it				base-locale-it
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
-./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it
+./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it	nls
 ./usr/share/locale/it/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/it_CH.ISO8859-1		base-locale-it
-./usr/share/locale/it_CH.ISO8859-1/LC_CTYPE	base-locale-it
+./usr/share/locale/it_CH.ISO8859-1/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/it_CH.ISO8859-15		base-locale-it
-./usr/share/locale/it_CH.ISO8859-15/LC_CTYPE	base-locale-it
+./usr/share/locale/it_CH.ISO8859-15/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-1		base-locale-it
-./usr/share/locale/it_IT.ISO8859-1/LC_CTYPE	base-locale-it
+./usr/share/locale/it_IT.ISO8859-1/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-15		base-locale-it
-./usr/share/locale/it_IT.ISO8859-15/LC_CTYPE	base-locale-it
+./usr/share/locale/it_IT.ISO8859-15/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
-./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja
+./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja	nls
 ./usr/share/locale/ja/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja
+./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja	nls
 ./usr/share/locale/ja_JP.ISO2022-JP		base-locale-ja
-./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-locale-ja
+./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-locale-ja		nls
 ./usr/share/locale/ja_JP.ISO2022-JP2		base-locale-ja
-./usr/share/locale/ja_JP.ISO2022-JP2/LC_CTYPE	base-locale-ja
+./usr/share/locale/ja_JP.ISO2022-JP2/LC_CTYPE	base-locale-ja		nls
 ./usr/share/locale/ja_JP.SJIS			base-locale-ja
-./usr/share/locale/ja_JP.SJIS/LC_CTYPE		base-locale-ja
+./usr/share/locale/ja_JP.SJIS/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.ct			base-locale-ja
-./usr/share/locale/ja_JP.ct/LC_CTYPE		base-locale-ja
+./usr/share/locale/ja_JP.ct/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.eucJP			base-locale-ja
-./usr/share/locale/ja_JP.eucJP/LC_CTYPE		base-locale-ja
+./usr/share/locale/ja_JP.eucJP/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ko				base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
-./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko
+./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls
 ./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ko_KR.UTF-8			base-locale-ko
-./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko
+./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko		nls
 ./usr/share/locale/ko_KR.eucKR			base-locale-ko
-./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko
+./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko		nls
 ./usr/share/locale/lt_LT.ISO8859-13		base-locale-lt
-./usr/share/locale/lt_LT.ISO8859-13/LC_CTYPE	base-locale-lt
+./usr/share/locale/lt_LT.ISO8859-13/LC_CTYPE	base-locale-lt		nls
 ./usr/share/locale/lt_LT.ISO8859-4		base-locale-lt
-./usr/share/locale/lt_LT.ISO8859-4/LC_CTYPE	base-locale-lt
+./usr/share/locale/lt_LT.ISO8859-4/LC_CTYPE	base-locale-lt		nls
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
-./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl
+./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl		nls
 ./usr/share/locale/nl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/nl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nl
+./usr/share/locale/nl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nl	nls
 ./usr/share/locale/nl_BE.ISO8859-1		base-locale-nl
-./usr/share/locale/nl_BE.ISO8859-1/LC_CTYPE	base-locale-nl
+./usr/share/locale/nl_BE.ISO8859-1/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/nl_BE.ISO8859-15		base-locale-nl
-./usr/share/locale/nl_BE.ISO8859-15/LC_CTYPE	base-locale-nl
+./usr/share/locale/nl_BE.ISO8859-15/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-1		base-locale-nl
-./usr/share/locale/nl_NL.ISO8859-1/LC_CTYPE	base-locale-nl
+./usr/share/locale/nl_NL.ISO8859-1/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-15		base-locale-nl
-./usr/share/locale/nl_NL.ISO8859-15/LC_CTYPE	base-locale-nl
+./usr/share/locale/nl_NL.ISO8859-15/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
-./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no
+./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no		nls
 ./usr/share/locale/no/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no
+./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no	nls
 ./usr/share/locale/no@nynorsk			base-locale-no
 ./usr/share/locale/no@nynorsk/LC_MESSAGES	base-locale-no
 ./usr/share/locale/no_NO.ISO8859-1		base-locale-no
-./usr/share/locale/no_NO.ISO8859-1/LC_CTYPE	base-locale-no
+./usr/share/locale/no_NO.ISO8859-1/LC_CTYPE	base-locale-no		nls
 ./usr/share/locale/no_NO.ISO8859-15		base-locale-no
-./usr/share/locale/no_NO.ISO8859-15/LC_CTYPE	base-locale-no
+./usr/share/locale/no_NO.ISO8859-15/LC_CTYPE	base-locale-no		nls
 ./usr/share/locale/pl				base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES		base-locale-pl
-./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl
+./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl		nls
 ./usr/share/locale/pl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pl_PL.ISO8859-2		base-locale-pl
-./usr/share/locale/pl_PL.ISO8859-2/LC_CTYPE	base-locale-pl
+./usr/share/locale/pl_PL.ISO8859-2/LC_CTYPE	base-locale-pl		nls
 ./usr/share/locale/pt				base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pt_BR			base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
-./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt
+./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pt_PT.ISO8859-1		base-locale-pt
-./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt
+./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-15		base-locale-pt
-./usr/share/locale/pt_PT.ISO8859-15/LC_CTYPE	base-locale-pt
+./usr/share/locale/pt_PT.ISO8859-15/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/ro				base-locale-ro
 ./usr/share/locale/ro/LC_MESSAGES		base-locale-ro
-./usr/share/locale/ro/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ro
+./usr/share/locale/ro/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ro	nls
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
-./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru
+./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls
 ./usr/share/locale/ru/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru
+./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru	nls
 ./usr/share/locale/ru_RU.CP866			base-locale-ru
-./usr/share/locale/ru_RU.CP866/LC_CTYPE		base-locale-ru
+./usr/share/locale/ru_RU.CP866/LC_CTYPE		base-locale-ru		nls
 ./usr/share/locale/ru_RU.ISO8859-5		base-locale-ru
-./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE	base-locale-ru
+./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE	base-locale-ru		nls
 ./usr/share/locale/ru_RU.KOI8-R			base-locale-ru
-./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE	base-locale-ru
+./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE	base-locale-ru		nls
 ./usr/share/locale/ru_SU.CP866			base-obsolete		obsolete
 ./usr/share/locale/ru_SU.CP866/LC_CTYPE		base-obsolete		obsolete
 ./usr/share/locale/ru_SU.ISO8859-5		base-obsolete		obsolete
@@ -1911,44 +1911,44 @@
 ./usr/share/locale/ru_SU.KOI8-R/LC_CTYPE	base-obsolete		obsolete
 ./usr/share/locale/sk				base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2		base-locale-sk
-./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk
+./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk		nls
 ./usr/share/locale/sl				base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES		base-locale-sl
-./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl
+./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl		nls
 ./usr/share/locale/sl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/sl_SI.ISO8859-2		base-locale-sl
-./usr/share/locale/sl_SI.ISO8859-2/LC_CTYPE	base-locale-sl
+./usr/share/locale/sl_SI.ISO8859-2/LC_CTYPE	base-locale-sl		nls
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
-./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv
+./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv	nls
 ./usr/share/locale/sv/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/sv/LC_MESSAGES/texinfo.mo	base-texinfo_locale-sv
+./usr/share/locale/sv/LC_MESSAGES/texinfo.mo	base-texinfo_locale-sv	nls
 ./usr/share/locale/sv_SE.ISO8859-1		base-locale-sv
-./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-sv
+./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-sv		nls
 ./usr/share/locale/sv_SE.ISO8859-15		base-locale-sv
-./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-sv
+./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-sv		nls
 ./usr/share/locale/tr				base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES		base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/tr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-tr
+./usr/share/locale/tr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-tr	nls
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
-./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
+./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk		nls
 ./usr/share/locale/zh_CN			base-locale-zh
 ./usr/share/locale/zh_CN.GB18030		base-locale-zh
-./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh
+./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh		nls
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
-./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_CN/LC_MESSAGES		base-locale-zh
-./usr/share/locale/zh_CN/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh
+./usr/share/locale/zh_CN/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/locale/zh_TW			base-locale-zh
 ./usr/share/locale/zh_TW.BIG5			base-locale-zh
-./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
-./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
-./usr/share/locale/zh_TW.eucTW/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_TW.eucTW/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW/LC_MESSAGES		base-locale-zh
-./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh
+./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/man					base-man-share
 ./usr/share/man/COPYRIGHT			base-man-share
 ./usr/share/man/cat1				base-man-share
@@ -2317,33 +2317,33 @@
 ./usr/share/nls					base-locale-share
 # C locale is required by POSIX, so is installed if any locales are.
 ./usr/share/nls/C				base-locale-share
-./usr/share/nls/C/libc.cat			base-locale-share
-./usr/share/nls/C/sushi.cat			base-sushi_locale-share
+./usr/share/nls/C/libc.cat			base-locale-share	nls
+./usr/share/nls/C/sushi.cat			base-sushi_locale-share	nls
 ./usr/share/nls/Pig				base-locale-Pig
-./usr/share/nls/Pig/libc.cat			base-locale-Pig
+./usr/share/nls/Pig/libc.cat			base-locale-Pig		nls
 ./usr/share/nls/ca				base-locale-ca
-./usr/share/nls/ca/libc.cat			base-locale-ca
+./usr/share/nls/ca/libc.cat			base-locale-ca		nls
 ./usr/share/nls/cs				base-locale-cs
-./usr/share/nls/cs/libc.cat			base-locale-cs
+./usr/share/nls/cs/libc.cat			base-locale-cs		nls
 ./usr/share/nls/de				base-locale-de
-./usr/share/nls/de/libc.cat			base-locale-de
+./usr/share/nls/de/libc.cat			base-locale-de		nls
 ./usr/share/nls/es				base-locale-es
-./usr/share/nls/es/libc.cat			base-locale-es
+./usr/share/nls/es/libc.cat			base-locale-es		nls
 ./usr/share/nls/fi				base-locale-fi
-./usr/share/nls/fi/libc.cat			base-locale-fi
+./usr/share/nls/fi/libc.cat			base-locale-fi		nls
 ./usr/share/nls/fr				base-locale-fr
-./usr/share/nls/fr/libc.cat			base-locale-fr
+./usr/share/nls/fr/libc.cat			base-locale-fr		nls
 ./usr/share/nls/nl				base-locale-nl
-./usr/share/nls/nl/libc.cat			base-locale-nl
-./usr/share/nls/nls.alias			base-locale-share
+./usr/share/nls/nl/libc.cat			base-locale-nl		nls
+./usr/share/nls/nls.alias			base-locale-share	nls
 ./usr/share/nls/no				base-locale-no
-./usr/share/nls/no/libc.cat			base-locale-no
+./usr/share/nls/no/libc.cat			base-locale-no		nls
 ./usr/share/nls/pl				base-locale-pl
-./usr/share/nls/pl/libc.cat			base-locale-pl
+./usr/share/nls/pl/libc.cat			base-locale-pl		nls
 ./usr/share/nls/sk				base-locale-sk
-./usr/share/nls/sk/libc.cat			base-locale-sk
+./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
-./usr/share/nls/sv/libc.cat			base-locale-sv
+./usr/share/nls/sv/libc.cat			base-locale-sv		nls
 ./usr/share/sushi				base-sushi-share
 ./usr/share/sushi/help				base-sushi-share
 ./usr/share/sushi/index				base-sushi-share

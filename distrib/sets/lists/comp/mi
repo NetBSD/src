@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.660 2004/01/11 15:09:51 lukem Exp $
+#	$NetBSD: mi,v 1.661 2004/01/11 23:42:27 lukem Exp $
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
@@ -1861,18 +1861,18 @@
 ./usr/share/ldscripts/sun4.xn			comp-obsolete		obsolete
 ./usr/share/ldscripts/sun4.xr			comp-obsolete		obsolete
 ./usr/share/ldscripts/sun4.xu			comp-obsolete		obsolete
-./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-c_locale-da
-./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-c_locale-de
-./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-c_locale-es
-./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-c_locale-fr
-./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-c_locale-ko
-./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-c_locale-nl
-./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-c_locale-no
-./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c_locale-no
-./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-c_locale-pl
-./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-c_locale-pt
-./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-c_locale-sl
-./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-c_locale-sv
+./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-c_locale-da	nls
+./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-c_locale-de	nls
+./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-c_locale-es	nls
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo	comp-c_locale-fr	nls
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo	comp-c_locale-ko	nls
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo	comp-c_locale-nl	nls
+./usr/share/locale/no/LC_MESSAGES/gettext.mo	comp-c_locale-no	nls
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c_locale-no	nls
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo	comp-c_locale-pl	nls
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo	comp-c_locale-pt	nls
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo	comp-c_locale-sl	nls
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo	comp-c_locale-sv	nls
 ./usr/share/man/cat1/addr2line.0		comp-debug-catman	bfd,.cat
 ./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat
