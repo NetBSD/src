@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/03/13 03:25:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 2000/08/26 00:37:47 mrg Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
@@ -25,7 +25,7 @@ realall: ${FILES}
 
 
 vers.c:
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	MACHINE=${MACHINE} sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 
 .for RELOC in ${RELOCS}
 boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
