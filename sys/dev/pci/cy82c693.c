@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.1 2000/06/06 03:07:39 thorpej Exp $ */
+/* $NetBSD: cy82c693.c,v 1.2 2000/11/24 03:59:08 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.1 2000/06/06 03:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.2 2000/11/24 03:59:08 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -64,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.1 2000/06/06 03:07:39 thorpej Exp $")
 static struct cy82c693_handle cyhc_handle;
 static int cyhc_initialized;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 static struct simplelock cyhc_slock = SIMPLELOCK_INITIALIZER;
-#endif
 
 #define	CYHC_LOCK(s)							\
 do {									\
