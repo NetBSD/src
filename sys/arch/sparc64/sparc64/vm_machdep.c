@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2003/12/02 22:44:17 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.53 2004/01/04 11:33:31 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2003/12/02 22:44:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,16 +330,8 @@ cpu_setfunc(l, func, arg)
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }	
 
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
- */
 void
-cpu_exit(l, proc)
+cpu_lwp_free(l, proc)
 	struct lwp *l;
 	int proc;
 {
@@ -352,7 +344,21 @@ cpu_exit(l, proc)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(l, proc);
+}
+
+/*
+ * cpu_exit is called as the last action during exit.
+ *
+ * We clean up a little and then call switchexit() with the old proc
+ * as an argument.  switchexit() switches to the idle context, schedules
+ * the old vmspace and stack to be freed, then selects a new process to
+ * run.
+ */
+void
+cpu_exit(l)
+	struct lwp *l;
+{
+	switchexit(l, 0);
 	/* NOTREACHED */
 }
 

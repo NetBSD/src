@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.61 2003/08/07 16:26:33 agc Exp $ */
+/* $NetBSD: cpu.h,v 1.62 2004/01/04 11:33:29 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -216,7 +216,6 @@ void	cpu_pause_resume_all(int);
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		alpha_pal_whami()
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 

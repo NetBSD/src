@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.9 2003/11/10 08:51:52 wiz Exp $	   */
+/*	$NetBSD: subr.S,v 1.10 2004/01/04 11:33:31 jdolecek Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -456,9 +456,6 @@ JSBENTRY(Swtchto)
 ENTRY(cpu_exit,0)
 	movl	4(%ap),%r6	# Process pointer in %r6
 
-	pushl	%r6
-	calls	$1,_C_LABEL(pmap_deactivate)
-
 	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
 	mfpr	$PR_SSP,%r7	# get cpu_info ptr
 	movl	CI_EXIT(%r7),%r8	# scratch page address
@@ -467,7 +464,7 @@ ENTRY(cpu_exit,0)
 	mtpr	%r8,$PR_PCBB	# new PCB
 	mtpr	%r7,$PR_SSP	# In case...
 	pushl	%r6
-	calls	$1,_C_LABEL(exit2)	# release last resources.
+	calls	$1,_C_LABEL(lwp_exit2)	# release last resources.
 	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
 #if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_lock_idle)

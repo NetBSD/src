@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2003/11/15 23:47:58 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2003/11/15 23:47:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -302,6 +302,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
 }
 
+void
+cpu_lwp_free(struct lwp *l)
+{
+
+	/* Nothing to do */
+}
+
 /*
  * void cpu_exit(struct lwp *l):
  *	+ Change kernel context to lwp0's one.
@@ -309,12 +316,11 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  *	+ switch to another process.
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_exit(struct lwp *l)
 {
 	struct switchframe *sf;
 
 	splsched();
-	uvmexp.swtch++;
 
 	/* Switch to lwp0 stack */
 	curlwp = 0;
@@ -330,10 +336,7 @@ cpu_exit(struct lwp *l, int proc)
 		"r"(sf->sf_r7_bank));
 
 	/* Schedule freeing process resources */
-	if (proc)
-		exit2(l);
-	else
-		lwp_exit2(l);
+	lwp_exit2(l);
 
 	cpu_switch(l, NULL);
 	/* NOTREACHED */
