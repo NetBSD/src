@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.5 1996/05/09 23:46:18 cgd Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.6 1997/05/24 10:26:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -44,3 +44,6 @@
 #define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEL)
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
+
+extern void	cpu_exec_ecoff_setregs __P((
+    struct proc *, struct exec_package *, u_long, register_t *));

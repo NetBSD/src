@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.32 1997/05/24 09:53:11 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.33 1997/05/24 10:26:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -139,6 +139,7 @@ extern char *ultrix_syscallnames[];
  * Select the appropriate setregs callback for the target architecture.
  */
 #ifdef mips
+#include <machine/ecoff_machdep.h>
 #define ULTRIX_EXEC_SETREGS cpu_exec_ecoff_setregs
 #endif /* mips */
 
