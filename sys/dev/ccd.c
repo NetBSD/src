@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.61 1999/03/04 02:20:13 mjacob Exp $	*/
+/*	$NetBSD: ccd.c,v 1.62 1999/03/04 02:38:19 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -789,9 +789,10 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf(" dev 0x%x(u%ld): cbp %p bn %d addr %p bcnt %ld\n",
-		    ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
-		    cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
+		printf(" dev 0x%x(u%lu): cbp %p bn %d addr %p bcnt %ld\n",
+		    ci->ci_dev, (unsigned long) (ci-cs->sc_cinfo), cbp,
+		    cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
+		    cbp->cb_buf.b_bcount);
 #endif
 
 	return (cbp);
