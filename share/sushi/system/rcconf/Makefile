@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/24 18:47:08 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2005/01/11 22:21:36 peter Exp $
 
 FILES=	form
 FILESDIR=${BINDIR}/sushi/system/rcconf
-SCRIPTS= script script1 script2 script3 script4
+SCRIPTS= script script1 script2 script4
 SCRIPTSDIR=${BINDIR}/sushi/system/rcconf
 NOOBJ=	# defined
 
