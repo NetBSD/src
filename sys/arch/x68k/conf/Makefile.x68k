@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.22 1997/11/12 22:26:48 thorpej Exp $
+#	$NetBSD: Makefile.x68k,v 1.23 1997/11/12 23:12:40 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -21,15 +21,19 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-CC?=	cc
+AR?=	ar
 AS?=	as
+CC?=	cc
+CPP?=	cpp
 LD?=	ld
 LORDER?=lorder
 MKDEP?=	mkdep
 NM?=	nm
+RANLIB?=ranlib
 SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
+
 COPTS?= -O2
 
 # source tree is located via $S relative to the compilation directory
