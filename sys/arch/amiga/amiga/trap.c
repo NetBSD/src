@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.20 1994/05/25 07:58:35 chopps Exp $
+ *	$Id: trap.c,v 1.21 1994/06/13 08:12:35 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ panictrap(type, code, v, fp)
 	static int panicing = 0;
 	if (panicing++ == 0) {
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(fp->f_regs, 128);
+		regdump(fp, 128);
 	}
 	type &= ~T_USER;
 	DCIS(); /* XXX? push cache */

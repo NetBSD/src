@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.19 1994/06/05 07:45:15 chopps Exp $
+ *	$Id: ite.c,v 1.20 1994/06/13 08:12:58 chopps Exp $
  */
 
 /*
@@ -870,14 +870,14 @@ ite_filter(c, caller)
 	    (kbd_ite && kbd_ite->keypad_appmode)) {
 		static char *in = "0123456789-+.\r()/*";
 		static char *out = "pqrstuvwxymlnMPQRS";
-		char *cp;
+		char *cp = index (in, code);
 
 		/* 
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
 		(*linesw[kbd_tty->t_line].l_rint) (27, kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) ('0', kbd_tty);
+		(*linesw[kbd_tty->t_line].l_rint) ('O', kbd_tty);
 		(*linesw[kbd_tty->t_line].l_rint) (out[cp - in], kbd_tty);
 		splx(s);
 		return;
@@ -1445,9 +1445,9 @@ doesc:
 		  
 		  case 'Z':	/* request ID */
 		    if (ip->emul_level == EMUL_VT100)
-		      ite_sendstr (ip, "\033[61;0c"); /* XXX not clean */
+		      ite_sendstr ("\033[?61;0c"); /* XXX not clean */
 		    else
-		      ite_sendstr (ip, "\033[63;0c"); /* XXX not clean */
+		      ite_sendstr ("\033[?63;0c"); /* XXX not clean */
 		    ip->escape = 0;
 		    return;
 
@@ -1568,16 +1568,16 @@ doesc:
   		    *ip->ap = 0;
 		    if (ip->argbuf[0] == '>')
 		      {
-		        ite_sendstr (ip, "\033[>24;0;0;0c");
+		        ite_sendstr ("\033[>24;0;0;0c");
 		      }
 		    else switch (ite_zargnum(ip))
 		      {
 		      case 0:
 			/* primary DA request, send primary DA response */
 			if (ip->emul_level == EMUL_VT100)
-		          ite_sendstr (ip, "\033[?1;1c");
+		          ite_sendstr ("\033[?1;1c");
 		        else
-		          ite_sendstr (ip, "\033[63;0c");
+		          ite_sendstr ("\033[?63;1c");
 			break;
 		      }
 		    ip->escape = 0;
@@ -1587,13 +1587,13 @@ doesc:
 		    switch (ite_zargnum(ip))
 		      {
 		      case 5:
-		        ite_sendstr (ip, "\033[0n");	/* no malfunction */
+		        ite_sendstr ("\033[0n");	/* no malfunction */
 			break;
 		      case 6:
 			/* cursor position report */
 		        sprintf (ip->argbuf, "\033[%d;%dR", 
 				 ip->cury + 1, ip->curx + 1);
-			ite_sendstr (ip, ip->argbuf);
+			ite_sendstr (ip->argbuf);
 			break;
 		      }
 		    ip->escape = 0;
@@ -1605,10 +1605,10 @@ doesc:
 		      {
 		      case 0:
 			/* Fake some terminal parameters.  */
-		        ite_sendstr (ip, "\033[2;1;1;112;112;1;0x");
+		        ite_sendstr ("\033[2;1;1;112;112;1;0x");
 			break;
 		      case 1:
-		        ite_sendstr (ip, "\033[3;1;1;112;112;1;0x");
+		        ite_sendstr ("\033[3;1;1;112;112;1;0x");
 			break;
 		      }
 		    ip->escape = 0;
@@ -1928,7 +1928,7 @@ doesc:
 
 		  case 'u':
 		    /* DECRQTSR */
-		    ite_sendstr (ip, "\033P\033\\");
+		    ite_sendstr ("\033P\033\\");
 		    ip->escape = 0;
 		    return;
 
@@ -1961,15 +1961,15 @@ doesc:
 		      {
 		        if (! strncmp (ip->argbuf, "15", 2))
 		          /* printer status: no printer */
-		          ite_sendstr (ip, "\033[13n");
+		          ite_sendstr ("\033[13n");
 		          
 		        else if (! strncmp (ip->argbuf, "25", 2))
 		          /* udk status */
-		          ite_sendstr (ip, "\033[20n");
+		          ite_sendstr ("\033[20n");
 		          
 		        else if (! strncmp (ip->argbuf, "26", 2))
 		          /* keyboard dialect: US */
-		          ite_sendstr (ip, "\033[27;1n");
+		          ite_sendstr ("\033[27;1n");
 		      }
 		    ip->escape = 0;
 		    return;
