@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.22 1998/06/09 07:46:32 scottr Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.23 1998/07/28 17:30:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,6 +76,10 @@ static ufs_daddr_t	ffs_mapsearch __P((int, struct fs *, struct cg *,
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 static int ffs_checkblk __P((struct inode *, ufs_daddr_t, long size));
 #endif
+
+/* in ffs_tables.c */
+extern int inside[], around[];
+extern u_char *fragtbl[];
 
 /*
  * Allocate a block in the file system.

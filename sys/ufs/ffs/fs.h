@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.10 1998/07/28 04:17:51 mycroft Exp $	*/
+/*	$NetBSD: fs.h,v 1.11 1998/07/28 17:30:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -514,8 +514,3 @@ struct ocg {
  * Number of indirects in a file system block.
  */
 #define	NINDIR(fs)	((fs)->fs_nindir)
-
-#ifdef _KERNEL
-extern int inside[], around[];
-extern u_char *fragtbl[];
-#endif
