@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.34 2001/06/30 16:34:59 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.35 2001/06/30 17:02:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2159,6 +2159,7 @@ static void ti_txeof_tigon2(sc)
 	struct ti_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp;
 	struct txdmamap_pool_entry *dma;
+	int firstidx, cnt;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -2166,6 +2167,8 @@ static void ti_txeof_tigon2(sc)
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
+	firstidx = sc->ti_tx_saved_considx;
+	cnt = 0;
 	while (sc->ti_tx_saved_considx != sc->ti_tx_considx.ti_idx) {
 		u_int32_t		idx = 0;
 
@@ -2186,10 +2189,14 @@ static void ti_txeof_tigon2(sc)
 			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, dma, link);
 			sc->txdma[idx] = NULL;
 		}
+		cnt++;
 		sc->ti_txcnt--;
 		TI_INC(sc->ti_tx_saved_considx, TI_TX_RING_CNT);
 		ifp->if_timer = 0;
 	}
+
+	if (cnt != 0)
+		TI_CDTXSYNC(sc, firstidx, cnt, BUS_DMASYNC_POSTWRITE);
 
 	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -2371,7 +2378,7 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	u_int32_t		*txidx;
 {
 	struct ti_tx_desc	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, firstfrag, cur, cnt = 0;
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
@@ -2395,7 +2402,7 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 		return (ENOMEM);
 	}
 
-	cur = frag = *txidx;
+	cur = firstfrag = frag = *txidx;
 
 	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		/* IP header checksum field must be 0! */
@@ -2447,6 +2454,9 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	/* Sync the packet's DMA map. */
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+
+	/* Sync the descriptors we are using. */
+	TI_CDTXSYNC(sc, firstfrag, cnt, BUS_DMASYNC_PREWRITE);
 
 	sc->ti_cdata.ti_tx_chain[cur] = m_head;
 	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
