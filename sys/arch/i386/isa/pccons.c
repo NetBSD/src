@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.9 1993/04/20 23:45:21 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.10 1993/04/21 00:04:14 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -452,18 +452,25 @@ pcstart(tp)
 	register struct tty *tp;
 {
 	register struct ringb *rbp;
-	int c, s;
+	int s, len;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
 	rbp = &tp->t_out;
-	while(RB_LEN(rbp)) {
-		char c = getc(rbp);
-		if (!c) continue;
+	while(len = RB_LEN(rbp)) {
+		char buf[64], c, n;
+		if (len > sizeof(buf)) len = sizeof(buf);
+		for (n = 0; n < len; )
+			if (c = getc(rbp))
+				buf[n++] = c;
+			else
+				--len;
+		if (!len) continue;
 		tp->t_state |= TS_BUSY;
 		splx(s);
-		sput(c, 0);
+		for (n = 0; n < len; )
+			sput(buf[n++], 0);
 		s = spltty();
 		tp->t_state &= ~TS_BUSY;
 	}
