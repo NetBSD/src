@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.8 2002/10/14 13:43:18 wiz Exp $
+.\"	$NetBSD: cons.9,v 1.9 2003/02/14 01:05:22 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,6 +83,7 @@ Note that the
 value is ignored commonly.
 .It Fn cngetc
 Poll (busy wait) for a input and return the input key.
+Returns 0 if there is no console input device.
 .Fn cnpollc
 .Em must
 be called before
