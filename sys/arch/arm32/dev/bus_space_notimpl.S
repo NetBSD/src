@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.2 1997/10/27 00:26:07 mark Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.3 1998/04/01 22:55:45 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -68,12 +68,6 @@ LLABEL(__C(func,_text))						;	\
 /*
  * Generic bus_space I/O functions
  */
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
 
 /*
  * read single
