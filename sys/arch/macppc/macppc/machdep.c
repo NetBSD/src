@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1999/02/02 16:47:08 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1999/02/19 14:11:35 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -334,6 +334,8 @@ initppc(startkernel, endkernel, args)
 	pmap_bootstrap(startkernel, endkernel);
 
 	restore_ofw_mapping();
+	battable[msgbuf_paddr >> 28].batl = BATL(msgbuf_paddr, BAT_M);
+	battable[msgbuf_paddr >> 28].batu = BATU(msgbuf_paddr);
 }
 
 static int N_mapping;
@@ -423,6 +425,9 @@ identifycpu()
 		break;
 	case 7:
 		sprintf(cpu_model, "603ev");
+		break;
+	case 8:
+		sprintf(cpu_model, "750");
 		break;
 	case 9:
 		sprintf(cpu_model, "604ev");
@@ -1028,7 +1033,7 @@ cpu_reboot(howto, what)
 	if (ap[-2] == '-')
 		*ap1 = 0;
 #if NADB > 0
-	powermac_restart();	/* not return */
+	adb_restart();	/* not return */
 #endif
 	ppc_boot(str);
 }
