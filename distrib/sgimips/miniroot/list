@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/06/12 22:59:33 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/12/30 14:55:28 pooka Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -31,6 +31,7 @@ SYMLINK	/tmp	var/tmp
 # we need the contents of /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/boot.elf	usr/mdec/boot.elf
+COPY	${DESTDIR}/usr/mdec/boot.ip32	usr/mdec/boot.ip32
 
 # the zoneinfo (dont use)
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo

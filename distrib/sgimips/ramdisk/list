@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/07/18 16:23:36 rafal Exp $
+#	$NetBSD: list,v 1.3 2002/12/30 14:55:29 pooka Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -63,6 +63,7 @@ LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/boot.elf		usr/mdec/boot.elf
+COPY	${DESTDIR}/usr/mdec/boot.ip32		usr/mdec/boot.ip32
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
