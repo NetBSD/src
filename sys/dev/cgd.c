@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.1 2002/10/04 18:22:35 elric Exp $ */
+/* $NetBSD: cgd.c,v 1.2 2002/10/14 19:16:55 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.1 2002/10/04 18:22:35 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.2 2002/10/14 19:16:55 elric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -464,7 +464,8 @@ cgddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct	cgd_softc *cs;
 
-	DPRINTF_FOLLOW(("cgddump(%d, %d, %p, %d)\n", dev, blkno, va, size));
+	DPRINTF_FOLLOW(("cgddump(%d, %d, %p, %lu)\n", dev, blkno, va,
+	    (unsigned long)size));
 	GETCGD_SOFTC(cs, dev);
 	return dk_dump(di, &cs->sc_dksc, dev, blkno, va, size);
 }
