@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.5 1997/01/09 20:20:36 tls Exp $
+.\"	$NetBSD: m4.1,v 1.6 1997/02/12 07:09:07 mikel Exp $
 .\"
 .Dd January 26, 1993
 .Dt m4 1
@@ -14,18 +14,18 @@
 .Op Fl U Ns Ar name
 .Sh DESCRIPTION
 The
-.Nm m4
+.Nm
 utility is a macro processor that can be used as a front end to any
 language (e.g., C, ratfor, fortran, lex, and yacc).
-.Nm m4
+.Nm
 reads from the standard input and writes
 the processed text to the standard output.
 .Pp
 Macro calls have the form name(argument1[, argument2, ...,] argumentN).
 .Pp
 There cannot be any space following the macro name and the open
-parentheses '('.  If the macro name is not followed by an open
-parentheses it is processed with no arguments.
+parenthesis '('.  If the macro name is not followed by an open
+parenthesis it is processed with no arguments.
 .Pp
 Macro names consist of a leading alphabetic or underscore
 possibly followed by alphanumeric or underscore characters, therefore
@@ -49,7 +49,7 @@ Undefine the symbol
 .Ar name .
 .El
 .Sh SYNTAX
-.Nm m4
+.Nm
 provides the following built-in macros.  They may be
 redefined, losing their original meaning.
 Return values are NULL unless otherwise stated.
@@ -79,7 +79,7 @@ macro definitions (even for built-in macros).
 .It divert
 There are 10 output queues (numbered 0-9).
 At the end of processing
-.Nm m4
+.Nm
 concatenates all the queues in numerical order to produce the
 final output.  Initially the output queue is 0.  The divert
 macro allows you to select a new output queue (an invalid argument
@@ -152,7 +152,7 @@ performed.
 .It sinclude
 Similar to include, except it ignores any errors.
 .It spaste
-Similar to spaste, except it ignores any errors.
+Similar to paste, except it ignores any errors.
 .It substr
 Returns a substring of the first argument starting at the offset specified
 by the second argument and the length specified by the third argument.
