@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.6 1994/03/10 20:59:28 pk Exp $
+ * $Id: locore.s,v 1.7 1994/03/16 16:14:44 pk Exp $
  */
 
 #define	LOCORE
@@ -2555,7 +2555,7 @@ _esigcode:
 #ifdef GPROF
 	.globl	mcount
 #define	ENTRY(x) \
-	.globl _##x; _##x: \
+	.globl _##x; _##x: ; \
 	save	%sp, -CCFSZ, %sp; \
 	call	mcount; \
 	nop; \
