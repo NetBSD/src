@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.10 2000/02/10 18:18:01 drochner Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.11 2000/02/26 19:02:40 mycroft Exp $
 
 # System configuration variables:
 #
@@ -126,8 +126,7 @@ incinstall::
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@rm -rf $$t"; \
-		echo "	@ln -s $$l $$t"; \
+		echo "	@rm -rf $$t; ln -s $$l $$t"; \
 	 done; \
 	) | ${MAKE} -f- all
 .endif
