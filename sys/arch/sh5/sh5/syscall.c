@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2002/07/12 20:43:12 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2002/10/14 09:46:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -209,10 +209,7 @@ syscall_plain(struct proc *p, struct trapframe *tf)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
-		    &copyargs[8], (nargs - 8) * sizeof(register_t));
-		if (error)
-			goto bad;
+		args = copyargs;
 		copyargs[0] = tf->tf_caller.r2;
 		copyargs[1] = tf->tf_caller.r3;
 		copyargs[2] = tf->tf_caller.r4;
@@ -221,7 +218,10 @@ syscall_plain(struct proc *p, struct trapframe *tf)
 		copyargs[5] = tf->tf_caller.r7;
 		copyargs[6] = tf->tf_caller.r8;
 		copyargs[7] = tf->tf_caller.r9;
-		args = copyargs;
+		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
+		    &copyargs[8], (nargs - 8) * sizeof(register_t));
+		if (error)
+			goto bad;
 		break;
 
 	case 8:
@@ -307,10 +307,7 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
-		    &copyargs[8], (nargs - 8) * sizeof(register_t));
-		if (error)
-			goto bad;
+		args = copyargs;
 		copyargs[0] = tf->tf_caller.r2;
 		copyargs[1] = tf->tf_caller.r3;
 		copyargs[2] = tf->tf_caller.r4;
@@ -319,7 +316,10 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 		copyargs[5] = tf->tf_caller.r7;
 		copyargs[6] = tf->tf_caller.r8;
 		copyargs[7] = tf->tf_caller.r9;
-		args = copyargs;
+		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
+		    &copyargs[8], (nargs - 8) * sizeof(register_t));
+		if (error)
+			goto bad;
 		break;
 
 	case 8:
