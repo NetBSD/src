@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.10 1998/04/01 23:00:13 mark Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.11 1998/06/02 19:14:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -59,7 +59,6 @@
  *   Only registers r0-r3 & r12 may be corrupted
  */
 
-#define USE_BCOPY	/* with bcopy.S 1.4 */
 .text
 Lcurpcb:
 	.word	_curpcb
