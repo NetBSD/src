@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.1 2003/01/20 20:12:18 christos Exp $ */
+/* $NetBSD: sem.c,v 1.2 2003/01/22 22:12:56 thorpej Exp $ */
 
 /****************************************************************************
  *
@@ -51,11 +51,15 @@
 static void *
 entry(void * a_arg)
 {
+	pthread_t self = pthread_self();
 	sem_t * sem = (sem_t *) a_arg;
 
-;	sem_wait(sem);
 #ifdef DEBUG
-	fprintf(stderr, "Got semaphore\n");
+	printf("Thread %p waiting for semaphore...\n", self);
+#endif
+	sem_wait(sem);
+#ifdef DEBUG
+	printf("Thread %p got semaphore\n");
 #endif
   
 	return NULL;
@@ -68,13 +72,13 @@ int
 main()
 {
 #ifdef DEBUG
-	fprintf(stderr, "Test begin\n");
+	printf("Test begin\n");
 #endif
 	usem();
 	ksem();
 
 #ifdef DEBUG
-	fprintf(stderr, "Test end\n");
+	printf("Test end\n");
 #endif
 	return 0;
 }
@@ -115,6 +119,10 @@ usem()
 	}
 
 	for (i = 0; i < NTHREADS; i++) {
+		sleep(1);
+#ifdef DEBUG
+		printf("main loop 1: posting...\n");
+#endif
 		assert(0 == sem_post(&sem_a));
 	}
   
@@ -127,6 +135,10 @@ usem()
 	}
 
 	for (i = 0; i < NTHREADS; i++) {
+		sleep(1);
+#ifdef DEBUG
+		printf("main loop 2: posting...\n");
+#endif
 		assert(0 == sem_post(&sem_a));
 	}
   
