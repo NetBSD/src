@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.26 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.27 1999/08/16 23:36:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,15 +45,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/ioccom.h>
-#include <sys/conf.h>
-#endif
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -70,12 +63,8 @@
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
 
-#if defined(__NetBSD__)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
-#elif defined(__FreeBSD__)
-#include <machine/mouse.h>
-#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (umsdebug) logprintf x
@@ -86,14 +75,14 @@ int	umsdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#define UMSUNIT(s)	(minor(s)&0x1f)
+#define UMS_BUT(i) ((i) == 1 || (i) == 2 ? 3 - (i) : i)
+
+#define UMSUNIT(s)	(minor(s))
 
 #define PS2LBUTMASK	x01
 #define PS2RBUTMASK	x02
 #define PS2MBUTMASK	x04
 #define PS2BUTMASK 0x0f
-
-#define QUEUE_BUFSIZE	240	/* MUST be divisible by 3 _and_ 4 */
 
 struct ums_softc {
 	bdevice sc_dev;			/* base device */
@@ -112,26 +101,12 @@ struct ums_softc {
 	int flags;		/* device configuration */
 #define UMS_Z		0x01	/* z direction available */
 	int nbuttons;
-#define MAX_BUTTONS	7	/* chosen because sc_buttons is u_char */
+#define MAX_BUTTONS	31	/* chosen because sc_buttons is u_int32_t */
 
 	char revz;		/* Z-axis is reversed */
 
-#if defined(__NetBSD__)
-	u_char sc_buttons;	/* mouse button status */
+	u_int32_t sc_buttons;	/* mouse button status */
 	struct device *sc_wsmousedev;
-#elif defined(__FreeBSD__)
-	u_char		qbuf[QUEUE_BUFSIZE];
-	u_char		dummy[100];	/* XXX just for safety and for now */
-	int		qcount, qhead, qtail;
-	mousehw_t	hw;
-	mousemode_t	mode;
-	mousestatus_t	status;
-
-	int		state;
-#	  define	UMS_ASLEEP	0x01	/* readFromDevice is waiting */
-#	  define	UMS_SELECT	0x02	/* select is waiting */
-	struct selinfo	rsel;		/* process waiting in select */
-#endif
 };
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
@@ -141,8 +116,6 @@ void ums_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 static int	ums_enable __P((void *));
 static void	ums_disable __P((void *));
-
-#if defined(__NetBSD__)
 static int	ums_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 const struct wsmouse_accessops ums_accessops = {
@@ -150,23 +123,6 @@ const struct wsmouse_accessops ums_accessops = {
 	ums_ioctl,
 	ums_disable,
 };
-
-#elif defined(__FreeBSD__)
-static d_open_t ums_open;
-static d_close_t ums_close;
-static d_read_t ums_read;
-static d_ioctl_t ums_ioctl;
-static d_poll_t ums_poll;
-
-#define UMS_CDEV_MAJOR	111
-
-static struct  cdevsw ums_cdevsw = {
-	ums_open,	ums_close,	ums_read,	nowrite,
-	ums_ioctl,	nostop,		nullreset,	nodevtotty,
-	ums_poll,	nommap,
-	NULL,		"ums",		NULL,		-1
-};
-#endif
 
 USB_DECLARE_DRIVER(ums);
 
@@ -204,9 +160,7 @@ USB_ATTACH(ums)
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-#if defined(__NetBSD__)
 	struct wsmousedev_attach_args a;
-#endif
 	int size;
 	void *desc;
 	usbd_status r;
@@ -331,41 +285,10 @@ USB_ATTACH(ums)
 	DPRINTF(("ums_attach: size=%d, id=%d\n", sc->sc_isize, sc->sc_iid));
 #endif
 
-#if defined(__NetBSD__)
 	a.accessops = &ums_accessops;
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-#elif defined(__FreeBSD__)
-	sc->hw.buttons = 2;		/* XXX hw&mode values are bogus */
-	sc->hw.iftype = MOUSE_IF_PS2;
-	sc->hw.type = MOUSE_MOUSE;
-	if (sc->flags & UMS_Z)
-		sc->hw.model = MOUSE_MODEL_INTELLI;
-	else
-		sc->hw.model = MOUSE_MODEL_GENERIC;
-	sc->hw.hwid = 0;
-	sc->mode.protocol = MOUSE_PROTO_PS2;
-	sc->mode.rate = -1;
-	sc->mode.resolution = MOUSE_RES_DEFAULT;
-	sc->mode.accelfactor = 1;
-	sc->mode.level = 0;
-	if (sc->flags & UMS_Z) {
-		sc->mode.packetsize = MOUSE_INTELLI_PACKETSIZE;
-		sc->mode.syncmask[0] = 0xc8;
-	} else {
-		sc->mode.packetsize = MOUSE_PS2_PACKETSIZE;
-		sc->mode.syncmask[0] = 0xc0;
-	}
-	sc->mode.syncmask[1] = 0;
-
-	sc->status.flags = 0;
-	sc->status.button = sc->status.obutton = 0;
-	sc->status.dx = sc->status.dy = sc->status.dz = 0;
-
-	sc->rsel.si_flags = 0;
-	sc->rsel.si_pid = 0;
-#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -406,15 +329,9 @@ ums_intr(reqh, addr, status)
 	struct ums_softc *sc = addr;
 	u_char *ibuf;
 	int dx, dy, dz;
-	u_char buttons = 0;
+	u_int32_t buttons = 0;
 	int i;
 	int s;
-
-#if defined(__NetBSD__)
-#define UMS_BUT(i) ((i) == 1 || (i) == 2 ? 3 - (i) : i)
-#elif defined(__FreeBSD__)
-#define UMS_BUT(i) (i)
-#endif
 
 	DPRINTFN(5, ("ums_intr: sc=%p status=%d\n", sc, status));
 	DPRINTFN(5, ("ums_intr: data = %02x %02x %02x\n",
@@ -443,7 +360,6 @@ ums_intr(reqh, addr, status)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
 
-#if defined(__NetBSD__)
 	if (dx || dy || dz || buttons != sc->sc_buttons) {
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
 			dx, dy, dz, buttons));
@@ -453,55 +369,6 @@ ums_intr(reqh, addr, status)
 			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz);
 			splx(s);
 		}
-#elif defined(__FreeBSD__)
-	if (dx || dy || dz || buttons != sc->status.button) {
-		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
-			dx, dy, dz, buttons));
-
-		sc->status.button = buttons;
-		sc->status.dx += dx;
-		sc->status.dy += dy;
-		sc->status.dz += dz;
-
-		/* Discard data in case of full buffer */
-		if (sc->qcount == sizeof(sc->qbuf)) {
-			DPRINTF(("Buffer full, discarded packet"));
-			return;
-		}
-
-		sc->qbuf[sc->qhead] = MOUSE_PS2_SYNC;
-		if (dx < 0)
-			sc->qbuf[sc->qhead] |= MOUSE_PS2_XNEG;
-		if (dx > 255 || dx < -255)
-			sc->qbuf[sc->qhead] |= MOUSE_PS2_XOVERFLOW;
-		if (dy < 0)
-			sc->qbuf[sc->qhead] |= MOUSE_PS2_YNEG;
-		if (dy > 255 || dy < -255)
-			sc->qbuf[sc->qhead] |= MOUSE_PS2_YOVERFLOW;
-		sc->qbuf[sc->qhead++] |= buttons;
-		sc->qbuf[sc->qhead++] = dx;
-		sc->qbuf[sc->qhead++] = dy;
-		sc->qcount += 3;
-		if (sc->flags & UMS_Z) {
-			sc->qbuf[sc->qhead++] = dz;
-			sc->qcount++;
-		}
-#ifdef USB_DEBUG
-		if (sc->qhead > sizeof(sc->qbuf))
-			DPRINTF(("Buffer overrun! %d %d\n", 
-				 sc->qhead, sizeof(sc->qbuf)));
-#endif
-		/* wrap round at end of buffer */
-		if (sc->qhead >= sizeof(sc->qbuf))
-			sc->qhead = 0;
-
-		/* someone waiting for data */
-		if (sc->state & UMS_ASLEEP)
-			wakeup(sc);
-		/* wake up any pending selects */
-		selwakeup(&sc->rsel);
-		sc->state &= ~UMS_SELECT;
-#endif
 	}
 }
 
@@ -518,21 +385,7 @@ ums_enable(v)
 		return EBUSY;
 
 	sc->sc_enabled = 1;
-#if defined(__NetBSD__)
 	sc->sc_buttons = 0;
-#elif defined(__FreeBSD__)
-	sc->qcount = 0;
-	sc->qhead = sc->qtail = 0;
-#ifdef USB_DEBUG
-	if (sizeof(sc->qbuf) % 4 || sizeof(sc->qbuf) % 3) {
-		DPRINTF(("Buffer size not divisible by 3 or 4\n"));
-		return ENXIO;
-	}
-#endif
-	sc->status.flags = 0;
-	sc->status.button = sc->status.obutton = 0;
-	sc->status.dx = sc->status.dy = sc->status.dz = 0;
-#endif
 
 	/* Set up interrupt pipe. */
 	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
@@ -566,14 +419,8 @@ ums_disable(v)
 	usbd_close_pipe(sc->sc_intrpipe);
 
 	sc->sc_enabled = 0;
-
-#if defined(USBVERBOSE) && defined(__FreeBSD__)
-	if (sc->qcount != 0)
-		DPRINTF(("Discarded %d bytes in queue\n", sc->qcount));
-#endif
 }
 
-#if defined(__NetBSD__)
 static int
 ums_ioctl(v, cmd, data, flag, p)
 	void *v;
@@ -592,161 +439,3 @@ ums_ioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-#elif defined(__FreeBSD__)
-static int
-ums_open(dev_t dev, int flag, int fmt, struct proc *p)
-{
-	struct ums_softc *sc = devclass_get_softc(ums_devclass, UMSUNIT(dev));
-
-	if (!sc) {
-		DPRINTF(("sc not found at open"));
-		return EINVAL;
-	}
-
-	return ums_enable(sc);
-}
-
-static int
-ums_close(dev_t dev, int flag, int fmt, struct proc *p)
-{
-	struct ums_softc *sc = devclass_get_softc(ums_devclass, UMSUNIT(dev));
-
-	if (!sc) {
-		DPRINTF(("sc not found at close"));
-		return EINVAL;
-	}
-
-	if (sc->sc_enabled)
-		ums_disable(sc);
-	return 0;
-}
-
-static int
-ums_read(dev_t dev, struct uio *uio, int flag)
-{
-	struct ums_softc *sc = devclass_get_softc(ums_devclass, UMSUNIT(dev));
-	int s;
-	char buf[sizeof(sc->qbuf)];
-	int l = 0;
-	int error;
-
-	if (!sc || !sc->sc_enabled) {
-		DPRINTF(("sc not found at read"));
-		return EINVAL;
-	}
-
-	s = splusb();
-	while (sc->qcount == 0 )  {
-		/* NWH XXX non blocking I/O ??
-		if (non blocking I/O ) {
-			splx(s);
-			return EWOULDBLOCK;
-		} else {
-		*/
-		sc->state |= UMS_ASLEEP;
-		error = tsleep(sc, PZERO | PCATCH, "umsrea", 0);
-		sc->state &= ~UMS_ASLEEP;
-		if (error) {
-			splx(s);
-			return error;
-		}
-	}
-
-	while ((sc->qcount > 0) && (uio->uio_resid > 0)) {
-		l = (sc->qcount < uio->uio_resid? sc->qcount:uio->uio_resid);
-		if (l > sizeof(buf))
-			l = sizeof(buf);
-		if (l > sizeof(sc->qbuf) - sc->qtail)		/* transfer till end of buf */
-			l = sizeof(sc->qbuf) - sc->qtail;
-
-		splx(s);
-		uiomove(&sc->qbuf[sc->qtail], l, uio);
-		s = splusb();
-
-		if ( sc->qcount - l < 0 ) {
-			DPRINTF(("qcount below 0, count=%d l=%d\n", sc->qcount, l));
-			sc->qcount = l;
-		}
-		sc->qcount -= l;	/* remove the bytes from the buffer */
-		sc->qtail = (sc->qtail + l) % sizeof(sc->qbuf);
-	}
-	splx(s);
-
-	return 0;
-}
-
-static int
-ums_poll(dev_t dev, int events, struct proc *p)
-{
-	struct ums_softc *sc = devclass_get_softc(ums_devclass, UMSUNIT(dev));
-	int revents = 0;
-	int s;
-
-	if (!sc) {
-		DPRINTF(("sc not found at poll"));
-		return 0;	/* just to make sure */
-	}
-
-	s = splusb();
-	if (events & (POLLIN | POLLRDNORM))
-		if (sc->qcount) {
-			revents = events & (POLLIN | POLLRDNORM);
-		} else {
-			sc->state |= UMS_SELECT;
-			selrecord(p, &sc->rsel);
-		}
-	splx(s);
-
-	return revents;
-}
-
-int
-ums_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
-{
-	struct ums_softc *sc = devclass_get_softc(ums_devclass, UMSUNIT(dev));
-	int error = 0;
-	int s;
-
-	if (!sc) {
-		DPRINTF(("sc not found at ioctl"));
-		return (ENOENT);
-	}
-
-	switch(cmd) {
-	case MOUSE_GETHWINFO:
-		*(mousehw_t *)addr = sc->hw;
-		break;
-	case MOUSE_GETMODE:
-		*(mousemode_t *)addr = sc->mode;
-		break;
-	case MOUSE_GETLEVEL:
-		*(int *)addr = sc->mode.level;
-		break;
-	case MOUSE_GETSTATUS: {
-		mousestatus_t *status = (mousestatus_t *) addr;
-
-		s = splusb();
-		*status = sc->status;
-		sc->status.obutton = sc->status.button;
-		sc->status.button = 0;
-		sc->status.dx = sc->status.dy = sc->status.dz = 0;
-		splx(s);
-
-		if (status->dx || status->dy || status->dz)
-			status->flags |= MOUSE_POSCHANGED;
-		if (status->button != status->obutton)
-			status->flags |= MOUSE_BUTTONSCHANGED;
-		break;
-		}
-	default:
-		error = ENOTTY;
-	}
-
-	return error;
-}
-#endif
-
-#if defined(__FreeBSD__)
-CDEV_DRIVER_MODULE(ums, usb, ums_driver, ums_devclass,
-			UMS_CDEV_MAJOR, ums_cdevsw, usbd_driver_load, 0);
-#endif
