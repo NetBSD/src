@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.73 2003/03/30 07:38:42 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.74 2003/04/08 18:55:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -311,6 +311,8 @@ extern int	 COLS;			/* Columns on the screen. */
 extern int	 LINES;			/* Lines on the screen. */
 extern int	 COLORS;		/* Max colours on the screen. */
 extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
+
+extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 
 #define	ERR	(0)			/* Error return. */
 #define	OK	(1)			/* Success return. */
