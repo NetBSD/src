@@ -1,7 +1,7 @@
-/*	$NetBSD: bootinfo.h,v 1.4 1999/03/08 21:44:48 drochner Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.1 1999/03/08 21:44:48 drochner Exp $	*/
 
 /*
- * Copyright (c) 1997
+ * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,36 @@
  *
  */
 
-#include <machine/bootinfo.h>
+#include <lib/libsa/stand.h>
+#include "libi386.h"
+#include "bootinfo.h"
 
-struct bootinfo {
-	int nentries;
-	physaddr_t entry[1];
-};
+extern int getmementry __P((int *, int *));
 
-#define BI_NHD	16
+void
+bi_getmemmap()
+{
+	int buf[5], i, nranges, n;
+	struct btinfo_memmap *bimm;
 
-extern struct bootinfo *bootinfo;
+	nranges = 0;
+	i = 0;
+	do {
+		if (getmementry(&i, buf))
+			break;
+		nranges++;
+	} while (i);
 
-#define BI_ALLOC(max) (bootinfo = alloc(sizeof(struct bootinfo) \
-                                        + ((max) - 1) * sizeof(physaddr_t))) \
-                      ->nentries = 0
+	bimm = alloc(sizeof(struct btinfo_memmap)
+		+ (nranges - 1) * sizeof(struct bi_memmap_entry));
 
-#define BI_FREE() free(bootinfo, 0)
+	i = 0;
+	for (n = 0; n < nranges; n++) {
+		getmementry(&i, buf);
+		bcopy(buf, &bimm->entry[n], sizeof(struct bi_memmap_entry));
+	}
+	bimm->num = nranges;
 
-#define BI_ADD(x, type, size) bi_add((struct btinfo_common*)(x), type, size)
-
-void bi_add __P((struct btinfo_common*, int, int));
-void bi_getbiosgeom __P((void));
-void bi_getmemmap __P((void));
+	BI_ADD(bimm, BTINFO_MEMMAP, sizeof(struct btinfo_memmap)
+	       + (nranges - 1) * sizeof(struct bi_memmap_entry));
+}
