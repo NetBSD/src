@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.52 2002/09/16 04:02:21 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.53 2002/10/21 10:10:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.52 2002/09/16 04:02:21 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.53 2002/10/21 10:10:26 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,10 +221,15 @@ main(int argc, char **argv)
 			err(1, NULL);
 		(void)memcpy(ep->name, utx->ut_name, sizeof(utx->ut_name));
 		(void)memcpy(ep->line, utx->ut_line, sizeof(utx->ut_line));
-		(void)memcpy(ep->host, utx->ut_host, sizeof(utx->ut_host));
 		ep->name[sizeof(utx->ut_name)] = '\0';
 		ep->line[sizeof(utx->ut_line)] = '\0';
-		ep->host[sizeof(utx->ut_host)] = '\0';
+		if (!nflag || getnameinfo((struct sockaddr *)&utx->ut_ss,
+		    utx->ut_ss.ss_len, ep->host, sizeof(ep->host), NULL, 0,
+		    NI_NUMERICHOST) != 0) {
+			(void)memcpy(ep->host, utx->ut_host,
+			    sizeof(utx->ut_host));
+			ep->host[sizeof(utx->ut_host)] = '\0';
+		}
 		ep->tv = utx->ut_tv;
 		*nextp = ep;
 		nextp = &(ep->next);
