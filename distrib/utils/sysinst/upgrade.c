@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.20.10.1 2000/09/08 23:57:20 hubertf Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.20.10.2 2000/09/11 22:13:12 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,17 +84,19 @@ do_upgrade()
 		return;
 
 	/*
-	 * Move target /etc -> target /etc.old so existing configuration
-	 * isn't overwritten by upgrade.
-	 */
-	if (save_etc())
-		return;
-
-	/*
 	 * Save X symlink, ...
 	 */
 	if (save_X())
 		return;
+
+	/*
+	 * Move target /etc -> target /etc.old so existing configuration
+	 * isn't overwritten by upgrade.
+	 */
+	if (save_etc()) {
+		merge_X();
+		return;
+	}
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
