@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/05/06 18:53:30 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/09/11 19:46:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -61,20 +61,34 @@
 #define	ARGC	(16*8)			
 	
 	.section	".text"
-	.align	16
+	.align	4
+.LLGETPC0:
+	retl
+	add	%o7,%l7,%l7
+
+	.section	".text"
+	.align	4
 	.global	_rtld_start
 	.type	_rtld_start,@function
 _rtld_start:
 	mov	0, %fp			/* Erect a fence post for ourselves */
 	mov	%g1, %l1		/* save ps_strings */
 	sub	%sp, 16, %sp		/* Make room for return args */
-	add	%sp, BIAS+(16*8), %l0	/* Now %l0 points at our return arg space. */
+
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
+	call	.LLGETPC0
+	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
+	ldx	[%l7+_DYNAMIC], %o0
+	ldx	[%l7+_GLOBAL_OFFSET_TABLE_], %o1
+	sub	%l7, %o1, %o1
+	call	_rtld_relocate_nonplt_self
+	 add	%o0, %o1, %o0
 
 	call	_rtld
-	 mov	%l0, %o0
+	 add	%sp, BIAS + ARGC, %o0	/* &argc - 16 */
 
-	ldx	[%l0], %g3		/* arg: cleanup */
-	ldx	[%l0 + 8], %g2		/* arg: obj */
+	ldx	[%sp + BIAS + ARGC], %g3	/* arg: cleanup */
+	ldx	[%sp + BIAS + ARGC + 8], %g2	/* arg: obj */
 	add	%sp, 16, %sp		/* restore stack pointer */
 
 	jmp	%o0

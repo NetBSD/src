@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.17 2002/09/06 15:51:24 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.18 2002/09/11 19:46:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -204,6 +204,8 @@ static const long reloc_target_bitmask[] = {
 /* %hi(v) with variable shift */
 #define	HIVAL(v, s)	(((v) >> (s)) &  0x003fffff)
 #define LOVAL(v)	((v) & 0x000003ff)
+
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
@@ -514,6 +516,32 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	}
 }
 
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where = (Elf_Addr)(relocbase + rela->r_addend);
+	}
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
@@ -521,6 +549,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	bool dodebug;
 {
 	const Elf_Rela *rela;
+
+	if (self)
+		return (0);
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr *where;
@@ -555,13 +586,12 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		value = rela->r_addend;
 
 		/*
-		 * Handle relative relocs here, because we might not be able to
-		 * access the reloc_target_{flags,bitmask}[] tables while
-		 * relocating ourself.
+		 * Handle relative relocs here, as an optimization.
 		 */
 		if (type == R_TYPE(RELATIVE)) {
-			/* XXXX -- apparently we ignore the preexisting value */
 			*where = (Elf_Addr)(obj->relocbase + value);
+			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
 			continue;
 		}
 
@@ -647,13 +677,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
-			rdbg(dodebug, ("%s %s in %s --> %p %s",
+			rdbg(dodebug, ("%s %s in %s --> %p in %s",
 			    reloc_names[type],
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)value, defobj->path));
+			    obj->path, (void *)*where, defobj->path));
 		} else {
-			rdbg(dodebug, ("%s --> %p", reloc_names[type],
-			    (void *)value));
+			rdbg(dodebug, ("%s in %s --> %p",
+			    reloc_names[type],
+			    obj->path, (void *)*where));
 		}
 #endif
 	}
