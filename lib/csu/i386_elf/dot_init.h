@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/05/11 22:44:15 ross Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2002/01/14 12:06:49 drochner Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -34,7 +34,6 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-#include <machine/asm.h>
 
 /*
  * These must be extern to avoid warnings ("declared static but never defined")
