@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2001/06/15 15:50:05 nonaka Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2001/08/26 02:47:34 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -119,9 +119,13 @@
 #define PHYS_TO_PCI_MEM(x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
 #define PCI_MEM_TO_PHYS(x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
+#ifdef _KERNEL
+void prep_bus_space_init __P((void));
+void prep_bus_space_mallocok __P((void));
 extern const struct powerpc_bus_space prep_io_space_tag;
 extern const struct powerpc_bus_space prep_isa_io_space_tag;
 extern const struct powerpc_bus_space prep_mem_space_tag;
 extern const struct powerpc_bus_space prep_isa_mem_space_tag;
+#endif
 
 #endif /* _PREP_BUS_H_ */

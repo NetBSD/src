@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/06/20 14:35:25 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2001/08/26 02:47:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -55,26 +55,21 @@ struct cfattach cpu_ca = {
 extern struct cfdriver cpu_cd;
 
 int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
+	if (cpu_info_store.ci_dev != NULL)
+		return (0);
 	return (1);
 }
 
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
+	cpu_attach_common(self, 0);
 
-	printf("\n");
-
-	(*platform->cpu_setup)(dev);
+	(*platform->cpu_setup)(self);
 }

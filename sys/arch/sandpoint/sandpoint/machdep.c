@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2001/08/24 04:34:26 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2001/08/26 02:47:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,7 +141,6 @@ paddr_t avail_end;			/* XXX temporary */
 void install_extint __P((void (*)(void)));
 
 void initppc __P((u_int, u_int, u_int, void *)); /* Called from locore */
-void identifycpu __P((void));
 void dumpsys __P((void));
 void strayintr __P((int));
 void lcsplx __P((int));
@@ -427,7 +426,7 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
-	identifycpu();
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

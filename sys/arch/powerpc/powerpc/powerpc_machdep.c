@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.7 2001/07/26 22:53:13 wiz Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8 2001/08/26 02:47:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,9 @@
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
+
+int cpu_timebase;
+int cpu_printfataltraps;
 
 /*
  * Set set up registers on exec.
@@ -105,9 +108,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_CACHELINE:
 		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
+	case CPU_TIMEBASE:
+		if (cpu_timebase)
+			return sysctl_rdint(oldp, oldlenp, newp, cpu_timebase);
+		break;
+	case CPU_PRINTFATALTRAPS:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+				  &cpu_printfataltraps);
 	default:
-		return EOPNOTSUPP;
+		break;
 	}
+	return EOPNOTSUPP;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2001/06/19 08:34:50 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2001/08/26 02:47:40 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,14 +32,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
+
+#include <dev/ofw/openfirm.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_long ticks_per_sec = 3125000;
 static u_long ns_per_tick = 320;
 static long ticks_per_intr;
 static volatile u_long lasttb;
@@ -100,44 +103,30 @@ decr_intr(frame)
 void
 cpu_initclocks()
 {
-	int qhandle, phandle;
-	char name[32];
+	struct cpu_softc *sc = cpu_cd.cd_devs[0];
 	int msr, scratch;
 	
-	/*
-	 * Get this info during autoconf?				XXX
-	 */
-	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-		    && !strcmp(name, "cpu")
-		    && OF_getprop(qhandle, "timebase-frequency",
-				  &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
-			/*
-			 * Should check for correct CPU here?		XXX
-			 */
-			asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-				      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-			ns_per_tick = 1000000000 / ticks_per_sec;
-			ticks_per_intr = ticks_per_sec / hz;
-			asm volatile ("mftb %0" : "=r"(lasttb));
-			asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-			asm volatile ("mtmsr %0" :: "r"(msr));
-			break;
-		}
-		if (phandle = OF_child(qhandle))
-			continue;
-		while (qhandle) {
-			if (phandle = OF_peer(qhandle))
-				break;
-			qhandle = OF_parent(qhandle);
-		}
-	}
-	if (!phandle)
+	if (sc == NULL)
 		panic("no cpu node");
+
+	if (cpu_timebase == 0)
+		panic("unknown timebase");
+
+	/*
+	 * Should check for correct CPU here?		XXX
+	 */
+	__asm __volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
+		: "=r"(msr), "=r"(scratch)
+		: "K"((u_short)~PSL_EE));
+	ns_per_tick = 1000000000 / cpu_timebase;
+	ticks_per_intr = cpu_timebase / hz;
+	__asm __volatile ("mftb %0" : "=r"(lasttb));
+	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm __volatile ("mtmsr %0" :: "r"(msr));
 }
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.15 2001/01/15 20:19:53 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.16 2001/08/26 02:47:35 matt Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -46,8 +46,17 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
+
+#include <machine/bus.h>
+#include <dev/isa/isavar.h>
+
+#include "com.h"
+#if NCOM > 0
+extern void comsoft(void);
+#endif
 
 unsigned int imen = 0xffffffff;
 volatile int cpl, ipending, astpending, tickspending;
@@ -56,10 +65,9 @@ int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
 void bebox_intr_mask __P((int));
-void intr_calculatemasks();
 
-int fakeintr(arg)
-	void *arg;
+static int
+fakeintr(void *arg)
 {
 	return 0;
 }
@@ -134,7 +142,7 @@ ext_intr()
 				break;
 			}
 	} else {
-		printf("ext_intr: unknown interrupt 0x%x\n", int_state);
+		printf("ext_intr: unknown interrupt 0x%lx\n", int_state);
 		goto out;
 	}
 
@@ -179,7 +187,7 @@ bebox_intr_mask(imen)
 	int mask = 0;
 
 	for (i = 0; i < BEBOX_INTR_SIZE; i++)
-		if (!(imen & (1 << i + BEBOX_ISA_INTR)))
+		if (!(imen & (1 << (i + BEBOX_ISA_INTR))))
 			mask |= bebox_intr_map[i];
 
 	*(unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) = BEBOX_INTR_MASK;
@@ -443,7 +451,6 @@ do_pending_int()
 	}
 	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;
-#include "com.h"
 #if NCOM > 0
 		comsoft();
 #endif

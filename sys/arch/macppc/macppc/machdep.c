@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2001/08/26 02:47:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -406,7 +406,6 @@ restore_ofmap(ofmap, len)
 /*
  * This should probably be in autoconf!				XXX
  */
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
@@ -450,7 +449,7 @@ cpu_startup()
 	v = (caddr_t)proc0paddr + USPACE;
 
 	printf("%s", version);
-	identifycpu(cpu_model);
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
 	printf("total memory = %s\n", pbuf);

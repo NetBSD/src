@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2001/08/24 04:34:26 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2001/08/26 02:47:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,13 +55,13 @@
 
 #include <net/netisr.h>
 
+#include <machine/autoconf.h>
 #include <machine/bat.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
+#include <dev/cons.h>
 
 /*
  * Global variables used here and there
@@ -116,26 +116,21 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	int phandle, qhandle;
-	char name[32];
-	struct machvec *mp;
-	extern trapcode, trapsize;
-	extern alitrap, alisize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
+	extern int trapcode, trapsize;
+	extern int alitrap, alisize;
+	extern int dsitrap, dsisize;
+	extern int isitrap, isisize;
+	extern int decrint, decrsize;
+	extern int tlbimiss, tlbimsize;
+	extern int tlbdlmiss, tlbdlmsize;
+	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
-	extern ddblow, ddbsize;
-	extern void *startsym, *endsym;
+	extern int ddblow, ddbsize;
+	/* extern void *startsym, *endsym; */
 #endif
 #ifdef IPKDB
-	extern ipkdblow, ipkdbsize;
+	extern int ipkdblow, ipkdbsize;
 #endif
-	extern void consinit __P((void));
-	extern void callback __P((void *));
 	int exc, scratch;
 
 	proc0.p_addr = proc0paddr;
@@ -279,59 +274,14 @@ initppc(startkernel, endkernel, args)
  * This should probably be in autoconf!				XXX
  */
 int cpu;
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-void
-identifycpu()
-{
-	int phandle, pvr;
-	char name[32];
-
-	/*
-	 * Find cpu type (Do it by OpenFirmware?)
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s\n", cpu_model);
-}
 
 void
 install_extint(handler)
 	void (*handler) __P((void));
 {
-	extern extint, extsize;
+	extern int extint, extsize;
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
@@ -377,7 +327,7 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
-	identifycpu();
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -590,6 +540,7 @@ cpu_reboot(howto, what)
 	ppc_boot(str);
 }
 
+#ifdef notyet
 /*
  * OpenFirmware callback routine
  */
@@ -599,6 +550,7 @@ callback(p)
 {
 	panic("callback");	/* for now			XXX */
 }
+#endif
 
 /*
  * Perform an `splx()' for locore.

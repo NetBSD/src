@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.40 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: GENERIC,v 1.41 2001/08/26 02:47:35 matt Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 maxusers	32
 
@@ -92,6 +92,7 @@ options 	PCI_NETBSD_CONFIGURE
 
 mainbus0 at root
 
+cpu*	at mainbus0
 pci0	at mainbus0 bus ?
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges

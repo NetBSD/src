@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2001/08/24 04:34:26 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2001/08/26 02:47:35 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 
 #include <net/netisr.h>
 
+#include <machine/autoconf.h>
 #include <machine/bat.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
@@ -100,6 +101,7 @@
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+void comsoft(void);
 #endif
 
 #ifdef DDB
@@ -108,7 +110,6 @@
 #endif
 
 void initppc __P((u_long, u_long, u_int, void *));
-void identifycpu __P((void));
 void dumpsys __P((void));
 void strayintr __P((int));
 int lcsplx __P((int));
@@ -127,7 +128,6 @@ char bootinfo[BOOTINFO_MAXSIZE];
 
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
-char cpu_model[80];
 
 struct pcb *curpcb;
 struct pmap *curpm;
@@ -158,16 +158,16 @@ initppc(startkernel, endkernel, args, btinfo)
 	u_int args;
 	void *btinfo;
 {
-	extern trapcode, trapsize;
-	extern alitrap, alisize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
+	extern int trapcode, trapsize;
+	extern int alitrap, alisize;
+	extern int dsitrap, dsisize;
+	extern int isitrap, isisize;
+	extern int decrint, decrsize;
+	extern int tlbimiss, tlbimsize;
+	extern int tlbdlmiss, tlbdlmsize;
+	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
-	extern ddblow, ddbsize;
+	extern int ddblow, ddbsize;
 	extern void *startsym, *endsym;
 #endif
 	int exc, scratch;
@@ -380,52 +380,6 @@ mem_regions(mem, avail)
 	*avail = availmemr;
 }
 
-/*
- * This should probably be in autoconf!				XXX
- */
-void
-identifycpu()
-{
-	int cpu, pvr;
-
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 8:
-		sprintf(cpu_model, "750");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: PowerPC %s\n", cpu_model);
-}
-
 void
 install_extint(handler)
 	void (*handler) __P((void));
@@ -488,7 +442,7 @@ cpu_startup()
 	printf("%s", version);
 
 	printf("Model: %s\n", res->VitalProductData.PrintableModel);
-	identifycpu();
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
