@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/28 02:52:16 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2001/05/01 13:24:02 enami Exp $
 
 SUBDIR=	platid_gen
 
@@ -11,7 +11,8 @@ test: platid_test
 platid_test: platid.c platid_mask.c platid_test.c platid_name.c
 	ln -sf ./ ./machine
 	ln -sf ../../mips/include ./mips
-	$(HOST_CC) -I. -DPLATID_TEST platid.c platid_mask.c platid_name.c platid_test.c -o $@
+	$(HOST_CC) -I. -DPLATID_TEST \
+	    platid.c platid_mask.c platid_name.c platid_test.c -o $@
 
 CLEANFILES+=	platid_test platid_test.out machine mips
 
