@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.53 1999/04/19 21:22:57 kleink Exp $
+#	$NetBSD: GENERIC,v 1.54 1999/07/20 07:40:35 christos Exp $
 #
 # Generic atari
 #
@@ -49,11 +49,11 @@ options 	MROUTING        # IP multicast routing
 #options 	EON             # OSI tunneling over IP
 #options 	CCITT,LLC,HDLC  # X.25
 options 	NETATALK        # AppleTalk networking protocols
-#options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE     # Deflate compression support for PPP
-#options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS      # pfil(9) packet filter hooks
-#options 	IPFILTER_LOG    # ipmon(8) log support
+options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
+options 	PPP_DEFLATE     # Deflate compression support for PPP
+options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS      # pfil(9) packet filter hooks
+options 	IPFILTER_LOG    # ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 # File systems
