@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.73.2.1 2004/06/07 09:37:58 tron Exp $ */
+/* $NetBSD: wskbd.c,v 1.73.2.2 2004/06/07 09:48:52 tron Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73.2.1 2004/06/07 09:37:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73.2.2 2004/06/07 09:48:52 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -611,10 +611,12 @@ wskbd_input(struct device *dev, u_int type, int value)
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_base.me_dispdv != NULL) {
+#ifdef WSDISPLAY_SCROLLSUPPORT
 				if (sc->id->t_symbols [0] != KS_Print_Screen) {
-					wsdisplay_scroll (sc->sc_base.
+					wsdisplay_scroll(sc->sc_base.
 					me_dispdv, WSDISPLAY_SCROLL_RESET);
 				}
+#endif
 				for (i = 0; i < num; i++)
 					wsdisplay_kbdinput(
 						sc->sc_base.me_dispdv,
@@ -1383,7 +1385,9 @@ static int
 internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	keysym_t ksym2)
 {
-	u_int state=0;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	u_int state = 0;
+#endif
 	switch (ksym) {
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	case KS_Cmd_ScrollFastUp:
