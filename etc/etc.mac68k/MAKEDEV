@@ -19,19 +19,18 @@
 # WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-#	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
+#	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
+#	$Id: MAKEDEV,v 1.4 1994/02/19 15:54:23 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
 #	local	configuration specific devices
 #
 # Tapes:
-#	st*	scsi tapes (old driver uses the
-#		block devices of the disks to get access)
+#	st*	scsi tapes
 #
 # Disks:
 #	fd*	floppy disk drives (3 1/2")
-#	as*	SCSI disk/tape/CDROM drives
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
 #	ch*	SCSI changers
