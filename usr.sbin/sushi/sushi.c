@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.1 2001/01/05 01:28:39 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.2 2001/01/08 21:19:31 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ main(int argc, char **argv)
 		if (!mte) {
 			printf("QuickName %s not found in any menus.\n",
 				argv[1]);
+			catclose(catalog);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -110,6 +111,7 @@ main(int argc, char **argv)
 
 	initCDKColor();
 	raw();
+	timeout(150);
 
 	if (mte == NULL)
 		navigate_menu(cqMenuHeadp, "sushi", 
@@ -117,12 +119,13 @@ main(int argc, char **argv)
 	else
 		navigate_submenu(mte);
 
-	destroyCDKScreen (cdkscreen);
+	destroyCDKScreen(cdkscreen);
 	endCDK();
 	endwin();
 #ifdef DEBUG
 	tree_printtree(cqMenuHeadp);
 #endif
+
 	catclose(catalog);
 	exit(EXIT_SUCCESS);
 }
@@ -264,6 +267,16 @@ display_menu(cqm, title, basedir)
 				bailout("strdup: %s", strerror(errno));
 		}
 		++items;
+	}
+
+	if (items == 0) {
+		destroyCDKScreen(cdkscreen);
+		endCDK();
+		endwin();
+		(void)fprintf(stderr, "%s\n", catgets(catalog, 1, 19,
+		    "No menu hierarchy found"));
+		catclose(catalog);
+		exit(EXIT_FAILURE);
 	}
 
 	bottom_help(1);

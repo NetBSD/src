@@ -17,6 +17,7 @@ $set 1 errors
 16 cannot allocate scroll widget
 17 select failure
 18 can't stat
+19 No menu hierchy found.
 $set 2 labels
 1 F1=Help
 2 F2=Refresh
