@@ -1,4 +1,4 @@
-.\"	$NetBSD: console.4,v 1.4 2000/07/05 16:13:48 msaitoh Exp $
+.\"	$NetBSD: console.4,v 1.5 2000/08/21 07:07:33 itohy Exp $
 .\"
 .Dd May 12, 2000
 .Os
@@ -68,7 +68,7 @@ sets the base address for the serial console port (default: 0x3f8).
 .It Cd options CONSPEED=integer
 sets the baudrate for the serial console (default: 9600).
 .It Cd options CONS_OVERRIDE
-causes console information passed bt the bootloader to be ignored and
+causes console information passed by the bootloader to be ignored and
 the settings specified by the three options above (or the defaults) to be
 used. Default behaviour is to use the settings from the bootloader if
 present, and to use option / default values only if no information was
