@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.17 1997/01/02 14:25:18 mouse Exp $	*/
+/*	$NetBSD: inetd.c,v 1.18 1997/01/12 06:55:43 mikel Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.17 1997/01/02 14:25:18 mouse Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.18 1997/01/12 06:55:43 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -645,7 +645,7 @@ config()
 	while (cp = getconfigent()) {
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (strcmp(sep->se_service, cp->se_service) == 0 &&
-			    strcmp(sep->se_service, cp->se_hostaddr) == 0 &&
+			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
 			    strcmp(sep->se_proto, cp->se_proto) == 0)
 				break;
 		if (sep != 0) {
