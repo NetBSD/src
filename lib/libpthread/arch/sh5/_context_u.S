@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1 2003/01/20 17:03:58 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.2 2003/01/21 11:31:38 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@
 	st.q	r2, UC_REGS_USR, r1			;\
 	fgetscr	fr0					;\
 	shlri	r1, SH5_CONREG_USR_FPRS_SHIFT, r1	;\
-	movi	(_UC_CPU | _UC_USER), r3		;\
+	LDC32((_UC_CPU | _UC_USER), r3)			;\
 	andi	r1, SH5_CONREG_USR_FPRS_MASK, r0	;\
 	fst.s	r2, UC_FPREGS_FPSCR, fr0		;\
 	beq/l	r0, r63, tr0				;\
@@ -141,8 +141,9 @@
 	 */						\
 	ld.q	r2, UC_FLAGS, r3			;\
 	ld.q	r2, UC_REGS_R10, r10			;\
-	andi	r3, _UC_USER, r0			;\
+	shlri	r3, _UC_USER_BIT, r0			;\
 	ld.q	r2, UC_REGS_R11, r11			;\
+	andi	r0, 1, r0				;\
 	pta/u	4f, tr0					;\
 	ld.q	r2, UC_REGS_R12, r12			;\
 	beq/u	r0, r63, tr0				;\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1 2003/01/21 00:34:56 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/21 11:31:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -61,11 +61,11 @@
  */
 
 ENTRY(pthread__switch)
-	LINK_FRAME(RND_CTXSIZE)		/* Make space for a ucontext_t */
+	LINK_BIG_FRAME(RND_CTXSIZE)	/* Make space for a ucontext_t */
 	pta/l	_C_LABEL(_swapcontext_u), tr0
 	STPTR	r2, PT_UC, r15		/* self->pt_uc = &ucontext_t */
 	blink	tr0, r18
-	UNLINK_FRAME(RND_CTXSIZE)
+	UNLINK_BIG_FRAME(RND_CTXSIZE)
 	ptabs/l	r18, tr0
 	blink	tr0, r18
 
@@ -115,7 +115,7 @@ Lpthread__switch_away_no_decrement:
  * r2 = self, r3 = next, r4 = lock
  */
 ENTRY(pthread__locked_switch)
-	LINK_FRAME(RND_CTXSIZE)
+	LINK_BIG_FRAME(RND_CTXSIZE)
 
 	/* Make sure we get continued */
 	ld.l	r3, PT_SPINLOCKS, r0
@@ -125,6 +125,9 @@ ENTRY(pthread__locked_switch)
 	/*
 	 * Keep r2-r4, and r15 safe for later.
 	 * We know that r19-r22 are not clobbered by libc's context routines.
+	 *
+	 * XXX: This might not remain the case once the dynamic linker gets
+	 * XXX: in the way of things.
 	 */
 	or	r2, r63, r19		/* self */
 	or	r3, r63, r20		/* next */
@@ -134,7 +137,7 @@ ENTRY(pthread__locked_switch)
 
 	/* Save the current context */
 	pta/l	_C_LABEL(_getcontext_u), tr0
-	or	r15, r63, r2
+	or	r22, r63, r2
 	blink	tr0, r18
 
 	/*
@@ -142,8 +145,8 @@ ENTRY(pthread__locked_switch)
 	 * the _setcontext_u below.  
 	 */
 	pta/u	Llocked_return_point, tr0
-	ptabs/u	tr0, r0
-	st.q	r19, (PT_UC + UC_REGS_PC), r0
+	gettr	tr0, r0
+	st.q	r22, UC_REGS_PC, r0
 
 	STACK_SWITCH(r20,r2)		/* r2 = next->pt_uc */
 
@@ -214,7 +217,7 @@ Llocked_no_old_preempt:
 
 Llocked_return_point:
 	/* We're back on the original stack. */
-	UNLINK_FRAME(RND_CTXSIZE)
+	UNLINK_BIG_FRAME(RND_CTXSIZE)
 	ptabs/l	r18, tr0
 	blink	tr0, r18
 
