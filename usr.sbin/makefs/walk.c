@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.6 2001/12/05 11:08:53 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.7 2002/01/23 02:26:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.6 2001/12/05 11:08:53 lukem Exp $");
+__RCSID("$NetBSD: walk.c,v 1.7 2002/01/23 02:26:21 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -98,7 +98,6 @@ __RCSID("$NetBSD: walk.c,v 1.6 2001/12/05 11:08:53 lukem Exp $");
 static	void	 apply_specdir(const char *, NODE *, fsnode *);
 static	void	 apply_specentry(const char *, NODE *, fsnode *);
 static	fsnode	*create_fsnode(const char *, struct stat *);
-static	fsinode	*create_fsinode(struct stat *);
 static	fsinode	*link_check(fsinode *);
 
 
@@ -142,7 +141,6 @@ walk_dir(const char *dir, fsnode *parent)
 		}
 
 		cur = create_fsnode(dent->d_name, &stbuf);
-		cur->inode = create_fsinode(&stbuf);
 		cur->parent = parent;
 		if (strcmp(dent->d_name, ".") == 0) {
 				/* ensure "." is at the start of the list */
@@ -196,21 +194,12 @@ create_fsnode(const char *name, struct stat *stbuf)
 	fsnode *cur;
 
 	if ((cur = calloc(1, sizeof(fsnode))) == NULL ||
-	    (cur->name = strdup(name)) == NULL)
+	    (cur->name = strdup(name)) == NULL ||
+	    (cur->inode = calloc(1, sizeof(fsinode))) == NULL)
 		err(1, "Memory allocation error");
 	cur->type = stbuf->st_mode & S_IFMT;
-	return (cur);
-}
-
-static fsinode *
-create_fsinode(struct stat *statbuf)
-{
-	fsinode *cur;
-
-	if ((cur = calloc(1, sizeof(fsinode))) == NULL)
-		err(1, "Memory allocation error");
-	cur->nlink = 1;
-	cur->st = *statbuf;
+	cur->inode->nlink = 1;
+	cur->inode->st = *stbuf;
 	return (cur);
 }
 
