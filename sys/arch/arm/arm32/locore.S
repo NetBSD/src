@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2002/04/03 17:30:50 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2002/04/25 23:23:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -134,7 +134,7 @@ Lboot_cache_purged:
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
-	mcrne   15, 0, r0, c8, c7, 0 	/* only when v4 MMU disable is asked for */
+	mcrne   15, 0, r0, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
