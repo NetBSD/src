@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2003/07/18 21:41:23 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2004/06/29 12:01:11 kleink Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/07/18 21:41:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/06/29 12:01:11 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -165,7 +165,7 @@ delay(n)
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*
