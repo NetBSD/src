@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.24 2002/07/19 19:18:26 yamt Exp $	*/
+/*	$NetBSD: show.c,v 1.25 2002/07/20 04:59:47 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.24 2002/07/19 19:18:26 yamt Exp $");
+__RCSID("$NetBSD: show.c,v 1.25 2002/07/20 04:59:47 yamt Exp $");
 #endif
 #endif
 
@@ -104,7 +104,6 @@ show_file(char *title, char *fname)
 	FILE   *fp;
 	char    line[1024];
 	int     n;
-	int     have_nl = 0;
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
@@ -112,14 +111,15 @@ show_file(char *title, char *fname)
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
 		printf("ERROR: show_file: Can't open '%s' for reading!\n", fname);
 	} else {
+		int append_nl = 0;
 		while ((n = fread(line, 1, sizeof(line), fp)) != 0) {
 			fwrite(line, 1, n, stdout);
-			have_nl = (line[n - 1] == '\n');
+			append_nl = (line[n - 1] != '\n');
 		}
 		(void) fclose(fp);
+		if (append_nl)
+			printf("\n");
 	}
-	if (!have_nl)
-		printf("\n");
 	printf("\n");		/* just in case */
 }
 
