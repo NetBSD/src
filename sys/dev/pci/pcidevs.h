@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.646 2004/08/05 16:26:41 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.647 2004/08/05 21:44:01 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.645 2004/08/05 16:26:05 cube Exp 
+ *	NetBSD: pcidevs,v 1.646 2004/08/05 21:43:46 mycroft Exp 
  */
 
 /*
@@ -629,7 +629,7 @@
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
 #define	PCI_PRODUCT_3COM_3C996	0x0003		/* 3c996 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_3COM_3C556MODEM	0x1007		/* 3c556 V.90 MiniPCI Modem */
+#define	PCI_PRODUCT_3COM_3C556MODEM	0x1007		/* 3c556 V.90 Mini-PCI Modem */
 #define	PCI_PRODUCT_3COM_3C940	0x1700		/* 3c940 Gigabit Ethernet */
 #define	PCI_PRODUCT_3COM_3C450TX	0x4500		/* 3c450-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C575TX	0x5057		/* 3c575-TX 10/100 Ethernet */
@@ -639,9 +639,9 @@
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595-MII 10/100 Ethernet */
-#define	PCI_PRODUCT_3COM_3C555	0x5055		/* 3c555 10/100 MiniPCI Ethernet */
-#define	PCI_PRODUCT_3COM_3C556	0x6055		/* 3c556 10/100 MiniPCI Ethernet */
-#define	PCI_PRODUCT_3COM_3C556B	0x6056		/* 3c556B 10/100 MiniPCI Ethernet */
+#define	PCI_PRODUCT_3COM_3C555	0x5055		/* 3c555 10/100 Mini-PCI Ethernet */
+#define	PCI_PRODUCT_3COM_3C556	0x6055		/* 3c556 10/100 Mini-PCI Ethernet */
+#define	PCI_PRODUCT_3COM_3C556B	0x6056		/* 3c556B 10/100 Mini-PCI Ethernet */
 #define	PCI_PRODUCT_3COM_3C656_E	0x6560		/* 3CCFEM656 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C656_M	0x6561		/* 3CCFEM656 56k Modem */
 #define	PCI_PRODUCT_3COM_3C656B_E	0x6562		/* 3CCFEM656B 10/100 Ethernet */
@@ -817,8 +817,8 @@
 
 /* Aironet Wireless Communicasions products */
 #define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* PC4500/PC4800 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_350	0x0350		/* 350 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_MPI350	0xa504		/* 350 miniPCI Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PCI350	0x0350		/* PCI350 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_MPI350	0xa504		/* MPI350 Mini-PCI Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless LAN Adapter */
 
@@ -1614,7 +1614,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_4	0x103c		/* PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_4	0x103d		/* PRO/100 VE (MOB) Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM (MOB) Network Controller */
-#define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_82597EX	0x1048		/* PRO/10GbE LR Server Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET/EZ PHY */
 #define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
