@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.6 1999/07/28 20:42:54 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.7 1999/07/29 07:55:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -775,7 +775,9 @@ ntfs_statfs(
 			(caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
 	}
 	sbp->f_flags = mp->mnt_flag;
+#ifdef __NetBSD__
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+#endif
 	
 	return (0);
 }
