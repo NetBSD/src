@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.2 1995/07/03 21:24:31 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 1995/10/02 17:08:43 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.2 1995/07/03 21:24:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.3 1995/10/02 17:08:43 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1228,9 +1228,9 @@ getsym(sb)
 		sym->s_name = s;
 		sym->s_blklev = 1;
 		di = dcs;
-		while (di->nxt != NULL && di->nxt->nxt != NULL)
-			di = di->nxt;
-		if (di->ctx != AUTO)
+		while (di->d_nxt != NULL && di->d_nxt->d_nxt != NULL)
+			di = di->d_nxt;
+		if (di->d_ctx != AUTO)
 			lerror("storesym() 2");
 	} else {
 		sym = getblk(sizeof (sym_t));
@@ -1249,8 +1249,8 @@ getsym(sb)
 		symtab[sb->sb_hash]->s_rlink = &sym->s_link;
 	(symtab[sb->sb_hash] = sym)->s_rlink = &symtab[sb->sb_hash];
 
-	*di->ldlsym = sym;
-	di->ldlsym = &sym->s_dlnxt;
+	*di->d_ldlsym = sym;
+	di->d_ldlsym = &sym->s_dlnxt;
 
 	freesb(sb);
 	return (sym);
@@ -1359,8 +1359,8 @@ pushdown(sym)
 		symtab[h]->s_rlink = &nsym->s_link;
 	(symtab[h] = nsym)->s_rlink = &symtab[h];
 
-	*dcs->ldlsym = nsym;
-	dcs->ldlsym = &nsym->s_dlnxt;
+	*dcs->d_ldlsym = nsym;
+	dcs->d_ldlsym = &nsym->s_dlnxt;
 
 	return (nsym);
 }

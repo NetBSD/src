@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.3 1995/07/04 01:53:09 cgd Exp $	*/
+/*	$NetBSD: tree.c,v 1.4 1995/10/02 17:08:47 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.3 1995/07/04 01:53:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.4 1995/10/02 17:08:47 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3353,7 +3353,7 @@ expr(tn, vctx, tctx)
 	}
 
 	/* expr() is also called in global initialisations */
-	if (dcs->ctx != EXTERN)
+	if (dcs->d_ctx != EXTERN)
 		chkreach();
 
 	chkmisc(tn, vctx, tctx, !tctx, 0, 0, 0);
