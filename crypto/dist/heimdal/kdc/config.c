@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id: config.c,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $");
+RCSID("$Id: config.c,v 1.2 2000/08/06 18:42:19 thorpej Exp $");
 
 static char *config_file;	/* location of kdc config file */
 
@@ -54,6 +54,7 @@ int num_db;
 char *port_str;
 
 int enable_http = -1;
+int no_detach;
 krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 
 krb5_boolean check_ticket_addresses;
@@ -95,6 +96,7 @@ static struct getargs args[] = {
     },
 #endif
     { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support" },
+    { "no-detach",   'D', arg_flag, &no_detach, "do not detach from tty" },
 #ifdef KRB4
     {	"kerberos4",	0, 	arg_negative_flag, &enable_v4,
 	"don't respond to kerberos 4 requests" 
