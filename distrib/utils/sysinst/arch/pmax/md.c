@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 1999/06/22 00:57:09 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.33 1999/08/07 15:45:26 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -379,71 +379,9 @@ int	md_make_bsd_partitions (void)
 }
 
 
-
-/*
- * md_copy_filesystem() -- MD hook called  after the target
- * disk's filesystems are newfs'ed (install) or /fsck'ed (upgrade)
- * and mounted.
- * Gives MD code an opportunity to copy data from the install-tools
- * boot disk to the  target disk.  (e.g., on i386, put a copy of the 
- * complete install ramdisk onto the hard disk, so it's at least
- * minimally bootable.)
- *
- * On pmax, we're probably running off a release diskimage.
- * Copy the diskimage to the target disk, since it's probably
- * the  same as the  install sets and it makes the target bootable
- * to standalone.  But don't do anything if the target is
- * already  the current root: we'd clobber the files we're trying to copy.
- */
-
 int	md_copy_filesystem (void)
 {
-	/*
-	 * Make sure any binaries in a diskimage /usr.install get copied 
-	 * into the current root's /usr/bin. (may be same as target /usr/bin.)
-	 * The rest of sysinst uses /usr/bin/{tar,ftp,chgrp}.
-	 * We cannot ship those in /usr/bin, because if we did
-	 * an install with target root == current root, they'd
-	 * be be hidden under the  target's /usr filesystem.
-	 *
-	 * Now copy them into the standard  location under /usr.
-	 * (the target /usr is already mounted so they always end
-	 * up in the correct place.
-	 */
-
-	/*  diskimage location of  /usr subset  -- patchable. */
-	const char *diskimage_usr = "/usr.install";
-	int dir_exists;
-
-
-	/* test returns 0  on success */
-	dir_exists = (run_prog(0, 0, NULL, "test -d %s", diskimage_usr) == 0);
-	if (dir_exists) {
-		if (run_prog ( 0, 1, NULL, "pax -Xrwpe -s /%s// %s /usr",
-			diskimage_usr, diskimage_usr) != 0)
-				return 1;
-	}
-
-	if (target_already_root()) {
-
-	  	/* The diskimage /usr subset has served its purpose. */
-	  	/* (but leave it for now, in case of errors.) */
-#if 0
-		run_prog(0, 0, NULL, "rm -fr %s", diskimage_usr);
-#endif
-		return 0;
-	}
-
-	/* Copy all the diskimage/ramdisk binaries to the target disk. */
-	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog (0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
-		return 1;
-
-	/* Make sure target has a copy of install kernel. */
-	dup_file_into_target("/netbsd");
-
-	/* Copy next-stage install profile into target /.profile. */
-	return cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return 0;
 }
 
 
