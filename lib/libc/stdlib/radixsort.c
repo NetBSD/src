@@ -1,6 +1,9 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Peter McIlroy and by Dan Bernstein at New York University, 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,259 +35,285 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)radixsort.c	5.7 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: radixsort.c,v 1.3 1993/08/26 00:48:07 jtc Exp $";
+/*static char sccsid[] = "from: @(#)radixsort.c	8.1 (Berkeley) 6/4/93";*/
+static char *rcsid = "$Id: radixsort.c,v 1.4 1994/06/16 05:26:44 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+/*
+ * Radixsort routines.
+ * 
+ * Program r_sort_a() is unstable but uses O(logN) extra memory for a stack.
+ * Use radixsort(a, n, trace, endchar) for this case.
+ * 
+ * For stable sorting (using N extra pointers) use sradixsort(), which calls
+ * r_sort_b().
+ * 
+ * For a description of this code, see D. McIlroy, P. McIlroy, K. Bostic,
+ * "Engineering Radix Sort".
+ */
+
 #include <sys/types.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <string.h>
+#include <errno.h>
 
-/*
- * __rspartition is the cutoff point for a further partitioning instead
- * of a shellsort.  If it changes check __rsshell_increments.  Both of
- * these are exported, as the best values are data dependent.
- */
-#define	NPARTITION	40
-int __rspartition = NPARTITION;
-int __rsshell_increments[] = { 4, 1, 0, 0, 0, 0, 0, 0 };
+typedef struct {
+	const u_char **sa;
+	int sn, si;
+} stack;
 
-/*
- * Stackp points to context structures, where each structure schedules a
- * partitioning.  Radixsort exits when the stack is empty.
- *
- * If the buckets are placed on the stack randomly, the worst case is when
- * all the buckets but one contain (npartitions + 1) elements and the bucket
- * pushed on the stack last contains the rest of the elements.  In this case,
- * stack growth is bounded by:
- *
- *	limit = (nelements / (npartitions + 1)) - 1;
- *
- * This is a very large number, 52,377,648 for the maximum 32-bit signed int.
- *
- * By forcing the largest bucket to be pushed on the stack first, the worst
- * case is when all but two buckets each contain (npartitions + 1) elements,
- * with the remaining elements split equally between the first and last
- * buckets pushed on the stack.  In this case, stack growth is bounded when:
- *
- *	for (partition_cnt = 0; nelements > npartitions; ++partition_cnt)
- *		nelements =
- *		    (nelements - (npartitions + 1) * (nbuckets - 2)) / 2;
- * The bound is:
- *
- *	limit = partition_cnt * (nbuckets - 1);
- *
- * This is a much smaller number, 4590 for the maximum 32-bit signed int.
- */
-#define	NBUCKETS	(UCHAR_MAX + 1)
+static inline void simplesort
+	    __P((const u_char **, int, int, const u_char *, u_int));
+static void r_sort_a __P((const u_char **, int, int, const u_char *, u_int));
+static void r_sort_b __P((const u_char **,
+	    const u_char **, int, int, const u_char *, u_int));
 
-typedef struct _stack {
-	const u_char **bot;
-	int indx, nmemb;
-} CONTEXT;
+#define	THRESHOLD	20		/* Divert to simplesort(). */
+#define	SIZE		512		/* Default stack size. */
 
-#define	STACKPUSH { \
-	stackp->bot = p; \
-	stackp->nmemb = nmemb; \
-	stackp->indx = indx; \
-	++stackp; \
-}
-#define	STACKPOP { \
-	if (stackp == stack) \
-		break; \
-	--stackp; \
-	bot = stackp->bot; \
-	nmemb = stackp->nmemb; \
-	indx = stackp->indx; \
+#define SETUP {								\
+	if (tab == NULL) {						\
+		tr = tr0;						\
+		for (c = 0; c < endch; c++)				\
+			tr0[c] = c + 1;					\
+		tr0[c] = 0;						\
+		for (c++; c < 256; c++)					\
+			tr0[c] = c;					\
+		endch = 0;						\
+	} else {							\
+		endch = tab[endch];					\
+		tr = tab;						\
+		if (endch != 0 && endch != 255) {			\
+			errno = EINVAL;					\
+			return (-1);					\
+		}							\
+	}								\
 }
 
-/*
- * A variant of MSD radix sorting; see Knuth Vol. 3, page 177, and 5.2.5,
- * Ex. 10 and 12.  Also, "Three Partition Refinement Algorithms, Paige
- * and Tarjan, SIAM J. Comput. Vol. 16, No. 6, December 1987.
- *
- * This uses a simple sort as soon as a bucket crosses a cutoff point,
- * rather than sorting the entire list after partitioning is finished.
- * This should be an advantage.
- *
- * This is pure MSD instead of LSD of some number of MSD, switching to
- * the simple sort as soon as possible.  Takes linear time relative to
- * the number of bytes in the strings.
- */
 int
-#if __STDC__
-radixsort(const u_char **l1, int nmemb, const u_char *tab, u_char endbyte)
-#else
-radixsort(l1, nmemb, tab, endbyte)
-	const u_char **l1;
-	register int nmemb;
-	const u_char *tab;
-	u_char endbyte;
-#endif
+radixsort(a, n, tab, endch)
+	const u_char **a, *tab;
+	int n;
+	u_int endch;
 {
-	register int i, indx, t1, t2;
-	register const u_char **l2;
-	register const u_char **p;
-	register const u_char **bot;
-	register const u_char *tr;
-	CONTEXT *stack, *stackp;
-	int c[NBUCKETS + 1], max;
-	u_char ltab[NBUCKETS];
-	static void shellsort();
+	const u_char *tr;
+	int c;
+	u_char tr0[256];
 
-	if (nmemb <= 1)
-		return(0);
-
-	/*
-	 * T1 is the constant part of the equation, the number of elements
-	 * represented on the stack between the top and bottom entries.
-	 * It doesn't get rounded as the divide by 2 rounds down (correct
-	 * for a value being subtracted).  T2, the nelem value, has to be
-	 * rounded up before each divide because we want an upper bound;
-	 * this could overflow if nmemb is the maximum int.
-	 */
-	t1 = ((__rspartition + 1) * (NBUCKETS - 2)) >> 1;
-	for (i = 0, t2 = nmemb; t2 > __rspartition; i += NBUCKETS - 1)
-		t2 = ((t2 + 1) >> 1) - t1;
-	if (i) {
-		if (!(stack = stackp = (CONTEXT *)malloc(i * sizeof(CONTEXT))))
-			return(-1);
-	} else
-		stack = stackp = NULL;
-
-	/*
-	 * There are two arrays, one provided by the user (l1), and the
-	 * temporary one (l2).  The data is sorted to the temporary stack,
-	 * and then copied back.  The speedup of using index to determine
-	 * which stack the data is on and simply swapping stacks back and
-	 * forth, thus avoiding the copy every iteration, turns out to not
-	 * be any faster than the current implementation.
-	 */
-	if (!(l2 = (const u_char **)malloc(sizeof(u_char *) * nmemb)))
-		return(-1);
-
-	/*
-	 * Tr references a table of sort weights; multiple entries may
-	 * map to the same weight; EOS char must have the lowest weight.
-	 */
-	if (tab)
-		tr = tab;
-	else {
-		for (t1 = 0, t2 = endbyte; t1 < t2; ++t1)
-			ltab[t1] = t1 + 1;
-		ltab[t2] = 0;
-		for (t1 = endbyte + 1; t1 < NBUCKETS; ++t1)
-			ltab[t1] = t1;
-		tr = ltab;
-	}
-
-	/* First sort is entire stack */
-	bot = l1;
-	indx = 0;
-
-	for (;;) {
-		/* Clear bucket count array */
-		bzero((char *)c, sizeof(c));
-
-		/*
-		 * Compute number of items that sort to the same bucket
-		 * for this index.
-		 */
-		for (p = bot, i = nmemb; --i >= 0;)
-			++c[tr[(*p++)[indx]]];
-
-		/*
-		 * Sum the number of characters into c, dividing the temp
-		 * stack into the right number of buckets for this bucket,
-		 * this index.  C contains the cumulative total of keys
-		 * before and included in this bucket, and will later be
-		 * used as an index to the bucket.  c[NBUCKETS] contains
-		 * the total number of elements, for determining how many
-		 * elements the last bucket contains.  At the same time
-		 * find the largest bucket so it gets pushed first.
-		 */
-		for (i = max = t1 = 0, t2 = __rspartition; i <= NBUCKETS; ++i) {
-			if (c[i] > t2) {
-				t2 = c[i];
-				max = i;
-			}
-			t1 = c[i] += t1;
-		}
-
-		/*
-		 * Partition the elements into buckets; c decrements through
-		 * the bucket, and ends up pointing to the first element of
-		 * the bucket.
-		 */
-		for (i = nmemb; --i >= 0;) {
-			--p;
-			l2[--c[tr[(*p)[indx]]]] = *p;
-		}
-
-		/* Copy the partitioned elements back to user stack */
-		bcopy(l2, bot, nmemb * sizeof(u_char *));
-
-		++indx;
-		/*
-		 * Sort buckets as necessary; don't sort c[0], it's the
-		 * EOS character bucket, and nothing can follow EOS.
-		 */
-		for (i = max; i; --i) {
-			if ((nmemb = c[i + 1] - (t1 = c[i])) < 2)
-				continue;
-			p = bot + t1;
-			if (nmemb > __rspartition)
-				STACKPUSH
-			else
-				shellsort(p, indx, nmemb, tr);
-		}
-		for (i = max + 1; i < NBUCKETS; ++i) {
-			if ((nmemb = c[i + 1] - (t1 = c[i])) < 2)
-				continue;
-			p = bot + t1;
-			if (nmemb > __rspartition)
-				STACKPUSH
-			else
-				shellsort(p, indx, nmemb, tr);
-		}
-		/* Break out when stack is empty */
-		STACKPOP
-	}
-
-	free((char *)l2);
-	free((char *)stack);
-	return(0);
+	SETUP;
+	r_sort_a(a, n, 0, tr, endch);
+	return (0);
 }
 
-/*
- * Shellsort (diminishing increment sort) from Data Structures and
- * Algorithms, Aho, Hopcraft and Ullman, 1983 Edition, page 290;
- * see also Knuth Vol. 3, page 84.  The increments are selected from
- * formula (8), page 95.  Roughly O(N^3/2).
- */
-static void
-shellsort(p, indx, nmemb, tr)
-	register u_char **p, *tr;
-	register int indx, nmemb;
+int
+sradixsort(a, n, tab, endch)
+	const u_char **a, *tab;
+	int n;
+	u_int endch;
 {
-	register u_char ch, *s1, *s2;
-	register int incr, *incrp, t1, t2;
+	const u_char *tr, **ta;
+	int c;
+	u_char tr0[256];
 
-	for (incrp = __rsshell_increments; incr = *incrp++;)
-		for (t1 = incr; t1 < nmemb; ++t1)
-			for (t2 = t1 - incr; t2 >= 0;) {
-				s1 = p[t2] + indx;
-				s2 = p[t2 + incr] + indx;
-				while ((ch = tr[*s1++]) == tr[*s2] && ch)
-					++s2;
-				if (ch > tr[*s2]) {
-					s1 = p[t2];
-					p[t2] = p[t2 + incr];
-					p[t2 + incr] = s1;
-					t2 -= incr;
-				} else
-					break;
+	SETUP;
+	if (n < THRESHOLD)
+		simplesort(a, n, 0, tr, endch);
+	else {
+		if ((ta = malloc(n * sizeof(a))) == NULL)
+			return (-1);
+		r_sort_b(a, ta, n, 0, tr, endch);
+		free(ta);
+	}
+	return (0);
+}
+
+#define empty(s)	(s >= sp)
+#define pop(a, n, i)	a = (--sp)->sa, n = sp->sn, i = sp->si
+#define push(a, n, i)	sp->sa = a, sp->sn = n, (sp++)->si = i
+#define swap(a, b, t)	t = a, a = b, b = t
+
+/* Unstable, in-place sort. */
+void
+r_sort_a(a, n, i, tr, endch)
+	const u_char **a;
+	int n, i;
+	const u_char *tr;
+	u_int endch;
+{
+	static int count[256], nc, bmin;
+	register int c;
+	register const u_char **ak, *r;
+	stack s[SIZE], *sp, *sp0, *sp1, temp;
+	int *cp, bigc;
+	const u_char **an, *t, **aj, **top[256];
+
+	/* Set up stack. */
+	sp = s;
+	push(a, n, i);
+	while (!empty(s)) {
+		pop(a, n, i);
+		if (n < THRESHOLD) {
+			simplesort(a, n, i, tr, endch);
+			continue;
+		}
+		an = a + n;
+
+		/* Make character histogram. */
+		if (nc == 0) {
+			bmin = 255;	/* First occupied bin, excluding eos. */
+			for (ak = a; ak < an;) {
+				c = tr[(*ak++)[i]];
+				if (++count[c] == 1 && c != endch) {
+					if (c < bmin)
+						bmin = c;
+					nc++;
+				}
 			}
+			if (sp + nc > s + SIZE) {	/* Get more stack. */
+				r_sort_a(a, n, i, tr, endch);
+				continue;
+			}
+		}
+
+		/*
+		 * Set top[]; push incompletely sorted bins onto stack.
+		 * top[] = pointers to last out-of-place element in bins.
+		 * count[] = counts of elements in bins.
+		 * Before permuting: top[c-1] + count[c] = top[c];
+		 * during deal: top[c] counts down to top[c-1].
+		 */
+		sp0 = sp1 = sp;		/* Stack position of biggest bin. */
+		bigc = 2;		/* Size of biggest bin. */
+		if (endch == 0)		/* Special case: set top[eos]. */
+			top[0] = ak = a + count[0];
+		else {
+			ak = a;
+			top[255] = an;
+		}
+		for (cp = count + bmin; nc > 0; cp++) {
+			while (*cp == 0)	/* Find next non-empty pile. */
+				cp++;
+			if (*cp > 1) {
+				if (*cp > bigc) {
+					bigc = *cp;
+					sp1 = sp;
+				}
+				push(ak, *cp, i+1);
+			}
+			top[cp-count] = ak += *cp;
+			nc--;
+		}
+		swap(*sp0, *sp1, temp);	/* Play it safe -- biggest bin last. */
+
+		/*
+		 * Permute misplacements home.  Already home: everything
+		 * before aj, and in bin[c], items from top[c] on.
+		 * Inner loop:
+		 *	r = next element to put in place;
+		 *	ak = top[r[i]] = location to put the next element.
+		 *	aj = bottom of 1st disordered bin.
+		 * Outer loop:
+		 *	Once the 1st disordered bin is done, ie. aj >= ak,
+		 *	aj<-aj + count[c] connects the bins in a linked list;
+		 *	reset count[c].
+		 */
+		for (aj = a; aj < an;  *aj = r, aj += count[c], count[c] = 0)
+			for (r = *aj;  aj < (ak = --top[c = tr[r[i]]]);)
+				swap(*ak, r, t);
+	}
+}
+
+/* Stable sort, requiring additional memory. */
+void
+r_sort_b(a, ta, n, i, tr, endch)
+	const u_char **a, **ta;
+	int n, i;
+	const u_char *tr;
+	u_int endch;
+{
+	static int count[256], nc, bmin;
+	register int c;
+	register const u_char **ak, **ai;
+	stack s[512], *sp, *sp0, *sp1, temp;
+	const u_char **top[256];
+	int *cp, bigc;
+
+	sp = s;
+	push(a, n, i);
+	while (!empty(s)) {
+		pop(a, n, i);
+		if (n < THRESHOLD) {
+			simplesort(a, n, i, tr, endch);
+			continue;
+		}
+
+		if (nc == 0) {
+			bmin = 255;
+			for (ak = a + n; --ak >= a;) {
+				c = tr[(*ak)[i]];
+				if (++count[c] == 1 && c != endch) {
+					if (c < bmin)
+						bmin = c;
+					nc++;
+				}
+			}
+			if (sp + nc > s + SIZE) {
+				r_sort_b(a, ta, n, i, tr, endch);
+				continue;
+			}
+		}
+
+		sp0 = sp1 = sp;
+		bigc = 2;
+		if (endch == 0) {
+			top[0] = ak = a + count[0];
+			count[0] = 0;
+		} else {
+			ak = a;
+			top[255] = a + n;
+			count[255] = 0;
+		}
+		for (cp = count + bmin; nc > 0; cp++) {
+			while (*cp == 0)
+				cp++;
+			if ((c = *cp) > 1) {
+				if (c > bigc) {
+					bigc = c;
+					sp1 = sp;
+				}
+				push(ak, c, i+1);
+			}
+			top[cp-count] = ak += c;
+			*cp = 0;			/* Reset count[]. */
+			nc--;
+		}
+		swap(*sp0, *sp1, temp);
+
+		for (ak = ta + n, ai = a+n; ak > ta;)	/* Copy to temp. */
+			*--ak = *--ai;
+		for (ak = ta+n; --ak >= ta;)		/* Deal to piles. */
+			*--top[tr[(*ak)[i]]] = *ak;
+	}
+}
+		
+static inline void
+simplesort(a, n, b, tr, endch)	/* insertion sort */
+	register const u_char **a;
+	int n, b;
+	register const u_char *tr;
+	u_int endch;
+{
+	register u_char ch;
+	const u_char  **ak, **ai, *s, *t;
+
+	for (ak = a+1; --n >= 1; ak++)
+		for (ai = ak; ai > a; ai--) {
+			for (s = ai[0] + b, t = ai[-1] + b;
+			    (ch = tr[*s]) != endch; s++, t++)
+				if (ch != tr[*t])
+					break;
+			if (ch >= tr[*t])
+				break;
+			swap(ai[0], ai[-1], s);
+		}
 }
