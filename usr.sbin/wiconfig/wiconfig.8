@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.23 2002/11/16 22:56:06 dyoung Exp $
+.\"	$NetBSD: wiconfig.8,v 1.24 2002/11/17 01:26:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	From: wicontrol.8,v 1.6 1999/05/22 16:12:47 wpaul Exp $
 .\"
-.Dd January 11, 2001
+.Dd November 16, 2002
 .Dt WICONFIG 8
 .Os
 .Sh NAME
@@ -41,28 +41,27 @@
 .Sh SYNOPSIS
 .Nm wiconfig
 .Ar interface
-.Op Fl o
-.Op Fl D
-.Bk -words
-.Op Fl s Ar station name
-.Ek
+.Op Fl \&Do
 .Bk -words
 .Op Fl a Ar access point density
-.Ek
-.Bk -words
-.Op Fl m Ar MAC address
 .Ek
 .Bk -words
 .Op Fl d Ar max data length
 .Ek
 .Bk -words
-.Op Fl r Ar RTS threshold
-.Ek
-.Bk -words
 .Op Fl M Ar 0|1
 .Ek
 .Bk -words
+.Op Fl m Ar MAC address
+.Ek
+.Bk -words
 .Op Fl R Ar 1|3
+.Ek
+.Bk -words
+.Op Fl r Ar RTS threshold
+.Ek
+.Bk -words
+.Op Fl s Ar station name
 .Ek
 .Sh DESCRIPTION
 The
@@ -105,12 +104,50 @@ interface.
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
-.It Fl o
-Print out the statistics counters instead of the card settings.
-Note that, however, the statistics will only be updated every minute or so.
+.It Fl a Ar access_point_density
+Specify the
+.Ar access point density
+for a given interface.
+Legal values are 1 (low), 2 (medium), and 3 (high).
+This setting influences some of the radio modem threshold settings.
 .It Fl D
 This forces the driver to initiate one round of access point scanning.
 All of the access points found are displayed.
+.It Fl d Ar max_data_length
+Set the maximum receive and transmit frame size for a specified interface.
+The
+.Ar max data length
+can be any number from 256 to 2346.
+The default is 2304.
+.It Fl M Ar 0|1
+Enable or disable
+.Qq microwave oven robustness
+on a given interface.
+.It Fl m Ar MAC address
+Set the station address for the specified interface.
+The
+.Ar MAC address
+is specified as a series of six hexadecimal values separated by colons,
+e.g. 00:60:1d:12:34:56.
+This programs the new address into the card and updates the interface as well.
+.It Fl o
+Print out the statistics counters instead of the card settings.
+Note that, however, the statistics will only be updated every minute or so.
+.It Fl R Ar 1|3
+Enable or disable roaming function on a given interface.
+The legal values are
+.Ar 1
+(Roaming handled by firmware) and
+.Ar 3
+(Roaming Disabled).
+The default is 1.
+.It Fl r Ar RTS threshold
+Set the RTS/CTS threshold for a given interface.
+This controls the number of bytes used for the RTS/CTS handshake boundary.
+The
+.Ar RTS threshold
+can be any value between 0 and 2347.
+The default is 2347, which indicates RTS/CTS mechanism never to be used.
 .It Fl s Ar station name
 Sets the
 .Ar station name
@@ -121,39 +158,6 @@ The
 .Tn Lucent
 .Tn WaveMANAGER
 software can poll the names of remote hosts.
-.It Fl a Ar access_point_density
-Specify the
-.Ar access point density
-for a given interface.  Legal values are 1 (low), 2 (medium) and 3 (high).
-This setting influences some of the radio modem threshold settings.
-.It Fl m Ar MAC address
-Set the station address for the specified interface.  The
-.Ar MAC address
-is specified as a series of six hexadecimal values separated by colons,
-e.g. 00:60:1d:12:34:56.
-This programs the new address into the card and updates the interface as well.
-.It Fl d Ar max_data_length
-Set the maximum receive and transmit frame size for a specified interface.
-The
-.Ar max data length
-can be any number from 256 to 2346.  The default is 2304.
-.It Fl r Ar RTS threshold
-Set the RTS/CTS threshold for a given interface.  This controls the
-number of bytes used for the RTS/CTS handshake boundary.  The
-.Ar RTS threshold
-can be any value between 0 and 2347.  The default is 2347,
-which indicates RTS/CTS mechanism never to be used.
-.It Fl M Ar 0|1
-Enable or disable
-.Qq microwave oven robustness
-on a given interface.
-.It Fl R Ar 1|3
-Enable or disable roaming function on a given interface.
-The legal values are
-.Ar 1
-(Roaming handled by firmware) and
-.Ar 3
-(Roaming Disabled).  The default is 1.
 .El
 .Sh SEE ALSO
 .Xr awi 4 ,
