@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.132.2.4 2005/01/11 06:41:35 jmc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.132.2.5 2005/03/16 11:54:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.4 2005/01/11 06:41:35 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.5 2005/03/16 11:54:49 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2595,7 +2595,7 @@ nfs_clearcommit(mp)
 
 	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
-		if (vp->v_type == VNON)
+		if (vp->v_type != VREG)
 			continue;
 		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
