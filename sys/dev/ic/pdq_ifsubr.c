@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.20 1998/08/16 03:44:42 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.21 1998/09/19 21:21:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -249,9 +249,13 @@ pdq_os_receive_pdu(
 	}
     }
 #endif
+    m->m_pkthdr.len = pktlen;
 #if NBPFILTER > 0
-    if (sc->sc_bpf != NULL)
+    if (sc->sc_bpf != NULL) {
+	m->m_data -= 3; m->m_len += 3; m->m_pkthdr.len += 3;
 	PDQ_BPF_MTAP(sc, m);
+	m->m_data += 3; m->m_len -= 3; m->m_pkthdr.len -= 3;
+    }
 #endif
     if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	PDQ_OS_DATABUF_FREE(pdq, m);
@@ -260,7 +264,7 @@ pdq_os_receive_pdu(
 
     m->m_data += sizeof(struct fddi_header);
     m->m_len  -= sizeof(struct fddi_header);
-    m->m_pkthdr.len = pktlen - sizeof(struct fddi_header);
+    m->m_pkthdr.len -= sizeof(struct fddi_header);
     m->m_pkthdr.rcvif = &sc->sc_if;
     fddi_input(&sc->sc_if, fh, m);
 }
