@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.48 2004/05/13 15:00:27 pooka Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.49 2004/05/28 21:42:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -442,7 +442,10 @@
 #define KS_Cmd_ContrastUp	0xf429
 #define KS_Cmd_ContrastDown	0xf42a
 #define KS_Cmd_ContrastRotate	0xf42b
-
+#define KS_Cmd_ScrollFastUp	0xf42c
+#define KS_Cmd_ScrollFastDown	0xf42d
+#define KS_Cmd_ScrollSlowUp	0xf42e
+#define KS_Cmd_ScrollSlowDown	0xf42f
 
 /*
  * Group 5 (internal)
