@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.11 1997/06/23 23:46:23 is Exp $	*/
+/*	$NetBSD: cc.c,v 1.12 1998/08/20 19:55:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -439,11 +439,12 @@ play_sample(len, data, period, volume, channels, count)
 
 	/* check to see, whether all channels are free */
 	for (i=0;i<4;i++) {
-		if ((1<<i)&dmabits)
+		if ((1<<i) & dmabits) {
 			if (channel[i].isaudio)
 				return; /* allocated */
 			else
 				channel[i].isaudio=-1; /* allocate */
+		}
 	}
 
 	custom.dmacon = dmabits;	/* turn off the correct channels */

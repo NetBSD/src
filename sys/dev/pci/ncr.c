@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.70 1998/08/13 02:10:54 eeh Exp $	*/
+/*	$NetBSD: ncr.c,v 1.71 1998/08/20 19:55:07 veego Exp $	*/
 
 /**************************************************************************
 **
@@ -1434,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.70 1998/08/13 02:10:54 eeh Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.71 1998/08/20 19:55:07 veego Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3932,7 +3932,7 @@ static void ncr_attach (pcici_t config_id, int unit)
 	/*
 	**	Get on-chip SRAM address, if supported
 	*/
-	if ((np->features & FE_RAM) && sizeof(struct script) <= 4096)
+	if ((np->features & FE_RAM) && sizeof(struct script) <= 4096) {
 #ifdef __NetBSD__
 		if (pci_mapreg_map(pa, 0x18,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
@@ -3941,11 +3941,13 @@ static void ncr_attach (pcici_t config_id, int unit)
 			np->ram_handle = memh;
 			np->paddr2 = memaddr;
 			np->scriptmapped = 1;
-		} else
+		} else {
 			np->scriptmapped = 0;
+		}
 #else	/* !__NetBSD__ */
 		(void)(!pci_map_mem (config_id,0x18, &np->vaddr2, &np->paddr2));
 #endif	/* __NetBSD__ */
+	}
 #endif	/* !NCR_IOMAPPED */
 
 	/*

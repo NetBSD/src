@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 1998/07/26 06:45:17 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 1998/08/20 19:55:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -338,12 +338,13 @@ again:
 	 * 5% of remaining. Insure a minimum of 16 buffers.
 	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
-  	if (bufpages == 0)
+  	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 			    (20 * CLSIZE);
+	}
 
 	if (nbuf == 0) {
 		nbuf = bufpages;
