@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.33 1998/03/01 02:24:00 fvdl Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.34 1998/03/27 01:46:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,6 +42,7 @@
 struct buf;
 struct loadavg;
 struct proc;
+struct pmap;
 struct vmspace;
 struct vmtotal;
 struct mount;
@@ -151,10 +152,12 @@ int		 vm_sysctl __P((int *, u_int, void *, size_t *, void *,
 		    size_t, struct proc *));
 void		 vmmeter __P((void));
 #if !defined(UVM)
-struct vmspace	*vmspace_alloc __P((vm_offset_t, vm_offset_t, int));
+struct vmspace	*vmspace_alloc __P((vm_offset_t, vm_offset_t, boolean_t));
 struct vmspace	*vmspace_fork __P((struct vmspace *));
 void		 vmspace_exec __P((struct proc *));
 void		 vmspace_free __P((struct vmspace *));
+void		 vmspace_init __P((struct vmspace *, struct pmap *,
+		    vm_offset_t, vm_offset_t, boolean_t));
 void		 vmspace_share __P((struct proc *, struct proc *));
 void		 vmspace_unshare __P((struct proc *));
 #endif
