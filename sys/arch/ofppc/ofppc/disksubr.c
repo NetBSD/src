@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1999/05/04 23:55:27 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2000/11/20 08:24:19 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -95,7 +95,7 @@ get_netbsd_label(dev, strat, lp, bno)
 	/* Now get the label block */
 	bp->b_blkno = bno + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -115,7 +115,6 @@ get_netbsd_label(dev, strat, lp, bno)
 		}
 	}
 done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return 0;
 }
@@ -156,7 +155,7 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	/* Now get the MBR */
 	bp->b_blkno = bno;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -209,7 +208,6 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	}
 done:
 	recursion--;
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return found;
 }
@@ -317,14 +315,13 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = osdep->cd_start + LABELSECTOR;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_WRITE;
+	bp->b_flags |= B_WRITE;
 
 	bcopy((caddr_t)lp, (caddr_t)bp->b_data, sizeof *lp);
 
 	(*strat)(bp);
 	error = biowait(bp);
 
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 
 	return error;
