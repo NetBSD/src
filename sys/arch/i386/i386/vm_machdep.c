@@ -36,27 +36,28 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.5 1993/10/26 12:00:00 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.6 1993/10/27 17:21:52 mycroft Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/user.h>
+#include <sys/vmmeter.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+
 #include "npx.h"
-
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "user.h"
-
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-
-#include "machine/cpu.h"
-#include "machine/cpufunc.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -155,10 +156,11 @@ cpu_exit(p)
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-
 	p->p_addr = (struct user *) &nullpcb;
+
 	splclock();
-	swtch();
+	cnt.v_swtch++;
+	cpu_swtch(NULL);
 	/* NOTREACHED */
 }
 #else
@@ -178,8 +180,9 @@ cpu_exit(p)
         }
 #endif
 	splclock();
-	swtch();
-	panic("cpu_exit: swtch returned");
+	cnt.v_swtch++;
+	cpu_swtch(NULL);
+	panic("cpu_exit: cpu_swtch returned");
 }
 
 void
