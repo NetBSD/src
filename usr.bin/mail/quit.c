@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)quit.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: quit.c,v 1.3 1994/06/29 05:09:39 deraadt Exp $";
+static char rcsid[] = "$Id: quit.c,v 1.4 1994/11/28 20:03:37 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -73,7 +73,7 @@ quit()
 	FILE *ibuf, *obuf, *fbuf, *rbuf, *readstat, *abuf;
 	register struct message *mp;
 	register int c;
-	extern char tempQuit[], tempResid[];
+	extern char *tempQuit, *tempResid;
 	struct stat minfo;
 	char *mbox;
 
@@ -390,8 +390,7 @@ edstop()
 	register struct message *mp;
 	FILE *obuf, *ibuf, *readstat;
 	struct stat statb;
-	char tempname[30];
-	char *mktemp();
+	char *tempname;
 
 	if (readonly)
 		return;
@@ -420,9 +419,8 @@ edstop()
 		goto done;
 	ibuf = NULL;
 	if (stat(mailname, &statb) >= 0 && statb.st_size > mailsize) {
-		strcpy(tempname, tmpdir);
-		strcat(tempname, "mboxXXXXXX");
-		mktemp(tempname);
+		tempname = tempnam(tmpdir, "mbox");
+
 		if ((obuf = Fopen(tempname, "w")) == NULL) {
 			perror(tempname);
 			relsesigs();
@@ -447,6 +445,7 @@ edstop()
 			reset(0);
 		}
 		rm(tempname);
+		free(tempname);
 	}
 	printf("\"%s\" ", mailname);
 	fflush(stdout);

@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)send.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: send.c,v 1.4 1994/06/29 05:09:42 deraadt Exp $";
+static char rcsid[] = "$Id: send.c,v 1.5 1994/11/28 20:03:38 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -427,7 +427,7 @@ infix(hp, fi)
 	struct header *hp;
 	FILE *fi;
 {
-	extern char tempMail[];
+	extern char *tempMail;
 	register FILE *nfo, *nfi;
 	register int c;
 
