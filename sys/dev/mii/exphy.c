@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.9 1998/11/03 00:18:18 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.10 1998/11/04 22:15:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,14 +97,6 @@ struct cfattach exphy_ca = {
 	sizeof(struct exphy_softc), exphymatch, exphyattach
 };
 
-#define	EXPHY_READ(sc, reg) \
-    (*(sc)->sc_mii.mii_pdata->mii_readreg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg))
-
-#define	EXPHY_WRITE(sc, reg, val) \
-    (*(sc)->sc_mii.mii_pdata->mii_writereg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg), (val))
-
 int	exphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	exphy_reset __P((struct exphy_softc *));
 void	exphy_auto __P((struct exphy_softc *));
@@ -172,7 +164,7 @@ exphyattach(parent, self, aux)
 
 	exphy_reset(sc);
 
-	sc->sc_capabilities = EXPHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->sc_capabilities = PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
@@ -213,7 +205,7 @@ exphy_service(self, mii, cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (EXPHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
+			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
 			exphy_auto(sc);
 			break;
@@ -226,8 +218,9 @@ exphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			EXPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
-			EXPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			PHY_WRITE(&sc->sc_mii, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -272,11 +265,12 @@ exphy_status(sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = EXPHY_READ(sc, MII_BMSR) | EXPHY_READ(sc, MII_BMSR);
+	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
+	    PHY_READ(&sc->sc_mii, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = EXPHY_READ(sc, MII_BMCR);
+	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -298,7 +292,8 @@ exphy_status(sc)
 			return;
 		}
 
-		anlpar = EXPHY_READ(sc, MII_ANAR) & EXPHY_READ(sc, MII_ANLPAR);
+		anlpar = PHY_READ(&sc->sc_mii, MII_ANAR) &
+		    PHY_READ(&sc->sc_mii, MII_ANLPAR);
 		if (anlpar & ANLPAR_T4)
 			mii->mii_media_active |= IFM_100_T4;
 		else if (anlpar & ANLPAR_TX_FD)
@@ -327,13 +322,13 @@ exphy_auto(sc)
 {
 	int bmsr, i;
 
-	EXPHY_WRITE(sc, MII_ANAR,
+	PHY_WRITE(&sc->sc_mii, MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	EXPHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 
 	/* Wait 500ms for it to complete. */
 	for (i = 0; i < 500; i++) {
-		if ((bmsr = EXPHY_READ(sc, MII_BMSR)) & BMSR_ACOMP)
+		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
 			return;
 		delay(1000);
 	}
@@ -350,11 +345,11 @@ exphy_reset(sc)
 {
 	int reg, i;
 
-	EXPHY_WRITE(sc, MII_BMCR, BMCR_RESET);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET);
 
 	/* Wait 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = EXPHY_READ(sc, MII_BMCR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -364,5 +359,5 @@ exphy_reset(sc)
 	 * XXX 3Com PHY doesn't set the BMCR properly after
 	 * XXX reset, which breaks autonegotiation.
 	 */
-	EXPHY_WRITE(sc, MII_BMCR, BMCR_S100|BMCR_AUTOEN|BMCR_FDX);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_S100|BMCR_AUTOEN|BMCR_FDX);
 }

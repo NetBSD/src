@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.11 1998/11/02 22:31:37 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.12 1998/11/04 22:15:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,14 +110,6 @@ struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach
 };
 
-#define	TLPHY_READ(sc, reg) \
-    (*(sc)->sc_mii.mii_pdata->mii_readreg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg))
-
-#define	TLPHY_WRITE(sc, reg, val) \
-    (*(sc)->sc_mii.mii_pdata->mii_writereg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg), (val))
-
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	tlphy_reset __P((struct tlphy_softc *));
 void	tlphy_auto __P((struct tlphy_softc *));
@@ -169,7 +161,7 @@ tlphyattach(parent, self, aux)
 	sc->sc_tlphycap = tlsc->tl_product->tp_tlphymedia;
 	if ((sc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
 		sc->sc_capabilities =
-		    TLPHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+		    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	else
 		sc->sc_capabilities = 0;
 
@@ -232,8 +224,8 @@ tlphy_service(self, mii, cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
-			reg = TLPHY_READ(sc, MII_BMCR);
-			TLPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+			reg = PHY_READ(&sc->sc_mii, MII_BMCR);
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 		
@@ -254,15 +246,16 @@ tlphy_service(self, mii, cmd)
 			break;
 		case IFM_10_2:
 		case IFM_10_5:
-			TLPHY_WRITE(sc, MII_BMCR, 0);
-			TLPHY_WRITE(sc, MII_TLPHY_CTRL, CTRL_AUISEL);
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, 0);
+			PHY_WRITE(&sc->sc_mii, MII_TLPHY_CTRL, CTRL_AUISEL);
 			delay(100000);
 			break;
 		default:
-			TLPHY_WRITE(sc, MII_TLPHY_CTRL, 0);
+			PHY_WRITE(&sc->sc_mii, MII_TLPHY_CTRL, 0);
 			delay(100000);
-			TLPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
-			TLPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			PHY_WRITE(&sc->sc_mii, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -292,7 +285,8 @@ tlphy_service(self, mii, cmd)
 		 *
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
 		 */
-		reg = TLPHY_READ(sc, MII_BMSR) | TLPHY_READ(sc, MII_BMSR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMSR) |
+		    PHY_READ(&sc->sc_mii, MII_BMSR);
 		if (reg & BMSR_LINK)
 			return (0);
 
@@ -330,14 +324,14 @@ tlphy_status(sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmcr = TLPHY_READ(sc, MII_BMCR);
+	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;  
 		return;
 	}
 
-	tlctrl = TLPHY_READ(sc, MII_TLPHY_CTRL);
+	tlctrl = PHY_READ(&sc->sc_mii, MII_TLPHY_CTRL);
 	if (tlctrl & CTRL_AUISEL) {
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2)
 			mii->mii_media_active |= IFM_10_2;
@@ -351,7 +345,8 @@ tlphy_status(sc)
 		return;
 	}
 
-	bmsr = TLPHY_READ(sc, MII_BMSR) | TLPHY_READ(sc, MII_BMSR);
+	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
+	    PHY_READ(&sc->sc_mii, MII_BMSR);
 	if (bmsr & BMSR_LINK)   
 		mii->mii_media_status |= IFM_ACTIVE;
 
@@ -375,13 +370,13 @@ tlphy_auto(sc)
 {
 	int aner, anlpar, bmsr, i;
 
-	TLPHY_WRITE(sc, MII_ANAR,
+	PHY_WRITE(&sc->sc_mii, MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	TLPHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 
 	/* Wait 500ms for it to complete. */
 	for (i = 0; i < 500; i++) {
-		if ((bmsr = TLPHY_READ(sc, MII_BMSR)) & BMSR_ACOMP)
+		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
 			return;
 		delay(1000);
 	}
@@ -399,12 +394,12 @@ tlphy_auto(sc)
 	 * based on the link partner status.
 	 */
 
-	aner = TLPHY_READ(sc, MII_ANER);
+	aner = PHY_READ(&sc->sc_mii, MII_ANER);
 	if (aner & ANER_LPAN) {
-		anlpar = TLPHY_READ(sc, MII_ANLPAR) &
-		    TLPHY_READ(sc, MII_ANAR);
+		anlpar = PHY_READ(&sc->sc_mii, MII_ANLPAR) &
+		    PHY_READ(&sc->sc_mii, MII_ANAR);
 		if (anlpar & ANAR_10_FD) {
-			TLPHY_WRITE(sc, MII_BMCR, BMCR_FDX);
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_FDX);
 			return;
 		}
 	}
@@ -414,7 +409,7 @@ tlphy_auto(sc)
 	 * Just assume we're not in full-duplex mode.
 	 * XXX Check link and try AUI/BNC?
 	 */
-	TLPHY_WRITE(sc, MII_BMCR, 0);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, 0);
 }
 
 void
@@ -423,11 +418,11 @@ tlphy_reset(sc)
 {
 	int reg, i;
 
-	TLPHY_WRITE(sc, MII_BMCR, BMCR_RESET|BMCR_ISO);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
 
 	/* Wait 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = TLPHY_READ(sc, MII_BMCR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -435,5 +430,5 @@ tlphy_reset(sc)
 
 	/* Make sure the PHY is isolated. */
 	if (sc->sc_mii.mii_inst != 0)
-		TLPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }

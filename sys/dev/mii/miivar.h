@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.1 1998/08/10 23:55:18 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.2 1998/11/04 22:15:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,6 +135,14 @@ typedef struct mii_attach_args mii_attach_args_t;
 
 #ifdef _KERNEL
 #include "locators.h"
+
+#define	PHY_READ(p, r) \
+	(*(p)->mii_pdata->mii_readreg)((p)->mii_dev.dv_parent, \
+	    (p)->mii_phy, (r))
+
+#define	PHY_WRITE(p, r, v) \
+	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
+	    (p)->mii_phy, (r), (v))
 
 int	mii_anar __P((int));
 int	mii_mediachg __P((struct mii_data *));
