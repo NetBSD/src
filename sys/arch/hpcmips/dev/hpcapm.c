@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.1 2000/07/02 10:01:31 takemura Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.2 2000/07/22 08:53:35 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -79,8 +79,8 @@ struct cfattach hpcapm_ca = {
 struct apmhpc_softc {
 	struct device sc_dev;
 	void *sc_apmdev;
-	unsigned int events;
-	int power_state;
+	volatile unsigned int events;
+	volatile int power_state;
 	config_hook_tag	sc_standby_hook;
 	config_hook_tag	sc_suspend_hook;
 };
@@ -157,22 +157,18 @@ hpcapm_hook(ctx, type, id, msg)
 	s = splhigh();
 	switch (id) {
 	case CONFIG_HOOK_PMEVENT_STANDBYREQ:
-		if (sc->power_state == APM_SYS_STANDBY) {
-			sc->power_state = APM_SYS_READY;
-			sc->events |= (1 << APM_NORMAL_RESUME);
-		} else {
-			DPRINTF(("hpcapm: standby req\n"));
+		if (sc->power_state != APM_SYS_STANDBY) {
 			sc->events |= (1 << APM_USER_STANDBY_REQ);
+		} else {
+			sc->events |= (1 << APM_NORMAL_RESUME);
 		}
 		break;
 	case CONFIG_HOOK_PMEVENT_SUSPENDREQ:
-		if (sc->power_state == APM_SYS_SUSPEND) {
-			sc->power_state = APM_SYS_READY;
-			DPRINTF(("hpcapm: resume\n"));
-			sc->events |= (1 << APM_NORMAL_RESUME);
-		} else {
+		if (sc->power_state != APM_SYS_SUSPEND) {
 			DPRINTF(("hpcapm: suspend req\n"));
 			sc->events |= (1 << APM_USER_SUSPEND_REQ);
+		} else {
+			sc->events |= (1 << APM_NORMAL_RESUME);
 		}
 		break;
 	}
@@ -225,6 +221,9 @@ hpcapm_set_powstate(scx, devid, powstat)
 	case APM_SYS_SUSPEND:
 		DPRINTF(("hpcapm: set power state SUSPEND...\n"));
 		s = splhigh();
+		config_hook_call(CONFIG_HOOK_PMEVENT, 
+				 CONFIG_HOOK_PMEVENT_HARDPOWER,
+				 (void *)PWR_SUSPEND);
 		sc->power_state = APM_SYS_SUSPEND;
 #if NVRIP > 0
 		if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
@@ -252,6 +251,10 @@ hpcapm_set_powstate(scx, devid, powstat)
 			vrip_intr_resume();
 		}
 #endif
+		config_hook_call(CONFIG_HOOK_PMEVENT, 
+				 CONFIG_HOOK_PMEVENT_HARDPOWER,
+				 (void *)PWR_RESUME);
+		DPRINTF(("hpcapm: resume\n"));
 		splx(s);
 		break;
 	case APM_SYS_OFF:
@@ -303,6 +306,7 @@ hpcapm_get_event(scx, event_type, event_info)
 			    *event_type == APM_CRIT_RESUME) {
 				/* pccard power off in the suspend state */
 				*event_info = 1;
+				sc->power_state = APM_SYS_READY;
 			} else
 				*event_info = 0;
 			return (0);

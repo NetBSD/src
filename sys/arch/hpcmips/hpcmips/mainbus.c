@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2000/07/02 10:01:31 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2000/07/22 08:53:37 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -105,7 +105,7 @@ mbattach(parent, self, aux)
 	register struct device *mb = self;
 	struct mainbus_attach_args ma;
 	char *devnames[] = {
-		"txsim", "bivideo", "vrip", "btnmgr", "hpcapm",
+		"txsim", "vrip", "bivideo", "btnmgr", "hpcapm",
 	};
 
 	printf("\n");
