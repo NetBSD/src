@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.329 2001/04/12 10:45:51 itojun Exp $
+#	$NetBSD: mi,v 1.330 2001/04/17 14:43:09 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -697,7 +697,7 @@
 ./usr/include/openssl/ssl23.h		comp-c-include
 ./usr/include/openssl/ssl3.h		comp-c-include
 ./usr/include/openssl/stack.h		comp-c-include
-./usr/include/openssl/symhack.h		comp-c-include
+./usr/include/openssl/symhacks.h	comp-c-include
 ./usr/include/openssl/tls1.h		comp-c-include
 ./usr/include/openssl/tmdiff.h		comp-c-include
 ./usr/include/openssl/txt_db.h		comp-c-include
@@ -1990,6 +1990,7 @@
 ./usr/share/man/cat3/gammaf_r.0	comp-c-catman
 ./usr/share/man/cat3/get_myaddress.0	comp-c-catman
 ./usr/share/man/cat3/getaddrinfo.0	comp-c-catman
+./usr/share/man/cat3/getbootfile.0	comp-c-catman
 ./usr/share/man/cat3/getbsize.0	comp-c-catman
 ./usr/share/man/cat3/getc.0	comp-c-catman
 ./usr/share/man/cat3/getcap.0	comp-c-catman
@@ -3927,6 +3928,7 @@
 ./usr/share/man/man3/gammaf_r.3		comp-c-man
 ./usr/share/man/man3/get_myaddress.3		comp-c-man
 ./usr/share/man/man3/getaddrinfo.3		comp-c-man
+./usr/share/man/man3/getbootfile.3	comp-c-man
 ./usr/share/man/man3/getbsize.3		comp-c-man
 ./usr/share/man/man3/getc.3		comp-c-man
 ./usr/share/man/man3/getcap.3		comp-c-man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.248 2001/04/16 08:20:58 wiz Exp $
+# $NetBSD: mi,v 1.249 2001/04/17 14:43:07 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -38,6 +38,7 @@
 ./bin/test		base-util-root
 ./dev			base-sys-root
 ./dev/MAKEDEV		base-sysutil-root
+./dev/altq		base-sys-root
 ./dev/fd		base-sys-root
 ./dev/log		base-sys-root
 ./etc			base-sys-root
@@ -444,7 +445,6 @@
 ./usr/include/arpa		base-c-usr
 ./usr/include/cdk		base-c-usr
 ./usr/include/dev		base-c-usr
-./usr/include/dev/microcode	base-c-usr
 ./usr/include/dev/ofw		base-c-usr
 ./usr/include/dev/usb		base-c-usr
 ./usr/include/g++		base-cxx-usr
