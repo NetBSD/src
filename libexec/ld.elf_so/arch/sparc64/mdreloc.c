@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.25 2002/09/25 14:36:37 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.26 2002/09/25 16:35:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -201,9 +201,9 @@ static const long reloc_target_bitmask[] = {
 #define	ORG5	0x82804005	/*	or	%g1, %g5, %g1 */
 
 
-/* %hi(v) with variable shift */
-#define	HIVAL(v, s)	(((v) >> (s)) &  0x003fffff)
-#define LOVAL(v)	((v) & 0x000003ff)
+/* %hi(v)/%lo(v) with variable shift */
+#define	HIVAL(v, s)	(((v) >> (s)) & 0x003fffff)
+#define LOVAL(v, s)	(((v) >> (s)) & 0x000003ff)
 
 void _rtld_bind_start_0(long, long);
 void _rtld_bind_start_1(long, long);
@@ -219,8 +219,8 @@ caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 #define	OR_l0_l0	0xa0142000
 #define	SLLX_l0_32_l0	0xa12c3020
 #define	OR_l0_l1_l0	0xa0140011
-#define	JMPL_l0_o1	0x93c42000
-#define	MOV_g1_o0	0x90100001
+#define	JMPL_l0_o0	0x91c42000
+#define	MOV_g1_o1	0x92100001
 
 void _rtld_install_plt __P((Elf_Word *pltgot,	Elf_Addr proc));
 
@@ -232,23 +232,23 @@ _rtld_install_plt(pltgot, proc)
 	pltgot[0] = SAVE;
 	pltgot[1] = SETHI_l0  | HIVAL(proc, 42);
 	pltgot[2] = SETHI_l1  | HIVAL(proc, 10);
-	pltgot[3] = OR_l0_l0  | LOVAL((proc) >> 32);
+	pltgot[3] = OR_l0_l0  | LOVAL(proc, 32);
 	pltgot[4] = SLLX_l0_32_l0;
 	pltgot[5] = OR_l0_l1_l0;
-	pltgot[6] = JMPL_l0_o1 | LOVAL(proc);
-	pltgot[7] = MOV_g1_o0;
+	pltgot[6] = JMPL_l0_o0 | LOVAL(proc, 0);
+	pltgot[7] = MOV_g1_o1;
 }
 
 #if 0
 long _rtld_bind_start_0_stub __P((long x, long y));
 long 
-_rtld_bind_start_0_stub(x, y)
-	long x, y;
+_rtld_bind_start_0_stub(y, x)
+	long y, x;
 {
 	long i;
 	long n;
 
-	i = x - y + 1048596;
+	i = x - y + 8 - 32768*32;
 	n = 32768 + (i/5120)*160 + (i%5120)/24;
 
 	return (n);
@@ -565,7 +565,7 @@ _rtld_bind(obj, reloff)
 		__asm __volatile("iflush %0+4" : : "r" (where));
 	} else if (value >= 0 && value < (1L<<32)) {
 		/* 
-		 * We're withing 32-bits of address zero.
+		 * We're within 32-bits of address zero.
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -579,14 +579,14 @@ _rtld_bind(obj, reloff)
 		 *	nop
 		 *
 		 */
-		where[2] = JMP   | LOVAL(value);
+		where[2] = JMP   | LOVAL(value, 0);
 		where[1] = SETHI | HIVAL(value, 10);
 		__asm __volatile("iflush %0+8" : : "r" (where));
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (value <= 0 && value > -(1L<<32)) {
 		/* 
-		 * We're withing 32-bits of address -1.
+		 * We're within 32-bits of address -1.
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -609,7 +609,7 @@ _rtld_bind(obj, reloff)
 
 	} else if (offset <= (1L<<32) && offset >= -((1L<<32) - 4)) {
 		/* 
-		 * We're withing 32-bits -- we can use a direct call insn 
+		 * We're within 32-bits -- we can use a direct call insn 
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -632,7 +632,7 @@ _rtld_bind(obj, reloff)
 
 	} else if (offset >= 0 && offset < (1L<<44)) {
 		/* 
-		 * We're withing 44 bits.  We can generate this pattern:
+		 * We're within 44 bits.  We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -646,7 +646,7 @@ _rtld_bind(obj, reloff)
 		 *	nop
 		 *
 		 */
-		where[4] = JMP   | LOVAL(offset);
+		where[4] = JMP   | LOVAL(offset, 0);
 		where[3] = SLLX  | 12;
 		where[2] = OR    | (((offset) >> 12) & 0x00001fff);
 		where[1] = SETHI | HIVAL(offset, 22);
@@ -657,7 +657,7 @@ _rtld_bind(obj, reloff)
 
 	} else if (offset < 0 && offset > -(1L<<44)) {
 		/* 
-		 * We're withing 44 bits.  We can generate this pattern:
+		 * We're within 44 bits.  We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -671,7 +671,7 @@ _rtld_bind(obj, reloff)
 		 *	nop
 		 *
 		 */
-		where[4] = JMP   | LOVAL(offset);
+		where[4] = JMP   | LOVAL(offset, 0);
 		where[3] = SLLX  | 12;
 		where[2] = XOR   | (((~offset) >> 12) & 0x00001fff);
 		where[1] = SETHI | HIVAL(~offset, 22);
@@ -696,14 +696,14 @@ _rtld_bind(obj, reloff)
 		 *	nop
 		 *
 		 */
-		where[6] = JMP     | LOVAL(value);
+		where[6] = JMP     | LOVAL(value, 0);
 		where[5] = ORG5;
-		where[4] = SLLX    | 12;
-		where[3] = OR      | LOVAL((value) >> 32);
+		where[4] = SLLX    | 32;
+		where[3] = OR      | LOVAL(value, 32);
 		where[2] = SETHIG5 | HIVAL(value, 10);
 		where[1] = SETHI   | HIVAL(value, 42);
+		__asm __volatile("iflush %0+24" : : "r" (where));
 		__asm __volatile("iflush %0+20" : : "r" (where));
-		__asm __volatile("iflush %0+16" : : "r" (where));
 		__asm __volatile("iflush %0+16" : : "r" (where));
 		__asm __volatile("iflush %0+12" : : "r" (where));
 		__asm __volatile("iflush %0+8" : : "r" (where));

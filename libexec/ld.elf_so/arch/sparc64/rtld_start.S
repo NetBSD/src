@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2002/09/25 14:35:39 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2002/09/25 16:35:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -130,30 +130,32 @@ _rtld_start:
 	.align	4
 	.global	_rtld_bind_start_0
 	.type	_rtld_bind_start_0,@function
-_rtld_bind_start_0:	# (x, y)
+_rtld_bind_start_0:	# (y, x)
 #if 0
 	call	_rtld_bind_start_0_stub
-	 ldx     [%o1 + (10*4)], %l7
-	mov	%o0, %l5
-	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %o1		/*  So multiply by 24. */
+	 ldx     [%o0 + (10*4)], %l7
+	mov	%o0, %o1
 	
 	call	_rtld_bind
 	 mov	%l7, %o0
 #else
-	sethi	%hi(1048596), %l1
-	sub	%o0, %o1, %l0		/* x - y */
-	or	%l1, %lo(1048596), %l1
-	add	%l0, %l1, %l0		/* x - y + 1048596 */
+	/* %o0 = obj->pltgot[6] */
+	/* %o1 = plt[4] */
+	/* %o1 - %o0 + 8 == offset of plt[] from obj->pltgot[] */
+	/* -32768*32 to get offset from beginning of upper PLT section */
+
+	sethi	%hi(32768*32-8), %l1
+	sub	%o1, %o0, %l0		/* i = x - y */
+	or	%l1, %lo(32768*32-8), %l1
+	sub	%l0, %l1, %l0		/* i = x - y + 8 - 32768*32 */
+
+	ldx	[%o0 + (10*4)], %o0	/* Load object pointer from PLT2 */
 
 	sdivx	%l0, 5120, %l1		/* Calculate i/5120 */
-	ldx	[%o1 + (10*4)], %o0	/* Load object pointer from PLT2 */
 	sub	%l0, %l1, %l2		/* And i%5120 */
 	
 	/* Let the division churn for a bit. */
-	sdivx	%l2, 14, %l4		/* (i%5120)/24 */
+	sdivx	%l2, 24, %l4		/* (i%5120)/24 */
 
 	/* 160 is (32 * 5) or (32 * (4 + 1)) */
 	sllx	%l1, 2, %l3		/* 4 * (i/5120) */
@@ -162,10 +164,9 @@ _rtld_bind_start_0:	# (x, y)
 
 	sethi	%hi(32768), %l6
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
-	add	%l5, %l6, %l5
 	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 mov	%l5, %o1
+	 add	%l5, %l6, %o1		/* %o1 = 32768 + ... */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
@@ -175,13 +176,11 @@ _rtld_bind_start_0:	# (x, y)
 	.align	4
 	.global	_rtld_bind_start_1
 	.type	_rtld_bind_start_1,@function
-_rtld_bind_start_1:	# (x, y)
-	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
-	
-	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
+_rtld_bind_start_1:	# (y, x)
+	ldx	[%o0 + (2*4)], %o0	/* Load object pointer from PLT2 */
 	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 mov	%o2, %o1
+	 srax	%o1, 15, %o1		/* %o1 is the index to our PLT slot */
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
