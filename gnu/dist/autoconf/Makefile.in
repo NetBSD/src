@@ -89,7 +89,7 @@ m4sources = m4sugar.m4 m4sh.m4               $(srcdir)/acversion.m4             
 distpkgdataDATA = acfunctions acheaders acidentifiers acmakevars acprograms                   aclibraries $(m4sources)
 
 
-nodistpkgdataDATA = autoconf.m4f
+nodistpkgdataDATA = 
 
 pkgdata_DATA = $(distpkgdataDATA) $(nodistpkgdataDATA)
 
@@ -176,6 +176,7 @@ install-pkgdataDATA: $(pkgdata_DATA)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
 	@list='$(pkgdata_DATA)'; for p in $$list; do \
+	  p=`basename $$p`; \
 	  if test -f $(srcdir)/$$p; then \
 	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(pkgdatadir)/$$p"; \
 	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(pkgdatadir)/$$p; \
