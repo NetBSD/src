@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.46 2000/06/05 00:09:20 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.47 2000/06/05 03:45:23 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -285,7 +285,13 @@ ENTRY(sbiflt);
 
 TRAPCALL(astintr, T_ASTFLT)
 
-FASTINTR(softclock,softclock)
+ENTRY(softclock)
+	PUSHR
+	calls	$0,_softclock
+	incl	_softclock_intrcnt+EV_COUNT
+	adwc	$0,_softclock_intrcnt+EV_COUNT+4
+	POPR
+	rei
 
 ENTRY(softnet)
 	PUSHR
@@ -303,6 +309,8 @@ ENTRY(softnet)
 
 2:	movab	_softnet_head,r0
 	jsb	softintr_dispatch
+	incl	_softnet_intrcnt+EV_COUNT
+	adwc	$0,_softnet_intrcnt+EV_COUNT+4
 	POPR
 	rei
 
@@ -310,6 +318,8 @@ ENTRY(softserial)
 	PUSHR
 	movab	_softserial_head,r0
 	jsb	softintr_dispatch
+	incl	_softserial_intrcnt+EV_COUNT
+	adwc	$0,_softserial_intrcnt+EV_COUNT+4
 	POPR
 	rei
 
