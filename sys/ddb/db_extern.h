@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.6 1998/12/04 20:18:05 thorpej Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.7 2000/07/17 19:57:50 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -76,5 +76,8 @@ void db_trap(int, int);
 
 /* db_write_cmd.c */
 void db_write_cmd __P((db_expr_t, boolean_t, db_expr_t, char *));
+
+/* Callback for MD platform code to manage watchdogs, etc. */
+void (*db_trap_callback)(int);
 
 #endif /* _DDB_DB_EXTERN_H_ */
