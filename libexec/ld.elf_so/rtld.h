@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.33 2001/12/28 05:44:22 lukem Exp $	 */
+/*	$NetBSD: rtld.h,v 1.33.2.1 2003/09/05 19:15:09 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -213,8 +213,6 @@ typedef struct Struct_Obj_Entry {
 	Objlist         dagmembers;	/* DAG has these members (%) */
 	dev_t           dev;		/* Object's filesystem's device */
 	ino_t           ino;		/* Object's inode number */
-	unsigned long   mark;		/* Set to "_rtld_curmark" to avoid
-					   repeat visits */
 } Obj_Entry;
 
 #if defined(_RTLD_SOURCE)
@@ -229,7 +227,6 @@ extern Search_Path *_rtld_paths;
 extern Library_Xform *_rtld_xforms;
 extern bool _rtld_trust;
 extern const char *_rtld_error_message;
-extern unsigned long _rtld_curmark;
 extern Objlist _rtld_list_global;
 extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
