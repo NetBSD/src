@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.33 2003/04/02 10:39:34 fvdl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.34 2003/04/02 19:47:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -833,7 +833,9 @@ static void
 ffs_oldfscompat(fs)
 	struct fs *fs;
 {
+#ifdef COMPAT_UFS
 	int i;
+#endif
 
 	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_size != fs->fs_old_size) {
 		fs->fs_maxbsize = fs->fs_bsize;
