@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1997/06/22 06:01:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1998/03/02 19:57:01 cgd Exp $
+
+.include <bsd.own.mk>
 
 BINDIR=	/usr/mdec
 PROG=	installboot
@@ -9,6 +11,6 @@ NOMAN=	yes
 
 CPPFLAGS= -I${.CURDIR}/../lib/crt/bootsect
 CFLAGS+= -Wall
-LDSTATIC=-static
+LDSTATIC?=-static
 
 .include <bsd.prog.mk>
