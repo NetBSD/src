@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.17 2000/06/02 22:57:57 fvdl Exp $	*/
+/*	$NetBSD: xdr.h,v 1.18 2000/07/14 08:39:31 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -154,6 +154,29 @@ typedef	bool_t (*xdrproc_t) __P((/* XDR *, void *, u_int */));
 #define xdr_putlong(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_putlong)(xdrs, longp)
 
+static __inline
+xdr_getint32(XDR *xdrs, int32_t *ip)
+{
+	long l;
+
+	if (!xdr_getlong(xdrs, &l))
+		return (FALSE);
+	*ip = (int32_t)l;
+	return (TRUE);
+}
+
+static __inline
+xdr_putint32(XDR *xdrs, int32_t *ip)
+{
+	long l;
+
+	l = (long)*ip;
+	return xdr_putlong(xdrs, &l);
+}
+
+#define XDR_GETINT32(xdrs, int32p)	xdr_getint32(xdrs, int32p)
+#define XDR_PUTINT32(xdrs, int32p)	xdr_putint32(xdrs, int32p)
+
 #define XDR_GETBYTES(xdrs, addr, len)			\
 	(*(xdrs)->x_ops->x_getbytes)(xdrs, addr, len)
 #define xdr_getbytes(xdrs, addr, len)			\
@@ -232,6 +255,11 @@ struct xdr_discrim {
  * N.B. and frozen for all time: each data type here uses 4 bytes
  * of external representation.
  */
+#define IXDR_GET_INT32(buf)		((int32_t)ntohl((u_int32_t)*(buf)++))
+#define IXDR_PUT_INT32(buf, v)		(*(buf)++ =(int32_t)htonl((u_int32_t)v))
+#define IXDR_GET_U_INT32(buf)		((u_int32_t)IXDR_GET_INT32(buf))
+#define IXDR_PUT_U_INT32(buf, v)	IXDR_PUT_INT32((buf), ((int32_t)(v)))
+
 #define IXDR_GET_LONG(buf)		((long)ntohl((u_int32_t)*(buf)++))
 #define IXDR_PUT_LONG(buf, v)		(*(buf)++ =(int32_t)htonl((u_int32_t)v))
 
