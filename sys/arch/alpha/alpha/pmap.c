@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.56 1998/06/12 07:28:07 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.57 1998/06/12 21:14:43 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 1998/06/12 07:28:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 1998/06/12 21:14:43 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ pa_to_pvh(pa)
 void	alpha_protection_init __P((void));
 boolean_t pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *,
 	    boolean_t));
-void	pmap_changebit __P((vm_offset_t, u_long, u_long));
+void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
 
@@ -460,12 +460,26 @@ int	pmap_physpage_addref __P((void *));
 int	pmap_physpage_delref __P((void *));
 
 /*
- * PMAP_ISACTIVE:
+ * PMAP_ISACTIVE{,_TEST}:
  *
  *	Check to see if a pmap is active on the current processor.
  */
-#define	PMAP_ISACTIVE(pm)						\
+#define	PMAP_ISACTIVE_TEST(pm)						\
 	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+
+#ifdef DEBUG
+#define	PMAP_ISACTIVE(pm)						\
+({									\
+	int isactive_ = PMAP_ISACTIVE_TEST(pm);				\
+									\
+	if (curproc != NULL &&						\
+	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
+		panic("PMAP_ISACTIVE");					\
+	(isactive_);							\
+})
+#else
+#define	PMAP_ISACTIVE(pm) PMAP_ISACTIVE_TEST(pm)
+#endif /* DEBUG */
 
 /*
  * PMAP_ACTIVATE_ASN_SANITY:
@@ -1287,7 +1301,7 @@ pmap_page_protect(pa, prot)
 		pvh = pa_to_pvh(pa);
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pvh->pvh_slock);
-		pmap_changebit(pa, 0, ~(PG_KWE|PG_UWE));
+/* XXX */	pmap_changebit(pa, PG_KWE | PG_UWE, FALSE);
 		simple_unlock(&pvh->pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		return;
@@ -2150,7 +2164,7 @@ pmap_clear_modify(pg)
 
 	if (pvh->pvh_attrs & PGA_MODIFIED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOW, ~0);
+		pmap_changebit(pa, PG_FOW, TRUE);
 		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
@@ -2179,7 +2193,7 @@ pmap_clear_modify(pa)
 	simple_lock(&pvh->pvh_slock);
 
 	if (pvh->pvh_attrs & PGA_MODIFIED) {
-		pmap_changebit(pa, PG_FOW, ~0);
+		pmap_changebit(pa, PG_FOW, TRUE); 
 		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
@@ -2214,7 +2228,7 @@ pmap_clear_reference(pg)
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2243,7 +2257,7 @@ pmap_clear_reference(pa)
 	simple_lock(&pvh->pvh_slock);
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2582,9 +2596,10 @@ pmap_remove_mapping(pmap, va, pte, dolock)
  *	the pmaps as we encounter them.
  */
 void
-pmap_changebit(pa, set, mask)
+pmap_changebit(pa, bit, setem)
 	vm_offset_t pa;
-	u_long set, mask;
+	u_long bit;
+	boolean_t setem;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
@@ -2614,7 +2629,7 @@ pmap_changebit(pa, set, mask)
 		/*
 		 * XXX don't write protect pager mappings
 		 */
-/* XXX */	if (mask == ~(PG_KWE|PG_UWE)) {
+/* XXX */	if (bit == (PG_UWE | PG_KWE)) {
 #if defined(UVM)
 			if (va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
@@ -2761,7 +2776,7 @@ pmap_emulate_reference(p, v, user, write)
 		pvh->pvh_attrs |= PGA_MODIFIED;
 		faultoff |= PG_FOW;
 	}
-	pmap_changebit(pa, 0, ~faultoff);
+	pmap_changebit(pa, faultoff, FALSE);
 
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
