@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.24 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.25 2002/01/26 13:41:01 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,18 +48,18 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void wstscattach __P((struct device *, struct device *, void *));
-int wstscmatch __P((struct device *, struct cfdata *, void *));
+void wstscattach(struct device *, struct device *, void *);
+int wstscmatch(struct device *, struct cfdata *, void *);
 
-int wstsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int wstsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-int wstsc_intr __P((void *));
+int wstsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int wstsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int wstsc_dma_xfer_in2(struct sci_softc *dev, int len,
+    register u_short *buf, int phase);
+int wstsc_dma_xfer_out2(struct sci_softc *dev, int len,
+    register u_short *buf, int phase);
+int wstsc_intr(void *);
 
 #ifdef DEBUG
 extern int sci_debug;
@@ -80,10 +80,7 @@ struct cfattach wstsc_ca = {
  * if this a Supra WordSync board
  */
 int
-wstscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+wstscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -101,9 +98,7 @@ wstscmatch(pdp, cfp, auxp)
 }
 
 void
-wstscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+wstscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc = (struct sci_softc *)dp;
@@ -114,7 +109,7 @@ wstscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	rp = zap->va;
 	/*
 	 * set up 5380 register pointers
@@ -180,11 +175,8 @@ wstscattach(pdp, dp, auxp)
 }
 
 int
-wstsc_dma_xfer_in (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+wstsc_dma_xfer_in(struct sci_softc *dev, int len, register u_char *buf,
+                  int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_idata;
@@ -267,11 +259,8 @@ wstsc_dma_xfer_in (dev, len, buf, phase)
 }
 
 int
-wstsc_dma_xfer_out (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+wstsc_dma_xfer_out(struct sci_softc *dev, int len, register u_char *buf,
+                   int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_data;
@@ -320,11 +309,8 @@ wstsc_dma_xfer_out (dev, len, buf, phase)
 
 
 int
-wstsc_dma_xfer_in2 (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_short *buf;
-	int phase;
+wstsc_dma_xfer_in2(struct sci_softc *dev, int len, register u_short *buf,
+                   int phase)
 {
 	volatile register u_short *sci_dma = (u_short *)(dev->sci_idata + 0x10);
 	volatile register u_char *sci_csr = dev->sci_csr + 0x10;
@@ -410,11 +396,8 @@ wstsc_dma_xfer_in2 (dev, len, buf, phase)
 }
 
 int
-wstsc_dma_xfer_out2 (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_short *buf;
-	int phase;
+wstsc_dma_xfer_out2(struct sci_softc *dev, int len, register u_short *buf,
+                    int phase)
 {
 	volatile register u_short *sci_dma = (ushort *)(dev->sci_data + 0x10);
 	volatile register u_char *sci_bus_csr = dev->sci_bus_csr;
@@ -516,8 +499,7 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 }
 
 int
-wstsc_intr(arg)
-	void *arg;
+wstsc_intr(void *arg)
 {
 	struct sci_softc *dev = arg;
 	u_char stat;
