@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.20 2001/11/09 04:14:17 thorpej Exp $
+#  $NetBSD: build.sh,v 1.21 2001/11/11 01:34:30 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -297,34 +297,32 @@ if [ -z "$makewrapper" ]; then
 	makewrapper=$TOOLDIR/bin/nbmake-$MACHINE
 fi
 
-if $do_rebuildmake || [ ! -f $makewrapper ] || [ $makewrapper -ot build.sh ]; then
-	$runcmd rm -f $makewrapper
-	if [ "$runcmd" = "echo" ]; then
-		echo 'cat <<EOF >'$makewrapper
-		makewrapout=
-	else
-		makewrapout=">>$makewrapper"
-	fi
+$runcmd rm -f $makewrapper
+if [ "$runcmd" = "echo" ]; then
+	echo 'cat <<EOF >'$makewrapper
+	makewrapout=
+else
+	makewrapout=">>$makewrapper"
+fi
 
-	eval cat <<EOF $makewrapout
+eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.20 2001/11/09 04:14:17 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.21 2001/11/11 01:34:30 jmc Exp $
 #
 
 EOF
-	for f in $makeenv; do
-		eval echo "$f=\'\$`echo $f`\'\;\ export\ $f" $makewrapout
-	done
-	eval echo "USETOOLS=yes\; export USETOOLS" $makewrapout
+for f in $makeenv; do
+	eval echo "$f=\'\$`echo $f`\'\;\ export\ $f" $makewrapout
+done
+eval echo "USETOOLS=yes\; export USETOOLS" $makewrapout
 
-	eval cat <<EOF $makewrapout
+eval cat <<EOF $makewrapout
 
 exec \$TOOLDIR/bin/nbmake \${1+"\$@"}
 EOF
-	[ "$runcmd" = "echo" ] && echo EOF
-	$runcmd chmod +x $makewrapper
-fi
+[ "$runcmd" = "echo" ] && echo EOF
+$runcmd chmod +x $makewrapper
 
 if $do_buildsystem; then
 	${runcmd-exec} $makewrapper $buildtarget
