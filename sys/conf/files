@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.695 2004/11/11 03:32:05 christos Exp $
+#	$NetBSD: files,v 1.696 2004/11/11 19:21:46 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1101,23 +1101,23 @@ file	kern/kern_drvctl.c		drvctl
 #
 # File systems
 #
-include "fs/adosfs/files.adosfs"
 include "coda/files.coda"
-include "fs/filecorefs/files.filecorefs"
-include "fs/smbfs/files.smbfs"
+include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
+include "fs/filecorefs/files.filecorefs"
+include "fs/msdosfs/files.msdosfs"
+include "fs/ntfs/files.ntfs"
+include "fs/ptyfs/files.ptyfs"
+include "fs/smbfs/files.smbfs"
+include "fs/union/files.union"
 include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"
 include "miscfs/overlay/files.overlay"
 include "miscfs/portal/files.portal"
 include "miscfs/procfs/files.procfs"
-include "miscfs/ptyfs/files.ptyfs"
 include "miscfs/umapfs/files.umapfs"
-include "fs/union/files.union"
-include "fs/msdosfs/files.msdosfs"
 include "nfs/files.nfs"
-include "fs/ntfs/files.ntfs"
 include "ufs/files.ufs"
 
 #
