@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.7.2.2 1993/11/26 22:43:17 mycroft Exp $
+ *	$Id: isofs_vfsops.c,v 1.7.2.3 1993/11/26 22:56:32 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ struct vfsops isofs_vfsops = {
 
 static iso_mountfs();
 
+int
 isofs_mountroot()
 {
 	register struct mount *mp;
@@ -175,7 +176,8 @@ isofs_mount(mp, path, data, ndp, p)
 /*
  * Common code for mount and mountroot
  */
-static iso_mountfs(devvp, mp, p, argp)
+static
+iso_mountfs(devvp, mp, p, argp)
 	register struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
@@ -459,6 +461,7 @@ isofs_sync(mp, waitfor)
 	struct mount *mp;
 	int waitfor;
 {
+
 	return 0;
 }
 

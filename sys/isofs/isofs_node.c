@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isofs_inode.c
- *	$Id: isofs_node.c,v 1.6.2.3 1993/11/26 22:43:09 mycroft Exp $
+ *	$Id: isofs_node.c,v 1.6.2.4 1993/11/26 22:56:27 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -642,6 +642,7 @@ isodirino(inump, isodir, imp)
 	struct iso_directory_record *isodir;
 	struct iso_mnt *imp;
 {
+
 	*inump = (isonum_733(isodir->extent)
 		  + isonum_711(isodir->ext_attr_length))
 		 * imp->logical_block_size;

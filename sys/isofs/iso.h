@@ -1,5 +1,5 @@
 /*
- *	$Id: iso.h,v 1.5.2.1 1993/11/26 22:43:04 mycroft Exp $
+ *	$Id: iso.h,v 1.5.2.2 1993/11/26 22:56:25 mycroft Exp $
  */
 
 #define ISODCL(from, to) (to - from + 1)
@@ -153,6 +153,7 @@ extern inline int
 isonum_711(p)
 	unsigned char *p;
 {
+
 	return *p;
 }
 
@@ -160,6 +161,7 @@ extern inline int
 isonum_712(p)
 	char *p;
 {
+
 	return *p;
 }
 
@@ -167,6 +169,7 @@ extern inline int
 isonum_721(p)
 	unsigned char *p;
 {
+
 	return *p|((char)p[1] << 8);
 }
 
@@ -174,6 +177,7 @@ extern inline int
 isonum_722(p)
 	unsigned char *p;
 {
+
 	return ((char)*p << 8)|p[1];
 }
 
@@ -181,6 +185,7 @@ extern inline int
 isonum_723(p)
 	unsigned char *p;
 {
+
 	return isonum_721(p);
 }
 
@@ -188,6 +193,7 @@ extern inline int
 isonum_731(p)
 	unsigned char *p;
 {
+
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 }
 
@@ -195,6 +201,7 @@ extern inline int
 isonum_732(p)
 	unsigned char *p;
 {
+
 	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
 }
 
@@ -202,6 +209,7 @@ extern inline int
 isonum_733(p)
 	unsigned char *p;
 {
+
 	return isonum_731(p);
 }
 
