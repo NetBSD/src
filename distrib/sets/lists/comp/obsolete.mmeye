@@ -1,5 +1,6 @@
-# $NetBSD: obsolete.mmeye,v 1.4 2002/05/11 19:23:15 wiz Exp $
+# $NetBSD: obsolete.mmeye,v 1.5 2002/09/07 12:48:55 gehenna Exp $
 /usr/include/mmeye/bootinfo.h
+/usr/include/mmeye/conf.h
 /usr/include/mmeye/cpufunc.h
 /usr/include/mmeye/loadfile_machdep.h
 /usr/include/mmeye/pio.h

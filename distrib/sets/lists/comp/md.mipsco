@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.7 2002/08/07 21:20:57 briggs Exp $
+# $NetBSD: md.mipsco,v 1.8 2002/09/07 12:48:52 gehenna Exp $
 ./usr/include/mipsco	comp-c-include
 ./usr/include/mipsco/_G_config.h	comp-c-include
 ./usr/include/mipsco/ansi.h	comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/mipsco/bswap.h	comp-c-include
 ./usr/include/mipsco/bus.h	comp-c-include
 ./usr/include/mipsco/cdefs.h	comp-c-include
-./usr/include/mipsco/conf.h	comp-c-include
 ./usr/include/mipsco/cpu.h	comp-c-include
 ./usr/include/mipsco/db_machdep.h	comp-c-include
 ./usr/include/mipsco/disklabel.h	comp-c-include

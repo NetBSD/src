@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.16 2002/08/07 21:21:02 briggs Exp $
+# $NetBSD: md.sparc64,v 1.17 2002/09/07 12:48:53 gehenna Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
 ./usr/include/sparc/aout_machdep.h	comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/sparc/bswap.h	comp-c-include
 ./usr/include/sparc/cdefs.h	comp-c-include
 ./usr/include/sparc/cgtworeg.h	comp-c-include
-./usr/include/sparc/conf.h	comp-c-include
 ./usr/include/sparc/cpu.h	comp-c-include
 ./usr/include/sparc/disklabel.h	comp-c-include
 ./usr/include/sparc/eeprom.h	comp-c-include
@@ -66,7 +65,6 @@
 ./usr/include/sparc64/bus.h	comp-c-include
 ./usr/include/sparc64/cdefs.h	comp-c-include
 ./usr/include/sparc64/cgtworeg.h	comp-c-include
-./usr/include/sparc64/conf.h	comp-c-include
 ./usr/include/sparc64/cpu.h	comp-c-include
 ./usr/include/sparc64/ctlreg.h	comp-c-include
 ./usr/include/sparc64/db_machdep.h	comp-c-include

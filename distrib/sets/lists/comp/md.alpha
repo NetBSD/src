@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.39 2002/08/07 21:20:52 briggs Exp $
+# $NetBSD: md.alpha,v 1.40 2002/09/07 12:48:51 gehenna Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -12,7 +12,6 @@
 ./usr/include/alpha/bwx.h	comp-c-include
 ./usr/include/alpha/cdefs.h	comp-c-include
 ./usr/include/alpha/cfbreg.h	comp-c-include
-./usr/include/alpha/conf.h	comp-c-include
 ./usr/include/alpha/cpu.h	comp-c-include
 ./usr/include/alpha/cpuconf.h	comp-c-include
 ./usr/include/alpha/db_machdep.h	comp-c-include

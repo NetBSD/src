@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.48 2002/08/07 21:21:00 briggs Exp $
+# $NetBSD: md.pmax,v 1.49 2002/09/07 12:48:53 gehenna Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/pmax/bswap.h	comp-c-include
 ./usr/include/pmax/bus.h	comp-c-include
 ./usr/include/pmax/cdefs.h	comp-c-include
-./usr/include/pmax/conf.h	comp-c-include
 ./usr/include/pmax/cpu.h	comp-c-include
 ./usr/include/pmax/db_machdep.h	comp-c-include
 ./usr/include/pmax/dc7085cons.h	comp-c-include

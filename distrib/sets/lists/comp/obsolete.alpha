@@ -1,6 +1,7 @@
-# $NetBSD: obsolete.alpha,v 1.5 2002/07/09 02:25:58 lukem Exp $
+# $NetBSD: obsolete.alpha,v 1.6 2002/09/07 12:48:54 gehenna Exp $
 /usr/include/alpha/atomic.h
 /usr/include/alpha/bwx.h
+/usr/include/alpha/conf.h
 /usr/include/alpha/endian_machdep.h
 /usr/include/alpha/fbio.h
 /usr/include/alpha/int_const.h

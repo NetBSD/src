@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.62 2002/08/13 11:18:34 wiz Exp $
+# $NetBSD: md.i386,v 1.63 2002/09/07 12:48:52 gehenna Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -11,7 +11,6 @@
 ./usr/include/i386/bus.h		comp-c-include
 ./usr/include/i386/byte_swap.h		comp-c-include
 ./usr/include/i386/cdefs.h		comp-c-include
-./usr/include/i386/conf.h		comp-c-include
 ./usr/include/i386/cpu.h		comp-c-include
 ./usr/include/i386/cpufunc.h		comp-c-include
 ./usr/include/i386/cputypes.h		comp-c-include

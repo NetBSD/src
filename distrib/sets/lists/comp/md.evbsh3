@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.17 2002/08/07 21:20:55 briggs Exp $
+# $NetBSD: md.evbsh3,v 1.18 2002/09/07 12:48:52 gehenna Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -7,7 +7,6 @@
 ./usr/include/evbsh3/bus.h	comp-c-include
 ./usr/include/evbsh3/cdefs.h	comp-c-include
 ./usr/include/evbsh3/coff_machdep.h	comp-c-include
-./usr/include/evbsh3/conf.h	comp-c-include
 ./usr/include/evbsh3/cpu.h	comp-c-include
 ./usr/include/evbsh3/cputypes.h	comp-c-include
 ./usr/include/evbsh3/db_machdep.h	comp-c-include
