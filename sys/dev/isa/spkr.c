@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
+/*	$NetBSD: spkr.c,v 1.2 2000/03/06 21:40:08 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -52,7 +52,7 @@ void tone(hz, ticks)
 /* emit tone of frequency hz for given number of ticks */
     u_int hz, ticks;
 {
-	pcppi_bell(ppicookie, hz, ticks, 1);
+	pcppi_bell(ppicookie, hz, ticks, PCPPI_BELL_SLEEP);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.21 1999/12/03 22:48:25 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.22 2000/03/06 21:40:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,10 +155,12 @@ const struct wskbd_accessops pckbd_accessops = {
 
 void	pckbd_cngetc __P((void *, u_int *, int *));
 void	pckbd_cnpollc __P((void *, int));
+void	pckbd_cnbell __P((void *, u_int, u_int, u_int));
 
 const struct wskbd_consops pckbd_consops = {
 	pckbd_cngetc,
 	pckbd_cnpollc,
+	pckbd_cnbell,
 };
 
 const struct wskbd_mapdata pckbd_keymapdata = {
@@ -169,6 +171,15 @@ const struct wskbd_mapdata pckbd_keymapdata = {
 	KB_US,
 #endif
 };
+
+/*
+ * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * is found, it attaches itself into the pckbd driver here.
+ */
+void	(*pckbd_bell_fn) __P((void *, u_int, u_int, u_int));
+void	*pckbd_bell_fn_arg;
+
+void	pckbd_bell __P((u_int, u_int, u_int));
 
 int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
 int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
@@ -572,15 +583,11 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		return (0);
 	    case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
-		/* keyboard can't beep - use md code */
-#ifdef __i386__
-		sysbeep(d->pitch, d->period * hz / 1000);
-		/* comes in as ms, goes out as ticks; volume ignored */
-#endif
-#ifdef __alpha__
-		isabeep(d->pitch, d->period * hz / 1000);
-		/* comes in as ms, goes out as ticks; volume ignored */
-#endif
+		/*
+		 * Keyboard can't beep directly; we have an
+		 * externally-provided global hook to do this.
+		 */
+		pckbd_bell(d->pitch, d->period, d->volume);
 #undef d
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -590,6 +597,27 @@ pckbd_ioctl(v, cmd, data, flag, p)
 #endif
 	}
 	return -1;
+}
+
+void
+pckbd_bell(pitch, period, volume)
+	u_int pitch, period, volume;
+{
+
+	if (pckbd_bell_fn != NULL)
+		(*pckbd_bell_fn)(pckbd_bell_fn_arg, pitch, period, volume);
+}
+
+void
+pckbd_hookup_bell(fn, arg)
+	void (*fn) __P((void *, u_int, u_int, u_int));
+	void *arg;
+{
+
+	if (pckbd_bell_fn == NULL) {
+		pckbd_bell_fn = fn;
+		pckbd_bell_fn_arg = arg;
+	}
 }
 
 int
@@ -644,4 +672,13 @@ pckbd_cnpollc(v, on)
 	struct pckbd_internal *t = v;
 
 	pckbc_set_poll(t->t_kbctag, t->t_kbcslot, on);
+}
+
+void
+pckbd_cnbell(v, pitch, period, volume)
+	void *v;
+	u_int pitch, period, volume;
+{
+
+	pckbd_bell(pitch, period, volume);
 }
