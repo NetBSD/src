@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.7 2003/03/09 01:38:50 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.8 2003/03/29 10:56:52 darcy Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -395,6 +395,10 @@ dplog(const char *fmt, ...)
   real_plog(XLOG_DEBUG, fmt, ap);
   va_end(ap);
 }
+#else
+void
+dplog(const char *fmt, ...)
+{ }
 #endif /* DEBUG */
 
 
