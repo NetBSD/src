@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: mapc.c,v 1.1 1993/11/27 21:17:24 mycroft Exp $
+ * $Id: mapc.c,v 1.2 1993/12/07 21:18:21 mycroft Exp $
  *
  */
 
@@ -653,7 +653,7 @@ int recurse;
 		for (i = 0; i < NKVHASH; i++) {
 			k = m->kvhash[i];
 			while (k) {
-				if (regexec(k->key, key))
+				if (regexec((regexp *) k->key, key))
 					break;
 				k = k->next;
 			}

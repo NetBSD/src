@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: xutil.c,v 1.1 1993/11/27 21:18:01 mycroft Exp $
+ * $Id: xutil.c,v 1.2 1993/12/07 21:12:29 mycroft Exp $
  *
  */
 
@@ -177,14 +177,12 @@ static void expand_error(f, e)
 char *f;
 char *e;
 {
-	extern int sys_nerr;
-	extern char *sys_errlist[];
 	char *p;
 	int error = errno;
 
 	for (p = f; *e = *p; e++, p++) {
 		if (p[0] == '%' && p[1] == 'm') {
-			char *errstr;
+			const char *errstr;
 			if (error < 0 || error >= sys_nerr)
 				errstr = 0;
 			else
