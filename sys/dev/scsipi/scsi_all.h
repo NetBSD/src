@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.18 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.19 2003/01/06 21:02:18 matt Exp $	*/
 
 /*
  * SCSI-specific interface description.
@@ -20,6 +20,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
+
+#ifndef _DEV_SCSIPI_SCSI_ALL_H_
+#define _DEV_SCSIPI_SCSI_ALL_H_
 
 /*
  * SCSI command format
@@ -114,3 +117,5 @@ struct scsi_blk_desc {
 #define	SCSI_TERMINATED		0x22
 #define	SCSI_QUEUE_FULL		0x28
 #define	SCSI_ACA_ACTIVE		0x30
+
+#endif /* _DEV_SCSIPI_SCSI_ALL_H_ */
