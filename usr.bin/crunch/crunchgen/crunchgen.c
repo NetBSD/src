@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.20 2001/02/05 01:40:51 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.21 2001/09/24 00:40:35 tls Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.20 2001/02/05 01:40:51 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.21 2001/09/24 00:40:35 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -789,6 +789,7 @@ void top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
+    fprintf(outmk, "DBG=-Os\n");
     fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
     fprintf(outmk, "LIBS=");
@@ -826,8 +827,8 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
 	fprintf(outmk, "%s_make:\n", p->ident);
-	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s $(%s_OBJS))\n\n", 
-		p->ident, makebin, p->ident);
+	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s clean ; %s DBG=${DBG} $(%s_OBJS))\n\n", 
+		p->ident, makebin, makebin, p->ident);
     }
     else
 	fprintf(outmk, "%s_make:\n\t@echo \"** cannot make objs for %s\"\n\n", 
