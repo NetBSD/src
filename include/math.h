@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.14 1998/07/26 14:15:07 mycroft Exp $	*/
+/*	$NetBSD: math.h,v 1.15 1998/09/07 15:00:05 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -137,7 +137,6 @@ extern double erf __P((double));
 extern double erfc __P((double));
 extern double gamma __P((double));
 extern double hypot __P((double, double));
-extern int isinf __P((double));
 extern int isnan __P((double));
 extern int finite __P((double));
 extern double j0 __P((double));
@@ -202,6 +201,8 @@ extern double lgamma_r __P((double, int *));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
+extern int isinf __P((double));
+
 /* float versions of ANSI/POSIX functions */
 extern float acosf __P((float));
 extern float asinf __P((float));
