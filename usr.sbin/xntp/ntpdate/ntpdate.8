@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.1.1.1 1997/04/18 13:29:07 christos Exp $
+.\"	$NetBSD: ntpdate.8,v 1.2 1997/04/20 21:53:21 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -81,7 +81,8 @@ daemon (e.g.,
 .Xr xntpd 8 )
 is running on the same host. When running 
 .Nm
-on a regular basis from <code>cron</code>
+on a regular basis from 
+.Xr cron 8
 as an alternative to running a daemon, doing so once every hour or two
 will result in precise enough timekeeping to avoid stepping the clock.
 .Pp
@@ -169,7 +170,9 @@ Direct
 to use an unprivileged port or outgoing
 packets. This is most useful when behind a firewall that blocks incoming
 traffic to privileged ports, and you want to synchronise with hosts
-beyond the firewall. Note that the <code>-d</code> option always uses
+beyond the firewall. Note that the 
+.Fl d
+option always uses
 unprivileged ports.
 .It Fl v
 Be verbose.  This option will cause the
