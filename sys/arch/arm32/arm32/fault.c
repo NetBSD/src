@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.30 1998/08/29 04:08:12 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.31 1998/09/18 04:09:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -73,7 +73,11 @@
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
+#ifdef DEBUG
 int verbose_faults = 1;
+#else
+int verbose_faults = 0;
+#endif
 
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
@@ -242,8 +246,10 @@ data_abort_handler(frame)
 	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
 	    || pcb->pcb_onfault == fusubailout) {
 copyfault:
+#ifdef DEBUG
 		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
 		    pcb->pcb_onfault, fault_address, fault_status, p);
+#endif
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 			panic("Yikes pcb_onfault=%p during USR mode fault\n",
