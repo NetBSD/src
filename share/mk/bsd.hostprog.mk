@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.30 2003/07/18 04:04:03 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.31 2003/07/28 23:54:24 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -62,7 +62,7 @@ OBJHOSTMACHINE=	# set
 .if defined(HOSTPROG)
 SRCS?=		${HOSTPROG}.c
 
-DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh)
