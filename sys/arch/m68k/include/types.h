@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.9 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.3 1994/03/14 02:12:15 cgd Exp $
+ *	$Id: types.h,v 1.4 1994/04/10 02:22:16 chopps Exp $
  */
-
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_M68K_TYPES_H_
+#define	_M68K_TYPES_H_
 
 typedef struct _physadr {
 	short r[1];
@@ -61,4 +60,4 @@ typedef	unsigned int		u_int32_t;
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* !_M68K_TYPES_H_ */
