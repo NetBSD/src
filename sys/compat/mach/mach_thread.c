@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.23 2003/11/11 18:12:40 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.24 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.23 2003/11/11 18:12:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.24 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.23 2003/11/11 18:12:40 manu Exp $"
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -113,6 +114,13 @@ mach_thread_policy(args)
 	mach_thread_policy_request_t *req = args->smsg;
 	mach_thread_policy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int end_offset;
+
+	/* Sanity check req_count */
+	end_offset = req->req_count +
+		     (sizeof(req->req_setlimit) / sizeof(req->req_base[0]));
+	if (MACH_REQMSG_OVERFLOW(args, req->req_base[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	uprintf("Unimplemented mach_thread_policy\n");
 
@@ -142,6 +150,12 @@ mach_thread_create_running(args)
 	int error;
 	int inmem;
 	int s;
+	int end_offset;
+
+	/* Sanity check req_count */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	/* 
 	 * Prepare the data we want to transmit to the child
@@ -204,6 +218,9 @@ mach_thread_info(args)
 	struct lwp *l = args->l;
 	struct proc *p = l->l_proc;
 
+	/* Sanity check req->req_count */
+	if (req->req_count > 12)
+		return mach_msg_error(args, EINVAL);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -298,6 +315,10 @@ mach_thread_get_state(args)
 	int error;
 	int size;
 
+	/* Sanity check req->req_count */
+	if (req->req_count > 144)
+		return mach_msg_error(args, EINVAL);
+
 	if ((error = mach_thread_get_state_machdep(l, 
 	    req->req_flavor, &rep->rep_state, &size)) != 0)
 		return mach_msg_error(args, error);
@@ -324,6 +345,12 @@ mach_thread_set_state(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	int error;
+	int end_offset;
+
+	/* Sanity check req_count */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	if ((error = mach_thread_set_state_machdep(l, 
 	    req->req_flavor, &req->req_state)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.28 2003/11/03 22:17:42 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.29 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -17,7 +17,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
@@ -156,7 +155,7 @@ typedef struct {
 	mach_port_name_t req_name;
 	mach_port_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
-	mach_integer_t req_port_info[10];
+	mach_integer_t req_port_info[0];
 } mach_port_set_attributes_request_t;
 
 typedef struct {
@@ -254,17 +253,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_request_notification_reply_t;
 
-
-int mach_port_deallocate(struct mach_trap_args *);
-int mach_port_allocate(struct mach_trap_args *);
-int mach_port_insert_right(struct mach_trap_args *);
-int mach_port_type(struct mach_trap_args *);
-int mach_port_set_attributes(struct mach_trap_args *);
-int mach_port_insert_member(struct mach_trap_args *);
-int mach_port_move_member(struct mach_trap_args *);
-int mach_port_destroy(struct mach_trap_args *);
-int mach_port_request_notification(struct mach_trap_args *);
-int mach_port_get_attributes(struct mach_trap_args *);
+/* Kernel-private structures */
 
 extern struct mach_port *mach_clock_port;
 extern struct mach_port *mach_io_master_port;

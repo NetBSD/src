@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.22 2003/11/02 00:44:19 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.23 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.22 2003/11/02 00:44:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.23 2003/11/13 13:40:39 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -178,10 +178,6 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
 
-	/* Sanity check req->req_incount */
-	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
-		return mach_msg_error(args, EINVAL);
-
 	maxoutcount = req->req_in[req->req_incount]; 
 
 	switch (req->req_selector) {
@@ -314,10 +310,6 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
-	/* Sanity check req->req_incount */
-	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
-		return mach_msg_error(args, EINVAL);
 
 	maxoutcount = req->req_in[req->req_incount]; 
 
