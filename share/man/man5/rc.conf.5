@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.32.2.6 2001/05/02 22:51:58 he Exp $
+.\"	$NetBSD: rc.conf.5,v 1.32.2.7 2002/03/06 22:25:07 he Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -221,6 +221,19 @@ to load in the IP network address translation (NAT) rules from
 at network boot time, before any interfaces are configured.
 See
 .Xr ipnat.conf 5 .
+.It Sy ipfs
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ipfs 8
+to save and restore information for ipnat and ipfilter state tables.
+The information is stored in
+.Pa /var/db/ipf/ipstate.ipf
+and
+.Pa /var/db/ipf/ipnat.ipf .
+Passes
+.Sy ipfs_flags .
 .It Sy ipsec
 .Sq YES
 or
