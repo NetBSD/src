@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.74 2001/03/17 20:56:32 leo Exp $
+#	$NetBSD: files.atari,v 1.75 2001/03/31 20:13:19 leo Exp $
 
 maxpartitions 16
 
@@ -158,11 +158,11 @@ include "dev/ata/files.ata"
 
 # Milan floppy driver - uses 'generic' isa version of fd.c
 device  fdcisa  {drive = -1}: isadma
-file    arch/atari/isa/fdcisa.c
+file    arch/atari/isa/fdcisa.c		fdcisa
 attach  fdcisa at isa
 device  fdisa: disk
 attach  fdisa at fdcisa
-file    dev/isa/fd.c
+file    dev/isa/fd.c			fdisa
 major   {fdisa = 2}
 
 attach	wdc at mainbus with wdc_mb
