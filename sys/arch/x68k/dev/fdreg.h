@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1.1.1.24.1 1999/02/02 23:47:12 minoura Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.1.1.1.24.2 1999/02/10 16:04:08 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,10 +44,10 @@
 
 /* registers */
 #define FDC_ADDR 0xe94000	/* builtin fdc is here */
-#define	fdstat	1	/* NEC 765 Main Status Register (R) */
+#define	fdsts	1	/* NEC 765 Main Status Register (R) */
 #define	fddata	3	/* NEC 765 Data Register (R/W) */
-#define fddrvstat 5	/* drive status register */
-#define	fdselect 7	/* Control Register (W) */
+#define fdout 5		/* Digital Output Register (W) */
+#define	fdctl  7	/* Control Register (W) */
 #define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
@@ -55,82 +55,6 @@
 
 #define	FDC_BSIZE	512
 #define	FDC_MAXIOSIZE	MAXBSIZE
-
-/*
- * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
- *
- * From: FreeBSD: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp 
- */
-
-#define FD_MAX_NSEC 36		/* highest known number of spt - allow for */
-				/* 2.88 MB drives */
-
-struct ne7_fd_formb {
-	int cyl, head;
-	int transfer_rate;	/* fdreg.h: FDC_???KBPS */
-
-	union {
-		struct fd_form_data {
-			/*
-			 * DO NOT CHANGE THE LAYOUT OF THIS STRUCTS
-			 * it is hardware-dependant since it exactly
-			 * matches the byte sequence to write to FDC
-			 * during its `format track' operation
-			 */
-			u_char secshift; /* 0 -> 128, ...; usually 2 -> 512 */
-			u_char nsecs;	/* must be <= FD_MAX_NSEC */
-			u_char gaplen;	/* GAP 3 length; usually 84 */
-			u_char fillbyte; /* usually 0xf6 */
-			struct fd_idfield_data {
-				/*
-				 * data to write into id fields;
-				 * for obscure formats, they mustn't match
-				 * the real values (but mostly do)
-				 */
-				u_char cylno;	/* 0 thru 79 (or 39) */
-				u_char headno;	/* 0, or 1 */
-				u_char secno;	/* starting at 1! */
-				u_char secsize;	/* usually 2 */
-			} idfields[FD_MAX_NSEC]; /* 0 <= idx < nsecs used */
-		} structured;
-		u_char raw[1];	/* to have continuous indexed access */
-	} format_info;
-};
-
-/* make life easier */
-# define fd_formb_secshift   format_info.structured.secshift
-# define fd_formb_nsecs      format_info.structured.nsecs
-# define fd_formb_gaplen     format_info.structured.gaplen
-# define fd_formb_fillbyte   format_info.structured.fillbyte
-/* these data must be filled in for(i = 0; i < fd_formb_nsecs; i++) */
-# define fd_formb_cylno(i)   format_info.structured.idfields[i].cylno
-# define fd_formb_headno(i)  format_info.structured.idfields[i].headno
-# define fd_formb_secno(i)   format_info.structured.idfields[i].secno
-# define fd_formb_secsize(i) format_info.structured.idfields[i].secsize
-
 
 /* Floppy disk controller command bytes. */
 #define NE7CMD_RESET       0x36	/* reset command for fdc */

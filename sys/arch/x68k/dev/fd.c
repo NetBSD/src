@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23.6.1 1999/02/02 23:47:11 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.23.6.2 1999/02/10 16:04:08 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,23 +74,6 @@
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
 
-/*
- * Floppy formatting facilities merged from FreeBSD fd.c driver:
- *	Id: fd.c,v 1.53 1995/03/12 22:40:56 joerg Exp
- * which carries the same copyright/redistribution notice as shown above with
- * the addition of the following statement before the "Redistribution and
- * use ..." clause:
- *
- * Copyright (c) 1993, 1994 by
- *  jc@irbs.UUCP (John Capo)
- *  vak@zebub.msk.su (Serge Vakulenko)
- *  ache@astral.msk.su (Andrew A. Chernov)
- *
- * Copyright (c) 1993, 1994, 1995 by
- *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
- *  dufault@hda.com (Peter Dufault)
- */
-
 #include "rnd.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -131,7 +114,6 @@
 
 #include "locators.h"
 
-#define FDDEBUG
 #ifdef FDDEBUG
 #define DPRINTF(x)      if (fddebug) printf x
 int     fddebug = 0;
@@ -141,9 +123,6 @@ int     fddebug = 0;
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
-
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
 
 #define b_cylin b_resid
 
@@ -172,10 +151,9 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
-	u_char	sc_flags;
 
-	bus_space_tag_t sc_bst;		/* intio i/o space identifier */
-	bus_space_handle_t sc_bht;	/* intio io handle */
+	bus_space_tag_t sc_iot;		/* intio i/o space identifier */
+	bus_space_handle_t sc_ioh;	/* intio io handle */
 	bus_dma_tag_t sc_dmat;		/* intio dma tag */
 	bus_dmamap_t sc_dmamap;		/* dma map */
 	u_int8_t *sc_addr;			/* physical address */
@@ -219,7 +197,7 @@ struct fd_type {
 	int	steprate;	/* step rate and head unload time */
 	int	gap1;		/* gap len between sectors */
 	int	gap2;		/* formatting gap */
-	int	tracks;		/* total num of tracks */
+	int	cyls;		/* total num of cylinders */
 	int	size;		/* size of disk in sectors */
 	int	step;		/* steps per cylinder */
 	int	rate;		/* transfer speed code */
@@ -245,7 +223,6 @@ struct fd_softc {
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
-	struct fd_type sc_type_copy;	/* copy for fiddling when formatting */
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
@@ -441,14 +418,13 @@ fdcattach(parent, self, aux)
 	/* Re-map the I/O space. */
 	bus_space_map(iot, ia->ia_addr, 0x2000, 0, &ioh);
 
-	fdc->sc_bst = iot;
-	fdc->sc_bht = ioh;
+	fdc->sc_iot = iot;
+	fdc->sc_ioh = ioh;
 	fdc->sc_addr = (void*) ia->ia_addr;
 
 	fdc->sc_dmat = ia->ia_dmat;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
-	fdc->sc_flags  = 0;
 
 	/* Initialize DMAC channel */
 	fdc->sc_dmachan = dmac_alloc_channel(parent, ia->ia_dma, "fdc",
@@ -490,7 +466,7 @@ void
 fdcreset(fdc)
 	struct fdc_softc *fdc;
 {
-	bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fdstat, NE7CMD_RESET);
+	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdsts, NE7CMD_RESET);
 }
 
 static int
@@ -500,7 +476,7 @@ fdcpoll(fdc)
 	int i = 25000, n;
 	while (--i > 0) {
 		if ((intio_get_sicilian_intr() & SICILIAN_STAT_FDC)) {
-			out_fdc(fdc->sc_bst, fdc->sc_bht, NE7CMD_SENSEI);
+			out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
 			n = fdcresult(fdc);
 			break;
 		}
@@ -519,8 +495,8 @@ fdprobe(parent, cf, aux)
 	struct fd_type *type;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
-	bus_space_tag_t iot = fdc->sc_bst;
-	bus_space_handle_t ioh = fdc->sc_bht;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 	int found = 0;
 	int i;
@@ -534,7 +510,7 @@ fdprobe(parent, cf, aux)
 	intio_disable_intr(SICILIAN_INTR_FDC);
 
 	/* select drive and turn on motor */
-	bus_space_write_1(iot, ioh, fdselect, 0x80 | (type->rate << 4)| drive);
+	bus_space_write_1(iot, ioh, fdctl, 0x80 | (type->rate << 4)| drive);
 	fdc_force_ready(FDCRDY);
 	fdcpoll(fdc);
 
@@ -571,8 +547,8 @@ retry:
 	}
 
 	/* turn off motor */
-	bus_space_write_1(fdc->sc_bst, fdc->sc_bht,
-			  fdselect, (type->rate << 4)| drive);
+	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh,
+			  fdctl, (type->rate << 4)| drive);
 	fdc_force_ready(FDCSTBY);
 	if (!found) {
 		intio_enable_intr(SICILIAN_INTR_FDC);
@@ -600,7 +576,7 @@ fdattach(parent, self, aux)
 
 	if (type)
 		printf(": %s, %d cyl, %d head, %d sec\n", type->name,
-		       type->tracks, type->heads, type->sectrac);
+		       type->cyls, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
 
@@ -798,7 +774,7 @@ fd_set_motor(fdc, reset)
 	DPRINTF(("fd_set_motor:\n"));
 	for (n = 0; n < 4; n++)
 		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR)) {
-			bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fdselect,
+			bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdctl,
 					  0x80 | (fd->sc_type->rate << 4)| n);
 		}
 }
@@ -815,7 +791,7 @@ fd_motor_off(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	bus_space_write_1 (fdc->sc_bst, fdc->sc_bht, fdselect,
+	bus_space_write_1 (fdc->sc_iot, fdc->sc_ioh, fdctl,
 			   (fd->sc_type->rate << 4) | fd->sc_drive);
 #if 0
 	fd_set_motor(fdc, 0); /* XXX */
@@ -844,14 +820,14 @@ int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
-	bus_space_tag_t iot = fdc->sc_bst;
-	bus_space_handle_t ioh = fdc->sc_bht;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	u_char i;
 	int j = 100000,
 	    n = 0;
 
 	for (; j; j--) {
-		i = bus_space_read_1(iot, ioh, fdstat) &
+		i = bus_space_read_1(iot, ioh, fdsts) &
 		  (NE7_DIO | NE7_RQM | NE7_CB);
 
 		if (i == NE7_RQM)
@@ -878,10 +854,10 @@ out_fdc(iot, ioh, x)
 {
 	int i = 100000;
 
-	while ((bus_space_read_1(iot, ioh, fdstat) & NE7_DIO) && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_DIO) && i-- > 0);
 	if (i <= 0)
 		return -1;
-	while ((bus_space_read_1(iot, ioh, fdstat) & NE7_RQM) == 0 && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
 	if (i <= 0)
 		return -1;
 	bus_space_write_1(iot, ioh, fddata, x);
@@ -916,9 +892,9 @@ fdopen(dev, flags, mode, p)
 	fdc = (void *)fd->sc_dev.dv_parent;
 	if ((fd->sc_flags & FD_OPEN) == 0) {
 		/* Lock eject button */
-		bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat,
+		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout,
 				  0x40 | ( 1 << unit));
-		bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat, 0x40);
+		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout, 0x40);
 	}
 
 	fd->sc_type = type;
@@ -960,9 +936,9 @@ fdclose(dev, flags, mode, p)
 	}
 
 	if ((fd->sc_flags & FD_OPEN) == 0) {
-		bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat,
+		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout,
 				  ( 1 << unit));
-		bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat, 0);
+		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout, 0);
 	}
 	return 0;
 }
@@ -993,7 +969,7 @@ fdcstatus(dv, n, s)
 	char bits[64];
 
 	if (n == 0) {
-		out_fdc(fdc->sc_bst, fdc->sc_bht, NE7CMD_SENSEI);
+		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
 		(void) fdcresult(fdc);
 		n = 2;
 	}
@@ -1071,8 +1047,8 @@ fdcintr(arg)
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
 	struct buf *bp;
-	bus_space_tag_t iot = fdc->sc_bst;
-	bus_space_handle_t ioh = fdc->sc_bht;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	int read, head, sec, pos, i, sectrac, nblks;
 	int	tmp;
 	struct fd_type *type;
@@ -1324,13 +1300,15 @@ loop:
 		untimeout(fdctimeout, fdc);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
-/*		timeout(fdcpseudointr, fdc, hz / 50);*/
+#if 0
+		timeout(fdcpseudointr, fdc, hz / 50);
+#endif
 		return 1;
 
 	case SEEKCOMPLETE:
 		/* Make sure seek really happened */
 		DPRINTF(("fdcintr: SEEKCOMPLETE: FDC status = %x\n",
-			 bus_space_read_1(fdc->sc_bst, fdc->sc_bht, fdstat)));
+			 bus_space_read_1(fdc->sc_iot, fdc->sc_ioh, fdsts)));
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		tmp = fdcresult(fdc);
 		if ((st0 & 0xf8) == 0xc0) {
@@ -1380,7 +1358,7 @@ loop:
 #endif
 	iocomplete2:
 		if (fdc->sc_errors) {
-			diskerr(bp, "fd", "soft error", LOG_PRINTF,
+			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
@@ -1448,7 +1426,9 @@ loop:
 		untimeout(fdctimeout, fdc);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
-/*		timeout(fdcpseudointr, fdc, hz / 30);*/
+#if 0
+		timeout(fdcpseudointr, fdc, hz / 30);
+#endif
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
@@ -1579,7 +1559,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return(0);
 #else
-		bzero(&buffer, sizeof(buffer));
+		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
@@ -1639,10 +1619,10 @@ fd_do_eject(fdc, unit)
 	struct fdc_softc *fdc;
 	int unit;
 {
-	bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat,
+	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout,
 			  0x20 | ( 1 << unit));
 	DELAY(1); /* XXX */
-	bus_space_write_1(fdc->sc_bst, fdc->sc_bht, fddrvstat, 0x20);
+	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout, 0x20);
 }
 
 /*
