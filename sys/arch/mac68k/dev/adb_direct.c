@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.26 1999/11/06 22:25:20 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.27 1999/11/06 23:44:32 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2133,6 +2133,8 @@ adb_reinit(void)
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
+	delay(1000);
+
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
 	delay(3000);
@@ -2209,6 +2211,7 @@ adb_reinit(void)
 			send_string[2] = 0xfe;
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
+			delay(500);
 
 			/* send TALK R3 - anything at old address? */
 			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
@@ -2263,6 +2266,7 @@ adb_reinit(void)
 				send_string[2] = 0xfe;
 				adb_op_sync((Ptr)send_string, (Ptr)0,
 				    (Ptr)0, (short)command);
+				delay(1000);
 			}
 		}
 	}
