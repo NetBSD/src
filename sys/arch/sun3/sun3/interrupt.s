@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.8 1994/02/04 08:20:56 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.9 1994/03/09 05:00:20 glass Exp $
  */
 
 .globl _cnt
@@ -106,10 +106,6 @@ _level5intr_clock:
 	andb #~IREG_CLOCK_ENAB_5, INTERREG_VA
 	orb #IREG_CLOCK_ENAB_5, INTERREG_VA
 	tstb CLOCK_VA+INTERSIL_INTR_OFFSET
-	notl _clock_turn
-	jeq cont
-	rte
-cont:
 	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
 #define CLOCK_DEBUG
 #ifdef CLOCK_DEBUG
