@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.6 2002/11/11 22:00:30 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.7 2002/11/20 10:03:24 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ struct mdlwp {
 	void	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
-	int	md_ss_addr;		/* single step address for ptrace */
+	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 };
 
