@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.36 1998/10/22 08:55:42 mycroft Exp $	*/
+/*	$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.36 1998/10/22 08:55:42 mycroft Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: newfs.c,v 1.36 1998/10/22 08:55:42 mycroft Exp $");
 #include <ufs/ffs/fs.h>
 
 #include <ctype.h>
+#include <disktab.h>
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>
