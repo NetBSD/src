@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.30 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: iostat.c,v 1.31 2005/02/26 22:11:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.30 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.31 2005/02/26 22:11:06 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ numlabels(int row)
 {
 	int i, col, regions, ndrives;
 
-#define COLWIDTH	(read_write ? 24 : 14)
+#define COLWIDTH	(8 + secs * 5 + read_write * 9 + 2)
 #define DRIVESPERLINE	((getmaxx(wnd) + 1) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
@@ -149,13 +149,16 @@ numlabels(int row)
 				if (row > getmaxy(wnd) - (linesperregion))
 					break;
 			}
-			mvwprintw(wnd, row, col + 4, "%s%s",
-			    cur.dk_name[i], read_write ? "       (write)" : "");
+			mvwprintw(wnd, row, col + 4, "%s", cur.dk_name[i]);
 			if (read_write)
-				mvwaddstr(wnd, row + 1, col,
-				    "kBps r/s  sec kBps w/s");
-			else
-				mvwaddstr(wnd, row + 1, col, "kBps tps  sec");
+				mvwprintw(wnd, row, col + 9 + secs * 5,
+				    "(write)");
+			mvwprintw(wnd, row + 1, col, "kBps %s",
+				read_write ? "r/s" : "tps");
+			if (secs)
+				waddstr(wnd, "  sec");
+			if (read_write)
+				waddstr(wnd, " kBps w/s");
 			col += COLWIDTH;
 		}
 	if (col)
@@ -240,6 +243,7 @@ static int
 stats(int row, int col, int dn)
 {
 	double atime, rwords, wwords;
+	uint64_t rxfer;
 
 	/* time busy in disk activity */
 	atime = (double)cur.dk_time[dn].tv_sec +
@@ -248,34 +252,31 @@ stats(int row, int col, int dn)
 	/* # of k transferred */
 	rwords = cur.dk_rbytes[dn] / 1024.0;
 	wwords = cur.dk_wbytes[dn] / 1024.0;
+	rxfer = cur.dk_rxfer[dn];
+	if (!read_write) {
+		rwords = wwords;
+		rxfer += cur.dk_wxfer[dn];
+	}
 	if (numbers) {
+		mvwprintw(wnd, row, col, "%4.0f%4.0f",
+		    rwords / etime, rxfer / etime);
+		if (secs)
+			wprintw(wnd, "%5.1f", atime / etime);
 		if (read_write)
-			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f %3.0f%4.0f",
-			    rwords / etime, cur.dk_rxfer[dn] / etime,
-			    atime / etime,
+			wprintw(wnd, " %4.0f%4.0f",
 			    wwords / etime, cur.dk_wxfer[dn] / etime);
-		else
-			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f",
-			    (rwords + wwords) / etime,
-			    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime,
-			    atime / etime);
 		return (row);
 	}
 
+	wmove(wnd, row++, col);
+	histogram(rwords / etime, 50, 0.5);
+	wmove(wnd, row++, col);
+	histogram(rxfer / etime, 50, 0.5);
 	if (read_write) {
-		wmove(wnd, row++, col);
-		histogram(rwords / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram(cur.dk_rxfer[dn] / etime, 50, 0.5);
 		wmove(wnd, row++, col);
 		histogram(wwords / etime, 50, 0.5);
 		wmove(wnd, row++, col);
 		histogram(cur.dk_wxfer[dn] / etime, 50, 0.5);
-	} else {
-		wmove(wnd, row++, col);
-		histogram((rwords + wwords) / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime, 50, 0.5);
 	}
 
 	if (secs) {
@@ -290,16 +291,16 @@ static void
 stat1(int row, int o)
 {
 	int i;
-	double time;
+	double total_time;
 
-	time = 0;
+	total_time = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		time += cur.cp_time[i];
-	if (time == 0.0)
-		time = 1.0;
+		total_time += cur.cp_time[i];
+	if (total_time == 0.0)
+		total_time = 1.0;
 	wmove(wnd, row, INSET);
 #define CPUSCALE	0.5
-	histogram(100.0 * cur.cp_time[o] / time, 50, CPUSCALE);
+	histogram(100.0 * cur.cp_time[o] / total_time, 50, CPUSCALE);
 }
 
 static void
@@ -350,7 +351,7 @@ iostat_secs(char *args)
 void
 iostat_rw(char *args)
 {
-	read_write = 1;
+	read_write ^= 1;
 	wclear(wnd);
 	labeliostat();
 	refresh();
