@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.2 1998/06/20 21:55:06 drochner Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.3 1998/06/26 21:05:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -77,6 +77,10 @@ static inline void _pcdisplay_6845_write(ph, reg, val)
 	_pcdisplay_6845_write(ph, offsetof(struct reg_mc6845, reg), val)
 
 void	pcdisplay_cursor __P((void *, int, int, int));
+#if 0
+unsigned int pcdisplay_mapchar_simple __P((void *, int));
+#endif
+unsigned int pcdisplay_mapchar __P((void *, int));
 void	pcdisplay_putchar __P((void *, int, int, u_int, long));
 void	pcdisplay_copycols __P((void *, int, int, int,int));
 void	pcdisplay_erasecols __P((void *, int, int, int, long));
