@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.1.1.1 2001/06/25 19:26:37 itojun Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -31,9 +31,14 @@
  * o BAP support
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.61 2001/06/11 10:33:03 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ppp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

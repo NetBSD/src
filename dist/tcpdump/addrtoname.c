@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.2 2001/06/25 19:59:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,9 +23,14 @@
  *  Internet, ethernet, port, and protocol string to address
  *  and address to string conversion routines
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.78 2001/06/24 21:49:25 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: addrtoname.c,v 1.2 2001/06/25 19:59:56 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-l2tp.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-l2tp.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,9 +23,14 @@
  * L2TP support contributed by Motonori Shindo (mshindo@mshindo.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-l2tp.c,v 1.8 2000/08/18 07:44:46 itojun Exp";
+#else
+__RCSID("$NetBSD: print-l2tp.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

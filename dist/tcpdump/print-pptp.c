@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pptp.c,v 1.1.1.1 2001/06/25 19:26:38 itojun Exp $	*/
+/*	$NetBSD: print-pptp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -24,9 +24,14 @@
  */
 
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] = 
      "@(#) Header: /tcpdump/master/tcpdump/print-pptp.c,v 1.2 2001/03/17 04:41:50 itojun Exp";
+#else
+__RCSID("$NetBSD: print-pptp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

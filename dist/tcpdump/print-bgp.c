@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bgp.c,v 1.1.1.1 2001/06/25 19:26:33 itojun Exp $	*/
+/*	$NetBSD: print-bgp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,9 +33,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.22 2001/01/28 09:52:47 itojun Exp";
+#else
+__RCSID("$NetBSD: print-bgp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
