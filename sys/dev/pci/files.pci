@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.173.2.2 2003/01/28 06:21:23 jmc Exp $
+#	$NetBSD: files.pci,v 1.173.2.3 2003/10/05 11:47:07 tron Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -561,3 +561,8 @@ file	dev/pci/weasel_pci.c		weasel
 # Game adapter (joystick)
 attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
+
+# Broadcom 4401 10/100 Ethernet
+device bce: ether, ifnet, arp, mii
+attach bce at pci
+file	dev/pci/if_bce.c		bce
