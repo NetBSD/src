@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.1 2001/03/20 22:59:41 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.2 2001/03/20 23:27:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -44,19 +44,6 @@
 #include <sys/param.h>
 #include <machine/bus.h>
 #include <machine/io.h>
-
-/* Define the structures used to describe the "known" podules */
-
-struct podule_description {
-	int product_id;
-	char *description;
-};
-
-struct podule_list {
-	int manufacturer_id;
-	char *description;
-	struct podule_description *products;
-};
 
 /* Define the structure used to describe a podule */
 
