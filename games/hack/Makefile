@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.39 2003/11/16 14:14:18 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -22,7 +22,7 @@ DPADD+=	${LIBTERM} ${LIBCOMPAT}
 LDADD+=	-ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
-CLEANFILES+=makedefs
+CLEANFILES+=makedefs makedefs.lo
 FILES=help hh data
 FILESDIR=/var/games/hackdir
 
@@ -31,9 +31,9 @@ hack.onames.h: makedefs def.objects.h
 	${_MKTARGET_CREATE}
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
-makedefs: makedefs.c
+makedefs: makedefs.lo
 	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o makedefs ${.CURDIR}/makedefs.c
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC}
 
 hack.h:	hack.onames.h
 
