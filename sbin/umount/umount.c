@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: umount.c,v 1.8 1994/08/23 20:57:04 cgd Exp $";
+static char *rcsid = "$Id: umount.c,v 1.9 1994/08/25 02:14:01 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ umountfs(name)
 
 	if (realpath(name, rname) == NULL) {
 		warn("%s", rname);
-		return (0);
+		return (1);
 	}
 
 	name = rname;
@@ -214,7 +214,7 @@ umountfs(name)
 	}
 
 	if (!selected(type))
-		return (0);
+		return (1);
 
 	if ((delimp = strchr(name, '@')) != NULL) {
 		hostp = delimp + 1;
@@ -230,7 +230,7 @@ umountfs(name)
 	} else
 		hp = NULL;
 	if (!namematch(hp))
-		return (0);
+		return (1);
 
 	if (vflag)
 		(void)printf("%s: unmount from %s\n", name, mntpt);
