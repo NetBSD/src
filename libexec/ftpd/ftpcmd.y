@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.18 1998/05/21 00:09:32 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.19 1998/06/21 12:16:35 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.18 1998/05/21 00:09:32 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.19 1998/06/21 12:16:35 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -677,7 +677,7 @@ pathname
 			if (logged_in && $1 && *$1 == '~') {
 				glob_t gl;
 				int flags =
-				 GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+				 GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 				if ($1[1] == '\0')
 					$$ = strdup(pw->pw_dir);
