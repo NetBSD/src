@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.44 1999/09/07 19:30:10 soren Exp $
+$NetBSD: pcmciadevs,v 1.45 1999/09/09 18:09:10 is Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ vendor YEDATA			-1 	Y-E DATA
 vendor DIGITAL			-1 	Digital Equipment Corporation
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking Technology
+vendor AMBICOM			-1	AmbiCom Inc
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -191,3 +192,4 @@ product LINKSYS ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
 product COREGA PCC_2	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
 product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
 product SVEC LANCARD	{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
+product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
