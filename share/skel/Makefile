@@ -1,13 +1,10 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 6/8/90
-#	$Id: Makefile,v 1.5 1993/11/14 15:40:12 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/02/10 01:55:04 cgd Exp $
 
 FILES=	dot.cshrc dot.login dot.mailrc dot.profile dot.rhosts
 NOOBJ=	noobj
 
 all clean cleandir depend lint tags:
-
-beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}/skel
 
 realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
