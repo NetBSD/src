@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1995/09/02 19:27:34 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1995/09/03 14:54:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1565,9 +1565,9 @@ static romvec_t romvecs[] =
 	 */
 	{			/* 6 */
 		"Quadra/Centris ROMs",
-		(caddr_t) 0x4080a700,	/* ADB int */		/* WRU 950831 */
+		(caddr_t) 0x4080a700,	/* ADB int */
 		0,		/* PM intr */
-		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 */	/* WRU 950831 */
+		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
