@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.11 2002/12/01 00:12:12 matt Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.12 2003/04/16 14:27:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -80,9 +80,9 @@ ufs_rw64(a, ns)
 	return ((ns) ?  bswap64(a) : (a));
 }
 #else
-#define ufs_rw16(a, ns) (a)
-#define ufs_rw32(a, ns) (a)
-#define ufs_rw64(a, ns) (a)
+#define ufs_rw16(a, ns) ((uint16_t)(a))
+#define ufs_rw32(a, ns) ((uint32_t)(a))
+#define ufs_rw64(a, ns) ((uint64_t)(a))
 #endif
 
 #define ufs_add16(a, b, ns) \
