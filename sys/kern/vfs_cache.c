@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.49 2003/07/31 15:14:08 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.50 2003/07/31 15:43:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.49 2003/07/31 15:14:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.50 2003/07/31 15:43:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -191,7 +191,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
-		cnp->cn_flags |= ncp->nc_vpid;
+		cnp->cn_flags |= ncp->nc_flags;
 		if (cnp->cn_nameiop != CREATE ||
 		    (cnp->cn_flags & ISLASTCN) == 0) {
 			nchstats.ncs_neghits++;
@@ -414,7 +414,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		 * For negative hits, save the ISWHITEOUT flag so we can
 		 * restore it later when the cache entry is used again.
 		 */
-		ncp->nc_vpid = cnp->cn_flags & ISWHITEOUT;
+		ncp->nc_flags = cnp->cn_flags & ISWHITEOUT;
 	}
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
