@@ -649,4 +649,23 @@ NAME(aout,bfd_free_cached_info) PARAMS ((bfd *));
       }									      
 #endif
 
+/* Test if a read-only section can be merged with .text.  This is
+   possible if:
+
+   1. Section has file contents and is read-only.
+   2. The VMA of the section is after the end of .text and before
+      the start of .data.
+   3. The image is demand-pageable (otherwise, a_text in the header
+      will not reflect the gap between .text and .data).  */
+
+#define aout_section_merge_with_text_p(abfd, sec)			\
+  (((sec)->flags & (SEC_HAS_CONTENTS|SEC_READONLY)) ==			\
+      (SEC_HAS_CONTENTS|SEC_READONLY)					\
+   && obj_textsec (abfd) != NULL					\
+   && obj_datasec (abfd) != NULL					\
+   && (sec)->vma >= (obj_textsec (abfd)->vma +				\
+		    obj_textsec (abfd)->_cooked_size)			\
+   && ((sec)->vma + (sec)->_cooked_size) <= obj_datasec (abfd)->vma	\
+   && ((abfd)->flags & D_PAGED) != 0)
+
 #endif /* ! defined (LIBAOUT_H) */
