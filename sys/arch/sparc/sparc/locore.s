@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165 2002/11/29 07:56:50 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.166 2002/12/06 16:04:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2445,8 +2445,13 @@ softintr_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
+1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+	rd	%psr, %o3		!  (bits already shifted to PIL field)
+	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
+	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
+	ld	[%l4], %o1
 	ld	[%l4 + 4], %o0
+	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
@@ -2601,8 +2606,13 @@ sparc_interrupt_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
+1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+	rd	%psr, %o3		!  (bits already shifted to PIL field)
+	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
+	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
+	ld	[%l4], %o1
 	ld	[%l4 + 4], %o0
+	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0

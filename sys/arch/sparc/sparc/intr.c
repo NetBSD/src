@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.60 2002/09/27 15:36:47 provos Exp $ */
+/*	$NetBSD: intr.c,v 1.61 2002/12/06 16:04:12 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -420,8 +420,9 @@ extern int sparc_interrupt44c[];
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih)
+intr_establish(level, classipl, ih)
 	int level;
+	int classipl;
 	struct intrhand *ih;
 {
 	struct intrhand **p, *q;
@@ -453,6 +454,18 @@ intr_establish(level, ih)
 			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
 	}
 #endif
+
+	if (classipl == 0)
+		classipl = level;
+
+	/* A requested IPL cannot exceed its device class level */
+	if (classipl < level)
+		panic("intr_establish: class lvl (%d) < pil (%d)\n",
+			classipl, level);
+
+	/* pre-shift to PIL field in %psr */
+	ih->ih_classipl = (classipl << 8) & PSR_PIL;
+
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
@@ -558,7 +571,7 @@ softintr_establish(level, fun, arg)
 	ih->ih_fun = (int (*) __P((void *)))fun;
 	ih->ih_arg = arg;
 	ih->ih_next = 0;
-	intr_establish(1, ih);
+	intr_establish(1, level, ih);
 	return (void *)ih;
 }
 
