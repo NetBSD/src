@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.8 2002/02/06 19:20:20 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.9 2002/04/24 05:23:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+int pthread__dbg;
 
 #ifdef PTHREAD__DEBUG
 
