@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fnmatch.3	8.1 (Berkeley) 6/9/93
-.\"	$Id: fnmatch.3,v 1.7 1993/11/11 03:21:21 jtc Exp $
+.\"	$Id: fnmatch.3,v 1.8 1993/11/25 02:48:56 jtc Exp $
 .\"
 .Dd June 9, 1993
 .Dt FNMATCH 3
@@ -108,17 +108,18 @@ otherwise, it returns the value
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr glob 3 ,
-.Xr wordexp 3 ,
-.Xr regexp 3
+.Xr regex 3 ,
+.Xr wordexp 3
 .Sh STANDARDS
 The
 .Fn fnmatch
-function is expected to conform to
+function conforms to
 .St -p1003.2-92 .
 .Sh HISTORY
 The
 .Fn fnmatch
-function first appeared in 4.4BSD.
+function first appeared in 
+.Bx 4.4 .
 .Sh BUGS
 The pattern
 .Ql *
