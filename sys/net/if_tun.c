@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.22 1996/02/13 22:00:26 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.23 1996/03/30 21:57:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -30,6 +30,7 @@
 #include <sys/select.h>
 #include <sys/file.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 
@@ -57,7 +58,6 @@
 #endif
 
 #include <net/if_tun.h>
-#include <net/net_conf.h>
 
 #define TUNDEBUG	if (tundebug) printf
 int	tundebug = 0;
