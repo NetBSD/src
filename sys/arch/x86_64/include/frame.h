@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2003/01/26 14:12:10 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2003/03/15 23:41:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,7 +176,6 @@ struct switchframe {
 struct sigframe {
 	uint64_t sf_ra;
 	struct	sigcontext sf_sc;
-	struct	fxsave64 sf_fp;
 };
 
 #endif  /* _X86_64FRAME_H_ */
