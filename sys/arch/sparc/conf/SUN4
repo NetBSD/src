@@ -1,4 +1,4 @@
-#	$NetBSD: SUN4,v 1.8 1994/12/16 21:53:45 deraadt Exp $
+#	$NetBSD: SUN4,v 1.9 1994/12/17 23:12:43 deraadt Exp $
 
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -70,10 +70,10 @@ esp0	at obio0 addr 0xfa000000 level 4
 le0	at obio0 addr 0xf9000000 level 6
 
 ie0	at obio0 addr 0xf6000000 level 6
-ie1	at vmes0 addr 0xe88000 level 5 vect 0x75
-ie2	at vmes0 addr 0x31ff02 level 5 vect 0x76
-ie3	at vmes0 addr 0x35ff02 level 5 vect 0x77
-ie4	at vmes0 addr 0x2dff02 level 5 vect 0x7c
+ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
+ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76
+ie3	at vmes0 addr 0xff35ff02 level 5 vect 0x77
+ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 
 scsibus* at esp?
 
