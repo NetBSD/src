@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.17 2001/11/17 03:54:36 lukem Exp $
+.\"	$NetBSD: malloc.9,v 1.18 2001/11/18 23:00:10 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -377,8 +377,6 @@ and can be examined by using
 .Fn malloc
 returns a kernel virtual address that is suitably aligned for storage of
 any type of object.
-.Sh SEE ALSO
-.Xr vmstat 1
 .Sh DIAGNOSTICS
 A kernel compiled with the
 .Dv DIAGNOSTIC
@@ -423,3 +421,5 @@ panic:
 .It
 .Dq Data modified on freelist: Aq data object description
 .El
+.Sh SEE ALSO
+.Xr vmstat 1
