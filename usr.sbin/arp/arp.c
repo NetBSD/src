@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	5.11.1.1 (Berkeley) 7/22/91";*/
-static char rcsid[] = "$Id: arp.c,v 1.3 1993/08/01 18:00:27 mycroft Exp $";
+static char rcsid[] = "$Id: arp.c,v 1.4 1993/12/25 02:28:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -120,10 +120,12 @@ file(name)
 	int i, retval;
 	char line[100], arg[5][50], *args[5];
 
+	setregid(getegid(), getgid());
 	if ((fp = fopen(name, "r")) == NULL) {
 		fprintf(stderr, "arp: cannot open %s\n", name);
 		exit(1);
 	}
+	setregid(getegid(), getgid());
 	args[0] = &arg[0][0];
 	args[1] = &arg[1][0];
 	args[2] = &arg[2][0];
