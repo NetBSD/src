@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.84 2000/11/19 01:46:26 sommerfeld Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.85 2000/11/20 01:46:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1009,6 +1009,28 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 	if (newp)
 		return (EPERM);
 
+	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
+
+	return (error);
+}
+
+/*
+ * As above, but can return a truncated result.
+ */
+int
+sysctl_rdminstruct(oldp, oldlenp, newp, sp, len)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	const void *sp;
+	int len;
+{
+	int error = 0;
+
+	if (newp)
+		return (EPERM);
+
+	len = min(*oldlenp, len);
 	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
 
 	return (error);
