@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2003/08/24 17:52:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2003/10/20 05:47:52 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2003/08/24 17:52:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2003/10/20 05:47:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1185,7 +1185,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		ctx = pm->pm_ctx;
 	}
 	__asm __volatile("mfmsr %0;"
-		"li %1, 0x20;"
+		"li %1, %7;"
 		"andc %1,%0,%1;"
 		"mtmsr %1;"
 		"sync;isync;"
@@ -1202,7 +1202,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mtmsr %0;"
 		"sync; isync"
 		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step));
+		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step),
+		  "K" (PSL_IR | PSL_DR));
 }
 
 
