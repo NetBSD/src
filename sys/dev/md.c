@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 1998/08/13 02:10:50 eeh Exp $	*/
+/*	$NetBSD: md.c,v 1.18 1998/09/01 06:13:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -104,16 +104,6 @@ struct md_softc {
 void mdattach __P((int));
 static void md_attach __P((struct device *, struct device *, void *));
 
-/*
- * Some ports (like i386) use a swapgeneric that wants to
- * snoop around in this md_cd structure.  It is preserved
- * (for now) to remain compatible with such practice.
- * XXX - that practice is questionable...
- */
-struct cfdriver md_cd = {
-	NULL, "md", DV_DULL, NULL, 0
-};
-
 void mdstrategy __P((struct buf *bp));
 struct dkdriver mddkdriver = { mdstrategy };
 
@@ -143,10 +133,6 @@ mdattach(n)
 	if (n > MD_MAX_UNITS)
 		n = MD_MAX_UNITS;
 	ramdisk_ndevs = n;
-
-	/* XXX: Fake-up md_cd (see above) */
-	md_cd.cd_ndevs = ramdisk_ndevs;
-	md_cd.cd_devs  = ramdisk_devs;
 
 	/* Attach as if by autoconfig. */
 	for (i = 0; i < n; i++) {
