@@ -3,7 +3,7 @@
    Parser for dhclient config and lease files... */
 
 /*
- * Copyright (c) 1996-2001 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.3 2002/06/10 00:30:33 itojun Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.4 2002/06/11 14:00:00 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -89,6 +89,7 @@ isc_result_t read_client_conf ()
 	top_level_config.script_name = path_dhclient_script;
 	top_level_config.requested_options = default_requested_options;
 	top_level_config.omapi_port = -1;
+	top_level_config.do_forward_update = 1;
 
 	group_allocate (&top_level_config.on_receipt, MDL);
 	if (!top_level_config.on_receipt)
@@ -462,6 +463,23 @@ void parse_client_statement (cfile, ip, config)
 		parse_semi (cfile);
 		return;
 		
+	      case DO_FORWARD_UPDATE:
+		token = next_token (&val, (unsigned *)0, cfile);
+		token = next_token (&val, (unsigned *)0, cfile);
+		if (!strcasecmp (val, "on") ||
+		    !strcasecmp (val, "true"))
+			config -> do_forward_update = 1;
+		else if (!strcasecmp (val, "off") ||
+			 !strcasecmp (val, "false"))
+			config -> do_forward_update = 0;
+		else {
+			parse_warn (cfile, "expecting boolean value.");
+			skip_to_semi (cfile);
+			return;
+		}
+		parse_semi (cfile);
+		return;
+
 	      case REBOOT:
 		token = next_token (&val, (unsigned *)0, cfile);
 		parse_lease_time (cfile, &config -> reboot_timeout);

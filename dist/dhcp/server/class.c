@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.2 2002/06/11 12:24:42 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.2 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 

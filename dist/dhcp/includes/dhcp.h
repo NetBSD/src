@@ -34,10 +34,9 @@
  * SUCH DAMAGE.
  *
  * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
+ * by Ted Lemon in cooperation with Vixie Enterprises.  To learn more
+ * about the Internet Software Consortium, see ``http://www.isc.org''.
+ * To learn more about Vixie Enterprises, see ``http://www.vix.com''.
  */
 
 #define DHCP_UDP_OVERHEAD	(14 + /* Ethernet header */		\

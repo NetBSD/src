@@ -128,7 +128,7 @@ VOIDPTR dmalloc (size, file, line)
 #endif
 #endif
 #ifdef DEBUG_REFCNT_DMALLOC_FREE
-	rc_register (file, line, 0, foo + DMDOFFSET, 1, 0);
+	rc_register (file, line, 0, foo + DMDOFFSET, 1, 0, RC_MALLOC);
 #endif
 	return bar;
 }
@@ -192,7 +192,8 @@ void dfree (ptr, file, line)
 	}
 #endif
 #ifdef DEBUG_REFCNT_DMALLOC_FREE
-	rc_register (file, line, 0, (unsigned char *)ptr + DMDOFFSET, 0, 1);
+	rc_register (file, line,
+		     0, (unsigned char *)ptr + DMDOFFSET, 0, 1, RC_MALLOC);
 #endif
 	free (ptr);
 }
@@ -578,7 +579,7 @@ isc_result_t omapi_object_reference (omapi_object_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, h -> type -> rc_flag);
 	return ISC_R_SUCCESS;
 }
 
@@ -684,7 +685,8 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 				omapi_object_dereference
 					(&hp -> outer, file, line);
 /*			if (!hp -> type -> freer) */
-				rc_register (file, line, h, hp, 0, 1);
+				rc_register (file, line, h, hp,
+					     0, 1, hp -> type -> rc_flag);
 			if (hp -> type -> destroy)
 				(*(hp -> type -> destroy)) (hp, file, line);
 			if (hp -> type -> freer)
@@ -695,12 +697,14 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 			(*h) -> refcnt--;
 /*			if (!(*h) -> type -> freer) */
 				rc_register (file, line,
-					     h, *h, (*h) -> refcnt, 1);
+					     h, *h, (*h) -> refcnt, 1,
+					     (*h) -> type -> rc_flag);
 		}
 	} else {
 		(*h) -> refcnt--;
 /*		if (!(*h) -> type -> freer) */
-			rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+			rc_register (file, line, h, *h, (*h) -> refcnt, 1,
+				     (*h) -> type -> rc_flag);
 	}
 	*h = 0;
 	return ISC_R_SUCCESS;
@@ -741,7 +745,7 @@ isc_result_t omapi_buffer_reference (omapi_buffer_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, RC_MISC);
 	return ISC_R_SUCCESS;
 }
 
@@ -775,7 +779,7 @@ isc_result_t omapi_buffer_dereference (omapi_buffer_t **h,
 	}
 
 	--(*h) -> refcnt;
-	rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt == 0)
 		dfree (*h, file, line);
 	*h = 0;
@@ -868,7 +872,7 @@ isc_result_t omapi_typed_data_reference (omapi_typed_data_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, RC_MISC);
 	return ISC_R_SUCCESS;
 }
 
@@ -902,7 +906,7 @@ isc_result_t omapi_typed_data_dereference (omapi_typed_data_t **h,
 	}
 	
 	--((*h) -> refcnt);
-	rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt <= 0 ) {
 		switch ((*h) -> type) {
 		      case omapi_datatype_int:
@@ -951,7 +955,7 @@ isc_result_t omapi_data_string_reference (omapi_data_string_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, RC_MISC);
 	return ISC_R_SUCCESS;
 }
 
@@ -985,7 +989,7 @@ isc_result_t omapi_data_string_dereference (omapi_data_string_t **h,
 	}
 
 	--((*h) -> refcnt);
-	rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt <= 0 ) {
 		dfree (*h, file, line);
 	}
@@ -1023,7 +1027,7 @@ isc_result_t omapi_value_reference (omapi_value_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, RC_MISC);
 	return ISC_R_SUCCESS;
 }
 
@@ -1057,7 +1061,7 @@ isc_result_t omapi_value_dereference (omapi_value_t **h,
 	}
 	
 	--((*h) -> refcnt);
-	rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt == 0) {
 		if ((*h) -> name)
 			omapi_data_string_dereference (&(*h) -> name,
@@ -1105,7 +1109,7 @@ isc_result_t omapi_addr_list_reference (omapi_addr_list_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt, 0);
+	rc_register (file, line, r, h, h -> refcnt, 0, RC_MISC);
 	return ISC_R_SUCCESS;
 }
 
@@ -1139,7 +1143,7 @@ isc_result_t omapi_addr_list_dereference (omapi_addr_list_t **h,
 	}
 
 	--((*h) -> refcnt);
-	rc_register (file, line, h, *h, (*h) -> refcnt, 1);
+	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt <= 0 ) {
 		dfree (*h, file, line);
 	}

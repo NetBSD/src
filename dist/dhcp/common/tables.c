@@ -43,16 +43,17 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.3 2002/06/11 14:00:02 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
 /* XXXDPN: Moved here from hash.c, when it moved to libomapi.  Not sure
    where these really belong. */
-HASH_FUNCTIONS (group, const char *, struct group_object)
-HASH_FUNCTIONS (universe, const char *, struct universe)
-HASH_FUNCTIONS (option, const char *, struct option)
+HASH_FUNCTIONS (group, const char *, struct group_object, group_hash_t,
+		group_reference, group_dereference)
+HASH_FUNCTIONS (universe, const char *, struct universe, universe_hash_t, 0, 0)
+HASH_FUNCTIONS (option, const char *, struct option, option_hash_t, 0, 0)
 
 /* DHCP Option names, formats and codes, from RFC1533.
 
@@ -1134,7 +1135,7 @@ const char *hardware_types [] = {
 	"unknown-254",
 	"unknown-255" };
 
-struct hash_table *universe_hash;
+universe_hash_t *universe_hash;
 struct universe **universes;
 int universe_count, universe_max;
 
@@ -1171,8 +1172,7 @@ void initialize_common_option_spaces()
 	dhcp_universe.store_length = putUChar;
 	dhcp_universe.index = universe_count++;
 	universes [dhcp_universe.index] = &dhcp_universe;
-	dhcp_universe.hash = new_hash (0, 0, 1, MDL);
-	if (!dhcp_universe.hash)
+	if (!option_new_hash (&dhcp_universe.hash, 1, MDL))
 		log_fatal ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options [i] = &dhcp_options [i];
@@ -1195,10 +1195,10 @@ void initialize_common_option_spaces()
 	nwip_universe.tag_size = 1;
 	nwip_universe.store_tag = putUChar;
 	nwip_universe.store_length = putUChar;
-	fqdn_universe.enc_opt = &dhcp_options [DHO_NWIP_SUBOPTIONS];
+	nwip_universe.enc_opt = &dhcp_options [DHO_NWIP_SUBOPTIONS];
 	nwip_universe.index = universe_count++;
 	universes [nwip_universe.index] = &nwip_universe;
-	nwip_universe.hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&nwip_universe.hash, 1, MDL);
 	if (!nwip_universe.hash)
 		log_fatal ("Can't allocate nwip option hash table.");
 	for (i = 0; i < 256; i++) {
@@ -1225,7 +1225,7 @@ void initialize_common_option_spaces()
 	fqdn_universe.index = universe_count++;
 	fqdn_universe.enc_opt = &dhcp_options [DHO_FQDN];
 	universes [fqdn_universe.index] = &fqdn_universe;
-	fqdn_universe.hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&fqdn_universe.hash, 1, MDL);
 	if (!fqdn_universe.hash)
 		log_fatal ("Can't allocate fqdn option hash table.");
 	for (i = 0; i < 256; i++) {
@@ -1236,7 +1236,7 @@ void initialize_common_option_spaces()
 	}
 
 	/* Set up the hash of universes. */
-	universe_hash = new_hash (0, 0, 1, MDL);
+	universe_new_hash (&universe_hash, 1, MDL);
 	universe_hash_add (universe_hash,
 			   dhcp_universe.name, 0,
 			   &dhcp_universe, MDL);
