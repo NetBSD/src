@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.30 2004/03/15 05:30:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.31 2004/03/15 05:34:34 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -174,3 +174,9 @@ usr.bin/rpcgen/rpc_main.c		1.24
 
 	Remove special case handling for $CPP and use execvp() instead.
 	[martin, ticket #1619]
+
+sys/miscfs/fifofs/fifo_vnops.c		1.46
+
+	Handle the case of fifo_close() getting called from vclean().
+	Fixes memory leak in revoke(2) path.
+	[wrstuden, ticket #1621]
