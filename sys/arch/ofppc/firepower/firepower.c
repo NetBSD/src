@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.3 2002/07/05 18:45:18 matt Exp $	*/
+/*	$NetBSD: firepower.c,v 1.4 2002/09/18 01:44:12 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -49,7 +49,14 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
+#include <dev/ic/wdcvar.h>
 
+#include <machine/autoconf.h>
 #include <machine/bat.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
@@ -63,6 +70,9 @@ void	firepower_init(void);
 void	firepower_cons_init(void);
 void	firepower_device_register(struct device *, void *);
 
+extern char bootpath[];
+extern char cbootpath[];
+
 /*
  * firepower_init:
  *
@@ -74,6 +84,7 @@ firepower_init(void)
 
 	platform.cons_init = firepower_cons_init;
 	platform.device_register = firepower_device_register;
+	platform.softintr_init = firepower_softintr_init;
 
 	/*
 	 * Map VA==PA the region that includes ISA I/O, PCI Config,
@@ -108,6 +119,11 @@ firepower_cons_init(void)
 {
 }
 
+#define DEVICE_IS(dev, name) \
+	(!strncmp((dev)->dv_xname, (name), sizeof(name) - 1) && \
+	 (dev)->dv_xname[sizeof(name) - 1] >= '0' && \
+	 (dev)->dv_xname[sizeof(name) - 1] <= '9')
+
 /*
  * firepower_device_register:
  *
@@ -117,6 +133,93 @@ firepower_cons_init(void)
 void
 firepower_device_register(struct device *dev, void *aux)
 {
+	static struct device *parent;
+	static char *bp = bootpath + 1, *cp = cbootpath + 1;
+	unsigned long addr;
+	char *pnext, *paddr;
+	int clen;
+
+	if (booted_device)
+		return;
+
+	/* Skip over devices not represented in the OF tree. */
+	if (DEVICE_IS(dev, "mainbus")) {
+		parent = dev;
+		return;
+	}
+	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "scsibus"))
+		return;
+
+	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
+	    DEVICE_IS(dev->dv_parent, "scsibus")) {
+		if (dev->dv_parent->dv_parent != parent)
+			return;
+	} else if (dev->dv_parent != parent) {
+		return;
+	}
+
+	/*
+	 * Get the address part of the current path component.
+	 */
+	pnext = strchr(cp, '/');
+	if (pnext) {
+		clen = pnext - cp;
+		pnext++;
+	} else {
+		clen = strlen(cp);
+	}
+	addr = 0;
+	paddr = strchr(cp, '@');
+	if (pnext && paddr > pnext) {
+		paddr = NULL;
+	} else if (!paddr && bp) {
+		paddr = strchr(bp, '@');
+	}
+	if (paddr) {
+		addr = strtoul(paddr + 1, NULL, 0x10);
+	}
+
+	if (DEVICE_IS(dev->dv_parent, "mainbus")) {
+		struct ofbus_attach_args *oba = aux;
+		
+		if (strcmp(oba->oba_busname, "cpu") == 0)
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "ofbus")) {
+		struct ofbus_attach_args *oba = aux;
+
+		if (strncmp(oba->oba_ofname, cp, clen))
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (addr != pa->pa_device)
+			return;
+	} else if (DEVICE_IS(dev->dv_parent, "scsibus") ||
+		   DEVICE_IS(dev->dv_parent, "atapibus")) {
+		struct scsipibus_attach_args *sa = aux;
+
+		/* periph_target is target for scsi, drive # for atapi */
+		if (addr != sa->sa_periph->periph_target)
+			return;
+	} else
+		return;
+
+	/*
+	 * If we reach this point, then dev is a match for the current
+	 * path component.
+	 */
+
+	if (pnext && *pnext) {
+		parent = dev;
+		cp = pnext;
+		bp = strchr(bp, '/');
+		if (bp)
+			bp++;
+		return;
+	} else {
+		booted_device = dev;
+		return;
+	}
 }
 
 /*
