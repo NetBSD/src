@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.8 2002/07/04 17:33:19 junyoung Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.9 2002/09/18 09:50:29 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,7 +172,7 @@ should be used instead.  It has the following members:
 .Ed
 .It Fa struct wsdisplay_emulops
 A structure used to specify the display emulation functions.  All
-displays intending to provide terminal emulation must must provide
+displays intending to provide terminal emulation must provide
 this structure and pass it to the
 .Xr wsdisplay 4
 child device.  It has the following members:
