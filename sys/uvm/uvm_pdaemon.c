@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.57 2004/01/04 11:33:32 jdolecek Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.58 2004/01/30 11:32:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.57 2004/01/04 11:33:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.58 2004/01/30 11:32:16 tls Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -226,6 +226,13 @@ uvm_pageout(void *arg)
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
 		/*
+		 * The metadata cache drainer knows about uvmexp.free
+		 * and uvmexp.freetarg.  We call it _before_ scanning
+		 * so that it sees the amount we really want.
+		 */
+		buf_drain(0);
+
+		/*
 		 * now lock page queues and recompute inactive count
 		 */
 
@@ -273,7 +280,6 @@ uvm_pageout(void *arg)
 		 * drain pool resources now that we're not holding any locks
 		 */
 
-		buf_drain(0);
 		pool_drain(0);
 
 		/*
