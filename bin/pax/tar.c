@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.10 1998/07/28 17:44:24 mycroft Exp $	*/
+/*	$NetBSD: tar.c,v 1.11 1998/08/10 22:35:02 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.10 1998/07/28 17:44:24 mycroft Exp $");
+__RCSID("$NetBSD: tar.c,v 1.11 1998/08/10 22:35:02 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ static int uqd_oct __P((u_quad_t, char *, int, int));
  */
 
 static int tar_nodir;			/* do not write dirs under old tar */
+int is_oldgnutar;			/* skip end-ofvolume checks */
 
 /*
  * tar_endwr()
@@ -791,6 +792,8 @@ ustar_id(blk, size)
 		return(-1);
 	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
 		return(-1);
+	if (!strncmp(hd->magic, "ustar  ", 8))
+		is_oldgnutar = 1;
 	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
 		return(-1);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.9 1998/07/28 17:44:23 mycroft Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.10 1998/08/10 22:35:01 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.9 1998/07/28 17:44:23 mycroft Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.10 1998/08/10 22:35:01 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1013,8 +1013,9 @@ next_head(arcn)
 			 * storage device, better give the user the bad news.
 			 */
 			if ((ret == 0) || (rd_sync() < 0)) {
-				tty_warn(1,
-				    "Premature end of file on archive read");
+				if (!is_oldgnutar)
+					tty_warn(1,
+					    "Premature end of file on archive read");
 				return(-1);
 			}
 			if (!in_resync) {
