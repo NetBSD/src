@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.10 1993/12/08 10:28:10 pk Exp $
+ *	$Id: rtld.c,v 1.11 1993/12/20 22:45:01 pk Exp $
  */
 
 #include <sys/param.h>
@@ -140,6 +140,7 @@ static void		check_text_reloc __P((	struct relocation_info *,
 						caddr_t));
 static void		reloc_maps __P((void));
 static void		reloc_copy __P((void));
+static void		init_maps __P((void));
 static char		*rtfindlib __P((char *, int, int, int *));
 void			binder_entry __P((void));
 long			binder __P((jmpslot_t *));
@@ -215,6 +216,7 @@ struct link_dynamic	*dp;
 	/* Relocate all loaded objects according to their RRS segments */
 	reloc_maps();
 	reloc_copy();
+	init_maps();
 
 	/* Fill in some field in main's __DYNAMIC structure */
 	crtp->crt_dp->ld_entry = &ld_entry;
@@ -437,15 +439,18 @@ reloc_maps()
 			check_text_reloc(r, lmp, addr);
 
 			if (RELOC_EXTERN_P(r)) {
-				struct link_map	*src_map;
-				struct nzlist	*np;
+				struct link_map	*src_map = NULL;
+				struct nzlist	*p, *np;
 				long	relocation = md_get_addend(r, addr);
 
 				if (RELOC_LAZY_P(r))
 					continue;
 
-				sym = LM_STRINGS(lmp) +
-					LM_SYMBOL(lmp,RELOC_SYMBOL(r))->nz_strx;
+				p = LM_SYMBOL(lmp,RELOC_SYMBOL(r));
+				if (p->nz_type == (N_SETV + N_EXT))
+					src_map = lmp;
+
+				sym = LM_STRINGS(lmp) + p->nz_strx;
 
 				np = lookup(sym, &src_map, 0/*XXX-jumpslots!*/);
 				if (np == NULL)
@@ -480,7 +485,9 @@ src_map->lm_addr, np->nz_value, sym, addr, relocation, np->nz_size);
 					continue;
 				}
 #if DEBUG
-xprintf("RELOCATE(%s) external: %s at %#x, reloc = %#x\n", lmp->lm_name, sym, addr, relocation);
+if (sym[2]=='_'&&(sym[3]=='C'||sym[3]=='D')&&sym[4]=='T')
+xprintf("RELOCATE(%s) external: %s at %#x, reloc = %#x in %s\n",
+lmp->lm_name, sym, addr, relocation, src_map?src_map->lm_name:"(NUL)");
 #endif
 				md_relocate(r, relocation, addr, 0);
 
@@ -563,22 +570,35 @@ caddr_t			addr;
 	lmp->lm_rwt = 1;
 }
 
+static void
+init_maps()
+{
+	struct link_map		*lmp, *src_map;
+	struct nzlist		*np;
+
+	for (lmp = link_map_head; lmp; lmp = lmp->lm_next) {
+		src_map = lmp;
+		np = lookup(".init", &src_map, 1);
+		if (np)
+			(*(void (*)())(src_map->lm_addr + np->nz_value))();
+	}
+}
+
 /*
  * Lookup NAME in the link maps. The link map producing a definition
- * is returned in SRC_MAP. If STRONG is set, the symbol returned must
+ * is returned in SRC_MAP. If SRC_MAP is not NULL on entry the search is
+ * confined to that map. If STRONG is set, the symbol returned must
  * have a proper type (used by binder()).
  */
 static struct nzlist *
 lookup(name, src_map, strong)
 char		*name;
-struct link_map	**src_map;
+struct link_map	**src_map;	/* IN/OUT */
 int		strong;
 {
 	long			common_size = 0;
 	struct link_map		*lmp;
 	struct rt_symbol	*rtsp;
-
-	*src_map = NULL;
 
 	if ((rtsp = lookup_rts(name)) != NULL)
 		return rtsp->rt_sp;
@@ -592,6 +612,9 @@ int		strong;
 		struct rrs_hash	*hp;
 		char		*cp;
 		struct	nzlist	*np;
+
+		if (*src_map && lmp != *src_map)
+			continue;
 
 		/*
 		 * Compute bucket in which the symbol might be found.
@@ -671,7 +694,7 @@ long
 binder(jsp)
 jmpslot_t	*jsp;
 {
-	struct link_map	*lmp, *src_map;
+	struct link_map	*lmp, *src_map = NULL;
 	long		addr;
 	char		*sym;
 	struct nzlist	*np;

@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.15 1993/12/08 10:13:54 pk Exp $
+ *	$Id: ld.c,v 1.16 1993/12/20 22:44:35 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1587,6 +1587,18 @@ digest_pass1()
 				/* Keep count and remember symbol */
 				sp->setv_count++;
 				set_vectors[setv_fill_count++] = (long)p;
+				if (building_shared_object) {
+					struct relocation_info reloc;
+
+					/*
+					 * Make sure to relocate the contents
+					 * of this set vector.
+					 */
+					bzero(&reloc, sizeof(reloc));
+					RELOC_ADDRESS(&reloc) =
+						setv_fill_count * sizeof(long);
+					alloc_rrs_segment_reloc(NULL, &reloc);
+				}
 
 			} else if ((type & N_EXT) && type != (N_UNDF | N_EXT)
 						&& (type & N_TYPE) != N_FN
@@ -1694,7 +1706,7 @@ digest_pass2()
 			 * at end. Reverse the vector itself to put it in
 			 * file order.
 			 */
-			unsigned long	i, tmp;
+			unsigned long	i, *p, *q;
 			unsigned long	length_word_index =
 						sp->value / sizeof(long);
 
@@ -1711,17 +1723,29 @@ digest_pass2()
 					set_vectors[1+i+length_word_index];
 
 				set_vectors[1+i+length_word_index] = p->n_value;
+				if (building_shared_object) {
+					struct relocation_info reloc;
+
+					bzero(&reloc, sizeof(reloc));
+					RELOC_ADDRESS(&reloc) =
+						(1 + i + length_word_index) *
+								sizeof(long)
+						+ set_sect_start;
+					RELOC_TYPE(&reloc) =
+					(p->n_type - (N_SETA - N_ABS)) & N_TYPE;
+					claim_rrs_segment_reloc(NULL, &reloc);
+				}
 			}
 
 			/*
 			 * Reverse the vector.
 			 */
-			for (i = 1; i < (sp->setv_count - 1)/2 + 1; i++) {
-
-				tmp = set_vectors[length_word_index + i];
-				set_vectors[length_word_index + i] =
-					set_vectors[length_word_index + sp->setv_count + 1 - i];
-				set_vectors[length_word_index + sp->setv_count + 1 - i] = tmp;
+			p = &set_vectors[length_word_index + 1];
+			q = &set_vectors[length_word_index + sp->setv_count];
+			while (p < q) {
+				unsigned long tmp = *p;
+				*p++ = *q;
+				*q-- = tmp;
 			}
 
 			/* Clear terminating entry */
@@ -2285,8 +2309,8 @@ write_data ()
 	 */
 
 	if (set_vector_count) {
-		swap_longs(set_vectors, 2 * set_symbol_count + set_vector_count);
-		mywrite (set_vectors, 2 * set_symbol_count + set_vector_count,
+		swap_longs(set_vectors, set_symbol_count + 2*set_vector_count);
+		mywrite (set_vectors, set_symbol_count + 2*set_vector_count,
 				sizeof (unsigned long), outdesc);
 	}
 
