@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.21 1996/04/19 00:02:29 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.22 1996/09/18 02:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -47,6 +47,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/fcntl.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
@@ -248,6 +249,21 @@ chioctl(dev, cmd, data, flags, p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
+
+	/*
+	 * If this command can change the device's state, we must
+	 * have the device open for writing.
+	 */
+	switch (cmd) {
+	case CHIOGPICKER:
+	case CHIOGPARAMS:
+	case CHIOGSTATUS:
+		break;
+
+	default:
+		if ((flags & FWRITE) == 0)
+			return (EBADF);
+	}
 
 	switch (cmd) {
 	case CHIOMOVE:
