@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.101 1996/06/25 20:47:02 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.102 1996/10/04 01:28:54 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -732,8 +732,13 @@ ed_find_3Com(sc, cf, ia)
 		ia->ia_iobase = ed_3com_iobase[ptr];	/* XXX --thorpej */
 
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_PCFR);
-	if (x == 0 || (x & (x - 1)) != 0)
+	if (x == 0 || (x & (x - 1)) != 0) {
+		printf("%s: The 3c503 is not currently supported with memory "
+		       "mapping disabled.\n%s: Reconfigure the card to "
+		       "enable memory mapping.\n",
+		       sc->sc_dev.dv_xname, sc->sc_dev.dv_xname);
 		goto err;
+	}
 	ptr = ffs(x) - 1;
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
