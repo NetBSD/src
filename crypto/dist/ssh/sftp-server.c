@@ -1,6 +1,6 @@
-/*	$NetBSD: sftp-server.c,v 1.12 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.13 2001/09/27 03:24:05 itojun Exp $	*/
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.28 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.30 2001/07/31 12:42:50 jakob Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -737,8 +737,8 @@ process_readdir(void)
 				stats = xrealloc(stats, nstats * sizeof(Stat));
 			}
 /* XXX OVERFLOW ? */
-			snprintf(pathname, sizeof pathname,
-			    "%s/%s", path, dp->d_name);
+			snprintf(pathname, sizeof pathname, "%s%s%s", path,
+			    strcmp(path, "/") ? "/" : "", dp->d_name);
 			if (lstat(pathname, &st) < 0)
 				continue;
 			stat_to_attrib(&st, &(stats[count].attrib));

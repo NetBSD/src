@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.6 2001/06/23 19:37:39 itojun Exp $	*/
-/*	$OpenBSD: misc.c,v 1.11 2001/06/16 08:58:34 markus Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2001/06/26 17:27:24 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,12 +26,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.11 2001/06/16 08:58:34 markus Exp $");
+RCSID("$OpenBSD: misc.c,v 1.12 2001/06/26 17:27:24 markus Exp $");
 
 #include "misc.h"
 #include "log.h"
 #include "xmalloc.h"
 
+/* remove newline at end of string */
 char *
 chop(char *s)
 {
@@ -47,6 +48,7 @@ chop(char *s)
 
 }
 
+/* set/unset filedescriptor to non-blocking */
 void
 set_nonblock(int fd)
 {
@@ -94,6 +96,7 @@ unset_nonblock(int fd)
 /* Characters considered whitespace in strsep calls. */
 #define WHITESPACE " \t\r\n"
 
+/* return next token in configuration line */
 char *
 strdelim(char **s)
 {
@@ -140,7 +143,13 @@ pwcopy(struct passwd *pw)
 	return copy;
 }
 
-int a2port(const char *s)
+/*
+ * Convert ASCII string to TCP/IP port number.
+ * Port must be >0 and <=65535.
+ * Return 0 if invalid.
+ */
+int
+a2port(const char *s)
 {
 	long port;
 	char *endp;
@@ -161,7 +170,29 @@ int a2port(const char *s)
 #define DAYS		(HOURS * 24)
 #define WEEKS		(DAYS * 7)
 
-long convtime(const char *s)
+/*
+ * Convert a time string into seconds; format is
+ * a sequence of:
+ *      time[qualifier]
+ *
+ * Valid time qualifiers are:
+ *      <none>  seconds
+ *      s|S     seconds
+ *      m|M     minutes
+ *      h|H     hours
+ *      d|D     days
+ *      w|W     weeks
+ *
+ * Examples:
+ *      90m     90 minutes
+ *      1h30m   90 minutes
+ *      2d      2 days
+ *      1w      1 week
+ *
+ * Return -1 if time string is invalid.
+ */
+long
+convtime(const char *s)
 {
 	long total, secs;
 	const char *p;
@@ -248,6 +279,7 @@ colon(char *cp)
 	return (0);
 }
 
+/* function to assist building execv() arguments */
 void
 addargs(arglist *args, char *fmt, ...)
 {

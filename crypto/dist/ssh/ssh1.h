@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh1.h,v 1.4 2001/06/23 19:37:42 itojun Exp $	*/
+/*	$NetBSD: ssh1.h,v 1.5 2001/09/27 03:24:06 itojun Exp $	*/
 /*	$OpenBSD: ssh1.h,v 1.3 2001/05/30 12:55:13 markus Exp $	*/
 
 /*
@@ -66,9 +66,6 @@
 #define SSH_SMSG_AUTH_KERBEROS_RESPONSE		43	/* (KTEXT) */
 #define SSH_CMSG_HAVE_KERBEROS_TGT		44	/* credentials (s) */
 #define SSH_CMSG_HAVE_AFS_TOKEN			65	/* token (s) */
-
-/* Kerberos IV tickets can't be forwarded. This is an AFS hack! */ 
-#define SSH_CMSG_HAVE_KRB4_TGT SSH_CMSG_HAVE_KERBEROS_TGT /* credentials (s) */
 
 /* protocol version 1.5 overloads some version 1.3 message types */
 #define SSH_MSG_CHANNEL_INPUT_EOF	SSH_MSG_CHANNEL_CLOSE

@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.h,v 1.2 2001/04/10 08:07:58 itojun Exp $	*/
-/*      $OpenBSD: mac.h,v 1.1 2001/02/11 12:59:24 markus Exp $   */
+/*	$NetBSD: mac.h,v 1.3 2001/09/27 03:24:03 itojun Exp $	*/
+/*      $OpenBSD: mac.h,v 1.3 2001/06/26 17:27:24 markus Exp $   */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,6 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	mac_valid(const char *names);
-int	mac_init(Mac *mac, char *name);
-u_char	*mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen);
+int	 mac_valid(const char *);
+int	 mac_init(Mac *, char *);
+u_char	*mac_compute(Mac *, u_int32_t, u_char *, int);

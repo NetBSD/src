@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.4 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.5 2001/09/27 03:24:03 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexgex.c,v 1.8 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: kexgex.c,v 1.9 2001/09/17 19:27:15 stevesk Exp $");
 
 #include <openssl/bn.h>
 
@@ -46,7 +46,7 @@ kexgex_hash(
     char *server_version_string,
     char *ckexinit, int ckexinitlen,
     char *skexinit, int skexinitlen,
-    char *serverhostkeyblob, int sbloblen,
+    u_char *serverhostkeyblob, int sbloblen,
     int min, int wantbits, int max, BIGNUM *prime, BIGNUM *gen,
     BIGNUM *client_dh_pub,
     BIGNUM *server_dh_pub,
@@ -235,7 +235,7 @@ kexgex_client(Kex *kex)
 	xfree(server_host_key_blob);
 	BN_free(dh_server_pub);
 
-	if (key_verify(server_host_key, (u_char *)signature, slen, hash, 20) != 1)
+	if (key_verify(server_host_key, signature, slen, hash, 20) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
 	xfree(signature);
@@ -359,7 +359,7 @@ kexgex_server(Kex *kex)
 	    kex->server_version_string,
 	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    buffer_ptr(&kex->my), buffer_len(&kex->my),
-	    (char *)server_host_key_blob, sbloblen,
+	    server_host_key_blob, sbloblen,
 	    min, nbits, max,
 	    dh->p, dh->g,
 	    dh_client_pub,
@@ -385,9 +385,9 @@ kexgex_server(Kex *kex)
 	/* send server hostkey, DH pubkey 'f' and singed H */
 	debug("SSH2_MSG_KEX_DH_GEX_REPLY sent");
 	packet_start(SSH2_MSG_KEX_DH_GEX_REPLY);
-	packet_put_string((char *)server_host_key_blob, sbloblen);
+	packet_put_string(server_host_key_blob, sbloblen);
 	packet_put_bignum2(dh->pub_key);	/* f */
-	packet_put_string((char *)signature, slen);
+	packet_put_string(signature, slen);
 	packet_send();
 	xfree(signature);
 	xfree(server_host_key_blob);
