@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.10 1995/06/12 00:47:35 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.11 1995/06/12 06:49:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -88,9 +88,9 @@ void	 in_pcbinit __P((struct inpcbtable *));
 struct inpcb *
 	 in_pcblookup __P((struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int, int));
-int	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
+void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
-int	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
+void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
 	    int, void (*)(struct inpcb *, int)));
 void	 in_rtchange __P((struct inpcb *, int));
 int	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.19 1995/06/12 06:46:34 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.20 1995/06/12 06:49:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -353,7 +353,7 @@ in_setpeeraddr(inp, nam)
  *
  * Must be called at splnet.
  */
-int
+void
 in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
@@ -388,7 +388,7 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	}
 }
 
-int
+void
 in_pcbnotifyall(table, dst, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
