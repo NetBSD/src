@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.35 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.36 2001/05/11 18:38:03 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -205,12 +205,8 @@ in6_pcbbind(in6p, nam, p)
 			struct ifaddr *ia = NULL;
 
 			sin6->sin6_port = 0;		/* yech... */
-#if defined(NFAITH) && NFAITH > 0
-			if ((in6p->in6p_flags & IN6P_FAITH) == 0
-			 && (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-#else
-			if ((ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-#endif
+			if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
+			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
 				return(EADDRNOTAVAIL);
 
 			/*
@@ -829,10 +825,8 @@ in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 	 	 * find destination match.  exact match is preferred
 		 * against wildcard match.
 		 */
-#if defined(NFAITH) && NFAITH > 0
 		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
 			continue;
-#endif
 		if (in6p->in6p_fport != 0)
 			continue;
 		if (in6p->in6p_lport != lport)
