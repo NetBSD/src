@@ -1,11 +1,12 @@
-/*	$NetBSD: hifn7751.c,v 1.14 2003/05/03 18:11:34 wiz Exp $	*/
-/*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.15 2003/07/30 18:49:27 jonathan Exp $	*/
+/* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
+/*	$OpenBSD: hifn7751.c,v 1.139 2003/03/13 20:08:06 jason Exp $	*/
 
 /*
- * Invertex AEON / Hi/fn 7751 driver
+ * Invertex AEON / Hifn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
- * Copyright (c) 2000 Network Security Technologies, Inc.
+ * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
  *
  * This driver is based on a previous driver by Invertex, for which they
@@ -34,14 +35,27 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 /*
- * Driver for the Hi/Fn 7751 encryption processor.
+ * Driver for the Hifn 7751 encryption processor.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.14 2003/05/03 18:11:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.15 2003/07/30 18:49:27 jonathan Exp $");
+
+#include "rnd.h"
+#include "opencrypto.h"
+
+#if NRND == 0 || NOPENCRYPTO == 0
+#error hifn7751 requires rnd and opencrypto pseudo-devices
+#endif
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,41 +64,51 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.14 2003/05/03 18:11:34 wiz Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#ifdef __OpenBSD__
-#include <vm/vm.h>
-#include <vm/vm_extern.h>
-#include <vm/pmap.h>
-#else
-#include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_pmap.h>
-#endif
-#include <machine/pmap.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 
 #ifdef __OpenBSD__
 #include <crypto/crypto.h>
 #include <dev/rndvar.h>
+#else
+#include <opencrypto/cryptodev.h>
+#include <sys/rnd.h>
 #endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/hifn7751var.h>
 #include <dev/pci/hifn7751reg.h>
+#include <dev/pci/hifn7751var.h>
 
 #undef HIFN_DEBUG
+
+#ifdef __NetBSD__
+#define	HIFN_NO_RNG			/* until statistically tested */
+#define M_DUP_PKTHDR M_COPY_PKTHDR	/* XXX */
+#endif
+
+#ifdef HIFN_DEBUG
+extern int hifn_debug;		/* patchable */
+int hifn_debug = 1;
+#endif
+
+#ifdef __OpenBSD__
+#define HAVE_CRYPTO_LZS		/* OpenBSD OCF supports CRYPTO_COMP_LZS */
+#endif
 
 /*
  * Prototypes and count for the pci_device structure
  */
 #ifdef __OpenBSD__
-int hifn_probe		__P((struct device *, void *, void *));
+int hifn_probe((struct device *, void *, void *);
 #else
-int hifn_probe		__P((struct device *, struct cfdata *, void *));
+int hifn_probe(struct device *, struct cfdata *, void *);
 #endif
-void hifn_attach	__P((struct device *, struct device *, void *));
+void hifn_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hifn, sizeof(struct hifn_softc),
     hifn_probe, hifn_attach, NULL, NULL);
@@ -95,40 +119,65 @@ struct cfdriver hifn_cd = {
 };
 #endif
 
-void	hifn_reset_board __P((struct hifn_softc *));
-int	hifn_enable_crypto __P((struct hifn_softc *, pcireg_t));
-void	hifn_init_dma __P((struct hifn_softc *));
-void	hifn_init_pci_registers __P((struct hifn_softc *));
-int	hifn_sramsize __P((struct hifn_softc *));
-int	hifn_dramsize __P((struct hifn_softc *));
-void	hifn_ramtype __P((struct hifn_softc *));
-void	hifn_sessions __P((struct hifn_softc *));
-int	hifn_intr __P((void *));
-u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
-u_int32_t hifn_next_signature __P((u_int32_t a, u_int cnt));
-#ifdef __OpenBSD__
-int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
-int	hifn_freesession __P((u_int64_t));
-int	hifn_process __P((struct cryptop *));
-void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
+void	hifn_reset_board(struct hifn_softc *, int);
+void	hifn_reset_puc(struct hifn_softc *);
+void	hifn_puc_wait(struct hifn_softc *);
+int	hifn_enable_crypto(struct hifn_softc *, pcireg_t);
+void	hifn_set_retry(struct hifn_softc *);
+void	hifn_init_dma(struct hifn_softc *);
+void	hifn_init_pci_registers(struct hifn_softc *);
+int	hifn_sramsize(struct hifn_softc *);
+int	hifn_dramsize(struct hifn_softc *);
+int	hifn_ramtype(struct hifn_softc *);
+void	hifn_sessions(struct hifn_softc *);
+int	hifn_intr(void *);
+u_int	hifn_write_command(struct hifn_command *, u_int8_t *);
+u_int32_t hifn_next_signature(u_int32_t a, u_int cnt);
+int	hifn_newsession(void*, u_int32_t *, struct cryptoini *);
+int	hifn_freesession(void*, u_int64_t);
+int	hifn_process(void*, struct cryptop *, int);
+void	hifn_callback(struct hifn_softc *, struct hifn_command *, u_int8_t *);
+int	hifn_crypto(struct hifn_softc *, struct hifn_command *,
+		    struct cryptop*, int);
+int	hifn_readramaddr(struct hifn_softc *, int, u_int8_t *);
+int	hifn_writeramaddr(struct hifn_softc *, int, u_int8_t *);
+int	hifn_dmamap_aligned(bus_dmamap_t);
+int	hifn_dmamap_load_src(struct hifn_softc *, struct hifn_command *);
+int	hifn_dmamap_load_dst(struct hifn_softc *, struct hifn_command *);
+int	hifn_init_pubrng(struct hifn_softc *);
+#ifndef HIFN_NO_RNG
+static	void hifn_rng(void *);
 #endif
-int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
-int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
-int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
+void	hifn_tick(void *);
+void	hifn_abort(struct hifn_softc *);
+void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *, int *);
+void	hifn_write_4(struct hifn_softc *, int, bus_size_t, u_int32_t);
+u_int32_t hifn_read_4(struct hifn_softc *, int, bus_size_t);
+#ifdef	HAVE_CRYPTO_LZS
+int	hifn_compression(struct hifn_softc *, struct cryptop *,
+			 struct hifn_command *);
+struct mbuf *hifn_mkmbuf_chain(int, struct mbuf *);
+int	hifn_compress_enter(struct hifn_softc *, struct hifn_command *);
+void	hifn_callback_comp(struct hifn_softc *, struct hifn_command *,
+			   u_int8_t *);
+#endif	/* HAVE_CRYPTO_LZS */
 
-struct hifn_stats {
-	u_int64_t hst_ibytes;
-	u_int64_t hst_obytes;
-	u_int32_t hst_ipackets;
-	u_int32_t hst_opackets;
-	u_int32_t hst_invalid;
-	u_int32_t hst_nomem;
-} hifnstats;
+
+#ifdef	notyet
+int	hifn_compression(struct hifn_softc *, struct cryptop *,
+    struct hifn_command *);
+struct mbuf *hifn_mkmbuf_chain(int, struct mbuf *);
+int	hifn_compress_enter(struct hifn_softc *, struct hifn_command *);
+void	hifn_callback_comp(struct hifn_softc *, struct hifn_command *,
+    u_int8_t *);
+#endif
+
+struct hifn_stats hifnstats;
 
 int
 hifn_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __OpenBSD__
+#ifdef	__OpenBSD__
 	void *match;
 #else
 	struct cfdata *match;
@@ -142,6 +191,12 @@ hifn_probe(parent, match, aux)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
@@ -170,6 +225,18 @@ hifn_attach(parent, self, aux)
 
 	aprint_naive(": Crypto processor\n");
 
+	sc->sc_pci_pc = pa->pa_pc;
+	sc->sc_pci_tag = pa->pa_tag;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
+		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS |
+		    HIFN_NO_BURSTWRITE;
+
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -190,6 +257,13 @@ hifn_attach(parent, self, aux)
 	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
 		aprint_error(": can't find mem space %d\n", 1);
 		goto fail_io0;
+	}
+
+	hifn_set_retry(sc);
+
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		sc->sc_waw_lastgroup = -1;
+		sc->sc_waw_lastreg = 1;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -220,47 +294,45 @@ hifn_attach(parent, self, aux)
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
+	sc->sc_dmamap = dmamap;
 	sc->sc_dma = (struct hifn_dma *)kva;
-	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
+	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
-	hifn_reset_board(sc);
+	hifn_reset_board(sc, 0);
 
 	if (hifn_enable_crypto(sc, pa->pa_id) != 0) {
 		aprint_error("%s: crypto enabling failed\n",
 		    sc->sc_dv.dv_xname);
 		goto fail_mem;
 	}
+	hifn_reset_puc(sc);
 
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 
-	hifn_ramtype(sc);
+	if (hifn_ramtype(sc))
+		goto fail_mem;
 
 	if (sc->sc_drammodel == 0)
 		hifn_sramsize(sc);
 	else
 		hifn_dramsize(sc);
 
+	/*
+	 * Workaround for NetSec 7751 rev A: half ram size because two
+	 * of the address lines were left floating
+	 */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751 &&
 	    PCI_REVISION(pa->pa_class) == 0x61)
 		sc->sc_ramsize >>= 1;
-
-	/*
-	 * Reinitialize again, since the DRAM/SRAM detection shifted our ring
-	 * pointers and may have changed the value we send to the RAM Config
-	 * Register.
-	 */
-	hifn_reset_board(sc);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": couldn't map interrupt\n");
 		goto fail_mem;
 	}
 	intrstr = pci_intr_string(pc, ih);
-#ifdef __OpenBSD__
+#ifdef	__OpenBSD__
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
 	    self->dv_xname);
 #else
@@ -285,47 +357,228 @@ hifn_attach(parent, self, aux)
 	aprint_normal(", %d%cB %cram, %s\n", rseg, rbase,
 	    sc->sc_drammodel ? 'd' : 's', intrstr);
 
-#ifdef __OpenBSD__
-	sc->sc_cid = crypto_get_driverid();
-	if (sc->sc_cid < 0)
+	sc->sc_cid = crypto_get_driverid(0);
+	if (sc->sc_cid < 0) {
+		aprint_error(": couldn't get crypto driver id\n");
 		goto fail_intr;
-#endif
+	}
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG,
 	    READ_REG_0(sc, HIFN_0_PUCNFG) | HIFN_PUCNFG_CHIPID);
 	ena = READ_REG_0(sc, HIFN_0_PUSTAT) & HIFN_PUSTAT_CHIPENA;
 
-#ifdef __OpenBSD__
 	switch (ena) {
 	case HIFN_PUSTAT_ENA_2:
-		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
-		    hifn_newsession, hifn_freesession, hifn_process);
+		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		crypto_register(sc->sc_cid, CRYPTO_ARC4, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96,
-		    NULL, NULL, NULL);
-		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
-		    NULL, NULL, NULL);
+		crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		crypto_register(sc->sc_cid, CRYPTO_SHA1, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		break;
 	}
-#endif
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG))
+		hifn_init_pubrng(sc);
+
+#ifdef	__OpenBSD__
+	timeout_set(&sc->sc_tickto, hifn_tick, sc);
+	timeout_add(&sc->sc_tickto, hz);
+#else
+	callout_init(&sc->sc_tickto);
+	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
+#endif
 	return;
 
-#ifdef __OpenBSD__
 fail_intr:
-#endif
 	pci_intr_disestablish(pc, sc->sc_ih);
 fail_mem:
 	bus_dmamap_unload(sc->sc_dmat, dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+
+	/* Turn off DMA polling */
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+
 fail_io1:
 	bus_space_unmap(sc->sc_st1, sc->sc_sh1, iosize1);
 fail_io0:
 	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
+}
+
+int
+hifn_init_pubrng(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t r;
+	int i;
+
+	if ((sc->sc_flags & HIFN_IS_7811) == 0) {
+		/* Reset 7951 public key/rng engine */
+		WRITE_REG_1(sc, HIFN_1_PUB_RESET,
+		    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
+
+		for (i = 0; i < 100; i++) {
+			DELAY(1000);
+			if ((READ_REG_1(sc, HIFN_1_PUB_RESET) &
+			    HIFN_PUBRST_RESET) == 0)
+				break;
+		}
+
+		if (i == 100) {
+			printf("%s: public key init failed\n",
+			    sc->sc_dv.dv_xname);
+			return (1);
+		}
+	}
+
+	/* Enable the rng, if available */
+	if (sc->sc_flags & HIFN_HAS_RNG) {
+		if (sc->sc_flags & HIFN_IS_7811) {
+			r = READ_REG_1(sc, HIFN_1_7811_RNGENA);
+			if (r & HIFN_7811_RNGENA_ENA) {
+				r &= ~HIFN_7811_RNGENA_ENA;
+				WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
+			}
+			WRITE_REG_1(sc, HIFN_1_7811_RNGCFG,
+			    HIFN_7811_RNGCFG_DEFL);
+			r |= HIFN_7811_RNGENA_ENA;
+			WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
+		} else
+			WRITE_REG_1(sc, HIFN_1_RNG_CONFIG,
+			    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
+			    HIFN_RNGCFG_ENA);
+
+		sc->sc_rngfirst = 1;
+		if (hz >= 100)
+			sc->sc_rnghz = hz / 100;
+		else
+			sc->sc_rnghz = 1;
+#ifndef	HIFN_NO_RNG
+#ifdef	__OpenBSD__
+		timeout_set(&sc->sc_rngto, hifn_rng, sc);
+		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+#else	/* !__OpenBSD__ */
+		callout_init(&sc->sc_rngto);
+		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
+#endif	/* !__OpenBSD__ */
+#endif	/* HIFN_NO_RNG */
+	}
+
+	/* Enable public key engine, if available */
+	if (sc->sc_flags & HIFN_HAS_PUBLIC) {
+		WRITE_REG_1(sc, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
+		sc->sc_dmaier |= HIFN_DMAIER_PUBDONE;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	}
+
+	return (0);
+}
+
+#ifndef HIFN_NO_RNG
+static void
+hifn_rng(vsc)
+	void *vsc;
+{
+#ifndef	__NetBSD__
+	struct hifn_softc *sc = vsc;
+	u_int32_t num1, sts, num2;
+	int i;
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		for (i = 0; i < 5; i++) {
+			sts = READ_REG_1(sc, HIFN_1_7811_RNGSTS);
+			if (sts & HIFN_7811_RNGSTS_UFL) {
+				printf("%s: RNG underflow: disabling\n",
+				    sc->sc_dv.dv_xname);
+				return;
+			}
+			if ((sts & HIFN_7811_RNGSTS_RDY) == 0)
+				break;
+
+			/*
+			 * There are at least two words in the RNG FIFO
+			 * at this point.
+			 */
+			num1 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num2 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			if (sc->sc_rngfirst)
+				sc->sc_rngfirst = 0;
+			else {
+				add_true_randomness(num1);
+				add_true_randomness(num2);
+			}
+		}
+	} else {
+		num1 = READ_REG_1(sc, HIFN_1_RNG_DATA);
+
+		if (sc->sc_rngfirst)
+			sc->sc_rngfirst = 0;
+		else
+			add_true_randomness(num1);
+	}
+
+#ifdef	__OpenBSD__
+	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+#else
+	callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
+#endif
+#endif	/*!__NetBSD__*/
+}
+#endif
+
+void
+hifn_puc_wait(sc)
+	struct hifn_softc *sc;
+{
+	int i;
+
+	for (i = 5000; i > 0; i--) {
+		DELAY(1);
+		if (!(READ_REG_0(sc, HIFN_0_PUCTRL) & HIFN_PUCTRL_RESET))
+			break;
+	}
+	if (!i)
+		printf("%s: proc unit did not reset\n", sc->sc_dv.dv_xname);
+}
+
+/*
+ * Reset the processing unit.
+ */
+void
+hifn_reset_puc(sc)
+	struct hifn_softc *sc;
+{
+	/* Reset processing unit */
+	WRITE_REG_0(sc, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
+	hifn_puc_wait(sc);
+}
+
+void
+hifn_set_retry(sc)
+	struct hifn_softc *sc;
+{
+	u_int32_t r;
+
+	r = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_TRDY_TIMEOUT);
+	r &= 0xffff0000;
+	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_TRDY_TIMEOUT, r);
 }
 
 /*
@@ -333,9 +586,10 @@ fail_io0:
  * from the reset (i.e. initial values are assigned elsewhere).
  */
 void
-hifn_reset_board(sc)
-	struct hifn_softc *sc;
+hifn_reset_board(struct hifn_softc *sc, int full)
 {
+	u_int32_t reg;
+
 	/*
 	 * Set polling in the DMA configuration register to zero.  0x7 avoids
 	 * resetting the board and zeros out the other fields.
@@ -349,22 +603,36 @@ hifn_reset_board(sc)
 	 */
 	DELAY(1000);
 
-	/* Reset the board.  We do this by writing zeros to the DMA reset
-	 * field, the BRD reset field, and the manditory 1 at position 2.
-	 * Every other field is set to zero.
-	 */
-	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE);
+	/* Reset the DMA unit */
+	if (full) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE);
+		DELAY(1000);
+	} else {
+		WRITE_REG_1(sc, HIFN_1_DMA_CNFG,
+		    HIFN_DMACNFG_MODE | HIFN_DMACNFG_MSTRESET);
+		hifn_reset_puc(sc);
+	}
 
-	/*
-	 * Wait another millisecond for the board to reset.
-	 */
-	DELAY(1000);
+	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
-	/*
-	 * Turn off the reset!  (No joke.)
-	 */
+	/* Bring dma unit out of reset */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+
+	hifn_puc_wait(sc);
+
+	hifn_set_retry(sc);
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		for (reg = 0; reg < 1000; reg++) {
+			if (READ_REG_1(sc, HIFN_1_7811_MIPSRST) &
+			    HIFN_MIPSRST_CRAMINIT)
+				break;
+			DELAY(1000);
+		}
+		if (reg == 1000)
+			printf(": cram init timeout\n");
+	}
 }
 
 u_int32_t
@@ -397,6 +665,11 @@ struct pci2id {
 	char		card_id[13];
 } pci2id[] = {
 	{
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7951,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
 		PCI_VENDOR_NETSEC,
 		PCI_PRODUCT_NETSEC_7751,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -404,6 +677,11 @@ struct pci2id {
 	}, {
 		PCI_VENDOR_INVERTEX,
 		PCI_PRODUCT_INVERTEX_AEON,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7811,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	}, {
@@ -467,9 +745,7 @@ hifn_enable_crypto(sc, pciid)
 		aprint_debug("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
-		WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
-		WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
-		return 0;	/* success */
+		goto report;
 	}
 
 	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
@@ -483,14 +759,14 @@ hifn_enable_crypto(sc, pciid)
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_UNLOCK |
 	    HIFN_DMACNFG_MSTRESET | HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 	DELAY(1000);
-	addr = READ_REG_1(sc, HIFN_UNLOCK_SECRET1);
+	addr = READ_REG_1(sc, HIFN_1_UNLOCK_SECRET1);
 	DELAY(1000);
-	WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, 0);
+	WRITE_REG_1(sc, HIFN_1_UNLOCK_SECRET2, 0);
 	DELAY(1000);
 
 	for (i = 0; i <= 12; i++) {
 		addr = hifn_next_signature(addr, offtbl[i] + 0x101);
-		WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, addr);
+		WRITE_REG_1(sc, HIFN_1_UNLOCK_SECRET2, addr);
 
 		DELAY(1000);
 	}
@@ -505,23 +781,25 @@ hifn_enable_crypto(sc, pciid)
 		aprint_debug("Encryption engine enabled successfully!");
 #endif
 
+report:
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
 	switch (encl) {
 	case HIFN_PUSTAT_ENA_0:
-		aprint_normal(": no encr/auth");
+		offtbl = "LZS-only (no encr/auth)";
 		break;
 	case HIFN_PUSTAT_ENA_1:
-		aprint_normal(": DES enabled");
+		offtbl = "DES";
 		break;
 	case HIFN_PUSTAT_ENA_2:
-		aprint_normal(": fully enabled");
+		offtbl = "3DES";
 		break;
 	default:
-		aprint_normal(": disabled");
+		offtbl = "disabled";
 		break;
 	}
+	aprint_normal(": %s", offtbl);
 
 	return 0;
 }
@@ -540,22 +818,46 @@ hifn_init_pci_registers(sc)
 	WRITE_REG_0(sc, HIFN_0_PUIER, HIFN_PUIER_DSTOVER);
 
 	/* write all 4 ring address registers */
-	WRITE_REG_1(sc, HIFN_1_DMA_CRAR, vtophys((vaddr_t)sc->sc_dma->cmdr));
-	WRITE_REG_1(sc, HIFN_1_DMA_SRAR, vtophys((vaddr_t)sc->sc_dma->srcr));
-	WRITE_REG_1(sc, HIFN_1_DMA_DRAR, vtophys((vaddr_t)sc->sc_dma->dstr));
-	WRITE_REG_1(sc, HIFN_1_DMA_RRAR, vtophys((vaddr_t)sc->sc_dma->resr));
+	WRITE_REG_1(sc, HIFN_1_DMA_CRAR, sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, cmdr[0]));
+	WRITE_REG_1(sc, HIFN_1_DMA_SRAR, sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, srcr[0]));
+	WRITE_REG_1(sc, HIFN_1_DMA_DRAR, sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, dstr[0]));
+	WRITE_REG_1(sc, HIFN_1_DMA_RRAR, sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, resr[0]));
+
+	DELAY(2000);
 
 	/* write status register */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA |
-	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
-	    HIFN_DMACSR_C_CTRL_ENA);
-	WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS |
+	    HIFN_DMACSR_S_CTRL_DIS | HIFN_DMACSR_C_CTRL_DIS |
+	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_D_DONE | HIFN_DMACSR_D_LAST |
+	    HIFN_DMACSR_D_WAIT | HIFN_DMACSR_D_OVER |
+	    HIFN_DMACSR_R_ABORT | HIFN_DMACSR_R_DONE | HIFN_DMACSR_R_LAST |
+	    HIFN_DMACSR_R_WAIT | HIFN_DMACSR_R_OVER |
+	    HIFN_DMACSR_S_ABORT | HIFN_DMACSR_S_DONE | HIFN_DMACSR_S_LAST |
+	    HIFN_DMACSR_S_WAIT |
+	    HIFN_DMACSR_C_ABORT | HIFN_DMACSR_C_DONE | HIFN_DMACSR_C_LAST |
+	    HIFN_DMACSR_C_WAIT |
+	    HIFN_DMACSR_ENGINE |
+	    ((sc->sc_flags & HIFN_HAS_PUBLIC) ?
+		HIFN_DMACSR_PUBDONE : 0) |
+	    ((sc->sc_flags & HIFN_IS_7811) ?
+		HIFN_DMACSR_ILLW | HIFN_DMACSR_ILLR : 0));
 
-#if 0
-#if BYTE_ORDER == BIG_ENDIAN
-	    (0x1 << 7) |
-#endif
-#endif
+	sc->sc_d_busy = sc->sc_r_busy = sc->sc_s_busy = sc->sc_c_busy = 0;
+	sc->sc_dmaier |= HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_ABORT |
+	    HIFN_DMAIER_D_OVER | HIFN_DMAIER_R_OVER |
+	    HIFN_DMAIER_S_ABORT | HIFN_DMAIER_D_ABORT | HIFN_DMAIER_R_ABORT |
+	    HIFN_DMAIER_ENGINE |
+	    ((sc->sc_flags & HIFN_IS_7811) ?
+		HIFN_DMAIER_ILLW | HIFN_DMAIER_ILLR : 0);
+	sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	CLR_LED(sc, HIFN_MIPSRST_LED0 | HIFN_MIPSRST_LED1 | HIFN_MIPSRST_LED2);
+
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
 	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
 	    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
@@ -599,93 +901,73 @@ hifn_sessions(sc)
 		sc->sc_maxses = 2048;
 }
 
-void
+/*
+ * Determine ram type (sram or dram).  Board should be just out of a reset
+ * state when this is called.
+ */
+int
 hifn_ramtype(sc)
 	struct hifn_softc *sc;
 {
 	u_int8_t data[8], dataexpect[8];
 	int i;
 
-	hifn_reset_board(sc);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
-
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = 0x55;
-	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
-		return;
-	if (hifn_readramaddr(sc, 0, data, 1) < 0)
-		return;
-	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (hifn_writeramaddr(sc, 0, data))
+		return (-1);
+	if (hifn_readramaddr(sc, 0, data))
+		return (-1);
+	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
-		return;
+		return (0);
 	}
-
-	hifn_reset_board(sc);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
 
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = 0xaa;
-	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
-		return;
-	if (hifn_readramaddr(sc, 0, data, 1) < 0)
-		return;
-	if (memcmp(data, dataexpect, sizeof(data)) != 0)
+	if (hifn_writeramaddr(sc, 0, data))
+		return (-1);
+	if (hifn_readramaddr(sc, 0, data))
+		return (-1);
+	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
+		return (0);
+	}
+
+	return (0);
 }
 
-/*
- * For sram boards, just write/read memory until it fails, also check for
- * banking.
- */
+#define	HIFN_SRAM_MAX		(32 << 20)
+#define	HIFN_SRAM_STEP_SIZE	16384
+#define	HIFN_SRAM_GRANULARITY	(HIFN_SRAM_MAX / HIFN_SRAM_STEP_SIZE)
+
 int
 hifn_sramsize(sc)
 	struct hifn_softc *sc;
 {
-	u_int32_t a = 0, end;
-	u_int8_t data[8], dataexpect[8];
+	u_int32_t a;
+	u_int8_t data[8];
+	u_int8_t dataexpect[sizeof(data)];
+	int32_t i;
 
-	for (a = 0; a < sizeof(data); a++)
-		data[a] = dataexpect[a] = 0x5a;
+	for (i = 0; i < sizeof(data); i++)
+		data[i] = dataexpect[i] = i ^ 0x5a;
 
-	hifn_reset_board(sc);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
-	end = 1 << 20;	/* 1MB */
-	for (a = 0; a < end; a += 16384) {
-		if (hifn_writeramaddr(sc, a, data, 0) < 0)
-			return (0);
-		if (hifn_readramaddr(sc, a, data, 1) < 0)
-			return (0);
-		if (memcmp(data, dataexpect, sizeof(data)) != 0)
-			return (0);
-		hifn_reset_board(sc);
-		hifn_init_dma(sc);
-		hifn_init_pci_registers(sc);
-		sc->sc_ramsize = a + 16384;
+	for (i = HIFN_SRAM_GRANULARITY - 1; i >= 0; i--) {
+		a = i * HIFN_SRAM_STEP_SIZE;
+		bcopy(&i, data, sizeof(i));
+		hifn_writeramaddr(sc, a, data);
 	}
 
-	for (a = 0; a < sizeof(data); a++)
-		data[a] = dataexpect[a] = 0xa5;
-	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
-		return (0);
-
-	end = sc->sc_ramsize;
-	for (a = 0; a < end; a += 16384) {
-		hifn_reset_board(sc);
-		hifn_init_dma(sc);
-		hifn_init_pci_registers(sc);
-		if (hifn_readramaddr(sc, a, data, 0) < 0)
+	for (i = 0; i < HIFN_SRAM_GRANULARITY; i++) {
+		a = i * HIFN_SRAM_STEP_SIZE;
+		bcopy(&i, dataexpect, sizeof(i));
+		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
-		if (a != 0 && memcmp(data, dataexpect, sizeof(data)) == 0)
+		if (bcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
-		sc->sc_ramsize = a + 16384;
+		sc->sc_ramsize = a + HIFN_SRAM_STEP_SIZE;
 	}
-
-	hifn_reset_board(sc);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
 
 	return (0);
 }
@@ -707,76 +989,188 @@ hifn_dramsize(sc)
 	return (0);
 }
 
-int
-hifn_writeramaddr(sc, addr, data, slot)
+void
+hifn_alloc_slot(sc, cmdp, srcp, dstp, resp)
 	struct hifn_softc *sc;
-	int addr, slot;
-	u_int8_t *data;
+	int *cmdp, *srcp, *dstp, *resp;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	hifn_base_command_t wc;
-	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
-	u_int64_t src, dst;
 
-	wc.masks = 3 << 13;
-	wc.session_num = addr >> 14;
-	wc.total_source_count = 8;
-	wc.total_dest_count = addr & 0x3fff;
-
-	/* build write command */
-	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = wc;
-	memcpy(&src, data, sizeof(src));
-
-	dma->srcr[slot].p = vtophys((vaddr_t)&src);
-	dma->dstr[slot].p = vtophys((vaddr_t)&dst);
-
-	dma->cmdr[slot].l = 16 | masks;
-	dma->srcr[slot].l = 8 | masks;
-	dma->dstr[slot].l = 8 | masks;
-	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
-
-	DELAY(1000);	/* let write command execute */
-	if (dma->resr[slot].l & HIFN_D_VALID) {
-		printf("%s: SRAM/DRAM detection error -- "
-		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
-		return (-1);
+	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
+		dma->cmdi = 0;
+		dma->cmdr[HIFN_D_CMD_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_CMDR_SYNC(sc, HIFN_D_CMD_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
-	return (0);
+	*cmdp = dma->cmdi++;
+	dma->cmdk = dma->cmdi;
+
+	if (dma->srci == HIFN_D_SRC_RSIZE) {
+		dma->srci = 0;
+		dma->srcr[HIFN_D_SRC_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_SRCR_SYNC(sc, HIFN_D_SRC_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*srcp = dma->srci++;
+	dma->srck = dma->srci;
+
+	if (dma->dsti == HIFN_D_DST_RSIZE) {
+		dma->dsti = 0;
+		dma->dstr[HIFN_D_DST_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_DSTR_SYNC(sc, HIFN_D_DST_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*dstp = dma->dsti++;
+	dma->dstk = dma->dsti;
+
+	if (dma->resi == HIFN_D_RES_RSIZE) {
+		dma->resi = 0;
+		dma->resr[HIFN_D_RES_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_RESR_SYNC(sc, HIFN_D_RES_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*resp = dma->resi++;
+	dma->resk = dma->resi;
 }
 
 int
-hifn_readramaddr(sc, addr, data, slot)
+hifn_writeramaddr(sc, addr, data)
 	struct hifn_softc *sc;
-	int addr, slot;
+	int addr;
 	u_int8_t *data;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	hifn_base_command_t rc;
+	struct hifn_base_command wc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
-	u_int64_t src, dst;
+	int r, cmdi, resi, srci, dsti;
 
-	rc.masks = 2 << 13;
-	rc.session_num = addr >> 14;
-	rc.total_source_count = addr & 0x3fff;
-	rc.total_dest_count = 8;
+	wc.masks = htole16(3 << 13);
+	wc.session_num = htole16(addr >> 14);
+	wc.total_source_count = htole16(8);
+	wc.total_dest_count = htole16(addr & 0x3fff);
 
-	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = rc;
+	hifn_alloc_slot(sc, &cmdi, &srci, &dsti, &resi);
 
-	dma->srcr[slot].p = vtophys((vaddr_t)&src);
-	dma->dstr[slot].p = vtophys((vaddr_t)&dst);
-	dma->cmdr[slot].l = 16 | masks;
-	dma->srcr[slot].l = 8 | masks;
-	dma->dstr[slot].l = 8 | masks;
-	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
+	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
-	DELAY(1000);	/* let read command execute */
-	if (dma->resr[slot].l & HIFN_D_VALID) {
-		printf("%s: SRAM/DRAM detection error -- "
-		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
-		return (-1);
+	/* build write command */
+	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	*(struct hifn_base_command *)dma->command_bufs[cmdi] = wc;
+	bcopy(data, &dma->test_src, sizeof(dma->test_src));
+
+	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
+	    + offsetof(struct hifn_dma, test_src));
+	dma->dstr[dsti].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
+	    + offsetof(struct hifn_dma, test_dst));
+
+	dma->cmdr[cmdi].l = htole32(16 | masks);
+	dma->srcr[srci].l = htole32(8 | masks);
+	dma->dstr[dsti].l = htole32(4 | masks);
+	dma->resr[resi].l = htole32(4 | masks);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    0, sc->sc_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	for (r = 10000; r >= 0; r--) {
+		DELAY(10);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if ((dma->resr[resi].l & htole32(HIFN_D_VALID)) == 0)
+			break;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
-	memcpy(data, &dst, sizeof(dst));
-	return (0);
+	if (r == 0) {
+		printf("%s: writeramaddr -- "
+		    "result[%d](addr %d) still valid\n",
+		    sc->sc_dv.dv_xname, resi, addr);
+		r = -1;
+		return (-1);
+	} else
+		r = 0;
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_DIS | HIFN_DMACSR_S_CTRL_DIS |
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS);
+
+	return (r);
+}
+
+int
+hifn_readramaddr(sc, addr, data)
+	struct hifn_softc *sc;
+	int addr;
+	u_int8_t *data;
+{
+	struct hifn_dma *dma = sc->sc_dma;
+	struct hifn_base_command rc;
+	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
+	int r, cmdi, srci, dsti, resi;
+
+	rc.masks = htole16(2 << 13);
+	rc.session_num = htole16(addr >> 14);
+	rc.total_source_count = htole16(addr & 0x3fff);
+	rc.total_dest_count = htole16(8);
+
+	hifn_alloc_slot(sc, &cmdi, &srci, &dsti, &resi);
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
+	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
+
+	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	*(struct hifn_base_command *)dma->command_bufs[cmdi] = rc;
+
+	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, test_src));
+	dma->test_src = 0;
+	dma->dstr[dsti].p =  htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+	    offsetof(struct hifn_dma, test_dst));
+	dma->test_dst = 0;
+	dma->cmdr[cmdi].l = htole32(8 | masks);
+	dma->srcr[srci].l = htole32(8 | masks);
+	dma->dstr[dsti].l = htole32(8 | masks);
+	dma->resr[resi].l = htole32(HIFN_MAX_RESULT | masks);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    0, sc->sc_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	for (r = 10000; r >= 0; r--) {
+		DELAY(10);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if ((dma->resr[resi].l & htole32(HIFN_D_VALID)) == 0)
+			break;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	if (r == 0) {
+		printf("%s: readramaddr -- "
+		    "result[%d](addr %d) still valid\n",
+		    sc->sc_dv.dv_xname, resi, addr);
+		r = -1;
+	} else {
+		r = 0;
+		bcopy(&dma->test_dst, data, sizeof(dma->test_dst));
+	}
+
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
+	    HIFN_DMACSR_C_CTRL_DIS | HIFN_DMACSR_S_CTRL_DIS |
+	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS);
+
+	return (r);
 }
 
 /*
@@ -789,16 +1183,29 @@ hifn_init_dma(sc)
 	struct hifn_dma *dma = sc->sc_dma;
 	int i;
 
+	hifn_set_retry(sc);
+
 	/* initialize static pointer values */
 	for (i = 0; i < HIFN_D_CMD_RSIZE; i++)
-		dma->cmdr[i].p = vtophys((vaddr_t)dma->command_bufs[i]);
+		dma->cmdr[i].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		    offsetof(struct hifn_dma, command_bufs[i][0]));
 	for (i = 0; i < HIFN_D_RES_RSIZE; i++)
-		dma->resr[i].p = vtophys((vaddr_t)dma->result_bufs[i]);
+		dma->resr[i].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		    offsetof(struct hifn_dma, result_bufs[i][0]));
 
-	dma->cmdr[HIFN_D_CMD_RSIZE].p = vtophys((vaddr_t)dma->cmdr);
-	dma->srcr[HIFN_D_SRC_RSIZE].p = vtophys((vaddr_t)dma->srcr);
-	dma->dstr[HIFN_D_DST_RSIZE].p = vtophys((vaddr_t)dma->dstr);
-	dma->resr[HIFN_D_RES_RSIZE].p = vtophys((vaddr_t)dma->resr);
+	dma->cmdr[HIFN_D_CMD_RSIZE].p =
+	    htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		offsetof(struct hifn_dma, cmdr[0]));
+	dma->srcr[HIFN_D_SRC_RSIZE].p =
+	    htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		offsetof(struct hifn_dma, srcr[0]));
+	dma->dstr[HIFN_D_DST_RSIZE].p =
+	    htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		offsetof(struct hifn_dma, dstr[0]));
+	dma->resr[HIFN_D_RES_RSIZE].p =
+	    htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+		offsetof(struct hifn_dma, resr[0]));
+
 	dma->cmdu = dma->srcu = dma->dstu = dma->resu = 0;
 	dma->cmdi = dma->srci = dma->dsti = dma->resi = 0;
 	dma->cmdk = dma->srck = dma->dstk = dma->resk = 0;
@@ -814,142 +1221,379 @@ hifn_write_command(cmd, buf)
 	u_int8_t *buf;
 {
 	u_int8_t *buf_pos;
-	hifn_base_command_t *base_cmd;
-	hifn_mac_command_t *mac_cmd;
-	hifn_crypt_command_t *cry_cmd;
-	int using_mac, using_crypt, len;
+	struct hifn_base_command *base_cmd;
+	struct hifn_mac_command *mac_cmd;
+	struct hifn_crypt_command *cry_cmd;
+	struct hifn_comp_command *comp_cmd;
+	int using_mac, using_crypt, using_comp, len;
+	u_int32_t dlen, slen;
 
 	buf_pos = buf;
 	using_mac = cmd->base_masks & HIFN_BASE_CMD_MAC;
 	using_crypt = cmd->base_masks & HIFN_BASE_CMD_CRYPT;
+	using_comp = cmd->base_masks & HIFN_BASE_CMD_COMP;
 
-	base_cmd = (hifn_base_command_t *)buf_pos;
-	base_cmd->masks = cmd->base_masks;
-	base_cmd->total_source_count = cmd->src_l;
-	base_cmd->total_dest_count = cmd->dst_l;
-	base_cmd->session_num = cmd->session_num;
-	buf_pos += sizeof(hifn_base_command_t);
+	base_cmd = (struct hifn_base_command *)buf_pos;
+	base_cmd->masks = htole16(cmd->base_masks);
+	slen = cmd->src_map->dm_mapsize;
+	if (cmd->sloplen)
+		dlen = cmd->dst_map->dm_mapsize - cmd->sloplen +
+		    sizeof(u_int32_t);
+	else
+		dlen = cmd->dst_map->dm_mapsize;
+	base_cmd->total_source_count = htole16(slen & HIFN_BASE_CMD_LENMASK_LO);
+	base_cmd->total_dest_count = htole16(dlen & HIFN_BASE_CMD_LENMASK_LO);
+	dlen >>= 16;
+	slen >>= 16;
+	base_cmd->session_num = htole16(cmd->session_num |
+	    ((slen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
+	    ((dlen << HIFN_BASE_CMD_DSTLEN_S) & HIFN_BASE_CMD_DSTLEN_M));
+	buf_pos += sizeof(struct hifn_base_command);
+
+	if (using_comp) {
+		comp_cmd = (struct hifn_comp_command *)buf_pos;
+		dlen = cmd->compcrd->crd_len;
+		comp_cmd->source_count = htole16(dlen & 0xffff);
+		dlen >>= 16;
+		comp_cmd->masks = htole16(cmd->comp_masks |
+		    ((dlen << HIFN_COMP_CMD_SRCLEN_S) & HIFN_COMP_CMD_SRCLEN_M));
+		comp_cmd->header_skip = htole16(cmd->compcrd->crd_skip);
+		comp_cmd->reserved = 0;
+		buf_pos += sizeof(struct hifn_comp_command);
+	}
 
 	if (using_mac) {
-		mac_cmd = (hifn_mac_command_t *)buf_pos;
-		mac_cmd->masks = cmd->mac_masks;
-		mac_cmd->header_skip = cmd->mac_header_skip;
-		mac_cmd->source_count = cmd->mac_process_len;
-		buf_pos += sizeof(hifn_mac_command_t);
+		mac_cmd = (struct hifn_mac_command *)buf_pos;
+		dlen = cmd->maccrd->crd_len;
+		mac_cmd->source_count = htole16(dlen & 0xffff);
+		dlen >>= 16;
+		mac_cmd->masks = htole16(cmd->mac_masks |
+		    ((dlen << HIFN_MAC_CMD_SRCLEN_S) & HIFN_MAC_CMD_SRCLEN_M));
+		mac_cmd->header_skip = htole16(cmd->maccrd->crd_skip);
+		mac_cmd->reserved = 0;
+		buf_pos += sizeof(struct hifn_mac_command);
 	}
 
 	if (using_crypt) {
-		cry_cmd = (hifn_crypt_command_t *)buf_pos;
-		cry_cmd->masks = cmd->cry_masks;
-		cry_cmd->header_skip = cmd->crypt_header_skip;
-		cry_cmd->source_count = cmd->crypt_process_len;
-		buf_pos += sizeof(hifn_crypt_command_t);
+		cry_cmd = (struct hifn_crypt_command *)buf_pos;
+		dlen = cmd->enccrd->crd_len;
+		cry_cmd->source_count = htole16(dlen & 0xffff);
+		dlen >>= 16;
+		cry_cmd->masks = htole16(cmd->cry_masks |
+		    ((dlen << HIFN_CRYPT_CMD_SRCLEN_S) & HIFN_CRYPT_CMD_SRCLEN_M));
+		cry_cmd->header_skip = htole16(cmd->enccrd->crd_skip);
+		cry_cmd->reserved = 0;
+		buf_pos += sizeof(struct hifn_crypt_command);
 	}
 
-	if (using_mac && mac_cmd->masks & HIFN_MAC_CMD_NEW_KEY) {
-		memcpy(buf_pos, cmd->mac, HIFN_MAC_KEY_LENGTH);
+	if (using_mac && cmd->mac_masks & HIFN_MAC_CMD_NEW_KEY) {
+		bcopy(cmd->mac, buf_pos, HIFN_MAC_KEY_LENGTH);
 		buf_pos += HIFN_MAC_KEY_LENGTH;
 	}
 
-	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_KEY) {
-		len = (cry_cmd->masks & HIFN_CRYPT_CMD_ALG_3DES) ?
-		    HIFN_3DES_KEY_LENGTH : HIFN_DES_KEY_LENGTH;
-		memcpy(buf_pos, cmd->ck, len);
-		buf_pos += len;
+	if (using_crypt && cmd->cry_masks & HIFN_CRYPT_CMD_NEW_KEY) {
+		switch (cmd->cry_masks & HIFN_CRYPT_CMD_ALG_MASK) {
+		case HIFN_CRYPT_CMD_ALG_3DES:
+			bcopy(cmd->ck, buf_pos, HIFN_3DES_KEY_LENGTH);
+			buf_pos += HIFN_3DES_KEY_LENGTH;
+			break;
+		case HIFN_CRYPT_CMD_ALG_DES:
+			bcopy(cmd->ck, buf_pos, HIFN_DES_KEY_LENGTH);
+			buf_pos += cmd->cklen;
+			break;
+		case HIFN_CRYPT_CMD_ALG_RC4:
+			len = 256;
+			do {
+				int clen;
+
+				clen = MIN(cmd->cklen, len);
+				bcopy(cmd->ck, buf_pos, clen);
+				len -= clen;
+				buf_pos += clen;
+			} while (len > 0);
+			bzero(buf_pos, 4);
+			buf_pos += 4;
+			break;
+		}
 	}
 
-	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
-		memcpy(buf_pos, cmd->iv, HIFN_IV_LENGTH);
+	if (using_crypt && cmd->cry_masks & HIFN_CRYPT_CMD_NEW_IV) {
+		bcopy(cmd->iv, buf_pos, HIFN_IV_LENGTH);
 		buf_pos += HIFN_IV_LENGTH;
 	}
 
-	if ((base_cmd->masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT)) == 0) {
-		memset(buf_pos, 0, 8);
+	if ((cmd->base_masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT |
+	    HIFN_BASE_CMD_COMP)) == 0) {
+		bzero(buf_pos, 8);
 		buf_pos += 8;
 	}
 
 	return (buf_pos - buf);
 }
 
-int 
-hifn_crypto(sc, cmd)
+int
+hifn_dmamap_aligned(map)
+	bus_dmamap_t map;
+{
+	int i;
+
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (map->dm_segs[i].ds_addr & 3)
+			return (0);
+		if ((i != (map->dm_nsegs - 1)) &&
+		    (map->dm_segs[i].ds_len & 3))
+			return (0);
+	}
+	return (1);
+}
+
+int
+hifn_dmamap_load_dst(sc, cmd)
 	struct hifn_softc *sc;
 	struct hifn_command *cmd;
 {
-#ifndef __OpenBSD__
-	return -1;
-#else
-	u_int32_t cmdlen;
-	struct	hifn_dma *dma = sc->sc_dma;
-	int	cmdi, srci, dsti, resi, nicealign = 0;
-	int     s, i;
+	struct hifn_dma *dma = sc->sc_dma;
+	bus_dmamap_t map = cmd->dst_map;
+	u_int32_t p, l;
+	int idx, used = 0, i;
 
-	if (cmd->src_npa == 0 && cmd->src_m)
-		cmd->src_l = mbuf2pages(cmd->src_m, &cmd->src_npa,
-		    cmd->src_packp, cmd->src_packl, MAX_SCATTER, &nicealign);
-	if (cmd->src_l == 0)
-		return (-1);
+	idx = dma->dsti;
+	for (i = 0; i < map->dm_nsegs - 1; i++) {
+		dma->dstr[idx].p = htole32(map->dm_segs[i].ds_addr);
+		dma->dstr[idx].l = htole32(HIFN_D_VALID |
+		    HIFN_D_MASKDONEIRQ | map->dm_segs[i].ds_len);
+		HIFN_DSTR_SYNC(sc, idx,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		used++;
 
-	if (nicealign == 0) {
-		int totlen, len;
-		struct mbuf *m, *top, **mp;
-
-		totlen = cmd->dst_l = cmd->src_l;
-		if (cmd->src_m->m_flags & M_PKTHDR) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			M_COPY_PKTHDR(m, cmd->src_m);
-			len = MHLEN;
-		} else {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			len = MLEN;
+		if (++idx == HIFN_D_DST_RSIZE) {
+			dma->dstr[idx].l = htole32(HIFN_D_VALID |
+			    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+			HIFN_DSTR_SYNC(sc, idx,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			idx = 0;
 		}
-		if (m == NULL)
-			return (-1);
-		if (totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-		}
-		m->m_len = len;
-		top = NULL;
-		mp = &top;
+	}
 
-		while (totlen > 0) {
-			if (top) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == NULL) {
-					m_freem(top);
-					return (-1);
-				}
-				len = MLEN;
+	if (cmd->sloplen == 0) {
+		p = map->dm_segs[i].ds_addr;
+		l = HIFN_D_VALID | HIFN_D_MASKDONEIRQ | HIFN_D_LAST |
+		    map->dm_segs[i].ds_len;
+	} else {
+		p = sc->sc_dmamap->dm_segs[0].ds_addr +
+		    offsetof(struct hifn_dma, slop[cmd->slopidx]);
+		l = HIFN_D_VALID | HIFN_D_MASKDONEIRQ | HIFN_D_LAST |
+		    sizeof(u_int32_t);
+
+		if ((map->dm_segs[i].ds_len - cmd->sloplen) != 0) {
+			dma->dstr[idx].p = htole32(map->dm_segs[i].ds_addr);
+			dma->dstr[idx].l = htole32(HIFN_D_VALID |
+			    HIFN_D_MASKDONEIRQ |
+			    (map->dm_segs[i].ds_len - cmd->sloplen));
+			HIFN_DSTR_SYNC(sc, idx,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			used++;
+
+			if (++idx == HIFN_D_DST_RSIZE) {
+				dma->dstr[idx].l = htole32(HIFN_D_VALID |
+				    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+				HIFN_DSTR_SYNC(sc, idx,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				idx = 0;
 			}
-			if (top && totlen >= MINCLSIZE) {
-				MCLGET(m, M_DONTWAIT);
-				if (m->m_flags & M_EXT)
+		}
+	}
+	dma->dstr[idx].p = htole32(p);
+	dma->dstr[idx].l = htole32(l);
+	HIFN_DSTR_SYNC(sc, idx, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	used++;
+
+	if (++idx == HIFN_D_DST_RSIZE) {
+		dma->dstr[idx].l = htole32(HIFN_D_VALID | HIFN_D_JUMP |
+		    HIFN_D_MASKDONEIRQ);
+		HIFN_DSTR_SYNC(sc, idx,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		idx = 0;
+	}
+
+	dma->dsti = idx;
+	dma->dstu += used;
+	return (idx);
+}
+
+int
+hifn_dmamap_load_src(sc, cmd)
+	struct hifn_softc *sc;
+	struct hifn_command *cmd;
+{
+	struct hifn_dma *dma = sc->sc_dma;
+	bus_dmamap_t map = cmd->src_map;
+	int idx, i;
+	u_int32_t last = 0;
+
+	idx = dma->srci;
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (i == map->dm_nsegs - 1)
+			last = HIFN_D_LAST;
+
+		dma->srcr[idx].p = htole32(map->dm_segs[i].ds_addr);
+		dma->srcr[idx].l = htole32(map->dm_segs[i].ds_len |
+		    HIFN_D_VALID | HIFN_D_MASKDONEIRQ | last);
+		HIFN_SRCR_SYNC(sc, idx,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+		if (++idx == HIFN_D_SRC_RSIZE) {
+			dma->srcr[idx].l = htole32(HIFN_D_VALID |
+			    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+			HIFN_SRCR_SYNC(sc, HIFN_D_SRC_RSIZE,
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+			idx = 0;
+		}
+	}
+	dma->srci = idx;
+	dma->srcu += map->dm_nsegs;
+	return (idx);
+}
+
+int 
+hifn_crypto(
+	struct hifn_softc *sc,
+	struct hifn_command *cmd,
+	struct cryptop *crp,
+	int hint)
+
+{
+	struct	hifn_dma *dma = sc->sc_dma;
+	u_int32_t cmdlen;
+	int	cmdi, resi, s, err = 0;
+
+	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
+	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
+		return (ENOMEM);
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->src_map,
+		    cmd->srcu.src_m, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto err_srcmap1;
+		}
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->src_map,
+		    cmd->srcu.src_io, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto err_srcmap1;
+		}
+	} else {
+		err = EINVAL;
+		goto err_srcmap1;
+	}
+
+	if (hifn_dmamap_aligned(cmd->src_map)) {
+		cmd->sloplen = cmd->src_map->dm_mapsize & 3;
+		if (crp->crp_flags & CRYPTO_F_IOV)
+			cmd->dstu.dst_io = cmd->srcu.src_io;
+		else if (crp->crp_flags & CRYPTO_F_IMBUF)
+			cmd->dstu.dst_m = cmd->srcu.src_m;
+		cmd->dst_map = cmd->src_map;
+	} else {
+		if (crp->crp_flags & CRYPTO_F_IOV) {
+			err = EINVAL;
+			goto err_srcmap;
+		} else if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			int totlen, len;
+			struct mbuf *m, *m0, *mlast;
+
+			totlen = cmd->src_map->dm_mapsize;
+			if (cmd->srcu.src_m->m_flags & M_PKTHDR) {
+				len = MHLEN;
+				MGETHDR(m0, M_DONTWAIT, MT_DATA);
+			} else {
+				len = MLEN;
+				MGET(m0, M_DONTWAIT, MT_DATA);
+			}
+			if (m0 == NULL) {
+				err = ENOMEM;
+				goto err_srcmap;
+			}
+			if (len == MHLEN)
+				M_DUP_PKTHDR(m0, cmd->srcu.src_m);
+			if (totlen >= MINCLSIZE) {
+				MCLGET(m0, M_DONTWAIT);
+				if (m0->m_flags & M_EXT)
 					len = MCLBYTES;
 			}
-			m->m_len = len;
 			totlen -= len;
-			*mp = m;
-			mp = &m->m_next;
-		}
-		cmd->dst_m = top;
-	}
-	else
-		cmd->dst_m = cmd->src_m;
+			m0->m_pkthdr.len = m0->m_len = len;
+			mlast = m0;
 
-	cmd->dst_l = mbuf2pages(cmd->dst_m, &cmd->dst_npa,
-	    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
-	if (cmd->dst_l == 0)
-		return (-1);
+			while (totlen > 0) {
+				MGET(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL) {
+					err = ENOMEM;
+					m_freem(m0);
+					goto err_srcmap;
+				}
+				len = MLEN;
+				if (totlen >= MINCLSIZE) {
+					MCLGET(m, M_DONTWAIT);
+					if (m->m_flags & M_EXT)
+						len = MCLBYTES;
+				}
+
+				m->m_len = len;
+				if (m0->m_flags & M_PKTHDR)
+					m0->m_pkthdr.len += len;
+				totlen -= len;
+
+				mlast->m_next = m;
+				mlast = m;
+			}
+			cmd->dstu.dst_m = m0;
+		}
+	}
+
+	if (cmd->dst_map == NULL) {
+		if (bus_dmamap_create(sc->sc_dmat,
+		    HIFN_MAX_SEGLEN * MAX_SCATTER, MAX_SCATTER,
+		    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map)) {
+			err = ENOMEM;
+			goto err_srcmap;
+		}
+		if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
+			    cmd->dstu.dst_m, BUS_DMA_NOWAIT)) {
+				err = ENOMEM;
+				goto err_dstmap1;
+			}
+		} else if (crp->crp_flags & CRYPTO_F_IOV) {
+			if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
+			    cmd->dstu.dst_io, BUS_DMA_NOWAIT)) {
+				err = ENOMEM;
+				goto err_dstmap1;
+			}
+		}
+	}
 
 #ifdef HIFN_DEBUG
-	printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
-	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER),
-	    dma->cmdu, dma->srcu, dma->dstu, dma->resu, cmd->src_npa,
-	    cmd->dst_npa);
+	if (hifn_debug)
+		printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
+		    sc->sc_dv.dv_xname,
+		    READ_REG_1(sc, HIFN_1_DMA_CSR),
+		    READ_REG_1(sc, HIFN_1_DMA_IER),
+		    dma->cmdu, dma->srcu, dma->dstu, dma->resu,
+		    cmd->src_map->dm_nsegs, cmd->dst_map->dm_nsegs);
 #endif
+
+	if (cmd->src_map == cmd->dst_map)
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	else {
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	}
 
 	s = splnet();
 
@@ -957,248 +1601,379 @@ hifn_crypto(sc, cmd)
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
-	if (dma->cmdu+1 > HIFN_D_CMD_RSIZE ||
-	    dma->srcu+cmd->src_npa > HIFN_D_SRC_RSIZE ||
-	    dma->dstu+cmd->dst_npa > HIFN_D_DST_RSIZE ||
-	    dma->resu+1 > HIFN_D_RES_RSIZE) {
+	if ((dma->cmdu + 1) > HIFN_D_CMD_RSIZE ||
+	    (dma->resu + 1) > HIFN_D_RES_RSIZE) {
 		splx(s);
-		return (HIFN_CRYPTO_RINGS_FULL);
+		err = ENOMEM;
+		goto err_dstmap;
+	}
+	if ((dma->srcu + cmd->src_map->dm_nsegs) > HIFN_D_SRC_RSIZE ||
+	    (dma->dstu + cmd->dst_map->dm_nsegs + 1) > HIFN_D_DST_RSIZE) {
+		splx(s);
+		err = ENOMEM;
+		goto err_dstmap;
 	}
 
 	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
 		dma->cmdi = 0;
-		dma->cmdr[HIFN_D_CMD_RSIZE].l = HIFN_D_VALID | HIFN_D_LAST |
-		    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
+		dma->cmdr[HIFN_D_CMD_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_CMDR_SYNC(sc, HIFN_D_CMD_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
 	cmdi = dma->cmdi++;
-
-	if (dma->resi == HIFN_D_RES_RSIZE) {
-		dma->resi = 0;
-		dma->resr[HIFN_D_RES_RSIZE].l = HIFN_D_VALID | HIFN_D_LAST |
-		    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
-	}
-	resi = dma->resi++;
-
 	cmdlen = hifn_write_command(cmd, dma->command_bufs[cmdi]);
-#ifdef HIFN_DEBUG
-	printf("write_command %d (nice %d)\n", cmdlen, nicealign);
-#endif
+	HIFN_CMD_SYNC(sc, cmdi, BUS_DMASYNC_PREWRITE);
+
 	/* .p for command/result already set */
-	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
-	    HIFN_D_MASKDONEIRQ;
+	dma->cmdr[cmdi].l = htole32(cmdlen | HIFN_D_VALID | HIFN_D_LAST |
+	    HIFN_D_MASKDONEIRQ);
+	HIFN_CMDR_SYNC(sc, cmdi,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	dma->cmdu++;
+	if (sc->sc_c_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
+		sc->sc_c_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED0);
+	}
 
 	/*
 	 * We don't worry about missing an interrupt (which a "command wait"
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
 	 */
-	if (dma->cmdu > 1)
-		WRITE_REG_1(sc, HIFN_1_DMA_IER,
-		    HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE);
+	if (dma->cmdu > 1) {
+		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	}
 
 	hifnstats.hst_ipackets++;
+	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
 
-	for (i = 0; i < cmd->src_npa; i++) {
-		int last = 0;
-
-		if (i == cmd->src_npa-1)
-			last = HIFN_D_LAST;
-
-		if (dma->srci == HIFN_D_SRC_RSIZE) {
-			srci = 0, dma->srci = 1;
-			dma->srcr[HIFN_D_SRC_RSIZE].l = HIFN_D_VALID |
-			    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP | HIFN_D_LAST;
-		} else
-			srci = dma->srci++;
-		dma->srcr[srci].p = cmd->src_packp[i];
-		dma->srcr[srci].l = cmd->src_packl[i] | HIFN_D_VALID |
-		    HIFN_D_MASKDONEIRQ | last;
-		hifnstats.hst_ibytes += cmd->src_packl[i];
+	hifn_dmamap_load_src(sc, cmd);
+	if (sc->sc_s_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
+		sc->sc_s_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED1);
 	}
-	dma->srcu += cmd->src_npa;
-
-	for (i = 0; i < cmd->dst_npa; i++) {
-		int last = 0;
-
-		if (i == cmd->dst_npa-1)
-			last = HIFN_D_LAST;
-
-		if (dma->dsti == HIFN_D_DST_RSIZE) {
-			dsti = 0, dma->dsti = 1;
-			dma->dstr[HIFN_D_DST_RSIZE].l = HIFN_D_VALID |
-			    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP | HIFN_D_LAST;
-		} else
-			dsti = dma->dsti++;
-		dma->dstr[dsti].p = cmd->dst_packp[i];
-		dma->dstr[dsti].l = cmd->dst_packl[i] | HIFN_D_VALID |
-		    HIFN_D_MASKDONEIRQ | last;
-	}
-	dma->dstu += cmd->dst_npa;
 
 	/*
 	 * Unlike other descriptors, we don't mask done interrupt from
 	 * result descriptor.
 	 */
 #ifdef HIFN_DEBUG
-	printf("load res\n");
+	if (hifn_debug)
+		printf("load res\n");
 #endif
+	if (dma->resi == HIFN_D_RES_RSIZE) {
+		dma->resi = 0;
+		dma->resr[HIFN_D_RES_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_RESR_SYNC(sc, HIFN_D_RES_RSIZE,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	resi = dma->resi++;
 	dma->hifn_commands[resi] = cmd;
-	dma->resr[resi].l = HIFN_MAX_RESULT | HIFN_D_VALID | HIFN_D_LAST;
+	HIFN_RES_SYNC(sc, resi, BUS_DMASYNC_PREREAD);
+	dma->resr[resi].l = htole32(HIFN_MAX_RESULT | 
+	    HIFN_D_VALID | HIFN_D_LAST);
+	HIFN_RESR_SYNC(sc, resi,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	dma->resu++;
+	if (sc->sc_r_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
+		sc->sc_r_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED2);
+	}
+
+	if (cmd->sloplen)
+		cmd->slopidx = resi;
+
+	hifn_dmamap_load_dst(sc, cmd);
+
+	if (sc->sc_d_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
+		sc->sc_d_busy = 1;
+	}
 
 #ifdef HIFN_DEBUG
-	printf("%s: command: stat %8x ier %8x\n",
-	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER));
+	if (hifn_debug)
+		printf("%s: command: stat %8x ier %8x\n",
+		    sc->sc_dv.dv_xname,
+		    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER));
 #endif
 
+	sc->sc_active = 5;
 	splx(s);
-	return 0;		/* success */
+	return (err);		/* success */
+
+err_dstmap:
+	if (cmd->src_map != cmd->dst_map)
+		bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+err_dstmap1:
+	if (cmd->src_map != cmd->dst_map)
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+err_srcmap:
+	if (crp->crp_flags & CRYPTO_F_IMBUF &&
+	    cmd->srcu.src_m != cmd->dstu.dst_m)
+		m_freem(cmd->dstu.dst_m);
+	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+err_srcmap1:
+	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
+	return (err);
+}
+
+void
+hifn_tick(vsc)
+	void *vsc;
+{
+	struct hifn_softc *sc = vsc;
+	int s;
+
+	s = splnet();
+	if (sc->sc_active == 0) {
+		struct hifn_dma *dma = sc->sc_dma;
+		u_int32_t r = 0;
+
+		if (dma->cmdu == 0 && sc->sc_c_busy) {
+			sc->sc_c_busy = 0;
+			r |= HIFN_DMACSR_C_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED0);
+		}
+		if (dma->srcu == 0 && sc->sc_s_busy) {
+			sc->sc_s_busy = 0;
+			r |= HIFN_DMACSR_S_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED1);
+		}
+		if (dma->dstu == 0 && sc->sc_d_busy) {
+			sc->sc_d_busy = 0;
+			r |= HIFN_DMACSR_D_CTRL_DIS;
+		}
+		if (dma->resu == 0 && sc->sc_r_busy) {
+			sc->sc_r_busy = 0;
+			r |= HIFN_DMACSR_R_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED2);
+		}
+		if (r)
+			WRITE_REG_1(sc, HIFN_1_DMA_CSR, r);
+	}
+	else
+		sc->sc_active--;
+	splx(s);
+#ifdef	__OpenBSD__
+	timeout_add(&sc->sc_tickto, hz);
+#else
+	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
 #endif
 }
 
 int 
-hifn_intr(arg)
-	void *arg;
+hifn_intr(void *arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr;
+	u_int32_t dmacsr, restart;
 	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
 
 #ifdef HIFN_DEBUG
-	printf("%s: irq: stat %08x ien %08x u %d/%d/%d/%d\n",
-	    sc->sc_dv.dv_xname,
-	    dmacsr, READ_REG_1(sc, HIFN_1_DMA_IER),
-	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
+	if (hifn_debug)
+		printf("%s: irq: stat %08x ien %08x u %d/%d/%d/%d\n",
+		       sc->sc_dv.dv_xname,
+		       dmacsr, READ_REG_1(sc, HIFN_1_DMA_IER),
+		       dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 #endif
 
-	if ((dmacsr & (HIFN_DMACSR_R_DONE | HIFN_DMACSR_C_WAIT)) == 0)
+	/* Nothing in the DMA unit interrupted */
+	if ((dmacsr & sc->sc_dmaier) == 0)
 		return (0);
 
-	if (dma->resu > HIFN_D_RES_RSIZE)
-		printf("%s: Internal Error -- ring overflow\n",
-		    sc->sc_dv.dv_xname);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR, dmacsr & sc->sc_dmaier);
 
-	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) {
+	if (dmacsr & HIFN_DMACSR_ENGINE)
+		WRITE_REG_0(sc, HIFN_0_PUISR, READ_REG_0(sc, HIFN_0_PUISR));
+
+	if ((sc->sc_flags & HIFN_HAS_PUBLIC) &&
+	    (dmacsr & HIFN_DMACSR_PUBDONE))
+		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
+		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
+
+	restart = dmacsr & (HIFN_DMACSR_R_OVER | HIFN_DMACSR_D_OVER);
+	if (restart)
+		printf("%s: overrun %x\n", sc->sc_dv.dv_xname, dmacsr);
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		if (dmacsr & HIFN_DMACSR_ILLR)
+			printf("%s: illegal read\n", sc->sc_dv.dv_xname);
+		if (dmacsr & HIFN_DMACSR_ILLW)
+			printf("%s: illegal write\n", sc->sc_dv.dv_xname);
+	}
+
+	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
+	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
+	if (restart) {
+		printf("%s: abort, resetting.\n", sc->sc_dv.dv_xname);
+		hifnstats.hst_abort++;
+		hifn_abort(sc);
+		return (1);
+	}
+
+	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->resu == 0)) {
 		/*
 		 * If no slots to process and we receive a "waiting on
 		 * command" interrupt, we disable the "waiting on command"
 		 * (by clearing it).
 		 */
-		WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
-	}
-
-	while (dma->resu > 0) {
-		struct hifn_command *cmd;
-		u_int8_t *macbuf = NULL;
-
-		cmd = dma->hifn_commands[dma->resk];
-
-		/* if still valid, stop processing */
-		if (dma->resr[dma->resk].l & HIFN_D_VALID)
-			break;
-
-		if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
-			macbuf = dma->result_bufs[dma->resk];
-			macbuf += 12;
-		}
-
-#ifdef __OpenBSD__
-		hifn_callback(sc, cmd, macbuf);
-#endif
-	
-		if (++dma->resk == HIFN_D_RES_RSIZE)
-			dma->resk = 0;
-		dma->resu--;
-		hifnstats.hst_opackets++;
+		sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
 
 	/* clear the rings */
+	i = dma->resk;
+	while (dma->resu != 0) {
+		HIFN_RESR_SYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (dma->resr[i].l & htole32(HIFN_D_VALID)) {
+			HIFN_RESR_SYNC(sc, i,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			break;
+		}
+
+		if (i != HIFN_D_RES_RSIZE) {
+			struct hifn_command *cmd;
+			u_int8_t *macbuf = NULL;
+
+			HIFN_RES_SYNC(sc, i, BUS_DMASYNC_POSTREAD);
+			cmd = dma->hifn_commands[i];
+			KASSERT(cmd != NULL 
+				/*("hifn_intr: null command slot %u", i)*/);
+			dma->hifn_commands[i] = NULL;
+
+			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
+				macbuf = dma->result_bufs[i];
+				macbuf += 12;
+			}
+
+			hifn_callback(sc, cmd, macbuf);
+			hifnstats.hst_opackets++;
+		}
+
+		if (++i == (HIFN_D_RES_RSIZE + 1))
+			i = 0;
+		else
+			dma->resu--;
+	}
+	dma->resk = i;
 
 	i = dma->srck; u = dma->srcu;
-	while (u != 0 && (dma->srcr[i].l & HIFN_D_VALID) == 0) {
-		if (++i == HIFN_D_SRC_RSIZE)
+	while (u != 0) {
+		HIFN_SRCR_SYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (dma->srcr[i].l & htole32(HIFN_D_VALID)) {
+			HIFN_SRCR_SYNC(sc, i,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			break;
+		}
+		if (++i == (HIFN_D_SRC_RSIZE + 1))
 			i = 0;
-		u--;
+		else
+			u--;
 	}
 	dma->srck = i; dma->srcu = u;
 
 	i = dma->cmdk; u = dma->cmdu;
-	while (u != 0 && (dma->cmdr[i].l & HIFN_D_VALID) == 0) {
-		if (++i == HIFN_D_CMD_RSIZE)
+	while (u != 0) {
+		HIFN_CMDR_SYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (dma->cmdr[i].l & htole32(HIFN_D_VALID)) {
+			HIFN_CMDR_SYNC(sc, i,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			break;
+		}
+		if (i != HIFN_D_CMD_RSIZE) {
+			u--;
+			HIFN_CMD_SYNC(sc, i, BUS_DMASYNC_POSTWRITE);
+		}
+		if (++i == (HIFN_D_CMD_RSIZE + 1))
 			i = 0;
-		u--;
 	}
 	dma->cmdk = i; dma->cmdu = u;
 
-	/*
-	 * Clear "result done" and "command wait" flags in status register.
-	 * If we still have slots to process and we received a "command wait"
-	 * interrupt, this will interrupt us again.
-	 */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
 	return (1);
 }
 
-#ifdef __OpenBSD__
 /*
  * Allocate a new 'session' and return an encoded session id.  'sidp'
  * contains our registration id, and should contain an encoded session
  * id on successful allocation.
  */
 int
-hifn_newsession(sidp, cri)
-	u_int32_t *sidp;
-	struct cryptoini *cri;
+hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c;
-	struct hifn_softc *sc = NULL;
-	int i, mac = 0, cry = 0;
+	struct hifn_softc *sc = arg;
+	int i, mac = 0, cry = 0, comp = 0;
 
-	if (sidp == NULL || cri == NULL)
-		return (EINVAL);
-
-	for (i = 0; i < hifn_cd.cd_ndevs; i++) {
-		sc = hifn_cd.cd_devs[i];
-		if (sc == NULL)
-			break;
-		if (sc->sc_cid == (*sidp))
-			break;
-	}
-	if (sc == NULL)
+	KASSERT(sc != NULL /*, ("hifn_newsession: null softc")*/);
+	if (sidp == NULL || cri == NULL || sc == NULL)
 		return (EINVAL);
 
 	for (i = 0; i < sc->sc_maxses; i++)
-		if (sc->sc_sessions[i].hs_flags == 0)
+		if (sc->sc_sessions[i].hs_state == HS_STATE_FREE)
 			break;
 	if (i == sc->sc_maxses)
 		return (ENOMEM);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
-		if (c->cri_alg == CRYPTO_MD5_HMAC96 ||
-		    c->cri_alg == CRYPTO_SHA1_HMAC96) {
+		switch (c->cri_alg) {
+		case CRYPTO_MD5:
+		case CRYPTO_SHA1:
+		case CRYPTO_MD5_HMAC:
+		case CRYPTO_SHA1_HMAC:
 			if (mac)
 				return (EINVAL);
 			mac = 1;
-		} else if (c->cri_alg == CRYPTO_DES_CBC ||
-		    c->cri_alg == CRYPTO_3DES_CBC) {
+			break;
+		case CRYPTO_DES_CBC:
+		case CRYPTO_3DES_CBC:
+#ifdef __NetBSD__
+			rnd_extract_data(sc->sc_sessions[i].hs_iv,
+			    HIFN_IV_LENGTH, RND_EXTRACT_ANY);
+#else	/* FreeBSD and OpenBSD have get_random_bytes */
+			/* XXX this may read fewer, does it matter? */
+ 			get_random_bytes(sc->sc_sessions[i].hs_iv, 
+ 			    HIFN_IV_LENGTH);
+#endif
+			/*FALLTHROUGH*/
+		case CRYPTO_ARC4:
 			if (cry)
 				return (EINVAL);
 			cry = 1;
-		}
-		else
+			break;
+#ifdef HAVE_CRYPTO_LSZ
+		case CRYPTO_LZS_COMP:
+			if (comp)
+				return (EINVAL);
+			comp = 1;
+			break;
+#endif
+		default:
 			return (EINVAL);
+		}
 	}
-	if (mac == 0 && cry == 0)
+	if (mac == 0 && cry == 0 && comp == 0)
+		return (EINVAL);
+
+	/*
+	 * XXX only want to support compression without chaining to
+	 * MAC/crypt engine right now
+	 */
+	if ((comp && mac) || (comp && cry))
 		return (EINVAL);
 
 	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
-	sc->sc_sessions[i].hs_flags = 1;
-	get_random_bytes(sc->sc_sessions[i].hs_iv, HIFN_IV_LENGTH);
+	sc->sc_sessions[i].hs_state = HS_STATE_USED;
 
 	return (0);
 }
@@ -1209,49 +1984,39 @@ hifn_newsession(sidp, cri)
  * XXX to blow away any keys already stored there.
  */
 int
-hifn_freesession(tid)
-	u_int64_t tid;
+hifn_freesession(void *arg, u_int64_t tid)
 {
-	struct hifn_softc *sc;
-	int card, session;
+	struct hifn_softc *sc = arg;
+	int session;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
-	card = HIFN_CARD(sid);
-	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL)
+	KASSERT(sc != NULL /*, ("hifn_freesession: null softc")*/);
+	if (sc == NULL)
 		return (EINVAL);
 
-	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(sid);
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
+	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
 int
-hifn_process(crp)
-	struct cryptop *crp;
+hifn_process(void *arg, struct cryptop *crp, int hint)
 {
+	struct hifn_softc *sc = arg;
 	struct hifn_command *cmd = NULL;
-	int card, session, err;
-	struct hifn_softc *sc;
+	int session, err;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
 		hifnstats.hst_invalid++;
 		return (EINVAL);
 	}
-
-	card = HIFN_CARD(crp->crp_sid);
-	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL) {
-		err = EINVAL;
-		goto errout;
-	}
-
-	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(crp->crp_sid);
-	if (session >= sc->sc_maxses) {
+
+	if (sc == NULL || session >= sc->sc_maxses) {
 		err = EINVAL;
 		goto errout;
 	}
@@ -1259,16 +2024,20 @@ hifn_process(crp)
 	cmd = (struct hifn_command *)malloc(sizeof(struct hifn_command),
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cmd == NULL) {
+		hifnstats.hst_nomem++;
 		err = ENOMEM;
 		goto errout;
 	}
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		cmd->src_m = (struct mbuf *)crp->crp_buf;
-		cmd->dst_m = (struct mbuf *)crp->crp_buf;
+		cmd->srcu.src_m = (struct mbuf *)crp->crp_buf;
+		cmd->dstu.dst_m = (struct mbuf *)crp->crp_buf;
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		cmd->srcu.src_io = (struct uio *)crp->crp_buf;
+		cmd->dstu.dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
-		goto errout;	/* XXX only handle mbufs right now */
+		goto errout;	/* XXX we don't handle contiguous buffers! */
 	}
 
 	crd1 = crp->crp_desc;
@@ -1279,34 +2048,47 @@ hifn_process(crp)
 	crd2 = crd1->crd_next;
 
 	if (crd2 == NULL) {
-		if (crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
+		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC ||
+		    crd1->crd_alg == CRYPTO_SHA1 ||
+		    crd1->crd_alg == CRYPTO_MD5) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-			 crd1->crd_alg == CRYPTO_3DES_CBC) {
+			   crd1->crd_alg == CRYPTO_3DES_CBC ||
+			   crd1->crd_alg == CRYPTO_ARC4) {
 			if ((crd1->crd_flags & CRD_F_ENCRYPT) == 0)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
 			enccrd = crd1;
+#ifdef	HAVE_CRYPTO_LSZ
+		} else if (crd1->crd_alg == CRYPTO_LZS_COMP) {
+		  return (hifn_compression(sc, crp, cmd));
+#endif
 		} else {
 			err = EINVAL;
 			goto errout;
 		}
 	} else {
-		if ((crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
+		     crd1->crd_alg == CRYPTO_SHA1_HMAC ||
+		     crd1->crd_alg == CRYPTO_MD5 ||
+		     crd1->crd_alg == CRYPTO_SHA1) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
-			crd2->crd_alg == CRYPTO_3DES_CBC) &&
+		     crd2->crd_alg == CRYPTO_3DES_CBC ||
+		     crd2->crd_alg == CRYPTO_ARC4) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			cmd->base_masks = HIFN_BASE_CMD_DECODE;
 			maccrd = crd1;
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
-		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
-		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
+			    crd1->crd_alg == CRYPTO_ARC4 ||
+			    crd1->crd_alg == CRYPTO_3DES_CBC) &&
+			   (crd2->crd_alg == CRYPTO_MD5_HMAC ||
+			    crd2->crd_alg == CRYPTO_SHA1_HMAC ||
+			    crd2->crd_alg == CRYPTO_MD5 ||
+			    crd2->crd_alg == CRYPTO_SHA1) &&
+			   (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
 		} else {
@@ -1319,74 +2101,135 @@ hifn_process(crp)
 	}
 
 	if (enccrd) {
+		cmd->enccrd = enccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_CRYPT;
-		cmd->cry_masks |= HIFN_CRYPT_CMD_MODE_CBC |
-		    HIFN_CRYPT_CMD_NEW_IV;
-		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				memcpy(cmd->iv, enccrd->crd_iv, HIFN_IV_LENGTH);
-			else
-				memcpy(cmd->iv, sc->sc_sessions[session].hs_iv,
-				    HIFN_IV_LENGTH);
+		switch (enccrd->crd_alg) {
+		case CRYPTO_ARC4:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_RC4;
+			if ((enccrd->crd_flags & CRD_F_ENCRYPT)
+			    != sc->sc_sessions[session].hs_prev_op)
+				sc->sc_sessions[session].hs_state =
+				    HS_STATE_USED;
+			break;
+		case CRYPTO_DES_CBC:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
+			    HIFN_CRYPT_CMD_MODE_CBC |
+			    HIFN_CRYPT_CMD_NEW_IV;
+			break;
+		case CRYPTO_3DES_CBC:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES |
+			    HIFN_CRYPT_CMD_MODE_CBC |
+			    HIFN_CRYPT_CMD_NEW_IV;
+			break;
+		default:
+			err = EINVAL;
+			goto errout;
+		}
+		if (enccrd->crd_alg != CRYPTO_ARC4) {
+			if (enccrd->crd_flags & CRD_F_ENCRYPT) {
+				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+					bcopy(enccrd->crd_iv, cmd->iv,
+					    HIFN_IV_LENGTH);
+				else
+					bcopy(sc->sc_sessions[session].hs_iv,
+					    cmd->iv, HIFN_IV_LENGTH);
 
-			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
-				m_copyback(cmd->src_m, enccrd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-		} else {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				memcpy(cmd->iv, enccrd->crd_iv, HIFN_IV_LENGTH);
-			else
-				m_copydata(cmd->src_m, enccrd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
+				if ((enccrd->crd_flags & CRD_F_IV_PRESENT)
+				    == 0) {
+					if (crp->crp_flags & CRYPTO_F_IMBUF)
+						m_copyback(cmd->srcu.src_m,
+						    enccrd->crd_inject,
+						    HIFN_IV_LENGTH, cmd->iv);
+					else if (crp->crp_flags & CRYPTO_F_IOV)
+						cuio_copyback(cmd->srcu.src_io,
+						    enccrd->crd_inject,
+						    HIFN_IV_LENGTH, cmd->iv);
+				}
+			} else {
+				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+					bcopy(enccrd->crd_iv, cmd->iv,
+					    HIFN_IV_LENGTH);
+				else if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copydata(cmd->srcu.src_m,
+					    enccrd->crd_inject,
+					    HIFN_IV_LENGTH, cmd->iv);
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					cuio_copydata(cmd->srcu.src_io,
+					    enccrd->crd_inject,
+					    HIFN_IV_LENGTH, cmd->iv);
+			}
 		}
 
-		if (enccrd->crd_alg == CRYPTO_DES_CBC)
-			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES;
-		else
-			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES;
-
-		cmd->crypt_header_skip = enccrd->crd_skip;
-		cmd->crypt_process_len = enccrd->crd_len;
 		cmd->ck = enccrd->crd_key;
+		cmd->cklen = enccrd->crd_klen >> 3;
 
-		if (sc->sc_sessions[session].hs_flags == 1)
+		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
 			cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
 	}
 
 	if (maccrd) {
+		cmd->maccrd = maccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_MAC;
-		cmd->mac_masks |= HIFN_MAC_CMD_RESULT |
-		    HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
-		    HIFN_MAC_CMD_POS_IPSEC | HIFN_MAC_CMD_TRUNC;
 
-		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
-			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5;
-		else
-			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1;
-
-		if (sc->sc_sessions[session].hs_flags == 1) {
-			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
-			memcpy(cmd->mac, maccrd->crd_key,
-			    maccrd->crd_klen >> 3);
-			memset(cmd->mac + (maccrd->crd_klen >> 3), 0,
-			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
+		switch (maccrd->crd_alg) {
+		case CRYPTO_MD5:
+			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
+			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HASH |
+			    HIFN_MAC_CMD_POS_IPSEC;
+			break;
+		case CRYPTO_MD5_HMAC:
+			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
+			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HMAC |
+			    HIFN_MAC_CMD_POS_IPSEC | HIFN_MAC_CMD_TRUNC;
+			break;
+		case CRYPTO_SHA1:
+			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1 |
+			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HASH |
+			    HIFN_MAC_CMD_POS_IPSEC;
+			break;
+		case CRYPTO_SHA1_HMAC:
+			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1 |
+			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HMAC |
+			    HIFN_MAC_CMD_POS_IPSEC | HIFN_MAC_CMD_TRUNC;
+			break;
 		}
 
-		cmd->mac_header_skip = maccrd->crd_skip;
-		cmd->mac_process_len = maccrd->crd_len;
+		if ((maccrd->crd_alg == CRYPTO_SHA1_HMAC ||
+		     maccrd->crd_alg == CRYPTO_MD5_HMAC) &&
+		    sc->sc_sessions[session].hs_state == HS_STATE_USED) {
+			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
+			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
+			bzero(cmd->mac + (maccrd->crd_klen >> 3),
+			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
+		}
 	}
 
-	if (sc->sc_sessions[session].hs_flags == 1)
-		sc->sc_sessions[session].hs_flags = 2;
-
-	cmd->private_data = (u_long)crp;
+	cmd->crp = crp;
 	cmd->session_num = session;
 	cmd->softc = sc;
 
-	if (hifn_crypto(sc, cmd) == 0)
-		return (0);
-
-	err = ENOMEM;
+	err = hifn_crypto(sc, cmd, crp, hint);
+	if (err == 0) {
+		if (enccrd)
+			sc->sc_sessions[session].hs_prev_op =
+				enccrd->crd_flags & CRD_F_ENCRYPT;
+		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
+			sc->sc_sessions[session].hs_state = HS_STATE_KEY;
+		return 0;
+	} else if (err == ERESTART) {
+		/*
+		 * There weren't enough resources to dispatch the request
+		 * to the part.  Notify the caller so they'll requeue this
+		 * request and resubmit it again soon.
+		 */
+#ifdef HIFN_DEBUG
+		if (hifn_debug)
+			printf(sc->sc_dv.dv_xname, "requeue request\n");
+#endif
+		free(cmd, M_DEVBUF);
+		sc->sc_needwakeup |= CRYPTO_SYMQ;
+		return (err);
+	}
 
 errout:
 	if (cmd != NULL)
@@ -1396,47 +2239,162 @@ errout:
 	else
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return (0);
 }
 
 void
-hifn_callback(sc, cmd, macbuf)
-	struct hifn_softc *sc;
-	struct hifn_command *cmd;
-	u_int8_t *macbuf;
+hifn_abort(struct hifn_softc *sc)
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	struct cryptop *crp = (struct cryptop *)cmd->private_data;
+	struct hifn_command *cmd;
+	struct cryptop *crp;
+	int i, u;
+
+	i = dma->resk; u = dma->resu;
+	while (u != 0) {
+		cmd = dma->hifn_commands[i];
+		KASSERT(cmd != NULL /*, ("hifn_abort: null cmd slot %u", i)*/);
+		dma->hifn_commands[i] = NULL;
+		crp = cmd->crp;
+
+		if ((dma->resr[i].l & htole32(HIFN_D_VALID)) == 0) {
+			/* Salvage what we can. */
+			u_int8_t *macbuf;
+
+			if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
+				macbuf = dma->result_bufs[i];
+				macbuf += 12;
+			} else
+				macbuf = NULL;
+			hifnstats.hst_opackets++;
+			hifn_callback(sc, cmd, macbuf);
+		} else {
+			if (cmd->src_map == cmd->dst_map) {
+				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+						0, cmd->src_map->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			} else {
+				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+				    0, cmd->src_map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
+				bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+				    0, cmd->dst_map->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD);
+			}
+
+			if (cmd->srcu.src_m != cmd->dstu.dst_m) {
+				m_freem(cmd->srcu.src_m);
+				crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
+			}
+
+			/* non-shared buffers cannot be restarted */
+			if (cmd->src_map != cmd->dst_map) {
+				/*
+				 * XXX should be EAGAIN, delayed until
+				 * after the reset.
+				 */
+				crp->crp_etype = ENOMEM;
+				bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+				bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+			} else
+				crp->crp_etype = ENOMEM;
+
+			bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+			bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
+
+			free(cmd, M_DEVBUF);
+			if (crp->crp_etype != EAGAIN)
+				crypto_done(crp);
+		}
+
+		if (++i == HIFN_D_RES_RSIZE)
+			i = 0;
+		u--;
+	}
+	dma->resk = i; dma->resu = u;
+
+	/* Force upload of key next time */
+	for (i = 0; i < sc->sc_maxses; i++)
+		if (sc->sc_sessions[i].hs_state == HS_STATE_KEY)
+			sc->sc_sessions[i].hs_state = HS_STATE_USED;
+	
+	hifn_reset_board(sc, 1);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
+}
+
+void
+hifn_callback(sc, cmd, resbuf)
+	struct hifn_softc *sc;
+	struct hifn_command *cmd;
+	u_int8_t *resbuf;
+{
+	struct hifn_dma *dma = sc->sc_dma;
+	struct cryptop *crp = cmd->crp;
 	struct cryptodesc *crd;
 	struct mbuf *m;
-	int totlen;
+	int totlen, i, u;
 
-	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (cmd->src_m != cmd->dst_m)) {
-		m_freem(cmd->src_m);
-		crp->crp_buf = (caddr_t)cmd->dst_m;
+	if (cmd->src_map == cmd->dst_map)
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	else {
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	}
 
-	if ((m = cmd->dst_m) != NULL) {
-		totlen = cmd->src_l;
-		hifnstats.hst_obytes += totlen;
-		while (m) {
-			if (totlen < m->m_len) {
-				m->m_len = totlen;
-				totlen = 0;
-			} else
-				totlen -= m->m_len;
-			m = m->m_next;
-			if (++dma->dstk == HIFN_D_DST_RSIZE)
-				dma->dstk = 0;
-			dma->dstu--;
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		if (cmd->srcu.src_m != cmd->dstu.dst_m) {
+			crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
+			totlen = cmd->src_map->dm_mapsize;
+			for (m = cmd->dstu.dst_m; m != NULL; m = m->m_next) {
+				if (totlen < m->m_len) {
+					m->m_len = totlen;
+					totlen = 0;
+				} else
+					totlen -= m->m_len;
+			}
+			cmd->dstu.dst_m->m_pkthdr.len =
+			    cmd->srcu.src_m->m_pkthdr.len;
+			m_freem(cmd->srcu.src_m);
 		}
-	} else {
-		hifnstats.hst_obytes += dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
-		if (++dma->dstk == HIFN_D_DST_RSIZE)
-			dma->dstk = 0;
-		dma->dstu--;
 	}
+
+	if (cmd->sloplen != 0) {
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copyback((struct mbuf *)crp->crp_buf,
+			    cmd->src_map->dm_mapsize - cmd->sloplen,
+			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cuio_copyback((struct uio *)crp->crp_buf,
+			    cmd->src_map->dm_mapsize - cmd->sloplen,
+			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+	}
+
+	i = dma->dstk; u = dma->dstu;
+	while (u != 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    offsetof(struct hifn_dma, dstr[i]), sizeof(struct hifn_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (dma->dstr[i].l & htole32(HIFN_D_VALID)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+			    offsetof(struct hifn_dma, dstr[i]),
+			    sizeof(struct hifn_desc),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			break;
+		}
+		if (++i == (HIFN_D_DST_RSIZE + 1))
+			i = 0;
+		else
+			u--;
+	}
+	dma->dstk = i; dma->dstu = u;
+
+	hifnstats.hst_obytes += cmd->dst_map->dm_mapsize;
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE)) ==
 	    HIFN_BASE_CMD_CRYPT) {
@@ -1444,26 +2402,513 @@ hifn_callback(sc, cmd, macbuf)
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
 			    crd->crd_alg != CRYPTO_3DES_CBC)
 				continue;
-			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
-			    HIFN_IV_LENGTH,
-			    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
+				    HIFN_IV_LENGTH,
+				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV) {
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
+				    HIFN_IV_LENGTH,
+				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			}
+			/* XXX We do not handle contig data */
 			break;
 		}
 	}
 
-	if (macbuf != NULL) {
+	if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
+		u_int8_t *macbuf;
+
+		macbuf = resbuf + sizeof(struct hifn_base_result);
+		if (cmd->base_masks & HIFN_BASE_CMD_COMP)
+			macbuf += sizeof(struct hifn_comp_result);
+		macbuf += sizeof(struct hifn_mac_result);
+
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-			if (crd->crd_alg != CRYPTO_MD5_HMAC96 &&
-			    crd->crd_alg != CRYPTO_SHA1_HMAC96)
+			int len;
+
+			if (crd->crd_alg == CRYPTO_MD5)
+				len = 16;
+			else if (crd->crd_alg == CRYPTO_SHA1)
+				len = 20;
+			else if (crd->crd_alg == CRYPTO_MD5_HMAC ||
+			    crd->crd_alg == CRYPTO_SHA1_HMAC)
+				len = 12;
+			else
 				continue;
-			m_copyback((struct mbuf *)crp->crp_buf,
-			    crd->crd_inject, 12, macbuf);
+
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copyback((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, len, macbuf);
+			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
+				bcopy((caddr_t)macbuf, crp->crp_mac, len);
 			break;
 		}
 	}
 
+	if (cmd->src_map != cmd->dst_map) {
+		bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+	}
+	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	free(cmd, M_DEVBUF);
 	crypto_done(crp);
 }
-#endif
+
+#ifdef HAVE_CRYPTO_LSZ
+
+int
+hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
+    struct hifn_command *cmd)
+{
+	struct cryptodesc *crd = crp->crp_desc;
+	int s, err = 0;
+
+	cmd->compcrd = crd;
+	cmd->base_masks |= HIFN_BASE_CMD_COMP;
+
+	if ((crp->crp_flags & CRYPTO_F_IMBUF) == 0) {
+		/*
+		 * XXX can only handle mbufs right now since we can
+		 * XXX dynamically resize them.
+		 */
+		err = EINVAL;
+		return (ENOMEM);
+	}
+
+	if ((crd->crd_flags & CRD_F_COMP) == 0)
+		cmd->base_masks |= HIFN_BASE_CMD_DECODE;
+	if (crd->crd_alg == CRYPTO_LZS_COMP)
+		cmd->comp_masks |= HIFN_COMP_CMD_ALG_LZS |
+		    HIFN_COMP_CMD_CLEARHIST;
+
+	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
+	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map)) {
+		err = ENOMEM;
+		goto fail;
+	}
+
+	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
+	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map)) {
+		err = ENOMEM;
+		goto fail;
+	}
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		int len;
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->src_map,
+		    cmd->srcu.src_m, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto fail;
+		}
+
+		len = cmd->src_map->dm_mapsize / MCLBYTES;
+		if ((cmd->src_map->dm_mapsize % MCLBYTES) != 0)
+			len++;
+		len *= MCLBYTES;
+
+		if ((crd->crd_flags & CRD_F_COMP) == 0)
+			len *= 4;
+
+		if (len > HIFN_MAX_DMALEN)
+			len = HIFN_MAX_DMALEN;
+
+		cmd->dstu.dst_m = hifn_mkmbuf_chain(len, cmd->srcu.src_m);
+		if (cmd->dstu.dst_m == NULL) {
+			err = ENOMEM;
+			goto fail;
+		}
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
+		    cmd->dstu.dst_m, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto fail;
+		}
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->src_map,
+		    cmd->srcu.src_io, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto fail;
+		}
+		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
+		    cmd->dstu.dst_io, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto fail;
+		}
+	}
+
+	if (cmd->src_map == cmd->dst_map)
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	else {
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	}
+
+	cmd->crp = crp;
+	/*
+	 * Always use session 0.  The modes of compression we use are
+	 * stateless and there is always at least one compression
+	 * context, zero.
+	 */
+	cmd->session_num = 0;
+	cmd->softc = sc;
+
+	s = splnet();
+	err = hifn_compress_enter(sc, cmd);
+	splx(s);
+
+	if (err != 0)
+		goto fail;
+	return (0);
+
+fail:
+	if (cmd->dst_map != NULL) {
+		if (cmd->dst_map->dm_nsegs > 0)
+			bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+	}
+	if (cmd->src_map != NULL) {
+		if (cmd->src_map->dm_nsegs > 0)
+			bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
+	}
+	free(cmd, M_DEVBUF);
+	if (err == EINVAL)
+		hifnstats.hst_invalid++;
+	else
+		hifnstats.hst_nomem++;
+	crp->crp_etype = err;
+	crypto_done(crp);
+	return (0);
+}
+
+/*
+ * must be called at splnet()
+ */
+int
+hifn_compress_enter(struct hifn_softc *sc, struct hifn_command *cmd)
+{
+	struct hifn_dma *dma = sc->sc_dma;
+	int cmdi, resi;
+	u_int32_t cmdlen;
+
+	if ((dma->cmdu + 1) > HIFN_D_CMD_RSIZE ||
+	    (dma->resu + 1) > HIFN_D_CMD_RSIZE)
+		return (ENOMEM);
+
+	if ((dma->srcu + cmd->src_map->dm_nsegs) > HIFN_D_SRC_RSIZE ||
+	    (dma->dstu + cmd->dst_map->dm_nsegs) > HIFN_D_DST_RSIZE)
+		return (ENOMEM);
+
+	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
+		dma->cmdi = 0;
+		dma->cmdr[HIFN_D_CMD_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_CMDR_SYNC(sc, HIFN_D_CMD_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	cmdi = dma->cmdi++;
+	cmdlen = hifn_write_command(cmd, dma->command_bufs[cmdi]);
+	HIFN_CMD_SYNC(sc, cmdi, BUS_DMASYNC_PREWRITE);
+
+	/* .p for command/result already set */
+	dma->cmdr[cmdi].l = htole32(cmdlen | HIFN_D_VALID | HIFN_D_LAST |
+	    HIFN_D_MASKDONEIRQ);
+	HIFN_CMDR_SYNC(sc, cmdi,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	dma->cmdu++;
+	if (sc->sc_c_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
+		sc->sc_c_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED0);
+	}
+
+	/*
+	 * We don't worry about missing an interrupt (which a "command wait"
+	 * interrupt salvages us from), unless there is more than one command
+	 * in the queue.
+	 */
+	if (dma->cmdu > 1) {
+		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	}
+
+	hifnstats.hst_ipackets++;
+	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
+
+	hifn_dmamap_load_src(sc, cmd);
+	if (sc->sc_s_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
+		sc->sc_s_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED1);
+	}
+
+	/*
+	 * Unlike other descriptors, we don't mask done interrupt from
+	 * result descriptor.
+	 */
+	if (dma->resi == HIFN_D_RES_RSIZE) {
+		dma->resi = 0;
+		dma->resr[HIFN_D_RES_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_RESR_SYNC(sc, HIFN_D_RES_RSIZE,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	resi = dma->resi++;
+	dma->hifn_commands[resi] = cmd;
+	HIFN_RES_SYNC(sc, resi, BUS_DMASYNC_PREREAD);
+	dma->resr[resi].l = htole32(HIFN_MAX_RESULT |
+	    HIFN_D_VALID | HIFN_D_LAST);
+	HIFN_RESR_SYNC(sc, resi,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	dma->resu++;
+	if (sc->sc_r_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
+		sc->sc_r_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED2);
+	}
+
+	if (cmd->sloplen)
+		cmd->slopidx = resi;
+
+	hifn_dmamap_load_dst(sc, cmd);
+
+	if (sc->sc_d_busy == 0) {
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
+		sc->sc_d_busy = 1;
+	}
+	sc->sc_active = 5;
+	cmd->cmd_callback = hifn_callback_comp;
+	return (0);
+}
+
+void
+hifn_callback_comp(struct hifn_softc *sc, struct hifn_command *cmd,
+    u_int8_t *resbuf)
+{
+	struct hifn_base_result baseres;
+	struct cryptop *crp = cmd->crp;
+	struct hifn_dma *dma = sc->sc_dma;
+	struct mbuf *m;
+	int err = 0, i, u;
+	u_int32_t olen;
+	bus_size_t dstsize;
+
+	bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+	    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+	    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+	dstsize = cmd->dst_map->dm_mapsize;
+	bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+
+	bcopy(resbuf, &baseres, sizeof(struct hifn_base_result));
+
+	i = dma->dstk; u = dma->dstu;
+	while (u != 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    offsetof(struct hifn_dma, dstr[i]), sizeof(struct hifn_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (dma->dstr[i].l & htole32(HIFN_D_VALID)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+			    offsetof(struct hifn_dma, dstr[i]),
+			    sizeof(struct hifn_desc),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			break;
+		}
+		if (++i == (HIFN_D_DST_RSIZE + 1))
+			i = 0;
+		else
+			u--;
+	}
+	dma->dstk = i; dma->dstu = u;
+
+	if (baseres.flags & htole16(HIFN_BASE_RES_DSTOVERRUN)) {
+		bus_size_t xlen;
+
+		xlen = dstsize;
+
+		m_freem(cmd->dstu.dst_m);
+
+		if (xlen == HIFN_MAX_DMALEN) {
+			/* We've done all we can. */
+			err = E2BIG;
+			goto out;
+		}
+
+		xlen += MCLBYTES;
+
+		if (xlen > HIFN_MAX_DMALEN)
+			xlen = HIFN_MAX_DMALEN;
+
+		cmd->dstu.dst_m = hifn_mkmbuf_chain(xlen,
+		    cmd->srcu.src_m);
+		if (cmd->dstu.dst_m == NULL) {
+			err = ENOMEM;
+			goto out;
+		}
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
+		    cmd->dstu.dst_m, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+		/* already at splnet... */
+		err = hifn_compress_enter(sc, cmd);
+		if (err != 0)
+			goto out;
+		return;
+	}
+
+	olen = dstsize - (letoh16(baseres.dst_cnt) |
+	    (((letoh16(baseres.session) & HIFN_BASE_RES_DSTLEN_M) >>
+	    HIFN_BASE_RES_DSTLEN_S) << 16));
+
+	crp->crp_olen = olen - cmd->compcrd->crd_skip;
+
+	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
+	bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+
+	m = cmd->dstu.dst_m;
+	if (m->m_flags & M_PKTHDR)
+		m->m_pkthdr.len = olen;
+	crp->crp_buf = (caddr_t)m;
+	for (; m != NULL; m = m->m_next) {
+		if (olen >= m->m_len)
+			olen -= m->m_len;
+		else {
+			m->m_len = olen;
+			olen = 0;
+		}
+	}
+
+	m_freem(cmd->srcu.src_m);
+	free(cmd, M_DEVBUF);
+	crp->crp_etype = 0;
+	crypto_done(crp);
+	return;
+
+out:
+	if (cmd->dst_map != NULL) {
+		if (cmd->src_map->dm_nsegs != 0)
+			bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+	}
+	if (cmd->src_map != NULL) {
+		if (cmd->src_map->dm_nsegs != 0)
+			bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
+	}
+	if (cmd->dstu.dst_m != NULL)
+		m_freem(cmd->dstu.dst_m);
+	free(cmd, M_DEVBUF);
+	crp->crp_etype = err;
+	crypto_done(crp);
+}
+
+struct mbuf *
+hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
+{
+	int len;
+	struct mbuf *m, *m0, *mlast;
+
+	if (mtemplate->m_flags & M_PKTHDR) {
+		len = MHLEN;
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	} else {
+		len = MLEN;
+		MGET(m0, M_DONTWAIT, MT_DATA);
+	}
+	if (m0 == NULL)
+		return (NULL);
+	if (len == MHLEN)
+		M_DUP_PKTHDR(m0, mtemplate);
+	MCLGET(m0, M_DONTWAIT);
+	if (!(m0->m_flags & M_EXT))
+		m_freem(m0);
+	len = MCLBYTES;
+
+	totlen -= len;
+	m0->m_pkthdr.len = m0->m_len = len;
+	mlast = m0;
+
+	while (totlen > 0) {
+		MGET(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			m_freem(m0);
+			return (NULL);
+		}
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m0);
+			return (NULL);
+		}
+		len = MCLBYTES;
+		m->m_len = len;
+		if (m0->m_flags & M_PKTHDR)
+			m0->m_pkthdr.len += len;
+		totlen -= len;
+
+		mlast->m_next = m;
+		mlast = m;
+	}
+
+	return (m0);
+}
+#endif	/* HAVE_CRYPTO_LSZ */
+
+void
+hifn_write_4(sc, reggrp, reg, val)
+	struct hifn_softc *sc;
+	int reggrp;
+	bus_size_t reg;
+	u_int32_t val;
+{
+	/*
+	 * 7811 PB3 rev/2 parts lock-up on burst writes to Group 0
+	 * and Group 1 registers; avoid conditions that could create
+	 * burst writes by doing a read in between the writes.
+	 */
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		if (sc->sc_waw_lastgroup == reggrp &&
+		    sc->sc_waw_lastreg == reg - 4) {
+			bus_space_read_4(sc->sc_st1, sc->sc_sh1, HIFN_1_REVID);
+		}
+		sc->sc_waw_lastgroup = reggrp;
+		sc->sc_waw_lastreg = reg;
+	}
+	if (reggrp == 0)
+		bus_space_write_4(sc->sc_st0, sc->sc_sh0, reg, val);
+	else
+		bus_space_write_4(sc->sc_st1, sc->sc_sh1, reg, val);
+
+}
+
+u_int32_t
+hifn_read_4(sc, reggrp, reg)
+	struct hifn_softc *sc;
+	int reggrp;
+	bus_size_t reg;
+{
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		sc->sc_waw_lastgroup = -1;
+		sc->sc_waw_lastreg = 1;
+	}
+	if (reggrp == 0)
+		return (bus_space_read_4(sc->sc_st0, sc->sc_sh0, reg));
+	return (bus_space_read_4(sc->sc_st1, sc->sc_sh1, reg));
+}
