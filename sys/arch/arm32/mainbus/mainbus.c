@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 1996/03/17 01:24:35 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 1996/03/20 18:38:00 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -116,7 +116,7 @@ mainbusscan(parent, match)
 		mb.mb_drq = cf->cf_loc[1];
 		mb.mb_irq = cf->cf_loc[2];
 	}
-	if ((*cf->cf_driver->cd_match)(parent, dev, &mb) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, dev, &mb) > 0)
 		config_attach(parent, dev, &mb, mainbusprint);
 	else
 		free(dev, M_DEVBUF);
