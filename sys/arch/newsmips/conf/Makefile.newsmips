@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.6 1998/07/22 19:59:21 tsubai Exp $
+#	$NetBSD: Makefile.newsmips,v 1.7 1998/08/21 16:24:25 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -172,7 +172,7 @@ SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
