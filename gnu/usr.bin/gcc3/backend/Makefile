@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/10/26 03:50:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/11/05 00:05:48 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -41,6 +41,11 @@ COPTS.prefix.o=			-DPREFIX=\"$(prefix)\"
 COPTS.toplev.o=			-DTARGET_NAME=\"$(target_alias)\"
 COPTS.insn-conditions.c=	-DGENERATOR_FILE
 COPTS.sparc.o=			-DTARGET_CPU_DEFAULT=${G_target_cpu_default}
+
+# XXX
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
+COPTS.ra-colorize.c=		-O0
+.endif
 
 # Headers that host objects depend on (except gen*rtl*)
 HH=	${G_HCONFIG_H} genrtl.h
