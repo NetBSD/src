@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.24 1997/06/14 08:43:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.24 1997/06/14 08:43:31 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $";
 #include <time.h>
 #include <unistd.h>
 
-#include "pathnames.h"
 #include "extern.h"
+#include "pathnames.h"
 
 #if __STDC__
 #include <stdarg.h>
@@ -93,7 +93,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $";
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 6.00";
+static char version[] = "Version 7.00";
 
 extern	off_t restart_point;
 extern	char cbuf[];
@@ -109,8 +109,6 @@ jmp_buf	errcatch, urgcatch;
 int	logged_in;
 struct	passwd *pw;
 int	debug;
-int	timeout = 900;    /* timeout after 15 minutes of inactivity */
-int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	guest;
 int	dochroot;
@@ -123,20 +121,15 @@ int	pdata = -1;		/* for passive mode */
 sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
-#if !defined(CMASK) || CMASK == 0
-#undef CMASK
-#define CMASK 027
-#endif
-#if !defined(GUEST_CMASK)
-#define GUEST_CMASK 0707
-#endif
-int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static char *anondir = NULL;
+static struct timeval lastt;
+
+extern struct ftpclass curclass;
 
 #if defined(KERBEROS)
 int	notickets = 1;
@@ -259,28 +252,11 @@ main(argc, argv, envp)
 			break;
 
 		case 't':
-			timeout = atoi(optarg);
-			if (maxtimeout < timeout)
-				maxtimeout = timeout;
-			break;
-
 		case 'T':
-			maxtimeout = atoi(optarg);
-			if (timeout > maxtimeout)
-				timeout = maxtimeout;
-			break;
-
 		case 'u':
-		    {
-			long val = 0;
-
-			val = strtol(optarg, &optarg, 8);
-			if (*optarg != '\0' || val < 0)
-				warnx("bad value for -u");
-			else
-				defumask = val;
+			warnx("-%c has be deprecated in favour of ftpd.conf",
+			    ch);
 			break;
-		    }
 
 		default:
 			warnx("unknown flag -%c ignored", optopt);
@@ -671,13 +647,23 @@ skip:
 	logged_in = 1;
 
 	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
+
+	/* parse ftpd.conf, setting up various parameters */
+	if (guest)
+		parse_conf(CLASS_GUEST);
+	else if (dochroot)
+		parse_conf(CLASS_CHROOT);
+	else
+		parse_conf(CLASS_REAL);
+
 	if (guest) {
 		/*
 		 * We MUST do a chdir() after the chroot. Otherwise
 		 * the old current directory will be accessible as "."
 		 * outside the new root!
 		 */
-		if (chroot(anondir ? anondir : pw->pw_dir) < 0 || chdir("/") < 0) {
+		if (chroot(anondir ? anondir : pw->pw_dir) < 0 ||
+		    chdir("/") < 0) {
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
@@ -713,6 +699,7 @@ skip:
 		(void) fflush(stdout);
 		(void) fclose(fd);
 	}
+	show_chdir_messages(230);
 	if (guest) {
 		reply(230, "Guest login ok, access restrictions apply.");
 #ifdef HASSETPROCTITLE
@@ -736,12 +723,7 @@ skip:
 			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
 			    remotehost, pw->pw_name);
 	}
-#ifndef INSECURE_GUEST
-	if (guest) 
-	    (void) umask(GUEST_CMASK);
-	else
-#endif
-	    (void) umask(defumask);
+	(void) umask(curclass.umask);
 	return;
 bad:
 	/* Forget all about it... */
@@ -755,22 +737,26 @@ retrieve(cmd, name)
 	FILE *fin, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *));
+	int log;
 
+	log = (cmd == 0);
 	if (cmd == 0) {
 		fin = fopen(name, "r"), closefunc = fclose;
-		st.st_size = 0;
-	} else {
+		if (fin == NULL)
+			cmd = do_conversion(name);
+	}
+	if (cmd) {
 		char line[BUFSIZ];
 
 		(void) sprintf(line, cmd, name), name = line;
-		fin = ftpd_popen(line, "r"), closefunc = ftpd_pclose;
+		fin = ftpd_popen(line, "r", 1), closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
 	if (fin == NULL) {
 		if (errno != 0) {
 			perror_reply(550, name);
-			if (cmd == 0) {
+			if (log) {
 				LOGCMD("get", name);
 			}
 		}
@@ -809,7 +795,7 @@ retrieve(cmd, name)
 	data = -1;
 	pdata = -1;
 done:
-	if (cmd == 0)
+	if (log)
 		LOGBYTES("get", name, byte_count);
 	(*closefunc)(fin);
 }
@@ -1012,14 +998,15 @@ send_data(instr, outstr, blksize)
 	FILE *instr, *outstr;
 	off_t blksize;
 {
-	int c, cnt, filefd, netfd;
-	char *buf;
+	int	 c, cnt, filefd, netfd;
+	char	*buf;
 
 	transflag++;
 	if (setjmp(urgcatch)) {
 		transflag = 0;
 		return;
 	}
+
 	switch (type) {
 
 	case TYPE_A:
@@ -1088,15 +1075,16 @@ static int
 receive_data(instr, outstr)
 	FILE *instr, *outstr;
 {
-	int c;
-	int cnt, bare_lfs = 0;
-	char buf[BUFSIZ];
+	int	c, cnt, bare_lfs;
+	char	buf[BUFSIZ];
 
+	bare_lfs = 0;
 	transflag++;
 	if (setjmp(urgcatch)) {
 		transflag = 0;
 		return (-1);
 	}
+
 	switch (type) {
 
 	case TYPE_I:
@@ -1172,7 +1160,7 @@ statfilecmd(filename)
 	char line[LINE_MAX];
 
 	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
-	fin = ftpd_popen(line, "r");
+	fin = ftpd_popen(line, "r", 0);
 	lreply(211, "status of %s:", filename);
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
@@ -1201,22 +1189,23 @@ statcmd()
 	struct sockaddr_in *sin;
 	u_char *a, *p;
 
-	lreply(211, "%s FTP server status:", hostname, version);
-	printf("     %s\r\n", version);
-	printf("     Connected to %s", remotehost);
-	if (!isdigit(remotehost[0]))
-		printf(" (%s)", inet_ntoa(his_addr.sin_addr));
-	printf("\r\n");
+	lreply(211, "%s FTP server status:", hostname);
+	lreply(211, "%s", version);
+	if (isdigit(remotehost[0]))
+		lreply(211, "Connected to %s", remotehost);
+	else
+		lreply(211, "Connected to %s (%s)", remotehost,
+		    inet_ntoa(his_addr.sin_addr));
 	if (logged_in) {
 		if (guest)
-			printf("     Logged in anonymously\r\n");
+			lreply(211, "Logged in anonymously");
 		else
-			printf("     Logged in as %s\r\n", pw->pw_name);
+			lreply(211, "Logged in as %s", pw->pw_name);
 	} else if (askpasswd)
-		printf("     Waiting for password\r\n");
+		lreply(211, "Waiting for password");
 	else
-		printf("     Waiting for user name\r\n");
-	printf("     TYPE: %s", typenames[type]);
+		lreply(211, "Waiting for user name");
+	printf("211- TYPE: %s", typenames[type]);
 	if (type == TYPE_A || type == TYPE_E)
 		printf(", FORM: %s", formnames[form]);
 	if (type == TYPE_L)
@@ -1228,13 +1217,13 @@ statcmd()
 	printf("; STRUcture: %s; transfer MODE: %s\r\n",
 	    strunames[stru], modenames[mode]);
 	if (data != -1)
-		printf("     Data connection open\r\n");
+		lreply(211, "Data connection open");
 	else if (pdata != -1) {
-		printf("     in Passive mode");
+		printf("211- in Passive mode");
 		sin = &pasv_addr;
 		goto printaddr;
 	} else if (usedefault == 0) {
-		printf("     PORT");
+		printf("211- PORT");
 		sin = &data_dest;
 printaddr:
 		a = (u_char *) &sin->sin_addr;
@@ -1244,7 +1233,32 @@ printaddr:
 			UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
 #undef UC
 	} else
-		printf("     No data connection\r\n");
+		lreply(211, "No data connection");
+
+	if (logged_in) {
+		struct ftpconv *cp;
+
+		lreply(211, "");
+		lreply(211, "Class: %s", curclass.classname);
+		if (curclass.display)
+			lreply(211, "Display file: %s", curclass.display);
+		if (curclass.notify)
+			lreply(211, "Notify fileglob: %s", curclass.notify);
+		lreply(211, "Idle timeout: %d, maximum timeout: %d",
+		    curclass.timeout, curclass.maxtimeout);
+		lreply(211, "dele, mkd, rmd, umask, chmod: %sabled",
+		    curclass.modify ? "en" : "dis");
+		lreply(211, "Umask: %.04o", curclass.umask);
+		for (cp = curclass.conversions; cp != NULL; cp=cp->next) {
+			if (cp->suffix == NULL || cp->types == NULL ||
+			    cp->command == NULL)
+				continue;
+			lreply(211, 
+			    "Conversion: %s [%s] disable: %s, command: %s",
+			    cp->suffix, cp->types, cp->disable, cp->command);
+		}
+	}
+
 	reply(211, "End of status");
 }
 
@@ -1372,8 +1386,10 @@ cwd(path)
 
 	if (chdir(path) < 0)
 		perror_reply(550, path);
-	else
+	else {
+		show_chdir_messages(250);
 		ack("CWD");
+	}
 }
 
 void
