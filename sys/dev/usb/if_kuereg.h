@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.2 2000/01/28 00:45:55 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.3 2000/02/02 13:22:07 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -168,7 +168,9 @@ struct kue_softc {
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #elif defined(__NetBSD__)
 	struct ethercom		kue_ec;
-	char			kue_dying;
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 #define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
 #endif
 
@@ -185,4 +187,6 @@ struct kue_softc {
 	u_int16_t		kue_rxfilt;
 	u_int8_t		*kue_mcfilters;
 	struct kue_cdata	kue_cdata;
+
+	char			kue_dying;
 };
