@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.5 2001/01/07 13:38:42 bjh21 Exp $ */
+/* $NetBSD: irq.h,v 1.6 2001/01/07 15:56:02 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -68,7 +68,8 @@ struct irq_handler;
 extern void irq_init(void);
 /* irq_handler is declared in machdep.h */
 /* splx, raisespl and lowerspl are declared in intr.h */
-extern struct irq_handler *irq_establish(int, int, int(*)(void *), void *);
+extern struct irq_handler *irq_establish(int, int, int(*)(void *), void *,
+    char const *);
 extern char const *irq_string(struct irq_handler *);
 extern void irq_enable(struct irq_handler *);
 extern void irq_disable(struct irq_handler *);
