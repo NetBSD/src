@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.26 2004/09/29 02:47:32 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.27 2004/10/04 04:02:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.26 2004/09/29 02:47:32 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.27 2004/10/04 04:02:27 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -661,6 +661,7 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 				break;
 		}
 	}
+	result &= NS_STATUSMASK;	/* clear private flags in result */
 
 	rwlock_unlock(&_nslock);
 
