@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.17 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.18 2001/05/18 21:11:43 is Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -87,13 +87,13 @@ struct scsipi_mode_sense {
 		struct {
 			u_int8_t unused;
 			u_int8_t length;
-		} scsi;
+		} scsi __attribute__((packed));
 		struct {
 			u_int8_t length[2];
-		} atapi;
+		} atapi __attribute__((packed));
 	} u_len;
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	MODE_SENSE_BIG		0x5A
 struct scsipi_mode_sense_big {
@@ -103,7 +103,7 @@ struct scsipi_mode_sense_big {
 	u_int8_t unused[4];
 	u_int8_t length[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	MODE_SELECT		0x15
 struct scsipi_mode_select {
@@ -116,13 +116,13 @@ struct scsipi_mode_select {
 		struct {
 			u_int8_t unused;
 			u_int8_t length;
-		} scsi;
+		} scsi __attribute__((packed));
 		struct {
 			u_int8_t length[2];
-		} atapi;
+		} atapi __attribute__((packed));
 	} u_len;
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	MODE_SELECT_BIG		0x55
 struct scsipi_mode_select_big {
@@ -131,7 +131,7 @@ struct scsipi_mode_select_big {
 	u_int8_t unused[5];
 	u_int8_t length[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	INQUIRY			0x12
 struct scsipi_inquiry {
@@ -140,7 +140,7 @@ struct scsipi_inquiry {
 	u_int8_t unused[2];
 	u_int8_t length;
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	PREVENT_ALLOW		0x1e
 struct scsipi_prevent {
@@ -149,7 +149,7 @@ struct scsipi_prevent {
 	u_int8_t unused[2];
 	u_int8_t how;
 	u_int8_t control;
-};
+} __attribute__((packed));
 #define	PR_PREVENT 0x01
 #define	PR_ALLOW   0x00
 
@@ -178,7 +178,7 @@ struct scsipi_sense_data {
 /*17*/	u_int8_t sense_key_spec_2;
 /*18*/	u_int8_t sense_key_spec_3;
 /*32*/	u_int8_t extra_bytes[14];
-};
+} __attribute__((packed));
 
 #define	SKEY_NO_SENSE		0x00
 #define	SKEY_RECOVERED_ERROR	0x01
@@ -210,7 +210,7 @@ struct scsipi_sense_data {
 struct scsipi_sense_data_unextended {
 /* 1*/	u_int8_t error_code; 
 /* 4*/	u_int8_t block[3];
-}; 
+} __attribute__((packed)); 
 
 #define	T_REMOV		1	/* device is removable */
 #define	T_FIXED		0	/* device is not removable */
@@ -293,7 +293,7 @@ struct scsipi_inquiry_data {
 #define	SID_CLOCKING_SD_DT    0x0C
 /*58*/	u_int8_t reserved;
 /*59*/	char    version_descriptor[8][2];
-}; /* 74 Bytes */
+} __attribute__((packed)); /* 74 Bytes */
 
 /* Data structures for mode select/mode sense */
 struct scsipi_mode_header {
@@ -301,7 +301,7 @@ struct scsipi_mode_header {
 	u_int8_t medium_type;
 	u_int8_t dev_spec;
 	u_int8_t blk_desc_len;	/* unused on ATAPI */
-};
+} __attribute__((packed));
 
 struct scsipi_mode_header_big {
 	u_int8_t data_length[2];	/* Sense data length */
@@ -309,7 +309,7 @@ struct scsipi_mode_header_big {
 	u_int8_t dev_spec;
 	u_int8_t unused[2];		/* unused on ATAPI */
 	u_int8_t blk_desc_len[2];	/* unused on ATAPI */
-};
+} __attribute__((packed));
 
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
