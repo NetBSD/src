@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.9 2000/08/31 16:14:39 itojun Exp $	
+.\"	$NetBSD: legal.common,v 1.10 2000/08/31 16:26:42 itojun Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -238,3 +238,8 @@ This product includes software developed by Eric Young (eay@mincom.oz.au).
 
 This product includes software developed by the OpenSSL Project
 for use in the OpenSSL Toolkit (http://www.openssl.org/).
+
+This product includes software developed by the University of Oregon.
+
+This product includes software developed by the University of Southern
+California and/or Information Sciences Institute.
