@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.35 1999/12/14 15:27:00 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.36 1999/12/15 02:02:16 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -556,18 +556,6 @@ raidstrategy(bp)
 	struct buf *dp;
 	int     wlabel;
 
-#if 0
-	db1_printf(("Strategy: 0x%x 0x%x\n", bp, bp->b_data));
-	db1_printf(("Strategy(2): bp->b_bufsize%d\n", (int) bp->b_bufsize));
-	db1_printf(("bp->b_count=%d\n", (int) bp->b_bcount));
-	db1_printf(("bp->b_resid=%d\n", (int) bp->b_resid));
-	db1_printf(("bp->b_blkno=%d\n", (int) bp->b_blkno));
-
-	if (bp->b_flags & B_READ)
-		db1_printf(("READ\n"));
-	else
-		db1_printf(("WRITE\n"));
-#endif
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
 		bp->b_flags = B_ERROR;
@@ -1115,10 +1103,6 @@ raidioctl(dev, cmd, data, flag, p)
 		*(int *) data = raidPtrs[unit]->totalSectors;
 		return (0);
 
-#define RAIDFRAME_RECON 1
-		/* XXX The above should probably be set somewhere else!! GO */
-#if RAIDFRAME_RECON > 0
-
 		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
 
@@ -1236,11 +1220,8 @@ raidioctl(dev, cmd, data, flag, p)
 		return (retcode);
 #endif
 
-
-#endif				/* RAIDFRAME_RECON > 0 */
-
 	default:
-		break;		/* fall through to the os-specific code below */
+		break; /* fall through to the os-specific code below */
 
 	}
 
@@ -1688,31 +1669,19 @@ KernelWakeupFunc(vbp)
 	int     unit;
 	register int s;
 
-	s = splbio();		/* XXX */
+	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
 	req = raidbp->req;
 
 	bp = raidbp->rf_obp;
-#if 0
-	db1_printf(("bp=0x%x\n", bp));
-#endif
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
 	if (raidbp->rf_buf.b_flags & B_ERROR) {
-#if 0
-		printf("Setting bp->b_flags!!! %d\n", raidbp->rf_buf.b_error);
-#endif
 		bp->b_flags |= B_ERROR;
 		bp->b_error = raidbp->rf_buf.b_error ?
 		    raidbp->rf_buf.b_error : EIO;
 	}
-#if 0
-	db1_printf(("raidbp->rf_buf.b_bcount=%d\n", (int) raidbp->rf_buf.b_bcount));
-	db1_printf(("raidbp->rf_buf.b_bufsize=%d\n", (int) raidbp->rf_buf.b_bufsize));
-	db1_printf(("raidbp->rf_buf.b_resid=%d\n", (int) raidbp->rf_buf.b_resid));
-	db1_printf(("raidbp->rf_buf.b_data=0x%x\n", raidbp->rf_buf.b_data));
-#endif
 
 	/* XXX methinks this could be wrong... */
 #if 1
@@ -1735,7 +1704,7 @@ KernelWakeupFunc(vbp)
 
 	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
 	 * ballistic, and mark the component as hosed... */
-#if 1
+
 	if (bp->b_flags & B_ERROR) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
@@ -1753,26 +1722,20 @@ KernelWakeupFunc(vbp)
 		}
 
 	}
-#endif
 
 	rs = &raid_softc[unit];
 	RAIDPUTBUF(rs, raidbp);
 
 
 	if (bp->b_resid == 0) {
-		db1_printf(("Disk is no longer busy for this buffer... %d %ld %ld\n",
-			unit, bp->b_resid, bp->b_bcount));
 		/* XXX is this the right place for a disk_unbusy()??!??!?!? */
 		disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
-	} else {
-		db1_printf(("b_resid is still %ld\n", bp->b_resid));
-	}
+	} 
 
 	rf_DiskIOComplete(queue, req, (bp->b_flags & B_ERROR) ? 1 : 0);
 	(req->CompleteFunc) (req->argument, (bp->b_flags & B_ERROR) ? 1 : 0);
-	/* printf("Exiting KernelWakeupFunc\n"); */
 
-	splx(s);		/* XXX */
+	splx(s);
 }
 
 
@@ -1800,14 +1763,9 @@ InitBP(
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
 	bp->b_dev = dev;
-	db1_printf(("bp->b_dev is %d\n", dev));
 	bp->b_un.b_addr = buf;
-#if 0
-	db1_printf(("bp->b_data=0x%x\n", bp->b_data));
-#endif
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
-	db1_printf(("b_bcount is: %d\n", (int) bp->b_bcount));
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!\n");
 	}
