@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.120 2000/06/01 15:51:26 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.120.2.1 2000/08/22 04:11:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -946,9 +946,23 @@ uhci_remove_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_ctrl: sqh=%p\n", sqh));
+	/*
+	 * The T bit should be set in the elink of the QH so that the HC
+	 * doesn't follow the pointer.  This condition may fail if the
+	 * the transferred packet was short so that the QH still points
+	 * at the last used TD.
+	 * In this case we set the T bit and wait a little for the HC
+	 * to stop looking at the TD.
+	 */
+	if (!(sqh->qh.qh_elink & htole32(UHCI_PTR_T))) {
+		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
+		delay(UHCI_QH_REMOVE_DELAY);
+	}
+
 	pqh = uhci_find_prev_qh(sc->sc_ctl_start, sqh);
 	pqh->hlink       = sqh->hlink;
 	pqh->qh.qh_hlink = sqh->qh.qh_hlink;
+	delay(UHCI_QH_REMOVE_DELAY);
 	if (sc->sc_ctl_end == sqh)
 		sc->sc_ctl_end = pqh;
 }
@@ -979,9 +993,15 @@ uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
+	/* See comment in uhci_remove_ctrl() */
+	if (!(sqh->qh.qh_elink & htole32(UHCI_PTR_T))) {
+		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
+		delay(UHCI_QH_REMOVE_DELAY);
+	}
 	pqh = uhci_find_prev_qh(sc->sc_bulk_start, sqh);
 	pqh->hlink       = sqh->hlink;
 	pqh->qh.qh_hlink = sqh->qh.qh_hlink;
+	delay(UHCI_QH_REMOVE_DELAY);
 	if (sc->sc_bulk_end == sqh)
 		sc->sc_bulk_end = pqh;
 }
@@ -2478,9 +2498,16 @@ uhci_remove_intr(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 
 	DPRINTFN(4, ("uhci_remove_intr: n=%d sqh=%p\n", sqh->pos, sqh));
 
+	/* See comment in uhci_remove_ctrl() */
+	if (!(sqh->qh.qh_elink & htole32(UHCI_PTR_T))) {
+		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
+		delay(UHCI_QH_REMOVE_DELAY);
+	}
+
 	pqh = uhci_find_prev_qh(vf->hqh, sqh);
 	pqh->hlink       = sqh->hlink;
 	pqh->qh.qh_hlink = sqh->qh.qh_hlink;
+	delay(UHCI_QH_REMOVE_DELAY);
 	if (vf->eqh == sqh)
 		vf->eqh = pqh;
 	vf->bandwidth--;
