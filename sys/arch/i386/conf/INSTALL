@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 1996/03/10 09:03:21 cgd Exp $
+#	$NetBSD: INSTALL,v 1.9 1996/03/12 01:32:52 perry Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -31,8 +31,6 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options		DIAGNOSTIC	# internally consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		COMPAT_10	# NetBSD 1.0,
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.19 1996/03/10 09:03:15 cgd Exp $
+#	$NetBSD: DISKLESS,v 1.20 1996/03/12 01:32:45 perry Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -30,7 +30,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-options		DIAGNOSTIC	# internally consistency checks
+options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		SYSVMSG		# System V-like message queues

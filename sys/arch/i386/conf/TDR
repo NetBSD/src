@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.60 1996/03/10 09:03:29 cgd Exp $
+#	$NetBSD: TDR,v 1.61 1996/03/12 01:33:00 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -28,7 +28,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-#options	DIAGNOSTIC	# internally consistency checks
+#options	DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 #options	SYSVMSG		# System V-like message queues

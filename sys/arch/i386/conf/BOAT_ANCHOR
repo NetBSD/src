@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.57 1996/03/10 09:03:13 cgd Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.58 1996/03/12 01:32:43 perry Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -28,7 +28,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
-options		DIAGNOSTIC,DEBUG # internally consistency checks
+options		DIAGNOSTIC,DEBUG # internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 #options	SYSVMSG		# System V-like message queues
