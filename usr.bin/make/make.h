@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.37 2001/09/16 16:34:43 wiz Exp $	*/
+/*	$NetBSD: make.h,v 1.38 2001/10/31 01:15:57 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -364,6 +364,7 @@ extern time_t 	now;	    	/* The time at the start of this whole
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
 extern Lst	sysIncPath;	/* The system include path. */
+extern Lst	defIncPath;	/* The default include path. */
 
 extern char	*progname;	/* The program name */
 
@@ -415,6 +416,6 @@ Boolean Make_Run __P((Lst));
 char * Check_Cwd_Cmd __P((char *));
 void Check_Cwd __P((char **));
 void PrintOnError __P((char *));
-void ExportMAKEFLAGS __P((int));
+void Main_ExportMAKEFLAGS __P((Boolean));
 
 #endif /* _MAKE_H_ */
