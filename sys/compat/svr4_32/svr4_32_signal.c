@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.10 2003/09/28 10:22:21 martin Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.11 2003/10/21 09:02:50 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.10 2003/09/28 10:22:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.11 2003/10/21 09:02:50 petrov Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -709,7 +709,7 @@ svr4_32_sys_context(l, v, retval)
 
 	case SVR4_SETCONTEXT: 
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
-		if (SCARG(uap, uc) == NULL)
+		if (!SCARG(uap, uc))
 			exit1(l, W_EXITCODE(0, 0));
 		else if ((error = copyin((caddr_t)(u_long)SCARG(uap, uc), 
 					 &uc, sizeof(uc))) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.11 2003/06/29 22:29:51 fvdl Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.12 2003/10/21 09:02:50 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.11 2003/06/29 22:29:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.12 2003/10/21 09:02:50 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,7 +772,7 @@ svr4_32_sys_utime(l, v, retval)
 	ttp = stackgap_alloc(p, &sg, sizeof(tbuf));
 	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ap, path));
-	if (SCARG(uap, ubuf) != NULL) {
+	if (SCARG(uap, ubuf)) {
 		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ubuf), 
 				    &ub, sizeof(ub))) != 0)
 			return error;

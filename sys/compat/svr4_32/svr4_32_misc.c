@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.23 2003/06/29 22:29:51 fvdl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.24 2003/10/21 09:02:50 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.23 2003/06/29 22:29:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.24 2003/10/21 09:02:50 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ svr4_32_sys_wait(l, v, retval)
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, options) = 0;
 
-	if (SCARG(uap, status) == NULL) {
+	if (SCARG(uap, status) == 0) {
 		caddr_t sg = stackgap_init(p, 0);
 
 		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
@@ -194,7 +194,7 @@ svr4_32_sys_execv(l, v, retval)
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = NULL;
+	SCARG(&ap, envp) = 0;
 
 	return netbsd32_execve(l, &ap, retval);
 }
@@ -1077,7 +1077,7 @@ svr4_32_hrtcntl(p, uap, retval)
 				DPRINTF(("clk == %d\n", SCARG(uap, clk)));
 				return EINVAL;
 			}
-			if (SCARG(uap, ti) == NULL) {
+			if (SCARG(uap, ti) == 0) {
 				DPRINTF(("ti NULL\n"));
 				return EINVAL;
 			}
