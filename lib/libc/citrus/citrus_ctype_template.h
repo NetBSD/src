@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.3.2.4 2002/06/21 18:18:04 nathanw Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.3.2.5 2003/01/08 20:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -113,6 +113,8 @@
  *     non-zero integral value.  Otherwise, 0.
  *
  *   _STATE_NEEDS_EXPLICIT_INIT(ps) :
+ *     some encodings, states needs some explicit initialization.
+ *     (ie. initialization with memset isn't enough.)
  *     If the encoding state pointed by "ps" needs to be initialized
  *     explicitly, return non-zero. Otherwize, 0.
  *
@@ -161,6 +163,8 @@ static int _FUNCNAME(mbrtowc_priv)(_ENCODING_INFO * __restrict,
  *   - additional 6th parameter is the storage to be stored
  *     the return value in the real mbrtowc context.
  *   - return value means "errno" in the real wcrtomb context.
+ *   - caller should ensure that 2nd parameter isn't NULL.
+ *     (XXX inconsist with mbrtowc_priv)
  */
 
 static int _FUNCNAME(wcrtomb_priv)(_ENCODING_INFO * __restrict,
@@ -233,14 +237,12 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(psenc != NULL);
+	_DIAGASSERT(s == NULL);
+	_DIAGASSERT(*s == NULL);
 
-	if (s == NULL || *s == NULL || n==0) {
-		*nresult = (size_t)-1;
-		return EILSEQ;
-	}
-
-	if (!pwcs)
-		n = 1;
+	/* if pwcs is NULL, ignore n */
+	if (pwcs == NULL)
+		n = 1; /* arbitrary >0 value */
 
 	cnt = 0;
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
@@ -352,7 +354,7 @@ do {									\
 			_pse_ = &_CEI_TO_STATE(_cei_, _func_);		\
 			if (_STATE_NEEDS_EXPLICIT_INIT(_pse_))		\
 			    _FUNCNAME(init_state)(_CEI_TO_EI(_cei_),	\
-							psenc);		\
+							(_pse_));	\
 		} else {						\
 			_pse_ = &_state;				\
 			_FUNCNAME(unpack_state)(_CEI_TO_EI(_cei_),	\
@@ -421,12 +423,16 @@ _FUNCNAME(ctype_mblen)(void * __restrict cl,
 		       const char * __restrict s, size_t n,
 		       int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 
 	_DIAGASSERT(cl != NULL);
 
-	return _FUNCNAME(mbtowc_priv)(_CEI_TO_EI(_TO_CEI(cl)), NULL, s, n,
-				      &_CEI_TO_STATE(_TO_CEI(cl), mblen),
-				      nresult);
+	psenc = &_CEI_TO_STATE(_TO_CEI(cl), mblen);
+	ei = _CEI_TO_EI(_TO_CEI(cl));
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(ei, psenc);
+	return _FUNCNAME(mbtowc_priv)(ei, NULL, s, n, psenc, nresult);
 }
 
 static int
@@ -435,17 +441,19 @@ _FUNCNAME(ctype_mbrlen)(void * __restrict cl, const char * __restrict s,
 			size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
 
+	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_RESTART_BEGIN(mbrlen, _TO_CEI(cl), pspriv, psenc);
 	if (s == NULL) {
-		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
+		_FUNCNAME(init_state)(ei, psenc);
 		*nresult = 0;
 	} else {
-		err = _FUNCNAME(mbrtowc_priv)(
-			cl, NULL, (const char **)&s, n, (void *)psenc, nresult);
+		err = _FUNCNAME(mbrtowc_priv)(ei, NULL, (const char **)&s, n,
+		    (void *)psenc, nresult);
 	}
 	_RESTART_END(mbrlen, _TO_CEI(cl), pspriv, psenc);
 
@@ -458,17 +466,19 @@ _FUNCNAME(ctype_mbrtowc)(void * __restrict cl, wchar_t * __restrict pwc,
 			 void * __restrict pspriv, size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
 
+	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_RESTART_BEGIN(mbrtowc, _TO_CEI(cl), pspriv, psenc);
 	if (s == NULL) {
-		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
+		_FUNCNAME(init_state)(ei, psenc);
 		*nresult = 0;
 	} else {
-		err = _FUNCNAME(mbrtowc_priv)(
-			cl, pwc, (const char **)&s, n, (void *)psenc, nresult);
+		err = _FUNCNAME(mbrtowc_priv)(ei, pwc, (const char **)&s, n,
+		    (void *)psenc, nresult);
 	}
 	_RESTART_END(mbrtowc, _TO_CEI(cl), pspriv, psenc);
 
@@ -501,12 +511,14 @@ _FUNCNAME(ctype_mbsrtowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 			   size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
 
+	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_RESTART_BEGIN(mbsrtowcs, _TO_CEI(cl), pspriv, psenc);
-	err = _FUNCNAME(mbsrtowcs_priv)(cl, pwcs, s, n, psenc, nresult);
+	err = _FUNCNAME(mbsrtowcs_priv)(ei, pwcs, s, n, psenc, nresult);
 	_RESTART_END(mbsrtowcs, _TO_CEI(cl), pspriv, psenc);
 
 	return (err);
@@ -519,11 +531,13 @@ _FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 {
 	int err;
 	_ENCODING_STATE state;
+	_ENCODING_INFO *ei;
 
 	_DIAGASSERT(cl != NULL);
 
-	_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), &state);
-	err = _FUNCNAME(mbsrtowcs_priv)(cl, pwcs, (const char **)&s, n, &state, nresult);
+	ei = _CEI_TO_EI(_TO_CEI(cl));
+	_FUNCNAME(init_state)(ei, &state);
+	err = _FUNCNAME(mbsrtowcs_priv)(ei, pwcs, (const char **)&s, n, &state, nresult);
 	if (*nresult == (size_t)-2) {
 		err = EILSEQ;
 		*nresult = (size_t)-1;
@@ -537,12 +551,16 @@ _FUNCNAME(ctype_mbtowc)(void * __restrict cl, wchar_t * __restrict pwc,
 			const char * __restrict s, size_t n,
 			int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 
 	_DIAGASSERT(cl != NULL);
 
-	return _FUNCNAME(mbtowc_priv)(cl, pwc, s, n,
-				      &_CEI_TO_STATE(_TO_CEI(cl), mbtowc),
-				      nresult);
+	psenc = &_CEI_TO_STATE(_TO_CEI(cl), mbtowc);
+	ei = _CEI_TO_EI(_TO_CEI(cl));
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(ei, psenc);
+	return _FUNCNAME(mbtowc_priv)(ei, pwc, s, n, psenc, nresult);
 }
 
 static int
@@ -550,9 +568,18 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 			 void * __restrict pspriv, size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	char buf[MB_LEN_MAX];
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
+
+	if (s == NULL) {
+		/*
+		 * use internal buffer.
+		 */
+		s = buf;
+		wc = L'\0'; /* SUSv3 */
+	}
 
 	_RESTART_BEGIN(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
@@ -571,12 +598,14 @@ _FUNCNAME(ctype_wcsrtombs)(void * __restrict cl, char * __restrict s,
 			   size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
 
+	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_RESTART_BEGIN(wcsrtombs, _TO_CEI(cl), pspriv, psenc);
-	err = _FUNCNAME(wcsrtombs_priv)(cl, s, pwcs, n, psenc, nresult);
+	err = _FUNCNAME(wcsrtombs_priv)(ei, s, pwcs, n, psenc, nresult);
 	_RESTART_END(wcsrtombs, _TO_CEI(cl), pspriv, psenc);
 
 	return err;
@@ -589,12 +618,14 @@ _FUNCNAME(ctype_wcstombs)(void * __restrict cl, char * __restrict s,
 			  size_t * __restrict nresult)
 {
 	_ENCODING_STATE state;
+	_ENCODING_INFO *ei;
 	int err;
 
 	_DIAGASSERT(cl != NULL);
 
-	_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), &state);
-	err = _FUNCNAME(wcsrtombs_priv)(cl, s, (const wchar_t **)&pwcs, n,
+	ei = _CEI_TO_EI(_TO_CEI(cl));
+	_FUNCNAME(init_state)(ei, &state);
+	err = _FUNCNAME(wcsrtombs_priv)(ei, s, (const wchar_t **)&pwcs, n,
 					&state, nresult);
 
 	return err;
@@ -604,18 +635,25 @@ static int
 _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 			int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc;
+	_ENCODING_INFO *ei;
 	size_t nr;
 	int err = 0;
-	char s0[MB_LEN_MAX];
 
 	_DIAGASSERT(cl != NULL);
 
-	if (s==NULL)
-		s = s0;
+	ei = _CEI_TO_EI(_TO_CEI(cl));
+	psenc = &_CEI_TO_STATE(_TO_CEI(cl), wctomb);
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(ei, psenc);
+	if (s == NULL) {
+		_FUNCNAME(init_state)(ei, psenc);
+		*nresult = _ENCODING_IS_STATE_DEPENDENT;
+		return 0;
+	}
 
-	err = _FUNCNAME(wcrtomb_priv)(cl, s,
-		      _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
-		      wc, &_CEI_TO_STATE(_TO_CEI(cl), wctomb), &nr);
+	err = _FUNCNAME(wcrtomb_priv)(ei, s, _ENCODING_MB_CUR_MAX(ei), wc,
+	    psenc, &nr);
 	*nresult = (int)nr;
 
 	return 0;

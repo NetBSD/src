@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.44.2.4 2002/12/10 06:25:51 thorpej Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.44.2.5 2003/01/08 20:32:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.44.2.4 2002/12/10 06:25:51 thorpej Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.44.2.5 2003/01/08 20:32:07 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -711,7 +711,7 @@ again:
 			return (-1);
 		/*
 		 * If not a regular file, or is owned by someone other than
-		 * user or root or if writeable by anyone but the owner, quit.
+		 * user or root or if writable by anyone but the owner, quit.
 		 */
 		cp = NULL;
 		if (lstat(pbuf, &sbuf) < 0)
@@ -723,7 +723,7 @@ again:
 		else if (sbuf.st_uid && sbuf.st_uid != pwd->pw_uid)
 			cp = "bad .rhosts owner";
 		else if (sbuf.st_mode & (S_IWGRP|S_IWOTH))
-			cp = ".rhosts writeable by other than owner";
+			cp = ".rhosts writable by other than owner";
 		/* If there were any problems, quit. */
 		if (cp) {
 			__rcmd_errstr = cp;
