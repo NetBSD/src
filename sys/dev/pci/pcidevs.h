@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.9 2004/07/28 10:54:40 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.10 2004/07/28 11:19:38 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.8 2004/07/28 10:52:40 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.9 2004/07/28 11:17:44 tron Exp 
  */
 
 /*
@@ -1718,6 +1718,8 @@
 #define	PCI_PRODUCT_INTEL_82801EB_HPB	0x2573		/* 82801EB Hub-to-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82875P_HB	0x2578		/* 82875P Host */
 #define	PCI_PRODUCT_INTEL_82875P_AGP	0x2579		/* 82875P AGP */
+#define	PCI_PRODUCT_INTEL_6300ESB_IDE	0x25a2		/* 6300ESB IDE Controller */
+#define	PCI_PRODUCT_INTEL_6300ESB_SATA	0x25a3		/* 6300ESB SATA Controller */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-to-AGP Bridge */
