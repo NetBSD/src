@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccreg.h,v 1.2 1994/03/27 06:23:35 chopps Exp $
+ *	$Id: grfabs_ccreg.h,v 1.3 1994/06/29 13:13:07 chopps Exp $
  */
 
 #if ! defined (_GRFABS_CCREG_H)
@@ -120,6 +120,12 @@ extern int std_dlace_copper_list_size;
 extern u_short a2024_color_value_line0[4];
 extern u_short a2024_color_value_line1[4];
 #endif /* GRF_A2024 */
+
+#if defined(GRF_AGA)
+extern cop_t aga_copper_list[];
+extern int aga_copper_list_len;
+extern int aga_copper_list_size;
+#endif
 
 extern cop_t std_copper_list[];
 extern int std_copper_list_len;
@@ -316,6 +322,11 @@ dmode_t *cc_init_ntsc_a2024(void);
 void display_a2024_view(view_t * v);
 void a2024_mode_vbl_handler(dmode_t * d);
 #    endif /* GRF_A2024 */
+
+#    if defined (GRF_AGA)
+dmode_t *cc_init_ntsc_aga(void);
+void display_aga_view(view_t * v);
+#    endif /* GRF_AGA */
 #  endif /* GRF_NTSC */
 
 #  if defined (GRF_PAL)
