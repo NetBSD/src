@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.40 1998/04/24 05:27:26 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.41 1998/04/24 05:53:29 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -462,12 +462,11 @@ pmap_bootstrap(nextpa, firstpa)
 		}
 	}
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
+
 	avail_remaining -= m68k_round_page(MSGBUFSIZE);
 	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
-
-	avail_remaining = m68k_trunc_page(avail_remaining);
-	avail_end = avail_start + avail_remaining;
-	avail_remaining = m68k_btop(avail_remaining);
+	avail_end = high[numranges - 1];
+	avail_remaining = m68k_btop(m68k_trunc_page(avail_remaining));
 
 	mem_size = m68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
