@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1996/10/09 00:13:36 jtc Exp $
+#	$Id: Makefile,v 1.3 1997/02/18 07:38:17 mikel Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		kcadp${REV}.fs
+IMAGE=		kc-${REV}.fs
 
 .include "${TOP}/kc-common/Makefile.inc"

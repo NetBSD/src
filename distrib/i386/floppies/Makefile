@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: Makefile,v 1.5 1997/02/18 07:38:15 mikel Exp $
 
-SUBDIR= inst kcadp kcoth upgr
+SUBDIR= inst kc upgr
 
 .include <bsd.subdir.mk>
