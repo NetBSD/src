@@ -1,12 +1,12 @@
 .\" *** ------------------------------------------------------------------
 .\" *** This file was generated automatically
-.\" *** from src/etc/etc.arm32/MAKEDEV and
+.\" *** from src/etc/etc.playstation2/MAKEDEV and
 .\" *** src/share/man/man8/MAKEDEV.8.template
 .\" ***
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.20 2002/03/14 01:38:34 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.1 2002/04/07 15:28:45 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 1996
-.Dt MAKEDEV 8 arm32
+.Dd April 7, 2002
+.Dt MAKEDEV 8 playstation2
 .Os
 .Sh NAME
 .Nm MAKEDEV
@@ -76,23 +76,17 @@ is used, which can only be used for creating devices by the
 super-user.
 .Pp
 The special targets supported on
-.Nx Ns / Ns arm32
+.Nx Ns / Ns playstation2
 are:
 .Pp
 .\" @@@SPECIAL@@@
 .Bl -tag -width 01234567 -compact
 .It Ar all
 Makes all known devices, including local devices. Tries to make the 'standard' number of each type.
-.It Ar floppy
-Devices to be put on install floppies
 .It Ar std
 Standard devices
-.It Ar local
-Configuration specific devices which are created by running the
-.Pa MAKEDEV.local
-shell script with the argument ``all''.
-.It Ar isdn
-Make ISDN devices
+.It Ar ramdisk
+Devices to be put into INSTALL kernel ramdisks.
 .El
 .Pp
 Please note that any hash marks
@@ -103,25 +97,11 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes :
-. Bl -tag -width 0123456789 -compact
-. It Ar st#
-SCSI tapes, see
-.Xr \&st 4
-. El
 .It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
 .Xr \&wd 4
-. It Ar fd#
-``floppy'' disk drives (3 1/2``, 5 1/4'')
-. It Ar sd#
-SCSI disks, see
-.Xr \&sd 4
-. It Ar cd#
-SCSI CD-ROM, see
-.Xr \&cd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
 .Xr \&vnd 4
@@ -132,24 +112,16 @@ Memory pseudo-disk devices, see
 Contatenated disk devices, see
 .Xr \&ccd 4
 . It Ar raid#
-RAIDframe disk driver, see
+RAIDframe disk devices, see
 .Xr \&raid 4
 . El
 .It Console ports :
 . Bl -tag -width 0123456789 -compact
-. It Ar ttyv0
-Pccons console
 . It Ar ttyE#
 Wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
-. It Ar quadmouse#
-``quadrature mouse'', see
-.Xr \&quadmouse 4
-. It Ar pms#
-``PS/2 mouse'', see
-.Xr \&pms 4
 . It Ar wsmouse#
 Wscons mouse events, see
 .Xr \&wsmouse 4
@@ -160,14 +132,6 @@ Wscons mouse events, see
 Wscons keyboard events, see
 .Xr \&wskbd 4
 . El
-.It Terminal ports :
-. Bl -tag -width 0123456789 -compact
-. It Ar tty#
-Serial ports, see
-.Xr \&tty 4
-. It Ar fcom
-DC21285 COM port
-. El
 .It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
@@ -176,111 +140,24 @@ Set of 62 master and slave pseudo terminals, see
 . It Ar opty
 First 16 ptys, to save inodes on install media
 . El
-.It Printers :
-. Bl -tag -width 0123456789 -compact
-. It Ar lpt#
-Stock lp, see
-.Xr \&lpt 4
-. It Ar lpa#
-Interruptless lp
-. El
-.It USB devices :
-. Bl -tag -width 0123456789 -compact
-. It Ar usb#
-Bus control devices used by usbd for attach/detach, see
-.Xr \&usb 4
-. It Ar uhid#
-Generic HID devices, see
-.Xr \&uhid 4
-. It Ar ulpt#
-Printer devices, see
-.Xr \&ulpt 4
-. It Ar ugen#
-Generic device, see
-.Xr \&ugen 4
-. It Ar urio#
-Diamond Rio 500, see
-.Xr \&urio 4
-. It Ar uscanner#
-Scanners, see
-.Xr \&uscanner 4
-. It Ar ttyU#
-Modem
-. El
-.It ISDN devices :
-. Bl -tag -width 0123456789 -compact
-. It Ar i4b
-Communication between userland isdnd and kernel
-. It Ar i4bctl
-Control device
-. It Ar i4brbch#
-Raw b-channel access
-. It Ar i4btel#
-Telephony device
-. It Ar i4btrc#
-Trace device
-. El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar clockctl
 Clock control for non root users, see
 .Xr \&clockctl 4
-. It Ar md
-Memory disk, see
-.Xr \&md 4
-. It Ar kbd
-Raw keyboard, see
-.Xr \&kbd 4
-. It Ar kbdctl
-Keyboard control
 . It Ar fd
 File descriptors, see
 .Xr \&fd 4
 . It Ar bpf#
 Packet filter, see
 .Xr \&bpf 4
-. It Ar beep
-Riscpc speaker, see
-.Xr \&beep 4
 . It Ar ipl
-IP filter control
-. It Ar openfirm
-OpenFirmware accessor
+Ip filter
 . It Ar random
 Random number generator
-. It Ar lkm
-Loadable kernel modules interface, see
-.Xr \&lkm 4
 . It Ar tun#
 Network tunnel driver, see
 .Xr \&tun 4
-. It Ar ch#
-SCSI media changer, see
-.Xr \&ch 4
-. It Ar uk#
-Unknown SCSI device, see
-.Xr \&uk 4
-. It Ar scsibus#
-SCSI busses, see
-.Xr \&scsi 4 ,
-.Xr \&scsictl 8
-. It Ar ss#
-SCSI scanner, see
-.Xr \&ss 4
-. It Ar iic#
-IIC bus device
-. It Ar rtc#
-RTC device
-. It Ar cfs#
-Coda file system device
-. It Ar wsmux#
-Wscons event multiplexor, see
-.Xr \&wsmux 4
-. It Ar wsfont#
-Console font control
-. It Ar pci#
-PCI bus access devices, see
-.Xr \&pci 4
 . El
 .El
 .Sh FILES
