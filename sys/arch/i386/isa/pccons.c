@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.6 1993/04/11 10:16:54 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.7 1993/04/20 23:03:41 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -473,7 +473,7 @@ pcstart(tp)
 	c = getc(&tp->t_out);
 	tp->t_state |= TS_BUSY;				/* 21 Aug 92*/
 	splx(s);
-	sput(c, 0);
+	if (!c) sput(c, 0);
 	(void)spltty();
 	tp->t_state &= ~TS_BUSY;			/* 21 Aug 92*/
 	} while(1);
