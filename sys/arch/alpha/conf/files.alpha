@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.118.2.1 2000/06/27 19:32:51 thorpej Exp $
+# $NetBSD: files.alpha,v 1.118.2.2 2000/07/12 20:56:02 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -371,8 +371,8 @@ file	arch/alpha/sableio/lpt_sableio.c	lpt_sableio
 attach	pckbc at sableio with pckbc_sableio
 file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
 
-#attach	fdc at sableio with fdc_sableio
-#file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
+attach	fdc at sableio with fdc_sableio
+file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
 
 # CPU support files
 file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
