@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2000/07/29 20:06:28 jdolecek Exp $	 */
+/*	$NetBSD: main.c,v 1.7 2000/09/24 18:28:18 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -137,7 +137,7 @@ command_help(arg)
 	char *arg;
 {
 	printf("commands are:\n"
-	       "boot [filename] [-ads]\n"
+	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "help|?\n"
 	       "quit\n");
