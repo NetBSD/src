@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8.2.3 1998/08/29 03:32:17 mellon Exp $	*/
+/*	$NetBSD: perform.c,v 1.8.2.4 1998/09/27 23:40:37 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8.2.3 1998/08/29 03:32:17 mellon Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8.2.4 1998/09/27 23:40:37 cgd Exp $");
 #endif
 #endif
 
@@ -277,11 +277,12 @@ pkg_do(char *pkg)
 				++code;
 			}
 		    }
-		else
-		   warnx("add of dependency `%s' failed%s",
-			    p->name, Force ? " (proceeding anyway)" : "!");
-		   if (!Force)
-			++code;
+		    else {
+			warnx("add of dependency `%s' failed%s",
+				p->name, Force ? " (proceeding anyway)" : "!");
+			     if (!Force)
+				++code;
+		    }
 		}
 		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 		    if (Verbose)
