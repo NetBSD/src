@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.4 2000/08/31 14:36:21 bouyer Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.5 2000/09/05 16:20:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ svr4_sys__lwp_continue(p, v, retval)
 	if (!CANSIGNAL(p, p->p_cred, pt, 0))
 		return EPERM;
 
-	pt->p_stat = (pt->p_flag & P_SUSPEND) ? SSUSPEND : SRUN;
+	pt->p_stat = SRUN;
 	return 0;
 }
 
