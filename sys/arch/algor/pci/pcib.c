@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.8 2001/06/22 04:33:26 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.9 2001/06/22 06:02:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8 2001/06/22 04:33:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2001/06/22 06:02:55 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -194,7 +194,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW1,
 	    ICW1_SELECT | ICW1_IC4);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW2,
-	    ICW2_VECTOR(32)/*XXX*/);
+	    ICW2_VECTOR(0)/*XXX*/);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW3,
 	    ICW3_CASCADE(2));
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW4,
@@ -216,7 +216,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW1,
 	    ICW1_SELECT | ICW1_IC4);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW2,
-	    ICW2_VECTOR(32 + 8)/*XXX*/);
+	    ICW2_VECTOR(0)/*XXX*/);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW3,
 	    ICW3_SIC(2));
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW4,
@@ -317,7 +317,11 @@ pcib_bridge_callback(self)
 	    }
 #elif defined(ALGOR_P6032)
 	    {
-		/* XXX */
+		struct p6032_config *acp = &p6032_configuration;
+
+		iba.iba_iot = &acp->ac_iot;
+		iba.iba_memt = &acp->ac_memt;
+		iba.iba_dmat = &acp->ac_isa_dmat;
 	    }
 #endif
 

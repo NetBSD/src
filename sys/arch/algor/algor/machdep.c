@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2001/06/14 16:14:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2001/06/22 06:02:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -309,9 +309,45 @@ mach_init(int argc, char *argv[], char *envp[])
 	    }
 #elif defined(ALGOR_P6032)
 	    {
-		/* XXX XXX XXX */
+		struct p6032_config *acp = &p6032_configuration;
+		struct bonito_config *bc = &acp->ac_bonito;
+		bus_space_handle_t sh;
 
 		strcpy(cpu_model, "Algorithmics P-6032");
+
+		bc->bc_adbase = 11;
+		
+		led_display('b','n','t','o');
+		bonito_pci_init(&acp->ac_pc, bc);
+
+		led_display('i','o',' ',' ');
+		algor_p6032_bus_io_init(&acp->ac_iot, acp);
+
+		led_display('m','e','m',' ');
+		algor_p6032_bus_mem_init(&acp->ac_memt, acp);
+
+		led_display('d','m','a',' ');
+		algor_p6032_dma_init(acp);
+#if NCOM > 0
+		/*
+		 * Delay to allow firmware putchars to complete.
+		 * FIFO depth * character time.
+		 * character time = (1000000 / (defaultrate / 10))
+		 */
+		led_display('c','o','n','s');
+		DELAY(160000000 / comcnrate);
+		if (comcnattach(&acp->ac_iot, 0x3f8, comcnrate,
+		    COM_FREQ,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
+			panic("p6032: unable to initialize serial console");
+#else
+		panic("p6032: not configured to use serial console");
+#endif /* NCOM > 0 */
+
+		led_display('h','z',' ',' ');
+		bus_space_map(&acp->ac_iot, 0x70, 2, 0, &sh);
+		algor_p6032_cal_timer(&acp->ac_iot, sh);
+		bus_space_unmap(&acp->ac_iot, sh, 2);
 	    }
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
@@ -767,9 +803,22 @@ algor_get_ethaddr(struct pci_attach_args *pa, u_int8_t *buf)
 #elif defined(ALGOR_P5064)
 	if (pa->pa_bus != 0 || pa->pa_device != 0 || pa->pa_function != 0)
 		return (0);
+#elif defined(ALGOR_P6032)
+	if (pa->pa_bus != 0 || pa->pa_device != 16 || pa->pa_function != 0)
+		return (0);
 #endif
 
 	if (buf != NULL)
 		memcpy(buf, algor_ethaddr, sizeof(algor_ethaddr));
+#if defined(ALGOR_P4032)
+	/*
+	 * XXX This is gross, disgusting, and otherwise vile, but
+	 * XXX V962 rev. < B2 have broken DMA FIFOs.  Give the
+	 * XXX on-board Ethernet a different DMA window that
+	 * XXX has pre-fetching enabled so that Ethernet performance
+	 * XXX doesn't completely suck.
+	 */
+	pa->pa_dmat = &p4032_configuration.ac_pci_pf_dmat;
+#endif
 	return (1);
 }
