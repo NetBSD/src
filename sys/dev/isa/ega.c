@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.1 1999/12/13 16:28:57 drochner Exp $ */
+/* $NetBSD: ega.c,v 1.2 2000/01/05 18:27:47 ad Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -373,11 +373,8 @@ ega_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
-#ifdef PCDISPLAY_SOFTCURSOR
-		/* disable hardware cursor */
-		vga_6845_write(&vc->hdl, curstart, 0x10);
-		vga_6845_write(&vc->hdl, curend, 0x10);
-#endif
+
+		pcdisplay_cursor_init(&scr->pcs);
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
