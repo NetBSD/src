@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdio.h>
@@ -48,19 +48,20 @@ struct entry_modifier {
   ~entry_modifier();
 };
 
+enum format_type {
+  FORMAT_LEFT, 
+  FORMAT_CENTER, 
+  FORMAT_RIGHT, 
+  FORMAT_NUMERIC,
+  FORMAT_ALPHABETIC,
+  FORMAT_SPAN, 
+  FORMAT_VSPAN,
+  FORMAT_HLINE,
+  FORMAT_DOUBLE_HLINE
+};
+
 struct entry_format : entry_modifier {
-  enum format_type {
-    LEFT, 
-    CENTER, 
-    RIGHT, 
-    NUMERIC,
-    ALPHABETIC,
-    SPAN, 
-    VSPAN,
-    HLINE,
-    DOUBLE_HLINE,
-    }
-  type;
+  format_type type;
 
   entry_format(format_type);
   entry_format();
@@ -78,6 +79,7 @@ class table {
   int ncolumns;
   int linesize;
   char delim[2];
+  char decimal_point_char;
   vertical_rule *vrule_list;
   stuff *stuff_list;
   horizontal_span *span_list;
@@ -123,9 +125,10 @@ public:
     EXPAND = 02,
     BOX = 04,
     ALLBOX = 010,
-    DOUBLEBOX = 020
+    DOUBLEBOX = 020,
+    NOKEEP = 040
     };
-  table(int nc, unsigned flags, int linesize);
+  table(int nc, unsigned flags, int linesize, char decimal_point_char);
   ~table();
 
   void add_text_line(int r, const string &, const char *, int);
