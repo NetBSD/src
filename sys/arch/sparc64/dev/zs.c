@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 2000/04/10 13:34:18 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 2000/04/13 09:52:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 #include <ddb/db_output.h>
 
 #include <sparc64/sparc64/vaddrs.h>
-#include <sparc64/sparc64/auxreg.h>
 #include <sparc64/dev/cons.h>
 
 #include "kbd.h"	/* NKBD */
