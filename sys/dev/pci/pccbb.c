@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.114 2005/01/27 02:58:52 jmcneill Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.115 2005/01/27 03:03:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.114 2005/01/27 02:58:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.115 2005/01/27 03:03:33 jmcneill Exp $");
 
 /*
 #define CBB_DEBUG
@@ -3430,7 +3430,7 @@ pccbb_powerhook(why, arg)
 				/* setup memory and io space window for CB */
 				pccbb_winset(0x1000, sc, sc->sc_memt);
 				pccbb_winset(0x04, sc, sc->sc_iot);
-				goto norestore:
+				goto norestore;
 			}
 		}
 		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
