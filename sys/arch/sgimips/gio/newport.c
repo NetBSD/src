@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.1 2003/12/15 05:24:51 lonewolf Exp $	*/
+/*	$NetBSD: newport.c,v 1.2 2004/01/22 14:15:51 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.1 2003/12/15 05:24:51 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.2 2004/01/22 14:15:51 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ newport_setup_hw(struct newport_devconfig *dc)
 	    (1 << REX3_DCBMODE_CSHOLD_SHIFT) |
 	    (1 << REX3_DCBMODE_CSSETUP_SHIFT));
 
-	dc->dc_boardrev = (rex3_read(dc, REX3_REG_DCBDATA0) >> 4) & 0x07;
+	dc->dc_boardrev = (rex3_read(dc, REX3_REG_DCBDATA0) >> 28) & 0x07;
 
 	/* Setup cursor glyph */
 	curp = vc2_read_ireg(dc, VC2_IREG_CURSOR_ENTRY);
