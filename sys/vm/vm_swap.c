@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.36 1997/01/22 07:28:21 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37 1997/04/17 00:12:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,7 +40,6 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/dmap.h>		/* XXX */
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/file.h>
@@ -62,6 +61,7 @@ int	nswap, nswdev;
 int	niswdev;		/* number of interleaved swap devices */
 int	niswap;			/* size of interleaved swap area */
 #endif
+extern	int dmmax;
 
 int swfree __P((struct proc *, int));
 
