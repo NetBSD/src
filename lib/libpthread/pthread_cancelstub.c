@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.10 2005/03/10 00:34:23 kleink Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.11 2005/03/18 11:23:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.10 2005/03/10 00:34:23 kleink Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.11 2005/03/18 11:23:44 kleink Exp $");
 
 /*
- * This is necessary because the fsync_range() name is always weak (it is
- * not a POSIX function).
+ * This is necessary because the names are always weak (they are not
+ * POSIX functions).
  */
 #define	fsync_range	_fsync_range
+#define	pollts		_pollts
 
 /*
  * XXX this is necessary to get the prototypes for the __sigsuspend14
@@ -83,7 +84,11 @@ int	_sys_msgsnd(int, const void *, size_t, int);
 int	_sys___msync13(void *, size_t, int);
 int	_sys_open(const char *, int, ...);
 int	_sys_poll(struct pollfd *, nfds_t, int);
+int	_sys_pollts(struct pollfd *, nfds_t, const struct timespec *,
+	    const sigset_t *);
 ssize_t	_sys_pread(int, void *, size_t, off_t);
+int	_sys_pselect(int, fd_set *, fd_set *, fd_set *,
+	    const struct timespec *, const sigset_t *);
 ssize_t	_sys_pwrite(int, const void *, size_t, off_t);
 ssize_t	_sys_read(int, void *, size_t);
 ssize_t	_sys_readv(int, const struct iovec *, int);
@@ -272,6 +277,21 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	return retval;
 }
 
+int
+pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+    const sigset_t *sigmask)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_pollts(fds, nfds, ts, sigmask);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
 ssize_t
 pread(int d, void *buf, size_t nbytes, off_t offset)
 {
@@ -281,6 +301,22 @@ pread(int d, void *buf, size_t nbytes, off_t offset)
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_pread(d, buf, nbytes, offset);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
+    const struct timespec *timeout, const sigset_t *sigmask)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_pselect(nfds, readfds, writefds, exceptfds, timeout,
+	    sigmask);
 	TESTCANCEL(self);
 
 	return retval;
@@ -396,7 +432,9 @@ __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
 __strong_alias(_open, open)
 __strong_alias(_poll, poll)
+__weak_alias(pollts, _pollts)
 __strong_alias(_pread, pread)
+__strong_alias(_pselect, pselect)
 __strong_alias(_pwrite, pwrite)
 __strong_alias(_read, read)
 __strong_alias(_readv, readv)
