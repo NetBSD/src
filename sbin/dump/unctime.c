@@ -1,4 +1,4 @@
-/*	$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $	*/
+/*	$NetBSD: unctime.c,v 1.11 1997/09/15 07:58:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-static char rcsid[] = "$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $";
+__RCSID("$NetBSD: unctime.c,v 1.11 1997/09/15 07:58:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +49,6 @@ static char rcsid[] = "$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
-#endif
-
-#ifndef __P
-#include <sys/cdefs.h>
 #endif
 
 /*
@@ -73,6 +70,7 @@ static char rcsid[] = "$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $
 #define	E_YEAR		20
 
 static	int lookup __P((char *));
+time_t unctime __P((char *));
 
 
 time_t

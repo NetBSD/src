@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.18 1997/09/15 07:58:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $";
+__RCSID("$NetBSD: dumprmt.c,v 1.18 1997/09/15 07:58:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,13 +83,20 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
-static	int okname __P((char *));
-static	int rmtcall __P((char *, char *));
-static	void rmtconnaborted __P((/* int, int */));
-static	int rmtgetb __P((void));
-static	void rmtgetconn __P((void));
-static	void rmtgets __P((char *, int));
-static	int rmtreply __P((char *));
+static	int	okname __P((char *));
+static	int	rmtcall __P((char *, char *));
+	void	rmtclose __P((void));
+static	void	rmtconnaborted __P((int));
+static	int	rmtgetb __P((void));
+static	void	rmtgetconn __P((void));
+static	void	rmtgets __P((char *, int));
+	int	rmthost __P((char *));
+	int	rmtioctl __P((int, int));
+	int	rmtopen __P((char *, int));
+	int	rmtread __P((char *, int));
+static	int	rmtreply __P((char *));
+	int	rmtseek __P((int, int));
+	int	rmtwrite __P((char *, int));
 
 extern	int ntrec;		/* blocking factor on tape */
 
@@ -110,7 +118,8 @@ rmthost(host)
 }
 
 static void
-rmtconnaborted()
+rmtconnaborted(dummy)
+	int dummy;
 {
 
 	errx(1, "Lost connection to remote host.");
@@ -221,7 +230,7 @@ rmtread(buf, count)
 	for (i = 0; i < n; i += cc) {
 		cc = read(rmtape, buf+i, n - i);
 		if (cc <= 0) {
-			rmtconnaborted();
+			rmtconnaborted(0);
 		}
 	}
 	return (n);
@@ -240,6 +249,7 @@ rmtwrite(buf, count)
 	return (rmtreply("write"));
 }
 
+#if 0		/* XXX unused? */
 void
 rmtwrite0(count)
 	int count;
@@ -265,6 +275,7 @@ rmtwrite2()
 
 	return (rmtreply("write"));
 }
+#endif
 
 int
 rmtseek(offset, pos)
@@ -276,11 +287,12 @@ rmtseek(offset, pos)
 	return (rmtcall("seek", line));
 }
 
-struct	mtget mts;
 
+#if 0		/* XXX unused? */
 struct mtget *
 rmtstatus()
 {
+	struct	mtget mts;
 	int i;
 	char *cp;
 
@@ -291,6 +303,7 @@ rmtstatus()
 		*cp++ = rmtgetb();
 	return (&mts);
 }
+#endif
 
 int
 rmtioctl(cmd, count)
@@ -310,7 +323,7 @@ rmtcall(cmd, buf)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
-		rmtconnaborted();
+		rmtconnaborted(0);
 	return (rmtreply(cmd));
 }
 
@@ -339,7 +352,7 @@ rmtreply(cmd)
 
 		msg("Protocol to remote tape server botched (code \"%s\").\n",
 		    code);
-		rmtconnaborted();
+		rmtconnaborted(0);
 	}
 	return (atoi(code + 1));
 }
@@ -350,7 +363,7 @@ rmtgetb()
 	char c;
 
 	if (read(rmtape, &c, 1) != 1)
-		rmtconnaborted();
+		rmtconnaborted(0);
 	return (c);
 }
 
@@ -374,5 +387,5 @@ rmtgets(line, len)
 	*cp = '\0';
 	msg("Protocol to remote tape server botched.\n");
 	msg("(rmtgets got \"%s\").\n", line);
-	rmtconnaborted();
+	rmtconnaborted(0);
 }
