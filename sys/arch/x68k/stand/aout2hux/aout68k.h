@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: aout68k.h,v 1.2 1999/11/16 00:48:12 itohy Exp $
+ *	$NetBSD: aout68k.h,v 1.3 1999/11/19 03:54:08 itohy Exp $
  */
 /*
  * NetBSD/m68k a.out format (OMAGIC, NMAGIC)
@@ -96,7 +96,7 @@ struct elf_m68k_hdr {
 #define ELFCLASS32	1	/* 32bit */
 #define ELFDATA2MSB	2	/* big endian */
 	be_uint16_t	e_type;		/* type of this file */
-#define EL_EXEC		2
+#define ET_EXEC		2
 	be_uint16_t	e_machine;	/* architecture id */
 #define EM_68K		4
 	be_uint32_t	e_version;
