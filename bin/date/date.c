@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.16 1997/11/05 21:20:51 cgd Exp $	*/
+/*	$NetBSD: date.c,v 1.17 1998/01/20 20:54:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.16 1997/11/05 21:20:51 cgd Exp $");
+__RCSID("$NetBSD: date.c,v 1.17 1998/01/20 20:54:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,9 @@ setthetime(p)
 	case 10:				/* yy */
 		lt->tm_year = ATOI2(p);
 		if (lt->tm_year < 69)		/* hack for 2000 ;-} */
-			lt->tm_year += 100;
+			lt->tm_year += 2000 - TM_YEAR_BASE;
+		else
+			lt->tm_year += 1900 - TM_YEAR_BASE;
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
