@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.8 2002/02/26 22:29:39 tv Exp $
+#	$NetBSD: configure.ac,v 1.9 2002/03/07 18:28:47 tv Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -40,7 +40,15 @@ AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h netconfig.h vis.h,,
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([id_t, long long, u_quad_t])
 
+dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
+dnl including use of compiler primitive types via AC_CHECK_SIZEOF.
+dnl
 define([NB_CHECK_INTTYPE], [
+	AC_CHECK_TYPE(uint][$1][_t,, [
+		AC_CHECK_TYPE(u_int][$1][_t,
+			AC_DEFINE(uint][$1][_t, u_int][$1][_t),
+			AC_MSG_ERROR([cannot find a suitable type for uint][$1][_t]))
+	])
 	AC_CHECK_TYPE(u_int][$1][_t,, [
 		AC_CHECK_TYPE(uint][$1][_t,
 			AC_DEFINE(u_int][$1][_t, uint][$1][_t),
