@@ -127,8 +127,8 @@ int
 _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 			  bool bind_now, bool dodebug)
 {
-	Elf32_Addr *where = (Elf32_Addr *)(obj->relocbase + rela->r_offset);
-	Elf32_Addr new_value;
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr new_value;
 
 	/* Fully resolve procedure addresses now */
 
@@ -143,17 +143,16 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 		if (def == NULL)
 			return -1;
 
-		new_value = (Elf32_Addr)(u_long)
+		new_value = (Elf_Addr)
 		    (defobj->relocbase + def->st_value + rela->r_addend);
 		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
 		    (int)bind_now,
 		    defobj->strtab + def->st_name,
-		    (void *)(u_long)*where, (void *)(u_long)new_value));
+		    (void *)*where, (void *)new_value));
 	} else {
 		if (!obj->mainprog) {
 			/* Just relocate the GOT slots pointing into the PLT */
-			new_value = *where + (Elf32_Addr)(u_long)
-			    obj->relocbase;
+			new_value = *where + (Elf_Addr) obj->relocbase;
 			rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
 			    (void *)(unsigned long)*where));
 		} else {
