@@ -1,0 +1,395 @@
+.\"	$NetBSD: elf.5,v 1.1 2001/04/13 18:47:56 pooka Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This document is derived from work contributed to The NetBSD Foundation
+.\" by Antti Kantee
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 11, 2001
+.Dt ELF 5
+.Os
+.Sh NAME
+.Nm ELF
+.Nd executable and linking format
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <elf.h>
+.Sh DESCRIPTION
+Because of the flexible nature of ELF, the structures describing it are
+available both as 32bit and 64bit versions. This document uses the 32bit
+versions, refer to
+.Pa elf.h
+for the corresponding 64bit versions.
+.Pp
+An ELF object file can come in three different types:
+.Bl -tag -width "relocatable"
+.It executable
+A file suitable for execution. It contains the information required for
+creating a new process image.
+.It relocatable
+Contains the necessary information to be run through the link editor
+.Xr ld 1
+to create an executable or a shared library.
+.It shared
+The shared object contains necessary information which can be used by
+either the link editor
+.Xr ld 1
+at link time or by the dynamic loader
+.Xr ld.so 1
+at run time.
+.El
+.Pp
+ELF files have a dual nature. The assembler
+.Xr as 1
+and linker
+.Xr ld 1
+treat them as a set of sections described by then section headers. The system
+loader treats them as a set of segments described by the program headers.
+.Pp
+The general format of an ELF file is the following: The file starts with an
+ELF header. This is followed by a table of program headers (optional for
+relocatable and shared files). After this come the sections or segments.
+The file ends with a table of section headers (optional for executable
+files).
+.Pp
+A segment can consist of several sections with related attributes. A file
+usually has only a few loadable segments, maybe one read-only/executable for
+code, one for read-only data and one for read/write data. Using segments the
+system can quickly map all the loadable sections into memory with just a few
+operations, instead of having to map each section separately.
+.Pp
+Each file is described by the ELF header:
+.Bd -literal -offset indent
+typedef struct {
+	unsigned char	e_ident[ELF_NIDENT];
+	Elf32_Half	e_type;
+	Elf32_Half	e_machine;
+	Elf32_Word	e_version;
+	Elf32_Addr	e_entry;
+	Elf32_Off	e_phoff;
+	Elf32_Off	e_shoff;
+	Elf32_Word	e_flags;
+	Elf32_Half	e_ehsize;
+	Elf32_Half	e_phentsize;
+	Elf32_Half	e_phnum;
+	Elf32_Half	e_shentsize;
+	Elf32_Half	e_shnum;
+	Elf32_Half	e_shstrndx;
+} Elf32_Ehdr;
+.Ed
+.Pp
+.Bl -tag -width "e_phentsize"
+.It Fa e_ident[]
+The array contains the following information in the indicated locations:
+.Bl -tag -width EI_ABIVERSION
+.It Dv ELFMAG0
+The elements ranging from 
+.Dv ELFMAG0
+to
+.Dv ELFMAG3
+contain the ELF magic number: \\0177ELF
+.It Dv EI_CLASS
+Contains the address size of the binary, either 32 or 64bit.
+.It Dv EI_DATA
+byte order
+.It Dv EI_VERSION
+Contains the ELF header version. This is currently always set to 1.
+.It Dv EI_OSABI
+Contains the operating system ABI identification.
+.It Dv EI_ABIVERSION
+ABI version.
+.El
+.It Fa e_type
+Contains the file type identification. It can be either
+.Dv ET_REL ,
+.Dv ET_EXEC ,
+.Dv ET_DYN ,
+or
+.Dv ET_CORE
+for relocatable, executable, shared, or core, respectively.
+.It Fa e_machine
+Contains the machine type, e.g. SPARC, Alpha, MIPS, ...
+.It Fa e_entry
+The program entry point if the file is executable.
+.It Fa e_phoff
+The position of the program header table in the file or 0 if it doesn't exist.
+.It Fa e_shoff
+The position of the section header table in the file or 0 if it doesn't exist.
+.It Fa e_flags
+Contains processor-specific flags.
+.It Fa e_ehsize
+The size of the ELF header.
+.It Fa e_phentsize
+The size of an entry in the program header table.
+.It Fa e_phnum
+The number of entries in the program header table, or 0 if none exists.
+.It Fa e_shentsize
+The size of an entry in the section header table.
+.It Fa e_shnum
+The number of entries in the section header table, or 0 if none exists.
+.It Fa e_shstrndx
+Contains the index number of the section which contains the section
+name strings.
+.El
+.Pp
+Each ELF section in turn is described by the section header:
+.Bd -literal -offset indent
+typedef struct {
+	Elf32_Word	sh_name;
+	Elf32_Word	sh_type;
+	Elf32_Word	sh_flags;
+	Elf32_Addr	sh_addr;
+	Elf32_Off	sh_offset;
+	Elf32_Word	sh_size;
+	Elf32_Word	sh_link;
+	Elf32_Word	sh_info;
+	Elf32_Word	sh_addralign;
+	Elf32_Word	sh_entsize;
+} Elf32_Shdr;
+.Ed
+.Pp
+.Bl -tag -width "sh_addralign"
+.It Fa sh_name
+Contains an index to the position in the section header string section where
+the name of the current section can be found.
+.It Fa sh_type
+Contains the section type indicator. The more important possible values are:
+.Bl -tag -width "SHT_PROGBITS"
+.It Dv SHT_NULL
+Section is inactive. The other fields contain undefined values.
+.It Dv SHT_PROGBITS
+Section contains program information. It can be for example code, data,
+or debugger information.
+.It Dv SHT_SYMTAB
+Section contains a symbol table. This section usually contains all the
+symbols and is intended for the regular link editor
+.Xr ld 1 .
+.It Dv SHT_STRTAB
+Section contains a string table.
+.It Dv SHT_RELA
+Section contains relocation information. The relocation information located
+here is absolute.
+.It Dv SHT_HASH
+Section contains a symbol hash table.
+.It Dv SHT_DYNAMIC
+Section contains dynamic linking information.
+.It Dv SHT_NOTE
+Section contains some special information. The format can be e.g.
+vendor-specific.
+.It Dv SHT_NOBITS
+Sections contains information similar to
+.Dv SHT_PROGBITS ,
+but takes up no space in the file. This can be used for e.g. bss.
+.It Dv SHT_REL
+Section contains relative relocation information.
+.It Dv SHT_SHLIB
+This section type is reserved but has unspecified semantics.
+.It Dv SHT_DYNSYM
+Section contains a symbol table. This symbol table is intended for the
+dynamic linker, and is kept as small as possible to conserve space, since
+it must be loaded to memory at run time.
+.El
+.It Fa sh_flags
+Contains the section flags, which can have the following values or any
+combination of them:
+.Bl -tag -width SHF_EXECINSTR
+.It Dv SHF_WRITE
+Section is writable after it has been loaded.
+.It Dv SHF_ALLOC
+Section will occupy memory at run time.
+.It Dv SHF_EXECINSTR
+Section contains executable machine instructions.
+.El
+.It Fa sh_addr
+Address to where the section will be loaded, or 0 if this section does not
+reside in memory at run time.
+.It Fa sh_offset
+The byte offset from the beginning of the file to the beginning of this
+section. If the section is of type
+.Dv SHT_NOBITS ,
+this field specifies the conceptual placement in the file.
+.It Fa sh_size
+The size of the section in the file for all types except
+.Dv SHT_NOBITS .
+For that type the value may differ from zero, but the section will still
+always take up no space from the file.
+.It Fa sh_link
+Contains an index to the section header table. The interpretation depends
+on the section type as follows:
+.Pp
+.Bl -tag -compact -width SHT_DYNAMIC
+.It Dv SHT_REL
+.It Dv SHT_RELA
+Section index of the associated symbol table.
+.Pp
+.It Dv SHT_SYMTAB
+.It Dv SHT_DYNSYM
+Section index of the associated string table.
+.Pp
+.It Dv SHT_HASH
+Section index of the symbol table to which the hash table applies.
+.Pp
+.It Dv SHT_DYNAMIC
+Section index of of the string table by which entries in this section are used.
+.El
+.It Fa sh_info
+Contains extra information. The interpretation depends on the type as
+follows:
+.Pp
+.Bl -tag -compact -width SHT_DYNSYM
+.It Dv SHT_REL
+.It Dv SHT_RELA
+Section index of the section to which the relocation information applies.
+.Pp
+.It Dv SHT_SYMTAB
+.It Dv SHT_DYNSYM 
+Contains a value one greater that the last local symbol table index.
+.El
+.It Fa sh_addralign
+Marks the section alignment requirement. If, for example, the section contains
+a doubleword, the entire section must be doubleword aligned to ensure proper
+alignment. Only 0 and integral powers of two are allowed. Values 0 and 1
+denote that the section has no alignment.
+.It Fa sh_entsize
+Contains the entry size of a element for sections which are constructed
+of a table of fixed-size entries. If the section does not hold a table of
+fixed-size entries, this value is 0.
+.El
+.Pp
+Every executable object must contain a program header. The program header
+contains information necessary in constructing a process image.
+.Bd -literal -offset indent
+typedef struct {
+	Elf32_Word	p_type;
+	Elf32_Off	p_offset;
+	Elf32_Addr	p_vaddr;
+	Elf32_Addr	p_paddr;
+	Elf32_Word	p_filesz;
+	Elf32_Word	p_memsz;
+	Elf32_Word	p_flags;
+	Elf32_Word	p_align;
+} Elf32_Phdr;
+.Ed
+.Pp
+.Bl -tag -width p_offset
+.It Fa p_type
+Contains the segment type indicator. The possible values are:
+.Bl -tag -width PT_DYNAMIC
+.It Dv PT_NULL
+Segment is inactive. The other fields contain undefined values.
+.It Dv PT_LOAD
+Segment is loadable. It is loaded to the address described by
+.Fa p_vaddr .
+If
+.Fa p_memsz
+is greater than
+.Fa p_filesz ,
+the memory range from
+.Po Fa p_vaddr 
++
+.Fa p_filesz Pc
+to
+.Po Fa p_vaddr
++
+.Fa p_memsz Pc
+is zero-filled when the segment is loaded.
+.Fa p_filesz
+can not be greater than
+.Fa p_memsz .
+Segments of this type are sorted in the header table by
+.Fa p_vaddr
+in ascending order.
+.It Dv PT_DYNAMIC
+Segment contains dynamic linking information.
+.It Dv PT_INTERP
+Segment contains a null-terminated path name to the interpreter. This segment
+may be present only once in a file, and it must appear before any loadable
+segments.
+.It Dv PT_NOTE
+Segment contains some special information. Format can be e.g. vendor-specific.
+.It Dv PT_SHLIB
+This segment type is reserved but has unspecified semantics. Programs
+that contain a segment of this type do not conform to the ABI.
+.It Dv PT_PHDR
+Values of the other fields, such as size and offset, specify values for the
+program header table. Only one segment of this kind may exist, and
+it must come before any loadable segments.
+.El
+.It Fa p_offset
+Contains the byte offset from the beginning of the file to the beginning
+of this segment.
+.It Fa p_vaddr
+Contains the virtual memory address to which this segment is loaded.
+.It Fa p_paddr
+Contains the physical address to which this segment is loaded. Since
+.Nx
+doesn't use physical addressing, this value is ignored.
+.It Fa p_filesz
+Contains the number of bytes this segment occupies in the file image.
+.It Fa p_memsz
+Contains the number of bytes this segment occupies in the memory image.
+.It Fa p_flags
+Contains the segment flags, which specify the permissions for the segment
+after it has been loaded. The following values or any combination of them
+is acceptable:
+.Bl -tag -width PF_R
+.It Dv PF_R
+Segment can be read.
+.It Dv PF_R
+Segment can be written.
+.It Dv PF_X
+Segment is executable.
+.El
+.It Fa p_align
+Contains the segment alignment. Acceptable values are 0 and 1 for no alignment,
+and integral powers of two.
+.Fa p_vaddr
+should equal
+.Fa p_offset
+modulo
+.Fa p_align .
+.El
+.Sh SEE ALSO
+.Xr as 1 ,
+.Xr gdb 1 ,
+.Xr ld 1 ,
+.Xr ld.so 1 ,
+.Xr execve 2 ,
+.Xr nlist 3 ,
+.Xr a.out 5 ,
+.Xr core 5
+.Xr link 5 ,
+.Xr stab 5 .
+.Sh HISTORY
+.Pa ELF
+first appeared in
+.At V .
