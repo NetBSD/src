@@ -33,6 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)mklocale.1	8.2 (Berkeley) 4/18/94
+.\" $FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp $
 .\"
 .Dd April 18, 1994
 .Dt MKLOCALE 1
@@ -42,8 +43,14 @@
 .Nd make LC_CTYPE locale files
 .Sh SYNOPSIS
 .Nm mklocale
+.Op Fl d
 .Ar "< src-file"
 .Ar "> language/LC_CTYPE"
+.Nm mklocale
+.Op Fl d
+.Fl o
+.Ar language/LC_CTYPE
+.Ar src-file
 .Sh DESCRIPTION
 The
 .Nm mklocale
@@ -61,6 +68,14 @@ It consists of a series of lines which start with a keyword and have
 associated data following.  C style comments are used
 to place comments in the file.
 .Pp
+Following options are available:
+.Bl -tag -width indent
+.It Fl d
+Turns on debuging messages.
+.It Fl o
+Specify output file.
+.El
+.Pp
 Besides the keywords which will be listed below,
 the following are valid tokens in
 .Ar src-file :
@@ -71,7 +86,7 @@ A
 may be any of the following:
 .Bl -tag -width 0x[0-9a-z]*
 .It Ar 'x'
-The ascii character
+The ASCII character
 .Ar x .
 .It Ar '\ex'
 The ANSI C character
@@ -187,7 +202,7 @@ Defines a map from runes to their digit value.
 .Dv RUNE2
 is the integer value represented  by
 .Dv RUNE1 .
-For example, the ascii character
+For example, the ASCII character
 .Nm '0'
 would map to the decimal value
 .Nm 0 .
@@ -241,7 +256,7 @@ Defines runes which are special characters, printable and graphic.
 Defines runes which are phonograms, printable and graphic.
 .El
 .Sh SEE ALSO
-.Xr mklocale 1 ,
+.Xr colldef 1 ,
 .Xr mbrune 3 ,
 .Xr rune 3 ,
 .Xr setlocale 3 ,

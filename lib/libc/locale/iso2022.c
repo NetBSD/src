@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: iso2022.c,v 1.1.2.1 2000/05/28 22:41:04 minoura Exp $
+ *	$Id: iso2022.c,v 1.1.2.2 2000/06/23 16:58:56 minoura Exp $
  */
 
 #if defined(XPG4) || defined(DLRUNEMOD)
@@ -420,7 +420,7 @@ _ISO2022_sgetrune(string, n, result, state)
 			CES->g[string[2] - '('].type = CS94MULTI;
 			CES->g[string[2] - '('].final = string[3];
 			CES->g[string[2] - '('].interm = '\0';
-			CES->g[string[2] - ','].vers = '\0';
+			CES->g[string[2] - '('].vers = '\0';
 			string += 4;
 			continue;
 		}
@@ -443,7 +443,7 @@ _ISO2022_sgetrune(string, n, result, state)
 			CES->g[string[5] - '('].type = CS94MULTI;
 			CES->g[string[5] - '('].final = string[6];
 			CES->g[string[5] - '('].interm = '\0';
-			CES->g[string[5] - ','].vers = string[2];
+			CES->g[string[5] - '('].vers = string[2];
 			string += 4;
 			continue;
 		}

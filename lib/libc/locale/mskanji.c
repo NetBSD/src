@@ -31,7 +31,7 @@
  * SUCH DAMAGE.  
  */  
 
-#if defined(XPG4) || defined(DLRUNEMOD)
+#if defined(DLRUNEMOD)
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #endif /* LIBC_SCCS and not lint */
@@ -120,4 +120,4 @@ _MSKanji_sputrune(c, string, n, result, state)
 	}
 	return len;
 }
-#endif  /* XPG4 || DLRUNEMOD */
+#endif  /* DLRUNEMOD */

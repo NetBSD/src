@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_memchr.c,v 1.1 1997/11/06 00:52:03 cgd Exp $	*/
+/* $NetBSD: Lint_memchr.c,v 1.1.10.1 2000/06/23 16:59:13 minoura Exp $ */
 
 /*
  * This file placed in the public domain.
