@@ -182,7 +182,7 @@ des-cbc		{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
 simple		{ PREPROC; yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
 blowfish-cbc	{ PREPROC; yylval.num = SADB_EALG_BLOWFISHCBC; return(ALG_ENC); }
 cast128-cbc	{ PREPROC; yylval.num = SADB_EALG_CAST128CBC; return(ALG_ENC); }
-rc5-cbc		{ PREPROC; yylval.num = SADB_EALG_RC5CBC; return(ALG_ENC); }
+	/* rc5-cbc		{ PREPROC; yylval.num = SADB_EALG_RC5CBC; return(ALG_ENC); }  */
 des-deriv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
 des-32iv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
 
