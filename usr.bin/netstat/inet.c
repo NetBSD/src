@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.16 1996/10/07 18:42:25 explorer Exp $	*/
+/*	$NetBSD: inet.c,v 1.17 1996/10/08 01:18:10 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.16 1996/10/07 18:42:25 explorer Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.17 1996/10/08 01:18:10 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,56 +179,56 @@ tcp_stats(off, name)
 #define	p3(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plurales(tcpstat.f))
 
-	p(tcps_sndtotal, "\t%u packet%s sent\n");
+	p(tcps_sndtotal, "\t%lu packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
-		"\t\t%u data packet%s (%u byte%s)\n");
+		"\t\t%lu data packet%s (%lu byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
-		"\t\t%u data packet%s (%u byte%s) retransmitted\n");
+		"\t\t%lu data packet%s (%lu byte%s) retransmitted\n");
 	p2(tcps_sndacks, tcps_delack,
-		"\t\t%u ack-only packet%s (%u delayed)\n");
-	p(tcps_sndurg, "\t\t%u URG only packet%s\n");
-	p(tcps_sndprobe, "\t\t%u window probe packet%s\n");
-	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
-	p(tcps_sndctrl, "\t\t%u control packet%s\n");
-	p(tcps_rcvtotal, "\t%u packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %u byte%s)\n");
-	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
-	p(tcps_rcvacktoomuch, "\t\t%u ack%s for unsent data\n");
+		"\t\t%lu ack-only packet%s (%lu delayed)\n");
+	p(tcps_sndurg, "\t\t%lu URG only packet%s\n");
+	p(tcps_sndprobe, "\t\t%lu window probe packet%s\n");
+	p(tcps_sndwinup, "\t\t%lu window update packet%s\n");
+	p(tcps_sndctrl, "\t\t%lu control packet%s\n");
+	p(tcps_rcvtotal, "\t%lu packet%s received\n");
+	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%lu ack%s (for %lu byte%s)\n");
+	p(tcps_rcvdupack, "\t\t%lu duplicate ack%s\n");
+	p(tcps_rcvacktoomuch, "\t\t%lu ack%s for unsent data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
-		"\t\t%u packet%s (%u byte%s) received in-sequence\n");
+		"\t\t%lu packet%s (%lu byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
-		"\t\t%u completely duplicate packet%s (%u byte%s)\n");
-	p(tcps_pawsdrop, "\t\t%u old duplicate packet%s\n");
+		"\t\t%lu completely duplicate packet%s (%lu byte%s)\n");
+	p(tcps_pawsdrop, "\t\t%lu old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-		"\t\t%u packet%s with some dup. data (%u byte%s duped)\n");
+		"\t\t%lu packet%s with some dup. data (%lu byte%s duped)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
-		"\t\t%u out-of-order packet%s (%u byte%s)\n");
+		"\t\t%lu out-of-order packet%s (%lu byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
-		"\t\t%u packet%s (%u byte%s) of data after window\n");
-	p(tcps_rcvwinprobe, "\t\t%u window probe%s\n");
-	p(tcps_rcvwinupd, "\t\t%u window update packet%s\n");
-	p(tcps_rcvafterclose, "\t\t%u packet%s received after close\n");
-	p(tcps_rcvbadsum, "\t\t%u discarded for bad checksum%s\n");
-	p(tcps_rcvbadoff, "\t\t%u discarded for bad header offset field%s\n");
-	p(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
-	p(tcps_connattempt, "\t%u connection request%s\n");
-	p(tcps_accepts, "\t%u connection accept%s\n");
-	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
+		"\t\t%lu packet%s (%lu byte%s) of data after window\n");
+	p(tcps_rcvwinprobe, "\t\t%lu window probe%s\n");
+	p(tcps_rcvwinupd, "\t\t%lu window update packet%s\n");
+	p(tcps_rcvafterclose, "\t\t%lu packet%s received after close\n");
+	p(tcps_rcvbadsum, "\t\t%lu discarded for bad checksum%s\n");
+	p(tcps_rcvbadoff, "\t\t%lu discarded for bad header offset field%s\n");
+	p(tcps_rcvshort, "\t\t%lu discarded because packet too short\n");
+	p(tcps_connattempt, "\t%lu connection request%s\n");
+	p(tcps_accepts, "\t%lu connection accept%s\n");
+	p(tcps_connects, "\t%lu connection%s established (including accepts)\n");
 	p2(tcps_closed, tcps_drops,
-		"\t%u connection%s closed (including %u drop%s)\n");
-	p(tcps_conndrops, "\t%u embryonic connection%s dropped\n");
+		"\t%lu connection%s closed (including %lu drop%s)\n");
+	p(tcps_conndrops, "\t%lu embryonic connection%s dropped\n");
 	p2(tcps_rttupdated, tcps_segstimed,
-		"\t%u segment%s updated rtt (of %u attempt%s)\n");
-	p(tcps_rexmttimeo, "\t%u retransmit timeout%s\n");
-	p(tcps_timeoutdrop, "\t\t%u connection%s dropped by rexmit timeout\n");
-	p(tcps_persisttimeo, "\t%u persist timeout%s\n");
-	p(tcps_keeptimeo, "\t%u keepalive timeout%s\n");
-	p(tcps_keepprobe, "\t\t%u keepalive probe%s sent\n");
-	p(tcps_keepdrops, "\t\t%u connection%s dropped by keepalive\n");
-	p(tcps_predack, "\t%u correct ACK header prediction%s\n");
-	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
-	p3(tcps_pcbhashmiss, "\t%u PCB hash miss%s\n");
-	p(tcps_noport, "\t%u dropped due to no socket\n");
+		"\t%lu segment%s updated rtt (of %lu attempt%s)\n");
+	p(tcps_rexmttimeo, "\t%lu retransmit timeout%s\n");
+	p(tcps_timeoutdrop, "\t\t%lu connection%s dropped by rexmit timeout\n");
+	p(tcps_persisttimeo, "\t%lu persist timeout%s\n");
+	p(tcps_keeptimeo, "\t%lu keepalive timeout%s\n");
+	p(tcps_keepprobe, "\t\t%lu keepalive probe%s sent\n");
+	p(tcps_keepdrops, "\t\t%lu connection%s dropped by keepalive\n");
+	p(tcps_predack, "\t%lu correct ACK header prediction%s\n");
+	p(tcps_preddat, "\t%lu correct data packet header prediction%s\n");
+	p3(tcps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
+	p(tcps_noport, "\t%lu dropped due to no socket\n");
 
 #undef p
 #undef p2
@@ -256,13 +256,13 @@ udp_stats(off, name)
 #define	p3(f, m) if (udpstat.f || sflag <= 1) \
     printf(m, udpstat.f, plurales(udpstat.f))
 
-	p(udps_ipackets, "\t%u datagram%s received\n");
-	p(udps_hdrops, "\t%u with incomplete header\n");
-	p(udps_badlen, "\t%u with bad data length field\n");
-	p(udps_badsum, "\t%u with bad checksum\n");
-	p(udps_noport, "\t%u dropped due to no socket\n");
-	p(udps_noportbcast, "\t%u broadcast/multicast datagram%s dropped due to no socket\n");
-	p(udps_fullsock, "\t%u dropped due to full socket buffers\n");
+	p(udps_ipackets, "\t%lu datagram%s received\n");
+	p(udps_hdrops, "\t%lu with incomplete header\n");
+	p(udps_badlen, "\t%lu with bad data length field\n");
+	p(udps_badsum, "\t%lu with bad checksum\n");
+	p(udps_noport, "\t%lu dropped due to no socket\n");
+	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
+	p(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
 	delivered = udpstat.udps_ipackets -
 		    udpstat.udps_hdrops -
 		    udpstat.udps_badlen -
@@ -271,9 +271,9 @@ udp_stats(off, name)
 		    udpstat.udps_noportbcast -
 		    udpstat.udps_fullsock;
 	if (delivered || sflag <= 1)
-		printf("\t%u delivered\n", delivered);
-	p3(udps_pcbhashmiss, "\t%u PCB hash miss%s\n");
-	p(udps_opackets, "\t%u datagram%s output\n");
+		printf("\t%lu delivered\n", delivered);
+	p3(udps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
+	p(udps_opackets, "\t%lu datagram%s output\n");
 
 #undef p
 #undef p3
@@ -297,31 +297,31 @@ ip_stats(off, name)
 #define	p(f, m) if (ipstat.f || sflag <= 1) \
     printf(m, ipstat.f, plural(ipstat.f))
 
-	p(ips_total, "\t%u total packet%s received\n");
-	p(ips_badsum, "\t%u bad header checksum%s\n");
-	p(ips_toosmall, "\t%u with size smaller than minimum\n");
-	p(ips_tooshort, "\t%u with data size < data length\n");
-	p(ips_badhlen, "\t%u with header length < data size\n");
-	p(ips_badlen, "\t%u with data length < header length\n");
-	p(ips_badoptions, "\t%u with bad options\n");
-	p(ips_badvers, "\t%u with incorrect version number\n");
-	p(ips_fragments, "\t%u fragment%s received\n");
-	p(ips_fragdropped, "\t%u fragment%s dropped (dup or out of space)\n");
-	p(ips_badfrags, "\t%u malformed fragment%s dropped\n");
-	p(ips_fragtimeout, "\t%u fragment%s dropped after timeout\n");
-	p(ips_reassembled, "\t%u packet%s reassembled ok\n");
-	p(ips_delivered, "\t%u packet%s for this host\n");
-	p(ips_noproto, "\t%u packet%s for unknown/unsupported protocol\n");
-	p(ips_forward, "\t%u packet%s forwarded\n");
-	p(ips_cantforward, "\t%u packet%s not forwardable\n");
-	p(ips_redirectsent, "\t%u redirect%s sent\n");
-	p(ips_localout, "\t%u packet%s sent from this host\n");
-	p(ips_rawout, "\t%u packet%s sent with fabricated ip header\n");
-	p(ips_odropped, "\t%u output packet%s dropped due to no bufs, etc.\n");
-	p(ips_noroute, "\t%u output packet%s discarded due to no route\n");
-	p(ips_fragmented, "\t%u output datagram%s fragmented\n");
-	p(ips_ofragments, "\t%u fragment%s created\n");
-	p(ips_cantfrag, "\t%u datagram%s that can't be fragmented\n");
+	p(ips_total, "\t%lu total packet%s received\n");
+	p(ips_badsum, "\t%lu bad header checksum%s\n");
+	p(ips_toosmall, "\t%lu with size smaller than minimum\n");
+	p(ips_tooshort, "\t%lu with data size < data length\n");
+	p(ips_badhlen, "\t%lu with header length < data size\n");
+	p(ips_badlen, "\t%lu with data length < header length\n");
+	p(ips_badoptions, "\t%lu with bad options\n");
+	p(ips_badvers, "\t%lu with incorrect version number\n");
+	p(ips_fragments, "\t%lu fragment%s received\n");
+	p(ips_fragdropped, "\t%lu fragment%s dropped (dup or out of space)\n");
+	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
+	p(ips_fragtimeout, "\t%lu fragment%s dropped after timeout\n");
+	p(ips_reassembled, "\t%lu packet%s reassembled ok\n");
+	p(ips_delivered, "\t%lu packet%s for this host\n");
+	p(ips_noproto, "\t%lu packet%s for unknown/unsupported protocol\n");
+	p(ips_forward, "\t%lu packet%s forwarded\n");
+	p(ips_cantforward, "\t%lu packet%s not forwardable\n");
+	p(ips_redirectsent, "\t%lu redirect%s sent\n");
+	p(ips_localout, "\t%lu packet%s sent from this host\n");
+	p(ips_rawout, "\t%lu packet%s sent with fabricated ip header\n");
+	p(ips_odropped, "\t%lu output packet%s dropped due to no bufs, etc.\n");
+	p(ips_noroute, "\t%lu output packet%s discarded due to no route\n");
+	p(ips_fragmented, "\t%lu output datagram%s fragmented\n");
+	p(ips_ofragments, "\t%lu fragment%s created\n");
+	p(ips_cantfrag, "\t%lu datagram%s that can't be fragmented\n");
 #undef p
 }
 
@@ -366,32 +366,32 @@ icmp_stats(off, name)
 #define	p(f, m) if (icmpstat.f || sflag <= 1) \
     printf(m, icmpstat.f, plural(icmpstat.f))
 
-	p(icps_error, "\t%u call%s to icmp_error\n");
+	p(icps_error, "\t%lu call%s to icmp_error\n");
 	p(icps_oldicmp,
-	    "\t%u error%s not generated 'cuz old message was icmp\n");
+	    "\t%lu error%s not generated 'cuz old message was icmp\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_outhist[i] != 0) {
 			if (first) {
 				printf("\tOutput histogram:\n");
 				first = 0;
 			}
-			printf("\t\t%s: %u\n", icmpnames[i],
+			printf("\t\t%s: %lu\n", icmpnames[i],
 				icmpstat.icps_outhist[i]);
 		}
-	p(icps_badcode, "\t%u message%s with bad code fields\n");
-	p(icps_tooshort, "\t%u message%s < minimum length\n");
-	p(icps_checksum, "\t%u bad checksum%s\n");
-	p(icps_badlen, "\t%u message%s with bad length\n");
+	p(icps_badcode, "\t%lu message%s with bad code fields\n");
+	p(icps_tooshort, "\t%lu message%s < minimum length\n");
+	p(icps_checksum, "\t%lu bad checksum%s\n");
+	p(icps_badlen, "\t%lu message%s with bad length\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_inhist[i] != 0) {
 			if (first) {
 				printf("\tInput histogram:\n");
 				first = 0;
 			}
-			printf("\t\t%s: %u\n", icmpnames[i],
+			printf("\t\t%s: %lu\n", icmpnames[i],
 				icmpstat.icps_inhist[i]);
 		}
-	p(icps_reflect, "\t%u message response%s generated\n");
+	p(icps_reflect, "\t%lu message response%s generated\n");
 #undef p
 }
 
@@ -414,15 +414,15 @@ igmp_stats(off, name)
     printf(m, igmpstat.f, plural(igmpstat.f))
 #define	py(f, m) if (igmpstat.f || sflag <= 1) \
     printf(m, igmpstat.f, igmpstat.f != 1 ? "ies" : "y")
-	p(igps_rcv_total, "\t%u message%s received\n");
-        p(igps_rcv_tooshort, "\t%u message%s received with too few bytes\n");
-        p(igps_rcv_badsum, "\t%u message%s received with bad checksum\n");
-        py(igps_rcv_queries, "\t%u membership quer%s received\n");
-        py(igps_rcv_badqueries, "\t%u membership quer%s received with invalid field(s)\n");
-        p(igps_rcv_reports, "\t%u membership report%s received\n");
-        p(igps_rcv_badreports, "\t%u membership report%s received with invalid field(s)\n");
-        p(igps_rcv_ourreports, "\t%u membership report%s received for groups to which we belong\n");
-        p(igps_snd_reports, "\t%u membership report%s sent\n");
+	p(igps_rcv_total, "\t%lu message%s received\n");
+        p(igps_rcv_tooshort, "\t%lu message%s received with too few bytes\n");
+        p(igps_rcv_badsum, "\t%lu message%s received with bad checksum\n");
+        py(igps_rcv_queries, "\t%lu membership quer%s received\n");
+        py(igps_rcv_badqueries, "\t%lu membership quer%s received with invalid field(s)\n");
+        p(igps_rcv_reports, "\t%lu membership report%s received\n");
+        p(igps_rcv_badreports, "\t%lu membership report%s received with invalid field(s)\n");
+        p(igps_rcv_ourreports, "\t%lu membership report%s received for groups to which we belong\n");
+        p(igps_snd_reports, "\t%lu membership report%s sent\n");
 #undef p
 #undef py
 }
