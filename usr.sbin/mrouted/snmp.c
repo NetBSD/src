@@ -1,4 +1,4 @@
-/*	$NetBSD: snmp.c,v 1.4 1999/01/23 22:44:43 hwr Exp $	*/
+/*	$NetBSD: snmp.c,v 1.4.12.1 2002/06/04 11:57:00 lukem Exp $	*/
 
 #include "defs.h"
 #include <netinet/in_var.h>
@@ -90,6 +90,7 @@ snmp_init(dest_port)
        perror("socket");
        return 1;
    }
+   memset(&me, 0, sizeof(me));
    me.sin_family = AF_INET;
    me.sin_addr.s_addr = INADDR_ANY;
    /* already in network byte order (I think) */
