@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.38 2002/04/28 17:10:39 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.39 2002/04/29 09:33:30 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -497,9 +497,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	frame.sf_sc.sc_r1 = tf->tf_r1;
 	frame.sf_sc.sc_r0 = tf->tf_r0;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
-#ifdef TODO
-	frame.sf_sc.sc_err = tf->tf_err;
-#endif
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -530,9 +527,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	 * Build context to run handler in.
 	 */
 	tf->tf_spc = (int)p->p_sigctx.ps_sigcode;
-#ifdef TODO
-	tf->tf_ssr &= ~(PSL_T|PSL_VM|PSL_AC);
-#endif
 	tf->tf_r15 = (int)fp;
 
 	/* Remember that we're now on the signal stack. */
