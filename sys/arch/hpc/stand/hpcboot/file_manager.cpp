@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.2.24.4 2004/09/21 13:15:48 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.2.24.5 2005/02/24 08:11:15 skrll Exp $	*/
 
 /*-
- * Copyright(c) 1996, 2001 The NetBSD Foundation, Inc.
+ * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

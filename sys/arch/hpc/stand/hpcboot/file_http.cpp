@@ -1,7 +1,7 @@
-/*	$NetBSD: file_http.cpp,v 1.7.14.3 2004/09/21 13:15:48 skrll Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.7.14.4 2005/02/24 08:11:14 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
