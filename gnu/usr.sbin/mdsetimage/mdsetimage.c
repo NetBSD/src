@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.7 2002/09/13 15:29:08 thorpej Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.8 2002/09/26 10:40:59 dbj Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.7 2002/09/13 15:29:08 thorpej Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.8 2002/09/26 10:40:59 dbj Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -78,6 +78,7 @@ static void	usage __P((void)) __attribute__((noreturn));
 static int	find_md_root __P((bfd *, struct symbols symbols[]));
 
 int	verbose;
+int	extract;
 int	setsize;
 
 static const char *progname;
@@ -103,7 +104,7 @@ main(argc, argv)
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "b:sv")) != -1)
+	while ((ch = getopt(argc, argv, "b:svx")) != -1)
 		switch (ch) {
 		case 'b':
 			bfdname = optarg;
@@ -113,6 +114,9 @@ main(argc, argv)
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'x':
+			extract = 1;
 			break;
 		case '?':
 		default:
@@ -126,8 +130,13 @@ main(argc, argv)
 	kfile = argv[0];
 	fsfile = argv[1];
 
-	if ((kfd = open(kfile, O_RDWR, 0))  == -1)
-		err(1, "open %s", kfile);
+	if (extract) {
+		if ((kfd = open(kfile, O_RDONLY, 0))  == -1)
+			err(1, "open %s", kfile);
+	} else {
+		if ((kfd = open(kfile, O_RDWR, 0))  == -1)
+			err(1, "open %s", kfile);
+	}
 
 	bfd_init();
 	if ((abfd = bfd_fdopenr(kfile, bfdname, kfd)) == NULL) {
@@ -161,45 +170,66 @@ main(argc, argv)
 
 	munmap(mappedkfile, ksb.st_size);
 
-	if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
-		err(1, "open %s", fsfile);
-	if (fstat(fsfd, &fssb) == -1)
-		err(1, "fstat %s", fsfile);
-	if (fssb.st_size != (size_t)fssb.st_size)
-		errx(1, "fs image is too big");
-	if (fssb.st_size > md_root_size)
-		errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
-		    (long long)fssb.st_size, (unsigned long)md_root_size);
+	if (extract) {
+		if ((fsfd = open(fsfile, O_WRONLY|O_CREAT, 0777)) == -1)
+			err(1, "open %s", fsfile);
+		left_to_copy = md_root_size;
+	} else {
+		if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
+			err(1, "open %s", fsfile);
+		if (fstat(fsfd, &fssb) == -1)
+			err(1, "fstat %s", fsfile);
+		if (fssb.st_size != (size_t)fssb.st_size)
+			errx(1, "fs image is too big");
+		if (fssb.st_size > md_root_size)
+			errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
+			    (long long)fssb.st_size, (unsigned long)md_root_size);
+		left_to_copy = fssb.st_size;
+	}
 
 	if (verbose)
-		fprintf(stderr, "copying image from %s into %s\n", fsfile,
-		    kfile);
+		fprintf(stderr, "copying image %s %s %s\n", fsfile,
+		    (extract ? "from" : "into"), kfile);
 
-	left_to_copy = fssb.st_size;
 	if (lseek(kfd, md_root_offset, SEEK_SET) != md_root_offset)
 		err(1, "seek %s", kfile);
 	while (left_to_copy > 0) {
 		char buf[CHUNKSIZE];
 		ssize_t todo;
+		int rfd;
+		int wfd;
+		const char *rfile;
+		const char *wfile;
+		if (extract) {
+			rfd = kfd;
+			rfile = kfile;
+			wfd = fsfd;
+			wfile = fsfile;
+		} else {
+			rfd = fsfd;
+			rfile = fsfile;
+			wfd = kfd;
+			wfile = kfile;
+		}
 
 		todo = (left_to_copy > CHUNKSIZE) ? CHUNKSIZE : left_to_copy;
-		if ((rv = read(fsfd, buf, todo)) != todo) {
+		if ((rv = read(rfd, buf, todo)) != todo) {
 			if (rv == -1)
-				err(1, "read %s", fsfile);
+				err(1, "read %s", rfile);
 			else
-				errx(1, "unexpected EOF reading %s", fsfile);
+				errx(1, "unexpected EOF reading %s", rfile);
 		}
-		if ((rv = write(kfd, buf, todo)) != todo) {
+		if ((rv = write(wfd, buf, todo)) != todo) {
 			if (rv == -1)
-				err(1, "write %s", kfile);
+				err(1, "write %s", wfile);
 			else
-				errx(1, "short write writing %s", kfile);
+				errx(1, "short write writing %s", wfile);
 		}
 		left_to_copy -= todo;
 	}
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
-	if (setsize) {
+	if (setsize && !extract) {
 		char buf[sizeof(uint32_t)];
 
 		if (verbose)
