@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142 2003/06/29 22:31:59 fvdl Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.143 2003/07/03 08:28:16 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142 2003/06/29 22:31:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.143 2003/07/03 08:28:16 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -181,8 +181,14 @@ int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_do_newreno = 0;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
-int	tcp_init_win = 1;	/* initial slow start window */
-int	tcp_init_win_local = 4;	/* initial slow start window for local nets */
+#ifndef TCP_INIT_WIN
+#define	TCP_INIT_WIN	1	/* initial slow start window */
+#endif
+#ifndef TCP_INIT_WIN_LOCAL
+#define	TCP_INIT_WIN_LOCAL 4	/* initial slow start window for local nets */
+#endif
+int	tcp_init_win = TCP_INIT_WIN;
+int	tcp_init_win_local = TCP_INIT_WIN_LOCAL;
 int	tcp_mss_ifmtu = 0;
 #ifdef TCP_COMPAT_42
 int	tcp_compat_42 = 1;
