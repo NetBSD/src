@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.9 1998/08/07 10:26:39 drochner Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.3 1999/03/19 05:04:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
