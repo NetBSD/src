@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.7 1995/02/21 07:16:24 mycroft Exp $	*/
+/*	$NetBSD: stand.h,v 1.8 1995/04/22 13:57:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -91,7 +91,7 @@ struct open_file {
 };
 
 #define	SOPEN_MAX	4
-extern struct open_file files[SOPEN_MAX];
+extern struct open_file files[];
 extern int nfsys;
 
 /* f_flags values */
@@ -105,7 +105,7 @@ extern int nfsys;
 #define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
-int	devopen __P((struct open_file *f, char *fname, char **file));
+int	devopen __P((struct open_file *f, const char *fname, char **file));
 void	*alloc __P((unsigned size));
 void	free __P((void *ptr, unsigned size));
 struct	disklabel;
@@ -113,7 +113,8 @@ char	*getdisklabel __P((const char *buf, struct disklabel *lp));
 
 void	printf __P((const char *, ...));
 void	gets __P((char *));
-void	panic __P((const char *, ...));
+__dead void	panic __P((const char *, ...))
+			__attribute__((noreturn));
 int	getchar __P((void));
 void	exec __P((char *, char *, int));
 int	open __P((char *,int));
