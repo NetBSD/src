@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.21 2000/07/08 17:12:08 sommerfeld Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.22 2001/04/25 17:53:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -91,12 +91,9 @@ scanjet_attach(ss, sa)
 	struct ss_softc *ss;
 	struct scsipibus_attach_args *sa;
 {
-#ifdef SCSIDEBUG
-	struct scsipi_link *sc_link = sa->sa_sc_link;
-#endif
 	int error;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
 	printf("%s: ", ss->sc_dev.dv_xname);
@@ -120,7 +117,8 @@ scanjet_attach(ss, sa)
 		printf("HP ScanJet 5p");
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
+	    ("scanjet_attach: scanner_type = %d\n",
 	    ss->sio.scan_scanner_type));
 
 	/* now install special handlers */
@@ -267,7 +265,7 @@ scanjet_read(ss, bp)
 	struct buf *bp;
 {
 	struct scsi_rw_scanner cmd;
-	struct scsipi_link *sc_link = ss->sc_link;
+	struct scsipi_periph *periph = ss->sc_periph;
 	int error;
 
 	/*
@@ -284,9 +282,8 @@ scanjet_read(ss, bp)
 
 	/*
 	 * go ask the adapter to do all this for us
-	 * XXX really need NOSLEEP?
 	 */
-	error = scsipi_command(sc_link,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
@@ -322,7 +319,7 @@ scanjet_ctl_write(ss, buf, size)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_link,
+	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
@@ -348,7 +345,7 @@ scanjet_ctl_read(ss, buf, size)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_link,
+	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
@@ -457,9 +454,9 @@ scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
 {
 	int error;
-	static const char wfail[] = "%s: interrogate write failed\n";
-	static const char rfail[] = "%s: interrogate read failed\n";
-	static const char dfail[] = "%s: bad data returned\n";
+	static const char *wfail = "%s: interrogate write failed\n";
+	static const char *rfail = "%s: interrogate read failed\n";
+	static const char *dfail = "%s: bad data returned\n";
 	char escape_codes[20];
 	char response[20];
 	char *p;

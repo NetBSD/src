@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2001/02/11 00:27:06 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.44 2001/04/25 17:53:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1274,7 +1274,7 @@ device_register(dev, aux)
 		 * correct controller in our boot path.
 		 */
 		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_link *sc_link = sa->sa_sc_link;
+		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsibus_softc *sbsc =
 			(struct scsibus_softc *)dev->dv_parent;
 		u_int target = bp->val[0];
@@ -1287,15 +1287,15 @@ device_register(dev, aux)
 		/*
 		 * Bounds check: we know the target and lun widths.
 		 */
-		if (target > sc_link->scsipi_scsi.max_target ||
-		    lun > sc_link->scsipi_scsi.max_lun) {
+		if (target >= periph->periph_channel->chan_ntargets ||
+		    lun >= periph->periph_channel->chan_nluns) {
 			printf("SCSI disk bootpath component not accepted: "
 			       "target %u; lun %u\n", target, lun);
 			return;
 		}
 
-		if (sc_link->scsipi_scsi.target == target &&
-		    sc_link->scsipi_scsi.lun == lun) {
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
 			    dev->dv_xname));

@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.15 2001/04/25 17:53:29 bouyer Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -750,10 +750,8 @@ typedef struct adw_softc {
 	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
 	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
-	struct scsipi_link	sc_link;     /* prototype for devs */
-	struct scsipi_adapter	sc_adapter;
-
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_adapter   sc_adapter;
+	struct scsipi_channel   sc_channel;
 
 	int			sc_freeze_dev[ADW_MAX_TID+1];
 

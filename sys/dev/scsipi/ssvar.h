@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.7 2000/01/21 23:40:00 thorpej Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.8 2001/04/25 17:53:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -65,7 +65,7 @@ struct ss_softc {
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
 #define	SSF_AUTOCONF	0x04	/* set during auto-configuration */
-	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
+	struct scsipi_periph *sc_periph; /* contains our targ, lun, etc. */
 	struct scan_io sio;
 	struct buf_queue buf_queue;	/* the queue of pending IO operations */
 	u_int quirks;			/* scanner is only mildly twisted */

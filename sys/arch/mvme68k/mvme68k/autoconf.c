@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2000/11/20 19:35:29 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 2001/04/25 17:53:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,7 +198,7 @@ device_register(dev, aux)
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != controller ||
-		    bootdevlun != sa->sa_sc_link->scsipi_scsi.target)
+		    bootdevlun != sa->sa_periph->periph_target)
 			return;
 
 		booted_device = dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.69 2001/04/14 19:37:17 ross Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.70 2001/04/25 17:53:31 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -118,12 +118,12 @@
 #define ALL_TARGETS_MASK 0xFFFF
 #define INITIATOR_WILDCARD	(~0)
 
-#define	SIM_IS_SCSIBUS_B(ahc, sc_link)	\
-	((sc_link)->scsipi_scsi.scsibus == (ahc)->sc_link_b.scsipi_scsi.scsibus)
-#define	SIM_CHANNEL(ahc, sc_link)	\
-	(SIM_IS_SCSIBUS_B(ahc, sc_link) ? 'B' : 'A')
-#define	SIM_SCSI_ID(ahc, sc_link)	\
-	(SIM_IS_SCSIBUS_B(ahc, sc_link) ? ahc->our_id_b : ahc->our_id)
+#define	SIM_IS_SCSIBUS_B(ahc, periph)	\
+	((periph)->periph_channel->chan_channel == 1)
+#define	SIM_CHANNEL(ahc, periph)	\
+	(SIM_IS_SCSIBUS_B(ahc, periph) ? 'B' : 'A')
+#define	SIM_SCSI_ID(ahc, periph)	\
+	(SIM_IS_SCSIBUS_B(ahc, periph) ? ahc->our_id_b : ahc->our_id)
 #define	SCB_IS_SCSIBUS_B(scb)	\
 	(((scb)->hscb->tcl & SELBUSB) != 0)
 #define	SCB_TARGET(scb)	\
@@ -144,9 +144,9 @@
 #define TCL_LUN(tcl) ((tcl) & LID)
 
 #define XS_TCL(ahc, xs) \
-	((((xs)->sc_link->scsipi_scsi.target << 4) & 0xF0) \
-	    | (SIM_IS_SCSIBUS_B((ahc), (xs)->sc_link) ? SELBUSB : 0) \
-	    | ((xs)->sc_link->scsipi_scsi.lun & 0x07))
+	((((xs)->xs_periph->periph_target << 4) & 0xF0) \
+	    | (SIM_IS_SCSIBUS_B((ahc), (xs)->xs_periph) ? SELBUSB : 0) \
+	    | ((xs)->xs_periph->periph_lun & 0x07))
 
 const char * const ahc_chip_names[] =
 {
@@ -201,14 +201,15 @@ static void	ahcfiniscbdata(struct ahc_softc *);
 static void	ahc_dump_targcmd(struct target_cmd *);
 #endif
 static void	ahc_shutdown(void *arg);
-static int32_t	ahc_action(struct scsipi_xfer *);
-static int	ahc_ioctl(struct scsipi_link *, u_long, caddr_t, int,
+static void	ahc_action(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+static int	ahc_ioctl(struct scsipi_channel *, u_long, caddr_t, int,
 			  struct proc *);
-static int	ahc_execute_scb(void *, bus_dma_segment_t *, int);
+static void	ahc_execute_scb(void *, bus_dma_segment_t *, int);
 static int	ahc_poll(struct ahc_softc *, int);
-static int	ahc_setup_data(struct ahc_softc *, struct scsipi_xfer *,
+static void	ahc_setup_data(struct ahc_softc *, struct scsipi_xfer *,
 			       struct scb *);
-static void	ahc_freeze_devq(struct ahc_softc *, struct scsipi_link *);
+static void	ahc_freeze_devq(struct ahc_softc *, struct scsipi_periph *);
 static void	ahcallocscbs(struct ahc_softc *);
 #if UNUSED
 static void	ahc_scb_devinfo(struct ahc_softc *, struct ahc_devinfo *,
@@ -235,10 +236,10 @@ static void	ahc_setup_target_msgin(struct ahc_softc *,
 				       struct ahc_devinfo *);
 static void	ahc_clear_msg_state(struct ahc_softc *);
 static void	ahc_handle_message_phase(struct ahc_softc *,
-					 struct scsipi_link *);
+					 struct scsipi_periph *);
 static int	ahc_sent_msg(struct ahc_softc *, u_int, int);
 
-static int	ahc_parse_msg(struct ahc_softc *, struct scsipi_link *,
+static int	ahc_parse_msg(struct ahc_softc *, struct scsipi_periph *,
 			      struct ahc_devinfo *);
 static void	ahc_handle_ign_wide_residue(struct ahc_softc *,
 					    struct ahc_devinfo *);
@@ -282,8 +283,7 @@ static void	ahc_set_syncrate(struct ahc_softc *, struct ahc_devinfo *,
 				 u_int, int, int);
 static void	ahc_set_width(struct ahc_softc *, struct ahc_devinfo *,
 			      u_int, u_int, int, int);
-static void	ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *,
-			     int);
+static void	ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *, int);
 static void	ahc_construct_sdtr(struct ahc_softc *, u_int, u_int);
 
 static void	ahc_construct_wdtr(struct ahc_softc *, u_int);
@@ -322,50 +322,13 @@ static void ahc_freedmamem(bus_dma_tag_t, int, bus_dmamap_t,
 			   caddr_t, bus_dma_segment_t *, int);
 static void ahcminphys(struct buf *);
 
-static __inline struct scsipi_xfer *ahc_first_xs(struct ahc_softc *);
 static __inline void ahc_swap_hscb(struct hardware_scb *);
 static __inline void ahc_swap_sg(struct ahc_dma_seg *);
-#ifndef AHC_NO_TAGS
-static void ahc_check_tags(struct ahc_softc *, struct scsipi_xfer *);
-#endif
 static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *, int);
 
 #if defined(AHC_DEBUG) && 0
 static void ahc_dumptinfo(struct ahc_softc *, struct ahc_initiator_tinfo *);
 #endif
-
-static struct scsipi_device ahc_dev =
-{
-    NULL,                       /* Use default error handler */
-    NULL,                       /* have a queue, served by this */
-    NULL,                       /* have no async handler */
-    NULL,                       /* Use default 'done' routine */
-};
-
-/*
- * Pick the first xs for a non-blocked target.
- */
-static __inline struct scsipi_xfer *
-ahc_first_xs(struct ahc_softc *ahc)
-{
-	int target;
-	struct scsipi_xfer *xs = TAILQ_FIRST(&ahc->sc_q);
-
-	if (ahc->queue_blocked)
-		return NULL;
-
-	while (xs != NULL) {
-		target = xs->sc_link->scsipi_scsi.target;
-		if (ahc->devqueue_blocked[target] == 0 &&
-		    (ahc_istagged_device(ahc, xs, 0) ||
-		     ahc_index_busy_tcl(ahc, XS_TCL(ahc, xs), FALSE) ==
-		    SCB_LIST_NULL))
-			break;
-		xs = TAILQ_NEXT(xs, adapter_q);
-	}
-
-	return xs;
-}
 
 static __inline void
 ahc_swap_hscb(struct hardware_scb *hscb)
@@ -504,12 +467,9 @@ static __inline void
 ahc_freeze_ccb(struct scb *scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
-	struct ahc_softc *ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
-	int target;
 
-	target = xs->sc_link->scsipi_scsi.target;
 	if (!(scb->flags & SCB_FREEZE_QUEUE)) {
-		ahc->devqueue_blocked[target]++;
+		scsipi_periph_freeze(xs->xs_periph, 1);
 		scb->flags |= SCB_FREEZE_QUEUE;
 	}
 }
@@ -569,7 +529,7 @@ ahc_run_qoutfifo(struct ahc_softc *ahc)
 			scb->xs->resid = 0;
 #ifdef AHC_DEBUG
 		if (ahc_debug & AHC_SHOWSCBS) {
-			scsi_print_addr(scb->xs->sc_link);
+			scsipi_printaddr(scb->xs->xs_periph);
 			printf("run_qoutfifo: SCB %x complete\n",
 			    scb->hscb->tag);
 		}
@@ -601,7 +561,9 @@ ahcfreescb(struct ahc_softc *ahc, struct scb *scb)
 	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0 ||
 	    (scb->flags & SCB_RECOVERY_SCB) != 0) {
 		ahc->flags &= ~AHC_RESOURCE_SHORTAGE;
-		ahc->queue_blocked = 0;
+		scsipi_channel_thaw(&ahc->sc_channel, 1);
+		if (ahc->features & AHC_TWIN)
+			scsipi_channel_thaw(&ahc->sc_channel_b, 1);
 	}
 
 	/* Clean up for the next user */
@@ -1316,12 +1278,12 @@ ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 	if (done) {
 		if (offset != 0) {
 			printf("%s: target %d synchronous at %sMHz, "
-			       "offset = 0x%x\n", ahc_name(ahc),
-			       devinfo->target, syncrate->rate, offset);
+			    "offset = 0x%x\n", ahc_name(ahc),
+			    devinfo->target, syncrate->rate, offset);
 		} else {
 			printf("%s: target %d using "
-			       "asynchronous transfers\n",
-			       ahc_name(ahc), devinfo->target);
+			    "asynchronous transfers\n",
+			    ahc_name(ahc), devinfo->target);
 		}
 	}
 
@@ -1371,8 +1333,8 @@ ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 
 	if (done) {
 		printf("%s: target %d using %dbit transfers\n",
-		       ahc_name(ahc), devinfo->target,
-		       8 * (0x01 << width));
+		    ahc_name(ahc), devinfo->target,
+		    8 * (0x01 << width));
 	}
 
 	if ((type & AHC_TRANS_GOAL) != 0)
@@ -1393,9 +1355,9 @@ ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 	tinfo = ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
 				    devinfo->target, &tstate);
 
-	if (enable)
+	if (enable) {
 		tstate->tagenable |= devinfo->target_mask;
-	else {
+	} else {
 		tstate->tagenable &= ~devinfo->target_mask;
 		tstate->tagdisable |= devinfo->target_mask;
 	}
@@ -1407,36 +1369,35 @@ ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 int
 ahc_attach(struct ahc_softc *ahc)
 {
-	TAILQ_INIT(&ahc->sc_q);
+	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
+	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
+	ahc->sc_adapter.adapt_openings = AHC_SCB_MAX;
+	ahc->sc_adapter.adapt_max_periph = AHC_SCB_MAX;
+	ahc->sc_adapter.adapt_ioctl = ahc_ioctl;
+	ahc->sc_adapter.adapt_minphys = ahcminphys;
+	ahc->sc_adapter.adapt_request = ahc_action;
 
-	ahc->sc_adapter.scsipi_cmd = ahc_action;
-	ahc->sc_adapter.scsipi_minphys = ahcminphys;
-	ahc->sc_adapter.scsipi_ioctl = ahc_ioctl;
-	ahc->sc_link.type = BUS_SCSI;
-	ahc->sc_link.scsipi_scsi.adapter_target = ahc->our_id;
-	ahc->sc_link.scsipi_scsi.channel = 0;
-	ahc->sc_link.scsipi_scsi.max_target =
-	    (ahc->features & AHC_WIDE) ? 15 : 7;
-	ahc->sc_link.scsipi_scsi.max_lun = 7;
-	ahc->sc_link.adapter_softc = ahc;
-	ahc->sc_link.adapter = &ahc->sc_adapter;
-	ahc->sc_link.openings = 2;
-	ahc->sc_link.device = &ahc_dev;
-
+	ahc->sc_channel.chan_adapter = &ahc->sc_adapter;
+	ahc->sc_channel.chan_bustype = &scsi_bustype;
+	ahc->sc_channel.chan_channel = 0;
+	ahc->sc_channel.chan_ntargets = (ahc->features & AHC_WIDE) ? 16 : 8;
+	ahc->sc_channel.chan_nluns = 8;
+	ahc->sc_channel.chan_id = ahc->our_id;
+	
 	if (ahc->features & AHC_TWIN) {
-		ahc->sc_link_b = ahc->sc_link;
-		ahc->sc_link_b.scsipi_scsi.adapter_target = ahc->our_id_b;
-		ahc->sc_link_b.scsipi_scsi.channel = 1;
+		ahc->sc_channel_b = ahc->sc_channel;
+		ahc->sc_channel_b.chan_id = ahc->our_id_b;
+		ahc->sc_channel_b.chan_channel = 1;
 	}
 
 	if ((ahc->flags & AHC_CHANNEL_B_PRIMARY) == 0) {
-		ahc->sc_link_b.scsipi_scsi.scsibus = 0xff;
-		config_found((void *)ahc, &ahc->sc_link, scsiprint);
+		config_found((void *)ahc, &ahc->sc_channel, scsiprint);
 		if (ahc->features & AHC_TWIN)
-			config_found((void *)ahc, &ahc->sc_link_b, scsiprint);
+			config_found((void *)ahc, &ahc->sc_channel_b,
+			    scsiprint);
 	} else {
-		config_found((void *)ahc, &ahc->sc_link_b, scsiprint);
-		config_found((void *)ahc, &ahc->sc_link, scsiprint);
+		config_found((void *)ahc, &ahc->sc_channel_b, scsiprint);
+		config_found((void *)ahc, &ahc->sc_channel, scsiprint);
 	}
 	return 1;
 }
@@ -1765,7 +1726,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			break;
 		}
 		/* Freeze the queue unit the client sees the error. */
-		ahc_freeze_devq(ahc, xs->sc_link);
+		ahc_freeze_devq(ahc, xs->xs_periph);
 		ahc_freeze_ccb(scb);
 		xs->status = hscb->status;
 		switch (hscb->status) {
@@ -1777,7 +1738,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		case SCSI_STATUS_CHECK_COND:
 #if defined(AHC_DEBUG)
 			if (ahc_debug & AHC_SHOWSENSE) {
-				scsi_print_addr(xs->sc_link);
+				scsipi_printaddr(xs->xs_periph);
 				printf("Check Status, resid %d datalen %d\n",
 				    xs->resid, xs->datalen);
 			}
@@ -1802,7 +1763,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 
 #ifdef AHC_DEBUG
 				if (ahc_debug & AHC_SHOWSENSE) {
-					scsi_print_addr(xs->sc_link);
+					scsipi_printaddr(xs->xs_periph);
 					printf("Sending Sense\n");
 				}
 #endif
@@ -1834,7 +1795,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				ahc_calc_residual(scb);
 #if defined(AHC_DEBUG)
 				if (ahc_debug & AHC_SHOWSENSE) {
-					scsi_print_addr(xs->sc_link);
+					scsipi_printaddr(xs->xs_periph);
 					printf("Sense: datalen %d resid %d"
 					       "chan %d id %d targ %d\n",
 					    xs->datalen, xs->resid,
@@ -1884,15 +1845,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			}
 			break;
 		case SCSI_STATUS_QUEUE_FULL:
-			scsi_print_addr(xs->sc_link);
-			printf("queue full\n");
 		case SCSI_STATUS_BUSY:
-			/*
-			 * XXX middle layer doesn't handle XS_BUSY well.
-			 * So, requeue this ourselves internally.
-			 */
 			xs->error = XS_BUSY;
-			scb->flags |= SCB_REQUEUE;
 			break;
 		}
 		break;
@@ -2017,12 +1971,12 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			if (lastphase == phase_table[i].phase)
 				break;
 		}
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("data overrun detected %s."
 		       "  Tag == 0x%x.\n",
 		       phase_table[i].phasemsg,
   		       scb->hscb->tag);
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("%s seen Data Phase.  Length = %d.  NumSGs = %d.\n",
 		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
 		       scb->xs->datalen, scb->sg_count);
@@ -2038,7 +1992,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * Set this and it will take affect when the
 		 * target does a command complete.
 		 */
-		ahc_freeze_devq(ahc, scb->xs->sc_link);
+		ahc_freeze_devq(ahc, scb->xs->xs_periph);
 		ahcsetccbstatus(scb->xs, XS_DRIVER_STUFFUP);
 		ahc_freeze_ccb(scb);
 		break;
@@ -2187,7 +2141,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		}
 		mesg_out = phase_table[i].mesg_out;
 		if (scb != NULL)
-			scsi_print_addr(scb->xs->sc_link);
+			scsipi_printaddr(scb->xs->xs_periph);
 		else
 			printf("%s:%c:%d: ", ahc_name(ahc),
 			       intr_channel,
@@ -2242,7 +2196,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 				tag = scb->hscb->tag;
 				/* FALLTRHOUGH */
 			case MSG_ABORT:
-				scsi_print_addr(scb->xs->sc_link);
+				scsipi_printaddr(scb->xs->xs_periph);
 				printf("SCB %x - Abort %s Completed.\n",
 				       scb->hscb->tag, tag == SCB_LIST_NULL ?
 				       "" : "Tag");
@@ -2295,7 +2249,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 					       SCB_LUN(scb), tag,
 					       ROLE_INITIATOR,
 					       XS_DRIVER_STUFFUP);
-				scsi_print_addr(scb->xs->sc_link);
+				scsipi_printaddr(scb->xs->xs_periph);
 			} else {
 				/*
 				 * We had not fully identified this connection,
@@ -2339,7 +2293,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			u_int tag;
 
 			tag = SCB_LIST_NULL;
-			if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0)
+			if ((scb->hscb->control & TAG_ENB) != 0)
 				tag = scb->hscb->tag;
 
 			ahc_abort_scbs(ahc, SCB_TARGET(scb), SCB_CHANNEL(scb),
@@ -2367,7 +2321,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		ahc_outb(ahc, CLRINT, CLRSCSIINT);
 		restart_sequencer(ahc);
 	} else {
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("Unknown SCSIINT. Status = 0x%x\n", status);
 		ahc_outb(ahc, CLRSINT1, status);
 		ahc_outb(ahc, CLRINT, CLRSCSIINT);
@@ -2440,8 +2394,8 @@ ahc_setup_initiator_msgout(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 		ahc->msgout_len++;
 
 		if ((scb->hscb->control & TAG_ENB) != 0) {
-			/* XXX fvdl FreeBSD has tag action passed down */
-			ahc->msgout_buf[ahc->msgout_index++] = MSG_SIMPLE_Q_TAG;
+			ahc->msgout_buf[ahc->msgout_index++] =
+						scb->xs->xs_tag_type;
 			ahc->msgout_buf[ahc->msgout_index++] = scb->hscb->tag;
 			ahc->msgout_len += 2;
 		}
@@ -2450,7 +2404,7 @@ ahc_setup_initiator_msgout(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 	if (scb->flags & SCB_DEVICE_RESET) {
 		ahc->msgout_buf[ahc->msgout_index++] = MSG_BUS_DEV_RESET;
 		ahc->msgout_len++;
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("Bus Device Reset Message Sent\n");
 	} else if (scb->flags & SCB_ABORT) {
 		if ((scb->hscb->control & TAG_ENB) != 0)
@@ -2458,7 +2412,7 @@ ahc_setup_initiator_msgout(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 		else
 			ahc->msgout_buf[ahc->msgout_index++] = MSG_ABORT;
 		ahc->msgout_len++;
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("Abort Message Sent\n");
 	} else if ((ahc->targ_msg_req & devinfo->target_mask) != 0) {
 		ahc_build_transfer_msg(ahc, devinfo);
@@ -2566,7 +2520,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		       ahc_name(ahc),
 		       devinfo->channel, devinfo->target);
 #endif
-	} else if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0) {
+	} else if ((scb->hscb->control & TAG_ENB) != 0) {
 		printf("%s:%c:%d: refuses tagged commands.  Performing "
 		       "non-tagged I/O\n", ahc_name(ahc),
 		       devinfo->channel, devinfo->target);
@@ -2613,7 +2567,7 @@ ahc_clear_msg_state(struct ahc_softc *ahc)
 }
 
 static void
-ahc_handle_message_phase(struct ahc_softc *ahc, struct scsipi_link *sc_link)
+ahc_handle_message_phase(struct ahc_softc *ahc, struct scsipi_periph *periph)
 {
 	struct	ahc_devinfo devinfo;
 	u_int	bus_phase;
@@ -2708,7 +2662,7 @@ reswitch:
 		/* Pull the byte in without acking it */
 		ahc->msgin_buf[ahc->msgin_index] = ahc_inb(ahc, SCSIBUSL);
 
-		message_done = ahc_parse_msg(ahc, sc_link, &devinfo);
+		message_done = ahc_parse_msg(ahc, periph, &devinfo);
 
 		if (message_done) {
 			/*
@@ -2804,7 +2758,7 @@ reswitch:
 		 */
 		ahc_outb(ahc, SXFRCTL0, ahc_inb(ahc, SXFRCTL0) & ~SPIOEN);
 		ahc->msgin_buf[ahc->msgin_index] = ahc_inb(ahc, SCSIDATL);
-		msgdone = ahc_parse_msg(ahc, sc_link, &devinfo);
+		msgdone = ahc_parse_msg(ahc, periph, &devinfo);
 		if (msgdone == MSGLOOP_TERMINATED) {
 			/*
 			 * The message is *really* done in that it caused
@@ -2904,7 +2858,7 @@ ahc_sent_msg(struct ahc_softc *ahc, u_int msgtype, int full)
 }
 
 static int
-ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_link *sc_link,
+ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_periph *periph,
 	      struct ahc_devinfo *devinfo)
 {
 	struct	ahc_initiator_tinfo *tinfo;
@@ -3312,26 +3266,26 @@ static void
 ahc_done(struct ahc_softc *ahc, struct scb *scb)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	int requeue = 0;
 	int target;
 
 
 	xs = scb->xs;
-	sc_link = xs->sc_link;
+	periph = xs->xs_periph;
 	LIST_REMOVE(scb, plinks);
 
 	callout_stop(&scb->xs->xs_callout);
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWCMDS) {
-		scsi_print_addr(sc_link);
+		scsipi_printaddr(periph);
 		printf("ahc_done opcode %d tag %x\n", xs->cmdstore.opcode,
 		    scb->hscb->tag);
 	}
 #endif
 
-	target = sc_link->scsipi_scsi.target;
+	target = periph->periph_target;
 
 	if (xs->datalen) {
 		int op;
@@ -3388,7 +3342,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 				   SEARCH_REMOVE);
 		if (xs->error != XS_NOERROR)
 			ahcsetccbstatus(xs, XS_TIMEOUT);
-		scsi_print_addr(xs->sc_link);
+		scsipi_printaddr(xs->xs_periph);
 		printf("no longer in timeout, status = %x\n", xs->status);
 	}
 
@@ -3412,7 +3366,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		xs->error = XS_SENSE;
 	}
 	if (scb->flags & SCB_FREEZE_QUEUE) {
-		ahc->devqueue_blocked[target]--;
+		scsipi_periph_thaw(periph, 1);
 		scb->flags &= ~SCB_FREEZE_QUEUE;
 	}
 
@@ -3420,25 +3374,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	ahcfreescb(ahc, scb);
 
 	if (requeue) {
-		/*
-		 * Re-insert at the front of the private queue to
-		 * preserve order.
-		 */
-		int s;
-
-		s = splbio();
-		TAILQ_INSERT_HEAD(&ahc->sc_q, xs, adapter_q);
-		splx(s);
-	} else {
-		xs->xs_status |= XS_STS_DONE;
-#ifndef AHC_NO_TAGS
-		ahc_check_tags(ahc, xs);
-#endif
-		scsipi_done(xs);
+		xs->error = XS_REQUEUE;
 	}
-
-	if ((xs = TAILQ_FIRST(&ahc->sc_q)) != NULL)
-		ahc_action(xs);
+	scsipi_done(xs);
 }
 
 /*
@@ -3846,18 +3784,17 @@ ahc_init(struct ahc_softc *ahc)
 }
 
 static int
-ahc_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr, int flag,
+ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr, int flag,
 	  struct proc *p)
 {
-	struct ahc_softc *ahc = sc_link->adapter_softc;
-	char channel;
+	struct ahc_softc *ahc = (void *)channel->chan_adapter->adapt_dev;
 	int s, ret = ENOTTY;
 
 	switch (cmd) {
 	case SCBUSIORESET:
-		channel = SIM_CHANNEL(ahc, sc_link);
 		s = splbio();
-		ahc_reset_channel(ahc, channel, TRUE);
+		ahc_reset_channel(ahc, channel->chan_channel == 1 ? 'B' : 'A',
+		    TRUE);
 		splx(s);
 		ret = 0;
 		break;
@@ -3874,11 +3811,12 @@ ahc_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr, int flag,
  * for the non-tagged queueing case, but we don't do tagged queueing
  * yet, so..
  */
-static int32_t
-ahc_action(struct scsipi_xfer *xs)
+static void
+ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
-	struct scsipi_xfer *first_xs, *next_xs = NULL;
-	struct ahc_softc *ahc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct ahc_softc *ahc = (void *)chan->chan_adapter->adapt_dev;
 	struct scb *scb;
 	struct hardware_scb *hscb;
 	struct ahc_initiator_tinfo *tinfo;
@@ -3888,193 +3826,143 @@ ahc_action(struct scsipi_xfer *xs)
 	int s, tcl;
 	u_int16_t mask;
 	char channel;
-	int dontqueue = 0, fromqueue = 0;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
+		SC_DEBUG(periph, SDEV_DB3, ("ahc_action\n"));
 
-	/* must protect the queue */
-	s = splbio();
+		/* must protect the queue */
+		s = splbio();
 
-	if (xs == TAILQ_FIRST(&ahc->sc_q)) {
-		/*
-		 * Called from ahc_done. Calling with the first entry in
-		 * the queue is really just a way of seeing where we're
-		 * called from. Now, find the first eligible SCB to send,
-		 * e.g. one which will be accepted immediately.
-		 */
+		tcl = XS_TCL(ahc, xs);
 
-		if (ahc->queue_blocked) {
-			splx(s);
-			return (TRY_AGAIN_LATER);
+		if (!ahc_istagged_device(ahc, xs, 0) &&
+		     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL) {
+			panic("ahc_action: not tagged and device busy");
 		}
 
-		xs = ahc_first_xs(ahc);
-		if (xs == NULL) {
-			splx(s);
-			return (TRY_AGAIN_LATER);
-		}
 
-		next_xs = TAILQ_NEXT(xs, adapter_q);
-		TAILQ_REMOVE(&ahc->sc_q, xs, adapter_q);
-		fromqueue = 1;
-		goto get_scb;
-	}
-
-	/*
-	 * If no new requests are accepted, just insert into the
-	 * private queue to wait for our turn.
-	 */
-	tcl = XS_TCL(ahc, xs);
-
-	if (ahc->queue_blocked ||
-	    ahc->devqueue_blocked[xs->sc_link->scsipi_scsi.target] ||
-	    (!ahc_istagged_device(ahc, xs, 0) &&
-	     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)) {
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return TRY_AGAIN_LATER;
-		}
-		TAILQ_INSERT_TAIL(&ahc->sc_q, xs, adapter_q);
-		splx(s);
-		return SUCCESSFULLY_QUEUED;
-	}
-
-	first_xs = ahc_first_xs(ahc);
-
-	/* determine safety of software queueing */
-	dontqueue = xs->xs_control & XS_CTL_POLL;
-
-	/*
-	 * Handle situations where there's already entries in the
-	 * queue.
-	 */
-	if (first_xs != NULL) {
-		/*
-		 * If we can't queue, we have to abort, since
-		 * we have to preserve order.
-		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
-		}
+		target_id = periph->periph_target;
+		our_id = SIM_SCSI_ID(ahc, periph);
 
 		/*
-		 * Swap with the first queue entry.
+		 * get an scb to use.
 		 */
-		TAILQ_INSERT_TAIL(&ahc->sc_q, xs, adapter_q);
-		xs = first_xs;
-		next_xs = TAILQ_NEXT(xs, adapter_q);
-		TAILQ_REMOVE(&ahc->sc_q, xs, adapter_q);
-		fromqueue = 1;
-
-	}
-
-get_scb:
-
-	target_id = xs->sc_link->scsipi_scsi.target;
-	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
-
-	/*
-	 * get an scb to use.
-	 */
-	if ((scb = ahcgetscb(ahc)) == NULL) {
-
-		if (dontqueue) {
+		if ((scb = ahcgetscb(ahc)) == NULL) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+			return;
 		}
 
-		/*
-		 * If we were pulled off the queue, put ourselves
-		 * back to where we came from, otherwise tack ourselves
-		 * onto the end.
-		 */
-		if (fromqueue && next_xs != NULL)
-			TAILQ_INSERT_BEFORE(xs, next_xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&ahc->sc_q, xs, adapter_q);
-
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	tcl = XS_TCL(ahc, xs);
+		tcl = XS_TCL(ahc, xs);
 
 #ifdef DIAGNOSTIC
-	if (!ahc_istagged_device(ahc, xs, 0) &&
-	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
-		panic("ahc: queuing for busy target");
+		if (!ahc_istagged_device(ahc, xs, 0) &&
+		    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
+			panic("ahc: queuing for busy target");
 #endif
 
-	scb->xs = xs;
-	hscb = scb->hscb;
-	hscb->tcl = tcl;
+		scb->xs = xs;
+		hscb = scb->hscb;
+		hscb->tcl = tcl;
 
-	if (ahc_istagged_device(ahc, xs, 0))
-		if((xs->bp != NULL) && xs->bp->b_flags & B_ASYNC)
-			scb->hscb->control |= MSG_SIMPLE_Q_TAG;
-		else
-			scb->hscb->control |= MSG_ORDERED_Q_TAG;
-	else
-		ahc_busy_tcl(ahc, scb);
+		if (xs->xs_tag_type) {
+#ifdef DIAGNOSTIC
+		if (ahc_istagged_device(ahc, xs, 0) == 0)
+			panic("ahc_action: taggged command for untagged device");
+#endif
+			scb->hscb->control |= TAG_ENB;
+		} else
+			ahc_busy_tcl(ahc, scb);
 
-	splx(s);
+		splx(s);
 
-	channel = SIM_CHANNEL(ahc, xs->sc_link);
-	if (ahc->inited_channels[channel - 'A'] == 0) {
-		if ((channel == 'A' && (ahc->flags & AHC_RESET_BUS_A)) ||
-		    (channel == 'B' && (ahc->flags & AHC_RESET_BUS_B))) {
+		channel = SIM_CHANNEL(ahc, periph);
+		if (ahc->inited_channels[channel - 'A'] == 0) {
+			if ((channel == 'A' &&
+			     (ahc->flags & AHC_RESET_BUS_A)) ||
+			    (channel == 'B' &&
+			     (ahc->flags & AHC_RESET_BUS_B))) {
+				s = splbio();
+				ahc_reset_channel(ahc, channel, TRUE);
+				splx(s);
+			}
+			ahc->inited_channels[channel - 'A'] = 1;
+		}
+
+		/*
+		 * Put all the arguments for the xfer in the scb
+		 */
+
+		mask = SCB_TARGET_MASK(scb);
+		tinfo = ahc_fetch_transinfo(ahc,
+			    SIM_CHANNEL(ahc, periph),
+			    our_id, target_id, &tstate);
+		if (ahc->inited_targets[target_id] == 0) {
+			struct ahc_devinfo devinfo;
+
 			s = splbio();
-			ahc_reset_channel(ahc, channel, TRUE);
+			ahc_compile_devinfo(&devinfo, our_id, target_id,
+			    periph->periph_lun,
+			    SIM_CHANNEL(ahc, periph),
+			    ROLE_INITIATOR);
+			ahc_update_target_msg_request(ahc, &devinfo, tinfo,
+			    TRUE, FALSE);
+			ahc->inited_targets[target_id] = 1;
 			splx(s);
 		}
-		ahc->inited_channels[channel - 'A'] = 1;
-	}
 
-	/*
-	 * Put all the arguments for the xfer in the scb
-	 */
+		hscb->scsirate = tinfo->scsirate;
+		hscb->scsioffset = tinfo->current.offset;
+		if ((tstate->ultraenb & mask) != 0)
+			hscb->control |= ULTRAENB;
 
-	mask = SCB_TARGET_MASK(scb);
-	tinfo = ahc_fetch_transinfo(ahc, SIM_CHANNEL(ahc, xs->sc_link), our_id,
-				    target_id, &tstate);
-	if (ahc->inited_targets[target_id] == 0) {
+		if ((tstate->discenable & mask) != 0)
+			hscb->control |= DISCENB;
+
+		if (xs->xs_control & XS_CTL_RESET) {
+			hscb->cmdpointer = 0;
+			scb->flags |= SCB_DEVICE_RESET;
+			hscb->control |= MK_MESSAGE;
+			ahc_execute_scb(scb, NULL, 0);
+		}
+
+		ahc_setup_data(ahc, xs, scb);
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX not supported */
+		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+	{
+		struct scsipi_xfer_mode *xm = arg;
 		struct ahc_devinfo devinfo;
+		int target_id, our_id;
+		char channel;
 
+		target_id = xm->xm_target;	
+		our_id = chan->chan_id;
+		channel = (chan->chan_channel == 1) ? 'B' : 'A';
 		s = splbio();
+		tinfo = ahc_fetch_transinfo(ahc, channel, our_id, target_id,
+		    &tstate);
 		ahc_compile_devinfo(&devinfo, our_id, target_id,
-		    xs->sc_link->scsipi_scsi.lun, SIM_CHANNEL(ahc, xs->sc_link),
-		    ROLE_INITIATOR);
-		ahc_update_target_msg_request(ahc, &devinfo, tinfo, TRUE,
-		    FALSE);
-		ahc->inited_targets[target_id] = 1;
+		    0, channel, ROLE_INITIATOR);
+		if (xm->xm_mode & PERIPH_CAP_TQING &&
+		    (tstate->tagdisable & devinfo.target_mask) == 0) {
+			ahc_set_tags(ahc, &devinfo, TRUE);
+			printf("%s: target %d using tagged queuing\n",
+			    ahc_name(ahc), target_id);
+		}
 		splx(s);
 	}
-
-	hscb->scsirate = tinfo->scsirate;
-	hscb->scsioffset = tinfo->current.offset;
-	if ((tstate->ultraenb & mask) != 0)
-		hscb->control |= ULTRAENB;
-
-	if ((tstate->discenable & mask) != 0)
-		hscb->control |= DISCENB;
-
-	if (xs->xs_control & XS_CTL_RESET) {
-		hscb->cmdpointer = 0;
-		scb->flags |= SCB_DEVICE_RESET;
-		hscb->control |= MK_MESSAGE;
-		return ahc_execute_scb(scb, NULL, 0);
 	}
-
-	return ahc_setup_data(ahc, xs, scb);
 }
 
-static int
+static void
 ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 {
 	struct	 scb *scb;
@@ -4084,7 +3972,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 	scb = (struct scb *)arg;
 	xs = scb->xs;
-	ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
+	ahc = (void *)xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
 
 
 	if (nsegments != 0) {
@@ -4140,7 +4028,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 			bus_dmamap_unload(ahc->parent_dmat, scb->dmamap);
 		ahcfreescb(ahc, scb);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 #ifdef DIAGNOSTIC
@@ -4161,8 +4049,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	if ((scb->flags & SCB_TARGET_IMMEDIATE) != 0) {
 #if 0
 		printf("Continueing Immediate Command %d:%d\n",
-		       xs->sc_link->scsipi_scsi.target,
-		       xs->sc_link->scsipi_scsi.lun);
+		       xs->xs_periph->periph_target,
+		       xs->xs_periph->periph_lun);
 #endif
 		pause_sequencer(ahc);
 		if ((ahc->flags & AHC_PAGESCBS) == 0)
@@ -4195,7 +4083,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWCMDS) {
-		scsi_print_addr(xs->sc_link);
+		scsi_print_addr(xs->xs_periph);
 		printf("opcode %d tag %x len %d flags %x control %x fpos %u"
 		    " rate %x\n",
 		    xs->cmdstore.opcode, scb->hscb->tag, scb->hscb->datalen,
@@ -4206,12 +4094,12 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 	if (!(xs->xs_control & XS_CTL_POLL)) {
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
+	SC_DEBUG(xs->xs_periph, SDEV_DB3, ("cmd_poll\n"));
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {
 			if (!(xs->xs_control & XS_CTL_SILENT))
@@ -4221,7 +4109,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		}
 	} while (!(xs->xs_status & XS_STS_DONE));
 	splx(s);
-	return (COMPLETE);
+	return;
 }
 
 static int
@@ -4242,7 +4130,7 @@ ahc_poll(struct ahc_softc *ahc, int wait)
 	return (0);
 }
 
-static int
+static void
 ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	       struct scb *scb)
 {
@@ -4268,27 +4156,28 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 		if (error) {
 			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
-			return (TRY_AGAIN_LATER);	/* XXX fvdl */
+			xs->error = XS_RESOURCE_SHORTAGE;	/* XXX fvdl */
+			scsipi_done(xs);
+			return;
 		}
-		error = ahc_execute_scb(scb,
+		ahc_execute_scb(scb,
 		    scb->dmamap->dm_segs,
 		    scb->dmamap->dm_nsegs);
-		return error;
 	} else {
-		return ahc_execute_scb(scb, NULL, 0);
+		ahc_execute_scb(scb, NULL, 0);
 	}
 }
 
 static void
-ahc_freeze_devq(struct ahc_softc *ahc, struct scsipi_link *sc_link)
+ahc_freeze_devq(struct ahc_softc *ahc, struct scsipi_periph *periph)
 {
 	int	target;
 	char	channel;
 	int	lun;
 
-	target = sc_link->scsipi_scsi.target;
-	lun = sc_link->scsipi_scsi.lun;
-	channel = sc_link->scsipi_scsi.channel;
+	target = periph->periph_target;
+	lun = periph->periph_lun;
+	channel = periph->periph_channel->chan_channel;
 
 	ahc_search_qinfifo(ahc, target, channel, lun,
 			   /*tag*/SCB_LIST_NULL, ROLE_UNKNOWN,
@@ -4598,7 +4487,9 @@ ahc_set_recoveryscb(struct ahc_softc *ahc, struct scb *scb)
 		 * Also ensure that no new CCBs are queued to us while we
 		 * try to fix this problem.
 		 */
-		ahc->queue_blocked = 1;
+		scsipi_channel_freeze(&ahc->sc_channel, 1);
+		if (ahc->features & AHC_TWIN)
+			scsipi_channel_freeze(&ahc->sc_channel_b, 1);
 
 		/*
 		 * Go through all of our pending SCBs and remove
@@ -4626,7 +4517,8 @@ ahc_timeout(void *arg)
 	char	channel;
 
 	scb = (struct scb *)arg;
-	ahc = (struct ahc_softc *)scb->xs->sc_link->adapter_softc;
+	ahc =
+	    (void *)scb->xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
 
 	s = splbio();
 
@@ -4653,7 +4545,7 @@ ahc_timeout(void *arg)
 	channel = SCB_CHANNEL(scb);
 	lun = SCB_LUN(scb);
 
-	scsi_print_addr(scb->xs->sc_link);
+	scsipi_printaddr(scb->xs->xs_periph);
 	printf("SCB %x - timed out ", scb->hscb->tag);
 	/*
 	 * Take a snapshot of the bus state and print out
@@ -4754,7 +4646,7 @@ bus_reset:
 			if (active_scb->hscb->tcl != scb->hscb->tcl) {
 				u_int	newtimeout;
 
-				scsi_print_addr(scb->xs->sc_link);
+				scsipi_printaddr(scb->xs->xs_periph);
 				printf("Other SCB Timeout%s",
 			 	       (scb->flags & SCB_OTHERTCL_TIMEOUT) != 0
 				       ? " again\n" : "\n");
@@ -4775,7 +4667,7 @@ bus_reset:
 				 * Send back any queued up transactions
 				 * and properly record the error condition.
 				 */
-				ahc_freeze_devq(ahc, scb->xs->sc_link);
+				ahc_freeze_devq(ahc, scb->xs->xs_periph);
 				ahcsetccbstatus(scb->xs, XS_TIMEOUT);
 				ahc_freeze_ccb(scb);
 				ahc_done(ahc, scb);
@@ -4789,7 +4681,7 @@ bus_reset:
 			ahc_set_recoveryscb(ahc, active_scb);
 			ahc_outb(ahc, MSG_OUT, MSG_BUS_DEV_RESET);
 			ahc_outb(ahc, SCSISIGO, last_phase|ATNO);
-			scsi_print_addr(active_scb->xs->sc_link);
+			scsipi_printaddr(active_scb->xs->xs_periph);
 			printf("BDR message in message buffer\n");
 			active_scb->flags |=  SCB_DEVICE_RESET;
 			callout_reset(&active_scb->xs->xs_callout,
@@ -4867,7 +4759,7 @@ bus_reset:
 						   ROLE_INITIATOR,
 						   SCB_REQUEUE,
 						   SEARCH_COMPLETE);
-				scsi_print_addr(scb->xs->sc_link);
+				scsipi_printaddr(scb->xs->xs_periph);
 				printf("Queuing a BDR SCB\n");
 				ahc->qinfifo[ahc->qinfifonext++] =
 				    scb->hscb->tag;
@@ -4891,7 +4783,7 @@ bus_reset:
 				/* Go "immediatly" to the bus reset */
 				/* This shouldn't happen */
 				ahc_set_recoveryscb(ahc, scb);
-				scsi_print_addr(scb->xs->sc_link);
+				scsipi_printaddr(scb->xs->xs_periph);
 				printf("SCB %x: Immediate reset.  "
 					"Flags = 0x%x\n", scb->hscb->tag,
 					scb->flags);
@@ -5432,7 +5324,7 @@ ahc_calc_residual(struct scb *scb)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC) {
-		scsi_print_addr(scb->xs->sc_link);
+		scsipi_printaddr(scb->xs->xs_periph);
 		printf("Handled Residual of %ld bytes\n" ,(long)scb->xs->resid);
 	}
 #endif
@@ -5466,7 +5358,7 @@ ahc_update_pending_syncrates(struct ahc_softc *ahc)
 		pending_hscb = pending_scb->hscb;
 		our_id = SCB_IS_SCSIBUS_B(pending_scb)
 		       ? ahc->our_id_b : ahc->our_id;
-		remote_id = xs->sc_link->scsipi_scsi.target;
+		remote_id = xs->xs_periph->periph_target;
 		ahc_compile_devinfo(&devinfo, our_id, remote_id,
 				    SCB_LUN(pending_scb),
 				    SCB_CHANNEL(pending_scb),
@@ -5509,7 +5401,7 @@ ahc_update_pending_syncrates(struct ahc_softc *ahc)
 			xs = pending_scb->xs;
 			our_id = SCB_IS_SCSIBUS_B(pending_scb)
 			       ? ahc->our_id_b : ahc->our_id;
-			remote_id = xs->sc_link->scsipi_scsi.target;
+			remote_id = xs->xs_periph->periph_target;
 			ahc_compile_devinfo(&devinfo, our_id, remote_id,
 					    SCB_LUN(pending_scb),
 					    SCB_CHANNEL(pending_scb),
@@ -5629,64 +5521,6 @@ ahc_dumptinfo(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo)
 }
 #endif
 
-#ifndef AHC_NO_TAGS
-static void
-ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
-{
-	struct scsipi_inquiry_data *inq;
-	struct ahc_devinfo devinfo;
-	struct tmode_tstate *tstate;
-	int target_id, our_id;
-	char channel;
-
-	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
-		return;
-
-	if (xs->sc_link->quirks & SDEV_NOTAG)
-		return;
-
-	target_id = xs->sc_link->scsipi_scsi.target;
-	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
-	channel = SIM_CHANNEL(ahc, xs->sc_link);
-
-	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
-	ahc_compile_devinfo(&devinfo, our_id, target_id,
-	    xs->sc_link->scsipi_scsi.lun, channel, ROLE_INITIATOR);
-
-	if (tstate->tagdisable & devinfo.target_mask)
-		return;
-
-	/*
-	 * Sneak a look at the results of the SCSI Inquiry
-	 * command and see if we can do Tagged queing.  This
-	 * should really be done by the higher level drivers.
-	 */
-	inq = (struct scsipi_inquiry_data *)xs->data;
-	if ((inq->flags3 & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
-	        printf("%s: target %d using tagged queuing\n",
-			ahc_name(ahc), xs->sc_link->scsipi_scsi.target);
-
-		ahc_set_tags(ahc, &devinfo, TRUE);
-
-		if (ahc->scb_data->maxhscbs >= 16 ||
-		    (ahc->flags & AHC_PAGESCBS)) {
-			/* Default to 16 tags */
-			xs->sc_link->openings = 16;
-		} else {
-			/*
-			 * Default to 4 tags on whimpy
-			 * cards that don't have much SCB
-			 * space and can't page.  This prevents
-			 * a single device from hogging all
-			 * slots.  We should really have a better
-			 * way of providing fairness.
-			 */
-			xs->sc_link->openings = 4;
-		}
-	}
-}
-#endif
-
 static int
 ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 		    int nocmdcheck)
@@ -5699,25 +5533,13 @@ ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	struct tmode_tstate *tstate;
 	struct ahc_devinfo devinfo;
 
-	if (xs->sc_link->quirks & SDEV_NOTAG)
-		return 0;
-
-	/*
-	 * XXX never do these commands with tags. Should really be
-	 * in a higher layer.
-	 */
-	if (!nocmdcheck && (xs->cmd->opcode == INQUIRY ||
-	     xs->cmd->opcode == TEST_UNIT_READY ||
-	     xs->cmd->opcode == REQUEST_SENSE))
-		return 0;
-
-	channel = SIM_CHANNEL(ahc, xs->sc_link);
-	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
-	target = xs->sc_link->scsipi_scsi.target;
+	channel = SIM_CHANNEL(ahc, xs->xs_periph);
+	our_id = SIM_SCSI_ID(ahc, xs->xs_periph);
+	target = xs->xs_periph->periph_target;
 	(void)ahc_fetch_transinfo(ahc, channel, our_id, target, &tstate);
 
 	ahc_compile_devinfo(&devinfo, our_id, target,
-	    xs->sc_link->scsipi_scsi.lun, channel, ROLE_INITIATOR);
+	    xs->xs_periph->periph_lun, channel, ROLE_INITIATOR);
 
 	return (tstate->tagenable & devinfo.target_mask);
 #endif
