@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.2 2000/06/14 17:25:51 cgd Exp $
+.\" $NetBSD: installboot.8,v 1.3 2000/10/17 01:55:33 dmcmahill Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -41,11 +41,11 @@
 .Sh SYNOPSIS
 .Nm /usr/mdec/installboot
 .Op Fl a | Fl i Ar isoblock
-.Op Fl nv
+.Op Fl nsv
 .Ar disk
 .Ar bootstrap
 .Nm /usr/mdec/installboot
-.Op Fl nv
+.Op Fl nsv
 .Fl c
 .Ar disk
 .Sh DESCRIPTION
@@ -114,6 +114,17 @@ See the
 section below for an example of this option.
 .It Fl n
 Do not actually write anything to the disk.
+.It Fl s
+Recalculate and restore the Sun and
+.Nx Ns Tn /sparc
+compatible checksum.  This option is used
+when making an ISO image which will boot on both 
+.Nx Ns Tn /sparc 
+and 
+.Nx Ns Tn /pmax. 
+.Em Note : No The existing
+.Nx Ns Tn /sparc
+disklabel should use no more than 4 partitions.
 .It Fl v
 Print information about what
 .Nm
