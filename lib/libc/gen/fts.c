@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $	*/
+/*	$NetBSD: fts.c,v 1.21 1997/10/22 00:55:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,9 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $");
+__RCSID("$NetBSD: fts.c,v 1.21 1997/10/22 00:55:17 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -53,18 +55,6 @@ __RCSID("$NetBSD: fts.c,v 1.20 1997/10/21 00:56:51 fvdl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#undef fts_children
-#undef fts_close
-#undef fts_open
-#undef fts_read
-#undef fts_set
-#undef stat
-#undef fstat
-#undef lstat
-
-#define FTSENT FTSENT12
-#define FTS FTS12
 
 #ifdef __weak_alias
 __weak_alias(fts_children,_fts_children);
