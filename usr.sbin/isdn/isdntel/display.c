@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *	$Id: display.c,v 1.1.1.1 2001/01/06 13:00:35 martin Exp $ 
+ *	$Id: display.c,v 1.2 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -64,7 +64,7 @@ init_screen(void)
 	keypad(main_w, TRUE);			/* use special keys */
 	scrollok(main_w, TRUE);
 
-	sprintf(buffer, " isdntel %d.%d.%d ", VERSION, REL, STEP);
+	snprintf(buffer, sizeof(buffer), " isdntel %d.%d.%d ", VERSION, REL, STEP);
 
 	move(0, 0);
 	standout();
