@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.1 1998/10/22 01:56:55 briggs Exp $	*/
+/*	$NetBSD: zsms.c,v 1.2 1998/10/22 08:37:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,14 +45,7 @@
  */
 
 /*
- * Mouse driver (/dev/mouse)
- */
-
-/*
- * Zilog Z8530 Dual UART driver (mouse interface)
- *
- * This is the "slave" driver that will be attached to
- * the "zsc" driver for a Sun mouse.
+ * VSXXX mice attached with channel A of the 1st SCC
  */
 
 #include <sys/param.h>
@@ -116,19 +109,17 @@ struct zsms_softc {		/* driver status information */
 
 struct zsops zsops_zsms;
 
-static int zsms_match(struct device *, struct cfdata *, void *);
-static void zsms_attach(struct device *, struct device *, void *);
-static void zsms_input(void *, int);
+static int  zsms_match __P((struct device *, struct cfdata *, void *));
+static void zsms_attach __P((struct device *, struct device *, void *));
+static void zsms_input __P((void *, int));
 
 struct cfattach zsms_ca = {
 	sizeof(struct zsms_softc), zsms_match, zsms_attach,
 };
 
-extern struct cfdriver ms_cd;
-
-static int	zsms_enable(void *);
-static int	zsms_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static void	zsms_disable(void *);
+static int  zsms_enable __P((void *));
+static int  zsms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static void zsms_disable __P((void *));
 
 const struct wsmouse_accessops zsms_accessops = {
 	zsms_enable,
@@ -136,7 +127,7 @@ const struct wsmouse_accessops zsms_accessops = {
 	zsms_disable,
 };
 
-int
+static int
 zsms_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -151,24 +142,19 @@ zsms_match(parent, cf, aux)
 	return 0;
 }
 
-void
+static void
 zsms_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct zsms_softc *zsms = (void *) self;
+	struct zsc_softc *zsc = (void *)parent;
+	struct zsms_softc *zsms = (void *)self;
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
-	struct cfdata *cf;
-	int channel, zsms_unit;
-	int reset, s;
 	struct wsmousedev_attach_args a;
+	int s;
 
-	cf = zsms->zsms_dev.dv_cfdata;
-	zsms_unit = zsms->zsms_dev.dv_unit;
-	channel = args->channel;
-	cs = zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[args->channel];
 	cs->cs_private = zsms;
 	cs->cs_ops = &zsops_zsms;
 	zsms->zsms_cs = cs;
@@ -178,8 +164,7 @@ zsms_attach(parent, self, aux)
 	/* Initialize the speed, etc. */
 	s = splzs();
 	/* May need reset... */
-	reset = (channel == 0) ?  ZSWR9_A_RESET : ZSWR9_B_RESET;
-	zs_write_reg(cs, 9, reset);
+	zs_write_reg(cs, 9, ZSWR9_A_RESET);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
@@ -190,7 +175,7 @@ zsms_attach(parent, self, aux)
 	a.accessops = &zsms_accessops;
 	a.accesscookie = zsms;
 
-	/*
+	/* XXX correct following comment block XXX
 	 * Attach the wsmouse, saving a handle to it.
 	 * Note that we don't need to check this pointer against NULL
 	 * here or in pmsintr, because if this fails pms_enable() will
@@ -201,7 +186,7 @@ zsms_attach(parent, self, aux)
 	zsms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
-int
+static int
 zsms_enable(v)
 	void *v;
 {
@@ -210,6 +195,7 @@ zsms_enable(v)
 	if (sc->sc_enabled)
 		return EBUSY;
 
+	/* XXX mice presence test should be done in match/attach context XXX */
 	sc->self_test = 1;
 	zs_write_data(sc->zsms_cs, MOUSE_SELF_TEST);
 	DELAY(100000);
@@ -227,7 +213,7 @@ zsms_enable(v)
 	return 0;
 }
 
-void
+static void
 zsms_disable(v)
 	void *v;
 {
@@ -236,7 +222,7 @@ zsms_disable(v)
 	sc->sc_enabled = 0;
 }
 
-int
+static int
 zsms_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -246,18 +232,19 @@ zsms_ioctl(v, cmd, data, flag, p)
 {
 	if (cmd == WSMOUSEIO_GTYPE) {
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
-		return (0);
+		return 0;
 	}
-	return (-1);
+	return -1;
 }
 
-void
+static void
 zsms_input(vsc, data)
 	void *vsc;
 	int data;
 {
 	struct zsms_softc *sc = vsc;
 
+	/* XXX mice presence test should be done in match/attach context XXX */
 	if (!sc->sc_enabled) {
 		if (sc->self_test > 0) {
 			if (data < 0) {
@@ -326,11 +313,11 @@ static void zsms_softint __P((struct zs_chanstate *));
 
 static void
 zsms_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zsms_softc *zsms;
-	register int put, put_next;
-	register u_char c, rr1;
+	struct zsms_softc *zsms;
+	int put, put_next;
+	u_char c, rr1;
 
 	zsms = cs->cs_private;
 	put = zsms->zsms_rbput;
@@ -367,9 +354,9 @@ zsms_rxint(cs)
 
 static void
 zsms_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zsms_softc *zsms;
+	struct zsms_softc *zsms;
 
 	zsms = cs->cs_private;
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -381,10 +368,10 @@ zsms_txint(cs)
 
 static void
 zsms_stint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zsms_softc *zsms;
-	register int rr0;
+	struct zsms_softc *zsms;
+	int rr0;
 
 	zsms = cs->cs_private;
 
@@ -411,10 +398,10 @@ static void
 zsms_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct zsms_softc *zsms;
-	register int get, c, s;
+	struct zsms_softc *zsms;
+	int get, c, s;
 	int intr_flags;
-	register u_short ring_data;
+	u_short ring_data;
 
 	zsms = cs->cs_private;
 
