@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.19 2003/07/25 19:35:57 christos Exp $	*/
+/*	$NetBSD: if_media.c,v 1.20 2003/11/03 14:43:32 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.19 2003/07/25 19:35:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.20 2003/11/03 14:43:32 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,16 +190,37 @@ void
 ifmedia_set(ifm, target)
 	struct ifmedia *ifm; 
 	int target;
-
 {
 	struct ifmedia_entry *match;
 
 	match = ifmedia_match(ifm, target, ifm->ifm_mask);
 
+	/*
+	 * If we didn't find the requested media, then we try to fall
+	 * back to target-type (IFM_ETHER, e.g.) | IFM_NONE.  If that's
+	 * not on the list, then we add it and set the media to it.
+	 *
+	 * Since ifmedia_set is almost always called with IFM_AUTO or
+	 * with a known-good media, this really should only occur if we:
+	 *
+	 * a) didn't find any PHYs, or
+	 * b) didn't find an autoselect option on the PHY when the
+	 *    parent ethernet driver expected to.
+	 *
+	 * In either case, it makes sense to select no media.
+	 */
 	if (match == NULL) {
 		printf("ifmedia_set: no match for 0x%x/0x%x\n",
 		    target, ~ifm->ifm_mask);
-		panic("ifmedia_set");
+		target = (target & IFM_NMASK) | IFM_NONE;
+		match = ifmedia_match(ifm, target, ifm->ifm_mask);
+		if (match == NULL) {
+			ifmedia_add(ifm, target, 0, NULL);
+			match = ifmedia_match(ifm, target, ifm->ifm_mask);
+			if (match == NULL) {
+				panic("ifmedia_set failed");
+			}
+		}
 	}
 	ifm->ifm_cur = match;
 
