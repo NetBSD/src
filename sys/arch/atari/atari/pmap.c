@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1997/03/10 14:44:28 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1997/06/04 14:33:51 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -84,6 +84,8 @@
 #include <sys/user.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+#include <m68k/cpu.h>
+#include <m68k/cacheops.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
