@@ -1,4 +1,7 @@
-/* $NetBSD: vesa_raster8.c,v 1.7 2003/04/01 20:52:35 thorpej Exp $ */
+/* $NetBSD: vesa_raster8.c,v 1.8 2003/07/14 22:13:09 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vesa_raster8.c,v 1.8 2003/07/14 22:13:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
