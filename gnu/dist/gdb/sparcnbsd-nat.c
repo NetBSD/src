@@ -132,9 +132,9 @@ fetch_inferior_registers (regno)
      all (16 ptrace calls!) if we really need them.  */
   if (regno == -1)
     {
-      target_xfer_memory (*(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)],
+      target_read_memory (*(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)],
 		          &registers[REGISTER_BYTE (L0_REGNUM)],
-			  16*REGISTER_RAW_SIZE (L0_REGNUM), 0);
+			  16*REGISTER_RAW_SIZE (L0_REGNUM));
       for (i = L0_REGNUM; i <= I7_REGNUM; i++)
 	register_valid[i] = 1;
     }
@@ -144,8 +144,8 @@ fetch_inferior_registers (regno)
       i = REGISTER_BYTE (regno);
       if (register_valid[regno])
 	printf_unfiltered("register %d valid and read\n", regno);
-      target_xfer_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
-			  &registers[i], REGISTER_RAW_SIZE (regno), 0);
+      target_read_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
+			  &registers[i], REGISTER_RAW_SIZE (regno));
       register_valid[regno] = 1;
     }
 }
@@ -209,17 +209,17 @@ store_inferior_registers (regno)
       if (regno < 0 || regno == SP_REGNUM)
 	{
 	  if (!register_valid[L0_REGNUM+5]) abort();
-	  target_xfer_memory (sp, 
-			      &registers[REGISTER_BYTE (L0_REGNUM)],
-			      16*REGISTER_RAW_SIZE (L0_REGNUM), 1);
+	  target_write_memory (sp, 
+			       &registers[REGISTER_BYTE (L0_REGNUM)],
+			       16*REGISTER_RAW_SIZE (L0_REGNUM));
 	}
       else
 	{
 	  if (!register_valid[regno]) abort();
-	  target_xfer_memory ((sp + REGISTER_BYTE (regno) -
+	  target_write_memory ((sp + REGISTER_BYTE (regno) -
 			       REGISTER_BYTE (L0_REGNUM)),
-			      &registers[REGISTER_BYTE (regno)],
-			      REGISTER_RAW_SIZE (regno), 1);
+			       &registers[REGISTER_BYTE (regno)],
+			       REGISTER_RAW_SIZE (regno));
 	}
 	
     }
