@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 2000/08/30 18:41:18 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 2000/08/30 19:16:15 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -243,9 +243,9 @@
  *
  * XXX 4 == sizeof pde
  */
-	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
+	.set	_C_LABEL(APTmap), (PDSLOT_APTE << PDSHIFT)
+	.set	_C_LABEL(APTD), (_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
+	.set	_C_LABEL(APTDpde), (_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 /*
  * Initialization
@@ -312,7 +312,7 @@ start1:
 	sub	r2, r1
 	sub	r1, r0
 	add	#4, r0		/* size of bytes to be copied */
-	shlr2	r0		/*  number of long word */
+	shlr2	r0		/* number of long word */
 	mov.l	_ROM_START, r3
 	add	r3, r1		/* src address */
 	mov.l	___start, r3
