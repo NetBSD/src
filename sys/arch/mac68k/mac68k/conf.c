@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1995/04/10 13:01:19 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1995/04/12 14:59:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -150,12 +150,11 @@ cdev_decl(sd);
 cdev_decl(fd);
 #include "grf.h"
 cdev_decl(grf);
+#define NADB 1 /* #include "adb.h" */
 cdev_decl(adb);
 #include "ser.h"
 cdev_decl(ser);
 cdev_decl(cd);
-#define NCLOCK 0 /* #include "clock.h" */
-cdev_decl(clock);
 cdev_decl(vnd);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -196,7 +195,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 20 */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
-	cdev_mouse_init(adb),		/* 23: ADB event interface */
+	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 25: loadable module driver */
 	cdev_lkm_dummy(),		/* 26 */
