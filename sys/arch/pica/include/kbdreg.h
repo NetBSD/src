@@ -1,7 +1,7 @@
+/*	$NetBSD: kbdreg.h,v 1.2 1996/07/16 23:24:23 thorpej Exp $	*/
+
 /*
  * Keyboard definitions
- *
- *	$Id: kbdreg.h,v 1.1.1.1 1996/03/13 04:58:07 jonathan Exp $
  */
 
 #define	KBSTATP		(PICA_SYS_KBD + 0x61)	/* controller status port (I) */

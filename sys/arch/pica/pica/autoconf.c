@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.3 1996/07/16 23:24:36 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +40,6 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.2 1996/04/04 06:25:51 cgd Exp $
  */
 
 /*

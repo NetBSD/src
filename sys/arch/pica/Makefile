@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1996/07/16 23:23:55 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
-#	$Id: Makefile,v 1.1.1.1 1996/03/13 04:58:04 jonathan Exp $
 
 # Makefile for pica links, tags file
 

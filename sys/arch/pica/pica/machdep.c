@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.4 1996/07/16 23:24:49 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,7 +39,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.3 1996/03/31 03:38:29 jonathan Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */

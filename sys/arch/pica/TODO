@@ -1,3 +1,5 @@
+$NetBSD: TODO,v 1.2 1996/07/16 23:24:02 thorpej Exp $
+
 To do list (not in any particular order).
 
     o	Improve pmap_zero_page and pmap_copy_page. Speed and flushing.

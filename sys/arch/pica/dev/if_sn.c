@@ -1,3 +1,5 @@
+/*	$NetBSD: if_sn.c,v 1.5 1996/07/16 23:24:13 thorpej Exp $	*/
+
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
