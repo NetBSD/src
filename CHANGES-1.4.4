@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.10 2001/04/04 15:56:03 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.11 2001/04/05 12:18:09 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -287,3 +287,8 @@ libexec/ftpd/ftpd.c				1.122
 
   Fixes buffer overflow problems in glob(3).  Adds and uses GLOB_LIMIT
   to prevent denial of service attacks.
+
+usr.sbin/xntp/xntpd/ntp_control.c		patch
+
+  Fix a DoS attack (and possibly, but not confirmed, a root exploit)
+  in ntpd.
