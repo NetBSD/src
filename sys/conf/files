@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.108 1997/01/05 22:16:51 veego Exp $
+#	$NetBSD: files,v 1.109 1997/01/07 11:35:21 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -101,7 +101,7 @@ pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
-pseudo-device ipl: ifnet
+pseudo-device ipfilter: ifnet
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
@@ -301,11 +301,11 @@ file netinet/tcp_subr.c			inet
 file netinet/tcp_timer.c		inet
 file netinet/tcp_usrreq.c		inet
 file netinet/udp_usrreq.c		inet
-file netinet/ip_fil.c			ipl		needs-flag
-file netinet/fil.c			ipl
-file netinet/ip_nat.c			ipl
-file netinet/ip_frag.c			ipl
-file netinet/ip_state.c			ipl
+file netinet/ip_fil.c			ipfilter	needs-flag
+file netinet/fil.c			ipfilter
+file netinet/ip_nat.c			ipfilter
+file netinet/ip_frag.c			ipfilter
+file netinet/ip_state.c			ipfilter
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso

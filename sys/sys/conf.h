@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.43 1997/01/05 13:41:50 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.44 1997/01/07 11:35:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -303,7 +303,7 @@ extern struct cdevsw cdevsw[];
 	0, dev_init(c,n,poll), dev_init(c,n,mmap) }
 
 /* open, close, read, ioctl */
-#define cdev_ipl_init(c,n) { \
+#define cdev_ipf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
