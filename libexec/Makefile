@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2002/09/10 22:17:04 joda Exp $
+#	$NetBSD: Makefile,v 1.44 2004/06/22 15:41:54 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -12,5 +12,11 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd ld.aout_so \
 # Heimdal/KTH Kerberos
 SUBDIR+= hpropd kadmind kpasswdd
 .endif
+
+SUBDIR+=login_chpass login_krb5 login_krb5-or-pwd login_lchpass \
+	login_passwd login_radius login_reject login_skey login_token
+
+# PF
+SUBDIR+=spamd
 
 .include <bsd.subdir.mk>
