@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.8 2003/02/08 00:44:00 cgd Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.9 2004/07/19 06:34:10 chs Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -94,13 +94,15 @@ test1()
 
 	if (munmap(allocstack, STACKSIZE) == -1)
 		err(1, "munmap stack");
+
+	printf("test1: PASS\n");
 }
 
 static void
 test2()
 {
 	void *allocstack, *stack;
-	int stat;
+	int rv, stat;
 
 	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
 	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
@@ -110,17 +112,23 @@ test2()
 
 	stack = (caddr_t) allocstack + STACKSIZE * stackdir(&stat);
 
-	if (__clone(0, stack,
+	errno = 0;
+	rv = __clone(0, stack,
+	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD, NULL);
+	if (rv != -1 || errno != EINVAL)
+		errx(1, "clone did not return EINVAL on NULL function pointer: "
+		     "rv %d errno %d", rv, errno);
+	rv = __clone(newclone, NULL,
 	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
-	    (void *)NULL) != -1 || errno != EINVAL)
-		errx(1, "clone did not return EINVAL on NULL function pointer");
-	if (__clone(newclone, NULL,
-	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
-	    (void *)NULL) != -1 || errno != EINVAL)
-		errx(1, "clone did not return EINVAL on NULL stack pointer");
+	    NULL);
+	if (rv != -1 || errno != EINVAL)
+		errx(1, "clone did not return EINVAL on NULL stack pointer: "
+		     "rv %d errno %d", rv, errno);
 
 	if (munmap(allocstack, STACKSIZE) == -1)
 		err(1, "munmap stack");
+
+	printf("test2: PASS\n");
 }
 
 static void
@@ -142,6 +150,8 @@ test3()
 	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
 	    (void *)&rl) != -1 || errno != EAGAIN)
 		errx(1, "clone did not return EAGAIN running out of procs");
+
+	printf("test3: PASS\n");
 }
 
 static int
@@ -177,6 +187,8 @@ newclone(void *arg)
 static int
 stackdir(void *p)
 {
-	void *q;
+	int val;
+	void *q = &val;
+
 	return p < q ? 0 : 1;
 }
