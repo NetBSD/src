@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.15 2002/07/09 01:12:35 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.15 2002/07/09 01:12:35 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,8 +302,7 @@ chksize(int size)
 }
 
 static int
-read_number(fn)
-	char *fn;
+read_number(char *fn)
 {
 	char lin[80];
 	FILE *fp;
