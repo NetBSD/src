@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.10 2003/01/18 11:29:04 thorpej Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.11 2003/09/09 00:22:17 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -256,7 +256,6 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	XDR 		xdr_stream; /* XDR stream */
 	XDR 		*xdrs = &xdr_stream;
 	struct rpc_msg	msg;	/* RPC message */
-	struct timeval	t;
 	char 		*outbuf = NULL;	/* Broadcast msg buffer */
 	char		*inbuf = NULL; /* Reply buf */
 	int		inlen;
@@ -380,8 +379,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	}
 
 	/* Serialize all the arguments which have to be sent */
-	(void) gettimeofday(&t, NULL);
-	msg.rm_xid = __RPC_GETXID(&t);
+	msg.rm_xid = __RPC_GETXID();
 	msg.rm_direction = CALL;
 	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	msg.rm_call.cb_prog = RPCBPROG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_internal.h,v 1.2 2003/01/18 11:29:05 thorpej Exp $	*/
+/*	$NetBSD: rpc_internal.h,v 1.3 2003/09/09 00:22:17 itojun Exp $	*/
 
 /*
  * Private include file for XDR functions only used internally in libc.
@@ -34,8 +34,8 @@ bool_t __rpc_control __P((int,void *));
 
 char *_get_next_token __P((char *, int));
 
-#define __RPC_GETXID(now) ((u_int32_t)getpid() ^ (u_int32_t)(now)->tv_sec ^ \
-    (u_int32_t)(now)->tv_usec)
+u_int32_t __rpc_getxid __P((void));
+#define __RPC_GETXID()	(__rpc_getxid())
 
 extern SVCXPRT **__svc_xports;
 extern int __svc_maxrec;
