@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.20 2002/02/02 10:50:10 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.21 2002/03/10 07:24:55 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -169,12 +169,17 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
 	struct vrip_attach_args *va = aux;
 	struct wsmousedev_attach_args wsmaa;
-
+	int res;
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 	struct platid_data *p;
 
-	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
+	if (va->va_parent_ioh != NULL)
+		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
+		    va->va_size, &ioh);
+	else
+		res = bus_space_map(iot, va->va_addr, 1, 0, &ioh);
+	if (res != 0) {
 		printf(": can't map bus space\n");
 		return;
 	}
