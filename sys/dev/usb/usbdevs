@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.98 2000/05/14 15:18:16 soren Exp $
+$NetBSD: usbdevs,v 1.99 2000/05/20 06:29:50 castor Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -221,6 +221,7 @@ vendor ALTERA		0x09fb	Altera
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical Co., Ltd.
 vendor BOCASYSTEMS	0x0a43	Boca Systems, Inc.
 vendor BROADCOM		0x0a5c	Broadcom Corp.
+vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
