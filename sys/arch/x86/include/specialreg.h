@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -143,13 +143,18 @@
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
 #define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
-				    "\24MPC\25B20\26B21\27MMXX\30MMX"
-#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33B26\34B27\35B28\36B29" \
+				    "\24MPC\25NOX\26B21\27MMXX\30MMX"
+#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35B28\36LONG" \
 				    "\0373DNOW2\0403DNOW"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 #define CPUID2STEPPING(cpuid)	((cpuid) & 15)
+
+#define CPUID(code, eax, ebx, ecx, edx)                         \
+	__asm("cpuid"                                           \
+	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
+	    : "a" (code));
 
 
 /*
