@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2004/07/27 02:17:06 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2004/07/27 02:20:56 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2004/07/27 02:17:06 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2004/07/27 02:20:56 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
 size_t	pagesize;
-FILE 	*terminal;
+FILE	*terminal;
 char	*tmpdir;
 
 int	main __P((int, char *[]));
@@ -101,7 +101,7 @@ main(argc, argv)
 		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv, "b:cD:df:himNRrs:tuvxy")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'b':
 			/* Change default tape blocksize. */
 			bflag = 1;
