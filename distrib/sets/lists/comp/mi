@@ -244,6 +244,8 @@
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
 ./usr/include/dev/rcons/rcons_subr.h
+./usr/include/dev/sbus
+./usr/include/dev/sbus/mbppio.h
 ./usr/include/dev/scsipi
 ./usr/include/dev/scsipi/atapi_all.h
 ./usr/include/dev/scsipi/atapi_cd.h
@@ -268,8 +270,6 @@
 ./usr/include/dev/scsipi/sdvar.h
 ./usr/include/dev/scsipi/ss_mustek.h
 ./usr/include/dev/scsipi/ssvar.h
-./usr/include/dev/sbus
-./usr/include/dev/sbus/mbppio.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/event_var.h
@@ -977,8 +977,8 @@
 ./usr/include/sys/map.h
 ./usr/include/sys/mbuf.h
 ./usr/include/sys/md5.h
-./usr/include/sys/mman.h
 ./usr/include/sys/midiio.h
+./usr/include/sys/mman.h
 ./usr/include/sys/mount.h
 ./usr/include/sys/msg.h
 ./usr/include/sys/msgbuf.h
