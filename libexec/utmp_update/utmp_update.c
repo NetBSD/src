@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.4 2002/08/16 20:21:48 itojun Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.5 2002/12/18 15:20:47 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
 
+__RCSID("$NetBSD: utmp_update.c,v 1.5 2002/12/18 15:20:47 christos Exp $");
+
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <stdio.h>
@@ -47,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
 
 int main(int, char *[]);
 
@@ -59,6 +65,7 @@ main(int argc, char *argv[])
 	struct stat st;
 	int fd;
 	uid_t euid;
+	char tty[MAXPATHLEN];
 
 	euid = geteuid();
 	if (seteuid(getuid()) == -1)
@@ -97,21 +104,23 @@ main(int argc, char *argv[])
 		errx(1, "Current user `%s' does not match `%s' in utmpx entry",
 		    pwd->pw_name, utx->ut_name);
 
-	fd = open(utx->ut_line, O_RDONLY, 0);
+	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, utx->ut_line);
+	fd = open(tty, O_RDONLY, 0);
 	if (fd == -1)
-		err(1, "Cannot open `%s'", utx->ut_line);
+		err(1, "Cannot open `%s'", tty);
 	if (fstat(fd, &st) == -1)
-		err(1, "Cannot stat `%s'", utx->ut_line);
+		err(1, "Cannot stat `%s'", tty);
 	if (st.st_uid != getuid())
-		errx(1, "%s: Is not owned by you", utx->ut_line);
+		errx(1, "%s: Is not owned by you", tty);
 	if (!isatty(fd))
-		errx(1, "%s: Not a tty device", utx->ut_line);
-	close(fd);
-	if (access(utx->ut_line, W_OK|R_OK) == -1)
-		err(1, "%s", utx->ut_line);
+		errx(1, "%s: Not a tty device", tty);
+	(void)close(fd);
+	if (access(tty, W_OK|R_OK) == -1)
+		err(1, "%s", tty);
 
 	(void)seteuid(euid);
-	pututxline(utx);
+	if (pututxline(utx) == NULL)
+		err(1, "Cannot update utmp entry");
 
 	return 0;
 }
