@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.116 1999/03/26 23:41:35 mycroft Exp $ */
+/*	$NetBSD: autoconf.c,v 1.117 1999/04/14 09:16:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -142,6 +142,10 @@ find_cpus()
 {
 #if defined(MULTIPROCESSOR)
 	int node, n;
+
+	/* We only consider sun4m class multi-processor machines */
+	if (!CPU_ISSUN4M)
+		return (0);
 
 	n = 0;
 	node = findroot();
@@ -1023,6 +1027,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = "vme";
 		ma.ma_bp = bootpath;
 		(void)config_found(dev, (void *)&ma, mbprint);
+		return;
 	}
 #endif
 
