@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.21 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.22 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ struct usb_attach_arg {
 	int			nifaces; /* number of interfaces */
 };
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
 /* First five codes is for a whole device. */
 #define UMATCH_VENDOR_PRODUCT_REV			14

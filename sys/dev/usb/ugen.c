@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.14 1999/08/14 14:49:31 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.15 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #elif defined(__FreeBSD__)
@@ -104,7 +104,7 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 cdev_decl(ugen);
 #elif defined(__FreeBSD__)
 d_open_t  ugenopen;
@@ -299,7 +299,7 @@ ugenopen(dev, flag, mode, p)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n", 
 				     endpt, isize));
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
                         if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
                                 return (ENOMEM);
 #elif defined(__FreeBSD__)
@@ -311,7 +311,7 @@ ugenopen(dev, flag, mode, p)
 				sce->ibuf, isize, ugenintr);
 			if (r != USBD_NORMAL_COMPLETION) {
 				free(sce->ibuf, M_USBDEV);
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 				clfree(&sce->q);
 #elif defined(__FreeBSD__)
 				clist_free_cblocks(&sce->q);
@@ -955,7 +955,7 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
-		error = uiomove(cdesc, len, &uio);
+		error = uiomove((caddr_t)cdesc, len, &uio);
 		free(cdesc, M_TEMP);
 		return (error);
 	}

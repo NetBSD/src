@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.8 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
@@ -156,7 +156,7 @@ typedef struct uhci_softc {
 #define UHCI_HAS_LOCK 1
 #define UHCI_WANT_LOCK 2
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	usb_dma_t *sc_mallocs;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.4 1999/01/09 12:16:54 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.5 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef struct usb_block_dma {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.24 1999/08/16 20:27:55 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.25 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
 #define _USB_H_
 
 #include <sys/types.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>
 #endif /* _KERNEL */

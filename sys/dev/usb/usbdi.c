@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.28 1999/08/16 20:24:33 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.29 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #else
 #include <sys/module.h>
