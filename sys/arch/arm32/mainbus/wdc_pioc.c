@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.6 1998/09/22 00:40:37 mark Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.7 1998/10/12 16:09:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -36,12 +36,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/irqhandler.h>
 
 #include <arm32/mainbus/piocvar.h>
 
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 #include "locators.h"
@@ -51,8 +53,8 @@
 #define WDC_PIOC_AUXREG_NPORTS	1
 
 struct wdc_pioc_softc {
-	struct wdc_softc sc_wdcdev;
-	struct wdc_attachment_data sc_ad;
+	struct	wdc_softc sc_wdcdev;
+	struct	channel_softc wdc_channel;
 	void	*sc_ih;
 };
 
@@ -79,7 +81,7 @@ wdc_pioc_probe(parent, cf, aux)
 	void *aux;
 {
 	struct pioc_attach_args *pa = aux;
-	struct wdc_attachment_data ad;
+	struct channel_softc ch = { 0 };
 	int res;
 	u_int iobase;
 
@@ -91,22 +93,22 @@ wdc_pioc_probe(parent, cf, aux)
 		return(0);
 
 	iobase = pa->pa_iobase + pa->pa_offset;
-	memset(&ad, 0, sizeof(ad));
-	ad.iot = pa->pa_iot;
-	ad.auxiot = pa->pa_iot;
+	ch.cmd_iot = pa->pa_iot;
+	ch.ctl_iot = pa->pa_iot;
 
-	if (bus_space_map(ad.iot, iobase, WDC_PIOC_REG_NPORTS, 0, &ad.ioh))
+	if (bus_space_map(ch.cmd_iot, iobase, WDC_PIOC_REG_NPORTS, 0,
+	    &ch.cmd_ioh))
 		return(0);
-	if (bus_space_map(ad.auxiot, iobase + WDC_PIOC_AUXREG_OFFSET,
-	    WDC_PIOC_AUXREG_NPORTS, 0, &ad.auxioh)) {
-		bus_space_unmap(ad.iot, ad.ioh, WDC_PIOC_REG_NPORTS);
+	if (bus_space_map(ch.ctl_iot, iobase + WDC_PIOC_AUXREG_OFFSET,
+	    WDC_PIOC_AUXREG_NPORTS, 0, &ch.ctl_ioh)) {
+		bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_PIOC_REG_NPORTS);
 		return(0);
 	}
 
-	res = wdcprobe(&ad);
+	res = wdcprobe(&ch);
 
-	bus_space_unmap(ad.auxiot, ad.auxioh, WDC_PIOC_AUXREG_NPORTS);
-	bus_space_unmap(ad.iot, ad.ioh, WDC_PIOC_REG_NPORTS);
+	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_PIOC_AUXREG_NPORTS);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_PIOC_REG_NPORTS);
 
 	if (res)
 		 pa->pa_iosize = WDC_PIOC_REG_NPORTS;
@@ -131,21 +133,33 @@ wdc_pioc_attach(parent, self, aux)
 	printf("\n");
 
 	iobase = pa->pa_iobase + pa->pa_offset;
-	sc->sc_ad.iot = pa->pa_iot;
-	sc->sc_ad.auxiot = pa->pa_iot;
-	if (bus_space_map(sc->sc_ad.iot, iobase, WDC_PIOC_REG_NPORTS, 0,
-	    &sc->sc_ad.ioh))
+	sc->wdc_channel.cmd_iot = pa->pa_iot;
+	sc->wdc_channel.ctl_iot = pa->pa_iot;
+	if (bus_space_map(sc->wdc_channel.cmd_iot, iobase,
+	    WDC_PIOC_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh))
 		panic("%s: couldn't map drive registers\n", self->dv_xname);
 	    
-	if (bus_space_map(sc->sc_ad.auxiot, iobase + WDC_PIOC_AUXREG_OFFSET,
-	    WDC_PIOC_AUXREG_NPORTS, 0, &sc->sc_ad.auxioh))
+	if (bus_space_map(sc->wdc_channel.ctl_iot,
+	    iobase + WDC_PIOC_AUXREG_OFFSET, WDC_PIOC_AUXREG_NPORTS, 0,
+	    &sc->wdc_channel.ctl_ioh))
 		panic("%s: couldn't map aux registers\n", self->dv_xname);
 
 	sc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "wdc",  wdcintr, sc);
 	if (!sc->sc_ih)
 		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
-
-	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->sc_wdcdev.nchannels = 1;
+	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->wdc_channel.ch_queue == NULL) {
+		printf("%s: can't allocate memory for command queue",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		return;
+	}
+	wdcattach(&sc->wdc_channel);
 }
 
 /* End of wdc_pioc.c */

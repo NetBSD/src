@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.11 1998/10/10 22:01:24 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.12 1998/10/12 16:09:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <dev/pcmcia/pcmciadevs.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 #define WDC_PCMCIA_REG_NPORTS      8
@@ -70,7 +71,7 @@
 
 struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
-	struct wdc_attachment_data sc_ad;
+	struct channel_softc wdc_channel;
 	struct pcmcia_io_handle sc_pioh;
 	struct pcmcia_io_handle sc_auxpioh;
 	int sc_iowindow;
@@ -208,11 +209,6 @@ wdc_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_ad.iot = sc->sc_pioh.iot;
-	sc->sc_ad.ioh = sc->sc_pioh.ioh;
-	sc->sc_ad.auxiot = sc->sc_auxpioh.iot;
-	sc->sc_ad.auxioh = sc->sc_auxpioh.ioh;
-
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
@@ -252,15 +248,33 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	printf("\n");
-
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, wdcintr, sc);
+	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, wdcintr,
+	    &sc->wdc_channel);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", self->dv_xname);
 		return;
 	}
 
+	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
+	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
+	sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
+	sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
+	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->sc_wdcdev.nchannels = 1;
+	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->wdc_channel.ch_queue == NULL) {
+	    printf("%s: can't allocate memory for command queue",
+		sc->sc_wdcdev.sc_dev.dv_xname);
+	    return;
+	}
 	if (wpp->wpp_quirk_flag & WDC_PCMCIA_NO_EXTRA_RESETS)
-		sc->sc_ad.flags |= WDC_NO_EXTRA_RESETS;
-
-	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
+	wdcattach(&sc->wdc_channel);
 }
