@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.25 2004/12/30 02:35:42 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.26 2004/12/30 23:18:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.25 2004/12/30 02:35:42 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.26 2004/12/30 23:18:09 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -381,10 +381,11 @@ sq_init(struct ifnet *ifp)
 
 	/* Set up HPC ethernet DMA config */
 	if (sc->hpc_regs->revision == 3) {
-		reg = sq_hpc_read(sc, HPC_ENETR_DMACFG);	
-		sq_hpc_write(sc, HPC_ENETR_DMACFG, reg | ENETR_DMACFG_FIX_RXDC |
-							 ENETR_DMACFG_FIX_INTR |
-							 ENETR_DMACFG_FIX_EOP);
+		reg = sq_hpc_read(sc, HPC3_ENETR_DMACFG);	
+		sq_hpc_write(sc, HPC3_ENETR_DMACFG, reg |
+		    HPC3_ENETR_DMACFG_FIX_RXDC |
+		    HPC3_ENETR_DMACFG_FIX_INTR |
+		    HPC3_ENETR_DMACFG_FIX_EOP);
 	}
 
 	/* Pass the start of the receive ring to the HPC */
@@ -625,10 +626,11 @@ sq_start(struct ifnet *ifp)
 		/* Last descriptor gets end-of-packet */
 		KASSERT(lasttx != -1);
 		if (sc->hpc_regs->revision == 3)
-			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |= HDD_CTL_EOPACKET;
+			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |=
+			    HPC3_HDD_CTL_EOPACKET;
 		else
 			sc->sc_txdesc[lasttx].hpc1_hdd_ctl |=
-							HPC1_HDD_CTL_EOPACKET;
+			    HPC1_HDD_CTL_EOPACKET;
 
 		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n", sc->sc_dev.dv_xname,
 						       sc->sc_nexttx, lasttx,
@@ -680,18 +682,18 @@ sq_start(struct ifnet *ifp)
 		 * last packet we enqueued, mark it as the last
 		 * descriptor.
 		 *
-		 * HDD_CTL_INTR will generate an interrupt on
-		 * HPC1 by itself. HPC3 will not interrupt unless 
-		 * HDD_CTL_EOPACKET is set as well.
+		 * HPC1_HDD_CTL_INTR will generate an interrupt on
+		 * HPC1. HPC3 requires HPC3_HDD_CTL_EOPACKET in
+		 * addition to HPC3_HDD_CTL_INTR to interrupt. 
 		 */
 		KASSERT(lasttx != -1);
 		if (sc->hpc_regs->revision == 3) {
-			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |= HDD_CTL_INTR |
-							HDD_CTL_EOCHAIN;
+			sc->sc_txdesc[lasttx].hpc3_hdd_ctl |=
+			    HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOCHAIN;
 		} else {
 			sc->sc_txdesc[lasttx].hpc1_hdd_ctl |= HPC1_HDD_CTL_INTR;
 			sc->sc_txdesc[lasttx].hpc1_hdd_bufptr |=
-							HPC1_HDD_CTL_EOCHAIN;
+			    HPC1_HDD_CTL_EOCHAIN;
 		}
 
 		SQ_CDTXSYNC(sc, lasttx, 1,
@@ -714,9 +716,12 @@ sq_start(struct ifnet *ifp)
 		if ((status & sc->hpc_regs->enetx_ctl_active) != 0) {
 			SQ_TRACE(SQ_ADD_TO_DMA, sc, firsttx, status);
 
-			/* NB: hpc3_hdd_ctl is also hpc1_hdd_bufptr */
+			/*
+			 * NB: hpc3_hdd_ctl == hpc1_hdd_bufptr, and
+			 * HPC1_HDD_CTL_EOCHAIN == HPC3_HDD_CTL_EOCHAIN
+			 */
 			sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc3_hdd_ctl &=
-			    ~HDD_CTL_EOCHAIN;
+			    ~HPC3_HDD_CTL_EOCHAIN;
 
 			if (sc->hpc_regs->revision != 3)
 				sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc1_hdd_ctl
@@ -727,11 +732,11 @@ sq_start(struct ifnet *ifp)
 		} else if (sc->hpc_regs->revision == 3) { 
 			SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
-			sq_hpc_write(sc, HPC_ENETX_NDBP, SQ_CDTXADDR(sc,
+			sq_hpc_write(sc, HPC3_ENETX_NDBP, SQ_CDTXADDR(sc,
 			    firsttx));
 
 			/* Kick DMA channel into life */
-			sq_hpc_write(sc, HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
+			sq_hpc_write(sc, HPC3_ENETX_CTL, HPC3_ENETX_CTL_ACTIVE);
 		} else {
 			/*
 			 * In the HPC1 case where transmit DMA is
@@ -900,10 +905,11 @@ sq_rxintr(struct sq_softc *sc)
 		 * If this is a CPU-owned buffer, we're at the end of the list.
 		 */
 		if (sc->hpc_regs->revision == 3)
-			ctl_reg = sc->sc_rxdesc[i].hpc3_hdd_ctl & HDD_CTL_OWN;
+			ctl_reg = sc->sc_rxdesc[i].hpc3_hdd_ctl &
+			    HPC3_HDD_CTL_OWN;
 		else
 			ctl_reg = sc->sc_rxdesc[i].hpc1_hdd_ctl &
-							HPC1_HDD_CTL_OWN;
+			    HPC1_HDD_CTL_OWN;
 
 		if (ctl_reg) {
 #if defined(SQ_DEBUG)
@@ -922,7 +928,7 @@ sq_rxintr(struct sq_softc *sc)
 		framelen = m->m_ext.ext_size - 3;
 		if (sc->hpc_regs->revision == 3)
 		    framelen -=
-			HDD_CTL_BYTECNT(sc->sc_rxdesc[i].hpc3_hdd_ctl);
+			HPC3_HDD_CTL_BYTECNT(sc->sc_rxdesc[i].hpc3_hdd_ctl);
 		else
 		    framelen -=
 			HPC1_HDD_CTL_BYTECNT(sc->sc_rxdesc[i].hpc1_hdd_ctl);
@@ -980,15 +986,18 @@ sq_rxintr(struct sq_softc *sc)
 
 	/* If anything happened, move ring start/end pointers to new spot */
 	if (i != sc->sc_nextrx) {
-		/* NB: hpc3_hdd_ctl is also hpc1_hdd_bufptr */
+		/*
+		 * NB: hpc3_hdd_ctl == hpc1_hdd_bufptr, and
+		 * HPC1_HDD_CTL_EOCHAIN == HPC3_HDD_CTL_EOCHAIN
+		 */
 
 		new_end = SQ_PREVRX(i);
-		sc->sc_rxdesc[new_end].hpc3_hdd_ctl |= HDD_CTL_EOCHAIN;
+		sc->sc_rxdesc[new_end].hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
 		SQ_CDRXSYNC(sc, new_end, BUS_DMASYNC_PREREAD |
 		    BUS_DMASYNC_PREWRITE);
 
 		orig_end = SQ_PREVRX(sc->sc_nextrx);
-		sc->sc_rxdesc[orig_end].hpc3_hdd_ctl &= ~HDD_CTL_EOCHAIN;
+		sc->sc_rxdesc[orig_end].hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
 		SQ_CDRXSYNC(sc, orig_end, BUS_DMASYNC_PREREAD |
 		    BUS_DMASYNC_PREWRITE);
 
@@ -1165,22 +1174,22 @@ sq_txring_hpc3(struct sq_softc *sc)
 		 * the buffer not being finished while the DMA channel
 		 * has gone idle.
 		 */
-		status = sq_hpc_read(sc, HPC_ENETX_CTL);
+		status = sq_hpc_read(sc, HPC3_ENETX_CTL);
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		/* Check for used descriptor and restart DMA chain if needed */
-		if ((sc->sc_txdesc[i].hpc3_hdd_ctl & HDD_CTL_XMITDONE) == 0) {
-			if ((status & ENETX_CTL_ACTIVE) == 0) {
+		if (!(sc->sc_txdesc[i].hpc3_hdd_ctl & HPC3_HDD_CTL_XMITDONE)) {
+			if ((status & HPC3_ENETX_CTL_ACTIVE) == 0) {
 				SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
 
-				sq_hpc_write(sc, HPC_ENETX_NDBP,
+				sq_hpc_write(sc, HPC3_ENETX_NDBP,
 				    SQ_CDTXADDR(sc, i));
 
 				/* Kick DMA channel into life */
-				sq_hpc_write(sc, HPC_ENETX_CTL,
-				    ENETX_CTL_ACTIVE); 
+				sq_hpc_write(sc, HPC3_ENETX_CTL,
+				    HPC3_ENETX_CTL_ACTIVE); 
 
 				/*
 				 * Set a watchdog timer in case the chip

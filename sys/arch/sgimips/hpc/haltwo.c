@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.4 2004/10/29 12:57:16 yamt Exp $ */
+/* $NetBSD: haltwo.c,v 1.5 2004/12/30 23:18:09 rumble Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.4 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.5 2004/12/30 23:18:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 
 		if (next_intr == segp->ds_len) {
 			/* Generate intr after this DMA buffer */
-			descp->hpc3_hdd_ctl |= HDD_CTL_INTR;
+			descp->hpc3_hdd_ctl |= HPC3_HDD_CTL_INTR;
 			next_intr = blksize;
 		} else
 			next_intr -= segp->ds_len;
@@ -278,19 +278,19 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dma_tag = haa->ha_dmat;
 
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
-	    HPC_PBUS_CH0_DEVREGS_SIZE, &sc->sc_ctl_sh)) {
+	    HPC3_PBUS_CH0_DEVREGS_SIZE, &sc->sc_ctl_sh)) {
 		aprint_error(": unable to map control registers\n");
 		return;
 	}
 
-	if (bus_space_subregion(haa->ha_st, haa->ha_sh, HPC_PBUS_CH2_DEVREGS,
-	    HPC_PBUS_CH2_DEVREGS_SIZE, &sc->sc_vol_sh)) {
+	if (bus_space_subregion(haa->ha_st, haa->ha_sh, HPC3_PBUS_CH2_DEVREGS,
+	    HPC3_PBUS_CH2_DEVREGS_SIZE, &sc->sc_vol_sh)) {
 		aprint_error(": unable to map volume registers\n");
 		return;
 	}
 
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_dmaoff,
-	    HPC_PBUS_DMAREGS_SIZE, &sc->sc_dma_sh)) {
+	    HPC3_PBUS_DMAREGS_SIZE, &sc->sc_dma_sh)) {
 		aprint_error(": unable to map DMA registers\n");
 		return;
 	}
@@ -327,9 +327,9 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* XXX Magic PBUS CFGDMA values from Linux HAL2 driver XXX */
-	bus_space_write_4(haa->ha_st, haa->ha_sh, HPC_PBUS_CH0_CFGDMA,
+	bus_space_write_4(haa->ha_st, haa->ha_sh, HPC3_PBUS_CH0_CFGDMA,
 	    0x8208844);
-	bus_space_write_4(haa->ha_st, haa->ha_sh, HPC_PBUS_CH1_CFGDMA,
+	bus_space_write_4(haa->ha_st, haa->ha_sh, HPC3_PBUS_CH1_CFGDMA,
 	    0x8208844);
 
 	/* Unmute output */
@@ -350,8 +350,8 @@ haltwo_intr(void *v)
 	struct haltwo_softc *sc = v;
 	int ret = 0;
 
-	if (bus_space_read_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_CTL)
-	    & HPC_PBUS_DMACTL_IRQ) {
+	if (bus_space_read_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL)
+	    & HPC3_PBUS_DMACTL_IRQ) {
 		sc->sc_dac.intr(sc->sc_dac.intr_arg);
 
 		ret = 1;
@@ -501,8 +501,8 @@ haltwo_halt_output(void *v)
 	struct haltwo_softc *sc = v;
 
 	/* Disable PBUS DMA */
-	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_CTL,
-	    HPC_PBUS_DMACTL_ACT_LD);
+	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL,
+	    HPC3_PBUS_DMACTL_ACT_LD);
 
 	return (0);
 }
@@ -731,8 +731,8 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	}
 
 	/* Disable PBUS DMA */
-	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_CTL,
-	    HPC_PBUS_DMACTL_ACT_LD);
+	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL,
+	    HPC3_PBUS_DMACTL_ACT_LD);
 
 	/* Disable HAL2 codec DMA */
 	haltwo_read_indirect(sc, HAL2_IREG_DMA_PORT_EN, &tmp, NULL);
@@ -750,20 +750,20 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	    " fifobeg = %d fifoend = %d\n", param->hw_channels, highwater,
 	    fifobeg, fifoend));
 
-	ctrl = HPC_PBUS_DMACTL_RT
-	    | HPC_PBUS_DMACTL_ACT_LD
-	    | (highwater << HPC_PBUS_DMACTL_HIGHWATER_SHIFT)
-	    | (fifobeg << HPC_PBUS_DMACTL_FIFOBEG_SHIFT)
-	    | (fifoend << HPC_PBUS_DMACTL_FIFOEND_SHIFT);
+	ctrl = HPC3_PBUS_DMACTL_RT
+	    | HPC3_PBUS_DMACTL_ACT_LD
+	    | (highwater << HPC3_PBUS_DMACTL_HIGHWATER_SHIFT)
+	    | (fifobeg << HPC3_PBUS_DMACTL_FIFOBEG_SHIFT)
+	    | (fifoend << HPC3_PBUS_DMACTL_FIFOEND_SHIFT);
 
 	/* Using PBUS CH0 for DAC DMA */
 	haltwo_write_indirect(sc, HAL2_IREG_DMA_DRV, 1, 0);
 
 	/* HAL2 is ready for action, now setup PBUS for DMA transfer */
-	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_DP,
+	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_DP,
 	    sc->sc_dac.dma_seg.ds_addr);
-	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC_PBUS_CH0_CTL,
-	    ctrl | HPC_PBUS_DMACTL_ACT);
+	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL,
+	    ctrl | HPC3_PBUS_DMACTL_ACT);
 
 	/* Both HAL2 and PBUS have been setup, now start it up */
 	haltwo_read_indirect(sc, HAL2_IREG_DMA_PORT_EN, &tmp, NULL);
