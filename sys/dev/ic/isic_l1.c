@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.4 2002/03/24 20:35:46 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.5 2002/03/30 17:54:17 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.4 2002/03/24 20:35:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.5 2002/03/30 17:54:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -219,17 +219,24 @@ static int
 isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
 	struct isic_softc *sc = (struct isic_softc*)token;
-	
+	int pass_down = 0;
+
 	switch(command)
 	{
 		case CMR_DOPEN:		/* daemon running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DOPEN", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 1;			
+			sc->sc_enabled = 1;
+			pass_down = 1;
 			break;
 			
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
 			sc->sc_enabled = 0;
+			pass_down = 1;
+			break;
+
+		case CMR_SETLEDS:
+			pass_down = 1;
 			break;
 
 		case CMR_SETTRACE:
@@ -241,6 +248,9 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 			NDBGL1(L1_ERROR, "ERROR, unknown command = %d, %s, parm = %p", command, sc->sc_dev.dv_xname, parm);
 			break;
 	}
+
+	if (pass_down && sc->drv_command != NULL)
+		sc->drv_command(sc, command, parm);
 
 	return(0);
 }
