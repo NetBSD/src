@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
+/*	$NetBSD: slattach.c,v 1.18 1997/09/15 11:20:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $";
+__RCSID("$NetBSD: slattach.c,v 1.18 1997/09/15 11:20:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,9 @@ int	slipdisc = SLIPDISC;
 
 char	devicename[32];
 
+int	main __P((int, char *[]));
+int	ttydisc __P((char *));
 void	usage __P((void));
-
-int ttydisc __P((char *));
 
 
 int
@@ -84,8 +84,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int fd;
-	register char *dev = argv[1];
+	int fd;
+	char *dev = argv[1];
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;
@@ -159,6 +159,8 @@ ttydisc(name)
 #endif
 	else
 		usage();
+	/* NOTREACHED */
+	return -1;
 }
 
 void
