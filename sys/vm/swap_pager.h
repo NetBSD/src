@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.h,v 1.6 1994/06/29 06:47:49 cgd Exp $	*/
+/*	$NetBSD: swap_pager.h,v 1.6.6.1 1996/12/07 12:09:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -83,6 +83,7 @@ struct swpager {
 	sw_blk_t     sw_blocks;	/* pointer to list of swap blocks */
 	short	     sw_flags;	/* flags */
 	short	     sw_poip;	/* pageouts in progress */
+	int	     sw_cnt;	/* count of pages in pager */
 };
 typedef struct swpager	*sw_pager_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.64 1996/11/06 20:20:04 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.64.2.1 1996/12/07 12:09:59 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -581,16 +581,6 @@ thread_sleep(event, lock, ruptible)
 	simple_unlock(lock);
 	if (curproc->p_thread)
 		tsleep(event, PVM, "thrd_sleep", 0);
-	splx(s);
-}
-
-void
-thread_wakeup(event)
-	void *event;
-{
-	int s = splhigh();
-
-	wakeup(event);
 	splx(s);
 }
 
