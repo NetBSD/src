@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.8 1999/09/28 13:57:45 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.9 1999/10/10 18:52:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -210,7 +210,7 @@ eso_attach(parent, self, aux)
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
 	printf(": ESS Solo-1 PCI AudioDrive ");
-	if (sc->sc_revision <=
+	if (sc->sc_revision <
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
 		printf("%s\n", eso_rev2model[sc->sc_revision]);
 	else
@@ -858,7 +858,7 @@ eso_getdev(hdl, retp)
 	strncpy(retp->name, "ESS Solo-1", sizeof (retp->name));
 	snprintf(retp->version, sizeof (retp->version), "0x%02x",
 	    sc->sc_revision);
-	if (sc->sc_revision <=
+	if (sc->sc_revision <
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
 		strncpy(retp->config, eso_rev2model[sc->sc_revision],
 		    sizeof (retp->config));
