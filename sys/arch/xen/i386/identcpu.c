@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.2 2004/04/06 16:20:29 cl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.3 2004/04/17 12:47:38 cl Exp $	*/
 /*	NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2 2004/04/06 16:20:29 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3 2004/04/17 12:47:38 cl Exp $");
 
 #include "opt_cputype.h"
 
@@ -1155,24 +1155,14 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-#if defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 * XXX this needs to run on the CPU being probed..
-	 */
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		u_int64_t last_tsc;
-
-		last_tsc = rdtsc();
-		delay(100000);
-		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		/* XXX this needs to read the shared_info of the CPU
+		 * being probed.. */
+		ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #ifndef NO_TSC_TIME
 		microtime_func = cc_microtime;
 #endif
 	}
-	/* XXX end XXX */
-#endif
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
