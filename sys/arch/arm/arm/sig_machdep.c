@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.17 2003/04/11 22:02:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/01/17 22:28:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/04/11 22:02:30 nathanw Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/01/17 22:28:48 thorpej Exp
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -278,7 +279,8 @@ cpu_getmcontext(l, mcp, flags)
 {
 	struct trapframe *tf = process_frame(l);
 	__greg_t *gr = mcp->__gregs;
-	
+	__greg_t ras_pc;
+
 	/* Save General Register context. */
 	gr[_REG_R0]   = tf->tf_r0;
 	gr[_REG_R1]   = tf->tf_r1;
@@ -297,6 +299,11 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_LR]   = tf->tf_usr_lr;
 	gr[_REG_PC]   = tf->tf_pc;
 	gr[_REG_CPSR] = tf->tf_spsr;
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_PC])) != -1)
+		gr[_REG_PC] = ras_pc;
+
 	*flags |= _UC_CPU;
 
 #ifdef ARMFPE
