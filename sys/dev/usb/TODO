@@ -4,13 +4,9 @@ Some things that need to be done:
 Before 1.5:
 -----------
 
-Reset toggle on SET_INTERFACE (USB 1.1)
-
 Allow interrupt out endpoints. (USB 1.1)
 
 Fix flow control in ucom (copy from com driver).
-
-Handle CLEAR_ENDPOINT_STALL centrally.
 
 Use some encapsulation in the upl driver to allow multiple protocols.
 
@@ -19,8 +15,6 @@ Get the uezcom driver (with Doug Ambrisko's firmware) running.
 
 Bug reports:
 ------------
-
-Chris Jones' problem: works in 1.4.2, not in -current
 
 Bernd Ernesti's problem: host controller halted with umodem
 
@@ -31,6 +25,8 @@ wskbd for X
 mel kravitz's problem, lockups with disk and printer
 
 Aaron's problem: Test aue with ohci.
+
+Y-E data floppy doesn't work.
 
 
 General:
