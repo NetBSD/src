@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.8 2003/06/27 15:33:25 wiz Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.9 2003/07/01 10:20:54 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -197,9 +197,9 @@ RPC service transport handle
 .Fa xprt .
 .Pp
 .It Fn __svc_getcallercreds
-.Bf Warning: this macro is specific to
+.Em Warning: this macro is specific to
 .Nx
-and thus not portable.
+.Em and thus not portable.
 This macro returns a pointer to a sockcred structure, defined in
 .Aq Pa sys/socket.h ,
 identifying the calling client.
