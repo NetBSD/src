@@ -1,0 +1,3 @@
+# $NetBSD: md.acorn32,v 1.1.2.2 2002/06/07 19:27:04 thorpej Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xarm32VIDC
