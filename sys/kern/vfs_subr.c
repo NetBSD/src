@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.236 2004/11/14 00:36:21 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.237 2004/12/18 03:07:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.236 2004/11/14 00:36:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.237 2004/12/18 03:07:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1930,21 +1930,17 @@ loop:
 	return (count);
 }
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#define ARRAY_PRINT(idx, arr) \
+    ((idx) > 0 && (idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
+
+const char * const vnode_tags[] = { VNODE_TAGS };
+const char * const vnode_types[] = { VNODE_TYPES };
+const char vnode_flagbits[] = VNODE_FLAGBITS;
+
 /*
  * Print out a description of a vnode.
  */
-const char * const vnode_types[] = {
-	"VNON",
-	"VREG",
-	"VDIR",
-	"VBLK",
-	"VCHR",
-	"VLNK",
-	"VSOCK",
-	"VFIFO",
-	"VBAD"
-};
-
 void
 vprint(label, vp)
 	char *label;
@@ -1954,26 +1950,11 @@ vprint(label, vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("tag %d type %s, usecount %d, writecount %ld, refcount %ld,",
-	    vp->v_tag, vnode_types[vp->v_type],
+	printf("tag %s(%d) type %s(%d), usecount %d, writecount %ld, "
+	    "refcount %ld,", ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	buf[0] = '\0';
-	if (vp->v_flag & VROOT)
-		strlcat(buf, "|VROOT", sizeof(buf));
-	if (vp->v_flag & VTEXT)
-		strlcat(buf, "|VTEXT", sizeof(buf));
-	if (vp->v_flag & VEXECMAP)
-		strlcat(buf, "|VEXECMAP", sizeof(buf));
-	if (vp->v_flag & VSYSTEM)
-		strlcat(buf, "|VSYSTEM", sizeof(buf));
-	if (vp->v_flag & VXLOCK)
-		strlcat(buf, "|VXLOCK", sizeof(buf));
-	if (vp->v_flag & VXWANT)
-		strlcat(buf, "|VXWANT", sizeof(buf));
-	if (vp->v_flag & VBWAIT)
-		strlcat(buf, "|VBWAIT", sizeof(buf));
-	if (vp->v_flag & VALIASED)
-		strlcat(buf, "|VALIASED", sizeof(buf));
+	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
 	if (buf[0] != '\0')
 		printf(" flags (%s)", &buf[1]);
 	if (vp->v_data == NULL) {
@@ -3066,11 +3047,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 }
 
 #ifdef DDB
-const char buf_flagbits[] =
-	"\20\1AGE\2NEEDCOMMIT\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI"
-	"\11DIRTY\12DONE\13EINTR\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE"
-	"\21ORDERED\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED"
-	"\32XXX\33VFLUSH";
+const char buf_flagbits[] = BUF_FLAGBITS;
 
 void
 vfs_buf_print(bp, full, pr)
@@ -3094,38 +3071,6 @@ vfs_buf_print(bp, full, pr)
 }
 
 
-const char vnode_flagbits[] =
-	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP"
-	"\11XLOCK\12XWANT\13BWAIT\14ALIASED"
-	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
-
-const char * const vnode_tags[] = {
-	"VT_NON",
-	"VT_UFS",
-	"VT_NFS",
-	"VT_MFS",
-	"VT_MSDOSFS",
-	"VT_LFS",
-	"VT_LOFS",
-	"VT_FDESC",
-	"VT_PORTAL",
-	"VT_NULL",
-	"VT_UMAP",
-	"VT_KERNFS",
-	"VT_PROCFS",
-	"VT_AFS",
-	"VT_ISOFS",
-	"VT_UNION",
-	"VT_ADOSFS",
-	"VT_EXT2FS",
-	"VT_CODA",
-	"VT_FILECORE",
-	"VT_NTFS",
-	"VT_VFS",
-	"VT_OVERLAY",
-	"VT_SMBFS"
-};
-
 void
 vfs_vnode_print(vp, full, pr)
 	struct vnode *vp;
@@ -3133,7 +3078,6 @@ vfs_vnode_print(vp, full, pr)
 	void (*pr)(const char *, ...);
 {
 	char buf[256];
-	const char *vtype, *vtag;
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
@@ -3145,15 +3089,9 @@ vfs_vnode_print(vp, full, pr)
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
-	vtype = (vp->v_type >= 0 &&
-		 vp->v_type < sizeof(vnode_types) / sizeof(vnode_types[0])) ?
-		vnode_types[vp->v_type] : "UNKNOWN";
-	vtag = (vp->v_tag >= 0 &&
-		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
-		vnode_tags[vp->v_tag] : "UNKNOWN";
-
-	(*pr)("type %s(%d) tag %s(%d) mount %p typedata %p\n",
-	      vtype, vp->v_type, vtag, vp->v_tag,
+	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
+	      ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	      vp->v_mount, vp->v_mountedhere);
 
 	if (full) {
