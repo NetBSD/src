@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.13 1994/09/28 01:39:54 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.14 1994/12/23 16:21:49 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: ypbind.c,v 1.13 1994/09/28 01:39:54 deraadt Exp $";
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -266,7 +267,7 @@ register SVCXPRT *transp;
 		return;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		return;
 	}
@@ -478,7 +479,7 @@ ping(ypdb)
 	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
 	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
 
-	rpcmsg.rm_xid = (int)dom;
+	rpcmsg.rm_xid = (long)dom;
 	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
 	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
 		st = RPC_CANTENCODEARGS;
@@ -543,7 +544,7 @@ broadcast(ypdb)
 	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
 	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
 
-	rpcmsg.rm_xid = (int)dom;
+	rpcmsg.rm_xid = (long)dom;
 	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
 	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
 		st = RPC_CANTENCODEARGS;
@@ -667,7 +668,7 @@ try_again:
 			goto try_again;
 		return RPC_CANTRECV;
 	}
-	if(inlen<sizeof(u_long))
+	if(inlen<sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -715,7 +716,7 @@ try_again:
 			goto try_again;
 		return RPC_CANTRECV;
 	}
-	if(inlen<sizeof(u_long))
+	if(inlen<sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -749,6 +750,8 @@ int force;
 	struct ypbind_resp ybr;
 	char path[MAXPATHLEN];
 	int fd;
+
+	/* XXX XXX USING POINTERS OVER THE NET LIKE THIS IS TOTALLY WRONG. */
 
 	/*printf("returned from %s about %s\n", inet_ntoa(raddrp->sin_addr), dom);*/
 
