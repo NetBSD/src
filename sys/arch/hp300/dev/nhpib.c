@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.7 1995/11/19 17:57:19 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.8 1995/12/02 18:22:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -106,21 +106,41 @@ nhpibtype(hc)
 
 	if (hc->hp_addr == internalhpib) {
 		hs->sc_type = HPIBA;
-		hs->sc_ba = HPIBA_BA;
 		hc->hp_ipl = HPIBA_IPL;
-		hs->sc_descrip = "Internal HP-IB";
-	}
-	else if (hd->hpib_cid == HPIBB) {
+		return (1);
+	} else if (hd->hpib_cid == HPIBB) {
 		hs->sc_type = HPIBB;
-		hs->sc_ba = hd->hpib_csa & CSA_BA;
 		hc->hp_ipl = HPIB_IPL(hd->hpib_ids);
-		hs->sc_descrip = "98624 HP-IB";
+		return (1);
 	}
-	else
-		return(0);
+
+	return(0);
+}
+
+void
+nhpibattach(hc)
+	register struct hp_ctlr *hc;
+{
+	struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
+	register struct nhpibdevice *hd = (struct nhpibdevice *)hc->hp_addr;
+
+	switch (hs->sc_type) {
+	case HPIBA:
+		hs->sc_ba = HPIBA_BA;
+		hs->sc_descrip = "Internal HP-IB";
+		break;
+
+	case HPIBB:
+		hs->sc_ba = hd->hpib_csa & CSA_BA;
+		hs->sc_descrip = "98624 HP-IB";
+		break;
+
+	default:
+		panic("nhpibattach: unknown type 0x%x", hs->sc_type);
+		/* NOTREACHED */
+	}
 
 	hs->sc_controller = &nhpib_controller;
-	return(1);
 }
 
 void
@@ -418,8 +438,8 @@ nhpibintr(unit)
 		}
 #ifdef DEBUG
 		else
-			printf("hpib%d: PPOLL intr bad status %x\n",
-			       unit, stat0);
+			printf("%s: PPOLL intr bad status %x\n",
+			       hs->sc_hc->hp_xname, stat0);
 #endif
 	}
 	return(1);
