@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.81 2002/11/17 19:54:59 manu Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.82 2002/12/11 12:59:32 scw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,7 +184,9 @@ struct ctlname {
 #ifndef _KERNEL
 #define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
 #endif
-#define	KERN_MAXID		62	/* number of valid kern ids */
+#define	KERN_LABELSECTOR	62	/* int: disklabel sector */
+#define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
+#define	KERN_MAXID		63	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -249,6 +251,8 @@ struct ctlname {
 	{ "tkstat", CTLTYPE_NODE }, \
 	{ "monotonic_clock", CTLTYPE_INT }, \
 	{ "urandom", CTLTYPE_INT }, \
+	{ "labelsector", CTLTYPE_INT }, \
+	{ "labeloffset", CTLTYPE_INT }, \
 }
 
 /*
