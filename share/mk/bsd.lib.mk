@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.151 1999/02/24 14:42:36 drochner Exp $
+#	$NetBSD: bsd.lib.mk,v 1.152 1999/03/30 09:30:43 fair Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -242,10 +242,19 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.if defined(DESTDIR)
+	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	    ${SHLIB_LDSTARTFILE} \
+	    --whole-archive lib${LIB}_pic.a \
+	    -nostdlib -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
+	    --no-whole-archive ${LDADD} \
+	    ${SHLIB_LDENDFILE}
+.else
 	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
+.endif
 .if ${OBJECT_FMT} == "ELF"
 	rm -f lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
