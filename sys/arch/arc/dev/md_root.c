@@ -1,4 +1,5 @@
-/*	$NetBSD: rd_root.c,v 1.2 2000/01/23 21:01:54 soda Exp $	*/
+/*	$NetBSD: md_root.c,v 1.1 2000/02/22 11:40:20 soda Exp $	*/
+/*	NetBSD: md_root.c,v 1.11 1999/03/17 18:59:22 sommerfe Exp 	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,7 +32,9 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
+
+#include "opt_mdsize.h"
 
 extern int boothowto;
 
@@ -43,25 +46,26 @@ extern int boothowto;
 
 /*
  * This array will be patched to contain a file-system image.
- * See the program:  src/distrib/sun3/common/rdsetroot.c
+ * See the program mdsetimage(8) for details.
  */
-int rd_root_size = ROOTBYTES;
-char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+u_int32_t md_root_size = ROOTBYTES;
+char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
  * This is called during autoconfig.
  */
 void
-rd_attach_hook(unit, rd)
+md_attach_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 	if (unit == 0) {
 		/* Setup root ramdisk */
-		rd->rd_addr = (caddr_t) rd_root_image;
-		rd->rd_size = (size_t)  rd_root_size;
-		rd->rd_type = RD_KMEM_FIXED;
-		printf("rd%d: fixed, %d blocks\n", unit, MINIROOTSIZE);
+		md->md_addr = (caddr_t)md_root_image;
+		md->md_size = (size_t)md_root_size;
+		md->md_type = MD_KMEM_FIXED;
+		printf("md%d: internal %dK image area\n", unit,
+		    ROOTBYTES / 1024);
 	}
 }
 
@@ -69,9 +73,9 @@ rd_attach_hook(unit, rd)
  * This is called during open (i.e. mountroot)
  */
 void
-rd_open_hook(unit, rd)
+md_open_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
