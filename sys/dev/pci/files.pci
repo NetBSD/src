@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.226 2004/12/06 19:23:09 cube Exp $
+#	$NetBSD: files.pci,v 1.227 2005/01/11 18:41:59 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -751,3 +751,8 @@ file	dev/pci/if_ipw.c		ipw
 # device declaration in sys/conf/files
 attach	njs at pci with njs_pci
 file	dev/pci/njs_pci.c		njs_pci
+
+# Intel PRO/Wireless 2200BG/2915ABG
+device	iwi: ifnet, wlan
+attach	iwi at pci
+file	dev/pci/if_iwi.c		iwi

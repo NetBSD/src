@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.647 2005/01/07 01:31:14 perry Exp $
+# $NetBSD: GENERIC,v 1.648 2005/01/11 18:43:42 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.647 $"
+#ident 		"GENERIC-$Revision: 1.648 $"
 
 maxusers	32		# estimated number of users
 
@@ -755,6 +755,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
