@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.19 2001/07/08 05:26:03 gmcgarry Exp $	*/
+/* $NetBSD: netdate.c,v 1.20 2001/09/13 10:06:41 wiz Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.19 2001/07/08 05:26:03 gmcgarry Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.20 2001/09/13 10:06:41 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,21 +72,20 @@ extern int retval;
  * Returns 0 on success.  Returns > 0 on failure, setting retval to 2;
  */
 int
-netsettime(tval)
-	time_t tval;
+netsettime(time_t tval)
 {
+	struct sockaddr_in dest, from, sin;
 	struct timeval tout;
-	struct servent *sp;
 	struct tsp msg;
-	struct sockaddr_in sin, dest, from;
+	char hostname[MAXHOSTNAMELEN];
+	struct servent *sp;
 	fd_set ready;
 	long waittime;
-	int s, timed_ack, found, error;
+	int error, found, s, timed_ack;
 	socklen_t length;
 #ifdef IP_PORTRANGE
 	int on;
 #endif
-	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
 		warnx("udp/timed: unknown service");

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/03/21 09:03:52 cgd Exp $	*/
+/* $NetBSD: extern.h,v 1.4 2001/09/13 10:06:41 wiz Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -35,4 +35,9 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-int	netsettime __P((time_t));
+#ifndef _EXTERN_H_
+#define _EXTERN_H_
+
+int netsettime(time_t);
+
+#endif /* !_EXTERN_H_ */
