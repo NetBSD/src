@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.10 2001/12/07 23:12:33 scw Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.11 2002/03/02 12:22:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -44,6 +44,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdlib.h>
 
 /*
  * Machine dependent constants you want to retrieve only once...
