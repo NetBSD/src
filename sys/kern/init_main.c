@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.119 1998/03/22 18:22:07 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.120 1998/03/27 01:52:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -261,14 +261,19 @@ main(framep)
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
 	limit0.p_refcnt = 1;
 
-	/* Allocate a prototype map so we have something to fork. */
+	/*
+	 * Initialize proc0's vmspace, which uses the kernel pmap.
+	 * All kernel processes (which never have user space mappings)
+	 * share proc0's vmspace, and thus, the kernel pmap.
+	 */
 #if defined(UVM)
-	p->p_vmspace = uvmspace_alloc(round_page(VM_MIN_ADDRESS),
-				     trunc_page(VM_MAX_ADDRESS), TRUE);
+	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
+	    trunc_page(VM_MAX_ADDRESS), TRUE);
 #else
-	p->p_vmspace = vmspace_alloc(round_page(VM_MIN_ADDRESS),
-				     trunc_page(VM_MAX_ADDRESS), TRUE);
+	vmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
+	    trunc_page(VM_MAX_ADDRESS), TRUE);
 #endif
+	p->p_vmspace = &vmspace0;
 
 	p->p_addr = proc0paddr;				/* XXX */
 
