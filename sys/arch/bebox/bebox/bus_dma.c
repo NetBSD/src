@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 1997/11/27 10:17:45 sakamoto Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 1997/12/18 09:08:35 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -133,8 +133,6 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/mc146818reg.h>
 #include <bebox/isa/isa_machdep.h>
-
-extern vm_offset_t avail_end;
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -373,8 +371,11 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 
+#if 0
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
+#endif 0
+	return 0;
 }
 
 /*
