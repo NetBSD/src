@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.17 2002/06/22 13:02:39 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.18 2002/07/04 23:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.17 2002/06/22 13:02:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.18 2002/07/04 23:32:10 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -175,8 +175,7 @@ irix_to_native_sigset(sss, bss)
 }
 
 void
-irix_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+irix_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -186,6 +185,7 @@ irix_sendsig(catcher, sig, mask, code)
 	struct frame *f;
 	int onstack;
 	int error;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct irix_sigframe sf;
  
 	f = (struct frame *)p->p_md.md_regs;

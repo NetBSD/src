@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.16 2001/11/13 02:08:01 lukem Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.17 2002/07/04 23:32:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.16 2001/11/13 02:08:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.17 2002/07/04 23:32:09 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -247,7 +247,8 @@ compat_43_sys_sigvec(p, v, retval)
 		compat_43_sigvec_to_sigaction(&nsv, &nsa);
 	}
 	error = sigaction1(p, SCARG(uap, signum),
-	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0);
+	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osv)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 2002/07/04 23:32:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -107,17 +107,18 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp, kf;
 	caddr_t sp;
 	struct trapframe *tf;
 	int onstack, fsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 
@@ -198,15 +199,33 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Set up the registers to return to sigcode. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		tf->tf_iioq_head =
+		    (int)p->p_sigctx.ps_sigcode | HPPA_PC_PRIV_USER;
+		tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+		break;
+#endif
+
+	case 1:
+		tf->tf_iioq_head =
+		    (int)ps->sa_sigdesc[sig].sd_tramp | HPPA_PC_PRIV_USER;
+		tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	tf->tf_sp = (int)sp;
 	tf->tf_r3 = (int)&fp->sf_sc;
-	tf->tf_iioq_head = (int)p->p_sigctx.ps_sigcode | HPPA_PC_PRIV_USER;
-	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	tf->tf_arg0 = sig;
 	tf->tf_arg1 = code;
 	tf->tf_arg2 = (int)&fp->sf_sc;
 	tf->tf_arg3 = (int)catcher;
-	
+
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.14 2001/11/13 02:08:09 lukem Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.15 2002/07/04 23:32:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.14 2001/11/13 02:08:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.15 2002/07/04 23:32:09 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -146,7 +146,8 @@ freebsd_sys_sigaction4(p, v, retval)
 		nbsa.sa_flags   = nesa.sa_flags;
 	}
 	error = sigaction1(p, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.7 2002/03/20 17:59:26 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.8 2002/07/04 23:32:07 thorpej Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -149,8 +149,7 @@ sunos32_setregs(p, pack, stack)
 }
 
 void
-sunos32_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sunos32_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -163,6 +162,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 	struct sunos32_sigcontext *scp;
 	u_int32_t addr, oldsp32;
 	int onstack; 
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
