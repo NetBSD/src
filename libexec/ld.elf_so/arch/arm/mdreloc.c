@@ -23,8 +23,10 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		const Elf_Sym   *def;
 		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
+		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+		symnum = ELF_R_SYM(rel->r_info);
 
 		switch (ELF_R_TYPE(rel->r_info)) {
 		case R_TYPE(NONE):
@@ -41,8 +43,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			if (addend & 0x00800000)
 				addend |= 0xff000000;
 
-			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			tmp = (Elf_Addr)obj->relocbase + def->st_value
@@ -67,8 +68,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 #endif
 
 		case R_TYPE(ABS32):	/* word32 B + S + A */
-			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			*where += (Elf_Addr)defobj->relocbase + def->st_value;
@@ -78,8 +78,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		case R_TYPE(GLOB_DAT):	/* word32 B + S */
-			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			*where = (Elf_Addr)(defobj->relocbase + def->st_value);
@@ -111,14 +110,11 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		default:
-			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
-			    true);
 			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
-			    (u_long)ELF_R_SYM(rel->r_info),
-			    (u_long)ELF_R_TYPE(rel->r_info),
+			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
-			    def ? defobj->strtab + def->st_name : "??"));
+			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));

@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.7 2002/09/05 20:12:43 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.8 2002/09/05 21:21:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -120,16 +120,17 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		const Elf_Sym   *def;
 		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
+		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		symnum = ELF_R_SYM(rela->r_info);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(NONE):
 			break;
 
 		case R_TYPE(REFQUAD):
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 
@@ -143,8 +144,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		case R_TYPE(GLOB_DAT):
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 
@@ -192,15 +192,12 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		default:
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    true);
 			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
-			    (u_long)ELF_R_SYM(rela->r_info),
-			    (u_long)ELF_R_TYPE(rela->r_info),
+			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
 			    (void *)*where,
-			    def ? defobj->strtab + def->st_name : "??"));
+			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));

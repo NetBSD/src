@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.9 2002/09/05 20:08:19 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.10 2002/09/05 21:21:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -225,7 +225,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-	def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
 		return (-1);
 
@@ -533,8 +533,10 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		Elf_Addr value = 0, mask;
 		const Elf_Sym *def = NULL;
 		const Obj_Entry *defobj = NULL;
+		unsigned long	 symnum;
 
 		where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
+		symnum = ELF_R_SYM(rela->r_info);
 
 		type = ELF_R_TYPE(rela->r_info);
 		if (type == R_TYPE(NONE))
@@ -570,8 +572,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 
 			/* Find the symbol */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return (-1);
 

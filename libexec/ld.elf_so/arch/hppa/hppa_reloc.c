@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.5 2002/09/05 20:08:16 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.6 2002/09/05 21:21:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -292,7 +292,8 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 		 * Look up the symbol.  While we're relocating self,
 		 * _rtld_objlist is NULL, so just pass in self.
 		 */
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
+		    false);
 		if (def == NULL)
 			return -1;
 		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +
@@ -346,21 +347,23 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		const Elf_Sym   *def;
 		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
+		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		symnum = ELF_R_SYM(rela->r_info);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(NONE):
 			break;
 
 		case R_TYPE(DIR32):
-			if (ELF_R_SYM(rela->r_info)) {
+			if (symnum) {
 				/*
 				 * This is either a DIR32 against a symbol
 				 * (def->st_name != 0), or against a local
 				 * section (def->st_name == 0).
 				 */
-				def = obj->symtab + ELF_R_SYM(rela->r_info);
+				def = obj->symtab + symnum;
 				defobj = obj;
 				if (def->st_name != 0)
 					/*
@@ -368,8 +371,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 					 * _rtld_objlist is NULL, so we just
 					 * pass in self.
 					 */
-					def = _rtld_find_symdef(rela->r_info,
-					    obj, &defobj, false);
+					def = _rtld_find_symdef(symnum, obj,
+					    &defobj, false);
 				if (def == NULL)
 					return -1;
 
@@ -403,13 +406,13 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		case R_TYPE(PLABEL32):
-			if (ELF_R_SYM(rela->r_info)) {
+			if (symnum) {
 				/*
 		 		 * While we're relocating self, _rtld_objlist
 				 * is NULL, so we just pass in self.
 				 */
-				def = _rtld_find_symdef(rela->r_info, obj,
-				    &defobj, false);
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
 				if (def == NULL)
 					return -1;
 
@@ -467,15 +470,12 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			break;
 
 		default:
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    true);
 			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
-			    (u_long)ELF_R_SYM(rela->r_info),
-			    (u_long)ELF_R_TYPE(rela->r_info),
+			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
 			    (void *)*where,
-			    def ? defobj->strtab + def->st_name : "??"));
+			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));

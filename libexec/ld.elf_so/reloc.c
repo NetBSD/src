@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.60 2002/09/05 20:08:14 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.61 2002/09/05 21:21:06 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -174,7 +174,8 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
 #endif
 
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
+		    true);
 		if (def == NULL)
 			return -1;
 
