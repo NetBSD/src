@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.24 1997/09/14 14:36:31 lukem Exp $	*/
+/*	$NetBSD: inode.c,v 1.25 1997/09/16 08:37:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.24 1997/09/14 14:36:31 lukem Exp $");
+__RCSID("$NetBSD: inode.c,v 1.25 1997/09/16 08:37:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -528,7 +528,7 @@ pinode(ino)
 	printf("MODE=%o\n", dp->di_mode);
 	if (preen)
 		printf("%s: ", cdevname());
-	printf("SIZE=%qu ", dp->di_size);
+	printf("SIZE=%qu ", (unsigned long long)dp->di_size);
 	t = dp->di_mtime;
 	p = ctime(&t);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);

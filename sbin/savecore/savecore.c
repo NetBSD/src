@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.32 1997/09/15 11:08:45 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.33 1997/09/16 08:37:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.32 1997/09/15 11:08:45 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.33 1997/09/16 08:37:18 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,8 @@ rawname(s)
 		    "can't make raw dump device name from %s", s);
 		return (s);
 	}
-	(void)snprintf(name, sizeof(name), "%.*s/r%s", sl - s, s, sl + 1);
+	(void)snprintf(name, sizeof(name), "%.*s/r%s", (int)(sl - s), s,
+	    sl + 1);
 	if ((sl = strdup(name)) == NULL) {
 		syslog(LOG_ERR, "%s", strerror(errno));
 		exit(1);

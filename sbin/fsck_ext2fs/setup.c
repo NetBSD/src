@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.4 1997/09/14 14:27:31 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.5 1997/09/16 08:37:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.4 1997/09/14 14:27:31 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.5 1997/09/16 08:37:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ setup(dev)
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
-			(unsigned)(maxino + 1) * sizeof(int16_t));
+			(unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
 	for (numdirs = 0, cg = 0; cg < sblock.e2fs_ncg; cg++) {
@@ -240,7 +240,7 @@ setup(dev)
 		sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n", 
-			(unsigned)numdirs * sizeof(struct inoinfo *));
+			(unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
 	bufinit();
@@ -344,8 +344,8 @@ readsb(listerr)
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %d, original %ld, alternate %ld\n",
-					olp - (long *)&sblock, *olp, *nlp);
+				printf("offset %ld, original %ld, alternate %ld\n",
+					(long)(olp - (long *)&sblock), *olp, *nlp);
 			}
 		}
 		badsb(listerr,

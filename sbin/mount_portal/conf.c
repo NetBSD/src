@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1997/09/15 05:58:24 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1997/09/16 08:37:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.5 1997/09/15 05:58:24 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 1997/09/16 08:37:11 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -121,7 +121,7 @@ xmalloc(siz)
 	void *p = malloc(siz);
 	if (p)
 		return (p);
-	syslog(LOG_ALERT, "malloc: failed to get %d bytes", siz);
+	syslog(LOG_ALERT, "malloc: failed to get %lu bytes", (u_long)siz);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.2 1997/09/14 14:27:27 lukem Exp $	*/
+/*	$NetBSD: pass2.c,v 1.3 1997/09/16 08:37:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.2 1997/09/14 14:27:27 lukem Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.3 1997/09/16 08:37:03 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,8 +145,8 @@ pass2()
 			}
 		} else if ((inp->i_isize & (sblock.e2fs_bsize - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
-			pwarn("DIRECTORY %s: LENGTH %d NOT MULTIPLE OF %d",
-				pathbuf, inp->i_isize, sblock.e2fs_bsize);
+			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
+			    pathbuf, (u_long)inp->i_isize, sblock.e2fs_bsize);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, sblock.e2fs_bsize);
