@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2002/03/05 19:06:38 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2002/04/23 12:41:08 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -356,7 +356,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
