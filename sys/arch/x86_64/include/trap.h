@@ -1,7 +1,3 @@
-/*	$NetBSD: trap.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: trap.h,v 1.2 2003/02/26 21:29:36 fvdl Exp $	*/
 
-#ifdef _KERNEL
-#include <i386/include/trap.h>
-#else
-#include <i386/trap.h>
-#endif
+#include <x86/trap.h>
