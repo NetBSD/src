@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/02/24 19:38:01 reinoud Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/02/25 18:40:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -323,7 +323,7 @@ identify_arm_cpu(cpu_number)
 	int cpu_number;
 {
 	cpu_t *cpu;
-	u_int cpuid;
+	u_int cpuid, cpu_type;
 
 	cpu = &cpus[cpu_number];
 	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
@@ -347,35 +347,35 @@ identify_arm_cpu(cpu_number)
 	switch (cpuid & CPU_ID_CPU_MASK) {
 #ifdef CPU_ARM6
         case ID_ARM610:
-        	cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
+        	cpu_type = cpuid & CPU_ID_CPU_MASK;
 		break;
 #endif
 #ifdef CPU_ARM7
 	case ID_ARM710 :
 	case ID_ARM700 :
-		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
 #endif
 #ifdef CPU_ARM8
 	case ID_ARM810 :
-		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
 #endif
 #ifdef CPU_SA110
 	case ID_SA110 :
-		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
 	case ID_SA1100 :
-		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-1100 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
 	case ID_SA1110 :
-		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-1110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
@@ -383,12 +383,12 @@ identify_arm_cpu(cpu_number)
 #endif
 	default :
 		printf("Unrecognised processor ID = %08x\n", cpuid);
-		cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
+		cpu_type = cpuid & CPU_ID_CPU_MASK;
 		break;
 	}
 
 	if (cpu->cpu_class == CPU_CLASS_ARM) {
-		sprintf(cpu->cpu_model, "ARM%x rev %d", cpu->cpu_type,
+		sprintf(cpu->cpu_model, "ARM%x rev %d", cpu_type,
 		    cpuid & CPU_ID_REVISION_MASK);
 
 		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
