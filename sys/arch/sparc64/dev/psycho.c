@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.10 2000/05/17 10:17:01 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.11 2000/05/17 10:28:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -1071,7 +1071,7 @@ psycho_dmamem_unmap(t, kva, size)
 	iommu_dvmamem_unmap(t, &sc->sc_is, kva, size);
 }
 
-#if NOT_DEBUG
+#ifdef NOT_DEBUG
 void
 psycho_print_intr_state(void)
 {
