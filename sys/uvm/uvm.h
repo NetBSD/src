@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.13.2.1 1998/11/09 06:06:36 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.13.2.2 1999/02/25 04:06:22 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -43,6 +43,7 @@
 #define _UVM_UVM_H_
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_uvmhist.h"
@@ -141,6 +142,9 @@ extern struct uvm uvm;
 
 UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
+#ifdef UBC
+UVMHIST_DECL(ubchist);
+#endif
 
 /*
  * macros
