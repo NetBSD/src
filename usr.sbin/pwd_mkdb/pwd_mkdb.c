@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.8 1996/11/22 05:37:30 lukem Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.9 1996/11/24 21:13:27 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,6 +193,16 @@ main(argc, argv)
 		/* look like YP? */
 		if((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
 			hasyp++;
+
+		/*
+		 * Warn about potentially unsafe uid/gid overrides.
+		 */
+		if (pwd.pw_name[0] == '+') {
+			if ((flags & _PASSWORD_NOUID) == 0 && pwd.pw_uid == 0)
+				warnx("line %d: superuser override in YP inclusion", cnt);
+			if ((flags & _PASSWORD_NOGID) == 0 && pwd.pw_gid == 0)
+				warnx("line %d: wheel override in YP inclusion", cnt);
+		}
 
 		/* Create insecure data. */
 		p = buf;
