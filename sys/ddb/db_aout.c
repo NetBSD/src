@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.24 1999/04/29 11:28:42 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.25 1999/06/05 08:36:29 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -141,8 +141,8 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    NULL) !=  -1) {
-                printf("[ preserving %d bytes of %s a.out symbol table ]\n",
-                          (char *)vesymtab - (char *)vsymtab, name);
+                printf("[ preserving %ld bytes of %s a.out symbol table ]\n",
+                          (long)vesymtab - (long)vsymtab, name);
 		return (TRUE);
         }
 	
