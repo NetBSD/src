@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2000/06/01 00:49:54 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2000/06/01 15:38:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -36,7 +36,7 @@
 struct device *booted_device;
 int booted_partition;
 
-static void	findroot(struct device **, int *);
+static void	findroot(void);
 
 int		cpuspeed = 100;		/* Until we know more precisely. */
 
@@ -54,7 +54,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 		booted_device ? booted_device->dv_xname : "<unknown>");
@@ -62,39 +62,30 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-struct device *booted_device;
-
 extern char	bootstring[];
 extern int	netboot;
 
 void
-findroot(devpp, partp)
+findroot(void)
 	struct device **devpp;
 	int *partp;
 {
 	struct device *dv;
 
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}              
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
 
 	if ((booted_device == NULL) && netboot == 0)
 		for (dv = alldevs.tqh_first; dv != NULL;
 		     dv = dv->dv_list.tqe_next)
 			if (dv->dv_class == DV_DISK &&
 			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
-				    *devpp = dv;
+				    booted_device = dv;
 
 	/*
 	 * XXX Match up MBR boot specification with BSD disklabel for root?
 	 */
-	*partp = 0;
+	booted_parition = 0;
 
 	return;
 }
