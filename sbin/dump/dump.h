@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.15 1999/01/15 13:32:06 bouyer Exp $	*/
+/*	$NetBSD: dump.h,v 1.16 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -146,10 +146,15 @@ int	mapdirs __P((ino_t maxino, long *tapesize));
 
 /* file dumping routines */
 void	blksout __P((daddr_t *blkp, int frags, ino_t ino));
-void	bread __P((daddr_t blkno, char *buf, int size));	
 void	dumpino __P((struct dinode *dp, ino_t ino));
 void	dumpmap __P((char *map, int type, ino_t ino));
 void	writeheader __P((ino_t ino));
+
+/* data block caching */
+void	bread __P((daddr_t blkno, char *buf, int size));	
+void	rawread __P((daddr_t, char *, int));
+void	initcache __P((int, int));
+void	printcachestats __P((void));
 
 /* tape writing routines */
 int	alloctape __P((void));
