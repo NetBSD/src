@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore_old.c,v 1.3 1997/08/26 07:13:18 veego Exp $	*/
+/*	$NetBSD: savecore_old.c,v 1.4 1997/09/15 11:08:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore_old.c,v 1.3 1997/08/26 07:13:18 veego Exp $";
+__RCSID("$NetBSD: savecore_old.c,v 1.4 1997/09/15 11:08:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,7 @@ int	 get_crashtime __P((void));
 void	 kmem_setup __P((void));
 void	 log __P((int, char *, ...));
 void	 Lseek __P((int, off_t, int));
+int	 main __P((int, char *[]));
 int	 Open __P((char *, int rw));
 int	 Read __P((int, void *, int));
 char	*rawname __P((char *s));
@@ -247,8 +248,8 @@ kmem_setup()
 	(void)Read(kmem, &dumplo, sizeof(dumplo));
 	dumplo *= DEV_BSIZE;
 	if (verbose)
-		(void)printf("dumplo = %d (%d * %d)\n",
-		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
+		(void)printf("dumplo = %ld (%ld * %ld)\n",
+		    (long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
 	Lseek(kmem, (off_t)(current_nl[X_DUMPMAG].n_value), SEEK_SET);
 	(void)Read(kmem, &dumpmag, sizeof(dumpmag));
 	ddname = find_dev(dumpdev, S_IFBLK);
@@ -269,7 +270,7 @@ kmem_setup()
 void
 check_kmem()
 {
-	register char *cp;
+	char *cp;
 	FILE *fp;
 	char core_vers[1024];
 
@@ -327,7 +328,8 @@ dump_exists()
 	 */
 	if (newdumpmag != dumpmag) {
 		if (verbose)
-			syslog(LOG_WARNING, "magic number mismatch (%x != %x)",
+			syslog(LOG_WARNING,
+			    "magic number mismatch (0x%x != 0x%x)",
 			    newdumpmag, dumpmag);
 		syslog(LOG_WARNING, "no core dump");
 		return (0);
@@ -340,10 +342,11 @@ char buf[1024 * 1024];
 void
 save_core()
 {
-	register FILE *fp;
-	register int bounds, ifd, nr, nw, ofd;
+	FILE *fp;
+	int bounds, ifd, nr, nw, ofd;
 	char *rawp, path[MAXPATHLEN];
 
+	ofd = -1;
 	/*
 	 * Get the current number and update the bounds file.  Do the update
 	 * now, because may fail later and don't want to overwrite anything.
@@ -463,10 +466,10 @@ err2:			syslog(LOG_WARNING,
 
 char *
 find_dev(dev, type)
-	register dev_t dev;
-	register int type;
+	dev_t dev;
+	int type;
 {
-	register DIR *dfd;
+	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
 	char *dp, devname[MAXPATHLEN + 1];
@@ -541,7 +544,7 @@ get_crashtime()
 int
 check_space()
 {
-	register FILE *fp;
+	FILE *fp;
 	char *tkernel;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
@@ -631,7 +634,7 @@ Create(file, mode)
 	char *file;
 	int mode;
 {
-	register int fd;
+	int fd;
 
 	fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (fd < 0) {
