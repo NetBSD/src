@@ -354,8 +354,8 @@ findentry(sp)
 				n = 8;
 			val += n;
 			instruc = get(addr += 2, ISP);
-		} while ((instruc & ADQMSK == ADDQSP) ||
-			 (instruc & ADQMSK == ADDQWSP));
+		} while ((instruc & ADQMSK) == ADDQSP ||
+			 (instruc & ADQMSK) == ADDQWSP);
 	} else if ((instruc & HIWORD) == ADDLSP)
 		val = get(addr + 2, ISP);
 	else if ((instruc & HIWORD) == ADDWSP ||
