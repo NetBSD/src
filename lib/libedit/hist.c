@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.10 2002/03/18 16:00:53 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.11 2002/11/15 14:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.10 2002/03/18 16:00:53 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.11 2002/11/15 14:32:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -132,18 +132,16 @@ hist_get(EditLine *el)
 			el->el_history.eventno = h;
 			return (CC_ERROR);
 		}
-	(void) strncpy(el->el_line.buffer, hp,
+	(void) strlcpy(el->el_line.buffer, hp,
 			(size_t)(el->el_line.limit - el->el_line.buffer));
 	el->el_line.lastchar = el->el_line.buffer + strlen(el->el_line.buffer);
 
-	if (el->el_line.lastchar > el->el_line.buffer) {
-		if (el->el_line.lastchar[-1] == '\n')
-			el->el_line.lastchar--;
-		if (el->el_line.lastchar[-1] == ' ')
-			el->el_line.lastchar--;
-		if (el->el_line.lastchar < el->el_line.buffer)
-			el->el_line.lastchar = el->el_line.buffer;
-	}
+	if (el->el_line.lastchar > el->el_line.buffer
+	    && el->el_line.lastchar[-1] == '\n')
+		el->el_line.lastchar--;
+	if (el->el_line.lastchar > el->el_line.buffer
+	    && el->el_line.lastchar[-1] == ' ')
+		el->el_line.lastchar--;
 #ifdef KSHVI
 	if (el->el_map.type == MAP_VI)
 		el->el_line.cursor = el->el_line.buffer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.7 2002/03/18 16:00:53 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.8 2002/11/15 14:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ typedef struct el_history_t {
 #define	HIST_FIRST(el)		HIST_FUN(el, H_FIRST, NULL)
 #define	HIST_LAST(el)		HIST_FUN(el, H_LAST, NULL)
 #define	HIST_PREV(el)		HIST_FUN(el, H_PREV, NULL)
-#define	HIST_EVENT(el, num)	HIST_FUN(el, H_EVENT, num)
+#define	HIST_SET(el, num)	HIST_FUN(el, H_SET, num)
 #define	HIST_LOAD(el, fname)	HIST_FUN(el, H_LOAD fname)
 #define	HIST_SAVE(el, fname)	HIST_FUN(el, H_SAVE fname)
 
