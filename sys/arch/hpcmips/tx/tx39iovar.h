@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39iovar.h,v 1.2 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39iovar.h,v 1.3 2001/06/13 19:09:08 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <dev/hpc/hpciovar.h>
+
 struct tx39io_port_status {
 	txreg_t dir, in, out, power;
 	union {
@@ -55,7 +57,7 @@ struct tx39io_softc {
 	struct tx39io_port_status sc_ostat_mfio;
 
 	/* unified IO manager ops */
-	struct txio_ops sc_io_ops;
-	struct txio_ops sc_mfio_ops;
+	struct hpcio_chip sc_io_ops;
+	struct hpcio_chip sc_mfio_ops;
 };
 
