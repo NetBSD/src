@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.25 1998/09/22 05:56:52 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.26 1998/09/23 21:51:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -305,7 +305,9 @@ typedef unsigned long alpha_pt_entry_t;
 /*
  * Misc. support routines.
  */
+struct rpb;
 const char	*alpha_dsr_sysname __P((void));
+void		alpha_hwrpb_checksum __P((struct rpb *));
 
 /*
  * Stubs for Alpha instructions normally inaccessible from C.
