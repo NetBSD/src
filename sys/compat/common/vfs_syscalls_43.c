@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.1 1995/06/24 20:16:25 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.2 1995/09/19 22:02:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-
 /*
  * Convert from an old to a new stat structure.
  */
@@ -97,14 +96,15 @@ cvtstat(st, ost)
  */
 /* ARGSUSED */
 int
-compat_43_stat(p, uap, retval)
+compat_43_stat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_stat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct stat sb;
 	struct ostat osb;
 	int error;
@@ -129,14 +129,15 @@ compat_43_stat(p, uap, retval)
  */
 /* ARGSUSED */
 int
-compat_43_lstat(p, uap, retval)
+compat_43_lstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_lstat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
 	struct ostat osb;
@@ -189,14 +190,15 @@ compat_43_lstat(p, uap, retval)
  * Return status information about a file descriptor.
  */
 /* ARGSUSED */
-compat_43_fstat(p, uap, retval)
+compat_43_fstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct ostat *) sb;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -234,14 +236,15 @@ compat_43_fstat(p, uap, retval)
  */
 /* ARGSUSED */
 int
-compat_43_ftruncate(p, uap, retval)
+compat_43_ftruncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(long) length;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
@@ -258,14 +261,15 @@ compat_43_ftruncate(p, uap, retval)
  */
 /* ARGSUSED */
 int
-compat_43_truncate(p, uap, retval)
+compat_43_truncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(long) length;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) pad;
@@ -282,15 +286,16 @@ compat_43_truncate(p, uap, retval)
  * Reposition read/write file offset.
  */
 int
-compat_43_lseek(p, uap, retval)
+compat_43_lseek(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_lseek_args /* {
 		syscallarg(int) fd;
 		syscallarg(long) offset;
 		syscallarg(int) whence;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct lseek_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
@@ -303,7 +308,7 @@ compat_43_lseek(p, uap, retval)
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, offset) = SCARG(uap, offset);
 	SCARG(&nuap, whence) = SCARG(uap, whence);
-	error = lseek(p, &nuap, &qret);
+	error = lseek(p, &nuap, (register_t *)&qret);
 	*(long *)retval = qret;
 	return (error);
 }
@@ -313,14 +318,15 @@ compat_43_lseek(p, uap, retval)
  * Create a file.
  */
 int
-compat_43_creat(p, uap, retval)
+compat_43_creat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_creat_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
@@ -349,16 +355,17 @@ compat_43_quota(p, uap, retval)
  * Read a block of directory entries in a file system independent format.
  */
 int
-compat_43_getdirentries(p, uap, retval)
+compat_43_getdirentries(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_getdirentries_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct file *fp;
 	struct uio auio, kuio;

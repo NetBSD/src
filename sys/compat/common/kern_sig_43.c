@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.3 1995/08/17 03:07:47 mycroft Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.4 1995/09/19 22:02:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,13 +68,14 @@
 #include <sys/user.h>		/* for coredump */
 
 int
-compat_43_sigblock(p, uap, retval)
+compat_43_sigblock(p, v, retval)
 	register struct proc *p;
-	struct compat_43_sigblock_args /* {
-		syscallarg(int) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_43_sigblock_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
 
 	(void) splhigh();
 	*retval = p->p_sigmask;
@@ -85,13 +86,14 @@ compat_43_sigblock(p, uap, retval)
 
 
 int
-compat_43_sigsetmask(p, uap, retval)
+compat_43_sigsetmask(p, v, retval)
 	struct proc *p;
-	struct compat_43_sigsetmask_args /* {
-		syscallarg(int) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_43_sigsetmask_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
 
 	(void) splhigh();
 	*retval = p->p_sigmask;
@@ -103,14 +105,15 @@ compat_43_sigsetmask(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_sigstack(p, uap, retval)
+compat_43_sigstack(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_sigstack_args /* {
 		syscallarg(struct sigstack *) nss;
 		syscallarg(struct sigstack *) oss;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigstack ss;
 	struct sigacts *psp;
 	int error = 0;
@@ -138,15 +141,16 @@ compat_43_sigstack(p, uap, retval)
  */
 /* ARGSUSED */
 int
-compat_43_sigvec(p, uap, retval)
+compat_43_sigvec(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct sigvec *sv;
@@ -189,14 +193,15 @@ compat_43_sigvec(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_killpg(p, uap, retval)
+compat_43_killpg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_killpg_args /* {
 		syscallarg(int) pgid;
 		syscallarg(int) signum;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 #ifdef COMPAT_09
 	SCARG(uap, pgid) = (short) SCARG(uap, pgid);

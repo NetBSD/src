@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.39 1995/03/09 17:32:18 mycroft Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.40 1995/09/19 21:57:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,13 +74,14 @@ int mmapdebug = 0;
 
 /* ARGSUSED */
 int
-sbrk(p, uap, retval)
+sbrk(p, v, retval)
 	struct proc *p;
-	struct sbrk_args /* {
-		syscallarg(int) incr;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sbrk_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -88,13 +89,14 @@ sbrk(p, uap, retval)
 
 /* ARGSUSED */
 int
-sstk(p, uap, retval)
+sstk(p, v, retval)
 	struct proc *p;
-	struct sstk_args /* {
-		syscallarg(int) incr;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sstk_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -116,8 +118,11 @@ compat_43_getpagesize(p, uap, retval)
 
 #ifdef COMPAT_43
 int
-compat_43_mmap(p, uap, retval)
+compat_43_mmap(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
@@ -125,9 +130,7 @@ compat_43_mmap(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(long) pos;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
@@ -184,8 +187,11 @@ compat_43_mmap(p, uap, retval)
  * and the return value is adjusted up by the page offset.
  */
 int
-mmap(p, uap, retval)
+mmap(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
@@ -194,9 +200,7 @@ mmap(p, uap, retval)
 		syscallarg(int) fd;
 		syscallarg(long) pad;
 		syscallarg(off_t) pos;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
@@ -329,14 +333,15 @@ mmap(p, uap, retval)
 }
 
 int
-msync(p, uap, retval)
+msync(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct msync_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	vm_map_t map;
@@ -418,14 +423,15 @@ msync(p, uap, retval)
 }
 
 int
-munmap(p, uap, retval)
+munmap(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct munmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	vm_map_t map;
@@ -488,15 +494,16 @@ munmapfd(p, fd)
 }
 
 int
-mprotect(p, uap, retval)
+mprotect(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct mprotect_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(int) len;
 		syscallarg(int) prot;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	register vm_prot_t prot;
@@ -532,15 +539,16 @@ mprotect(p, uap, retval)
 
 /* ARGSUSED */
 int
-madvise(p, uap, retval)
+madvise(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct madvise_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -548,29 +556,31 @@ madvise(p, uap, retval)
 
 /* ARGSUSED */
 int
-mincore(p, uap, retval)
+mincore(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct mincore_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
 }
 
 int
-mlock(p, uap, retval)
+mlock(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct mlock_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	int error;
@@ -612,14 +622,15 @@ mlock(p, uap, retval)
 }
 
 int
-munlock(p, uap, retval)
+munlock(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct munlock_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	int error;

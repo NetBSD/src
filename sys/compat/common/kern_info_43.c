@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.1 1995/06/24 20:16:13 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.2 1995/09/19 22:01:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -84,14 +84,15 @@ compat_43_gethostid(p, uap, retval)
 
 /*ARGSUSED*/
 int
-compat_43_gethostname(p, uap, retval)
+compat_43_gethostname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_43_gethostname_args /* {
 		syscallarg(char *) hostname;
 		syscallarg(u_int) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int name;
 
 	name = KERN_HOSTNAME;
@@ -108,16 +109,17 @@ compat_43_gethostname(p, uap, retval)
 #define	KINFO_CLOCKRATE		(6<<8)
 
 int
-compat_43_getkerninfo(p, uap, retval)
+compat_43_getkerninfo(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_getkerninfo_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) where;
 		syscallarg(int *) size;
 		syscallarg(int) arg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error, name[5];
 	size_t size;
 
@@ -190,13 +192,14 @@ compat_43_getkerninfo(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_sethostid(p, uap, retval)
+compat_43_sethostid(p, v, retval)
 	struct proc *p;
-	struct compat_43_sethostid_args /* {
-		syscallarg(int32_t) hostid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_43_sethostid_args /* {
+		syscallarg(int32_t) hostid;
+	} */ *uap = v;
 	int error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
@@ -208,11 +211,12 @@ compat_43_sethostid(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_sethostname(p, uap, retval)
+compat_43_sethostname(p, v, retval)
 	struct proc *p;
-	register struct compat_43_sethostname_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_43_sethostname_args *uap = v;
 	int name;
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.1 1995/06/24 20:16:19 christos Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.2 1995/09/19 22:02:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -55,14 +55,15 @@
 
 /* ARGSUSED */
 int
-compat_43_getrlimit(p, uap, retval)
+compat_43_getrlimit(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct ogetrlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct orlimit olim;
 
 	if (SCARG(uap, which) >= RLIM_NLIMITS)
@@ -79,14 +80,15 @@ compat_43_getrlimit(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_setrlimit(p, uap, retval)
+compat_43_setrlimit(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_43_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct ogetrlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct orlimit olim;
 	struct rlimit lim;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.2 1995/08/10 04:08:57 mycroft Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.3 1995/09/19 22:01:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -47,17 +47,18 @@
 
 #ifdef SYSVSEM
 int
-compat_10_semsys(p, uap, retval)
+compat_10_semsys(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_10_semsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct __semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
@@ -110,16 +111,17 @@ compat_10_semsys(p, uap, retval)
 
 #ifdef SYSVSHM
 int
-compat_10_shmsys(p, uap, retval)
+compat_10_shmsys(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_10_shmsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(void *) shmaddr;
@@ -170,8 +172,11 @@ compat_10_shmsys(p, uap, retval)
 
 #ifdef SYSVMSG
 int
-compat_10_msgsys(p, uap, retval)
-	struct caller *p;
+compat_10_msgsys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_10_msgsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
@@ -179,9 +184,7 @@ compat_10_msgsys(p, uap, retval)
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 		syscallarg(int) a6;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
