@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.6 1994/08/03 02:28:35 briggs Exp $
+#	$Id: MAKEDEV,v 1.7 1994/08/03 06:10:15 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -62,7 +62,7 @@ std)
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
-	mknod reload		c 2 20	; chmod 640 mem ; chgrp kmem mem
+	mknod reload		c 2 20	; chmod 640 reload ; chgrp kmem reload
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
 	mknod tty		c 1 0	; chmod 666 tty
@@ -117,11 +117,11 @@ sd*)
 
 tty0*)
 	unit=`expr $i : 'tty0\(.*\)'`
-	rm -f ser${unit} tty${unit}
+	rm -f ser${unit} tty${unit} tty0${unit}
 	case ${unit} in
 	0|1)
-		mknod tty${unit} c 12 ${unit}
-		chown uucp.wheel tty${unit}
+		mknod tty0${unit} c 12 ${unit}
+		chown uucp.wheel tty0${unit}
 		;;
 	*)
 		echo bad unit for serial tty in: $i
