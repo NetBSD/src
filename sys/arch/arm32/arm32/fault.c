@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.10 1996/10/13 03:05:51 christos Exp $ */
+/* $NetBSD: fault.c,v 1.11 1996/10/15 22:22:22 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -112,6 +112,8 @@ static char *aborts[16] = {
  * We first need to identify the type of page fault.
  */
 
+#define TRAP_CODE ((fault_status & 0x0f) | (fault_address & 0xfffffff0))
+
 void
 data_abort_handler(frame)
 	trapframe_t *frame;
@@ -126,50 +128,54 @@ data_abort_handler(frame)
 	int fault_code;
 	u_quad_t sticks = 0;
 	int saved_lr = 0;
-    
-/*
- * OK you did not see this :-) This is worse than your worst nightmare
- * This bug was found when implementing LDR/STR late abort fixes
- * Don't know why I did not spot it before.
- * I really need to rethink the trapframe structure ...
- */
+
+#ifndef CPU_SA110    
+	/*
+	 * OK you did not see this :-) This is worse than your worst nightmare
+	 * This bug was found when implementing LDR/STR late abort fixes
+	 * Don't know why I did not spot it before.
+	 * I really need to rethink the trapframe structure ...
+	 */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
-/* Ok an abort in SVC mode */
+	/* Ok an abort in SVC mode */
 
-/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
+	/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
 
-/* Copy the SVC r14 into the usr r14 - The usr r14 is garbage as the fault
- * happened in svc mode but we need it in the usr slot so we can
- * treat the registers as an array of ints during fixing.
- * NOTE: This PC is in the position but writeback is not allowed on r15.
- */
+	/*
+	 * Copy the SVC r14 into the usr r14 - The usr r14 is garbage as
+	 * the fault happened in svc mode but we need it in the usr slot
+	 * so we can treat the registers as an array of ints during fixing.
+	 * NOTE: This PC is in the position but writeback is not allowed
+	 * on r15.
+	 */
 		saved_lr = frame->tf_usr_lr;
 		frame->tf_usr_lr = frame->tf_svc_lr;
-        
-/* Note the trapframe does not have the SVC r13 so a fault from an
- * instruction with writeback to r13 in SVC mode is not allowed.
- * This should not happen as the kstack is always valid.
- */
-	}
-     
 
-/*
- * Enable IRQ's and FIQ's (disabled by CPU on abort) if trapframe shows
- * they were enabled.
- */
+	/*
+	 * Note the trapframe does not have the SVC r13 so a fault from an
+	 * instruction with writeback to r13 in SVC mode is not allowed.
+	 * This should not happen as the kstack is always valid.
+	 */
+	}
+#endif	/* !CPU_SA110 */
+
+	/*
+	 * Enable IRQ's and FIQ's (disabled by CPU on abort) if trapframe
+	 * shows they were enabled.
+	 */
 
 #ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif
+#endif	/* BLOCK_IRQS */
 
-/* Update vmmeter statistics */
+	/* Update vmmeter statistics */
 
 	cnt.v_trap++;
 
-/* Get fault address and status from the CPU */
+	/* Get fault address and status from the CPU */
 
 	fault_address = cpu_faultaddress();
 	fault_status = cpu_faultstatus();
@@ -177,7 +183,7 @@ data_abort_handler(frame)
 
 	fault_instruction = ReadWord(fault_pc);
 
-/* More debug stuff */
+	/* More debug stuff */
 
 	s = spltty();
 	if (pmap_debug_level >= 0) {
@@ -189,34 +195,37 @@ data_abort_handler(frame)
 		    fault_pc, fault_instruction);
 	}
 
-/* Decode the fault instruction and fix the registers as needed */
+	/* Decode the fault instruction and fix the registers as needed */
 
-/* Was is a swap instruction ? */
+#ifndef CPU_SA110
+	/* Was is a swap instruction ? */
 
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
+#ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("SWP\n");
 			disassemble(fault_pc);
 		}
+#endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
-/* Was is a ldr/str instruction */
+	/* Was is a ldr/str instruction */
 
 #ifdef CPU_LATE_ABORT
 
-/* This is for late abort only */
+		/* This is for late abort only */
 
 		int base;
 		int offset;
 		int *registers = &frame->tf_r0;
-#endif
+#endif	/* CPU_LATE_ABORT */
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 /*			printf("LDR/STR\n");*/
 			disassemble(fault_pc);
 		}
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 		
 #ifdef CPU_LATE_ABORT
 
@@ -236,9 +245,9 @@ data_abort_handler(frame)
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >=0)
 			printf("late abt fix: r%d=%08x ", base, registers[base]);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 		if ((fault_instruction & (1 << 25)) == 0) {
-/* Immediate offset - easy */                  
+			/* Immediate offset - easy */                  
 			offset = fault_instruction & 0xfff;
 			if ((fault_instruction & (1 << 23)))
 				offset = -offset;
@@ -246,7 +255,7 @@ data_abort_handler(frame)
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
 				printf("imm=%08x ", offset);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 		} else {
 			int shift;
 
@@ -274,13 +283,13 @@ data_abort_handler(frame)
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >=0)
 					printf("shift reg=%d ", shift);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 				shift = registers[shift];
 			}
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
 				printf("shift=%08x ", shift);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 			switch (((fault_instruction >> 5) & 0x3)) {
 			case 0 : /* Logical left */
 				offset = (int)(((u_int)offset) << shift);
@@ -302,23 +311,22 @@ data_abort_handler(frame)
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
 				printf("abt: fixed LDR/STR with register offset\n");
-#endif                  
+#endif	/* DEBUG_FAULT_CORRECTION */               
 			if ((fault_instruction & (1 << 23)))
 				offset = -offset;
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
 				printf("offset=%08x ", offset);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 			registers[base] += offset;
 		}
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >=0)
 			printf("r%d=%08x\n", base, registers[base]);
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 	}
-#endif
-	}
-	else if ((fault_instruction & 0x0e000000) == 0x08000000) {
+#endif	/* CPU_LATE_ABORT */
+	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
 		int base;
 		int loop;
 		int count;
@@ -329,17 +337,18 @@ data_abort_handler(frame)
 			printf("LDM/STM\n");
 			disassemble(fault_pc);
 		}
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
 				printf("This instruction must be corrected\n");
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
 				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
+			/* Count registers transferred */
 			count = 0;
 			for (loop = 0; loop < 16; ++loop) {
 				if (fault_instruction & (1<<loop))
@@ -350,18 +359,18 @@ data_abort_handler(frame)
 				printf("%d registers used\n", count);
 				printf("Corrected r%d by %d bytes ", base, count * 4);
 			}
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 			if (fault_instruction & (1 << 23)) {
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >= 0)
 					printf("down\n");
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 				registers[base] -= count * 4;
 			} else {
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >= 0)
 					printf("up\n");
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 				registers[base] += count * 4;
 			}
 		}
@@ -377,7 +386,7 @@ data_abort_handler(frame)
 			printf("LDC/STC\n");
 			disassemble(fault_pc);
 		}
-#endif
+#endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
 
@@ -406,41 +415,45 @@ data_abort_handler(frame)
 		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
-/*
- * OK you did not see this :-) This is worse than your worst nightmare
- * This bug was found when implementing LDR/STR late abort fixes
- * Don't know why I did not spot it before.
- * I really need to rethink the trapframe structure ...
- */
+	/*
+	 * OK you did not see this :-) This is worse than your worst nightmare
+	 * This bug was found when implementing LDR/STR late abort fixes
+	 * Don't know why I did not spot it before.
+	 * I really need to rethink the trapframe structure ...
+	 */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
-/* Ok an abort in SVC mode */
+		/* Ok an abort in SVC mode */
 
-/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
+		/* CHEAT CHEAT CHEAT - SHUT YOUR EYES NOW ! */
 
-/* Copy the SVC r14 into the usr r14 - The usr r14 is garbage as the fault
- * happened in svc mode but we need it in the usr slot so we can
- * treat the registers as an array of ints during fixing.
- * NOTE: This PC is in the position but writeback is not allowed on r15.
- */
+	/*
+	 * Copy the SVC r14 into the usr r14 - The usr r14 is garbage as
+	 * the fault happened in svc mode but we need it in the usr slot
+	 * so we can treat the registers as an array of ints during fixing.
+	 * NOTE: This PC is in the position but writeback is not allowed
+	 * on r15.
+	 */
 
 		frame->tf_svc_lr = frame->tf_usr_lr;
 		frame->tf_usr_lr = saved_lr;
 
-/* Note the trapframes does not have the SVC r13 so a fault from an
- * instruction with writeback to r13 in SVC mode is not allowed.
- * This should not happen as the kstack is always valid.
- */
+	/*
+	 * Note the trapframe does not have the SVC r13 so a fault from an
+	 * instruction with writeback to r13 in SVC mode is not allowed.
+	 * This should not happen as the kstack is always valid.
+	 */
 	}
+#endif	/* !CPU_SA110 */
 
 	(void)splx(s);
 
-/* Extract the fault code from the fault status */
+	/* Extract the fault code from the fault status */
 
 	fault_code = fault_status & FAULT_TYPE_MASK;
 
-/* Get the current proc structure or proc0 if there is none */
+	/* Get the current proc structure or proc0 if there is none */
 
 	if ((p = curproc) == 0)
 		p = &proc0;
@@ -459,24 +472,28 @@ data_abort_handler(frame)
 			return;
 		if (pmap_modified_emulation(kernel_pmap, va))
 			return;
+		printf("data_abort_handler: pc=%08x fault addr=%08x faultcode=%08x\n",
+		    fault_pc, fault_address, fault_status);
 		panic("data_abort_handler: no pcb ... we're toast !\n");
 	}
 
+#ifdef DIAGNOSTIC
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
 		    (u_int)curpcb);
 		printf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
 		    (u_int)curproc);
 	}
+#endif	/* DIAGNOSTIC */
 
-/* fusubail is used by [fs]uswintr to avoid page faulting */
+	/* fusubail is used by [fs]uswintr to avoid page faulting */
 
 	if ((pcb->pcb_onfault
 	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
 	    || pcb->pcb_onfault == fusubailout) {
 copyfault:
-		printf("Using pcb_onfault=%08x addr=%08x st=%08x\n",
-		    (u_int)pcb->pcb_onfault, fault_address, fault_status);
+		printf("Using pcb_onfault=%08x addr=%08x st=%08x curproc=%x\n",
+		    (u_int)pcb->pcb_onfault, fault_address, fault_status, (u_int)curproc);
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 			panic("Yikes pcb_onfault=%08x during USR mode fault\n",
@@ -484,40 +501,43 @@ copyfault:
 #ifdef VALIDATE_TRAPFRAME
 		validate_trapframe(frame, 1);
 #endif
+#ifdef PORTMASTER
 		++onfault_count;
-		if (onfault_count > 10) {
+		if (onfault_count == 10) {
 			printf("Bummer: OD'ing on onfault_count\n");
 #ifdef DDB
-			Debugger();
+/*			Debugger();*/
 			onfault_count = 0;
-#else
-			panic("Eaten by zombies\n");
-#endif
+#endif	/* DDB */
 		}
+#endif	/* PORTMASTER */
 		return;
 	}
 
-/* Were we in user mode when the abort occurred ? */
+	/* Were we in user mode when the abort occurred ? */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		sticks = p->p_sticks;
         
-/* Modify the fault_code to reflect the USR/SVC state at time of fault */
+	/*
+	 * Modify the fault_code to reflect the USR/SVC state
+	 * at time of fault
+	 */
 
 		fault_code |= FAULT_USER;
 		p->p_md.md_regs = frame;
 	}
 
-/* Now act of the fault type */
+	/* Now act of the fault type */
 
 	switch (fault_code) {
 	case FAULT_WRTBUF_0 | FAULT_USER: /* Write Buffer Fault */
 	case FAULT_WRTBUF_1 | FAULT_USER: /* Write Buffer Fault */
 	case FAULT_WRTBUF_0:              /* Write Buffer Fault */
 	case FAULT_WRTBUF_1:              /* Write Buffer Fault */
-/* If this happens forget it no point in continuing */
+		/* If this happens forget it no point in continuing */
 
-		panic("Write Buffer Fault - Halting\n");
+		panic("Write Buffer Fault [%d] - Halting\n", fault_code);
 		break;
 
 	case FAULT_ALIGN_0 | FAULT_USER: /* Alignment Fault */
@@ -525,15 +545,15 @@ copyfault:
 	case FAULT_ALIGN_0:              /* Alignment Fault */
 	case FAULT_ALIGN_1:              /* Alignment Fault */
 
-/*
- * Really this should just kill the process. Alignment faults are turned
- * off in the kernel in order to get better performance from shorts with
- * GCC so an alignment fault means somebody has played with the control
- * register in the CPU. Might as well panic as the kernel was not compiled
- * for aligned accesses.
- */
-		panic("Alignment fault - Halting\n");
-/*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
+		/*
+		 * Really this should just kill the process.
+		 * Alignment faults are turned off in the kernel
+		 * in order to get better performance from shorts with
+		 * GCC so an alignment fault means somebody has played
+		 * with the control register in the CPU. Might as well
+		 * panic as the kernel was not compiled for aligned accesses.
+		 */
+		panic("Alignment fault [%d] - Halting\n", fault_code);
 		break;
           
 	case FAULT_BUSERR_0 | FAULT_USER: /* Bus Error LF Section */
@@ -545,11 +565,10 @@ copyfault:
 	case FAULT_BUSERR_2:              /* Bus Error Section */
 	case FAULT_BUSERR_3:              /* Bus Error Page */
 
-/* What will accutally cause a bus error ? */
-/* Real bus errors are not a process problem but hardware */
+		/* What will accutally cause a bus error ? */
+		/* Real bus errors are not a process problem but hardware */
  
-		panic("Bus Error - Halting\n");
-/*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);*/
+		panic("Bus Error [%d]- Halting\n", fault_code);
 		break;
           
 	case FAULT_DOMAIN_S | FAULT_USER: /* Section Domain Error Fault */
@@ -557,22 +576,22 @@ copyfault:
 	case FAULT_DOMAIN_S:              /* Section Domain Error Fault */
 	case FAULT_DOMAIN_P:              /* Page Domain Error Fault*/
 
-/*
- * Right well we dont use domains, everything is always a client and thus
- * subject to access permissions.
- * If we get a domain error then we have corrupts PTE's so we might
- * as well die !
- * I suppose eventually this should just kill the process who owns the
- * PTE's but if this happens it implies a kernel problem.
- */
+		/*
+		 * Right well we dont use domains, everything is
+		 * always a client and thus subject to access permissions.
+		 * If we get a domain error then we have corrupts PTE's
+		 * so we might as well die !
+		 * I suppose eventually this should just kill the process
+		 * who owns the PTE's but if this happens it implies a
+		 * kernel problem.
+		 */
  
-		panic("Domain Error - Halting\n");
-/*		trapsignal(p, SIGSEGV, fault_status & FAULT_TYPE_MASK);*/
+		panic("Domain Error [%d] - Halting\n", fault_code);
 		break;
 
 	case FAULT_PERM_P:		 /* Page Permission Fault*/
 	case FAULT_PERM_P | FAULT_USER:	/* Page Permission Fault*/
-/* Ok we have a permission fault in user or kernel mode */
+	/* Ok we have a permission fault in user or kernel mode */
 	{
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
@@ -604,14 +623,14 @@ copyfault:
 
 		if ((fault_code & FAULT_USER) == 0
 		    && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
- /* Was the fault due to the FPE/KGDB ? */
+			/* Was the fault due to the FPE/KGDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 				printf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 				    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 				    fault_pc);
 				    postmortem(frame);
-				trapsignal(p, SIGSEGV, FAULT_PERM_P);
+				trapsignal(p, SIGSEGV, TRAP_CODE);
 				goto out;
 			}
 
@@ -668,66 +687,35 @@ copyfault:
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
-			trapsignal(p, SIGSEGV, FAULT_PERM_P);
+			trapsignal(p, SIGSEGV, TRAP_CODE);
 			break;
 		}
 	}            
-/*		panic("Page Permission Fault - Halting\n");*/
-		break;
-
-#if 0          
-        case FAULT_PERM_P: /* Page Permission Fault is non USR mode */
-
-/*
- * Kernel permission faults should not happen. The kernel should never
- * access memory it does not have permission for. Since the kernel has
- * read access on all mapped pages it means the kernel has written to
- * a read only kernel page. e.g. page 0
- *
- * Erg: Major cock up time. The kernel can take permission faults during
- * the emulation of FP instructions. How comes I have not hit this problem ?
- * ok out with the superglue ... This condition needs to be integrated with
- * the FAULT_PERM_P | FAULT_USER case similarly to FAULT_TRANS_P
- */
-
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
-		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
-		    fault_pc);
-		postmortem(frame);
-		panic("Page Permission Fault - (in SVC mode) Halting\n");
-		break;
-#endif
+	break;
 
 	case FAULT_PERM_S | FAULT_USER: /* Section Permission Fault */
-/*
- * Section permission fault should not happen yet.
- * However I have had this panic once so it can occor
- * Yes they do ... Writing to -1 in user space does it ...
- */
+		/*
+		 * Section permission faults should not happen often.
+		 * Only from user processes mis-behaving
+		 */
 		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		disassemble(fault_pc);
 		postmortem(frame);
-		trapsignal(p, SIGSEGV, FAULT_PERM_S);
+		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
-
-/*		panic("Section Permission Fault - Halting\n");
-		trapsignal(p, SIGSEGV, fault_status & FAULT_TYPE_MASK);
-		break;*/
 
 	case FAULT_BUSTRNL1 | FAULT_USER: /* Bus Error Trans L1 Fault */
 	case FAULT_BUSTRNL2 | FAULT_USER: /* Bus Error Trans L2 Fault */
 	case FAULT_BUSTRNL1:              /* Bus Error Trans L1 Fault */
 	case FAULT_BUSTRNL2:              /* Bus Error Trans L2 Fault */
-/*
- * These faults imply that the PTE is corrupt. Likely to be a kernel
- * fault so we had better stop.
- */
-		panic("Bus Error Translation - Halting\n");
+		/*
+		 * These faults imply that the PTE is corrupt.
+		 * Likely to be a kernel fault so we had better stop.
+		 */
+		panic("Bus Error Translation [%d] - Halting\n", fault_code);
 		break;
-/*		trapsignal(p, SIGBUS, fault_status & FAULT_TYPE_MASK);
-		break;*/
           
 	case FAULT_TRANS_P:              /* Page Translation Fault */
 	case FAULT_TRANS_P | FAULT_USER: /* Page Translation Fault */
@@ -798,7 +786,7 @@ copyfault:
 			printf("trap: bad kernel access at %x\n", (u_int)va);
 			goto we_re_toast;
 		}
-#endif
+#endif	/* DIAGNOSTIC */
 
 		nss = 0;
 		if ((caddr_t)va >= vm->vm_maxsaddr
@@ -848,7 +836,7 @@ nogo:
 		    fault_pc);
 		disassemble(fault_pc);
 				postmortem(frame);
-		trapsignal(p, SIGSEGV, FAULT_TRANS_P);
+		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
 		}            
 /*		panic("Page Fault - Halting\n");*/
@@ -898,7 +886,7 @@ nogo:
 			printf("trap: bad kernel access at %x\n", (u_int)va);
 			goto we_re_toast;
 		}
-#endif
+#endif	/* DIAGNOSTIC */
 
 		nss = 0;
 		if ((caddr_t)va >= vm->vm_maxsaddr
@@ -964,7 +952,7 @@ nogo1:
 			goto we_re_toast;
 		}
 		postmortem(frame);
-		trapsignal(p, SIGSEGV, FAULT_TRANS_S);
+		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
 		}            
 /*		panic("Section Fault - Halting\n");
@@ -1024,7 +1012,7 @@ prefetch_abort_handler(frame)
 	int fault_code;
 	u_quad_t sticks;
 
-/* Debug code */
+	/* Debug code */
 
 #ifdef DIAGNOSTIC
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
@@ -1035,24 +1023,24 @@ prefetch_abort_handler(frame)
 		(void)splx(s);
 		panic("Fault handler not in SVC mode\n");
 	}
-#endif
+#endif	/* DIAGNOSTIC */
 
-/*
- * Enable IRQ's & FIQ's (disabled by the abort) This always comes
- * from user mode so we know interrupts were not disabled.
- * But we check anyway.
- */
+	/*
+	 * Enable IRQ's & FIQ's (disabled by the abort) This always comes
+	 * from user mode so we know interrupts were not disabled.
+	 * But we check anyway.
+	 */
 
 #ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 #endif
 
-/* Update vmmeter statistics */
+	/* Update vmmeter statistics */
  
 	cnt.v_trap++;
 
-/* Get the current proc structure or proc0 if there is none */
+	/* Get the current proc structure or proc0 if there is none */
 
 	if ((p = curproc) == 0) {
 		p = &proc0;
@@ -1062,28 +1050,33 @@ prefetch_abort_handler(frame)
 	if (pmap_debug_level >= 0)
 		printf("prefetch fault in process %08x\n", (u_int)p);
 
-/* can't use curpcb, as it might be NULL; and we have p in a register anyway */
+	/*
+	 * can't use curpcb, as it might be NULL; and we have p in a
+	 * register anyway
+	 */
 
 	pcb = &p->p_addr->u_pcb;
 	if (pcb == 0)
 		panic("prefetch_abort_handler: no pcb ... we're toast !\n");
 
+#ifdef DIAGNOSTIC
 	if (pcb != curpcb) {
-		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
-		    (u_int)curpcb);
-		printf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
-		    (u_int)curproc);
+		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n",
+		    (u_int)pcb, (u_int)curpcb);
+		printf("data_abort: Alert ! proc(%08x), curproc(%08x)\n",
+		    (u_int)p, (u_int)curproc);
 	}
+#endif	/* DIAGNOSTIC */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		sticks = p->p_sticks;
         
-/* Modify the fault_code to reflect the USR/SVC state at time of fault */
+	/* Modify the fault_code to reflect the USR/SVC state at time of fault */
 
 		fault_code |= FAULT_USER;
 		p->p_md.md_regs = frame;
 	} else {
-/* All the kernel code pages are loaded at boot and do not get paged */
+		/* All the kernel code pages are loaded at boot and do not get paged */
 
 		s = spltty();
 		printf("Prefetch address = %08x\n", frame->tf_pc);
@@ -1091,48 +1084,49 @@ prefetch_abort_handler(frame)
 		postmortem(frame);
 
 #ifdef CONTINUE_AFTER_SVC_PREFETCH
-
 		printf("prefetch abort in SVC mode !\n");
 		printf("The system should now be considered very unstable :-)\n");
 		sigexit(curproc, SIGILL);
-/* Not reached */
+		/* Not reached */
 	        panic("prefetch_abort_handler: How did we get here ?\n");
 #else
 	        panic("Prefetch abort in SVC mode\n");
-#endif
+#endif	/* CONTINUE_AFTER_SVC_PREFETCH */
 	}
 
-/* Get fault address */
+	/* Get fault address */
 
 	fault_pc = frame->tf_pc;
 
 	if (pmap_debug_level >= 0)
 		printf("Prefetch abort: PC = %08x\n", fault_pc);
 
-/* Ok validate the address, can only execute in USER space */
+	/* Ok validate the address, can only execute in USER space */
 
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
 		s = spltty();
-		printf("prefetch: pc (%08x) not in user process space\n", fault_pc);
+		printf("prefetch: pc (%08x) not in user process space\n",
+		    fault_pc);
 		postmortem(frame);
-		trapsignal(p, SIGSEGV, FAULT_PERM_P);
+		trapsignal(p, SIGSEGV, fault_pc);
 		(void)splx(s);
 		userret(p, frame->tf_pc, sticks);
 		return;
 	}
 
-/* Ok read the fault address. This will fault the page in for us */
+	/* Ok read the fault address. This will fault the page in for us */
 
 	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
 		s = spltty();
-		printf("prefetch: faultin failed for address %08x!!\n", fault_pc);
+		printf("prefetch: faultin failed for address %08x!!\n",
+		    fault_pc);
 		postmortem(frame);
 		trapsignal(p, SIGSEGV, fault_pc);
 		(void)splx(s);
 	} else {
 
 #ifdef DIAGNOSTIC
-/* More debug stuff */
+		/* More debug stuff */
 
 		if (pmap_debug_level >= 0) {
 			s = spltty();
@@ -1142,7 +1136,7 @@ prefetch_abort_handler(frame)
 
 			(void)splx(s);
 		}
-#endif
+#endif	/* DIAGNOSTIC */
 	}
 
 #ifdef VALIDATE_TRAPFRAME
@@ -1156,6 +1150,7 @@ prefetch_abort_handler(frame)
 #endif
 }
 
+#ifdef VALIDATE_TRAPFRAME
 
 void
 validate_trapframe(frame, where) 
@@ -1219,5 +1214,6 @@ validate_trapframe(frame, where)
 			printf("VTF WARNING: %s: frame->tf_pc < 0xf0000000 [%08x]\n", ptr, frame->tf_pc);
 	}
 }
-  
+#endif	/* VALIDATE_TRAPFRAME */
+
 /* End of fault.c */
