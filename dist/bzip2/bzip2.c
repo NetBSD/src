@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.2 2002/03/15 01:54:19 mjl Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.3 2002/12/06 02:21:45 thorpej Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -557,7 +557,7 @@ Bool uncompressStream ( FILE *zStream, FILE *stream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-      BZ2_bzReadGetUnused ( &bzerr, bzf, (void**)(&unusedTmp), &nUnused );
+      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
       if (bzerr != BZ_OK) panic ( "decompress:bzReadGetUnused" );
 
       for (i = 0; i < nUnused; i++) unused[i] = unusedTmp[i];
@@ -665,7 +665,7 @@ Bool testStream ( FILE *zStream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-      BZ2_bzReadGetUnused ( &bzerr, bzf, (void**)(&unusedTmp), &nUnused );
+      BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
       if (bzerr != BZ_OK) panic ( "test:bzReadGetUnused" );
 
       for (i = 0; i < nUnused; i++) unused[i] = unusedTmp[i];
