@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.25 1998/12/05 19:43:34 mjacob Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.26 2000/01/15 17:09:47 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,6 +52,8 @@
 #include <amiga/dev/sbicvar.h>
 #include <amiga/dev/ahscreg.h>
 #include <amiga/dev/zbusvar.h>
+
+#include <machine/cpu.h>
 
 void ahscattach __P((struct device *, struct device *, void *));
 int ahscmatch __P((struct device *, struct cfdata *, void *));
