@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: apbus.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -62,8 +62,9 @@ struct ap_intrhand {
 
 #define	NLEVEL	2
 #define	NBIT	16
+#define	LEVELxBIT(l,b)	(((l)*NBIT)+(b))
 
-static struct ap_intrhand apintr[NLEVEL][NBIT];
+static struct ap_intrhand apintr[NLEVEL*NBIT];
 
 static int
 apbusmatch(parent, cfdata, aux)
@@ -87,20 +88,13 @@ apbusattach(parent, self, aux)
         void *aux;
 {
 	struct apbus_attach_args child;
-	struct apbus_device *apdev;
+	struct apbus_dev *apdev;
 	struct apbus_ctl *apctl;
 
-	*(volatile u_int*)(NEWS5000_APBUS_INTSTAT) = 0xffffffff;
-	*(volatile u_int*)(NEWS5000_APBUS_INTMASK) = NEWS5000_INTAPBUS_ALL;
-
-	*(volatile u_int*)(NEWS5000_APBUS_CONFIG) = 0x04;
-	*(volatile u_int *)(NEWS5000_APBUS_DUMCOH) =
-	                               NEWS5000_APBUS_DEVICE_DMAC3 |
-	                               NEWS5000_APBUS_DEVICE_SONIC |
-	                               NEWS5000_APBUS_DEVICE_ALLSLOT;
-
-	*(volatile u_int*)NEWS5000_INTMASK0 = NEWS5000_INT0_ALL;
-	*(volatile u_int*)NEWS5000_INTMASK1 = NEWS5000_INT1_ALL;
+	*(volatile u_int *)(NEWS5000_APBUS_INTST) = 0xffffffff;
+	*(volatile u_int *)(NEWS5000_APBUS_INTMSK) = 0xffffffff;
+	*(volatile u_int *)(NEWS5000_APBUS_CTRL) = 0x00000004;
+	*(volatile u_int *)(NEWS5000_APBUS_DMA) = 0xffffffff;
 
 	printf("\n");
 
@@ -129,13 +123,6 @@ apbusattach(parent, self, aux)
 				child.apa_ctlnum = apctl->apbc_ctlno;
 				child.apa_slotno = apctl->apbc_sl;
 				child.apa_hwbase = apctl->apbc_hwbase;
-
-#if 0
-printf("config_found: name = %s\n", child.apa_name);
-printf("            : unit = %d\n", child.apa_ctlnum);
-printf("            : slot = %d\n", child.apa_slotno);
-printf("            : unit = 0x%08lx\n", child.apa_hwbase);
-#endif
 
 				config_found(self, &child, apbusprint);
 
@@ -181,15 +168,9 @@ aptokseg0(va)
 void
 apbus_wbflush()
 {
-	volatile int *wbflush = (int *)NEWS5000_WB;
+	volatile int *wbflush = (int *)NEWS5000_WBFLUSH;
 
 	(void)*wbflush;
-}
-
-void
-apbus_intr_init()
-{
-	bzero(&apintr[0][0],sizeof(apintr));
 }
 
 /*
@@ -202,7 +183,7 @@ apbus_intr_call(level, stat)
 {
 	int i;
 	int nintr = 0;
-	struct ap_intrhand *aip = &apintr[level][0];
+	struct ap_intrhand *aip = &apintr[LEVELxBIT(level,0)];
 
 	for(i = 0; i < NBIT; i++) {
 		if (aip->ai_mask & stat) {
@@ -241,7 +222,7 @@ apbus_intr_establish(level, mask, priority, func, aux, name, ctlno)
 	if (nbit == -1)
 		panic("apbus_intr_establish");
 
-	aip = &apintr[level][nbit];
+	aip = &apintr[LEVELxBIT(level,nbit)];
 	aip->ai_mask = 1 << nbit;
 	aip->ai_priority = priority;
 	aip->ai_func = func;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ap.c,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: clock_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -93,14 +93,7 @@ void
 clockinit(dev)
 	struct device *dev;
 {
-#if 1
-	/* use timer0 */
-	*(volatile u_int *)NEWS5000_INTMASK2 = NEWS5000_INT2_TIMER0;
-#else
-	/* use timer1 */
-	*(volatile u_int *)NEWS5000_TIMER1_PERIOD = 5000 / CLOCK_RATE - 1;
-	*(volatile u_int *)NEWS5000_INTMASK2 = NEWS5000_INT2_TIMER1;
-#endif
+	*(volatile u_int *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -33,31 +33,31 @@
 
 void *
 apbus_device_to_hwaddr(apbus_dev)
-	struct apbus_device *apbus_dev;
+	struct apbus_dev *apbus_dev;
 {
 	struct apbus_ctl *ctl;
 
-	if (!apbus_dev)
-		return (void *)0;
+	if (apbus_dev == NULL)
+		return NULL;
 
 	ctl = apbus_dev->apbd_ctl;
-	if (!ctl)
-		return (void *)0;
+	if (ctl == NULL)
+		return NULL;
 
 	return (void *)ctl->apbc_hwbase;
 }
 
-struct apbus_device *
+struct apbus_dev *
 apbus_lookupdev(devname)
 	char *devname;
 {
-	struct apbus_device *dp;
+	struct apbus_dev *dp;
 
 	dp = _sip->apbsi_dev;
-	if (!devname || *devname == '\0')
+	if (devname == NULL || *devname == '\0')
 		return dp;
 
-	/* search apbus_device named 'devname' */
+	/* search apbus_dev named 'devname' */
 	while (dp) {
 		if (strcmp(devname,dp->apbd_name) == 0)
 			return dp;
@@ -65,7 +65,7 @@ apbus_lookupdev(devname)
 		dp = dp->apbd_link;
 	}
 
-	return (struct apbus_device *)0;
+	return NULL;
 }
 
 void
@@ -77,7 +77,7 @@ apctl_dump(apctl)
 	if (!apctl)
 		return;
 
-	printf("	apbus_ctl dump (0x%08x)\n", (unsigned int)apctl);
+	printf("	apbus_ctl dump (%p)\n", apctl);
 
 	p = (void *)apctl;
 
@@ -93,21 +93,21 @@ apctl_dump(apctl)
 
 void
 apdevice_dump(apdev)
-	struct apbus_device *apdev;
+	struct apbus_dev *apdev;
 {
 	struct apbus_ctl *apctl;
 
-	if (!apdev)
+	if (apdev == NULL)
 		return;
 
 	/* only no pseudo device */
 	apctl = apdev->apbd_ctl;
-	if (!(int)apctl || !(int)apctl->apbc_hwbase)
+	if (apctl == NULL || apctl->apbc_hwbase == 0)
 		return;
 
-	printf("apbus_device dump (%p)\n", apdev);
-	printf("name:		%s\n", (char *)apdev->apbd_name);
-	printf("vendor:		%s\n", (char *)apdev->apbd_vendor);
+	printf("apbus_dev dump (%p)\n", apdev);
+	printf("name:		%s\n", apdev->apbd_name);
+	printf("vendor:		%s\n", apdev->apbd_vendor);
 	printf("atr:		%08x\n", apdev->apbd_atr);
 	printf("rev:		%d\n", apdev->apbd_rev);
 	printf("driver:		0x%08x\n", (unsigned int)apdev->apbd_driver);
