@@ -1,4 +1,4 @@
-/*      $NetBSD: extern.h,v 1.7 1996/12/06 02:06:48 lukem Exp $      */
+/*      $NetBSD: extern.h,v 1.8 1996/12/29 04:05:30 lukem Exp $      */
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -106,8 +106,8 @@ void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int));
-off_t	remotesize __P((const char *));
-time_t	remotemodtime __P((const char *));
+off_t	remotesize __P((const char *, int));
+time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
