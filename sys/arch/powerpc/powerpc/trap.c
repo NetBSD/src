@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2003/11/21 22:57:14 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 2004/02/24 18:25:27 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/11/21 22:57:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2004/02/24 18:25:27 drochner Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -334,7 +334,7 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)frame->srr0;
-		ksi.ksi_code = SEGV_MAPERR;
+		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
