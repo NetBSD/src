@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.25 2004/01/02 18:56:39 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.26 2004/01/02 19:14:00 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.25 2004/01/02 18:56:39 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.26 2004/01/02 19:14:00 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -83,7 +83,6 @@ void pthread__upcall(int type, struct sa_t *sas[], int ev, int intr,
 void pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
     pthread_t *qhead, pthread_t *schedqhead, pthread_t self);
 void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
-void pthread__recycle_bulk(pthread_t self, pthread_t qhead);
 
 extern void pthread__switch_return_point(void);
 
@@ -374,13 +373,12 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 void
 pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 {
-	pthread_t victim, prev, next, switchto, runq, recycleq, intqueue;
+	pthread_t victim, prev, next, switchto, runq, intqueue;
 	pthread_t tmp;
 	pthread_spin_t *lock;
 
 	PTHREADD_ADD(PTHREADD_RESOLVELOCKS);
 
-	recycleq = NULL;
 	runq = self;
 	intqueue = *intqueuep;
 	switchto = NULL;
@@ -469,13 +467,12 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						prev->pt_next = next;
 					else
 						intqueue = next;
-					victim->pt_next = recycleq;
-					recycleq = victim;
 					if (victim->pt_switchto == victim) {
 						victim->pt_switchto = NULL;
 						victim->pt_switchtouc = NULL;
 						SDPRINTF((" switchto self"));
 					}
+					pthread__sa_recycle(victim, self);
 				} else {
 					/*
 					 * Not finished yet.
@@ -609,33 +606,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 
 	}
 
-	/* Recycle upcalls. */
-	pthread__recycle_bulk(self, recycleq);
 	SDPRINTF(("(rl %p) exiting\n", self));
 	*intqueuep = runq;
-}
-
-void
-pthread__recycle_bulk(pthread_t self, pthread_t qhead)
-{
-	int count, ret;
-	pthread_t upcall;
-	stack_t recyclable[PT_UPCALLSTACKS];
-
-	count = 0;
-	while(qhead != NULL) {
-		upcall = qhead; 
-		qhead = qhead->pt_next;
-		upcall->pt_state = PT_STATE_RUNNABLE;
-		upcall->pt_next = NULL;
-		upcall->pt_parent = NULL;
-		recyclable[count] = upcall->pt_stack;
-		count++;
-	}
-	
-	ret = sa_stacks(count, recyclable);
-	pthread__assert(ret == count);
-	SDPRINTF(("(recycle_bulk %p) recycled %d stacks\n", self, count));
 }
 
 /*
@@ -645,15 +617,18 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 void
 pthread__sa_recycle(pthread_t old, pthread_t new)
 {
-	int ret;
 
 	old->pt_next = NULL;
 	old->pt_parent = NULL;
 	old->pt_state = PT_STATE_RUNNABLE;
 
-	ret = sa_stacks(1, &old->pt_stack);
-	pthread__assert(ret == 1);
-	SDPRINTF(("(recycle %p) recycled %p\n", new, old));
+#ifdef PTHREAD__DEBUG
+	if (pthread__debug_newline == 1)
+		SDPRINTF(("(recycle %p) recycling %p\n", new, old));
+	else
+		SDPRINTF((" (recycling %p)", old));
+#endif
+	old->pt_stackinfo.sasi_stackgen++;
 }
 
 /*
@@ -721,7 +696,9 @@ pthread__sa_start(void)
 	if (value)
 		rr = atoi(value);
 
-	ret = sa_register(pthread__upcall, NULL, flags, 0);
+	flags |= SA_FLAG_STACKINFO;
+	ret = sa_register(pthread__upcall, NULL, flags,
+	    pthread__stackinfo_offset());
 	if (ret) {
 		if (errno == ENOSYS)
 			errx(1,
