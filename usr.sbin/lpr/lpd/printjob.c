@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.11 1996/12/09 09:57:46 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.12 1997/03/22 03:20:38 lukem Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -651,7 +651,8 @@ start:
 	if ((child = dofork(DORETURN)) == 0) {	/* child */
 		dup2(fi, 0);
 		dup2(fo, 1);
-		n = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC, 0664);
+		unlink(tempfile);
+		n = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0664);
 		if (n >= 0)
 			dup2(n, 2);
 		for (n = 3; n < NOFILE; n++)
