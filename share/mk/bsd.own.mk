@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.314 2002/09/27 17:03:08 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.315 2002/09/27 21:37:57 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -213,6 +213,10 @@ DESTDIR?=
 # libraries moved from /usr/lib to /lib and the shared linker moved
 # from /usr/libexec to /lib
 #
+# Note that if the BINDIR is not /bin or /sbin, then we always use the
+# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
+# and /sbin).  See <bsd.shlib.mk>.
+#
 MKDYNAMICROOT?=	yes
 
 # Where the system object and source trees are kept; can be configurable
@@ -242,21 +246,7 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
-.if ${MKDYNAMICROOT} == "no"
-SHLIBDIR?=	/usr/lib
-.else
-SHLIBDIR?=	/lib
-.endif
-.if ${USE_SHLIBDIR:Uno} == "yes"
-_LIBSODIR?=	${SHLIBDIR}
-.else
-_LIBSODIR?=	${LIBDIR}
-.endif
-.if ${MKDYNAMICROOT} == "no"
-SHLINKDIR?=	/usr/libexec
-.else
-SHLINKDIR?=	/libexec
-.endif
+
 LINTLIBDIR?=	/usr/libdata/lint
 LIBGRP?=	${BINGRP}
 LIBOWN?=	${BINOWN}
