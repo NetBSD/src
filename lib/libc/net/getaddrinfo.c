@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.49 2000/09/23 04:40:19 lukem Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.50 2000/12/10 04:19:53 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.49 2000/09/23 04:40:19 lukem Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.50 2000/12/10 04:19:53 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1580,9 +1580,6 @@ _yp_getaddrinfo(rv, cb_data, ap)
 #endif
 
 /* resolver logic */
-
-extern const char *__hostalias __P((const char *));
-extern int h_errno;
 
 /*
  * Formulate a normal query, send, and await answer.
