@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.5 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.6 1998/12/27 13:03:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,8 @@ ohci_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_bus.bdev.dv_xname);
+		printf("%s: couldn't map interrupt\n", 
+		       sc->sc_bus.bdev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
