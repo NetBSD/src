@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 1997/11/10 03:57:31 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.8 1997/11/16 12:50:05 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,7 @@ EXTERN	char *disk_names[]
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  */
-EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
+EXTERN char ftp_prefix[STRSIZE] INIT("/binary");
 EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
