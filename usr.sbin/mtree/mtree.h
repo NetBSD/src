@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.13 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.14 2001/10/05 01:03:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,6 +95,13 @@ typedef struct _node {
 
 	char	name[1];			/* file name (must be last) */
 } NODE;
+
+
+typedef struct {
+	char  **list;
+	int	count;
+} slist_t;
+
 
 #define	RP(p)	\
 	((p)->fts_path[0] == '.' && (p)->fts_path[1] == '/' ? \

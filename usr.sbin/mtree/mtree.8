@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.18 2001/10/04 11:24:05 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.19 2001/10/05 01:03:24 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ can be used to control which files are printed.
 Add the comma separated tags to the
 .Dq exclusion
 list.
-Regular files with tags which are in the exclusion list are not printed with
+Non-directories with tags which are in the exclusion list are not printed with
 .Fl D .
 .It Fl e
 Don't complain about files that are in the file hierarchy, but not in the
@@ -118,7 +118,7 @@ instead of from the standard input.
 Add the comma separated tags to the
 .Dq inclusion
 list.
-Only regular files with tags which are in the inclusion list are printed with
+Non-directories with tags which are in the inclusion list are printed with
 .Fl D .
 If no inclusion list is provided, the default is to display all files.
 .It Fl i
