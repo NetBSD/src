@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.13.2.2 1997/11/06 22:36:31 mellon Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.3 1997/11/07 23:51:08 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -757,13 +757,16 @@ SCRIPTS_ENV+=	BATCH=yes
 .endif
 
 MANPREFIX?=	${PREFIX}
+CATPREFIX?=	${PREFIX}
 
 .for sect in 1 2 3 4 5 6 7 8 9
 MAN${sect}PREFIX?=	${MANPREFIX}
-CAT${sect}PREFIX?=	${MANPREFIX}
+CAT${sect}PREFIX?=	${CATPREFIX}
 .endfor
 MANLPREFIX?=	${MANPREFIX}
 MANNPREFIX?=	${MANPREFIX}
+CATLPREFIX?=	${CATPREFIX}
+CATNPREFIX?=	${CATPREFIX}
 
 MANLANG?=	""	# english only by default
 
@@ -784,6 +787,14 @@ _MANPAGES+=	${MANL:S%^%${MANLPREFIX}/man/${lang}/manl/%}
 
 .if defined(MANN)
 _MANPAGES+=	${MANN:S%^%${MANNPREFIX}/man/${lang}/mann/%}
+.endif
+
+.if defined(CATL)
+_CATPAGES+=	${CATL:S%^%${CATLPREFIX}/man/${lang}/catl/%}
+.endif
+
+.if defined(CATN)
+_CATPAGES+=	${CATN:S%^%${CATNPREFIX}/man/${lang}/catn/%}
 .endif
 
 .endfor
