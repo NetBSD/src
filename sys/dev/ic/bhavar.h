@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.20 2001/04/25 17:53:32 bouyer Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.21 2001/05/03 20:34:54 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -150,10 +150,13 @@ struct bha_probe_data {
 	int sc_irq, sc_drq;
 };
 
-int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
+int	bha_find __P((bus_space_tag_t, bus_space_handle_t));
+int	bha_inquire_config __P((bus_space_tag_t, bus_space_handle_t,
 	    struct bha_probe_data *));
-void	bha_attach __P((struct bha_softc *, struct bha_probe_data *));
+void	bha_attach __P((struct bha_softc *));
 int	bha_info __P((struct bha_softc *));
 int	bha_intr __P((void *));
 
 int	bha_disable_isacompat __P((struct bha_softc *));
+int	bha_probe_inquiry __P((bus_space_tag_t, bus_space_handle_t,
+	    struct bha_probe_data *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.42 2001/04/25 17:53:31 bouyer Exp $	*/
+/*	$NetBSD: bha.c,v 1.43 2001/05/03 20:34:54 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -89,27 +89,28 @@
 int     bha_debug = 0;
 #endif /* BHADEBUG */
 
-int	bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
-	    int, u_char *, int, u_char *));
+static int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, char *, int,
+	    u_char *, int, u_char *));
 
-void	bha_scsipi_request __P((struct scsipi_channel *,
+static void bha_scsipi_request __P((struct scsipi_channel *,
 	    scsipi_adapter_req_t, void *));
-void	bha_minphys __P((struct buf *));
+static void bha_minphys __P((struct buf *));
 
-void	bha_get_xfer_mode __P((struct bha_softc *, struct scsipi_xfer_mode *));
+static void bha_get_xfer_mode __P((struct bha_softc *,
+	    struct scsipi_xfer_mode *));
 
-void	bha_done __P((struct bha_softc *, struct bha_ccb *));
-int	bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
-void	bha_timeout __P((void *arg));
+static void bha_done __P((struct bha_softc *, struct bha_ccb *));
+int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
+static void bha_timeout __P((void *arg));
 
-int	bha_init __P((struct bha_softc *));
+static int bha_init __P((struct bha_softc *));
 
-int	bha_create_mailbox __P((struct bha_softc *));
-void	bha_collect_mbo __P((struct bha_softc *));
+static int bha_create_mailbox __P((struct bha_softc *));
+static void bha_collect_mbo __P((struct bha_softc *));
 
-void	bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
-void	bha_start_ccbs __P((struct bha_softc *));
-void	bha_finish_ccbs __P((struct bha_softc *));
+static void bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
+static void bha_start_ccbs __P((struct bha_softc *));
+static void bha_finish_ccbs __P((struct bha_softc *));
 
 struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, bus_addr_t));
 void	bha_create_ccbs __P((struct bha_softc *, int));
@@ -157,9 +158,8 @@ bha_nextmbi(sc, mbi)
  *	Finish attaching a Buslogic controller, and configure children.
  */
 void
-bha_attach(sc, bpd)
+bha_attach(sc)
 	struct bha_softc *sc;
-	struct bha_probe_data *bpd;
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -261,7 +261,7 @@ bha_intr(arg)
 
 		toggle.cmd.opcode = BHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		bha_cmd(iot, ioh, sc,
+		bha_cmd(iot, ioh, sc->sc_dev.dv_xname,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, (u_char *)0);
 		bha_start_ccbs(sc);
@@ -510,7 +510,7 @@ bha_get_xfer_mode(sc, xm)
 	    ((sc->sc_flags & BHAF_WIDE) ? sizeof(hwsetup.reply_w) : 0);
 	hwsetup.cmd.opcode = BHA_INQUIRE_SETUP;
 	hwsetup.cmd.len = rlen;
-	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+	bha_cmd(sc->sc_iot, sc->sc_ioh, sc->sc_dev.dv_xname,
 	    sizeof(hwsetup.cmd), (u_char *)&hwsetup.cmd,
 	    rlen, (u_char *)&hwsetup.reply);
 
@@ -563,7 +563,7 @@ bha_get_xfer_mode(sc, xm)
 			      sizeof(hwperiod.reply_w) : 0);
 			hwperiod.cmd.opcode = BHA_INQUIRE_PERIOD;
 			hwperiod.cmd.len = rlen;
-			bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+			bha_cmd(sc->sc_iot, sc->sc_ioh, sc->sc_dev.dv_xname,
 			    sizeof(hwperiod.cmd), (u_char *)&hwperiod.cmd,
 			    rlen, (u_char *)&hwperiod.reply);
 
@@ -765,23 +765,17 @@ bha_timeout(arg)
  *	Send a command to the Buglogic controller.
  */
 int
-bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
+bha_cmd(iot, ioh, name, icnt, ibuf, ocnt, obuf)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct bha_softc *sc;
+	char *name;
 	int icnt, ocnt;
 	u_char *ibuf, *obuf;
 {
-	const char *name;
 	int i;
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];
-
-	if (sc != NULL)
-		name = sc->sc_dev.dv_xname;
-	else
-		name = "(bha probe)";
 
 	/*
 	 * Calculate a reasonable timeout for the command.
@@ -896,19 +890,16 @@ bad:
 /*
  * bha_find:
  *
- *	Find the board and determine it's irq/drq.
+ *	Find the board.
  */
 int
-bha_find(iot, ioh, sc)
+bha_find(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct bha_probe_data *sc;
 {
 	int i;
 	u_char sts;
 	struct bha_extended_inquire inquire;
-	struct bha_config config;
-	int irq, drq;
 
 	/* Check something is at the ports we need to access */
 	sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
@@ -962,7 +953,7 @@ bha_find(iot, ioh, sc)
 	delay(1000);
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	i = bha_cmd(iot, ioh, (struct bha_softc *)0,
+	i = bha_cmd(iot, ioh, "(bha_find)",
 	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 
@@ -995,13 +986,29 @@ bha_find(iot, ioh, sc)
 		return (0);
 	}
 
+	return (1);
+}
+
+
+/*
+ * bha_inquire_config:
+ *
+ *	Determine irq/drq.
+ */
+int
+bha_inquire_config(bus_space_tag_t iot, bus_space_handle_t ioh,
+	    struct bha_probe_data *sc)
+{
+	int irq, drq;
+	struct bha_config config;
+
 	/*
 	 * Assume we have a board at this stage setup dma channel from
 	 * jumpers and save int level
 	 */
 	delay(1000);
 	config.cmd.opcode = BHA_INQUIRE_CONFIG;
-	bha_cmd(iot, ioh, (struct bha_softc *)0,
+	bha_cmd(iot, ioh, "(bha_inquire_config)",
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
@@ -1021,7 +1028,7 @@ bha_find(iot, ioh, sc)
 		drq = 7;
 		break;
 	default:
-		printf("bha_find: illegal drq setting %x\n",
+		printf("bha: illegal drq setting %x\n",
 		    config.reply.chan);
 		return (0);
 	}
@@ -1046,7 +1053,7 @@ bha_find(iot, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		printf("bha_find: illegal irq setting %x\n",
+		printf("bha: illegal irq setting %x\n",
 		    config.reply.intr);
 		return (0);
 	}
@@ -1058,6 +1065,13 @@ bha_find(iot, ioh, sc)
 	}
 
 	return (1);
+}
+
+int
+bha_probe_inquiry(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct bha_probe_data *bpd)
+{
+	return bha_find(iot, ioh) && bha_inquire_config(iot, ioh, bpd);
 }
 
 /*
@@ -1074,7 +1088,7 @@ bha_disable_isacompat(sc)
 
 	isa_disable.cmd.opcode = BHA_MODIFY_IOPORT;
 	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
-	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+	bha_cmd(sc->sc_iot, sc->sc_ioh, sc->sc_dev.dv_xname,
 	    sizeof(isa_disable.cmd), (u_char*)&isa_disable.cmd,
 	    0, (u_char *)0);
 	return (0);
@@ -1100,6 +1114,7 @@ bha_info(sc)
 	struct bha_revision revision;
 	struct bha_digit digit;
 	int i, j, initial_ccbs, rlen;
+	char *name = sc->sc_dev.dv_xname;
 	char *p;
 
 	/*
@@ -1107,7 +1122,7 @@ bha_info(sc)
 	 */
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 
@@ -1115,7 +1130,7 @@ bha_info(sc)
 	 * Fetch the configuration information.
 	 */
 	config.cmd.opcode = BHA_INQUIRE_CONFIG;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 
@@ -1126,14 +1141,14 @@ bha_info(sc)
 	 */
 	p = sc->sc_firmware;
 	revision.cmd.opcode = BHA_INQUIRE_REVISION;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(revision.cmd), (u_char *)&revision.cmd,
 	    sizeof(revision.reply), (u_char *)&revision.reply);
 	*p++ = revision.reply.firm_revision;
 	*p++ = '.';
 	*p++ = revision.reply.firm_version;
 	digit.cmd.opcode = BHA_INQUIRE_REVISION_3;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(digit.cmd), (u_char *)&digit.cmd,
 	    sizeof(digit.reply), (u_char *)&digit.reply);
 	*p++ = digit.reply.digit;
@@ -1141,7 +1156,7 @@ bha_info(sc)
 	    (revision.reply.firm_revision == '3' &&
 	     revision.reply.firm_version >= '3')) {
 		digit.cmd.opcode = BHA_INQUIRE_REVISION_4;
-		bha_cmd(iot, ioh, sc,
+		bha_cmd(iot, ioh, name,
 		    sizeof(digit.cmd), (u_char *)&digit.cmd,
 		    sizeof(digit.reply), (u_char *)&digit.reply);
 		*p++ = digit.reply.digit;
@@ -1191,7 +1206,7 @@ bha_info(sc)
 		p = sc->sc_model;
 		model.cmd.opcode = BHA_INQUIRE_MODEL;
 		model.cmd.len = sizeof(model.reply);
-		bha_cmd(iot, ioh, sc,
+		bha_cmd(iot, ioh, name,
 		    sizeof(model.cmd), (u_char *)&model.cmd,
 		    sizeof(model.reply), (u_char *)&model.reply);
 		*p++ = model.reply.id[0];
@@ -1286,7 +1301,7 @@ bha_info(sc)
 	    ((sc->sc_flags & BHAF_WIDE) ? sizeof(setup.reply_w) : 0);
 	setup.cmd.opcode = BHA_INQUIRE_SETUP;
 	setup.cmd.len = rlen;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    rlen, (u_char *)&setup.reply);
 
@@ -1308,7 +1323,7 @@ bha_info(sc)
 	 * Poll targets 0 - 7.
 	 */
 	devices.cmd.opcode = BHA_INQUIRE_DEVICES;
-	bha_cmd(iot, ioh, sc,
+	bha_cmd(iot, ioh, name,
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
@@ -1326,7 +1341,7 @@ bha_info(sc)
 	 */
 	if (sc->sc_flags & BHAF_WIDE) {
 		devices.cmd.opcode = BHA_INQUIRE_DEVICES_2;
-		bha_cmd(iot, ioh, sc,
+		bha_cmd(iot, ioh, name,
 		    sizeof(devices.cmd), (u_char *)&devices.cmd,
 		    sizeof(devices.reply), (u_char *)&devices.reply);
 
@@ -1365,6 +1380,7 @@ int
 bha_init(sc)
 	struct bha_softc *sc;
 {
+	char *name = sc->sc_dev.dv_xname;
 	struct bha_toggle toggle;
 	struct bha_mailbox mailbox;
 	struct bha_mbx_out *mbo;
@@ -1396,7 +1412,7 @@ bha_init(sc)
 	if (sc->sc_flags & BHAF_STRICT_ROUND_ROBIN) {
 		toggle.cmd.opcode = BHA_ROUND_ROBIN;
 		toggle.cmd.enable = 1;
-		bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+		bha_cmd(sc->sc_iot, sc->sc_ioh, name,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, NULL);
 	}
@@ -1407,7 +1423,7 @@ bha_init(sc)
 	mailbox.cmd.opcode = BHA_MBX_INIT_EXTENDED;
 	mailbox.cmd.nmbx = sc->sc_mbox_count;
 	ltophys(sc->sc_dmamap_mbox->dm_segs[0].ds_addr, mailbox.cmd.addr);
-	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+	bha_cmd(sc->sc_iot, sc->sc_ioh, name,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 
@@ -1471,7 +1487,7 @@ bha_start_ccbs(sc)
 
 				toggle.cmd.opcode = BHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
-				bha_cmd(iot, ioh, sc,
+				bha_cmd(iot, ioh, sc->sc_dev.dv_xname,
 				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 				    0, (u_char *)0);
 				break;
