@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.6 2005/02/27 23:49:05 joff Exp $ */
+/*	$NetBSD: if_atu.c,v 1.7 2005/03/01 03:19:05 itojun Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.6 2005/02/27 23:49:05 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.7 2005/03/01 03:19:05 itojun Exp $");
 
 #include "bpfilter.h"
 
@@ -141,6 +141,8 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
 	{ USB_VENDOR_ACERP,	USB_PRODUCT_ACERP_AWL300,
 	  RadioIntersil,	ATU_NO_QUIRK },
+	{ USB_VENDOR_OQO,	USB_PRODUCT_OQO_WIFI01,
+	  RadioRFMD2958,	ATU_NO_QUIRK },
 };
 
 struct atu_radfirm {
