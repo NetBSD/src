@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.32 2000/03/13 23:36:02 cgd Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.33 2000/05/08 13:53:32 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -250,8 +250,13 @@ ep_pcmcia_disable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
-	ep_pcmcia_disable1(sc);
+	/* 
+	 * We must disestablish the interrupt before disabling the function,
+	 * because on a multifunction card the interrupt disestablishment
+	 * accesses CCR registers.
+	 */
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	ep_pcmcia_disable1(sc);
 }
 
 void
@@ -301,7 +306,7 @@ ep_pcmcia_attach(parent, self, aux)
 	}
 
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
+		bus_addr_t maxaddr = pa->pf->sc->iobase + pa->pf->sc->iosize;
 
 		for (i = pa->pf->sc->iobase; i < maxaddr; i += 0x10) {
 			/*
