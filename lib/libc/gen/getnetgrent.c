@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.21 1999/01/21 22:21:13 thorpej Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.22 1999/01/22 03:25:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.21 1999/01/21 22:21:13 thorpej Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.22 1999/01/22 03:25:31 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -85,7 +85,7 @@ static int		 in_lookup __P((const char *, const char *,
 					const char *, int));
 
 static const ns_src default_files_nis[] = {
-	{ NSSRC_FILES,	NS_SUCCESS },
+	{ NSSRC_FILES,	NS_SUCCESS | NS_NOTFOUND },
 #ifdef YP
 	{ NSSRC_NIS,	NS_SUCCESS },
 #endif
@@ -222,6 +222,7 @@ _local_lookup(rv, cb_data, ap)
 	case 1:
 		return NS_NOTFOUND;
 	case -1:
+			/* XXX: call endnetgrent() here ? */
 		return NS_UNAVAIL;
 	}
 
