@@ -35,7 +35,7 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.2 1993/04/10 12:04:42 glass Exp $";
 
 /*
  * 386 Trap and System call handleing
@@ -90,8 +90,7 @@ trap(frame)
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
-#include "ddb.h"
-#if NDDB > 0
+#ifdef DDB
 	if (curpcb && curpcb->pcb_onfault) {
 		if (frame.tf_trapno == T_BPTFLT
 		    || frame.tf_trapno == T_TRCTRAP)
@@ -128,7 +127,7 @@ copyfault:
 		if (kdb_trap(&psl))
 			return;
 #endif
-#if NDDB > 0
+#ifdef DDB
 		if (kdb_trap (type, 0, &frame))
 			return;
 #endif
@@ -288,7 +287,7 @@ nogo:
 		break;
 	    }
 
-#if NDDB == 0
+#ifndef DDB
 	case T_TRCTRAP:	 /* trace trap -- someone single stepping lcall's */
 		frame.tf_eflags &= ~PSL_T;
 
@@ -306,7 +305,7 @@ nogo:
 #if	NISA > 0
 	case T_NMI:
 	case T_NMI|T_USER:
-#if NDDB > 0
+#ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
 		if (kdb_trap (type, 0, &frame))

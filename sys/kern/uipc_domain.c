@@ -72,8 +72,7 @@ domaininit()
 #ifdef CCITT
 	ADDDOMAIN(ccitt);
 #endif
-#include "imp.h"
-#if NIMP > 0
+#ifdef IMP
 	ADDDOMAIN(imp);
 #endif
 #endif
