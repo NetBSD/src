@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.22 2003/12/31 16:45:48 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.23 2004/01/02 14:13:16 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.22 2003/12/31 16:45:48 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.23 2004/01/02 14:13:16 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -103,8 +103,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__maxlwps = sas[0]->sa_id;
 
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
-	    type, sas[0]->sa_id, ev ? sas[1]->sa_id : 0, 
-	    intr ? sas[1+ev]->sa_id : 0));
+	    type, sas[0]->sa_id, ev, intr));
 
 	if (type == SA_UPCALL_BLOCKED) {
 		/* Don't handle this SA in the usual processing. */
@@ -265,8 +264,8 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 #endif
 		victim->pt_trapuc = sas[1 + i]->sa_context;
 		victim->pt_trapuc->uc_flags &= ~_UC_SIGMASK;
-		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
-			     victim->pt_type));
+		SDPRINTF(("(fi %p) victim %d %p(%d)", self, sas[1 + i]->sa_id,
+			     victim, victim->pt_type));
 		if (type == SA_UPCALL_UNBLOCKED && i < ev) {
 			victim->pt_unblockgen++;
 #ifdef PTHREAD__DEBUG
