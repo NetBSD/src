@@ -117,6 +117,7 @@
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mb86960var.h
 ./usr/include/dev/ic/mc146818reg.h
+./usr/include/dev/ic/mc6845reg.h
 ./usr/include/dev/ic/midwayreg.h
 ./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/ncr5380reg.h
@@ -130,6 +131,7 @@
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/opl3sa3.h
 ./usr/include/dev/ic/pcdisplay.h
+./usr/include/dev/ic/pcdisplayvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/rrunnerreg.h
@@ -173,6 +175,7 @@
 ./usr/include/dev/isa/madreg.h
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
+./usr/include/dev/isa/pcdisplayvar.h
 ./usr/include/dev/isa/pckbcvar.h
 ./usr/include/dev/isa/pcppireg.h
 ./usr/include/dev/isa/pcppivar.h
@@ -269,6 +272,7 @@
 ./usr/include/dev/tc
 ./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h
+./usr/include/dev/tc/ioasicreg.h
 ./usr/include/dev/tc/ioasicvar.h
 ./usr/include/dev/tc/sticreg.h
 ./usr/include/dev/tc/sticvar.h
@@ -983,6 +987,7 @@
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
 ./usr/include/sys/sem.h
+./usr/include/sys/sha1.h
 ./usr/include/sys/shm.h
 ./usr/include/sys/signal.h
 ./usr/include/sys/signalvar.h

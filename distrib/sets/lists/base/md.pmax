@@ -5,7 +5,7 @@
 ./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so
 ./usr/lib/libbfd.so.0
-./usr/lib/libbfd.so.0.0
+./usr/lib/libbfd.so.0.1
 ./usr/lib/libc.so
 ./usr/lib/libc.so.12
 ./usr/lib/libc.so.12.26
@@ -25,8 +25,8 @@
 ./usr/lib/libgnumalloc.so.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libkvm.so
-./usr/lib/libkvm.so.4
-./usr/lib/libkvm.so.4.0
+./usr/lib/libkvm.so.5
+./usr/lib/libkvm.so.5.0
 ./usr/lib/libm.so
 ./usr/lib/libm.so.0
 ./usr/lib/libm.so.0.1

@@ -6,7 +6,7 @@
 ./usr/bin/rtcalarm
 ./usr/bin/tvctrl
 ./usr/lib/libamu.so.0.1
-./usr/lib/libbfd.so.0.0
+./usr/lib/libbfd.so.0.1
 ./usr/lib/libc.so.12.26
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.2
