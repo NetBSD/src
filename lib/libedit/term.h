@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.14 2003/08/07 16:44:34 agc Exp $	*/
+/*	$NetBSD: term.h,v 1.15 2003/09/14 21:48:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ typedef struct {		/* Symbolic function key bindings	*/
 } fkey_t;
 
 typedef struct {
+	const char *t_name;		/* the terminal name	*/
 	coord_t	  t_size;		/* # lines and cols	*/
 	int	  t_flags;
 #define	TERM_CAN_INSERT		0x001	/* Has insert cap	*/
@@ -96,6 +97,7 @@ protected void	term_print_arrow(EditLine *, const char *);
 protected int	term_clear_arrow(EditLine *, const char *);
 protected int	term_set_arrow(EditLine *, const char *, key_value_t *, int);
 protected void	term_end(EditLine *);
+protected void	term_get(EditLine *, const char **);
 protected int	term_set(EditLine *, const char *);
 protected int	term_settc(EditLine *, int, const char **);
 protected int	term_telltc(EditLine *, int, const char **);
