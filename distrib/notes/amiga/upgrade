@@ -80,7 +80,6 @@ To upgrade your system, follow the following instructions:
 	If you don't already have the NetBSD distribution sets on your
 	disk, look in the installation section for information on how
 	to transfer them to your disk.
->>> NetBSD or AmigaDOS partitions...
 
 	Once the distribution sets are transferred to your disk,
 	continue here.  (Obviously, if the NetBSD distribution sets
@@ -115,8 +114,9 @@ To upgrade your system, follow the following instructions:
 	up the installation, by remaking some system databases.  When
 	it is complete, you should use "halt" to halt the system.
 
->>>	transfer new kernel to /
-
+	You will probably also want to copy the release "netbsd" kernel
+	image to your root at some point.
+	
 Your system has now been upgraded to NetBSD 1.1.
 
 After a new kernel has been copied to your hard disk, your
