@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.2 2001/06/12 15:17:26 wiz Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.3 2001/07/01 01:57:29 gmcgarry Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*
@@ -32,7 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Additional Card Configuration Registers on Dingo */
+#define PCMCIA_CCR_ECOR
+
+/* Additional Card Configuration Registers (CCR) on Dingo */
 
 #define PCMCIA_CCR_DCOR0		0x20
 #define PCMCIA_CCR_DCOR0_MRST_SFRST		0x80
@@ -75,13 +77,15 @@
 
 #define PCMCIA_CCR_SIZE_DINGO		0x54
 
+#define XI_IOSIZE 	16
+
 /* All pages */
 #define CR	0x0	/* W  - Command register */
 #define ESR	0x0	/* R  - Ethernet status register */
 #define PR	0x1	/* RW - Page register select */
 #define EDP	0x2	/* RW - Ethernet data port, 4 registers */
 #define ISR0	0x6	/* R  - Etherenet interrupt status register */
-#define GIR	0x7	/* RW - Global interrupt register */
+#define GIR	0x7	/* RW - Global interrupt register - dingo only */
 #define PTR	0xd	/* R  - Packets Transmitted register */
 
 /* Page 0 */
@@ -248,7 +252,7 @@
 /* CMD0 register bits */
 #define ONLINE		0x04	/* Online */
 #define OFFLINE		0x08	/* Online */
-#define ENABLE_RX	0x20	/* Enable receiver */
+#define ENABLE_RX	0x20	/* Enable reciever */
 #define DISABLE_RX	0x80	/* Disable receiver */
 
 /* RX0Msk register bits */
