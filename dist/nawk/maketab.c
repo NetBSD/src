@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 	printf("static const char * const printname[%d] = {\n", SIZE);
 	i = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
-		n = sscanf(buf, "%1c %s %s %d", &c, def, name, &tok);
+		n = sscanf(buf, "%1c %199s %199s %d", &c, def, name, &tok);
 		if (c != '#' || (n != 4 && strcmp(def,"define") != 0))	/* not a valid #define */
 			continue;
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
