@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.7 2003/10/25 18:38:07 christos Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.8 2003/11/17 01:52:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.7 2003/10/25 18:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.8 2003/11/17 01:52:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.7 2003/10/25 18:38:07 christos E
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_notify.h>
 
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
@@ -122,3 +124,18 @@ darwin_sys_sigaction(l, v, retval)
 	return 0;
 }
 
+void
+darwin_trapsignal(l, ksi)
+	struct lwp *l;
+	const struct ksiginfo *ksi;
+{
+	/* 
+	 * If mach_trapsignal1 returns 0, the exception was intercepted at
+	 * the Mach level, n signal is to be sent. if it returns an error,
+	 * we call native trapsignal to fire a UNIX signal.
+	 */
+	if (mach_trapsignal1(l, ksi) != 0)
+		trapsignal(l, ksi);
+
+	return;
+}

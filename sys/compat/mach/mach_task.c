@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.33 2003/11/15 17:44:39 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.34 2003/11/17 01:52:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.33 2003/11/15 17:44:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.34 2003/11/17 01:52:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,10 +374,42 @@ mach_task_set_exception_ports(args)
 	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
+	mach_port_name_t mn;
+	struct mach_right *mr;
+	struct mach_port *mp;
+
+	mn = req->req_new_port.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
+		return mach_msg_error(args, EPERM);
+
+	mp = mr->mr_port;
+#ifdef DIAGNOSTIC
+	if ((mp->mp_datatype != MACH_MP_EXC_FLAGS) && 
+	    (mp->mp_datatype != MACH_MP_NONE))
+		printf("mach_task_set_exception_ports: data exists\n");
+#endif
+	mp->mp_datatype = MACH_MP_EXC_FLAGS;
+	mp->mp_data = (void *)((req->req_behavior << 16) | req->req_flavor);
 
 	med = l->l_proc->p_emuldata;
-
-	uprintf("Unimplemented mach_task_set_exception_ports\n");
+	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)
+		med->med_exc[MACH_EXC_BAD_ACCESS] = mp;
+	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
+		med->med_exc[MACH_EXC_BAD_INSTRUCTION] = mp;
+	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC)
+		med->med_exc[MACH_EXC_ARITHMETIC] = mp;
+	if (req->req_mask & MACH_EXC_MASK_EMULATION)
+		med->med_exc[MACH_EXC_EMULATION] = mp;
+	if (req->req_mask & MACH_EXC_MASK_SOFTWARE)
+		med->med_exc[MACH_EXC_SOFTWARE] = mp;
+	if (req->req_mask & MACH_EXC_MASK_BREAKPOINT)
+		med->med_exc[MACH_EXC_BREAKPOINT] = mp;
+	if (req->req_mask & MACH_EXC_MASK_SYSCALL)
+		med->med_exc[MACH_EXC_SYSCALL] = mp;
+	if (req->req_mask & MACH_EXC_MASK_MACH_SYSCALL)
+		med->med_exc[MACH_EXC_MACH_SYSCALL] = mp;
+	if (req->req_mask & MACH_EXC_MASK_RPC_ALERT)
+		med->med_exc[MACH_EXC_RPC_ALERT] = mp;
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.9 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.10 2003/11/17 01:52:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_exception_mask_t req_mask;
 	mach_exception_behavior_t req_behavior;
-	mach_thread_state_flavor_t req_new_flavor;
+	mach_thread_state_flavor_t req_flavor;
 } mach_task_set_exception_ports_request_t;
 
 typedef struct {
