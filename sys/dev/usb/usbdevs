@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.26 1999/04/27 21:30:53 augustss Exp $
+$NetBSD: usbdevs,v 1.27 1999/05/09 14:34:41 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
 /* Microsoft products */
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
+product MICROSOFT DDS80		0x0014	Digital Sound System 80
 
 /* Kensington products */
 product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
