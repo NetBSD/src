@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.20 1996/10/11 00:25:00 christos Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.21 1996/10/13 03:21:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -70,7 +70,7 @@ struct ncr53c96_softc {
 	int	timeo=100000; \
 	while (!(reg & val)) { \
 		if (!(--timeo)) { \
-			kprintf("scsi96: WAIT_FOR timeout.\n"); \
+			printf("scsi96: WAIT_FOR timeout.\n"); \
 			goto have_error; \
 		} \
 	} \
@@ -150,7 +150,7 @@ ncr96attach(parent, dev, aux)
 	ncr53c96->sc_link.flags = SDEV_DB1 | SDEV_DB2 /* | SDEV_DB3 | SDEV_DB4 */ ;
 #endif
 
-	kprintf("\n");
+	printf("\n");
 
 	config_found(dev, &(ncr53c96->sc_link), scsiprint);
 
@@ -165,7 +165,7 @@ static void
 ncr53c96_minphys(struct buf * bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
-		kprintf("Uh-oh...  ncr53c96_minphys setting bp->b_bcount "
+		printf("Uh-oh...  ncr53c96_minphys setting bp->b_bcount "
 		    "= %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
@@ -182,15 +182,15 @@ ncr53c96_scsi_cmd(struct scsi_xfer * xs)
 	if (xs->bp)
 		flags |= (SCSI_NOSLEEP);
 	if (flags & ITSDONE) {
-		kprintf("Already done?");
+		printf("Already done?");
 		xs->flags &= ~ITSDONE;
 	}
 	if (!(flags & INUSE)) {
-		kprintf("Not in use?");
+		printf("Not in use?");
 		xs->flags |= INUSE;
 	}
 	if (flags & SCSI_RESET) {
-		kprintf("flags & SCSIRESET.\n");
+		printf("flags & SCSIRESET.\n");
 		if (!(flags & SCSI_NOSLEEP)) {
 			s = splbio();
 			ncr53c96_reset_target(xs->sc_link->scsibus,
@@ -237,7 +237,7 @@ ncr53c96_scsi_cmd(struct scsi_xfer * xs)
 	do {
 		if (ncr53c96_poll(xs->sc_link->scsibus, xs->timeout)) {
 			if ( ! ( xs->flags & SCSI_SILENT ) )
-				kprintf("cmd fail.\n");
+				printf("cmd fail.\n");
 			cmd_cleanup
 			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
@@ -253,17 +253,17 @@ ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
 	int     i = 0;
 
 	if (!(xs->flags & SCSI_RESET)) {
-		kprintf("ncr53c96(%d:%d:%d)-",
+		printf("ncr53c96(%d:%d:%d)-",
 		    xs->sc_link->scsibus, xs->sc_link->target,
 		    xs->sc_link->lun);
 		while (i < xs->cmdlen) {
 			if (i)
-				kprintf(",");
-			kprintf("%x", b[i++]);
+				printf(",");
+			printf("%x", b[i++]);
 		}
-		kprintf("-\n");
+		printf("-\n");
 	} else {
-		kprintf("ncr53c96(%d:%d:%d)-RESET-\n",
+		printf("ncr53c96(%d:%d:%d)-RESET-\n",
 		    xs->sc_link->scsibus, xs->sc_link->target,
 		    xs->sc_link->lun);
 	}
@@ -286,7 +286,7 @@ extern int	ncr53c96_irq_intr __P((void));
 extern int
 ncr53c96_irq_intr(void)
 {
-	kprintf("irq\n");
+	printf("irq\n");
 	return 1;
 }
 
@@ -294,7 +294,7 @@ extern int	ncr53c96_drq_intr __P((void));
 extern int
 ncr53c96_drq_intr(void)
 {
-	kprintf("drq\n");
+	printf("drq\n");
 	return 1;
 }
 
@@ -339,25 +339,25 @@ do_send_cmd(struct scsi_xfer * xs)
 	intr = ncr->instreg;
 	if ((is & 0x07) != 0x4 || intr != 0x18) {
 		if ((is & 0x7) != 0x0 || intr != 0x20) {
-			kprintf("scsi96: stat = 0x%x, is = 0x%x, intr = 0x%x\n",
+			printf("scsi96: stat = 0x%x, is = 0x%x, intr = 0x%x\n",
 			    stat, is, intr);
 		}
 		goto have_error;
 	}
-	kprintf("scsi96: before loop: stat = 0x%x, is = 0x%x, intr = 0x%x, "
+	printf("scsi96: before loop: stat = 0x%x, is = 0x%x, intr = 0x%x, "
 	    "datalen = %d\n", stat, is, intr, xs->datalen);
 	phase = ncr->statreg & NCR96_STAT_PHASE;
 	if (((phase == 0x01) || (phase == 0x00)) && xs->datalen) {
-		kprintf("data = %p, datalen = 0x%x.\n", xs->data, xs->datalen);
+		printf("data = %p, datalen = 0x%x.\n", xs->data, xs->datalen);
 		stat = ncr->statreg;
 		is = ncr->isreg;
 		intr = ncr->instreg;
-		kprintf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
+		printf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
 		    stat, is, intr);
 		ncr->tcreg_lsb = (xs->datalen & 0xff);
 		ncr->tcreg_msb = (xs->datalen >> 8) & 0xff;
 		ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER;
-		kprintf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
+		printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
 		i = 0;
 		while (i < xs->datalen) {
 			int     d, stat;
@@ -368,18 +368,18 @@ do_send_cmd(struct scsi_xfer * xs)
 
 			for (d = 1000000; d && !(via_reg(VIA2, vIFR) & 0x01); d--);
 			if (d <= 0)
-				kprintf("read timeout.\n");
+				printf("read timeout.\n");
 			d = ncr->fifostatereg & NCR96_CF_MASK;
 
 			while (d--) {
 				xs->data[i++] = ncr->fifo;
-				kprintf("0x%x,", xs->data[i - 1]);
+				printf("0x%x,", xs->data[i - 1]);
 			}
 
 			intr = ncr->instreg;
-			kprintf("\nin loop.  stat = 0x%x, intr = 0x%x",
+			printf("\nin loop.  stat = 0x%x, intr = 0x%x",
 			    stat, intr);
-			kprintf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
+			printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
 		}
 /*	} else {
 		WAIT_FOR(ncr->statreg, NCR96_STAT_INT); */
@@ -387,7 +387,7 @@ do_send_cmd(struct scsi_xfer * xs)
 	stat = ncr->statreg;
 	is = ncr->isreg;
 	intr = ncr->instreg;
-	kprintf("past loop...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
+	printf("past loop...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
 	    stat, is, intr);
 
 	ncr->cmdreg = NCR96_CMD_ICCS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37 1996/10/11 00:24:43 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.38 1996/10/13 03:21:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@ grfattach(parent, self, aux)
 	struct grf_softc *sc = (struct grf_softc *)self;
 	struct grfbus_attach_args *ga = aux;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Load forwarded pointers. */
 	sc->sc_grfmode = ga->ga_grfmode;
@@ -351,7 +351,7 @@ grfmap(dev, addrp, p)
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		kprintf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
+		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 	len = mac68k_round_page(gp->sc_grfmode->fbsize + gp->sc_grfmode->fboff);
 	flags = MAP_SHARED | MAP_FIXED;
@@ -374,7 +374,7 @@ grfmap(dev, addrp, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		kprintf("grfmap(%d): returning addr %p\n", p->p_pid, *addrp);
+		printf("grfmap(%d): returning addr %p\n", p->p_pid, *addrp);
 #endif
 
 	return (error);
@@ -394,7 +394,7 @@ grfunmap(dev, addr, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		kprintf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
+		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
 
 	if (addr == 0)
