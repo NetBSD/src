@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.20 1998/03/25 19:45:02 fair Exp $
+.\"	$NetBSD: ddb.4,v 1.21 1998/03/25 21:26:33 fair Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,6 +84,53 @@ upon kernel panic:
 is the in-kernel debugger.
 It may be entered at any time via a special key sequence, and
 optionally may be invoked when the kernel panics.
+.Sh ENTERING THE DEBUGGER
+Unless
+.Dv DDB_ONPANIC
+is set to 0,
+.Nm
+will be activated whenever the kernel would otherwise panic.
+.Pp
+.Nm
+may also be activated from the console.
+In general, sending a break on a serial console will activate
+.Nm "" .
+There are also key sequences for each port that will activate
+.Nm
+from the keyboard:
+.Bl -tag -offset indent -width "mvme68k"
+.It alpha
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
+.It amiga
+<LAlt>-<LAmiga>-<F10>
+.It hp300
+<Shift>-<Reset>
+.It i386
+<Ctrl>-<Alt>-<Esc>
+.It mac68k
+<Command>-<Power>, or the Interrupt switch.
+.It mvme68k
+Abort switch on CPU card.
+.It pmax
+<Break> on serial console, or <Do> on LK-201 rcons console.
+.It sparc
+<L1>-A, or <Stop>-A
+.El
+.Pp
+In addition,
+.Nm
+may be explicitly activated by the debugging code in the kernel
+if
+.Cm DDB
+is configured.
+.Sh COMMAND SYNTAX
+.Pp
+The general command syntax is:
+.Bd -ragged -offset indent
+.Ic command Ns Op Cm / Ns Ar modifier
+.Ar address
+.Op Cm , Ns Ar count
+.Ed
 .Pp
 The current memory location being edited is referred to as
 .Ar dot ,
@@ -103,13 +150,6 @@ and set
 .Ar next
 to be the same as
 .Ar dot .
-.Pp
-The general command syntax is:
-.Bd -ragged -offset indent
-.Ic command Ns Op Cm / Ns Ar modifier
-.Ar address
-.Op Cm , Ns Ar count
-.Ed
 .Pp
 A blank line repeats the previous command from the address
 .Ar next
@@ -601,46 +641,46 @@ All of these commands are preceded by the command word
 to indicate that they are part of the machine-specific command
 set (e.g. "machine reboot").
 Some of these commands are:
-.Ss Alpha
+.Ss alpha
 .Bl -tag -width "intrchain"
 .It halt
-call the PROM monitor to halt the CPU.
+Call the PROM monitor to halt the CPU.
 .It reboot
-call the PROM monitor to reboot the CPU.
+Call the PROM monitor to reboot the CPU.
 .El
-.Ss Arm32
+.Ss arm32
 .Bl -tag -width "intrchain"
 .It vmstat
 Equivalent to
 .Xr vmstat 8
 output with "-s" option (statistics).
 .It vnode
-print out a description of a vnode.
+Print out a description of a vnode.
 .It intrchain
-print the list of IRQ handlers.
+Print the list of IRQ handlers.
 .It panic
-print the current "panic" string.
+Print the current "panic" string.
 .It frame
 Given a trap frame address, print out the trap frame.
 .El
-.Ss Mips
+.Ss mips
 .Bl -tag -width "intrchain"
 .It halt
-call the PROM monitor to halt the CPU.
+Call the PROM monitor to halt the CPU.
 .It tlb
-Print out the Translation Lookaside Buffer.
+Print out the Translation Lookaside Buffer (TLB).
 .It trapdump
 Print out the Trap Log.
 Only works in
 .Nx
 kernels compiled with DEBUG option.
 .El
-.Ss Sparc
+.Ss sparc
 .Bl -tag -width "intrchain"
 .It prom
-Drop into Sun PROM monitor.
+Exit to the Sun PROM monitor.
 .El
-.Ss Sun3 and Sun3x
+.Ss sun3 and sun3x
 .Bl -tag -width "intrchain"
 .It abort
 Drop into monitor via abort (allows continue).
@@ -787,43 +827,7 @@ It may be followed by a
 .Sq :
 and modifiers as described above.
 .El
-.Sh ENTERING THE DEBUGGER
-Unless
-.Va onpanic
-is set to 0,
-.Nm
-will be activated whenever the kernel would otherwise panic.
-.Pp
-.Nm
-may also be activated from the console.
-In general, sending a break on a serial console will activate
-.Nm "" .
-There are also key sequences for each port that will activate
-.Nm
-from the keyboard:
-.Bl -tag -offset indent -width "mvme68k"
-.It alpha
-<Ctrl>-<Alt>-<Esc> on PC style keyboards.
-.It amiga
-<LAlt>-<LAmiga>-<F10>
-.It hp300
-<Shift>-<Reset>
-.It i386
-<Ctrl>-<Alt>-<Esc>
-.It mac68k
-<Command>-<Power>, or the Interrupt switch.
-.It mvme68k
-Abort switch on CPU card.
-.It sparc
-<L1>-A, or <Stop>-A
-.El
-.Pp
-In addition,
-.Nm
-may be explicitly activated by the debugging code in the kernel
-if
-.Cm DDB
-is configured.
+
 .Sh HISTORY
 The
 .Nm
