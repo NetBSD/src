@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.21 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -779,7 +779,7 @@ rtmalloc(size_t size,
 {
 	void *p = malloc(size);
 	if (p == 0)
-		logbad(1,"malloc(%d) failed in %s", size, msg);
+		logbad(1,"malloc(%ld) failed in %s", (long)size, msg);
 	return p;
 }
 
