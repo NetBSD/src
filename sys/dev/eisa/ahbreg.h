@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.7 1998/08/15 02:26:31 mycroft Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.8 1998/08/15 02:37:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,8 @@ typedef u_long physlen;
 /*
  * Offset of AHA1740 registers, relative from slot base.
  */
-#define	AHB_PORT_OFFSET	0xc80
-#define	AHB_PORT_SIZE	0x080
+#define	AHB_EISA_SLOT_OFFSET	0x0c80
+#define	AHB_EISA_IOSIZE		0x0080
 
 /*
  * AHA1740 EISA board mode registers (relative to port offset)
