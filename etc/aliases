@@ -1,6 +1,6 @@
-#	$NetBSD: aliases,v 1.8 1997/04/16 01:36:15 mrg Exp $
+#	$NetBSD: aliases,v 1.9 1998/01/09 23:51:09 perry Exp $
 #
-#	@(#)aliases	8.2 (Berkeley) 3/5/94
+#	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -17,19 +17,28 @@ postmaster: root
 # General redirections for pseudo accounts.
 bin:		root
 daemon:		root
+falken:		root
 games:		root
 ingres:		root
 nobody:		root
-system:		root
 toor:		root
 uucp:		root
-ftp-bugs:	root
 
 # Well-known aliases -- these should be filled in!
 # root:
-# manager:
-# dumper:
 # operator:
+
+# Standard aliases defined by rfc2142
+abuse:		postmaster # address to report network abuse (like spam)
+noc:		root	   # reports of network infrastructure difficulties
+security:	root	   # address to report security problems
+hostmaster:	root	   # DNS maintainer (DNS SOA records should use this)
+usenet:		root	   # Usenet news service maintainer
+news:		usenet	   # defined as an alias for "usenet"
+webmaster:	root	   # http/web service maintainer
+www:		webmaster  # defined as an alias for "webmaster"
+uucp:		root	   # uucp service maintainer
+ftp:		root	   # ftp maintainer (especially anonymous ftp)
 
 # don't enable this.
 # decode:	/dev/null
