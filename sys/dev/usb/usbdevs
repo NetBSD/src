@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.357 2003/11/23 19:06:19 augustss Exp $
+$NetBSD: usbdevs,v 1.358 2003/12/22 10:27:51 sekiya Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -1039,6 +1039,7 @@ product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
 product MELCO MCRSM2		0x001b	MCR-SM2 SmartMedia Card Reader/Writer
 product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
+product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
