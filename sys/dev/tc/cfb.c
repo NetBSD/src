@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.18 2000/03/14 06:25:21 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.19 2000/03/14 08:04:06 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.18 2000/03/14 06:25:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.19 2000/03/14 08:04:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,6 @@ cfbattach(parent, self, aux)
 	struct cfb_softc *sc = (struct cfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
 	int console;
 
 	console = (ta->ta_addr == cfb_consaddr);
@@ -351,9 +350,7 @@ cfbattach(parent, self, aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-	cm = &sc->sc_cmap;
-	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
+	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
 
 	sc->sc_cursor.cc_magic.x = CX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = CX_MAGIC_Y;
@@ -632,13 +629,13 @@ cfbinit(dc)
 
 	/* build sane colormap */
 	SELECT(vdac, 0);
-	REG(vdac, bt_cmap) = 0;	 tc_wmb();
-	REG(vdac, bt_cmap) = 0;	 tc_wmb();
-	REG(vdac, bt_cmap) = 0;	 tc_wmb();
-	for (i = 1; i < CMAP_SIZE; i++) {
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
+	for (i = 0; i < CMAP_SIZE; i++) {
+		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 0];
+		tc_wmb();
+		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 1];
+		tc_wmb();
+		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 2];
+		tc_wmb();
 	}
 
 	/* clear out cursor image */
