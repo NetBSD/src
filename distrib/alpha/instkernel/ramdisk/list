@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1998/11/28 02:49:44 jonathan Exp $
+#	$NetBSD: list,v 1.6 1999/03/22 08:52:21 ross Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -14,6 +14,7 @@ LINK	ramdiskbin			bin/ls
 LINK	ramdiskbin			bin/mkdir
 LINK	ramdiskbin			bin/mt
 LINK	ramdiskbin			bin/mv
+LINK	ramdiskbin			bin/pax
 LINK	ramdiskbin			bin/pwd
 LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
@@ -31,9 +32,9 @@ LINK	ramdiskbin			sbin/mknod
 LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
 LINK	ramdiskbin			sbin/mount_ffs
+LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
 LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/newfs
 LINK	ramdiskbin			sbin/ping
 LINK	ramdiskbin			sbin/reboot
@@ -42,12 +43,14 @@ LINK	ramdiskbin			sbin/route
 LINK	ramdiskbin			sbin/rrestore
 LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
+LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat			usr/bin/chgrp
 SYMLINK	/bin/cat			usr/bin/ftp
 SYMLINK	/bin/cat			usr/bin/gunzip
 SYMLINK	/bin/cat			usr/bin/gzcat
 SYMLINK	/bin/cat			usr/bin/gzip
+SYMLINK	/bin/cat			usr/bin/less
 SYMLINK	/bin/cat			usr/bin/more
 SYMLINK	/bin/cat			usr/bin/sed
 SYMLINK	/bin/cat			usr/bin/strings
@@ -76,9 +79,13 @@ COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/services	etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+SPECIAL	/bin/rm etc/spwd.db
+SPECIAL	/bin/rm etc/pwd.db
 
 # and the common installation tools
 COPY	${DESTDIR}/usr/share/misc/termcap	usr/share/misc/termcap
+COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
+COPY	${CURDIR}/../../../utils/script-installer/dot.instutils	   .instutils
 
 # the disktab explanation file
 COPY	disktab.preinstall			etc/disktab.preinstall
@@ -89,14 +96,10 @@ COPY	dot.hdprofile				tmp/.hdprofile
 
 # old-style installation tools
 
-COPY	${CURDIR}/../../../utils/script-installer/dot.instutils	   .instutils
-COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
 COPY	${CURDIR}/../src/install.sh	install
 COPY	${CURDIR}/../src/upgrade.sh	upgrade
 
 SPECIAL chmod 755 install
 SPECIAL chmod 755 upgrade
 
-# someday put in the release notes too
-#
-#COPY	${CURDIR}/../../../notes/alpha/INSTALL.txt	INSTALL.txt
+COPY	${CURDIR}/../../../notes/alpha/INSTALL.more	INSTALL.more
