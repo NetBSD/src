@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.13 2002/04/20 00:15:54 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.14 2002/04/20 15:25:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -48,6 +48,7 @@ typedef struct scr_table {
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
  * transfer. 
+ * If you change something here, don't forget to update offsets in {s,es}iop.ss
  */
 struct siop_common_xfer {
 	u_int8_t msg_out[8];	/* 0 */
