@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1998/05/15 10:15:59 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1998/07/13 17:38:37 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -465,8 +465,8 @@ void
 main()
 {
 	extern char bootprog_name[], bootprog_rev[],
-	    bootprog_maker[], bootprog_date[];
-	int chosen;
+		    bootprog_maker[], bootprog_date[];
+	int chosen, options;
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	int fd;
@@ -483,6 +483,21 @@ main()
 	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
 		OF_exit();
+	}
+
+	/*
+	 * Some versions of Openfirmware sets bootpath to "".
+	 * We use boot-device instead if it occurs.
+	 */
+	if (bootdev[0] == 0) {
+		printf("Cannot use bootpath\n");
+		if ((options = OF_finddevice("/options")) == -1 ||
+		    OF_getprop(options, "boot-device", bootdev,
+			       sizeof bootdev) < 0) {
+			printf("Invalid Openfirmware environment\n");
+			OF_exit();
+		}
+		printf("Using boot-device instead\n");
 	}
 
 	prom2boot(bootdev);
