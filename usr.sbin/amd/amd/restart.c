@@ -1,7 +1,7 @@
-/*	$NetBSD: restart.c,v 1.1.1.4 1997/10/26 00:03:03 christos Exp $	*/
+/*	$NetBSD: restart.c,v 1.1.1.5 1998/08/08 22:05:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,10 +97,14 @@ restart(void)
 
       if (colon && strstr(colon, "(pid")) {
 	plog(XLOG_WARNING, "%s is an existing automount point", me->mnt_dir);
-	fs_ops = &sfs_ops;
+	fs_ops = &amfs_link_ops;
       } else {
 	fs_ops = &nfs_ops;
       }
+#ifdef MNTTAB_TYPE_NFS3
+    } else if (STREQ(me->mnt_type, MNTTAB_TYPE_NFS3)) {
+      fs_ops = &nfs_ops;
+#endif /* MNTTAB_TYPE_NFS3 */
 #ifdef MNTTAB_TYPE_LOFS
     } else if (STREQ(me->mnt_type, MNTTAB_TYPE_LOFS)) {
       fs_ops = &lofs_ops;
@@ -118,14 +122,14 @@ restart(void)
       /*
        * MFS entry.  Fake with a symlink.
        */
-      fs_ops = &sfs_ops;
+      fs_ops = &amfs_link_ops;
 #endif /* MNTTAB_TYPE_MFS */
     } else {
       /*
        * Catch everything else with symlinks to
        * avoid recursive mounts.  This is debatable...
        */
-      fs_ops = &sfs_ops;
+      fs_ops = &amfs_link_ops;
     }
 
     /*
@@ -173,7 +177,7 @@ restart(void)
 	 * If the restarted type is a link then
 	 * don't time out.
 	 */
-	if (fs_ops == &sfs_ops || fs_ops == &ufs_ops)
+	if (fs_ops == &amfs_link_ops || fs_ops == &ufs_ops)
 	  mf->mf_flags |= MFF_RSTKEEP;
 	if (fs_ops->fs_init) {
 	  /*
@@ -193,9 +197,9 @@ restart(void)
        * Clean up mo
        */
       if (mo.opt_rhost)
-	free(mo.opt_rhost);
+	XFREE(mo.opt_rhost);
       if (mo.opt_rfs)
-	free(mo.opt_rfs);
+	XFREE(mo.opt_rfs);
     }
   }
 

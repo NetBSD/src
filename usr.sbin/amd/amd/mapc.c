@@ -1,7 +1,7 @@
-/*	$NetBSD: mapc.c,v 1.1.1.5 1997/10/26 00:02:45 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.1.1.6 1998/08/08 22:05:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -87,7 +87,7 @@
 #define	MREC_PART	1
 #define	MREC_NONE	0
 
-#define MAX_CHAIN	1024
+#define MAX_CHAIN	2048
 
 static struct opt_tab mapc_opt[] =
 {
@@ -117,6 +117,7 @@ struct map_type {
   char *name;			/* Name of this map type */
   init_fn *init;		/* Initialisation */
   reload_fn *reload;		/* Reload or fill */
+  isup_fn *isup;		/* Is service up or not? (1=up, 0=down) */
   search_fn *search;		/* Search for new entry */
   mtime_fn *mtime;		/* Find modify time */
   int def_alloc;		/* Default allocation mode */
@@ -188,6 +189,7 @@ extern int nisplus_mtime(mnt_map *, char *, time_t *);
 #ifdef HAVE_MAP_NIS
 extern int nis_init(mnt_map *, char *, time_t *);
 extern int nis_reload(mnt_map *, char *, add_fn *);
+extern int nis_isup(mnt_map *, char *);
 extern int nis_search(mnt_map *, char *, char *, char **, time_t *);
 extern int nis_mtime(mnt_map *, char *, time_t *);
 #endif /* HAVE_MAP_NIS */
@@ -211,41 +213,112 @@ extern int file_mtime(mnt_map *, char *, time_t *);
 /* note that the choice of MAPC_{INC,ALL} will affect browsable_dirs */
 static map_type maptypes[] =
 {
-  {"root", root_init, error_reload, error_search, error_mtime, MAPC_ROOT},
-
+  {
+    "root",
+    root_init,
+    error_reload,
+    NULL,			/* isup function */
+    error_search,
+    error_mtime,
+    MAPC_ROOT
+  },
 #ifdef HAVE_MAP_PASSWD
-  {"passwd", passwd_init, error_reload, passwd_search, error_mtime, MAPC_ALL},
+  {
+    "passwd",
+    passwd_init,
+    error_reload,
+    NULL,			/* isup function */
+    passwd_search,
+    error_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_PASSWD */
-
 #ifdef HAVE_MAP_HESIOD
-  {"hesiod", amu_hesiod_init, error_reload, hesiod_search, error_mtime, MAPC_ALL},
+  {
+    "hesiod",
+    amu_hesiod_init,
+    error_reload,
+    NULL,			/* isup function */
+    hesiod_search,
+    error_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_HESIOD */
-
 #ifdef HAVE_MAP_LDAP
-  {"ldap", amu_ldap_init, error_reload, amu_ldap_search, amu_ldap_mtime, MAPC_ALL},
+  {
+    "ldap",
+    amu_ldap_init,
+    error_reload,
+    NULL,			/* isup function */
+    amu_ldap_search,
+    amu_ldap_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_LDAP */
-
 #ifdef HAVE_MAP_UNION
-  {"union", union_init, union_reload, union_search, error_mtime, MAPC_ALL},
+  {
+    "union",
+    union_init,
+    union_reload,
+    NULL,			/* isup function */
+    union_search,
+    error_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_UNION */
-
 #ifdef HAVE_MAP_NISPLUS
-  {"nisplus", nisplus_init, nisplus_reload, nisplus_search, nisplus_mtime, MAPC_INC},
+  {
+    "nisplus",
+    nisplus_init,
+    nisplus_reload,
+    NULL,			/* isup function */
+    nisplus_search,
+    nisplus_mtime,
+    MAPC_INC
+  },
 #endif /* HAVE_MAP_NISPLUS */
-
 #ifdef HAVE_MAP_NIS
-  {"nis", nis_init, nis_reload, nis_search, nis_mtime, MAPC_ALL},
+  {
+    "nis",
+    nis_init,
+    nis_reload,
+    nis_isup,			/* is NIS up or not? */
+    nis_search,
+    nis_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_NIS */
-
 #ifdef HAVE_MAP_NDBM
-  {"ndbm", ndbm_init, error_reload, ndbm_search, ndbm_mtime, MAPC_ALL},
+  {
+    "ndbm",
+    ndbm_init,
+    error_reload,
+    NULL,			/* isup function */
+    ndbm_search,
+    ndbm_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_NDBM */
-
 #ifdef HAVE_MAP_FILE
-  {"file", file_init, file_reload, file_search, file_mtime, MAPC_ALL},
+  {
+    "file",
+    file_init,
+    file_reload,
+    NULL,			/* isup function */
+    file_search,
+    file_mtime,
+    MAPC_ALL
+  },
 #endif /* HAVE_MAP_FILE */
-
-  {"error", error_init, error_reload, error_search, error_mtime, MAPC_NONE},
+  {
+    "error",
+    error_init,
+    error_reload,
+    NULL,			/* isup function */
+    error_search,
+    error_mtime,
+    MAPC_NONE
+  },
 };
 
 
@@ -346,7 +419,7 @@ mapc_repl_kv(mnt_map *m, char *key, char *val)
     k = k->next;
 
   if (k) {
-    free(k->val);
+    XFREE(k->val);
     k->val = val;
   } else {
     mapc_add_kv(m, key, val);
@@ -519,6 +592,7 @@ mapc_create(char *map, char *opt, const char *type)
 
   m->alloc = alloc;
   m->reload = mt->reload;
+  m->isup = mt->isup;
   m->modify = modify;
   m->search = alloc >= MAPC_ALL ? error_search : mt->search;
   m->mtime = mt->mtime;
@@ -552,10 +626,10 @@ mapc_clear(mnt_map *m)
     kv *k = m->kvhash[i];
     while (k) {
       kv *n = k->next;
-      free((voidp) k->key);
+      XFREE(k->key);
       if (k->val)
-	free((voidp) k->val);
-      free((voidp) k);
+	XFREE(k->val);
+      XFREE(k);
       k = n;
     }
   }
@@ -569,7 +643,7 @@ mapc_clear(mnt_map *m)
    * Free the wildcard if it exists
    */
   if (m->wildcard) {
-    free(m->wildcard);
+    XFREE(m->wildcard);
     m->wildcard = 0;
   }
 }
@@ -615,9 +689,9 @@ mapc_free(voidp v)
    */
   if (m && --m->refc == 0) {
     mapc_clear(m);
-    free((voidp) m->map_name);
+    XFREE(m->map_name);
     rem_que(&m->hdr);
-    free((voidp) m);
+    XFREE(m);
   }
 }
 
@@ -777,6 +851,15 @@ static void
 mapc_sync(mnt_map *m)
 {
   if (m->alloc != MAPC_ROOT) {
+
+    /* do not clear map if map service is down */
+    if (m->isup) {
+      if (!((*m->isup)(m, m->map_name))) {
+	plog(XLOG_ERROR, "mapc_sync: map %s is down: not clearing map", m->map_name);
+	return;
+      }
+    }
+
     mapc_clear(m);
 
     if (m->alloc >= MAPC_ALL)
@@ -864,6 +947,8 @@ root_newmap(const char *dir, const char *opts, const char *map, const cf_map_t *
 	strcat(str, ";");
 	strcat(str, opts);
       }
+      if (cfm->cfm_flags & CFM_BROWSABLE_DIRS_FULL)
+	strcat(str, ";opts:=rw,fullybrowsable");
       if (cfm->cfm_flags & CFM_BROWSABLE_DIRS)
 	strcat(str, ";opts:=rw,browsable");
       if (cfm->cfm_type) {
@@ -944,7 +1029,7 @@ key_already_in_chain(char *keyname, const nfsentry *chain)
  * -Erez Zadok <ezk@cs.columbia.edu>
  */
 nfsentry *
-make_entry_chain(am_node *mp, const nfsentry *current_chain)
+make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable)
 {
   static u_int last_cookie = ~(u_int) 0 - 1;
   static nfsentry chain[MAX_CHAIN];
@@ -985,7 +1070,7 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain)
 	continue;
 
       /* Skip '*' */
-      if (strchr(key, '*'))
+      if (!fully_browsable && strchr(key, '*'))
 	continue;
 
       /*
@@ -993,15 +1078,17 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain)
        * this * string, and if it does, skip over this prefix.
        */
       if (preflen) {
-	if (strncmp(key, mp->am_pref, preflen))
+	if (!NSTREQ(key, mp->am_pref, preflen))
 	  continue;
 	key += preflen;
       }
 
-      /*
-       * No more '/' are allowed.
-       */
-      if (strchr(key, '/') || key_already_in_chain(key, current_chain))
+      /* no more '/' are allowed, unless browsable_dirs=full was used */
+      if (!fully_browsable && strchr(key, '/'))
+	continue;
+
+      /* no duplicates allowed */
+      if (key_already_in_chain(key, current_chain))
 	continue;
 
       /* fill in a cell and link the entry */

@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: fsi_lex.l,v 1.1.1.5 1997/10/26 00:03:29 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.1.1.6 1998/08/08 22:05:37 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -93,6 +93,29 @@ static int yylineno;
 #include <fsi_data.h>
 #include <fsinfo.h>
 #include <fsi_gram.h>
+/* and once again undefine this, just in case */
+#ifdef ECHO
+# undef ECHO
+#endif /* ECHO */
+
+/*
+ * There are some things that need to be defined only if useing GNU flex.
+ * These must not be defined if using standard lex
+ */
+#ifdef FLEX_SCANNER
+# ifndef ECHO
+#  define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+# endif /* not ECHO */
+#endif /* FLEX_SCANNER */
+
+/*
+ * some systems such as DU-4.x have a different GNU flex in /usr/bin
+ * which automatically generates yywrap macros and symbols.  So I must
+ * distinguish between them and when yywrap is actually needed.
+ */
+#ifndef yywrap
+int yywrap(void);
+#endif /* not yywrap */
 
 YYSTYPE yylval;
 static char *fsi_filename;
@@ -234,3 +257,16 @@ current_location(void)
   ip->i_file = fsi_filename;
   return ip;
 }
+
+
+/*
+ * some systems such as DU-4.x have a different GNU flex in /usr/bin
+ * which automatically generates yywrap macros and symbols.  So I must
+ * distinguish between them and when yywrap is actually needed.
+ */
+#ifndef yywrap
+int yywrap(void)
+{
+  return 1;
+}
+#endif /* not yywrap */

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_subr.c,v 1.1.1.5 1997/10/26 00:02:49 christos Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.1.1.6 1998/08/08 22:05:31 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -260,7 +260,7 @@ quick_reply(am_node *mp, int error)
     /*
      * Free up transp.  It's only used for one reply.
      */
-    free(transp);
+    XFREE(transp);
     mp->am_transp = NULL;
 #ifdef DEBUG
     dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
@@ -419,7 +419,7 @@ nfsproc_rename_2_svc(nfsrenameargs *argp, struct svc_req *rqstp)
    * If the kernel is doing clever things with referenced files
    * then let it pretend...
    */
-  else if (strncmp(argp->rna_to.da_name, ".nfs", 4) == 0)
+  else if (NSTREQ(argp->rna_to.da_name, ".nfs", 4))
     res = NFS_OK;
   /*
    * otherwise a failure

@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.1.1.4 1997/10/26 00:02:38 christos Exp $	*/
+/*	$NetBSD: get_args.c,v 1.1.1.5 1998/08/08 22:05:28 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,10 +57,10 @@
 /* include auto-generated version file */
 #include <build_version.h>
 
-char *conf_file = NULL;		/* default amd configuration file */
+char *conf_file = "/etc/amd.conf"; /* default amd configuration file */
 char *conf_tag = NULL;		/* default conf file tags to use */
 int usage = 0;
-int use_conf_file = 0;		/* use amd configuration file */
+int use_conf_file = 0;		/* default don't use amd.conf file */
 char *mnttab_file_name = NULL;	/* symbol must be available always */
 #ifdef DEBUG
 int debug_flags = D_AMQ		/* Register AMQ */
@@ -69,16 +69,24 @@ int debug_flags = D_AMQ		/* Register AMQ */
 
 
 /*
- * Return the version string (static buffer!)
+ * Return the version string (dynamic buffer)
  */
 char *
 get_version_string(void)
 {
-  static char vers[2048];
+  static char *vers = NULL;
   char tmpbuf[1024];
+  char *wire_buf;
+  int wire_buf_len = 0;
 
+  /* first get dynamic string listing all known networks */
+  wire_buf = print_wires();
+  if (wire_buf)
+    wire_buf_len = strlen(wire_buf);
+
+  vers = xmalloc(2048 + wire_buf_len);
   sprintf(vers, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997 Erez Zadok",
+	  "Copyright (c) 1997-1998 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
@@ -105,22 +113,27 @@ get_version_string(void)
   ops_showfstypes(tmpbuf);
   strcat(vers, tmpbuf);
 
-  /* list all known networks */
-  print_wires(tmpbuf);
-  strcat(vers, tmpbuf);
+  /* append list of networks if available */
+  if (wire_buf) {
+    strcat(vers, wire_buf);
+    XFREE(wire_buf);
+  }
 
   return vers;
 }
 
 
 void
-get_args(int c, char *v[])
+get_args(int argc, char *argv[])
 {
   int opt_ch;
   FILE *fp = stdin;
 
-  while ((opt_ch = getopt(c, v, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:H")) != EOF)
+  /* if no arguments were passed, try to use /etc/amd.conf file */
+  if (argc <= 1)
+    use_conf_file = 1;
 
+  while ((opt_ch = getopt(argc, argv, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:H")) != EOF)
     switch (opt_ch) {
 
     case 'a':
@@ -173,10 +186,10 @@ get_args(int c, char *v[])
 	if (dot)
 	  *dot = '\0';
 	if (*optarg) {
-	  gopt.afs_timeo = atoi(optarg);
+	  gopt.amfs_auto_timeo = atoi(optarg);
 	}
 	if (dot) {
-	  gopt.afs_retrans = atoi(dot + 1);
+	  gopt.amfs_auto_retrans = atoi(dot + 1);
 	  *dot = '.';
 	}
       }
@@ -217,20 +230,25 @@ get_args(int c, char *v[])
 #endif /* not DEBUG */
       break;
 
-    case 'S':
-      gopt.flags &= ~CFM_PROCESS_LOCK; /* turn process locking off */
-      break;
-
     case 'F':
       conf_file = optarg;
-      break;
-
-    case 'T':
-      conf_tag = optarg;
+      use_conf_file = 1;
       break;
 
     case 'H':
       goto show_usage;
+      break;
+
+    case 'O':
+      gopt.op_sys = optarg;
+      break;
+
+    case 'S':
+      gopt.flags &= ~CFM_PROCESS_LOCK; /* turn process locking off */
+      break;
+
+    case 'T':
+      conf_tag = optarg;
       break;
 
     default:
@@ -238,11 +256,17 @@ get_args(int c, char *v[])
       break;
     }
 
-  /* check if amd conf file used */
-  if (conf_file) {
+  /*
+   * amd.conf file: if not command-line arguments were used, or if -F was
+   * specified, then use that amd.conf file.  If the file cannot be opened,
+   * abort amd.  If it can be found, open it, parse it, and then close it.
+   */
+  if (use_conf_file && conf_file) {
     fp = fopen(conf_file, "r");
     if (!fp) {
-      perror(conf_file);
+      char buf[128];
+      sprintf(buf, "Amd configuration file (%s)", conf_file);
+      perror(buf);
       exit(1);
     }
     yyin = fp;
@@ -250,7 +274,6 @@ get_args(int c, char *v[])
     fclose(fp);
     if (process_last_regular_map() != 0)
       exit(1);
-    use_conf_file = 1;
   }
 
   /* make sure there are some default options defined */
@@ -260,6 +283,10 @@ get_args(int c, char *v[])
 #ifdef DEBUG
   usage += switch_option("debug");
 #endif /* DEBUG */
+
+  /* log information regarding amd.conf file */
+  if (use_conf_file && conf_file)
+    plog(XLOG_INFO, "using configuration file %s", conf_file);
 
 #ifdef HAVE_MAP_LDAP
   /* ensure that if ldap_base is specified, that also ldap_hostports is */
@@ -272,17 +299,17 @@ get_args(int c, char *v[])
   if (usage)
     goto show_usage;
 
-  while (optind <= c - 2) {
-    char *dir = v[optind++];
-    char *map = v[optind++];
+  while (optind <= argc - 2) {
+    char *dir = argv[optind++];
+    char *map = argv[optind++];
     char *opts = "";
-    if (v[optind] && *v[optind] == '-')
-      opts = &v[optind++][1];
+    if (argv[optind] && *argv[optind] == '-')
+      opts = &argv[optind++][1];
 
     root_newmap(dir, opts, map, NULL);
   }
 
-  if (optind == c) {
+  if (optind == argc) {
     /*
      * Append domain name to hostname.
      * sub_domain overrides hostdomain
@@ -322,21 +349,32 @@ get_args(int c, char *v[])
     if (gopt.cluster == 0)
       gopt.cluster = hostdomain;
 
-    if (gopt.afs_timeo <= 0)
-      gopt.afs_timeo = AFS_TIMEO;
-    if (gopt.afs_retrans <= 0)
-      gopt.afs_retrans = AFS_RETRANS;
-    if (gopt.afs_retrans <= 0)
-      gopt.afs_retrans = 3;	/* XXX */
+    if (gopt.amfs_auto_timeo <= 0)
+      gopt.amfs_auto_timeo = AMFS_AUTO_TIMEO;
+    if (gopt.amfs_auto_retrans <= 0)
+      gopt.amfs_auto_retrans = AMFS_AUTO_RETRANS;
+    if (gopt.amfs_auto_retrans <= 0)
+      gopt.amfs_auto_retrans = 3;	/* XXX */
     return;
   }
 
 show_usage:
   fprintf(stderr,
-	  "Usage: %s [-mnprvHS] [-a mnt_point] [-c cache_time] [-d domain]\n\
-\t[-k kernel_arch] [-l logfile|\"syslog\"] [-t afs_timeout]\n\
-\t[-w wait_timeout] [-C cluster_name]\n\
-\t[-F conf_file] [-T conf_tag]", progname);
+	  "Usage: %s [-nprvHS] [-a mount_point] [-c cache_time] [-d domain]\n\
+\t[-k kernel_arch] [-l logfile%s\n\
+\t[-t timeout.retrans] [-w wait_timeout] [-C cluster_name]\n\
+\t[-o op_sys_ver] [-O op_sys_name]\n\
+\t[-F conf_file] [-T conf_tag]", progname,
+#ifdef HAVE_SYSLOG
+# ifdef LOG_DAEMON
+	  "|\"syslog[:facility]\"]"
+# else /* not LOG_DAEMON */
+	  "|\"syslog\"]"
+# endif /* not LOG_DAEMON */
+#else /* not HAVE_SYSLOG */
+	  "]"
+#endif /* not HAVE_SYSLOG */
+	  );
 
 #ifdef HAVE_MAP_NIS
   fputs(" [-y nis-domain]\n", stderr);
@@ -348,6 +386,6 @@ show_usage:
 #ifdef DEBUG
   show_opts('D', dbg_opt);
 #endif /* DEBUG */
-  fprintf(stderr, "\t{directory mapname [-map_options]} ...\n");
+  fprintf(stderr, "\t[directory mapname [-map_options]] ...\n");
   exit(1);
 }

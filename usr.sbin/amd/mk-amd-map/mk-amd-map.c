@@ -1,7 +1,7 @@
-/*	$NetBSD: mk-amd-map.c,v 1.1.1.3 1997/10/26 00:03:35 christos Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.1.1.4 1998/08/08 22:05:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,7 @@ read_file(FILE *fp, char *map, voidp db)
     /*
      * Find start of key
      */
-    for (kp = key_val; *kp && isascii(*kp) && isspace(*kp); kp++) ;
+    for (kp = key_val; *kp && isascii(*kp) && isspace((int)*kp); kp++) ;
 
     /*
      * Ignore blank lines
@@ -160,7 +160,7 @@ read_file(FILE *fp, char *map, voidp db)
     /*
      * Find end of key
      */
-    for (cp = kp; *cp && (!isascii(*cp) || !isspace(*cp)); cp++) ;
+    for (cp = kp; *cp && (!isascii(*cp) || !isspace((int)*cp)); cp++) ;
 
     /*
      * Check whether key matches, or whether
@@ -168,7 +168,7 @@ read_file(FILE *fp, char *map, voidp db)
      */
     if (*cp)
       *cp++ = '\0';
-    while (*cp && isascii(*cp) && isspace(*cp))
+    while (*cp && isascii(*cp) && isspace((int)*cp))
       cp++;
     if (*kp == '+') {
       fprintf(stderr, "Can't interpolate %s\n", kp);
@@ -216,6 +216,7 @@ int
 main(int argc, char *argv[])
 {
   FILE *mapf;
+  int mapfd = -1;
   char *map;
   int rc = 0;
   DBM *mapd = NULL;
@@ -266,7 +267,18 @@ main(int argc, char *argv[])
       perror("mk-amd-map: malloc");
       exit(1);
     }
-    mktemp(maptmp);
+#ifdef HAVE_MKSTEMP
+    mapfd = mkstemp(maptmp);
+#else /* not HAVE_MKSTEMP */
+    map = mktemp(maptmp);
+    if (!maptmp) {
+      fprintf(stderr, "cannot create temporary file\n");
+      exit(1);
+    }
+    mapfd = open(map, O_RDONLY);
+#endif /* not HAVE_MKSTEMP */
+
+    /* open DBM files */
     sprintf(maptpag, "%s.pag", maptmp);
     sprintf(maptdir, "%s.dir", maptmp);
     if (remove_file(maptpag) < 0 || remove_file(maptdir) < 0) {
@@ -275,7 +287,8 @@ main(int argc, char *argv[])
       exit(1);
     }
   }
-  mapf = fopen(map, "r");
+  /* open and check if map file was opened OK */
+  mapf = fdopen(mapfd, "r");
   if (mapf && !printit)
     mapd = dbm_open(maptmp, O_RDWR|O_CREAT, 0444);
   else
@@ -288,6 +301,7 @@ main(int argc, char *argv[])
 
   if (mapd || printit) {
     int error = read_file(mapf, map, mapd);
+    (void) close(mapfd);
     (void) fclose(mapf);
     if (printit) {
       if (error) {
