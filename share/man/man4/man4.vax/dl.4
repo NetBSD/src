@@ -1,4 +1,4 @@
-.\"	$NetBSD: dl.4,v 1.2 1998/02/06 06:07:04 perry Exp $
+.\"	$NetBSD: dl.4,v 1.3 1999/03/10 09:31:18 erh Exp $
 .\"
 .\" Copyright (c) 1997 Ben Harris.  All rights reserved.
 .\"
@@ -73,6 +73,7 @@ but it hasn't been tested.
 .Bl -tag -width /dev/ttyJ? -compact
 .It Pa /dev/ttyJ?
 Special files for communicating with dl devices.
+.El
 .\" .Sh EXAMPLES
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -82,6 +83,7 @@ character arrived, and has been lost.
 .It dl%d: stray rx interrupt.
 The driver was called to service a receive interrupt, but there was
 nothing for it to read.
+.El
 .Sh SEE ALSO
 .Xr tty 4
 .\" .Sh STANDARDS
