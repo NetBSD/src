@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.31 1999/02/14 00:43:38 lukem Exp $
+#	$NetBSD: services,v 1.31.2.1 2000/02/12 16:51:52 he Exp $
 #
 # Network services, Internet style
 #
@@ -80,8 +80,8 @@ netbios-dgm	138/tcp				# NETBIOS Datagram Service
 netbios-dgm	138/udp
 netbios-ssn	139/tcp				# NETBIOS session service
 netbios-ssn	139/udp
-imap2		143/tcp				# Interim Mail Access Proto v2
-imap2		143/udp
+imap	143/tcp		imap2 imap4	# Internet Message Access Protocol
+imap	143/udp		imap2 imap4
 snmp		161/udp				# Simple Net Mgmt Proto
 snmp-trap	162/udp		snmptrap	# Traps for SNMP
 cmip-man	163/tcp				# ISO mgmt over IP (CMOT)
