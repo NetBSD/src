@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.4 1998/08/13 02:10:50 eeh Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.5 1998/09/08 23:50:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -108,9 +108,9 @@ db_show_all_procs(addr, haddr, count, modif)
 {
 	int i;
 	char *mode;
-	int doingzomb = 0;
 	struct proc *p, *pp;
 	struct timeval tv[3];
+	const struct proclist_desc *pd;
     
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
@@ -124,8 +124,6 @@ db_show_all_procs(addr, haddr, count, modif)
 		return;
 	}
 	
-	p = allproc.lh_first;
-
 	switch (*mode) {
 
 	case 'a':
@@ -143,7 +141,10 @@ db_show_all_procs(addr, haddr, count, modif)
 		break;
 	}
 
-	while (p != 0) {
+	pd = proclists;
+ loop:
+	for (p = LIST_FIRST(pd->pd_list); p != NULL;
+	     p = LIST_NEXT(p, p_list)) {
 		pp = p->p_pptr;
 		if (p->p_stat) {
 
@@ -182,12 +183,10 @@ db_show_all_procs(addr, haddr, count, modif)
 
 			}
 		}
-		p = p->p_list.le_next;
-		if (p == 0 && doingzomb == 0) {
-			doingzomb = 1;
-			p = zombproc.lh_first;
-		}
 	}
+	pd++;
+	if (pd->pd_list != NULL)
+		goto loop;
 }
 
 void

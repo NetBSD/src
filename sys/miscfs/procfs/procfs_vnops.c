@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.58 1998/08/13 10:06:34 kleink Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.59 1998/09/08 23:50:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -854,16 +854,14 @@ procfs_readdir(v)
 	 * what is needed is a special entry for "curproc"
 	 * followed by an entry for each process on allproc
 #ifdef PROCFS_ZOMBIE
-	 * and zombproc.
+	 * and deadproc and zombproc.
 #endif
 	 */
 
 	case Proot: {
-#ifdef PROCFS_ZOMBIE
-		int doingzomb = 0;
-#endif
 		int pcnt = i, nc = 0;
-		volatile struct proc *p = allproc.lh_first;
+		const struct proclist_desc *pd;
+		volatile struct proc *p;
 
 		if (pcnt > 3)
 			pcnt = 3;
@@ -876,10 +874,16 @@ procfs_readdir(v)
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
+		/*
+		 * XXX: THIS LOOP ASSUMES THAT allproc IS THE FIRST
+		 * PROCLIST IN THE proclists!
+		 */
+		pd = proclists;
 #ifdef PROCFS_ZOMBIE
 	again:
 #endif
-		for (; p && uio->uio_resid >= UIO_MX; i++, pcnt++) {
+		for (p = LIST_FIRST(pd->pd_list);
+		     p != NULL && uio->uio_resid >= UIO_MX; i++, pcnt++) {
 			switch (i) {
 			case 0:		/* `.' */
 			case 1:		/* `..' */
@@ -900,7 +904,7 @@ procfs_readdir(v)
 			default:
 				while (pcnt < i) {
 					pcnt++;
-					p = p->p_list.le_next;
+					p = LIST_NEXT(p, p_list);
 					if (!p)
 						goto done;
 				}
@@ -921,11 +925,9 @@ procfs_readdir(v)
 	done:
 
 #ifdef PROCFS_ZOMBIE
-		if (p == 0 && doingzomb == 0) {
-			doingzomb = 1;
-			p = zombproc.lh_first;
+		pd++;
+		if (p == NULL && pd->pd_list != NULL)
 			goto again;
-		}
 #endif
 		ncookies = nc;
 
