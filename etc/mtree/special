@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.51 2002/02/19 21:33:13 veego Exp $
+#	$NetBSD: special,v 1.52 2002/02/24 17:17:48 wiz Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -87,7 +87,7 @@
 ./etc/mailer.conf		type=file mode=0644
 ./etc/man.conf			type=file mode=0644
 ./etc/master.passwd		type=file mode=0600 tags=nodiff
-./etc/mk.conf			type=file mode=0644
+./etc/mk.conf			type=file mode=0644 optional
 ./etc/moduli			type=file mode=0444
 ./etc/monthly			type=file mode=0644
 ./etc/monthly.conf		type=file mode=0644
