@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1996/02/05 20:33:37 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1996/04/04 06:37:15 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -78,7 +78,7 @@ cpu_fork(p1, p2)
 
 	/* Copy curpcb (which is presumably p1's PCB) to p2. */
 	*pcb = p1->p_addr->u_pcb;
-	pcb->pcb_onstack = (struct on_stack *)((u_int)p2->p_addr + USPACE) - 1;
+	pcb->pcb_onstack = (struct reg *)((u_int)p2->p_addr + USPACE) - 1;
 	*pcb->pcb_onstack = *p1->p_addr->u_pcb.pcb_onstack;
 	/* If p1 is holding the FPU, update the FPU context of p2. */
 	if (fpu_proc == p1)
@@ -90,12 +90,12 @@ cpu_fork(p1, p2)
 	 * through rei().
 	 */
 	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
-	p2->p_md.md_regs = (int *)&(tf->sf_reg);
+	p2->p_md.md_regs = &tf->sf_regs;
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (long) proc_trampoline;
-	sf->sf_fp = (long) &tf->sf_fp;
-	sf->sf_reg[REG_R3] = (long) child_return;
-	sf->sf_reg[REG_R4] = (long) p2;
+	sf->sf_fp = (long) &tf->sf_regs.r_fp;
+	sf->sf_r3 = (long) child_return;
+	sf->sf_r4 = (long) p2;
 	sf->sf_pl = imask[IPL_ZERO];
 	pcb->pcb_ksp = (long) sf;
 	pcb->pcb_kfp = (long) &sf->sf_fp;
@@ -123,8 +123,8 @@ cpu_set_kpc(p, pc)
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *) pcbp->pcb_ksp;
 	sf->sf_pc = (long) proc_trampoline;
-	sf->sf_reg[REG_R3] = pc;
-	sf->sf_reg[REG_R4] = (long) p;
+	sf->sf_r3 = pc;
+	sf->sf_r4 = (long) p;
 }
 
 /*
