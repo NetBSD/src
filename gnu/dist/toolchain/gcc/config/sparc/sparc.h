@@ -250,12 +250,12 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 #define CPP_ARCH32_SPEC "-D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int \
 -D__GCC_NEW_VARARGS__ -Acpu(sparc) -Amachine(sparc)"
 #define CPP_ARCH64_SPEC "-D__SIZE_TYPE__=long\\ unsigned\\ int -D__PTRDIFF_TYPE__=long\\ int \
--D__arch64__ -Acpu(sparc64) -Amachine(sparc64)"
+-D__arch64__ -D_LP64 -Acpu(sparc64) -Amachine(sparc64)"
 
 #else
 
 #define CPP_ARCH32_SPEC "-D__GCC_NEW_VARARGS__ -Acpu(sparc) -Amachine(sparc)"
-#define CPP_ARCH64_SPEC "-D__arch64__ -Acpu(sparc64) -Amachine(sparc64)"
+#define CPP_ARCH64_SPEC "-D__arch64__ -D_LP64 -Acpu(sparc64) -Amachine(sparc64)"
 
 #endif
 
