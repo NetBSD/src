@@ -1,4 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.4 1999/12/16 05:55:53 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: pathnames.h,v 1.3 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: pathnames.h,v 1.2 1999/12/16 05:36:37 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.

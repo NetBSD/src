@@ -1,4 +1,5 @@
-/*	$NetBSD: mld6_proto.c,v 1.5 2000/10/06 00:13:02 itojun Exp $	*/
+/*	$NetBSD: mld6_proto.c,v 1.6 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: mld6_proto.c,v 1.6 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -63,8 +64,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
- *
- *  KAME Id: mld6_proto.c,v 1.4 2000/05/05 12:38:30 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.

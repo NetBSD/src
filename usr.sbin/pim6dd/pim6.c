@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6.c,v 1.5 2000/05/19 10:43:43 itojun Exp $	*/
+/*	$NetBSD: pim6.c,v 1.6 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: pim6.c,v 1.8 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -63,8 +64,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: pim6.c,v 1.6 2000/03/07 02:23:50 jinmei Exp
  */
 
 #include "defs.h"
@@ -132,7 +131,7 @@ init_pim6()
 	sndmh.msg_controllen = sndcmsglen;
 	/* initilization cmsg for specifing outgoing interfaces and source */
 	cmsgp=(struct cmsghdr *)sndcmsgbuf;
-	cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
+	cmsgp->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
 	cmsgp->cmsg_level = IPPROTO_IPV6;
 	cmsgp->cmsg_type = IPV6_PKTINFO;
 	sndpktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);

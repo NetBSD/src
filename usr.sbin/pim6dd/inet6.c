@@ -1,4 +1,5 @@
-/*	$NetBSD: inet6.c,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.3 2000/12/04 07:05:47 itojun Exp $	*/
+/*	$KAME: inet6.c,v 1.3 2000/12/04 06:33:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
