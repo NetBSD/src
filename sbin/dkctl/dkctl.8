@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.14 2004/09/25 04:00:49 snj Exp $
+.\"	$NetBSD: dkctl.8,v 1.15 2004/09/25 12:44:25 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -38,15 +38,12 @@
 .Os
 .Sh NAME
 .Nm dkctl
-.Nd a program to manipulate disks
+.Nd program to manipulate disks
 .Sh SYNOPSIS
 .Nm
 .Ar device
 .Ar command
-.Oo
-.Ar arg Oo ...
-.Oc
-.Oc
+.Op Ar arg Op ...
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to manipulate and configure disks
@@ -55,18 +52,13 @@ It is used by specifying a disk to manipulate, the command
 to perform, and any arguments the command may require.
 .Sh COMMANDS
 The following commands are supported:
-.Pp
-.Nm getcache
-.Pp
+.Bl -tag -width XgetwedgeinfoX
+.It Ic getcache
 Get and display the cache enables for the specified device.
-.Pp
-.Nm setcache
-.Ar none | r | w | rw
-.Op Ar save
-.Pp
+.It Ic setcache Ar none | r | w | rw Op Ar save
 Set the cache enables for the specified device.
 The enables are as follows:
-.Bl -tag -width indent
+.Bl -tag -offset indent -width XsaveX
 .It none
 Disable all caches on the disk.
 .It r
@@ -79,10 +71,7 @@ Enable both the read and write caches on the disk.
 If specified, and the cache enables are savable, saves the cache
 enables in the disk's non-volatile parameter storage.
 .El
-.Pp
-.Nm synccache
-.Op Ar force
-.Pp
+.It Ic synccache Op Ar force
 Causes the cache on the disk to be synchronized, flushing all dirty
 write cache blocks to the media.
 If
@@ -90,10 +79,7 @@ If
 is specified, the cache synchronization command will be issued even
 if the kernel does not believe that there are any dirty cache blocks
 in the disk's cache.
-.Pp
-.Nm keeplabel
-.Op Ar yes | no
-.Pp
+.It Ic keeplabel Op Ar yes | no
 Specify to keep or drop the in-core disklabel on the last close of
 the disk device.
 (Keep if
@@ -101,15 +87,14 @@ the disk device.
 is specified, drop if
 .Ar no
 is specified.)
-.Pp
-.Nm badsector
-.Ar flush | list | retry
-.Pp
-Used for managing the kernel's bad sector list for wd* devices.
+.It Ic badsector Ar flush | list | retry
+Used for managing the kernel's bad sector list for
+.Xr wd 4
+devices.
 The software bad sector list is only maintained if the option
 .Dq WD_SOFTBADSECT
 was specified on kernel configuration.
-.Bl -tag -width indent
+.Bl -tag -width XflushX -offset indent
 .It flush
 Clears the in kernel list of bad sectors.
 .It list
@@ -121,15 +106,9 @@ This option
 .Em can only
 be used with character devices.
 .El
-.Pp
-.Nm addwedge
-.Ar name
-.Ar startblk
-.Ar blkcnt
-.Ar ptype
-.Pp
+.It Ic addwedge Ar name Ar startblk Ar blkcnt Ar ptype
 Define a
-.Sq wedge
+.Dq wedge
 on the specified disk starting at block number
 .Ar startblk
 and spanning
@@ -144,21 +123,15 @@ displayed after the wedge has been successfully created.
 See
 .Xr dk 4
 for more information about disk wedges.
-.Pp
-.Nm delwedge
-.Ar dk
-.Pp
+.It Ic delwedge Ar dk
 Delete the wedge specified by its device name
 .Ar dk
 from the specified disk.
-.Pp
-.Nm getwedgeinfo
-.Pp
+.It Ic getwedgeinfo
 Display information about the specified disk wedge.
-.Pp
-.Nm listwedges
-.Pp
+.It Ic listwedges
 List all of the wedges configured on the specified disk.
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr dk 4 ,
@@ -175,4 +148,6 @@ command first appeared in
 .Sh AUTHORS
 The
 .Nm
-command was written by Jason R. Thorpe of Wasabi Systems, Inc.
+command was written by
+.An Jason R. Thorpe
+of Wasabi Systems, Inc.
