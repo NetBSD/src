@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 1994/11/17 05:04:35 gwr Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 1994/11/28 19:29:14 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -133,8 +133,18 @@ kdbprinttrap(type, code)
 	printf(" trap\n");
 }
 
+int
+Debugger()
+{
+	asm ("trap #15");
+}
+
+#ifndef	sun3
+
 /*
  * Read bytes from kernel address space for debugger.
+ * XXX - Each port should provide one of these...
+ * See arch/sun3/sun3/db_memrw.c for an example. -gwr
  */
 void
 db_read_bytes(addr, size, data)
@@ -149,11 +159,10 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
-#ifndef	sun3
 /*
  * Write bytes to kernel address space for debugger.
- * XXX - Should each port provide one of these?
- * See arch/sun3/sun3/db_write.c for example. -gwr
+ * XXX - Each port should provide one of these...
+ * See arch/sun3/sun3/db_memrw.c for an example. -gwr
  */
 void
 db_write_bytes(addr, size, data)
@@ -174,9 +183,3 @@ db_write_bytes(addr, size, data)
 
 }
 #endif	/* !sun3 */
-
-int
-Debugger()
-{
-	asm ("trap #15");
-}
