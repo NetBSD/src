@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.16 1993/11/03 21:32:45 mycroft Exp $
+#	$Id: TEST,v 1.17 1993/11/04 09:28:26 cgd Exp $
 #
 
 # standard options
@@ -92,6 +92,9 @@ fd* at fdc? drive ?
 
 #non-scsi tape drives
 #wt0 at isa? port 0x300 drq 1			# QIC-02, QIC-36
+
+#non-scsi CD-ROM drives
+#mcd0 at isa? port 0x300 irq 10			# Mitsumi
 
 #scsi
 #aha0 at isa? port 0x330 drq 5			# Adaptec 1542

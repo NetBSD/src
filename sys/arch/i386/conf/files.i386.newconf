@@ -73,6 +73,10 @@ device	wt at isa: tape, dma
 file	arch/i386/isa/wt.c		wt needs-flag
 major	{wt = 3}
 
+device	mcd at isa: disk, dma
+file	arch/i386/isa/mcd.c		mcd needs-count
+major	{mcd = 7}
+
 
 define	scsi {target = -1}
 
