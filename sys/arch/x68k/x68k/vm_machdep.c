@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1998/11/11 06:43:52 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 1998/11/18 10:05:35 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,7 +117,7 @@ cpu_fork(p1, p2)
  * with the supplied argument.
  *
  * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
+ * should be invoked, to return to user code.
  */
 void
 cpu_set_kpc(p, pc, arg)
@@ -285,12 +285,12 @@ int
 kvtop(addr)
 	caddr_t addr;
 {
-	vaddr_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
-	if (va == 0)
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)addr);
+	if (pa == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -309,9 +309,9 @@ vmapbuf(bp, len)
 	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vaddr_t uva;	/* User VA (map from) */
-	vaddr_t kva;	/* Kernel VA (new to) */
-	paddr_t pa; 	/* physical address */
+	vaddr_t uva;		/* User VA (map from) */
+	vaddr_t kva;		/* Kernel VA (new to) */
+	paddr_t pa; 		/* physical address */
 	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
