@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.12 1999/02/05 07:53:24 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.13 1999/02/05 08:21:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -308,9 +308,7 @@ static int vr_mii_readreg(self, phy, reg)
 	int phy, reg;
 {
 	struct vr_softc *sc = (struct vr_softc *)self;
-	int i, ack, s, val = 0;
-
-	s = splnet();
+	int i, ack, val = 0;
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -379,8 +377,6 @@ static int vr_mii_readreg(self, phy, reg)
 	SIO_SET(VR_MIICMD_CLK);
 	DELAY(1);
 
-	splx(s);
-
 	return (val);
 }
 
@@ -392,9 +388,6 @@ static void vr_mii_writereg(self, phy, reg, val)
 	int phy, reg, val;
 {
 	struct vr_softc *sc = (struct vr_softc *)self;
-	int s;
-
-	s = splnet();
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -423,8 +416,6 @@ static void vr_mii_writereg(self, phy, reg, val)
 	 * Turn off xmit.
 	 */
 	SIO_CLR(VR_MIICMD_DIR);
-
-	splx(s);
 }
 
 static void vr_mii_statchg(self)
@@ -1087,14 +1078,14 @@ static void vr_start(ifp)
 	return;
 }
 
+/*
+ * Initialize the interface.  Must be called at splnet.
+ */
 static void vr_init(xsc)
 	void			*xsc;
 {
 	struct vr_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->vr_ec.ec_if;
-	int			s;
-
-	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1113,7 +1104,6 @@ static void vr_init(xsc)
 		printf("%s: initialization failed: no "
 			"memory for rx buffers\n", sc->vr_dev.dv_xname);
 		vr_stop(sc);
-		(void)splx(s);
 		return;
 	}
 
@@ -1162,8 +1152,6 @@ static void vr_init(xsc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	(void)splx(s);
 
 	/* Start one second timer. */
 	timeout(vr_tick, sc, hz);
@@ -1270,7 +1258,7 @@ static int vr_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return (error);
 }
