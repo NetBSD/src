@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.57 2003/04/21 04:33:30 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.58 2003/04/22 00:24:48 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -882,7 +882,7 @@ set_cpufuncs()
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		get_cachetype_cp15();
-		pmap_pte_init_generic();
+		pmap_pte_init_arm8();
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
@@ -900,7 +900,7 @@ set_cpufuncs()
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
-		pmap_pte_init_generic();
+		pmap_pte_init_sa1();
 		return 0;
 	}
 #endif	/* CPU_SA110 */
@@ -909,7 +909,7 @@ set_cpufuncs()
 		cpufuncs = sa11x0_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
-		pmap_pte_init_generic();
+		pmap_pte_init_sa1();
 
 		/* Use powersave on this CPU. */
 		cpu_do_powersave = 1;
@@ -922,7 +922,7 @@ set_cpufuncs()
 		cpufuncs = sa11x0_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
-		pmap_pte_init_generic();
+		pmap_pte_init_sa1();
 
 		/* Use powersave on this CPU. */
 		cpu_do_powersave = 1;
@@ -935,7 +935,7 @@ set_cpufuncs()
                 cpufuncs = ixp12x0_cpufuncs;
                 cpu_reset_needs_v4_MMU_disable = 1;
                 get_cachetype_table();
-                pmap_pte_init_generic();
+                pmap_pte_init_sa1();
                 return 0;
         }
 #endif  /* CPU_IXP12X0 */
