@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.7 2003/08/07 16:43:40 agc Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.8 2004/05/09 19:34:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,14 +34,20 @@
 #if 0
 static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.7 2003/08/07 16:43:40 agc Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.8 2004/05/09 19:34:11 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(getsubopt,_getsubopt)
+#endif
 
 /*
  * The SVID interface to getsubopt provides no way of figuring out which
@@ -59,8 +65,8 @@ getsubopt(optionp, tokens, valuep)
 	int cnt;
 	char *p;
 
-	_DIAGASSERT(valuep != NULL);
 	_DIAGASSERT(tokens != NULL);
+	_DIAGASSERT(valuep != NULL);
 	/* optionp is tested below */
 
 	suboptarg = *valuep = NULL;
