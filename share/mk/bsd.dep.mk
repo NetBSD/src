@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.26 1999/02/24 22:04:15 simonb Exp $
+#	$NetBSD: bsd.dep.mk,v 1.27 1999/08/11 02:00:15 sommerfeld Exp $
 
 .PHONY:		cleandepend
 cleandir distclean: cleandepend
@@ -42,7 +42,7 @@ depend: .depend
 	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
 cleandepend:
-	rm -f .depend ${.CURDIR}/tags
+	rm -f .depend ${.CURDIR}/tags ${CLEANDEPEND}
 .else
 cleandepend:
 .endif
