@@ -1,9 +1,9 @@
-#	$NetBSD: sys.mk,v 1.30 1997/03/29 08:02:58 mikel Exp $
+#	$NetBSD: sys.mk,v 1.31 1997/05/17 02:01:09 mycroft Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .r .y .l .s .S .cl .p .h .sh .m4
+.SUFFIXES: .out .a .ln .o .s .S .c .cc .C .F .f .r .y .l .cl .p .h .sh .m4
 
 .LIBS:		.a
 
