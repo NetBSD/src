@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2002/04/05 22:17:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2002/04/09 19:37:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2002/04/05 22:17:41 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2002/04/09 19:37:16 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -905,15 +905,15 @@ pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, boolean_t selfref)
 	ptva = (va >> L1_S_SHIFT) & ~3;
 
 	/* Map page table into the L1. */
-	pmap->pm_pdir[ptva + 0] = L1_PTE(l2pa + 0x000);
-	pmap->pm_pdir[ptva + 1] = L1_PTE(l2pa + 0x400);
-	pmap->pm_pdir[ptva + 2] = L1_PTE(l2pa + 0x800);
-	pmap->pm_pdir[ptva + 3] = L1_PTE(l2pa + 0xc00);
+	pmap->pm_pdir[ptva + 0] = L1_C_PROTO | (l2pa + 0x000);
+	pmap->pm_pdir[ptva + 1] = L1_C_PROTO | (l2pa + 0x400);
+	pmap->pm_pdir[ptva + 2] = L1_C_PROTO | (l2pa + 0x800);
+	pmap->pm_pdir[ptva + 3] = L1_C_PROTO | (l2pa + 0xc00);
 
 	/* Map the page table into the page table area. */
 	if (selfref)
-		*((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
-		    L2_PTE_NC_NB(l2pa, AP_KRW);
+		*((pt_entry_t *)(pmap->pm_vptpt + ptva)) = L2_S_PROTO | l2pa |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
 }
 
 #if 0
@@ -1757,7 +1757,8 @@ pmap_zero_page(paddr_t phys)
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*cdst_pte = L2_PTE(phys, AP_KRW);
+	*cdst_pte = L2_S_PROTO | phys |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bzero_page(cdstp);
@@ -1789,7 +1790,8 @@ pmap_pageidlezero(paddr_t phys)
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*cdst_pte = L2_PTE(phys, AP_KRW);
+	*cdst_pte = L2_S_PROTO | phys |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 
@@ -1851,8 +1853,10 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*csrc_pte = L2_PTE(src, AP_KR);
-	*cdst_pte = L2_PTE(dst, AP_KRW);
+	*csrc_pte = L2_S_PROTO | src |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_cache_mode;
+	*cdst_pte = L2_S_PROTO | dst |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -2463,9 +2467,9 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		armprot = 0;
 		if (sva < VM_MAXUSER_ADDRESS)
-			armprot |= L2_AP(AP_U);
+			armprot |= L2_S_PROT_U;
 		else if (sva < VM_MAX_ADDRESS)
-			armprot |= L2_AP(AP_W);  /* XXX Ekk what is this ? */
+			armprot |= L2_S_PROT_W;  /* XXX Ekk what is this ? */
 		*pte = (*pte & 0xfffff00f) | armprot;
 
 		pa = pmap_pte_pa(pte);
@@ -2646,7 +2650,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	/* VA 0 is magic. */
 	if (pmap != pmap_kernel() && va != vector_page)
-		npte |= L2_AP(AP_U);
+		npte |= L2_S_PROT_U;
 
 	if (pg != NULL) {
 #ifdef DIAGNOSTIC
@@ -2655,7 +2659,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 		npte |= pte_cache_mode;
 		if (flags & VM_PROT_WRITE) {
-			npte |= L2_TYPE_S | L2_AP(AP_W);
+			npte |= L2_TYPE_S | L2_S_PROT_W;
 			pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 		} else if (flags & VM_PROT_ALL) {
 			npte |= L2_TYPE_S;
@@ -2664,7 +2668,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			npte |= L2_TYPE_INV;
 	} else {
 		if (prot & VM_PROT_WRITE)
-			npte |= L2_TYPE_S | L2_AP(AP_W);
+			npte |= L2_TYPE_S | L2_S_PROT_W;
 		else if (prot & VM_PROT_ALL)
 			npte |= L2_TYPE_S;
 		else
@@ -2702,7 +2706,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
  
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
-	*pte = L2_PTE(pa, AP_KRW);
+
+	/* XXX r/w! */
+	*pte = L2_S_PROTO | pa |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE) | pte_cache_mode;
 }
 
 void
@@ -3018,7 +3025,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			}
 
 			/* make the pte read only */
-			ptes[arm_btop(va)] &= ~L2_AP(AP_W);
+			ptes[arm_btop(va)] &= ~L2_S_PROT_W;
 		}
 
 		if (maskbits & PVF_REF)
@@ -3126,7 +3133,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 		goto out;
 
 	/* This can happen if user code tries to access kernel memory. */
-	if ((ptes[arm_btop(va)] & L2_AP(AP_W)) != 0)
+	if ((ptes[arm_btop(va)] & L2_S_PROT_W) != 0)
 		goto out;
 
 	/* Extract the physical address of the page */
@@ -3165,7 +3172,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 	 * that we can write to this page.
 	 */
 	ptes[arm_btop(va)] =
-	    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S | L2_AP(AP_W);
+	    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S | L2_S_PROT_W;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
@@ -3413,12 +3420,11 @@ out:
 void
 vector_page_setprot(int prot)
 {
-	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pt_entry_t *pte;
 
 	pte = vtopte(vector_page);
 
-	*pte = (*pte & ~L2_AP(AP_KRW)) | L2_AP(ap);
+	*pte = (*pte & ~L1_S_PROT_MASK) | L2_S_PROT(PTE_KERNEL, prot);
 	cpu_tlb_flushD_SE(vector_page);
 	cpu_cpwait();
 }
@@ -3455,12 +3461,12 @@ void
 pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pd_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pd_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
 
 	KASSERT(((va | pa) & L1_S_OFFSET) == 0);
 
-	pde[va >> L1_S_SHIFT] = L1_SECPTE(pa, ap, fl);
+	pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa |
+	    L1_S_PROT(PTE_KERNEL, prot) | fl;
 }
 
 /*
@@ -3472,7 +3478,6 @@ void
 pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
 	pt_entry_t *pte;
 
@@ -3486,7 +3491,8 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 	if (pte == NULL)
 		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
 
-	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa, ap, fl);
+	pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa |
+	    L2_S_PROT(PTE_KERNEL, prot) | fl;
 }
 
 /*
@@ -3503,10 +3509,10 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 
 	KASSERT((l2pv->pv_pa & PGOFSET) == 0);
 
-	pde[slot + 0] = L1_PTE(l2pv->pv_pa + 0x000);
-	pde[slot + 1] = L1_PTE(l2pv->pv_pa + 0x400);
-	pde[slot + 2] = L1_PTE(l2pv->pv_pa + 0x800);
-	pde[slot + 3] = L1_PTE(l2pv->pv_pa + 0xc00);
+	pde[slot + 0] = L1_C_PROTO | (l2pv->pv_pa + 0x000);
+	pde[slot + 1] = L1_C_PROTO | (l2pv->pv_pa + 0x400);
+	pde[slot + 2] = L1_C_PROTO | (l2pv->pv_pa + 0x800);
+	pde[slot + 3] = L1_C_PROTO | (l2pv->pv_pa + 0xc00);
 
 	SLIST_INSERT_HEAD(&kernel_pt_list, l2pv, pv_list);
 }
@@ -3523,7 +3529,6 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
     int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
 	pt_entry_t *pte;
 	vsize_t resid;  
@@ -3548,7 +3553,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #ifdef VERBOSE_INIT_ARM
 			printf("S");
 #endif
-			pde[va >> L1_S_SHIFT] = L1_SECPTE(pa, ap, fl);
+			pde[va >> L1_S_SHIFT] = L1_S_PROTO | pa |
+			    L1_S_PROT(PTE_KERNEL, prot) | fl;
 			va += L1_S_SIZE;
 			pa += L1_S_SIZE;
 			resid -= L1_S_SIZE;
@@ -3577,7 +3583,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #endif
 			for (i = 0; i < 16; i++) {
 				pte[((va >> PGSHIFT) & 0x3f0) + i] =
-				    L2_LPTE(pa, ap, fl);
+				    L2_L_PROTO | pa |
+				    L2_L_PROT(PTE_KERNEL, prot) | fl;
 			}
 			va += L2_L_SIZE;
 			pa += L2_L_SIZE;
@@ -3589,7 +3596,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #ifdef VERBOSE_INIT_ARM
 		printf("P");
 #endif
-		pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa, ap, fl);
+		pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa |
+		    L2_S_PROT(PTE_KERNEL, prot) | fl;
 		va += NBPG;
 		pa += NBPG;
 		resid -= NBPG;
