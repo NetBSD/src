@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.23 2004/04/03 23:56:49 christos Exp $
+.\"	$NetBSD: vacation.1,v 1.24 2004/04/04 01:17:29 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 indication
 .Sh SYNOPSIS
 .Nm
-.Fl i
+.Fl di
 .Op Fl f Ar F|R|S
 .Op Fl r Ar interval
 .Op Fl t Ar A|D
@@ -74,6 +74,8 @@ Handle messages for
 .Ar alias
 in the same manner as those received for the user's
 login name.
+.It Fl d
+Turn debugging on; don't send an actual message, but print it on stdout.
 .It Fl f Ar F|R|S
 Make
 .Nm
