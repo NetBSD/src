@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.35 2000/09/19 17:04:51 bjh21 Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.36 2000/09/19 22:13:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -159,6 +159,7 @@ loop:
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset((caddr_t)np, 0, sizeof *np);
+	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
 	/*
