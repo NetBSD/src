@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 1997/01/31 23:26:10 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 1997/03/15 02:59:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -429,7 +429,7 @@ findroot(devpp, partp)
 			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
 				continue;
-			(void)(*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 
 			pp = &dkp->dk_label->d_partitions[0];
