@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.50 2002/03/21 12:54:21 pk Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.51 2002/03/26 23:13:08 fredette Exp $
 
 .include <bsd.init.mk>
 
@@ -42,6 +42,11 @@ machine-links:
 	    ln -s $S/arch/${MACHINE}/include machine
 	@rm -f ${MACHINE_CPU} && \
 	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+# XXX. it gets worse..
+.if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
+	@rm -f sun68k && \
+	    ln -s $S/arch/sun68k/include sun68k
+.endif
 
 ##### Install rules
 .if !target(kmodinstall)
