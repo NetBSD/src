@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.2 1996/11/13 23:42:55 cgd Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.3 1997/03/12 01:47:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,9 +45,9 @@
 #include "dec_2100_a50.h"
 cpu_decl(dec_2100_a50);
 
-#undef DEC_21000		/* config 'option' with flag brokenness */
-#include "dec_21000.h"
-cpu_decl(dec_21000);
+#undef DEC_KN8AE		/* config 'option' with flag brokenness */
+#include "dec_kn8ae.h"
+cpu_decl(dec_kn8ae);
 
 #undef DEC_3000_300		/* config 'option' with flag brokenness */
 #include "dec_3000_300.h"
@@ -87,7 +87,7 @@ const struct cpusw cpusw[] = {
 	cpu_notdef("AXPvme 64"),		/* 10: ST_DEC_APXVME_64 */
 	cpu_init("DEC AXPpci",DEC_AXPPCI_33,dec_axppci_33),
 						/* 11: ST_DEC_AXPPCI_33 */
-	cpu_init("DEC 21000",DEC_21000,dec_21000),
+	cpu_init("AlphaServer 8400",DEC_KN8AE,dec_kn8ae),
 						/* 12: ST_DEC_21000 */
 	cpu_init("AlphaStation 200/400 (\"Avanti\")",DEC_2100_A50,dec_2100_a50),
 						/* 13: ST_DEC_2100_A50 */
