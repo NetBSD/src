@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.16 1996/10/13 02:31:58 christos Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -54,6 +54,7 @@
 #include <sys/time.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/cd9660_rrip.h>
 #include <isofs/cd9660/iso_rrip.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.11 1996/10/25 23:14:02 cgd Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -52,12 +52,11 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h> /* XXX */
-#include <miscfs/fifofs/fifo.h> /* XXX */
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 
 /*
  * translate and compare a filename

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.37 1996/10/13 02:32:00 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.38 1997/01/24 00:27:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -60,6 +60,7 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 
