@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.481 2002/10/24 06:40:56 grant Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.482 2002/10/25 15:58:03 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.477 2002/10/24 06:40:07 grant Exp 
+ *	NetBSD: pcidevs,v 1.479 2002/10/25 15:56:47 kent Exp 
  */
 
 /*
@@ -554,6 +554,7 @@
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom Corporation */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
+#define	PCI_VENDOR_ENE	0x1524		/* ENE Technology, Inc. */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
@@ -573,6 +574,7 @@
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
+#define	PCI_VENDOR_ICOMPRESSION	0x4444		/* Conexant (iCompression) */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
@@ -807,8 +809,8 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
-#define	PCI_PRODUCT_AMD_PBC8111_AC	0x764d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
@@ -1200,6 +1202,9 @@
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* \"Light Pulse\" FibreChannel adapter */
 
+/* ENE Technology Inc. products */
+#define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 Cardbus Controller */
+
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI97	0x1371		/* AudioPCI 97 */
@@ -1314,6 +1319,9 @@
 #define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
+
+/* Conexant (iCompression, GlobeSpan) products */
+#define	PCI_PRODUCT_ICOMPRESSION_ITVC15	0x0803		/* iTVC15 MPEG2 codec */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
