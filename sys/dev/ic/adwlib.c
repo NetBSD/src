@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.2 1998/09/26 19:54:22 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.3 1999/02/23 20:18:16 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -948,8 +948,17 @@ AdvISR(sc)
 			ADW_READ_WORD_LRAM(iot, ioh,
 				      next_done_loc + RQL_PHYADDR + 2, msw);
 
-			scsiq = (ADW_SCSI_REQ_Q *)
-				(((u_int32_t) msw << 16) | lsw);
+			/*
+			 * Here we retrive the virtual address of the
+			 * ADW_SCSI_REQ_Q structure. This is accomplished
+			 * retriving first the ccb physical address (which
+			 * we passed to the board in AdvSendScsiCmd),
+			 * translating then to a virtual address, and
+			 * retrivieng the the ADW_SCSI_REQ_Q pointer stored
+			 * into the ccb structure.
+			 */
+			scsiq = &adw_ccb_phys_kv(sc,
+				(((u_int32_t) msw << 16) | lsw))->scsiq;
 		}
 
 		target_bit = ADW_TID_TO_TIDMASK(scsiq->target_id);
@@ -1096,12 +1105,14 @@ AdvSendScsiCmd(sc, scsiq)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	ADW_CCB        *ccb = (ADW_CCB *) scsiq->ccb_ptr;
+	ADW_CCB        *ccb;
 	u_int16_t       next_ready_loc;
 	u_int8_t        next_ready_loc_fwd;
 	long            req_size;
 	u_int32_t       q_phy_addr;
 
+
+	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
 	if (sc->cur_host_qng >= sc->max_host_qng) {
 		return ADW_BUSY;
@@ -1138,7 +1149,14 @@ AdvSendScsiCmd(sc, scsiq)
 	q_phy_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsiq);
 
-	scsiq->scsiq_ptr = scsiq;
+	/*
+	 * The "scsiq" pointer must be passed to the board so we can retrive it
+	 * during the interrupt condition: inside the Adv_ISR() function.
+	 * It should contain the virtual address of ADW_SCSI_REQ_Q structure,
+	 * but actually, to make it works under 64bits architecure it contains
+	 * the physical address of ccb (ADW_CCB).
+	 */ 
+	scsiq->ccb_scsiq_ptr = scsiq->ccb_ptr;
 
 	/*
 	 * The RISC list structure, which 'next_ready_loc' is a pointer

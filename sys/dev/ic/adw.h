@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.1 1998/09/26 16:10:41 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.2 1999/02/23 20:18:16 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -46,7 +46,10 @@
 typedef int (* ADW_ISR_CALLBACK) (ADW_SOFTC *, ADW_SCSI_REQ_Q *);
 typedef int (* ADW_SBRESET_CALLBACK) (ADW_SOFTC *);
 
-/* per request scatter-gather element limit  */
+/*
+ * per request scatter-gather element limit
+ * We could have up to 256 SG lists.
+ */
 #define ADW_MAX_SG_LIST		64
 
 /* 
@@ -68,6 +71,8 @@ struct adw_ccb
 	struct scsipi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
+	struct adw_ccb		*nexthash;
+	u_long			hashkey;
 	struct scsipi_xfer	*xs;	/* the scsipi_xfer for this cmd */
 	int			flags;	/* see below */
 
@@ -104,6 +109,7 @@ struct adw_control
 int adw_init __P((ADW_SOFTC *sc));
 void adw_attach __P((ADW_SOFTC *sc));
 int adw_intr __P((void *arg));
+ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_long));
 
 /******************************************************************************/
 
