@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.137 2004/12/16 03:54:56 atatat Exp $
+#	$NetBSD: Makefile.inc,v 1.138 2005/01/02 16:43:26 thorpej Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -7,7 +7,8 @@
 SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	closefrom.c confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
 	disklabel.c err.c errx.c __errlist14.c errlist.c errno.c execl.c \
-	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
+	execle.c execlp.c execv.c execvp.c extattr.c \
+	fmtcheck.c fmtmsg.c fnmatch.c \
 	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c \
 	getdomainname.c getgrent.c getgrouplist.c gethostname.c \
@@ -44,7 +45,7 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
-	endutxent.3 err.3 exec.3 \
+	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 \
 	ftok.3 fts.3 \
 	getbsize.3 getcap.3 getcwd.3 getdevmajor.3 \
@@ -78,6 +79,8 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3 exec.3 exect.3
+MLINKS+=extattr.3 extattr_namespace_to_string.3 \
+	extattr.3 extattr_string_to_namespace.3
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
 	fpgetmask.3 fpsetsticky.3
