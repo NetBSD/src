@@ -1,3 +1,4 @@
+/*	$NetBSD: crunchgen.c,v 1.7 1997/08/02 21:30:12 perry Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -30,6 +31,11 @@
  * Generates a Makefile and main C file for a crunched executable,
  * from specs given in a .conf file.  
  */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: crunchgen.c,v 1.7 1997/08/02 21:30:12 perry Exp $");
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -156,10 +162,6 @@ int main(int argc, char **argv)
 
     sprintf(cachename, "%s.cache", confname);
     sprintf(tempfname, ".tmp_%sXXXXXX", confname);
-    if(mktemp(tempfname) == NULL) {
-	perror(tempfname);
-	exit(1);
-    }
 
     parse_conf_file();
     gen_outputs();
@@ -541,11 +543,17 @@ void fillin_program_objs(prog_t *p, char *path)
 {
     char *obj, *cp;
     int rc;
+    int fd;
     FILE *f;
 
     /* discover the objs from the srcdir Makefile */
 
-    if((f = fopen(tempfname, "w")) == NULL) {
+    if((fd = mkstemp(tempfname)) < 0) {
+	perror(tempfname);
+	exit(1);
+    }
+
+    if((f = fdopen(fd, "w")) == NULL) {
 	perror(tempfname);
 	goterror = 1;
 	return;

@@ -1,3 +1,4 @@
+/*	$NetBSD: crunched_main.c,v 1.2 1997/08/02 21:30:10 perry Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -31,6 +32,11 @@
  *	or calls one of them based on argv[1].   This allows the testing of
  *	the crunched binary without creating all the links.
  */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: crunched_main.c,v 1.2 1997/08/02 21:30:10 perry Exp $");
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
