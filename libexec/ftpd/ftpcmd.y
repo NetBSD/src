@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.78 2004/07/16 03:31:51 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.79 2004/07/16 08:29:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.78 2004/07/16 03:31:51 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.79 2004/07/16 08:29:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -543,7 +543,7 @@ cmd
 	| SITE SP CHMOD SP octal_number SP pathname CRLF
 		{
 			if (check_write($7, 0)) {
-				if ($5 > 0777)
+				if (($5 == -1) || ($5 > 0777))
 					reply(501,
 				"CHMOD: Mode value must be between 0 and 0777");
 				else if (chmod($7, $5) < 0)
