@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.20 2004/05/11 23:21:51 wiz Exp $
+.\"	$NetBSD: cardbus.4,v 1.21 2005/03/21 18:05:36 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 3, 2004
+.Dd March 21, 2005
 .Dt CARDBUS 4
 .Os
 .Sh NAME
@@ -136,3 +136,22 @@ The
 .Nm
 driver appeared in
 .Nx 1.5 .
+.Sh BUGS
+.Ss Memory space conflicts
+.Nx
+maps memory on Cardbus and PCMCIA cards in order to access the cards
+(including reading CIS tuples on PCMCIA cards)
+and access the devices using the
+.Tn RBUS
+abstraction.
+When the mapping does not work, PCMCIA cards are typically ignored on
+insert, and Cardbus cards are recognized but nonfunctional.
+The location is machine-specific, and the default location does not
+work on all hardware.
+On i386, the following kernel configuration line, which maps Cardbus
+space at 512M rather than 1GB, has been found to make Cardbus support
+(including PCMCIA attachment under a cbb) work on some notebook
+models, including the IBM Thinkpad 600E (2645-4AU) and the Compaq
+ARMADA M700:
+.Pp
+.Cd options RBUS_MIN_START="0x20000000"
