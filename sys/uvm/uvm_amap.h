@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.14.2.3 2002/12/11 06:51:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.14.2.4 2002/12/20 19:10:30 thorpej Exp $	*/
 
 /*
  *
@@ -280,7 +280,7 @@ struct vm_amap {
 void		amap_pp_adjref		/* adjust references */
 			 __P((struct vm_amap *, int, vsize_t, int));
 void		amap_pp_establish	/* establish ppref */
-			__P((struct vm_amap *));
+			__P((struct vm_amap *, vaddr_t));
 void		amap_wiperange		/* wipe part of an amap */
 			__P((struct vm_amap *, int, int));
 #endif	/* UVM_AMAP_PPREF */

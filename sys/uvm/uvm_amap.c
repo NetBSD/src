@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.30.2.12 2002/12/11 06:51:51 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30.2.13 2002/12/20 19:10:29 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.12 2002/12/11 06:51:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.13 2002/12/20 19:10:29 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -140,6 +140,8 @@ static __inline void
 pp_setreflen(ppref, offset, ref, len)
 	int *ppref, offset, ref, len;
 {
+	if (len == 0)
+		return;
 	if (len == 1) {
 		ppref[offset] = ref + 1;
 	} else {
@@ -456,7 +458,9 @@ amap_extend(entry, addsize, flags)
 	 * case 3: we need to malloc a new amap and copy all the amap
 	 * data over from old amap to the new one.
 	 *
-	 * XXXCDC: could we take advantage of a kernel realloc()?
+	 * note that the use of a kernel realloc() probably would not
+	 * help here, since we wish to abort cleanly if one of the
+	 * three (or four) mallocs fails.
 	 */
 
 	amap_unlock(amap);	/* unlock in case we sleep in malloc */
@@ -1034,7 +1038,7 @@ amap_splitref(origref, splitref, offset)
 	 * establish ppref before we add a duplicate reference to the amap
 	 */
 	if (origref->ar_amap->am_ppref == NULL)
-		amap_pp_establish(origref->ar_amap);
+		amap_pp_establish(origref->ar_amap, origref->ar_pageoff);
 #endif
 
 	splitref->ar_amap = origref->ar_amap;
@@ -1052,8 +1056,9 @@ amap_splitref(origref, splitref, offset)
  * => amap locked by caller
  */
 void
-amap_pp_establish(amap)
+amap_pp_establish(amap, offset)
 	struct vm_amap *amap;
+	vaddr_t offset;
 {
 	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
 	    M_UVMAMAP, M_NOWAIT);
@@ -1067,7 +1072,9 @@ amap_pp_establish(amap)
 		return;
 	}
 	memset(amap->am_ppref, 0, sizeof(int) * amap->am_maxslot);
-	pp_setreflen(amap->am_ppref, 0, amap->am_ref, amap->am_nslot);
+	pp_setreflen(amap->am_ppref, 0, 0, offset);
+	pp_setreflen(amap->am_ppref, offset, amap->am_ref,
+	    amap->am_nslot - offset);
 	return;
 }
 
