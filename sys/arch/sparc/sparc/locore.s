@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.208 2004/04/28 12:36:48 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.209 2004/05/02 11:22:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4799,23 +4799,20 @@ ENTRY(write_user_windows)
 /*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
- *	nswitchexit = number of calls to switchexit()
  *	cnt.v_swtch = total calls to swtch+swtchexit
  */
 	.comm	_C_LABEL(nswitchdiff), 4
-	.comm	_C_LABEL(nswitchexit), 4
 
 /*
- * switchexit is called only from cpu_exit() before the current process
- * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curlwp is already NULL.)
+ * cpu_exit is called as the last action during exit.
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
+ *
+ * lwp_exit2(0 will free the thread's stack.
  */
-ENTRY(switchexit)
-	mov	%o0, %g2		! save proc for exit2() call
-	mov	%o1, %g1		! exit2() or lwp_exit2()
+ENTRY(cpu_exit)
+	mov	%o0, %g2		! save lwp for lwp_exit2() call
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
@@ -4849,7 +4846,7 @@ ENTRY(switchexit)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	 nop
-	call	%g1			! {lwp}exit2(p)
+	call	lwp_exit2		! lwp_exit2(l)
 	 mov	%g2, %o0
 
 	/*
@@ -4867,7 +4864,6 @@ ENTRY(switchexit)
 	 *	%o1 = tmp 2
 	 */
 
-	INCR(_C_LABEL(nswitchexit))	! nswitchexit++;
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
 
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
