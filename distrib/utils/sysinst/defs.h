@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.110 2004/01/29 08:48:23 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.111 2004/03/26 19:55:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -307,7 +307,6 @@ int	fs_is_lfs(void *);
 
 /* from label.c */
 const char *get_last_mounted(int, int);
-void	emptylabel(partinfo *);
 int	savenewlabel(partinfo *, int);
 int	incorelabel(const char *, partinfo *);
 int	edit_and_check_label(partinfo *, int, int, int);
