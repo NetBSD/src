@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.3 1993/12/17 00:41:23 deraadt Exp $
+ *	$Id: sys.c,v 1.4 1994/01/11 14:27:56 mycroft Exp $
  */
 
 #include "boot.h"
@@ -66,19 +66,16 @@ read(buffer, count)
 		bnum2 = fsbtodb(fs, block_map(logno)) + boff;
 		cnt = cnt2;
 		bnum = bnum2;
-		if (	(!off)  && (size <= count))
-		{
+		if (!off && (size <= count)) {
 			iodest = buffer;
 			devread();
-		}
-		else
-		{
+		} else {
 			iodest = iobuf;
 			size -= off;
 			if (size > count)
 				size = count;
 			devread();
-			bcopy(iodest+off,buffer,size);
+			bcopy(iodest + off, buffer, size);
 		}
 		buffer += size;
 		count -= size;
@@ -87,25 +84,26 @@ read(buffer, count)
 }
 
 find(path)
-     char *path;
+	char *path;
 {
 	char *rest, ch;
 	int block, off, loc, ino = ROOTINO;
 	struct dirent *dp;
-loop:	iodest = iobuf;
+loop:
+	iodest = iobuf;
 	cnt = fs->fs_bsize;
-	bnum = fsbtodb(fs,itod(fs,ino)) + boff;
+	bnum = fsbtodb(fs, itod(fs,ino)) + boff;
 	devread();
 	bcopy(&((struct dinode *)iodest)[ino % fs->fs_inopb],
 	      &inode.i_din,
-	      sizeof (struct dinode));
+	      sizeof(struct dinode));
 	if (!*path)
 		return 1;
 	while (*path == '/')
 		path++;
-	if (!inode.i_size || ((inode.i_mode&IFMT) != IFDIR))
+	if (!inode.i_size || ((inode.i_mode & IFMT) != IFDIR))
 		return 0;
-	for (rest = path; (ch = *rest) && ch != '/'; rest++) ;
+	for (rest = path; (ch = *rest) && ch != '/'; rest++);
 	*rest = 0;
 	loc = 0;
 	do {
@@ -130,11 +128,11 @@ char mapbuf[MAXBSIZE];
 int mapblock = 0;
 
 block_map(file_block)
-     int file_block;
+	int file_block;
 {
 	if (file_block < NDADDR)
 		return(inode.i_db[file_block]);
-	if ((bnum=fsbtodb(fs, inode.i_ib[0])+boff) != mapblock) {
+	if ((bnum = fsbtodb(fs, inode.i_ib[0]) + boff) != mapblock) {
 		iodest = mapbuf;
 		cnt = fs->fs_bsize;
 		devread();
@@ -151,20 +149,15 @@ openrd()
 	\*******************************************************/
 	while (*cp && *cp!='(')
 		cp++;
-	if (!*cp)
-	{
+	if (!*cp) {
 		cp = name;
-	}
-	else
-	{
-		if (cp++ != name)
-		{
+	} else {
+		if (cp++ != name) {
 			for (devp = devs; *devp; devp++)
 				if (name[0] == (*devp)[0] &&
 				    name[1] == (*devp)[1])
 					break;
-			if (!*devp)
-			{
+			if (!*devp) {
 				printf("Unknown device\n");
 				return 1;
 			}
@@ -174,8 +167,7 @@ openrd()
 		* Look inside brackets for unit number, and partition	*
 		\*******************************************************/
 		if (*cp >= '0' && *cp <= '9')
-			if ((unit = *cp++ - '0') > 1)
-			{
+			if ((unit = *cp++ - '0') > 1) {
 				printf("Bad unit\n");
 				return 1;
 			}
@@ -187,8 +179,7 @@ openrd()
 		if (!*cp)
 			return 1;
 	}
-	switch(maj)
-	{
+	switch(maj) {
 	case 1:
 		dosdev = unit | 0x80;
 		unit = 0;
@@ -223,8 +214,7 @@ openrd()
 	/***********************************************\
 	* Find the actual FILE on the mounted device	*
 	\***********************************************/
-	if (!find(cp))
-	{
+	if (!find(cp)) {
 		return 1;
 	}
 	poff = 0;
