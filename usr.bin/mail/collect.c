@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.7 1997/05/17 19:55:12 pk Exp $	*/
+/*	$NetBSD: collect.c,v 1.8 1997/07/07 22:57:52 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: collect.c,v 1.7 1997/05/17 19:55:12 pk Exp $";
+static char rcsid[] = "$NetBSD: collect.c,v 1.8 1997/07/07 22:57:52 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,8 @@ collect(hp, printheaders)
 	extern char *tempMail;
 	char getsub;
 	sigset_t oset, nset;
+	int longline, lastlong, rc;	/* So we don't make 2 or more lines
+					   out of a long input line. */
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void) &escape;
@@ -142,6 +144,8 @@ collect(hp, printheaders)
 		escape = ESCAPE;
 	eofcount = 0;
 	hadintr = 0;
+	lastlong = 0;
+	longline = 0;
 
 	if (!setjmp(colljmp)) {
 		if (getsub)
@@ -174,14 +178,17 @@ cont:
 			}
 			break;
 		}
+		lastlong = longline;
+		longline = c == LINESIZE-1;
 		eofcount = 0;
 		hadintr = 0;
 		if (linebuf[0] == '.' && linebuf[1] == '\0' &&
-		    value("interactive") != NOSTR &&
+		    value("interactive") != NOSTR && !lastlong &&
 		    (value("dot") != NOSTR || value("ignoreeof") != NOSTR))
 			break;
-		if (linebuf[0] != escape || value("interactive") == NOSTR) {
-			if (putline(collf, linebuf) < 0)
+		if (linebuf[0] != escape || value("interactive") == NOSTR ||
+		    lastlong) {
+			if (putline(collf, linebuf, !longline) < 0)
 				goto err;
 			continue;
 		}
@@ -193,7 +200,7 @@ cont:
 			 * Otherwise, it's an error.
 			 */
 			if (c == escape) {
-				if (putline(collf, &linebuf[1]) < 0)
+				if (putline(collf, &linebuf[1], !longline) < 0)
 					goto err;
 				else
 					break;
@@ -298,9 +305,10 @@ cont:
 			fflush(stdout);
 			lc = 0;
 			cc = 0;
-			while (readline(fbuf, linebuf, LINESIZE) >= 0) {
-				lc++;
-				if ((t = putline(collf, linebuf)) < 0) {
+			while ((rc = readline(fbuf, linebuf, LINESIZE)) >= 0) {
+				if (rc != LINESIZE-1) lc++;
+				if ((t = putline(collf, linebuf,
+						 rc != LINESIZE-1)) < 0) {
 					Fclose(fbuf);
 					goto err;
 				}

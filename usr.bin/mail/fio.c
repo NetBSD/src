@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.7 1997/05/13 06:15:54 mikel Exp $	*/
+/*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: fio.c,v 1.7 1997/05/13 06:15:54 mikel Exp $";
+static char rcsid[] = "$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,21 +163,25 @@ setptr(ibuf, offset)
 /*
  * Drop the passed line onto the passed output buffer.
  * If a write error occurs, return -1, else the count of
- * characters written, including the newline.
+ * characters written, including the newline if requested.
  */
 int
-putline(obuf, linebuf)
+putline(obuf, linebuf, outlf)
 	FILE *obuf;
 	char *linebuf;
+	int   outlf;
 {
 	register int c;
 
 	c = strlen(linebuf);
 	(void) fwrite(linebuf, sizeof *linebuf, c, obuf);
-	(void) putc('\n', obuf);
+	if (outlf) {
+		(void) putc('\n', obuf);
+		c++;
+	}
 	if (ferror(obuf))
 		return (-1);
-	return (c + 1);
+	return (c);
 }
 
 /*
