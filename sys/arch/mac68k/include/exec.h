@@ -36,7 +36,8 @@
 
 #include "sys/exec.h"
 
-#define MID_MACHINE	MID_M68K4K
+#define MID_MACHINE	MID_M68K
+#define __LDPGSZ	8192
 
 /* #define cpu_exec_makecmds(p,epp)	ENOEXEC */
 
