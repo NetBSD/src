@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.25 2001/08/09 16:10:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2001/10/31 16:27:32 tv Exp $
+
+REQUIRETOOLS=	yes
 
 .include <bsd.own.mk>
 
