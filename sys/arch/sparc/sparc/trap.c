@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1995/05/08 17:53:40 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.33 1995/07/04 22:57:35 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,6 +147,17 @@ const char *trap_type[] = {
 	"svr4 syscall",		/* 88 */
 	"4.4 syscall",		/* 89 */
 	"kgdb exec",		/* 8a */
+	T, T, T, T, T,		/* 8b..8f */
+	T, T, T, T, T, T, T, T,	/* 9a..97 */
+	T, T, T, T, T, T, T, T,	/* 98..9f */
+	"svr4 getcc",		/* a0 */
+	"svr4 setcc",		/* a1 */
+	"svr4 getpsr",		/* a2 */
+	"svr4 setpsr",		/* a3 */
+	"svr4 gethrtime",	/* a4 */
+	"svr4 gethrvtime",	/* a5 */
+	T,			/* a6 */
+	"svr4 gethrestime",	/* a7 */
 };
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
@@ -268,12 +279,26 @@ dopanic:
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
+badtrap:
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
 		trapsignal(p, SIGILL, type);
 		break;
+
+#ifdef COMPAT_SVR4
+	case T_SVR4_GETCC:
+	case T_SVR4_SETCC:
+	case T_SVR4_GETPSR:
+	case T_SVR4_SETPSR:
+	case T_SVR4_GETHRTIME:
+	case T_SVR4_GETHRVTIME:
+	case T_SVR4_GETHRESTIME:
+		if (!svr4_trap(type, p))
+			goto badtrap;
+		break;
+#endif
 
 	case T_AST:
 		break;	/* the work is all in userret() */
@@ -784,13 +809,13 @@ syscall(code, tf, pc)
 		tf->tf_npc = i + 4;
 	} else if (error > 0 /*error != ERESTART && error != EJUSTRETURN*/) {
 bad:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
 		tf->tf_psr |= PSR_C;	/* fail */
 		i = tf->tf_npc;
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 	}
 	/* else if (error == ERESTART || error == EJUSTRETURN) */
 		/* nothing to do */
