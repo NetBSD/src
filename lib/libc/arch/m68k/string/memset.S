@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.6 1995/11/28 23:40:56 thorpej Exp $	*/
+/*	$NetBSD: memset.S,v 1.7 1997/01/04 03:26:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,13 +37,13 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.6 1995/11/28 23:40:56 thorpej Exp $")
+	RCSID("$NetBSD: memset.S,v 1.7 1997/01/04 03:26:23 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
