@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.142 2003/12/04 19:38:22 atatat Exp $	 */
+/* $NetBSD: machdep.c,v 1.143 2003/12/08 09:29:30 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2003/12/08 09:29:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -458,14 +458,14 @@ cpu_reboot(howto, b)
 		 * rely on that.
 		 */
 #ifdef notyet
-		asm("	movl	%sp, (0x80000200)
-			movl	0x80000200, %sp
-			mfpr	$0x10, -(%sp)	# PR_PCBB
-			mfpr	$0x11, -(%sp)	# PR_SCBB
-			mfpr	$0xc, -(%sp)	# PR_SBR
-			mfpr	$0xd, -(%sp)	# PR_SLR
-			mtpr	$0, $0x38	# PR_MAPEN
-		");
+		asm(	"\tmovl	%sp, (0x80000200)\n"
+			"\tmovl	0x80000200, %sp\n"
+			"\tmfpr	$0x10, -(%sp)\n"	/* PR_PCBB */
+			"\tmfpr	$0x11, -(%sp)\n"	/* PR_SCBB */
+			"\tmfpr	$0xc, -(%sp)\n"		/* PR_SBR */
+			"\tmfpr	$0xd, -(%sp)\n"		/* PR_SLR */
+			"\tmtpr	$0, $0x38\n"		/* PR_MAPEN */
+		);
 #endif
 
 		if (showto & RB_DUMP)
