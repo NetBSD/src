@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.25 2000/02/29 04:41:51 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.26 2000/03/06 03:13:36 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.25 2000/02/29 04:41:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.26 2000/03/06 03:13:36 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
 
 static void	dec_3max_cons_init __P((void));
-static void	dec_3max_device_register __P((struct device *, void *));
 static void	dec_3max_errintr __P((void));
 static int	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3max_intr_establish __P((struct device *, void *,
@@ -114,7 +113,6 @@ dec_3max_init()
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
-	platform.device_register = dec_3max_device_register;
 	platform.iointr = dec_3max_intr;
 	platform.intr_establish = dec_3max_intr_establish;
 	platform.memsize = memsize_scan;
@@ -193,14 +191,6 @@ dec_3max_cons_init()
  	DELAY(160000000 / 9600);	/* XXX */
  
  	dc_cnattach(KN02_SYS_DZ, kbd);
-}
-
-static void
-dec_3max_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_3max_device_register unimplemented");
 }
 
 static const struct {
