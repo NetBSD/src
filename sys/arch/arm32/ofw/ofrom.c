@@ -1,3 +1,5 @@
+/*	$NetBSD: ofrom.c,v 1.3 1998/05/01 21:18:43 cgd Exp $	*/
+
 /*
  * Copyright 1998
  * Digital Equipment Corporation. All rights reserved.
