@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.11 1994/06/29 06:38:06 cgd Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.12 1994/09/29 02:31:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -132,7 +132,7 @@ in_pcbbind(inp, nam)
 			/* GROSS */
 			if (ntohs(lport) < IPPORT_RESERVED &&
 			    (error = suser(p->p_ucred, &p->p_acflag)))
-				return (error);
+				return (EACCES);
 			t = in_pcblookup(head, zeroin_addr, 0,
 			    sin->sin_addr, lport, wild);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
