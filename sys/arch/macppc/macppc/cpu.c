@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 2003/02/03 17:09:56 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.32 2003/02/04 03:15:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_l2cr_config.h"
+#include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 
