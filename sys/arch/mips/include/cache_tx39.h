@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.h,v 1.3 2002/03/05 14:08:07 simonb Exp $	*/
+/*	$NetBSD: cache_tx39.h,v 1.4 2003/02/17 11:35:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define	CACHEOP_TX3920_HIT_WB		(6 << 2)	/* D */
 #define	CACHEOP_TX3920_ISTTAG		(7 << 2)	/* I, D */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 
 /*
  * cache_tx39_op_line:
@@ -173,4 +173,4 @@ void	tx3920_pdcache_wb_range_16wb(vaddr_t, vsize_t);
 void	tx3900_icache_do_inv_index_16(vaddr_t, vsize_t);
 void	tx3920_icache_do_inv_16(vaddr_t, vsize_t);
 
-#endif /* _KERNEL && !_LOCORE */
+#endif /* !_LOCORE */
