@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.73 1998/04/09 00:23:39 thorpej Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.74 1998/04/30 06:28:59 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -173,20 +173,22 @@ chgkprot(addr, len, rw)
 #endif
 
 void
-vslock(addr, len)
+vslock(p, addr, len)
+	struct proc *p;
 	caddr_t	addr;
 	u_int	len;
 {
-	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+	vm_map_pageable(&p->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), FALSE);
 }
 
 void
-vsunlock(addr, len)
+vsunlock(p, addr, len)
+	struct proc *p;
 	caddr_t	addr;
 	u_int	len;
 {
-	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+	vm_map_pageable(&p->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), TRUE);
 }
 
