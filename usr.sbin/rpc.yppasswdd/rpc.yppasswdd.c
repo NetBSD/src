@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.10 2002/01/25 20:30:41 wennmach Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.11 2002/11/08 00:16:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.10 2002/01/25 20:30:41 wennmach Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.11 2002/11/08 00:16:39 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,7 @@ main(int argc, char *argv[])
 	SVCXPRT *transp;
 	int i;
 	char *arg;
+	int maxrec = RPC_MAXDATASIZE;
 
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
@@ -110,6 +111,8 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "can't detach");
 	pidfile(NULL);
 
+	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
+
 	(void)pmap_unset(YPPASSWDPROG, YPPASSWDVERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
@@ -121,7 +124,7 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE,
 		    "unable to register YPPASSWDPROG/YPPASSWDVERS/UDP");
 
-	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
+	transp = svctcp_create(RPC_ANYSOCK, RPC_MAXDATASIZE, RPC_MAXDATASIZE);
 	if (transp == NULL)
 		errx(EXIT_FAILURE, "cannot create TCP service");
 

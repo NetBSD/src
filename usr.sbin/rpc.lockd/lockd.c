@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.7 2000/08/12 18:08:44 thorpej Exp $	*/
+/*	$NetBSD: lockd.c,v 1.8 2002/11/08 00:16:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.7 2000/08/12 18:08:44 thorpej Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.8 2002/11/08 00:16:39 fvdl Exp $");
 #endif
 
 /*
@@ -91,6 +91,7 @@ main(argc, argv)
 	struct sigaction sigchild, sigalarm;
 	int grace_period = 30;
 	struct netconfig *nconf;
+	int maxrec = RPC_MAXDATASIZE;
 
 	while ((ch = getopt(argc, argv, "d:g:")) != (-1)) {
 		switch (ch) {
@@ -131,12 +132,15 @@ main(argc, argv)
 		maxindex = 4;
 	}
 
+	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
+
 	for (i = 0; i < maxindex; i++) {
 		nconf = getnetconfigent(transports[i]);
 		if (nconf == NULL)
 			errx(1, "cannot get udp netconf.");
 
-		transp = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
+		transp = svc_tli_create(RPC_ANYFD, nconf, NULL, RPC_MAXDATASIZE,
+		    RPC_MAXDATASIZE);
 		if (transp == NULL) {
 			errx(1, "cannot create %s service.", transports[i]);
 			/* NOTREACHED */
