@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.233 2004/03/09 02:35:45 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.233 2004/03/09 02:35:45 junyoung Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -115,13 +115,13 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $");
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
-#ifdef	FAST_IPSEC
+#ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#ifdef SYSVSEM 
+#ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
 #ifdef SYSVMSG
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.232 2004/01/09 00:04:53 tls Exp $");
 #include <sys/domain.h>
 #include <sys/namei.h>
 #if NOPENCRYPTO > 0
-#include <opencrypto/cryptodev.h>	/* XXX really  the framework */
+#include <opencrypto/cryptodev.h>	/* XXX really the framework */
 #endif
 #if NRND > 0
 #include <sys/rnd.h>
@@ -234,6 +234,7 @@ main(void)
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -416,7 +417,6 @@ main(void)
 	/* Initialize System V style message queues. */
 	msginit();
 #endif
-
 
 #ifdef P1003_1B_SEMAPHORE
 	/* Initialize posix semaphores */
