@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1995/11/30 00:58:14 jtc Exp $
+#	$NetBSD: GENERIC,v 1.26 1995/12/14 01:09:59 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -152,11 +152,11 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
-le*	at pci? bus ? dev ?
-de*	at pci? bus ? dev ?
+le*	at pci? bus ? dev ?			# PCnet-PCI based ethernet cards
+de*	at pci? bus ? dev ?			# DC21X4X-based ethernet cards
+ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
