@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/07/05 13:32:03 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2002/07/12 20:43:12 scw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_systrace.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -193,6 +194,11 @@ struct cdevsw	cdevsw[] =
 	cdev_esh_init(NESH, esh_fp),	/* 50: HIPPI (esh) raw device */
 	cdev_notdef(),			/* 51 */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
+#ifdef SYSTRACE
+        cdev_systrace_init(1, systrace),/* 53: system call tracing */
+#else
+	cdev_notdef(),			/* 53: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
