@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.142 2000/11/27 08:39:44 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.143 2000/12/31 03:13:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1124,6 +1124,7 @@ vget(vp, flags)
 		simple_lock(&vp->v_interlock);
 	if (vp->v_flag & VXLOCK) {
 		if (flags & LK_NOWAIT) {
+			simple_unlock(&vp->v_interlock);
 			return EBUSY;
 		}
 		vp->v_flag |= VXWANT;
