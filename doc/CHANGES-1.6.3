@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.1 2004/03/02 06:14:49 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.2 2004/03/12 04:01:28 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -9,3 +9,8 @@ sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
 	Mark this as 1.6.2_STABLE.
+
+build.sh					patch
+
+	Set NETBSDSRCDIR explicitly to avoid build lossage
+	[jmmv, ticket #1550]
