@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.485 2002/06/06 02:37:08 simonb Exp $
+# $NetBSD: mi,v 1.486 2002/06/06 02:38:45 simonb Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -3274,6 +3274,7 @@
 ./usr/share/man/man8/pmppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man
 ./usr/share/man/man8/pppd.8			man-ppp-man
+./usr/share/man/man8/pppdump.8			man-ppp-man
 ./usr/share/man/man8/pppoectl.8			man-isdn-man
 ./usr/share/man/man8/pppstats.8			man-ppp-man
 ./usr/share/man/man8/praliases.8		man-sendmail-man
