@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1.2.3 2003/10/20 00:54:13 cyber Exp $
+# $NetBSD: shl.mi,v 1.1.2.4 2003/10/26 18:31:17 cyber Exp $
 ./usr/X11R6/lib/libFS.so.6.0
 ./usr/X11R6/lib/libGL.so.1.2
 ./usr/X11R6/lib/libGLU.so.1.3
@@ -21,7 +21,6 @@
 ./usr/X11R6/lib/libXss.so.1.0
 ./usr/X11R6/lib/libXv.so.1.0
 ./usr/X11R6/lib/libXvMC.so.1.0
-./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/lib/libXxf86misc.so.1.0
 ./usr/X11R6/lib/libXxf86vm.so.1.0
 ./usr/X11R6/lib/libdps.so.1.0
