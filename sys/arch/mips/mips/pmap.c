@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99.2.1 2000/06/22 05:11:21 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99.2.2 2001/11/15 22:43:39 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99.2.1 2000/06/22 05:11:21 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99.2.2 2001/11/15 22:43:39 he Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1743,9 +1743,8 @@ pmap_copy_page(src, dst)
 	 *      the destination as well?
 	 */
 	if (CPUISMIPS3) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(dst, NBPG);
+		MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(src), NBPG);
+		MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
 #endif
 }
