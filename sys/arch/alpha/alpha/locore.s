@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1997/02/03 19:50:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -273,9 +273,7 @@ LEAF(exception_restore_regs, 0)
 	ldq	t10,(FRAME_T10*8)(sp)
 	ldq	t11,(FRAME_T11*8)(sp)
 	ldq	t12,(FRAME_T12*8)(sp)
-#ifndef __OpenBSD__
 	RET
-#endif
 	END(exception_restore_regs)
 
 /**************************************************************************/
@@ -1574,3 +1572,71 @@ LXconsole_restart1: LDGP(pv)
 
 	call_pal PAL_halt
 	END(XentRestart)
+
+/**************************************************************************/
+
+/*
+ * Kernel setjmp and longjmp.  Rather minimalist.
+ *
+ *	longjmp(label_t *a)
+ * will generate a "return (1)" from the last call to
+ *	setjmp(label_t *a)
+ * by restoring registers from the stack,
+ */
+
+	.set	noreorder
+
+LEAF(setjmp, 1)
+	LDGP(pv)
+
+	stq	ra, (0 * 8)(a0)			/* return address */
+	stq	s0, (1 * 8)(a0)			/* callee-saved registers */
+	stq	s1, (2 * 8)(a0)
+	stq	s2, (3 * 8)(a0)
+	stq	s3, (4 * 8)(a0)
+	stq	s4, (5 * 8)(a0)
+	stq	s5, (6 * 8)(a0)
+	stq	s6, (7 * 8)(a0)
+	stq	sp, (8 * 8)(a0)
+
+	ldiq	t0, 0xbeeffedadeadbabe		/* set magic number */
+	stq	t0, (9 * 8)(a0)
+
+	mov	zero, v0			/* return zero */
+	RET
+END(setjmp)
+
+LEAF(longjmp, 1)
+	LDGP(pv)
+
+	ldiq	t0, 0xbeeffedadeadbabe		/* check magic number */
+	ldq	t1, (9 * 8)(a0)
+	cmpeq	t0, t1, t0
+	beq	t0, longjmp_botch		/* if bad, punt */
+
+	ldq	ra, (0 * 8)(a0)			/* return address */
+	ldq	s0, (1 * 8)(a0)			/* callee-saved registers */
+	ldq	s1, (2 * 8)(a0)
+	ldq	s2, (3 * 8)(a0)
+	ldq	s3, (4 * 8)(a0)
+	ldq	s4, (5 * 8)(a0)
+	ldq	s5, (6 * 8)(a0)
+	ldq	s6, (7 * 8)(a0)
+	ldq	sp, (8 * 8)(a0)
+
+	ldiq	v0, 1
+	RET
+
+longjmp_botch:
+	lda	a0, longjmp_botchmsg
+	mov	ra, a1
+	CALL(panic)
+	call_pal PAL_bugchk
+
+	.data
+longjmp_botchmsg:
+	.asciz	"longjmp botch from %p"
+	.text
+END(longjmp)
+
+/**************************************************************************/
