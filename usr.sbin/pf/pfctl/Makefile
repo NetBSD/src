@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2004/06/22 15:16:30 itojun Exp $
+#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
 #	$OpenBSD: Makefile,v 1.15 2004/03/10 18:49:49 mcbride Exp $
+
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	pfctl
 SRCS=	pfctl.c parse.y pfctl_parser.c pf_print_state.c pfctl_altq.c
@@ -12,6 +14,11 @@ WARNS?=	1
 
 LDADD+=	-lm
 DPADD+=	${LIBM}
+
+BINDIR=		/sbin
+.if (${MKDYNAMICROOT} == "no")
+LDSTATIC?=	-static
+.endif
 
 .include <bsd.prog.mk>
 
