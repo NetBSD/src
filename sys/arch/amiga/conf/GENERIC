@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.143.2.1 2000/06/23 14:36:06 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.143.2.2 2000/07/06 14:10:33 sommerfeld Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.143.2.1 $"
+#ident 		"GENERIC-$Revision: 1.143.2.2 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -66,7 +66,7 @@ options 	INET6		# IPV6
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 #endif

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.67.2.1 2000/06/23 14:36:07 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.67.2.2 2000/07/06 14:10:34 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.67.2.1 $"
+#ident 		"GENERIC-$Revision: 1.67.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -75,7 +75,7 @@ options 	INET6		# IPV6
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
