@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21.2.4 1999/04/30 04:32:08 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.5 1999/05/30 15:17:57 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -141,7 +141,7 @@
 #define UBC_WRITE	1
 
 /*
- * flags for uvn_findpage().
+ * flags for uvn_findpages().
  */
 #define UFP_ALL		0x0
 #define UFP_NOWAIT	0x1
@@ -415,9 +415,9 @@ boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
 void			uvn_findpages __P((struct uvm_object *, vaddr_t,
 					   int *, struct vm_page **, int));
-void			uvm_vnp_setpageblknos __P((struct vnode *, off_t, off_t,
-						   daddr_t, int, boolean_t));
 void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
+void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t,
+					      size_t));
 
 #endif /* _UVM_UVM_EXTERN_H_ */
 
