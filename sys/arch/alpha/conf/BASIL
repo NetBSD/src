@@ -1,10 +1,10 @@
-# $NetBSD: BASIL,v 1.9 2002/04/12 08:10:47 gmcgarry Exp $
+# $NetBSD: BASIL,v 1.10 2002/04/17 02:22:43 mycroft Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"BASIL-$Revision: 1.9 $"
+#ident 		"BASIL-$Revision: 1.10 $"
 
 maxusers 64
 
@@ -211,7 +211,6 @@ bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 #cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
-#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -238,10 +237,6 @@ sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet

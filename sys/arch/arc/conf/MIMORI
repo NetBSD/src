@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.15 2002/04/15 14:47:04 tsutsui Exp $
+#	$NetBSD: MIMORI,v 1.16 2002/04/17 02:22:45 mycroft Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -170,16 +170,11 @@ scsibus*	at ahc?
 #siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
 #scsibus* 	at siop?
 
-#de*		at pci? dev ? function ?
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible
-tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
