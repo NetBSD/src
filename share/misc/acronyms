@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.26 1999/07/23 13:49:12 hubertf Exp $
+$NetBSD: acronyms,v 1.27 1999/07/23 21:19:26 jtk Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
@@ -40,6 +40,7 @@ RTFM	read the fine manual
 RTFMP	read the fine man page
 RTFS	read the fine source
 SEP	someone else's problem
+SMLSFB	So many losers, so few bullets
 SMOP	simple matter of programming
 SOL	shit out [of] luck
 SFA	sweet fuck all
