@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.14 1995/04/22 20:25:42 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.15 1995/11/19 22:32:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@ extern struct emul emul_hpux;
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ite.h>
+#include "ite.h"
 #if NITE == 0
 #define	iteon(u,f)
 #define	iteoff(u,f)
