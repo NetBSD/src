@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2002/08/13 03:36:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2002/08/21 18:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2002/08/13 03:36:30 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2002/08/21 18:34:31 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -902,6 +902,7 @@ pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, boolean_t selfref)
 	pmap->pm_pdir[ptva + 1] = L1_C_PROTO | (l2pa + 0x400);
 	pmap->pm_pdir[ptva + 2] = L1_C_PROTO | (l2pa + 0x800);
 	pmap->pm_pdir[ptva + 3] = L1_C_PROTO | (l2pa + 0xc00);
+	cpu_dcache_wb_range((vaddr_t) &pmap->pm_pdir[ptva + 0], 16);
 
 	/* Map the page table into the page table area. */
 	if (selfref)
@@ -923,6 +924,7 @@ pmap_unmap_in_l1(struct pmap *pmap, vaddr_t va)
 	pmap->pm_pdir[ptva + 1] = 0;
 	pmap->pm_pdir[ptva + 2] = 0;
 	pmap->pm_pdir[ptva + 3] = 0;
+	cpu_dcache_wb_range((vaddr_t) &pmap->pm_pdir[ptva + 0], 16);
 
 	/* Unmap the page table from the page table area. */
 	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) = 0;
@@ -1175,7 +1177,6 @@ pmap_alloc_l1pt(void)
 	struct l1pt *pt;
 	int error;
 	struct vm_page *m;
-	pt_entry_t *pte;
 
 	/* Allocate virtual address space for the L1 page table */
 	va = uvm_km_valloc(kernel_map, L1_TABLE_SIZE);
@@ -1213,17 +1214,7 @@ pmap_alloc_l1pt(void)
 	while (m && va < (pt->pt_va + L1_TABLE_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		pte = vtopte(va);
-
-		/*
-		 * Assert that the PTE is invalid.  If it's invalid,
-		 * then we are guaranteed that there won't be an entry
-		 * for this VA in the TLB.
-		 */
-		KDASSERT(pmap_pte_v(pte) == 0);
-
-		*pte = L2_S_PROTO | VM_PAGE_TO_PHYS(m) |
-		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
@@ -1364,8 +1355,11 @@ pmap_allocpagedir(struct pmap *pmap)
 	pmap->pm_pdir = (pd_entry_t *)pt->pt_va;
 
 	/* Clean the L1 if it is dirty */
-	if (!(pt->pt_flags & PTFLAG_CLEAN))
+	if (!(pt->pt_flags & PTFLAG_CLEAN)) {
 		bzero((void *)pmap->pm_pdir, (L1_TABLE_SIZE - KERNEL_PD_SIZE));
+		cpu_dcache_wb_range((vaddr_t) pmap->pm_pdir,
+		    (L1_TABLE_SIZE - KERNEL_PD_SIZE));
+	}
 
 	/* Allocate a page table to map all the page tables for this pmap */
 	if ((error = pmap_alloc_ptpt(pmap)) != 0) {
@@ -1380,12 +1374,14 @@ pmap_allocpagedir(struct pmap *pmap)
 	bcopy((char *)pmap_kernel()->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
 		(char *)pmap->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
 		KERNEL_PD_SIZE);
+	cpu_dcache_wb_range((vaddr_t)pmap->pm_pdir +
+	    (L1_TABLE_SIZE - KERNEL_PD_SIZE), KERNEL_PD_SIZE);
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
 
 	pt->pt_flags &= ~PTFLAG_CLEAN;	/* L1 is dirty now */
-	
+
 	/*
 	 * Map the kernel page tables into the new PT map.
 	 */
