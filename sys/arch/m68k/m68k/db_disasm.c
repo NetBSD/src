@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 1997/06/19 17:39:38 scottr Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.21 1998/10/07 05:27:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -910,7 +910,7 @@ opcode_addsub(dbuf, opc)
 		if (IS_INST(ADDX,opc))
 			addstr(dbuf,"addx");
 		else
-			addstr(dbuf,"addx");
+			addstr(dbuf,"subx");
 
 		addchar(ch);
 		addchar('\t');
@@ -2094,6 +2094,9 @@ print_reglist(dbuf, mod, rl)
 			}
 		}
 	}
+	if (list > 1)
+		addstr(dbuf, regs[15]);
+
 	if (dbuf->casm[-1] == '/' || dbuf->casm[-1] == '-')
 		dbuf->casm--;
 	*dbuf->casm = 0;
