@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 1999/03/06 11:11:11 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 1999/04/26 22:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -152,7 +152,6 @@ struct pmap_physseg {
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0xC0000000))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
