@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.6 1997/11/27 07:37:21 mikel Exp $
+.\"	$NetBSD: socket.2,v 1.7 1998/04/30 22:03:03 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,10 +202,11 @@ The operation of sockets is controlled by socket level
 .Em options .
 These options are defined in the file
 .Ao Pa sys/socket.h Ac .
-.Xr Setsockopt 2
+The
+.Xr setsockopt 2
 and
 .Xr getsockopt 2
-are used to set and get options, respectively.
+system calls are used to set and get options, respectively.
 .Sh RETURN VALUES
 A -1 is returned if an error occurs, otherwise the return
 value is a descriptor referencing the socket.
