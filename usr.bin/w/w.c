@@ -191,7 +191,8 @@ main(argc, argv)
 		*nextp = ep;
 		nextp = &(ep->next);
 		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
-		stp = ttystat(ep->utmp.ut_line);
+		if (!(stp = ttystat(ep->utmp.ut_line)))
+			continue;
 		ep->tdev = stp->st_rdev;
 #ifdef CPU_CONSDEV
 		/*
@@ -410,7 +411,7 @@ ttystat(line)
 
 	(void)snprintf(ttybuf, sizeof(ttybuf), "%s/%s", _PATH_DEV, line);
 	if (stat(ttybuf, &sb))
-		err(1, "%s", ttybuf);
+		return (NULL);
 	return (&sb);
 }
 
