@@ -4737,7 +4737,6 @@ ENTRY(write_all_windows)
 	nop
 #endif /* KGDB */
 
-#ifdef DDB
 ENTRY(setjmp)
 	std	%sp, [%o0+0]	! stack pointer & return pc
 	st	%fp, [%o0+8]	! frame pointer
@@ -4778,7 +4777,6 @@ Llongjmpbotch:
 3: 
 	jmp	%o3 + 8		! success, return %g6
 	 mov	%g6, %o0
-#endif /* DDB */
 
 	.data
 #ifdef DDB
