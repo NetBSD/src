@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.39 2000/06/01 14:29:00 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.40 2000/10/10 12:37:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ USB_ATTACH(uhid)
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
-	desc = 0;
+	desc = NULL;
 	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_USBDEV);
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
@@ -308,7 +308,8 @@ USB_DETACH(uhid)
 	/* XXX not implemented yet */
 #endif
 
-	free(sc->sc_repdesc, M_USBDEV);
+	if (sc->sc_repdesc)
+		free(sc->sc_repdesc, M_USBDEV);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
