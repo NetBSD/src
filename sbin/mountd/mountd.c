@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.22 1995/06/02 21:04:24 mycroft Exp $	*/
+/*	$NetBSD: mountd.c,v 1.23 1995/06/07 17:16:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,15 +40,15 @@
 static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif not lint
+#endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.22 1995/06/02 21:04:24 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.23 1995/06/07 17:16:19 cgd Exp $";
 #endif
-#endif not lint
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -205,8 +205,9 @@ char exname[MAXPATHLEN];
 struct ucred def_anon = {
 	1,
 	(uid_t) -2,
-	1,
-	{ (gid_t) -2 }
+	(gid_t) -2,
+	0,
+	{ 0, },
 };
 int resvport_only = 1;
 int opt_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.5 1995/04/24 13:23:52 cgd Exp $	*/
+/*	$NetBSD: lfs.c,v 1.6 1995/06/07 17:16:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: lfs.c,v 1.5 1995/04/24 13:23:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: lfs.c,v 1.6 1995/06/07 17:16:39 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -629,10 +629,8 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 	dip->di_blocks = nblocks << lfsp->lfs_fsbtodb;
 
 	dip->di_size = (nblocks << lfsp->lfs_bshift);
-	dip->di_atime.ts_sec = dip->di_mtime.ts_sec =
-	    dip->di_ctime.ts_sec = lfsp->lfs_tstamp;
-	dip->di_atime.ts_nsec = dip->di_mtime.ts_nsec =
-	    dip->di_ctime.ts_nsec = 0;
+	dip->di_atime = dip->di_mtime = dip->di_ctime = lfsp->lfs_tstamp;
+	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
 
 #define	SEGERR \

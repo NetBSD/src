@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.4 1994/12/23 15:59:21 cgd Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.5 1995/06/07 17:14:41 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,8 +139,8 @@ print_mesg(tf, request, remote_machine)
 	char *remote_machine;
 {
 	struct timeval clock;
+	time_t clocktime;
 	struct timezone zone;
-	struct tm *localtime();
 	struct tm *localclock;
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
@@ -151,7 +151,8 @@ print_mesg(tf, request, remote_machine)
 	i = 0;
 	max_size = 0;
 	gettimeofday(&clock, &zone);
-	localclock = localtime( &clock.tv_sec );
+	clocktime = clock.tv_sec;
+	localclock = localtime(&clocktime);
 	(void)sprintf(line_buf[i], " ");
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
