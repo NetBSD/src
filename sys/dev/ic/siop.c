@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.69 2003/10/28 18:35:06 matt Exp $	*/
+/*	$NetBSD: siop.c,v 1.70 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.69 2003/10/28 18:35:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.70 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ siop_intr(v)
 		if (istat & ISTAT_DIP)
 			delay(10);
 		/*
-		 * Can't read sist0 & sist1 independantly, or we have to
+		 * Can't read sist0 & sist1 independently, or we have to
 		 * insert delay
 		 */
 		sist = bus_space_read_2(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -584,7 +584,7 @@ siop_intr(v)
 			    SIOP_DSP) - 8);
 			return 1;
 		}
-		/* Else it's an unhandled exeption (for now). */
+		/* Else it's an unhandled exception (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
 		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname, sist,
 		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -1116,7 +1116,7 @@ siop_handle_qtag_reject(siop_cmd)
 
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
- * target struct and report loosage to upper layer.
+ * target struct and report lossage to upper layer.
  * As the upper layer may requeue immediatly we have to first store
  * all active commands in a temporary queue.
  */
@@ -1140,7 +1140,7 @@ siop_handle_reset(sc)
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
 	/*
-	 * Process all commands: first commmands being executed
+	 * Process all commands: first commands being executed
 	 */
 	for (target = 0; target < sc->sc_c.sc_chan.chan_ntargets;
 	    target++) {
@@ -1859,7 +1859,7 @@ siop_add_dev(sc, target, lun)
 	ntargets =  sc->sc_c.sc_chan.chan_ntargets - 1 - sc->sc_ntargets;
 
 	/*
-	 * we need 8 bytes for the lun sw additionnal entry, and
+	 * we need 8 bytes for the lun sw additional entry, and
 	 * eventually sizeof(tag_switch) for the tag switch entry.
 	 * Keep enough free space for the free targets that could be
 	 * probed later.

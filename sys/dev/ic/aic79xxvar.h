@@ -478,7 +478,7 @@ struct hardware_scb {
  * each S/G element is expired, its datacnt field is checked to see
  * if the LAST_SEG flag is set.  If so, SG_LIST_NULL is set in the
  * residual sg ptr and the transfer is considered complete.  If the
- * sequencer determines that there is a residual in the tranfer, or
+ * sequencer determines that there is a residual in the transfer, or
  * there is non-zero status, it will set the SG_STATUS_VALID flag in
  * sgptr and DMA the scb back into host memory.  To summarize:
  *
@@ -529,7 +529,7 @@ struct hardware_scb {
  */
 
 /*
- * Definition of a scatter/gather element as transfered to the controller.
+ * Definition of a scatter/gather element as transferred to the controller.
  * The aic7xxx chips only support a 24bit length.  We use the top byte of
  * the length to store additional address bits and a flag to indicate
  * that a given segment terminates the transfer.  This gives us an
@@ -748,7 +748,7 @@ struct ahd_tmode_lstate;
 #endif
 
 /******************** Transfer Negotiation Datastructures *********************/
-#define AHD_TRANS_CUR		0x01	/* Modify current neogtiation status */
+#define AHD_TRANS_CUR		0x01	/* Modify current negotiation status */
 #define AHD_TRANS_ACTIVE	0x03	/* Assume this target is on the bus */
 #define AHD_TRANS_GOAL		0x04	/* Modify negontiation goal */
 #define AHD_TRANS_USER		0x08	/* Modify user negotiation settings */
@@ -1123,7 +1123,7 @@ struct ahd_softc {
 
 	/*
 	 * Device instance currently on the bus awaiting a continue TIO
-	 * for a command that was not given the disconnect priveledge.
+	 * for a command that was not given the disconnect priviledge.
 	 */
 	struct ahd_tmode_lstate  *pending_device;
 

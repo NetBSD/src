@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.10 2003/08/07 16:31:01 agc Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.11 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -568,7 +568,7 @@
 					/*	10	external PHY	*/
 					/*	11	reserved	*/
 
-/* Initialzation block (mode) */
+/* Initialization block (mode) */
 #define	LE_MODE_PROM	0x8000		/* promiscuous mode */
 /*			0x7f80		   reserved, must be zero */
 /* 0x4000 - 0x0080 are not available on LANCE 7990 */
@@ -577,7 +577,7 @@
 #define	LE_MODE_DLNKTST	0x1000		/* disable link status */
 #define	LE_MODE_DAPC	0x0800		/* disable automatic polarity correction */
 #define	LE_MODE_MENDECL	0x0400		/* MENDEC loopback mode */
-#define	LE_MODE_LRTTSEL	0x0200		/* lower receice threshold /
+#define	LE_MODE_LRTTSEL	0x0200		/* lower receive threshold /
 					   transmit mode selection */
 #define	LE_MODE_PSEL1	0x0100		/* port selection bit1 */
 #define	LE_MODE_PSEL0	0x0080		/* port selection bit0 */

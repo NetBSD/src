@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.103 2003/08/07 01:08:10 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.104 2003/11/02 11:07:45 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.103 2003/08/07 01:08:10 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.104 2003/11/02 11:07:45 wiz Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -2047,7 +2047,7 @@ isp_pdb_sync(struct ispsoftc *isp)
 		}
 
 		/*
-		 * Make sure we can get the approriate port information.
+		 * Make sure we can get the appropriate port information.
 		 */
 		if (isp_getpdb(isp, lp->loopid, &pdb) != 0) {
 			isp_prt(isp, ISP_LOGWARN, nopdb, lp->portid);
@@ -3412,7 +3412,7 @@ isp_control(struct ispsoftc *isp, ispctl_t ctl, void *arg)
 		}
 		/*
 		 * XXX: Look for command in the REQUEST QUEUE. That is,
-		 * XXX: It hasen't been picked up by firmware yet.
+		 * XXX: It hasn't been picked up by firmware yet.
 		 */
 		break;
 
@@ -3933,7 +3933,7 @@ again:
 	if (nlooked) {
 		WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, optr);
 		/*
-		 * While we're at it, read the requst queue out pointer.
+		 * While we're at it, read the request queue out pointer.
 		 */
 		isp->isp_reqodx = READ_REQUEST_QUEUE_OUT_POINTER(isp);
 		if (isp->isp_rscchiwater < ndone)
@@ -4140,7 +4140,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			rval = -1;
 #endif
 		/*
-		 * We've had problems with data corruption occuring on
+		 * We've had problems with data corruption occurring on
 		 * commands that complete (with no apparent error) after
 		 * we receive a LIP. This has been observed mostly on
 		 * Local Loop topologies. To be safe, let's just mark

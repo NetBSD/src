@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.54 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.54 2003/11/02 11:07:46 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -1534,7 +1534,7 @@ epic_mediachange(ifp)
 	if (miisc->mii_flags & MIIF_HAVEFIBER) {
 		/* XXX XXX assume it's a Level1 - should check */
 
-		/* We have to powerup fiber tranceivers */
+		/* We have to powerup fiber transceivers */
 		cfg = PHY_READ(miisc, MII_LXTPHY_CONFIG);
 		if (IFM_SUBTYPE(media) == IFM_100_FX) {
 #ifdef EPICMEDIADEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.76 2003/08/01 14:54:12 scw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.77 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.76 2003/08/01 14:54:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.77 2003/11/02 11:07:45 wiz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -674,7 +674,7 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
  *
  * 559's can have either 64-word or 256-word EEPROMs, the 558
  * datasheet only talks about 64-word EEPROMs, and the 557 datasheet
- * talks about the existance of 16 to 256 word EEPROMs.
+ * talks about the existence of 16 to 256 word EEPROMs.
  *
  * The only known sizes are 64 and 256, where the 256 version is used
  * by CardBus cards to store CIS information.

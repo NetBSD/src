@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.24 2003/04/09 00:29:11 thorpej Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.25 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -68,12 +68,12 @@ struct siop_common_xfer {
 	scr_table_t data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
 
-/* status can hold the SCSI_* status values, and 2 additionnal values: */
+/* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
 
 /*
- * This decribes a command handled by the SCSI controller
+ * This describes a command handled by the SCSI controller
  */
 struct siop_common_cmd {
 	struct siop_common_softc *siop_sc; /* points back to our adapter */
@@ -140,7 +140,7 @@ struct siop_common_softc {
 	int mode;			/* current SE/LVD/HVD mode */
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
-	bus_addr_t sc_raddr;		/* register adresses */
+	bus_addr_t sc_raddr;		/* register addresses */
 	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
 	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -163,7 +163,7 @@ struct siop_common_softc {
 #define SF_CHIP_DBLR	0x00000400 /* clock doubler or quadrupler */
 #define SF_CHIP_QUAD	0x00000800 /* clock quadrupler, with PPL */
 #define SF_CHIP_FIFO	0x00001000 /* large fifo */
-#define SF_CHIP_PF	0x00002000 /* Intructions prefetch */
+#define SF_CHIP_PF	0x00002000 /* Instructions prefetch */
 #define SF_CHIP_RAM	0x00004000 /* on-board RAM */
 #define SF_CHIP_LS	0x00008000 /* load/store instruction */
 #define SF_CHIP_10REGS	0x00010000 /* 10 scratch registers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.21 2003/10/16 10:57:35 dyoung Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.22 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -304,7 +304,7 @@ struct wi_ltv_keys {
 #define WI_RID_CARD_ID		0xFD0B /* card identification */
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
 #define WI_RID_CFI_SUP_RANGE	0xFD0D /* controller sup. compatibility */
-#define WI_RID_CHANNEL_LIST	0xFD10 /* allowd comm. frequencies. */
+#define WI_RID_CHANNEL_LIST	0xFD10 /* allowed comm. frequencies. */
 #define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */

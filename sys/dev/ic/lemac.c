@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.24 2003/10/01 08:07:39 itojun Exp $ */
+/* $NetBSD: lemac.c,v 1.25 2003/11/02 11:07:45 wiz Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.24 2003/10/01 08:07:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -157,7 +157,7 @@ lemac_rxd_intr(
     }
 
     /*
-     *  Error during initializion.  Mark card as disabled.
+     *  Error during initialization.  Mark card as disabled.
      */
     printf("%s: recovery failed -- board disabled\n", sc->sc_if.if_xname);
 }
@@ -417,7 +417,7 @@ lemac_read_macaddr(
     hwaddr[0] = bus_space_read_1(iot, ioh, ioreg);
     hwaddr[1] = bus_space_read_1(iot, ioh, ioreg);
 
-    /* hardware adddress can't be multicast */
+    /* hardware address can't be multicast */
     if (hwaddr[0] & 1)
 	return -1;
 

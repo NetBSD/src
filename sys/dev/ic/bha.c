@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.56 2003/10/31 14:26:06 reinoud Exp $	*/
+/*	$NetBSD: bha.c,v 1.57 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.56 2003/10/31 14:26:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.57 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -244,7 +244,7 @@ bha_intr(arg)
 #endif /* BHADEBUG */
 
 	/*
-	 * First acknowlege the interrupt, Then if it's not telling about
+	 * First acknowledge the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
 	sts = bus_space_read_1(iot, ioh, BHA_INTR_PORT);

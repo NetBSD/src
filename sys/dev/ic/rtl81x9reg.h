@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.7 2003/10/25 23:48:45 fvdl Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.8 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -484,7 +484,7 @@ struct rtk_desc {
 #define RTK_TDESC_STAT_LINKFAIL	0x00200000	/* link faulure */
 #define RTK_TDESC_STAT_OWINCOL	0x00400000	/* out-of-window collision */
 #define RTK_TDESC_STAT_TXERRSUM	0x00800000	/* transmit error summary */
-#define RTK_TDESC_STAT_UNDERRUN	0x02000000	/* TX underrun occured */
+#define RTK_TDESC_STAT_UNDERRUN	0x02000000	/* TX underrun occurred */
 #define RTK_TDESC_STAT_OWN	0x80000000
 
 /*

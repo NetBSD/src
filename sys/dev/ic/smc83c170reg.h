@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.7 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.8 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -346,7 +346,7 @@ struct epic_fraglist {
 #define	IDCHK_ID_MASK		0x0000ff00	/* board ID */
 #define	IDCHK_CKSUM_MASK	0x000000ff	/* checksum (should be 0xff) */
 
-#define	EPIC_MC0		0x50 /* MULTICAST ADDDRESS HASH TABLE */
+#define	EPIC_MC0		0x50 /* MULTICAST ADDRESS HASH TABLE */
 
 #define	EPIC_MC1		0x54
 

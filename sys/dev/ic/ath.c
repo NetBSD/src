@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.14 2003/11/02 01:55:40 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.15 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.14 2003/11/02 01:55:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.15 2003/11/02 11:07:45 wiz Exp $");
 #endif
 
 /*
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.14 2003/11/02 01:55:40 dyoung Exp $");
 #include <../contrib/sys/dev/ic/athhal_desc.h>
 #endif
 
-/* unalligned little endian access */     
+/* unaligned little endian access */     
 #define LE_READ_2(p)							\
 	((u_int16_t)							\
 	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8)))

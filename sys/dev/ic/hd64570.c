@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.24 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.25 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.24 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -654,10 +654,10 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	/* make sure that we won't wrap */
 	if ((desc_p & 0xffff0000) !=
 	    ((desc_p + sizeof(*desc) * scp->sp_ntxdesc) & 0xffff0000))
-		panic("sca: tx descriptors cross architecural boundry");
+		panic("sca: tx descriptors cross architecural boundary");
 	if ((buf_p & 0xff000000) !=
 	    ((buf_p + SCA_BSIZE * scp->sp_ntxdesc) & 0xff000000))
-		panic("sca: tx buffers cross architecural boundry");
+		panic("sca: tx buffers cross architecural boundary");
 #endif
 
 	for (i = 0 ; i < scp->sp_ntxdesc ; i++) {
@@ -714,10 +714,10 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	/* make sure that we won't wrap */
 	if ((desc_p & 0xffff0000) !=
 	    ((desc_p + sizeof(*desc) * scp->sp_nrxdesc) & 0xffff0000))
-		panic("sca: rx descriptors cross architecural boundry");
+		panic("sca: rx descriptors cross architecural boundary");
 	if ((buf_p & 0xff000000) !=
 	    ((buf_p + SCA_BSIZE * scp->sp_nrxdesc) & 0xff000000))
-		panic("sca: rx buffers cross architecural boundry");
+		panic("sca: rx buffers cross architecural boundary");
 #endif
 
 	for (i = 0 ; i < scp->sp_nrxdesc; i++) {

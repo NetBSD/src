@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.109 2003/11/01 17:00:49 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.110 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.109 2003/11/01 17:00:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.110 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ static int ecb_pool_initialized = 0;
 static struct pool ecb_pool;
 
 /*
- * Names for the NCR53c9x variants, correspnding to the variant tags
+ * Names for the NCR53c9x variants, corresponding to the variant tags
  * in ncr53c9xvar.h.
  */
 static const char *ncr53c9x_variant_names[] = {
@@ -1042,7 +1042,7 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 /*
  * Schedule a scsi operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from ncr53c9x_scsipi_request and
- * ncr53c9x_done.  This may save us an unecessary interrupt just to get
+ * ncr53c9x_done.  This may save us an unnecessary interrupt just to get
  * things going.  Should only be called when state == NCR_IDLE and at bio pl.
  */
 void

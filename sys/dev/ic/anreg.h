@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.8 2001/06/29 11:24:42 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.9 2003/11/02 11:07:45 wiz Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -160,7 +160,7 @@
 #define AN_EV_CMD		0x0010	/* command completed */
 #define AN_EV_ALLOC		0x0008	/* async alloc/reclaim completed */
 #define AN_EV_TX_EXC		0x0004	/* async xmit completed with failure */
-#define AN_EV_TX		0x0002	/* async xmit completed succesfully */
+#define AN_EV_TX		0x0002	/* async xmit completed successfully */
 #define AN_EV_RX		0x0001	/* async rx completed */
 
 /* Host software registers */

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.42 2003/10/21 00:25:59 fvdl Exp $	 */
+/* $NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.42 2003/10/21 00:25:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -881,7 +881,7 @@ adw_timeout(void *arg)
 #endif
 		/*
 		 * waiting for multishot callout_reset() let's restart it
-		 * by hand so the next time a timeout event will occour
+		 * by hand so the next time a timeout event will occur
 		 * we will reset the bus.
 		 */
 		callout_reset(&xs->xs_callout,
@@ -1069,7 +1069,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 
 	/*
 	 * 'done_status' contains the command's ending status.
-	 * 'host_status' conatins the host adapter status.
+	 * 'host_status' contains the host adapter status.
 	 * 'scsi_status' contains the scsi peripheral status.
 	 */
 	if ((scsiq->host_status == QHSTA_NO_ERROR) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.13 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.13 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -220,7 +220,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 *
 		 * Zero any sense not transferred by the
 		 * device.  The SCSI spec mandates that any
-		 * untransfered data should be assumed to be
+		 * untransferred data should be assumed to be
 		 * zero.  Complete the 'bounce' of sense information
 		 * through buffers accessible via bus-space by
 		 * copying it into the clients csio.
@@ -800,7 +800,7 @@ bus_reset:
 		 * The target/initiator that is holding up the bus may not
 		 * be the same as the one that triggered this timeout
 		 * (different commands have different timeout lengths).
-		 * If the bus is idle and we are actiing as the initiator
+		 * If the bus is idle and we are acting as the initiator
 		 * for this request, queue a BDR message to the timed out
 		 * target.  Otherwise, if the timed out transaction is
 		 * active:

@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.42 2003/10/08 17:38:31 fvdl Exp $
+ * $Id: aic7xxxvar.h,v 1.43 2003/11/02 11:07:44 wiz Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -462,7 +462,7 @@ typedef enum {
 
 /*
  * The driver keeps up to MAX_SCB scb structures per card in memory.  The SCB
- * consists of a "hardware SCB" mirroring the fields availible on the card
+ * consists of a "hardware SCB" mirroring the fields available on the card
  * and additional information the kernel stores for each transaction.
  *
  * To minimize space utilization, a portion of the hardware scb stores
@@ -477,7 +477,7 @@ typedef enum {
  */
 
 /*
- * Status information embedded in the shared poriton of
+ * Status information embedded in the shared portion of
  * an SCB after passing the cdb to the target.  The kernel
  * driver will only read this data for transactions that
  * complete abnormally (non-zero status byte).
@@ -531,7 +531,7 @@ struct hardware_scb {
  * each S/G element is expired, its datacnt field is checked to see
  * if the LAST_SEG flag is set.  If so, SG_LIST_NULL is set in the
  * residual sg ptr and the transfer is considered complete.  If the
- * sequencer determines that there is a residual in the tranfer, it
+ * sequencer determines that there is a residual in the transfer, it
  * will set the SG_RESID_VALID flag in sgptr and DMA the scb back into
  * host memory.  To summarize:
  *
@@ -593,7 +593,7 @@ struct hardware_scb {
  */
 
 /*
- * Definition of a scatter/gather element as transfered to the controller.
+ * Definition of a scatter/gather element as transferred to the controller.
  * The aic7xxx chips only support a 24bit length.  We use the top byte of
  * the length to store additional address bits and a flag to indicate
  * that a given segment terminates the transfer.  This gives us an
@@ -793,7 +793,7 @@ struct ahc_tmode_lstate;
 #endif
 
 /******************** Transfer Negotiation Datastructures *********************/
-#define AHC_TRANS_CUR		0x01	/* Modify current neogtiation status */
+#define AHC_TRANS_CUR		0x01	/* Modify current negotiation status */
 #define AHC_TRANS_ACTIVE	0x03	/* Assume this target is on the bus */
 #define AHC_TRANS_GOAL		0x04	/* Modify negotiation goal */
 #define AHC_TRANS_USER		0x08	/* Modify user negotiation settings */
@@ -1087,7 +1087,7 @@ struct ahc_softc {
 
 	/*
 	 * Device instance currently on the bus awaiting a continue TIO
-	 * for a command that was not given the disconnect priveledge.
+	 * for a command that was not given the disconnect priviledge.
 	 */
 	struct ahc_tmode_lstate  *pending_device;
 

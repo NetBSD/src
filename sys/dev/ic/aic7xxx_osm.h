@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.6 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -252,7 +252,7 @@ static __inline void ahc_lockinit(struct ahc_softc *);
 static __inline void ahc_lock(struct ahc_softc *, unsigned long *);
 static __inline void ahc_unlock(struct ahc_softc *, unsigned long *);
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void ahc_done_lockinit(struct ahc_softc *);
 static __inline void ahc_done_lock(struct ahc_softc *, unsigned long *);
 static __inline void ahc_done_unlock(struct ahc_softc *, unsigned long *);
@@ -279,7 +279,7 @@ ahc_unlock(struct ahc_softc *ahc, unsigned long *flags)
 	splx(*flags);
 }
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void
 ahc_done_lockinit(struct ahc_softc *ahc)
 {

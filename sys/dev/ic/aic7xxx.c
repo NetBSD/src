@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -120,7 +120,7 @@ static const u_int num_phases = NUM_ELEMENTS(ahc_phase_table) - 1;
 
 /*
  * Valid SCSIRATE values.  (p. 3-17)
- * Provides a mapping of tranfer periods in ns to the proper value to
+ * Provides a mapping of transfer periods in ns to the proper value to
  * stick in the scsixfer reg.
  */
 static struct ahc_syncrate ahc_syncrates[] =
@@ -410,7 +410,7 @@ ahc_handle_brkadrint(struct ahc_softc *ahc)
 
 	ahc_dump_card_state(ahc);
 
-	/* Tell everyone that this HBA is no longer availible */
+	/* Tell everyone that this HBA is no longer available */
 	ahc_abort_scbs(ahc, CAM_TARGET_WILDCARD, ALL_CHANNELS,
 		       CAM_LUN_WILDCARD, SCB_LIST_NULL, ROLE_UNKNOWN,
 		       CAM_NO_HBA);
@@ -548,7 +548,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			 * We can't allow the target to disconnect.
 			 * This will be an untagged transaction and
 			 * having the target disconnect will make this
-			 * transaction indestinguishable from outstanding
+			 * transaction indistinguishable from outstanding
 			 * tagged transactions.
 			 */
 			hscb->control = 0;
@@ -680,7 +680,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * that requires host assistance for completion.
 		 * While handling the message phase(s), we will be
 		 * notified by the sequencer after each byte is
-		 * transfered so we can track bus phase changes.
+		 * transferred so we can track bus phase changes.
 		 *
 		 * If this is the first time we've seen a HOST_MSG_LOOP
 		 * interrupt, initialize the state of the host message
@@ -1365,7 +1365,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			}
 			/*
 			 * Renegotiate with this device at the
-			 * next oportunity just in case this busfree
+			 * next opportunity just in case this busfree
 			 * is due to a negotiation mismatch with the
 			 * device.
 			 */
@@ -1844,7 +1844,7 @@ ahc_validate_width(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo,
 
 /*
  * Update the bitmask of targets for which the controller should
- * negotiate with at the next convenient oportunity.  This currently
+ * negotiate with at the next convenient opportunity.  This currently
  * means the next time we send the initial identify messages for
  * a new transaction.
  */
@@ -2267,7 +2267,7 @@ ahc_assert_atn(struct ahc_softc *ahc)
 /*
  * When an initiator transaction with the MK_MESSAGE flag either reconnects
  * or enters the initial message out phase, we are interrupted.  Fill our
- * outgoing message buffer with the appropriate message and beging handing
+ * outgoing message buffer with the appropriate message and begin handing
  * the message phase(s) manually.
  */
 static void
@@ -3005,9 +3005,9 @@ ahc_parse_msg(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 	targ_scsirate = tinfo->scsirate;
 
 	/*
-	 * Parse as much of the message as is availible,
+	 * Parse as much of the message as is available,
 	 * rejecting it if we don't support it.  When
-	 * the entire message is availible and has been
+	 * the entire message is available and has been
 	 * handled, return MSGLOOP_MSGCOMPLETE, indicating
 	 * that we have parsed an entire message.
 	 *
@@ -3538,7 +3538,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 
 		/*
 		 * Requeue all tagged commands for this target
-		 * currently in our posession so they can be
+		 * currently in our possession so they can be
 		 * converted to untagged commands.
 		 */
 		ahc_search_qinfifo(ahc, SCB_GET_TARGET(ahc, scb),
@@ -4866,7 +4866,7 @@ ahc_init(struct ahc_softc *ahc)
 		/*
 		 * Wait for up to 500ms for our transceivers
 		 * to settle.  If the adapter does not have
-		 * a cable attached, the tranceivers may
+		 * a cable attached, the transceivers may
 		 * never settle, so don't complain if we
 		 * fail here.
 		 */

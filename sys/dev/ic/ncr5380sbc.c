@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.49 2003/05/03 18:11:22 wiz Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.50 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49 2003/05/03 18:11:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.50 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -1093,7 +1093,7 @@ ncr5380_reselect(sc)
 	 * then raise SEL, and finally drop BSY.  Only then is the
 	 * data bus required to have valid selection ID bits set.
 	 * Wait for: SEL==1, BSY==0 before reading the data bus.
-	 * While this theoretically can happen, we are aparently
+	 * While this theoretically can happen, we are apparently
 	 * never fast enough to get here before BSY drops.
 	 */
 	timo = ncr5380_wait_nrq_timo;

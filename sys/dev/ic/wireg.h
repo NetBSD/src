@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.48 2003/10/25 13:45:07 simonb Exp $	*/
+/*	$NetBSD: wireg.h,v 1.49 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -192,7 +192,7 @@
 #define WI_EV_CMD		0x0010	/* command completed */
 #define WI_EV_ALLOC		0x0008	/* async alloc/reclaim completed */
 #define WI_EV_TX_EXC		0x0004	/* async xmit completed with failure */
-#define WI_EV_TX		0x0002	/* async xmit completed succesfully */
+#define WI_EV_TX		0x0002	/* async xmit completed successfully */
 #define WI_EV_RX		0x0001	/* async rx completed */
 
 /* Host software registers */
@@ -397,7 +397,7 @@ struct wi_pcf {
  * Connection control characteristics. (0xFC00)
  * 0 == IBSS (802.11 compliant mode) (Only PRISM2)
  * 1 == Basic Service Set (BSS)
- * 2 == Wireless Distribudion System (WDS)
+ * 2 == Wireless Distribution System (WDS)
  * 3 == Pseudo IBSS 
  *	(Only PRISM2; not 802.11 compliant mode, testing use only)
  * 6 == HOST AP (Only PRISM2)

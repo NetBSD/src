@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.21 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: tropic.c,v 1.22 2003/11/02 11:07:46 wiz Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.21 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.22 2003/11/02 11:07:46 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1445,7 +1445,7 @@ struct tr_softc *sc;
 
 
 /*
- * copy out the packet byte-by-byte in resonably optimal fashion
+ * copy out the packet byte-by-byte in reasonably optimal fashion
  */
 int
 tr_mbcopy(sc, dhb, m0)

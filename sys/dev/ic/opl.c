@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.18 2003/02/09 09:28:21 itohy Exp $	*/
+/*	$NetBSD: opl.c,v 1.19 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.18 2003/02/09 09:28:21 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.19 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ opl_find(sc)
 	u_int8_t status1, status2;
 
 	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)sc->ioh));
-	sc->model = OPL_2;	/* worst case assumtion */
+	sc->model = OPL_2;	/* worst case assumption */
 
 	/* Reset timers 1 and 2 */
 	opl_command(sc, OPL_L, OPL_TIMER_CONTROL,

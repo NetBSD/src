@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.40 2003/10/25 18:35:43 christos Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.41 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.40 2003/10/25 18:35:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.41 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -363,7 +363,7 @@ ne2000_detect(nict, nich, asict, asich)
 	delay(5000);
 
 	/*
-	 * Generic probe routine for testing for the existance of a DS8390.
+	 * Generic probe routine for testing for the existence of a DS8390.
 	 * Must be performed  after the NIC has just been reset.  This
 	 * works by looking at certain register values that are guaranteed
 	 * to be initialized a certain way after power-up or reset.

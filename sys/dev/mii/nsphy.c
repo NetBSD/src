@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.40 2003/11/02 01:42:28 briggs Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.41 2003/11/02 11:10:36 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.40 2003/11/02 01:42:28 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.41 2003/11/02 11:10:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		reg |= PCR_LED4MODE;
 
 		/*
-		 * Make sure Carrier Intgrity Monitor function is
+		 * Make sure Carrier Integrity Monitor function is
 		 * disabled (normal for Node operation, but sometimes
 		 * it's not set?!)
 		 */

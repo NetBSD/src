@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.7 2003/08/07 16:30:58 agc Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.8 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ struct leinit {
 #define	LE_T1_ERR	0x40		/* error summary */
 #define	LE_T1_MORE	0x10		/* multiple collisions */
 #define	LE_T1_ONE	0x08		/* single collision */
-#define	LE_T1_DEF	0x04		/* defferred transmit */
+#define	LE_T1_DEF	0x04		/* deferred transmit */
 #define	LE_T1_STP	0x02		/* start of packet */
 #define	LE_T1_ENP	0x01		/* end of packet */
 
