@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.62 2002/08/26 21:09:03 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.63 2002/10/05 13:29:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 
 /*
  * The current ELF ABI specification is available at:
- *	http://www.sco.com/developer/gabi/
+ *	http://www.caldera.com/developers/gabi/
  *
  * Current header definitions are in:
- *	http://www.sco.com/developer/gabi/latest/ch4.eheader.html
+ *	http://www.caldera.com/developers/gabi/latest/ch4.eheader.html
  */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
