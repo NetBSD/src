@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1.1.1 1995/02/14 22:56:36 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.2 1995/02/24 05:07:00 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -58,9 +58,7 @@ struct fs		*fs;
 int			maxblocknum = MAXBLOCKNUM;
 daddr_t			blocknum[MAXBLOCKNUM] = { 0 };
 
-main(argc, argv)
-	int argc;
-	char **argv;
+main()
 {
 	char *dummy;
 	int n;
@@ -124,4 +122,3 @@ copyboot(f, addr)
 	return 0;
 }
 
-twiddle() {}
