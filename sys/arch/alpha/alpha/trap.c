@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.72 2001/06/02 18:09:08 chs Exp $ */
+/* $NetBSD: trap.c,v 1.73 2001/06/26 17:29:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2001/06/02 18:09:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2001/06/26 17:29:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,6 +361,8 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (user)
 				KERNEL_PROC_LOCK(p);
 			else {
+				struct cpu_info *ci = curcpu();
+
 				if (p == NULL) {
 					/*
 					 * If there is no current process,
@@ -386,6 +388,13 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 					p->p_addr->u_pcb.pcb_onfault = 0;
 					goto out;
 				}
+
+				/*
+				 * If we're in interrupt context at this
+				 * point, this is an error.
+				 */
+				if (ci->ci_intrdepth != 0)
+					goto dopanic;
 
 				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			}
