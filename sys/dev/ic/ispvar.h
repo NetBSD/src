@@ -1,5 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.10 1998/07/18 21:06:20 mjacob Exp $ */
-/* $Id: ispvar.h,v 1.10 1998/07/18 21:06:20 mjacob Exp $ */
+/* $Id: ispvar.h,v 1.11 1998/09/08 07:27:04 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -48,7 +47,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	1
+#define	ISP_CORE_VERSION_MINOR	2
 
 /*
  * Vector for MD code to provide specific services.
@@ -77,29 +76,29 @@ struct ispmdvec {
 };
 
 #define	MAX_TARGETS	16
-#define	MAX_LUNS	8
 #define	MAX_FC_TARG	126
 
-#define	RQUEST_QUEUE_LEN	MAXISPREQUEST
-#define	RESULT_QUEUE_LEN	(MAXISPREQUEST/4)
-
-#define	QENTRY_LEN		64
-
-#define	ISP_QUEUE_ENTRY(q, idx)	((q) + ((idx) * QENTRY_LEN))
-#define	ISP_QUEUE_SIZE(n)	((n) * QENTRY_LEN)
+/* queue length must be a power of two */
+#define	QENTRY_LEN			64
+#define	RQUEST_QUEUE_LEN		MAXISPREQUEST
+#define	RESULT_QUEUE_LEN		(MAXISPREQUEST/4)
+#define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
+#define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
+#define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
+#define	ISP_QDEPTH(in, out, qlen)	((in - out) & ((qlen) - 1))
 
 /*
  * SCSI (as opposed to FC-PH) Specific Host Adapter Parameters
  */
 
 typedef struct {
-        u_int		isp_adapter_enabled	: 1,
-        		isp_req_ack_active_neg	: 1,	
+        u_int		isp_req_ack_active_neg	: 1,	
 	        	isp_data_line_active_neg: 1,
 			isp_cmd_dma_burst_enable: 1,
 			isp_data_dma_burst_enabl: 1,
 			isp_fifo_threshold	: 2,
 			isp_diffmode		: 1,
+			isp_fast_mttr		: 1,
 			isp_initiator_id	: 4,
         		isp_async_data_setup	: 4;
         u_int16_t	isp_selection_timeout;
@@ -110,26 +109,32 @@ typedef struct {
         u_int8_t	isp_retry_count;
         u_int8_t	isp_retry_delay;
 	struct {
-		u_int		dev_flags	: 8,	/* Device Flags - see below */
-				exc_throttle	: 8,
-				sync_period	: 8,
-				sync_offset	: 4,
-				dev_enable	: 1;
+		u_int	dev_update	:	1,
+			dev_enable	:	1,
+			exc_throttle	:	7,
+			sync_offset	:	4,
+			sync_period	:	8;
+		u_int16_t dev_flags;		/* persistent device flags */
+		u_int16_t cur_dflags;		/* current device flags */
 	} isp_devparam[MAX_TARGETS];
 } sdparam;	/* scsi device parameters */
 
 /*
  * Device Flags
  */
-#define	DPARM_DISC	0x80
-#define	DPARM_PARITY	0x40
-#define	DPARM_WIDE	0x20
-#define	DPARM_SYNC	0x10
-#define	DPARM_TQING	0x08
-#define	DPARM_ARQ	0x04
-#define	DPARM_QFRZ	0x02
-#define	DPARM_RENEG	0x01
-#define	DPARM_DEFAULT	(0xff & ~DPARM_QFRZ)
+#define	DPARM_DISC	0x8000
+#define	DPARM_PARITY	0x4000
+#define	DPARM_WIDE	0x2000
+#define	DPARM_SYNC	0x1000
+#define	DPARM_TQING	0x0800
+#define	DPARM_ARQ	0x0400
+#define	DPARM_QFRZ	0x0200
+#define	DPARM_RENEG	0x0100
+#define	DPARM_NARROW	0x0080	/* Possibly only available with >= 7.55 fw */
+#define	DPARM_ASYNC	0x0040	/* Possibly only available with >= 7.55 fw */
+#define	DPARM_DEFAULT	(0xFFFF & ~DPARM_QFRZ)
+#define	DPARM_SAFE_DFLT	(DPARM_DEFAULT & ~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING))
+
 
 #define ISP_20M_SYNCPARMS	0x080c
 #define ISP_10M_SYNCPARMS	0x0c19
@@ -141,17 +146,16 @@ typedef struct {
  * Fibre Channel Specifics
  */
 typedef struct {
-#if	0
-	/*
-	 * Not gathered yet.
-	 */
 	u_int64_t		isp_wwn;	/* WWN of adapter */
-#endif
-	u_int8_t		isp_loopid;	/* FCAL of this adapter inst */
-        u_int8_t		isp_retry_count;
+	u_int8_t		isp_loopid;	/* hard loop id */
+	u_int8_t		isp_alpa;	/* ALPA */
+	u_int8_t		isp_execthrottle;
         u_int8_t		isp_retry_delay;
+        u_int8_t		isp_retry_count;
 	u_int8_t		isp_fwstate;	/* ISP F/W state */
-
+	u_int16_t		isp_maxalloc;
+	u_int16_t		isp_maxfrmlen;
+	u_int16_t		isp_fwoptions;
 	/*
 	 * Scratch DMA mapped in area to fetch Port Database stuff, etc.
 	 */
@@ -206,27 +210,37 @@ struct ispsoftc {
 	 * State, debugging, etc..
 	 */
 
-	u_int32_t	isp_state	: 3,
-			isp_dogactive	: 1,
-			isp_dblev	: 4,
+	u_int				: 8,
 			isp_confopts	: 8,
-			isp_fwrev	: 16;
+					: 2,
+			isp_dblev	: 3,
+			isp_gotdparms	: 1,
+			isp_dogactive	: 1,
+			isp_bustype	: 1,	/* BUS Implementation */
+			isp_type	: 8;	/* HBA Type and Revision */
 
-	/*
-	 * Host Adapter Type and Parameters.
-	 * Some parameters nominally stored in NVRAM on card.
-	 */
+	u_int16_t		isp_fwrev;	/* Running F/W revision */
+	u_int16_t		isp_romfw_rev;	/* 'ROM' F/W revision */
 	void * 			isp_param;
-	u_int8_t		isp_type;
-	int16_t			isp_nactive;
 
 	/*
-	 * Result and Request Queues.
+	 * Volatile state
 	 */
+
+	volatile u_int
+				:	19,
+		isp_state	:	3,
+		isp_sendmarker	:	1,	/* send a marker entry */
+		isp_update	:	1,	/* update paramters */
+		isp_nactive	:	9;	/* how many commands active */
+
+	/*
+	 * Result and Request Queue indices.
+	 */
+	volatile u_int8_t	isp_reqodx;	/* index of last ISP pickup */
 	volatile u_int8_t	isp_reqidx;	/* index of next request */
 	volatile u_int8_t	isp_residx;	/* index of next result */
-	volatile u_int8_t	isp_sendmarker;
-	volatile u_int8_t	isp_seqno;
+	volatile u_int8_t	isp_seqno;	/* rolling sequence # */
 
 	/*
 	 * Sheer laziness, but it gets us around the problem
@@ -240,7 +254,7 @@ struct ispsoftc {
 	volatile ISP_SCSI_XFER_T *isp_xflist[RQUEST_QUEUE_LEN];
 
 	/*
-	 * request/result queues
+	 * request/result queues and dma handles for them.
 	 */
 	volatile caddr_t	isp_rquest;
 	volatile caddr_t	isp_result;
@@ -261,15 +275,24 @@ struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 
+#define	ISP_FW_REV(maj, min)	((maj) << 10| (min))
+
 /*
- * Adapter Types
+ * Bus (implementation) types
+ */
+#define	ISP_BT_PCI		0	/* PCI Implementations */
+#define	ISP_BT_SBUS		1	/* SBus Implementations */
+
+/*
+ * Chip Types
  */
 #define	ISP_HA_SCSI		0xf
-#define	ISP_HA_SCSI_UNKNOWN	0x0
-#define	ISP_HA_SCSI_1020	0x1
-#define	ISP_HA_SCSI_1020A	0x2
-#define	ISP_HA_SCSI_1040A	0x3
-#define	ISP_HA_SCSI_1040B	0x4
+#define	ISP_HA_SCSI_UNKNOWN	0x1
+#define	ISP_HA_SCSI_1020	0x2
+#define	ISP_HA_SCSI_1020A	0x3
+#define	ISP_HA_SCSI_1040	0x4
+#define	ISP_HA_SCSI_1040A	0x5
+#define	ISP_HA_SCSI_1040B	0x6
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 
@@ -344,7 +367,7 @@ void isp_watch __P((void *));
 /*
  * Command Entry Point
  */
-extern int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
+int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
 
 /*
  * Platform Dependent to Internal Control Point
@@ -366,6 +389,7 @@ int isp_control __P((struct ispsoftc *, ispctl_t, void *));
 /*
  * lost command routine (XXXX IN TRANSITION XXXX)
  */
-extern void isp_lostcmd __P((struct ispsoftc *, ISP_SCSI_XFER_T *));
+void isp_lostcmd __P((struct ispsoftc *, ISP_SCSI_XFER_T *));
+
 
 #endif	/* _ISPVAR_H */
