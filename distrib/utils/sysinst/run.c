@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.51 2003/08/09 19:26:38 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.52 2003/09/27 10:38:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,7 @@
 #include <termios.h>
 #include <dirent.h>
 #include <util.h>
+#include <signal.h>
 #include <err.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -336,11 +337,6 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		return(1);
 	}
 
-#if 0
-	rtt = tt;
-	rtt.c_lflag |= (ICANON|ECHO); 
-	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
-#endif
 	rtt = tt;
 
 	/* ignore tty signals until we're done with subprocess setup */
@@ -365,6 +361,11 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		rtt = tt;
 		rtt.c_lflag |= (ICANON|ECHO); 
 		(void)tcsetattr(slave, TCSANOW, &rtt);
+#if 0	/* This doesn't work (yet) */
+		i = 1;
+		/* steal console output */
+		ioctl(slave, TIOCCONS, &i);
+#endif
 		login_tty(slave);
 		if (logging) {
 			fprintf(logfp, "executing:");
@@ -453,22 +454,11 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 				}
 				/* posix curses is braindead wrt \r\n so... */
 				ncp = cp;
-				do  {
-					ncp = strchr(ncp, '\r');
-					if (ncp != NULL) {
-						switch (*++ncp) {
-						case 0:
-							break;
-						case '\n':
-							ncp[-1] = 0;
-							break;
-						default:
-							continue;
-						}
-					}
-					waddstr(actionwin, cp);
-					cp = ncp;
-				} while (cp != NULL);
+				for (; (ncp = strstr(ncp, "\r\n")); ncp += 2) {
+					ncp[0] = '\n';
+					ncp[1] = '\r';
+				}
+				waddstr(actionwin, cp);
 				wrefresh(actionwin);
 			}
 		}
@@ -512,7 +502,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	WINDOW *actionwin, *statuswin, *boxwin;
 	char *scmd;
 	char **args;
-	const char *errstr;
+	const char *errstr = NULL;
 
 	va_start(ap, cmd);
 	vasprintf(&scmd, cmd, ap);
@@ -531,11 +521,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	if (win.ws_col == 0)
 		win.ws_col = 80;
 
-	if ((flags & RUN_SYSTEM) != 0) {
-		if ((flags & RUN_CHROOT) != 0)
-			chroot(target_prefix());
-		ret = system(scmd);
-	} else if ((flags & RUN_DISPLAY) != 0) {
+	if ((flags & RUN_DISPLAY) != 0) {
 		wclear(stdscr);
 		clearok(stdscr, 1);
 		touchwin(stdscr);
@@ -602,7 +588,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 
 		wmove(statuswin, 0, 13);
 		wstandout(statuswin);
-		if (ret) {
+		if (ret && errstr != NULL) {
 			waddstr(statuswin, "Failed: ");
 			waddstr(statuswin, errstr);
 		} else
