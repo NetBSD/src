@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.17 2004/10/30 15:20:36 dsl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.18 2004/12/01 23:13:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.17 2004/10/30 15:20:36 dsl Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.18 2004/12/01 23:13:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ __RCSID("$NetBSD: bpf.c,v 1.17 2004/10/30 15:20:36 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <paths.h>
 #include <unistd.h>
 #include <ifaddrs.h>
 #include "defs.h"
@@ -132,18 +133,10 @@ int
 BpfOpen()
 {
 	struct ifreq ifr;
-	char bpfdev[32];
-	int n = 0;
 	u_int bufsize = 32768;
+	int n;
 
-	/*
-	 *  Open the first available BPF device.
-	 */
-	do {
-		(void) snprintf(bpfdev, sizeof(bpfdev), _PATH_BPF, n++);
-		BpfFd = open(bpfdev, O_RDWR);
-	} while (BpfFd < 0 && (errno == EBUSY || errno == EPERM));
-
+	BpfFd = open(_PATH_BPF, O_RDWR);
 	if (BpfFd < 0) {
 		syslog(LOG_ERR, "bpf: no available devices: %m");
 		Exit(0);
