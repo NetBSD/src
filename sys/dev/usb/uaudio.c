@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.83 2004/10/22 15:25:56 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.84 2004/10/22 15:34:04 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.83 2004/10/22 15:25:56 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.84 2004/10/22 15:34:04 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,10 +601,8 @@ void
 uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
 	int res;
-	size_t len = sizeof(*mc) * (sc->sc_nctls + 1);
-	struct mixerctl *nmc = sc->sc_nctls == 0 ?
-	    malloc(len, M_USBDEV, M_NOWAIT) :
-	    realloc(sc->sc_ctls, len, M_USBDEV, M_NOWAIT);
+	size_t len;
+	struct mixerctl *nmc;
 
 	if (mc->class < UAC_NCLASSES) {
 		DPRINTF(("%s: adding %s.%s\n",
@@ -612,9 +610,16 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	} else {
 		DPRINTF(("%s: adding %s\n", __func__, mc->ctlname));
 	}
+	len = sizeof(*mc) * (sc->sc_nctls + 1);
+	nmc = malloc(len, M_USBDEV, M_NOWAIT);
 	if (nmc == NULL) {
 		printf("uaudio_mixer_add_ctl: no memory\n");
 		return;
+	}
+	/* Copy old data, if there was any */
+	if (sc->sc_nctls != 0) {
+		memcpy(nmc, sc->sc_ctls, sizeof(*mc) * (sc->sc_nctls));
+		free(sc->sc_ctls, M_USBDEV);
 	}
 	sc->sc_ctls = nmc;
 
@@ -1480,16 +1485,20 @@ uaudio_identify(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 void
 uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 {
-	size_t len = sizeof(*ai) * (sc->sc_nalts + 1);
-	struct as_info *nai = (sc->sc_nalts == 0) ?
-	    malloc(len, M_USBDEV, M_NOWAIT) :
-	    realloc(sc->sc_alts, len, M_USBDEV, M_NOWAIT);
+	size_t len;
+	struct as_info *nai;
 
+	len = sizeof(*ai) * (sc->sc_nalts + 1);
+	nai = malloc(len, M_USBDEV, M_NOWAIT);
 	if (nai == NULL) {
 		printf("uaudio_add_alt: no memory\n");
 		return;
 	}
-
+	/* Copy old data, if there was any */
+	if (sc->sc_nalts != 0) {
+		memcpy(nai, sc->sc_alts, sizeof(*ai) * (sc->sc_nalts));
+		free(sc->sc_alts, M_USBDEV);
+	}
 	sc->sc_alts = nai;
 	DPRINTFN(2,("uaudio_add_alt: adding alt=%d, enc=%d\n",
 		    ai->alt, ai->encoding));
