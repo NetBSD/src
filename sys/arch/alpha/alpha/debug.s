@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.1 1999/04/20 21:09:49 thorpej Exp $ */
+/* $NetBSD: debug.s,v 1.2 1999/05/31 06:41:39 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ ABS(debug_stack_top, debug_stack_bottom + NBPG)
 NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	br	pv, Ldbg1
 Ldbg1:	LDGP(pv)
+	lda	t0, FRAME_SIZE*8(a4)	/* what would sp have been? */
+	stq	t0, FRAME_SP*8(a4)	/* belatedly save sp for ddb view */
 	lda	sp, -32(sp)		/* set up stack frame */
 	stq	ra, (32-8)(sp)		/* save ra */
 	stq	s0, (32-16)(sp)		/* save s0 */
