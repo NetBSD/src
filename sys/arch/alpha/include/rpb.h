@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.18 1998/03/02 08:04:05 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.19 1998/03/20 21:48:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -66,12 +66,15 @@ struct rpb {
 #define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
 #define	ST_EB66			19		/* EB66 (PCI/ISA?) */
 #define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
+#define	ST_ALPHABOOK1		21		/* Alphabook (?) */
 #define	ST_DEC_4100		22		/* "Rawhide" (?) */
 #define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
 #define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
 #define	ST_DEC_1000A		27		/* "Noritake" (?) */
 #define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
+#define	ST_DEC_EV56_PBP		32		/* "Takara" (?) */
+#define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME?) */
 
 	u_int64_t	rpb_type;		/*  50: */
 
