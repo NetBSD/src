@@ -1,4 +1,4 @@
-# $NetBSD: shlib_version,v 1.40 1997/09/04 06:38:19 mrg Exp $
+# $NetBSD: shlib_version,v 1.41 1997/10/06 01:15:00 enami Exp $
 # Note: the next time $major is changed, look at:
 #	gen/setproctitle.c (XXX __ps_strings)
 #	arch/*/sys/{Ov,}fork.S (no longer needed)
@@ -8,4 +8,4 @@
 #	depricate swapon() [move to libcompat?]
 #
 major=12
-minor=17
+minor=18
