@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.7 2002/10/26 11:40:56 lukem Exp $
+#	$NetBSD: BRANCHES,v 1.8 2002/12/18 05:03:34 gmcgarry Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -223,6 +223,31 @@ Scope:		syssrc
 Notes:		The goal is to get rid of the existing device switch tables in
 		port-dependent conf.c and to generate them dynamically by
 		config(8).
+
+Branch:		gmcgarry_ctxsw
+Description:	Separate scheduler from context-switch code
+Status:		Active
+Start Date:	18 December 2002
+End Date:
+Base Tag:	gmcgarry_ctxsw_base
+Maintainer:	Gregory McGarry <gmcgarry@netbsd.org>
+Scope:		kernel
+Notes:		Removing knowledge of the schedular and its run queues
+		from the machine-dependent context switch code is the
+		first step in cleaning up the scheduler.  It is necessary
+		for the newlock branch, making the scheduler SMP friendly,
+		adding real-time scheduler extensions, and reducing the
+		number of code paths for LWP and proc switching.
+
+Branch:		gmcgarry_ucred
+Description:	Integrate and encapsulate user credentials
+Status:		Active
+Start Date:	18 December 2002
+End Date:
+Base Tag:	gmcgarry_ucred_base
+Maintainer:	Gregory McGarry <gmcgarry@netbsd.org>
+Scope:		kernel
+Notes:		merge pcred and ucred and poolify
 
 Branch:		is-newarp
 Description:	?
