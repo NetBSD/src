@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.43 1998/09/12 15:05:48 rvb Exp $	*/
+/*	$NetBSD: malloc.h,v 1.44 1999/01/14 22:38:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -142,7 +142,8 @@
 #define	M_CODA		90	/* Coda file system structures and tables. */
 #define	M_FILECOREMNT	91	/* Filcore FS mount structures */
 #define	M_FILECORENODE	92	/* Filcore FS vnode private part */
-#define	M_LAST		93	/* Must be last type + 1 */
+#define	M_RAIDFRAME	93	/* RAIDframe structures */
+#define	M_LAST		94	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -238,7 +239,8 @@
 	"coda",		/* 90 M_CODA */ \
 	"filecore mount", /* 91 M_FILECOREMNT */ \
 	"filecore node", /* 92 M_FILECORENODE */ \
-	NULL,		/* 93 */ \
+	"RAIDframe",	/* 93 M_RAIDFRAME */ \
+	NULL,		/* 94 */ \
 }
 
 struct kmemstats {
