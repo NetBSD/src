@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.42 1999/08/30 12:49:21 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.43 1999/09/01 15:17:07 bouyer Exp $	*/
 
 
 /*
@@ -554,7 +554,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	    PCIIDE_COMPAT_CMD_SIZE, 0, &wdc_cp->cmd_ioh) != 0) {
 		printf("%s: couldn't map %s channel cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		rv = 0;
+		return (0);
 	}
 
 	wdc_cp->ctl_iot = pa->pa_iot;
@@ -564,10 +564,10 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
 		    PCIIDE_COMPAT_CMD_SIZE);
-		rv = 0;
+		return (0);
 	}
 
-	return (rv);
+	return (1);
 }
 
 int
