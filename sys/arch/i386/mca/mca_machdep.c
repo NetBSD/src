@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.4 2000/08/13 10:38:38 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.5 2001/04/22 11:51:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -269,8 +269,8 @@ mca_busprobe()
 		"\04WAITEV"
 		"\05KBDINT"
 		"\06RTC"
-		"\07IC2",
-		"\08DMA3\n",
+		"\07IC2"
+		"\010DMA3\n",
 		buf, sizeof(buf));
 	printf("BIOS SDT: features 0x%s\n", buf);
 #endif
