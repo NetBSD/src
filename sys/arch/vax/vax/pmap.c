@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.52 1998/07/18 20:35:14 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.53 1998/08/21 13:46:38 ragge Exp $	   */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ struct pte *QVmap[NQD];
 extern void *qd_ubaio;
 #endif
 
-#define ISTACK_SIZE (4 * CLBYTES)
+#define ISTACK_SIZE CLBYTES
 
 /* 
  * This code uses bitfield operators for most page table entries.  
@@ -143,15 +143,35 @@ pmap_bootstrap()
 	 * Remember: sysptsize is in PTEs and nothing else!
 	 */
 
+#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
+#ifdef notyet
+#define	vax_btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+	/* all physical memory */
+	sysptsize = vax_btoc(avail_end);
+	/* reverse mapping struct is in phys memory already */
+	/* user page table */
+	sysptsize += vax_btoc(USRPTSIZE * sizeof(struct pte) * maxproc);
+	/* kernel malloc area */
+	sysptsize += vax_btoc(NKMEMCLUSTERS * CLSIZE);
+	/* Different table etc... called again in machdep */
+	physmem = btoc(avail_end); /* XXX in machdep also */
+	sysptsize += vax_btoc((int) allocsys((caddr_t) 0));
+	/* buffer pool (buffer_map) */
+	sysptsize += vax_btoc(MAXBSIZE * nbuf);
+	/* exec argument submap */
+	sysptsize += vax_btoc(16 * NCARGS);
+	/* phys_map - XXX This submap should be nuked */
+	sysptsize += vax_btoc(VM_PHYS_SIZE);
+#else
 	/* Kernel alloc area */
 	sysptsize = (((0x100000 * maxproc) >> PGSHIFT) / 4);
 	/* reverse mapping struct */
 	sysptsize += (avail_end >> PGSHIFT) * 2;
 	/* User Page table area. This may grow big */
-#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
 	sysptsize += ((USRPTSIZE * 4) / NBPG) * maxproc;
 	/* Kernel stacks per process */
 	sysptsize += UPAGES * maxproc;
+#endif
 
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
@@ -347,7 +367,6 @@ if(startpmapdebug)printf("pmap_create: phys_size %x\n",(int)phys_size);
 	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
 	bzero(pmap, sizeof(struct pmap));
 	pmap_pinit(pmap); 
-	pmap->pm_stack = USRSTACK;
 	return (pmap);
 }
 #endif
@@ -374,6 +393,7 @@ pmap_pinit(pmap)
 	pmap->pm_p0lr = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
 	pmap->pm_p1br = (void *)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - btoc(MAXSSIZ));
+	pmap->pm_stack = USRSTACK;
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
@@ -441,7 +461,7 @@ if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
  * Rensa is a help routine to remove a pv_entry from the pv list.
  * Arguments are physical clustering page and page table entry pointer.
  */
-static inline void
+/* static inline */void
 rensa(clp, ptp)
 	int clp;
 	struct pte *ptp;
@@ -477,9 +497,6 @@ pmap_kenter_pa(va, pa, prot)
 	vm_offset_t va, pa;
 	vm_prot_t prot;
 {
-#if 0
-	pmap_enter(pmap_kernel(), va, pa, prot, 0);
-#endif
 	int *ptp;
 
 	ptp = (int *)kvtopte(va);
@@ -490,8 +507,13 @@ printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
 	ptp[0] = PG_V | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_SREF;
 	ptp[1] = ptp[0] + 1;
-	mtpr(va, PR_TBIS);
-	mtpr(va + NBPG, PR_TBIS);
+	ptp[2] = ptp[0] + 2;
+	ptp[3] = ptp[0] + 3;
+	ptp[4] = ptp[0] + 4;
+	ptp[5] = ptp[0] + 5;
+	ptp[6] = ptp[0] + 6;
+	ptp[7] = ptp[0] + 7;
+	mtpr(0, PR_TBIA);
 }
 
 void
@@ -518,10 +540,7 @@ printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
 			continue;
 		if (pte->pg_sref == 0)
 			rensa(pte->pg_pfn >> CLSIZELOG2, pte);
-		*(long long *)pte = 0;
-#ifdef notdef
 		bzero(pte, CLSIZE * sizeof(struct pte));
-#endif
 		pte += CLSIZE;
 	}
 	mtpr(0, PR_TBIA);
@@ -550,7 +569,13 @@ printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 		ptp[0] = PG_V | PG_KW |
 		    PG_PFNUM(VM_PAGE_TO_PHYS(pgs[i])) | PG_SREF;
 		ptp[1] = ptp[0] + 1;
-		ptp += 2;
+		ptp[2] = ptp[0] + 2;
+		ptp[3] = ptp[0] + 3;
+		ptp[4] = ptp[0] + 4;
+		ptp[5] = ptp[0] + 5;
+		ptp[6] = ptp[0] + 6;
+		ptp[7] = ptp[0] + 7;
+		ptp += CLSIZE;
 	}
 	mtpr(0, PR_TBIA);
 }
@@ -638,13 +663,14 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 
 	patch[i] = nypte;
 	patch[i+1] = nypte+1;
+	patch[i+2] = nypte+2;
+	patch[i+3] = nypte+3;
+	patch[i+4] = nypte+4;
+	patch[i+5] = nypte+5;
+	patch[i+6] = nypte+6;
+	patch[i+7] = nypte+7;
 
-	if (v > KERNBASE && v < ptemapend) { /* If we're playing with PTEs */
-		mtpr(0, PR_TBIA);
-	} else {
-		mtpr(v, PR_TBIS);
-		mtpr(v + NBPG, PR_TBIS);
-	}
+	mtpr(0, PR_TBIA);
 }
 
 void *
@@ -801,6 +827,12 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 			if (*(int *)pts) {
 				pts[0].pg_prot = pr;
 				pts[1].pg_prot = pr;
+				pts[2].pg_prot = pr;
+				pts[3].pg_prot = pr;
+				pts[4].pg_prot = pr;
+				pts[5].pg_prot = pr;
+				pts[6].pg_prot = pr;
+				pts[7].pg_prot = pr;
 			}
 			pts += CLSIZE;
 		}
@@ -858,10 +890,16 @@ pmap_clear_reference(pa)
 	pv = pv_table + (pa >> CLSHIFT);
 
 	if (pv->pv_pte)
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 0;
+		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
+		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
+		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
+		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 
 	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 0;
+		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
+		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
+		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
+		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 #ifdef PMAP_NEW
 	return TRUE; /* XXX */
 #endif
@@ -891,11 +929,17 @@ pmap_is_modified(pa)
 #endif
 
 	if (pv->pv_pte)
-		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m))
+		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m
+		    | pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m
+		    | pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m
+		    | pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m))
 			return 1;
 
 	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m))
+		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m
+		    | pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m
+		    | pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m
+		    | pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m))
 			return 1;
 	}
 	return 0;
@@ -925,10 +969,16 @@ pmap_clear_modify(pa)
 		printf("pmap_clear_modify: pa %lx pv_entry %p\n", pa, pv);
 #endif
 	if (pv->pv_pte)
-		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m = 0;
+		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
+		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
+		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
+		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
 
 	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m = 0;
+		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
+		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
+		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
+		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
 #ifdef PMAP_NEW
 	return TRUE; /* XXX */
 #endif
@@ -945,7 +995,19 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t       prot;
 {
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	struct	pte *pt;
+	struct	pv_entry *pv, *opv;
+	int	s;
+	vm_offset_t pa;
+#ifdef PMAPDEBUG
+if(startpmapdebug) printf("pmap_page_protect: pg %p, prot %x, ",pg, prot);
+#endif
+	pa = VM_PAGE_TO_PHYS(pg);
+#ifdef PMAPDEBUG
+if(startpmapdebug) printf("pa %lx\n",pa);
+#endif
+
+
 #else
 void
 pmap_page_protect(pa, prot)
@@ -953,13 +1015,7 @@ pmap_page_protect(pa, prot)
 	vm_prot_t	prot;
 {
 #endif
-	struct	pte *pt;
-	struct	pv_entry *pv, *opv;
-	int	s;
   
-#ifdef PMAPDEBUG
-if(startpmapdebug) printf("pmap_page_protect: pa %lx, prot %x\n",pa, prot);
-#endif
 	pv = pv_table + (pa >> CLSHIFT);
 	if (pv->pv_pte == 0 && pv->pv_next == 0)
 		return;
@@ -989,9 +1045,11 @@ if(startpmapdebug) printf("pmap_page_protect: pa %lx, prot %x\n",pa, prot);
 			if (pt == 0)
 				continue;
 			pt[0].pg_prot = pt[1].pg_prot = 
+			    pt[2].pg_prot = pt[3].pg_prot = 
+			    pt[4].pg_prot = pt[5].pg_prot = 
+			    pt[6].pg_prot = pt[7].pg_prot = 
 			    ((vm_offset_t)pv->pv_pte < ptemapstart ? 
 			    PROT_KR : PROT_RO);
-
 		} while ((pv = pv->pv_next));
 	}
 	mtpr(0, PR_TBIA);
