@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.20 2003/06/02 16:59:26 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.21 2003/06/06 21:06:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.20 2003/06/02 16:59:26 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.21 2003/06/06 21:06:07 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -327,6 +327,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * stack start; this is arranged by pthread__stackalloc().
 	 */
 	_INITCONTEXT_U(newthread->pt_uc);
+#ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
+	pthread__uc_id(newthread->pt_uc) = newthread;
+#endif
 	newthread->pt_uc->uc_stack = newthread->pt_stack;
 	newthread->pt_uc->uc_link = NULL;
 	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
