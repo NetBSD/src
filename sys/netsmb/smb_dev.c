@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.6 2002/01/08 19:52:16 deberg Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.6.8.1 2002/05/16 03:52:37 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -101,7 +101,17 @@ int smb_dev_queue(struct smb_dev *ndp, struct smb_rq *rqp, int prio);
 */
 
 #ifdef __NetBSD__
-cdev_decl(nsmb_dev_);
+dev_type_open(nsmb_dev_open);
+dev_type_close(nsmb_dev_close);
+dev_type_read(nsmb_dev_read);
+dev_type_write(nsmb_dev_write);
+dev_type_ioctl(nsmb_dev_ioctl);
+dev_type_poll(nsmb_dev_poll);
+
+const struct cdevsw netsmb_cdevsw = {
+	nsmb_dev_open, nsmb_dev_close, nsmb_dev_read, nsmb_dev_write,
+	nsmb_dev_ioctl, nostop, notty, nsmb_dev_poll, nommap,
+};
 #else
 static struct cdevsw nsmb_cdevsw = {
 	/* open */	nsmb_dev_open,
