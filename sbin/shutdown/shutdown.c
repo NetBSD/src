@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.16.2.1 1998/01/29 11:12:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.16.2.1 1998/01/29 11:12:50 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $");
 #include <sys/syslog.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -111,19 +112,16 @@ main(argc, argv)
 {
 	char *p, *endp;
 	struct passwd *pw;
-	int arglen, ch, len, readstdin;
+	int arglen, ch, len;
 
 #ifndef DEBUG
-	if (geteuid()) {
-		(void)fprintf(stderr, "shutdown: NOT super-user\n");
-		exit(1);
-	}
+	if (geteuid())
+		errx(1, "NOT super-user");
 #endif
-	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknrd")) != -1)
+	while ((ch = getopt(argc, argv, "dfhknr")) != -1)
 		switch (ch) {
-		case '-':
-			readstdin = 1;
+		case 'd':
+			dodump = 1;
 			break;
 		case 'f':
 			dofast = 1;
@@ -140,9 +138,6 @@ main(argc, argv)
 		case 'r':
 			doreboot = 1;
 			break;
-		case 'd':
-			dodump = 1;
-			break;
 		case '?':
 		default:
 			usage();
@@ -153,51 +148,47 @@ main(argc, argv)
 	if (argc < 1)
 		usage();
 
+	if (dodump && !dohalt && !doreboot)
+		doreboot = 1;
+
 	if (dofast && nosync) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -f and -n.\n");
+		warnx("incompatible switches -f and -n");
 		usage();
 	}
-	if (doreboot && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -r.\n");
+	if (dohalt && doreboot) {
+		warnx("incompatible switches -h and -r");
 		usage();
 	}
-	if (dodump && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -d.\n");
-		usage();
-	}
+
 	getoffset(*argv++);
 
-	if (*argv) {
-		for (p = mbuf, len = sizeof(mbuf); *argv; ++argv) {
-			arglen = strlen(*argv);
-			if ((len -= arglen) <= 2)
-				break;
-			if (p != mbuf)
-				*p++ = ' ';
-			memmove(p, *argv, arglen);
-			p += arglen;
-		}
-		*p = '\n';
-		*++p = '\0';
-	}
-
-	if (readstdin) {
-		p = mbuf;
-		endp = mbuf + sizeof(mbuf) - 2;
-		for (;;) {
-			if (!fgets(p, endp - p + 1, stdin))
-				break;
-			for (; *p &&  p < endp; ++p);
-			if (p == endp) {
-				*p = '\n';
-				*++p = '\0';
-				break;
+	if (argv[0])
+		if (strcmp(argv[0], "-") || argv[1]) {
+			for (p = mbuf, len = sizeof(mbuf); *argv; ++argv) {
+				arglen = strlen(*argv);
+				if ((len -= arglen) <= 2)
+					break;
+				if (p != mbuf)
+					*p++ = ' ';
+				memmove(p, *argv, arglen);
+				p += arglen;
+			}
+			*p = '\n';
+			*++p = '\0';
+		} else {
+			p = mbuf;
+			endp = mbuf + sizeof(mbuf) - 2;
+			for (;;) {
+				if (!fgets(p, endp - p + 1, stdin))
+					break;
+				for (; *p &&  p < endp; ++p);
+				if (p == endp) {
+					*p = '\n';
+					*++p = '\0';
+					break;
+				}
 			}
 		}
-	}
 	mbuflen = strlen(mbuf);
 
 	if (offset)
@@ -340,7 +331,7 @@ die_you_gravy_sucking_pig_dog()
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
-	    doreboot || dodump ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
+	    doreboot ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
@@ -350,36 +341,44 @@ die_you_gravy_sucking_pig_dog()
 	}
 	if (dofast)
 		doitfast();
-#ifdef DEBUG
-	if (doreboot || dodump)
-		(void)printf("reboot%s", dodump ? " -d" : "");
-	else if (dohalt)
-		(void)printf("halt");
-	if (nosync)
-		(void)printf(" no sync");
-	if (dofast)
-		(void)printf(" no fsck");
-	(void)printf("\nkill -HUP 1\n");
+	if (doreboot || dohalt) {
+		char *args[8], **arg, *path;
+
+		arg = &args[0];
+		if (doreboot) {
+			path = _PATH_REBOOT;
+			*arg++ = "reboot";
+		} else {
+			path = _PATH_HALT;
+			*arg++ = "halt";
+		}
+		if (dodump)
+			*arg++ = "-d";
+		if (nosync)
+			*arg++ = "-n";
+		*arg++ = "-l";
+		*arg++ = 0;
+#ifndef DEBUG
+		exect(path, args, (char **)0);
+		syslog(LOG_ERR, "shutdown: can't exec %s: %m", path);
+		perror("shutdown");
 #else
-	if (doreboot || dodump) {
-		execle(_PATH_REBOOT, "reboot",
-		       dodump ? (nosync ? "-ldn" : "-ld") :
-		       (nosync ? "-ln" : "-l"), 0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
-		perror("shutdown");
-	}
-	else if (dohalt) {
-		execle(_PATH_HALT, "halt", nosync ? "-ln" : "-l",
-		    (char *)0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
-		perror("shutdown");
-	}
-	(void)kill(1, SIGTERM);		/* to single user */
+		printf("%s", path);
+		for (arg = &args[0]; *arg; arg++)
+			printf(" %s", *arg);
+		printf("\n");
 #endif
+	} else {
+#ifndef DEBUG
+		(void)kill(1, SIGTERM);		/* to single user */
+#else
+		printf("kill 1\n");
+#endif
+	}
 	finish(0);
 }
 
-#define	ATOI2(p)	(p[0] - '0') * 10 + (p[1] - '0'); p += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 void
 getoffset(timearg)
@@ -388,6 +387,7 @@ getoffset(timearg)
 	struct tm *lt;
 	char *p;
 	time_t now;
+	int yearset;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
 		offset = 0;
@@ -417,39 +417,46 @@ getoffset(timearg)
 	unsetenv("TZ");					/* OUR timezone */
 	lt = localtime(&now);				/* current time val */
 
-	switch(strlen(timearg)) {
+	lt->tm_sec = 0;
+
+	yearset = 0;
+	switch (strlen(timearg)) {
+	case 12:
+		lt->tm_year = ATOI2(timearg) * 100 - TM_YEAR_BASE;
+		yearset = 1;
+		/* FALLTHROUGH */
 	case 10:
-		lt->tm_year = ATOI2(timearg);
+		if (yearset) {
+			lt->tm_year += ATOI2(timearg);
+		} else {
+			yearset = ATOI2(timearg);
+			if (yearset < 69)
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
+			else
+				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
+		}
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
-		if (--lt->tm_mon < 0 || lt->tm_mon > 11)
-			badtime();
+		--lt->tm_mon;
 		/* FALLTHROUGH */
 	case 6:
 		lt->tm_mday = ATOI2(timearg);
-		if (lt->tm_mday < 1 || lt->tm_mday > 31)
-			badtime();
 		/* FALLTHROUGH */
 	case 4:
 		lt->tm_hour = ATOI2(timearg);
-		if (lt->tm_hour < 0 || lt->tm_hour > 23)
-			badtime();
+		/* FALLTHROUGH */
+	case 2:
 		lt->tm_min = ATOI2(timearg);
-		if (lt->tm_min < 0 || lt->tm_min > 59)
-			badtime();
-		lt->tm_sec = 0;
-		if ((shuttime = mktime(lt)) == -1)
-			badtime();
-		if ((offset = shuttime - now) < 0) {
-			(void)fprintf(stderr,
-			    "shutdown: that time is already past.\n");
-			exit(1);
-		}
 		break;
 	default:
 		badtime();
 	}
+
+	if ((shuttime = mktime(lt)) == -1)
+		badtime();
+	if ((offset = shuttime - now) < 0)
+		errx(1, "time is already past");
 }
 
 #define	FSMSG	"fastboot file for fsck\n"
@@ -500,13 +507,14 @@ finish(signo)
 void
 badtime()
 {
-	(void)fprintf(stderr, "shutdown: bad time format.\n");
-	exit(1);
+	warnx("illegal time format");
+	usage();
 }
 
 void
 usage()
 {
-	fprintf(stderr, "usage: shutdown [-fhknrd] shutdowntime [ message ]\n");
+	(void)fprintf(stderr,
+	    "usage: shutdown [-dfhknr] time [message ... | -]\n");
 	exit(1);
 }
