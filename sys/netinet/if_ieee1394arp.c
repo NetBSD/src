@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.3 2001/04/13 23:30:22 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.4 2001/06/12 15:17:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct arpstat {
 
 	u_quad_t	as_rcvtotal;	/* total packets received */
 	u_quad_t	as_rcvrequest;	/* valid requests received */
-	u_quad_t	as_rcvreply;	/* replies recieved */
+	u_quad_t	as_rcvreply;	/* replies received */
 	u_quad_t	as_rcvmcast;    /* multicast/broadcast received */
 	u_quad_t	as_rcvbadproto;	/* unknown protocol type received */
 	u_quad_t	as_rcvbadlen;	/* bad (short) length received */

@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.40 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: seagate.c,v 1.41 2001/06/12 15:17:24 wiz Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -1413,7 +1413,7 @@ sea_information_transfer(sea)
 				sea_done(sea, scb);
 				return;
 			case MSG_MESSAGE_REJECT:
-				printf("%s: message_reject recieved\n",
+				printf("%s: message_reject received\n",
 				    sea->sc_dev.dv_xname);
 				break;
 			case MSG_DISCONNECT:

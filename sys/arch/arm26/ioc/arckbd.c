@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.12 2001/02/17 18:39:11 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.13 2001/06/12 15:17:17 wiz Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -34,7 +34,7 @@
  * Most of the information used to write this driver came from the
  * A3000 Technical Reference Manual (ISBN 1-85250-074-3).
  *
- * We keep a queue of one command in the softc for use by the recieve
+ * We keep a queue of one command in the softc for use by the receive
  * interrupt handler in case it finds the KART is already transmitting
  * a command (presumably as a consequence of a user request) when it
  * wants to.  I think this is safe in all cases, and it will never
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.12 2001/02/17 18:39:11 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.13 2001/06/12 15:17:17 wiz Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
