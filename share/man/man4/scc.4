@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.5 2003/04/25 03:03:07 fair Exp $
+.\"	$NetBSD: scc.4,v 1.6 2003/04/25 03:17:08 fair Exp $
 .\"
 .Dd April 24, 2003
 .Dt SCC 4
@@ -83,14 +83,14 @@ but speeds higher than 57600 do not work reliably without an external
 clock signal.
 .Sh FILES
 .Ss alpha
-.Bl -tag -width Pa
+.Bl -tag -width Pa -compact
 .It Pa /dev/ttyB0
 .It Pa /dev/ttyB1
 .It Pa /dev/ttyB2
 .It Pa /dev/ttyB3
 .El
 .Ss pmax
-.Bl -tag -width Pa
+.Bl -tag -width Pa -compact
 .It Pa /dev/ttya
 .It Pa /dev/ttyb
 .It Pa /dev/ttyc
@@ -117,6 +117,7 @@ and the second port is
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ioasic 4 ,
+.Xr ttys 5 ,
 .Xr MAKEDEV 8
 .Sh HISTORY
 The
