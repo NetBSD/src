@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.49 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.50 2000/12/22 17:07:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -81,6 +81,9 @@ typedef	char	bool;
 #define	nocrmode()	nocbreak()
 #define	ospeed		(cfgetospeed(&__baset))
 #endif /* _CURSES_PRIVATE */
+
+/* Termcap capabilities. */
+extern char	PC;
 /* END BACKWARD COMPATIBILITY ONLY. */
 
 /* symbols for values returned by getch in keypad mode */
