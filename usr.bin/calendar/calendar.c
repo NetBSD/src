@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)calendar.c	4.11 (Berkeley) 10/12/90";*/
-static char rcsid[] = "$Id: calendar.c,v 1.2 1993/08/01 18:18:14 mycroft Exp $";
+static char rcsid[] = "$Id: calendar.c,v 1.3 1994/01/05 13:13:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,8 +139,8 @@ struct iovec header[] = {
 
 /* 1-based month, 0-based days, cumulative */
 int daytab[][14] = {
-	0, 0, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364,
-	0, 0, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365,
+	0, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364,
+	0, -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365,
 };
 struct tm *tp;
 int *cumdays, offset, yrdays;
@@ -191,7 +191,7 @@ isnow(endp)
 		day = v1;
 		/* if no recognizable month, assume just a day alone */
 		if (!(month = getfield(endp, &endp, &flags)))
-			month = tp->tm_mon;
+			month = tp->tm_mon + 1;
 	} else if (flags&F_ISMONTH) {
 		month = v1;
 		/* if no recognizable day, assume the first */
@@ -227,13 +227,17 @@ getfield(p, endp, flags)
 	int val;
 	char *start, savech;
 
+	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		;
 	if (*p == '*') {			/* `*' is current month */
 		*flags |= F_ISMONTH;
-		return(tp->tm_mon);
+		*endp = p+1;
+		return(tp->tm_mon + 1);
 	}
 	if (isdigit(*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
-		for (; !isdigit(*p) && !isalpha(*p); ++p);
+		for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+			;
 		*endp = p;
 		return(val);
 	}
@@ -246,7 +250,8 @@ getfield(p, endp, flags)
 		*flags |= F_ISDAY;
 	else
 		return(0);
-	for (*p = savech; !isdigit(*p) && !isalpha(*p); ++p);
+	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		;
 	*endp = p;
 	return(val);
 }
