@@ -469,6 +469,7 @@
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
+./usr/share/man/cat8/compat_ultrix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/dev_mkdb.0
