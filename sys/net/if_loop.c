@@ -43,6 +43,7 @@
 #include "socket.h"
 #include "errno.h"
 #include "ioctl.h"
+#include "protosw.h"
 
 #include "../net/if.h"
 #include "../net/if_types.h"
