@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.65 2001/04/10 00:27:00 sommerfeld Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.66 2001/04/20 00:10:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2001/04/10 00:27:00 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2001/04/20 00:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
+	simple_lock_init(&p2->p_addr->u_pcb.pcb_fpcpu_slock);
 
 	/*
 	 * Arrange for a non-local goto when the new process
