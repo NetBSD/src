@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2002/03/06 13:10:24 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2002/03/20 17:59:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -434,7 +434,7 @@ setregs(p, pack, stack)
 	tf->tf_regs[D7] = 0;
 	tf->tf_regs[A0] = 0;
 	tf->tf_regs[A1] = 0;
-	tf->tf_regs[A2] = (int)PS_STRINGS;
+	tf->tf_regs[A2] = (int)p->p_psstr;
 	tf->tf_regs[A3] = 0;
 	tf->tf_regs[A4] = 0;
 	tf->tf_regs[A5] = 0;

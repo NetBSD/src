@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2002/03/10 22:32:31 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.69 2002/03/20 17:59:27 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -325,7 +325,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	exptr->r6 = stack;			/* for ELF */
 	exptr->r7 = 0;				/* for ELF */
 	exptr->r8 = 0;				/* for ELF */
-	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
+	exptr->r9 = (u_long) p->p_psstr;	/* for ELF */
 }
 
 void
