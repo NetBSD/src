@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.1.2.2 1998/10/19 19:48:40 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.1.2.3 1999/01/26 17:08:36 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.2 1998/10/19 19:48:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.3 1999/01/26 17:08:36 drochner Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -627,6 +627,8 @@ zs_write_data(cs, val)
 
 /*
  * Handle user request to enter kernel debugger.
+ * Called from zstty, only if ZS_HWFLAG_CONSOLE.
+ * XXX What about kgdb?
  */
 void
 zs_abort(cs)
@@ -640,10 +642,8 @@ zs_abort(cs)
 		rr0 = zs_read_csr(cs);
 	} while (rr0 & ZSRR0_BREAK);
 
-#if defined(KGDB)
-	zskgdb(cs);
-#elif defined(DDB)
-	Debugger();
+#if defined(DDB)
+	console_debugger();
 #else
 	printf("zs_abort: ignoring break on console\n");
 #endif
