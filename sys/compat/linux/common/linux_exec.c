@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.38 2000/11/21 00:37:53 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.39 2000/11/21 12:23:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -64,12 +64,17 @@
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_errno.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 const char linux_emul_path[] = "/emul/linux";
 
 extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
+
+static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
+static void linux_e_proc_fork __P((struct proc *, struct proc *));
+static void linux_e_proc_exit __P((struct proc *));
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
@@ -112,4 +117,54 @@ const struct emul emul_linux = {
 	linux_syscallnames,
 	linux_sigcode,
 	linux_esigcode,
+	linux_e_proc_exec,
+	linux_e_proc_fork,
+	linux_e_proc_exit,
 };
+
+/*
+ * Allocate per-process structures. Called when executing Linux
+ * process. We can re-used the old emuldata - if it's not null,
+ * the executed process is of same emulation as original forked one.
+ */
+static void
+linux_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	if (!p->p_emuldata) {
+		/* allocate new Linux emuldata */
+		MALLOC(p->p_emuldata, void *, sizeof(struct linux_emuldata),
+			M_EMULDATA, M_WAITOK);
+	}
+
+	memset(p->p_emuldata, '\0', sizeof(struct linux_emuldata));
+}
+
+/*
+ * Emulation per-process exit hook.
+ */
+static void
+linux_e_proc_exit(p)
+	struct proc *p;
+{
+	/* free Linux emuldata and set the pointer to null */
+	FREE(p->p_emuldata, M_EMULDATA);
+	p->p_emuldata = NULL;
+}
+
+/*
+ * Emulation fork hook.
+ */
+static void
+linux_e_proc_fork(p, parent)
+	struct proc *p, *parent;
+{
+	/*
+	 * It could be desirable to copy some stuff from parent's
+	 * emuldata. We don't need anything like that for now.
+	 * So just allocate new emuldata for the new process.
+	 */
+	p->p_emuldata = NULL;
+	linux_e_proc_exec(p, NULL);
+}
