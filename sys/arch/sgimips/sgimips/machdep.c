@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2001/11/14 22:47:16 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2001/11/19 17:29:53 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -91,7 +91,7 @@ char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
 char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
 
-struct sgi_intrhand intrtab[NINTR];
+struct sgimips_intrhand intrtab[NINTR];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -264,15 +264,15 @@ mach_init(argc, argv, envp)
 			boothowto &= ~RB_SINGLE;
 		}
 		/*
-		 * If this is OSLoadPartition, use it to set the boot device.
-		 * XXX This probably should not be done if we used a path
-		 * XXX from argv[1], but how to tell?
+		 * If this is OSLoadPartition or, failing that,
+		 * SystemPartition, use it to set the boot device.
 		 */
-		if (strncmp(argv[i], "OSLoadPartition=", 16) == 0)
+		if (strncmp(argv[i], "OSLoadPartition=", 15) == 0)
 			makebootdev(argv[i] + 16);
-#if 0
+		else if (strncmp(argv[i], "SystemPartition", 15) == 0)
+			makebootdev(argv[i] + 16);
+#ifdef DEBUG
 		printf("argv[%d]: %s\n", i, argv[i]);
-		/* delay(20000); */ /* give the user a little time.. */
 #endif
 	}
 
