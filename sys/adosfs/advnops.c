@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.18 1994/12/28 08:52:06 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.19 1994/12/29 22:06:15 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -86,9 +86,6 @@ adosfs_getattr(sp)
 	vap->va_uid = ap->uid;
 	vap->va_gid = ap->gid;
 	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsid.val[0];
-	microtime(&vap->va_atime);
-	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_ctime;
 	vap->va_atime.ts_sec = vap->va_mtime.ts_sec = vap->va_ctime.ts_sec =
 		ap->mtime.days * 24 * 60 * 60 + ap->mtime.mins * 60 +
 		ap->mtime.ticks / 50 + (8 * 365 + 2) * 24 * 60 * 60;
@@ -704,18 +701,12 @@ adosfs_access(sp)
 	} */ *sp;
 {
 	struct anode *ap;
-	struct ucred *ucp;
-	gid_t *gp;
-	mode_t mode, mask;
-	int i, error;
+	int error;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 
-	mask = error = 0;
-	ucp = sp->a_cred;
-	mode = sp->a_mode;
 	ap = VTOA(sp->a_vp);
 #ifdef DIAGNOSTIC
 	if (!VOP_ISLOCKED(sp->a_vp)) {
@@ -726,7 +717,7 @@ adosfs_access(sp)
 #ifdef QUOTA
 #endif
 	error = vaccess(adunixprot(ap->adprot) & ap->amp->mask, ap->uid,
-	    ap->gid, mode, cred);
+	    ap->gid, sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
