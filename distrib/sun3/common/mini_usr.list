@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.12 2001/02/13 03:09:27 jmc Exp $
+#	$NetBSD: mini_usr.list,v 1.13 2001/05/26 06:12:11 chs Exp $
 #
 # miniroot files from /usr:
 
@@ -9,12 +9,17 @@
 # libtermcap: ftp, less, vi
 # libutil: rdate
 SPECIAL	cd usr; ln -s lib libexec
-COPY	${DESTDIR}/usr/libexec/ld.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libc.so.12.70	usr/lib
-COPY	${DESTDIR}/usr/lib/libcurses.so.4.1	usr/lib
-COPY	${DESTDIR}/usr/lib/libedit.so.2.5	usr/lib
-COPY	${DESTDIR}/usr/lib/libtermcap.so.0.4	usr/lib
-COPY	${DESTDIR}/usr/lib/libutil.so.5.4	usr/lib
+COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib
+COPY	${DESTDIR}/usr/lib/libc.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libc.so.12		usr/lib
+COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libcurses.so.4	usr/lib
+COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libedit.so.2		usr/lib
+COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib
+COPY	${DESTDIR}/usr/lib/libtermcap.so.0	usr/lib
+COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libutil.so.5		usr/lib
 
 # usr.sbin:
 COPY	${DESTDIR}/usr/sbin/chown		usr/sbin
