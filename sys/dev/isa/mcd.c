@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.16 1994/06/16 01:08:23 mycroft Exp $
+ *	$Id: mcd.c,v 1.17 1994/08/03 08:57:59 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -357,8 +357,10 @@ mcd_start(sc)
 	struct partition *p;
 	int s = splbio();
 	
-	if (sc->flags & MCDMBXBSY)
+	if (sc->flags & MCDMBXBSY) {
+		splx(s);
 		return;
+	}
 
 	if ((bp = qp->b_actf) != 0) {
 		/* Block found to process; dequeue. */
@@ -551,7 +553,7 @@ mcdprobe(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 	int i;
-	int st, check;
+	int st, check, version;
 
 #ifdef notyet
 	/* Get irq/drq configuration word. */
@@ -561,7 +563,7 @@ mcdprobe(parent, self, aux)
 
 	/* Send a reset. */
 	outb(iobase + mcd_reset, 0);
-	delay(300000);
+	delay(1000000);
 	/* Get any pending status and throw away. */
 	for (i = 10; i; i--)
 		inb(iobase + mcd_status);
@@ -569,9 +571,9 @@ mcdprobe(parent, self, aux)
 
 	/* Send get status command. */
 	outb(iobase + mcd_command, MCD_CMDGETSTAT);
-	i = mcd_getreply(sc, DELAY_GETREPLY);
+	st = mcd_getreply(sc, DELAY_GETREPLY);
 
-	if (i < 0) {
+	if (st < 0) {
 #ifdef DEBUG
 		printf("Mitsumi drive NOT detected\n");
 #endif
@@ -589,19 +591,19 @@ mcdprobe(parent, self, aux)
 
 	delay(2000);
 	outb(iobase + mcd_command, MCD_CMDCONTINFO);
-	i = mcd_getreply(sc, DELAY_GETREPLY);
+	st = mcd_getreply(sc, DELAY_GETREPLY);
 
-	if (i < 0) {
+	if (st < 0) {
 #ifdef DEBUG
 		printf("Mitsumi drive error\n");
 #endif
 		return 0;
 	}
-	st = mcd_getreply(sc, DELAY_GETREPLY);
-	if (st < 0)
-		return 0;
 	check = mcd_getreply(sc, DELAY_GETREPLY);
 	if (check < 0)
+		return 0;
+	version = mcd_getreply(sc, DELAY_GETREPLY);
+	if (version < 0)
 		return 0;
 	/* Flush junk. */
 	(void) mcd_getreply(sc, DELAY_GETREPLY);
@@ -613,14 +615,10 @@ mcdprobe(parent, self, aux)
 	 * Also, the original hack had a bogus condition that always
 	 * returned true.
 	 */
-#ifdef notdef
-	if (check != 'M') {
-#ifdef DEBUG
-		printf("Mitsumi drive NOT detected\n");
-#endif
-		return 0;
+	if (check != 'D' && check != 'M') {
+		printf("%s: unrecognized drive version %c%02x; will try to use it anyway\n",
+		    sc->sc_dev.dv_xname, check, version);
 	}
-#endif
 
 #ifdef DEBUG
 	printf("Mitsumi drive detected\n");
