@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.45 2003/10/25 18:26:46 christos Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.46 2003/10/29 01:25:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.45 2003/10/25 18:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.46 2003/10/29 01:25:04 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -124,7 +124,7 @@ lfs_balloc(void *v)
 	struct vnode *vp;
 	int offset;
 	u_long iosize;
-	daddr_t daddr, idaddr = 0; /* XXX: gcc */
+	daddr_t daddr, idaddr;
 	struct buf *ibp, *bp, **bpp;
 	struct inode *ip;
 	struct lfs *fs;
@@ -256,32 +256,33 @@ lfs_balloc(void *v)
 		/*
 		 * Create new indirect blocks if necessary
 		 */
-		if (num > 1)
+		if (num > 1) {
 			idaddr = ip->i_ffs1_ib[indirs[0].in_off];
-		for (i = 1; i < num; ++i) {
-			ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize, 0,0);
-			if (!indirs[i].in_exists) {
-				clrbuf(ibp);
-				ibp->b_blkno = UNWRITTEN;
-			} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
-				ibp->b_blkno = fsbtodb(fs, idaddr);
-				ibp->b_flags |= B_READ;
-				VOP_STRATEGY(ibp);
-				biowait(ibp);
-			}
-			/*
-			 * This block exists, but the next one may not.
-			 * If that is the case mark it UNWRITTEN to keep
-			 * the accounting straight.
-			 */
-			/* XXX ondisk32 */
-			if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
-				((int32_t *)ibp->b_data)[indirs[i].in_off] =
-					UNWRITTEN;
-			/* XXX ondisk32 */
-			idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
-			if ((error = VOP_BWRITE(ibp))) {
-				return error;
+			for (i = 1; i < num; ++i) {
+				ibp = getblk(vp, indirs[i].in_lbn,
+				    fs->lfs_bsize, 0,0);
+				if (!indirs[i].in_exists) {
+					clrbuf(ibp);
+					ibp->b_blkno = UNWRITTEN;
+				} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
+					ibp->b_blkno = fsbtodb(fs, idaddr);
+					ibp->b_flags |= B_READ;
+					VOP_STRATEGY(ibp);
+					biowait(ibp);
+				}
+				/*
+				 * This block exists, but the next one may not.
+				 * If that is the case mark it UNWRITTEN to keep
+				 * the accounting straight.
+				 */
+				/* XXX ondisk32 */
+				if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
+					((int32_t *)ibp->b_data)[indirs[i].in_off] =
+						UNWRITTEN;
+				/* XXX ondisk32 */
+				idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
+				if ((error = VOP_BWRITE(ibp)))
+					return error;
 			}
 		}
 	}	
