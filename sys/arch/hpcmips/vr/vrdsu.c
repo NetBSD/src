@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.1 1999/11/28 04:29:39 takemura Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.2 1999/12/14 04:21:10 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -89,6 +89,7 @@ vrdsuattach(parent, self, aux)
 	struct vrdsu_softc *sc = (struct vrdsu_softc *)self;
 	struct vrip_attach_args *va = aux;
 
+	sc->sc_iot = va->va_iot;
 	if (bus_space_map(va->va_iot, va->va_addr, va->va_size,
 			  0, &sc->sc_ioh)) {
 		printf(": can't map bus space\n");
