@@ -1,9 +1,16 @@
-/*	$NetBSD: style,v 1.9 1999/01/20 23:13:54 lukem Exp $	*/
+/*	$NetBSD: style,v 1.10 1999/01/29 07:24:20 scottr Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
  *
  *	from: @(#)style	1.12 (Berkeley) 3/18/94
+ */
+/*
+ * An indent(1) profile approximating the style outlined in
+ * this document lives in /usr/share/misc/indent.pro.  It is a
+ * useful tool to assist in converting code to KNF, but indent(1)
+ * output generated using this profile must not be considered to
+ * be an authoritative reference.
  */
 
 /*
