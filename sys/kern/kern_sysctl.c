@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.103 2002/02/14 07:08:21 chs Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.103.4.1 2002/03/11 18:28:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.103 2002/02/14 07:08:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.103.4.1 2002/03/11 18:28:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.103 2002/02/14 07:08:21 chs Exp $"
 #include <sys/msgbuf.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/syscallargs.h>
@@ -127,13 +128,13 @@ static int sysctl_pty(void *, size_t *, void *, size_t);
  * is really a good idea to worry about it probably a subject of some
  * debate.
  */
-struct lock sysctl_memlock;
+kmutex_t sysctl_memlock;
 
 void
 sysctl_init(void)
 {
 
-	lockinit(&sysctl_memlock, PRIBIO|PCATCH, "sysctl", 0, 0);
+	mutex_init(&sysctl_memlock, MUTEX_DEFAULT, 0);
 }
 
 int
@@ -219,12 +220,10 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		oldlenp = &oldlen;
 	}
 	if (SCARG(uap, old) != NULL) {
-		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
-		if (error)
-			return (error);
+		mutex_enter(&sysctl_memlock);
 		error = uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_WRITE);
 		if (error) {
-			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
+			mutex_exit(&sysctl_memlock);
 			return error;
 		}
 		savelen = oldlen;
@@ -233,7 +232,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, SCARG(uap, old), savelen);
-		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
+		mutex_exit(&sysctl_memlock);
 	}
 	if (error)
 		return (error);
