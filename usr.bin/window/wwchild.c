@@ -1,4 +1,4 @@
-/*	$NetBSD: wwchild.c,v 1.4 1997/11/21 08:37:00 lukem Exp $	*/
+/*	$NetBSD: wwchild.c,v 1.5 1998/12/20 15:02:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwchild.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwchild.c,v 1.4 1997/11/21 08:37:00 lukem Exp $");
+__RCSID("$NetBSD: wwchild.c,v 1.5 1998/12/20 15:02:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,13 +56,13 @@ wwchild(dummy)
 {
 	int olderrno;
 	struct ww **wp;
-	union wait w;
+	int status;
 	int pid;
 	char collected = 0;
 
 	olderrno = errno;
 	while ((pid =
-	    wait3((int *)&w, WNOHANG|WUNTRACED, (struct rusage *)0)) > 0) {
+	    wait3(&status, WNOHANG|WUNTRACED, (struct rusage *)0)) > 0) {
 		for (wp = wwindex; wp < &wwindex[NWW]; wp++) {
 			if (*wp && (*wp)->ww_state == WWS_HASPROC
 			    && (*wp)->ww_pid == pid) {
