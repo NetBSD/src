@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.45 2003/01/06 20:30:29 wiz Exp $
+# $NetBSD: postinstall,v 1.46 2003/01/16 07:37:33 martti Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -377,7 +377,7 @@ do_rc()
 		screenblank sendmail securelevel sshd swap1 swap2 \
 		sysdb sysctl syslogd timed ttys virecover \
 		wdogctl wscons wsmoused \
-		xdm xfs ypbind yppasswdd ypserv
+		xdm xfs ypbind yppasswdd ypserv ypset
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
