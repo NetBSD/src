@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 2000/03/04 05:42:55 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53 2000/03/06 03:15:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2000/03/04 05:42:55 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2000/03/06 03:15:28 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,21 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2000/03/04 05:42:55 mhitch Exp $")
 
 #include <pmax/dev/device.h>
 
+#include <dev/tc/tcvar.h>
+
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 #include "rz.h"
 #include "xasc_ioasic.h"
 #include "xasc_pmaz.h"
 
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
-struct device *booted_controller;
-int	booted_slot, booted_unit, booted_partition;
-char	*booted_protocol;
+static struct device *booted_controller;
+static int	booted_slot, booted_unit, booted_partition;
+static char	*booted_protocol;
 
 /*
  * Configure all devices on system
@@ -140,7 +146,7 @@ cpu_rootconf()
 	struct device *dv;
 	char name[5];
 
-	if (booted_device == NULL) {
+	if (booted_device == NULL && strcmp(booted_protocol, "SCSI") == 0) {
 		int ctlr_no;
 
 		if (booted_controller)
@@ -162,31 +168,117 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-#if (NXASC_PMAZ + NXASC_IOASIC) > 0
-
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#include <sys/disk.h>
-
-struct xx_softc {
-	struct device sc_dev;
-	struct disk sc_dk;
-	int flag;
-	struct scsipi_link *sc_link;
-};	
-#define	SCSITARGETID(dev) ((struct xx_softc *)dev)->sc_link->scsipi_scsi.target
-
+/*
+ * Try to determine the boot device.
+ */
 void
-dk_establish(dk, dev)
-	struct disk *dk;
+device_register(dev, aux)
 	struct device *dev;
+	void *aux;
 {
-	if (booted_device || strcmp(booted_protocol, "SCSI"))
+	static int found, initted, scsiboot, netboot;
+	static struct device *ioasicdev;
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
+
+	if (found)
 		return;
-	if (dev->dv_parent == NULL || dev->dv_parent->dv_parent != booted_controller)
+
+	if (!initted) {
+		scsiboot = strcmp(booted_protocol, "SCSI") == 0;
+		netboot = (strcmp(booted_protocol, "BOOTP") == 0) ||
+		    (strcmp(booted_protocol, "MOP") == 0);
+		initted = 1;
+	}
+
+	/*
+	 * Check if IOASIC was the boot slot.
+	 */
+	if (strcmp(cd->cd_name, "ioasic") == 0) {
+		struct tc_attach_args *ta = aux;
+
+		if (ta->ta_slot == booted_slot)
+			ioasicdev = dev;
 		return;
-	if (booted_unit != SCSITARGETID(dev))
+	}
+
+	/*
+	 * Check for ASC controller on either IOASIC or TC option card.
+	 */
+	if (scsiboot && (
+	    strcmp(cd->cd_name, "asc") == 0 ||
+	    strcmp(cd->cd_name, "xasc") == 0)) {
+		struct tc_attach_args *ta = aux;
+
+		/*
+		 * If boot was from IOASIC controller, ioasicdev will
+		 * be the ASC parent.
+		 * If boot was from a TC option card, the TC slot number
+		 * of the ASC will match the boot slot.
+		 */
+		if (parent == ioasicdev ||
+		    ta->ta_slot == booted_slot) {
+			booted_controller = dev;
+			return;
+		}
+	}
+
+	/*
+	 * If an SII device is configured, it's currently the only
+	 * possible SCSI boot device.
+	 */
+	if (scsiboot && (
+	    strcmp(cd->cd_name, "sii") == 0 ||
+	    strcmp(cd->cd_name, "xsii") == 0)) {
+		booted_controller = dev;
 		return;
-	booted_device = dev;
+	}
+
+	/*
+	 * If we found the boot controller, if check disk/tape/cdrom device
+	 * on that controller matches.
+	 */
+	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
+	    strcmp(cd->cd_name, "st") == 0 ||
+	    strcmp(cd->cd_name, "cd") == 0)) {
+		struct scsipibus_attach_args *sa = aux;
+
+		if (parent->dv_parent != booted_controller)
+			return;
+		if (booted_unit != sa->sa_sc_link->scsipi_scsi.target)
+			return;
+		booted_device = dev;
+		found = 1;
+		return;
+	}
+
+	/*
+	 * XXX rz devices don't call device_register?
+	 */
+	if (booted_controller && (strcmp(cd->cd_name, "rz") == 0 ||
+	    strcmp(cd->cd_name, "tz") == 0)) {
+		int sd_ctlr = (int)aux;
+
+		if (booted_unit == (dev->dv_unit & 7)) {
+			if (booted_controller->dv_unit == sd_ctlr)
+				booted_device = dev;
+				found = 1;
+				return;
+		}
+	}
+
+	/*
+	 * Check if netboot device.
+	 */
+	if (netboot && strcmp(cd->cd_name, "le") == 0) {
+		struct tc_attach_args *ta = aux;
+
+		if (parent == ioasicdev ||
+		    ta->ta_slot == booted_slot) {
+			booted_device = dev;
+			found = 1;
+			return;
+		}
+	}
 }
-#endif
