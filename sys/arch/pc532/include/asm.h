@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 1996/10/09 07:28:40 matthias Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 1996/11/07 07:33:28 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -98,6 +98,10 @@
 
 #define	DECL(x)	MC1; .globl x; .type x,@function; .align ALIGN; CAT(x,:); MC2
 #define	_DECL(x) .globl x; .type x,@function; .align ALIGN; CAT(x,:)
+#define ALTENTRY(name, rname) \
+	.globl EX(name); \
+	.type EX(name),@function; \
+	.set EX(name),EX(rname)
 
 #define	ENTRY(x)	DECL(EX(x))
 #define	_ENTRY(x)	_DECL(EX(x))
