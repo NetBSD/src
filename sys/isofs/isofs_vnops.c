@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.14 1994/02/06 20:38:43 ws Exp $
+ *	$Id: isofs_vnops.c,v 1.15 1994/03/02 19:04:29 ws Exp $
  */
 
 #include <sys/param.h>
@@ -555,7 +555,7 @@ int isofs_readlink(vp, uio, cred)
 	 * Get parents directory record block that this inode included.
 	 */
 	error = bread(imp->im_devvp,
-		      (daddr_t)(ip->i_number / DEV_BSIZE),
+		      (daddr_t)((ip->i_number&~imp->im_bmask) / DEV_BSIZE),
 		      imp->logical_block_size,
 		      NOCRED,
 		      &bp);
