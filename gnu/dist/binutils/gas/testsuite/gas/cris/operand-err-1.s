@@ -1,6 +1,7 @@
 ; Error cases for invalid operands.
 ;  { dg-do assemble { target cris-*-* } }
  .text
+ .syntax no_register_prefix
 start:
  add.w r3,r4,r5 ; { dg-error "(Illegal|Invalid) operands" }
  add.w 42,r4,r5 ; { dg-error "(Illegal|Invalid) operands" }

@@ -1,6 +1,7 @@
 ; Flag settings; clearf, setf
 
  .text
+ .syntax no_register_prefix
 start:
  nop			; So we get it tested too -- and it makes the
 			; size of the code a 32-bit multiple, so

@@ -4,8 +4,6 @@
 
 .*:     file format elf32-d10v
 
-Disassembly of section .text:
-Disassembly of section .data:
 Disassembly of section s1:
 
 00000000 <foo>:

@@ -4,7 +4,7 @@
  .endm
 
  .text
-
+ .syntax no_register_prefix
 ; Region of relaxation is after insn, same segment 
 z:
  move.d [pc-(x1-x+128-4)],r8 ; 4

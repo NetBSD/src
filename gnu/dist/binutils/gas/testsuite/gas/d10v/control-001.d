@@ -16,4 +16,3 @@ Disassembly of section .text:
   1c:	69 0a 57 40 	mvfc	r0, mod_s	->	mvtc	r0, mod_s
   20:	69 0b 57 60 	mvfc	r0, mod_e	->	mvtc	r0, mod_e
   24:	69 0e 57 c0 	mvfc	r0, iba	->	mvtc	r0, iba
-Disassembly of section .data:

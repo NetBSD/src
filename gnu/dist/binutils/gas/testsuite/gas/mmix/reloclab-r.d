@@ -1,5 +1,5 @@
 #objdump: -dr
-#as: -linkrelax -x
+#as: -linkrelax -x --no-stubs
 #source: reloclab.s
 .*:     file format elf64-mmix
 

@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
        0:	1c 00 00 00 01 00 	\[MFB\]       nop\.m 0x0
        6:	40 38 14 0c 40 00 	            fma\.s0 f4=f5,f6,f7
        c:	00 00 00 20       	            nop\.b 0x0

@@ -8,7 +8,7 @@ proc do_quad {} {
     set x2 0
     set x3 0
     set file "quad.s"
-    if [istarget vax-*-*elf*] {
+    if { [istarget vax-*-*elf*] || [istarget vax-*-linux-gnu*] } then {
 	set file "quad_elf.s"
     }
     gas_start $file "-al"

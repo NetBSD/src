@@ -27,8 +27,6 @@ Contents of section \.text:
 #...
  0360 230bf700 230bf800 230bf900 230bfa00  .*
  0370 230bfb00 230bfc00 230bfd00 230bfe00  .*
-Contents of section \.data:
-Contents of section \.sbss:
 Contents of section \.MMIX\.reg_contents:
  0100 00000000 00000000 00000000 00000100  .*
  0110 00000000 00000200 00000000 00000300  .*

@@ -21,24 +21,30 @@
 # Make sure that ld correctly handles common symbols in ELF.
 
 # This test can only be run on ELF platforms.
-# Square bracket expressions seem to confuse istarget.
-if { ![istarget hppa*64*-*-hpux*] \
-     && ![istarget *-*-gnu] \
-     && ![istarget *-*-linux*] \
-     && ![istarget *-*-elf] } {
+if ![is_elf_format] {
     return
 }
 
-if { [istarget *-*-linux*aout*] \
-     || [istarget *-*-linux*oldld*] } {
+set test1	"size/aligment change of common symbols"
+set test1w1	"$test1 (warning 1)"
+set test1w2	"$test1 (warning 2)"
+set test1c1	"$test1 (change 1)"
+set test1c2	"$test1 (change 2)"
+
+if { [which $CC] == 0 } {
+    untested $test1w1
+    untested $test1w2
+    untested $test1c1
+    untested $test1c2
     return
 }
 
 proc dump_common1 { testname } {
     global exec_output
+    global READELF
 
-    send_log "readelf -s tmpdir/common1.o | grep foo\n"
-    catch "exec readelf -s tmpdir/common1.o | grep foo" exec_output
+    send_log "$READELF -s tmpdir/common1.o | grep foo\n"
+    catch "exec $READELF -s tmpdir/common1.o | grep foo" exec_output
     if { ![regexp "(\[ 	\]*)(\[0-9\]+):(\[ 	\]*)(\[0\]*)80(\[ 	\]+)4(\[ 	\]+)OBJECT(\[ 	\]+)GLOBAL(\[ 	\]+)DEFAULT(\[ 	\]+)COM(\[ 	\]+)_?foo2" $exec_output]
  	 || ![regexp "(\[ 	\]*)(\[0-9\]+):(\[ 	\]*)(\[0-9\]+)(\[ 	\]+)21(\[ 	\]+)OBJECT(\[ 	\]+)GLOBAL(\[ 	\]+)DEFAULT(\[ 	\]+)(\[0-9\]+)(\[ 	\]+)_?foo1" $exec_output] } {
 	send_log "$exec_output\n"
@@ -50,7 +56,6 @@ proc dump_common1 { testname } {
     return 1
 }
 
-set test1 "size/aligment change of common symbols"
 if { ![ld_compile "$CC $CFLAGS" $srcdir/$subdir/common1a.c tmpdir/common1a.o]
     || ![ld_compile "$CC $CFLAGS" $srcdir/$subdir/common1b.c tmpdir/common1b.o] } {
     unresolved $test1
@@ -61,32 +66,32 @@ global ld
 global link_output
 
 if { [ld_simple_link $ld tmpdir/common1.o "-r tmpdir/common1a.o tmpdir/common1b.o"] } {
-    unresolved "$test1 (warning 1)"
+    unresolved $test1w1
     return
 }
 
 if { ![regexp "Warning: alignment (\[0-9\]+) of symbol \`_?foo1\' in tmpdir/common1b.o is smaller than 64 in tmpdir/common1a.o" $link_output]
      || ![regexp "Warning: size of symbol \`_?foo1\' changed from 2 in tmpdir/common1a.o to 21 in tmpdir/common1b.o" $link_output] } {
-    fail "$test1 (warning 1)"
+    fail $test1w1
 } else {
-    pass "$test1 (warning 1)"
+    pass $test1w1
 }
 
-if { [dump_common1 "$test1 (change 1)"] } {
-    pass "$test1 (change 1)"
+if { [dump_common1 $test1c1] } {
+    pass $test1c1
 }
 
 if { [ld_simple_link $ld tmpdir/common1.o "-r tmpdir/common1b.o tmpdir/common1a.o"] } {
-    unresolved "$test1 (warning 2)"
+    unresolved $test1w2
     return
 }
 
 if { ![regexp "Warning: alignment (\[0-9\]+) of symbol \`_?foo1\' in tmpdir/common1b.o is smaller than 64 in tmpdir/common1a.o" $link_output] } {
-    fail "$test1 (warning 2)"
+    fail $test1w2
 } else {
-    pass "$test1 (warning 2)"
+    pass $test1w2
 }
 
-if { [dump_common1 "$test1 (change 2)"] } {
-    pass "$test1 (change 2)"
+if { [dump_common1 $test1c2] } {
+    pass $test1c2
 }

@@ -1,5 +1,6 @@
 ; Test the addi insn.
  .text
+ .syntax no_register_prefix
 start:
  addi r0.b,r1
  addi r0.w,r1

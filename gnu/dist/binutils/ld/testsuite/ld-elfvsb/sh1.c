@@ -339,6 +339,37 @@ shlib_visibility_checkweak ()
 {
   return 1;
 }
+#elif defined (HIDDEN_WEAK_TEST)
+#pragma weak shlib_visibility_undef_var_weak
+extern int shlib_visibility_undef_var_weak;
+asm (".hidden shlib_visibility_undef_var_weak");
+
+#pragma weak shlib_visibility_undef_func_weak
+extern int shlib_visibility_undef_func_weak ();
+asm (".hidden shlib_visibility_undef_func_weak");
+
+#pragma weak shlib_visibility_var_weak
+extern int shlib_visibility_var_weak;
+asm (".hidden shlib_visibility_var_weak");
+
+#pragma weak shlib_visibility_func_weak
+extern int shlib_visibility_func_weak ();
+asm (".hidden shlib_visibility_func_weak");
+
+int
+shlib_visibility_checkcom ()
+{
+  return 1;
+}
+
+int
+shlib_visibility_checkweak ()
+{
+  return &shlib_visibility_undef_var_weak == NULL
+	 && &shlib_visibility_undef_func_weak == NULL
+	 && &shlib_visibility_func_weak == NULL
+	 && &shlib_visibility_var_weak == NULL;
+}
 #else
 int
 shlib_visibility_checkcom ()

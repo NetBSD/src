@@ -34,19 +34,19 @@ if { !([istarget "ia64-*-elf*"]
 # readelf: Apply readelf options on result.  Compare with regex (last arg).
 
 set ia64tests {
-    {"TLS -fpic -shared" "-shared -melf64_ia64"
+    {"TLS -fpic -shared" "-shared"
      "" {tlspic1.s tlspic2.s}
      {{readelf -WSsrl tlspic.rd} {objdump -drj.text tlspic.dd}
       {objdump -sj.got tlspic.sd} {objdump -sj.tdata tlspic.td}}
       "libtlspic.so"}
-    {"Helper shared library" "-shared -melf64_ia64"
+    {"Helper shared library" "-shared"
      "" {tlslib.s} {} "libtlslib.so"}
     {"TLS -fpic and -fno-pic exec"
-     "-melf64_ia64 tmpdir/libtlslib.so" "" {tlsbinpic.s tlsbin.s}
+     "tmpdir/libtlslib.so" "" {tlsbinpic.s tlsbin.s}
      {{readelf -WSsrl tlsbin.rd} {objdump -drj.text tlsbin.dd}
       {objdump -sj.got tlsbin.sd} {objdump -sj.tdata tlsbin.td}}
       "tlsbin"}
-    {"TLS in debug sections" "-melf64_ia64"
+    {"TLS in debug sections" ""
      "" {tlsg.s}
      {{objdump -sj.debug_foobar tlsg.sd}} "tlsg"}
 }
