@@ -1,0 +1,83 @@
+#	$NetBSD: Makefile.tarfloppy,v 1.1 2002/04/16 09:00:20 lukem Exp $
+#
+# Makefile snippet to create a set of ustar floppies.
+# Each floppy has an 8KB header, followed by part or all of the ustar archive.
+#
+
+#
+# Required variables:
+#	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
+#	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
+#			be generated as ${FLOPPYBASE}${n}.fs
+#	FLOPPYSIZE	Size of floppy in 512 byte blocks.
+#	FLOPPYFILES	Files to write to floppy.
+#			Usually set to "boot ${FLOPPYMETAFILE} netbsd"
+#
+
+#
+# Optional variables:
+#	FLOPPY_BOOT		Bootstrap to use as "boot".
+#	FLOPPY_BOOT_STRIP	If yes, strip "boot" before use.
+#	FLOPPY_NETBSD		Kernel to to use as "netbsd".
+#
+#	FLOPPYMAX	Maximum number of floppies to build.
+#			If 1, final image is installed as ${FLOPPYBASE}.fs
+#	FLOPPYMETAFILE	Ustar metafile (optional)
+#	FLOPPYINSTBOOT	Installboot program to use.  ustar file is in @IMAGE@.
+#	FLOPPYPAD	If defined, pad the last floppy to ${FLOPPYSIZE}
+#	FLOPPYINSTDIR	Where to install release images.
+#
+
+
+.if defined(FLOPPY_BOOT)				# {
+CLEANFILES+=	boot
+boot: ${FLOPPY_BOOT}
+	@echo "Copying ${.ALLSRC} to boot"
+	@rm -f boot
+	@cp ${.ALLSRC} boot
+.if defined(FLOPPY_BOOT_STRIP)
+	@${STRIP} boot
+.endif
+.endif	# FLOPPY_BOOT					# }
+
+
+.if defined(FLOPPY_NETBSD)				# {
+CLEANFILES+=	netbsd
+netbsd: ${FLOPPY_NETBSD}
+	@echo "Copying ${.ALLSRC} to netbsd"
+	@rm -f netbsd
+	@cp ${.ALLSRC} netbsd
+.endif	# FLOPPY_NETBSD					# }
+
+
+.if defined(FLOPPYMETAFILE)				# {
+CLEANFILES+=	${FLOPPYMETAFILE}
+${FLOPPYMETAFILE}:
+	@echo "Creating ${FLOPPYMETAFILE}"
+	@rm -f ${FLOPPYMETAFILE}
+	@touch ${FLOPPYMETAFILE}
+.endif	# FLOPPYMETAFILE				# }
+
+
+${FLOPPYBASE}1.fs: ${FLOPPYFILES} ${DISTRIBDIR}/common/buildfloppies.sh
+	@echo "Creating ${FLOPPYBASE}1.fs from: ${FLOPPYFILES}"
+	sh ${DISTRIBDIR}/common/buildfloppies.sh ${FLOPPYMAX:D-m ${FLOPPYMAX}} \
+	    ${FLOPPYINSTBOOT:D-i ${FLOPPYINSTBOOT}} ${FLOPPYPAD:D-p} \
+	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}
+
+CLEANFILES+=	${FLOPPYBASE}?.fs
+
+
+realall: ${FLOPPYBASE}1.fs
+
+.if defined(FLOPPYINSTDIR)
+release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1.fs
+	-mkdir -p ${RELEASEDIR}/${FLOPPYINSTDIR}
+	if [ -e ${FLOPPYBASE}2.fs ]; then \
+		${RELINSTALL} ${FLOPPYBASE}?.fs \
+		    ${RELEASEDIR}/${FLOPPYINSTDIR}; \
+	else \
+		${RELINSTALL} ${FLOPPYBASE}1.fs \
+		    ${RELEASEDIR}/${FLOPPYINSTDIR}/${FLOPPYBASE}.fs; \
+	fi
+.endif
