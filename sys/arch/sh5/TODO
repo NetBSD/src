@@ -1,0 +1,58 @@
+$NetBSD: TODO,v 1.1 2002/09/22 20:54:33 scw Exp $
+
+TODO List For NetBSD/sh5
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+In no particular order:
+
+
+1.	Enable the cpu cache.	*MOSTLY DONE*
+	There are two cache modes available in the current cpu: write-back
+	and write-through. The former would be very nice. However, I don't
+	want to enable caching until I'm happy enough with the stability
+	of the pmap. And anyway, the pmap doesn't pay lip-service to the
+	cache yet.
+
+2.	Re-work the TLB invalidation code.
+	This is a pain, as there is no hardware support for looking up an
+	address in the TLBs. To get around this, the PTEG structure
+	used to track user-space mappings contains a hint as to which group
+	of four TLB slots a mapping is entered on. This information is
+	maintained and updated by the TLB miss code itself. Higher level
+	pmap code uses the hint to speed up TLB invalidation for user-space
+	mappings (a maximum of 4 ITLB and/or 4 DTLB slots need be searched).
+
+	Unfortunately, no such "hint" is maintained for kernel mappings
+	(those in KSEG1), making KSEG1 TLB invalidations very expensive.
+
+	Adding a "hint" field to the pmap_kernel_ipt structure would make
+	things much quicker, but would use more memory... It's a question
+	of trade offs.
+
+	When I make the above change, I'd like to add a similar "hint"
+	field to the PTEG structure, instead of relying on "unused" bits
+	in the PTEH. This will allow the "hint" to pinpoint *exactly*
+	which TLB slot in both ITLB and DTLB contains the mapping. This
+	would work for both user-space and KSEG1 mappings.
+
+3.	Allocate interrupt handles from a pool backed by pages from KSEG0.
+	This will reduce DTLB misses at interrupt time.
+
+4.	copy{in,out}() need to be re-written.
+	Right now, they copy byte-at-a-time, which is not exactly fast...
+
+5.	in_cksum.c needs to be replaced with an assembly code version
+	which makes use of special SHmedia instructions. At first glance,
+	an algorithm which makes use of the M* instructions would be
+	very fast indeed.
+
+6.	libkern needs sh5-specific optimised versions of key functions.
+	Most of these can be used by libc too.
+
+7.	Support for more of the on-chip peripherals, such as DMA and PCI.
+
+8.	Test the whole lot using a 64-bit kernel/userland.
+
+9.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
+
+10.	Stress-testing of just about everything. ;-)
