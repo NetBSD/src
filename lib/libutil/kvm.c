@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.21 1993/12/05 00:33:30 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.22 1993/12/15 00:53:29 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -982,7 +982,7 @@ Vtophys(loc)
 	struct pte pte;
 	int p;
 
-	pde = PTD[loc >> PD_SHIFT];
+	pde = PTD[loc >> PDSHIFT];
 	if (pde.pd_v == 0) {
 		seterr("vtophys: page directory entry not valid");
 		return((off_t) -1);
