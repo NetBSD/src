@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.4 2003/08/05 11:32:35 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.5 2003/08/27 03:46:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.4 2003/08/05 11:32:35 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.5 2003/08/27 03:46:05 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -424,7 +424,7 @@ initarm(void *arg)
 	bootstrap_bs_map(&bootstrap_bs_tag, S3C2410_INTCTL_BASE,
 	    S3C2410_INTCTL_SIZE, 0, &temp_softc.sc_sx.sc_intctl_ioh);
 	bootstrap_bs_map(&bootstrap_bs_tag, S3C2410_CLKMAN_BASE,
-	    S3C2410_CLKMAN_SIZE, 0, &temp_softc.sc_sx.sc_clkman_ioh);
+	    S3C24X0_CLKMAN_SIZE, 0, &temp_softc.sc_sx.sc_clkman_ioh);
 
 #undef __LED
 #define __LED(x) 								\

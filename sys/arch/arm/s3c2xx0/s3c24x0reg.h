@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.2 2003/08/04 12:19:38 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.3 2003/08/27 03:46:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -52,7 +52,7 @@
 #define	 BWSCON_ST		0x08	/* SRAM use UB/LB for the bank */
 
 #define	MEMCTL_BANKCON0 	0x04	/* Boot ROM control */
-#define	MEMCTL_BANKCON(n)	(0x04+4*(n)) /* BANKn control */)
+#define	MEMCTL_BANKCON(n)	(0x04+4*(n)) /* BANKn control */
 #define	 BANKCON_MT_SHIFT 	15
 #define	 BANKCON_MT_ROM 	(0<<BANKCON_MT_SHIFT)
 #define	 BANKCON_MT_DRAM 	(3<<BANKCON_MT_SHIFT)
@@ -91,8 +91,10 @@
 #define	MEMCTL_MRSRB7    	0x30
 #define	 MRSR_CL_SHIFT		4	/* CAS Latency */
 
+#define S3C24X0_MEMCTL_SIZE	0x34
+
 /* USB Host controller */
-/* XXX */
+#define	S3C24X0_USBHC_SIZE	0x5c
 
 /* Interrupt controller */
 #define	INTCTL_PRIORITY 	0x0c	/* IRQ Priority control */
@@ -128,12 +130,12 @@
 #define S3C24X0_INT_TIMER2	12
 #define S3C24X0_INT_TIMER1	11
 #define S3C24X0_INT_TIMER0	10
-#define S3C24X0_INT_TIMER(n)	(10+(n)) /* External interrupt [4:0] */
+#define S3C24X0_INT_TIMER(n)	(10+(n)) /* timer interrupt [4:0] */
 #define S3C24X0_INT_WDT 	9	/* Watch dog timer */
 #define	S3C24X0_INT_TICK 	8
 #define	S3C2410_INT_BFLT 	7	/* Battery fault */
 #define S3C2410_INT_8_23	5	/* Ext int 8..23 */
-#define S3C2410_INT_4_7 	4	/* Ext int 8..23 */
+#define S3C2410_INT_4_7 	4	/* Ext int 4..7 */
 #define S3C24X0_INT_EXT(n)	(n) 	/* External interrupt [7:0] for 2400,
 					 * [3:0] for 2410 */
 /* DMA controller */
@@ -161,9 +163,11 @@
 #define	 CLKDIVN_HDIVN	(1<<1)
 #define	 CLKDIVN_PDIVN	(1<<0)
 
+#define S3C24X0_CLKMAN_SIZE	0x18
 
 /* LCD controller */
 /* XXX */
+#define	S3C24X0_LCDC_SIZE 	0x64
 
 /* Timer */
 #define	TIMER_TCFG0 	0x00	/* Timer configuration */
@@ -188,12 +192,16 @@
 #define	TIMER_TCMPB(n)	(0x10+0x0c*(n))	/* compare buffer 0 */
 #define	TIMER_TO(n)	(0x14+0x0c*(n))	/* count observation 0 */
 
+#define	S3C24X0_TIMER_SIZE	0x44
+
 /* UART */
 /* diffs to s3c2800 */
 #define  UMCON_AFC	(1<<4)	/* auto flow control */
 #define  UMSTAT_DCTS	(1<<2)	/* CTS change */
 #define	 ULCON_IR  	(1<<6)
 #define	 ULCON_PARITY_SHIFT  3
+
+#define	S3C24X0_UART_SIZE 	0x2c
 
 /* USB device */
 /* XXX */
@@ -216,15 +224,21 @@
 #define	WDT_WTDAT 	0x04	/* timer data */
 #define	WDT_WTCNT 	0x08	/* timer count */
 
+#define	S3C24X0_WDT_SIZE 	0x0c
+
 /* IIC */ /* XXX */
+#define	S3C24X0_IIC_SIZE 	0x0c
+
 
 /* IIS */ /* XXX */
+#define	S3C24X0_IIS_SIZE 	0x14
 
 /* RTC */ /* XXX */
 
 /* ADC */ /* XXX */
 
 /* SPI */ /* XXX */
+#define	S3C24X0_SPI_SIZE 	0x18
 
 
 
