@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.8 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: xfer,v 1.9 2001/07/24 18:24:51 nra Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -89,7 +89,7 @@ after
 it has acquired its IP address through
 .Tn RARP .
 It will attempt to download a file using a name derived from the
-machine's recently aquired IP
+machine's recently acquired IP
 .if r_sun3 address.
 .if r_sun3x address and an extension which corresponds to the
 .if r_sun3x machine architecture.
