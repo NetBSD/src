@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.5 2002/02/16 01:39:10 reinoud Exp $
+	$NetBSD: prep.RISCOS,v 1.6 2002/02/16 02:31:30 reinoud Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -210,8 +210,8 @@ Here is the procedure you should use:
 	Click on Define/create partitions
 		Click on the device you want to set up for NetBSD.
 
-		Set up the RISC OS partitions as RiscOs: and the
-		remaining one as Empty:.
+		Set up the RISC OS partitions as "RiscOs:" and the
+		remaining one as "Empty:".
 
 		Click on each figure and press RETURN.
 
@@ -243,7 +243,7 @@ Here is the procedure you should use:
 		Click on configure. This will configure your computer
 		and give you access to the Discs.
 
-	You *Must Not* run bb_riscbsd
+	You *Must Not* run bb_riscbsd.
 
 
 
@@ -285,7 +285,7 @@ Now you should enter the following commands:
 
 	quit
 
-	Go to the section on running bb_riscbsd
+	Go to the section on running bb_riscbsd.
 
 
 
@@ -356,7 +356,7 @@ Now that your device is ready for the installation you need to
 unpack the bootloader archive. Pick either BtNetBSD.tgz or BtNetBSD.zip
 depending on wich type of archive you can extract easiest. (if you're
 installing from CD-ROM then this should be unpacked already), copy the
-directory to your harddisc. In the archive you'll find the tools
+directory to your hard disc. In the archive you'll find the tools
 mentioned in this document as well as the bootloader !BtNetBSD itself.
 
 
@@ -557,7 +557,7 @@ Also, if you have different controllers, all devices on controller
         - b     The swap partition
         - c     The complete and whole disc ; all OS's and partitions
         - d     Part of the disc that is not used by NetBSD; normally RiscOS
-        - e     The first additonal partition.
+        - e     The first additional partition.
                 i.e. if you have only /usr, then this will be /usr
                 if you have both /var and /usr this will be /var
         - f     The second additional partition.
@@ -597,11 +597,11 @@ This manual has been written from scratch based on version 1.2
 of the installation manual that Mark Brinicombe wrote.
 
 It was mainly written by Kjetil B. Thomassen
-(mailto:kjetil@thomassen.priv.no) with contributions from:
-Neil Hoggarth (mailto:neil.hoggarth@physiol.ox.ac.uk)
-Markus Baeurle (mailto:emw4maba@gp.fht-esslingen.de)
-Jasper Wallace (mailto:jasper@ivision.co.uk)
-Mark Brinicombe (mailto:amb@physig.ph.kcl.ac.uk)
-Scott Stevens (mailto:s.k.stevens@ic.ac.uk)
+(kjetil@thomassen.priv.no) with contributions from:
+Neil Hoggarth (neil.hoggarth@physiol.ox.ac.uk)
+Markus Baeurle (emw4maba@gp.fht-esslingen.de)
+Jasper Wallace (jasper@ivision.co.uk)
+Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
+Scott Stevens (s.k.stevens@ic.ac.uk)
 and a lot more people posting to the origional RiscBSD mailing list.
 
