@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.9 1998/08/27 20:31:01 ross Exp $	*/
+/*	$NetBSD: plist.c,v 1.10 1998/10/08 12:15:25 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.9 1998/08/27 20:31:01 ross Exp $");
+__RCSID("$NetBSD: plist.c,v 1.10 1998/10/08 12:15:25 agc Exp $");
 #endif
 #endif
 
@@ -368,7 +368,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 {
     PackingList p;
     char *Where = ".", *last_file = "";
-    Boolean fail = SUCCESS;
+    int fail = SUCCESS;
     Boolean preserve;
     char tmp[FILENAME_MAX], *name = NULL;
 
