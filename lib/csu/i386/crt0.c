@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.24 1996/12/07 23:31:07 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.25 1997/06/19 06:02:06 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.24 1996/12/07 23:31:07 mycroft Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.25 1997/06/19 06:02:06 mikel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ __start(argc, argv, envp)
 
 	environ = envp;
 
-	if (ap = argv[0])
+	if ((ap = argv[0]))
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else
