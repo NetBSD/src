@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.160 1996/12/22 23:05:31 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.161 1997/01/10 05:28:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -191,9 +191,10 @@ tmpstk:
 #define	RELOC(x)	((x) - KERNBASE)
 
 	.text
-	.globl	_C_LABEL(kernel_text)
+	.globl	_kernel_text
+	.set	_kernel_text,KERNTEXTOFF
+
 	.globl	start
-_C_LABEL(kernel_text):
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
