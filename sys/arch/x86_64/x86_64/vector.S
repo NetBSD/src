@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.3 2002/05/28 23:11:40 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.4 2002/06/03 18:23:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
 
 #define	BPTTRAP(a)	ZTRAP(a)
+
+#define CPUVAR(off)	%gs:CPU_INFO_/**/off
 
 	.text
 IDTVEC(trap00)
@@ -229,52 +231,40 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 
+IDTVEC(syscall32)
+	sysret		/* go away please */
+
 /*
  * syscall insn entry. This currently isn't much faster, but
  * it can be made faster in the future.
  */
 IDTVEC(syscall)
-	/*
-	 * We're out of spare registers in the ABI. I don't want
-	 * to go the swapgs route, so use temp storage in
-	 * per-CPU private data. XXX
-	 */
-	movq	%r15,CPUPRIV(SCRATCH_R15)
-	movq	_C_LABEL(curpcb)(%rip), %r15
+	swapgs
+	movq	%r15,CPUVAR(SCRATCH)
+	movq	_C_LABEL(curpcb)(%rip),%r15
 	movq	PCB_RSP0(%r15),%r15
-	xchgq	%rsp,%r15
+	xchgq	%r15,%rsp
 	sti
 
 	/*
 	 * XXX don't need this whole frame, split of the
 	 * syscall frame and trapframe is needed.
+	 * First, leave some room for the trapno, error,
+	 * ss:rsp, etc, so that all GP registers can be
+	 * saved. Then, fill in the rest.
 	 */
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
 	pushq	%r15
-	pushq	%r11	/* old rflags */
-	pushq	$(LSEL(LUCODE_SEL, SEL_UPL))
-	pushq	%rcx	/* old rip */
-	pushq	$0
-	pushq	$T_ASTFLT
-	pushq	%rax
-	pushq	%rcx
-	pushq	%rdx
-	pushq	%rbx
-	pushq	%rbp
-	pushq	%rsi
-	pushq	%rdi
-	pushq	%r8
-	pushq	%r9
-	pushq	%r10
-	pushq	%r11
-	pushq	%r12
-	pushq	%r13
-	pushq	%r14
-	movq	CPUPRIV(SCRATCH_R15),%r15
-	pushq	%r15
+	subq	$(TF_RSP-TF_TRAPNO),%rsp
+	movq	CPUVAR(SCRATCH),%r15
+	INTR_SAVEARGS
+	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
+	movq	%rcx,TF_RIP(%rsp)
+	movq	$0,TF_ERR(%rsp)
+	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
-	movq	_C_LABEL(curproc)(%rip),%r15	# get pointer to curproc
-	orl	$MDP_SYSCALL,P_MD_FLAGS(%r15)
+	movq    _C_LABEL(curproc)(%rip),%r15
 	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
@@ -289,27 +279,13 @@ IDTVEC(syscall)
 	jmp	1b
 2:
 	sti
-	andl	$~MDP_SYSCALL,P_MD_FLAGS(%r15)
 syscall_return:
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%r11
-	popq	%r10
-	popq	%r9
-	popq	%r8
-	popq	%rdi
-	popq	%rsi
-	popq	%rbp
-	popq	%rbx
-	popq	%rdx
-	popq	%rcx
-	popq	%rax
+	INTR_RESTOREARGS
 	addq	$16,%rsp
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
 	popq	%r11	/* flags as set by sysret insn */
+	swapgs
 	cli
 	movq	(%rsp),%rsp
 	sysretq
@@ -323,9 +299,7 @@ NENTRY(proc_trampoline)
 NENTRY(child_trampoline)
 	movq	%r13,%rdi
 	call	*%r12
-	btrl	$MDP_SYSCALL,P_MD_FLAGS(%r13)
-	jc	syscall_return
-	INTRFASTEXIT
+	jmp	syscall_return
 
 /*
  * Old call gate entry for syscall. XXXfvdl: only needed if we're
@@ -341,8 +315,7 @@ IDTVEC(oosyscall)
 
 /*
  * Trap gate entry for int $80 syscall
- * XXX convert to using syscall/sysret.
- * XXXfvdl Pushing all of the intr frame is overkill.
+ * XXX should only be used for 32bit binaries, check for this.
  */
 IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
@@ -350,6 +323,8 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
+	testl	$P_32,P_FLAG(%rdx)
+	je	1f		# not a 32bit process, go away please
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl)(%rip),%ebx
 #endif /* DIAGNOSTIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2002/05/28 23:11:40 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2002/06/03 18:23:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -121,10 +121,7 @@ syscall_plain(frame)
 		case 5:
 			args[4] = frame.tf_r8;
 		case 4:
-			if (p->p_md.md_flags & MDP_SYSCALL)
-				args[3] = frame.tf_r10;
-			else
-				args[3] = frame.tf_rcx;
+			args[3] = frame.tf_r10;
 		case 3:
 			args[2] = frame.tf_rdx;
 		case 2:	
@@ -225,10 +222,7 @@ syscall_fancy(frame)
 		case 5:
 			args[4] = frame.tf_r8;
 		case 4:
-			if (p->p_md.md_flags & MDP_SYSCALL)
-				args[3] = frame.tf_r10;
-			else
-				args[3] = frame.tf_rcx;
+			args[3] = frame.tf_r10;
 		case 3:
 			args[2] = frame.tf_rdx;
 		case 2:	

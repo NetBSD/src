@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2002/05/28 23:11:40 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2002/06/03 18:23:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -421,8 +421,13 @@ copyfault:
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, T_PAGEFLT);
-		} else 
+		} else {
+#ifdef fvdl_debug
+			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
+			    p->p_pid, p->p_comm, frame.tf_rip, va);
+#endif
 			trapsignal(p, SIGSEGV, T_PAGEFLT);
+		}
 		break;
 	}
 
