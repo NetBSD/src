@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15 2003/05/18 21:00:57 martin Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.16 2004/01/06 20:41:23 petrov Exp $ */
 
 /*
  * Mach Operating System
@@ -40,7 +40,6 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 
-/* end of mangling */
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
@@ -51,7 +50,7 @@ struct trapstate {
 	int64_t	tnpc;
 	int64_t	tt;
 };
-#if 1
+
 typedef struct {
 	struct trapframe64	ddb_tf;
 	struct frame64		ddb_fr;
@@ -59,27 +58,8 @@ typedef struct {
 	int			ddb_tl;
 	struct fpstate64	ddb_fpstate;
 } db_regs_t;
-#else
-typedef struct db_regs {
-	struct trapregs dbr_traps[4];
-	int		dbr_y;
-	char		dbr_tl;
-	char		dbr_canrestore;
-	char		dbr_cansave;
-	char		dbr_cleanwin;
-	char		dbr_cwp;
-	char		dbr_wstate;
-	int64_t		dbr_g[8];
-	int64_t		dbr_ag[8];
-	int64_t		dbr_ig[8];
-	int64_t		dbr_mg[8];
-	int64_t		dbr_out[8];
-	int64_t		dbr_local[8];
-	int64_t		dbr_in[8];
-} db_regs_t;
-#endif
 
-db_regs_t		ddb_regs;	/* register state */
+extern db_regs_t		ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 #define	DDB_TF		(&ddb_regs.ddb_tf)
 #define	DDB_FR		(&ddb_regs.ddb_fr)
