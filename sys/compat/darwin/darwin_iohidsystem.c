@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.23 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.24 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.23 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.24 2003/12/09 11:29:01 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -171,13 +171,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_connect_method_scalari_scalaro()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
 	maxoutcount = req->req_in[req->req_incount]; 
 
 	switch (req->req_selector) {
@@ -283,10 +277,10 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 		break;
 	}
 
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
-
 	*msglen = sizeof(*rep) - ((16 + rep->rep_outcount) * sizeof(int));
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -304,13 +298,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_connect_method_structi_structo()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
-
 	maxoutcount = req->req_in[req->req_incount]; 
 
 	switch (req->req_selector) {
@@ -357,10 +345,11 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		break;
 	}
 
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -396,18 +385,15 @@ darwin_iohidsystem_connect_map_memory(args)
 #ifdef DEBUG_DARWIN
 	printf("pvaddr = 0x%08lx\n", (long)pvaddr);
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_retval = 0;
 	rep->rep_addr = pvaddr;
 	rep->rep_len = sizeof(struct darwin_iohidsystem_shmem);
-	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep);
-
+	mach_set_trailer(rep, *msglen);
 	return 0;
 }
 
@@ -714,7 +700,8 @@ mach_notify_iohidsystem(l, mr)
 	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_name;
 	req->req_msgh.msgh_id = 0;
-	req->req_trailer.msgh_trailer_size = 8;
+
+	mach_set_trailer(req, sizeof(*req));
 
 #ifdef KTRACE
 	ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
