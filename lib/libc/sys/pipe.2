@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pipe.2	6.3 (Berkeley) 3/10/91
-.\"	$Id: pipe.2,v 1.4 1993/11/29 21:25:26 jtc Exp $
+.\"	$Id: pipe.2,v 1.4.2.1 1994/07/22 03:38:27 cgd Exp $
 .\"
 .Dd March 10, 1991
 .Dt PIPE 2
@@ -79,10 +79,6 @@ signal.
 Widowing a pipe is the only way to deliver end-of-file to a reader:
 after the reader consumes any buffered data, reading a widowed pipe
 returns a zero count.
-.Pp
-Pipes are really a special case of the 
-.Xr socketpair 2
-call and, in fact, are implemented as such in the system.
 .Sh RETURN VALUES
 On successful creation of the pipe, zero is returned. Otherwise, 
 a value of -1 is returned and the variable
