@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.8 2003/12/16 11:59:04 sekiya Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.9 2003/12/29 06:33:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.8 2003/12/16 11:59:04 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.9 2003/12/29 06:33:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,16 +136,15 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 #ifdef DMA_DEBUG
 		printf("%p:%ld, ", (void *)segp->ds_addr, segp->ds_len);
 #endif
-		if (sc->hpc->revision == 15)
-		{
+		if (sc->hpc->revision == 3) {
+			hva->hpc3_hdd_bufptr = segp->ds_addr;
+			hva->hpc3_hdd_ctl    = segp->ds_len;
+			hva->hdd_descptr = (u_int32_t) ++hpa;
+		} else /* HPC 1/1.5 */ {
 			/* there doesn't seem to be any good way of doing this
 		   	   via an abstraction layer */
-			hva->hdd_bufptr = segp->ds_len;
-			hva->hdd_ctl    = segp->ds_addr;
-			hva->hdd_descptr = (u_int32_t) ++hpa;
-		} else {
-			hva->hdd_bufptr = segp->ds_addr;
-			hva->hdd_ctl    = segp->ds_len;
+			hva->hpc1_hdd_bufptr = segp->ds_addr;
+			hva->hpc1_hdd_ctl    = segp->ds_len;
 			hva->hdd_descptr = (u_int32_t) ++hpa;
 		}
 		++hva; ++segp;
@@ -154,13 +153,13 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 	/* Work around HPC3 DMA bug */
 	if (sc->hpc->revision == 3)
 	{
-		hva->hdd_bufptr  = 0;
-		hva->hdd_ctl     = HDD_CTL_EOCHAIN;
+		hva->hpc3_hdd_bufptr  = 0;
+		hva->hpc3_hdd_ctl     = HDD_CTL_EOCHAIN;
 		hva->hdd_descptr = 0;
 		hva++;
 	} else {
 		hva--;
-		hva->hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
+		hva->hpc1_hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
 		hva->hdd_descptr = 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.22 2003/12/16 11:59:04 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.23 2003/12/29 06:33:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.22 2003/12/16 11:59:04 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.23 2003/12/29 06:33:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,134 +128,136 @@ struct hpc_softc {
 };
 
 static struct hpc_values hpc1_values = {
-	15,
-	HPC1_SCSI0_REGS,
-	HPC1_SCSI0_REGS_SIZE,
-	HPC1_SCSI0_CBP,
-	HPC1_SCSI0_NDBP,
-	HPC1_SCSI0_BC,
-	HPC1_SCSI0_CTL,
-	HPC1_SCSI0_GIO,
-	HPC1_SCSI0_DEV,
-	HPC1_SCSI0_DMACFG,
-	HPC1_SCSI0_PIOCFG,
-	HPC1_SCSI1_REGS,
-	HPC1_SCSI1_REGS_SIZE,
-	HPC1_SCSI1_CBP,
-	HPC1_SCSI1_NDBP,
-	HPC1_SCSI1_BC,
-	HPC1_SCSI1_CTL,
-	HPC1_SCSI1_GIO,
-	HPC1_SCSI1_DEV,
-	HPC1_SCSI1_DMACFG,
-	HPC1_SCSI1_PIOCFG,
-	HPC1_DMACTL_DIR,
-	HPC1_DMACTL_FLUSH,
-	HPC1_DMACTL_ACTIVE,
-	HPC1_DMACTL_RESET,
-	HPC1_ENET_REGS,
-	HPC1_ENET_REGS_SIZE,
-	HPC1_ENET_INTDELAY,
-	HPC1_ENET_INTDELAYVAL,
-	HPC1_ENETR_CBP,
-	HPC1_ENETR_NDBP,
-	HPC1_ENETR_BC,
-	HPC1_ENETR_CTL,
-	HPC1_ENETR_CTL_ACTIVE,
-	HPC1_ENETR_RESET,
-	0,
-	HPC1_ENETR_PIOCFG,
-	HPC1_ENETX_CBP,
-	HPC1_ENETX_NDBP,
-	HPC1_ENETX_BC,
-	HPC1_ENETX_CTL,
-	HPC1_ENETX_CTL_ACTIVE,
-	HPC1_ENETX_DEV,
-	HPC1_ENETR_FIFO,
-	HPC1_ENETR_FIFO_SIZE,
-	HPC1_ENETX_FIFO,
-	HPC1_ENETX_FIFO_SIZE,
-	HPC1_SCSI0_DEVREGS_SIZE,
-	HPC1_SCSI0_DEVREGS_SIZE,
-	HPC1_ENET_DEVREGS,
-	HPC1_ENET_DEVREGS_SIZE,
-	HPC1_PBUS_FIFO,
-	HPC1_PBUS_FIFO_SIZE,
-	HPC1_PBUS_BBRAM,
+	.revision =		1,
+	.scsi0_regs =		HPC1_SCSI0_REGS,
+	.scsi0_regs_size =	HPC1_SCSI0_REGS_SIZE,
+	.scsi0_cbp =		HPC1_SCSI0_CBP,
+	.scsi0_ndbp = 		HPC1_SCSI0_NDBP,
+	.scsi0_bc =		HPC1_SCSI0_BC,
+	.scsi0_ctl =		HPC1_SCSI0_CTL,
+	.scsi0_gio =		HPC1_SCSI0_GIO,
+	.scsi0_dev =		HPC1_SCSI0_DEV,
+	.scsi0_dmacfg =		HPC1_SCSI0_DMACFG,
+	.scsi0_piocfg =		HPC1_SCSI0_PIOCFG,
+	.scsi1_regs =		HPC1_SCSI1_REGS,
+	.scsi1_regs_size =	HPC1_SCSI1_REGS_SIZE,
+	.scsi1_cbp =		HPC1_SCSI1_CBP,
+	.scsi1_ndbp =		HPC1_SCSI1_NDBP,
+	.scsi1_bc =		HPC1_SCSI1_BC,
+	.scsi1_ctl =		HPC1_SCSI1_CTL,
+	.scsi1_gio =		HPC1_SCSI1_GIO,
+	.scsi1_dev =		HPC1_SCSI1_DEV,
+	.scsi1_dmacfg =		HPC1_SCSI1_DMACFG,
+	.scsi1_piocfg =		HPC1_SCSI1_PIOCFG,
+	.dmactl_dir =		HPC1_DMACTL_DIR,
+	.dmactl_flush =		HPC1_DMACTL_FLUSH,
+	.dmactl_active =	HPC1_DMACTL_ACTIVE,
+	.dmactl_reset =		HPC1_DMACTL_RESET,
+	.enet_regs =		HPC1_ENET_REGS,
+	.enet_regs_size =	HPC1_ENET_REGS_SIZE,
+	.enet_intdelay =	HPC1_ENET_INTDELAY,
+	.enet_intdelayval =	HPC1_ENET_INTDELAYVAL,
+	.enetr_cbp =		HPC1_ENETR_CBP,
+	.enetr_ndbp =		HPC1_ENETR_NDBP,
+	.enetr_bc =		HPC1_ENETR_BC,
+	.enetr_ctl =		HPC1_ENETR_CTL,
+	.enetr_ctl_active =	HPC1_ENETR_CTL_ACTIVE,
+	.enetr_reset =		HPC1_ENETR_RESET,
+	.enetr_dmacfg =		0,
+	.enetr_piocfg =		HPC1_ENETR_PIOCFG,
+	.enetx_cbp =		HPC1_ENETX_CBP,
+	.enetx_ndbp =		HPC1_ENETX_NDBP,
+	.enetx_bc =		HPC1_ENETX_BC,
+	.enetx_ctl =		HPC1_ENETX_CTL,
+	.enetx_ctl_active =	HPC1_ENETX_CTL_ACTIVE,
+	.enetx_dev =		HPC1_ENETX_DEV,
+	.enetr_fifo =		HPC1_ENETR_FIFO,
+	.enetr_fifo_size =	HPC1_ENETR_FIFO_SIZE,
+	.enetx_fifo =		HPC1_ENETX_FIFO,
+	.enetx_fifo_size =	HPC1_ENETX_FIFO_SIZE,
+	.scsi0_devregs_size =	HPC1_SCSI0_DEVREGS_SIZE,
+	.scsi1_devregs_size =	HPC1_SCSI0_DEVREGS_SIZE,
+	.enet_devregs =		HPC1_ENET_DEVREGS,
+	.enet_devregs_size =	HPC1_ENET_DEVREGS_SIZE,
+	.pbus_fifo =		HPC1_PBUS_FIFO,
+	.pbus_fifo_size =	HPC1_PBUS_FIFO_SIZE,
+	.pbus_bbram =		HPC1_PBUS_BBRAM,
 #define MAX_SCSI_XFER   (512*1024)
-	(MAX_SCSI_XFER / 4096),
-	4096,
-	100,
-	(HPC1_DMACTL_ACTIVE | HPC1_DMACTL_DIR),
-	HPC1_DMACTL_ACTIVE,
-	HPC1_DMACTL_FLUSH,
-	HPC1_DMACTL_ACTIVE,
-	HPC1_DMACTL_RESET
+	.scsi_max_xfer =	MAX_SCSI_XFER,
+	.scsi_dma_segs =	(MAX_SCSI_XFER / 4096),
+	.scsi_dma_segs_size =	4096,
+	.clk_freq =		100,
+	.dma_datain_cmd =	(HPC1_DMACTL_ACTIVE | HPC1_DMACTL_DIR),
+	.dma_dataout_cmd =	HPC1_DMACTL_ACTIVE,
+	.scsi_dmactl_flush =	HPC1_DMACTL_FLUSH,
+	.scsi_dmactl_active =	HPC1_DMACTL_ACTIVE,
+	.scsi_dmactl_reset =	HPC1_DMACTL_RESET
 };
 
 static struct hpc_values hpc3_values = {
-	3,
-	HPC_SCSI0_REGS,
-	HPC_SCSI0_REGS_SIZE,
-	HPC_SCSI0_CBP,
-	HPC_SCSI0_NDBP,
-	HPC_SCSI0_BC,
-	HPC_SCSI0_CTL,
-	HPC_SCSI0_GIO,
-	HPC_SCSI0_DEV,
-	HPC_SCSI0_DMACFG,
-	HPC_SCSI0_PIOCFG,
-	HPC_SCSI1_REGS,
-	HPC_SCSI1_REGS_SIZE,
-	HPC_SCSI1_CBP,
-	HPC_SCSI1_NDBP,
-	HPC_SCSI1_BC,
-	HPC_SCSI1_CTL,
-	HPC_SCSI1_GIO,
-	HPC_SCSI1_DEV,
-	HPC_SCSI1_DMACFG,
-	HPC_SCSI1_PIOCFG,
-	HPC_DMACTL_DIR,
-	HPC_DMACTL_FLUSH,
-	HPC_DMACTL_ACTIVE,
-	HPC_DMACTL_RESET,
-	HPC_ENET_REGS,
-	HPC_ENET_REGS_SIZE,
-	0,
-	0,
-	HPC_ENETR_CBP,
-	HPC_ENETR_NDBP,
-	HPC_ENETR_BC,
-	HPC_ENETR_CTL,
-	ENETR_CTL_ACTIVE,
-	HPC_ENETR_RESET,
-	HPC_ENETR_DMACFG,
-	HPC_ENETR_PIOCFG,
-	HPC_ENETX_CBP,
-	HPC_ENETX_NDBP,
-	HPC_ENETX_BC,
-	HPC_ENETX_CTL,
-	ENETX_CTL_ACTIVE,
-	HPC_ENETX_DEV,
-	HPC_ENETR_FIFO,
-	HPC_ENETR_FIFO_SIZE,
-	HPC_ENETX_FIFO,
-	HPC_ENETX_FIFO_SIZE,
-	HPC_SCSI0_DEVREGS_SIZE,
-	HPC_SCSI1_DEVREGS_SIZE,
-	HPC_ENET_DEVREGS,
-	HPC_ENET_DEVREGS_SIZE,
-	HPC_PBUS_FIFO,
-	HPC_PBUS_FIFO_SIZE,
-	HPC_PBUS_BBRAM,
-	(MAX_SCSI_XFER / 8192),
-	8192,
-	100,
-	HPC_DMACTL_ACTIVE,
-	(HPC_DMACTL_ACTIVE | HPC_DMACTL_DIR),
-	HPC_DMACTL_FLUSH,
-	HPC_DMACTL_ACTIVE,
-	HPC_DMACTL_RESET
+	.revision		3,
+	.scsi0_regs =		HPC_SCSI0_REGS,
+	.scsi0_regs_size =	HPC_SCSI0_REGS_SIZE,
+	.scsi0_cbp =		HPC_SCSI0_CBP,
+	.scsi0_ndbp =		HPC_SCSI0_NDBP,
+	.scsi0_bc =		HPC_SCSI0_BC,
+	.scsi0_ctl =		HPC_SCSI0_CTL,
+	.scsi0_gio =		HPC_SCSI0_GIO,
+	.scsi0_dev =		HPC_SCSI0_DEV,
+	.scsi0_dmacfg =		HPC_SCSI0_DMACFG,
+	.scsi0_piocfg =		HPC_SCSI0_PIOCFG,
+	.scsi1_regs =		HPC_SCSI1_REGS,
+	.scsi1_regs_size =	HPC_SCSI1_REGS_SIZE,
+	.scsi1_cbp =		HPC_SCSI1_CBP,
+	.scsi1_ndbp =		HPC_SCSI1_NDBP,
+	.scsi1_bc =		HPC_SCSI1_BC,
+	.scsi1_ctl =		HPC_SCSI1_CTL,
+	.scsi1_gio =		HPC_SCSI1_GIO,
+	.scsi1_dev =		HPC_SCSI1_DEV,
+	.scsi1_dmacfg =		HPC_SCSI1_DMACFG,
+	.scsi1_piocfg =		HPC_SCSI1_PIOCFG,
+	.dmactl_dir =		HPC_DMACTL_DIR,
+	.dmactl_flush =		HPC_DMACTL_FLUSH,
+	.dmactl_active =	HPC_DMACTL_ACTIVE,
+	.dmactl_reset =		HPC_DMACTL_RESET,
+	.enet_regs =		HPC_ENET_REGS,
+	.enet_regs_size =	HPC_ENET_REGS_SIZE,
+	.enet_intdelay =	0,
+	.enet_intdelayval =	0,
+	.enetr_cbp =		HPC_ENETR_CBP,
+	.enetr_ndbp =		HPC_ENETR_NDBP,
+	.enetr_bc =		HPC_ENETR_BC,
+	.enetr_ctl =		HPC_ENETR_CTL,
+	.enetr_ctl_active =	ENETR_CTL_ACTIVE,
+	.enetr_reset =		HPC_ENETR_RESET,
+	.enetr_dmacfg =		HPC_ENETR_DMACFG,
+	.enetr_piocfg =		HPC_ENETR_PIOCFG,
+	.enetx_cbp =		HPC_ENETX_CBP,
+	.enetx_ndbp =		HPC_ENETX_NDBP,
+	.enetx_bc =		HPC_ENETX_BC,
+	.enetx_ctl =		HPC_ENETX_CTL,
+	.enetx_ctl_active =	ENETX_CTL_ACTIVE,
+	.enetx_dev =		HPC_ENETX_DEV,
+	.enetr_fifo =		HPC_ENETR_FIFO,
+	.enetr_fifo_size =	HPC_ENETR_FIFO_SIZE,
+	.enetx_fifo =		HPC_ENETX_FIFO,
+	.enetx_fifo_size =	HPC_ENETX_FIFO_SIZE,
+	.scsi0_devregs_size =	HPC_SCSI0_DEVREGS_SIZE,
+	.scsi1_devregs_size =	HPC_SCSI1_DEVREGS_SIZE,
+	.enet_devregs =		HPC_ENET_DEVREGS,
+	.enet_devregs_size =	HPC_ENET_DEVREGS_SIZE,
+	.pbus_fifo =		HPC_PBUS_FIFO,
+	.pbus_fifo_size =	HPC_PBUS_FIFO_SIZE,
+	.pbus_bbram =		HPC_PBUS_BBRAM,
+	.scsi_max_xfer =	MAX_SCSI_XFER,
+	.scsi_dma_segs =	(MAX_SCSI_XFER / 8192),
+	.scsi_dma_segs_size =	8192,
+	.clk_freq =		100,
+	.dma_datain_cmd =	HPC_DMACTL_ACTIVE,
+	.dma_dataout_cmd =	(HPC_DMACTL_ACTIVE | HPC_DMACTL_DIR),
+	.scsi_dmactl_flush =	HPC_DMACTL_FLUSH,
+	.scsi_dmactl_active =	HPC_DMACTL_ACTIVE,
+	.scsi_dmactl_reset =	HPC_DMACTL_RESET
 };
 
 
@@ -304,6 +306,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		hpctype = 15;
 		sysmask = HPCDEV_IP20;
 		break;
+
 	case MACH_SGI_IP22:
 		hpctype = 3;
 		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
@@ -313,11 +316,22 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		panic("hpc_attach: can't handle HPC on an IP%d",
-		    mach_type);
+		panic("hpc_attach: can't handle HPC on an IP%d", mach_type);
 	};
 
-	printf(": SGI HPC%d\n", hpctype);
+	/* Verify HPC1 or HPC1.5 */
+	if (hpctype != 3) {
+		hpctype = *(u_int32_t *)
+			MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN);
+
+		if (((hpctype >> HPC1_REVSHIFT) & HPC1_REVMASK) == HPC1_REV15)
+			hpctype = 15;
+		else
+			hpctype = 1;
+	}
+	
+	printf(": SGI HPC%d%s\n", (hpctype ==  3) ? 3 : 1,
+				  (hpctype == 15) ? ".5" : "");
 
 	sc->sc_ct = 1;
 	sc->sc_ch = ga->ga_ioh;
@@ -341,6 +355,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			ha.hpc_regs = &hpc3_values;
 		else
 			ha.hpc_regs = &hpc1_values;
+		ha.hpc_regs->revision = hpctype;
 
 		(void) config_found_sm(self, &ha, hpc_print, hpc_submatch);
 	}
@@ -353,7 +368,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	 * a specific register anyway (XXX#2!), we don't care when
 	 * it gets attached, as long as it only happens once.
 	 */
-	if (!powerintr_established) {
+	if (mach_type == MACH_SGI_IP22 && !powerintr_established) {
 		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
 		powerintr_established++;
 	}
