@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.1 2000/08/19 12:13:47 wdk Exp $	*/
+/*	$NetBSD: prom.h,v 1.2 2000/09/04 22:23:34 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,12 @@
  * Entry points into PROM firmware functions for MIPS machines
  */
 
-#ifndef _MIPSCO_FIRMWARE_H
-#define _MIPSCO_FIRMWARE_H
+#ifndef _MIPSCO_PROM_H
+#define _MIPSCO_PROM_H
+
+#ifndef _LOCORE
+#include <sys/types.h>
+#include <sys/cdefs.h>
 
 struct mips_prom {
 
@@ -167,11 +171,15 @@ struct mips_prom {
 	 * Both of these routines take indexes as opposed to addresses
 	 * to guarantee portability between various platforms
 	 */
-	void	(*prom_nvget)		__P((void));
-	void	(*prom_nv_set)		__P((void));
+	int	(*prom_nvget)		__P((int));
+	void	(*prom_nvset)		__P((void));
 };
 
 extern struct mips_prom *callv;
+
+extern void prom_init __P((void));
+
+#endif	/* _LOCORE */
 
 /*
  * Macro to help call a prom function
@@ -179,7 +187,135 @@ extern struct mips_prom *callv;
 #define MIPS_PROM(func)		(callv->prom_##func)
 
 /*
- * Return the address for a given prom function number */
-#define	PROM_ENTRY(x)		(0xbfc00000+((x)*8))
+ * Return the address for a given prom function number
+ */
+#define	MIPS_PROM_ENTRY(x)	(0xbfc00000+((x)*8))
 
-#endif /* ! _MIPSCO_FIRMWARE_H */
+/*
+ * MIPS PROM firmware functions:
+ *
+ *	MIPS_PROM_RESET		Run diags, check bootmode, reinit.
+ *	MIPS_PROM_EXEC		Load new program image.
+ *	MIPS_PROM_RESTART	Re-enter monitor command loop.
+ *	MIPS_PROM_REINIT	Re-init monitor, then cmd loop.
+ *	MIPS_PROM_REBOOT	Check bootmode, no config.
+ *	MIPS_PROM_AUTOBOOT	Autoboot the system.
+ *
+ * The following routines access PROM saio routines and may be used by
+ * standalone programs that would like to use PROM I/O:
+ *
+ *	MIPS_PROM_OPEN		Open a file.
+ *	MIPS_PROM_READ		Read from a file.
+ *	MIPS_PROM_WRITE		Write to a file.
+ *	MIPS_PROM_IOCTL		Ioctl on a file.
+ *	MIPS_PROM_CLOSE		Close a file.
+ *	MIPS_PROM_GETCHAR	Read character from console.
+ *	MIPS_PROM_PUTCHAR	Put character on console.
+ *	MIPS_PROM_SHOWCHAR	Show a char visibly.
+ *	MIPS_PROM_GETS		gets with editing.
+ *	MIPS_PROM_PUTS		Put string to console.
+ *	MIPS_PROM_PRINTF	Kernel style printf to console.
+ *
+ *  PROM protocol entry points:
+ *
+ *	MIPS_PROM_INITPROTO	Initialize protocol.
+ *	MIPS_PROM_PROTOENABLE	Enable protocol mode.
+ *	MIPS_PROM_PROTODISABLE	Disable protocol mode.
+ *	MIPS_PROM_GETPKT	Get protocol packet.
+ *	MIPS_PROM_PUTPKT	Put protocol packet.
+ *
+ *   Atomic Read-Modify-Write functions
+ *
+ *	MIPS_PROM_RMW_OR32	r-m-w OR word.
+ *	MIPS_PROM_RMW_OR16	r-m-w OR halfword.
+ *	MIPS_PROM_RMW_OR8	r-m-w OR or byte.
+ *	MIPS_PROM_RMW_AND32	r-m-w AND word.
+ *	MIPS_PROM_RMW_AND16	r-m-w AND halfword.
+ *	MIPS_PROM_RMW_AND8	r-m-w AND byte.
+ *
+ *	MIPS_PROM_FLUSHCACHE	Flush entire cache ().
+ *	MIPS_PROM_CLEARCACHE	Clear I & D cache in range (addr, len).
+ *	MIPS_PROM_SETJMP	Save registers in a buffer.
+ *	MIPS_PROM_LONGJMP	Get register back from buffer.
+ *	MIPS_PROM_BEVUTLB	utlbmiss boot exception vector
+ *	MIPS_PROM_GETENV	Gets a string from system environment.
+ *	MIPS_PROM_SETENV	Sets a string in system environment.
+ *	MIPS_PROM_ATOB		Converts ascii string to number.
+ *	MIPS_PROM_STRCMP	Compares strings (strcmp).
+ *	MIPS_PROM_STRLEN	Length of string (strlen).
+ *	MIPS_PROM_STRCPY	Copies string (strcpy).
+ *	MIPS_PROM_STRCAT	Appends string (strcat).
+ *	MIPS_PROM_PARSER	Command parser.
+ *	MIPS_PROM_RANGE		Address range parser
+ *	MIPS_PROM_ARGVIZE	Parses string to argc,argv.
+ *	MIPS_PROM_HELP		Help on prom commands.
+ *	MIPS_PROM_DUMP		Dump memory command.
+ *	MIPS_PROM_SETENVCMD	Setenv command.
+ *	MIPS_PROM_UNSETENVCMD	Unsetenv command.
+ *	MIPS_PROM_PRINTENV	Print environment command.
+ *	MIPS_PROM_BEVEXCEPT	General boot exception vector 
+ *	MIPS_PROM_ENABLE	Performs prom enable command.
+ *	MIPS_PROM_DISABLE	Performs prom disable command.
+ *	MIPS_PROM_CLEARNOFAULT	Clear existing fault handlers.
+ *	MIPS_PROM_NOTIMPL	Guaranteed to be not implemented
+ *	MIPS_PROM_NVGET		Read bytes from NVRAM
+ *	MIPS_PROM_NVSET		Write bytes to NVRAM
+ */
+
+#define	MIPS_PROM_RESET		MIPS_PROM_ENTRY(0)
+#define	MIPS_PROM_EXEC		MIPS_PROM_ENTRY(1)
+#define	MIPS_PROM_RESTART	MIPS_PROM_ENTRY(2)
+#define	MIPS_PROM_REINIT	MIPS_PROM_ENTRY(3)
+#define	MIPS_PROM_REBOOT	MIPS_PROM_ENTRY(4)
+#define	MIPS_PROM_AUTOBOOT	MIPS_PROM_ENTRY(5)
+#define	MIPS_PROM_OPEN		MIPS_PROM_ENTRY(6)
+#define	MIPS_PROM_READ		MIPS_PROM_ENTRY(7)
+#define	MIPS_PROM_WRITE		MIPS_PROM_ENTRY(8)
+#define	MIPS_PROM_IOCTL		MIPS_PROM_ENTRY(9)
+#define	MIPS_PROM_CLOSE		MIPS_PROM_ENTRY(10)
+#define	MIPS_PROM_GETCHAR	MIPS_PROM_ENTRY(11)
+#define	MIPS_PROM_PUTCHAR	MIPS_PROM_ENTRY(12)
+#define	MIPS_PROM_SHOWCHAR	MIPS_PROM_ENTRY(13)
+#define	MIPS_PROM_GETS		MIPS_PROM_ENTRY(14)
+#define	MIPS_PROM_PUTS		MIPS_PROM_ENTRY(15)
+#define	MIPS_PROM_PRINTF	MIPS_PROM_ENTRY(16)
+#define	MIPS_PROM_INITPROTO	MIPS_PROM_ENTRY(17)
+#define	MIPS_PROM_PROTOENABLE	MIPS_PROM_ENTRY(18)
+#define	MIPS_PROM_PROTODISABLE	MIPS_PROM_ENTRY(19)
+#define	MIPS_PROM_GETPKT	MIPS_PROM_ENTRY(20)
+#define	MIPS_PROM_PUTPKT	MIPS_PROM_ENTRY(21)
+#define	MIPS_PROM_ORW_RMW	MIPS_PROM_ENTRY(22)
+#define	MIPS_PROM_ORH_RMW	MIPS_PROM_ENTRY(23)
+#define	MIPS_PROM_ORB_RMW	MIPS_PROM_ENTRY(24)
+#define	MIPS_PROM_ANDW_RMW	MIPS_PROM_ENTRY(25)
+#define	MIPS_PROM_ANDH_RMW	MIPS_PROM_ENTRY(26)
+#define	MIPS_PROM_ANDB_RMW	MIPS_PROM_ENTRY(27)
+#define	MIPS_PROM_FLUSHCACHE	MIPS_PROM_ENTRY(28)
+#define	MIPS_PROM_CLEARCACHE	MIPS_PROM_ENTRY(29)
+#define	MIPS_PROM_SETJMP	MIPS_PROM_ENTRY(30)
+#define	MIPS_PROM_LONGJMP	MIPS_PROM_ENTRY(31)
+#define	MIPS_PROM_BEVUTLB	MIPS_PROM_ENTRY(32)
+#define	MIPS_PROM_GETENV	MIPS_PROM_ENTRY(33)
+#define	MIPS_PROM_SETENV	MIPS_PROM_ENTRY(34)
+#define	MIPS_PROM_ATOB		MIPS_PROM_ENTRY(35)
+#define	MIPS_PROM_STRCMP	MIPS_PROM_ENTRY(36)
+#define	MIPS_PROM_STRLEN	MIPS_PROM_ENTRY(37)
+#define	MIPS_PROM_STRCPY	MIPS_PROM_ENTRY(38)
+#define	MIPS_PROM_STRCAT	MIPS_PROM_ENTRY(39)
+#define	MIPS_PROM_PARSER	MIPS_PROM_ENTRY(40)
+#define	MIPS_PROM_RANGE		MIPS_PROM_ENTRY(41)
+#define	MIPS_PROM_ARGVIZE	MIPS_PROM_ENTRY(42)
+#define	MIPS_PROM_HELP		MIPS_PROM_ENTRY(43)
+#define	MIPS_PROM_DUMP		MIPS_PROM_ENTRY(44)
+#define	MIPS_PROM_SETENVCMD	MIPS_PROM_ENTRY(45)
+#define	MIPS_PROM_UNSETENVCMD	MIPS_PROM_ENTRY(46)
+#define	MIPS_PROM_PRINTENV	MIPS_PROM_ENTRY(47)
+#define	MIPS_PROM_BEVEXCEPT	MIPS_PROM_ENTRY(48)
+#define	MIPS_PROM_ENABLE	MIPS_PROM_ENTRY(49)
+#define	MIPS_PROM_DISABLE	MIPS_PROM_ENTRY(50)
+#define	MIPS_PROM_CLEARNOFAULT	MIPS_PROM_ENTRY(51)
+#define	MIPS_PROM_NOTIMPLEMENT	MIPS_PROM_ENTRY(52)
+#define MIPS_PROM_NVGET		MIPS_PROM_ENTRY(53)
+#define MIPS_PROM_NVSET		MIPS_PROM_ENTRY(54)
+
+#endif /* ! _MIPSCO_PROM_H */
