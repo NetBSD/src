@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.11 1996/04/12 18:15:23 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.12 1996/04/12 18:22:35 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -249,7 +249,6 @@ siimatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct confargs *ca = aux;
 
 	if (strcmp(ca->ca_name, "sii") != 0 &&
@@ -355,7 +354,7 @@ siiintr(xxxsc)
 	dstat = sc->sc_regs->dstat;
 	if (dstat & (SII_CI | SII_DI)) {
 		sii_DoIntr(sc, dstat);
-		return (0);		/* XXX */
+		return (0);	/* XXX */
 	}
 
 	return (1);		/* XXX spurious interrupt? */
@@ -852,10 +851,6 @@ again:
 				cstat, dstat); /* XXX */
 			if (cstat & SII_DST) {
 				sc->sc_target = regs->destat;
-
-				/* XXX -- possible uninitialized use? */
-				state = &sc->sc_st[sc->sc_target]; /* XXX */
-
 				state->prevComm = 0;
 			} else {
 #ifdef DEBUG
@@ -1488,7 +1483,7 @@ abort:
 		if (sii_debug > 0)
 			printf("Abort: cs %x ds %x i %d\n", cstat, dstat, i);
 #endif
-		if ((dstat & (SII_DNE | SII_PHASE_MSK)) ==
+		if (dstat & (SII_DNE | SII_PHASE_MSK) ==
 		    (SII_DNE | SII_MSG_OUT_PHASE)) {
 			/* disconnect if command in progress */
 			regs->comm = SII_DISCON;
@@ -1633,12 +1628,8 @@ sii_GetByte(regs, phase, ack)
 	register int i;
 	register int data;
 
-
 	dstat = regs->dstat;
 	state = regs->cstat & SII_STATE_MSK;
-
-	i = -1; /* XXX -- uninitialized usage? */
-
 	if (!(dstat & SII_IBF) || (dstat & SII_MIS)) {
 		regs->comm = state | phase;
 		wbflush();
