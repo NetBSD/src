@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.6 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7 2005/01/16 00:33:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.7 2005/01/16 00:33:43 chs Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/param.h>
@@ -154,7 +154,7 @@ zs_kgdb_init(void)
 		return;
 
 	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
-	channel  =  kgdb_dev & 1;
+	channel = kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching tty0%c at %d baud\n",
 		   '0' + (kgdb_dev & 3), kgdb_rate);
 
@@ -163,7 +163,7 @@ zs_kgdb_init(void)
 
 	/* Setup temporary chanstate. */
 	memset(&cs, 0, sizeof(cs));
-	zc = zs_get_chan_addr(0, channel);
+	zc = zs_get_chan_addr(channel);
 	if (zc == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");
 		kgdb_dev = -1;
