@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 1995/03/01 05:10:36 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 1995/03/09 08:03:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -541,37 +541,35 @@ douret:
  * Process a system call.
  */
 syscall(code, frame)
-	u_int code;
+	register_t code;
 	struct frame frame;
 {
 	register caddr_t params;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, opc, numsys;
-	u_int argsize;
+	int error, opc, nsys;
+	size_t argsize;
+	register_t args[8], rval[2];
 	u_quad_t sticks;
-	int args[8];
-	int rval[2];
-	struct timeval syst;
-	struct sysent *systab;
-
-	if (!USERMODE(frame.f_sr))
-		panic("syscall");
 
 	cnt.v_syscall++;
+	if (!USERMODE(frame.f_sr))
+		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
-
 	p->p_md.md_regs = frame.f_regs;
-	p->p_md.md_flags &= ~MDP_STACKADJ;
-	opc = frame.f_pc - 2;
-	error = 0;
+	opc = frame.f_pc;
 
 	switch (p->p_emul) {
+	case EMUL_NETBSD:
+		nsys = nsysent;
+		callp = sysent;
+		break;
 #ifdef COMPAT_SUNOS
 	case EMUL_SUNOS:
-		systab = sunos_sysent;
-		numsys = nsunos_sysent;
+		nsys = nsunos_sysent;
+		callp = sunos_sysent;
+
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
 		 * BSD passes it in D0. So, we have to get the real "code"
@@ -579,35 +577,35 @@ syscall(code, frame)
 		 * code assumes the kernel pops the syscall argument the
 		 * glue pushed on the stack. Sigh...
 		 */
-		code = fuword ((caddr_t) frame.f_regs[SP]);
+		code = fuword((caddr_t)frame.f_regs[SP]);
 
 		/*
-		 * XXX don't do this for sun_sigreturn, as there's no
-		 * XXX stored pc on the stack to skip, the argument follows
-		 * XXX the syscall number without a gap.
+		 * XXX
+		 * Don't do this for sunos_sigreturn, as there's no stored pc
+		 * on the stack to skip, the argument follows the syscall
+		 * number without a gap.
 		 */
 		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
-			 * remember that we adjusted the SP, might have to
-			 * undo this if the system call returns ERESTART.
+			 * remember that we adjusted the SP, 
+			 * might have to undo this if the system call
+			 * returns ERESTART.
 			 */
 			p->p_md.md_flags |= MDP_STACKADJ;
-		}
+		} else
+			p->p_md.md_flags &= ~MDP_STACKADJ;
 		break;
 #endif
-	case EMUL_NETBSD:
-		systab = sysent;
-		numsys = nsysent;
-		break;
+#ifdef DIAGNOSTIC
 	default:
-	    panic("syscall: bad syscall emulation type");
+		panic("invalid p_emul %d", p->p_emul);
+#endif
 	}
 
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
 	switch (code) {
-
 	case SYS_syscall:
 		/*
 		 * Code is first argument, followed by actual args.
@@ -620,49 +618,43 @@ syscall(code, frame)
 		 * trap.  Cannot allow it here so make sure we fail.
 		 */
 		if (code == SYS_sigreturn)
-			code = numsys;
+			code = nsys;
 		break;
-
 	case SYS___syscall:
 		/*
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (systab != sysent)
+		if (callp != sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
-
 	default:
+		break;
 	}
-
-	callp = systab;
-	if (code < numsys)
-		callp += code;
+	if (code < 0 || code >= nsys)
+		callp = &callp[0];		/* illegal */
 	else
-		callp += SYS_syscall;		/* => nosys */
-
+		callp = &callp[code];
 	argsize = callp->sy_argsize;
-	if (argsize != 0)
+	if (argsize)
 		error = copyin(params, (caddr_t)args, argsize);
-
+	else
+		error = 0;
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
 #endif
-
 	if (error)
 		goto bad;
-
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-
-	/* OK, actualy do the system call... */
-	error = (*callp->sy_call)(p, &args, rval);
-
+	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
-
 	case 0:
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
@@ -671,36 +663,33 @@ syscall(code, frame)
 		p = curproc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
-		frame.f_sr &= ~PSL_C;
+		frame.f_sr &= ~PSL_C;	/* carry bit */
 		break;
-
 	case ERESTART:
-		/* The opc already points at the trap instruction. */
-		frame.f_pc = opc;
+		/*
+		 * We always enter through a `trap' instruction, which is 2
+		 * bytes, so adjust the pc by that amount.
+		 */
+		frame.f_pc = opc - 2;
 		break;
-
 	case EJUSTRETURN:
+		/* nothing to do */
 		break;
-
 	default:
 	bad:
-#ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX)
-			error = bsdtohpuxerrno(error);
-#endif
 		frame.f_regs[D0] = error;
 		frame.f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
 
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval[0]);
+#endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ)) {
+	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
 		frame.f_regs[SP] -= sizeof (int);
-		p->p_md.md_flags &= ~MDP_STACKADJ;
-	}
 #endif
-
 	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
