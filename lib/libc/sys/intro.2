@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.37 2004/01/07 16:26:23 christos Exp $
+.\"	$NetBSD: intro.2,v 1.38 2004/01/08 09:12:57 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd November 25, 2003
+.Dd January 7, 2004
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -474,18 +474,18 @@ operation has expired.
 .El
 .Sh DEFINITIONS
 .Bl -tag -width Ds
-.It  Process ID .
+.It Process ID .
 Each active process in the system is uniquely identified by a non-negative
 integer called a process ID.
 The range of this ID is from 0 to 30000.
-.It  Parent process ID
+.It Parent process ID
 A new process is created by a currently active process; (see
 .Xr fork 2 ) .
 The parent process ID of a process is initially the process ID of its creator.
 If the creating process exits,
 the parent process ID of each child is set to the ID of a system process,
 .Xr init 8 .
-.It  Process Group
+.It Process Group
 Each active process is a member of a process group that is identified by
 a non-negative integer called the process group ID.
 This is the process ID of the group leader.
@@ -510,7 +510,7 @@ A session leader with a controlling terminal is a controlling process.
 .It Controlling terminal
 A terminal that is associated with a session is known as the controlling
 terminal for that session and its members.
-.It  "Terminal Process Group ID"
+.It "Terminal Process Group ID"
 A terminal may be acquired by a session leader as its controlling terminal.
 Once a terminal is associated with a session, any of the process groups
 within the session may be placed into the foreground by setting
@@ -522,7 +522,7 @@ to arbitrate between multiple jobs contending for the same terminal.
 and
 .Xr tty 4
 for more information on job control.)
-.It  "Orphaned Process Group"
+.It "Orphaned Process Group"
 A process group is considered to be
 .Em orphaned
 if it is not under the control of a job control shell.
@@ -572,7 +572,7 @@ The group access list is a set of group IDs
 used only in determining resource accessibility.
 Access checks are performed as described below in
 .Qq File Access Permissions .
-.It  "Saved Set User ID and Saved Set Group ID"
+.It "Saved Set User ID and Saved Set Group ID"
 When a process executes a new file, the effective user ID is set
 to the owner of the file if the file is set-user-ID, and the effective
 group ID (first element of the group access list) is set to the group
@@ -585,11 +585,11 @@ or group ID after reverting to the real ID (see
 (In POSIX.1, the saved set-user-ID and saved set-group-ID are optional,
 and are used in setuid and setgid, but this does not work as desired
 for the super-user.)
-.It  Super-user
+.It Super-user
 A process is recognized as a
 .Em super-user
 process and is granted special privileges if its effective user ID is 0.
-.It  Special Processes
+.It Special Processes
 The processes with process IDs of 0 and 1 are special.
 Process 0 is the scheduler.
 Process 1 is the initialization process
@@ -601,8 +601,8 @@ periodic tasks or device related tasks, such as:
 .Bl -tag -width pagedaemon
 .It Sy acctwatch
 System accounting disk watcher, see
-.Xr acct 2 , 
-.Xr acct 4 .
+.Xr acct 2 ,
+.Xr acct 5 .
 .It Sy aiodoned
 Asynchronous I/O done handler, see
 .Xr uvm 9 .
@@ -619,22 +619,22 @@ File system snapshot thread, see
 .Xr fss 4 .
 .It Sy ioflush
 The in-kernel periodic flush the buffer cache to disk task,
- which replaces the old
+which replaces the old
 .Sy update
 program.
-.It Sy nfsio, nfskqpoll
+.It Sy nfsio , nfskqpoll
 NFS handing daemons.
 .It Sy lfs_writer
 Log filesystem writer.
 .It Sy pagedaemon
 The page daemon.
-.It Sy raidX, raidioX, raid_parity, raid_recon, raid_reconip, raid_copyback
+.It Sy raidX , raidioX , raid_parity , raid_recon , raid_reconip , raid_copyback
 Raid framework related threads, see
 .Xr raid 4 .
 .It Sy scsibusX
 SCSI bus handler, see
 .Xr scsi 4 .
-.It Sy smbiodX, smbkq
+.It Sy smbiodX , smbkq
 SMBFS handling daemon, see
 .Xr netsmb 4 .
 .It Sy swdmover
@@ -642,14 +642,15 @@ The software data mover I/O thread, see
 .Xr dmoverio 4 .
 .It Sy sysmon
 The systems monitoring framework daemon.
-.It Sy usbX,  usbtask
+.It Sy usbX , usbtask
 USB bus handler, see
 .Xr usb 4 .
 .El
 .Pp
-There are more machine-dependent kernel threads allocated by different drivers.
+There are more machine-dependent kernel threads allocated by
+different drivers.
 See the specific driver manual pages for more information.
-.It  Descriptor
+.It Descriptor
 An integer assigned by the system when a file is referenced
 by
 .Xr open 2
@@ -662,7 +663,7 @@ or
 .Xr socketpair 2 ,
 which uniquely identifies an access path to that file or socket from
 a given process or any of its children.
-.It  File Name
+.It File Name
 Names consisting of up to 255
 .Pq Dv MAXNAMELEN
 characters may be used to name
@@ -687,7 +688,7 @@ or
 as part of
 file names because of the special meaning attached to these characters
 by the shell.
-.It  Pathname
+.It Pathname
 A path name is a
 .Tn NUL Ns -terminated
 character string starting with an
@@ -705,7 +706,7 @@ directory.
 Otherwise, the search begins from the current working directory.
 A slash by itself names the root directory.
 An empty string is not a valid pathname.
-.It  Directory
+.It Directory
 A directory is a special type of file that contains entries
 that are references to other files.
 Directory entries are called links.
@@ -725,7 +726,7 @@ and a current working directory for the purpose of resolving path
 name searches.
 A process's root directory need not be the root
 directory of the root file system.
-.It  File Access Permissions
+.It File Access Permissions
 Every file in the file system has a set of access permissions.
 These permissions are used in determining whether a process
 may perform a requested operation on the file (such as opening
@@ -770,7 +771,7 @@ match the corresponding user ID and group ID of the file,
 but the permissions for ``other users'' allow access.
 .Pp
 Otherwise, permission is denied.
-.It  Sockets and Address Families
+.It Sockets and Address Families
 A socket is an endpoint for communication between processes.
 Each socket has queues for sending and receiving data.
 .Pp
