@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.703 2005/03/24 13:17:24 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.704 2005/04/06 15:49:07 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.704 2005/03/24 13:17:08 tron Exp
+ *	NetBSD: pcidevs,v 1.705 2005/04/06 15:48:16 martti Exp
  */
 
 /*
@@ -4802,6 +4802,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
+	    "CERC SATA RAID 1.5/6ch",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
@@ -10136,4 +10140,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1955;
+const int pci_nproducts = 1956;
