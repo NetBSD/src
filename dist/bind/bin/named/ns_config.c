@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_config.c,v 1.5 2001/02/06 10:02:05 itojun Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.6 2001/05/17 22:59:39 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_config.c,v 8.118 2000/12/23 08:14:37 vixie Exp";
+static const char rcsid[] = "Id: ns_config.c,v 8.121 2001/02/08 02:05:53 marka Exp";
 #endif /* not lint */
 
 /*
@@ -690,8 +690,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 			zoneinit(zp);
 		else {
 			/* 
-			** Force secondary to try transfer soon
-			** after SIGHUP.
+			** Force slave to try transfer soon after SIGHUP.
 			*/
 			if ((zp->z_flags & (Z_QSERIAL|Z_XFER_RUNNING)) == 0 &&
 			    reloading && !reconfiging) {
@@ -1527,25 +1526,43 @@ periodic_getnetconf(evContext ctx, void *uap, struct timespec due,
 	getnetconf(1);
 }
 
+static int clean_interval = 0;
+static int interface_interval = 0;
+static int stats_interval = 0;
+static int heartbeat_interval = 0;
+
 static void
 set_interval_timer(int which_timer, int interval) {
 	evTimerID *tid = NULL;
 	evTimerFunc func = NULL;
+	int changed = 0;
 
 	switch (which_timer) {
 	case CLEAN_TIMER:
+		if (clean_interval != interval)
+			changed = 1;
+		clean_interval = interval;
 		tid = &clean_timer;
 		func = ns_cleancache;
 		break;
 	case INTERFACE_TIMER:
+		if (interface_interval != interval)
+			changed = 1;
+		interface_interval = interval;
 		tid = &interface_timer;
 		func = periodic_getnetconf;
 		break;
 	case STATS_TIMER:
+		if (stats_interval != interval)
+			changed = 1;
+		stats_interval = interval;
 		tid = &stats_timer;
 		func = ns_logstats;
 		break;
 	case HEARTBEAT_TIMER:
+		if (heartbeat_interval != interval)
+			changed = 1;
+		heartbeat_interval = interval;
 		tid = &heartbeat_timer;
 		func = ns_heartbeat;
 		break;
@@ -1555,7 +1572,8 @@ set_interval_timer(int which_timer, int interval) {
 	}
 	if ((active_timers & which_timer) != 0) {
 		if (interval > 0) {
-			if (evResetTimer(ev, *tid, func, NULL, 
+			if (changed &&
+			    evResetTimer(ev, *tid, func, NULL, 
 					 evAddTime(evNowTime(), 
 						   evConsTime(interval, 0)),
 					 evConsTime(interval, 0)) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.1.1.2 2001/05/17 20:47:19 itojun Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.2 2001/05/17 23:00:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.

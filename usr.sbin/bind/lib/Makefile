@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/01/28 01:43:26 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2001/05/17 22:59:37 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ CPPFLAGS+=	-I${BIND_CRYPTO_DIST_DIR}/lib/dnssafe -DDNSSAFE
 	${BIND_DIST_DIR}/lib/nameser \
 	${BIND_DIST_DIR}/lib/dst \
 	${BIND_DIST_DIR}/lib/irs \
+	${BIND_DIST_DIR}/lib/bsd \
 	${BIND_CRYPTO_DIST_DIR}/lib/cylink \
 	${BIND_CRYPTO_DIST_DIR}/lib/dnssafe
 
@@ -59,6 +60,8 @@ SRCS+=	dns.c dns_gr.c dns_ho.c dns_nw.c dns_pr.c dns_pw.c \
 	lcl_ng.c lcl_nw.c lcl_pr.c lcl_pw.c lcl_sv.c nis.c \
 	nis_gr.c nis_ho.c nis_ng.c nis_nw.c nis_pr.c nis_pw.c \
 	nis_sv.c nul_ng.c util.c
+# ${BIND_DIST_DIR}/lib/bsd
+SRCS+=	gettimeofday.c
 # ${BIND_DIST_DIR}/lib/cylink
 SRCS+=	bn.c bn00.c lbn00.c lbnmem.c legal.c \
 	bits.c dss.c math.c ctk_prime.c rand.c sha.c swap.c 
