@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.1 2000/08/13 17:00:52 scw Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.2 2000/08/20 17:07:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,15 @@ struct mvmebus_range {
 
 /* Assigned to vr_am to specify the mapping is not valid */
 #define MVMEBUS_AM_DISABLED	((vme_am_t)-1)
+
+/* For slave mappings, these specify the slave's capabilities */
+#define MVMEBUS_AM_CAP_DATA	0x0100
+#define MVMEBUS_AM_CAP_PROG	0x0200
+#define MVMEBUS_AM_CAP_BLK	0x0400
+#define MVMEBUS_AM_CAP_BLKD64	0x0800
+#define MVMEBUS_AM_CAP_USER	0x1000
+#define MVMEBUS_AM_CAP_SUPER	0x2000
+#define MVMEBUS_AM_HAS_CAP(x)	(((x) & 0x3f00) != 0)
 
 
 /*
