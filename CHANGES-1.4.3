@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.30 2000/07/03 20:11:21 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.31 2000/07/05 20:15:44 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -724,3 +724,22 @@ lib/checkver					patch
   Handle use of "tiny" version numbers, to allow version bumps of
   shared libraries on a release branch without reusing version
   numbers.
+
+share/man/man4/options.4			1.110
+sys/arch/amiga/conf/GENERIC			1.146
+sys/arch/amiga/conf/DRACO			regenerate
+sys/arch/amiga/conf/AMIGA			regenerate
+sys/arch/arm32/conf/GENERIC			1.70
+sys/arch/i386/conf/DISKLESS			1.73
+sys/arch/i386/conf/GENERIC			1.358
+sys/arch/mac68k/conf/GENERIC			1.105
+sys/arch/sparc/conf/GENERIC			1.112
+sys/arch/sparc64/conf/GENERIC			1.39
+sys/arch/sparc64/conf/GENERIC64			patch
+sys/arch/sparc64/conf/NONPLUS			1.20
+sys/arch/sparc64/conf/NONPLUS64			1.14
+
+  Comment out EON ISO-over-ip tunneling pseudo-driver, and document 
+  as broken/fragile.  Unlikely to be of much use, and confuses new
+  users when their system crashes when they, or their dhclient
+  stumble over it.  See PR#10500 and PR#8994 for the gory details.
