@@ -1,7 +1,43 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.14 1999/11/19 11:06:29 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.15 2000/03/14 09:59:36 nisimura Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.14 1999/11/19 11:06:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.15 2000/03/14 09:59:36 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -23,10 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.14 1999/11/19 11:06:29 nisimura
 #include <dev/tc/ioasicvar.h>
 #include <dev/tc/ioasicreg.h>
 
-#undef	bus_space_read_4
-#define	bus_space_read_4(t, h, o)					\
-     ((void) t, (*(volatile u_int32_t *)((h) + (o))))
-
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
@@ -34,43 +66,40 @@ struct asc_softc {
 	bus_space_handle_t sc_scsi_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
-	void	*sc_cookie;			/* intr. handling cookie */
-
-	int	sc_active;			/* DMA active ? */
-	int	sc_ispullup;			/* DMA into main memory? */
-	size_t	sc_dmasize;
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
+	size_t	sc_dmasize;
+	int	sc_active;			/* DMA active ? */
+	int	sc_ispullup;			/* DMA into main memory? */
 };
 
-int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	asc_ioasic_attach __P((struct device *, struct device *, void *));
+static int  asc_ioasic_match __P((struct device *, struct cfdata *, void *));
+static void asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
 };
 
-struct scsipi_device asc_ioasic_dev = {
+static struct scsipi_device asc_ioasic_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
 
-void	asc_ioasic_reset __P((struct ncr53c9x_softc *));
-int	asc_ioasic_intr __P((struct ncr53c9x_softc *));
-int	asc_ioasic_setup __P((struct ncr53c9x_softc *,
-				caddr_t *, size_t *, int, size_t *));
-void	asc_ioasic_go __P((struct ncr53c9x_softc *));
-void	asc_ioasic_stop __P((struct ncr53c9x_softc *));
-
 static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
 static void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
 static int	asc_dma_isintr __P((struct ncr53c9x_softc *sc));
+static void	asc_ioasic_reset __P((struct ncr53c9x_softc *));
+static int	asc_ioasic_intr __P((struct ncr53c9x_softc *));
+static int	asc_ioasic_setup __P((struct ncr53c9x_softc *,
+				caddr_t *, size_t *, int, size_t *));
+static void	asc_ioasic_go __P((struct ncr53c9x_softc *));
+static void	asc_ioasic_stop __P((struct ncr53c9x_softc *));
 static int	asc_dma_isactive __P((struct ncr53c9x_softc *));
 static void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue asc_ioasic_glue = {
+static struct ncr53c9x_glue asc_ioasic_glue = {
 	asc_read_reg,
 	asc_write_reg,
 	asc_dma_isintr,
@@ -83,7 +112,7 @@ struct ncr53c9x_glue asc_ioasic_glue = {
 	asc_clear_latched_intr,
 };
 
-int
+static int
 asc_ioasic_match(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -97,7 +126,7 @@ asc_ioasic_match(parent, cfdata, aux)
 	return 1;
 }
 
-void
+static void
 asc_ioasic_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -105,9 +134,13 @@ asc_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	struct asc_softc *asc = (struct asc_softc *)self;	
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
-/* XXX */
-	extern int slot_in_progress;	/* TC slot being probed */
-	slot_in_progress = 3;		/* IOASIC always resides in TC slot 3 */
+/* XXX Hook into dk_establish() to determine boot device */
+ 	extern int booted_slot;		/* TC slot of boot device */
+ 	extern struct device *booted_controller;
+ 
+ 	/* Is this the controller we booted from? */
+ 	if (booted_slot == 3)		/* IOASIC always resides in TC slot 3 */
+ 		booted_controller = self;
 /* XXX */
 
 	/*
@@ -123,7 +156,6 @@ asc_ioasic_attach(parent, self, aux)
 		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	asc->sc_cookie = d->iada_cookie;
 
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
@@ -131,7 +163,7 @@ asc_ioasic_attach(parent, self, aux)
 	/* gimme Mhz */
 	sc->sc_freq /= 1000000;
 
-	ioasic_intr_establish(parent, asc->sc_cookie, TC_IPL_BIO,
+	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
 		(int (*)(void *))ncr53c9x_intr, sc);
 
 	/*
@@ -188,16 +220,29 @@ asc_ioasic_reset(sc)
 
 #define	SCRDEBUG(x)
 
-int
+static int
 asc_ioasic_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int trans, resid;
-	u_int tcl, tcm, ssr, scr;
+	u_int tcl, tcm, ssr, scr, intr;
 	
 	if (asc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
+
+#define	IOASIC_ASC_ERRORS \
+    (IOASIC_INTR_SCSI_PTR_LOAD|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E)
+	/*
+	 * When doing polled I/O, the SCSI bits in the interrupt register won't
+	 * get cleared by the interrupt processing.  This will cause the DMA
+	 * address registers to not load on the next DMA transfer.
+	 * Check for these bits here, and clear them if needed.
+	 */
+	intr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR);
+	if ((intr & IOASIC_ASC_ERRORS) != 0)
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR,
+		    intr & ~IOASIC_ASC_ERRORS);
 
 	/* DMA has stopped */
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
@@ -381,9 +426,6 @@ asc_ioasic_stop(sc)
 {
 }
 
-/*
- * Glue functions.
- */
 static u_char
 asc_read_reg(sc, reg)
 	struct ncr53c9x_softc *sc;
