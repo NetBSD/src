@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.31 2002/07/22 21:48:39 hannken Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.32 2002/07/25 12:13:03 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.31 2002/07/22 21:48:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.32 2002/07/25 12:13:03 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -287,6 +287,8 @@ rastrategy(bp)
 {
 	int unit;
 	struct ra_softc *ra;
+	int b;
+
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -300,6 +302,10 @@ rastrategy(bp)
 	 * If drive is open `raw' or reading label, let it at it.
 	 */
 	if (ra->ra_state == DK_RDLABEL) {
+	        /* Make some statistics... /bqt */
+	        b = splbio();
+	        disk_busy(&ra->ra_disk);
+		splx(b);
 		mscp_strategy(bp, ra->ra_dev.dv_parent);
 		return;
 	}
@@ -321,8 +327,9 @@ rastrategy(bp)
 		goto done;
 
 	/* Make some statistics... /bqt */
-	ra->ra_disk.dk_xfer++;
-	ra->ra_disk.dk_bytes += bp->b_bcount;
+	b = splbio();
+	disk_busy(&ra->ra_disk);
+	splx(b);
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
@@ -671,6 +678,7 @@ rxstrategy(bp)
 {
 	int unit;
 	struct rx_softc *rx;
+	int b;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -700,8 +708,9 @@ rxstrategy(bp)
 	}
 
 	/* Make some statistics... /bqt */
-	rx->ra_disk.dk_xfer++;
-	rx->ra_disk.dk_bytes += bp->b_bcount;
+	b = splbio();
+	disk_busy(&rx->ra_disk);
+	splx(b);
 	mscp_strategy(bp, rx->ra_dev.dv_parent);
 	return;
 
@@ -841,6 +850,14 @@ rriodone(usc, bp)
 	struct device *usc;
 	struct buf *bp;
 {
+	struct ra_softc *ra;
+	int unit;
+
+	/* We assume that this is a reasonable drive. ra_strategy should
+	   already have verified it. Thus, no checks here... /bqt */
+	unit = DISKUNIT(bp->b_dev);
+	ra = ra_cd.cd_devs[unit];
+	disk_unbusy(&ra->ra_disk, bp->b_bcount);
 
 	biodone(bp);
 }
