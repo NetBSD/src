@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.16 2003/08/07 11:13:18 agc Exp $	*/
+/*	$NetBSD: edit.c,v 1.17 2004/10/30 17:11:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.16 2003/08/07 11:13:18 agc Exp $");
+__RCSID("$NetBSD: edit.c,v 1.17 2004/10/30 17:11:24 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ verify(tempname, pw)
 					warnx("line corrupted");
 					goto bad;
 				}
-				while (isspace(*++p));
+				while (isspace((unsigned char)*++p));
 				if (ep->except && strpbrk(p, ep->except)) {
 					warnx(
 				   "illegal character in the \"%s\" field",

@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.28 2004/09/10 05:36:00 itojun Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.29 2004/10/30 17:08:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.28 2004/09/10 05:36:00 itojun Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.29 2004/10/30 17:08:12 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -285,7 +285,7 @@ help(void)
 	mc = cmdtab + sizeof(cmdtab) / sizeof(cmdtab[0]);
 	for (c = cmdtab; c < mc; c++) {
 		for (i = c->min, s = c->name; *s != '\0'; s++, i--) {
-			n = (i > 0 ? toupper(*s) : *s);
+			n = (i > 0 ? toupper((unsigned char)*s) : *s);
 			putchar(n);
 		}
 		if (c->args != NULL)
@@ -364,7 +364,7 @@ run(int cmd, const char *arg)
 		break;
 
 	case CMD_PLAY:
-		while (isspace(*arg))
+		while (isspace((unsigned char)*arg))
 			arg++;
 		rv = play(arg, 1);
 		break;
@@ -1023,15 +1023,15 @@ parse(char *buf, int *cmd)
 	char *p, *q;
 	int len;
 
-	for (p = buf; isspace(*p); p++)
+	for (p = buf; isspace((unsigned char)*p); p++)
 		continue;
 
-	if (isdigit(*p) || (p[0] == '#' && isdigit(p[1]))) {
+	if (isdigit((unsigned char)*p) || (p[0] == '#' && isdigit((unsigned char)p[1]))) {
 		*cmd = CMD_PLAY;
 		return (p);
 	}
 
-	for (buf = p; *p != '\0' && !isspace(*p); p++)
+	for (buf = p; *p != '\0' && !isspace((unsigned char)*p); p++)
 		continue;
 
 	if ((len = p - buf) == 0)
@@ -1068,7 +1068,7 @@ parse(char *buf, int *cmd)
 		return (0);
 	}
 
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 	return (p);
 }
