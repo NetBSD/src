@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.1 2005/04/03 11:21:44 jdolecek Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.1 2005/04/03 11:21:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2 2005/04/03 11:37:19 jdolecek Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -77,42 +77,46 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.1 2005/04/03 11:21:44 jdolecek Exp $")
  */
 
 /* XXX There are still rough edges......
-
+ *
  * (1) There is no watchdog timer for the transmitter. It's doubtful that
- * transmit from the chip could be restarted without a hardware reset though.
-Fixed - not fully tested
-
+ *     transmit from the chip could be restarted without a hardware reset
+ *     though. (Fixed - not fully tested)
+ *
  * (2) The media interface callback goo is broke.  No big deal since to change
- * from aui to bnc on the old Tiara LANCard requires moving 8 board jumpers.
- * Other cards (SMC ?) using the EtherStar chip may support media change via software.
-Fixed - tested
-
- * (3) The maximum outstanding transmit packets is set to 4.  What is a good limit
- * of outstanding transmit packets for the EtherStar?  Is there a way to tell how
- * many bytes are remaining to be transmitted? [no]
+ *     from aui to bnc on the old Tiara LANCard requires moving 8 board jumpers.
+ *     Other cards (SMC ?) using the EtherStar chip may support media change
+ *     via software. (Fixed - tested)
+ *
+ * (3) The maximum outstanding transmit packets is set to 4.  What
+ *     is a good limit of outstanding transmit packets for the EtherStar?
+ *     Is there a way to tell how many bytes are remaining to be
+ *     transmitted? [no]
 ---
-	When the EtherStar was designed, CPU power was a fraction of what it is now.  The
-	single EtherStar transmit buffer was fine.  It was unlikely that the CPU could
-	outrun the EtherStar. However, things in 2004 are quite different.  sc->txb_size
-	is used to keep the CPU from overrunning the EtherStar.  At most allow one packet
-	transmitting and one going into the fifo.
+	When the EtherStar was designed, CPU power was a fraction
+	of what it is now.  The single EtherStar transmit buffer
+	was fine.  It was unlikely that the CPU could outrun the
+	EtherStar. However, things in 2004 are quite different.
+	sc->txb_size is used to keep the CPU from overrunning the
+	EtherStar.  At most allow one packet transmitting and one
+	going into the fifo.
+
 ---
     No, that isn't right either :(
 
- * (4) Multicast isn't supported.  Feel free to add multicast code if you know how
- * to make the EtherStar do multicast.  Otherwise you'd have to use promiscuous mode
- * and do multicast in software. OUCH!
-
+ * (4) Multicast isn't supported.  Feel free to add multicast code
+ *     if you know how to make the EtherStar do multicast.  Otherwise
+ *     you'd have to use promiscuous mode and do multicast in software. OUCH!
+ *
  * (5) There are no bus_space_barrier calls used. Are they needed? Maybe not.
-
- * (6) Access to the fifo assumes word (16 bit) mode.  Cards configured for byte
- * wide fifo access will require driver code changes.
-
- * Only the minimum code necessary to make the Tiara LANCard work has been tested.
- * Other cards may require more work, especially byte mode fifo and if DMA is used.
-
+ *
+ * (6) Access to the fifo assumes word (16 bit) mode.  Cards configured for
+ *     byte wide fifo access will require driver code changes.
+ *
+ * Only the minimum code necessary to make the Tiara LANCard work
+ * has been tested. Other cards may require more work, especially
+ * byte mode fifo and if DMA is used.
+ *
  * djb / 2004
-
  */
 
 #include "opt_inet.h"
@@ -257,11 +261,11 @@ mb86950_drain_fifo(sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
-/* XXX There ought to be a better way, eats CPU and bothers the chip ....... */
 	/* Read data until bus read error (i.e. buffer empty). */
+	/* XXX There ought to be a better way, eats CPU and bothers the chip */
 	while (!(bus_space_read_1(bst, bsh, DLCR_RX_STAT) & RX_BUS_RD_ERR))
 		bus_space_read_2(bst, bsh, BMPR_FIFO);
-/* XXX                                        */
+	/* XXX */
 
 	/* Clear Bus Rd Error */
 	bus_space_write_1(bst, bsh, DLCR_RX_STAT, RX_BUS_RD_ERR);
@@ -275,15 +279,9 @@ mb86950_config(sc, media, nmedia, defmedia)
 	struct mb86950_softc *sc;
 	int *media, nmedia, defmedia;
 {
-/* XXX
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-*/
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-/*
-	int buf_config;
-*/
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -337,12 +335,14 @@ mb86950_config(sc, media, nmedia, defmedia)
 
 */
 
-/* Set reasonable values for number of packet flow control if not set elsewhere */
+	/* Set reasonable values for number of packet flow control if not
+	 * set elsewhere */
 	if (sc->txb_num_pkt == 0) sc->txb_num_pkt = 1;
 	if (sc->rxb_num_pkt == 0) sc->rxb_num_pkt = 100;
 
 	/* Print additional info when attached. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname, ether_sprintf(sc->sc_enaddr));
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	/* The attach is successful. */
 	sc->sc_stat |= ESTAR_STAT_ATTACHED;
@@ -417,14 +417,24 @@ mb86950_watchdog(ifp)
 	/* verbose watchdog messages for debugging timeouts */
     if ((tstat = bus_space_read_1(bst, bsh, DLCR_TX_STAT)) != 0) {
 		if (tstat & TX_CR_LOST) {
-			if ((tstat & (TX_COL | TX_16COL)) == 0) log(LOG_ERR, "%s: carrier lost\n", sc->sc_dev.dv_xname);
-			else log(LOG_ERR, "%s: excessive collisions\n", sc->sc_dev.dv_xname);
+			if ((tstat & (TX_COL | TX_16COL)) == 0) {
+				 log(LOG_ERR, "%s: carrier lost\n",
+				    sc->sc_dev.dv_xname);
+			} else {
+				log(LOG_ERR, "%s: excessive collisions\n",
+				    sc->sc_dev.dv_xname);
+			}
 		}
-		else if ((tstat & (TX_UNDERFLO | TX_BUS_WR_ERR)) != 0) log(LOG_ERR, "%s: tx fifo underflow/overflow\n", sc->sc_dev.dv_xname);
-		else log(LOG_ERR, "%s: transmit error\n", sc->sc_dev.dv_xname);
-	}
-	else
+		else if ((tstat & (TX_UNDERFLO | TX_BUS_WR_ERR)) != 0) {
+			log(LOG_ERR, "%s: tx fifo underflow/overflow\n",
+			    sc->sc_dev.dv_xname);
+		} else {
+			log(LOG_ERR, "%s: transmit error\n",
+			    sc->sc_dev.dv_xname);
+		}
+	} else {
 		log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	}
 
 	/* Don't know how many packets are lost by this accident.
 	 *  ... So just errors = errors + 1
@@ -605,11 +615,11 @@ mb86950_start(ifp)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-    /* Send the packet to the mb86950 */
+	/* Send the packet to the mb86950 */
 	len = mb86950_put_fifo(sc,m);
 	m_freem(m);
 
-/* XXX bus_space_barrier here ? */
+	/* XXX bus_space_barrier here ? */
 	if (bus_space_read_1(bst, bsh, DLCR_TX_STAT) & (TX_UNDERFLO | TX_BUS_WR_ERR)) {
 		log(LOG_ERR, "%s: tx fifo underflow/overflow\n", sc->sc_dev.dv_xname);
 	}
@@ -617,7 +627,7 @@ mb86950_start(ifp)
 	bus_space_write_2(bst, bsh, BMPR_TX_LENGTH, len | TRANSMIT_START);
 
 	bus_space_write_1(bst, bsh, DLCR_TX_INT_EN, TX_MASK);
-/* XXX                          */
+	/* XXX                          */
 	sc->txb_sched++;
 
 	/* We have space for 'n' transmit packets of size 'mtu. */
@@ -628,8 +638,7 @@ mb86950_start(ifp)
 }
 
 /*
- * ********************  SEND PACKET
- * Copy packet from mbuf to the fifo
+ * Send packet - copy packet from mbuf to the fifo
  */
 u_short
 mb86950_put_fifo(sc, m)
@@ -682,14 +691,11 @@ mb86950_put_fifo(sc, m)
 	if (totlen < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
 
 		/* Fill the rest of the packet with zeros. */
-/*
-		len1 = (ETHER_MIN_LEN - ETHER_CRC_LEN - totlen + 1) / 2;
-*/
-/* XXX Replace this mess with something else, eats CPU */
-/* The zero fill and last byte ought to be combined somehow */
+		/* XXX Replace this mess with something else, eats CPU */
+		/* The zero fill and last byte ought to be combined somehow */
 		for(len = totlen + 1; len < (ETHER_MIN_LEN - ETHER_CRC_LEN); len += 2)
 	  		bus_space_write_2(bst, bsh, BMPR_FIFO, 0);
-/* XXX                                       */
+		/* XXX                                       */
 
 		totlen = (ETHER_MIN_LEN - ETHER_CRC_LEN);
 	}
@@ -698,7 +704,7 @@ mb86950_put_fifo(sc, m)
 }
 
 /*
- ****************************  INTERRUPTS
+ * Handle interrupts.
  * Ethernet interface interrupt processor
  */
 int
@@ -745,7 +751,8 @@ mb86950_intr(arg)
 	}
 
 	/* If tx still pending reset tx interrupt mask */
-	if (sc->txb_sched > 0) bus_space_write_1(bst, bsh, DLCR_TX_INT_EN, TX_MASK);
+	if (sc->txb_sched > 0)
+		bus_space_write_1(bst, bsh, DLCR_TX_INT_EN, TX_MASK);
 
 	/*
 	 * If it looks like the transmitter can take more data,
@@ -783,14 +790,16 @@ mb86950_tint(sc, tstat)
 	if (tstat & TX_16COL) {
 		ifp->if_collisions += 16;
 		/* 16 collisions means that the packet has been thrown away. */
-		if (sc->txb_sched > 0) sc->txb_sched--;
+		if (sc->txb_sched > 0)
+			sc->txb_sched--;
 	}
 
 	/* transmission complete. */
 	if (tstat & TX_DONE) {
 		/* successfully transmitted packets ++. */
 		ifp->if_opackets++;
-		if (sc->txb_sched > 0) sc->txb_sched--;
+		if (sc->txb_sched > 0)
+			sc->txb_sched--;
 
 		/* Collision count valid only when TX_DONE is set */
 		if (tstat & TX_COL) {
@@ -876,7 +885,7 @@ mb86950_rint(sc, rstat)
 }
 
 /*
- * *********************  RECEIVE PACKET
+ * Receive packet.
  * Retrieve packet from receive buffer and send to the next level up via
  * ether_input(). If there is a BPF listener, give a copy to BPF, too.
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
@@ -1062,11 +1071,10 @@ mb86950_dump(level, sc)
 	    bus_space_read_1(bst, bsh, DLCR_RX_MODE),
 	    bus_space_read_1(bst, bsh, DLCR_CONFIG));
 
-/* XXX BMPR2, 4 write only ?
+	/* XXX BMPR2, 4 write only ?
 	log(level, "\tBMPR = xxxx %04x %04x\n",
 		bus_space_read_2(bst, bsh, BMPR_TX_LENGTH),
 		bus_space_read_2(bst, bsh, BMPR_DMA));
-*/
-
+	*/
 }
 #endif

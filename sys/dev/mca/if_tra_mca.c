@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.1 2005/04/03 11:21:44 jdolecek Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.2 2005/04/03 11:36:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 /*
- * Driver for Tiara LANCard/E II and friends adapted from if_ate_mca.c by Dave J. Barnes 2004.
+ * Driver for Tiara LANCard/E II and friends adapted from if_ate_mca.c
+ * by Dave J. Barnes 2004.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.1 2005/04/03 11:21:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.2 2005/04/03 11:36:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,23 +144,22 @@ tiara_mca_attach(parent, self, aux)
 	int iobase = 0, irq = 0;
 	const struct tiara_mca_product *tra_p;
 
-    pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
+	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 
 	tra_p = tiara_mca_lookup(ma->ma_id);
 
-    switch (tra_p->tra_prodid) {
+	switch (tra_p->tra_prodid) {
 
-    case MCA_PRODUCT_TIARA:
-    case MCA_PRODUCT_TIARA_TP:
-
+	case MCA_PRODUCT_TIARA:
+	case MCA_PRODUCT_TIARA_TP:
 		/*
 		 * POS register 2: (adf pos0)
 		 * 7 6 5 4 3 2 1 0
-		 * \_____/ \_/  \ \__ enable: 0=adapter disabled, 1=adapter enabled
+		 * \_____/ \_/  \ \__ enable: 0=disabled, 1=enabled
 		 *       \   \   \___ boot rom: 0=disabled, 1=enabled
 		 *        \   \______ IRQ 00=3 01=4 10=7 11=9
 		 *         \_________ Base I/O Port
-		 *						0000=0x1200 0001=0x1220 ... 1110=0x13c0 1111=0x13e0
+		 *			0000=0x1200 0001=0x1220 ... 1110=0x13c0 1111=0x13e0
 		 *
 		 * POS register 3: (adf pos1) not used
 		 * POS register 4: (adf pos2) not used
@@ -170,8 +170,8 @@ tiara_mca_attach(parent, self, aux)
 		 * 1 1 0 X \____/
 		 *              \____EPROM Address
 		 */
-	    iobase = 0x1200 + ((pos2 & 0xf0) << 1);
-	    irq = tiara_irq[((pos2 & 0x0c) >> 2)];
+		iobase = 0x1200 + ((pos2 & 0xf0) << 1);
+		irq = tiara_irq[((pos2 & 0x0c) >> 2)];
 
 		/* XXX SWAG for number pkts. */
 		/* My Tiara LANCard has 128K memory ?!? */
@@ -179,24 +179,29 @@ tiara_mca_attach(parent, self, aux)
 		sc->rxb_num_pkt = (65535 - 8192 - 4) / 64;
 		/* XXX                       */
 
-    	break;
+		break;
 
 	case MCA_PRODUCT_SMC3016:
 		/*
 		 * POS register 2: (adf pos0)
 		 * 7 6 5 4 3 2 1 0
-		 * \_____/ \___/  \__ enable: 0=adapter disabled, 1=adapter enabled
+		 * \_____/ \___/  \__ enable: 0=disabled, 1=enabled
 		 *       \     \_____ I/O Address (see ioaddr table)
 		 *        \__________ IRQ (see irq table)
 		 *
 		 * POS register 3: (adf pos1) ignored
-         * 7 6 5 4 3 2 1 0
+		 * 7 6 5 4 3 2 1 0
 		 * X X X X \____/
 		 *              \____EPROM Address (0000 = not used)
-         */
+		 */
 		iobase = smc_iobase[((pos2 & 0x0e) >> 1)];
-		if ((pos2 & 0x80) != 0) irq = smc_irq[((pos2 & 0x70) >> 4)];
-		else printf("%s: unsupported irq selected\n",sc->sc_dev.dv_xname);
+		if ((pos2 & 0x80) != 0)
+			irq = smc_irq[((pos2 & 0x70) >> 4)];
+		else {
+			printf("%s: unsupported irq selected\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 
 		/* XXX SWAG for number pkts. */
 		/* The SMC3016 has a 12K rx buffer and a 4k tx buffer */
@@ -204,8 +209,8 @@ tiara_mca_attach(parent, self, aux)
 		sc->rxb_num_pkt = (12288 - 4) / 64;
 		/* XXX                       */
 
-    	break;
-    }
+		break;
+	}
 
 
 #ifdef DIAGNOSTIC
@@ -231,9 +236,10 @@ tiara_mca_attach(parent, self, aux)
 	bus_space_read_region_1(iot, ioh, TIARA_PROM_ID, myea, ETHER_ADDR_LEN);
 
 	/* This interface is always enabled. */
-/* XXX
+	/* XXX
 	sc->sc_stat |= NIC_STAT_ENABLED;
-*/
+	*/
+
 	/*
 	 * Do generic MB86950 attach.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950reg.h,v 1.1 2005/04/03 11:21:44 jdolecek Exp $	*/
+/*	$NetBSD: mb86950reg.h,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -35,10 +35,11 @@
  */
 
 /*
- *  The Fujitsu mb86950, "EtherStar", is the predecessor to the mb8696x NICE supported
- *  by the ate driver.  While similar in function and programming to the mb8696x, the register offset
- *  differences and quirks make it nearly impossible to have one driver for both the
- *  EtherStar and NICE chips.
+ * The Fujitsu mb86950, "EtherStar", is the predecessor to the mb8696x
+ * NICE supported by the ate driver.  While similar in function and
+ * programming to the mb8696x, the register offset differences and
+ * quirks make it nearly impossible to have one driver for both the
+ * EtherStar and NICE chips.
  *
  *  Definitions from Fujitsu documentation.
  */
