@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.3 1998/08/13 02:10:55 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.4 1998/08/25 22:42:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _SBUS_VAR_H
 
 /* We use #defined(SUN4*) here while the ports are in flux */
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
 struct sbus_softc;
 
 /*
