@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 1997/07/10 04:07:00 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240 1997/07/10 16:02:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -522,7 +522,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "Pentium Pro", 0, 0, "Pentium Pro", 0, 0,
+				0, "Pentium Pro", 0, "Pentium II",
+				"Pentium Pro", 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			}
