@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/29 13:13:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2000/03/29 13:54:44 simonb Exp $
 
 PROG=	ntpd
+MAN=	ntpd.8
 SRCS=	jupiter.h map_vme.c ntp_config.c ntp_control.c ntp_filegen.c \
 	ntp_intres.c ntp_io.c ntp_loopfilter.c ntp_monitor.c ntp_peer.c \
 	ntp_proto.c ntp_refclock.c ntp_request.c ntp_restrict.c ntp_timer.c \
