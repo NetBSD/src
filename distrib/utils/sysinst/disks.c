@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.57 2003/06/09 19:06:48 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.58 2003/06/16 10:42:47 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <util.h>
 
 #include <sys/param.h>
+#include <sys/swap.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #define FSTYPENAMES
@@ -649,13 +650,14 @@ fsck_disks(void)
 }
 
 int
-set_swap(dev, pp, enable)
+set_swap(dev, pp)
 	const char *dev;
 	partinfo *pp;
-	int enable;
 {
 	partinfo parts[16];
 	int i, maxpart;
+	char *cp;
+	int rval;
 
 	if (pp == NULL) {
 		emptylabel(parts);
@@ -667,18 +669,66 @@ set_swap(dev, pp, enable)
 	maxpart = getmaxpartitions();
 
 	for (i = 0; i < maxpart; i++) {
-		if (pp[i].pi_fstype == FS_SWAP) {
-			if (run_prog(0, NULL,
-			    "/sbin/swapctl -%c /dev/%s%c",
-			    enable ? 'a' : 'd', dev, 'a' + i) != 0)
-				return -1;
-			if (enable)
-				strcpy(swapdev, dev);
-			else
-				swapdev[0] = '\0';
-			break;
-		}
+		if (pp[i].pi_fstype != FS_SWAP)
+			continue;
+		asprintf(&cp, "/dev/%s%c", dev, 'a' + i);
+		rval = swapctl(SWAP_ON, cp, 0);
+		free(cp);
+		if (rval != 0)
+			return -1;
 	}
 
 	return 0;
+}
+
+int
+check_swap(const char *dev, int remove)
+{
+	struct swapent *swap;
+	char *cp;
+	int nswap;
+	int l;
+	int rval = 0;
+
+	nswap = swapctl(SWAP_NSWAP, 0, 0);
+	if (nswap <= 0)
+		return 0;
+
+	swap = malloc(nswap * sizeof *swap);
+	if (swap == NULL)
+		return -1;
+
+	nswap = swapctl(SWAP_STATS, swap, nswap);
+	if (nswap < 0)
+		goto bad_swap;
+
+	l = strlen(dev);
+	while (--nswap >= 0) {
+		/* Should we check the se_dev or se_path? */
+		cp = swap[nswap].se_path;
+		if (memcmp(cp, "/dev/", 5) != 0)
+			continue;
+		if (memcmp(cp + 5, dev, l) != 0)
+			continue;
+		if (!isalpha(*(unsigned char *)(cp + 5 + l)))
+			continue;
+		if (cp[5 + l + 1] != 0)
+			continue;
+		/* ok path looks like it is for this device */
+		if (!remove) {
+			/* count active swap areas */
+			rval++;
+			continue;
+		}
+		if (swapctl(SWAP_OFF, cp, 0) == -1)
+			rval = -1;
+	}
+
+    done:
+	free(swap);
+	return rval;
+
+    bad_swap:
+	rval = -1;
+	goto done;
 }
