@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbusvar.h,v 1.6 1995/03/02 02:23:50 chopps Exp $	*/
+/*	$NetBSD: gvpbusvar.h,v 1.7 1995/03/05 13:01:27 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,6 +43,8 @@ enum gvpbusprod {
 	GVP_COMBO_R3 = 0xe0,
 	GVP_COMBO_R3_SCSI = 0xf0,
 	GVP_SERIESII = 0xf8,
+	GVP_A530 = 0xc0,
+	GVP_A530_SCSI = 0xd0,
 	GVP_IOEXTEND = 0x98,
 	GVP_PHONEPAK = 0x78,
 };
