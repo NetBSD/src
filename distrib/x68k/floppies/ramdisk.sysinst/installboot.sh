@@ -6,7 +6,7 @@
 #	requires /bin/sh /bin/dd (x_dd) /bin/mkdir /bin/rm /bin/test
 #		 /sbin/disklabel
 #
-#	$NetBSD: installboot.sh,v 1.3 2000/06/18 10:33:20 minoura Exp $
+#	$NetBSD: installboot.sh,v 1.4 2000/07/04 14:07:43 minoura Exp $
 #
 #
 #    originally from:
@@ -72,6 +72,7 @@ if test -c "$rootdev"; then
 		/dev/rfd??)	# floppies---check disklabel later
 			echo "$rootdev: floppies are not supported!"
 			exit 1
+			;;
 		/dev/r*[a-h])	# SCSI disks
 			$verbose && echo "checking partition type..."
 			rawdev="`echo \"$rootdev\" | sed 's/.$/'$rawpart'/'`"
