@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1998/05/06 07:40:32 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1998/05/07 04:17:59 mycroft Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -16,8 +16,6 @@ CPPFLAGS+=-I${.CURDIR} \
 	-I${DIST} \
 	-I${DIST}/config \
 	-I${DIST}/config/${MACHINE_ARCH} \
-	-DMD_EXEC_PREFIX=\"/usr/libexec/\" \
-	-DMD_STARTFILE_PREFIX=\"/usr/lib/\" \
 	-DIN_GCC -DNETBSD_NATIVE
 
 LDADD+=		-lgnumalloc
