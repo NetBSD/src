@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.18 2004/01/10 00:56:27 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.19 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.18 2004/01/10 00:56:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.19 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -126,9 +126,11 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 	useMirror = 0;
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID level 1 degraded read DAG]\n");
 	}
+#endif
 	dag_h->creator = "RaidOneDegradedReadDAG";
 	/* alloc the Wnd nodes and the Wmir node */
 	if (asmap->numDataFailed == 0)
@@ -278,9 +280,11 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	    asmap->raidAddress, &which_ru);
 	sectorsPerSU = layoutPtr->sectorsPerStripeUnit;
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating degraded read DAG]\n");
 	}
+#endif
 	RF_ASSERT(asmap->numDataFailed == 1);
 	dag_h->creator = "DegradedReadDAG";
 
@@ -543,9 +547,11 @@ rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID C degraded read DAG]\n");
 	}
+#endif
 	dag_h->creator = "RaidCDegradedReadDAG";
 	/* alloc the Wnd nodes and the Wmir node */
 	if (asmap->numDataFailed == 0)
@@ -995,8 +1001,10 @@ rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_PhysDiskAddr_t *failedPDAtwo = asmap->failedPDAs[1];
 	RF_StripeNum_t parityStripeID = rf_RaidAddressToParityStripeID(layoutPtr, asmap->raidAddress, &which_ru);
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug)
 		printf("[Creating Double Degraded Read DAG]\n");
+#endif
 	rf_DD_GenerateFailedAccessASMs(raidPtr, asmap, &npdas, &nRrdNodes, &pqPDAs, &nPQNodes, allocList);
 
 	nRudNodes = asmap->numStripeUnitsAccessed - (asmap->numDataFailed);

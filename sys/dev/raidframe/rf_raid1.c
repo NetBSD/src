@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.22 2004/03/03 13:29:00 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.23 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.22 2004/03/03 13:29:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.23 2004/03/05 03:22:05 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -178,8 +178,10 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
 	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
+#if RF_DEBUG_DAG
 		if (rf_dagDebug) 
 			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
+#endif
 		*createFunc = NULL;
 		return;
 	}
@@ -221,6 +223,7 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 					}
 				}
 			}
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			if (rf_dagDebug || rf_mapDebug) {
 				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
 				       raidPtr->raidid, type, oc, 
@@ -228,6 +231,7 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 				       failedPDA->col,
 				       (long) failedPDA->startSector);
 			}
+#endif
 			asmap->numDataFailed = asmap->numParityFailed = 0;
 		}
 	}
