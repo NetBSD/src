@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/18 05:35:03 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2004/02/07 08:30:34 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -19,9 +19,13 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/X11
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "amiga" || ${MACHINE} == "alpha" || \
-    ${MACHINE} == "pmax" || ${MACHINE} == "acorn32"
+.if ${MACHINE} == "sparc" || \
+    ${MACHINE} == "amiga" || \
+    ${MACHINE} == "alpha" || \
+    ${MACHINE} == "sparc64" || \
+    ${MACHINE} == "acorn32" || \
+    ${MACHINE} == "pmax" || \
+    ${MACHINE} == "dreamcast"
 CPPFLAGS+=	-DXINPUT
 .endif
 
