@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.7 1998/05/23 18:21:43 matt Exp $	*/
+/*	$NetBSD: findcons.c,v 1.8 1998/11/15 11:21:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.7 1998/05/23 18:21:43 matt Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.8 1998/11/15 11:21:52 jonathan Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,13 @@ struct consdev cd;
 #include  "rasterconsole.h"
 
 #include <dev/tc/tcvar.h>		/* find TC fraembuffer device. */
+
+#include <machine/tc_machdep.h>
+
+#include <pmax/pmax/asic.h>		/* scc serial console addresses */
+#include <pmax/pmax/kn03.h>
+#include <pmax/pmax/kmin.h>
+#include <pmax/pmax/maxine.h>
 
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>		/* framebuffer decls used below */
@@ -380,6 +387,7 @@ scc_serial(comslot)
 {
 #if NSCC > 0
 	int dev;
+	void * sccaddr;
 
 	/*
 	 * On the 3min and 3maxplus, the default serial-console
@@ -387,16 +395,29 @@ scc_serial(comslot)
 	 * On the MAXINE, there is only  serial port, which
 	 * configures at the lower address.
 	 */
-	dev = (systype == DS_MAXINE) ? SCCCOMM2_PORT: SCCCOMM3_PORT;
+	switch (systype) {
+	case DS_MAXINE:
+		dev = SCCCOMM2_PORT;
+		sccaddr = (void*)(TC_KV(XINE_SYS_ASIC) + IOASIC_SLOT_4_START);
+		break;
+
+	case DS_3MIN:
+		dev = SCCCOMM3_PORT;
+		sccaddr = (void*)(TC_KV(KMIN_SYS_ASIC) + IOASIC_SLOT_6_START);
+		break;
+
+	case DS_3MAXPLUS:
+		dev = SCCCOMM3_PORT;
+		sccaddr = (void*)(TC_KV(KN03_SYS_ASIC) + IOASIC_SLOT_6_START);
+		break;
+	default:
+		return (0);
+	}
+
 	cd.cn_dev = makedev(SCCDEV, dev);
 
-#ifdef notyet	/* no boot-time init entrypoint for scc */
-	return scc_consinit(cd.cn_dev);
-
-#else	/* !notyet */
-	printf("Using PROM serial output until serial drivers initialized.\n");
-	return(1);
-#endif	/* notyet */
+	scc_consinit(cd.cn_dev, sccaddr);
+	return 1;
 #endif /* NSCC */
 
 	return 0;

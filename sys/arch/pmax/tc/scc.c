@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.43 1998/10/29 21:25:17 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.44 1998/11/15 11:21:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.43 1998/10/29 21:25:17 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.44 1998/11/15 11:21:53 jonathan Exp $");
 
 #include "opt_ddb.h"
 
@@ -161,10 +161,6 @@ extern void ttrstrt	__P((void *));
 
 #define CONSOLE_ON_UNIT(unit) \
   (major(cn_tab->cn_dev) == SCCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
-
-#ifdef alpha
-#define RASTER_CONSOLE() 1	/* Treat test for cn_screen as true */
-#endif
 
 
 /*
@@ -302,7 +298,7 @@ static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
-void scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
+void scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 
 /*
@@ -321,9 +317,6 @@ scc_consinit(dev, sccaddr)
 	scc_regmap_t *sccaddr;
 {
 	struct scc_softc *sc;
-	struct termios cterm;
-	struct tty ctty;
-	int s;
 
 	/* Save address in case we're cold. */
 	if (cold && scc_cons_addr == 0) {
@@ -337,23 +330,13 @@ scc_consinit(dev, sccaddr)
 	}
 
 	/* Reset chip. */
-	sccreset(sc);
 	/* XXX make sure sccreset() called only once for this chip? */
+	sccreset(sc);
 
-	/* set console-line parameters */
-	s = spltty();
-	ctty.t_dev = dev;
 	scccons.cn_dev = dev;
-	cterm.c_cflag = CS8;
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag  |= CLOCAL;
-#endif
-	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) cold_sccparam(&ctty, &cterm, sc);
 	*cn_tab = scccons;
-	DELAY(1000);
-	splx(s);
+	sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
+	scc_tty_init(sc, cn_tab->cn_dev);
 }
 
 
@@ -524,11 +507,13 @@ sccattach(parent, self, aux)
 		 * and we just reset the chip under the console.
 		 * Re-wire  this unit up as console ASAP.
 		 */
+#ifdef alpha
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV,
 		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
 
 		/* Wire carrier for console. */
+#endif
 		sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
 		scc_tty_init(sc, cn_tab->cn_dev);
 
@@ -573,7 +558,8 @@ scc_tty_init(sc, dev)
 	cterm.c_cflag  |= CLOCAL;
 #endif
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) sccparam(&ctty, &cterm);
+	/* scc_tty_init() may be called when very cold */
+	(void) cold_sccparam(&ctty, &cterm, sc);
 	DELAY(1000);
 	splx(s);
 }
@@ -973,24 +959,6 @@ cold_sccparam(tp, t, sc)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 
-	/*
-	 * Handle console specially.
-	 */
-#ifdef HAVE_RCONS
-	if (cn_tab->cn_getc == LKgetc) {
-		if (minor(tp->t_dev) == SCCKBD_PORT) {
-			cflag = CS8;
-			ospeed = ttspeedtab(4800, sccspeedtab);
-		} else if (minor(tp->t_dev) == SCCMOUSE_PORT) {
-			cflag = CS8 | PARENB | PARODD;
-			ospeed = ttspeedtab(4800, sccspeedtab);
-		}
-	} else if (tp->t_dev == cn_tab->cn_dev)
-#endif /*HAVE_RCONS*/
-	{
-		cflag = CS8;
-		ospeed = ttspeedtab(9600, sccspeedtab);
-	}
 	if (ospeed == 0) {
 		(void) sccmctl(tp->t_dev, 0, DMSET);	/* hang up line */
 		return (0);
