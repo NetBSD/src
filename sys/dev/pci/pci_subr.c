@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.37 2000/08/03 19:58:55 nathanw Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.38 2000/09/02 00:48:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -53,15 +53,15 @@
 static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
 static int pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
-    const pcireg_t *regs, int, const char *));
+    const pcireg_t *regs, int, const char *, int));
 static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
     int pastlast));
 static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -529,12 +529,13 @@ pci_conf_print_common(pc, tag, regs)
 }
 
 static int
-pci_conf_print_bar(pc, tag, regs, reg, name)
+pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
 	int reg;
 	const char *name;
+	int sizebar;
 {
 	int s, width;
 	pcireg_t mask, rval;
@@ -553,7 +554,8 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	 * we write all 1s and see what we get back.
 	 */
 	rval = regs[o2i(reg)];
-	if (rval != 0) {
+	/* XXX don't size unknown memory type? */
+	if (rval != 0 && sizebar) {
 		/*
 		 * The following sequence seems to make some devices
 		 * (e.g. host bus bridges, which don't normally
@@ -612,26 +614,40 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 		printf("%s %sprefetchable memory\n", type, prefetch);
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
 		case PCI_MAPREG_MEM_TYPE_64BIT:
-			printf("      base: 0x%016llx, size: 0x%016llx\n",
+			printf("      base: 0x%016llx, ",
 			    PCI_MAPREG_MEM64_ADDR(
-				((((long long) rval64h) << 32) | rval)),
-			    PCI_MAPREG_MEM64_SIZE(
-				((((long long) mask64h) << 32) | mask)));
+				((((long long) rval64h) << 32) | rval)));
+			if (sizebar)
+				printf("size: 0x%016llx",
+				    PCI_MAPREG_MEM64_SIZE(
+				      ((((long long) mask64h) << 32) | mask)));
+			else
+				printf("not sized");
+			printf("\n");
 			break;
 		case PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		default:
-			printf("      base: 0x%08x, size: 0x%08x\n",
-			    PCI_MAPREG_MEM_ADDR(rval),
-			    PCI_MAPREG_MEM_SIZE(mask));
+			printf("      base: 0x%08x, ",
+			    PCI_MAPREG_MEM_ADDR(rval));
+			if (sizebar)
+				printf("size: 0x%08x",
+				    PCI_MAPREG_MEM_SIZE(mask));
+			else
+				printf("not sized");
+			printf("\n");
 			break;
 		}
-
 	} else {
+		if (sizebar)
+			printf("%d-bit ", mask & ~0x0000ffff ? 32 : 16);
 		printf("i/o\n");
-		printf("      base: 0x%08x, size: 0x%08x\n",
-		    PCI_MAPREG_IO_ADDR(rval),
-		    PCI_MAPREG_IO_SIZE(mask));
+		printf("      base: 0x%08x, ", PCI_MAPREG_IO_ADDR(rval));
+		if (sizebar)
+			printf("size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
+		else
+			printf("not sized");
+		printf("\n");
 	}
 
 	return width;
@@ -663,16 +679,17 @@ pci_conf_print_regs(regs, first, pastlast)
 }
 
 static void
-pci_conf_print_type0(pc, tag, regs)
+pci_conf_print_type0(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
 	int off, width;
 	pcireg_t rval;
 
 	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width)
-		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -757,10 +774,11 @@ pci_conf_print_type0(pc, tag, regs)
 }
 
 static void
-pci_conf_print_type1(pc, tag, regs)
+pci_conf_print_type1(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
 	int off, width;
 	pcireg_t rval;
@@ -775,7 +793,7 @@ pci_conf_print_type1(pc, tag, regs)
 	 */
 
 	for (off = 0x10; off < 0x18; off += width)
-		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
 
 	printf("    Primary bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
@@ -882,10 +900,11 @@ pci_conf_print_type1(pc, tag, regs)
 }
 
 static void
-pci_conf_print_type2(pc, tag, regs)
+pci_conf_print_type2(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
 	pcireg_t rval;
 
@@ -899,7 +918,7 @@ pci_conf_print_type2(pc, tag, regs)
 	 */
 
 	pci_conf_print_bar(pc, tag, regs, 0x10,
-	    "CardBus socket/ExCA registers");
+	    "CardBus socket/ExCA registers", sizebars);
 
 	printf("    Reserved @ 0x14: 0x%04x\n",
 	    (regs[o2i(0x14)] >> 0) & 0xffff);
@@ -1000,7 +1019,8 @@ pci_conf_print_type2(pc, tag, regs)
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
-	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers");
+	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers",
+	    sizebars);
 }
 
 void
@@ -1012,12 +1032,18 @@ pci_conf_print(pc, tag, printfn)
 	pcireg_t regs[o2i(256)];
 	int off, endoff, hdrtype;
 	const char *typename;
-	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
+	int sizebars;
 
 	printf("PCI configuration registers:\n");
 
 	for (off = 0; off < 256; off += 4)
 		regs[o2i(off)] = pci_conf_read(pc, tag, off);
+
+	sizebars = 1;
+	if (PCI_CLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_SUBCLASS_BRIDGE_HOST)
+		sizebars = 0;
 
 	/* common header */
 	printf("  Common header:\n");
@@ -1061,7 +1087,7 @@ pci_conf_print(pc, tag, printfn)
 	pci_conf_print_regs(regs, 16, endoff);
 	printf("\n");
 	if (typeprintfn)
-		(*typeprintfn)(pc, tag, regs);
+		(*typeprintfn)(pc, tag, regs, sizebars);
 	else
 		printf("    Don't know how to pretty-print type %d header.\n",
 		    hdrtype);
