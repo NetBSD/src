@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.5 1997/09/15 01:29:28 lukem Exp $	*/
+/*	$NetBSD: bim.c,v 1.6 1997/10/01 02:25:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.5 1997/09/15 01:29:28 lukem Exp $");
+__RCSID("$NetBSD: bim.c,v 1.6 1997/10/01 02:25:55 enami Exp $");
 #endif /* not lint */
 
 /*
@@ -574,8 +574,6 @@ main(argc, argv)
 	char    *fname;
 	int     cmdscnt;	/* Number of argument line commands. */
 	char   *argcmds[MAXARGCMDS];
-	extern int optind, opterr;
-	extern char *optarg;
 	char    optchar;
 	int     index;
 
