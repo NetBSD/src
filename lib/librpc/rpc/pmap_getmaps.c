@@ -26,10 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#if !defined(lint) && defined(SCCSIDS)
-/*static char sccsid[] = "from: @(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char sccsid[] = "from: @(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: pmap_getmaps.c,v 1.2 1993/08/01 18:33:35 mycroft Exp $";
+
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char *sccsid = "from: @(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
+/*static char *sccsid = "from: @(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";*/
+static char *rcsid = "$Id: pmap_getmaps.c,v 1.3 1993/08/26 00:53:27 jtc Exp $";
 #endif
 
 /*

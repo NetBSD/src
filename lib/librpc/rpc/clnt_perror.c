@@ -26,10 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#if !defined(lint) && defined(SCCSIDS)
-/*static char sccsid[] = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
-/*static char sccsid[] = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: clnt_perror.c,v 1.3 1993/08/01 18:33:50 mycroft Exp $";
+
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
+/*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
+static char *rcsid = "$Id: clnt_perror.c,v 1.4 1993/08/26 00:53:16 jtc Exp $";
 #endif
 
 /*
@@ -39,14 +40,13 @@ static char rcsid[] = "$Id: clnt_perror.c,v 1.3 1993/08/01 18:33:50 mycroft Exp 
  *
  */
 #include <stdio.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <rpc/types.h>
 #include <rpc/auth.h>
 #include <rpc/clnt.h>
 
 static char *auth_errmsg();
-
-extern char *strcpy();
 
 static char *buf;
 
