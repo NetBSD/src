@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.10 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.11 2004/04/27 20:13:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -73,9 +73,6 @@ void	 dbm_close __P((DBM *));
 int	 dbm_delete __P((DBM *, datum));
 datum	 dbm_fetch __P((DBM *, datum));
 datum	 dbm_firstkey __P((DBM *));
-#if defined(_NETBSD_SOURCE)
-long	 dbm_forder __P((DBM *, datum));
-#endif
 datum	 dbm_nextkey __P((DBM *));
 DBM	*dbm_open __P((const char *, int, mode_t));
 int	 dbm_store __P((DBM *, datum, datum, int));
