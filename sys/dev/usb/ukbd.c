@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.40 1999/08/23 22:55:14 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.41 1999/08/28 21:42:35 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -390,7 +390,7 @@ ukbd_enable(v, on)
 
 int
 ukbd_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
@@ -409,7 +409,7 @@ ukbd_activate(self, act)
 
 int
 ukbd_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.28 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.29 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ USB_ATTACH(ums)
 
 int
 ums_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
@@ -316,7 +316,7 @@ ums_activate(self, act)
 
 int
 ums_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
