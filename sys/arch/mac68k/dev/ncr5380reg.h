@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.5 1995/12/04 02:10:46 briggs Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.6 1995/12/13 03:48:10 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
