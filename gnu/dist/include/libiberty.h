@@ -26,7 +26,7 @@ extern void freeargv PARAMS ((char **));
    across different systems, sometimes as "char *" and sometimes as
    "const char *" */
 
-#if defined(__GNU_LIBRARY__ ) || defined (__linux__)
+#if defined(__GNU_LIBRARY__ ) || defined (__linux__) || defined(__NetBSD__)
 extern char *basename PARAMS ((const char *));
 #else
 extern char *basename ();
