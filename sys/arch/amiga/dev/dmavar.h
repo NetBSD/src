@@ -38,18 +38,17 @@
 #define	DMAGO_NOINT	0x80	/* don't interrupt on completion */
 
 #ifdef KERNEL
-typedef int  (*dmareq_t)  (struct devqueue *);
-typedef void (*dmafree_t) (struct devqueue *dq);
-typedef int  (*dmago_t)   (int, char *, int, int);
-typedef int  (*dmanext_t) (int);
-typedef void (*dmastop_t) (int);
+typedef void (*dmafree_t) (void *dev);
+typedef int  (*dmago_t)   (void *dev, char *, int, int);
+typedef int  (*dmanext_t) (void *dev);
+typedef void (*dmastop_t) (void *dev);
 
-extern void dma3000init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+extern void dma3000init (struct amiga_ctlr *, dmafree_t *, dmago_t *, 
 			 dmanext_t *, dmastop_t *);
 
-extern void dma2091init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+extern void dma2091init (struct amiga_ctlr *, dmafree_t *, dmago_t *, 
 			 dmanext_t *, dmastop_t *);
 
-extern void dmagvp11init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+extern void dmagvp11init (struct amiga_ctlr *, dmafree_t *, dmago_t *, 
 			  dmanext_t *, dmastop_t *);
 #endif

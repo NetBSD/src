@@ -100,6 +100,3 @@ struct sdmac {
 #define ISTR_FF_FLG	(1<<1)	/* FIFO-Full Flag */
 #define ISTR_FE_FLG	(1<<0)	/* FIFO-Empty Flag */
 
-
-#define	NDMA		1
-

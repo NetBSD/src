@@ -62,7 +62,6 @@ struct	driver serdriver = {
 };
 
 int	serstart(), serparam(), serintr();
-extern int ttrstrt();
 int	ser_active;
 int	ser_hasfifo;
 int	nser = NSER;

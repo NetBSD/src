@@ -37,7 +37,7 @@ cc_init(gp, ad)
   struct view_size vs;
 
   /* already initialized fail */
-  if (gp->g_data == 12345678)
+  if (gp->g_data == (caddr_t) 12345678)
     return 0;
 
   rc = grfcc_probe ();
@@ -115,9 +115,9 @@ XXX_grf_cc_on (unit)
 
   viewioctl (unit, VIEW_GETBITMAP, &bm, 0, -1);
   
-  gp->g_data = 12345678;		/* not particularly clean.. */
+  gp->g_data = (caddr_t) 12345678; /* not particularly clean.. */
   
-  gi->gd_regaddr = 0xdff000;		/* no need to look at regs */
+  gi->gd_regaddr = (caddr_t) 0xdff000;		/* no need to look at regs */
   gi->gd_regsize = round_page(sizeof (custom));	/* I mean it X people, for CC */
 					/* use the view device. That way */
 					/* we can have both X and a console. */
