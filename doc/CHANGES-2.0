@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.137 2004/04/28 05:56:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.138 2004/04/28 05:57:30 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1429,3 +1429,8 @@ sys/netinet6/in6_pcb.c				1.64
 	do all the per-PCB policy cache calls when either (KAME) IPSEC, or  
 	FAST_IPSEC is defined.
 	[jonathan, ticket #201]
+
+sys/sys/bootblock.h				1.27
+
+	Add offset of old i386 mbr bootsel structure.
+	[dsl, ticket #198]
