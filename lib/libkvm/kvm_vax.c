@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.7 1998/02/03 19:12:45 perry Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.7.2.1 2000/10/27 21:01:16 he Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,13 +119,13 @@ _kvm_kvatop(kd, va, pa)
 	int end;
 
 	if (va < KERNBASE) {
-		_kvm_err(kd, 0, "invalid address (%x<%x)", va, KERNBASE);
+		_kvm_err(kd, 0, "invalid address (%lx<%x)", va, KERNBASE);
 		return (0);
 	}
 
 	end = kd->vmst->end;
 	if (va >= end) {
-		_kvm_err(kd, 0, "invalid address (%x>=%x)", va, end);
+		_kvm_err(kd, 0, "invalid address (%lx>=%x)", va, end);
 		return (0);
 	}
 
