@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.29 2001/11/13 00:56:56 lukem Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.30 2001/12/21 07:16:58 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.29 2001/11/13 00:56:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.30 2001/12/21 07:16:58 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -425,14 +425,6 @@ ah4_input(m, va_alist)
 			ipsecstat.in_inval++;
 			goto fail;
 		}
-
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
-			goto fail;
-		}
-#endif
 
 #if 1
 		/*
@@ -904,14 +896,6 @@ ah6_input(mp, offp, proto)
 			ipsec6stat.in_inval++;
 			goto fail;
 		}
-
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
-			goto fail;
-		}
-#endif
 
 #if 1
 		/*
