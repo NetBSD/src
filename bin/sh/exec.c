@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.26 1998/07/28 11:41:54 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.27 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.26 1998/07/28 11:41:54 mycroft Exp $");
+__RCSID("$NetBSD: exec.c,v 1.27 1999/07/09 03:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,10 +117,10 @@ STATIC void delete_cmd_entry __P((void));
  */
 
 void
-shellexec(argv, envp, path, index)
+shellexec(argv, envp, path, idx)
 	char **argv, **envp;
-	char *path;
-	int index;
+	const char *path;
+	int idx;
 {
 	char *cmdname;
 	int e;
@@ -131,7 +131,7 @@ shellexec(argv, envp, path, index)
 	} else {
 		e = ENOENT;
 		while ((cmdname = padvance(&path, argv[0])) != NULL) {
-			if (--index < 0 && pathopt == NULL) {
+			if (--idx < 0 && pathopt == NULL) {
 				tryexec(cmdname, argv, envp);
 				if (errno != ENOENT && errno != ENOTDIR)
 					e = errno;
@@ -285,15 +285,16 @@ break2:;
  * NULL.
  */
 
-char *pathopt;
+const char *pathopt;
 
 char *
 padvance(path, name)
-	char **path;
-	char *name;
+	const char **path;
+	const char *name;
 	{
-	char *p, *q;
-	char *start;
+	const char *p;
+	char *q;
+	const char *start;
 	int len;
 
 	if (*path == NULL)
@@ -379,17 +380,17 @@ printentry(cmdp, verbose)
 	struct tblentry *cmdp;
 	int verbose;
 	{
-	int index;
-	char *path;
+	int idx;
+	const char *path;
 	char *name;
 
 	if (cmdp->cmdtype == CMDNORMAL) {
-		index = cmdp->param.index;
+		idx = cmdp->param.index;
 		path = pathval();
 		do {
 			name = padvance(&path, cmdp->cmdname);
 			stunalloc(name);
-		} while (--index >= 0);
+		} while (--idx >= 0);
 		out1str(name);
 	} else if (cmdp->cmdtype == CMDBUILTIN) {
 		out1fmt("builtin %s", cmdp->cmdname);
@@ -425,10 +426,10 @@ find_command(name, entry, act, path)
 	char *name;
 	struct cmdentry *entry;
 	int act;
-	char *path;
+	const char *path;
 {
 	struct tblentry *cmdp;
-	int index;
+	int idx;
 	int prev;
 	char *fullname;
 	struct stat statb;
@@ -482,11 +483,11 @@ find_command(name, entry, act, path)
 	}
 
 	e = ENOENT;
-	index = -1;
+	idx = -1;
 loop:
 	while ((fullname = padvance(&path, name)) != NULL) {
 		stunalloc(fullname);
-		index++;
+		idx++;
 		if (pathopt) {
 			if (prefix("builtin", pathopt)) {
 				if ((i = find_builtin(name)) < 0)
@@ -504,8 +505,8 @@ loop:
 			}
 		}
 		/* if rehash, don't redo absolute path names */
-		if (fullname[0] == '/' && index <= prev) {
-			if (index < prev)
+		if (fullname[0] == '/' && idx <= prev) {
+			if (idx < prev)
 				goto loop;
 			TRACE(("searchexec \"%s\": no change\n", name));
 			goto success;
@@ -546,7 +547,7 @@ loop:
 		INTOFF;
 		cmdp = cmdlookup(name, 1);
 		cmdp->cmdtype = CMDNORMAL;
-		cmdp->param.index = index;
+		cmdp->param.index = idx;
 		INTON;
 		goto success;
 	}
@@ -618,18 +619,18 @@ changepath(newval)
 	const char *newval;
 {
 	const char *old, *new;
-	int index;
+	int idx;
 	int firstchange;
 	int bltin;
 
 	old = pathval();
 	new = newval;
 	firstchange = 9999;	/* assume no change */
-	index = 0;
+	idx = 0;
 	bltin = -1;
 	for (;;) {
 		if (*old != *new) {
-			firstchange = index;
+			firstchange = idx;
 			if ((*old == '\0' && *new == ':')
 			 || (*old == ':' && *new == '\0'))
 				firstchange++;
@@ -638,9 +639,9 @@ changepath(newval)
 		if (*new == '\0')
 			break;
 		if (*new == '%' && bltin < 0 && prefix("builtin", new + 1))
-			bltin = index;
+			bltin = idx;
 		if (*new == ':') {
-			index++;
+			idx++;
 		}
 		new++, old++;
 	}
@@ -877,7 +878,7 @@ typecmd(argc, argv)
 	char **pp;
 	struct alias *ap;
 	int i;
-	int error = 0;
+	int err = 0;
 	extern char *const parsekwd[];
 
 	for (i = 1; i < argc; i++) {
@@ -911,7 +912,8 @@ typecmd(argc, argv)
 		switch (entry.cmdtype) {
 		case CMDNORMAL: {
 			int j = entry.u.index;
-			char *path = pathval(), *name;
+			const char *path = pathval();
+			char *name;
 			if (j == -1) 
 				name = argv[i];
 			else {
@@ -934,9 +936,9 @@ typecmd(argc, argv)
 
 		default:
 			out1str(" not found\n");
-			error |= 127;
+			err |= 127;
 			break;
 		}
 	}
-	return error;
+	return err;
 }

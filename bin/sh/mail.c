@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.12 1998/01/31 12:36:17 christos Exp $	*/
+/*	$NetBSD: mail.c,v 1.13 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mail.c,v 1.12 1998/01/31 12:36:17 christos Exp $");
+__RCSID("$NetBSD: mail.c,v 1.13 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ chkmail(silent)
 	int silent;
 {
 	int i;
-	char *mpath;
+	const char *mpath;
 	char *p;
 	char *q;
 	struct stackmark smark;

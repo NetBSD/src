@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.31 1998/05/20 01:36:14 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.32 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.31 1998/05/20 01:36:14 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.32 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,8 @@ static int
 preadfd()
 {
 	int nr;
-	parsenextc = parsefile->buf;
+	char *buf =  parsefile->buf;
+	parsenextc = buf;
 
 retry:
 #ifndef SMALL
@@ -193,11 +194,11 @@ retry:
 			nr = 0;
 		else {
 			/* XXX - BUFSIZE should redesign so not necessary */
-			(void) strcpy(parsenextc, rl_cp);
+			(void) strcpy(buf, rl_cp);
 		}
 	} else
 #endif
-		nr = read(parsefile->fd, parsenextc, BUFSIZ - 1);
+		nr = read(parsefile->fd, buf, BUFSIZ - 1);
 
 
 	if (nr <= 0) {
@@ -381,7 +382,7 @@ popstring()
 
 void
 setinputfile(fname, push)
-	char *fname;
+	const char *fname;
 	int push;
 {
 	int fd;
