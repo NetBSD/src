@@ -1,0 +1,10 @@
+#!/bin/sh -
+../ed - <<\EOT
+r \!.d
+!read one
+hello, world
+a
+okay
+.
+w \!.o
+EOT

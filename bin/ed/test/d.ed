@@ -1,0 +1,8 @@
+#!/bin/sh -
+../ed - <<\EOT
+r \d.d
+1d
+2,3d
+$d
+w \d.o
+EOT

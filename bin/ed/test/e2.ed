@@ -1,0 +1,6 @@
+#!/bin/sh -
+../ed - <<\EOT
+r \e2.d
+E !echo hello world-
+w \e2.o
+EOT
