@@ -479,10 +479,8 @@
 ./usr/sbin/edquota
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
-./usr/sbin/gettable
 ./usr/sbin/hlfsd
 ./usr/sbin/host
-./usr/sbin/htable
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipfstat

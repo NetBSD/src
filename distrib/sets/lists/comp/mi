@@ -1092,8 +1092,6 @@
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
-./usr/lib/libamu.a
-./usr/lib/libamu_p.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
@@ -1255,6 +1253,7 @@
 ./usr/share/man/cat2/getpriority.0
 ./usr/share/man/cat2/getrlimit.0
 ./usr/share/man/cat2/getrusage.0
+./usr/share/man/cat2/getsid.0
 ./usr/share/man/cat2/getsockname.0
 ./usr/share/man/cat2/getsockopt.0
 ./usr/share/man/cat2/gettimeofday.0
@@ -1354,6 +1353,7 @@
 ./usr/share/man/cat2/syscall.0
 ./usr/share/man/cat2/truncate.0
 ./usr/share/man/cat2/umask.0
+./usr/share/man/cat2/undelete.0
 ./usr/share/man/cat2/unlink.0
 ./usr/share/man/cat2/unmount.0
 ./usr/share/man/cat2/utimes.0
@@ -1412,6 +1412,10 @@
 ./usr/share/man/cat3/bm_free.0
 ./usr/share/man/cat3/bsearch.0
 ./usr/share/man/cat3/bstring.0
+./usr/share/man/cat3/bswap.0
+./usr/share/man/cat3/bswap16.0
+./usr/share/man/cat3/bswap32.0
+./usr/share/man/cat3/bswap64.0
 ./usr/share/man/cat3/btree.0
 ./usr/share/man/cat3/byteorder.0
 ./usr/share/man/cat3/bzero.0
@@ -1674,6 +1678,8 @@
 ./usr/share/man/cat3/inet_netof.0
 ./usr/share/man/cat3/inet_network.0
 ./usr/share/man/cat3/inet_ntoa.0
+./usr/share/man/cat3/inet_ntop.0
+./usr/share/man/cat3/inet_pton.0
 ./usr/share/man/cat3/initgroups.0
 ./usr/share/man/cat3/initstate.0
 ./usr/share/man/cat3/innetgr.0
@@ -2024,6 +2030,7 @@
 ./usr/share/man/cat3/tcflush.0
 ./usr/share/man/cat3/tcgetattr.0
 ./usr/share/man/cat3/tcgetpgrp.0
+./usr/share/man/cat3/tcgetsid.0
 ./usr/share/man/cat3/tcsendbreak.0
 ./usr/share/man/cat3/tcsetattr.0
 ./usr/share/man/cat3/tcsetpgrp.0
@@ -2220,6 +2227,7 @@
 ./usr/share/man/man2/getpriority.2
 ./usr/share/man/man2/getrlimit.2
 ./usr/share/man/man2/getrusage.2
+./usr/share/man/man2/getsid.2
 ./usr/share/man/man2/getsockname.2
 ./usr/share/man/man2/getsockopt.2
 ./usr/share/man/man2/gettimeofday.2
@@ -2319,6 +2327,7 @@
 ./usr/share/man/man2/syscall.2
 ./usr/share/man/man2/truncate.2
 ./usr/share/man/man2/umask.2
+./usr/share/man/man2/undelete.2
 ./usr/share/man/man2/unlink.2
 ./usr/share/man/man2/unmount.2
 ./usr/share/man/man2/utimes.2
@@ -2377,6 +2386,10 @@
 ./usr/share/man/man3/bm_free.3
 ./usr/share/man/man3/bsearch.3
 ./usr/share/man/man3/bstring.3
+./usr/share/man/man3/bswap.3
+./usr/share/man/man3/bswap16.3
+./usr/share/man/man3/bswap32.3
+./usr/share/man/man3/bswap64.3
 ./usr/share/man/man3/btree.3
 ./usr/share/man/man3/byteorder.3
 ./usr/share/man/man3/bzero.3
@@ -2639,6 +2652,8 @@
 ./usr/share/man/man3/inet_netof.3
 ./usr/share/man/man3/inet_network.3
 ./usr/share/man/man3/inet_ntoa.3
+./usr/share/man/man3/inet_ntop.3
+./usr/share/man/man3/inet_pton.3
 ./usr/share/man/man3/initgroups.3
 ./usr/share/man/man3/initstate.3
 ./usr/share/man/man3/innetgr.3
@@ -2989,6 +3004,7 @@
 ./usr/share/man/man3/tcflush.3
 ./usr/share/man/man3/tcgetattr.3
 ./usr/share/man/man3/tcgetpgrp.3
+./usr/share/man/man3/tcgetsid.3
 ./usr/share/man/man3/tcsendbreak.3
 ./usr/share/man/man3/tcsetattr.3
 ./usr/share/man/man3/tcsetpgrp.3

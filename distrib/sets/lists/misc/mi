@@ -245,6 +245,7 @@
 ./usr/share/sendmail/cf/tcpproto.mc
 ./usr/share/sendmail/cf/trinity.mc
 ./usr/share/sendmail/cf/uucpproto.mc
+./usr/share/sendmail/cf/zhadum.mc
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/EECS.Berkeley.EDU.m4
