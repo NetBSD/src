@@ -1,6 +1,9 @@
 /*
- *	$Id: limits.h,v 1.5 1994/01/26 21:12:19 mw Exp $
+ *	$Id: limits.h,v 1.6 1994/04/10 02:06:42 chopps Exp $
  */
+#ifndef _MACHINE_LIMITS_H
+#define _MACHINE_LIMITS_H
 
-/* Just use the common m68k definition */
 #include <m68k/limits.h>
+
+#endif
