@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.3 1999/12/09 15:08:33 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.4 1999/12/31 19:40:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,21 +93,39 @@ sockopen()
 
 	/* specify to tell receiving interface */
 	on = 1;
+#ifdef IPV6_RECVPKTINFO
+	if (setsockopt(rssock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+		       sizeof(on)) < 0) {
+		warnmsg(LOG_ERR, __FUNCTION__, "IPV6_RECVPKTINFO: %s",
+		       strerror(errno));
+		exit(1);
+	}
+#else  /* old adv. API */
 	if (setsockopt(rssock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "IPV6_PKTINFO: %s",
 		       strerror(errno));
 		exit(1);
 	}
+#endif 
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
+#ifdef IPV6_RECVHOPLIMIT
+	if (setsockopt(rssock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
+		       sizeof(on)) < 0) {
+		warnmsg(LOG_ERR, __FUNCTION__, "IPV6_RECVHOPLIMIT: %s",
+		       strerror(errno));
+		exit(1);
+	}
+#else  /* old adv. API */
 	if (setsockopt(rssock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "IPV6_HOPLIMIT: %s",
 		       strerror(errno));
 		exit(1);
 	}
+#endif 
 
 	/* specfiy to accept only router advertisements on the socket */
 	ICMP6_FILTER_SETBLOCKALL(&filt);
