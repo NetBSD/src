@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)getusershell.c	5.7 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: getusershell.c,v 1.2 1993/07/30 08:22:44 mycroft Exp $";
+static char rcsid[] = "$Id: getusershell.c,v 1.3 1993/08/25 22:24:50 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ static char *okshells[] =
 
 static char **shells, *strings;
 static char **curshell = NULL;
-extern char **initshells();
+static char **initshells();
 
 /*
  * Get a list of shells from SHELLS, if it exists.
