@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.4 2000/01/14 03:28:13 nisimura Exp $ */
+/* $NetBSD: lunaws.c,v 1.5 2000/10/19 10:35:34 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.4 2000/01/14 03:28:13 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.5 2000/10/19 10:35:34 nisimura Exp $");
 
 #include "wsmouse.h"
 
@@ -249,7 +249,13 @@ wsintr(chan)
 					omkbd_input(sc, code);
 					continue;
 				}
-				sc->buttons = code & 07;
+				code = (code & 07) ^ 07;
+				/* LMR->RML: wsevent counts 0 for leftmost */
+				sc->buttons = (code & 02);
+				if (code & 01)
+					sc->buttons |= 04;
+				if (code & 04)
+					sc->buttons |= 01;
 				sc->sc_msreport = 1;
 			}
 			else if (sc->sc_msreport == 1) {
