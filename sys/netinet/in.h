@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.24.4.1 1997/08/28 00:22:10 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.24.4.2 1997/10/14 10:29:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -187,6 +187,7 @@ struct ip_opts {
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
+#define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
 
 /*
  * Defaults and limits for options

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.35 1996/10/13 02:21:49 christos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.35.10.1 1997/10/14 10:28:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1438,7 +1438,7 @@ union_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	register struct union_node *un = VTOUNION(ap->a_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.11 1996/10/10 23:22:20 christos Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.11.10.1 1997/10/14 10:29:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,7 @@
 #include <netiso/iso_var.h>
 #include <netiso/tuba_table.h>
 #include <netiso/tp_var.h>
+
 /*
  * TCP protocol interface to socket abstraction.
  */
@@ -239,8 +240,7 @@ tuba_usrreq(so, req, m, nam, control, p)
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
 		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		tp->iss = tcp_iss;
-		tcp_iss += TCP_ISSINCR / 2;
+		tp->iss = tcp_new_iss(tp, sizeof(tp), 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
 		tuba_refcnt(isop, 1);

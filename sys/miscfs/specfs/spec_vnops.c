@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.36 1997/04/02 17:14:32 kleink Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.36.4.1 1997/10/14 10:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,13 +55,13 @@
 #include <miscfs/specfs/specdev.h>
 
 /* symbolic sleep message strings for devices */
-char	devopn[] = "devopn";
-char	devio[] = "devio";
-char	devwait[] = "devwait";
-char	devin[] = "devin";
-char	devout[] = "devout";
-char	devioc[] = "devioc";
-char	devcls[] = "devcls";
+const char	devopn[] = "devopn";
+const char	devio[] = "devio";
+const char	devwait[] = "devwait";
+const char	devin[] = "devin";
+const char	devout[] = "devout";
+const char	devioc[] = "devioc";
+const char	devcls[] = "devcls";
 
 int (**spec_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
