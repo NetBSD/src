@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.14 2000/09/11 22:36:35 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.15 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -155,8 +155,8 @@ prom_vtop(vaddr)
 	args.method = ADR2CELL(&"translate");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
-	if(openfirmware(&args) != 0)
-		return 0;
+	if(openfirmware(&args) == -1)
+		return -1;
 #if 0
 	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
 		    mmuh, vaddr, (int)(args.status>>32), (int)args.status, (int)(args.retaddr>>32), (int)args.retaddr, 
@@ -201,8 +201,8 @@ prom_claim_virt(vaddr, len)
 	args.align = 0;
 	args.len = len;
 	args.vaddr = ADR2CELL(vaddr);
-	if (openfirmware(&args) != 0)
-		return 0;
+	if (openfirmware(&args) == -1)
+		return -1;
 	return (paddr_t)args.retaddr;
 }
 
@@ -390,7 +390,7 @@ prom_alloc_phys(len, align)
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_alloc_phys: cannot get memh\r\n");
-		return 0;
+		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = 4;
@@ -400,7 +400,7 @@ prom_alloc_phys(len, align)
 	args.align = align;
 	args.len = len;
 	if (openfirmware(&args) != 0)
-		return 0;
+		return -1;
 	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
 }
 
@@ -431,7 +431,7 @@ prom_claim_phys(phys, len)
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_alloc_phys: cannot get memh\r\n");
-		return 0;
+		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = 6;

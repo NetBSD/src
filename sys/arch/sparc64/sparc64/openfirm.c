@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.12 2001/05/30 12:28:51 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -486,7 +486,8 @@ OF_test_method(service, method)
 	args.nreturns = 1;
 	args.service = HDL2CELL(service);
 	args.method = ADR2CELL(method);
-	openfirmware(&args);
+	if (openfirmware(&args) == -1) 
+		return -1;
 	return args.status;
 }
   
@@ -689,7 +690,7 @@ void
 	args.nreturns = 1;
 	args.newfunc = ADR2CELL(newfunc);
 	if (openfirmware(&args) == -1)
-		return 0;
+		return (void*)(long)-1;
 	return (void*)(long)args.oldfunc;
 }
 
@@ -747,7 +748,8 @@ OF_milliseconds()
 	args.name = ADR2CELL(&"milliseconds");
 	args.nargs = 0;
 	args.nreturns = 1;
-	openfirmware(&args);
+	if (openfirmware(&args) == -1)
+		return -1;
 	return (args.ticks);
 }
 
