@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
+/*	$NetBSD: lpr.c,v 1.11 1996/08/10 20:09:19 explorer Exp $	*/
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -129,6 +129,7 @@ main(argc, argv)
 	euid = geteuid();
 	uid = getuid();
 	seteuid(uid);
+
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, cleanup);
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -354,7 +355,7 @@ main(argc, argv)
 		}
 		if (sflag)
 			printf("%s: %s: not linked, copying instead\n", name, arg);
-		seteuid(euid);
+		seteuid(uid);
 		if ((i = open(arg, O_RDONLY)) < 0) {
 			seteuid(uid);
 			printf("%s: cannot open %s\n", name, arg);
@@ -457,9 +458,7 @@ linked(file)
 	register int ret;
 
 	if (*file != '/') {
-		seteuid(euid);
 		if (getcwd(buf, BUFSIZ) == NULL) {
-			seteuid(uid);
 			return(NULL);
 		}
 		while (file[0] == '.') {
@@ -587,7 +586,7 @@ test(file)
 	register int fd;
 	register char *cp;
 
-	seteuid(euid);
+	seteuid(uid);
 	if (access(file, 4) < 0) {
 		printf("%s: cannot access %s\n", name, file);
 		goto bad;
