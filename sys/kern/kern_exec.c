@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138 2001/02/26 20:43:25 lukem Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.139 2001/05/06 19:09:54 manu Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -119,7 +119,7 @@ const struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
+	EMUL_HAS_SYS___syscall | EMUL_BSD_ASYNCIO_PIPE,
 	NULL,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
