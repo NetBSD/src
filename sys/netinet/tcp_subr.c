@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.91 2000/03/30 13:25:07 augustss Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.91.4.1 2000/07/23 05:25:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -449,39 +449,85 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		}
 		flags = TH_ACK;
 	} else {
+
+		if ((m->m_flags & M_PKTHDR) == 0) {
+#if 0
+			printf("non PKTHDR to tcp_respond\n");
+#endif
+			m_freem(m);
+			return EINVAL;
+		}
+#ifdef DIAGNOSTIC
+		if (!th0)
+			panic("th0 == NULL in tcp_respond");
+#endif
+
 		/* get family information from m */
 		switch (mtod(m, struct ip *)->ip_v) {
 		case 4:
 			family = AF_INET;
 			hlen = sizeof(struct ip);
+			ip = mtod(m, struct ip *);
 			break;
 #ifdef INET6
 		case 6:
 			family = AF_INET6;
 			hlen = sizeof(struct ip6_hdr);
+			ip6 = mtod(m, struct ip6_hdr *);
 			break;
 #endif
 		default:
 			m_freem(m);
 			return EAFNOSUPPORT;
 		}
+		if ((flags & TH_SYN) == 0 || sizeof(*th0) > (th0->th_off << 2))
+			tlen = sizeof(*th0);
+		else
+			tlen = th0->th_off << 2;
 
-		/* template pointer almost has no meaning */
-		m_freem(m->m_next);
-		m->m_next = 0;
-		m->m_len = hlen + sizeof(struct tcphdr);
-		if ((m->m_flags & M_PKTHDR) == 0) {
-			printf("non PKTHDR to tcp_respond\n");
+		if (m->m_len > hlen + tlen && (m->m_flags & M_EXT) == 0 &&
+		    mtod(m, caddr_t) + hlen == (caddr_t)th0) {
+			m->m_len = hlen + tlen;
+			m_freem(m->m_next);
+			m->m_next = NULL;
+		} else {
+			struct mbuf *n;
+
+#ifdef DIAGNOSTIC
+			if (max_linkhdr + hlen + tlen > MCLBYTES) {
+				m_freem(m);
+				return EMSGSIZE;
+			}
+#endif
+			MGETHDR(n, M_DONTWAIT, MT_HEADER);
+			if (n && max_linkhdr + hlen + tlen > MHLEN) {
+				MCLGET(n, M_DONTWAIT);
+				if ((n->m_flags & M_EXT) == 0) {
+					m_freem(n);
+					n = NULL;
+				}
+			}
+			if (!n) {
+				m_freem(m);
+				return ENOBUFS;
+			}
+
+			n->m_data += max_linkhdr;
+			n->m_len = hlen + tlen;
+			m_copyback(n, 0, hlen, mtod(m, caddr_t));
+			m_copyback(n, hlen, tlen, (caddr_t)th0);
+
 			m_freem(m);
-			return EINVAL;
+			m = n;
+			n = NULL;
 		}
 
-		tlen = 0;
 #define xchg(a,b,type) { type t; t=a; a=b; b=t; }
 		switch (family) {
 		case AF_INET:
 			ip = mtod(m, struct ip *);
 			th = (struct tcphdr *)(ip + 1);
+			ip->ip_p = IPPROTO_TCP;
 			xchg(ip->ip_dst, ip->ip_src, struct in_addr);
 			ip->ip_p = IPPROTO_TCP;
 			break;
@@ -489,14 +535,21 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		case AF_INET6:
 			ip6 = mtod(m, struct ip6_hdr *);
 			th = (struct tcphdr *)(ip6 + 1);
+			ip6->ip6_nxt = IPPROTO_TCP;
 			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
 			ip6->ip6_nxt = IPPROTO_TCP;
 			break;
 #endif
+#if 0
+		default:
+			/* noone will visit here */
+			m_freem(m);
+			return EAFNOSUPPORT;
+#endif
 		}
-		*th = *th0;
 		xchg(th->th_dport, th->th_sport, u_int16_t);
 #undef xchg
+		tlen = 0;	/*be friendly with the following code*/
 	}
 	th->th_seq = htonl(seq);
 	th->th_ack = htonl(ack);
@@ -508,7 +561,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			win = TCP_MAXWIN;
 		th->th_win = htons((u_int16_t)win);
 		th->th_off = sizeof (struct tcphdr) >> 2;
-		tlen += sizeof (struct tcphdr);
+		tlen += sizeof(*th);
 	} else
 		tlen += th->th_off << 2;
 	m->m_len = hlen + tlen;
