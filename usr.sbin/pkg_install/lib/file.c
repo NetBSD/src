@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.25 1999/03/15 08:57:12 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.25.2.1 1999/04/12 03:10:06 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.25 1999/03/15 08:57:12 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.25.2.1 1999/04/12 03:10:06 hubertf Exp $");
 #endif
 #endif
 
@@ -311,8 +311,8 @@ fileGetURL(char *base, char *spec)
 	    tpid = fork();
 	    if (!tpid) {
 		dup2(fileno(ftp), 0);
-		i = execl(TAR_CMD, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
-		exit(i);
+		i = execl(TAR_FULLPATHNAME, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
+		err(i, TAR_FULLPATHNAME " failed");
 	    }
 	    else {
 		int pstat;
