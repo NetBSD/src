@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.1 1997/02/04 03:53:07 thorpej Exp $	*/
+/*	$NetBSD: uboot.c,v 1.2 1997/02/04 19:40:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,10 +60,10 @@ extern	int noconsole;
  */
 char *name;
 char *names[] = {
-	"netbsd",
-	"netbsd.bak",
-	"netbsd.old",
-	"onetbsd",
+	"netbsd",		"netbsd.gz",
+	"netbsd.bak",		"netbsd.bak.gz",
+	"netbsd.old",		"netbsd.old.gz",
+	"onetbsd",		"onetbsd.gz",
 	NULL
 };
 #define NUMNAMES	(sizeof(names) / sizeof(char *))
