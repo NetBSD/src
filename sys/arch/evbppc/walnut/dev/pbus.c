@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.3 2003/07/15 01:37:38 lukem Exp $	*/
+/*	$NetBSD: pbus.c,v 1.4 2003/07/16 08:06:10 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.3 2003/07/15 01:37:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.4 2003/07/16 08:06:10 simonb Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.3 2003/07/15 01:37:38 lukem Exp $");
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 /*
- * The devices built in to the 405GP cpu.
+ * The external devices on the Walnut 405GP evaluation board.
  */
 const struct pbus_dev {
 	const char *name;
