@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.10 2001/09/27 15:29:06 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.11 2001/12/09 11:11:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.10 2001/09/27 15:29:06 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.11 2001/12/09 11:11:01 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -585,6 +585,20 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 		if (!bindtextdomain(domainname, _PATH_TEXTDOMAIN))
 			goto fail;
 		db = __bindings;
+	}
+
+	/* resolve relative path */
+	/* XXX not necessary? */
+	if (db->path[0] != '/') {
+		char buf[PATH_MAX];
+
+		if (getcwd(buf, sizeof(buf)) == 0)
+			goto fail;
+		if (strlcat(buf, "/", sizeof(buf)) >= sizeof(buf))
+			goto fail;
+		if (strlcat(buf, db->path, sizeof(buf)) >= sizeof(buf))
+			goto fail;
+		strcpy(db->path, buf);
 	}
 
 	/* don't bother looking it up if the values are the same */
