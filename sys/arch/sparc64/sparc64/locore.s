@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.170 2003/02/05 12:06:52 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.171 2003/02/09 19:44:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6641,11 +6641,6 @@ ENTRY(cache_flush_phys)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 	/*
-	 * The next 2 instructions are skipped for signal trampolines.
-	 */
-	ba,a,pt	%xcc, 99f
-	 nop
-	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
 	 *
@@ -6735,14 +6730,7 @@ _C_LABEL(sigcode):
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
-99:
-	/*
-	 * Upcall for scheduler activations.
-	 */
-	call	%g1
-	 nop
-	mov	SYS_exit, %g1		! exit(errno)
-	t	ST_SYSCALL
+	/* NOTREACHED */
 _C_LABEL(esigcode):
 #endif
 
