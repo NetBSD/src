@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.23 2003/08/08 18:57:07 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.24 2003/09/06 22:55:06 erh Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.23 2003/08/08 18:57:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.24 2003/09/06 22:55:06 erh Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -213,6 +213,9 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
+	if ((error = vn_marktext(vp)))
+		goto badunlock;
+
 	VOP_UNLOCK(vp, 0);
 	/*
 	 * Read header.
@@ -349,6 +352,10 @@ exec_pecoff_makecmds(p, epp)
 	}
 	if ((error = pecoff_signature(p, epp->ep_vp, dp)) != 0)
 		return error;
+
+	if ((error = vn_marktext(epp->ep_vp)) != 0)
+		return error;
+
 	peofs = dp->d_peofs + sizeof(signature) - 1;
 	fp = malloc(PECOFF_HDR_SIZE, M_TEMP, M_WAITOK);
 	error = exec_read_from(p, epp->ep_vp, peofs, fp, PECOFF_HDR_SIZE);
