@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.19 1996/09/30 23:56:01 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.20 1996/10/03 02:16:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,7 +31,9 @@
  */
 
 #define	ELFSIZE		32				/* XXX should die */
+#ifndef EXEC_ELF32					/* XXX should die */
 #define	EXEC_ELF32					/* XXX should die */
+#endif							/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +403,7 @@ linux_elf32_signature(p, epp, eh)
 		 * Header cannot have a load address, or flags and
 		 * it must be large enough.
 		 */
-		if (s->sh_type != Elf_sht_progbits ||
+		if (s->sh_type != Elf32_sht_progbits ||
 		    s->sh_addr != 0 ||
 		    s->sh_flags != 0 ||
 		    s->sh_size < sizeof(signature) - 1)
