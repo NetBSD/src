@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.32 1999/11/30 00:42:47 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.33 1999/12/01 18:23:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -326,8 +326,8 @@ alpha_rpcc()
 	return (v0);
 }
 
-#define	alpha_mb()	__asm __volatile("mb")
-#define	alpha_wmb()	__asm __volatile("mb")	/* XXX */
+#define	alpha_mb()	__asm __volatile("mb" : : : "memory")
+#define	alpha_wmb()	__asm __volatile("mb" : : : "memory")	/* XXX */
 
 u_int8_t	alpha_ldbu __P((volatile u_int8_t *));
 u_int16_t	alpha_ldwu __P((volatile u_int16_t *));
@@ -350,6 +350,8 @@ void		alpha_atomic_sub_q __P((unsigned long *, unsigned long));
 /*
  * Stubs for OSF/1 PALcode operations.
  */
+#include <machine/pal.h>
+
 void		alpha_pal_cflush __P((unsigned long));
 void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
@@ -375,16 +377,17 @@ static __inline void alpha_pal_tbi __P((unsigned long, vaddr_t))
 static __inline unsigned long alpha_pal_whami __P((void))
 	__attribute__((__unused__));
 
-#define	alpha_pal_imb()	__asm __volatile("call_pal 0x0086")
+#define	alpha_pal_imb()	__asm __volatile("call_pal %0"			\
+				: : "i" (PAL_imb) : "memory")
 
 static __inline unsigned long
 alpha_pal_rdps()
 {
 	register unsigned long v0 __asm("$0");
 
-	__asm __volatile("call_pal 0x0036"	/* PAL_OSF1_rdps */
+	__asm __volatile("call_pal %1"
 		: "=r" (v0)
-		:
+		: "i" (PAL_OSF1_rdps)
 		/* clobbers t0, t8..t11 */
 		: "$1", "$22", "$23", "$24", "$25");
 
@@ -398,11 +401,11 @@ alpha_pal_swpipl(ipl)
 	register unsigned long a0 __asm("$16") = ipl;
 	register unsigned long v0 __asm("$0");
 
-	__asm __volatile("call_pal 0x0035"	/* PAL_OSF1_swpipl */
-		: "=r" (v0)
-		: "r" (a0)
-		/* clobbers t0, t8..t11, a0 */
-		: "$1", "$22", "$23", "$24", "$25", "$16");
+	__asm __volatile("call_pal %2"
+		: "=r" (a0), "=r" (v0)
+		: "i" (PAL_OSF1_swpipl), "0" (a0)
+		/* clobbers t0, t8..t11, a0 (above) */
+		: "$1", "$22", "$23", "$24", "$25");
 
 	return (v0);
 }
@@ -415,11 +418,11 @@ alpha_pal_tbi(op, va)
 	register unsigned long a0 __asm("$16") = op;
 	register unsigned long a1 __asm("$17") = va;
 
-	__asm __volatile("call_pal 0x0033"	/* PAL_OSF1_tbi */
-		:
-		: "r" (a0), "r" (a1)
-		/* clobbers t0, t8..t11, a0, a1 */
-		: "$1", "$22", "$23", "$24", "$25", "$16", "$17");
+	__asm __volatile("call_pal %2"
+		: "=r" (a0), "=r" (a1)
+		: "i" (PAL_OSF1_tbi), "0" (a0), "1" (a1)
+		/* clobbers t0, t8..t11, a0 (above), a1 (above) */
+		: "$1", "$22", "$23", "$24", "$25");
 }
 
 static __inline unsigned long
@@ -427,9 +430,9 @@ alpha_pal_whami()
 {
 	register unsigned long v0 __asm("$0");
 
-	__asm __volatile("call_pal 0x003c"	/* PAL_OSF1_whami */
+	__asm __volatile("call_pal %1"
 		: "=r" (v0)
-		:
+		: "i" (PAL_OSF1_whami)
 		/* clobbers t0, t8..t11 */
 		: "$1", "$22", "$23", "$24", "$25");
 
