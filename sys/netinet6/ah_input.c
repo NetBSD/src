@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.15.2.5 2001/03/11 21:10:53 he Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.15.2.6 2001/04/06 00:27:12 he Exp $	*/
 /*	$KAME: ah_input.c,v 1.34 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ ah4_input(m, va_alist)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
-	if (ipsec4_tunnel_validate(ip, nxt, sav) && nxt == IPPROTO_IPV4) {
+	if (ipsec4_tunnel_validate(ip, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
 		 *	IP xx AH IP' payload -> IP' payload
@@ -454,6 +454,11 @@ ah4_input(m, va_alist)
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
+			ipsecstat.in_nomem++;
+			goto fail;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
@@ -536,6 +541,10 @@ ah4_input(m, va_alist)
 		/* forget about IP hdr checksum, the check has already been passed */
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
+			ipsecstat.in_nomem++;
+			goto fail;
+		}
 
 		if (nxt != IPPROTO_DONE) {
 			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
@@ -802,7 +811,7 @@ ah6_input(mp, offp, proto)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
-	if (ipsec6_tunnel_validate(ip6, nxt, sav) && nxt == IPPROTO_IPV6) {
+	if (ipsec6_tunnel_validate(ip6, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
 		 *	IP6 xx AH IP6' payload -> IP6' payload
@@ -864,6 +873,11 @@ ah6_input(mp, offp, proto)
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
+			ipsec6stat.in_nomem++;
+			goto fail;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
@@ -942,6 +956,10 @@ ah6_input(mp, offp, proto)
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
+			ipsec6stat.in_nomem++;
+			goto fail;
+		}
 	}
 
 	*offp = off;
