@@ -1,4 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.9 2000/02/17 10:59:38 darrenr Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.10 2000/02/25 00:27:18 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.20 2000/02/24 12:02:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -514,11 +515,9 @@ ah6_input(mp, offp, proto)
 	u_int16_t nxt;
 	int s;
 
-	ip6 = mtod(m, struct ip6_hdr *);
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(struct ah), IPPROTO_DONE);
-
-	ah = (struct ah *)(((caddr_t)ip6) + off);
+	ah = (struct ah *)(mtod(m, caddr_t) + off);
 #else
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
 	if (ah == NULL) {
@@ -527,7 +526,7 @@ ah6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
-
+	ip6 = mtod(m, struct ip6_hdr *);
 	nxt = ah->ah_nxt;
 
 	/* find the sassoc.  */
