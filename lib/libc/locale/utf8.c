@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.2 2000/12/21 12:19:44 itojun Exp $	*/
+/*	$NetBSD: utf8.c,v 1.3 2000/12/21 12:21:38 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: utf8.c,v 1.10 2000/12/21 12:18:55 itojun Exp
+ *	citrus Id: utf8.c,v 1.11 2000/12/21 12:21:05 itojun Exp
  */
 
 /*-
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.2 2000/12/21 12:19:44 itojun Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.3 2000/12/21 12:21:38 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -182,11 +182,8 @@ _UTF8_sgetrune(rl, string, n, result, state)
 #if 1	/* should we do it?  utf2.c does not reject redundant encodings */
 		/* sanity check on value range */
 		i = findlen(v);
-		if (i != c) {
-			if (result)
-				*result = string;
-			return (___INVALID_RUNE(rl));
-		}
+		if (i != c)
+			goto encoding_error;
 #endif
 
 		if (result)
