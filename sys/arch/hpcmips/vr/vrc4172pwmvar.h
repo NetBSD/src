@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwmvar.h,v 1.3 2000/12/29 11:44:44 sato Exp $	*/
+/*	$Id: vrc4172pwmvar.h,v 1.4 2000/12/29 15:54:17 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -31,11 +31,6 @@
 struct vrc4172pwm_param {
 	int n_brightness;
 	int values[VRC2_PWM_N_BRIGHTNESS];
-};
-
-struct vrc4172pwm_platid_param {
-	platid_mask_t *mask;
-	struct vrc4172pwm_param *param;
 };
 
 struct vrc4172pwm_softc {

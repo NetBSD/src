@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.3 2000/12/29 11:44:44 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.4 2000/12/29 15:54:17 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -88,7 +88,7 @@ struct vrc4172pwm_param vrc4172pwm_mcr530_param = {
 	{ 0x16, 0x1b, 0x20, 0x25, 0x2a, 0x30, 0x37, 0x3f }
 };
 
-struct vrc4172pwm_platid_param vrc4172pwm_platid_param_table[] = {
+struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_530A, 
 		&vrc4172pwm_mcr530_param},
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, 
@@ -211,11 +211,10 @@ vrc4172pwmattach(parent, self, aux)
 struct vrc4172pwm_param *
 vrc4172pwm_getparam()
 {
-	struct vrc4172pwm_platid_param *p;
+	struct platid_data *p;
 
-	if ((p = (struct vrc4172pwm_platid_param *)
-		platid_search(&platid, (void *)vrc4172pwm_platid_param_table)))
-		return p->param;
+	if ((p = platid_search(&platid, vrc4172pwm_platid_param_table)))
+		return p->data;
 	return NULL;
 }
 
