@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.5 2001/01/04 14:42:20 lukem Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.6 2001/01/25 22:50:57 jdolecek Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -65,7 +65,7 @@ struct handle {
 	int nettype;
 };
 
-struct _rpcnettype {
+static const struct _rpcnettype {
 	const char *name;
 	const int type;
 } _rpctypelist[] = {
@@ -86,7 +86,7 @@ struct netid_af {
 	int		protocol;
 };
 
-static struct netid_af na_cvt[] = {
+static const struct netid_af na_cvt[] = {
 	{ "udp",  AF_INET,  IPPROTO_UDP },
 	{ "tcp",  AF_INET,  IPPROTO_TCP },
 #ifdef INET6
