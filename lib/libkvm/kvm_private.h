@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.10 2000/10/04 16:11:27 sommerfeld Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.10.2.1 2002/04/23 20:10:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@ struct __kvm {
 	char	alive;		/* live kernel? */
 	struct kinfo_proc *procbase;
 	struct kinfo_proc2 *procbase2;
+	struct kinfo_lwp *lwpbase;
 	u_long	usrstack;		/* address of end of user stack */
 	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
