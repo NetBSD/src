@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.35 2001/11/13 07:48:43 lukem Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.36 2001/11/21 17:33:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.35 2001/11/13 07:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.36 2001/11/21 17:33:28 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ le_pci_mediachange(sc)
 		reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
 		if (IFM_OPTIONS(newmedia) & IFM_FDX) {
 			reg |= 1; /* FDEN */
-			/* allow FDX on AUI only if explicitely chosen,
+			/* allow FDX on AUI only if explicitly chosen,
 			 not in autoselect mode */
 			if (IFM_SUBTYPE(newmedia) == IFM_10_5)
 				reg |= 2; /* AUIFD */
