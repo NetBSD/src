@@ -1,6 +1,15 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,194 +39,246 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.17 1994/06/24 14:22:15 hpeyerl Exp $
+ *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
+ *	$Id: config.h,v 1.18 1995/04/28 06:55:01 cgd Exp $
  */
 
 /*
- * Config.
+ * Name/value lists.  Values can be strings or pointers and/or can carry
+ * integers.  The names can be NULL, resulting in simple value lists.
  */
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define	NODEV	((dev_t)-1)
-
-struct name_expr {
-	int type;
-	char *name;
-	struct name_expr *next,*left,*right;
-};
-
-struct file_list {
-	struct	file_list *f_next;	
-	char	*f_fn;			/* the name */
-	u_char	f_type;			/* see below */
-	u_char	f_flags;		/* see below */
-	u_char  f_was_driver;	 /* to handle un-included pseudo-drivers*/
-	u_char  f_needs_count;	 /* to handle un-included pseudo-drivers*/
-	char	*f_special;		/* special make rule if present */
-	struct	name_expr *f_needs;
-	struct	name_expr *f_countname;
-	/*
-	 * Random values:
-	 *	swap space parameters for swap areas
-	 *	root device, etc. for system specifications
-	 */
+struct nvlist {
+	struct	nvlist *nv_next;
+	const char *nv_name;
 	union {
-		struct {		/* when swap specification */
-			dev_t	fuw_swapdev;
-			int	fuw_swapsize;
-		} fuw;
-		struct {		/* when system specification */
-			dev_t	fus_rootdev;
-			dev_t	fus_dumpdev;
-		} fus;
-		struct {		/* when component dev specification */
-			dev_t	fup_compdev;
-			int	fup_compinfo;
-		} fup;
-	} fun;
-#define	f_swapdev	fun.fuw.fuw_swapdev
-#define	f_swapsize	fun.fuw.fuw_swapsize
-#define	f_rootdev	fun.fus.fus_rootdev
-#define	f_dumpdev	fun.fus.fus_dumpdev
-#define f_compdev	fun.fup.fup_compdev
-#define f_compinfo	fun.fup.fup_compinfo
+		const char *un_str;
+		void *un_ptr;
+	} nv_un;
+#define	nv_str	nv_un.un_str
+#define	nv_ptr	nv_un.un_ptr
+	int	nv_int;
 };
 
 /*
- * Types.
+ * Kernel configurations.
  */
-#define DRIVER		1
-#define NORMAL		2
-#define	INVISIBLE	3
-#define	PROFILING	4
-#define	SYSTEMSPEC	5
-#define	SWAPSPEC	6
-#define COMPDEVICE	7
-#define COMPSPEC	8
-
-/*
- * Attributes (flags).
- */
-#define	CONFIGDEP	0x1
-#define DUPLICATE       0x2
-
-struct	idlst {
-	char	*id;
-	struct	idlst *id_next;
-};
-
-struct device {
-	int	d_type;			/* CONTROLLER, DEVICE, bus adaptor */
-	struct	device *d_conn;		/* what it is connected to */
-	char	*d_name;		/* name of device (e.g. rk11) */
-	struct	idlst *d_vec;		/* interrupt vectors */
-	int	d_pri;			/* interrupt priority */
-	int	d_addr;			/* address of csr */
-	int	d_unit;			/* unit number */
-	int	d_drive;		/* drive number */
-	int	d_slave;		/* slave number */
-#define QUES	-1	/* -1 means '?' */
-#define	UNKNOWN -2	/* -2 means not set yet */
-	int	d_dk;			/* if init 1 set to number for iostat */
-	int	d_flags;		/* flags for device init */
-	char	*d_port;		/* io port base manifest constant */
-	int	d_portn;	/* io port base (if number not manifest) */
-	char	*d_mask;		/* interrupt mask */
-	int	d_maddr;		/* io memory base */
-	int	d_msize;		/* io memory size */
-	int	d_drq;			/* DMA request */
-	int	d_irq;			/* interrupt request */
-	int	d_seq;			/* sequential number */
-	struct	device *d_next;		/* Next one in list */
-};
-#define TO_NEXUS	(struct device *)-1
-#define TO_VBA		(struct device *)-2
-
 struct config {
-	char	*c_dev;
-	char	*s_sysname;
+	struct	config *cf_next;	/* linked list */
+	const char *cf_name;		/* "vmunix" */
+	int	cf_lineno;		/* source line */
+	struct	nvlist *cf_root;	/* "root on ra0a" */
+	struct	nvlist *cf_swap;	/* "swap on ra0b and ra1b" */
+	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
 };
 
 /*
- * Config has a global notion of which machine type is
- * being used.  It uses the name of the machine in choosing
- * files and directories.  Thus if the name of the machine is ``vax'',
- * it will build from ``Makefile.vax'' and use ``../vax/inline''
- * in the makerules, etc.
+ * Attributes.  These come in two flavors: "plain" and "interface".
+ * Plain attributes (e.g., "ether") simply serve to pull in files.
+ * Interface attributes (e.g., "scsi") carry three lists: locators,
+ * child devices, and references.  The locators are those things
+ * that must be specified in order to configure a device instance
+ * using this attribute (e.g., "tg0 at scsi0").  The a_devs field
+ * lists child devices that can connect here (e.g., "tg"s), while
+ * the a_refs are parents that carry the attribute (e.g., actual
+ * SCSI host adapter drivers such as the SPARC "esp").
  */
-int	machine;
-char	*machinename;
-char	*machinearch;
-#define	MACHINE_VAX	1
-#define	MACHINE_TAHOE	2
-#define MACHINE_HP300	3
-#define	MACHINE_I386	4
-#define	MACHINE_PC532	5
-#define	MACHINE_PMAX	6
-#define	MACHINE_AMIGA	7
+struct attr {
+	const char *a_name;		/* name of this attribute */
+	int	a_iattr;		/* true => allows children */
+	struct	nvlist *a_locs;		/* locators required */
+	int	a_loclen;		/* length of above list */
+	struct	nvlist *a_devs;		/* children */
+	struct	nvlist *a_refs;		/* parents */
+};
 
 /*
- * For each machine, a set of CPU's may be specified as supported.
- * These and the options (below) are put in the C flags in the makefile.
+ * The "base" part of a device ("uba", "sd"; but not "uba2" or
+ * "sd0").  It may be found "at" one or more attributes, including
+ * "at root" (this is represented by a NULL attribute).
+ *
+ * Each device may also export attributes.  If any provide an output
+ * interface (e.g., "esp" provides "scsi"), other devices (e.g.,
+ * "tg"s) can be found at instances of this one (e.g., "esp"s).
+ * Such a connection must provide locators as specified by that
+ * interface attribute (e.g., "target").
+ *
+ * Each base carries a list of instances (via d_ihead).  Note that this
+ * list "skips over" aliases; those must be found through the instances
+ * themselves.
  */
-struct cputype {
-	char	*cpu_name;
-	struct	cputype *cpu_next;
-} *cputype;
+struct devbase {
+	const char *d_name;		/* e.g., "sd" */
+	struct	devbase *d_next;	/* linked list */
+	int	d_isdef;		/* set once properly defined */
+	int	d_ispseudo;		/* is a pseudo-device */
+	int	d_major;		/* used for "root on sd0", e.g. */
+	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
+	struct	nvlist *d_vectors;	/* interrupt vectors, if any */
+	struct	nvlist *d_attrs;	/* attributes, if any */
+	struct	devi *d_ihead;		/* first instance, if any */
+	struct	devi **d_ipp;		/* used for tacking on more instances */
+	int	d_umax;			/* highest unit number + 1 */
+};
 
 /*
- * A set of options may also be specified which are like CPU types,
- * but which may also specify values for the options.
- * A separate set of options may be defined for make-style options.
+ * An "instance" of a device.  The same instance may be listed more
+ * than once, e.g., "xx0 at isa? port FOO" + "xx0 at isa? port BAR".
+ *
+ * After everything has been read in and verified, the devi's are
+ * "packed" to collect all the information needed to generate ioconf.c.
+ * In particular, we try to collapse multiple aliases into a single entry.
+ * We then assign each "primary" (non-collapsed) instance a cfdata index.
+ * Note that there may still be aliases among these.
  */
-struct opt {
-	char	*op_name;
-	char	*op_value;
-	struct	opt *op_next;
-} *opt, *mkopt;
+struct devi {
+	/* created while parsing config file */
+	const char *i_name;	/* e.g., "sd0" */
+	int	i_unit;		/* unit from name, e.g., 0 */
+	struct	devbase *i_base;/* e.g., pointer to "sd" base */
+	struct	devi *i_next;	/* list of all instances */
+	struct	devi *i_bsame;	/* list on same base */
+	struct	devi *i_alias;	/* other aliases of this instance */
+	const char *i_at;	/* where this is "at" (NULL if at root) */
+	struct	attr *i_atattr;	/* attr that allowed attach */
+	struct	devbase *i_atdev;/* dev if "at <devname><unit>", else NULL */
+	const char **i_locs;	/* locators (as given by i_atattr) */
+	int	i_atunit;	/* unit from "at" */
+	int	i_cfflags;	/* flags from config line */
+	int	i_lineno;	/* line # in config, for later errors */
 
-char	*ident;
-char	*ns();
-char	*tc();
-char	*qu();
-char	*get_word();
-char	*get_quoted_word();
-char	*path();
-char	*raisestr();
+	/* created during packing or ioconf.c generation */
+/* 		i_loclen	   via i_atattr->a_loclen */
+	short	i_collapsed;	/* set => this alias no longer needed */
+	short	i_cfindex;	/* our index in cfdata */
+	short	i_pvlen;	/* number of parents */
+	short	i_pvoff;	/* offset in parents.vec */
+	short	i_locoff;	/* offset in locators.vec */
+	short	i_ivoff;	/* offset in interrupt vectors, if any */
+	struct	devi **i_parents;/* the parents themselves */
 
-int	do_trace;
+};
+/* special units */
+#define	STAR	(-1)		/* unit number for, e.g., "sd*" */
+#define	WILD	(-2)		/* unit number for, e.g., "sd?" */
 
-#if MACHINE_VAX
-int	seen_mba, seen_uba;
-#endif
-#if MACHINE_TAHOE
-int	seen_vba;
-#endif
-#if MACHINE_I386
-int	seen_isa;
-#endif
-int	seen_cd;
+/*
+ * Files.  Each file is either standard (always included) or optional,
+ * depending on whether it has names on which to *be* optional.
+ */
+struct files {
+	struct	files *fi_next;	/* linked list */
+	const char *fi_srcfile;	/* the name of the "files" file that got us */
+	u_short	fi_srcline;	/* and the line number */
+	u_char	fi_flags;	/* as below */
+	char	fi_lastc;	/* last char from path */
+	const char *fi_path;	/* full file path */
+	const char *fi_tail;	/* name, i.e., rindex(fi_path, '/') + 1 */
+	const char *fi_base;	/* tail minus ".c" (or whatever) */
+	struct	nvlist *fi_opt;	/* optional on ... */
+	const char *fi_mkrule;	/* special make rule, if any */
+};
 
-struct	device *connect();
-struct	device *dtab;
-dev_t	nametodev();
-char	*devtoname();
+/* flags */
+#define	FI_SEL		0x01	/* selected */
+#define	FI_CONFIGDEP	0x02	/* config-dependent */
+#define	FI_DRIVER	0x04	/* device-driver */
+#define	FI_NEEDSCOUNT	0x08	/* needs-count */
+#define	FI_NEEDSFLAG	0x10	/* needs-flag */
+#define	FI_HIDDEN	0x20	/* obscured by other(s), base names overlap */
 
-char	errbuf[80];
-int	yyline;
+/*
+ * Hash tables look up name=value pairs.  The pointer value of the name
+ * is assumed to be constant forever; this can be arranged by interning
+ * the name.  (This is fairly convenient since our lexer does this for
+ * all identifier-like strings---it has to save them anyway, lest yacc's
+ * look-ahead wipe out the current one.)
+ */
+struct hashtab;
 
-struct	file_list *ftab, *conf_list, **confp, *comp_list, **compp;
+const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
+const char *confdirbase;	/* basename of compile directory, usu. same */
+const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
+const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
+int	errors;			/* counts calls to error() */
+int	minmaxusers;		/* minimum "maxusers" parameter */
+int	defmaxusers;		/* default "maxusers" parameter */
+int	maxmaxusers;		/* default "maxusers" parameter */
+int	maxusers;		/* configuration's "maxusers" parameter */
+int	maxpartitions;		/* configuration's "maxpartitions" parameter */
+struct	nvlist *options;	/* options */
+struct	nvlist *mkoptions;	/* makeoptions */
+struct	hashtab *devbasetab;	/* devbase lookup */
+struct	hashtab *selecttab;	/* selects things that are "optional foo" */
+struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 
-int	zone, hadtz;
-int	dst;
-int	profiling;
-int	debugging;
+struct	devbase *allbases;	/* list of all devbase structures */
+struct	config *allcf;		/* list of configured kernels */
+struct	devi *alldevi;		/* list of all instances */
+struct	devi *allpseudo;	/* list of all pseudo-devices */
+int	ndevi;			/* number of devi's (before packing) */
+int	npseudo;		/* number of pseudo's */
 
-int	maxusers;
-u_int	loadaddress;
-int     fatal_errors;
+struct	files *allfiles;	/* list of all kernel source files */
 
-#define eq(a,b)	(!strcmp(a,b))
+struct	devi **packed;		/* arrayified table for packed devi's */
+int	npacked;		/* size of packed table, <= ndevi */
+
+struct {			/* pv[] table for config */
+	short	*vec;
+	int	used;
+} parents;
+struct {			/* loc[] table for config */
+	const char **vec;
+	int	used;
+} locators;
+
+/* files.c */
+void	initfiles __P((void));
+void	checkfiles __P((void));
+int	fixfiles __P((void));	/* finalize */
+void	addfile __P((const char *, struct nvlist *, int, const char *));
+
+/* hash.c */
+struct	hashtab *ht_new __P((void));
+int	ht_insrep __P((struct hashtab *, const char *, void *, int));
+#define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
+#define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
+void	*ht_lookup __P((struct hashtab *, const char *));
+void	initintern __P((void));
+const char *intern __P((const char *));
+
+/* main.c */
+void	addoption __P((const char *name, const char *value));
+void	addmkoption __P((const char *name, const char *value));
+
+/* mkheaders.c */
+int	mkheaders __P((void));
+
+/* mkioconf.c */
+int	mkioconf __P((void));
+
+/* mkmakefile.c */
+int	mkmakefile __P((void));
+
+/* mkswap.c */
+int	mkswap __P((void));
+
+/* pack.c */
+void	pack __P((void));
+
+/* scan.l */
+int	currentline __P((void));
+
+/* sem.c, other than for yacc actions */
+void	initsem __P((void));
+
+/* util.c */
+void	*emalloc __P((size_t));
+void	*erealloc __P((void *, size_t));
+char	*path __P((const char *));
+void	error __P((const char *, ...));			/* immediate errs */
+void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
+__dead void panic __P((const char *, ...));
+struct nvlist *newnv __P((const char *, const char *, void *, int));
+void	nvfree __P((struct nvlist *));
+void	nvfreel __P((struct nvlist *));
