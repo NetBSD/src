@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.103 1999/06/29 07:04:16 ross Exp $
+# $NetBSD: files.alpha,v 1.104 1999/08/04 07:17:50 nisimura Exp $
 #
 # alpha-specific configuration info
 
@@ -173,12 +173,12 @@ device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty		needs-flag
 
-device	zsms: wsmousedev
-attach	zsms at zsc
+device	vsms: wsmousedev
+attach	vsms at zsc with zsms
 file	dev/dec/zsms.c			zsms
 
-device	zskbd: wskbddev
-attach	zskbd at zsc
+device	lkkbd: wskbddev
+attach	lkkbd at zsc with zskbd
 file	dev/dec/zskbd.c			zskbd		needs-flag
 
 # the TCDS ASIC
