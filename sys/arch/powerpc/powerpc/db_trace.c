@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2003/12/17 04:04:41 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.36.2.2 2004/03/29 01:12:02 simonb Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2003/12/17 04:04:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36.2.2 2004/03/29 01:12:02 simonb Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -230,7 +230,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			if (symname == NULL || !strcmp(symname, "end")) {
 				(*pr)("%p: srr1=%#x\n", lr, tf->srr1);
 			} else {
-				(*pr)("%s+%x: srr1=%#x\n", symname,
+				(*pr)("%s+%#x: srr1=%#x\n", symname,
 				    diff, tf->srr1);
 			}
 			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
@@ -264,7 +264,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (symname == NULL || !strcmp(symname, "end"))
 			(*pr)("at %p", lr);
 		else
-			(*pr)("at %s+%x", symname, diff);
+			(*pr)("at %s+%#x", symname, diff);
 		if (full)
 			/* Print all the args stored in that stackframe. */
 			(*pr)("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)",

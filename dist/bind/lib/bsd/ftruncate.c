@@ -1,7 +1,5 @@
-/*	$NetBSD: ftruncate.c,v 1.1.1.2 2002/06/20 10:30:12 itojun Exp $	*/
-
 #ifndef LINT
-static const char rcsid[] = "Id: ftruncate.c,v 8.4 1999/10/13 16:39:21 vixie Exp";
+static const char rcsid[] = "$Id: ftruncate.c,v 1.1.1.1 2001/05/17 22:48:45 itojun Exp $";
 #endif
 
 /*
