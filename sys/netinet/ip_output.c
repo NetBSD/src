@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.43 1998/02/13 10:23:49 kleink Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.44 1998/02/13 18:21:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -211,17 +211,14 @@ ip_output(m0, va_alist)
 			goto bad;
 		}
 		/*
-		 * If source address not specified yet, use address
+		 * If source address not specified yet, use an address
 		 * of outgoing interface.
 		 */
 		if (in_nullhost(ip->ip_src)) {
 			register struct in_ifaddr *ia;
 
-			for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
-				if (ia->ia_ifp == ifp) {
-					ip->ip_src = ia->ia_addr.sin_addr;
-					break;
-				}
+			IFP_TO_IA(ifp, ia);
+			ip->ip_src = ia->ia_addr.sin_addr;
 		}
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);

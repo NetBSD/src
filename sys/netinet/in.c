@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.37 1998/01/12 03:02:49 scottr Exp $	*/
+/*	$NetBSD: in.c,v 1.38 1998/02/13 18:21:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -150,7 +150,7 @@ in_setmaxmtu()
 		if ((ifp->if_flags & (IFF_UP|IFF_LOOPBACK)) != IFF_UP)
 			continue;
 		if (ifp->if_mtu > maxmtu)
-			maxmtu =  ifp->if_mtu;
+			maxmtu = ifp->if_mtu;
 	}
 	if (maxmtu)
 		in_maxmtu = maxmtu;
@@ -181,18 +181,18 @@ in_control(so, cmd, data, ifp, p)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-			if (ia->ia_ifp == ifp)
-				break;
+		IFP_TO_IA(ifp, ia);
 
 	switch (cmd) {
 
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sin_family == AF_INET)
-			for (; ia != 0; ia = ia->ia_list.tqe_next) {
+			for (ia = IN_IFADDR_HASH(ifra->ifra_addr.sin_addr.s_addr).lh_first;
+			    ia != 0; ia = ia->ia_hash.le_next) {
 				if (ia->ia_ifp == ifp  &&
-				    in_hosteq(ia->ia_addr.sin_addr, ifra->ifra_addr.sin_addr))
+				    in_hosteq(ia->ia_addr.sin_addr,
+				    ifra->ifra_addr.sin_addr))
 					break;
 			}
 		if (cmd == SIOCDIFADDR && ia == 0)
@@ -330,6 +330,7 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCDIFADDR:
 		in_ifscrub(ifp, ia);
+		LIST_REMOVE(ia, ia_hash);
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
@@ -389,7 +390,11 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * Set up new addresses.
 	 */
 	oldaddr = ia->ia_addr;
+	if (ia->ia_addr.sin_family == AF_INET)
+		LIST_REMOVE(ia, ia_hash);
 	ia->ia_addr = *sin;
+	LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr), ia, ia_hash);
+
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
@@ -460,7 +465,11 @@ in_ifinit(ifp, ia, sin, scrub)
 	return (error);
 bad:
 	splx(s);
+	LIST_REMOVE(ia, ia_hash);
 	ia->ia_addr = oldaddr;
+	if (ia->ia_addr.sin_family == AF_INET)
+		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
+		    ia, ia_hash);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.43 1998/01/05 10:31:44 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.44 1998/02/13 18:21:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -467,7 +467,7 @@ in_arpinput(m)
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
-	struct in_ifaddr *ia, *maybe_ia = 0;
+	struct in_ifaddr *ia;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -488,24 +488,27 @@ in_arpinput(m)
 
 	/*
 	 * If the source IP address is zero, this is most likely a
-	 * confused host trying to use IP address zero.  (Windoze?)
-	 * XXX:  Should we bother trying to reply to these?
+	 * confused host trying to use IP address zero. (Windoze?)
+	 * XXX: Should we bother trying to reply to these?
 	 */
 	if (in_nullhost(isaddr))
 		goto out;
 
-	/* Search for a matching interface address. */
-	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-		if (ia->ia_ifp == ifp) {
-			maybe_ia = ia;
-			if (in_hosteq(itaddr, ia->ia_addr.sin_addr) ||
-			    in_hosteq(isaddr, ia->ia_addr.sin_addr))
-				break;
-		}
-	if (maybe_ia == 0)
-		goto out;
+	/*
+	 * Search for a matching interface address
+	 * or any address on the interface to use
+	 * as a dummy address in the rest of this function
+	 */
+	INADDR_TO_IA(itaddr, ia);
+	if (ia == NULL) {
+		INADDR_TO_IA(isaddr, ia);
+			if (ia == NULL) {
+				IFP_TO_IA(ifp, ia);
+				if (ia == NULL) goto out;
+			}
+	}
+	myaddr = ia->ia_addr.sin_addr;
 
-	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen))
 		goto out;	/* it's from me, ignore it. */
