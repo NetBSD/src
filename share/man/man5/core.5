@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.17 2002/07/09 01:05:32 thorpej Exp $
+.\"	$NetBSD: core.5,v 1.18 2002/10/02 11:00:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ process).
 This template is either an absolute or relative path name, in which format
 characters can be used, preceded by the percent character
 .Pq Dq \&% .
-The following characters are recognised as format and substituted:
+The following characters are recognized as format and substituted:
 .Bl -tag -width 4n -offset indent -compact
 .It Sy n
 The process's name
@@ -251,7 +251,7 @@ system call.  The note types correspond to the
 request numbers that return the same data.  For example,
 a note with a note type of PT_GETREGS would contain a
 .Fa struct reg
-with the registister contents of the execution context.
+with the register contents of the execution context.
 For a complete list of available
 .Xr ptrace 2
 request types for a given architecture, refer to that architecture's
