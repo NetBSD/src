@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.3 2001/05/11 17:37:15 kleink Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.4 2001/06/17 13:10:05 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -180,7 +180,8 @@ svr4_32_getmcontext(p, mc, flags)
 	/*
 	 * Get the floating point registers
 	 */
-	bcopy(fps->fs_regs, f->fpu_regs, sizeof(fps->fs_regs));
+	/* Note: copies only pre-v9 floating point registers. */
+	bcopy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
 	f->fp_nqsize = sizeof(struct fp_qentry);
 	f->fp_nqel = fps->fs_qsize;
 	f->fp_fsr = fps->fs_fsr;
@@ -309,7 +310,8 @@ svr4_32_setmcontext(p, mc, flags)
 #endif
 			return EINVAL;
 		}
-		bcopy(f->fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+		/* Note: touches only pre-v9 floating point registers. */
+		bcopy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
 		if (f->fp_q != 0) {
