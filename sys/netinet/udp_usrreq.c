@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.58 2000/01/31 14:18:58 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.59 2000/02/01 22:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1308,6 +1308,11 @@ udp_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
+
+	if (req == PRU_PURGEADDR) {
+		in_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+		return (0);
+	}
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);

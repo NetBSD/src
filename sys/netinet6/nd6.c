@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.13 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.14 2000/02/01 22:52:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1011,8 +1011,8 @@ nd6_rtrequest(req, rt, sa)
 				 * of the loopback address.
 				 */
 				if (ifa != rt->rt_ifa) {
-					rt->rt_ifa->ifa_refcnt--;
-					ifa->ifa_refcnt++;
+					IFAFREE(rt->rt_ifa);
+					IFAREF(ifa);
 					rt->rt_ifa = ifa;
 				}
 			}

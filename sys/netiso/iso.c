@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.25 1999/07/12 18:15:09 thorpej Exp $	*/
+/*	$NetBSD: iso.c,v 1.26 2000/02/01 22:52:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -494,8 +494,10 @@ iso_control(so, cmd, data, ifp, p)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
+			IFAREF((struct ifaddr *)ia);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
+			IFAREF((struct ifaddr *)ia);
 			ia->ia_ifa.ifa_addr = sisotosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sisotosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sisotosa(&ia->ia_sockmask);
@@ -558,10 +560,7 @@ iso_control(so, cmd, data, ifp, p)
 		return (error);
 
 	case SIOCDIFADDR_ISO:
-		iso_ifscrub(ifp, ia);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
-		IFAFREE((&ia->ia_ifa));
+		iso_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
@@ -573,6 +572,20 @@ iso_control(so, cmd, data, ifp, p)
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return (0);
+}
+
+void
+iso_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct iso_ifaddr *ia = (void *) ifa;
+
+	iso_ifscrub(ifp, ia);
+	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
+	IFAFREE((&ia->ia_ifa));
 }
 
 /*

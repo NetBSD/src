@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.16 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.17 2000/02/01 22:52:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -387,6 +387,7 @@ pk_control(so, cmd, data, ifp, p)
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 					  ifa_list);
 			ifa = &ia->ia_ifa;
+			IFAREF(ifa);
 			ifa->ifa_netmask = (struct sockaddr *) & pk_sockmask;
 			ifa->ifa_addr = (struct sockaddr *) & ia->ia_xc.xc_addr;
 			ifa->ifa_dstaddr = (struct sockaddr *) & ia->ia_dstaddr;	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.29 1999/10/09 18:55:30 sommerfeld Exp $	*/
+/*	$NetBSD: route.c,v 1.30 2000/02/01 22:52:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -238,12 +238,15 @@ void
 ifafree(ifa)
 	register struct ifaddr *ifa;
 {
+
+#ifdef DIAGNOSTIC
 	if (ifa == NULL)
-		panic("ifafree");
-	if (ifa->ifa_refcnt == 0)
-		free(ifa, M_IFADDR);
-	else
-		ifa->ifa_refcnt--;
+		panic("ifafree: null ifa");
+	if (ifa->ifa_refcnt != 0)
+		panic("ifafree: ifa_refcnt != 0 (%d)", ifa->ifa_refcnt);
+#endif
+printf("ifafree: freeing ifaddr %p\n", ifa);
+	free(ifa, M_IFADDR);
 }
 
 /*
@@ -486,7 +489,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
-		ifa->ifa_refcnt++;
+		IFAREF(ifa);
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
@@ -627,7 +630,7 @@ rtinit(ifa, cmd, flags)
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;	/*XXX*/
-			ifa->ifa_refcnt++;
+			IFAREF(ifa);
 			if (ifa->ifa_rtrequest)
 			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(0));
 		}

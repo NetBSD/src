@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.16 2000/01/31 14:19:06 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.17 2000/02/01 22:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -493,6 +493,11 @@ rip6_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
 				    (struct ifnet *)control, p));
+
+	if (req == PRU_PURGEADDR) {
+		in6_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+		return (0);
+	}
 
 	switch (req) {
 	case PRU_ATTACH:

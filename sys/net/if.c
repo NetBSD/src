@@ -1,4 +1,40 @@
-/*	$NetBSD: if.c,v 1.52 1999/09/29 22:42:02 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.53 2000/02/01 22:52:04 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by William Studnemund and Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,6 +121,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/radix.h>
+#include <net/route.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
@@ -106,6 +143,8 @@ void	if_slowtimo __P((void *arg));
 extern void nd6_setmtu __P((struct ifnet *));
 #endif 
 
+int	if_rt_walktree __P((struct radix_node *, void *));
+
 /*
  * Network interface utility routines.
  *
@@ -117,6 +156,81 @@ ifinit()
 {
 
 	if_slowtimo(NULL);
+}
+
+/*
+ * Null routines used while an interface is going away.  These routines
+ * just return an error.
+ */
+int	if_nulloutput __P((struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *));
+void	if_nullinput __P((struct ifnet *, struct mbuf *));
+void	if_nullstart __P((struct ifnet *));
+int	if_nullioctl __P((struct ifnet *, u_long, caddr_t));
+int	if_nullreset __P((struct ifnet *));
+void	if_nullwatchdog __P((struct ifnet *));
+void	if_nulldrain __P((struct ifnet *));
+
+int
+if_nulloutput(ifp, m, so, rt)
+	struct ifnet *ifp;
+	struct mbuf *m;
+	struct sockaddr *so;
+	struct rtentry *rt;
+{
+
+	return (ENXIO);
+}
+
+void
+if_nullinput(ifp, m)
+	struct ifnet *ifp;
+	struct mbuf *m;
+{
+
+	/* Nothing. */
+}
+
+void
+if_nullstart(ifp)
+	struct ifnet *ifp;
+{
+
+	/* Nothing. */
+}
+
+int
+if_nullioctl(ifp, cmd, data)
+	struct ifnet *ifp;
+	u_long cmd;
+	caddr_t data;
+{
+
+	return (ENXIO);
+}
+
+int
+if_nullreset(ifp)
+	struct ifnet *ifp;
+{
+
+	return (ENXIO);
+}
+
+void
+if_nullwatchdog(ifp)
+	struct ifnet *ifp;
+{
+
+	/* Nothing. */
+}
+
+void
+if_nulldrain(ifp)
+	struct ifnet *ifp;
+{
+
+	/* Nothing. */
 }
 
 int if_index = 0;
@@ -149,11 +263,12 @@ if_attach(ifp)
 	 *	struct ifadd **ifnet_addrs
 	 *	struct ifnet **ifindex2ifnet
 	 */
-	if (ifnet_addrs == 0 || ifindex2ifnet == 0 || if_index >= if_indexlim) {
+	if (ifnet_addrs == 0 || ifindex2ifnet == 0 ||
+	    ifp->if_index >= if_indexlim) {
 		size_t n;
 		caddr_t q;
 		
-		while (if_index >= if_indexlim)
+		while (ifp->if_index >= if_indexlim)
 			if_indexlim <<= 1;
 
 		/* grow ifnet_addrs */
@@ -177,7 +292,7 @@ if_attach(ifp)
 		ifindex2ifnet = (struct ifnet **)q;
 	}
 
-	ifindex2ifnet[if_index] = ifp;
+	ifindex2ifnet[ifp->if_index] = ifp;
 
 	/*
 	 * create a Link Level name for this device
@@ -199,10 +314,12 @@ if_attach(ifp)
 	sdl->sdl_nlen = namelen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
-	ifnet_addrs[if_index] = ifa;
+	ifnet_addrs[ifp->if_index] = ifa;
+	IFAREF(ifa);
 	ifa->ifa_ifp = ifp;
 	ifa->ifa_rtrequest = link_rtrequest;
 	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
+	IFAREF(ifa);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
@@ -214,6 +331,144 @@ if_attach(ifp)
 	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 }
+
+/*
+ * Deactivate an interface.  This points all of the procedure
+ * handles at error stubs.  May be called from interrupt context.
+ */
+void
+if_deactivate(ifp)
+	struct ifnet *ifp;
+{
+	int s;
+
+	s = splimp();
+
+	ifp->if_output	 = if_nulloutput;
+	ifp->if_input	 = if_nullinput;
+	ifp->if_start	 = if_nullstart;
+	ifp->if_ioctl	 = if_nullioctl;
+	ifp->if_reset	 = if_nullreset;
+	ifp->if_watchdog = if_nullwatchdog;
+	ifp->if_drain	 = if_nulldrain;
+
+	/* No more packets may be enqueued. */
+	ifp->if_snd.ifq_maxlen = 0;
+
+	splx(s);
+}
+
+/*
+ * Detach an interface from the list of "active" interfaces,
+ * freeing any resources as we go along.
+ *
+ * NOTE: This routine must be called with a valid thread context,
+ * as it may block.
+ */
+void
+if_detach(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa;
+#ifdef IFAREF_DEBUG
+	struct ifaddr *last_ifa = NULL;
+#endif
+	struct protosw *pr;
+	struct socket so;
+	struct radix_node_head *rnh;
+	int s, i;
+
+	/* XXX Rethink this part. */
+	so.so_type = SOCK_DGRAM;
+	so.so_options = 0;
+	so.so_linger = 0;
+	so.so_state = SS_NOFDREF | SS_CANTSENDMORE | SS_CANTRCVMORE;
+	so.so_pcb = 0;
+	so.so_head = 0;
+	TAILQ_INIT(&so.so_q0);
+	TAILQ_INIT(&so.so_q);
+
+	so.so_q0len = so.so_qlen = so.so_qlimit = 0;
+	so.so_timeo = so.so_oobmark = 0;
+
+	s = splimp();
+
+	/*
+	 * Do an if_down() to give protocols a chance to do something.
+	 */
+	if_down(ifp);
+
+	/*
+	 * Rip all the addresses off the interface.  This should make
+	 * all of the routes go away.
+	 */
+	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
+#ifdef IFAREF_DEBUG
+		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
+		    ifa, ifa->ifa_addr->sa_family, ifa->ifa_refcnt);
+		if (last_ifa != NULL && ifa == last_ifa)
+			panic("loop detected");
+		last_ifa = ifa;
+#endif
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			rtinit(ifa, RTM_DELETE, 0);
+			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+			IFAFREE(ifa);
+		} else {
+			pr = pffindtype(ifa->ifa_addr->sa_family, SOCK_DGRAM);
+			so.so_proto = pr;
+			if (pr->pr_usrreq) {
+				(void) (*pr->pr_usrreq)(&so, PRU_PURGEADDR,
+				    NULL,
+				    (struct mbuf *) ifa,
+				    (struct mbuf *) ifp, curproc);
+			} else {
+				rtinit(ifa, RTM_DELETE, 0);
+				TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+				IFAFREE(ifa);
+			}
+		}
+	}
+
+	/* Walk the routing table looking for straglers. */
+	for (i = 1; i <= AF_MAX; i++) {
+		if ((rnh = rt_tables[i]) != NULL &&
+		    (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp) != 0)
+			break;
+	}
+
+	IFAFREE(ifnet_addrs[ifp->if_index]);
+	ifnet_addrs[ifp->if_index] = NULL;
+
+	TAILQ_REMOVE(&ifnet, ifp, if_list);
+
+	splx(s);
+}
+
+/*
+ * Callback for a radix tree walk to delete all references to an
+ * ifnet.
+ */
+int
+if_rt_walktree(rn, v)
+	struct radix_node *rn;
+	void *v;
+{
+	struct ifnet *ifp;
+	struct rtentry *rt = (struct rtentry *)rn;
+	int error;
+
+	if (rt->rt_ifp == ifp) {
+		/* Delete the entry. */
+		error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+		    rt_mask(rt), rt->rt_flags, NULL);
+		if (error)
+			printf("%s: warning: unable to delete rtentry @ %p, "
+			    "error = %d\n", ifp->if_xname, rt, error);
+	}
+	return (0);
+}
+
 /*
  * Locate an interface based on a complete address.
  */
@@ -227,19 +482,26 @@ ifa_ifwithaddr(addr)
 
 #define	equal(a1, a2) \
   (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-	    for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-		if (ifa->ifa_addr->sa_family != addr->sa_family)
+
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (ifp->if_output == if_nulloutput)
 			continue;
-		if (equal(addr, ifa->ifa_addr))
-			return (ifa);
-		if ((ifp->if_flags & IFF_BROADCAST) && ifa->ifa_broadaddr &&
-		    /* IP6 doesn't have broadcast */
-		    ifa->ifa_broadaddr->sa_len != 0 &&
-		    equal(ifa->ifa_broadaddr, addr))
-			return (ifa);
+		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+			if (ifa->ifa_addr->sa_family != addr->sa_family)
+				continue;
+			if (equal(addr, ifa->ifa_addr))
+				return (ifa);
+			if ((ifp->if_flags & IFF_BROADCAST) &&
+			    ifa->ifa_broadaddr &&
+			    /* IP6 doesn't have broadcast */
+			    ifa->ifa_broadaddr->sa_len != 0 &&
+			    equal(ifa->ifa_broadaddr, addr))
+				return (ifa);
+		}
 	}
-	return ((struct ifaddr *)0);
+	return (NULL);
 }
 
 /*
@@ -253,16 +515,23 @@ ifa_ifwithdstaddr(addr)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-	    if (ifp->if_flags & IFF_POINTOPOINT)
-		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-			if (ifa->ifa_addr->sa_family != addr->sa_family ||
-			    ifa->ifa_dstaddr == NULL)
-				continue;
-			if (equal(addr, ifa->ifa_dstaddr))
-				return (ifa);
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+		if (ifp->if_flags & IFF_POINTOPOINT) {
+			for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+			     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+				if (ifa->ifa_addr->sa_family !=
+				      addr->sa_family ||
+				    ifa->ifa_dstaddr == NULL)
+					continue;
+				if (equal(addr, ifa->ifa_dstaddr))
+					return (ifa);
+			}
+		}
 	}
-	return ((struct ifaddr *)0);
+	return (NULL);
 }
 
 /*
@@ -275,49 +544,61 @@ ifa_ifwithnet(addr)
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
+	register struct sockaddr_dl *sdl;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-	    register struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-	    if (sdl->sdl_index && sdl->sdl_index <= if_index)
-		return (ifnet_addrs[sdl->sdl_index]);
+		sdl = (struct sockaddr_dl *)addr;
+		if (sdl->sdl_index && sdl->sdl_index <= if_index &&
+		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput)
+			return (ifnet_addrs[sdl->sdl_index]);
 	}
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
-		for (ifp = ifnet.tqh_first; ifp != 0;
-		    ifp = ifp->if_list.tqe_next) {
+		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+		     ifp = TAILQ_NEXT(ifp, if_list)) {
+			if (ifp->if_output == if_nulloutput)
+				continue;
 			ifa = at_ifawithnet((struct sockaddr_at *)addr, ifp);
 			if (ifa)
-				return ifa;
+				return (ifa);
 		}
-		return NULL;
+		return (NULL);
 	}
 #endif
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			register char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
-				next: continue;
+ next:				continue;
 			cp = addr_data;
 			cp2 = ifa->ifa_addr->sa_data;
 			cp3 = ifa->ifa_netmask->sa_data;
 			cplim = (char *)ifa->ifa_netmask +
-				ifa->ifa_netmask->sa_len;
-			while (cp3 < cplim)
-				if ((*cp++ ^ *cp2++) & *cp3++)
-				    /* want to continue for() loop */
+			    ifa->ifa_netmask->sa_len;
+			while (cp3 < cplim) {
+				if ((*cp++ ^ *cp2++) & *cp3++) {
+					/* want to continue for() loop */
 					goto next;
+				}
+			}
 			if (ifa_maybe == 0 ||
 			    rn_refines((caddr_t)ifa->ifa_netmask,
 			    (caddr_t)ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
+	}
 	return (ifa_maybe);
 }
+
 /*
  * Find the interface of the addresss.
  */
@@ -327,8 +608,8 @@ ifa_ifwithladdr(addr)
 {
 	struct ifaddr *ia;
 
-	if ((ia = ifa_ifwithaddr(addr)) || (ia = ifa_ifwithdstaddr(addr))
-	    || (ia = ifa_ifwithnet(addr)))
+	if ((ia = ifa_ifwithaddr(addr)) || (ia = ifa_ifwithdstaddr(addr)) ||
+	    (ia = ifa_ifwithnet(addr)))
 		return (ia);
 	return (NULL);
 }
@@ -343,11 +624,17 @@ ifa_ifwithaf(af)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			if (ifa->ifa_addr->sa_family == af)
 				return (ifa);
-	return ((struct ifaddr *)0);
+		}
+	}
+	return (NULL);
 }
 
 /*
@@ -365,15 +652,21 @@ ifaof_ifpforaddr(addr, ifp)
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
+	if (ifp->if_output == if_nulloutput)
+		return (NULL);
+
 	if (af >= AF_MAX)
-		return (0);
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+		return (NULL);
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+	     ifa = TAILQ_NEXT(ifa, ifa_list)) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
 		if (ifa->ifa_netmask == 0) {
 			if (equal(addr, ifa->ifa_addr) ||
-			    (ifa->ifa_dstaddr && equal(addr, ifa->ifa_dstaddr)))
+			    (ifa->ifa_dstaddr &&
+			     equal(addr, ifa->ifa_dstaddr)))
 				return (ifa);
 			continue;
 		}
@@ -381,16 +674,15 @@ ifaof_ifpforaddr(addr, ifp)
 		cp2 = ifa->ifa_addr->sa_data;
 		cp3 = ifa->ifa_netmask->sa_data;
 		cplim = ifa->ifa_netmask->sa_len + (char *)ifa->ifa_netmask;
-		for (; cp3 < cplim; cp3++)
+		for (; cp3 < cplim; cp3++) {
 			if ((*cp++ ^ *cp2++) & *cp3)
 				break;
+		}
 		if (cp3 == cplim)
 			return (ifa);
 	}
 	return (ifa_maybe);
 }
-
-#include <net/route.h>
 
 /*
  * Default action when installing a route with a Link Level gateway.
@@ -413,7 +705,7 @@ link_rtrequest(cmd, rt, sa)
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		IFAFREE(rt->rt_ifa);
 		rt->rt_ifa = ifa;
-		ifa->ifa_refcnt++;
+		IFAREF(ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, sa);
 	}
@@ -431,7 +723,8 @@ if_down(ifp)
 	register struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	if_qflush(&ifp->if_snd);
 	rt_ifmsg(ifp);
@@ -453,8 +746,8 @@ if_up(ifp)
 	ifp->if_flags |= IFF_UP;
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	     ifa = ifa->ifa_list.tqe_next)
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 	rt_ifmsg(ifp);
@@ -494,7 +787,8 @@ if_slowtimo(arg)
 	register struct ifnet *ifp;
 	int s = splimp();
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
 		if (ifp->if_timer == 0 || --ifp->if_timer)
 			continue;
 		if (ifp->if_watchdog)
@@ -514,10 +808,13 @@ ifunit(name)
 {
 	register struct ifnet *ifp;
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		if (strcmp(ifp->if_xname, name) == 0)
+	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+	     ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+	 	if (strcmp(ifp->if_xname, name) == 0)
 			return (ifp);
-
+	}
 	return (NULL);
 }
 
@@ -533,9 +830,9 @@ if_withname(sa)
 	char ifname[IFNAMSIZ+1];
 	struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
-	if ( (sa->sa_family != AF_LINK) || (sdl->sdl_nlen == 0) ||
-	     (sdl->sdl_nlen > IFNAMSIZ) )
-		return NULL;
+	if ((sa->sa_family != AF_LINK) || (sdl->sdl_nlen == 0) ||
+	     (sdl->sdl_nlen > IFNAMSIZ))
+		return (NULL);
 
 	/*
 	 * ifunit wants a null-terminated name.  It may not be null-terminated

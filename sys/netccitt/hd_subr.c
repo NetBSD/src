@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.10 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.11 2000/02/01 22:52:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -106,6 +106,7 @@ hd_ctlinput(prc, addr, ext)
 			return (void *) (ENOBUFS);
 		}
 		hdp->hd_ifp = ifp;
+		IFAREF(ifa);
 		hdp->hd_ifa = ifa;
 		hdp->hd_xcp = xcp;
 		hdp->hd_state = INIT;

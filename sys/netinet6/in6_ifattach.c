@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.14 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.15 2000/02/01 22:52:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -339,6 +339,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 	ia->ia_ifa.ifa_netmask = (struct sockaddr *)&ia->ia_prefixmask;
 	ia->ia_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	IFAREF((struct ifaddr *)ia);
+
 	/*
 	 * Also link into the IPv6 address chain beginning with in6_ifaddr.
 	 * kazu opposed it, but itojun & jinmei wanted.
@@ -349,6 +351,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 		oia->ia_next = ia;
 	} else
 		in6_ifaddr = ia;
+	IFAREF((struct ifaddr *)ia);
 
 	ia->ia_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ia->ia_prefixmask.sin6_family = AF_INET6;
@@ -435,11 +438,12 @@ in6_ifattach(ifp, type, laddr, noloop)
 
 			/* undo changes */
 			TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+			IFAFREE((struct ifaddr *)ia);
 			if (oia)
 				oia->ia_next = ia->ia_next;
 			else
 				in6_ifaddr = ia->ia_next;
-			free(ia, M_IFADDR);
+			IFAFREE((struct ifaddr *)ia);
 			return;
 		}
 	}

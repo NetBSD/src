@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.32 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.33 2000/02/01 22:52:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -466,32 +466,31 @@ rt_setif(rt, Ifpaddr, Ifaaddr, Gate)
 	    (ifp = ifa->ifa_ifp) && (Ifaaddr || Gate))
 		ifa = ifaof_ifpforaddr(Ifaaddr ? Ifaaddr : Gate,
 					ifp);
-	else if (Ifpaddr && (ifp = if_withname(Ifpaddr)) ) {
+	else if (Ifpaddr && (ifp = if_withname(Ifpaddr))) {
 		ifa = Gate ? ifaof_ifpforaddr(Gate, ifp) :
 				TAILQ_FIRST(&ifp->if_addrlist);
-	}
-	else if ((Ifaaddr && (ifa = ifa_ifwithaddr(Ifaaddr))) ||
+	} else if ((Ifaaddr && (ifa = ifa_ifwithaddr(Ifaaddr))) ||
 		 (Gate && (ifa = ifa_ifwithroute(rt->rt_flags,
 					rt_key(rt), Gate))))
 		ifp = ifa->ifa_ifp;
 	if (ifa) {
 		register struct ifaddr *oifa = rt->rt_ifa;
-		if (oifa != ifa) {
-		    if (oifa && oifa->ifa_rtrequest)
-			oifa->ifa_rtrequest(RTM_DELETE,
-						rt, Gate);
-		    IFAFREE(rt->rt_ifa);
-		    rt->rt_ifa = ifa;
-		    ifa->ifa_refcnt++;
-		    rt->rt_ifp = ifp;
-		    rt->rt_rmx.rmx_mtu = ifp->if_mtu;
-		    if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
-			rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, Gate);
-		} else
+
+		if (oifa == ifa)
 			goto call_ifareq;
+
+		if (oifa && oifa->ifa_rtrequest)
+			oifa->ifa_rtrequest(RTM_DELETE, rt, Gate);
+		IFAFREE(rt->rt_ifa);
+		rt->rt_ifa = ifa;
+		IFAREF(rt->rt_ifa);
+		rt->rt_ifp = ifp;
+		rt->rt_rmx.rmx_mtu = ifp->if_mtu;
+		if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
+			rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, Gate);
 		return;
 	}
-      call_ifareq:
+ call_ifareq:
 	/* XXX: to reset gateway to correct value, at RTM_CHANGE */
 	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, Gate);

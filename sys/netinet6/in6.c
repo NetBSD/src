@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.9 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.10 2000/02/01 22:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -210,8 +210,8 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * loopback address.
 	 */
 	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
-		nrt->rt_ifa->ifa_refcnt--;
-		ifa->ifa_refcnt++;
+		IFAFREE(nrt->rt_ifa);
+		IFAREF(ifa);
 		nrt->rt_ifa = ifa;
 	}
 	if (nrt)
@@ -559,8 +559,12 @@ in6_control(so, cmd, data, ifp, p)
 				oia->ia_next = ia;
 			} else
 				in6_ifaddr = ia;
+			IFAREF(&ia->ia_ifa);
+
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 				(struct ifaddr *)ia, ifa_list);
+			IFAREF(&ia->ia_ifa);
+
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in6_interfaces++;	/*XXX*/
 		}
@@ -862,58 +866,7 @@ in6_control(so, cmd, data, ifp, p)
 		return(error);
 
 	case SIOCDIFADDR_IN6:
-		in6_ifscrub(ifp, ia);
-
-		if (ifp->if_flags & IFF_MULTICAST) {
-			/*
-			 * delete solicited multicast addr for deleting host id
-			 */
-			struct in6_multi *in6m;
-			struct in6_addr llsol;
-			bzero(&llsol, sizeof(struct in6_addr));
-			llsol.s6_addr16[0] = htons(0xff02);
-			llsol.s6_addr16[1] = htons(ifp->if_index);
-			llsol.s6_addr32[1] = 0;
-			llsol.s6_addr32[2] = htonl(1);
-			llsol.s6_addr32[3] =
-				ia->ia_addr.sin6_addr.s6_addr32[3];
-			llsol.s6_addr8[12] = 0xff;
-
-			IN6_LOOKUP_MULTI(llsol, ifp, in6m);
-			if (in6m)
-				in6_delmulti(in6m);
-		}
-		/* Leave dstaddr's solicited multicast if necessary. */
-		if (nd6_proxyall)
-			in6_ifremproxy(ia);
-
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		oia = ia;
-		if (oia == (ia = in6_ifaddr))
-			in6_ifaddr = ia->ia_next;
-		else {
-			while (ia->ia_next && (ia->ia_next != oia))
-				ia = ia->ia_next;
-			if (ia->ia_next)
-				ia->ia_next = oia->ia_next;
-			else
-				printf("Didn't unlink in6_ifaddr from list\n");
-		}
-		{
-			int iilen;
-
-			iilen = (sizeof(oia->ia_prefixmask.sin6_addr) << 3) -
-				in6_mask2len(&oia->ia_prefixmask.sin6_addr);
-			in6_prefix_remove_ifid(iilen, oia);
-		}
-		if (oia->ia6_multiaddrs.lh_first == NULL) {
-			IFAFREE(&oia->ia_ifa);
-			break;
-		}
-		else
-			in6_savemkludge(oia);
-
-		IFAFREE((&oia->ia_ifa));
+		in6_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 	default:
@@ -922,6 +875,77 @@ in6_control(so, cmd, data, ifp, p)
 		return((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return(0);
+}
+
+void
+in6_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct in6_ifaddr *oia, *ia = (void *) ifa;
+
+	in6_ifscrub(ifp, ia);
+
+	if (ifp->if_flags & IFF_MULTICAST) {
+		/*
+		 * delete solicited multicast addr for deleting host id
+		 */
+		struct in6_multi *in6m;
+		struct in6_addr llsol;
+		bzero(&llsol, sizeof(struct in6_addr));
+		llsol.s6_addr16[0] = htons(0xff02);
+		llsol.s6_addr16[1] = htons(ifp->if_index);
+		llsol.s6_addr32[1] = 0;
+		llsol.s6_addr32[2] = htonl(1);
+		llsol.s6_addr32[3] =
+			ia->ia_addr.sin6_addr.s6_addr32[3];
+		llsol.s6_addr8[12] = 0xff;
+
+		IN6_LOOKUP_MULTI(llsol, ifp, in6m);
+		if (in6m)
+			in6_delmulti(in6m);
+	}
+	/* Leave dstaddr's solicited multicast if necessary. */
+	if (nd6_proxyall)
+		in6_ifremproxy(ia);
+
+	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+
+	oia = ia;
+	if (oia == (ia = in6_ifaddr))
+		in6_ifaddr = ia->ia_next;
+	else {
+		while (ia->ia_next && (ia->ia_next != oia))
+			ia = ia->ia_next;
+		if (ia->ia_next)
+			ia->ia_next = oia->ia_next;
+		else
+			printf("Didn't unlink in6_ifaddr from list\n");
+	}
+	{
+		int iilen;
+
+		iilen = (sizeof(oia->ia_prefixmask.sin6_addr) << 3) -
+			in6_mask2len(&oia->ia_prefixmask.sin6_addr);
+		in6_prefix_remove_ifid(iilen, oia);
+	}
+	if (oia->ia6_multiaddrs.lh_first != NULL) {
+		/*
+		 * XXX thorpej@netbsd.org -- if the interface is going
+		 * XXX away, don't save the multicast entries, delete them!
+		 */
+		if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
+			struct in6_multi *in6m;
+
+			while ((in6m =
+			    LIST_FIRST(&oia->ia6_multiaddrs)) != NULL)
+				in6_delmulti(in6m);
+		} else
+			in6_savemkludge(oia);
+	}
+
+	IFAFREE(&oia->ia_ifa);
 }
 
 /*
@@ -1279,7 +1303,7 @@ in6_savemkludge(oia)
 		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next){
 			next = in6m->in6m_entry.le_next;
 			IFAFREE(&in6m->in6m_ia->ia_ifa);
-			ia->ia_ifa.ifa_refcnt++;
+			IFAREF(&ia->ia_ifa);
 			in6m->in6m_ia = ia;
 			LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 		}
@@ -1381,7 +1405,7 @@ in6_addmulti(maddr6, ifp, errorp)
 			return(NULL);
 		}
 		in6m->in6m_ia = ia;
-		ia->ia_ifa.ifa_refcnt++; /* gain a reference */
+		IFAREF(&ia->ia_ifa);	/* gain a reference */
 		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 
 		/*

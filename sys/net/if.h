@@ -1,4 +1,40 @@
-/*	$NetBSD: if.h,v 1.43 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.44 2000/02/01 22:52:05 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by William Studnemund and Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,7 +194,10 @@ struct ifnet {				/* and the entries */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	short	if__pad1;		/* be nice to m68k ports */
 	struct	if_data if_data;	/* statistics and other data about if */
-/* procedure handles */
+	/*
+	 * Procedure handles.  If you add more of these, don't forget the
+	 * corresponding NULL stub in if.c.
+	 */
 	int	(*if_output)		/* output routine (enqueue) */
 		__P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *));
@@ -438,11 +477,43 @@ struct if_laddrreq {
 #endif /* !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
-#define	IFAFREE(ifa) \
-	if ((ifa)->ifa_refcnt <= 0) \
-		ifafree(ifa); \
-	else \
-		(ifa)->ifa_refcnt--;
+#ifdef IFAREF_DEBUG
+#define	IFAREF(ifa)							\
+do {									\
+	printf("IFAREF: %s:%d %p -> %d\n", __FILE__, __LINE__,		\
+	    (ifa), ++(ifa)->ifa_refcnt);				\
+} while (0)
+
+#define	IFAFREE(ifa)							\
+do {									\
+	if ((ifa)->ifa_refcnt <= 0)					\
+		panic("%s:%d: %p ifa_refcnt <= 0", __FILE__,		\
+		    __LINE__, (ifa));					\
+	printf("IFAFREE: %s:%d %p -> %d\n", __FILE__, __LINE__,		\
+	    (ifa), --(ifa)->ifa_refcnt);				\
+	if ((ifa)->ifa_refcnt == 0)					\
+		ifafree(ifa);						\
+} while (0)
+#else
+#define	IFAREF(ifa)	(ifa)->ifa_refcnt++
+
+#ifdef DIAGNOSTIC
+#define	IFAFREE(ifa)							\
+do {									\
+	if ((ifa)->ifa_refcnt <= 0)					\
+		panic("%s:%d: %p ifa_refcnt <= 0", __FILE__,		\
+		    __LINE__, (ifa));					\
+	if (--(ifa)->ifa_refcnt == 0)					\
+		ifafree(ifa);						\
+} while (0)
+#else
+#define	IFAFREE(ifa)							\
+do {									\
+	if (--(ifa)->ifa_refcnt == 0)					\
+		ifafree(ifa);						\
+} while (0)
+#endif /* DIAGNOSTIC */
+#endif /* IFAREF_DEBUG */
 
 struct ifnet_head ifnet;
 struct ifnet **ifindex2ifnet;
@@ -452,9 +523,12 @@ struct ifnet loif[];
 int if_index;
 
 void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
+void	ether_ifdetach __P((struct ifnet *));
 char	*ether_sprintf __P((const u_char *));
 
 void	if_attach __P((struct ifnet *));
+void	if_deactivate __P((struct ifnet *));
+void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
 void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));
@@ -482,6 +556,19 @@ void	loopattach __P((int));
 int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 void	lortrequest __P((int, struct rtentry *, struct sockaddr *));
+
+/*
+ * These are exported because they're an easy way to tell if
+ * an interface is going away without having to burn a flag.
+ */
+int	if_nulloutput __P((struct ifnet *, struct mbuf *,
+	    struct sockaddr *, struct rtentry *));
+void	if_nullinput __P((struct ifnet *, struct mbuf *));
+void	if_nullstart __P((struct ifnet *));
+int	if_nullioctl __P((struct ifnet *, u_long, caddr_t));
+int	if_nullreset __P((struct ifnet *));
+void	if_nullwatchdog __P((struct ifnet *));
+void	if_nulldrain __P((struct ifnet *));
 #else
 struct if_nameindex {
 	unsigned int	if_index;	/* 1, 2, ... */

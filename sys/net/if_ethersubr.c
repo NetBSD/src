@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.51 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.52 2000/02/01 22:52:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -781,6 +781,14 @@ ether_ifattach(ifp, lla)
 #ifdef INET6
 	in6_ifattach_getifid(ifp);
 #endif
+}
+
+void
+ether_ifdetach(ifp)
+	struct ifnet *ifp;
+{
+
+	/* Nothing. */
 }
 
 #ifdef INET

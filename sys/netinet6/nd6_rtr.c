@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.8 2000/01/06 15:46:11 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.9 2000/02/01 22:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -430,7 +430,7 @@ defrouter_addreq(new)
 		Free(rt);
 		goto bad;
 	}
-	ifa->ifa_refcnt++;
+	IFAREF(ifa);
 	rt->rt_ifa = ifa;
 	rt->rt_ifp = ifp;
 	rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
@@ -1250,11 +1250,13 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		oia->ia_next = ia;
 	} else
 		in6_ifaddr = ia;
+	IFAREF((struct ifaddr *)ia);
 
 	/* link to if_addrlist */
 	if (ifp->if_addrlist.tqh_first != NULL) {
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			ifa_list);
+		IFAREF((struct ifaddr *)ia);
 	}
 #if 0
 	else {
@@ -1386,6 +1388,7 @@ in6_ifdel(ifp, in6)
 	}
 
 	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	IFAFREE((struct ifaddr *)ia);
 
 	/* lladdr is never deleted */
 	oia = ia;

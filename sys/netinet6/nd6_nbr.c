@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.12 2000/01/28 07:21:29 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.13 2000/02/01 22:52:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -927,7 +927,7 @@ nd6_dad_start(ifa, tick)
 	 * (re)initialization.
 	 */
 	dp->dad_ifa = ifa;
-	ifa->ifa_refcnt++;	/*just for safety*/
+	IFAREF(ifa);		/* just for safety */
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
@@ -991,7 +991,7 @@ nd6_dad_timer(ifa)
 		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 		free(dp, M_IP6NDP);
 		dp = NULL;
-		ifa->ifa_refcnt--;
+		IFAFREE(ifa);
 		goto done;
 	}
 
@@ -1068,7 +1068,7 @@ nd6_dad_timer(ifa)
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
-			ifa->ifa_refcnt--;
+			IFAFREE(ifa);
 		}
 	}
 
@@ -1107,7 +1107,7 @@ nd6_dad_duplicated(ifa)
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
-	ifa->ifa_refcnt--;
+	IFAFREE(ifa);
 }
 
 static void

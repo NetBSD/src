@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.17 1999/10/25 19:18:11 drochner Exp $	*/
+/*	$NetBSD: ns.c,v 1.18 2000/02/01 22:52:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -109,8 +109,10 @@ ns_control(so, cmd, data, ifp, p)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ns_ifaddr, ia, ia_list);
+			IFAREF((struct ifaddr *)ia);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
+			IFAREF((struct ifaddr *)ia);
 			ia->ia_ifa.ifa_addr = snstosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_netmask = snstosa(&ns_netmask);
 			ia->ia_ifa.ifa_dstaddr = snstosa(&ia->ia_dstaddr);
@@ -193,16 +195,7 @@ ns_control(so, cmd, data, ifp, p)
 		return (error);
 
 	case SIOCDIFADDR:
-		ns_ifscrub(ifp, ia);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		TAILQ_REMOVE(&ns_ifaddr, ia, ia_list);
-		IFAFREE((&ia->ia_ifa));
-		if (0 == --ns_interfaces) {
-			/*
-			 * We reset to virginity and start all over again
-			 */
-			ns_thishost = ns_zerohost;
-		}
+		ns_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 	default:
@@ -211,6 +204,26 @@ ns_control(so, cmd, data, ifp, p)
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return (0);
+}
+
+void
+ns_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct ns_ifaddr *ia = (void *) ifa;
+
+	ns_ifscrub(ifp, ia);
+	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+	TAILQ_REMOVE(&ns_ifaddr, ia, ia_list);
+	IFAFREE((&ia->ia_ifa));
+	if (0 == --ns_interfaces) {
+		/*
+		 * We reset to virginity and start all over again
+		 */
+		ns_thishost = ns_zerohost;
+	}
 }
 
 /*
