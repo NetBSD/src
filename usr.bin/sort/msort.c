@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.11 2002/12/25 21:19:15 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.12 2003/03/20 16:13:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.11 2002/12/25 21:19:15 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.12 2003/03/20 16:13:03 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 	if (!buffer) {
 		buffer = malloc(bufsize);
 		if (!buffer)
-			err(2, "fmerge(): realloc");
+			err(2, "fmerge(): malloc");
 
 		if (!linebuf && !SINGL_FLD) {
 			linebuf_size = DEFLLEN;
@@ -143,7 +143,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	struct field *ftbl;
 {
 	int c, i, j, nf = nfiles;
-	struct mfile *flist[MERGE_FNUM], *cfile;
+	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
 	size_t availsz = bufsize;
 	static void *bufs[MERGE_FNUM+1];
 	static size_t bufs_sz[MERGE_FNUM+1];
@@ -160,7 +160,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 
 		bufs[i] = malloc(DEFLLEN);
 		if (!bufs[i])
-			err(2, "merge(): realloc");
+			err(2, "merge: malloc");
 		bufs_sz[i] = DEFLLEN;
 	}
 
@@ -178,11 +178,10 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 
 			if (c == BUFFEND) {
 				cfile = realloc(bufs[j], bufs_sz[j] *= 2);
-				bufs[j] = (void *) cfile;
-
 				if (!cfile)
-					err(2, "merge(): realloc");
+					err(2, "merge: realloc");
 
+				bufs[j] = (void *) cfile;
 				cfile->end = (u_char *)cfile + bufs_sz[j];
 
 				c = 1;
@@ -204,9 +203,10 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				put(flist[0]->rec, outfp);
-				memmove(flist, flist + 1,
-				    sizeof(MFILE *) * (--nfiles));
-				cfile->flno = flist[0]->flno;
+				if (--nfiles > 0) {
+					flist++;
+					cfile->flno = flist[0]->flno;
+				}
 				break;
 			}
 			if (c == BUFFEND) {
@@ -214,6 +214,9 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 				availsz = (char *) cfile->end - oldbuf;
 				availsz *= 2;
 				cfile = realloc(oldbuf, availsz);
+				if (!cfile)
+					err(2, "merge: realloc");
+
 				for(i=0; i < nf+1; i++) {
 					if (bufs[i] == oldbuf) {
 						bufs[i] = (char *)cfile;
@@ -221,9 +224,6 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 						break;
 					}
 				}
-
-				if (!cfile)
-					err(2, "merge: realloc");
 
 				cfile->end = (u_char *)cfile + availsz;
 				c = 1;
