@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.19 2001/09/19 01:14:51 enami Exp $	*/
+/*	$NetBSD: execvp.c,v 1.20 2001/12/08 00:30:59 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.19 2001/09/19 01:14:51 enami Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.20 2001/12/08 00:30:59 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,9 +118,9 @@ execvp(const char *name, char * const *argv)
 			(void)write(STDERR_FILENO, ": path too long\n", 16);
 			continue;
 		}
-		memmove(buf, p, lp);
+		memcpy(buf, p, lp);
 		buf[lp] = '/';
-		memmove(buf + lp + 1, name, ln);
+		memcpy(buf + lp + 1, name, ln);
 		buf[lp + ln + 1] = '\0';
 
 retry:		rwlock_rdlock(&__environ_lock);
@@ -139,7 +139,7 @@ retry:		rwlock_rdlock(&__environ_lock);
 				goto done;
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
-			(void)memmove(&memp[2], &argv[1], cnt * sizeof(*memp));
+			(void)memcpy(&memp[2], &argv[1], cnt * sizeof(*memp));
 			rwlock_rdlock(&__environ_lock);
 			(void)execve(_PATH_BSHELL, (char * const *)memp,
 			    environ);
