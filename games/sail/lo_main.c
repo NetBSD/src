@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.4 1997/01/07 12:42:21 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lo_main.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: lo_main.c,v 1.4 1997/01/07 12:42:21 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $";
  */
 #include <sys/types.h>
 #include <pwd.h>
-#include "externs.h"
+#include "extern.h"
 #include "pathnames.h"
 
 char *title[] = {

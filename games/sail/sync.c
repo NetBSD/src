@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.4 1995/04/24 12:25:28 cgd Exp $	*/
+/*	$NetBSD: sync.c,v 1.5 1997/01/07 12:42:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,15 +35,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)sync.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: sync.c,v 1.4 1995/04/24 12:25:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: sync.c,v 1.5 1997/01/07 12:42:27 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
 #include <sys/file.h>
-#include <sys/errno.h>
+#include <errno.h>
+#include "extern.h"
 
 #define BUFSIZE 4096
 
