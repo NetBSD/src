@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.63 2000/01/21 23:39:57 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.64 2000/02/07 20:16:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -440,7 +440,7 @@ vndstrategy(bp)
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
 		nbp->vb_buf.b_error = 0;
 		nbp->vb_buf.b_data = addr;
-		nbp->vb_buf.b_blkno = nbn + btodb(off);
+		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
 		nbp->vb_buf.b_vp = NULLVP;

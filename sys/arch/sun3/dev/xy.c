@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.24 2000/01/21 23:39:55 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.25 2000/02/07 20:16:54 thorpej Exp $	*/
 
 /*
  *
@@ -978,6 +978,8 @@ xystrategy(bp)
 {
 	struct xy_softc *xy;
 	int     s, unit;
+	struct disklabel *lp;
+	daddr_t blkno;
 
 	unit = DISKUNIT(bp->b_dev);
 
@@ -1010,9 +1012,21 @@ xystrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
+	lp = xy->sc_dk.dk_label;
+
+	if (bounds_check_with_label(bp, lp,
 		(xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	if (DISKPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno;
 
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
@@ -1253,8 +1267,7 @@ xyc_startbuf(xycsc, xysc, bp)
 #endif
 
 	/*
-	 * load request.  we have to calculate the correct block number based
-	 * on partition info.
+	 * load request.
 	 *
 	 * also, note that there are two kinds of buf structures, those with
 	 * B_PHYS set and those without B_PHYS.   if B_PHYS is set, then it is
@@ -1274,8 +1287,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	 * (It is done inexpensively, using whole segments!)
 	 */
 
-	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
-	    xysc->sc_dk.dk_label->d_partitions[partno].p_offset);
+	block = bp->b_rawblkno;
 
 	dbuf = dvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.20 2000/01/21 23:39:56 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.21 2000/02/07 20:16:54 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -183,17 +183,24 @@ hpstrategy(bp)
 	struct	hp_softc *sc;
 	struct	buf *gp;
 	int	unit, s, err;
+	struct disklabel *lp;
 
 	unit = DISKUNIT(bp->b_dev);
 	sc = hp_cd.cd_devs[unit];
+	lp = sc->sc_disk.dk_label;
 
-	err = bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel);
+	err = bounds_check_with_label(bp, lp, sc->sc_wlabel);
 	if (err < 0)
 		goto done;
+
+	bp->b_rawblkno =
+	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
+
 	s = splbio();
 
 	gp = BUFQ_FIRST(&sc->sc_md.md_q);
-	disksort_blkno(&sc->sc_md.md_q, bp);	/* XXX disksort_cylinder */
+	disksort_cylinder(&sc->sc_md.md_q, bp);
 	if (gp == 0)
 		mbaqueue(&sc->sc_md);
 
@@ -228,7 +235,7 @@ hpstart(md)
 
 	hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
 
-	bn = bp->b_blkno + lp->d_partitions[part].p_offset;
+	bn = bp->b_rawblkno;
 	if (bn) {
 		cn = bn / lp->d_secpercyl;
 		sn = bn % lp->d_secpercyl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.27 2000/01/28 09:27:38 hannken Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.28 2000/02/07 20:16:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -140,7 +140,8 @@ disksort_cylinder(bufq, bp)
 	 * must locate the second request list and add ourselves to it.
 	 */
 	if (bp->b_cylinder < bq->b_cylinder ||
-	    (bp->b_cylinder == bq->b_cylinder && bp->b_blkno < bq->b_blkno)) {
+	    (bp->b_cylinder == bq->b_cylinder &&
+	     bp->b_rawblkno < bq->b_rawblkno)) {
 		while ((nbq = BUFQ_NEXT(bq)) != NULL) {
 			/*
 			 * Check for an ``inversion'' in the normally ascending
@@ -158,7 +159,7 @@ disksort_cylinder(bufq, bp)
 					if (bp->b_cylinder < nbq->b_cylinder)
 						goto insert;
 					if (bp->b_cylinder == nbq->b_cylinder &&
-					    bp->b_blkno < nbq->b_blkno)
+					    bp->b_rawblkno < nbq->b_rawblkno)
 						goto insert;
 					bq = nbq;
 				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
@@ -186,7 +187,7 @@ disksort_cylinder(bufq, bp)
 		if (nbq->b_cylinder < bq->b_cylinder ||
 		    bp->b_cylinder < nbq->b_cylinder ||
 		    (bp->b_cylinder == nbq->b_cylinder &&
-		     bp->b_blkno < nbq->b_blkno))
+		     bp->b_rawblkno < nbq->b_rawblkno))
 			goto insert;
 		bq = nbq;
 	}
@@ -198,7 +199,7 @@ insert:	BUFQ_INSERT_AFTER(bufq, bq, bp);
 }
 
 /*
- * Seek sort for disks.  This version sorts based on b_blkno, which
+ * Seek sort for disks.  This version sorts based on b_rawblkno, which
  * indicates the block number.
  *
  * As before, there are actually two queues, sorted in ascendening block
@@ -241,14 +242,14 @@ disksort_blkno(bufq, bp)
 	 * If we lie after the first (currently active) request, then we
 	 * must locate the second request list and add ourselves to it.
 	 */
-	if (bp->b_blkno < bq->b_blkno) {
+	if (bp->b_rawblkno < bq->b_rawblkno) {
 		while ((nbq = BUFQ_NEXT(bq)) != NULL) {
 			/*
 			 * Check for an ``inversion'' in the normally ascending
 			 * block numbers, indicating the start of the second
 			 * request list.
 			 */
-			if (nbq->b_blkno < bq->b_blkno) {
+			if (nbq->b_rawblkno < bq->b_rawblkno) {
 				/*
 				 * Search the second request list for the first
 				 * request at a larger block number.  We go
@@ -256,7 +257,7 @@ disksort_blkno(bufq, bp)
 				 * go at the end.
 				 */
 				do {
-					if (bp->b_blkno < nbq->b_blkno)
+					if (bp->b_rawblkno < nbq->b_rawblkno)
 						goto insert;
 					bq = nbq;
 				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
@@ -281,8 +282,8 @@ disksort_blkno(bufq, bp)
 		 * request list), or if the next request is a larger cylinder
 		 * than our request.
 		 */
-		if (nbq->b_blkno < bq->b_blkno ||
-		    bp->b_blkno < nbq->b_blkno)
+		if (nbq->b_rawblkno < bq->b_rawblkno ||
+		    bp->b_rawblkno < nbq->b_rawblkno)
 			goto insert;
 		bq = nbq;
 	}

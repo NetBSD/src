@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.38 2000/01/31 19:04:52 kleink Exp $	*/
+/*	$NetBSD: rd.c,v 1.39 2000/02/07 20:16:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -702,9 +702,9 @@ rdstrategy(bp)
 			goto bad;
 		}
 	}
-	bp->b_cylinder = bn + offset;		/* XXX */
+	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	disksort_cylinder(&rs->sc_tab, bp);	/* XXX */
+	disksort_blkno(&rs->sc_tab, bp);
 	if (rs->sc_active == 0) {
 		rs->sc_active = 1;
 		rdustart(rs);
@@ -786,7 +786,7 @@ again:
 	rs->sc_ioc.c_volume = C_SVOL(0);
 	rs->sc_ioc.c_saddr = C_SADDR;
 	rs->sc_ioc.c_hiaddr = 0;
-	rs->sc_ioc.c_addr = RDBTOS(bp->b_cylinder);	/* XXX */
+	rs->sc_ioc.c_addr = RDBTOS(bp->b_rawblkno);
 	rs->sc_ioc.c_nop2 = C_NOP;
 	rs->sc_ioc.c_slen = C_SLEN;
 	rs->sc_ioc.c_len = rs->sc_resid;

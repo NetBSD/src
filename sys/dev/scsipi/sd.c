@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.156 2000/01/25 20:42:33 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.157 2000/02/07 20:16:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -554,6 +554,8 @@ sdstrategy(bp)
 	struct buf *bp;
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct disklabel *lp;
+	daddr_t blkno;
 	int s;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
@@ -570,11 +572,14 @@ sdstrategy(bp)
 			bp->b_error = ENODEV;
 		goto bad;
 	}
+
+	lp = sd->sc_dk.dk_label;
+
 	/*
 	 * The transfer must be a whole number of blocks, offset must not be
 	 * negative.
 	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0 ||
+	if ((bp->b_bcount % lp->d_secsize) != 0 ||
 	    bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -590,9 +595,23 @@ sdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (SDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
+	    bounds_check_with_label(bp, lp,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	if (lp->d_secsize >= DEV_BSIZE)
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	else
+		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
+
+	if (SDPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[SDPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno;
 
 	s = splbio();
 
@@ -649,8 +668,7 @@ sdstart(v)
 	struct scsi_rw cmd_small;
 #endif
 	struct scsipi_generic *cmdp;
-	int blkno, nblks, cmdlen, error;
-	struct partition *p;
+	int nblks, cmdlen, error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart "));
 	/*
@@ -689,19 +707,9 @@ sdstart(v)
 		}
 
 		/*
-		 * We have a buf, now we should make a command
-		 *
-		 * First, translate the block to absolute and put it in terms
-		 * of the logical blocksize of the device.
+		 * We have a buf, now we should make a command.
 		 */
-		if (lp->d_secsize >= DEV_BSIZE)
-			blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-		else
-			blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
-		if (SDPART(bp->b_dev) != RAW_PART) {
-			p = &lp->d_partitions[SDPART(bp->b_dev)];
-			blkno += p->p_offset;
-		}
+
 		nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 #if NSD_SCSIBUS > 0
@@ -709,7 +717,7 @@ sdstart(v)
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
 		 */
-		if (((blkno & 0x1fffff) == blkno) &&
+		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI) {
 			/*
 			 * We can fit in a small cdb.
@@ -717,7 +725,7 @@ sdstart(v)
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
-			_lto3b(blkno, cmd_small.addr);
+			_lto3b(bp->b_rawblkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
@@ -730,7 +738,7 @@ sdstart(v)
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
-			_lto4b(blkno, cmd_big.addr);
+			_lto4b(bp->b_rawblkno, cmd_big.addr);
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsipi_generic *)&cmd_big;
@@ -778,7 +786,7 @@ sddone(xs)
 	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
 #if NRND > 0
-		rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+		rnd_add_uint32(&sd->rnd_source, xs->bp->b_rawblkno);
 #endif
 	}
 }

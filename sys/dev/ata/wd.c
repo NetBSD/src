@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.201 2000/01/24 14:51:07 enami Exp $ */
+/*	$NetBSD: wd.c,v 1.202 2000/02/07 20:16:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -432,14 +432,17 @@ wdstrategy(bp)
 	struct buf *bp;
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(bp->b_dev)];
+	struct disklabel *lp = wd->sc_dk.dk_label;
+	daddr_t blkno;
 	int s;
+
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % wd->sc_dk.dk_label->d_secsize) != 0 ||
-	    (bp->b_bcount / wd->sc_dk.dk_label->d_secsize) >= (1 << NBBY)) {
+	    (bp->b_bcount % lp->d_secsize) != 0 ||
+	    (bp->b_bcount / lp->d_secsize) >= (1 << NBBY)) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -462,6 +465,21 @@ wdstrategy(bp)
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	if (lp->d_secsize >= DEV_BSIZE)
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	else
+		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
+
+	if (WDPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno;
+
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort_blkno(&wd->sc_q, bp);
@@ -510,14 +528,8 @@ __wdstart(wd, bp)
 	struct wd_softc *wd;
 	struct buf *bp;
 {
-	daddr_t p_offset;
-	if (WDPART(bp->b_dev) != RAW_PART)
-		p_offset =
-		    wd->sc_dk.dk_label->d_partitions[WDPART(bp->b_dev)].p_offset;
-	else
-		p_offset = 0;
-	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
-	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+
+	wd->sc_wdc_bio.blkno = bp->b_rawblkno;
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.64 2000/01/21 23:39:58 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.65 2000/02/07 20:16:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -457,6 +457,8 @@ mcdstrategy(bp)
 	struct buf *bp;
 {
 	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(bp->b_dev)];
+	struct disklabel *lp = sc->sc_dk.dk_label;
+	daddr_t blkno;
 	int s;
 	
 	/* Test validity. */
@@ -486,10 +488,20 @@ mcdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (MCDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
+	    bounds_check_with_label(bp, lp,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
-	
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	if (MCDPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[MCDPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno; 
+
 	/* Queue it. */
 	s = splbio();
 	disksort_blkno(&sc->buf_queue, bp);
@@ -545,12 +557,7 @@ loop:
 
 	sc->mbx.retry = MCD_RDRETRIES;
 	sc->mbx.bp = bp;
-	sc->mbx.blkno = bp->b_blkno / (sc->blksize / DEV_BSIZE);
-	if (MCDPART(bp->b_dev) != RAW_PART) {
-		struct partition *p;
-		p = &sc->sc_dk.dk_label->d_partitions[MCDPART(bp->b_dev)];
-		sc->mbx.blkno += p->p_offset;
-	}
+	sc->mbx.blkno = bp->b_rawblkno;
 	sc->mbx.nblk = bp->b_bcount / sc->blksize;
 	sc->mbx.sz = sc->blksize;
 	sc->mbx.skip = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.63 2000/01/21 23:22:24 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.64 2000/02/07 20:16:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -671,7 +671,7 @@ start:
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
 			goto start;
 		binshash(bp, bh);
-		bp->b_blkno = bp->b_lblkno = blkno;
+		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
 		splx(s);
@@ -851,7 +851,7 @@ start:
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
 	bp->b_dev = NODEV;
-	bp->b_blkno = bp->b_lblkno = 0;
+	bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = 0;
 	bp->b_iodone = 0;
 	bp->b_error = 0;
 	bp->b_resid = 0;

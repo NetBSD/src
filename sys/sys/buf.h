@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.38 2000/01/24 04:56:02 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.39 2000/02/07 20:16:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -181,7 +181,10 @@ struct buf {
 	} b_un;
 	void	*b_saveaddr;		/* Original b_addr for physio. */
 	daddr_t	b_lblkno;		/* Logical block number. */
-	daddr_t	b_blkno;		/* Underlying physical block number. */
+	daddr_t	b_blkno;		/* Underlying physical block number
+					   (partition relative) */
+	daddr_t	b_rawblkno;		/* Raw underlying physical block
+					   number (not partition relative) */
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
 	struct	vnode *b_vp;		/* Device vnode. */
