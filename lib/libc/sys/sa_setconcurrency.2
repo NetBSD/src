@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_setconcurrency.2,v 1.1 2004/03/14 09:18:45 yamt Exp $
+.\"     $NetBSD: sa_setconcurrency.2,v 1.2 2004/03/14 10:20:43 snj Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm sa_setconcurrency
-.Nd increase number of virtual processors
+.Nd increase the number of virtual processors
 .\" ------------------------------------------------------------
 .Sh LIBRARY
 .Lb libc
@@ -43,24 +43,25 @@
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn sa_setconcurrency
-is used to increase number of scheduler activation virtual processors
+is used to increase the number of scheduler activation virtual processors
 used by the process.
 .Fn sa_setconcurrency
-increases virtual processors, i.e. execution concurrency, up to
+increases the number of virtual processors, i.e., execution concurrency,
+up to
 .Fa concurrency .
 However,
 .Fn sa_setconcurrency
-won't try to allocate virtual processors more than physical processors
-on the system.
+won't try to allocate more virtual processors than there are physical
+processors on the system.
 .Pp
-upcall handler should be registered by
+Upcall handlers should be registered by
 .Fn sa_register
 beforehand.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 On success,
 .Fn sa_setconcurrency
-returns number of newly added virtual processors.
+returns the number of newly added virtual processors.
 Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
