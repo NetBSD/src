@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.90 2002/04/27 21:36:50 enami Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.91 2002/04/28 22:35:19 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.90 2002/04/27 21:36:50 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.91 2002/04/28 22:35:19 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1389,6 +1389,7 @@ fdcheckstd(p)
 	struct filedesc *fdp;
 	struct file *fp;
 	struct file *devnullfp;
+	struct proc *pp;
 	register_t retval;
 	int fd, i, error, flags = FREAD|FWRITE, devnull = -1, logged = 0;
 
@@ -1398,8 +1399,12 @@ fdcheckstd(p)
 		if (fdp->fd_ofiles[i] != NULL)
 			continue;
 		if (!logged) {
-			log(LOG_WARNING, "set{u,g}id pid %d (%s) was invoked "
-			    "with fd 0, 1, or 2 closed\n", p->p_pid, p->p_comm);
+			pp = p->p_pptr;
+			log(LOG_WARNING, "set{u,g}id pid %d (%s) "
+			    "was invoked by uid %d ppid %d (%s) "
+			    "with fd 0, 1, or 2 closed\n",
+			    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+			    pp->p_pid, pp->p_comm);
 			logged++;
 		}
 		if (devnull < 0) {
