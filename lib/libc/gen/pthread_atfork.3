@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_atfork.3,v 1.1 2003/02/13 02:50:51 nathanw Exp $
+.\"	$NetBSD: pthread_atfork.3,v 1.2 2003/03/03 06:45:18 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ handler is called in the parent process before the fork happens, the
 handler is called in the parent process after the fork has happened, and the
 .Ar child
 handler is called in the child process after the fork has happened.
-The 
+The
 .Ar parent
 and
 .Ar child
@@ -70,12 +70,14 @@ handlers are called in the order in which they were registered, while the
 .Ar prepare
 handlers are called in reverse of the order in which they were registerd.
 .Pp
-Any of the handlers given may be NULL.
+Any of the handlers given may be
+.Dv NULL .
 .Pp
 The intended use of
 .Fn pthread_atfork
-is to provide a consistent state to a child process from a multithreaded parent process where locks may be acquired and released asynchronously with respect to the
-.Xr fork
+is to provide a consistent state to a child process from a multithreaded parent
+process where locks may be acquired and released asynchronously with respect to the
+.Xr fork 2
 call.
 Each subsystem with locks that are used in a child process should register
 handlers with
@@ -84,7 +86,7 @@ that acquires those locks in the
 .Ar prepare
 handler and releases them in the
 .Ar parent
-handler. 
+handler.
 .Sh RETURN VALUES
 The
 .Fn pthread_atfork
@@ -112,7 +114,7 @@ After calling
 .Xr fork 2
 from a multithreaded process, it is only safe to call
 async-signal-safe functions until calling one of the
-.Xr exec 3 
+.Xr exec 3
 functions.
 The
 .Fn pthread_*
@@ -123,4 +125,3 @@ handler.
 .Sh BUGS
 There is no way to unregister a handler registered with
 .Fn pthread_atfork .
-
