@@ -30,8 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.if exists(${.CURDIR}/../common/obj)
-COBJDIR= ${.CURDIR}/../common/obj
+.if exists(${.CURDIR}/../common/${__objdir})
+COBJDIR= ${.CURDIR}/../common/${__objdir}
 .else
 COBJDIR= ${.CURDIR}/../common    
 .endif
