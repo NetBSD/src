@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2002/04/12 03:21:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.58 2002/04/23 19:44:14 tv Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -8,6 +8,7 @@
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 
 CRUNCHBIN=	instbin
+CRUNCHGEN_FLAGS= -d "${DBG}"
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGE=		miniroot.fs
