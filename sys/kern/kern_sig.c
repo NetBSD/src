@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.193 2004/04/03 19:46:10 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.194 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.193 2004/04/03 19:46:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.194 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -89,9 +89,11 @@ static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask, sigtrapmask;
 
-struct pool	sigacts_pool;	/* memory pool for sigacts structures */
-struct pool	siginfo_pool;	/* memory pool for siginfo structures */
-struct pool	ksiginfo_pool;	/* memory pool for ksiginfo structures */
+POOL_INIT(sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
+    &pool_allocator_nointr);
+POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
+    &pool_allocator_nointr);
+POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
@@ -203,12 +205,7 @@ ksiginfo_exithook(struct proc *p, void *v)
 void
 signal_init(void)
 {
-	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    &pool_allocator_nointr);
-	pool_init(&siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
-	    &pool_allocator_nointr);
-	pool_init(&ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
-	    NULL);
+
 	exithook_establish(ksiginfo_exithook, NULL);
 	exechook_establish(ksiginfo_exithook, NULL);
 

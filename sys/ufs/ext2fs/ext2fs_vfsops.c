@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.67 2004/04/21 01:05:44 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.68 2004/04/25 16:42:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.67 2004/04/21 01:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.68 2004/04/25 16:42:43 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -146,8 +146,13 @@ struct genfs_ops ext2fs_genfsops = {
 	genfs_gop_write,
 };
 
-struct pool ext2fs_inode_pool;
-struct pool ext2fs_dinode_pool;
+/*
+ * XXX Same structure as FFS inodes?  Should we share a common pool?
+ */
+POOL_INIT(ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0, "ext2fsinopl",
+    &pool_allocator_nointr);
+POOL_INIT(ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
+    "ext2dinopl", &pool_allocator_nointr);
 
 extern u_long ext2gennumber;
 
@@ -155,14 +160,6 @@ void
 ext2fs_init()
 {
 	ufs_init();
-
-	/*
-	 * XXX Same structure as FFS inodes?  Should we share a common pool?
-	 */
-	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
-	    "ext2fsinopl", &pool_allocator_nointr);
-	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-	    "ext2dinopl", &pool_allocator_nointr);
 }
 
 void

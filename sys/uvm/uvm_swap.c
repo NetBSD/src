@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.86 2004/04/21 01:05:47 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.87 2004/04/25 16:42:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.86 2004/04/21 01:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.87 2004/04/25 16:42:45 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -180,8 +180,8 @@ struct vndbuf {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-static struct pool vndxfer_pool;
-static struct pool vndbuf_pool;
+POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL);
+POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
@@ -285,16 +285,6 @@ uvm_swap_init()
 				M_VMSWAP, 0, 0, EX_NOWAIT);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
-
-	/*
-	 * allocate pools for structures used for swapping to files.
-	 */
-
-	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0,
-	    "swp vnx", NULL);
-
-	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0,
-	    "swp vnd", NULL);
 
 	/*
 	 * done!

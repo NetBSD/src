@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.48 2003/09/22 13:00:04 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.49 2004/04/25 16:42:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -159,8 +159,6 @@ int	dofilereadv(struct proc *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
 int	dofilewritev(struct proc *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
-
-void	finit(void);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);

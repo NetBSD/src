@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.60 2004/04/21 21:03:43 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.61 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.60 2004/04/21 21:03:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.61 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_ns.h"
 
@@ -135,8 +135,8 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
-struct pool rtentry_pool;	/* pool for rtentry structures */
-struct pool rttimer_pool;	/* pool for rttimer structures */
+POOL_INIT(rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl", NULL);
+POOL_INIT(rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl", NULL);
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
@@ -157,9 +157,6 @@ rtable_init(void **table)
 void
 route_init(void)
 {
-
-	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
-	    NULL);
 
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
@@ -848,9 +845,6 @@ void
 rt_timer_init(void)
 {
 	assert(rt_init_done == 0);
-
-	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
-	    NULL);
 
 	LIST_INIT(&rttimer_queue_head);
 	callout_init(&rt_timer_ch);

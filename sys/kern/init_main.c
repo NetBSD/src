@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.235 2004/03/28 22:43:56 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.236 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.235 2004/03/28 22:43:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.236 2004/04/25 16:42:41 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -251,6 +251,9 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
+	/* Initialise pools. */
+	link_pool_init();
+
 	/* Initialize callouts. */
 	callout_startup();
 
@@ -262,9 +265,6 @@ main(void)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
-
-	/* Initialize kqueues. */
-	kqueue_init();
 
 	/* Initialize sockets. */
 	soinit();
@@ -290,9 +290,7 @@ main(void)
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
 
-	/*
-	 * Initialize process and pgrp structures.
-	 */
+	/* Initialize process and pgrp structures. */
 	procinit();
 
 #ifdef LKM
@@ -333,7 +331,6 @@ main(void)
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Create the file descriptor table. */
-	finit();
 	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
 
@@ -585,11 +582,6 @@ main(void)
 
 	/* Initialize exec structures */
 	exec_init(1);
-
-#ifndef PIPE_SOCKETPAIR
-	/* Initialize pipe structures */
-	pipe_init();
-#endif
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.20 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.21 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,7 +113,6 @@ extern	struct igmpstat igmpstat;
 #define	IGMP_HDR_ALIGNED_P(ig)	((((vaddr_t) (ig)) & 3) == 0)
 #endif
 
-void	igmp_init(void);
 void	igmp_input(struct mbuf *, ...);
 int	igmp_joingroup(struct in_multi *);
 void	igmp_leavegroup(struct in_multi *);
