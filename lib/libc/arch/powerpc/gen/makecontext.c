@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.2 2003/01/18 11:12:54 thorpej Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.3 2003/10/09 00:17:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.2 2003/01/18 11:12:54 thorpej Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.3 2003/10/09 00:17:59 kleink Exp $");
 #endif
 
 #include <inttypes.h>
@@ -72,9 +72,9 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	 * Start executing at <func> -- when <func> completes, return to
 	 * <_resumecontext>.
 	 */
-	gr[1]  = (__greg_t)sp;
-	gr[33] = (__greg_t)_resumecontext;
-	gr[34] = (__greg_t)func;
+	gr[_REG_R1]  = (__greg_t)sp;
+	gr[_REG_LR] = (__greg_t)_resumecontext;
+	gr[_REG_PC] = (__greg_t)func;
 
 	/* Wipe out stack frame backchain pointer. */
 	*sp = 0;
@@ -83,7 +83,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	va_start(ap, argc);
 	/* Up to the first eight arguments are passed in r3-10. */
 	for (i = 0; i < argc && i < 8; i++)
-		gr[3 + i] = va_arg(ap, int);
+		gr[_REG_R3 + i] = va_arg(ap, int);
 	/* Pass remaining arguments on the stack above the backchain/lr gap. */
 	for (sp += 2; i < argc; i++)
 		*sp++ = va_arg(ap, int);
