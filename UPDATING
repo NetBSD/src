@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.64 2002/07/01 02:12:11 sommerfeld Exp $
+$NetBSD: UPDATING,v 1.65 2002/08/24 13:25:01 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,20 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020822:
+	Crunched rescue tools (contents of /bin and /sbin, plus others)
+	are now provided in /rescue.
+
+	To ensure that these are built statically linked (no matter
+	what the setting of LDSTATIC is), use a crunchgen(1) built
+	from sources newer than 20020820 (see the next entry).
+
+20020820:
+	crunchgen(1) changed to ensure that the generated program
+	is statically linked.
+
+	Solution: update and reinstall usr.bin/crunch
 
 20020515:
 	sshd user/group has been added.  Need to hand add this in, or sshd
