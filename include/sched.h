@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.6 2002/10/29 01:26:45 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.7 2002/11/08 08:29:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
+#include <sys/cdefs.h>
 #include <sys/sched.h>
 
 /* Required by POSIX 1003.1, section 13.1, lines 12-13. */
