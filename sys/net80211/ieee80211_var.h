@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.3 2003/09/14 01:14:56 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.4 2003/10/13 04:27:40 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -63,7 +63,8 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11A	= 1,	/* 5GHz, OFDM */
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
-	IEEE80211_MODE_TURBO	= 4,	/* 5GHz, OFDM, 2x clock */
+	IEEE80211_MODE_FH	= 4,	/* 2GHz, GFSK */
+	IEEE80211_MODE_TURBO	= 5,	/* 5GHz, OFDM, 2x clock */
 };
 #define	IEEE80211_MODE_MAX	(IEEE80211_MODE_TURBO+1)
 
@@ -92,10 +93,13 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
 #define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
+#define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
 
 /*
  * Useful combinations of channel characteristics.
  */
+#define	IEEE80211_CHAN_FHSS \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
 #define	IEEE80211_CHAN_A \
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
 #define	IEEE80211_CHAN_B \
@@ -107,6 +111,8 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_T \
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
+#define	IEEE80211_IS_CHAN_FHSS(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
 #define	IEEE80211_IS_CHAN_A(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_A) == IEEE80211_CHAN_A)
 #define	IEEE80211_IS_CHAN_B(_c) \
@@ -126,12 +132,18 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_OFDM) != 0)
 #define	IEEE80211_IS_CHAN_CCK(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_CCK) != 0)
+#define	IEEE80211_IS_CHAN_GFSK(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_GFSK) != 0)
 
 /* ni_chan encoding for FH phy */
 #define	IEEE80211_FH_CHANMOD	80
 #define	IEEE80211_FH_CHAN(set,pat)	(((set)-1)*IEEE80211_FH_CHANMOD+(pat))
 #define	IEEE80211_FH_CHANSET(chan)	((chan)/IEEE80211_FH_CHANMOD+1)
 #define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
+
+#define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
+
+#define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
 
 struct ieee80211com {
 #ifdef __NetBSD__
@@ -148,6 +160,7 @@ struct ieee80211com {
 				    enum ieee80211_state, int);
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
+	int			(*ic_set_tim)(struct ieee80211com *, int, int);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
@@ -155,6 +168,7 @@ struct ieee80211com {
 	u_char			ic_chan_active[roundup(IEEE80211_CHAN_MAX, NBBY)];
 	u_char			ic_chan_scan[roundup(IEEE80211_CHAN_MAX,NBBY)];
 	struct ifqueue		ic_mgtq;
+	struct ifqueue		ic_pwrsaveq;
 	u_int32_t		ic_flags;	/* state flags */
 	u_int32_t		ic_caps;	/* capabilities */
 	u_int16_t		ic_modecaps;	/* set of mode capabilities */
@@ -162,6 +176,8 @@ struct ieee80211com {
 	enum ieee80211_phytype	ic_phytype;	/* XXX wrong for multi-mode */
 	enum ieee80211_opmode	ic_opmode;	/* operation mode */
 	enum ieee80211_state	ic_state;	/* 802.11 state */
+	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
+	u_int16_t		ic_max_aid;
 	struct ifmedia		ic_media;	/* interface media config */
 #ifdef __FreeBSD__
 	struct bpf_if		*ic_rawbpf;	/* packet filter structure */
@@ -253,6 +269,7 @@ void	ieee80211_media_init(struct ifnet *, ifm_change_cb_t, ifm_stat_cb_t);
 int	ieee80211_media_change(struct ifnet *);
 void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
 int	ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
+int	ieee80211_get_rate(struct ieee80211com *);
 int	ieee80211_cfgget(struct ifnet *, u_long, caddr_t);
 int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);
 void	ieee80211_watchdog(struct ifnet *);
@@ -267,7 +284,6 @@ int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		struct ieee80211_channel *);
 
-#define	IEEE80211_DEBUG
 #ifdef IEEE80211_DEBUG
 extern	int ieee80211_debug;
 #define	IEEE80211_DPRINTF(X)	if (ieee80211_debug) printf X
