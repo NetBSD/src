@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.6 1996/10/13 00:46:55 christos Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.7 1996/10/19 12:40:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -12,7 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Matthew R. Green for
+ *      the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
