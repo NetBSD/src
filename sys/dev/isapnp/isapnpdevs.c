@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.23 1999/03/17 21:11:57 dean Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.24 1999/03/18 17:07:51 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.20 1999/03/16 22:58:17 dean Exp 
+ *	NetBSD: isapnpdevs,v 1.21 1999/03/18 17:07:09 drochner Exp 
  */
 
 /*-
@@ -62,9 +62,11 @@ const struct isapnp_devinfo isapnp_aha_devinfo = {
 /* Adaptec SCSI */
 static const char *isapnp_aic_devlogic[] = {
 	"ADP1520",	/* Adaptec AHA-1520B */
+	"ADP1505",	/* Adaptec AVA-1505A */
 	NULL
 };
 static const char *isapnp_aic_devcompat[] = {
+	"ADP1530",	/* (Adaptec AVA-1505A) */
 	NULL
 };
 const struct isapnp_devinfo isapnp_aic_devinfo = {
