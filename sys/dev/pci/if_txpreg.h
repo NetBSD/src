@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.1 2003/07/01 20:08:51 drochner Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.2 2003/07/07 15:18:24 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -590,6 +590,10 @@ struct txp_softc {
 	struct txp_dma_alloc	sc_rxbufring_dma;
 	int			sc_cold;
 	u_int32_t		sc_rx_capability, sc_tx_capability;
+	int			sc_flags;
+#define TXP_USESUBSYSTEM	0x1 /* use PCI subsys reg for detail info */
+#define TXP_SERVERVERSION	0x2
+#define TXP_FIBER		0x4
 };
 
 #define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : (sc)->sc_dev.dv_xname)
