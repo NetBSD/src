@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.3 2000/03/24 14:33:09 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.4 2000/04/26 15:54:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.3 2000/03/24 14:33:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.4 2000/04/26 15:54:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ static int	cac_submatch __P((struct device *, struct cfdata *, void *));
 static void	cac_ccb_poll __P((struct cac_softc *, struct cac_ccb *, int));
 static void	cac_shutdown __P((void *));
 
-static SIMPLEQ_HEAD(, cac_softc) cac_hba;	/* list of HBA softc's */
 static void *cac_sdh;				/* shutdown hook */
 
 /*
@@ -154,13 +153,10 @@ cac_init(sc, intrstr)
 	}
 
 	/* Set shutdownhook before we start any device activity. */
-	if (cac_sdh == NULL) {
-		SIMPLEQ_INIT(&cac_hba);
+	if (cac_sdh == NULL)
 		cac_sdh = shutdownhook_establish(cac_shutdown, NULL);
-	}
 
 	sc->sc_cl->cl_intr_enable(sc, CAC_INT_ENABLE);
-	SIMPLEQ_INSERT_HEAD(&cac_hba, sc, sc_chain);
 	return (0);
 }
 
@@ -171,13 +167,16 @@ static void
 cac_shutdown(cookie)
 	void *cookie;
 {
+	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
 	char buf[512];
+	int i;
 
 	printf("shutting down cac devices...");
 
-	for (sc = SIMPLEQ_FIRST(&cac_hba); sc != NULL; 
-	    sc = SIMPLEQ_NEXT(sc, sc_chain)) {
+	for (i = 0; i < cac_cd.cd_ndevs; i++) {
+		if ((sc = cac_cd.cd_devs[i]) == NULL)
+			continue; 
 		/* XXX documentation on this is a bit fuzzy. */
 		memset(buf, 0, sizeof (buf));
 		buf[0] = 1;
@@ -331,12 +330,13 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 			cac_ccb_free(sc, ccb);
 			rv = 0;
 		}
-		splx(s);
 	} else {
 		memcpy(&ccb->ccb_context, context, sizeof(struct cac_context));
+		s = splbio();
 		rv = cac_ccb_start(sc, ccb);
 	}
 	
+	splx(s);
 	return (rv);
 }
 
@@ -387,18 +387,13 @@ cac_ccb_start(sc, ccb)
 	struct cac_softc *sc;
 	struct cac_ccb *ccb;
 {
-	int s;
 	
-	s = splbio();
-
 	if (ccb != NULL)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
-		if (sc->sc_cl->cl_fifo_full(sc)) {
-			splx(s);
+		if (sc->sc_cl->cl_fifo_full(sc))
 			return (-1);
-		}
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    (caddr_t)ccb - sc->sc_ccbs, sizeof(struct cac_ccb),
@@ -406,7 +401,6 @@ cac_ccb_start(sc, ccb)
 		sc->sc_cl->cl_submit(sc, ccb->ccb_paddr);
 	}
 	
-	splx(s);
 	return (0);
 }
 
