@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.18 1998/01/17 12:00:46 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.19 1998/01/18 13:30:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.18 1998/01/17 12:00:46 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.19 1998/01/18 13:30:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,21 @@ printcol(dp)
 	int base, chcnt, col, colwidth, num;
 	int numcols, numrows, row;
 
+	colwidth = dp->maxlen;
+	if (f_inode)
+		colwidth += dp->s_inode + 1;
+	if (f_size)
+		colwidth += dp->s_block + 1;
+	if (f_type)
+		colwidth += 1;
+
+	colwidth += 1;
+
+	if (termwidth < 2 * colwidth) {
+		printscol(dp);
+		return;
+	}
+
 	/*
 	 * Have to do random access in the linked list -- build a table
 	 * of pointers.
@@ -162,6 +177,36 @@ printcol(dp)
 	for (p = dp->list, num = 0; p; p = p->fts_link)
 		if (p->fts_number != NO_PRINT)
 			array[num++] = p;
+
+	numcols = termwidth / colwidth;
+	colwidth = termwidth / numcols;		/* spread out if possible */
+	numrows = num / numcols;
+	if (num % numcols)
+		++numrows;
+
+	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
+		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
+	for (row = 0; row < numrows; ++row) {
+		for (base = row, chcnt = col = 0; col < numcols; ++col) {
+			chcnt = printaname(array[base], dp->s_inode,
+			    dp->s_block);
+			if ((base += numrows) >= num)
+				break;
+			while (chcnt++ < colwidth)
+				putchar(' ');
+		}
+		(void)putchar('\n');
+	}
+}
+
+void
+printacol(dp)
+	DISPLAY *dp;
+{
+	extern int termwidth;
+	FTSENT *p;
+	int chcnt, col, colwidth;
+	int numcols;
 
 	colwidth = dp->maxlen;
 	if (f_inode)
@@ -180,22 +225,23 @@ printcol(dp)
 
 	numcols = termwidth / colwidth;
 	colwidth = termwidth / numcols;		/* spread out if possible */
-	numrows = num / numcols;
-	if (num % numcols)
-		++numrows;
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
-	for (row = 0; row < numrows; ++row) {
-		for (base = row, chcnt = col = 0; col < numcols; ++col) {
-			chcnt = printaname(array[base], dp->s_inode, dp->s_block);
-			if ((base += numrows) >= num)
-				break;
-			while (chcnt++ < colwidth)
-				putchar(' ');
+	chcnt = col = 0;
+	for (p = dp->list; p; p = p->fts_link) {
+		if (IS_NOPRINT(p))
+			continue;
+		if (col >= numcols) {
+			chcnt = col = 0;
+			putchar('\n');
 		}
-		(void)putchar('\n');
+		chcnt = printaname(p, dp->s_inode, dp->s_block);
+		while (chcnt++ < colwidth)
+			putchar(' ');
+		col++;
 	}
+	putchar('\n');
 }
 
 /*
