@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.142 2003/08/24 06:11:19 itojun Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.143 2003/08/24 19:20:40 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.142 2003/08/24 06:11:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.143 2003/08/24 19:20:40 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -271,7 +271,6 @@ int securelevel = 0;
 #define	DEFCORENAME	"%n.core"
 #endif
 char defcorename[MAXPATHLEN] = DEFCORENAME;
-int defcorenamelen = sizeof(DEFCORENAME);
 
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
@@ -524,8 +523,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			return (EINVAL);
 		error = sysctl_string(oldp, oldlenp, newp, newlen,
 		    defcorename, sizeof(defcorename));
-		if (newp && !error)
-			defcorenamelen = newlen;
 		return (error);
 	case KERN_SYNCHRONIZED_IO:
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
@@ -800,7 +797,6 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 	struct proc *ptmp = NULL;
-	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
 	struct plimit *newplim;
@@ -813,23 +809,9 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	if (name[0] == PROC_CURPROC) {
 		ptmp = p;
+	} else if ((ptmp = pfind((pid_t)name[0])) == NULL) {
+		return (ESRCH);
 	} else {
-		proclist_lock_read();
-		for (pd = proclists; pd->pd_list != NULL; pd++) {
-			for (ptmp = LIST_FIRST(pd->pd_list); ptmp != NULL;
-			    ptmp = LIST_NEXT(ptmp, p_list)) {
-				/* Skip embryonic processes. */
-				if (ptmp->p_stat == SIDL)
-					continue;
-				if (ptmp->p_pid == (pid_t)name[0])
-					break;
-			}
-			if (ptmp != NULL)
-				break;
-		}
-		proclist_unlock_read();
-		if (ptmp == NULL)
-			return (ESRCH);
 		if (p->p_ucred->cr_uid != 0) {
 			if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
 			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
