@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.9.2.1 2001/08/30 23:43:39 nathanw Exp $ */
+/* $NetBSD: db_trace.c,v 1.9.2.2 2002/02/28 23:56:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9.2.1 2001/08/30 23:43:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9.2.2 2002/02/28 23:56:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				(*pr)("not found\n");
 				return;
 			}	
-			l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+			l = proc_representative_lwp(p); /* XXX NJWLWP */
 			if ((l->l_flag & L_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
