@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.12 2000/11/06 22:32:49 augustss Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.13 2000/11/07 13:53:59 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.12 2000/11/06 22:32:26 augustss Exp 
+ *	NetBSD: miidevs,v 1.13 2000/11/07 13:53:42 soren Exp 
  */
 
 /*-
@@ -75,7 +75,7 @@
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
 
 /* Some Intel 82553's use an alternative OUI. */
-#define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
+#define	MII_OUI_xxINTEL	0x00f800	/* Intel */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
