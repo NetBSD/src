@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.2 1998/07/22 12:22:09 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.3 1998/07/23 13:44:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@ extern int usbdebug;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define X { printf("usbdi: unimplemented\n"); return USBD_XXX; }
 
 static usbd_status usbd_ar_pipe  __P((usbd_pipe_handle pipe));
 static usbd_status usbd_ar_iface __P((usbd_interface_handle iface));
@@ -766,6 +764,21 @@ usbd_unlock(tok)
 	splx(tok);
 }
 
+/* XXX need to check that the interface is idle */
+usbd_status
+usbd_set_interface(iface, aiface)
+	usbd_interface_handle iface;
+	int aiface;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_INTERFACE;
+	req.bRequest = UR_SET_INTERFACE;
+	USETW(req.wValue, aiface);
+	USETW(req.wIndex, iface->idesc->iInterface);
+	USETW(req.wLength, 0);
+	return usbd_do_request(iface->device, &req, 0);
+}
 
 /*** Internal routines ***/
 
