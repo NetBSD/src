@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.8.2.1 2002/01/05 17:33:16 he Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.8.2.2 2002/01/29 22:50:45 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10.2.1 2002/01/05 17:32:32 he Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.2 2002/01/29 22:50:14 he Exp 
  */
 
 /*
@@ -58,6 +58,18 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3c575C-TX",
 	},
 	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
+	    0,
+	    "AboCom Systems",
+	    "FE2500 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_PCM200,
+	    0,
+	    "AboCom Systems",
+	    "FE2500 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
 	    0,
 	    "Adaptec",
@@ -68,6 +80,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "MPX 5030/5038 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_EN2242,
+	    0,
+	    "Accton Technology",
+	    "EN2242 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
@@ -130,12 +148,6 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "8138 Ethernet",
 	},
 	{
-	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
-	    0,
-	    "Realtek Semiconductor",
-	    "8139 Ethernet",
-	},
-	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Digital Equipment",
@@ -193,6 +205,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ACCTON, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "AboCom Systems",
 	    NULL,
 	},
 	{
