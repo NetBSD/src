@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.17.2.3 2004/09/21 13:13:19 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.17.2.4 2004/11/21 08:51:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17.2.3 2004/09/21 13:13:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17.2.4 2004/11/21 08:51:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ static const struct wsscreen_list vidcvideo_screenlist = {
 	sizeof(_vidcvideo_scrlist) / sizeof(struct wsscreen_descr *), _vidcvideo_scrlist
 };
 
-static int	vidcvideoioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int	vidcvideoioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static paddr_t	vidcvideommap __P((void *, off_t, int));
 
 static int	vidcvideo_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -409,12 +409,12 @@ vidcvideo_attach(parent, self, aux)
 
 
 static int
-vidcvideoioctl(v, cmd, data, flag, p)
+vidcvideoioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vidcvideo_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
