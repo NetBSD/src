@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120 2001/09/10 21:19:30 chris Exp $	 */
+/* $NetBSD: machdep.c,v 1.121 2002/02/24 01:04:27 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -106,6 +106,7 @@ caddr_t		msgbufaddr;
 int		physmem;
 int		dumpsize = 0;
 int		*symtab_start;
+int		*symtab_end;
 int		symtab_nsyms;
 
 #define	IOMAPSZ	100
@@ -299,15 +300,19 @@ consinit()
 	iospace_inited = 1;
 #endif
 	cninit();
-#ifdef DDB
+#if defined(DDB) && !defined(__ELF__)
 	{
+#ifndef __ELF__
 		extern int end; /* Contains pointer to symsize also */
-		extern int *esym;
-
+#endif
 		if (symtab_start != NULL)
-			ddb_init(symtab_nsyms, symtab_start, esym);
-		else
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+			ddb_init(symtab_nsyms, symtab_start, symtab_end);
+#ifndef __ELF__
+		else {
+			extern paddr_t esym;
+			ddb_init(*(int *)&end, ((int *)&end) + 1, (void *)esym);
+		}
+#endif
 	}
 #ifdef DEBUG
 	if (sizeof(struct user) > REDZONEADDR)
@@ -524,12 +529,12 @@ cpu_reboot(howto, b)
 		 * rely on that.
 		 */
 #ifdef notyet
-		asm("	movl	sp, (0x80000200)
-			movl	0x80000200, sp
-			mfpr	$0x10, -(sp)	# PR_PCBB
-			mfpr	$0x11, -(sp)	# PR_SCBB
-			mfpr	$0xc, -(sp)	# PR_SBR
-			mfpr	$0xd, -(sp)	# PR_SLR
+		asm("	movl	%sp, (0x80000200)
+			movl	0x80000200, %sp
+			mfpr	$0x10, -(%sp)	# PR_PCBB
+			mfpr	$0x11, -(%sp)	# PR_SCBB
+			mfpr	$0xc, -(%sp)	# PR_SBR
+			mfpr	$0xd, -(%sp)	# PR_SLR
 			mtpr	$0, $0x38	# PR_MAPEN
 		");
 #endif
@@ -545,8 +550,8 @@ cpu_reboot(howto, b)
 
 		mtpr(GC_CONS|GC_BTFL, PR_TXDB);
 	}
-	asm("movl %0, r5":: "g" (showto)); /* How to boot */
-	asm("movl %0, r11":: "r"(showto)); /* ??? */
+	asm("movl %0, %%r5":: "g" (showto)); /* How to boot */
+	asm("movl %0, %%r11":: "r"(showto)); /* ??? */
 	asm("halt");
 	panic("Halt sket sej");
 }
