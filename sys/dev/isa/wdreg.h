@@ -1,4 +1,4 @@
-/*	$NetBSD: wdreg.h,v 1.10 1994/11/22 09:34:06 mycroft Exp $	*/
+/*	$NetBSD: wdreg.h,v 1.11 1994/11/23 07:56:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -115,6 +115,8 @@
 #define	WDCC_CACHEC	0xef	/* cache control */
 
 #define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
+#define	WDSD_CHS	0x00	/* cylinder/head/sector addressing */
+#define	WDSD_LBA	0x40	/* logical block addressing */
 
 
 #ifdef KERNEL
