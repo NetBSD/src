@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/07/02 04:07:43 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/07/02 13:20:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -74,6 +74,8 @@ char *names[] = {
 static char *default_devname;
 static int default_unit, default_partition;
 static char *default_filename;
+
+char	*sprint_bootsel __P((const char*));
 
 void	command_help __P((char *));
 void	command_ls __P((char *));
@@ -163,23 +165,20 @@ parsebootfile(fname, fsname, devname, unit, partition, file)
 	return(0);
 }
 
-void
-print_bootsel(filename, howto)
-	char *filename;
-	int howto;
+char *sprint_bootsel(filename)
+const char *filename;
 {
 	char *fsname, *devname;
 	int unit, partition;
 	const char *file;
-
+	static char buf[80];
+	
 	if (parsebootfile(filename, &fsname, &devname, &unit,
-	    &partition, &file) == 0) {
-		printf("booting %s%d%c:%s", devname, unit,
-		    'a' + partition, file);
-		if (howto)
-			printf(" (howto 0x%x)", howto);
-		printf("\n");
+			  &partition, &file) == 0) {
+		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		return(buf);
 	}
+	return("(invalid)");
 }
 
 void
@@ -188,11 +187,16 @@ bootit(filename, howto, tell)
 	int howto, tell;
 {
 
-	if (tell)
-		print_bootsel(filename, howto);
+	if (tell) {
+		printf("booting %s", sprint_bootsel(filename));
+		if (howto)
+			printf(" (howto 0x%x)", howto);
+		printf("\n");
+	}
 
 	if (exec_netbsd(filename, 0, howto, 0, consdev) < 0)
-		printf("boot: %s: %s\n", filename, strerror(errno));
+		printf("boot: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
 	else
 		printf("boot returned\n");
 }
@@ -329,7 +333,7 @@ bootmenu()
 	char input[80];
 	int i;
 
-	printf("\ntype \"?\" or \"help\" for help.\n");
+	printf("type \"?\" or \"help\" for help.\n");
 	for (;;) {
  loop:
 		input[0] = '\0';
@@ -365,21 +369,24 @@ awaitkey(timeout, tell)
 
 	i = timeout * POLL_FREQ;
 
-	while (i--) {
+	while (i) {
+		if (tell && (i % POLL_FREQ) == 0)
+			printf("%d\b", i/POLL_FREQ);
 		if (iskey()) {
 			/* flush input buffer */
 			while (iskey())
 				c = getchar();
-			return(c); /* XXX what happens if c == 0? */
+			goto out; /* XXX what happens if c == 0? */
 		}
 		delay(1000000 / POLL_FREQ);
-		if (tell && (i % POLL_FREQ) == 0)
-			printf("%d\b", i/POLL_FREQ);
+		i--;
 	}
+
+out:
 	if (tell)
 		printf("0\n");
 
-	return(0);
+	return(c);
 }
 
 void
@@ -387,12 +394,8 @@ print_banner(void)
 {
 
 	printf("\n" ">> NetBSD BOOT: %d/%d k [%s]\n"
-#ifndef MATTHIAS
 	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
 	    "press return to boot now, any other key for boot menu\n",
-#else
-	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n",
-#endif
 	    getbasemem(), getextmem(), version);
 }
 
@@ -421,51 +424,27 @@ main()
 
 	currname = 0;
 	for (;;) {
-#ifndef MATTHIAS
-		print_bootsel(0, 0);
-		printf("starting in %d\b", TIMEOUT);
+		printf("booting %s - starting in ",
+		       sprint_bootsel(names[currname]));
 
 		c = awaitkey(TIMEOUT, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0'))
 			bootmenu(); /* does not return */
 
-		printf("\n");
-		
 		/*
 		 * try pairs of names[] entries, foo and foo.gz
 		 */
-		/* don't print "booting..." again for first try */
-		bootit(names[currname], 0, currname != 0);
+		/* don't print "booting..." again */
+		bootit(names[currname], 0, 0);
 		/* since it failed, try switching bootfile. */
 		currname = ++currname % NUMNAMES;
 
 		/* now try the second of a pair, presumably the .gz
 		   version. */
 		/* XXX duped code sucks. */
-		/* don't print "booting..." again for first try */
-		bootit(names[currname], 0, currname != 0);
+		bootit(names[currname], 0, 1);
 		/* since it failed, try switching bootfile. */
 		currname = ++currname % NUMNAMES;
-#else
-		print_bootsel(0, 0);
-		printf("press any key for boot menu\n"
-		    "starting in %d\b", TIMEOUT);
-
-		c = awaitkey(TIMEOUT, 1);
-		if ((c != '\r') && (c != '\n') && (c != '\0'))
-			bootmenu(); /* does not return */
-
-		printf("\n");
-
-		/* try every names[] entry once */
-		do {
-			/* dont't print "booting..." again for first try */
-			bootit(names[currname], 0, currname != 0);
-
-			/* since it failed, try switching bootfile. */
-			currname = ++currname % NUMNAMES;
-		} while(currname);
-#endif
 	}
 }
 
