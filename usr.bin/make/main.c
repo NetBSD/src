@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.10 1993/12/17 23:55:57 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.11 1993/12/22 00:25:57 pk Exp $";
 #endif /* not lint */
 
 /*-
@@ -349,6 +349,7 @@ main(argc, argv)
 	Boolean outOfDate; 	/* FALSE if all targets up to date */
 	struct stat sb;
 	char mdpath[MAXPATHLEN + 1], *p, *path, *getenv();
+	char objpath[MAXPATHLEN + 1];
 
 	/*
 	 * if the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -370,6 +371,7 @@ main(argc, argv)
 		exit(2);
 	}
 	if (!lstat(mdpath, &sb)) {
+		snprintf(objpath, MAXPATHLEN + 1, "%s/%s", curdir, mdpath);
 		if (chdir(mdpath))
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 			    mdpath, strerror(errno));
@@ -377,6 +379,7 @@ main(argc, argv)
 			obj_is_elsewhere = 1;
 	} else {
 		if (!lstat(path, &sb)) {
+			snprintf(objpath, MAXPATHLEN + 1, "%s/%s", curdir, path);
 			if (chdir(path))
 				(void)fprintf(stderr, "make warning: %s: %s.\n",
 				    path, strerror(errno));
@@ -417,6 +420,7 @@ main(argc, argv)
 	if (obj_is_elsewhere)
 		Dir_AddDir(dirSearchPath, curdir);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
+	Var_Set(".OBJDIR", obj_is_elsewhere?objpath:curdir, VAR_GLOBAL);
 
 	/*
 	 * Initialize various variables.
