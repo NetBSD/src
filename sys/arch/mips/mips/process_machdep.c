@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23 2003/08/07 16:28:33 agc Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24 2003/11/26 08:36:49 he Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2003/08/07 16:28:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2003/11/26 08:36:49 he Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -123,9 +123,9 @@ process_write_regs(struct lwp *l, struct reg *regs)
 	mips_reg_t sr;
 
 	f = (struct frame *) l->l_md.md_regs;
-	sr = f->f_regs[SR];
+	sr = f->f_regs[_R_SR];
 	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
-	f->f_regs[SR] = sr;
+	f->f_regs[_R_SR] = sr;
 	return 0;
 }
 
@@ -164,6 +164,6 @@ int
 process_set_pc(struct lwp *l, caddr_t addr)
 {
 
-	((struct frame *)l->l_md.md_regs)->f_regs[PC] = (int)addr;
+	((struct frame *)l->l_md.md_regs)->f_regs[_R_PC] = (int)addr;
 	return 0;
 }
