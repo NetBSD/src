@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.22 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.23 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -130,13 +130,7 @@ nsphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = nsphy_service;
 	sc->mii_pdata = mii;
-
-	/*
-	 * i82557 wedges if all of its PHYs are isolated!
-	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
-	    mii->mii_instance == 0)
-		sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_flags = mii->mii_flags;
 
 	mii_phy_reset(sc);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.5 2000/02/02 08:05:29 thorpej Exp $ */
+/* $NetBSD: if_rl.c,v 1.6 2000/02/02 17:09:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -930,7 +930,7 @@ rl_attach(parent, self, aux)
 	sc->mii.mii_writereg = rl_phy_writereg;
 	sc->mii.mii_statchg = rl_phy_statchg;
 	ifmedia_init(&sc->mii.mii_media, 0, rl_ifmedia_upd, rl_ifmedia_sts);
-	mii_attach(self, &sc->mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY);
+	mii_attach(self, &sc->mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {

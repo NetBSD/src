@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.14 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.15 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ struct mii_attach_args {
 	int mii_id1;			/* PHY ID register 1 */
 	int mii_id2;			/* PHY ID register 2 */
 	int mii_capmask;		/* capability mask from BMSR */
+	int mii_flags;			/* flags from parent */
 };
 typedef struct mii_attach_args mii_attach_args_t;
 
@@ -182,7 +183,8 @@ struct mii_media {
 	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
 	    (p)->mii_phy, (r), (v))
 
-void	mii_attach __P((struct device *, struct mii_data *, int, int, int));
+void	mii_attach __P((struct device *, struct mii_data *, int, int,
+	    int, int));
 void	mii_activate __P((struct mii_data *, enum devact, int, int));
 void	mii_detach __P((struct mii_data *, int, int));
 
