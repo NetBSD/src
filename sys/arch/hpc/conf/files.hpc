@@ -1,4 +1,6 @@
-#	$NetBSD: files.hpc,v 1.1 2001/01/28 02:52:16 uch Exp $
+#	$NetBSD: files.hpc,v 1.2 2001/02/05 17:41:22 uch Exp $
 
 file	arch/hpc/hpc/config_hook.c
 file	arch/hpc/hpc/platid.c
+file	arch/hpc/hpc/platid_mask.c
+file	arch/hpc/hpc/platid_name.c
