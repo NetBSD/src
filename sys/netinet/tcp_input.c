@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.39 1998/01/05 10:32:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.40 1998/01/18 05:56:15 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
@@ -1864,10 +1864,8 @@ syn_cache_get(so, m)
 #endif
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL) {
-		m_freem(m);
+	if (am == NULL)
 		goto resetandabort;
-	}
 	am->m_len = sizeof(struct sockaddr_in);
 	sin = mtod(am, struct sockaddr_in *);
 	sin->sin_family = AF_INET;
@@ -1877,7 +1875,6 @@ syn_cache_get(so, m)
 	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
 	if (in_pcbconnect(inp, am)) {
 		(void) m_free(am);
-		m_freem(m);
 		goto resetandabort;
 	}
 	(void) m_free(am);
@@ -1934,6 +1931,7 @@ syn_cache_get(so, m)
 resetandabort:
 	(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
 	    (tcp_seq)0, TH_RST|TH_ACK);
+	m_freem (m);
 abort:
 	if (so != NULL)
 		(void) soabort(so);
