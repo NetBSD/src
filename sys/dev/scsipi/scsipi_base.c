@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.9 2001/01/15 09:22:12 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.10 2001/01/22 17:43:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1208,6 +1208,9 @@ scsipi_complete(xs)
 		if (xs->xs_control & XS_CTL_REQSENSE) {
 			scsipi_printaddr(periph);
 			printf("request sense for request sense\n");
+			/* we've been frozen because xs->error != XS_NOERROR */
+			scsipi_periph_thaw(periph, 1);
+			splx(s);
 			return EIO;
 		}
 		scsipi_request_sense(xs);
@@ -1219,6 +1222,8 @@ scsipi_complete(xs)
 	 */
 	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
 		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
+		if (xs->error != XS_NOERROR)
+			scsipi_periph_thaw(periph, 1);
 		scsipi_user_done(xs);
 		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		return 0;
@@ -1285,6 +1290,10 @@ scsipi_complete(xs)
 			error = ERESTART;
 		} else
 			error = EBUSY;
+		break;
+
+	case XS_REQUEUE:
+		error = ERESTART;
 		break;
 
 	case XS_TIMEOUT:
@@ -2076,6 +2085,7 @@ scsipi_async_event_channel_reset(chan)
 	for (xs = TAILQ_FIRST(&chan->chan_queue); xs != NULL; xs = xs_next) {
 		xs_next = TAILQ_NEXT(xs, channel_q);
 		if (xs->xs_control & XS_CTL_REQSENSE) {
+			TAILQ_REMOVE(&chan->chan_queue, xs, channel_q);
 			xs->error = XS_RESET;
 			scsipi_done(xs);
 		}
