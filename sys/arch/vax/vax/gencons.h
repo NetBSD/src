@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.8 2000/01/17 04:55:26 matt Exp $ */
+/*	$NetBSD: gencons.h,v 1.9 2000/01/20 00:07:49 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,6 @@
  */
 
  /* All bugs are subject to removal without further notice */
-#include "opt_vax8600.h"
 
 /*
  * Some definitions for generic console interface (PR 32-35)
