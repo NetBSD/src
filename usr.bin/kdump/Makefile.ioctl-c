@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.9 2003/10/19 04:25:00 lukem Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.10 2003/10/21 10:01:22 lukem Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -16,8 +16,7 @@ DEPFILES != grep -l '_IO.*(' ${DEPFILEGLOB}
 .endif
 
 ioctl.c: mkioctls ${DEPFILES}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	CC="${CC}" DESTDIR=${DESTDIR} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
 	    ${SEARCHFILES} > ioctl.c

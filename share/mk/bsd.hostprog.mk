@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.34 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.35 2003/10/21 10:01:21 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -76,8 +76,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 ${HOSTPROG}: ${OBJS} ${DPADD}
-	${_MKMSGLINK.m} ${HOSTPROG}
-	${_MKCMD}\
+	${_MKMSG_LINK} ${HOSTPROG}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(OBJS) && !empty(OBJS)
@@ -90,7 +89,6 @@ MAN=	${HOSTPROG}.1
 realall: ${HOSTPROG}
 
 cleanprog:
-	${_MKCMD}\
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
@@ -108,7 +106,6 @@ afterdepend: .depend
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2003/10/19 04:30:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.36 2003/10/21 10:01:22 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -40,42 +40,32 @@ ${MKHITS}:
 
 astosc.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${MKASTOSC} \
 	    ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	    < ${.CURDIR}/../ctlr/${KBD} > astosc.tmp
-	${_MKCMD}\
 	mv -f astosc.tmp ${.TARGET}
 CLEANFILES+=	astosc.tmp astosc.out
 
 asc_disp.out: ${MKASTODS}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${MKASTODS} > asc_disp.tmp
-	${_MKCMD}\
 	mv -f asc_disp.tmp ${.TARGET}
 CLEANFILES+=	asc_disp.tmp asc_disp.out
 
 disp_asc.out: ${MKDSTOAS}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${MKDSTOAS} > disp_asc.tmp
-	${_MKCMD}\
 	mv -f disp_asc.tmp ${.TARGET}
 CLEANFILES+=	disp_asc.tmp disp_asc.out
 
 kbd.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} ${MKHITS}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${CC} ${CPPFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
-	${_MKCMD}\
 	${MKHITS} \
 	    ${.CURDIR}/../ctlr/hostctlr.h TMPfunc.out \
 	    < ${.CURDIR}/../ctlr/${KBD} > kbd.tmp
-	${_MKCMD}\
 	rm -f TMPFunc.out
-	${_MKCMD}\
 	mv -f kbd.tmp ${.TARGET}
 CLEANFILES+=	TMPfunc.out kbd.tmp kbd.out
 
