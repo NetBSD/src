@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.4 2003/04/26 18:43:20 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5 2003/05/25 14:02:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -52,6 +52,7 @@ struct zsc_softc {
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
 	struct zs_chanstate  zsc_cs_store[2];
+	void *zsc_si;			/* softinterrupt handle */
 };
 
 /*
@@ -76,6 +77,4 @@ void zssoft __P((void*));
 int zs_get_speed __P((struct zs_chanstate *));
 void (*zs_delay) __P((void));
 
-/* Zilog Serial hardware interrupts (level 1) */
-#define splzs		cpu_spl1
-extern int splzs(void);
+#define splzs()		splserial()
