@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.3 1998/10/12 16:09:12 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.4 1998/11/22 14:36:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
+	struct	channel_softc *wdc_chanptr;
 	struct  channel_softc wdc_channel;
 	void	*sc_ih;
 };
@@ -164,7 +165,8 @@ wdc_mb_attach(parent, self, aux)
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;
-	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->wdc_chanptr = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
