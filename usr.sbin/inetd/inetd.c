@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.96 2004/09/14 17:42:31 rumble Exp $	*/
+/*	$NetBSD: inetd.c,v 1.97 2004/10/20 11:37:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.96 2004/09/14 17:42:31 rumble Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.97 2004/10/20 11:37:42 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -1049,7 +1049,10 @@ goaway(void)
 static void
 setup(struct servtab *sep)
 {
-	int		on = 1, off = 0;
+	int		on = 1;
+#ifdef INET6
+	int		off = 0;
+#endif
 	struct kevent	*ev;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
@@ -2444,7 +2447,9 @@ port_good_dg(struct sockaddr *sa)
 	case AF_INET:
 		in.s_addr = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
 		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+#ifdef INET6
 	v4chk:
+#endif
 		if (IN_MULTICAST(in.s_addr))
 			goto bad;
 		switch ((in.s_addr & 0xff000000) >> 24) {
