@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2001/03/15 03:01:40 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.101 2001/03/15 06:10:49 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -787,7 +787,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (type == T_TEXTFAULT)
 		v = pc;
 	if (VA_INHOLE(v)) {
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 		goto fault;
 	}
 	atype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
@@ -816,7 +816,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, atype) == 0)
 				return;
 			goto kfault;
 		}
@@ -832,7 +832,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	rv = mmu_pagein(vm->vm_map.pmap, va,
 			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0) {
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 		goto fault;
 	}
 	if (rv > 0)
@@ -855,14 +855,14 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 SUNOS_MAXSADDR_SLOP)
 #endif
 	    ) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		/*
 		 * pmap_enter() does not enter all requests made from
 		 * vm_fault into the MMU (as that causes unnecessary
@@ -893,7 +893,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -1016,7 +1016,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (type == T_TEXTFAULT)
 			sfva = pc;
 		else {
-			rv = KERN_PROTECTION_FAILURE;
+			rv = EACCES;
 			goto fault;
 		}
 	}
@@ -1026,7 +1026,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * Translation errors are always fatal, as they indicate
 		 * a corrupt translation (page) table hierarchy.
 		 */
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 
 		/* XXXSMP - why bother with this anyway? */
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
@@ -1060,7 +1060,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
 			if (uvm_fault(&vm->vm_map, trunc_page(pc),
-				     0, VM_PROT_READ) != KERN_SUCCESS)
+				      0, VM_PROT_READ) != 0)
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1097,8 +1097,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) ==
-			    KERN_SUCCESS) {
+			if (uvm_fault(kernel_map, va, 0, atype) == 0) {
 				KERNEL_UNLOCK();
 				return;
 			}
@@ -1120,14 +1119,14 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
@@ -1151,7 +1150,7 @@ kfault:
 			KERNEL_UNLOCK();
 			return;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.26 2000/11/27 08:39:42 chs Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.27 2001/03/15 06:10:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -133,20 +133,18 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 int
 vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
-	/*
-	 * note that if you're going to map part of an process as being
-	 * paged from a vnode, that vnode had damn well better be marked as
-	 * VTEXT.  that's handled in the routine which sets up the vmcmd to
-	 * call this routine.
-	 */
-        struct uvm_object *uobj;
-	int retval;
+	struct uvm_object *uobj;
+	int error;
+
+#if 0
+	/* XXX not true for eg. ld.elf_so */
+	KASSERT(cmd->ev_vp->v_flag & VTEXT);
+#endif
 
 	/*
 	 * map the vnode in using uvm_map.
 	 */
 
-	/* checks imported from uvm_mmap, needed? */
         if (cmd->ev_len == 0)
                 return(0);
         if (cmd->ev_offset & PAGE_MASK)
@@ -160,7 +158,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 * first, attach to the object
 	 */
 
-        uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+        uobj = uvn_attach(cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
         if (uobj == NULL)
                 return(ENOMEM);
 	VREF(cmd->ev_vp);
@@ -169,24 +167,14 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 * do the map
 	 */
 
-	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
 		uobj, cmd->ev_offset, 0,
 		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
-
-	/*
-	 * check for error
-	 */
-
-	if (retval == KERN_SUCCESS)
-		return(0);
-
-	/*
-	 * error: detach from object
-	 */
-
-	uobj->pgops->pgo_detach(uobj);
-	return (EINVAL);
+	if (error) {
+		uobj->pgops->pgo_detach(uobj);
+	}
+	return error;
 }
 
 /*
@@ -202,8 +190,8 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	long diff;
 
 	if (cmd->ev_len == 0)
-		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
-	
+		return 0;
+
 	diff = cmd->ev_addr - trunc_page(cmd->ev_addr);
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_offset -= diff;
@@ -233,19 +221,20 @@ vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		return error;
 
 	if (cmd->ev_prot != (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) {
+
 		/*
 		 * we had to map in the area at PROT_ALL so that vn_rdwr()
 		 * could write to it.   however, the caller seems to want
 		 * it mapped read-only, so now we are going to have to call
 		 * uvm_map_protect() to fix up the protection.  ICK.
 		 */
-		return(uvm_map_protect(&p->p_vmspace->vm_map, 
+
+		return uvm_map_protect(&p->p_vmspace->vm_map, 
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
-				cmd->ev_prot, FALSE));
-	} else {
-		return (KERN_SUCCESS);
+				cmd->ev_prot, FALSE);
 	}
+	return 0;
 }
 
 /*
@@ -260,9 +249,6 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	int error;
 	long diff;
 
-	if (cmd->ev_len == 0)
-		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
-	
 	diff = cmd->ev_addr - trunc_page(cmd->ev_addr);
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_len += diff;
@@ -272,8 +258,5 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
-
-	if (error)
-		return error;
-	return (KERN_SUCCESS);
+	return error;
 }

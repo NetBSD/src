@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.2 2001/02/28 18:15:44 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.3 2001/03/15 06:10:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -427,7 +427,7 @@ copyfault:
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
 		pcb->pcb_onfault = onfault;
-		if (rv == KERN_SUCCESS)
+		if (rv == 0)
 			goto out;
 
 		if (user == 0) {
@@ -439,7 +439,7 @@ copyfault:
 		}
 
 		report_abort("", fault_status, fault_address, fault_pc);
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n", p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -625,11 +625,8 @@ cowfault(va)
 		return (EFAULT);
 
 	vm = curproc->p_vmspace;
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
-	    != KERN_SUCCESS)
-		return (EFAULT);
-
-	return (0);
+	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE);
+	return error;
 }
 
 /* End of fault.c */

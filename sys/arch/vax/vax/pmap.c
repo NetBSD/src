@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2001/02/11 19:25:55 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.94 2001/03/15 06:10:52 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -726,7 +726,7 @@ if (startpmapdebug)
 					break;
 				if (flags & PMAP_CANFAIL) {
 					RECURSEEND;
-					return (KERN_RESOURCE_SHORTAGE);
+					return ENOMEM;
 				}
 
 				if (pmap == pmap_kernel())
@@ -756,7 +756,7 @@ if (startpmapdebug)
 		if (pmap != pmap_kernel())
 			pmap->pm_refcnt[index]++; /* New mapping */
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	if (flags & PMAP_WIRED)
@@ -769,13 +769,13 @@ if (startpmapdebug)
 	if (newpte == (oldpte | PG_W)) {
 		patch[i] |= PG_W; /* Just wiring change */
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	/* mapping unchanged? just return. */
 	if (newpte == oldpte) {
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	/* Changing mapping? */
@@ -834,7 +834,7 @@ if (startpmapdebug)
 		more_pventries();
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void *

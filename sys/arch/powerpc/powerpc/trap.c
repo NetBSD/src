@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2001/02/12 21:20:32 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2001/03/15 06:10:47 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -119,7 +119,7 @@ trap(frame)
 				ftype = VM_PROT_READ;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
-			if (rv == KERN_SUCCESS)
+			if (rv == 0)
 				return;
 			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->srr0 = (*fb)[0];
@@ -139,13 +139,13 @@ trap(frame)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		if ((rv = uvm_fault(&p->p_vmspace->vm_map,
-				    trunc_page(frame->dar), 0, ftype))
-		    == KERN_SUCCESS) {
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
+		    0, ftype);
+		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, p->p_comm,
@@ -160,9 +160,9 @@ trap(frame)
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (uvm_fault(&p->p_vmspace->vm_map,
-			     trunc_page(frame->srr0), 0, ftype)
-		    == KERN_SUCCESS) {
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
+		    0, ftype);
+		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
