@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.216 2001/12/30 05:09:50 gehenna Exp $
+$NetBSD: usbdevs,v 1.217 2001/12/30 11:01:44 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ vendor DIGI		0x05c5	Digi International
 vendor QTRONIX		0x05c7	Qtronix
 vendor ELSA		0x05cc	ELSA
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
-vebdor ULTIMA		0x05d8	Ultima
+vendor ULTIMA		0x05d8	Ultima
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
 vendor LEXAR		0x05dc	Lexar Media
