@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
-#	$Id: Makefile,v 1.9 1993/08/01 05:41:52 mycroft Exp $
+#	$Id: Makefile,v 1.10 1993/10/01 00:22:14 jtc Exp $
 
 .SUFFIXES: .x
 
@@ -27,7 +27,7 @@ install: all
 		(install ${COPY} -m 644 $$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HFILES); do \
 		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
-	@chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/rpcsvc
+	@chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/rpcsvc
 	@chmod -R a-w ${DESTDIR}/usr/include/rpcsvc
 
 .x.h:
