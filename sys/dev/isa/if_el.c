@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.58 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.59 1999/08/25 22:46:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -400,7 +400,8 @@ elstart(ifp)
 
 		/* Transfer datagram to board. */
 		DPRINTF(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
-		off = EL_BUFSIZ - max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+		off = EL_BUFSIZ - max(m0->m_pkthdr.len,
+		    ETHER_MIN_LEN - ETHER_CRC_LEN);
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
 			printf("%s: bogus off 0x%x\n",

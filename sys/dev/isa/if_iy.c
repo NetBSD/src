@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.34 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.35 1999/08/25 22:46:16 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -621,8 +621,8 @@ struct ifnet *ifp;
 #ifdef IYDEBUG
 		printf("%s: length is %d.\n", sc->sc_dev.dv_xname, len);
 #endif
-		if (len < ETHER_MIN_LEN) {
-			pad = ETHER_MIN_LEN - len;
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
+			pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
 		}
 
         	if (len + pad > ETHER_MAX_LEN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.47 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.48 1999/08/25 22:46:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -613,7 +613,7 @@ loop:
 		printf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
 		panic("egstart");
 	}
-	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
