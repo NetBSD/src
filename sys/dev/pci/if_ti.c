@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.4 2000/01/25 23:23:48 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.5 2000/03/06 21:02:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1870,8 +1870,8 @@ static void ti_attach(parent, self, aux)
 #endif
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
-	ifp->if_baudrate = 10000000;
 #if 0
+	ifp->if_baudrate = 10000000;
 	ifp->if_init = ti_init;
 	ifp->if_mtu = ETHERMTU;
 #endif
@@ -2515,6 +2515,9 @@ static int ti_ifmedia_upd(ifp)
 		break;
 	}
 
+	sc->ethercom.ec_if.if_baudrate =
+	    ifmedia_baudrate(ifm->ifm_media);
+
 	return(0);
 }
 
@@ -2551,7 +2554,10 @@ static void ti_ifmedia_sts(ifp, ifmr)
 		if (media & TI_LNK_HALF_DUPLEX)
 			ifmr->ifm_active |= IFM_HDX;
 	}
-	
+
+	sc->ethercom.ec_if.if_baudrate =
+	    ifmedia_baudrate(sc->ifmedia.ifm_media);
+
 	return;
 }
 

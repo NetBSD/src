@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $
+ *	$Id: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $
  */
 
 /*
@@ -116,7 +116,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $";
+	"$Id: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $";
 #endif
 
 #ifdef foo
@@ -292,7 +292,6 @@ wi_attach(parent, self, aux)
 	ifp->if_ioctl = wi_ioctl;
 	ifp->if_watchdog = wi_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_baudrate = 2000000;
 
 	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);
@@ -355,6 +354,8 @@ wi_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, mac.wi_mac_addr);
+
+	ifp->if_baudrate = IF_Mbps(2);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
@@ -1695,6 +1696,8 @@ wi_media_change(ifp)
 		    orate != sc->wi_tx_rate)
 			wi_init(sc);
 	}
+
+	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
 
 	return (0);
 }
