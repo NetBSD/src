@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.84 2002/11/08 00:49:32 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.84.4.1 2002/12/18 05:01:01 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -173,18 +173,12 @@ END(mips3_wbflush)
  *	for kernel profiling.
  *
  *	This version takes advantage of power-saving features on
- *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
+ *	the QED RM52xx family of CPUs, and MIPS32 & MI79PS64 CPUs.
  */
-LEAF(mips_wait_idle)
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
-#if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-#endif
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
+NESTED(mips_wait_idle, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, -4
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
 	nop
 
 	/* Try to zero some free pages. */
@@ -195,46 +189,15 @@ LEAF(mips_wait_idle)
 	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 1:
-#ifdef MIPS_DYNAMIC_STATUS_MASK
-	# Do this again since the mask may have changed.
-	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
-	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
-	nop
-#endif
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	bne	t0, zero, 1f
-	nop
 	wait
 	nop
 	nop
 	nop
-	b	1b
+
+	lw	ra, CALLFRAME_RA(sp)
 	nop
-1:
-#if defined(LOCKDEBUG)
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	nop
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
-	nop
-	la	ra, cpu_switch_queuescan
 	j	ra
-	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
-#endif
+	addu	sp, sp, CALLFRAME_SIZ
 END(mips_wait_idle)
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 
@@ -513,7 +476,7 @@ LEAF(badaddr64)
 8:
 	ld	v0, (a0)
 9:
-	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
+	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra

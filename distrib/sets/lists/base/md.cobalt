@@ -1,3 +1,0 @@
-# $NetBSD: md.cobalt,v 1.5 2002/10/09 01:22:38 thorpej Exp $
-./sbin/fdisk			base-sysutil-bin
-./usr/mdec/installkernel	base-sysutil-bin

@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.vax,v 1.3 2002/11/17 02:48:08 lukem Exp $
-./usr/include/ieeefp.h
-./usr/lib/c++rt0.o
-./usr/lib/scrt0.o

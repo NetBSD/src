@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.148 2002/11/09 02:02:31 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.148.4.1 2002/12/18 05:01:00 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,67 +151,94 @@ _C_LABEL(kernel_text):
 _C_LABEL(verylocore):
 
 /*
- * When no processes are on the runq, cpu_switch branches to idle
- * to wait for something to come ready.
- * Note: this is really a part of cpu_switch() but defined here for kernel
- * profiling.
+ * void cpu_idle(void)
  */
-LEAF(mips_idle)
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+NESTED(cpu_idle, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, -4
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	  ra, CALLFRAME_RA(sp)
+
+	/*
+	 * Unlock the scheduler and enable interrupts.
+	 */
 #if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	jal	 _C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
 #endif
-#ifdef 	IPL_ICU_MASK
-	# all interrupts enable.
-	sw	zero, _C_LABEL(md_imask)	
-	jal	_C_LABEL(md_imask_update)
+
+#ifdef  IPL_ICU_MASK
+	sw	  zero, _C_LABEL(md_imask)	
+	jal	 _C_LABEL(md_imask_update)
 	nop
 #endif
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	li	  t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	COP0_SYNC
 	nop
 
-	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	/*
+	 * Invoke CPU-dependent idling function.
+	 */
+	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
+	nop					# for r2000/r3000
+	jal	ra, t3
 	nop
-	beq	t0, zero, 1f
-	nop
-	jal	_C_LABEL(uvm_pageidlezero)
-	nop
-1:
-#ifdef MIPS_DYNAMIC_STATUS_MASK
-	# Do this again since the mask may have changed.
-	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
-	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
-	nop
-#endif
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	nop
-	beq	t0, zero, 1b
-	nop
+
+	/*
+	 * Disable interrupts and lock the scheduler.
+	 */
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 	COP0_SYNC
 	nop
 	nop
 	nop
-#if defined(LOCKDEBUG)
 	nop
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+
+#if defined(LOCKDEBUG)
+	jal	 _C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif
-	la	ra, cpu_switch_queuescan
-	j	ra
+
+	lw	ra, CALLFRAME_RA(sp)
 	nop
+	j	ra
+	addu	sp, sp, CALLFRAME_SIZ
+END(cpu_idle)
+
+/*
+ * General idling function.
+ */
+NESTED(mips_idle, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, -4
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
+	nop
+1:
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
+	nop
+	bne	t0, zero, 2f
+	nop
+
+	/*
+	 * Try to zero some free pages.
+	 */
+	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	nop
+	beq	t0, zero, 1b
+	nop
+	la	ra, 1b
+	j	_C_LABEL(uvm_pageidlezero)
+	nop
+2:
+	lw	ra, CALLFRAME_RA(sp)
+	nop
+	j	ra
+	addu	sp, sp, CALLFRAME_SIZ
 END(mips_idle)
 
 /*
- * cpu_switch(struct proc *)
- * Find the highest priority process and resume it.
+ * cpu_switch(struct proc *curp, struct proc *newp)
  */
 NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	lw	a0, P_ADDR(a0)
@@ -237,67 +264,15 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-/*
- * Entered here from idle() and switch_exit().  Interrupts are
- * blocked, and sched_lock is held.
- */
-	.globl	cpu_switch_queuescan
-cpu_switch_queuescan:
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	li	t2, -1				# t2 = lowest bit set
-	bne	t0, zero, 1f
-	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
-	nop					# for r2000/r3000
-	jal	ra, t3
-	nop
-1:
-	move	t3, t0				# t3 = saved whichqs
-1:
-#if defined(MIPS3_5900)	/* work around for branch prediction miss. */
-	nop
-	nop
-	nop
-#endif
-	addu	t2, t2, 1
-	and	t1, t0, 1			# bit set?
-	beq	t1, zero, 1b
-	srl	t0, t0, 1			# try next bit
-/*
- * Remove process from queue.
- */
-	sll	t0, t2, 3
-	la	t1, _C_LABEL(sched_qs)
-	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
-	lw	a0, P_FORW(t0)			# a0 = p = highest pri process
-	nop
-	lw	v0, P_FORW(a0)			# v0 = p->p_forw
-	bne	t0, a0, 2f			# make sure something in queue
-	sw	v0, P_FORW(t0)			# qp->ph_link = p->p_forw;
-	PANIC("cpu_switch")			# nothing in queue
-2:
-	sw	t0, P_BACK(v0)			# p->p_forw->p_back = qp
-	bne	v0, t0, 3f			# queue still not empty
-	sw	zero, P_BACK(a0)		## for firewall checking
-	li	v1, 1				# compute bit in 'whichqs'
-	sll	v1, v1, t2
-	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, _C_LABEL(sched_whichqs)
-3:
+
+	move	a0, a1				# need in a0
+sw1:
 	/* Squirrel away proc pointer. */
 	move	s7, a0
-#if defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	jal	_C_LABEL(sched_unlock_idle)
-	nop
-	move	a0, s7				# restore proc
-#endif
 
-/*
- * Switch to new context.
- */
+	/*
+	 * Switch to new context.
+	 */
 #if defined(MULTIPROCESSOR)
 	/*
 	 * XXXSMP
@@ -310,6 +285,17 @@ cpu_switch_queuescan:
 	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
 	nop
+
+	sw	zero, _C_LABEL(want_resched)	# we've context switched
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	jal	_C_LABEL(sched_unlock_idle)
+	nop
+#endif
 
 #if 1	/* XXX XXX XXX */
 	REG_PROLOGUE
@@ -324,7 +310,6 @@ cpu_switch_queuescan:
 	move	a0, s7				# -BDSLOT-
 
 	lw	a0, P_ADDR(s7)
-	sw	zero, _C_LABEL(want_resched)	# we've context switched
 	sw	a0, _C_LABEL(curpcb)
 
 #ifdef IPL_ICU_MASK
@@ -335,22 +320,25 @@ cpu_switch_queuescan:
 	nop
 	lw	a0, P_ADDR(s7)			# restore pcb_context pointer.
 #endif /* IPL_ICU_MASK */
+
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
 	lw	v1, P_NRAS(s7)
-	addu	t0, a0, USPACE - FRAME_SIZ
-	beq	v1, zero, 1f
 	nop
+	beq	v1, zero, 1f
+	addu	t0, a0, USPACE - FRAME_SIZ	# -BDSLOT-
 	move	a0, s7
-	jal	_C_LABEL(ras_lookup)
 	lw	a1, FRAME_EPC(t0)
-	lw	a0, P_ADDR(s7)
+	jal	_C_LABEL(ras_lookup)
+	nop
+	lw	a0, P_ADDR(s7)			# restore a0 to curpcb
 	li	v1, -1
 	beq	v1, v0, 1f
 	addu	t0, a0, USPACE - FRAME_SIZ
 	sw	v0, FRAME_EPC(t0)
 1:
+
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
@@ -369,7 +357,7 @@ cpu_switch_queuescan:
 	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1				# possible return to 'savectx()'
+	nop
 END(cpu_switch)
 
 /*
@@ -392,9 +380,13 @@ LEAF(switch_exit)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
+	jal	_C_LABEL(chooseproc)
+	nop
+	move	a0, v0
+
+	la	ra, sw1				# rathole to cpu_switch()
 	j	ra
-	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
+	subu	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
 
 /*
