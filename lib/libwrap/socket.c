@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.5 1999/07/03 12:30:42 simonb Exp $	*/
+/*	$NetBSD: socket.c,v 1.6 1999/08/27 16:06:17 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#) socket.c 1.14 95/01/30 19:51:50";
+static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.5 1999/07/03 12:30:42 simonb Exp $");
+__RCSID("$NetBSD: socket.c,v 1.6 1999/08/27 16:06:17 itojun Exp $");
 #endif
 #endif
 
@@ -192,8 +192,8 @@ struct host_info *host;
 	     * problem. It could also be that someone is trying to spoof us.
 	     */
 
-	    tcpd_warn("host name/name mismatch: %s != %s",
-		      host->name, hp->h_name);
+	    tcpd_warn("host name/name mismatch: %s != %.*s",
+		      host->name, STRING_LENGTH, hp->h_name);
 
 	} else {
 
@@ -217,8 +217,8 @@ struct host_info *host;
 	     * server.
 	     */
 
-	    tcpd_warn("host name/address mismatch: %s != %s",
-		      inet_ntoa(sin->sin_addr), hp->h_name);
+	    tcpd_warn("host name/address mismatch: %s != %.*s",
+		      inet_ntoa(sin->sin_addr), STRING_LENGTH, hp->h_name);
 	}
 	/* name is bad, clobber it */
 	(void)strncpy(host->name, paranoid, sizeof(host->name) - 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.8 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.9 1999/08/27 16:06:17 itojun Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
+static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.8 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.9 1999/08/27 16:06:17 itojun Exp $");
 #endif
 #endif
 
@@ -125,7 +125,8 @@ struct request_info *request;
 
     if (resident <= 0)
 	resident++;
-    if ((verdict = setjmp(tcpd_buf)) != 0)
+    verdict = setjmp(tcpd_buf);
+    if (verdict != 0)
 	return (verdict == AC_PERMIT);
     if (table_match(hosts_allow_table, request))
 	return (YES);
