@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.88 2004/04/12 12:34:53 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.89 2004/04/16 08:05:34 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -889,4 +889,53 @@ distrib/sets/lists/xserver/md.evbsh3		1.1
 
 	evbsh3 builds Xvfb.
 	[mrg, ticket #133]
+
+x11/tools/fc-cache/Makefile			1.7
+x11/tools/mkfontscale/Makefile			1.3-1.4
+
+	Remove DPADD=${LIBZ}, since a host tool should not depend on
+	/usr/lib/libz.a even if it is using the system libz.
+	Add -DDARWIN_NO_CARBON to HOST_CPPFLAGS so that cross build on MacOS
+	will not attempt to use mac specific resource fork font support.
+	[dbj, ticket #135]
+
+sbin/sysctl/sysctl.c				1.91
+
+	If the node was specifically requested but has no description, print
+	the "no description" message instead of skipping (as happens when
+	recursing into a subtree).  This does not apply to non-node-type
+	nodes.
+	[atatat, ticket #136]
+
+sys/dev/ata/atavar.h				1.41
+
+	Change the value of DRIVE_ATAPIST which was same as that of
+	DRIVE_DMAERR. Ok'd by bouyer.
+	[minoura, ticket #137]
+
+sys/arch/i386/i386/locore.S			1.26
+sys/arch/i386/i386/pmap.c			1.172
+
+	- keep cr3 register and its copy in TSS synchronized.
+	  otherwise an interrupt vector using a task gate (ie. ddbipi) messes
+	  it up.
+	- defer LDTR loading as well as cr3.
+	- tweak comments to make three copies of switching code more
+	  synchronized.
+	[yamt, ticket #138]
+
+sys/dev/pci/if_dge.c				1.2-1.3
+
+	Make it possible to use 16k MTU.
+	The 82597 chip may write back some receive descriptors off-by-one when
+	the PCIX bus start to get heavily loaded.  This only happen when using
+	chained descriptors, therefore work-around it by providing a private
+	pool of receive buffers able to contain a full-sized packet.
+	[ragge, ticket #139]
+
+sys/netinet/tcp_input.c				1.192
+
+	Add back one line which was accidentially removed (by me) a while ago.
+	Spotted by Markus Friedl (markus at openbsd.org).
+	[ragge, ticket #140]
 
