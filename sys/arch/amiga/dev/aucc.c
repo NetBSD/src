@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.20 1997/10/19 07:41:33 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.20.2.1 1997/11/24 21:35:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -667,11 +667,20 @@ aucc_set_port(addr, cp)
 #endif
 
 		/* set volume for channel 0..i-1 */
-		if (i>1)
+
+		/* evil workaround for xanim bug, IMO */
+		if ((sc->sc_channels == 1) && (i == 2)) {
+			sc->sc_channel[0].nd_volume = 
+			    sc->sc_channel[3].nd_volume = 
+			    cp->un.value.level[0]>>2;
+			sc->sc_channel[1].nd_volume = 
+			    sc->sc_channel[2].nd_volume = 
+			    cp->un.value.level[1]>>2;
+		} else if (i>1) {
 			for (j=0;j<i;j++)
 	 			sc->sc_channel[j].nd_volume =
 				    cp->un.value.level[j]>>2;
-		else if (sc->sc_channels > 1)
+		} else if (sc->sc_channels > 1)
 			for (j=0; j<sc->sc_channels; j++)
 	 			sc->sc_channel[j].nd_volume =
 				    cp->un.value.level[0]>>2;
