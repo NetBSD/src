@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.4 2000/04/25 14:16:47 tsutsui Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.5 2000/04/26 14:02:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -141,6 +141,7 @@
 #define RL_USEIOSPACE
 
 #include <dev/ic/rtl81x9reg.h>
+#include <dev/ic/rtl81x9var.h>
 
 struct rl_pci_softc {
 	struct rl_softc sc_rl;		/* real rl softc */

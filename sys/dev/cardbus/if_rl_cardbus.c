@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.4 2000/04/24 15:25:00 tsutsui Exp $	*/
+/*	$NetBSD: if_rl_cardbus.c,v 1.5 2000/04/26 14:02:36 tsutsui Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -93,6 +93,7 @@
 #define RL_USEIOSPACE 
 
 #include <dev/ic/rtl81x9reg.h>
+#include <dev/ic/rtl81x9var.h>
 
 /*
  * Various supported device vendors/types and their names.
