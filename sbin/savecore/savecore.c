@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.18 1994/10/31 04:37:32 cgd Exp $";
+static char *rcsid = "$Id: savecore.c,v 1.19 1994/10/31 04:47:26 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -320,8 +320,6 @@ dump_exists()
 }
 
 char buf[1024 * 1024];
-
-FILE *zopen __P((char *, char *, int));
 
 void
 save_core()
