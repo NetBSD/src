@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/12/05 07:33:13 jonathan Exp $
+#	$NetBSD: Makefile,v 1.2 1999/04/05 06:17:44 simonb Exp $
 
 
 KERN=	${.CURDIR}/../../../sys/arch/pmax/compile/RAMDISK/netbsd
@@ -8,17 +8,16 @@ RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 CLEANFILES= netbsd.tmp netbsd.ecoff netbsd.ecoff.gz \
 	    netbsd.aout netbsd.aout.gz
 
-all:	netbsd.ram.gz
+all:	netbsd.gz
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
-	elf2ecoff netbsd.tmp netbsd.ecoff
+netbsd.gz: ${KERN} ${RAMDISK}
+	cp ${KERN} netbsd
+	mdsetimage -v netbsd ${RAMDISK}
+	elf2ecoff netbsd netbsd.ecoff
 	rm -f netbsd.ecoff.gz
-	gzip netbsd.ecoff
-	elf2aout netbsd.tmp netbsd.aout
-	rm -f netbsd.aout.gz
-	gzip netbsd.aout
+	gzip -9 netbsd.ecoff
+	rm -f netbsd.gz
+	gzip -9 netbsd
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
