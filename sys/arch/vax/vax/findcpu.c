@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.7 2000/05/08 17:53:24 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.8 2000/05/22 15:41:31 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,7 +56,7 @@ int vax_confdata;	/* machine dependend, configuration/setup data */
  * Try to figure out which type of system this is.
  */
 void
-findcpu()
+findcpu(void)
 {
 	vax_cpudata = mfpr(PR_SID);
 	vax_cputype = vax_cpudata >> 24;
