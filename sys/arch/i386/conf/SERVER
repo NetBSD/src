@@ -1,7 +1,7 @@
 #
 #	SERVER -- an NFS server
 #
-#	$Id: SERVER,v 1.8 1993/06/03 01:30:35 cgd Exp $
+#	$Id: SERVER,v 1.9 1993/06/06 22:20:09 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -18,7 +18,7 @@ options		KERNFS,FDESC,DDB
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
 
-config		netbsd	root on wd0 swap on wd0 and as0
+config		netbsd	root on wd0 swap on wd0
 
 controller	isa0
 controller	wd0	at isa? port "IO_WD1" bio irq 14 vector wdintr

@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.10 1993/06/06 04:15:29 cgd Exp $
+#	$Id: ALL,v 1.11 1993/06/06 22:20:03 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -66,11 +66,6 @@ controller	ahb0	at isa? bio irq 11  vector ahbintr
 controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
 controller	scbus0
-
-#old scsi
-#controller	as0	at isa? port 0x330 bio irq 11 drq 5 vector asintr
-#disk		as0	at as0 drive 0
-#disk		as1	at as0 drive 1
 
 device		sd0
 device		sd1
