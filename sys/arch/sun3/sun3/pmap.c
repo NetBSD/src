@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.26 1994/06/29 05:35:55 gwr Exp $
+ *	$Id: pmap.c,v 1.27 1994/06/30 12:45:54 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ void pmap_update __P((void));
 int pmap_debug;
 
 #ifdef	PMAP_DEBUG	/* XXX */
-
+int pmap_db_watchva;
 int pmap_db_minphys;
 void set_pte_debug(va, pte)
     vm_offset_t va, pte;
@@ -985,7 +985,9 @@ unsigned char pv_link(pmap, pa, va, flags)
     int s;
 
 #ifdef PMAP_DEBUG
-    if (pmap_debug & PMD_LINK) {
+    if ((pmap_debug & PMD_LINK) ||
+	(va == pmap_db_watchva))
+    {
 	printf("pv_link(%x, %x, %x, %x)\n", pmap, pa, va, flags);
 	pv_print(pa);
     }
@@ -1077,7 +1079,9 @@ void pv_unlink(pmap, pa, va)
 
     if (!pv_initialized) return;
 #ifdef PMAP_DEBUG
-    if (pmap_debug & PMD_UNLINK) {
+    if ((pmap_debug & PMD_UNLINK) ||
+	(va == pmap_db_watchva))
+    {
 	printf("pv_unlink(%x, %x, %x)\n", pmap, pa, va);
     }
 #endif
@@ -1520,6 +1524,13 @@ void pmap_remove_range(pmap, sva, eva)
      vm_offset_t sva, eva;
 {
     pmeg_t pmegp;
+
+#ifdef PMAP_DEBUG
+    if ((pmap_debug & PMD_REMOVE) ||
+	((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
+	printf("pmap_remove_range(%x, %x, %x)\n", pmap, sva, eva);
+#endif
+
    /* cases: kernel: always has context, always available
     *
     *        user: has context, is available
@@ -1562,10 +1573,6 @@ void pmap_remove(pmap, sva, eva)
     if (pmap == NULL)
 	return;
 
-#ifdef PMAP_DEBUG
-    if (pmap_debug & PMD_REMOVE)
-	printf("pmap_remove(%x, %x, %x)\n", pmap, sva, eva);
-#endif
     /* do something about contexts */
     if (pmap == kernel_pmap) {
 	if (sva < VM_MIN_KERNEL_ADDRESS)
@@ -1785,7 +1792,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 
     if (pmap == NULL) return;
 #ifdef	PMAP_DEBUG
-    if (pmap_debug & PMD_ENTER)
+    if ((pmap_debug & PMD_ENTER) ||
+	(va == pmap_db_watchva))
 	printf("pmap_enter(%x, %x, %x, %x, %x)\n",
 	       pmap, va, pa, prot, wired);
 #endif
