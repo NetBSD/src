@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.2 1997/10/14 23:01:10 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.3 1997/10/19 09:05:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@ ne_isa_match(parent, match, aux)
 	int rv = 0;
 
 	/* Disallow wildcarded values. */
-	if (ia->ia_irq == -1)
+	if (ia->ia_irq == ISACF_IRQ_DEFAULT)
 		return (0);
-	if (ia->ia_iobase == -1)
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return (0);
 
 	/* Make sure this is a valid NE[12]000 i/o address. */

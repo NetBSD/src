@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.2 1997/10/09 07:57:25 jtc Exp $	*/
+/*	$NetBSD: satlink.c,v 1.3 1997/10/19 09:05:09 thorpej Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -129,9 +129,9 @@ satlinkprobe(parent, match, aux)
 	int rv = 0;
 
 	/* Don't allow wildcarding of iobase or drq. */
-	if (ia->ia_iobase == -1)
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return (0);
-	if (ia->ia_drq == -1)
+	if (ia->ia_drq == ISACF_DRQ_DEFAULT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, SATLINK_IOSIZE, 0, &ioh))
