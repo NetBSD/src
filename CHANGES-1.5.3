@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.43 2002/02/24 16:18:43 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.44 2002/02/26 22:36:41 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -262,7 +262,7 @@ sys/sys/device.h				1.43
 sys/sys/disklabel.h				patch
 sys/sys/scsiio.h				1.9
 
-  Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
+  Add Mylex DAC960, CAC-EISA, and I2O block/SCSI drivers.
 
 sys/dev/ic/Makefile				patch
 sys/dev/pci/Makefile				patch
@@ -724,7 +724,7 @@ distrib/sets/lists/comp/mi			patch
 
 sys/arch/alpha/conf/INSTALL			patch
 
-  Add Mylex DACC960 (mlx), change ca* to ld*.
+  Add Mylex DAC960 (mlx), change ca* to ld*.
 
 lib/csu/common_elf/Makefile.inc			1.8-1.9 via patch
 lib/csu/common_elf/crtbegin.c			1.11-1.14
@@ -2118,3 +2118,134 @@ distrib/notes/common/sysinst			1.26
 distrib/notes/i386/hardware			1.97 via patch
 
   Add Table of Contents to the install notes. 
+
+bin/ksh/Makefile				1.14-1.16
+bin/ksh/c_ksh.c					1.6
+bin/ksh/c_sh.c					1.4
+bin/ksh/config.h				1.5
+bin/ksh/exec.c					1.6
+bin/ksh/expand.h				1.4
+bin/ksh/io.c					1.6
+bin/ksh/jobs.c					1.6
+bin/ksh/ksh.Man					1.3-1.6
+bin/ksh/lex.h					1.4
+bin/ksh/misc.c					1.5
+bin/ksh/shf.c					1.4
+bin/ksh/trap.c					1.4
+bin/ksh/var.c					1.7
+bin/ksh/vi.c					1.6
+
+  Synchronize with current development version.  Fixes:
+   o fix problem with ``set -x'' causing a core dump; fixes PR#11361
+   o fix problem with ``set -e'' causing early exit; fixes PR#11542
+   o fix various misspellings and nested extern declarations
+
+distrib/sets/maketars				1.17 via patch
+
+  Collect exit status for all set constructions before exiting.
+
+sys/netinet6/ip6_input.c			patch
+sys/netinet6/ip6_forward.c			patch
+sys/netinet6/ip6_output.c			patch
+
+  Fix it so that IPFilter handles IPv6 traffic.
+
+distrib/utils/sysinst/msg.mi.en			1.84
+distrib/utils/sysinst/msg.mi.fr			1.42
+distrib/utils/sysinst/net.c			1.76
+
+  Allow the user to continue the install even if sysinst thinks
+  that the network configure failed (caused by e.g. failure of the
+  default gateway to respond to ping).
+
+distrib/notes/i386/hardware			patch
+distrib/sets/lists/man/mi			patch
+share/man/man4/Makefile				patch
+share/man/man4/pci.4				patch
+share/man/man4/sip.4				1.1-1.2 (new)
+
+  Add manual page for the sip(4) Ethernet driver.
+
+sys/net/if_gre.c				1.26 via patch
+sys/net/if_gre.h				1.10
+sys/netinet/in.h				1.56 via patch
+sys/netinet/ip_input.c				1.144
+share/man/man4/gre.4				1.20
+
+  Clear M_BCAST and M_MCAST on encapsulated packets on outgoing
+  mbufs.  Also do not copy TTL from the inner packet, and make the
+  outer TTL sysctl'able.  Fixes PR#14269, and makes traceroute work
+  over GRE tunnels.
+
+etc/mtree/special				1.52 via patch
+
+  Mark /etc/mk.conf optional, fixing PR#15572.
+
+sys/netinet/ip_input.c				1.145
+
+  Correctly enforce ipsec policy check in IPv4 forwarding case.
+
+sys/ufs/ffs/ffs_inode.c				patch
+
+  Fix a panic in the FFS sofdep code on an NFS server triggered by
+  an excerciser program run on an NFS client.
+
+sys/ufs/ffs/ffs_vnops.c				1.47 via patch
+sys/ufs/ufs/ufs_vnops.c				1.84-1.85
+
+  Correct a mistake made in the original merge-in of the softdep
+  code, and fix a problem which caused ffs_fsync to do unneeded
+  sync writes.
+
+distrib/notes/alpha/Makefile			1.3
+distrib/notes/amiga/Makefile			1.2
+distrib/notes/arm32/Makefile			1.3
+distrib/notes/atari/Makefile			1.2
+distrib/notes/hp300/Makefile			1.2
+distrib/notes/hpcmips/Makefile			1.3
+distrib/notes/i386/Makefile			1.5
+distrib/notes/mac68k/Makefile			1.3
+distrib/notes/macppc/Makefile			1.3
+distrib/notes/mvme68k/Makefile			1.2
+distrib/notes/news68k/Makefile			1.3
+distrib/notes/next68k/Makefile			1.2
+distrib/notes/pc532/Makefile			1.2
+distrib/notes/pmax/Makefile			1.3
+distrib/notes/sparc/Makefile			1.2
+distrib/notes/sparc64/Makefile			1.2
+distrib/notes/sun3/Makefile			1.2
+distrib/notes/vax/Makefile			1.3
+distrib/notes/x68k/Makefile			1.2
+
+  Use bsd.man.mk instead of bsd.prog.mk, and do cleaning differently.
+
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/man/mi			patch
+include/util.h					1.16-1.18 via patch
+lib/libutil/Makefile				1.26 via patch
+lib/libutil/passwd.c				1.20-1.23
+lib/libutil/pw_getconf.3			1.1-1.4 (new)
+lib/libutil/shlib_version			patch
+share/man/man5/Makefile				1.33
+share/man/man5/passwd.conf.5			1.1-1.4 (new)
+usr.bin/chpass/chpass.1				1.15
+usr.bin/passwd/Makefile				1.27
+usr.bin/passwd/extern.h				1.8
+usr.bin/passwd/krb5_passwd.c			1.9
+usr.bin/passwd/local_passwd.c			1.20
+usr.bin/passwd/passwd.1				1.14
+usr.bin/passwd/passwd.c				1.20
+usr.bin/passwd/pwd_gensalt.c			1.1-1.5 (new)
+usr.bin/passwd/yp_passwd.c			1.23
+
+  Add support for local MD5-encrypted passwords.
+
+sys/netinet/ip_nat.c				patch
+
+  Prevent panic when packets are received in a certain order.
+
+distrib/notes/common/main			patch
+
+  Minor update for 1.5.3: add a list of notable changes for 1.5.3,
+  and note a caveat about the IPF update.
