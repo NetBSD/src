@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 2001/04/23 11:22:19 uch Exp $
+#	$NetBSD: GENERIC,v 1.3 2001/06/04 17:08:36 uch Exp $
 #
 #	GENERIC kernel for SH3+HD64461 based machines.
 #
@@ -18,11 +18,7 @@ options 	KTRACE			# system call tracing support
 options		MSGBUFSIZE=65534
 
 # Standard system options
-
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
-
-# Compatibility options
-options 	COMPAT_43
 
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
@@ -72,9 +68,7 @@ shb1 at mainbus? id HITACHI
 #
 # Workstation Console attachments
 #
-bivideo*	at mainbus? id HP
-hpcfb*		at bivideo?
-
+hpcfb*		at hd64461video?
 wsdisplay*	at hpcfb?
 pfckbd*		at mainbus? id HP
 hpckbd*		at pfckbd?
@@ -90,6 +84,7 @@ scif0 at shb0 port 0xa4000008 irq 12
 
 hd64461if0 at shb0 irq 4
 hd64461pcmcia*	at hd64461if0
+hd64461video*	at hd64461if0
 
 #
 # HITACHI PERSONA
@@ -108,15 +103,15 @@ pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
 ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 ep*	at pcmcia0 function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
-#wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
-#mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
-#com*	at mhzc?
-#sm*	at mhzc?
+wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
+mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
 
 # PCMCIA SCSI interfaces
-#aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
+aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
 
-#scsibus* at aic?
+scsibus* at aic?
 
 # PCMCIA IDE disk
 # PC-Card slot
@@ -127,7 +122,7 @@ wdc0	at pcmcia1 function ?
 wd*	at wdc0 channel ? drive ? flags 0x0000
 
 # SCSI devices
-#sd*	at scsibus? target ? lun ?	# SCSI disk drives
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Network Interfaces
 

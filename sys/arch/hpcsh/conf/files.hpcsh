@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.11 2001/04/23 11:22:19 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.12 2001/06/04 17:08:36 uch Exp $
 #
 maxpartitions 8
 
@@ -71,6 +71,11 @@ file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
 
 attach	com at hd64461if with hd64461uart
 file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart
+
+device	hd64461video: hpcfbif
+attach	hd64461video at hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video
+file	dev/hpc/video_subr.c			hd64461video
 
 # network devices MII bus
 include	"dev/mii/files.mii"

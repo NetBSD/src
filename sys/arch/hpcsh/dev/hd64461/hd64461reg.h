@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461reg.h,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461reg.h,v 1.2 2001/06/04 17:08:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define HD64461_REGSIZE				0x02000000
 #define HD64461_FBBASE				(SH3_AREA4_BASE + 0x02000000)
 #define HD64461_FBSIZE				0x02000000
+#define HD64461_FBPAGESIZE			0x1000
 
 /* SH3 Area 5 (PCC1 memory space) */
 #define HD64461_PCC1_MEMBASE			SH3_AREA5_BASE
