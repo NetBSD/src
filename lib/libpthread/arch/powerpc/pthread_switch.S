@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/16 22:11:46 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2001/11/19 21:07:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,21 +68,21 @@
  * out.
  */
 ENTRY(pthread__switch)
-	stwu	1, -(RND_CTXSIZE + 16)(1)	/* alloc ucontext_t + r1 */
-	mflr	0
-	stw	0, (RND_CTXSIZE + 20)(1)	/* Save return address */
+	stwu	r1, -(RND_CTXSIZE + 16)(r1)	/* alloc ucontext_t + r1 */
+	mflr	r0
+	stw	r0, (RND_CTXSIZE + 20)(r1)	/* Save return address */
 	
 	/* Save pointer to saved space on stack in self->pt_uc */
-	la	5, 8(1)
-	stw	5, PT_UC(3)	
+	la	r5, 8(r1)
+	stw	r5, PT_UC(r3)
 
-	mr	3, 5				/* self->pt_uc */
-	lwz	4, PT_UC(4)			/* next->pt_uc */
+	mr	r3, r5				/* self->pt_uc */
+	lwz	r4, PT_UC(r4)			/* next->pt_uc */
 	bl	PIC_PLT(_C_LABEL(_swapcontext_u))
 
-	addi	1, 1, (RND_CTXSIZE + 16)
-	lwz	0, 4(1)
-	mtlr	0
+	addi	r1, r1, (RND_CTXSIZE + 16)
+	lwz	r0, 4(r1)
+	mtlr	r0
 	blr
 
 /*
@@ -91,18 +91,18 @@ ENTRY(pthread__switch)
  */
 #define STACK_SWITCH(pt,tmp)		  \
 	lwz	tmp, PT_UC(pt)		; \
-	la	1, -STACKSPACE(tmp)
+	la	r1, -STACKSPACE(tmp)
 
 pthread__switch_away:
-	STACK_SWITCH(4,6)
+	STACK_SWITCH(r4,r6)
 
-	or.	5, 5, 5
+	or.	r5, r5, r5
 	beq	1f
-	lwz	7, PT_SPINLOCKS(3)
-	addi	7, 7, -1
-	stw	7, PT_SPINLOCKS(3)
+	lwz	r7, PT_SPINLOCKS(r3)
+	addi	r7, r7, -1
+	stw	r7, PT_SPINLOCKS(r3)
 
-1:	mr	3, 6
+1:	mr	r3, r6
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
@@ -111,50 +111,50 @@ pthread__switch_away:
  * pthread__upcall_switch(pthread_t self (r3), pthread_t next (r4))
  */
 ENTRY(pthread__upcall_switch)
-	lwz	6, PT_SPINLOCKS(4)
-	addi	6, 6, 1
-	stw	6, PT_SPINLOCKS(4)
+	lwz	r6, PT_SPINLOCKS(r4)
+	addi	r6, r6, 1
+	stw	r6, PT_SPINLOCKS(r4)
 
-	STACK_SWITCH(4,5)
+	STACK_SWITCH(r4,r5)
 
-	lwz	7, PT_NEXT(3)
-	or.	7, 7, 7
+	lwz	r7, PT_NEXT(r3)
+	or.	r7, r7, r7
 	beq	1f
 
-	stw	4, PT_SWITCHTO(3)
-	stw	5, PT_SWITCHTOUC(3)
-	li	5, PT_STATE_RECYCLABLE
-	stw	5, PT_STATE(3)
-	mr	3, 4
-	mr	4, 7
-	li	5, 1
+	stw	r4, PT_SWITCHTO(r3)
+	stw	r5, PT_SWITCHTOUC(r3)
+	li	r5, PT_STATE_RECYCLABLE
+	stw	r5, PT_STATE(r3)
+	mr	r3, r4
+	mr	r4, r7
+	li	r5, 1
 	b	pthread__switch_away
 	NOTREACHED
 
-1:	mr	14, 3
-	mr	15, 4
-	mr	16, 5
+1:	mr	r14, r3
+	mr	r15, r4
+	mr	r16, r5
 	bl	PIC_PLT(_C_LABEL(pthread__sa_recycle))
-	mr	3, 14
-	mr	4, 15
+	mr	r3, r14
+	mr	r4, r15
 
-	lwz	6, PT_SPINLOCKS(4)
-	addi	6, 6, -1
-	stw	6, PT_SPINLOCKS(4)
+	lwz	r6, PT_SPINLOCKS(r4)
+	addi	r6, r6, -1
+	stw	r6, PT_SPINLOCKS(r4)
 
-	lwz	7, PT_NEXT(4)
-	or.	7, 7, 7
+	lwz	r7, PT_NEXT(r4)
+	or.	r7, r7, r7
 	beq	2f
 
-	stw	4, PT_SWITCHTO(4)
-	stw	5, PT_SWITCHTOUC(4)
-	mr	3, 4
-	mr	4, 7
-	li	5, 0
+	stw	r4, PT_SWITCHTO(r4)
+	stw	r5, PT_SWITCHTOUC(r4)
+	mr	r3, r4
+	mr	r4, r7
+	li	r5, 0
 	b	pthread__switch_away
 	NOTREACHED
 
-2:	mr	3, 16
+2:	mr	r3, r16
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
@@ -179,41 +179,41 @@ ENTRY(pthread__upcall_switch)
  * the ucontext on the stack.  i.e., 8.
  */
 ENTRY(pthread__locked_switch)
-	stwu	1, -(RND_CTXSIZE + 32)(1)	/* alloc stack space */
-	mflr	0
-	stw	31,(RND_CTXSIZE + 20)(1)	/* saved r31 */
-	stw	5, (RND_CTXSIZE + 16)(1)	/* lock */
-	stw	4, (RND_CTXSIZE + 12)(1)	/* next */
-	stw	3, (RND_CTXSIZE +  8)(1)	/* self */
-	stw	0, (RND_CTXSIZE + 36)(1)	/* Save return address */
-	addi	31, 1, 8			/* r31 = ucontext */
+	stwu	r1, -(RND_CTXSIZE + 32)(r1)	/* alloc stack space */
+	mflr	r0
+	stw	r31,(RND_CTXSIZE + 20)(r1)	/* saved r31 */
+	stw	r5, (RND_CTXSIZE + 16)(r1)	/* lock */
+	stw	r4, (RND_CTXSIZE + 12)(r1)	/* next */
+	stw	r3, (RND_CTXSIZE +  8)(r1)	/* self */
+	stw	r0, (RND_CTXSIZE + 36)(r1)	/* Save return address */
+	addi	r31, r1, 8			/* r31 = ucontext */
 	
 	/* increment spinlock to make sure that next gets continued */
-	lwz	6, PT_SPINLOCKS(4)
-	addi	6, 6, 1
-	stw	6, PT_SPINLOCKS(4)
+	lwz	r6, PT_SPINLOCKS(r4)
+	addi	r6, r6, 1
+	stw	r6, PT_SPINLOCKS(r4)
 
 	/* Get the current context */
-	stw	31, PT_UC(3)
-	mr	3, 31
+	stw	r31, PT_UC(r3)
+	mr	r3, r31
 	bl	PIC_PLT(_C_LABEL(_getcontext_u))
-	lwz	3, (RND_CTXSIZE +  8)(1)
-	lwz	4, (RND_CTXSIZE + 12)(1)
-	lwz	5, (RND_CTXSIZE + 16)(1)
+	lwz	r3, (RND_CTXSIZE +  8)(r1)
+	lwz	r4, (RND_CTXSIZE + 12)(r1)
+	lwz	r5, (RND_CTXSIZE + 16)(r1)
 
 	/*
 	 * Exit the context to make it continue at locked_return instead of
 	 * here.
 	 */
-	lis	6, locked_return@ha
-	addi	6, 6, locked_return@l
-	stw	6, (_REG_PC + 8)(1)
+	lis	r6, locked_return@ha
+	addi	r6, r6, locked_return@l
+	stw	r6, (_REG_PC + 8)(r1)
 
-	STACK_SWITCH(4, 7)
+	STACK_SWITCH(r4, r7)
 
 	/* Check if the switcher was preempted and continued to here. */
-	lwz	8, PT_NEXT(3)
-	or.	8, 8, 8
+	lwz	r8, PT_NEXT(r3)
+	or.	r8, r8, r8
 	beq	1f
 
 	/*
@@ -225,24 +225,24 @@ ENTRY(pthread__locked_switch)
 	 * Don't release the lock.  It's possible that if we do so,
 	 * PT_SWITCHTO will be stomped by another switch_lock and preemption.
 	 */
-	stw	4, PT_SWITCHTO(3)
-	stw	7, PT_SWITCHTOUC(3)
-	stw	5, PT_HELDLOCK(3)
-	lwz	6, PT_SPINLOCKS(3)
-	addi	6, 6, -1
-	stw	6, PT_SPINLOCKS(3)
+	stw	r4, PT_SWITCHTO(r3)
+	stw	r7, PT_SWITCHTOUC(r3)
+	stw	r5, PT_HELDLOCK(r3)
+	lwz	r6, PT_SPINLOCKS(r3)
+	addi	r6, r6, -1
+	stw	r6, PT_SPINLOCKS(r3)
 
 	/*
 	 * Save the context we previously stored in PT_UC(3);
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere.
 	 */
-	stw	1, PT_SLEEPUC(3)
-	addi	1, 1, -STACKSPACE	/* Convert to stack */
+	stw	r1, PT_SLEEPUC(r3)
+	addi	r1, r1, -STACKSPACE	/* Convert to stack */
 
-	mr	3, 4
-	mr	4, 8
-	li	5, 1
+	mr	r3, r4
+	mr	r4, r8
+	li	r5, 1
 	b	pthread__switch_away
 	NOTREACHED
 
@@ -252,39 +252,39 @@ ENTRY(pthread__locked_switch)
 	 * saved.  The queue lock can be released.
 	 */
 	/* Reduce the lock count... */
-	lwz	6, PT_SPINLOCKS(3)
-	addi	6, 6, -1
-	stw	6, PT_SPINLOCKS(3)
+	lwz	r6, PT_SPINLOCKS(r3)
+	addi	r6, r6, -1
+	stw	r6, PT_SPINLOCKS(r3)
 	/* ... actually release the lock ... */
 	sync
-	xor	9,9,9
-	stw	9, 0(5)
+	xor	r9,r9,r9
+	stw	r9, 0(r5)
 	/* ... and remove the fake lock */
-	lwz	6, PT_SPINLOCKS(4)
-	addi	6, 6, -1
-	stw	6, PT_SPINLOCKS(4)
+	lwz	r6, PT_SPINLOCKS(r4)
+	addi	r6, r6, -1
+	stw	r6, PT_SPINLOCKS(r4)
 
 	/* Check to see if we were preempted while holding the fake lock */
-	lwz	8, PT_NEXT(4)
-	or.	8, 8, 8
+	lwz	r8, PT_NEXT(r4)
+	or.	r8, r8, r8
 	beq	2f
 
 	/* Yes, we were.  Go to the next element in the chain. */
-	stw	4, PT_SWITCHTO(4)
-	stw	7, PT_SWITCHTOUC(4)
-	mr	3, 4
-	mr	4, 8
-	li	5, 0
+	stw	r4, PT_SWITCHTO(r4)
+	stw	r7, PT_SWITCHTOUC(r4)
+	mr	r3, r4
+	mr	r4, r8
+	li	r5, 0
 	b	pthread__switch_away
 	NOTREACHED
 
-2:	mr	3, 7
+2:	mr	r3, r7
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
 locked_return:
-	lwz	31, (RND_CTXSIZE + 20)(1)
-	addi	1, 1, (RND_CTXSIZE + 32)
-	lwz	0, 4(1)
-	mtlr	0
+	lwz	r31, (RND_CTXSIZE + 20)(r1)
+	addi	r1, r1, (RND_CTXSIZE + 32)
+	lwz	r0, 4(r1)
+	mtlr	r0
 	blr
