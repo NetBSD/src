@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.32 2003/01/01 00:20:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.33 2003/01/08 23:51:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2003/01/01 00:20:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.33 2003/01/08 23:51:11 jmcneill Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -167,6 +167,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2003/01/01 00:20:33 thorpej Exp $");
 
 #endif /* i386 */
 
+#include <dev/isa/fdvar.h>
+
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
@@ -175,28 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2003/01/01 00:20:33 thorpej Exp $");
 
 /* controller driver configuration */
 int fdprint __P((void *, const char *));
-
-/*
- * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
- * we tell them apart.
- */
-struct fd_type {
-	int	sectrac;	/* sectors per track */
-	int	heads;		/* number of heads */
-	int	seccyl;		/* sectors per cylinder */
-	int	secsize;	/* size code for sectors */
-	int	datalen;	/* data len when secsize = 0 */
-	int	steprate;	/* step rate and head unload time */
-	int	gap1;		/* gap len between sectors */
-	int	gap2;		/* formatting gap */
-	int	cyls;		/* total num of cylinders */
-	int	size;		/* size of disk in sectors */
-	int	step;		/* steps per cylinder */
-	int	rate;		/* transfer speed code */
-	u_char	fillbyte;	/* format fill byte */
-	u_char	interleave;	/* interleave factor (formatting) */
-	const char	*name;
-};
 
 #if NMCA > 0
 /* MCA - specific entries */
@@ -225,44 +205,6 @@ const struct fd_type fd_types[] = {
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 };
 #endif /* defined(atari) */
-
-/* software state, per disk (with up to 4 disks per ctlr) */
-struct fd_softc {
-	struct device sc_dev;
-	struct disk sc_dk;
-
-	const struct fd_type *sc_deftype; /* default type descriptor */
-	struct fd_type *sc_type;	/* current type descriptor */
-	struct fd_type sc_type_copy;	/* copy for fiddling when formatting */
-
-	struct callout sc_motoron_ch;
-	struct callout sc_motoroff_ch;
-
-	daddr_t	sc_blkno;	/* starting block number */
-	int sc_bcount;		/* byte count left */
- 	int sc_opts;		/* user-set options */
-	int sc_skip;		/* bytes already transferred */
-	int sc_nblks;		/* number of blocks currently transferring */
-	int sc_nbytes;		/* number of bytes currently transferring */
-
-	int sc_drive;		/* physical unit number */
-	int sc_flags;
-#define	FD_OPEN		0x01		/* it's open */
-#define	FD_MOTOR	0x02		/* motor should be on */
-#define	FD_MOTOR_WAIT	0x04		/* motor coming up */
-	int sc_cylin;		/* where we think the head is */
-
-	void *sc_sdhook;	/* saved shutdown hook for drive. */
-
-	TAILQ_ENTRY(fd_softc) sc_drivechain;
-	int sc_ops;		/* I/O ops since last switch */
-	struct bufq_state sc_q;	/* pending I/O requests */
-	int sc_active;		/* number of active I/O operations */
-
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
-};
 
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
@@ -398,25 +340,33 @@ fdcattach(fdc)
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
+		if (fdc->sc_known) {
+			if (fdc->sc_present & (1 << fa.fa_drive)) {
+				fa.fa_deftype = fdc->sc_knownfds[fa.fa_drive];
+				config_found(&fdc->sc_dev, (void *)&fa,
+				    fdprint);
+			}
+		} else {
 #if defined(i386)
-		if (type >= 0 && fa.fa_drive < 2)
-			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
-			    type, fa.fa_drive);
-		else
-			fa.fa_deftype = NULL;		/* unknown */
+			if (type >= 0 && fa.fa_drive < 2)
+				fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
+				    type, fa.fa_drive);
+			else
+				fa.fa_deftype = NULL;		/* unknown */
 #elif defined(atari)
-		/*
-		 * Atari has a different ordening, defaults to 1.44
-		 */
-		fa.fa_deftype = &fd_types[2];
+			/*
+			 * Atari has a different ordening, defaults to 1.44
+			 */
+			fa.fa_deftype = &fd_types[2];
 #else
-		/*
-		 * Default to 1.44MB on Alpha and BeBox.  How do we tell
-		 * on these platforms?
-		 */
-		fa.fa_deftype = &fd_types[0];
+			/*
+			 * Default to 1.44MB on Alpha and BeBox.  How do we tell
+			 * on these platforms?
+			 */
+			fa.fa_deftype = &fd_types[0];
 #endif /* i386 */
-		(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
+			(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
+		}
 	}
 }
 
@@ -444,6 +394,10 @@ fdprobe(parent, match, aux)
 	 */
 	if (cf->cf_loc[FDCCF_DRIVE] == FDCCF_DRIVE_DEFAULT && drive >= 2)
 		return 0;
+
+	/* Use PNP information if available */
+	if (fdc->sc_known)
+		return 1;
 
 	/* select drive and turn on motor */
 	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
