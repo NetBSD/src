@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.2 2000/01/24 02:40:36 matt Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.3 2000/04/30 11:47:21 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -297,7 +297,7 @@ ubaerror(uh, ipl, uvec)
 			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
 				uba->uba_sr, ubasr_bits, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
-			ubareset(vc->uv_sc.uh_dev.dv_unit);
+			ubareset(&vc->uv_sc);
 		}
 		return;
 	}
@@ -305,7 +305,7 @@ ubaerror(uh, ipl, uvec)
 		printf("%s: sbi fault sr=%b cnfgr=%b\n",
 		    vc->uv_sc.uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
 		    uba->uba_cnfgr, NEXFLT_BITS);
-		ubareset(vc->uv_sc.uh_dev.dv_unit);
+		ubareset(&vc->uv_sc);
 		*uvec = 0;
 		return;
 	}
@@ -320,7 +320,7 @@ ubaerror(uh, ipl, uvec)
 		if (ubaerrcnt > ubacrazy)
 			panic("uba crazy");
 		printf("ERROR LIMIT ");
-		ubareset(vc->uv_sc.uh_dev.dv_unit);
+		ubareset(&vc->uv_sc);
 		*uvec = 0;
 	}
 }
