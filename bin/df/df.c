@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.46 2003/04/16 14:00:31 grant Exp $	*/
+/*	$NetBSD: df.c,v 1.47 2003/04/18 12:48:25 grant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.46 2003/04/16 14:00:31 grant Exp $");
+__RCSID("$NetBSD: df.c,v 1.47 2003/04/18 12:48:25 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ void	 usage(void);
 void	 prthumanval(int64_t, char *);
 void	 prthuman(struct statfs *, long);
 
-int	aflag, Gflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
+int	aflag, gflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
 
 int
@@ -91,13 +91,13 @@ main(int argc, char *argv[])
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "aGhiklmnPt:")) != -1)
+	while ((ch = getopt(argc, argv, "aghiklmnPt:")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
 			break;
-		case 'G':
-			Gflag = 1;
+		case 'g':
+			gflag = 1;
 			break;
 		case 'h':
 			hflag = 1;
@@ -346,7 +346,7 @@ prtstat(struct statfs *sfsp, int maxwidth)
 			blocksize = 1024 * 1024;
 			header = Pflag ? "1048576-blocks" : "1M-blocks";
 			headerlen = strlen(header);
-		} else if (Gflag) {
+		} else if (gflag) {
 			blocksize = 1024 * 1024 * 1024;
 			header = Pflag ? "1073741824-blocks" : "1G-blocks";
 			headerlen = strlen(header);
@@ -390,7 +390,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aGhiklmnP] [-t type] [file | file_system ...]\n",
+	    "Usage: %s [-aghiklmnP] [-t type] [file | file_system ...]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
