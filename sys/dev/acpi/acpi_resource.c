@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.6 2003/03/05 23:00:56 christos Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.7 2003/11/02 11:12:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6 2003/03/05 23:00:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.7 2003/11/02 11:12:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,6 +519,29 @@ acpi_res_parse_ioport(struct device *dev, void *context, uint32_t base,
 {
 	struct acpi_resources *res = context;
 	struct acpi_io *ar;
+
+	/*
+	 * Check if there is another I/O port directly below/under
+	 * this one.
+	 */
+	SIMPLEQ_FOREACH(ar, &res->ar_io, ar_list) {
+		if (ar->ar_base == base + length ) {
+			/*
+			 * Entry just below existing entry - adjust
+			 * the entry and return.
+			 */
+			ar->ar_base = base;
+			ar->ar_length += length;
+			return;
+		} else if (ar->ar_base + ar->ar_length == base) {
+			/*
+			 * Entry just above existing entry - adjust
+			 * the entry and return.
+			 */
+			ar->ar_length += length;
+			return;
+		}
+	}
 
 	ar = AcpiOsAllocate(sizeof(*ar));
 	if (ar == NULL) {
