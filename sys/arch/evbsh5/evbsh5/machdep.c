@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2002/07/05 13:31:40 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2002/07/12 19:52:22 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -167,7 +167,6 @@ evbsh5_init(void)
 static void
 compute_ctc_tick_per_us(void)
 {
-#ifndef SIMULATED_CLOCK
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 	register_t ctcstart, ctcstop;
@@ -213,9 +212,6 @@ compute_ctc_tick_per_us(void)
 	_sh5_ctc_ticks_per_us = (ctcstart - ctcstop) / 125000;
 
 	bus_space_unmap(bt, bh, RTC_REG_SIZE);
-#else
-	_sh5_ctc_ticks_per_us = 300;
-#endif
 }
 
 void

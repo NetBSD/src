@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.1 2002/07/05 13:32:06 scw Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.2 2002/07/12 19:52:21 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -104,10 +104,6 @@ static struct evcnt clock_statcnt;
 static struct clock_attach_args *clock_args;
 static todr_chip_handle_t todr_handle;
 
-#ifdef SIMULATED_CLOCK
-u_int _sh5_simclock_ticks;
-#endif
-
 
 /*
  * Common parts of clock autoconfiguration
@@ -142,7 +138,7 @@ clock_rtc_config(todr_chip_handle_t todr)
 void
 cpu_initclocks(void)
 {
-#ifndef SIMULATED_CLOCK
+
 	if (clock_args == NULL)
 		panic("cpu_initclocks: clock not configured");
 
@@ -170,7 +166,6 @@ cpu_initclocks(void)
 	}
 
 	(*clock_args->ca_start)(clock_args->ca_arg, CLK_HARDCLOCK, tick);
-#endif
 }
 
 /*ARGSUSED*/
@@ -232,11 +227,7 @@ microtime(struct timeval *tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-#ifndef SIMULATED_CLOCK
 	tvp->tv_usec += (*clock_args->ca_microtime)(clock_args->ca_arg);
-#else
-	tvp->tv_usec = lasttime.tv_usec + 1;
-#endif
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
@@ -257,7 +248,6 @@ microtime(struct timeval *tvp)
 void
 inittodr(time_t base)
 {
-#ifndef SIMULATED_CLOCK
         int badbase = 0, waszero = (base == 0);
 
 	if (todr_handle == NULL)
@@ -296,8 +286,6 @@ inittodr(time_t base)
                     time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
         }
         printf(" -- CHECK AND RESET THE DATE!\n");
-
-#endif /* !SIMULATED_CLOCK */
 }
 
 /*
@@ -310,11 +298,9 @@ void
 resettodr(void)
 {
 
-#ifndef SIMULATED_CLOCK
         if (!time.tv_sec)
                 return;
 
         if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
                 printf("resettodr: failed to set time\n");
-#endif
 }

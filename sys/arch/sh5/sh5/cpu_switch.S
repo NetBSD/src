@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.3 2002/07/12 15:42:28 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.4 2002/07/12 19:52:21 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -241,24 +241,11 @@ ASENTRY_NOPROFILE(idle)
 	movi	SH5_CONREG_SR_IMASK_IPL0, r0
 	putcon	r0, sr			/* Enable interrupts */
 
-#ifndef SIMULATED_CLOCK
-	synci				/* Sync the instruction pipeline */
 	synco				/* Sync the operand pipeline */
+	synci				/* Sync the instruction pipeline */
 	sleep				/* Snooze until an interrupt */
 	synci				/* Sync the instruction pipeline */
-#else
-	LEA(_C_LABEL(_sh5_simclock_ticks), r1)
-	ld.l	r1, 0, r2
-	addz.l	r2, r63, r2
-	pta/l	Lno_simclockint, tr0
-	getcon	ctc, r0
-	bgt/l	r2, r0, tr0
-	LDC32(64000, r2)
-	add	r0, r2, r0
-	st.l	r1, 0, r0
-	trapa	r63			/* "Magic" simulated clock trap */
-Lno_simclockint:
-#endif
+
 	movi	SH5_CONREG_SR_IMASK_ALL, r0
 	putcon	r0, sr			/* Disable interrupts */
 
