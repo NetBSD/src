@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.6 1995/04/24 12:22:54 cgd Exp $	*/
+/*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: canfield.c,v 1.6 1995/04/24 12:22:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1274,7 +1274,7 @@ getcmd(row, col, cp)
 	int row, col;
 	char *cp;
 {
-	char cmd[2], ch;
+	char cmd[2] = { '\0', '\0'}, ch;
 	int i;
 
 	i = 0;
@@ -1296,11 +1296,11 @@ getcmd(row, col, cp)
 		} else if (ch == erasechar() && i > 0) {
 			printw("\b \b");
 			refresh();
-			i--;
+			cmd[--i] = '\0';
 		} else if (ch == killchar() && i > 0) {
 			while (i > 0) {
 				printw("\b \b");
-				i--;
+				cmd[--i] = '\0';
 			}
 			refresh();
 		} else if (ch == '\032') {	/* Control-Z */
