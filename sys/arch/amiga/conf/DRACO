@@ -1,14 +1,14 @@
-# $NetBSD: DRACO,v 1.46 2000/06/14 22:02:18 veego Exp $
+# $NetBSD: DRACO,v 1.46.2.1 2000/07/06 14:11:57 sommerfeld Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.140 2000/03/23 22:44:42 is Exp $
+#$ NetBSD: GENERIC,v 1.143.2.2 2000/07/06 14:10:33 sommerfeld Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.46 $"
+#ident  		"GENERIC-$Revision: 1.46.2.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -22,6 +22,8 @@ options 	DRACO
 options 	M68060		# support for 060
 options 	M060SP		# MC68060 software support (Required for 060)
 
+#Networking options
+
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
@@ -34,7 +36,7 @@ options 	INET6		# IPV6
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 
@@ -70,7 +72,7 @@ file-system 	UNION		# union filesystem
 #options 	FFS_EI		# FFS Endian Independant support
 
 options 	QUOTA		# User and group quotas in FFS
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -214,8 +216,9 @@ scsibus*	at drsc0
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
-ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
+
+ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 
 pseudo-device	loop			# loopback network interface
@@ -228,6 +231,7 @@ pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys
