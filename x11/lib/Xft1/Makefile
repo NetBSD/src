@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/10 23:35:55 lukem Exp $
-
-XTODO=	XftConfig-OBSOLETE in etc/X11/
+#	$NetBSD: Makefile,v 1.5 2004/01/23 14:32:02 lukem Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -17,9 +15,6 @@ SRCS=	xftcfg.c xftcolor.c xftcore.c xftdbg.c xftdir.c xftdpy.c \
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2
-
-FILES=		XftConfig-OBSOLETE
-FILESDIR=	${X11LIBDIR}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
