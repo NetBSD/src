@@ -120,42 +120,42 @@ extern int errno;
    Here as #define's to make changing the names a simple task.  */
 
 #ifdef USE_VMS_FILENAMES
-#define CVSADM          "CVS"
-#define CVSADM_ENT      "CVS/Entries."
-#define CVSADM_ENTBAK   "CVS/Entries.Backup"
-#define CVSADM_ENTLOG   "CVS/Entries.Log"
-#define CVSADM_ENTSTAT  "CVS/Entries.Static"
-#define CVSADM_REP      "CVS/Repository."
-#define CVSADM_ROOT     "CVS/Root."
-#define CVSADM_CIPROG   "CVS/Checkin.prog"
-#define CVSADM_UPROG    "CVS/Update.prog"
-#define CVSADM_TAG      "CVS/Tag."
-#define CVSADM_NOTIFY   "CVS/Notify."
-#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
-#define CVSADM_BASE      "CVS/Base"
-#define CVSADM_BASEREV   "CVS/Baserev."
-#define CVSADM_BASEREVTMP "CVS/Baserev.tmp"
-#define CVSADM_TEMPLATE "CVS/Template."
+#define CVSADM          getCVSDir("")
+#define CVSADM_ENT      getCVSDir("/Entries.")
+#define CVSADM_ENTBAK   getCVSDir("/Entries.Backup")
+#define CVSADM_ENTLOG   getCVSDir("/Entries.Log")
+#define CVSADM_ENTSTAT  getCVSDir("/Entries.Static")
+#define CVSADM_REP      getCVSDir("/Repository.")
+#define CVSADM_ROOT     getCVSDir("/Root.")
+#define CVSADM_CIPROG   getCVSDir("/Checkin.prog")
+#define CVSADM_UPROG    getCVSDir("/Update.prog")
+#define CVSADM_TAG      getCVSDir("/Tag.")
+#define CVSADM_NOTIFY   getCVSDir("/Notify.")
+#define CVSADM_NOTIFYTMP getCVSDir("/Notify.tmp")
+#define CVSADM_BASE      getCVSDir("/Base")
+#define CVSADM_BASEREV   getCVSDir("/Baserev.")
+#define CVSADM_BASEREVTMP getCVSDir("/Baserev.tmp")
+#define CVSADM_TEMPLATE getCVSDir("/Template.")
 #else /* USE_VMS_FILENAMES */
-#define	CVSADM		"CVS"
-#define	CVSADM_ENT	"CVS/Entries"
-#define	CVSADM_ENTBAK	"CVS/Entries.Backup"
-#define CVSADM_ENTLOG	"CVS/Entries.Log"
-#define	CVSADM_ENTSTAT	"CVS/Entries.Static"
-#define	CVSADM_REP	"CVS/Repository"
-#define	CVSADM_ROOT	"CVS/Root"
-#define	CVSADM_CIPROG	"CVS/Checkin.prog"
-#define	CVSADM_UPROG	"CVS/Update.prog"
-#define	CVSADM_TAG	"CVS/Tag"
-#define CVSADM_NOTIFY	"CVS/Notify"
-#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
+#define	CVSADM		getCVSDir("")
+#define	CVSADM_ENT	getCVSDir("/Entries")
+#define	CVSADM_ENTBAK	getCVSDir("/Entries.Backup")
+#define CVSADM_ENTLOG	getCVSDir("/Entries.Log")
+#define	CVSADM_ENTSTAT	getCVSDir("/Entries.Static")
+#define	CVSADM_REP	getCVSDir("/Repository")
+#define	CVSADM_ROOT	getCVSDir("/Root")
+#define	CVSADM_CIPROG	getCVSDir("/Checkin.prog")
+#define	CVSADM_UPROG	getCVSDir("/Update.prog")
+#define	CVSADM_TAG	getCVSDir("/Tag")
+#define CVSADM_NOTIFY	getCVSDir("/Notify")
+#define CVSADM_NOTIFYTMP getCVSDir("/Notify.tmp")
 /* A directory in which we store base versions of files we currently are
    editing with "cvs edit".  */
-#define CVSADM_BASE     "CVS/Base"
-#define CVSADM_BASEREV  "CVS/Baserev"
-#define CVSADM_BASEREVTMP "CVS/Baserev.tmp"
+#define CVSADM_BASE     getCVSDir("/Base")
+#define CVSADM_BASEREV  getCVSDir("/Baserev")
+#define CVSADM_BASEREVTMP getCVSDir("/Baserev.tmp")
 /* File which contains the template for use in log messages.  */
-#define CVSADM_TEMPLATE "CVS/Template"
+#define CVSADM_TEMPLATE getCVSDir("/Template")
 #endif /* USE_VMS_FILENAMES */
 
 /* This is the special directory which we use to store various extra
@@ -166,7 +166,7 @@ extern int errno;
    
    See fileattr.h for details about file attributes, the only thing stored
    in CVSREP currently.  */
-#define CVSREP "CVS"
+#define CVSREP getCVSDir("")
 
 /*
  * Definitions for the CVSROOT Administrative directory and the files it
@@ -440,6 +440,7 @@ List *Entries_Open PROTO ((int aflag, char *update_dir));
 void Subdirs_Known PROTO((List *entries));
 void Subdir_Register PROTO((List *, const char *, const char *));
 void Subdir_Deregister PROTO((List *, const char *, const char *));
+const char *getCVSDir PROTO((const char *));
 
 char *Make_Date PROTO((char *rawdate));
 char *date_from_time_t PROTO ((time_t));
@@ -552,7 +553,7 @@ extern int ign_case;
 void line2argv PROTO ((int *pargc, char ***argv, char *line, char *sepchars));
 void make_directories PROTO((const char *name));
 void make_directory PROTO((const char *name));
-extern int mkdir_if_needed PROTO ((char *name));
+extern int mkdir_if_needed PROTO ((const char *name));
 void rename_file PROTO((const char *from, const char *to));
 /* Expand wildcards in each element of (ARGC,ARGV).  This is according to the
    files which exist in the current directory, and accordingly to OS-specific

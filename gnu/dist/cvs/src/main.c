@@ -51,6 +51,7 @@ int top_level_admin = 0;
 
 mode_t cvsumask = UMASK_DFLT;
 char *RCS_citag = NULL;
+const char *cvsDir = "CVS";
 
 char *CurDir;
 
@@ -257,6 +258,7 @@ static const char *const opt_usage[] =
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
     "    -e editor    Use 'editor' for editing log information.\n",
     "    -d CVS_root  Overrides $CVSROOT as the root of the CVS tree.\n",
+    "	 -D dir	      use DIR as the bookkeeping directory instead of CVS.\n"
     "    -f           Do not use the ~/.cvsrc file.\n",
 #ifdef CLIENT_SUPPORT
     "    -z #         Use compression level '#' for net traffic.\n",
@@ -410,7 +412,7 @@ main (argc, argv)
     int help = 0;		/* Has the user asked for help?  This
 				   lets us support the `cvs -H cmd'
 				   convention to give help for cmd. */
-    static const char short_options[] = "+Qqrwtnulvb:T:e:d:Hfz:s:xa";
+    static const char short_options[] = "+Qqrwtnulvb:T:e:d:D:Hfz:s:xa";
     static struct option long_options[] =
     {
         {"help", 0, NULL, 'H'},
@@ -624,6 +626,11 @@ Copyright (c) 1989-2002 Brian Berliner, david d `zoo' zuhn, \n\
                    have it in their .cvsrc and not cause any trouble.
                    We will issue an error later if stream
                    authentication is not supported.  */
+		break;
+	    case 'D':
+		cvsDir = xstrdup(optarg);
+		if (strchr(cvsDir, '/') != NULL)
+		  error(1, 0, "cvsDir is not allowed to have slashes");
 		break;
 	    case '?':
 	    default:
@@ -1153,6 +1160,26 @@ tm_to_internet (dest, source)
     sprintf (dest, "%d %s %d %02d:%02d:%02d -0000", source->tm_mday,
 	     source->tm_mon < 0 || source->tm_mon > 11 ? "???" : month_names[source->tm_mon],
 	     source->tm_year + 1900, source->tm_hour, source->tm_min, source->tm_sec);
+}
+
+const char *
+getCVSDir(const char *suffix)
+{
+  static const char *buf[20][2];
+  size_t i, len;
+  for (i = 0; i < 20; i++) 
+    {
+      if (buf[i][0] == NULL)
+	break;
+      if (strcmp(buf[i][0], suffix) == 0)
+	return buf[i][1];
+    }
+  if (i == 20)
+    error(1, 0, "Out of static buffer space");
+  buf[i][0] = suffix;
+  buf[i][1] = xmalloc(len = strlen(cvsDir) + strlen(suffix) + 1);
+  snprintf((char *)buf[i][1], len, "%s%s", cvsDir, suffix);
+  return buf[i][1];
 }
 
 void
