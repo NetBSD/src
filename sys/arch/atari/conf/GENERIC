@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.55.2.3 2001/03/28 18:20:25 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.55.2.4 2001/04/02 16:28:22 bouyer Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.55.2.3 $"
+#ident 		"GENERIC-$Revision: 1.55.2.4 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -202,7 +202,7 @@ uk* 	at scsibus? target ? lun ?	# SCSI unknown
 
 pcibus0	at mainbus0			# PCI-bus
 pci0	at pcibus0
-#ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
+ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
 avmebus0 at mainbus0			# VME bus
 vme0	at avmebus0
 le0	at vme0	irq 5			# Lance ethernet (Riebl/PAM).
