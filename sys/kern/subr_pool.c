@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.39 2000/06/27 17:41:34 mrg Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.40 2000/08/12 16:28:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -619,9 +619,7 @@ _pool_get(pp, flags, file, line)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
@@ -706,9 +704,7 @@ _pool_get(pp, flags, file, line)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
