@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.20 1997/09/26 02:50:18 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.21 1997/09/26 04:00:09 mycroft Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -370,17 +370,6 @@ wds_attach(sc, wpd)
 	wds_inquire_setup_information(sc);
 
 	/*
-	 * Since DMA memory allocation is always rounded up to a
-	 * page size, create some scbs from the leftovers.
-	 * Done here since we need the revision number to know
-	 * the number of allowed segments per DMA map.
-	 */
-	if (wds_create_scbs(sc, ((caddr_t)wmbx) +
-	    ALIGN(sizeof(struct wds_mbx)),
-	    NBPG - ALIGN(sizeof(struct wds_mbx))))
-		panic("wds_init: can't create scbs");
-
-	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
@@ -685,7 +674,7 @@ wds_scb_phys_kv(sc, scb_phys)
 			break;
 		scb = scb->nexthash;
 	}
-	return scb;
+	return (scb);
 }
 
 /*
@@ -992,6 +981,14 @@ wds_init(sc, isreset)
 	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
 		panic("wds_init: can't create or map mailbox");
 
+	/*
+	 * Since DMA memory allocation is always rounded up to a
+	 * page size, create some scbs from the leftovers.
+	 */
+	if (wds_create_scbs(sc, ((caddr_t)wmbx) +
+	    ALIGN(sizeof(struct wds_mbx)),
+	    NBPG - ALIGN(sizeof(struct wds_mbx))))
+		panic("wds_init: can't create scbs");
 
 	/*
 	 * Create and load the mailbox DMA map.
@@ -1042,28 +1039,11 @@ wds_inquire_setup_information(sc)
 	u_char *j;
 	int s;
 
-	/* XXX EVIL KLUDGE HERE!
-	 * So, we have a slight chicken-egg problem... we need the
-	 * board revision to determine the number of segments
-	 * an scb's DMA map can map.  But we need an scb to get
-	 * that information.
-	 *
-	 * So, here is what we do... We know that we are called
-	 * before the initial set of scbs are created with the
-	 * mailbox leftovers (see wds_attach()).  This means that
-	 * there are still leftovers to play with.  So, we manually
-	 * create an scb here, create a DMA map for it (with one
-	 * segment that is large enough to get the setup info),
-	 * and then destroy the DMA map.  The scb will be recycled
-	 * when the initial set is created in wds_attach().
-	 *
-	 * Geez, I really hate hardware like this.
-	 */
-
 	sc->sc_maxsegs = 1;
-	scb = (struct wds_scb *)
-	    ((caddr_t)wmbx) + ALIGN(sizeof(struct wds_mbx));
-	wds_init_scb(sc, scb);
+
+	scb = wds_get_scb(sc, SCSI_NOSLEEP);
+	if (scb == 0)
+		panic("wds_inquire_setup_information: no scb available");
 
 	scb->xs = NULL;
 	scb->timeout = 40;
@@ -1084,7 +1064,8 @@ wds_inquire_setup_information(sc)
 		goto out;
 
 	/* Print the version number. */
-	printf(": version %x.%02x ", scb->cmd.targ, scb->cmd.scb.opcode);
+	printf("%s: version %x.%02x ", sc->sc_dev.dv_xname,
+	    scb->cmd.targ, scb->cmd.scb.opcode);
 	sc->sc_revision = (scb->cmd.targ << 8) | scb->cmd.scb.opcode;
 	/* Print out the version string. */
 	j = 2 + &(scb->cmd.targ);
@@ -1105,13 +1086,7 @@ out:
 	/*
 	 * Free up the resources used by this scb.
 	 */
-	bus_dmamap_unload(sc->sc_dmat, scb->dmamap_self);
-	bus_dmamap_destroy(sc->sc_dmat, scb->dmamap_self);
-
-	/*
-	 * Clear the scb hash table, as if we were never here.
-	 */
-	bzero(sc->sc_scbhash, sizeof(sc->sc_scbhash));
+	wds_free_scb(sc, scb);
 }
 
 void
