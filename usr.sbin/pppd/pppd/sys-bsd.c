@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.45 2003/08/17 21:43:29 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.46 2003/09/01 16:54:27 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.45 2003/08/17 21:43:29 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.46 2003/09/01 16:54:27 christos Exp $");
 #endif
 #endif
 
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.45 2003/08/17 21:43:29 itojun Exp $");
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
+#include <vis.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -559,8 +560,19 @@ clean_check()
 	    break;
 	}
 	if (s != NULL) {
+	    struct ppp_rawin win;
+	    char buf[4 * sizeof(win.buf) + 1];
+	    int i;
 	    warn("Serial link is not 8-bit clean:");
 	    warn("All received characters had %s", s);
+	    if (ioctl(ppp_fd, PPPIOCGRAWIN, &win) == -1) {
+		warn("ioctl(PPPIOCGRAWIN): %s", strerror(errno));
+		return;
+	    }
+	    for (i = 0; i < sizeof(win.buf); i++)
+		win.buf[i] = win.buf[i] & 0x7f;
+	    strvisx(buf, (char *)win.buf, win.count, VIS_CSTYLE);
+	    warn("Last %d characters were: %s", (int)win.count, buf);
 	}
     }
 }
