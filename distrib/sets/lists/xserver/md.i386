@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.16 2004/01/08 05:12:33 rtr Exp $
+# $NetBSD: md.i386,v 1.17 2004/01/09 16:22:12 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -230,7 +230,6 @@
 ./usr/X11R6/man/man1/scanpci.1
 ./usr/X11R6/man/man1/xf86cfg.1
 ./usr/X11R6/man/man1/xf86config.1
-./usr/X11R6/man/man1/xvidtune.1
 ./usr/X11R6/man/man4
 ./usr/X11R6/man/man4/apm.4
 ./usr/X11R6/man/man4/ati.4

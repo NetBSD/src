@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.8 2004/01/08 14:43:54 rtr Exp $
+# $NetBSD: md.macppc,v 1.9 2004/01/09 16:22:12 rtr Exp $
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/kbd_mode
@@ -6,7 +6,6 @@
 ./usr/X11R6/bin/mmapw
 ./usr/X11R6/bin/scanpci
 ./usr/X11R6/bin/xf86config
-./usr/X11R6/bin/xvidtune
 ./usr/X11R6/include/X11/bitmaps/card.xbm
 ./usr/X11R6/include/X11/bitmaps/down.xbm
 ./usr/X11R6/include/X11/bitmaps/keyboard.xbm
@@ -26,7 +25,6 @@
 ./usr/X11R6/include/X11/pixmaps/mouse.xpm
 ./usr/X11R6/lib/X11/Cards
 ./usr/X11R6/lib/X11/Options
-./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/lib/X11/doc
 ./usr/X11R6/lib/X11/doc/README.XKB-Config
 ./usr/X11R6/lib/X11/doc/README.XKB-Enhancing
@@ -43,7 +41,6 @@
 ./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/scanpci.0
 ./usr/X11R6/man/cat1/xf86config.0
-./usr/X11R6/man/cat1/xvidtune.0
 ./usr/X11R6/man/cat4/js_x.0
 ./usr/X11R6/man/cat4/kbd.0
 ./usr/X11R6/man/cat4/palmax.0
@@ -57,7 +54,6 @@
 ./usr/X11R6/man/man1/pcitweak.1
 ./usr/X11R6/man/man1/scanpci.1
 ./usr/X11R6/man/man1/xf86config.1
-./usr/X11R6/man/man1/xvidtune.1
 ./usr/X11R6/man/man4/js_x.4
 ./usr/X11R6/man/man4/kbd.4
 ./usr/X11R6/man/man4/palmax.4

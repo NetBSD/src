@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.15 2004/01/08 09:30:29 lukem Exp $
+# $NetBSD: md.i386,v 1.16 2004/01/09 16:22:12 rtr Exp $
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
 ./usr/X11R6/bin/inl
@@ -12,7 +12,6 @@
 ./usr/X11R6/bin/outw
 ./usr/X11R6/bin/scanpci
 ./usr/X11R6/bin/xf86config
-./usr/X11R6/bin/xvidtune
 ./usr/X11R6/include/X11/bitmaps/card.xbm
 ./usr/X11R6/include/X11/bitmaps/down.xbm
 ./usr/X11R6/include/X11/bitmaps/keyboard.xbm
@@ -32,7 +31,6 @@
 ./usr/X11R6/include/X11/pixmaps/mouse.xpm
 ./usr/X11R6/lib/X11/Cards
 ./usr/X11R6/lib/X11/Options
-./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/lib/X11/etc/sun.termcap
 ./usr/X11R6/lib/X11/etc/sun.terminfo
 ./usr/X11R6/lib/X11/etc/xmodmap.std
@@ -45,4 +43,3 @@
 ./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/scanpci.0
 ./usr/X11R6/man/cat1/xf86config.0
-./usr/X11R6/man/cat1/xvidtune.0

@@ -1,6 +1,10 @@
-# $NetBSD: mi,v 1.8 2004/01/08 05:12:34 rtr Exp $
+# $NetBSD: mi,v 1.9 2004/01/09 16:22:12 rtr Exp $
 ./usr/X11R6/bin/Xprt
+./usr/X11R6/bin/xvidtune
+./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/lib/X11/xserver
 ./usr/X11R6/lib/X11/xserver/SecurityPolicy
 ./usr/X11R6/man/cat1/Xserver.0
+./usr/X11R6/man/cat1/xvidtune.0
 ./usr/X11R6/man/man1/Xserver.1
+./usr/X11R6/man/man1/xvidtune.1
