@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.27 2000/08/09 22:52:36 jeffs Exp $	*/
+/*	$NetBSD: asm.h,v 1.28 2000/08/30 22:31:12 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 	nop;							\
 	lw	t9,4(sp);					\
 	addiu	sp,sp,8;					\
-	addiu	t9,t9,36;					\
+	addiu	t9,t9,40;					\
 	.set	pop;					
 
 #ifdef GPROF
