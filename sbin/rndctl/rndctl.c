@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.11 2001/09/11 05:52:37 enami Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.12 2002/05/19 09:47:10 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -223,13 +223,13 @@ do_stats()
 	if (ioctl(fd, RNDGETPOOLSTAT, &rs) < 0)
 		err(1, "ioctl(RNDGETPOOLSTAT)");
 
-	printf("\t%9d bits mixed into pool\n", rs.added);
-	printf("\t%9d bits currently stored in pool (max %d)\n",
+	printf("\t%9u bits mixed into pool\n", rs.added);
+	printf("\t%9u bits currently stored in pool (max %u)\n",
 	    rs.curentropy, rs.maxentropy);
-	printf("\t%9d bits of entropy discarded due to full pool\n",
+	printf("\t%9u bits of entropy discarded due to full pool\n",
 	    rs.discarded);
-	printf("\t%9d hard-random bits generated\n", rs.removed);
-	printf("\t%9d pseudo-random bits generated\n", rs.generated);
+	printf("\t%9u hard-random bits generated\n", rs.removed);
+	printf("\t%9u pseudo-random bits generated\n", rs.generated);
 
 	close(fd);
 }
