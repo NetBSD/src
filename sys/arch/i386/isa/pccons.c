@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.129 1998/08/05 02:28:27 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.130 1998/08/13 18:00:05 rvb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -2362,7 +2362,7 @@ strans(dt)
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
-		if ((dt == 88) && pccons_is_console)
+		if ((dt == 88) && !pccons_is_console)
 			Debugger();
 #endif
 		capchar[0] = dt;
