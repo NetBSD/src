@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tools,v 1.1 2001/08/14 11:01:57 tv Exp $
+#	$NetBSD: Makefile.tools,v 1.2 2001/08/14 12:36:34 tv Exp $
 #
 # Included Makefile fragment used by the top-level Makefile, and by
 # the Makefile.inc in the "tools" subdirectory.
@@ -43,11 +43,7 @@ TSORT=		${TOOLDIR}/bin/tsort
 YACC=		${TOOLDIR}/bin/yacc
 
 # Make sure DESTDIR is set, so that builds with these tools always
-# get appropriate -nostdinc, -nostdlib, etc. handling.  The value is
+# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
 # <empty string>, meaning start from /, the root directory.
 
 DESTDIR?=
-
-# Temporary switch for turning on the appropriate toolchain bits
-
-USE_NEW_TOOLCHAIN=1
