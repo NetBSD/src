@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.36 2003/08/12 13:15:35 dsl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.37 2003/08/30 10:30:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.36 2003/08/12 13:15:35 dsl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.37 2003/08/30 10:30:52 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,34 +73,60 @@ union {
 } cgun;
 #define	acg	cgun.cg
 
+#define OPT_FLAG(ch)	(1 << ((ch) & 31))
+#define ISOPT(opt)	(opt_flags & (opt))
+#define opt_superblock	OPT_FLAG('s')
+#define opt_cg_summary	OPT_FLAG('m')
+#define opt_cg_info	OPT_FLAG('c')
+#define opt_inodes	OPT_FLAG('i')
+#define opt_verbose	OPT_FLAG('v')
+#define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info)
+
 long	dev_bsize = 1;
-int	needswap, Fflag;
-int	is_ufs2;
+int	needswap, printold, is_ufs2;
+int	Fflag;
+
+uint	opt_flags;
 
 int	dumpfs(const char *);
+int	print_superblock(const char *, int, off_t);
+int	print_cgsum(const char *, int);
+int	print_cginfo(const char *, int);
+int	print_inodes(const char *, int);
 int	dumpcg(const char *, int, int);
 int	main(int, char **);
 int	openpartition(const char *, int, char *, size_t);
-void	pbits(void *, int);
+void	pbits(int, void *, int);
 void	usage(void);
 void	swap_cg(struct cg *);
+void	print_ufs1_inode(int, int, void *);
+void	print_ufs2_inode(int, int, void *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "F")) != -1)
+	while ((ch = getopt(argc, argv, "Fcimsv")) != -1)
 		switch(ch) {
-		case 'F':
-			Fflag = 1;
+		case 'c':	/* cylinder group info */
+		case 'i':	/* actual inodes */
+		case 'm':	/* cylinder group summary */
+		case 's':	/* superblock */
+		case 'v':	/* more verbose */
+			opt_flags |= OPT_FLAG(ch);
 			break;
+		case 'F':	/* File (not device) */
+			Fflag = 1;
 		case '?':
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (opt_flags == 0)
+		opt_flags = DFLT_OPTS;
 
 	if (argc < 1)
 		usage();
@@ -113,15 +139,14 @@ main(int argc, char *argv[])
 	exit(eval);
 }
 
-off_t sblock_try[] = SBLOCKSEARCH;
 
 int
 dumpfs(const char *name)
 {
-	int fd, i, j, size, printold;
-	time_t t;
+	const static off_t sblock_try[] = SBLOCKSEARCH;
 	char device[MAXPATHLEN];
-	struct csum *ccsp;
+	int fd, i;
+	int rval = 1;
 
 	if (Fflag)
 		fd = open(name, O_RDONLY);
@@ -178,7 +203,36 @@ dumpfs(const char *name)
 		afs.fs_cstotal.cs_nffree = afs.fs_old_cstotal.cs_nffree;
 	}
 
+	if (printold && afs.fs_old_postblformat == FS_42POSTBLFMT)
+		afs.fs_old_nrpos = 8;
+	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
+
+	rval = 0;
 	printf("file system: %s\n", name);
+
+	if (ISOPT(opt_superblock))
+		rval = print_superblock(name, fd, sblock_try[i]);
+	if (rval == 0 && ISOPT(opt_cg_summary))
+		rval = print_cgsum(name, fd);
+	if (rval == 0 && ISOPT(opt_cg_info))
+		rval = print_cginfo(name, fd);
+	if (rval == 0 && ISOPT(opt_inodes))
+		rval = print_inodes(name, fd);
+
+    err:
+	if (fd != -1)
+		(void)close(fd);
+	if (rval)
+		warn("%s", name);
+	return rval;
+}
+
+int
+print_superblock(const char *name, int fd, off_t sblock)
+{
+	int i, size;
+	time_t t;
+
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (needswap)
 #else
@@ -187,12 +241,10 @@ dumpfs(const char *name)
 		printf("endian\tbig-endian\n");
 	else
 		printf("endian\tlittle-endian\n");
-	if (printold && afs.fs_old_postblformat == FS_42POSTBLFMT)
-		afs.fs_old_nrpos = 8;
-	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	t = afs.fs_time;
-	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock_try[i],
+	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock,
 	    afs.fs_magic, ctime(&t));
+
 	if (is_ufs2)
 		i = 4;
 	else {
@@ -274,7 +326,16 @@ dumpfs(const char *name)
 		else
 			printf("(no rotational position table)\n");
 	}
-	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
+
+	return 0;
+}
+
+int
+print_cgsum(const char *name, int fd)
+{
+	struct csum *ccsp;
+	int i, j, size;
+
 	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
 		size = afs.fs_cssize - i < afs.fs_bsize ?
@@ -283,12 +344,14 @@ dumpfs(const char *name)
 		if (lseek(fd,
 		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
 		    dev_bsize, SEEK_SET) == (off_t)-1)
-			goto err;
+			return 1;
 		if (read(fd, ccsp, size) != size)
-			goto err;
+			return 1;
 		if (needswap)
 			ffs_csum_swap(ccsp, ccsp, size);
 	}
+
+	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
 	for (i = 0; i < afs.fs_ncg; i++) {
 		struct csum *cs = &afs.fs_cs(&afs, i);
 		if (i && i % 4 == 0)
@@ -296,7 +359,9 @@ dumpfs(const char *name)
 		printf("(%d,%d,%d,%d) ",
 		    cs->cs_nbfree, cs->cs_ndir, cs->cs_nifree, cs->cs_nffree);
 	}
-	printf("\n");
+	if (i % 4 == 0)
+		printf("\n");
+
 	if (printold && (afs.fs_old_ncyl % afs.fs_old_cpg)) {
 		printf("cylinders in last group %d\n",
 		    i = afs.fs_old_ncyl % afs.fs_old_cpg);
@@ -304,17 +369,46 @@ dumpfs(const char *name)
 		    i * afs.fs_old_spc / (afs.fs_old_nspf << afs.fs_fragshift));
 	}
 	printf("\n");
+	free(afs.fs_csp);
+	afs.fs_csp = NULL;
+
+	return 0;
+}
+
+int
+print_cginfo(const char *name, int fd)
+{
+	int i;
+
 	for (i = 0; i < afs.fs_ncg; i++)
 		if (dumpcg(name, fd, i))
-			goto err;
-	(void)close(fd);
+			return 1;
 	return 0;
+}
 
-err:	if (fd != -1)
-		(void)close(fd);
-	warn("%s", name);
-	return 1;
-};
+int
+print_inodes(const char *name, int fd)
+{
+	void *ino_buf = malloc(afs.fs_bsize);
+	void (*print_inode)(int, int, void *);
+	int i, inum;
+
+	if (ino_buf == 0)
+		return 1;
+
+	print_inode = is_ufs2 ? print_ufs2_inode : print_ufs1_inode;
+
+	for (inum = 0; inum < afs.fs_ncg * afs.fs_ipg; inum += afs.fs_inopb) {
+		if (pread(fd, ino_buf, afs.fs_bsize,
+		    ino_to_fsba(&afs, inum) * afs.fs_fsize) != afs.fs_bsize)
+			return 1;
+		for (i = 0; i < afs.fs_inopb; i++)
+			print_inode(inum + i, i, ino_buf);
+	}
+
+	free(ino_buf);
+	return 0;
+}
 
 int
 dumpcg(const char *name, int fd, int c)
@@ -362,18 +456,59 @@ dumpcg(const char *name, int fd, int c)
 		    afs.fs_contigsumsize,
 		    cg_clustersum(&acg, 0)[afs.fs_contigsumsize]);
 		printf("clusters free:\t");
-		pbits(cg_clustersfree(&acg, 0), acg.cg_nclusterblks);
+		pbits(0, cg_clustersfree(&acg, 0), acg.cg_nclusterblks);
 	} else
 		printf("\n");
 	printf("iused:\t");
-	pbits(cg_inosused(&acg, 0), afs.fs_ipg);
+	pbits(c * afs.fs_ipg, cg_inosused(&acg, 0), afs.fs_ipg);
 	printf("free:\t");
-	pbits(cg_blksfree(&acg, 0), afs.fs_fpg);
+	pbits(0, cg_blksfree(&acg, 0), afs.fs_fpg);
 	return (0);
-};
+}
 
 void
-pbits(void *vp, int max)
+print_ufs1_inode(int inum, int i_off, void *ibuf)
+{
+	struct ufs1_dinode *i = ibuf;
+
+	i += i_off;
+
+	if (inum == 0)
+		printf("\n   inode:   mode  nlink                 size"
+		    "      ctime.nsec         flags     blocks"
+		    " generation      uid        gid\n");
+	if (i->di_mode == 0 && i->di_nlink == 0 && !ISOPT(opt_verbose))
+		return;
+	printf("%8u: %6o %6d %20" PRIu64 " %10u.%09u %8x %10u %8x %10u %10u\n",
+		inum, i->di_mode, i->di_nlink, i->di_size,
+		i->di_ctime, i->di_ctimensec, i->di_flags, i->di_blocks,
+		i->di_gen, i->di_uid, i->di_gid);
+}
+
+void
+print_ufs2_inode(int inum, int i_off, void *ibuf)
+{
+	struct ufs2_dinode *i = ibuf;
+
+	i += i_off;
+
+	if (inum == 0)
+		printf("\n   inode:   mode  nlink                 size"
+		    "      ctime.nsec         flags     blocks"
+		    " generation      uid        gid\n");
+
+	if (i->di_mode == 0 && i->di_nlink == 0 && !ISOPT(opt_verbose))
+		return;
+
+	printf("%8u: %6o %6d %20" PRIu64 " %10" PRIu64 ".%09u %8x %10" PRIu64 " %8x %10u %10u\n",
+		inum, i->di_mode, i->di_nlink, i->di_size,
+		i->di_ctime, i->di_ctimensec, i->di_flags, i->di_blocks,
+		i->di_gen, i->di_uid, i->di_gid);
+}
+
+
+void
+pbits(int offset, void *vp, int max)
 {
 	int i;
 	char *p;
@@ -384,12 +519,12 @@ pbits(void *vp, int max)
 			if (count)
 				printf(",%s", count % 6 ? " " : "\n\t");
 			count++;
-			printf("%d", i);
+			printf("%d", offset + i);
 			j = i;
 			while ((i+1)<max && isset(p, i+1))
 				i++;
 			if (i != j)
-				printf("-%d", i);
+				printf("-%d", offset + i);
 		}
 	printf("\n");
 }
@@ -398,7 +533,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs [-F] filesys | device [...]\n");
+	(void)fprintf(stderr, "usage: dumpfs [-Fcimsv] filesys | device [...]\n");
 	exit(1);
 }
 
