@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.1.2.2 1999/12/29 05:56:36 scottr Exp $	*/
+/*	$NetBSD: maccons.c,v 1.1.2.3 2000/02/09 06:16:28 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -28,9 +28,11 @@
 
 #include "wsdisplay.h"
 #include "wskbd.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -47,6 +49,10 @@ int maccngetc __P((dev_t));
 void maccnputc __P((dev_t, int));
 void maccnpollc __P((dev_t, int));
 
+#if NWSDISPLAY > 0
+cdev_decl(wsdisplay);
+#endif
+
 static int	maccons_initted = (-1);
 
 /* From Booter via locore */
@@ -55,14 +61,34 @@ extern u_int32_t	mac68k_vidphys;
 void
 maccnprobe(struct consdev *cp)
 {
-	cp->cn_pri = CN_INTERNAL;
+#if NWSDISPLAY > 0
+	int     maj, unit;
+#endif
+
 	cp->cn_dev = NODEV;
+	cp->cn_pri = CN_NORMAL;
+
+#if NWSDISPLAY > 0
+	unit = 0;
+	for (maj = 0; maj < nchrdev; maj++) {
+		if (cdevsw[maj].d_open == wsdisplayopen) {
+			break;
+		}
+	}
+	if (maj != nchrdev) {
+		cp->cn_pri = CN_INTERNAL;
+		cp->cn_dev = makedev(maj, unit);
+	}
+#endif
 }
 
 void
 maccninit(struct consdev *cp)
 {
-	/* XXX evil hack; see consinit() for an explanation. */
+	/*
+	 * XXX evil hack; see consinit() for an explanation.
+	 * note:  maccons_initted is initialized to (-1).
+	 */
 	if (++maccons_initted > 0) {
 		macfb_cnattach(mac68k_vidphys);
 		akbd_cnattach();
@@ -82,10 +108,19 @@ maccngetc (dev_t dev)
 void
 maccnputc(dev_t dev, int c)
 {
+#if NZSC > 0
+	extern dev_t mac68k_zsdev;
+	extern int zscnputc __P((dev_t dev, int c));
+#endif
+
 #if NWSDISPLAY > 0
 	if (maccons_initted > 0)
 		wsdisplay_cnputc(dev,c);	
 #endif
+#if NZSC > 0
+        if (mac68k_machine.serial_boot_echo) 
+                zscnputc(mac68k_zsdev, c);
+#endif 
 }
 
 void
