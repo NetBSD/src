@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.21 2001/08/24 00:14:03 wiz Exp $	*/
+/*	$NetBSD: state.c,v 1.22 2002/02/11 10:57:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.21 2001/08/24 00:14:03 wiz Exp $");
+__RCSID("$NetBSD: state.c,v 1.22 2002/02/11 10:57:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -718,7 +718,7 @@ wontoption(option)
 			 * If we get a WONT TM, and had sent a DO TM,
 			 * don't respond with a DONT TM, just leave it
 			 * as is.  Short circut the state machine to
-			 * achive this.
+			 * achieve this.
 			 */
 			set_his_want_state_wont(TELOPT_TM);
 			return;
