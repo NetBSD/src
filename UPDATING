@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.118 2004/04/25 21:16:57 dbj Exp $
+$NetBSD: UPDATING,v 1.119 2004/05/03 03:57:15 atatat Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,23 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040426:
+	Support for the original dynamic sysctl node structure has
+	been removed in favor of the newer layout.  This affects
+	consumers of the create and delete interface, as well as
+	the dynamic discovery mechanism.  This is believed only to
+	be the sysctl(8) binary itself, at this point in time, so
+	the only effect of this should be that a sysctl binary
+	built from sources dated between 2003/12/04 and 2004/03/24
+	will not work on a kernel built from sources dated after
+	2004/04/25.  If you need a new sysctl binary but build.sh
+	does not work, make sure that your revision of
+	/usr/include/sys/sysctl.h is 1.112 (or later), and then
+	the following should provide a functioning sysctl binary:
+
+	cd src/sbin/sysctl
+	make USETOOLS=no dependall install
 
 20040425:
 	The ffs superblock issues listed below under 20040109 and 20030402
