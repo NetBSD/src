@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.178 2003/02/26 21:28:24 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.179 2003/05/11 15:19:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2003/02/26 21:28:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2003/05/11 15:19:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -476,14 +476,6 @@ copyfault:
 		 */
 		if (pcb->pcb_onfault == fusubail)
 			goto copyefault;
-#ifdef MULTIPROCESSOR
-		/*
-		 * process doing kernel-mode page fault must have
-		 * been running with big lock held
-		 */
-		if ((l->l_flag & L_BIGLOCK) == 0)
-			goto we_re_toast;
-#endif
 
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2003/05/11 15:19:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -380,10 +380,7 @@ copyfault:
 		 */
 		if (pcb->pcb_onfault == fusuintrfailure)
 			goto copyefault;
-#ifdef MULTIPROCESSOR
-		if ((l->l_flag & L_BIGLOCK) == 0)
-			goto we_re_toast;
-#endif
+
 		cr2 = rcr2();
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		goto faultcommon;
