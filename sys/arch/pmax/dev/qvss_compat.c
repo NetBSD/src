@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.1 1995/09/11 07:45:47 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.2 1995/09/18 03:01:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -625,8 +625,53 @@ genDeconfigMouse()
 }
 
 
-/*
- * And a mouse-report handler for redirected mouse input.
- */
+/**
+ ** And a mouse-report handler for redirected mouse input.
+ ** Could arguably be in its own source file, but it's only
+ ** used when the kernel is performing  mouse tracking.
+ **/
 
-#include "dec_mouse.c"
+/*
+ * Mouse-event parser.  Called as an upcall with each character
+ * read from a serial port. Accumulates complete mouse-event
+ *  reports and passes them up to framebuffer layer.
+ * Mouse events are reported as a 3-byte sequence:
+ * header+button state, delta-x, delta-y
+ */
+void
+mouseInput(cc)
+	int cc;
+{
+	register MouseReport *mrp;
+	static MouseReport currentRep;
+
+	mrp = &currentRep;
+	mrp->byteCount++;
+	if (cc & MOUSE_START_FRAME) {
+		/*
+		 * The first mouse report byte (button state).
+		 */
+		mrp->state = cc;
+		if (mrp->byteCount > 1)
+			mrp->byteCount = 1;
+	} else if (mrp->byteCount == 2) {
+		/*
+		 * The second mouse report byte (delta x).
+		 */
+		mrp->dx = cc;
+	} else if (mrp->byteCount == 3) {
+		/*
+		 * The final mouse report byte (delta y).
+		 */
+		mrp->dy = cc;
+		mrp->byteCount = 0;
+		if (mrp->dx != 0 || mrp->dy != 0) {
+			/*
+			 * If the mouse moved,
+			 * post a motion event.
+			 */
+			(genMouseEvent)(mrp);
+		}
+		(genMouseButtons)(mrp);
+	}
+}

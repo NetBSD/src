@@ -346,3 +346,49 @@ LKgetc(dev)
 	}
 	return (c);
 }
+
+
+/*
+ * Initialize the mouse.  (Doesn't really belong here.)
+ */
+void
+MouseInit(mdev, putc, getc)
+	dev_t mdev;
+	void (*putc) __P((dev_t, int));
+	int (*getc) __P((dev_t));
+{
+	int id_byte1, id_byte2, id_byte3, id_byte4;
+
+	/*
+	 * Initialize the mouse.
+	 */
+	(*putc)(mdev, MOUSE_SELF_TEST);
+	id_byte1 = (*getc)(mdev);
+	if (id_byte1 < 0) {
+		printf("MouseInit: Timeout on 1st byte of self-test report\n");
+		return;
+	}
+	id_byte2 = (*getc)(mdev);
+	if (id_byte2 < 0) {
+		printf("MouseInit: Timeout on 2nd byte of self-test report\n");
+		return;
+	}
+	id_byte3 = (*getc)(mdev);
+	if (id_byte3 < 0) {
+		printf("MouseInit: Timeout on 3rd byte of self-test report\n");
+		return;
+	}
+	id_byte4 = (*getc)(mdev);
+	if (id_byte4 < 0) {
+		printf("MouseInit: Timeout on 4th byte of self-test report\n");
+		return;
+	}
+	if ((id_byte2 & 0x0f) != 0x2)
+		printf("MouseInit: We don't have a mouse!!!\n");
+	/*
+	 * For some reason, the mouse doesn't see this command if it comes
+	 * too soon after a self test.
+	 */
+	DELAY(100);
+	(*putc)(mdev, MOUSE_INCREMENTAL);
+}
