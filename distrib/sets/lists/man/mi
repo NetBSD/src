@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.235 2000/05/02 12:46:06 simonb Exp $
+# $NetBSD: mi,v 1.236 2000/05/03 11:45:28 veego Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -764,6 +764,7 @@
 ./usr/share/man/cat8/intro.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipf.0
+./usr/share/man/cat8/ipfs.0
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
 ./usr/share/man/cat8/ipnat.0
@@ -1735,6 +1736,7 @@
 ./usr/share/man/man8/intro.8
 ./usr/share/man/man8/iostat.8
 ./usr/share/man/man8/ipf.8
+./usr/share/man/man8/ipfs.8
 ./usr/share/man/man8/ipfstat.8
 ./usr/share/man/man8/ipmon.8
 ./usr/share/man/man8/ipnat.8
