@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.22 1998/12/08 21:43:06 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.23 1999/01/16 01:40:30 abs Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -70,6 +70,7 @@ case $i in
 
 all)
 	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0 vt0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
 	sh $0 dz0 dl0 dhu0 rx0 rx1 raid0 raid1 raid2 raid3
