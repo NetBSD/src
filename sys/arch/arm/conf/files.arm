@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.38 2001/09/05 17:08:41 matt Exp $
+#	$NetBSD: files.arm,v 1.39 2001/10/18 14:03:43 rearnsha Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -8,7 +8,8 @@ defopt	opt_progmode.h	PROG26 PROG32
 # CPU types
 defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3 : PROG26
 defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8 
-			CPU_SA110 CPU_SA1100 CPU_SA1110 CPU_XSCALE : PROG32
+			CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110
+			CPU_XSCALE : PROG32
 
 # Floating point emulator
 defopt	ARMFPE
