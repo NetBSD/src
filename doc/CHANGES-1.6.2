@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.94 2003/07/10 15:45:55 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.95 2003/07/10 15:55:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1055,4 +1055,16 @@ sys/net/if_spppsubr.c				1.67 (via patch)
 	We should use IFQ_DEQUEUE to get packets from the send queue, not
 	IF_DEQUEUE. Hopefully this will fix ALTQ for ISDN and PPPoE interfaces.
 	[martin, ticket #1374]
+
+sys/netinet6/esp_input.c			1.30
+
+	Fix missing check for taillen against pkthdr.len.
+	[itojun, ticket #1364]
+
+sys/dev/pci/pcidevs				1.542
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Add some intel devices, from Quentin Garnier in private mail.
+	[bouyer, ticket #1365]
 
