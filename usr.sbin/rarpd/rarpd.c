@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.49 2003/07/13 12:29:20 itojun Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.49.2.1 2004/04/21 03:56:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.49 2003/07/13 12:29:20 itojun Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.49.2.1 2004/04/21 03:56:04 jmc Exp $");
 #endif
 
 
@@ -304,6 +304,7 @@ rarp_open(char *device)
 	struct ifreq ifr;
 	u_int   dlt;
 	int     immediate;
+	u_int	bufsize;
 
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
@@ -328,6 +329,11 @@ rarp_open(char *device)
 	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
 		rarperr(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
 		/* NOTREACHED */
+	}
+	/* Set a 32k buffer size for kernel use */
+	bufsize = 32768;
+	if (ioctl(fd, BIOCSBLEN, &bufsize) < 0) {
+		rarperr(NONFATAL, "BIOCSBLEN:%d: %s", bufsize, strerror(errno));
 	}
 	(void)strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name - 1);
 	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
