@@ -1,10 +1,10 @@
-.\"	$NetBSD: tzset.3,v 1.9 1997/06/18 01:12:58 jtc Exp $
+.\"	$NetBSD: tzset.3,v 1.10 2000/06/05 11:56:13 kleink Exp $
 .TH TZSET 3
 .SH NAME
 tzset \- initialize time conversion information
 .SH SYNOPSIS
 .nf
-.B void tzset()
+.B void tzset(void)
 .PP
 .fi
 .SH DESCRIPTION
@@ -234,4 +234,9 @@ ctime(3),
 strftime(3),
 time(3),
 tzfile(5)
+.SH STANDARDS
+The
+tzset()
+function conforms to
+IEEE Std1003.1-1988 (``POSIX'').
 .\" @(#)newtzset.3	7.5
