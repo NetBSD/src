@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2003/06/16 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2003/09/03 21:33:33 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -94,6 +94,7 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+#define	CLKF_BASEPRI(frame)	((frame)->pri == IPL_NONE)
 
 struct clockframe;
 
