@@ -1,10 +1,10 @@
-#   $NetBSD: TODO,v 1.3 1999/03/15 00:46:47 perseant Exp $
+#   $NetBSD: TODO,v 1.4 2000/11/17 19:14:41 perseant Exp $
 
 - If we put an LFS onto a striped disk, we want to be able to specify
   the segment size to be equal to the stripe size, regardless of whether
   this is a power of two; also, the first segment should just eat the
   label pad, like the segments eat the superblocks.  Then, we could
-  neatly lay out the segments along stripe boundaries.
+  neatly lay out the segments along stripe boundaries. [v2]
 
 - Working fsck_lfs.  (Have something that will verify, need something
   that will fix too.  Really, need a general-purpose external
@@ -13,10 +13,6 @@
 - Roll-forward agent, *at least* to verify the newer superblock's
   checkpoint (easy) but also to create a valid checkpoint for
   post-checkpoint writes (requires an external partial-segment writer).
-
-- Blocks created in the cache are currently not marked in any way,
-  except that b_blkno == b_lblkno, which can happen naturally too.  LFS
-  needs to know for accounting.
 
 - Inode blocks are currently the same size as the fs block size; but all
   the ones I've seen are mostly empty, and this will be especially true
@@ -66,11 +62,6 @@
 - Move lfs_countlocked() into vfs_bio.c, to replace count_locked_queue;
   perhaps keep the name, replace the function.  Could it count referenced
   vnodes as well, if it was in vfs_subr.c instead?
-
-- If we clean a DIROP vnode, and we toss a fake buffer in favor of a
-  pending held real buffer, we risk writing part of the dirop during a
-  synchronous checkpoint.  This is bad.  Now that we're doing `stingy'
-  cleaning, is there a good reason to favor real blocks over fake ones?
 
 - Why not delete the lfs_bmapv call, just mark everything dirty that
   isn't deleted/truncated?  Get some numbers about what percentage of

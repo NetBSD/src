@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.31 2000/11/12 07:58:36 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.32 2000/11/17 19:14:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,20 +107,6 @@ int	lfs_writing          = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
 extern int lfs_dostats;
 
-
-/*
- * #define WRITE_THRESHHOLD    ((nbuf >> 1) - 10)
- * #define WAIT_THRESHHOLD     (nbuf - (nbuf >> 2) - 10)
- */
-#define LFS_MAX_BUFS        ((nbuf >> 2) - 10)
-#define LFS_WAIT_BUFS       ((nbuf >> 1) - (nbuf >> 3) - 10)
-/* These are new ... is LFS taking up too much memory in its buffers? */
-#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * NBPG)
-#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
-#define LFS_BUFWAIT         2
-
-inline static int lfs_fits(struct lfs *, int);
-
 /*
  * Try to reserve some blocks, prior to performing a sensitive operation that
  * requires the vnode lock to be honored.  If there is not enough space, give
@@ -208,7 +194,7 @@ lfs_bwrite(v)
  * inode blocks, a summary block, plus potentially the ifile inode and
  * the segment usage table, plus an ifile page.
  */
-inline static int
+int
 lfs_fits(struct lfs *fs, int db)
 {
 	int needed;
@@ -229,6 +215,41 @@ lfs_fits(struct lfs *fs, int db)
 }
 
 int
+lfs_availwait(fs, db)
+	struct lfs *fs;
+	int db;
+{
+	int error;
+	CLEANERINFO *cip;
+	struct buf *cbp;
+
+	while (!lfs_fits(fs, db)) {
+		/*
+		 * Out of space, need cleaner to run.
+		 * Update the cleaner info, then wake it up.
+		 * Note the cleanerinfo block is on the ifile
+		 * so it CANT_WAIT.
+		 */
+		LFS_CLEANERINFO(cip, fs, cbp);
+		LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
+		
+		printf("lfs_availwait: out of available space, "
+		       "waiting on cleaner\n");
+		
+		wakeup(&lfs_allclean_wakeup);
+		wakeup(&fs->lfs_nextseg);
+#ifdef DIAGNOSTIC
+		if (fs->lfs_seglock && fs->lfs_lockpid == curproc->p_pid)
+			panic("lfs_availwait: deadlock");
+#endif
+		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", 0);
+		if (error)
+			return (error);
+	}
+	return 0;
+}
+
+int
 lfs_bwrite_ext(bp, flags)
 	struct buf *bp;
 	int flags;
@@ -236,15 +257,14 @@ lfs_bwrite_ext(bp, flags)
 	struct lfs *fs;
 	struct inode *ip;
 	int db, error, s;
-	struct buf *cbp;
-	CLEANERINFO *cip;
 	
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
 	 * In particular the cleaner can't write blocks either.
 	 */
         if(VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
-		bp->b_flags &= ~(B_DELWRI|B_LOCKED|B_READ|B_ERROR);
+		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
+		LFS_UNLOCK_BUF(bp);
 		if(bp->b_flags & B_CALL)
 			bp->b_flags &= ~B_BUSY;
 		else
@@ -269,27 +289,10 @@ lfs_bwrite_ext(bp, flags)
 	if (!(bp->b_flags & B_LOCKED)) {
 		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
 		db = fragstodb(fs, numfrags(fs, bp->b_bcount));
-		while (!lfs_fits(fs, db) && !CANT_WAIT(bp,flags)) {
-			/*
-			 * Out of space, need cleaner to run.
-			 * Update the cleaner info, then wake it up.
-			 * Note the cleanerinfo block is on the ifile
-			 * so it CANT_WAIT.
-			 */
-			LFS_CLEANERINFO(cip, fs, cbp);
-			LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
-
-			printf("lfs_bwrite: out of available space, "
-			       "waiting on cleaner\n");
-
-			wakeup(&lfs_allclean_wakeup);
-			wakeup(&fs->lfs_nextseg);
-			error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
-			    "cleaner", 0);
-			if (error) {
-				/* printf("lfs_bwrite: error in tsleep"); */
+		if (!CANT_WAIT(bp, flags)) {
+			if ((error = lfs_availwait(fs, db)) != 0) {
 				brelse(bp);
-				return (error);
+				return error;
 			}
 		}
 		
@@ -300,11 +303,11 @@ lfs_bwrite_ext(bp, flags)
 			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		}
 		fs->lfs_avail -= db;
-		++locked_queue_count;
-		locked_queue_bytes += bp->b_bufsize;
-		s = splbio();
-		bp->b_flags |= B_DELWRI | B_LOCKED;
+		bp->b_flags |= B_DELWRI;
+
+		LFS_LOCK_BUF(bp);
 		bp->b_flags &= ~(B_READ | B_ERROR);
+		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
 
@@ -387,10 +390,12 @@ lfs_flush(fs, flags)
 	}
 	simple_unlock(&mountlist_slock);
 
+#if 1 || defined(DEBUG)
 	s = splbio();
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes);
 	splx(s);
 	wakeup(&locked_queue_count);
+#endif /* 1 || DEBUG */
 
 	lfs_writing = 0;
 }
@@ -559,10 +564,8 @@ lfs_countlocked(count, bytes)
 
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
 	    bp = bp->b_freelist.tqe_next) {
-#ifdef DEBUG_LOCKED_LIST
 		if (bp->b_flags & B_CALL) /* Malloced buffer */
 			continue;
-#endif
 		n++;
 		size += bp->b_bufsize;
 #ifdef DEBUG_LOCKED_LIST
@@ -571,7 +574,7 @@ lfs_countlocked(count, bytes)
 			      " buffers locked than exist");
 #endif
 	}
-#ifdef DEBUG_LFS
+#ifdef DEBUG
 	/* Theoretically this function never really does anything */
 	if (n != *count)
 		printf("lfs_countlocked: adjusted buf count from %d to %d\n",
