@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: info_union.c,v 1.1 1993/11/27 21:17:22 mycroft Exp $
+ * $Id: info_union.c,v 1.2 1993/12/22 18:24:11 cgd Exp $
  *
  */
 
@@ -52,7 +52,7 @@
 
 #ifdef HAS_UNION_MAPS
 
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(__NetBSD__)
 #include <dirent.h>
 #define	DIRENT struct dirent
 #else
