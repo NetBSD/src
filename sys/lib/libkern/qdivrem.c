@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.3 1994/10/26 06:42:40 cgd Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.4 1995/01/06 00:48:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #ifdef notdef
 static char *sccsid = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char *rcsid = "$NetBSD: qdivrem.c,v 1.3 1994/10/26 06:42:40 cgd Exp $";
+static char *rcsid = "$NetBSD: qdivrem.c,v 1.4 1995/01/06 00:48:37 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,7 @@ static char *rcsid = "$NetBSD: qdivrem.c,v 1.3 1994/10/26 06:42:40 cgd Exp $";
 
 #include "quad.h"
 
-#define	B	(1 << HALF_BITS)	/* digit base */
+#define	B	((long)1 << HALF_BITS)	/* digit base */
 
 /* Combine two `digits' to make a single two-digit number. */
 #define	COMBINE(a, b) (((u_long)(a) << HALF_BITS) | (b))
