@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.8 1995/10/02 17:30:04 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.9 1995/10/02 17:35:11 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.8 1995/10/02 17:30:04 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.9 1995/10/02 17:35:11 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3492,6 +3492,7 @@ chkmisc(tn, vctx, tctx, eqwarn, fcall, rvdisc, szof)
 	int	nrvdisc, cvctx, ctctx;
 	op_t	op;
 	scl_t	sc;
+	dinfo_t	*di;
 
 	if (tn == NULL)
 		return;
@@ -3533,8 +3534,17 @@ chkmisc(tn, vctx, tctx, eqwarn, fcall, rvdisc, szof)
 	case SHRASS:
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			sc = ln->tn_sym->s_scl;
+			/*
+			 * Look if there was a asm statement in one of the
+			 * compound statements we are in. If not, we don't
+			 * print a warning.
+			 */
+			for (di = dcs; di != NULL; di = di->d_nxt) {
+				if (di->d_asm)
+					break;
+			}
 			if (sc != EXTERN && sc != STATIC &&
-			    !ln->tn_sym->s_set && !szof) {
+			    !ln->tn_sym->s_set && !szof && di == NULL) {
 				/* %s may be used before set */
 				warning(158, ln->tn_sym->s_name);
 				setsflg(ln->tn_sym);
