@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.25 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.26 2000/04/16 15:28:00 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.55 2000/04/16 14:08:30 itojun Exp $	*/
 
 /*
@@ -173,6 +173,7 @@ nd6_ifattach(ifp)
 	ND.reachable = ND_COMPUTE_RTIME(ND.basereachable);
 	ND.retrans = RETRANS_TIMER;
 	ND.receivedra = 0;
+	ND.flags = ND6_IFF_PERFORMNUD;
 	nd6_setmtu(ifp);
 #undef ND
 }
@@ -392,6 +393,8 @@ nd6_timer(ignored_arg)
 		struct ifnet *ifp;
 		struct sockaddr_in6 *dst;
 		struct llinfo_nd6 *next = ln->ln_next;
+		/* XXX: used for the DELAY case only: */
+		struct nd_ifinfo *ndi = NULL;
 
 		if ((rt = ln->ln_rt) == NULL) {
 			ln = next;
@@ -401,6 +404,7 @@ nd6_timer(ignored_arg)
 			ln = next;
 			continue;
 		}
+		ndi = &nd_ifinfo[ifp->if_index];
 		dst = (struct sockaddr_in6 *)rt_key(rt);
 
 		if (ln->ln_expire > time_second) {
@@ -454,14 +458,19 @@ nd6_timer(ignored_arg)
 		 * routine.
 		 */
 		case ND6_LLINFO_DELAY:
-			ln->ln_asked = 1;
-			ln->ln_state = ND6_LLINFO_PROBE;
-			ln->ln_expire = time_second +
-				nd_ifinfo[ifp->if_index].retrans / 1000;
-			nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr,
-				ln, 0);
+			if (ndi && (ndi->flags & ND6_IFF_PERFORMNUD) != 0) {
+				/* We need NUD */
+				ln->ln_asked = 1;
+				ln->ln_state = ND6_LLINFO_PROBE;
+				ln->ln_expire = time_second +
+					ndi->retrans / 1000;
+				nd6_ns_output(ifp, &dst->sin6_addr,
+					      &dst->sin6_addr,
+					      ln, 0);
+			}
+			else
+				ln->ln_state = ND6_LLINFO_STALE; /* XXX */
 			break;
-
 		case ND6_LLINFO_PROBE:
 			if (ln->ln_asked < nd6_umaxtries) {
 				ln->ln_asked++;
@@ -1074,14 +1083,21 @@ nd6_rtrequest(req, rt, sa)
 #endif
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
-		if (gate->sa_family != AF_LINK ||
-		    gate->sa_len < sizeof(null_sdl)) {
-			log(LOG_DEBUG, "nd6_rtrequest: bad gateway value\n");
-			break;
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+			/*
+			 * Address resolution isn't necessary for a point to
+			 * point link, so we can skip this test for a p2p link.
+			 */
+			if (gate->sa_family != AF_LINK ||
+			    gate->sa_len < sizeof(null_sdl)) {
+				log(LOG_DEBUG,
+				    "nd6_rtrequest: bad gateway value\n");
+				break;
+			}
+			SDL(gate)->sdl_type = ifp->if_type;
+			SDL(gate)->sdl_index = ifp->if_index;
 		}
-		SDL(gate)->sdl_type = ifp->if_type;
-		SDL(gate)->sdl_index = ifp->if_index;
-		if (ln != 0)
+		if (ln != NULL)
 			break;	/* This happens on a route change */
 		/*
 		 * Case 2: This route may come from cloning, or a manual route
@@ -1379,6 +1395,10 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = nd_ifinfo[ifp->if_index];
+		break;
+	case SIOCSIFINFO_FLAGS:
+		/* XXX: almost all other fields of ndi->ndi is unused */
+		nd_ifinfo[ifp->if_index].flags = ndi->ndi.flags;
 		break;
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* flush default router list */
@@ -1722,16 +1742,24 @@ nd6_output(ifp, m0, dst, rt0)
 
 	/*
 	 * XXX: we currently do not make neighbor cache on any interface
-	 * other than ARCnet, Ethernet and FDDI.
+	 * other than ARCnet, Ethernet, FDDI and GIF.
+	 *
+	 * draft-ietf-ngtrans-mech-04.txt says:
+	 * - unidirectional tunnels needs no ND
 	 */
 	switch (ifp->if_type) {
 	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
+	case IFT_GIF:		/* XXX need more cases? */
 		break;
 	default:
 		goto sendpkt;
 	}
+
+	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
+	    (nd_ifinfo[ifp->if_index].flags & ND6_IFF_PERFORMNUD) == 0)
+		goto sendpkt;
 
 	/*
 	 * next hop determination. This routine is derived from ether_outpout.
@@ -1782,6 +1810,10 @@ nd6_output(ifp, m0, dst, rt0)
 		senderr(EIO);	/* XXX: good error? */
 	}
 
+	/* We don't have to do link-layer address resolution on a p2p link. */
+	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
+	    ln->ln_state < ND6_LLINFO_REACHABLE)
+		ln->ln_state = ND6_LLINFO_STALE;
 
 	/*
 	 * The first time we send a packet to a neighbor whose entry is
