@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.1 2001/02/02 07:28:54 mrg Exp $
+;	$NetBSD: syscalls.master,v 1.2 2001/02/04 09:47:22 mrg Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp 
 
@@ -139,7 +139,7 @@
 69	NOARGS		{ int netbsd32_sbrk(netbsd32_intptr_t incr); }
 70	NOARGS		{ int netbsd32_sstk(int incr); }
 71	STD		{ netbsd32_voidp sunos32_sys_mmap(netbsd32_voidp addr, netbsd32_size_t len, \
-			    int prot, int flags, int fd, long pos); }
+			    int prot, int flags, int fd, netbsd32_long pos); }
 72	NOARGS		{ int netbsd32_ovadvise(int anom); } vadvise
 73	NOARGS		{ int netbsd32_munmap(netbsd32_voidp addr, netbsd32_size_t len); }
 74	NOARGS		{ int netbsd32_mprotect(netbsd32_voidp addr, netbsd32_size_t len, \
