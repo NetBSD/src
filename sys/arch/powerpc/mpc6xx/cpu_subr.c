@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.2.1 2002/07/15 00:33:11 gehenna Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.2.2 2002/07/16 13:09:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -35,6 +35,7 @@
 
 #include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
+#include "opt_altivec.h"
 #include "sysmon_envsys.h"
 
 #include <sys/param.h>
@@ -67,6 +68,7 @@ struct cpu_info cpu_info[CPU_MAXNUM];
 struct cpu_info cpu_info_store;
 #endif
 
+int cpu_altivec;
 char cpu_model[80];
 
 void
@@ -79,6 +81,7 @@ cpu_probe_cache(void)
 
 	switch (vers) {
 #define	K	*1024
+	case IBM750FX:
 	case MPC601:
 	case MPC750:
 	case MPC7450:
@@ -87,9 +90,16 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 8;
 		break;
+	case MPC603:
+		curcpu()->ci_ci.dcache_size = 8 K;
+		curcpu()->ci_ci.icache_size = 8 K;
+		assoc = 2;
+		break;
 	case MPC603e:
 	case MPC603ev:
 	case MPC604:
+	case MPC8240:
+	case MPC8245:
 		curcpu()->ci_ci.dcache_size = 16 K;
 		curcpu()->ci_ci.icache_size = 16 K;
 		assoc = 4;
@@ -100,8 +110,8 @@ cpu_probe_cache(void)
 		assoc = 4;
 		break;
 	default:
-		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
-		curcpu()->ci_ci.icache_size = PAGE_SIZE;
+		curcpu()->ci_ci.dcache_size = NBPG;
+		curcpu()->ci_ci.icache_size = NBPG;
 		assoc = 1;
 #undef	K
 	}
@@ -113,7 +123,7 @@ cpu_probe_cache(void)
 	/*
 	 * Possibly recolor.
 	 */
-        uvm_page_recolor(atop(curcpu()->ci_ci.dcache_line_size / assoc));
+	uvm_page_recolor(atop(curcpu()->ci_ci.dcache_size / assoc));
 }
 
 struct cpu_info *
@@ -188,8 +198,11 @@ cpu_attach_common(struct device *self, int id)
 	case MPC603ev:
 	case MPC604ev:
 	case MPC750:
+	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
+	case MPC8240:
+	case MPC8245:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -213,6 +226,7 @@ cpu_attach_common(struct device *self, int id)
 
 #ifdef NAPMODE
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -223,6 +237,7 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
@@ -263,7 +278,7 @@ cpu_attach_common(struct device *self, int id)
 	/*
 	 * Display speed and cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 ||
+	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
 		printf("%s", self->dv_xname);
 		cpu_print_speed();
@@ -278,7 +293,7 @@ cpu_attach_common(struct device *self, int id)
 	 * XXX supported by Motorola and may return values that are off by 
 	 * XXX 35-55 degrees C.
 	 */
-	if (vers == MPC750)
+	if (vers == MPC750 || vers == IBM750FX)
 		cpu_tau_setup(ci);
 #endif
 
@@ -306,14 +321,16 @@ cpu_attach_common(struct device *self, int id)
 		&ci->ci_ev_traps, self->dv_xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_ali_fatal, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_ali, self->dv_xname, "user alignment traps");
-	if (vers == MPC7400 || vers == MPC7410 || vers == MPC7450) {
-		evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_traps, self->dv_xname,
-			"user AltiVec unavailable");
+	evcnt_attach_dynamic(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_umchk, self->dv_xname, "user MCHK failures");
+	evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, self->dv_xname, "AltiVec unavailable");
+#ifdef ALTIVEC
+	if (cpu_altivec) {
 		evcnt_attach_dynamic(&ci->ci_ev_vecsw, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_vec, self->dv_xname,
-			"user AltiVec context switches");
+		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
+#endif
 
 	return ci;
 }
@@ -331,12 +348,14 @@ static const struct cputab models[] = {
 	{ MPC604,     "604" },
 	{ MPC604ev,   "604ev" },
 	{ MPC620,     "620" },
+	{ IBM750FX,   "750FX" },
 	{ MPC750,     "750" },
 	{ MPC7400,   "7400" },
 	{ MPC7410,   "7410" },
 	{ MPC7450,   "7450" },
 	{ MPC7455,   "7455" },
 	{ MPC8240,   "8240" },
+	{ MPC8245,   "8245" },
 	{ 0,	       NULL }
 };
 
@@ -354,8 +373,8 @@ cpu_identify(char *str, size_t len)
 		maj = min <= 4 ? 1 : 2;
 		break;
 	default:
-		maj = (pvr >>  8) & 0xff;
-		min = (pvr >>  0) & 0xff;
+		maj = (pvr >>  8) & 0xf;
+		min = (pvr >>  0) & 0xf;
 	}
 
 	for (cp = models; cp->name != NULL; cp++) {
@@ -424,6 +443,11 @@ cpu_config_l2cr(int vers)
 				printf(", %cMB L3 backside cache",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 			printf("\n");
+			return;
+		}
+		if (vers == IBM750FX) {
+			printf(": 512KB L2 cache\n");
+			return;
 		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:

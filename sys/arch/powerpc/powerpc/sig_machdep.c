@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5 2001/05/28 00:12:21 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.16.1 2002/07/16 13:10:00 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,16 +44,17 @@
  * Send a signal to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = trapframe(p);
 
@@ -69,10 +70,6 @@ sendsig(catcher, sig, mask, code)
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
 
 	/* Save register context. */
 	frame.sf_sc.sc_frame = *tf;
@@ -103,14 +100,34 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  Note the trampoline version
+	 * numbers are coordinated with machine-dependent code in libc.
 	 */
-	tf->fixreg[1] = (int)fp;
-	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (int)code;
-	tf->fixreg[5] = (int)&fp->sf_sc;
-	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		tf->fixreg[1] = (int)fp;
+		tf->lr = (int)catcher;
+		tf->fixreg[3] = (int)sig;
+		tf->fixreg[4] = (int)code;
+		tf->fixreg[5] = (int)&fp->sf_sc;
+		tf->srr0 = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		tf->fixreg[1] = (int)fp;
+		tf->lr = (int)catcher;
+		tf->fixreg[3] = (int)sig;
+		tf->fixreg[4] = (int)code;
+		tf->fixreg[5] = (int)&fp->sf_sc;
+		tf->srr0 = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

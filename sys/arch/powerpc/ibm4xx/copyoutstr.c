@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.1 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.1.16.1 2002/07/16 13:09:56 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 			"sync; isync;"
 			"addi %3,%3,1;"			/* Inc len */
 			"or. %2,%2,%2;"
-			"bdnzf 2,1b;"			/* 
+			"bdnzf 2,1b;"			/*
 							 * while(ctr-- && !zero)
 							 */
 

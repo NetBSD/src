@@ -41,6 +41,7 @@
 #define	SPR_SRR0		0x01a	/* 468 Save/Restore Register 0 */
 #define	SPR_SRR1		0x01b	/* 468 Save/Restore Register 1 */
 #define	SPR_USPRG0		0x100	/* 4.. User SPR General 0 */
+#define SPR_VRSAVE		0x100	/* .6. AltiVec VRSAVE */
 #define	SPR_SPRG0		0x110	/* 468 SPR General 0 */
 #define	SPR_SPRG1		0x111	/* 468 SPR General 1 */
 #define	SPR_SPRG2		0x112	/* 468 SPR General 2 */
@@ -65,9 +66,11 @@
 #define   MPC620		  0x0014
 #define   MPC860		  0x0050
 #define   MPC8240		  0x0081
+#define   IBM750FX		  0x7000
 #define   MPC7450		  0x8000
 #define   MPC7455		  0x8001
 #define   MPC7410		  0x800c
+#define   MPC8245		  0x8081
 #define   IBM405GP		  0x4011
 #define   IBM405L		  0x4161
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */

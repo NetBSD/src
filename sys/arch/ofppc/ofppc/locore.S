@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2002/03/09 23:35:58 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.6.1 2002/07/16 13:00:02 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,8 +74,8 @@ GLOBAL(proc0paddr)
 	.data
 idle_u:
 	.long	0			/* fake uarea during idle after exit */
-openfirmware_entry:
-	.long	0			/* openfirmware entry point */
+OF_buffer:
+	.space	NBPG
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -92,14 +92,8 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
-#ifdef	FIRMWORKSBUGS
-	mfmsr	0
-	andi.	0,0,PSL_IR|PSL_DR
-	beq	1f
+	bl	_C_LABEL(ofwinit)	/* init our OF hooks */
 
-	bl	_C_LABEL(ofwr_init)
-1:
-#endif
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 	isync
@@ -136,19 +130,14 @@ __start:
 	mr	8,9			/* r8 = end of kernel + symbols */
 	b	2f
 1:
+#endif
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
 2:
-#else
-	lis	8,_C_LABEL(end)@ha
-	addi	8,8,_C_LABEL(end)@l
-#endif
 	li	9,PGOFSET
 	add	8,8,9
 	andc	8,8,9
-	lis	9,_C_LABEL(OF_buf)@ha
-	stw	8,_C_LABEL(OF_buf)@l(9)
-	addi	8,8,NBPG
+
 	lis	9,idle_u@ha
 	stw	8,idle_u@l(9)
 	addi	8,8,USPACE		/* space for idle_u */
@@ -159,8 +148,11 @@ __start:
 	xor	0,0,0
 	stwu	0,-16(1)		/* end of stack chain */
 	
-	lis	8,openfirmware_entry@ha
-	stw	5,openfirmware_entry@l(8) /* save client interface handler */
+	lis	8,OF_buffer@ha
+	addi	8,8,OF_buffer@l
+	lis	9,_C_LABEL(OF_buf)@ha
+	stw	8,_C_LABEL(OF_buf)@l(9)
+
 	lis	3,__start@ha
 	addi	3,3,__start@l
 	mr	5,6			/* args string */
@@ -169,107 +161,9 @@ __start:
 	b	_C_LABEL(OF_exit)
 
 /*
- * OpenFirmware entry point
+ * Pull in common OFW code.
  */
-ENTRY(openfirmware)
-	mflr	0			/* save return address */
-	stw	0,4(1)
-	stwu	1,-16(1)		/* setup stack frame */
-
-	mfmsr	4			/* save msr */
-	stw	4,8(1)
-
-	lis	4,openfirmware_entry@ha	/* get firmware entry point */
-	lwz	4,openfirmware_entry@l(4)
-	mtlr	4
-
-	li	0,0			/* turn off any ints/mmu/etc. */
-	mtmsr	0
-	isync
-
-	blrl				/* call OpenFirmware */
-
-	lwz	4,8(1)			/* restore msr */
-	mtmsr	4
-	isync
-
-	lwz	1,0(1)			/* and return */
-	lwz	0,4(1)
-	mtlr	0
-	blr
-
-/*
- * Switch to/from OpenFirmware real mode stack
- *
- * Note: has to be called as the very first thing in OpenFirmware interface
- * routines.
- * E.g.:
- * int
- * OF_xxx(arg1, arg2)
- * type arg1, arg2;
- * {
- *	static struct {
- *		char *name;
- *		int nargs;
- *		int nreturns;
- *		char *method;
- *		int arg1;
- *		int arg2;
- *		int ret;
- *	} args = {
- *		"xxx",
- *		2,
- *		1,
- *	};
- *
- *	ofw_stack();
- *	args.arg1 = arg1;
- *	args.arg2 = arg2;
- *	if (openfirmware(&args) < 0)
- *		return -1;
- *	return args.ret;
- * }
- */
-
-	.local	firmstk
-	.comm	firmstk,NBPG,8
-
-ENTRY(ofw_stack)
-	mfmsr	8			/* turn off interrupts */
-	andi.	0,8,~(PSL_EE|PSL_RI)@l
-	mtmsr	0
-	stw	8,4(1)			/* abuse return address slot */
-
-	lwz	5,0(1)			/* get length of stack frame */
-	subf	5,1,5
-
-	lis	7,firmstk+NBPG-8@ha
-	addi	7,7,firmstk+NBPG-8@l
-	lis	6,ofw_back@ha
-	addi	6,6,ofw_back@l
-	subf	4,5,7			/* make room for stack frame on
-					   new stack */
-	stw	6,-4(7)			/* setup return pointer */
-	stwu	1,-8(7)
-	
-	stw	7,-8(4)
-
-	addi	3,1,8
-	addi	1,4,-8
-	subi	5,5,8
-
-	b	_C_LABEL(ofbcopy)	/* and copy it */
-
-ofw_back:
-	lwz	1,0(1)			/* get callers original stack pointer */
-
-	lwz	0,4(1)			/* get saved msr from abused slot */
-	mtmsr	0
-	
-	lwz	1,0(1)			/* return */
-	lwz	0,4(1)
-	mtlr	0
-	blr
+#include <powerpc/mpc6xx/ofw_subr.S>
 
 /*
  * Pull in common switch / setfault code.

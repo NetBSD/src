@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.2.1 2002/07/15 00:33:12 gehenna Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.2.2 2002/07/16 13:09:59 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -904,7 +904,7 @@ pmap_pinit(pmap_t pm)
 		}
 		pmap_vsid_bitmap[n] |= mask;
 		for (i = 0; i < 16; i++)
-			pm->pm_sr[i] = VSID_MAKE(i, hash);
+			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY;
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -2688,9 +2688,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	kernelstart = trunc_page(kernelstart);
 	kernelend = round_page(kernelend);
 	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
-		mp->start = round_page(mp->start);
+		s = round_page(mp->start);
+		mp->size -= (s - mp->start);
 		mp->size = trunc_page(mp->size);
-		s = mp->start;
+		mp->start = s;
 		e = mp->start + mp->size;
 
 		DPRINTFN(BOOT,
@@ -2896,11 +2897,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 
-	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
-	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
@@ -2934,7 +2935,9 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",
 		    pbuf, cnt);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 

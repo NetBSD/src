@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.69 2001/12/09 05:00:49 atatat Exp $
+#	$NetBSD: Makefile.pc532,v 1.69.8.1 2002/07/16 13:02:15 gehenna Exp $
 
 # Makefile for NetBSD
 #
@@ -46,6 +46,9 @@ KERN_AS=	obj
 MD_OBJS=	locore.o
 MD_CILES=
 MD_SFILES=	${PC532}/pc532/locore.s
+
+# egcs-1.1.2 bug fix; see doc/HACKS - egcs-pc532-ip6_mroute
+CC_OPT1=	${NORMAL_C:C/-O[0-9]+/-O1/}
 
 locore.o: ${PC532}/pc532/locore.s assym.h
 	${NORMAL_S}
