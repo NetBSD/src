@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2000/12/19 21:09:57 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2001/05/12 22:35:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,7 @@ struct clockframe {
 	u_short	sr;		/* sr at time of interrupt */
 	u_long	pc;		/* pc at time of interrupt */
 	u_short	vo;		/* vector offset (4-word frame) */
-};
+} __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
