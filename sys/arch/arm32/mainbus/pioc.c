@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.2 1998/01/13 02:10:20 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.3 1998/01/18 03:42:59 mark Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -91,7 +91,9 @@ bus_space_tag_t comconstag = &mainbus_bs_tag;
 static int  piocmatch	 __P((struct device *, struct cfdata *, void *));
 static void piocattach	 __P((struct device *, struct device *, void *));
 static int  piocprint	 __P((void *aux, const char *name));
+#if 0
 static int  piocsearch	 __P((struct device *, struct cfdata *, void *));
+#endif
 static int  piocsubmatch __P((struct device *, struct cfdata *, void *));
 static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
 			      int config_entry, int *id, int *revision));
@@ -266,7 +268,6 @@ piocsubmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pioc_softc *sc = (struct pioc_softc *)parent;
 	struct pioc_attach_args *pa = aux;
 	int tryagain;
 
