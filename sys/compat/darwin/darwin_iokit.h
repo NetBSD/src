@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.4 2003/05/22 22:07:39 manu Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.5 2003/11/01 00:32:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@ typedef struct {
 
 #include <compat/darwin/darwin_iohidsystem.h> 
 #include <compat/darwin/darwin_ioframebuffer.h>
+#include <compat/darwin/darwin_ioresources.h>
 
 #define DARWIN_IOKIT_DEVCLASSES			\
 	&darwin_iohidsystem_devclass,		\
-	&darwin_ioframebuffer_devclass,
+	&darwin_ioframebuffer_devclass,		\
+	&darwin_iokbd_devclass,
 							
 #endif /* _DARWIN_IOKIT_H_ */

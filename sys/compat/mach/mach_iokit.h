@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.19 2003/10/18 13:25:27 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.20 2003/11/01 00:32:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -555,6 +555,7 @@ struct mach_iokit_property {
 
 struct mach_iokit_devclass {
 	char *mid_string;
+	struct mach_iokit_devclass *mid_parent;
 	char *mid_properties;
 	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
