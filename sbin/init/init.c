@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.24 1997/03/14 00:44:35 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.25 1997/07/19 17:06:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
+static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.24 1997/03/14 00:44:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.25 1997/07/19 17:06:29 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -858,7 +858,7 @@ find_session(pid)
 	key.size = sizeof pid;
 	if ((*session_db->get)(session_db, &key, &data, 0) != 0)
 		return 0;
-	memcpy(&ret, data.data, sizeof(ret));
+	memmove(&ret, data.data, sizeof(ret));
 	return ret;
 }
 
