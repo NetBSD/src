@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.9 1999/03/31 16:12:52 cgd Exp $ */
+/* $NetBSD: start.S,v 1.10 1999/04/01 11:08:39 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -48,19 +48,18 @@ NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
 Lstartgp:
 	LDGP(pv)
 
-#if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
+#ifndef PRIMARY_BOOTBLOCK
 	lda	sp,start		/* start stack below text */
 	lda	sp,-ENTRY_FRAME(sp)
+#endif
 
 	or	a0,zero,s0
-#endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
 	lda	a0,_edata
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
-#if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	or	s0,zero,a0
-#endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
+
 
 	CALL(main)			/* transfer to C */
 
@@ -68,3 +67,27 @@ XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)
+
+/*
+ * Dummy routine for GCC2.
+ */
+LEAF(__main,0)
+	RET
+END(__main)
+
+/*
+ * cpu_number
+ *	Return the cpu number, using the whami instruction.
+ */
+LEAF(cpu_number, 0)
+	call_pal PAL_VMS_mfpr_whami
+	RET
+END(cpu_number)
+/*
+ * Execute Instruction Memory Barrier operation from the Common
+ * Palcode Architecture. Establishes I-Cache coherency point.
+ */
+LEAF(alpha_pal_imb, 0)
+	imb
+	RET
+END(alpha_pal_imb);

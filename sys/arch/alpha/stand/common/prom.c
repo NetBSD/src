@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.8 1999/03/31 03:34:21 cgd Exp $ */
+/* $NetBSD: prom.c,v 1.9 1999/04/01 11:08:39 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -35,10 +35,7 @@
 
 int console;
 
-#if !defined(NO_GETCHAR) || !defined(NO_PUTCHAR_HALT)
-static int test_getchar(int *);
-#endif
-static void putonechar(int c);
+static int test_getchar(prom_return_t *, int *);
 
 void
 init_prom_calls()
@@ -59,65 +56,58 @@ init_prom_calls()
 	console = buf[0] - '0';
 }
 
-#if !defined(NO_GETCHAR) || !defined(NO_PUTCHAR_HALT)
 static int
-test_getchar(xc)
+test_getchar(xret, xc)
+	prom_return_t *xret;
 	int *xc;
 {
-	prom_return_t ret;
-
-	ret.bits = prom_dispatch(PROM_R_GETC, console);
-	*xc = ret.u.retval;
-	return ret.u.status == 0 || ret.u.status == 1;
+	xret->bits = prom_dispatch(PROM_R_GETC, console);
+	*xc = xret->u.retval;
+	return xret->u.status == 0 || xret->u.status == 1;
 }
-#endif
 
-#if !defined(NO_GETCHAR)
 int
 getchar()
 {
 	int c;
+	prom_return_t ret;
 
 	for (;;) {
-		if (test_getchar(&c)) {
+		if (test_getchar(&ret, &c)) {
 			if (c == 3)
 				halt();
 			return c;
 		}
 	}
 }
-#endif
-
-static void
-putonechar(c)
-	int c;
-{
-	prom_return_t ret;
-	char cbuf = c;
-
-	do {
-		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
-	} while ((ret.u.retval & 1) == 0);
-}
 
 void
 putchar(c)
 	int c;
 {
-#if !defined(NO_PUTCHAR_HALT)
+	prom_return_t ret;
+	char cbuf;
 	int typed_c;
-#endif
 
 	if (c == '\r' || c == '\n') {
-		putonechar('\r');
-		c = '\n';
-	}
-	putonechar(c);
-#if !defined(NO_PUTCHAR_HALT)
-	if (test_getchar(&typed_c))
+		cbuf = '\r';
+		do {
+			ret.bits = prom_dispatch(PROM_R_PUTS, console,
+			    &cbuf, 1);
+		} while ((ret.u.retval & 1) == 0);
+		cbuf = '\n';
+	} else
+		cbuf = c;
+	do {
+		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+	} while ((ret.u.retval & 1) == 0);
+	ret.bits = prom_dispatch(PROM_R_GETC, console);
+	if (ret.u.status == 0 || ret.u.status == 1)
+		if (ret.u.retval == 3)
+			halt();
+	if (test_getchar(&ret, &typed_c))
 		if (typed_c == 3)
 			halt();
-#endif
 }
 
 int
