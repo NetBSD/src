@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.7 1994/12/15 20:48:56 mycroft Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8 1994/12/28 08:52:04 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -134,7 +134,8 @@ adosfs_mountfs(mp, path, bdvp, args, p)
 	amp->bsize = dl.d_secsize;
 	amp->nwords = amp->bsize >> 2;
 	amp->devvp = bdvp;
-	amp->rootb = (parp->p_size - 1 + 2) >> 1;
+/*	amp->rootb = (parp->p_size - 1 + 2) >> 1;*/
+	amp->rootb = (parp->p_size - 1 + parp->p_cpg) >> 1;
 	amp->uid = args->uid;	/* XXX check? */
 	amp->gid = args->gid;	/* XXX check? */
 	amp->mask = args->mask;
@@ -413,10 +414,34 @@ adosfs_vget(mp, an, vpp)
 	else if (ap->type == ALFILE)
 		ap->lastindblk = ap->linkto;
 
-	if (ap->type == AROOT)
+	if (ap->type == AROOT) {
 		ap->adprot = 0;
-	else 
+		ap->uid = amp->uid;
+		ap->gid = amp->gid;
+	} else {
 		ap->adprot = adoswordn(bp, ap->nwords - 48);
+		/*
+		 * Get uid/gid from extensions in file header
+		 * (really need to know if this is a muFS partition)
+		 */
+		ap->uid = (adoswordn(bp, ap->nwords - 49) >> 16) & 0xffff;
+		ap->gid = adoswordn(bp, ap->nwords - 49) & 0xffff;
+		if (ap->uid || ap->gid) {
+			if (ap->uid == 0xffff)
+				ap->uid = 0;
+			if (ap->gid == 0xffff)
+				ap->gid = 0;
+			ap->adprot |= 0x40000000;	/* Kludge */
+		}
+		else {
+			/*
+			 * uid & gid extension don't exist,
+			 * so use the mount-point uid/gid
+			 */
+			ap->uid = amp->uid;
+			ap->gid = amp->gid;
+		}
+	}
 	ap->mtime.days = adoswordn(bp, ap->nwords - 23);
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);

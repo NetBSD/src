@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.17 1994/12/27 19:06:16 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.18 1994/12/28 08:52:06 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -83,12 +83,16 @@ adosfs_getattr(sp)
 	ap = VTOA(sp->a_vp);
 	amp = ap->amp;
 	vattr_null(vap);
-	vap->va_uid = amp->uid;
-	vap->va_gid = amp->gid;
+	vap->va_uid = ap->uid;
+	vap->va_gid = ap->gid;
 	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsid.val[0];
 	microtime(&vap->va_atime);
 	vap->va_mtime = vap->va_atime;
 	vap->va_ctime = vap->va_ctime;
+	vap->va_atime.ts_sec = vap->va_mtime.ts_sec = vap->va_ctime.ts_sec =
+		ap->mtime.days * 24 * 60 * 60 + ap->mtime.mins * 60 +
+		ap->mtime.ticks / 50 + (8 * 365 + 2) * 24 * 60 * 60;
+	vap->va_atime.ts_nsec = vap->va_mtime.ts_nsec = vap->va_ctime.ts_nsec = 0;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = NODEV;
@@ -447,7 +451,7 @@ adosfs_bmap(sp)
 	/*
 	 * check last indirect block cache
 	 */
-	if (flblk > ap->lastlindblk) 
+	if (flblk < ap->lastlindblk) 
 		fcnt = 0;
 	else {
 		flblk -= ap->lastlindblk;
@@ -721,8 +725,8 @@ adosfs_access(sp)
 #endif
 #ifdef QUOTA
 #endif
-	error = vaccess(adunixprot(ap->adprot) & ap->amp->mask, ap->amp->uid,
-	    ap->amp->gid, mode, cred);
+	error = vaccess(adunixprot(ap->adprot) & ap->amp->mask, ap->uid,
+	    ap->gid, mode, cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
