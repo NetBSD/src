@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.29 2001/09/28 12:36:49 chs Exp $	*/
+/*	$NetBSD: bus.c,v 1.30 2002/01/07 07:17:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -337,6 +337,25 @@ bus_space_handle_t	*mhp;
 {
 	*mhp = memh + off;
 	return 0;
+}
+
+paddr_t
+bus_space_mmap(t, addr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/*
+	 * "addr" is the base address of the device we're mapping.
+	 * "off" is the offset into that device.
+	 *
+	 * Note we are called for each "page" in the device that
+	 * the upper layers want to map.
+	 */
+	return (m68k_btop(addr + off));
 }
 
 /*
