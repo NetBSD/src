@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.369 2002/12/11 13:55:13 lukem Exp $
+# $NetBSD: mi,v 1.370 2002/12/17 01:17:44 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -40,7 +40,6 @@
 ./bin/tar		base-util-root
 ./bin/test		base-util-root
 ./dev			base-sys-root
-./dev/MAKEDEV		base-sysutil-root
 ./dev/altq		base-sys-root
 ./dev/fd		base-sys-root
 ./dev/log		base-sys-root
