@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.34 2003/01/18 07:44:51 thorpej Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.35 2003/01/22 12:58:24 rafal Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.34 2003/01/18 07:44:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.35 2003/01/22 12:58:24 rafal Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -88,12 +88,12 @@ void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
     struct proc *, register_t *));
-static int irix_syssgi_sysconf __P((int name, struct proc *, register_t *));
-static int irix_syssgi_pathconf __P((char *, int, struct proc *, register_t *));
+static int irix_syssgi_sysconf __P((int name, struct lwp *, register_t *));
+static int irix_syssgi_pathconf __P((char *, int, struct lwp *, register_t *));
 
 int
-irix_sys_syssgi(p, v, retval)
-	struct proc *p;
+irix_sys_syssgi(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -105,6 +105,7 @@ irix_sys_syssgi(p, v, retval)
 		syscallarg(void *) arg4;                                        
 		syscallarg(void *) arg5;                                        
 	} */ *uap = v;  
+	struct proc *p = l->l_proc;
 	int request = SCARG(uap, request);
 	void *arg1, *arg2, *arg3; 
 
@@ -121,7 +122,7 @@ irix_sys_syssgi(p, v, retval)
 
 		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
 		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
-		return (sys_setgroups(p, &cup, retval));
+		return (sys_setgroups(l, &cup, retval));
 		break;
 	}
 
@@ -130,19 +131,19 @@ irix_sys_syssgi(p, v, retval)
 
 		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
 		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
-		return (sys_getgroups(p, &cup, retval));
+		return (sys_getgroups(l, &cup, retval));
 		break;
 	}
 
 	case IRIX_SGI_SETSID: 	/* Set session ID: setsid(2) */
-		return (sys_setsid(p, NULL, retval)); 
+		return (sys_setsid(l, NULL, retval)); 
 		break;
 
 	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
 		struct sys_getsid_args cup;
 
 		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
-		return (sys_getsid(p, &cup, retval)); 
+		return (sys_getsid(l, &cup, retval)); 
 		break;
 	}
 
@@ -150,7 +151,7 @@ irix_sys_syssgi(p, v, retval)
 		struct sys_getpgid_args cup;
 
 		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
-		return (sys_getpgid(p, &cup, retval)); 
+		return (sys_getpgid(l, &cup, retval)); 
 		break;
 	}
 
@@ -159,13 +160,13 @@ irix_sys_syssgi(p, v, retval)
 
 		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
 		SCARG(&cup, pgid) = (pid_t)SCARG(uap, arg2); 
-		return (sys_setpgid(p, &cup, retval)); 
+		return (sys_setpgid(l, &cup, retval)); 
 		break;
 	}
 
 	case IRIX_SGI_PATHCONF: /* Get file limits: pathconf(3) */ 
 		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
-		    (int)SCARG(uap, arg2), p, retval);
+		    (int)SCARG(uap, arg2), l, retval);
 		break;
 
 	case IRIX_SGI_RUSAGE: {	/* BSD getrusage(2) */
@@ -173,7 +174,7 @@ irix_sys_syssgi(p, v, retval)
 
 		SCARG(&cup, who) = (int)SCARG(uap, arg1);
 		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
-		return sys_getrusage(p, &cup, retval);
+		return sys_getrusage(l, &cup, retval);
 		break;
 	}
 
@@ -263,7 +264,7 @@ irix_sys_syssgi(p, v, retval)
 
 	case IRIX_SGI_SYSCONF:		/* POSIX sysconf */
 		arg1 = SCARG(uap, arg1); /* system variable name */
-		return irix_syssgi_sysconf((int)arg1, p, retval);	
+		return irix_syssgi_sysconf((int)arg1, l, retval);	
 		break;
 
 	case IRIX_SGI_SATCTL:		/* control audit stream */
@@ -456,11 +457,12 @@ bad:
 
 
 static int
-irix_syssgi_sysconf(name, p, retval)
+irix_syssgi_sysconf(name, l, retval)
 	int name;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	int error = 0;
 	int mib[2], value;
 	int len = sizeof(value);
@@ -533,14 +535,14 @@ irix_syssgi_sysconf(name, p, retval)
 	SCARG(&cup, new) = NULL;
 	SCARG(&cup, newlen) = 0;
 
-	return sys___sysctl(p, &cup, retval);
+	return sys___sysctl(l, &cup, retval);
 }
 
 static int 
-irix_syssgi_pathconf(path, name, p, retval)
+irix_syssgi_pathconf(path, name, l, retval)
 	char *path;
 	int name;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 {
 	struct sys_pathconf_args cup;
@@ -575,5 +577,5 @@ irix_syssgi_pathconf(path, name, p, retval)
 	}
 	SCARG(&cup, path) = path;
 	SCARG(&cup, name) = bname;
-	return sys_pathconf(p, &cup, retval);
+	return sys_pathconf(l, &cup, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.5 2002/10/05 21:29:02 manu Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.5 2002/10/05 21:29:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.5 2002/10/05 21:29:02 manu Exp $");
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
 #include <sys/types.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 
@@ -71,8 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.5 2002/10/05 21:29:02 manu Exp $");
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_ioctl(p, v, retval)
-	struct proc *p;
+irix_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -82,6 +83,7 @@ irix_sys_ioctl(p, v, retval)
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
 	extern const struct cdevsw irix_usema_cdevsw;
+	struct proc *p = l->l_proc;
 	u_long	cmd;
 	caddr_t data;
 	struct file *fp;
@@ -185,7 +187,7 @@ out:
 		break;
 
 	default: /* Fallback to the standard SVR4 ioctl's */
-		error = svr4_sys_ioctl(p, v, retval);
+		error = svr4_sys_ioctl(l, v, retval);
 		break;
 	}
 
