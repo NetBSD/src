@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.23.10.1 2002/01/29 23:24:15 he Exp $	*/
+/*	$NetBSD: ctl.c,v 1.23.10.2 2002/02/09 17:31:59 he Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@ void getinfo __P((int fd));
 void audioctl_write __P((int, int, char *[]));
 void usage __P((void));
 int main __P((int argc, char **argv));
-
-FILE *out = stdout;
 
 char *prog;
 
@@ -177,63 +175,63 @@ prfield(p, sep)
 	int i;
 
 	if (sep)
-		fprintf(out, "%s%s", p->name, sep);
+		printf("%s%s", p->name, sep);
 	switch(p->format) {
 	case STRING:
-		fprintf(out, "%s", (char*)p->valp);
+		printf("%s", (char*)p->valp);
 		break;
 	case INT:
-		fprintf(out, "%d", *(int*)p->valp);
+		printf("%d", *(int*)p->valp);
 		break;
 	case UINT:
-		fprintf(out, "%u", *(u_int*)p->valp);
+		printf("%u", *(u_int*)p->valp);
 		break;
 	case XINT:
-		fprintf(out, "0x%x", *(u_int*)p->valp);
+		printf("0x%x", *(u_int*)p->valp);
 		break;
 	case UCHAR:
-		fprintf(out, "%u", *(u_char*)p->valp);
+		printf("%u", *(u_char*)p->valp);
 		break;
 	case ULONG:
-		fprintf(out, "%lu", *(u_long*)p->valp);
+		printf("%lu", *(u_long*)p->valp);
 		break;
 	case P_R:
 		v = *(u_int*)p->valp;
 		cm = "";
 		if (v & AUMODE_PLAY) {
 			if (v & AUMODE_PLAY_ALL)
-				fprintf(out, "play");
+				printf("play");
 			else
-				fprintf(out, "playsync");
+				printf("playsync");
 			cm = ",";
 		}
 		if (v & AUMODE_RECORD)
-			fprintf(out, "%srecord", cm);
+			printf("%srecord", cm);
 		break;
 	case ENC:
 		v = *(u_int*)p->valp;
 		encstr = audio_enc_from_val(v);
 		if (encstr)
-			fprintf(out, "%s", encstr);
+			printf("%s", encstr);
 		else
-			fprintf(out, "%u", v);
+			printf("%u", v);
 		break;
 	case PROPS:
 		v = *(u_int*)p->valp;
 		for (cm = "", i = 0; props[i].name; i++) {
 			if (v & props[i].prop) {
-				fprintf(out, "%s%s", cm, props[i].name);
+				printf("%s%s", cm, props[i].name);
 				cm = ",";
 			}
 		}
 		break;
 	case FORMAT:
 		prfield(p + 1, 0);
-		fprintf(out, ",");
+		printf(",");
 		prfield(p + 3, 0);
-		fprintf(out, ",");
+		printf(",");
 		prfield(p + 4, 0);
-		fprintf(out, ",");
+		printf(",");
 		prfield(p + 5, 0);
 		break;
 	default:
@@ -345,7 +343,6 @@ main(argc, argv)
 {
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
-	struct stat dstat, ostat;
 	const char *file;
 	char *sep = "=";
 	extern char *__progname;
@@ -393,17 +390,6 @@ main(argc, argv)
 	if (fd < 0)
 		err(1, "%s", file);
     
-	/* Check if stdout is the same device as the audio device. */
-	if (fstat(fd, &dstat) < 0)
-		err(1, "fstat audioctl");
-	if (fstat(STDOUT_FILENO, &ostat) < 0)
-		err(1, "fstat stdout");
-	if (S_ISCHR(dstat.st_mode) && S_ISCHR(ostat.st_mode) &&
-	    major(dstat.st_dev) == major(ostat.st_dev) &&
-	    minor(dstat.st_dev) == minor(ostat.st_dev))
-		/* We can't write to stdout so use stderr */
-		out = stderr;
-
 	if (!wflag)
 		getinfo(fd);
 
@@ -411,7 +397,7 @@ main(argc, argv)
 		for (i = 0; fields[i].name; i++) {
 			if (!(fields[i].flags & ALIAS)) {
 				prfield(&fields[i], sep);
-				fprintf(out, "\n");
+				printf("\n");
 			}
 		}
 	} else if (argc > 0 && !aflag) {
@@ -421,9 +407,9 @@ main(argc, argv)
 				getinfo(fd);
 				for (i = 0; fields[i].name; i++) {
 					if (fields[i].flags & SET) {
-						fprintf(out, "%s: -> ", fields[i].name);
+						printf("%s: -> ", fields[i].name);
 						prfield(&fields[i], 0);
-						fprintf(out, "\n");
+						printf("\n");
 					}
 				}
 			}
@@ -438,7 +424,7 @@ main(argc, argv)
 						warnx("field %s does not exist", *argv);
 				} else {
 					prfield(p, sep);
-					fprintf(out, "\n");
+					printf("\n");
 				}
 				argv++;
 			}
