@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/main.c,v 1.9 1995/05/05 05:35:34 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/main.c,v 1.10 1996/12/10 07:18:48 mikel Exp $ */
 
 
 #include "flexdef.h"
@@ -585,7 +585,7 @@ int argc;
 char **argv;
 	{
 	int i, sawcmpflag;
-	char *arg, *mktemp();
+	char *arg;
 
 	printstats = syntaxerror = trace = spprdflt = caseins = false;
 	lex_compat = C_plus_plus = backing_up_report = ddebug = fulltbl = false;

@@ -1,4 +1,4 @@
-// $Header: /cvsroot/src/usr.bin/lex/Attic/FlexLexer.h,v 1.6 1995/05/05 05:35:08 jtc Exp $
+// $Header: /cvsroot/src/usr.bin/lex/Attic/FlexLexer.h,v 1.7 1996/12/10 07:18:37 mikel Exp $
 
 // FlexLexer.h -- define interfaces for lexical analyzer classes generated
 //		  by flex
@@ -178,6 +178,8 @@ protected:
 
 	int yy_more_flag;
 	int yy_more_len;
+	int yy_more_offset;
+	int yy_prev_more_offset;
 };
 
 #endif
