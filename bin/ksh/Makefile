@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/10/22 01:36:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 1999/10/20 15:09:58 hubertf Exp $
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I.
 
@@ -7,7 +7,7 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	eval.c exec.c expr.c history.c io.c jobs.c lex.c mail.c \
 	main.c misc.c path.c shf.c sigact.c syn.c table.c trap.c \
 	tree.c tty.c var.c version.c vi.c
-DPSRCS=	emacs.out siglist.out
+DPSRCS=	emacs.out siglist.out ksh.1
 
 # needs tbl for the man page.
 USETBL= 
@@ -21,6 +21,10 @@ siglist.out: config.h sh.h siglist.in siglist.sh
 emacs.out: emacs.c
 	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
 	mv tmpemacs.out emacs.out
+
+ksh.1: ksh.Man mkman
+	sh $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >tmpksh.1
+	mv tmpksh.1 ksh.1
 
 emacs.o:	emacs.out
 trap.o:		siglist.out
