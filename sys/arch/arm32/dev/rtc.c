@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.6 1997/01/06 04:47:59 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.7 1997/10/14 19:07:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -49,8 +49,9 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <machine/iic.h>
 #include <machine/rtc.h>
+#include <arm32/dev/iic.h>
+#include <arm32/dev/todclockvar.h>
 
 struct rtc_softc {
 	struct device	sc_dev;
@@ -60,7 +61,7 @@ struct rtc_softc {
 };
 
 void rtcattach __P((struct device *parent, struct device *self, void *aux));
-int rtcmatch __P((struct device *parent, void *match, void *aux));
+int rtcmatch __P((struct device *parent, struct cfdata *cf, void *aux));
 
 /* Read a byte from CMOS RAM */
 
@@ -156,7 +157,7 @@ rtc_write(rtc)
 
 	buff[0] = 1;
 
-	buff[1] = dectohexdec(rtc->rtc_centi);
+/*	buff[1] = dectohexdec(rtc->rtc_centi);
 	buff[2] = dectohexdec(rtc->rtc_sec);
 	buff[3] = dectohexdec(rtc->rtc_min);
 	buff[4] = dectohexdec(rtc->rtc_hour) & 0x3f;
@@ -166,9 +167,12 @@ rtc_write(rtc)
 	if (iic_control(RTC_Write, buff, 7))
 		return(0);
 
-	cmos_write(RTC_ADDR_YEAR, rtc->rtc_year);
-	cmos_write(RTC_ADDR_CENT, rtc->rtc_cen);
-
+	if (cmos_write(RTC_ADDR_YEAR, rtc->rtc_year))
+		returm(0);
+	if (cmos_write(RTC_ADDR_CENT, rtc->rtc_cen))
+		return(0);
+*/
+	printf("rtc_write: Currently disabled\n");
 	return(1);
 }
 
@@ -217,6 +221,7 @@ rtc_read(rtc)
 	return(1);
 }
 
+/* device and attach structures */
 
 struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtcmatch, rtcattach
@@ -226,17 +231,31 @@ struct cfdriver rtc_cd = {
 	NULL, "rtc", DV_DULL, 0
 };
 
+/*
+ * rtcmatch()
+ *
+ * Validate the IIC address to make sure its an RTC we understand
+ */
+
 int
-rtcmatch(parent, match, aux)
+rtcmatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-/*	struct iicbus_attach_args *ib = aux;*/
+	struct iicbus_attach_args *ib = aux;
 
-	return(1);
+	if ((ib->ib_addr & IIC_PCF8583_MASK) == IIC_PCF8583_ADDR)
+		return(1);
+
+	return(0);
 }
 
+/*
+ * rtcattach()
+ *
+ * Attach the rtc device
+ */
 
 void
 rtcattach(parent, self, aux)
@@ -247,10 +266,13 @@ rtcattach(parent, self, aux)
 	struct rtc_softc *sc = (struct rtc_softc *)self;
 	struct iicbus_attach_args *ib = aux;
 	u_char buff[1];
+	struct todclock_attach_args ta;
 
 	sc->sc_flags |= RTC_BROKEN;
 	if ((ib->ib_addr & IIC_PCF8583_MASK) == IIC_PCF8583_ADDR) {
 		printf(": PCF8583");
+
+		/* Read RTC register 0 and report info found */
 
 		buff[0] = 0;
 
@@ -283,16 +305,12 @@ rtcattach(parent, self, aux)
 		sc->sc_flags &= ~RTC_BROKEN;
 	}
 
-
-/*
- * Initialise the time of day register.
- * This is normally left to the filing system to do but not all
- * filing systems call it e.g. cd9660
- */
-
-	inittodr(0);
-
 	printf("\n");
+
+	ta.ta_name = "todclock";
+	ta.ta_rtc_write = rtc_write; 
+	ta.ta_rtc_read =  rtc_read;
+	config_found(self, &ta, NULL);
 }
 
 
