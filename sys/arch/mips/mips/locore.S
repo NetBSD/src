@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.145 2002/11/03 13:47:34 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.146 2002/11/04 04:04:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1261,7 +1261,32 @@ END(MachFPInterrupt)
 #endif /* !defined(NOFPU) && !defined(SOFTFLOAT) */
 
 LEAF(mips_pagecopy)
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#if defined(__mips_n32) || defined(_LP64)
+	li	a2, NBPG >> 6
+
+1:	ld	t0, 0(a1)
+	ld	t4, 32(a1)
+	ld	t2, 16(a1)
+	ld	t6, 48(a1)
+	subu	a2, 1
+	ld	t1, 8(a1)
+	ld	t3, 24(a1)
+	ld	t5, 40(a1)
+	ld	t7, 56(a1)
+
+	sd	t0, 0(a0)
+	sd	t4, 32(a0)
+	sd	t2, 16(a0)
+	sd	t6, 48(a0)
+	addu	a1, 64
+	sd	t1, 8(a0)
+	sd	t3, 24(a0)
+	sd	t5, 40(a0)
+	sd	t7, 56(a0)
+	bgtz	a2,1b
+	addu	a0, 64
+#else
+	/* o32 */
 	li	a2, NBPG >> 5
 
 1:	lw	t0, 0(a1)
@@ -1285,40 +1310,28 @@ LEAF(mips_pagecopy)
 	sw	t7, 28(a0)
 	bgtz	a2,1b
 	addu	a0, 32
-#else
-	li	a2, NBPG >> 6
-
-	REG_PROLOGUE
-1:	ld	t0, 0(a1)
-	ld	t4, 32(a1)
-	ld	t2, 16(a1)
-	ld	t6, 48(a1)
-	subu	a2, 1
-	ld	t1, 8(a1)
-	ld	t3, 24(a1)
-	ld	t5, 40(a1)
-	ld	t7, 56(a1)
-
-	sd	t0, 0(a0)
-	sd	t4, 32(a0)
-	sd	t2, 16(a0)
-	sd	t6, 48(a0)
-	addu	a1, 64
-	sd	t1, 8(a0)
-	sd	t3, 24(a0)
-	sd	t5, 40(a0)
-	sd	t7, 56(a0)
-	bgtz	a2,1b
-	addu	a0, 64
-	REG_EPILOGUE
-#endif
-
+#endif /* __mips_n32 || _LP64 */
 	j	ra
 	nop
 END(mips_pagecopy)
 
 LEAF(mips_pagezero)
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#if defined(__mips_n32) || defined(_LP64)
+	li	a1, NBPG >> 6
+
+1:	sd	zero, 0(a0)			# try to miss cache first
+	sd	zero, 32(a0)
+	subu	a1, 1
+	sd	zero, 16(a0)
+	sd	zero, 48(a0)
+	sd	zero, 8(a0)			# fill in cache lines
+	sd	zero, 40(a0)
+	sd	zero, 24(a0)
+	sd	zero, 56(a0)
+	bgtz	a1,1b
+	addu	a0, 64
+#else
+	/* o32 */
 	li	a1, NBPG >> 5
 
 1:	sw	zero, 0(a0)
@@ -1332,24 +1345,7 @@ LEAF(mips_pagezero)
 	sw	zero, 28(a0)
 	bgtz	a1,1b
 	addu	a0, 32
-#else
-	li	a1, NBPG >> 6
-
-	REG_PROLOGUE
-1:	sd	zero, 0(a0)			# try to miss cache first
-	sd	zero, 32(a0)
-	subu	a1, 1
-	sd	zero, 16(a0)
-	sd	zero, 48(a0)
-	sd	zero, 8(a0)			# fill in cache lines
-	sd	zero, 40(a0)
-	sd	zero, 24(a0)
-	sd	zero, 56(a0)
-	REG_EPILOGUE
-	bgtz	a1,1b
-	addu	a0, 64
-#endif
-
+#endif /* __mips_n32 || _LP64 */
 	j	ra
 	nop
 END(mips_pagezero)
