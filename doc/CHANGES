@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.239 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.240 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -549,3 +549,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sgimips: Add newport(4), a driver for SGI NG1 graphics controller
 		and enable console on it and pckbc on IP22 machines.
 		[lonewolf 20031215]
+	satalink(4): Add support for the Silicon Image 3114 4-port
+		SATA controller.  [thorpej 20031219]
