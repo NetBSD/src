@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.311 2001/01/28 01:43:02 nathanw Exp $
+# $NetBSD: mi,v 1.312 2001/01/28 05:55:02 jwise Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -921,588 +921,587 @@
 ./usr/share/man/cat4/ym.0			man-sys-catman
 ./usr/share/man/cat4/zero.0			man-sys-catman
 ./usr/share/man/cat4/zstty.0			man-sys-catman
-./usr/share/man/cat5/a.out.0
-./usr/share/man/cat5/access.0
-./usr/share/man/cat5/acct.0
-./usr/share/man/cat5/aliases.0
-./usr/share/man/cat5/altq.conf.0
-./usr/share/man/cat5/amd.conf.0
-./usr/share/man/cat5/ar.0
-./usr/share/man/cat5/bootparams.0
-./usr/share/man/cat5/bootptab.0
-./usr/share/man/cat5/canonical.0
-./usr/share/man/cat5/core.0
-./usr/share/man/cat5/crontab.0
-./usr/share/man/cat5/daily.conf.0
-./usr/share/man/cat5/dhclient.conf.0
-./usr/share/man/cat5/dhclient.leases.0
-./usr/share/man/cat5/dhcp-eval.0
-./usr/share/man/cat5/dhcp-options.0
-./usr/share/man/cat5/dhcpd.conf.0
-./usr/share/man/cat5/dhcpd.leases.0
-./usr/share/man/cat5/dir.0
-./usr/share/man/cat5/dirent.0
-./usr/share/man/cat5/disklabel.0
-./usr/share/man/cat5/disktab.0
-./usr/share/man/cat5/dm.conf.0
-./usr/share/man/cat5/editrc.0
-./usr/share/man/cat5/ethers.0
-./usr/share/man/cat5/exports.0
-./usr/share/man/cat5/fs.0
-./usr/share/man/cat5/fstab.0
-./usr/share/man/cat5/ftpchroot.0
-./usr/share/man/cat5/ftpd.conf.0
-./usr/share/man/cat5/ftpusers.0
-./usr/share/man/cat5/genassym.cf.0
-./usr/share/man/cat5/gettytab.0
-./usr/share/man/cat5/group.0
-./usr/share/man/cat5/hesiod.conf.0
-./usr/share/man/cat5/hosts.0
-./usr/share/man/cat5/hosts.allow.0
-./usr/share/man/cat5/hosts.deny.0
-./usr/share/man/cat5/hosts.equiv.0
-./usr/share/man/cat5/hosts_access.0
-./usr/share/man/cat5/hosts_options.0
-./usr/share/man/cat5/ifaliases.0
-./usr/share/man/cat5/ifconfig.if.0
-./usr/share/man/cat5/inetd.conf.0
-./usr/share/man/cat5/inode.0
-./usr/share/man/cat5/intro.0
-./usr/share/man/cat5/ipf.0
-./usr/share/man/cat5/ipf.conf.0
-./usr/share/man/cat5/ipnat.0
-./usr/share/man/cat5/ipnat.conf.0
-./usr/share/man/cat5/ipsend.0
-./usr/share/man/cat5/isdnd.acct.0
-./usr/share/man/cat5/isdnd.rates.0
-./usr/share/man/cat5/isdnd.rc.0
-./usr/share/man/cat5/krb5.conf.0
-./usr/share/man/cat5/lastlog.0
-./usr/share/man/cat5/ld.so.conf.0
-./usr/share/man/cat5/link.0
-./usr/share/man/cat5/lkm.conf.0
-./usr/share/man/cat5/login.conf.0
-./usr/share/man/cat5/magic.0
-./usr/share/man/cat5/mailer.conf.0
-./usr/share/man/cat5/man.conf.0
-./usr/share/man/cat5/map3270.0
-./usr/share/man/cat5/master.passwd.0
-./usr/share/man/cat5/monthly.conf.0
-./usr/share/man/cat5/motd.0
-./usr/share/man/cat5/named.conf.0
-./usr/share/man/cat5/netconfig.0
-./usr/share/man/cat5/netgroup.0
-./usr/share/man/cat5/netid.0
-./usr/share/man/cat5/networks.0
-./usr/share/man/cat5/newsyslog.conf.0
-./usr/share/man/cat5/nsswitch.conf.0
-./usr/share/man/cat5/openssl.cnf.0
-./usr/share/man/cat5/passwd.0
-./usr/share/man/cat5/passwd.conf.0
-./usr/share/man/cat5/phones.0
-./usr/share/man/cat5/pim6dd.conf.0
-./usr/share/man/cat5/pim6sd.conf.0
-./usr/share/man/cat5/printcap.0
-./usr/share/man/cat5/protocols.0
-./usr/share/man/cat5/racoon.conf.0
-./usr/share/man/cat5/rc.conf.0
-./usr/share/man/cat5/rcsfile.0
-./usr/share/man/cat5/relocated.0
-./usr/share/man/cat5/remote.0
-./usr/share/man/cat5/resolv.conf.0
-./usr/share/man/cat5/rhosts.0
-./usr/share/man/cat5/rpc.0
-./usr/share/man/cat5/rtadvd.conf.0
-./usr/share/man/cat5/security.conf.0
-./usr/share/man/cat5/services.0
-./usr/share/man/cat5/shells.0
-./usr/share/man/cat5/stab.0
-./usr/share/man/cat5/syslog.conf.0
-./usr/share/man/cat5/termcap.0
-./usr/share/man/cat5/transport.0
-./usr/share/man/cat5/ttyaction.0
-./usr/share/man/cat5/ttys.0
-./usr/share/man/cat5/types.0
-./usr/share/man/cat5/tzfile.0
-./usr/share/man/cat5/utmp.0
-./usr/share/man/cat5/uuencode.0
-./usr/share/man/cat5/vgrindefs.0
-./usr/share/man/cat5/virtual.0
-./usr/share/man/cat5/weekly.conf.0
-./usr/share/man/cat5/wscons.conf.0
-./usr/share/man/cat5/wtmp.0
-./usr/share/man/cat7/ascii.0
-./usr/share/man/cat7/des_modes.0
-./usr/share/man/cat7/environ.0
-./usr/share/man/cat7/hier.0
-./usr/share/man/cat7/hostname.0
-./usr/share/man/cat7/intro.0
-./usr/share/man/cat7/lint.0
-./usr/share/man/cat7/mailaddr.0
-./usr/share/man/cat7/mandoc.0
-./usr/share/man/cat7/mdoc.0
-./usr/share/man/cat7/msafer.0
-./usr/share/man/cat7/packages.0
-./usr/share/man/cat7/re_format.0
-./usr/share/man/cat7/release.0
-./usr/share/man/cat7/signal.0
-./usr/share/man/cat7/symlink.0
-./usr/share/man/cat8/ac.0
-./usr/share/man/cat8/accton.0
-./usr/share/man/cat8/adduser.0
-./usr/share/man/cat8/alpha/MAKEDEV.0
-./usr/share/man/cat8/alpha/boot.0
-./usr/share/man/cat8/alpha/installboot.0
-./usr/share/man/cat8/alpha/installboot.old.0
-./usr/share/man/cat8/alpha/makedev.0
-./usr/share/man/cat8/alpha/mkbootimage.0
-./usr/share/man/cat8/alpha/setnetbootinfo.0
-./usr/share/man/cat8/altqd.0
-./usr/share/man/cat8/amd.0
-./usr/share/man/cat8/amiga/MAKEDEV.0
-./usr/share/man/cat8/amiga/binpatch.0
-./usr/share/man/cat8/amiga/boot.0
-./usr/share/man/cat8/amiga/installboot.0
-./usr/share/man/cat8/amiga/makedev.0
-./usr/share/man/cat8/amq.0
-./usr/share/man/cat8/apmd.0
-./usr/share/man/cat8/arc/MAKEDEV.0
-./usr/share/man/cat8/arc/makedev.0
-./usr/share/man/cat8/arm26/BBBB.0
-./usr/share/man/cat8/arm26/bbbb.0
-./usr/share/man/cat8/arm32/MAKEDEV.0
-./usr/share/man/cat8/arm32/makedev.0
-./usr/share/man/cat8/arp.0
-./usr/share/man/cat8/atactl.0
-./usr/share/man/cat8/atari/MAKEDEV.0
-./usr/share/man/cat8/atari/binpatch.0
-./usr/share/man/cat8/atari/boot.0
-./usr/share/man/cat8/atari/bootpref.0
-./usr/share/man/cat8/atari/installboot.0
-./usr/share/man/cat8/atari/makedev.0
-./usr/share/man/cat8/atrun.0
-./usr/share/man/cat8/bad144.0
-./usr/share/man/cat8/badsect.0
-./usr/share/man/cat8/bebox/MAKEDEV.0
-./usr/share/man/cat8/bebox/makedev.0
-./usr/share/man/cat8/bootparamd.0
-./usr/share/man/cat8/bootpd.0
-./usr/share/man/cat8/bootpef.0
-./usr/share/man/cat8/bootpgw.0
-./usr/share/man/cat8/bootptest.0
-./usr/share/man/cat8/bootselect.0
-./usr/share/man/cat8/bounce.0
-./usr/share/man/cat8/catman.0
-./usr/share/man/cat8/ccdconfig.0
-./usr/share/man/cat8/chat.0
-./usr/share/man/cat8/chown.0
-./usr/share/man/cat8/chroot.0
-./usr/share/man/cat8/chrtbl.0
-./usr/share/man/cat8/cleanup.0
-./usr/share/man/cat8/clri.0
-./usr/share/man/cat8/cnwctl.0
-./usr/share/man/cat8/compat_freebsd.0
-./usr/share/man/cat8/compat_ibcs2.0
-./usr/share/man/cat8/compat_linux.0
-./usr/share/man/cat8/compat_osf1.0
-./usr/share/man/cat8/compat_pecoff.0
-./usr/share/man/cat8/compat_sco.0
-./usr/share/man/cat8/compat_solaris.0
-./usr/share/man/cat8/compat_sunos.0
-./usr/share/man/cat8/compat_svr4.0
-./usr/share/man/cat8/compat_ultrix.0
-./usr/share/man/cat8/compat_win32.0
-./usr/share/man/cat8/compat_xenix.0
-./usr/share/man/cat8/comsat.0
-./usr/share/man/cat8/cron.0
-./usr/share/man/cat8/dbsym.0
-./usr/share/man/cat8/defer.0
-./usr/share/man/cat8/dev_mkdb.0
-./usr/share/man/cat8/dhclient-script.0
-./usr/share/man/cat8/dhclient.0
-./usr/share/man/cat8/dhcpd.0
-./usr/share/man/cat8/dhcrelay.0
-./usr/share/man/cat8/disklabel.0
-./usr/share/man/cat8/diskless.0
-./usr/share/man/cat8/diskpart.0
-./usr/share/man/cat8/dm.0
-./usr/share/man/cat8/dmesg.0
-./usr/share/man/cat8/dump.0
-./usr/share/man/cat8/dump_lfs.0
-./usr/share/man/cat8/dumpfs.0
-./usr/share/man/cat8/dumplfs.0
-./usr/share/man/cat8/edquota.0
-./usr/share/man/cat8/eeprom.0
-./usr/share/man/cat8/envstat.0
-./usr/share/man/cat8/error.0
-./usr/share/man/cat8/eshconfig.0
-./usr/share/man/cat8/faithd.0
-./usr/share/man/cat8/fastboot.0
-./usr/share/man/cat8/fasthalt.0
-./usr/share/man/cat8/fdisk.0
-./usr/share/man/cat8/fingerd.0
-./usr/share/man/cat8/fixmount.0
-./usr/share/man/cat8/fsck.0
-./usr/share/man/cat8/fsck_ext2fs.0
-./usr/share/man/cat8/fsck_ffs.0
-./usr/share/man/cat8/fsck_lfs.0
-./usr/share/man/cat8/fsck_msdos.0
-./usr/share/man/cat8/fsdb.0
-./usr/share/man/cat8/fsinfo.0
-./usr/share/man/cat8/fsirand.0
-./usr/share/man/cat8/ftpd.0
-./usr/share/man/cat8/genassym.sh.0
-./usr/share/man/cat8/getNAME.0
-./usr/share/man/cat8/getencstat.0
-./usr/share/man/cat8/getty.0
-./usr/share/man/cat8/greconfig.0
-./usr/share/man/cat8/grfconfig.0
-./usr/share/man/cat8/group.0
-./usr/share/man/cat8/groupadd.0
-./usr/share/man/cat8/groupdel.0
-./usr/share/man/cat8/groupinfo.0
-./usr/share/man/cat8/groupmod.0
-./usr/share/man/cat8/halt.0
-./usr/share/man/cat8/hlfsd.0
-./usr/share/man/cat8/hp300/MAKEDEV.0
-./usr/share/man/cat8/hp300/boot.0
-./usr/share/man/cat8/hp300/crash.0
-./usr/share/man/cat8/hp300/format.0
-./usr/share/man/cat8/hp300/makedev.0
-./usr/share/man/cat8/hpcmips/MAKEDEV.0
-./usr/share/man/cat8/hpcmips/makedev.0
-./usr/share/man/cat8/hpcmips/pbsdboot.0
-./usr/share/man/cat8/hprop.0
-./usr/share/man/cat8/hpropd.0
-./usr/share/man/cat8/i386/MAKEDEV.0
-./usr/share/man/cat8/i386/apm.0
-./usr/share/man/cat8/i386/boot.0
-./usr/share/man/cat8/i386/boot_console.0
-./usr/share/man/cat8/i386/dosboot.0
-./usr/share/man/cat8/i386/installboot.0
-./usr/share/man/cat8/i386/makedev.0
-./usr/share/man/cat8/i386/w95boot.0
-./usr/share/man/cat8/i386/zzz.0
-./usr/share/man/cat8/identd.0
-./usr/share/man/cat8/ifconfig.0
-./usr/share/man/cat8/ifmcstat.0
-./usr/share/man/cat8/inetd.0
-./usr/share/man/cat8/init.0
-./usr/share/man/cat8/intro.0
-./usr/share/man/cat8/iopctl.0
-./usr/share/man/cat8/iostat.0
-./usr/share/man/cat8/ipf.0
-./usr/share/man/cat8/ipfs.0
-./usr/share/man/cat8/ipfstat.0
-./usr/share/man/cat8/ipmon.0
-./usr/share/man/cat8/ipnat.0
-./usr/share/man/cat8/isdnd.0
-./usr/share/man/cat8/isdnmonitor.0
-./usr/share/man/cat8/isdntel.0
-./usr/share/man/cat8/isdntelctl.0
-./usr/share/man/cat8/isdntrace.0
-./usr/share/man/cat8/ispppcontrol.0
-./usr/share/man/cat8/iteconfig.0
-./usr/share/man/cat8/kadmin.0
-./usr/share/man/cat8/kadmind.0
-./usr/share/man/cat8/kdc.0
-./usr/share/man/cat8/kerberos.0
-./usr/share/man/cat8/kfd.0
-./usr/share/man/cat8/kpasswdd.0
-./usr/share/man/cat8/kstash.0
-./usr/share/man/cat8/ktutil.0
-./usr/share/man/cat8/kvm_mkdb.0
-./usr/share/man/cat8/lastlogin.0
-./usr/share/man/cat8/ldconfig.0
-./usr/share/man/cat8/lfs_cleanerd.0
-./usr/share/man/cat8/link.0
-./usr/share/man/cat8/lmcctl.0
-./usr/share/man/cat8/local.0
-./usr/share/man/cat8/lockd.0
-./usr/share/man/cat8/lpc.0
-./usr/share/man/cat8/lpd.0
-./usr/share/man/cat8/mac68k/MAKEDEV.0
-./usr/share/man/cat8/mac68k/boot.0
-./usr/share/man/cat8/mac68k/makedev.0
-./usr/share/man/cat8/mail.local.0
-./usr/share/man/cat8/mailstats.0
-./usr/share/man/cat8/mailwrapper.0
-./usr/share/man/cat8/makedbm.0
-./usr/share/man/cat8/makekey.0
-./usr/share/man/cat8/makemap.0
-./usr/share/man/cat8/makewhatis.0
-./usr/share/man/cat8/map-mbone.0
-./usr/share/man/cat8/master.0
-./usr/share/man/cat8/mbr.0
-./usr/share/man/cat8/mbrlabel.0
-./usr/share/man/cat8/mdconfig.0
-./usr/share/man/cat8/mdsetimage.0
-./usr/share/man/cat8/mfs.0
-./usr/share/man/cat8/mk-amd-map.0
-./usr/share/man/cat8/mkalias.0
-./usr/share/man/cat8/mknetid.0
-./usr/share/man/cat8/mknod.0
-./usr/share/man/cat8/mld6query.0
-./usr/share/man/cat8/modload.0
-./usr/share/man/cat8/modstat.0
-./usr/share/man/cat8/modunload.0
-./usr/share/man/cat8/mopd.0
-./usr/share/man/cat8/mount.0
-./usr/share/man/cat8/mount_ados.0
-./usr/share/man/cat8/mount_cd9660.0
-./usr/share/man/cat8/mount_ext2fs.0
-./usr/share/man/cat8/mount_fdesc.0
-./usr/share/man/cat8/mount_ffs.0
-./usr/share/man/cat8/mount_filecore.0
-./usr/share/man/cat8/mount_kernfs.0
-./usr/share/man/cat8/mount_lfs.0
-./usr/share/man/cat8/mount_mfs.0
-./usr/share/man/cat8/mount_msdos.0
-./usr/share/man/cat8/mount_nfs.0
-./usr/share/man/cat8/mount_ntfs.0
-./usr/share/man/cat8/mount_null.0
-./usr/share/man/cat8/mount_overlay.0
-./usr/share/man/cat8/mount_portal.0
-./usr/share/man/cat8/mount_procfs.0
-./usr/share/man/cat8/mount_ufs.0
-./usr/share/man/cat8/mount_umap.0
-./usr/share/man/cat8/mount_union.0
-./usr/share/man/cat8/mountd.0
-./usr/share/man/cat8/mrinfo.0
-./usr/share/man/cat8/mrouted.0
-./usr/share/man/cat8/mtrace.0
-./usr/share/man/cat8/mtrace6.0
-./usr/share/man/cat8/mtree.0
-./usr/share/man/cat8/mvme68k/MAKEDEV.0
-./usr/share/man/cat8/mvme68k/boot.0
-./usr/share/man/cat8/mvme68k/installboot.0
-./usr/share/man/cat8/mvme68k/makedev.0
-./usr/share/man/cat8/named-bootconf.0
-./usr/share/man/cat8/named-xfer.0
-./usr/share/man/cat8/named.0
-./usr/share/man/cat8/named.reload.0
-./usr/share/man/cat8/named.restart.0
-./usr/share/man/cat8/ndc.0
-./usr/share/man/cat8/ndp.0
-./usr/share/man/cat8/netgroup_mkdb.0
-./usr/share/man/cat8/newbtconf.0
-./usr/share/man/cat8/newfs.0
-./usr/share/man/cat8/newfs_lfs.0
-./usr/share/man/cat8/newfs_msdos.0
-./usr/share/man/cat8/newsyslog.0
-./usr/share/man/cat8/next68k/MAKEDEV.0
-./usr/share/man/cat8/next68k/boot.0
-./usr/share/man/cat8/next68k/makedev.0
-./usr/share/man/cat8/nfsd.0
-./usr/share/man/cat8/nis.0
-./usr/share/man/cat8/nologin.0
-./usr/share/man/cat8/nslookup.0
-./usr/share/man/cat8/nsupdate.0
-./usr/share/man/cat8/ntpd.0
-./usr/share/man/cat8/ntpdate.0
-./usr/share/man/cat8/ntpdc.0
-./usr/share/man/cat8/ntpq.0
-./usr/share/man/cat8/ntptime.0
-./usr/share/man/cat8/ntptrace.0
-./usr/share/man/cat8/pac.0
-./usr/share/man/cat8/pc532/MAKEDEV.0
-./usr/share/man/cat8/pc532/bim.0
-./usr/share/man/cat8/pc532/makedev.0
-./usr/share/man/cat8/pcnfsd.0
-./usr/share/man/cat8/peace.0
-./usr/share/man/cat8/pickup.0
-./usr/share/man/cat8/pim6dd.0
-./usr/share/man/cat8/pim6sd.0
-./usr/share/man/cat8/ping.0
-./usr/share/man/cat8/ping6.0
-./usr/share/man/cat8/pipe.0
-./usr/share/man/cat8/pmax/MAKEDEV.0
-./usr/share/man/cat8/pmax/boot.0
-./usr/share/man/cat8/pmax/installboot.0
-./usr/share/man/cat8/pmax/makedev.0
-./usr/share/man/cat8/poweroff.0
-./usr/share/man/cat8/pppd.0
-./usr/share/man/cat8/pppstats.0
-./usr/share/man/cat8/praliases.0
-./usr/share/man/cat8/prep/MAKEDEV.0
-./usr/share/man/cat8/prep/makedev.0
-./usr/share/man/cat8/pstat.0
-./usr/share/man/cat8/pvcsif.0
-./usr/share/man/cat8/pvctxctl.0
-./usr/share/man/cat8/pwd_mkdb.0
-./usr/share/man/cat8/qmgr.0
-./usr/share/man/cat8/quot.0
-./usr/share/man/cat8/quotacheck.0
-./usr/share/man/cat8/quotaoff.0
-./usr/share/man/cat8/quotaon.0
-./usr/share/man/cat8/racoon.0
-./usr/share/man/cat8/raidctl.0
-./usr/share/man/cat8/rarpd.0
-./usr/share/man/cat8/rbootd.0
-./usr/share/man/cat8/rc.0
-./usr/share/man/cat8/rc.d.0
-./usr/share/man/cat8/rc.shutdown.0
-./usr/share/man/cat8/rcorder.0
-./usr/share/man/cat8/rdate.0
-./usr/share/man/cat8/rdisc.0
-./usr/share/man/cat8/rdump.0
-./usr/share/man/cat8/rdump_lfs.0
-./usr/share/man/cat8/reboot.0
-./usr/share/man/cat8/renice.0
-./usr/share/man/cat8/repquota.0
-./usr/share/man/cat8/restore.0
-./usr/share/man/cat8/revnetgroup.0
-./usr/share/man/cat8/rexecd.0
-./usr/share/man/cat8/rip6query.0
-./usr/share/man/cat8/rlogind.0
-./usr/share/man/cat8/rmail.0
-./usr/share/man/cat8/rmt.0
-./usr/share/man/cat8/rndctl.0
-./usr/share/man/cat8/route.0
-./usr/share/man/cat8/route6d.0
-./usr/share/man/cat8/routed.0
-./usr/share/man/cat8/rpc.bootparamd.0
-./usr/share/man/cat8/rpc.lockd.0
-./usr/share/man/cat8/rpc.pcnfsd.0
-./usr/share/man/cat8/rpc.rquotad.0
-./usr/share/man/cat8/rpc.rstatd.0
-./usr/share/man/cat8/rpc.rusersd.0
-./usr/share/man/cat8/rpc.rwalld.0
-./usr/share/man/cat8/rpc.sprayd.0
-./usr/share/man/cat8/rpc.statd.0
-./usr/share/man/cat8/rpc.yppasswdd.0
-./usr/share/man/cat8/rpcbind.0
-./usr/share/man/cat8/rpcinfo.0
-./usr/share/man/cat8/rquotad.0
-./usr/share/man/cat8/rrestore.0
-./usr/share/man/cat8/rshd.0
-./usr/share/man/cat8/rstatd.0
-./usr/share/man/cat8/rtadvd.0
-./usr/share/man/cat8/rtquery.0
-./usr/share/man/cat8/rtsol.0
-./usr/share/man/cat8/rtsold.0
-./usr/share/man/cat8/rusersd.0
-./usr/share/man/cat8/rwalld.0
-./usr/share/man/cat8/rwhod.0
-./usr/share/man/cat8/sa.0
-./usr/share/man/cat8/savecore.0
-./usr/share/man/cat8/scsictl.0
-./usr/share/man/cat8/sendmail.0
-./usr/share/man/cat8/sesd.0
-./usr/share/man/cat8/setencstat.0
-./usr/share/man/cat8/setkey.0
-./usr/share/man/cat8/setobjstat.0
-./usr/share/man/cat8/sftp-server.0
-./usr/share/man/cat8/showmount.0
-./usr/share/man/cat8/showq.0
-./usr/share/man/cat8/shutdown.0
-./usr/share/man/cat8/slattach.0
-./usr/share/man/cat8/slip.0
-./usr/share/man/cat8/sliplogin.0
-./usr/share/man/cat8/slstats.0
-./usr/share/man/cat8/smrsh.0
-./usr/share/man/cat8/smtp.0
-./usr/share/man/cat8/smtpd.0
-./usr/share/man/cat8/sparc/MAKEDEV.0
-./usr/share/man/cat8/sparc/boot.0
-./usr/share/man/cat8/sparc/installboot.0
-./usr/share/man/cat8/sparc/makedev.0
-./usr/share/man/cat8/sparc/tadpolectl.0
-./usr/share/man/cat8/sparc64/MAKEDEV.0
-./usr/share/man/cat8/sparc64/installboot.0
-./usr/share/man/cat8/sparc64/makedev.0
-./usr/share/man/cat8/spray.0
-./usr/share/man/cat8/sprayd.0
-./usr/share/man/cat8/sshd.0
-./usr/share/man/cat8/statd.0
-./usr/share/man/cat8/stdethers.0
-./usr/share/man/cat8/stdhosts.0
-./usr/share/man/cat8/sticky.0
-./usr/share/man/cat8/strfile.0
-./usr/share/man/cat8/string2key.0
-./usr/share/man/cat8/sun3/MAKEDEV.0
-./usr/share/man/cat8/sun3/boot.0
-./usr/share/man/cat8/sun3/installboot.0
-./usr/share/man/cat8/sun3/makedev.0
-./usr/share/man/cat8/supfilesrv.0
-./usr/share/man/cat8/supscan.0
-./usr/share/man/cat8/supservers.0
-./usr/share/man/cat8/sushi.0
-./usr/share/man/cat8/swapctl.0
-./usr/share/man/cat8/swapon.0
-./usr/share/man/cat8/sync.0
-./usr/share/man/cat8/sysctl.0
-./usr/share/man/cat8/syslogd.0
-./usr/share/man/cat8/talkd.0
-./usr/share/man/cat8/tbrconfig.0
-./usr/share/man/cat8/tcpdchk.0
-./usr/share/man/cat8/tcpdmatch.0
-./usr/share/man/cat8/tcpdump.0
-./usr/share/man/cat8/telnetd.0
-./usr/share/man/cat8/tftpd.0
-./usr/share/man/cat8/timed.0
-./usr/share/man/cat8/timedc.0
-./usr/share/man/cat8/traceroute.0
-./usr/share/man/cat8/traceroute6.0
-./usr/share/man/cat8/trivial-rewrite.0
-./usr/share/man/cat8/trpt.0
-./usr/share/man/cat8/trsp.0
-./usr/share/man/cat8/ttyflags.0
-./usr/share/man/cat8/tunefs.0
-./usr/share/man/cat8/umount.0
-./usr/share/man/cat8/unlink.0
-./usr/share/man/cat8/usbdevs.0
-./usr/share/man/cat8/user.0
-./usr/share/man/cat8/useradd.0
-./usr/share/man/cat8/userdel.0
-./usr/share/man/cat8/userinfo.0
-./usr/share/man/cat8/usermod.0
-./usr/share/man/cat8/uucico.0
-./usr/share/man/cat8/uucpd.0
-./usr/share/man/cat8/uugetty.0
-./usr/share/man/cat8/uuxqt.0
-./usr/share/man/cat8/vax/MAKEDEV.0
-./usr/share/man/cat8/vax/boot.0
-./usr/share/man/cat8/vax/crash.0
-./usr/share/man/cat8/vax/drtest.0
-./usr/share/man/cat8/vax/format.0
-./usr/share/man/cat8/vax/installboot.0
-./usr/share/man/cat8/vax/makedev.0
-./usr/share/man/cat8/vipw.0
-./usr/share/man/cat8/vmstat.0
-./usr/share/man/cat8/vnconfig.0
-./usr/share/man/cat8/wdogctl.0
-./usr/share/man/cat8/wiconfig.0
-./usr/share/man/cat8/wire-test.0
-./usr/share/man/cat8/wsconscfg.0
-./usr/share/man/cat8/wsconsctl.0
-./usr/share/man/cat8/wsfontload.0
-./usr/share/man/cat8/x68k/MAKEDEV.0
-./usr/share/man/cat8/x68k/boot.0
-./usr/share/man/cat8/x68k/loadbsd.0
-./usr/share/man/cat8/x68k/loadbsd.x.0
-./usr/share/man/cat8/x68k/makedev.0
-./usr/share/man/cat8/x68k/memswitch.0
-./usr/share/man/cat8/x68k/newdisk.0
-./usr/share/man/cat8/x68k/poffd.0
-./usr/share/man/cat8/x68k/rtcalarm.0
-./usr/share/man/cat8/yp.0
-./usr/share/man/cat8/ypbind.0
-./usr/share/man/cat8/ypinit.0
-./usr/share/man/cat8/yppasswdd.0
-./usr/share/man/cat8/yppoll.0
-./usr/share/man/cat8/yppush.0
-./usr/share/man/cat8/ypserv.0
-./usr/share/man/cat8/ypset.0
-./usr/share/man/cat8/yptest.0
-./usr/share/man/cat8/ypxfr.0
-./usr/share/man/cat8/zdump.0
-./usr/share/man/cat8/zic.0
-./usr/share/man/cat9/i386/bioscall.0
-./usr/share/man/cat9/sun3/isr_add.0
-./usr/share/man/cat9/sun3/isr_add_autovect.0
-./usr/share/man/cat9/sun3/isr_add_custom.0
-./usr/share/man/cat9/sun3/isr_add_vectored.0
+./usr/share/man/cat5/a.out.0			man-sys-catman
+./usr/share/man/cat5/access.0			man-postfix-catman
+./usr/share/man/cat5/acct.0			man-sys-catman
+./usr/share/man/cat5/aliases.0			man-sendmail-catman
+./usr/share/man/cat5/altq.conf.0		man-router-catman
+./usr/share/man/cat5/amd.conf.0			man-amd-catman
+./usr/share/man/cat5/ar.0			man-sys-catman
+./usr/share/man/cat5/bootparams.0		man-bootserver-catman
+./usr/share/man/cat5/bootptab.0			man-bootserver-catman
+./usr/share/man/cat5/canonical.0		man-postfix-catman
+./usr/share/man/cat5/core.0			man-sys-catman
+./usr/share/man/cat5/crontab.0			man-cron-catman
+./usr/share/man/cat5/daily.conf.0		man-sys-catman
+./usr/share/man/cat5/dhclient.conf.0		man-dhclient-catman
+./usr/share/man/cat5/dhclient.leases.0		man-dhclient-catman
+./usr/share/man/cat5/dhcp-eval.0		man-dhclient-catman
+./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman
+./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman
+./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman
+./usr/share/man/cat5/dir.0			man-c-catman
+./usr/share/man/cat5/dirent.0			man-c-catman
+./usr/share/man/cat5/disklabel.0		man-sys-catman
+./usr/share/man/cat5/disktab.0			man-sys-catman
+./usr/share/man/cat5/dm.conf.0			man-games-catman
+./usr/share/man/cat5/editrc.0			man-sys-catman
+./usr/share/man/cat5/ethers.0			man-net-catman
+./usr/share/man/cat5/exports.0			man-nfsserver-catman
+./usr/share/man/cat5/fs.0			man-sys-catman
+./usr/share/man/cat5/fstab.0			man-sys-catman
+./usr/share/man/cat5/ftpchroot.0		man-netutil-catman
+./usr/share/man/cat5/ftpd.conf.0		man-netutil-catman
+./usr/share/man/cat5/ftpusers.0			man-netutil-catman
+./usr/share/man/cat5/genassym.cf.0		man-sys-catman
+./usr/share/man/cat5/gettytab.0			man-sysutil-catman
+./usr/share/man/cat5/group.0			man-sys-catman
+./usr/share/man/cat5/hesiod.conf.0		man-hesiod-catman
+./usr/share/man/cat5/hosts.0			man-net-catman
+./usr/share/man/cat5/hosts.allow.0		man-net-catman
+./usr/share/man/cat5/hosts.deny.0		man-net-catman
+./usr/share/man/cat5/hosts.equiv.0		man-netutil-catman
+./usr/share/man/cat5/hosts_access.0		man-net-catman
+./usr/share/man/cat5/hosts_options.0		man-net-catman
+./usr/share/man/cat5/ifaliases.0		man-net-catman
+./usr/share/man/cat5/ifconfig.if.0		man-net-catman
+./usr/share/man/cat5/inetd.conf.0		man-netutil-catman
+./usr/share/man/cat5/inode.0			man-sys-catman
+./usr/share/man/cat5/intro.0			man-sys-catman
+./usr/share/man/cat5/ipf.0			man-ipf-catman
+./usr/share/man/cat5/ipf.conf.0			man-ipf-catman
+./usr/share/man/cat5/ipnat.0			man-ipf-catman
+./usr/share/man/cat5/ipnat.conf.0		man-ipf-catman
+./usr/share/man/cat5/ipsend.0			man-ipf-catman
+./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman
+./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman
+./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman
+./usr/share/man/cat5/krb5.conf.0		man-krb5-catman
+./usr/share/man/cat5/lastlog.0			man-sys-catman
+./usr/share/man/cat5/ld.so.conf.0		man-sys-catman
+./usr/share/man/cat5/link.0			man-sys-catman
+./usr/share/man/cat5/lkm.conf.0			man-sys-catman
+./usr/share/man/cat5/login.conf.0		man-sys-catman
+./usr/share/man/cat5/magic.0			man-util-catman
+./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman
+./usr/share/man/cat5/man.conf.0			man-man-catman
+./usr/share/man/cat5/map3270.0			man-tn3270-catman
+./usr/share/man/cat5/master.passwd.0		man-sys-catman
+./usr/share/man/cat5/monthly.conf.0		man-sys-catman
+./usr/share/man/cat5/motd.0			man-sys-catman
+./usr/share/man/cat5/named.conf.0		man-bind-catman
+./usr/share/man/cat5/netconfig.0		man-net-catman
+./usr/share/man/cat5/netgroup.0			man-nis-catman
+./usr/share/man/cat5/netid.0			man-nis-catman
+./usr/share/man/cat5/networks.0			man-net-catman
+./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman
+./usr/share/man/cat5/nsswitch.conf.0		man-net-catman
+./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman
+./usr/share/man/cat5/passwd.0			man-sys-catman
+./usr/share/man/cat5/passwd.conf.0		man-sys-catman
+./usr/share/man/cat5/phones.0			man-uucp-catman
+./usr/share/man/cat5/pim6dd.conf.0		man-router-catman
+./usr/share/man/cat5/pim6sd.conf.0		man-router-catman
+./usr/share/man/cat5/printcap.0			man-lpr-catman
+./usr/share/man/cat5/protocols.0		man-net-catman
+./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
+./usr/share/man/cat5/rc.conf.0			man-sys-catman
+./usr/share/man/cat5/rcsfile.0			man-rcs-catman
+./usr/share/man/cat5/relocated.0		man-postfix-catman
+./usr/share/man/cat5/remote.0			man-uucp-catman
+./usr/share/man/cat5/resolv.conf.0		man-net-catman
+./usr/share/man/cat5/rhosts.0			man-netutil-catman
+./usr/share/man/cat5/rpc.0			man-net-catman
+./usr/share/man/cat5/rtadvd.conf.0		man-router-catman
+./usr/share/man/cat5/security.conf.0		man-sys-catman
+./usr/share/man/cat5/services.0			man-net-catman
+./usr/share/man/cat5/shells.0			man-sys-catman
+./usr/share/man/cat5/stab.0			man-sys-catman
+./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman
+./usr/share/man/cat5/termcap.0			man-sys-catman
+./usr/share/man/cat5/transport.0		man-postfix-catman
+./usr/share/man/cat5/ttyaction.0		man-sys-catman
+./usr/share/man/cat5/ttys.0			man-sys-catman
+./usr/share/man/cat5/types.0			man-c-catman
+./usr/share/man/cat5/tzfile.0			man-sys-catman
+./usr/share/man/cat5/utmp.0			man-sys-catman
+./usr/share/man/cat5/uuencode.0			man-util-catman
+./usr/share/man/cat5/vgrindefs.0		man-groff-catman
+./usr/share/man/cat5/virtual.0			man-postfix-catman
+./usr/share/man/cat5/weekly.conf.0		man-sys-catman
+./usr/share/man/cat5/wscons.conf.0		man-sys-catman
+./usr/share/man/cat5/wtmp.0			man-sys-catman
+./usr/share/man/cat7/ascii.0			man-reference-catman
+./usr/share/man/cat7/des_modes.0		man-reference-catman
+./usr/share/man/cat7/environ.0			man-reference-catman
+./usr/share/man/cat7/hier.0			man-reference-catman
+./usr/share/man/cat7/hostname.0			man-reference-catman
+./usr/share/man/cat7/intro.0			man-reference-catman
+./usr/share/man/cat7/lint.0			man-reference-catman
+./usr/share/man/cat7/mailaddr.0			man-reference-catman
+./usr/share/man/cat7/mandoc.0			man-reference-catman
+./usr/share/man/cat7/mdoc.0			man-reference-catman
+./usr/share/man/cat7/msafer.0			man-reference-catman
+./usr/share/man/cat7/packages.0			man-reference-catman
+./usr/share/man/cat7/re_format.0		man-reference-catman
+./usr/share/man/cat7/release.0			man-reference-catman
+./usr/share/man/cat7/signal.0			man-reference-catman
+./usr/share/man/cat7/symlink.0			man-reference-catman
+./usr/share/man/cat8/ac.0			man-sysutil-catman
+./usr/share/man/cat8/accton.0			man-sysutil-catman
+./usr/share/man/cat8/adduser.0			man-sysutil-catman
+./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/alpha/boot.0		man-sys-catman
+./usr/share/man/cat8/alpha/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/alpha/installboot.old.0	man-sysutil-catman
+./usr/share/man/cat8/alpha/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/alpha/mkbootimage.0	man-sysutil-catman
+./usr/share/man/cat8/alpha/setnetbootinfo.0	man-sysutil-catman
+./usr/share/man/cat8/altqd.0			man-router-catman
+./usr/share/man/cat8/amd.0			man-amd-catman
+./usr/share/man/cat8/amiga/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/amiga/binpatch.0		man-sysutil-catman
+./usr/share/man/cat8/amiga/boot.0		man-sys-catman
+./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/amiga/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/amq.0			man-amd-catman
+./usr/share/man/cat8/apmd.0			man-sysutil-catman
+./usr/share/man/cat8/arc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/arc/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/arm26/BBBB.0		man-sys-catman
+./usr/share/man/cat8/arm26/bbbb.0		man-sys-catman
+./usr/share/man/cat8/arm32/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/arm32/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/arp.0			man-netutil-catman
+./usr/share/man/cat8/atactl.0			man-sysutil-catman
+./usr/share/man/cat8/atari/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/atari/binpatch.0		man-sysutil-catman
+./usr/share/man/cat8/atari/boot.0		man-sys-catman
+./usr/share/man/cat8/atari/bootpref.0		man-sysutil-catman
+./usr/share/man/cat8/atari/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/atari/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/atrun.0			man-cron-catman
+./usr/share/man/cat8/bad144.0			man-sysutil-catman
+./usr/share/man/cat8/badsect.0			man-sysutil-catman
+./usr/share/man/cat8/bebox/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/bebox/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/bootparamd.0		man-bootserver-catman
+./usr/share/man/cat8/bootpd.0			man-bootserver-catman
+./usr/share/man/cat8/bootpef.0			man-bootserver-catman
+./usr/share/man/cat8/bootpgw.0			man-bootserver-catman
+./usr/share/man/cat8/bootptest.0		man-bootserver-catman
+./usr/share/man/cat8/bounce.0			man-postfix-catman
+./usr/share/man/cat8/catman.0			man-man-catman
+./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
+./usr/share/man/cat8/chat.0			man-ppp-catman
+./usr/share/man/cat8/chown.0			man-sysutil-catman
+./usr/share/man/cat8/chroot.0			man-sysutil-catman
+./usr/share/man/cat8/chrtbl.0			man-sysutil-catman
+./usr/share/man/cat8/cleanup.0			man-postfix-catman
+./usr/share/man/cat8/clri.0			man-sysutil-catman
+./usr/share/man/cat8/cnwctl.0			man-sysutil-catman
+./usr/share/man/cat8/compat_freebsd.0		man-sys-catman
+./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman
+./usr/share/man/cat8/compat_linux.0		man-sys-catman
+./usr/share/man/cat8/compat_osf1.0		man-sys-catman
+./usr/share/man/cat8/compat_pecoff.0		man-sys-catman
+./usr/share/man/cat8/compat_sco.0		man-sys-catman
+./usr/share/man/cat8/compat_solaris.0		man-sys-catman
+./usr/share/man/cat8/compat_sunos.0		man-sys-catman
+./usr/share/man/cat8/compat_svr4.0		man-sys-catman
+./usr/share/man/cat8/compat_ultrix.0		man-sys-catman
+./usr/share/man/cat8/compat_win32.0		man-sys-catman
+./usr/share/man/cat8/compat_xenix.0		man-sys-catman
+./usr/share/man/cat8/comsat.0			man-man-catman
+./usr/share/man/cat8/cron.0			man-cron-catman
+./usr/share/man/cat8/dbsym.0			man-sysutil-catman
+./usr/share/man/cat8/defer.0			man-postfix-catman
+./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman
+./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman
+./usr/share/man/cat8/dhclient.0			man-dhclient-catman
+./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman
+./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman
+./usr/share/man/cat8/disklabel.0		man-sysutil-catman
+./usr/share/man/cat8/diskless.0			man-sysutil-catman
+./usr/share/man/cat8/diskpart.0			man-sysutil-catman
+./usr/share/man/cat8/dm.0			man-games-catman
+./usr/share/man/cat8/dmesg.0			man-sysutil-catman
+./usr/share/man/cat8/dump.0			man-sysutil-catman
+./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman
+./usr/share/man/cat8/dumpfs.0			man-sysutil-catman
+./usr/share/man/cat8/dumplfs.0			man-sysutil-catman
+./usr/share/man/cat8/edquota.0			man-sysutil-catman
+./usr/share/man/cat8/eeprom.0			man-sysutil-catman
+./usr/share/man/cat8/envstat.0			man-sysutil-catman
+./usr/share/man/cat8/error.0			man-sysutil-catman
+./usr/share/man/cat8/eshconfig.0		man-sysutil-catman
+./usr/share/man/cat8/faithd.0			man-router-catman
+./usr/share/man/cat8/fastboot.0			man-sysutil-catman
+./usr/share/man/cat8/fasthalt.0			man-sysutil-catman
+./usr/share/man/cat8/fdisk.0			man-sysutil-catman
+./usr/share/man/cat8/fingerd.0			man-sysutil-catman
+./usr/share/man/cat8/fixmount.0			man-sysutil-catman
+./usr/share/man/cat8/fsck.0			man-sysutil-catman
+./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman
+./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman
+./usr/share/man/cat8/fsck_lfs.0			man-sysutil-catman
+./usr/share/man/cat8/fsck_msdos.0		man-sysutil-catman
+./usr/share/man/cat8/fsdb.0			man-sysutil-catman
+./usr/share/man/cat8/fsinfo.0			man-sysutil-catman
+./usr/share/man/cat8/fsirand.0			man-sysutil-catman
+./usr/share/man/cat8/ftpd.0			man-netutil-catman
+./usr/share/man/cat8/genassym.sh.0		man-sys-catman
+./usr/share/man/cat8/getNAME.0			man-man-catman
+./usr/share/man/cat8/getencstat.0		man-sysutil-catman
+./usr/share/man/cat8/getty.0			man-sysutil-catman
+./usr/share/man/cat8/greconfig.0		man-netutil-catman
+./usr/share/man/cat8/grfconfig.0		man-sysutil-catman
+./usr/share/man/cat8/group.0			man-sysutil-catman
+./usr/share/man/cat8/groupadd.0			man-sysutil-catman
+./usr/share/man/cat8/groupdel.0			man-sysutil-catman
+./usr/share/man/cat8/groupinfo.0		man-sysutil-catman
+./usr/share/man/cat8/groupmod.0			man-sysutil-catman
+./usr/share/man/cat8/halt.0			man-sysutil-catman
+./usr/share/man/cat8/hlfsd.0			man-amd-catman
+./usr/share/man/cat8/hp300/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hp300/boot.0		man-sys-catman
+./usr/share/man/cat8/hp300/crash.0		man-sys-catman
+./usr/share/man/cat8/hp300/format.0		man-sys-catman
+./usr/share/man/cat8/hp300/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/hpcmips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hpcmips/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman
+./usr/share/man/cat8/hprop.0			man-krb5-catman
+./usr/share/man/cat8/hpropd.0			man-krb5-catman
+./usr/share/man/cat8/i386/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/i386/apm.0			man-sysutil-catman
+./usr/share/man/cat8/i386/boot.0		man-sys-catman
+./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
+./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
+./usr/share/man/cat8/i386/installboot.0		man-sysutil-catman
+./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/i386/w95boot.0		man-sys-catman
+./usr/share/man/cat8/i386/zzz.0			man-sysutil-catman
+./usr/share/man/cat8/identd.0			man-netutil-catman
+./usr/share/man/cat8/ifconfig.0			man-netutil-catman
+./usr/share/man/cat8/ifmcstat.0			man-netutil-catman
+./usr/share/man/cat8/inetd.0			man-netutil-catman
+./usr/share/man/cat8/init.0			man-sysutil-catman
+./usr/share/man/cat8/intro.0			man-sys-catman
+./usr/share/man/cat8/iopctl.0			man-sysutil-catman
+./usr/share/man/cat8/iostat.0			man-sysutil-catman
+./usr/share/man/cat8/ipf.0			man-ipf-catman
+./usr/share/man/cat8/ipfs.0			man-ipf-catman
+./usr/share/man/cat8/ipfstat.0			man-ipf-catman
+./usr/share/man/cat8/ipmon.0			man-ipf-catman
+./usr/share/man/cat8/ipnat.0			man-ipf-catman
+./usr/share/man/cat8/isdnd.0			man-isdn-catman
+./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman
+./usr/share/man/cat8/isdntel.0			man-isdn-catman
+./usr/share/man/cat8/isdntelctl.0		man-isdn-catman
+./usr/share/man/cat8/isdntrace.0		man-isdn-catman
+./usr/share/man/cat8/ispppcontrol.0		man-isdn-catman
+./usr/share/man/cat8/iteconfig.0		man-sysutil-catman
+./usr/share/man/cat8/kadmin.0			man-krb5-catman
+./usr/share/man/cat8/kadmind.0			man-krb5-catman
+./usr/share/man/cat8/kdc.0			man-krb5-catman
+./usr/share/man/cat8/kerberos.0			man-krb5-catman
+./usr/share/man/cat8/kfd.0			man-krb5-catman
+./usr/share/man/cat8/kpasswdd.0			man-krb5-catman
+./usr/share/man/cat8/kstash.0			man-krb5-catman
+./usr/share/man/cat8/ktutil.0			man-krb5-catman
+./usr/share/man/cat8/kvm_mkdb.0			man-sysutil-catman
+./usr/share/man/cat8/lastlogin.0		man-sysutil-catman
+./usr/share/man/cat8/ldconfig.0			man-sysutil-catman
+./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman
+./usr/share/man/cat8/link.0			man-sysutil-catman
+./usr/share/man/cat8/lmcctl.0			man-sysutil-catman
+./usr/share/man/cat8/local.0			man-postfix-catman
+./usr/share/man/cat8/lockd.0			man-nfsserver-catman
+./usr/share/man/cat8/lpc.0			man-lpr-catman
+./usr/share/man/cat8/lpd.0			man-lpr-catman
+./usr/share/man/cat8/mac68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mac68k/boot.0		man-sys-catman
+./usr/share/man/cat8/mac68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/mail.local.0		man-sendmail-catman
+./usr/share/man/cat8/mailstats.0		man-sendmail-catman
+./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman
+./usr/share/man/cat8/makedbm.0			man-sendmail-catman
+./usr/share/man/cat8/makekey.0			man-crypto-catman
+./usr/share/man/cat8/makemap.0			man-sendmail-catman
+./usr/share/man/cat8/makewhatis.0		man-man-catman
+./usr/share/man/cat8/map-mbone.0		man-netutil-catman
+./usr/share/man/cat8/master.0			man-postfix-catman
+./usr/share/man/cat8/mbr.0			man-sys-catman
+./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman
+./usr/share/man/cat8/mdconfig.0			man-sysutil-catman
+./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman
+./usr/share/man/cat8/mfs.0			man-sys-catman
+./usr/share/man/cat8/mk-amd-map.0		man-amd-catman
+./usr/share/man/cat8/mkalias.0			man-nis-catman
+./usr/share/man/cat8/mknetid.0			man-nis-catman
+./usr/share/man/cat8/mknod.0			man-sysutil-catman
+./usr/share/man/cat8/mld6query.0		man-netutil-catman
+./usr/share/man/cat8/modload.0			man-sysutil-catman
+./usr/share/man/cat8/modstat.0			man-sysutil-catman
+./usr/share/man/cat8/modunload.0		man-sysutil-catman
+./usr/share/man/cat8/mopd.0			man-bootserver-catman
+./usr/share/man/cat8/mount.0			man-sysutil-catman
+./usr/share/man/cat8/mount_ados.0		man-adosfs-catman
+./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman
+./usr/share/man/cat8/mount_ext2fs.0		man-ext2fs-catman
+./usr/share/man/cat8/mount_fdesc.0		man-miscfs-catman
+./usr/share/man/cat8/mount_ffs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_filecore.0		man-filecorefs-catman
+./usr/share/man/cat8/mount_kernfs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_lfs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_mfs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_msdos.0		man-sysutil-catman
+./usr/share/man/cat8/mount_nfs.0		man-nfsclient-catman
+./usr/share/man/cat8/mount_ntfs.0		man-ntfs-catman
+./usr/share/man/cat8/mount_null.0		man-miscfs-catman
+./usr/share/man/cat8/mount_overlay.0		man-miscfs-catman
+./usr/share/man/cat8/mount_portal.0		man-miscfs-catman
+./usr/share/man/cat8/mount_procfs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_ufs.0		man-sysutil-catman
+./usr/share/man/cat8/mount_umap.0		man-miscfs-catman
+./usr/share/man/cat8/mount_union.0		man-miscfs-catman
+./usr/share/man/cat8/mountd.0			man-nfsserver-catman
+./usr/share/man/cat8/mrinfo.0			man-netutil-catman
+./usr/share/man/cat8/mrouted.0			man-router-catman
+./usr/share/man/cat8/mtrace.0			man-netutil-catman
+./usr/share/man/cat8/mtrace6.0			man-netutil-catman
+./usr/share/man/cat8/mtree.0			man-sysutil-catman
+./usr/share/man/cat8/mvme68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mvme68k/boot.0		man-sys-catman
+./usr/share/man/cat8/mvme68k/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/mvme68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/named-bootconf.0		man-bind-catman
+./usr/share/man/cat8/named-xfer.0		man-bind-catman
+./usr/share/man/cat8/named.0			man-bind-catman
+./usr/share/man/cat8/named.reload.0		man-bind-catman
+./usr/share/man/cat8/named.restart.0		man-bind-catman
+./usr/share/man/cat8/ndc.0			man-bind-catman
+./usr/share/man/cat8/ndp.0			man-netutil-catman
+./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman
+./usr/share/man/cat8/newbtconf.0		man-sysutil-catman
+./usr/share/man/cat8/newfs.0			man-sysutil-catman
+./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman
+./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman
+./usr/share/man/cat8/newsyslog.0		man-sysutil-catman
+./usr/share/man/cat8/next68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/next68k/boot.0		man-sys-catman
+./usr/share/man/cat8/next68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/nfsd.0			man-nfsserver-catman
+./usr/share/man/cat8/nis.0			man-nis-catman
+./usr/share/man/cat8/nologin.0			man-sysutil-catman
+./usr/share/man/cat8/nslookup.0			man-netutil-catman
+./usr/share/man/cat8/nsupdate.0			man-netutil-catman
+./usr/share/man/cat8/ntpd.0			man-ntp-catman
+./usr/share/man/cat8/ntpdate.0			man-ntp-catman
+./usr/share/man/cat8/ntpdc.0			man-ntp-catman
+./usr/share/man/cat8/ntpq.0			man-ntp-catman
+./usr/share/man/cat8/ntptime.0			man-ntp-catman
+./usr/share/man/cat8/ntptrace.0			man-ntp-catman
+./usr/share/man/cat8/pac.0			man-sysutil-catman
+./usr/share/man/cat8/pc532/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman
+./usr/share/man/cat8/pc532/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman
+./usr/share/man/cat8/peace.0			man-sys-catman
+./usr/share/man/cat8/pickup.0			man-postfix-catman
+./usr/share/man/cat8/pim6dd.0			man-router-catman
+./usr/share/man/cat8/pim6sd.0			man-router-catman
+./usr/share/man/cat8/ping.0			man-netutil-catman
+./usr/share/man/cat8/ping6.0			man-netutil-catman
+./usr/share/man/cat8/pipe.0			man-postfix-catman
+./usr/share/man/cat8/pmax/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/pmax/boot.0		man-sys-catman
+./usr/share/man/cat8/pmax/installboot.0		man-sysutil-catman
+./usr/share/man/cat8/pmax/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/poweroff.0			man-sysutil-catman
+./usr/share/man/cat8/pppd.0			man-ppp-catman
+./usr/share/man/cat8/pppstats.0			man-ppp-catman
+./usr/share/man/cat8/praliases.0		man-sendmail-catman
+./usr/share/man/cat8/prep/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/prep/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/pstat.0			man-sysutil-catman
+./usr/share/man/cat8/pvcsif.0			man-netutil-catman
+./usr/share/man/cat8/pvctxctl.0			man-netutil-catman
+./usr/share/man/cat8/pwd_mkdb.0			man-sysutil-catman
+./usr/share/man/cat8/qmgr.0			man-postfix-catman
+./usr/share/man/cat8/quot.0			man-sysutil-catman
+./usr/share/man/cat8/quotacheck.0		man-sysutil-catman
+./usr/share/man/cat8/quotaoff.0			man-sysutil-catman
+./usr/share/man/cat8/quotaon.0			man-sysutil-catman
+./usr/share/man/cat8/racoon.0			man-netutil-catman
+./usr/share/man/cat8/raidctl.0			man-sysutil-catman
+./usr/share/man/cat8/rarpd.0			man-bootserver-catman
+./usr/share/man/cat8/rbootd.0			man-bootserver-catman
+./usr/share/man/cat8/rc.0			man-rc-catman
+./usr/share/man/cat8/rc.d.0			man-rc-catman
+./usr/share/man/cat8/rc.shutdown.0		man-rc-catman
+./usr/share/man/cat8/rcorder.0			man-sysutil-catman
+./usr/share/man/cat8/rdate.0			man-netutil-catman
+./usr/share/man/cat8/rdisc.0			man-netutil-catman
+./usr/share/man/cat8/rdump.0			man-netutil-catman
+./usr/share/man/cat8/rdump_lfs.0		man-netutil-catman
+./usr/share/man/cat8/reboot.0			man-sysutil-catman
+./usr/share/man/cat8/renice.0			man-sysutil-catman
+./usr/share/man/cat8/repquota.0			man-sysutil-catman
+./usr/share/man/cat8/restore.0			man-sysutil-catman
+./usr/share/man/cat8/revnetgroup.0		man-nis-catman
+./usr/share/man/cat8/rexecd.0			man-netutil-catman
+./usr/share/man/cat8/rip6query.0		man-netutil-catman
+./usr/share/man/cat8/rlogind.0			man-netutil-catman
+./usr/share/man/cat8/rmail.0			man-uucp-catman
+./usr/share/man/cat8/rmt.0			man-sysutil-catman
+./usr/share/man/cat8/rndctl.0			man-sysutil-catman
+./usr/share/man/cat8/route.0			man-netutil-catman
+./usr/share/man/cat8/route6d.0			man-router-catman
+./usr/share/man/cat8/routed.0			man-router-catman
+./usr/share/man/cat8/rpc.bootparamd.0		man-bootserver-catman
+./usr/share/man/cat8/rpc.lockd.0		man-nfsserver-catman
+./usr/share/man/cat8/rpc.pcnfsd.0		man-nfsserver-catman
+./usr/share/man/cat8/rpc.rquotad.0		man-nfsserver-catman
+./usr/share/man/cat8/rpc.rstatd.0		man-netutil-catman
+./usr/share/man/cat8/rpc.rusersd.0		man-netutil-catman
+./usr/share/man/cat8/rpc.rwalld.0		man-netutil-catman
+./usr/share/man/cat8/rpc.sprayd.0		man-netutil-catman
+./usr/share/man/cat8/rpc.statd.0		man-nfsserver-catman
+./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman
+./usr/share/man/cat8/rpcbind.0			man-netutil-catman
+./usr/share/man/cat8/rpcinfo.0			man-netutil-catman
+./usr/share/man/cat8/rquotad.0			man-nfsserver-catman
+./usr/share/man/cat8/rrestore.0			man-netutil-catman
+./usr/share/man/cat8/rshd.0			man-netutil-catman
+./usr/share/man/cat8/rstatd.0			man-netutil-catman
+./usr/share/man/cat8/rtadvd.0			man-router-catman
+./usr/share/man/cat8/rtquery.0			man-netutil-catman
+./usr/share/man/cat8/rtsol.0			man-netutil-catman
+./usr/share/man/cat8/rtsold.0			man-netutil-catman
+./usr/share/man/cat8/rusersd.0			man-netutil-catman
+./usr/share/man/cat8/rwalld.0			man-netutil-catman
+./usr/share/man/cat8/rwhod.0			man-netutil-catman
+./usr/share/man/cat8/sa.0			man-sysutil-catman
+./usr/share/man/cat8/savecore.0			man-sysutil-catman
+./usr/share/man/cat8/scsictl.0			man-sysutil-catman
+./usr/share/man/cat8/sendmail.0			man-sendmail-catman
+./usr/share/man/cat8/sesd.0			man-sysutil-catman
+./usr/share/man/cat8/setencstat.0		man-sysutil-catman
+./usr/share/man/cat8/setkey.0			man-netutil-catman
+./usr/share/man/cat8/setobjstat.0		man-sysutil-catman
+./usr/share/man/cat8/sftp-server.0		man-secsh-catman
+./usr/share/man/cat8/showmount.0		man-nfsclient-catman
+./usr/share/man/cat8/showq.0			man-postfix-catman
+./usr/share/man/cat8/shutdown.0			man-sysutil-catman
+./usr/share/man/cat8/slattach.0			man-slip-catman
+./usr/share/man/cat8/slip.0			man-slip-catman
+./usr/share/man/cat8/sliplogin.0		man-slip-catman
+./usr/share/man/cat8/slstats.0			man-slip-catman
+./usr/share/man/cat8/smrsh.0			man-sendmail-catman
+./usr/share/man/cat8/smtp.0			man-postfix-catman
+./usr/share/man/cat8/smtpd.0			man-postfix-catman
+./usr/share/man/cat8/sparc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sparc/boot.0		man-sys-catman
+./usr/share/man/cat8/sparc/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/sparc/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/sparc/tadpolectl.0		man-sysutil-catman
+./usr/share/man/cat8/sparc64/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sparc64/installboot.0	man-sysutil-catman
+./usr/share/man/cat8/sparc64/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/spray.0			man-netutil-catman
+./usr/share/man/cat8/sprayd.0			man-netutil-catman
+./usr/share/man/cat8/sshd.0			man-secsh-catman
+./usr/share/man/cat8/statd.0			man-nfsserver-catman
+./usr/share/man/cat8/stdethers.0		man-nis-catman
+./usr/share/man/cat8/stdhosts.0			man-nis-catman
+./usr/share/man/cat8/sticky.0			man-sys-catman
+./usr/share/man/cat8/strfile.0			man-sysutil-catman
+./usr/share/man/cat8/string2key.0		man-krb5-catman
+./usr/share/man/cat8/sun3/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sun3/boot.0		man-sys-catman
+./usr/share/man/cat8/sun3/installboot.0		man-sysutil-catman
+./usr/share/man/cat8/sun3/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/supfilesrv.0		man-sup-catman
+./usr/share/man/cat8/supscan.0			man-sup-catman
+./usr/share/man/cat8/supservers.0		man-sup-catman
+./usr/share/man/cat8/sushi.0			man-sysutil-catman
+./usr/share/man/cat8/swapctl.0			man-sysutil-catman
+./usr/share/man/cat8/swapon.0			man-sysutil-catman
+./usr/share/man/cat8/sync.0			man-sysutil-catman
+./usr/share/man/cat8/sysctl.0			man-sysutil-catman
+./usr/share/man/cat8/syslogd.0			man-sysutil-catman
+./usr/share/man/cat8/talkd.0			man-netutil-catman
+./usr/share/man/cat8/tbrconfig.0		man-router-catman
+./usr/share/man/cat8/tcpdchk.0			man-netutil-catman
+./usr/share/man/cat8/tcpdmatch.0		man-netutil-catman
+./usr/share/man/cat8/tcpdump.0			man-netutil-catman
+./usr/share/man/cat8/telnetd.0			man-netutil-catman
+./usr/share/man/cat8/tftpd.0			man-netutil-catman
+./usr/share/man/cat8/timed.0			man-timed-catman
+./usr/share/man/cat8/timedc.0			man-timed-catman
+./usr/share/man/cat8/traceroute.0		man-netutil-catman
+./usr/share/man/cat8/traceroute6.0		man-netutil-catman
+./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman
+./usr/share/man/cat8/trpt.0			man-netutil-catman
+./usr/share/man/cat8/trsp.0			man-netutil-catman
+./usr/share/man/cat8/ttyflags.0			man-sysutil-catman
+./usr/share/man/cat8/tunefs.0			man-sysutil-catman
+./usr/share/man/cat8/umount.0			man-sysutil-catman
+./usr/share/man/cat8/unlink.0			man-sysutil-catman
+./usr/share/man/cat8/usbdevs.0			man-sysutil-catman
+./usr/share/man/cat8/user.0			man-sysutil-catman
+./usr/share/man/cat8/useradd.0			man-sysutil-catman
+./usr/share/man/cat8/userdel.0			man-sysutil-catman
+./usr/share/man/cat8/userinfo.0			man-sysutil-catman
+./usr/share/man/cat8/usermod.0			man-sysutil-catman
+./usr/share/man/cat8/uucico.0			man-uucp-catman
+./usr/share/man/cat8/uucpd.0			man-uucp-catman
+./usr/share/man/cat8/uugetty.0			man-uucp-catman
+./usr/share/man/cat8/uuxqt.0			man-uucp-catman
+./usr/share/man/cat8/vax/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/vax/boot.0			man-sys-catman
+./usr/share/man/cat8/vax/crash.0		man-sys-catman
+./usr/share/man/cat8/vax/drtest.0		man-sys-catman
+./usr/share/man/cat8/vax/format.0		man-sys-catman
+./usr/share/man/cat8/vax/installboot.0		man-sysutil-catman
+./usr/share/man/cat8/vax/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/vipw.0			man-sysutil-catman
+./usr/share/man/cat8/vmstat.0			man-sysutil-catman
+./usr/share/man/cat8/vnconfig.0			man-sysutil-catman
+./usr/share/man/cat8/wdogctl.0			man-sysutil-catman
+./usr/share/man/cat8/wiconfig.0			man-netutil-catman
+./usr/share/man/cat8/wire-test.0		man-netutil-catman
+./usr/share/man/cat8/wsconscfg.0		man-sysutil-catman
+./usr/share/man/cat8/wsconsctl.0		man-sysutil-catman
+./usr/share/man/cat8/wsfontload.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/boot.0		man-sys-catman
+./usr/share/man/cat8/x68k/loadbsd.0		man-sys-catman
+./usr/share/man/cat8/x68k/loadbsd.x.0		man-sys-catman
+./usr/share/man/cat8/x68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/memswitch.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/newdisk.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/poffd.0		man-sysutil-catman
+./usr/share/man/cat8/x68k/rtcalarm.0		man-sysutil-catman
+./usr/share/man/cat8/yp.0			man-nis-catman
+./usr/share/man/cat8/ypbind.0			man-nis-catman
+./usr/share/man/cat8/ypinit.0			man-nis-catman
+./usr/share/man/cat8/yppasswdd.0		man-nis-catman
+./usr/share/man/cat8/yppoll.0			man-nis-catman
+./usr/share/man/cat8/yppush.0			man-nis-catman
+./usr/share/man/cat8/ypserv.0			man-nis-catman
+./usr/share/man/cat8/ypset.0			man-nis-catman
+./usr/share/man/cat8/yptest.0			man-nis-catman
+./usr/share/man/cat8/ypxfr.0			man-nis-catman
+./usr/share/man/cat8/zdump.0			man-sysutil-catman
+./usr/share/man/cat8/zic.0			man-sysutil-catman
+./usr/share/man/cat9/i386/bioscall.0		man-sys-catman
+./usr/share/man/cat9/sun3/isr_add.0		man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_autovect.0	man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_custom.0	man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_vectored.0	man-sys-catman
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/alias.1
