@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.75 2003/01/16 16:27:48 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.76 2003/01/22 21:58:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,6 +128,45 @@ bogusintr(fp)
 }
 #endif /* DIAGNOSTIC */
 
+/*
+ * Get module ID of interrupt target.
+ */
+u_int
+getitr()
+{
+#if defined(MULTIPROCESSOR)
+	u_int v;
+
+	if (!CPU_ISSUN4M || ncpu <= 1)
+		return (0);
+
+	v = *((u_int *)ICR_ITR);
+	return (v + 8);
+#else
+	return (0);
+#endif
+}
+
+/*
+ * Set interrupt target.
+ * Return previous value.
+ */
+u_int
+setitr(u_int mid)
+{
+#if defined(MULTIPROCESSOR)
+	u_int v;
+
+	if (!CPU_ISSUN4M || ncpu <= 1)
+		return (0);
+
+	v = *((u_int *)ICR_ITR);
+	*((u_int *)ICR_ITR) = CPU_MID2CPUNO(mid);
+	return (v + 8);
+#else
+	return (0);
+#endif
+}
 
 /*
  * Process software network interrupts.
