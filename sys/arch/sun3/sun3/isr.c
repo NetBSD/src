@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.19 1995/08/21 21:37:38 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.20 1995/09/26 04:02:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,9 +65,12 @@ struct isr {
 
 void set_vector_entry __P((int, void (*handler)()));
 unsigned int get_vector_entry __P((int));
+static int nmi_intr();
+static int soft1intr();
 
 volatile u_char *interrupt_reg;
 
+/* called early (by internal_configure) */
 void isr_init()
 {
 	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
@@ -75,6 +78,13 @@ void isr_init()
 		mon_panic("interrupt reg VA not found\n");
 	/* Turn off all interrupts until clock_attach */
 	*interrupt_reg = 0;
+}
+
+/* called later, by configure */
+void isr_config()
+{
+	isr_add_autovect(nmi_intr, 0, 7);
+	isr_add_autovect(soft1intr, 0, 1);
 }
 
 void isr_add_custom(level, handler)
@@ -186,8 +196,8 @@ void netintr()
  *	Network software interrupt
  *	Soft clock interrupt
  */
-int soft1intr(fp)
-	void *fp;
+int soft1intr(arg)
+	void *arg;
 {
 	union sun3sir sir;
 	int n, s;
@@ -219,6 +229,23 @@ int soft1intr(fp)
 		return (1);
 	}
 	return(0);
+}
+
+/*
+ * Generic handler for the non-maskable interrupt.
+ * XXX: Should check memory error register here!
+ */
+int nmi_intr(arg)
+	void *arg;
+{
+	static int nmi_cnt;
+	if (!nmi_cnt++) {
+		printf("nmi interrupt received\n");
+#ifdef	DDB
+		Debugger();
+#endif
+	}
+	return 1;
 }
 
 

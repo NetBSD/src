@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1995/08/21 21:36:25 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1995/09/26 04:02:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,6 +65,7 @@ void mainbusattach __P((struct device *, struct device *, void *));
 void swapgeneric();
 void swapconf(), dumpconf();
 
+int cold;
 
 struct mainbus_softc {
 	struct device mainbus_dev;
@@ -89,31 +90,17 @@ void mainbusattach(parent, self, args)
 	}
 }
 
-int nmi_intr(arg)
-	int arg;
-{
-	static int nmi_cnt;
-	if (!nmi_cnt++) {
-		printf("nmi interrupt received\n");
-#ifdef	DDB
-		Debugger();
-#endif
-	}
-	return 1;
-}
-
 void configure()
 {
 	int root_found;
+
+	/* Install non-device interrupt handlers. */
+	isr_config();
 
 	/* General device autoconfiguration. */
 	root_found = config_rootfound("mainbus", NULL);
 	if (!root_found)
 		panic("configure: mainbus not found");
-
-	/* Install non-device interrupt handlers. */
-	isr_add_autovect(nmi_intr, 0, 7);
-	isr_add_autovect(soft1intr, 0, 1);
 
 #ifdef	GENERIC
 	/* Choose root and swap devices. */
@@ -121,6 +108,7 @@ void configure()
 #endif
 	swapconf();
 	dumpconf();
+	cold = 0;
 }
 
 /*
@@ -134,10 +122,6 @@ swapconf()
 	int nblks;
 	
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-
-		/* If root on swap, leave swap size at zero. */
-		if (swp->sw_dev == rootdev)
-			continue;
 
 		maj = major(swp->sw_dev);
 		if (maj > nblkdev) /* paranoid? */
@@ -280,14 +264,12 @@ static const int bustype_to_pmaptype[4] = {
 	PMAP_VME32,
 };
 
-extern caddr_t dvma_vm_alloc();
-
 char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
 	int off, pa, pgs, pmt;
-	caddr_t va;
+	vm_offset_t va;
 
 	if (bustype & ~3)
 		return (NULL);
@@ -300,13 +282,13 @@ bus_mapin(bustype, paddr, sz)
 	pmt = bustype_to_pmaptype[bustype];
 	pmt |= PMAP_NC;	/* non-cached */
 
-	/* Get some DVMA space. */
-	va = dvma_vm_alloc(sz);
-	if (va == NULL)
+	/* Get some kernel virtual address space. */
+	va = kmem_alloc_wait(kernel_map, sz);
+	if (va == 0)
 		panic("bus_mapin");
 
 	/* Map it to the specified bus. */
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
 
-	return (va + off);
+	return ((char*)(va + off));
 }	
