@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.33 1997/08/15 00:15:32 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.34 1997/10/09 01:25:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -259,6 +259,11 @@ bad:
 		break;
 	case NUBUS_DRHW_CB364:
 		add_nubus_intr(na->slot, grfmv_intr_cb364, sc);
+		break;
+	case NUBUS_DRHW_RPC8:
+		sc->cli_offset = 0xfdff8f;
+		sc->cli_value = 0xff;
+		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
