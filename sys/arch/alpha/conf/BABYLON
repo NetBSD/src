@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.6 1998/04/24 18:18:41 thorpej Exp $
+# $NetBSD: BABYLON,v 1.7 1998/05/11 00:34:24 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -176,6 +176,8 @@ ncr0	at	pci0 dev 7 function 0		# NCR 53c8xx SCSI
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 #tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #vga*	at	pci? dev ? function ?		# PCI VGA Graphics
@@ -187,9 +189,11 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pckbc*	at	isa?				# PC keyboard controller
+pckbc*	at	isa? port ?			# PC keyboard controller
 #pckbd*	at	pckbc?				# PC keyboard (kbd port)
 #psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pcppi*	at	isa? port ?			# PC prog. peripheral interface
+spkr*	at	pcppi?
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
@@ -242,14 +246,14 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # ST506/ESDI/IDE devices
-#wd*	at	wdc? drive ?
+wd*	at	wdc? drive ?
 
 # ATAPI bus support
-#atapibus* at	wdc?
+atapibus* at	wdc?
 
 # ATAPI devices
-#sd*	at	atapibus? drive ?		# ATAPI disk devices
-#cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
