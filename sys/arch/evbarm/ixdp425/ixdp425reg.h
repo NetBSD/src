@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425reg.h,v 1.4 2003/10/23 10:50:01 scw Exp $ */
+/*	$NetBSD: ixdp425reg.h,v 1.5 2003/10/24 10:04:01 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -52,13 +52,13 @@
 #define	GPIO_PCI_INTB	10
 #define	GPIO_PCI_INTC	9
 #define	GPIO_PCI_INTD	8
+#define	GPIO_I2C_SDA	7
+#define	GPIO_I2C_SCL	6
 /* Interrupt */
 #define	PCI_INT_A	IXP425_INT_GPIO_11
 #define	PCI_INT_B	IXP425_INT_GPIO_10
 #define	PCI_INT_C	IXP425_INT_GPIO_9
 #define	PCI_INT_D	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
 #endif /* EVBARM_BOARDTYPE == ixdp425 */
 
 #if EVBARM_BOARDTYPE == zao425		/* conf/ZAO425 */
@@ -69,14 +69,14 @@
 #define	GPIO_PCI_INTB	10
 #define	GPIO_PCI_INTC	9
 #define	GPIO_PCI_INTD	8
+#define	GPIO_I2C_SDA	7
+#define	GPIO_I2C_SCL	6
 /* Interrupt */
 #define	MPCI_GPIO0	IXP425_INT_GPIO_12
 #define	PCI_INT_A	IXP425_INT_GPIO_11
 #define	PCI_INT_B	IXP425_INT_GPIO_10
 #define	PCI_INT_C	IXP425_INT_GPIO_9
 #define	PCI_INT_D	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
 #define	MPCI_GPIO3	IXP425_INT_GPIO_5
 #define	HSS0_INT	IXP425_INT_GPIO_4
 #define	HSS0_SCLK	IXP425_INT_GPIO_3
