@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.101 2003/12/04 20:06:58 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.102 2003/12/06 04:16:33 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -717,7 +717,8 @@ struct kinfo_drivers {
 #define	PROC_PID_LIMIT		2
 #define	PROC_PID_STOPFORK	3
 #define	PROC_PID_STOPEXEC	4
-#define	PROC_PID_MAXID		5
+#define	PROC_PID_STOPEXIT	5
+#define	PROC_PID_MAXID		6
 
 #define	PROC_PID_NAMES { \
 	{ 0, 0 }, \
@@ -725,6 +726,7 @@ struct kinfo_drivers {
 	{ "rlimit", CTLTYPE_NODE }, \
 	{ "stopfork", CTLTYPE_INT }, \
 	{ "stopexec", CTLTYPE_INT }, \
+	{ "stopexit", CTLTYPE_INT }, \
 }
 
 /* Limit types from <sys/resources.h> */

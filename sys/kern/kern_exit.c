@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.129 2003/11/17 22:52:09 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.130 2003/12/06 04:16:33 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.129 2003/11/17 22:52:09 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.130 2003/12/06 04:16:33 atatat Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -199,6 +199,18 @@ exit1(struct lwp *l, int rv)
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
 	p->p_flag |= P_WEXIT;
+	if (p->p_flag & P_STOPEXIT) {
+		int s;
+
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_stat = SSTOP;
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(l, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
 
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	/*
