@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.21 1995/02/16 21:57:39 chopps Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.22 1995/02/23 19:14:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -988,7 +988,7 @@ rt_mode(gp, cmd, arg, a2, a3)
       return rt_setbank (gp, arg);
 #endif
     case GM_GRFIOCTL:
-      return rt_ioctl (gp, arg, a2);
+      return rt_ioctl (gp, (u_long)arg, (void *)a2);
 
     default:
       break;
