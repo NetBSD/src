@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.22 1999/02/17 21:44:56 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.23 1999/02/17 23:55:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -655,7 +655,8 @@ eap_set_params(addr, setmode, usemode, play, rec)
 {
 	struct eap_softc *sc = addr;
 	struct audio_params *p;
-	u_int32_t mode, div;
+	int mode;
+	u_int32_t div;
 
 	/*
 	 * This device only has one clock, so make the sample rates match.
