@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.66 2002/02/03 18:15:21 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.67 2002/02/11 15:11:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.66 2002/02/03 18:15:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.67 2002/02/11 15:11:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,8 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 			}
 		}
 		err = usbd_do_request_flags(sc->sc_bus->devices[addr],
-			  &ur->request, ptr, ur->flags, &ur->actlen);
+			  &ur->request, ptr, ur->flags, &ur->actlen,
+			  USBD_DEFAULT_TIMEOUT);
 		if (err) {
 			error = EIO;
 			goto ret;

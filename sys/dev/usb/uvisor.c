@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.12 2001/11/13 06:24:57 lukem Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.13 2002/02/11 15:11:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.12 2001/11/13 06:24:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.13 2002/02/11 15:11:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
 	err = usbd_do_request_flags(sc->sc_udev, &req, ci,
-				    USBD_SHORT_XFER_OK, &actlen);
+		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
 		return (err);
 
@@ -377,5 +377,5 @@ uvisor_close(void *addr, int portno)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
 	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo, 
-				    USBD_SHORT_XFER_OK, &actlen);
+		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 }
