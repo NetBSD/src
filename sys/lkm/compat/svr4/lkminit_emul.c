@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.4 2000/12/17 16:00:38 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.5 2001/10/31 18:25:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@ extern const struct emul emul_svr4;
 
 int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
 
+static int svr4_init __P((struct lkm_table *lkmtp, int cmd));
+static int svr4_done __P((struct lkm_table *lkmtp, int cmd));
+
 /*
  * declare the emulation
  */
@@ -62,5 +65,41 @@ compat_svr4_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+	DISPATCH(lkmtp, cmd, ver, svr4_init, svr4_done, lkm_nofunc);
+}
+
+static int
+svr4_init(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
+{
+#ifdef i386
+	/*
+	 * XXX Yeah, this is ugly.
+	 * Ideally, there would be some compat init/done routine, called
+	 * by both this code and i386/machdep.c. However, that seems like
+	 * overkill given that only svr4 compat needs an initialization.
+	 */
+#define	IDTVEC(name)	__CONCAT(X, name)
+	extern void IDTVEC(svr4_fasttrap) __P((void));
+
+	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
+		SEL_UPL);
+#endif
+
+	return (0);
+}
+
+static int
+svr4_done(struct lkm_table *lkmtp, int cmd)
+{
+#ifdef i386
+	/* XXX is this right? Wouldn't this cause null pointer dereference
+	 * if some userland code would use the gate after the LKM is unloaded?
+	 */
+	setgate(&idt[0xd2].gd, NULL, 0, SDT_SYS386TGT,
+		SEL_UPL);
+#endif
+
+	return (0);
 }
