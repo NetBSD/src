@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -94,7 +94,7 @@ int bdsize = sizeof(struct bootdata);
  * Initialize PDC and related variables.
  */
 void
-pdc_init()
+pdc_init(void)
 {
 	int err;
 
@@ -131,17 +131,12 @@ pdc_init()
  * the (negative) error condition, or zero if at "EOF".
  */
 int
-iodcstrategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, 
+    size_t *rsize)
 {
 	struct hppa_dev *dp = devdata;
 	struct pz_device *pzdev = dp->pz_dev;
-	register int	offset, xfer, ret;
+	int offset, xfer, ret;
 
 #ifdef PDCDEBUG
 	if (debug)
@@ -273,14 +268,13 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
  * (any if unit == -1), and of specified class (PCL_*).
  */
 struct pz_device *
-pdc_findev(unit, class)
-	int unit, class;
+pdc_findev(int unit, int class)
 {
 	static struct pz_device pz;
 	int layers[sizeof(pz.pz_layers)/sizeof(pz.pz_layers[0])];
-	register iodcio_t iodc;
-	register struct iomod *io;
-	register int err = 0;
+	iodcio_t iodc;
+	struct iomod *io;
+	int err = 0;
 
 #ifdef	PDCDEBUG
 	if (debug)
@@ -306,7 +300,7 @@ pdc_findev(unit, class)
 	} else {
 		struct pdc_memmap memmap;
 		struct iodc_data mptr;
-		register int i, stp;
+		int i, stp;
 
 		for (i = 0; i < 0xf; i++) {
 			pz.pz_bc[0] = pz.pz_bc[1] =
@@ -409,10 +403,9 @@ pdc_findev(unit, class)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data; 
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
-        register int loop;                  /* Internal vars */
+        int loop;
 
         for (; c_count--; c_base += c_stride)
                 for (loop = c_loop; loop--; )
@@ -431,9 +424,9 @@ fall(c_base, c_count, c_loop, c_stride, data)
 struct pdc_cache pdc_cacheinfo PDC_ALIGNMENT;
 
 void 
-fcacheall()
+fcacheall(void)
 {
-	register int err;
+	int err;
 
         if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
 #ifdef DEBUG
@@ -456,11 +449,11 @@ fcacheall()
         /*
          * Flush the instruction, then data cache.
          */
-        fall (pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
-	      pdc_cacheinfo.ic_loop, pdc_cacheinfo.ic_stride, 0);
+        fall(pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
+	     pdc_cacheinfo.ic_loop, pdc_cacheinfo.ic_stride, 0);
 	sync_caches();
-        fall (pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
-	      pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
+        fall(pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
+	     pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
 	sync_caches();
 }
 
