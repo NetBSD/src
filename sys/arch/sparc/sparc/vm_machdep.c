@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1995/12/06 22:33:52 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.16 1995/12/07 22:18:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,7 +223,7 @@ vmapbuf(bp)
 	off = addr & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 	kva = kmem_alloc_wait(kernel_map, size);
-	bp->b_un.b_addr = (caddr_t)(kva + off);
+	bp->b_data = (caddr_t)(kva + off);
 	addr = trunc_page(addr);
 	npf = btoc(size);
 	while (npf--) {
@@ -260,8 +260,10 @@ vunmapbuf(bp)
 	off = kva & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
-	bp->b_un.b_addr = bp->b_saveaddr;
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+	if (vactype != VAC_NONE)
+		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
 }
 
 
