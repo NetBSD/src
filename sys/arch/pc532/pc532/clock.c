@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1994/10/26 08:24:52 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 1994/12/05 19:14:27 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,8 +58,8 @@ extern struct timeval time;
 extern struct timezone tz;
 
 /* Conversion data */
-static const short daymon[12] = {
-    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+static const short daymon[13] = {
+    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
 };
 
 /* Defines to make code more readable. */
@@ -67,7 +67,7 @@ static const short daymon[12] = {
 #define FROMBCD(B)	(((B)>>4) * 10 + ((B)&0xf))
 #define TOBCD(D)	((((D)/10)<<4) + (D)%10)
 
-#define DAYMON(M,L)	(daymon[(M)] + ((L) && (M) > 0))
+#define DAYMON(M,L)	(daymon[(M)] + ((L) && (M) > 1))
 
 #define SECDAY		(24*60*60)
 #define SECMON(M,L)	(DAYMON(M,L)*SECDAY)
@@ -145,6 +145,10 @@ inittodr(base)
     /* Check to see if it was really the rtc by checking for bad date info. */
     if (sec > 59 || min > 59 || hour > 23 || dom > 31 || month > 12) {
 	printf("inittodr: No clock found\n");
+#ifdef TEST
+	printf ("sec=%d, min=%d, hour=%d, dom=%d, month=%d\n",
+		 sec, min, hour, dom, month);
+#endif
 	have_rtc = 0;
 	time.tv_sec = base;
 	return;
@@ -202,9 +206,9 @@ resettodr()
     /* XXX apply 1-day tweak? */
 
     /* apply local offset */
-    sec -= tz.tz_minuteswest * 60;
+    t -= tz.tz_minuteswest * 60;
     if (tz.tz_dsttime)
-	sec += 60 * 60;
+	t += 60 * 60;
 
     year = 70;
     for (;;) {
