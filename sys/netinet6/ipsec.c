@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.5 1999/07/06 05:09:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3074,19 +3074,19 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			}
 		}
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_def_policy.policy);
+				  &ip4_def_policy.policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_trans_deflev);
+				  &ip4_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_net_deflev);
+				  &ip4_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_trans_deflev);
+				  &ip4_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_net_deflev);
+				  &ip4_ah_net_deflev);
 	case IPSECCTL_INBOUND_CALL_IKE:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_inbound_call_ike);
