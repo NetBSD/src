@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.81 2000/01/25 17:31:05 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.82 2000/01/26 10:04:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -983,6 +983,7 @@ uhci_intr(arg)
 		/* no acknowledge needed */
 		printf("%s: host controller halted\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
+		sc->sc_dying = 1;
 	}
 
 	if (ack)	/* acknowledge the ints */
@@ -1544,6 +1545,9 @@ uhci_device_bulk_start(xfer)
 	DPRINTFN(3, ("uhci_device_bulk_transfer: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
 
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
+
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
 		panic("uhci_device_bulk_transfer: a request\n");
@@ -1713,6 +1717,9 @@ uhci_device_ctrl_start(xfer)
 	uhci_softc_t *sc = (uhci_softc_t *)xfer->pipe->device->bus;
 	usbd_status err;
 
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
+
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
 		panic("uhci_device_ctrl_transfer: not a request\n");
@@ -1756,6 +1763,9 @@ uhci_device_intr_start(xfer)
 	uhci_soft_qh_t *sqh;
 	usbd_status err;
 	int i, s;
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
 
 	DPRINTFN(3,("uhci_device_intr_transfer: xfer=%p len=%d flags=%d\n",
 		    xfer, xfer->length, xfer->flags));
@@ -2056,6 +2066,9 @@ uhci_device_isoc_enter(xfer)
 		    "nframes=%d\n",
 		    iso->inuse, iso->next, xfer, xfer->nframes));
 
+	if (sc->sc_dying)
+		return;
+
 	if (xfer->status == USBD_IN_PROGRESS) {
 		/* This request has already been entered into the frame list */
 		/* XXX */
@@ -2116,6 +2129,9 @@ uhci_device_isoc_start(xfer)
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *end;
 	int s, i;
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
 
 #ifdef DIAGNOSTIC
 	if (xfer->status != USBD_IN_PROGRESS)
@@ -2706,6 +2722,9 @@ uhci_root_ctrl_start(xfer)
 	usb_port_status_t ps;
 	usbd_status err;
 
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
+
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
 		panic("uhci_root_ctrl_transfer: not a request\n");
@@ -3084,6 +3103,9 @@ uhci_root_intr_start(xfer)
 
 	DPRINTFN(3, ("uhci_root_intr_transfer: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
 
 	sc->sc_ival = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
 	usb_timeout(uhci_timo, xfer, sc->sc_ival, xfer->timo_handle);
