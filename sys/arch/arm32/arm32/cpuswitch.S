@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.7 1996/05/06 00:36:05 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.8 1996/06/03 21:43:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -64,6 +64,28 @@ pc	.req	r15
         mov     r0, r0;                 /* NOP for previous instruction */ \
  	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
  	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+
+#undef IRQdisable
+#undef IRQenable
+
+/*
+ * New experimental definitions of IRQdisable and IRQenable
+ * These keep FIQ's enabled since FIQ's are special.
+ */
+
+#define IRQdisable \
+	stmfd	sp!, {r0} ; \
+	mrs	r0, cpsr_all ; \
+	orr	r0, r0, #(I32_bit) ; \
+	msr	cpsr_all, r0 ; \
+	ldmfd	sp!, {r0}
+
+#define IRQenable \
+	stmfd	sp!, {r0} ; \
+	mrs	r0, cpsr_all ; \
+	bic	r0, r0, #(I32_bit) ; \
+	msr	cpsr_all, r0 ; \
+	ldmfd	sp!, {r0}		
 
 /*
  * setrunqueue() and remrq()
