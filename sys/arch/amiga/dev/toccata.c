@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.2 2002/01/28 09:57:03 aymeric Exp $ */
+/* $NetBSD: toccata.c,v 1.3 2002/03/27 16:39:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.2 2002/01/28 09:57:03 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.3 2002/03/27 16:39:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -338,7 +338,8 @@ toccata_intr(void *tag) {
 	 * FIFO interupt.
 	 */
 #ifdef DEBUG
-	printf("%s: got unexpected interupt %x\n", sc->sc_ad.sc_dev, status);
+	printf("%s: got unexpected interupt %x\n", sc->sc_ad.sc_dev.dv_xname,
+	    status);
 #endif
 	*sc->sc_boardp = TOCC_ACT;
 	return 1;
