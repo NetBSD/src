@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.14 1996/10/13 03:39:48 christos Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.15 1997/05/15 16:43:36 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,6 +211,7 @@ consinit()
 
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		screen = 1;
+#if NRASTERCONSOLE > 0
 	/*
 	 * The boot program uses PMAX ROM entrypoints so the ROM sets
 	 * osconsole to '1' like the PMAX.
@@ -306,6 +307,7 @@ consinit()
 
 
 remcons:
+#endif /* NRASTERCONSOLE > 0 */
 
 	/*
 	 * Configure a serial port as a remote console.
