@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.11 2002/01/31 19:36:54 tv Exp $ */
+/* $NetBSD: emit1.c,v 1.12 2002/02/05 03:04:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.11 2002/01/31 19:36:54 tv Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.12 2002/02/05 03:04:27 thorpej Exp $");
 #endif
 
 #include <ctype.h>
@@ -395,7 +395,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
-	quad_t	q;
+	int64_t	q;
 	tspec_t	t;
 
 	/* reset buffer */
