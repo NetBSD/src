@@ -1,4 +1,4 @@
-.\"	$NetBSD: mem.4,v 1.2 1996/07/31 20:33:08 thorpej Exp $
+.\"	$NetBSD: mem.4,v 1.3 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,23 +43,22 @@
 .Sh NAME
 .Nm mem ,
 .Nm kmem
-.Nd main memory
+.Nd main memory access driver
 .Sh DESCRIPTION
 The file
-.Nm /dev/mem
-is an interface to the physical memory of the
-computer.
+.Pa /dev/mem
+is an interface to the physical memory of the computer.
 Byte offsets in this file are interpreted as physical memory addresses.
 Reading and writing this file is equivalent to reading and writing
 memory itself.
 An error will be returned if an attempt is made to reference
 an offset outside of
-.Nm /dev/mem .
+.Pa /dev/mem .
 .Pp
 Kernel virtual memory is accessed via the file
-.Nm /dev/kmem
+.Pa /dev/kmem
 in the same manner as
-.Nm /dev/mem .
+.Pa /dev/mem .
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Sh SPARC
 On the
