@@ -40,15 +40,9 @@
 #include <sys/types.h>
 #include <sys/unistd.h>
 
-#define	 STDIN_FILENO	0	/* standard input file descriptor */
+#define	STDIN_FILENO	0	/* standard input file descriptor */
 #define	STDOUT_FILENO	1	/* standard output file descriptor */
 #define	STDERR_FILENO	2	/* standard error file descriptor */
-
-/* fnmatch(3) defines */
-#define	FNM_PATHNAME	0x01	/* match pathnames, not filenames */
-#ifndef _POSIX_SOURCE
-#define	FNM_QUOTE	0x02	/* escape special chars with \ */
-#endif
 
 #ifndef NULL
 #define	NULL		0	/* null pointer constant */
@@ -123,7 +117,6 @@ int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
 int	 fchflags __P((int, long));
 int	 fchown __P((int, int, int));
-int	 fnmatch __P((const char *, const char *, int));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
 int	 getdtablesize __P((void));
