@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.11 1993/12/20 12:40:15 cgd Exp $
+ *	$Id: vm_object.c,v 1.12 1994/01/07 19:15:44 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -73,6 +73,13 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
+
+static void	_vm_object_allocate __P((vm_size_t, vm_object_t));
+void		vm_object_page_clean
+		   __P((vm_object_t, vm_offset_t, vm_offset_t));
+static void	vm_object_deactivate_pages __P((vm_object_t));
+static void	vm_object_cache_trim __P((void));
+static void	vm_object_remove __P((vm_pager_t));
 
 /*
  *	Virtual memory objects maintain the actual data
@@ -116,7 +123,8 @@ long	object_bypasses  = 0;
  *
  *	Initialize the VM objects module.
  */
-void vm_object_init()
+void
+vm_object_init()
 {
 	register int	i;
 
@@ -143,7 +151,8 @@ void vm_object_init()
  *	Returns a new object with the given size.
  */
 
-vm_object_t vm_object_allocate(size)
+vm_object_t
+vm_object_allocate(size)
 	vm_size_t	size;
 {
 	register vm_object_t	result;
@@ -156,6 +165,7 @@ vm_object_t vm_object_allocate(size)
 	return(result);
 }
 
+static void
 _vm_object_allocate(size, object)
 	vm_size_t		size;
 	register vm_object_t	object;
@@ -190,7 +200,8 @@ _vm_object_allocate(size, object)
  *
  *	Gets another reference to the given object.
  */
-void vm_object_reference(object)
+void
+vm_object_reference(object)
 	register vm_object_t	object;
 {
 	if (object == NULL)
@@ -212,7 +223,8 @@ void vm_object_reference(object)
  *
  *	No object may be locked.
  */
-void vm_object_deallocate(object)
+void
+vm_object_deallocate(object)
 	register vm_object_t	object;
 {
 	vm_object_t	temp;
@@ -289,7 +301,7 @@ void vm_object_deallocate(object)
 		 *	Make sure no one can look us up now.
 		 */
 		vm_object_remove(object->pager);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		/*
 		 * Sanity check on the object hash table.
 		 */
@@ -328,7 +340,8 @@ void vm_object_deallocate(object)
  *
  *	The object must be locked.
  */
-void vm_object_terminate(object)
+void
+vm_object_terminate(object)
 	register vm_object_t	object;
 {
 	register vm_page_t	p;
@@ -450,6 +463,7 @@ void vm_object_terminate(object)
  *
  *	The object must be locked.
  */
+void
 vm_object_page_clean(object, start, end)
 	register vm_object_t	object;
 	register vm_offset_t	start;
@@ -493,6 +507,7 @@ again:
  *
  *	The object must be locked.
  */
+static void
 vm_object_deactivate_pages(object)
 	register vm_object_t	object;
 {
@@ -515,6 +530,7 @@ vm_object_deactivate_pages(object)
 /*
  *	Trim the object cache to size.
  */
+static void
 vm_object_cache_trim()
 {
 	register vm_object_t	object;
@@ -547,7 +563,8 @@ vm_object_cache_trim()
  *	race conditions!
  */
 
-void vm_object_shutdown()
+void
+vm_object_shutdown()
 {
 	register vm_object_t	object;
 
@@ -599,7 +616,8 @@ void vm_object_shutdown()
  *
  *	The object must *not* be locked.
  */
-void vm_object_pmap_copy(object, start, end)
+void
+vm_object_pmap_copy(object, start, end)
 	register vm_object_t	object;
 	register vm_offset_t	start;
 	register vm_offset_t	end;
@@ -629,7 +647,8 @@ void vm_object_pmap_copy(object, start, end)
  *
  *	The object must *not* be locked.
  */
-void vm_object_pmap_remove(object, start, end)
+void
+vm_object_pmap_remove(object, start, end)
 	register vm_object_t	object;
 	register vm_offset_t	start;
 	register vm_offset_t	end;
@@ -660,7 +679,8 @@ void vm_object_pmap_remove(object, start, end)
  *	May defer the copy until later if the object is not backed
  *	up by a non-default pager.
  */
-void vm_object_copy(src_object, src_offset, size,
+void
+vm_object_copy(src_object, src_offset, size,
 		    dst_object, dst_offset, src_needs_copy)
 	register vm_object_t	src_object;
 	vm_offset_t		src_offset;
@@ -860,7 +880,8 @@ void vm_object_copy(src_object, src_offset, size,
  *	are returned in the source parameters.
  */
 
-void vm_object_shadow(object, offset, length)
+void
+vm_object_shadow(object, offset, length)
 	vm_object_t	*object;	/* IN/OUT */
 	vm_offset_t	*offset;	/* IN/OUT */
 	vm_size_t	length;
@@ -905,7 +926,8 @@ void vm_object_shadow(object, offset, length)
  *	Set the specified object's pager to the specified pager.
  */
 
-void vm_object_setpager(object, pager, paging_offset,
+void
+vm_object_setpager(object, pager, paging_offset,
 			read_only)
 	vm_object_t	object;
 	vm_pager_t	pager;
@@ -934,7 +956,8 @@ void vm_object_setpager(object, pager, paging_offset,
  *	specified pager and paging id.
  */
 
-vm_object_t vm_object_lookup(pager)
+vm_object_t
+vm_object_lookup(pager)
 	vm_pager_t	pager;
 {
 	register queue_t		bucket;
@@ -972,7 +995,8 @@ vm_object_t vm_object_lookup(pager)
  *	the hash table.
  */
 
-void vm_object_enter(object, pager)
+void
+vm_object_enter(object, pager)
 	vm_object_t	object;
 	vm_pager_t	pager;
 {
@@ -1008,6 +1032,7 @@ void vm_object_enter(object, pager)
  *	is locked.  XXX this should be fixed
  *	by reorganizing vm_object_deallocate.
  */
+static void
 vm_object_remove(pager)
 	register vm_pager_t	pager;
 {
@@ -1035,7 +1060,8 @@ vm_object_remove(pager)
  *
  */
 
-void vm_object_cache_clear()
+void
+vm_object_cache_clear()
 {
 	register vm_object_t	object;
 
@@ -1075,7 +1101,8 @@ boolean_t	vm_object_collapse_allowed = TRUE;
  *	queues be unlocked.
  *
  */
-void vm_object_collapse(object)
+void
+vm_object_collapse(object)
 	register vm_object_t	object;
 
 {
@@ -1396,7 +1423,8 @@ void vm_object_collapse(object)
  *
  *	The object must be locked.
  */
-void vm_object_page_remove(object, start, end)
+void
+vm_object_page_remove(object, start, end)
 	register vm_object_t	object;
 	register vm_offset_t	start;
 	register vm_offset_t	end;
@@ -1441,7 +1469,8 @@ void vm_object_page_remove(object, start, end)
  *	Conditions:
  *	The object must *not* be locked.
  */
-boolean_t vm_object_coalesce(prev_object, next_object,
+boolean_t
+vm_object_coalesce(prev_object, next_object,
 			prev_offset, next_offset,
 			prev_size, next_size)
 
@@ -1509,10 +1538,12 @@ boolean_t vm_object_coalesce(prev_object, next_object,
 	return(TRUE);
 }
 
+#if	defined(DDB) || defined(DEBUG)
 /*
  *	vm_object_print:	[ debug ]
  */
-void vm_object_print(object, full)
+void
+vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
@@ -1521,7 +1552,8 @@ void vm_object_print(object, full)
         _vm_object_print(object, full, printf);
 }
 
-void _vm_object_print(object, full, pr)
+void
+_vm_object_print(object, full, pr)
 	vm_object_t	object;
 	boolean_t	full;
         int (*pr)();
@@ -1567,3 +1599,4 @@ void _vm_object_print(object, full, pr)
 		(*pr)("\n");
 	indent -= 2;
 }
+#endif
