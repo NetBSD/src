@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.10 1997/09/15 05:58:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,11 @@
  *	@(#)pt_tcp.c	8.3 (Berkeley) 3/27/94
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pt_tcp.c,v 1.10 1997/09/15 05:58:31 lukem Exp $");
+#endif /* not lint */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -61,12 +66,13 @@
  * Some trailing suffix values have special meanings.
  * An unrecognised suffix is an error.
  */
-int portal_tcp(pcr, key, v, kso, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int kso;
-int *fdp;
+int
+portal_tcp(pcr, key, v, kso, fdp)
+	struct portal_cred *pcr;
+	char *key;
+	char **v;
+	int kso;
+	int *fdp;
 {
 	char host[MAXHOSTNAMELEN];
 	char port[MAXHOSTNAMELEN];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.8 1997/09/15 05:58:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,11 @@
  *	@(#)pt_file.c	8.2 (Berkeley) 3/27/94
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pt_file.c,v 1.8 1997/09/15 05:58:30 lukem Exp $");
+#endif /* not lint */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -51,17 +56,17 @@
 
 #include "portald.h"
 
-int portal_file(pcr, key, v, so, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int so;
-int *fdp;
+int
+portal_file(pcr, key, v, so, fdp)
+	struct portal_cred *pcr;
+	char *key;
+	char **v;
+	int so;
+	int *fdp;
 {
 	int fd;
 	char pbuf[MAXPATHLEN];
 	int error;
-	int i;
 
 	pbuf[0] = '/';
 	strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));

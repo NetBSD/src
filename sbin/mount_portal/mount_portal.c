@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.9 1997/09/15 05:58:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $";
+__RCSID("$NetBSD: mount_portal.c,v 1.9 1997/09/15 05:58:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,11 @@ const struct mntopt mopts[] = {
 
 static char *mountpt;		/* made available to signal handler */
 
-static void usage __P((void));
+	int	main __P((int, char *[]));
+static	void	sigchld __P((int));
+static	void	sighup __P((int));
+static	void	sigterm __P((int));
+static	void	usage __P((void));
 
 static sig_atomic_t readcf;	/* Set when SIGHUP received */
 
@@ -130,7 +134,7 @@ main(argc, argv)
 	 */
 	int ch;
 
-	while ((ch = getopt(argc, argv, "o:")) != EOF) {
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
@@ -172,7 +176,7 @@ main(argc, argv)
 	}
 	(void) unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
-		err(1, NULL);
+		err(1, "%s", "");
 	(void) unlink(un.sun_path);
 
 	(void) listen(so, 5);
@@ -183,7 +187,7 @@ main(argc, argv)
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
 	if (rc < 0)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	/*
 	 * Everything is ready to go - now is a good time to fork
