@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.12 2001/04/28 06:55:46 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.13 2001/05/09 19:38:03 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -104,6 +104,9 @@
 #endif
 
 #include "faith.h"
+#if defined(NFAITH) && 0 < NFAITH
+#include <net/if_faith.h>
+#endif
 
 #include <net/net_osdep.h>
 
@@ -347,7 +350,7 @@ icmp6_input(mp, offp, proto)
 	}
 
 #if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
+	if (faithprefix(&ip6->ip6_dst)) {
 		/*
 		 * Deliver very specific ICMP6 type only.
 		 * This is important to deilver TOOBIG.  Otherwise PMTUD
