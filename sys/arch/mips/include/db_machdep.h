@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.12 2001/11/09 06:52:24 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.13 2002/02/15 07:32:34 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -46,7 +46,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct frame db_regs_t;
 
-db_regs_t		ddb_regs;	/* register state */
+extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[PC])
