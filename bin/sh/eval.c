@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.26 1995/06/09 01:53:44 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.27 1995/09/11 17:05:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.26 1995/06/09 01:53:44 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.27 1995/09/11 17:05:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,12 +79,6 @@ static char sccsid[] = "$NetBSD: eval.c,v 1.26 1995/06/09 01:53:44 christos Exp 
 #define EV_EXIT 01		/* exit after evaluating tree */
 #define EV_TESTED 02		/* exit status is checked; ignore -e flag */
 #define EV_BACKCMD 04		/* command executing within back quotes */
-
-
-/* reasons for skipping commands (see comment on breakcmd routine) */
-#define SKIPBREAK 1
-#define SKIPCONT 2
-#define SKIPFUNC 3
 
 MKINIT int evalskip;		/* set if we are skipping commands */
 STATIC int skipcount;		/* number of levels to skip */
@@ -965,8 +959,14 @@ returncmd(argc, argv)
 	if (funcnest) {
 		evalskip = SKIPFUNC;
 		skipcount = 1;
+		return ret;
 	}
-	return ret;
+	else {
+		/* Do what ksh does; skip the rest of the file */
+		evalskip = SKIPFILE;
+		skipcount = 1;
+		return ret;
+	}
 }
 
 
