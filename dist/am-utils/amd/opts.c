@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.1.1.2 2000/11/19 23:43:41 wiz Exp $	*/
+/*	$NetBSD: opts.c,v 1.2 2000/11/20 03:19:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -872,7 +872,7 @@ normalize_slash(char *p)
 static void
 expand_op(opt_apply *p, int sel_p)
 {
-  static char expand_error[] = "No space to expand \"%s\"";
+  static const char expand_error[] = "No space to expand \"%s\"";
   char expbuf[MAXPATHLEN + 1];
   char nbuf[NLEN + 1];
   char *ep = expbuf;
