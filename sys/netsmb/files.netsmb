@@ -1,6 +1,6 @@
-#	$NetBSD: files.netsmb,v 1.1 2003/02/18 12:18:29 jdolecek Exp $
+#	$NetBSD: files.netsmb,v 1.2 2003/02/19 08:33:09 jdolecek Exp $
 
-defpseudo nsmb
+defpseudo nsmb:		des
 
 file	netsmb/iconv.c			nsmb
 file	netsmb/smb_conn.c		nsmb
