@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27 2001/01/26 02:16:24 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.28 2001/06/14 02:35:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -363,6 +363,14 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 		c_label.status = rf_ds_optimal;
 		c_label.partitionSize = raidPtr->Disks[srow][scol].partitionSize;
 
+		/* We've just done a rebuild based on all the other
+		   disks, so at this point the parity is known to be
+		   clean, even if it wasn't before. */
+
+		/* XXX doesn't hold for RAID 6!!*/
+
+		raidPtr->parity_good = RF_RAID_CLEAN;
+
 		/* XXXX MORE NEEDED HERE */
 		
 		raidwrite_component_label(
@@ -595,7 +603,15 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 		c_label.row = row;
 		c_label.column = col;
-		
+
+		/* We've just done a rebuild based on all the other
+		   disks, so at this point the parity is known to be
+		   clean, even if it wasn't before. */
+
+		/* XXX doesn't hold for RAID 6!!*/
+
+		raidPtr->parity_good = RF_RAID_CLEAN;
+	
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
 					  &c_label);
