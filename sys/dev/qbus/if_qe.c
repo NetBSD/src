@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.54 2002/09/30 22:42:11 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.55 2002/10/02 16:52:28 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.54 2002/09/30 22:42:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.55 2002/10/02 16:52:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,7 +115,7 @@ static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
 
 CFATTACH_DECL(qe, sizeof(struct qe_softc),
-    qematch, qeattach, NULL, NULL)
+    qematch, qeattach, NULL, NULL);
 
 #define	QE_WCSR(csr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)

@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.12 2002/09/30 20:37:45 thorpej Exp $
+ *	$Id: ifpci.c,v 1.13 2002/10/02 16:51:38 thorpej Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.12 2002/09/30 20:37:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.13 2002/10/02 16:51:38 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -139,7 +139,7 @@ static int ifpci_detach(struct device *self, int flags);
 static int ifpci_activate(struct device *self, enum devact act);
 
 CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
-    ifpci_match, ifpci_attach, ifpci_detach, ifpci_activate)
+    ifpci_match, ifpci_attach, ifpci_detach, ifpci_activate);
 
 /*---------------------------------------------------------------------------*
  *	AVM PCI Fritz!Card special registers

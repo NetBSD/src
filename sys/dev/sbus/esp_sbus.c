@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.25 2002/09/30 23:07:07 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.26 2002/10/02 16:52:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.25 2002/09/30 23:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.26 2002/10/02 16:52:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
 
 
 CFATTACH_DECL(esp_sbus, sizeof(struct esp_softc),
-    espmatch_sbus, espattach_sbus, NULL, NULL)
+    espmatch_sbus, espattach_sbus, NULL, NULL);
 
 CFATTACH_DECL(esp_dma, sizeof(struct esp_softc),
-    espmatch_sbus, espattach_dma, NULL, NULL)
+    espmatch_sbus, espattach_dma, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

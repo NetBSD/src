@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.7 2002/10/01 01:12:35 thorpej Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.8 2002/10/02 16:53:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.7 2002/10/01 01:12:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.8 2002/10/02 16:53:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static int  asc_tcds_match  __P((struct device *, struct cfdata *, void *));
 static void asc_tcds_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(asc_tcds, sizeof(struct asc_softc),
-    asc_tcds_match, asc_tcds_attach, NULL, NULL)
+    asc_tcds_match, asc_tcds_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

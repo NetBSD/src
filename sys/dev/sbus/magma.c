@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.19 2002/09/30 23:07:08 thorpej Exp $	*/
+/*	$NetBSD: magma.c,v 1.20 2002/10/02 16:52:41 thorpej Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.19 2002/09/30 23:07:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.20 2002/10/02 16:52:41 thorpej Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -187,13 +187,13 @@ static struct magma_board_info supported_cards[] = {
  */
 
 CFATTACH_DECL(magma, sizeof(struct magma_softc),
-    magma_match, magma_attach, NULL, NULL)
+    magma_match, magma_attach, NULL, NULL);
 
 CFATTACH_DECL(mtty, sizeof(struct mtty_softc),
-    mtty_match, mtty_attach, NULL, NULL)
+    mtty_match, mtty_attach, NULL, NULL);
 
 CFATTACH_DECL(mbpp, sizeof(struct mbpp_softc),
-    mbpp_match, mbpp_attach, NULL, NULL)
+    mbpp_match, mbpp_attach, NULL, NULL);
 
 extern struct cfdriver mtty_cd;
 extern struct cfdriver mbpp_cd;

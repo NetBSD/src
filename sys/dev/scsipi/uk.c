@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.36 2002/09/30 23:12:52 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.37 2002/10/02 16:52:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.36 2002/09/30 23:12:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.37 2002/10/02 16:52:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,10 @@ int ukdetach __P((struct device *, int));
 
 
 CFATTACH_DECL(uk_scsibus, sizeof(struct uk_softc),
-    ukmatch, ukattach, ukdetach, ukactivate)
+    ukmatch, ukattach, ukdetach, ukactivate);
 
 CFATTACH_DECL(uk_atapibus, sizeof(struct uk_softc),
-    ukmatch, ukattach, ukdetach, ukactivate)
+    ukmatch, ukattach, ukdetach, ukactivate);
 
 extern struct cfdriver uk_cd;
 

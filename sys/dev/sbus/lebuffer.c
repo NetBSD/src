@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.17 2002/10/01 19:15:45 uwe Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.18 2002/10/02 16:52:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.17 2002/10/01 19:15:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18 2002/10/02 16:52:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ int	lebufmatch	__P((struct device *, struct cfdata *, void *));
 void	lebufattach	__P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
-    lebufmatch, lebufattach, NULL, NULL)
+    lebufmatch, lebufattach, NULL, NULL);
 
 int
 lebufprint(aux, busname)

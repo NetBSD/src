@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.81 2002/10/01 14:30:54 onoe Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.82 2002/10/02 16:51:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.81 2002/10/01 14:30:54 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.82 2002/10/02 16:51:48 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -227,7 +227,7 @@ static void cb_show_regs __P((pci_chipset_tag_t pc, pcitag_t tag,
 #endif
 
 CFATTACH_DECL(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, NULL, NULL)
+    pcicbbmatch, pccbbattach, NULL, NULL);
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,

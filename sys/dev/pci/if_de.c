@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.107 2002/09/30 20:37:26 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.108 2002/10/02 16:51:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.107 2002/09/30 20:37:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.108 2002/10/02 16:51:19 thorpej Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5588,7 +5588,7 @@ tulip_pci_probe(
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
 CFATTACH_DECL(de, sizeof(tulip_softc_t),
-    tulip_pci_probe, tulip_pci_attach, NULL, NULL)
+    tulip_pci_probe, tulip_pci_attach, NULL, NULL);
 
 #endif /* __NetBSD__ */
 

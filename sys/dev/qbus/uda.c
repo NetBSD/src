@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.46 2002/09/30 22:42:11 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.47 2002/10/02 16:52:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.46 2002/09/30 22:42:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.47 2002/10/02 16:52:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,10 +90,10 @@ static	void udasaerror(struct device *, int);
 static	void udago(struct device *, struct mscp_xi *);
 
 CFATTACH_DECL(mtc, sizeof(struct uda_softc),
-    udamatch, udaattach, NULL, NULL)
+    udamatch, udaattach, NULL, NULL);
 
 CFATTACH_DECL(uda, sizeof(struct uda_softc),
-    udamatch, udaattach, NULL, NULL)
+    udamatch, udaattach, NULL, NULL);
 
 /*
  * More driver definitions, for generic MSCP code.
