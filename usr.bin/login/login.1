@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)login.1	6.12 (Berkeley) 6/29/91
-.\"	$Id: login.1,v 1.3 1994/01/11 02:31:09 jtc Exp $
+.\"	$Id: login.1,v 1.4 1994/05/24 06:51:00 deraadt Exp $
 .\"
 .Dd June 29, 1991
 .Dt LOGIN 1
@@ -53,6 +53,10 @@ of the user fails,
 .Nm login
 prompts for a user name.
 Authentication of users is done via passwords.
+Alternately, the user can enter the password "s/key", in which case
+S/Key authentication of users is performed, as descibed in
+.Xr skey 1 .
+S/Key is a Trademark of Bellcore.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -137,6 +141,7 @@ makes login quieter
 .Xr chpass 1 ,
 .Xr passwd 1 ,
 .Xr rlogin 1 ,
+.Xr skey 1 ,
 .Xr getpass 3 ,
 .Xr utmp 5 ,
 .Xr environ 7 ,
