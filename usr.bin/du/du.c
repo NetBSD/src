@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)du.c	5.17 (Berkeley) 5/20/92";*/
-static char rcsid[] = "$Id: du.c,v 1.5 1993/10/13 18:34:03 jtc Exp $";
+static char rcsid[] = "$Id: du.c,v 1.6 1994/01/25 20:25:36 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,7 +56,6 @@ static char rcsid[] = "$Id: du.c,v 1.5 1993/10/13 18:34:03 jtc Exp $";
 #include <fts.h>
 
 void	 err __P((const char *, ...));
-char	*getbsize __P((char *, int *, long *, int));
 int	 linkchk __P((FTSENT *));
 void	 usage __P((void));
 
@@ -112,7 +111,8 @@ main(argc, argv)
 		argv[1] = NULL;
 	}
 
-	(void)getbsize("du", &notused, &blocksize, kflag);
+	if (!kflag)
+		(void)getbsize(&notused, &blocksize);
 	blocksize /= 512;
 
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
