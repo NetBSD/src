@@ -1027,6 +1027,15 @@ xlatkey2ascii(U_short key)
 			{
 				more_chars = (u_char *)"\r\n"; /* CR LF */
 			}
+			if(meta_down)
+			{
+#if PCVT_META_ESC
+				metachar[1] = *more_chars;
+#else
+				metachar[0] = *more_chars | 0x80;
+#endif
+				more_chars = metachar;
+			}
 			return(more_chars);
 			
 		case KBD_META:		/* these keys are	*/
