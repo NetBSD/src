@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.110 2004/04/21 03:20:34 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.111 2004/04/21 03:23:19 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1090,3 +1090,13 @@ distrib/sets/makesrctars			1.16
 
 	Move ./contrib/sys from src.tgz to syssrc.tgz. PR#25251
 	[lukem, ticket #165]
+
+distrib/sets/makesrctars			1.17
+distrib/sets/Makefile				1.45
+
+	* Support '-x xsrcdir' to tar up xsrcdir as xsrc.tgz, with the
+	  contents of the tarfile being relative to xsrcdir and
+	  prefixed with 'usr/xsrc'
+	* Convert to getopts a la the other scripts in this directory
+	* if ${MKX11} != no, call makesrctars with '-x ${X11SRCDIR}'
+	[lukem, ticket #166]
