@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.5 2000/07/14 13:17:12 pk Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.6 2000/07/14 15:09:51 pk Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -49,6 +49,22 @@ struct psychoreg {
 	} sys_upa;
 
 	u_int64_t	psy_csr;		/* PSYCHO control/status register */	/* 1fe.0000.0010 */
+	/* 
+	 * 63     59     55     50     45     4        3       2     1      0
+	 * +------+------+------+------+--//---+--------+-------+-----+------+
+	 * | IMPL | VERS | MID  | IGN  |  xxx  | APCKEN | APERR | IAP | MODE |
+	 * +------+------+------+------+--//---+--------+-------+-----+------+
+	 *
+	 */
+#define PSYCHO_GCSR_IMPL(csr)	((u_int)(((csr) >> 60) & 0xf))
+#define PSYCHO_GCSR_VERS(csr)	((u_int)(((csr) >> 56) & 0xf))
+#define PSYCHO_GCSR_MID(csr)	((u_int)(((csr) >> 51) & 0x1f))
+#define PSYCHO_GCSR_IGN(csr)	((u_int)(((csr) >> 46) & 0x1f))
+#define PSYCHO_CSR_APCKEN	8	/* UPA addr parity check enable */
+#define PSYCHO_CSR_APERR	4	/* UPA addr parity error */
+#define PSYCHO_CSR_IAP		2	/* invert UPA address parity */
+#define PSYCHO_CSR_MODE		1	/* UPA/PCI handshake */
+
 	u_int64_t	pad0;
 	u_int64_t	psy_ecccr;		/* ECC control register */		/* 1fe.0000.0020 */
 	u_int64_t	reserved;							/* 1fe.0000.0028 */
