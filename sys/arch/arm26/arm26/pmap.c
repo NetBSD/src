@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.5 2000/08/22 21:22:51 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.6 2000/09/23 11:10:58 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2000/08/22 21:22:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2000/09/23 11:10:58 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -145,7 +145,8 @@ struct pmap {
  * Global array of pv_entries.  Should be dynamically allocated based on
  * number of physical pages in system, or something.
  */
-struct pv_entry pv_table[1024];
+#define PHYSMEM_MAX 1024
+struct pv_entry pv_table[PHYSMEM_MAX];
 
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
@@ -167,6 +168,8 @@ static void pv_release(pmap_t pmap, int ppn, int lpn);
 static caddr_t pmap_find(paddr_t);
 
 static void pmap_update_page(int);
+
+void pmap_virtual_space(vaddr_t *, vaddr_t *);
 
 /*
  * No-one else wanted to take responsibility for the MEMC control register,
@@ -227,6 +230,28 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	/* Manually map zero page (it doesn't appear in pmaps) */
 	MEMC_WRITE(MEMC_TRANS_ENTRY_32K(atop(zp_physaddr), 0,
 					MEMC_PPL_NOACCESS));
+}
+
+vaddr_t
+pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
+{
+	int i;
+	vaddr_t addr;
+	
+	addr = NULL;
+	size = round_page(size);
+	for (i = 0; i < vm_nphysseg; i++) {
+		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {
+			addr = (vaddr_t)
+			    (MEMC_PHYS_BASE + ptoa(vm_physmem[i].avail_start));
+			vm_physmem[i].avail_start++;
+			break;
+		}
+	}
+
+	pmap_virtual_space(vstartp, vendp);
+
+	return addr;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: pmap.h,v 1.2 2000/09/23 11:10:58 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -54,6 +54,7 @@ extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 /* Save on hassle and kernel VM */
 #define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)MEMC_PHYS_BASE + (pa))
 #define PMAP_UNMAP_POOLPAGE(va)	((va) - (vaddr_t)MEMC_PHYS_BASE)
+#define PMAP_STEAL_MEMORY
 
 #endif /* _KERNEL */
 
