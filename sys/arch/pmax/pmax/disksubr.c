@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2000/01/09 03:56:01 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2000/01/10 03:24:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,10 +40,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/syslog.h>
 
 #define	b_cylin	b_resid
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.13 2000/01/09 03:55:40 simonb Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.14 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -17,24 +17,22 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/tty.h>
-#include <machine/autoconf.h>
-#include <pmax/ibus/ibusvar.h>
 
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/cons.h>
 
-#include <sys/ioctl.h>
-#include <machine/pmioctl.h>
+#include <machine/autoconf.h>
+#include <machine/dc7085cons.h>		/* XXX */
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/pmioctl.h>
 
-#include <pmax/dev/fbreg.h>
 #include <pmax/dev/dcvar.h>
-#include <machine/dc7085cons.h>		/* XXX */
+#include <pmax/dev/fbreg.h>
 #include <pmax/dev/pmvar.h>		/* XXX move */
+
+#include <pmax/ibus/ibusvar.h>
 
 #include "fb.h"
 #include "pm.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.19 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: bt459.c,v 1.20 2000/01/10 03:24:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.19 1999/12/09 00:16:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.20 2000/01/10 03:24:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.19 1999/12/09 00:16:14 simonb Exp $");
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
-
 #include <pmax/dev/bt459.h>			/* chipset definitions */
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.6 2000/01/09 03:56:03 simonb Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.7 2000/01/10 03:24:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/sysconf.h>
 #include <pmax/pmax/pmaxtype.h>
