@@ -592,6 +592,8 @@ bfd_generic_openr_next_archived_file (archive, last_file)
 	 Note that last_file->origin can be odd in the case of
 	 BSD-4.4-style element with a long odd size. */
       filestart = last_file->origin + size;
+      if (!strncmp(arch_hdr (last_file)->ar_name, "#1/", 3))
+	size += strlen(normalize(last_file, last_file->filename));
       filestart += size % 2;
     }
 
