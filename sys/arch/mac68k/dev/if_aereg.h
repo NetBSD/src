@@ -1,12 +1,15 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Id: if_aereg.h,v 1.1 1993/11/29 00:32:46 briggs Exp $
+ * $Id: if_aereg.h,v 1.2 1994/03/01 15:24:26 briggs Exp $
  *
  * Modification history
  *
  * $Log: if_aereg.h,v $
- * Revision 1.1  1993/11/29 00:32:46  briggs
+ * Revision 1.2  1994/03/01 15:24:26  briggs
+ * More Dayna separation.
+ *
+ * Revision 1.1  1993/11/29  00:32:46  briggs
  * Update to current work in progress.  This includes an update to
  * use config.new.
  * Numerous updates to console so it works better on the SE/30 screen.
@@ -554,8 +557,10 @@ struct ae_ring	{
 /*
  * Vendor types
  */
+#define AE_VENDOR_UNKNOWN	0xFF		/* Unknown network card */
 #define AE_VENDOR_APPLE		0x00		/* Apple Ethernet card */
 #define AE_VENDOR_INTERLAN	0x01		/* Interlan A310 card (GatorCard) */
+#define AE_VENDOR_DAYNA		0x02		/* DaynaPORT E/30s (and others?) */
 
 /*
  * Compile-time config flags
@@ -575,6 +580,10 @@ struct ae_ring	{
 #define	GC_ROM_OFFSET		0x000c0000 /* address prom */
 #define GC_DATA_OFFSET		0x000d0000 /* Offset to NIC memory */
 #define GC_NIC_OFFSET		0x000e0000 /* Offset to NIC registers */
+
+#define DP_ROM_OFFSET		0x000f0000
+#define DP_DATA_OFFSET		0x000d0000 /* Offset to SONIC memory */
+#define DP_NIC_OFFSET		0x000e0000 /* Offset to SONIC registers */
 
 #define AE_ROM_OFFSET		0x000f0000
 #define AE_DATA_OFFSET		0x000d0000 /* Offset to NIC memory */
