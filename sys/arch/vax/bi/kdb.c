@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.10 1998/01/18 22:09:16 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.11 1998/01/24 14:17:07 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,7 +79,7 @@ struct	kdb_softc {
 	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
 };
 
-int	kdbmatch __P((struct device *, void *, void *));
+int	kdbmatch __P((struct device *, struct cfdata *, void *));
 void	kdbattach __P((struct device *, struct device *, void *));
 void	kdbreset __P((int));
 void	kdbintr __P((int));
@@ -117,11 +117,11 @@ kdbprint(aux, name)
  * Poke at a supposed KDB to see if it is there.
  */
 int
-kdbmatch(parent, match, aux)
+kdbmatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct  cfdata *cf;
+	void	*aux;
 {
-	struct  cfdata *cf = match;
 	struct bi_attach_args *ba = aux;
 
         if (ba->ba_node->biic.bi_dtype != BIDT_KDB50)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.28 1998/01/12 20:52:33 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.29 1998/01/24 14:17:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -139,7 +139,7 @@ struct	de_softc {
 	int	ds_nxmit;		/* # of transmits in progress */
 };
 
-int	dematch __P((struct device *, void *, void *));
+int	dematch __P((struct device *, struct cfdata *, void *));
 void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
 void	deinit __P((struct de_softc *));
@@ -691,9 +691,10 @@ dewait(ds, fn)
 }
 
 int
-dematch(parent, match, aux)
-	struct	device *parent;
-	void	*match, *aux;
+dematch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct	uba_attach_args *ua = aux;
 	volatile struct dedevice *addr = (struct dedevice *)ua->ua_addr;

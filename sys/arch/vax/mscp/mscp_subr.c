@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.7 1998/01/12 20:52:43 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.8 1998/01/24 14:16:45 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -59,7 +59,7 @@
 
 #define	b_forw	b_hash.le_next
 
-int	mscp_match __P((struct device *, void *, void *));
+int	mscp_match __P((struct device *, struct cfdata *, void *));
 void	mscp_attach __P((struct device *, struct device *, void *));
 void    mscp_start __P((struct  mscp_softc *));
 int	mscp_init __P((struct  mscp_softc *));
@@ -103,7 +103,8 @@ mscp_waitstep(mi, mask, result)
 int
 mscp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct	mscp_attach_args *ma = aux;
 
