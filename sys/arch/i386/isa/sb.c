@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.14 1994/11/18 22:03:38 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.15 1994/12/17 18:45:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -39,6 +39,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -179,7 +180,7 @@ sbforceintr(aux)
 	 * it is needed (and you pay the latency).  Also, you might
 	 * never need the buffer anyway.)
 	 */
-	at_dma(1, &dmabuf, 1, ia->ia_drq);
+	at_dma(B_READ, &dmabuf, 1, ia->ia_drq);
 	if (wdsp(iobase, SB_DSP_RDMA) == 0) {
 		(void)wdsp(iobase, 0);
 		(void)wdsp(iobase, 0);
@@ -274,9 +275,13 @@ wdsp(int iobase, int v)
 	register int i;
 
 	for (i = 100; --i >= 0; ) {
-		if ((inb(iobase + SBP_DSP_WSTAT) & SB_DSP_BUSY) != 0)
+		register u_char x;
+		x = inb(iobase + SBP_DSP_WSTAT);
+		delay(20);
+		if ((x & SB_DSP_BUSY) != 0)
 			continue;
 		outb(iobase + SBP_DSP_WRITE, v);
+		delay(20);
 		return 0;
 	}
 	++sberr.wdsp;
@@ -292,9 +297,14 @@ rdsp(int iobase)
 	register int i;
 
 	for (i = 100; --i >= 0; ) {
-		if ((inb(iobase + SBP_DSP_RSTAT) & SB_DSP_READY) == 0)
+		register u_char x;
+		x = inb(iobase + SBP_DSP_RSTAT);
+		delay(20);
+		if ((x & SB_DSP_READY) == 0)
 			continue;
-		return inb(iobase + SBP_DSP_READ);
+		x = inb(iobase + SBP_DSP_READ);
+		delay(20);
+		return x;
 	}
 	++sberr.rdsp;
 	return -1;
@@ -317,8 +327,9 @@ sbreset(sc)
 	 * Gee, what a brilliant hardware design.
 	 */
 	outb(iobase + SBP_DSP_RESET, 1);
-	delay(3);
+	delay(20);
 	outb(iobase + SBP_DSP_RESET, 0);
+	delay(20);
 	if (rdsp(iobase) != SB_MAGIC)
 		return -1;
 	return 0;
@@ -524,7 +535,7 @@ sb_dma_input(sc, p, cc, intr, arg)
 {
 	register int iobase;
 
-	at_dma(1, p, cc, sc->sc_dmachan);
+	at_dma(B_READ, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 	iobase = sc->sc_iobase;
@@ -559,7 +570,7 @@ sb_dma_output(sc, p, cc, intr, arg)
 {
 	register int iobase;
 
-	at_dma(0, p, cc, sc->sc_dmachan);
+	at_dma(B_WRITE, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 	iobase = sc->sc_iobase;
@@ -599,6 +610,7 @@ sbintr(sc)
 	sc->sc_locked = 0;
 	/* clear interrupt */
 	inb(sc->sc_iobase + SBP_DSP_RSTAT);
+	delay(20);
 	if (sc->sc_mintr != 0) {
 		int c = rdsp(sc->sc_iobase);
 		(*sc->sc_mintr)(sc->sc_arg, c);
