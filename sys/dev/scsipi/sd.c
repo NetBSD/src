@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.149 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.150 1999/10/17 06:22:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -929,7 +929,7 @@ sdioctl(dev, cmd, addr, flag, p)
 			if ((sd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
 			    sd->sc_dk.dk_bopenmask + sd->sc_dk.dk_copenmask ==
 			    sd->sc_dk.dk_openmask) {
-				error =  scsipi_prevent(sd->sc_link, PR_ALLOW,
+				error = scsipi_prevent(sd->sc_link, PR_ALLOW,
 				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
@@ -1126,7 +1126,7 @@ sd_interpret_sense(xs)
 				printf("%s: respinning up disk\n",
 				    sd->sc_dev.dv_xname);
 				retval = scsipi_start(sd->sc_link, SSS_START,
-				   XS_CTL_URGENT | XS_CTL_NOSLEEP);
+				    XS_CTL_URGENT | XS_CTL_NOSLEEP);
 				if (retval != 0) {
 					printf(
 					    "%s: respin of disk failed - %d\n",
