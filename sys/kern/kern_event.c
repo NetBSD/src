@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.12 2003/02/23 22:05:35 pk Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.13 2003/03/21 21:13:51 dsl Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -60,9 +60,9 @@ static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 		    struct ucred *cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
 		    struct ucred *cred, int flags);
-static int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
+static int	kqueue_ioctl(struct file *fp, u_long com, void *data,
 		    struct proc *p);
-static int	kqueue_fcntl(struct file *fp, u_int com, caddr_t data,
+static int	kqueue_fcntl(struct file *fp, u_int com, void *data,
 		    struct proc *p);
 static int	kqueue_poll(struct file *fp, int events, struct proc *p);
 static int	kqueue_kqfilter(struct file *fp, struct knote *kn);
@@ -1067,7 +1067,7 @@ kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
  */
 /*ARGSUSED*/
 static int
-kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
+kqueue_ioctl(struct file *fp, u_long com, void *data, struct proc *p)
 {
 	struct kfilter_mapping	*km;
 	const struct kfilter	*kfilter;
@@ -1115,7 +1115,7 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
  */
 /*ARGSUSED*/
 static int
-kqueue_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p)
+kqueue_fcntl(struct file *fp, u_int com, void *data, struct proc *p)
 {
 
 	return (ENOTTY);

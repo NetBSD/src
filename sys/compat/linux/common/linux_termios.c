@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.17 2003/02/27 16:04:16 yamt Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.18 2003/03/21 21:13:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.17 2003/02/27 16:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.18 2003/03/21 21:13:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -481,7 +481,7 @@ linux_ioctl_termios(p, uap, retval)
 	struct sys_ioctl_args ia;
 	int error;
 	char tioclinux;
-	int (*bsdioctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*bsdioctl)(struct file *, u_long, void *, struct proc *);
 
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
