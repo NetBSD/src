@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.15 2000/10/04 20:09:05 mjl Exp $	*/
+/*	$NetBSD: whois.c,v 1.16 2001/01/27 22:31:52 joda Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.15 2000/10/04 20:09:05 mjl Exp $");
+__RCSID("$NetBSD: whois.c,v 1.16 2001/01/27 22:31:52 joda Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -305,7 +305,8 @@ int main(argc, argv)
 #endif
   
 #ifdef TOPDOMAIN
-  host = strcat(TOPDOMAIN, "-whois.ripe.net");
+  char topdomain[] = TOPDOMAIN "-whois.ripe.net";
+  host = topdomain;
 #else
   host = NICHOST;
 #endif
