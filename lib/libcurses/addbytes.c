@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.28 2003/08/07 16:44:18 agc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.29 2003/08/10 07:37:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.28 2003/08/07 16:44:18 agc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.29 2003/08/10 07:37:11 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -135,9 +135,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 #endif
 
 			if (lp->flags & __ISPASTEOL) {
-				x = 0;
 		newline:
-				lp->flags &= ~(__ISPASTEOL | __ISAFTERCR);
+				x = 0;
+				lp->flags &= ~__ISPASTEOL;
 				if (y == win->scr_b) {
 #ifdef DEBUG
 					__CTRACE("ADDBYTES - on bottom "
@@ -204,29 +204,18 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 #endif
 			break;
 		case '\n':
-			if (!(lp->flags & (__ISPASTEOL | __ISAFTERCR))) {
-				SYNCH_OUT;
-				wclrtoeol(win);
-				SYNCH_IN;
-			}
-			if (!__NONL)
-				x = 0;
+			SYNCH_OUT;
+			wclrtoeol(win);
+			SYNCH_IN;
 			goto newline;
 		case '\r':
-			if (!(lp->flags & __ISAFTERCR)) {
-				SYNCH_OUT;
-				wclrtoeol(win);
-				SYNCH_IN;
-			}
 			x = 0;
-			lp->flags |= __ISAFTERCR;
 			continue;
 		case '\b':
 			if (--x < 0)
 				x = 0;
 			break;
 		}
-		lp->flags &= ~__ISAFTERCR;
 	}
 	SYNCH_OUT;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.13 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: move.c,v 1.14 2003/08/10 07:37:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.13 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: move.c,v 1.14 2003/08/10 07:37:11 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -70,8 +70,8 @@ wmove(WINDOW *win, int y, int x)
 	if (x >= win->maxx || y >= win->maxy)
 		return (ERR);
 	win->curx = x;
-	win->lines[win->cury]->flags &= ~(__ISPASTEOL | __ISAFTERCR);
+	win->lines[win->cury]->flags &= ~__ISPASTEOL;
 	win->cury = y;
-	win->lines[y]->flags &= ~(__ISPASTEOL | __ISAFTERCR);
+	win->lines[y]->flags &= ~__ISPASTEOL;
 	return (OK);
 }
