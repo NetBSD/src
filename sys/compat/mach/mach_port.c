@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.8 2002/11/28 21:21:33 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.9 2002/12/07 21:23:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.8 2002/11/28 21:21:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.9 2002/12/07 21:23:04 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,7 @@ mach_port_deallocate(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_port_deallocate();\n"));
+	DPRINTF(("mach_port_deallocate();\n"));
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
@@ -147,7 +147,7 @@ mach_port_allocate(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_port_allocate();\n"));
+	DPRINTF(("mach_port_allocate();\n"));
 
 	bzero(&rep, sizeof(rep));
 
@@ -182,7 +182,7 @@ mach_port_insert_right(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_port_insert_right();\n"));
+	DPRINTF(("mach_port_insert_right();\n"));
 
 	bzero(&rep, sizeof(rep));
 
@@ -191,6 +191,43 @@ mach_port_insert_right(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
+
+int 
+mach_port_type(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_port_type_request_t req;
+	mach_port_type_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	DPRINTF(("mach_port_type();\n"));
+
+	bzero(&rep, sizeof(rep));
+	
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_retval = 0;
+	rep.rep_ptype = 0;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if (sizeof(rep) > maxlen)
