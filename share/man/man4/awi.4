@@ -1,7 +1,7 @@
-.\"     $NetBSD: awi.4,v 1.2 1999/12/10 15:17:05 sommerfeld Exp $
+.\"     $NetBSD: awi.4,v 1.3 1999/12/15 22:07:30 abs Exp $
 .\"
 .\"
-.\"	$Id: awi.4,v 1.2 1999/12/10 15:17:05 sommerfeld Exp $
+.\"	$Id: awi.4,v 1.3 1999/12/15 22:07:30 abs Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4 
@@ -9,7 +9,7 @@
 .Sh NAME
 .Nm awi
 .Nd
-Bay Networks BayStack 650 IEEE 802.11 PCMCIA driver
+Bay Networks BayStack 650 IEEE 802.11 PCMCIA wireless network driver
 .Sh SYNOPSIS
 .Cd "awi*     at pcmcia? function ?"
 .Sh DESCRIPTION
@@ -33,7 +33,7 @@ speed is fixed at 1Mbps.
 .Pp
 The driver currently only works in infrastructure mode, communicating
 with an Access Point which serves as a link-layer bridge between an
-ethernet and the wireless network.
+Ethernet and the wireless network.
 .Pp 
 This card seems to take between 5 and 20 seconds after it has been brought up
 to synchronize with an AP.  When using 
