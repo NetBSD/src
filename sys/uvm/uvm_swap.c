@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.66 2002/07/21 15:32:20 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.67 2002/07/27 14:37:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.66 2002/07/21 15:32:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.67 2002/07/27 14:37:00 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -605,6 +605,10 @@ sys_swapctl(p, v, retval)
 		priority = SCARG(uap, misc);
 		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
+		memset(sdp, 0, sizeof(*sdp));
+		sdp->swd_flags = SWF_FAKE;
+		sdp->swd_vp = vp;
+		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		bufq_alloc(&sdp->swd_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 		simple_lock(&uvm.swap_data_lock);
 		if (swaplist_find(vp, 0) != NULL) {
@@ -615,11 +619,6 @@ sys_swapctl(p, v, retval)
 			free(spp, M_VMSWAP);
 			break;
 		}
-		memset(sdp, 0, sizeof(*sdp));
-		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
-		sdp->swd_vp = vp;
-		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
 
