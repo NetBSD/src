@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.14 2003/09/22 14:11:15 cl Exp $
+# $NetBSD: GENERIC.in,v 1.15 2003/09/22 18:23:01 jandberg Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -411,6 +411,12 @@ m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
 ')m4_dnl
+')m4_dnl
+
+m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
+wsmouse*	at ms?
+', `
+#wsmouse*	at ms?
 ')m4_dnl
 
 m4_ifdef(`DRACO_CONFIGURATION', `m4_dnl
