@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.26 2000/03/30 12:45:31 augustss Exp $	*/
+/*	$NetBSD: i82586.c,v 1.27 2000/05/11 20:55:03 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -561,6 +561,8 @@ ie_ack(sc, mask)
 	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 	status = (sc->ie_bus_read16)(sc, IE_SCB_STATUS(sc->scb));
 	i82586_start_cmd(sc, status & mask, 0, 0, 0);
+	if (sc->intrhook)
+		sc->intrhook(sc, INTR_ACK);
 }
 
 /*
@@ -1235,7 +1237,7 @@ ie_readframe(sc, num)
 		printf("%s: frame from ether %s type 0x%x len %d\n",
 			sc->sc_dev.dv_xname,
 			ether_sprintf(eh->ether_shost),
-			(u_int)eh->ether_type,
+			(u_int)ntohs(eh->ether_type),
 			pktlen);
 	}
 #endif
@@ -1446,12 +1448,12 @@ i82586_proberam(sc)
 
 	/* Put in 16-bit mode */
 	off = IE_SCP_BUS_USE(sc->scp);
-	bus_space_write_1(sc->bt, sc->bh, off, 0);
+	(sc->ie_bus_write16)(sc, off, 0);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
 
 	/* Set the ISCP `busy' bit */
 	off = IE_ISCP_BUSY(sc->iscp);
-	bus_space_write_1(sc->bt, sc->bh, off, 1);
+	(sc->ie_bus_write16)(sc, off, 1);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
 
 	if (sc->hwreset)
@@ -1464,7 +1466,7 @@ i82586_proberam(sc)
 	/* Read back the ISCP `busy' bit; it should be clear by now */
 	off = IE_ISCP_BUSY(sc->iscp);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_READ);
-	result = bus_space_read_1(sc->bt, sc->bh, off) == 0;
+	result = (sc->ie_bus_read16)(sc, off) == 0;
 
 	/* Acknowledge any interrupts we may have caused. */
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1742,21 +1744,22 @@ ie_cfg_setup(sc, cmd, promiscuous, manchester)
 	int promiscuous, manchester;
 {
 	int cmdresult, status;
+	u_int8_t buf[IE_CMD_CFG_SZ]; /* XXX malloc? */
 
+	*IE_CMD_CFG_CNT(buf)       = 0x0c;
+	*IE_CMD_CFG_FIFO(buf)      = 8;
+        *IE_CMD_CFG_SAVEBAD(buf)   = 0x40;
+	*IE_CMD_CFG_ADDRLEN(buf)   = 0x2e;
+	*IE_CMD_CFG_PRIORITY(buf)  = 0;
+	*IE_CMD_CFG_IFS(buf)       = 0x60;
+	*IE_CMD_CFG_SLOT_LOW(buf)  = 0;
+	*IE_CMD_CFG_SLOT_HIGH(buf) = 0xf2;
+	*IE_CMD_CFG_PROMISC(buf)   = !!promiscuous | manchester << 2;
+	*IE_CMD_CFG_CRSCDT(buf)    = 0;
+	*IE_CMD_CFG_MINLEN(buf)    = 64;
+	*IE_CMD_CFG_JUNK(buf)      = 0xff;
+	sc->memcopyout(sc, buf, cmd, IE_CMD_CFG_SZ);
 	setup_simple_command(sc, IE_CMD_CONFIG, cmd);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_CNT(cmd), 0x0c);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_FIFO(cmd), 8);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SAVEBAD(cmd), 0x40);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_ADDRLEN(cmd), 0x2e);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_PRIORITY(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_IFS(cmd), 0x60);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_LOW(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_HIGH(cmd), 0xf2);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_PROMISC(cmd),
-					  !!promiscuous | manchester << 2);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_CRSCDT(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_MINLEN(cmd), 64);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_JUNK(cmd), 0xff);
 	bus_space_barrier(sc->bt, sc->bh, cmd, IE_CMD_CFG_SZ,
 			  BUS_SPACE_BARRIER_WRITE);
 
