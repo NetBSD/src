@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2002/08/07 07:21:08 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2002/08/20 04:22:03 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2002/08/07 07:21:08 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2002/08/20 04:22:03 shin Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2002/08/07 07:21:08 gmcgarry Exp $"
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <uvm/uvm_extern.h>
 
