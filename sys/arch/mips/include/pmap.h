@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1999/05/18 01:36:51 nisimura Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2000/04/28 19:25:55 soren Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -127,7 +127,7 @@ void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
 #define	PMAP_NEED_PROCWR
 
 /*
- * pmap_prefer()  helps reduce virtual-coherency exceptions in
+ * pmap_prefer() helps reduce virtual-coherency exceptions in
  * the virtually-indexed cache on mips3 CPUs.
  */
 #ifdef MIPS3
@@ -142,6 +142,12 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
  */
 #define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+void	pmap_zero_page_uncached __P((paddr_t));
+#define PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
  * Kernel cache operations for the user-space API
