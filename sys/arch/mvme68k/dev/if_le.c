@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 2002/10/02 05:28:13 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 2003/04/02 02:19:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -193,7 +195,7 @@ le_pcc_attach(parent, self, aux)
 	bus_space_map(pa->pa_bust, pa->pa_offset, 4, 0, &lsc->sc_bush);
 
 	/* Get contiguous DMA-able memory for the lance */
-	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
+	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, PAGE_SIZE, 0,
 	    &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT)) {
 		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
