@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.14 1999/02/12 05:57:21 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.15 1999/03/25 16:26:20 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -53,8 +53,8 @@ device fdc {}
 attach fdc at mainbus, sbus
 device fd: disk
 attach fd at fdc
-file	arch/sparc64/dev/fd.c			fdc | fd needs-flag
-file	arch/sparc64/sparc/bsd_fdintr.s		fdc
+file	dev/sun/fd.c				fdc | fd needs-flag
+file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
 
 #
 # Console (zs) related stuff
@@ -190,8 +190,9 @@ include "../../../dev/rcons/files.rcons"
 # Binary compatiblity with previous NetBSD releases.
 file	arch/sparc64/sparc64/compat_13_machdep.c compat_13
 
-# NetBSD/sparc Binary compatibility (COMPAT_SPARC32)
-include "../../../compat/sparc32/files.sparc32"
+# NetBSD/sparc Binary compatibility (COMPAT_NETBSD32)
+include "../../../compat/netbsd32/files.netbsd32"
+file	arch/sparc64/sparc64/netbsd32_machdep.c	compat_netbsd32
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "../../../compat/svr4/files.svr4"
