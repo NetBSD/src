@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.182 2000/09/28 22:25:28 thorpej Exp $
+# $NetBSD: mi,v 1.183 2000/10/14 01:54:28 wiz Exp $
 .
 ./altroot
 ./bin
@@ -41,6 +41,7 @@
 ./dev/fd
 ./dev/log
 ./etc
+./etc/defaults
 ./etc/disklabels
 ./etc/kerberosIV
 ./etc/kerberosV
