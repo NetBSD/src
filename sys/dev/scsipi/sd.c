@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.162 2000/05/30 01:08:25 augustss Exp $	*/
+/*	$NetBSD: sd.c,v 1.163 2000/06/09 08:54:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1101,7 +1101,7 @@ sd_reassign_blocks(sd, blkno)
 	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
-	    XS_CTL_DATA_OUT));
+	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 /*
