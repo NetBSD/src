@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.10 2004/03/04 00:54:30 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.11 2004/03/04 00:56:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,7 +51,6 @@
 #include <sys/buf.h>
 
 struct RF_PropHeader_s {	/* structure for propagation of results */
-	int     resultNum;	/* bind result # resultNum */
 	int     paramNum;	/* to parameter # paramNum */
 	RF_PropHeader_t *next;	/* linked list for multiple results/params */
 };
