@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.122 2001/05/21 00:44:42 jhawk Exp $
+.\"	$NetBSD: main,v 1.123 2001/05/21 01:09:55 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd April 7, 2001
+.Dd May 21, 2001
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -155,7 +155,7 @@ in our CVS repository (also known as ``NetBSD-current'') from
 .Em after
 the point where the release cycle for 1.5 was started are designated
 by version identifiers such as 1.5A, 1.5B, etc.
-These identifisers do not designate releases, but indicate major changes
+These identifiers do not designate releases, but indicate major changes
 in internal kernel APIs.
 Note that the kernel from
 .Nx
@@ -173,12 +173,12 @@ Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
 above and 1.5.1 to determine if a given feature is present or absent
 in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
-is done on a separate branch in the CVS repository which was created when
+is done on a separate branch in the CVS repository. The branch was created when
 the release cycle for 1.5 was started, and during the release cycle of
-1.5 and its patch releases, selective fixes and enhancements have been
+1.5 and its patch releases, selected fixes and enhancements have been
 imported from the main development trunk.
-So there are features in 1.5.1 which were not in e.g. 1.5B, but the
-reverse is most probably also true.
+So, there are features in 1.5.1 which were not in, e.g. 1.5B, and vice
+versa.
 .Ss Major Changes Between 1.5 and 1.5.1
 The complete list of changes between
 .Nx
@@ -198,7 +198,8 @@ The
 .Xr siop 4
 driver has improved in performance and robustness.
 .It
-Support for cloning pseudo-interfaces has been added.
+Support for cloning pseudo-interfaces has been added. See
+.Xr ifconfig 8 .
 .It
 Support for 802.1Q virtual LANs has been added.
 See
@@ -208,8 +209,7 @@ The
 .Xr isp 4
 driver has been upgraded to (among other things) work on MacPPC.
 .It
-BIND has been upgraded to version 8.2.3.
-This fixes SA2001-001.
+BIND has been upgraded to version 8.2.3 (SA2001-001).
 .It
 Support for booting from RAIDframe RAID1 mirrors on i386 added.
 .It
@@ -268,9 +268,9 @@ clone card has been added to
 .Xr ne 4 .
 .It
 The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
-to fix among many other things core dumps in
-.Xr dhclient 8 .
-Please note that the new
+to fix core dumps in
+.Xr dhclient 8 ,
+among other things.  Please note that the new
 .Xr dhcpd 8
 forces you to configure a "ddns-update-style" of either
 "ad-hoc", "interim" or "none".
@@ -306,7 +306,7 @@ and Cirrus Logic CrystalClear PCI Audio CS4281 (see
 .Xr clct 4 ) have been added.
 .El
 .Pp
-In addition, many bugs have been fixed -- more than 95 problems
+In addition, many bugs have been fixed\(emmore than 95 problems
 reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
 See the CHANGES-1.5.1 file for the complete list.
@@ -322,7 +322,7 @@ Once you start using more than 8 partitions, you can no longer
 downgrade to a 1.5 kernel.
 .It
 The user-land tools which handle disklabels in 1.5.1 can not be
-used together with a 1.5 kernel.
+used running under a 1.5 kernel.
 .El
 .\}
 .Ss Changes Between The NetBSD 1.4 and 1.5 Releases
