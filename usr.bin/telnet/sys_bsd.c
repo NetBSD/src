@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.8 1996/02/24 01:18:46 jtk Exp $";
+static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.9 1996/02/24 07:32:01 jtk Exp $";
 #endif /* not lint */
 
 /*
@@ -1189,14 +1189,19 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	if (c < 0 && errno == EWOULDBLOCK) {
 	    c = 0;
 	} else {
-	    /* EOF detection for line mode!!!! */
-	    if ((c == 0) && MODE_LOCAL_CHARS(globalmode) && isatty(tin)) {
-			/* must be an EOF... */
-		*ttyiring.supply = termEofChar;
-		c = 1;
-	    }
-	    if (c <= 0) {
+	    if (c < 0) {
 		return -1;
+	    }
+	    if (c == 0) {
+		/* must be an EOF... */
+		if (MODE_LOCAL_CHARS(globalmode) && isatty(tin)) {
+		    *ttyiring.supply = termEofChar;
+		    c = 1;
+		} else {
+		    clienteof = 1;
+		    shutdown(net, 1);
+		    return 0;
+		}
 	    }
 	    if (termdata) {
 		Dump('<', ttyiring.supply, c);
