@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.10 1998/01/14 15:27:46 drochner Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.11 1998/01/15 02:26:38 cgd Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -297,6 +297,7 @@ atapibus* at wdc?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+sd*	at atapibus? drive ?		# ATAPI disk drives
 
 
 # Miscellaneous mass storage devices

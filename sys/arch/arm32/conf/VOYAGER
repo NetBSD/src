@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.28 1998/01/05 06:28:49 perry Exp $
+#	$NetBSD: VOYAGER,v 1.29 1998/01/15 02:26:32 cgd Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -179,6 +179,7 @@ wdc0	at pioc? offset 0x01f0 irq 9
 wd*	at wdc? drive ?
 atapibus* at wdc?
 cd*	at atapibus? drive ?
+sd*	at atapibus? drive ?
 
 # Floppy disk controller
 fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000

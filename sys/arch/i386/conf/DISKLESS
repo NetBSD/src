@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.56 1998/01/14 15:27:43 drochner Exp $
+#	$NetBSD: DISKLESS,v 1.57 1998/01/15 02:26:34 cgd Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -195,6 +195,7 @@ mms1	at isa? port 0x238 irq 5
 #wd*	at wdc? drive ?
 #atapibus* at wdc?
 #cd*	at atapibus? drive ?
+#sd*	at atapibus? drive ?
 
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't
