@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.25 2000/03/18 16:13:26 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.26 2000/03/25 15:27:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -201,6 +201,8 @@ si_attach(parent, self, aux)
 	ncr_sc->sci_r5 = 20;
 	ncr_sc->sci_r6 = 24;
 	ncr_sc->sci_r7 = 28;
+
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
 
 	ncr_sc->sc_no_disconnect = 0xff;
 

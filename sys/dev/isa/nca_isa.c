@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.5 2000/03/18 17:14:35 mycroft Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.6 2000/03/25 15:27:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -348,6 +348,7 @@ nca_isa_attach(parent, self, aux)
 		sc->sci_r5 = 5;
 		sc->sci_r6 = 6;
 		sc->sci_r7 = 7;
+		sc->sc_rev = NCR_VARIANT_NCR5380;
 		break;
 	case CTLR_NCR_53C400:
 		printf("%s: NCR 53C400 detected\n", sc->sc_dev.dv_xname);
@@ -359,9 +360,11 @@ nca_isa_attach(parent, self, aux)
 		sc->sci_r5 = C400_5380_REG_OFFSET + 5;
 		sc->sci_r6 = C400_5380_REG_OFFSET + 6;
 		sc->sci_r7 = C400_5380_REG_OFFSET + 7;
+		sc->sc_rev = NCR_VARIANT_NCR53C400;
 		break;
 	case CTLR_PAS16:
 		printf("%s: ProAudio Spectrum 16 detected\n", sc->sc_dev.dv_xname);
+		sc->sc_rev = NCR_VARIANT_PAS16;
 		break;
 	}
 

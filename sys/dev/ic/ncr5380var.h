@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.17 2000/03/18 17:14:35 mycroft Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.18 2000/03/25 15:27:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -209,6 +209,12 @@ struct ncr5380_softc {
 	u_char	*sc_omp;		/* Outgoing message pointer */
 	u_char	sc_imess[NCR_MAX_MSG_LEN];
 	u_char	*sc_imp;		/* Incoming message pointer */
+	int	sc_rev;			/* Chip revision */
+#define NCR_VARIANT_NCR5380	0
+#define NCR_VARIANT_DP8490	1
+#define NCR_VARIANT_NCR53C400	2
+#define NCR_VARIANT_PAS16	3
+#define NCR_VARIANT_CXD1180	4
 
 };
 

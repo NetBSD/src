@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.17 2000/03/18 16:13:22 mycroft Exp $	*/
+/*	$NetBSD: oak.c,v 1.18 2000/03/25 15:27:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,7 +146,9 @@ oak_attach(parent, self, aux)
 	sc->sc_ncr5380.sci_r5 = iobase + 20;
 	sc->sc_ncr5380.sci_r6 = iobase + 24;
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
-	
+
+	sc->sc_ncr5380.sc_rev = NCR_VARIANT_NCR5380;
+
 	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
 

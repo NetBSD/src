@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.2 2000/03/18 21:11:16 mycroft Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.3 2000/03/25 15:27:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -174,6 +174,8 @@ nca_pcmcia_attach(parent, self, aux)
 	sc->sci_r5 = C400_5380_REG_OFFSET + 5;
 	sc->sci_r6 = C400_5380_REG_OFFSET + 6;
 	sc->sci_r7 = C400_5380_REG_OFFSET + 7;
+
+	sc->sc_rev = NCR_VARIANT_NCR53C400;
 
 	/*
 	 * MD function pointers used by the MI code.
