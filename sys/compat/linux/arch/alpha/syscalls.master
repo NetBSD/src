@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2000/12/11 04:55:50 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.29 2000/12/14 20:38:03 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -507,7 +507,7 @@
 315	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
 316	NOARGS		{ int sys_mlockall(int flags); }
 317	NOARGS		{ int sys_munlockall(void); }
-318	UNIMPL		sysinfo
+318	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 319	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 320	UNIMPL		idle
 321	UNIMPL		oldumount

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2000/12/12 22:23:03 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.24 2000/12/14 20:37:57 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -222,7 +222,7 @@
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 115	STD		{ int linux_sys_swapoff(const char *path); }
-116	UNIMPL		sysinfo
+116	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
