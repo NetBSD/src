@@ -1,0 +1,99 @@
+#--------------------------------------------------
+# check if correct driver
+#--------------------------------------------------
+if [ -f /usr/sbin/ispcvt ]
+then
+  if /usr/sbin/ispcvt
+  then
+#--------------------------------------------------
+# loading fonts into vga
+#--------------------------------------------------
+    echo 'console driver type: pcvt'
+    if [ -f /usr/local/bin/loadfont ]
+    then
+      if [ -f /usr/local/bin/scon ]
+      then
+        adaptor=`/usr/local/bin/scon -a`
+        if [ $adaptor = EGA -o $adaptor = VGA ]
+        then
+          echo 'loading 25 lines base font into character set 0'
+          /usr/local/bin/loadfont -c0 -f/usr/share/misc/vgafonts/vt220l.816
+          echo 'loading 25 lines extension font into character set 1'
+          /usr/local/bin/loadfont -c1 -f/usr/share/misc/vgafonts/vt220h.816
+          echo 'loading 28 lines base font into character set 2'
+          /usr/local/bin/loadfont -c2 -f/usr/share/misc/vgafonts/vt220l.814
+          echo 'loading 28 lines extension font into character set 3'
+          /usr/local/bin/loadfont -c3 -f/usr/share/misc/vgafonts/vt220h.814
+          echo 'loading 40 lines base font into character set 4'
+          /usr/local/bin/loadfont -c4 -f/usr/share/misc/vgafonts/vt220l.810
+          echo 'loading 40 lines extension font into character set 5'
+          /usr/local/bin/loadfont -c5 -f/usr/share/misc/vgafonts/vt220h.810
+          echo 'loading 50 lines base font into character set 6'
+          /usr/local/bin/loadfont -c6 -f/usr/share/misc/vgafonts/vt220l.808
+          echo 'loading 50 lines extension font into character set 7'
+          /usr/local/bin/loadfont -c7 -f/usr/share/misc/vgafonts/vt220h.808
+        fi
+      fi
+    fi
+#--------------------------------------------------
+# setting screen sizes and emulation
+#--------------------------------------------------
+    if [ -f /usr/local/bin/scon ]
+    then
+      if [ $adaptor = EGA -o $adaptor = VGA ]
+      then
+        size=-s28
+        echo 'switching to 28 lines and VT/HP-emulation'
+      else
+        size=
+        echo 'switching to VT/HP-emulation'
+      fi
+      monitor=`/usr/local/bin/scon -m`
+      for device in /dev/ttyv*
+      do
+        /usr/local/bin/scon -d$device $size -H
+        if [ $monitor = MONO ]
+	then
+          /usr/local/bin/scon -d$device -p8,60,60,60
+        fi
+      done
+      /usr/local/bin/scon -c0
+      /usr/local/bin/scon -t360
+    fi
+#--------------------------------------------------
+# setting national keyboard layout
+#--------------------------------------------------
+#   if [ -f /usr/local/bin/kcon ]
+#   then
+#     echo 'switching to german keyboard layout'
+#     /usr/local/bin/kcon -m de
+#   fi
+#--------------------------------------------------
+
+#--------------------------------------------------
+# cp /etc/ttys corresponding to console driver
+#--------------------------------------------------
+    if [ -f /etc/ttys.pcvt ]
+    then
+      echo 'copying /etc/ttys.pcvt -> /etc/ttys'
+      cp /etc/ttys.pcvt /etc/ttys
+    fi
+  else
+    echo 'console driver type: not pcvt or pcvt utility/driver mismatch:'
+    echo '--------------------------------------------------------------'
+    /usr/sbin/ispcvt -v
+    echo '--------------------------------------------------------------'
+    if [ -f /etc/ttys.pccons ]
+    then
+      echo 'copying /etc/ttys.pccons -> /etc/ttys'
+      cp /etc/ttys.pccons /etc/ttys
+    fi
+  fi
+else
+  echo 'console driver type: not pcvt'
+  if [ -f /etc/ttys.pccons ]
+  then
+    echo 'copying /etc/ttys.pccons -> /etc/ttys'
+    cp /etc/ttys.pccons /etc/ttys
+  fi
+fi
