@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.9.24.1 1999/06/21 01:23:59 thorpej Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.9.24.2 1999/07/04 01:33:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -260,7 +260,15 @@ exec_ecoff_prep_zmagic(p, epp, execp, vp)
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	vp->v_flag |= VTEXT;
+	ubc_flush(&vp->v_uvm.u_obj, 0, 0);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, eap->tsize,

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.3 1999/02/20 23:25:55 thorpej Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.3.4.1 1999/07/04 01:33:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -162,7 +162,15 @@ exec_m68k4k_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.16.2.1.2.1 1999/06/21 01:09:12 thorpej Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.16.2.1.2.2 1999/07/04 01:33:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -167,7 +167,15 @@ sunos_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

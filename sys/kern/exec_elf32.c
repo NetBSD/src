@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.43.4.2 1999/07/01 23:43:19 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.43.4.3 1999/07/04 01:33:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -716,7 +716,16 @@ ELFNAME2(exec,makecmds)(p, epp)
 	    VM_PROT_READ);
 #endif
 	free((char *)ph, M_TEMP);
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
+
 	return exec_elf_setup_stack(p, epp);
 
 bad:
