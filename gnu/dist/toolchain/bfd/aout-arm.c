@@ -46,7 +46,7 @@ static boolean 		MYARM(write_object_contents)	PARAMS((bfd *));
 
 /* Avoid multiple defininitions from aoutx if supporting standarad a.out
    as well as our own.  */
-#define NAME(x,y) CAT3(aoutarm,_xx_,y)
+#define NAME(x,y) CAT3(aoutarm,_32_,y)
 
 #define MY_bfd_reloc_type_lookup aoutarm_bfd_reloc_type_lookup
 
