@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.7 1996/11/15 05:52:46 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.8 1997/10/14 02:08:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,20 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: term.c,v 1.7 1996/11/15 05:52:46 lukem Exp $";
+__RCSID("$NetBSD: term.c,v 1.8 1997/10/14 02:08:01 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <errno.h>
-#include <ttyent.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
+#include <ttyent.h>
+#include <unistd.h>
 #include "extern.h"
 
 char    tbuf[1024];      		/* Termcap entry. */
@@ -72,12 +74,12 @@ get_termcap_entry(userarg, tcapbufp)
 	}
 
 	/* Try the environment. */
-	if (ttype = getenv("TERM"))
+	if ((ttype = getenv("TERM")) != NULL)
 		goto map;
 
 	/* Try ttyname(3); check for dialup or other mapping. */
-	if (ttypath = ttyname(STDERR_FILENO)) {
-		if (p = strrchr(ttypath, '/'))
+	if ((ttypath = ttyname(STDERR_FILENO)) != NULL) {
+		if ((p = strrchr(ttypath, '/')) != NULL)
 			++p;
 		else
 			p = ttypath;
@@ -150,7 +152,7 @@ askuser(dflt)
 			return (dflt);
 		}
 
-		if (p = strchr(answer, '\n'))
+		if ((p = strchr(answer, '\n')) != NULL)
 			*p = '\0';
 		if (answer[0])
 			return (answer);

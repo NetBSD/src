@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.6 1994/12/07 05:08:10 jtc Exp $	*/
+/*	$NetBSD: set.c,v 1.7 1997/10/14 02:07:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-static char rcsid[] = "$NetBSD: set.c,v 1.6 1994/12/07 05:08:10 jtc Exp $";
+__RCSID("$NetBSD: set.c,v 1.7 1997/10/14 02:07:59 lukem Exp $");
 #endif /* not lint */
 
+#include <stdio.h>
+#include <termcap.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdio.h>
 #include "extern.h"
 
 #define	CHK(val, dft)	(val <= 0 ? dft : val)

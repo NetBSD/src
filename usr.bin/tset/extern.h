@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1994/12/07 05:08:06 jtc Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1997/10/14 02:07:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,12 +38,6 @@
 /* This should be in <termcap.h> instead. */
 extern char PC;
 extern short ospeed;
-int	 tgetent __P((char *, char *));
-int	 tgetflag __P((char *));
-int	 tgetnum __P((char *));
-char	*tgetstr __P((char *, char **));
-char	*tgoto __P((char *, int, int));
-int	 tputs __P((char *, int, void (*) __P((int))));
 
 extern struct termios mode, oldmode;
 extern int columns, isreset, lines;
