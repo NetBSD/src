@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.17 2003/07/18 17:34:07 fvdl Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.18 2004/01/11 18:51:15 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.17 2003/07/18 17:34:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.18 2004/01/11 18:51:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ filt_procdetach(struct knote *kn)
 		return;
 
 	p = kn->kn_ptr.p_proc;
-	KASSERT(p->p_stat == SDEAD || pfind(kn->kn_id) == p);
+	KASSERT(p->p_stat == SZOMB || pfind(kn->kn_id) == p);
 
 	/* XXXSMP lock the process? */
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
