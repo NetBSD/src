@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/08 09:07:15 mrg Exp $
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
+#	$NetBSD: Makefile,v 1.7 1997/10/08 09:13:33 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	fingerd
 MAN=	fingerd.8
