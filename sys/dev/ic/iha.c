@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.26 2004/12/07 14:48:58 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.27 2005/01/02 12:22:19 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.26 2004/12/07 14:48:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.27 2005/01/02 12:22:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.26 2004/12/07 14:48:58 thorpej Exp $");
  * SCSI Rate Table, indexed by FLAG_SCSI_RATE field of
  * tcs flags.
  */
-static const u_int8_t iha_rate_tbl[] = {
+static const uint8_t iha_rate_tbl[] = {
 	/* fast 20		  */
 	/* nanosecond divide by 4 */
 	12,	/* 50ns,  20M	  */
@@ -80,7 +80,7 @@ static const u_int8_t iha_rate_tbl[] = {
 #define IHA_MAX_PERIOD	62
 
 #ifdef notused
-static u_int16_t eeprom_default[EEPROM_SIZE] = {
+static uint16_t eeprom_default[EEPROM_SIZE] = {
 	/* -- Header ------------------------------------ */
 	/* signature */
 	EEP_SIGNATURE,
@@ -133,7 +133,7 @@ static u_int16_t eeprom_default[EEPROM_SIZE] = {
 #endif
 
 static void iha_append_free_scb(struct iha_softc *, struct iha_scb *);
-static void iha_append_done_scb(struct iha_softc *, struct iha_scb *, u_int8_t);
+static void iha_append_done_scb(struct iha_softc *, struct iha_scb *, uint8_t);
 static __inline struct iha_scb *iha_pop_done_scb(struct iha_softc *);
 
 static struct iha_scb *iha_find_pend_scb(struct iha_softc *);
@@ -142,7 +142,7 @@ static __inline void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
 static __inline void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
 static __inline void iha_mark_busy_scb(struct iha_scb *);
 
-static __inline void iha_set_ssig(struct iha_softc *, u_int8_t, u_int8_t);
+static __inline void iha_set_ssig(struct iha_softc *, uint8_t, uint8_t);
 
 static int iha_alloc_sglist(struct iha_softc *);
 
@@ -153,20 +153,20 @@ static void iha_update_xfer_mode(struct iha_softc *, int);
 static void iha_reset_scsi_bus(struct iha_softc *);
 static void iha_reset_chip(struct iha_softc *);
 static void iha_reset_dma(struct iha_softc *);
-static void iha_reset_tcs(struct tcs *, u_int8_t);
+static void iha_reset_tcs(struct tcs *, uint8_t);
 
 static void iha_main(struct iha_softc *);
 static void iha_scsi(struct iha_softc *);
-static void iha_select(struct iha_softc *, struct iha_scb *, u_int8_t);
-static int iha_wait(struct iha_softc *, u_int8_t);
+static void iha_select(struct iha_softc *, struct iha_scb *, uint8_t);
+static int iha_wait(struct iha_softc *, uint8_t);
 
 static void iha_exec_scb(struct iha_softc *, struct iha_scb *);
 static void iha_done_scb(struct iha_softc *, struct iha_scb *);
 static int iha_push_sense_request(struct iha_softc *, struct iha_scb *);
 
 static void iha_timeout(void *);
-static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
-static u_int8_t iha_data_over_run(struct iha_scb *);
+static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, uint8_t);
+static uint8_t iha_data_over_run(struct iha_scb *);
 
 static int iha_next_state(struct iha_softc *);
 static int iha_state_1(struct iha_softc *);
@@ -190,8 +190,8 @@ static int iha_msgin_extended(struct iha_softc *);
 static int iha_msgin_sdtr(struct iha_softc *);
 static int iha_msgin_ignore_wid_resid(struct iha_softc *);
 
-static int  iha_msgout(struct iha_softc *, u_int8_t);
-static void iha_msgout_abort(struct iha_softc *, u_int8_t);
+static int  iha_msgout(struct iha_softc *, uint8_t);
+static void iha_msgout_abort(struct iha_softc *, uint8_t);
 static int  iha_msgout_reject(struct iha_softc *);
 static int  iha_msgout_extended(struct iha_softc *);
 static int  iha_msgout_wdtr(struct iha_softc *);
@@ -203,12 +203,12 @@ static void iha_sync_done(struct iha_softc *);
 static void iha_bad_seq(struct iha_softc *);
 
 static void iha_read_eeprom(struct iha_softc *, struct iha_eeprom *);
-static int iha_se2_rd_all(struct iha_softc *, u_int16_t *);
+static int iha_se2_rd_all(struct iha_softc *, uint16_t *);
 static void iha_se2_instr(struct iha_softc *, int);
-static u_int16_t iha_se2_rd(struct iha_softc *, int);
+static uint16_t iha_se2_rd(struct iha_softc *, int);
 #ifdef notused
 static void iha_se2_update_all(struct iha_softc *);
-static void iha_se2_wr(struct iha_softc *, int, u_int16_t);
+static void iha_se2_wr(struct iha_softc *, int, uint16_t);
 #endif
 
 /*
@@ -248,7 +248,7 @@ iha_append_free_scb(struct iha_softc *sc, struct iha_scb *scb)
 }
 
 static void
-iha_append_done_scb(struct iha_softc *sc, struct iha_scb *scb, u_int8_t hastat)
+iha_append_done_scb(struct iha_softc *sc, struct iha_scb *scb, uint8_t hastat)
 {
 	struct tcs *tcs;
 	int s;
@@ -424,11 +424,11 @@ iha_mark_busy_scb(struct iha_scb *scb)
  *		  one which turns off/on the specified signals.
  */
 static __inline void
-iha_set_ssig(struct iha_softc *sc, u_int8_t offsigs, u_int8_t onsigs)
+iha_set_ssig(struct iha_softc *sc, uint8_t offsigs, uint8_t onsigs)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t currsigs;
+	uint8_t currsigs;
 
 	currsigs = bus_space_read_1(iot, ioh, TUL_SSIGI);
 	bus_space_write_1(iot, ioh, TUL_SSIGO, (currsigs & ~offsigs) | onsigs);
@@ -860,7 +860,7 @@ iha_reset_dma(struct iha_softc *sc)
  *		   the other bits are fixed at initialization.
  */
 static void
-iha_reset_tcs(struct tcs *tcs, u_int8_t config0)
+iha_reset_tcs(struct tcs *tcs, uint8_t config0)
 {
 
 	tcs->flags &= ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
@@ -914,7 +914,7 @@ iha_scsi(struct iha_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scb *scb;
 	struct tcs *tcs;
-	u_int8_t stat;
+	uint8_t stat;
 
 	/* service pending interrupts asap */
 
@@ -1003,7 +1003,7 @@ iha_scsi(struct iha_softc *sc)
 }
 
 static void
-iha_select(struct iha_softc *sc, struct iha_scb *scb, u_int8_t select_type)
+iha_select(struct iha_softc *sc, struct iha_scb *scb, uint8_t select_type)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1052,7 +1052,7 @@ iha_select(struct iha_softc *sc, struct iha_scb *scb, u_int8_t select_type)
  *            the command is NO_OP, skip the command writing.
  */
 static int
-iha_wait(struct iha_softc *sc, u_int8_t cmd)
+iha_wait(struct iha_softc *sc, uint8_t cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1357,7 +1357,7 @@ iha_timeout(void *arg)
  *                queue with the supplied host status value.
  */
 static void
-iha_abort_xs(struct iha_softc *sc, struct scsipi_xfer *xs, u_int8_t hastat)
+iha_abort_xs(struct iha_softc *sc, struct scsipi_xfer *xs, uint8_t hastat)
 {
 	struct iha_scb *scb;
 	int i, s;
@@ -1406,7 +1406,7 @@ iha_abort_xs(struct iha_softc *sc, struct scsipi_xfer *xs, u_int8_t hastat)
  *		       found by scanning all the SCSI-3 T10 drafts. See
  *		       www.t10.org for the curious with a .pdf reader.
  */
-static u_int8_t
+static uint8_t
 iha_data_over_run(struct iha_scb *scb)
 {
 	switch (scb->cmd[0]) {
@@ -1747,8 +1747,8 @@ iha_state_5(struct iha_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scb *scb = sc->sc_actscb;
 	struct iha_sg_element *sg;
-	u_int32_t cnt;
-	u_int8_t period, stat;
+	uint32_t cnt;
+	uint8_t period, stat;
 	long xcnt;  /* cannot use unsigned!! see code: if (xcnt < 0) */
 	int i;
 
@@ -1893,7 +1893,7 @@ iha_state_8(struct iha_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scb *scb;
 	int i;
-	u_int8_t tar;
+	uint8_t tar;
 
 	if (sc->sc_phase == PHASE_MSG_OUT) {
 		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_BUS_DEV_RESET);
@@ -1940,8 +1940,8 @@ iha_xfer_data(struct iha_softc *sc, struct iha_scb *scb, int direction)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t xferlen;
-	u_int8_t xfercmd;
+	uint32_t xferlen;
+	uint8_t xfercmd;
 
 	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != direction)
 		return (6); /* wrong direction, abandon I/O */
@@ -2041,7 +2041,7 @@ iha_status_msg(struct iha_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scb *scb;
-	u_int8_t msg;
+	uint8_t msg;
 	int phase;
 
 	if ((phase = iha_wait(sc, CMD_COMP)) == -1)
@@ -2139,7 +2139,7 @@ iha_resel(struct iha_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scb *scb;
 	struct tcs *tcs;
-	u_int8_t tag, target, lun, msg, abortmsg;
+	uint8_t tag, target, lun, msg, abortmsg;
 
 	if (sc->sc_actscb != NULL) {
 		if ((sc->sc_actscb->status == STATUS_SELECT))
@@ -2227,7 +2227,7 @@ iha_msgin(struct iha_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int flags;
 	int phase;
-	u_int8_t msg;
+	uint8_t msg;
 
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, TUL_SFIFOCNT) & FIFOC) > 0)
@@ -2378,7 +2378,7 @@ iha_msgin_sdtr(struct iha_softc *sc)
 {
 	int flags;
 	int newoffer;
-	u_int8_t default_period;
+	uint8_t default_period;
 
 	flags = sc->sc_actscb->tcs->flags;
 
@@ -2439,7 +2439,7 @@ iha_msgin_ignore_wid_resid(struct iha_softc *sc)
 }
 
 static int
-iha_msgout(struct iha_softc *sc, u_int8_t msg)
+iha_msgout(struct iha_softc *sc, uint8_t msg)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, TUL_SFIFO, msg);
@@ -2448,7 +2448,7 @@ iha_msgout(struct iha_softc *sc, u_int8_t msg)
 }
 
 static void
-iha_msgout_abort(struct iha_softc *sc, u_int8_t aborttype)
+iha_msgout_abort(struct iha_softc *sc, uint8_t aborttype)
 {
 
 	iha_set_ssig(sc, REQ | BSY | SEL, ATN);
@@ -2608,8 +2608,8 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t *buf = (u_int16_t *)eeprom;
-	u_int8_t gctrl;
+	uint16_t *buf = (uint16_t *)eeprom;
+	uint8_t gctrl;
 
 	/* Enable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) | EEPRG;
@@ -2636,8 +2636,8 @@ iha_se2_update_all(struct iha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t *np;
-	u_int32_t chksum;
+	uint16_t *np;
+	uint32_t chksum;
 	int i;
 
 	/* Enable erase/write state of EEPROM */
@@ -2645,7 +2645,7 @@ iha_se2_update_all(struct iha_softc *sc)
 	bus_space_write_1(iot, ioh, TUL_NVRAM, 0);
 	EEP_WAIT();
 
-	np = (u_int16_t *)&eeprom_default;
+	np = (uint16_t *)&eeprom_default;
 
 	for (i = 0, chksum = 0; i < EEPROM_SIZE - 1; i++) {
 		iha_se2_wr(sc, i, *np);
@@ -2666,7 +2666,7 @@ iha_se2_update_all(struct iha_softc *sc)
  *		at the specified offset
  */
 static void
-iha_se2_wr(struct iha_softc *sc, int addr, u_int16_t writeword)
+iha_se2_wr(struct iha_softc *sc, int addr, uint16_t writeword)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2712,13 +2712,13 @@ iha_se2_wr(struct iha_softc *sc, int addr, u_int16_t writeword)
  *		offset in the Serial E2PROM
  *
  */
-static u_int16_t
+static uint16_t
 iha_se2_rd(struct iha_softc *sc, int addr)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, bit;
-	u_int16_t readword;
+	uint16_t readword;
 
 	/* Send 'READ' instruction == address | READ bit */
 	iha_se2_instr(sc, addr | READ);
@@ -2745,10 +2745,10 @@ iha_se2_rd(struct iha_softc *sc, int addr)
  * iha_se2_rd_all - Read SCSI H/A config parameters from serial EEPROM
  */
 static int
-iha_se2_rd_all(struct iha_softc *sc, u_int16_t *buf)
+iha_se2_rd_all(struct iha_softc *sc, uint16_t *buf)
 {
 	struct iha_eeprom *eeprom = (struct iha_eeprom *)buf;
-	u_int32_t chksum;
+	uint32_t chksum;
 	int i;
 
 	for (i = 0, chksum = 0; i < EEPROM_SIZE - 1; i++) {

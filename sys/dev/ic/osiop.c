@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.19 2004/09/25 09:46:17 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.19 2004/09/25 09:46:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -141,7 +141,7 @@ void osiop_init(struct osiop_softc *);
 void osiop_reset(struct osiop_softc *);
 void osiop_resetbus(struct osiop_softc *);
 void osiop_start(struct osiop_softc *);
-int osiop_checkintr(struct osiop_softc *, u_int8_t, u_int8_t, u_int8_t, int *);
+int osiop_checkintr(struct osiop_softc *, uint8_t, uint8_t, uint8_t, int *);
 void osiop_select(struct osiop_softc *);
 void osiop_update_xfer_mode(struct osiop_softc *, int);
 void scsi_period_to_osiop(struct osiop_softc *, int);
@@ -172,7 +172,7 @@ int osiop_trix = 0;
 	osiop_trbuf[osiop_trix + 3] = (d);			\
 	osiop_trix = (osiop_trix + 4) & (OSIOP_TRACE_SIZE - 1);	\
 } while (0)
-u_int8_t osiop_trbuf[OSIOP_TRACE_SIZE];
+uint8_t osiop_trbuf[OSIOP_TRACE_SIZE];
 void osiop_dump_trace(void);
 void osiop_dump_acb(struct osiop_acb *);
 void osiop_dump(struct osiop_softc *);
@@ -494,7 +494,7 @@ osiop_poll(struct osiop_softc *sc, struct osiop_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	int status, i, s, to;
-	u_int8_t istat, dstat, sstat0;
+	uint8_t istat, dstat, sstat0;
 
 	s = splbio();
 	to = xs->timeout / 1000;
@@ -808,7 +808,7 @@ osiop_reset(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb;
 	int i, s;
-	u_int8_t stat;
+	uint8_t stat;
 
 #ifdef OSIOP_DEBUG
 	printf("%s: resetting chip\n", sc->sc_dev.dv_xname);
@@ -1072,8 +1072,8 @@ osiop_start(struct osiop_softc *sc)
  */
 
 int
-osiop_checkintr(struct osiop_softc *sc, u_int8_t istat, u_int8_t dstat,
-    u_int8_t sstat0, int *status)
+osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
+    uint8_t sstat0, int *status)
 {
 	struct osiop_acb *acb = sc->sc_nexus;
 	struct osiop_ds *ds = NULL;	/* XXX */
@@ -1496,7 +1496,7 @@ osiop_checkintr(struct osiop_softc *sc, u_int8_t istat, u_int8_t dstat,
 		int reselid = ffs(osiop_read_4(sc, OSIOP_SCRATCH) & 0xff) - 1;
 		int reselun = osiop_read_1(sc, OSIOP_SFBR) & 0x07;
 #ifdef OSIOP_DEBUG
-		u_int8_t resmsg;
+		uint8_t resmsg;
 #endif
 
 		/* Reconnect */
@@ -1561,7 +1561,7 @@ osiop_checkintr(struct osiop_softc *sc, u_int8_t istat, u_int8_t dstat,
 	}
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_int_connect) {
 #ifdef OSIOP_DEBUG
-		u_int8_t ctest2 = osiop_read_1(sc, OSIOP_CTEST2);
+		uint8_t ctest2 = osiop_read_1(sc, OSIOP_CTEST2);
 
 		/* reselect was interrupted (by Sig_P or select) */
 		if (osiop_debug & DEBUG_DISC ||
@@ -1720,7 +1720,7 @@ void
 osiop_intr(struct osiop_softc *sc)
 {
 	int status, s;
-	u_int8_t istat, dstat, sstat0;
+	uint8_t istat, dstat, sstat0;
 
 	s = splbio();
 
@@ -1894,7 +1894,7 @@ osiop_dump_trace(void)
 void
 osiop_dump_acb(struct osiop_acb *acb)
 {
-	u_int8_t *b;
+	uint8_t *b;
 	int i;
 
 	printf("acb@%p ", acb);
@@ -1903,7 +1903,7 @@ osiop_dump_acb(struct osiop_acb *acb)
 		return;
 	}
 
-	b = (u_int8_t *)&acb->xs->cmd;
+	b = (uint8_t *)&acb->xs->cmd;
 	printf("(%d:%d) status %2x cmdlen %2ld cmd ",
 	    acb->xs->xs_periph->periph_target,
 	    acb->xs->xs_periph->periph_lun, acb->status, acb->cmdlen);
