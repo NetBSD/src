@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.21 2003/08/07 11:15:20 agc Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.22 2003/10/18 12:26:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.21 2003/08/07 11:15:20 agc Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.22 2003/10/18 12:26:26 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 		}
 
 	if (use_sysctl)		/* XXX */
-		goto dump_mowners;
+		goto dump_drain;
 
 	printf("%lu/%lu mapped pages in use\n",
 	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
@@ -193,9 +193,10 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
+
+dump_drain:
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
 
-    dump_mowners:
  	if (sflag < 2)
 		return;
 
