@@ -1,5 +1,5 @@
-/*	$NetBSD: dump.c,v 1.4 2002/05/21 14:29:52 itojun Exp $	*/
-/*	$KAME: dump.c,v 1.15 2000/11/11 06:57:22 jinmei Exp $	*/
+/*	$NetBSD: dump.c,v 1.5 2002/05/29 14:40:31 itojun Exp $	*/
+/*	$KAME: dump.c,v 1.28 2002/05/29 14:25:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -34,9 +34,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
@@ -53,6 +50,7 @@
 #include <syslog.h>
 #include <string.h>
 #include <errno.h>
+#include <netdb.h>
 
 #include "rtadvd.h"
 #include "timer.h"
@@ -66,29 +64,27 @@ extern struct rainfo *ralist;
 static char *ether_str __P((struct sockaddr_dl *));
 static void if_dump __P((void));
 
-#ifdef __FreeBSD__		/* XXX: see PORTABILITY */
-#define LONGLONG "%qu"
-#else
-#define LONGLONG "%llu"
-#endif
+static char *rtpref_str[] = {
+	"medium",		/* 00 */
+	"high",			/* 01 */
+	"rsv",			/* 10 */
+	"low"			/* 11 */
+};
 
 static char *
 ether_str(sdl)
 	struct sockaddr_dl *sdl;
 {
-	static char ebuf[32];
-	u_char *cp;
+	static char hbuf[NI_MAXHOST];
 
-	if (sdl->sdl_alen && sdl->sdl_alen > 5) {
-		cp = (u_char *)LLADDR(sdl);
-		sprintf(ebuf, "%x:%x:%x:%x:%x:%x",
-			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-	}
-	else {
-		sprintf(ebuf, "NONE");
-	}
+	if (sdl->sdl_alen) {
+		if (getnameinfo((struct sockaddr *)sdl, sdl->sdl_len,
+		    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			snprintf(hbuf, sizeof(hbuf), "<invalid>");
+	} else
+		snprintf(hbuf, sizeof(hbuf), "NONE");
 
-	return(ebuf);
+	return(hbuf);
 }
 
 static void
@@ -124,43 +120,36 @@ if_dump()
 			rai->waiting, rai->initcounter);
 
 		/* statistics */
-		fprintf(fp,
-			"  statistics: RA(out/in/inconsistent): "
-			LONGLONG "/" LONGLONG "/" LONGLONG ", ",
-			(unsigned long long)rai->raoutput,
-			(unsigned long long)rai->rainput,
-			(unsigned long long)rai->rainconsistent);
-		fprintf(fp, "RS(input): " LONGLONG "\n",
-			(unsigned long long)rai->rsinput);
+		fprintf(fp, "  statistics: RA(out/in/inconsistent): "
+		    "%llu/%llu/%llu, ",
+		    (unsigned long long)rai->raoutput,
+		    (unsigned long long)rai->rainput,
+		    (unsigned long long)rai->rainconsistent);
+		fprintf(fp, "RS(input): %llu\n",
+		    (unsigned long long)rai->rsinput);
 
 		/* interface information */
 		if (rai->advlinkopt)
 			fprintf(fp, "  Link-layer address: %s\n",
-				ether_str(rai->sdl));
+			    ether_str(rai->sdl));
 		fprintf(fp, "  MTU: %d\n", rai->phymtu);
 
 		/* Router configuration variables */
-		fprintf(fp,
-			"  DefaultLifetime: %d, MaxAdvInterval: %d, "
-			"MinAdvInterval: %d\n",
-			rai->lifetime, rai->maxinterval, rai->mininterval);
-		fprintf(fp, "  Flags: %s%s%s MTU: %d\n",
-			rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
-#ifdef MIP6
-			rai->haflg ? "H" :
-#endif
-			"", rai->linkmtu);
+		fprintf(fp, "  DefaultLifetime: %d, MaxAdvInterval: %d, "
+		    "MinAdvInterval: %d\n", rai->lifetime, rai->maxinterval,
+		    rai->mininterval);
+		fprintf(fp, "  Flags: %s%s%s, ",
+		    rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
+		    "");
+		fprintf(fp, "Preference: %s, ",
+			rtpref_str[(rai->rtpref >> 3) & 0xff]);
+		fprintf(fp, "MTU: %d\n", rai->linkmtu);
 		fprintf(fp, "  ReachableTime: %d, RetransTimer: %d, "
 			"CurHopLimit: %d\n", rai->reachabletime,
 			rai->retranstimer, rai->hoplimit);
-#ifdef MIP6
-		fprintf(fp, "  HAPreference: %d, HALifetime: %d\n",
-			rai->hapref, rai->hatime);
-#endif 
-
 		if (rai->clockskew)
 			fprintf(fp, "  Clock skew: %ldsec\n",
-				rai->clockskew);  
+			    rai->clockskew);
 		for (first = 1, pfx = rai->prefix.next; pfx != &rai->prefix;
 		     pfx = pfx->next) {
 			if (first) {
@@ -168,9 +157,8 @@ if_dump()
 				first = 0;
 			}
 			fprintf(fp, "    %s/%d(",
-				inet_ntop(AF_INET6, &pfx->prefix,
-					  prefixbuf, sizeof(prefixbuf)),
-				pfx->prefixlen);
+			    inet_ntop(AF_INET6, &pfx->prefix, prefixbuf,
+			    sizeof(prefixbuf)), pfx->prefixlen);
 			switch (pfx->origin) {
 			case PREFIX_FROM_KERNEL:
 				fprintf(fp, "KERNEL, ");
@@ -207,9 +195,6 @@ if_dump()
 			fprintf(fp, "flags: %s%s%s",
 				pfx->onlinkflg ? "L" : "",
 				pfx->autoconfflg ? "A" : "",
-#ifdef MIP6
-				pfx->routeraddr ? "R" :
-#endif
 				"");
 			fprintf(fp, ")\n");
 		}
