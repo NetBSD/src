@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.10 1997/08/27 11:23:32 bouyer Exp $ */
+/* $NetBSD: oak.c,v 1.11 1997/10/14 22:43:28 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -50,7 +50,6 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-/*#include <machine/bootconfig.h>*/
 
 /* SCSI bus includes */
 
@@ -64,8 +63,8 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/ncr5380reg.h>
-#include <arm32/podulebus/ncr5380var.h>
+#include <arm32/dev/ncr5380reg.h>
+#include <arm32/dev/ncr5380var.h>
 #include <arm32/podulebus/podules.h>
 
 /****************************************************************************/
@@ -89,7 +88,7 @@ struct oak_softc {
 /* Function and data prototypes *********************************************/
 /****************************************************************************/
 
-int  oakprobe 	__P((struct device *, void *, void *));
+int  oakprobe 	__P((struct device *, struct cfdata *, void *));
 void oakattach 	__P((struct device *, struct device *, void *));
 void oakminphys __P((struct buf *));
 
@@ -113,9 +112,9 @@ struct scsipi_device oak_device = {
 };
 
 int
-oakprobe(parent, match, aux)
+oakprobe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *) aux;
