@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.3 2002/06/18 08:31:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -52,3 +52,4 @@ struct mdproc {
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_COMPAT	0x0002	/* x86 compatibility process */
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
+#define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */

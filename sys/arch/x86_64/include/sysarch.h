@@ -1,9 +1,5 @@
-/*	$NetBSD: sysarch.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2 2002/06/18 08:31:43 fvdl Exp $	*/
 
-#if 0
-/*
- * XXXfvdl todo.
- */
 #ifndef _X86_64_SYSARCH_H_
 #define _X86_64_SYSARCH_H_
 
@@ -19,6 +15,13 @@
 #define	X86_64_PMC_INFO	8
 #define	X86_64_PMC_STARTSTOP 9
 #define	X86_64_PMC_READ	10
+#define X86_64_GET_MTRR   11
+#define X86_64_SET_MTRR   12
+
+/*
+ * XXXfvdl todo.
+ */
+#if 0
 
 struct x86_64_get_ldt_args {
 	int start;
@@ -77,6 +80,19 @@ struct x86_64_pmc_read_args {
 	u_int64_t time;
 };
 
+#endif /* todo */
+
+struct x86_64_get_mtrr_args {
+	struct mtrr *mtrrp;
+	int *n;
+};
+
+struct x86_64_set_mtrr_args {
+	struct mtrr *mtrrp;
+	int *n;
+};
+
+
 #ifndef _KERNEL
 int x86_64_get_ldt __P((int, union descriptor *, int));
 int x86_64_set_ldt __P((int, union descriptor *, int));
@@ -86,8 +102,9 @@ int x86_64_set_ioperm __P((u_long *));
 int x86_64_pmc_info __P((struct x86_64_pmc_info_args *));
 int x86_64_pmc_startstop __P((struct x86_64_pmc_startstop_args *));
 int x86_64_pmc_read __P((struct x86_64_pmc_read_args *));
+int x86_64_set_mtrr __P((struct mtrr *, int *));
+int x86_64_get_mtrr __P((struct mtrr *, int *));
 int sysarch __P((int, void *));
 #endif
 
 #endif /* !_X86_64_SYSARCH_H_ */
-#endif /* 0 */
