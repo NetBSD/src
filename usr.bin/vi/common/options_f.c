@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)options_f.c	10.23 (Berkeley) 5/4/96";
+static const char sccsid[] = "@(#)options_f.c	10.25 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>

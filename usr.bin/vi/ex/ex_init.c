@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_init.c	10.22 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)ex_init.c	10.26 (Berkeley) 8/12/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,6 @@ ex_screen_copy(orig, sp)
 	CIRCLEQ_INIT(&nexp->tq);
 	TAILQ_INIT(&nexp->tagfq);
 	LIST_INIT(&nexp->cscq);
-	TAILQ_INIT(&nexp->cdq);
 
 	if (orig == NULL) {
 	} else {
@@ -106,9 +105,6 @@ ex_screen_end(sp)
 	if (ex_tag_free(sp))
 		rval = 1;
 
-	if (ex_cdfree(sp))
-		rval = 1;
-
 	/* Free private memory. */
 	free(exp);
 	sp->ex_private = NULL;
@@ -130,8 +126,6 @@ ex_optchange(sp, offset, str, valp)
 	u_long *valp;
 {
 	switch (offset) {
-	case O_CDPATH:
-		return (ex_cdalloc(sp, str));
 	case O_TAGS:
 		return (ex_tagf_alloc(sp, str));
 	}
@@ -186,11 +180,17 @@ ex_exrc(sp)
 		break;
 	}
 
+	/* Run the commands. */
+	if (EXCMD_RUNNING(sp->gp))
+		(void)ex_cmd(sp);
+	if (F_ISSET(sp, SC_EXIT | SC_EXIT_FORCE))
+		return (0);
+
 	if ((p = getenv("NEXINIT")) != NULL) {
-		if (ex_run_str(sp, "NEXINIT", p, strlen(p), 1, 1))
+		if (ex_run_str(sp, "NEXINIT", p, strlen(p), 1, 0))
 			return (1);
 	} else if ((p = getenv("EXINIT")) != NULL) {
-		if (ex_run_str(sp, "EXINIT", p, strlen(p), 1, 1))
+		if (ex_run_str(sp, "EXINIT", p, strlen(p), 1, 0))
 			return (1);
 	} else if ((p = getenv("HOME")) != NULL && *p) {
 		(void)snprintf(path, sizeof(path), "%s/%s", p, _PATH_NEXRC);
@@ -211,12 +211,13 @@ ex_exrc(sp)
 		}
 	}
 
-	/* Run the commands, they may set the exrc edit option. */
+	/* Run the commands. */
 	if (EXCMD_RUNNING(sp->gp))
 		(void)ex_cmd(sp);
 	if (F_ISSET(sp, SC_EXIT | SC_EXIT_FORCE))
 		return (0);
 
+	/* Previous commands may have set the exrc option. */
 	if (O_ISSET(sp, O_EXRC)) {
 		switch (exrc_isok(sp, &lsb, _PATH_NEXRC, 0, 0)) {
 		case NOEXIST:
@@ -290,11 +291,9 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
 
 	if (nocopy)
 		ecp->cp = str;
-	else {
-		/* See ex.h for a discussion of SEARCH_TERMINATION. */
+	else
 		if ((ecp->cp = v_strdup(sp, str, len)) == NULL)
 			return (1);
-	}
 	ecp->clen = len;
 
 	if (name == NULL)
