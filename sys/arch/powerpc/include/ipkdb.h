@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb.h,v 1.1 1996/10/16 19:33:04 ws Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.2 1997/04/16 22:57:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,15 +30,22 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* register array */
+
+/*
+ * Register array.
+ * This is an initial part of the struct trapframe.
+ */
 #define	FIX	0
-#define	LR	32
-#define	CR	33
-#define	CTR	34
-#define	XER	35
-#define	PC	36
-#define	MSR	37
-#define	NREG	38
+#define	NFIX	32
+#define	FLOAT	32
+#define	NFLOAT	64	/* Floating regs are double the size of fix regs */
+#define	PC	96
+#define	PS	97
+#define	CR	98
+#define	LR	99
+#define	CTR	100
+#define	XER	101
+#define	NREG	105	/* XXX tm-rs6000.h reserves extra space in reg file */
 
 extern int ipkdbregs[NREG];
 
