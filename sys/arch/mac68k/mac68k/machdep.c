@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 1995/10/02 09:38:38 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 1995/10/04 03:38:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,6 +125,7 @@
 
 #include "via.h"
 #include "macrom.h"
+#include "ether.h"
 
 /* The following is used externally (sysctl_hw) */
 char    machine[] = "mac68k";	/* cpu "architecture" */
