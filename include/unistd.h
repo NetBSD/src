@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.12 1993/10/14 23:15:26 jtc Exp $
+ *	$Id: unistd.h,v 1.13 1993/12/02 09:50:34 mycroft Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -135,8 +135,8 @@ char	*mktemp __P((char *));
 int	 nfssvc __P((int));
 int	 nice __P((int));
 void	 psignal __P((u_int, const char *));
-extern char *sys_siglist[];
-extern char *sys_signame[];
+extern const char *const sys_siglist[];
+extern const char *const sys_signame[];
 int	 profil __P((char *, int, int, int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
