@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.76 2004/02/27 23:06:02 enami Exp $	*/
+/*	$NetBSD: kdump.c,v 1.77 2004/03/07 17:20:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.76 2004/02/27 23:06:02 enami Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.77 2004/03/07 17:20:53 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ hexdump_buf(vdp, datalen, word_sz)
 	int word_sz;
 {
 	const char hex[] = "0123456789abcdef";
-	char chars[16];
+	char chars[16], prev[16];
 	char bytes[16 * 3 + 4];
 	const unsigned char *dp = vdp;
 	const unsigned char *datalim = dp + datalen;
@@ -636,6 +636,7 @@ hexdump_buf(vdp, datalen, word_sz)
 	int gdelim = 3;			/* gap between blocks */
 	int bsize = 2;			/* increment for each byte */
 	int width;
+	int dupl = 0;
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 	int bswap = word_sz - 1;
 #else
@@ -661,11 +662,35 @@ hexdump_buf(vdp, datalen, word_sz)
 	for (off = 0; dp < datalim; off += l) {
 		memset(bytes, ' ', sizeof bytes);
 		line_end = dp + 16;
-		if (line_end > datalim)
+		if (line_end >= datalim) {
 			line_end = datalim;
+			dupl |= 1;	/* need to print */
+		} else {
+			if (dupl == 0 || memcmp(dp, prev, sizeof chars))
+				dupl |= 1;
+		}
+
+		if (!(dupl & 1)) {
+			/* This is a duplicate of the line above, count 'em */
+			dupl += 2;
+			dp = line_end;
+			continue;
+		}
+
+		if (dupl > 3) {
+			/* previous line as a duplicate */
+			if (dupl == 5)
+				/* Only one duplicate, print line */
+				printf("\t%-5.3x%.*s%.*s\n",
+					off - l, width, bytes, l, chars);
+			else
+				printf("\t%.*s\n",
+					snprintf(NULL, 0, "%3x", off), "*****");
+		}
 
 		for (l = 0, bp = bytes, cp = chars; dp < line_end; l++) {
 			c = *dp++;
+			prev[l] = c;
 			if ((l & divmask) == 0)
 				bp += gdelim;
 			bp[(l ^ bswap) * bsize] = hex[c >> 4];
@@ -674,6 +699,7 @@ hexdump_buf(vdp, datalen, word_sz)
 		}
 
 		printf("\t%-5.3x%.*s%.*s\n", off, width, bytes, l, chars);
+		dupl = 2;
 	}
 }
 
