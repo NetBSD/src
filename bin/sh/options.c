@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.11 1995/03/21 09:09:51 cgd Exp $	*/
+/*	$NetBSD: options.c,v 1.12 1995/03/25 23:45:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.11 1995/03/21 09:09:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.12 1995/03/25 23:45:24 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,12 +154,15 @@ options(cmdline)
 			val = 1;
                         if (p[0] == '\0' || p[0] == '-' && p[1] == '\0') {
                                 if (!cmdline) {
+#if 0	/* No other bourne shell does this! */
                                         /* "-" means turn off -x and -v */
                                         if (p[0] == '\0')
                                                 xflag = vflag = 0;
                                         /* "--" means reset params */
-                                        else if (*argptr == NULL)
-                                                setparam(argptr);
+                                        else
+#endif
+						if (*argptr == NULL)
+							setparam(argptr);
                                 }
 				break;	  /* "-" or  "--" terminates options */
 			}
