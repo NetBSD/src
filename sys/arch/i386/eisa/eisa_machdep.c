@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.2 1996/04/09 23:00:27 cgd Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.1 1996/04/09 23:00:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,32 +31,95 @@
  */
 
 /*
- * Machine-specific definitions for EISA autoconfiguration.
+ * Machine-specific functions for EISA autoconfiguration.
  */
 
-/*
- * i386-specific EISA definitions.
- * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- */
-#define	EISA_ID			"EISA"
-#define	EISA_ID_LEN		(sizeof(EISA_ID) - 1)
-#define	EISA_ID_PADDR		0xfffd9
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/device.h>
 
-/*
- * Types provided to machine-independent EISA code.
- */
-typedef void *eisa_chipset_tag_t;
-typedef int eisa_intr_handle_t;
+#include <i386/isa/icu.h>
+#include <dev/isa/isavar.h>
+#include <dev/eisa/eisavar.h>
 
-/*
- * Functions provided to machine-independent EISA code.
- */
-void		eisa_attach_hook __P((struct device *, struct device *,
-		    struct eisabus_attach_args *));
-int		eisa_maxslots __P((eisa_chipset_tag_t));
-int		eisa_intr_map __P((eisa_chipset_tag_t, u_int,
-		    eisa_intr_handle_t *));
-const char	*eisa_intr_string __P((eisa_chipset_tag_t, eisa_intr_handle_t));
-void		*eisa_intr_establish __P((eisa_chipset_tag_t,
-		    eisa_intr_handle_t, int, int, int (*)(void *), void *));
-void		eisa_intr_disestablish __P((eisa_chipset_tag_t, void *));
+void
+eisa_attach_hook(parent, self, eba)
+	struct device *parent, *self;
+	struct eisabus_attach_args *eba;
+{
+
+	/* Nothing to do */
+}
+
+int
+eisa_maxslots(ec)
+	eisa_chipset_tag_t ec;
+{
+
+	/*
+	 * Always try 16 slots.
+	 */
+	return (16);
+}
+
+int
+eisa_intr_map(ec, irq, ihp)
+	eisa_chipset_tag_t ec;
+	u_int irq;
+	eisa_intr_handle_t *ihp;
+{
+
+	if (irq >= ICU_LEN) {
+		printf("eisa_intr_map: bad IRQ %d\n", irq);
+		*ihp = -1;
+		return 1;
+	}
+	if (irq == 2) {
+		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		irq = 9;
+	}
+
+	*ihp = irq;
+	return 0;
+}
+
+const char *
+eisa_intr_string(ec, ih)
+	eisa_chipset_tag_t ec;
+	eisa_intr_handle_t ih;
+{
+	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+
+	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
+
+	sprintf(irqstr, "irq %d", ih);
+	return (irqstr);
+	
+}
+
+void *
+eisa_intr_establish(ec, ih, type, level, func, arg)
+	eisa_chipset_tag_t ec;
+	eisa_intr_handle_t ih;
+	int type, level, (*func) __P((void *));
+	void *arg;
+{
+
+	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
+
+	return isa_intr_establish(ih, type, level, func, arg);
+}
+
+void
+eisa_intr_disestablish(ec, cookie)
+	eisa_chipset_tag_t ec;
+	void *cookie;
+{
+
+	return isa_intr_disestablish(cookie);
+}
