@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207 2001/01/05 07:39:10 garbled Exp $
+# $NetBSD: mi,v 1.208 2001/01/05 15:47:32 garbled Exp $
 .
 ./altroot
 ./bin
@@ -721,6 +721,7 @@
 ./usr/sbin/sup
 ./usr/sbin/supfilesrv
 ./usr/sbin/supscan
+./usr/sbin/sushi
 ./usr/sbin/syslogd
 ./usr/sbin/tbrconfig
 ./usr/sbin/tcpdchk
