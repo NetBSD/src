@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.2 2001/02/28 18:15:45 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.1 2001/03/05 23:06:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

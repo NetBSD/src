@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.8 2001/03/04 08:25:38 matt Exp $
+#	$NetBSD: files.hpcarm,v 1.9 2001/03/05 23:06:17 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -46,7 +46,6 @@ file	arch/hpcarm/hpcarm/setcpsr.S
 file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
-file	arch/hpcarm/hpcarm/undefined.c
 file	arch/hpcarm/hpcarm/vm_machdep.c
 
 #
