@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.20 2000/03/13 23:52:34 soren Exp $ */
+/*	$NetBSD: ka43.c,v 1.21 2000/04/22 18:11:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -82,6 +82,8 @@ struct	cpu_dep ka43_calls = {
         ka43_halt,
         ka43_reboot,
         ka43_clrf,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 /*
