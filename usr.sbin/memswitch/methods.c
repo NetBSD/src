@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.3 1999/06/28 08:49:15 minoura Exp $	*/
+/*	$NetBSD: methods.c,v 1.4 2001/02/21 13:09:18 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -390,6 +390,7 @@ parse_bootdev (prop, value)
 {
 	const char *p = value;
 	int v;
+	char expr_scsi[32];
 
 	while (*p == ' ' || *p == '\t') p++;
 
@@ -417,6 +418,24 @@ parse_bootdev (prop, value)
 		}
 		v *= 0x0100;
 		v += 0x9070;
+	} else if (strncasecmp ("INSCSI", p, 6) == 0 ||
+		   strncasecmp ("EXSCSI", p, 6) == 0) {
+		int isin = strncasecmp ("EXSCSI", p, 6);
+
+		p += 6;
+		v = atoi_ (&p);
+		if (p == 0 || v < 0 || v > 7) {
+			warnx ("%s: Invalid value", value);
+			return -1;
+		}
+
+		/* change boot.romaddr */
+		sprintf(expr_scsi, "boot.romaddr=0x%06x",
+			(isin ? 0xfc0000 : 0xea0020) + v * 4);
+		modify_single(expr_scsi);
+
+		/* boot.device again */
+		v = 0xa000;
 	} else {
 		warnx ("%s: Invalid value", value);
 		return -1;
@@ -713,12 +732,13 @@ print_serial (prop, str)
 	char *str;
 {
 	unsigned int v;
-	char *baud, bit, parity, *stop, flow;
-	char *bauds[] = {"75", "150", "300", "600", "1200",
-			 "2400", "4800", "9600", "17361"};
+	const char *baud, *stop;
+	char bit, parity, flow;
+	const char *bauds[] = {"75", "150", "300", "600", "1200",
+			       "2400", "4800", "9600", "17361"};
 	const char bits[] = "5678";
 	const char parities[] = "noen";
-	char *stops[] = {"2", "1", "1.5", "2"};
+	const char *stops[] = {"2", "1", "1.5", "2"};
 	const char flows[] = "-s";
 
 	if (prop->modified)

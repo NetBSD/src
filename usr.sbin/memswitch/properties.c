@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.c,v 1.2 1999/06/28 08:49:15 minoura Exp $	*/
+/*	$NetBSD: properties.c,v 1.3 2001/02/21 13:09:18 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@ struct property properties[] = {
 		fill_ushort, flush_ushort,
 		" Boot device.\n"
 		" STD for standard, HDn for the nth harddisk,  FDn for the nth floppy drive,\n"
-		" ROM for ROM, RAM for RAM.\n"
+		" ROM for the ROM firmware, RAM for the non-volatile SRAM,\n"
+		" INSCSIn for the SCSI device ID n which is attached to the built-in adaptor,\n"
+		" EXSCSIn for the SCSI device ID n which is attached to the external adaptor.\n"
 	},
 	{
 		"boot", "ramaddr",
