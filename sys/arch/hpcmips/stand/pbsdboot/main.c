@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/12/08 05:35:30 jun Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/12/08 07:34:58 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -118,6 +118,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R300"), BIFB_D2_M2L_0,
 		640, 240, 256, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_300 },
+	{ TEXT("MobileGearII for DoCoMo"), BIFB_D2_M2L_0,
+		640, 240, 256, 0xa000000,
+		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_FORDOCOMO },
 	{ TEXT("MobileGearII MC-R320"), BIFB_D2_M2L_0,
 		640, 240, 160, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_320 },
