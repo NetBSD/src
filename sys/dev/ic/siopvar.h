@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.9 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.10 2000/10/06 16:39:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -55,12 +55,12 @@ struct siop_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	void (*sc_reset) __P((struct siop_softc*)); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
-	bus_dmamap_t  sc_sheddma;	/* DMA map for sched and resel script */
+	bus_dmamap_t  sc_scheddma;	/* DMA map for sched and resel script */
 	u_int32_t *sc_script;		/* script location in memory */
-	u_int32_t *sc_shed;		/* script scheduler location in mem */
+	u_int32_t *sc_sched;		/* script scheduler location in mem */
 	u_int32_t *sc_resel;		/* reselect script location in mem */
-	int sc_nshedslots;		/* number of scheduler slots */
-	int sc_currshedslot;		/* current scheduler slot */
+	int sc_nschedslots;		/* number of scheduler slots */
+	int sc_currschedslot;		/* current scheduler slot */
 	int sc_nreselslots;		/* number of reselect slots */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */

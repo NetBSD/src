@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.28 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.29 2000/10/06 16:39:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -122,13 +122,13 @@ siop_table_sync(siop_cmd, ops)
 	    sizeof(struct siop_xfer), ops);
 }
 
-static __inline__ void siop_shed_sync __P((struct siop_softc *, int));
+static __inline__ void siop_sched_sync __P((struct siop_softc *, int));
 static __inline__ void
-siop_shed_sync(sc, ops)
+siop_sched_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, 0, 2*NBPG, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, 0, 2*NBPG, ops);
 }
 
 static __inline__ void siop_resel_sync __P((struct siop_softc *, int));
@@ -137,7 +137,7 @@ siop_resel_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, NBPG, NBPG, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, NBPG, NBPG, ops);
 }
 
 void
@@ -192,35 +192,35 @@ siop_attach(sc)
 		return;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, 2 * NBPG,
-	    (caddr_t *)&sc->sc_shed, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (caddr_t *)&sc->sc_sched, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map scheduler DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_create(sc->sc_dmat, 2 * NBPG, 1,
-	    2 * NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_sheddma);
+	    2 * NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scheddma);
 	if (error) {
 		printf("%s: unable to create scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_sheddma, sc->sc_shed,
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_scheddma, sc->sc_sched,
 	    2 * NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	sc->sc_resel = &sc->sc_shed[NBPG / sizeof(int32_t)];
+	sc->sc_resel = &sc->sc_sched[NBPG / sizeof(int32_t)];
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
 	/* compute number of scheduler slots */
-	sc->sc_nshedslots = (
+	sc->sc_nschedslots = (
 	    NBPG /* memory size allocated for scheduler */
 	    - sizeof(endslot_script) /* memory needed at end of scheduler */
 	    ) / (sizeof(slot_script) - 8);
-	sc->sc_currshedslot = 0;
+	sc->sc_currschedslot = 0;
 	/* compute number of reselect slots */
 	sc->sc_nreselslots = (
 	    NBPG /* memory size allocated for reselect script */
@@ -230,7 +230,7 @@ siop_attach(sc)
 	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d "
 	    "nresel %d\n",
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
-	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script, sc->sc_nshedslots,
+	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script, sc->sc_nschedslots,
 	    sc->sc_nreselslots);
 #endif
 
@@ -295,12 +295,12 @@ siop_reset(sc)
 		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh, 0,
 		    siop_script, sizeof(siop_script) / sizeof(siop_script[0]));
 		for (j = 0; j <
-		    (sizeof(E_script_abs_shed_Used) /
-		    sizeof(E_script_abs_shed_Used[0]));
+		    (sizeof(E_script_abs_sched_Used) /
+		    sizeof(E_script_abs_sched_Used[0]));
 		    j++) {
 			bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
-			    E_script_abs_shed_Used[j] * 4,
-			    sc->sc_sheddma->dm_segs[0].ds_addr);
+			    E_script_abs_sched_Used[j] * 4,
+			    sc->sc_scheddma->dm_segs[0].ds_addr);
 		}
 		for (j = 0; j <
 		    (sizeof(E_abs_find_dsa_Used) /
@@ -308,7 +308,7 @@ siop_reset(sc)
 		    j++) {
 			bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
 			    E_abs_find_dsa_Used[j] * 4,
-			    sc->sc_sheddma->dm_segs[0].ds_addr + NBPG);
+			    sc->sc_scheddma->dm_segs[0].ds_addr + NBPG);
 		}
 	} else {
 		for (j = 0;
@@ -316,24 +316,24 @@ siop_reset(sc)
 			sc->sc_script[j] = htole32(siop_script[j]);
 		}
 		for (j = 0; j <
-		    (sizeof(E_script_abs_shed_Used) /
-		    sizeof(E_script_abs_shed_Used[0]));
+		    (sizeof(E_script_abs_sched_Used) /
+		    sizeof(E_script_abs_sched_Used[0]));
 		    j++) {
-			sc->sc_script[E_script_abs_shed_Used[j]] =
-			    htole32(sc->sc_sheddma->dm_segs[0].ds_addr);
+			sc->sc_script[E_script_abs_sched_Used[j]] =
+			    htole32(sc->sc_scheddma->dm_segs[0].ds_addr);
 		}
 		for (j = 0; j <
 		    (sizeof(E_abs_find_dsa_Used) /
 		    sizeof(E_abs_find_dsa_Used[0]));
 		    j++) {
 			sc->sc_script[E_abs_find_dsa_Used[j]] =
-			    htole32(sc->sc_sheddma->dm_segs[0].ds_addr + NBPG);
+			    htole32(sc->sc_scheddma->dm_segs[0].ds_addr + NBPG);
 		}
 	}
 	/* copy and init the scheduler slots script */
-	for (i = 0; i < sc->sc_nshedslots; i++) {
-		scr = &sc->sc_shed[(Ent_nextslot / 4) * i];
-		physaddr = sc->sc_sheddma->dm_segs[0].ds_addr +
+	for (i = 0; i < sc->sc_nschedslots; i++) {
+		scr = &sc->sc_sched[(Ent_nextslot / 4) * i];
+		physaddr = sc->sc_scheddma->dm_segs[0].ds_addr +
 		    Ent_nextslot * i;
 		for (j = 0; j < (sizeof(slot_script) / sizeof(slot_script[0]));
 		    j++) {
@@ -345,7 +345,7 @@ siop_reset(sc)
 		 */
 		scr[Ent_slotdata/4 + 1] = scr[Ent_slot/4 + 1];
 		scr[E_slot_nextp_Used[0]] = htole32(physaddr + Ent_slot + 4);
-		scr[E_slot_shed_addrsrc_Used[0]] = htole32(physaddr +
+		scr[E_slot_sched_addrsrc_Used[0]] = htole32(physaddr +
 		    Ent_slotdata + 4);
 		/* JUMP selected, in main script */
 		scr[E_slot_abs_selected_Used[0]] =
@@ -355,7 +355,7 @@ siop_reset(sc)
 		   htole32(sc->sc_scriptaddr + Ent_reselect);
 	}
 	/* Now the final JUMP */
-	scr = &sc->sc_shed[(Ent_nextslot / 4) * sc->sc_nshedslots];
+	scr = &sc->sc_sched[(Ent_nextslot / 4) * sc->sc_nschedslots];
 	for (j = 0; j < (sizeof(endslot_script) / sizeof(endslot_script[0]));
 	    j++) {
 		scr[j] = htole32(endslot_script[j]);
@@ -387,7 +387,7 @@ siop_reset(sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
-	siop_shed_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	siop_sched_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
 	    sc->sc_scriptaddr + Ent_reselect);
 }
@@ -947,12 +947,12 @@ scintr:
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			}
 			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-			    sc->sc_sheddma->dm_segs[0].ds_addr);
+			    sc->sc_scheddma->dm_segs[0].ds_addr);
 			return 1;
 		case A_int_resfail:
 			printf("reselect failed\n");
 			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-			    sc->sc_sheddma->dm_segs[0].ds_addr);
+			    sc->sc_scheddma->dm_segs[0].ds_addr);
 			return  1;
 		case A_int_done:
 			if (xs == NULL) {
@@ -961,7 +961,7 @@ scintr:
 				siop_cmd->status = CMDST_FREE;
 				bus_space_write_4(sc->sc_rt, sc->sc_rh,
 				    SIOP_DSP,
-				    sc->sc_sheddma->dm_segs[0].ds_addr);
+				    sc->sc_scheddma->dm_segs[0].ds_addr);
 				siop_start(sc);
 				return 1;
 			}
@@ -1021,7 +1021,7 @@ check_sense:
 	return 1;
 end:
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    sc->sc_sheddma->dm_segs[0].ds_addr);
+	    sc->sc_scheddma->dm_segs[0].ds_addr);
 	lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
 	siop_scsicmd_end(siop_cmd);
 	if (siop_cmd->status == CMDST_FREE) {
@@ -1340,7 +1340,7 @@ siop_start(sc)
 	/*
 	 * first make sure to read valid data
 	 */
-	siop_shed_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	siop_sched_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * The queue management here is a bit tricky: the script always looks
@@ -1353,15 +1353,15 @@ siop_start(sc)
 	 * but using only 53c720 features this can be "interesting".
 	 * A mid-way solution could be to implement 2 queues and swap orders.
 	 */
-	slot = sc->sc_currshedslot;
-	scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
+	slot = sc->sc_currschedslot;
+	scr = &sc->sc_sched[(Ent_nextslot / 4) * slot];
 	/*
 	 * if relative addr of first jump is not 0 the slot is free. As this is 
 	 * the last used slot, all previous slots are free, we can restart
 	 * from 0.
 	 */
 	if (scr[Ent_slot / 4 + 1] != 0) {
-		slot = sc->sc_currshedslot = 0;
+		slot = sc->sc_currschedslot = 0;
 	} else {
 		slot++;
 	}
@@ -1395,8 +1395,8 @@ siop_start(sc)
 				goto end; /* no free slot */
 			}
 			/* find a free scheduler slot and load it */
-			for (; slot < sc->sc_nshedslots; slot++) {
-				scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
+			for (; slot < sc->sc_nschedslots; slot++) {
+				scr = &sc->sc_sched[(Ent_nextslot / 4) * slot];
 				/*
 				 * if relative addr of first jump is 0 the
 				 * slot isn't free
@@ -1480,10 +1480,10 @@ siop_start(sc)
 				break;
 			}
 			/* no more free slot, no need to continue */
-			if (slot == sc->sc_nshedslots) {
+			if (slot == sc->sc_nschedslots) {
 				goto end;
 			}
-			sc->sc_currshedslot = slot;
+			sc->sc_currschedslot = slot;
 		}
 	}
 end:
@@ -1491,7 +1491,7 @@ end:
 	if (newcmd == 0)
 		return;
 	/* make sure SCRIPT processor will read valid data */
-	siop_shed_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	siop_sched_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* Signal script it has some work to do */
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_SIGP);
 	/* and wait for IRQ */
@@ -1532,7 +1532,7 @@ siop_dump_script(sc)
 	struct siop_softc *sc;
 {
 	int i;
-	siop_shed_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	siop_sched_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	for (i = 0; i < NBPG / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
 		    le32toh(sc->sc_script[i]), le32toh(sc->sc_script[i+1]));
