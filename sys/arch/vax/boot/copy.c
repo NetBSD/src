@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.4 1997/02/12 18:00:42 ragge Exp $ */
+/*	$NetBSD: copy.c,v 1.4.8.1 1997/11/12 01:36:58 mellon Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -93,7 +93,7 @@ Xmain()
 int 
 fill_buffer (void)
 {
-	char 	devname[64];
+	char 	devname[64], sparname[64];
 	int	numblocks;
 	int	blocksize = 512;
 	int	bpv = 0;		/* blocks per volume */
@@ -163,7 +163,8 @@ again:
 		gets (line);
 		if (*line == 'g' || *line == 'G') {
 			printf ("Reading ... ");
-			if (devopen (&file, devname, &filename)) {
+			bcopy(devname, sparname, 64);
+			if (devopen (&file, sparname, &filename)) {
 				printf ("cannot open unit %s.\n", devname);
 				goto again;
 			}
