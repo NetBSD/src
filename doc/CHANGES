@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.78 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.79 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -247,3 +247,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	texinfo(1): upgraded to 4.3 [wiz 20030117]
 	cpio(1): removed GNU cpio (replaced by pax frontend) [wiz 20030118]
 	tar(1): removed GNU tar (replaced by pax frontend) [wiz 20030118]
+	semaphores: Added p1003.1b semaphores from freebsd [christos 20030120]
