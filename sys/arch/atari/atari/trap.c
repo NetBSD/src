@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1996/04/29 20:55:44 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 1996/05/15 07:28:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,10 @@
 #include <machine/pte.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
+#endif
+
+#ifdef FPU_EMULATE
+#include <m68k/fpe/fpu_emulate.h>
 #endif
 
 #ifdef COMPAT_SUNOS
