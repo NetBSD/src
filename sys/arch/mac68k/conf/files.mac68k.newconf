@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.13 1994/07/09 06:27:53 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.14 1994/07/21 01:00:58 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -16,13 +16,14 @@ file	arch/mac68k/dev/ser.c		ser needs-count
 device	adb at mainbus
 file	arch/mac68k/dev/adbsys.c	adb
 
-file	arch/mac68k/dev/asc.c		# this should be a real device...
+device	asc at mainbus
+file	arch/mac68k/dev/asc.c		asc
 
 device	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
-file	arch/mac68k/dev/grf_gb.c		grf
+file	arch/mac68k/dev/grf_gb.c	grf
 device	ite at mainbus
-file	arch/mac68k/dev/ite.c			ite needs-count
+file	arch/mac68k/dev/ite.c		ite needs-count
 
 device	ae at nubus: ifnet, ether
 file	arch/mac68k/dev/if_ae.c		ae needs-count
