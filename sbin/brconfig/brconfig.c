@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.1 2001/08/17 21:42:11 thorpej Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.2 2002/11/06 05:26:54 enami Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -407,7 +407,7 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 		bifc.ifbic_len = len;
 		bifc.ifbic_buf = inbuf = realloc(inbuf, len);
 		if (inbuf == NULL)
-			err(1, "unabel to allocate interface buffer");
+			err(1, "unable to allocate interface buffer");
 		if (do_cmd(sock, bridge, BRDGGIFS, &bifc, sizeof(bifc), 0) < 0)
 			err(1, "unable to get interface list");
 		if ((bifc.ifbic_len + sizeof(*req)) < len)
