@@ -1,5 +1,5 @@
 NOMAN=noman
-#$Header: /cvsroot/src/usr.bin/rcs/src/Attic/Makefile,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+#$Header: /cvsroot/src/usr.bin/rcs/src/Attic/Makefile,v 1.2 1993/03/22 08:15:20 cgd Exp $
 # Copyright (C) 1982, 1988, 1989 Walter Tichy
 # All rights reserved.
 #
@@ -254,3 +254,26 @@ HFILES=	rcsbase.h time.h
 
 depend:	${SOURCE} ${HFILES}
 	mkdep ${CFLAGS:S/-O//} ${.ALLSRC:M*.c}
+
+obj:
+	@cd ${.CURDIR}; \
+        here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
+        if test $$here != $$subdir ; then \
+                rm -rf obj; \
+                dest=/usr/obj/$$subdir ; \
+                echo "$$here -> $$dest"; ln -s $$dest obj; \
+                if test -d /usr/obj -a ! -d $$dest; then \
+                        mkdir -p $$dest; \
+                else \
+                        true; \
+                fi; \
+        else \
+                true ; \
+                dest=$$here/obj ; \
+                /bin/rm -f $$dest 2> /dev/null || true; \
+                echo "making $$here/obj" ; \
+                if test ! -d obj ; then \
+                        mkdir $$here/obj; \
+                fi ; \
+        fi;
+
