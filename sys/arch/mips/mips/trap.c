@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2000/09/26 18:24:45 jeffs Exp $	*/
+/*	$NetBSD: trap.c,v 1.150 2000/10/23 05:49:05 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2000/09/26 18:24:45 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2000/10/23 05:49:05 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -349,6 +349,7 @@ trap(status, cause, vaddr, opc, frame)
 	switch (type) {
 	default:
 	dopanic:
+		(void)splhigh();
 		printf("trap: %s in %s mode\n",
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
