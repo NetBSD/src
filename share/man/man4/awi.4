@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.13 2001/09/11 00:08:25 wiz Exp $
+.\"     $NetBSD: awi.4,v 1.14 2001/09/11 17:39:01 wiz Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4
@@ -10,7 +10,6 @@ AMD PCnetMobile IEEE 802.11 PCMCIA wireless network driver
 .Sh SYNOPSIS
 .Cd "awi*     at pcmcia? function ?"
 .Sh DESCRIPTION
-.Pp
 The
 .Nm
 driver supports various IEEE 802.11 wireless cards
@@ -138,17 +137,13 @@ The system was unable to obtain the lock to access shared memory.
 .It "awi0: command %d failed %x"
 The device failed to complete the request from the system.
 .El
-.Sh BUGS
-.Pp
-Doesn't create IBSS itself.
-.Pp
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr cnw 4 ,
+.Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr pcmcia 4 ,
 .Xr wi 4 ,
-.Xr cnw 4 ,
-.Xr ifmedia 4 ,
 .Xr ifconfig 8 ,
 .Xr wiconfig 8
 .Rs
@@ -170,3 +165,5 @@ Then the
 driver module completely rewritten to support cards with DS phy and
 to support adhoc mode by
 .An Atsushi Onoe Aq onoe@netbsd.org .
+.Sh BUGS
+Doesn't create IBSS itself.
