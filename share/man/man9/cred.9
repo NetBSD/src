@@ -1,4 +1,4 @@
-.\"     $NetBSD: cred.9,v 1.2 2002/10/20 10:46:57 wiz Exp $
+.\"     $NetBSD: cred.9,v 1.3 2002/10/20 11:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,12 +39,12 @@
 .Os
 .Sh NAME
 .Nm cred ,
-.Nm crfree ,
-.Nm crhold ,
 .Nm crcopy ,
-.Nm crdup ,
-.Nm crget ,
 .Nm crcvt
+.Nm crdup ,
+.Nm crfree ,
+.Nm crget ,
+.Nm crhold ,
 .Nd operations on user credentials
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/ucred.h\*[Gt]
@@ -62,8 +62,9 @@
 .Fn crhold "struct ucred *cr"
 .Sh DESCRIPTION
 A process must have the appropriate user credentials for the kernel to
-perform an operation on its behalf.  The user credentials are stored
-along with the process in the following structure:
+perform an operation on its behalf.
+The user credentials are stored along with the process in the following
+structure:
 .Pp
 .Bd -literal
 struct ucred {
@@ -89,8 +90,8 @@ and
 system calls.
 .Pp
 References to user credentials are maintained from many different data
-structures, including processes, file descriptors and vnodes.  The
-ucred member
+structures, including processes, file descriptors and vnodes.
+The ucred member
 .Em cr_ref
 reflects the number of references to the credentials.
 .Sh FUNCTIONS
@@ -101,10 +102,11 @@ The following functions operate on user credentials:
 Allocate a new credentials structure and copy the contents from
 credentials
 .Fa cr
-to the new one.  The old credentials
+to the new one.
+The old credentials
 .Fa cr
-is freed.  The reference count on the returned credentials is
-guaranteed to be one.
+are freed.
+The reference count on the returned credentials is guaranteed to be one.
 .It Fn crcvt "cr" "ucr"
 Convert from userland credentials
 .Fa ucr
@@ -114,10 +116,11 @@ to kernel credentials
 Allocate a new credentials structure and copy the contents from
 credentials
 .Fa cr
-to the new one.  The old credentials
+to the new one.
+The old credentials
 .Fa cr
-remains unchanged.  The reference count on the returned credentials is
-guaranteed to be one.
+remain unchanged.
+The reference count on the returned credentials is guaranteed to be one.
 .It Fn crfree "cr"
 Decrement the reference count on credentials
 .Fa cr .
@@ -135,4 +138,5 @@ User credentials are sometimes allocated using
 .Xr MALLOC 9
 and sometimes using the
 .Xr pool 9
-facility.  This cannot be right.
+facility.
+This cannot be right.
