@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 1998/12/28 00:50:44 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.22 1998/12/29 04:40:19 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -87,6 +87,7 @@ options 	NMBCLUSTERS=1024
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
@@ -157,6 +158,33 @@ atapibus* at wdc? channel ?
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# PCI USB controllers
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse* at ums?
+
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ?
+
+# USB Generic HID devices
+uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Generic driver
+ugen*	at uhub? port ? configuration ? interface ?
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
