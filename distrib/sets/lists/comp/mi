@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.760 2005/01/24 00:57:19 rumble Exp $
+#	$NetBSD: mi,v 1.761 2005/01/24 07:05:17 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1460,6 +1460,7 @@
 ./usr/include/ufs/mfs/mfsnode.h			comp-c-include
 ./usr/include/ufs/ufs/dinode.h			comp-c-include
 ./usr/include/ufs/ufs/dir.h			comp-c-include
+./usr/include/ufs/ufs/dirhash.h			comp-c-include		obsolete
 ./usr/include/ufs/ufs/inode.h			comp-c-include
 ./usr/include/ufs/ufs/quota.h			comp-c-include
 ./usr/include/ufs/ufs/ufs_bswap.h		comp-c-include
