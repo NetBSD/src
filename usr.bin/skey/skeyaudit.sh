@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: skeyaudit.sh,v 1.3 2000/07/07 15:19:09 mjl Exp $
+#	$NetBSD: skeyaudit.sh,v 1.4 2000/07/27 14:40:58 mjl Exp $
 #
 # This script will look thru the skeykeys file for
 # people with sequence numbers less than LOWLIMIT=12
@@ -22,6 +22,9 @@ then
  LOWLIMIT=$1
 fi
 
+if [ ! -s "${KEYDB}" ]; then
+  exit 0
+fi
 
 # an skeykeys entry looks like
 #   jsw 0076 la13079          ba20a75528de9d3a
@@ -39,7 +42,7 @@ while [ "X$1" != "X" ]; do
   SEQ=$2
   KEY=$3
   shift 3
-echo "$USER -- $SEQ -- $KEY"
+  # echo "$USER -- $SEQ -- $KEY"
   if [ $SEQ -lt $LOWLIMIT ]; then
     if [ $SEQ -lt  3 ]; then
       SUBJECT="IMPORTANT action required"
