@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.10 1993/12/23 17:05:41 cgd Exp $
+ *	$Id: disklabel.h,v 1.11 1994/01/09 20:05:38 cgd Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -184,6 +184,8 @@ struct disklabel {
 #define	DTYPE_SCSI		4		/* SCSI */
 #define	DTYPE_ESDI		5		/* ESDI interface */
 #define	DTYPE_ST506		6		/* ST506 etc. */
+#define	DTYPE_HPIB		7		/* CS/80 on HP-IB */
+#define DTYPE_HPFL		8		/* HP Fiber-link */
 #define	DTYPE_FLOPPY		10		/* floppy */
 
 /* d_subtype values: */
@@ -200,8 +202,8 @@ static char *dktypenames[] = {
 	"SCSI",
 	"ESDI",
 	"ST506",
-	"type 7",
-	"type 8",
+	"HP-IB",
+	"HP-FL",
 	"type 9",
 	"floppy",
 	0
