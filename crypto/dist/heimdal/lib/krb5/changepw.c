@@ -33,11 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: changepw.c,v 1.3 2001/02/11 14:13:12 assar Exp $");
+RCSID("$Id: changepw.c,v 1.4 2001/02/11 16:08:41 assar Exp $");
 
-static void str2data (krb5_data *d, char *fmt, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
-	
 static krb5_error_code
 get_kdc_address (krb5_context context,
 		 krb5_realm realm,
@@ -144,7 +141,7 @@ out2:
 static void
 str2data (krb5_data *d,
 	  const char *fmt,
-	  ...) __attribute__ ((format (printf, 2, 3)));
+	  ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 
 static void
 str2data (krb5_data *d,
