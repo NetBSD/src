@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.31 1996/10/13 01:38:35 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.32 1996/12/10 21:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -553,6 +553,7 @@ ascattach(asc, dmabufsize, bus_speed)
 	asc->sc_link.adapter = &asc_switch;
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
+	asc->sc_link.max_target = 7;
 
 	/*
 	 * Now try to attach all the sub-devices.
