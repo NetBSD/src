@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.6 2000/09/04 22:06:29 lukem Exp $	*/
+/*	$NetBSD: hist.c,v 1.7 2001/01/04 15:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.6 2000/09/04 22:06:29 lukem Exp $");
+__RCSID("$NetBSD: hist.c,v 1.7 2001/01/04 15:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -62,6 +62,8 @@ hist_init(EditLine *el)
 	el->el_history.fun = NULL;
 	el->el_history.ref = NULL;
 	el->el_history.buf = (char *) el_malloc(EL_BUFSIZ);
+	if (el->el_history.buf == NULL)
+		return (-1);
 	el->el_history.last = el->el_history.buf;
 	return (0);
 }

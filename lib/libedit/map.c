@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.12 2000/11/11 22:18:57 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.13 2001/01/04 15:56:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.12 2000/11/11 22:18:57 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.13 2001/01/04 15:56:32 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -911,16 +911,24 @@ map_init(EditLine *el)
 #endif
 
 	el->el_map.alt = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	if (el->el_map.alt == NULL)
+		return (-1);
 	el->el_map.key = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	if (el->el_map.key == NULL)
+		return (-1);
 	el->el_map.emacs = el_map_emacs;
 	el->el_map.vic = el_map_vi_command;
 	el->el_map.vii = el_map_vi_insert;
 	el->el_map.help = (el_bindings_t *) el_malloc(sizeof(el_bindings_t) *
 	    EL_NUM_FCNS);
+	if (el->el_map.help == NULL)
+		return (-1);
 	(void) memcpy(el->el_map.help, help__get(),
 	    sizeof(el_bindings_t) * EL_NUM_FCNS);
-	el->el_map.func = (el_func_t *) el_malloc(sizeof(el_func_t) *
+	el->el_map.func = (el_func_t *)el_malloc(sizeof(el_func_t) *
 	    EL_NUM_FCNS);
+	if (el->el_map.func == NULL)
+		return (-1);
 	memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
 	el->el_map.nfunc = EL_NUM_FCNS;
 
@@ -1384,15 +1392,19 @@ map_bind(EditLine *el, int argc, char **argv)
 protected int
 map_addfunc(EditLine *el, const char *name, const char *help, el_func_t func)
 {
+	void *p;
 	int nf = el->el_map.nfunc + 2;
 
 	if (name == NULL || help == NULL || func == NULL)
 		return (-1);
 
-	el->el_map.func = (el_func_t *)
-	    el_realloc(el->el_map.func, nf * sizeof(el_func_t));
-	el->el_map.help = (el_bindings_t *)
-	    el_realloc(el->el_map.help, nf * sizeof(el_bindings_t));
+	if ((p = el_realloc(el->el_map.func, nf * sizeof(el_func_t))) == NULL)
+		return (-1);
+	el->el_map.func = (el_func_t *) p;
+	if ((p = el_realloc(el->el_map.help, nf * sizeof(el_bindings_t)))
+	    == NULL)
+		return (-1);
+	el->el_map.help = (el_bindings_t *) p;
 
 	nf = el->el_map.nfunc;
 	el->el_map.func[nf] = func;
