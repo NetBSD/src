@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.480 2002/11/04 12:35:27 wiz Exp $
+$NetBSD: pcidevs,v 1.481 2002/11/07 20:40:28 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -557,6 +557,7 @@ vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor MYSON		0x1516	Myson-Century Technology
 vendor NDC		0x15e8	National Datacomm Corp.
 vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
@@ -1654,6 +1655,9 @@ product MYLEX EXTREMERAID_3000	0x0030	eXtremeRAID 3000
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
+
+/* Myson-Century Technology products */
+product MYSON MTD803	0x0803	MTD803 3-in-1 Fast Ethernet Controller
 
 /* National Datacomm Corp. products */
 product NDC NCP130		0x0130 NCP130 Wireless NIC
