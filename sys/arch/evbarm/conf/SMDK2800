@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.5 2003/09/13 13:30:07 chris Exp $
+#	$NetBSD: SMDK2800,v 1.6 2003/10/08 11:07:31 bouyer Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -166,6 +166,9 @@ pci0	at sspci0
 # a machine hang with some controllers.
 #pciide*		 at pci? dev ? function ? flags 0x0000
 
+# ATA bus support
+#atabus* 	at pciide? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -177,7 +180,7 @@ pci0	at sspci0
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-#wd*		at pciide? channel ? drive ? flags 0x0000	# the drives themselves
+#wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 
 # PCI SCSI Controllers and Buses
 #ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI Controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.22 2003/10/06 16:06:06 thorpej Exp $
+#	$NetBSD: IQ80321,v 1.23 2003/10/08 11:07:31 bouyer Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -169,7 +169,8 @@ pci*		at ppb? bus ?
 
 # PCI IDE/S-ATA controllers and devices
 pciide*		at pci? dev ? function ? flags 0x0000
-wd*		at pciide? channel ? drive ? flags 0x0000
+atabus* 	at pciide? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 # PCI SCSI controllers
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI

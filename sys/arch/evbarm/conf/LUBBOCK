@@ -207,7 +207,8 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # PCMCIA IDE controllers and disks
 wdc*	at pcmcia? function ?
-wd*	at wdc?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 #
 # Networking devices

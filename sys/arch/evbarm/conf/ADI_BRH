@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.9 2003/09/13 13:30:06 chris Exp $
+#	$NetBSD: ADI_BRH,v 1.10 2003/10/08 11:07:31 bouyer Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -168,7 +168,8 @@ pci*		at ppb? bus ?
 
 # PCI IDE/S-ATA controllers and devices
 pciide*		at pci? dev ? function ? flags 0x0000
-wd*		at pciide? channel ? drive ? flags 0x0000
+atabus* 	at pciide? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 # PCI SCSI controllers
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
