@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: decomp_ticket.c,v 1.2 2000/12/29 02:52:36 assar Exp $");
+RCSID("$Id: decomp_ticket.c,v 1.3 2001/09/17 12:21:42 assar Exp $");
 
 /*
  * This routine takes a ticket and pointers to the variables that

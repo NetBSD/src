@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: encrypt_ktext.c,v 1.2 2000/12/29 02:52:36 assar Exp $");
+RCSID("$Id: encrypt_ktext.c,v 1.3 2001/09/17 12:21:42 assar Exp $");
 
 void
 encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt)
