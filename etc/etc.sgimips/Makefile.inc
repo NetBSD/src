@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.9 2003/11/15 08:58:27 sekiya Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2004/11/13 10:27:14 sekiya Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC32_IP2x GENERIC32_IP3x
+KERNEL_SETS=		GENERIC32_IP12 GENERIC32_IP2x GENERIC32_IP3x
 KERNEL_SUFFIXES=	ecoff
 
 #EXTRA_KERNELS=		NETBOOT
