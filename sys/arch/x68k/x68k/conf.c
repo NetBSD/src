@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10.4.1 1997/10/14 10:20:57 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.10.4.2 1997/10/15 23:21:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -167,7 +167,7 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 
-#include "com.h"
+#include "xcom.h"
 cdev_decl(com);
 #include "zs.h"
 cdev_decl(zs);
@@ -200,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_gen_init(1,kbd),		/* 14: /dev/kbd */
 	cdev_gen_init(1,ms),		/* 15: /dev/mouse */
-	cdev_tty_init(NCOM,com),	/* 16: serial port */
+	cdev_tty_init(NXCOM,com),	/* 16: serial port */
 	cdev_gen_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */

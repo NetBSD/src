@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.10.4.2 1997/10/14 10:20:03 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.10.4.3 1997/10/15 23:21:17 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -73,9 +73,9 @@ device	zs: tty
 attach	zs at mainbus
 file	arch/x68k/dev/zs.c		zs needs-count
 
-device	com: tty
-attach	com at mainbus
-file	arch/x68k/dev/com.c		com needs-count
+device	xcom: tty
+attach	xcom at mainbus
+file	arch/x68k/dev/com.c		xcom needs-count
 
 device	par
 attach	par at mainbus
