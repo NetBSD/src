@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.57 2001/12/20 20:10:37 soren Exp $	*/
+/*	$NetBSD: mount.c,v 1.58 2002/01/30 21:40:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.57 2001/12/20 20:10:37 soren Exp $");
+__RCSID("$NetBSD: mount.c,v 1.58 2002/01/30 21:40:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,27 +94,7 @@ static const struct opt {
 	int o_silent;
 	const char *o_name;
 } optnames[] = {
-	{ MNT_ASYNC,		0,	"asynchronous" },
-	{ MNT_DEFEXPORTED,	1,	"exported to the world" },
-	{ MNT_EXKERB,		1,	"kerberos uid mapping" },
-	{ MNT_EXPORTED,		0,	"NFS exported" },
-	{ MNT_EXPORTANON,	1,	"anon uid mapping" },
-	{ MNT_EXRDONLY,		1,	"exported read-only" },
-	{ MNT_LOCAL,		0,	"local" },
-	{ MNT_NOATIME,		0,	"noatime" },
-	{ MNT_NOCOREDUMP,	0,	"nocoredump" },
-	{ MNT_NODEV,		0,	"nodev" },
-	{ MNT_NODEVMTIME,	0,	"nodevmtime" },
-	{ MNT_NOEXEC,		0,	"noexec" },
-	{ MNT_NOSUID,		0,	"nosuid" },
-	{ MNT_QUOTA,		0,	"with quotas" },
-	{ MNT_RDONLY,		0,	"read-only" },
-	{ MNT_ROOTFS,		1,	"root file system" },
-	{ MNT_SYMPERM,		0,	"symperm" },
-	{ MNT_SYNCHRONOUS,	0,	"synchronous" },
-	{ MNT_UNION,		0,	"union" },
-	{ MNT_SOFTDEP,		0,	"soft dependencies" },
-	{ 0 }
+	__MNT_FLAGS
 };
 
 static char ffs_fstype[] = "ffs";
@@ -488,9 +468,10 @@ prmount(sfp)
 	    sfp->f_mntonname, MFSNAMELEN, sfp->f_fstypename);
 
 	flags = sfp->f_flags & MNT_VISFLAGMASK;
-	for (f = 0, o = optnames; flags && o->o_opt; o++)
+	for (f = 0, o = optnames; flags && o < 
+	    &optnames[sizeof(optnames)/sizeof(optnames[0])]; o++)
 		if (flags & o->o_opt) {
-			if (!o->o_silent)
+			if (!o->o_silent || verbose)
 				(void)printf("%s%s", !f++ ? " (" : ", ",
 				    o->o_name);
 			flags &= ~o->o_opt;
