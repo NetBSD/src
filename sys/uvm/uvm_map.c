@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.127 2002/12/11 07:14:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.128 2003/01/18 09:43:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.127 2002/12/11 07:14:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.128 2003/01/18 09:43:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -561,7 +561,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	 * detect a popular device driver bug.
 	 */
 
-	KASSERT(curproc != NULL || map->flags & VM_MAP_INTRSAFE);
+	KASSERT(curlwp != NULL || map->flags & VM_MAP_INTRSAFE);
 
 	/*
 	 * check sanity of protection code
@@ -2982,9 +2982,10 @@ uvmspace_share(p1, p2)
  */
 
 void
-uvmspace_unshare(p)
-	struct proc *p;
+uvmspace_unshare(l)
+	struct lwp *l; 
 {
+	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 
 	if (ovm->vm_refcnt == 1)
@@ -2994,9 +2995,9 @@ uvmspace_unshare(p)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
-	pmap_deactivate(p);		/* unbind old vmspace */
+	pmap_deactivate(l);		/* unbind old vmspace */
 	p->p_vmspace = nvm;
-	pmap_activate(p);		/* switch to new vmspace */
+	pmap_activate(l);		/* switch to new vmspace */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -3008,16 +3009,17 @@ uvmspace_unshare(p)
  */
 
 void
-uvmspace_exec(p, start, end)
-	struct proc *p;
+uvmspace_exec(l, start, end)
+	struct lwp *l;
 	vaddr_t start, end;
 {
+	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	struct vm_map *map = &ovm->vm_map;
 
 #ifdef __sparc__
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
-	kill_user_windows(p);   /* before stack addresses go away */
+	kill_user_windows(l);   /* before stack addresses go away */
 #endif
 
 	/*
@@ -3074,9 +3076,9 @@ uvmspace_exec(p, start, end)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
-		pmap_deactivate(p);
+		pmap_deactivate(l);
 		p->p_vmspace = nvm;
-		pmap_activate(p);
+		pmap_activate(l);
 
 		uvmspace_free(ovm);
 	}

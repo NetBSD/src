@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.11 2002/09/22 07:17:25 chs Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.12 2003/01/18 09:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@
 #ifndef	_PMAP_VM_
 #define	_PMAP_VM_
 
-struct proc;		/* for pmap_activate()/pmap_deactivate() proto */
+struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 
 /*
  * Each machine dependent implementation is expected to
@@ -105,8 +105,8 @@ __BEGIN_DECLS
 struct pmap	*pmap_kernel __P((void));
 #endif
 
-void		 pmap_activate __P((struct proc *));
-void		 pmap_deactivate __P((struct proc *));
+void		 pmap_activate __P((struct lwp *));
+void		 pmap_deactivate __P((struct lwp *));
 void		 pmap_unwire __P((pmap_t, vaddr_t));
 
 #if !defined(pmap_clear_modify)

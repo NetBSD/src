@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.85 2002/10/29 10:15:16 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.86 2003/01/18 09:34:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.85 2002/10/29 10:15:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.86 2003/01/18 09:34:30 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -954,7 +954,9 @@ nfs_doio(bp, p)
 			uprintf("Process killed due to "
 				"text file modification\n");
 			psignal(p, SIGKILL);
+#if 0 /* XXX NJWLWP */
 			p->p_holdcnt++;
+#endif
 		}
 		break;
 	    case VLNK:

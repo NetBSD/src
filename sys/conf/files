@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.587 2002/12/26 12:31:24 jdolecek Exp $
+#	$NetBSD: files,v 1.588 2003/01/18 08:51:40 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1049,6 +1049,7 @@ file	kern/kern_ktrace.c
 file	kern/kern_systrace.c		systrace
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
+file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
@@ -1057,6 +1058,7 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
+file	kern/kern_sa.c
 file	kern/kern_sig.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c

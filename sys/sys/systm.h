@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.155 2002/12/31 23:45:36 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.156 2003/01/18 09:53:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -80,6 +80,7 @@
 
 struct clockframe;
 struct device;
+struct lwp;
 struct proc;
 struct timeval;
 struct tty;
@@ -126,7 +127,7 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 extern const dev_t zerodev;	/* /dev/zero */
 
-typedef int	sy_call_t(struct proc *, void *, register_t *);
+typedef int	sy_call_t(struct lwp *, void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
@@ -176,7 +177,7 @@ enum hashtype {
 void	*hashinit __P((u_int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
 int	seltrue __P((dev_t, int, struct proc *));
-int	sys_nosys __P((struct proc *, void *, register_t *));
+int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 
 #ifdef _KERNEL
@@ -257,7 +258,6 @@ long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
 int	hzto __P((struct timeval *));
-void	realitexpire __P((void *));
 
 void	hardclock __P((struct clockframe *));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -332,9 +332,9 @@ void	doexithooks __P((struct proc *));
 /*
  * kernel syscall tracing/debugging hooks.
  */
-int	trace_enter __P((struct proc *, register_t, register_t,
+int	trace_enter __P((struct lwp *, register_t, register_t,
 	    const struct sysent *, void *, register_t []));
-void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
+void	trace_exit __P((struct lwp *, register_t, void *, register_t [], int));
 
 int	uiomove __P((void *, size_t, struct uio *));
 
@@ -428,30 +428,30 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif /* _KERNEL */
 
 #ifdef SYSCALL_DEBUG
-void scdebug_call __P((struct proc *, register_t, register_t[]));
-void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
+void scdebug_call __P((struct lwp *, register_t, register_t[]));
+void scdebug_ret __P((struct lwp *, register_t, int, register_t[]));
 #endif /* SYSCALL_DEBUG */
 
 #if defined(MULTIPROCESSOR)
 void	_kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(void);
-void	_kernel_proc_lock(struct proc *);
-void	_kernel_proc_unlock(struct proc *);
+void	_kernel_proc_lock(struct lwp *);
+void	_kernel_proc_unlock(struct lwp *);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
 #define	KERNEL_LOCK(flag)		_kernel_lock((flag))
 #define	KERNEL_UNLOCK()			_kernel_unlock()
-#define	KERNEL_PROC_LOCK(p)		_kernel_proc_lock((p))
-#define	KERNEL_PROC_UNLOCK(p)		_kernel_proc_unlock((p))
+#define	KERNEL_PROC_LOCK(l)		_kernel_proc_lock((l))
+#define	KERNEL_PROC_UNLOCK(l)		_kernel_proc_unlock((l))
 
 #else /* ! MULTIPROCESSOR */
 
 #define	KERNEL_LOCK_INIT()		/* nothing */
 #define	KERNEL_LOCK(flag)		/* nothing */
 #define	KERNEL_UNLOCK()			/* nothing */
-#define	KERNEL_PROC_LOCK(p)		/* nothing */
-#define	KERNEL_PROC_UNLOCK(p)		/* nothing */
+#define	KERNEL_PROC_LOCK(l)		/* nothing */
+#define	KERNEL_PROC_UNLOCK(l)		/* nothing */
 
 #endif /* MULTIPROCESSOR */
 

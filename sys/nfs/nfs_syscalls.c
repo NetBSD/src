@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.52 2002/09/14 21:45:16 chs Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.53 2003/01/18 09:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.52 2002/09/14 21:45:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.53 2003/01/18 09:34:31 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.52 2002/09/14 21:45:16 chs Exp $"
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <netinet/in.h>
@@ -143,8 +144,8 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
  * - remains in the kernel as an nfsiod
  */
 int
-sys_nfssvc(p, v, retval)
-	struct proc *p;
+sys_nfssvc(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -152,6 +153,7 @@ sys_nfssvc(p, v, retval)
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 #ifdef NFS
 	struct nameidata nd;
@@ -180,7 +182,7 @@ sys_nfssvc(p, v, retval)
 	}
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
 #if defined(NFS) && defined(COMPAT_14)
-		error = nfssvc_iod(p);
+		error = nfssvc_iod(l);
 #else
 		error = ENOSYS;
 #endif
@@ -207,7 +209,7 @@ sys_nfssvc(p, v, retval)
 			return (0);
 		nmp->nm_iflag |= NFSMNT_MNTD;
 		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
-			SCARG(uap, argp), p);
+			SCARG(uap, argp), l);
 #endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
@@ -332,7 +334,7 @@ sys_nfssvc(p, v, retval)
 		if ((SCARG(uap, flag) & NFSSVC_AUTHINFAIL) &&
 		    (nfsd = nsd->nsd_nfsd))
 			nfsd->nfsd_flag |= NFSD_AUTHFAIL;
-		error = nfssvc_nfsd(nsd, SCARG(uap, argp), p);
+		error = nfssvc_nfsd(nsd, SCARG(uap, argp), l);
 #endif /* !NFSSERVER */
 	}
 	if (error == EINTR || error == ERESTART)
@@ -445,10 +447,10 @@ nfssvc_addsock(fp, mynam)
  * until it is killed by a signal.
  */
 int
-nfssvc_nfsd(nsd, argp, p)
+nfssvc_nfsd(nsd, argp, l)
 	struct nfsd_srvargs *nsd;
 	caddr_t argp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mbuf *m;
 	int siz;
@@ -460,6 +462,7 @@ nfssvc_nfsd(nsd, argp, p)
 	struct mbuf *mreq;
 	int error = 0, cacherep, s, sotype, writes_todo;
 	u_quad_t cur_usec;
+	struct proc *p = l->l_proc;
 
 #ifndef nolint
 	cacherep = RC_DOIT;
@@ -474,7 +477,7 @@ nfssvc_nfsd(nsd, argp, p)
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
 	}
-	p->p_holdcnt++;
+	PHOLD(l);
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -572,7 +575,7 @@ nfssvc_nfsd(nsd, argp, p)
 			    !copyout(nfsd->nfsd_verfstr, nsd->nsd_verfstr,
 				nfsd->nfsd_verflen) &&
 			    !copyout((caddr_t)nsd, argp, sizeof (*nsd))) {
-			    p->p_holdcnt--;
+			    PRELE(l);
 			    return (ENEEDAUTH);
 			}
 			cacherep = RC_DROPIT;
@@ -627,7 +630,7 @@ nfssvc_nfsd(nsd, argp, p)
 			 * of the failing routine usually turns up the
 			 * lock leak.. once we know what it is..
 			 */
-			lockcount = p->p_locks;
+			lockcount = l->l_locks;
 #endif
 			if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
 			     nd->nd_procnum == NFSPROC_WRITE &&
@@ -638,7 +641,7 @@ nfssvc_nfsd(nsd, argp, p)
 			    error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
 				slp, nfsd->nfsd_procp, &mreq);
 #ifdef DIAGNOSTIC
-			if (p->p_locks != lockcount) {
+			if (l->l_locks != lockcount) {
 				/*
 				 * If you see this panic, audit
 				 * nfsrv3_procs[nd->nd_procnum] for vnode
@@ -652,7 +655,7 @@ nfssvc_nfsd(nsd, argp, p)
 				printf("nfsd: locking botch in op %d"
 				    " (before %d, after %d)\n",
 				    nd ? nd->nd_procnum : -1,
-				    lockcount, p->p_locks);
+				    lockcount, l->l_locks);
 			}
 #endif
 			if (mreq == NULL)
@@ -750,7 +753,7 @@ nfssvc_nfsd(nsd, argp, p)
 		}
 	}
 done:
-	p->p_holdcnt--;
+	PRELE(l);
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
 	free((caddr_t)nfsd, M_NFSD);
@@ -932,13 +935,14 @@ int nfs_defect = 0;
  */
 
 int
-nfssvc_iod(p)
-	struct proc *p;
+nfssvc_iod(l)
+	struct lwp *l;
 {
 	struct buf *bp;
 	int i, myiod;
 	struct nfsmount *nmp;
 	int error = 0;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * Assign my position or return error if too many already running
@@ -953,7 +957,7 @@ nfssvc_iod(p)
 		return (EBUSY);
 	nfs_asyncdaemon[myiod] = p;
 	nfs_numasync++;
-	p->p_holdcnt++;
+	PHOLD(l);
 	/*
 	 * Just loop around doing our stuff until SIGKILL
 	 */
@@ -991,7 +995,7 @@ nfssvc_iod(p)
 		    break;
 	    }
 	}
-	p->p_holdcnt--;
+	PRELE(l);
 	if (nmp)
 		nmp->nm_bufqiods--;
 	nfs_iodwant[myiod] = NULL;
@@ -1006,7 +1010,7 @@ void
 start_nfsio(arg)
 	void *arg;
 {
-	nfssvc_iod(curproc);
+	nfssvc_iod(curlwp);
 	
 	kthread_exit(0);
 }
