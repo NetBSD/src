@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.23 2002/01/17 19:15:02 eeh Exp $	*/
+/*	$NetBSD: nonints.h,v 1.24 2002/01/18 03:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -41,7 +41,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-#define __attribute__()
+#define __attribute__(x)
 #endif
 
 /* arch.c */
