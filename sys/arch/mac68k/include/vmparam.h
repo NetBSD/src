@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 1998/04/26 20:06:26 scottr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 1998/04/26 21:12:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -265,7 +265,6 @@
 /* Use new VM page bootstrap interface. */
 #define	MACHINE_NEW_NONCONTIG
 
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  * Constants which control the way the VM system deals with memory segments.
  * Most mac68k systems have only 1 physical memory segment, but some have 2.
@@ -289,6 +288,5 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv table for this seg */
 	char *attrs;			/* page attributes for this seg */
 };
-#endif /* MACHINE_NEW_NONCONTIG */
 
 #endif /* _MAC68K_VMPARAM_H_ */

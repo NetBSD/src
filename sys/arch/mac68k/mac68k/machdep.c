@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 1998/04/26 03:49:47 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 1998/04/26 21:12:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -264,7 +264,6 @@ void
 mac68k_init()
 {
 	int i;
-#if defined(MACHINE_NEW_NONCONTIG)
 	extern vm_offset_t avail_start;
 
 	/*
@@ -289,7 +288,6 @@ mac68k_init()
 			    atop(low[i]), atop(high[i]));
 #endif /* UVM */
 	}
-#endif /* MACHINE_NEW_NONCONTIG */
 
 	/* Initialize the VIAs */
 	via_init();
