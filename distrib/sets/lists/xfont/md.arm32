@@ -1,6 +1,4 @@
-# $NetBSD: md.arm32,v 1.4 2000/08/06 22:40:40 wiz Exp $
-./usr/X11R6/lib/X11/fonts/PEX/Roman.phont
-./usr/X11R6/lib/X11/fonts/PEX/Roman_M.phont
+# $NetBSD: md.arm32,v 1.5 2002/02/11 16:23:20 tron Exp $
 ./usr/X11R6/lib/X11/fonts/cyrillic
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1c.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1cb.pcf.gz

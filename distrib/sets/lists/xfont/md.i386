@@ -1,6 +1,4 @@
-# $NetBSD: md.i386,v 1.5 1999/04/19 03:11:36 simonb Exp $
-./usr/X11R6/lib/X11/fonts/PEX/Roman.phont
-./usr/X11R6/lib/X11/fonts/PEX/Roman_M.phont
+# $NetBSD: md.i386,v 1.6 2002/02/11 16:23:20 tron Exp $
 ./usr/X11R6/lib/X11/fonts/cyrillic
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1c.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1cb.pcf.gz

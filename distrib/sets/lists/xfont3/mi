@@ -1,0 +1,6 @@
+# $NetBSD: mi,v 1.1 2002/02/11 16:23:21 tron Exp $
+./usr/X11R6/lib/X11/fonts/misc/7x13euro.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/7x13euroB.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/7x14rk.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/heb6x13.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/heb8x13.pcf.gz
