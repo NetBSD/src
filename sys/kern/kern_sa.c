@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.36 2003/11/01 15:36:35 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.37 2003/11/02 16:26:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.36 2003/11/01 15:36:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.37 2003/11/02 16:26:10 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,6 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_vp = NULL;
 		sa->sa_old_lwp = NULL;
 		sa->sa_vp_wait_count = 0;
-		sa->sa_idle = NULL;
-		sa->sa_woken = NULL;
 		sa->sa_concurrency = 1;
 		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
@@ -373,52 +371,23 @@ sa_yield(struct lwp *l)
 		ret = 0;	
 
 		while  ((ret == 0) && (p->p_userret == NULL)) {
-			sa->sa_idle = l;
-			l->l_flag &= ~L_SA;
-
-			SCHED_ASSERT_UNLOCKED();
-
+			l->l_flag |= L_SA_YIELD;
 			ret = tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
+			l->l_flag &= ~L_SA_YIELD;
+			if (p->p_flag & P_WEXIT)
+				lwp_exit(l);
+			KDASSERT(sa->sa_vp == l);
 
-			SCHED_ASSERT_UNLOCKED();
-
-			l->l_flag |= L_SA;
-			sa->sa_idle = NULL;
 			splx(s);
 			sa_vp_donate(l);
 			KDASSERT(sa->sa_vp == l);
-		
 			s = splsched();	/* Protect from timer expirations */
 		}
-
 		l->l_flag |= L_SA_UPCALL; 
 		splx(s);
 		DPRINTFN(1,("sa_yield(%d.%d) returned\n",
 		    p->p_pid, l->l_lid));
 #if 0
-	} else {
-		DPRINTFN(1,("sa_yield(%d.%d) stepping aside\n", p->p_pid, l->l_lid));
-
-		PHOLD(l);
-		SCHED_LOCK(s);
-		l2 = sa->sa_woken;
-		sa->sa_woken = NULL;
-		sa->sa_vp = NULL;
-		p->p_nrlwps--;
-		sa_putcachelwp(p, l);
-		KDASSERT((l2 == NULL) || (l2->l_proc == l->l_proc));
-		KDASSERT((l2 == NULL) || (l2->l_stat == LSRUN));
-		mi_switch(l, l2);
-		/*
-		 * This isn't quite a NOTREACHED; we may get here if
-		 * the process exits before this LWP is reused. In
-		 * that case, we want to call lwp_exit(), which will
-		 * be done by the userret() hooks.
-		 */
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
-		KDASSERT(p->p_flag & P_WEXIT);
-		/* mostly NOTREACHED */
 	}
 #endif
 }
@@ -747,11 +716,18 @@ sa_switch(struct lwp *l, int type)
 	SCHED_ASSERT_LOCKED();
 
 	if (p->p_flag & P_WEXIT) {
-		mi_switch(l,0);
+		mi_switch(l, NULL);
 		return;
 	}
 
-	if (sa->sa_vp == l) {
+	if (l->l_flag & L_SA_YIELD) {
+		/*
+		 * Case 0: we're blocking in sa_yield
+		 */
+		l->l_flag |= L_SA_IDLE;
+		mi_switch(l, NULL);
+		return;
+	} else if (sa->sa_vp == l) {
 		/*
 		 * Case 1: we're blocking for the first time; generate
 		 * a SA_BLOCKED upcall and allocate resources for the
@@ -863,7 +839,7 @@ sa_switch(struct lwp *l, int type)
 		 * go. If the LWP on the VP was idling, don't make it
 		 * run again, though.
 		 */
-		if (sa->sa_idle)
+		if (sa->sa_vp->l_flag & L_SA_YIELD)
 			l2 = NULL;
 		else {
 			l2 = sa->sa_vp; /* XXXUPSXXX Unfair advantage for l2 ? */
@@ -919,8 +895,6 @@ sa_switch(struct lwp *l, int type)
 	KDASSERT(l->l_wchan == 0);
 
 	SCHED_ASSERT_UNLOCKED();
-	if (sa->sa_woken == l)
-		sa->sa_woken = NULL;
 
 	/*
 	 * The process is trying to exit. In this case, the last thing
@@ -929,12 +903,6 @@ sa_switch(struct lwp *l, int type)
 	 */
 	if (p->p_flag & P_WEXIT)
 		return;
-
-	/*
-	 * Okay, now we've been woken up. This means that it's time
-	 * for a SA_UNBLOCKED upcall when we get back to userlevel
-	 */
-	l->l_flag |= L_SA_UPCALL;
 }
 
 void
@@ -1127,6 +1095,14 @@ sa_unblock_userret(struct lwp *l)
 		DPRINTFN(8,("sa_unblock_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
 
+		SCHED_ASSERT_UNLOCKED();
+
+		l2 = sa_vp_repossess(l);
+		if (l2 == NULL)
+			lwp_exit(l);
+
+		SCHED_ASSERT_UNLOCKED();
+			
 		sau = sadata_upcall_alloc(1);
 		sau->sau_arg = NULL;
 
@@ -1135,23 +1111,11 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 	
-		SCHED_ASSERT_UNLOCKED();
-
-		l2 = sa_vp_repossess(l);
-
 		KDASSERT(sa->sa_nstacks > 0);
 		st = sa->sa_stacks[--sa->sa_nstacks];
 		DPRINTFN(9,("sa_unblock_userret(%d.%d) nstacks--   = %2d\n",
 		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		
-		SCHED_ASSERT_UNLOCKED();
-			
-		if (l2 == NULL) {
-			sadata_upcall_free(sau);
-			/* No need to put st back */
-			lwp_exit(l);
-		}
-
 		/*
 		 * Defer saving the event lwp's state because a
 		 * PREEMPT upcall could be on the queue already.
@@ -1169,6 +1133,7 @@ sa_unblock_userret(struct lwp *l)
 			sigexit(l, SIGABRT);
 			/* NOTREACHED */
 		}
+
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
@@ -1176,6 +1141,7 @@ sa_unblock_userret(struct lwp *l)
 		sa_putcachelwp(p, l2); /* PHOLD from sa_vp_repossess */
 		SCHED_UNLOCK(s);
 	}
+
 	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_PROC_UNLOCK(l);
 }
@@ -1334,7 +1300,7 @@ sa_upcall_userret(struct lwp *l)
 
 	sadata_upcall_free(sau);
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n",p->p_pid,
+	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
@@ -1364,8 +1330,11 @@ sa_vp_repossess(struct lwp *l)
 	 */
 	l2 = sa->sa_vp;
 	sa->sa_vp = l;
-	if (sa->sa_idle == l2)
-		sa->sa_idle = NULL;
+	if (l2->l_flag & L_SA_YIELD)
+		l2->l_flag &= ~(L_SA_YIELD|L_SA_IDLE);
+
+	DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
+		     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
 
 	KDASSERT(l2 != l);
 	if (l2) {
@@ -1407,9 +1376,10 @@ sa_vp_repossess(struct lwp *l)
 	l->l_flag |= L_SA_WANTS_VP;
 	sa->sa_vp_wait_count++;
 
-	if(sa->sa_idle != NULL) {
+	if (sa->sa_vp->l_flag & L_SA_YIELD) {
 		/* XXXUPSXXX Simple but slow */
-		wakeup(sa->sa_idle);
+		sa->sa_vp->l_flag &= ~L_SA_IDLE;
+		wakeup(sa->sa_vp);
 	} else {
 		SCHED_LOCK(s);
 		sa->sa_vp->l_flag |= L_SA_UPCALL;
@@ -1538,9 +1508,10 @@ debug_print_sa(struct proc *p)
 	sa = p->p_sa;
 	if (sa) {
 		if (sa->sa_vp)
-			printf("SA VP: %d\n", sa->sa_vp->l_lid);
-		if (sa->sa_idle)
-			printf("SA idle: %d\n", sa->sa_idle->l_lid);
+			printf("SA VP: %d %s\n", sa->sa_vp->l_lid,
+			    sa->sa_vp->l_flag & L_SA_YIELD ?
+				(sa->sa_vp->l_flag & L_SA_IDLE ?
+				    "idle" : "yielding") : "");
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
 		printf("%d upcall stacks\n", sa->sa_nstacks);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
