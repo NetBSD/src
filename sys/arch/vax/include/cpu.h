@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.51 2000/06/10 14:59:39 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.52 2000/06/11 07:50:13 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -106,7 +106,7 @@ struct cpu_info {
 	 * Private members.
 	 */
 	int ci_want_resched;		/* Should change process */
-	int ci_cpunumber;		/* Index in cpu_cd.cd_devs[] array */
+	struct device *ci_dev;		/* device struct for this cpu */
 	long ci_exit;			/* Page to use while exiting */
 #if defined(MULTIPROCESSOR)
 	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
@@ -119,7 +119,7 @@ struct cpu_info {
 
 #define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
 #define	curproc	(curcpu()->ci_curproc)
-#define	cpu_number() (curcpu()->ci_cpunumber)
+#define	cpu_number() (curcpu()->ci_dev->dv_unit)
 #define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	(ci->ci_flags & CI_MASTERCPU)
