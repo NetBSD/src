@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.251 2002/04/09 16:16:32 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.252 2002/04/09 16:22:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1583,22 +1583,26 @@ ENTRY(subyte)
 
 /*
  * void lgdt(struct region_descriptor *rdp);
- * Change the global descriptor table.
- * XXX should there be an MD section 9 man page for this?
- *     or even just a better comment? --Perry, May 7, 2001
+ * Load a new GDT pointer (and do any necessary cleanup).
+ * XXX It's somewhat questionable whether reloading all the segment registers
+ * is necessary, since the actual descriptor data is not changed except by
+ * process creation and exit, both of which clean up via task switches.  OTOH,
+ * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt(struct region_descriptor *rdp) */
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
-	/* Flush the prefetch q. */
+	/* Flush the prefetch queue. */
 	jmp	1f
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%ds
 	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
 	movw	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
