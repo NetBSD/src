@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.4 1997/08/14 15:22:01 drochner Exp $	*/
+/*	$NetBSD: libi386.h,v 1.5 1997/08/14 17:00:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -50,10 +50,10 @@ void delay __P((int));
 int getbasemem __P((void));
 int getextmemx __P((void));
 int getextmem1 __P((void));
-#ifdef EXTENDED_MEMDETECT
-#define getextmem() getextmemx()
-#else
+#ifdef CONSERVATIVE_MEMDETECT
 #define getextmem() getextmem1()
+#else
+#define getextmem() getextmemx()
 #endif
 void reboot __P((void));
 void gateA20 __P((void));
