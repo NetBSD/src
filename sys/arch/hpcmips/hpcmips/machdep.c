@@ -1,4 +1,33 @@
-/*	$NetBSD: machdep.c,v 1.46 2001/04/11 08:23:27 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2001/04/18 10:42:39 sato Exp $	*/
+
+/*-
+ * Copyright (c) 1999 Shin Takemura, All rights reserved.
+ * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2001/04/11 08:23:27 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2001/04/18 10:42:39 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -94,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2001/04/11 08:23:27 sato Exp $");
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
+#include <machine/platid_mask.h>
 #include <machine/locore.h>
 
 #ifdef DDB
@@ -271,19 +301,35 @@ mach_init(argc, argv, bi)
 			platid.dw.dw1 = bootinfo->platid_machine;
 		}
 	}
-	/* Platform Specific Function Hooks */
 #if defined TX39XX && defined VR41XX
+/* XXX: currently, the case defined TX39XX && defined VR41XX don't work */
 #error misconfiguration
-#elif defined TX39XX
-	tx_init();
-#elif defined VR41XX
-	vr_init();
+#endif /* defined TX39XX && defined VR41XX */
+
+	/* Platform Specific Function Hooks */
+#ifdef VR41XX
+#ifdef TX39XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+#endif /* TX39XX */
+	{
+		vr_init();
 #if NBICONSDEV > 0
 	/* bicons don't need actual device initialize. only bootinfo needed. */
-	cn_tab = &bicons;
-	bicons_init(&bicons);
+		cn_tab = &bicons;
+		bicons_init(&bicons);
 #endif
-#endif
+	}
+#endif /* VR41XX */
+#ifdef TX39XX
+#ifdef VR41XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
+	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
+#endif /* VR41XX */
+	{
+		tx_init();
+	}
+#endif /* TX39XX */
+
 	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
 	(*platform.fb_init)(&kernend);
 	kernend = (caddr_t)mips_round_page(kernend);
@@ -743,7 +789,10 @@ cpu_intr(status, cause, pc, ipending)
 	uvmexp.intrs++;
 
 #ifdef VR41XX
-	if (ipending & MIPS_INT_MASK_5) {
+#ifdef TX39XX
+	if (CPUISMIPS3)
+#endif /* TX39XX */
+	if (ipending & MIPS_INT_MASK_5){
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
@@ -753,15 +802,22 @@ cpu_intr(status, cause, pc, ipending)
 #endif
 
 	/* device interrupts */
-#ifdef ENABLE_MIPS_TX3900
-	if (ipending & MIPS_HARD_INT_MASK) {
-		_splset((*platform.iointr)(status, cause, pc, ipending));
-	}
-#else
-	if (ipending & MIPS3_HARD_INT_MASK) {
-		_splset((*platform.iointr)(status, cause, pc, ipending));
-	}
-#endif
+#if defined(VR41XX)
+#if defined(TX39XX)
+	if (CPUISMIPS3)
+#endif /* TX39XX */
+		if (ipending & MIPS3_HARD_INT_MASK) {
+			_splset((*platform.iointr)(status, cause, pc, ipending));
+		}
+#endif /* VR41XX */
+#if defined(TX39XX)
+#if defined(VR41XX)
+	if (CPUISMIPS1)
+#endif /* VR41XX */
+		if (ipending & MIPS_HARD_INT_MASK) {
+			_splset((*platform.iointr)(status, cause, pc, ipending));
+		}
+#endif /* TX39XX */
 
 	/* software simulated interrupt */
 	if ((ipending & MIPS_SOFT_INT_MASK_1)
