@@ -1,4 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.23 2000/02/06 12:49:49 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.24 2000/02/25 00:29:00 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.39 2000/02/23 08:54:23 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -178,7 +179,7 @@ udp6_input(mp, offp, proto)
 	IP6_EXTHDR_CHECK(m, off, sizeof(struct udphdr), IPPROTO_DONE);
 	uh = (struct udphdr *)((caddr_t)ip6 + off);
 #else
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udhpdr));
+	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udphdr));
 	if (uh == NULL) {
 		udp6stat.udp6s_hdrops++;
 		return IPPROTO_DONE;
@@ -297,7 +298,7 @@ udp6_input(mp, offp, proto)
 				/*
 				 * Check AH/ESP integrity.
 				 */
-				if (last != NULL && ipsec6_in_reject(m, last)) {
+				if (ipsec6_in_reject(m, last)) {
 					ipsec6stat.in_polvio++;
 					/* do not inject data into pcb */
 				} else
