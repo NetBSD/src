@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.18 2000/03/13 22:46:59 soren Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.19 2000/06/17 18:19:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.18 2000/03/13 22:46:59 soren Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.19 2000/06/17 18:19:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -805,8 +805,9 @@ set_chflags(fnm, flags)
 	u_int32_t flags;
 #endif
 {
+	
 #if 0
-	if (chflags(fnm, flags) < 0)
+	if (chflags(fnm, flags) < 0 && errno != EOPNOTSUPP)
 		syswarn(1, errno, "Could not set file flags on %s", fnm);
 #endif
 	return;
