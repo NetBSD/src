@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.28 1997/03/10 14:44:26 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.29 1997/04/09 19:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -705,8 +705,8 @@ daddr_t	*p_blkno;
 	return (error);
 }
 
-#if (NPHYS_RAM_SEGS < NMEM_SEGS)
-#error "Configuration error: NPHYS_RAM_SEGS < NMEM_SEGS"
+#if (M68K_NPHYS_RAM_SEGS < NMEM_SEGS)
+#error "Configuration error: M68K_NPHYS_RAM_SEGS < NMEM_SEGS"
 #endif
 /*
  * Initialize the cpu_kcore_header.
@@ -715,16 +715,61 @@ static void
 cpu_init_kcorehdr(kbase)
 u_long	kbase;
 {
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern char end[];
+	extern char machine[];
 	int	i;
 
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = NBPG;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK; 
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = (u_int)Sysseg + kbase;
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = kbase;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (u_int32_t)end;
+
 	for (i = 0; i < NMEM_SEGS; i++) {
-		cpu_kcore_hdr.ram_segs[i].start = boot_segs[i].start;
-		cpu_kcore_hdr.ram_segs[i].size  = boot_segs[i].end
-							- boot_segs[i].start;
+		m->ram_segs[i].start = boot_segs[i].start;
+		m->ram_segs[i].size  = boot_segs[i].end -
+		    boot_segs[i].start;
 	}
-	cpu_kcore_hdr.mmutype   = mmutype;
-	cpu_kcore_hdr.kernel_pa = kbase;
-	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)((u_int)Sysseg + kbase);
 }
 
 void
