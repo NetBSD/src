@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.5 1999/08/02 15:31:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.6 1999/08/08 00:40:06 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1848,8 +1848,8 @@ ntfs_procfixups(
 	}
 	if ((fhp->fh_fnum - 1) * ntmp->ntm_bps != len) {
 		printf("ntfs_procfixups: " \
-		       "bad fixups number: %d for %d bytes block\n", 
-		       fhp->fh_fnum, len);
+		       "bad fixups number: %d for %ld bytes block\n", 
+		       fhp->fh_fnum, (long)len);	/* XXX printf kludge */
 		return (EINVAL);
 	}
 	if (fhp->fh_foff >= ntmp->ntm_spc * ntmp->ntm_mftrecsz * ntmp->ntm_bps) {
