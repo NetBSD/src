@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.7 2001/06/23 16:36:34 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.1.1.8 2001/09/27 02:00:44 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -10,7 +10,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  *
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.27 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: key.c,v 1.32 2001/09/19 13:23:29 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -55,6 +55,7 @@ key_new(int type)
 	DSA *dsa;
 	k = xmalloc(sizeof(*k));
 	k->type = type;
+	k->flags = 0;
 	k->dsa = NULL;
 	k->rsa = NULL;
 	switch (k->type) {
@@ -358,7 +359,7 @@ write_bignum(FILE *f, BIGNUM *num)
 	return 1;
 }
 
-/* returns 1 ok, -1 error, 0 type mismatch */
+/* returns 1 ok, -1 error */
 int
 key_read(Key *ret, char **cpp)
 {
@@ -413,7 +414,7 @@ key_read(Key *ret, char **cpp)
 		} else if (ret->type != type) {
 			/* is a key, but different type */
 			debug3("key_read: type mismatch");
-			return 0;
+			return -1;
 		}
 		len = 2*strlen(cp);
 		blob = xmalloc(len);
@@ -653,7 +654,7 @@ key_names_valid2(const char *names)
 }
 
 Key *
-key_from_blob(char *blob, int blen)
+key_from_blob(u_char *blob, int blen)
 {
 	Buffer b;
 	char *ktype;
@@ -728,8 +729,9 @@ key_to_blob(Key *key, u_char **blobp, u_int *lenp)
 		buffer_put_bignum2(&b, key->rsa->n);
 		break;
 	default:
-		error("key_to_blob: illegal key type %d", key->type);
-		break;
+		error("key_to_blob: unsupported key type %d", key->type);
+		buffer_free(&b);
+		return 0;
 	}
 	len = buffer_len(&b);
 	buf = xmalloc(len);
