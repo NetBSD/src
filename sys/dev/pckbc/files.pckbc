@@ -1,4 +1,4 @@
-# $NetBSD: files.pckbc,v 1.3 1998/06/16 11:26:04 drochner Exp $
+# $NetBSD: files.pckbc,v 1.4 1998/07/27 22:36:23 drochner Exp $
 # devices attached at pckbc, for use with wscons
 
 device	pckbd: wskbddev
@@ -9,3 +9,7 @@ defopt	PCKBD_LAYOUT
 device  psm: wsmousedev
 attach  psm at pckbc
 file    dev/pckbc/psm.c            psm
+
+device  psmi: wsmousedev
+attach  psmi at pckbc
+file    dev/pckbc/psm_intelli.c            psmi
