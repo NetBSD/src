@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.81.2.2 1999/10/09 21:32:12 cgd Exp $
+#	$NetBSD: NetBSD.dist,v 1.81.2.3 2000/01/23 13:56:40 he Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -57,6 +57,11 @@ postfix
 # ./etc/sliphome
 sliphome
 # ./etc/sliphome
+..
+
+# ./etc/skel
+skel
+# ./etc/skel
 ..
 
 # ./etc/uucp
@@ -817,6 +822,11 @@ ipf
 # ./usr/share/examples/supfiles
 supfiles
 # ./usr/share/examples/supfiles
+..
+
+# ./usr/share/examples/usermgmt
+usermgmt
+# ./usr/share/examples/usermgmt
 ..
 
 # ./usr/share/examples
