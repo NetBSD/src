@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.2 1999/09/02 23:25:29 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.3 1999/09/09 21:48:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -347,6 +347,7 @@ struct tulip_desc {
 #define	STATUS_EB_PARITY	0x00000000	/* parity errror */
 #define	STATUS_EB_MABT		0x00800000	/* master abort */
 #define	STATUS_EB_TABT		0x01000000	/* target abort */
+#define	STATUS_PNIC_TXABORT	0x04000000	/* transmit aborted */
 
 
 /* CSR6 - Operation Mode */
@@ -381,7 +382,7 @@ struct tulip_desc {
 #define	OPMODE_WINB_TTH_SHIFT	14
 #define	OPMODE_BP		0x00010000	/* backpressure enable */
 #define	OPMODE_CA		0x00020000	/* capture effect enable */
-#define	OPMODE_PMAC_COE		0x00020000	/* collision offset enable */
+#define	OPMODE_PMAC_TBEN	0x00020000	/* Tx backoff offset enable */
 #define	OPMODE_PS		0x00040000	/* port select:
 						   1 = MII/SYM, 0 = SRL
 						   (21140) */
@@ -390,6 +391,7 @@ struct tulip_desc {
 						   set according to PHY
 						   in MII 10mbps mode
 						   (21140) */
+#define	OPMODE_PNIC_IT		0x00100000	/* immediate transmit */
 #define	OPMODE_SF		0x00200000	/* store and forward mode
 						   (21140) */
 #define	OPMODE_WINB_REIT	0x1fe00000	/* receive eartly intr thresh */
@@ -400,11 +402,11 @@ struct tulip_desc {
 #define	OPMODE_PCS		0x00800000	/* PCS function (21140) */
 #define	OPMODE_SCR		0x01000000	/* scrambler mode (21140) */
 #define	OPMODE_MBO		0x02000000	/* must be one (21140) */
-#define	OPMODE_PNIC_RXCRCDIS	0x20000000	/* don't include CRC in Rx
+#define	OPMODE_PNIC_DRC		0x20000000	/* don't include CRC in Rx
 						   frames (PNIC) */
 #define	OPMODE_WINB_FES		0x20000000	/* fast ethernet select */
 #define	OPMODE_RA		0x40000000	/* receive all (21140) */
-#define	OPMODE_PNIC_EXT_ENDEC	0x40000000	/* 1 == ext, 0 == int PHY
+#define	OPMODE_PNIC_EED		0x40000000	/* 1 == ext, 0 == int ENDEC
 						   (PNIC) */
 #define	OPMODE_WINB_TEIO	0x40000000	/* transmit early intr on */
 #define	OPMODE_SC		0x80000000	/* special capture effect
@@ -592,14 +594,26 @@ struct tulip_desc {
 #define	CSR_GPP			TULIP_CSR12
 #define	GPP_MD			0x000000ff	/* general purpose mode/data */
 #define	GPP_GPC			0x00000100	/* general purpose control */
-#define	GPP_PNIC_SPEEDSEL	0x00000001	/* 1 == 100mbps, 0 == 10mbps
-						   (PNIC) */
-#define	GPP_PNIC_100TX_LOOP	0x00000002	/* 1 == normal, 0 == loop
-						   (PNIC) */
-#define	GPP_PNIC_BNC_ENB	0x00000004	/* BNC enable (PNIC) */
-#define	GPP_PNIC_100TX_LINK	0x00000008	/* 100base-TX link (PNIC) */
-#define	GPP_PNIC_MBO		0x00000030	/* must be one (PNIC) */
- 
+#define	GPP_PNIC_GPD		0x0000000f	/* general purpose data */
+#define	GPP_PNIC_GPC		0x000000f0	/* general purpose control */
+
+#define	GPP_PNIC_IN(x)		(1 << (x))
+#define	GPP_PNIC_OUT(x)		((1 << (x)) | (1 << ((x) + 4)))
+
+/*
+ * The Lite-On PNIC manual recommends the following for the General Purpose
+ * I/O pins:
+ *
+ *	0	Speed Relay		1 == 100mbps
+ *	1	100mbps loopback	1 == loopback
+ *	2	BNC DC-DC converter	1 == select BNC
+ *	3	Link 100		1 == 100baseTX link status
+ */
+#define	GPP_PNIC_PIN_SPEED_RLY	0
+#define	GPP_PNIC_PIN_100M_LPKB	1
+#define	GPP_PNIC_PIN_BNC_XMER	2
+#define	GPP_PNIC_PIN_LNK100X	3
+
 
 /* CSR15 - Watchdog timer (21140+). */
 #define	CSR_WATCHDOG		TULIP_CSR15
@@ -700,14 +714,20 @@ struct tulip_desc {
 
 /* ENDEC General Register */
 #define	CSR_PNIC_ENDEC		0x78
-#define	PNIC_ENDEC_JABBERDIS	0x00000001	/* jabber disable */
+#define	PNIC_ENDEC_JDIS		0x00000001	/* jabber disable */
 
 /* SROM Power Register */
 #define	CSR_PNIC_SROMPWR	0x90
+#define	PNIC_SROMPWR_MRLE	0x00000001	/* Memory-Read-Line enable */
+#define	PNIC_SROMPWR_CB		0x00000002	/* cache boundary alignment
+						   burst type; 1 == burst to
+						   boundary, 0 == single-cycle
+						   to boundary */
 
 /* SROM Control Register */
 #define	CSR_PNIC_SROMCTL	0x98
-#define	PNIC_SROMCTL_addr	0x000000ff	/* mask of address bits */
+#define	PNIC_SROMCTL_addr	0x0000003f	/* mask of address bits */
+/* XXX THESE ARE WRONG ACCORDING TO THE MANUAL! */
 #define	PNIC_SROMCTL_READ	0x00000600	/* read command */
 
 /* MII Access Register */
@@ -718,40 +738,44 @@ struct tulip_desc {
 #define	PNIC_MII_PHY		0x0f800000	/* phy mask */
 #define	PNIC_MII_PHYSHIFT	23
 #define	PNIC_MII_OPCODE		0x30000000	/* opcode mask */
-#define	PNIC_MII_RESERVED	0x00020000
+#define	PNIC_MII_RESERVED	0x00020000	/* must be one/must be zero;
+						   2 bits are described here */
+#define	PNIC_MII_MBO		0x40000000	/* must be one */
 #define	PNIC_MII_BUSY		0x80000000	/* MII is busy */
 
-	/* !@##!@^ PNIC doesn't behave as it should */
-#define	PNIC_MII_READ		0x60020000	/* read PHY command */
-#define	PNIC_MII_WRITE		0x50020000	/* write PHY command */
+#define	PNIC_MII_WRITE		0x10000000	/* write PHY command */
+#define	PNIC_MII_READ		0x20000000	/* read PHY command */
 
 /* NWAY Register */
 #define	CSR_PNIC_NWAY		0xb8
-#define	PNIC_NWAY_RESET		0x00000001	/* reset NWay logic */
-#define	PNIC_NWAY_PDOWN		0x00000002	/* power down */
-#define	PNIC_NWAY_BYPASS	0x00000004	/* bypass */
-#define	PNIC_NWAY_AUILOWCUR	0x00000008	/* AUI low current */
-#define	PNIC_NWAY_TPEXTEND	0x00000010	/* low squelch voltage */
-#define	PNIC_NWAY_POLARITY	0x00000020	/* 0 == normal, 1 == reverse */
-#define	PNIC_NWAY_TP		0x00000040	/* 1 == TP, 0 == AUI */
-#define	PNIC_NWAY_AUIVOLT	0x00000080	/* 1 == full, 0 == half */
-#define	PNIC_NWAY_DUPLEX	0x00000100	/* 1 == full, 0 == half */
-#define	PNIC_NWAY_LINKTEST	0x00000200	/* 1 == on, 0 == off */
-#define	PNIC_NWAY_AUTODETECT	0x00000400	/* 1 == on, 0 == off */
-#define	PNIC_NWAY_SPEEDSEL	0x00000800	/* 0 == 10mbps, 1 == 100mbps */
-#define	PNIC_NWAY_ENB		0x00001000	/* 1 == on, 0 == off */
+#define	PNIC_NWAY_RS		0x00000001	/* reset NWay block */
+#define	PNIC_NWAY_PD		0x00000002	/* power down NWay block */
+#define	PNIC_NWAY_BX		0x00000004	/* bypass transciever */
+#define	PNIC_NWAY_LC		0x00000008	/* AUI low current mode */
+#define	PNIC_NWAY_UV		0x00000010	/* low squelch voltage */
+#define	PNIC_NWAY_DX		0x00000020	/* disable TP pol. correction */
+#define	PNIC_NWAY_TW		0x00000040	/* select TP (0 == AUI) */
+#define	PNIC_NWAY_AF		0x00000080	/* AUI full/half step input
+						   voltage */
+#define	PNIC_NWAY_FD		0x00000100	/* full duplex mode */
+#define	PNIC_NWAY_DL		0x00000200	/* disable link integrity
+						   test */
+#define	PNIC_NWAY_DM		0x00000400	/* disable AUI/TP autodetect */
+#define	PNIC_NWAY_100		0x00000800	/* 1 == 100mbps, 0 == 10mbps */
+#define	PNIC_NWAY_NW		0x00001000	/* enable NWay block */
 #define	PNIC_NWAY_CAP10T	0x00002000	/* adv. 10baseT */
 #define	PNIC_NWAY_CAP10TFDX	0x00004000	/* adv. 10baseT-FDX */
 #define	PNIC_NWAY_CAP100TXFDX	0x00008000	/* adv. 100baseTX-FDX */
 #define	PNIC_NWAY_CAP100TX	0x00010000	/* adv. 100baseTX */
 #define	PNIC_NWAY_CAP100T4	0x00020000	/* adv. 100base-T4 */
-#define	PNIC_NWAY_AUTONEGRSTR	0x02000000
-#define	PNIC_NWAY_REMFAULT	0x04000000	/* remote fault detected */
+#define	PNIC_NWAY_RN		0x02000000	/* re-negotiate enable */
+#define	PNIC_NWAY_RF		0x04000000	/* remote fault detected */
 #define	PNIC_NWAY_LPAR10T	0x08000000	/* link part. 10baseT */
 #define	PNIC_NWAY_LPAR10TFDX	0x10000000	/* link part. 10baseT-FDX */
 #define	PNIC_NWAY_LPAR100TXFDX	0x20000000	/* link part. 100baseTX-FDX */
 #define	PNIC_NWAY_LPAR100TX	0x40000000	/* link part. 100baseTX */
 #define	PNIC_NWAY_LPAR100T4	0x80000000	/* link part. 100base-T4 */
+#define	PNIC_NWAY_LPAR_MASK	0xf8000000
 
 
 /*

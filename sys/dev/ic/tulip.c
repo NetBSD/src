@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.5 1999/09/02 23:25:28 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.6 1999/09/09 21:48:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1346,7 +1346,7 @@ tlp_init(sc)
 			/* Enable the MII port. */
 			sc->sc_opmode |= OPMODE_PS;
 
-			TULIP_WRITE(sc, CSR_PNIC_ENDEC, PNIC_ENDEC_JABBERDIS);
+			TULIP_WRITE(sc, CSR_PNIC_ENDEC, PNIC_ENDEC_JDIS);
 			break;
 
 		case TULIP_CHIP_WB89C840F:
@@ -1493,9 +1493,9 @@ tlp_init(sc)
 	 */
 	TULIP_WRITE(sc, CSR_RXPOLL, RXPOLL_RPD);
 
-	if (sc->sc_flags & TULIPF_HAS_MII) {
+	if (sc->sc_tick != NULL) {
 		/* Start the one second clock. */
-		timeout(tlp_mii_tick, sc, hz);
+		timeout(sc->sc_tick, sc, hz);
 	}
 
 	/*
@@ -1552,9 +1552,9 @@ tlp_stop(sc, drain)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct tulip_txsoft *txs;
 
-	if (sc->sc_flags & TULIPF_HAS_MII) {
+	if (sc->sc_tick != NULL) {
 		/* Stop the one second clock. */
-		untimeout(tlp_mii_tick, sc);
+		untimeout(sc->sc_tick, sc);
 	}
 
 	/* Disable interrupts. */
@@ -2219,7 +2219,7 @@ tlp_mii_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(tlp_mii_tick, sc, hz);
+	timeout(sc->sc_tick, sc, hz);
 }
 
 /*
@@ -2470,6 +2470,7 @@ tlp_pnic_mii_readreg(self, phy, reg)
 	int i;
 
 	TULIP_WRITE(sc, CSR_PNIC_MII,
+	    PNIC_MII_MBO | PNIC_MII_RESERVED |
 	    PNIC_MII_READ | (phy << PNIC_MII_PHYSHIFT) |
 	    (reg << PNIC_MII_REGSHIFT));
 
@@ -2501,6 +2502,7 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
 	int i;
 
 	TULIP_WRITE(sc, CSR_PNIC_MII,
+	    PNIC_MII_MBO | PNIC_MII_RESERVED |
 	    PNIC_MII_WRITE | (phy << PNIC_MII_PHYSHIFT) |
 	    (reg << PNIC_MII_REGSHIFT) | val);
 
@@ -2544,6 +2546,7 @@ tlp_sio_mii_tmsw_init(sc)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else {
 		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 }
@@ -2559,11 +2562,23 @@ const struct tulip_mediasw tlp_pnic_mediasw = {
 	tlp_pnic_tmsw_init, tlp_pnic_tmsw_get, tlp_pnic_tmsw_set
 };
 
+void	tlp_pnic_nway_tick __P((void *));
+int	tlp_pnic_nway_service __P((struct tulip_softc *, int));
+void	tlp_pnic_nway_reset __P((struct tulip_softc *));
+int	tlp_pnic_nway_auto __P((struct tulip_softc *, int));
+void	tlp_pnic_nway_auto_timeout __P((void *));
+void	tlp_pnic_nway_status __P((struct tulip_softc *));
+void	tlp_pnic_nway_acomp __P((struct tulip_softc *));
+
 void
 tlp_pnic_tmsw_init(sc)
 	struct tulip_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	const char *sep = "";
+
+#define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;
@@ -2573,15 +2588,44 @@ tlp_pnic_tmsw_init(sc)
 	    tlp_mediastatus);
 	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		/* XXX USE INTERNAL NWAY! */
-		printf("%s: no support for PNIC NWAY yet\n",
-		    sc->sc_dev.dv_xname);
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		/* XXX What about AUI/BNC support? */
+		printf("%s: ", sc->sc_dev.dv_xname);
+
+		tlp_pnic_nway_reset(sc);
+
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0),
+		    PNIC_NWAY_TW|PNIC_NWAY_CAP10T);
+		PRINT("10baseT");
+
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, 0),
+		    PNIC_NWAY_TW|PNIC_NWAY_FD|PNIC_NWAY_CAP10TFDX);
+		PRINT("10baseT-FDX");
+
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, 0),
+		    PNIC_NWAY_TW|PNIC_NWAY_100|PNIC_NWAY_CAP100TX);
+		PRINT("100baseTX");
+
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, 0),
+		    PNIC_NWAY_TW|PNIC_NWAY_100|PNIC_NWAY_FD|
+		    PNIC_NWAY_CAP100TXFDX);
+		PRINT("100baseTX-FDX");
+
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0),
+		    PNIC_NWAY_TW|PNIC_NWAY_RN|PNIC_NWAY_NW|
+		    PNIC_NWAY_CAP10T|PNIC_NWAY_CAP10TFDX|
+		    PNIC_NWAY_CAP100TXFDX|PNIC_NWAY_CAP100TX);
+		PRINT("auto");
+
+		sc->sc_tick = tlp_pnic_nway_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	} else {
 		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
+
+#undef ADD
+#undef PRINT
 }
 
 void
@@ -2589,13 +2633,16 @@ tlp_pnic_tmsw_get(sc, ifmr)
 	struct tulip_softc *sc;
 	struct ifmediareq *ifmr;
 {
+	struct mii_data *mii = &sc->sc_mii;
 
 	if (sc->sc_flags & TULIPF_HAS_MII)
 		tlp_mii_getmedia(sc, ifmr);
 	else {
-		/* XXX CHECK INTERNAL NWAY! */
-		ifmr->ifm_status = 0;
-		ifmr->ifm_active = IFM_ETHER|IFM_NONE;
+		mii->mii_media_status = 0;
+		mii->mii_media_active = IFM_NONE;
+		tlp_pnic_nway_service(sc, MII_POLLSTAT);
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
+		ifmr->ifm_active = sc->sc_mii.mii_media_active; 
 	}
 }
 
@@ -2603,10 +2650,256 @@ int
 tlp_pnic_tmsw_set(sc)
 	struct tulip_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 
 	if (sc->sc_flags & TULIPF_HAS_MII)
 		return (tlp_mii_setmedia(sc));
 
-	/* XXX USE INTERNAL NWAY! */
-	return (EIO);
+	if (ifp->if_flags & IFF_UP) {
+		mii->mii_media_status = 0;
+		mii->mii_media_active = IFM_NONE;
+		return (tlp_pnic_nway_service(sc, MII_MEDIACHG));
+	}
+
+	return (0);
+}
+
+void
+tlp_pnic_nway_tick(arg)
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	tlp_pnic_nway_service(sc, MII_TICK);
+	splx(s);
+
+	timeout(tlp_pnic_nway_tick, sc, hz);
+}
+
+/*
+ * Support for the Lite-On PNIC internal NWay block.  This is constructed
+ * somewhat like a PHY driver for simplicity.
+ */
+
+int
+tlp_pnic_nway_service(sc, cmd)
+	struct tulip_softc *sc;
+	int cmd;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		return (0);
+
+	switch (cmd) {
+	case MII_POLLSTAT:
+		/* Nothing special to do here. */
+		break;
+
+	case MII_MEDIACHG:
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_AUTO:
+			(void) tlp_pnic_nway_auto(sc, 1);
+			break;
+		case IFM_100_T4:
+			/*
+			 * XXX Not supported as a manual setting right now.
+			 */
+			return (EINVAL);
+		default:
+			/*
+			 * NWAY register data is stored in the ifmedia entry.
+			 */
+			TULIP_WRITE(sc, CSR_PNIC_NWAY, ife->ifm_data);
+		}
+		break;
+
+	case MII_TICK:
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			return (0);
+
+		/*
+		 * Check to see if we have link.  If we do, we don't
+		 * need to restart the autonegotiation process.
+		 */
+		if (sc->sc_flags & TULIPF_LINK_UP)
+			return (0);
+
+		/*
+		 * Only retry autonegotiation every 5 seconds.
+		 */
+		if (++sc->sc_nway_ticks != 5)
+			return (0);
+
+		sc->sc_nway_ticks = 0;
+		tlp_pnic_nway_reset(sc);
+		if (tlp_pnic_nway_auto(sc, 0) == EJUSTRETURN)
+			return (0);
+		break;
+	}
+
+	/* Update the media status. */
+	tlp_pnic_nway_status(sc);
+
+	/* Callback if something changed. */
+	if (sc->sc_nway_active != mii->mii_media_active ||
+	    cmd == MII_MEDIACHG) {
+		(*sc->sc_statchg)(&sc->sc_dev);
+		sc->sc_nway_active = mii->mii_media_active;
+	}
+	return (0);
+}
+
+void
+tlp_pnic_nway_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	TULIP_WRITE(sc, CSR_PNIC_NWAY, PNIC_NWAY_RS);
+	delay(100);
+	TULIP_WRITE(sc, CSR_PNIC_NWAY, 0);
+}
+
+int
+tlp_pnic_nway_auto(sc, waitfor)
+	struct tulip_softc *sc;
+	int waitfor;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	u_int32_t reg;
+	int i;
+
+	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0)
+		TULIP_WRITE(sc, CSR_PNIC_NWAY, ife->ifm_data);
+
+	if (waitfor) {
+		/* Wait 500ms for it to complete. */
+		for (i = 0; i < 500; i++) {
+			reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+			if (reg & PNIC_NWAY_LPAR_MASK) {
+				tlp_pnic_nway_acomp(sc);
+				return (0);
+			}
+			delay(1000);
+		}
+#if 0
+		if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
+			printf("%s: autonegotiation failed to complete\n",
+			    sc->sc_dev.dv_xname);
+#endif
+
+		/*
+		 * Don't need to worry about clearing DOINGAUTO.
+		 * If that's set, a timeout is pending, and it will
+		 * clear the flag.
+		 */
+		return (EIO);
+	}
+
+	/*
+	 * Just let it finish asynchronously.  This is for the benefit of
+	 * the tick handler driving autonegotiation.  Don't want 500ms
+	 * delays all the time while the system is running!
+	 */
+	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0) {
+		sc->sc_flags |= TULIPF_DOINGAUTO;
+		timeout(tlp_pnic_nway_auto_timeout, sc, hz >> 1);
+	}
+	return (EJUSTRETURN);
+}
+
+void
+tlp_pnic_nway_auto_timeout(arg)
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	u_int32_t reg;
+	int s;
+
+	s = splnet();
+	sc->sc_flags &= ~TULIPF_DOINGAUTO;
+	reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+#if 0
+	if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
+		printf("%s: autonegotiation failed to complete\n",
+		    sc->sc_dev.dv_xname);
+#endif
+
+	tlp_pnic_nway_acomp(sc);
+
+	/* Update the media status. */
+	(void) tlp_pnic_nway_service(sc, MII_POLLSTAT);
+	splx(s);
+}
+
+void
+tlp_pnic_nway_status(sc)
+	struct tulip_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	u_int32_t reg;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+
+	if (sc->sc_flags & TULIPF_LINK_UP)
+		mii->mii_media_status |= IFM_ACTIVE;
+
+	if (reg & PNIC_NWAY_NW) {
+		if ((reg & PNIC_NWAY_LPAR_MASK) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+#if 0
+		if (reg & PNIC_NWAY_LPAR100T4)
+			mii->mii_media_active |= IFM_100_T4;
+		else
+#endif
+		if (reg & PNIC_NWAY_LPAR100TXFDX)
+			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+		else if (reg & PNIC_NWAY_LPAR100TX)
+			mii->mii_media_active |= IFM_100_TX;
+		else if (reg & PNIC_NWAY_LPAR10TFDX)
+			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+		else if (reg & PNIC_NWAY_LPAR10T)
+			mii->mii_media_active |= IFM_10_T;
+		else
+			mii->mii_media_active |= IFM_NONE;
+	} else {
+		if (reg & PNIC_NWAY_100)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (reg & PNIC_NWAY_FD)
+			mii->mii_media_active |= IFM_FDX;
+	}
+}
+
+void
+tlp_pnic_nway_acomp(sc)
+	struct tulip_softc *sc;
+{
+	u_int32_t reg;
+
+	reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+	reg &= ~(PNIC_NWAY_FD|PNIC_NWAY_100|PNIC_NWAY_RN);
+
+	if (reg & (PNIC_NWAY_LPAR100TXFDX|PNIC_NWAY_LPAR100TX))
+		reg |= PNIC_NWAY_100;
+	if (reg & (PNIC_NWAY_LPAR10TFDX|PNIC_NWAY_LPAR100TXFDX))
+		reg |= PNIC_NWAY_FD;
+
+	TULIP_WRITE(sc, CSR_PNIC_NWAY, reg);
 }

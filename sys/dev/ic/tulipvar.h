@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.5 1999/09/08 22:29:46 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.6 1999/09/09 21:48:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -207,6 +207,13 @@ struct tulip_softc {
 	 */
 	const struct tulip_mediasw *sc_mediasw;
 
+	/*
+	 * For chips with built-in NWay blocks, these are state
+	 * variables required for autonegotiation.
+	 */
+	int		sc_nway_ticks;	/* tick counter */
+	int		sc_nway_active;	/* last active media */
+
 	tulip_chip_t	sc_chip;	/* chip type */
 	int		sc_rev;		/* chip revision */
 	int		sc_flags;	/* misc flags. */
@@ -220,8 +227,11 @@ struct tulip_softc {
 	/* Filter setup function. */
 	void		(*sc_filter_setup) __P((struct tulip_softc *));
 
-	/* Media status update function */
+	/* Media status update function. */
 	void		(*sc_statchg) __P((struct device *));
+
+	/* Media tick function. */
+	void		(*sc_tick) __P((void *));
 
 	/*
 	 * The Winbond 89C840F places registers 4 bytes apart, instead
@@ -269,6 +279,8 @@ struct tulip_softc {
 #define	TULIPF_DOING_SETUP	0x00000002	/* doing multicast setup */
 #define	TULIPF_HAS_MII		0x00000004	/* has media on MII */
 #define	TULIPF_IC_FS		0x00000008	/* IC bit on first tx seg */
+#define	TULIPF_LINK_UP		0x00000010	/* link is up (non-MII) */
+#define	TULIPF_DOINGAUTO	0x00000020	/* doing autoneg (non-MII) */
 
 #define	TULIP_CDTXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDTXOFF((x)))
 #define	TULIP_CDRXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDRXOFF((x)))
