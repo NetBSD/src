@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/06/12 13:57:41 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/19 17:50:11 drochner Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
@@ -16,6 +16,12 @@ SRCS=	jupiter.h map_vme.c ntp_config.c ntp_control.c ntp_crypto.c \
 	refclock_parse.c refclock_pcf.c refclock_pst.c refclock_ptbacts.c \
 	refclock_shm.c refclock_tpro.c refclock_trak.c refclock_true.c \
 	refclock_ulink.c refclock_usno.c refclock_wwv.c refclock_wwvb.c
+
+.include <bsd.own.mk>
+
+LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
+LDADD+=		-L${LIBPARSE} -lparse
+DPADD+=		${LIBPARSE}/libparse.a
 
 LDADD+=	-lm
 DPADD+=	${LIBM}
