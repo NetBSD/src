@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1 2002/04/10 04:36:20 briggs Exp $ */
+/* $NetBSD: bus_dma.c,v 1.1.6.1 2002/07/05 13:52:43 lukem Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2002/04/10 04:36:20 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.6.1 2002/07/05 13:52:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,83 +446,107 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
+#if defined(M68040) || defined(M68060)
+	int i;
+#endif
+
 	/* flush/purge the cache.
 	 * @@@ should probably be fixed to use offset and len args.
 	 */
 
+#if defined(M68040) || defined(M68060)
 	if (ops & BUS_DMASYNC_PREWRITE) {
-		int i;
-		for(i=0;i<map->dm_nsegs;i++) {
+		for (i = 0; i < map->dm_nsegs; i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
 			/* If the pointers are unaligned, it's ok to flush surrounding cache line */
-			p -= p%16;
-			if (e % 16) e += 16-(e%16);
+			p -= p % 16;
+			if (e % 16) e += 16 - (e % 16);
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
+					"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 			}
 #endif
-			while((p<e)&&(p%NBPG)) {
-				DCFL(p);							/* flush cache line */
+			while ((p < e) && (p % NBPG)) {
+				DCFL(p);		/* flush cache line */
 				p += 16;
 			}
-			while(p+NBPG<=e) {
-				DCFP(p);							/* flush page */
+			while (p + NBPG <= e) {
+				DCFP(p);		/* flush page */
 				p += NBPG;
 			}
-			while(p<e) {
-				DCFL(p);							/* flush cache line */
+			while (p < e) {
+				DCFL(p);		/* flush cache line */
 				p += 16;
 			}
 #ifdef DIAGNOSTIC
 			if (p != e) {
 				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
+					"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 			}
 #endif
 		}
 	}
+#endif /* M68040 || M68060 */
 
 	if (ops & BUS_DMASYNC_PREREAD) {
-		int i;
-		for(i=0;i<map->dm_nsegs;i++) {
-			bus_addr_t p = map->dm_segs[i].ds_addr;
-			bus_addr_t e = p+map->dm_segs[i].ds_len;
-			if (p % 16) {
-				p -= p%16;
-				DCFL(p);
-			}
-			if (e % 16) {
-				e += 16-(e%16);
-				DCFL(e-16);
-			}
-#ifdef DIAGNOSTIC
-			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync while purging.\n"
-						"address=0x%08lx, end=0x%08lx, ops=0x%x", p,e,ops);
-			}
+		switch (cputype) {
+		default:
+#ifdef M68020
+		case CPU_68020:
+			break;
 #endif
-			while((p<e)&&(p%NBPG)) {
-				DCPL(p);							/* purge cache line */
-				p += 16;
-			}
-			while(p+NBPG<=e) {
-				DCPP(p);							/* purge page */
-				p += NBPG;
-			}
-			while(p<e) {
-				DCPL(p);							/* purge cache line */
-				p += 16;
-			}
-#ifdef DIAGNOSTIC
-			if (p != e) {
-				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
-			}
+#ifdef M68030
+		case CPU_68030:
+			break;
 #endif
+#if defined(M68040) || defined(M68060)
+#ifdef M68040
+		case CPU_68040:
+#endif
+#ifdef M68060
+		case CPU_68060:
+#endif
+			for (i = 0; i < map->dm_nsegs; i++) {
+				bus_addr_t p = map->dm_segs[i].ds_addr;
+				bus_addr_t e = p+map->dm_segs[i].ds_len;
+				if (p % 16) {
+					p -= p % 16;
+					DCFL(p);
+				}
+				if (e % 16) {
+					e += 16 - (e % 16);
+					DCFL(e - 16);
+				}
+#ifdef DIAGNOSTIC
+				if ((p % 16) || (e % 16)) {
+					panic("unaligned address in _bus_dmamap_sync while purging.\n"
+						"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
+				}
+#endif
+				while ((p < e) && (p % NBPG)) {
+					DCPL(p);	/* purge cache line */
+					p += 16;
+				}
+				while (p + NBPG <= e) {
+					DCPP(p);	/* purge page */
+					p += NBPG;
+				}
+				while (p < e) {
+					DCPL(p);	/* purge cache line */
+					p += 16;
+				}
+#ifdef DIAGNOSTIC
+				if (p != e) {
+					panic("overrun in _bus_dmamap_sync while purging.\n"
+						"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
+				}
+#endif
+			}
+			break;
 		}
+#endif /* M68040 || M68060 */
 	}
 }
 
