@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.423 2000/12/21 05:11:00 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.424 2000/12/21 05:20:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -323,6 +323,7 @@ cpu_startup()
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char buf[160];				/* about 2 line */
 	char pbuf[9];
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -362,19 +363,15 @@ cpu_startup()
 	}
 	if (cpu_l2cache_info)
 		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
-	if (cpu_feature) {
-		char buf[1024];
-
-		if ((cpu_feature & CPUID_MASK1) != 0) {
-			bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
-			    buf, sizeof(buf));
-			printf("cpu0: features %s\n", buf);
-		}
-		if ((cpu_feature & CPUID_MASK2) != 0) {
-			bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
-			    buf, sizeof(buf));
-			printf("cpu0: features %s\n", buf);
-		}
+	if ((cpu_feature & CPUID_MASK1) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK2) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
 	}
 
 	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
