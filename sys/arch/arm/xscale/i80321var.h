@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.1 2002/03/27 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.1.6.1 2002/11/11 22:46:14 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -132,6 +132,18 @@ struct i80321_softc {
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
 	uint8_t sc_gpio_val;	/* GPIO output pin value */
+};
+
+/*
+ * Arguments used to attach IOP built-ins.
+ */
+struct iopxs_attach_args {
+	const char *ia_name;	/* name of device */
+	bus_space_tag_t ia_st;	/* space tag */
+	bus_space_handle_t ia_sh;/* handle of IOP base */
+	bus_dma_tag_t ia_dmat;	/* DMA tag */
+	bus_addr_t ia_offset;	/* offset of device from IOP base */
+	bus_size_t ia_size;	/* size of sub-device */
 };
 
 extern struct bus_space i80321_bs_tag;
