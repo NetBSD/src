@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.58 2002/10/29 12:31:24 blymn Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.59 2002/12/06 22:44:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.58 2002/10/29 12:31:24 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.59 2002/12/06 22:44:50 christos Exp $");
 
 #include "fs_union.h"
 
@@ -108,7 +108,7 @@ vn_open(ndp, fmode, cmode)
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 &&
-		    ((fmode & FNOSYMLINK) == 0))
+		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
 			return (error);
