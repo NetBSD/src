@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_alpha.c,v 1.21 2003/04/09 22:46:39 nathanw Exp $ */
+/* $NetBSD: kvm_alpha.c,v 1.22 2003/05/16 10:24:55 wiz Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -153,7 +153,7 @@ lose:
 }
 
 /*
- * Translate a physical address to a file-offset in the crash-dump.
+ * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
 _kvm_pa2off(kd, pa)

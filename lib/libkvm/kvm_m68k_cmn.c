@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.10 2000/10/10 20:44:16 he Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.11 2003/05/16 10:24:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.10 2000/10/10 20:44:16 he Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.11 2003/05/16 10:24:55 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,7 +131,7 @@ _kvm_cmn_kvatop(kd, va, pa)
 }
 
 /*
- * Translate a physical address to a file-offset in the crash-dump.
+ * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
 _kvm_cmn_pa2off(kd, pa)
