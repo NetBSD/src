@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.14 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.15 2005/02/25 16:03:09 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.14 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.15 2005/02/25 16:03:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ cgsixattach(parent, self, aux)
 	struct sbusdev *sd = &((struct cgsix_sbus_softc *)self)->bss_sd;
 	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
-	int node, isconsole;
+	int node, isconsole, ramsize;
 	char *name;
 	bus_space_handle_t bh;
 
@@ -186,8 +186,8 @@ cgsixattach(parent, self, aux)
 	name = prom_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);
-	if (isconsole && cgsix_use_rasterconsole) {
-		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+	/* we need the address of the framebuffer, no matter if we're console or not. */
+	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_slot,
 				 sa->sa_offset + CGSIX_RAM_OFFSET,
@@ -196,9 +196,7 @@ cgsixattach(parent, self, aux)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		sc->sc_fb.fb_pixels = (caddr_t)bus_space_vaddr(sa->sa_bustag, 
-			bh);
-	}
+	sc->sc_fb.fb_pixels = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
 
 	cg6attach(sc, name, isconsole);
 }
