@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.8 2000/08/26 03:34:36 sommerfeld Exp $ */
+/* $NetBSD: sched.h,v 1.9 2000/08/26 04:01:18 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ struct proc;
 
 void schedclock(struct proc *p);
 void sched_wakeup(void *);
-void roundrobin(void);
+void roundrobin(struct cpu_info *);
 
 /*
  * scheduler_fork_hook:
