@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.122 2000/10/12 22:51:20 augustss Exp $
+$NetBSD: usbdevs,v 1.123 2000/10/13 16:18:02 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -477,8 +477,9 @@ product HP 4200C		0x0105	ScanJet 4200C
 product HP 6200C		0x0201	ScanJet 6200C
 product HP S20b			0x0202	PhotoSmart S20
 product HP 3300C		0x0205	ScanJet 3300C
-product HP 5200			0x0401	Scanjet 5200
+product HP 5200C		0x0401	Scanjet 5200C
 product HP 6300C		0x0601	Scanjet 6300C
+product HP 5300C		0x0701	Scanjet 5300C
 product HP 970CSE		0x1004	Deskjet 970Cse
 product HP P1100		0x3102	Photosmart P1100
 
