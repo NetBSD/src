@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.42 2002/06/21 14:49:41 agc Exp $ */
+/* $NetBSD: lib.h,v 1.43 2002/07/19 19:04:40 yamt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -37,6 +37,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "path.h"
 
 /* Macros */
 #define SUCCESS	(0)
@@ -180,6 +182,9 @@ typedef int (*matchfn) (const char *, void *);
  * and this must be an URL. Hide this behind a more obvious name. */
 #define IS_URL(str)	(URLlength(str) > 0)
 
+#define IS_STDIN(str)	((str) != NULL && !strcmp((str), "-"))
+#define IS_FULLPATH(str)	((str) != NULL && (str)[0] == '/')
+
 /* Prototypes */
 /* Misc */
 int     vsystem(const char *,...)
@@ -196,8 +201,9 @@ void    show_version(void);
 /* String */
 char   *get_dash_string(char **);
 void    str_lowercase(char *);
-char   *basename_of(char *);
-char   *dirname_of(const char *);
+const char *basename_of(const char *);
+const char *dirname_of(const char *);
+const char *suffix_of(const char *);
 int     pmatch(const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
@@ -220,17 +226,17 @@ Boolean isemptyfile(const char *);
 Boolean isfile(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
-char   *fileGetURL(char *, char *);
-char   *fileURLFilename(char *, char *, int);
-char   *fileURLHost(char *, char *, int);
-char   *fileFindByPath(char *, char *);
+char   *fileGetURL(const char *);
+const char *fileURLFilename(const char *, char *, int);
+const char *fileURLHost(const char *, char *, int);
+char   *fileFindByPath(const char *);
 char   *fileGetContents(char *);
 Boolean make_preserve_name(char *, size_t, char *, char *);
 void    write_file(char *, char *);
 void    copy_file(char *, char *, char *);
 void    move_file(char *, char *, char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
-int     unpack(char *, char *);
+int     unpack(const char *, const char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
 
 /* ftpio.c: FTP handling */
@@ -249,8 +255,8 @@ void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
 void    csum_plist_entry(char *, plist_t *);
-void    add_plist(package_t *, pl_ent_t, char *);
-void    add_plist_top(package_t *, pl_ent_t, char *);
+void    add_plist(package_t *, pl_ent_t, const char *);
+void    add_plist_top(package_t *, pl_ent_t, const char *);
 void    delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
