@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.2 2000/12/20 10:57:38 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -48,6 +48,7 @@ struct podulebus_chunk {
 	int	pc_type;
 	int	pc_length;
 	int	pc_offset;
+	int	pc_useloader;
 };
 
 struct podulebus_attach_args {
@@ -69,6 +70,7 @@ struct podulebus_attach_args {
 	struct podulebus_chunk *pa_chunks;
 	int	pa_nchunks;
 	char	*pa_descr;
+	void	*pa_loader;
 };
 
 #define IS_PODULE(pa, man, prod)	\
@@ -78,6 +80,11 @@ struct podulebus_attach_args {
 
 extern struct irq_handler *podulebus_irq_establish(struct device *, int, int,
 						   int (*)(void *), void *);
+extern int podulebus_initloader(struct podulebus_attach_args *);
+extern int podloader_readbyte(struct podulebus_attach_args *, u_int);
+extern void podloader_writebyte(struct podulebus_attach_args *, u_int, int);
+void podloader_reset(struct podulebus_attach_args *);
+int podloader_callloader(struct podulebus_attach_args *, u_int, u_int);
 
 #endif
 
