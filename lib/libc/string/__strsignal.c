@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strsignal.c,v 1.10 1996/10/11 00:51:08 jtc Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.11 1996/10/11 20:59:20 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -66,7 +66,7 @@ __strsignal(num, buf)
 	signum = num;				/* convert to unsigned */
 	if (signum < NSIG) {
 #ifdef NLS
-		stnrcpy(buf, catgets(catd, 2, signum,
+		strncpy(buf, catgets(catd, 2, signum,
 		    (char *)sys_siglist[signum]), NL_TEXTMAX); 
 		buf[NL_TEXTMAX - 1] = '\0';
 #else
