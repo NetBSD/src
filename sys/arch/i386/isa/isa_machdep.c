@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 1995/12/24 02:30:15 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 1996/02/09 02:26:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -196,18 +196,18 @@ intr_calculatemasks()
 		imask[level] = irqs | SIR_ALLMASK;
 	}
 
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-	/* In the presence of SLIP or PPP, imp > tty. */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-#endif
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
+	 */
+	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
 
 	/*
-	 * There are network and disk drivers that use free() at interrupt
-	 * time, so imp > (net | bio).
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
 	 */
-	imask[IPL_IMP] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NET] |= imask[IPL_BIO];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
