@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2001/03/26 12:33:23 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.4 2001/12/01 14:14:58 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -37,6 +37,9 @@ cdev_decl(ctty);
 
 bdev_decl(fd);
 cdev_decl(fd);
+
+/* open, close, read, write, ioctl -- XXX should be a generic device */
+#define	cdev_par_init(c,n)	cdev__ocrwi_init(c,n)
 
 cdev_decl(ms);
 
