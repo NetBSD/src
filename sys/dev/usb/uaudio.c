@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.14 1999/12/06 21:06:59 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.15 2000/01/06 21:13:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -892,14 +892,41 @@ uaudio_add_processing(sc, v, dps)
 	usb_descriptor_t *v;
 	usb_descriptor_t **dps;
 {
-#ifdef UAUDIO_DEBUG
 	struct usb_audio_processing_unit *d = 
-		(struct usb_audio_processing_unit *)v;
+	    (struct usb_audio_processing_unit *)v;
+	struct usb_audio_processing_unit_1 *d1 =
+	    (struct usb_audio_processing_unit_1 *)&d->baSourceId[d->bNrInPins];
+	int ptype = UGETW(d->wProcessType);
+	struct mixerctl mix;
 
-	DPRINTFN(2,("uaudio_add_processing: bUnitId=%d bNrInPins=%d\n",
-		    d->bUnitId, d->bNrInPins));
-	printf("uaudio_add_processing: NOT IMPLEMENTED\n");
+	DPRINTFN(2,("uaudio_add_processing: wProcessType=%d bUnitId=%d "
+		    "bNrInPins=%d\n", ptype, d->bUnitId, d->bNrInPins));
+
+	if (d1->bmControls[0] & UA_PROC_ENABLE_MASK) {
+		mix.wIndex = MAKE(d->bUnitId, sc->sc_ac_iface);
+		mix.nchan = 1;
+		mix.wValue[0] = MAKE(XX_ENABLE_CONTROL, 0);
+		mix.class = -1;
+		mix.type = MIX_ON_OFF;
+		mix.ctlunit = "";
+		sprintf(mix.ctlname, "pro%d.%d-enable", d->bUnitId, ptype);
+		uaudio_mixer_add_ctl(sc, &mix);
+	}
+
+	switch(ptype) {
+	case UPDOWNMIX_PROCESS:
+	case DOLBY_PROLOGIC_PROCESS:
+	case P3D_STEREO_EXTENDER_PROCESS:
+	case REVERBATION_PROCESS:
+	case CHORUS_PROCESS:
+	case DYN_RANGE_COMP_PROCESS:
+	default:
+#ifdef UAUDIO_DEBUG
+		printf("uaudio_add_processing: unit %d, type=%d not impl.\n",
+		       d->bUnitId, ptype);
 #endif
+		break;
+	}
 }
 
 void
@@ -917,7 +944,7 @@ uaudio_add_extension(sc, v, dps)
 	DPRINTFN(2,("uaudio_add_extension: bUnitId=%d bNrInPins=%d\n",
 		    d->bUnitId, d->bNrInPins));
 
-	if (d1->bmControls[0] & (1 << UA_EXT_ENABLE)) {
+	if (d1->bmControls[0] & UA_EXT_ENABLE_MASK) {
 		mix.wIndex = MAKE(d->bUnitId, sc->sc_ac_iface);
 		mix.nchan = 1;
 		mix.wValue[0] = MAKE(UA_EXT_ENABLE, 0);
