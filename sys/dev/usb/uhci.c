@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.85 2000/02/22 11:30:55 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.86 2000/02/22 16:03:42 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -258,6 +258,7 @@ static void		uhci_dump_tds __P((uhci_soft_td_t *));
 static void		uhci_dump_td __P((uhci_soft_td_t *));
 #endif
 
+#define UWRITE1(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE2(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
 #define UREAD1(sc, r) bus_space_read_1((sc)->iot, (sc)->ioh, (r))
@@ -589,17 +590,17 @@ uhci_power(why, v)
 				      sc->sc_has_timo->timo_handle);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
+
+		/* save some state if BIOS doesn't */
+		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
+		sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
+		
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_suspend = why;
 		sc->sc_bus.use_polling--;
 		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
 	} else {
-		/*
-		 * XXX We should really do much more here in case the
-		 * controller registers have been lost and BIOS has
-		 * not restored them.
-		 */
 #ifdef DIAGNOSTIC
 		if (sc->sc_suspend == PWR_RESUME)
 			printf("uhci_power: weird, resume without suspend.\n");
@@ -608,6 +609,12 @@ uhci_power(why, v)
 		sc->sc_suspend = why;
 		if (cmd & UHCI_CMD_RS)
 			uhci_run(sc, 0); /* in case BIOS has started it */
+
+		/* restore saved state */
+		UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma));
+		UWRITE2(sc, UHCI_FRNUM, sc->sc_saved_frnum);
+		UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
+
 		UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force global resume */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */

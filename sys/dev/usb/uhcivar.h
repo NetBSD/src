@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.22 2000/01/26 10:04:39 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.23 2000/02/22 16:03:44 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -147,6 +147,9 @@ typedef struct uhci_softc {
 
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
+
+	u_int8_t sc_saved_sof;
+	u_int16_t sc_saved_frnum;
 
 	char sc_isreset;
 	char sc_suspend;
