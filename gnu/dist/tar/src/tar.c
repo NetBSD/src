@@ -185,6 +185,7 @@ static struct option long_options[] =
   {"block-size", required_argument, 0, OBSOLETE_BLOCKING_FACTOR},
   {"blocking-factor", required_argument, 0, 'b'},
   {"bzip2", no_argument, 0, 'j'},
+  {"unbzip2", no_argument, 0, 'j'},
   {"catenate", no_argument, 0, 'A'},
   {"checkpoint", no_argument, &checkpoint_option, 1},
   {"compare", no_argument, 0, 'd'},
@@ -386,7 +387,7 @@ Archive format selection:\n\
               PATTERN                at list/extract time, a globbing PATTERN\n\
   -o, --old-archive, --portability   write a V7 format archive\n\
       --posix                        write a POSIX format archive\n\
-  -j, --bzip2                        filter the archive through bzip2\n\
+  -j, --bzip2, --unbzip2             filter the archive through bzip2\n\
   -z, --gzip, --ungzip               filter the archive through gzip\n\
   -Z, --compress, --uncompress       filter the archive through compress\n\
       --use-compress-program=PROG    filter through PROG (must accept -d)\n"),
