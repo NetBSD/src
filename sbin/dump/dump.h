@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.20 2000/10/10 20:24:50 is Exp $	*/
+/*	$NetBSD: dump.h,v 1.21 2000/12/13 22:44:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -115,7 +115,7 @@ int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
 int	xferrate;	/* averaged transfer rate of all volumes */
 char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
-long	dev_bsize;	/* block size of underlying disk device */
+extern long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 int needswap;	/* file system in swapped byte order */
