@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 13:50:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/23 14:28:21 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -9,11 +9,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 LIB=	vgahw
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
-SRCS=	vgaHW.c
-
-.if defined(X11FLAGS.LOADABLE)
-SRCS+=	vgaHWmodule.c
-.endif
+SRCS=	vgaHW.c vgaHWmodule.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
