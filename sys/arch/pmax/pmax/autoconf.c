@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1998/03/24 08:39:02 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1998/03/25 03:57:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 1998/03/24 08:39:02 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 1998/03/25 03:57:55 jonathan Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -65,20 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 1998/03/24 08:39:02 jonathan Exp $
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/sysconf.h>
+
 #include <pmax/dev/device.h>
-#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
-
-void dumpconf __P((void)); 	/* XXX */
-
-#if 0
-/*
- * XXX system-dependent, should call through a pointer.
- * (spl0 should _NOT_ enable TC interrupts on a 3MIN.)
- *
- */
-int spl0 __P((void));
-#endif
 
 
 /*
@@ -88,14 +78,10 @@ int spl0 __P((void));
  */
 int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 30;	/* approx # instr per usec. */
-extern	int pmax_boardtype;
 extern	tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
-extern int cputype;	/* glue for new-style config */
-int cputype;
 
-extern int initcpu __P((void));		/*XXX*/
 void configure_scsi __P((void));
 
 void	findroot __P((struct device **, int *));
@@ -122,35 +108,29 @@ configure()
 	int s;
 
 	/*
-	 * Set CPU type for new-style config. 
-	 * Should support Decstations with CPUs on daughterboards,
-	 * where system-type (board type) and CPU type aren't
-	 * necessarily the same.
-	 * (On hold until someone donates an r4400 daughterboard).
-	 */
-	cputype = pmax_boardtype;		/*XXX*/
-
-
-	/*
 	 * Kick off autoconfiguration
 	 */
 	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
 
-	initcpu();
+	(*platform.bus_reset)();	/* XXX_cf_alpha */
+
 
 #ifdef DEBUG
 	printf("autconfiguration done, spl back to 0x%x\n", s);
 #endif
 	/*
-	 * Configuration is finished,  turn on interrupts.
-	 * This is just spl0(), except on the 3MIN, where TURBOChannel
+	 * Configuration is finished,  turn on interrupts. */
+#if 0
+	 /* This is just spl0(), except on the 3MIN, where TURBOChannel
 	 * option cards interrupt at IPLs 0-2, and some dumb drivers like
 	 * the cfb want to just disable interrupts.
 	 */
-	if (cputype != DS_3MIN)
-		spl0();
+	/* hairy 3min spls */
+if (systype != DS_3MIN)			/* XXX */
+#endif
+	spl0();
 
 	/*
 	 * Probe SCSI bus using old-style pmax configuration table.

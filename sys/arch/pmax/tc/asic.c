@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.23 1998/01/12 20:12:41 thorpej Exp $	*/
+/*	$NetBSD: asic.c,v 1.24 1998/03/25 03:57:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/nameglue.h>
 
-extern int cputype;
+extern int systype;
 #endif
 
 struct asic_softc {
@@ -139,7 +139,7 @@ asicmatch(parent, cf, aux)
 gotasic:
 
 	/* See if the unit number is valid. */
-	switch (cputype) {
+	switch (systype) {
 	case DS_3MIN:
 		if (cf->cf_unit > 0)
 			return (0);
@@ -178,7 +178,7 @@ asicattach(parent, self, aux)
 	struct confargs *nca;
 	struct ioasicdev_attach_args ioasicdev;
 	int i;
-	extern int cputype;
+	extern int systype;
 
 	if (asic_slots == NULL)
 		panic("asicattach: no asic_slot map\n");
@@ -193,7 +193,7 @@ asicattach(parent, self, aux)
 	printf("\n");
 #else	/* Alpha AXP: select ASIC speed  */
 #ifdef DEC_3000_300
-	if (cputype == ST_DEC_3000_300) {
+	if (systype == ST_DEC_3000_300) {
 		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
 		    IOASIC_CSR_FASTMODE;
 		MB();
