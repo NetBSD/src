@@ -1,6 +1,8 @@
+/*	$NetBSD: rcstime.c,v 1.1.1.1 1996/10/13 21:56:51 veego Exp $	*/
+
 /* Convert between RCS time format and Posix and/or C formats.  */
 
-/* Copyright 1992, 1993, 1994 Paul Eggert
+/* Copyright 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -29,15 +32,9 @@ Report problems and direct all questions to:
 #include "partime.h"
 #include "maketime.h"
 
-libId(rcstimeId, "$Id: rcstime.c,v 1.1 1995/02/24 02:25:15 mycroft Exp $")
+libId(rcstimeId, "Id: rcstime.c,v 1.4 1995/06/16 06:19:24 eggert Exp")
 
-#if has_printf_dot
-	char const dateform[] = "%.2d.%.2d.%.2d.%.2d.%.2d.%.2d";
-#else
-	char const dateform[] = "%02d.%02d.%02d.%02d.%02d.%02d";
-#endif
-
-static int zone_offset; /* minutes east of UTC, or TM_LOCAL_ZONE */
+static long zone_offset; /* seconds east of UTC, or TM_LOCAL_ZONE */
 static int use_zone_offset; /* if zero, use UTC without zone indication */
 
 /*
@@ -52,7 +49,11 @@ time2date(unixtime,date)
 {
 	register struct tm const *tm = time2tm(unixtime, RCSversion<VERSION(5));
 	VOID sprintf(date,
-		dateform,
+#		if has_printf_dot
+			"%.2d.%.2d.%.2d.%.2d.%.2d.%.2d",
+#		else
+			"%02d.%02d.%02d.%02d.%02d.%02d",
+#		endif
 		tm->tm_year  +  ((unsigned)tm->tm_year < 100 ? 0 : 1900),
 		tm->tm_mon+1, tm->tm_mday,
 		tm->tm_hour, tm->tm_min, tm->tm_sec
@@ -60,12 +61,12 @@ time2date(unixtime,date)
 }
 
 /* Like str2time, except die if an error was found.  */
-static time_t str2time_checked P((char const*,time_t,int));
+static time_t str2time_checked P((char const*,time_t,long));
 	static time_t
 str2time_checked(source, default_time, default_zone)
 	char const *source;
 	time_t default_time;
-	int default_zone;
+	long default_zone;
 {
 	time_t t = str2time(source, default_time, default_zone);
 	if (t == -1)
@@ -108,7 +109,7 @@ zone_set(s)
 	char const *s;
 {
 	if ((use_zone_offset = *s)) {
-		int zone;
+		long zone;
 		char const *zonetail = parzone(s, &zone);
 		if (!zonetail || *zonetail)
 			error("%s: not a known time zone", s);
@@ -141,7 +142,8 @@ date2str(date, datebuf)
 	else {
 	    struct tm t;
 	    struct tm const *z;
-	    int zone;
+	    int non_hour;
+	    long zone;
 	    char c;
 
 	    t.tm_year = atoi(date) - (date[2]=='.' ? 0 : 1900);
@@ -153,9 +155,10 @@ date2str(date, datebuf)
 	    t.tm_wday = -1;
 	    zone = zone_offset;
 	    if (zone == TM_LOCAL_ZONE) {
-		time_t u = tm2time(&t, 0);
+		time_t u = tm2time(&t, 0), d;
 		z = localtime(&u);
-		zone = difftm(z, &t) / 60;
+		d = difftm(z, &t);
+		zone  =  (time_t)-1 < 0 || d < -d  ?  d  :  -(long)-d;
 	    } else {
 		adjzone(&t, zone);
 		z = &t;
@@ -167,14 +170,24 @@ date2str(date, datebuf)
 	    }
 	    VOID sprintf(datebuf,
 #		if has_printf_dot
-		    "%.2d-%.2d-%.2d %.2d:%.2d:%.2d%c%.2d%.2d",
+		    "%.2d-%.2d-%.2d %.2d:%.2d:%.2d%c%.2d",
 #		else
-		    "%02d-%02d-%02d %02d:%02d:%02d%c%02d%02d",
+		    "%02d-%02d-%02d %02d:%02d:%02d%c%02d",
 #		endif
 		z->tm_year + 1900,
 		z->tm_mon + 1, z->tm_mday, z->tm_hour, z->tm_min, z->tm_sec,
-		c, zone/60, zone%60
+		c, (int) (zone / (60*60))
 	    );
+	    if ((non_hour = zone % (60*60))) {
+#		if has_printf_dot
+		    static char const fmt[] = ":%.2d";
+#		else
+		    static char const fmt[] = ":%02d";
+#		endif
+		VOID sprintf(datebuf + strlen(datebuf), fmt, non_hour / 60);
+		if ((non_hour %= 60))
+		    VOID sprintf(datebuf + strlen(datebuf), fmt, non_hour);
+	    }
 	}
 	return datebuf;
 }

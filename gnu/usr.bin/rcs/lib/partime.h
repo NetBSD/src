@@ -1,6 +1,8 @@
+/*	$NetBSD: partime.h,v 1.1.1.1 1996/10/13 21:57:05 veego Exp $	*/
+
 /* Parse a string, yielding a struct partime that describes it.  */
 
-/* Copyright 1993 Paul Eggert
+/* Copyright 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,7 +31,7 @@ Report problems and direct all questions to:
 #define TM_UNDEFINED (-1)
 #define TM_DEFINED(x) (0 <= (x))
 
-#define TM_UNDEFINED_ZONE (-24 * 60)
+#define TM_UNDEFINED_ZONE ((long) -24 * 60 * 60)
 #define TM_LOCAL_ZONE (TM_UNDEFINED_ZONE - 1)
 
 struct partime {
@@ -56,8 +59,8 @@ struct partime {
 	*/
 	int yweek;
 
-	/* Minutes east of UTC; or TM_LOCAL_ZONE or TM_UNDEFINED_ZONE.  */
-	int zone;
+	/* Seconds east of UTC; or TM_LOCAL_ZONE or TM_UNDEFINED_ZONE.  */
+	long zone;
 };
 
 #if defined(__STDC__) || has_prototypes
@@ -66,9 +69,5 @@ struct partime {
 #	define __PARTIME_P(x) ()
 #endif
 
-#ifndef __STDC__
-#	define const
-#endif
-
-char const *partime __PARTIME_P((char const *, struct partime *));
-char const *parzone __PARTIME_P((char const *, int *));
+char *partime __PARTIME_P((char const *, struct partime *));
+char *parzone __PARTIME_P((char const *, long *));
