@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.4 2000/12/21 18:22:56 itojun Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.5 2000/12/21 18:24:57 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.4 2000/12/21 18:22:56 itojun Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.5 2000/12/21 18:24:57 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "rune.h"
@@ -339,7 +339,7 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 		} else
 			_PathModule = _PATH_LOCALEMODULE;
 	}
-	/* Range checking not needed, encoding length already checked above */
+
 	(void)snprintf(namebase, sizeof(namebase), "lib%s", rl->__encoding);
 	maj = RUNEMOD_MAJOR;
 	min = -1;
