@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.240 2003/02/18 13:36:52 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.241 2003/02/18 22:05:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -828,7 +828,9 @@ pgt_page_alloc(struct pool *pp, int flags)
 		return (NULL);
 
 	/* Allocate virtual memory */
-	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
+	va = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE,
+		UVM_KMF_VALLOC |
+		((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK));
 	if (va == 0) {
 		uvm_pagefree(pg);
 		return (NULL);
@@ -4664,7 +4666,8 @@ pmap_page_protect4_4c(pg, prot)
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		sp = &rp->rg_segmap[vs];
-		nleft = sp->sg_npte;
+		if ((nleft = sp->sg_npte) <= 0)
+			panic("pmap_page_protect: empty vseg");
 		sp->sg_npte = --nleft;
 
 		if (sp->sg_pmeg == seginval) {
@@ -5034,8 +5037,8 @@ pmap_page_protect4m(pg, prot)
 		if (rp->rg_nsegmap == 0)
 			panic("pmap_remove_all: empty vreg");
 		sp = &rp->rg_segmap[vs];
-		if ((nleft = sp->sg_npte) == 0)
-			panic("pmap_remove_all: empty vseg");
+		if ((nleft = sp->sg_npte) <= 0)
+			panic("pmap_page_protect: empty vseg");
 		sp->sg_npte = --nleft;
 
 		/*
@@ -6224,11 +6227,13 @@ pmap_kenter_pa4m(va, pa, prot)
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
+	simple_lock(&pm->pm_lock);
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
 
 	sp->sg_npte++;
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	simple_unlock(&pm->pm_lock);
 }
 
 void
@@ -6439,6 +6444,10 @@ pmap_extract4m(pm, va, pap)
 #endif
 		return (FALSE);
 	}
+#ifdef DIAGNOSTIC
+	if (sm->sg_npte <= 0)
+		panic("pmap_extract: pm %p: npte = %d\n", pm, sm->sg_npte);
+#endif
 
 	if (pap != NULL)
 		*pap = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) |
