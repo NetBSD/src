@@ -165,8 +165,10 @@ calc_address_cost (operand)
     case POST_DEC:
     case PRE_DEC:
       break;
-    case MULT:
     case MEM:
+      cost += calc_address_cost (XEXP (operand, 0));
+      break;
+    case MULT:
     case PLUS:
       for (i = 0; i < GET_RTX_LENGTH (GET_CODE (operand)); i++)
 	{
