@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.37 1997/05/24 09:48:53 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.38 1997/06/07 05:10:42 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -971,6 +971,30 @@ again:
 			asc->script = &asc_scripts[SCRIPT_GET_STATUS];
 			regs->asc_cmd = ASC_CMD_I_COMPLETE;
 			readback(regs->asc_cmd);
+			goto done;
+
+		case SCSI_PHASE_COMMAND:
+			/*
+			 * This seems to occur after the command is sent
+			 * following sync negotiation.  The device still
+			 * wants more command data.  The fifo appears to
+			 * to still have the unsent data - but the 53C94
+			 * signaled TC.  If the fifo still contains data,
+			 * transfer it, otherwise do a transfer pad.  The
+			 * target should then continue through the rest of
+			 * the phases and complete normally.
+			 */
+			printf("asc_intr: tgt %d command phase TC zero",
+			    asc->target);
+			if ((regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
+				printf(" with non-empty fifo %d\n",
+				    regs->asc_flags & ASC_FLAGS_FIFO_CNT);
+				regs->asc_cmd = ASC_CMD_XFER_INFO;
+			} else {
+				printf("; padding command\n");
+				ASC_TC_PUT(regs, 0xff);
+				regs->asc_cmd = ASC_CMD_XFER_PAD | ASC_CMD_DMA;
+			}
 			goto done;
 
 		default:
@@ -2050,12 +2074,11 @@ asc_disconnect(asc, status, ss, ir)
 	register asc_softc_t asc;
 	register int status, ss, ir;
 {
-#if  MACH_DDIAGNOSTIC
+	int i;
+#ifdef DIAGNOSTIC
 	/* later Mach driver checks for late asych disconnect here. */
 	register State *state = &asc->st[asc->target];
-#endif
 
-#ifdef DIAGNOSTIC
 	if (!(state->flags & DISCONN)) {
 		printf("asc_disconnect: device %d: DISCONN not set!\n",
 			asc->target);
@@ -2063,6 +2086,18 @@ asc_disconnect(asc, status, ss, ir)
 #endif /*DIAGNOSTIC*/
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
+	/*
+	 * Look for another device that is ready.
+	 * May want to keep last one started and increment for fairness
+	 * rather than always starting at zero.
+	 */
+	for (i = 0; i < ASC_NCMD; i++) {
+		/* don't restart a disconnected command */
+		if (!asc->cmd[i] || asc->st[i].flags & DISCONN)
+			continue;
+		asc_startcmd(asc, i);
+		return (0);
+	}
 	return (1);
 }
 
