@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.7 2000/01/03 22:07:11 simonb Exp $
+#	$NetBSD: list,v 1.8 2000/01/06 01:43:30 simonb Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
 LINK	ramdiskbin			sysinst
+LINK	ramdiskbin			bin/[
 LINK	ramdiskbin			bin/cat
 LINK	ramdiskbin			bin/chmod
 LINK	ramdiskbin			bin/cp
@@ -21,7 +22,6 @@ LINK	ramdiskbin			bin/sh
 LINK	ramdiskbin			bin/stty
 LINK	ramdiskbin			bin/sync
 LINK	ramdiskbin			bin/test
-LINK	ramdiskbin			bin/[
 LINK	ramdiskbin			sbin/disklabel
 LINK	ramdiskbin			sbin/fsck
 LINK	ramdiskbin			sbin/fsck_ffs
@@ -32,9 +32,9 @@ LINK	ramdiskbin			sbin/mknod
 LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
 LINK	ramdiskbin			sbin/mount_ffs
+LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
 LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/newfs
 LINK	ramdiskbin			sbin/ping
 LINK	ramdiskbin			sbin/reboot
@@ -44,29 +44,26 @@ LINK	ramdiskbin			sbin/rrestore
 LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/umount
-SYMLINK	/bin/cat			usr/bin/chgrp
-SYMLINK	/bin/cat			usr/bin/cpio
-SYMLINK	/bin/cat			usr/bin/ftp
-SYMLINK	/bin/cat			usr/bin/gunzip
-SYMLINK	/bin/cat			usr/bin/gzcat
-SYMLINK	/bin/cat			usr/bin/gzip
-SYMLINK	/bin/cat			usr/bin/more
-SYMLINK	/bin/cat			usr/bin/sed
-SYMLINK	/bin/cat			usr/bin/strings
-SYMLINK	/bin/cat			usr/bin/tar
-SYMLINK	/bin/cat			usr/bin/tip
-SYMLINK	/bin/cat			usr/bin/tset
-SYMLINK	/bin/cat			usr/sbin/bad144
-SYMLINK	/bin/cat			usr/sbin/chown
-SYMLINK	/bin/cat			usr/sbin/chroot
-SYMLINK	/bin/cat			usr/mdec/installboot
+LINK	ramdiskbin			usr/bin/chgrp
+LINK	ramdiskbin			usr/bin/cpio
+LINK	ramdiskbin			usr/bin/ftp
+LINK	ramdiskbin			usr/bin/gunzip
+LINK	ramdiskbin			usr/bin/gzcat
+LINK	ramdiskbin			usr/bin/gzip
+LINK	ramdiskbin			usr/bin/more
+LINK	ramdiskbin			usr/bin/sed
+LINK	ramdiskbin			usr/bin/strings
+LINK	ramdiskbin			usr/bin/tar
+LINK	ramdiskbin			usr/bin/tip
+LINK	ramdiskbin			usr/bin/tset
+LINK	ramdiskbin			usr/mdec/installboot
+LINK	ramdiskbin			usr/sbin/bad144
+LINK	ramdiskbin			usr/sbin/chown
+LINK	ramdiskbin			usr/sbin/chroot
 SPECIAL	/bin/rm ramdiskbin
 
-# copy the MAKEDEV script and make some devices
-COPY	${CURDIR}/../../../etc/etc.pmax/MAKEDEV	dev/MAKEDEV
-#SPECIAL	cd dev; sh MAKEDEV minimal
-SPECIAL	cd dev; sh MAKEDEV minimal pty0
-SPECIAL	/bin/rm dev/MAKEDEV
+# make some devices
+SPECIAL	cd dev; sh ${CURDIR}/../../../etc/etc.pmax/MAKEDEV minimal pty0
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
@@ -76,8 +73,7 @@ COPY	${DESTDIR}/usr/mdec/boot.pmax		usr/mdec/boot.pmax
 COPY	${CURDIR}/../../../etc/group		etc/group
 COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../etc/services	etc/services
-SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+COPY	${CURDIR}/../../../etc/services		etc/services
 
 # and the common installation tools
 COPY	${ARCHDIR}/termcap.rcons		usr/share/misc/termcap
@@ -85,7 +81,7 @@ COPY	${ARCHDIR}/termcap.rcons		usr/share/misc/termcap
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
-# and the installation tools
+# and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
 COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 
@@ -95,4 +91,4 @@ COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 #COPY	${CURDIR}/../../notes/pmax/INSTALL.txt	INSTALL.txt
 
 #the lists of obsolete files used by sysinst  
-SPECIAL sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist
+SPECIAL sh ${CURDIR}/../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist
