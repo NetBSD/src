@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.13 1999/09/27 16:24:39 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.14 2002/08/04 05:22:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -48,7 +48,7 @@
 #define	_POSIX_NAME_MAX		14
 #define	_POSIX_NGROUPS_MAX	0
 #define	_POSIX_OPEN_MAX		16
-#define	_POSIX_PATH_MAX		255
+#define	_POSIX_PATH_MAX		256
 #define	_POSIX_PIPE_BUF		512
 #define	_POSIX_SSIZE_MAX	32767
 #define	_POSIX_STREAM_MAX	8
