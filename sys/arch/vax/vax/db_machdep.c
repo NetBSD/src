@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 1998/04/13 12:10:27 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11 1998/06/07 20:19:13 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -179,9 +179,7 @@ db_write_bytes(addr, size, data)
 void
 Debugger()
 {
-	int s = splx(0xe); /* Is this good? We must lower anyway... */
 	mtpr(0xf, PR_SIRR); /* beg for debugger */
-	splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.2 1998/06/05 22:02:57 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.3 1998/06/07 20:19:12 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,6 +52,7 @@
 static  int lkc_match __P((struct device *, struct cfdata *, void *));
 static  void lkc_attach __P((struct device *, struct device *, void *));
 static	int lkc_catch __P((int, int));
+	int lkc_decode __P((int));
 
 struct  lkc_softc {
 	struct  device ls_dev;
@@ -90,32 +91,58 @@ int
 lkc_catch(line, ch)
 	int line, ch;
 {
-	struct lkc_softc *ls = lkc_cd.cd_devs[0]; /* XXX */
-	extern unsigned short q_key[], q_shift_key[];
 	extern char *q_special[];
-	u_short hej;
+	int hej;
 	char c, *cp;
 
 	if (line > 1)
 		return 0;
 
+	if ((hej = lkc_decode(ch)) == -1)
+		return 1;
+
+	if (hej > 255) {
+		cp = q_special[c & 255];
+		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp, strlen(cp));
+	} else {
+		c = hej;
+		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], &c, 1);
+	}
+	return 1;
+}
+
+int
+lkc_decode(ch)
+	int ch;
+{
+	extern unsigned short q_key[], q_shift_key[];
+	static int shifted, ctrl, lastchar;
+	int hej;
+
 	switch (ch) {
 	case KEY_SHIFT:
-		ls->ls_shifted ^= 1;
-		return 1;
+		shifted ^= 1;
+		return -1;
 
 	case KEY_UP:
-		ls->ls_shifted = ls->ls_ctrl = 0;
-		return 1;
+		shifted = ctrl = 0;
+		return -1;
 
 	case KEY_CONTROL:
-		ls->ls_ctrl ^= 1;
-		return 1;
+		ctrl ^= 1;
+		return -1;
 
 	case KEY_REPEAT:
-		ch = ls->ls_lastchar;
+		ch = lastchar;
 		break;
 
+#if DDB
+	case 113: /* ESC */
+		if ((shifted & ctrl) == 0)
+			break;
+		Debugger();
+		return -1;
+#endif
 	case 86:
 	case 87:
 	case 88:
@@ -124,29 +151,24 @@ lkc_catch(line, ch)
 	case 100:
 	case 101:
 	case 102:
-		if ((ls->ls_shifted & ls->ls_ctrl) == 0)
+		if ((shifted & ctrl) == 0)
 			break;
 		ch -= 86;
 		if (ch > 10)
 			ch -= 9;
 		wsdisplay_switch(wsdisplay_cd.cd_devs[0], ch);
-		return 1;
+		return -1;
 
 	default:
 		break;
 	}
 
-	hej = (ls->ls_shifted ? q_shift_key[ch] : q_key[ch]);
-	c = hej;
-	ls->ls_lastchar = ch;
+	hej = (shifted ? q_shift_key[ch] : q_key[ch]);
+	lastchar = ch;
 
-	if (ls->ls_ctrl && c > 64)
-		c &= 31;
+	if (ctrl)
+		hej &= 31;
 
-	if (hej > 255) {
-		cp = q_special[hej & 255];
-		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp, strlen(cp));
-	} else
-		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], &c, 1);
-	return 1;
+	return hej;
 }
+
