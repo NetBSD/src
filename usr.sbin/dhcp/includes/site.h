@@ -85,7 +85,7 @@
 /* Define this if you want DHCP failover protocol support in the DHCP
    server. */
 
-/* #define FAILOVER_PROTOCOL */
+#define FAILOVER_PROTOCOL
 
 /* Define this if you want DNS update functionality to be available. */
 

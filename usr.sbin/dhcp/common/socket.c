@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.10.2.1 2000/07/22 05:04:43 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.10.2.2 2000/10/18 04:11:14 tv Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -131,9 +131,12 @@ int if_register_socket (info)
 			(char *)&flag, sizeof flag) < 0)
 		log_fatal ("Can't set SO_REUSEADDR option on dhcp socket: %m");
 
-	/* Set the BROADCAST option so that we can broadcast DHCP responses. */
-	if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
-			(char *)&flag, sizeof flag) < 0)
+	/* Set the BROADCAST option so that we can broadcast DHCP responses.
+	   We shouldn't do this for fallback devices, and we can detect that
+	   a device is a fallback because it has no ifp structure. */
+	if (info -> ifp &&
+	    (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
+			 (char *)&flag, sizeof flag) < 0))
 		log_fatal ("Can't set SO_BROADCAST option on dhcp socket: %m");
 
 	/* Bind the socket to this interface's IP address. */
@@ -181,7 +184,7 @@ void if_register_send (info)
 		       info -> shared_network -> name : ""));
 }
 
-#if !defined (USE_SOCKET_FALLBACK)
+#if defined (USE_SOCKET_SEND)
 void if_deregister_send (info)
 	struct interface_info *info;
 {
@@ -197,7 +200,7 @@ void if_deregister_send (info)
 		      (info -> shared_network ?
 		       info -> shared_network -> name : ""));
 }
-#endif /* !USE_SOCKET_FALLBACK */
+#endif /* USE_SOCKET_SEND */
 #endif /* USE_SOCKET_SEND || USE_SOCKET_FALLBACK */
 
 #ifdef USE_SOCKET_RECEIVE
@@ -334,6 +337,16 @@ int can_receive_unicast_unconfigured (ip)
 #endif
 }
 
+int supports_multiple_interfaces (ip)
+	struct interface_info *ip;
+{
+#if defined (SO_BINDTODEVICE)
+	return 1;
+#else
+	return 0;
+#endif
+}
+
 /* If we have SO_BINDTODEVICE, set up a fallback interface; otherwise,
    do not. */
 
@@ -341,18 +354,23 @@ void maybe_setup_fallback ()
 {
 #if defined (USE_SOCKET_FALLBACK)
 	isc_result_t status;
-	struct interface_info *fbi;
-	fbi = setup_fallback ();
-	if (fbi) {
+	struct interface_info *fbi = (struct interface_info *)0;
+	if (setup_fallback (&fbi, MDL)) {
 		fbi -> wfdesc = if_register_socket (fbi);
-		fbi -> refcnt = 1;
-		fbi -> type = dhcp_type_interface;
+		fbi -> rfdesc = fbi -> wfdesc;
+		log_info ("Sending on   Socket/%s%s%s",
+		      fbi -> name,
+		      (fbi -> shared_network ? "/" : ""),
+		      (fbi -> shared_network ?
+		       fbi -> shared_network -> name : ""));
+	
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't register I/O handle for %s: %s",
 				   fbi -> name, isc_result_totext (status));
+		interface_dereference (&fbi, MDL);
 	}
 #endif
 }

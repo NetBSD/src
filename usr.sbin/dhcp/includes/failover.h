@@ -158,6 +158,9 @@ typedef struct {
 
 #define DHCP_FAILOVER_MAX_MESSAGE_SIZE	2048
 
+/* Failover server flags. */
+#define FTF_STARTUP	1
+
 typedef struct {
 	u_int8_t type;
 
@@ -214,9 +217,10 @@ typedef struct {
 	u_int32_t xid;
 } dhcp_failover_link_t;
 
-typedef struct {
+typedef struct _dhcp_failover_listener {
 	OMAPI_OBJECT_PREAMBLE;
-	unsigned local_port;
+	struct _dhcp_failover_listener *next;
+	omapi_addr_t address;
 } dhcp_failover_listener_t;
 #endif /* FAILOVER_PROTOCOL */
 
@@ -226,31 +230,55 @@ enum failover_state {
 	partner_down,
 	normal,
 	communications_interrupted,
-	potential_conflict_nic,
+	resolution_interrupted,
 	potential_conflict,
-	recover
+	recover,
+	recover_done,
+	shut_down,
+	paused,
+	startup
+};
+
+/* Service states are simplifications of failover states, particularly
+   useful because the startup state isn't actually implementable as a
+   seperate failover state without maintaining a state stack. */
+
+enum service_state {
+	unknown_service_state,
+	cooperating,
+	not_cooperating,
+	service_partner_down,
+	not_responding,
+	service_startup
 };
 
 #if defined (FAILOVER_PROTOCOL)
+typedef struct _dhcp_failover_config {
+	struct option_cache *address;
+	int port;
+	u_int32_t max_flying_updates;
+	enum failover_state state;
+	TIME stos;
+	u_int32_t max_response_delay;
+} dhcp_failover_config_t;
+
 typedef struct _dhcp_failover_state {
 	OMAPI_OBJECT_PREAMBLE;
 	struct _dhcp_failover_state *next;
 	char *name;			/* Name of this failover instance. */
-	struct option_cache *address;	/* Partner's IP address or hostname. */
-	int port;			/* Partner's TCP port. */
-	struct option_cache *server_addr; /* IP address on which to listen. */
+	dhcp_failover_config_t me;	/* My configuration. */
+	dhcp_failover_config_t partner;	/* Partner's configuration. */
+	enum failover_state saved_state; /* Saved state during startup. */
 	struct data_string server_identifier; /* Server identifier (IP addr) */
-	int listen_port;		/* Port on which to listen. */
-	u_int32_t max_flying_updates;
 	u_int32_t mclt;
 
 	u_int8_t *hba;	/* Hash bucket array for load balancing. */
 	int load_balance_max_secs;
 
-	enum failover_state partner_state;
-	TIME partner_stos;
-	enum failover_state my_state;
-	TIME my_stos;
+	enum service_state service_state;
+	const char *nrr;	/* Printable reason why we're in the
+				   not_responding service state (empty
+				   string if we are responding. */
 
 	dhcp_failover_link_t *link_to_peer;	/* Currently-established link
 						   to peer. */
@@ -263,13 +291,6 @@ typedef struct _dhcp_failover_state {
 	TIME last_timestamp_received;	/* The last timestamp we sent that
 					   has been returned by our partner. */
 	TIME skew;	/* The skew between our clock and our partner's. */
-	u_int32_t max_transmit_idle; /* Always send a poll if we haven't sent
-					some other packet more recently than
-					this. */
-	u_int32_t max_response_delay;	/* If the returned timestamp on the
-					   last packet we received is older
-					   than this, communications have been
-					   interrupted. */
 	struct lease *update_queue_head; /* List of leases we haven't sent
 					    to peer. */
 	struct lease *update_queue_tail;
@@ -277,6 +298,9 @@ typedef struct _dhcp_failover_state {
 	struct lease *ack_queue_head;	/* List of lease updates the peer
 					   hasn't yet acked. */
 	struct lease *ack_queue_tail;
+
+	struct lease *send_update_done;	/* When we get a BNDACK for this
+					   lease, send an UPDDONE message. */
 	int cur_unacked_updates;	/* Number of updates we've sent
 					   that have not yet been acked. */
 } dhcp_failover_state_t;

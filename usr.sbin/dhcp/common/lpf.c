@@ -37,7 +37,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: lpf.c,v 1.1.1.6 2000/06/10 18:04:48 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: lpf.c,v 1.1.1.6.2.1 2000/10/18 04:11:05 tv Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -83,14 +83,18 @@ int if_register_lpf (info)
 	struct sockaddr sa;
 
 	/* Make an LPF socket. */
-	if ((sock = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ALL))) < 0) {
+	if ((sock = socket(PF_PACKET, SOCK_PACKET,
+			   htons((short)ETH_P_ALL))) < 0) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT || errno == EINVAL)
-			log_fatal ("socket: %m - make sure %s %s %s!",
-				   "CONFIG_PACKET (Packet socket)"
-				   "and CONFIG_FILTER (Socket Filtering) are",
-				   "enabled in your kernel configuration");
+		    errno == EAFNOSUPPORT || errno == EINVAL) {
+			log_error ("socket: %m - make sure");
+			log_error ("CONFIG_PACKET (Packet socket) %s",
+				   "and CONFIG_FILTER");
+			log_error ("(Socket Filtering) are enabled %s",
+				   "in your kernel");
+			log_fatal ("configuration!");
+		}
 		log_fatal ("Open a socket for LPF: %m");
 	}
 
@@ -101,11 +105,14 @@ int if_register_lpf (info)
 	if (bind (sock, &sa, sizeof sa)) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT || errno == EINVAL)
-			log_fatal ("socket: %m - make sure %s %s %s!",
-				   "CONFIG_PACKET (Packet socket)"
-				   "and CONFIG_FILTER (Socket Filtering) are",
-				   "enabled in your kernel configuration");
+		    errno == EAFNOSUPPORT || errno == EINVAL) {
+			log_error ("socket: %m - make sure");
+			log_error ("CONFIG_PACKET (Packet socket) %s",
+				   "and CONFIG_FILTER");
+			log_error ("(Socket Filtering) are enabled %s",
+				   "in your kernel");
+			log_fatal ("configuration!");
+		}
 		log_fatal ("Bind socket to interface: %m");
 	}
 
@@ -163,11 +170,14 @@ void if_deregister_send (info)
    in bpf includes... */
 extern struct sock_filter dhcp_bpf_filter [];
 extern int dhcp_bpf_filter_len;
+
+#if defined (HAVE_TR_SUPPORT)
 extern struct sock_filter dhcp_bpf_tr_filter [];
 extern int dhcp_bpf_tr_filter_len;
+static void lpf_tr_filter_setup (struct interface_info *);
+#endif
 
 static void lpf_gen_filter_setup (struct interface_info *);
-static void lpf_tr_filter_setup (struct interface_info *);
 
 void if_register_receive (info)
 	struct interface_info *info;
@@ -175,9 +185,11 @@ void if_register_receive (info)
 	/* Open a LPF device and hang it on this interface... */
 	info -> rfdesc = if_register_lpf (info);
 
+#if defined (HAVE_TR_SUPPORT)
 	if (info -> hw_address.hbuf [0] == HTYPE_IEEE802)
 		lpf_tr_filter_setup (info);
 	else
+#endif
 		lpf_gen_filter_setup (info);
 
 	if (!quiet_interface_discovery)
@@ -222,21 +234,25 @@ static void lpf_gen_filter_setup (info)
         /* Patch the server port into the LPF  program...
 	   XXX changes to filter program may require changes
 	   to the insn number(s) used below! XXX */
-	dhcp_bpf_filter [8].k = ntohs (local_port);
+	dhcp_bpf_filter [8].k = ntohs ((short)local_port);
 
 	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
 			sizeof p) < 0) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT)
-			log_fatal ("socket: %m - make sure %s %s %s!",
-				   "CONFIG_PACKET (Packet socket)"
-				   "and CONFIG_FILTER (Socket Filtering) are",
-				   "enabled in your kernel configuration");
+		    errno == EAFNOSUPPORT) {
+			log_error ("socket: %m - make sure");
+			log_error ("CONFIG_PACKET (Packet socket) %s",
+				   "and CONFIG_FILTER");
+			log_error ("(Socket Filtering) are enabled %s",
+				   "in your kernel");
+			log_fatal ("configuration!");
+		}
 		log_fatal ("Can't install packet filter program: %m");
 	}
 }
 
+#if defined (HAVE_TR_SUPPORT)
 static void lpf_tr_filter_setup (info)
 	struct interface_info *info;
 {
@@ -258,14 +274,18 @@ static void lpf_tr_filter_setup (info)
 			sizeof p) < 0) {
 		if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
 		    errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
-		    errno == EAFNOSUPPORT)
-			log_fatal ("socket: %m - make sure %s %s %s!",
-				   "CONFIG_PACKET (Packet socket)"
-				   "and CONFIG_FILTER (Socket Filtering) are",
-				   "enabled in your kernel configuration");
+		    errno == EAFNOSUPPORT) {
+			log_error ("socket: %m - make sure");
+			log_error ("CONFIG_PACKET (Packet socket) %s",
+				   "and CONFIG_FILTER");
+			log_error ("(Socket Filtering) are enabled %s",
+				   "in your kernel");
+			log_fatal ("configuration!");
+		}
 		log_fatal ("Can't install packet filter program: %m");
 	}
 }
+#endif /* HAVE_TR_SUPPORT */
 #endif /* USE_LPF_RECEIVE */
 
 #ifdef USE_LPF_SEND
@@ -278,21 +298,27 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
-	unsigned bufp = 0;
-	unsigned char buf [1500];
+	unsigned hbufp = 0, ibufp = 0;
+	double hh [16];
+	double ih [1536 / sizeof (double)];
+	unsigned char *buf = (unsigned char *)ih;
 	struct sockaddr sa;
 	int result;
+	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
 				      len, from, to, hto);
 
 	/* Assemble the headers... */
-	assemble_hw_header (interface, buf, &bufp, hto);
-	assemble_udp_ip_header (interface, buf, &bufp, from.s_addr,
+	assemble_hw_header (interface, (unsigned char *)hh, &hbufp, hto);
+	fudge = hbufp % 4;	/* IP header must be word-aligned. */
+	memcpy (buf + fudge, (unsigned char *)hh, hbufp);
+	ibufp = hbufp + fudge;
+	assemble_udp_ip_header (interface, buf, &ibufp, from.s_addr,
 				to -> sin_addr.s_addr, to -> sin_port,
 				(unsigned char *)raw, len);
-	memcpy (buf + bufp, raw, len);
+	memcpy (buf + ibufp, raw, len);
 
 	/* For some reason, SOCK_PACKET sockets can't be connected,
 	   so we have to do a sentdo every time. */
@@ -301,8 +327,8 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	strncpy (sa.sa_data,
 		 (const char *)interface -> ifp, sizeof sa.sa_data);
 
-	result = sendto (interface -> wfdesc, buf, bufp + len, 0,
-			 &sa, sizeof sa);
+	result = sendto (interface -> wfdesc,
+			 buf + fudge, ibufp + len - fudge, 0, &sa, sizeof sa);
 	if (result < 0)
 		log_error ("send_packet: %m");
 	return result;
@@ -321,7 +347,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int length = 0;
 	int offset = 0;
 	unsigned char ibuf [1500];
-	int bufix = 0;
+	unsigned bufix = 0;
 
 	length = read (interface -> rfdesc, ibuf, sizeof ibuf);
 	if (length <= 0)
@@ -342,8 +368,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	length -= offset;
 
 	/* Decode the IP and UDP headers... */
-	offset = decode_udp_ip_header (interface, ibuf, bufix,
-				       from, (unsigned char *)0, length);
+	offset = decode_udp_ip_header (interface, ibuf, bufix, from,
+				       (unsigned char *)0, (unsigned)length);
 
 	/* If the IP or UDP checksum was bad, skip the packet... */
 	if (offset < 0)
@@ -364,6 +390,12 @@ int can_unicast_without_arp (ip)
 }
 
 int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
+int supports_multiple_interfaces (ip)
 	struct interface_info *ip;
 {
 	return 1;

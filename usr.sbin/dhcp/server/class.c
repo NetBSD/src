@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.2 2000/06/10 18:05:30 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.2.2.1 2000/10/18 04:11:40 tv Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ void classification_setup ()
 void classify_client (packet)
 	struct packet *packet;
 {
-	execute_statements (packet, (struct lease *)0, packet -> options,
+	execute_statements ((struct binding_value **)0,
+			    packet, (struct lease *)0, packet -> options,
 			    (struct option_state *)0, &global_scope,
 			    default_classification_rules);
 }
@@ -105,14 +106,42 @@ int check_collection (packet, lease, collection)
 		log_info ("checking against class %s...", class -> name);
 #endif
 		memset (&data, 0, sizeof data);
-		/* If a class is for billing, don't put the client in the
-		   class if we've already billed it to a different class. */
+
+		/* If there is a "match if" expression, check it.   If
+		   we get a match, and there's no subclass expression,
+		   it's a match.   If we get a match and there is a subclass
+		   expression, then we check the submatch.   If it's not a
+		   match, that's final - we don't check the submatch. */
+
+		if (class -> expr) {
+			status = (evaluate_boolean_expression_result
+				  (&ignorep, packet, lease,
+				   packet -> options, (struct option_state *)0,
+				   lease ? &lease -> scope : &global_scope,
+				   class -> expr));
+			if (status) {
+				if (!class -> submatch) {
+					matched = 1;
+#if defined (DEBUG_CLASS_MATCHING)
+					log_info ("matches class.");
+#endif
+					classify (packet, class);
+					continue;
+				}
+			} else
+				continue;
+		}
+
+		/* Check to see if the client matches an existing subclass.
+		   If it doesn't, and this is a spawning class, spawn a new
+		   subclass and put the client in it. */
 		if (class -> submatch) {
 			status = (evaluate_data_expression
 				  (&data, packet, lease,
 				   packet -> options, (struct option_state *)0,
-				   &lease -> scope, class -> submatch));
-			if (status) {
+				   lease ? &lease -> scope : &global_scope,
+				   class -> submatch));
+			if (status && data.len) {
 				nc = (struct class *)0;
 				if (class_hash_lookup (&nc, class -> hash,
 						       (const char *)data.data,
@@ -125,6 +154,7 @@ int check_collection (packet, lease, collection)
 					data_string_forget (&data, MDL);
 					classify (packet, nc);
 					matched = 1;
+					class_dereference (&nc, MDL);
 					continue;
 				}
 				if (!class -> spawning) {
@@ -135,11 +165,11 @@ int check_collection (packet, lease, collection)
 				log_info ("spawning subclass %s.",
 				      print_hex_1 (data.len, data.data, 60));
 #endif
-				nc = (struct class *)
-					dmalloc (sizeof (struct class), MDL);
-				memset (nc, 0, sizeof *nc);
-				nc -> group = class -> group;
-				nc -> superclass = class;
+				status = class_allocate (&nc, MDL);
+				group_reference (&nc -> group,
+						 class -> group, MDL);
+				class_reference (&nc -> superclass,
+						 class, MDL);
 				nc -> lease_limit = class -> lease_limit;
 				nc -> dirty = 1;
 				if (nc -> lease_limit) {
@@ -154,7 +184,7 @@ int check_collection (packet, lease, collection)
 						data_string_forget
 							(&nc -> hash_string,
 							 MDL);
-						dfree (nc, MDL);
+						class_dereference (&nc, MDL);
 						data_string_forget (&data,
 								    MDL);
 						continue;
@@ -175,18 +205,6 @@ int check_collection (packet, lease, collection)
 						nc, MDL);
 				classify (packet, nc);
 			}
-		}
-
-		status = (evaluate_boolean_expression_result
-			  (&ignorep, packet, lease,
-			   packet -> options, (struct option_state *)0,
-			   &lease -> scope, class -> expr));
-		if (status) {
-			matched = 1;
-#if defined (DEBUG_CLASS_MATCHING)
-			log_info ("matches class.");
-#endif
-			classify (packet, class);
 		}
 	}
 	return matched;

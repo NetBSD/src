@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.1.1.1.2.1 2000/07/10 19:58:47 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.1.1.1.2.2 2000/10/18 04:11:01 tv Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -77,7 +77,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_group_lookup, 
 					     dhcp_group_create,
 					     dhcp_group_remove, 0, 0, 0,
-					     sizeof (struct group));
+					     sizeof (struct group_object), 0);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register group object type: %s",
 			   isc_result_totext (status));
@@ -92,7 +92,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_subnet_lookup, 
 					     dhcp_subnet_create,
 					     dhcp_subnet_remove, 0, 0, 0,
-					     sizeof (struct subnet));
+					     sizeof (struct subnet), 0);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register subnet object type: %s",
 			   isc_result_totext (status));
@@ -108,7 +108,7 @@ void dhcp_common_objects_setup ()
 		 dhcp_shared_network_lookup, 
 		 dhcp_shared_network_create,
 		 dhcp_shared_network_remove, 0, 0, 0,
-		 sizeof (struct shared_network));
+		 sizeof (struct shared_network), 0);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register shared network object type: %s",
 			   isc_result_totext (status));
@@ -124,7 +124,8 @@ void dhcp_common_objects_setup ()
 					     dhcp_interface_create,
 					     dhcp_interface_remove,
 					     0, 0, 0,
-					     sizeof (struct interface_info));
+					     sizeof (struct interface_info),
+					     0);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register interface object type: %s",
 			   isc_result_totext (status));
@@ -410,7 +411,6 @@ isc_result_t dhcp_group_create (omapi_object_t **lp,
 	status = group_object_allocate (&group, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	memset (group, 0, sizeof *group);
 	group -> flags = GROUP_OBJECT_DYNAMIC;
 	status = omapi_object_reference (lp, (omapi_object_t *)group, MDL);
 	group_object_dereference (&group, MDL);

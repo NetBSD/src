@@ -53,6 +53,7 @@ omapi_object_type_t *omapi_type_protocol_listener;
 omapi_object_type_t *omapi_type_waiter;
 omapi_object_type_t *omapi_type_remote;
 omapi_object_type_t *omapi_type_message;
+omapi_object_type_t *omapi_type_auth_key;
 
 omapi_object_type_t *omapi_object_types;
 int omapi_object_type_count;
@@ -61,6 +62,8 @@ static int ot_max;
 isc_result_t omapi_init (void)
 {
 	isc_result_t status;
+
+	dst_init();
 
 	/* Register all the standard object types... */
 	status = omapi_object_type_register (&omapi_type_connection,
@@ -72,7 +75,7 @@ isc_result_t omapi_init (void)
 					     omapi_connection_stuff_values,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof
-					     (omapi_connection_object_t));
+					     (omapi_connection_object_t), 0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -84,7 +87,8 @@ isc_result_t omapi_init (void)
 					     omapi_listener_signal_handler,
 					     omapi_listener_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_listener_object_t));
+					     sizeof (omapi_listener_object_t),
+					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -96,7 +100,7 @@ isc_result_t omapi_init (void)
 					     omapi_io_signal_handler,
 					     omapi_io_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_io_object_t));
+					     sizeof (omapi_io_object_t), 0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -108,7 +112,8 @@ isc_result_t omapi_init (void)
 					     omapi_generic_signal_handler,
 					     omapi_generic_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_generic_object_t));
+					     sizeof (omapi_generic_object_t),
+					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -120,7 +125,8 @@ isc_result_t omapi_init (void)
 					     omapi_protocol_signal_handler,
 					     omapi_protocol_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_protocol_object_t));
+					     sizeof (omapi_protocol_object_t),
+					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -132,7 +138,7 @@ isc_result_t omapi_init (void)
 		   omapi_protocol_listener_signal,
 		   omapi_protocol_listener_stuff,
 		   0, 0, 0, 0, 0, 0,
-		   sizeof (omapi_protocol_listener_object_t)));
+		   sizeof (omapi_protocol_listener_object_t), 0));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -144,7 +150,8 @@ isc_result_t omapi_init (void)
 					     omapi_message_signal_handler,
 					     omapi_message_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_message_object_t));
+					     sizeof (omapi_message_object_t),
+					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -155,7 +162,21 @@ isc_result_t omapi_init (void)
 					     0,
 					     omapi_waiter_signal_handler, 0,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (omapi_waiter_object_t));
+					     sizeof (omapi_waiter_object_t),
+					     0);
+	if (status != ISC_R_SUCCESS)
+		return status;
+
+	status = omapi_object_type_register (&omapi_type_auth_key,
+					     "authenticator",
+					     0,
+					     omapi_auth_key_get_value,
+					     omapi_auth_key_destroy,
+					     0,
+					     omapi_auth_key_stuff_values,
+					     omapi_auth_key_lookup,
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_auth_key_t), 0);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -202,7 +223,10 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 						(omapi_object_t **,
 						 const char *, int),
 					 isc_result_t (*sizer) (size_t),
-					 size_t size)
+					 size_t size,
+					 isc_result_t (*initialize)
+						(omapi_object_t *,
+						 const char *, int))
 {
 	omapi_object_type_t *t;
 
@@ -225,6 +249,7 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 	t -> size = size;
 	t -> freer = freer;
 	t -> allocator = allocator;
+	t -> initialize = initialize;
 	omapi_object_types = t;
 	if (type)
 		*type = t;
@@ -274,13 +299,47 @@ isc_result_t omapi_set_value (omapi_object_t *h,
 			      omapi_typed_data_t *value)
 {
 	omapi_object_t *outer;
+	isc_result_t status;
+
+#if defined (DEBUG)
+	if (!value) {
+		log_info ("omapi_set_value (%.*s, NULL)",
+			  (int)name -> len, name -> value);
+	} else if (value -> type == omapi_datatype_int) {
+		log_info ("omapi_set_value (%.*s, %ld)",
+			  (int)name -> len, name -> value,
+			  (long)value -> u.integer);
+	} else if (value -> type == omapi_datatype_string) {
+		log_info ("omapi_set_value (%.*s, %.*s)",
+			  (int)name -> len, name -> value,
+			  (int)value -> u.buffer.len, value -> u.buffer.value);
+	} else if (value -> type == omapi_datatype_data) {
+		log_info ("omapi_set_value (%.*s, %ld %lx)",
+			  (int)name -> len, name -> value,
+			  (long)value -> u.buffer.len,
+			  (unsigned long)value -> u.buffer.value);
+	} else if (value -> type == omapi_datatype_object) {
+		log_info ("omapi_set_value (%.*s, %s)",
+			  (int)name -> len, name -> value,
+			  value -> u.object
+			  ? (value -> u.object -> type
+			     ? value -> u.object -> type -> name
+			     : "(unknown object)")
+			  : "(unknown object)");
+	}
+#endif
 
 	for (outer = h; outer -> outer; outer = outer -> outer)
 		;
 	if (outer -> type -> set_value)
-		return (*(outer -> type -> set_value)) (outer,
-							id, name, value);
-	return ISC_R_NOTFOUND;
+		status = (*(outer -> type -> set_value)) (outer,
+							  id, name, value);
+	else
+		status = ISC_R_NOTFOUND;
+#if defined (DEBUG)
+	log_info (" ==> %s", isc_result_totext (status));
+#endif
+	return status;
 }
 
 isc_result_t omapi_set_value_str (omapi_object_t *h,
@@ -480,7 +539,7 @@ isc_result_t omapi_object_update (omapi_object_t *obj, omapi_object_t *id,
 		status = omapi_set_value (obj, id,
 					  gsrc -> values [i] -> name,
 					  gsrc -> values [i] -> value);
-		if (status != ISC_R_SUCCESS)
+		if (status != ISC_R_SUCCESS && status != ISC_R_UNCHANGED)
 			return status;
 	}
 	if (handle)
@@ -630,12 +689,11 @@ isc_result_t omapi_make_int_value (omapi_value_t **vp,
 		return status;
 	}
 	status = omapi_typed_data_new (file, line, &(*vp) -> value,
-				       omapi_datatype_int);
+				       omapi_datatype_int, value);
 	if (status != ISC_R_SUCCESS) {
 		omapi_value_dereference (vp, file, line);
 		return status;
 	}
-	(*vp) -> value -> u.integer = value;
 	return ISC_R_SUCCESS;
 }
 
@@ -645,6 +703,36 @@ isc_result_t omapi_make_uint_value (omapi_value_t **vp,
 				    const char *file, int line)
 {
 	return omapi_make_int_value (vp, name, (int)value, file, line);
+}
+
+isc_result_t omapi_make_object_value (omapi_value_t **vp,
+				      omapi_data_string_t *name,
+				      omapi_object_t *value,
+				      const char *file, int line)
+{
+	isc_result_t status;
+	
+	status = omapi_value_new (vp, file, line);
+	if (status != ISC_R_SUCCESS)
+		return status;
+	
+	status = omapi_data_string_reference (&(*vp) -> name,
+                                              name, file, line);
+	if (status != ISC_R_SUCCESS) {
+		omapi_value_dereference (vp, file, line);
+		return status;
+	}
+	
+	if (value) {
+		status = omapi_typed_data_new (file, line, &(*vp) -> value,
+					       omapi_datatype_object, value);
+		if (status != ISC_R_SUCCESS) {
+			omapi_value_dereference (vp, file, line);
+			return status;
+		}
+	}
+	
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t omapi_make_handle_value (omapi_value_t **vp,

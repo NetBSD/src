@@ -357,6 +357,8 @@ isc_result_t omapi_object_initialize (omapi_object_t *o,
 {
 	memset (o, 0, psize);
 	o -> type = type;
+	if (type -> initialize)
+		(*type -> initialize) (o, file, line);
 	return ISC_R_SUCCESS;
 }
 

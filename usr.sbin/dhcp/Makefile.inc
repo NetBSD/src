@@ -40,8 +40,8 @@ MROBJDIR!=cd $(.CURDIR)/../minires; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
-DPADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
+LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
+DPADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.4.2.1 2000/07/22 05:01:23 mellon Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.4.2.2 2000/10/18 04:11:35 tv Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -107,12 +107,10 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static char copyright [] =
-"Copyright 1997, 1998, 1999 Internet Software Consortium.";
-static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static const char copyright [] = "Copyright 1997-2000 Internet Software Consortium.";
+static const char arr [] = "All rights reserved.";
+static const char message [] = "Internet Software Consortium DHCP Relay Agent";
+static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 int main (argc, argv, envp)
 	int argc;
@@ -148,19 +146,24 @@ int main (argc, argv, envp)
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
 			struct interface_info *tmp =
-				((struct interface_info *)
-				 dmalloc (sizeof *tmp, MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-				       "record interface", argv [i]);
+				(struct interface_info *)0;
+			status = interface_allocate (&tmp, MDL);
+			if (status != ISC_R_SUCCESS)
+				log_fatal ("%s: interface_allocate: %s",
+					   argv [i],
+					   isc_result_totext (status));
 			if (++i == argc) {
 				usage ();
 			}
-			memset (tmp, 0, sizeof *tmp);
 			strcpy (tmp -> name, argv [i]);
-			tmp -> next = interfaces;
 			tmp -> flags = INTERFACE_REQUESTED;
-			interfaces = tmp;
+			if (interfaces) {
+				interface_reference (&tmp -> next, interfaces,
+						     MDL);
+				interface_dereference (&interfaces, MDL);
+			}
+			interface_reference (&interfaces, tmp, MDL);
+			interface_dereference (&tmp, MDL);
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
 			quiet_interface_discovery = 1;
@@ -223,7 +226,6 @@ int main (argc, argv, envp)
 		log_info ("%s %s", message, DHCP_VERSION);
 		log_info (copyright);
 		log_info (arr);
-		log_info (contrib);
 		log_info (url);
 	} else {
 		quiet = 0;
@@ -473,6 +475,30 @@ int find_subnet (struct subnet **sp,
 	return 0;
 }
 
+#if defined (DEBUG)
+int check_collection (struct packet *p, struct lease *l,
+		      struct collection *c)
+{
+	return 0;
+}
+
+void classify (struct packet *p, struct class *c)
+{
+}
+
+isc_result_t find_class (struct class **class, const char *c1,
+			 const char *c2, int i)
+{
+	return ISC_R_NOTFOUND;
+}
+
+int parse_allow_deny (struct option_cache **oc, struct parse *p, int i)
+{
+	return 0;
+}
+
+#endif
+
 /* Strip any Relay Agent Information options from the DHCP packet
    option buffer.   If an RAI option is found whose Agent ID matches
    the giaddr (i.e., ours), try to look up the outgoing interface
@@ -599,7 +625,7 @@ int find_interface_by_agent_option (packet, out, buf, len)
 	u_int8_t *buf;
 	int len;
 {
-	int i;
+	int i = 0;
 	u_int8_t *circuit_id = 0;
 	unsigned circuit_id_len;
 	struct interface_info *ip;

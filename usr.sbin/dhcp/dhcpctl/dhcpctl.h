@@ -50,9 +50,11 @@ typedef isc_result_t dhcpctl_status;
 typedef omapi_object_t *dhcpctl_handle;
 typedef omapi_data_string_t *dhcpctl_data_string;
 
-#define DHCPCTL_CREATE		1
-#define DHCPCTL_UPDATE		2
-#define DHCPCTL_EXCL		4
+#define dhcpctl_null_handle ((dhcpctl_handle) 0)
+
+#define DHCPCTL_CREATE		OMAPI_CREATE
+#define DHCPCTL_UPDATE		OMAPI_UPDATE
+#define DHCPCTL_EXCL		OMAPI_EXCL
 
 typedef struct {
 	OMAPI_OBJECT_PREAMBLE;
@@ -104,6 +106,10 @@ isc_result_t dhcpctl_callback_signal_handler (omapi_object_t *,
 isc_result_t dhcpctl_callback_stuff_values (omapi_object_t *,
 					    omapi_object_t *,
 					    omapi_object_t *);
+
+dhcpctl_status dhcpctl_new_authenticator (dhcpctl_handle *,
+					  const char *, const char *,
+					  const char *, unsigned);
 
 dhcpctl_status dhcpctl_open_object (dhcpctl_handle, dhcpctl_handle, int);
 dhcpctl_status dhcpctl_new_object (dhcpctl_handle *,
