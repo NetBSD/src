@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.57 1999/11/10 07:34:41 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.58 1999/11/11 02:53:03 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 10, 1999
+.Dd November 11, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1202,6 +1202,13 @@ Defaults to
 .It pager
 Defaults to
 .Ev $PAGER .
+.It prompt
+Prompt to display when requesting input.
+Defaults to
+.Sq "ftp> ".
+Refer to
+.Sx COMMAND LINE PROMPT
+below for more information.
 .El
 .It Ic size Ar remote-file
 Return size of
@@ -1788,6 +1795,37 @@ To use this, bind a key to the
 command
 .Ic ftp-complete .
 By default, this is bound to the TAB key.
+.Sh COMMAND LINE PROMPT
+By default,
+.Nm
+displays a command line prompt of
+.Sq "ftp> "
+to the user.
+This can be changed with the
+.Ic "set prompt"
+command.
+.Pp
+The following formatting sequences are replaced by the given
+information:
+.Bl -tag -width "%% " -offset indent
+.It %/
+The current remote working directory.
+.It %M
+The remote host name.
+.It %m
+The remote host name, up to the first
+.Sq \&. .
+.It %n
+The remote user name.
+.It %%
+A single
+.Sq % .
+.El
+.Pp
+If a sequence depends upon information only available during a
+connection, then
+.Sq -
+will be used if the connection isn't valid.
 .Sh ENVIRONMENT
 .Nm
 uses the following environment variables.
@@ -1896,12 +1934,13 @@ command appeared in
 Various features such as command line editing, context sensitive
 command and file completion, dynamic progress bar, automatic
 fetching of files and URLs, modification time preservation,
-transfer rate throttling, and other enhancements over the standard
+transfer rate throttling, configurable command line prompt,
+and other enhancements over the standard
 .Bx
 .Nm
 were implemented in
 .Nx 1.3
-(and later releases)
+and later releases
 by Luke Mewburn <lukem@netbsd.org>.
 .Pp
 IPv6 support was added by the WIDE/KAME project.

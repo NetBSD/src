@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 1999/10/24 12:31:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.66 1999/11/11 02:53:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.65 1999/10/24 12:31:41 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.66 1999/11/11 02:53:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,10 +413,13 @@ main(argc, argv)
 	(void)strlcat(anonpass, "@",	  len);
 
 	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
-	setupoption("ftp_proxy",	getenv(FTP_PROXY),	xstrdup(""));
-	setupoption("http_proxy",	getenv(HTTP_PROXY),	xstrdup(""));
-	setupoption("no_proxy",		getenv(NO_PROXY),	xstrdup(""));
-	setupoption("pager",		getenv("PAGER"), xstrdup(DEFAULTPAGER));
+	setupoption("ftp_proxy",	getenv(FTP_PROXY),	"");
+	setupoption("http_proxy",	getenv(HTTP_PROXY),	"");
+	setupoption("no_proxy",		getenv(NO_PROXY),	"");
+	setupoption("pager",		getenv("PAGER"),	DEFAULTPAGER);
+	setupoption("prompt",		DEFAULTPROMPT,		NULL);
+
+	free(anonpass);
 
 	setttywidth(0);
 #ifdef SIGINFO
@@ -481,7 +484,64 @@ main(argc, argv)
 char *
 prompt()
 {
-	return ("ftp> ");
+	static char	**prompt;
+	static char	  buf[MAXPATHLEN];
+	char		 *p, *p2;
+	int		  i;
+
+	if (prompt == NULL) {
+		struct option *o;
+
+		o = getoption("prompt");
+		if (o == NULL)
+			errx(1, "no such option `prompt'");
+		prompt = &(o->value);
+	}
+
+#define ADDBUF(x) do { \
+		if (i >= sizeof(buf) - 1) \
+			goto endbuf; \
+		buf[i++] = (x); \
+	} while (0)
+
+	p = *prompt ? *prompt : DEFAULTPROMPT;
+	for (i = 0; *p; p++) {
+		if (*p == '%') {
+			p++;
+			switch (*p) {
+			case '%':
+				ADDBUF('%');
+				break;
+			case '/':
+				for (p2 = connected ? remotepwd : "/";
+				    *p2; p2++)
+					ADDBUF(*p2);
+				break;
+			case 'M':
+				for (p2 = connected ? hostname : "-";
+				    *p2; p2++)
+					ADDBUF(*p2);
+				break;
+			case 'm':
+				for (p2 = connected ? hostname : "-";
+				    *p2 && *p2 != '.'; p2++)
+					ADDBUF(*p2);
+				break;
+			case 'n':
+				for (p2 = connected ? username : "-";
+				    *p2 && *p2 != '.'; p2++)
+					ADDBUF(*p2);
+				break;
+			default:
+				/* XXX: ignore for now. maybe barf ? */
+				break;
+			}
+		} else
+			ADDBUF(*p);
+	}
+ endbuf:
+	buf[i] = '\0';
+	return (buf);
 }
 
 /*
@@ -867,15 +927,13 @@ char *
 getoptionvalue(name)
 	const char *name;
 {
-	const char *p;
 	struct option *c;
 
 	if (name == NULL)
 		errx(1, "getoptionvalue() invoked with NULL name");
-	for (c = optiontab; (p = c->name) != NULL; c++) {
-		if (strcasecmp(p, name) == 0)
-			return (c->value);
-	}
+	c = getoption(name);
+	if (c != NULL)
+		return (c->value);
 	errx(1, "getoptionvalue() invoked with unknown option `%s'", name);
 }
 
