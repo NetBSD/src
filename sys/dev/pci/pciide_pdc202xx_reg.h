@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.7 2002/04/23 20:41:18 bouyer Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.8 2002/07/26 14:11:35 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -102,7 +102,7 @@
 
 /*
  * The timings provided here cmoes from the PDC20262 docs. I hope they are
- * rigth for the PDC20246 too ...
+ * right for the PDC20246 too ...
  */
 
 static const int8_t pdc2xx_pa[] __attribute__((__unused__)) =
