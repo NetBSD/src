@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.7 1996/02/13 22:10:45 christos Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -362,9 +362,12 @@ tpcons_output_dg(m0, va_alist)
 }
 #else
 
-#include <machine/stdarg.h>
+#include <sys/param.h>
 
 struct mbuf;
+
+int tpcons_output __P((struct mbuf *m0, ...));
+
 int
 #if __STDC__
 tpcons_output(struct mbuf *m0, ...)
