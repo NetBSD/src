@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.220.10.4 2003/08/15 19:33:23 tron Exp $ */
+/*	$NetBSD: wd.c,v 1.220.10.5 2004/03/28 08:07:44 jmc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.4 2003/08/15 19:33:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.5 2004/03/28 08:07:44 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -105,6 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.4 2003/08/15 19:33:23 tron Exp $");
 #include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
+
+#define	LBA48_THRESHOLD		(0xfffffff)	/* 128GB / DEV_BSIZE */
+
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
@@ -563,7 +566,7 @@ __wdstart(wd, bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
-	if (wd->sc_flags & WDF_LBA48 && wd->sc_wdc_bio.blkno > 0xffffff)
+	if (wd->sc_flags & WDF_LBA48 && wd->sc_wdc_bio.blkno > LBA48_THRESHOLD)
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
@@ -1297,7 +1300,7 @@ again:
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wddumpmulti == 1)
 			wd->sc_wdc_bio.flags |= ATA_SINGLE;
-		if (wd->sc_flags & WDF_LBA48 && blkno > 0xffffff)
+		if (wd->sc_flags & WDF_LBA48 && blkno > LBA48_THRESHOLD)
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
