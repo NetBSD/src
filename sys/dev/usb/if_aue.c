@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.42 2000/06/01 14:28:57 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.43 2000/09/20 01:26:14 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -631,7 +631,7 @@ aue_setmulti(struct aue_softc *sc)
 		if (ifma->ifma_addr->sa_family != AF_LINK)
 			continue;
 		h = aue_crc(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0xF));
+		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 	}
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 #if defined(__NetBSD__)
@@ -649,7 +649,7 @@ aue_setmulti(struct aue_softc *sc)
 		}
 #endif
 		h = aue_crc(enm->enm_addrlo);
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0xF));
+		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
@@ -1719,6 +1719,14 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+		error = (command == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->aue_ec) :
+			ether_delmulti(ifr, &sc->aue_ec);
+		if (error == ENETRESET) {
+			aue_init(sc);
+		}
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 		aue_setmulti(sc);
 		error = 0;
 		break;
