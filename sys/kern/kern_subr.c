@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.28 1997/08/03 20:36:03 leo Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.29 1997/08/06 16:57:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -763,7 +763,9 @@ getdisk(str, len, defpart, nam2blk, devp, isdump)
 	int isdump;
 {
 	struct device	*dv;
+#ifdef MEMORY_DISK_HOOKS
 	int		i;
+#endif
 
 	if ((dv = parsedisk(str, len, defpart, nam2blk, devp)) == NULL) {
 		printf("use one of:");
@@ -797,7 +799,10 @@ parsedisk(str, len, defpart, nam2blk, devp)
 {
 	struct device *dv;
 	char *cp, c;
-	int majdev, part, i;
+	int majdev, part;
+#ifdef MEMORY_DISK_HOOKS
+	int i;
+#endif
 
 	if (len == 0)
 		return (NULL);
