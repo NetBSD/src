@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.3 2000/10/29 14:08:08 lukem Exp $
+.\"	$NetBSD: hardware,v 1.4 2000/11/01 15:36:53 deberg Exp $
 .
 .Nx*M
 \*V will run on 68040-based non-turbo
@@ -36,6 +36,9 @@ built in ethernet
 Displays
 .(bullet -compact
 NeXT monochrome display
+.Pq Em nextdisplay .
+.It
+NeXT 12-bit color display
 .Pq Em nextdisplay .
 .bullet)
 .It
