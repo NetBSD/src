@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.121 2004/03/25 23:17:16 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.122 2004/03/26 00:31:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.121 2004/03/25 23:17:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.122 2004/03/26 00:31:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,23 +395,33 @@ buf_lotsfree(void)
 {
 	int try, thresh;
 
-	if (bufmem < bufmem_lowater) {
+	/* Always allocate if less than the low water mark. */
+	if (bufmem < bufmem_lowater)
 		return 1;
-	}
+	
+	/* Never allocate if greater than the high water mark. */
+	if (bufmem > bufmem_hiwater)
+		return 0;
 
 	/* If there's anything on the AGE list, it should be eaten. */
-
 	if (TAILQ_FIRST(&bufqueues[BQ_AGE]) != NULL)
 		return 0;
 
+	/*
+	 * The probabily of getting a new allocation is inversely
+	 * proportional to the current size of the cache, using
+	 * a granularity of 16 steps.
+	 */
 	try = random() & 0x0000000fL;
 
-	thresh = (16 * bufmem) / bufmem_hiwater;
+	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
+	thresh = bufmem / (bufmem_hiwater / 16);
 
 	if ((try > thresh) && (uvmexp.free > (2 * uvmexp.freetarg))) {
 		return 1;
 	}
 
+	/* Otherwise don't allocate. */
 	return 0;
 }
 
@@ -1591,6 +1601,11 @@ SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache", NULL,
 		       sysctl_bufvm_update, 0, &bufcache, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "bufmem", NULL,
+		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
