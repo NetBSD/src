@@ -1,0 +1,4 @@
+#	$NetBSD: shlib_version,v 1.1 1999/02/09 22:32:33 is Exp $
+#
+major=0
+minor=0
