@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.247 2004/07/15 03:53:45 atatat Exp $
+# $NetBSD: GENERIC,v 1.248 2004/07/20 00:08:52 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.247 $"
+#ident 		"GENERIC-$Revision: 1.248 $"
 
 maxusers 32
 
@@ -323,7 +323,7 @@ ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*at pci? dev ? function ?		# Acard IDE controllers
+acardide* at pci? dev ? function ?		# Acard IDE controllers
 aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
 artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
