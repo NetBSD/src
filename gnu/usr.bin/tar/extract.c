@@ -313,7 +313,8 @@ extract_archive ()
 
       if (f_unlink && !f_keep) {
 	if (unlink(skipcrud + current_file_name) == -1)
-		msg_perror ("Could not unlink %s",
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
                       skipcrud + current_file_name);
       }
 
@@ -565,7 +566,8 @@ extract_archive ()
 
         if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
-		msg_perror ("Could not unlink %s",
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
                       skipcrud + current_file_name);
         }
 
@@ -593,7 +595,8 @@ extract_archive ()
     again_symlink:
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
-		msg_perror ("Could not unlink %s",
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
                       skipcrud + current_file_name);
       }
 
@@ -623,7 +626,8 @@ extract_archive ()
     make_node:
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
-		msg_perror ("Could not unlink %s",
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
                       skipcrud + current_file_name);
       }
 
@@ -646,7 +650,8 @@ extract_archive ()
     make_fifo:
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
-		msg_perror ("Could not unlink %s",
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
                       skipcrud + current_file_name);
       }
 
