@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.37 1999/06/10 00:54:13 simonb Exp $
+# $NetBSD: md.i386,v 1.38 1999/06/17 00:12:40 thorpej Exp $
 ./usr/include/i386
 ./usr/include/i386/_G_config.h
 ./usr/include/i386/ansi.h
@@ -39,7 +39,6 @@
 ./usr/include/i386/pcvt_ioctl.h
 ./usr/include/i386/pio.h
 ./usr/include/i386/pmap.h
-./usr/include/i386/pmap.new.h
 ./usr/include/i386/proc.h
 ./usr/include/i386/profile.h
 ./usr/include/i386/psl.h
