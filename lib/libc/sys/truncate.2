@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.11 2000/05/28 09:41:52 jdolecek Exp $
+.\"	$NetBSD: truncate.2,v 1.12 2000/06/17 19:33:34 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,9 +88,8 @@ characters.
 .It Bq Er ENOENT
 The named file does not exist.
 .It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
-.It Bq Er EACCES
-The named file is not writable by the user.
+Search permission is denied for a component of the path prefix, or
+the named file is not writable by the user.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EISDIR
@@ -116,9 +115,8 @@ is not a valid descriptor.
 .It Bq Er EINVAL
 The
 .Fa fd
-references a socket, not a file.
-.It Bq Er EINVAL
-The
+references a socket, not a file, or
+the
 .Fa fd
 is not open for writing.
 .El
