@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.22 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.23 2004/03/01 01:12:22 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.22 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.23 2004/03/01 01:12:22 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -242,10 +242,6 @@ MakeReconMapListElem(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector,
 	RF_ReconMapListElem_t *p;
 
 	p = pool_get(&mapPtr->elem_pool, PR_WAITOK);
-
-	if (p == NULL)
-		return (NULL);
-
 	p->startSector = startSector;
 	p->stopSector = stopSector;
 	p->next = next;
