@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.4 2000/11/07 05:44:51 lukem Exp $
+.\"     $NetBSD: lock.9,v 1.5 2001/01/22 21:58:17 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -281,7 +281,7 @@ unless one of the following is true:
 LK_FORCEUPGRADE is requested and some other process has already
 requested a lock upgrade (returns EBUSY).
 .It
-LK_WAIT is set and a sleep would be required (returns EBUSY).
+LK_NOWAIT is set and a sleep would be required (returns EBUSY).
 .It
 LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
 .It
