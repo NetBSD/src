@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.9 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.10 1999/01/28 14:46:27 chuck Exp $	*/
 
 /*
  *
@@ -67,9 +67,7 @@ struct vm_amap;
  * provide a hook to turn this off.  macros can also be used.
  */
 
-#undef UVM_AMAP_INLINE			/* turn it off for now */
-
-#ifdef UVM_AMAP_INLINE
+#ifdef UVM_AMAP_INLINE			/* defined/undef'd in uvm_amap.c */
 #define AMAP_INLINE static __inline	/* inline enabled */
 #else 
 #define AMAP_INLINE			/* inline disabled */
@@ -147,10 +145,10 @@ void		amap_wipeout	/* remove all anons from amap */
  * we currently provide an array-based amap implementation.  in this
  * implementation we provide the option of tracking split references
  * so that we don't lose track of references during partial unmaps
- * ... this is enabled with the "VM_AMAP_PPREF" define.
+ * ... this is enabled with the "UVM_AMAP_PPREF" define.
  */
 
-#define VM_AMAP_PPREF		/* track partial references */
+#define UVM_AMAP_PPREF		/* track partial references */
 
 /*
  * here is the definition of the vm_amap structure for this implementation.
@@ -166,7 +164,7 @@ struct vm_amap {
 	int *am_slots;		/* contig array of active slots */
 	int *am_bckptr;		/* back pointer array to am_slots */
 	struct vm_anon **am_anon; /* array of anonymous pages */
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	int *am_ppref;		/* per page reference count (if !NULL) */
 #endif
 };
@@ -269,7 +267,7 @@ struct vm_amap {
  * we need to prototype here...
  */
 
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 
 #define PPREF_NONE ((int *) -1)	/* not using ppref */
 
@@ -279,6 +277,6 @@ void		amap_pp_establish	/* establish ppref */
 			__P((struct vm_amap *));
 void		amap_wiperange		/* wipe part of an amap */
 			__P((struct vm_amap *, int, int));
-#endif	/* VM_AMAP_PPREF */
+#endif	/* UVM_AMAP_PPREF */
 
 #endif /* _UVM_UVM_AMAP_H_ */

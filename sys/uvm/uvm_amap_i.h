@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.10 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.11 1999/01/28 14:46:27 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -48,10 +48,11 @@
  */
 
 /*
- * inline functions [maybe]
+ * if inlines are enabled always pull in these functions, otherwise
+ * pull them in only once (when we are compiling uvm_amap.c).
  */
 
-#if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP)
+#if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C)
 
 /*
  * amap_lookup: look up a page in an amap
@@ -82,6 +83,7 @@ amap_lookup(aref, offset)
  * amap_lookups: look up a range of pages in an amap
  *
  * => amap should be locked by caller.
+ * => XXXCDC: this interface is biased toward array-based amaps.  fix.
  */
 AMAP_INLINE void
 amap_lookups(aref, offset, anons, npages)
@@ -211,7 +213,7 @@ amap_ref(entry, flags)
 	amap->am_ref++;
 	if (flags & AMAP_SHARED)
 		amap->am_flags |= AMAP_SHARED;
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
 	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
 		amap_pp_establish(amap);
@@ -230,9 +232,10 @@ amap_ref(entry, flags)
 /*
  * amap_unref: remove a reference to an amap
  *
- * => caller has already removed pmap mappings to amap.
- * => entry is no longer a part of a map, so it can't be changed and
- *	doesn't need to be locked.
+ * => caller must remove all pmap-level references to this amap before
+ *	dropping the reference
+ * => called from uvm_unmap_detach [only]  ... note that entry is no
+ *	longer part of a map and thus has no need for locking
  * => amap must be unlocked (we will lock it).
  */
 AMAP_INLINE void
@@ -268,7 +271,7 @@ amap_unref(entry, all)
 	amap->am_ref--;
 	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && all == 0 &&
 	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
 		amap_pp_establish(amap);
@@ -285,6 +288,6 @@ amap_unref(entry, all)
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 }
 
-#endif /* defined(UVM_AMAP_INLINE) || defined(UVM_AMAP) */
+#endif /* defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C) */
 
 #endif /* _UVM_UVM_AMAP_I_H_ */
