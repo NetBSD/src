@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.45 1998/03/07 00:42:07 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.46 1998/03/07 01:10:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.45 1998/03/07 00:42:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.46 1998/03/07 01:10:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2071,7 +2071,7 @@ pmap_enter_ptpage(pmap, va)
 			kmem_alloc(st_map, ALPHA_STSIZE);
 #endif
 		pmap->pm_lev1map[l1pte_index(VM_MIN_ADDRESS)] =
-		    *kvtopte(pmap->pm_stab);
+		    *pmap_l3pte(pmap_kernel(), pmap->pm_stab);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %p stab %p(%lx)\n",
@@ -2204,7 +2204,7 @@ pmap_emulate_reference(p, v, user, write)
 	if (v >= VM_MIN_KERNEL_ADDRESS) {
 		if (user)
 			panic("pmap_emulate_reference: user ref to kernel");
-		pte = kvtopte(v);
+		pte = pmap_l3pte(pmap_kernel(), v);
 	} else {
 #ifdef DIAGNOSTIC
 		if (p == NULL)
