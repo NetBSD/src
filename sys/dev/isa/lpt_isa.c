@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.33 1996/03/17 00:53:41 thorpej Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.34 1996/03/17 13:40:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -131,15 +131,19 @@ static int not_ready __P((u_char, struct lpt_softc *));
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
+int	lpt_port_test __P((bus_chipset_tag_t, bus_io_handle_t, bus_io_addr_t,
+	    bus_io_size_t, u_char, u_char));
+
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 int
-lpt_port_test(ioh, off, data, mask, base)
+lpt_port_test(bc, ioh, base, off, data, mask)
+	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	size_t off;
+	bus_io_addr_t base;
+	bus_io_size_t off;
 	u_char data, mask;
-	u_long base;
 {
 	int timeout;
 	u_char temp;
@@ -205,22 +209,22 @@ lptprobe(parent, match, aux)
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
