@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkioctls,v 1.12 2003/06/24 11:27:50 mjl Exp $
+#	$NetBSD: mkioctls,v 1.13 2003/08/27 20:35:42 thorpej Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,7 @@ BEGIN {
 	print "#include <sys/termios.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
+	print "#include <crypto/cryptodev.h>"
 	print ""
 	print "char *ioctlname __P((long));"
 	print ""
@@ -57,7 +58,7 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO)[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO|CIO|CRIO)[A-Z]*[ 	]*_IO/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
