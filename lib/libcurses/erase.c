@@ -1,3 +1,5 @@
+/*	$NetBSD: erase.c,v 1.9 1997/07/22 07:36:39 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: erase.c,v 1.9 1997/07/22 07:36:39 mikel Exp $");
+#endif
 #endif	/* not lint */
 
 #include "curses.h"
@@ -51,6 +58,9 @@ werase(win)
 
 #ifdef DEBUG
 	__CTRACE("werase: (%0.2o)\n", win);
+#endif
+#ifdef __GNUC__
+	maxx = NULL;		/* XXX gcc -Wuninitialized */
 #endif
 	for (y = 0; y < win->maxy; y++) {
 		minx = -1;

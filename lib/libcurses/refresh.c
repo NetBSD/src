@@ -1,3 +1,5 @@
+/*	$NetBSD: refresh.c,v 1.8 1997/07/22 07:36:59 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
+#else
+__RCSID("$NetBSD: refresh.c,v 1.8 1997/07/22 07:36:59 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include <string.h>
@@ -224,6 +231,9 @@ makech(win, wy)
 	int lch, wx, y;
 	char *ce;
 
+#ifdef __GNUC__
+	nlsp = 0;		/* XXX gcc -Wuninitialized */
+#endif
 	/* Is the cursor still on the end of the last line? */
 	if (wy > 0 && win->lines[wy - 1]->flags & __ISPASTEOL) {
 		domvcur(ly, lx, ly + 1, 0);
@@ -451,6 +461,9 @@ quickch(win)
 	__LDATA buf[1024];
 	u_int blank_hash;
 
+#ifdef __GNUC__
+	curs = curw = starts = startw = 0; /* XXX gcc -Wuninitialized */
+#endif
 	/*
 	 * Find how many lines from the top of the screen are unchanged.
 	 */
@@ -724,8 +737,8 @@ scrolln(win, starts, startw, curs, bot, top)
 	 */
 	if (n > 0) {
 		if (CS != NULL && HO != NULL && (SF != NULL ||
-		    (AL == NULL || DL == NULL ||
-		    top > 3 || bot + 3 < win->maxy) && sf != NULL)) {
+		    ((AL == NULL || DL == NULL ||
+		    top > 3 || bot + 3 < win->maxy) && sf != NULL))) {
 			tputs(__tscroll(CS, top, bot + 1), 0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
 			tputs(HO, 0, __cputchar);
@@ -779,8 +792,8 @@ scrolln(win, starts, startw, curs, bot, top)
 		 * See the above comments for details.
 		 */
 		if (CS != NULL && HO != NULL && (SR != NULL ||
-		    (AL == NULL || DL == NULL ||
-		    top > 3 || bot + 3 < win->maxy) && sr != NULL)) {
+		    ((AL == NULL || DL == NULL ||
+		    top > 3 || bot + 3 < win->maxy) && sr != NULL))) {
 			tputs(__tscroll(CS, top, bot + 1), 0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
 			tputs(HO, 0, __cputchar);

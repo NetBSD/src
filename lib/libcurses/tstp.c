@@ -1,3 +1,5 @@
+/*	$NetBSD: tstp.c,v 1.9 1997/07/22 07:37:09 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: tstp.c,v 1.9 1997/07/22 07:37:09 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include <errno.h>
@@ -103,7 +110,7 @@ __stop_signal_handler(signo)
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
-static void (*otstpfn)() = SIG_DFL;
+static void (*otstpfn) __P((int)) = SIG_DFL;
 
 /*
  * Set the TSTP handler.
