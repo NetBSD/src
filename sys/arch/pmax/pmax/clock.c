@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: clock.c 1.18 91/01/21
- * from: @(#)clock.c	7.6 (Berkeley) 11/15/92
- * $Id: clock.c,v 1.1.1.1 1993/10/12 03:22:29 deraadt Exp $
+ *
+ *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
+ *      $Id: clock.c,v 1.2 1994/05/27 08:41:38 glass Exp $
  */
 
 #include <sys/param.h>

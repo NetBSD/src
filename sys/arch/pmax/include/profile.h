@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)profile.h	7.3 (Berkeley) 2/26/93
- * $Id: profile.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
+ *      $Id: profile.h,v 1.2 1994/05/27 08:40:57 glass Exp $
  */
 
 #define	_MCOUNT_DECL static void __mcount
@@ -72,7 +72,7 @@
  * functions on the PMAX, and we do not want to invoke mcount
  * recursively.
  */
-#define	MCOUNT_ENTER
+#define	MCOUNT_ENTER	s = _splhigh()
 
-#define	MCOUNT_EXIT
+#define	MCOUNT_EXIT	_splx(s)
 #endif /* KERNEL */

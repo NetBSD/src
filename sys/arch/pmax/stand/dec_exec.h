@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1993 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dec_exec.h	7.2 (Berkeley) 2/15/93
+ *	from: @(#)dec_exec.h	8.1 (Berkeley) 6/10/93
+ *      $Id: dec_exec.h,v 1.2 1994/05/27 08:42:35 glass Exp $
  */
+
 
 /*
  * Portions of this file are subject to the following copyright notice:
@@ -50,7 +52,7 @@
 
 /*
  * /sprite/src/kernel/proc/ds3100.md/RCS/procMach.h,v 9.3 90/02/20 15:35:50
- * shirriff Exp $ SPRITE (Berkeley)
+ * shirriff Exp  SPRITE (Berkeley)
  */
 
 /* Description of the COFF section. */

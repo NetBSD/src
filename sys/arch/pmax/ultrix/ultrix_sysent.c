@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: hpux_sysent.c 1.1 90/07/09
- * from: @(#)ultrix_sysent.c	7.5 (Berkeley) 10/11/92
- * $Id: ultrix_sysent.c,v 1.2 1994/05/05 03:31:09 cgd Exp $
+ *
+ *	from: @(#)ultrix_sysent.c	8.1 (Berkeley) 6/10/93
+ *      $Id: ultrix_sysent.c,v 1.3 1994/05/27 08:43:27 glass Exp $
  */
 
 /*
@@ -85,7 +86,7 @@ int	execve();
 int	umask();
 int	chroot();
 int	ofstat();
-int	getpagesize();
+int	ogetpagesize();
 int	vfork();
 int	sbrk();
 int	sstk();
@@ -96,8 +97,8 @@ int	ultrixsetpgrp();
 int	setitimer();
 int	ultrixwait3();
 int	getitimer();
-int	gethostname();
-int	sethostname();
+int	ogethostname();
+int	osethostname();
 int	getdtablesize();
 int	dup2();
 int	fcntl();
@@ -144,10 +145,10 @@ int	rmdir();
 int	utimes();
 int	adjtime();
 int	ogetpeername();
-int	gethostid();
-int	sethostid();
-int	ultrixgetrlimit();
-int	ultrixsetrlimit();
+int	ogethostid();
+int	osethostid();
+int	getrlimit();
+int	setrlimit();
 int	okillpg();
 int	ogetsockname();
 int	ogetdirentries();
@@ -227,7 +228,7 @@ struct sysent ultrixsysent[] = {
 	1, chroot,			/*  61 = chroot */
 	2, ofstat,			/*  62 = fstat */
 	0, nosys,			/*  63 = unused */
-	0, getpagesize,			/*  64 = getpagesize */
+	0, ogetpagesize,		/*  64 = getpagesize */
 	0, notimp,			/*  65 = mremap */
 	0, vfork,			/*  66 = vfork */
 	0, nosys,			/*  67 = old vread */
@@ -250,8 +251,8 @@ struct sysent ultrixsysent[] = {
 	3, ultrixwait3,			/*  84 = wait3 */
 	1, notimp,			/*  85 = swapon */
 	2, getitimer,			/*  86 = getitimer */
-	2, gethostname,			/*  87 = gethostname */
-	2, sethostname,			/*  88 = sethostname */
+	2, ogethostname,		/*  87 = gethostname */
+	2, osethostname,		/*  88 = sethostname */
 	0, getdtablesize,		/*  89 = getdtablesize */
 	2, dup2,			/*  90 = dup2 */
 	0, notimp,			/*  91 = getdopt */
@@ -305,15 +306,15 @@ struct sysent ultrixsysent[] = {
 	1, sigreturn,			/* 139 = internal (4.2 sigreturn) */
 	2, adjtime,			/* 140 = adjtime */
 	3, ogetpeername,		/* 141 = getpeername */
-	2, gethostid,			/* 142 = gethostid */
-	2, sethostid,			/* 143 = sethostid */
-	2, ultrixgetrlimit,		/* 144 = getrlimit */
-	2, ultrixsetrlimit,		/* 145 = setrlimit */
+	2, ogethostid,			/* 142 = gethostid */
+	2, osethostid,			/* 143 = sethostid */
+	2, getrlimit,			/* 144 = getrlimit */
+	2, setrlimit,			/* 145 = setrlimit */
 	2, okillpg,			/* 146 = killpg */
 	0, nosys,			/* 147 = nosys */
 	0, notimp,			/* 148 = setquota */
 	0, notimp,			/* 149 = quota */
-	3, ogetsockname,			/* 150 = getsockname */
+	3, ogetsockname,		/* 150 = getsockname */
 	/*
 	 * ULTRIX specific syscalls
 	 */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
- * from: @(#)vm_machdep.c	7.6 (Berkeley) 10/11/92
- * $Id: vm_machdep.c,v 1.2 1994/01/16 00:53:44 deraadt Exp $
+ *
+ *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
+ *      $Id: vm_machdep.c,v 1.3 1994/05/27 08:42:26 glass Exp $
  */
 
 #include <sys/param.h>
@@ -75,10 +76,10 @@ cpu_fork(p1, p2)
 	p2->p_md.md_flags = p1->p_md.md_flags & (MDP_FPUSED | MDP_ULTRIX);
 
 	/*
-	 * Convert the user struct virtual address to a physical one
-	 * and cache it in the proc struct. Note: if the phyical address
-	 * can change (due to memory compaction in kmem_alloc?),
-	 * we will have to update things.
+	 * Cache the PTEs for the user area in the machine dependent
+	 * part of the proc struct so cpu_switch() can quickly map in
+	 * the user struct and kernel stack. Note: if the virtual address
+	 * translation changes (e.g. swapout) we have to update this.
 	 */
 	pte = kvtopte(up);
 	for (i = 0; i < UPAGES; i++) {
@@ -99,6 +100,8 @@ cpu_fork(p1, p2)
 	 * part of the stack.  The stack and pcb need to agree;
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	/* cache segtab for ULTBMiss() */
+	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -118,14 +121,38 @@ cpu_fork(p1, p2)
 }
 
 /*
+ * Finish a swapin operation.
+ * We neded to update the cached PTEs for the user area in the
+ * machine dependent part of the proc structure.
+ */
+void
+cpu_swapin(p)
+	register struct proc *p;
+{
+	register struct user *up = p->p_addr;
+	register pt_entry_t *pte;
+	register int i;
+
+	/*
+	 * Cache the PTEs for the user area in the machine dependent
+	 * part of the proc struct so cpu_switch() can quickly map in
+	 * the user struct and kernel stack.
+	 */
+	pte = kvtopte(up);
+	for (i = 0; i < UPAGES; i++) {
+		p->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
+		pte++;
+	}
+}
+
+/*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
- * Once finished, we call swtch_exit, which switches to a temporary
+ * Once finished, we call switch_exit, which switches to a temporary
  * pcb and stack and never returns.  We block memory allocation
- * until swtch_exit has made things safe again.
+ * until switch_exit has made things safe again.
  */
-void
 cpu_exit(p)
 	struct proc *p;
 {
@@ -138,7 +165,7 @@ cpu_exit(p)
 
 	(void) splhigh();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	swtch_exit();
+	switch_exit();
 	/* NOTREACHED */
 }
 
