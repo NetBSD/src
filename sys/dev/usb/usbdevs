@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.305 2003/02/12 15:34:18 ichiro Exp $
+$NetBSD: usbdevs,v 1.306 2003/02/15 18:30:28 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -398,6 +398,7 @@ product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
 product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
+product ACERP ATAPI		0x6003	ATA/ATAPI adapter
 
 /* Actiontec products */
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
@@ -600,6 +601,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
+product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
