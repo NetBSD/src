@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.107 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.108 1999/11/29 23:34:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -301,10 +301,22 @@ nfs_access(v)
 	register caddr_t cp;
 	register int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	int error = 0, attrflag;
+	int error = 0, attrflag, cachevalid;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	u_int32_t mode, rmode;
 	int v3 = NFS_ISV3(vp);
+	struct nfsnode *np = VTONFS(vp);
+
+	cachevalid = (np->n_accstamp != -1 &&
+	    (time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(np) &&
+	    np->n_accuid == ap->a_cred->cr_uid);
+
+	/*
+	 * Check access cache first. If this request has been made for this
+	 * uid shortly before, use the cached result.
+	 */
+	if (cachevalid && ((np->n_accmode & ap->a_mode) == ap->a_mode))
+		return np->n_accerror;
 
 	/*
 	 * For nfs v3, do an access rpc, otherwise you are stuck emulating
@@ -350,8 +362,6 @@ nfs_access(v)
 				error = EACCES;
 		}
 		nfsm_reqdone;
-		if (error)
-			return (error);
 	} else
 		return (nfsspec_access(ap));
 	/*
@@ -359,17 +369,35 @@ nfs_access(v)
 	 * unless the file is a socket, fifo, or a block or character
 	 * device resident on the filesystem.
 	 */
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
+	if (!error && (ap->a_mode & VWRITE) &&
+	    (vp->v_mount->mnt_flag & MNT_RDONLY)) {
 		switch (vp->v_type) {
 		case VREG:
 		case VDIR:
 		case VLNK:
-			return (EROFS);
+			error = EROFS;
 		default:
 			break;
 		}
 	}
-	return (0);
+
+	if (!error || error == EACCES) {
+		/*
+		 * If we got the same result as for a previous,
+		 * different request, OR it in. Don't update
+		 * the timestamp in that case.
+		 */
+		if (cachevalid && error == np->n_accerror)
+			np->n_accmode |= ap->a_mode;
+		else {
+			np->n_accstamp = time.tv_sec;
+			np->n_accuid = ap->a_cred->cr_uid;
+			np->n_accmode = ap->a_mode;
+			np->n_accerror = error;
+		}
+	}
+
+	return (error);
 }
 
 /*
@@ -748,6 +776,7 @@ nfs_lookup(v)
 		return (EROFS);
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
+
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	nmp = VFSTONFS(dvp->v_mount);
@@ -764,6 +793,18 @@ nfs_lookup(v)
 	 */
 	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
 		struct vattr vattr;
+		int err2;
+
+		if (error && error != ENOENT) {
+			*vpp = NULLVP;
+			return (error);
+		}
+
+		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
+		if (err2) {
+			*vpp = NULLVP;
+			return (err2);
+		}
 
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
@@ -773,9 +814,10 @@ nfs_lookup(v)
 			cache_purge(dvp);
 			np->n_nctime = 0;
 			goto dorpc;
-		}
-		else if (error > 0)
+		} else if (error > 0) {
+			*vpp = NULLVP;
 			return error;
+		}
 
 		newvp = *vpp;
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
