@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.5.2.1 2000/07/03 17:17:08 he Exp $
+#	$NetBSD: checkver,v 1.5.2.2 2000/07/05 20:49:15 he Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -193,20 +193,17 @@ if [ "X$minor" = "X" -o "X$major" = "X" ] ; then
     exit 2
 fi
 
-tiny=`echo $minor | awk 'BEGIN { FS="." } { print $2 + 0 } '`
-minor=`echo $minor | awk 'BEGIN { FS="." } { print $1 } '`
-
 # Find every shared object library with the same base name.
  for instlib in `grep $libname.so "$LIBLIST" ` ; do
     # Grab the major and minor from the installed library.
     instmajor=`basename $instlib | awk 'BEGIN { FS="." } { print $3 } '`
     instminor=`basename $instlib | awk 'BEGIN { FS="." } { print $4 } '`
-    insttiny=`basename $instlib | awk 'BEGIN { FS="." } { print $5 + 0 } '`
+    instteeny=`basename $instlib | awk 'BEGIN { FS="." } { print $5 + 0 } '`
 
     # If they're greater than the source, complain.
     if [ "0$major" -eq "0$instmajor" ] ; then
 	if [ "0$minor" -eq "0$instminor" ] ; then
-	    if [ "0$tiny" -lt "0$insttiny" ] ; then
+	    if [ "0$teeny" -lt "0$instteeny" ] ; then
 		if [ $error -eq 0 -a $quiet -eq 0 ]; then
 		    echo -n "The following libraries have versions greater"
 		    echo " than the source:"
