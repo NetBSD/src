@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.29 2003/07/15 02:15:05 lukem Exp $ */
+/*	$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.29 2003/07/15 02:15:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,14 +94,13 @@ void
 sbi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bp_conf *bp = aux;
-	u_int	nexnum, minnex;
+	u_int	nexnum, minnex = 0; /* default only one SBI, as on 780 */
 	struct	sbi_attach_args sa;
 
 	printf("\n");
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	if (vax_boardtype == VAX_BTYP_780) {
-		minnex = 0;	/* only one SBI */
 		sa.sa_sbinum = 0;
 	}
 	if (vax_boardtype == VAX_BTYP_790) {
