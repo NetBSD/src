@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.12 2001/11/25 18:40:34 thorpej Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.13 2002/03/04 02:10:02 lukem Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd November 12, 2001
+.Dd March 4, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -224,6 +224,8 @@ end with a slash
 character (for installation into the system's root directory, set
 .Sy DESTDIR
 to an empty string).
+The directory must reside on a file system which supports long file
+names and hard links.
 .DFLT
 Empty string if
 .Sy USETOOLS
@@ -376,6 +378,22 @@ of
 .Sy src/tools .
 .DFLTu
 .
+.It Sy UNPRIVED
+If set, then an unprivileged install will occur.
+The user, group, permissions, and file flags, will not be set on
+the installed item; instead the information will be appended to
+a file called
+.Pa METALOG
+in the
+.Sy .OBJDIR
+of
+.Sy src .
+The contents of
+.Pa METALOG
+is used during the generation of the distribution tar files to ensure
+that the appropriate file ownership is stored.
+.DFLTu
+.
 .It Sy UPDATE
 If set, then all install operations intended to write to
 .Sy DESTDIR
@@ -429,7 +447,7 @@ include files).
 .Ss \*qmake\*q variables for full builds
 These variables only affect the top level
 .Dq Makefile
-and do not manually building subtrees of the
+and do not affect manually building subtrees of the
 .Nx
 source code.
 .
@@ -827,6 +845,11 @@ If set, the bootstrap
 will only be rebuilt as needed (when the source files for
 .Xr make 1
 change).
+.
+.It Sy -U
+Set the
+.Sy UNPRIVED
+variable.
 .
 .El
 .

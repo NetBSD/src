@@ -98,7 +98,9 @@ CONFIGURATION
                  their default use of the host system's /usr/include,
                  /usr/lib, and so forth.  This pathname should not end with a
                  slash (/) character (for installation into the system's root
-                 directory, set DESTDIR to an empty string).
+                 directory, set DESTDIR to an empty string).  The directory
+                 must reside on a file system which supports long file names
+                 and hard links.
 
                  Default: Empty string if USETOOLS is ``yes''; unset other-
                  wise.
@@ -209,6 +211,16 @@ CONFIGURATION
 
                  Default: Unset.
 
+     UNPRIVED    If set, then an unprivileged install will occur.  The user,
+                 group, permissions, and file flags, will not be set on the
+                 installed item; instead the information will be appended to a
+                 file called METALOG in the .OBJDIR of src.  The contents of
+                 METALOG is used during the generation of the distribution tar
+                 files to ensure that the appropriate file ownership is
+                 stored.
+
+                 Default: Unset.
+
      UPDATE      If set, then all install operations intended to write to
                  DESTDIR will compare file timestamps before installing, and
                  skip the install phase if the destination files are up-to-
@@ -241,8 +253,8 @@ CONFIGURATION
                  clude files).
 
    "make" variables for full builds
-     These variables only affect the top level ``Makefile'' and do not manual-
-     ly building subtrees of the NetBSD source code.
+     These variables only affect the top level ``Makefile'' and do not affect
+     manually building subtrees of the NetBSD source code.
 
      MKOBJDIRS      Can be set to ``yes'' or ``no''.  Indicates whether object
                     directories will be created automatically (via a ``make
@@ -446,6 +458,8 @@ BUILDING
                ``make'' will only be rebuilt as needed (when the source files
                for make(1) change).
 
+     -U        Set the UNPRIVED variable.
+
    The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
      will be created in TOOLDIR/bin upon the first build to assist in building
@@ -467,4 +481,4 @@ HISTORY
 BUGS
      Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                         November 12, 2001                             8
+NetBSD                           March 4, 2002                               8
