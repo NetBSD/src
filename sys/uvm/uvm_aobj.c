@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.15.2.1 1998/11/09 06:06:37 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.15.2.2 1999/02/25 04:08:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1021,7 +1021,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				    rv,0,0,0);
 				if (ptmp->flags & PG_WANTED)
 					/* object lock still held */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
 				uvm_lock_pageq();
@@ -1402,7 +1402,7 @@ uao_pagein_page(aobj, pageidx)
 	 * handle wanted pages
 	 */
 	if (pg->flags & PG_WANTED) {
-		thread_wakeup(pg);
+		wakeup(pg);
 	}
 
 #ifdef DIAGNOSTIC
@@ -1422,14 +1422,14 @@ uao_pagein_page(aobj, pageidx)
 	if (slot) {
 		uvm_swap_free(slot, 1);
 	}
+	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+	pmap_clear_reference(PMAP_PGARG(pg));
 	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
 	/*
 	 * deactivate the page (to put it on a page queue).
 	 */
-	pmap_clear_reference(PMAP_PGARG(pg));
-	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
