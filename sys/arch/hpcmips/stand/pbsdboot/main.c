@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1999/12/27 01:56:18 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2000/01/03 05:59:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -139,6 +139,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R520"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520 },
+	{ TEXT("MobileGearII MC-R530"), BIFB_D16_0000,
+		640, 240, 1600, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("Mobile Pro 770"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520A },
@@ -169,6 +172,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("INTERTOP CX300"), BIFB_D8_FF,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
+	{ TEXT("INTERTOP CX310"), BIFB_D8_FF,
+		640, 480, 640, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT310 },
 	{ TEXT("IBM WorkPad z50"), BIFB_D16_0000,
 		640, 480, 1280, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_IBM_WORKPAD_Z50 },
@@ -206,16 +212,19 @@ struct fb_setting fb_settings[] = {
 	TEXT('\\'), 0xff92, 0xff93, 0xff98, TEXT(' '), 0xff76, 0xff70, \
 	0xff84, 0xff9e
 TCHAR unicode_memory_card[] = { UNICODE_MEMORY_CARD,  TEXT('\\') };
+TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD,  TEXT('1'), TEXT('\\') };
 TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD,  TEXT('2'), TEXT('\\') };
 #endif
 
 TCHAR* path_list[] = {
-	TEXT("\\Storage Card\\"),
 	TEXT("/"),
+	TEXT("2:/"),
 	TEXT("\\"),
+	TEXT("\\Storage Card\\"),
 	TEXT("\\Storage Card2\\"),
 #ifdef UNDER_CE
 	unicode_memory_card,
+	unicode_memory_card1,
 	unicode_memory_card2,
 #endif
 };
@@ -431,7 +440,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.7.6 1999.12.27\r\n")
+			       TEXT("Version 1.8 2000.01.03\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
