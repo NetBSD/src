@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.2 2001/09/15 17:27:24 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.3 2001/09/16 15:08:40 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.2 2001/09/15 17:27:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.3 2001/09/16 15:08:40 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -114,7 +114,7 @@ eca_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_init = eca_init;
 	ifp->if_stop = eca_stop;
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	IFQ_SET_READY(&ifp->if_snd);
 	sc->sc_ec.ec_claimwire = eca_claimwire;
 	sc->sc_ec.ec_txframe = eca_txframe;

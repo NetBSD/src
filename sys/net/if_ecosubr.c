@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.6 2001/09/16 12:16:50 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.7 2001/09/16 15:08:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.6 2001/09/16 12:16:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.7 2001/09/16 15:08:39 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -341,7 +341,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
-	int s;
+	int s, i;
 #ifdef INET
 	struct arphdr *ah;
 	struct eco_arp *ecah;
@@ -413,10 +413,34 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			schednetisr(NETISR_ARP);
 			inq = &arpintrq;
 			break;
+		case ECO_CTL_IPBCAST_REQUEST:
+		{
+			struct sockaddr_storage dst_store;
+			struct sockaddr *dst = (struct sockaddr *)&dst_store;
+
+			/* Queue? */
+			memcpy(eh->eco_dhost, eh->eco_shost, ECO_ADDR_LEN);
+			eh->eco_control = ECO_CTL_IPBCAST_REPLY;
+			/* dst->sa_len??? */
+			dst->sa_family = AF_UNSPEC;
+			memcpy(dst->sa_data, eh, ECO_HDR_LEN);
+			ifp->if_output(ifp, m, dst, NULL);
+			return;
+		}
 		default:
-			printf("%s: unknown IP stn %s ctl 0x%02x\n",
+			printf("%s: unknown IP stn %s ctl 0x%02x len %d:",
 			    ifp->if_xname, eco_sprintf(eh->eco_shost),
-			    eh->eco_control);
+			    eh->eco_control, m->m_pkthdr.len);
+			if (m->m_len == 0) {
+				m = m_pullup(m, 1);
+				if (m == 0) {
+					printf("\n");
+					goto drop;
+				}
+			}
+			for (i = 0; i < m->m_len; i++)
+				printf(" %02x", mtod(m, u_int8_t *)[i]);
+			printf("\n");
 			goto drop;
 		}
 		break;
