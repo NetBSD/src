@@ -1,6 +1,6 @@
-#	$NetBSD: files.isa,v 1.30.2.2 1997/07/17 13:42:43 bouyer Exp $
+#	$NetBSD: files.isa,v 1.30.2.3 1997/07/22 12:21:14 bouyer Exp $
 #
-# Config.new file and device description for machine-independent ISA code.
+# Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
