@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2002/07/10 15:12:40 fredette Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2003/10/06 16:08:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,22 +82,22 @@ ENTRY($rtld_start,32)
 	 * pseudoinstruction from the b,l description.
 	 */
 #define	LOAD_ADDR(sym,reg)						!\
-	bl	4,t1		/* branch to the ldw below, */		!\
+	bl	4,%t1		/* branch to the ldw below, */		!\
 				/*  storing absolute address of	*/	!\
 				/*  fake branch in t1 */		!\
-	depi	0, 31, 2, t1	/* mask off privilege bits */		!\
+	depi	0, 31, 2, %t1	/* mask off privilege bits */		!\
 	b	sym		/* fake branch, never executed */	!\
-	ldw	0(t1), t2	/* load the fake branch	*/		!\
-	ldo	8(t1), t1	/* branch target = pc + 8 + disp */	!\
-	extrs	t2, 31, 1, t3	/* extract w */				!\
-	zdep	t3, 13, 16, reg	/* deposit w */				!\
-	extru	t2, 15, 5, t3	/* extract w1 */			!\
-	dep	t3, 18, 5, reg	/* deposit w1 */			!\
-	extru	t2, 29, 1, t3	/* extract w2{10} */			!\
-	dep	t3, 19, 1, reg	/* deposit w2{10} */			!\
-	extru	t2, 28, 10, t3	/* extract w2{0..9} */			!\
-	dep	t3, 29, 10, reg	/* deposit w2{0..9} */			!\
-	add	t1, reg, reg	/* make final absolute address */
+	ldw	0(%t1), %t2	/* load the fake branch	*/		!\
+	ldo	8(%t1), %t1	/* branch target = pc + 8 + disp */	!\
+	extrs	%t2, 31, 1, %t3	/* extract w */				!\
+	zdep	%t3, 13, 16, reg /* deposit w */				!\
+	extru	%t2, 15, 5, %t3	/* extract w1 */			!\
+	dep	%t3, 18, 5, reg	/* deposit w1 */			!\
+	extru	%t2, 29, 1, %t3	/* extract w2{10} */			!\
+	dep	%t3, 19, 1, reg	/* deposit w2{10} */			!\
+	extru	%t2, 28, 10, %t3 /* extract w2{0..9} */			!\
+	dep	%t3, 29, 10, reg /* deposit w2{0..9} */			!\
+	add	%t1, reg, reg	/* make final absolute address */
 
 	/*
 	 * Load the absolute address of the beginning of the
