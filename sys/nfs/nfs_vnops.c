@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.175 2003/06/29 22:32:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.176 2003/07/30 12:25:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.175 2003/06/29 22:32:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.176 2003/07/30 12:25:39 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1744,6 +1744,10 @@ nfs_remove(v)
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	PNBUF_PUT(cnp->cn_pnbuf);
+	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
+	    vattr.va_nlink == 1) {
+		np->n_flag |= NREMOVED;
+	}
 	np->n_attrstamp = 0;
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
