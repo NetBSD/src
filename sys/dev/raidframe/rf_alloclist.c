@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.16 2003/12/31 16:32:50 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.17 2004/02/25 02:15:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.16 2003/12/31 16:32:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.17 2004/02/25 02:15:52 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,29 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.16 2003/12/31 16:32:50 oster Exp 
 #include "rf_general.h"
 #include "rf_shutdown.h"
 
-static unsigned int fl_hit_count, fl_miss_count;
+#include <sys/pool.h>
 
-static RF_AllocListElem_t *al_free_list = NULL;
-static int al_free_list_count;
-
+static struct pool rf_alloclist_pool;
 #define RF_AL_FREELIST_MAX 256
 
 static void rf_ShutdownAllocList(void *);
 
 static void rf_ShutdownAllocList(void *ignored)
 {
-	RF_AllocListElem_t *p, *pt;
-
-	for (p = al_free_list; p;) {
-		pt = p;
-		p = p->next;
-		RF_Free(pt, sizeof(*pt));
-	}
-	/*
-        printf("Alloclist: Free list hit count %lu (%lu %%) miss count %lu (%lu %%)\n",
-	       fl_hit_count, (100*fl_hit_count)/(fl_hit_count+fl_miss_count),
-	       fl_miss_count, (100*fl_miss_count)/(fl_hit_count+fl_miss_count));
-        */
+	pool_destroy(&rf_alloclist_pool);
 }
 
 int 
@@ -79,13 +66,17 @@ rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
-	al_free_list = NULL;
-	fl_hit_count = fl_miss_count = al_free_list_count = 0;
+	pool_init(&rf_alloclist_pool, sizeof(RF_AllocListElem_t),
+		  0, 0, 0, "rf_alloclist_pl", NULL);
+	pool_sethiwat(&rf_alloclist_pool, RF_AL_FREELIST_MAX);
+	pool_prime(&rf_alloclist_pool, 16);  /* need something.. */
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		return (rc);
 	}
+
 	return (0);
 }
 
@@ -131,13 +122,7 @@ rf_FreeAllocList(RF_AllocListElem_t *l)
 	while (l) {
 		temp = l;
 		l = l->next;
-		if (al_free_list_count > RF_AL_FREELIST_MAX) {
-			RF_Free(temp, sizeof(*temp));
-		} else {
-			temp->next = al_free_list;
-			al_free_list = temp;
-			al_free_list_count++;
-		}
+		pool_put(&rf_alloclist_pool, temp);
 	}
 }
 
@@ -146,20 +131,7 @@ rf_real_MakeAllocList()
 {
 	RF_AllocListElem_t *p;
 
-	if (al_free_list) {
-		fl_hit_count++;
-		p = al_free_list;
-		al_free_list = p->next;
-		al_free_list_count--;
-	} else {
-		fl_miss_count++;
-		RF_Malloc(p, sizeof(RF_AllocListElem_t), 
-			  (RF_AllocListElem_t *));	
-		/* no allocation locking in kernel, so this is fine */
-	}
-	if (p == NULL) {
-		return (NULL);
-	}
+	p = pool_get(&rf_alloclist_pool, PR_WAITOK);
 	memset((char *) p, 0, sizeof(RF_AllocListElem_t));
 	return (p);
 }
