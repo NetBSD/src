@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.11 2000/01/17 00:01:00 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.12 2000/01/25 09:33:12 enami Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -215,8 +215,8 @@ ata_perror(drvp, errno, buf)
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s %s", sep, errstr[i]);
-			sep = ",";
+			buf += sprintf(buf, "%s%s", sep, errstr[i]);
+			sep = ", ";
 		}
 	}
 }
