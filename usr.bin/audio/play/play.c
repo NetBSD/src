@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.38 2002/10/01 20:22:10 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.39 2002/11/03 19:35:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -198,9 +198,9 @@ cleanup(signo)
 	int signo;
 {
 
-	close(audiofd);
 	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
 	(void)ioctl(audiofd, AUDIO_SETINFO, &info);
+	close(audiofd);
 	exit(exitstatus);
 }
 
@@ -291,7 +291,7 @@ play(file)
 }
 
 /*
- * play the file on on the file descriptor fd
+ * play the file on the file descriptor fd
  */
 void
 play_fd(file, fd)
