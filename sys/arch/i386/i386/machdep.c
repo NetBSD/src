@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.296 1998/03/22 16:04:31 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.297 1998/03/25 16:30:43 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1785,6 +1785,7 @@ init386(first_avail)
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
+	bzero(vtopte(0), NBPG);  /* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr, VM_PROT_ALL, TRUE);
