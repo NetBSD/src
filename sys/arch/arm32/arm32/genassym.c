@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.6 1996/05/06 00:16:25 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.7 1996/06/12 20:02:42 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,6 +66,10 @@ main()
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, (u_int)V)
 
+	def("VM_MIN_ADDRESS", (int)VM_MIN_ADDRESS);
+	def("VM_MAXUSER_ADDRESS", (int)VM_MAXUSER_ADDRESS);
+	def("VM_MAXKERN_ADDRESS", (int)VM_MAXKERN_ADDRESS);
+
 	def("UPAGES", UPAGES);
 	def("PGSHIFT", PGSHIFT);
 	def("PDSHIFT", PDSHIFT);
@@ -119,8 +123,8 @@ main()
 	def("IH_LEVEL", &ih->ih_level);
 	def("IH_NUM", &ih->ih_num);
 	def("IH_FLAGS", &ih->ih_flags);
-	def("IH_MASK", &ih->ih_irqmask);
-	def("IH_BIT", &ih->ih_irqbit);
+	def("IH_MASKADDR", &ih->ih_maskaddr);
+	def("IH_MASKBITS", &ih->ih_maskbits);
 	def("IH_NEXT", &ih->ih_next);
 
 	def("FH_FUNC", &fh->fh_func);
