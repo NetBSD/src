@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2000/03/05 06:12:19 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2000/05/20 02:20:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,45 +100,45 @@
  * SUCH DAMAGE.
  */
 
-void	blkfree __P((char **));
-char   *conffilename __P((const char *));
-char  **copyblk __P((char **));
-void	count_users __P((void));
-void	cwd __P((const char *));
-void	delete __P((const char *));
-char  **do_conversion __P((const char *));
-void	dologout __P((int));
-void	fatal __P((const char *));
-int	format_file __P((const char *, int));
-int	ftpd_pclose __P((FILE *));
-FILE   *ftpd_popen __P((char *[], const char *, int));
-char   *getline __P((char *, int, FILE *));
-void	init_curclass __P((void));
-void	logcmd __P((const char *, off_t, const char *, const char *,
-	    const struct timeval *, const char *));
-void	logwtmp __P((const char *, const char *, const char *));
-void	lreply __P((int, const char *, ...));
-void	makedir __P((const char *));
-void	parse_conf __P((char *));
-void	pass __P((const char *));
-void	passive __P((void));
-void	long_passive __P((char *, int));
-void	perror_reply __P((int, const char *));
-void	pwd __P((void));
-void	removedir __P((const char *));
-void	renamecmd __P((const char *, const char *));
-char   *renamefrom __P((char *));
-void	reply __P((int, const char *, ...));
-void	retrieve __P((char *[], const char *));
-void	send_file_list __P((const char *));
-void	show_chdir_messages __P((int));
-void	statcmd __P((void));
-void	statfilecmd __P((const char *));
-void	store __P((const char *, const char *, int));
-int	strsuftoi __P((const char *));
-void	user __P((const char *));
-char   *xstrdup __P((const char *));
-void	yyerror __P((char *));
+void	blkfree(char **);
+char   *conffilename(const char *);
+char  **copyblk(char **);
+void	count_users(void);
+void	cwd(const char *);
+void	delete(const char *);
+char  **do_conversion(const char *);
+void	dologout(int);
+void	fatal(const char *);
+int	format_file(const char *, int);
+int	ftpd_pclose(FILE *);
+FILE   *ftpd_popen(char *[], const char *, int);
+char   *getline(char *, int, FILE *);
+void	init_curclass(void);
+void	logcmd(const char *, off_t, const char *, const char *,
+	    const struct timeval *, const char *);
+void	logwtmp(const char *, const char *, const char *);
+void	lreply(int, const char *, ...);
+void	makedir(const char *);
+void	parse_conf(const char *);
+void	pass(const char *);
+void	passive(void);
+void	long_passive(char *, int);
+void	perror_reply(int, const char *);
+void	pwd(void);
+void	removedir(const char *);
+void	renamecmd(const char *, const char *);
+char   *renamefrom(const char *);
+void	reply(int, const char *, ...);
+void	retrieve(char *[], const char *);
+void	send_file_list(const char *);
+void	show_chdir_messages(int);
+void	statcmd(void);
+void	statfilecmd(const char *);
+void	store(const char *, const char *, int);
+int	strsuftoi(const char *);
+void	user(const char *);
+char   *xstrdup(const char *);
+void	yyerror(char *);
 
 typedef long long qdfmt_t;
 typedef unsigned long long qufmt_t;
@@ -198,7 +198,7 @@ union sockunion {
 #define su_family	su_si.si_family
 #define su_port		su_si.si_port
 
-extern  int		yyparse __P((void));
+extern  int		yyparse(void);
 
 #ifndef	GLOBAL
 #define	GLOBAL	extern
@@ -250,6 +250,6 @@ GLOBAL	off_t		total_xfers_in, total_xfers_out, total_xfers;
 				(W) = strsep(&(P), " \t"); \
 			} while ((W) != NULL && *(W) == '\0')
 #define PLURAL(s)	((s) == 1 ? "" : "s")
-#define REASSIGN(X,Y)	do { if (X) free(X); (X)=(Y); } while (0)
+#define REASSIGN(X,Y)	do { if (X) free(X); (X)=(Y); } while (/*CONSTCOND*/0)
 
 #define	INTERNAL_LS	"/bin/ls"

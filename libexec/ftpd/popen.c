@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.20 2000/03/05 06:12:19 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.21 2000/05/20 02:20:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.20 2000/03/05 06:12:19 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.21 2000/05/20 02:20:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,13 +114,10 @@ __RCSID("$NetBSD: popen.c,v 1.20 2000/03/05 06:12:19 lukem Exp $");
 static int *pids;
 static int fds;
 
-extern int ls_main __P((int, char *[]));
+extern int ls_main(int, char *[]);
 
 FILE *
-ftpd_popen(argv, type, stderrfd)
-	char *argv[];
-	const char *type;
-	int stderrfd;
+ftpd_popen(char *argv[], const char *type, int stderrfd)
 {
 	FILE *iop;
 	int argc, pdes[2], pid, isls;
@@ -217,8 +214,7 @@ pfree:	if (sl)
 }
 
 int
-ftpd_pclose(iop)
-	FILE *iop;
+ftpd_pclose(FILE *iop)
 {
 	int fdes, status;
 	pid_t pid;
