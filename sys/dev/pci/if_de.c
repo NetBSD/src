@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.40 1997/04/13 20:14:25 cgd Exp $	*/
+/*	$NetBSD: if_de.c,v 1.41 1997/05/07 18:45:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_de.c,v 1.83 1997/03/25 21:12:17 thomas Exp
+ * Id: if_de.c,v 1.84 1997/03/26 23:27:20 thomas Exp
  *
  */
 
@@ -2143,6 +2143,18 @@ tulip_identify_cogent_nic(
     if (sc->tulip_chipid == TULIP_21140 || sc->tulip_chipid == TULIP_21140A) {
 	if (sc->tulip_rombuf[32] == TULIP_COGENT_EM100_ID)
 	    sc->tulip_boardsw = &tulip_21140_cogent_em100_boardsw;
+	/*
+	 * Magic number (0x24001109U) is the SubVendor (0x2400) and
+	 * SubDevId (0x1109) for the ANA6944TX (EM440TX).
+	 */
+	if (*(u_int32_t *) sc->tulip_rombuf == 0x24001109U
+		&& (sc->tulip_flags & TULIP_BASEROM)) {
+	    /*
+	     * Cogent (Adaptec) is still mapping all INTs to INTA of
+	     * first 21140.  Dumb!  Dumb!
+	     */
+	    sc->tulip_flags |= TULIP_SHAREDINTR;
+	}
     } else if (sc->tulip_chipid == TULIP_21040) {
 	sc->tulip_flags |= TULIP_SHAREDINTR|TULIP_BASEROM;
     }
@@ -2156,7 +2168,7 @@ tulip_identify_asante_nic(
     if ((sc->tulip_chipid == TULIP_21140 || sc->tulip_chipid == TULIP_21140A)
 	    && sc->tulip_boardsw != &tulip_2114x_isv_boardsw) {
 	tulip_media_info_t *mi = sc->tulip_mediainfo;
-
+	int idx;
 	/*
 	 * The Asante Fast Ethernet doesn't always ship with a valid
 	 * new format SROM.  So if isn't in the new format, we cheat
@@ -2170,7 +2182,6 @@ tulip_identify_asante_nic(
 	TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_ASANTE_PHYRESET);
 	DELAY(100);
 	TULIP_CSR_WRITE(sc, csr_gp, 0);
-	DELAY(200000);
 
 	mi->mi_type = TULIP_MEDIAINFO_MII;
 	mi->mi_gpr_length = 0;
@@ -2178,9 +2189,16 @@ tulip_identify_asante_nic(
 	mi->mi_reset_length = 0;
 	mi->mi_reset_offset = 0;;
 
-	mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
-	if (mi->mi_phyaddr == TULIP_MII_NOPHY)
+	mi->mi_phyaddr = TULIP_MII_NOPHY;
+	for (idx = 20; idx > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx--) {
+	    DELAY(10000);
+	    mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
+	}
+	if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+	    printf(TULIP_PRINTF_FMT ": can't find phy 0\n", TULIP_PRINTF_ARGS);
 	    return;
+	}
+
 	sc->tulip_features |= TULIP_HAVE_MII;
 	mi->mi_capabilities  = PHYSTS_10BASET|PHYSTS_10BASET_FD|PHYSTS_100BASETX|PHYSTS_100BASETX_FD;
 	mi->mi_advertisement = PHYSTS_10BASET|PHYSTS_10BASET_FD|PHYSTS_100BASETX|PHYSTS_100BASETX_FD;
@@ -2191,6 +2209,8 @@ tulip_identify_asante_nic(
 	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASET4);
 	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET_FD);
 	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET);
+	mi->mi_phyid = (tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDLOW) << 16) |
+	    tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDHIGH);
 
 	sc->tulip_boardsw = &tulip_2114x_isv_boardsw;
     }
@@ -2376,9 +2396,22 @@ tulip_srom_decode(
 			TULIP_CSR_WRITE(sc, csr_gp, sc->tulip_rombuf[mi->mi_gpr_offset + idx3]);
 		    }
 
-		    mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
-		    if (mi->mi_phyaddr == TULIP_MII_NOPHY)
+		    /*
+		     * At least write something!
+		     */
+		    if (mi->mi_reset_length == 0 && mi->mi_gpr_length == 0)
+			TULIP_CSR_WRITE(sc, csr_gp, 0);
+
+		    mi->mi_phyaddr = TULIP_MII_NOPHY;
+		    for (idx3 = 20; idx3 > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx3--) {
+			DELAY(10000);
+			mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
+		    }
+		    if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+			printf(TULIP_PRINTF_FMT ": can't find phy %d\n",
+			       TULIP_PRINTF_ARGS, phyno);
 			break;
+		    }
 		    sc->tulip_features |= TULIP_HAVE_MII;
 		    mi->mi_capabilities  = dp[0] + dp[1] * 256; dp += 2;
 		    mi->mi_advertisement = dp[0] + dp[1] * 256; dp += 2;
@@ -2389,6 +2422,8 @@ tulip_srom_decode(
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASET4);
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET_FD);
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET);
+		    mi->mi_phyid = (tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDLOW) << 16) |
+			tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDHIGH);
 		    mi++;
 		    break;
 		}
@@ -2460,9 +2495,20 @@ tulip_srom_decode(
 			DELAY(10);
 			TULIP_CSR_WRITE(sc, csr_sia_general, (dp0[0] + 256 * dp0[1]) << 16);
 		    }
-		    mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
-		    if (mi->mi_phyaddr == TULIP_MII_NOPHY)
+
+		    if (mi->mi_reset_length == 0 && mi->mi_gpr_length == 0)
+			TULIP_CSR_WRITE(sc, csr_sia_general, 0);
+
+		    mi->mi_phyaddr = TULIP_MII_NOPHY;
+		    for (idx3 = 20; idx3 > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx3--) {
+			DELAY(10000);
+			mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, phyno);
+		    }
+		    if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+			printf(TULIP_PRINTF_FMT ": can't find phy %d\n",
+			       TULIP_PRINTF_ARGS, phyno);
 			break;
+		    }
 		    sc->tulip_features |= TULIP_HAVE_MII;
 		    mi->mi_capabilities  = dp[0] + dp[1] * 256; dp += 2;
 		    mi->mi_advertisement = dp[0] + dp[1] * 256; dp += 2;
@@ -2474,6 +2520,8 @@ tulip_srom_decode(
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASET4);
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET_FD);
 		    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET);
+		    mi->mi_phyid = (tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDLOW) << 16) |
+			tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDHIGH);
 		    mi++;
 		    break;
 		}
