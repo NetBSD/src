@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.17 1999/03/26 23:41:34 mycroft Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.17.2.1 1999/04/14 21:15:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -329,6 +329,7 @@ vmeattach_mainbus(parent, self, aux)
 /*XXX*/	sparc_vme_chipset_tag.cookie = self;
 /*XXX*/	sparc_vme4_dma_tag._cookie = self;
 
+	sparc_vme_bus_tag.parent = ma->ma_bustag;
 	vba.vba_bustag = &sparc_vme_bus_tag;
 	vba.vba_chipset_tag = &sparc_vme_chipset_tag;
 	vba.vba_dmatag = &sparc_vme4_dma_tag;
