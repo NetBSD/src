@@ -1,0 +1,3 @@
+#	$NetBSD: Src-dst,v 1.1 2001/04/06 04:09:55 thorpej Exp $
+
+DSTSRCS= dst_api.c dst_support.c hmac_link.c prandom.c base64.c
