@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.135 1999/10/30 12:35:30 frueauf Exp $
+#	$NetBSD: rc,v 1.136 1999/11/15 20:04:50 fvdl Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -440,9 +440,6 @@ if [ -f /var/account/acct ]; then
 fi
 
 echo -n standard daemons:
-if checkyesno update; then
-	echo -n ' update';		update $update_flags
-fi
 if checkyesno cron; then
 	echo -n ' cron';		cron
 fi
