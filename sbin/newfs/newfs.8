@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)newfs.8	8.3 (Berkeley) 3/27/94
-.\"	$Id: newfs.8,v 1.9 1994/07/16 05:18:11 jtc Exp $
+.\"	$Id: newfs.8,v 1.10 1994/12/01 18:46:37 mycroft Exp $
 .\"
 .Dd March 27, 1994
 .Dt NEWFS 8
@@ -53,6 +53,7 @@
 .Op Fl k Ar skew
 .Op Fl l Ar interleave
 .Op Fl m Ar free space
+.Op Fl n Ar nrpos
 .Op Fl o Ar optimization
 .Op Fl p Ar sectors
 .Op Fl r Ar revolutions
@@ -129,7 +130,7 @@ This specifies the maximum number of contiguous blocks that will be
 laid out before forcing a rotational delay (see the
 .Fl d
 option).
-The default value is one.
+The default value is 8.
 See
 .Xr tunefs 8
 for more details on how to set this option.
@@ -141,7 +142,7 @@ The default value is 16.
 .It Fl d Ar rotdelay
 This specifies the expected time (in milliseconds) to service a transfer
 completion interrupt and initiate a new transfer on the same disk.
-The default is 4 milliseconds.
+The default is 0 milliseconds.
 See
 .Xr tunefs 8
 for more details on how to set this option.
@@ -167,6 +168,8 @@ The default value used is 10%.
 See
 .Xr tunefs 8
 for more details on how to set this option.
+.It Fl n Ar number of rotational positions
+The number of distinct rotational positions.  The default is 1.
 .It Fl o Ar optimization\ preference
 .Pq ``space'' or ``time''
 The file system can either be instructed to try to minimize the time spent
