@@ -1,7 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:07:26 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9 2002/09/12 17:18:40 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
+ * Portions copyright 2002 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
