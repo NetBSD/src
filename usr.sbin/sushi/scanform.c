@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.29 2003/10/16 06:19:11 itojun Exp $       */
+/*      $NetBSD: scanform.c,v 1.30 2003/10/21 02:55:43 fvdl Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ form_appenditem(struct cqForm *cqf, char *desc, int type, char *data, int req)
 
         if ((fte = malloc(sizeof(FTREE_ENTRY))) == NULL ||
                 ((fte->desc = strdup(desc)) == NULL) ||
-                ((fte->type = type) == NULL) ||
+                ((fte->type = type) == 0) ||
 		((fte->data = strdup(data)) == NULL))
                         bailout("malloc: %s", strerror(errno));
 	fte->required = req;
@@ -476,7 +476,7 @@ my_driver(FORM * form, int c, char *path)
 		/* NOTREACHED */
 		break;
 	case DUMPSCREEN:
-		do_scrdump(NULL, NULL, NULL, NULL);
+		do_scrdump(0, NULL, NULL, 0);
 		return(FALSE);
 		/* NOTREACHED */
 		break;
@@ -1595,7 +1595,7 @@ tab_help(FORM *form)
 
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, lines, TRUE, FALSE);
 	activateCDKLabel(label, NULL);
-	waitCDKLabel(label, NULL);
+	waitCDKLabel(label, 0);
 	destroyCDKLabel(label);
 	touchwin(stdscr);
 	wrefresh(stdscr);
