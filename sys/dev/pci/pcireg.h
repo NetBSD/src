@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.24 2000/04/28 17:12:45 uch Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.25 2000/05/08 10:45:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -347,7 +347,8 @@ typedef u_int8_t pci_revision_t;
 /*
  * capabilities link list (PCI rev. 2.2)
  */
-#define PCI_CAPLISTPTR_REG		0x34
+#define PCI_CAPLISTPTR_REG		0x34	/* header type 0 */
+#define PCI_CARDBUS_CAPLISTPTR_REG	0x14	/* header type 2 */
 #define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
 #define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
 #define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
