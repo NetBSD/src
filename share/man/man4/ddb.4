@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.80 2004/09/30 09:20:52 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.81 2005/02/14 18:14:27 fredb Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd September 30, 2004
+.Dd February 14, 2005
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -534,7 +534,9 @@ A synonym for
 .It Ic reboot Op Ar flags
 Reboot, using the optionally supplied boot
 .Ar flags ,
-which is a bitmask supporting the following values:
+which is a bitmask supporting the same values as for
+.Xr reboot 2 .
+Some of the more useful flags:
 .Bl -column "Value" "RB_AUTOBOOT" "Description"
 .It Sy "Value" Ta Sy "Name" Ta Sy "Description"
 .It 0x1 Ta RB_ASKNAME Ta Ask for file name to reboot from
@@ -542,6 +544,7 @@ which is a bitmask supporting the following values:
 .It 0x4 Ta RB_NOSYNC Ta Don't sync before reboot
 .It 0x8 Ta RB_HALT Ta Halt instead of reboot
 .It 0x40 Ta RB_KDB Ta Boot into kernel debugger
+.It 0x100 Ta RB_DUMP Ta Dump unconditionally before reboot
 .It 0x808 Ta RB_POWERDOWN Ta Power off (or at least halt)
 .El
 .Pp
@@ -1231,6 +1234,8 @@ and modifiers as described above.
 .El
 .Sh SEE ALSO
 .Xr options 4 ,
+.Xr reboot 2 ,
+.Xr reboot 8 ,
 .Xr sysctl 8 ,
 .Xr cnmagic 9
 .Sh HISTORY
