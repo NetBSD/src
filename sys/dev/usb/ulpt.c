@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.5 1998/12/02 22:54:54 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.6 1998/12/08 15:12:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -367,10 +367,12 @@ ulptwrite(dev, uio, flags)
 	DPRINTF(("ulptwrite\n"));
 	reqh = usbd_alloc_request();
 	if (reqh == 0)
-		return (EIO);
+		return (ENOMEM);
 	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		ulpt_statusmsg(ulpt_status(sc), sc);
-		uiomove(buf, n, uio);
+		error = uiomove(buf, n, uio);
+		if (error)
+			break;
 		/* XXX use callback to enable interrupt? */
 		r = usbd_setup_request(reqh, sc->sc_bulkpipe, 0, buf, n,
 				       0, USBD_NO_TIMEOUT, 0);
