@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.43 2004/04/06 04:03:17 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.44 2004/04/06 20:33:39 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -470,3 +470,11 @@ dist/dhcp/includes/cf/netbsd.h			1.5
 
 	Use _LP64 to indicate 64-bit platform.
 	[nakayama, ticket #71]
+
+x11/bin/xdm/config/Makefile			1.6
+	mirror change in Imakefiles:  provide DEFAULTVT=vt05 for amd64 as well.
+	[mrg, ticket #72]
+
+xsrc/xfree/xc/programs/xdm/sessreg.c		1.2
+	Add support for utmpx in current (since 1.6C).  OKed by tron.
+	[markd, ticket #73]
