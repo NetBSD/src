@@ -1,4 +1,4 @@
-#	$Id: list,v 1.2 1994/10/18 07:03:15 glass Exp $
+#	$NetBSD: list,v 1.2.8.1 1996/09/04 07:08:43 thorpej Exp $
 
 # and the upgrade tools
 COPY	dot.profile			.profile

@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: install.sh,v 1.6.4.1 1996/09/04 07:08:20 thorpej Exp $
+#
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 #
@@ -28,7 +30,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.6 1995/11/28 23:57:26 jtc Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +39,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {

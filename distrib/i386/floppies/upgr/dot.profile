@@ -1,3 +1,4 @@
+#	$NetBSD: dot.profile,v 1.1.1.1.8.1 1996/09/04 07:08:41 thorpej Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -27,7 +28,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.profile,v 1.1.1.1 1994/08/29 15:30:19 cgd Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
