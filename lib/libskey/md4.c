@@ -23,7 +23,7 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  *
- * $Id: md4.c,v 1.1 1994/05/21 05:46:02 deraadt Exp $
+ * $Id: md4.c,v 1.2 1994/05/26 09:39:08 deraadt Exp $
  */
 
 /* 
@@ -46,27 +46,14 @@
 
 /* Implementation notes:
  * This implementation assumes that longs are 32-bit quantities.
- * If the machine stores the least-significant byte of an long in the
- * least-addressed byte (eg., VAX and 8086), then LOWBYTEFIRST should be
- * set to TRUE.  Otherwise (eg., SUNS), LOWBYTEFIRST should be set to
- * FALSE.  Note that on machines with LOWBYTEFIRST FALSE the routine
+ * Note that on big endian machines the routine
  * MDupdate modifies has a side-effect on its input array (the order of bytes
  * in each word are reversed).  If this is undesired a call to MDreverse(X) can
  * reverse the bytes of X back into order after each call to MDupdate.
  */
-#define TRUE  1
-#define FALSE 0
-
-#if (defined(__MSDOS__) || defined(MPU8086) || defined(MPU8080) \
- || defined(vax) || defined (MIPSEL))
-#define LOWBYTEFIRST TRUE	/* Low order bytes are first in memory */
-#else			/* Almost all other machines are big-endian */
-#define	LOWBYTEFIRST FALSE
-#endif
-
-
 /* Compile-time includes */
 #include <stdio.h>
+#include <machine/endian.h>
 #include "md4.h"
 
 /* Compile-time declarations of MD4 ``magic constants'' */
@@ -189,7 +176,7 @@ unsigned long *X;
 { 
 	register unsigned long tmp, A, B, C, D;
 
-#if LOWBYTEFIRST == FALSE
+#if BYTE_ORDER == BIG_ENDIAN
 	MDreverse(X);
 #endif
 	A = MDp->buffer[0];
