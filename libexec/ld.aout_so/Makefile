@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 1997/03/24 22:06:36 christos Exp $
+#	$NetBSD: Makefile,v 1.16 1997/04/16 16:49:43 christos Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
 MAN= rtld.1
-LDDIR?= $(.CURDIR)/..
 PICFLAG=-fpic -fno-function-cse
-CFLAGS+=-I$(LDDIR) -I$(.CURDIR) -I$(LDDIR)/$(MACHINE_ARCH) $(PICFLAG) -DRTLD -DLIBC_SCCS
+CFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
 .if defined(DESTDIR)
@@ -19,7 +18,7 @@ MLINKS=	rtld.1 ld.so.1
 INCS=${HDRS}
 INCSDIR=/usr/include
 
-.PATH: $(LDDIR) $(LDDIR)/$(MACHINE_ARCH) ${.CURDIR}/../../../../lib/libc/stdio
+.PATH: ${.CURDIR}/../../../../lib/libc/stdio
 
 $(PROG):
 	$(LD) -o $(PROG) $(LDFLAGS) $(OBJS) $(LDADD)
