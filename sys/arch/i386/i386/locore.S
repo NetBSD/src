@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.2.3 2002/12/11 16:00:50 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.4 2002/12/12 12:43:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1672,7 +1672,7 @@ NENTRY(setrunqueue)
 	jne	1f
 	cmpl	$0,L_WCHAN(%eax)
 	jne	1f
-	cmpb	$SRUN,L_STAT(%eax)
+	cmpb	$LSRUN,L_STAT(%eax)
 	jne	1f
 #endif /* DIAGNOSTIC */
 	movzbl	L_PRIORITY(%eax),%edx
@@ -1751,10 +1751,10 @@ ENTRY(cpu_switch)
 #ifdef DEBUG
 	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jae	1f
-	pushl	2f
+	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splhigh() in cpu_switch!"
+2:	.asciz	"not splsched() in cpu_switch!"
 1:	
 #endif /* DEBUG */
 	
@@ -1775,7 +1775,7 @@ ENTRY(cpu_switch)
 	 *   %eax - queue head, scratch, then zero
 	 *   %ebx - queue number
 	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
+	 *   %edx - next lwp in queue
 	 *   %esi - old lwp
 	 *   %edi - new lwp
 	 */
