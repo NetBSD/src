@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16 1999/03/22 05:02:41 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1999/08/19 19:37:22 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 1999/03/22 05:02:41 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 1999/08/19 19:37:22 hubertf Exp $");
 #endif
 #endif
 
@@ -61,7 +61,7 @@ usage(void)
     exit(1);
 }
 
-static int
+int
 find_fn(const char *pkg, char *data)
 {
     lpkg_t *lpp;
