@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.115 2000/07/27 06:18:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.116 2000/07/27 11:34:06 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -191,6 +191,8 @@ int	tcprexmtthresh = 3;
 int	tcp_log_refused;
 
 struct timeval tcp_rst_ratelim_last;
+static int tcp_rst_ppslim_count = 0;
+static struct timeval tcp_rst_ppslim_last;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -2143,6 +2145,11 @@ dropwithreset_ratelim:
 	 * an attempt to connect to or otherwise communicate with
 	 * a port for which we have no socket.
 	 */
+	if (ppsratecheck(&tcp_rst_ppslim_last, &tcp_rst_ppslim_count,
+	    tcp_rst_ppslim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
 	if (ratecheck(&tcp_rst_ratelim_last, &tcp_rst_ratelim) == 0) {
 		/* XXX stat */
 		goto drop;
