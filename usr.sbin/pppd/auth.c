@@ -32,6 +32,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: auth.c,v 1.2 1993/11/10 01:33:56 paulus Exp $";
+#endif
+
 #include <stdio.h>
 #include <stddef.h>
 #include <syslog.h>

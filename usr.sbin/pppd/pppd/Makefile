@@ -1,6 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/11/09 04:53:15 paulus Exp $
-
-#DEBUG_FLAGS = -DDEBUGALL
+#	$Id: Makefile,v 1.5 1993/11/10 01:33:51 paulus Exp $
 
 PROG=	pppd
 SRCS=	main.c magic.c fsm.c lcp.c ipcp.c upap.c chap.c md5.c \

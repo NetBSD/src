@@ -17,6 +17,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: fsm.c,v 1.3 1993/11/10 01:34:04 paulus Exp $";
+#endif
+
 /*
  * TODO:
  * Randomize fsm id on link/init.
