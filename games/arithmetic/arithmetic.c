@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.11 1998/09/13 15:27:25 hubertf Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.12 1998/09/14 09:13:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.11 1998/09/13 15:27:25 hubertf Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.12 1998/09/14 09:13:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,9 @@ int	problem __P((void));
 void	showstats __P((void));
 void	usage __P((void)) __attribute__((__noreturn__));
 
-char keylist[] = "+-x/";
-char defaultkeys[] = "+-";
-char *keys = defaultkeys;
+const char keylist[] = "+-x/";
+const char defaultkeys[] = "+-";
+const char *keys = defaultkeys;
 int nkeys = sizeof(defaultkeys) - 1;
 int rangemax = 10;
 int nright, nwrong;
@@ -125,7 +125,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "r:o:")) != -1)
 		switch(ch) {
 		case 'o': {
-			char *p;
+			const char *p;
 
 			for (p = keys = optarg; *p; ++p)
 				if (!strchr(keylist, *p))
