@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.11 2001/10/26 05:56:10 lukem Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.12 2001/11/06 07:11:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -112,7 +112,6 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct vnode *devvp;
 	struct indir a[NIADDR + 1], *xap;
 	ufs_daddr_t daddr;
 	long metalbn;
@@ -165,7 +164,6 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	daddr = ufs_rw32(ip->i_ffs_ib[xap->in_off],
 	    UFS_MPNEEDSWAP(vp->v_mount));
 
-	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* 
 		 * Exit the loop if there is no disk address assigned yet and

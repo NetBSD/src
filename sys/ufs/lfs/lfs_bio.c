@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.37 2001/10/26 05:56:09 lukem Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.38 2001/11/06 07:11:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -171,9 +171,6 @@ lfs_bwrite(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct inode *ip;
-
-	ip = VTOI(bp->b_vp);
 
 #ifdef DIAGNOSTIC
         if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
