@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.16 1998/08/25 19:18:12 ross Exp $	*/
+/*	$NetBSD: badsect.c,v 1.17 1999/07/30 15:56:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.16 1998/08/25 19:18:12 ross Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.17 1999/07/30 15:56:58 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,10 +132,11 @@ main(argc, argv)
 		    S_ISBLK(devstat.st_mode))
 			break;
 	}
-	closedir(dirp);
-	if (dp == NULL)
+	if (dp == NULL) {
+		closedir(dirp);
 		errx(1, "Cannot find dev 0%o corresponding to %s", 
 		    stbuf.st_rdev, argv[1]);
+	}
 
 	/*
 	 * The filesystem is mounted; use the character device instead.
@@ -143,6 +144,9 @@ main(argc, argv)
 	 * the character device.
 	 */
 	(void) snprintf(name, sizeof(name), "%sr%s", _PATH_DEV, dp->d_name);
+
+	closedir(dirp); /* now *dp is invalid */
+
 	if ((fsi = open(name, O_RDONLY)) == -1)
 		err(1, "Cannot open `%s'", argv[1]);
 
