@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.4 2005/01/18 11:11:58 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.5 2005/01/22 04:34:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -50,12 +50,6 @@
 
 #include <sys/types.h>
 
-#include <machine/bus.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
@@ -73,8 +67,14 @@
 #include <net/if_media.h>
 #include <net/if_vlanvar.h>
 
+#include <machine/bus.h>
+
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * Default to using PIO access for this driver.
