@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.28 1998/01/12 10:21:11 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.29 1998/01/17 03:39:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.28 1998/01/12 10:21:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.29 1998/01/17 03:39:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,8 @@ apecsattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &acp->ac_iot;
 	pba.pba_memt = &acp->ac_memt;
-	pba.pba_dmat = &acp->ac_dmat_direct;
+	pba.pba_dmat =
+	    alphabus_dma_get_tag(&acp->ac_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
