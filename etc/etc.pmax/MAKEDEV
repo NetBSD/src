@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 1998/11/17 23:09:46 jonathan Exp $
+#	$NetBSD: MAKEDEV,v 1.27 1999/01/16 01:40:29 abs Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -57,7 +57,7 @@ all)
 	sh $0 raid0 raid1 raid2 raid3
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
-	sh $0 bpf0 bpf1 bpf2 bpf3
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 fb0 fb1 fb2
 	sh $0 mouse
 	sh $0 ipl random lkm
