@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2.6.4 2001/03/27 15:31:15 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.6.5 2001/04/06 07:08:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,6 +180,7 @@ cdev_decl(tun);
 #if 0
 #include "lpt.h"
 cdev_decl(lpt);
+#endif
 
 #include "scsibus.h"
 cdev_decl(scsibus);
