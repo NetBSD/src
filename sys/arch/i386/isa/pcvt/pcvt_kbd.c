@@ -1,8 +1,7 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.9 1995/09/03 01:20:39 mycroft Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
- *                              Joerg Wunsch and Holger Veit.
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
+ *
+ * Copyright (c) 1992, 1993 Brian Dunford-Shore and Holger Veit.
  *
  * All rights reserved.
  *
@@ -39,7 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)pcvt_kbd.c, 3.00, Last Edit-Date: [Sun Feb 27 17:04:53 1994]
+ * @(#)pcvt_kbd.c, 3.32, Last Edit-Date: [Tue Oct  3 11:19:48 1995]
  *
  */
 
@@ -47,33 +46,33 @@
  *
  *	pcvt_kbd.c	VT220 Driver Keyboard Interface Code
  *	----------------------------------------------------
- *	-jw	include rather primitive X stuff
- *	-hm	patch from Gordon L. Burditt to fix repeat of CAPS LOCK etc.
- *	-hm	netbsd: no file ddb.h available
- *	-hm	new keyboard routines from netbsd-current
- *	-hm	re-introduced keyboard id detection
- *	-hm	keyboard id debugging, hp sends special id ...
- *	-jw	keyboard overlay table now malloc'ed, SCROLL_SLEEP
- *	-hm	keyboard initialization for ddb activists ...
- *	-hm	keyboard security no longer ignored
- *	-hm	reset cursor when soft reset fkey
- *	-jw	USL VT compatibility
- *	-hm	CTRL-ALT-Fx switches to virtual terminal x
- *	-hm	added totalscreen checking, removed bug in vt220-like kbd part
- *	-hm	SCROLL_SLEEPing works
- *	-hm	kbd scancode sets 1 and 2 (patch from Onno van der Linden)
- *	-hm	printscreen key fix
- *	-jw	mouse emulation mode
- *	-jw/hm	all ifdef's converted to if's 
- *	-jw	cleaned up the key prefix recognition
- *	-jw	included PCVT_META_ESC
- *	-hm	removed typo in cfkey11() (pillhuhns have good eyes ..)
- *	-hm	Debugger("kbd") patch from Joerg for FreeBSD
- *	-hm	bugfix, ALT-F12 steps over screen 0
- *	-hm	vgapage() -> do_vgapage(), checks if in scrolling
  *	-hm	------------ Release 3.00 --------------
+ *	-hm	integrating NetBSD-current patches
+ *	-jw	introduced kbd_emulate_pc() if scanset > 1
+ *	-hm	patch from joerg for timeout in kbd_emulate_pc()
+ *	-hm	starting to implement alt-shift/ctrl key mappings
+ *	-hm	Gateway 2000 Keyboard fix from Brian Moore
+ *	-hm	some #if adjusting for NetBSD 0.9
+ *	-hm	split off pcvt_kbd.h
+ *	-hm	applying Joerg's patches for FreeBSD 2.0
+ *	-hm	patch from Martin, PCVT_NO_LED_UPDATE
+ *	-hm	PCVT_VT220KEYB patches from Lon Willet
+ *	-hm	PR #399, patch from Bill Sommerfeld: Return with PCVT_META_ESC
+ *	-hm	allow keyboard-less kernel boot for serial consoles and such ..
+ *	-hm	patch from Lon Willett for led-update and showkey()
+ *	-hm	patch from Lon Willett to fix mapping of Control-R scancode
+ *	-hm	delay patch from Martin Husemann after port-i386 ml-discussion
+ *	-hm	added PCVT_NONRESP_KEYB_TRY definition to doreset()
+ *	-hm	keyboard code bugfix from Jukka A. Ukkonen (ukkonen@csc.fi)
+ *	-hm	---------------- Release 3.30 -----------------------
+ *	-hm	patch from Frank van der Linden for keyboard state per VT
+ *	-hm	removed KBDGLEDS and KBDSLEDS ioctls
+ *	-hm	---------------- Release 3.32 -----------------------
  *
  *---------------------------------------------------------------------------*/
+
+#include "vt.h"
+#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 
@@ -106,383 +105,151 @@ static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
 
 #if PCVT_SHOWKEYS
-u_char rawkeybuf[80];	
+u_char rawkeybuf[80];
+#endif
+
+#include "pcvt_kbd.h"		/* tables etc */
+
+#if PCVT_SHOWKEYS
+/*---------------------------------------------------------------------------*
+ *	keyboard debugging: put kbd communication char into some buffer
+ *---------------------------------------------------------------------------*/
+static void showkey (char delim, u_char val)
+{
+	int rki;
+
+	for(rki = 3; rki < 80; rki++)		/* shift left buffer */
+		rawkeybuf[rki-3] = rawkeybuf[rki];
+
+	rawkeybuf[77] = delim;		/* delimiter */
+
+	rki = (val & 0xf0) >> 4;	/* ms nibble */
+
+	if(rki <= 9)
+		rki = rki + '0';
+	else
+		rki = rki - 10 + 'A';
+
+	rawkeybuf[78] = rki;
+
+	rki = val & 0x0f;		/* ls nibble */
+
+	if(rki <= 9)
+		rki = rki + '0';
+	else
+		rki = rki - 10 + 'A';
+
+	rawkeybuf[79] = rki;
+}
 #endif	/* PCVT_SHOWKEYS */
 
 /*---------------------------------------------------------------------------*
- *	function bound to control function key 12
+ *	function to switch to another virtual screen
  *---------------------------------------------------------------------------*/
 static void
 do_vgapage(int page)
 {
-	if(critical_scroll)
-		switch_page = page;
+	if(critical_scroll)		/* executing critical region ? */
+		switch_page = page;	/* yes, auto switch later */
 	else
-		vgapage(page);
+		vgapage(page);		/* no, switch now */
 }
 
+
+/*
+ * This code from Lon Willett enclosed in #if PCVT_UPDLED_LOSES_INTR is
+ * abled because it crashes FreeBSD 1.1.5.1 at boot time.
+ * The cause is obviously that the timeout queue is not yet initialized
+ * timeout is called from here the first time.
+ * Anyway it is a pointer in the right direction so it is included for
+ * reference here.
+ */
+
+#define PCVT_UPDLED_LOSES_INTR	0	/* disabled for now */
+
+#if PCVT_UPDLED_LOSES_INTR
+
 /*---------------------------------------------------------------------------*
- *	this is one sub-entry for the table. the type can be either
- *	"pointer to a string" or "pointer to a function"
+ *	check for lost keyboard interrupts
  *---------------------------------------------------------------------------*/
-typedef struct
+
+/*
+ * The two commands to change the LEDs generate two KEYB_R_ACK responses
+ * from the keyboard, which aren't explicitly checked for (maybe they
+ * should be?).  However, when a lot of other I/O is happening, one of
+ * the interrupts sometimes gets lost (I'm not sure of the details of
+ * how and why and what hardware this happens with).
+ *
+ * This is a real problem, because normally the keyboard is only polled
+ * by pcrint(), and no more interrupts will be generated until the ACK
+ * has been read.  So the keyboard is hung.  This code polls a little
+ * while after changing the LEDs to make sure that this hasn't happened.
+ *
+ * XXX Quite possibly we should poll the kbd on a regular basis anyway,
+ * in the interest of robustness.  It may be possible that interrupts
+ * get lost other times as well.
+ */
+
+static int lost_intr_timeout_queued = 0;
+
+static void
+check_for_lost_intr (void *arg)
 {
-	u_char subtype;			/* subtype, string or function */
-	union what
+	lost_intr_timeout_queued = 0;
+	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
 	{
-		u_char *string;		/* ptr to string, null terminated */
-		void (*func)();		/* ptr to function */
-	} what;
-} entry;
+		int opri = spltty ();
+		(void) pcrint ();
+		splx (opri);
+	}
+}
+
+#endif /* PCVT_UPDLED_LOSES_INTR */
 
 /*---------------------------------------------------------------------------*
- *	this is the "outer" table 
- *---------------------------------------------------------------------------*/
-typedef struct
-{
-	u_short	type;			/* type of key */
-	u_short	ovlindex;		/* -hv- index into overload table */
-	entry 	unshift;		/* normal default codes/funcs */
-	entry	shift;			/* shifted default codes/funcs */
-	entry 	ctrl;			/* control default codes/funcs */
-} Keycap_def;
-
-#define IDX0		0	/* default indexvalue into ovl table */
-
-#define STR		KBD_SUBT_STR	/* subtype = ptr to string */
-#define FNC		KBD_SUBT_FNC	/* subtype = ptr to function */
-
-#define CODE_SIZE	5
-
-/*---------------------------------------------------------------------------*
- * the overlaytable table is a static fixed size scratchpad where all the
- * overloaded definitions are stored.
- * an entry consists of a short (holding the new type attribute) and
- * four entries for a new keydefinition.
- *---------------------------------------------------------------------------*/
-
-#define OVLTBL_SIZE	64		/* 64 keys can be overloaded */
-
-#define Ovl_tbl struct kbd_ovlkey
-
-static Ovl_tbl *ovltbl;			/* the table itself */
-
-static ovlinitflag = 0;			/* the init flag for the table */
-
-/*
- * key codes >= 128 denote "virtual" shift/control
- * They are resolved before any keymapping is handled
- */
-
-#if PCVT_SCANSET == 2
-static u_char scantokey[] = {
-/*      -0- -1- -2- -3- -4- -5- -6- -7-    This layout is valid for US only */
-/*00*/   0,120,  0,116,114,112,113,123,  /* ??  F9  ??  F5  F3  F1  F2  F12 */
-/*08*/   0,121,119,117,115, 16,  1,  0,  /* ??  F10 F8  F6  F4  TAB `   ??  */
-/*10*/   0, 60, 44,  0, 58, 17,  2,  0,  /* ??  ALl SHl ??  CTl Q   1   ??  */
-/*18*/   0,  0, 46, 32, 31, 18,  3,  0,  /* ??  Z   S   A   W   2   ??  ??  */
-/*20*/   0, 48, 47, 33, 19,  5,  4,  0,  /* ??  C   X   D   E   4   3   ??  */
-/*28*/   0, 61, 49, 34, 21, 20,  6,  0,  /* ??  SP  V   F   T   R   5   ??  */
-/*30*/   0, 51, 50, 36, 35, 22,  7,  0,  /* ??  N   B   H   G   Y   6   ??  */
-/*38*/   0,  0, 52, 37, 23,  8,  9,  0,  /* ??  ??  M   J   U   7   8   ??  */
-/*40*/   0, 53, 38, 24, 25, 11, 10,  0,  /* ??  ,   K   I   O   0   9   ??  */
-/*48*/   0, 54, 55, 39, 40, 26, 12,  0,  /* ??  .   /   L   ;   P   -   ??  */
-/*50*/   0,  0, 41,  0, 27, 13,  0,  0,  /* ??  ??  "   ??  [   =   ??  ??  */
-/*58*/  30, 57, 43, 28,  0, 29,  0,  0,  /* CAP SHr ENT ]   ??  \   ??  ??  */
-/*60*/   0, 45,  0,  0,  0,  0, 15,  0,  /* ??  NL1 ??  ??  ??  ??  BS  ??  */
-/*68*/   0, 93,  0, 92, 91,  0,  0,  0,  /* ??  KP1 ??  KP4 KP7 ??  ??  ??  */
-/*70*/  99,104, 98, 97,102, 96,110, 90,  /* KP0 KP. KP2 KP5 KP6 KP8 ESC NUM */
-/*78*/ 122,106,103,105,100,101,125,  0,  /* F11 KP+ KP3 KP- KP* KP9 LOC ??  */
-/*80*/   0,  0,  0,118,127               /* ??  ??  ??  F7 SyRQ */
-};
-
-static u_char extscantokey[] = {
-/*      -0- -1- -2- -3- -4- -5- -6- -7-    This layout is valid for US only */
-/*00*/   0,120,  0,116,114,112,113,123,  /* ??  F9  ??  F5  F3  F1  F2  F12 */
-/*08*/   0,121,119,117,115, 16,  1,  0,  /* ??  F10 F8  F6  F4  TAB `   ??  */
-/*10*/   0, 62,128,  0, 58, 17,  2,  0,  /* ??  ALr vSh ??  CTr Q   1   ??  */
-/*18*/   0,  0, 46, 32, 31, 18,  3,  0,  /* ??  Z   S   A   W   2   ??  ??  */
-/*20*/   0, 48, 47, 33, 19,  5,  4,  0,  /* ??  C   X   D   E   4   3   ??  */
-/*28*/   0, 61, 49, 34, 21, 20,  6,  0,  /* ??  SP  V   F   T   R   5   ??  */
-/*30*/   0, 51, 50, 36, 35, 22,  7,  0,  /* ??  N   B   H   G   Y   6   ??  */
-/*38*/   0,  0, 52, 37, 23,  8,  9,  0,  /* ??  ??  M   J   U   7   8   ??  */
-/*40*/   0, 53, 38, 24, 25, 11, 10,  0,  /* ??  ,   K   I   O   0   9   ??  */
-/*48*/   0, 54, 95, 39, 40, 26, 12,  0,  /* ??  .   KP/ L   ;   P   -   ??  */
-/*50*/   0,  0, 41,  0, 27, 13,  0,  0,  /* ??  ??  "   ??  [   =   ??  ??  */
-/*58*/  30, 57,108, 28,  0, 29,  0,  0,  /* CAP  SHr KPE ]   ??  \  ??  ??  */
-/*60*/   0, 45,  0,  0,  0,  0, 15,  0,  /* ??  NL1 ??  ??  ??  ??  BS  ??  */
-/*68*/   0, 81,  0, 79, 80,  0,  0,  0,  /* ??  END ??  LA  HOM ??  ??  ??  */
-/*70*/  75, 76, 84, 97, 89, 83,110, 90,  /* INS DEL DA  KP5 RA  UA  ESC NUM */
-/*78*/ 122,106, 86,105,124, 85,126,  0,  /* F11 KP+ PD  KP- PSc PU  Brk ??  */
-/*80*/   0,  0,  0,118,127               /* ??  ??  ??  F7 SysRq */
-};
-
-#else	/* PCVT_SCANSET != 2 */
-
-static u_char scantokey[] = {
-/*       -0- -1- -2- -3- -4- -5- -6- -7-    This layout is valid for US only */
-/*00*/    0,110,  2,  3,  4,  5,  6,  7,  /* ??  ESC 1   2   3   4   5   6   */
-/*08*/    8,  9, 10, 11, 12, 13, 15, 16,  /* 7   8   9   0   -   =   BS  TAB */
-/*10*/   17, 18, 19, 20, 21, 22, 23, 24,  /* Q   W   E   R   T   Y   U   I   */
-/*18*/   25, 26, 27, 28, 43, 58, 31, 32,  /* O   P   [   ]   ENT CTl A   S   */
-/*20*/   33, 34, 35, 36, 37, 38, 39, 40,  /* D   F   G   H   J   K   L   ;   */
-/*28*/   41,  1, 44, 29, 46, 47, 48, 49,  /* '   `   SHl \   Z   X   C   V   */
-/*30*/   50, 51, 52, 53, 54, 55, 57,100,  /* B   N   M   ,   .   /   SHr KP* */
-/*38*/   60, 61, 30,112,113,114,115,116,  /* ALl SP  CAP F1  F2  F3  F4  F5  */
-/*40*/  117,118,119,120,121, 90,125, 91,  /* F6  F7  F8  F9  F10 NUM LOC KP7 */
-/*48*/   96,101,105, 92, 97,102,106, 93,  /* KP8 KP9 KP- KP4 KP5 KP6 KP+ KP1 */
-/*50*/   98,103, 99,104,127,  0, 45,122,  /* KP2 KP3 KP0 KP. SyRq??  NL1 F11 */
-/*58*/  123                               /* F12 */
-};
-
-static u_char extscantokey[] = {
-/*       -0- -1- -2- -3- -4- -5- -6- -7-    This layout is valid for US only */
-/*00*/    0,110,  2,  3,  4,  5,  6,  7,  /* ??  ESC 1   2   3   4   5   6   */
-/*08*/    8,  9, 10, 11, 12, 13, 15, 16,  /* 7   8   9   0   -   =   BS  TAB */
-/*10*/   17, 18, 19, 20, 21, 22, 23, 24,  /* Q   W   E   R   T   Y   U   I   */
-/*18*/   25, 26, 27, 28,108, 58, 31, 32,  /* O   P   [   ]   KPE CTr A   S   */
-/*20*/   33, 34, 35, 36, 37, 38, 39, 40,  /* D   F   G   H   J   K   L   ;   */
-/*28*/   41,  1,128, 29, 46, 47, 48, 49,  /* '   `   vSh \   Z   X   C   V   */
-/*30*/   50, 51, 52, 53, 54, 95, 57,124,  /* B   N   M   ,   .   KP/ SHr KP* */
-/*38*/   62, 61, 30,112,113,114,115,116,  /* ALr SP  CAP F1  F2  F3  F4  F5  */
-/*40*/  117,118,119,120,121, 90,126, 80,  /* F6  F7  F8  F9  F10 NUM Brk HOM */
-/*48*/   83, 85,105, 79, 97, 89,106, 81,  /* UA  PU  KP- LA  KP5 RA  KP+ END */
-/*50*/   84, 86, 75, 76,  0,  0, 45,122,  /* DA  PD  INS DEL ??  ??  NL1 F11 */
-/*58*/  123,                              /* F12 */
-};
-#endif	/* PCVT_SCANSET == 2 */
-
-static Keycap_def	key2ascii[] =
-{
-
-/* define some shorthands to make the table (almost) fit into 80 columns */
-#define C (u_char *)
-#define V (void *)
-#define S STR
-#define F FNC
-#define I IDX0
-
-/* DONT EVER OVERLOAD KEY 0, THIS IS A KEY THAT MUSTN'T EXIST */
-
-/*      type   index   unshift        shift           ctrl         */
-/*      ---------------------------------------------------------- */
-/*  0*/ KBD_NONE,  I, {S,C "df"},    {S,C ""},      {S,C ""},
-/*  1*/ KBD_ASCII, I, {S,C "`"},     {S,C "~"},     {S,C "`"},
-/*  2*/ KBD_ASCII, I, {S,C "1"},     {S,C "!"},     {S,C "1"},
-/*  3*/ KBD_ASCII, I, {S,C "2"},     {S,C "@"},     {S,C "\000"},   
-/*  4*/ KBD_ASCII, I, {S,C "3"},     {S,C "#"},     {S,C "3"},      
-/*  5*/ KBD_ASCII, I, {S,C "4"},     {S,C "$"},     {S,C "4"},
-/*  6*/ KBD_ASCII, I, {S,C "5"},     {S,C "%"},     {S,C "5"},
-/*  7*/ KBD_ASCII, I, {S,C "6"},     {S,C "^"},     {S,C "\036"},
-/*  8*/ KBD_ASCII, I, {S,C "7"},     {S,C "&"},     {S,C "7"},
-/*  9*/ KBD_ASCII, I, {S,C "8"},     {S,C "*"},     {S,C "9"},
-/* 10*/ KBD_ASCII, I, {S,C "9"},     {S,C "("},     {S,C "9"},
-/* 11*/ KBD_ASCII, I, {S,C "0"},     {S,C ")"},     {S,C "0"},
-/* 12*/ KBD_ASCII, I, {S,C "-"},     {S,C "_"},     {S,C "\037"},
-/* 13*/ KBD_ASCII, I, {S,C "="},     {S,C "+"},     {S,C "="},
-/* 14*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 15*/ KBD_ASCII, I, {S,C "\177"},  {S,C "\010"},  {S,C "\177"}, /* BS */
-/* 16*/ KBD_ASCII, I, {S,C "\t"},    {S,C "\t"},    {S,C "\t"},   /* TAB */
-/* 17*/ KBD_ASCII, I, {S,C "q"},     {S,C "Q"},     {S,C "\021"},
-/* 18*/ KBD_ASCII, I, {S,C "w"},     {S,C "W"},     {S,C "\027"},
-/* 19*/ KBD_ASCII, I, {S,C "e"},     {S,C "E"},     {S,C "\005"},
-/* 20*/ KBD_ASCII, I, {S,C "r"},     {S,C "R"},     {S,C "\022"},
-/* 21*/ KBD_ASCII, I, {S,C "t"},     {S,C "T"},     {S,C "\024"},
-/* 22*/ KBD_ASCII, I, {S,C "y"},     {S,C "Y"},     {S,C "\031"},
-/* 23*/ KBD_ASCII, I, {S,C "u"},     {S,C "U"},     {S,C "\025"},
-/* 24*/ KBD_ASCII, I, {S,C "i"},     {S,C "I"},     {S,C "\011"},
-/* 25*/ KBD_ASCII, I, {S,C "o"},     {S,C "O"},     {S,C "\017"},
-/* 26*/ KBD_ASCII, I, {S,C "p"},     {S,C "P"},     {S,C "\020"},
-/* 27*/ KBD_ASCII, I, {S,C "["},     {S,C "{"},     {S,C "\033"},
-/* 28*/ KBD_ASCII, I, {S,C "]"},     {S,C "}"},     {S,C "\035"},
-/* 29*/ KBD_ASCII, I, {S,C "\\"},    {S,C "|"},     {S,C "\034"},
-/* 30*/ KBD_CAPS,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 31*/ KBD_ASCII, I, {S,C "a"},     {S,C "A"},     {S,C "\001"},
-/* 32*/ KBD_ASCII, I, {S,C "s"},     {S,C "S"},     {S,C "\023"},
-/* 33*/ KBD_ASCII, I, {S,C "d"},     {S,C "D"},     {S,C "\004"},
-/* 34*/ KBD_ASCII, I, {S,C "f"},     {S,C "F"},     {S,C "\006"},
-/* 35*/ KBD_ASCII, I, {S,C "g"},     {S,C "G"},     {S,C "\007"},
-/* 36*/ KBD_ASCII, I, {S,C "h"},     {S,C "H"},     {S,C "\010"},
-/* 37*/ KBD_ASCII, I, {S,C "j"},     {S,C "J"},     {S,C "\n"},
-/* 38*/ KBD_ASCII, I, {S,C "k"},     {S,C "K"},     {S,C "\013"},
-/* 39*/ KBD_ASCII, I, {S,C "l"},     {S,C "L"},     {S,C "\014"},
-/* 40*/ KBD_ASCII, I, {S,C ";"},     {S,C ":"},     {S,C ";"},
-/* 41*/ KBD_ASCII, I, {S,C "'"},     {S,C "\""},    {S,C "'"},
-/* 42*/ KBD_ASCII, I, {S,C "\\"},    {S,C "|"},     {S,C "\034"}, /* special */
-/* 43*/ KBD_RETURN,I, {S,C "\r"},    {S,C "\r"},    {S,C "\r"},    /* RETURN */
-/* 44*/ KBD_SHIFT, I, {S,C ""},      {S,C ""},      {S,C ""},  /* SHIFT left */
-/* 45*/ KBD_ASCII, I, {S,C "<"},     {S,C ">"},     {S,C ""},
-/* 46*/ KBD_ASCII, I, {S,C "z"},     {S,C "Z"},     {S,C "\032"},
-/* 47*/ KBD_ASCII, I, {S,C "x"},     {S,C "X"},     {S,C "\030"},
-/* 48*/ KBD_ASCII, I, {S,C "c"},     {S,C "C"},     {S,C "\003"},
-/* 49*/ KBD_ASCII, I, {S,C "v"},     {S,C "V"},     {S,C "\026"},
-/* 50*/ KBD_ASCII, I, {S,C "b"},     {S,C "B"},     {S,C "\002"},
-/* 51*/ KBD_ASCII, I, {S,C "n"},     {S,C "N"},     {S,C "\016"},
-/* 52*/ KBD_ASCII, I, {S,C "m"},     {S,C "M"},     {S,C "\r"},
-/* 53*/ KBD_ASCII, I, {S,C ","},     {S,C "<"},     {S,C ","},
-/* 54*/ KBD_ASCII, I, {S,C "."},     {S,C ">"},     {S,C "."},
-/* 55*/ KBD_ASCII, I, {S,C "/"},     {S,C "?"},     {S,C "/"},
-/* 56*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 57*/ KBD_SHIFT, I, {S,C ""},      {S,C ""},      {S,C ""}, /* SHIFT right */
-/* 58*/ KBD_CTL,   I, {S,C ""},      {S,C ""},      {S,C ""},    /* CTL left */
-/* 59*/ KBD_ASCII, I, {S,C ""},      {S,C ""},      {S,C ""}, 
-/* 60*/ KBD_META,  I, {S,C ""},      {S,C ""},      {S,C ""},    /* ALT left */
-#if !PCVT_NULLCHARS					      
-/* 61*/ KBD_ASCII, I, {S,C " "},     {S,C " "},     {S,C " "},      /* SPACE */
-#else
-/* 61*/ KBD_ASCII, I,   {S,C " "},   {S,C " "},     {S,C "\000"},   /* SPACE */
-#endif /* PCVT_NULLCHARS */
-/* 62*/ KBD_META,  I, {S,C ""},      {S,C ""},      {S,C ""},   /* ALT right */
-/* 63*/ KBD_ASCII, I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 64*/ KBD_CTL,   I, {S,C ""},      {S,C ""},      {S,C ""},   /* CTL right */
-/* 65*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 66*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 67*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 68*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 69*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 70*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 71*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 72*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 73*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 74*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 75*/ KBD_FUNC,  I, {S,C "\033[2~"},{S,C "\033[2~"},{S,C "\033[2~"},/* INS */
-/* 76*/ KBD_FUNC,  I, {S,C "\033[3~"},{S,C "\033[3~"},{S,C "\033[3~"},/* DEL */
-/* 77*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 78*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 79*/ KBD_CURSOR,I, {S,C "\033[D"},{S,C "\033OD"},{S,C "\033[D"}, /* CU <- */
-/* 80*/ KBD_FUNC,  I, {S,C "\033[1~"},{S,C "\033[1~"},{S,C "\033[1~"},/* HOME = FIND*/
-/* 81*/ KBD_FUNC,  I, {S,C "\033[4~"},{S,C "\033[4~"},{S,C "\033[4~"},/* END = SELECT */
-/* 82*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 83*/ KBD_CURSOR,I, {S,C "\033[A"},{S,C "\033OA"},{S,C "\033[A"}, /* CU ^ */
-/* 84*/ KBD_CURSOR,I, {S,C "\033[B"},{S,C "\033OB"},{S,C "\033[B"}, /* CU v */
-/* 85*/ KBD_FUNC,  I, {S,C "\033[5~"},{S,C "\033[5~"},{S,C "\033[5~"},/*PG UP*/
-/* 86*/ KBD_FUNC,  I, {S,C "\033[6~"},{S,C "\033[6~"},{S,C "\033[6~"},/*PG DN*/
-/* 87*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 88*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 89*/ KBD_CURSOR,I, {S,C "\033[C"},{S,C "\033OC"},{S,C "\033[C"}, /* CU -> */
-/* 90*/ KBD_NUM,   I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 91*/ KBD_KP,    I, {S,C "7"},     {S,C "\033Ow"},{S,C "7"},
-/* 92*/ KBD_KP,    I, {S,C "4"},     {S,C "\033Ot"},{S,C "4"},
-/* 93*/ KBD_KP,    I, {S,C "1"},     {S,C "\033Oq"},{S,C "1"},
-/* 94*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/* 95*/ KBD_KP,    I, {S,C "/"},     {S,C "/"},     {S,C "/"},
-/* 96*/ KBD_KP,    I, {S,C "8"},     {S,C "\033Ox"},{S,C "8"},
-/* 97*/ KBD_KP,    I, {S,C "5"},     {S,C "\033Ou"},{S,C "5"},
-/* 98*/ KBD_KP,    I, {S,C "2"},     {S,C "\033Or"},{S,C "2"},
-/* 99*/ KBD_KP,    I, {S,C "0"},     {S,C "\033Op"},{S,C "0"},
-/*100*/ KBD_KP,    I, {S,C "*"},     {S,C "*"},     {S,C "*"},
-/*101*/ KBD_KP,    I, {S,C "9"},     {S,C "\033Oy"},{S,C "9"},
-/*102*/ KBD_KP,    I, {S,C "6"},     {S,C "\033Ov"},{S,C "6"},
-/*103*/ KBD_KP,    I, {S,C "3"},     {S,C "\033Os"},{S,C "3"},
-/*104*/ KBD_KP,    I, {S,C "."},     {S,C "\033On"},{S,C "."},
-/*105*/ KBD_KP,    I, {S,C "-"},     {S,C "\033Om"},{S,C "-"},
-/*106*/ KBD_KP,    I, {S,C "+"},     {S,C "+"},     {S,C "+"},
-/*107*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/*108*/ KBD_RETURN,I, {S,C "\r"},    {S,C "\033OM"},{S,C "\r"},  /* KP ENTER */
-/*109*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},       
-/*110*/ KBD_ASCII, I, {S,C "\033"},  {S,C "\033"},  {S,C "\033"},
-/*111*/ KBD_NONE,  I, {S,C ""},      {S,C ""},      {S,C ""},
-/*112*/ KBD_FUNC,  I, {F,V fkey1},   {F,V sfkey1},  {F,V cfkey1},  /* F1 */
-/*113*/ KBD_FUNC,  I, {F,V fkey2},   {F,V sfkey2},  {F,V cfkey2},  /* F2 */
-/*114*/ KBD_FUNC,  I, {F,V fkey3},   {F,V sfkey3},  {F,V cfkey3},  /* F3 */
-/*115*/ KBD_FUNC,  I, {F,V fkey4},   {F,V sfkey4},  {F,V cfkey4},  /* F4 */
-/*116*/ KBD_FUNC,  I, {F,V fkey5},   {F,V sfkey5},  {F,V cfkey5},  /* F5 */
-/*117*/ KBD_FUNC,  I, {F,V fkey6},   {F,V sfkey6},  {F,V cfkey6},  /* F6 */
-/*118*/ KBD_FUNC,  I, {F,V fkey7},   {F,V sfkey7},  {F,V cfkey7},  /* F7 */
-/*119*/ KBD_FUNC,  I, {F,V fkey8},   {F,V sfkey8},  {F,V cfkey8},  /* F8 */
-/*120*/ KBD_FUNC,  I, {F,V fkey9},   {F,V sfkey9},  {F,V cfkey9},  /* F9 */
-/*121*/ KBD_FUNC,  I, {F,V fkey10},  {F,V sfkey10}, {F,V cfkey10}, /* F10 */
-/*122*/ KBD_FUNC,  I, {F,V fkey11},  {F,V sfkey11}, {F,V cfkey11}, /* F11 */
-/*123*/ KBD_FUNC,  I, {F,V fkey12},  {F,V sfkey12}, {F,V cfkey12}, /* F12 */
-/*124*/ KBD_KP,    I, {S,C ""},      {S,C ""},      {S,C ""},
-/*125*/ KBD_SCROLL,I, {S,C ""},      {S,C ""},      {S,C ""},
-/*126*/ KBD_BREAK, I, {S,C ""},      {S,C ""},      {S,C ""},
-/*127*/ KBD_FUNC,  I, {S,C ""},      {S,C ""},      {S,C ""},      /* SysRq */
-
-#undef C
-#undef V
-#undef S
-#undef F
-#undef I
-};
-static short	keypad2num[] = {
-	7, 4, 1, -1, -1, 8, 5, 2, 0, -1, 9, 6, 3, -1, -1, -1, -1
-};
-
-#if PCVT_USL_VT_COMPAT
-
-#define N_KEYNUMS 128
-
-/*
- * this is the reverse mapping from keynumbers to scanset 1 codes
- * it is used to emulate the SysV-style GIO_KEYMAP ioctl cmd
- */
-
-static u_char key2scan1[N_KEYNUMS] = {
-	   0,0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09, /*   0 */
-	0x0a,0x0b,0x0c,0x0d,   0,0x0e,0x0f,0x10,0x11,0x12, /*  10 */
-	0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x2b, /*  20 */
-	0x3a,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26, /*  30 */
-	0x27,0x28,   0,0x1c,0x2a,0x56,0x2c,0x2d,0x2e,0x2f, /*  40 */
-	0x30,0x31,0x32,0x33,0x34,0x35,0x56,0x36,0x1d,   0, /*  50 */
-	0x38,0x39,   0,   0,   0,   0,   0,   0,   0,   0, /*  60 */
-	   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, /*  70 */
-	   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, /*  80 */
-	0x45,0x47,0x4b,0x4f,   0,   0,0x48,0x4c,0x50,0x52, /*  90 */
-	0x37,0x49,0x4d,0x51,0x53,0x4a,0x4e,   0,   0,   0, /* 100 */
-	0x01,   0,0x3b,0x3c,0x3d,0x3e,0x3f,0x40,0x41,0x42, /* 110 */
-	0x43,0x44,0x57,0x58,   0,0x46,   0,0x54		   /* 120 */
-};
-
-/*
- * SysV is brain-dead enough to stick on the IBM code page 437. So we
- * have to translate our keymapping into IBM 437 (possibly losing keys),
- * in order to have the X server convert it back into ISO8859.1
- */
-
-/* NB: this table only contains the mapping for codes >= 128 */
-
-static u_char iso2ibm437[] =
-{
-	   0,     0,     0,     0,     0,     0,     0,     0,
-	   0,     0,     0,     0,     0,     0,     0,     0,
-	   0,     0,     0,     0,     0,     0,     0,     0,
-	   0,     0,     0,     0,     0,     0,     0,     0,
-	0xff,  0xad,  0x9b,  0x9c,     0,  0x9d,     0,  0x40,
-	0x6f,  0x63,  0x61,  0xae,     0,     0,     0,     0,
-	0xf8,  0xf1,  0xfd,  0x33,     0,  0xe6,     0,  0xfa,
-	   0,  0x31,  0x6f,  0xaf,  0xac,  0xab,     0,  0xa8,
-	0x41,  0x41,  0x41,  0x41,  0x8e,  0x8f,  0x92,  0x80,
-	0x45,  0x90,  0x45,  0x45,  0x49,  0x49,  0x49,  0x49,
-	0x81,  0xa5,  0x4f,  0x4f,  0x4f,  0x4f,  0x99,  0x4f,
-	0x4f,  0x55,  0x55,  0x55,  0x9a,  0x59,     0,  0xe1,
-	0x85,  0xa0,  0x83,  0x61,  0x84,  0x86,  0x91,  0x87,
-	0x8a,  0x82,  0x88,  0x89,  0x8d,  0xa1,  0x8c,  0x8b,
-	   0,  0xa4,  0x95,  0xa2,  0x93,  0x6f,  0x94,  0x6f,
-	0x6f,  0x97,  0xa3,  0x96,  0x81,  0x98,     0,     0
-};
-
-#endif /* PCVT_USL_VT_COMPAT */
-
-
-/*---------------------------------------------------------------------------*
- *	update keyboard led's	
+ *	update keyboard led's
  *---------------------------------------------------------------------------*/
 void
 update_led(void)
 {
-	ledstate = ((vsp->scroll_lock) |
-		    (vsp->num_lock * 2) |
-		    (vsp->caps_lock * 4));
-		    
-	if(kbd_cmd(KEYB_C_LEDS) != 0)
-		printf("Keyboard LED command timeout\n");
-	else if(kbd_cmd(ledstate) != 0)
-		printf("Keyboard LED data timeout\n");	
+
+#if !PCVT_NO_LED_UPDATE
+
+	/* Don't update LED's unless necessary. */
+
+	int new_ledstate = ((vsp->scroll_lock) |
+			    (vsp->num_lock * 2) |
+			    (vsp->caps_lock * 4));
+
+	if (new_ledstate != ledstate)
+	{
+		if(kbd_cmd(KEYB_C_LEDS) != 0)
+		{
+			printf("Keyboard LED command timeout\n");
+			return;
+		}
+
+		if(kbd_cmd(new_ledstate) != 0) {
+			printf("Keyboard LED data timeout\n");
+			return;
+		}
+
+		ledstate = new_ledstate;
+
+#if PCVT_UPDLED_LOSES_INTR
+		if (lost_intr_timeout_queued)
+			untimeout (check_for_lost_intr, (void *)NULL);
+
+		timeout (check_for_lost_intr, (void *)NULL, hz);
+		lost_intr_timeout_queued = 1;
+#endif /* PCVT_UPDLED_LOSES_INTR */
+
+	}
+#endif /* !PCVT_NO_LED_UPDATE */
 }
 
 /*---------------------------------------------------------------------------*
- *	set typamatic rate
+ *	set typematic rate
  *---------------------------------------------------------------------------*/
 static void
 settpmrate(int rate)
@@ -491,9 +258,9 @@ settpmrate(int rate)
 	if(kbd_cmd(KEYB_C_TYPEM) != 0)
 		printf("Keyboard TYPEMATIC command timeout\n");
 	else if(kbd_cmd(tpmrate) != 0)
-		printf("Keyboard TYPEMATIC data timeout\n");	
+		printf("Keyboard TYPEMATIC data timeout\n");
 }
- 
+
 /*---------------------------------------------------------------------------*
  *	Pass command to keyboard controller (8042)
  *---------------------------------------------------------------------------*/
@@ -506,7 +273,6 @@ kbc_8042cmd(int val)
 	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
 		if (--timeo == 0)
 			return (-1);
-	delay(6);
 	outb(CONTROLLER_CTRL, val);
 	return (0);
 }
@@ -523,26 +289,80 @@ kbd_cmd(int val)
 	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
 		if (--timeo == 0)
 			return (-1);
-	delay(6);
 	outb(CONTROLLER_DATA, val);
+
+#if PCVT_SHOWKEYS
+	showkey ('>', val);
+#endif	/* PCVT_SHOWKEYS */
+
 	return (0);
 }
 
 /*---------------------------------------------------------------------------*
  *	Read response from keyboard
+ *	NB: make sure to call spltty() before kbd_cmd(), kbd_response().
  *---------------------------------------------------------------------------*/
 int
 kbd_response(void)
 {
+	u_char ch;
 	unsigned timeo;
 
 	timeo = 500000; 	/* > 500 msec (KEYB_R_SELFOK requires 87) */
 	while (!(inb(CONTROLLER_CTRL) & STATUS_OUTPBF))
 		if (--timeo == 0)
 			return (-1);
-	delay(6);
-	return ((u_char) inb(CONTROLLER_DATA));
+
+	PCVT_KBD_DELAY();		/* 7 us delay */
+	ch = inb(CONTROLLER_DATA);
+
+#if PCVT_SHOWKEYS
+	showkey ('<', ch);
+#endif	/* PCVT_SHOWKEYS */
+
+	return ch;
 }
+
+/*---------------------------------------------------------------------------*
+ *	switch to/from PC scan code emulation mode
+ *---------------------------------------------------------------------------*/
+void
+kbd_setmode(int mode)
+{
+#if PCVT_SCANSET > 1		/* switch only if we are running */
+				/*           keyboard scancode 2 */
+
+	int cmd, timeo = 10000;
+
+#if PCVT_USEKBDSEC
+	cmd =                  COMMAND_SYSFLG | COMMAND_IRQEN;
+#else
+	cmd = COMMAND_INHOVR | COMMAND_SYSFLG | COMMAND_IRQEN;
+#endif
+
+	if(mode == K_RAW)		/* switch to scancode 1 ? */
+		cmd |= COMMAND_PCSCAN;	/*     yes, setup command */
+
+	kbc_8042cmd(CONTR_WRITE);
+	
+	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
+	{
+		if (--timeo == 0)
+			break;
+	}
+	
+	outb(CONTROLLER_DATA, cmd);
+
+#endif /* PCVT_SCANSET > 1 */
+
+	if(mode == K_RAW)
+		shift_down = meta_down = altgr_down = ctrl_down = 0;
+}
+
+
+#ifndef PCVT_NONRESP_KEYB_TRY
+#define PCVT_NONRESP_KEYB_TRY	25	/* no of times to try to detect	*/
+#endif					/* a nonresponding keyboard	*/
 
 /*---------------------------------------------------------------------------*
  *	try to force keyboard into a known state ..
@@ -551,11 +371,13 @@ static
 void doreset(void)
 {
 	int again = 0;
-	int response;
+	int once = 0;
+	int response, opri;
+	unsigned int wait_retries, seen_negative_response;
 
 	/* Enable interrupts and keyboard, etc. */
-	if (kbc_8042cmd(CONTR_WRITE) != 0)
-		printf("Timeout specifying load of keyboard command byte\n");
+	if(kbc_8042cmd(CONTR_WRITE) != 0)
+		printf("pcvt: doreset() - timeout controller write command\n");
 
 #if PCVT_USEKBDSEC		/* security enabled */
 
@@ -576,44 +398,74 @@ void doreset(void)
 
 #endif /* PCVT_USEKBDSEC */
 
-	if (kbd_cmd(KBDINITCMD) != 0)
-		printf("Timeout writing keyboard command byte\n");
-	
+	if(kbd_cmd(KBDINITCMD) != 0)
+		printf("pcvt: doreset() - timeout writing keyboard init command\n");
+
 	/*
 	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
 	 * very careful and sometimes leaves a KEYB_R_RESEND.
 	 */
-	while (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
+	while(inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
 		kbd_response();
 
 	/* Start keyboard reset */
-	if (kbd_cmd(KEYB_C_RESET) != 0)
-		printf("Timeout for keyboard reset command\n");
+
+	opri = spltty();
+
+	if(kbd_cmd(KEYB_C_RESET) != 0)
+		printf("pcvt: doreset() - timeout for keyboard reset command\n");
 
 	/* Wait for the first response to reset and handle retries */
-	while ((response = kbd_response()) != KEYB_R_ACK) {
-		if (response < 0) {
-			printf("Timeout for keyboard reset ack byte #1\n");
+
+	while((response = kbd_response()) != KEYB_R_ACK)
+	{
+		if(response < 0)
+		{
+			if(!again)	/* print message only once ! */
+				printf("pcvt: doreset() - response != ack and response < 0 [one time only msg]\n");
 			response = KEYB_R_RESEND;
 		}
-		if (response == KEYB_R_RESEND) {
-			if (!again) {
-				printf("KEYBOARD disconnected: RECONNECT\n");
-				again = 1;
+		if(response == KEYB_R_RESEND)
+		{
+			if(!again)	/* print message only once ! */
+				printf("pcvt: doreset() - got KEYB_R_RESEND response ... [one time only msg]\n");
+
+			if(++again > PCVT_NONRESP_KEYB_TRY)
+			{
+				printf("pcvt: doreset() - Caution - no PC keyboard detected!\n");
+				keyboard_type = KB_UNKNOWN;
+				splx(opri);
+				return;
 			}
-			if (kbd_cmd(KEYB_C_RESET) != 0)
-				printf("Timeout for keyboard reset command\n");
+
+			if((kbd_cmd(KEYB_C_RESET) != 0) && (once == 0))
+			{
+				once++;		/* print message only once ! */
+				printf("pcvt: doreset() - timeout for loop keyboard reset command [one time only msg]\n");
+			}
 		}
-		/*
-		 * Other responses are harmless.  They may occur for new
-		 * keystrokes.
-		 */
 	}
 
 	/* Wait for the second response to reset */
-	while ((response = kbd_response()) != KEYB_R_SELFOK) {
-		if (response < 0) {
-			printf("Timeout for keyboard reset ack byte #2\n");
+
+	wait_retries = seen_negative_response = 0;
+
+	while((response = kbd_response()) != KEYB_R_SELFOK)
+	{
+		/*
+		 *  Let's be a little more tolerant here...
+		 *  Receiving a -1 could indicate that the keyboard
+		 *  is not ready to answer just yet.
+		 *  Such cases have been noticed with e.g. Alps Membrane.
+		 */
+
+		if(response < 0)
+			seen_negative_response = 1;
+
+		if(seen_negative_response && (wait_retries >= 10))
+		{
+			printf("pcvt: doreset() - response != OK and response < 0\n");
+
 			/*
 			 * If KEYB_R_SELFOK never arrives, the loop will
 			 * finish here unless the keyboard babbles or
@@ -621,50 +473,68 @@ void doreset(void)
 			 */
 			break;
 		}
+		wait_retries++;
 	}
+
+	splx(opri);
 
 #if PCVT_KEYBDID
 
+query_kbd_id:
+
+	opri = spltty();
+
 	if(kbd_cmd(KEYB_C_ID) != 0)
 	{
-		printf("Timeout for keyboard ID command\n");
+		printf("pcvt: doreset() - timeout for keyboard ID command\n");
 		keyboard_type = KB_UNKNOWN;
 	}
 	else
 	{
 
 r_entry:
-
 		if((response = kbd_response()) == KEYB_R_MF2ID1)
 		{
 			if((response = kbd_response()) == KEYB_R_MF2ID2)
 			{
 				keyboard_type = KB_MFII;
 			}
+			else if(response == KEYB_R_RESEND)
+			{
+				/*
+				 *  Let's give other priority levels
+				 *  a chance instead of blocking at
+				 *  tty level.
+				 */
+				splx(opri);
+				goto query_kbd_id;
+			}
 			else if(response == KEYB_R_MF2ID2HP)
 			{
 				keyboard_type = KB_MFII;
-			}				
+			}
 			else
 			{
-				printf("\nkbdid, response 2 = [%d]\n",
+				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n",
 				       response);
 				keyboard_type = KB_UNKNOWN;
 			}
-		}	
-		else if (response == KEYB_R_ACK)
+		}
+		else if(response == KEYB_R_ACK)
 		{
 			goto r_entry;
 		}
-		else if (response == -1)		
+		else if(response == -1)
 		{
 			keyboard_type = KB_AT;
-		}			
+		}
 		else
 		{
-			printf("\nkbdid, response 1 = [%d]\n", response);
+			printf("\npcvt: doreset() - kbdid, response 1 = [%d]\n", response);
 		}
 	}
+
+	splx(opri);
 
 #else /* PCVT_KEYBDID */
 
@@ -688,7 +558,7 @@ kbd_code_init(void)
 /*---------------------------------------------------------------------------*
  *	init keyboard code, this initializes the keyboard subsystem
  *	just "a bit" so the very very first ddb session is able to
- *	get proper keystrokes, in other words, it's a hack ....
+ *	get proper keystrokes - in other words, it's a hack ....
  *---------------------------------------------------------------------------*/
 void
 kbd_code_init1(void)
@@ -698,13 +568,13 @@ kbd_code_init1(void)
 }
 
 /*---------------------------------------------------------------------------*
- *	init keyboard overlay table	
+ *	init keyboard overlay table
  *---------------------------------------------------------------------------*/
 static
-void ovlinit(int force) 
+void ovlinit(int force)
 {
 	register i;
-	
+
 	if(force || ovlinitflag==0)
 	{
 		if(ovlinitflag == 0 &&
@@ -714,10 +584,10 @@ void ovlinit(int force)
 
 		for(i=0; i<OVLTBL_SIZE; i++)
 		{
-			ovltbl[i].keynum = 
+			ovltbl[i].keynum =
 			ovltbl[i].type = 0;
 			ovltbl[i].unshift[0] =
-			ovltbl[i].shift[0] = 
+			ovltbl[i].shift[0] =
 			ovltbl[i].ctrl[0] =
 			ovltbl[i].altgr[0] = 0;
 			ovltbl[i].subu =
@@ -739,7 +609,7 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
 {
 	if(key == 0 || key > MAXKEYNUM)
 		return EINVAL;
-	
+
 	thisdef->keynum = key;
 	thisdef->type = key2ascii[key].type;
 
@@ -765,8 +635,8 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
 	{
 		bcopy("",thisdef->shift,CODE_SIZE);
 		thisdef->subs = KBD_SUBT_FNC;
-	}		
-	
+	}
+
 	if(key2ascii[key].ctrl.subtype == STR)
 	{
 		bcopy((u_char *)(key2ascii[key].ctrl.what.string),
@@ -775,11 +645,11 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
 	}
 	else
 	{
-		bcopy("",thisdef->ctrl,CODE_SIZE);	
+		bcopy("",thisdef->ctrl,CODE_SIZE);
 		thisdef->subc = KBD_SUBT_FNC;
 	}
-	
-	/* deliver at least anything for ALTGR settings ... */		
+
+	/* deliver at least anything for ALTGR settings ... */
 
 	if(key2ascii[key].unshift.subtype == STR)
 	{
@@ -799,11 +669,11 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
  *	get current key definition
  *---------------------------------------------------------------------------*/
 static int
-getckeydef(unsigned key, Ovl_tbl *thisdef) 
+getckeydef(unsigned key, Ovl_tbl *thisdef)
 {
 	u_short type = key2ascii[key].type;
 
-	if(key>MAXKEYNUM) 
+	if(key>MAXKEYNUM)
 		return EINVAL;
 
 	if(type & KBD_OVERLOAD)
@@ -830,10 +700,10 @@ xlatkey2ascii(U_short key)
 	static Ovl_tbl	thisdef;
 	int		n;
 	void		(*fnc)();
-	
+
 	if(key==0)			/* ignore the NON-KEY */
 		return 0;
-	
+
 	getckeydef(key&0x7F, &thisdef);	/* get the current ASCII value */
 
 	thisdef.type &= KBD_MASK;
@@ -861,10 +731,11 @@ xlatkey2ascii(U_short key)
 		case KBD_FUNC:
 			fnc = NULL;
 			more_chars = NULL;
-			
+
 			if(altgr_down)
+			{
 				more_chars = (u_char *)thisdef.altgr;
-	
+			}
 			else if(!ctrl_down && (shift_down || vsp->shift_lock))
 			{
 				if(key2ascii[key].shift.subtype == STR)
@@ -872,7 +743,7 @@ xlatkey2ascii(U_short key)
 				else
 					fnc = key2ascii[key].shift.what.func;
 			}
-				
+
 			else if(ctrl_down)
 			{
 				if(key2ascii[key].ctrl.subtype == STR)
@@ -880,7 +751,7 @@ xlatkey2ascii(U_short key)
 				else
 					fnc = key2ascii[key].ctrl.what.func;
 			}
-	
+
 			else
 			{
 				if(key2ascii[key].unshift.subtype == STR)
@@ -888,10 +759,10 @@ xlatkey2ascii(U_short key)
 				else
 					fnc = key2ascii[key].unshift.what.func;
 			}
-	
+
 			if(fnc)
 				(*fnc)();	/* execute function */
-					
+
 			if((more_chars != NULL) && (more_chars[1] == 0))
 			{
 				if(vsp->caps_lock && more_chars[0] >= 'a'
@@ -915,7 +786,7 @@ xlatkey2ascii(U_short key)
 		case KBD_KP:
 			fnc = NULL;
 			more_chars = NULL;
-	
+
 			if(meta_down)
 			{
 				switch(key)
@@ -925,13 +796,13 @@ xlatkey2ascii(U_short key)
 						more_chars =
 						 (u_char *)"\033OQ";
 						return(more_chars);
-						
+
 					case 100:	/* * */
 						altkpflag = 0;
 						more_chars =
 						 (u_char *)"\033OR";
 						return(more_chars);
-						
+
 					case 105:	/* - */
 						altkpflag = 0;
 						more_chars =
@@ -940,7 +811,7 @@ xlatkey2ascii(U_short key)
 				}
 			}
 
-			if(meta_down || altgr_down)				
+			if(meta_down || altgr_down)
 			{
 				if((n = keypad2num[key-91]) >= 0)
 				{
@@ -956,8 +827,8 @@ xlatkey2ascii(U_short key)
 				else
 					altkpflag = 0;
 				return 0;
-			} 
-	
+			}
+
 			if(!(vsp->num_lock))
 			{
 				if(key2ascii[key].shift.subtype == STR)
@@ -972,15 +843,15 @@ xlatkey2ascii(U_short key)
 				else
 					fnc = key2ascii[key].unshift.what.func;
 			}
-	
+
 			if(fnc)
 				(*fnc)();	/* execute function */
 			return(more_chars);
-	
+
 		case KBD_CURSOR:
 			fnc = NULL;
 			more_chars = NULL;
-	
+
 			if(vsp->ckm)
 			{
 				if(key2ascii[key].shift.subtype == STR)
@@ -995,14 +866,14 @@ xlatkey2ascii(U_short key)
 				else
 					fnc = key2ascii[key].unshift.what.func;
 			}
-	
+
 			if(fnc)
 				(*fnc)();	/* execute function */
 			return(more_chars);
 
 		case KBD_NUM:		/*  special kp-num handling */
 			more_chars = NULL;
-			
+
 			if(meta_down)
 			{
 				more_chars = (u_char *)"\033OP"; /* PF1 */
@@ -1039,7 +910,7 @@ xlatkey2ascii(U_short key)
 				more_chars = metachar;
 			}
 			return(more_chars);
-			
+
 		case KBD_META:		/* these keys are	*/
 		case KBD_ALTGR:		/*  handled directly	*/
 		case KBD_SCROLL:	/*  by the keyboard	*/
@@ -1057,6 +928,13 @@ xlatkey2ascii(U_short key)
  *	if noblock = 0, wait until a key is pressed.
  *	else return NULL if no characters present.
  *---------------------------------------------------------------------------*/
+
+#if PCVT_KBD_FIFO
+extern	u_char	pcvt_kbd_fifo[];
+extern	int	pcvt_kbd_rptr;
+extern	short	pcvt_kbd_count;
+#endif
+
 u_char *
 sgetc(int noblock)
 {
@@ -1064,8 +942,13 @@ sgetc(int noblock)
 	u_char		dt;
 	u_char		key;
 	u_short		type;
-	
+
+#if PCVT_KBD_FIFO && PCVT_SLOW_INTERRUPT
+	int		s;
+#endif
+
 	static u_char	kbd_lastkey = 0; /* last keystroke */
+
 	static struct
 	{
 		u_char extended: 1;	/* extended prefix seen */
@@ -1081,12 +964,42 @@ sgetc(int noblock)
 #endif /* XSERVER */
 
 loop:
-	/* see if there is something from the keyboard in the input buffer */
 
 #ifdef XSERVER
+
+#if PCVT_KBD_FIFO
+
+	/* see if there is data from the keyboard available either from */
+	/* the keyboard fifo or from the 8042 keyboard controller	*/
+
+	if ((( noblock) && (pcvt_kbd_count)) ||
+	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)))
+	{
+		if (!noblock)		/* source = 8042 */
+		{
+			PCVT_KBD_DELAY();	/* 7 us delay */
+			dt = inb(CONTROLLER_DATA);	/* get from obuf */
+		}
+		else			/* source = keyboard fifo */
+		{
+			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++];
+			PCVT_DISABLE_INTR();
+			pcvt_kbd_count--;
+			PCVT_ENABLE_INTR();
+			if (pcvt_kbd_rptr >= PCVT_KBD_FIFO_SZ)
+				pcvt_kbd_rptr = 0;
+		}
+
+#else /* !PCVT_KB_FIFO */
+
+	/* see if there is data from the keyboard available from the 8042 */
+
 	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
 	{
-		dt = inb(CONTROLLER_DATA);		/* yes, get it ! */
+		PCVT_KBD_DELAY();		/* 7 us delay */
+		dt = inb(CONTROLLER_DATA);	/* yes, get data */
+
+#endif /* !PCVT_KBD_FIFO */
 
 		/*
 		 * If x mode is active, only care for locking keys, then
@@ -1094,47 +1007,11 @@ loop:
 		 * Additionally, this prevents us from any attempts to
 		 * execute pcvt internal functions caused by keys (such
 		 * as screen flipping).
-		 * XXX For now, only the default locking key definitions
-		 * are recognized (i.e. if you have overloaded you "A" key
-		 * as NUMLOCK, that wont effect X mode:-)
-		 * Changing this would be nice, but would require modifi-
-		 * cations to the X server. After having this, X will
-		 * deal with the LEDs itself, so we are committed.
 		 */
-		/*
-		 * Iff PCVT_USL_VT_COMPAT is defined, the behaviour has
-		 * been fixed. We need not care about any keys here, since
-		 * there are ioctls that deal with the lock key / LED stuff.
-		 */
-#if PCVT_USL_VT_COMPAT
-		if (vsp->kbd_state == K_RAW)
-#else
-		if (pcvt_xmode)
-#endif
+
+ 		if (vsp->kbd_state == K_RAW)
 		{
 			keybuf[0] = dt;
-#if !PCVT_USL_VT_COMPAT
-			if ((dt & 0x80) == 0)
-				/* key make */
-				switch(dt)
-				{
-				case 0x45:
-					/* XXX on which virt screen? */
-					vsp->num_lock ^= 1;
-					update_led();
-					break;
-
-				case 0x3a:
-					vsp->caps_lock ^= 1;
-					update_led();
-					break;
-
-				case 0x46:
-					vsp->scroll_lock ^= 1;
-					update_led();
-					break;
-				}
-#endif /* !PCVT_USL_VT_COMPAT */
 
 #if PCVT_EMU_MOUSE
 			/*
@@ -1221,7 +1098,7 @@ loop:
 					{0x87,   4,  -4,   0,   0}  /* SE */
 				}
 				};
-				
+
 				if(dt == 0xe0)
 				{
 					/* ignore extended scan codes */
@@ -1344,7 +1221,7 @@ loop:
 						 && now.tv_usec
 						 < mousedef.acceltime);
 					break;
-					
+
 				default: /* not a mouse-emulating key */
 					goto no_mouse_event;
 				}
@@ -1367,8 +1244,41 @@ no_mouse_event:
 
 #else /* !XSERVER */
 
+#  if PCVT_KBD_FIFO
+
+	/* see if there is data from the keyboard available either from */
+	/* the keyboard fifo or from the 8042 keyboard controller	*/
+
+	if ((( noblock) && (pcvt_kbd_count)) ||
+	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)))
+	{
+		if (!noblock)		/* source = 8042 */
+		{
+			PCVT_KBD_DELAY();	/* 7 us delay */
+			dt = inb(CONTROLLER_DATA);
+		}
+		else			/* source = keyboard fifo */
+		{
+			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++]; /* yes, get it ! */
+			PCVT_DISABLE_INTR();
+			pcvt_kbd_count--;
+			PCVT_ENABLE_INTR();
+			if (pcvt_kbd_rptr >= PCVT_KBD_FIFO_SZ)
+				pcvt_kbd_rptr = 0;
+		}
+	}
+
+#else /* !PCVT_KBD_FIFO */
+
+	/* see if there is data from the keyboard available from the 8042 */
+
 	if(inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
-		dt = inb(CONTROLLER_DATA);		/* yes, get it ! */
+	{
+		PCVT_KBD_DELAY();		/* 7 us delay */
+		dt = inb(CONTROLLER_DATA);	/* yes, get data ! */
+	}
+
+#endif /* !PCVT_KBD_FIFO */
 
 #endif /* !XSERVER */
 
@@ -1381,33 +1291,7 @@ no_mouse_event:
 	}
 
 #if PCVT_SHOWKEYS
-	{
-	int rki;
-	
-	
-	for(rki = 3; rki < 80; rki++)		/* shift left buffer */
-		rawkeybuf[rki-3] = rawkeybuf[rki];
-
-	rawkeybuf[77] = ' ';		/* delimiter */
-
-	rki = (dt & 0xf0) >> 4;		/* ms nibble */
-
-	if(rki <= 9)
-		rki = rki + '0';
-	else
-		rki = rki - 10 + 'A';
-
-	rawkeybuf[78] = rki;
-		
-	rki = dt & 0x0f;			/* ls nibble */
-
-	if(rki <= 9)
-		rki = rki + '0';
-	else
-		rki = rki - 10 + 'A';
-
-	rawkeybuf[79] = rki;
-	}
+	showkey (' ', dt);
 #endif	/* PCVT_SHOWKEYS */
 
 	/* lets look what we got */
@@ -1431,12 +1315,12 @@ no_mouse_event:
 			kbd_status.ext1 = 1;
 			/* FALLTHROUGH */
 		case KEYB_R_EXT0:	/* keyboard extended scancode pfx 1 */
-			kbd_status.extended = 1; 
+			kbd_status.extended = 1;
 			break;
 
 #if PCVT_SCANSET == 2
 		case KEYB_R_BREAKPFX:	/* break code prefix for set 2 and 3 */
-			kbd_status.breakseen = 1; 
+			kbd_status.breakseen = 1;
 			break;
 #endif /* PCVT_SCANSET == 2 */
 
@@ -1462,26 +1346,28 @@ regular:
 		key = 0;
 	else
 		key = kbd_status.extended ? extscantokey[dt] : scantokey[dt];
-	if(kbd_status.ext1 && key == 58)
+
+	if(kbd_status.ext1 && key == 64)
 		/* virtual control key */
 		key = 129;
+
 	kbd_status.extended = kbd_status.ext1 = 0;
 
 #if PCVT_CTRL_ALT_DEL		/*   Check for cntl-alt-del	*/
 	if((key == 76) && ctrl_down && (meta_down||altgr_down))
 		cpu_reset();
 #endif /* PCVT_CTRL_ALT_DEL */
-		
-#if !PCVT_NETBSD
+
+#if !(PCVT_NETBSD || PCVT_FREEBSD >= 200)
 #include "ddb.h"
-#endif /* !PCVT_NETBSD */
+#endif /* !(PCVT_NETBSD || PCVT_FREEBSD >= 200) */
 
 #if NDDB > 0 || defined(DDB)		 /*   Check for cntl-alt-esc	*/
 
   	if((key == 110) && ctrl_down && (meta_down || altgr_down))
  	{
  		static u_char in_Debugger;
- 
+
  		if(!in_Debugger)
  		{
  			in_Debugger = 1;
@@ -1565,7 +1451,7 @@ regular:
 		else
 			goto loop;
 	}
-	
+
 	type = key2ascii[key].type;
 
 	if(type & KBD_OVERLOAD)
@@ -1581,7 +1467,7 @@ regular:
 				vsp->shift_lock ^= 1;
 			}
 			break;
-			
+
 		case KBD_CAPS:
 			if(!kbd_status.breakseen && key != kbd_lastkey)
 			{
@@ -1589,7 +1475,7 @@ regular:
 				update_led();
 			}
 			break;
-			
+
 		case KBD_SCROLL:
 			if(!kbd_status.breakseen && key != kbd_lastkey)
 			{
@@ -1603,7 +1489,7 @@ regular:
 				}
 			}
 			break;
-			
+
 		case KBD_SHIFT:
 			shift_down = kbd_status.breakseen ? 0 : 1;
 			break;
@@ -1633,10 +1519,12 @@ regular:
 	}			 /* N-Key-Rollover, but I ignore that */
 	else			 /* because avoidance is too complicated */
 		kbd_lastkey = key;
-	
+
 	cp = xlatkey2ascii(key);	/* have a key */
+
 	if(cp == NULL && !noblock)
 		goto loop;
+
 	return cp;
 }
 
@@ -1659,13 +1547,13 @@ static int
 rmkeydef(int key)
 {
 	register Ovl_tbl *ref;
-	
+
 	if(key==0 || key > MAXKEYNUM)
 		return EINVAL;
 
 	if(key2ascii[key].type & KBD_OVERLOAD)
 	{
-		ref = &ovltbl[key2ascii[key].ovlindex];		
+		ref = &ovltbl[key2ascii[key].ovlindex];
 		ref->keynum = 0;
 		ref->type = 0;
 		ref->unshift[0] =
@@ -1675,7 +1563,7 @@ rmkeydef(int key)
 		key2ascii[key].type &= KBD_MASK;
 	}
 	return 0;
-}	
+}
 
 /*---------------------------------------------------------------------------*
  *	overlay a key
@@ -1699,7 +1587,7 @@ setkeydef(Ovl_tbl *data)
 	data->subs =
 	data->subc =
 	data->suba = KBD_SUBT_STR;		/* just strings .. */
-	
+
 	data->type |= KBD_OVERLOAD;		/* mark overloaded */
 
 	/* if key already overloaded, use that slot else find free slot */
@@ -1714,7 +1602,7 @@ setkeydef(Ovl_tbl *data)
 			if(ovltbl[i].keynum==0)
 				break;
 
-		if(i==OVLTBL_SIZE) 
+		if(i==OVLTBL_SIZE)
 			return ENOSPC;	/* no space, abuse of ENOSPC(!) */
 	}
 
@@ -1722,7 +1610,7 @@ setkeydef(Ovl_tbl *data)
 
 	key2ascii[data->keynum].type |= KBD_OVERLOAD; 	/* mark key */
 	key2ascii[data->keynum].ovlindex = i;
-	
+
 	return 0;
 }
 
@@ -1730,7 +1618,7 @@ setkeydef(Ovl_tbl *data)
  *	keyboard ioctl's entry
  *---------------------------------------------------------------------------*/
 int
-kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
+kbdioctl(Dev_t dev, int cmd, caddr_t data, int flag)
 {
 	int key;
 
@@ -1759,14 +1647,6 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 			kbrepflag = (*(int *)data) & 1;
 			break;
 
-		case KBDGLEDS:
-			*(int *)data = ledstate;
-			break;
-
-		case KBDSLEDS:
-			update_led();	/* ??? */
-			break;
-
 		case KBDGLOCK:
 			*(int *)data = ( (vsp->scroll_lock) |
 					 (vsp->num_lock * 2) |
@@ -1779,7 +1659,7 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 
 		case KBDGCKEY:
 			key = ((Ovl_tbl *)data)->keynum;
-			return getckeydef(key,(Ovl_tbl *)data);		
+			return getckeydef(key,(Ovl_tbl *)data);
 
 		case KBDSCKEY:
 			key = ((Ovl_tbl *)data)->keynum;
@@ -1795,7 +1675,7 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 
 		case KBDDEFAULT:
 			ovlinit(1);
-			break;	
+			break;
 
 		default:
 			/* proceed with vga ioctls */
@@ -1809,20 +1689,20 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
  *	mouse emulator ioctl
  *--------------------------------------------------------------------------*/
 int
-mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data)
+mouse_ioctl(Dev_t dev, int cmd, caddr_t data)
 {
 	struct mousedefs *def = (struct mousedefs *)data;
-	
+
 	switch(cmd)
 	{
 		case KBDMOUSEGET:
 			*def = mousedef;
 			break;
-			
+
 		case KBDMOUSESET:
 			mousedef = *def;
 			break;
-			
+
 		default:
 			return -1;
 	}
@@ -1830,7 +1710,6 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data)
 }
 #endif	/* PCVT_EMU_MOUSE */
 
-#if PCVT_USL_VT_COMPAT
 /*---------------------------------------------------------------------------*
  *	convert ISO-8859 style keycode into IBM 437
  *---------------------------------------------------------------------------*/
@@ -1853,14 +1732,14 @@ get_usl_keymap(keymap_t *map)
 	bzero((caddr_t)map, sizeof(keymap_t));
 
 	map->n_keys = 0x59;	/* that many keys we know about */
-	
+
 	for(i = 1; i < N_KEYNUMS; i++)
 	{
 		Ovl_tbl kdef;
 		u_char c;
 		int j;
 		int idx = key2scan1[i];
-		
+
 		if(idx == 0 || idx >= map->n_keys)
 			continue;
 
@@ -1887,7 +1766,7 @@ get_usl_keymap(keymap_t *map)
 			if((c & 0x7f) >= 0x40)
 				map->key[idx].map[5] = iso2ibm(c ^ 0x20);
 			break;
-			
+
 		case KBD_FUNC:
 			/* we are only interested in F1 thru F12 here */
 			if(i >= 112 && i <= 123) {
@@ -1918,14 +1797,12 @@ get_usl_keymap(keymap_t *map)
 				map->key[idx].map[j] = c;
 			map->key[idx].spcl = 0xff;
 			break;
-			
+
 		default:
 			break;
 		}
 	}
-}		
-
-#endif /* PCVT_USL_VT_COMPAT */
+}
 
 /*---------------------------------------------------------------------------*
  *	switch keypad to numeric mode
@@ -1947,519 +1824,7 @@ vt_keyappl(struct video_state *svsp)
 	update_led();
 }
 
-#if PCVT_VT220KEYB
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 1
- *---------------------------------------------------------------------------*/
-static void
-fkey1(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[23~"; /* F11 */
-	else
-		do_vgapage(0);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 2
- *---------------------------------------------------------------------------*/
-static void
-fkey2(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[24~"; /* F12 */
-	else
-		do_vgapage(1);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 3
- *---------------------------------------------------------------------------*/
-static void
-fkey3(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[25~"; /* F13 */
-	else
-		do_vgapage(2);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 4
- *---------------------------------------------------------------------------*/
-static void
-fkey4(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[26~"; /* F14 */
-	else
-		do_vgapage(3);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 5
- *---------------------------------------------------------------------------*/
-static void
-fkey5(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[28~"; /* Help */
-	else
-	{
-		if((current_video_screen + 1) > totalscreens-1)
-			do_vgapage(0);
-		else
-			do_vgapage(current_video_screen + 1);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 6
- *---------------------------------------------------------------------------*/
-static void
-fkey6(void)
-{
-	if(meta_down)	
-		more_chars = (u_char *)"\033[29~"; /* DO */
-	else
-		more_chars = (u_char *)"\033[17~"; /* F6 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 7
- *---------------------------------------------------------------------------*/
-static void
-fkey7(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[31~"; /* F17 */
-	else
-		more_chars = (u_char *)"\033[18~"; /* F7 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 8
- *---------------------------------------------------------------------------*/
-static void
-fkey8(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[32~"; /* F18 */
-	else
-		more_chars = (u_char *)"\033[19~"; /* F8 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 9
- *---------------------------------------------------------------------------*/
-static void
-fkey9(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[33~"; /* F19 */
-	else
-		more_chars = (u_char *)"\033[20~"; /* F9 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 10
- *---------------------------------------------------------------------------*/
-static void
-fkey10(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\033[34~"; /* F20 */
-	else
-		more_chars = (u_char *)"\033[21~"; /* F10 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 11
- *---------------------------------------------------------------------------*/
-static void
-fkey11(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\0x8FP"; /* PF1 */
-	else
-		more_chars = (u_char *)"\033[23~"; /* F11 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 12
- *---------------------------------------------------------------------------*/
-static void
-fkey12(void)
-{
-	if(meta_down)
-		more_chars = (u_char *)"\0x8FQ"; /* PF2 */
-	else
-		more_chars = (u_char *)"\033[24~"; /* F12 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 1
- *---------------------------------------------------------------------------*/
-static void
-sfkey1(void)
-{
-	if(meta_down)
-	{
-		if(vsp->ukt.length[6])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[6]]);
-		else
-			more_chars = (u_char *)"\033[23~"; /* F11 */
-	}
-	else
-		do_vgapage(4);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 2
- *---------------------------------------------------------------------------*/
-static void
-sfkey2(void)
-{
-	if(meta_down)
-	{
-		if(vsp->ukt.length[7])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[7]]);
-		else
-			more_chars = (u_char *)"\033[24~"; /* F12 */
-	}
-	else
-		do_vgapage(5);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 3
- *---------------------------------------------------------------------------*/
-static void
-sfkey3(void)
-{
-	if(meta_down)
-	{
-		if(vsp->ukt.length[8])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[8]]);
-		else
-			more_chars = (u_char *)"\033[25~"; /* F13 */
-	}
-	else
-		do_vgapage(6);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 4
- *---------------------------------------------------------------------------*/
-static void
-sfkey4(void)
-{
-	if(meta_down)
-	{
-		if(vsp->ukt.length[9])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[9]]);
-		else
-			more_chars = (u_char *)"\033[26~"; /* F14 */
-	}
-	else
-		do_vgapage(7);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 5
- *---------------------------------------------------------------------------*/
-static void
-sfkey5(void)
-{
-	if(meta_down)
-	{
-		if(vsp->ukt.length[11])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[11]]);
-		else
-			more_chars = (u_char *)"\033[28~"; /* Help */
-	}
-	else
-	{
-		if(current_video_screen <= 0)
-			do_vgapage(totalscreens-1);
-		else
-			do_vgapage(current_video_screen - 1);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 6
- *---------------------------------------------------------------------------*/
-static void
-sfkey6(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[0])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[0]]);
-		else
-			more_chars = (u_char *)"\033[17~"; /* F6 */
-	}
-	else if(vsp->ukt.length[12])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[12]]);
-	     else
-			more_chars = (u_char *)"\033[29~"; /* DO */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 7
- *---------------------------------------------------------------------------*/
-static void
-sfkey7(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[1])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[1]]);
-		else
-			more_chars = (u_char *)"\033[18~"; /* F7 */
-	}
-	else if(vsp->ukt.length[14])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[14]]);
-	     else
-			more_chars = (u_char *)"\033[31~"; /* F17 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 8
- *---------------------------------------------------------------------------*/
-static void
-sfkey8(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[2])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[2]]);
-		else
-			more_chars = (u_char *)"\033[19~"; /* F8 */
-	}
-	else if(vsp->ukt.length[14])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[15]]);
-	     else
-			more_chars = (u_char *)"\033[32~"; /* F18 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 9
- *---------------------------------------------------------------------------*/
-static void
-sfkey9(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[3])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[3]]);
-		else
-			more_chars = (u_char *)"\033[20~"; /* F9 */
-	}
-	else if(vsp->ukt.length[16])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[16]]);
-	     else
-			more_chars = (u_char *)"\033[33~"; /* F19 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 10
- *---------------------------------------------------------------------------*/
-static void
-sfkey10(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[4])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[4]]);
-		else
-			more_chars = (u_char *)"\033[21~"; /* F10 */
-	}
-	else if(vsp->ukt.length[17])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[17]]);
-	     else
-			more_chars = (u_char *)"\033[34~"; /* F20 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 11
- *---------------------------------------------------------------------------*/
-static void
-sfkey11(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[6])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[6]]);
-		else
-			more_chars = (u_char *)"\033[23~"; /* F11 */
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 12
- *---------------------------------------------------------------------------*/
-static void
-sfkey12(void)
-{
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[7])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[7]]);
-		else
-			more_chars = (u_char *)"\033[24~"; /* F12 */
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 1
- *---------------------------------------------------------------------------*/
-static void
-cfkey1(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_columns(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 2
- *---------------------------------------------------------------------------*/
-static void
-cfkey2(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		vt_ris(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 3
- *---------------------------------------------------------------------------*/
-static void
-cfkey3(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_24l(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 4
- *---------------------------------------------------------------------------*/
-static void
-cfkey4(void)
-{
-#if PCVT_SHOWKEYS
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_kbddbg(vsp);
-#endif /* PCVT_SHOWKEYS */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 5
- *---------------------------------------------------------------------------*/
-static void
-cfkey5(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_bell(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 6
- *---------------------------------------------------------------------------*/
-static void
-cfkey6(void)
-{
-	if(vsp->which_fkl == SYS_FKL)	
-		toggl_sevenbit(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 7
- *---------------------------------------------------------------------------*/
-static void
-cfkey7(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_dspf(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 8
- *---------------------------------------------------------------------------*/
-static void
-cfkey8(void)
-{
-	if(vsp->which_fkl == SYS_FKL)	
-		toggl_awm(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 9
- *---------------------------------------------------------------------------*/
-static void
-cfkey9(void)
-{
-	if(vsp->labels_on)	/* toggle label display on/off */
-	        fkl_off(vsp);
-	else
-	        fkl_on(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 10
- *---------------------------------------------------------------------------*/
-static void
-cfkey10(void)
-{
-	if(vsp->labels_on)	/* toggle user/system fkey labels */
-	{
-		if(vsp->which_fkl == USR_FKL)
-			sw_sfkl(vsp);
-		else if(vsp->which_fkl == SYS_FKL)
-			sw_ufkl(vsp);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 11
- *---------------------------------------------------------------------------*/
-static void
-cfkey11(void)
-{
-	if(vsp->vt_pure_mode == M_PUREVT)
-	        set_emulation_mode(vsp, M_HPVT);
-	else if(vsp->vt_pure_mode == M_HPVT)
-	        set_emulation_mode(vsp, M_PUREVT);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 12
- *---------------------------------------------------------------------------*/
-static void
-cfkey12(void)
-{
-}
-
-#else	/* !PCVT_VT220KEYB, HP-like Keyboard layout */
+#if !PCVT_VT220KEYB	/* !PCVT_VT220KEYB, HP-like Keyboard layout */
 
 /*---------------------------------------------------------------------------*
  *	function bound to function key 1
@@ -2566,7 +1931,7 @@ fkey5(void)
 	if(!meta_down)
 	{
 		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))	
+		   && (vsp->which_fkl == SYS_FKL))
 			toggl_bell(vsp);
 		else
 			more_chars = (u_char *)"\033[21~";	/* F10 */
@@ -2588,7 +1953,7 @@ fkey6(void)
 	if(!meta_down)
 	{
 		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))	
+		   && (vsp->which_fkl == SYS_FKL))
 			toggl_sevenbit(vsp);
 		else
 			more_chars = (u_char *)"\033[23~";	/* F11 */
@@ -2632,7 +1997,7 @@ fkey8(void)
 	if(!meta_down)
 	{
 		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))	
+		   && (vsp->which_fkl == SYS_FKL))
 			toggl_awm(vsp);
 		else
 			more_chars = (u_char *)"\033[25~";	/* F13 */
@@ -2655,7 +2020,7 @@ fkey9(void)
 	{
 		if(vsp->vt_pure_mode == M_PUREVT)
 			return;
-	
+
 		if(vsp->labels_on)	/* toggle label display on/off */
 			fkl_off(vsp);
 		else
@@ -3038,6 +2403,530 @@ cfkey12(void)
 		do_vgapage(11);
 }
 
+#else	/* PCVT_VT220  -  VT220-like Keyboard layout */
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 1
+ *---------------------------------------------------------------------------*/
+static void
+fkey1(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[23~"; /* F11 */
+	else
+		do_vgapage(0);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 2
+ *---------------------------------------------------------------------------*/
+static void
+fkey2(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[24~"; /* F12 */
+	else
+		do_vgapage(1);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 3
+ *---------------------------------------------------------------------------*/
+static void
+fkey3(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[25~"; /* F13 */
+	else
+		do_vgapage(2);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 4
+ *---------------------------------------------------------------------------*/
+static void
+fkey4(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[26~"; /* F14 */
+	else
+		do_vgapage(3);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 5
+ *---------------------------------------------------------------------------*/
+static void
+fkey5(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[28~"; /* Help */
+	else
+	{
+		if((current_video_screen + 1) > totalscreens-1)
+			do_vgapage(0);
+		else
+			do_vgapage(current_video_screen + 1);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 6
+ *---------------------------------------------------------------------------*/
+static void
+fkey6(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[29~"; /* DO */
+	else
+		more_chars = (u_char *)"\033[17~"; /* F6 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 7
+ *---------------------------------------------------------------------------*/
+static void
+fkey7(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[31~"; /* F17 */
+	else
+		more_chars = (u_char *)"\033[18~"; /* F7 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 8
+ *---------------------------------------------------------------------------*/
+static void
+fkey8(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[32~"; /* F18 */
+	else
+		more_chars = (u_char *)"\033[19~"; /* F8 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 9
+ *---------------------------------------------------------------------------*/
+static void
+fkey9(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[33~"; /* F19 */
+	else
+		more_chars = (u_char *)"\033[20~"; /* F9 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 10
+ *---------------------------------------------------------------------------*/
+static void
+fkey10(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\033[34~"; /* F20 */
+	else
+		more_chars = (u_char *)"\033[21~"; /* F10 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 11
+ *---------------------------------------------------------------------------*/
+static void
+fkey11(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\0x8FP"; /* PF1 */
+	else
+		more_chars = (u_char *)"\033[23~"; /* F11 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to function key 12
+ *---------------------------------------------------------------------------*/
+static void
+fkey12(void)
+{
+	if(meta_down)
+		more_chars = (u_char *)"\0x8FQ"; /* PF2 */
+	else
+		more_chars = (u_char *)"\033[24~"; /* F12 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 1
+ *---------------------------------------------------------------------------*/
+static void
+sfkey1(void)
+{
+	if(meta_down)
+	{
+		if(vsp->ukt.length[6])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[6]]);
+		else
+			more_chars = (u_char *)"\033[23~"; /* F11 */
+	}
+	else
+	{
+		do_vgapage(4);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 2
+ *---------------------------------------------------------------------------*/
+static void
+sfkey2(void)
+{
+	if(meta_down)
+	{
+		if(vsp->ukt.length[7])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[7]]);
+		else
+			more_chars = (u_char *)"\033[24~"; /* F12 */
+	}
+	else
+	{
+		do_vgapage(5);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 3
+ *---------------------------------------------------------------------------*/
+static void
+sfkey3(void)
+{
+	if(meta_down)
+	{
+		if(vsp->ukt.length[8])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[8]]);
+		else
+			more_chars = (u_char *)"\033[25~"; /* F13 */
+	}
+	else
+	{
+		do_vgapage(6);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 4
+ *---------------------------------------------------------------------------*/
+static void
+sfkey4(void)
+{
+	if(meta_down)
+	{
+		if(vsp->ukt.length[9])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[9]]);
+		else
+			more_chars = (u_char *)"\033[26~"; /* F14 */
+	}
+	else
+	{
+		do_vgapage(7);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 5
+ *---------------------------------------------------------------------------*/
+static void
+sfkey5(void)
+{
+	if(meta_down)
+	{
+		if(vsp->ukt.length[11])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[11]]);
+		else
+			more_chars = (u_char *)"\033[28~"; /* Help */
+	}
+	else
+	{
+		if(current_video_screen <= 0)
+			do_vgapage(totalscreens-1);
+		else
+			do_vgapage(current_video_screen - 1);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 6
+ *---------------------------------------------------------------------------*/
+static void
+sfkey6(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[0])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[0]]);
+		else
+			more_chars = (u_char *)"\033[17~"; /* F6 */
+	}
+	else if(vsp->ukt.length[12])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[12]]);
+	     else
+			more_chars = (u_char *)"\033[29~"; /* DO */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 7
+ *---------------------------------------------------------------------------*/
+static void
+sfkey7(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[1])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[1]]);
+		else
+			more_chars = (u_char *)"\033[18~"; /* F7 */
+	}
+	else if(vsp->ukt.length[14])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[14]]);
+	     else
+			more_chars = (u_char *)"\033[31~"; /* F17 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 8
+ *---------------------------------------------------------------------------*/
+static void
+sfkey8(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[2])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[2]]);
+		else
+			more_chars = (u_char *)"\033[19~"; /* F8 */
+	}
+	else if(vsp->ukt.length[14])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[15]]);
+	     else
+			more_chars = (u_char *)"\033[32~"; /* F18 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 9
+ *---------------------------------------------------------------------------*/
+static void
+sfkey9(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[3])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[3]]);
+		else
+			more_chars = (u_char *)"\033[20~"; /* F9 */
+	}
+	else if(vsp->ukt.length[16])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[16]]);
+	     else
+			more_chars = (u_char *)"\033[33~"; /* F19 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 10
+ *---------------------------------------------------------------------------*/
+static void
+sfkey10(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[4])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[4]]);
+		else
+			more_chars = (u_char *)"\033[21~"; /* F10 */
+	}
+	else if(vsp->ukt.length[17])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[17]]);
+	     else
+			more_chars = (u_char *)"\033[34~"; /* F20 */
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 11
+ *---------------------------------------------------------------------------*/
+static void
+sfkey11(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[6])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[6]]);
+		else
+			more_chars = (u_char *)"\033[23~"; /* F11 */
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to SHIFTED function key 12
+ *---------------------------------------------------------------------------*/
+static void
+sfkey12(void)
+{
+	if(!meta_down)
+	{
+		if(vsp->ukt.length[7])	/* entry available ? */
+			more_chars = (u_char *)
+				&(vsp->udkbuf[vsp->ukt.first[7]]);
+		else
+			more_chars = (u_char *)"\033[24~"; /* F12 */
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 1
+ *---------------------------------------------------------------------------*/
+static void
+cfkey1(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_columns(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 2
+ *---------------------------------------------------------------------------*/
+static void
+cfkey2(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		vt_ris(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 3
+ *---------------------------------------------------------------------------*/
+static void
+cfkey3(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_24l(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 4
+ *---------------------------------------------------------------------------*/
+static void
+cfkey4(void)
+{
+
+#if PCVT_SHOWKEYS
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_kbddbg(vsp);
+#endif /* PCVT_SHOWKEYS */
+
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 5
+ *---------------------------------------------------------------------------*/
+static void
+cfkey5(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_bell(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 6
+ *---------------------------------------------------------------------------*/
+static void
+cfkey6(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_sevenbit(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 7
+ *---------------------------------------------------------------------------*/
+static void
+cfkey7(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_dspf(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 8
+ *---------------------------------------------------------------------------*/
+static void
+cfkey8(void)
+{
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_awm(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 9
+ *---------------------------------------------------------------------------*/
+static void
+cfkey9(void)
+{
+	if(vsp->labels_on)	/* toggle label display on/off */
+	        fkl_off(vsp);
+	else
+	        fkl_on(vsp);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 10
+ *---------------------------------------------------------------------------*/
+static void
+cfkey10(void)
+{
+	if(vsp->labels_on)	/* toggle user/system fkey labels */
+	{
+		if(vsp->which_fkl == USR_FKL)
+			sw_sfkl(vsp);
+		else if(vsp->which_fkl == SYS_FKL)
+			sw_ufkl(vsp);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 11
+ *---------------------------------------------------------------------------*/
+static void
+cfkey11(void)
+{
+	if(vsp->vt_pure_mode == M_PUREVT)
+	        set_emulation_mode(vsp, M_HPVT);
+	else if(vsp->vt_pure_mode == M_HPVT)
+	        set_emulation_mode(vsp, M_PUREVT);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 12
+ *---------------------------------------------------------------------------*/
+static void
+cfkey12(void)
+{
+}
+
 #endif	/* PCVT_VT220KEYB */
+
+#endif	/* NVT > 0 */
 
 /* ------------------------------- EOF -------------------------------------*/

@@ -1,6 +1,4 @@
-$NetBSD: Acknowledgements,v 1.2 1994/10/27 04:19:06 cgd Exp $
-
-Thank You,					    (in the order of appearence)
+Thank You,					    (in the order of appearance)
 
 
 	Lynne and Bill Jolitz
@@ -17,7 +15,7 @@ Thank You,					    (in the order of appearence)
 
 	Per Lindberg
 
-		for the extremly helpful vt100 terminal testprogram found
+		for the extremely helpful vt100 terminal testprogram found
 		in the directory vttest.
 
 
@@ -57,7 +55,7 @@ Thank You,					    (in the order of appearence)
 
 		for contributing precise bugreports and -fixes, the 8x10
 		EGA/VGA fonts and the color palette ioctls and for being
-		a very reponsive contributor of various ideas.
+		a very responsive contributor of various ideas.
 		Joerg wrote pcvt's interface to XFree86 1.2 and 1.3 and
 		the SYSV/syscons - like interface to XFree86 2.0.
 		There would be no support for X without Joerg's work!
@@ -81,20 +79,43 @@ Thank You,					    (in the order of appearence)
 		if Theo didn't asked for features ... ;-)
 
 
-	Onno van der Linden	(c/o vdlinden@fwi.uva.nl)
+	Onno van der Linden	(c/o frank@fwi.uva.nl)
 
 		for writing the 132 column support for the Cirrus
 		chipsets although he had no time to do it ... :-)
 
 
-	Wolfram Solfrank, Ingo Koenig, Michael Havemester
+	Wolfram Solfrank, Ingo Koenig
 
 		for putting some data onto tape (and handling and shipping
 		in the case of Wolfgang) to provide me with some latest
 		sources because i still have no ip-connectivity ....
 
 
+	Michael Havemester	(tik@abqhh.hanse.de)
+
+		for giving me a chance to stay up to date with NetBSD-
+		current, for programming the initial version of the fast
+		scrolling code and for the keyboard fifo code!
+
+
+	Charles Hannum		(mycroft@gnu.ai.mit.edu)
+
+		for getting bored by a slow-scrolling video driver and 
+		for leaving me some bugs to fix ;-)
+
+
 	The NetBSD and FreeBSD teams
 
 		for giving me something to play, work and learn with !
 		There would be nothing to write a driver for without you !!!
+
+
+	J.T. Conklin
+
+		for forwarding the pcvt-related NetBSD PR's to me !
+	
+
+	John Kohl
+
+		for producing patches for NetBSD-current !

@@ -1,5 +1,3 @@
-;;	$NetBSD: pcvt.el,v 1.2 1994/10/27 04:19:27 cgd Exp $
-
 ;; pcvt25.el, by J"org Wunsch <joerg_wunsch@uriah.sax.de>
 ;;
 ;; pcvt is a good VT emulator

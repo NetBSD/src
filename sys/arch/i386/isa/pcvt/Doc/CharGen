@@ -1,11 +1,9 @@
-$NetBSD: CharGen,v 1.2 1994/10/27 04:19:11 cgd Exp $
-
 Character Generator description			        (before it gets lost ..)
 --------------------------------------------------------------------------------
 
-The lower character generator is the default IBM charcter set II.
+The lower character generator is the default IBM character set II.
 
-The description of the higher charcter generator follows below. The
+The description of the higher character generator follows below. The
 character names are taken from the "Postscript Language Reference
 Manual", 2nd Edition, Fourth printing July 1991, pp 596.
 

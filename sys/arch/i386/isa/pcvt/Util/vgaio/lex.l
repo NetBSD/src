@@ -1,8 +1,6 @@
-/*	$NetBSD: lex.l,v 1.2 1994/10/27 04:20:47 cgd Exp $	*/
-
 %{
 /*
- * Copyright (c) 1994 Joerg Wunsch
+ * Copyright (c) 1994,1995 Joerg Wunsch
  *
  * All rights reserved.
  *
@@ -35,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$NetBSD: lex.l,v 1.2 1994/10/27 04:20:47 cgd Exp $"
+#ident "$Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/vgaio/Attic/lex.l,v 1.3 1995/10/07 21:46:00 jtc Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +56,8 @@ ar|AR	{ return AR; }
 gr|GR	{ return GR; }
 
 sr|SR	{ return SR; }
+
+mi|MI	{ return MI; }
 
 {D}({D}*)  { sscanf(yytext, "%x", &yylval.num); return NUM; }
 

@@ -1,6 +1,4 @@
-$NetBSD: TestedHardware,v 1.2 1994/10/27 04:19:21 cgd Exp $
-
-Tested Hardware List                  last edit-date: [Thu Dec  9 21:39:51 1993]
+Tested Hardware List                  last edit-date: [Sat Jun 24 14:50:46 1995]
 
 This is by no means a complete list of hardware pcvt runs on, it is just 
 compiled from reports people sent in and from hardware owned/loaned !
@@ -27,11 +25,14 @@ Tseng Labs			ET3000AX	JVC VGA Color		(2)
 Video7 Inc.			VEGA VGA	VGA Mono		(2)
 Video7 Inc.			1024i		VGA Mono		(2)
 ELSA GmbH			S3 928		VGA Mono/Color
+IBM EGA				6845		Monochrome		(2,3)
+IBM EGA				6845		Tandon EGA Color	(2,3)
+Trident				TVGA 8900CL	VGA Mono                (2)
 
 Notes:
 (1) - slight display distortion when switching between screens
-(2) - remakable display distortion and/or loss of sync while loading fonts
-
+(2) - remarkable display distortion and/or loss of sync while loading fonts
+(3) - snow while scrolling with HP function key labels turned on
 
 TESTED VIDEO BOARDS (132 column operation)
 --------------------------------------------------------------------------------
@@ -46,11 +47,13 @@ Kyocera ML IIII33 (Mainboard)	WD90C11		VGA Color		(1,2)
 Trident (?)			TVGA9000B	VGA Mono		(1,3)
 Tseng Labs (?)			ET3000		NEC 3D
 ELSA GmbH			S3 928		VGA Mono/Color
+Trident				TVGA 8900CL	VGA Mono
+HP Vectra VE 5/75 Motherbd	CL-GD5430	MAG
 
 Notes:
 (1) - slight display distortion when switching between screens
 (2) - all fonts must be loaded in ascending order prior to switching to 132 cols
-(3) - remakable display distortion and/or loss of sync while loading fonts
+(3) - remarkable display distortion and/or loss of sync while loading fonts
 
 
 TESTED KEYBOARDS

@@ -1,5 +1,3 @@
-/*	$NetBSD: keycap.h,v 1.2 1994/10/27 04:20:24 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#)keycap.h, 3.00, Last Edit-Date: [Sun Jan  2 13:48:53 1994]
+ * @(#)keycap.h, 3.20, Last Edit-Date: [Tue Dec 20 14:52:11 1994]
  */
 
 #ifndef _KEYCAP_H_

@@ -1,5 +1,3 @@
-/*	$NetBSD: select.c,v 1.2 1994/10/27 04:19:50 cgd Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993, 1994 by Hellmuth Michaelis
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: header.h,v 1.2 1994/10/27 04:20:54 cgd Exp $	*/
-
 #define VERSION "1.7b 1985-04-19"
 
 /* Choose one of these */
