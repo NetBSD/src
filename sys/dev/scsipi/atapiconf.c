@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.9 1998/01/15 02:21:29 cgd Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.10 1998/07/31 03:00:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -170,6 +170,9 @@ atapibusattach(parent, self, aux)
 	int nbytes;
 
 	printf("\n");
+
+	/* Initialize shared data. */
+	scsipi_init();
 
 	sc_link_proto->scsipi_atapi.atapibus = ab->sc_dev.dv_unit;
 	sc_link_proto->scsipi_cmd = atapi_scsipi_cmd;
