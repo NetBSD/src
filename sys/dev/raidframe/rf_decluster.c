@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.12 2002/09/23 03:04:27 simonb Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.13 2002/09/23 03:27:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.12 2002/09/23 03:04:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.13 2002/09/23 03:27:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.12 2002/09/23 03:04:27 simonb Exp
 #include "rf_utils.h"
 #include "rf_alloclist.h"
 #include "rf_general.h"
+#include "rf_kintf.h"
 #include "rf_shutdown.h"
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
