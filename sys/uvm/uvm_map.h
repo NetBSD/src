@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.37 2003/11/01 11:09:02 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.38 2004/01/29 12:06:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,9 +142,9 @@ struct vm_map_entry {
 #define uvm_map_entry_stop_copy flags
 	u_int8_t		flags;		/* flags */
 
-#define UVM_MAP_STATIC		0x01		/* static map entry */
-#define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
-
+#define UVM_MAP_KERNEL		0x01		/* kernel map entry */
+#define UVM_MAP_KMAPENT		0x02		/* contains map entries */
+#define UVM_MAP_FIRST		0x04		/* the first special entry */
 };
 
 #define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
@@ -225,6 +225,7 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
+	LIST_HEAD(, uvm_kmapent_hdr) kentry_free; /* freelist of map entry */
 #define	min_offset		header.end
 #define	max_offset		header.start
 };
@@ -238,15 +239,19 @@ struct vm_map {
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 
-/* XXX: number of kernel maps and entries to statically allocate */
+#ifdef _KERNEL
+struct uvm_map_args {
+	struct vm_map_entry *uma_prev;
 
-#if !defined(MAX_KMAPENT)
-#if (50 + (2 * NPROC) > 1000)
-#define MAX_KMAPENT (50 + (2 * NPROC))
-#else
-#define	MAX_KMAPENT	1000  /* XXXCDC: no crash */
-#endif
-#endif	/* !defined MAX_KMAPENT */
+	vaddr_t uma_start;
+	vsize_t uma_size;
+
+	struct uvm_object *uma_uobj;
+	voff_t uma_uoffset;
+
+	uvm_flag_t uma_flags;
+};
+#endif /* _KERNEL */
 
 #ifdef _KERNEL
 #define	vm_map_modflags(map, set, clear)				\
@@ -315,6 +320,12 @@ MAP_INLINE
 void		uvm_unmap(struct vm_map *, vaddr_t, vaddr_t);
 void		uvm_unmap_detach(struct vm_map_entry *,int);
 void		uvm_unmap_remove(struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map_entry **);
+
+int		uvm_map_prepare(struct vm_map *, vaddr_t, vsize_t,
+		    struct uvm_object *, voff_t, vsize_t, uvm_flag_t,
+		    struct uvm_map_args *);
+int		uvm_map_enter(struct vm_map *, const struct uvm_map_args *,
 		    struct vm_map_entry **);
 
 #endif /* _KERNEL */
