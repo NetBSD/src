@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 1996/11/27 01:42:07 cgd Exp $
+#	$NetBSD: Makefile,v 1.17 1997/02/24 20:35:23 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
 
-TARGETS=	bin.tar.gz etc.tar.gz x11.tar.gz rz25-image.gz
+TARGETS=	bin.tar.gz etc.tar.gz x11.tar.gz diskimage.gz
 
 .if !defined(DESTDIR) || !defined(DESTDISK)
 all:
@@ -11,8 +11,8 @@ all:
 	@false
 .else
 
-SECPERCYL=	558
-CYLS=		1476
+SECPERCYL=	343
+CYLS=		1189
 
 all: ${TARGETS}
 
@@ -20,7 +20,7 @@ mount-fs:
 	disklabel -W ${DESTDISK}
 	-dd if=/dev/zero of=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS}
-	disklabel -w -r ${DESTDISK} rz25
+	disklabel -w -r ${DESTDISK} ImageDisk
 	disklabel -W ${DESTDISK}
 	newfs -O /dev/r${DESTDISK}a
 	newfs -O /dev/r${DESTDISK}d
@@ -30,14 +30,14 @@ mount-fs:
 
 build-fs:
 	cd ${.CURDIR}/../../../etc && make distribution
-	if [ -d /usr/alphasrc/cygnus ]; then \
-		cd /usr/alphasrc/cygnus && \
+	if [ -d ${.CURDIR}/../../../toolchain ]; then \
+		cd ${.CURDIR}/../../../toolchain && \
 		    make prefix=${DESTDIR}/usr/local install; \
 	else \
 		true; \
 	fi
-	if [ -d /usr/alphasrc/xc ]; then \
-		cd /usr/alphasrc/xc && make install install.man; \
+	if [ -d ${.CURDIR}/../../../xc ]; then \
+		cd ${.CURDIR}/../../../xc && make install install.man; \
 	else \
 		true; \
 	fi
@@ -63,7 +63,7 @@ unmount-fs:
 	umount ${DESTDIR}/usr ${DESTDIR}
 	fsck -f -t ffs /dev/r${DESTDISK}a /dev/r${DESTDISK}d
 
-rz25-image.gz: mount-fs build-fs unmount-fs
+diskimage.gz: mount-fs build-fs unmount-fs
 	mount /dev/${DESTDISK}a ${DESTDIR}
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr
 	mkdir ${DESTDIR}/alphadist
