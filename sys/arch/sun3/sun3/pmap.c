@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1994/10/26 09:12:54 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1994/10/26 19:04:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Adam Glass
@@ -47,6 +47,9 @@
 #include <machine/mon.h>
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+
+/* XXX - This is weird... */
+#define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
 
 extern void printf __P((const char *, ...));
 
