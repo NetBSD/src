@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.29 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.30 1999/10/11 09:15:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -404,25 +404,17 @@ uhub_explore(dev)
 				     "error=%s\n", usbd_errstr(r)));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
-/* XXX
- * What should we do.  The device may or may not be at its
- * assigned address.  In any case we'd like to ignore it.
- * Maybe the port should be disabled until the device is
- * disconnected.
- */
-			if (r == USBD_SET_ADDR_FAILED || 1) {/* XXX */
-				/* The unit refused to accept a new
-				 * address, and since we cannot leave
-				 * at 0 we have to disable the port
-				 * instead. */
-				printf("%s: device problem, disabling "
-				       "port %d\n",
-				       USBDEVNAME(sc->sc_dev), port);
-				usbd_clear_port_feature(dev, port, 
-							UHF_PORT_ENABLE);
-				/* Make sure we don't try to restart it. */
-				up->restartcnt = USBD_RESTART_MAX;
-			}
+
+			/* 
+			 * The unit refused to accept a new address, or had
+			 * some other serious problem.  Since we cannot leave
+			 * at 0 we have to disable the port instead.
+			 */
+			printf("%s: device problem, disabling port %d\n",
+			       USBDEVNAME(sc->sc_dev), port);
+			usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
+			/* Make sure we don't try to restart it infinitely. */
+			up->restartcnt = USBD_RESTART_MAX;
 		} else {
 			if (up->device->hub)
 				up->device->hub->explore(up->device);
