@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2003/09/12 14:59:12 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2003/09/12 15:29:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2003/09/12 14:59:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2003/09/12 15:29:48 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,7 +107,6 @@ int	bootpart = -1;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	configure(void);
 void	mach_init(unsigned int);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
