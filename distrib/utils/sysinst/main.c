@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2000/12/03 01:54:46 minoura Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,12 +54,12 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-int main __P((int argc, char **argv));
-static void usage __P((void));
-static void miscsighandler __P((int));
-static void ttysighandler __P((int));
-static void cleanup __P((void));
-static void process_f_flag __P((char *));
+int main (int argc, char **argv);
+static void usage (void);
+static void miscsighandler (int);
+static void ttysighandler (int);
+static void cleanup (void);
+static void process_f_flag (char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 int logging;			/* are we logging everything? */
@@ -68,7 +68,7 @@ FILE *log;			/* log file */
 FILE *script;			/* script file */
 
 #ifdef DEBUG
-extern int log_flip __P((void));
+extern int log_flip (void);
 #endif
 
 int

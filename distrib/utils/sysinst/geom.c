@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.2 1998/06/20 13:05:48 mrg Exp $	*/
+/*	$NetBSD: geom.c,v 1.3 2000/12/22 10:12:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -42,7 +42,7 @@
 #include <util.h>
 
 /* Visible functions */
-int get_geom __P((char *, struct disklabel *));
+int get_geom (char *, struct disklabel *);
 
 int
 get_geom(disk, l)
