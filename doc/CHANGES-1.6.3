@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.31 2004/03/15 05:34:34 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.32 2004/03/15 05:42:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -180,3 +180,14 @@ sys/miscfs/fifofs/fifo_vnops.c		1.46
 	Handle the case of fifo_close() getting called from vclean().
 	Fixes memory leak in revoke(2) path.
 	[wrstuden, ticket #1621]
+
+share/man/man4/auich.4			patch
+sys/dev/pci/auich.c			patch
+sys/dev/pci/auichreg.h			patch
+sys/dev/pci/pcidevs			patch
+sys/dev/pci/pcidevs.h			regen
+sys/dev/pci/pcidevs_data.h		regen
+
+	Add support for ICH3, ICH4, ICH5, SiS 7012, nForce MCP, nForce2 MCP-T,
+	and nForce3 MCP-T to auich driver.
+	[kent, ticket #1612]
