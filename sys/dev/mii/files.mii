@@ -1,0 +1,14 @@
+
+device mii {dev = -1}
+attach mii at miibus
+
+file    dev/mii/mii.c miibus
+file    dev/mii/generic_phy.c miibus
+
+device tlphy
+attach tlphy at mii
+file dev/mii/tlphy.c	tlphy
+
+device nsphy
+attach nsphy at mii
+file dev/mii/nsphy.c	nsphy
