@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.15 2001/11/13 07:11:13 lukem Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.16 2002/08/02 03:55:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.15 2001/11/13 07:11:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.16 2002/08/02 03:55:13 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -534,48 +534,6 @@ rf_CreateDiskQueueData(
 	p->priority = RF_IO_NORMAL_PRIORITY;
 	p->AuxFunc = NULL;
 	p->buf2 = NULL;
-	p->raidPtr = raidPtr;
-	p->flags = flags;
-	p->b_proc = kb_proc;
-	return (p);
-}
-
-RF_DiskQueueData_t *
-rf_CreateDiskQueueDataFull(
-    RF_IoType_t typ,
-    RF_SectorNum_t ssect,
-    RF_SectorCount_t nsect,
-    caddr_t buf,
-    RF_StripeNum_t parityStripeID,
-    RF_ReconUnitNum_t which_ru,
-    int (*wakeF) (void *, int),
-    void *arg,
-    RF_DiskQueueData_t * next,
-    RF_AccTraceEntry_t * tracerec,
-    int priority,
-    int (*AuxFunc) (void *,...),
-    caddr_t buf2,
-    void *raidPtr,
-    RF_DiskQueueDataFlags_t flags,
-    void *kb_proc)
-{
-	RF_DiskQueueData_t *p;
-
-	RF_FREELIST_GET_INIT(rf_dqd_freelist, p, next, (RF_DiskQueueData_t *), init_dqd);
-
-	p->sectorOffset = ssect + rf_protectedSectors;
-	p->numSector = nsect;
-	p->type = typ;
-	p->buf = buf;
-	p->parityStripeID = parityStripeID;
-	p->which_ru = which_ru;
-	p->CompleteFunc = wakeF;
-	p->argument = arg;
-	p->next = next;
-	p->tracerec = tracerec;
-	p->priority = priority;
-	p->AuxFunc = AuxFunc;
-	p->buf2 = buf2;
 	p->raidPtr = raidPtr;
 	p->flags = flags;
 	p->b_proc = kb_proc;
