@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.21 2001/01/19 14:29:20 fvdl Exp $
+#	$NetBSD: MINBAR,v 1.22 2001/01/19 14:44:11 fvdl Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -608,7 +608,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 # miscellaneous pseudo-devices
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 #pseudo-device	rnd			# /dev/random and in-kernel generator
