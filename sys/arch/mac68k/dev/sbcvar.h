@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.10 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.11 2005/03/05 17:34:06 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -59,7 +59,7 @@ struct sbc_softc {
 	volatile struct sbc_regs *sc_regs;
 	volatile vaddr_t	sc_drq_addr;
 	volatile vaddr_t	sc_nodrq_addr;
-	void			(*sc_clrintr) __P((struct ncr5380_softc *));
+	void			(*sc_clrintr)(struct ncr5380_softc *);
 	volatile int		sc_resid;
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302 2005/02/11 15:03:56 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.303 2005/03/05 17:34:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2005/02/11 15:03:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2005/03/05 17:34:06 chs Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -492,8 +492,7 @@ initcpu(void)
 	DCIS();
 }
 
-void doboot __P((void))
-	__attribute__((__noreturn__));
+void doboot(void) __attribute__((__noreturn__));
 
 /*
  * Set registers on exec.
