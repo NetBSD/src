@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hpux_tty.c 1.14 93/08/05$
  *
  *	from: @(#)hpux_tty.c	8.3 (Berkeley) 1/12/94
- *	$Id: hpux_tty.c,v 1.6 1994/05/23 08:04:26 mycroft Exp $
+ *	$Id: hpux_tty.c,v 1.7 1994/10/20 04:47:36 cgd Exp $
  */
 
 /*
@@ -470,19 +470,21 @@ struct ohpux_sgtty_args {
 ohpux_gtty(p, uap, retval)
 	struct proc *p;
 	struct ohpux_sgtty_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
-	return (getsettty(p, uap->fdes, HPUXTIOCGETP, uap->cmarg));
+	return (getsettty(p, SCARG(uap, fdes), HPUXTIOCGETP,
+	    SCARG(uap, cmarg)));
 }
 
 ohpux_stty(p, uap, retval)
 	struct proc *p;
 	struct ohpux_sgtty_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
-	return (getsettty(p, uap->fdes, HPUXTIOCSETP, uap->cmarg));
+	return (getsettty(p, SCARG(uap, fdes), HPUXTIOCSETP,
+	    SCARG(uap, cmarg)));
 }
 
 /*

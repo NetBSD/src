@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.2 1994/06/29 06:30:33 cgd Exp $	*/
+/*	$NetBSD: svr4_ioctl.c,v 1.3 1994/10/20 04:47:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -79,7 +79,7 @@ int
 svr4_ioctl(p, uap, retval)
 	register struct proc *p;
 	register struct svr4_ioctl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	char *dir;
 	char c;

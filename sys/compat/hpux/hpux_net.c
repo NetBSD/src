@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hpux_net.c 1.8 93/08/02$
  *
  *	from: @(#)hpux_net.c	8.2 (Berkeley) 9/9/93
- *	$Id: hpux_net.c,v 1.6 1994/05/23 08:04:18 mycroft Exp $
+ *	$Id: hpux_net.c,v 1.7 1994/10/20 04:47:33 cgd Exp $
  */
 
 /*
@@ -105,14 +105,14 @@ struct hpux_netioctl_args {
 hpux_netioctl(p, uap, retval)
 	struct proc *p;
 	struct hpux_netioctl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int *args, i;
 	register int code;
 	int error;
 
-	args = uap->args;
-	code = uap->call - MINBSDIPCCODE;
+	args = SCARG(uap, args);
+	code = SCARG(uap, call) - MINBSDIPCCODE;
 	if (code < 0 || code >= NUMBSDIPC || hpuxtobsdipc[code].rout == NULL)
 		return (EINVAL);
 	if ((i = hpuxtobsdipc[code].nargs * sizeof (int)) &&
@@ -168,42 +168,42 @@ struct hpux_setsockopt_args {
 hpux_setsockopt(p, uap, retval)
 	struct proc *p;
 	struct hpux_setsockopt_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int tmp, error;
 
-	if (error = getsock(p->p_fd, uap->s, &fp))
+	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
 		return (error);
-	if (uap->valsize > MLEN)
+	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
-	if (uap->val) {
+	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
-		if (error = copyin(uap->val, mtod(m, caddr_t),
-		    (u_int)uap->valsize)) {
+		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize))) {
 			(void) m_free(m);
 			return (error);
 		}
-		if (uap->name == SO_LINGER) {
+		if (SCARG(uap, name) == SO_LINGER) {
 			tmp = *mtod(m, int *);
 			mtod(m, struct linger *)->l_onoff = 1;
 			mtod(m, struct linger *)->l_linger = tmp;
 			m->m_len = sizeof(struct linger);
 		} else
-			socksetsize(uap->valsize, m);
-	} else if (uap->name == ~SO_LINGER) {
+			socksetsize(SCARG(uap, valsize), m);
+	} else if (SCARG(uap, name) == ~SO_LINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m) {
-			uap->name = SO_LINGER;
+			SCARG(uap, name) = SO_LINGER;
 			mtod(m, struct linger *)->l_onoff = 0;
 			m->m_len = sizeof(struct linger);
 		}
 	}
-	return (sosetopt((struct socket *)fp->f_data, uap->level,
-	    uap->name, m));
+	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m));
 }
 
 struct hpux_setsockopt2_args {
@@ -217,29 +217,29 @@ struct hpux_setsockopt2_args {
 hpux_setsockopt2(p, uap, retval)
 	struct proc *p;
 	register struct hpux_setsockopt2_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
 
-	if (error = getsock(p->p_fd, uap->s, &fp))
+	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
 		return (error);
-	if (uap->valsize > MLEN)
+	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
-	if (uap->val) {
+	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
-		if (error = copyin(uap->val, mtod(m, caddr_t),
-		    (u_int)uap->valsize)) {
+		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize))) {
 			(void) m_free(m);
 			return (error);
 		}
-		socksetsize(uap->valsize, m);
+		socksetsize(SCARG(uap, valsize), m);
 	}
-	return (sosetopt((struct socket *)fp->f_data, uap->level,
-	    uap->name, m));
+	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m));
 }
 
 struct hpux_getsockopt_args {
@@ -252,25 +252,25 @@ struct hpux_getsockopt_args {
 hpux_getsockopt(p, uap, retval)
 	struct proc *p;
 	struct hpux_getsockopt_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int valsize, error;
 
-	if (error = getsock(p->p_fd, uap->s, &fp))
+	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
 		return (error);
-	if (uap->val) {
-		if (error = copyin((caddr_t)uap->avalsize, (caddr_t)&valsize,
-		    sizeof (valsize)))
+	if (SCARG(uap, val)) {
+		if (error = copyin((caddr_t)SCARG(uap, avalsize),
+		    (caddr_t)&valsize, sizeof (valsize)))
 			return (error);
 	} else
 		valsize = 0;
-	if (error = sogetopt((struct socket *)fp->f_data, uap->level,
-	    uap->name, &m))
+	if (error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), &m))
 		goto bad;
-	if (uap->val && valsize && m != NULL) {
-		if (uap->name == SO_LINGER) {
+	if (SCARG(uap, val) && valsize && m != NULL) {
+		if (SCARG(uap, name) == SO_LINGER) {
 			if (mtod(m, struct linger *)->l_onoff)
 				*mtod(m, int *) = mtod(m, struct linger *)->l_linger;
 			else
@@ -279,10 +279,11 @@ hpux_getsockopt(p, uap, retval)
 		}
 		if (valsize > m->m_len)
 			valsize = m->m_len;
-		error = copyout(mtod(m, caddr_t), uap->val, (u_int)valsize);
+		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
+		    (u_int)valsize);
 		if (error == 0)
 			error = copyout((caddr_t)&valsize,
-			    (caddr_t)uap->avalsize, sizeof (valsize));
+			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
 	}
 bad:
 	if (m != NULL)

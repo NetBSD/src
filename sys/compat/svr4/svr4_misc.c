@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.5 1994/06/29 06:30:35 cgd Exp $	*/
+/*	$NetBSD: svr4_misc.c,v 1.6 1994/10/20 04:47:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ struct svr4_wait4_args {
 svr4_wait4(p, uap, retval)
 	struct proc *p;
 	struct svr4_wait4_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	if (uap->pid == 0)
@@ -110,7 +110,7 @@ struct svr4_wait_args {
 svr4_wait(p, uap, retval)
 	struct proc *p;
 	struct svr4_wait_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int err;
 	struct svr4_wait4_args w4;
@@ -128,7 +128,7 @@ struct svr4_creat_args {
 svr4_creat(p, uap, retval)
 	struct proc *p;
 	struct svr4_creat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct args {
 		char	*fname;
@@ -150,7 +150,7 @@ struct svr4_execv_args {
 svr4_execv(p, uap, retval)
 	struct proc *p;
 	struct svr4_execv_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	uap->envp = NULL;
@@ -164,7 +164,7 @@ struct svr4_unmount_args {
 svr4_unmount(p, uap, retval)
 	struct proc *p;
 	struct svr4_unmount_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	uap->flags = 0;
@@ -207,7 +207,7 @@ struct svr4_mount_args {
 svr4_mount(p, uap, retval)
 	struct proc *p;
 	struct svr4_mount_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int oflags = uap->flags, nflags, error;
 	extern char sigcode[], esigcode[];
@@ -272,7 +272,7 @@ struct svr4_sigpending_args {
 svr4_sigpending(p, uap, retval)
 	struct proc *p;
 	struct svr4_sigpending_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int mask = p->p_siglist & p->p_sigmask;
 
@@ -302,7 +302,7 @@ struct svr4_getdents_args {
 svr4_getdents(p, uap, retval)
 	struct proc *p;
 	register struct svr4_getdents_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
@@ -410,7 +410,7 @@ struct svr4_mmap_args {
 svr4_mmap(p, uap, retval)
 	register struct proc *p;
 	register struct svr4_mmap_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct filedesc *fdp;
 	register struct file *fp;
@@ -460,7 +460,7 @@ struct svr4_mctl_args {
 svr4_mctl(p, uap, retval)
 	register struct proc *p;
 	register struct svr4_mctl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	switch (uap->func) {
@@ -482,7 +482,7 @@ struct svr4_fchroot_args {
 svr4_fchroot(p, uap, retval)
 	register struct proc *p;
 	register struct svr4_fchroot_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct vnode *vp;
@@ -531,7 +531,7 @@ struct svr4_uname_args {
 svr4_uname(p, uap, retval)
 	struct proc *p;
 	struct svr4_uname_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct svr4_utsname sut;
 	extern struct utsname utsname;
@@ -573,7 +573,7 @@ struct svr4_open_args {
 svr4_open(p, uap, retval)
 	struct proc *p;
 	struct svr4_open_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int l, r = 0;
 	int noctty = uap->fmode & 0x8000;
@@ -625,7 +625,7 @@ struct svr4_nfssvc_args {
 svr4_nfssvc(p, uap, retval)
 	struct proc *p;
 	struct svr4_nfssvc_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct nfssvc_args outuap;
 	struct sockaddr sa;
@@ -663,7 +663,7 @@ struct svr4_ustat_args {
 svr4_ustat(p, uap, retval)
 	struct proc *p;
 	struct svr4_ustat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct svr4_ustat us;
 	int error;
@@ -689,7 +689,7 @@ struct svr4_quotactl_args {
 svr4_quotactl(p, uap, retval)
 	struct proc *p;
 	struct svr4_quotactl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	return EINVAL;
 }
@@ -733,7 +733,7 @@ struct svr4_statfs_args {
 svr4_statfs(p, uap, retval)
 	struct proc *p;
 	struct svr4_statfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct mount *mp;
 	register struct nameidata *ndp;
@@ -763,7 +763,7 @@ struct svr4_fstatfs_args {
 svr4_fstatfs(p, uap, retval)
 	struct proc *p;
 	struct svr4_fstatfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mount *mp;
@@ -788,7 +788,7 @@ struct svr4_exportfs_args {
 svr4_exportfs(p, uap, retval)
 	struct proc *p;
 	struct svr4_exportfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	/*
 	 * XXX: should perhaps translate into a mount(2)
@@ -807,7 +807,7 @@ struct svr4_mknod_args {
 svr4_mknod(p, uap, retval)
 	struct proc *p;
 	struct svr4_mknod_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (S_ISFIFO(uap->fmode))
 		return mkfifo(p, uap, retval);
@@ -818,7 +818,7 @@ svr4_mknod(p, uap, retval)
 svr4_vhangup(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int *retval;
+	register_t *retval;
 {
 	return 0;
 }
@@ -839,7 +839,7 @@ struct svr4_sysconfig_args {
 svr4_sysconfig(p, uap, retval)
 	struct proc *p;
 	struct svr4_sysconfig_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	extern int maxfiles;
 
@@ -888,7 +888,7 @@ struct svr4_getrlimit_args {
 svr4_getrlimit(p, uap, retval)
 	struct proc *p;
 	struct svr4_getrlimit_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (uap->which >= SVR4_RLIM_NLIMITS)
 		return EINVAL;
@@ -908,7 +908,7 @@ struct svr4_setrlimit_args {
 svr4_setrlimit(p, uap, retval)
 	struct proc *p;
 	struct svr4_getrlimit_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (uap->which >= SVR4_RLIM_NLIMITS)
 		return EINVAL;
@@ -978,7 +978,7 @@ struct svr4_stat_args {
 svr4_stat(p, uap, retval)
 	struct proc *p;
 	struct svr4_stat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	extern char sigcode[], esigcode[];
 	struct stat st;
@@ -1010,7 +1010,7 @@ struct svr4_lstat_args {
 svr4_lstat(p, uap, retval)
 	struct proc *p;
 	struct svr4_lstat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	extern char sigcode[], esigcode[];
 	struct stat st;
@@ -1042,7 +1042,7 @@ struct svr4_fstat_args {
 svr4_fstat(p, uap, retval)
 	struct proc *p;
 	struct svr4_fstat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	extern char sigcode[], esigcode[];
 	struct stat st;
@@ -1070,7 +1070,7 @@ struct svr4_syssun_args {
 svr4_syssun(p, uap, retval)
 	struct proc *p;
 	struct svr4_syssun_args *uap;
-	int *retval;
+	register_t *retval;
 {
 #ifdef DEBUG_SVR4
 	printf("syssun(%d)\n", uap->gate);
