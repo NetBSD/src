@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jef Poskanzer and Craig Leres of the Lawrence Berkeley Laboratory.
@@ -35,14 +35,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)write.c	4.22 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: write.c,v 1.2 1993/08/01 18:01:05 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)write.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: write.c,v 1.3 1994/09/19 08:18:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,8 @@ static char rcsid[] = "$Id: write.c,v 1.2 1993/08/01 18:01:05 mycroft Exp $";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+
+#include <err.h>
 #include <utmp.h>
 #include <ctype.h>
 #include <pwd.h>
@@ -76,23 +78,16 @@ main(argc, argv)
 		myttyfd = fileno(stdout);
 	else if (isatty(fileno(stderr)))
 		myttyfd = fileno(stderr);
-	else {
-		(void)fprintf(stderr, "write: can't find your tty\n");
-		exit(1);
-	}
-	if (!(mytty = ttyname(myttyfd))) {
-		(void)fprintf(stderr, "write: can't find your tty's name\n");
-		exit(1);
-	}
-	if (cp = rindex(mytty, '/'))
+	else
+		errx(1, "can't find your tty");
+	if (!(mytty = ttyname(myttyfd)))
+		errx(1, "can't find your tty's name");
+	if (cp = strrchr(mytty, '/'))
 		mytty = cp + 1;
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
-	if (!msgsok) {
-		(void)fprintf(stderr,
-		    "write: you have write permission turned off.\n");
-		exit(1);
-	}
+	if (!msgsok)
+		errx(1, "you have write permission turned off");
 
 	myuid = getuid();
 
@@ -105,20 +100,14 @@ main(argc, argv)
 	case 3:
 		if (!strncmp(argv[2], "/dev/", 5))
 			argv[2] += 5;
-		if (utmp_chk(argv[1], argv[2])) {
-			(void)fprintf(stderr,
-			    "write: %s is not logged in on %s.\n",
+		if (utmp_chk(argv[1], argv[2]))
+			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
-			exit(1);
-		}
 		if (term_chk(argv[2], &msgsok, &atime, 1))
 			exit(1);
-		if (myuid && !msgsok) {
-			(void)fprintf(stderr,
-			    "write: %s has messages disabled on %s\n",
+		if (myuid && !msgsok)
+			errx(1, "%s has messages disabled on %s",
 			    argv[1], argv[2]);
-			exit(1);
-		}
 		do_write(argv[2], mytty, myuid);
 		break;
 	default:
@@ -173,10 +162,8 @@ search_utmp(user, tty, mytty, myuid)
 	int ufd, nloggedttys, nttys, msgsok, user_is_me;
 	char atty[UT_LINESIZE + 1];
 
-	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
-		perror("utmp");
-		exit(1);
-	}
+	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
+		err(1, "%s", _PATH_UTMP);
 
 	nloggedttys = nttys = 0;
 	bestatime = 0;
@@ -202,23 +189,17 @@ search_utmp(user, tty, mytty, myuid)
 		}
 
 	(void)close(ufd);
-	if (nloggedttys == 0) {
-		(void)fprintf(stderr, "write: %s is not logged in\n", user);
-		exit(1);
-	}
+	if (nloggedttys == 0)
+		errx(1, "%s is not logged in", user);
 	if (nttys == 0) {
 		if (user_is_me) {		/* ok, so write to yourself! */
 			(void)strcpy(tty, mytty);
 			return;
 		}
-		(void)fprintf(stderr,
-		    "write: %s has messages disabled\n", user);
-		exit(1);
-	} else if (nttys > 1) {
-		(void)fprintf(stderr,
-		    "write: %s is logged in more than once; writing to %s\n",
+		errx(1, "%s has messages disabled", user);
+	} else if (nttys > 1)
+		warnx("%s is logged in more than once; writing to %s",
 		    user, tty);
-	}
 }
 
 /*
@@ -236,8 +217,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 	(void)sprintf(path, "/dev/%s", tty);
 	if (stat(path, &s) < 0) {
 		if (showerror)
-			(void)fprintf(stderr,
-			    "write: %s: %s\n", path, strerror(errno));
+			warn("%s", path);
 		return(1);
 	}
 	*msgsokP = (s.st_mode & (S_IWRITE >> 3)) != 0;	/* group write bit */
@@ -266,10 +246,8 @@ do_write(tty, mytty, myuid)
 			login = "???";
 
 	(void)sprintf(path, "/dev/%s", tty);
-	if ((freopen(path, "w", stdout)) == NULL) {
-		(void)fprintf(stderr, "write: %s: %s\n", path, strerror(errno));
-		exit(1);
-	}
+	if ((freopen(path, "w", stdout)) == NULL)
+		err(1, "%s", path);
 
 	(void)signal(SIGINT, done);
 	(void)signal(SIGHUP, done);
@@ -321,7 +299,6 @@ wr_fputs(s)
 	}
 	return;
 
-err:	(void)fprintf(stderr, "write: %s\n", strerror(errno));
-	exit(1);
+err:	err(1, NULL);
 #undef PUTC
 }
