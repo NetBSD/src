@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.15 2003/10/08 04:25:45 lukem Exp $	 */
+/*	$NetBSD: pcio.c,v 1.16 2004/03/13 22:41:38 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -244,13 +244,21 @@ putchar(c)
 int
 getchar()
 {
-#ifdef SUPPORT_SERIAL
 	int c;
+#ifdef SUPPORT_SERIAL
 	switch (iodev) {
 	    default: /* to make gcc -Wall happy... */
 	    case CONSDEV_PC:
 #endif
-		return (congetc());
+		c = congetc();
+#ifdef CONSOLE_KEYMAP
+		{
+			char *cp = strchr(CONSOLE_KEYMAP, c);
+			if (cp != 0 && cp[1] != 0)
+				c = cp[1];
+		}
+#endif
+		return c;
 #ifdef SUPPORT_SERIAL
 	    case CONSDEV_COM0:
 	    case CONSDEV_COM1:
@@ -333,7 +341,7 @@ awaitkey(timeout, tell)
 
 out:
 	if (tell)
-		printf("0\n");
+		printf("0 \n");
 
 	return(c);
 }
