@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2003/03/05 22:08:26 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2003/03/16 07:07:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -240,6 +240,12 @@ decr_intr(struct clockframe *frame)
 	clockframe = frame;
 #endif
 
+	{
+		extern int softclock_ticks;
+		if (++softclock_ticks > 3 * hz)
+			cpu_Debugger();
+	}
+
 
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
@@ -338,7 +344,7 @@ calc_delayconst()
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	curcpu()->ci_lasttb = mftb();
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	extintr_restore(omsr);
 }
 
@@ -418,7 +424,7 @@ clock_stop_time(struct stop_time *stp)
 		return;
 
 	stp->st_msr = extintr_disable();
-	asm volatile ("mfdec %0" : "=r"(stp->st_decr));
+	__asm __volatile ("mfdec %0" : "=r"(stp->st_decr));
 	stp->st_tb = mftb();
 	stp->st_state = STS_STOPPED;
 }
@@ -440,7 +446,7 @@ clock_restart_time(struct stop_time *stp)
 	}
 	stp->st_state = 0;
 	mttb(stp->st_tb);
-	asm volatile ("mtdec %0" :: "r"(stp->st_decr));
+	__asm __volatile ("mtdec %0" :: "r"(stp->st_decr));
 	extintr_restore(stp->st_msr);
 }
 
