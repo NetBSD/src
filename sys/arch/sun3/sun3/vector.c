@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.12 1995/01/18 17:14:47 gwr Exp $	*/
+/*	$NetBSD: vector.c,v 1.13 1995/08/21 21:37:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -46,8 +46,7 @@ void addrerr(), badtrap(), buserr(), chkinst(), coperr(), fmterr(),
     fpfline(),  fpunsupp(), illinst(), privinst(), trace(), trap0(),
     trap1(), trap12(), trap15(), trap2(), trapvinst(), zerodiv(), fpfault();
 
-void level0intr(), level1intr(), level2intr(), level3intr();
-void level4intr(), level5intr(), level6intr(), level7intr();
+void _isr_autovec();
 
 #define fpbsun fpfault
 #define fpdz fpfault
@@ -60,68 +59,68 @@ void level4intr(), level5intr(), level6intr(), level7intr();
 void (*vector_table[NVECTORS])() = {
 	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
 	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
-	buserr,					/* 2: bus error */
-	addrerr,				/* 3: address error */
-	illinst,				/* 4: illegal instruction */
-	zerodiv,				/* 5: zero divide */
-	chkinst,				/* 6: CHK instruction */
-	trapvinst,				/* 7: TRAPV instruction */
-	privinst,				/* 8: privilege violation */
-	trace,					/* 9: trace */
-	illinst,				/* 10: line 1010 emulator */
-	fpfline,				/* 11: line 1111 emulator */
-	badtrap,				/* 12: unassigned, reserved */
-	coperr,					/* 13: coprocessor protocol violatio */
-	fmterr,					/* 14: format error */
-	badtrap,				/* 15: uninitialized interrupt vecto */
-	badtrap,				/* 16: unassigned, reserved */
-	badtrap,				/* 17: unassigned, reserved */
-	badtrap,				/* 18: unassigned, reserved */
-	badtrap,				/* 19: unassigned, reserved */
-	badtrap,				/* 20: unassigned, reserved */
-	badtrap,				/* 21: unassigned, reserved */
-	badtrap,				/* 22: unassigned, reserved */
-	badtrap,				/* 23: unassigned, reserved */
-	level0intr,				/* 24: spurious interrupt */
-	level1intr,				/* 25: level 1 interrupt autovector */
-	level2intr,				/* 26: level 2 interrupt autovector */
-	level3intr,				/* 27: level 3 interrupt autovector */
-	level4intr,				/* 28: level 4 interrupt autovector */
-	level5intr,				/* 29: level 5 interrupt autovector */
-	level6intr,				/* 30: level 6 interrupt autovector */
-	level7intr,				/* 31: level 7 interrupt autovector */
-	trap0,					/* 32: syscalls (at least on hp300) */
-	trap1,					/* 33: sigreturn syscall or breakpoi */
-	trap2,					/* 34: breakpoint or sigreturn sysca */
-	illinst,				/* 35: TRAP instruction vector */
-	illinst,				/* 36: TRAP instruction vector */
-	illinst,				/* 37: TRAP instruction vector */
-	illinst,				/* 38: TRAP instruction vector */
-	illinst,				/* 39: TRAP instruction vector */
-	illinst,				/* 40: TRAP instruction vector */
-	illinst,				/* 41: TRAP instruction vector */
-	illinst,				/* 42: TRAP instruction vector */
-	illinst,				/* 43: TRAP instruction vector */
-	trap12,  				/* 44: TRAP instruction vector */
-	illinst,				/* 45: TRAP instruction vector */
-	illinst,				/* 46: TRAP instruction vector */
-	trap15,					/* 47: TRAP instruction vector */
-	fpbsun, 				/* 48: FPCP branch/set on unordered */
-	fpinex, 				/* 49: FPCP inexact result */
-	fpdz,   				/* 50: FPCP divide by zero */
-	fpunfl, 				/* 51: FPCP underflow */
-	fpoperr,				/* 52: FPCP operand error */
-	fpovfl, 				/* 53: FPCP overflow */
-	fpsnan, 				/* 54: FPCP signalling NAN */
-	fpunsupp,				/* 55: FPCP unimplemented data type */
-	badtrap,				/* 56: unassigned, reserved */
-	badtrap,				/* 57: unassigned, reserved */
-	badtrap,				/* 58: unassigned, reserved */
-	badtrap,				/* 59: unassigned, reserved */
-	badtrap,				/* 60: unassigned, reserved */
-	badtrap,				/* 61: unassigned, reserved */
-	badtrap,				/* 62: unassigned, reserved */
-	badtrap,				/* 63: unassigned, reserved */
+	buserr,				/* 2: bus error */
+	addrerr,			/* 3: address error */
+	illinst,			/* 4: illegal instruction */
+	zerodiv,			/* 5: zero divide */
+	chkinst,			/* 6: CHK instruction */
+	trapvinst,			/* 7: TRAPV instruction */
+	privinst,			/* 8: privilege violation */
+	trace,				/* 9: trace */
+	illinst,			/* 10: line 1010 emulator */
+	fpfline,			/* 11: line 1111 emulator */
+	badtrap,			/* 12: unassigned, reserved */
+	coperr,				/* 13: coprocessor protocol violatio */
+	fmterr,				/* 14: format error */
+	badtrap,			/* 15: uninitialized interrupt vecto */
+	badtrap,			/* 16: unassigned, reserved */
+	badtrap,			/* 17: unassigned, reserved */
+	badtrap,			/* 18: unassigned, reserved */
+	badtrap,			/* 19: unassigned, reserved */
+	badtrap,			/* 20: unassigned, reserved */
+	badtrap,			/* 21: unassigned, reserved */
+	badtrap,			/* 22: unassigned, reserved */
+	badtrap,			/* 23: unassigned, reserved */
+	_isr_autovec,			/* 24: spurious interrupt */
+	_isr_autovec,			/* 25: level 1 interrupt autovector */
+	_isr_autovec,			/* 26: level 2 interrupt autovector */
+	_isr_autovec,			/* 27: level 3 interrupt autovector */
+	_isr_autovec,			/* 28: level 4 interrupt autovector */
+	_isr_autovec,			/* 29: level 5 interrupt autovector */
+	_isr_autovec,			/* 30: level 6 interrupt autovector */
+	_isr_autovec,			/* 31: level 7 interrupt autovector */
+	trap0,				/* 32: syscalls (at least on hp300) */
+	trap1,				/* 33: sigreturn syscall or breakpoi */
+	trap2,				/* 34: breakpoint or sigreturn sysca */
+	illinst,			/* 35: TRAP instruction vector */
+	illinst,			/* 36: TRAP instruction vector */
+	illinst,			/* 37: TRAP instruction vector */
+	illinst,			/* 38: TRAP instruction vector */
+	illinst,			/* 39: TRAP instruction vector */
+	illinst,			/* 40: TRAP instruction vector */
+	illinst,			/* 41: TRAP instruction vector */
+	illinst,			/* 42: TRAP instruction vector */
+	illinst,			/* 43: TRAP instruction vector */
+	trap12,  			/* 44: TRAP instruction vector */
+	illinst,			/* 45: TRAP instruction vector */
+	illinst,			/* 46: TRAP instruction vector */
+	trap15,				/* 47: TRAP instruction vector */
+	fpbsun, 			/* 48: FPCP branch/set on unordered */
+	fpinex, 			/* 49: FPCP inexact result */
+	fpdz,   			/* 50: FPCP divide by zero */
+	fpunfl, 			/* 51: FPCP underflow */
+	fpoperr,			/* 52: FPCP operand error */
+	fpovfl, 			/* 53: FPCP overflow */
+	fpsnan, 			/* 54: FPCP signalling NAN */
+	fpunsupp,			/* 55: FPCP unimplemented data type */
+	badtrap,			/* 56: unassigned, reserved */
+	badtrap,			/* 57: unassigned, reserved */
+	badtrap,			/* 58: unassigned, reserved */
+	badtrap,			/* 59: unassigned, reserved */
+	badtrap,			/* 60: unassigned, reserved */
+	badtrap,			/* 61: unassigned, reserved */
+	badtrap,			/* 62: unassigned, reserved */
+	badtrap,			/* 63: unassigned, reserved */
 
 	/* 64-255: set later by isr_add_vectored() */
 
@@ -129,22 +128,3 @@ void (*vector_table[NVECTORS])() = {
 	BADTRAP16,	BADTRAP16,	BADTRAP16,	BADTRAP16,
 	BADTRAP16,	BADTRAP16,	BADTRAP16,	BADTRAP16,
 };
-
-
-void set_vector_entry(entry, handler)
-	int entry;
-	void (*handler)();
-{
-	if ((entry <0) || (entry >= NVECTORS))
-	panic("set_vector_entry: setting vector too high or low\n");
-	vector_table[entry] =  handler;
-}
-
-unsigned int get_vector_entry(entry)
-	int entry;
-{
-	if ((entry <0) || (entry >= NVECTORS))
-	panic("get_vector_entry: setting vector too high or low\n");
-	return (unsigned int) vector_table[entry];
-}
-
