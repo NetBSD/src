@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.13 2002/09/27 05:36:04 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.14 2002/09/29 10:17:00 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.13 2002/09/27 05:36:04 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.14 2002/09/29 10:17:00 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -785,11 +785,23 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
-		if (ic->ic_flags & IEEE80211_F_DESBSSID)
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_myaddr);
+			else if (ic->ic_flags & IEEE80211_F_DESBSSID)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_des_bssid);
+			else
+				memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+			break;
+		default:
 			IEEE80211_ADDR_COPY(bssid->i_bssid,
 			    ic->ic_bss.ni_bssid);
-		else
-			memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+			break;
+		}
 		break;
 	case SIOCS80211CHANNEL:
 		chan = (struct ieee80211_channel *)data;
