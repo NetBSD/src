@@ -1,11 +1,15 @@
-.\"	$NetBSD: de.4,v 1.1 2000/02/11 09:28:50 fair Exp $
+.\"	$NetBSD: de.4,v 1.2 2000/02/11 09:42:10 fair Exp $
 .Dd February 11, 2000
 .Dt DE 4
 .Os
 .Sh NAME
 .Nm de
 .Nd
-DECchip 21040, 21140, 21141, 21142, and 21143 PCI Ethernet interface driver
+.Tn DECchip
+21040, 21140, 21141, 21142, and 21143
+.Tn PCI
+.Tn Ethernet
+interface driver
 .Sh SYNOPSIS
 .Cd "de* at pci? dev ? function ?"
 .Pp
@@ -19,8 +23,9 @@ driver supports
 .Tn Ethernet
 and Fast
 .Tn Ethernet
-interfaces based on the Digital Equipment Corporation DECchip 21040,
-21140, 21141, 21142, and 21143 model controllers for
+interfaces based on the Digital Equipment Corporation
+.Tn DECchip
+21040, 21140, 21141, 21142, and 21143 model controllers for
 .Tn PCI
 bus.
 .Pp
@@ -60,13 +65,13 @@ driver should recognize and control it.
 Multi-port interfaces are typically configured as a
 .Tn PCI Ns \- Ns Tn PCI
 bridge with multiple
-.Em de
+.Nm
 instances on the
 .Tn PCI
 bus on the other side of the bridge.
 .Pp
 .Tn DEC
-sold its semiconductor divison to
+sold its semiconductor division to
 .Tn Intel .
 In addition, there are many "knock-offs" of the
 .Tn DEC
