@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.22 1997/01/30 10:29:24 tls Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.23 1997/01/31 02:33:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,6 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/disklabel.h>
+#include <sys/device.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -306,6 +307,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (error);
 	case KERN_RTC_OFFSET:
 		return (sysctl_rdint(oldp, oldlenp, newp, rtc_offset));
+	case KERN_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp,
+		    root_device->dv_xname));
 	default:
 		return (EOPNOTSUPP);
 	}
