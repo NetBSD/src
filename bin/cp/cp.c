@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cp.c	5.26 (Berkeley) 10/27/91";*/
-static char rcsid[] = "$Id: cp.c,v 1.6 1993/10/30 13:06:46 mycroft Exp $";
+static char rcsid[] = "$Id: cp.c,v 1.7 1993/11/09 18:57:54 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -326,7 +326,7 @@ copy_file(fs, dne)
 			checkch = ch = getchar();
 			while (ch != '\n' && ch != EOF)
 				ch = getchar();
-			if (checkch != 'y') {
+			if (checkch != 'y' && checkch != 'Y') {
 				(void)close(from_fd);
 				return;
 			}

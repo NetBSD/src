@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mv.c	5.11 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: mv.c,v 1.6 1993/09/22 21:39:19 jtc Exp $";
+static char rcsid[] = "$Id: mv.c,v 1.7 1993/11/09 18:58:03 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ do_move(from, to)
 		if (ask) {
 			if ((ch = getchar()) != EOF && ch != '\n')
 				while (getchar() != '\n');
-			if (ch != 'y')
+			if (ch != 'y' && ch != 'Y')
 				return(0);
 		}
 	}
