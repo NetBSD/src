@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.100 2000/11/10 01:03:29 hubertf Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.101 2000/11/21 00:25:43 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp 
+ *	NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp 
  */
 
 /*-
@@ -230,9 +230,9 @@
 #define	PCMCIA_STR_FARALLON_SKYLINE	"SkyLINE Wireless"
 
 /* Lexar Media */
-#define	PCMCIA_CIS_LEXARMEDIA_COMPATFLASH	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH	0x0100
-#define	PCMCIA_STR_LEXARMEDIA_COMPATFLASH	"Lexar Media CompactFlash"
+#define	PCMCIA_CIS_LEXARMEDIA_COMPACTFLASH	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LEXARMEDIA_COMPACTFLASH	0x0100
+#define	PCMCIA_STR_LEXARMEDIA_COMPACTFLASH	"Lexar Media CompactFlash"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ETHERFAST	{ NULL, NULL, NULL, NULL }
