@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.559 2003/07/29 07:43:48 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.560 2003/07/29 19:47:44 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.558 2003/07/29 07:42:51 martin Exp 
+ *	NetBSD: pcidevs,v 1.559 2003/07/29 19:46:56 thorpej Exp 
  */
 
 /*
@@ -1467,6 +1467,7 @@
 #define	PCI_PRODUCT_INTEL_82540EP_LOM	0x1016		/* i82540EP (LOM) Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82540EP	0x1017		/* i82540EP Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82547EI	0x1019		/* i82547EI Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82546EB_QUAD	0x101d		/* i82546EB Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_82540EP_LP	0x101e		/* i82540EP Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
