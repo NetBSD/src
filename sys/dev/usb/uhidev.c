@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.4 2002/01/27 18:10:34 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.5 2002/02/27 01:30:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ USB_ATTACH(uhidev)
 		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
-				M_USBDEV, M_NOWAIT);
+				M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
@@ -218,7 +218,7 @@ USB_ATTACH(uhidev)
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
 		    hid_report_size(desc, size, hid_output, repid) == 0 &&
 		    hid_report_size(desc, size, hid_feature, repid) == 0) {
-			sc->sc_subdevs[repid] = NULL;
+			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
 			uha.reportid = repid;
 			dev = (struct uhidev *)config_found_sm(self, &uha,
