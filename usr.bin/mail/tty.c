@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.10 1998/12/19 16:35:10 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.11 1999/01/06 15:53:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.10 1998/12/19 16:35:10 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.11 1999/01/06 15:53:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ grabh(hp, gflags)
 
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
-# if !defined(TIOCSTI) && defined(TIOCEXT)
+# if defined(TIOCSTI) && defined(TIOCEXT)
 	(void) &extproc;
 # endif
 	(void) &saveint;
