@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.3 2001/05/26 21:48:32 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.4 2001/06/08 20:09:07 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.5 2001/05/26 21:48:21 bjh21 Exp 
+ *	NetBSD: podules,v 1.6 2001/06/08 20:08:35 bjh21 Exp 
  */
 
 /*
@@ -139,6 +139,11 @@ static struct podule_description podules_vti[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_dtsoft[] = {
+	{ PODULE_DTSOFT_IDE,	"IDE interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_cumana[] = {
 	{ PODULE_CUMANA_SCSI2,	"SCSI II interface" },
 	{ PODULE_CUMANA_SCSI1,	"SCSI I interface" },
@@ -203,11 +208,6 @@ static struct podule_description podules_castle[] = {
 	{ 0x0000, NULL }
 };
 
-static struct podule_description podules_dtsoft[] = {
-	{ PODULE_DTSOFT_IDE,	"IDE interface" },
-	{ 0x0000, NULL }
-};
-
 static struct podule_description podules_alsystems[] = {
 	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
 	{ 0x0000, NULL }
@@ -253,6 +253,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
 	{ MANUFACTURER_HCCS2, 		"HCCS", 	podules_hccs2 },
 	{ MANUFACTURER_VTI, 		"Vertical Twist", 	podules_vti },
+	{ MANUFACTURER_DTSOFT, 		"D.T. Software", 	podules_dtsoft },
 	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
 	{ MANUFACTURER_ICS, 		"ICS", 	podules_ics },
 	{ MANUFACTURER_SERIALPORT, 	"Serial Port", 	podules_serialport },
@@ -262,7 +263,6 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
 	{ MANUFACTURER_CASTLE, 		"Castle Technology", 	podules_castle },
-	{ MANUFACTURER_DTSOFT, 		"D.T. Software", 	podules_dtsoft },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
 	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
