@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2001/07/08 19:44:43 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2001/07/28 18:12:43 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -151,7 +151,6 @@ int pmap_debug_level = -2;
 #endif	/* PMAP_DEBUG */
 
 struct pmap     kernel_pmap_store;
-pmap_t          kernel_pmap;
 
 /*
  * pool that pmap structures are allocated from
@@ -192,7 +191,7 @@ extern pv_addr_t systempage;
 
 #define ALLOC_PAGE_HOOK(x, s) \
 	x.va = virtual_start; \
-	x.pte = (pt_entry_t *)pmap_pte(kernel_pmap, virtual_start); \
+	x.pte = (pt_entry_t *)pmap_pte(pmap_kernel(), virtual_start); \
 	virtual_start += s; 
 
 /* Variables used by the L1 page table queue code */
@@ -206,20 +205,20 @@ int l1pt_create_count;			/* stat - L1's create count */
 int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
-pt_entry_t *pmap_pte __P((pmap_t pmap, vaddr_t va));
+pt_entry_t *pmap_pte __P((struct pmap *pmap, vaddr_t va));
 void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
     paddr_t pa, unsigned int flags));
 void pmap_copy_on_write __P((paddr_t pa));
-void pmap_pinit __P((pmap_t));
-void pmap_freepagedir __P((pmap_t));
-void pmap_release __P((pmap_t));
+void pmap_pinit __P((struct pmap *));
+void pmap_freepagedir __P((struct pmap *));
+void pmap_release __P((struct pmap *));
 
 /* Other function prototypes */
 extern void bzero_page __P((vaddr_t));
 extern void bcopy_page __P((vaddr_t, vaddr_t));
 
 struct l1pt *pmap_alloc_l1pt __P((void));
-static __inline void pmap_map_in_l1 __P((pmap_t pmap, vaddr_t va,
+static __inline void pmap_map_in_l1 __P((struct pmap *pmap, vaddr_t va,
      vaddr_t l2pa));
 
 static pt_entry_t *pmap_map_ptes __P((struct pmap *));
@@ -450,7 +449,7 @@ pmap_collect_pv()
 
 /*__inline*/ void
 pmap_enter_pv(pmap, va, pv, flags)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 	struct pv_entry *pv;
 	u_int flags;
@@ -514,7 +513,7 @@ pmap_enter_pv(pmap, va, pv, flags)
 
 /*__inline*/ void
 pmap_remove_pv(pmap, va, pv)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 	struct pv_entry *pv;
 {
@@ -571,7 +570,7 @@ pmap_remove_pv(pmap, va, pv)
 
 /*__inline */ u_int
 pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 	struct pv_entry *pv;
 	u_int bic_mask;
@@ -628,7 +627,7 @@ pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
  */
 static /*__inline*/ void
 pmap_map_in_l1(pmap, va, l2pa)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va, l2pa;
 {
 	vaddr_t ptva;
@@ -658,7 +657,7 @@ pmap_map_in_l1(pmap, va, l2pa)
 #if 0
 static /*__inline*/ void
 pmap_unmap_in_l1(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	vaddr_t ptva;
@@ -734,13 +733,11 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 #endif
 	vsize_t size;
 
-	kernel_pmap = &kernel_pmap_store;
-
-	kernel_pmap->pm_pdir = kernel_l1pt;
-	kernel_pmap->pm_pptpt = kernel_ptpt.pv_pa;
-	kernel_pmap->pm_vptpt = kernel_ptpt.pv_va;
-	simple_lock_init(&kernel_pmap->pm_lock);
-	kernel_pmap->pm_count = 1;
+	pmap_kernel()->pm_pdir = kernel_l1pt;
+	pmap_kernel()->pm_pptpt = kernel_ptpt.pv_pa;
+	pmap_kernel()->pm_vptpt = kernel_ptpt.pv_va;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
 
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
@@ -837,7 +834,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	virtual_start += NBPG;
 
 	msgbufaddr = (caddr_t)virtual_start;
-	msgbufpte = (pt_entry_t)pmap_pte(kernel_pmap, virtual_start);
+	msgbufpte = (pt_entry_t)pmap_pte(pmap_kernel(), virtual_start);
 	virtual_start += round_page(MSGBUFSIZE);
 
 	size = npages * sizeof(struct pv_entry);
@@ -966,7 +963,7 @@ pmap_postinit()
 pmap_t
 pmap_create()
 {
-	pmap_t pmap;
+	struct pmap *pmap;
 
 	/*
 	 * Fetch pmap entry from the pool
@@ -1067,7 +1064,7 @@ pmap_free_l1pt(pt)
 	struct l1pt *pt;
 {
 	/* Separate the physical memory for the virtual space */
-	pmap_remove(kernel_pmap, pt->pt_va, pt->pt_va + PD_SIZE);
+	pmap_remove(pmap_kernel(), pt->pt_va, pt->pt_va + PD_SIZE);
 	pmap_update();
 
 	/* Return the physical memory */
@@ -1131,7 +1128,7 @@ pmap_allocpagedir(pmap)
 	if (!(pt->pt_flags & PTFLAG_KPT)) {
 		/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
 
-		bcopy((char *)kernel_pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		bcopy((char *)pmap_kernel()->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
 		    (char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
 		    KERNEL_PD_SIZE);
 		pt->pt_flags |= PTFLAG_KPT;
@@ -1151,11 +1148,11 @@ pmap_allocpagedir(pmap)
 		return(ENOMEM);
 	}
 
-	(void) pmap_extract(kernel_pmap, pmap->pm_vptpt, &pmap->pm_pptpt);
+	(void) pmap_extract(pmap_kernel(), pmap->pm_vptpt, &pmap->pm_pptpt);
 	pmap->pm_pptpt &= PG_FRAME;
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
-	pte = pmap_pte(kernel_pmap, pmap->pm_vptpt);
+	pte = pmap_pte(pmap_kernel(), pmap->pm_vptpt);
 	*pte = *pte & ~(PT_C | PT_B);
 
 	/* Wire in this page table */
@@ -1224,7 +1221,7 @@ pmap_pinit(pmap)
 
 void
 pmap_freepagedir(pmap)
-	pmap_t pmap;
+	struct pmap *pmap;
 {
 	/* Free the memory used for the page table mapping */
 	if (pmap->pm_vptpt != 0)
@@ -1255,7 +1252,7 @@ pmap_freepagedir(pmap)
 
 void
 pmap_destroy(pmap)
-	pmap_t pmap;
+	struct pmap *pmap;
 {
 	int count;
 
@@ -1281,7 +1278,7 @@ pmap_destroy(pmap)
 
 void
 pmap_release(pmap)
-	pmap_t pmap;
+	struct pmap *pmap;
 {
 	struct vm_page *page;
 	pt_entry_t *pte;
@@ -1321,14 +1318,14 @@ pmap_release(pmap)
 
 
 /*
- * void pmap_reference(pmap_t pmap)
+ * void pmap_reference(struct pmap *pmap)
  *
  * Add a reference to the specified pmap.
  */
 
 void
 pmap_reference(pmap)
-	pmap_t pmap;
+	struct pmap *pmap;
 {
 	if (pmap == NULL)
 		return;
@@ -1364,10 +1361,10 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	(void) pmap_extract(kernel_pmap, (vaddr_t)pmap->pm_pdir,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 	    (paddr_t *)&pcb->pcb_pagedir);
 
 	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
@@ -1566,7 +1563,7 @@ pmap_next_phys_page(addr)
 #if 0
 void
 pmap_pte_addref(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pd_entry_t *pde;
@@ -1588,7 +1585,7 @@ pmap_pte_addref(pmap, va)
 
 void
 pmap_pte_delref(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pd_entry_t *pde;
@@ -1748,7 +1745,7 @@ pmap_vac_me_harder(struct pmap *pmap, struct pv_entry *pv, pt_entry_t *ptes,
 
 void
 pmap_remove(pmap, sva, eva)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t sva;
 	vaddr_t eva;
 {
@@ -1782,7 +1779,7 @@ pmap_remove(pmap, sva, eva)
 	pte = &ptes[arm_byte_to_page(sva)];
 	/* Note if the pmap is active thus require cache and tlb cleans */
 	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
-	    || (pmap == kernel_pmap))
+	    || (pmap == pmap_kernel()))
 		pmap_active = 1;
 	else
 		pmap_active = 0;
@@ -1900,7 +1897,7 @@ pmap_remove_all(pa)
 	paddr_t pa;
 {
 	struct pv_entry *ph, *pv, *npv;
-	pmap_t pmap;
+	struct pmap *pmap;
 	pt_entry_t *pte, *ptes;
 	int s;
 
@@ -1976,7 +1973,7 @@ reduce wiring count on page table pages as references drop
 
 void
 pmap_protect(pmap, sva, eva, prot)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t sva;
 	vaddr_t eva;
 	vm_prot_t prot;
@@ -2069,7 +2066,7 @@ next:
 }
 
 /*
- * void pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
+ * void pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
  * int flags)
  *  
  *      Insert the given physical page (p) at
@@ -2086,7 +2083,7 @@ next:
 
 int
 pmap_enter(pmap, va, pa, prot, flags)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
@@ -2283,7 +2280,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 */
 		ptes = pmap_map_ptes(pmap);
 		if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
-		    || (pmap == kernel_pmap))
+		    || (pmap == pmap_kernel()))
 			pmap_active = TRUE;
  		pmap_vac_me_harder(pmap, pv, ptes, pmap_active);
 		pmap_unmap_ptes(pmap);
@@ -2393,7 +2390,7 @@ pmap_page_protect(pg, prot)
 
 void
 pmap_unwire(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
@@ -2423,7 +2420,7 @@ pmap_unwire(pmap, va)
 }
 
 /*
- * pt_entry_t *pmap_pte(pmap_t pmap, vaddr_t va)
+ * pt_entry_t *pmap_pte(struct pmap *pmap, vaddr_t va)
  *
  * Return the pointer to a page table entry corresponding to the supplied
  * virtual address.
@@ -2438,7 +2435,7 @@ pmap_unwire(pmap, va)
  */
 pt_entry_t *
 pmap_pte(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pt_entry_t *ptp;
@@ -2471,7 +2468,7 @@ pmap_pte(pmap, va)
 	 * Otherwise we need to map the page tables to an alternative
 	 * address and reference them there.
 	 */
-	if (pmap == kernel_pmap || pmap->pm_pptpt
+	if (pmap == pmap_kernel() || pmap->pm_pptpt
 	    == (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
 	    + ((PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) &
 	    ~3) + (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)) {
@@ -2530,7 +2527,7 @@ pmap_pte(pmap, va)
  */
 boolean_t
 pmap_extract(pmap, va, pap)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t *pap;
 {
@@ -2589,8 +2586,8 @@ pmap_extract(pmap, va, pap)
 
 void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t dst_pmap;
-	pmap_t src_pmap;
+	struct pmap *dst_pmap;
+	struct pmap *src_pmap;
 	vaddr_t dst_addr;
 	vsize_t len;
 	vaddr_t src_addr;
@@ -2803,7 +2800,7 @@ pmap_is_referenced(pg)
 
 int
 pmap_modified_emulation(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
@@ -2865,7 +2862,7 @@ pmap_modified_emulation(pmap, va)
 
 int
 pmap_handled_emulation(pmap, va)
-	pmap_t pmap;
+	struct pmap *pmap;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
@@ -2919,7 +2916,7 @@ pmap_handled_emulation(pmap, va)
 
 void
 pmap_collect(pmap)
-	pmap_t pmap;
+	struct pmap *pmap;
 {
 }
 

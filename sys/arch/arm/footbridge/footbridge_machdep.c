@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.2 2001/06/09 10:44:11 chris Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.3 2001/07/28 18:12:44 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -76,7 +76,7 @@ footbridge_sa110_cc_setup(void)
 /*	printf("vaddr=%x addr=%x\n", vaddr, addr);*/
 
 	for (loop = 0; loop < cleanarea; loop += NBPG) {
-		pte = pmap_pte(kernel_pmap, (addr + loop));
+		pte = pmap_pte(pmap_kernel(), (addr + loop));
 		*pte = L2_PTE(DC21285_SA_CACHE_FLUSH_BASE + loop, AP_KR);
 	}
 	sa110_cache_clean_addr = addr;
