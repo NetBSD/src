@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.70 2003/09/11 12:19:45 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.71 2003/10/09 16:23:29 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.70 2003/09/11 12:19:45 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.71 2003/10/09 16:23:29 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,6 +226,7 @@ main(int argc, char *argv[])
 	char *cp, *endp, *s1, *s2, *special;
 	const char *opstring;
 	long long llsize;
+	int llsizemult;
 	int dfl_fragsize, dfl_blksize;
 #ifdef MFS
 	char mountfromname[100];
@@ -363,40 +364,35 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			llsize = strtoll(optarg, &endp, 10);
-			if (endp[0] != '\0' && endp[1] != '\0')
-				llsize = -1;
+			if ((((llsize == LLONG_MIN) || (llsize == LLONG_MAX)) && (errno == ERANGE))
+			    || (llsize == 0) || (endp[0] != '\0' && endp[1] != '\0'))
+				llsizemult = -1;
 			else {
-				int	ssiz;
-
-				ssiz = (sectorsize ? sectorsize : DFL_SECSIZE);
 				switch (tolower((unsigned char)endp[0])) {
 				case 'b':
-					llsize /= ssiz;
+					llsizemult = 1;
 					break;
 				case 'k':
-					llsize *= 1024 / ssiz;
+					llsizemult = 1024;
 					break;
 				case 'm':
-					llsize *= 1024 * 1024 / ssiz;
+					llsizemult = 1024 * 1024;
 					break;
 				case 'g':
-					llsize *= 1024 * 1024 * 1024 / ssiz;
+					llsizemult = 1024 * 1024 * 1024;
 					break;
 				case '\0':
 				case 's':
+					llsizemult = 0;
 					break;
 				default:
-					llsize = -1;
+					llsizemult = -1;
 				}
 			}
-			if (llsize > LLONG_MAX)
-				errx(1, "file system size `%s' is too large.",
-				    optarg);
-			if (llsize <= 0)
+			if (llsizemult < 0)
 				errx(1,
 			    "`%s' is not a valid number for file system size.",
 				    optarg);
-			fssize = llsize;
 			break;
 		case 'u':
 			if (mfs)
@@ -433,9 +429,15 @@ main(int argc, char *argv[])
 		if (!sectorsize)
 			sectorsize = DFL_SECSIZE;
 
+		if (Fflag) {
+			if (llsize <= 0)
+				errx(1, "need to specify positive size when using -F");
+			if (llsizemult)
+				fssize = llsize * llsizemult / sectorsize;
+			else
+				fssize = llsize;
+		}
 		if (Fflag && !Nflag) {	/* creating image in a regular file */
-			if (fssize == 0)
-				errx(1, "need to specify size when using -F");
 			fso = open(special, O_RDWR | O_CREAT, 0777);
 			if (fso == -1)
 				err(1, "can't open file %s", special);
@@ -558,16 +560,22 @@ main(int argc, char *argv[])
 		}
 	}	/* !Fflag && !mfs */
 
-	if (fssize == 0)
-		fssize = pp->p_size;
-	if (fssize > pp->p_size && !mfs && !Fflag)
-		errx(1, "maximum file system size on the `%c' partition is %d",
-		    *cp, pp->p_size);
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
 			errx(1, "no default sector size");
 	}
+	if (llsize <= 0)
+		fssize = pp->p_size;
+	else
+		fssize = 0;
+	if (llsizemult)
+		fssize += llsize * llsizemult / sectorsize;
+	else
+		fssize += llsize;
+	if (((fssize <= 0) || (fssize > pp->p_size)) && !mfs && !Fflag)
+		errx(1, "maximum file system size on the `%c' partition is %d",
+		    *cp, pp->p_size);
 
 	if (isappleufs) {
 		dfl_fragsize = APPLEUFS_DFL_FRAGSIZE;
