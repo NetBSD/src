@@ -1,17 +1,20 @@
-#       $NetBSD: Makefile,v 1.108 2002/04/05 18:30:32 bouyer Exp $
+#       $NetBSD: Makefile,v 1.109 2002/05/25 02:16:35 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	bcmp.9 bcopy.9 bzero.9 \
 	bus_dma.9 bus_space.9 \
-	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 cpu_reboot.9 \
-	ctxsw.9 disk.9 disklabel.9 \
+	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 \
+	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_fork.9 \
+	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
+	cpu_startup.9 cpu_swapout.9 cpu_sysctl.9 cpu_wait.9 \
+	ctxsw.9 curproc.9 delay.9 disk.9 disklabel.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 fork1.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
-	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 \
-	itimerfix.9 \
+	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
+	isapnp.9 itimerfix.9 kcopy.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
 	mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 mstohz.9 namecache.9 namei.9 \
@@ -19,7 +22,8 @@ MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
 	psignal.9 radio.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
-	scsipi.9 setrunqueue.9 shutdownhook_establish.9 sleep.9 softintr.9 \
+	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
+	sleep.9 softintr.9 \
 	spl.9 store.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
 	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
@@ -107,7 +111,13 @@ MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
+MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
+	cpu_dumpconf.9 dumpsys.9
+MLINKS+=cpu_fork.9 child_return.9 cpu_fork.9 proc_trampoline.9
+MLINKS+=cpu_swapout.9 cpu_swapin.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
+MLINKS+=curproc.9 curcpu.9
+MLINKS+=delay.9 DELAY.9
 MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
 	disk.9 disk_resetstat.9
@@ -135,6 +145,9 @@ MLINKS+=ioasic.9 ioasic_intr_establish.9 \
 	ioasic.9 ioasic_intr_evcnt.9 \
 	ioasic.9 ioasic_attach_devs.9 \
 	ioasic.9 ioasic_submatch.9
+MLINKS+=ipkdb.9 ipkdb_init.9 ipkdb.9 ipkdb_connect.9 ipkdb.9 ipkdbinit.9 \
+	ipkdb.9 ipkdbcmds.9 ipkdb.9 ipkdb_trap.9 ipkdb.9 ipkdb_poll.9 \
+	ipkdb.9 ipkdbif_init.9 ipkdb.9 ipkdbfbyte.9 ipkdb.9 ipkdbsbyte.9
 MLINKS+=isa.9 isa_intr_alloc.9 \
 	isa.9 isa_intr_establish.9 \
 	isa.9 isa_intr_disestablish.9 \
@@ -260,6 +273,7 @@ MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9
+MLINKS+=setjmp.9 longjmp.9
 MLINKS+=setrunqueue.9 remrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9 sleep.9 ltsleep.9
