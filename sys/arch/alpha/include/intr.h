@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.24 2000/03/19 01:46:18 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.25 2000/05/23 05:12:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -88,7 +88,7 @@ extern u_int64_t ssir;
 #define	SIR_CLOCK	0x2
 #define	SIR_SERIAL	0x4
 
-#define	setsoft(x)	alpha_atomic_setbits_q(&ssir, (x))
+#define	setsoft(x)	atomic_setbits_ulong(&ssir, (x))
 
 #define	setsoftnet()	setsoft(SIR_NET)
 #define	setsoftclock()	setsoft(SIR_CLOCK)

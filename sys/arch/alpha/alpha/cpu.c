@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.43 2000/04/03 01:47:28 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2000/04/03 01:47:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -373,7 +373,7 @@ recognized:
 	 */
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
 		ci->ci_flags |= CPUF_PRIMARY;
-		alpha_atomic_setbits_q(&cpus_running, (1UL << ma->ma_slot));
+		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
 #endif /* MULTIPROCESSOR */
 }
@@ -523,7 +523,7 @@ cpu_hatch(ci)
 	curpcb = ci->ci_idle_pcb_paddr;
 
 	/* Mark the kernel pmap active on this processor. */
-	alpha_atomic_setbits_q(&pmap_kernel()->pm_cpus, cpumask);
+	atomic_setbits_ulong(&pmap_kernel()->pm_cpus, cpumask);
 
 	/* Initialize trap vectors for this processor. */
 	trap_init();
@@ -531,7 +531,7 @@ cpu_hatch(ci)
 	/* Yahoo!  We're running kernel code!  Announce it! */
 	printf("%s: processor ID %lu running\n", ci->ci_dev->dv_xname,
 	    alpha_pal_whami());
-	alpha_atomic_setbits_q(&cpus_running, cpumask);
+	atomic_setbits_ulong(&cpus_running, cpumask);
 
 	/*
 	 * Lower interrupt level so that we can get IPIs.  Don't use
@@ -571,7 +571,7 @@ cpu_iccb_send(cpu_id, msg)
 	 */
 	strcpy(pcsp->pcs_iccb.iccb_rxbuf, msg);
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
-	alpha_atomic_setbits_q(&hwrpb->rpb_rxrdy, cpumask);
+	atomic_setbits_ulong(&hwrpb->rpb_rxrdy, cpumask);
 
 	/* Wait for the message to be received. */
 	for (timeout = 10000; timeout != 0; timeout--) {
