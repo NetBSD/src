@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19.2.2 2002/10/19 11:59:36 bjh21 Exp $
+#	$NetBSD: genassym.cf,v 1.19.2.3 2002/10/24 21:22:05 bjh21 Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -125,4 +125,5 @@ define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 ifdef MULTIPROCESSOR
 define	CI_CURPROC		offsetof(struct cpu_info, ci_curproc)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define	CI_IDLEPCB		offsetof(struct cpu_info, ci_idlepcb)
 endif
