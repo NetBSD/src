@@ -37,9 +37,9 @@
  *
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
- *	@(#)grf.c	7.8 (Berkeley) 5/7/91
+ *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
+ *	$Id: grf.c,v 1.2 1993/11/29 00:32:32 briggs Exp $
  */
-#ident "$Id: grf.c,v 1.1.1.1 1993/09/29 06:09:30 briggs Exp $"
 
 /*
  * Graphics display driver for the HP300.
@@ -52,13 +52,15 @@
 #include "grf.h"
 #if NGRF > 0
 
+#include "sys/types.h"
 #include "param.h"
 #include "proc.h"
 #include "ioctl.h"
 #include "file.h"
 #include "malloc.h"
 
-#include "device.h"
+#include "sys/device.h"
+#include "nubus.h"
 #include "grfioctl.h"
 #include "grfvar.h"
 
@@ -69,7 +71,7 @@
 #include "vm/vm_page.h"
 #include "vm/vm_pager.h"
 
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "vnode.h"
 #include "mman.h"
 
@@ -88,7 +90,7 @@ struct grfdev grfdev[] = {
 };
 int	ngrfdev = sizeof(grfdev) / sizeof(grfdev[0]);
 
-struct	driver grfdriver = { grfprobe, "grf" };
+/* struct	driver grfdriver = { grfprobe, "grf" }; */
 struct	grf_softc grf_softc[NGRF];
 
 int gNumGrfDev=0;
@@ -108,12 +110,13 @@ MF maybe i'll call this from larrys console stuff
  */
 grfconfig()
 {
+#if 0
 	register caddr_t addr;
 	register struct nubus_hw *hw;
 	register struct mac_device *hd, *nhd;
 	int i;
 
-	for (i=0,hw = nubus_table;i<MAXSLOTS; hw++,i++) {
+	for (i=0,hw = nubus_table;i<NUBUS_MAXSLOTS; hw++,i++) {
 	        if (hw->Slot.type!=NUBUS_VIDEO)
 			continue;
 		/*
@@ -146,31 +149,60 @@ break;
 			hw->claimed = 1;
 		}
 	}
+#endif
 }
 
 /*
  * Normal init routine called by configure() code
  */
-grfprobe(hd)
-	struct mac_device *hd;
+grfprobe(nu, unit)
+	struct nubus_hw *nu;
+	int		unit;
 {
-	struct grf_softc *gp = &grf_softc[hd->mac_unit];
+	struct grf_softc *gp = &grf_softc[unit];
 
 	if ((gp->g_flags & GF_ALIVE) == 0 &&
-	    !grfinit(hd, hd->mac_unit))
+	    !grfinit(nu, unit)) {
+		printf("\n");
 		return(0);
-	printf("grf%d: %d x %d ", hd->mac_unit,
+	}
+	printf(": %d x %d ",
 	       gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
 	if (gp->g_display.gd_colors == 2)
 		printf("monochrome");
 	else
 		printf("%d color", gp->g_display.gd_colors);
-	printf(" %s display\n", grfdev[gp->g_type].gd_desc);
+	printf(" %s (%s) display\n", grfdev[gp->g_type].gd_desc, nu->Slot.name);
 	return(1);
 }
 
-grfinit(md, unit)
-	struct mac_device *md;
+static int
+matchvideocard(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
+{
+	struct nubus_hw	*nu = (struct nubus_hw *) aux;
+
+	return (nu->Slot.type == NUBUS_VIDEO);
+}
+
+static void
+grf_attach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
+{
+	struct nubus_hw	*nu = (struct nubus_hw *) aux;
+
+	grfprobe(nu, dev->dv_unit);
+}
+
+struct cfdriver grfcd =
+      { NULL, "grf", matchvideocard, grf_attach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
+
+grfinit(nu, unit)
+	struct nubus_hw *nu;
 {
 	struct grf_softc *gp = &grf_softc[unit];
 	struct grfreg *gr;
@@ -179,7 +211,7 @@ grfinit(md, unit)
 	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
 		/* if (gd->gd_hardid == gr->gr_id2) */
 			break;
-	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, md)) {
+	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, nu)) {
 		gp->g_display.gd_id = gd->gd_softid;
 		gp->g_type = gd - grfdev;
 		gp->g_flags = GF_ALIVE;
@@ -616,7 +648,7 @@ grflckunmmap(dev, addr)
 #endif	/* NGRF > 0 */
 
 
-int macvideo_init(struct grf_softc *gp,struct mac_device *md)
+int macvideo_init(struct grf_softc *gp,struct nubus_hw *nu)
 {
 	int i=0;
 	struct grfinfo *gi;
@@ -626,14 +658,7 @@ int macvideo_init(struct grf_softc *gp,struct mac_device *md)
 /* find out which nubus slot this guy is in, then get the video
 params 
 */
-	for(i=0;i<MAXSLOTS ;i++)
-	{
-		if (nubus_table[i].addr==md->mac_addr)
-			break;	
-	}
-	
-	
-	image=(struct imagedata *)NUBUS_GetImageData(&(nubus_table[i].Slot),&imageSpace );
+	image=(struct imagedata *)NUBUS_GetImageData(&(nu->Slot),&imageSpace );
 
 	gi = &(gp->g_display);
 	gi->gd_regsize=0;
@@ -643,7 +668,7 @@ params
 	gi->gd_dheight=gi->gd_fbheight=image->bottom;
 	gi->gd_fbsize=image->right*image->bottom;
 	gi->gd_fbrowbytes=image->rowbytes;
-	gi->gd_fbaddr=(unsigned long)image->offset+(unsigned long)md->mac_addr;
+	gi->gd_fbaddr=(caddr_t) ((u_long)image->offset+(u_long)nu->addr);
 	gp->g_fbkva=gi->gd_fbaddr;
 	
 	return 1;
