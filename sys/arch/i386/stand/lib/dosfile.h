@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.h,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: dosfile.h,v 1.2 2003/08/18 15:47:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -32,12 +32,4 @@
  *
  */
 
-
-int dos_open __P((char *path, struct open_file *f));
-int dos_read __P((struct open_file *f,void *addr,
-	      size_t size, size_t *resid));
-int dos_close __P((struct open_file *f));
-int dos_write __P((struct open_file *f,void *addr,
-	      size_t size, size_t *resid));
-int dos_stat __P((struct open_file *f, struct stat *sb));
-off_t dos_seek __P((struct open_file *f, off_t offset, int where));
+FS_DEF(dos);
