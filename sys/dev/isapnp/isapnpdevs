@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.29 1999/10/27 15:11:56 christos Exp $
+$NetBSD: isapnpdevs,v 1.30 1999/11/16 05:10:54 jun Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ devcompat	aha	PNP00A0		0	Adaptec AHA-1542CP
  * aic
  */
 devlogic	aic	ADP1520		0	Adaptec AHA-1520B
+devlogic	aic	ADP1502		0	Adaptec AHA-1502P
 devlogic	aic	ADP1505		0	Adaptec AVA-1505A
 devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
 
