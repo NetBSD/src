@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.5 1993/07/15 14:07:51 cgd Exp $
+ *	$Id: vm_fault.c,v 1.6 1993/07/15 14:25:21 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -895,7 +895,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
  *
  *	Wire down a range of virtual addresses in a map.
  */
-int
+void
 vm_fault_wire(map, start, end)
 	vm_map_t	map;
 	vm_offset_t	start, end;
@@ -920,19 +920,8 @@ vm_fault_wire(map, start, end)
 	 */
 
 	for (va = start; va < end; va += PAGE_SIZE) {
-		int rv;
-
-		if ((rv = vm_fault(map, va, VM_PROT_NONE, TRUE)) !=
-				KERN_SUCCESS) {
-#ifdef notyet
-	/* XXX print a diagnostic so we know if this is being used */
-			printf("vm_fault_wire() - wire failed\n");
-			return(rv);
-#endif
-		}
+		(void) vm_fault(map, va, VM_PROT_NONE, TRUE);
 	}
-
-	return(KERN_SUCCESS);
 }
 
 
@@ -991,7 +980,8 @@ vm_fault_unwire(map, start, end)
  *		entry corresponding to a main map entry that is wired down).
  */
 
-void vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
+void
+vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 	vm_map_t	dst_map;
 	vm_map_t	src_map;
 	vm_map_entry_t	dst_entry;
