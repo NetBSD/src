@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.7 1996/06/10 16:11:26 is Exp $	*/
+/*	$NetBSD: flsc.c,v 1.8 1996/08/04 11:25:36 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -341,14 +341,13 @@ flsc_need_bump(sc, ptr, len)
 {
 	int	p;
 
-	p = (int)ptr & 0x03;
-
-	if (p) {
-		p = 4-p;
-	    
-		if (len < 256)
+	if (((int)ptr & 0x03) || (len & 0x03)) {
+		if (len < 256) 
 			p = len;
-	}
+		else
+			p = 256;
+	} else 
+		p = 0;
 
 	return(p);
 }
