@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.5 2002/02/17 23:19:00 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.6 2003/04/20 19:31:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,24 +60,20 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#ifdef __STDC__
 #include <machine/stdarg.h>
-#else
-#include <machine/varargs.h>
-#endif
 
 #include "stand.h"
 
-static void kprintn __P((void (*)(int), u_long, int));
-static void sputchar __P((int));
-static void kdoprnt __P((void (*)(int), const char *, va_list));
+static void kprintn(void (*)(int), u_long, int);
+static void sputchar(int);
+static void kdoprnt(void (*)(int), const char *, va_list);
 
 static char *sbuf, *ebuf;
 
 static void
-sputchar(c)
-	int c;
+sputchar(int c)
 {
+
 	if (sbuf < ebuf)
 		*sbuf++ = c;
 }
@@ -101,10 +97,7 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 }
 
 static void
-kdoprnt(put, fmt, ap)
-	void (*put)__P((int));
-	const char *fmt;
-	va_list ap;
+kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 {
 	char *p;
 	int ch, n;
@@ -193,10 +186,7 @@ reswitch:	switch (ch = *fmt++) {
 }
 
 static void
-kprintn(put, ul, base)
-	void (*put)__P((int));
-	unsigned long ul;
-	int base;
+kprintn(void (*put)(int), unsigned long ul, int base)
 {
 					/* hold a long in base 8 */
 	char *p, buf[(sizeof(long) * NBBY / 3) + 1];
