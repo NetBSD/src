@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.57 2002/09/11 20:48:21 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.58 2002/09/12 17:45:41 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -64,10 +64,10 @@
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t, int));
+static void     _rtld_init __P((caddr_t, caddr_t, int));
 static void     _rtld_exit __P((void));
 
-Elf_Addr        _rtld __P((Elf_Addr *));
+Elf_Addr        _rtld __P((Elf_Addr *, Elf_Addr));
 
 
 /*
@@ -142,8 +142,8 @@ _rtld_call_init_functions(first)
  * this function is to relocate the dynamic linker.
  */
 static void
-_rtld_init(mapbase, pagesz)
-	caddr_t mapbase;
+_rtld_init(mapbase, relocbase, pagesz)
+	caddr_t mapbase, relocbase;
 	int pagesz;
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
@@ -161,6 +161,7 @@ _rtld_init(mapbase, pagesz)
 	objself.path = NULL;
 	objself.rtld = true;
 	objself.mapbase = mapbase;
+	objself.relocbase = relocbase;
 	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
 	for (i = 0; i < hdr->e_phnum; i++) {
 		if (objself.phdr[i].p_type == PT_LOAD) {
@@ -177,16 +178,6 @@ _rtld_init(mapbase, pagesz)
 			break;
 		}
 	}
-
-#if defined(__mips__)
-	/*
-	* mips and ld.so currently linked at load address,
-	* so no relocation needed
-	*/
-	objself.relocbase = 0;
-#else
-	objself.relocbase = mapbase;
-#endif
 
 	objself.pltgot = NULL;
 
@@ -262,8 +253,9 @@ _rtld_exit()
  * sp[1].
  */
 Elf_Addr
-_rtld(sp)
+_rtld(sp, relocbase)
 	Elf_Addr *sp;
+	Elf_Addr relocbase;
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
@@ -350,9 +342,10 @@ _rtld(sp)
 	assert(pAUX_base != NULL);
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase,
+	    (int)pAUX_pagesz->a_v);
 #else
-	_rtld_init((caddr_t) pAUX_base->a_v, 0);
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase, 0);
 #endif
 
 	/* Digest the auxiliary vector (full pass now that we can afford it). */
@@ -426,8 +419,8 @@ _rtld(sp)
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
 	}
 	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
-	dbg(("%s is initialized, base address = %p", __progname,
-	     (void *) pAUX_base->a_v));
+	dbg(("%s is initialized, mapbase=%p, relocbase=%p", __progname,
+	     _rtld_objself.mapbase, _rtld_objself.relocbase));
 
 	/*
          * Load the main program, or process its program header if it is
