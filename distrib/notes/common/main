@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.239 2003/09/02 05:34:28 mbw Exp $
+.\"	$NetBSD: main,v 1.240 2003/09/08 19:00:48 jandberg Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1689,6 +1689,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ta
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
+.It Ta Jukka Andberg Ta Mt jandberg@NetBSD.org
 .It Ta Julian Assange Ta Mt proff@NetBSD.org
 .It Ta Lennart Augustsson Ta Mt augustss@NetBSD.org
 .It Ta Christoph Badura Ta Mt bad@NetBSD.org
