@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.126 2000/12/28 21:40:59 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.127 2001/01/24 09:04:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -471,12 +471,23 @@ ip_input(struct mbuf *m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
-			   PFIL_IN) != 0)
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+#ifdef IPSEC
+	if (!ipsec_gethist(m, NULL))
+#else
+	if (1)
+#endif
+	{
+		if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
+				   PFIL_IN) != 0)
 		return;
-	if (m == NULL)
-		return;
-	ip = mtod(m, struct ip *);
+		if (m == NULL)
+			return;
+		ip = mtod(m, struct ip *);
+	}
 #endif /* PFIL_HOOKS */
 
 #ifdef ALTQ
@@ -1452,7 +1463,7 @@ ip_forward(m, srcrt)
 
 #ifdef IPSEC
 	/* Don't lookup socket in forwading case */
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
