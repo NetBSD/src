@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.29 1999/08/05 04:00:04 sommerfeld Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.30 1999/08/29 00:26:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -830,6 +830,14 @@ _pool_put(pp, v, file, line)
 
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
+
+#ifdef DIAGNOSTIC
+	if (pp->pr_nout == 0) {
+		printf("pool %s: putting with none out\n",
+		    pp->pr_wchan);
+		panic("pool_put");
+	}
+#endif
 
 	pr_log(pp, v, PRLOG_PUT, file, line);
 
