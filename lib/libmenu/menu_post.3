@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_post.3,v 1.3 2001/02/26 01:26:06 blymn Exp $
+.\"	$NetBSD: menu_post.3,v 1.4 2001/04/29 19:07:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,12 +29,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENU_POST 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm post_menu
-.Nd menu library
+.Nm unpost_menu
+.Nd post (draw) or unpost a menu
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
@@ -47,44 +48,51 @@
 The
 .Fn post_menu
 function causes the menu to be drawn on the screen.  Any functions
-defined by either 
-.Xr set_menu_init
+defined by either
+.Fn set_menu_init
 or
-.Xr set_item_init
-are called before the menu is placed on the screen.  The 
+.Fn set_item_init
+(see
+.Xr menu_hook 3 )
+are called before the menu is placed on the screen.  The
 .Fn unpost_menu
 does the opposite, it removes a menu from the screen.  Any functions
 defined by both
-.Xr set_menu_term
+.Fn set_menu_term
 and
-.Xr set_item_term
+.Fn set_item_term
+(see
+.Xr menu_hook 3 )
 are called prior to the menu's removal.
 .Sh RETURN VALUES
 The functions return one of the following error values:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_SYSTEM_ERROR		There was a system error during the call.
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-E_POSTED		The menu is already posted.
-E_BAD_STATE		The function was called from within an initialisation
-			or termination routine.
-E_NO_ROOM		The menu does not fit within the subwindow.
-E_NOT_CONNECTED		The item is not connected to a menu.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_NOT_CONNECTED -compact
+.It Er E_OK
+The function was successful.
+.It Er E_SYSTEM_ERROR
+There was a system error during the call.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.It Er E_BAD_STATE
+The function was called from within an initialisation or termination
+routine.
+.It Er E_NO_ROOM
+The menu does not fit within the subwindow.
+.It Er E_NOT_CONNECTED
+The item is not connected to a menu.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
+.Xr menu_hook 3 ,
 .Xr menus 3
 .Sh NOTES
 The header
-.Xr <menu.h>
+.Pa <menu.h>
 automatically includes both
-.Xr <curses.h>
+.Pa <curses.h>
 and
-.Xr <eti.h>
+.Pa <eti.h> .
 

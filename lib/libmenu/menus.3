@@ -1,4 +1,4 @@
-.\"	$NetBSD: menus.3,v 1.3 2000/11/07 06:43:24 lukem Exp $
+.\"	$NetBSD: menus.3,v 1.4 2001/04/29 19:07:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENUS 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm menu
 .Nd menu library
@@ -42,20 +42,19 @@
 .Sh DESCRIPTION
 The
 .Xr menu 3
-provides a terminal independent menu system using the 
+provides a terminal independent menu system using the
 .Xr curses 3
-library.  Before using the 
+library.  Before using the
 .Xr menu 3
 functions the terminal must be set up by
 .Xr curses 3
 using the
 .Fn initscr
 function or similar.  Programs using
-.Xr menu
+.Xr menu 3
 functions must be linked with the
 .Xr curses 3
-library
-.Xr -lcurses .
+library.
 .Pp
 The
 .Xr menu 3
@@ -74,104 +73,187 @@ pointer in the item or menu parameter when calling the set routine.  The
 current default value can be retrieved by calling the get routine with a
 NULL pointer for the item or menu parameter.
 .Pp
-.ta 20
-.nf
-.ft 3
-menus Routine Name      Manual Page Name
-.sp 0.5
-current_item		menu_item_current(3)
-free_item		menu_item_new(3)
-free_menu		menu_new(3)
-item_count		menu_items(3)
-item_description	menu_item_name(3)
-item_index		menu_item_current(3)
-item_init		menu_hook(3)
-item_name		menu_item_name(3)
-item_opts		menu_item_opts(3)
-item_opts_off		menu_item_opts(3)
-item_opts_on		menu_item_opts(3)
-item_term		menu_hook(3)
-item_userptr		menu_item_userptr(3)
-item_value		menu_item_value(3)
-item_visible		menu_item_visible(3)
-menu_back		menu_attributes(3)
-menu_driver		menu_driver(3)
-menu_fore		menu_attributes(3)
-menu_format		menu_format(3)
-menu_grey		menu_attributes(3)
-menu_init		menu_hook(3)
-menu_items		menu_items(3)
-menu_mark		menu_mark(3)
-menu_opts		menu_opts(3)
-menu_opts_off		menu_opts(3)
-menu_opts_on		menu_opts(3)
-menu_pad		menu_attributes(3)
-menu_pattern		menu_pattern(3)
-menu_sub		menu_win(3)
-menu_term		menu_hook(3)
-menu_unmark		menu_mark(3)
-menu_userptr		menu_userptr(3)
-men_win			menu_win(3)
-new_item		menu_item_new(3)
-new_menu		menu_new(3)
-pos_menu_cursor		menu_cursor(3)
-post_menu		menu_post(3)
-scale_window		menu_win(3)
-set_current_item	menu_item_current(3)
-set_item_init		menu_hook(3)
-set_item_opts		menu_item_opts(3)
-set_item_term		menu_hook(3)
-set_item_userptr	menu_item_userptr(3)
-set_item_value		menu_item_value(3)
-set_menu_back		menu_attributes(3)
-set_menu_fore		menu_attributes(3)
-set_menu_format		menu_format(3)
-set_menu_grey		menu_attributes(3)
-set_menu_init		menu_hook(3)
-set_menu_items		menu_items(3)
-set_menu_mark		menu_mark(3)
-set_menu_opts		menu_opts(3)
-set_menu_pad		menu_attributes(3)
-set_menu_pattern	menu_pattern(3)
-set_menu_sub		menu_win(3)
-set_menu_term		menu_hook(3)
-set_menu_unmark		menu_mark(3)
-set_menu_userptr	menu_userptr(3)
-set_menu_win		menu_win(3)
-set_top_row		menu_item_current(3)
-top_row			menu_item_current(3)
-unpost_menu		menu_post(3)
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width item_description -compact
+.It function name
+manual page name
+.It current_item
+.Xr menu_item_current 3
+.It free_item
+.Xr menu_item_new 3
+.It free_menu
+.Xr menu_new 3
+.It item_count
+.Xr menu_items 3
+.It item_description
+.Xr menu_item_name 3
+.It item_index
+.Xr menu_item_current 3
+.It item_init
+.Xr menu_hook 3
+.It item_name
+.Xr menu_item_name 3
+.It item_opts
+.Xr menu_item_opts 3
+.It item_opts_off
+.Xr menu_item_opts 3
+.It item_opts_on
+.Xr menu_item_opts 3
+.It item_term
+.Xr menu_hook 3
+.It item_userptr
+.Xr menu_item_userptr 3
+.It item_value
+.Xr menu_item_value 3
+.It item_visible
+.Xr menu_item_visible 3
+.It menu_back
+.Xr menu_attributes 3
+.It menu_driver
+.Xr menu_driver 3
+.It menu_fore
+.Xr menu_attributes 3
+.It menu_format
+.Xr menu_format 3
+.It menu_grey
+.Xr menu_attributes 3
+.It menu_init
+.Xr menu_hook 3
+.It menu_items
+.Xr menu_items 3
+.It menu_mark
+.Xr menu_mark 3
+.It menu_opts
+.Xr menu_opts 3
+.It menu_opts_off
+.Xr menu_opts 3
+.It menu_opts_on
+.Xr menu_opts 3
+.It menu_pad
+.Xr menu_attributes 3
+.It menu_pattern
+.Xr menu_pattern 3
+.It menu_sub
+.Xr menu_win 3
+.It menu_term
+.Xr menu_hook 3
+.It menu_unmark
+.Xr menu_mark 3
+.It menu_userptr
+.Xr menu_userptr 3
+.It men_win
+.Xr menu_win 3
+.It new_item
+.Xr menu_item_new 3
+.It new_menu
+.Xr menu_new 3
+.It pos_menu_cursor
+.Xr menu_cursor 3
+.It post_menu
+.Xr menu_post 3
+.It scale_window
+.Xr menu_win 3
+.It set_current_item
+.Xr menu_item_current 3
+.It set_item_init
+.Xr menu_hook 3
+.It set_item_opts
+.Xr menu_item_opts 3
+.It set_item_term
+.Xr menu_hook 3
+.It set_item_userptr
+.Xr menu_item_userptr 3
+.It set_item_value
+.Xr menu_item_value 3
+.It set_menu_back
+.Xr menu_attributes 3
+.It set_menu_fore
+.Xr menu_attributes 3
+.It set_menu_format
+.Xr menu_format 3
+.It set_menu_grey
+.Xr menu_attributes 3
+.It set_menu_init
+.Xr menu_hook 3
+.It set_menu_items
+.Xr menu_items 3
+.It set_menu_mark
+.Xr menu_mark 3
+.It set_menu_opts
+.Xr menu_opts 3
+.It set_menu_pad
+.Xr menu_attributes 3
+.It set_menu_pattern
+.Xr menu_pattern 3
+.It set_menu_sub
+.Xr menu_win 3
+.It set_menu_term
+.Xr menu_hook 3
+.It set_menu_unmark
+.Xr menu_mark 3
+.It set_menu_userptr
+.Xr menu_userptr 3
+.It set_menu_win
+.Xr menu_win 3
+.It set_top_row
+.Xr menu_item_current 3
+.It top_row
+.Xr menu_item_current 3
+.It unpost_menu
+.Xr menu_post 3
+.El
 .Sh RETURN VALUES
 Any function returning a string pointer will return NULL if an error
 occurs.  Functions returning an integer will return one of the
 following:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_SYSTEM_ERROR		There was a system error during the call.
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-E_POSTED		The menu is already posted.
-E_CONNECTED		An item was already connected to a menu.
-E_BAD_STATE		The function was called from within an initialisation
-			or termination routine.
-E_NO_ROOM		The menu does not fit within the subwindow.
-E_NOT_POSTED		The menu is not posted
-E_UNKNOWN_COMMAND	The menu driver does not recognise the request
-			passed to it.
-E_NO_MATCH		The character search failed to find a match.
-E_NOT_SELECTABLE	The item could not be selected.
-E_NOT_CONNECTED		The item is not connected to a menu.
-E_REQUEST_DENIED	The menu driver could not process the request.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_SYSTEM_ERROR
+There was a system error during the call.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.It Er E_CONNECTED
+An item was already connected to a menu.
+.It Er E_BAD_STATE
+The function was called from within an initialisation or termination
+routine.
+.It Er E_NO_ROOM
+The menu does not fit within the subwindow.
+.It Er E_NOT_POSTED
+The menu is not posted.
+.It Er E_UNKNOWN_COMMAND
+The menu driver does not recognise the request passed to it.
+.It Er E_NO_MATCH
+The character search failed to find a match.
+.It Er E_NOT_SELECTABLE
+The item could not be selected.
+.It Er E_NOT_CONNECTED
+The item is not connected to a menu.
+.It Er E_REQUEST_DENIED
+The menu driver could not process the request.
+.El
 .Sh SEE ALSO
-.Xr curses 3
-
+.Xr curses 3 ,
+.Xr menu_attributes 3 ,
+.Xr menu_cursor 3 ,
+.Xr menu_driver 3 ,
+.Xr menu_format 3 ,
+.Xr menu_hook 3 ,
+.Xr menu_item_current 3 ,
+.Xr menu_item_name 3 ,
+.Xr menu_item_new 3 ,
+.Xr menu_item_opts 3 ,
+.Xr menu_item_userptr 3 ,
+.Xr menu_item_value 3 ,
+.Xr menu_item_visible 3 ,
+.Xr menu_items 3 ,
+.Xr menu_mark 3 ,
+.Xr menu_new 3 ,
+.Xr menu_opts 3 ,
+.Xr menu_pattern 3 ,
+.Xr menu_post 3 ,
+.Xr menu_userptr 3 ,
+.Xr menu_win 3

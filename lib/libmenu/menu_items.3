@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_items.3,v 1.3 2001/02/26 01:26:05 blymn Exp $
+.\"	$NetBSD: menu_items.3,v 1.4 2001/04/29 19:07:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,14 +29,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENU_ITEMS 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm item_count ,
 .Nm menu_items ,
 .Nm set_menu_items
-.Nd menu library
+.Nd attach items to menus or check correspondances
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
@@ -57,7 +57,9 @@ The
 .Fn menu_items
 function returns a pointer to an array of item pointers that represent
 the menu items currently attached to the given menu.  Apart from using
-.Xr new_menu
+.Fn new_menu
+(see
+.Xr menu_new 3 )
 menu items may be attached to a menu by calling
 .Fn set_menu_items
 any items currently attached to the menu will be detached and the NULL
@@ -67,23 +69,22 @@ Any function returning a string pointer will return NULL if an error
 occurs.  Functions returning an integer will return one of the
 following:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_POSTED		The menu is already posted.
-E_CONNECTED		An item was already connected to a menu.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_CONNECTED -compact
+.It Er E_OK
+The function was successful.
+.It Er E_POSTED
+The menu is already posted.
+.It Er E_CONNECTED
+An item was already connected to a menu.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
 The header
-.Xr <menu.h>
+.Pa <menu.h>
 automatically includes both
-.Xr <curses.h>
+.Pa <curses.h>
 and
-.Xr <eti.h>
+.Pa <eti.h> .
 
