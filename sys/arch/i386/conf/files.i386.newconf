@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.51 1995/04/17 16:58:14 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.52 1995/04/17 20:23:32 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -99,6 +99,12 @@ major	{fd = 2}
 # PC speaker
 device	spkr at isa: tty
 file	arch/i386/isa/spkr.c		speaker needs-flag
+
+# AMD am7990 (Lance) -based boards
+# (BICC Isolan, NE2100, DEPCA)
+# XXX conflicts with other ports; can't be in files.isa
+device	le at isa: ether, ifnet, isadma
+file	dev/isa/if_le.c			le
 
 #
 # EISA-only drivers
