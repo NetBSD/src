@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.4 2002/07/11 01:38:49 simonb Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.5 2002/08/02 03:46:42 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  * NOTICE: This is not a standalone file.  to use it, #include it in
  * your port's locore.S, like so:
  *
- *	#include <powerpc/powerpc/trap_subr.S>
+ *	#include <powerpc/ibm4xx/trap_subr.S>
  */
 
 /*
@@ -358,6 +358,50 @@ _C_LABEL(trapexit):
 	FRAME_LEAVE(exitsave)
 	rfi
 	ba	.	/* Protect against prefetch */
+
+
+
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+_C_LABEL(sctrap):
+	STANDARD_PROLOG(tempsave);
+	bla	s_sctrap
+_C_LABEL(scsize) = .-_C_LABEL(sctrap)
+
+s_sctrap:
+	FRAME_SETUP(tempsave)
+/* Now we can recover interrupts again: */
+	wrteei	1			/* Enable interrupts */
+/* Call the appropriate syscall handler: */
+	addi	3,1,8
+	lis	4,_C_LABEL(curproc)@ha
+	lwz	4,_C_LABEL(curproc)@l(4)
+	lwz	4,P_MD_SYSCALL@l(4)
+	mtctr	4
+	bctrl
+/* Disable interrupts: */
+	wrteei	0
+/* Test AST pending: */
+	lwz	5,FRAME_SRR1+8(1)
+	mtcr	5
+	bc	4,17,1f			/* branch if PSL_PR is false */
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(3)
+	lwz	4,CI_ASTPENDING(3)
+#else
+	lis	3,_C_LABEL(astpending)@ha
+	lwz	4,_C_LABEL(astpending)@l(3)
+#endif
+	andi.	4,4,1
+	beq	1f
+	li	6,EXC_AST
+	stw	6,FRAME_EXC+8(1)
+	b	trapagain
+1:
+	FRAME_LEAVE(exitsave)
+	rfi
+	ba	.	/* Protect against prefetch */
+
+
 /*
  * External interrupt second level handler
  */

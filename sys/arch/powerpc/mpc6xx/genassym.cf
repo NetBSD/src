@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2002/07/24 05:44:37 chs Exp $
+#	$NetBSD: genassym.cf,v 1.6 2002/08/02 03:46:44 chs Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,6 +111,8 @@ define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_CPU		offsetof(struct proc, p_cpu)
+
+define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
 define	SONPROC		SONPROC
 

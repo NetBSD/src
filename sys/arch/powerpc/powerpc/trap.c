@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2002/07/28 07:07:45 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 2002/08/02 03:46:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,6 +55,7 @@
 #include <machine/trap.h>
 #include <powerpc/altivec.h>
 #include <powerpc/spr.h>
+#include <powerpc/userret.h>
 
 #ifndef MULTIPROCESSOR
 volatile int astpending;
@@ -223,9 +224,6 @@ trap(struct trapframe *frame)
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(p);
 		break;
-	case EXC_SC|EXC_USER:
-		(*p->p_md.md_syscall)(frame);
-		break;
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
@@ -344,39 +342,7 @@ brain_damage2:
 #endif
 		panic("trap");
 	}
-
-	/* Take pending signals. */
-	{
-		int sig;
-
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If someone stole the fp or vector unit while we were away,
-	 * disable it
-	 */
-	if ((pcb->pcb_flags & PCB_FPU) &&
-	    (p != ci->ci_fpuproc || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~PSL_FP;
-	}
-#ifdef ALTIVEC
-	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
-	    (p != ci->ci_vecproc || pcb->pcb_veccpu != ci)) {
-		frame->srr1 &= ~PSL_VEC;
-	}
-	/*
-	 * If the new process isn't the current AltiVec process on this
-	 * cpu, we need to stop any data streams that are active (since
-	 * it will be a different address space).
-	 */
-	if (ci->ci_vecproc != NULL && ci->ci_vecproc != p) {
-		__asm __volatile("dssall;sync");
-	}
-#endif
-
-	ci->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	userret(p, frame);
 }
 
 static inline void
