@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.13 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.14 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.13 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.14 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,9 @@ acpibut_match(struct device *parent, struct cfdata *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, button_hid));
+	return acpi_match_hid(aa->aa_node->ad_devinfo, button_hid);
 }
 
 /*
