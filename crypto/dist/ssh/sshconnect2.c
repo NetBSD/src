@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.9 2001/05/15 15:02:39 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.1.1.10 2001/06/23 16:36:53 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.72 2001/04/18 23:43:26 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.76 2001/06/23 15:12:21 itojun Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -73,11 +73,11 @@ struct sockaddr *xxx_hostaddr;
 
 Kex *xxx_kex = NULL;
 
-int
-check_host_key_callback(Key *hostkey)
+static int
+verify_host_key_callback(Key *hostkey)
 {
-	check_host_key(xxx_host, xxx_hostaddr, hostkey,
-	    options.user_hostfile2, options.system_hostfile2);
+	if (verify_host_key(xxx_host, xxx_hostaddr, hostkey) == -1)
+		fatal("verify_host_key failed");
 	return 0;
 }
 
@@ -120,7 +120,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	kex = kex_setup(myproposal);
 	kex->client_version_string=client_version_string;
 	kex->server_version_string=server_version_string;
-	kex->check_host_key=&check_host_key_callback;
+	kex->verify_host_key=&verify_host_key_callback;
 
 	xxx_kex = kex;
 
@@ -189,19 +189,21 @@ int	userauth_hostbased(Authctxt *authctxt);
 
 void	userauth(Authctxt *authctxt, char *authlist);
 
-int
-sign_and_send_pubkey(Authctxt *authctxt, Key *k,
-    sign_cb_fn *sign_callback);
-void	clear_auth_state(Authctxt *authctxt);
+static int sign_and_send_pubkey(Authctxt *, Key *, sign_cb_fn *);
+static void clear_auth_state(Authctxt *);
 
-Authmethod *authmethod_get(char *authlist);
-Authmethod *authmethod_lookup(const char *name);
-char *authmethods_get(void);
+static Authmethod *authmethod_get(char *authlist);
+static Authmethod *authmethod_lookup(const char *name);
+static char *authmethods_get(void);
 
 Authmethod authmethods[] = {
 	{"publickey",
 		userauth_pubkey,
 		&options.pubkey_authentication,
+		NULL},
+	{"hostbased",
+		userauth_hostbased,
+		&options.hostbased_authentication,
 		NULL},
 	{"password",
 		userauth_passwd,
@@ -211,10 +213,6 @@ Authmethod authmethods[] = {
 		userauth_kbdint,
 		&options.kbd_interactive_authentication,
 		&options.batch_mode},
-	{"hostbased",
-		userauth_hostbased,
-		&options.hostbased_authentication,
-		NULL},
 	{"none",
 		userauth_none,
 		NULL,
@@ -230,7 +228,7 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	int type;
 	int plen;
 
-	if (options.challenge_reponse_authentication)
+	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
 
 	debug("send SSH2_MSG_SERVICE_REQUEST");
@@ -478,7 +476,7 @@ clear_auth_state(Authctxt *authctxt)
 	authctxt->last_key_sign = NULL;
 }
 
-int
+static int
 sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 {
 	Buffer b;
@@ -563,7 +561,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	return 1;
 }
 
-int
+static int
 send_pubkey_test(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback,
     int hint)
 {
@@ -596,7 +594,7 @@ send_pubkey_test(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback,
 	return 1;
 }
 
-Key *
+static Key *
 load_identity_file(char *filename)
 {
 	Key *private;
@@ -634,7 +632,7 @@ load_identity_file(char *filename)
 	return private;
 }
 
-int
+static int
 identity_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
@@ -652,19 +650,21 @@ identity_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
 	return ret;
 }
 
-int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+static int
+agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return ssh_agent_sign(authctxt->agent, key, sigp, lenp, data, datalen);
 }
 
-int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+static int
+key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return key_sign(key, sigp, lenp, data, datalen);
 }
 
-int
+static int
 userauth_pubkey_agent(Authctxt *authctxt)
 {
 	static int called = 0;
@@ -788,6 +788,7 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 	packet_start(SSH2_MSG_USERAUTH_INFO_RESPONSE);
 	packet_put_int(num_prompts);
 
+	debug2("input_userauth_info_req: num_prompts %d", num_prompts);
 	for (i = 0; i < num_prompts; i++) {
 		prompt = packet_get_string(NULL);
 		echo = packet_get_char();
@@ -900,7 +901,7 @@ userauth_hostbased(Authctxt *authctxt)
  * given auth method name, if configurable options permit this method fill
  * in auth_ident field and return true, otherwise return false.
  */
-int
+static int
 authmethod_is_enabled(Authmethod *method)
 {
 	if (method == NULL)
@@ -914,7 +915,7 @@ authmethod_is_enabled(Authmethod *method)
 	return 1;
 }
 
-Authmethod *
+static Authmethod *
 authmethod_lookup(const char *name)
 {
 	Authmethod *method = NULL;
@@ -935,7 +936,7 @@ static char *preferred = NULL;
  * next method we should try.  If the server initially sends a nil list,
  * use a built-in default list.
  */
-Authmethod *
+static Authmethod *
 authmethod_get(char *authlist)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.1.1.4 2001/04/10 07:13:58 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.1.1.5 2001/06/23 16:36:35 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -26,10 +26,12 @@
 #include "includes.h"
 #include "uuencode.h"
 
-RCSID("$OpenBSD: radix.c,v 1.15 2001/01/16 23:58:09 deraadt Exp $");
+RCSID("$OpenBSD: radix.c,v 1.16 2001/06/23 15:12:19 itojun Exp $");
 
 #ifdef AFS
 #include <krb.h>
+
+#include <radix.h>
 
 typedef u_char my_u_char;
 typedef u_int my_u_int32_t;

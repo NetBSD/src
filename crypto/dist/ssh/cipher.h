@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.h,v 1.1.1.4 2001/04/10 07:13:53 itojun Exp $	*/
+/*	$NetBSD: cipher.h,v 1.1.1.5 2001/06/23 16:36:31 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$OpenBSD: cipher.h,v 1.25 2000/12/19 23:17:56 markus Exp $"); */
+/* RCSID("$OpenBSD: cipher.h,v 1.26 2001/05/28 22:51:11 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
@@ -72,8 +72,9 @@ struct CipherContext {
 		struct {
 			des_key_schedule key1;
 			des_key_schedule key2;
-			des_cblock iv2;
 			des_key_schedule key3;
+			des_cblock iv1;
+			des_cblock iv2;
 			des_cblock iv3;
 		}       des3;
 		struct {

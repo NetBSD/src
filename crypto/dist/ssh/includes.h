@@ -1,5 +1,5 @@
-/*	$NetBSD: includes.h,v 1.1.1.3 2001/04/10 07:13:55 itojun Exp $	*/
-/*	$OpenBSD: includes.h,v 1.14 2001/01/29 01:58:16 niklas Exp $	*/
+/*	$NetBSD: includes.h,v 1.1.1.4 2001/06/23 16:36:33 itojun Exp $	*/
+/*	$OpenBSD: includes.h,v 1.15 2001/06/08 15:25:40 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -57,9 +57,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 #include <dirent.h>
 
 #include "version.h"
-
-/* Define this to be the path of the xauth program. */
-#define XAUTH_PATH "/usr/X11R6/bin/xauth"
 
 /*
  * Define this to use pipes instead of socketpairs for communicating with the

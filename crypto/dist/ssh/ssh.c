@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.1.1.8 2001/05/15 15:02:37 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.1.1.9 2001/06/23 16:36:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.118 2001/05/04 23:47:34 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.126 2001/06/23 15:12:21 itojun Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -141,7 +141,7 @@ int subsystem_flag = 0;
 
 /* Prints a help message to the user.  This function never returns. */
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [options] host [command]\n", __progname);
@@ -149,12 +149,12 @@ usage(void)
 	fprintf(stderr, "  -l user     Log in using this user name.\n");
 	fprintf(stderr, "  -n          Redirect input from " _PATH_DEVNULL ".\n");
 	fprintf(stderr, "  -A          Enable authentication agent forwarding.\n");
-	fprintf(stderr, "  -a          Disable authentication agent forwarding.\n");
+	fprintf(stderr, "  -a          Disable authentication agent forwarding (default).\n");
 #ifdef AFS
 	fprintf(stderr, "  -k          Disable Kerberos ticket and AFS token forwarding.\n");
 #endif				/* AFS */
 	fprintf(stderr, "  -X          Enable X11 connection forwarding.\n");
-	fprintf(stderr, "  -x          Disable X11 connection forwarding.\n");
+	fprintf(stderr, "  -x          Disable X11 connection forwarding (default).\n");
 	fprintf(stderr, "  -i file     Identity for public key authentication "
 	    "(default: ~/.ssh/identity)\n");
 	fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
@@ -167,8 +167,7 @@ usage(void)
 	fprintf(stderr, "  -f          Fork into background after authentication.\n");
 	fprintf(stderr, "  -e char     Set escape character; ``none'' = disable (default: ~).\n");
 
-	fprintf(stderr, "  -c cipher   Select encryption algorithm: "
-	    "``3des'', ``blowfish''\n");
+	fprintf(stderr, "  -c cipher   Select encryption algorithm\n");
 	fprintf(stderr, "  -m macs     Specify MAC algorithms for protocol version 2.\n");
 	fprintf(stderr, "  -p port     Connect to this port.  Server must be on the same port.\n");
 	fprintf(stderr, "  -L listen-port:host:port   Forward local port to remote address\n");
@@ -184,7 +183,7 @@ usage(void)
 	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	fprintf(stderr, "  -s          Invoke command (mandatory) as SSH2 subsystem.\n");
-	fprintf(stderr, "  -b          Local IP address.\n");
+	fprintf(stderr, "  -b addr     Local IP address.\n");
 	exit(1);
 }
 
@@ -192,7 +191,7 @@ usage(void)
  * Connects to the given host using rsh (or prints an error message and exits
  * if rsh is not available).  This function never returns.
  */
-void
+static void
 rsh_connect(char *host, char *user, Buffer * command)
 {
 	char *args[10];
@@ -226,9 +225,9 @@ rsh_connect(char *host, char *user, Buffer * command)
 	exit(1);
 }
 
-int	ssh_session(void);
-int	ssh_session2(void);
-void	load_public_identity_files(void);
+static int ssh_session(void);
+static int ssh_session2(void);
+static void load_public_identity_files(void);
 
 /*
  * Main program for the ssh client.
@@ -238,7 +237,7 @@ main(int ac, char **av)
 {
 	int i, opt, optind, exit_status, ok;
 	u_short fwd_port, fwd_host_port;
-	char *optarg, *cp, buf[256];
+	char *optarg, *p, *cp, buf[256];
 	struct stat st;
 	struct passwd *pw;
 	int dummy;
@@ -294,10 +293,12 @@ main(int ac, char **av)
 		if (av[optind][0] != '-') {
 			if (host)
 				break;
-			if ((cp = strchr(av[optind], '@'))) {
-				if(cp == av[optind])
+			if (strchr(av[optind], '@')) {
+				p = xstrdup(av[optind]);
+				cp = strchr(p, '@');
+				if(cp == NULL || cp == p)
 					usage();
-				options.user = av[optind];
+				options.user = p;
 				*cp = '\0';
 				host = ++cp;
 			} else
@@ -410,7 +411,7 @@ main(int ac, char **av)
 			else if (strlen(optarg) == 1)
 				options.escape_char = (u_char) optarg[0];
 			else if (strcmp(optarg, "none") == 0)
-				options.escape_char = -2;
+				options.escape_char = SSH_ESCAPECHAR_NONE;
 			else {
 				fprintf(stderr, "Bad escape character '%s'.\n", optarg);
 				exit(1);
@@ -721,7 +722,7 @@ main(int ac, char **av)
 	return exit_status;
 }
 
-void
+static void
 x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 {
 	char line[512];
@@ -760,7 +761,7 @@ x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 	}
 }
 
-void
+static void
 ssh_init_forwarding(void)
 {
 	int success = 0;
@@ -794,7 +795,7 @@ ssh_init_forwarding(void)
 	}
 }
 
-void
+static void
 check_agent_present(void)
 {
 	if (options.forward_agent) {
@@ -807,7 +808,7 @@ check_agent_present(void)
 	}
 }
 
-int
+static int
 ssh_session(void)
 {
 	int type;
@@ -849,7 +850,7 @@ ssh_session(void)
 		cp = getenv("TERM");
 		if (!cp)
 			cp = "";
-		packet_put_string(cp, strlen(cp));
+		packet_put_cstring(cp);
 
 		/* Store window size in the packet. */
 		if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) < 0)
@@ -941,10 +942,11 @@ ssh_session(void)
 	}
 
 	/* Enter the interactive session. */
-	return client_loop(have_tty, tty_flag ? options.escape_char : -1, 0);
+	return client_loop(have_tty, tty_flag ?
+	    options.escape_char : SSH_ESCAPECHAR_NONE, 0);
 }
 
-void
+static void
 client_subsystem_reply(int type, int plen, void *ctxt)
 {
 	int id, len;
@@ -959,7 +961,7 @@ client_subsystem_reply(int type, int plen, void *ctxt)
 		    len, buffer_ptr(&command), id);
 }
 
-void
+static void
 ssh_session2_callback(int id, void *arg)
 {
 	int len;
@@ -1035,7 +1037,7 @@ ssh_session2_callback(int id, void *arg)
 	packet_set_interactive(interactive);
 }
 
-int
+static int
 ssh_session2_command(void)
 {
 	Channel *c;
@@ -1075,14 +1077,14 @@ ssh_session2_command(void)
 
 	debug3("ssh_session2_command: channel_new: %d", c->self);
 
-	channel_open(c->self);
+	channel_send_open(c->self);
 	channel_register_callback(c->self, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION,
 	     ssh_session2_callback, (void *)0);
 
 	return c->self;
 }
 
-int
+static int
 ssh_session2(void)
 {
 	int id;
@@ -1097,10 +1099,11 @@ ssh_session2(void)
 		if (daemon(1, 1) < 0)
 			fatal("daemon() failed: %.200s", strerror(errno));
 
-	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
+	return client_loop(tty_flag, tty_flag ?
+	    options.escape_char : SSH_ESCAPECHAR_NONE, id);
 }
 
-void
+static void
 load_public_identity_files(void)
 {
 	char *filename;
