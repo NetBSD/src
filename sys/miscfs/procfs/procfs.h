@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.49 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: procfs.h,v 1.50 2003/09/27 15:32:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -103,7 +103,6 @@ typedef enum {
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
 } pfstype;
-#endif
 
 /*
  * control data for the proc file system.
@@ -118,6 +117,7 @@ struct pfsnode {
 	u_long		pfs_flags;	/* open flags */
 	u_long		pfs_fileno;	/* unique file id */
 };
+#endif
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
