@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.4 1997/02/11 08:42:03 mrg Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.5 1997/06/29 18:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,12 +33,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
+#else
+__RCSID("$NetBSD: ttymsg.c,v 1.5 1997/06/29 18:44:10 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: ttymsg.c,v 1.4 1997/02/11 08:42:03 mrg Exp $";
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -51,6 +53,7 @@ static char rcsid[] = "$NetBSD: ttymsg.c,v 1.4 1997/02/11 08:42:03 mrg Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <util.h>
 
 /*
  * Display the contents of a uio structure on a terminal.  Used by wall(1),
@@ -63,7 +66,7 @@ char *
 ttymsg(iov, iovcnt, line, tmout)
 	struct iovec *iov;
 	int iovcnt;
-	char *line;
+	const char *line;
 	int tmout;
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
