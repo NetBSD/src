@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.4 1998/11/19 21:44:59 thorpej Exp $	*/
+/*	$NetBSD: csa.c,v 1.5 2000/03/18 16:13:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,14 +75,6 @@
 
 void csa_attach __P((struct device *, struct device *, void *));
 int  csa_match  __P((struct device *, struct cfdata *, void *));
-static void csa_minphys __P((struct buf *bp));
-
-struct scsipi_device csa_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
 
 /*
  * Cumana SCSI 1 softc structure.
@@ -185,19 +177,12 @@ csa_attach(parent, self, aux)
 	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
 
-	sc->sc_ncr5380.sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	sc->sc_ncr5380.sc_adapter.scsipi_minphys = csa_minphys;
-
-	sc->sc_ncr5380.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_ncr5380.sc_link.adapter_softc = sc;
-	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_ncr5380.sc_link.adapter = &sc->sc_ncr5380.sc_adapter;
-	sc->sc_ncr5380.sc_link.device = &csa_scsidev;
-
 	/* Provide an override for the host id */
+	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
 	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
 	(void)get_bootconf_option(boot_args, hi_option,
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
+	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
 
 	printf(" host=%d, using 8 bit PIO", sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
@@ -214,16 +199,7 @@ csa_attach(parent, self, aux)
 	printf("\n");
 	*sc->sc_ctrl = 0;
 
-	ncr5380_init(&sc->sc_ncr5380);
-	ncr5380_reset_scsibus(&sc->sc_ncr5380);
-	config_found(&sc->sc_ncr5380.sc_dev, &sc->sc_ncr5380.sc_link, scsiprint);
-}
-
-static void
-csa_minphys(bp)
-	struct buf *bp;
-{
-	return(minphys(bp));
+	ncr5380_attach(&sc->sc_ncr5380);
 }
 
 int

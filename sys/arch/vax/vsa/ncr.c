@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.24 2000/01/24 02:40:35 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.25 2000/03/18 16:13:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,15 +101,6 @@ struct si_softc {
 	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
 };
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsipi_device si_dev = {
-	NULL,	/* Use default error handler. */
-	NULL,	/* Use default start handler. */
-	NULL,	/* Use default async handler. */
-	NULL,	/* Use default "done" routine. */
-};
-
 static	int si_match(struct device *, struct cfdata *, void *);
 static	void si_attach(struct device *, struct device *, void *);
 static	void si_minphys(struct buf *);
@@ -196,22 +187,6 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &si_dev;
-	ncr_sc->sc_link.type = BUS_SCSI;
-	
-	/*
 	 * Initialize fields used by the MI code.
 	 */
 /*	ncr_sc->sc_regt =  Unused on VAX */
@@ -228,13 +203,14 @@ si_attach(parent, self, aux)
 	ncr_sc->sci_r7 = 28;
 
 	ncr_sc->sc_no_disconnect = 0xff;
+
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
 	/*
 	 * Initialize si board itself.
 	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
 }
 
 /*
