@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1997/09/15 06:55:43 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1997/09/15 11:40:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.3 1997/09/15 06:55:43 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 1997/09/15 11:40:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ u_int
 log2(num)
         u_int num;
 {
-        register u_int i, limit;
+        u_int i, limit;
 
         limit = 1;
         for (i = 0; limit < num; limit = limit << 1, i++);
