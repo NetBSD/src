@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1997/07/01 09:32:28 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.2.1 1997/09/22 06:32:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,7 +126,8 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
+
+caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	memcfg;			/* memory config register */
@@ -476,9 +477,9 @@ mach_init(argc, argv, code)
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	maxmem -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)(MIPS_PHYS_TO_KSEG0(maxmem << PGSHIFT));
-	msgbufmapped = 1;
+	maxmem -= btoc(MSGBUFSIZE);
+	msgbufaddr = (caddr_t)(MIPS_PHYS_TO_KSEG0(maxmem << PGSHIFT));
+	initmsgbuf(msgbufaddr, pica_round_page(MSGBUFSIZE));
 
 	/*
 	 * Allocate space for system data structures.

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1997/07/10 08:22:37 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.23.2.1 1997/09/22 06:30:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

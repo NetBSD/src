@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52.2.2 1997/09/16 03:49:12 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.52.2.3 1997/09/22 06:32:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -176,6 +176,8 @@ cpu_attach(parent, self, aux)
 		sc->master = 1;
 	else {
 		sc->mid = getpropint(node, "mid", 0);
+		if (sc->mid != 0)
+			printf(": mid %d", sc->mid);
 		if (sc->mid == 0 || sc->mid == getmid() + 8 /*XXX*/)
 			sc->master = 1;
 	}
@@ -458,21 +460,21 @@ cpumatch_sun4(sc, mp, node)
 		sc->classlvl = 100;
 		sc->mmu_ncontext = 8;
 		sc->mmu_nsegment = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 14280000;
 		break;
 	case ID_SUN4_200:
 		sc->cpu_type = CPUTYP_4_200;
 		sc->classlvl = 200;
 		sc->mmu_nsegment = 512;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 16670000;
 		break;
 	case ID_SUN4_300:
 		sc->cpu_type = CPUTYP_4_300;
 		sc->classlvl = 300;
 		sc->mmu_nsegment = 256;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 25000000;
 		break;
 	case ID_SUN4_400:
 		sc->cpu_type = CPUTYP_4_400;
@@ -480,7 +482,7 @@ cpumatch_sun4(sc, mp, node)
 		sc->mmu_nsegment = 1024;
 		sc->mmu_ncontext = 64;
 		sc->mmu_nregion = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 33000000;
 		sc->sun4_mmu3l = 1;
 		break;
 	}
@@ -574,7 +576,7 @@ sun4_hotfix(sc)
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		printf("cache chip bug; trap page uncached ");
+		printf(": cache chip bug; trap page uncached");
 	}
 
 }
@@ -776,7 +778,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line
+	viking_pcache_flush_line
 };
 
 void
@@ -793,18 +795,22 @@ void
 viking_hotfix(sc)
 	struct cpu_softc *sc;
 {
+	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
 	/* Test if we're directly on the MBus */
-	if (!(lda(SRMMU_PCR, ASI_SRMMU) & VIKING_PCR_MB)) {
+	if ((pcr & VIKING_PCR_MB) == 0) {
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
 		 * uncache in pmap_bootstrap().
 		 */
-		sc->flags |= CPUFLG_CACHEPAGETABLES;
+		if ((pcr & VIKING_PCR_TC) == 0)
+			printf("[viking: PCR_TC is off]");
+		else
+			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 		sc->cache_flush = viking_cache_flush;
-		sc->pcache_flush_line = viking_pcache_flush_line;
 	}
 
 	/* XXX! */
@@ -821,9 +827,13 @@ viking_mmu_enable()
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
-	if (cpuinfo.mxcc)
+	if (cpuinfo.mxcc) {
+		if ((pcr & VIKING_PCR_TC) == 0) {
+			printf("[viking: turn on PCR_TC]");
+		}
 		pcr |= VIKING_PCR_TC;
-	else
+		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
+	} else
 		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57.2.1 1997/09/16 03:49:22 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.57.2.2 1997/09/22 06:32:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -286,7 +286,6 @@ trap(type, psr, pc, tf)
 		if (type == T_BREAKPOINT) {
 			write_all_windows();
 			if (kdb_trap(type, tf)) {
-				ADVANCE;
 				return;
 			}
 		}

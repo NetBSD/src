@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.50.4.1 1997/09/16 03:51:09 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.50.4.2 1997/09/22 06:33:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,15 +218,32 @@ kernfs_xread(kt, off, bufp, len)
 	}
 
 	case KTT_MSGBUF: {
-		extern struct msgbuf *msgbufp;
 		long n;
 
-		if (off >= MSG_BSIZE)
+		/*
+		 * deal with cases where the message buffer has
+		 * become corrupted.
+		 */
+		if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+			msgbufenabled = 0;
+			return (ENXIO);
+		}
+
+		/*
+		 * Note that reads of /kern/msgbuf won't necessarily yield
+		 * consistent results, if the message buffer is modified
+		 * while the read is in progress.  The worst that can happen
+		 * is that incorrect data will be read.  There's no way
+		 * that this can crash the system unless the values in the
+		 * message buffer header are corrupted, but that'll cause
+		 * the system to die anyway.
+		 */
+		if (off >= msgbufp->msg_bufs)
 			return (0);
 		n = msgbufp->msg_bufx + off;
-		if (n >= MSG_BSIZE)
-			n -= MSG_BSIZE;
-		len = min(MSG_BSIZE - n, MSG_BSIZE - off);
+		if (n >= msgbufp->msg_bufs)
+			n -= msgbufp->msg_bufs;
+		len = min(msgbufp->msg_bufs - n, msgbufp->msg_bufs - off);
 		*bufp = msgbufp->msg_bufc + n;
 		return (len);
 	}

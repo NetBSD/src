@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1997/07/15 12:45:22 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.3.2.1 1997/09/22 06:31:49 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -41,7 +41,14 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/net.h>	/* global "bootfile" */
+
+#include <libi386.h>
+#include <bootinfo.h>
+#include "dev_net.h"
+
+struct btinfo_bootpath bibp;
 
 int
 devopen(f, fname, file)
@@ -55,12 +62,18 @@ devopen(f, fname, file)
 	dp = &devsw[0];
 	f->f_dev = dp;
 
-	error = (*dp->dv_open) (f, 0);
+	if(fname)
+		strncpy(bootfile, fname, FNAME_SIZE);
+
+	error = net_open(f);
 
 	if (bootfile[0])
 		*file = bootfile;
 	else
 		*file = (char *) fname;
+
+	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
 
 	return (error);
 }

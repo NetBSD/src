@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91.2.3 1997/09/16 03:49:19 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.91.2.4 1997/09/22 06:32:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -521,6 +521,7 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vm_offset_t, vm_offset_t,
 #define tlb_flush_all()	      sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
 
 static u_int	VA2PA __P((caddr_t));
+static u_long	srmmu_bypass_read __P((u_long));
 
 /*
  * VA2PA(addr) -- converts a virtual address to a physical address using
@@ -978,6 +979,33 @@ mmu_reservemon4_4c(nrp, nsp)
 
 #if defined(SUN4M) /* Sun4M versions of above */
 
+u_long
+srmmu_bypass_read(paddr)
+	u_long	paddr;
+{
+	unsigned long v;
+
+	if (/*cpuinfo.cpu_impl == 4 && */cpuinfo.mxcc) {
+		/*
+		 * We're going to have to use MMU passthrough. If we're on
+		 * a Viking MicroSparc without an mbus, we need to turn
+		 * off traps and set the AC bit at 0x8000 in the MMU's
+		 * control register.  Ugh.
+		 */
+
+		unsigned long s = lda(SRMMU_PCR,ASI_SRMMU);
+
+		/* set MMU AC bit */
+		sta(SRMMU_PCR, ASI_SRMMU, s | VIKING_PCR_AC);
+		v = lda(paddr, ASI_BYPASS);
+		sta(SRMMU_PCR, ASI_SRMMU, s);
+	} else
+		v = lda(paddr, ASI_BYPASS);
+
+	return (v);
+}
+
+
 /*
  * Take the monitor's initial page table layout, convert it to 3rd-level pte's
  * (it starts out as a L1 mapping), and install it along with a set of kernel
@@ -1000,9 +1028,9 @@ mmu_reservemon4m(kpmap)
 {
 	unsigned int rom_ctxtbl;
 	register int te;
-	unsigned int mmupcrsave;
 
-/*XXX-GCC!*/mmupcrsave = 0;
+	prom_vstart = OPENPROM_STARTVADDR;
+	prom_vend = OPENPROM_ENDVADDR;
 
 	/*
 	 * XXX: although the Sun4M can handle 36 bits of physical
@@ -1017,17 +1045,8 @@ mmu_reservemon4m(kpmap)
 
 	rom_ctxtbl = (lda(SRMMU_CXTPTR,ASI_SRMMU) << SRMMU_PPNPASHIFT);
 
-	/* We're going to have to use MMU passthrough. If we're on a
-	 * Viking MicroSparc without an mbus, we need to turn off traps
-	 * and set the AC bit at 0x8000 in the MMU's control register. Ugh.
-	 * XXX: Once we've done this, can we still access kernel vm?
-	 */
-	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
-		sta(SRMMU_PCR, ASI_SRMMU, 	/* set MMU AC bit */
-		    ((mmupcrsave = lda(SRMMU_PCR,ASI_SRMMU)) | VIKING_PCR_AC));
-	}
+	te = srmmu_bypass_read(rom_ctxtbl);	/* i.e. context 0 */
 
-	te = lda(rom_ctxtbl, ASI_BYPASS);	/* i.e. context 0 */
 	switch (te & SRMMU_TETYPE) {
 	case SRMMU_TEINVALID:
 		cpuinfo.ctx_tbl[0] = SRMMU_TEINVALID;
@@ -1046,10 +1065,6 @@ mmu_reservemon4m(kpmap)
 		break;
 	default:
 		panic("mmu_reservemon4m: unknown pagetable entry type");
-	}
-
-	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
-		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
 	}
 }
 
@@ -1083,7 +1098,7 @@ mmu_setup4m_L1(regtblptd, kpmap)
 		/* The region we're dealing with */
 		rp = &kpmap->pm_regmap[i];
 
-		te = lda(regtblrover, ASI_BYPASS);
+		te = srmmu_bypass_read(regtblrover);
 		switch(te & SRMMU_TETYPE) {
 		case SRMMU_TEINVALID:
 			break;
@@ -1104,14 +1119,14 @@ mmu_setup4m_L1(regtblptd, kpmap)
 
 				for (k = 0; k < SRMMU_L3SIZE; k++) {
 					sp->sg_npte++;
-					(sp->sg_pte)[k] =
-					    (te & SRMMU_L1PPNMASK) |
-					    (j << SRMMU_L2PPNSHFT) |
-					    (k << SRMMU_L3PPNSHFT) |
-					    (te & SRMMU_PGBITSMSK) |
-					    ((te & SRMMU_PROT_MASK) |
-					     PPROT_U2S_OMASK) |
-					    SRMMU_TEPTE;
+					setpgt4m(&sp->sg_pte[k],
+						(te & SRMMU_L1PPNMASK) |
+						(j << SRMMU_L2PPNSHFT) |
+						(k << SRMMU_L3PPNSHFT) |
+						(te & SRMMU_PGBITSMSK) |
+						((te & SRMMU_PROT_MASK) |
+						 PPROT_U2S_OMASK) |
+						SRMMU_TEPTE);
 				}
 			}
 			break;
@@ -1141,7 +1156,7 @@ mmu_setup4m_L2(segtblptd, rp)
 
 		sp = &rp->rg_segmap[i];
 
-		te = lda(segtblrover, ASI_BYPASS);
+		te = srmmu_bypass_read(segtblrover);
 		switch(te & SRMMU_TETYPE) {
 		case SRMMU_TEINVALID:
 			break;
@@ -1157,14 +1172,14 @@ mmu_setup4m_L2(segtblptd, rp)
 			 */
 			for (k = 0; k < SRMMU_L3SIZE; k++) {
 				sp->sg_npte++;
-				(sp->sg_pte)[k] =
-				    (te & SRMMU_L1PPNMASK) |
-				    (te & SRMMU_L2PPNMASK) |
-				    (k << SRMMU_L3PPNSHFT) |
-				    (te & SRMMU_PGBITSMSK) |
-				    ((te & SRMMU_PROT_MASK) |
-				     PPROT_U2S_OMASK) |
-				    SRMMU_TEPTE;
+				setpgt4m(&sp->sg_pte[k],
+					(te & SRMMU_L1PPNMASK) |
+					(te & SRMMU_L2PPNMASK) |
+					(k << SRMMU_L3PPNSHFT) |
+					(te & SRMMU_PGBITSMSK) |
+					((te & SRMMU_PROT_MASK) |
+					 PPROT_U2S_OMASK) |
+					SRMMU_TEPTE);
 			}
 			break;
 
@@ -1189,13 +1204,13 @@ mmu_setup4m_L3(pagtblptd, sp)
 
 	pagtblrover = (pagtblptd & ~SRMMU_TETYPE) << SRMMU_PPNPASHIFT;
 	for (i = 0; i < SRMMU_L3SIZE; i++, pagtblrover += sizeof(long)) {
-		te = lda(pagtblrover, ASI_BYPASS);
+		te = srmmu_bypass_read(pagtblrover);
 		switch(te & SRMMU_TETYPE) {
 		case SRMMU_TEINVALID:
 			break;
 		case SRMMU_TEPTE:
 			sp->sg_npte++;
-			sp->sg_pte[i] = te | PPROT_U2S_OMASK;
+			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
@@ -3272,6 +3287,8 @@ pmap_bootstrap4m(void)
 
 }
 
+static u_long prom_ctxreg;
+
 void
 mmu_install_tables(sc)
 	struct cpu_softc *sc;
@@ -3287,6 +3304,7 @@ mmu_install_tables(sc)
 		sc->mmu_enable();
 
 	tlb_flush_all();
+	prom_ctxreg = lda(SRMMU_CXTPTR, ASI_SRMMU);
 
 	sta(SRMMU_CXTPTR, ASI_SRMMU,
 	    (VA2PA((caddr_t)sc->ctx_tbl) >> SRMMU_PPNPASHIFT) & ~0x3);
@@ -3296,6 +3314,16 @@ mmu_install_tables(sc)
 #ifdef DEBUG
 	printf("done.\n");
 #endif
+}
+
+void srmmu_restore_prom_ctx __P((void));
+
+void
+srmmu_restore_prom_ctx()
+{
+	tlb_flush_all();
+	sta(SRMMU_CXTPTR, ASI_SRMMU, prom_ctxreg);
+	tlb_flush_all();
 }
 
 /*
@@ -3358,7 +3386,7 @@ pmap_alloc_cpu(sc)
 	}
 #endif
 }
-#endif /* defined sun4m */
+#endif /* SUN4M */
 
 
 void
@@ -6481,28 +6509,33 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 #endif
 
 /*
- * Return the number bytes that pmap_dumpmmu() will dump.
- * For each pmeg in the MMU, we'll write NPTESG PTEs.
- * The last page or two contains stuff so libkvm can bootstrap.
+ * Return the number of disk blocks that pmap_dumpmmu() will dump.
  */
 int
 pmap_dumpsize()
 {
-	long	sz;
+	int	sz;
 
 	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
 	sz += npmemarr * sizeof(phys_ram_seg_t);
+	sz += sizeof(kernel_segmap_store);
 
 	if (CPU_ISSUN4OR4C)
+		/* For each pmeg in the MMU, we'll write NPTESG PTEs. */
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
-	return (btoc(sz));
+	return btodb(sz + DEV_BSIZE - 1);
 }
 
 /*
- * Write the mmu contents to the dump device.
- * This gets appended to the end of a crash dump since
- * there is no in-core copy of kernel memory mappings on a 4/4c machine.
+ * Write the core dump headers and MD data to the dump device.
+ * We dump the following items:
+ * 
+ *	kcore_seg_t		 MI header defined in <sys/kcore.h>)
+ *	cpu_kcore_hdr_t		 MD header defined in <machine/kcore.h>)
+ *	phys_ram_seg_t[npmemarr] physical memory segments
+ *	segmap_t[NKREG*NSEGRG]	 the kernel's segment map
+ *	the MMU pmegs on sun4/sun4c
  */
 int
 pmap_dumpmmu(dump, blkno)
@@ -6513,7 +6546,7 @@ pmap_dumpmmu(dump, blkno)
 	cpu_kcore_hdr_t	*kcpup;
 	phys_ram_seg_t	memseg;
 	register int	error = 0;
-	register int	i, memsegoffset, pmegoffset;
+	register int	i, memsegoffset, segmapoffset, pmegoffset;
 	int		buffer[dbtob(1) / sizeof(int)];
 	int		*bp, *ep;
 #if defined(SUN4C) || defined(SUN4)
@@ -6546,31 +6579,40 @@ pmap_dumpmmu(dump, blkno)
 	/* Fill in MI segment header */
 	ksegp = (kcore_seg_t *)bp;
 	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	ksegp->c_size = ctob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+	ksegp->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpup->cputype = cputyp;
+	kcpup->kernbase = KERNBASE;
 	kcpup->nmemseg = npmemarr;
 	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
-	kcpup->pmegoffset = pmegoffset =
+	kcpup->nsegmap = NKREG*NSEGRG;
+	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	/* Note: we have assumed everything fits in buffer[] so far... */
-	bp = (int *)&kcpup->segmap_store;
-	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
+	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
+	kcpup->pmegoffset = pmegoffset =
+		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 
+	/* Note: we have assumed everything fits in buffer[] so far... */
+	bp = (int *)((int)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
+
+#if 0
 	/* Align storage for upcoming quad-aligned segment array */
 	while (bp != (int *)ALIGN(bp)) {
 		int dummy = 0;
 		EXPEDITE(&dummy, 4);
 	}
+#endif
+
 	for (i = 0; i < npmemarr; i++) {
 		memseg.start = pmemarr[i].addr;
 		memseg.size = pmemarr[i].len;
 		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
 	}
+
+	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
 
 	if (CPU_ISSUN4M)
 		goto out;

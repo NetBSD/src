@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 1997/07/10 08:22:09 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.3.2.1 1997/09/22 06:31:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,10 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	USPACE		(UPAGES * NBPG)
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.

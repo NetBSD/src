@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.4 1997/07/22 17:44:31 drochner Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.4.2.1 1997/09/22 06:31:39 thorpej Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -74,8 +74,7 @@ socktodesc(sock)
 }
 
 int
-netif_open(machdep_hint)
-	void *machdep_hint;
+netif_open()
 {
 	struct iodesc *io;
 

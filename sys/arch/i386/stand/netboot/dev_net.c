@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.6 1997/07/22 17:44:32 drochner Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.6.2.1 1997/09/22 06:31:48 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -46,15 +46,17 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/bootparam.h>
+#include <machine/stdarg.h>
 
 #include <netif/netif_small.h>
+#include "dev_net.h"
 
 #ifdef SUPPORT_BOOTP
 void bootp      __P((int));
 #endif
 
 struct in_addr  myip;		/* init'ed as INADDR_ANY */
-struct in_addr  rootip, gateip, swapip, nameip;
+struct in_addr  rootip, gateip;
 n_long          netmask;
 
 char	rootpath[FNAME_SIZE];
@@ -63,7 +65,7 @@ char	bootfile[FNAME_SIZE];
 char	hostname[FNAME_SIZE];	/* our hostname */
 int	hostnamelen;
 
-#if defined(SUPPORT_BOOTP) || defined (SUPPORT_BOOTPARAM)
+#ifdef SUPPORT_BOOTPARAM
 char	domainname[FNAME_SIZE];	/* our DNS domain, not used */
 int	domainnamelen;
 #endif
@@ -72,20 +74,14 @@ u_char	bcea[6] = BA;
 
 static int      netdev_sock = -1;
 
-#ifdef SUPPORT_BOOTP
-int	no_bootp = 0;
-#endif
-
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(f, devname)
-	struct open_file *f;
-	char           *devname;/* Device part of file name (or NULL). */
+net_open(struct open_file *f, ...)
 {
-	int             error = 0;
+	int error = 0;
 
 #ifdef NET_DEBUG
 	if (netdev_sock != -1)
@@ -93,15 +89,13 @@ net_open(f, devname)
 #endif
 
 	/* Find network interface. */
-	if ((netdev_sock = netif_open(devname)) < 0)
-	    return (ENXIO);
+	if ((netdev_sock = netif_open()) < 0)
+		return (ENXIO);
 
 #ifdef SUPPORT_BOOTP
-	if (!no_bootp) {
-	    printf("configure network...trying bootp\n");
-	    /* Get boot info using BOOTP way. (RFC951, RFC1048) */
-	    bootp(netdev_sock);
-	}
+	printf("configure network...trying bootp\n");
+	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
+	bootp(netdev_sock);
 #endif
 
 	if (myip.s_addr != INADDR_ANY) {	/* got bootp reply or

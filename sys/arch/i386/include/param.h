@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 1997/02/26 01:21:18 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.31.4.1 1997/09/22 06:31:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,10 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 #define	UPAGES		2		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.21.4.1 1997/08/23 07:09:56 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.21.4.2 1997/09/22 06:31:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -86,8 +86,9 @@
 #include <mac68k/dev/ascvar.h>
 #include <mac68k/dev/obiovar.h>
 
-#define	MAC68K_ASC_BASE	0x50f14000
-#define	MAC68K_ASC_LEN	0x01000
+#define	MAC68K_ASC_BASE		0x50f14000
+#define	MAC68K_IIFX_ASC_BASE	0x50f10000
+#define	MAC68K_ASC_LEN		0x01000
 
 static u_int8_t		asc_wave_tab[0x800];
 
@@ -116,8 +117,12 @@ ascmatch(parent, cf, aux)
 	bus_space_handle_t bsh;
 	int rval = 0;
 
-	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
-	    oa->oa_addr : MAC68K_ASC_BASE);
+	if (oa->oa_addr != (-1))
+		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACIIFX)
+		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
+	else
+		addr = (bus_addr_t)MAC68K_ASC_BASE;
 
 	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
@@ -143,8 +148,12 @@ ascattach(parent, self, aux)
 	int i;
 
 	sc->sc_tag = oa->oa_tag;
-	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
-	    oa->oa_addr : MAC68K_ASC_BASE);
+	if (oa->oa_addr != (-1))
+		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACIIFX)
+		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
+	else
+		addr = (bus_addr_t)MAC68K_ASC_BASE;
 	if (bus_space_map(sc->sc_tag, addr, MAC68K_ASC_LEN, 0,
 	    &sc->sc_handle)) {
 		printf(": can't map memory space\n");

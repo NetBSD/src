@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
+/*	$NetBSD: iommu.c,v 1.13.2.1 1997/09/22 06:32:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -194,7 +194,7 @@ iommu_attach(parent, self, aux)
 	 *
 	 * XXX: PGOFSET, NBPG assume same page size as SRMMU
 	 */
-	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
 		/* set MMU AC bit */
 		sta(SRMMU_PCR, ASI_SRMMU,
 		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
@@ -210,7 +210,7 @@ iommu_attach(parent, self, aux)
 			        (tpte_p - &sc->sc_ptes[0])*NBPG + DVMA4M_BASE);
 		*tpte_p = lda(pa, ASI_BYPASS);
 	}
-	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
 		/* restore mmu after bug-avoidance */
 		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
 	}

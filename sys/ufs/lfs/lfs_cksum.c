@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.6 1996/02/16 02:22:05 christos Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.6.12.1 1997/09/22 06:34:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,8 @@
 #include <sys/types.h>
 #ifdef _KERNEL
 #include <ufs/lfs/lfs_extern.h>
+#else
+u_long cksum __P((void *, size_t));
 #endif
 
 /*

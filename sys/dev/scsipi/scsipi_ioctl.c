@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.25.2.2 1997/08/27 23:33:28 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.25.2.3 1997/09/22 06:33:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -368,6 +368,14 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		return scsi_probe_busses(sca->addr.scsi.scbus, sca->addr.scsi.target,
 			sca->addr.scsi.lun);
 	}
+#if defined(COMPAT_12) || defined(COMPAT_FREEBSD)
+	/* SCIOCREPROBE before ATAPI staff merge */
+	case OSCIOCREPROBE: {
+		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
+
+		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
+	}
+#endif
 #endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
@@ -389,6 +397,19 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		}
 		return ENXIO;
 	}
+#if defined(COMPAT_12) || defined(COMPAT_FREEBSD)
+	/* SCIOCIDENTIFY before ATAPI staff merge */
+	case OSCIOCIDENTIFY: {
+		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
+
+		if (sc_link->type != BUS_SCSI)
+			return (ENODEV);
+		sca->scbus = sc_link->scsipi_scsi.scsibus;
+		sca->target = sc_link->scsipi_scsi.target;
+		sca->lun = sc_link->scsipi_scsi.lun;
+		return (0);
+	}
+#endif
 	default:
 		return ENOTTY;
 	}

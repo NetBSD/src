@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.2.2.2 1997/08/27 23:31:31 thorpej Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.2.2.3 1997/09/22 06:33:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -106,6 +106,7 @@ com_multi_attach(parent, self, aux)
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_ioh = ca->ca_ioh;
 	sc->sc_iobase = ca->ca_iobase;
+	sc->sc_frequency = 115200 * 16;
 
 	if (ca->ca_noien)
 		sc->sc_hwflags |= COM_HW_NOIEN;
