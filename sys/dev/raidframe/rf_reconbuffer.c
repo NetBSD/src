@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.9 2002/09/21 01:21:19 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.10 2002/11/23 01:58:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.9 2002/09/21 01:21:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.10 2002/11/23 01:58:18 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -333,11 +333,6 @@ rf_GetFullReconBuffer(reconCtrlPtr)
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
-	if ((p = reconCtrlPtr->priorityList) != NULL) {
-		reconCtrlPtr->priorityList = p->next;
-		p->next = NULL;
-		goto out;
-	}
 	if ((p = reconCtrlPtr->fullBufferList) != NULL) {
 		reconCtrlPtr->fullBufferList = p->next;
 		p->next = NULL;
