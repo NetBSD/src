@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.30 2002/11/04 19:40:05 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.31 2002/11/04 20:02:10 thorpej Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -230,11 +230,11 @@ endif
 
 define	TF_REG_T8	offsetof(struct trapframe, tf_regs[TF_T8])
 define	TF_REG_T9	offsetof(struct trapframe, tf_regs[TF_T9])
-define	TF_REG_RA	offsetof(struct trapframe, tf_ra)
-define	TF_REG_SR	offsetof(struct trapframe, tf_sr)
-define	TF_REG_MULLO	offsetof(struct trapframe, tf_mullo)
-define	TF_REG_MULHI	offsetof(struct trapframe, tf_mulhi)
-define	TF_REG_EPC	offsetof(struct trapframe, tf_epc)
+define	TF_REG_RA	offsetof(struct trapframe, tf_regs[TF_RA])
+define	TF_REG_SR	offsetof(struct trapframe, tf_regs[TF_SR])
+define	TF_REG_MULLO	offsetof(struct trapframe, tf_regs[TF_MULLO])
+define	TF_REG_MULHI	offsetof(struct trapframe, tf_regs[TF_MULHI])
+define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
 define	TF_PPL		offsetof(struct trapframe, tf_ppl)
 
 define	CTXSWFRAME_SIZ	sizeof(mips_reg_t) * 12
