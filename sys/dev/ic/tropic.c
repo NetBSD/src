@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.11 2000/06/13 20:00:02 soren Exp $	*/
+/*	$NetBSD: tropic.c,v 1.12 2000/06/15 19:55:27 soren Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -83,6 +83,7 @@
 #include <dev/ic/tropicvar.h>
 
 static void tr_shutdown __P((void *));
+static void tr_reopen __P((void *));
 
 void	tr_rint __P((struct tr_softc *));
 void	tr_xint __P((struct tr_softc *));
@@ -597,16 +598,32 @@ void
 tr_reinit(arg)
 	void *arg;
 {
-	if (tr_reset((struct tr_softc *) arg))
-		return;
-	if (tr_config((struct tr_softc *) arg))
-		return;
+	struct tr_softc *sc = arg;
+	int	s;
+
+	s = splnet();
+	if (tr_reset(sc) == 0) {
+		if (tr_config(sc) == 0)
+			tr_init(arg);
+	}
+	splx(s);
+}
+
+static void
+tr_reopen(arg)
+	void *arg;
+{
+	int	s;
+
+	s = splnet();
 	tr_init(arg);
+	splx(s);
 }
 
 /*
  *  tr_init - initialize network interface, open adapter for packet
- *	     reception and start any pending output
+ *          - reception and start any pending output
+ *          - must be called at splnet
  */
 void
 tr_init(arg)
@@ -615,13 +632,10 @@ tr_init(arg)
 	struct tr_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_size_t open_srb;
-	int s, num_dhb;
-	int	resvdmem, availmem, dhbsize;
+	int	num_dhb, resvdmem, availmem, dhbsize;
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		return;
-
-	s = splimp();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_xmit_head = sc->sc_xmit_tail = 0;	/* XXX tr_reset() */
@@ -687,7 +701,6 @@ tr_init(arg)
 	/* Tell adapter: command in SRB. */
 	ACA_SETB(sc, ACA_ISRA_o, CMD_IN_SRB);
 
-	splx(s);
 }
 
 /*
@@ -910,7 +923,7 @@ tr_intr(arg)
  * XXX error 0x24 && autospeed mode: open again !!!!
  */
 					callout_reset(&sc->sc_init_callout,
-					    hz * 30, tr_init, sc);
+					    hz * 30, tr_reopen, sc);
 				}
 				break;
 
