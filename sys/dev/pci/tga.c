@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.25.2.3 2001/06/25 16:27:54 he Exp $ */
+/* $NetBSD: tga.c,v 1.25.2.4 2001/08/16 16:52:39 tv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -771,7 +771,8 @@ tga_builtin_set_cursor(dc, cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
-	int count, error, v;
+	u_int count, v;
+	int error;
 
 	v = cursorp->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
