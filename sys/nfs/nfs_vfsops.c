@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.99 2001/01/22 12:17:41 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.100 2001/02/06 11:40:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -207,7 +207,7 @@ nfs_statfs(mp, sbp, p)
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	nfsm_reqdone;
-	vrele(vp);
+	vput(vp);
 	crfree(cred);
 	return (error);
 }
@@ -718,14 +718,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
-	/*
-	 * A reference count is needed on the nfsnode representing the
-	 * remote root.  If this object is not persistent, then backward
-	 * traversals of the mount point (i.e. "..") will not work if
-	 * the nfsnode gets flushed out of the cache. Ufs does not have
-	 * this problem, because one can identify root inodes by their
-	 * number == ROOTINO (2).
-	 */
 	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
 	if (error)
 		goto bad;
@@ -739,6 +731,17 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, p, cr);
 		crfree(cr);
 	}
+
+	/*
+	 * A reference count is needed on the nfsnode representing the
+	 * remote root.  If this object is not persistent, then backward
+	 * traversals of the mount point (i.e. "..") will not work if
+	 * the nfsnode gets flushed out of the cache. Ufs does not have
+	 * this problem, because one can identify root inodes by their
+	 * number == ROOTINO (2). So, just unlock, but no rele.
+	 */
+
+	VOP_UNLOCK(*vpp, 0);
 
 	return (0);
 bad:
@@ -809,10 +812,11 @@ nfs_unmount(mp, mntflags, p)
 	nmp->nm_iflag |= NFSMNT_DISMNT;
 
 	/*
-	 * There are two reference counts to get rid of here.
+	 * There are two reference counts to get rid of here
+	 * (see comment in mountnfs()).
 	 */
 	vrele(vp);
-	vrele(vp);
+	vput(vp);
 	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
