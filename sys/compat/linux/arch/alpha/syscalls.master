@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 2000/12/09 05:27:29 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.26 2000/12/09 12:23:35 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -592,3 +592,7 @@
 368	UNIMPL		capget
 369	UNIMPL		capset
 370	UNIMPL		sendfile
+371	UNIMPL		setresgid
+372	UNIMPL		getresgid
+373	UNIMPL		sys_dipc
+374	UNIMPL		shmget
