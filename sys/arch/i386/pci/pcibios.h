@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.2.6.1 2000/08/10 22:42:04 soda Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -79,6 +79,9 @@ struct pcibios_pir_header {
 	u_int8_t	checksum;
 } __attribute__((__packed__));
 
+#define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
+#define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
+
 void	pcibios_init __P((void));
 
 extern struct pcibios_pir_header pcibios_pir_header;
@@ -88,3 +91,21 @@ extern int pcibios_max_bus;
 
 void pci_device_foreach __P((pci_chipset_tag_t, int,
 			     void (*) (pci_chipset_tag_t, pcitag_t)));
+
+#ifdef PCIBIOSVERBOSE
+extern int pcibiosverbose;
+
+#define	PCIBIOS_PRINTV(arg) \
+	do { \
+		if (pcibiosverbose) \
+			printf arg; \
+	} while (0)
+#define	PCIBIOS_PRINTVN(n, arg) \
+	do { \
+		 if (pcibiosverbose > (n)) \
+			printf arg; \
+	} while (0)
+#else
+#define	PCIBIOS_PRINTV(arg)
+#define	PCIBIOS_PRINTVN(n, arg)
+#endif
