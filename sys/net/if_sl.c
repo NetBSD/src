@@ -193,6 +193,7 @@ struct sl_softc sl_softc[NSL];
 #define t_sc T_LINEP
 
 int sloutput(), slioctl(), ttrstrt();
+void slstart();
 extern struct timeval time;
 
 /*
