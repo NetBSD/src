@@ -1130,11 +1130,21 @@ wdgetctlr(int u, struct disk *du)
 		return(stat);
 	}
 #endif
+
+	/*
+	 * If WDCC_READP fails then we might have an old drive so we try
+	 * a seek to 0; if that passes then the drive is there but it's
+	 * OLD AND KRUSTY.
+	 */
 	if (stat & WDCS_ERR) {
-		splx(x);
-		return(inb(wdc+wd_error));
+		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
+	        if(stat & WDCS_ERR) {
+			splx(x);
+			return(inb(wdc+wd_error));
+		}
+		stat = 0x7f; /* MFM/RLL marker for later. */
 	}
-    
+
 	/* obtain parameters */
 	wp = &du->dk_params;
 	insw(wdc+wd_data, tb, sizeof(tb)/sizeof(short));
@@ -1146,6 +1156,7 @@ wdgetctlr(int u, struct disk *du)
 		p = (u_short *) (wp->wdp_model + i);
 		*p = ntohs(*p);
 	}
+
 /*
 	printf("gc %x cyl %d trk %d sec %d type %d sz %d model %s\n", wp->wdp_config,
 		wp->wdp_fixedcyl+wp->wdp_removcyl, wp->wdp_heads, wp->wdp_sectors,
@@ -1161,10 +1172,18 @@ wdgetctlr(int u, struct disk *du)
 	du->dk_dd.d_partitions[1].p_offset = 0;
 
 	/* dubious ... */
-	bcopy("ESDI/IDE", du->dk_dd.d_typename, 9);
+	if(stat == 0x7f) {
+		strncpy(du->dk_dd.d_typename, "ST506", sizeof du->dk_dd.d_typename);
+		for(i=0; i<sizeof(wp->wdp_model); i++)
+			wp->wdp_model[i] = ' ';
+		strncpy(wp->wdp_model, "KrUsTy DiSk", sizeof wp->wdp_model);
+		du->dk_dd.d_type = DTYPE_ST506;
+	} else {
+		strncpy(du->dk_dd.d_typename, "ESDI/IDE", sizeof du->dk_dd.d_typename);
+		du->dk_dd.d_type = DTYPE_ESDI;
+	}
 	bcopy(wp->wdp_model+20, du->dk_dd.d_packname, 14-1);
 	/* better ... */
-	du->dk_dd.d_type = DTYPE_ESDI;
 	du->dk_dd.d_subtype |= DSTYPE_GEOMETRY;
     
 	/* XXX sometimes possibly needed */
