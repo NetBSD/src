@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.23 2002/10/06 16:33:36 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.24 2002/10/06 23:14:25 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.23 2002/10/06 16:33:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.24 2002/10/06 23:14:25 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,12 +130,12 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define		AUVIA_PCICONF_ACFM	 0x00000200	/* FM enab */
 #define		AUVIA_PCICONF_ACSB	 0x00000100	/* SB enab */
 
-#define		AUVIA_PLAY_BASE			0x00
-#define		AUVIA_RECORD_BASE		0x10
+#define	AUVIA_PLAY_BASE			0x00
+#define	AUVIA_RECORD_BASE		0x10
 
-#define		AUVIA_RP_STAT			0x00
+#define	AUVIA_RP_STAT			0x00
 #define		AUVIA_RPSTAT_INTR		0x03
-#define		AUVIA_RP_CONTROL		0x01
+#define	AUVIA_RP_CONTROL		0x01
 #define		AUVIA_RPCTRL_START		0x80
 #define		AUVIA_RPCTRL_TERMINATE		0x40
 #define		AUVIA_RPCTRL_AUTOSTART		0x20
@@ -143,22 +143,22 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define		AUVIA_RPCTRL_STOP		0x04
 #define		AUVIA_RPCTRL_EOL		0x02
 #define		AUVIA_RPCTRL_FLAG		0x01
-#define		AUVIA_RP_MODE			0x02
+#define	AUVIA_RP_MODE			0x02
 #define		AUVIA_RPMODE_INTR_FLAG		0x01
 #define		AUVIA_RPMODE_INTR_EOL		0x02
 #define		AUVIA_RPMODE_STEREO		0x10
 #define		AUVIA_RPMODE_16BIT		0x20
 #define		AUVIA_RPMODE_AUTOSTART		0x80
-#define		AUVIA_RP_DMAOPS_BASE		0x04
+#define	AUVIA_RP_DMAOPS_BASE		0x04
 
-#define		VIA8233_RP_DXS_LVOL		0x02
-#define		VIA8233_RP_DXS_RVOL		0x03
-#define		VIA8233_RP_RATEFMT		0x08
+#define	VIA8233_RP_DXS_LVOL		0x02
+#define	VIA8233_RP_DXS_RVOL		0x03
+#define	VIA8233_RP_RATEFMT		0x08
 #define		VIA8233_RATEFMT_48K		0xfffff
 #define		VIA8233_RATEFMT_STEREO		0x00100000
 #define		VIA8233_RATEFMT_16BIT		0x00200000
 
-#define		VIA_RP_DMAOPS_COUNT		0x0c
+#define	VIA_RP_DMAOPS_COUNT		0x0c
 
 #define	AUVIA_CODEC_CTL			0x80
 #define		AUVIA_CODEC_READ		0x00800000
@@ -961,21 +961,17 @@ auvia_trigger_output(void *addr, void *start, void *end,
 			AUVIA_PLAY_BASE + AUVIA_RP_DMAOPS_BASE,
 		ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		AUVIA_PLAY_BASE + AUVIA_RP_CONTROL, ch->sc_reg);
-
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			AUVIA_PLAY_BASE + VIA8233_RP_DXS_LVOL, 0);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			AUVIA_PLAY_BASE + VIA8233_RP_DXS_RVOL, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_PLAY_BASE + AUVIA_RP_CONTROL,
 			AUVIA_RPCTRL_START | AUVIA_RPCTRL_AUTOSTART |
 			AUVIA_RPCTRL_STOP  | AUVIA_RPCTRL_EOL | AUVIA_RPCTRL_FLAG);
-	} else
+	} else {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_PLAY_BASE + AUVIA_RP_MODE, ch->sc_reg);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_PLAY_BASE + AUVIA_RP_CONTROL, AUVIA_RPCTRL_START);
+	}
 
 	return 0;
 }
@@ -1007,22 +1003,18 @@ auvia_trigger_input(void *addr, void *start, void *end,
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		AUVIA_RECORD_BASE + AUVIA_RP_DMAOPS_BASE,
 		ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		AUVIA_RECORD_BASE + AUVIA_RP_MODE,
-		ch->sc_reg);
 
-	if(sc->sc_flags & AUVIA_FLAGS_VT8233) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			AUVIA_RECORD_BASE + VIA8233_RP_DXS_LVOL, 0);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			AUVIA_RECORD_BASE + VIA8233_RP_DXS_RVOL, 0);
+	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_RECORD_BASE + AUVIA_RP_CONTROL,
 			AUVIA_RPCTRL_START | AUVIA_RPCTRL_AUTOSTART |
 			AUVIA_RPCTRL_STOP  | AUVIA_RPCTRL_EOL | AUVIA_RPCTRL_FLAG);
-	} else
+	} else {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			AUVIA_RECORD_BASE + AUVIA_RP_MODE, ch->sc_reg);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			AUVIA_RECORD_BASE + AUVIA_RP_CONTROL, AUVIA_RPCTRL_START);
+	}
 
 	return 0;
 }
