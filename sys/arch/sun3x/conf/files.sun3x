@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.21 1997/10/07 17:08:35 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.22 1997/10/16 17:20:35 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -32,6 +32,8 @@ file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c
 file arch/sun3/sun3/vm_machdep.c
 
+file arch/sun3x/dev/idprom.c
+
 # include "arch/m68k/fpe/files.fpe"
 
 file arch/m68k/m68k/sig_machdep.c
@@ -61,15 +63,10 @@ device obmem {addr = -1, [ipl = -1], [vect = -1]}
 attach obmem at mainbus
 file arch/sun3x/dev/obmem.c		obmem
 
-# VME Short space (D16)
-device vmes {addr = -1, [ipl = -1], [vect = -1]}
-attach vmes at mainbus
-
-# VME Long space (D32)
-device vmel {addr = -1, [ipl = -1], [vect = -1]}
-attach vmel at mainbus
-
-file arch/sun3x/dev/vme.c		vmes | vmel
+# VME (unit encodes address/data sizes)
+device vme {addr = -1, [ipl = -1], [vect = -1]}
+attach vme at mainbus
+file arch/sun3x/dev/vme.c		vme
 
 #
 # Machine-independent SCSI drivers
@@ -91,9 +88,6 @@ file arch/sun3/dev/fb.c			# sunfb needs-flag
 #
 # On-Board I/O (OBIO)
 #
-device idprom
-attach idprom at obio
-file arch/sun3x/dev/idprom.c		idprom
 
 device memerr
 attach memerr at obio
@@ -160,31 +154,27 @@ attach cgfour at obmem
 file arch/sun3x/dev/cg4.c		cgfour needs-flag
 
 #
-# VME A16 (vmes)
+# VME
 #
 
-attach ie at vmes with ie_vmes
+attach ie at vme with ie_vmes
 file arch/sun3/dev/if_ie_vmes.c 	ie_vmes
 
-attach si at vmes with si_vmes
+attach si at vme with si_vmes
 file	arch/sun3/dev/si_vme.c		si_vmes
 
 device cgtwo: sunfb
-attach cgtwo at vmes
+attach cgtwo at vme
 file arch/sun3x/dev/cg2.c		cgtwo needs-flag
 
 device	xyc {drive = -1}
-attach	xyc at vmes
+attach	xyc at vme
 device	xy: disk
 attach	xy at xyc
 file	arch/sun3x/dev/xy.c		xy needs-flag
 
-#
-# VME A32 (vmel)
-#
-
 device	xdc {drive = -1}
-attach	xdc at vmel
+attach	xdc at vme
 device	xd: disk
 attach	xd at xdc
 file	arch/sun3x/dev/xd.c		xd needs-flag

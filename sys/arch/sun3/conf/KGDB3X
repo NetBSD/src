@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.11 1997/10/07 17:49:26 gwr Exp $
+# $NetBSD: KGDB3X,v 1.12 1997/10/16 17:20:41 gwr Exp $
 
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -86,6 +86,7 @@ ms0	at zsc0 channel 1	# mouse
 
 # Intel Ethernet
 ie0 at obio0 addr 0x65000000 ipl 3
+ie1 at vme2  addr   0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr 0x65002000 ipl 3
@@ -109,6 +110,21 @@ esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
 fd0  at fdc0	# First (and only) floppy drive.
+
+# Sun3 "si" SCSI controller (NCR 5380)
+# This driver has several flags which may be enabled using
+# the "flags" directive.  Valid flags are:
+#
+# 0x000ff	Set (1<<target) to disable disconnect/reselect
+# 0x0ff00	Set (1<<(target+8)) to disable parity checking
+# 0x10000	Set this bit to disable DMA interrupts (poll)
+# 0x20000	Set this bit to disable DMA entirely (use PIO)
+#
+# For example: "flags 0x1000f" would disable DMA interrupts,
+# and disable disconnect/reselect for targets 0-3
+# XXX: Disable DMA entirely until it is debugged.
+si0 at vme2 addr 0x200000 ipl 2 vect 0x40 flags 0x300ff
+si1 at vme2 addr 0x204000 ipl 2 vect 0x41 flags 0x300ff
 
 #
 # Frame buffer devices
