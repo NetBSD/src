@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.15 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: rain.c,v 1.16 2004/02/08 22:21:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.15 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: rain.c,v 1.16 2004/02/08 22:21:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ main(argc, argv)
 	(void)signal(SIGTSTP, onsig);
 	(void)signal(SIGTERM, onsig);
 
+	curs_set(0);
 	for (j = 4; j >= 0; --j) {
 		xpos[j] = random() % cols + 2;
 		ypos[j] = random() % lines + 2;

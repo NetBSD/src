@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.13 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: worms.c,v 1.14 2004/02/08 22:21:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.13 2004/01/27 20:30:31 jsm Exp $");
+__RCSID("$NetBSD: worms.c,v 1.14 2004/02/08 22:21:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,6 +238,7 @@ main(argc, argv)
 	    sizeof(struct worm))) || !(mp = malloc((size_t)1024)))
 		nomem();
 	initscr();
+	curs_set(0);
 	CO = COLS;
 	LI = LINES;
 	last = CO - 1;
