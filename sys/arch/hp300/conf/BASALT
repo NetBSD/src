@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.30 1999/07/31 20:19:31 thorpej Exp $
+#	$NetBSD: BASALT,v 1.31 1999/09/19 21:12:43 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -23,6 +23,9 @@ options 	COMPAT_11		# compatibility with NetBSD 1.1
 options 	COMPAT_12		# compatibility with NetBSD 1.2
 options 	COMPAT_13		# compatibility with NetBSD 1.3
 options 	COMPAT_14		# compatibility with NetBSD 1.4
+options 	SYSVSHM			# System V-style shared memory
+options 	SYSVSEM			# System V-style semaphores
+options 	SYSVMSG			# System V-style message queues
 options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
 options 	LKM			# loadable kernel modules
