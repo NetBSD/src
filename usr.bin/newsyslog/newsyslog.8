@@ -3,7 +3,7 @@
 .\" This file contains changes from the Open Software Foundation.
 .\"
 .\"	from: @(#)newsyslog.8
-.\"	$Id: newsyslog.8,v 1.5 1993/10/05 00:51:20 cgd Exp $
+.\"	$Id: newsyslog.8,v 1.6 1995/01/06 19:20:20 jtc Exp $
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
 .\" 
@@ -118,7 +118,7 @@ The
 .I flags
 field specifies if the archives should have any special processing
 done to the archived log files.  The ``Z'' flag will make the archive
-files compressed to save space using /usr/ucb/compress.  The ``B'' flag
+files compressed to save space using /usr/bin/gzip.  The ``B'' flag
 means that the file is a binary file, and so the ascii message which
 .I newsyslog
 inserts to indicate the fact that the logs have been turned over
@@ -163,6 +163,6 @@ Theodore Ts'o, MIT Project Athena
 .br
 Copyright 1987, Massachusetts Institute of Technology
 .SH "SEE ALSO"
-syslogd(8), syslog(3), compress(1)
+syslogd(8), syslog(3), gzip(1)
 .ns
 .sp

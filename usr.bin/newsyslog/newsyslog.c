@@ -25,11 +25,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: pk $
+ *      $Author: jtc $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.7 1994/02/20 09:54:45 pk Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.8 1995/01/06 19:20:22 jtc Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -46,6 +46,7 @@ static char rcsid[] = "$Id: newsyslog.c,v 1.7 1994/02/20 09:54:45 pk Exp $";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
@@ -174,11 +175,12 @@ PRS(argc,argv)
         int     c;
         FILE    *f;
         char    line[BUFSIZ];
+	char	*p;
 
         progname = argv[0];
         timenow = time((time_t *) 0);
-        daytime = ctime(&timenow);
-        daytime[strlen(daytime)-1] = '\0';
+        daytime = ctime(&timenow) + 4;
+        daytime[16] = '\0';
 
         /* Let's find the pid of syslogd */
         syslog_pid = 0;
@@ -189,10 +191,12 @@ PRS(argc,argv)
 		(void)fclose(f);
 
         /* Let's get our hostname */
-        if (gethostname(hostname, 64)) {
-                perror("gethostname");
-                (void) strcpy(hostname,"Mystery Host");
-        }
+        (void) gethostname(hostname, sizeof(hostname));
+
+	/* Truncate domain */
+	if (p = strchr(hostname, '.')) {
+		*p = '\0';
+	}
 
         optind = 1;             /* Start options parsing */
         while ((c=getopt(argc,argv,"nrvf:t:")) != EOF)
