@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.101 2003/12/19 03:46:02 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.102 2004/10/07 07:44:17 dan Exp $
 .\"
 .\" Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1746,6 +1746,14 @@ is not given, the file is stored in the current directory as the
 .Xr basename 1
 of
 .Ar path .
+Note that if a
+.Tn HTTP
+redirect is received, the fetch is retried using the new target URL 
+supplied by the server, with a corresponding new
+.Ar path . 
+Using an explicit
+.Fl o Ar output
+is recommended, to avoid writing to unexpected file names.
 .Pp
 If a classic format or an
 .Tn FTP
