@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2002/07/29 16:22:57 simonb Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 2002/08/28 02:27:11 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,10 +41,6 @@
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>
-
-// #include <evbmips/malta/autoconf.h>
-// #include <evbmips/malta/maltareg.h>
-// #include <evbmips/malta/maltavar.h>
 
 #include "locators.h"
 
