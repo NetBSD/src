@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1999/04/26 22:46:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1999/05/20 08:21:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,7 @@
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,15 +67,6 @@
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -131,21 +120,6 @@ vm_offset_t vmmap;
  */
 int	safepri = PSL_LOWIPL;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-
 u_char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
@@ -198,69 +172,6 @@ consinit()
 }
 
 /*
- * allocsys() - Private routine used by cpu_startup() below.
- *
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-#define	valloc(name, type, num) \
-	v = (caddr_t)(((name) = (type *)v) + (num))
-static caddr_t allocsys __P((caddr_t));
-
-static caddr_t
-allocsys(v)
-	register caddr_t v;
-{
-
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate. We allocate
-	 * the BSD standard of use 10% of memory for the first 2 Meg,
-	 * 5% of remaining. Insure a minimum of 16 buffers.
-	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0) {
-		/* We always have more than 2MB of memory. */
-		bufpages = ((btoc(2 * 1024 * 1024) + physmem) /
-		            (20 * CLSIZE));
-	}
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-	return v;
-}
-#undef	valloc
-
-/*
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  *
@@ -276,6 +187,7 @@ cpu_startup()
 	vm_size_t size;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
+	char pbuf[9];
 
 	/*
 	 * Initialize message buffer (for kernel printf).
@@ -295,17 +207,17 @@ cpu_startup()
 	identifycpu();
 	initfpu();	/* also prints FPU type */
 
-	size = ptoa(physmem);
-	printf("real  mem = %ldK (0x%lx)\n", (size >> 10), size);
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	sz = (int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -384,10 +296,10 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-	size = ptoa(uvmexp.free);
-	printf("avail mem = %ldK (0x%lx)\n", (size >> 10), size);
-	printf("using %d buffers containing %d bytes of memory\n",
-		   nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
