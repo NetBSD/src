@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 1997/04/01 16:32:25 matthias Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 1998/03/18 21:59:38 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -30,10 +30,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
+
 #define DEFINE_SPLX
 #include <sys/param.h>
-#include <sys/vmmeter.h>
 #include <sys/systm.h>
+
+#include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/psl.h>
 
@@ -125,7 +131,11 @@ check_sir(arg)
 		     cirpending & -mask; mask <<= 1, iv++) {
 			if ((cirpending & mask) != 0) {
 				register int s;
+#if defined(UVM)
+				uvmexp.softs++;
+#else
 				cnt.v_soft++;
+#endif
 				iv->iv_cnt++;
 				s = splraise(iv->iv_mask);
 				iv->iv_vec(iv->iv_arg);
