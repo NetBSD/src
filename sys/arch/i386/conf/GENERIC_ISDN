@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.1.1.1 2001/01/05 12:50:07 martin Exp $
+# $NetBSD: GENERIC_ISDN,v 1.2 2001/01/05 23:22:01 martin Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -28,8 +28,9 @@ options ISICISA_USR_STI
 options ISICISA_ITKIX1
 # isic0 at isa? port 0x398 irq 10
 #
+# XXX not ready yet:
 # Active EICON/Diehl Cards: S, SX, SXn, SCOM or QUADRO
-daic0 at isa? iomem 0xd8000 irq 10
+# daic0 at isa? iomem 0xd8000 irq 10
 #
 #---------------------------------------------------------------------
 # Supported ISA Plug & Play cards:
