@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.128 2003/05/22 06:34:45 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.129 2003/05/31 19:38:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.128 2003/05/22 06:34:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.129 2003/05/31 19:38:08 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1476,7 +1476,7 @@ wi_write_multi(struct wi_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep estep;
 
- 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset(&mlist, 0, sizeof(mlist));
