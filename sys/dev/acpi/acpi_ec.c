@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.19 2003/11/12 13:18:24 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.20 2003/11/12 13:59:23 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.19 2003/11/12 13:18:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.20 2003/11/12 13:59:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,7 @@ struct acpi_ec_softc {
 	uint32_t	sc_csrvalue;	/* saved control register */
 
 	struct lock	sc_lock;	/* serialize operations to this EC */
+	struct simplelock sc_slock;	/* protect against interrupts */
 	UINT32		sc_glkhandle;	/* global lock handle */
 	UINT32		sc_glk;		/* need global lock? */
 } *acpiec_ecdt_softc;
@@ -218,7 +219,8 @@ static const char * const ec_hid[] = {
 	NULL
 };
 
-#define	EC_F_PENDQUERY	0x02		/* query is pending */
+#define	EC_F_TRANSACTION	0x01	/* doing transaction */
+#define	EC_F_PENDQUERY		0x02	/* query is pending */
 
 /*
  * how long to wait to acquire global lock.
@@ -235,45 +237,6 @@ static const char * const ec_hid[] = {
 	bus_space_read_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0)
 #define	EC_CSR_WRITE(sc, v)						\
 	bus_space_write_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0, (v))
-
-static __inline int
-EcIsLocked(struct acpi_ec_softc *sc)
-{
- 
-	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
-}
-
-static __inline void
-EcLock(struct acpi_ec_softc *sc)
-{
-	ACPI_STATUS status;
-
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-	if (sc->sc_glk) {
-		status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
-		    &sc->sc_glkhandle);
-		if (ACPI_FAILURE(status)) {
-			printf("%s: failed to acquire global lock\n",
-			    sc->sc_dev.dv_xname);
-			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-			return;
-		}
-	}
-}
-
-static __inline void
-EcUnlock(struct acpi_ec_softc *sc)
-{
-	ACPI_STATUS status;
-
-	if (sc->sc_glk) {
-		status = AcpiReleaseGlobalLock(sc->sc_glkhandle);
-		if (ACPI_FAILURE(status))
-			printf("%s: failed to release global lock\n",
-			    sc->sc_dev.dv_xname);
-	}
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-}
 
 typedef struct {
 	EC_COMMAND	Command;
@@ -297,12 +260,89 @@ static ACPI_STATUS	EcRead(struct acpi_ec_softc *sc, UINT8 Address,
 			    UINT8 *Data);
 static ACPI_STATUS	EcWrite(struct acpi_ec_softc *sc, UINT8 Address,
 			    UINT8 *Data);
+static void		EcGpeQueryHandler(void *);
+static __inline int	EcIsLocked(struct acpi_ec_softc *);
+static __inline void	EcLock(struct acpi_ec_softc *);
+static __inline void	EcUnlock(struct acpi_ec_softc *);
+
 
 int	acpiec_match(struct device *, struct cfdata *, void *);
 void	acpiec_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
+
+static __inline int
+EcIsLocked(struct acpi_ec_softc *sc)
+{
+ 
+	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
+}
+
+static __inline void
+EcLock(struct acpi_ec_softc *sc)
+{
+	ACPI_STATUS status;
+	int s;
+
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	if (sc->sc_glk) {
+		status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
+		    &sc->sc_glkhandle);
+		if (ACPI_FAILURE(status)) {
+			printf("%s: failed to acquire global lock\n",
+			    sc->sc_dev.dv_xname);
+			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+			return;
+		}
+	}
+
+	s = splvm(); /* XXX */
+	simple_lock(&sc->sc_slock);
+	sc->sc_flags |= EC_F_TRANSACTION;
+	simple_unlock(&sc->sc_slock);
+	splx(s);
+}
+
+static __inline void
+EcUnlock(struct acpi_ec_softc *sc)
+{
+	ACPI_STATUS status;
+	int s;
+
+	/*
+	 * Clear & Re-Enable the EC GPE:
+	 * -----------------------------
+	 * 'Consume' any EC GPE events that we generated while performing
+	 * the transaction (e.g. IBF/OBF). Clearing the GPE here shouldn't
+	 * have an adverse affect on outstanding EC-SCI's, as the source
+	 * (EC-SCI) will still be high and thus should trigger the GPE
+	 * immediately after we re-enabling it.
+	 */
+	s = splvm(); /* XXX */
+	simple_lock(&sc->sc_slock);
+	if (sc->sc_flags & EC_F_PENDQUERY) {
+		ACPI_STATUS Status2;
+
+		Status2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
+		    EcGpeQueryHandler, sc);
+		if (ACPI_FAILURE(Status2))
+			printf("%s: unable to queue pending query: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(Status2));
+		sc->sc_flags &= ~EC_F_PENDQUERY;
+	}
+	sc->sc_flags &= ~EC_F_TRANSACTION;
+	simple_unlock(&sc->sc_slock);
+	splx(s);
+
+	if (sc->sc_glk) {
+		status = AcpiReleaseGlobalLock(sc->sc_glkhandle);
+		if (ACPI_FAILURE(status))
+			printf("%s: failed to release global lock\n",
+			    sc->sc_dev.dv_xname);
+	}
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+}
 
 /*
  * acpiec_match:
@@ -366,6 +406,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	printf(": ACPI Embedded Controller\n");
 
 	lockinit(&sc->sc_lock, PWAIT, "eclock", 0, 0);
+	simple_lock_init(&sc->sc_slock);
 
 	sc->sc_node = aa->aa_node;
 
@@ -483,10 +524,14 @@ EcGpeQueryHandler(void *Context)
 		if ((EC_CSR_READ(sc) & EC_EVENT_SCI) == 0)
 			break;
 
+		EcLock(sc);
+
 		/*
 		 * Find out why the EC is signalling us
 		 */
 		Status = EcQuery(sc, &Data);
+
+		EcUnlock(sc);
 	    
 		/*
 		 * If we failed to get anything from the EC, give up.
@@ -535,7 +580,8 @@ EcGpeHandler(void *Context)
 	 * If EC is locked, the intr must process EcRead/Write wait only.
 	 * Query request must be pending.
 	 */
-	if (EcIsLocked(sc)) {
+	simple_lock(&sc->sc_slock);
+	if (sc->sc_flags & EC_F_TRANSACTION) {
 		csrvalue = EC_CSR_READ(sc);
 		if (csrvalue & EC_EVENT_SCI)
 			sc->sc_flags |= EC_F_PENDQUERY;
@@ -545,7 +591,9 @@ EcGpeHandler(void *Context)
 			sc->sc_csrvalue = csrvalue;
 			wakeup(&sc->sc_csrvalue);
 		}
+		simple_unlock(&sc->sc_slock);
 	} else {
+		simple_unlock(&sc->sc_slock);
 		/* Enqueue GpeQuery handler. */
 		Status = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
 		    EcGpeQueryHandler, Context);
@@ -713,14 +761,14 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 {
 	ACPI_STATUS Status;
 
-	EcLock(sc);
+	if (EcIsLocked(sc) == 0)
+		printf("%s: EcQuery called without EC lock!\n",
+		    sc->sc_dev.dv_xname);
 
 	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
-	Status = EcWaitEvent(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
+	Status = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
 	if (ACPI_SUCCESS(Status))
 		*Data = EC_DATA_READ(sc);
-
-	EcUnlock(sc);
 
 	if (ACPI_FAILURE(Status))
 		printf("%s: timed out waiting for EC to respond to "
@@ -751,26 +799,6 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 	default:
 		Status = AE_SUPPORT;
 		break;
-	}
-
-	/*
-	 * Clear & Re-Enable the EC GPE:
-	 * -----------------------------
-	 * 'Consume' any EC GPE events that we generated while performing
-	 * the transaction (e.g. IBF/OBF). Clearing the GPE here shouldn't
-	 * have an adverse affect on outstanding EC-SCI's, as the source
-	 * (EC-SCI) will still be high and thus should trigger the GPE
-	 * immediately after we re-enabling it.
-	 */
-	if (sc->sc_flags & EC_F_PENDQUERY) {
-		ACPI_STATUS Status2;
-
-		Status2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
-		    EcGpeQueryHandler, sc);
-		if (ACPI_FAILURE(Status2))
-			printf("%s: unable to queue pending query: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(Status2));
-		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
 
 	EcUnlock(sc);
