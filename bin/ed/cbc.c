@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.12 1998/02/03 05:49:42 perry Exp $	*/
+/*	$NetBSD: cbc.c,v 1.13 1998/07/28 05:46:20 mycroft Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -44,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.12 1998/02/03 05:49:42 perry Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.13 1998/07/28 05:46:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ typedef char Desbuf[8];
 #define	BUFFER(x)	(x)
 #define	UBUFFER(x)	(x)
 
+#ifdef DES
 /*
  * global variables and related macros
  */
@@ -113,6 +114,7 @@ int pflag;				/* 1 to preserve parity bits */
 unsigned char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
 int des_ct = 0;			/* count for get_des_char/put_des_char */
 int des_n = 0;			/* index for put_des_char/get_des_char */
+#endif
 
 
 /* init_des_cipher: initialize DES */
