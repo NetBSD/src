@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.60 2000/05/11 23:06:59 jdc Exp $
+#	$NetBSD: termcap.src,v 1.61 2000/05/12 06:44:34 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1742,7 +1742,7 @@ xterm-r6|xterm-old|xterm X11R6 version:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 xterm-xf86-v32|xterm terminal emulator (X Window System):\
-	:am:bs:km:mi:ms:utxn:\
+	:am:bs:km:mi:ms:ut:xn:\
 	:Co#8:co#80:it#8:li#24:pa#64:\
 	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
 	:*6=\E[4~:@0=\E[1~:@1=\EOE:@7=\EOF:@8=\EOM:F1=\E[23~:\
