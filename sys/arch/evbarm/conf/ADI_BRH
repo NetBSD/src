@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.24 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: ADI_BRH,v 1.25 2005/02/18 21:05:51 dsl Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -49,7 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

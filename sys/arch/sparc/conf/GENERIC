@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168 2005/02/11 08:25:56 dsl Exp $
+# $NetBSD: GENERIC,v 1.169 2005/02/18 21:05:54 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.168 $"
+#ident 		"GENERIC-$Revision: 1.169 $"
 
 maxusers	32
 
@@ -193,7 +193,7 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

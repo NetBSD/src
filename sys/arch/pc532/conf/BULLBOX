@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.17 2005/01/31 16:55:01 hannken Exp $
+#	$NetBSD: BULLBOX,v 1.18 2005/02/18 21:05:53 dsl Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -48,6 +48,7 @@ options 	SETUIDSCRIPTS
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 options 	SOFTDEP			# FFS soft updates support.
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 options 	GATEWAY		# packet forwarding

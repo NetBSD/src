@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.51 2005/02/11 08:25:53 dsl Exp $
+# 	$NetBSD: GENERIC,v 1.52 2005/02/18 21:05:50 dsl Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.51 $"
+#ident		"GENERIC-$Revision: 1.52 $"
 
 # estimated number of users
 maxusers	32
@@ -71,7 +71,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

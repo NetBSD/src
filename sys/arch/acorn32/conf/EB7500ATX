@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.12 2005/02/11 08:25:53 dsl Exp $
+#	$NetBSD: EB7500ATX,v 1.13 2005/02/18 21:05:50 dsl Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.12 $"
+#ident		"EB7500ATX-$Revision: 1.13 $"
 
 # estimated number of users
 maxusers	32
@@ -65,7 +65,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
