@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.25 2000/06/11 21:19:23 thorpej Exp $ */
+/* $NetBSD: cpuconf.c,v 1.25.2.1 2000/06/27 19:32:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -152,9 +152,17 @@ extern void dec_550_init __P((void));
 #include "opt_dec_1000.h"
 #include "opt_dec_1000a.h"
 #if defined(DEC_1000) || defined(DEC_1000A)
-extern void dec_1000a_init __P((void));
+extern void _dec_1000a_init __P((void));
+#endif
+#ifdef DEC_1000A
+#define	dec_1000a_init		_dec_1000a_init
 #else
 #define	dec_1000a_init		platform_not_configured
+#endif
+#ifdef DEC_1000
+#define	dec_1000_init		_dec_1000a_init
+#else
+#define	dec_1000_init		platform_not_configured
 #endif
 
 #include "opt_dec_alphabook1.h"
@@ -179,10 +187,19 @@ extern void dec_6600_init __P((void));
 #endif
 
 #include "opt_dec_2100_a500.h"
+#include "opt_dec_2100a_a500.h"
+#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
+extern void _dec_2100_a500_init __P((void));
+#endif
 #ifdef DEC_2100_A500
-extern void dec_2100_a500_init __P((void));
+#define	dec_2100_a500_init	_dec_2100_a500_init
 #else
 #define	dec_2100_a500_init	platform_not_configured
+#endif
+#ifdef DEC_2100A_A500
+#define	dec_2100a_a500_init	_dec_2100_a500_init
+#else
+#define	dec_2100a_a500_init	platform_not_configured
 #endif
 
 #include "opt_api_up1000.h"
@@ -214,13 +231,13 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_2100_A50, dec_2100_a50_init, "DEC_2100_A50"),
 	cpu_notsupp(ST_DEC_MUSTANG, "Mustang"),
 	cpu_init(ST_DEC_KN20AA, dec_kn20aa_init, "DEC_KN20AA"),
-	cpu_init(ST_DEC_1000, dec_1000a_init, "DEC_1000"),
+	cpu_init(ST_DEC_1000, dec_1000_init, "DEC_1000"),
 	cpu_init(ST_EB66, dec_eb66_init, "DEC_EB66"),
 	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
 	cpu_init(ST_ALPHABOOK1, dec_alphabook1_init, "DEC_ALPHABOOK1"),
 	cpu_init(ST_DEC_4100, dec_kn300_init, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
-	cpu_notsupp(ST_DEC_2100A_A500, "DEC 2100A/A500 (``Lynx'')"),
+	cpu_init(ST_DEC_2100A_A500, dec_2100a_a500_init, "DEC_2100A_A500"),
 	cpu_init(ST_EB164, dec_eb164_init, "DEC_EB164"),
 	cpu_init(ST_DEC_1000A, dec_1000a_init, "DEC_1000A"),
 	cpu_notsupp(ST_DEC_ALPHAVME_224, "AlphaVME 224"),
