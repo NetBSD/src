@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.285 2000/12/15 01:28:39 thorpej Exp $
+#	$NetBSD: mi,v 1.286 2000/12/17 13:52:04 ad Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -354,6 +354,8 @@
 ./usr/include/dev/tc/ioasicreg.h		comp-c-include
 ./usr/include/dev/tc/ioasicvar.h		comp-c-include
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
+./usr/include/dev/tc/sticreg.h		comp-c-include
+./usr/include/dev/tc/sticvar.h		comp-c-include
 ./usr/include/dev/tc/tcdevs.h		comp-c-include
 ./usr/include/dev/tc/tcdevs_data.h		comp-c-include
 ./usr/include/dev/tc/tcdsreg.h		comp-c-include
