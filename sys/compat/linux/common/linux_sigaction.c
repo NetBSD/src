@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.16 1998/10/04 00:02:42 fvdl Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.17 1998/10/07 23:47:44 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
 
 #include <compat/linux/linux_syscallargs.h>
 
-/* Used on: arm, i386, m68k, mips, ppc */
-/* Not used on: alpha, sparc, sparc64 */
+/* Used on: alpha (aka osf_sigaction), arm, i386, m68k, mips, ppc */
+/* Not used on: sparc, sparc64 */
 
 /*
  * The Linux sigaction() system call. Do the usual conversions,
