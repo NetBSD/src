@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.13 2002/07/03 23:31:44 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.14 2002/07/19 22:20:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -735,15 +735,6 @@ NENTRY(sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-
-/* 
- *  Scheduler activations upcall trampoline.
- */ 	
-NENTRY(upcallcode)
-	call	SAF_UPCALL(%esp)
-	pushl	$101
-	movl	$SYS_exit,%eax
-	int	$0x80			# upcalls should not return.
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1.16.1 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.16.2 2002/07/19 22:20:39 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,8 +50,4 @@ _C_LABEL(sigcode):
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit
 	sc				/* exit(errno) */
-_C_LABEL(upcallcode):
-	blrl
-	li	0,SYS_exit
-	sc
 _C_LABEL(esigcode):
