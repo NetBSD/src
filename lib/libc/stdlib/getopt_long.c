@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.6 2000/06/09 21:35:53 nathanw Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.7 2000/07/08 14:58:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.6 2000/06/09 21:35:53 nathanw Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.7 2000/07/08 14:58:43 sommerfeld Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -398,7 +398,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			else {
 				/* ambiguous abbreviation */
 				if (PRINT_ERROR)
-					warnx(ambig, current_argv_len,
+					warnx(ambig, (int)current_argv_len,
 					     current_argv);
 				optopt = 0;
 				return BADCH;
@@ -408,7 +408,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 		        if (long_options[match].has_arg == no_argument
 			    && has_equal) {
 				if (PRINT_ERROR)
-					warnx(noarg, current_argv_len,
+					warnx(noarg, (int)current_argv_len,
 					     current_argv);
 				/*
 				 * XXX: GNU sets optopt to val regardless of
