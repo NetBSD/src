@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.3 2001/04/10 08:07:58 itojun Exp $	*/
-/*	$OpenBSD: misc.c,v 1.4 2001/02/28 17:52:54 deraadt Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2001/05/11 14:59:56 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.4 2001/02/28 17:52:54 deraadt Exp $");
+RCSID("$OpenBSD: misc.c,v 1.8 2001/05/11 14:59:56 markus Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -51,17 +51,40 @@ void
 set_nonblock(int fd)
 {
 	int val;
+
 	val = fcntl(fd, F_GETFL, 0);
 	if (val < 0) {
 		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
 		return;
 	}
 	if (val & O_NONBLOCK) {
-		debug("fd %d IS O_NONBLOCK", fd);
+		debug2("fd %d is O_NONBLOCK", fd);
 		return;
 	}
 	debug("fd %d setting O_NONBLOCK", fd);
 	val |= O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, val) == -1)
+		if (errno != ENODEV)
+			error("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
+			    fd, strerror(errno));
+}
+
+void
+unset_nonblock(int fd)
+{
+	int val;
+
+	val = fcntl(fd, F_GETFL, 0);
+	if (val < 0) {
+		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
+		return;
+	}
+	if (!(val & O_NONBLOCK)) {
+		debug2("fd %d is not O_NONBLOCK", fd);
+		return;
+	}
+	debug("fd %d setting O_NONBLOCK", fd);
+	val &= ~O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, val) == -1)
 		if (errno != ENODEV)
 			error("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
@@ -113,4 +136,73 @@ pwcopy(struct passwd *pw)
 	copy->pw_dir = xstrdup(pw->pw_dir);
 	copy->pw_shell = xstrdup(pw->pw_shell);
 	return copy;
+}
+
+int a2port(const char *s)
+{
+	long port;
+	char *endp;
+
+	errno = 0;
+	port = strtol(s, &endp, 0);
+	if (s == endp || *endp != '\0' ||
+	    (errno == ERANGE && (port == LONG_MIN || port == LONG_MAX)) ||
+	    port <= 0 || port > 65535)
+		return 0;
+
+	return port;
+}
+
+char *
+cleanhostname(char *host)
+{
+	if (*host == '[' && host[strlen(host) - 1] == ']') {
+		host[strlen(host) - 1] = '\0';
+		return (host + 1);
+	} else
+		return host;
+}
+
+char *
+colon(char *cp)
+{
+	int flag = 0;
+
+	if (*cp == ':')		/* Leading colon is part of file name. */
+		return (0);
+	if (*cp == '[')
+		flag = 1;
+
+	for (; *cp; ++cp) {
+		if (*cp == '@' && *(cp+1) == '[')
+			flag = 1;
+		if (*cp == ']' && *(cp+1) == ':' && flag)
+			return (cp+1);
+		if (*cp == ':' && !flag)
+			return (cp);
+		if (*cp == '/')
+			return (0);
+	}
+	return (0);
+}
+
+void
+addargs(arglist *args, char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	if (args->list == NULL) {
+		args->nalloc = 32;
+		args->num = 0;
+	} else if (args->num+2 >= args->nalloc) 
+		args->nalloc *= 2;
+
+	args->list = xrealloc(args->list, args->nalloc * sizeof(char *));
+	args->list[args->num++] = xstrdup(buf);
+	args->list[args->num] = NULL;
 }

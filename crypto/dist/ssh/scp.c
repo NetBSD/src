@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.12 2001/05/15 14:50:51 itojun Exp $	*/
+/*	$NetBSD: scp.c,v 1.13 2001/05/15 15:26:09 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,12 +76,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.65 2001/04/06 16:46:59 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.70 2001/05/08 19:45:24 mouring Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
 #include "pathnames.h"
 #include "log.h"
+#include "misc.h"
 
 /* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5
@@ -93,14 +94,14 @@ void progressmeter(int);
 int getttywidth(void);
 int do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc);
 
-/* setup arguments for the call to ssh */
-void addargs(char *fmt, ...) __attribute__((format(printf, 1, 2)));
+/* Struct for addargs */
+arglist args;
 
 /* Time a transfer started. */
 static struct timeval start;
 
 /* Number of bytes of current file transferred so far. */
-volatile u_long statbytes;
+volatile off_t statbytes;
 
 /* Total size of current file. */
 off_t totalbytes = 0;
@@ -116,13 +117,6 @@ int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
 char *ssh_program = _PATH_SSH_PROGRAM;
-
-/* This is the list of arguments that scp passes to ssh */
-struct {
-	char	**list;
-	int	num;
-	int	nalloc;
-} args;
 
 /* prototypes */
 void alarmtimer(int);
@@ -172,9 +166,9 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc)
 
 		args.list[0] = ssh_program;
 		if (remuser != NULL)
-			addargs("-l%s", remuser);
-		addargs("%s", host);
-		addargs("%s", cmd);
+			addargs(&args, "-l%s", remuser);
+		addargs(&args, "%s", host);
+		addargs(&args, "%s", cmd);
 
 		execvp(ssh_program, args.list);
 		perror(ssh_program);
@@ -194,7 +188,6 @@ typedef struct {
 } BUF;
 
 BUF *allocbuf(BUF *, int, int);
-char *colon(char *);
 void lostconn(int);
 void nospace(void);
 int okname(char *);
@@ -215,7 +208,6 @@ void rsource(char *, struct stat *);
 void sink(int, char *[]);
 void source(int, char *[]);
 void tolocal(int, char *[]);
-char *cleanhostname(char *);
 void toremote(char *, int, char *[]);
 void usage(void);
 
@@ -230,9 +222,9 @@ main(argc, argv)
 	extern int optind;
 
 	args.list = NULL;
-	addargs("ssh");	 	/* overwritten with ssh_program */
-	addargs("-x");
-	addargs("-oFallBackToRsh no");
+	addargs(&args, "ssh");	 	/* overwritten with ssh_program */
+	addargs(&args, "-x");
+	addargs(&args, "-oFallBackToRsh no");
 
 	fflag = tflag = 0;
 	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S:o:")) != -1)
@@ -241,18 +233,18 @@ main(argc, argv)
 		case '4':
 		case '6':
 		case 'C':
-			addargs("-%c", ch);
+			addargs(&args, "-%c", ch);
 			break;
 		case 'o':
 		case 'c':
 		case 'i':
-			addargs("-%c%s", ch, optarg);
+			addargs(&args, "-%c%s", ch, optarg);
 			break;
 		case 'P':
-			addargs("-p%s", optarg);
+			addargs(&args, "-p%s", optarg);
 			break;
 		case 'B':
-			addargs("-oBatchmode yes");
+			addargs(&args, "-oBatchmode yes");
 			break;
 		case 'p':
 			pflag = 1;
@@ -330,17 +322,6 @@ main(argc, argv)
 			verifydir(argv[argc - 1]);
 	}
 	exit(errs != 0);
-}
-
-char *
-cleanhostname(host)
-	char *host;
-{
-	if (*host == '[' && host[strlen(host) - 1] == ']') {
-		host[strlen(host) - 1] = '\0';
-		return (host + 1);
-	} else
-		return host;
 }
 
 void
@@ -487,8 +468,8 @@ source(argc, argv)
 	struct stat stb;
 	static BUF buffer;
 	BUF *bp;
-	off_t i;
-	int amt, fd, haderr, indx, result;
+	off_t i, amt, result;
+	int fd, haderr, indx;
 	char *last, *name, buf[2048];
 	int len;
 
@@ -656,9 +637,10 @@ sink(argc, argv)
 	off_t size;
 	int setimes, targisdir, wrerrno = 0;
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[2048];
-	int dummy_usec;
 	struct timeval tv[2];
 
+#define	atime	tv[0]
+#define	mtime	tv[1]
 #define	SCREWUP(str)	{ why = str; goto screwup; }
 
 	setimes = targisdir = 0;
@@ -705,25 +687,21 @@ sink(argc, argv)
 		if (ch == '\n')
 			*--cp = 0;
 
-#define getnum(t) (t) = 0; \
-  while (*cp >= '0' && *cp <= '9') (t) = (t) * 10 + (*cp++ - '0');
 		cp = buf;
 		if (*cp == 'T') {
 			setimes++;
 			cp++;
-			getnum(tv[1].tv_sec);
-			if (*cp++ != ' ')
+			mtime.tv_sec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.sec not delimited");
-			getnum(dummy_usec);
-			tv[1].tv_usec = 0;
-			if (*cp++ != ' ')
+			mtime.tv_usec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.usec not delimited");
-			getnum(tv[0].tv_sec);
-			if (*cp++ != ' ')
+			atime.tv_sec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("atime.sec not delimited");
-			getnum(dummy_usec);
-			tv[0].tv_usec = 0;
-			if (*cp++ != '\0')
+			atime.tv_usec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != '\0')
 				SCREWUP("atime.usec not delimited");
 			(void) atomic_write(remout, "", 1);
 			continue;
@@ -972,30 +950,6 @@ run_err(const char *fmt,...)
 	va_end(ap);
 }
 
-char *
-colon(cp)
-	char *cp;
-{
-	int flag = 0;
-
-	if (*cp == ':')		/* Leading colon is part of file name. */
-		return (0);
-	if (*cp == '[')
-		flag = 1;
-
-	for (; *cp; ++cp) {
-		if (*cp == '@' && *(cp+1) == '[')
-			flag = 1;
-		if (*cp == ']' && *(cp+1) == ':' && flag)
-			return (cp+1);
-		if (*cp == ':' && !flag)
-			return (cp);
-		if (*cp == '/')
-			return (0);
-	}
-	return (0);
-}
-
 void
 verifydir(cp)
 	char *cp;
@@ -1213,26 +1167,4 @@ getttywidth(void)
 		return (winsize.ws_col ? winsize.ws_col : 80);
 	else
 		return (80);
-}
-
-void
-addargs(char *fmt, ...)
-{
-	va_list ap;
-	char buf[1024];
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-
-	if (args.list == NULL) {
-		args.nalloc = 32;
-		args.num = 0;
-		args.list = xmalloc(args.nalloc * sizeof(char *));
-	} else if (args.num+2 >= args.nalloc) {
-		args.nalloc *= 2;
-		args.list = xrealloc(args.list, args.nalloc * sizeof(char *));
-	}
-	args.list[args.num++] = xstrdup(buf);
-	args.list[args.num] = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.10 2001/05/15 14:50:54 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.11 2001/05/15 15:26:10 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.103 2001/04/06 21:00:14 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.105 2001/04/30 11:18:52 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -158,7 +158,8 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 int
 ssh_create_socket(struct passwd *pw, int privileged, int family)
 {
-	int sock;
+	int sock, gaierr;
+	struct addrinfo hints, *res;
 
 	/*
 	 * If we are running as root and want to connect to a privileged
@@ -171,17 +172,40 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
 			error("rresvport: af=%d %.100s", family, strerror(errno));
 		else
 			debug("Allocated local port %d.", p);
-	} else {
-		/*
-		 * Just create an ordinary socket on arbitrary port.  We use
-		 * the user's uid to create the socket.
-		 */
-		temporarily_use_uid(pw);
-		sock = socket(family, SOCK_STREAM, 0);
-		if (sock < 0)
-			error("socket: %.100s", strerror(errno));
-		restore_uid();
+		return sock;
 	}
+	/*
+	 * Just create an ordinary socket on arbitrary port.  We use
+	 * the user's uid to create the socket.
+	 */
+	temporarily_use_uid(pw);
+	sock = socket(family, SOCK_STREAM, 0);
+	if (sock < 0)
+		error("socket: %.100s", strerror(errno));
+	restore_uid();
+
+	/* Bind the socket to an alternative local IP address */
+	if (options.bind_address == NULL)
+		return sock;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = IPv4or6;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	gaierr = getaddrinfo(options.bind_address, "0", &hints, &res);
+	if (gaierr) {
+		error("getaddrinfo: %s: %s", options.bind_address,
+		    gai_strerror(gaierr));
+		close(sock);
+		return -1;
+	}
+	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+		error("bind: %s: %s", options.bind_address, strerror(errno));
+		close(sock);
+		freeaddrinfo(res);
+		return -1;
+	}
+	freeaddrinfo(res);
 	return sock;
 }
 
@@ -741,7 +765,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
  * This function does not require super-user privileges.
  */
 void
-ssh_login(Key *own_host_key, const char *orighost,
+ssh_login(Key **keys, int nkeys, const char *orighost,
     struct sockaddr *hostaddr, struct passwd *pw)
 {
 	char *host, *cp;
@@ -766,10 +790,10 @@ ssh_login(Key *own_host_key, const char *orighost,
 	/* authenticate user */
 	if (compat20) {
 		ssh_kex2(host, hostaddr);
-		ssh_userauth2(server_user, host);
+		ssh_userauth2(local_user, server_user, host, keys, nkeys);
 	} else {
 		ssh_kex(host, hostaddr);
-		ssh_userauth(local_user, server_user, host, own_host_key);
+		ssh_userauth1(local_user, server_user, host, keys, nkeys);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.4 2001/04/10 08:08:05 itojun Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.5 2001/05/15 15:26:11 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: xmalloc.c,v 1.14 2001/02/07 18:04:50 itojun Exp $");
+RCSID("$OpenBSD: xmalloc.c,v 1.15 2001/04/16 08:05:34 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -40,8 +40,9 @@ xrealloc(void *ptr, size_t new_size)
 	if (new_size == 0)
 		fatal("xrealloc: zero size");
 	if (ptr == NULL)
-		fatal("xrealloc: NULL pointer given as argument");
-	new_ptr = realloc(ptr, new_size);
+		new_ptr = malloc(new_size);
+	else
+		new_ptr = realloc(ptr, new_size);
 	if (new_ptr == NULL)
 		fatal("xrealloc: out of memory (new_size %lu bytes)", (u_long) new_size);
 	return new_ptr;

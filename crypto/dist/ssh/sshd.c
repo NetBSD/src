@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.10 2001/05/15 14:50:55 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.11 2001/05/15 15:26:10 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.191 2001/04/05 10:42:57 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.195 2001/04/15 16:58:03 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -575,7 +575,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != -1) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDeiqQ46")) != -1) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -600,6 +600,9 @@ main(int ac, char **av)
 		case 'D':
 			no_daemon_flag = 1;
 			break;
+		case 'e':
+			log_stderr = 1;
+			break;
 		case 'i':
 			inetd_flag = 1;
 			break;
@@ -618,7 +621,11 @@ main(int ac, char **av)
 				fprintf(stderr, "too many ports.\n");
 				exit(1);
 			}
-			options.ports[options.num_ports++] = atoi(optarg);
+			options.ports[options.num_ports++] = a2port(optarg);
+			if (options.ports[options.num_ports-1] == 0) {
+				fprintf(stderr, "Bad port number.\n");
+				exit(1);
+			}
 			break;
 		case 'g':
 			options.login_grace_time = atoi(optarg);
@@ -701,8 +708,8 @@ main(int ac, char **av)
 		key = key_load_private(options.host_key_files[i], "", NULL);
 		sensitive_data.host_keys[i] = key;
 		if (key == NULL) {
-			error("Could not load host key: %.200s: %.100s",
-			    options.host_key_files[i], strerror(errno));
+			error("Could not load host key: %s",
+			    options.host_key_files[i]);
 			sensitive_data.host_keys[i] = NULL;
 			continue;
 		}
@@ -796,9 +803,9 @@ main(int ac, char **av)
 
 	/* Start listening for a socket, unless started from inetd. */
 	if (inetd_flag) {
-		int s1, s2;
+		int s1;
 		s1 = dup(0);	/* Make sure descriptors 0, 1, and 2 are in use. */
-		s2 = dup(s1);
+		dup(s1);
 		sock_in = dup(0);
 		sock_out = dup(1);
 		startup_pipe = -1;

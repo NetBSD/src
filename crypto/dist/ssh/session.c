@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.12 2001/05/15 14:50:52 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.13 2001/05/15 15:26:09 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.71 2001/04/06 21:00:12 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.75 2001/05/03 15:45:15 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -94,6 +94,8 @@ void	do_exec_pty(Session *s, const char *command);
 void	do_exec_no_pty(Session *s, const char *command);
 void	do_login(Session *s, const char *command);
 void	do_child(Session *s, const char *command);
+void	do_motd(void);
+int	check_quietlogin(Session *s, const char *command);
 
 void	do_authenticated1(Authctxt *authctxt);
 void	do_authenticated2(Authctxt *authctxt);
@@ -123,8 +125,8 @@ extern char *__progname;
 extern int log_stderr;
 extern int debug_flag;
 extern u_int utmp_len;
-
 extern int startup_pipe;
+extern void destroy_sensitive_data(void);
 
 /* Local Xauthority file. */
 static char *xauthfile;
@@ -157,6 +159,12 @@ do_authenticated(Authctxt *authctxt)
 		error("unable to get login class");
 		return;
 	}
+#ifdef BSD_AUTH
+	if (auth_approval(NULL, lc, authctxt->pw->pw_name, "ssh") <= 0) {
+		packet_disconnect("Approval failure for %s",
+		    authctxt->pw->pw_name);
+	}
+#endif
 #endif
 	/* setup the channel layer */
 	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
@@ -689,13 +697,10 @@ do_exec_pty(Session *s, const char *command)
 void
 do_login(Session *s, const char *command)
 {
-	FILE *f;
 	char *time_string;
-	char buf[256];
 	char hostname[MAXHOSTNAMELEN];
 	socklen_t fromlen;
 	struct sockaddr_storage from;
-	struct stat st;
 	time_t last_login_time;
 	struct passwd * pw = s->pw;
 	pid_t pid = getpid();
@@ -726,16 +731,9 @@ do_login(Session *s, const char *command)
 	    get_remote_name_or_ip(utmp_len, options.reverse_mapping_check),
 	    (struct sockaddr *)&from);
 
-	/* Done if .hushlogin exists or a command given. */
-	if (command != NULL)
+	if (check_quietlogin(s, command))
 		return;
-	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
-#ifdef HAVE_LOGIN_CAP
-	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
-#else
-	if (stat(buf, &st) >= 0)
-#endif
-		return;
+
 	if (options.print_lastlog && last_login_time != 0) {
 		time_string = ctime(&last_login_time);
 		if (strchr(time_string, '\n'))
@@ -745,6 +743,19 @@ do_login(Session *s, const char *command)
 		else
 			printf("Last login: %s from %s\r\n", time_string, hostname);
 	}
+
+	do_motd();
+}
+
+/*
+ * Display the message of the day.
+ */
+void
+do_motd(void)
+{
+	FILE *f;
+	char buf[256];
+
 	if (options.print_motd) {
 #ifdef HAVE_LOGIN_CAP
 		f = fopen(login_getcapstr(lc, "welcome", "/etc/motd",
@@ -758,6 +769,31 @@ do_login(Session *s, const char *command)
 			fclose(f);
 		}
 	}
+}
+
+
+/*
+ * Check for quiet login, either .hushlogin or command given.
+ */
+int
+check_quietlogin(Session *s, const char *command)
+{
+	char buf[256];
+	struct passwd * pw = s->pw;
+	struct stat st;
+
+	/* Return 1 if .hushlogin exists or a command given. */
+	if (command != NULL)
+		return 1;
+	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
+#ifdef HAVE_LOGIN_CAP
+	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
+		return 1;
+#else
+	if (stat(buf, &st) >= 0)
+		return 1;
+#endif
+	return 0;
 }
 
 /*
@@ -860,6 +896,9 @@ do_child(Session *s, const char *command)
 	char *argv[10];
 	int do_xauth = s->auth_proto != NULL && s->auth_data != NULL;
 
+	/* remove hostkey from the child's memory */
+	destroy_sensitive_data();
+
 	/* login(1) is only called if we execute the login shell */
 	if (options.use_login && command != NULL)
 		options.use_login = 0;
@@ -892,13 +931,6 @@ do_child(Session *s, const char *command)
 				perror("unable to set user context");
 				exit(1);
 			}
-#ifdef BSD_AUTH
-			if (auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
-				error("approval failure for %s", pw->pw_name);
-				fprintf(stderr, "Approval failure");
-				exit(1);
-			}
-#endif
 #else
 			if (setlogin(pw->pw_name) < 0)
 				error("setlogin failed: %s", strerror(errno));
@@ -1094,11 +1126,13 @@ do_child(Session *s, const char *command)
 	 * in this order).
 	 */
 	if (!options.use_login) {
-		if (stat(_PATH_SSH_USER_RC, &st) >= 0) {
+		/* ignore _PATH_SSH_USER_RC for subsystems */
+		if (!s->is_subsystem && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
+			snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
+			    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL,
-				    _PATH_SSH_USER_RC);
-			f = popen(_PATH_BSHELL " " _PATH_SSH_USER_RC, "w");
+				fprintf(stderr, "Running %s\n", cmd);
+			f = popen(cmd, "w");
 			if (f) {
 				if (do_xauth)
 					fprintf(f, "%s %s\n", s->auth_proto,
@@ -1340,7 +1374,7 @@ int
 session_pty_req(Session *s)
 {
 	u_int len;
-	char *term_modes;	/* encoded terminal modes */
+	int n_bytes;
 
 	if (no_pty_flag)
 		return 0;
@@ -1351,8 +1385,6 @@ session_pty_req(Session *s)
 	s->row = packet_get_int();
 	s->xpixel = packet_get_int();
 	s->ypixel = packet_get_int();
-	term_modes = packet_get_string(&len);
-	packet_done();
 
 	if (strcmp(s->term, "") == 0) {
 		xfree(s->term);
@@ -1365,7 +1397,6 @@ session_pty_req(Session *s)
 		s->ptyfd = -1;
 		s->ttyfd = -1;
 		error("session_pty_req: session %d alloc failed", s->self);
-		xfree(term_modes);
 		return 0;
 	}
 	debug("session_pty_req: session %d alloc %s", s->self, s->tty);
@@ -1378,10 +1409,12 @@ session_pty_req(Session *s)
 	/* Get window size from the packet. */
 	pty_change_window_size(s->ptyfd, s->row, s->col, s->xpixel, s->ypixel);
 
+	/* Get tty modes from the packet. */
+	tty_parse_modes(s->ttyfd, &n_bytes);
+	packet_done();
+
 	session_proctitle(s);
 
-	/* XXX parse and set terminal modes */
-	xfree(term_modes);
 	return 1;
 }
 

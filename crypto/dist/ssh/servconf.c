@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.8 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.9 2001/05/15 15:26:09 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.74 2001/04/06 22:25:25 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.79 2001/05/03 21:43:01 stevesk Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -35,8 +35,7 @@ RCSID("$OpenBSD: servconf.c,v 1.74 2001/04/06 22:25:25 stevesk Exp $");
 #include "kex.h"
 #include "mac.h"
 
-/* add listen address */
-void add_listen_addr(ServerOptions *options, char *addr, char *port);
+void add_listen_addr(ServerOptions *options, char *addr, u_short port);
 void add_one_listen_addr(ServerOptions *options, char *addr, u_short port);
 
 /* AF_UNSPEC or AF_INET or AF_INET6 */
@@ -72,6 +71,8 @@ initialize_server_options(ServerOptions *options)
 	options->log_level = (LogLevel) - 1;
 	options->rhosts_authentication = -1;
 	options->rhosts_rsa_authentication = -1;
+	options->hostbased_authentication = -1;
+	options->hostbased_uses_name_from_packet_only = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
 #if defined(KRB4) || defined(KRB5)
@@ -108,6 +109,8 @@ initialize_server_options(ServerOptions *options)
 	options->max_startups = -1;
 	options->banner = NULL;
 	options->reverse_mapping_check = -1;
+	options->client_alive_interval = -1;
+	options->client_alive_count_max = -1;
 }
 
 void
@@ -125,7 +128,7 @@ fill_default_server_options(ServerOptions *options)
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
 	if (options->listen_addrs == NULL)
-		add_listen_addr(options, NULL, NULL);
+		add_listen_addr(options, NULL, 0);
 	if (options->pid_file == NULL)
 		options->pid_file = _PATH_SSH_DAEMON_PID_FILE;
 	if (options->server_key_bits == -1)
@@ -168,6 +171,10 @@ fill_default_server_options(ServerOptions *options)
 		options->rhosts_authentication = 0;
 	if (options->rhosts_rsa_authentication == -1)
 		options->rhosts_rsa_authentication = 0;
+	if (options->hostbased_authentication == -1)
+		options->hostbased_authentication = 0;
+	if (options->hostbased_uses_name_from_packet_only == -1)
+		options->hostbased_uses_name_from_packet_only = 0;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
@@ -222,6 +229,10 @@ fill_default_server_options(ServerOptions *options)
 		options->max_startups_begin = options->max_startups;
 	if (options->reverse_mapping_check == -1)
 		options->reverse_mapping_check = 0;
+	if (options->client_alive_interval == -1)
+		options->client_alive_interval = 0;  
+	if (options->client_alive_count_max == -1)
+		options->client_alive_count_max = 3;
 }
 
 /* Keyword tokens. */
@@ -251,7 +262,9 @@ typedef enum {
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
-	sBanner, sReverseMappingCheck,
+	sBanner, sReverseMappingCheck, sHostbasedAuthentication,
+	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval, 
+	sClientAliveCountMax,
 	sIgnoreRootRhosts
 } ServerOpCodes;
 
@@ -272,6 +285,8 @@ static struct {
 	{ "loglevel", sLogLevel },
 	{ "rhostsauthentication", sRhostsAuthentication },
 	{ "rhostsrsaauthentication", sRhostsRSAAuthentication },
+	{ "hostbasedauthentication", sHostbasedAuthentication },
+	{ "hostbasedusesnamefrompacketonly", sHostbasedUsesNameFromPacketOnly },
 	{ "rsaauthentication", sRSAAuthentication },
 	{ "pubkeyauthentication", sPubkeyAuthentication },
 	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
@@ -320,6 +335,8 @@ static struct {
 	{ "maxstartups", sMaxStartups },
 	{ "banner", sBanner },
 	{ "reversemappingcheck", sReverseMappingCheck },
+	{ "clientaliveinterval", sClientAliveInterval },
+	{ "clientalivecountmax", sClientAliveCountMax },
 	{ NULL, 0 }
 };
 
@@ -337,26 +354,23 @@ parse_token(const char *cp, const char *filename,
 		if (strcasecmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
 
-	fprintf(stderr, "%s: line %d: Bad configuration option: %s\n",
-		filename, linenum, cp);
+	error("%s: line %d: Bad configuration option: %s",
+	    filename, linenum, cp);
 	return sBadOption;
 }
 
-/*
- * add listen address
- */
 void
-add_listen_addr(ServerOptions *options, char *addr, char *port)
+add_listen_addr(ServerOptions *options, char *addr, u_short port)
 {
 	int i;
 
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
-	if (port == NULL)
+	if (port == 0)
 		for (i = 0; i < options->num_ports; i++)
 			add_one_listen_addr(options, addr, options->ports[i]);
 	else
-		add_one_listen_addr(options, addr, atoi(port));
+		add_one_listen_addr(options, addr, port);
 }
 
 void
@@ -422,7 +436,7 @@ read_server_config(ServerOptions *options, const char *filename)
 				continue;
 			if (options->listen_addrs != NULL)
 				fatal("%s line %d: ports must be specified before "
-				    "ListenAdress.\n", filename, linenum);
+				    "ListenAdress.", filename, linenum);
 			if (options->num_ports >= MAX_PORTS)
 				fatal("%s line %d: too many ports.",
 				    filename, linenum);
@@ -430,18 +444,19 @@ read_server_config(ServerOptions *options, const char *filename)
 			if (!arg || *arg == '\0')
 				fatal("%s line %d: missing port number.",
 				    filename, linenum);
-			options->ports[options->num_ports++] = atoi(arg);
+			options->ports[options->num_ports++] = a2port(arg);
+			if (options->ports[options->num_ports-1] == 0)
+				fatal("%s line %d: Badly formatted port number.",
+				    filename, linenum);
 			break;
 
 		case sServerKeyBits:
 			intptr = &options->server_key_bits;
 parse_int:
 			arg = strdelim(&cp);
-			if (!arg || *arg == '\0') {
-				fprintf(stderr, "%s line %d: missing integer value.\n",
-					filename, linenum);
-				exit(1);
-			}
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: missing integer value.",
+				    filename, linenum);
 			value = atoi(arg);
 			if (*intptr == -1)
 				*intptr = value;
@@ -468,20 +483,25 @@ parse_int:
 				memmove(p, p+1, strlen(p+1)+1);
 			} else if (((p = strchr(arg, ':')) == NULL) ||
 				    (strchr(p+1, ':') != NULL)) {
-				add_listen_addr(options, arg, NULL);
+				add_listen_addr(options, arg, 0);
 				break;
 			}
 			if (*p == ':') {
+				u_short port;
+
 				p++;
 				if (*p == '\0')
 					fatal("%s line %d: bad inet addr:port usage.",
 					    filename, linenum);
 				else {
 					*(p-1) = '\0';
-					add_listen_addr(options, arg, p);
+					if ((port = a2port(p)) == 0)
+						fatal("%s line %d: bad port number.",
+						    filename, linenum);
+					add_listen_addr(options, arg, port);
 				}
 			} else if (*p == '\0')
-				add_listen_addr(options, arg, NULL);
+				add_listen_addr(options, arg, 0);
 			else
 				fatal("%s line %d: bad inet addr usage.",
 				    filename, linenum);
@@ -489,20 +509,15 @@ parse_int:
 
 		case sHostKeyFile:
 			intptr = &options->num_host_key_files;
-			if (*intptr >= MAX_HOSTKEYS) {
-				fprintf(stderr,
-				    "%s line %d: too many host keys specified (max %d).\n",
+			if (*intptr >= MAX_HOSTKEYS)
+				fatal("%s line %d: too many host keys specified (max %d).",
 				    filename, linenum, MAX_HOSTKEYS);
-				exit(1);
-			}
 			charptr = &options->host_key_files[*intptr];
 parse_filename:
 			arg = strdelim(&cp);
-			if (!arg || *arg == '\0') {
-				fprintf(stderr, "%s line %d: missing file name.\n",
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: missing file name.",
 				    filename, linenum);
-				exit(1);
-			}
 			if (*charptr == NULL) {
 				*charptr = tilde_expand_filename(arg, getuid());
 				/* increase optional counter */
@@ -518,12 +533,11 @@ parse_filename:
 		case sPermitRootLogin:
 			intptr = &options->permit_root_login;
 			arg = strdelim(&cp);
-			if (!arg || *arg == '\0') {
-				fprintf(stderr, "%s line %d: missing yes/"
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: missing yes/"
 				    "without-password/forced-commands-only/no "
-				    "argument.\n", filename, linenum);
-				exit(1);
-			}
+				    "argument.", filename, linenum);
+			value = 0;	/* silence compiler */
 			if (strcmp(arg, "without-password") == 0)
 				value = PERMIT_NO_PASSWD;
 			else if (strcmp(arg, "forced-commands-only") == 0)
@@ -532,12 +546,10 @@ parse_filename:
 				value = PERMIT_YES;
 			else if (strcmp(arg, "no") == 0)
 				value = PERMIT_NO;
-			else {
-				fprintf(stderr, "%s line %d: Bad yes/"
+			else
+				fatal("%s line %d: Bad yes/"
 				    "without-password/forced-commands-only/no "
-				    "argument: %s\n", filename, linenum, arg);
-				exit(1);
-			}
+				    "argument: %s", filename, linenum, arg);
 			if (*intptr == -1)
 				*intptr = value;
 			break;
@@ -546,20 +558,17 @@ parse_filename:
 			intptr = &options->ignore_rhosts;
 parse_flag:
 			arg = strdelim(&cp);
-			if (!arg || *arg == '\0') {
-				fprintf(stderr, "%s line %d: missing yes/no argument.\n",
-					filename, linenum);
-				exit(1);
-			}
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: missing yes/no argument.",
+				    filename, linenum);
+			value = 0;	/* silence compiler */
 			if (strcmp(arg, "yes") == 0)
 				value = 1;
 			else if (strcmp(arg, "no") == 0)
 				value = 0;
-			else {
-				fprintf(stderr, "%s line %d: Bad yes/no argument: %s\n",
+			else
+				fatal("%s line %d: Bad yes/no argument: %s",
 					filename, linenum, arg);
-				exit(1);
-			}
 			if (*intptr == -1)
 				*intptr = value;
 			break;
@@ -578,6 +587,14 @@ parse_flag:
 
 		case sRhostsRSAAuthentication:
 			intptr = &options->rhosts_rsa_authentication;
+			goto parse_flag;
+
+		case sHostbasedAuthentication:
+			intptr = &options->hostbased_authentication;
+			goto parse_flag;
+
+		case sHostbasedUsesNameFromPacketOnly:
+			intptr = &options->hostbased_uses_name_from_packet_only;
 			goto parse_flag;
 
 		case sRSAAuthentication:
@@ -822,23 +839,22 @@ parse_flag:
 		case sBanner:
 			charptr = &options->banner;
 			goto parse_filename;
-
+		case sClientAliveInterval:
+			intptr = &options->client_alive_interval;
+			goto parse_int;
+		case sClientAliveCountMax:
+			intptr = &options->client_alive_count_max;
+			goto parse_int;
 		default:
-			fprintf(stderr, "%s line %d: Missing handler for opcode %s (%d)\n",
-				filename, linenum, arg, opcode);
-			exit(1);
+			fatal("%s line %d: Missing handler for opcode %s (%d)",
+			    filename, linenum, arg, opcode);
 		}
-		if ((arg = strdelim(&cp)) != NULL && *arg != '\0') {
-			fprintf(stderr,
-				"%s line %d: garbage at end of line; \"%.200s\".\n",
-				filename, linenum, arg);
-			exit(1);
-		}
+		if ((arg = strdelim(&cp)) != NULL && *arg != '\0')
+			fatal("%s line %d: garbage at end of line; \"%.200s\".",
+			    filename, linenum, arg);
 	}
 	fclose(f);
-	if (bad_options > 0) {
-		fprintf(stderr, "%s: terminating, %d bad configuration options\n",
-			filename, bad_options);
-		exit(1);
-	}
+	if (bad_options > 0)
+		fatal("%s: terminating, %d bad configuration options",
+		    filename, bad_options);
 }

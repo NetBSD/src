@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.8 2001/05/15 14:50:50 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.9 2001/05/15 15:26:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.61 2001/04/08 11:27:33 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.70 2001/05/11 14:59:55 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -80,6 +80,8 @@ RCSID("$OpenBSD: clientloop.c,v 1.61 2001/04/08 11:27:33 markus Exp $");
 #include "clientloop.h"
 #include "authfd.h"
 #include "atomicio.h"
+#include "sshtty.h"
+#include "misc.h"
 
 /* import options */
 extern Options options;
@@ -101,15 +103,6 @@ extern char *host;
  * because this is updated in a signal handler.
  */
 static volatile int received_window_change_signal = 0;
-
-/* Terminal modes, as saved by enter_raw_mode. */
-static struct termios saved_tio;
-
-/*
- * Flag indicating whether we are in raw mode.  This is used by
- * enter_raw_mode and leave_raw_mode.
- */
-static int in_raw_mode = 0;
 
 /* Flag indicating whether the user\'s terminal is in non-blocking mode. */
 static int in_non_blocking_mode = 0;
@@ -169,46 +162,6 @@ void client_init_dispatch_20(void);
 void client_init_dispatch_13(void);
 void client_init_dispatch_15(void);
 
-/* Returns the user\'s terminal to normal mode if it had been put in raw mode. */
-
-void
-leave_raw_mode(void)
-{
-	if (!in_raw_mode)
-		return;
-	in_raw_mode = 0;
-	if (tcsetattr(fileno(stdin), TCSADRAIN, &saved_tio) < 0)
-		perror("tcsetattr");
-
-	fatal_remove_cleanup((void (*) (void *)) leave_raw_mode, NULL);
-}
-
-/* Puts the user\'s terminal in raw mode. */
-
-void
-enter_raw_mode(void)
-{
-	struct termios tio;
-
-	if (tcgetattr(fileno(stdin), &tio) < 0)
-		perror("tcgetattr");
-	saved_tio = tio;
-	tio.c_iflag |= IGNPAR;
-	tio.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
-	tio.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
-#ifdef IEXTEN
-	tio.c_lflag &= ~IEXTEN;
-#endif				/* IEXTEN */
-	tio.c_oflag &= ~OPOST;
-	tio.c_cc[VMIN] = 1;
-	tio.c_cc[VTIME] = 0;
-	if (tcsetattr(fileno(stdin), TCSADRAIN, &tio) < 0)
-		perror("tcsetattr");
-	in_raw_mode = 1;
-
-	fatal_add_cleanup((void (*) (void *)) leave_raw_mode, NULL);
-}
-
 /* Restores stdin to blocking mode. */
 
 void
@@ -251,7 +204,7 @@ window_change_handler(int sig)
 void
 signal_handler(int sig)
 {
-	if (in_raw_mode)
+	if (in_raw_mode())
 		leave_raw_mode();
 	if (in_non_blocking_mode)
 		leave_non_blocking();
@@ -646,6 +599,7 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 "%c?\r\n\
 Supported escape sequences:\r\n\
 ~.  - terminate connection\r\n\
+~R - Request rekey (SSH protocol 2 only)\r\n\
 ~^Z - suspend ssh\r\n\
 ~#  - list forwarded connections\r\n\
 ~&  - background ssh (when waiting for connections to terminate)\r\n\
@@ -705,6 +659,8 @@ client_process_input(fd_set * readset)
 	if (FD_ISSET(fileno(stdin), readset)) {
 		/* Read as much as possible. */
 		len = read(fileno(stdin), buf, sizeof(buf));
+		if (len < 0 && (errno == EAGAIN || errno == EINTR))
+			return;		/* we'll try again later */
 		if (len <= 0) {
 			/*
 			 * Received EOF or error.  They are treated
@@ -758,7 +714,7 @@ client_process_output(fd_set * writeset)
 		len = write(fileno(stdout), buffer_ptr(&stdout_buffer),
 		    buffer_len(&stdout_buffer));
 		if (len <= 0) {
-			if (errno == EAGAIN)
+			if (errno == EINTR || errno == EAGAIN)
 				len = 0;
 			else {
 				/*
@@ -781,7 +737,7 @@ client_process_output(fd_set * writeset)
 		len = write(fileno(stderr), buffer_ptr(&stderr_buffer),
 		    buffer_len(&stderr_buffer));
 		if (len <= 0) {
-			if (errno == EAGAIN)
+			if (errno == EINTR || errno == EAGAIN)
 				len = 0;
 			else {
 				/* EOF or error, but can't even print error message. */
@@ -829,7 +785,7 @@ client_channel_closed(int id, void *arg)
 		error("client_channel_closed: id %d != session_ident %d",
 		    id, session_ident);
 	session_closed = 1;
-	if (in_raw_mode)
+	if (in_raw_mode())
 		leave_raw_mode();
 }
 
@@ -863,6 +819,13 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	max_fd = MAX(connection_in, connection_out);
 
 	if (!compat20) {
+		/* enable nonblocking unless tty */
+		if (!isatty(fileno(stdin)))
+			set_nonblock(fileno(stdin));
+		if (!isatty(fileno(stdout)))
+			set_nonblock(fileno(stdout));
+		if (!isatty(fileno(stderr)))
+			set_nonblock(fileno(stderr));
 		max_fd = MAX(max_fd, fileno(stdin));
 		max_fd = MAX(max_fd, fileno(stdout));
 		max_fd = MAX(max_fd, fileno(stderr));
@@ -1005,6 +968,15 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		snprintf(buf, sizeof buf, "Connection to %.64s closed.\r\n", host);
 		buffer_append(&stderr_buffer, buf, strlen(buf));
 	}
+
+	/* restore blocking io */
+	if (!isatty(fileno(stdin)))
+		unset_nonblock(fileno(stdin));
+	if (!isatty(fileno(stdout)))
+		unset_nonblock(fileno(stdout));
+	if (!isatty(fileno(stderr)))
+		unset_nonblock(fileno(stderr));
+
 	/* Output any buffered data for stdout. */
 	while (buffer_len(&stdout_buffer) > 0) {
 		len = write(fileno(stdout), buffer_ptr(&stdout_buffer),
@@ -1097,7 +1069,7 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	Channel* c = NULL;
 	char *listen_address, *originator_address;
 	int listen_port, originator_port;
-	int sock, newch;
+	int sock;
 
 	/* Get rest of the packet */
 	listen_address = packet_get_string(NULL);
@@ -1110,12 +1082,18 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	    listen_address, listen_port, originator_address, originator_port);
 
 	sock = channel_connect_by_listen_adress(listen_port);
-	if (sock >= 0) {
-		newch = channel_new("forwarded-tcpip",
-		    SSH_CHANNEL_CONNECTING, sock, sock, -1,
-		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
-		    xstrdup(originator_address), 1);
-		c = channel_lookup(newch);
+	if (sock < 0) {
+		xfree(originator_address);
+		xfree(listen_address);
+		return NULL;
+	}
+	c = channel_new("forwarded-tcpip",
+	    SSH_CHANNEL_CONNECTING, sock, sock, -1,
+	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
+	    xstrdup(originator_address), 1);
+	if (c == NULL) {
+		error("client_request_forwarded_tcpip: channel_new failed");
+		close(sock);
 	}
 	xfree(originator_address);
 	xfree(listen_address);
@@ -1128,7 +1106,7 @@ client_request_x11(const char *request_type, int rchan)
 	Channel *c = NULL;
 	char *originator;
 	int originator_port;
-	int sock, newch;
+	int sock;
 
 	if (!options.forward_x11) {
 		error("Warning: ssh server tried X11 forwarding.");
@@ -1146,15 +1124,18 @@ client_request_x11(const char *request_type, int rchan)
 	/* XXX check permission */
 	debug("client_request_x11: request from %s %d", originator,
 	    originator_port);
-	sock = x11_connect_display();
-	if (sock >= 0) {
-		newch = channel_new("x11",
-		    SSH_CHANNEL_X11_OPEN, sock, sock, -1,
-		    CHAN_TCP_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT, 0,
-		    xstrdup("x11"), 1);
-		c = channel_lookup(newch);
-	}
 	xfree(originator);
+	sock = x11_connect_display();
+	if (sock < 0)
+		return NULL;
+	c = channel_new("x11",
+	    SSH_CHANNEL_X11_OPEN, sock, sock, -1,
+	    CHAN_TCP_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT, 0,
+	    xstrdup("x11"), 1);
+	if (c == NULL) {
+		error("client_request_x11: channel_new failed");
+		close(sock);
+	}
 	return c;
 }
 
@@ -1162,7 +1143,7 @@ Channel*
 client_request_agent(const char *request_type, int rchan)
 {
 	Channel *c = NULL;
-	int sock, newch;
+	int sock;
 
 	if (!options.forward_agent) {
 		error("Warning: ssh server tried agent forwarding.");
@@ -1170,12 +1151,15 @@ client_request_agent(const char *request_type, int rchan)
 		return NULL;
 	}
 	sock =  ssh_get_authentication_socket();
-	if (sock >= 0) {
-		newch = channel_new("authentication agent connection",
-		    SSH_CHANNEL_OPEN, sock, sock, -1,
-		    CHAN_X11_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
-		    xstrdup("authentication agent connection"), 1);
-		c = channel_lookup(newch);
+	if (sock < 0)
+		return NULL;
+	c = channel_new("authentication agent connection",
+	    SSH_CHANNEL_OPEN, sock, sock, -1,
+	    CHAN_X11_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
+	    xstrdup("authentication agent connection"), 1);
+	if (c == NULL) {
+		error("client_request_agent: channel_new failed");
+		close(sock);
 	}
 	return c;
 }
@@ -1212,20 +1196,23 @@ client_input_channel_open(int type, int plen, void *ctxt)
 		c->remote_id = rchan;
 		c->remote_window = rwindow;
 		c->remote_maxpacket = rmaxpack;
-
-		packet_start(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
-		packet_put_int(c->remote_id);
-		packet_put_int(c->self);
-		packet_put_int(c->local_window);
-		packet_put_int(c->local_maxpacket);
-		packet_send();
+		if (c->type != SSH_CHANNEL_CONNECTING) {
+			packet_start(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
+			packet_put_int(c->remote_id);
+			packet_put_int(c->self);
+			packet_put_int(c->local_window);
+			packet_put_int(c->local_maxpacket);
+			packet_send();
+		}
 	} else {
 		debug("failure %s", ctype);
 		packet_start(SSH2_MSG_CHANNEL_OPEN_FAILURE);
 		packet_put_int(rchan);
 		packet_put_int(SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED);
-		packet_put_cstring("bla bla");
-		packet_put_cstring("");
+		if (!(datafellows & SSH_BUG_OPENFAILURE)) {
+			packet_put_cstring("open failed");
+			packet_put_cstring("");
+		}
 		packet_send();
 	}
 	xfree(ctype);

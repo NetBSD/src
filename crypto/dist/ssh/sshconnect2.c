@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.9 2001/05/15 14:50:54 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.10 2001/05/15 15:26:10 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.67 2001/04/05 10:42:56 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.72 2001/04/18 23:43:26 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -54,6 +54,7 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.67 2001/04/05 10:42:56 markus Exp $");
 #include "readpass.h"
 #include "match.h"
 #include "dispatch.h"
+#include "canohost.h"
 
 /* import */
 extern char *client_version_string;
@@ -114,6 +115,9 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
 		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 	}
+	if (options.hostkeyalgorithms != NULL)
+	        myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
+		    options.hostkeyalgorithms;
 
 	/* start key exchange */
 	kex = kex_setup(myproposal);
@@ -151,15 +155,20 @@ typedef int sign_cb_fn(
 
 struct Authctxt {
 	const char *server_user;
+	const char *local_user;
 	const char *host;
 	const char *service;
-	AuthenticationConnection *agent;
 	Authmethod *method;
 	int success;
 	char *authlist;
+	/* pubkey */
 	Key *last_key;
 	sign_cb_fn *last_key_sign;
 	int last_key_hint;
+	AuthenticationConnection *agent;
+	/* hostbased */
+	Key **keys;
+	int nkeys;
 };
 struct Authmethod {
 	char	*name;		/* string to compare against server's list */
@@ -179,6 +188,7 @@ int	userauth_none(Authctxt *);
 int	userauth_pubkey(Authctxt *);
 int	userauth_passwd(Authctxt *);
 int	userauth_kbdint(Authctxt *);
+int	userauth_hostbased(Authctxt *);
 
 void	userauth(Authctxt *authctxt, char *authlist);
 
@@ -209,6 +219,10 @@ Authmethod authmethods[] = {
 		userauth_kbdint,
 		&options.kbd_interactive_authentication,
 		&options.batch_mode},
+	{"hostbased",
+		userauth_hostbased,
+		&options.hostbased_authentication,
+		NULL},
 	{"none",
 		userauth_none,
 		NULL,
@@ -217,7 +231,8 @@ Authmethod authmethods[] = {
 };
 
 void
-ssh_userauth2(const char *server_user, char *host)
+ssh_userauth2(const char *local_user, const char *server_user, char *host,
+    Key **keys, int nkeys)
 {
 	Authctxt authctxt;
 	int type;
@@ -251,11 +266,14 @@ ssh_userauth2(const char *server_user, char *host)
 	/* setup authentication context */
 	authctxt.agent = ssh_get_authentication_connection();
 	authctxt.server_user = server_user;
+	authctxt.local_user = local_user;
 	authctxt.host = host;
 	authctxt.service = "ssh-connection";		/* service name */
 	authctxt.success = 0;
 	authctxt.method = authmethod_lookup("none");
 	authctxt.authlist = NULL;
+	authctxt.keys = keys;
+	authctxt.nkeys = nkeys;
 	if (authctxt.method == NULL)
 		fatal("ssh_userauth2: internal error: cannot send userauth none request");
 
@@ -352,7 +370,7 @@ input_userauth_pk_ok(int type, int plen, void *ctxt)
 	Authctxt *authctxt = ctxt;
 	Key *key = NULL;
 	Buffer b;
-	int alen, blen, pktype, sent = 0;
+	int alen, blen, sent = 0;
 	char *pkalg, *pkblob, *fp;
 
 	if (authctxt == NULL)
@@ -380,7 +398,7 @@ input_userauth_pk_ok(int type, int plen, void *ctxt)
 			debug("no last key or no sign cb");
 			break;
 		}
-		if ((pktype = key_type_from_name(pkalg)) == KEY_UNSPEC) {
+		if (key_type_from_name(pkalg) == KEY_UNSPEC) {
 			debug("unknown pkalg %s", pkalg);
 			break;
 		}
@@ -793,6 +811,95 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 
 	packet_inject_ignore(64);
 	packet_send();
+}
+
+/*
+ * this will be move to an external program (ssh-keysign) ASAP. ssh-keysign
+ * will be setuid-root and the sbit can be removed from /usr/bin/ssh.
+ */
+int
+userauth_hostbased(Authctxt *authctxt)
+{
+	Key *private = NULL;
+	Buffer b;
+	u_char *signature, *blob;
+	char *chost, *pkalg, *p;
+	const char *service;
+	u_int blen, slen;
+	int ok, i, len, found = 0;
+
+	p = get_local_name(packet_get_connection_in());
+	if (p == NULL) {
+		error("userauth_hostbased: cannot get local ipaddr/name");
+		return 0;
+	}
+	len = strlen(p) + 2;
+	chost = xmalloc(len);
+	strlcpy(chost, p, len);
+	strlcat(chost, ".", len);
+	debug2("userauth_hostbased: chost %s", chost);
+	/* check for a useful key */
+	for (i = 0; i < authctxt->nkeys; i++) {
+		private = authctxt->keys[i];
+		if (private && private->type != KEY_RSA1) {
+			found = 1;
+			/* we take and free the key */
+			authctxt->keys[i] = NULL;
+			break;
+		}
+	}
+	if (!found) {
+		xfree(chost);
+		return 0;
+	}
+	if (key_to_blob(private, &blob, &blen) == 0) {
+		key_free(private);
+		xfree(chost);
+		return 0;
+	}
+	service = datafellows & SSH_BUG_HBSERVICE ? "ssh-userauth" :
+	    authctxt->service;
+	pkalg = xstrdup(key_ssh_name(private));
+	buffer_init(&b);
+	/* construct data */
+	buffer_put_string(&b, session_id2, session_id2_len);
+	buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
+	buffer_put_cstring(&b, authctxt->server_user);
+	buffer_put_cstring(&b, service);
+	buffer_put_cstring(&b, authctxt->method->name);
+	buffer_put_cstring(&b, pkalg);
+	buffer_put_string(&b, blob, blen);
+	buffer_put_cstring(&b, chost);
+	buffer_put_cstring(&b, authctxt->local_user);
+#ifdef DEBUG_PK
+	buffer_dump(&b);
+#endif
+	debug2("xxx: chost %s", chost);
+	ok = key_sign(private, &signature, &slen, buffer_ptr(&b), buffer_len(&b));
+	key_free(private);
+	buffer_free(&b);
+	if (ok != 0) {
+		error("key_sign failed");
+		xfree(chost);
+		xfree(pkalg);
+		return 0;
+	}
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_cstring(authctxt->server_user);
+	packet_put_cstring(authctxt->service);
+	packet_put_cstring(authctxt->method->name);
+	packet_put_cstring(pkalg);
+	packet_put_string(blob, blen);
+	packet_put_cstring(chost);
+	packet_put_cstring(authctxt->local_user);
+	packet_put_string(signature, slen);
+	memset(signature, 's', slen);
+	xfree(signature);
+	xfree(chost);
+	xfree(pkalg);
+
+	packet_send();
+	return 1;
 }
 
 /* find auth method */
