@@ -15,6 +15,7 @@
 ./usr/include/x68k/float.h
 ./usr/include/x68k/frame.h
 ./usr/include/x68k/grfioctl.h
+./usr/include/x68k/ieee.h
 ./usr/include/x68k/ieeefp.h
 ./usr/include/x68k/iteioctl.h
 ./usr/include/x68k/kbd.h

@@ -16,6 +16,7 @@
 ./usr/include/next68k/endian.h
 ./usr/include/next68k/float.h
 ./usr/include/next68k/frame.h
+./usr/include/next68k/ieee.h
 ./usr/include/next68k/ieeefp.h
 ./usr/include/next68k/intr.h
 ./usr/include/next68k/kcore.h
