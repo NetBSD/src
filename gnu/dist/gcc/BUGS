@@ -24,7 +24,6 @@ Table of Contents
                o [15]Non-bugs
                o [16]Missing features
                o [17]Parse errors for "simple" code
-               o [18]Optimization at -O3 takes a very long time
      _________________________________________________________________
 
                                 Reporting Bugs
@@ -33,7 +32,7 @@ Table of Contents
    most  important  prerequisite  for  this  is  that  the report must be
    complete and self-contained, which we explain in detail below.
 
-   Before  you report a bug, please check the [19]list of well-known bugs
+   Before  you report a bug, please check the [18]list of well-known bugs
    and,  if  possible  in any way, try a current development snapshot. If
    you  want  to report a bug with versions of GCC before 3.1 we strongly
    recommend upgrading to the current release first.
@@ -101,17 +100,17 @@ Summarized bug reporting instructions
 
   Where to post it
 
-   Please  submit  your  bug report directly to the [20]GCC bug database.
+   Please  submit  your  bug report directly to the [19]GCC bug database.
    Alternatively,  you  can  use  the  gccbug  script that mails your bug
    report to the bug database. Only if all this is absolutely impossible,
-   mail  all  information to [21]gcc-bugs@gcc.gnu.org, but note that such
+   mail  all  information to [20]gcc-bugs@gcc.gnu.org, but note that such
    reports  are  often overlooked since they are not permanently recorded
    into the database for later processing.
 
 Detailed bug reporting instructions
 
-   Please  refer to the [22]next section when reporting bugs in GNAT, the
-   Ada  compiler,  or  to the [23]one after that when reporting bugs that
+   Please  refer to the [21]next section when reporting bugs in GNAT, the
+   Ada  compiler,  or  to the [22]one after that when reporting bugs that
    appear when using a precompiled header.
 
    In  general, all the information we need can be obtained by collecting
@@ -171,7 +170,7 @@ Detailed bug reporting instructions
 
 Detailed bug reporting instructions for GNAT
 
-   See  the  [24]previous  section for bug reporting instructions for GCC
+   See  the  [23]previous  section for bug reporting instructions for GCC
    language implementations other than Ada.
 
    Bug  reports  have  to  contain  at least the following information in
@@ -203,7 +202,7 @@ Detailed bug reporting instructions for GNAT
    you have to report a bug in gnatprep).
 
    When  you  have  checked that your report meets these criteria, please
-   submit  it  according  to  our [25]generic instructions. (If you use a
+   submit  it  according  to  our [24]generic instructions. (If you use a
    mailing  list  for  reporting,  please  include  an "[Ada]" tag in the
    subject.)
 
@@ -213,11 +212,11 @@ Detailed bug reporting instructions when using a precompiled header
    first thing to do is to delete the precompiled header, and try running
    the  same GCC command again. If the bug happens again, the bug doesn't
    really  involve  precompiled  headers,  please report it without using
-   them by following the instructions [26]above.
+   them by following the instructions [25]above.
 
    If  you've  found  a  bug  while  building  a  precompiled header (for
    instance,   the  compiler  crashes),  follow  the  usual  instructions
-   [27]above.
+   [26]above.
 
    If  you've  found  a  real  precompiled header bug, what we'll need to
    reproduce  it  is  the  sources  to build the precompiled header (as a
@@ -234,7 +233,7 @@ Detailed bug reporting instructions when using a precompiled header
 Fortran
 
    Fortran  bugs  are documented in the G77 manual rather than explicitly
-   listed  here.  Please see [28]Known Causes of Trouble with GNU Fortran
+   listed  here.  Please see [27]Known Causes of Trouble with GNU Fortran
    in the G77 manual.
      _________________________________________________________________
 
@@ -266,7 +265,7 @@ FILE *yyin = stdin;
 
           There  is  a  common  misconception that the GCC developers are
           responsible  for  GNU  libc.  These  are  in  fact two entirely
-          separate  projects; please check the [29]GNU libc web pages for
+          separate  projects; please check the [28]GNU libc web pages for
           details.
 
    Cannot use preprocessor directive in macro arguments.
@@ -330,7 +329,7 @@ C++
    reported  very  often, but not yet fixed. While it is certainly better
    to  fix  bugs  instead  of  documenting them, this document might save
    people  the  effort  of  writing  a bug report when the bug is already
-   well-known. [30]How to report bugs tells you how to report a bug.
+   well-known. [29]How to report bugs tells you how to report a bug.
 
    There  are many reasons why reported bugs don't get fixed. It might be
    difficult  to  fix,  or  fixing  it  might break compatibility. Often,
@@ -348,12 +347,12 @@ C++
   Common problems updating from G++ 2.95 to G++ 3.0
 
    G++  3.0  conforms  much  closer to the ISO C++ standard (available at
-   [31]http://www.ncits.org/cplusplus.htm).
+   [30]http://www.ncits.org/cplusplus.htm).
 
    We  have  also implemented some of the core and library defect reports
    (available at
-   [32]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html      &
-   [33]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
+   [31]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html      &
+   [32]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
    respectively).
      * The  ABI  has  changed. This means that both class layout and name
        mangling  is  different.  You must recompile all c++ libraries (if
@@ -397,7 +396,9 @@ C++
 
   Non-bugs
 
-   Here are some features that have been reported as bugs, but are not.
+   This  section  lists several features that have been reported as bugs,
+   but  are not; in addition, the manual contains a section on [33]Common
+   Misunderstandings with GNU C++.
 
    Nested classes can access private types of the containing class.
           G++  now implements type access control on member types. Defect
@@ -556,12 +557,6 @@ A B::f1(bool b)
    proposed  do not change the semantics of the program at all; they make
    them perhaps less readable.
 
-  Optimization at -O3 takes a very long time
-
-   At  -O3, all functions are candidates for inlining. The heuristic used
-   has some deficiencies which show up when allowed such freedom. This is
-   g++ specific, as it has an earlier inliner than gcc.
-
 References
 
    1. http://gcc.gnu.org/bugs.html
@@ -581,20 +576,20 @@ References
   15. http://gcc.gnu.org/bugs.html#nonbugs
   16. http://gcc.gnu.org/bugs.html#missing
   17. http://gcc.gnu.org/bugs.html#parsing
-  18. http://gcc.gnu.org/bugs.html#-O3
-  19. http://gcc.gnu.org/bugs.html#known
-  20. http://gcc.gnu.org/bugzilla/
-  21. mailto:gcc-bugs@gcc.gnu.org
-  22. http://gcc.gnu.org/bugs.html#gnat
-  23. http://gcc.gnu.org/bugs.html#pch
-  24. http://gcc.gnu.org/bugs.html#detailed
-  25. http://gcc.gnu.org/bugs.html#where
+  18. http://gcc.gnu.org/bugs.html#known
+  19. http://gcc.gnu.org/bugzilla/
+  20. mailto:gcc-bugs@gcc.gnu.org
+  21. http://gcc.gnu.org/bugs.html#gnat
+  22. http://gcc.gnu.org/bugs.html#pch
+  23. http://gcc.gnu.org/bugs.html#detailed
+  24. http://gcc.gnu.org/bugs.html#where
+  25. http://gcc.gnu.org/bugs.html#detailed
   26. http://gcc.gnu.org/bugs.html#detailed
-  27. http://gcc.gnu.org/bugs.html#detailed
-  28. http://gcc.gnu.org/onlinedocs/g77/Trouble.html
-  29. http://www.gnu.org/software/glibc/
-  30. http://gcc.gnu.org/bugs.html#report
-  31. http://www.ncits.org/cplusplus.htm
-  32. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html
-  33. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
+  27. http://gcc.gnu.org/onlinedocs/g77/Trouble.html
+  28. http://www.gnu.org/software/glibc/
+  29. http://gcc.gnu.org/bugs.html#report
+  30. http://www.ncits.org/cplusplus.htm
+  31. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html
+  32. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
+  33. http://gcc.gnu.org/onlinedocs/gcc/C---Misunderstandings.html
   34. http://www.validlab.com/goldberg/paper.ps
