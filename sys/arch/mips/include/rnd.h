@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.2 2000/06/09 04:24:22 soda Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3 2000/10/05 02:36:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -51,7 +51,7 @@ cpu_hascounter(void)
 static __inline u_int32_t
 cpu_counter(void)
 {
-	return mips3_cycle_count();
+	return mips3_cp0_count_read();
 }
 #endif
 
