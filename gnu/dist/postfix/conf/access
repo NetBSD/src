@@ -33,63 +33,33 @@
 #        different way as described below.
 # 
 # TABLE FORMAT
-#        The format of the access table is as follows:
+#        The input format for the postmap(1) command is as follows:
 # 
 #        pattern action
 #               When pattern matches a mail address, domain or host
 #               address, perform the corresponding action.
 # 
 #        blank lines and comments
-#               Empty  lines and whitespace-only lines are ignored,
-#               as are lines whose first  non-whitespace  character
+#               Empty lines and whitespace-only lines are  ignored,
+#               as  are  lines whose first non-whitespace character
 #               is a `#'.
 # 
 #        multi-line text
-#               A  logical  line starts with non-whitespace text. A
-#               line that starts with whitespace continues a  logi-
+#               A logical line starts with non-whitespace  text.  A
+#               line  that starts with whitespace continues a logi-
 #               cal line.
 # 
 # EMAIL ADDRESS PATTERNS
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or SQL,  the  following
-#        lookup patterns are examined in the order as listed:
+#        networked  tables  such  as NIS, LDAP or SQL, patterns are
+#        tried in the order as listed below:
 # 
 #        user@domain
 #               Matches the specified mail address.
 # 
 #        domain.tld
-#               Matches  domain.tld  as the domain part of an email
+#               Matches domain.tld as the domain part of  an  email
 #               address.
-# 
-#               The pattern domain.tld also matches subdomains, but
-#               only when the string smtpd_access_maps is listed in
-#               the Postfix  parent_domain_matches_subdomains  con-
-#               figuration setting.  Otherwise, specify .domain.tld
-#               (note the initial dot) in  order  to  match  subdo-
-#               mains.
-# 
-#        user@  Matches  all mail addresses with the specified user
-#               part.
-# 
-#        Note: lookup of the null sender address  is  not  possible
-#        with  some types of lookup table. By default, Postfix uses
-#        <> as the lookup key for  such  addresses.  The  value  is
-#        specified  with the smtpd_null_access_lookup_key parameter
-#        in the Postfix main.cf file.
-# 
-# ADDRESS EXTENSION
-#        When a mail address localpart contains the optional recip-
-#        ient  delimiter  (e.g., user+foo@domain), the lookup order
-#        becomes: user+foo@domain, user@domain, domain,  user+foo@,
-#        and user@.
-# 
-# HOST NAME/ADDRESS PATTERNS
-#        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or SQL,  the  following
-#        lookup patterns are examined in the order as listed:
-# 
-#        domain.tld
-#               Matches domain.tld.
 # 
 #               The pattern domain.tld also matches subdomains, but
 #               only when the string smtpd_access_maps is listed in
@@ -98,15 +68,50 @@
 #               (note  the  initial  dot)  in order to match subdo-
 #               mains.
 # 
+#        user@  Matches all mail addresses with the specified  user
+#               part.
+# 
+#        Note:  lookup  of  the null sender address is not possible
+#        with some types of lookup table. By default, Postfix  uses
+#        <>  as  the  lookup  key  for such addresses. The value is
+#        specified with the smtpd_null_access_lookup_key  parameter
+#        in the Postfix main.cf file.
+# 
+# ADDRESS EXTENSION
+#        When a mail address localpart contains the optional recip-
+#        ient delimiter (e.g., user+foo@domain), the  lookup  order
+#        becomes:  user+foo@domain, user@domain, domain, user+foo@,
+#        and user@.
+# 
+# HOST NAME/ADDRESS PATTERNS
+#        With lookups from indexed files such as DB or DBM, or from
+#        networked  tables  such as NIS, LDAP or SQL, the following
+#        lookup patterns are examined in the order as listed:
+# 
+#        domain.tld
+#               Matches domain.tld.
+# 
+#               The pattern domain.tld also matches subdomains, but
+#               only when the string smtpd_access_maps is listed in
+#               the Postfix  parent_domain_matches_subdomains  con-
+#               figuration setting.  Otherwise, specify .domain.tld
+#               (note the initial dot) in  order  to  match  subdo-
+#               mains.
+# 
 #        net.work.addr.ess
 # 
 #        net.work.addr
 # 
 #        net.work
 # 
-#        net    Matches any host address in the specified  network.
-#               A  network  address  is  a  sequence of one or more
+#        net    Matches  any host address in the specified network.
+#               A network address is a  sequence  of  one  or  more
 #               octets separated by ".".
+# 
+#               Note:  CIDR  notation (network/netmask) is not sup-
+#               ported with lookups from indexed files such  as  DB
+#               or  DBM, or from networked tables such as NIS, LDAP
+#               or SQL.
 # 
 # ACTIONS
 #        [45]NN text

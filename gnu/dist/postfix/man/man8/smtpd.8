@@ -73,7 +73,7 @@ a configuration change.
 Disallow non-RFC 821 style addresses in SMTP commands. For example,
 the RFC822-style address forms with comments that Sendmail allows.
 .IP \fBbroken_sasl_auth_clients\fR
-Support older Microsoft clients that mis-implement the AUTH
+Support Microsoft clients that implement an older version of the AUTH
 protocol, and that expect an EHLO response of "250 AUTH=list"
 instead of "250 AUTH list".
 .IP \fBsmtpd_noop_commands\fR
@@ -87,7 +87,7 @@ either bounces mail or re-injects the result back into Postfix.
 This parameter uses the same syntax as the right-hand side of
 a Postfix transport table.
 .SH "Authentication controls"
-.IP \fBenable_sasl_authentication\fR
+.IP \fBsmtpd_sasl_auth_enable\fR
 Enable per-session authentication as per RFC 2554 (SASL).
 This functionality is available only when explicitly selected
 at program build time and explicitly enabled at runtime.

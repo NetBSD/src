@@ -13,6 +13,9 @@
 /* DESCRIPTION
 /*	sane_accept() implements the accept(2) socket call, and maps
 /*	known harmless error results to EAGAIN.
+/*
+/*	If the buf and len arguments are not null, then additional
+/*	workarounds may be enabled that depend on the socket type.
 /* BUGS
 /*	Bizarre systems may have other harmless error results. Such
 /*	systems encourage programers to ignore error results, and
@@ -76,8 +79,7 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
      * client has disconnected in the mean time. The data that was sent with
      * connect() write() close() is lost, even though the write() and close()
      * reported successful completion. This was fixed shortly before FreeBSD
-     * 4.3. However, other systems may make that same mistake again, so we're
-     * adding a special warning.
+     * 4.3.
      * 
      * XXX HP-UX 11 returns ENOBUFS when the client has disconnected in the mean
      * time.
@@ -90,5 +92,21 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
 	    }
 	}
     }
+
+    /*
+     * XXX Solaris select() produces false read events, so that read() blocks
+     * forever on a blocking socket, and fails with EAGAIN on a non-blocking
+     * socket. Turning on keepalives will fix a blocking socket provided that
+     * the kernel's keepalive timer expires before the Postfix watchdog
+     * timer.
+     */
+#if defined(BROKEN_READ_SELECT_ON_TCP_SOCKET) && defined(SO_KEEPALIVE)
+    else if (sa != 0 && sa->sa_family == AF_INET) {
+	int     on = 1;
+
+	(void) setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,
+			  (char *) &on, sizeof(on));
+    }
+#endif
     return (fd);
 }

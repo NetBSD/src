@@ -45,37 +45,40 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
 
        <b>if</b> <b>!/</b><i>pattern</i><b>/</b><i>flags</i>
 
-       <b>endif</b>  Examine the lines between <b>if</b>..<b>endif</b> only if <i>pattern</i>
-              matches (does not match). The <b>if</b>..<b>endif</b>  can  nest.
-              Do   not  prepend  whitespace  to  patterns  inside
+       <b>endif</b>  Match   the  search  string  against  the  patterns
+              between <b>if</b> and <b>endif</b>, if and  only  if  the  search
+              string   matches  (does  not  match)  <i>pattern</i>.  The
+              <b>if</b>..<b>endif</b> can nest.
+
+              Note: do not prepend whitespace to patterns  inside
               <b>if</b>..<b>endif</b>.
 
        Each pattern is a regular expression enclosed by a pair of
        delimiters.  The regular expression syntax is described in
        <i>re_format</i>(7).  The expression delimiter can be any charac-
-       ter,  except  whitespace  or  characters that have special
-       meaning (traditionally the forward  slash  is  used).  The
+       ter, except whitespace or  characters  that  have  special
+       meaning  (traditionally  the  forward  slash is used). The
        regular expression can contain whitespace.
 
        By default, matching is case-insensitive, although follow-
-       ing the second slash with an `i' flag will  reverse  this.
-       Other  flags are `x' (disable extended expression syntax),
-       and `m' (enable multi-line mode, that  is,  treat  newline
+       ing  the  second slash with an `i' flag will reverse this.
+       Other flags are `x' (disable extended expression  syntax),
+       and  `m'  (enable  multi-line mode, that is, treat newline
        characters as special).
 
-       Each  pattern  is applied to the entire lookup key string.
-       Depending on the application, that  string  is  an  entire
+       Each pattern is applied to the entire lookup  key  string.
+       Depending  on  the  application,  that string is an entire
        client hostname, an entire client IP address, or an entire
-       mail address.  Thus, no parent domain  or  parent  network
-       search  is  done,  and  <i>user@domain</i> mail addresses are not
-       broken up into their <i>user</i> and  <i>domain</i>  constituent  parts,
+       mail  address.   Thus,  no parent domain or parent network
+       search is done, and <i>user@domain</i>  mail  addresses  are  not
+       broken  up  into  their <i>user</i> and <i>domain</i> constituent parts,
        nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns  are  applied  in  the  order as specified in the
-       table, until a pattern is found that  matches  the  search
+       Patterns are applied in the  order  as  specified  in  the
+       table,  until  a  pattern is found that matches the search
        string.
 
-       Substitution  of  substrings  from  the matched expression
+       Substitution of substrings  from  the  matched  expression
        into the result string is possible using $1, $2, etc.. The
        macros in the result string may need to be written as ${n}
        or $(n) if they aren't followed by whitespace.

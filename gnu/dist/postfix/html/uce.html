@@ -134,7 +134,9 @@ matches a table, the action depends on the lookup result:
 Reject the message, log the header and the optional text,
 and send the optional text to the originator.
 
-<dt>IGNORE <dd> Delete the header from the message.
+<dt>OK <dd>Skip all further header patterns for this header line.
+
+<dt>IGNORE <dd> Delete the header line from the message.
 
 <dt>WARN <dd>
 
@@ -240,7 +242,9 @@ and send the optional text to the originator.
 Log (but do not reject) the body line with a warning, and log the
 optional text.
 
-<dt>IGNORE <dd> Delete the matched line from the message.
+<dt>OK <dd>Skip all further body patterns for this body line.
+
+<dt>IGNORE <dd> Delete the body line from the message.
 
 <dt>HOLD <dd> 
 
@@ -344,8 +348,8 @@ reject_rbl_client relays.mail-abuse.org</b> (paid service)
 <dd> <b>smtpd_client_restrictions = hash:/etc/postfix/access,
 reject_rbl_client relays.ordb.org</b> (free service)
 
-<dd> <b>smtpd_client_restrictions = hash:/etc/postfix/access,
-reject_rhsbl_client dsn.rfc-ignorant.org</b> (free service)
+<dd> <b>smtpd_sender_restrictions = hash:/etc/postfix/access,
+reject_rhsbl_sender dsn.rfc-ignorant.org</b> (free service)
 
 <dd> <b>smtpd_client_restrictions = permit_mynetworks,
 reject_unknown_client</b>
@@ -856,7 +860,7 @@ and the address contains no sender-specified routing
 <li>Postfix is the final destination:  any destination that matches
 <a href="basic.html#mydestination">$mydestination</a>, <a
 href="basic.html#inet_interfaces">$inet_interfaces</a>, <a
-href="virtual.5.html">$virtual_alias_domains</a>, or
+href="virtual.5.html">$virtual_alias_domains</a>, or <a
 href="virtual.8.html">$virtual_mailbox_domains</a>.
 
 </ul>
@@ -930,19 +934,19 @@ lookup tables:
 
 <table border="1">
 
-<tr><th>Recipient domain matches <th>Recipient lookup table 
+<tr><th>Recipient domain matches</th> <th>Recipient lookup table</th> 
 
-<tr><td><a href="basic.html#mydestination"> $mydestination</a> or
-<a href="basic.html#inet_interfaces">$inet_interfaces</a> 
-<td>$local_recipient_maps
+</tr><tr><td><a href="basic.html#mydestination"> $mydestination</a> or
+<a href="basic.html#inet_interfaces">$inet_interfaces</a></td> 
+<td>$local_recipient_maps</td>
 
-<tr><td>$virtual_alias_domains <td>$virtual_alias_maps 
+</tr><tr><td>$virtual_alias_domains</td> <td>$virtual_alias_maps</td> 
 
-<tr><td>$virtual_mailbox_domains <td>$virtual_mailbox_maps 
+</tr><tr><td>$virtual_mailbox_domains</td> <td>$virtual_mailbox_maps</td> 
 
-<tr><td>$relay_domains <td>$relay_recipient_maps 
+</tr><tr><td>$relay_domains</td> <td>$relay_recipient_maps</td> 
 
-</table>
+</tr></table>
 
 </blockquote>
 

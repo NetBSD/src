@@ -53,7 +53,6 @@ typedef struct LMTP_STATE {
     sasl_callback_t *sasl_callbacks;	/* stateful callbacks */
 #endif
     int     sndbufsize;			/* total window size */
-    int     sndbuffree;			/* remaining window */
     int     reuse;			/* connection being reused */
 } LMTP_STATE;
 

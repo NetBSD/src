@@ -24,6 +24,23 @@ snapshot release).  Patches change the patchlevel and the release
 date. Snapshots change only the release date, unless they include
 the same bugfixes as a patch release.
 
+Incompatible changes with Postfix version 2.0.8 (released 20030415)
+===================================================================
+
+Too many people mess up their net/mask patterns, causing open
+mail relay problems. Postfix processes now abort when given a
+net/mask pattern with a non-zero host portion (for example,
+168.100.189.2/28), and suggest to specify the proper net/mask
+pattern instead (for example, 168.100.189.0/28).
+
+Major changes with Postfix version 2.0.8 (released 20030415)
+============================================================
+
+Workaround for file system clock drift that caused Postfix to ignore
+new mail (this could happen with file systems mounted from a server).
+Postfix now logs a warning and proceeds with only slightly reduced
+performance, instead of ignoring new mail.
+
 Incompatible changes with Postfix version 2.0.6 (released 20030305)
 ===================================================================
 
@@ -193,7 +210,10 @@ more flexible "reject_rbl_client" feature instead.
 
 [Obsolete 20021209] The "check_relay_domains" restriction is going
 away.  The SMTP server logs a warning and suggests using the more
-robust "reject_unauth_destination" instead.
+robust "reject_unauth_destination" instead. This means that Postfix
+by default no longer grants relay permissions on the basis of the
+client hostname, and that relay clients must be authorized via
+other means such as permit_mynetworks.
 
 [Obsolete 20020917] In regexp lookup tables, the form /pattern1/!/pattern2/
 is going away. Use the cleaner and more flexible "if !/pattern2/..endif"
@@ -313,7 +333,7 @@ mail relay traffic from outbound traffic. This eliminates a problem
 where inbound mail deliveries could become resource starved in the
 presence of a high volume of outbound mail.
 
-[Feature 20021013] The body_checks_max_size parameter limits the
+[Feature 20021013] The body_checks_size_limit parameter limits the
 amount of text per message body segment (or attachment, if you
 prefer to use that term) that is subjected to body_checks inspection.
 The default limit is 50 kbytes. This speeds up the processing of
@@ -466,7 +486,8 @@ or html/uce.html for details.
 IP address blacklisting. Based on code by LaMont Jones.  The old
 "reject_maps_rbl" is now implemented as a wrapper around the
 reject_rbl_client code, and logs a warning that "reject_maps_rbl"
-is going away.
+is going away. To upgrade, specify "reject_rbl_client domainname"
+once for each domain name that is listed in maps_rbl_domains.
 
 [Feature 20020923] "reject_rhsbl_sender rbl.domain.tld" for sender
 domain blacklisting. Also: reject_rhsbl_client and reject_rhsbl_recipient
@@ -724,7 +745,7 @@ mime_header_checks (for MIME headers), and nested_header_checks
 (for headers of attached email messages except MIME headers).  By
 default, all headers are matched with header_checks.
 
-[Feature 20021013] The body_checks_max_size parameter limits the
+[Feature 20021013] The body_checks_size_limit parameter limits the
 amount of text per message body segment (or attachment, if you
 prefer to use that term) that is subjected to body_checks inspection.
 The default limit is 50 kbytes. This speeds up the processing of

@@ -1262,12 +1262,12 @@ Apologies for any names omitted.
 	reorganization of the way queue scans were done. The queue
 	manager socket now has become public.
 
-10091002
+19981002
 
 	SMTPD now logs "lost connection after end-of-message" instead
 	of "lost connection after DATA".
 
-10091005
+19981005
 
 	More bullet proofing: timeouts on all triggers.
 
@@ -6928,7 +6928,7 @@ Apologies for any names omitted.
 	File: util/dict_regexp.c.
 
  
-200209010
+20020910
 
 	Bugfix: the SMTP client produced suprious warnings about
 	trouble with fallback_relay hosts. File:  smtp/smtp_connect.c.
@@ -6936,7 +6936,7 @@ Apologies for any names omitted.
 	Robustness: don't wait with detecting broken SMTP connections
 	until reading input. Leandro Santi. File: smtpd/smtpd_chat.c.
 
-200209011
+20020911
 
 	Workaround: IRIX 6 can't do ioctl FIONREAD on pipes. This
 	breaks the in_flow_delay feature.  File:  util/sys_defs.h.
@@ -7682,7 +7682,307 @@ Apologies for any names omitted.
 	systems against exploitation of the remote buffer overflow
 	vulnerability described in CERT advisory CA-2003-07.
 
+20030311-19
+
+	Bugfix: the access map actions HOLD, DISCARD and FILTER
+	were broken with smtpd_delay_reject=no and with ETRN. Fixing
+	this required re-architecting of the actions code. Files:
+	smtpd/smtpd.[hc], smtpd/smtpd_check.c, smtpd/smtpd_state.c.
+
+20030315
+
+	Bugfix: the postsuper manual page documented support for
+	the -c command line option, but it was not implemented.
+	File: postsuper/postsuper.c.
+
+	Bugfix: the Postfix 2.0 recipient map checking code broke
+	the VRFY command, causing it to reply with status code 252
+	for non-existent addresses. This required re-architecting
+	the recipient table lookup code. File:  smtpd/smtpd_check.c.
+
+20030410
+
+	Safety: log a fatal error when a net/mask pattern has a
+	non-zero host part, so that mail delivery is deferred.
+	File: util/match_ops.c.
+
+20030411
+
+	Bugfix: extraneous warning about out-of-order original
+	recipient records by Patrik Rak. Files: *qmgr/qmgr_message.c.
+
+20030415
+
+	Workaround: log a warning and reset incoming queue file
+	time stamps when the file system clock is ahead of the
+	local clock, instead of ignoring new mail until the next
+	queue scan. The file system clock drift detection executes
+	only once per process instance, to minimize the performance
+	impact. File: global/mail_stream.c.
+
+20030416
+
+	Bugfix: missing partial last line when 1) someone submits
+	8-bit mail not ending in newline via /usr/sbin/sendmail
+	and 2) MIME input processing is turned off, and 3) MIME
+	8bit->7bit conversion is requested upon delivery via SMTP.
+
+20030424
+
+	Cleanup: readlline() did not terminate the result before
+	complaining about lines starting with whitespace.
+
+	Cleanup: eliminated valid_hostname warning for invalid
+	queue file names. File: global/mail_queue.c.
+
+	Bugfix: the Postfix sendmail command applied the message
+	size limit when running as newaliases. The limiting code
+	is now moved to the message enqueuing branch of the code.
+	File: sendmail/sendmail.c.
+
+20030429
+
+	Bugfix: "," was not recognized in proxy_read_maps settings.
+	Fix by Leandro Santi. File: proxymap/proxymap.c.
+
+20030502
+
+	Bugfix: defer delivery after .forward etc. file read error.
+	File: local/token.c. Problem reported by Ben Rosengart,
+	Panix.
+
+20030520
+
+	Cleanup: future time stamps in Received: headers and negative
+	delays in delivery agent logging after "postdrop -r",
+	because deferred queue files had future file modification
+	times.  File:  src/postsuper/postsuper.c.
+
+20030521
+
+	Cleanup: nqmgr warnings about "recipient count mismatch"
+	after "postdrop -r", because the cleanup server did not
+	count the "already done" recipients. Problem reported by
+	Richard Stockton, Gramma Software. Files:
+	cleanup/cleanup_envelope.c, cleanup/cleanup_extracted.c
+
+20030528
+
+	Compatibility: "sendmail -q<time>" without -bd option now
+	exits immediately, instead of waiting for input on the
+	standard input stream and screwing up system boot sequences.
+	File: sendmail/sendmail.c.
+
+	Bugfix: the Postfix LMTP client used the wrong service
+	name, causing trouble with SASL 2.1.13.  Daniel Schales,
+	Louisiana Tech. File: lmtp/lmtp_sasl_glue.c.
+
+	Workaround: IRIX select() reports that a non-blocking file
+	descriptor is writable while write() transfers zero bytes.
+	File:  global/pipe_command.c.
+
+	Feature: "postcat -q" (search the queue for the named file)
+	support copied from snapshot release because I can't see
+	people suffer. File: postcat/postcat.c.
+
+20030530
+
+	Bugfix: client access denied with smtpd_delay_reject=no
+	broke "sendmail -bs". Fix by Victor Duchovni, Morgan Stanley.
+	File: smtpd/smtpd.c.
+
+20030531
+
+	Compatibility: allow <@site,@site:address> route addresses
+	in SMTP commands.  File: smtpd/smtpd.c.
+
+20030605
+
+	Bugfix: the "dead host" backoff timer in the MySQL client
+	didn't work.  Fix by Leandro Santi. File: util/dict_mysql.c.
+
+	Safety: stricter checks on what queue file records the
+	postdrop submission command accepts (idea copied from
+	snapshot). File:  postdrop/postdrop.c.
+
+	Workaround: turned off non-blocking write to pipe because
+	too many systems give a weird write() result. File:
+	global/pipe_command.c.  
+
+20030609
+
+	Workaround: Solaris blocking socket read() may hang.  Hernan
+	Perez Masci and Leandro Santi. File: smtpd/smtpd.c.
+
+20030611
+
+	Bugfix: the stricter postdrop input filter broke "sendmail
+	-bs". Found by Lutz Jaenicke. File: smtpd/smtpd.c.
+
+20030616
+
+	Cleanup: more accurate "postfix check" warning for files
+	that miss one or more of the required mode 02111 execute
+	permission bits. Matthias Andree. File: conf/postfix-script.
+
+20030618
+
+	Workaround: after "postfix reload", the master daemon now
+	warns when inet_interfaces has changed, and ignores the
+	change, instead of passing incorrect information to the
+	smtp server. File:  master/master_ent.c.
+
+20030620
+
+	Bugfix: after the last change to postdrop, postcat no longer
+	recognized maildrop queue files as valid. File: postcat/postcat.c.
+
+20030621
+
+	Workaround: the safe_open(O_CREAT) race condition exploit
+	avoiding code tries a little harder when it encounters a
+	race condition. File: util/safe_open.c.
+
+20030629
+
+	Cleanup: replaced references to "simulated virtual domains"
+	by "virtual alias domains". Victor Duchovni, Morgan Stanley.
+
+20030711
+
+	Bugfix: the LMTP session caching code did not reset the
+	EHLO server feature list when it needed to reconnect.
+	Problem found by Tobias Erbsland.
+
+20030717
+
+	Documentation: corrected the command time limit parameter
+	syntax in the spawn(8) manual page.
+
+20030811
+
+	Cleanup: produce a warning when host:port specifies a badly
+	formatted numerical port.  Files:  util/find_inet.c,
+	smtp/smtp_connect.c, lmtp/lmtp_connect.c.
+
+20030905
+
+	Workaround: Solaris 8 select() claims that a non-blocking
+	socket is readable and then read() fails with EAGAIN. Files:
+	util/timed_read.c and as precautionary measure,
+	util/timed_write.c.
+
+20030908
+
+	The 20030905 workaround triggers too many warnings. TCP
+	sockets are back to blocking, and keepalives are turned on
+	to kill off dead sockets, as suggested by Leandro Santi.
+	Files: master/{single,multi}_server.c, smtpd/smtpd.c,
+	util/sys_defs.h.
+
+20030909
+
+	Bugfix: the LMTP session caching code had problems with
+	SASL authentication after the first connection, and pipelining
+	was working poorly.  Fix by Viktor Dukhovni, Morgan Stanley.
+	Files: lmtp/lmtp.c, lmtp/lmtp_proto.c.
+
+20030912
+
+	Workaround: besides SMTP server sockets, SMTP client sockets
+	can also hang on Solaris, as reported by Leandro Santi. In
+	order to deal with this at the root, all connection management
+	is now done by sane_accept() and sane_connect().  Both turn
+	on keepalives on Solaris.
+
+20030913
+
+	Safety: set-gid commands don't trust TZ.  File: msg_syslog.c.
+
+20031027
+
+	Portability: MacOS X Bind8 compatibility. File: makedefs.
+
+20031110
+
+	Cleanup: don't report that $queue_directory/etc/filename
+	differs from /etc/filename when /etc/filename does not
+	exist.  File: conf/postfix-script.
+
+20031126
+
+	Bugfix: "panic: mymalloc: requested length 0" when master.cf
+	specified an invalid host name or address.  Postfix now
+	logs more specific information. File:  master/master_ent.c.
+	Reported by several people.
+
+20031215
+
+	Safety: updated mail_queue_id_ok() for long fast flush
+	logfile names. File: global/mail_queue.c.
+
+	Robustness: save and restore the resolver _res.options
+	settings before and after DNS lookup, to avoid surprises
+	in third-party code. This may eliminate some "localhost
+	not found" problems. File: dns/dns_lookup.c.
+
+20031222
+
+	Cleanup: shaved half the worst-case bits off the cleanup
+	duplicate address filter footprint. After discussion with
+	Victor Duchovni. File: cleanup/cleanup_out_recipient.c.
+
+20031223
+
+	Bugfix: restore errno after write failure in SIGCHLD handler.
+	Leandro Santi. File: master/master_sig.c.
+
+20040104
+
+	Workaround: MacOSX dumps core on the 20030913 TZ censoring
+	code. We explictly set TZ=UTC, which will produce incorrect
+	results when "mailq" formatting is moved from the showq
+	daemon to the postqueue command.   File: msg_syslog.c.
+
+	Bugfix: vstring_get() etc. now return VSTREAM_EOF when they
+	terminate prematurely, instead of returning the last
+	character stored.  This avoids mis-leading warnings. File:
+	global/vstring_vstream.c.
+
+20040115
+
+	Performance: allow delivery concurrency to increase even
+	while mail is deferred, as long as the delivery agent does
+	not report really serious trouble with the destination.
+	Files:  *qmgr/qmgr_deliver.c.
+
+20040122
+
+	UNDO the 20040104 change (vstring_get() etc. return
+	VSTREAM_EOF when they terminate prematurely, instead of
+	returning the last character stored, to avoid mis-leading
+	warnings). File:  global/vstring_vstream.c.
+
+	Portability: test -e is not portable. File: conf/postfix-script.
+
+20040302
+
+	Bugfix: the pickup daemon now strokes the watchdog frequently
+	to prevent the watchdog from barking when mail arrives
+	faster than it can be picked up. File: pickup/pickup.c.
+
+20040311
+
+	Bugfix: bad address syntax caused map lookup with zero-length
+	keys.  Problem reported by Andrei Koulik. Files:
+	util/match_ops.c, src/trivial-rewrite/transport.c.
+
 Open problems:
+
+	Doc: mention the proxy_interfaces parameter everywhere the
+	inet_interfaces and mydestination parameters are mentioned.
+
+	Low: smtp-source may block when sending large test messages.
 
 	Low: after successful delivery, per-queue window += 1/window,
 	after failure, queue window -= 1 (Victor).

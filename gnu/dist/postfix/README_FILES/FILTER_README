@@ -236,8 +236,9 @@ program.
 
 Note: the localhost port 10025 SMTP server filter should announce
 itself as "220 localhost...".  Postfix aborts delivery when it
-connects to an SMTP server that uses the same hostname, because
-that normally means you have a mail delivery loop problem.
+connects to an SMTP server that uses the same hostname as Postfix
+("host <servername> greeted me with my own hostname"), because that
+normally means you have a mail delivery loop problem.
 
 The example here assumes that the /some/where/filter command is a
 PERL script. PERL has modules that make talking SMTP easy. The
@@ -280,9 +281,9 @@ mail.
 The "-o local_recipient_maps=" and "-o relay_recipient_maps=" avoid
 unnecessary table lookups.
 
-The "-o myhostname=localhost.domain.tld" avoids a possible problem
-if your content filter is based on a proxy that simply relays SMTP
-commands.
+The "-o myhostname=localhost.domain.tld" avoids false alarms ("host
+<servername> greeted me with my own hostname") if your content
+filter is based on a proxy that simply relays SMTP commands.
 
 The "-o smtpd_xxx_restrictions" and "-o mynetworks=127.0.0.0/8"
 turn off UCE controls that would only waste time here.
@@ -504,7 +505,7 @@ Limitations:
   precedence over filters specified with the main.cf content_filter 
   parameter.
 
-- Only the last FILTER action from smtpd access maps or in
+- Only the last FILTER action from smtpd access maps or from
   header/body_checks takes effect.
 
 - The same content filter is applied to all the recipients of a

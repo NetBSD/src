@@ -184,14 +184,15 @@ const char *maps_find(MAPS *maps, const char *name, int flags)
 	    continue;
 	if ((expansion = dict_get(dict, name)) != 0) {
 	    if (msg_verbose)
-		msg_info("%s: %s: %s = %s", myname, *map_name, name, expansion);
+		msg_info("%s: %s: %s: %s = %s", myname, maps->title,
+			 *map_name, name, expansion);
 	    return (expansion);
 	} else if (dict_errno != 0) {
 	    break;
 	}
     }
     if (msg_verbose)
-	msg_info("%s: %s: %s", myname, name, dict_errno ?
+	msg_info("%s: %s: %s: %s", myname, maps->title, name, dict_errno ?
 		 "search aborted" : "not found");
     return (0);
 }

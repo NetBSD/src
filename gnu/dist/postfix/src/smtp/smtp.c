@@ -21,10 +21,6 @@
 /*	the destination host, sorts the list by preference, and connects
 /*	to each listed address until it finds a server that responds.
 /*
-/*	When the domain or host is specified as a comma/whitespace
-/*	separated list, the SMTP client repeats the above process
-/*	for all destinations until it finds a server that responds.
-/*
 /*	Once the SMTP client has received the server greeting banner, no
 /*	error will cause it to proceed to the next address on the mail
 /*	exchanger list. Instead, the message is either bounced, or its

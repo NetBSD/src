@@ -97,6 +97,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->defer_if_permit_sender = 0;
     state->defer_if_reject.reason = 0;
     state->defer_if_permit.reason = 0;
+    state->discard = 0;
     state->expand_buf = 0;
 
 #ifdef USE_SASL_AUTH

@@ -35,10 +35,12 @@
 # .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 # .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
-#       Examine the lines between \fBif\fR..\fBendif\fR only if
-#       \fIpattern\fR matches (does not match). The \fBif\fR..\fBendif\fR
-#	can nest.
-#       Do not prepend whitespace to patterns inside \fBif\fR..\fBendif\fR.
+#	Match the search string against the patterns between \fBif\fR
+#	and \fBendif\fR, if and only if the search string matches (does
+#	not match) \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+# .sp
+#	Note: do not prepend whitespace to patterns inside
+#	\fBif\fR..\fBendif\fR.
 # .PP
 #	Each pattern is a regular expression enclosed by a pair of delimiters.
 #	The regular expression syntax is described in \fIre_format\fR(7).

@@ -50,6 +50,7 @@
 
 #include "msg.h"
 #include "iostuff.h"
+#include "sane_connect.h"
 #include "connect.h"
 #include "timed_connect.h"
 
@@ -99,7 +100,7 @@ int     unix_connect(const char *addr, int block_mode, int timeout)
      */
     else {
 	non_blocking(sock, block_mode);
-	if (connect(sock, (struct sockaddr *) & sun, sizeof(sun)) < 0
+	if (sane_connect(sock, (struct sockaddr *) & sun, sizeof(sun)) < 0
 	    && errno != EINPROGRESS) {
 	    close(sock);
 	    return (-1);

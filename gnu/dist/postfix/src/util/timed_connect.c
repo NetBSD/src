@@ -59,6 +59,7 @@
 
 #include "msg.h"
 #include "iostuff.h"
+#include "sane_connect.h"
 #include "timed_connect.h"
 
 /* timed_connect - connect with deadline */
@@ -78,7 +79,7 @@ int     timed_connect(int sock, struct sockaddr * sa, int len, int timeout)
     /*
      * Start the connection, and handle all possible results.
      */
-    if (connect(sock, sa, len) == 0)
+    if (sane_connect(sock, sa, len) == 0)
 	return (0);
     if (errno != EINPROGRESS)
 	return (-1);
