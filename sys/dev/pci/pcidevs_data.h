@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.349 2001/08/23 03:32:24 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.350 2001/08/23 03:42:27 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.346 2001/08/23 03:31:55 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
  */
 
 /*
@@ -745,25 +745,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79c970 PCnet-PCI LANCE Ethernet",
+	    "PCnet-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME,
 	    0,
 	    "Advanced Micro Devices",
-	    "79c978 PCnet-PCI Home",
+	    "PCnet-Home HomePNA Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "53c974 PCscsi-PCI SCSI",
+	    "PCscsi-PCI SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79C974 PCnet-PCI Ethernet & SCSI",
+	    "PCnet-PCI Ethernet & SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
