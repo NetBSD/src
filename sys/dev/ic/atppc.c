@@ -1,7 +1,8 @@
-/* $NetBSD: atppc.c,v 1.12 2004/02/10 18:42:48 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.13 2004/02/10 21:55:38 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
+ * Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.12 2004/02/10 18:42:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.13 2004/02/10 21:55:38 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
