@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.24.2.2 2004/06/27 08:30:49 jdc Exp $	*/
+/*	$NetBSD: atw.c,v 1.24.2.2.2.1 2005/01/24 21:38:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.24.2.2 2004/06/27 08:30:49 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.24.2.2.2.1 2005/01/24 21:38:46 he Exp $");
 
 #include "bpfilter.h"
 
@@ -3813,7 +3813,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    ether_addmulti(ifr, &sc->sc_ic.ic_ec) :
 		    ether_delmulti(ifr, &sc->sc_ic.ic_ec);
 		if (error == ENETRESET) {
-			if (ATW_IS_ENABLED(sc))
+			if (ifp->if_flags & IFF_RUNNING)
 				atw_filter_setup(sc); /* do not rescan */
 			error = 0;
 		}
