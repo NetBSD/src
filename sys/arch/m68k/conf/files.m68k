@@ -1,4 +1,4 @@
-#       $NetBSD: files.m68k,v 1.30 2000/12/19 21:09:59 scw Exp $
+#       $NetBSD: files.m68k,v 1.30.8.1 2001/11/10 21:22:50 scw Exp $
 #
 
 defopt	opt_fpsp.h		FPSP
@@ -17,13 +17,13 @@ file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	netns/ns_cksum.c			ns
 file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
+file	arch/m68k/m68k/reenter_syscall.s
 file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
 file	arch/m68k/m68k/m68k_syscall.c
 
 file	arch/m68k/m68k/compat_13_machdep.c	compat_13
 
-file	arch/m68k/m68k/reenter_syscall.s	compat_linux | compat_svr4
 
 file	arch/m68k/m68k/svr4_machdep.c		compat_svr4
 
