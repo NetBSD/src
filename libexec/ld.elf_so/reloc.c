@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.26 2000/05/01 11:41:08 kleink Exp $	 */
+/*	$NetBSD: reloc.c,v 1.26.4.1 2000/07/26 23:45:22 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -680,6 +680,46 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			_rtld_setup_powerpc_plt(obj);
 #endif
 #if defined(__sparc__)
+#if defined(__arch64__) || defined(__sparc_v9__)
+			/*
+			 * On sparc64 we got troubles.
+			 *
+			 * Instructions are 4 bytes long.
+			 * Elf[64]_Addr is 8 bytes long, so are our pltglot[]
+			 * array entries.
+			 * Each PLT entry jumps to PLT0 to enter the dynamic
+			 * linker.
+			 * Loading an arbitrary 64-bit pointer takes 6
+			 * instructions and 2 registers.
+			 *
+			 * Somehow we need to issue a save to get a new stack
+			 * frame, load the address of the dynamic linker, and
+			 * jump there, in 8 instructions or less.
+			 *
+			 * Oh, we need to fill out both PLT0 and PLT1.
+			 */
+			{
+				Elf_Word *entry = (Elf_Word *)obj->pltgot;
+				extern void _rtld_install_plt __P((Elf_Word *,
+					Elf_Addr));
+				extern void _rtld_bind_start_0 __P((long,
+					long));
+				extern void _rtld_bind_start_1 __P((long,
+					long));
+
+				/* Install in entries 0 and 1 */
+				_rtld_install_plt(&entry[0], 
+					(Elf_Addr)&_rtld_bind_start_0);
+				_rtld_install_plt(&entry[8], 
+					(Elf_Addr)&_rtld_bind_start_1);
+
+				/* 
+				 * Install the object reference in first slot
+				 * of entry 2.
+				 */
+				obj->pltgot[8] = (Elf_Addr) obj;
+			}
+#else
 			/*
 			 * PLTGOT is the PLT on the sparc.
 			 * The first entry holds the call the dynamic linker.
@@ -698,6 +738,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			obj->pltgot[2] = NOP;
 
 			obj->pltgot[3] = (Elf_Addr) obj;
+#endif
 #endif
 #if defined(__vax__)
 			obj->pltgot[0] = (Elf_Addr) & _rtld_bind_start;
