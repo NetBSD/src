@@ -1,0 +1,85 @@
+#	$NetBSD: files.sgimips,v 1.1 2000/06/14 15:45:37 soren Exp $
+
+maxpartitions 16
+
+maxusers 2 8 64
+
+device mainbus {[addr = -1]}
+attach mainbus at root
+file arch/sgimips/sgimips/mainbus.c	mainbus
+
+device cpu
+attach cpu at mainbus
+file arch/sgimips/sgimips/cpu.c		cpu
+
+define giobus {}
+
+device imc: giobus, eisabus
+attach imc at mainbus
+file arch/sgimips/dev/imc.c		imc
+
+device crime
+attach crime at mainbus
+file arch/sgimips/dev/crime.c		crime
+
+device mace {[offset = -1], [intr = -1]}
+attach mace at mainbus
+file arch/sgimips/dev/mace.c		mace
+
+attach com at mace with com_mace
+file arch/sgimips/dev/com_mace.c	com_mace
+
+device lpt
+attach lpt at mace with lpt_mace
+file arch/sgimips/dev/lpt_mace.c	lpt_mace
+
+attach pckbc at mace with pckbc_mace
+file arch/sgimips/dev/pckbc_mace.c	pckbc_mace
+
+device mec: arp, ether, ifnet, mii
+attach mec at mace
+file arch/sgimips/dev/if_mec.c		mec
+
+device macepci: pcibus
+attach macepci at mace
+file arch/sgimips/pci/macepci.c		macepci
+
+file arch/sgimips/sgimips/ip22.c
+file arch/sgimips/sgimips/ip27.c
+file arch/sgimips/sgimips/ip32.c
+
+file arch/sgimips/sgimips/arcs.c
+file arch/sgimips/sgimips/autoconf.c
+file arch/sgimips/sgimips/bus.c
+file arch/sgimips/sgimips/clock.c
+file arch/sgimips/sgimips/conf.c
+file arch/sgimips/sgimips/console.c
+file arch/sgimips/sgimips/disksubr.c
+file arch/sgimips/sgimips/machdep.c
+
+file arch/sgimips/sgimips/md_root.c	memory_disk_hooks
+major {md = 2}
+
+major {raid = 5} 
+
+file dev/clock_subr.c
+file dev/cons.c
+
+include "arch/sgimips/gio/files.gio"
+include "arch/sgimips/hpc/files.hpc"
+
+include "dev/pci/files.pci"
+file	arch/sgimips/pci/pci_machdep.c	pci
+
+include "dev/vme/files.vme"
+include "dev/eisa/files.eisa"
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/pckbc/files.pckbc"
+include "dev/mii/files.mii"
+include "dev/usb/files.usb"
+include "dev/scsipi/files.scsipi"
+major {sd = 10}
+major {cd = 12}
+include "dev/ata/files.ata"
+major {wd = 13}
