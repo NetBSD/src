@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.3 1996/10/02 05:23:02 cgd Exp $
+.\"	$NetBSD: compat_linux.8,v 1.4 1996/10/15 11:41:09 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -237,6 +237,11 @@ less important, though it is advised to take the most
 recent version.
 .El
 
+.Ss Setting up other files
+Newer version of Linux use /etc/nsswitch.conf for network information,
+such as YP and DNS. You must create or get a valid copy of this file
+and put it in /emul/linux/etc.
+
 .Ss Finding the necessary files.
 .Nm Note:
 the information below is valid as of the \time this
@@ -339,3 +344,6 @@ work, but may confuse others, so you may have to remove it again at
 some point.
 .Sh BUGS
 The information about Linux distributions may become outdated.
+.Pp
+Pathnames pointed to by symbolic links are not looked up in the
+shadow root when running a Linux executable. This is not consistent.
