@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.24 2002/12/17 08:32:12 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.25 2003/02/22 05:11:16 tsutsui Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.24 2002/12/17 08:32:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.25 2003/02/22 05:11:16 tsutsui Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -435,7 +435,7 @@ magma_attach(parent, self, aux)
 		/* seemingly the Magma drivers just ignore the propstring */
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 
-		dprintf(("%s attach CD1400 %d addr %p rev %x clock %dMhz\n",
+		dprintf(("%s attach CD1400 %d addr %p rev %x clock %dMHz\n",
 			sc->ms_dev.dv_xname, chip,
 			cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
 
