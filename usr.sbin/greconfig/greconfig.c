@@ -37,20 +37,25 @@
 /*
  * greconfig - frontend to set/query tunnel endpoints
  *
- * $NetBSD: greconfig.c,v 1.4 1999/01/26 21:32:40 hwr Exp $
+ * $NetBSD: greconfig.c,v 1.5 1999/06/28 07:37:13 explorer Exp $
  */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/sockio.h>
+
 #include <netdb.h>
+
 #include <net/if.h>
+
 #include <netinet/in.h>
+
 #include <arpa/inet.h>
 
 /* from sys/sockio.h */
@@ -64,100 +69,115 @@
 
 void usage(void);
 void name2sa(char *name,struct sockaddr **sa);
-char* sa2name(struct sockaddr *sa);
+char *sa2name(struct sockaddr *sa);
 
 int verbose;
 
 int
 main(int argc, char **argv)
 {
-	int i,s,err;
-	char *dst,*src,*inf;
+	int i, s, err;
+	char *dst, *src, *inf;
 	struct ifreq ifr;
 	struct sockaddr *sa;
 	int pflag=0;
 	u_char proto = 47;
 
-	dst=src=inf=NULL;
-	verbose=0;
+	dst = src = inf = NULL;
+	verbose = 0;
 
 	while ((i = getopt(argc, argv, "d:i:p:s:v")) != -1) 
 		switch(i) {
-			case 'd': dst=optarg; break;
-			case 'i': inf=optarg; break;
-			case 'p': proto=atoi(optarg); pflag++; break;
-			case 's': src=optarg; break;
-			case 'v': verbose++; break;
-			default: usage(); exit(1); 
+			case 'd':
+				dst = optarg;
+				break;
+			case 'i':
+				inf = optarg;
+				break;
+			case 'p':
+				proto = atoi(optarg);
+				pflag++;
+				break;
+			case 's':
+				src = optarg;
+				break;
+			case 'v':
+				verbose++;
+				break;
+			default:
+				usage();
+				exit(1); 
 		}
 
-	if (inf==NULL) {
+	if (inf == NULL) {
 		usage();
 		exit(2);
 	}
 
-	if (strncmp("gre",inf,3)!=0) {
+	if (strncmp("gre", inf, 3) != 0) {
 		usage();
 		exit(3);
 	}
 
-	if((proto!=47) && (proto!=55)) {
+	if ((proto != 47) && (proto != 55)) {
 		usage();
 		exit(4);
 	}
 
-	s=socket(PF_INET,SOCK_DGRAM,0);
-	if(s<0) {
+	s = socket(PF_INET, SOCK_DGRAM, 0);
+	if (s < 0) {
 		perror("Socket() failed: \n");
 		exit(5);
 	}
 	if (pflag) {	/* IPPROTO_GRE is default in kernel */
-		strncpy(ifr.ifr_name,inf,sizeof(ifr.ifr_name));
+		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
 		ifr.ifr_flags =  proto;
 		if (verbose)
-			printf("Setting tunnel protocol to proto %d\n",proto);
-		err=ioctl(s,GRESPROTO,(caddr_t)&ifr);
-		if(err<0)
+			printf("Setting tunnel protocol to proto %d\n", proto);
+		err = ioctl(s, GRESPROTO, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GRESPROTO");
 	}
-	if (src!=NULL) {
-		strncpy(ifr.ifr_name,inf,sizeof(ifr.ifr_name));
-		name2sa(src,&sa);
-		ifr.ifr_addr=*sa;
-		if(verbose)
-			printf("Setting source address ...\n");
-		err=ioctl(s,GRESADDRS,(caddr_t)&ifr);
-		if(err<0)
+	if (src != NULL) {
+		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
+		name2sa(src, &sa);
+		ifr.ifr_addr = *sa;
+		if (verbose)
+			printf("Setting source address to %s...\n",
+			       sa2name(sa));
+		err = ioctl(s, GRESADDRS, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GRESADDRS");
 	}
-	if (dst!=NULL) {
-		strncpy(ifr.ifr_name,inf,sizeof(ifr.ifr_name));
-		name2sa(dst,&sa);
-		ifr.ifr_addr=*sa;
-		if(verbose)
-			printf("Setting destination address ...\n");
-		err=ioctl(s,GRESADDRD,(caddr_t)&ifr);
-		if(err<0)
+	if (dst != NULL) {
+		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
+		name2sa(dst, &sa);
+		ifr.ifr_addr = *sa;
+		if (verbose)
+			printf("Setting destination address to %s...\n",
+			       sa2name(sa));
+		err = ioctl(s, GRESADDRD, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GRESADDRD");
 	}
-	if (src==NULL && dst==NULL && !pflag) {
-		strncpy(ifr.ifr_name,inf,sizeof(ifr.ifr_name));
-		err=ioctl(s,GREGADDRS,(caddr_t)&ifr);
-		if(err<0)
+	if (src == NULL && dst == NULL && !pflag) {
+		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
+		err = ioctl(s, GREGADDRS, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GREGADDRS");
 		else 
-			printf("%s -> ",sa2name(&ifr.ifr_addr));
-		strncpy(ifr.ifr_name,inf,sizeof(ifr.ifr_name));
-		err=ioctl(s,GREGADDRD,(caddr_t)&ifr);
-		if(err<0)
+			printf("%s -> ", sa2name(&ifr.ifr_addr));
+		strncpy(ifr.ifr_name, inf, sizeof(ifr.ifr_name));
+		err = ioctl(s, GREGADDRD, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GREGADDRD");
 		else
-			printf("%s, ",sa2name(&ifr.ifr_addr));
-		err=ioctl(s,GREGPROTO,(caddr_t)&ifr);
-		if(err<0)
+			printf("%s, ", sa2name(&ifr.ifr_addr));
+		err = ioctl(s, GREGPROTO, (caddr_t)&ifr);
+		if (err < 0)
 			perror("GREGPROTO");
 		else
-			printf("running IP-Proto %d\n",ifr.ifr_flags);
+			printf("running IP-Proto %d\n", ifr.ifr_flags);
 	}
 	close(s);
 
@@ -167,34 +187,36 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	printf("greconfig -i unit [-d dst] [-s src] [-p proto] [-v]\n");
-	printf("unit is gre<n>, proto either 47 or 55\n");
+	fprintf(stderr,
+		"greconfig -i unit [-d dst] [-s src] [-p proto] [-v]\n");
+	fprintf(stderr, "unit is gre<n>, proto either 47 or 55\n");
 }
 
-void name2sa(char *name,struct sockaddr **sa)
+void
+name2sa(char *name, struct sockaddr **sa)
 {
 	struct hostent *hp;
 	struct sockaddr_in *si;
-	struct sockaddr_in s;
+	static struct sockaddr_in s;
 
-	hp=gethostbyname(name);
+	hp = gethostbyname(name);
 
-	bzero(&s,sizeof(struct sockaddr_in));
-	s.sin_family=hp->h_addrtype;
-	if(hp->h_addrtype != AF_INET) {
-		printf("Only internet addresses allowed, not %s\n",name);
-		exit(5);
-	}
-	bcopy(hp->h_addr,&s.sin_addr,hp->h_length);
-	si=&s;
+	bzero(&s, sizeof(struct sockaddr_in));
+	s.sin_family = hp->h_addrtype;
+	if (hp->h_addrtype != AF_INET)
+		errx(5, "Only internet addresses allowed, not %s\n", name);
+	bcopy(hp->h_addr, &s.sin_addr, hp->h_length);
+	si = &s;
 
-	*sa=(struct sockaddr *)si;
+	*sa = (struct sockaddr *)si;
 }
-	
-char* sa2name(struct sockaddr *sa)
+
+char *
+sa2name(struct sockaddr *sa)
 {
 	struct sockaddr_in *si;
 
-	si=((struct sockaddr_in *)(sa));
-	return(inet_ntoa(si->sin_addr));
+	si = ((struct sockaddr_in *)(sa));
+
+	return (inet_ntoa(si->sin_addr));
 }
