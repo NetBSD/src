@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.79 2004/06/05 11:23:15 lha Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.80 2004/06/18 15:02:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,10 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.79 2004/06/05 11:23:15 lha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.80 2004/06/18 15:02:53 christos Exp $");
 
 #include "opt_compat_sunos.h"
-#include "pty.h"
+#include "opt_ptm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ int	pty_maxptys(int, int);
 static struct pt_softc **ptyarralloc(int);
 static int check_pty(int);
 
-#ifdef NPTM
+#ifndef NO_DEV_PTM
 
 static int pts_major;
 
@@ -136,6 +136,11 @@ dev_type_ioctl(ptmioctl);
 const struct cdevsw ptm_cdevsw = {
 	ptmopen, ptmclose, noread, nowrite, ptmioctl,
 	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
+};
+#else
+const struct cdevsw ptm_cdevsw = {
+	noopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
 };
 #endif
 
@@ -330,6 +335,9 @@ ptyattach(n)
 		n = DEFAULT_NPTYS;
 	pt_softc = ptyarralloc(n);
 	npty = n;
+#ifndef NO_DEV_PTM
+	ptmattach(1);
+#endif
 }
 
 /*ARGSUSED*/
@@ -1079,7 +1087,7 @@ ptyioctl(dev, cmd, data, flag, p)
 
 	if (cdev != NULL && cdev->d_open == ptcopen)
 		switch (cmd) {
-#ifdef NPTM
+#ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
 			return pty_grant_slave(p, dev);
 
@@ -1210,7 +1218,7 @@ ptyioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
-#ifdef NPTM
+#ifndef NO_DEV_PTM
 /*
  * Check if a pty is free to use.
  */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2004/06/16 15:07:39 christos Exp $
+# $NetBSD: GENERIC,v 1.100 2004/06/18 15:04:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.99 $"
+#ident		"GENERIC-$Revision: 1.100 $"
 
 maxusers	32		# estimated number of users
 
@@ -410,7 +410,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
