@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2002/07/05 13:31:56 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 2002/07/10 10:24:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,11 @@
 	x:
 #endif
 
+#ifdef GPROF
+#define	_PROF_PROLOGUE	pta/l	_mcount, tr0; blink tr0, r0
+#else
 #define	_PROF_PROLOGUE
+#endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
 	_PROF_PROLOGUE
