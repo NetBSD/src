@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.57 2002/09/11 02:22:49 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.58 2002/09/14 17:53:58 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.57 2002/09/11 02:22:49 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.58 2002/09/14 17:53:58 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,8 +173,7 @@ rf_BootRaidframe()
 
 	rc = rf_lkmgr_mutex_init(&configureMutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		RF_PANIC();
 	}
 	configureCount = 0;
@@ -317,8 +316,7 @@ rf_Shutdown(raidPtr)
 #define DO_RAID_MUTEX(_m_) { \
 	rc = rf_create_managed_mutex(&raidPtr->shutdownList, (_m_)); \
 	if (rc) { \
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", \
-			__FILE__, __LINE__, rc); \
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc); \
 		DO_RAID_FAIL(); \
 		return(rc); \
 	} \
@@ -327,8 +325,7 @@ rf_Shutdown(raidPtr)
 #define DO_RAID_COND(_c_) { \
 	rc = rf_create_managed_cond(&raidPtr->shutdownList, (_c_)); \
 	if (rc) { \
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", \
-			__FILE__, __LINE__, rc); \
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc); \
 		DO_RAID_FAIL(); \
 		return(rc); \
 	} \
@@ -348,8 +345,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	if (isconfigged == 0) {
 		rc = rf_create_managed_mutex(&globalShutdown, &rf_printf_mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			rf_ShutdownList(&globalShutdown);
 			return (rc);
 		}
@@ -393,8 +389,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	    (void (*) (void *)) rf_FreeAllocList,
 	    raidPtr->cleanupList);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		DO_RAID_FAIL();
 		return (rc);
 	}
@@ -516,14 +511,12 @@ init_rad(desc)
 
 	rc = rf_mutex_init(&desc->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_cond_init(&desc->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		rf_mutex_destroy(&desc->mutex);
 		return (rc);
 	}
@@ -558,8 +551,7 @@ rf_ConfigureRDFreeList(listp)
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownRDFreeList(NULL);
 		return (rc);
 	}
@@ -892,8 +884,7 @@ rf_InitThroughputStats(
 	/* these used by user-level raidframe only */
 	rc = rf_create_managed_mutex(listp, &raidPtr->throughputstats.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	raidPtr->throughputstats.sum_io_us = 0;
@@ -1016,4 +1007,34 @@ rf_print_assert_panic_message(line,file,condition)
 	sprintf(rf_panicbuf,
 		"raidframe error at line %d file %s (failed asserting %s)\n",
 		line, file, condition);
+}
+
+void
+rf_print_unable_to_init_mutex(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
+		     file, line, rc);
+}
+
+void
+rf_print_unable_to_init_cond(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n",
+		     file, line, rc);
+}
+
+void
+rf_print_unable_to_add_shutdown(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
+		     file, line, rc);
 }
