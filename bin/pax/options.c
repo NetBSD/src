@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.55 2002/10/18 13:45:05 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.56 2002/11/27 18:40:34 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.55 2002/10/18 13:45:05 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.56 2002/11/27 18:40:34 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,12 +192,12 @@ options(int argc, char **argv)
 		argv0 = argv[0];
 
 	if (strcmp(NM_TAR, argv0) == 0)
-		return(tar_options(argc, argv));
+		tar_options(argc, argv);
 	else if (strcmp(NM_CPIO, argv0) == 0)
-		return(cpio_options(argc, argv));
+		cpio_options(argc, argv);
 	else {
 		argv0 = NM_PAX;
-		return(pax_options(argc, argv));
+		pax_options(argc, argv);
 	}
 }
 
