@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1998/02/12 05:16:06 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1998/03/26 23:45:59 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,17 @@
 #include "vt.h"
 #if (NVT > 0)
 #include <bebox/isa/pcvt/pcvt_cons.h>
+#endif
+
+#include "vga.h"
+#if (NVGA > 0)
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/isa/pckbcvar.h>
 #endif
 
 #include "com.h"
@@ -617,12 +628,23 @@ consinit()
 	if (!consinfo)
 		panic("not found console information in bootinfo");
 
-#if (NPC > 0) || (NVT > 0)
+#if (NPC > 0) || (NVT > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
+#if (NVGA > 0)
+		if (!vga_cnattach(BEBOX_BUS_SPACE_IO, BEBOX_BUS_SPACE_MEM,
+				  -1, 1))
+			goto dokbd;
+#endif
+#if (NPC > 0) || (NVT > 0)
 		pccnattach();
+#endif
+dokbd:
+#if (NPCKBC > 0)
+		pckbc_cnattach(BEBOX_BUS_SPACE_IO, PCKBC_KBD_SLOT);
+#endif
 		return;
 	}
-#endif
+#endif /* PC | VT | VGA */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = BEBOX_BUS_SPACE_IO;
@@ -636,6 +658,24 @@ consinit()
 #endif
 	panic("invalid console device %s", consinfo->devname);
 }
+
+#if (NPCKBC > 0) && (NPCKBD == 0)
+/*
+ * glue code to support old console code with the
+ * mi keyboard controller driver
+ */
+int
+pckbc_machdep_cnattach(kbctag, kbcslot)
+	pckbc_tag_t kbctag;
+	pckbc_slot_t kbcslot;
+{
+#if (NPC > 0)
+	return (pcconskbd_cnattach(kbctag, kbcslot));
+#else
+	return (ENXIO);
+#endif
+}
+#endif
 
 /*
  * Set set up registers on exec.
