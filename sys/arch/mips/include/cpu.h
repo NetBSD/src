@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66 2002/08/04 01:47:17 gmcgarry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67 2002/08/05 13:00:47 shin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ do {									\
  * with other mips platforms.
  */
 #ifndef CPU_MAXID
-#define CPU_MAXID		4	/* number of valid machdep ids */
+#define CPU_MAXID		5	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
