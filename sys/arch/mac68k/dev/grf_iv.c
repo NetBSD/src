@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.16 1996/12/16 16:17:06 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.16.6.1 1997/03/12 15:08:33 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -43,8 +43,9 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
-#include <machine/grfioctl.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
 
 #include "nubus.h"
 #include "grfvar.h"
