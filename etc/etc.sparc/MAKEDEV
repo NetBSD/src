@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.48 1999/09/18 00:23:39 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.49 1999/10/06 22:26:16 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -144,7 +144,7 @@ tty[abcd])
 	rm -f tty$unit dty$unit
 	mknod tty$unit c 12 $(($index + $dialin ))
 	mknod dty$unit c 12 $(($index + $dialout))
-	chown uucp.wheel tty$unit dty$unit
+	chown uucp:wheel tty$unit dty$unit
 	;;
 
 ttyC*)
@@ -152,7 +152,7 @@ ttyC*)
         rm -f ttyC$unit dtyC$unit
         mknod ttyC$unit c 36 $(($unit + $dialin ))
         mknod dtyC$unit c 36 $(($unit + $dialout))
-        chown uucp.wheel ttyC$unit dtyC$unit
+        chown uucp:wheel ttyC$unit dtyC$unit
 	;;
 
 fd)
@@ -163,7 +163,7 @@ fd)
 		mknod fd/$n c 24 $n
 		n=$(($n + 1))
 	done
-	chown -R root.wheel fd
+	chown -R root:wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -223,7 +223,7 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
+	chown root:wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -232,7 +232,7 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 105 $unit
 	chmod 600 bpf$unit
-	chown root.wheel bpf$unit
+	chown root:wheel bpf$unit
 	;;
 
 tun*)
@@ -240,7 +240,7 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 111 $unit
 	chmod 600 tun$unit
-	chown root.wheel tun$unit
+	chown root:wheel tun$unit
 	;;
 
 md*)
@@ -361,7 +361,7 @@ ipl)
 	mknod ipnat c 25 1
 	mknod ipstate c 25 2
 	mknod ipauth c 25 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -411,7 +411,7 @@ random)
 	rm -f random urandom
 	mknod random c 119 0
 	mknod urandom c 119 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;

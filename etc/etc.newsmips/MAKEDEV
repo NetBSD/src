@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 1999/10/06 22:05:25 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.5 1999/10/06 22:26:16 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -117,7 +117,7 @@ audio)
 	mknod mixer		c 35 16;
 	mknod sound		c 35 128;
 	chmod 666 audio sound mixer
-	chown root.wheel audio sound mixer
+	chown root:wheel audio sound mixer
 	;;
 
 bpf*)
@@ -125,7 +125,7 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 24 $unit
 	chmod 600 bpf$unit
-	chown root.wheel bpf$unit
+	chown root:wheel bpf$unit
 	;;
 
 tun*)
@@ -133,7 +133,7 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 25 $unit
 	chmod 600 tun$unit
-	chown root.wheel tun$unit
+	chown root:wheel tun$unit
 	;;
 
 md*)
@@ -247,7 +247,7 @@ ipl)
 	mknod ipnat c 46 1
 	mknod ipstate c 46 2
 	mknod ipauth c 46 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -297,14 +297,14 @@ tty*)
 	unit=${i#???}
 	rm -f tty0$unit
 	mknod tty0$unit c 1 $unit
-	chown uucp.wheel tty0$unit
+	chown uucp:wheel tty0$unit
 	;;
 
 random)
 	rm -f random urandom
 	mknod random c 47 0
 	mknod urandom c 47 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.50 1999/09/18 00:23:35 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.51 1999/10/06 22:26:14 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -165,7 +165,7 @@ fd)
 		mknod fd/$n c 21 $n
 		n=$(($n + 1))
 	done
-	chown -R root.wheel fd
+	chown -R root:wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -481,7 +481,7 @@ bpf*|tun*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 lkm)
@@ -497,7 +497,7 @@ ipl)
 	mknod ipnat c 40 1
 	mknod ipstate c 40 2
 	mknod ipauth c 40 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -514,7 +514,7 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
+	chown root:wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -523,7 +523,7 @@ random)
 	rm -f random urandom
 	mknod random c 42 0
 	mknod urandom c 42 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;

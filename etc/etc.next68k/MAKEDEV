@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.9 1999/09/21 14:25:46 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.10 1999/10/06 22:26:16 ad Exp $
 #
 ###########################################################################
 #
@@ -129,7 +129,7 @@ ttye*)
 	chr=11; unit=${i#ttye}
 	rm -f ttye$unit ite*
 	mknod ttye$unit	c $chr $unit
-	chown root.wheel ttye$unit
+	chown root:wheel ttye$unit
 	;;
 
 grf*)
@@ -157,7 +157,7 @@ wsmux|wsmouse|wskbd)
 	rm -f wsmouse wskbd
 	mknod wsmouse c 45 0
 	mknod wskbd c 45 1
-	chown root.wheel wsmouse wskbd
+	chown root:wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
 	;;
 
@@ -165,7 +165,7 @@ ttyEcfg)
 	chr=41
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
-	chown root.wheel ttyEcfg
+	chown root:wheel ttyEcfg
 	chmod 600 ttyEcfg
 	;;
 
@@ -173,7 +173,7 @@ ttyE*)
 	chr=41; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
+	chown root:wheel ttyE$unit
 	;;
 
 wsmouse*)
@@ -182,7 +182,7 @@ wsmouse*)
 	major=43
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
-	chown root.wheel $wsmouse
+	chown root:wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
@@ -192,7 +192,7 @@ wskbd*)
 	major=42
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
+	chown root:wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
@@ -204,7 +204,7 @@ fd)
 		mknod fd/$n c 21 $n
 		n=$(($n + 1))
 	done
-	chown -R root.wheel fd
+	chown -R root:wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -268,7 +268,7 @@ tty*)
 	unit=${i#tty}
 	rm -f ser$unit tty$unit tty0$unit
 	mknod tty0$unit c 12 $unit
-	chown uucp.wheel tty0$unit
+	chown uucp:wheel tty0$unit
 	;;
 
 pty*)
@@ -364,7 +364,7 @@ bpf*|tun*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 lkm)
@@ -380,7 +380,7 @@ ipl)
 	mknod ipnat c 35 1
 	mknod ipstate c 35 2
 	mknod ipauth c 35 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -395,7 +395,7 @@ random)
 	rm -f random urandom
 	mknod random c 38 0
 	mknod urandom c 38 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
