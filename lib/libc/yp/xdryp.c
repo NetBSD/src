@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.11 1996/05/14 23:37:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.11 1996/05/14 23:37:29 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -47,8 +47,8 @@ static char *rcsid = "$NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-extern int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
-extern void *ypresp_data;
+int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
+void *ypresp_data;
 
 bool_t
 xdr_domainname(xdrs, objp)

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 1996/05/14 13:36:49 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1996/05/14 23:37:27 jtc Exp $
 
 # yp sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/yp ${.CURDIR}/yp
 
-SRCS+=	xdryp.c yplib.c yperr_string.c
+SRCS+=	xdryp.c yp_all.c yp_master.c yp_order.c yplib.c yperr_string.c
 MAN+=	ypclnt.3
 
 MLINKS+=ypclnt.3 yp_all.3 ypclnt.3 yp_bind.3 ypclnt.3 yp_first.3 \
