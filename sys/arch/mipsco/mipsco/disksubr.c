@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2000/09/04 22:35:26 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2000/09/16 08:27:17 wdk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -72,51 +72,78 @@ readdisklabel(dev, strat, lp, clp)
 	struct cpu_disklabel *clp;
 {
 	register struct buf *bp;
-	struct mips_volheader *vh;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	int i;
 
-#ifdef DIAGNOSTIC
-	if (sizeof(*vh) > lp->d_secsize ||
-	    sizeof(*dlp)+LABELOFFSET > lp->d_secsize)
-		panic("label >512 bytes");
-#endif
-
+	/* minimum requirements for disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (lp->d_npartitions == 0) {
+		lp->d_npartitions = RAW_PART + 1;
+		if (lp->d_partitions[RAW_PART].p_size == 0)
+			lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+	}
 
 	bp = geteblk((int)lp->d_secsize);
+
+	bp->b_dev = dev;
+	bp->b_blkno = MIPS_VHSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
+	(*strat)(bp);
+
+	if(biowait(bp))
+		goto ioerror;
+
+	/* Save copy of primary (MIPS or RISC/os) label */
+	bcopy(bp->b_data, &clp->cd_volhdr, sizeof(clp->cd_volhdr));
+
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
-	if (biowait(bp)) {
-		msg = "I/O error";
-	} else {
-		/* Save copy of current label */
-		bcopy(bp->b_data, &clp->cd_volhdr, sizeof(clp->cd_volhdr));
 
-		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
-		vh = (struct mips_volheader *) bp->b_un.b_addr;
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
-			if (dkcksum(dlp))
-				msg = "disk label corrupted";
-			else
-				bcopy(dlp, lp, LABELSIZE(dlp));
-		} else if (vh->vh_magic == MIPS_VHMAGIC) {
-			msg = disklabel_mips_to_bsd(vh, lp);
-		} else 
-			msg = "no disk label";
-	}
+	if (biowait(bp))
+		goto ioerror;
+
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
-	return (msg);
+
+	/* Check for NetBSD label in second sector */
+	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC)
+		if (!dkcksum(dlp)) {
+			bcopy(dlp, lp, LABELSIZE(dlp));
+			return NULL;
+		}
+
+	/* Check for MIPS RISC/os volume header */
+	if (clp->cd_volhdr.vh_magic == MIPS_VHMAGIC)
+		return disklabel_mips_to_bsd(&clp->cd_volhdr, lp);
+
+	/* Search for NetBSD label in first sector */
+	for (i=0; i <= lp->d_secsize - sizeof(*dlp); i += sizeof(long)) {
+		dlp = (struct disklabel *) ((char *)&clp->cd_volhdr + i);
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
+			if (dlp->d_npartitions > MAXPARTITIONS ||
+			    dkcksum(dlp) != 0)
+				return "disk label corrupted";
+			else {
+				bcopy(dlp, lp, sizeof *lp);
+				return NULL; /* Found */
+			}
+		}
+	}
+	return "no disk label";
+
+  ioerror:
+	bp->b_flags = B_INVAL | B_AGE;
+	brelse(bp);
+	return "disk label read error";
 }
 
 /*
@@ -191,22 +218,32 @@ writedisklabel(dev, strat, lp, clp)
 	if (error)
 		return (error);
 	
-	bp = geteblk((int)lp->d_secsize);
-
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
+
 	bcopy(&clp->cd_volhdr, bp->b_data, sizeof(clp->cd_volhdr));
 
-	/* Write out the updated label. */
+	/* Write MIPS RISC/os label to first sector */
 	bp->b_dev = dev;
-	bp->b_blkno = LABELSECTOR;
+	bp->b_blkno = MIPS_VHSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	
+	/* Write NetBSD disk label to second sector */
+	if (!error) {
+		bzero(bp->b_data, lp->d_secsize);
+		bcopy(lp, bp->b_data, sizeof(*lp));
+		bp->b_blkno = LABELSECTOR;
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_WRITE;
+		(*strat)(bp);
+		error = biowait(bp);
+	}
 
+	brelse(bp);
 	return error;
 }
 
