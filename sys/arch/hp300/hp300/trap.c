@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.7 1994/01/09 22:50:11 mycroft Exp $
+ *	$Id: trap.c,v 1.8 1994/02/04 23:11:43 mycroft Exp $
  */
 
 #include "param.h"
@@ -320,7 +320,7 @@ copyfault:
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
+			softclock(&frame.f_stackadj);	/* XXX */
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
