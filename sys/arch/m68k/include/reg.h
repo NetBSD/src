@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: reg.h 1.1 90/07/09$
- *
+ *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	from: @(#)reg.h	7.2 (Berkeley) 11/3/90
- *	$Id: reg.h,v 1.2 1993/05/22 07:58:32 cgd Exp $
+ *	$Id: reg.h,v 1.3 1993/09/02 19:05:47 mycroft Exp $
  */
 
 /*
