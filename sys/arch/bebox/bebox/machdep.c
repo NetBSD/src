@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1998/01/19 03:47:42 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1998/02/02 04:59:19 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -120,7 +120,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	u_int startkernel, endkernel, args;
 	void *btinfo;
 {
-	struct machvec *mp;
 	extern trapcode, trapsize;
 	extern dsitrap, dsisize;
 	extern isitrap, isisize;
@@ -158,6 +157,21 @@ initppc(startkernel, endkernel, args, btinfo)
 		physmemr[0].size = meminfo->memsize & ~PGOFSET;
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
 		availmemr[0].size = meminfo->memsize - availmemr[0].start;
+	}
+
+	/*
+	 * Get CPU clock
+	 */
+	{
+		struct btinfo_clock *clockinfo;
+		extern u_long ticks_per_sec, ns_per_tick;
+	
+		clockinfo =
+			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
+		if (!clockinfo)
+			panic("not found clock information in bootinfo");
+		ticks_per_sec = clockinfo->ticks_per_sec;
+		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
 	/*
@@ -261,20 +275,17 @@ initppc(startkernel, endkernel, args, btinfo)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#ifdef DDB
+#if defined(DDB) || NIPKDB > 0
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
+#if defined(DDB)
 			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
-			break;
-#endif
-#if NIPKDB > 0
-		case EXC_PGM:
-		case EXC_TRC:
-		case EXC_BPT:
+#else
 			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
-			break;
 #endif
+			break;
+#endif /* DDB || NIPKDB > 0 */
 		}
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
