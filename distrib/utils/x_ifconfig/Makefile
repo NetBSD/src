@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2000/05/04 03:27:10 itojun Exp $
+# $NetBSD: Makefile,v 1.11 2000/05/18 00:43:07 matt Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 PROG=	ifconfig
@@ -9,6 +9,7 @@ CPPFLAGS+= -DINET_ONLY -I${SRCDIR}
 .if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "hpcmips")
 CPPFLAGS+= -DINET6
 .endif
+COPTS+= -Os
 
 all: ${PROG}
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 1999/09/26 04:49:37 dan Exp $
+# $NetBSD: Makefile,v 1.10 2000/05/18 00:43:06 matt Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
@@ -20,6 +20,7 @@ HACKOBJS= getcap.o getgrent.o gethost.o getnet.o getnetgr.o getpwent.o \
 HACKOBJS+= opendir.o
 .endif
 
+COPTS+= -Os
 WARNS=	1
 MKPIC=	no
 MKLINT= no

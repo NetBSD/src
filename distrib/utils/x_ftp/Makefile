@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/05/04 03:27:09 itojun Exp $
+# $NetBSD: Makefile,v 1.8 2000/05/18 00:43:07 matt Exp $
 # Build a smaller ftp (i.e. for boot media)
 
 PROG=	ftp
@@ -17,6 +17,7 @@ CPPFLAGS+= -DNO_EDITCOMPLETE -DNO_ABOUT -I${SRCDIR}
 .if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "hpcmips")
 CPPFLAGS+= -DINET6
 .endif
+COPTS+= -Os
 
 all: ${PROG}
 
