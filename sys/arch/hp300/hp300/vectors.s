@@ -31,31 +31,8 @@
 | SUCH DAMAGE.
 |
 |	from: @(#)vectors.s	8.2 (Berkeley) 1/21/94
-|	$Id: vectors.s,v 1.3 1994/05/23 06:15:41 mycroft Exp $
+|	$Id: vectors.s,v 1.4 1994/07/03 11:40:38 mycroft Exp $
 |
-#ifdef HPFPLIB
-/*
- * XXX the HP FP library mishandles "normal" F-line faults causing
- * the kernel to crash, hence we detect it ourselves rather than just
- * vectoring to "_fline".  We also always catch unsupported data type
- * faults ourselves for no particular reason.
- */
-#define	_fpbsun		_bsun
-#define	_fpinex		_inex
-#define	_fpdz		_dz
-#define	_fpunfl		_unfl
-#define	_fpoperr	_operr
-#define	_fpovfl		_ovfl
-#define	_fpsnan		_snan
-#else
-#define	_fpbsun		_fpfault
-#define	_fpinex		_fpfault
-#define	_fpdz		_fpfault
-#define	_fpunfl		_fpfault
-#define	_fpoperr	_fpfault
-#define	_fpovfl		_fpfault
-#define	_fpsnan		_fpfault
-#endif
 
 	.text
 	.globl	_buserr,_addrerr
@@ -64,8 +41,7 @@
 	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
 	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
 	.globl	_trap0,_trap1,_trap2,_trap15
-	.globl	_fpfline, _fpunsupp, _fpfault
-	.globl	_fpbsun, _fpinex, _fpdz, _fpunfl, _fpoperr, _fpovfl, _fpsnan
+	.globl	_fpfline, _fpunsupp
 	.globl	_trap12
 
 Lvectab:
@@ -117,13 +93,26 @@ Lvectab:
 	.long	_illinst	/* 45: TRAP instruction vector */
 	.long	_illinst	/* 46: TRAP instruction vector */
 	.long	_trap15		/* 47: TRAP instruction vector */
- 	.long	_fpbsun		/* 48: FPCP branch/set on unordered cond */
- 	.long	_fpinex		/* 49: FPCP inexact result */
- 	.long	_fpdz		/* 50: FPCP divide by zero */
- 	.long	_fpunfl		/* 51: FPCP underflow */
- 	.long	_fpoperr	/* 52: FPCP operand error */
- 	.long	_fpovfl		/* 53: FPCP overflow */
- 	.long	_fpsnan		/* 54: FPCP signalling NAN */
+#ifdef FPSP
+	.globl	fpsp_bsun, real_inex, real_dz, fpsp_unfl, fpsp_operr
+	.globl	fpsp_ovfl, fpsp_snan
+ 	.long	fpsp_bsun	/* 48: FPCP branch/set on unordered cond */
+ 	.long	real_inex	/* 49: FPCP inexact result */
+ 	.long	real_dz		/* 50: FPCP divide by zero */
+ 	.long	fpsp_unfl	/* 51: FPCP underflow */
+ 	.long	fpsp_operr	/* 52: FPCP operand error */
+ 	.long	fpsp_ovfl	/* 53: FPCP overflow */
+ 	.long	fpsp_snan	/* 54: FPCP signalling NAN */
+#else
+	.globl	_fpfault
+ 	.long	_fpfault	/* 48: FPCP branch/set on unordered cond */
+ 	.long	_fpfault	/* 49: FPCP inexact result */
+ 	.long	_fpfault	/* 50: FPCP divide by zero */
+ 	.long	_fpfault	/* 51: FPCP underflow */
+ 	.long	_fpfault	/* 52: FPCP operand error */
+ 	.long	_fpfault	/* 53: FPCP overflow */
+ 	.long	_fpfault	/* 54: FPCP signalling NAN */
+#endif
 
 	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
 	.long	_badtrap	/* 56: unassigned, reserved */
