@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.39 2004/08/11 00:55:38 mycroft Exp $ */
+/*	$NetBSD: stp4020.c,v 1.40 2004/08/11 00:58:08 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.39 2004/08/11 00:55:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.40 2004/08/11 00:58:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -988,8 +988,10 @@ stp4020_chip_socket_enable(pch)
 	 */
 	delay(10);
 
-	/* Clear reset flag */
+	/* Clear reset flag, set to memory mode */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
 	v &= ~STP4020_ICR0_RESET;
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
@@ -1055,7 +1057,8 @@ stp4020_chip_socket_disable(pch)
 	 * Disable socket I/O interrupts.
 	 */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Power down the socket */
