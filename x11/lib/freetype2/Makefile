@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/04/29 05:18:26 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ INCS=	ft2build.h
 INCSDIR=${X11INCDIR}
 .PATH:	${FREETYPETOP}/include
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADLIB} -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
 
 .if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
