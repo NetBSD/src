@@ -1,3 +1,30 @@
+2003-07-10  Kazu Hirata	 <kazu@cs.umass.edu>
+
+	PR c/11449
+	* fold-const.c (sign_bit_p): Return EXP if VAL is the sign bit
+	of HOST_WIDE_INT.
+	(fold_single_bit_test): If sign_bit_p() fails, assume that the
+	bit being tested is not a sign bit.
+
+2003-07-04  Jeff Law  <law@redhat.com>
+
+	PR c/11428
+	* expr.c (do_store_flag): Pass in the correct result type
+	when calling fold_single_bit_test.
+	* fold-const.c (fold_single_bit_test): Use result_type for the
+	result when folding a sign bit test.
+
+2003-07-02  Jeff Law  <law@redhat.com>
+
+	* expr.c (do_store_flag): Remove special case folding for
+	single bit tests.  Instead call back into the commonized folder
+	routine.
+	* fold-const.c (fold_single_bit_test): New function, mostly
+	extracted from do_store_flag, with an additional case extracted
+	from fold.
+	(fold): Call fold_single_bit_test appropriately.
+	* tree.h (fold_single_bit_test): Prototype.
+
 2004-01-27  Eric Botcazou  <ebotcazou@libertysurf.fr>
 
 	PR target/10904
