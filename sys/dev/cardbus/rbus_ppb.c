@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.10 2003/11/24 06:11:56 lukem Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.11 2004/04/23 21:13:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.10 2003/11/24 06:11:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.11 2004/04/23 21:13:08 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ ppb_cardbus_attach(parent, self, aux)
 	csc->foo=parent_sc->sc_intrline;
 	
 
-	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
 
 	csc->sc_tag = ca->ca_tag;	/* XXX cardbustag_t == pcitag_t */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.9 2004/04/23 21:13:07 itojun Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.9 2004/04/23 21:13:07 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -139,7 +139,7 @@ pciide_common_attach(sc, pa, pp)
 	if (pp == NULL) {
 		/* should only happen for generic pciide devices */
 		sc->sc_pp = &default_product_desc;
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 		displaydev = devinfo;
 	} else {
 		sc->sc_pp = pp;

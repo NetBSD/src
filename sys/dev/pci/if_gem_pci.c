@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.15 2004/03/17 13:54:09 martin Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.16 2004/04/23 21:13:06 itojun Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.15 2004/03/17 13:54:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.16 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -132,7 +132,7 @@ gem_attach_pci(parent, self, aux)
 
 	aprint_naive(": Ethernet controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 

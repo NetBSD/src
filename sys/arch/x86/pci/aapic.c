@@ -1,7 +1,7 @@
-/* 	$NetBSD: aapic.c,v 1.1 2004/04/18 18:34:22 fvdl Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.2 2004/04/23 21:13:06 itojun Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.1 2004/04/18 18:34:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.2 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ aapic_attach(parent, self, aux)
 	pcitag_t tag;
 	pcireg_t reg;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	rev = PCI_REVISION(pa->pa_class);
 	printf(": %s (rev. 0x%02x)\n", devinfo, rev);
 

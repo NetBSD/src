@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.24 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.25 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.24 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.25 2004/04/23 21:13:06 itojun Exp $");
 
 #include "ehci.h"
 
@@ -106,7 +106,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */

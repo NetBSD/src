@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.48 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.48 2004/04/23 21:13:07 itojun Exp $");
 
 #include "opt_cardbus.h"
 
@@ -591,7 +591,8 @@ cardbusprint(void *aux, const char *pnp)
 	int i;
 
 	if (pnp) {
-		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
+		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo,
+		    sizeof(devinfo));
 		for (i = 0; i < 4; i++) {
 			if (ca->ca_cis.cis1_info[i] == NULL)
 				break;

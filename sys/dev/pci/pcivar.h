@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.59 2003/08/15 07:17:21 itojun Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.60 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -207,7 +207,7 @@ int	pci_enumerate_bus_generic(struct pci_softc *,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
-void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
+void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *, size_t));
 void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
 const struct pci_quirkdata *

@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.10 2003/11/13 03:09:28 chs Exp $	*/
+/*	$NetBSD: gten.c,v 1.11 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.10 2003/11/13 03:09:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.11 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -178,7 +178,7 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 	}
 	gt->gt_psize = gt->gt_memsize - GTEN_VRAM_OFFSET;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 	format_bytes(pbuf, sizeof(pbuf), gt->gt_psize);
 	printf("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
