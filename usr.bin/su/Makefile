@@ -1,10 +1,11 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1993/10/07 02:20:19 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/05/24 06:52:17 deraadt Exp $
 
 PROG=	su
 BINOWN=	root
 BINMODE=4555
-LDADD+= -lcrypt
-DPADD+= ${LIBCRYPT}
+CFLAGS+=-DSKEY
+LDADD+= -lcrypt -lskey
+DPADD+= ${LIBCRYPT} ${LIBSKEY}
 
 .include <bsd.prog.mk>

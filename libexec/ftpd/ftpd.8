@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ftpd.8	6.9 (Berkeley) 3/16/91
-.\"	$Id: ftpd.8,v 1.3 1994/04/06 20:49:52 cgd Exp $
+.\"	$Id: ftpd.8,v 1.4 1994/05/24 06:53:36 deraadt Exp $
 .\"
 .Dd March 16, 1991
 .Dt FTPD 8
@@ -177,6 +177,14 @@ The user name must be in the password data base,
 and not have a null password.  In this case a password
 must be provided by the client before any file operations
 may be performed.
+If the user has an S/Key key, the response from a successful USER
+command will include an S/Key challenge. The client may choose to respond
+with a PASS command giving either a standard password or an S/Key
+one-time password. The server will automaticly determine which type of
+password it has been given and attempt to authenticate accordingly. See
+.Xr skey 1
+for more information on S/Key authentication. S/Key is a Trademark of
+Bellcore.
 .It
 The user name must not appear in the file
 .Pa /etc/ftpusers .
@@ -256,6 +264,7 @@ anonymous account in this directory.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
+.Xr skey 1 ,
 .Xr getusershell 3 ,
 .Xr syslogd 8
 .Sh BUGS
