@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_pmc.c,v 1.1 2000/09/13 04:52:12 thorpej Exp $	*/
+/*	$NetBSD: i386_pmc.c,v 1.2 2000/09/13 05:20:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 
 #include <machine/sysarch.h>
-#include <machine/pmc.h>
 
 int
 i386_pmc_info(struct i386_pmc_info_args *args)
