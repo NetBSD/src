@@ -1,9 +1,10 @@
-/*	$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19.2.1 1997/05/24 04:50:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * Portions Copyright (c) 1994, Jason Downs. All Rights Reserved.
+ * Portions Copyright (c) 1997, Luke Mewburn. All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,43 +39,56 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.1 1997/05/24 04:50:54 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <grp.h>
 #include <limits.h>
+#include <nsswitch.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <grp.h>
+#include <syslog.h>
+#ifdef HESIOD
+#include <hesiod.h>
+#endif
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #endif
 
-static FILE *_gr_fp;
-static struct group _gr_group;
-static int _gr_stayopen;
-static int grscan(), start_gr();
+static FILE		*_gr_fp;
+static struct group	_gr_group;
+static int		_gr_stayopen;
+
+static int grscan	__P((int, int, const char *));
+static int matchline	__P((int, int, const char *));
+static int start_gr	__P((void));
 
 #define	MAXGRP		200
-static char *members[MAXGRP];
 #define	MAXLINELENGTH	1024
-static char line[MAXLINELENGTH];
+
+static char	*members[MAXGRP];
+static char	line[MAXLINELENGTH];
 
 #ifdef YP
-enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
-static enum _ypmode __ypmode;
-static char	*__ypcurrent, *__ypdomain;
-static int	__ypcurrentlen;
+enum _grmode { GRMODE_NONE, GRMODE_FULL, GRMODE_NAME };
+static enum _grmode	 __grmode;
+static char		*__ypcurrent, *__ypdomain;
+static int		 __ypcurrentlen;
+#endif
+
+#ifdef HESIOD
+static int	__hesindex;
 #endif
 
 struct group *
 getgrent()
 {
-	if (!_gr_fp && !start_gr() || !grscan(0, 0, NULL))
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
 		return(NULL);
 	return(&_gr_group);
 }
@@ -94,12 +108,8 @@ getgrnam(name)
 }
 
 struct group *
-#ifdef __STDC__
-getgrgid(gid_t gid)
-#else
 getgrgid(gid)
 	gid_t gid;
-#endif
 {
 	int rval;
 
@@ -114,14 +124,17 @@ getgrgid(gid)
 static int
 start_gr()
 {
+#ifdef YP
+	__grmode = GRMODE_NONE;
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+#endif
+#ifdef HESIOD
+	__hesindex = 0;
+#endif
 	if (_gr_fp) {
 		rewind(_gr_fp);
-#ifdef YP
-		__ypmode = YPMODE_NONE;
-		if (__ypcurrent)
-			free(__ypcurrent);
-		__ypcurrent = NULL;
-#endif
 		return(1);
 	}
 	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
@@ -146,111 +159,34 @@ setgroupent(stayopen)
 void
 endgrent()
 {
+#ifdef YP
+	__grmode = GRMODE_NONE;
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+#endif
+#ifdef HESIOD
+	__hesindex = 0;
+#endif
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
-#ifdef YP
-		__ypmode = YPMODE_NONE;
-		if (__ypcurrent)
-			free(__ypcurrent);
-		__ypcurrent = NULL;
-#endif
 	}
 }
 
 static int
-grscan(search, gid, name)
-	int search;
-	gid_t gid;
-	const char *name;
+_local_grscan(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
 {
-	char *cp, **m;
-	char *bp, *ep;
-	unsigned long id;
-#ifdef YP
-	char *key, *data;
-	int keylen, datalen;
-	int r;
-	char *grname = (char *)NULL;
-#endif
+	int		 search = va_arg(ap, int);
+	int		 gid = va_arg(ap, int);
+	const char	*name = va_arg(ap, const char *);
 
 	for (;;) {
-#ifdef YP
-		if (__ypmode != YPMODE_NONE) {
-
-			if (!__ypdomain) {
-				if (yp_get_default_domain(&__ypdomain)) {
-					__ypmode = YPMODE_NONE;
-					if (grname != (char *)NULL) {
-						free(grname);
-						grname = (char *)NULL;
-					}
-					continue;
-				}
-			}
-			switch(__ypmode) {
-			case YPMODE_FULL:
-				data = NULL;
-				if (__ypcurrent) {
-					key = NULL;
-					r = yp_next(__ypdomain, "group.byname",
-						__ypcurrent, __ypcurrentlen,
-						&key, &keylen, &data, &datalen);
-					free(__ypcurrent);
-					if (r != 0) {
-						__ypcurrent = NULL;
-						if (key)
-							free(key);
-					}
-					else {
-						__ypcurrent = key;
-						__ypcurrentlen = keylen;
-					}
-				} else {
-					r = yp_first(__ypdomain, "group.byname",
-						&__ypcurrent, &__ypcurrentlen,
-						&data, &datalen);
-				}
-				if (r != 0) {
-					__ypmode = YPMODE_NONE;
-					if (data)
-						free(data);
-					continue;
-				}
-				bcopy(data, line, datalen);
-				free(data);
-				break;
-			case YPMODE_NAME:
-				if (grname != (char *)NULL) {
-					data = NULL;
-					r = yp_match(__ypdomain, "group.byname",
-						grname, strlen(grname),
-						&data, &datalen);
-					__ypmode = YPMODE_NONE;
-					free(grname);
-					grname = (char *)NULL;
-					if (r != 0) {
-						if (data)
-							free(data);
-						continue;
-					}
-					bcopy(data, line, datalen);
-					free(data);
-				} else {
-						/* YP not available? */
-					__ypmode = YPMODE_NONE;
-					continue;
-				}
-				break;
-			}
-			line[datalen] = '\0';
-			bp = line;
-			goto parse;
-		}
-#endif /* YP */
 		if (!fgets(line, sizeof(line), _gr_fp))
-			return(0);
-		bp = line;
+			return(NS_NOTFOUND);
 		/* skip lines that are too big */
 		if (!strchr(line, '\n')) {
 			int ch;
@@ -259,112 +195,356 @@ grscan(search, gid, name)
 				;
 			continue;
 		}
+		if (matchline(search, gid, name))
+			return(NS_SUCCESS);
+	}
+	/* NOTREACHED */
+}
+
+#ifdef HESIOD
+static int
+_dns_grscan(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	int		 search = va_arg(ap, int);
+	int		 gid = va_arg(ap, int);
+	const char	*name = va_arg(ap, const char *);
+
+	char		**hp;
+
+	for (;;) {
+		if (search) {
+			if (name)
+				strncpy(line, name, sizeof(line));
+			else
+				snprintf(line, sizeof(line), "%u", gid);
+		} else {
+			snprintf(line, sizeof(line), "group-%u", __hesindex);
+			__hesindex++;
+		}
+
+		line[sizeof(line) - 1] = '\0';
+		hp = hes_resolve(line, "group");
+		if (hp == NULL) {
+			switch (hes_error()) {
+			case HES_ER_NOTFOUND:
+				if (! search)
+					__hesindex = 0;
+				return(NS_NOTFOUND);
+			case HES_ER_OK:
+				abort();
+			default:
+				return(NS_UNAVAIL);
+			}
+		}
+
+						/* only check first elem */
+		strncpy(line, hp[0], sizeof(line));
+		line[sizeof(line) - 1] = '\0';
+		hes_free(hp);
+		if (matchline(search, gid, name))
+			return(NS_SUCCESS);
+		else if (search)
+			return(NS_NOTFOUND);
+	}
+}
+#endif
+
 #ifdef YP
+static int
+_nis_grscan(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	int		 search = va_arg(ap, int);
+	int		 gid = va_arg(ap, int);
+	const char	*name = va_arg(ap, const char *);
+
+	char	*key, *data;
+	int	 keylen, datalen;
+	int	 r;
+
+	if(__ypdomain == NULL) {
+		switch (yp_get_default_domain(&__ypdomain)) {
+		case 0:
+			break;
+		case YPERR_RESRC:
+			return(NS_TRYAGAIN);
+		default:
+			return(NS_UNAVAIL);
+		}
+	}
+
+	if (search) {			/* specific group or gid */
+		if (name)
+			strncpy(line, name, sizeof(line));
+		else
+			snprintf(line, sizeof(line), "%u", gid);
+		line[sizeof(line) - 1] = '\0';
+		data = NULL;
+		r = yp_match(__ypdomain,
+				(name) ? "group.byname" : "group.bygid",
+				line, strlen(line), &data, &datalen);
+		switch (r) {
+		case 0:
+			break;
+		case YPERR_KEY:
+			if (data)
+				free(data);
+			return(NS_NOTFOUND);
+		default:
+			if (data)
+				free(data);
+			return(NS_UNAVAIL);
+		}
+		data[datalen] = '\0';			/* clear trailing \n */
+		strncpy(line, data, sizeof(line));
+		line[sizeof(line) - 1] = '\0';
+		free(data);
+		if (matchline(search, gid, name))
+			return(NS_SUCCESS);
+		else
+			return(NS_NOTFOUND);
+	}
+
+	for (;;) {
+		data = NULL;
+		if(__ypcurrent) {
+			key = NULL;
+			r = yp_next(__ypdomain, "group.byname",
+				__ypcurrent, __ypcurrentlen,
+				&key, &keylen, &data, &datalen);
+			free(__ypcurrent);
+			switch (r) {
+			case 0:
+				break;
+			case YPERR_NOMORE:
+				__ypcurrent = NULL;
+				if (key)
+					free(key);
+				if (data)
+					free(data);
+				return(NS_NOTFOUND);
+			default:
+				if (key)
+					free(key);
+				if (data)
+					free(data);
+				return(NS_UNAVAIL);
+			}
+			__ypcurrent = key;
+			__ypcurrentlen = keylen;
+		} else {
+			if (yp_first(__ypdomain, "group.byname",
+					&__ypcurrent, &__ypcurrentlen,
+					&data, &datalen)) {
+				if (data);
+					free(data);
+				return(NS_UNAVAIL);
+			}
+		}
+		data[datalen] = '\0';			/* clear trailing \n */
+		strncpy(line, data, sizeof(line));
+		line[sizeof(line) - 1] = '\0';
+		free(data);
+		if (matchline(search, gid, name))
+			return(NS_SUCCESS);
+	}
+	/* NOTREACHED */
+}
+#endif
+
+#if defined(YP) || defined(HESIOD)
+/*
+ * log an error if "files" or "compat" is specified in group_compat database
+ */
+static int
+_bad_grscan(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	static int warned;
+	if (!warned) {
+		syslog(LOG_ERR,
+			"nsswitch.conf group_compat database can't use '%s'",
+			(char *)cb_data);
+	}
+	warned = 1;
+	return NS_UNAVAIL;
+}
+
+/*
+ * when a name lookup in compat mode is required, look it up in group_compat
+ * nsswitch database. only Hesiod and NIS is supported - it doesn't make
+ * sense to lookup compat names from 'files' or 'compat'
+ */
+static int
+__grscancompat(search, gid, name)
+	int		 search, gid;
+	const char	*name;
+{
+	static ns_dtab	dtab;
+
+	NS_FILES_CB(dtab, _bad_grscan, "files");
+	NS_DNS_CB(dtab, _dns_grscan, NULL);
+	NS_NIS_CB(dtab, _nis_grscan, NULL);
+	NS_COMPAT_CB(dtab, _bad_grscan, "compat");
+
+	return nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, search, gid, name);
+}
+
+
+static int
+_compat_grscan(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	int		 search = va_arg(ap, int);
+	int		 gid = va_arg(ap, int);
+	const char	*name = va_arg(ap, const char *);
+
+	static char	*grname = NULL;
+
+	for (;;) {
+		if(__grmode != GRMODE_NONE) {
+			int	 r;
+
+			switch(__grmode) {
+			case GRMODE_FULL:
+				r = __grscancompat(search, gid, name);
+				if (r == NS_SUCCESS)
+					return(r);
+				__grmode = GRMODE_NONE;
+				break;
+			case GRMODE_NAME:
+				if(grname == (char *)NULL) {
+					__grmode = GRMODE_NONE;
+					break;
+				}
+				r = __grscancompat(1, 0, grname);
+				free(grname);
+				grname = (char *)NULL;
+				if (r != NS_SUCCESS)
+					break;
+				if (!search)
+					return NS_SUCCESS;
+				if (name) {
+					if (! strcmp(_gr_group.gr_name, name))
+						return NS_SUCCESS;
+				} else {
+					if (_gr_group.gr_gid == gid)
+						return NS_SUCCESS;
+				}
+				break;
+			case GRMODE_NONE:
+				abort();
+			}
+			continue;
+		}
+
+		if (!fgets(line, sizeof(line), _gr_fp))
+			return(NS_NOTFOUND);
+		/* skip lines that are too big */
+		if (!strchr(line, '\n')) {
+			int ch;
+
+			while ((ch = getc(_gr_fp)) != '\n' && ch != EOF)
+				;
+			continue;
+		}
+
 		if (line[0] == '+') {
+			char	*tptr, *bp;
+
 			switch(line[1]) {
 			case ':':
 			case '\0':
 			case '\n':
-				if (_yp_check(NULL)) {
-					if (!search) {
-						__ypmode = YPMODE_FULL;
-						continue;
-					}
-					if (!__ypdomain &&
-					   yp_get_default_domain(&__ypdomain))
-						continue;
-					data = NULL;
-					if (name) {
-						r = yp_match(__ypdomain,
-							     "group.byname",
-							     name, strlen(name),
-							     &data, &datalen);
-					} else {
-						char buf[20];
-						snprintf(buf, sizeof(buf),
-						    "%u", gid);
-						r = yp_match(__ypdomain,
-							     "group.bygid",
-							     buf, strlen(buf),
-							     &data, &datalen);
-					}
-					if (r != 0) {
-						if (data)
-							free(data);
-						continue;
-					}
-					bcopy(data, line, datalen);
-					free(data);
-					line[datalen] = '\0';
-					bp = line;
-					_gr_group.gr_name = strsep(&bp, ":\n");
-					_gr_group.gr_passwd =
-					    strsep(&bp, ":\n");
-					if (!(cp = strsep(&bp, ":\n")))
-						continue;
-					if (name) {
-						id = strtoul(cp, &ep, 10);
-						if (id > GID_MAX || *ep != '\0')
-							continue;
-						_gr_group.gr_gid = (gid_t)id;
-					} else
-						_gr_group.gr_gid = gid;
-					goto found_it;
-				}
+				__grmode = GRMODE_FULL;
 				break;
 			default:
-				if (_yp_check(NULL)) {
-					char *tptr;
-
-					tptr = strsep(&bp, ":\n");
-					if (search && name &&
-					    strcmp(tptr, name))
-						continue;
-					__ypmode = YPMODE_NAME;
-					grname = strdup(tptr + 1);
-					continue;
-				}
+				__grmode = GRMODE_NAME;
+				bp = line;
+				tptr = strsep(&bp, ":\n");
+				grname = strdup(tptr + 1);
 				break;
 			}
+			continue;
 		}
-parse:
-#endif /* YP */
-		_gr_group.gr_name = strsep(&bp, ":\n");
-		if (search && name && strcmp(_gr_group.gr_name, name))
-			continue;
-		_gr_group.gr_passwd = strsep(&bp, ":\n");
-		if (!(cp = strsep(&bp, ":\n")))
-			continue;
-		id = strtoul(cp, &ep, 10);
-		if (id > GID_MAX || *ep != '\0')
-			continue;
-		_gr_group.gr_gid = (gid_t)id;
-		if (search && name == NULL && _gr_group.gr_gid != gid)
-			continue;
-	found_it:
-		cp = NULL;
-		if (bp == NULL)
-			continue;
-		for (m = _gr_group.gr_mem = members;; bp++) {
-			if (m == &members[MAXGRP - 1])
-				break;
-			if (*bp == ',') {
-				if (cp) {
-					*bp = '\0';
-					*m++ = cp;
-					cp = NULL;
-				}
-			} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
-				if (cp) {
-					*bp = '\0';
-					*m++ = cp;
-				}
-				break;
-			} else if (cp == NULL)
-				cp = bp;
-		}
-		*m = NULL;
-		return(1);
+		if (matchline(search, gid, name))
+			return(NS_SUCCESS);
 	}
 	/* NOTREACHED */
+}
+#endif /* YP || HESIOD */
+
+static int
+grscan(search, gid, name)
+	int		 search, gid;
+	const char	*name;
+{
+	int		r;
+	static ns_dtab	dtab;
+
+	NS_FILES_CB(dtab, _local_grscan, NULL);
+	NS_DNS_CB(dtab, _dns_grscan, NULL);
+	NS_NIS_CB(dtab, _nis_grscan, NULL);
+	NS_COMPAT_CB(dtab, _compat_grscan, NULL);
+
+	r = nsdispatch(NULL, dtab, NSDB_GROUP, search, gid, name);
+	return (r == NS_SUCCESS) ? 1 : 0;
+}
+
+static int
+matchline(search, gid, name)
+	int		 search, gid;
+	const char	*name;
+{
+	unsigned long	id;
+	char		*cp, **m;
+	char		*bp, *ep;
+
+	if (line[0] == '+')
+		return(0);	/* sanity check to prevent recursion */
+	bp = line;
+	_gr_group.gr_name = strsep(&bp, ":\n");
+	if (search && name && strcmp(_gr_group.gr_name, name))
+		return(0);
+	_gr_group.gr_passwd = strsep(&bp, ":\n");
+	if (!(cp = strsep(&bp, ":\n")))
+		return(0);
+	id = strtoul(cp, &ep, 10);
+	if (id > GID_MAX || *ep != '\0')
+		return(0);
+	_gr_group.gr_gid = (gid_t)id;
+	if (search && name == NULL && _gr_group.gr_gid != gid)
+		return(0);
+	cp = NULL;
+	if (bp == NULL)
+		return(0);
+	for (m = _gr_group.gr_mem = members;; bp++) {
+		if (m == &members[MAXGRP - 1])
+			break;
+		if (*bp == ',') {
+			if (cp) {
+				*bp = '\0';
+				*m++ = cp;
+				cp = NULL;
+			}
+		} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
+			if (cp) {
+				*bp = '\0';
+				*m++ = cp;
+			}
+			break;
+		} else if (cp == NULL)
+			cp = bp;
+	}
+	*m = NULL;
+	return(1);
 }
