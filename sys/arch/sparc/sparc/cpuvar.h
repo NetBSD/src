@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.3 1997/03/20 23:26:23 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
  */
 struct cpu_softc;
 struct module_info {
+	int  cpu_type;
+	enum vactype vactype;
 	void (*cpu_match)__P((struct cpu_softc *, struct module_info *, int));
 	void (*getcacheinfo)__P((struct cpu_softc *sc, int node));
 	void (*hotfix) __P((struct cpu_softc *));
@@ -164,12 +166,12 @@ struct cpu_softc {
 
 	/* Cache handling functions */
 	void	(*cache_enable) __P((void));
-	void	(*cache_flush)__P((caddr_t base, u_int len));
-	void	(*vcache_flush_page)__P((int va));
-	void	(*vcache_flush_segment)__P((int vreg, int vseg));
-	void	(*vcache_flush_region)__P((int vreg));
+	void	(*cache_flush)__P((caddr_t, u_int));
+	void	(*vcache_flush_page)__P((int));
+	void	(*vcache_flush_segment)__P((int, int));
+	void	(*vcache_flush_region)__P((int));
 	void	(*vcache_flush_context)__P((void));
-	void	(*pcache_flush_line) __P((int, int));
+	void	(*pcache_flush_line)__P((int, int));
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */
