@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.23 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.24 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -125,7 +125,7 @@ cxd1185_attach(parent, self, aux)
 	cxd1185_init(sc);
 	DELAY(100000);
 
-	hb_intr_establish(intlevel, IPL_BIO, sc_intr, sc);
+	hb_intr_establish(intlevel, INTEN1_DMA, IPL_BIO, sc_intr, sc);
 
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }

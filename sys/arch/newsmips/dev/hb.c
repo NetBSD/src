@@ -1,10 +1,12 @@
-/*	$NetBSD: hb.c,v 1.11 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.12 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 
 #include <newsmips/dev/hbvar.h>
 
@@ -18,13 +20,8 @@ CFATTACH_DECL(hb, sizeof(struct device),
 
 extern struct cfdriver hb_cd;
 
-struct intrhand {
-	int (*func) __P((void *));
-	void *arg;
-};
-
-#define NHBINTR	4
-struct intrhand hb_intrhand[6][NHBINTR];
+#define NLEVEL	4
+static struct newsmips_intr hbintr_tab[NLEVEL];
 
 static int
 hb_match(parent, cf, aux)
@@ -47,9 +44,17 @@ hb_attach(parent, self, aux)
 	void *aux;
 {
 	struct hb_attach_args ha;
+	struct newsmips_intr *ip;
+	int i;
 
 	printf("\n");
+
 	memset(&ha, 0, sizeof(ha));
+	for (i = 0; i < NLEVEL; i++) {
+		ip = &hbintr_tab[i];
+		LIST_INIT(&ip->intr_q);
+	}
+
 	config_search(hb_search, self, &ha);
 }
 
@@ -93,50 +98,58 @@ hb_print(args, name)
 }
 
 void *
-hb_intr_establish(irq, level, func, arg)
-	int irq, level;
+hb_intr_establish(level, mask, priority, func, arg)
+	int level, mask, priority;
 	int (*func) __P((void *));
 	void *arg;
 {
-	struct intrhand *ih = hb_intrhand[irq];
-	int i;
+	struct newsmips_intr *ip;
+	struct newsmips_intrhand *ih, *curih;
 
-	for (i = NHBINTR; i > 0; i--) {
-		if (ih->func == NULL)
-			goto found;
-		ih++;
+	ip = &hbintr_tab[level];
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		panic("hb_intr_establish: malloc failed");
+
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+	ih->ih_level = level;
+	ih->ih_mask = mask;
+	ih->ih_priority = priority;
+
+	if (LIST_EMPTY(&ip->intr_q)) {
+		LIST_INSERT_HEAD(&ip->intr_q, ih, ih_q);
+		goto done;
 	}
-	panic("hb_intr_establish: no room");
 
-found:
-	ih->func = func;
-	ih->arg = arg;
-
-#ifdef HB_DEBUG
-	for (irq = 0; irq <= 2; irq++) {
-		for (i = 0; i < NHBINTR; i++) {
-			printf("%p(%p) ",
-			       hb_intrhand[irq][i].func,
-			       hb_intrhand[irq][i].arg);
+	for (curih = LIST_FIRST(&ip->intr_q);
+	    LIST_NEXT(curih, ih_q) != NULL;
+	    curih = LIST_NEXT(curih, ih_q)) {
+		if (ih->ih_priority > curih->ih_priority) {
+			LIST_INSERT_BEFORE(curih, ih, ih_q);
+			goto done;
 		}
-		printf("\n");
 	}
-#endif
 
+	LIST_INSERT_AFTER(curih, ih, ih_q);
+
+ done:
 	return ih;
 }
 
 void
-hb_intr_dispatch(irq)
-	int irq;
+hb_intr_dispatch(level, stat)
+	int level;
+	int stat;
 {
-	struct intrhand *ih;
-	int i;
+	struct newsmips_intr *ip;
+	struct newsmips_intrhand *ih;
 
-	ih = hb_intrhand[irq];
-	for (i = NHBINTR; i > 0; i--) {
-		if (ih->func)
-			(*ih->func)(ih->arg);
-		ih++;
+	ip = &hbintr_tab[level];
+
+	LIST_FOREACH(ih, &ip->intr_q, ih_q) {
+		if (ih->ih_mask & stat)
+			(*ih->ih_func)(ih->ih_arg);
 	}
 }
