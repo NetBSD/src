@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.9 (Berkeley) 5/24/91";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:16:13 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1993/12/29 22:00:13 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,9 +95,13 @@ main(argc, argv)
 	argc -= optind;	
 	argv += optind;
 
-	/* Find first option to delimit the file list. */
+	/* The first argument that starts with a -, or is a ! or a (, and all
+	 * subsequent arguments shall be interpreted as an expression ...
+	 * (POSIX.2).
+	 */
 	while (*argv) {
-		if (option(*argv))
+		if (**argv == '-' ||
+		    ((*argv)[1] == '\0' && (**argv == '!' || **argv == '(')))
 			break;
 		*p++ = *argv++;
 	}
