@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.1.1.1.2.3 2004/08/13 03:58:40 jmc Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.1.1.1.2.3.2.1 2005/02/06 07:44:20 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1372,8 +1372,8 @@ int topclosed;
 			if (c == ERR)
 				continue;
 
-			if (isalpha(c) && isupper(c))
-				c = tolower(c);
+			if (ISALPHA(c) && ISUPPER(c))
+				c = TOLOWER(c);
 			if (c == 'l') {
 				redraw = 1;
 			} else if (c == 'q') {
@@ -1592,7 +1592,9 @@ static char *getip(v, addr)
 int v;
 i6addr_t *addr;
 {
+#ifdef  USE_INET6
 	static char hostbuf[MAXHOSTNAMELEN+1];
+#endif
 
 	if (v == 4)
 		return inet_ntoa(addr->in4);
