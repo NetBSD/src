@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.70 1994/05/24 10:41:52 mycroft Exp $
+ *	$Id: locore.s,v 1.71 1994/05/24 11:53:17 mycroft Exp $
  */
 
 /*
@@ -221,8 +221,50 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	jnz	2f			# if flags changed, Intel chip
 
 	movl	$CPU_486DLC,_cpu-KERNBASE # set CPU value for Cyrix
-	movl	$0x69727943,_cpu_vendor
-	movw	$0x0078,_cup_vendor+4
+	movl	$0x69727943,_cpu_vendor	# store vendor string
+	movw	$0x0078,_cpu_vendor+4
+
+	/* Set cache parameters */
+	invd				# Start with guaranteed clean cache
+	movb	$0xc0,%al		# Configuration Register index (CCR0)
+	outb	%al,$0x22
+	# movb	$0x22,%al		# Configuration Register CCR0 data
+	movb	$0x02,%al		# Configuration Register CCR0 data
+	outb	%al,$0x23
+	movb	$0xc1,%al		# CCR1
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 1	*/
+	movb	$0xc6,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 2	*/
+	movb	$0xc9,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 3	*/
+	movb	$0xcc,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 4	*/
+	movb	$0xcf,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* enable caching in CR0 */
+	movl	%cr0,%eax
+#ifdef notyet_cyrix
+	andl	$~(CR0_CD|CR0_NW),%eax
+#else
+	orl	$CR0_CD,%eax
+	invd
+#endif
+	movl	%eax,%cr0
+
 	jmp	2f
 
 try586:	/* Use the `cpuid' instruction. */
@@ -483,45 +525,17 @@ reloc_gdt:
 	movl	%cr0,%eax		# get control word
 	orl	$CR0_WP,%eax		# enable ring 0 Write Protection
 	movl	%eax,%cr0
+1:
+#endif
 
-	/* Initialize Cyrix 486DLC family CPU if present */
-	cmpl	$CPU_486DLC,_cpu
+#ifndef notyet_cyrix
+	cmp	$CPU_486DLC,_cpu
 	jne	1f
-	/* Set cache parameters */
-	invd				# Start with guaranteed clean cache
-	movb	$0xc0,%al		# Configuration Register index (CCR0)
-	outb	%al,$0x22
-	# movb	$0x22,%al		# Configuration Register CCR0 data
-	movb	$0x02,%al		# Configuration Register CCR0 data
-	outb	%al,$0x23
-	movb	$0xc1,%al		# CCR1
-	outb	%al,$0x22
-	xorb	%al,%al
-	outb	%al,$0x23
-	/* clear non-cacheable region 1	*/
-	movb	$0xc6,%al
-	outb	%al,$0x22
-	xorb	%al,%al
-	outb	%al,$0x23
-	/* clear non-cacheable region 2	*/
-	movb	$0xc9,%al
-	outb	%al,$0x22
-	xorb	%al,%al
-	outb	%al,$0x23
-	/* clear non-cacheable region 3	*/
-	movb	$0xcc,%al
-	outb	%al,$0x22
-	xorb	%al,%al
-	outb	%al,$0x23
-	/* clear non-cacheable region 4	*/
-	movb	$0xcf,%al
-	outb	%al,$0x22
-	xorb	%al,%al
-	outb	%al,$0x23
-	/* enable caching in CR0 */
-	movl	%cr0,%eax
-	andl	$0x8050001f,%eax
-	movl	%eax,%cr0
+	pushl	$2f
+	call	_printf
+	addl	$4,%esp
+	jmp	1f
+2:	.asciz	"WARNING: CYRIX 486DLC DETECTED; CACHE DISABLED.\n"
 1:
 #endif
 
