@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.3 1997/07/28 22:26:13 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.4 1997/07/28 22:35:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
@@ -657,17 +657,6 @@ iexmit(sc)
 	if (sc->sc_debug & IED_XMIT)
 		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname,
 			sc->xctail);
-#endif
-
-#if NBPFILTER > 0
-	/*
-	 * If BPF is listening on this interface, let it see the packet before
-	 * we push it on the wire.
-	 */
-	if (sc->sc_ethercom.ec_if.if_bpf)
-		bpf_tap(sc->sc_ethercom.ec_if.if_bpf,
-		    sc->xmit_cbuffs[sc->xctail],
-		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
 #endif
 
 	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= SWAP(IE_XMIT_LAST);
