@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.51 2002/09/18 07:35:40 junyoung Exp $	 */
+/*	$NetBSD: rtld.h,v 1.52 2002/09/19 14:05:37 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -100,13 +100,13 @@ typedef struct Struct_Needed_Entry {
 	struct Struct_Needed_Entry *next;
 	struct Struct_Obj_Entry *obj;
 	unsigned long   name;	/* Offset of name in string table */
-}               Needed_Entry;
+} Needed_Entry;
 
 typedef struct _rtld_search_path_t {
 	struct _rtld_search_path_t *sp_next;
 	const char     *sp_path;
 	size_t          sp_pathlen;
-}               Search_Path;
+} Search_Path;
 
 
 #define RTLD_MAX_ENTRY 10
