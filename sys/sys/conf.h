@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.37 1996/09/07 12:41:31 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.38 1996/09/07 18:39:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -132,7 +132,7 @@ extern struct bdevsw bdevsw[];
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
 #else
-#define	bdev_lkm_dummy(c,n)	bdev_notdef(c,n)
+#define	bdev_lkm_dummy()	bdev_notdef()
 #endif
 
 #define	bdev_notdef() { \
@@ -217,7 +217,7 @@ extern struct cdevsw cdevsw[];
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 #else
-#define	cdev_lkm_dummy(c,n)	cdev_notdef(c,n)
+#define	cdev_lkm_dummy()	cdev_notdef()
 #endif
 
 #define	cdev_notdef() { \
