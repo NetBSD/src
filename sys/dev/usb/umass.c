@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.64 2001/11/13 06:24:55 lukem Exp $	*/
+/*	$NetBSD: umass.c,v 1.65 2001/11/13 08:01:40 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.64 2001/11/13 06:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.65 2001/11/13 08:01:40 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -1098,7 +1098,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					     &sc->transfer_actlen, NULL);
 
 			if (err) {
-				DPRINTF(UDMASS_BBB, ("%s: Data-%s %db failed, "
+				DPRINTF(UDMASS_BBB, ("%s: Data-%s %d failed, "
 					"%s\n", USBDEVNAME(sc->sc_dev),
 					(sc->transfer_dir == DIR_IN?"in":"out"),
 					sc->transfer_datalen,usbd_errstr(err)));
@@ -1549,7 +1549,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
 
 		if (err) {
-			DPRINTF(UDMASS_CBI, ("%s: Data-%s %db failed, "
+			DPRINTF(UDMASS_CBI, ("%s: Data-%s %d failed, "
 				"%s\n", USBDEVNAME(sc->sc_dev),
 				(sc->transfer_dir == DIR_IN?"in":"out"),
 				sc->transfer_datalen,usbd_errstr(err)));
@@ -1798,7 +1798,7 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
-	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen = %db "
+	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen = %d "
 		"(0x%02x%02x%02x%02x%02x%02x%s), "
 		"data = %d bytes, dir = %s\n",
 		USBDEVNAME(sc->sc_dev), tag, clen,
