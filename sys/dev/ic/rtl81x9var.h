@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.15 2005/01/09 12:25:25 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.16 2005/01/23 10:26:06 dan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -33,6 +33,12 @@
  *
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
+
+#include "rnd.h"
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
@@ -143,6 +149,9 @@ struct rtk_softc {
 	int	(*sc_enable)	__P((struct rtk_softc *));
 	void	(*sc_disable)	__P((struct rtk_softc *));
 	void	(*sc_power)	__P((struct rtk_softc *, int));
+#if NRND > 0
+	rndsource_element_t     rnd_source;
+#endif
 };
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
