@@ -1,4 +1,4 @@
-.\" Copyright (c) 1989, 1991, 1993
+.\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,36 +29,33 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getloadavg.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)getpagesize.3	8.1 (Berkeley) 6/4/93
 .\"
 .Dd June 4, 1993
-.Dt GETLOADAVG 3
-.Os
+.Dt GETPAGESIZE 3
+.Os BSD 4.2
 .Sh NAME
-.Nm getloadavg
-.Nd get system load averages
+.Nm getpagesize
+.Nd get system page size
 .Sh SYNOPSIS
-.Fn getloadavg "double loadavg[]" "int nelem"
+.Fd #include <unistd.h>
+.Ft int
+.Fn getpagesize void
 .Sh DESCRIPTION
-The
-.Fn getloadavg
-function returns the number of processes in the system run queue
-averaged over various periods of time.
-Up to
-.Fa nelem
-samples are retrieved and assigned to successive elements of
-.Fa loadavg Ns Bq .
-The system imposes a maximum of 3 samples, representing averages
-over the last 1, 5, and 15 minutes, respectively.
-.Sh DIAGNOSTICS
-If the load average was unobtainable, \-1 is returned; otherwise,
-the number of samples actually retrieved is returned.
+.Fn Getpagesize
+returns the number of bytes in a page.
+Page granularity is the granularity of many of the memory
+management calls.
+.Pp
+The page size is a 
+.Xr system
+page size and may not be the same as the underlying
+hardware page size.
 .Sh SEE ALSO
-.Xr uptime 1 ,
-.Xr sysctl 2 ,
-.Xr kvm_getloadavg 3
+.Xr sbrk 2 ,
+.Xr pagesize 1
 .Sh HISTORY
 The
-.Fn getloadavg
-function appeared in
-.Bx 4.3 Reno .
+.Nm
+function call appeared in
+.Bx 4.2 .

@@ -1,4 +1,4 @@
-.\" Copyright (c) 1989, 1991, 1993
+.\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,36 +29,69 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getloadavg.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)gethostname.3	8.1 (Berkeley) 6/4/93
 .\"
 .Dd June 4, 1993
-.Dt GETLOADAVG 3
-.Os
+.Dt GETHOSTNAME 3
+.Os BSD 4.2
 .Sh NAME
-.Nm getloadavg
-.Nd get system load averages
+.Nm gethostname ,
+.Nm sethostname
+.Nd get/set name of current host
 .Sh SYNOPSIS
-.Fn getloadavg "double loadavg[]" "int nelem"
+.Fd #include <unistd.h>
+.Ft int
+.Fn gethostname "char *name" "int namelen"
+.Ft int
+.Fn sethostname "const char *name" "int namelen"
 .Sh DESCRIPTION
+.Fn Gethostname
+returns the standard host name for the current processor, as
+previously set by
+.Fn sethostname .
+The parameter
+.Fa namelen
+specifies the size of the 
+.Fa name
+array.  The returned name is null-terminated unless insufficient
+space is provided.
+.Pp
+.Fn Sethostname
+sets the name of the host machine to be
+.Fa name ,
+which has length
+.Fa namelen .
+This call is restricted to the super-user and
+is normally used only when the system is bootstrapped.
+.Sh RETURN VALUES
+If the call succeeds a value of 0 is returned.  If the call
+fails, a value of -1 is returned and an error code is
+placed in the global location
+.Va errno .
+.Sh ERRORS
+The following errors may be returned by these calls:
+.Bl -tag -width Er
+.It Bq Er EFAULT
 The
-.Fn getloadavg
-function returns the number of processes in the system run queue
-averaged over various periods of time.
-Up to
-.Fa nelem
-samples are retrieved and assigned to successive elements of
-.Fa loadavg Ns Bq .
-The system imposes a maximum of 3 samples, representing averages
-over the last 1, 5, and 15 minutes, respectively.
-.Sh DIAGNOSTICS
-If the load average was unobtainable, \-1 is returned; otherwise,
-the number of samples actually retrieved is returned.
+.Fa name
+or
+.Fa namelen
+parameter gave an
+invalid address.
+.It Bq Er EPERM
+The caller tried to set the hostname and was not the super-user.
+.El
 .Sh SEE ALSO
-.Xr uptime 1 ,
-.Xr sysctl 2 ,
-.Xr kvm_getloadavg 3
+.Xr sysctl 2
+.Xr gethostid 3
+.Sh BUGS
+Host names are limited to
+.Dv MAXHOSTNAMELEN
+(from
+.Ao Pa sys/param.h Ac )
+characters, currently 256.
 .Sh HISTORY
 The
-.Fn getloadavg
-function appeared in
-.Bx 4.3 Reno .
+.Nm
+function call appeared in
+.Bx 4.2 .

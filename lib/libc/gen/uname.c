@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,40 +32,59 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)uname.c	8.1 (Berkeley) 1/4/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/sysctl.h>
-#include <vm/vm_param.h>
+#include <sys/utsname.h>
 
-#include <stdlib.h>
-
-/*
- * getloadavg() -- Get system load averages.
- *
- * Put `nelem' samples into `loadavg' array.
- * Return number of samples retrieved, or -1 on error.
- */
 int
-getloadavg(loadavg, nelem)
-	double loadavg[];
-	int nelem;
+uname(name)
+	struct utsname *name;
 {
-	struct loadavg loadinfo;
-	int i, mib[2];
-	size_t size;
+	int mib[2], rval;
+	size_t len;
+	char *p;
 
-	mib[0] = CTL_VM;
-	mib[1] = VM_LOADAVG;
-	size = sizeof(loadinfo);
-	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) < 0)
-		return (-1);
+	rval = 0;
 
-	nelem = MIN(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
-	for (i = 0; i < nelem; i++)
-		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
-	return (nelem);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSTYPE;
+	len = sizeof(name->sysname);
+	if (sysctl(mib, 2, &name->sysname, &len, NULL, 0) == -1)
+		rval = -1;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_HOSTNAME;
+	len = sizeof(name->nodename);
+	if (sysctl(mib, 2, &name->nodename, &len, NULL, 0) == -1)
+		rval = -1;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSRELEASE;
+	len = sizeof(name->release);
+	if (sysctl(mib, 2, &name->release, &len, NULL, 0) == -1)
+		rval = -1;
+
+	/* The version may have newlines in it, turn them into spaces. */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_VERSION;
+	len = sizeof(name->version);
+	if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1)
+		rval = -1;
+	else
+		for (p = name->version; len--; ++p)
+			if (*p == '\n' || *p == '\t')
+				if (len > 1)
+					*p = ' ';
+				else
+					*p = '\0';
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_MACHINE;
+	len = sizeof(name->machine);
+	if (sysctl(mib, 2, &name->machine, &len, NULL, 0) == -1)
+		rval = -1;
+	return (rval);
 }
