@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.165 2002/10/02 16:33:28 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.166 2002/10/16 21:07:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.165 2002/10/02 16:33:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.166 2002/10/16 21:07:08 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1824,9 +1824,20 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case AUDIO_SETINFO:
+	    {
+		struct audio_info *info = (struct audio_info *)addr;
+
 		DPRINTF(("AUDIO_SETINFO mode=0x%x\n", sc->sc_mode));
-		error = audiosetinfo(sc, (struct audio_info *)addr);
+
+		/* Ensure PLAY/RECORD mode is set correctly */
+		if (info->mode != ~0) {
+			info->mode &= ~(AUMODE_PLAY|AUMODE_RECORD);
+			info->mode |= sc->sc_mode;
+		}
+
+		error = audiosetinfo(sc, info);
 		break;
+	    }
 
 	case AUDIO_GETINFO:
 		DPRINTF(("AUDIO_GETINFO\n"));
