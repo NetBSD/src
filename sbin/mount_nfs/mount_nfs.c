@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.6 1994/09/23 14:27:30 mycroft Exp $";
+static char *rcsid = "$Id: mount_nfs.c,v 1.7 1994/12/29 00:48:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -291,7 +291,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc != 2)
-		error = 1;
+		usage();
 
 	spec = *argv++;
 	name = *argv;
