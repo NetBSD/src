@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1997/10/13 00:46:52 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1998/03/24 04:17:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -278,13 +278,14 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
-	cdev_notdef(),		/* 87: reserved for wscons fb */
-	cdev_notdef(),		/* 88: reserved for wscons kbd */
-	cdev_notdef(),		/* 89: reserved for wscons mouse */
-	cdev_bpftun_init(NTUN,tun),	/* 90: network tunnel */
-
+	cdev_notdef(),		/* 88: reserved for wscons fb */
+	cdev_notdef(),		/* 89: reserved for wscons kbd */
+	cdev_notdef(),		/* 90: reserved for wscons mouse */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 91: ip-filter device */
 	cdev_rnd_init(NRND,rnd),	/* 92: random source pseudo-device */
+	cdev_bpftun_init(NTUN,tun),	/* 93: network tunnel */
+	cdev_lkm_init(NLKM,lkm),	/* 94: loadable module driver */
+
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
