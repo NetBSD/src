@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.8 2000/01/14 06:21:25 mjl Exp $	*/
+/*	$NetBSD: apply.c,v 1.9 2001/02/05 01:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.8 2000/01/14 06:21:25 mjl Exp $");
+__RCSID("$NetBSD: apply.c,v 1.9 2001/02/05 01:20:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,9 @@ __RCSID("$NetBSD: apply.c,v 1.8 2000/01/14 06:21:25 mjl Exp $");
 
 int	main __P((int, char **));
 void	usage __P((void));
-int	system __P((const char *));
+int	shell_system __P((const char *));
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -180,7 +182,7 @@ main(argc, argv)
 		if (debug)
 			(void)printf("%s\n", c);
 		else
-			if (system(c))
+			if (shell_system(c))
 				rval = 1;
 	}
 
@@ -191,12 +193,12 @@ main(argc, argv)
 }
 
 /*
- * system --
+ * shell_system --
  * 	Private version of system(3).  Use the user's SHELL environment
  *	variable as the shell to execute.
  */
 int
-system(command)
+shell_system(command)
 	const char *command;
 {
 	static char *name, *shell;
@@ -238,7 +240,6 @@ system(command)
 void
 usage()
 {
-	extern char *__progname;
 	(void)fprintf(stderr,
 	    "Usage: %s [-a magic] [-0123456789] command arguments ...\n",
 	    __progname);
