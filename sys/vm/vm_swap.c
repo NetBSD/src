@@ -32,7 +32,7 @@
  *
  *	@(#)vm_swap.c	7.18 (Berkeley) 5/6/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.2 1993/04/28 03:04:25 mycroft Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -51,6 +51,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.1.1.1 19
  */
 
 int	nswap, nswdev;
+struct rlist *swapmap = NULL;
 
 /*
  * Set up swap devices.
@@ -248,7 +249,7 @@ swfree(p, index)
 
 	/*printf("%d blocks from device %d/%d ",
 		sp->sw_nblks, major(sp->sw_dev), minor(sp->sw_dev));*/
-	for (dvbase = 0; dvbase < nblks; dvbase += dmmax) {
+	for (dvbase = 1; dvbase < nblks; dvbase += dmmax) {
 		blk = nblks - dvbase;
 		if ((vsbase = index*dmmax + dvbase*nswdev) >= nswap)
 			panic("swfree");
