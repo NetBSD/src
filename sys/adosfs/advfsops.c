@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.54 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.55 2002/09/21 18:10:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.54 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.55 2002/09/21 18:10:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,14 +103,21 @@ adosfs_mount(mp, path, data, ndp, p)
 	int error;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		amp = VFSTOADOSFS(mp);
+		if (amp == NULL)
+			return EIO;
+		args.uid = amp->uid;
+		args.gid = amp->gid;
+		args.mask = amp->mask;
+		args.fspec = NULL;
+		args.export = amp->export;
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args));
 	if (error)
 		return(error);
 	
-#if 0
-	if (mp->mnt_flag & MNT_UPDATE)
-		return (EOPNOTSUPP);
-#endif
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 	/*
