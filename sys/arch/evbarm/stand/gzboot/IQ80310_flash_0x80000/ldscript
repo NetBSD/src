@@ -4,9 +4,9 @@ OUTPUT_ARCH(arm)
 ENTRY(FLASH)
 MEMORY
 {
-  /* We will locate the .text section in flash, and run directly
-     from there.  The data and bss sections are small, and we
-     will locate them offset 1MB in SDRAM.  */
+  /* We will locate the .text section in flash, and will run directly
+     from there just long enough to relocate our .text and .data into
+     a small chunk of SDRAM starting at (SDRAM + 1M).  */
   flash : o = 0x80000, l = 6M
   sdram : o = 0xa0100000, l = 1M	/* kernel loads at 0xa0200000 */
 }
