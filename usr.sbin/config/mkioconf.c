@@ -647,12 +647,14 @@ i386_ioconf()
 		fprintf(fp, "#include \"i386/isa/icu.h\"\n\n");
 
 		for (dp = dtab; dp != 0; dp = dp->d_next) {
+			char *handler;
 			mp = dp->d_conn;
 			if (mp == 0 || mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
 			fprintf(fp, "extern struct isa_driver %sdriver;\n",
 				dp->d_name, dp->d_unit);
-			fprintf(fp, "extern %s();\n", shandler(dp));
+			if ((handler = shandler(dp)))
+				fprintf(fp, "extern %s();\n", handler);
 		}
 		fprintf(fp, "\nstruct isa_device isa_devtab_bio[] = {\n");
 		fprintf(fp, "\
@@ -673,7 +675,7 @@ i386_ioconf()
 			fprintf(fp,
 			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_msize, shandler(dp) ?: "0", dp->d_unit,
 				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
@@ -697,7 +699,7 @@ i386_ioconf()
 			fprintf(fp,
 			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_msize, shandler(dp) ?: "0", dp->d_unit,
 				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
@@ -721,7 +723,7 @@ i386_ioconf()
 			fprintf(fp,
 			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_msize, shandler(dp) ?: "0", dp->d_unit,
 				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
@@ -745,7 +747,7 @@ i386_ioconf()
 			fprintf(fp,
 			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_msize, shandler(dp) ?: "0", dp->d_unit,
 				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
@@ -797,7 +799,7 @@ struct device *dp;
 	static char buf[32+20];
 
 	if(dp->d_irq==-1)
-		return "0";
+		return NULL;
 	sprintf(buf, "V%.32s%d", dp->d_name, dp->d_unit);
 	return buf;
 }
