@@ -1,10 +1,15 @@
-#	$NetBSD: gcc.mi,v 1.3 2003/12/13 22:03:48 chs Exp $
-./usr/bin/readelf				comp-util-bin
+#	$NetBSD: gcc.mi,v 1.4 2003/12/29 03:13:26 lukem Exp $
 ./usr/bin/protoize				comp-c-bin
+./usr/bin/readelf				comp-util-bin
 ./usr/bin/unprotoize				comp-c-bin
-./usr/include/stdbool.h				comp-c-include
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
+./usr/include/g++/PlotFile.h			comp-cxx-include	obsolete
+./usr/include/g++/SFile.h			comp-cxx-include	obsolete
+./usr/include/g++/_G_config.h			comp-cxx-include	obsolete
+./usr/include/g++/algo.h			comp-cxx-include	obsolete
+./usr/include/g++/algobase.h			comp-cxx-include	obsolete
 ./usr/include/g++/algorithm			comp-cxx-include
+./usr/include/g++/alloc.h			comp-cxx-include	obsolete
 ./usr/include/g++/backward			comp-cxx-include
 ./usr/include/g++/backward/algo.h		comp-cxx-include
 ./usr/include/g++/backward/algobase.h		comp-cxx-include
@@ -126,6 +131,8 @@
 ./usr/include/g++/bits/valarray_meta.h		comp-cxx-include
 ./usr/include/g++/bits/vector.tcc		comp-cxx-include
 ./usr/include/g++/bitset			comp-cxx-include
+./usr/include/g++/builtinbuf.h			comp-cxx-include	obsolete
+./usr/include/g++/bvector.h			comp-cxx-include	obsolete
 ./usr/include/g++/c++config.h			comp-cxx-include
 ./usr/include/g++/cassert			comp-cxx-include
 ./usr/include/g++/cctype			comp-cxx-include
@@ -135,7 +142,9 @@
 ./usr/include/g++/climits			comp-cxx-include
 ./usr/include/g++/clocale			comp-cxx-include
 ./usr/include/g++/cmath				comp-cxx-include
+./usr/include/g++/compare.h			comp-cxx-include	obsolete
 ./usr/include/g++/complex			comp-cxx-include
+./usr/include/g++/complex.h			comp-cxx-include	obsolete
 ./usr/include/g++/csetjmp			comp-cxx-include
 ./usr/include/g++/csignal			comp-cxx-include
 ./usr/include/g++/cstdarg			comp-cxx-include
@@ -147,7 +156,10 @@
 ./usr/include/g++/cwchar			comp-cxx-include
 ./usr/include/g++/cwctype			comp-cxx-include
 ./usr/include/g++/cxxabi.h			comp-cxx-include
+./usr/include/g++/defalloc.h			comp-cxx-include	obsolete
 ./usr/include/g++/deque				comp-cxx-include
+./usr/include/g++/deque.h			comp-cxx-include	obsolete
+./usr/include/g++/editbuf.h			comp-cxx-include	obsolete
 ./usr/include/g++/exception			comp-cxx-include
 ./usr/include/g++/exception_defines.h		comp-cxx-include
 ./usr/include/g++/ext				comp-cxx-include
@@ -167,34 +179,143 @@
 ./usr/include/g++/ext/stl_hash_fun.h		comp-cxx-include
 ./usr/include/g++/ext/stl_hashtable.h		comp-cxx-include
 ./usr/include/g++/ext/stl_rope.h		comp-cxx-include
+./usr/include/g++/faralloc.h			comp-cxx-include	obsolete
+./usr/include/g++/fdeque.h			comp-cxx-include	obsolete
+./usr/include/g++/flist.h			comp-cxx-include	obsolete
+./usr/include/g++/floatio.h			comp-cxx-include	obsolete
+./usr/include/g++/fmap.h			comp-cxx-include	obsolete
+./usr/include/g++/fmultmap.h			comp-cxx-include	obsolete
+./usr/include/g++/fmultset.h			comp-cxx-include	obsolete
+./usr/include/g++/fset.h			comp-cxx-include	obsolete
 ./usr/include/g++/fstream			comp-cxx-include
+./usr/include/g++/fstream.h			comp-cxx-include	obsolete
+./usr/include/g++/function.h			comp-cxx-include	obsolete
 ./usr/include/g++/functional			comp-cxx-include
+./usr/include/g++/gen				comp-cxx-include	obsolete
+./usr/include/g++/gen/AVLMap.ccP		comp-cxx-include	obsolete
+./usr/include/g++/gen/AVLMap.hP			comp-cxx-include	obsolete
+./usr/include/g++/gen/intVec.hP			comp-cxx-include	obsolete
+./usr/include/g++/generic.h			comp-cxx-include	obsolete
+./usr/include/g++/getpagesize.h			comp-cxx-include	obsolete
+./usr/include/g++/hash_map			comp-cxx-include	obsolete
+./usr/include/g++/hash_map.h			comp-cxx-include	obsolete
+./usr/include/g++/hash_set			comp-cxx-include	obsolete
+./usr/include/g++/hash_set.h			comp-cxx-include	obsolete
+./usr/include/g++/hashtable.h			comp-cxx-include	obsolete
+./usr/include/g++/heap.h			comp-cxx-include	obsolete
+./usr/include/g++/indstream.h			comp-cxx-include	obsolete
+./usr/include/g++/iolibio.h			comp-cxx-include	obsolete
 ./usr/include/g++/iomanip			comp-cxx-include
+./usr/include/g++/iomanip.h			comp-cxx-include	obsolete
 ./usr/include/g++/ios				comp-cxx-include
 ./usr/include/g++/iosfwd			comp-cxx-include
 ./usr/include/g++/iostream			comp-cxx-include
+./usr/include/g++/iostream.h			comp-cxx-include	obsolete
 ./usr/include/g++/istream			comp-cxx-include
+./usr/include/g++/istream.h			comp-cxx-include	obsolete
 ./usr/include/g++/iterator			comp-cxx-include
+./usr/include/g++/iterator.h			comp-cxx-include	obsolete
+./usr/include/g++/libio.h			comp-cxx-include	obsolete
 ./usr/include/g++/limits			comp-cxx-include
 ./usr/include/g++/list				comp-cxx-include
+./usr/include/g++/list.h			comp-cxx-include	obsolete
 ./usr/include/g++/locale			comp-cxx-include
 ./usr/include/g++/map				comp-cxx-include
+./usr/include/g++/map.h				comp-cxx-include	obsolete
 ./usr/include/g++/memory			comp-cxx-include
+./usr/include/g++/multimap.h			comp-cxx-include	obsolete
+./usr/include/g++/multiset.h			comp-cxx-include	obsolete
 ./usr/include/g++/new				comp-cxx-include
+./usr/include/g++/new.h				comp-cxx-include	obsolete
 ./usr/include/g++/numeric			comp-cxx-include
 ./usr/include/g++/ostream			comp-cxx-include
+./usr/include/g++/ostream.h			comp-cxx-include	obsolete
+./usr/include/g++/pair.h			comp-cxx-include	obsolete
+./usr/include/g++/parsestream.h			comp-cxx-include	obsolete
+./usr/include/g++/pfstream.h			comp-cxx-include	obsolete
+./usr/include/g++/procbuf.h			comp-cxx-include	obsolete
+./usr/include/g++/pthread_alloc			comp-cxx-include	obsolete
+./usr/include/g++/pthread_alloc.h		comp-cxx-include	obsolete
 ./usr/include/g++/queue				comp-cxx-include
+./usr/include/g++/rope				comp-cxx-include	obsolete
+./usr/include/g++/rope.h			comp-cxx-include	obsolete
+./usr/include/g++/ropeimpl.h			comp-cxx-include	obsolete
 ./usr/include/g++/set				comp-cxx-include
+./usr/include/g++/set.h				comp-cxx-include	obsolete
+./usr/include/g++/slist				comp-cxx-include	obsolete
+./usr/include/g++/slist.h			comp-cxx-include	obsolete
 ./usr/include/g++/sstream			comp-cxx-include
 ./usr/include/g++/stack				comp-cxx-include
+./usr/include/g++/stack.h			comp-cxx-include	obsolete
 ./usr/include/g++/std				comp-cxx-include
+./usr/include/g++/std/bastring.cc		comp-cxx-include	obsolete
+./usr/include/g++/std/bastring.h		comp-cxx-include	obsolete
+./usr/include/g++/std/complext.cc		comp-cxx-include	obsolete
+./usr/include/g++/std/complext.h		comp-cxx-include	obsolete
+./usr/include/g++/std/dcomplex.h		comp-cxx-include	obsolete
+./usr/include/g++/std/fcomplex.h		comp-cxx-include	obsolete
+./usr/include/g++/std/gslice.h			comp-cxx-include	obsolete
+./usr/include/g++/std/gslice_array.h		comp-cxx-include	obsolete
+./usr/include/g++/std/indirect_array.h		comp-cxx-include	obsolete
+./usr/include/g++/std/ldcomplex.h		comp-cxx-include	obsolete
+./usr/include/g++/std/mask_array.h		comp-cxx-include	obsolete
+./usr/include/g++/std/slice.h			comp-cxx-include	obsolete
+./usr/include/g++/std/slice_array.h		comp-cxx-include	obsolete
+./usr/include/g++/std/std_valarray.h		comp-cxx-include	obsolete
+./usr/include/g++/std/straits.h			comp-cxx-include	obsolete
+./usr/include/g++/std/valarray_array.h		comp-cxx-include	obsolete
+./usr/include/g++/std/valarray_array.tcc	comp-cxx-include	obsolete
+./usr/include/g++/std/valarray_meta.h		comp-cxx-include	obsolete
 ./usr/include/g++/stdexcept			comp-cxx-include
+./usr/include/g++/stdiostream.h			comp-cxx-include	obsolete
+./usr/include/g++/stl.h				comp-cxx-include	obsolete
+./usr/include/g++/stl_algo.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_algobase.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_alloc.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_bvector.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_config.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_construct.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_deque.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_function.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_hash_fun.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_hash_map.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_hash_set.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_hashtable.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_heap.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_iterator.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_list.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_map.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_multimap.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_multiset.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_numeric.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_pair.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_queue.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_raw_storage_iter.h	comp-cxx-include	obsolete
+./usr/include/g++/stl_relops.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_rope.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_set.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_slist.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_stack.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_tempbuf.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_tree.h			comp-cxx-include	obsolete
+./usr/include/g++/stl_uninitialized.h		comp-cxx-include	obsolete
+./usr/include/g++/stl_vector.h			comp-cxx-include	obsolete
+./usr/include/g++/stream.h			comp-cxx-include	obsolete
 ./usr/include/g++/streambuf			comp-cxx-include
+./usr/include/g++/streambuf.h			comp-cxx-include	obsolete
+./usr/include/g++/strfile.h			comp-cxx-include	obsolete
 ./usr/include/g++/string			comp-cxx-include
+./usr/include/g++/strstream			comp-cxx-include	obsolete
+./usr/include/g++/strstream.h			comp-cxx-include	obsolete
+./usr/include/g++/tempbuf.h			comp-cxx-include	obsolete
+./usr/include/g++/tree.h			comp-cxx-include	obsolete
+./usr/include/g++/type_traits.h			comp-cxx-include	obsolete
 ./usr/include/g++/typeinfo			comp-cxx-include
 ./usr/include/g++/utility			comp-cxx-include
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
+./usr/include/g++/vector.h			comp-cxx-include	obsolete
+./usr/include/stdbool.h				comp-c-include
 ./usr/lib/libfrtbegin.a				comp-c-lib
 ./usr/lib/libgcc_p.a				comp-c-proflib
 ./usr/lib/libsupc++.a				comp-cxx-lib

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.15 2003/02/26 22:31:01 thorpej Exp $
+# $NetBSD: md.sparc64,v 1.16 2003/12/29 03:13:26 lukem Exp $
 ./sbin/edlabel			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
 ./usr/lkm/compat_netbsd32.o	base-netbsd32-lkm
@@ -12,6 +12,7 @@
 ./usr/lkm/exec_svr4_32_elf.o	base-svr4_32-lkm
 ./usr/mdec/binstall		base-sysutil-bin
 ./usr/mdec/bootblk		base-sysutil-bin
+./usr/mdec/installboot			base-obsolete	obsolete
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.net		base-sysutil-bin
 ./usr/sbin/eeprom		base-sysutil-bin

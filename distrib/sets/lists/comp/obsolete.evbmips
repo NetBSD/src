@@ -1,6 +1,0 @@
-# $NetBSD: obsolete.evbmips,v 1.3 2003/10/25 22:26:08 mycroft Exp $
-./usr/include/evbmips/_G_config.h
-./usr/include/evbmips/intr.h
-./usr/include/evbmips/isa_machdep.h
-./usr/include/evbmips/pci_machdep.h
-./usr/include/evbmips/rnd.h

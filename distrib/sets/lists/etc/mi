@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.127 2003/12/27 00:28:19 martin Exp $
+# $NetBSD: mi,v 1.128 2003/12/29 03:13:28 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -10,15 +10,34 @@
 ./etc/csh.logout			etc-util-etc
 ./etc/daily				etc-sys-etc
 ./etc/daily.conf			etc-sys-etc
+./etc/default				etc-obsolete	obsolete
+./etc/default/daily.conf		etc-obsolete	obsolete
+./etc/default/monthly.conf		etc-obsolete	obsolete
+./etc/default/rc.conf			etc-obsolete	obsolete
+./etc/default/security.conf		etc-obsolete	obsolete
+./etc/default/weekly.conf		etc-obsolete	obsolete
 ./etc/defaults/daily.conf		etc-sys-defaults
 ./etc/defaults/monthly.conf		etc-sys-defaults
 ./etc/defaults/rc.conf			etc-sys-defaults
 ./etc/defaults/security.conf		etc-sys-defaults
 ./etc/defaults/weekly.conf		etc-sys-defaults
+./etc/dhclient-script			etc-obsolete	obsolete
 ./etc/disktab				etc-sysutil-etc
 ./etc/dm.conf				etc-games-etc
 ./etc/dumpdates				etc-sysutil-etc
 ./etc/floppytab				etc-sysutil-etc
+./etc/fstab.nfs				etc-obsolete	obsolete
+./etc/fstab.sd				etc-obsolete	obsolete
+./etc/fstab.sd0				etc-obsolete	obsolete
+./etc/fstab.sd1				etc-obsolete	obsolete
+./etc/fstab.sd2				etc-obsolete	obsolete
+./etc/fstab.sd3				etc-obsolete	obsolete
+./etc/fstab.sd4				etc-obsolete	obsolete
+./etc/fstab.sd5				etc-obsolete	obsolete
+./etc/fstab.sd6				etc-obsolete	obsolete
+./etc/fstab.sd7				etc-obsolete	obsolete
+./etc/fstab.tmp				etc-obsolete	obsolete
+./etc/fstab.wd				etc-obsolete	obsolete
 ./etc/ftpchroot				etc-netutil-etc
 ./etc/ftpusers				etc-netutil-etc
 ./etc/gettytab				etc-sysutil-etc
@@ -55,6 +74,13 @@
 ./etc/newsyslog.conf			etc-sysutil-etc
 ./etc/nsswitch.conf			etc-net-etc
 ./etc/ntp.conf				etc-ntp-etc
+./etc/obsolete/base			etc-obsolete	obsolete
+./etc/obsolete/comp			etc-obsolete	obsolete
+./etc/obsolete/etc			etc-obsolete	obsolete
+./etc/obsolete/games			etc-obsolete	obsolete
+./etc/obsolete/man			etc-obsolete	obsolete
+./etc/obsolete/misc			etc-obsolete	obsolete
+./etc/obsolete/text			etc-obsolete	obsolete
 ./etc/passwd				etc-sys-etc
 ./etc/passwd.conf			etc-sys-etc
 ./etc/phones				etc-uucp-etc
@@ -67,6 +93,7 @@
 ./etc/postinstall			etc-sys-etc
 ./etc/powerd/scripts/power_button	etc-sysutil-etc
 ./etc/powerd/scripts/reset_button	etc-sysutil-etc
+./etc/primes				etc-obsolete	obsolete
 ./etc/printcap				etc-lpr-etc
 ./etc/profile				etc-util-etc
 ./etc/protocols				etc-net-etc
@@ -76,6 +103,7 @@
 ./etc/rc.conf				etc-sys-rc
 ./etc/rc.d/DAEMON			etc-sys-rc
 ./etc/rc.d/LOGIN			etc-sys-rc
+./etc/rc.d/NETWORK			etc-obsolete	obsolete
 ./etc/rc.d/NETWORKING			etc-sys-rc
 ./etc/rc.d/SERVERS			etc-sys-rc
 ./etc/rc.d/accounting			etc-sys-rc
@@ -94,6 +122,8 @@
 ./etc/rc.d/dmesg			etc-sys-rc
 ./etc/rc.d/downinterfaces		etc-sys-rc
 ./etc/rc.d/fsck				etc-sys-rc
+./etc/rc.d/fsck.sh			etc-obsolete	obsolete
+./etc/rc.d/gated			etc-obsolete	obsolete
 ./etc/rc.d/ifwatchd			etc-net-rc
 ./etc/rc.d/inetd			etc-net-rc
 ./etc/rc.d/ipfilter			etc-ipf-rc
@@ -103,6 +133,7 @@
 ./etc/rc.d/ipsec			etc-net-rc
 ./etc/rc.d/isdnd			etc-isdn-rc
 ./etc/rc.d/kdc				etc-krb5-rc
+./etc/rc.d/kerberos			etc-obsolete	obsolete
 ./etc/rc.d/ldconfig			etc-sys-rc
 ./etc/rc.d/lkm1				etc-sys-rc
 ./etc/rc.d/lkm2				etc-sys-rc
@@ -157,6 +188,7 @@
 ./etc/rc.d/sysctl			etc-sys-rc
 ./etc/rc.d/sysdb			etc-sys-rc
 ./etc/rc.d/syslogd			etc-sys-rc
+./etc/rc.d/systemfs			etc-obsolete	obsolete
 ./etc/rc.d/timed			etc-timed-rc
 ./etc/rc.d/tpctl			etc-sys-rc
 ./etc/rc.d/ttys				etc-sys-rc
@@ -166,13 +198,16 @@
 ./etc/rc.d/wsmoused			etc-sys-rc
 ./etc/rc.d/xdm				etc-x11-rc
 ./etc/rc.d/xfs				etc-x11-rc
+./etc/rc.d/xntpd			etc-obsolete	obsolete
 ./etc/rc.d/ypbind			etc-nis-rc
 ./etc/rc.d/yppasswdd			etc-nis-rc
 ./etc/rc.d/ypserv			etc-nis-rc
+./etc/rc.d/ypset			etc-obsolete	obsolete
 ./etc/rc.lkm				etc-sys-rc
 ./etc/rc.local				etc-sys-rc
 ./etc/rc.shutdown			etc-sys-rc
 ./etc/rc.subr				etc-sys-rc
+./etc/rc.wscons				etc-obsolete	obsolete
 ./etc/remote				etc-uucp-etc
 ./etc/rmt				etc-sysutil-etc
 ./etc/rpc				etc-net-etc
