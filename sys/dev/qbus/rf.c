@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.2 2003/05/03 18:11:38 wiz Exp $	*/
+/*	$NetBSD: rf.c,v 1.3 2003/07/14 15:47:26 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -34,6 +34,9 @@ TODO:
 - Formating / "Set Density"
 - Better error handling / detaild error reason reportnig.
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.3 2003/07/14 15:47:26 lukem Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>

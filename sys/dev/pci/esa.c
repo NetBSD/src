@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.20 2003/02/01 06:23:39 thorpej Exp $ */
+/* $NetBSD: esa.c,v 1.21 2003/07/14 15:47:23 lukem Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,9 @@
  * problems with the original list management code present in the Linux
  * driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.21 2003/07/14 15:47:23 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>

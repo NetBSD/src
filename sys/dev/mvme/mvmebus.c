@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.3 2003/05/03 18:11:31 wiz Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.4 2003/07/14 15:47:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.4 2003/07/14 15:47:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.1 2003/04/20 20:20:35 thorpej Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.2 2003/07/14 15:47:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * General purpose task queue for sysmon back-ends.  This can be
  * used to run callbacks that require thread context.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.2 2003/07/14 15:47:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

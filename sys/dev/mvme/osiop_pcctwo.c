@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.4 2002/10/02 16:34:27 thorpej Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.5 2003/07/14 15:47:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Front-end attachment code for the ncr53c710 SCSI controller
  * on mvme68k/mvme88k boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.5 2003/07/14 15:47:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

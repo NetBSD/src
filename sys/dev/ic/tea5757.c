@@ -1,4 +1,4 @@
-/* $NetBSD: tea5757.c,v 1.2 2002/09/03 18:53:40 augustss Exp $ */
+/* $NetBSD: tea5757.c,v 1.3 2003/07/14 15:47:12 lukem Exp $ */
 /*	$OpenBSD: tea5757.c,v 1.3 2002/01/07 18:32:19 mickey Exp $	*/
 
 /*
@@ -51,6 +51,9 @@
  * Gemtek PCI cards and most Mediaforte FM tuners and sound cards with
  * integrated FM tuners.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tea5757.c,v 1.3 2003/07/14 15:47:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/radioio.h>

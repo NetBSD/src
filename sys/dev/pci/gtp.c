@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.5 2003/01/31 00:07:42 thorpej Exp $ */
+/* $NetBSD: gtp.c,v 1.6 2003/07/14 15:47:24 lukem Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -27,6 +27,9 @@
  */
 
 /* Gemtek PCI Radio Card Device Driver */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.6 2003/07/14 15:47:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

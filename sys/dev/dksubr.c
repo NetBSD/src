@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.9 2003/06/29 22:29:58 fvdl Exp $ */
+/* $NetBSD: dksubr.c,v 1.10 2003/07/14 15:47:03 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.10 2003/07/14 15:47:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

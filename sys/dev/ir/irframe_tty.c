@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.26 2003/06/29 22:30:19 fvdl Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.27 2003/07/14 15:47:14 lukem Exp $	*/
 
 /*
  * TODO
@@ -46,6 +46,9 @@
  * Loosely based on ppp_tty.c.
  * Framing and dongle handling written by Tommy Bohlin.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.27 2003/07/14 15:47:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

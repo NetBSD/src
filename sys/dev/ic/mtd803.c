@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.2 2003/01/06 12:14:29 wiz Exp $ */
+/* $NetBSD: mtd803.c,v 1.3 2003/07/14 15:47:12 lukem Exp $ */
 
 /*-
  *
@@ -49,6 +49,9 @@
  * - When you enable the TXBUN (Tx buffer unavailable) interrupt, it gets
  *    raised every time a packet is sent. Strange, since everything works anyway
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.3 2003/07/14 15:47:12 lukem Exp $");
 
 #include "bpfilter.h"
 

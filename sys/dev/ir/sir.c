@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.c,v 1.2 2001/12/06 00:17:12 augustss Exp $	*/
+/*	$NetBSD: sir.c,v 1.3 2003/07/14 15:47:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Framing originally written by Tommy Bohlin.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.3 2003/07/14 15:47:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
