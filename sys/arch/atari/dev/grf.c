@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.31 2002/10/23 09:10:51 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.32 2003/07/15 01:19:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -48,6 +48,9 @@
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the grf_softc->g_mode routine.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.32 2003/07/15 01:19:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

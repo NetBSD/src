@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.58 2003/06/23 11:01:09 martin Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.59 2003/07/15 01:19:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.59 2003/07/15 01:19:42 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"

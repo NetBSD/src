@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.16 2002/10/02 05:04:27 thorpej Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.17 2003/07/15 01:19:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -40,6 +40,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.17 2003/07/15 01:19:56 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.12 2002/10/23 09:10:53 jdolecek Exp $	*/
+/*	$NetBSD: ms.c,v 1.13 2003/07/15 01:19:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -54,6 +54,9 @@
 /*
  * Mouse driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.13 2003/07/15 01:19:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

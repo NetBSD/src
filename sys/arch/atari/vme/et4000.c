@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.10 2002/10/23 09:10:55 jdolecek Exp $	*/
+/*	$NetBSD: et4000.c,v 1.11 2003/07/15 01:19:55 lukem Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,9 @@
 /*
 #define DEBUG_ET4000
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.11 2003/07/15 01:19:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

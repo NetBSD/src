@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2002/09/27 02:24:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2003/07/15 01:29:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/07/15 01:29:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

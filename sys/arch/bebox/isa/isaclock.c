@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.8 2001/07/22 14:34:36 wiz Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.9 2003/07/15 01:26:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -88,6 +88,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.9 2003/07/15 01:26:31 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

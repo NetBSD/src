@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.47 2003/07/15 01:19:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,6 +47,9 @@
  *   - Test it with an HD-drive (Don't have that either)
  *   - Finish ioctl's
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2003/07/15 01:19:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

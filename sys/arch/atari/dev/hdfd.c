@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.39 2003/06/18 08:58:37 drochner Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.40 2003/07/15 01:19:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -57,6 +57,9 @@
  *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *  dufault@hda.com (Peter Dufault)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.40 2003/07/15 01:19:50 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 2002/10/23 09:10:54 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.40 2003/07/15 01:19:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -53,6 +53,10 @@
  *
  * This driver knows far too much about chip to usage mappings.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40 2003/07/15 01:19:53 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.4 2003/04/01 23:47:03 thorpej Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.5 2003/07/15 01:19:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.5 2003/07/15 01:19:54 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

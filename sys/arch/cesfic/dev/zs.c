@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 2003/04/09 11:04:41 drochner Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 2003/07/15 01:29:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * Runs two serial lines per chip using slave drivers.
  * Plain tty/async lines use the zs_async slave.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.8 2003/07/15 01:29:21 lukem Exp $");
 
 #include "opt_ddb.h"
 

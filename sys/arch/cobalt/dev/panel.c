@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.1 2003/01/20 01:26:14 soren Exp $ */
+/* $NetBSD: panel.c,v 1.2 2003/07/15 01:29:23 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.2 2003/07/15 01:29:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

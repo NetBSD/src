@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2003/01/01 01:27:20 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2003/07/15 01:29:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2003/07/15 01:29:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
