@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.23 1999/01/26 14:47:32 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.24 1999/03/09 11:10:40 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.23 1999/01/26 14:47:32 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.24 1999/03/09 11:10:40 agc Exp $");
 #endif
 #endif
 
@@ -311,7 +311,7 @@ fileGetURL(char *base, char *spec)
 	    tpid = fork();
 	    if (!tpid) {
 		dup2(fileno(ftp), 0);
-		i = execl("/usr/bin/tar", "tar", Verbose ? "-xzvf" : "-xzf", "-", 0);
+		i = execl(TAR_CMD, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
 		exit(i);
 	    }
 	    else {
@@ -320,7 +320,7 @@ fileGetURL(char *base, char *spec)
 		fclose(ftp);
 		tpid = waitpid(tpid, &pstat, 0);
 		if (Verbose)
-		    printf("tar command returns %d status\n", WEXITSTATUS(pstat));
+		    printf("%s command returns %d status\n", TAR_CMD, WEXITSTATUS(pstat));
 	    }
 	}
 	else
@@ -549,12 +549,12 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 	/* If absolute path, use it */
 	if (*fname == '/')
 	    dir = "/";
-	snprintf(cmd, FILENAME_MAX * 3, "tar cf - -C %s %s | tar xpf -",
- 		 dir, fname);
+	snprintf(cmd, sizeof(cmd), "%s cf - -C %s %s | %s xpf -",
+ 		 TAR_CMD, dir, fname, TAR_CMD);
     }
     else
-	snprintf(cmd, FILENAME_MAX * 3, "tar cf - %s | tar xpf - -C %s",
- 		 fname, dir);
+	snprintf(cmd, sizeof(cmd), "%s cf - %s | %s xpf - -C %s",
+ 		 TAR_CMD, fname, dir, TAR_CMD);
 #ifdef DEBUG
     printf("Using '%s' to copy trees.\n", cmd);
 #endif
@@ -586,8 +586,8 @@ unpack(char *pkg, char *flist)
     else
 	strcpy(args, "z");
     strcat(args, "xpf");
-    if (vsystem("tar %s %s %s", args, pkg, flist ? flist : "")) {
-	warnx("tar extract of %s failed!", pkg);
+    if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
+	warnx("%s extract of %s failed!", TAR_CMD, pkg);
 	return 1;
     }
     return 0;
