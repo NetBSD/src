@@ -42,11 +42,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	5.5 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: fsplit.c,v 1.2 1993/08/01 18:15:39 mycroft Exp $";
+static char rcsid[] = "$Id: fsplit.c,v 1.3 1994/12/24 16:35:34 cgd Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
