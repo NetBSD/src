@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.5 1994/10/26 21:09:15 cgd Exp $	*/
+/*	$NetBSD: rz.c,v 1.6 1994/11/28 18:41:31 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,16 @@ struct	size {
  * (including the boot area).
  */
 static struct size rzdefaultpart[MAXPARTITIONS] = {
+#ifdef GENERIC	/* greedy machines have 64 meg of swap */
+	        0,   32768,	/* A */
+	    32768,  131072,	/* B */
+	        0,       0,	/* C */
+	    17408,       0,	/* D */
+	   115712,       0,	/* E */
+	   218112,       0,	/* F */
+	   163840,       0,	/* G */
+	   115712,       0,	/* H */
+#else
 	        0,   16384,	/* A */
 	    16384,   65536,	/* B */
 	        0,       0,	/* C */
@@ -98,6 +108,7 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	   218112,       0,	/* F */
 	    81920,       0,	/* G */
 	   115712,       0,	/* H */
+#endif
 };
 
 #define	RAWPART		2	/* 'c' partition */	/* XXX */
@@ -138,10 +149,10 @@ struct	rz_softc {
 #define	RZF_WLABEL		0x08	/* label is writeable */
 
 #ifdef DEBUG
-int	rzdebug = 3;
 #define RZB_ERROR	0x01
 #define RZB_PARTIAL	0x02
 #define RZB_PRLABEL	0x04
+int	rzdebug = RZB_ERROR;
 #endif
 
 #define	rzunit(x)	(minor(x) >> 3)
@@ -664,6 +675,10 @@ rzdone(unit, error, resid, status)
 	}
 }
 
+#ifdef COMPAT_ULTRIX
+#include "../../stand/dec_boot.h"
+#endif
+
 /*
  * Read or constuct a disklabel
  */
@@ -696,8 +711,32 @@ rzgetinfo(dev)
 	msg = readdisklabel(dev, rzstrategy, lp, &cd);
 	if (msg == NULL)
 		return;
-#if 0
+
 	printf("rz%d: WARNING: %s\n", unit, msg);
+#if 1
+#ifdef COMPAT_ULTRIX
+	if(sc->sc_label.d_magic != DEC_LABEL_MAGIC){
+#endif /*COMPAT_ULTRIX*/
+	bzero(lp, sizeof (*lp));
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		sc->sc_label.d_partitions[i].p_size =
+			(rzdefaultpart[i].nblocks) ?
+			rzdefaultpart[i].nblocks: sc->sc_blks;
+		sc->sc_label.d_partitions[i].p_offset =
+			rzdefaultpart[i].strtblk;
+		printf(" default rz%d%c: start %d len %d\n",
+			unit, "abcdefgh"[i],
+			rzdefaultpart[i].strtblk,  rzdefaultpart[i].nblocks);
+	}
+#ifdef COMPAT_ULTRIX
+	}
+	else
+	  for (i = 0; i < MAXPARTITIONS; i++)
+	    printf(" rz%d%c: start %d len %d\n",
+		   unit, "abcdefgh"[i],
+		   sc->sc_label.d_partitions[i].p_offset,
+		   sc->sc_label.d_partitions[i].p_size);
+#endif /*COMPAT_ULTRIX*/
 	sc->sc_label.d_magic = DISKMAGIC;
 	sc->sc_label.d_magic2 = DISKMAGIC;
 	sc->sc_label.d_type = DTYPE_SCSI;
@@ -708,14 +747,8 @@ rzgetinfo(dev)
 	sc->sc_label.d_npartitions = MAXPARTITIONS;
 	sc->sc_label.d_bbsize = BBSIZE;
 	sc->sc_label.d_sbsize = SBSIZE;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		sc->sc_label.d_partitions[i].p_size =
-			rzdefaultpart[i].nblocks;
-		sc->sc_label.d_partitions[i].p_offset =
-			rzdefaultpart[i].strtblk;
-	}
 	sc->sc_label.d_partitions[RAWPART].p_size = sc->sc_blks;
-#endif
+#endif /*if 1*/
 }
 
 int
@@ -741,7 +774,14 @@ rzopen(dev, flags, mode, p)
 
 	lp = &sc->sc_label;
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0)
+	{
+		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
+			unit, "abcdefg"[part],  unit, part);
+		printf("# partions %d, size of %d = %d\n",
+			lp->d_npartitions, lp->d_partitions[part].p_size);
 		return (ENXIO);
+	}
+
 	/*
 	 * Warn if a partition is opened that overlaps another
 	 * already open, unless either is the `raw' partition
