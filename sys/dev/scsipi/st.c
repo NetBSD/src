@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.21 1994/04/01 06:49:22 mycroft Exp $
+ *	$Id: st.c,v 1.22 1994/04/05 21:59:49 mycroft Exp $
  */
 
 /*
@@ -142,6 +142,27 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
+#if 0
+    /* One of these is probably fine. */
+    {"SANKYO  ", "CP525", "????",
+	0,
+	{
+	    {0, ST_Q_SNS_HLP, 0},			/* minor 0-3 */
+	    {0, ST_Q_SNS_HLP, QIC_525},			/* minor 4-7 */
+	    {0, 0, QIC_150},				/* minor 8-11 */
+	    {0, 0, QIC_120}				/* minor 12-15 */
+	}
+    },
+    {"SANKYO  ", "CP525", "????",
+	0,
+	{
+	    {512, ST_Q_FORCE_FIXED_MODE, 0},		/* minor 0-3 */
+	    {512, ST_Q_FORCE_FIXED_MODE, QIC_525},	/* minor 4-7 */
+	    {0, 0, QIC_150},				/* minor 8-11 */
+	    {0, 0, QIC_120}				/* minor 12-15 */
+	}
+    },
+#endif
     {"ARCHIVE ", "VIPER 150", "????",
 	ST_Q_NEEDS_PAGE_0,
 	{
@@ -1137,6 +1158,12 @@ stioctl(dev, cmd, arg, flag)
 			st_unmount(st, EJECT);
 			break;
 		case MTNOP:	/* no operation, sets status only */
+			break;
+		case MTEOM:	/* forward space to end of media */
+			error = st_chkeod(st, FALSE, &nmarks, flags);
+			if (!error)
+				error = st_space(st, 1, SP_EOM, flags);
+			break;
 		case MTCACHE:	/* enable controller cache */
 		case MTNOCACHE:	/* disable controller cache */
 			break;
@@ -1491,7 +1518,7 @@ st_space(st, number, what, flags)
 	case SP_FILEMARKS:
 		if (st->flags & ST_EIO_PENDING) {
 			if (number > 0) {
-				/* pretend we just discover the error */
+				/* pretend we just discovered the error */
 				st->flags &= ~ST_EIO_PENDING;
 				return EIO;
 			} else if (number < 0) {
@@ -1508,6 +1535,16 @@ st_space(st, number, what, flags)
 			st->flags &= ~ST_BLANK_READ;
 			number++;	/* XXX dubious */
 		}
+		break;
+	case SP_EOM:
+		if (st->flags & ST_EIO_PENDING) {
+			/* pretend we just discovered the error */
+			st->flags &= ~ST_EIO_PENDING;
+			return EIO;
+		}
+		if (st->flags & ST_AT_FILEMARK)
+			st->flags &= ~ST_AT_FILEMARK;
+		break;
 	}
 	if (number == 0)
 		return 0;
