@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.6 1998/10/13 15:18:48 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.7 1998/10/19 12:28:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -554,8 +554,12 @@ again:
 		} else if (dma_err < 0) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 		}
-#ifdef DIAGNOSTIC
 		if (xfer->c_bcount != 0) {
+			WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
+			    "%d after io\n", xfer->c_bcount), DEBUG_XFERS);
+		}
+#ifdef DIAGNOSTIC
+		if (xfer->c_bcount < 0) {
 			printf("wdc_atapi_intr warning: bcount value "
 			    "is %d after io\n", xfer->c_bcount);
 		}
