@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.4 1995/03/24 14:52:24 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.5 1995/04/11 03:41:04 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -93,6 +93,7 @@
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/pdma.h>
+#include <dev/ic/z8530.h>
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
 #include <pmax/dev/fbreg.h>
@@ -409,35 +410,34 @@ sccreset(sc)
 	SCC_INIT_REG(regs, SCC_CHANNEL_A);
 	SCC_INIT_REG(regs, SCC_CHANNEL_B);
 
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, SCC_WR9_HW_RESET);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, ZSWR9_HARD_RESET);
 	DELAY(50000);	/*enough ? */
 	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, 0);
 
 	/* program the interrupt vector */
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR2, 0xf0);
-	SCC_WRITE_REG(regs, SCC_CHANNEL_B, SCC_WR2, 0xf0);
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, SCC_WR9_VIS);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, ZSWR_IVEC, 0xf0);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_B, ZSWR_IVEC, 0xf0);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, ZSWR9_VECTOR_INCL_STAT);
 
 	/* receive parameters and control */
 	sc->scc_wreg[SCC_CHANNEL_A].wr3 = 0;
 	sc->scc_wreg[SCC_CHANNEL_B].wr3 = 0;
 
 	/* timing base defaults */
-	sc->scc_wreg[SCC_CHANNEL_A].wr4 = SCC_WR4_CLK_x16;
-	sc->scc_wreg[SCC_CHANNEL_B].wr4 = SCC_WR4_CLK_x16;
+	sc->scc_wreg[SCC_CHANNEL_A].wr4 = ZSWR4_CLK_X16;
+	sc->scc_wreg[SCC_CHANNEL_B].wr4 = ZSWR4_CLK_X16;
 
 	/* enable DTR, RTS and SS */
 	sc->scc_wreg[SCC_CHANNEL_B].wr5 = 0;
-	sc->scc_wreg[SCC_CHANNEL_A].wr5 = SCC_WR5_RTS | SCC_WR5_DTR;
+	sc->scc_wreg[SCC_CHANNEL_A].wr5 = ZSWR5_RTS | ZSWR5_DTR;
 
 	/* baud rates */
-	val = SCC_WR14_BAUDR_ENABLE|SCC_WR14_BAUDR_SRC;
+	val = ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK;
 	sc->scc_wreg[SCC_CHANNEL_B].wr14 = val;
 	sc->scc_wreg[SCC_CHANNEL_A].wr14 = val;
 
 	/* interrupt conditions */
-	val =	SCC_WR1_RXI_ALL_CHAR | SCC_WR1_PARITY_IE |
-		SCC_WR1_EXT_IE | SCC_WR1_TX_IE;
+	val =	ZSWR1_RIE | ZSWR1_PE_SC | ZSWR1_SIE | ZSWR1_TIE;
 	sc->scc_wreg[SCC_CHANNEL_A].wr1 = val;
 	sc->scc_wreg[SCC_CHANNEL_B].wr1 = val;
 }
@@ -514,8 +514,8 @@ sccclose(dev, flag, mode, p)
 
 	tp = scc_tty[minor(dev)];
 	line = SCCLINE(dev);
-	if (sc->scc_wreg[line].wr5 & SCC_WR5_SEND_BREAK) {
-		sc->scc_wreg[line].wr5 &= ~SCC_WR5_SEND_BREAK;
+	if (sc->scc_wreg[line].wr5 & ZSWR5_BREAK) {
+		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
 		ttyoutput(0, tp);
 	}
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -575,12 +575,12 @@ sccioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case TIOCSBRK:
-		sc->scc_wreg[line].wr5 |= SCC_WR5_SEND_BREAK;
+		sc->scc_wreg[line].wr5 |= ZSWR5_BREAK;
 		ttyoutput(0, tp);
 		break;
 
 	case TIOCCBRK:
-		sc->scc_wreg[line].wr5 &= ~SCC_WR5_SEND_BREAK;
+		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
 		ttyoutput(0, tp);
 		break;
 
@@ -663,9 +663,9 @@ sccparam(tp, t)
 #if 0
 	/* reset line */
 	if (line == SCC_CHANNEL_A)
-		value = SCC_WR9_RESET_CHA_A;
+		value = ZSWR9_A_RESET;
 	else
-		value = SCC_WR9_RESET_CHA_B;
+		value = ZSWR9_B_RESET;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	DELAY(25);
 #endif
@@ -673,40 +673,40 @@ sccparam(tp, t)
 	/* stop bits, normally 1 */
 	value = sc->scc_wreg[line].wr4 & 0xf0;
 	if (cflag & CSTOPB)
-		value |= SCC_WR4_2_STOP;
+		value |= ZSWR4_TWOSB;
 	else
-		value |= SCC_WR4_1_STOP;
+		value |= ZSWR4_ONESB;
 	if ((cflag & PARODD) == 0)
-		value |= SCC_WR4_EVEN_PARITY;
+		value |= ZSWR4_EVENP;
 	if (cflag & PARENB)
-		value |= SCC_WR4_PARITY_ENABLE;
+		value |= ZSWR4_PARENB;
 
 	/* set it now, remember it must be first after reset */
 	sc->scc_wreg[line].wr4 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR4, value);
 
 	/* vector again */
-	SCC_WRITE_REG(regs, line, SCC_WR2, 0xf0);
+	SCC_WRITE_REG(regs, line, ZSWR_IVEC, 0xf0);
 
 	/* clear break, keep rts dtr */
-	wvalue = sc->scc_wreg[line].wr5 & (SCC_WR5_DTR|SCC_WR5_RTS);
+	wvalue = sc->scc_wreg[line].wr5 & (ZSWR5_DTR | ZSWR5_RTS);
 	switch (cflag & CSIZE) {
 	case CS5:
-		value = SCC_WR3_RX_5_BITS;
-		wvalue |= SCC_WR5_TX_5_BITS;
+		value = ZSWR3_RX_5;
+		wvalue |= ZSWR5_TX_5;
 		break;
 	case CS6:
-		value = SCC_WR3_RX_6_BITS;
-		wvalue |= SCC_WR5_TX_6_BITS;
+		value = ZSWR3_RX_6;
+		wvalue |= ZSWR5_TX_6;
 		break;
 	case CS7:
-		value = SCC_WR3_RX_7_BITS;
-		wvalue |= SCC_WR5_TX_7_BITS;
+		value = ZSWR3_RX_7;
+		wvalue |= ZSWR5_TX_7;
 		break;
 	case CS8:
 	default:
-		value = SCC_WR3_RX_8_BITS;
-		wvalue |= SCC_WR5_TX_8_BITS;
+		value = ZSWR3_RX_8;
+		wvalue |= ZSWR5_TX_8;
 	};
 	sc->scc_wreg[line].wr3 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR3, value);
@@ -721,33 +721,33 @@ sccparam(tp, t)
 	}
 #endif
 
-	SCC_WRITE_REG(regs, line, SCC_WR6, 0);
-	SCC_WRITE_REG(regs, line, SCC_WR7, 0);
-	SCC_WRITE_REG(regs, line, SCC_WR9, SCC_WR9_VIS);
+	SCC_WRITE_REG(regs, line, ZSWR_SYNCLO, 0);
+	SCC_WRITE_REG(regs, line, ZSWR_SYNCHI, 0);
+	SCC_WRITE_REG(regs, line, SCC_WR9, ZSWR9_VECTOR_INCL_STAT);
 	SCC_WRITE_REG(regs, line, SCC_WR10, 0);
-	value = SCC_WR11_RCLK_BAUDR | SCC_WR11_XTLK_BAUDR |
-		SCC_WR11_TRc_OUT | SCC_WR11_TRcOUT_BAUDR;
+	value = ZSWR11_RXCLK_BAUD | ZSWR11_TXCLK_BAUD |
+		ZSWR11_TRXC_OUT_ENA | ZSWR11_TRXC_BAUD;
 	SCC_WRITE_REG(regs, line, SCC_WR11, value);
 	SCC_SET_TIMING_BASE(regs, line, ospeed);
 	value = sc->scc_wreg[line].wr14;
 	SCC_WRITE_REG(regs, line, SCC_WR14, value);
 	if (SCCUNIT(tp->t_dev) != 1) {
-		value = SCC_WR15_BREAK_IE | SCC_WR15_CTS_IE | SCC_WR15_DCD_IE;
+		value = ZSWR15_BREAK_IE | ZSWR15_CTS_IE | ZSWR15_DCD_IE;
 	} else {
 		/* On unit one, on the flamingo, modem control is floating! */
-		value = SCC_WR15_BREAK_IE;
+		value = ZSWR15_BREAK_IE;
 	}
 	SCC_WRITE_REG(regs, line, SCC_WR15, value);
 
 	/* and now the enables */
-	value = sc->scc_wreg[line].wr3 | SCC_WR3_RX_ENABLE;
+	value = sc->scc_wreg[line].wr3 | ZSWR3_RX_ENABLE;
 	SCC_WRITE_REG(regs, line, SCC_WR3, value);
-	value = sc->scc_wreg[line].wr5 | SCC_WR5_TX_ENABLE;
+	value = sc->scc_wreg[line].wr5 | ZSWR5_TX_ENABLE;
 	sc->scc_wreg[line].wr5 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR5, value);
 
 	/* master inter enable */
-	value = SCC_WR9_MASTER_IE | SCC_WR9_VIS;
+	value = ZSWR9_MASTER_IE | ZSWR9_VECTOR_INCL_STAT;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	SCC_WRITE_REG(regs, line, SCC_WR1, sc->scc_wreg[line].wr1);
 
@@ -775,16 +775,16 @@ sccintr(xxxunit)
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 	for (;;) {
-	    SCC_READ_REG(regs, SCC_CHANNEL_B, SCC_RR2, rr2);
+	    SCC_READ_REG(regs, SCC_CHANNEL_B, ZSRR_IVEC, rr2);
 	    rr2 = SCC_RR2_STATUS(rr2);
 	    /* are we done yet ? */
 	    if (rr2 == 6) {	/* strange, distinguished value */
-		SCC_READ_REG(regs, SCC_CHANNEL_A, SCC_RR3, rr3);
+		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
 		if (rr3 == 0)
 			return;
 	    }
 
-	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, SCC_RESET_HIGHEST_IUS);
+	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
 	    if ((rr2 == SCC_RR2_A_XMIT_DONE) || (rr2 == SCC_RR2_B_XMIT_DONE)) {
 		chan = (rr2 == SCC_RR2_A_XMIT_DONE) ?
 			SCC_CHANNEL_A : SCC_CHANNEL_B;
@@ -808,9 +808,9 @@ sccintr(xxxunit)
 				sccstart(tp);
 			if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 				SCC_READ_REG(regs, chan, SCC_RR15, cc);
-				cc &= ~SCC_WR15_TX_UNDERRUN_IE;
+				cc &= ~ZSWR15_TXUEOM_IE;
 				SCC_WRITE_REG(regs, chan, SCC_WR15, cc);
-				cc = sc->scc_wreg[chan].wr1 & ~SCC_WR1_TX_IE;
+				cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
 				SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
 				sc->scc_wreg[chan].wr1 = cc;
 				MB();
@@ -828,8 +828,8 @@ sccintr(xxxunit)
 		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
 			rr2 == SCC_RR2_B_RECV_SPECIAL) {
 			SCC_READ_REG(regs, chan, SCC_RR1, rr1);
-			SCC_WRITE_REG(regs, chan, SCC_RR0, SCC_RESET_ERROR);
-			if ((rr1 & SCC_RR1_RX_OVERRUN) && overrun == 0) {
+			SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_ERRORS);
+			if ((rr1 & ZSRR1_DO) && overrun == 0) {
 				log(LOG_WARNING, "scc%d,%d: silo overflow\n",
 					unit >> 1, chan);
 				overrun = 1;
@@ -905,16 +905,16 @@ sccintr(xxxunit)
 		}
 		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
 			rr2 == SCC_RR2_B_RECV_SPECIAL) {
-			if (rr1 & SCC_RR1_PARITY_ERR)
+			if (rr1 & ZSRR1_PE)
 				cc |= TTY_PE;
-			if (rr1 & SCC_RR1_FRAME_ERR)
+			if (rr1 & ZSRR1_FE)
 				cc |= TTY_FE;
 		}
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	    } else if ((rr2 == SCC_RR2_A_EXT_STATUS) || (rr2 == SCC_RR2_B_EXT_STATUS)) {
 		chan = (rr2 == SCC_RR2_A_EXT_STATUS) ?
 			SCC_CHANNEL_A : SCC_CHANNEL_B;
-		SCC_WRITE_REG(regs, chan, SCC_RR0, SCC_RESET_EXT_IP);
+		SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_STATUS);
 		scc_modem_intr(unit | chan);
 	    }
 	}
@@ -985,11 +985,11 @@ sccstart(tp)
 	 */
 	chan = SCCLINE(tp->t_dev);
 	SCC_READ_REG(regs, chan, SCC_RR0, temp);
-	sendone = (temp & SCC_RR0_TX_EMPTY);
+	sendone = (temp & ZSRR0_TX_READY);
 	SCC_READ_REG(regs, chan, SCC_RR15, temp);
-	temp |= SCC_WR15_TX_UNDERRUN_IE;
+	temp |= ZSWR15_TXUEOM_IE;
 	SCC_WRITE_REG(regs, chan, SCC_WR15, temp);
-	temp = sc->scc_wreg[chan].wr1 | SCC_WR1_TX_IE;
+	temp = sc->scc_wreg[chan].wr1 | ZSWR1_TIE;
 	SCC_WRITE_REG(regs, chan, SCC_WR1, temp);
 	sc->scc_wreg[chan].wr1 = temp;
 	if (sendone) {
@@ -1052,12 +1052,12 @@ sccmctl(dev, bits, how)
 	 */
 	mbits = DML_DTR | DML_DSR | DML_CAR;
 	if (line == SCC_CHANNEL_B) {
-		if (sc->scc_wreg[SCC_CHANNEL_A].wr5 & SCC_WR5_DTR)
+		if (sc->scc_wreg[SCC_CHANNEL_A].wr5 & ZSWR5_DTR)
 			mbits = DML_DTR | DML_DSR;
 		else
 			mbits = 0;
 		SCC_READ_REG_ZERO(regs, SCC_CHANNEL_B, value);
-		if (value & SCC_RR0_DCD)
+		if (value & ZSRR0_DCD)
 			mbits |= DML_CAR;
 	}
 	switch (how) {
@@ -1079,9 +1079,9 @@ sccmctl(dev, bits, how)
 	}
 	if (line == SCC_CHANNEL_B) {
 		if (mbits & DML_DTR)
-			sc->scc_wreg[SCC_CHANNEL_A].wr5 |= SCC_WR5_DTR;
+			sc->scc_wreg[SCC_CHANNEL_A].wr5 |= ZSWR5_DTR;
 		else
-			sc->scc_wreg[SCC_CHANNEL_A].wr5 &= ~SCC_WR5_DTR;
+			sc->scc_wreg[SCC_CHANNEL_A].wr5 &= ~ZSWR5_DTR;
 		SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR5,
 			sc->scc_wreg[SCC_CHANNEL_A].wr5);
 	}
@@ -1116,7 +1116,7 @@ scc_modem_intr(dev)
 		car = 1;
 	else {
 		SCC_READ_REG_ZERO(regs, chan, value);
-		car = value & SCC_RR0_DCD;
+		car = value & ZSRR0_DCD;
 	}
 #ifdef notdef
 	if (car) {
@@ -1150,17 +1150,17 @@ sccGetc(dev)
 	s = splhigh();
 	for (;;) {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
-		if (value & SCC_RR0_RX_AVAIL) {
+		if (value & ZSRR0_RX_READY) {
 			SCC_READ_REG(regs, line, SCC_RR1, value);
 			SCC_READ_DATA(regs, line, c);
-			if (value & (SCC_RR1_PARITY_ERR | SCC_RR1_RX_OVERRUN |
-				SCC_RR1_FRAME_ERR)) {
-				SCC_WRITE_REG(regs, line, SCC_WR0, SCC_RESET_ERROR);
+			if (value & (ZSRR1_PE | ZSRR1_DO | ZSRR1_FE)) {
+				SCC_WRITE_REG(regs, line, SCC_WR0,
+				    ZSWR0_RESET_ERRORS);
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					SCC_RESET_HIGHEST_IUS);
+				    ZSWR0_CLR_INTR);
 			} else {
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					SCC_RESET_HIGHEST_IUS);
+				    ZSWR0_CLR_INTR);
 				splx(s);
 				return (c & 0xff);
 			}
@@ -1193,7 +1193,7 @@ sccPutc(dev, c)
 	 */
 	do {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
-		if (value & SCC_RR0_TX_EMPTY)
+		if (value & ZSRR0_TX_READY)
 			break;
 		DELAY(100);
 	} while (1);
@@ -1234,8 +1234,8 @@ rr(msg, regs)
 }
 	L(SCC_RR0, r0);
 	L(SCC_RR1, r1);
-	L(SCC_RR2, r2);
-	L(SCC_RR3, r3);
+	L(ZSRR_IVEC, r2);
+	L(ZSRR_IPEND, r3);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
 	printf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
@@ -1247,7 +1247,7 @@ rr(msg, regs)
 }
 	L(SCC_RR0, r0);
 	L(SCC_RR1, r1);
-	L(SCC_RR2, r2);
+	L(ZSRR_IVEC, r2);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
 	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
