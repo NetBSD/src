@@ -290,6 +290,9 @@
 #define   L2CR_L2BYP		  0x00002000 /* 18: L2 DLL bypass. */
 #define   L2CR_L2IP		  0x00000001 /* 31: L2 global invalidate in */
 					     /*     progress (read only). */
+#define	SPR_L3CR		0x3fa	/* .6. L3 Control Register */
+#define   L3CR_L3E		  0x80000000 /*  0: L3 enable */
+#define   L3CR_L3SIZ		  0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
 #define	SPR_DCCR		0x3fa	/* 4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* 4.. Instruction Cache Cachability Register */
 #define	SPR_THRM1		0x3fc	/* .6. Thermal Management Register */
