@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.43 1994/10/30 21:47:50 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.44 1995/01/26 17:56:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -130,10 +130,8 @@ ptrace(p, uap, retval)
 
 	case  PT_READ_I:
 	case  PT_READ_D:
-	case  PT_READ_U:
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
-	case  PT_WRITE_U:
 	case  PT_CONTINUE:
 	case  PT_KILL:
 	case  PT_DETACH:
@@ -206,53 +204,6 @@ ptrace(p, uap, retval)
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
 		return (procfs_domem(p, t, NULL, &uio));
-
-	case  PT_READ_U:
-		/*
-		 * The 4.4BSD PRM says that only the first 512 bytes
-		 * of the user area are accessible for reading.  This
-		 * disagrees with common practice, and would render PT_READ_U
-		 * almost worthless.  Additionally, we _always_ require
-		 * that the address be int-aligned.
-		 */
-		if ((u_long)SCARG(uap, addr) > USPACE - sizeof(int) ||
-#ifdef m68k /* XXX */
-		    ((u_long)SCARG(uap, addr) & 1) != 0)
-#else /* !m68k XXX */
-		    ((u_long)SCARG(uap, addr) & (sizeof(int) - 1)) != 0)
-#endif /* !m68k XXX */
-			return (EINVAL);
-
-		/*
-		 * Fill in eproc in user area, because user.h says that
-		 * it's valid for ptrace().  Do it the same way as coredump().
-		 */
-		bcopy(t, &t->p_addr->u_kproc.kp_proc, sizeof(struct proc));
-		fill_eproc(t, &t->p_addr->u_kproc.kp_eproc);
-
-		/* Finally, pull the appropriate int out of the user area. */
-		*retval =
-		    *(int *)((caddr_t)t->p_addr + (u_long)SCARG(uap, addr));
-		return (0);
-
-	case  PT_WRITE_U:
-		/*
-		 * Mostly the same as PT_READ_U, but write data instead of
-		 * reading it.  Don't bother filling in the eproc, because
-		 * it won't be used for anything anyway.
-		 */
-		if ((u_long)SCARG(uap, addr) > USPACE - sizeof(int) ||
-#ifdef m68k /* XXX */
-		    ((u_long)SCARG(uap, addr) & 1) != 0)
-#else /* !m68k XXX */
-		    ((u_long)SCARG(uap, addr) & (sizeof(int) - 1)) != 0)
-#endif /* !m68k XXX */
-			return (EINVAL);
-
-		/* And write the data. */
-		*(int *)((caddr_t)t->p_addr + (u_long)SCARG(uap, addr)) =
-		    SCARG(uap, data);
-		return (0);
 
 #ifdef PT_STEP
 	case  PT_STEP:
