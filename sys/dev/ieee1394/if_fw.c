@@ -1,4 +1,6 @@
-/*	$NetBSD: if_fw.c,v 1.3 2000/12/12 18:00:24 thorpej Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.4 2000/12/14 07:03:50 thorpej Exp $	*/
+
+/* XXX ALTQ XXX */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
