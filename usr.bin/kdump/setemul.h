@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.h,v 1.11 2003/11/18 13:21:54 dsl Exp $	*/
+/*	$NetBSD: setemul.h,v 1.12 2004/01/12 13:39:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@ struct emulation {
 	int nerrnomap;		/* number of elements in array */
 	const int  *signalmap;	/* Array of signal number mapping */
 	int nsignalmap;		/* number of elements in array */
+	u_int32_t flags;	/* Special flags for this emulation */
+#define EMUL_FLAG_NETBSD32	0x00000001	/* this emulation is
+						 * based on netbsd32 */
 };
 
 extern const struct emulation *cur_emul;
