@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.4 1997/04/05 02:53:22 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.5 1997/04/05 22:36:56 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -641,11 +641,11 @@ ispscsicmd(xs)
 #endif
 		/*
 		 * If no other error occurred but we didn't finish,
-		 * assume a *selection* timeout.
+		 * something bad happened.
 		 */
 		if ((xs->flags & ITSDONE) == 0 && xs->error == XS_NOERROR) {
 			isp_lostcmd(isp, xs);
-			xs->error = XS_SELTIMEOUT;
+			xs->error = XS_DRIVER_STUFFUP;
 		}
 	}
 	return (COMPLETE);
