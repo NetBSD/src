@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.18 2001/10/26 20:45:05 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.19 2001/10/27 00:34:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -624,12 +624,12 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	me->me_parent = sc;
 	CIRCLEQ_INSERT_TAIL(&sc->sc_cld, me, me_next);
 
+	error = 0;
 #if NWSDISPLAY > 0
 	if (sc->sc_base.me_dispdv != NULL) {
 		/* This is a display mux, so attach the new device to it. */
 		DPRINTF(("wsmux_attach_sc: %s: set display %p\n", 
 			 sc->sc_base.me_dv.dv_xname, sc->sc_base.me_dispdv));
-		error = 0;
 		if (me->me_ops->dsetdisplay != NULL) {
 			error = wsevsrc_set_display(me, &sc->sc_base);
 			/* Ignore that the console already has a display. */
@@ -644,9 +644,9 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 #endif
 			}
 		}
-	} else 
+	}
 #endif
-		if (sc->sc_base.me_evp != NULL) {
+	if (sc->sc_base.me_evp != NULL) {
 		/* Mux is open, so open the new subdevice */
 		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
 			 sc->sc_base.me_dv.dv_xname, me->me_dv.dv_xname));
@@ -654,7 +654,6 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	} else {
 		DPRINTF(("wsmux_attach_sc: %s not open\n",
 			 sc->sc_base.me_dv.dv_xname));
-		error = 0;
 	}
 
 	if (error) {
