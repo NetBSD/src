@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1996/03/20 12:41:35 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/03/22 09:07:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -339,7 +339,7 @@ bsd_label(dev, strat, label, blkno, offset)
 			 */
 			if (  (  (p[0] == NBDAMAGIC && blkno == 0)
 			      || (p[0] == AHDIMAGIC && blkno != 0)
-#if 1	/* #ifdef COMPAT_11 */
+#ifdef COMPAT_11
 			      || (char *)dl - (char *)bb == 7168
 #endif
 			      )
