@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.18 1994/02/10 13:59:35 mycroft Exp $
+ *	$Id: ite.c,v 1.19 1994/02/10 14:55:31 mycroft Exp $
  */
 
 /*
@@ -61,8 +61,8 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/iteioctl.h>
 #include <hp300/dev/kbdmap.h>

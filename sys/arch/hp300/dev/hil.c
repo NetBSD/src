@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.9 1994/02/10 13:59:33 mycroft Exp $
+ *	$Id: hil.c,v 1.10 1994/02/10 14:57:57 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -53,8 +53,8 @@
 #include <sys/kernel.h>
 
 #include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilvar.h>
 #include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #include <hp300/dev/kbdmap.h>
 
 #include <machine/cpu.h>
