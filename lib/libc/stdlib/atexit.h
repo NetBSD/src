@@ -1,3 +1,5 @@
+/*	$NetBSD: atexit.h,v 1.4 1995/12/28 08:52:03 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)atexit.h	5.1 (Berkeley) 5/15/90
- *	$Id: atexit.h,v 1.3 1995/06/14 05:16:04 jtc Exp $
  */
 
 /* must be at least 32 to guarantee ANSI conformance */

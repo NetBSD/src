@@ -1,3 +1,5 @@
+/*	$NetBSD: rand.c,v 1.5 1995/12/28 08:52:40 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rand.c	5.6 (Berkeley) 6/24/91";*/
-static char *rcsid = "$Id: rand.c,v 1.4 1994/10/19 03:06:51 cgd Exp $";
+#if 0
+static char *sccsid = "from: @(#)rand.c	5.6 (Berkeley) 6/24/91";
+#else
+static char *rcsid = "$NetBSD: rand.c,v 1.5 1995/12/28 08:52:40 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

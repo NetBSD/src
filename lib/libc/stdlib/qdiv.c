@@ -1,3 +1,5 @@
+/*	$NetBSD: qdiv.c,v 1.2 1995/12/28 08:52:34 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ldiv.c	5.2 (Berkeley) 4/16/91";*/
-static char *rcsid = "$Id: qdiv.c,v 1.1 1995/03/21 23:12:38 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)ldiv.c	5.2 (Berkeley) 4/16/91";
+#else
+static char *rcsid = "$NetBSD: qdiv.c,v 1.2 1995/12/28 08:52:34 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>		/* qdiv_t */

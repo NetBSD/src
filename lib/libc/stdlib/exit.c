@@ -1,3 +1,5 @@
+/*	$NetBSD: exit.c,v 1.4 1995/12/28 08:52:15 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)exit.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: exit.c,v 1.3 1993/08/26 00:47:56 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)exit.c	5.4 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: exit.c,v 1.4 1995/12/28 08:52:15 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>

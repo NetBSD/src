@@ -1,3 +1,5 @@
+/*	$NetBSD: strtod.c,v 1.20 1995/12/28 08:52:51 thorpej Exp $	*/
+
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -90,7 +92,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.19 1994/12/23 22:50:19 jtc Exp $";
+static char *rcsid = "$NetBSD: strtod.c,v 1.20 1995/12/28 08:52:51 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \

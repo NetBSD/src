@@ -1,3 +1,5 @@
+/*	$NetBSD: multibyte.c,v 1.5 1995/12/28 08:52:30 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";*/
-static char *rcsid = "$Id: multibyte.c,v 1.4 1995/03/05 07:41:15 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
+#else
+static char *rcsid = "$NetBSD: multibyte.c,v 1.5 1995/12/28 08:52:30 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>

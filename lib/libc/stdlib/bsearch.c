@@ -1,3 +1,5 @@
+/*	$NetBSD: bsearch.c,v 1.5 1995/12/28 08:52:10 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bsearch.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: bsearch.c,v 1.4 1995/02/28 01:46:39 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)bsearch.c	5.4 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: bsearch.c,v 1.5 1995/12/28 08:52:10 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
