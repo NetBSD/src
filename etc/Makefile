@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.27 1994/01/07 23:29:07 jtc Exp $
+#	$Id: Makefile,v 1.28 1994/01/07 23:55:00 jtc Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -85,16 +85,9 @@ hcx9-distribution:
 	    ${DESTDIR}/)
 
 distrib-dirs:
-#	mtree -u -d -p ${DESTDIR} -f ${.CURDIR}/mtree/BSD.root.dist
+	mtree -u -d -p ${DESTDIR} -f ${.CURDIR}/mtree/BSD.root.dist
 #	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
 #	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
-	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/kern ${DESTDIR}/root \
-	       ${DESTDIR}/tmp ${DESTDIR}/var
-	chmod 755 ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/kern \
-		  ${DESTDIR}/root ${DESTDIR}/var
-	chmod 1777 ${DESTDIR}/tmp
-	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
-	chmod 755 ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
 	-mkdir ${DESTDIR}/var/at ${DESTDIR}/var/backups ${DESTDIR}/var/cron \
 	       ${DESTDIR}/var/db ${DESTDIR}/var/log ${DESTDIR}/var/mail \
 	       ${DESTDIR}/var/msgs ${DESTDIR}/var/preserve ${DESTDIR}/var/run \
@@ -115,8 +108,7 @@ distrib-dirs:
 	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 		  ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
 		  ${DESTDIR}/var/spool/uucppublic
-	rm -f ${DESTDIR}/sys
-	ln -s ${DESTDIR}/usr/src/sys ${DESTDIR}/sys
+	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 	-mkdir ${DESTDIR}/usr/obj
 	chmod 755 ${DESTDIR}/usr/obj
 
