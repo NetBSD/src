@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.22 2000/05/11 19:46:06 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.23 2001/02/05 10:42:44 chs Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.22 2000/05/11 19:46:06 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_proxy.c,v 1.23 2001/02/05 10:42:44 chs Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 darrenr Exp";
 #endif
@@ -84,10 +84,6 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 da
 # include <sys/malloc.h>
 #endif
 
-
-#ifndef MIN
-#define MIN(a,b)        (((a)<(b))?(a):(b))
-#endif
 
 static ap_session_t *appr_new_session __P((aproxy_t *, ip_t *,
 					   fr_info_t *, nat_t *));

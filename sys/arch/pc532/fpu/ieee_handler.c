@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.10 1998/09/12 19:14:58 matthias Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.11 2001/02/05 10:42:40 chs Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -363,10 +363,6 @@ static void store_result(struct operand *op)
 #define BUF_TO_UADDR(addr) ((addr) - copyin_buffer.buf + copyin_buffer.base)
 
 #define FETCH_CHUNK 8		/* Size of chunks to copyin */
-
-#define MAX(x,y) ((x) > (y)? (x): (y))
-#define MIN(x,y) ((x) < (y)? (x): (y))
-
 
 /* Fetch data from user space so as to validate buffer up to addr.
  * We do some read ahead (to minimise the number of copyins) but

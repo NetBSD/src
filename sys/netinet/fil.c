@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.44 2001/01/18 20:28:22 jdolecek Exp $	*/
+/*	$NetBSD: fil.c,v 1.45 2001/02/05 10:42:43 chs Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.44 2001/01/18 20:28:22 jdolecek Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.45 2001/02/05 10:42:43 chs Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -101,9 +101,6 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darre
 #   include "opt_ipfilter.h"
 #  endif
 # endif
-#ifndef	MIN
-# define	MIN(a,b)	(((a)<(b))?(a):(b))
-#endif
 #include "netinet/ipl.h"
 
 #ifndef	_KERNEL
