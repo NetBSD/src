@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.1 2001/12/11 21:17:59 tv Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.2 2002/01/04 14:30:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,8 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* This file comes from the modified version in lukemftp 1.5. */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
