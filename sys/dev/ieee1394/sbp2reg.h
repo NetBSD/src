@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2reg.h,v 1.4 2002/12/18 06:08:21 jmc Exp $	*/
+/*	$NetBSD: sbp2reg.h,v 1.5 2002/12/19 09:56:10 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -231,7 +231,10 @@
 #define SBP2_STATE_SUSPENDED	0x2
 #define SBP2_STATE_DEAD		0x3
 
-#define SBP2_MAXPHYS		(0x10000 - 2048)
+#define SBP2_MAXPHYS		0xffff
+#define SBP2_PHYS_SEGMENT	(0x10000 - 4)
+
+#define SBP2_PTENT_SIZE		16
 
 struct sbp2_pte_u {
 	uint32_t seg_hi_length;
