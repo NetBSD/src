@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.20.2.2 1999/05/05 22:39:04 perry Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.20.2.3 1999/08/25 11:20:01 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -238,6 +238,9 @@ wdc_atapi_start(chp, xfer)
 		xfer->c_flags |= C_DMA;
 	else
 		xfer->c_flags &= ~C_DMA;
+	/* start timeout machinery */
+	if ((sc_xfer->flags & SCSI_POLL) == 0)
+		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != PIOMODE) {
@@ -285,7 +288,6 @@ wdc_atapi_start(chp, xfer)
 		wdc_atapi_intr(chp, xfer, 0);
 	} else {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
-		timeout(wdctimeout, chp, hz);
 	}
 	if (sc_xfer->flags & SCSI_POLL) {
 		while ((sc_xfer->flags & ITSDONE) == 0) {
@@ -322,6 +324,16 @@ wdc_atapi_intr(chp, xfer, irq)
 		    drvp->state);
 		panic("wdc_atapi_intr: bad state\n");
 	}
+	/*
+	 * If we missed an interrupt in a PIO transfer, reset and restart.
+	 * Don't try to continue transfer, we may have missed cycles.
+	 */
+	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
+		sc_xfer->error = XS_TIMEOUT;
+		wdc_atapi_reset(chp, xfer);
+		return 1;
+	} 
+
 	/* Ack interrupt done in wait_for_unbusy */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
@@ -425,7 +437,6 @@ again:
 
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 		}
 		return 1;
 
@@ -503,7 +514,6 @@ again:
 		}
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 		}
 		return 1;
 
@@ -580,7 +590,6 @@ again:
 		}
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 		}
 		return 1;
 
@@ -636,6 +645,7 @@ again:
 					    sizeof(sc_xfer->sense.scsi_sense);
 					xfer->c_skip = 0;
 					xfer->c_flags |= C_SENSE;
+					untimeout(wdctimeout, chp);
 					wdc_atapi_start(chp, xfer);
 					return 1;
 				}
@@ -746,13 +756,13 @@ again:
 	ready:
 		drvp->state = READY;
 		xfer->c_intr = wdc_atapi_intr;
+		untimeout(wdctimeout, chp);
 		wdc_atapi_start(chp, xfer);
 		return 1;
 	}
 	if ((sc_xfer->flags & SCSI_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 		xfer->c_intr = wdc_atapi_ctrl;
-		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 	} else {
 		goto again;
 	}
@@ -790,6 +800,7 @@ wdc_atapi_done(chp, xfer)
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
+	untimeout(wdctimeout, chp);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
