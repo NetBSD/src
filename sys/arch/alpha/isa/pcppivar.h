@@ -1,4 +1,4 @@
-/*	$NetBSD: pcppivar.h,v 1.1 1996/11/25 03:26:37 cgd Exp $	*/
+/*	$NetBSD: pcppivar.h,v 1.1.2.1 1997/02/01 02:17:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,3 +42,5 @@ struct pcppi_attach_args {
 
 #define	PCPPI_KBD_SLOT	0
 #define	PCPPI_AUX_SLOT	1
+
+void	pcppi_attach_console __P((bus_space_tag_t));
