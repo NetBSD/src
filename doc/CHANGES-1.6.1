@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.1 2002/09/30 12:42:03 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.2 2002/09/30 12:51:34 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -8,4 +8,46 @@ File						Revision(s)
 sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
-  Mark this as 1.6_STABLE
+	Mark this as 1.6_STABLE.
+
+distrib/sets/lists/base/mi			1.350
+distrib/sets/lists/base/obsolete.mi		1.52-1.53
+distrib/sets/lists/man/mi			1.513
+distrib/sets/lists/man/obsolete.mi		1.52
+libexec/Makefile				1.43
+libexec/kfd/Makefile				1.8
+usr.bin/Makefile				1.126
+usr.bin/kf/Makefile				1.10
+
+	Don't build kf or kfd; there are security issues with
+	Heimdal 0.4e, and we don't actually need them.
+	[Ticket #782 from joda]
+
+sys/arch/vax/vsa/asc_vsbus.c			1.25
+
+	Increase sc_maxxfer from 63K to 64K, otherwise fsck
+	fails for file systems with larger block sizes.
+	[Ticket #783 from chuck]
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.95
+sys/dev/pcmcia/pcmciadevs			1.177
+sys/dev/pcmcia/pcmciadevs.h			regen
+sys/dev/pcmcia/pcmciadevs_data.h		regen
+
+	Add support for ACCTON EN2216-PCMCIA-ETHERNET.
+	[Ticket #829 from bouyer]
+
+doc/LAST_MINUTE					1.1,patch
+doc/CHANGES					1.1,patch
+doc/CHANGES.prev				1.1,patch
+doc/README.files				1.1
+
+	Pull up documentation that was moved into the base source.
+	Clean up for the 1.6 release.
+	Update LAST_MINUTE for cats and alpha X set issues.
+
+share/termcap/termcap.src			1.71
+
+	Correct the escape sequences for F1-F4 in our xterm entry.
+	Fixes PR#18272.
+	[Ticket 789 from jdc]
