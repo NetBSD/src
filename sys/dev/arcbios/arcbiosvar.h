@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbiosvar.h,v 1.2 2001/07/08 22:57:10 thorpej Exp $	*/
+/*	$NetBSD: arcbiosvar.h,v 1.3 2001/07/08 23:57:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,9 +49,16 @@ struct arcbios_treewalk_context {
 extern const struct arcbios_spb *ARCBIOS_SPB;
 extern const struct arcbios_fv *ARCBIOS;
 
+extern char arcbios_sysid_vendor[];
+extern char arcbios_sysid_product[];
+
+extern char arcbios_system_identifier[];
+
 int	arcbios_init(vaddr_t);
 
 void	arcbios_tree_walk(void (*)(struct arcbios_component *,
 	    struct arcbios_treewalk_context *), void *);
+
+void	arcbios_component_id_copy(struct arcbios_component *, char *, size_t);
 
 #endif /* _KERNEL */
