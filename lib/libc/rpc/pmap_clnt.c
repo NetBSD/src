@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.10 1999/01/20 11:37:37 lukem Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.11 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.10 1999/01/20 11:37:37 lukem Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.11 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
 
@@ -89,8 +89,8 @@ pmap_set(program, version, protocol, port)
 	parms.pm_vers = version;
 	parms.pm_prot = protocol;
 	parms.pm_port = port;
-	if (CLNT_CALL(client, PMAPPROC_SET, xdr_pmap, &parms, xdr_bool, &rslt,
-	    tottimeout) != RPC_SUCCESS) {
+	if (CLNT_CALL(client, PMAPPROC_SET, (xdrproc_t)xdr_pmap, 
+	    &parms, (xdrproc_t)xdr_bool, &rslt, tottimeout) != RPC_SUCCESS) {
 		clnt_perror(client, "Cannot register service");
 		if (socket != -1)
 			(void)close(socket);
@@ -126,8 +126,8 @@ pmap_unset(program, version)
 	parms.pm_prog = program;
 	parms.pm_vers = version;
 	parms.pm_port = parms.pm_prot = 0;
-	CLNT_CALL(client, PMAPPROC_UNSET, xdr_pmap, &parms, xdr_bool, &rslt,
-	    tottimeout);
+	CLNT_CALL(client, PMAPPROC_UNSET, (xdrproc_t)xdr_pmap, &parms,
+	    (xdrproc_t)xdr_bool, &rslt, tottimeout);
 	CLNT_DESTROY(client);
 	if (socket != -1)
 		(void)close(socket);
