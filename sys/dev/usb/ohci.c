@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.27 1999/01/13 10:33:53 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.28 1999/05/09 22:48:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2153,7 +2153,7 @@ ohci_device_intr_close(pipe)
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
-		--sc->sc_bws[pos * nslots + j];
+		--sc->sc_bws[(pos * nslots + j) & OHCI_NO_INTRS];
 
 	ohci_free_std(sc, opipe->tail);
 	ohci_free_sed(sc, opipe->sed);
@@ -2199,7 +2199,7 @@ ohci_device_setintr(sc, opipe, ival)
 	for (best = i = slow, bestbw = ~0; i < shigh; i++) {
 		bw = 0;
 		for (j = 0; j < nslots; j++)
-			bw += sc->sc_bws[i * nslots + j];
+			bw += sc->sc_bws[(i * nslots + j) % OHCI_NO_INTRS];
 		if (bw < bestbw) {
 			best = i;
 			bestbw = bw;
@@ -2217,7 +2217,7 @@ ohci_device_setintr(sc, opipe, ival)
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
-		++sc->sc_bws[best * nslots + j];
+		++sc->sc_bws[(best * nslots + j) % OHCI_NO_INTRS];
 	opipe->u.intr.nslots = nslots;
 	opipe->u.intr.pos = best;
 
