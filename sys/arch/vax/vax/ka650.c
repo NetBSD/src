@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.17 1999/02/02 18:37:21 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.17.2.1 1999/04/19 16:29:40 perry Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -109,7 +109,8 @@ uvaxIII_conf(parent, self, aux)
 	    syssub == VAX_SIE_KA640 ? 4 : 5,
 	    syssub == VAX_SIE_KA655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
-	ka650setcache(CACHEON);
+	if (syssub != VAX_SIE_KA640)
+		ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
