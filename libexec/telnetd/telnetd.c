@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.23 2000/11/19 20:17:39 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.24 2001/01/10 02:51:37 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.23 2000/11/19 20:17:39 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.24 2001/01/10 02:51:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,7 +601,7 @@ main(argc, argv)
 	}
 #endif	/* _SC_CRAY_SECURE_SYS */
 
-	openlog("telnetd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
+	openlog("telnetd", LOG_PID, LOG_DAEMON);
 	fromlen = sizeof (from);
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		fprintf(stderr, "%s: ", progname);
