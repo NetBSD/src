@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 1996/07/15 05:20:19 cgd Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 1996/10/17 04:26:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 LEAF(ffs, 1)
 	addl	a0, 0, t0
