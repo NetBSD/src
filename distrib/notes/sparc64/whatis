@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.8 2003/12/23 16:36:59 martin Exp $
+.\"	$NetBSD: whatis,v 1.9 2003/12/23 16:43:20 martin Exp $
 .
 .Nx \*V
 is the second major release for the \*M!
@@ -14,4 +14,7 @@ has been completed.
 .It
 Support for SBUS based audio
 .Pq Em audiocs
+.It
+New generic cycle counter based microtime implementation greatly improves
+microtime(9) for \*M
 .bullet)
