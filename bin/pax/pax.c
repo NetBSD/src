@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.10 1999/08/24 07:57:07 tron Exp $	*/
+/*	$NetBSD: pax.c,v 1.11 1999/11/01 01:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.10 1999/08/24 07:57:07 tron Exp $");
+__RCSID("$NetBSD: pax.c,v 1.11 1999/11/01 01:35:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ int	Zflag;			/* same as uflg except after name mode */
 int	vfpart;			/* is partial verbose output in progress */
 int	patime = 1;		/* preserve file access time */
 int	pmtime = 1;		/* preserve file modification times */
+int	pfflags = 1;		/* preserve file flags */
 int	pmode;			/* preserve file mode bits */
 int	pids;			/* preserve file uid/gid */
 int	exit_val;		/* exit value */
