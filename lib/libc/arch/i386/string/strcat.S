@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcat.S,v 1.5 1994/02/14 20:06:01 mycroft Exp $
+ *	$Id: strcat.S,v 1.6 1994/03/12 01:40:04 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: strcat.S,v 1.5 1994/02/14 20:06:01 mycroft Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: strcat.S,v 1.6 1994/03/12 01:40:04 jtc Exp $")
+#endif
 
 /*
  * strcat(s, append)

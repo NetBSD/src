@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: bcmp.S,v 1.3 1994/01/28 20:34:33 jtc Exp $
+ *	$Id: bcmp.S,v 1.4 1994/03/12 01:39:55 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: bcmp.S,v 1.3 1994/01/28 20:34:33 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: bcmp.S,v 1.4 1994/03/12 01:39:55 jtc Exp $")
+#endif
 
 /*
  * bcmp (void *b1, void *b2, size_t len)

@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcmp.S,v 1.8 1994/02/14 20:06:04 mycroft Exp $
+ *	$Id: strcmp.S,v 1.9 1994/03/12 01:40:05 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: strcmp.S,v 1.8 1994/02/14 20:06:04 mycroft Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: strcmp.S,v 1.9 1994/03/12 01:40:05 jtc Exp $")
+#endif
 
 /*
  * strcmp(s1, s2)

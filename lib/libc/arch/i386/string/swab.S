@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: swab.S,v 1.6 1994/02/14 17:43:19 jtc Exp $
+ *	$Id: swab.S,v 1.7 1994/03/12 01:40:09 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: swab.S,v 1.6 1994/02/14 17:43:19 jtc Exp $"
-#endif
-
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	RCSID("$Id: swab.S,v 1.7 1994/03/12 01:40:09 jtc Exp $")
+#endif
 
 /*
  * void

@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ffs.S,v 1.4 1994/01/28 20:34:37 jtc Exp $
+ *	$Id: ffs.S,v 1.5 1994/03/12 01:39:59 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: ffs.S,v 1.4 1994/01/28 20:34:37 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: ffs.S,v 1.5 1994/03/12 01:39:59 jtc Exp $")
+#endif
 
 /*
  * ffs(value)
