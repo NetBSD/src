@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.4 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.5 2000/03/30 13:57:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,16 @@ cgsixattach(parent, self, aux)
 		return;
 	}
 	sc->sc_tec = (struct cg6_tec_xxx *)bh;
+
+	if (bus_space_map2(oba->oba_bustag, 0,
+			   oba->oba_paddr + CGSIX_FBC_OFFSET,
+			   sizeof(*sc->sc_fbc),
+			   BUS_SPACE_MAP_LINEAR,
+			   0, &bh) != 0) {
+		printf("%s: cannot map FBC registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_fbc = (struct cg6_fbc *)bh;
 
 
 	if (fb_pfour_id((void *)sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
