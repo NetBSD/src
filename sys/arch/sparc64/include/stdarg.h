@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.9 2000/02/03 16:16:10 kleink Exp $ */
+/*	$NetBSD: stdarg.h,v 1.10 2000/06/29 20:15:24 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,13 +75,13 @@ typedef _BSD_VA_LIST_	va_list;
  * For sparcv9 code.
  */
 #define	__va_arg(ap, type) \
-	((type)*(unsigned long *)((ap) += 8, (ap) - 8))
+	(*(type *)(void *)((ap) += 8, (ap) - (sizeof (type))))
 
 /* Like __va_arg(), except when the type must be 16-byte aligned. */
 #define	__va_arg16(ap, type) \
-	((type)*(unsigned long *)((__alignof__(type) == 16 ?				\
+	(*(type *)((__alignof__(type) == 16 ?				\
 		    (ap) = (va_list)(((unsigned long)(ap) + 31) & -16) :\
-			((ap) += 16)), (ap) - 16))
+			((ap) += 16)), (ap) - (sizeof (type))))
 
 #define	__REAL_TYPE_CLASS	8
 #define	__RECORD_TYPE_CLASS	12
