@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.23 1999/02/19 03:14:00 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.24 1999/07/06 21:44:10 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -370,7 +370,7 @@ pcic_create_event_thread(arg)
 		panic("pcic_create_event_thread: unknown pcic socket");
 	}
 
-	if (kthread_create(pcic_event_thread, h, &h->event_thread,
+	if (kthread_create1(pcic_event_thread, h, &h->event_thread,
 	    "%s,%s", h->sc->dev.dv_xname, cs)) {
 		printf("%s: unable to create event thread for sock 0x%02x\n",
 		    h->sc->dev.dv_xname, h->sock);
@@ -478,7 +478,7 @@ pcic_init_socket(h)
 	if (h->event_thread != NULL)
 		panic("pcic_attach_socket: event thread");
 #endif
-	kthread_create_deferred(pcic_create_event_thread, h);
+	kthread_create(pcic_create_event_thread, h);
 
 	/* set up the card to interrupt on card detect */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.7 1999/05/13 21:58:37 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.8 1999/07/06 21:44:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,16 +53,18 @@
  */
 #include <machine/stdarg.h>
 
+int	kthread_create_now;
+
 /*
  * Fork a kernel thread.  Any process can request this to be done.
  * The VM space and limits, etc. will be shared with proc0.
  */
 int
 #if __STDC__
-kthread_create(void (*func)(void *), void *arg,
+kthread_create1(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
 #else
-kthread_create(func, arg, newpp, fmt, va_alist)
+kthread_create1(func, arg, newpp, fmt, va_alist)
 	void (*func) __P((void *));
 	void *arg;
 	struct proc **newpp;
@@ -143,11 +145,16 @@ SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
  * the caller to create threads for e.g. file systems and device drivers.
  */
 void
-kthread_create_deferred(func, arg)
+kthread_create(func, arg)
 	void (*func) __P((void *));
 	void *arg;
 {
 	struct kthread_q *kq;
+
+	if (kthread_create_now) {
+		(*func)(arg);
+		return;
+	}
 
 	kq = malloc(sizeof(*kq), M_TEMP, M_NOWAIT);
 	if (kq == NULL)
@@ -164,6 +171,9 @@ void
 kthread_run_deferred_queue()
 {
 	struct kthread_q *kq;
+
+	/* No longer need to defer kthread creation. */
+	kthread_create_now = 1;
 
 	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq, kq_q);
