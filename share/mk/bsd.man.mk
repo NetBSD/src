@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.91 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.92 2004/01/29 05:25:51 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -201,7 +201,6 @@ htmlpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-cleandir: cleanhtml
 cleanhtml: .PHONY
 	rm -f ${HTMLPAGES}
 .endif							# }
