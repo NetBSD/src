@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.10.4.1 1996/12/10 01:18:37 mycroft Exp $	*/
+/*	$NetBSD: fsck.h,v 1.10.4.2 1997/03/02 20:25:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -182,6 +182,7 @@ char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
 int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
+int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
 daddr_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
