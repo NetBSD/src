@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.164 2001/04/15 22:33:23 augustss Exp $
+$NetBSD: usbdevs,v 1.165 2001/04/16 10:42:19 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ $NetBSD: usbdevs,v 1.164 2001/04/15 22:33:23 augustss Exp $
 
 vendor AOX		0x03e8	AOX, Inc.
 vendor ATMEL		0x03eb	Atmel Corp.
+vendor MITSUMI		0x03ee	Mitsumi
 vendor HP		0x03f0	Hewlett Packard
 vendor ADAPTEC		0x03f3	Adaptec, Inc.
 vendor NATIONAL		0x0400	National Semiconductor
@@ -71,6 +72,7 @@ vendor ADI		0x0422	ADI Systems, Inc.
 vendor CATC		0x0423	Computer Access Technology Corp.
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
 vendor SUN		0x0430	Sun Microsystems
+vendor TAUGA		0x0436  Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International, Inc.
 vendor NANAO		0x0440	NANAO Corp.
@@ -201,6 +203,7 @@ vendor AIWA		0x0677	Aiwa Co., Ltd.
 vendor ACARD		0x0678	ACARD Technology Corp.
 vendor PROLIFIC		0x067b	Prolific Technology Inc.
 vendor ADVANCELOGIC	0x0680	Avance Logic, Inc.
+vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer Corp.
 vendor ALCATELT		0x06b9	Alcatel Telecom
@@ -523,6 +526,11 @@ product FTDI SERIAL		0x8372	Serial converter
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
+/* Hagiwara products */
+product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Card Reader
+product HAGIWARA FGCF		0x0003  FlashGate CompactFlash Card Reader
+product HAGIWARA FG		0x0005  FlashGate
+
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
 
@@ -566,6 +574,7 @@ product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
+product INSYSTEM ATAPI		0x0031	ATAPI adapter
 product INSYSTEM ISD110		0x0200	IDE adapter ISD110
 product INSYSTEM ISD105		0x0202	IDE adapter ISD105
 product INSYSTEM USBCABLE	0x081a	USB cable
@@ -628,12 +637,14 @@ product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro scanner
 
 /* LaCie products */
+product LACIE HD		0xa601	Hard Disk
 product LACIE CDRW		0xa602	CD R/W
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
 
 /* Linksys products */
+product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
@@ -688,7 +699,10 @@ product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
 /* Microtech products */
+product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
+product MICROTECH SCSIHD50	0x0005	USB-SCSI-HD50
 product MICROTECH DPCM		0x0006	USB CameraMate
+product MICROTECH FREECOM	0xfc01	Freecom USB-IDE
 
 /* Microtek products */
 product MICROTEK 336CX		0x0094	Phantom 336CX - C3 scanner
@@ -701,6 +715,9 @@ product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
+
+/* Mitsumi products */
+product MITSUMI CDRRW		0x0000	CD-R/RW Drive
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
@@ -809,14 +826,25 @@ product	ROLAND UM1		0x0009	UM-1 MIDI I/F
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
 
 /* SanDisk products */
-product SANDISK IMAGEMATE	0x0001	USB ImageMate
+product SANDISK SDDR05A		0x0001	ImageMate SDDR-05a
+product SANDISK SDDR31		0x0002	ImageMate SDDR-31
+product SANDISK SDDR12		0x0100	ImageMate SDDR-12
+product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 
 /* ScanLogic products */
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
+product SHUTTLE EUSCSI		0x0002	eUSCSI Bridge
+product SHUTTLE SDDR09		0x0003	ImageMate SDDR09
 product SHUTTLE ZIOMMC		0x0006	eUSB MultiMediaCard Adapter
+product SHUTTLE HIFD		0x0007	Sony Hifd
+product SHUTTLE EUSBATAPI	0x0009	eUSB ATA/ATAPI Adapter
+product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
+product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
+product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
+product SHUTTLE CDRW		0x0101	CD-RW Device
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
@@ -839,8 +867,9 @@ product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
 
 /* SONY products */
-product SONY DSC		0x0010	Sony DSC cameras
-product SONY MSC		0x0032	Sony MSC memory stick slot
+product SONY DSC		0x0010	DSC cameras
+product SONY MSACUS1		0x002d	Memorystick MSAC-US1
+product SONY MSC		0x0032	MSC memory stick slot
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
@@ -858,6 +887,9 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
 product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+
+/* Taugagreining products */
+product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
  
 /* TDK products */
 product TDK UPA9664		0x0115	USB-PDC Adapter UPA9664
