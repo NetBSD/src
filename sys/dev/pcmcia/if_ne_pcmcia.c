@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.22 1998/10/31 01:44:17 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.23 1998/11/04 06:37:09 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -101,11 +101,6 @@ struct ne2000dev {
       PCMCIA_CIS_PLANET_SMARTCOM2000,
       0, 0xff0, { 0x00, 0x00, 0xe8 } },
 
-    { PCMCIA_STR_DLINK_DE650,
-      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_DLINK_DE650,
-      0, 0x0040, { 0x00, 0x80, 0xc8 } },
-
     { PCMCIA_STR_DLINK_DE660,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DLINK_DE660,
@@ -122,6 +117,29 @@ struct ne2000dev {
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
 
     /*
+     * D-Link DE-650 has many minor versions:
+     *
+     *   CIS information          Manufacturer Product  Note
+     * 1 "D-Link, DE-650"             INVALID  INVALID  white card
+     * 2 "D-Link, DE-650, Ver 01.00"  INVALID  INVALID  became bare metal
+     * 3 "D-Link, DE-650, Ver 01.00"   0x149    0x265   minor change in look
+     * 4 "D-Link, DE-650, Ver 01.00"   0x149    0x265   collision LED added
+     *
+     * While the 1st and the 2nd types should use the "D-Link DE-650" entry,
+     * the 3rd and the 4th types should use the "Linksys EtherCard" entry.
+     * Therefore, the Linksys entry should be before the D-Link.  --itohy
+     */
+    { PCMCIA_STR_LINKSYS_ECARD_1, 
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+      PCMCIA_CIS_LINKSYS_ECARD_1, 
+      0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_DLINK_DE650,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_DLINK_DE650,
+      0, 0x0040, { 0x00, 0x80, 0xc8 } },
+
+    /*
      * You have to add new entries which contains
      * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID 
      * in front of this comment.
@@ -136,11 +154,6 @@ struct ne2000dev {
       PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x08, 0x00, 0x5a } },
-
-    { PCMCIA_STR_LINKSYS_ECARD_1, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
-      PCMCIA_CIS_LINKSYS_ECARD_1, 
-      0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
