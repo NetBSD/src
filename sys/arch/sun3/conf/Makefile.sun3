@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.78 2000/01/19 16:30:01 tsutsui Exp $
+# $NetBSD: Makefile.sun3,v 1.79 2000/01/24 20:36:17 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -205,6 +205,9 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${CPPFLAGS} ${SUN3}/${MACHTYPE}/genassym.c
+
+dependall: depend all
+
 
 # XXX - see below
 #	${MKDEP} -a ${APPFLAGS} ${SUN3}/${MACHTYPE}/locore.s
