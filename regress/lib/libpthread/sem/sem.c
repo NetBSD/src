@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.2 2003/01/22 22:12:56 thorpej Exp $ */
+/* $NetBSD: sem.c,v 1.3 2003/11/19 00:40:03 uwe Exp $ */
 
 /****************************************************************************
  *
@@ -59,9 +59,9 @@ entry(void * a_arg)
 #endif
 	sem_wait(sem);
 #ifdef DEBUG
-	printf("Thread %p got semaphore\n");
+	printf("Thread %p got semaphore\n", self);
 #endif
-  
+
 	return NULL;
 }
 
@@ -90,16 +90,16 @@ usem()
 	pthread_t threads[NTHREADS];
 	unsigned i;
 	int val;
-  
+
 	/* userland sem */
 	assert(0 == sem_init(&sem_b, 0, 0));
 	assert(0 == sem_getvalue(&sem_b, &val));
 	assert(0 == val);
-  
+
 	assert(0 == sem_post(&sem_b));
 	assert(0 == sem_getvalue(&sem_b, &val));
 	assert(1 == val);
-  
+
 	assert(0 == sem_wait(&sem_b));
 	assert(-1 == sem_trywait(&sem_b));
 	assert(EAGAIN == errno);
@@ -111,7 +111,7 @@ usem()
 
 
 	assert(0 == sem_destroy(&sem_b));
-  
+
 	assert(0 == sem_init(&sem_a, 0, 0));
 
 	for (i = 0; i < NTHREADS; i++) {
@@ -125,11 +125,11 @@ usem()
 #endif
 		assert(0 == sem_post(&sem_a));
 	}
-  
+
 	for (i = 0; i < NTHREADS; i++) {
 		pthread_join(threads[i], NULL);
 	}
-  
+
 	for (i = 0; i < NTHREADS; i++) {
 		pthread_create(&threads[i], NULL, entry, (void *) &sem_a);
 	}
@@ -141,11 +141,11 @@ usem()
 #endif
 		assert(0 == sem_post(&sem_a));
 	}
-  
+
 	for (i = 0; i < NTHREADS; i++) {
 		pthread_join(threads[i], NULL);
 	}
-  
+
 	assert(0 == sem_destroy(&sem_a));
 
 }
