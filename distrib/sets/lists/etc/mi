@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.105 2002/09/03 00:56:10 wiz Exp $
+# $NetBSD: mi,v 1.106 2002/09/03 15:35:54 abs Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -127,6 +127,7 @@
 ./etc/rc.d/quota			etc-sys-rc
 ./etc/rc.d/racoon			etc-net-rc
 ./etc/rc.d/raidframe			etc-sys-rc
+./etc/rc.d/raidframeparity		etc-sys-rc
 ./etc/rc.d/rarpd			etc-bootserver-rc
 ./etc/rc.d/rbootd			etc-bootserver-rc 
 ./etc/rc.d/root				etc-sys-rc

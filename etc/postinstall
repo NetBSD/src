@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.26 2002/07/30 09:11:27 lukem Exp $
+# $NetBSD: postinstall,v 1.27 2002/09/03 15:35:53 abs Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -352,8 +352,8 @@ do_rc()
 		mountall mountcritlocal mountcritremote mountd moused \
 		mrouted mixerctl named ndbootd network newsyslog nfsd \
 		nfslocking ntpd ntpdate poffd postfix ppp pwcheck \
-		quota racoon rpcbind raidframe rarpd rbootd root \
-		route6d routed rtadvd rtsold rwho savecore \
+		quota racoon rpcbind raidframe raidframeparity rarpd rbootd \
+		root route6d routed rtadvd rtsold rwho savecore \
 		screenblank sendmail securelevel sshd swap1 swap2 \
 		sysdb sysctl syslogd timed ttys virecover \
 		wdogctl wscons wsmoused \
