@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init_disp.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init_disp.c,v 1.4 1994/01/24 22:03:04 cgd Exp $";
+static char rcsid[] = "$Id: init_disp.c,v 1.5 1994/03/28 11:17:16 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ set_edit_chars()
 	tcgetattr(0, &tty);
 	my_win.cerase = tty.c_cc[VERASE];
 	my_win.kill = tty.c_cc[VKILL];
-	if (tty.c_cc[VWERASE] == (char) -1)
+	if (tty.c_cc[VWERASE] == (unsigned char) -1)
 		my_win.werase = '\027';	 /* control W */
 	else
 		my_win.werase = tty.c_cc[VWERASE];
