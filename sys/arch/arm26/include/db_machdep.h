@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 2000/06/29 08:32:36 mrg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 2000/12/10 01:31:48 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -86,5 +86,8 @@ u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
  */
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
+
+/* Entry point from undefined instruction handler */
+int kdb_trap __P((int, db_regs_t *));
 
 #endif	/* _ARM26_DB_MACHDEP_H_ */
