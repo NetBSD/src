@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.2 2000/08/18 12:50:01 bjh21 Exp $ */
+/* $NetBSD: ioeb.c,v 1.3 2000/12/09 18:04:05 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2 2000/08/18 12:50:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.3 2000/12/09 18:04:05 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -61,10 +61,13 @@ static int
 ioeb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ioc_attach_args *ioc = aux;
+	int id;
 
-	if (ioeb_read(ioc->ioc_fast_t, ioc->ioc_fast_h, IOEB_REG_ID) ==
-	    IOEB_ID_IOEB)
+	id = ioeb_read(ioc->ioc_fast_t, ioc->ioc_fast_h, IOEB_REG_ID);
+	if (id == IOEB_ID_IOEB)
 		return 1;
+	if (id != 0xf)
+		printf("ioeb_match: ID = %x\n", id);
 	return 0;
 }
 
