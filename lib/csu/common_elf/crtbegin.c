@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.23 2003/12/02 03:01:19 lukem Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.24 2003/12/03 18:41:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -51,6 +51,12 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <stdlib.h>
+
+#if __GNUC_PREREQ__(3, 0)
+#define	USED_NOINLINE __attribute__((__used__,__noinline__))
+#else
+#define	USED_NOINLINE __attribute__((__unused__))
+#endif
 
 #ifdef DWARF2_EH
 #include "dwarf2_eh.h"
@@ -133,7 +139,7 @@ __dtors(void)
 		(**p++)();
 }
 
-static void __attribute__((__used__,__noinline__))
+static void USED_NOINLINE
 __do_global_ctors_aux(void)
 {
 	static int initialized;
@@ -166,7 +172,7 @@ __do_global_ctors_aux(void)
 }
 MD_CALL_STATIC_FUNCTION(.init, __do_global_ctors_aux)
 
-static void __attribute__((__used__,__noinline__))
+static void USED_NOINLINE
 __do_global_dtors_aux(void)
 {
 	static int finished;
