@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.4 1999/07/17 07:07:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -169,9 +169,9 @@ struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
 extern struct in6pcb *in6_pcblookup_connect __P((struct in6pcb *,
-	struct in6_addr *, u_int, struct in6_addr *, u_int));
+	struct in6_addr *, u_int, struct in6_addr *, u_int, int));
 extern struct in6pcb *in6_pcblookup_bind __P((struct in6pcb *,
-	struct in6_addr *, u_int));
+	struct in6_addr *, u_int, int));
 #endif
 #endif /* _KERNEL */
 

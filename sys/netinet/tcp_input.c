@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.86 1999/07/14 22:37:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.87 1999/07/17 07:07:08 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -141,6 +141,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -174,6 +175,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
+
+#include "faith.h"
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
@@ -719,10 +722,11 @@ findpcb:
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
 			in6p = in6_pcblookup_connect(&tcb6, &s, th->th_sport,
-				&d, th->th_dport);
+				&d, th->th_dport, 0);
 			if (in6p == 0) {
 				++tcpstat.tcps_pcbhashmiss;
-				in6p = in6_pcblookup_bind(&tcb6, &d, th->th_dport);
+				in6p = in6_pcblookup_bind(&tcb6, &d,
+					th->th_dport, 0);
 			}
 		}
 #endif
@@ -777,11 +781,24 @@ findpcb:
 		break;
 #if defined(INET6) && !defined(TCP6)
 	case AF_INET6:
+	    {
+		int faith;
+
+#if defined(NFAITH) && NFAITH > 0
+		if (m->m_pkthdr.rcvif
+		 && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
+			faith = 1;
+		} else
+			faith = 0;
+#else
+		faith = 0;
+#endif
 		in6p = in6_pcblookup_connect(&tcb6, &ip6->ip6_src, th->th_sport,
-			&ip6->ip6_dst, th->th_dport);
+			&ip6->ip6_dst, th->th_dport, faith);
 		if (in6p == NULL) {
 			++tcpstat.tcps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst, th->th_dport);
+			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst,
+				th->th_dport, faith);
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
@@ -794,6 +811,7 @@ findpcb:
 		}
 #endif /*IPSEC*/
 		break;
+	    }
 #endif
 	}
 
