@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.3 1996/09/07 21:53:08 mycroft Exp $
+.\"	$NetBSD: poll.2,v 1.4 1997/11/21 18:30:49 kleink Exp $
 .\"
 .\" Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <poll.h>
 .Ft int
-.Fn poll "struct pollfd *fds" "unsigned int nfds" "int timeout"
+.Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
 .Sh DESCRIPTION
 .Fn Poll
 examines a set of file descriptors to see if some of them are ready for
