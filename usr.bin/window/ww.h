@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.11 1997/12/31 06:55:16 thorpej Exp $	*/
+/*	$NetBSD: ww.h,v 1.12 1998/07/26 15:28:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -338,7 +338,8 @@ void	wwdumpsmap __P((void));
 void	wwdumpwin __P((struct ww *));
 void	wwend __P((int));
 int	wwenviron __P((struct ww *));
-char   *wwerror __P((void));
+const char *
+	wwerror __P((void));
 void	wwflush __P((void));
 void	wwframe __P((struct ww *, struct ww *));
 void	wwframec __P((struct ww *, int, int, char));

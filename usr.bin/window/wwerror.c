@@ -1,4 +1,4 @@
-/*	$NetBSD: wwerror.c,v 1.4 1997/11/21 08:37:19 lukem Exp $	*/
+/*	$NetBSD: wwerror.c,v 1.5 1998/07/26 15:28:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwerror.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwerror.c,v 1.4 1997/11/21 08:37:19 lukem Exp $");
+__RCSID("$NetBSD: wwerror.c,v 1.5 1998/07/26 15:28:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: wwerror.c,v 1.4 1997/11/21 08:37:19 lukem Exp $");
 #include <string.h>
 #include "ww.h"
 
-char *
+const char *
 wwerror()
 {
 	switch (wwerrno) {

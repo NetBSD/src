@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.7 1997/10/20 00:46:38 lukem Exp $	*/
+/*	$NetBSD: tftp.c,v 1.8 1998/07/26 15:26:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.7 1997/10/20 00:46:38 lukem Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.8 1998/07/26 15:26:18 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,9 +326,9 @@ makerequest(request, name, tp, mode)
 	return (cp - (char *)tp);
 }
 
-struct errmsg {
+const struct errmsg {
 	int	e_code;
-	char	*e_msg;
+	const char *e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
 	{ ENOTFOUND,	"File not found" },
@@ -351,21 +351,22 @@ static void
 nak(error)
 	int error;
 {
-	struct errmsg *pe;
+	const struct errmsg *pe;
 	struct tftphdr *tp;
 	int length;
 
 	tp = (struct tftphdr *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
-	tp->th_code = htons((u_short)error);
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
 		if (pe->e_code == error)
 			break;
 	if (pe->e_code < 0) {
-		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;
+		strcpy(tp->th_msg, strerror(error - 100));
+	} else {
+		tp->th_code = htons((u_short)error);
+		strcpy(tp->th_msg, pe->e_msg);
 	}
-	strcpy(tp->th_msg, pe->e_msg);
 	length = strlen(pe->e_msg) + 4;
 	if (trace)
 		tpacket("sent", tp, length);

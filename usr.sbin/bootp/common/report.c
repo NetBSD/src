@@ -1,8 +1,8 @@
-/*	$NetBSD: report.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+/*	$NetBSD: report.c,v 1.4 1998/07/26 15:33:34 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: report.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: report.c,v 1.4 1998/07/26 15:33:34 mycroft Exp $");
 #endif
 
 /*
@@ -140,7 +140,7 @@ report(priority, fmt, va_alist)
 /*
  * Return pointer to static string which gives full filesystem error message.
  */
-char *
+const char *
 get_errmsg()
 {
 	extern int errno;
