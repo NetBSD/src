@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.40 2003/10/17 15:33:23 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.41 2003/11/01 23:37:30 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -560,7 +560,11 @@ Set the cursor to point to the requested element.
 .It Dv H_ADD , Fa "const char *str"
 Append
 .Fa str
-to the current element of the history, or create an element with
+to the current element of the history, or perform the
+.Dv H_ENTER
+operation wth argument
+.Fa str
+if there is no current element.
 .It Dv H_APPEND , Fa "const char *str"
 Append
 .Fa str
