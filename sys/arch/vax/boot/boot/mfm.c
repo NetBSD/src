@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.3 2000/07/19 00:58:25 matt Exp $	*/
+/*	$NetBSD: mfm.c,v 1.4 2001/07/26 22:55:13 wiz Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -128,7 +128,7 @@ creg_write()
  *
  * before reading/writing a sector from/to floppy, we use the SEEK/READ_ID
  * command to place the head at the desired location. Then we wait some
- * time before issueing the real command in order to let the drive become
+ * time before issuing the real command in order to let the drive become
  * ready...
  */
 int

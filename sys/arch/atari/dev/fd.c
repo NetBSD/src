@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36 2000/03/29 14:19:22 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.37 2001/07/26 22:55:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1287,7 +1287,7 @@ struct fd_softc	*fdsoftc;
 }
 
 /*
- * Used to find out wich drives are actually connected. We do this by issueing
+ * Used to find out wich drives are actually connected. We do this by issuing
  * is 'RESTORE' command and check if the 'track-0' bit is set. This also works
  * if the drive is present but no floppy is inserted.
  */

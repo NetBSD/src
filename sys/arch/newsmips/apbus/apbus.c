@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.5 2000/12/03 01:42:29 matt Exp $	*/
+/*	$NetBSD: apbus.c,v 1.6 2001/07/26 22:55:13 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -491,7 +491,7 @@ apbus_dmamap_sync(t, map, offset, len, ops)
 {
 
 	/*
-	 * Flush DMA cache by issueing IO read for the AProm of specified slot.
+	 * Flush DMA cache by issuing IO read for the AProm of specified slot.
 	 */
 	bus_space_read_4(t->_slotbaset, t->_slotbaseh, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.11 1999/11/02 10:07:13 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.12 2001/07/26 22:55:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	asm("		mnegl $1,r0");
 	asm("		ret");
 	asm("	1:	movpsl -(sp)");		/* flush the icache */
-	asm("		pushab 2f");		/* by issueing an REI */
+	asm("		pushab 2f");		/* by issuing an REI */
 	asm("		rei");
 	asm("	2:	ret");
 
@@ -117,7 +117,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 1999/11/02 10:07:13 lukem Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.12 2001/07/26 22:55:12 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
