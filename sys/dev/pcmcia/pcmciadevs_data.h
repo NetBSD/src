@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.3 2000/08/09 23:30:03 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.4 2001/03/16 19:36:02 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.3 2000/08/09 23:15:58 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.4 2001/03/16 19:35:14 he Exp 
  */
 
 /*-
@@ -836,6 +836,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Intersil Prism II"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SYNERGY21_S21810,
+	    PCMCIA_CIS_SYNERGY21_S21810,
+	    0,
+	    "Synergy 21",
+	    "Synergy 21 S21810+ NE2000 Compatible Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1218,6 +1225,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Intersil",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SYNERGY21, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Synergy 21",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

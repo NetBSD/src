@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.3 2000/08/09 23:30:02 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.4 2001/03/16 19:36:02 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.3 2000/08/09 23:15:58 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.4 2001/03/16 19:35:14 he Exp 
  */
 
 /*-
@@ -427,6 +427,7 @@
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -529,3 +530,6 @@
 #define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL}
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	-1
 #define	PCMCIA_STR_INTERSIL_PRISM2	"Intersil Prism II"
+#define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
+#define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
+#define	PCMCIA_STR_SYNERGY21_S21810	"Synergy 21 S21810+ NE2000 Compatible Card"
