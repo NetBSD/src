@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.16 2002/12/06 03:39:07 thorpej Exp $	*/
+/*	$NetBSD: auth.c,v 1.17 2003/03/24 18:25:21 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -160,12 +160,26 @@ allowed_user(struct passwd * pw)
 
 		(void)gettimeofday(&tv, (struct timezone *)NULL);
 		if (pw->pw_expire) {
-			if (tv.tv_sec >= pw->pw_expire)
+			if (tv.tv_sec >= pw->pw_expire) {
+				logit("User %.100s not allowed because account has expired",
+				    pw->pw_name);
 				return 0;	/* expired */
+			}
 		}
+#ifdef _PASSWORD_CHGNOW
+		if (pw->pw_change == _PASSWORD_CHGNOW) {
+			logit("User %.100s not allowed because password needs to be changed",
+			    pw->pw_name);
+
+			return 0;	/* can't force password change (yet) */
+		}
+#endif
 		if (pw->pw_change) {
-			if (tv.tv_sec >= pw->pw_change)
+			if (tv.tv_sec >= pw->pw_change) {
+				logit("User %.100s not allowed because password has expired",
+				    pw->pw_name);
 				return 0;	/* expired */
+			}
 		}
 	}
 
