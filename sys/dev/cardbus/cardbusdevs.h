@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.20 2002/11/11 14:20:01 kanaoka Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.21 2003/02/01 07:50:06 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.23 2002/11/11 14:15:48 kanaoka Exp 
+ *	NetBSD: cardbusdevs,v 1.24 2003/02/01 07:49:33 ichiro Exp 
  */
 
 /*
@@ -120,6 +120,9 @@
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* FE2500 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500MX	0xab08		/* FE2500MX 10/100 Ethernet */
+
+/* OEM: AboCom FE2000VX 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_ABOCOM_FE2000VX	0xab06		/* IO-DATA CBET100-CL 10/100 Ethernet */
 
 /* Planex products */
 #define	CARDBUS_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
