@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.6 1999/08/23 19:09:27 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.7 2000/05/08 17:06:48 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -84,6 +84,13 @@ void ka630_consinit __P((void));
 int ka630_rom_putchar __P((int c));
 int ka630_rom_getchar __P((void));
 int ka630_rom_testchar __P((void));
+/* Also added such a thing for KA53 - MK-991208 */
+unsigned char  *ka53_conspage;
+void ka53_consinit(void);
+int ka53_rom_putchar(int c);
+int ka53_rom_getchar(void);
+int ka53_rom_testchar(void);
+
 
 putchar(c)
 	int c;
@@ -135,7 +142,6 @@ consinit()
 	switch (vax_boardtype) {
 
 	case VAX_BTYP_690:
-	case VAX_BTYP_1303:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		test_fp = rom_testchar;
@@ -165,6 +171,10 @@ consinit()
 		test_fp = rom_testchar;
 		rom_putc = 0x20040068;
 		rom_getc = 0x20040054;
+		break;
+
+	case VAX_BTYP_53:
+		ka53_consinit();
 		break;
 
 #ifdef notdef
@@ -320,3 +330,56 @@ asm("
 		jsb     *0x24(r11)      # output character (KA630_PUTC)
 		ret			# we're done
 ");
+
+/*
+ * void ka53_consinit (void)  ==> initialize KA53 ROM console I/O
+ */
+void ka53_consinit()
+{
+	ka53_conspage = (char *) 0x2014044b;
+
+	put_fp = ka53_rom_putchar;
+	get_fp = ka53_rom_getchar;
+	test_fp = ka53_rom_testchar;
+}
+
+
+/*
+ * int ka53_rom_getchar (void)  ==> getchar() using ROM-routines on KA53
+ */
+asm("
+	.globl _ka53_rom_getchar
+	_ka53_rom_getchar:
+	        .word 0x802             # save-mask: R1, R11
+	        movl    _ka53_conspage,r11      # load location of console page
+	loop53g:                        # do {
+	        jsb     *0x64(r11)      #   test for char
+	        blbc    r0, loop53g     # } while (R0 == 0)
+	        jsb     *0x6c(r11)      # get the char
+	        ret                     # we're done
+
+	_ka53_rom_testchar:
+	        .word   0
+	        movl    _ka53_conspage,r3
+	        jsb     *0x64(r3)
+	        blbc    r0,1f
+	        jsb     *0x6c(r3)       # get the char
+	1:      ret
+");
+
+/*
+ * int ka53_rom_putchar (int c) ==> putchar() using ROM-routines on KA53
+ */
+asm("
+	.globl _ka53_rom_putchar
+	_ka53_rom_putchar:
+	        .word 0x802             # save-mask: R1, R11
+	        movl    _ka53_conspage,r11      # load location of console page
+	loop53p:                        # do {
+	        jsb     *0x20(r11)      #   is rom ready?
+	        blbc    r0, loop53p     # } while (R0 == 0)
+	        movl    4(ap), r1       # R1 holds char
+	        jsb     *0x24(r11)      # output character
+                ret                     # we're done
+");
+
