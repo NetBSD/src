@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.3 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.4 2001/12/08 18:08:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _IRIX_TYPES_H_
 #define _IRIX_TYPES_H_
 
+#include <sys/types.h>
+
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
 
@@ -46,5 +48,100 @@
 typedef struct {
 	__uint32_t bits[4];
 } irix_sigset_t;
+
+/* From IRIX's <sys/types.h> */
+typedef __uint32_t irix_app32_ulong_t;
+typedef __int32_t irix_app32_long_t;
+typedef __uint64_t irix_app32_ulong_long_t;
+typedef __int64_t irix_app32_long_long_t;
+typedef __uint64_t irix_ino_t;
+typedef __int64_t irix_off_t;
+
+#if 1 /* _MIPS_SZLONG == 32 */
+typedef unsigned long irix_mode_t;
+typedef unsigned long irix_dev_t;
+typedef long irix_uid_t;
+typedef long irix_gid_t;
+typedef unsigned long irix_nlink_t;
+typedef long irix_pid_t;
+typedef long irix_time_t;
+#endif
+#if 0 /* _MIPS_SZLONG == 64 */
+typedef __uint32_t irix_dev_t;
+typedef __uint32_t irix_mode_t;
+typedef __int32_t irix_uid_t;
+typedef __int32_t irix_gid_t;
+typedef __uint32_t irix_nlink_t;
+typedef __int32_t irix_pid_t;
+typedef int irix_time_t;
+#endif
+typedef __int64_t irix_blkcnt_t;
+typedef __uint64_t irix_ino64_t;
+typedef __int64_t irix_off64_t;
+typedef __int64_t irix_blkcnt64_t;
+
+/* From IRIX's <sys/ktypes.h> */
+typedef irix_app32_long_long_t irix_irix5_n32_off_t;
+
+/* From IRIX's <sys/ktime.h> */
+typedef irix_app32_long_t irix_irix5_time_t;
+typedef struct irix_irix5_timespec {
+	irix_irix5_time_t tv_sec;
+	irix_app32_long_t tv_nsec;
+} irix_irix5_timespec_t;
+
+/* From IRIX's <sys/timespec.h> */
+typedef struct irix___timespec {
+	irix_time_t tv_sec;
+	long tv_nsec;
+} irix_timespec_t;
+
+/* From IRIX's <sys/stat.h> */
+#define IRIX__R3_STAT_VER 1
+#define IRIX__STAT_VER 2
+#define IRIX__STAT64_VER 3
+struct irix_stat {
+	irix_dev_t	ist_dev;
+	long		ist_pad1[3];
+	irix_ino_t	ist_ino;
+	irix_mode_t	ist_mode;
+	irix_nlink_t	ist_nlink;
+	irix_uid_t	ist_uid;
+	irix_gid_t	ist_gid;
+	irix_dev_t	ist_rdev;
+	long		ist_pad2[2];
+	irix_off_t	ist_size;
+	long		ist_pad3;
+	irix_timespec_t	ist_atim;
+	irix_timespec_t	ist_mtim;
+	irix_timespec_t	ist_ctim;
+	long		ist_blksize;
+	irix_blkcnt_t	ist_blocks;
+	char		ist_fstype[16];
+	long		ist_projid;
+	long		ist_pad4[7];
+};
+
+struct irix_stat64 {
+	irix_dev_t	ist_dev;
+	long		ist_pad1[3];
+	irix_ino64_t	ist_ino;
+	irix_mode_t	ist_mode;
+	irix_nlink_t	ist_nlink;
+	irix_uid_t	ist_uid;
+	irix_gid_t	ist_gid;
+	irix_dev_t	ist_rdev;
+	long		ist_pad2[2];
+	irix_off64_t	ist_size;
+	long		ist_pad3;
+	irix_timespec_t	ist_atim;
+	irix_timespec_t	ist_mtim;
+	irix_timespec_t	ist_ctim;
+	long		ist_blksize;
+	irix_blkcnt64_t	ist_blocks;
+	char		ist_fstype[16];
+	long		ist_projid;
+	long		ist_pad4[7];
+};
 
 #endif /* _IRIX_TYPES_H_ */
