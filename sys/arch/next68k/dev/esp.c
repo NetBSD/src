@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.41 2002/09/27 20:34:27 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.42 2002/10/02 04:22:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -152,9 +152,8 @@ int esp_dma_nest = 0;
 
 
 /* Linkup to the rest of the kernel */
-const struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch_intio, espattach_intio
-};
+CFATTACH_DECL(esp, sizeof(struct esp_softc),
+    espmatch_intio, espattach_intio, NULL, NULL);
 
 static int attached = 0;
 

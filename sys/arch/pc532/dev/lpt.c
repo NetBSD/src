@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.36 2002/09/27 20:34:35 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.37 2002/10/02 04:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -205,9 +205,8 @@ static
 	int	pliptransmit __P((volatile struct i8255 *, u_char *, int));
 #endif
 
-const struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptmatch, lptattach
-};
+CFATTACH_DECL(lpt, sizeof(struct lpt_softc),
+    lptmatch, lptattach, NULL, NULL);
 
 extern struct cfdriver lpt_cd;
 

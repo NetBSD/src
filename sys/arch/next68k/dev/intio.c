@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.5 2002/09/27 20:34:29 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.6 2002/10/02 04:22:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,9 +54,8 @@ void	intioattach __P((struct device *, struct device *, void *));
 int	intioprint __P((void *, const char *));
 int	intiosearch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach intio_ca = {
-	sizeof(struct device), intiomatch, intioattach
-};
+CFATTACH_DECL(intio, sizeof(struct device),
+    intiomatch, intioattach, NULL, NULL);
 
 #if 0
 struct cfdriver intio_cd = {
