@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $	*/
+/*	$NetBSD: console.c,v 1.14 1998/08/25 03:26:36 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -918,7 +918,7 @@ physconinit(cp)
 		if (test[counter]==0)
 			panic ( "Render engine %s is missing a routine",
 			    vconsole_master->terminal_emulator->name );
-	printf("\x0c");
+	vconsole_master->PUTSTRING("\x0c", 1, vconsole_master);
 }
 
 /*
