@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.31 2002/09/26 01:41:51 wiz Exp $
+.\" $NetBSD: pkg_info.1,v 1.32 2002/11/14 09:40:23 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -110,6 +110,12 @@ will match versions 1.3 and later of the
 package.
 The collating sequence of the various package version numbers is
 unusual, but strives to be consistent.
+The magic string ``alpha'' equates to
+.Pa alpha version
+and sorts before a beta version.
+The magic string ``beta'' equates to
+.Pa beta version
+and sorts before a release candidate.
 The magic string ``rc'' equates to
 .Pa release candidate
 and sorts before a release.
@@ -119,6 +125,12 @@ will sort before
 .Pa name-1.3
 and after
 .Pa name-1.2.9
+Similarily
+.Pa name-1.3alpha2
+will sort before
+.Pa name-1.3beta1
+and they both sort before
+.Pa name-1.3rc1
 In addition, alphabetic characters sort in the same place as
 their numeric counterparts, so that
 .Pa name-1.2e
