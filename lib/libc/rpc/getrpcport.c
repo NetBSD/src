@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcport.c 1.3 87/08/11 SMI";*/
 /*static char *sccsid = "from: @(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: getrpcport.c,v 1.1 1993/10/07 07:29:56 cgd Exp $";
+static char *rcsid = "$Id: getrpcport.c,v 1.2 1993/12/05 14:37:02 deraadt Exp $";
 #endif
 
 /*
@@ -50,6 +50,7 @@ getrpcport(host, prognum, versnum, proto)
 
 	if ((hp = gethostbyname(host)) == NULL)
 		return (0);
+	bzero((char *)&addr, sizeof addr);
 	bcopy(hp->h_addr, (char *) &addr.sin_addr, hp->h_length);
 	addr.sin_family = AF_INET;
 	addr.sin_port =  0;
