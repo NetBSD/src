@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_chipset.h,v 1.1 1995/06/28 01:25:50 cgd Exp $	*/
+/*	$NetBSD: pci_chipset.h,v 1.2 1995/08/03 00:33:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,6 +37,7 @@ struct pci_cs_fcns {
 	pcitag_t	(*cs_make_tag) __P((int, int, int));
 	pcireg_t	(*cs_conf_read) __P((pcitag_t, int));
 	void		(*cs_conf_write) __P((pcitag_t, int, pcireg_t));
+	int		(*cs_map_io) __P((pcitag_t, int, int *));
 	int		(*cs_map_mem) __P((pcitag_t, int, vm_offset_t *,
 			    vm_offset_t *));
 	int		(*cs_pcidma_map) __P((caddr_t, vm_size_t,
