@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.295 2004/11/15 00:28:16 christos Exp $
+#	$NetBSD: Makefile,v 1.296 2004/11/15 16:33:41 he Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -266,7 +266,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 .endif	# MKUNPRIVED != no
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    etc.${MACHINE}/ttys ${DESTDIR}/etc
+	    ttys ${DESTDIR}/etc
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
