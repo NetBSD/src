@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.107 2000/09/23 00:48:29 enami Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.108 2000/11/05 15:37:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1585,4 +1585,16 @@ copy:			*d = *s;
 	}
 	*d = '\0';
 	return (0);
+}
+
+/*
+ * Returns true if signal is ignored or masked for passed process.
+ */
+int
+sigismasked(p, sig)
+	struct proc *p;
+	int sig;
+{
+	return sigismember(&p->p_sigignore, SIGTTOU)
+		|| sigismember(&p->p_sigmask, SIGTTOU);
 }
