@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.5 1995/04/17 12:09:47 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.6 1995/05/23 03:43:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -63,6 +63,8 @@ struct pci_attach_args {
 
 pcitag_t pci_make_tag __P((int, int, int));
 pcireg_t pci_conf_read __P((pcitag_t, int));
-void pci_conf_write __P((pcitag_t, int, pcireg_t));
-int pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
-void *pci_map_int __P((pcitag_t, pci_intrlevel, int (*)(void *), void *));
+void	 pci_conf_write __P((pcitag_t, int, pcireg_t));
+int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
+void	*pci_map_int __P((pcitag_t, pci_intrlevel, int (*)(void *), void *));
+
+int	 pci_attach_subdev __P((struct device *, int, int));
