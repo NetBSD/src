@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.2 1997/06/13 14:28:53 drochner Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.3 1997/06/26 19:11:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.
@@ -33,7 +33,11 @@
  */
 
 #include <sys/types.h>
+#ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 #include "stand.h"
 
 /*
