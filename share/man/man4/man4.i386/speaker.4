@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: speaker.4,v 1.4 1994/01/29 01:43:26 jtc Exp $
+.\"	$Id: speaker.4,v 1.5 1996/03/24 21:15:50 jtk Exp $
 .\"
 .Dd August 6, 1993
 .Dt SPEAKER 4 i386
@@ -35,7 +35,7 @@
 .Sh NAME
 speaker \- console speaker device driver
 .Sh SYNOPSIS
-.Cd "pseudo-device speaker"
+.Cd "spkr0	at pckbd? port 0x61"
 .Sh DESCRIPTION
 The speaker device driver allows applications to control the PC console
 speaker on an IBM-PC-compatible machine running UNIX.
@@ -139,7 +139,9 @@ melody sections.
 .Sh BUGS
 Due to roundoff in the pitch tables and slop in the tone-generation and timer
 hardware (neither of which was designed for precision), neither pitch accuracy
-nor timings will be mathematically exact. There is no volume control.
+nor timings will be mathematically exact.
+.Pp
+There is no volume control.
 .Pp
 In play strings which are very long (longer than your system's physical I/O
 blocks) note suffixes or numbers may occasionally be parsed incorrectly due
