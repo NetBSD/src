@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 2000/09/08 10:15:24 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 2001/02/05 18:14:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -177,10 +177,10 @@
 	mov.l	r0, @-r15
 
 /*
- * emulate x86 cli, sti, ecli, esti
+ * Macros to disable and enable exceptions (including interrupts).
+ * This modifies SR.BL
  */
-
-#define CLI	\
+#define EXCEPT_DISABLE		  \
 	mov.l	r0, @-r15	; \
 	mov.l	r1, @-r15	; \
 	mov	#0x10, r0	; \
@@ -188,11 +188,11 @@
 	swap.w	r0, r0		; /* r0 = 0x10000000 */ \
 	stc	sr, r1		; \
 	or	r0, r1		; \
-	ldc	r1, sr		; /* disable interrupt */ \
+	ldc	r1, sr		; /* disable exceptions */ \
 	mov.l	@r15+, r1	; \
 	mov.l	@r15+, r0
 
-#define STI	\
+#define EXCEPT_ENABLE		  \
 	mov.l	r0, @-r15	; \
 	mov.l	r1, @-r15	; \
 	mov	#0x10, r0	; \
@@ -201,11 +201,15 @@
 	not	r0, r0		; \
 	stc	sr, r1		; \
 	and	r0, r1		; \
-	ldc	r1, sr		; /* enable interrupt */ \
+	ldc	r1, sr		; /* enable exceptions */ \
 	mov.l	@r15+, r1	; \
 	mov.l	@r15+, r0
 
-#define ECLI	\
+/*
+ * Macros do disable and enable interrupts.
+ * This modifies SR.I[0-3]
+ */
+#define INTR_DISABLE		  \
 	mov.l	r0, @-r15	; \
 	mov.l	r1, @-r15	; \
 	mov	#0x78, r0	; \
@@ -216,7 +220,7 @@
 	mov.l	@r15+, r1	; \
 	mov.l	@r15+, r0
 
-#define ESTI	\
+#define INTR_ENABLE		  \
 	mov.l	r0, @-r15	; \
 	mov.l	r1, @-r15	; \
 	mov	#0x78, r0	; \
@@ -269,7 +273,7 @@ start:
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
-	ECLI
+	INTR_DISABLE
 
 	/* Set Register Bank to Bank 0 */
 	mov.l	SR_init, r0
@@ -380,7 +384,7 @@ NENTRY(proc_trampoline)
 	jsr	@r12
 	nop
 	add	#4, r15		/* pop tf_trapno */
-	CLI
+	EXCEPT_DISABLE
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -468,10 +472,10 @@ ENTRY(longjmp)
 
 ENTRY(idle)
 	/* 
-	 * When we get here, interrupts are off (via ECLI) and
+	 * When we get here, interrupts are off (via INTR_DISABLE) and
 	 * sched_lock is held.
 	 */
-	STI
+	EXCEPT_ENABLE
 
 	mov.l	XLwhichqs, r0
 	mov.l	@r0, r14
@@ -483,11 +487,11 @@ ENTRY(idle)
 	jsr	@r0
 	nop
 #endif
-	ESTI
+	INTR_ENABLE
 
 	sleep
 
-	ECLI
+	INTR_DISABLE
 #if defined(LOCKDEBUG)
 	mov.l	Xsched_lock, r0
 	jsr	@r0
@@ -665,7 +669,7 @@ switch_search:
 	 */
 
 	/* Lock the scheduler. */
-	ECLI				/* splhigh doesn't do a cli */
+	INTR_DISABLE			/* splhigh doesn't do a cli */
 #if defined(LOCKDEBUG)
 	mov.l	Xsched_lock, r0
 	jsr	@r0
@@ -821,7 +825,7 @@ XL_switch_error:
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-	ESTI
+	INTR_ENABLE
 
 	/* Skip context switch if same process. */
 					/* r12 = oldCurproc */
@@ -858,7 +862,7 @@ switch_exited:
 	 */
 
 	/* No interrupts while loading new state. */
-	ECLI
+	INTR_DISABLE
 	mov.l	XLP_ADDR, r0
 	mov.l	@(r0, r8), r12		/* r8 = qs[i]->p_forw */
 
@@ -889,7 +893,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-	ESTI
+	INTR_ENABLE
 
 switch_return:
 	/*
@@ -941,7 +945,7 @@ ENTRY(switch_exit)
 	mov.l	r0, @r1
 
 	/* Restore proc0's context. */
-	ECLI
+	INTR_DISABLE
 	mov.l	XLP_ADDR, r0
 	mov.l	@(r0, r9), r10
 
@@ -965,7 +969,7 @@ ENTRY(switch_exit)
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-	ESTI
+	INTR_ENABLE
 
 	mov	r8, r4
 	mov.l	XLexit2, r0
@@ -1058,8 +1062,8 @@ NENTRY(exphandler)
 	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
-	ESTI
-	STI
+	INTR_ENABLE
+	EXCEPT_ENABLE
 	mov.l	XL_trap, r0
 	jsr	@r0
 	nop
@@ -1067,7 +1071,7 @@ NENTRY(exphandler)
 	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	ECLI
+	INTR_DISABLE
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1084,7 +1088,7 @@ NENTRY(exphandler)
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
-	ESTI
+	INTR_ENABLE
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XL_trap, r0
@@ -1094,7 +1098,7 @@ NENTRY(exphandler)
 	bra	2b
 	nop
 1:
-	CLI
+	EXCEPT_DISABLE
 
 #ifdef DDB
 	mov.l	@r15, r0
@@ -1137,15 +1141,15 @@ XL_splimit3:		.long	_end
 XL_splimit_low3:	.long	0x80000000
 100:
 #endif
-	ECLI
+	INTR_DISABLE
 	/* we must permit interrupt to enable address translation */
-	STI
+	EXCEPT_ENABLE
 	mov.l	r0, @-r15	/* push dummy trap code */
 	mov.l	XL_tlb_handler, r0
 	jsr	@r0
 	nop
 	add	#4, r15		/* pop dummy code */
-	CLI
+	EXCEPT_DISABLE
 	ldtlb
 	INTRFASTEXIT
 
@@ -1268,8 +1272,8 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
-	ECLI			/* disable external interrupt */
-	STI			/* enable exception for TLB handling */
+	INTR_DISABLE		/* disable external interrupt */
+	EXCEPT_ENABLE		/* enable exception for TLB handling */
 	mov.l	XL_intrhandler, r0
 	jsr	@r0
 	nop
@@ -1286,7 +1290,7 @@ XL_splimit_low2:	.long	0x80000000
 	bf	7b
 
 2:	/* Check for ASTs on exit to user mode. */
-	ECLI
+	INTR_DISABLE
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1303,7 +1307,7 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
 
-	ESTI
+	INTR_ENABLE
 
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
@@ -1315,7 +1319,7 @@ XL_splimit_low2:	.long	0x80000000
 	nop
 
 1:
-	CLI
+	EXCEPT_DISABLE
 	INTRFASTEXIT
 
 	.align	2
@@ -1325,22 +1329,22 @@ XLT_ASTFLT:		.long	T_ASTFLT
 XL_trap:		.long	_C_LABEL(trap)
 
 ENTRY(enable_interrupt)
-	ESTI
+	INTR_ENABLE
 	rts
 	nop
 
 ENTRY(disable_interrupt)
-	ECLI
+	INTR_DISABLE
 	rts
 	nop
 
 ENTRY(enable_ext_intr)
-	ESTI
+	INTR_ENABLE
 	rts
 	nop
 
 ENTRY(disable_ext_intr)
-	ECLI
+	INTR_DISABLE
 	rts
 	nop
 
@@ -1349,8 +1353,8 @@ NENTRY(Xspllower)
 	mov.l	r1, @-r15
 
 Xrestart:
-	ECLI
-	STI
+	INTR_DISABLE
+	EXCEPT_ENABLE
 	mov.l	XL_check_ipending, r0
 	jsr	@r0
 	nop
@@ -1364,7 +1368,7 @@ Xrestart:
 	nop
 
 1:
-	ESTI
+	INTR_ENABLE
 	mov.l	@r15+, r1
 	lds.l	@r15+, pr
 	rts
@@ -1418,7 +1422,7 @@ XL_start_address:
 load_and_reset_end:
 
 ENTRY(XLoadAndReset)
-	ECLI
+	INTR_DISABLE
 	/* copy trampoline code to RAM area top */
 	mov.l	XL_load_and_reset, r0
 	mov.l	XL_load_and_reset_end, r1
