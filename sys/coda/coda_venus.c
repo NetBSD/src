@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.8 2001/07/18 16:12:31 thorpej Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.9 2001/08/05 11:22:33 jdolecek Exp $	*/
 
 /*
  * 
@@ -265,6 +265,9 @@ venus_ioctl(void *mdp, ViceFid *fid,
     inp->cmd = (com & ~(IOCPARM_MASK << 16));
     tmp = ((com >> 16) & IOCPARM_MASK) - sizeof (char *) - sizeof (int);
     inp->cmd |= (tmp & IOCPARM_MASK) <<	16;
+
+    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE)
+	return (EINVAL);
 
     inp->rwflag = flag;
     inp->len = iap->vi.in_size;
