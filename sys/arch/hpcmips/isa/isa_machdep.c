@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2000/06/04 19:14:43 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.7 2000/09/12 02:12:20 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -149,7 +149,7 @@ vrisabattach(parent, self, aux)
 		sc->sc_intr_map[i] = -1;
 	printf (":ISA port %#x-%#x mem %#x-%#x\n",
 		iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
-		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_base);
+		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
 	config_found(self, &iba, vrisabprint);
 #endif
 }
