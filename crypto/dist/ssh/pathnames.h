@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 2002/03/11 04:57:56 itojun Exp $	*/
 /*	$OpenBSD: pathnames.h,v 1.11 2002/02/09 17:37:34 deraadt Exp $	*/
 
 /*
@@ -14,7 +14,7 @@
  */
 
 #define ETCDIR				"/etc"
-#define SSHDIR				ETCDIR
+#define SSHDIR				ETCDIR "/ssh"
 #define _PATH_SSH_PIDDIR		"/var/run"
 
 /*

@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.53 2002/02/24 01:15:21 matt Exp $
+$NetBSD: UPDATING,v 1.54 2002/03/11 04:57:55 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,7 +7,12 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
-20010223:
+20020311:
+	ssh configuration files were moved from /etc to /etc/ssh.  Beware
+	if you restart your machine from remote.  Note that sshd.conf needs
+	to be changed (due to the use of "/etc" inside).
+
+20020223:
 	Users of the VAX port will need to rebuild and install gas
 	so it deal with the now present register prefix used in all
 	the VAX assembly files.
