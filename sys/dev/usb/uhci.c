@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.94 2000/03/25 07:13:05 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.95 2000/03/25 07:23:12 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ static void		uhci_dump_qhs __P((uhci_soft_qh_t *));
 static void		uhci_dump_qh __P((uhci_soft_qh_t *));
 static void		uhci_dump_tds __P((uhci_soft_td_t *));
 static void		uhci_dump_td __P((uhci_soft_td_t *));
+static void		uhci_dump_ii __P((uhci_intr_info_t *ii));
 #endif
 
 #define UWRITE1(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
@@ -816,18 +817,34 @@ uhci_dump_tds(std)
 	}
 }
 
-void uhci_dump_ii(uhci_intr_info_t *ii);
-void
+static void
 uhci_dump_ii(ii)
 	uhci_intr_info_t *ii;
 {
-	usbd_pipe_handle pipe = ii->xfer->pipe;
-	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
-	usbd_device_handle dev = pipe->device;
+	usbd_pipe_handle pipe;
+	usb_endpoint_descriptor_t *ed;
+	usbd_device_handle dev;
 	
+        if (ii == NULL) {
+                printf("ii NULL\n");
+                return;
+        }
+        if (ii->xfer == NULL) {
+		printf("ii %p: done=%d xfer=NULL\n",
+		       ii, ii->isdone);
+                return;
+        }
+        pipe = ii->xfer->pipe;
+        if (pipe == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=NULL\n",
+		       ii, ii->isdone, ii->xfer);
+                return;
+	}
+        ed = pipe->endpoint->edesc;
+        dev = pipe->device;
 	printf("ii %p: done=%d xfer=%p dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n", 
 	       ii, ii->isdone, ii->xfer, dev, 
-	       UGETW(dev->ddesc.idVendor), 
+	       UGETW(dev->ddesc.idVendor),
 	       UGETW(dev->ddesc.idProduct),
 	       dev->address, pipe,
 	       ed->bEndpointAddress, ed->bmAttributes);
