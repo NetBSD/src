@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.25 1999/09/20 04:38:58 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.25.4.1 1999/12/27 23:50:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.25 1999/09/20 04:38:58 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.25.4.1 1999/12/27 23:50:06 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,7 +131,7 @@ getdiskbyname(name)
 #define	getnum(field, dname) \
 	if (cgetnum(buf, dname, &f) != -1) field = (u_int32_t)f
 
-	getnumdflt(dp->d_secsize, "se", DEV_BSIZE);
+	getnumdflt(dp->d_secsize, "se", DEF_BSIZE);
 	getnum(dp->d_ntracks, "nt");
 	getnum(dp->d_nsectors, "ns");
 	getnum(dp->d_ncylinders, "nc");
