@@ -1,11 +1,11 @@
-/*	$NetBSD: ld_twe.c,v 1.13 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.14 2003/09/21 19:20:18 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran; and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.13 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.14 2003/09/21 19:20:18 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -96,22 +96,48 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_twe_softc *sc;
 	struct ld_softc *ld;
 	struct twe_softc *twe;
+	struct twe_drive *td;
+	const char *typestr, *stripestr;
+	char unktype[16], stripebuf[32];
 
 	sc = (struct ld_twe_softc *)self;
 	ld = &sc->sc_ld;
 	twe = (struct twe_softc *)parent;
 	twea = aux;
+	td = &twe->sc_units[twea->twea_unit];
 
 	sc->sc_hwunit = twea->twea_unit;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = twe_get_maxxfer(twe_get_maxsegs());
-	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
+	ld->sc_secperunit = td->td_size;
 	ld->sc_secsize = TWE_SECTOR_SIZE;
 	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
 
-	printf("\n");
+	typestr = twe_describe_code(twe_table_unittype, td->td_type);
+	if (typestr == NULL) {
+		sprintf(unktype, "<0x%02x>", td->td_type);
+		typestr = unktype;
+	}
+	switch (td->td_type) {
+	case TWE_AD_CONFIG_RAID0:
+	/* XXX TWE_AD_CONFIG_TwinStor? */
+	case TWE_AD_CONFIG_RAID5:
+	case TWE_AD_CONFIG_RAID10:
+		stripestr = twe_describe_code(twe_table_stripedepth,
+		    td->td_stripe);
+		if (stripestr == NULL)
+			sprintf(stripebuf, "<stripe code 0x%02x> ",
+			    td->td_stripe);
+		else
+			sprintf(stripebuf, "%s stripe ", stripestr);
+		break;
+	default:
+		stripebuf[0] = '\0';
+	}
+
+	printf(": %s%s\n", stripebuf, typestr);
 	ldattach(ld);
 }
 
