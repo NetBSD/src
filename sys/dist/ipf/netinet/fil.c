@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.2 2004/10/03 12:16:32 jdolecek Exp $	*/
+/*	$NetBSD: fil.c,v 1.3 2004/10/03 12:21:13 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.2 2004/10/03 12:16:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.3 2004/10/03 12:21:13 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -4011,7 +4011,8 @@ caddr_t data;
 	 * pointless because adding a state entry to the table will
 	 * fail with the out of window (oow) flag set.
 	 */
-	if ((fp->fr_flags & FR_KEEPSTATE) && (fp->fr_flx & FI_OOW))
+	if ((fp->fr_flags & FR_KEEPSTATE)
+	    && fp->fr_dun.fru_ipf != NULL && (fp->fr_flx & FI_OOW))
 		return EINVAL;
 
 	/*
