@@ -1,4 +1,4 @@
-/*	$NetBSD: sun.c,v 1.2 2002/01/15 17:01:33 mrg Exp $	*/
+/*	$NetBSD: sun.c,v 1.3 2003/06/23 12:15:01 agc Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -31,6 +31,12 @@
 /*
  * XXX this is slightly icky in places...
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: sun.c,v 1.3 2003/06/23 12:15:01 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/audioio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.33 2003/01/06 13:26:27 wiz Exp $	*/
+/*	$NetBSD: ctl.c,v 1.34 2003/06/23 12:15:02 agc Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: ctl.c,v 1.34 2003/06/23 12:15:02 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/stat.h>
