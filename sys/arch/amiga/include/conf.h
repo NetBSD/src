@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 1997/09/27 10:38:19 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -74,7 +74,7 @@ cdev_decl(msc);
 
 cdev_decl(mfcs);
 
-cdev_decl(drcom);
+cdev_decl(com);
 
 cdev_decl(view);
 
