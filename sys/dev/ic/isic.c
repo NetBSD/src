@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $ 
+ *	$Id: isic.c,v 1.4 2002/03/24 20:35:46 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.4 2002/03/24 20:35:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -51,14 +51,36 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+#include <netisdn/i4b_global.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
-#include <netisdn/i4b_global.h>
+isdn_link_t *isic_ret_linktab(void*, int channel);
+void isic_set_link(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+void n_connect_request(u_int cdid);
+void n_connect_response(u_int cdid, int response, int cause);
+void n_disconnect_request(u_int cdid, int cause);
+void n_alert_request(u_int cdid);
+void n_mgmt_command(int bri, int cmd, void *parm);
+
+const struct isdn_l3_driver_functions
+isic_l3_driver = {
+	isic_ret_linktab,
+	isic_set_link,
+	n_connect_request,
+	n_connect_response,
+	n_disconnect_request,
+	n_alert_request,
+	NULL,
+	NULL,
+	n_mgmt_command
+};
 
 /*---------------------------------------------------------------------------*
  *	isic - device driver interrupt routine
@@ -66,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
 int
 isicintr(void *arg)
 {
-	struct l1_softc *sc = arg;
+	struct isic_softc *sc = arg;
 	
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
@@ -191,7 +213,7 @@ isicintr(void *arg)
  *	isic_recovery - try to recover from irq lockup
  *---------------------------------------------------------------------------*/
 void
-isic_recover(struct l1_softc *sc)
+isic_recover(struct isic_softc *sc)
 {
 	u_char byte;
 	
@@ -244,4 +266,22 @@ isic_recover(struct l1_softc *sc)
 	ISAC_WRITE(I_MASK, 0xff);	
 	DELAY(100);
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
+}
+
+int
+isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver)
+{
+	sc->sc_l3token = isdn_attach_bri(sc->sc_dev.dv_xname, cardname, &sc->sc_l2, &isic_l3_driver);
+	sc->sc_l2.driver = dchan_driver;
+	sc->sc_l2.l1_token = sc;
+	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	return 1;
+}
+
+int
+isic_detach_bri(struct isic_softc *sc)
+{
+	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 0);
+	isdn_detach_bri(sc->sc_l3token);
+	return 1;
 }

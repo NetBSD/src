@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.3 2001/11/13 13:14:38 lukem Exp $ 
+ *	$Id: isac.c,v 1.4 2002/03/24 20:35:45 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.3 2001/11/13 13:14:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.4 2002/03/24 20:35:45 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -77,25 +77,26 @@ __KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.3 2001/11/13 13:14:38 lukem Exp $");
 #include <netisdn/i4b_trace.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
-
-static u_char isic_isac_exir_hdlr(register struct l1_softc *sc, u_char exir);
-static void isic_isac_ind_hdlr(register struct l1_softc *sc, int ind);
+static u_char isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir);
+static void isic_isac_ind_hdlr(register struct isic_softc *sc, int ind);
 
 /*---------------------------------------------------------------------------*
  *	ISAC interrupt service routine
  *---------------------------------------------------------------------------*/
 void
-isic_isac_irq(struct l1_softc *sc, int ista)
+isic_isac_irq(struct isic_softc *sc, int ista)
 {
 	register u_char c = 0;
-	NDBGL1(L1_F_MSG, "unit %d: ista = 0x%02x", sc->sc_unit, ista);
+	NDBGL1(L1_F_MSG, "%s: ista = 0x%02x", sc->sc_dev.dv_xname, ista);
 
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
@@ -118,24 +119,24 @@ isic_isac_irq(struct l1_softc *sc, int ista)
 			if(!(rsta & ISAC_RSTA_CRC))	/* CRC error */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "unit %d: CRC error", sc->sc_unit);
+				NDBGL1(L1_I_ERR, "%s: CRC error", sc->sc_dev.dv_xname);
 			}
 	
 			if(rsta & ISAC_RSTA_RDO)	/* ReceiveDataOverflow */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "unit %d: Data Overrun error", sc->sc_unit);
+				NDBGL1(L1_I_ERR, "%s: Data Overrun error", sc->sc_dev.dv_xname);
 			}
 	
 			if(rsta & ISAC_RSTA_RAB)	/* ReceiveABorted */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "unit %d: Receive Aborted error", sc->sc_unit);
+				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", sc->sc_dev.dv_xname);
 			}
 
 			if(error == 0)
 			{
-				NDBGL1(L1_I_ERR, "unit %d: RME unknown error, RSTA = 0x%02x!", sc->sc_unit, rsta);
+				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTA = 0x%02x!", sc->sc_dev.dv_xname, rsta);
 			}				
 
 			i4b_Dfreembuf(sc->sc_ibuf);
@@ -181,15 +182,15 @@ isic_isac_irq(struct l1_softc *sc, int ista)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_NT;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(sc->sc_l2, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
 			}
 
 			c |= ISAC_CMDR_RMC;
 
 			if(sc->sc_enabled &&
-			   (ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S))
+			   (((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S))
 			{
-				isdn_layer2_data_ind(sc->sc_l2, sc->sc_ibuf);
+				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_ibuf);
 			}
 			else
 			{
@@ -325,7 +326,7 @@ isic_isac_irq(struct l1_softc *sc, int ista)
  *	ISAC L1 Extended IRQ handler
  *---------------------------------------------------------------------------*/
 static u_char
-isic_isac_exir_hdlr(register struct l1_softc *sc, u_char exir)
+isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir)
 {
 	u_char c = 0;
 	
@@ -386,7 +387,7 @@ isic_isac_exir_hdlr(register struct l1_softc *sc, u_char exir)
  *	ISAC L1 Indication handler
  *---------------------------------------------------------------------------*/
 static void
-isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
+isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 {
 	register int event;
 	
@@ -397,7 +398,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR8);
 			event = EV_INFO48;
-			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
 			break;
 			
 		case ISAC_CIRR_IAI10:
@@ -405,7 +406,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR10);
 			event = EV_INFO410;
-			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
 			break;
 
 		case ISAC_CIRR_IRSY:
@@ -427,7 +428,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 		case ISAC_CIRR_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
-			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_IDLE);
+			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_IDLE);
 			break;
 
 		case ISAC_CIRR_IDIS:
@@ -473,7 +474,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
  *	execute a layer 1 command
  *---------------------------------------------------------------------------*/	
 void
-isic_isac_l1_cmd(struct l1_softc *sc, int command)
+isic_isac_l1_cmd(struct isic_softc *sc, int command)
 {
 	u_char cmd;
 
@@ -547,7 +548,7 @@ isic_isac_l1_cmd(struct l1_softc *sc, int command)
  *	L1 ISAC initialization
  *---------------------------------------------------------------------------*/
 int
-isic_isac_init(struct l1_softc *sc)
+isic_isac_init(struct isic_softc *sc)
 {
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 

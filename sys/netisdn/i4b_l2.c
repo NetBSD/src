@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.6 2002/03/19 20:10:45 martin Exp $");
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
@@ -157,10 +158,8 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct mbuf *m)
  *	isdn_layer2_activate_ind - link activation/deactivation indication from layer 1
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_activate_ind(isdn_layer2token t, int event_activate)
+isdn_layer2_activate_ind(struct l2_softc *l2sc, int event_activate)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)t;
-
 	if (event_activate) {
 		l2sc->ph_active = PH_ACTIVE;
 	} else {
@@ -215,9 +214,8 @@ i4b_l2_unit_init(l2_softc_t *l2sc)
  *	isdn_layer2_status_ind - status indication upward
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
+isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 {
-	l2_softc_t *l2sc = (l2_softc_t*)token;
 	int s;
 	int sendup = 1;
 	
@@ -230,7 +228,7 @@ isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
 		case STI_ATTACH:
 			l2sc->i_queue.ifq_maxlen = IQUEUE_MAXLEN;
 			l2sc->ua_frame = NULL;
-			bzero(&l2sc->stat, sizeof(lapdstat_t));			
+			memset(&l2sc->stat, 0, sizeof(lapdstat_t));			
 			i4b_l2_unit_init(l2sc);
 			
 			/* initialize the callout handles for timeout routines */
@@ -280,7 +278,7 @@ isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
  *---------------------------------------------------------------------------*/
 int i4b_mdl_command_req(int bri, int command, void * parm)
 {
-	struct l2_softc *sc = (struct l2_softc*)isdn_find_l2_by_bri(bri);
+	struct l2_softc *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 
 	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", bri, command, parm);
 
@@ -305,9 +303,8 @@ int i4b_mdl_command_req(int bri, int command, void * parm)
  * isdn_layer2_data_ind - process a rx'd frame got from layer 1
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
+isdn_layer2_data_ind(l2_softc_t *l2sc, struct mbuf *m)
 {
-	l2_softc_t *l2sc = (l2_softc_t*)t;
 	u_char *ptr = m->m_data;
 
 	if ( (*(ptr + OFF_CNTL) & 0x01) == 0 )
@@ -355,13 +352,13 @@ isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
 
 int i4b_l2_channel_get_state(int bri, int b_chanid)
 {
-	l2_softc_t *sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+	l2_softc_t *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 	return sc->bchan_state[b_chanid];
 }
 
 void i4b_l2_channel_set_state(int bri, int b_chanid, int state)
 {
-	l2_softc_t *sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+	l2_softc_t *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 	sc->bchan_state[b_chanid] = state;
 }
 

@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.3 2001/11/13 07:56:42 lukem Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.4 2002/03/24 20:35:51 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -75,7 +75,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.3 2001/11/13 07:56:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.4 2002/03/24 20:35:51 martin Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.3 2001/11/13 07:56:42 luk
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -141,11 +142,11 @@ extern struct cfdriver isiccd;
 #endif
 
 #if !defined(__FreeBSD__) && !defined(__bsdi__)
-static void dynalink_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size);
-static void dynalink_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size);
-static void dynalink_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data);
-static u_int8_t dynalink_read_reg(struct l1_softc *sc, int what, bus_size_t offs);
-void isic_attach_Dyn(struct l1_softc *sc);
+static void dynalink_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void dynalink_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size);
+static void dynalink_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static u_int8_t dynalink_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+void isic_attach_Dyn(struct isic_softc *sc);
 #endif
 
 /* io address mapping */
@@ -177,7 +178,7 @@ int
 isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2) 
 {
 
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
@@ -282,7 +283,7 @@ isic_attach_Dyn(struct isa_device *dev, unsigned int iobase2)
 */
 
 static int
-set_softc(struct l1_softc *sc, struct isa_attach_args *ia, int unit)
+set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 {
 	if (unit >= NISIC)
 		return 0;
@@ -353,7 +354,7 @@ int
 isapnp_match_dynalink(struct device *parent, struct cfdata *cf,
 		struct isa_attach_args *ia)
 {
-	struct l1_softc dummysc, *sc = &dummysc;
+	struct isic_softc dummysc, *sc = &dummysc;
 	pnp_resource_t res;
 	char *ids[] = {"ASU1688", NULL};
 	bzero(&res, sizeof res);
@@ -392,7 +393,7 @@ int
 isic_attach_Dyn(struct device *parent, struct device *self,
 		struct isa_attach_args *ia)
 {
-	struct l1_softc *sc = (struct l1_softc *)self;
+	struct isic_softc *sc = (struct isic_softc *)self;
 	int unit = sc->sc_dev.dv_unit;
 
 	/* Commit the probed attachment values */
@@ -408,7 +409,7 @@ isic_attach_Dyn(struct device *parent, struct device *self,
 
 #else
 
-void isic_attach_Dyn(struct l1_softc *sc)
+void isic_attach_Dyn(struct isic_softc *sc)
 {
 	/* setup access routines */
 	sc->clearirq = NULL;
@@ -464,7 +465,7 @@ dynalink_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-dynalink_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+dynalink_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -493,7 +494,7 @@ dynalink_write_fifo(void *base, const void *buf, size_t len)
 	outsb(IOADDR(base), (u_char *)buf, (u_int)len);
 }
 #else
-static void dynalink_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+static void dynalink_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -522,7 +523,7 @@ dynalink_write_reg(u_char *base, u_int offset, u_int v)
 	outb(IOADDR(base), (u_char)v);
 }
 #else
-static void dynalink_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+static void dynalink_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -551,7 +552,7 @@ dynalink_read_reg(u_char *base, u_int offset)
 	return (inb(IOADDR(base)));
 }
 #else
-static u_int8_t dynalink_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+static u_int8_t dynalink_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
