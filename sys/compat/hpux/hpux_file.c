@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.15 2000/12/01 12:28:32 jdolecek Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.16 2001/01/22 20:08:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -873,7 +873,7 @@ hpux_sys_readlink(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return (sys_readlink(p, uap, retval));
 }

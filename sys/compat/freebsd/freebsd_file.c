@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.12 2001/01/18 20:28:25 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.13 2001/01/22 20:08:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -275,7 +275,7 @@ freebsd_sys_lchown(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_lchown(p, uap, retval);
 }
 
@@ -404,7 +404,7 @@ freebsd_sys_readlink(p, v, retval)
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
 }
 
