@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.35 2000/03/26 20:54:48 kleink Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.35.4.1 2001/10/08 19:23:54 he Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -118,6 +118,7 @@ struct vm_map_entry {
 	u_int8_t		flags;		/* flags */
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
+#define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
 
 };
 
