@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.7 2001/02/04 17:15:37 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.8 2001/04/30 02:46:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ ldenddetach(struct ld_softc *sc)
 			    sc->sc_dv.dv_xname);
 }
 
+/* ARGSUSED */
 static void
 ldshutdown(void *cookie)
 {
@@ -219,6 +220,7 @@ ldshutdown(void *cookie)
 	}
 }
 
+/* ARGSUSED */
 int
 ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
@@ -259,6 +261,7 @@ ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
@@ -290,6 +293,7 @@ ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 ldread(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -297,6 +301,7 @@ ldread(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(ldstrategy, NULL, dev, B_READ, ldminphys, uio));
 }
 
+/* ARGSUSED */
 int
 ldwrite(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -304,6 +309,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(ldstrategy, NULL, dev, B_WRITE, ldminphys, uio));
 }
 
+/* ARGSUSED */
 int
 ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 {
