@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: select.h,v 1.3 1993/05/20 10:26:36 cgd Exp $
+ * $Id: select.h,v 1.4 1993/05/20 11:49:00 cgd Exp $
  */
 
 #ifndef _SYS_SELECT_H_
@@ -38,13 +38,13 @@ struct selinfo {
 };
 
 #ifdef KERNEL
+struct proc;
 
 /* record a select request */
 void	selrecord  __P((struct proc *, struct selinfo *));
 
 /* wakeup a selecting proc */
 void	selwakeup  __P((struct selinfo *));
-
 #endif /* KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */
