@@ -198,11 +198,15 @@ smmap(p, uap, retval)
 		/*
 		 * Map protections to MACH style
 		 */
-                maxprot = VM_PROT_EXECUTE;
-		if (fp->f_flag & FREAD)
-			maxprot |= VM_PROT_READ;
-		if (fp->f_flag & FWRITE)
-			maxprot |= VM_PROT_WRITE;
+		if(flags & MAP_SHARED) {
+        	        maxprot = VM_PROT_EXECUTE;
+			if (fp->f_flag & FREAD)
+				maxprot |= VM_PROT_READ;
+			if (fp->f_flag & FWRITE)
+				maxprot |= VM_PROT_WRITE;
+		} else {
+			maxprot = VM_PROT_ALL;
+		}
 	} else if (uap->fd != -1) {
                 maxprot = VM_PROT_ALL;
 		handle = (caddr_t)fp;
