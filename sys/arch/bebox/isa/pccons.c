@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.14 1998/11/19 15:38:22 mrg Exp $	*/
+/*	$NetBSD: pccons.c,v 1.15 1999/03/19 04:58:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <bebox/isa/isa_machdep.h>
 #include <bebox/isa/kbdreg.h>
 
 #define	ISA_MEM(p)	((void *)(BEBOX_BUS_SPACE_MEM + (u_long)(p)))

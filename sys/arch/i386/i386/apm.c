@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.37 1999/01/21 22:58:11 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.38 1999/03/19 04:58:46 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,9 +74,8 @@
 #include <machine/psl.h>
 
 #include <dev/isa/isareg.h>
-#include <i386/isa/isa_machdep.h>
-#include <i386/isa/nvram.h>
 #include <dev/isa/isavar.h>
+#include <i386/isa/nvram.h>
 
 #include <machine/bioscall.h>
 #include <machine/apmvar.h>
