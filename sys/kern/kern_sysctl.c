@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.3 2001/04/09 01:57:54 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.4 2001/06/20 13:44:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1750,7 +1750,8 @@ static struct lwp *proc_representative_lwp(p)
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_stat == LSRUN ||
 			    l->l_stat == LSSLEEP ||
-			    l->l_stat == LSONPROC)
+			    l->l_stat == LSONPROC ||
+			    l->l_stat == LSSUSPENDED)
 				return (l);
 		}
 		break;
