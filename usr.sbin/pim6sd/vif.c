@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.1 2000/01/28 19:32:53 itojun Exp $	*/
+/*	$NetBSD: vif.c,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -311,39 +311,40 @@ void start_vif (vifi_t vifi)
 	IF_DEBUG(DEBUG_IF)
 		log(LOG_DEBUG,0,"%s comes up ,vif #%u now in service",v->uv_name,vifi);
 
-	if(!(v->uv_flags & MIFF_REGISTER))
-	{
+	if (!(v->uv_flags & MIFF_REGISTER)) {
+	    /*
+	     * Join the PIM multicast group on the interface.
+	     */
+	    k_join(mld6_socket, &allpim6routers_group.sin6_addr,
+		   v->uv_ifindex);
 
-    /*
-     * Join the PIM multicast group on the interface.
-     */
+	    /*
+	     * Join the ALL-ROUTERS multicast group on the interface.
+	     * This allows mtrace requests to loop back if they are run
+	     * on the multicast router.this allow receiving mld6 messages too.
+	     */
+	    k_join(mld6_socket, &allrouters_group.sin6_addr, v->uv_ifindex);
 
-
-		k_join(mld6_socket,&allpim6routers_group.sin6_addr,v->uv_ifindex);
-    /*
-     * Join the ALL-ROUTERS multicast group on the interface.
-     * This allows mtrace requests to loop back if they are run
-     * on the multicast router.this allow receiving mld6 messages too.
-     */
-
-		k_join(mld6_socket,&allrouters_group.sin6_addr,v->uv_ifindex);
-
-   /*
-     * Until neighbors are discovered, assume responsibility for sending
-     * periodic group membership queries to the subnet.  Send the first
-     * query.
-     */
-
-
-		v->uv_flags |= VIFF_QUERIER;
-	 	query_groups(v);
+	    /*
+	     * Until neighbors are discovered, assume responsibility for sending
+	     * periodic group membership queries to the subnet.  Send the first
+	     * query.
+	     */
+	    v->uv_flags |= VIFF_QUERIER;
+	    if (!v->uv_querier) {
+		v->uv_querier = (struct listaddr *)malloc(sizeof(struct listaddr));
+		memset(v->uv_querier, 0, sizeof(struct listaddr));
+	    }
+	    v->uv_querier->al_addr = v->uv_linklocal->pa_addr;
+	    v->uv_querier->al_timer = MLD6_OTHER_QUERIER_PRESENT_INTERVAL;
+	    time(&v->uv_querier->al_ctime); /* reset timestamp */
+	    query_groups(v);
   
-    /*
-     * Send a probe via the new vif to look for neighbors.
-     */
-
-		send_pim6_hello( v , pim_hello_holdtime );
-	}	
+	    /*
+	     * Send a probe via the new vif to look for neighbors.
+	     */
+	    send_pim6_hello(v, pim_hello_holdtime);
+	}
 }
 
 /*
@@ -706,12 +707,12 @@ local_address(src)
     register struct phaddr *p;
 
     for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
-    if (v->uv_flags & (VIFF_DISABLED | VIFF_DOWN | MIFF_REGISTER))
-        continue;
-    for (p = v->uv_addrs; p; p = p->pa_next) {
-        if (inet6_equal(src, &p->pa_addr))
-            return(vifi);
-    }
+	if (v->uv_flags & (VIFF_DISABLED | VIFF_DOWN | MIFF_REGISTER))
+	    continue;
+	for (p = v->uv_addrs; p; p = p->pa_next) {
+	    if (inet6_equal(src, &p->pa_addr))
+		return(vifi);
+	}
     }
     /* Returning NO_VIF means not a local address */
     return (NO_VIF);

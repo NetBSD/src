@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2000/05/19 10:43:37 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: main.c,v 1.2 1999/08/13 09:20:13 jinmei Exp
+ *  KAME Id: main.c,v 1.3 2000/03/26 19:11:41 sumikawa Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -525,7 +525,7 @@ main(argc, argv)
 	    IF_DEBUG(DEBUG_TIMEOUT)
 		log(LOG_DEBUG, 0, "TIMEOUT: secs %d, diff secs %d, diff usecs %d", secs, difftime.tv_sec, difftime.tv_usec );
 #endif
-	    while (difftime.tv_usec > 1000000) {
+	    while (difftime.tv_usec >= 1000000) {
 		difftime.tv_sec++;
 		difftime.tv_usec -= 1000000;
 	    }

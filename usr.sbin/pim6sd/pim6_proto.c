@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_proto.c,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.2 2000/05/19 10:43:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -322,8 +322,6 @@ receive_pim6_hello(src, pim_message, datalen)
 		}
 	    }
 	    v->uv_flags &= ~VIFF_DR;
-	    v->uv_flags &= ~VIFF_QUERIER;
-		
 	}
     }
 
@@ -375,15 +373,12 @@ delete_pim6_nbr(nbr_delete)
     else
     {
 	if  (inet6_greaterthan(&v->uv_linklocal->pa_addr, 
-	    &v->uv_pim_neighbors->address)) 
-
+			       &v->uv_pim_neighbors->address)) 
 	    /*
 	     * The first address is the new potential remote DR address, but
 	     * the local address is the winner.
 	     */
-
 	    v->uv_flags |= VIFF_DR;
-   	    v->uv_flags |= VIFF_QUERIER; 
     }
 
     /* Update the source entries */
@@ -3696,6 +3691,15 @@ receive_pim6_bootstrap(src, dst, pim_message, datalen)
 	GET_BYTE(curr_frag_rp_count, data_ptr);
 	GET_HOSTSHORT(reserved_short, data_ptr);
 	MASKLEN_TO_MASK6(curr_group_addr.masklen, curr_group_mask);
+
+	if (IN6_IS_ADDR_MC_NODELOCAL(&curr_group_addr.mcast_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&curr_group_addr.mcast_addr)) {
+		log(LOG_WARNING, 0,
+		    "receive_pim6_bootstrap: "
+		    "group prefix has a narraw scope: %s (ignored)",
+		    inet6_fmt(&curr_group_addr.mcast_addr));
+		continue;
+	}
 	if (curr_rp_count == 0)
 	{
 	    group_.sin6_addr = curr_group_addr.mcast_addr;
@@ -3783,7 +3787,7 @@ receive_pim6_bootstrap(src, dst, pim_message, datalen)
 			& grp_mask_ptr->group_mask.s6_addr[i];
 	    }
 
-	    if (inet6_lessthan(&prefix_h2, &prefix_h))
+	    if (inet6_greaterthan(&prefix_h2, &prefix_h))
 		continue;
 	    else
 		break;

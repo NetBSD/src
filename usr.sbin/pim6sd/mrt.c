@@ -1,4 +1,4 @@
-/*	$NetBSD: mrt.c,v 1.2 2000/03/13 23:22:56 soren Exp $	*/
+/*	$NetBSD: mrt.c,v 1.3 2000/05/19 10:43:49 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -815,7 +815,7 @@ create_grpentry(group)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
  * (or NULL if first in the chain.
  */
 static int
@@ -852,7 +852,7 @@ search_srcmrtlink(srcentry_ptr, group, mrtPtr)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
  * (or NULL if first in the chain.
  */
 static int
@@ -1081,6 +1081,12 @@ create_mrtentry(srcentry_ptr, grpentry_ptr, flags)
 	insert_grpmrtlink(r_new, r_grp_insert, grpentry_ptr);
 	insert_srcmrtlink(r_new, r_src_insert, srcentry_ptr);
 	r_new->flags |= MRTF_SG;
+
+	IF_DEBUG(DEBUG_MFC)
+	    log(LOG_DEBUG, 0, "create SG entry, source %s, group %s",
+		inet6_fmt(&source->sin6_addr),
+		inet6_fmt(&group->sin6_addr));
+
 	return (r_new);
     }
 
