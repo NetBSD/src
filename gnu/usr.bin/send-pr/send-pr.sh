@@ -262,8 +262,10 @@ SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
 PRIORITY_C='<[ low | medium | high ] (one line)>'
 CATEGORY_C='<problem report category - see top for list (one line)>'
 CLASS_C='<[ sw-bug | doc-bug | change-request | support ] (one line)>'
-RELEASE_C='<release number or tag (one line)>'
-ENVIRONMENT_C='<machine, os, target, libraries (multiple lines)>'
+RELEASE_C_1='<Please check that the above is correct for the bug being reported,>'
+RELEASE_C_2='<and append source date of snapshot, if applicable (one line).>'
+ENVIRONMENT_C_1='<The following information is extracted from your kernel. Please>'
+ENVIRONMENT_C_2='<append output of "ldd", "ident" where relevant (multiple lines).>'
 DESCRIPTION_C='<precise description of the problem (multiple lines)>'
 HOW_TO_REPEAT_C='<code/input/activities to reproduce the problem (multiple lines)>'
 FIX_C='<how to correct or work around the problem, if known (multiple lines)>'
@@ -363,9 +365,12 @@ ${ORGANIZATION-	$ORGANIZATION_C}
 >Priority:	$PRIORITY_C
 >Category:	$CATEGORY_C
 >Class:		$CLASS_C
->Release:	${DEFAULT_RELEASE-$RELEASE_C}
+>Release:	${DEFAULT_RELEASE:-"unreleased"}
+	$RELEASE_C_1
+	$RELEASE_C_2
 >Environment:
-	$ENVIRONMENT_C
+	$ENVIRONMENT_C_1
+	$ENVIRONMENT_C_2
 `[ -n "$SYSTEM" ] && echo System: $SYSTEM`
 `[ -n "$ARCH" ] && echo Architecture: $ARCH`
 `[ -n "$MACHINE" ] && echo Machine: $MACHINE`
@@ -539,8 +544,10 @@ sed  -e "
 /^>Priority:/s;<.*>;;
 /^>Category:/s;$CATEGORY_C;;
 /^>Class:/s;<.*>;;
-/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C;;
-/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C;;
+/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C_1;;
+/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C_2;;
+/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C_1;;
+/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C_2;;
 /^>Description:/,/^>[A-Za-z-]*:/s;$DESCRIPTION_C;;
 /^>How-To-Repeat:/,/^>[A-Za-z-]*:/s;$HOW_TO_REPEAT_C;;
 /^>Fix:/,/^>[A-Za-z-]*:/s;$FIX_C;;
