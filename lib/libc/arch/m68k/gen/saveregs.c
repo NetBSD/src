@@ -1,4 +1,4 @@
-/*	$NetBSD: saveregs.c,v 1.4 1997/07/14 02:13:56 christos Exp $	*/
+/*	$NetBSD: saveregs.c,v 1.5 1997/07/14 19:36:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,16 +42,17 @@
 #if 0
 static char sccsid[] = "from: @(#)saveregs.c	5.2 (Berkeley) 6/22/90";
 #else
-__RCSID("$NetBSD: saveregs.c,v 1.4 1997/07/14 02:13:56 christos Exp $");
+__RCSID("$NetBSD: saveregs.c,v 1.5 1997/07/14 19:36:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
-void __builtin_saveregs __P((void));
+void *__builtin_saveregs __P((void));
 
-void
+void *
 __builtin_saveregs()
 {
 	abort();
+	return NULL;
 }
