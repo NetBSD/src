@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.7 1997/07/22 03:44:30 jonathan Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.8 1997/08/26 01:27:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -204,19 +204,79 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 	register caddr_t from = fromv;
 	register caddr_t bptr;
-	register int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
+
+	/*
+	 * Dispose of boff so destination of subsequent copies is
+	 * 16-byte aligned.
+	 */
+	if (boff) {
+		register int xfer;
+		xfer = min(len, 16 - boff);
 		bcopy(from, bptr + boff, xfer);
 		from += xfer;
 		bptr += 32;
-		boff = 0;
 		len -= xfer;
-		xfer = min(len, 16);
 	}
+
+	/* Destination of  copies is now 16-byte aligned. */
+	if (len >= 16)
+		switch ((u_long)from & (sizeof(u_int32_t) -1)) {
+		case 2:
+			/*  Ethernet headers make this the dominant case. */
+		do {
+			register u_int32_t *dst = (u_int32_t*)bptr;
+			register u_int16_t t0;
+			register u_int32_t t1,  t2, t3, t4;
+
+			/* read from odd-16-bit-aligned, cached src */
+			t0 = *(u_int16_t*)from;
+			t1 = *(u_int32_t*)(from+2);
+			t2 = *(u_int32_t*)(from+6);
+			t3 = *(u_int32_t*)(from+10);
+			t4 = *(u_int16_t*)(from+14);
+
+			/* DMA buffer is uncached on mips */
+			dst[0] =         t0 |  (t1 << 16);
+			dst[1] = (t1 >> 16) |  (t2 << 16);
+			dst[2] = (t2 >> 16) |  (t3 << 16);
+			dst[3] = (t3 >> 16) |  (t4 << 16);
+
+			from += 16;
+			bptr += 32;
+			len -= 16;
+		} while (len >= 16);
+		break;
+
+		case 0:
+		do {
+			register u_int32_t *src = (u_int32_t*)from;
+			register u_int32_t *dst = (u_int32_t*)bptr;
+			register u_int32_t t0, t1, t2, t3;
+
+			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
+			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
+
+			from += 16;
+			bptr += 32;
+			len -= 16;
+		} while (len >= 16);
+		break;
+
+		default: 
+		/* Does odd-aligned case ever happen? */
+		do {
+			bcopy(from, bptr, 16);
+			from += 16;
+			bptr += 32;
+			len -= 16;
+		} while (len >= 16);
+		break;
+	}
+	if (len)
+		bcopy(from, bptr, len);
 }
 
 void
@@ -228,19 +288,71 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 	register caddr_t to = tov;
 	register caddr_t bptr;
-	register int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bcopy(bptr + boff, to, xfer);
+
+	/* Dispose of boff. source of copy is subsequently 16-byte aligned. */
+	if (boff) {
+		register int xfer;
+		xfer = min(len, 16 - boff);
+		bcopy(bptr+boff, to, xfer);
 		to += xfer;
 		bptr += 32;
-		boff = 0;
 		len -= xfer;
-		xfer = min(len, 16);
 	}
+	if (len >= 16)
+	switch ((u_long)to & (sizeof(u_int32_t) -1)) {
+	case 2:
+		/*
+		 * to is aligned to an odd 16-bit boundary.  Ethernet headers
+		 * make this the dominant case (98% or more).
+		 */
+		do {
+			register u_int32_t *src = (u_int32_t*)bptr;
+			register u_int32_t t0, t1, t2, t3;
+
+			/* read from uncached aligned DMA buf */
+			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
+
+			/* write to odd-16-bit-word aligned dst */
+			*(u_int16_t *) (to+0)  = (u_short)  t0;
+			*(u_int32_t *) (to+2)  = (t0 >> 16) |  (t1 << 16);
+			*(u_int32_t *) (to+6)  = (t1 >> 16) |  (t2 << 16);
+			*(u_int32_t *) (to+10) = (t2 >> 16) |  (t3 << 16);
+			*(u_int16_t *) (to+14) = (t3 >> 16);
+			bptr += 32;
+			to += 16;
+			len -= 16;
+		} while (len > 16);
+		break;
+	case 0:
+		/* 32-bit aligned aligned copy. Rare. */
+		do {
+			register u_int32_t *src = (u_int32_t*)bptr;
+			register u_int32_t *dst = (u_int32_t*)to;
+			register u_int32_t t0, t1, t2, t3;
+
+			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
+			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
+			to += 16;
+			bptr += 32;
+			len -= 16;
+		} while (len  > 16);
+		break;
+
+	/* XXX Does odd-byte-aligned case ever happen? */
+	default:
+		do {
+			bcopy(bptr, to, 16);
+			to += 16;
+			bptr += 32;
+			len -= 16;
+		} while (len  > 16);
+		break;
+	}
+	if (len)
+		bcopy(bptr, to, len);
 }
 
 void
