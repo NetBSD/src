@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.31 1999/11/18 13:28:06 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.32 1999/12/03 02:43:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1584,6 +1584,8 @@ rf_DispatchKernelIO(queue, req)
 	raidbp->rf_obp = bp;
 	raidbp->req = req;
 
+	LIST_INIT(&raidbp->rf_buf.b_dep);
+
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */
 		/* Dprintf2("rf_DispatchKernelIO: NOP to r %d c %d\n",
@@ -1775,7 +1777,6 @@ InitBP(
 #if 0
 	db1_printf(("bp->b_data=0x%x\n", bp->b_data));
 #endif
-	LIST_INIT(&bp->b_dep);
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	db1_printf(("b_bcount is: %d\n", (int) bp->b_bcount));
