@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.7 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.8 2000/01/06 00:34:38 tron Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.7 1998/06/27 21:15:08 christos Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.8 2000/01/06 00:34:38 tron Exp $");
 #endif
 #endif
 
@@ -447,7 +447,7 @@ assign_date(tm, mday, mon, year)
 	}
 
 	if (year >= 0) {
-		if (year < 69)
+		if (year < 70)
 			tm->tm_year = year + 2000 - TM_YEAR_BASE;
 		else
 			tm->tm_year = year + 1900 - TM_YEAR_BASE;
