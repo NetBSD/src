@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15.2.1 2004/08/03 10:34:47 skrll Exp $
+# $NetBSD: GENERIC,v 1.15.2.2 2004/08/05 20:23:05 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.15.2.1 $"
+#ident 		"GENERIC-$Revision: 1.15.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -311,7 +311,7 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
-#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
 dpt*	at eisa? slot ?			# DPT EATA SCSI
 uha*	at eisa? slot ?			# UltraStor 24f SCSI

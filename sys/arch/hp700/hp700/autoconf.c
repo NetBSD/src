@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.2.1 2004/08/03 10:34:48 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.2 2004/08/05 20:23:05 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.1 2004/08/03 10:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.2 2004/08/05 20:23:05 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -415,7 +415,6 @@ device_register(struct device *dev, void *aux)
 	hp700_pagezero_unmap(pagezero_cookie);
 	return;
 }
-
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.5.6.1 2004/08/03 10:38:28 skrll Exp $	*/
+/*	$NetBSD: xafb.c,v 1.5.6.2 2004/08/05 20:23:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.1 2004/08/03 10:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.2 2004/08/05 20:23:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.1 2004/08/03 10:38:28 skrll Exp $");
 #include <machine/adrsmap.h>
 #include <machine/apcall.h>
 
-#include <dev/wscons/wsconsio.h>
+#include <machine/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
@@ -62,6 +62,7 @@ struct xafb_reg {
 
 struct xafb_devconfig {
 	volatile u_char *dc_fbbase;	/* VRAM base address */
+	paddr_t dc_fbpaddr;		/* VRAM physical address */
 	struct xafb_reg *dc_reg;	/* register address */
 	struct rasops_info dc_ri;
 };
@@ -160,8 +161,8 @@ xafb_attach(parent, self, aux)
 	} else {
 		dc = malloc(sizeof(struct xafb_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(dc, sizeof(struct xafb_devconfig));
-
-		dc->dc_fbbase = (void *)0xb0000000;		/* XXX */
+		dc->dc_fbpaddr = (paddr_t)0x10000000;
+		dc->dc_fbbase = (void *)MIPS_PHYS_TO_KSEG1(dc->dc_fbpaddr);
 		dc->dc_reg = (void *)(apa->apa_hwbase + 0x3000);
 		if (xafb_common_init(dc) != 0) {
 			printf(": couldn't initialize device\n");
@@ -258,15 +259,18 @@ xafb_ioctl(v, cmd, data, flag, p)
 {
 	struct xafb_softc *sc = v;
 	struct xafb_devconfig *dc = sc->sc_dc;
-	struct wsdisplay_fbinfo *wdf;
+	struct newsmips_wsdisplay_fbinfo *nwdf = (void *)data;
+	struct wsdisplay_fbinfo *wdf = (void *)data;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;	/* XXX */
 		return 0;
 
+	case NEWSMIPS_WSDISPLAYIO_GINFO:
+		nwdf->stride = dc->dc_ri.ri_stride;
+		/* FALLTHROUGH */
 	case WSDISPLAYIO_GINFO:
-		wdf = (void *)data;
 		wdf->height = dc->dc_ri.ri_height;
 		wdf->width = dc->dc_ri.ri_width;
 		wdf->depth = dc->dc_ri.ri_depth;
@@ -297,7 +301,7 @@ xafb_mmap(v, offset, prot)
 	if (offset >= (ri->ri_stride * ri->ri_height) || offset < 0)
 		return -1;
 
-	return mips_btop((int)dc->dc_fbbase + offset);
+	return mips_btop(dc->dc_fbpaddr + offset);
 }
 
 int
@@ -359,7 +363,8 @@ xafb_cnattach()
 	if (!xafb_is_console())
 		return -1;
 
-	dc->dc_fbbase = (void *)0xb0000000;			/* XXX */
+	dc->dc_fbpaddr = (paddr_t)0x10000000;
+	dc->dc_fbbase = (void *)MIPS_PHYS_TO_KSEG1(dc->dc_fbpaddr);
 	dc->dc_reg = (void *)0xb4903000;			/* XXX */
 	xafb_common_init(dc);
 
