@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.8 1996/02/02 18:08:03 mycroft Exp $	*/
+/*	$NetBSD: scc.c,v 1.9 1996/02/08 02:26:34 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -133,6 +133,7 @@ extern void ttrstrt	__P((void *));
  */
 #ifdef pmax
 #define HAVE_RCONS
+extern int pending_remcons;
 #endif
 
 /*
@@ -272,6 +273,10 @@ static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
 int		sccintr __P((void *));
+
+void scc_consinit __P((struct scc_softc *sc));
+
+
 #ifdef alpha
 void	scc_alphaintr __P((int));
 #endif
@@ -429,6 +434,50 @@ sccattach(parent, self, aux)
 	/*
 	 * Special handling for consoles.
 	 */
+#ifdef pmax
+	if (pending_remcons) {
+		/*
+		 * We were using PROM callbacks for console I/O,
+		 * and we just reset the chip under the console.
+		 * wire up this driver as console ASAP.
+		 */
+
+		static struct consdev scccons = {
+			NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
+		};
+
+
+		/*XXX*/ /* test for correct unit */
+		DELAY(10000);
+
+		/*
+		 * XXX PROM  and NetBSD unit numbers swapped
+		 * on kn03, maybe kmin?
+		 */
+		if (cn_tab->cn_dev == unit)
+			return;
+
+		/*
+		 * If we are using the PROM serial-console routines
+		 * as console, now is the time to set up the scc
+		 * driver as console.
+		 */
+		scc_consinit(sc);
+		cn_tab = &scccons;
+		cn_tab->cn_dev = makedev(SCCDEV,
+		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
+		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
+	 	printf(" (Unit = %d)", unit);
+		printf(": console");
+		pending_remcons = 0;
+		/*
+		 * XXX We should support configurations where the PROM
+		 * console device is a serial console, and a
+		 * framebuffer, keyboard, and mouse are present.
+		 */
+		return;
+	}
+#endif /* pmax */
 #ifdef HAVE_RCONS
 	if ((cn_tab->cn_getc == LKgetc)) {
 		/* XXX test below may be too inclusive ? */
@@ -471,28 +520,9 @@ sccattach(parent, self, aux)
 		}
 	} else
 #endif /* HAVE_RCONS */
-	 if (SCCUNIT(cn_tab->cn_dev) == unit)
-	 {
-		s = spltty();
-#ifdef pmax
-		printf("wiring unit %d as console\n", SCCUNIT(cn_tab->cn_dev));
-		ctty.t_dev = cn_tab->cn_dev;
-#else
-                ctty.t_dev = makedev(SCCDEV,
-                    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-#endif
-		cterm.c_cflag = CS8;
-#ifdef pmax
-		/* XXX -- why on pmax, not on Alpha? */
-		cterm.c_cflag  |= CLOCAL;
-#endif
-		cterm.c_ospeed = cterm.c_ispeed = 9600;
-		(void) sccparam(&ctty, &cterm);
-		DELAY(1000);
-#ifdef HAVE_RCONS
-		/*cn_tab.cn_disabled = 0;*/ /* FIXME */
-#endif
-		splx(s);
+	if (SCCUNIT(cn_tab->cn_dev) == unit)
+	{
+		/*XXX console initialization used to go here */
 	}
 
 #ifdef alpha
@@ -502,9 +532,6 @@ sccattach(parent, self, aux)
 	 */
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
 	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
-#else /* !alpha */
-	if (cn_tab->cn_dev == NODEV) /*XXX*/
-#endif /* !alpha */
 	 {
 		static struct consdev scccons = {
 		    NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
@@ -518,6 +545,36 @@ sccattach(parent, self, aux)
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
 		printf("\n");
+#endif /* !alpha */
+}
+
+/*
+ * Set up a given unit as a serial console device.
+ * XXX
+ * As most DECstations only bring out one rs-232 lead from an SCC
+ * to the bulkhead, and use the other for mouse and keyboard, we
+ * only allow one unit per SCC to be console.
+ */
+void
+scc_consinit(sc)
+	struct scc_softc *sc;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = makedev(SCCDEV,
+	sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
+	cterm.c_cflag = CS8;
+#ifdef pmax
+	/* XXX -- why on pmax, not on Alpha? */
+	cterm.c_cflag  |= CLOCAL;
+#endif
+	cterm.c_ospeed = cterm.c_ispeed = 9600;
+	(void) sccparam(&ctty, &cterm);
+	DELAY(1000);
+	splx(s);
 }
 
 /*
