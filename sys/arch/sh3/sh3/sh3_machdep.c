@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.46 2003/01/18 06:33:44 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.47 2003/04/02 02:56:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -222,8 +222,8 @@ sh_proc0_init()
 	lwp0.l_addr = proc0paddr;
 	/*
 	 * u-area map:
-	 * |user| .... | ............... |
-	 * |      NBPG |  USPACE - NBPG  |
+	 * |user| .... | .................. |
+	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
          *        frame top        stack top
 	 * current frame ... r6_bank
 	 * stack top     ... r7_bank
@@ -233,7 +233,7 @@ sh_proc0_init()
 	curupte = lwp0.l_md.md_upte;
 
 	sf = &curpcb->pcb_sf;
-	sf->sf_r6_bank = u + NBPG;
+	sf->sf_r6_bank = u + PAGE_SIZE;
 	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
 	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
 	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
@@ -241,8 +241,8 @@ sh_proc0_init()
 	lwp0.l_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
 #ifdef KSTACK_DEBUG
 	memset((char *)(u + sizeof(struct user)), 0x5a,
-	    NBPG - sizeof(struct user));
-	memset((char *)(u + NBPG), 0xa5, USPACE - NBPG);
+	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)(u + PAGE_SIZE), 0xa5, USPACE - PAGE_SIZE);
 #endif /* KSTACK_DEBUG */
 }
 
@@ -308,7 +308,7 @@ sh_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -338,7 +338,7 @@ sh_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2002/10/23 09:11:58 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 2003/04/02 02:56:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			/* Physical address */
 			if (__mm_mem_addr(v)) {
 				o = v & PGOFSET;
-				c = min(uio->uio_resid, (int)(NBPG - o));
+				c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 				error = uiomove((caddr_t)SH3_PHYS_TO_P1SEG(v),
 				    c, uio);
 			} else {
@@ -133,10 +133,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return (0);
 			}
 			if (zeropage == NULL) {
-				zeropage = malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, NBPG);
+				zeropage = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 
