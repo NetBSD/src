@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.13 2002/10/15 13:49:52 jdc Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.14 2002/12/09 16:11:50 pk Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -64,20 +64,9 @@
 /* interrupt interfaces */
 #ifdef AUDIO_C_HANDLER
 int	am7930hwintr __P((void *));
-#if defined(SUN4M)
-#define AUDIO_SET_SWINTR do {		\
-	if (CPU_ISSUN4M)		\
-		raise(0, 4);		\
-	else				\
-		ienab_bis(IE_L4);	\
-} while(0);
-#else
-#define AUDIO_SET_SWINTR ienab_bis(IE_L4)
-#endif /* defined(SUN4M) */
-#else
-struct auio *auiop;
 #endif /* AUDIO_C_HANDLER */
-int	am7930swintr __P((void *));
+struct auio *auiop;
+void	am7930swintr __P((void *));
 
 /*
  * interrupt-handler status 
@@ -102,6 +91,7 @@ struct audioamd_softc {
 	/* sc_au is special in that the hardware interrupt handler uses it */
 	struct  auio sc_au;		/* recv and xmit buffers, etc */
 #define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
+	void	*sc_sicookie;		/* softintr(9) cookie */
 };
 
 void	audioamd_mainbus_attach __P((struct device *,
@@ -306,8 +296,6 @@ audioamd_attach(sc, pri)
 	int pri;
 {
 
-	printf(" softpri %d\n", PIL_AUSOFT);
-
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
@@ -315,8 +303,8 @@ audioamd_attach(sc, pri)
 
 	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
 
-#ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
+#ifndef AUDIO_C_HANDLER
 	(void)bus_intr_establish(sc->sc_bt, pri, IPL_AUDIO,
 				 BUS_INTR_ESTABLISH_FASTTRAP,
 				 (int (*) __P((void *)))amd7930_trap, NULL);
@@ -324,9 +312,16 @@ audioamd_attach(sc, pri)
 	(void)bus_intr_establish(sc->sc_bt, pri, IPL_AUDIO, 0,
 				 am7930hwintr, sc);
 #endif
-	(void)bus_intr_establish(sc->sc_bt, PIL_AUSOFT, IPL_AUDIO,
-				 BUS_INTR_ESTABLISH_SOFTINTR,
-				 am7930swintr, sc);
+
+	sc->sc_sicookie = softintr_establish(IPL_SOFTAUDIO, am7930swintr, sc);
+	if (sc->sc_sicookie == NULL) {
+		printf("\n%s: cannot establish software interrupt\n",
+			sc->sc_am7930.sc_dev.dv_xname);
+		return;
+	}
+
+	printf(" softpri %d\n", IPL_SOFTAUDIO);
+
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    sc->sc_am7930.sc_dev.dv_xname, "intr");
@@ -436,6 +431,9 @@ am7930hwintr(v)
 
 	/* clear interrupt */
 	k = audioamd_codec_dread(sc, AM7930_DREG_IR);
+	if ((k & (AM7930_IR_DTTHRSH|AM7930_IR_DRTHRSH|AM7930_IR_DSRI|
+		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0)
+		return (0);
 
 	/* receive incoming data */
 	d = au->au_rdata;
@@ -445,7 +443,7 @@ am7930hwintr(v)
 		au->au_rdata++;
 		if (d == e) {
 			DPRINTFN(1, ("am7930hwintr: swintr(r) requested"));
-			AUDIO_SET_SWINTR;
+			softintr_schedule(sc->sc_sicookie);
 		}
 	}
 
@@ -457,7 +455,7 @@ am7930hwintr(v)
 		au->au_pdata++;
 		if (d == e) {
 			DPRINTFN(1, ("am7930hwintr: swintr(p) requested"));
-			AUDIO_SET_SWINTR;
+			softintr_schedule(sc->sc_sicookie);
 		}
 	}
 
@@ -466,13 +464,13 @@ am7930hwintr(v)
 }
 #endif /* AUDIO_C_HANDLER */
 
-int
+void
 am7930swintr(sc0)
 	void *sc0;
 {
 	struct audioamd_softc *sc = sc0;
 	struct auio *au;
-	int s, ret = 0;
+	int s;
 
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 
@@ -480,17 +478,14 @@ am7930swintr(sc0)
 	s = splaudio();
 	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL) {
 		splx(s);
-		ret = 1;
 		(*sc->sc_rintr)(sc->sc_rarg);
 		s = splaudio();
 	}
 	if (au->au_pdata > au->au_pend && sc->sc_pintr != NULL) {
 		splx(s);
-		ret = 1;
 		(*sc->sc_pintr)(sc->sc_parg);
 	} else
 		splx(s);
-	return (ret);
 }
 
 
