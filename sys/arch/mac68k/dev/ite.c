@@ -38,13 +38,13 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.1 1994/07/08 07:55:52 lkestel Exp $
+ *	$Id: ite.c,v 1.2 1994/07/09 06:49:36 briggs Exp $
  */
 
 /*
  * ite.c
  *
- * $Id: ite.c,v 1.1 1994/07/08 07:55:52 lkestel Exp $
+ * $Id: ite.c,v 1.2 1994/07/09 06:49:36 briggs Exp $
  *
  * The ite module handles the system console; that is, stuff printed
  * by the kernel and by user programs while "desktop" and X aren't
@@ -63,8 +63,8 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <dev/cons.h>
 
-#include "../mac68k/cons.h"
 #include "../mac68k/via.h"
 #include <machine/frame.h>
 
@@ -482,13 +482,10 @@ itecnprobe(struct consdev *cp)
 		panic ("itecnprobe(): did not find iteopen().");
 	}
 
-	cdevsw[maj].d_ttys = &ite_tty;
-
-	unit = 0;
+	unit = 0; /* hardcode first device as console. */
 
 	/* initialize required fields */
 	cp->cn_dev = makedev (maj, unit);
-	cp->cn_tp = ite_tty;
 	cp->cn_pri = CN_INTERNAL;
 }
 

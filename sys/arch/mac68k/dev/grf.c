@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.7 1994/06/26 13:02:41 briggs Exp $
+ *	$Id: grf.c,v 1.8 1994/07/09 06:49:34 briggs Exp $
  */
 
 /*
@@ -76,10 +76,10 @@
 #include <mman.h>
 
 #include "ite.h"
-#if NITE == 0
+/* #if NITE == 0 */
 #define	iteon(u,f)
 #define	iteoff(u,f)
-#endif
+/* #endif */
 
 int	grfprobe();
 int	macvideo_init(), macvideo_mode();
