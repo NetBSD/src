@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chmod.c	5.19 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: chmod.c,v 1.5 1993/08/01 19:01:05 mycroft Exp $";
+static char rcsid[] = "$Id: chmod.c,v 1.6 1993/08/05 23:59:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ done:	argv += optind;
 				exit(1);
 			default:
 				if (chmod(p->fts_accpath,
-				    oct ? omode : getmode(set, p->fts_statb.st_mode))
+				    oct ? omode : getmode(set, p->fts_statp->st_mode))
 				    && !fflag)
 					error(p->fts_path);
 				break;
