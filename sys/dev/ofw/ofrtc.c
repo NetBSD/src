@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.8 2001/08/25 19:05:04 matt Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.9 2001/08/26 02:49:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -56,10 +56,7 @@ struct cfattach ofrtc_ca = {
 extern struct cfdriver ofrtc_cd;
 
 static int
-ofrtc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
@@ -76,9 +73,7 @@ ofrtc_match(parent, match, aux)
 }
 
 static void
-ofrtc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofrtc_softc *of = (void *)self;
 	struct ofbus_attach_args *oba = aux;
@@ -97,11 +92,7 @@ ofrtc_attach(parent, self, aux)
 }
 
 int
-ofrtc_open(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
@@ -133,27 +124,20 @@ ofrtc_open(dev, flags, fmt, p)
 }
 
 int
-ofrtc_close(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofrtc_close(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	return 0;
 }
 
 static void
-twodigit(bp, i)
-	char *bp;
-	int i;
+twodigit(char *bp, int i)
 {
 	*bp++ = i / 10 + '0';
 	*bp = i % 10 + '0';
 }
 
 static int
-twodigits(bp)
-	char *bp;
+twodigits(char *bp)
 {
 	int i;
 	
@@ -162,10 +146,7 @@ twodigits(bp)
 }
 
 int
-ofrtc_read(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtc_read(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	int date[6];
@@ -197,10 +178,7 @@ ofrtc_read(dev, uio, flag)
 }
 
 int
-ofrtc_write(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtc_write(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	char buf[14];
