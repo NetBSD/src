@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.30 2004/01/01 17:52:19 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.31 2004/01/01 18:07:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.30 2004/01/01 17:52:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.31 2004/01/01 18:07:58 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.30 2004/01/01 17:52:19 bjh21 Exp $")
 #include <arm/iomd/vidc.h>
 #include <arm/mainbus/mainbus.h>
 #include <arm/iomd/waveform.h>
-#include "vidcaudio.h"
 
 extern int *vidc_base;
 
