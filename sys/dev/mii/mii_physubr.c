@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.15 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.16 2000/03/15 20:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ mii_phy_statusmsg(sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int baudrate, link_state, announce = 0;
+	int s, baudrate, link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
@@ -291,6 +291,11 @@ mii_phy_statusmsg(sc)
 
 	if (link_state != ifp->if_link_state) {
 		ifp->if_link_state = link_state;
+		/*
+		 * XXX Right here we'd like to notify protocols
+		 * XXX that the link status has changed, so that
+		 * XXX e.g. Duplicate Address Detection can restart.
+		 */
 		announce = 1;
 	}
 
@@ -299,8 +304,11 @@ mii_phy_statusmsg(sc)
 		announce = 1;
 	}
 
-	if (announce)
+	if (announce) {
+		s = splimp();	/* XXX Should be splnet() */
 		rt_ifmsg(ifp);
+		splx(s);
+	}
 }
 
 /*
