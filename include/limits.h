@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.9 1998/02/02 21:07:27 perry Exp $	*/
+/*	$NetBSD: limits.h,v 1.10 1998/07/08 19:51:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -61,9 +61,8 @@
 #define	_POSIX2_EXPR_NEST_MAX	32
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	255
-#endif /* !_ANSI_SOURCE */
 
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #define PASS_MAX		128
 
 #define NL_ARGMAX		9
@@ -72,7 +71,11 @@
 #define NL_NMAX			1
 #define NL_SETMAX		255
 #define NL_TEXTMAX		255
-#endif 
+
+#define TMP_MAX			308915776
+#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+
+#endif /* !_ANSI_SOURCE */
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>
