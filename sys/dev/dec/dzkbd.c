@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.3 2001/09/24 01:29:06 chs Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.4 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * LK200/LK400 keyboard attached to line 0 of the DZ*-11
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.4 2001/11/13 12:49:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

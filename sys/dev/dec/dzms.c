@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
+/*	$NetBSD: dzms.c,v 1.2 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * VSXXX mice attached to line 1 of the DZ*
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.2 2001/11/13 12:49:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
