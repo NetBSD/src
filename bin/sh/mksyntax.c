@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.21 1999/02/23 01:50:26 wrstuden Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.22 1999/03/08 17:55:20 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.21 1999/02/23 01:50:26 wrstuden Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.22 1999/03/08 17:55:20 castor Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: mksyntax.c,v 1.21 1999/02/23 01:50:26 wrstuden Exp $");
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include "parser.h"
 
 
