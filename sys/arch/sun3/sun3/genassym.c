@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.30 1996/02/02 19:43:09 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.31 1996/02/16 23:36:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -169,6 +169,7 @@ main()
 	def("FR_SP", &fp->f_regs[15]);
 	def("FR_HW", &fp->f_sr);
 	def("FR_ADJ", &fp->f_stackadj);
+	def("FR_SIZE", sizeof(struct trapframe));
 
 	/* FP frame offsets */
 	def("FPF_REGS", &fpf->fpf_regs[0]);
