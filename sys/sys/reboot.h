@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.15 1998/06/06 01:34:45 thorpej Exp $	*/
+/*	$NetBSD: reboot.h,v 1.16 1998/06/06 20:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -55,7 +55,7 @@
 #define	RB_DUMP		0x100	/* dump kernel memory before reboot */
 #define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
 #define	RB_STRING	0x400	/* use provided bootstr */
-#define	RB_POWERDOWN	0x800	/* turn power off */
+#define	RB_POWERDOWN	(RB_HALT|0x800) /* turn power off (or at least halt) */
 
 /*
  * Constants for converting boot-style device number to type,
