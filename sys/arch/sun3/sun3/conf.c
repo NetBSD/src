@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 1995/08/17 17:41:02 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.43 1995/08/22 19:39:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -55,7 +55,7 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
-#inclide "ccd.h"
+#include "ccd.h"
 bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
