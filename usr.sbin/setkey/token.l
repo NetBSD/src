@@ -1,9 +1,10 @@
-/*	$NetBSD: token.l,v 1.6 2000/03/15 00:24:31 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.7 2000/06/12 10:40:51 itojun Exp $	*/
+/*	$KAME: token.l,v 1.13 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -71,7 +72,8 @@ extern u_int m_len;
 extern int f_debug;
 
 int yylex __P((void));
-void yyerror __P((char *s));
+void yyfatal __P((const char *s));
+void yyerror __P((const char *s));
 extern void parse_init __P((void));
 int parse __P((FILE **));
 int yyparse __P((void));
@@ -106,9 +108,7 @@ decstring	{digit}+
 hexpair		{hexdigit}{hexdigit}
 hexstring	0[xX]{hexdigit}+
 octetstring	{octet}({dot}{octet})+
-ipaddress	{ipv4addr}|{ipv6addr}
-ipv4addr	{digit}{1,3}({dot}{digit}{1,3}){0,3}
-ipv6addr	({hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,7}|{hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,7}%{letter}+|{hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,5}{colon}{ipv4addr})
+ipaddress	[a-fA-F0-9:]([a-fA-F0-9:\.]*|[a-fA-F0-9:\.]*%[a-zA-Z0-9]*)
 ipaddrmask	{slash}{digit}{1,3}
 ipaddrport	{blcl}{decstring}{elcl}
 keyword		{letter}{letter}+
@@ -171,9 +171,6 @@ des-cbc		{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
 simple		{ PREPROC; yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
 blowfish-cbc	{ PREPROC; yylval.num = SADB_EALG_BLOWFISHCBC; return(ALG_ENC); }
 cast128-cbc	{ PREPROC; yylval.num = SADB_EALG_CAST128CBC; return(ALG_ENC); }
-	/*
-rc5-cbc		{ PREPROC; yylval.num = SADB_EALG_RC5CBC; return(ALG_ENC); }
-	*/
 des-deriv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
 des-32iv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
 
@@ -221,31 +218,13 @@ any		{ PREPROC; return(ANY); }
 			return(DECSTRING);
 		}
 
-{ipv4addr}	{
-			/*
-			 * I can't supprt the type without dot,
-			 * because it's umbiguous against {decstring}.
-			 * e.g. 127
-			 */
+{ipaddress}	{
 			PREPROC;
 
-			yylval.val.len = sizeof(struct sockaddr_in);
+			yylval.val.len = yyleng;
 			yylval.val.buf = strdup(yytext);
 
-			return(IP4_ADDRESS);
-		}
-
-{ipv6addr}	{
-#ifdef INET6
-			PREPROC;
-
-			yylval.val.len = sizeof(struct sockaddr_in6);
-			yylval.val.buf = strdup(yytext);
-
-			return(IP6_ADDRESS);
-#else
-			yyerror("IPv6 address not supported");
-#endif
+			return(ADDRESS);
 		}
 
 {ipaddrmask}	{
@@ -296,12 +275,24 @@ any		{ PREPROC; return(ANY); }
 			return(QUOTEDSTRING);
 		}
 
-.		{ yyerror("Syntax error"); }
+.		{
+			yyfatal("Syntax error");
+			/*NOTREACHED*/
+		}
 
 %%
 
 void
-yyerror(char *s)
+yyfatal(s)
+	const char *s;
+{
+	yyerror(s);
+	exit(1);
+}
+
+void
+yyerror(s)
+	const char *s;
 {
 	printf("line %d: %s at [%s]\n", lineno, s, yytext);
 }
@@ -321,4 +312,3 @@ parse(fp)
 
 	return(0);
 }
-

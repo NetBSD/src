@@ -1,9 +1,10 @@
-/*	$NetBSD: keysock.c,v 1.9 2000/03/30 13:03:58 augustss Exp $	*/
+/*	$NetBSD: keysock.c,v 1.10 2000/06/12 10:40:48 itojun Exp $	*/
+/*	$KAME: keysock.c,v 1.22 2000/05/23 13:19:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,8 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* KAME Id: keysock.c,v 1.10 2000/01/29 06:21:02 itojun Exp */
 
 #include "opt_inet.h"
 
@@ -61,7 +60,6 @@
 
 struct sockaddr key_dst = { 2, PF_KEY, };
 struct sockaddr key_src = { 2, PF_KEY, };
-struct sockproto key_proto = { PF_KEY, PF_KEY_V2 };
 
 static int key_sendup0 __P((struct rawcb *, struct mbuf *, int));
 
@@ -71,18 +69,30 @@ struct pfkeystat pfkeystat;
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
  */
+#ifndef __NetBSD__
+int
+key_usrreq(so, req, m, nam, control)
+	register struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+#else
 int
 key_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
+	register struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
+#endif /*__NetBSD__*/
 {
-	int error = 0;
-	struct keycb *kp = (struct keycb *)sotorawcb(so);
+	register int error = 0;
+	register struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -140,10 +150,9 @@ key_output(m, va_alist)
 	va_dcl
 #endif
 {
-	struct sadb_msg *msg = NULL;
+	struct sadb_msg *msg;
 	int len, error = 0;
 	int s;
-	int target;
 	struct socket *so;
 	va_list ap;
 
@@ -183,7 +192,7 @@ key_output(m, va_alist)
 
 #ifdef IPSEC_DEBUG
 	KEYDEBUG(KEYDEBUG_KEY_DUMP, kdebug_mbuf(m));
-#endif /* defined(IPSEC_DEBUG) */
+#endif
 
 	msg = mtod(m, struct sadb_msg *);
 	pfkeystat.out_msgtype[msg->sadb_msg_type]++;
@@ -196,39 +205,19 @@ key_output(m, va_alist)
 		goto end;
 	}
 
-	/*
-	 * allocate memory for sadb_msg, and copy to sadb_msg from mbuf
-	 * XXX: To be processed directly without a copy.
-	 */
-	msg = (struct sadb_msg *)malloc(len, M_SECA, M_NOWAIT);
-	if (msg == NULL) {
-#ifdef IPSEC_DEBUG
-		printf("key_output: No more memory.\n");
-#endif
-		error = ENOBUFS;
-		pfkeystat.out_nomem++;
-		goto end;
-		/* or do panic ? */
-	}
-	m_copydata(m, 0, len, (caddr_t)msg);
-
 	/*XXX giant lock*/
+#ifdef __NetBSD__
 	s = splsoftnet();
-	if ((len = key_parse(&msg, so, &target)) == 0) {
-		/* discard. i.e. no need to reply. */
-		/* msg has been freed at key_parse() */
-		error = 0;
-		splx(s);
-		goto end;
-	}
-
-	/* send up message to the socket */
-	error = key_sendup(so, msg, len, target);
+#else
+	s = splnet();
+#endif
+	error = key_parse(m, so);
+	m = NULL;
 	splx(s);
-	free(msg, M_SECA);
 end:
-	m_freem(m);
-	return (error);
+	if (m)
+		m_freem(m);
+	return error;
 }
 
 /*
@@ -250,7 +239,7 @@ key_sendup0(rp, m, promisc)
 #ifdef IPSEC_DEBUG
 			printf("key_sendup0: cannot pullup\n");
 #endif
-		pfkeystat.in_nomem++;
+			pfkeystat.in_nomem++;
 			m_freem(m);
 			return ENOBUFS;
 		}
@@ -309,7 +298,7 @@ key_sendup(so, msg, len, target)
 	/*
 	 * Get mbuf chain whenever possible (not clusters),
 	 * to save socket buffer.  We'll be generating many SADB_ACQUIRE
-	 * messages to listening key sockets.  If we simmply allocate clusters,
+	 * messages to listening key sockets.  If we simply allocate clusters,
 	 * sbappendaddr() will raise ENOBUFS due to too little sbspace().
 	 * sbspace() computes # of actual data bytes AND mbuf region.
 	 *
@@ -364,6 +353,7 @@ key_sendup(so, msg, len, target)
 	return key_sendup_mbuf(so, m, target);
 }
 
+/* so can be NULL if target != KEY_SENDUP_ONE */
 int
 key_sendup_mbuf(so, m, target)
 	struct socket *so;
@@ -374,9 +364,11 @@ key_sendup_mbuf(so, m, target)
 	struct keycb *kp;
 	int sendup;
 	struct rawcb *rp;
-	int error;
+	int error = 0;
 
-	if (so == NULL || m == NULL)
+	if (m == NULL)
+		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+	if (so == NULL && target == KEY_SENDUP_ONE)
 		panic("key_sendup_mbuf: NULL pointer was passed.\n");
 
 	pfkeystat.in_total++;
@@ -422,14 +414,14 @@ key_sendup_mbuf(so, m, target)
 		}
 
 		/* the exact target will be processed later */
-		if (sotorawcb(so) == rp)
+		if (so && sotorawcb(so) == rp)
 			continue;
 
 		sendup = 0;
 		switch (target) {
 		case KEY_SENDUP_ONE:
 			/* the statement has no effect */
-			if (sotorawcb(so) == rp)
+			if (so && sotorawcb(so) == rp)
 				sendup++;
 			break;
 		case KEY_SENDUP_ALL:
@@ -462,8 +454,13 @@ key_sendup_mbuf(so, m, target)
 		n = NULL;
 	}
 
-	error = key_sendup0(sotorawcb(so), m, 0);
-	m = NULL;
+	if (so) {
+		error = key_sendup0(sotorawcb(so), m, 0);
+		m = NULL;
+	} else {
+		error = 0;
+		m_freem(m);
+	}
 	return error;
 }
 

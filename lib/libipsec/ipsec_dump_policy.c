@@ -1,4 +1,5 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.2 2000/03/13 21:23:55 itojun Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$KAME: ipsec_dump_policy.c,v 1.11 2000/05/07 05:29:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -42,12 +43,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 
 #include "ipsec_strerror.h"
-
-#ifdef USE_GETNAMEINFO
-#undef USE_GETNAMEINFO
-#endif
 
 static const char *ipsp_dir_strs[] = {
 	"any", "in", "out",
@@ -57,7 +55,11 @@ static const char *ipsp_policy_strs[] = {
 	"discard", "none", "ipsec", "entrust", "bypass",
 };
 
-static int set_addresses __P((char *buf, caddr_t ptr));
+static char *ipsec_dump_ipsecrequest __P((char *, size_t,
+	struct sadb_x_ipsecrequest *, size_t));
+static int set_addresses __P((char *, size_t, struct sockaddr *,
+	struct sockaddr *));
+static char *set_address __P((char *, size_t, struct sockaddr *));
 
 /*
  * policy is sadb_x_policy buffer.
@@ -71,9 +73,10 @@ ipsec_dump_policy(policy, delimiter)
 {
 	struct sadb_x_policy *xpl = (struct sadb_x_policy *)policy;
 	struct sadb_x_ipsecrequest *xisr;
-	int xtlen, buflen;
+	size_t off, buflen;
 	char *buf;
-	int error;
+	char isrbuf[1024];
+	char *newbuf;
 
 	/* sanity check */
 	if (policy == NULL)
@@ -118,159 +121,187 @@ ipsec_dump_policy(policy, delimiter)
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return NULL;
 	}
-	strcpy(buf, ipsp_dir_strs[xpl->sadb_x_policy_dir]);
-	strcat(buf, " ");
-	strcat(buf, ipsp_policy_strs[xpl->sadb_x_policy_type]);
+	snprintf(buf, buflen, "%s %s", ipsp_dir_strs[xpl->sadb_x_policy_dir],
+	    ipsp_policy_strs[xpl->sadb_x_policy_type]);
 
 	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
 		__ipsec_errcode = EIPSEC_NO_ERROR;
 		return buf;
 	}
 
-	xtlen = PFKEY_EXTLEN(xpl) - sizeof(*xpl);
-	xisr = (struct sadb_x_ipsecrequest *)(xpl + 1);
-
 	/* count length of buffer for use */
-	/* XXX non-seriously */
-	while (xtlen > 0) {
-		/* protocol/mode/addresses/level */
-		buflen += (10 + 10 + 82 + 20);
-		xtlen -= xisr->sadb_x_ipsecrequest_len;
-		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xisr
-				+ xisr->sadb_x_ipsecrequest_len);
+	off = sizeof(*xpl);
+	while (off < PFKEY_EXTLEN(xpl)) {
+		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xpl + off);
+		off += xisr->sadb_x_ipsecrequest_len;
 	}
 
 	/* validity check */
-	if (xtlen < 0) {
+	if (off != PFKEY_EXTLEN(xpl)) {
 		__ipsec_errcode = EIPSEC_INVAL_SADBMSG;
 		free(buf);
 		return NULL;
 	}
 
-	if ((buf = realloc(buf, buflen)) == NULL) {
-		__ipsec_errcode = EIPSEC_NO_BUFS;
-		return NULL;
-	}
+	off = sizeof(*xpl);
+	while (off < PFKEY_EXTLEN(xpl)) {
+		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xpl + off);
 
-	xtlen = PFKEY_EXTLEN(xpl) - sizeof(*xpl);
-	xisr = (struct sadb_x_ipsecrequest *)(xpl + 1);
-
-	while (xtlen > 0) {
-		strcat(buf, delimiter);
-
-		switch (xisr->sadb_x_ipsecrequest_proto) {
-		case IPPROTO_ESP:
-			strcat(buf, "esp");
-			break;
-		case IPPROTO_AH:
-			strcat(buf, "ah");
-			break;
-		case IPPROTO_IPCOMP:
-			strcat(buf, "ipcomp");
-			break;
-		default:
-			__ipsec_errcode = EIPSEC_INVAL_PROTO;
+		if (ipsec_dump_ipsecrequest(isrbuf, sizeof(isrbuf), xisr,
+		    PFKEY_EXTLEN(xpl) - off) == NULL) {
 			free(buf);
 			return NULL;
 		}
 
-		strcat(buf, "/");
-
-		switch (xisr->sadb_x_ipsecrequest_mode) {
-		case IPSEC_MODE_ANY:
-			strcat(buf, "any");
-			break;
-		case IPSEC_MODE_TRANSPORT:
-			strcat(buf, "transport");
-			break;
-		case IPSEC_MODE_TUNNEL:
-			strcat(buf, "tunnel");
-			break;
-		default:
-			__ipsec_errcode = EIPSEC_INVAL_MODE;
+		buflen = strlen(buf) + strlen(delimiter) + strlen(isrbuf) + 1;
+		newbuf = (char *)realloc(buf, buflen);
+		if (newbuf == NULL) {
+			__ipsec_errcode = EIPSEC_NO_BUFS;
 			free(buf);
 			return NULL;
 		}
+		buf = newbuf;
+		snprintf(buf, buflen, "%s%s%s", buf, delimiter, isrbuf);
 
-		strcat(buf, "/");
-
-		if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
-			error = set_addresses(buf, (caddr_t)(xisr + 1));
-			if (error) {
-				__ipsec_errcode = EIPSEC_INVAL_MODE;
-				free(buf);
-				return NULL;
-			}
-		}
-
-		switch (xisr->sadb_x_ipsecrequest_level) {
-		case IPSEC_LEVEL_DEFAULT:
-			strcat(buf, "/default");
-			break;
-		case IPSEC_LEVEL_USE:
-			strcat(buf, "/use");
-			break;
-		case IPSEC_LEVEL_REQUIRE:
-			strcat(buf, "/require");
-			break;
-		case IPSEC_LEVEL_UNIQUE:
-			strcat(buf, "/unique");
-			break;
-		default:
-			__ipsec_errcode = EIPSEC_INVAL_LEVEL;
-			free(buf);
-			return NULL;
-		}
-
-		if (xisr->sadb_x_ipsecrequest_reqid != 0) {
-			char id[16];
-			if (xisr->sadb_x_ipsecrequest_reqid
-					> IPSEC_MANUAL_REQID_MAX)
-				strcat(buf, "#");
-			else
-				strcat(buf, ":");
-			snprintf(id, sizeof(id), "%d",
-				xisr->sadb_x_ipsecrequest_reqid);
-			strcat(buf, id);
-		}
-
-		xtlen -= xisr->sadb_x_ipsecrequest_len;
-		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xisr
-				+ xisr->sadb_x_ipsecrequest_len);
+		off += xisr->sadb_x_ipsecrequest_len;
 	}
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return buf;
 }
 
-static int
-set_addresses(buf, ptr)
+static char *
+ipsec_dump_ipsecrequest(buf, len, xisr, bound)
 	char *buf;
-	caddr_t ptr;
+	size_t len;
+	struct sadb_x_ipsecrequest *xisr;
+	size_t bound;	/* boundary */
 {
-	char tmp[100]; /* XXX */
-	struct sockaddr *saddr = (struct sockaddr *)ptr;
+	const char *proto, *mode, *level;
+	char abuf[NI_MAXHOST * 2 + 2];
 
-#ifdef USE_GETNAMEINFO
-	getnameinfo(saddr, saddr->sa_len, tmp, sizeof(tmp),
-		NULL, 0, NI_NUMERICHOST);
-#else
-	inet_ntop(saddr->sa_family, _INADDRBYSA(saddr),
-		tmp, sizeof(tmp));
-#endif
-	strcat(buf, tmp);
+	if (xisr->sadb_x_ipsecrequest_len > bound) {
+		__ipsec_errcode = EIPSEC_INVAL_PROTO;
+		return NULL;
+	}
 
-	strcat(buf, "-");
+	switch (xisr->sadb_x_ipsecrequest_proto) {
+	case IPPROTO_ESP:
+		proto = "esp";
+		break;
+	case IPPROTO_AH:
+		proto = "ah";
+		break;
+	case IPPROTO_IPCOMP:
+		proto = "ipcomp";
+		break;
+	default:
+		__ipsec_errcode = EIPSEC_INVAL_PROTO;
+		return NULL;
+	}
 
-	saddr = (struct sockaddr *)((caddr_t)saddr + saddr->sa_len);
-#ifdef USE_GETNAMEINFO
-	getnameinfo(saddr, saddr->sa_len, tmp, sizeof(tmp),
-		NULL, 0, NI_NUMERICHOST);
-#else
-	inet_ntop(saddr->sa_family, _INADDRBYSA(saddr),
-		tmp, sizeof(tmp));
-#endif
-	strcat(buf, tmp);
+	switch (xisr->sadb_x_ipsecrequest_mode) {
+	case IPSEC_MODE_ANY:
+		mode = "any";
+		break;
+	case IPSEC_MODE_TRANSPORT:
+		mode = "transport";
+		break;
+	case IPSEC_MODE_TUNNEL:
+		mode = "tunnel";
+		break;
+	default:
+		__ipsec_errcode = EIPSEC_INVAL_MODE;
+		return NULL;
+	}
 
+	abuf[0] = '\0';
+	if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
+		struct sockaddr *sa1, *sa2;
+		caddr_t p;
+
+		p = (caddr_t)(xisr + 1);
+		sa1 = (struct sockaddr *)p;
+		sa2 = (struct sockaddr *)(p + sa1->sa_len);
+		if (sizeof(*xisr) + sa1->sa_len + sa2->sa_len !=
+		    xisr->sadb_x_ipsecrequest_len) {
+			__ipsec_errcode = EIPSEC_INVAL_ADDRESS;
+			return NULL;
+		}
+		if (set_addresses(abuf, sizeof(abuf), sa1, sa2) != 0) {
+			__ipsec_errcode = EIPSEC_INVAL_ADDRESS;
+			return NULL;
+		}
+	}
+
+	switch (xisr->sadb_x_ipsecrequest_level) {
+	case IPSEC_LEVEL_DEFAULT:
+		level = "default";
+		break;
+	case IPSEC_LEVEL_USE:
+		level = "use";
+		break;
+	case IPSEC_LEVEL_REQUIRE:
+		level = "require";
+		break;
+	case IPSEC_LEVEL_UNIQUE:
+		level = "unique";
+		break;
+	default:
+		__ipsec_errcode = EIPSEC_INVAL_LEVEL;
+		return NULL;
+	}
+
+	if (xisr->sadb_x_ipsecrequest_reqid == 0)
+		snprintf(buf, len, "%s/%s/%s/%s", proto, mode, abuf, level);
+	else {
+		int ch;
+
+		if (xisr->sadb_x_ipsecrequest_reqid > IPSEC_MANUAL_REQID_MAX)
+			ch = '#';
+		else
+			ch = ':';
+		snprintf(buf, len, "%s/%s/%s/%s%c%d", proto, mode, abuf, level,
+		    ch, xisr->sadb_x_ipsecrequest_reqid);
+	}
+
+	return buf;
+}
+
+static int
+set_addresses(buf, len, sa1, sa2)
+	char *buf;
+	size_t len;
+	struct sockaddr *sa1;
+	struct sockaddr *sa2;
+{
+	char tmp1[NI_MAXHOST], tmp2[NI_MAXHOST];
+
+	if (set_address(tmp1, sizeof(tmp1), sa1) == NULL ||
+	    set_address(tmp2, sizeof(tmp2), sa2) == NULL)
+		return -1;
+	if (strlen(tmp1) + 1 + strlen(tmp2) + 1 > len)
+		return -1;
+	snprintf(buf, len, "%s-%s", tmp1, tmp2);
 	return 0;
+}
+
+static char *
+set_address(buf, len, sa)
+	char *buf;
+	size_t len;
+	struct sockaddr *sa;
+{
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST;
+#endif
+
+	if (len < 1)
+		return NULL;
+	buf[0] = '\0';
+	if (getnameinfo(sa, sa->sa_len, buf, len, NULL, 0, niflags) != 0)
+		return NULL;
+	return buf;
 }

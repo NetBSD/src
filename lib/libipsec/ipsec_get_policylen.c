@@ -1,4 +1,5 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.2 2000/02/08 13:17:51 itojun Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.

@@ -1,4 +1,5 @@
-/*	$NetBSD: policy_token.l,v 1.3 2000/03/13 21:23:56 itojun Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.4 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$KAME: policy_token.l,v 1.9 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.

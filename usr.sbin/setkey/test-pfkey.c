@@ -1,9 +1,10 @@
-/*	$NetBSD: test-pfkey.c,v 1.3 2000/01/31 14:22:44 itojun Exp $	*/
+/*	$NetBSD: test-pfkey.c,v 1.4 2000/06/12 10:40:50 itojun Exp $	*/
+/*	$KAME: test-pfkey.c,v 1.4 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: test-pfkey.c,v 1.2 1999/10/26 08:09:17 itojun Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
+#include <netdb.h>
 
 u_char m_buf[BUFSIZ];
 u_int m_len;
@@ -136,11 +137,14 @@ key_setsadbmsg(type)
 {
 	struct sadb_msg m_msg;
 
+	memset(&m_msg, 0, sizeof(m_msg));
 	m_msg.sadb_msg_version = PF_KEY_V2;
 	m_msg.sadb_msg_type = type;
 	m_msg.sadb_msg_errno = 0;
 	m_msg.sadb_msg_satype = SADB_SATYPE_ESP;
+#if 0
 	m_msg.sadb_msg_reserved = 0;
+#endif
 	m_msg.sadb_msg_seq = 0;
 	m_msg.sadb_msg_pid = getpid();
 
@@ -467,31 +471,48 @@ key_setsadbaddr(ext, af, str)
 	caddr_t str;
 {
 	struct sadb_address m_addr;
-	u_char abuf[64];
-	struct sockaddr *a = (struct sockaddr *)abuf;
 	u_int len;
+	struct addrinfo hints, *res;
+	const char *serv;
+	int plen;
+
+	switch (af) {
+	case AF_INET:
+		plen = sizeof(struct in_addr) << 3;
+		break;
+	case AF_INET6:
+		plen = sizeof(struct in6_addr) << 3;
+		break;
+	default:
+		/* XXX bark */
+		exit(1);
+	}
 
 	/* make sockaddr buffer */
-	memset(abuf, 0, sizeof(abuf));
-	a->sa_len = _SALENBYAF(af);
-	a->sa_family = af;
-	_INPORTBYSA(a) = 
-		(ext == SADB_EXT_ADDRESS_PROXY ? 0 : htons(0x1234));
-	if (inet_pton(af, str, _INADDRBYSA(a)) != 1)
-		; /* XXX do something */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	serv = (ext == SADB_EXT_ADDRESS_PROXY ? "0" : "4660");	/*0x1234*/
+	if (getaddrinfo(str, serv, &hints, &res) != 0 || res->ai_next) {
+		/* XXX bark */
+		exit(1);
+	}
 	
-	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(a->sa_len);
+	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(res->ai_addrlen);
 	m_addr.sadb_address_len = PFKEY_UNIT64(len);
 	m_addr.sadb_address_exttype = ext;
 	m_addr.sadb_address_proto =
 		(ext == SADB_EXT_ADDRESS_PROXY ? 0 : IPPROTO_TCP);
-	m_addr.sadb_address_prefixlen = _INALENBYAF(af);
+	m_addr.sadb_address_prefixlen = plen;
 	m_addr.sadb_address_reserved = 0;
 
 	key_setsadbextbuf(m_buf, m_len,
 			(caddr_t)&m_addr, sizeof(struct sadb_address),
-			abuf, a->sa_len);
+			(caddr_t)res->ai_addr, res->ai_addrlen);
 	m_len += len;
+
+	freeaddrinfo(res);
 
 	return;
 }
