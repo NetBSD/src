@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.24 1997/05/19 03:44:43 mycroft Exp $	*/
+/*	$NetBSD: w.c,v 1.25 1997/07/07 20:30:08 phil Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.24 1997/05/19 03:44:43 mycroft Exp $";
+static char rcsid[] = "$NetBSD: w.c,v 1.25 1997/07/07 20:30:08 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,23 +386,26 @@ pr_header(nowp, nusers)
 	    boottime.tv_sec != 0) {
 		uptime = now - boottime.tv_sec;
 		uptime += 30;
-		days = uptime / SECSPERDAY;
-		uptime %= SECSPERDAY;
-		hrs = uptime / SECSPERHOUR;
-		uptime %= SECSPERHOUR;
-		mins = uptime / SECSPERMIN;
-		(void)printf(" up");
-		if (days > 0)
-			(void)printf(" %d day%s,", days, days > 1 ? "s" : "");
-		if (hrs > 0 && mins > 0)
-			(void)printf(" %2d:%02d,", hrs, mins);
-		else {
-			if (hrs > 0)
-				(void)printf(" %d hr%s,",
-				    hrs, hrs > 1 ? "s" : "");
-			if (mins > 0)
-				(void)printf(" %d min%s,",
-				    mins, mins > 1 ? "s" : "");
+		if (uptime > SECSPERMIN) {
+			days = uptime / SECSPERDAY;
+			uptime %= SECSPERDAY;
+			hrs = uptime / SECSPERHOUR;
+			uptime %= SECSPERHOUR;
+			mins = uptime / SECSPERMIN;
+			(void)printf(" up");
+			if (days > 0)
+				(void)printf(" %d day%s,", days,
+				    days > 1 ? "s" : "");
+			if (hrs > 0 && mins > 0)
+				(void)printf(" %2d:%02d,", hrs, mins);
+			else {
+				if (hrs > 0)
+					(void)printf(" %d hr%s,",
+					    hrs, hrs > 1 ? "s" : "");
+				if (mins > 0)
+					(void)printf(" %d min%s,",
+					    mins, mins > 1 ? "s" : "");
+			}
 		}
 	}
 
