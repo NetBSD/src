@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.4 2000/04/18 20:25:13 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.5 2000/04/22 16:50:44 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -170,6 +170,7 @@ getbootdev()
 			adaptor = (bootregs[1] & 0x40000 ? 0 : 1);
 		break;
 
+	case BDEV_RL:		/* RL01/02 */
 	case BDEV_TK:		/* TK50 boot */
 	case BDEV_CNSL:		/* Console storage boot */
 	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
@@ -357,6 +358,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		case BDEV_RD:
 		case BDEV_ST:
 		case BDEV_SD:
+		case BDEV_RL:
 
 		default:
 			romread_uvax(block, size, buf, bootregs);
