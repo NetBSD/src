@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2.8.1 2002/01/10 19:44:00 thorpej Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2.8.2 2002/02/11 20:08:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,23 +53,11 @@
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
-
-/*
- * hpcmips-specific mips locore code.
- */
-
 #include <mips/asm.h>
-#include <mips/cpuregs.h>	/* XXX - misnomer? */
+#include <mips/cpuregs.h>
 
 	.set	noreorder
-/*
- * GCC2 seems to want to call __main in main() for some reason.
- */
-LEAF(__main)
-	j	ra
-	nop
-END(__main)
-
+	.align	2
 /*
  * Interrupt counters for vmstat.
  */
@@ -79,29 +67,6 @@ END(__main)
 	.globl _C_LABEL(intrnames)
 	.globl _C_LABEL(eintrnames)
 _C_LABEL(intrnames):
-	.asciiz	"softclock"
-	.asciiz	"softnet"
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	"clock"
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz ""
-	.asciiz ""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
-	.asciiz	""
 _C_LABEL(eintrnames):
-	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
 _C_LABEL(eintrcnt):
-	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
-			#  label ends end up in a different section otherwise.

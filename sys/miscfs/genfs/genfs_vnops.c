@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.35.2.2 2002/01/10 20:01:35 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35.2.3 2002/02/11 20:10:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.2 2002/01/10 20:01:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.3 2002/02/11 20:10:27 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1004,6 +1004,7 @@ genfs_putpages(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uobj;
+	struct simplelock *slock = &uobj->vmobjlock;
 	off_t startoff = ap->a_offlo;
 	off_t endoff = ap->a_offhi;
 	off_t off;
@@ -1028,7 +1029,7 @@ genfs_putpages(v)
 			vp->v_flag &= ~VONWORKLST;
 			LIST_REMOVE(vp, v_synclist);
 		}
-		simple_unlock(&uobj->vmobjlock);
+		simple_unlock(slock);
 		return 0;
 	}
 
@@ -1070,6 +1071,12 @@ genfs_putpages(v)
 	}
 	nextpg = NULL;
 	while (by_list || off < endoff) {
+		if (curproc->p_cpu->ci_schedstate.spc_flags &
+		    SPCF_SHOULDYIELD) {
+			simple_unlock(slock);
+			preempt(NULL);
+			simple_lock(slock);
+		}
 
 		/*
 		 * if the current page is not interesting, move on to the next.
@@ -1122,9 +1129,8 @@ genfs_putpages(v)
 			}
 			pg->flags |= PG_WANTED;
 			pg->flags &= ~PG_CLEAN;
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-			    "genput", 0);
-			simple_lock(&uobj->vmobjlock);
+			UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
+			simple_lock(slock);
 			if (by_list) {
 				UVMHIST_LOG(ubchist, "after next %p",
 					    TAILQ_NEXT(&curmp, listq), 0,0,0);
@@ -1227,9 +1233,9 @@ genfs_putpages(v)
 				TAILQ_INSERT_AFTER(&uobj->memq, pg, &curmp,
 				    listq);
 			}
-			simple_unlock(&uobj->vmobjlock);
+			simple_unlock(slock);
 			error = GOP_WRITE(vp, pgs, npages, flags);
-			simple_lock(&uobj->vmobjlock);
+			simple_lock(slock);
 			if (by_list) {
 				pg = TAILQ_NEXT(&curmp, listq);
 				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
@@ -1266,7 +1272,7 @@ genfs_putpages(v)
 				pg = TAILQ_NEXT(pg, listq);
 			}
 		} else {
-			off += PAGE_SIZE;
+			off += npages << PAGE_SHIFT;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
 			}
@@ -1294,9 +1300,9 @@ genfs_putpages(v)
 		s = splbio();
 		while (vp->v_numoutput != 0) {
 			vp->v_flag |= VBWAIT;
-			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, &uobj->vmobjlock,
-					    FALSE, "genput2",0);
-			simple_lock(&uobj->vmobjlock);
+			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, FALSE,
+			    "genput2", 0);
+			simple_lock(slock);
 		}
 		splx(s);
 	}

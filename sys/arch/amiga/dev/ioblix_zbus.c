@@ -1,4 +1,4 @@
-/* $NetBSD: ioblix_zbus.c,v 1.3 2001/03/10 23:55:29 is Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.3.2.1 2002/02/11 20:07:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.2.1 2002/02/11 20:07:00 jdolecek Exp $");
+
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
 
@@ -63,19 +66,17 @@ struct iobz_softc {
 	struct bus_space_tag sc_bst;
 };
 
-int iobzmatch __P((struct device *, struct cfdata *, void *));
-void iobzattach __P((struct device *, struct device *, void *));
-int iobzprint __P((void *auxp, const char *));
+int iobzmatch(struct device *, struct cfdata *, void *);
+void iobzattach(struct device *, struct device *, void *);
+int iobzprint(void *auxp, const char *);
+void iobz_shutdown(void *);
 
 struct cfattach iobl_zbus_ca = {
 	sizeof(struct iobz_softc), iobzmatch, iobzattach
 };
 
 int
-iobzmatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+iobzmatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 
 	struct zbus_args *zap;
@@ -111,9 +112,7 @@ struct iobz_devs {
 int iobzclock = IOBZCLOCK;		/* patchable! */
 
 void
-iobzattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+iobzattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct iobz_softc *iobzsc;
 	struct iobz_devs  *iobzd;
@@ -146,13 +145,12 @@ iobzattach(parent, self, auxp)
 	}
 
 	p = (volatile u_int8_t *)zap->va + 2;
+	(void)shutdownhook_establish(iobz_shutdown, (void *)p);
 	*p = ((*p) & 0x1F) | 0x80;
 }
 
 int
-iobzprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+iobzprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;
@@ -164,4 +162,17 @@ iobzprint(auxp, pnp)
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);
+}
+
+/*
+ * Disable board interupts at shutdown time.
+ */
+
+void
+iobz_shutdown(void *p) {
+	volatile int8_t *q;
+
+	q = p;
+
+	*q &= 0x1F;
 }

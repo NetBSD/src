@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.1 2002/01/10 19:36:52 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.2 2002/02/11 20:06:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1.2.1 2002/01/10 19:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1.2.2 2002/02/11 20:06:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,55 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 15 */
 	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
 	bdev_disk_init(NLD,ld),		/* 17: logical disk driver */
+	bdev_lkm_dummy(),		/* 18 */
+	bdev_lkm_dummy(),		/* 19 */
+	bdev_lkm_dummy(),		/* 20 */
+	bdev_lkm_dummy(),		/* 21 */
+	bdev_lkm_dummy(),		/* 22 */
+	bdev_lkm_dummy(),		/* 23 */
+	bdev_lkm_dummy(),		/* 24 */
+	bdev_lkm_dummy(),		/* 25 */
+	bdev_lkm_dummy(),		/* 26 */
+	bdev_lkm_dummy(),		/* 27 */
+	bdev_lkm_dummy(),		/* 28 */
+	bdev_lkm_dummy(),		/* 29 */
+	bdev_lkm_dummy(),		/* 30 */
+	bdev_lkm_dummy(),		/* 31 */
+	bdev_lkm_dummy(),		/* 32 */
+	bdev_lkm_dummy(),		/* 33 */
+	bdev_lkm_dummy(),		/* 34 */
+	bdev_lkm_dummy(),		/* 35 */
+	bdev_lkm_dummy(),		/* 36 */
+	bdev_lkm_dummy(),		/* 37 */
+	bdev_lkm_dummy(),		/* 38 */
+	bdev_lkm_dummy(),		/* 39 */
+	bdev_lkm_dummy(),		/* 40 */
+	bdev_lkm_dummy(),		/* 41 */
+	bdev_lkm_dummy(),		/* 42 */
+	bdev_lkm_dummy(),		/* 43 */
+	bdev_lkm_dummy(),		/* 44 */
+	bdev_lkm_dummy(),		/* 45 */
+	bdev_lkm_dummy(),		/* 46 */
+	bdev_lkm_dummy(),		/* 47 */
+	bdev_lkm_dummy(),		/* 48 */
+	bdev_lkm_dummy(),		/* 49 */
+	bdev_lkm_dummy(),		/* 50 */
+	bdev_lkm_dummy(),		/* 51 */
+	bdev_lkm_dummy(),		/* 52 */
+	bdev_lkm_dummy(),		/* 53 */
+	bdev_lkm_dummy(),		/* 54 */
+	bdev_lkm_dummy(),		/* 55 */
+	bdev_lkm_dummy(),		/* 56 */
+	bdev_lkm_dummy(),		/* 57 */
+	bdev_lkm_dummy(),		/* 58 */
+	bdev_lkm_dummy(),		/* 59 */
+	bdev_lkm_dummy(),		/* 60 */
+	bdev_lkm_dummy(),		/* 61 */
+	bdev_lkm_dummy(),		/* 62 */
+	bdev_lkm_dummy(),		/* 63 */
+	bdev_lkm_dummy(),		/* 64 */
+	bdev_lkm_dummy(),		/* 65 */
+	bdev_lkm_dummy(),		/* 66 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -201,6 +250,9 @@ cdev_decl(i4btel);
 
 #include <altq/altqconf.h>
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -275,6 +327,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
 	cdev_altq_init(NALTQ,altq),	/* 64: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
+	cdev_clockctl_init(NCLOCKCTL,clockctl),	/* 66: clockctl pseudo device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -382,6 +435,7 @@ static int chrtoblktbl[] = {
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
 	/* 65 */	NODEV,
+	/* 66 */	NODEV,
 };
 
 /*

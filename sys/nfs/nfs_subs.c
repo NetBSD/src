@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.95.2.1 2002/01/10 20:04:25 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.95.2.2 2002/02/11 20:10:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.95.2.1 2002/01/10 20:04:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.95.2.2 2002/02/11 20:10:43 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -143,6 +143,7 @@ const enum vtype nv2tov_type[8] =
 const enum vtype nv3tov_type[8] =
 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO };
 int nfs_ticks;
+int nfs_commitsize;
 
 /* NFS client/server stats. */
 struct nfsstats nfsstats;
@@ -1494,6 +1495,7 @@ void
 nfs_vfs_init()
 {
 	nfs_nhinit();			/* Init the nfsnode table */
+	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
 }
 
 void

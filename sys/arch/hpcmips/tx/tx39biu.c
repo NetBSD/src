@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39biu.c,v 1.5 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.5.2.1 2002/02/11 20:08:10 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,24 +36,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_tx39_debug.h"
 #include "opt_tx39_watchdogtimer.h"
-#include "opt_tx39biudebug.h"
+#include "opt_tx39biu_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/debug.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39biureg.h>
-
 #include <hpcmips/tx/txcsbusvar.h>
 
+#ifdef	TX39BIU_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39biu_debug
+#endif
+#include <machine/debug.h>
+
 #define ISSET(x, s)	((x) & (1 << (s)))
-#define ISSETPRINT(r, s, m) __is_set_print((u_int32_t)(r),		\
-	TX39_MEMCONFIG##s##_##m, #m)
+#define ISSETPRINT(r, s, m) dbg_bitmask_print((u_int32_t)(r),		\
+	TX39_MEMCONFIG ## s ## _ ##m, #m)
 
 int	tx39biu_match(struct device *, struct cfdata *, void *);
 void	tx39biu_attach(struct device *, struct device *, void *);
@@ -62,8 +67,9 @@ int	tx39biu_print(void *, const char *);
 int	tx39biu_intr(void *);
 
 static void *__sc; /* XXX */
-
+#ifdef TX39BIU_DEBUG
 void	tx39biu_dump(tx_chipset_tag_t);
+#endif
 
 struct tx39biu_softc {
 	struct	device sc_dev;
@@ -98,7 +104,7 @@ tx39biu_attach(parent, self, aux)
 
 	sc->sc_tc = tc = ta->ta_tc;
 	printf("\n");
-#ifdef TX39BIUDEBUG
+#ifdef TX39BIU_DEBUG
 	tx39biu_dump(tc);
 #endif
 
@@ -173,6 +179,7 @@ tx39biu_intr(arg)
 	return (0);
 }
 
+#ifdef TX39BIU_DEBUG
 void
 tx39biu_dump(tc)
 	tx_chipset_tag_t tc;	
@@ -286,3 +293,4 @@ tx39biu_dump(tc)
 	}
 	printf("\n");
 }
+#endif /* TX39BIU_DEBUG */

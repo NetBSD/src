@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.3 2002/01/10 19:49:12 thorpej Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.4 2002/02/11 20:09:09 jdolecek Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -56,6 +56,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support; still under development.
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM

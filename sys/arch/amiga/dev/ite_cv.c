@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv.c,v 1.4 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: ite_cv.c,v 1.4.22.1 2002/02/11 20:07:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -38,6 +38,10 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_cv.c,v 1.4.22.1 2002/02/11 20:07:01 jdolecek Exp $");
+
 #include "grfcv.h"
 #if NGRFCV > 0
 
@@ -55,23 +59,23 @@
 #include <machine/cpu.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/iteioctl.h>
-#include <amiga/amiga/device.h> 
+#include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 
-void cv_ite_init __P((struct ite_softc *));
-void cv_ite_deinit __P((struct ite_softc *));
-static void cv_cursor __P((struct ite_softc *, int));
-static void cv_putc __P((struct ite_softc *, int, int, int, int));
-static void cv_clear __P((struct ite_softc *, int, int, int, int));
-static void cv_scroll __P((struct ite_softc *, int, int, int, int));
+void cv_ite_init(struct ite_softc *);
+void cv_ite_deinit(struct ite_softc *);
+static void cv_cursor(struct ite_softc *, int);
+static void cv_putc(struct ite_softc *, int, int, int, int);
+static void cv_clear(struct ite_softc *, int, int, int, int);
+static void cv_scroll(struct ite_softc *, int, int, int, int);
 
 /*
  * called from grf_cv to return console priority
  */
 int
-grfcv_cnprobe()
+grfcv_cnprobe(void)
 {
 	static int done;
 	int rv;
@@ -98,8 +102,7 @@ grfcv_cnprobe()
  * grf_softc struct
  */
 void
-grfcv_iteinit(gp)
-	struct grf_softc *gp;
+grfcv_iteinit(struct grf_softc *gp)
 {
 	gp->g_itecursor = cv_cursor;
 	gp->g_iteputc = cv_putc;
@@ -111,8 +114,7 @@ grfcv_iteinit(gp)
 
 
 void
-cv_ite_deinit(ip)
-	struct ite_softc *ip;
+cv_ite_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
@@ -127,8 +129,7 @@ static unsigned short cv_rowc[MAXCOLS*(MAXROWS+1)];
 static unsigned short *console_buffer;
 
 void
-cv_ite_init(ip)
-	register struct ite_softc *ip;
+cv_ite_init(register struct ite_softc *ip)
 {
 	struct grfcvtext_mode *md;
 	int i;
@@ -148,14 +149,14 @@ cv_ite_init(ip)
 #if 0  /* XXX malloc seems not to work in early init :( */
 	if (cv_rowc)
 		free(cv_rowc, M_DEVBUF);
- 
+
 	/* alloc all in one */
 	cv_rowc = malloc(sizeof(short) * (ip->rows + 1) * (ip->cols + 2),
 		M_DEVBUF, M_WAITOK);
 	if (!cv_rowc)
 		panic("No buffers for ite_cv!");
 #endif
- 
+
 	console_buffer = cv_rowc + ip->rows + 1;
 
 
@@ -177,9 +178,7 @@ cv_ite_init(ip)
 
 
 void
-cv_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+cv_cursor(struct ite_softc *ip, int flag)
 {
 	volatile caddr_t ba = ip->grf->g_regkva;
 
@@ -204,12 +203,7 @@ cv_cursor(ip, flag)
 
 
 void
-cv_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+cv_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	caddr_t fb = ip->grf->g_fbkva;
 	unsigned char attr;
@@ -231,12 +225,7 @@ cv_putc(ip, c, dy, dx, mode)
 
 
 void
-cv_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+cv_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	/* cv_clear and cv_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
@@ -259,12 +248,7 @@ cv_clear(ip, sy, sx, h, w)
 }
 
 void
-cv_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+cv_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	unsigned short *src, *dst, *dst2;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman.c,v 1.3 2001/06/13 19:09:08 uch Exp $ */
+/*	$NetBSD: txioman.c,v 1.3.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

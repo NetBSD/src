@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.23 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.23.2.1 2002/02/11 20:08:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #define TX3912VIDEO_DEBUG
 
-#include "opt_tx39_debug.h"
 #include "hpcfb.h"
 
 #include <sys/param.h>

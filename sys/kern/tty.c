@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.6 2002/01/10 20:00:10 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.7 2002/02/11 20:10:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.6 2002/01/10 20:00:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.7 2002/02/11 20:10:24 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -174,6 +174,11 @@ struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
 
 struct pool tty_pool;
+
+u_int64_t tk_cancc;
+u_int64_t tk_nin;
+u_int64_t tk_nout;
+u_int64_t tk_rawcc;
 
 int
 ttyopen(struct tty *tp, int dialout, int nonblock)

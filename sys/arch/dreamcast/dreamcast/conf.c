@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2001/05/26 19:04:40 marcus Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.2.1 2002/02/11 20:07:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -158,6 +158,9 @@ cdev_decl(gdrom);
 #include "maple.h"
 cdev_decl(maple);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -220,6 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),  /* 56: ws multiplexor */
 	cdev_disk_init(NGDROM,gdrom),	/* 57: GDROM */
 	cdev__oci_init(NMAPLE, maple),	/* 58: Maple bus */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 59: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -319,6 +323,8 @@ static int chrtoblktbl[] = {
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
 	/* 57 */	19,
+	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 /*

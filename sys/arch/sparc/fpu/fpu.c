@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11.4.1 2002/01/10 19:48:48 thorpej Exp $ */
+/*	$NetBSD: fpu.c,v 1.11.4.2 2002/02/11 20:09:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,6 +136,7 @@ fpu_cleanup(p, fs)
 		break;
 
 	case FSR_TT_IEEE:
+		DPRINTF(FPE_INSN, ("fpu_cleanup: FSR_TT_IEEE\n"));
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
@@ -143,6 +144,7 @@ fpu_cleanup(p, fs)
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
+		DPRINTF(FPE_INSN, ("fpu_cleanup: FSR_TT_UNFIN\n"));
 #ifdef SUN4U
 		if (fs->fs_qsize == 0) {
 			printf("fpu_cleanup: unfinished fpop");
@@ -153,6 +155,7 @@ fpu_cleanup(p, fs)
 
 #endif /* SUN4U */
 	case FSR_TT_UNIMP:
+		DPRINTF(FPE_INSN, ("fpu_cleanup: FSR_TT_UNIMP\n"));
 		if (fs->fs_qsize == 0)
 			panic("fpu_cleanup: unimplemented fpop");
 		break;
@@ -162,6 +165,7 @@ fpu_cleanup(p, fs)
 		/* NOTREACHED */
 
 	case FSR_TT_HWERR:
+		DPRINTF(FPE_INSN, ("fpu_cleanup: FSR_TT_HWERR\n"));
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
@@ -545,19 +549,32 @@ fpu_execute(fe, instr)
 		break;
 
 	case FTOX >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
+		DPRINTF(FPE_INSN, ("fpu_execute: FTOX\n"));
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = FTYPE_LNG;
+		/* Recalculate destination register */
+		rd = instr.i_opf.i_rd;
 		break;
-#endif /* SUN4U */
 
+#endif /* SUN4U */
 	case FTOI >> 2:
+		DPRINTF(FPE_INSN, ("fpu_execute: FTOI\n"));
+		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
+		type = FTYPE_INT;
+		/* Recalculate destination register */
+		rd = instr.i_opf.i_rd;
+		break;
+
 	case FTOS >> 2:
 	case FTOD >> 2:
 	case FTOQ >> 2:
 		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
+		/* Recalculate rd with correct type info. */
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
+		mask = 0x3 >> (3 - type);
+		rd = instr.i_opf.i_rd;
+		rd = (rd & ~mask) | ((rd & mask & 0x1) << 5);
 		break;
 	}
 
@@ -582,6 +599,12 @@ fpu_execute(fe, instr)
 		fsr |= (cx << FSR_CX_SHIFT) | (cx << FSR_AX_SHIFT);
 	}
 	fs->fs_fsr = fsr;
+	DPRINTF(FPE_REG, ("-> %c%d\n", (type == FTYPE_LNG) ? 'x' :
+		((type == FTYPE_INT) ? 'i' :
+			((type == FTYPE_SNG) ? 's' :
+				((type == FTYPE_DBL) ? 'd' :
+					((type == FTYPE_EXT) ? 'q' : '?')))),
+		rd));
 	fs->fs_regs[rd] = space[0];
 	if (type >= FTYPE_DBL || type == FTYPE_LNG) {
 		fs->fs_regs[rd + 1] = space[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65 2001/03/21 22:25:56 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.65.2.1 2002/02/11 20:09:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -169,6 +169,9 @@ cdev_decl(zs);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 /* Block devices */
 struct bdevsw	bdevsw[] =
 {
@@ -288,6 +291,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 81: SCSI bus */
 	cdev_disk_init(NRAID,raid), 	/* 82: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 83: svr4 net pseudo-device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 84: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -412,6 +416,8 @@ static int chrtoblktbl[] = {
 	/* 80 */	NODEV,
 	/* 81 */	NODEV,
 	/* 82 */	25,
+	/* 83 */	NODEV,
+	/* 84 */	NODEV,
 };
 
 /*

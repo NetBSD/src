@@ -1,8 +1,13 @@
-#	$NetBSD: files.hpcsh,v 1.14 2001/07/02 17:19:09 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.14.2.1 2002/02/11 20:08:15 jdolecek Exp $
 #
 maxpartitions 8
 
 maxusers 2 16 64
+
+defflag debug_hpcsh.h	BUS_SPACE_DEBUG
+			PFCKBD_DEBUG
+			HD64461VIDEO_DEBUG
+			HD64461PCMCIA_DEBUG			
 
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
@@ -11,7 +16,11 @@ file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
-file	arch/hpcsh/hpcsh/debug.c
+
+file	arch/hpc/hpc/kloader.c
+file	arch/hpcsh/hpcsh/kloader_machdep.c
+defflag	debug_kloader.h			KLOADER_DEBUG
+defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
 device mainbus { [id = -1] }
 
@@ -23,6 +32,13 @@ file	arch/hpc/hpc/disksubr.c			disk
 include "dev/hpc/files.bicons"
 include "dev/hpc/files.hpckbd"
 include "dev/hpc/files.hpcfb"
+
+#
+# Debug utility
+#
+file	arch/hpc/hpc/debug_subr.c
+file	arch/hpcsh/hpcsh/debug.c
+defflag	opt_interrupt_monitor.h		INTERRUPT_MONITOR
 
 #
 # Machine-independent SCSI drivers

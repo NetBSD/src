@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.2 2002/01/10 19:44:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.2 2002/01/10 19:44:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.2 2002/01/10 19:44:00 thorpej Exp
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
 #include "fs_nfs.h"
+#include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.2 2002/01/10 19:44:00 thorpej Exp
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
-
-#include <hpcmips/hpcmips/machdep.h>
+#include <machine/kloader.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -165,8 +165,7 @@ extern void	tx_init(void);
 static struct bootinfo bi_copy;
 struct bootinfo *bootinfo;
 char booted_kernel[128];
-struct device *booted_device;
-int booted_partition;
+extern void makebootdev(const char *);
 
 /* maps for VM objects */
 struct vm_map *exec_map;
@@ -202,6 +201,12 @@ extern void stacktrace(void); /*XXX*/
 void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
+	/* 
+	 * this routines stack is never polluted since stack pointer
+	 * is lower than kernel text segment, and at exiting, stack pointer
+	 * is changed to proc0.
+	 */
+	struct kloader_bootinfo kbi;
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
 #ifdef DDB
@@ -262,6 +267,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 			platid.dw.dw1 = bootinfo->platid_machine;
 		}
 	}
+	/* copy boot parameter for kloader */
+	kloader_bootinfo_set(&kbi, argc, argv, bi, FALSE);
 
 	/* 
 	 * CPU core Specific Function Hooks 
@@ -304,8 +311,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	intr_init();
 	mips_vector_init();
+	intr_init();
 
 #ifdef DEBUG
 	/*
@@ -646,8 +653,14 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* If "always halt" was specified as a boot flag, obey. */
-	if ((boothowto & RB_HALT) != 0)
+	if ((boothowto & RB_HALT) != 0) {
 		howto |= RB_HALT;
+	}
+
+#ifdef KLOADER_KERNEL_PATH
+	if ((howto & RB_HALT) == 0)
+		kloader_reboot_setup(KLOADER_KERNEL_PATH);
+#endif
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
@@ -667,12 +680,8 @@ cpu_reboot(int howto, char *bootstr)
 	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
-#if 0
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-#else
-		if (howto & RB_DUMP)
-#endif
-			dumpsys();
+	if (howto & RB_DUMP)
+		dumpsys();
 
  haltsys:
 
@@ -680,9 +689,16 @@ cpu_reboot(int howto, char *bootstr)
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	(*platform.reboot)(howto, bootstr);
+	if (howto & RB_HALT) {
+		printf("halted.\n");
+	} else {
+#ifdef KLOADER_KERNEL_PATH
+		kloader_reboot();
+		/* NOTREACHED */
+#endif
+	}
 
+	(*platform.reboot)(howto, bootstr);
 	while(1)
 		;
 	/*NOTREACHED*/

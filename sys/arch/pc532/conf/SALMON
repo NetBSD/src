@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.13.2.1 2002/01/10 19:47:19 thorpej Exp $
+#	$NetBSD: SALMON,v 1.13.2.2 2002/02/11 20:08:48 jdolecek Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -15,6 +15,7 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SYSVSHM			# System V shared memory; broken
 #options 	SHMMAXPGS=1024
 #options 	LKM			# loadable kernel modules
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # compatibility options
 options 	COMPAT_43	# 4.3 system calls

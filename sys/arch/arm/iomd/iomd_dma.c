@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.2.2.2 2002/01/10 19:38:02 thorpej Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.2.2.3 2002/02/11 20:07:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -218,7 +218,7 @@ fill:
 /*
  * Flush the cache for this address
  */
-	cpu_cache_purgeD_rng((vm_offset_t)dp->dc_nextaddr, len);
+	cpu_dcache_wbinv_range((vm_offset_t)dp->dc_nextaddr, len);
 
 	dp->dc_nextaddr += len;
 	dp->dc_len -= len;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.14.4.1 2002/01/10 19:59:17 thorpej Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.14.4.2 2002/02/11 20:10:21 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.14.4.1 2002/01/10 19:59:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.14.4.2 2002/02/11 20:10:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +211,7 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	edp->cbcookie = cbcookie;
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
-	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT);
-	memset(edp->dblwid, 0, edp->nrows);
+	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT|M_ZERO);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);

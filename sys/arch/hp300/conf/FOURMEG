@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.1.2.1 2002/01/10 19:42:46 thorpej Exp $
+# $NetBSD: FOURMEG,v 1.1.2.2 2002/02/11 20:07:47 jdolecek Exp $
 #
 # Options for low-memory systems.
 #
@@ -14,3 +14,4 @@ options 	BUFPAGES=16
 options 	NMBCLUSTERS=64
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2002/01/10 19:37:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $
 
 ### what we need:
 
@@ -106,3 +106,5 @@ m68k:
 
 ${COBJS}: ${TXLT}
 ${FILES}: ${RELOC2BB}
+
+.include "${.CURDIR}/../Makefile.booters"

@@ -1,4 +1,4 @@
-/* $NetBSD: esareg.h,v 1.3.2.2 2002/01/10 19:56:33 thorpej Exp $ */
+/* $NetBSD: esareg.h,v 1.3.2.3 2002/02/11 20:09:57 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -286,74 +286,6 @@
 #define ESA_DSP2HOST_REQ_I2SRATE    0x02
 #define ESA_DSP2HOST_REQ_TIMER      0x04
 
-/* AC97 registers */
-/* XXX fix this crap up */
-/*#define ESA_AC97_RESET              0x00*/
-
-#define ESA_AC97_VOL_MUTE_B         0x8000
-#define ESA_AC97_VOL_M              0x1F
-#define ESA_AC97_LEFT_VOL_S         8
-
-#define ESA_AC97_MASTER_VOL         0x02
-#define ESA_AC97_LINE_LEVEL_VOL     0x04
-#define ESA_AC97_MASTER_MONO_VOL    0x06
-#define ESA_AC97_PC_BEEP_VOL        0x0A
-#define ESA_AC97_PC_BEEP_VOL_M      0x0F
-#define ESA_AC97_SROUND_MASTER_VOL  0x38
-#define ESA_AC97_PC_BEEP_VOL_S      1
-
-/*#define ESA_AC97_PHONE_VOL          0x0C
-#define ESA_AC97_MIC_VOL            0x0E*/
-#define ESA_AC97_MIC_20DB_ENABLE    0x40
-
-/*#define ESA_AC97_LINEIN_VOL         0x10
-#define ESA_AC97_CD_VOL             0x12
-#define ESA_AC97_VIDEO_VOL          0x14
-#define ESA_AC97_AUX_VOL            0x16*/
-#define ESA_AC97_PCM_OUT_VOL        0x18
-/*#define ESA_AC97_RECORD_SELECT      0x1A*/
-#define ESA_AC97_RECORD_MIC         0x00
-#define ESA_AC97_RECORD_CD          0x01
-#define ESA_AC97_RECORD_VIDEO       0x02
-#define ESA_AC97_RECORD_AUX         0x03
-#define ESA_AC97_RECORD_MONO_MUX    0x02
-#define ESA_AC97_RECORD_DIGITAL     0x03
-#define ESA_AC97_RECORD_LINE        0x04
-#define ESA_AC97_RECORD_STEREO      0x05
-#define ESA_AC97_RECORD_MONO        0x06
-#define ESA_AC97_RECORD_PHONE       0x07
-
-/*#define ESA_AC97_RECORD_GAIN        0x1C*/
-#define ESA_AC97_RECORD_VOL_M       0x0F
-
-/*#define ESA_AC97_GENERAL_PURPOSE    0x20*/
-#define ESA_AC97_POWER_DOWN_CTRL    0x26
-#define ESA_AC97_ADC_READY          0x0001
-#define ESA_AC97_DAC_READY          0x0002
-#define ESA_AC97_ANALOG_READY       0x0004
-#define ESA_AC97_VREF_ON            0x0008
-#define ESA_AC97_PR0                0x0100
-#define ESA_AC97_PR1                0x0200
-#define ESA_AC97_PR2                0x0400
-#define ESA_AC97_PR3                0x0800
-#define ESA_AC97_PR4                0x1000
-
-#define ESA_AC97_RESERVED1          0x28
-
-#define ESA_AC97_VENDOR_TEST        0x5A
-
-#define ESA_AC97_CLOCK_DELAY        0x5C
-#define ESA_AC97_LINEOUT_MUX_SEL    0x0001
-#define ESA_AC97_MONO_MUX_SEL       0x0002
-#define ESA_AC97_CLOCK_DELAY_SEL    0x1F
-#define ESA_AC97_DAC_CDS_SHIFT      6
-#define ESA_AC97_ADC_CDS_SHIFT      11
-
-#define ESA_AC97_MULTI_CHANNEL_SEL  0x74
-
-/*#define ESA_AC97_VENDOR_ID1         0x7C
-#define ESA_AC97_VENDOR_ID2         0x7E*/
-
 /*
  * ASSP control regs
  */
@@ -375,22 +307,22 @@
 #define ESA_REV_A_CODE_MEMORY_BEGIN         0x0000
 #define ESA_REV_A_CODE_MEMORY_END           0x0FFF
 #define ESA_REV_A_CODE_MEMORY_UNIT_LENGTH   0x0040
-#define ESA_REV_A_CODE_MEMORY_LENGTH        (REV_A_CODE_MEMORY_END - REV_A_CODE_MEMORY_BEGIN + 1)
+#define ESA_REV_A_CODE_MEMORY_LENGTH        (ESA_REV_A_CODE_MEMORY_END - ESA_REV_A_CODE_MEMORY_BEGIN + 1)
 
 #define ESA_REV_B_CODE_MEMORY_BEGIN         0x0000
 #define ESA_REV_B_CODE_MEMORY_END           0x0BFF
 #define ESA_REV_B_CODE_MEMORY_UNIT_LENGTH   0x0040
-#define ESA_REV_B_CODE_MEMORY_LENGTH        (REV_B_CODE_MEMORY_END - REV_B_CODE_MEMORY_BEGIN + 1)
+#define ESA_REV_B_CODE_MEMORY_LENGTH        (ESA_REV_B_CODE_MEMORY_END - ESA_REV_B_CODE_MEMORY_BEGIN + 1)
 
 #define ESA_REV_A_DATA_MEMORY_BEGIN         0x1000
 #define ESA_REV_A_DATA_MEMORY_END           0x2FFF
 #define ESA_REV_A_DATA_MEMORY_UNIT_LENGTH   0x0080
-#define ESA_REV_A_DATA_MEMORY_LENGTH        (REV_A_DATA_MEMORY_END - REV_A_DATA_MEMORY_BEGIN + 1)
+#define ESA_REV_A_DATA_MEMORY_LENGTH        (ESA_REV_A_DATA_MEMORY_END - ESA_REV_A_DATA_MEMORY_BEGIN + 1)
 
 #define ESA_REV_B_DATA_MEMORY_BEGIN         0x1000
 #define ESA_REV_B_DATA_MEMORY_END           0x2BFF
 #define ESA_REV_B_DATA_MEMORY_UNIT_LENGTH   0x0080
-#define ESA_REV_B_DATA_MEMORY_LENGTH        (REV_B_DATA_MEMORY_END - REV_B_DATA_MEMORY_BEGIN + 1)
+#define ESA_REV_B_DATA_MEMORY_LENGTH        (ESA_REV_B_DATA_MEMORY_END - ESA_REV_B_DATA_MEMORY_BEGIN + 1)
 
 
 #define ESA_NUM_UNITS_KERNEL_CODE          16

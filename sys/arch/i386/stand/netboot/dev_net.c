@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.9 2000/07/30 06:11:38 simonb Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.9.6.1 2002/02/11 20:08:29 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,9 +60,9 @@ void bootp      __P((int));
 
 struct in_addr  myip;		/* init'ed as INADDR_ANY */
 struct in_addr  rootip, gateip;
-n_long          netmask;
+n_long          netmask = 0xffffff00;
 
-char	rootpath[FNAME_SIZE];
+char	rootpath[FNAME_SIZE] = "/";
 char	bootfile[FNAME_SIZE];
 
 char	hostname[FNAME_SIZE];	/* our hostname */

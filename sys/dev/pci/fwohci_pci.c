@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.10.2.1 2002/01/10 19:56:35 thorpej Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.10.2.2 2002/02/11 20:09:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.10.2.1 2002/01/10 19:56:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.10.2.2 2002/02/11 20:09:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
 	    &psc->psc_sc.sc_memt, &psc->psc_sc.sc_memh,
 	    NULL, &psc->psc_sc.sc_memsize)) {
-		printf("%s: can't map OCHI register space\n", self->dv_xname);
+		printf("%s: can't map OHCI register space\n", self->dv_xname);
 		return;
 	}
 

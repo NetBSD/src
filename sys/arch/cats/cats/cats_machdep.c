@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.1.2.2 2002/01/10 19:40:52 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.1.2.3 2002/02/11 20:07:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -136,7 +136,8 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define KERNEL_PT_VMDATA	2	/* Page tables for mapping kernel VM */
+#define KERNEL_PT_KERNEL2	2	/* 2nd page table for mapping kernel */
+#define KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
 #ifndef KERNEL_PT_VMDATA_NUM
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #endif
@@ -153,23 +154,8 @@ void consinit		__P((void));
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
-
-void process_kernel_args	__P((char *));
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
+static void process_kernel_args	__P((char *));
 extern void configure		__P((void));
-extern void parse_mi_bootargs	__P((char *args));
-extern void dumpsys		__P((void));
 
 /* A load of console goo. */
 #include "vga.h"
@@ -538,6 +524,9 @@ initarm(bootargs)
 	    kernel_pt_table[KERNEL_PT_SYS]);
 	map_pagetable(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	map_pagetable(l1pagetable, KERNEL_BASE + 0x00400000,
+	    kernel_pt_table[KERNEL_PT_KERNEL2]);
+
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
@@ -556,19 +545,23 @@ initarm(bootargs)
 	else {
 		extern int end;
 
-		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
-		    physical_start, kernexec->a_text,
-		    AP_KR, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_data,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_bss,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_syms + sizeof(int)
-		    + *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
+		logical = map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE,
+			physical_start, kernexec->a_text,
+			AP_KR, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_data,
+			AP_KRW, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_bss,
+			AP_KRW, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_syms + sizeof(int)
+			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
+			AP_KRW, PT_CACHEABLE);
 	}
 
 	/*
@@ -612,6 +605,9 @@ initarm(bootargs)
 	l2pagetable = kernel_ptpt.pv_pa;
 	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	map_entry_nc(l2pagetable, ((KERNEL_BASE +0x00400000) >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_KERNEL2]);
+
 	map_entry_nc(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa);
 	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
@@ -677,7 +673,7 @@ initarm(bootargs)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_icache_sync_all();
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -755,7 +751,7 @@ initarm(bootargs)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-void
+static void
 process_kernel_args(args)
 	char *args;
 {
@@ -785,38 +781,6 @@ process_kernel_args(args)
 
 	parse_mi_bootargs(boot_args);
 }
-
-#if 0
-void
-arm32_cachectl(va, len, flags)
-	vm_offset_t va;
-	int len;
-	int flags;
-{
-	pt_entry_t *ptep, pte;
-	int loop;
-	vm_offset_t addr;
-
-/*	printf("arm32_cachectl(%x,%x,%x)\n", va, len, flags);*/
-
-	if (flags & 1) {
-		addr = va;
-		loop = len;
-		while (loop > 0) {
-			ptep = vtopte(addr & (~PGOFSET));
-			pte = *ptep;
-	
-			*ptep = (pte & ~(PT_C | PT_B)) | (flags & (PT_C | PT_B));
-	
-			loop -= NBPG;
-			addr += NBPG;
-		}
-		tlb_flush();
-	}
-	
-	cpu_cache_purgeD_rng(va, len);	
-}
-#endif
 
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;

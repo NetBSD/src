@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.2.2.1 2002/01/10 19:41:31 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.2.2.2 2002/02/11 20:07:38 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -722,9 +722,10 @@ int scrprobe(parent, match, aux)
         devices++;      
 
         /* tell the caller that we are not using any resource */
-        ia->ia_iosize = -1;
-        ia->ia_irq   = -1;
-        ia->ia_msize = 0;
+	ia->ia_nio = 0;
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
         rv = 1;
 
 

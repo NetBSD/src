@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.2.12.1 2002/01/10 19:44:14 thorpej Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.2.12.2 2002/02/11 20:08:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <machine/bus.h>
 
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/dsureg.h>
 #include <hpcmips/vr/vrdsuvar.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451.2.5 2002/01/10 19:52:31 thorpej Exp $
+#	$NetBSD: files,v 1.451.2.6 2002/02/11 20:09:35 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -13,6 +13,7 @@ defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
 defflag				NEW_PIPE
+defflag				PIPE_SOCKETPAIR
 
 defflag				MULTIPROCESSOR
 
@@ -950,6 +951,7 @@ file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/ccd.c			ccd			needs-flag
+file	dev/clockctl.c			clockctl		needs-flag
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
 file	dev/ir/cir.c			cir			needs-flag
@@ -1483,4 +1485,7 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
-file	dev/clockctl.c			clockctl		needs-flag
+
+# Game adapter (joystick)
+device	joy
+file	dev/ic/joy.c			joy needs-flag

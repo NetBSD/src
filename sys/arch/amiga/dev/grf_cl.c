@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.25.16.1 2001/08/25 06:15:04 thorpej Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.25.16.2 2002/02/11 20:06:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -34,6 +34,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.25.16.2 2002/02/11 20:06:54 jdolecek Exp $");
+
 #include "grfcl.h"
 #if NGRFCL > 0
 
@@ -83,37 +87,37 @@
 #include <amiga/dev/grf_clreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	cl_mondefok __P((struct grfvideo_mode *));
-void	cl_boardinit __P((struct grf_softc *));
-static void	cl_CompFQ __P((u_int, u_char *, u_char *, u_char *));
-int	cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int	cl_setvmode __P((struct grf_softc *, unsigned int));
-int	cl_toggle __P((struct grf_softc *, unsigned short));
-int	cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cl_mondefok(struct grfvideo_mode *);
+void	cl_boardinit(struct grf_softc *);
+static void cl_CompFQ(u_int, u_char *, u_char *, u_char *);
+int	cl_getvmode(struct grf_softc *, struct grfvideo_mode *);
+int	cl_setvmode(struct grf_softc *, unsigned int);
+int	cl_toggle(struct grf_softc *, unsigned short);
+int	cl_getcmap(struct grf_softc *, struct grf_colormap *);
+int	cl_putcmap(struct grf_softc *, struct grf_colormap *);
 #ifndef CL5426CONSOLE
-void	cl_off __P((struct grf_softc *));
+void	cl_off(struct grf_softc *);
 #endif
-void	cl_inittextmode __P((struct grf_softc *));
-int	cl_ioctl __P((register struct grf_softc *, u_long, void *));
-int	cl_getmousepos __P((struct grf_softc *, struct grf_position *));
-int	cl_setmousepos __P((struct grf_softc *, struct grf_position *));
-static int	cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int	cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-static int	cl_getspritemax __P((struct grf_softc *, struct grf_position *));
-int	cl_blank __P((struct grf_softc *, int *));
-int	cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-void	cl_writesprpos __P((volatile char *, short, short));
-void	writeshifted __P((volatile char *, char, char));
+void	cl_inittextmode(struct grf_softc *);
+int	cl_ioctl(register struct grf_softc *, u_long, void *);
+int	cl_getmousepos(struct grf_softc *, struct grf_position *);
+int	cl_setmousepos(struct grf_softc *, struct grf_position *);
+static int cl_setspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+int	cl_getspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+static int cl_getspritemax(struct grf_softc *, struct grf_position *);
+int	cl_blank(struct grf_softc *, int *);
+int	cl_setmonitor(struct grf_softc *, struct grfvideo_mode *);
+void	cl_writesprpos(volatile char *, short, short);
+void	writeshifted(volatile char *, char, char);
 
-static void	RegWakeup __P((volatile caddr_t));
-static void	RegOnpass __P((volatile caddr_t));
-static void	RegOffpass __P((volatile caddr_t));
+static void	RegWakeup(volatile caddr_t);
+static void	RegOnpass(volatile caddr_t);
+static void	RegOffpass(volatile caddr_t);
 
-void	grfclattach __P((struct device *, struct device *, void *));
-int	grfclprint __P((void *, const char *));
-int	grfclmatch __P((struct device *, struct cfdata *, void *));
-void	cl_memset __P((unsigned char *, unsigned char, int));
+void	grfclattach(struct device *, struct device *, void *);
+int	grfclprint(void *, const char *);
+int	grfclmatch(struct device *, struct cfdata *, void *);
+void	cl_memset(unsigned char *, unsigned char, int);
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
@@ -292,7 +296,7 @@ grfclmatch(pdp, cfp, auxp)
 			cl_fbaddr = zap->va;
 			cl_fbautosize = zap->size;
 			break;
-		    case 22: 
+		    case 22:
 			cl_fbautosize += zap->size;
 			break;
 		    case 23:
@@ -328,7 +332,7 @@ grfclmatch(pdp, cfp, auxp)
 			cfdata = cfp;
 		}
 #endif
-	
+
 	return (1);
 }
 
@@ -608,7 +612,7 @@ cl_getvmode(gp, vm)
 		bcopy(&clconsole_mode, vm, sizeof(struct grfvideo_mode));
 		/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = clconsole_mode.fy;
-	} else 
+	} else
 #endif
         {
                 if (vm->mode_num == 0)
@@ -628,7 +632,7 @@ cl_getvmode(gp, vm)
         vm->hsync_start *= 8;
         vm->hsync_stop *= 8;
         vm->htotal *= 8;
-        
+
 	return (0);
 }
 
@@ -673,7 +677,7 @@ cl_blank(gp, on)
         WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
         return(0);
 }
-        
+
 /*
  * Change the mode of the display.
  * Return a UNIX error number or 0 for success.
@@ -910,8 +914,8 @@ cl_setspriteinfo(gp, data)
                 unsigned long ssi[128], ssm[128];
                 struct grf_position gpos;
 
-               
-                /* check for a too large sprite (no clipping!) */ 
+
+                /* check for a too large sprite (no clipping!) */
                 dsy = data->size.y;
                 dsx = data->size.x;
                 if (dsy > 64 || dsx > 64)
@@ -998,7 +1002,7 @@ cl_setspriteinfo(gp, data)
 			vgaw(ba, VDAC_DATA, (u_char) (green[1] >> 2));
 			vgaw(ba, VDAC_DATA, (u_char) (red[1] >> 2));
 		}
-                
+
                 /* turn on/off sprite */
 		if (cl_cursprite.enable) {
 			WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x05);
@@ -1026,7 +1030,7 @@ cl_setspriteinfo(gp, data)
 
                 /* do it */
                 cl_setmousepos(gp, &data->pos);
-                
+
 	}
 	return (0);
 }
@@ -1251,7 +1255,7 @@ cl_CompFQ(fq, num, denom, clkdoub)
 	unsigned long err, minerr;
 
 /*
-numer = 0x00 - 0x7f 
+numer = 0x00 - 0x7f
 denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 */
 
@@ -1307,7 +1311,7 @@ cl_mondefok(gv)
 	struct grfvideo_mode *gv;
 {
         unsigned long maxpix;
-        
+
 	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max)
                 if (gv->mode_num != 255 || gv->depth != 4)
                         return(0);
@@ -1623,7 +1627,7 @@ cl_load_mon(gp, md)
 		HDE = gv->disp_width / 16;
 		break;
 	    case 8:
-		if (clkdoub) 
+		if (clkdoub)
 			vgaw(ba, VDAC_MASK, 0x4a); /* Clockdouble Magic */
 		else
 			vgaw(ba, VDAC_MASK, 0);

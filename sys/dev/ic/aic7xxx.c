@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.78.2.2 2002/01/10 19:54:09 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.78.2.3 2002/02/11 20:09:42 jdolecek Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -6,6 +6,7 @@
  * i386/eisa/ahc_eisa.c	27/284X and aic7770 motherboard controllers
  * pci/ahc_pci.c	3985, 3980, 3940, 2940, aic7895, aic7890,
  *			aic7880, aic7870, aic7860, and aic7850 controllers
+ * cardbus/ahc_cardbus.c aic7860 cardbus controllers
  *
  * Copyright (c) 1994, 1995, 1996, 1997, 1998, 1999, 2000 Justin T. Gibbs.
  * All rights reserved.
@@ -87,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.78.2.2 2002/01/10 19:54:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.78.2.3 2002/02/11 20:09:42 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -810,12 +811,11 @@ ahc_alloc(struct ahc_softc *ahc, bus_space_handle_t sh, bus_space_tag_t st,
 {
 	struct scb_data *scb_data;
 
-	scb_data = malloc(sizeof (struct scb_data), M_DEVBUF, M_NOWAIT);
+	scb_data = malloc(sizeof (struct scb_data), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb_data == NULL) {
 		printf("%s: cannot malloc softc!\n", ahc_name(ahc));
 		return -1;
 	}
-	memset(scb_data, 0, sizeof (struct scb_data));
 	LIST_INIT(&ahc->pending_ccbs);
 	ahc->tag = st;
 	ahc->bsh = sh;
@@ -863,10 +863,9 @@ ahcinitscbdata(struct ahc_softc *ahc)
 	/* Allocate SCB resources */
 	scb_data->scbarray =
 	    (struct scb *)malloc(sizeof(struct scb) * AHC_SCB_MAX,
-				 M_DEVBUF, M_NOWAIT);
+				 M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
-	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
@@ -1409,15 +1408,50 @@ ahc_attach(struct ahc_softc *ahc)
 	}
 
 	if ((ahc->flags & AHC_CHANNEL_B_PRIMARY) == 0) {
-		config_found((void *)ahc, &ahc->sc_channel, scsiprint);
+		ahc->child = config_found((void *)ahc, &ahc->sc_channel, scsiprint);
 		if (ahc->features & AHC_TWIN)
-			config_found((void *)ahc, &ahc->sc_channel_b,
+			ahc->child = config_found((void *)ahc, &ahc->sc_channel_b,
 			    scsiprint);
 	} else {
-		config_found((void *)ahc, &ahc->sc_channel_b, scsiprint);
-		config_found((void *)ahc, &ahc->sc_channel, scsiprint);
+		ahc->child = config_found((void *)ahc, &ahc->sc_channel_b, scsiprint);
+		ahc->child = config_found((void *)ahc, &ahc->sc_channel, scsiprint);
 	}
 	return 1;
+}
+
+int
+ahc_detach(struct ahc_softc *ahc, int flags)
+{
+	int rv = 0;
+
+	if (ahc->child != NULL)
+		rv = config_detach(ahc->child, flags);
+
+	ahc_free(ahc);
+
+        return (rv);
+}
+
+int
+ahc_activate(struct device *self, enum devact act)
+{
+	struct ahc_softc *ahc = (void *) self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (ahc->child != NULL)
+			rv = config_deactivate(ahc->child);
+		break;
+	}
+	splx(s);
+
+	return (rv);
 }
 
 static void

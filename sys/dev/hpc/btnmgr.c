@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.2.2.1 2002/01/10 19:53:55 thorpej Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2.2.2 2002/02/11 20:09:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.2.2.1 2002/01/10 19:53:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.2.2.2 2002/02/11 20:09:40 jdolecek Exp $");
 
 #define BTNMGRDEBUG
 
@@ -183,7 +183,7 @@ btnmgrattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * install button event listener
 	 */
-	for (id = 0; id <= CONFIG_HOOK_MAX_ID; id++)
+	for (id = 0; id <= n_button_config; id++)
 		if (button_config[id].name != NULL)
 			sc->sc_hook_tag = config_hook(CONFIG_HOOK_BUTTONEVENT,
 			    id, CONFIG_HOOK_SHARE,

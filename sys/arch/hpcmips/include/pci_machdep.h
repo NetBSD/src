@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/06/13 07:32:47 enami Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.4.1 2002/02/11 20:08:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -70,11 +70,6 @@ struct hpcmips_pci_chipset {
 	void *(*pc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
 	void (*pc_intr_disestablish)(pci_chipset_tag_t, void *);
-
-	/* hpcmips specific */
-	void *(*pc_vrcintr_establish)(pci_chipset_tag_t, int,
-	    int (*)(void *), void *);
-	void (*pc_vrcintr_disestablish)(pci_chipset_tag_t, void *);
 };
 
 /*
@@ -106,9 +101,3 @@ struct hpcmips_pci_chipset {
     (*(c)->pc_intr_establish)((c), (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c), (iv))
-
-/* XXX */
-#define	pci_vrcintr_establish(c, p, func, arg)				\
-    (*(c)->pc_vrcintr_establish)((c), (p), (func), (arg))
-#define	pci_vrcintr_disestablish(c, iv)					\
-    (*(c)->pc_vrcintr_disestablish)((c), (iv))

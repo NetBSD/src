@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.4 2002/01/10 19:48:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.5 2002/02/11 20:08:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -516,7 +516,8 @@ cpu_startup()
 	 * allocater isn't using direct-mapped pool pages.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbcluters & mclsize, 0, FALSE, NULL);
+				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
+				 FALSE, NULL);
 #endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
@@ -774,8 +775,7 @@ mapiodev(pa, len)
 		return NULL;
 
 	for (; len > 0; len -= NBPG) {
-		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.6.2.1 2002/01/10 19:43:52 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.6.2.2 2002/02/11 20:08:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_tx39_debug.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -51,11 +49,11 @@
 #include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumpcmciareg.h>
 
-#ifdef PLUMPCMCIADEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
+#ifdef	PLUMPCMCIA_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	plumpcmcia_debug
 #endif
+#include <machine/debug.h>
 
 int	plumpcmcia_match(struct device *, struct cfdata *, void *);
 void	plumpcmcia_attach(struct device *, struct device *, void *);
@@ -189,11 +187,13 @@ static int plum_csc_intr(void *);
 static void plumpcmcia_create_event_thread(void *);
 static void plumpcmcia_event_thread(void *);
 
+#ifdef PLUMPCMCIA_DEBUG
 /* debug */
 #define __DEBUG_FUNC	__attribute__((__unused__))
 static void __ioareadump(plumreg_t) __DEBUG_FUNC;
 static void __memareadump(plumreg_t) __DEBUG_FUNC;
 static void plumpcmcia_dump(struct plumpcmcia_softc *) __DEBUG_FUNC;
+#endif /* PLUMPCMCIA_DEBUG */
 
 struct cfattach plumpcmcia_ca = {
 	sizeof(struct plumpcmcia_softc), plumpcmcia_match, plumpcmcia_attach
@@ -550,9 +550,9 @@ plumpcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
     bus_addr_t offset, bus_size_t size,
     struct pcmcia_io_handle *pcihp, int *windowp)
 {
-#ifdef PLUMPCMCIADEBUG
+#ifdef PLUMPCMCIA_DEBUG
 	static char *width_names[] = { "auto", "io8", "io16" };
-#endif /* PLUMPCMCIADEBUG */
+#endif /* PLUMPCMCIA_DEBUG */
 	struct plumpcmcia_handle *ph = (void*)pch;
 	bus_addr_t winofs;
 	int i, win;
@@ -891,28 +891,6 @@ plum_csc_intr(void *arg)
 	return (0);
 }
 
-static void
-__memareadump(plumreg_t reg)
-{
-	int maparea;
-
-	maparea = PLUM_PCMCIA_MEMWINCTRL_MAP(reg);
-	switch (maparea) {
-	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA1:
-		printf("MEM Area1\n");
-		break;
-	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA2:
-		printf("MEM Area2\n");
-		break;
-	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA3:
-		printf("MEM Area3\n");
-		break;
-	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA4:
-		printf("MEM Area4\n");
-		break;
-	}
-}	
-
 static struct plumpcmcia_event *
 plumpcmcia_event_alloc()
 {
@@ -1010,6 +988,7 @@ plumpcmcia_power(void *ctx, int type, long id, void *msg)
 	return (0);
 }
 
+#ifdef PLUMPCMCIA_DEBUG
 static void
 __ioareadump(plumreg_t reg)
 {
@@ -1020,6 +999,28 @@ __ioareadump(plumreg_t reg)
 		printf("I/O Area 1\n");
 	}
 }
+
+static void
+__memareadump(plumreg_t reg)
+{
+	int maparea;
+
+	maparea = PLUM_PCMCIA_MEMWINCTRL_MAP(reg);
+	switch (maparea) {
+	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA1:
+		printf("MEM Area1\n");
+		break;
+	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA2:
+		printf("MEM Area2\n");
+		break;
+	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA3:
+		printf("MEM Area3\n");
+		break;
+	case PLUM_PCMCIA_MEMWINCTRL_MAP_AREA4:
+		printf("MEM Area4\n");
+		break;
+	}
+}	
 
 static void
 plumpcmcia_dump(struct plumpcmcia_softc *sc)
@@ -1045,8 +1046,9 @@ plumpcmcia_dump(struct plumpcmcia_softc *sc)
 			reg = plum_conf_read(sc->sc_regt, sc->sc_regh,
 			    i + 0x800 * j);
 			printf("%03x %08x", i, reg);
-			bitdisp(reg);
+			dbg_bit_print(reg);
 		}
 	}
 	printf("\n");
 }
+#endif /* PLUMPCMCIA_DEBUG */

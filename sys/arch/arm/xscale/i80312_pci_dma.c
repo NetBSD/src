@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci_dma.c,v 1.1.6.2 2002/01/10 19:38:33 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci_dma.c,v 1.1.6.3 2002/02/11 20:07:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -218,6 +218,7 @@ i80312_pci_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 
 	return (error);
@@ -261,6 +262,7 @@ i80312_pci_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 
 	return (0);
@@ -320,6 +322,7 @@ i80312_pci_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.20 2000/11/15 01:02:12 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.20.4.1 2002/02/11 20:07:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -64,6 +64,9 @@
  * TODO:
  * - add multicast support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.20.4.1 2002/02/11 20:07:00 jdolecek Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -156,23 +159,24 @@ struct	qn_softc {
 #endif
 
 
-int	qnmatch __P((struct device *, struct cfdata *, void *));
-void	qnattach __P((struct device *, struct device *, void *));
-int	qnintr __P((void *));
-int	qnioctl __P((struct ifnet *, u_long, caddr_t));
-void	qnstart __P((struct ifnet *));
-void	qnwatchdog __P((struct ifnet *));
-void	qnreset __P((struct qn_softc *));
-void	qninit __P((struct qn_softc *));
-void	qnstop __P((struct qn_softc *));
-static	u_short qn_put __P((u_short volatile *, struct mbuf *));
-static	void qn_rint __P((struct qn_softc *, u_short));
-static	void qn_flush __P((struct qn_softc *));
-static	void inline word_copy_from_card __P((u_short volatile *, u_short *, u_short));
-static	void inline word_copy_to_card __P((u_short *, u_short volatile *, register u_short));
-static	void qn_get_packet __P((struct qn_softc *, u_short)); 
+int	qnmatch(struct device *, struct cfdata *, void *);
+void	qnattach(struct device *, struct device *, void *);
+int	qnintr(void *);
+int	qnioctl(struct ifnet *, u_long, caddr_t);
+void	qnstart(struct ifnet *);
+void	qnwatchdog(struct ifnet *);
+void	qnreset(struct qn_softc *);
+void	qninit(struct qn_softc *);
+void	qnstop(struct qn_softc *);
+static	u_short qn_put(u_short volatile *, struct mbuf *);
+static	void qn_rint(struct qn_softc *, u_short);
+static	void qn_flush(struct qn_softc *);
+static	void inline word_copy_from_card(u_short volatile *, u_short *, u_short);
+static	void inline word_copy_to_card(u_short *, u_short volatile *,
+				register u_short);
+static	void qn_get_packet(struct qn_softc *, u_short);
 #ifdef QN_DEBUG1
-static	void qn_dump __P((struct qn_softc *));
+static	void qn_dump(struct qn_softc *);
 #endif
 
 struct cfattach qn_ca = {
@@ -180,10 +184,7 @@ struct cfattach qn_ca = {
 };
 
 int
-qnmatch(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+qnmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct zbus_args *zap;
 
@@ -202,9 +203,7 @@ qnmatch(parent, cfp, aux)
  * to accept packets.
  */
 void
-qnattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qnattach(struct device *parent, struct device *self, void *aux)
 {
 	struct zbus_args *zap;
 	struct qn_softc *sc = (struct qn_softc *)self;
@@ -268,8 +267,7 @@ qnattach(parent, self, aux)
  *
  */
 void
-qninit(sc)
-	struct qn_softc *sc;
+qninit(struct qn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short i;
@@ -315,8 +313,7 @@ qninit(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-qnwatchdog(ifp)
-	struct ifnet *ifp;
+qnwatchdog(struct ifnet *ifp)
 {
 	struct qn_softc *sc = ifp->if_softc;
 
@@ -330,8 +327,7 @@ qnwatchdog(ifp)
  * Flush card's buffer RAM.
  */
 static void
-qn_flush(sc)
-	struct qn_softc *sc;
+qn_flush(struct qn_softc *sc)
 {
 #if 1
 	/* Read data until bus read error (i.e. buffer empty). */
@@ -352,8 +348,7 @@ qn_flush(sc)
  *
  */
 void
-qnreset(sc)
-	struct qn_softc *sc;
+qnreset(struct qn_softc *sc)
 {
 	int s;
 
@@ -367,8 +362,7 @@ qnreset(sc)
  * Take interface offline.
  */
 void
-qnstop(sc)
-	struct qn_softc *sc;
+qnstop(struct qn_softc *sc)
 {
 
 	/* Stop the interface. */
@@ -398,8 +392,7 @@ qnstop(sc)
  *
  */
 void
-qnstart(ifp)
-	struct ifnet *ifp;
+qnstart(struct ifnet *ifp)
 {
 	struct qn_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -459,9 +452,7 @@ qnstart(ifp)
  * Memory copy, copies word at a time
  */
 static void inline
-word_copy_from_card(card, b, len)
-	u_short volatile *card;
-	u_short *b, len;
+word_copy_from_card(u_short volatile *card, u_short *b, u_short len)
 {
 	register u_short l = len/2;
 
@@ -470,10 +461,7 @@ word_copy_from_card(card, b, len)
 }
 
 static void inline
-word_copy_to_card(a, card, len)
-	u_short *a;
-	u_short volatile *card;
-	register u_short len;
+word_copy_to_card(u_short *a, u_short volatile *card, register u_short len)
 {
 	/*register u_short l = len/2;*/
 
@@ -486,9 +474,7 @@ word_copy_to_card(a, card, len)
  *
  */
 static u_short
-qn_put(addr, m)
-	u_short volatile *addr;
-	struct mbuf *m;
+qn_put(u_short volatile *addr, struct mbuf *m)
 {
 	u_short *data;
 	u_char savebyte[2];
@@ -552,9 +538,7 @@ qn_put(addr, m)
  *
  */
 static void
-qn_get_packet(sc, len)
-	struct qn_softc *sc;
-	u_short len;
+qn_get_packet(struct qn_softc *sc, u_short len)
 {
 	register u_short volatile *nic_fifo_ptr = sc->nic_fifo;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -634,9 +618,7 @@ bad:
  * Ethernet interface receiver interrupt.
  */
 static void
-qn_rint(sc, rstat)
-	struct qn_softc *sc;
-	u_short rstat;
+qn_rint(struct qn_softc *sc, u_short rstat)
 {
 	int i;
 	u_short len, status;
@@ -726,7 +708,7 @@ qn_rint(sc, rstat)
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname, len);
-#endif 
+#endif
 
 		/* Read the packet. */
 		qn_get_packet(sc, len);
@@ -745,8 +727,7 @@ qn_rint(sc, rstat)
  * Our interrupt routine
  */
 int
-qnintr(arg)
-	void *arg;
+qnintr(void *arg)
 {
 	struct qn_softc *sc = arg;
 	u_short tint, rint, tintmask;
@@ -837,10 +818,7 @@ qnintr(arg)
  * I somehow think that this is quite a common excuse... ;-)
  */
 int
-qnioctl(ifp, command, data)
-	register struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+qnioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct qn_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
@@ -953,8 +931,7 @@ qnioctl(ifp, command, data)
  */
 #ifdef QN_DEBUG1
 static void
-qn_dump(sc)
-	struct qn_softc *sc;
+qn_dump(struct qn_softc *sc)
 {
 
 	log(LOG_INFO, "t_status  : %04x\n", *sc->nic_t_status);

@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.3 1994/10/26 02:05:08 cgd Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.3.46.1 2002/02/11 20:07:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,7 +41,7 @@ struct view_softc {
     struct  view_size size;
     view_t *view;
 
-    dmode_t   *mode;  
+    dmode_t   *mode;
     monitor_t *monitor;
 
     pid_t   lock_process;

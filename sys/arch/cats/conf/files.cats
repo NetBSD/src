@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7.2.3 2002/01/10 19:40:55 thorpej Exp $
+#	$NetBSD: files.cats,v 1.7.2.4 2002/02/11 20:07:33 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -47,13 +47,8 @@ file	arch/arm32/dev/todclock.c		todclock	needs-count
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
 
-# XXX ISA joystick driver
-device	joy
-file	arch/arm32/isa/joy.c			joy needs-flag
-attach	joy at isa with joy_isa
-file	arch/arm32/isa/joy_isa.c		joy_isa
-attach	joy at isapnp with joy_isapnp
-file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
+# Game adapter (joystick)
+file	arch/arm32/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks

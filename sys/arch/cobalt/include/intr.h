@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/04/13 23:29:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.2.1 2002/02/11 20:07:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -90,9 +90,6 @@ extern void		_clrsoftintr(int);
 extern unsigned int	intrcnt[];
 #define SOFTCLOCK_INTR	0
 #define SOFTNET_INTR	1  
-
-extern void *	cpu_intr_establish(int, int, int (*)(void *), void *);
-extern void *	icu_intr_establish(int, int, int, int (*)(void *), void *);
 
 #endif /* !_LOCORE */
 #endif /* _LOCORE */

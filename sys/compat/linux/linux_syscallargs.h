@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.36.4.1 2002/01/10 19:51:23 thorpej Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.36.4.2 2002/02/11 20:09:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <compat/linux/arch/powerpc/linux_syscallargs.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_syscallargs.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_syscallargs.h>
 #else
 #error Undefined linux_syscallargs.h machine type.
 #endif

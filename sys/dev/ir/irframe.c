@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.15.4.2 2002/01/10 18:29:12 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.15.4.3 2002/02/11 20:09:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -414,8 +414,7 @@ irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
 	for (unit = 0; unit < cd->cd_ndevs; unit++)
 		if (cd->cd_devs[unit] == NULL)
 			break;
-	dev = malloc(size, M_DEVBUF, M_WAITOK);
-	memset(dev, 0, size);
+	dev = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	snprintf(dev->dv_xname, sizeof dev->dv_xname, "irframe%d", unit);
 	dev->dv_unit = unit;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */

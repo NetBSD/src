@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18.2.1 2002/01/10 19:55:23 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.2.2 2002/02/11 20:09:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.1 2002/01/10 19:55:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.2 2002/02/11 20:09:52 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1540,10 +1540,9 @@ fdformat(dev, finfo, p)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT|M_ZERO);
 	if(bp == 0)
 		return ENOBUFS;
-	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;

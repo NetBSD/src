@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.8.2.3 2002/01/10 19:37:40 thorpej Exp $
+#	$NetBSD: PCCONS,v 1.8.2.4 2002/02/11 20:07:14 jdolecek Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -33,6 +33,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks

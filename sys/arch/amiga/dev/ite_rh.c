@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.8 1999/03/25 23:19:59 is Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.8.22.1 2002/02/11 20:07:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_retina.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.8.22.1 2002/02/11 20:07:01 jdolecek Exp $");
+
 #include "grfrh.h"
 #if NGRFRH > 0
 
@@ -50,8 +54,8 @@
 #include <amiga/dev/itevar.h>
 
 #ifdef	RETINA_SPEED_HACK
-static void screen_up __P((struct ite_softc *, int, int, int));
-static void screen_down __P((struct ite_softc *, int, int, int));
+static void screen_up(struct ite_softc *, int, int, int);
+static void screen_down(struct ite_softc *, int, int, int);
 #endif
 
 /*
@@ -61,7 +65,7 @@ static void screen_down __P((struct ite_softc *, int, int, int));
  * will be true.
  */
 int
-grfrh_cnprobe()
+grfrh_cnprobe(void)
 {
 	static int done;
 	int rv;
@@ -76,8 +80,7 @@ grfrh_cnprobe()
 
 
 void
-grfrh_iteinit(gp)
-	struct grf_softc *gp;
+grfrh_iteinit(struct grf_softc *gp)
 {
 	gp->g_iteinit = rh_init;
 	gp->g_itedeinit = rh_deinit;
@@ -89,8 +92,7 @@ grfrh_iteinit(gp)
 
 
 void
-rh_init(ip)
-	struct ite_softc *ip;
+rh_init(struct ite_softc *ip)
 {
 	struct MonDef *md;
 
@@ -108,9 +110,7 @@ rh_init(ip)
 
 
 void
-rh_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+rh_cursor(struct ite_softc *ip, int flag)
 {
 #if 0
 	volatile u_char *ba = ip->grf->g_regkva;
@@ -144,11 +144,7 @@ rh_cursor(ip, flag)
 
 #ifdef	RETINA_SPEED_HACK
 static void
-screen_up(ip, top, bottom, lines)
-	struct ite_softc *ip;
-	int top;
-	int bottom;
-	int lines;
+screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 {
 
 	/* do some bounds-checking here.. */
@@ -166,11 +162,7 @@ screen_up(ip, top, bottom, lines)
 
 
 static void
-screen_down (ip, top, bottom, lines)
-	struct ite_softc *ip;
-	int top;
-	int bottom;
-	int lines;
+screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 {
 
 	/* do some bounds-checking here.. */
@@ -189,20 +181,14 @@ screen_down (ip, top, bottom, lines)
 
 
 void
-rh_deinit(ip)
-	struct ite_softc *ip;
+rh_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 
 void
-rh_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+rh_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	volatile u_char * fb = ip->grf->g_fbkva;
 	register u_char attr;
@@ -218,12 +204,7 @@ rh_putc(ip, c, dy, dx, mode)
 
 
 void
-rh_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+rh_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	RZ3AlphaErase (ip->grf, sx, sy, w, h);
 }
@@ -234,12 +215,7 @@ rh_clear(ip, sy, sx, h, w)
  * it causes text to smear horizontally
  */
 void
-rh_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+rh_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 #ifndef	RETINA_SPEED_HACK
 	u_long * fb = (u_long *) ip->grf->g_fbkva;

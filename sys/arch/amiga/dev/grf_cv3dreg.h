@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.3 1997/11/09 23:30:51 is Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.3.28.1 2002/02/11 20:06:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -110,14 +110,14 @@ struct grfcv3dtext_mode {
 		asm volatile ("nop"); \
 } while (0)
 
-int grfcv3d_cnprobe __P((void));
-void grfcv3d_iteinit __P((struct grf_softc *));
-static __inline void GfxBusyWait __P((volatile caddr_t));    
-static __inline void GfxFifoWait __P((volatile caddr_t));    
-static __inline unsigned char RAttr __P((volatile caddr_t, short)); 
-static __inline unsigned char RSeq __P((volatile caddr_t, short)); 
-static __inline unsigned char RCrt __P((volatile caddr_t, short)); 
-static __inline unsigned char RGfx __P((volatile caddr_t, short)); 
+int grfcv3d_cnprobe(void);
+void grfcv3d_iteinit(struct grf_softc *);
+static __inline void GfxBusyWait(volatile caddr_t);
+static __inline void GfxFifoWait(volatile caddr_t);
+static __inline unsigned char RAttr(volatile caddr_t, short);
+static __inline unsigned char RSeq(volatile caddr_t, short);
+static __inline unsigned char RCrt(volatile caddr_t, short);
+static __inline unsigned char RGfx(volatile caddr_t, short);
 
 
 /*
@@ -134,7 +134,7 @@ static __inline unsigned char RGfx __P((volatile caddr_t, short));
 
 /* General Registers: */
 #define GREG_MISC_OUTPUT_R	0x03CC
-#define GREG_MISC_OUTPUT_W	0x03C2	
+#define GREG_MISC_OUTPUT_W	0x03C2
 #define GREG_FEATURE_CONTROL_R	0x03CA
 #define GREG_FEATURE_CONTROL_W	0x03DA
 #define GREG_INPUT_STATUS0_R	0x03C2
@@ -559,8 +559,8 @@ static __inline unsigned char RGfx __P((volatile caddr_t, short));
 
 /* Gfx engine busy wait */
 
-static __inline void 
-GfxBusyWait (ba) 
+static __inline void
+GfxBusyWait (ba)
 	volatile caddr_t ba;
 {
 	int test;
@@ -573,7 +573,7 @@ GfxBusyWait (ba)
 
 
 static __inline void
-GfxFifoWait(ba) 
+GfxFifoWait(ba)
 	volatile caddr_t ba;
 {
 #if 0	/* XXX */
@@ -624,7 +624,7 @@ RCrt(ba, idx)
 
 static __inline unsigned char
 RGfx(ba, idx)
-	volatile caddr_t ba; 
+	volatile caddr_t ba;
 	short idx;
 {
 	vgaw(ba, GCT_ADDRESS, idx);

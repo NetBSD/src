@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.3.22.1 2002/01/10 19:37:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.22.2 2002/02/11 20:07:12 jdolecek Exp $
 PROG=installboot
 SRCS=installboot.c chksum.c
+BINDIR=/usr/mdec
 
 NOMAN=	# defined
 

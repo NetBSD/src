@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15.10.2 2002/01/10 20:05:04 thorpej Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.10.3 2002/02/11 20:10:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,22 +36,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.10.2 2002/01/10 20:05:04 thorpej Exp $");
+#if defined(__KERNEL_RCSID)
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.10.3 2002/02/11 20:10:47 jdolecek Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#ifndef _KERNEL
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
-#include <ufs/ffs/ffs_extern.h>
-#include <ufs/ufs/ufs_bswap.h>
-#endif
 
 /* in ffs_tables.c */
 extern int inside[], around[];
 extern u_char *fragtbl[];
 
-#ifdef _KERNEL
+#ifndef _KERNEL
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
+void    panic __P((const char *, ...))
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));
+
+#else	/* _KERNEL */
+#include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -98,7 +106,7 @@ ffs_blkatoff(v)
 	*ap->a_bpp = bp;
 	return (0);
 }
-#endif
+#endif	/* _KERNEL */
 
 /*
  * Update the frsum fields to reflect addition or deletion 
@@ -170,7 +178,7 @@ ffs_checkoverlap(bp, ip)
 		panic("Disk buffer overlap");
 	}
 }
-#endif /* DIAGNOSTIC */
+#endif /* _KERNEL && DIAGNOSTIC */
 
 /*
  * block operations

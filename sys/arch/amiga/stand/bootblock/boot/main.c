@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.12.4.1 2002/01/10 19:37:23 thorpej Exp $
+ * $NetBSD: main.c,v 1.12.4.2 2002/02/11 20:07:11 jdolecek Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -68,14 +68,14 @@ extern const char bootprog_rev[];
 extern const char bootprog_date[];
 extern const char bootprog_maker[];
 
-void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
-	int, int, u_long, u_long, u_long, int));
-int get_cpuid __P((u_int32_t *));
+void startit(void *, u_long, u_long, void *, u_long, u_long, int, void *,
+	     int, int, u_long, u_long, u_long, int);
+int get_cpuid(u_int32_t *);
 #ifdef PPCBOOTER
 u_int16_t kickstart[];
 size_t kicksize;
 #else
-void startit_end __P((void));
+void startit_end(void);
 #endif
 
 /*
@@ -84,7 +84,7 @@ void startit_end __P((void));
  *	2:      needs esym location passed in a4
  *	3:      load kernel image into fastmem rather than chipmem
  *	MAX:    highest version with backward compatibility.
- */     
+ */
 
 #define KERNEL_STARTUP_VERSION		3
 #define KERNEL_STARTUP_VERSION_MAX	9
@@ -94,9 +94,7 @@ static long get_number(char **);
 extern char default_command[];
 
 int
-pain(aio, cons)
-	void *aio;	
-	void *cons;
+pain(void *aio,	void *cons)
 {
 	char linebuf[128];
 	char	*kernel_name = default_command;
@@ -206,7 +204,7 @@ again:
 					m_value = get_number(&path) * 1024;
 					break;
 				case 'n':	/* non-contiguous memory */
-					amiga_flags |= 
+					amiga_flags |=
 					    (get_number(&path) & 3) << 1;
 					break;
 				case 'p':	/* Select fastmem by priority */
@@ -279,7 +277,7 @@ again:
 	nseg = 0;
 	mh = SysBase->MemLst;
 	vfrom = mh->Lower & -__PGSZ;
-	vsize = (mh->Upper & -__PGSZ) - vfrom; 
+	vsize = (mh->Upper & -__PGSZ) - vfrom;
 	contflag = mapped1to1 = 0;
 
 	do {
@@ -299,7 +297,7 @@ again:
 
 #ifdef DEBUG_MEMORY_LIST
 		printf("%lx %lx %lx %ld/%lx %lx\n",
-			(long)from, (long)size, 
+			(long)from, (long)size,
 			(long)mh->Attribs, (long)mh->Pri,
 			(long)vfrom, (long)vsize);
 #endif
@@ -308,7 +306,7 @@ again:
 		/* a) dont load kernel over DraCo MMU table */
 			
 		if (((cpuid >> 24) == 0x7D) &&
-		    ((from & -DRACOMMUMARGIN) == 0x40000000) && 
+		    ((from & -DRACOMMUMARGIN) == 0x40000000) &&
 		    (size >= DRACOMMUMARGIN)) {
 
 			memseg[nseg].ms_start = from & -DRACOMMUMARGIN;
@@ -340,7 +338,7 @@ again:
 			contflag = 0;
 			if (mh->next) {
 				vfrom = mh->Lower & -__PGSZ;
-				vsize = (mh->Upper & -__PGSZ) - vfrom; 
+				vsize = (mh->Upper & -__PGSZ) - vfrom;
 			}
 		}
 	} while ((++nseg <= 16) && vsize);
@@ -499,8 +497,7 @@ out:
 }
 
 static
-long get_number(ptr)
-char **ptr;
+long get_number(char **ptr)
 {
 	long value = 0;
 	int base = 10;
@@ -538,7 +535,7 @@ char **ptr;
 	}
 	*ptr = p - 1;
 #ifdef TEST
-	fprintf(stderr, "get_number: got %c0x%x", 
+	fprintf(stderr, "get_number: got %c0x%x",
 	    sign ? '-' : '+', value);
 #endif	
 	return (sign ? -value : value);
@@ -550,8 +547,7 @@ char **ptr;
  */
 
 int
-get_cpuid(cpuid)
-	u_int32_t *cpuid;
+get_cpuid(u_int32_t *cpuid)
 {
 	*cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if (*cpuid & 0xffff0000) {

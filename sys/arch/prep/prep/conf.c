@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.1 2002/01/10 19:48:15 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.2 2002/02/11 20:08:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,6 +186,9 @@ cdev_decl(i4btel);
 #include "pci.h"
 cdev_decl(pci);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -263,6 +266,7 @@ struct cdevsw cdevsw[] =
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 70: i4b phone device */
 	cdev__oci_init(NWSFONT,wsfont),	/* 71: wsfont pseudo-device */
 	cdev_pci_init(NPCI,pci),	/* 72: PCI bus access device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 73: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.4.2.1 2002/01/10 19:37:35 thorpej Exp $
+# $NetBSD: NULL,v 1.4.2.2 2002/02/11 20:07:13 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -104,11 +104,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #options 	KTRACE		# system call tracing support
 #options 	LKM		# Loadable kernel modules
 #options 	UCONSOLE	# anyone can redirect a virtual console
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-#options 	SCSIVERBOSE	# Verbose SCSI errors
-
+#options 	INSECURE	# disable kernel security levels
+#options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 

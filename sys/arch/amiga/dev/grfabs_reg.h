@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.5 1996/04/21 21:11:31 veego Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.5.44.1 2002/02/11 20:06:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -77,18 +77,18 @@ extern struct monitor_list *monitors;
 
 /*
  * Note structure is 5 long words big.  This may come in handy for
- * contiguous allocations 
- * 
+ * contiguous allocations
+ *
  * Please do fill in everything correctly this is the main input for
  * all other programs.  In other words all problems with RTG start here.
  * If you do not mimic everyone else exactly problems will appear.
  * If you need a template look at alloc_bitmap() in grf_cc.c.
  *
- * WARNING: the plane array is only for convience, all data for bitplanes 
+ * WARNING: the plane array is only for convience, all data for bitplanes
  *	MUST be contiguous.  This is for mapping purposes.  The reason
  *	for the plane pointers and row_mod is to support interleaving
- *	on monitors that wish to support this. 
- *	
+ *	on monitors that wish to support this.
+ *
  * 2nd Warning: Also don't get funky with these pointers you are expected
  *	to place the start of mappable plane data in ``hardware_address'',
  *	``hardware_address'' is the only thing that /dev/view checks and it
@@ -97,11 +97,11 @@ extern struct monitor_list *monitors;
  *	so that the entire contiguous plane data is exactly:
  *	bytes_per_row*height*depth long starting at the physical address
  *	contained within hardware_address.
- *	
+ *
  * Final Warning: Plane data must begin on a PAGE address and the allocation
  *	must be ``n'' PAGES big do to mapping requirements (otherwise the
  *	user could write over non-allocated memory.
- *	
+ *
  */
 struct bitmap {
     u_short   bytes_per_row;	  /* number of bytes per display row. */
@@ -138,11 +138,11 @@ enum bitmap_flags {
  */
 
 /*
- * valid masks are a bitfield of zeros followed by ones that indicate 
- * which mask are valid for each component.  The ones and zeros will 
+ * valid masks are a bitfield of zeros followed by ones that indicate
+ * which mask are valid for each component.  The ones and zeros will
  * be contiguous so adding one to this value yields the number of
- * levels for that component. 
- * -ch 
+ * levels for that component.
+ * -ch
  */
 
 struct colormap {
@@ -185,13 +185,19 @@ enum colormap_type {
 #define CM_WTOL(v) \
     (((0xF00 & (v)) << 8) | ((0x0F0 & (v)) << 4) | (0xF & (v)))
 
+#define CM_GET_RED(entry)    (((entry) & 0xFF0000) >> 16)
+#define CM_GET_GREEN(entry)  (((entry) & 0x00FF00) >> 8)
+#define CM_GET_BLUE(entry)   (((entry) & 0x0000FF))
+#define CM_GET_GREY(entry)   (((entry) & 0x0000FF))
+#define CM_GET_MONO(entry)   (((entry) & 0x000001))
+
 /*
  * View stuff.
  */
-typedef void remove_view_func (view_t *v);                               
-typedef void free_view_func (view_t *v);                               
-typedef void display_view_func (view_t *v);             
-typedef dmode_t *get_mode_func (view_t *v);    
+typedef void remove_view_func (view_t *v);
+typedef void free_view_func (view_t *v);
+typedef void display_view_func (view_t *v);
+typedef dmode_t *get_mode_func (view_t *v);
 typedef int get_colormap_func (view_t *v, colormap_t *);
 typedef int use_colormap_func (view_t *v, colormap_t *);
 
@@ -219,7 +225,7 @@ struct view {
 typedef view_t *alloc_view_func (dmode_t *mode, dimen_t *dim, u_char depth);
 typedef view_t *get_current_view_func (dmode_t *);
 typedef monitor_t  *get_monitor_func (dmode_t *);
-    
+
 struct display_mode {
     LIST_ENTRY(display_mode) link;
     u_char    *name;			/* logical name for mode. */
@@ -248,7 +254,7 @@ struct monitor {
     vbl_handler_func	*vbl_handler;	/* called on every vbl if not NULL */
     get_next_mode_func	*get_next_mode;	/* return next mode in list */
     get_best_mode_func	*get_best_mode; /* return mode that best fits */
-    
+
     alloc_bitmap_func	*alloc_bitmap;
     free_bitmap_func	*free_bitmap;
 };
@@ -281,26 +287,26 @@ struct monitor {
  */
 
 /* views */
-view_t * grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
-void grf_display_view __P((view_t *v));
-void grf_remove_view __P((view_t *v));
-void grf_free_view __P((view_t *v));
-dmode_t *grf_get_display_mode __P((view_t *v));
-int grf_get_colormap __P((view_t *v, colormap_t *cm));
-int grf_use_colormap __P((view_t *v, colormap_t *cm));
+view_t * grf_alloc_view(dmode_t *d, dimen_t *dim, u_char depth);
+void grf_display_view(view_t *v);
+void grf_remove_view(view_t *v);
+void grf_free_view(view_t *v);
+dmode_t *grf_get_display_mode(view_t *v);
+int grf_get_colormap(view_t *v, colormap_t *cm);
+int grf_use_colormap(view_t *v, colormap_t *cm);
 
 /* modes */
-view_t *grf_get_current_view __P((dmode_t *d));
-monitor_t *grf_get_monitor __P((dmode_t *d));
+view_t *grf_get_current_view(dmode_t *d);
+monitor_t *grf_get_monitor(dmode_t *d);
 
 /* monitors */
-dmode_t * grf_get_next_mode __P((monitor_t *m, dmode_t *d));
-dmode_t * grf_get_current_mode __P((monitor_t *));
-dmode_t * grf_get_best_mode __P((monitor_t *m, dimen_t *size, u_char depth));
-bmap_t  * grf_alloc_bitmap __P((monitor_t *m, u_short w, u_short h,
-				u_short d, u_short f));
-void grf_free_bitmap __P((monitor_t *m, bmap_t *bm));
+dmode_t * grf_get_next_mode(monitor_t *m, dmode_t *d);
+dmode_t * grf_get_current_mode(monitor_t *);
+dmode_t * grf_get_best_mode(monitor_t *m, dimen_t *size, u_char depth);
+bmap_t  * grf_alloc_bitmap(monitor_t *m, u_short w, u_short h,
+				u_short d, u_short f);
+void grf_free_bitmap(monitor_t *m, bmap_t *bm);
 
-int grfcc_probe __P((void));
+int grfcc_probe(void);
 
 #endif /* _GRFABS_REG_H */

@@ -1,16 +1,14 @@
-/*	$NetBSD: elf_machdep.h,v 1.2.2.1 2002/01/10 19:49:36 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2.2.2 2002/02/11 20:09:15 jdolecek Exp $	*/
 
 #ifndef _MACHINE_ELF_MACHDEP_H_
 #define _MACHINE_ELF_MACHDEP_H_
 
 #include <m68k/elf_machdep.h>
 
-#undef	ELF32_MACHDEP_ID_CASES
-#define	ELF32_MACHDEP_ID_CASES						\
-                case EM_68000:						\
-                        break;
-
-#undef	ELF32_MACHDEP_ID
-#define	ELF32_MACHDEP_ID	EM_68000
+/*
+ * The 68010 can't execute binaries for 68020-and-up.
+ */
+#define	ELF32_EHDR_FLAGS_OK(eh)						\
+	(((eh)->e_flags & EF_M68000) != 0)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2.10.1 2002/02/11 20:07:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h> 
 #include <machine/intr.h>
+#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -50,10 +51,7 @@ struct cfattach pcib_ca = {
 	sizeof(struct device), pcib_match, pcib_attach
 };
 
-static struct {
-        int     (*func)(void *);
-        void    *arg;
-} icu[IO_ICUSIZE];
+static struct cobalt_intr icu[IO_ICUSIZE];
 
 static int
 pcib_match(parent, match, aux)
@@ -113,12 +111,25 @@ icu_intr_establish(irq, type, level, func, arg)
 		if (icu[i].func != NULL)
 			continue;
 
+		icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
 		icu[i].func = func;
 		icu[i].arg = arg;
 		break;
 	}
 
 	return (void *)-1;
+}
+
+void
+icu_intr_disestablish(cookie)
+	void *cookie;
+{
+	struct cobalt_intr *p = cookie;
+
+	if (p->cookie_type == COBALT_COOKIE_TYPE_ICU) {
+		p->func = NULL;
+		p->arg = NULL;
+	}
 }
 
 int

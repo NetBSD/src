@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.10.4.1 2002/01/10 19:56:33 thorpej Exp $      */
+/*      $NetBSD: esm.c,v 1.10.4.2 2002/02/11 20:09:57 jdolecek Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.10.4.1 2002/01/10 19:56:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.10.4.2 2002/02/11 20:09:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,11 +507,15 @@ wc_wrchctl(struct esm_softc *ess, int ch, u_int16_t data)
 void
 esm_power(struct esm_softc *ess, int status)
 {
-	u_int8_t data;
+	pcireg_t data;
+	int pmcapreg;
 
-	data = pci_conf_read(ess->pc, ess->tag, CONF_PM_PTR);
-	if ((pci_conf_read(ess->pc, ess->tag, data) & 0xff) == PPMI_CID)
-		pci_conf_write(ess->pc, ess->tag, data + PM_CTRL, status);
+	if (pci_get_capability(ess->pc, ess->tag, PCI_CAP_PWRMGMT,
+	    &pmcapreg, 0)) {
+		data = pci_conf_read(ess->pc, ess->tag, pmcapreg + 4);
+		if ((data && PCI_PMCSR_STATE_MASK) != status)
+			pci_conf_write(ess->pc, ess->tag, pmcapreg + 4, status);
+	}
 }
 
 
@@ -1362,7 +1366,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	/* set to power state D0 */
-	esm_power(ess, PPMI_D0);
+	esm_power(ess, PCI_PMCSR_STATE_D0);
 	delay(100000);
 
 	/* Disable all legacy emulations. */
@@ -1459,7 +1463,7 @@ esm_suspend(struct esm_softc *ess)
 	delay(20);
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL, 0);
 	delay(1);
-	esm_power(ess, PPMI_D3);
+	esm_power(ess, PCI_PMCSR_STATE_D3);
 
 	return 0;
 }
@@ -1469,7 +1473,7 @@ esm_resume(struct esm_softc *ess)
 {
 	int x;
 
-	esm_power(ess, PPMI_D0);
+	esm_power(ess, PCI_PMCSR_STATE_D0);
 	delay(100000);
 	esm_init(ess);
 

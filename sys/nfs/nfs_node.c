@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.44.2.1 2002/01/10 20:04:21 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.44.2.2 2002/02/11 20:10:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.44.2.1 2002/01/10 20:04:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.44.2.2 2002/02/11 20:10:43 jdolecek Exp $");
 
 #include "opt_nfs.h"
 
@@ -83,7 +83,7 @@ int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 struct genfs_ops nfs_genfsops = {
 	nfs_gop_size,
 	nfs_gop_alloc,
-	nfs_gop_write,
+	genfs_gop_write,
 };
 
 /*
@@ -210,7 +210,7 @@ loop:
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
 	if (error) {
-		vgone(vp);
+		vput(vp);
 		return error;
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);

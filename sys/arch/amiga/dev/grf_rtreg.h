@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.9.8.1 2001/08/03 04:10:54 lukem Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.9.8.2 2002/02/11 20:06:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -36,7 +36,7 @@
 /*
  * This driver for the MacroSystem Retina board was only possible,
  * because MacroSystem provided information about the pecularities
- * of the board. THANKS! Competition in Europe among gfx board 
+ * of the board. THANKS! Competition in Europe among gfx board
  * manufacturers is rather tough, so Lutz Vieweg, who wrote the
  * initial driver, has made an agreement with MS not to document
  * the driver source (see also his comment below).
@@ -44,11 +44,11 @@
  * -> " -------------- START OF CODE -------------- "
  * -> have been added by myself (mw) from studying the publically
  * -> available "NCR 77C22E+" Data Manual
- */	 
+ */
 /*
  * This code offers low-level routines to access the Retina graphics-board
  * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
- * 
+ *
  * Thanks to MacroSystem for providing me with the necessary information
  * to create theese routines. The sparse documentation of this code
  * results from the agreements between MS and me.
@@ -60,7 +60,7 @@
 /* definitions to find the autoconfig-board under
    AmigaDOS */
 
-#define RETINA_MANUFACTURER     0x4754  
+#define RETINA_MANUFACTURER     0x4754
 #define RETINA_PRODUCT          6
 #define RETINA_SERIALNUMBER     1
 #endif
@@ -72,19 +72,19 @@
 */
 
 struct MonDef {
-	
+
 	/* first the general monitor characteristics */
-	
+
 	unsigned long  FQ;
 	unsigned char  FLG;
-	
+
 	unsigned short MW;  /* screen width in pixels */
                             /* has to be at least a multiple of 8, */
                             /* has to be a multiple of 64 in 256-color mode */
                             /* if you want to use some great tricks */
                             /* to speed up the vertical scrolling */
 	unsigned short MH;  /* screen height in pixels */
-	
+
 	unsigned short HBS;
 	unsigned short HSS;
 	unsigned short HSE;
@@ -95,54 +95,54 @@ struct MonDef {
 	unsigned short VSE;
 	unsigned short VBE;
 	unsigned short VT;
-	
+
 	unsigned short DEP;  /* Color-depth, 4 for text-mode */
                              /* 8 enables 256-color graphics-mode, */
                              /* 16 and 24bit gfx not supported yet */
-	
+
 	unsigned char * PAL; /* points to 16*3 byte RGB-palette data */
                              /* use LoadPalette() to set colors 0..255 */
                              /* in 256-color-gfx mode */
-	
+
 	/* all following entries are font-specific in
 	   text mode. Make sure your monitor
 	   parameters are calculated for the
 	   appropriate font width and height!
 	*/
-	
+
        unsigned short  TX;     /* Text-mode (DEP=4):          */
                                /* screen-width  in characters */
                                /* currently, TX has to be a   */
                                /* multiple of 16!             */
-                               
+
                                /* Gfx-mode (DEP > 4)          */
                                /* "logical" screen-width,     */
                                /* use values > MW to allow    */
                                /* hardware-panning            */
                                /* has to be a multiple of 8   */
-                               
+
        unsigned short  TY;     /* Text-mode:                  */
                                /* screen-height in characters */
-       
+
                                /* Gfx-mode: "logical" screen  */
                                /* height for panning          */
-       
+
        /* the following values are currently unused for gfx-mode */
-       
+
 	unsigned short  XY;     /* TX*TY (speeds up some calcs.) */
-	
+
 	unsigned short  FX;     /* font-width (valid values: 4,7-16) */
 	unsigned short  FY;     /* font-height (valid range: 1-32) */
 	unsigned char * FData;  /* pointer to the font-data */
-	
+
 	/* The font data is simply an array of bytes defining
 	   the chars in ascending order, line by line. If your
 	   font is wider than 8 pixel, FData has to be an
 	   array of words. */
-	
+
 	unsigned short  FLo;    /* lowest character defined */
-	unsigned short  FHi;    /* highest char. defined */ 
-	
+	unsigned short  FHi;    /* highest char. defined */
+
 };
 
 
@@ -187,33 +187,33 @@ extern unsigned char NCRStdPalette[];
 
    This routine initialises the Retina hardware, opens a
    text- or gfx-mode screen, depending on the value of MonDef.DEP,
-   and sets the cursor to position 0. 
+   and sets the cursor to position 0.
    It takes as arguments a pointer to the hardware-base
    address as it is denoted in the DevConf structure
    of the AmigaDOS, and a pointer to a struct MonDef
    which describes the screen-mode parameters.
-   
+
    The routine returns 0 if it was unable to open the screen,
    or an unsigned char * to the display/attribute memory
    when it succeeded. The organisation of the display memory
    is a little strange in text-mode (Intel-typically...) :
-   
+
    Byte  00    01    02    03    04     05    06   etc.
        Char0  Attr0  --    --   Char1 Attr1   --   etc.
-       
+
    You may set a character and its associated attribute byte
    with a single word-access, or you may perform to byte writes
    for the char and attribute. Each 2. word has no meaning,
    and writes to theese locations are ignored.
-   
+
    The attribute byte for each character has the following
    structure:
-   
+
    Bit  7     6     5     4     3     2     1     0
       BLINK BACK2 BACK1 BACK0 FORE3 FORE2 FORE1 FORE0
-      
+
    Were FORE is the foreground-color index (0-15) and
-   BACK is the background color index (0-7). BLINK 
+   BACK is the background color index (0-7). BLINK
    enables blinking for the associated character.
    The higher 8 colors in the standard palette are
    lighter than the lower 8, so you may see FORE3 as
@@ -229,29 +229,29 @@ extern unsigned char NCRStdPalette[];
    (assumed the value returned by InitNCR was stored
     into "DispMem", the actual MonDef struct * is hold
     in "MDef")
-   
+
    void SetChar(unsigned char chr, unsigned char attr,
                 unsigned short x, unsigned short y) {
-      
+
       unsigned struct MonDef * md = MDef;
       unsigned char * c = DispMem + x*4 + y*md->TX*4;
-      
+
       *c++ = chr;
       *c   = attr;
-      
+
    }
-   
+
    In Gfx-mode, the memory organisation is rather simple,
    1 byte per pixel in 256-color mode, one pixel after
    each other, line by line.
-   
+
    Currently, InitNCR() disables the Retina VBLANK IRQ,
    but beware: When running the Retina WB-Emu under
    AmigaDOS, the VBLANK IRQ is ENABLED.
-   
+
 	void SetCursorPos(unsigned short pos);
 
-   This routine sets the hardware-cursor position 
+   This routine sets the hardware-cursor position
    to the screen location pos. pos can be calculated
    as (x + y * md->TY).
    Text-mode only!
@@ -284,19 +284,19 @@ extern unsigned char NCRStdPalette[];
 
    Fills the whole screen with "color" - 256-color mode only!
 
-	void LoadPalette(unsigned char * pal, unsigned char firstcol, 
+	void LoadPalette(unsigned char * pal, unsigned char firstcol,
 	                 unsigned char colors);
 
-   Loads the palette-registers. "pal" points to an array of unsigned char 
-   triplets, for the red, green and blue component. "firstcol" determines the 
-   number of the first palette-register to load (256 available). "colors" 
+   Loads the palette-registers. "pal" points to an array of unsigned char
+   triplets, for the red, green and blue component. "firstcol" determines the
+   number of the first palette-register to load (256 available). "colors"
    is the number of colors you want to put in the palette registers.
 
-	void SetPalette(unsigned char colornum, unsigned char red, 
+	void SetPalette(unsigned char colornum, unsigned char red,
 	                unsigned char green, unsigned char blue);
 
-   Allows you to set a single color in the palette, "colornum" is the number 
-   of the palette entry (256 available), "red", "green" and "blue" are the 
+   Allows you to set a single color in the palette, "colornum" is the number
+   of the palette entry (256 available), "red", "green" and "blue" are the
    three components.
 
 	void SetPanning(unsigned short xoff, unsigned short yoff);
@@ -326,7 +326,7 @@ extern unsigned char NCRStdPalette[];
 #define GREG_STATUS0_R		0x43C2
 #define GREG_STATUS1_R		0x43DA
 #define GREG_MISC_OUTPUT_R	0x43CC
-#define GREG_MISC_OUTPUT_W	0x43C2	
+#define GREG_MISC_OUTPUT_W	0x43C2
 #define GREG_FEATURE_CONTROL_R	0x43CA
 #define GREG_FEATURE_CONTROL_W	0x43DA
 #define GREG_POS		0x4102
@@ -481,7 +481,7 @@ extern unsigned char NCRStdPalette[];
 #define CRT_ID_EXT_HOR_TIMING2	0x32
 #define CRT_ID_EXT_VER_TIMING	0x33
 
-/* Video DAC (these are *pure* guesses from the usage of these registers, 
+/* Video DAC (these are *pure* guesses from the usage of these registers,
    I don't have a data sheet for this chip:-/) */
 #define VDAC_REG_D		0x800d	/* well.. */
 #define VDAC_REG_SELECT		0x8001	/* perhaps.. */
@@ -522,6 +522,6 @@ static __inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int grfrt_cnprobe __P((void));
-void grfrt_iteinit __P((struct grf_softc *));
+int grfrt_cnprobe(void);
+void grfrt_iteinit(struct grf_softc *);
 #endif /* _GRF_RTREG_H */

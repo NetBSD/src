@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.82.2.2 2002/01/10 20:01:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.82.2.3 2002/02/11 20:10:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.82.2.2 2002/01/10 20:01:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.82.2.3 2002/02/11 20:10:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,6 +242,7 @@ procfs_open(v)
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct proc *p1, *p2;
+	int error;
 
 	p1 = ap->a_p;				/* tracer */
 	p2 = PFIND(pfs->pfs_pid);		/* traced */
@@ -255,8 +256,8 @@ procfs_open(v)
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
 
-		if (procfs_checkioperm(p1, p2) != 0)
-			return (EPERM);
+		if ((error = procfs_checkioperm(p1, p2)) != 0)
+			return (error);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);

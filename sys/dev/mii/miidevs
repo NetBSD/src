@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.23.2.4 2002/01/10 19:56:15 thorpej Exp $
+$NetBSD: miidevs,v 1.23.2.5 2002/02/11 20:09:54 jdolecek Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -141,7 +141,8 @@ model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
 /* Marvell Semiconductor PHYs */
-model xxMARVELL E1000		0x0005 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface

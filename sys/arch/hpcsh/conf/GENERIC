@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4.2.3 2002/01/10 19:44:18 thorpej Exp $
+# $NetBSD: GENERIC,v 1.4.2.4 2002/02/11 20:08:15 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,21 +22,29 @@ include 	"arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+options		KLOADER_DEBUG
+#options		INTERRUPT_MONITOR
+#options		BUS_SPACE_DEBUG
+#options		PFCKBD_DEBUG
+#options		HD64461VIDEO_DEBUG
+#options		HD64461PCMCIA_DEBUG			
+
 options 	SH7709A			# 133MHz
 options 	SH7709A_BROKEN_IPR
-options 	PCLOCK=22000000		# 22MHz
 
 options 	DDB			# in-kernel debugger
-options 	DIAGNOSTIC		# extra kernel debugging checks
-options 	DEBUG			# extra kernel debugging support
+#options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=65534
 
 # Standard system options
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 
-options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.69.2.3 2002/01/10 20:02:08 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.69.2.4 2002/02/11 20:10:28 jdolecek Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.69.2.3 2002/01/10 20:02:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.69.2.4 2002/02/11 20:10:28 jdolecek Exp $");
 
 #include "ppp.h"
 
@@ -117,9 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.69.2.3 2002/01/10 20:02:08 thorpej Exp 
 #include <net/bpf.h>
 #endif
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9.2.1 2002/01/10 19:47:12 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.9.2.2 2002/02/11 20:08:48 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,6 +104,9 @@ cdev_decl(wd);
 cdev_decl(md);
 cdev_decl(ld);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 /* open, close, read, write */
 #define	cdev_rtc_init(c,n)	cdev__ocrw_init(c,n)
 
@@ -127,6 +130,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NWD,wd),		/* 16: ATA disk driver */
 	cdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	cdev_disk_init(NLD,ld),		/* 18: logical disks */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 19: clockctl pseudo device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -179,6 +183,7 @@ static int chrtoblktbl[] = {
 	/* 16 */	5,
 	/* 17 */	6,
 	/* 18 */	7,
+	/* 19 */	NODEV,
 };
 
 /*

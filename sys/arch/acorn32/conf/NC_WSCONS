@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.5.2.2 2002/01/10 19:36:03 thorpej Exp $
+#	$NetBSD: NC_WSCONS,v 1.5.2.3 2002/02/11 20:06:37 jdolecek Exp $
 #
 #	NC - with wscons
 #
@@ -108,6 +108,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 
@@ -285,7 +286,6 @@ podulebus0	at root
 #eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	wsmux
 pseudo-device	loop	1		# network loopback
 #pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl	2		# CSLIP

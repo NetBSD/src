@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.2.2.4 2002/01/10 19:44:27 thorpej Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2.2.5 2002/02/11 20:08:21 jdolecek Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -64,6 +64,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.6 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.6.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -42,7 +42,7 @@
 #include <machine/shbvar.h>
 
 #include <net/netisr.h>
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 int shbmatch __P((struct device *, struct cfdata *, void *));
 void shbattach __P((struct device *, struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.26.2.3 2002/01/10 19:54:59 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26.2.4 2002/02/11 20:09:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.3 2002/01/10 19:54:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.4 2002/02/11 20:09:45 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -787,10 +787,9 @@ esh_fpopen(dev, oflags, devtype, p)
 	 */
 
 	recv = (struct esh_fp_ring_ctl *) 
-	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK);
+	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (recv == NULL)
 		return(ENOMEM);
-	memset(recv, 0, sizeof(*recv));
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
@@ -3711,9 +3710,9 @@ esh_new_dmainfo(sc)
 
 	/* None sitting around, so build one now... */
 
-	di = (struct esh_dmainfo *) malloc(sizeof(*di), M_DEVBUF, M_WAITOK);
+	di = (struct esh_dmainfo *) malloc(sizeof(*di), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 	assert(di != NULL);
-	memset(di, 0, sizeof(*di));
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
 			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 

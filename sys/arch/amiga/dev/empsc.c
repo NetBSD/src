@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.20 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: empsc.c,v 1.20.2.1 2002/02/11 20:06:52 jdolecek Exp $ */
 
 /*
 
@@ -36,6 +36,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.20.2.1 2002/02/11 20:06:52 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -50,9 +54,9 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void empscattach __P((struct device *, struct device *, void *));
-int empscmatch __P((struct device *, struct cfdata *, void *));
-int empsc_intr __P((void *));
+void empscattach(struct device *, struct device *, void *);
+int empscmatch(struct device *, struct cfdata *, void *);
+int empsc_intr(void *);
 
 #ifdef DEBUG
 extern int sci_debug;
@@ -68,10 +72,7 @@ struct cfattach empsc_ca = {
  * if this is an EMPLANT board
  */
 int
-empscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+empscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -87,9 +88,7 @@ empscmatch(pdp, cfp, auxp)
 }
 
 void
-empscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+empscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc = (struct sci_softc *)dp;
@@ -100,7 +99,7 @@ empscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	rp = (u_char *)zap->va + 0x5000;
 
 	sc->sci_data = rp;
@@ -152,8 +151,7 @@ empscattach(pdp, dp, auxp)
 }
 
 int
-empsc_intr(arg)
-	void *arg;
+empsc_intr(void *arg)
 {
 	struct sci_softc *dev = arg;
 	u_char stat;

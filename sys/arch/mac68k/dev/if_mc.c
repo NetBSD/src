@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.18 2000/11/15 01:02:12 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.18.4.1 2002/02/11 20:08:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -636,15 +636,6 @@ mace_read(sc, pkt, len)
 		return;
 	}
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
-	 */
-	if (ifp->if_bpf)
-		bpf_tap(ifp->if_bpf, pkt, len);
-#endif
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {
 		ifp->if_ierrors++;
@@ -652,6 +643,12 @@ mace_read(sc, pkt, len)
 	}
 
 	ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+	/* Pass the packet to any BPF listeners. */
+	if (ifp->if_bpf) 
+		bpf_mtap(ifp->if_bpf, m);
+#endif
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

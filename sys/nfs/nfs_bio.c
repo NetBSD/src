@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.68.2.1 2002/01/10 20:04:19 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.68.2.2 2002/02/11 20:10:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.68.2.1 2002/01/10 20:04:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.68.2.2 2002/02/11 20:10:42 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.68.2.1 2002/01/10 20:04:19 thorpej Exp
 #include <nfs/nfs_var.h>
 
 extern int nfs_numasync;
+extern int nfs_commitsize;
 extern struct nfsstats nfsstats;
 
 /*
@@ -768,7 +769,6 @@ nfs_asyncio(bp)
 	if (nfs_numasync == 0)
 		return (EIO);
 
-       
 	nmp = VFSTONFS(bp->b_vp->v_mount);
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
@@ -792,10 +792,12 @@ again:
 			gotiod = TRUE;
 			break;
 		}
+
 	/*
 	 * If none are free, we may already have an iod working on this mount
 	 * point.  If so, it will process our request.
 	 */
+
 	if (!gotiod && nmp->nm_bufqiods > 0)
 		gotiod = TRUE;
 
@@ -803,38 +805,44 @@ again:
 	 * If we have an iod which can process the request, then queue
 	 * the buffer.
 	 */
+
 	if (gotiod) {
+
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
+
 		while (nmp->nm_bufqlen >= 2*nfs_numasync) {
 			nmp->nm_bufqwant = TRUE;
 			error = tsleep(&nmp->nm_bufq, slpflag | PRIBIO,
 				"nfsaio", slptimeo);
 			if (error) {
-				if (nfs_sigintr(nmp, NULL, bp->b_proc))
+				if (nfs_sigintr(nmp, NULL, curproc))
 					return (EINTR);
 				if (slpflag == PCATCH) {
 					slpflag = 0;
 					slptimeo = 2 * hz;
 				}
 			}
+
 			/*
 			 * We might have lost our iod while sleeping,
 			 * so check and loop if nescessary.
 			 */
+
 			if (nmp->nm_bufqiods == 0)
 				goto again;
 		}
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
 		return (0);
-	    }
+	}
 
 	/*
 	 * All the iods are busy on other mounts, so return EIO to
 	 * force the caller to process the i/o synchronously.
 	 */
+
 	return (EIO);
 }
 
@@ -852,10 +860,15 @@ nfs_doio(bp, p)
 	struct nfsnode *np;
 	struct nfsmount *nmp;
 	int error = 0, diff, len, iomode, must_commit = 0;
+	int pushedrange;
 	struct uio uio;
 	struct iovec io;
+	off_t off, cnt;
+	struct uvm_object *uobj;
+	UVMHIST_FUNC("nfs_doio"); UVMHIST_CALLED(ubchist);
 
 	vp = bp->b_vp;
+	uobj = &vp->v_uobj;
 	np = VTONFS(vp);
 	nmp = VFSTONFS(vp->v_mount);
 	uiop = &uio;
@@ -955,22 +968,121 @@ nfs_doio(bp, p)
 		bp->b_error = error;
 	    }
 	} else {
+	    int i, npages = bp->b_bufsize >> PAGE_SHIFT;
+	    struct vm_page *pgs[npages];
+	    boolean_t needcommit = TRUE;
+
+	    if ((bp->b_flags & B_ASYNC) != 0) {
+		    iomode = NFSV3WRITE_UNSTABLE;
+	    } else {
+		    iomode = NFSV3WRITE_FILESYNC;
+	    }
+
+	    for (i = 0; i < npages; i++) {
+		    pgs[i] = uvm_pageratop((vaddr_t)bp->b_data +
+					   (i << PAGE_SHIFT));
+		    if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0) {
+			    needcommit = FALSE;
+		    }
+	    }
+	    if (!needcommit && iomode == NFSV3WRITE_UNSTABLE) {
+		    for (i = 0; i < npages; i++) {
+			    pgs[i]->flags |= PG_NEEDCOMMIT | PG_RDONLY;
+			    pmap_page_protect(pgs[i], VM_PROT_READ);
+		    }
+	    }
+
+	    uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
+	    off = uiop->uio_offset;
+	    cnt = bp->b_bcount;
+
 	    /*
-	     * If B_NEEDCOMMIT is set, a commit rpc may do the trick. If not
-	     * an actual write will have to be scheduled.
+	     * Send the data to the server if necessary,
+	     * otherwise just send a commit rpc.
 	     */
 
+	    if (needcommit) {
+
+		/*
+		 * If the buffer is in the range that we already committed,
+		 * there's nothing to do.
+		 *
+		 * If it's in the range that we need to commit, push the
+		 * whole range at once, otherwise only push the buffer.
+		 * In both these cases, acquire the commit lock to avoid
+		 * other processes modifying the range.
+		 */
+
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		if (!nfs_in_committed_range(vp, off, bp->b_bcount)) {
+			if (nfs_in_tobecommitted_range(vp, off, bp->b_bcount)) {
+				pushedrange = 1;
+				off = np->n_pushlo;
+				cnt = np->n_pushhi - np->n_pushlo;
+			} else {
+				pushedrange = 0;
+			}
+			error = nfs_commit(vp, off, cnt, curproc);
+			if (error == 0) {
+				if (pushedrange) {
+					nfs_merge_commit_ranges(vp);
+				} else {
+					nfs_add_committed_range(vp, off, cnt);
+				}
+			}
+		}
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		if (!error) {
+			bp->b_resid = 0;
+			simple_lock(&uobj->vmobjlock);
+			for (i = 0; i < npages; i++) {
+				pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
+			}
+			simple_unlock(&uobj->vmobjlock);
+			biodone(bp);
+			return (0);
+		} else if (error == NFSERR_STALEWRITEVERF) {
+			nfs_clearcommit(bp->b_vp->v_mount);
+		}
+	    }
 	    io.iov_base = bp->b_data;
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
-	    uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
 	    uiop->uio_rw = UIO_WRITE;
 	    nfsstats.write_bios++;
-	    iomode = NFSV3WRITE_UNSTABLE;
 	    error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
+	    if (!error && iomode == NFSV3WRITE_UNSTABLE) {
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		nfs_add_tobecommitted_range(vp, off, cnt);
+		simple_lock(&uobj->vmobjlock);
+		for (i = 0; i < npages; i++) {
+			pgs[i]->flags &= ~PG_CLEAN;
+		}
+		simple_unlock(&uobj->vmobjlock);
+		if (np->n_pushhi - np->n_pushlo > nfs_commitsize) {
+			off = np->n_pushlo;
+			cnt = nfs_commitsize >> 1;
+			error = nfs_commit(vp, off, cnt, curproc);
+			if (!error) {
+				nfs_add_committed_range(vp, off, cnt);
+				nfs_del_tobecommitted_range(vp, off, cnt);
+			}
+		}
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	    } else if (!error && needcommit) {
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		nfs_del_committed_range(vp, off, cnt);
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		simple_lock(&uobj->vmobjlock);
+		for (i = 0; i < npages; i++) {
+			pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
+		}
+		simple_unlock(&uobj->vmobjlock);
+	    }
 	}
 	bp->b_resid = uiop->uio_resid;
-	if (must_commit)
+	if (must_commit || (error == NFSERR_STALEWRITEVERF)) {
 		nfs_clearcommit(vp->v_mount);
+	}
 	biodone(bp);
 	return (error);
 }
@@ -998,12 +1110,11 @@ nfs_getpages(v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	struct vm_page *pg, **pgs;
-	off_t origoffset;
+	off_t origoffset, len;
 	int i, error, npages;
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
-	UVMHIST_FUNC("nfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * update the cached read creds for this node.
@@ -1029,12 +1140,13 @@ nfs_getpages(v)
 	 * this is a write fault, update the commit info.
 	 */
 
-	origoffset = ap->a_offset;
 	pgs = ap->a_m;
+	origoffset = ap->a_offset;
+	len = npages << PAGE_SHIFT;
 
 	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
-	nfs_del_committed_range(vp, origoffset, npages);
-	nfs_del_tobecommitted_range(vp, origoffset, npages);
+	nfs_del_committed_range(vp, origoffset, len);
+	nfs_del_tobecommitted_range(vp, origoffset, len);
 	if (!locked) {
 		simple_lock(&uobj->vmobjlock);
 	}
@@ -1043,89 +1155,11 @@ nfs_getpages(v)
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-		pg->flags &= ~(PG_NEEDCOMMIT|PG_RDONLY);
+		pg->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 	}
 	if (!locked) {
 		simple_unlock(&uobj->vmobjlock);
 	}
 	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 	return 0;
-}
-
-int
-nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
-{
-	struct uvm_object *uobj = &vp->v_uobj;
-	struct nfsnode *np = VTONFS(vp);
-	off_t origoffset, commitoff;
-	uint32_t commitbytes;
-	int error, i;
-	int bytes;
-	boolean_t v3 = NFS_ISV3(vp);
-	boolean_t weak = flags & PGO_WEAK;
-	UVMHIST_FUNC("nfs_gop_write"); UVMHIST_CALLED(ubchist);
-
-	/* XXX for now, skip the v3 stuff. */
-	v3 = FALSE;
-
-	/*
-	 * for NFSv2, just write normally.
-	 */
-
-	if (!v3) {
-		return genfs_gop_write(vp, pgs, npages, flags);
-	}
-
-	/*
-	 * for NFSv3, use delayed writes and the "commit" operation
-	 * to avoid sync writes.
-	 */
-
-	origoffset = pgs[0]->offset;
-	bytes = npages << PAGE_SHIFT;
-	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
-	if (nfs_in_committed_range(vp, origoffset, bytes)) {
-		goto committed;
-	}
-	if (nfs_in_tobecommitted_range(vp, origoffset, bytes)) {
-		if (weak) {
-			lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-			return 0;
-		} else {
-			commitoff = np->n_pushlo;
-			commitbytes = (uint32_t)(np->n_pushhi - np->n_pushlo);
-			goto commit;
-		}
-	} else {
-		commitoff = origoffset;
-		commitbytes = npages << PAGE_SHIFT;
-	}
-	simple_lock(&uobj->vmobjlock);
-	for (i = 0; i < npages; i++) {
-		pgs[i]->flags |= PG_NEEDCOMMIT|PG_RDONLY;
-		pgs[i]->flags &= ~PG_CLEAN;
-	}
-	simple_unlock(&uobj->vmobjlock);
-	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-	error = genfs_gop_write(vp, pgs, npages, flags);
-	if (error) {
-		return error;
-	}
-	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
-	if (weak) {
-		nfs_add_tobecommitted_range(vp, origoffset,
-		    npages << PAGE_SHIFT);
-	} else {
-commit:
-		error = nfs_commit(vp, commitoff, commitbytes, curproc);
-		nfs_del_tobecommitted_range(vp, commitoff, commitbytes);
-committed:
-		simple_lock(&uobj->vmobjlock);
-		for (i = 0; i < npages; i++) {
-			pgs[i]->flags &= ~(PG_NEEDCOMMIT|PG_RDONLY);
-		}
-		simple_unlock(&uobj->vmobjlock);
-	}
-	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-	return error;
 }

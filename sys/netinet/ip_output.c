@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.86.2.2 2002/01/10 20:02:54 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.86.2.3 2002/02/11 20:10:36 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.86.2.2 2002/01/10 20:02:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.86.2.3 2002/02/11 20:10:36 jdolecek Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -235,13 +235,17 @@ ip_output(m0, va_alist)
 	 * If there is a cached route,
 	 * check that it is to the same destination
 	 * and is still up.  If not, free it and try again.
+	 * The address family should also be checked in case of sharing the
+	 * cache with IPv6.
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    dst->sin_family != AF_INET ||
 	    !in_hosteq(dst->sin_addr, ip->ip_dst))) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;
 	}
 	if (ro->ro_rt == 0) {
+		bzero(dst, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = ip->ip_dst;
@@ -1639,6 +1643,13 @@ ip_mloopback(ifp, m, dst)
 		ip = mtod(copym, struct ip *);
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
+
+		if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			in_delayed_cksum(copym);
+			copym->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
 		(void) looutput(ifp, copym, sintosa(dst), NULL);

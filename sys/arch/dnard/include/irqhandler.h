@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.2 2001/05/30 12:28:41 mrg Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.2.4.1 2002/02/11 20:07:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -134,25 +134,6 @@ void enable_irq __P((int));
 #endif	/* _LOCORE */
 
 #define IRQ_FLAG_ACTIVE 0x00000001	/* This is the active handler in list */
-
-#ifndef _LOCORE
-typedef struct fiqhandler {
-	void (*fh_func) __P((void));/* handler function */
-	u_int fh_size;		/* Size of handler function */
-	u_int fh_mask;		/* FIQ mask */
-	u_int fh_r8;		/* FIQ mode r8 */
-	u_int fh_r9;		/* FIQ mode r9 */
-	u_int fh_r10;		/* FIQ mode r10 */
-	u_int fh_r11;		/* FIQ mode r11 */
-	u_int fh_r12;		/* FIQ mode r12 */
-	u_int fh_r13;		/* FIQ mode r13 */
-} fiqhandler_t;
-
-#ifdef _KERNEL
-int fiq_claim __P((fiqhandler_t *));
-int fiq_release __P((fiqhandler_t *));
-#endif	/* _KERNEL */
-#endif	/* _LOCORE */
 
 #endif	/* _ARM32_IRQHANDLER_H_ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.8.2.1 2001/08/03 04:13:07 lukem Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.8.2.2 2002/02/11 20:09:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -223,5 +223,7 @@ struct ieee1394_async_nodata {
 #define	CSR_SB_FCP_RESPONSE_FRAME	0x0d00
 #define	CSR_SB_TOPOLOGY_MAP		0x1000
 #define	CSR_SB_END			0x1400
+
+#define IEEE1394_MAX_REC(i)     ((0x1 << (i + 1)))
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39io.c,v 1.9 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.9.2.1 2002/02/11 20:08:10 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#undef TX39IODEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,11 +48,11 @@
 #include <hpcmips/tx/tx39iovar.h>
 #include <hpcmips/tx/tx39ioreg.h>
 
-#ifdef TX39IODEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
+#ifdef	TX39IO_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39io_debug
 #endif
+#include <machine/debug.h>
 
 #define ISSET(x, s)	((x) & (1 << (s)))
 
@@ -164,14 +162,13 @@ tx39io_attach(struct device *parent, struct device *self, void *aux)
 	hpcio_update(io_hc);
 	hpcio_update(mfio_hc);
 
-#ifdef TX39IODEBUG
+#ifdef TX39IO_DEBUG
 	hpcio_dump(io_hc);
 	hpcio_dump(mfio_hc);
-#else
 	printf("IO i0x%08x o0x%08x MFIO i0x%08x o0x%08x\n",
 	       sc->sc_stat_io.in, sc->sc_stat_io.out,
 	       sc->sc_stat_mfio.in, sc->sc_stat_mfio.out);
-#endif
+#endif /* TX39IO_DEBUG */
 }
 
 /* 
@@ -224,7 +221,7 @@ mfio_out(hpcio_chip_t arg, int port, int onoff)
 	tx_chipset_tag_t tc;
 	txreg_t reg, pos;
 
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 	tc = sc->sc_tc;
 	/* MFIO */
 	pos = 1 << port;
@@ -247,7 +244,7 @@ mfio_in(hpcio_chip_t arg, int port)
 {
 	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc ;
 
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 	return (tx_conf_read(sc->sc_tc, TX39_IOMFIODATAIN_REG) & (1 << port));
 }
 
@@ -263,7 +260,7 @@ mfio_intr_map(int *src, int port, int mode)
 		return (0);
 	}
 		
-	DPRINTF(("invalid interrupt mode.\n"));
+	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
 }
@@ -293,31 +290,28 @@ tx391x_io_in(hpcio_chip_t arg, int port)
 	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc;
 	txreg_t reg = tx_conf_read(sc->sc_tc, TX39_IOCTRL_REG);
 
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 	return  (TX391X_IOCTRL_IODIN(reg) & (1 << port));
 }
 
 void
 tx391x_io_out(hpcio_chip_t arg, int port, int onoff)
 {
-#ifdef DIAGNOSTIC
-	const char *devname;
-#endif
 	struct tx39io_softc *sc = arg->hc_sc;
 	tx_chipset_tag_t tc;
 	txreg_t reg, pos, iostat;
 
 	KASSERT(sc);
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 
-	devname  =  sc->sc_dev.dv_xname;
 	tc = sc->sc_tc;
 
 	/* IO [0:6] */ 
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_io.dir & pos))
-		panic("%s: IO%d is not output port.\n", devname, port);
+		panic("%s: IO%d is not output port.\n", sc->sc_dev.dv_xname,
+		      port);
 #endif
 	reg = tx_conf_read(tc, TX39_IOCTRL_REG);
 	iostat = TX391X_IOCTRL_IODOUT(reg);
@@ -361,7 +355,7 @@ tx391x_io_intr_map(int *src, int port, int mode)
 		return (0);
 	}
 		
-	DPRINTF(("invalid interrupt mode.\n"));
+	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
 }
@@ -377,7 +371,7 @@ tx392x_io_in(hpcio_chip_t arg, int port)
 	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc;
 	txreg_t reg = tx_conf_read(sc->sc_tc, TX392X_IODATAINOUT_REG);
 
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 	
 	return (TX392X_IODATAINOUT_DIN(reg) & (1 << port));
 }
@@ -392,7 +386,7 @@ tx392x_io_out(hpcio_chip_t arg, int port, int onoff)
 	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg, pos, iostat;
 
-	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
+	DPRINTF("port #%d\n", port);
 	/* IO [0:15] */
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
@@ -422,7 +416,7 @@ tx392x_io_intr_map(int *src, int port, int mode)
 		return (0);
 	}
 		
-	DPRINTF(("invalid interrupt mode.\n"));
+	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
 }
@@ -499,4 +493,3 @@ __print_port_status(struct tx39io_port_status *stat, int i)
 	       ISSET(stat->in, i) ? 1 : 0,
 	       ISSET(stat->power, i) ? "Down  ": "Active");
 }
-

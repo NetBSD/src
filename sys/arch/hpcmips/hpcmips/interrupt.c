@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.4.1 2002/01/10 19:44:00 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.4.2 2002/02/11 20:08:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,13 +63,8 @@ struct hpcmips_soft_intr hpcmips_soft_intrs[_IPL_NSOFT];
 void
 intr_init()
 {
-#if defined(VR41XX) && defined(TX39XX)
+
 	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;
-#elif defined(VR41XX)
-	ipl_sr_bits = __ipl_sr_bits_vr;
-#elif defined(TX39XX)
-	ipl_sr_bits = __ipl_sr_bits_tx;
-#endif
 }
 
 #if defined(VR41XX) && defined(TX39XX)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58.2.2 2001/09/13 01:12:58 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58.2.3 2002/02/11 20:06:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58.2.3 2002/02/11 20:06:47 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -64,7 +67,7 @@
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -84,7 +87,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
@@ -179,7 +182,7 @@ pagemove(from, to, size)
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
- */ 
+ */
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;

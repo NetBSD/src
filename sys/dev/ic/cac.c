@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.17.2.2 2002/01/10 19:54:18 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.17.2.3 2002/02/11 20:09:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.17.2.2 2002/01/10 19:54:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.17.2.3 2002/02/11 20:09:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,24 +62,24 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.17.2.2 2002/01/10 19:54:18 thorpej Exp $")
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-static struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
-static void	cac_ccb_done(struct cac_softc *, struct cac_ccb *);
-static void	cac_ccb_free(struct cac_softc *, struct cac_ccb *);
-static int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
-static int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
-static int	cac_print(void *, const char *);
-static void	cac_shutdown(void *);
-static int	cac_submatch(struct device *, struct cfdata *, void *);
+struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
+void	cac_ccb_done(struct cac_softc *, struct cac_ccb *);
+void	cac_ccb_free(struct cac_softc *, struct cac_ccb *);
+int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
+int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
+int	cac_print(void *, const char *);
+void	cac_shutdown(void *);
+int	cac_submatch(struct device *, struct cfdata *, void *);
 
-static struct	cac_ccb *cac_l0_completed(struct cac_softc *);
-static int	cac_l0_fifo_full(struct cac_softc *);
-static void	cac_l0_intr_enable(struct cac_softc *, int);
-static int	cac_l0_intr_pending(struct cac_softc *);
-static void	cac_l0_submit(struct cac_softc *, struct cac_ccb *);
+struct	cac_ccb *cac_l0_completed(struct cac_softc *);
+int	cac_l0_fifo_full(struct cac_softc *);
+void	cac_l0_intr_enable(struct cac_softc *, int);
+int	cac_l0_intr_pending(struct cac_softc *);
+void	cac_l0_submit(struct cac_softc *, struct cac_ccb *);
 
 static void	*cac_sdh;	/* shutdown hook */
 
-struct cac_linkage cac_l0 = {
+const struct cac_linkage cac_l0 = {
 	cac_l0_completed,
 	cac_l0_fifo_full,
 	cac_l0_intr_enable,
@@ -186,14 +186,14 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	if (cac_sdh == NULL)
 		cac_sdh = shutdownhook_establish(cac_shutdown, NULL);
 		
-	(*sc->sc_cl->cl_intr_enable)(sc, CAC_INTR_ENABLE);
+	(*sc->sc_cl.cl_intr_enable)(sc, CAC_INTR_ENABLE);
 	return (0);
 }
 
 /*
  * Shut down all `cac' controllers.
  */
-static void
+void
 cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
@@ -214,7 +214,7 @@ cac_shutdown(void *cookie)
 /*
  * Print autoconfiguration message for a sub-device.
  */
-static int
+int
 cac_print(void *aux, const char *pnp)
 {
 	struct cac_attach_args *caca;
@@ -230,7 +230,7 @@ cac_print(void *aux, const char *pnp)
 /*
  * Match a sub-device.
  */
-static int
+int
 cac_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cac_attach_args *caca;
@@ -256,14 +256,14 @@ cac_intr(void *cookie)
 
 	sc = (struct cac_softc *)cookie;
 
-	if (!(*sc->sc_cl->cl_intr_pending)(sc)) {
+	if (!(*sc->sc_cl.cl_intr_pending)(sc)) {
 #ifdef DEBUG
 		printf("%s: spurious intr\n", sc->sc_dv.dv_xname);
 #endif
 		return (0);
 	}	
 
-	while ((ccb = (*sc->sc_cl->cl_completed)(sc)) != NULL) {
+	while ((ccb = (*sc->sc_cl.cl_completed)(sc)) != NULL) {
 		cac_ccb_done(sc, ccb);
 		cac_ccb_start(sc, NULL);
 	}
@@ -331,14 +331,14 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		s = splbio();
 
 		/* Synchronous commands musn't wait. */
-		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
+		if ((*sc->sc_cl.cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
 			rv = -1;
 		} else {
 #ifdef DIAGNOSTIC
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 #endif
-			(*sc->sc_cl->cl_submit)(sc, ccb);
+			(*sc->sc_cl.cl_submit)(sc, ccb);
 			rv = cac_ccb_poll(sc, ccb, 2000);
 			cac_ccb_free(sc, ccb);
 		}
@@ -355,7 +355,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 /*
  * Wait for the specified CCB to complete.  Must be called at splbio.
  */
-static int
+int
 cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
@@ -364,13 +364,14 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 
 	do {
 		for (; timo != 0; timo--) {
-			if ((ccb = (*sc->sc_cl->cl_completed)(sc)) != NULL)
+			ccb = (*sc->sc_cl.cl_completed)(sc);
+			if (ccb != NULL)
 				break;
 			DELAY(100);
 		}
 
 		if (timo == 0) {
-			printf("%s: timeout", sc->sc_dv.dv_xname);
+			printf("%s: timeout\n", sc->sc_dv.dv_xname);
 			return (EBUSY);
 		}
 		cac_ccb_done(sc, ccb);
@@ -383,7 +384,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
  * Enqueue the specifed command (if any) and attempt to start all enqueued 
  * commands.  Must be called at splbio.
  */
-static int
+int
 cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
@@ -391,13 +392,13 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
-		if ((*sc->sc_cl->cl_fifo_full)(sc))
+		if ((*sc->sc_cl.cl_fifo_full)(sc))
 			return (EBUSY);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
 #ifdef DIAGNOSTIC
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;
 #endif
-		(*sc->sc_cl->cl_submit)(sc, ccb);
+		(*sc->sc_cl.cl_submit)(sc, ccb);
 	}
 	
 	return (0);
@@ -406,7 +407,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 /*
  * Process a finished CCB.
  */
-static void
+void
 cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 	struct device *dv;
@@ -494,14 +495,14 @@ cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
  * Board specific linkage shared between multiple bus types.
  */
 
-static int
+int
 cac_l0_fifo_full(struct cac_softc *sc)
 {
 
 	return (cac_inl(sc, CAC_REG_CMD_FIFO) == 0);
 }
 
-static void
+void
 cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
@@ -510,13 +511,20 @@ cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 	cac_outl(sc, CAC_REG_CMD_FIFO, ccb->ccb_paddr);
 }
 
-static struct cac_ccb *
+struct cac_ccb *
 cac_l0_completed(struct cac_softc *sc)
 {
 	struct cac_ccb *ccb;
 	paddr_t off;
 
-	off = (cac_inl(sc, CAC_REG_DONE_FIFO) & ~3) - sc->sc_ccbs_paddr;
+	if ((off = cac_inl(sc, CAC_REG_DONE_FIFO)) == 0)
+		return (NULL);
+
+	if ((off & 3) != 0)
+		printf("%s: failed command list returned: %lx\n",
+		    sc->sc_dv.dv_xname, (long)off);
+
+	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
@@ -525,14 +533,14 @@ cac_l0_completed(struct cac_softc *sc)
 	return (ccb);
 }
 
-static int
+int
 cac_l0_intr_pending(struct cac_softc *sc)
 {
 
-	return (cac_inl(sc, CAC_REG_INTR_PENDING));
+	return (cac_inl(sc, CAC_REG_INTR_PENDING) & CAC_INTR_ENABLE);
 }
 
-static void
+void
 cac_l0_intr_enable(struct cac_softc *sc, int state)
 {
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17.4.2 2002/01/10 19:51:22 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.17.4.3 2002/02/11 20:09:27 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -34,6 +34,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #include "opt_sysv.h"
+#include "opt_compat_43.h"
 #endif
 
 #include <sys/param.h>
@@ -82,7 +83,7 @@
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		ptrace
-27	OBSOL		alarm
+27	STD		{ int svr4_sys_alarm(unsigned sec); }
 28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
 29	STD		{ int svr4_sys_pause(void); }
 30	STD		{ int svr4_sys_utime(const char *path, \
@@ -207,10 +208,14 @@
 106	NOARGS		{ int sys_shutdown(int s, int how); }
 107	STD		{ int svr4_sys_socket(int domain, int type, \
 			    int protocol); }
-108	UNIMPL		sys_gethostname
-109	UNIMPL		sethostname
-110	UNIMPL		sys_getdomainname
-111	UNIMPL		setdomainname
+108	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
+			    u_int len); }
+109	NOARGS		{ int compat_43_sys_sethostname(const char *hostname, \
+			    u_int len); }
+110	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); }
+111	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); }
 112	UNIMPL		truncate
 113	UNIMPL		ftruncate
 114	NOARGS		{ int sys_rename(const char *from, const char *to); }
@@ -226,10 +231,13 @@
 122	UNIMPL		exportfs
 123	UNIMPL		setregid
 124	UNIMPL		setreuid
-125	UNIMPL		getitimer
-126	UNIMPL		setitimer
-127	UNIMPL		adjtime
-128	UNIMPL		gettimeofday
+125	NOARGS		{ int sys_getitimer(u_int which, \
+			    struct itimerval *itv); }
+126	NOARGS		{ int sys_setitimer(u_int which, \
+			    struct itimerval *itv, struct itimerval *oitv); }
+127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
+			    struct timeval *olddelta); }
+128	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
 129	UNIMPL		sproc
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
 			    void *arg1); }
@@ -322,12 +330,15 @@
 203	STD		{ int irix_sys_getmountid(const char *path, \
 			    irix_mountid_t *buf); }
 204	UNIMPL		nsproc
-205	UNIMPL		getdents64
+205	STD		{ int irix_sys_getdents64(int fildes, \
+			    irix_dirent64_t *buf, int nbytes); }
 206	UNIMPL		afs_syscall
 207	STD		{ int irix_sys_ngetdents(int fildes, \
 			    irix_dirent_t *buf, unsigned short nbyte, \
 			    int *eof); }
-208	UNIMPL		ngetdents64
+208	STD		{ int irix_sys_ngetdents64(int fildes, \
+			    irix_dirent64_t *buf, unsigned short nbyte, \
+			    int *eof); }
 209	UNIMPL		sgi_sesmgr
 210	UNIMPL		pidsprocsp
 211	UNIMPL		rexec

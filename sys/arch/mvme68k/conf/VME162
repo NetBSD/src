@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.8.2.2 2002/01/10 19:46:31 thorpej Exp $
+#	$NetBSD: VME162,v 1.8.2.3 2002/02/11 20:08:41 jdolecek Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -16,6 +16,7 @@ maxusers	8
 #options 	SYSVSHM
 options 	KTRACE
 options 	COMPAT_43
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 file-system 	FFS
 file-system 	NFS

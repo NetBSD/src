@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh3.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3.h,v 1.4.2.1 2002/02/11 20:07:59 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,14 +69,20 @@
 #define MMU_WAY			4
 #define MMU_ENTRY		32
 
-/* Windows CE uses 1Kbyte page */
-#define PAGE_SIZE		0x400
-#define PAGE_MASK		(~(PAGE_SIZE - 1))
+/* Windows CE uses 1Kbyte page for SH3, 4Kbyte for SH4 */
+#define SH3_PAGE_SIZE		0x400
+#define SH3_PAGE_MASK		(~(SH3_PAGE_SIZE - 1))
+#define SH4_PAGE_SIZE		0x1000
+#define SH4_PAGE_MASK		(~(SH4_PAGE_SIZE - 1))
 
 #define MMUPTEH			0xfffffff0
 #define MMUPTEH_ASID_MASK	0x0000000f
 #define MMUPTEH_VPN_MASK	0xfffffc00
+#ifdef SH4
+#define MMUCR			0xff000010
+#else
 #define MMUCR			0xffffffe0
+#endif
 #define MMUCR_AT		0x00000001
 #define MMUCR_IX		0x00000002
 #define MMUCR_TF		0x00000004
@@ -265,6 +271,14 @@ __END_DECLS
 /*
  * SCI
  */
+#ifdef SH4
+#define SCI_SCSMR_REG8			0xffe00000
+#define SCI_SCBRR_REG8			0xffe00004
+#define SCI_SCSCR_REG8			0xffe00008
+#define SCI_SCTDR_REG8			0xffe0000c
+#define SCI_SCSSR_REG8			0xffe00010
+#define SCI_SCRDR_REG8			0xffe00014
+#else
 #define SCI_SCRSR_REG8			/* can't access from CPU */
 #define SCI_SCTSR_REG8			/* can't access from CPU */
 #define SCI_SCSMR_REG8			0xfffffe80
@@ -272,10 +286,11 @@ __END_DECLS
 #define SCI_SCSCR_REG8			0xfffffe84
 #define SCI_SCTDR_REG8			0xfffffe86
 #define SCI_SCSSR_REG8			0xfffffe88
-#define SCI_SCSSR_TDRE			0x80
 #define SCI_SCRDR_REG8			0xfffffe8a
 #define SCI_SCPCR_REG16			0xa4000116
 #define SCI_SCPDR_REG16			0xa4000136
+#endif
+#define SCI_SCSSR_TDRE			0x80
 
 #define SCI_TX_BUSY()							\
 	while ((VOLATILE_REF8(SCI_SCSSR_REG8) & SCI_SCSSR_TDRE) == 0)
@@ -302,6 +317,19 @@ __END_MACRO
 /* 
  * SCIF
  */
+#ifdef SH4
+#define SCIF_SCSMR2_REG16		0xffe80000
+#define SCIF_SCBRR2_REG8		0xffe80004
+#define SCIF_SCSCR2_REG16		0xffe80008
+#define SCIF_SCFTDR2_REG8		0xffe8000c
+#define SCIF_SCFSR2_REG16		0xffe80010
+#define SCIF_SCFRDR2_REG8		0xffe80014
+#define SCIF_SCFCR2_REG16		0xffe80018
+#define SCIF_SCFDR2_REG16		0xffe8001c
+#define SCIF_SCSPTR2_REG16		0xffe80020
+#define SCIF_SCLSR2_REG16		0xffe80024
+#define	SCIF_SCSSR2_REG16		SCIF_SCFSR2_REG16
+#else
 #define SCIF_SCSMR2_REG8		0xa4000150	/* R/W */
 #define SCIF_SCBRR2_REG8		0xa4000152	/* R/W */
 #define SCIF_SCSCR2_REG8		0xa4000154	/* R/W */
@@ -310,6 +338,7 @@ __END_MACRO
 #define SCIF_SCFRDR2_REG8		0xa400015a	/* R */
 #define SCIF_SCFCR2_REG8		0xa400015c	/* R/W */
 #define SCIF_SCFDR2_REG16		0xa400015e	/* R */
+#endif
 
 /* Transmit FIFO Data Empty */
 #define SCIF_SCSSR2_TDFE		0x00000020
@@ -361,5 +390,6 @@ __END_MACRO
 #include <sh3/sh_7707.h>
 #include <sh3/sh_7709.h>
 #include <sh3/sh_7709a.h>
+#include <sh3/sh_7750.h>
 
 #endif // _HPCBOOT_SH3_H_

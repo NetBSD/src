@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.13 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: scivar.h,v 1.13.2.1 2002/02/11 20:07:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,9 +64,9 @@ struct	sci_softc {
 	volatile u_char	*sci_irecv;	/* w: Start dma receive, initiator */
 
 	/* psuedo DMA transfer */
-	int	(*dma_xfer_in) __P((struct sci_softc *, int, u_char *, int));
+	int	(*dma_xfer_in)(struct sci_softc *, int, u_char *, int);
 	/* psuedo DMA transfer */
-	int	(*dma_xfer_out) __P((struct sci_softc *, int, u_char *, int));
+	int	(*dma_xfer_out)(struct sci_softc *, int, u_char *, int);
 	u_char	sc_flags;
 	u_char	sc_lun;
 	/* one for each target */
@@ -135,8 +135,8 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsipi_xfer;
 
-void sci_minphys __P((struct buf *));
-void sci_scsipi_request __P((struct scsipi_channel *, scsipi_adapter_req_t, void *));
-void scireset __P((struct sci_softc *));
+void sci_minphys(struct buf *);
+void sci_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void scireset(struct sci_softc *);
 
 #endif /* _SCIVAR_H_ */

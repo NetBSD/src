@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.43.2.1 2001/08/03 04:10:54 lukem Exp $	*/
+/*	$NetBSD: sbic.c,v 1.43.2.2 2002/02/11 20:07:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,6 +45,9 @@
 
 #include "opt_ddb.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.43.2.2 2002/02/11 20:07:06 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -81,32 +84,32 @@
 
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
-int  sbicicmd __P((struct sbic_softc *, int, int, void *, int, void *, int));
-int  sbicgo __P((struct sbic_softc *, struct scsipi_xfer *));
-int  sbicdmaok __P((struct sbic_softc *, struct scsipi_xfer *));
-int  sbicwait __P((sbic_regmap_t, char, int , int));
-int  sbiccheckdmap __P((void *, u_long, u_long));
-int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_t, u_char, u_char, u_char));
-int  sbicxfstart __P((sbic_regmap_t, int, u_char, int));
-int  sbicxfout __P((sbic_regmap_t regs, int, void *, int));
-int  sbicfromscsiperiod __P((struct sbic_softc *, sbic_regmap_t, int));
-int  sbictoscsiperiod __P((struct sbic_softc *, sbic_regmap_t, int));
-int  sbicpoll __P((struct sbic_softc *));
-int  sbicnextstate __P((struct sbic_softc *, u_char, u_char));
-int  sbicmsgin __P((struct sbic_softc *));
-int  sbicxfin __P((sbic_regmap_t regs, int, void *));
-int  sbicabort __P((struct sbic_softc *, sbic_regmap_t, char *));
-void sbicxfdone __P((struct sbic_softc *, sbic_regmap_t, int));
-void sbicerror __P((struct sbic_softc *, sbic_regmap_t, u_char));
-void sbicstart __P((struct sbic_softc *));
-void sbicreset __P((struct sbic_softc *));
-void sbic_scsidone __P((struct sbic_acb *, int));
-void sbic_sched __P((struct sbic_softc *));
-void sbic_save_ptrs __P((struct sbic_softc *, sbic_regmap_t,int,int));
-void sbic_load_ptrs __P((struct sbic_softc *, sbic_regmap_t,int,int));
+int  sbicicmd(struct sbic_softc *, int, int, void *, int, void *, int);
+int  sbicgo(struct sbic_softc *, struct scsipi_xfer *);
+int  sbicdmaok(struct sbic_softc *, struct scsipi_xfer *);
+int  sbicwait(sbic_regmap_t, char, int , int);
+int  sbiccheckdmap(void *, u_long, u_long);
+int  sbicselectbus(struct sbic_softc *, sbic_regmap_t, u_char, u_char, u_char);
+int  sbicxfstart(sbic_regmap_t, int, u_char, int);
+int  sbicxfout(sbic_regmap_t regs, int, void *, int);
+int  sbicfromscsiperiod(struct sbic_softc *, sbic_regmap_t, int);
+int  sbictoscsiperiod(struct sbic_softc *, sbic_regmap_t, int);
+int  sbicpoll(struct sbic_softc *);
+int  sbicnextstate(struct sbic_softc *, u_char, u_char);
+int  sbicmsgin(struct sbic_softc *);
+int  sbicxfin(sbic_regmap_t regs, int, void *);
+int  sbicabort(struct sbic_softc *, sbic_regmap_t, char *);
+void sbicxfdone(struct sbic_softc *, sbic_regmap_t, int);
+void sbicerror(struct sbic_softc *, sbic_regmap_t, u_char);
+void sbicstart(struct sbic_softc *);
+void sbicreset(struct sbic_softc *);
+void sbic_scsidone(struct sbic_acb *, int);
+void sbic_sched(struct sbic_softc *);
+void sbic_save_ptrs(struct sbic_softc *, sbic_regmap_t,int,int);
+void sbic_load_ptrs(struct sbic_softc *, sbic_regmap_t,int,int);
 #ifdef DEBUG
-void sbicdumpstate __P((void));
-void sbic_dump_acb __P((struct sbic_acb *));
+void sbicdumpstate(void);
+void sbic_dump_acb(struct sbic_acb *);
 #endif
 
 /*
@@ -143,7 +146,7 @@ int	sbic_dma_debug = 0;
 int	reselect_debug = 0;
 int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
-void sbictimeout __P((struct sbic_softc *dev));
+void sbictimeout(struct sbic_softc *dev);
 
 #define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
@@ -204,8 +207,7 @@ struct {
  * default minphys routine for sbic based controllers
  */
 void
-sbic_minphys(bp)
-	struct buf *bp;
+sbic_minphys(struct buf *bp)
 {
 
 	/*
@@ -218,10 +220,7 @@ sbic_minphys(bp)
  * Save DMA pointers.  Take into account partial transfer. Shut down DMA.
  */
 void
-sbic_save_ptrs(dev, regs, target, lun)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	int target, lun;
+sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 {
 	int count, asr, s;
 	struct sbic_acb* acb;
@@ -283,10 +282,8 @@ sbic_save_ptrs(dev, regs, target, lun)
 /*
  * DOES NOT RESTART DMA!!!
  */
-void sbic_load_ptrs(dev, regs, target, lun)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	int target, lun;
+void
+sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 {
 	int s, count;
 	char* vaddr, * paddr;
@@ -363,10 +360,8 @@ void sbic_load_ptrs(dev, regs, target, lun)
  * in scsi_scsipi_cmd().
  */
 void
-sbic_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+sbic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+                    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -472,8 +467,7 @@ sbic_scsipi_request(chan, req, arg)
  * attempt to start the next available command
  */
 void
-sbic_sched(dev)
-	struct sbic_softc *dev;
+sbic_sched(struct sbic_softc *dev)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -535,9 +529,7 @@ sbic_sched(dev)
 }
 
 void
-sbic_scsidone(acb, stat)
-	struct sbic_acb *acb;
-	int stat;
+sbic_scsidone(struct sbic_acb *acb, int stat)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -629,9 +621,7 @@ sbic_scsidone(acb, stat)
 }
 
 int
-sbicdmaok(dev, xs)
-	struct sbic_softc *dev;
-	struct scsipi_xfer *xs;
+sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
 {
 	if (sbic_no_dma || !xs->datalen || xs->datalen & 0x1 ||
 	    (u_int)xs->data & 0x3)
@@ -672,11 +662,7 @@ sbicdmaok(dev, xs)
 
 
 int
-sbicwait(regs, until, timeo, line)
-	sbic_regmap_t regs;
-	char until;
-	int timeo;
-	int line;
+sbicwait(sbic_regmap_t regs, char until, int timeo, int line)
 {
 	u_char val;
 	int csr;
@@ -705,10 +691,7 @@ sbicwait(regs, until, timeo, line)
 }
 
 int
-sbicabort(dev, regs, where)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	char *where;
+sbicabort(struct sbic_softc *dev, sbic_regmap_t regs, char *where)
 {
 	u_char csr, asr;
 
@@ -780,8 +763,7 @@ printf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
  */
 
 void
-sbicinit(dev)
-	struct sbic_softc *dev;
+sbicinit(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	u_int i;
@@ -836,8 +818,7 @@ sbicinit(dev)
 }
 
 void
-sbicreset(dev)
-	struct sbic_softc *dev;
+sbicreset(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	u_int my_id, s;
@@ -929,10 +910,7 @@ sbicreset(dev)
 }
 
 void
-sbicerror(dev, regs, csr)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	u_char csr;
+sbicerror(struct sbic_softc *dev, sbic_regmap_t regs, u_char csr)
 {
 	struct scsipi_xfer *xs;
 
@@ -953,10 +931,8 @@ sbicerror(dev, regs, csr)
  * select the bus, return when selected or error.
  */
 int
-sbicselectbus(dev, regs, target, lun, our_addr)
-        struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	u_char target, lun, our_addr;
+sbicselectbus(struct sbic_softc *dev, sbic_regmap_t regs, u_char target,
+              u_char lun, u_char our_addr)
 {
 	u_char asr, csr, id;
 
@@ -1140,10 +1116,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 }
 
 int
-sbicxfstart(regs, len, phase, wait)
-	sbic_regmap_t regs;
-	int len, wait;
-	u_char phase;
+sbicxfstart(sbic_regmap_t regs, int len, u_char phase, int wait)
 {
 	u_char id;
 
@@ -1172,11 +1145,7 @@ sbicxfstart(regs, len, phase, wait)
 }
 
 int
-sbicxfout(regs, len, bp, phase)
-	sbic_regmap_t regs;
-	int len;
-	void *bp;
-	int phase;
+sbicxfout(sbic_regmap_t regs, int len, void *bp, int phase)
 {
 	u_char orig_csr, asr, *buf;
 	int wait;
@@ -1227,10 +1196,7 @@ sbicxfout(regs, len, bp, phase)
 
 /* returns # bytes left to read */
 int
-sbicxfin(regs, len, bp)
-	sbic_regmap_t regs;
-	int len;
-	void *bp;
+sbicxfin(sbic_regmap_t regs, int len, void *bp)
 {
 	int wait;
 	u_char *obp, *buf;
@@ -1306,10 +1272,8 @@ sbicxfin(regs, len, bp)
  * command must supply no data.
  */
 int
-sbicicmd(dev, target, lun, cbuf, clen, buf, len)
-	struct sbic_softc *dev;
-	void *cbuf, *buf;
-	int clen, len;
+sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
+         void *buf, int len)
 {
 	sbic_regmap_t regs;
 	u_char phase, csr, asr;
@@ -1553,10 +1517,7 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
  * skip (and don't allow) the select, cmd out and data in/out phases.
  */
 void
-sbicxfdone(dev, regs, target)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	int target;
+sbicxfdone(struct sbic_softc *dev, sbic_regmap_t regs, int target)
 {
 	u_char phase, asr, csr;
 	int s;
@@ -1599,9 +1560,7 @@ sbicxfdone(dev, regs, target)
 	 */
 
 int
-sbicgo(dev, xs)
-	struct sbic_softc *dev;
-	struct scsipi_xfer *xs;
+sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 {
 	int i, dmaflags, count, usedma;
 	u_char csr, asr, *addr;
@@ -1813,8 +1772,7 @@ if (i == SBIC_STATE_DONE && dev->sc_stat[0] == 0xff) printf("sbicgo: done & stat
 
 
 int
-sbicintr(dev)
-	struct sbic_softc *dev;
+sbicintr(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	u_char asr, csr;
@@ -1861,8 +1819,7 @@ sbicintr(dev)
  * Run commands and wait for disconnect
  */
 int
-sbicpoll(dev)
-	struct sbic_softc *dev;
+sbicpoll(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	u_char asr, csr;
@@ -1922,8 +1879,7 @@ sbicpoll(dev)
  */
 
 int
-sbicmsgin(dev)
-	struct sbic_softc *dev;
+sbicmsgin(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	int recvlen;
@@ -2195,9 +2151,7 @@ sbicmsgin(dev)
  *		-1 == error
  */
 int
-sbicnextstate(dev, csr, asr)
-	struct sbic_softc *dev;
-	u_char csr, asr;
+sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 {
 	sbic_regmap_t regs;
 	struct sbic_acb *acb;
@@ -2553,9 +2507,7 @@ sbicnextstate(dev, csr, asr)
  */
 
 int
-sbiccheckdmap(bp, len, mask)
-	void *bp;
-	u_long len, mask;
+sbiccheckdmap(void *bp, u_long len, u_long mask)
 {
 	u_char *buffer;
 	u_long phy_buf;
@@ -2579,10 +2531,7 @@ sbiccheckdmap(bp, len, mask)
 }
 
 int
-sbictoscsiperiod(dev, regs, a)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	int a;
+sbictoscsiperiod(struct sbic_softc *dev, sbic_regmap_t regs, int a)
 {
 	unsigned int fs;
 
@@ -2600,10 +2549,7 @@ sbictoscsiperiod(dev, regs, a)
 }
 
 int
-sbicfromscsiperiod(dev, regs, p)
-	struct sbic_softc *dev;
-	sbic_regmap_t regs;
-	int p;
+sbicfromscsiperiod(struct sbic_softc *dev, sbic_regmap_t regs, int p)
 {
 	register unsigned int fs, ret;
 
@@ -2627,7 +2573,7 @@ sbicfromscsiperiod(dev, regs, p)
 #ifdef DEBUG
 
 void
-sbicdumpstate()
+sbicdumpstate(void)
 {
 	u_char csr, asr;
 
@@ -2643,8 +2589,7 @@ sbicdumpstate()
 }
 
 void
-sbictimeout(dev)
-	struct sbic_softc *dev;
+sbictimeout(struct sbic_softc *dev)
 {
 	int s, asr;
 
@@ -2670,8 +2615,7 @@ sbictimeout(dev)
 }
 
 void
-sbic_dump_acb(acb)
-	struct sbic_acb *acb;
+sbic_dump_acb(struct sbic_acb *acb)
 {
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
@@ -2695,8 +2639,7 @@ sbic_dump_acb(acb)
 }
 
 void
-sbic_dump(dev)
-	struct sbic_softc *dev;
+sbic_dump(struct sbic_softc *dev)
 {
 	sbic_regmap_t regs;
 	u_char csr, asr;

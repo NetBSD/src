@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.4.4.1 2002/01/10 19:43:49 thorpej Exp $ */
+/*	$NetBSD: m38813c.c,v 1.4.4.2 2002/02/11 20:08:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * Device driver for MITUBISHI M38813 controller
  */
 
-#include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 
 #include <sys/param.h>

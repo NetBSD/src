@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.22.16.2 2002/01/10 19:55:42 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.22.16.3 2002/02/11 20:09:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.22.16.2 2002/01/10 19:55:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.22.16.3 2002/02/11 20:09:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ sb_isa_match(parent, match, aux)
 
 	memset(sc, 0, sizeof *sc);
 	strcpy(sc->sc_dev.dv_xname, "sb");
+	sc->sc_dev.dv_cfdata = match;
 	return sbfind(parent, sc, 1, aux);
 }
 

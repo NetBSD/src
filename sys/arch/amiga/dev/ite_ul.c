@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.9 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: ite_ul.c,v 1.9.22.1 2002/02/11 20:07:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.9.22.1 2002/02/11 20:07:02 jdolecek Exp $");
+
 #include "grful.h"
 #if NGRFUL > 0
 
@@ -55,7 +58,7 @@
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_ulreg.h>
 
-#ifndef KFONT_CUSTOM  
+#ifndef KFONT_CUSTOM
 #ifdef KFONT_8X11
 #define kernel_font_width       kernel_font_width_8x11
 #define kernel_font_height      kernel_font_height_8x11
@@ -91,15 +94,15 @@ extern u_int8_t kernel_font[], kernel_cursor[];
 
 int ulowell_console = 1;
 
-void ulowell_cursor __P((struct ite_softc *,int));
-void ulowell_scroll __P((struct ite_softc *,int,int,int,int));
-void ulowell_deinit __P((struct ite_softc *));
-void ulowell_clear __P((struct ite_softc *,int,int,int,int));
-void ulowell_putc __P((struct ite_softc *,int,int,int,int));
-void ulowell_init __P((struct ite_softc *));
+void ulowell_cursor(struct ite_softc *, int);
+void ulowell_scroll(struct ite_softc *, int, int, int, int);
+void ulowell_deinit(struct ite_softc *);
+void ulowell_clear(struct ite_softc *, int, int, int, int);
+void ulowell_putc(struct ite_softc *, int, int, int, int);
+void ulowell_init(struct ite_softc *);
 
 #ifdef DEBUG_UL
-void gsp_dump __P((u_int16_t *,int));
+void gsp_dump(u_int16_t *, int);
 #endif
 
 /* Text always on overlay plane, so: */
@@ -112,7 +115,7 @@ void gsp_dump __P((u_int16_t *,int));
  * field each time a ulowell board is attached.
  */
 int
-grful_cnprobe()
+grful_cnprobe(void)
 {
 	static int done;
 	int uv;
@@ -125,13 +128,12 @@ grful_cnprobe()
 	return(uv);
 }
 
-/* 
+/*
  * init the required fields in the grf_softc struct for a
  * grf to function as an ite.
  */
 void
-grful_iteinit(gp)
-	struct grf_softc *gp;
+grful_iteinit(struct grf_softc *gp)
 {
 	gp->g_iteinit = ulowell_init;
 	gp->g_itedeinit = ulowell_deinit;
@@ -142,8 +144,7 @@ grful_iteinit(gp)
 }
 
 void
-ulowell_init(ip)
-	struct ite_softc *ip;
+ulowell_init(struct ite_softc *ip)
 {
 	struct gspregs *ba;
 
@@ -165,41 +166,41 @@ ulowell_init(ip)
 	/* upload font data */
 
 	ba->ctrl = LBL|INCW;
-	ba->hstadrh = 0xFFA2; 
-	ba->hstadrl = 0x0200; 
+	ba->hstadrh = 0xFFA2;
+	ba->hstadrl = 0x0200;
 
-	ba->data = 0x0000; 
-	ba->data = 0xFFA3; 
-	ba->data = ip->ftwidth; 
-	ba->data = ip->ftheight; 
+	ba->data = 0x0000;
+	ba->data = 0xFFA3;
+	ba->data = ip->ftwidth;
+	ba->data = ip->ftheight;
 	ba->data = ip->ftbaseline;
 	ba->data = 1;
 	ba->data = ip->font_lo;
 	ba->data = ip->font_hi;
 	ba->data = ip->ftboldsmear;
-    
-	ba->hstadrh = 0xFFA3; 
-	ba->hstadrl = 0x0000; 
-    
-	/*      
+
+	ba->hstadrh = 0xFFA3;
+	ba->hstadrl = 0x0000;
+
+	/*
 	 * font has to be word aligned and padded to word boundary.
 	 * 8 bit wide fonts will be byte swapped in the bit swap
 	 * routine.
-	 */      
+	 */
 
 	i = (ip->font_hi - ip->font_lo + 1) * ip->ftheight;
 	if (ip->ftwidth <= 8)
 		i /= 2;
 	for (sp = (u_int16_t *)ip->font; i>0; --i,++sp) {
 		ba->data = *sp;
-	}       
+	}
 
 	/* bitwise mirror the font: */
 
 	cmd[0] = GCMD_FNTMIR;
 	gsp_out(ba, cmd, 1);
 
-	ip->priv = NULL;	
+	ip->priv = NULL;
 	ip->cursor_opt = 0;
 
 	if (ip->ftwidth >0 && ip->ftheight > 0) {
@@ -209,7 +210,7 @@ ulowell_init(ip)
 
 	ulowell_clear(ip, 0, 0, ip->rows, ip->cols);
 
-	/* 
+	/*
 	 * switch overlay plane 0 on again, in case s.b. did a GM_GRFOVOFF
 	 * XXX maybe this should be done on each output, by the TMS code?
 	 * what happens on panic?
@@ -271,7 +272,7 @@ void ulowell_cursor(struct ite_softc *ip, int flag)
 		cmd[6] = 10;	/* thats src xor dst */
 		gsp_out(ba, cmd, 7);
 	}
-		
+
 	if (flag != DRAW_CURSOR && flag != MOVE_CURSOR &&
 	    flag != END_CURSOROPT)
 		return;
@@ -303,8 +304,8 @@ void ulowell_cursor(struct ite_softc *ip, int flag)
 
 
 
-static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
-{	
+static void screen_up(struct ite_softc *ip, int top, int bottom, int lines)
+{
 	struct gspregs *ba;
 
 	u_int16_t cmd[7];
@@ -318,7 +319,7 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 
 	if (top >= bottom)
 		return;
-	  
+
 	if (top + lines >= bottom)
 	{
 		ulowell_clear (ip, top, 0, bottom - top, ip->cols);
@@ -337,8 +338,8 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	ulowell_clear(ip, bottom-lines+1, 0, lines-1, ip->cols);
 };
 
-static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
-{	
+static void screen_down(struct ite_softc *ip, int top, int bottom, int lines)
+{
 	struct gspregs *ba;
 
 	u_int16_t cmd[7];
@@ -353,7 +354,7 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 
 	if (top >= bottom)
 		return;
-	  
+
 	if (top + lines >= bottom)
 	{
 	    ulowell_clear (ip, top, 0, bottom - top, ip->cols);
@@ -382,7 +383,7 @@ void ulowell_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	struct gspregs *ba;
 	u_int16_t cmd[8];
-	
+
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
 	cmd[0] = GCMD_CHAR;
@@ -455,7 +456,7 @@ void ulowell_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 		cmd[6] = sy * ip->ftheight;
 		gsp_out(ba,cmd,7);
 		ulowell_clear (ip, sy, ip->cols - count, 1, count);
-	}		
+	}
 }
 
 #ifdef DEBUG_UL

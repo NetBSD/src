@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.42.2.1 2002/01/10 19:38:41 thorpej Exp $
+#	$NetBSD: SHARK,v 1.42.2.2 2002/02/11 20:07:26 jdolecek Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.42.2.1 $"
+#ident		"GENERIC-$Revision: 1.42.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -128,6 +128,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 

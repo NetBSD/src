@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.4.2 2002/01/10 19:51:21 thorpej Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.4.3 2002/02/11 20:09:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.2 2002/01/10 19:51:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.3 2002/02/11 20:09:27 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -180,7 +180,7 @@ irix_sys_syssgi(p, v, retval)
 
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
-		return EINVAL;
+		return 0;
 		break;
 
 	default:
@@ -209,11 +209,15 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	int flags;
 	u_long size;
 	Elf_Addr uaddr;
+	Elf_Addr reloc_offset;
 	struct file *fp;
 	struct filedesc *fdp;
 	struct exec_vmcmd_set vcset;
 	struct exec_vmcmd *base_vcp = NULL;
 	struct vnode *vp;
+	struct vm_map_entry *ret;
+	struct exec_vmcmd *vcp;
+	int need_relocation;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
@@ -229,14 +233,77 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	if (error)
 		goto bad;
 	
-	/* Check that each ELF sections is loadable */
 	pht = kph;
+	need_relocation = 0;
 	for (i = 0; i < count; i++) {
+	 	/* Check that each ELF sections is loadable */
 		if (pht->p_type != PT_LOAD) {
 			error = ENOEXEC;
 			goto bad;
 		}
+
+	 	/* 
+		 * Check that the section load addresses are increasing
+		 * with the section in the program header array. We do 
+		 * not support any other situation.
+		 */
+		if (pht->p_vaddr < kph->p_vaddr) {
+#ifdef DEBUG_IRIX
+			printf("mapelf: unsupported psection order\n");
+#endif
+			error = EINVAL;
+			goto bad;
+		}
+
+	 	/* 
+		 * Check that the default load addresses are free.
+		 * If not, we will have to perform a relocation
+		 */
+		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
+		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)&uaddr, 
+		    NULL, 0, 0, UVM_FLAG_FIXED);
+		if (ret == NULL)
+			need_relocation = 1;
 		pht++;
+	}
+
+	/*
+	 * Perform a relocation
+	 */
+	if (need_relocation) { 
+		/* 
+		 * compute the size needed by the section union. This
+		 * assumes that the section load addresses are increasing.
+		 * (And also that the sections are not overlapping)
+		 */
+		pht--;
+		size = (pht->p_vaddr & ~(pht->p_align - 1)) + pht->p_align 
+		    - kph->p_vaddr;
+
+		/* Find a free place for the sections */
+		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
+		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)&uaddr, 
+			NULL, 0, kph->p_align, 0);
+
+		if (ret == NULL) {
+			error = ENOMEM;
+			goto bad;
+		}
+		
+		/* 
+		 * Relocate the sections, all with the same offset.
+		 */
+		reloc_offset = uaddr - kph->p_vaddr;
+		pht = kph;
+		for (i = 0; i < count; i++) {
+#ifdef DEBUG_IRIX
+			printf("mapelf: relocating section %d from %p to %p\n",
+			    i, (void *)pht->p_vaddr, 
+			    (void *)(pht->p_vaddr + reloc_offset));
+#endif
+			pht->p_vaddr += reloc_offset;
+			pht++;
+		}
 	}
 
 	/* Find the file's vnode */
@@ -249,9 +316,18 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	FILE_USE(fp);
 	vp = (struct vnode *)fp->f_data;
 
+	/* 
+	 * Load the sections 
+	 */
 	pht = kph;
 	for (i = 0; i < count; i++) {
-		uaddr = ELFDEFNNAME(NO_ADDR);
+#ifdef DEBUG_IRIX
+		printf("mapelf: loading section %d (len 0x%08lx) at %p\n", 
+		    i, (long)pht->p_memsz, (void *)pht->p_vaddr);
+#endif
+		/* Build the vmcmds for loading the section */
+		kill_vmcmds(&vcset);
+		uaddr = pht->p_vaddr;
 		size = 0;
 		prot = 0;
 		flags = VMCMD_BASE;
@@ -259,34 +335,25 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		ELFNAME(load_psection)(&vcset, vp, pht, &uaddr, 
 		    &size, &prot, flags);
 
-		pht++;
-	}
-		    
-	/* 
-	 * Run the vmcmds
-	 */
-	for (j = 0; j < vcset.evs_used && !error; j++) {
-		struct exec_vmcmd *vcp;
-		vcp = &vcset.evs_cmds[j];
-		if (vcp->ev_flags & VMCMD_RELATIVE) {
-			if (base_vcp == NULL)
-				panic("irix_syssgi_mapelf: bad vmcmd base\n");
+		/* Execute the vmcmds */
+		for (j = 0; j < vcset.evs_used && !error; j++) {
+			vcp = &vcset.evs_cmds[j];
+			if (vcp->ev_flags & VMCMD_RELATIVE) {
+				if (base_vcp == NULL)
+					panic("irix_syssgi_mapelf():  bad vmcmd base\n");
 				   
-			vcp->ev_addr += base_vcp->ev_addr;
+				vcp->ev_addr += base_vcp->ev_addr;
+			}
+			error = (*vcp->ev_proc)(p, vcp);
+			if (error)
+				goto bad;
 		}
-#ifdef DEBUG_IRIX
-	printf("irix_syssgi_mapelf(): mapping j = %d\n", j);
-	printf("uaddr = 0x%08lx, size = 0x%08lx, prot = 0x%08x ", 
-	    (unsigned long)uaddr, size, prot);
-#endif
-		error = (*vcp->ev_proc)(p, vcp);
-		if (vcp->ev_flags & VMCMD_BASE)
-			base_vcp = vcp;
+		pht++;
 	}
 
 	FILE_UNUSE(fp, p);
 	
-	*retval = (register_t)kph->p_vaddr;	
+	*retval = (register_t)kph->p_vaddr;
 bad:
 	free(kph, M_TEMP);
 	return error;

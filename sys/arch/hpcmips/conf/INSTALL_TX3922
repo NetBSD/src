@@ -1,7 +1,7 @@
 #
 # kernel config file for system install
 #
-# 	$NetBSD: INSTALL_TX3922,v 1.1 2001/04/22 02:01:44 shin Exp $
+# 	$NetBSD: INSTALL_TX3922,v 1.1.6.1 2002/02/11 20:08:03 jdolecek Exp $
 #
 
 include		"arch/hpcmips/conf/TX3922"
@@ -13,3 +13,5 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=8192	# size of memory disk, in blocks
+
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

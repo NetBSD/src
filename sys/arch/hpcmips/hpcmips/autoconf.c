@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8.2.1 2002/01/10 19:43:57 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.2 2002/02/11 20:08:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.1 2002/01/10 19:43:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.2 2002/02/11 20:08:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.1 2002/01/10 19:43:57 thorpej Exp
 #include <machine/sysconf.h>
 #include <machine/config_hook.h>
 
-#include <hpcmips/hpcmips/machdep.h>
+void makebootdev(const char *);
 
+struct device *booted_device;
+int booted_partition;
 static char __booted_device_name[16];
-static void get_device(char *);
+static void get_device(const char *);
 
 /*
  * Setup the system to run on the current machine.
@@ -97,17 +99,18 @@ cpu_rootconf()
 }
 
 void
-makebootdev(char *cp)
+makebootdev(const char *cp)
 {
 
 	strncpy(__booted_device_name, cp, 16);
 }
 
 static void
-get_device(char *name)
+get_device(const char *name)
 {
 	int loop, unit, part;
-	char buf[32], *cp;
+	char buf[32];
+	const char *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)

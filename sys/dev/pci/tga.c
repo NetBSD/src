@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.33.2.4 2002/01/10 19:57:05 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.33.2.5 2002/02/11 20:10:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.4 2002/01/10 19:57:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.5 2002/02/11 20:10:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,8 +421,8 @@ tgaattach(parent, self, aux)
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = (struct tga_devconfig *)
-		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
-		memset(sc->sc_dc, 0, sizeof(struct tga_devconfig));
+		    malloc(sizeof(struct tga_devconfig), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		tga_init(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {

@@ -1,13 +1,30 @@
-# $NetBSD: DRACO,v 1.54.2.2 2002/01/10 19:37:14 thorpej Exp $
+# $NetBSD: DRACO,v 1.54.2.3 2002/02/11 20:06:48 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.161 2001/08/25 21:15:46 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
 
+#GENERIC machine description file
+
+#This machine description file is used to generate the default NetBSD
+#kernel.  The generic kernel does not include all options, subsystems
+#and device drivers, but should be useful for most applications.
+
+#The machine description file can be customised for your specific
+#machine to reduce the kernel size and improve its performance.
+
+#For further information on compiling NetBSD kernels, see the config(8)
+#man page.
+
+#For further information on hardware support for this architecture, see
+#the intro(4) man page.  For further information about kernel options
+#for this architecture, see the options(4) man page.  For an explanation
+#of each device driver in this file see the section 4 man page for the
+#device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.54.2.2 $"
+#ident  		"GENERIC-$Revision: 1.54.2.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -109,11 +126,11 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	INSECURE	# disable kernel security levels
+options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 
@@ -132,7 +149,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-				# define and decrease this, or define and
+				# uncomment and decrease this, or uncomment and
 				# increase NKPTADD if you get "out of PT pages"
 				# panics.
 
@@ -215,6 +232,9 @@ lpt0		at drsupio? port ?	# DraCo parallel
 repulse*	at zbus0		# ALiENDESiGN Repulse
 audio*		at repulse?
 
+toccata*	at zbus0		# MacroSystem GmbH Toccata
+audio*		at toccata?
+
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
 ne*		at zbus0		# AriadneII, X-surf
@@ -240,6 +260,7 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
@@ -249,14 +270,23 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options	RF_INCLUDE_EVENODD=1
+#options	RF_INCLUDE_RAID5_RS=1
+#options	RF_INCLUDE_PARITYLOGGING=1
+#options	RF_INCLUDE_CHAINDECLUSTER=1
+#options	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

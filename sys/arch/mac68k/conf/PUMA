@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.32 2001/07/08 16:32:19 abs Exp $
+#	$NetBSD: PUMA,v 1.32.2.1 2002/02/11 20:08:31 jdolecek Exp $
 #
 # PUMA
 
@@ -26,6 +26,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DDB		# in-kernel debugger

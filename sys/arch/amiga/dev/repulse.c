@@ -1,4 +1,4 @@
-/* $NetBSD: repulse.c,v 1.1.4.3 2002/01/10 19:37:18 thorpej Exp $ */
+/*	$NetBSD: repulse.c,v 1.1.4.4 2002/02/11 20:07:04 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.1.4.4 2002/02/11 20:07:04 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 #include <sys/fcntl.h>		/* FREAD */
 
 #include <machine/bus.h>
@@ -49,7 +51,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
- 
+
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
@@ -282,7 +284,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 		bp->rhw_reset = 0;
 
 		delay(1 * USECPERTICK);
-		
+
 		for (fwp = (u_int8_t *)repulse_firmware;
 		    fwp < (repulse_firmware_size +
 		    (u_int8_t *)repulse_firmware); fwp++)
@@ -325,7 +327,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 	}
 
 #ifdef DIAGNOSTIC
-	/* 
+	/*
 	 * Print a warning if the codec doesn't support hardware variable
 	 * rate audio. As the initial incarnations of the Repulse board
 	 * are AC'97 2.1, it is epxected that we'll always have VRA.
@@ -354,7 +356,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 		static struct {
 			char *class, *device;
 		} d[] = {
-			{ AudioCoutputs, AudioNmaster}, 
+			{ AudioCoutputs, AudioNmaster},
                         { AudioCinputs, AudioNdac},
                         { AudioCinputs, AudioNcd},
                         { AudioCinputs, AudioNline},
@@ -380,7 +382,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 Initerr:
 	printf("\n%s: firmware not successfully loaded\n", self->dv_xname);
 	return;
-	
+
 }
 
 void repac_reset(void *arg) {
@@ -388,7 +390,7 @@ void repac_reset(void *arg) {
 	struct repulse_hw *bp = sc->sc_boardp;
 
 	u_int16_t a;
-	
+
 	a = bp->rhw_status;
 	a |= REPSTATUS_CODECRESET;
 	bp->rhw_status = a;
@@ -446,7 +448,7 @@ int repac_attach(void *arg, struct ac97_codec_if *acip){
 /* audio(9) support stuff which is not ac97-constant */
 
 int
-rep_open(void *arg, int flags) 
+rep_open(void *arg, int flags)
 {
 	return 0;
 }
@@ -476,11 +478,11 @@ rep_getdev(void *arg, struct audio_device *retp)
 	return 0;
 }
 
-int		
+int
 rep_get_props(void *v)
 {
 	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
-}	
+}
 
 int
 rep_halt_output(void *arg)
@@ -552,7 +554,7 @@ rep_query_encoding(void *arg, struct audio_encoding *fp)
  * mode. Generic ac97 versions for now.
  */
 
-int 
+int
 rep_get_port(void *arg, mixer_ctrl_t *cp)
 {
 	struct repulse_softc *sc = arg;
@@ -560,7 +562,7 @@ rep_get_port(void *arg, mixer_ctrl_t *cp)
 	return (sc->sc_codec_if->vtbl->mixer_get_port(sc->sc_codec_if, cp));
 }
 
-int 
+int
 rep_set_port(void *arg, mixer_ctrl_t *cp)
 {
 	struct repulse_softc *sc = arg;
@@ -588,7 +590,7 @@ rep_round_blocksize(void *arg, int blk)
 	return (b1);
 }
 
-size_t	
+size_t
 rep_round_buffersize(void *arg, int direction, size_t size)
 {
 	return size;
@@ -705,7 +707,7 @@ rep_set_params(void *addr, int setmode, int usemode,
 		}
 		/* TBD: ulaw, alaw */
 	}
-	return 0; 
+	return 0;
 }
 
 void
@@ -884,7 +886,7 @@ rep_read_16_stereo(struct  repulse_hw  *bp, u_int8_t *p, int length,
 
 int
 rep_start_output(void *addr, void *block, int blksize,
-	void (*intr)(void*), void *intrarg) { 
+	void (*intr)(void*), void *intrarg) {
 
 	struct repulse_softc *sc;
 	u_int8_t *buf;
@@ -921,7 +923,7 @@ rep_start_output(void *addr, void *block, int blksize,
 
 int
 rep_start_input(void *addr, void *block, int blksize,
-	void (*intr)(void*), void *intrarg) { 
+	void (*intr)(void*), void *intrarg) {
 
 	struct repulse_softc *sc;
 	struct repulse_hw *bp;

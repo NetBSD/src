@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.3.2.2 2002/01/10 19:42:37 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.3.2.3 2002/02/11 20:07:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,7 +38,32 @@
 #ifndef _IQ80310_IQ80310VAR_H_
 #define	_IQ80310_IQ80310VAR_H_
 
+#include <sys/queue.h>
 #include <dev/pci/pcivar.h>
+
+/*
+ * We currently support 8 interrupt sources.
+ */
+#define	NIRQ		8
+
+struct intrhand {
+	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
+	int (*ih_func)(void *);		/* handler */
+	void *ih_arg;			/* arg for handler */
+	int ih_ipl;			/* IPL_* */
+	int ih_irq;			/* IRQ number */
+};
+
+#define	IRQNAMESIZE	sizeof("iq80310 irq 8")
+
+struct intrq {
+	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
+	struct evcnt iq_ev;		/* event counter */
+	int iq_mask;			/* IRQs to mask while handling */
+	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_ist;			/* share type */
+	char iq_name[IRQNAMESIZE];	/* interrupt name */
+};
 
 /*
  * XINT3 bits 0-4 are "IRQ 0-4".  XINT0 bits 0-2 are "IRQ 5-7".
@@ -53,6 +78,7 @@ void	iq80310_7seg_snake(void);
 
 void	iq80310_pci_init(pci_chipset_tag_t, void *);
 
+void	iq80310_intr_init(void);
 void	*iq80310_intr_establish(int, int, int (*)(void *), void *);
 void	iq80310_intr_disestablish(void *);
 

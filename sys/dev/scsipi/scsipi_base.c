@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.4 2002/01/10 19:58:22 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.5 2002/02/11 20:10:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.4 2002/01/10 19:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.5 2002/02/11 20:10:12 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -131,14 +131,14 @@ scsipi_channel_init(chan)
 
 	nbytes = chan->chan_nluns * sizeof(struct scsipi_periph *);
 	for (i = 0; i < chan->chan_ntargets; i++) { 
-		chan->chan_periphs[i] = malloc(nbytes, M_DEVBUF, M_NOWAIT);
+		chan->chan_periphs[i] = malloc(nbytes, M_DEVBUF,
+		    M_NOWAIT|M_ZERO);
 		if (chan->chan_periphs[i] == NULL) {
 			while (--i >= 0) {
 				free(chan->chan_periphs[i], M_DEVBUF);
 			}
 			return (ENOMEM);
 		}
-		memset(chan->chan_periphs[i], 0, nbytes);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.9.2.1 2002/01/10 19:43:48 thorpej Exp $ */
+/*	$NetBSD: it8368.c,v 1.9.2.2 2002/02/11 20:08:04 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +183,7 @@ it8368e_id_check(void *aux)
 	    0, &csregh);
 	reg = it8368_reg_read(csregt, csregh, IT8368_CTRL_REG);
 	oreg = reg;
-	bitdisp(reg);
+	dbg_bit_print(reg);
 
 	reg &= ~IT8368_CTRL_BYTESWAP;
 	it8368_reg_write(csregt, csregh, IT8368_CTRL_REG, reg);
@@ -360,7 +359,7 @@ it8368_intr(void *arg)
 		u_int16_t reg2;
 		reg2 = reg & ~(IT8368_PIN_BCRDRDY|IT8368_PIN_CRDDET2);
 		printf("unknown it8368 interrupt: ");
-		bitdisp(reg2);
+		dbg_bit_print(reg2);
 		it8368_reg_write(csregt, csregh, IT8368_GPIONEGINTSTAT_REG,
 		    reg);
 #endif
@@ -745,9 +744,9 @@ it8368_chip_socket_disable(pcmcia_chipset_handle_t pch)
 }
 
 #ifdef IT8368DEBUG
-#define PRINTGPIO(m) __bitdisp(it8368_reg_read(csregt, csregh,		\
+#define PRINTGPIO(m) __dbg_bit_print(it8368_reg_read(csregt, csregh,		\
 	IT8368_GPIO##m##_REG), 0, IT8368_GPIO_MAX, #m, 1)
-#define PRINTMFIO(m) __bitdisp(it8368_reg_read(csregt, csregh,		\
+#define PRINTMFIO(m) __dbg_bit_print(it8368_reg_read(csregt, csregh,		\
 	IT8368_MFIO##m##_REG), 0, IT8368_MFIO_MAX, #m, 1)
 void
 it8368_dump(struct it8368e_softc *sc)
@@ -772,9 +771,9 @@ it8368_dump(struct it8368e_softc *sc)
 	PRINTMFIO(NEGINTEN);
 	PRINTMFIO(POSINTSTAT);
 	PRINTMFIO(NEGINTSTAT);
-	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_CTRL_REG), 0, 15,
+	__dbg_bit_print(it8368_reg_read(csregt, csregh, IT8368_CTRL_REG), 0, 15,
 	    "CTRL", 1);
-	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG),
+	__dbg_bit_print(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG),
 	    8, 11, "]CRDDET/SENSE[", 1);
 }
 #endif /* IT8368DEBUG */

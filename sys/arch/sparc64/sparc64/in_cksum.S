@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2.2.3 2002/01/10 19:49:26 thorpej Exp $ */
+/*	$NetBSD: in_cksum.S,v 1.2.2.4 2002/02/11 20:09:11 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -54,11 +54,13 @@
  */
 
 #define	IALIGN	.align	32
-	
+
+	IALIGN
 ENTRY(in_cksum)
 	clr	%o3		! sum = 0;
 	clr	%o2
 _ENTRY(_C_LABEL(in_cksum_internal))
+	srl	%o3, 0, %o3	! Make sure this is a 32-bit value going in
 	brz	%o0, Lfinish	! for (; m && len > 0; m->m_next) {
 	 clr	%g1		! swapped = 0;
 	brlez	%o1, Lfinish
@@ -182,7 +184,11 @@ Lfinish_byte:
 	add	%o3, %o4, %o3
 	
 Lnext:
+#ifdef __arch64__
 	ldx	[%o0 + M_NEXT], %o0
+#else
+	lduw	[%o0 + M_NEXT], %o0
+#endif
 Lfinish:
 	srlx	%o3, 32, %o4	! Reduce to 32-bits
 	srl	%o3, 0, %o3

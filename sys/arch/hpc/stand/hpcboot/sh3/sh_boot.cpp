@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_boot.cpp,v 1.4 2001/05/21 15:54:25 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.4.2.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,8 +73,12 @@ SHBoot::setup()
 		args.architecture = ARCHITECTURE_SH3_7709;
 	} else if (platid_match(&platid, &platid_mask_CPU_SH_3_7709A)) {
 		args.architecture = ARCHITECTURE_SH3_7709A;
-	} else
+	} else if (platid_match(&platid, &platid_mask_CPU_SH_4_7750)) {
+		args.architecture = ARCHITECTURE_SH4_7750;
+	} else {
+		DPRINTF((TEXT("CPU not supported.")));
 		return FALSE;
+	}
 
 	return super::setup();
 }
@@ -84,6 +88,7 @@ SHBoot::create()
 {
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
 	BOOL(*unlock_pages)(LPVOID, DWORD);
+	size_t page_size;
 
 	// Setup console. this setting is passed to kernel bootinfo.
 	if (args.console == CONSOLE_SERIAL) {
@@ -104,9 +109,15 @@ SHBoot::create()
 		return FALSE;
 	case ARCHITECTURE_SH3_7709:
 		_arch = new SH7709(_cons, _mem, SH7709::boot_func);      
+		page_size = SH3_PAGE_SIZE;
 		break;
 	case ARCHITECTURE_SH3_7709A:
 		_arch = new SH7709A(_cons, _mem, SH7709A::boot_func);
+		page_size = SH3_PAGE_SIZE;
+		break;
+	case ARCHITECTURE_SH4_7750:
+		_arch = new SH7750(_cons, _mem, SH7750::boot_func);
+		page_size = SH4_PAGE_SIZE;
 		break;
 	}
 	_arch->setDebug() = args.architectureDebug;
@@ -114,7 +125,7 @@ SHBoot::create()
 	lock_pages = _arch->_load_LockPages();
 	unlock_pages = _arch->_load_UnlockPages();
 	if (lock_pages == 0 || unlock_pages == 0)
-		args.memory = MEMORY_MANAGER_HARDMMU;      
+		args.memory = MEMORY_MANAGER_HARDMMU;
 	else
 		args.memory = MEMORY_MANAGER_LOCKPAGES;
 
@@ -123,16 +134,21 @@ SHBoot::create()
 	default:
 	case MEMORY_MANAGER_VIRTUALCOPY:
 		// VirtualCopy method causes Windows CE unstable.
-		// FALLTHROUGH
+		/* FALLTHROUGH */
 	case MEMORY_MANAGER_SOFTMMU:
 		DPRINTF((TEXT("unsupported address detection method.\n")));
 		return FALSE;
 	case MEMORY_MANAGER_HARDMMU:
-		_mem = new MemoryManager_SHMMU(_cons, PAGE_SIZE);
+		if (args.architecture == ARCHITECTURE_SH4_7750) {
+			DPRINTF((TEXT("No SH4 MMU code.\n")));
+			return FALSE;
+		}
+
+		_mem = new MemoryManager_SHMMU(_cons, page_size);
 		break;
 	case MEMORY_MANAGER_LOCKPAGES:
 		_mem = new MemoryManager_LockPages(lock_pages, unlock_pages,
-		    _cons, PAGE_SIZE);
+		    _cons, page_size);
 		break;
 	}
 	_mem->setDebug() = args.memorymanagerDebug;

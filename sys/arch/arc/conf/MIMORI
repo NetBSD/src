@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.6.2.2 2002/01/10 19:37:39 thorpej Exp $
+#	$NetBSD: MIMORI,v 1.6.2.3 2002/02/11 20:07:14 jdolecek Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -24,6 +24,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks

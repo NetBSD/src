@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26.2.1 2002/01/10 19:48:42 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.26.2.2 2002/02/11 20:09:02 jdolecek Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -70,6 +70,8 @@ config		netbsd	root on ? type ?
 
 ## Loadable kernel module support; still under development.
 #options 	LKM
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM

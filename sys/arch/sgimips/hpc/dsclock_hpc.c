@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.1.4.2 2002/01/10 19:48:25 thorpej Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.1.4.3 2002/02/11 20:08:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -146,13 +146,7 @@ dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 	dt->dt_wday = FROMBCD(regs[DS_DOW]);
 	dt->dt_day = FROMBCD(regs[DS_DOM]);
 	dt->dt_mon = FROMBCD(regs[DS_MONTH] & DS_MONTH_MASK);
-	dt->dt_year = FROMBCD(regs[DS_YEAR]);
-
-	/* RTC base on IRIX is 1940, offsets < 45 are from 1970 */
-	if (dt->dt_year < 45)
-		dt->dt_year += 30;
-
-	dt->dt_year += IRIX_CLOCK_BASE;	/* 1940 */
+	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS_YEAR]));
 }
 
 /*
@@ -180,14 +174,7 @@ dsclock_set(struct device *dev, struct clock_ymdhms * dt)
 	regs[DS_MONTH] &=  ~DS_MONTH_MASK;
 	regs[DS_MONTH] |=  TOBCD(dt->dt_mon) & DS_MONTH_MASK;
 
-	/* 
-	 * If year < 1985, store (year - 1970), else (year - 1940).  This 
-	 * matches IRIX semantics.
-	 */
-	if (dt->dt_year < 1985)
-	    dt->dt_year -= 30;
-
-	regs[DS_YEAR] = TOBCD(dt->dt_year - IRIX_CLOCK_BASE);	/* - 1940 */
+	regs[DS_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);

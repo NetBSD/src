@@ -1,7 +1,7 @@
-/*	$NetBSD: vrpiuvar.h,v 1.6.4.1 2001/08/03 04:11:37 lukem Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.6.4.2 2002/02/11 20:08:15 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 1999 Shin Takemura All rights reserved.
+ * Copyright (c) 1999, 2002 TAKEMURA Shin All rights reserved.
  * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,9 @@ struct vrpiu_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	int sc_unit;
 	void *sc_handler;
-	vrip_chipset_tag_t *sc_vrip;
+	vrip_chipset_tag_t sc_vrip;
 
 	enum vrpiu_tpstat sc_tpstat;
 	enum vrpiu_adstat sc_adstat;

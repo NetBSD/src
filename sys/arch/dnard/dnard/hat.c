@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.1.2.2 2002/01/10 19:41:31 thorpej Exp $	*/
+/*	$NetBSD: hat.c,v 1.1.2.3 2002/02/11 20:07:37 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,6 +46,8 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <arm/fiq.h>
+
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
@@ -55,11 +57,8 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/ic/i8253reg.h>
-#include <dnard/dnard/fiq.h>
+#include <dnard/dnard/dnard_fiq.h>
 #include <dnard/dnard/sequoia.h>
-
-extern int fiq_getregs         __P((fiqhandler_t *));
-extern int fiq_setregs         __P((fiqhandler_t *));
 
 static int hatOn = 0;
 
@@ -70,9 +69,10 @@ static void hatEnableSWTCH();
 
 static void (*hatWedgeFn)(int);
 
+extern struct fiqregs dnard_fiqregs;
+
 int hatClkOff(void)
 {
-        fiqhandler_t fiqhandler;
 	u_int16_t    seqReg;
 
 	if (!hatOn) return -1;
@@ -88,13 +88,13 @@ int hatClkOff(void)
         outb(ATSR_REG1_REG, 
 	     inb(ATSR_REG1_REG) & ~((REG1_M_TMR2EN) | (REG1_M_SPKREN)));
 
-	fiq_getregs(&fiqhandler);
+	fiq_getregs(&dnard_fiqregs);
 
 	/* get rid of the C routine and stack */
-	fiqhandler.fh_r9  = 0;
-	fiqhandler.fh_r13 = 0;
+	dnard_fiqregs.fr_r9  = 0;
+	dnard_fiqregs.fr_r13 = 0;
 
-	fiq_setregs(&fiqhandler);
+	fiq_setregs(&dnard_fiqregs);
 	isa_dmathaw(&isa_chipset_tag);		/* XXX */
 
 	return 0;
@@ -104,7 +104,6 @@ int hatClkOff(void)
 int hatClkOn(int count, void (*hatFn)(int), int arg,
 	     unsigned char *stack, void (*wedgeFn)(int))
 {
-        fiqhandler_t fiqhandler;
 	u_int16_t    seqReg;
 
 	if (hatOn) return -1;
@@ -113,14 +112,14 @@ int hatClkOn(int count, void (*hatFn)(int), int arg,
 
 	isa_dmafreeze(&isa_chipset_tag);	/* XXX */
 
-	fiq_getregs(&fiqhandler);
+	fiq_getregs(&dnard_fiqregs);
 
 	/* set the C routine and stack */
-	fiqhandler.fh_r9  = (u_int)hatFn;
-	fiqhandler.fh_r10 = (u_int)arg;
-	fiqhandler.fh_r13 = (u_int)stack;
+	dnard_fiqregs.fr_r9  = (u_int)hatFn;
+	dnard_fiqregs.fr_r10 = (u_int)arg;
+	dnard_fiqregs.fr_r13 = (u_int)stack;
 
-	fiq_setregs(&fiqhandler);
+	fiq_setregs(&dnard_fiqregs);
 
 	/* no debounce on SWTCH */
 	sequoiaRead(PMC_DBCR_REG, &seqReg);

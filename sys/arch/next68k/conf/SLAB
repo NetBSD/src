@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.6.2.1 2002/01/10 19:47:04 thorpej Exp $
+# $NetBSD: SLAB,v 1.6.2.2 2002/02/11 20:08:46 jdolecek Exp $
 #
 # deberg's development machine
 #
@@ -19,6 +19,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	DEBUG		# kernel debugging code
 options 	DIAGNOSTIC	# extra kernel sanity checking

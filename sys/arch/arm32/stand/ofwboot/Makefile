@@ -1,13 +1,19 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2002/01/10 19:39:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2002/02/11 20:07:29 jdolecek Exp $
 
-S=	${.CURDIR}/../../../..
+S=		${.CURDIR}/../../../..
 
 PROG=		ofwboot
 SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
+CPPFLAGS+=	-D_STANDALONE
 DBG=		-Os
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 NOMAN=		# defined
 STRIPFLAG=
@@ -21,7 +27,7 @@ ENTRY=		_start
 
 CLEANFILES+=	vers.c
 
-CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 
 .BEGIN:
@@ -29,6 +35,8 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
 .NOPATH: machine arm
 CLEANFILES+= machine arm
+
+CLEANFILES+= ${PROG}.aout
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -49,9 +57,10 @@ LIBSA=		${SALIB}
 .PHONY: vers.c
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "dnard" ${NEWVERSWHAT}
-	
+
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET} \
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET}.aout \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${OBJCOPY} -O binary ${.TARGET}.aout ${.TARGET}
 
 .include <bsd.prog.mk>

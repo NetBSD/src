@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.3.2.2 2002/01/10 19:42:32 thorpej Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.3.2.3 2002/02/11 20:07:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ integrator_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load: error=%d\n", error);
@@ -160,6 +161,7 @@ integrator_bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: error=%d\n", error);
@@ -221,6 +223,7 @@ integrator_bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return (error);
 }
@@ -344,7 +347,7 @@ integrator_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
-				cpu_cache_purgeD_rng(va, NBPG);	
+				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep = ((*ptep) & (~PT_C | PT_B));

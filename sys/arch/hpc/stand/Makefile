@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2001/06/19 16:50:06 uch Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2002/02/11 20:07:50 jdolecek Exp $
 #
 
-PROJECT_DIRS	= hpcboot libz libsa
-MAKE	= make
+PROJECT_DIRS=	hpcboot libz libsa
+UUDECODE?=	uudecode
 
 all:
-	find binary -name "hpcboot*.exe.uu" -exec uudecode {} \;
+	find binary -name "hpcboot*.exe.uu" -exec ${UUDECODE} {} \;
 
 #
 # generates project/work files for Embeded Visual C++ 3.0
@@ -62,7 +62,7 @@ distclean: clean
 
 # WCE210 or later binary
 install:
-	for a in SH3 ARM MIPS; do					\
+	for a in SH3 SH4 ARM MIPS; do					\
 		file=`echo "compile/"$$a"Release/hpcboot.exe"`;		\
 		cp $$file binary/$$a/hpcboot.exe;			\
 	done

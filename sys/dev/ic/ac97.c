@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.20.2.1 2002/01/10 19:54:02 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.20.2.2 2002/02/11 20:09:42 jdolecek Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.20.2.1 2002/01/10 19:54:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.20.2.2 2002/02/11 20:09:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,11 +325,11 @@ static const struct ac97_codecid {
 static const char * const ac97enhancement[] = {
 	"no 3D stereo",
 	"Analog Devices Phat Stereo",
-	"Creative"
+	"Creative",
 	"National Semi 3D",
 	"Yamaha Ymersion",
 	"BBE 3D",
-	"Crystal Semi 3D"
+	"Crystal Semi 3D",
 	"Qsound QXpander",
 	"Spatializer 3D",
 	"SRS 3D",
@@ -566,12 +566,10 @@ ac97_attach(host_if)
 	u_int32_t id;
 	mixer_ctrl_t ctl;
 	
-	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK);
+	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (as == NULL)
 		return (ENOMEM);
-
-	memset(as, 0, sizeof(*as));
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;

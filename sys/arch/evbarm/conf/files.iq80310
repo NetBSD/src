@@ -1,12 +1,14 @@
-#	$NetBSD: files.iq80310,v 1.4.6.2 2002/01/10 19:42:01 thorpej Exp $
+#	$NetBSD: files.iq80310,v 1.4.6.3 2002/02/11 20:07:41 jdolecek Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
 
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
 file	arch/evbarm/iq80310/iq80310_7seg.c
 file	arch/evbarm/iq80310/iq80310_machdep.c
 file	arch/evbarm/iq80310/iq80310_intr.c
-file	arch/evbarm/iq80310/iq80310_irq.S
 file	arch/evbarm/iq80310/iq80310_timer.c
 file	arch/evbarm/iq80310/iq80310_pci.c
 
@@ -20,6 +22,9 @@ file	arch/evbarm/iq80310/obio_space_asm.S		obio
 # on-board XR 16550 UARTs
 attach	com at obio with com_obio
 file	arch/evbarm/iq80310/com_obio.c			com_obio
+
+# i80200 CPU support
+include "arch/arm/xscale/files.i80200"
 
 # i80312 Companion I/O support
 include	"arch/arm/xscale/files.i80312"

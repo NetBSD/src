@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.86.2.2 2002/01/10 19:59:06 thorpej Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.86.2.3 2002/02/11 20:10:18 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.86.2.2 2002/01/10 19:59:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.86.2.3 2002/02/11 20:10:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,10 +972,9 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		return (USBD_NO_ADDR);
 	}
 
-	dev = malloc(sizeof *dev, M_USB, M_NOWAIT);
+	dev = malloc(sizeof *dev, M_USB, M_NOWAIT|M_ZERO);
 	if (dev == NULL)
 		return (USBD_NOMEM);
-	memset(dev, 0, sizeof(*dev));
 
 	dev->bus = bus;
 

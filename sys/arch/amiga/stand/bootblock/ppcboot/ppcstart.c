@@ -1,4 +1,4 @@
-/* $NetBSD: ppcstart.c,v 1.2 1999/12/30 21:09:56 is Exp $ */
+/* $NetBSD: ppcstart.c,v 1.2.10.1 2002/02/11 20:07:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Startit for Phase5 PPC boards. 
+ * Startit for Phase5 PPC boards.
  */
 
 #include <sys/types.h>

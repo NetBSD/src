@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2001/05/06 20:49:43 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.2.1 2002/02/11 20:06:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,10 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37.2.1 2002/02/11 20:06:44 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -81,10 +85,10 @@ struct rdbmap {
 
 #define baddr(bp) (void *)((bp)->b_data)
 
-u_long rdbchksum __P((void *));
-struct adostype getadostype __P((u_long));
-struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
-    struct cpu_disklabel *));
+u_long rdbchksum(void *);
+struct adostype getadostype(u_long);
+struct rdbmap *getrdbmap(dev_t, void (*)(struct buf *), struct disklabel *,
+			 struct cpu_disklabel *);
 
 /*
  * Attempt to read a disk label from a device
@@ -190,7 +194,7 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_nsectors = rbp->nsectors;
 	lp->d_ntracks = rbp->nheads;
 	/*
-	 * should be rdb->ncylinders however this is a bogus value 
+	 * should be rdb->ncylinders however this is a bogus value
 	 * sometimes it seems
 	 */
 	if (rbp->highcyl == 0)
@@ -214,7 +218,7 @@ readdisklabel(dev, strat, lp, clp)
 		    rbp->nsectors, rbp->nheads);
 #endif
 	lp->d_sparespercyl =
-	    max(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks) 
+	    max(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks)
 	    - lp->d_secpercyl;
 	if (lp->d_sparespercyl == 0)
 		lp->d_sparespertrack = 0;
@@ -233,7 +237,7 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_rpm = 3600; 		/* good guess I suppose. */
 	lp->d_interleave = rbp->interleave;
 	lp->d_headswitch = lp->d_flags = lp->d_trackskew = lp->d_cylskew = 0;
-	lp->d_trkseek = /* rbp->steprate */ 0;	
+	lp->d_trkseek = /* rbp->steprate */ 0;
 
 	/*
 	 * raw partition gets the entire disk
@@ -255,7 +259,7 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
 #endif
 		strat(bp);
-		
+
 		if (biowait(bp)) {
 			msg = "partition scan I/O error";
 			goto done;
@@ -341,7 +345,7 @@ readdisklabel(dev, strat, lp, clp)
 		 */
 		while ((pp - lp->d_partitions) > RAW_PART + 1) {
 			daddr_t boff;
-			
+
 			boff = pbp->e.lowcyl * pbp->e.secpertrk
 			    * pbp->e.numheads;
 			if (boff > (pp - 1)->p_offset)
@@ -352,11 +356,11 @@ readdisklabel(dev, strat, lp, clp)
 		i = (pp - lp->d_partitions);
 		if (nopname || i == 1) {
 			/*
-			 * either we have no packname yet or we found 
+			 * either we have no packname yet or we found
 			 * the swap partition. copy BCPL string into packname
 			 * [the reason we use the swap partition: the user
 			 *  can supply a decent packname without worry
-			 *  of having to access an odly named partition 
+			 *  of having to access an odly named partition
 			 *  under AmigaDos]
 			 */
 			s = lp->d_packname;
@@ -479,7 +483,7 @@ setdisklabel(olp, nlp, openmask, clp)
 
 /*
  * Write disk label back to device after modification.
- * this means write out the Rigid disk blocks to represent the 
+ * this means write out the Rigid disk blocks to represent the
  * label.  Hope the user was carefull.
  */
 int
@@ -528,7 +532,7 @@ bounds_check_with_label(bp, lp, wlabel)
 #endif
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		if (bp->b_blkno == maxsz) {
-			/* 
+			/*
 			 * trying to get one block beyond return EOF.
 			 */
 			bp->b_resid = bp->b_bcount;
@@ -540,7 +544,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_flags |= B_ERROR;
 			return(-1);
 		}
-		/* 
+		/*
 		 * adjust count down
 		 */
 		if (bp->b_flags & B_RAW)
@@ -571,7 +575,7 @@ rdbchksum(bdata)
 	return(val);
 }
 
-struct adostype 
+struct adostype
 getadostype(dostype)
 	u_long dostype;
 {
@@ -605,7 +609,7 @@ getadostype(dostype)
 		else
 			adt.fstype = FS_ADOS;
 		return(adt);
-	
+
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;
 		if (b1 == 2)
@@ -645,7 +649,7 @@ getadostype(dostype)
 		adt.archtype = ADT_UNKNOWN;
 		adt.fstype = FS_UNUSED;
 		return(adt);
-	}	
+	}
 }
 
 /*

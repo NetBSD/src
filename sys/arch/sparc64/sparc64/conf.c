@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17.2.1 2002/01/10 19:49:25 thorpej Exp $ */
+/*	$NetBSD: conf.c,v 1.17.2.2 2002/02/11 20:09:11 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,9 @@ cdev_decl(i4btel);
 
 #include "pci.h"
 cdev_decl(pci);
+
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -279,6 +282,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Cirrus-Logic CD18xx */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -441,6 +445,9 @@ static int chrtoblktbl[] = {
 	/*120 */	NODEV,
 	/*121 */	25,
 	/*122 */	NODEV,
+	/*123 */	NODEV,
+	/*124 */	NODEV,
+	/*125 */	NODEV,
 };
 
 /*

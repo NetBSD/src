@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.24.2.1 2002/01/10 20:05:23 thorpej Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.24.2.2 2002/02/11 20:10:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.24.2.1 2002/01/10 20:05:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.24.2.2 2002/02/11 20:10:49 jdolecek Exp $");
 
 #include "opt_quota.h"
 
@@ -215,7 +215,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_READ, 0, PGO_SYNCIO|PGO_PASTEOF);
 	if (error) {
-		goto out;
+		return error;
 	}
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
@@ -249,7 +249,6 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 * (since they now have backing store) and unbusy them.
 	 */
 
-out:
 	simple_lock(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		pgs[i]->flags &= ~PG_RDONLY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.16 2001/04/25 17:53:08 bouyer Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.16.2.1 2002/02/11 20:07:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,10 +138,10 @@ struct	sbic_softc {
 	u_long	sc_dmamask;		/* dma valid mem mask */
 	struct	dma_chain *sc_cur;
 	struct	dma_chain *sc_last;
-	int  (*sc_dmago)	__P((struct sbic_softc *, char *, int, int));
-	int  (*sc_dmanext)	__P((struct sbic_softc *));
-	void (*sc_enintr)	__P((struct sbic_softc *));
-	void (*sc_dmastop)	__P((struct sbic_softc *));
+	int  (*sc_dmago)(struct sbic_softc *, char *, int, int);
+	int  (*sc_dmanext)(struct sbic_softc *);
+	void (*sc_enintr)(struct sbic_softc *);
+	void (*sc_dmastop)(struct sbic_softc *);
 	u_short	gtsc_bankmask;		/* GVP specific bank selected */
 };
 
@@ -224,13 +224,12 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsipi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
-void sbic_scsipi_request __P((struct scsipi_channel *,
-			scsipi_adapter_req_t, void *));
-void sbicinit __P((struct sbic_softc *));
-int  sbicintr __P((struct sbic_softc *));
+void sbic_minphys(struct buf *bp);
+void sbic_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void sbicinit(struct sbic_softc *);
+int  sbicintr(struct sbic_softc *);
 #ifdef DEBUG
-void sbic_dump __P((struct sbic_softc *dev));
+void sbic_dump(struct sbic_softc *dev);
 #endif
 
 #endif /* _SBICVAR_H_ */

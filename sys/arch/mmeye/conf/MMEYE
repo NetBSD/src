@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.7.4.1 2002/01/10 19:46:24 thorpej Exp $
+#	$NetBSD: MMEYE,v 1.7.4.2 2002/02/11 20:08:40 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -23,6 +23,8 @@ options 	HZ=50		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

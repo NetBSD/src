@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.9.2.2 2002/01/10 19:44:29 thorpej Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.9.2.3 2002/02/11 20:08:22 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -69,6 +69,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

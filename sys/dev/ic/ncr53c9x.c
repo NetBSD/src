@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.83.2.3 2002/01/10 19:54:54 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.83.2.4 2002/02/11 20:09:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.3 2002/01/10 19:54:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.4 2002/02/11 20:09:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1069,12 +1069,11 @@ ncr53c9x_sched(sc)
 		li = TINFO_LUN(ti, lun);
 		if (li == NULL) {
 			/* Initialize LUN info and add to list. */
-			if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT))
-			    == NULL) {
+			if ((li = malloc(sizeof(*li),
+			    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
 				splx(s);
 				continue;
 			}
-			memset(li, 0, sizeof(*li));
 			li->lun = lun;
 
 			LIST_INSERT_HEAD(&ti->luns, li, link);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7.2.1 2002/01/10 19:46:18 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.2.2 2002/02/11 20:08:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -87,8 +87,6 @@ extern void _clrsoftintr __P((int));
 	splx(s);				\
 } while (0)
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-
 #define softintr_schedule(arg)						\
 do {									\
 	struct mipsco_intrhand *__ih = (arg);				\
@@ -99,16 +97,6 @@ do {									\
 extern struct mipsco_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-
-#else /* ! __HAVE_GENERIC_SOFT_INTERRUPTS */
-
-#define SIR_NET		0x01
-#define SIR_SERIAL	0x02
-
-# define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-# define setsoftnet()	setsoft(SIR_NET)
-# define setsoftserial()	setsoft(SIR_SERIAL)
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /*
  * nesting interrupt masks.

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 2000/02/14 07:01:48 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.54.8.1 2002/02/11 20:08:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,6 +119,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "zsc.h"
 #include "zstty.h"
 #include "scsibus.h"
+#include "clockctl.h"
 
 cdev_decl(aed);
 cdev_decl(asc);
@@ -161,6 +162,7 @@ cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
 cdev_decl(vc_nb_);
+cdev_decl(clockctl);
 
 dev_decl(filedesc,open);
 
@@ -214,6 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
 	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 48: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -303,6 +306,7 @@ static int chrtoblktab[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
+	/* 48 */	NODEV,
 };
 
 dev_t

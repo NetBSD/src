@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.86.2.2 2002/01/10 19:50:01 thorpej Exp $
+#       $NetBSD: files.vax,v 1.86.2.3 2002/02/11 20:09:18 jdolecek Exp $
 #
 # new style config file for vax architecture
 #
@@ -99,7 +99,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
 # Memory Disk for install floppy
-file arch/vax/vax/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 23}
 
 # RAIDframe

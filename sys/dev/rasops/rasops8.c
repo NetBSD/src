@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.9.6.2 2002/01/10 19:58:05 thorpej Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.9.6.3 2002/02/11 20:10:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.9.6.2 2002/01/10 19:58:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.9.6.3 2002/02/11 20:10:10 jdolecek Exp $");
 
 #include "opt_rasops.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -199,6 +200,8 @@ rasops8_makestamp(ri, attr)
 		stamp[i] |= ((i & 4 ? fg : bg) << 16);
 		stamp[i] |= ((i & 8 ? fg : bg) << 24);
 #endif
+		if ((ri->ri_flg & RI_BSWAP) != 0)
+			stamp[i] = bswap32(stamp[i]);
 	}
 }
 

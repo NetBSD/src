@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.33.2.3 2002/01/10 19:49:17 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.33.2.4 2002/02/11 20:09:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -416,6 +416,7 @@ found:
 	 * arrive here, start up the IOMMU and get a config space tag.
 	 */
 	if (osc == NULL) {
+		uint64_t timeo;
 
 		/*
 		 * Establish handlers for interesting interrupts....
@@ -444,6 +445,28 @@ found:
 		psycho_set_intr(sc, 1, psycho_wakeup,
 			&sc->sc_regs->pwrmgt_int_map, 
 			&sc->sc_regs->pwrmgt_clr_int);
+
+
+		/*
+		 * Apparently a number of machines with psycho and psycho+
+		 * controllers have interrupt latency issues.  We'll try
+		 * setting the interrupt retry timeout to 0xff which gives us
+		 * a retry of 3-6 usec (which is what sysio is set to) for the
+		 * moment, which seems to help alleviate this problem.
+		 */
+		timeo = bus_space_read_8(sc->sc_bustag,
+			(bus_space_handle_t)
+			(u_long)&sc->sc_regs->intr_retry_timer, 0);
+		if (timeo > 0xfff) {
+#ifdef DEBUG
+			printf("decreasing interrupt retry timeout "
+				"from %lx to 0xff\n", (long)timeo);
+#endif
+			bus_space_write_8(sc->sc_bustag,
+				(bus_space_handle_t)
+				(u_long)&sc->sc_regs->intr_retry_timer, 0,
+				0xff);
+		}
 
 		/*
 		 * Setup IOMMU and PCI configuration if we're the first

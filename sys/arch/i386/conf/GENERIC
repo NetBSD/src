@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.410.2.4 2002/01/10 19:44:25 thorpej Exp $
+# $NetBSD: GENERIC,v 1.410.2.5 2002/02/11 20:08:20 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.410.2.4 $"
+#ident 		"GENERIC-$Revision: 1.410.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -77,6 +77,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -470,8 +472,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -896,9 +898,9 @@ audio*	at auvia?
 audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
-audio*	at esa?
 audio*	at eap?
 audio*	at emuxki?
+audio*	at esa?
 #audio*	at esl?
 audio*	at esm?
 audio*	at eso?
@@ -1019,8 +1021,16 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

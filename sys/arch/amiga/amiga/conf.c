@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 2001/03/21 22:25:53 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.62.2.1 2002/02/11 20:06:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,6 +36,9 @@
  */
 
 #include "opt_compat_svr4.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.2.1 2002/02/11 20:06:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,9 +196,9 @@ struct cdevsw	cdevsw[] =
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
 #ifdef BANKEDDEVPAGER
-extern int grfbanked_get __P((int, int, int));
-extern int grfbanked_set __P((int, int));
-extern int grfbanked_cur __P((int));
+extern int grfbanked_get(int, int, int);
+extern int grfbanked_set(int, int);
+extern int grfbanked_cur(int);
 
 struct bankeddevsw bankeddevsw[sizeof (cdevsw) / sizeof (cdevsw[0])] = {
   { 0, 0, 0 },						/* 0 */

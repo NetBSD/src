@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41.2.1 2001/09/13 01:14:19 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.41.2.2 2002/02/11 20:08:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,8 @@ bdev_decl(sw);
 bdev_decl(vnd);
 #include "audio.h"
 cdev_decl(audio);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -276,6 +278,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
 	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
 	cdev_audio_init(NAUDIO,audio),  /* 99: generic audio I/O */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 100 clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -414,6 +417,7 @@ static int chrtoblktbl[] =  {
 	/* 97 */	17,		/* memory disk */
 	/* 98 */	NODEV,
 	/* 99 */	NODEV,
+	/* 100 */	NODEV,
 };
 
 /*

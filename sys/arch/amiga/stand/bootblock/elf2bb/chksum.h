@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.h,v 1.1.2.2 2002/01/10 19:37:26 thorpej Exp $ */
+/* $NetBSD: chksum.h,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,5 +38,5 @@
 
 #define CHKSUMOFFS 1
 
-u_int32_t chksum __P((u_int32_t *, int));
+u_int32_t chksum(u_int32_t *, int);
 

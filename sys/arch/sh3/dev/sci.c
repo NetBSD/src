@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.2.1 2001/09/13 01:14:31 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.15.2.2 2002/02/11 20:09:00 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -104,7 +104,6 @@
  */
 
 #include "opt_kgdb.h"
-#include "opt_pclock.h"
 #include "opt_sci.h"
 
 #include <sys/param.h>
@@ -121,6 +120,7 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <sh3/pclock.h>
 #include <sh3/scireg.h>
 #include <sh3/tmureg.h>
 

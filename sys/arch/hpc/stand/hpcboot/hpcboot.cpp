@@ -1,7 +1,7 @@
-/*	$NetBSD: hpcboot.cpp,v 1.4 2001/05/08 18:51:22 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.4.2.1 2002/02/11 20:07:59 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,17 +101,21 @@ hpcboot(void *arg)
 	Boot &f = Boot::Instance();
 
 	menu.progress();
-	if (!f.setup())
-		return;
+	if (!f.setup()) {
+		error_message = TEXT("architecture not supported.\n");
+		goto failed_exit;
+	}
 
 	menu.progress();
-	if (!f.create())
-		return;
+	if (!f.create()) {
+		error_message = TEXT("architexture ops. not found.\n");
+		goto failed_exit;
+	}
 
 	menu.progress();
 	if (!f._arch->init()) {
 		error_message = TEXT("architecture initialize failed.\n");
-		goto failed;
+		goto failed_exit;
 	}
 
 	f._arch->systemInfo();
@@ -120,7 +124,7 @@ hpcboot(void *arg)
 	// kernel / file system image directory.
 	if (!f._file->setRoot(f.args.fileRoot)) {
 		error_message = TEXT("couldn't set root directory.\n");
-		goto failed;
+		goto failed_exit;
 	}
 
 	// open file system image.
@@ -129,7 +133,7 @@ hpcboot(void *arg)
 		if (!f._file->open(f.args.mfsName)) {
 			error_message =
 			    TEXT("couldn't open file system image.\n");
-			goto failed;
+			goto failed_exit;
 		}
 		sz = f._file->size();
 		f._file->close();
@@ -205,6 +209,7 @@ hpcboot(void *arg)
 	if (error_message == 0)
 		error_message = TEXT("can't jump to kernel.\n");
 	f._file->close();
+ failed_exit:
 	MessageBox(menu._root->_window, error_message,
 	    TEXT("BOOT FAILED"), 0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: elf2bb.h,v 1.1.2.2 2002/01/10 19:37:27 thorpej Exp $ */
+/* $NetBSD: elf2bb.h,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,12 +40,12 @@
  * Relocator version definitions for aout to Amiga bootblock converter.
  */
 
-/* 
+/*
  * All the tables are at the end of the bootblock, with logical start at the
  * end.
  */
 
-/* 
+/*
  * The following formats are for a length of 8 kBytes only.
  */
 

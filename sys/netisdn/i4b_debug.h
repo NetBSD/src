@@ -27,13 +27,16 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_debug.h,v 1.1.1.1.6.1 2002/02/11 20:10:40 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Wed May 31 09:51:34 2000]
  *
  *---------------------------------------------------------------------------*/
+
+#ifndef I4B_DEBUG_H
+#define I4B_DEBUG_H
 
 #if !defined DO_I4B_DEBUG
 # define DO_I4B_DEBUG 1		/* default = include debugging code */
@@ -301,4 +304,5 @@ typedef struct {
 
 #define	I4B_CTL_CLR_LAPDSTAT	_IOW('C', 5, int)
 
+#endif
 /* EOF */

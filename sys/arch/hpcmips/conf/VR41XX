@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.1.2.2 2002/01/10 19:43:45 thorpej Exp $
+# $NetBSD: VR41XX,v 1.1.2.3 2002/02/11 20:08:04 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	16
 
@@ -37,6 +37,9 @@ options 	DDB			# in-kernel debugger
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+options		KLOADER_DEBUG
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN
@@ -100,6 +103,9 @@ options 	COMPAT_43
 options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
+
+# compile options
+makeoptions	DEFGP="-G 18"
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.27 2001/04/25 17:53:06 bouyer Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,10 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -55,17 +59,17 @@
 
 #include <machine/cpu.h>
 
-void ahscattach __P((struct device *, struct device *, void *));
-int ahscmatch __P((struct device *, struct cfdata *, void *));
+void ahscattach(struct device *, struct device *, void *);
+int ahscmatch(struct device *, struct cfdata *, void *);
 
-void ahsc_enintr __P((struct sbic_softc *));
-void ahsc_dmastop __P((struct sbic_softc *));
-int ahsc_dmanext __P((struct sbic_softc *));
-int ahsc_dmaintr __P((void *));
-int ahsc_dmago __P((struct sbic_softc *, char *, int, int));
+void ahsc_enintr(struct sbic_softc *);
+void ahsc_dmastop(struct sbic_softc *);
+int ahsc_dmanext(struct sbic_softc *);
+int ahsc_dmaintr(void *);
+int ahsc_dmago(struct sbic_softc *, char *, int, int);
 
 #ifdef DEBUG
-void ahsc_dump __P((void));
+void ahsc_dump(void);
 #endif
 
 #ifdef DEBUG
@@ -80,10 +84,7 @@ struct cfattach ahsc_ca = {
  * if we are an A3000 we are here.
  */
 int
-ahscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+ahscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	char *mbusstr;
 
@@ -94,9 +95,7 @@ ahscmatch(pdp, cfp, auxp)
 }
 
 void
-ahscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+ahscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc = (struct sbic_softc *)dp;
@@ -105,9 +104,9 @@ ahscattach(pdp, dp, auxp)
 	struct scsipi_channel *chan = &sc->sc_channel;
 
 	ecdp = &cfdev[ncfdev];
-	
+
 	for (cdp = cfdev; cdp < ecdp; cdp++) {
-		if (cdp->rom.manid == 8738 && 
+		if (cdp->rom.manid == 8738 &&
 		    cdp->rom.prodid == 35)
 				break;
 	}
@@ -146,7 +145,7 @@ ahscattach(pdp, dp, auxp)
 	 */
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &sc->sc_dev;
-	adapt->adapt_nchannels = 1;   
+	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
 	adapt->adapt_request = sbic_scsipi_request;
@@ -159,7 +158,7 @@ ahscattach(pdp, dp, auxp)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 8;      
+	chan->chan_ntargets = 8;
 	chan->chan_nluns = 8;
 	chan->chan_id = 7;
 
@@ -177,8 +176,7 @@ ahscattach(pdp, dp, auxp)
 }
 
 void
-ahsc_enintr(dev)
-	struct sbic_softc *dev;
+ahsc_enintr(struct sbic_softc *dev)
 {
 	volatile struct sdmac *sdp;
 
@@ -189,10 +187,7 @@ ahsc_enintr(dev)
 }
 
 int
-ahsc_dmago(dev, addr, count, flags)
-	struct sbic_softc *dev;
-	char *addr;
-	int count, flags;
+ahsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 {
 	volatile struct sdmac *sdp;
 
@@ -217,8 +212,7 @@ ahsc_dmago(dev, addr, count, flags)
 }
 
 void
-ahsc_dmastop(dev)
-	struct sbic_softc *dev;
+ahsc_dmastop(struct sbic_softc *dev)
 {
 	volatile struct sdmac *sdp;
 	int s;
@@ -240,7 +234,7 @@ ahsc_dmastop(dev)
 			while ((sdp->ISTR & ISTR_FE_FLG) == 0)
 				;
 		}
-		/* 
+		/*
 		 * clear possible interrupt and stop dma
 		 */
 		sdp->CINT = 1;
@@ -251,8 +245,7 @@ ahsc_dmastop(dev)
 }
 
 int
-ahsc_dmaintr(arg)
-	void *arg;
+ahsc_dmaintr(void *arg)
 {
 	struct sbic_softc *dev = arg;
 	volatile struct sdmac *sdp;
@@ -281,7 +274,7 @@ ahsc_dmaintr(arg)
 		sdp->CINT = 1;	/* clear possible interrupt */
 
 		/*
-		 * check for SCSI ints in the same go and 
+		 * check for SCSI ints in the same go and
 		 * eventually save an interrupt
 		 */
 	}
@@ -293,8 +286,7 @@ ahsc_dmaintr(arg)
 
 
 int
-ahsc_dmanext(dev)
-	struct sbic_softc *dev;
+ahsc_dmanext(struct sbic_softc *dev)
 {
 	volatile struct sdmac *sdp;
 
@@ -307,7 +299,7 @@ ahsc_dmanext(dev)
 		return(0);
 	}
 	if ((dev->sc_dmacmd & (CNTR_TCEN | CNTR_DDIR)) == 0) {
-		  /* 
+		  /*
 		   * only FLUSH if terminal count not enabled,
 		   * and reading from peripheral
 		   */
@@ -315,7 +307,7 @@ ahsc_dmanext(dev)
 		while ((sdp->ISTR & ISTR_FE_FLG) == 0)
 			;
 	}
-	/* 
+	/*
 	 * clear possible interrupt and stop dma
 	 */
 	sdp->CINT = 1;	/* clear possible interrupt */
@@ -330,7 +322,7 @@ ahsc_dmanext(dev)
 
 #ifdef DEBUG
 void
-ahsc_dump()
+ahsc_dump(void)
 {
 	extern struct cfdriver ahsc_cd;
 	int i;

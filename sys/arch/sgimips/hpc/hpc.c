@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.1.2.2 2002/01/10 19:48:25 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.1.2.3 2002/02/11 20:08:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -107,6 +107,8 @@ extern int mach_boardrev;	/* machine board revision, in case it matters */
 
 extern struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag;
 
+static int powerintr_established;
+
 int	hpc_match(struct device *, struct cfdata *, void *);
 void	hpc_attach(struct device *, struct device *, void *);
 int	hpc_print(void *, const char *);
@@ -179,11 +181,17 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* 
-	 * XXXrkb: only true for first HPC, but didn't know where else to
-	 * shove it (ip22_intr is too early).  I suppose I should request
-	 * a post-config callback or something, but where?
+	 * XXX: Only attach the powerfail interrupt once, since the 
+	 * interrupt code doesn't let you share interrupt just yet.
+	 *
+	 * Since the powerfail interrupt is hardcoded to read from 
+	 * a specific register anyway (XXX#2!), we don't care when
+	 * it gets attached, as long as it only happens once.
 	 */
-	cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
+	if (!powerintr_established) {
+		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
+		powerintr_established++;
+	}
 }
 
 int

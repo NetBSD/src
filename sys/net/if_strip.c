@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.39.2.1 2002/01/10 20:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.39.2.2 2002/02/11 20:10:31 jdolecek Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.39.2.1 2002/01/10 20:02:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.39.2.2 2002/02/11 20:10:31 jdolecek Exp $");
 
 #include "strip.h"
 
@@ -116,9 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.39.2.1 2002/01/10 20:02:15 thorpej Ex
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>

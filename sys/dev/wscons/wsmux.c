@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.6.2 2002/01/10 19:59:20 thorpej Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.6.3 2002/02/11 20:10:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.6.2 2002/01/10 19:59:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.6.3 2002/02/11 20:10:22 jdolecek Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -620,10 +620,9 @@ wsmux_create(const char *name, int unit)
 	struct wsmux_softc *sc;
 
 	DPRINTF(("wsmux_create: allocating\n"));
-	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc == NULL)
 		return (NULL);
-	memset(sc, 0, sizeof *sc);
 	CIRCLEQ_INIT(&sc->sc_cld);
 	snprintf(sc->sc_base.me_dv.dv_xname, sizeof sc->sc_base.me_dv.dv_xname,
 		 "%s%d", name, unit);

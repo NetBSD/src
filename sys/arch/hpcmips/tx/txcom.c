@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.14 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.14.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_tx39_debug.h"
-#include "opt_tx39uartdebug.h"
+
+#include "opt_tx39uart_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,11 @@
 #define ON		((void *)1)
 #define OFF		((void *)0)
 
-#ifdef TX39UARTDEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
+#ifdef	TX39UART_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39uart_debug
 #endif
+#include <machine/debug.h>
 
 #define TXCOM_HW_CONSOLE	0x40
 #define	TXCOM_RING_SIZE		256 /* must be a power of two! */
@@ -531,7 +531,7 @@ txcom_setbaudrate(struct txcom_chip *chip)
 		return;
 
 	if (!cold)
-		DPRINTF(("txcom_setbaudrate: %d\n", chip->sc_speed));
+		DPRINTF("%d\n", chip->sc_speed);
 
 	reg1 = tx_conf_read(chip->sc_tc, ofs);
 	reg1 &= ~TX39_UARTCTRL1_ENUART;
@@ -841,11 +841,11 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 	splx(s);
 #define	TXCOMDIALOUT(x)	(minor(x) & 0x80000)
 	if ((err = ttyopen(tp, TXCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK)))) {
-		DPRINTF(("txcomopen: ttyopen failed\n"));
+		DPRINTF("ttyopen failed\n");
 		goto out;
 	}
 	if ((err = (*tp->t_linesw->l_open)(dev, tp))) {
-		DPRINTF(("txcomopen: line dicipline open failed\n"));
+		DPRINTF("line dicipline open failed\n");
 		goto out;
 	}
 
@@ -1140,7 +1140,7 @@ txcom_dcd_hook(void *arg, int type, long id, void *msg)
 	struct txcom_chip *chip = sc->sc_chip;
 	int modem = !(int)msg; /* p-edge 1, n-edge 0 */
 
-	DPRINTF(("%s: DCD %s\n", __FUNCTION__, modem ? "ON" : "OFF"));
+	DPRINTF("DCD %s\n", modem ? "ON" : "OFF");
 		 
 	if (modem && chip->sc_dcd)	
 		(void) (*tp->t_linesw->l_modem)(tp, chip->sc_dcd);
@@ -1156,7 +1156,7 @@ txcom_cts_hook(void *arg, int type, long id, void *msg)
 	struct txcom_chip *chip = sc->sc_chip;
 	int clear = !(int)msg; /* p-edge 1, n-edge 0 */
 
-	DPRINTF(("%s: CTS %s\n", __FUNCTION__, clear ? "ON"  : "OFF"));
+	DPRINTF("CTS %s\n", clear ? "ON"  : "OFF");
 
 	if (chip->sc_msr_cts) {
 		if (!clear) {
@@ -1180,7 +1180,7 @@ txcom_dump(struct txcom_chip *chip)
 	
 	reg = tx_conf_read(tc, TX39_UARTCTRL1_REG(slot));
 #define ISSETPRINT(r, m) \
-	__is_set_print(r, TX39_UARTCTRL1_##m, #m)
+	dbg_bitmask_print(r, TX39_UARTCTRL1_##m, #m)
 	ISSETPRINT(reg, UARTON);
 	ISSETPRINT(reg, EMPTY);
 	ISSETPRINT(reg, PRXHOLDFULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.1 2002/02/11 20:09:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -384,6 +384,29 @@ x86_64_memio_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+x86_64_memio_mmap(t, addr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/* Can't mmap I/O space. */
+	if (t == X86_64_BUS_SPACE_IO)
+		return (-1);
+
+	/*
+	 * "addr" is the base address of the device we're mapping.
+	 * "off" is the offset into that device.
+	 *
+	 * Note we are called for each "page" in the device that
+	 * the upper layers want to map.
+	 */
+	return (x86_64_btop(addr + off));
 }
 
 /*

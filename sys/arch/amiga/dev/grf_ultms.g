@@ -1,4 +1,4 @@
-; $NetBSD: grf_ultms.g,v 1.5 2001/06/13 10:46:00 wiz Exp $
+; $NetBSD: grf_ultms.g,v 1.5.2.1 2002/02/11 20:06:57 jdolecek Exp $
 ;
 ; ite support for A2410.
 
@@ -33,11 +33,11 @@
 ; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ; This file contains the source code for grf_ultmscode.h. It is
-; assembler code for the TMS34010 CPU/graphics processor. 
+; assembler code for the TMS34010 CPU/graphics processor.
 ;
 ; Use Paul Mackerras' gspa assembler to transfer it to hex format, then
-; Ignatios Souvatzis' gpsahextoc utility to convert it to grf_ultmscode.h. 
-; 
+; Ignatios Souvatzis' gpsahextoc utility to convert it to grf_ultmscode.h.
+;
 ; This has been integrated into the NetBSD/Amiga kernel build procedure.
 ;
 
@@ -249,7 +249,7 @@ continue:
 	move	@font_lmo,b0
 	move	b0,@convsp,0
 	move	@font_area,b11
-	
+
 	mpyu	b12,b11		; times char offset
 	move	@font_adr,b0,1	; font bitmaps base
 	add	b11,b0		; character bitmap start addr. linear
@@ -329,7 +329,7 @@ yok:	jrv	xok
 	ori	PBH,b11
 xok:	move	b11,@control,0
 	move	@control,b11,0
-	
+
 	pixblt	xy,xy
 	jruc	loop_end,l
 
@@ -433,14 +433,14 @@ smearlp:
 ;;
 	jruc	loop_end,l
 
-	
+
 testfor5:
 	dec	a2
 	jrne	testfor6
 ; loadclut --- load clut entry.
 ;	1==overlay index red green blue
 ;	for speed reasons, the host will load the image clut directly rather
-;	than through us, but its not that expensive to support both here 
+;	than through us, but its not that expensive to support both here
 ;	just in case
 	move	a0,a4
 	addk	$10,a4
@@ -457,7 +457,7 @@ t5l1:	move	*a4+,a5,0
 	move	*a4+,a5,0
 	move	a5,*a6,0
 	jruc	loop_end,l
-	
+
 testfor6:
 	dec	a2
 	jrne	testfor7
@@ -478,7 +478,7 @@ testfor6:
 	move	b0,@pixel_size,0	; this syncs the psize write, too
 
 	jruc	loop_end,l
-	
+
 testfor7:
 	jruc	loop_end,l
 ;;;

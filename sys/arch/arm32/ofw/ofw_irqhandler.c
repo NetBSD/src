@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.8.4.1 2002/01/10 19:39:03 thorpej Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.8.4.2 2002/02/11 20:07:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -54,7 +54,6 @@
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
-fiqhandler_t *fiqhandlers;
 
 int current_intr_depth;
 u_int current_mask;
@@ -90,9 +89,6 @@ irq_init()
 		irqhandlers[loop] = NULL;
 		irqblock[loop] = 0;
 	}
-
-	/* Clear the FIQ handler */
-	fiqhandlers = NULL;
 
 	/*
 	 * Setup the irqmasks for the different Interrupt Priority Levels

@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7.8.1 2002/01/10 19:58:12 thorpej Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.8.2 2002/02/11 20:10:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.8.1 2002/01/10 19:58:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.8.2 2002/02/11 20:10:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,8 @@ lebufattach(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag), 
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sbt == NULL) {
 		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;
@@ -150,7 +150,6 @@ lebufattach(parent, self, aux)
 
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
-	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 

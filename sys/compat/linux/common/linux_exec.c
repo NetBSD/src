@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.52.2.1 2002/01/10 19:51:40 thorpej Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.52.2.2 2002/02/11 20:09:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.52.2.1 2002/01/10 19:51:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.52.2.2 2002/02/11 20:09:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void LINUX_SYSCALL_FUNCTION __P((void));
 #endif
 
 static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
@@ -134,7 +134,7 @@ const struct emul emul_linux = {
 #ifdef __HAVE_SYSCALL_INTERN
 	linux_syscall_intern,
 #else
-	syscall,
+	LINUX_SYSCALL_FUNCTION,
 #endif
 };
 

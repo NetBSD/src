@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.1.2.2 2002/01/10 19:37:25 thorpej Exp $
+ * $NetBSD: main.c,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -65,15 +65,14 @@
  */
 extern const char bootprog_rev[];
 
-void startit __P((void *, void *, void *));
+void startit(void *, void *, void *);
 
 int consclose(void);
 
 extern void *ConsoleBase;
 
 int
-pain(aio)
-	void *aio;	
+pain(void *aio)
 {
 	long int io = 0;
 	caddr_t kp;

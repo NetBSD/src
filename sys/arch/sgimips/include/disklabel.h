@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1.10.1 2002/01/10 19:48:28 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.10.2 2002/02/11 20:08:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -46,11 +46,11 @@
  * Partition 10 - whole disk
  */
 
-#define MAXPARTITIONS	16
-#define RAW_PART	2
-
 #define LABELSECTOR	1
 #define LABELOFFSET	0
+
+#define MAXPARTITIONS	16
+#define RAW_PART	2
 
 struct cpu_disklabel {
 	int	cd_dummy;

@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.4.2.2 2002/01/10 19:44:24 thorpej Exp $
+#	$NetBSD: DELPHI,v 1.4.2.3 2002/02/11 20:08:20 jdolecek Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.4.2.2 $"
+ident 		"DELPHI-$Revision: 1.4.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -60,6 +60,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks

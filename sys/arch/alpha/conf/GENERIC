@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189.2.3 2002/01/10 19:37:02 thorpej Exp $
+# $NetBSD: GENERIC,v 1.189.2.4 2002/02/11 20:06:41 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.189.2.3 $"
+#ident 		"GENERIC-$Revision: 1.189.2.4 $"
 
 maxusers 32
 
@@ -132,6 +132,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -497,8 +498,16 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

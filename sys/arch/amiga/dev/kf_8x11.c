@@ -1,4 +1,7 @@
-/*	$NetBSD: kf_8x11.c,v 1.4 1997/10/21 12:29:30 is Exp $	*/
+/*	$NetBSD: kf_8x11.c,v 1.4.28.1 2002/02/11 20:07:02 jdolecek Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kf_8x11.c,v 1.4.28.1 2002/02/11 20:07:02 jdolecek Exp $");
 
 /*
  *	From ftp.funet.fi:pub/amiga/system/fonts/Systemfonts1.lha

@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.1.2.2 2001/08/25 06:15:56 thorpej Exp $ */
+/*	$NetBSD: in4_cksum.c,v 1.1.2.3 2002/02/11 20:09:11 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -80,19 +80,38 @@ in4_cksum(m, nxt, off, len)
 		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 		w = (u_char *)&ipov;
 		/* assumes sizeof(ipov) == 20 */
+#ifdef __arch64__
 		__asm __volatile(" lduw [%5 + 0], %1; "
 			" lduw [%5 + 4], %2; "
 			" lduw [%5 + 8], %3; add %0, %1, %0; "
 			" lduw [%5 + 12], %1; add %0, %2, %0; "
 			" lduw [%5 + 16], %2; add %0, %3, %0; "
-			" mov -1, %3; "
-			" add %0, %1, %0; "
-			" srl %3, 0, %3; "
-			" add %0, %2, %0; "
+			" mov -1, %3; add %0, %1, %0; "
+			" srl %3, 0, %3; add %0, %2, %0; "
 			" srlx %0, 32, %2; and %0, %3, %1; "
 			" add %0, %2, %0; "
 			: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3)
 			: "0" (sum), "r" (w));
+#else
+		/* 
+		 * Can't use upper 32-bits of the registers, so this needs to
+		 * be recoded.  So instead of accumulating the carry in the 
+		 * upper 32-bits of the registers, we use addxcc which cannot
+		 * be grouped with any other instructions.
+		 */
+		__asm __volatile(" lduw [%5 + 0], %1; "
+			" lduw [%5 + 4], %2; "
+			" lduw [%5 + 8], %3; addcc %0, %1, %0; "
+			" lduw [%5 + 12], %1; "
+			" addxcc %0, %2, %0; "
+			" lduw [%5 + 16], %2; "
+			" addxcc %0, %3, %0; "
+			" addxcc %0, %1, %0; "
+			" addxcc %0, %2, %0; "
+			" addxcc %0, 0, %0; "
+			: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3)
+			: "0" (sum), "r" (w));
+#endif
 	}
 
 	/* skip unnecessary part */
@@ -102,6 +121,5 @@ in4_cksum(m, nxt, off, len)
 		off -= m->m_len;
 		m = m->m_next;
 	}
-	
 	return (in_cksum_internal(m, len, off, sum));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.6.2 2002/01/10 20:05:02 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.6.3 2002/02/11 20:10:47 jdolecek Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.6.2 2002/01/10 20:05:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.6.3 2002/02/11 20:10:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2346,7 +2346,7 @@ handle_workitem_freeblocks(freeblks)
 		if ((bn = freeblks->fb_iblks[level]) == 0)
 			continue;
 		if ((error = indir_trunc(&tip, fsbtodb(fs, bn), level,
-		    baselbns[level], &blocksreleased)) == 0)
+		    baselbns[level], &blocksreleased)) != 0)
 			allerror = error;
 		ffs_blkfree(&tip, bn, fs->fs_bsize);
 		fs->fs_pendingblocks -= nblocks;
@@ -5347,13 +5347,11 @@ softdep_lookupvp(fs, ino)
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_op == &ffs_vfsops &&
 		    VFSTOUFS(mp)->um_fs == fs) {
-			break;
+			return (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino));
 		}
 	}
-	if (mp == NULL) {
-		return NULL;
-	}
-	return ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino);
+
+	return (NULL);
 }
 
 /*

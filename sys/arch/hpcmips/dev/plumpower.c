@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.5.6.1 2002/01/10 19:43:53 thorpej Exp $ */
+/*	$NetBSD: plumpower.c,v 1.5.6.2 2002/02/11 20:08:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #undef PLUMPOWERDEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,8 +265,8 @@ plum_power_disestablish(plum_chipset_tag_t pc, int ph)
 }
 
 #ifdef PLUMPOWERDEBUG
-#define ISPOWERSUPPLY(r, m) __is_set_print(r, PLUM_POWER_PWRCONT_##m, #m)
-#define ISCLOCKSUPPLY(r, m) __is_set_print(r, PLUM_POWER_CLKCONT_##m, #m)
+#define ISPOWERSUPPLY(r, m) dbg_bitmask_print(r, PLUM_POWER_PWRCONT_##m, #m)
+#define ISCLOCKSUPPLY(r, m) dbg_bitmask_print(r, PLUM_POWER_CLKCONT_##m, #m)
 static void
 plumpower_dump(struct plumpower_softc *sc)
 {

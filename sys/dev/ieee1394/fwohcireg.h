@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.10 2001/07/02 02:36:48 onoe Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.10.2.1 2002/02/11 20:09:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@
 #define	OHCI_SelfID_Size_MASK		0x000007fc
 #define	OHCI_SelfID_Size_BITPOS		2
 
-/* OCHI_REG_Int{Event|Mask}*
+/* OHCI_REG_Int{Event|Mask}*
  */
 #define	OHCI_Int_MasterEnable		0x80000000
 #define	OHCI_Int_VendorSpecific		0x40000000

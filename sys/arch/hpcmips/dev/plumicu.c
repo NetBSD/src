@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicu.c,v 1.3.10.1 2002/01/10 19:43:50 thorpej Exp $ */
+/*	$NetBSD: plumicu.c,v 1.3.10.2 2002/02/11 20:08:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,14 +386,14 @@ plumicu_dump(struct plumicu_softc *sc)
 	
 	printf("status:");
 	reg = plum_conf_read(regt, regh, PLUM_INT_INTSTA_REG);
-	bitdisp(reg);
+	dbg_bit_print(reg);
 	printf("ExtIO\n");
 	printf("status:");
 	reg = plum_conf_read(regt, regh, PLUM_INT_EXTINTS_REG);
-	bitdisp(reg);
+	dbg_bit_print(reg);
 	printf("enable:");
 	reg = plum_conf_read(regt, regh, PLUM_INT_EXTIEN_REG);
- 	bitdisp(reg);
+ 	dbg_bit_print(reg);
 
 }
 #endif /* PLUMICUDEBUG */

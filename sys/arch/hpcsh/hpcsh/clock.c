@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
@@ -165,12 +166,14 @@ clock_init()
 int
 clock_get_cpuclock()
 {
+
 	return __cpuclock;
 }
 
 int
 clock_get_pclock()
 {
+
 	return __pclock;
 }
 
@@ -208,6 +211,7 @@ microtime(struct timeval *tv)
 void
 delay(int n)
 {
+
 	DELAY_LOOP(__cnt_delay * n);
 }
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.4.4.1 2002/01/10 19:45:16 thorpej Exp $
+#	$NetBSD: files.luna68k,v 1.4.4.2 2002/02/11 20:08:30 jdolecek Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -61,7 +61,7 @@ major	{sd = 2}	# SCSI disk
 major	{cd = 4}	# SCSI CD-ROM
 
 # Memory Disk for boot tape
-file arch/luna68k/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 7}	# Memory disk (for mini-kernel)
 
 # RAIDframe

@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.14 2001/04/26 05:58:41 is Exp $ */
+/*	$NetBSD: aster.c,v 1.14.2.1 2002/02/11 20:06:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.2.1 2002/02/11 20:06:50 jdolecek Exp $");
+
 /*
  * zbus ISDN Blaster, ISDN Master driver.
  */
@@ -64,19 +67,16 @@ struct aster_softc {
 	struct bus_space_tag sc_bst;
 };
 
-int astermatch __P((struct device *, struct cfdata *, void *));
-void asterattach __P((struct device *, struct device *, void *));
-int asterprint __P((void *auxp, const char *));
+int astermatch(struct device *, struct cfdata *, void *);
+void asterattach(struct device *, struct device *, void *);
+int asterprint(void *auxp, const char *);
 
 struct cfattach aster_ca = {
 	sizeof(struct aster_softc), astermatch, asterattach
 };
 
 int
-astermatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+astermatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 
 	struct zbus_args *zap;
@@ -103,9 +103,7 @@ astermatch(parent, cfp, auxp)
 }
 
 void
-asterattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+asterattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct aster_softc *astrsc;
 	struct zbus_args *zap;
@@ -157,9 +155,7 @@ asterattach(parent, self, auxp)
 }
 
 int
-asterprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+asterprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;

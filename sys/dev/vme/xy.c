@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.35.2.2 2002/01/10 19:59:14 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.35.2.3 2002/02/11 20:10:20 jdolecek Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.35.2.2 2002/01/10 19:59:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.35.2.3 2002/02/11 20:10:20 jdolecek Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -482,10 +482,10 @@ xycattach(parent, self, aux)
 	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
 	xyc->reqs = (struct xy_iorq *)
-	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
+	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (xyc->reqs == NULL)
 		panic("xyc malloc");
-	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
 
 	/*
 	 * init iorq to iopb pointers, and non-zero fields in the

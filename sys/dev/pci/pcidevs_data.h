@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340.2.4 2002/01/10 19:56:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340.2.5 2002/02/11 20:10:03 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.383 2002/01/09 19:29:07 augustss Exp 
+ *	NetBSD: pcidevs,v 1.400 2002/02/04 16:56:49 junyoung Exp 
  */
 
 /*
@@ -44,6 +44,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c985 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996,
+	    0,
+	    "3Com",
+	    "3c996 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
@@ -104,6 +110,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3cSOHO100-TX 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A,
+	    0,
+	    "3Com",
+	    "3crwe777a AirConnect",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
@@ -748,6 +760,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "ACEnic 1000baseT Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
+	    0,
+	    "Alteon",
+	    "ACEnic BCM5700 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
+	    0,
+	    "Alteon",
+	    "ACEnic BCM5701 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
@@ -1084,10 +1108,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GI",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GL,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GL",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXLAGP2X,
 	    0,
 	    "ATI Technologies",
 	    "Rage XL AGP 2x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GN,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GN",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GO,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GO",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
@@ -1100,6 +1142,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 GQ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GR,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GR",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GS,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GS",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
@@ -1538,6 +1592,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 2706",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5700 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5701 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -2422,10 +2488,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
-	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000,
+	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
 	    0,
 	    "Eumitcom",
-	    "WL11000",
+	    "WL11000P PCI WaveLAN/IEEE 802.11",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
@@ -2581,13 +2647,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
 	    0,
 	    "Global Sun Tech",
-	    "GL24110P",
+	    "GL24110P PCI IEEE 802.11b",
 	},
 	{
-	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P_2,
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
 	    0,
 	    "Global Sun Tech",
-	    "GL24110P",
+	    "GL24110P PCI IEEE 802.11b",
 	},
 	{
 	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
@@ -2624,6 +2690,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hi/Fn",
 	    "7951",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB1,
+	    0,
+	    "HiNT",
+	    "HB1 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
@@ -2746,6 +2818,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "INIC-920 SCSI",
 	},
 	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I850,
+	    0,
+	    "Initio",
+	    "INIC-850 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I1060,
+	    0,
+	    "Initio",
+	    "INIC-1060 SCSI",
+	},
+	{
 	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I940,
 	    0,
 	    "Initio",
@@ -2762,6 +2846,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Initio",
 	    "INIC-950 SCSI",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1680,
+	    0,
+	    "Integraphics Systems",
+	    "IGA 1680",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1682,
+	    0,
+	    "Integraphics Systems",
+	    "IGA 1682",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
@@ -2870,6 +2966,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "i82544 Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC,
+	    0,
+	    "Intel",
+	    "i82544GC Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_64,
+	    0,
+	    "Intel",
+	    "i82544GC (64-bit) Gigabit Ethernet (1000BASE-T)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -3280,7 +3388,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA LPC Interface",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1,
 	    0,
 	    "Intel",
 	    "82801CA/CAM USB Controller",
@@ -3292,7 +3400,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA/CAM SMBus Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_2,
 	    0,
 	    "Intel",
 	    "82801CA/CAM USB Controller",
@@ -3316,16 +3424,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA/CAM USB Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_1,
 	    0,
 	    "Intel",
-	    "82801CA UltraATA IDE Controller",
+	    "82801CA IDE Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_2,
 	    0,
 	    "Intel",
-	    "82801CA UltraATA IDE Controller",
+	    "82801CA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC,
@@ -3346,10 +3454,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82820 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
 	    0,
 	    "Intel",
-	    "82830MP CPU to I/O Bridge",
+	    "82830MP CPU to I/O Bridge 1",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
@@ -3364,10 +3472,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82830MP Integrated Video",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
 	    0,
 	    "Intel",
-	    "82830MP CPU to I/O Bridge",
+	    "82830MP CPU to I/O Bridge 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
@@ -4345,7 +4453,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
 	    0,
 	    "Netgear",
-	    "MA301",
+	    "MA301 PCI IEEE 802.11b",
 	},
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
@@ -4676,6 +4784,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Rainbow Technologies",
 	    "CryptoSwift 200 PKI Accelerator",
+	},
+	{
+	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
+	    0,
+	    "Ratoc Systems",
+	    "REX PCI-31/33 SCSI",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
@@ -5422,6 +5536,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SK-NET GE",
 	},
 	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_ALTIMA,
+	    0,
+	    "Schneider & Koch",
+	    "SK-NET Altima Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21,
+	    0,
+	    "Schneider & Koch",
+	    "SK-9D21 1000BASE-T",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41,
+	    0,
+	    "Schneider & Koch",
+	    "SK-9D41 1000BASE-X",
+	},
+	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
 	    0,
 	    "Tamarack Microelectronics, Inc.",
@@ -5479,13 +5611,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4450 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4410 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
@@ -5509,7 +5641,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4451 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -5593,19 +5725,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4450 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4410 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
@@ -6001,7 +6133,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
 	    0,
 	    "VIA Technologies",
-	    "VT6305 OCHI IEEE 1394 Controller",
+	    "VT6305 OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
@@ -6151,7 +6283,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
 	    0,
 	    "VIA Technologies",
-	    "VT3606 OCHI IEEE 1394 Controller",
+	    "VT3606 OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
@@ -8248,7 +8380,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_INTERGRAPHICS, 0,
+	    PCI_VENDOR_INTEGRAPHICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Integraphics Systems",
 	    NULL,
@@ -8944,9 +9076,9 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_SYNEMA, 0,
+	    PCI_VENDOR_RENDITION, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Synema Corporation",
+	    "Rendition Inc.",
 	    NULL,
 	},
 	{
@@ -9186,7 +9318,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_RATOC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Ratoc System",
+	    "Ratoc Systems",
 	    NULL,
 	},
 	{
@@ -9718,6 +9850,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_SIIG, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Siig Inc.",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_DOMEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Domex",
@@ -9772,6 +9910,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_LAVA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Lava Semiconductor Manufacturing, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ETIMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "eTIMedia Technology Co. Ltd.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_OXFORDSEMI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Oxford Semiconductor Ltd.",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_TAMARACK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tamarack Microelectronics, Inc.",
@@ -9811,6 +9967,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INVERTEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Invertex",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_BROADCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Broadcom Corporation",
 	    NULL,
 	},
 	{
@@ -9880,12 +10042,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_LAVA, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Lava Semiconductor Manufacturing, Inc.",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_COREGA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Corega",
@@ -9901,6 +10057,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_FZJZEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "FZ Juelich / ZEL",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_HINT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "HiNT",
 	    NULL,
 	},
 	{

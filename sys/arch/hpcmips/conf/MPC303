@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.1.4.1 2002/01/10 19:43:44 thorpej Exp $
+# 	$NetBSD: MPC303,v 1.1.4.2 2002/02/11 20:08:03 jdolecek Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.1.4.1 $"
+#ident 		"GENERIC-$Revision: 1.1.4.2 $"
 
 maxusers	16
 
@@ -27,6 +27,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=16384	# dmesg buffer size
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN
@@ -95,6 +96,9 @@ options 	NFS_BOOT_BOOTPARAM
 
 options 	VR_FIND_DRAMLIM=0x03800000
 
+# compile options
+makeoptions	DEFGP="-G 14"
+
 #config		netbsd		root on ? type ?
 config		netbsd		root on aue0 type nfs
 
@@ -121,17 +125,17 @@ apmdev0	at hpcapm0			# APM
 vrip*	at mainbus0
 vrbcu*	at vrip? addr 0x0f000000 size 0x20
 vrcmu*	at vrip? addr 0x0f000060 size 0x20
-vrrtc*	at vrip? addr 0x0f000100 size 0x20 intr 2
+vrrtc*	at vrip? addr 0x0f000100 size 0x20 unit VRRTC
 
-#vrkiu*	at vrip? addr 0x0b000180 size 0x20 intr 7
+#vrkiu*	at vrip? addr 0x0b000180 size 0x20 unit VRKIU
 #hpckbd*	at vrkiu?
-com*	at vrip? addr 0x0f000800 size 0x20 intr 9 pwctl PWCTL_COM0
-vrgiu*	at vrip? addr 0x0f000140 size 0x20 intr 8
-vrpmu*	at vrip? addr 0x0f0000c0 size 0x20 intr 1 # power switch
+com*	at vrip? addr 0x0f000800 size 0x20 unit VRSIU pwctl PWCTL_COM0
+vrgiu*	at vrip? addr 0x0f000140 size 0x20 unit VRGIU
+vrpmu*	at vrip? addr 0x0f0000c0 size 0x20 unit VRPMU # power switch
 #vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
-#vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
-vrled*	at vrip? addr 0x0f000180 size 0x10 intr 17
-vrpciu*	at vrip? addr 0x0f000c00 size 0x200 intr 22
+#vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 unit VRPIU
+vrled*	at vrip? addr 0x0f000180 size 0x10 unit VRLED
+vrpciu*	at vrip? addr 0x0f000c00 size 0x200 unit VRPCIU
 
 # PCI bus support
 options 	PCIVERBOSE
@@ -160,6 +164,32 @@ usb*	at ohci?
 # USB Hubs
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+#ums*	at uhidev? reportid ?
+#wsmouse*	at ums? mux 0
+
+# USB Keyboards
+#ukbd*	at uhidev? reportid ?
+#wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+#uhid*	at uhidev? reportid ?
+
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
+
+# USB Mass Storage
+#umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
+#scsibus* at umass? channel ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
@@ -379,6 +409,15 @@ vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
 isa6	at vrisab6
 ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
 #wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_02 port 0 level 1 connect 1
+
+#
+# MP-C303/304
+#
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_02 port 1 level 0 hold 1 connect 1
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?

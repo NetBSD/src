@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.6.4.2 2002/01/10 19:43:47 thorpej Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6.4.3 2002/02/11 20:08:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -406,7 +406,9 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 		}
 #endif /* NVRIP > 0 */
 #ifdef TX39XX
-		tx39power_suspend_cpu();
+		if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
+			tx39power_suspend_cpu();
+		}
 #endif
 		config_hook_call(CONFIG_HOOK_PMEVENT, 
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,

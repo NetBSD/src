@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/05/16 18:49:51 drochner Exp $	*/
+/*	$NetBSD: param.h,v 1.2.2.1 2002/02/11 20:07:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,53 +82,13 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
- * spl functions; all but spl0 are done in-line
+ * Interrupt glue.
  */
-#include <machine/psl.h>
-
-/* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * These four globals contain the appropriate PSL_S|PSL_IPL? values
- * to raise interrupt priority to the requested level.
- */
-extern	unsigned short cesfic_bioipl;
-extern	unsigned short cesfic_netipl;
-extern	unsigned short cesfic_ttyipl;
-extern	unsigned short cesfic_impipl;
-#endif /* _KERNEL && !_LOCORE */
-
-/* These spl calls are used by machine-independent code. */
-#define	spllowersoftclock() spl1()
-#define	splsoft()	splraise1()
-#define splsoftclock()	splsoft()
-#define splsoftnet()	splsoft()
-#define splbio()	_splraise(cesfic_bioipl)
-#define splnet()	_splraise(cesfic_netipl)
-#define spltty()	_splraise(cesfic_ttyipl)
-#define splvm()		_splraise(cesfic_impipl)
-#define splclock()	spl6()
-#define splstatclock()	spl6()
-#define splhigh()	spl7()
-#define splsched()	spl7()
-#define spllock()	spl7()
-
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+#include <machine/intr.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
 
-int	spl0 __P((void));
 void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
-

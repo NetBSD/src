@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.1.6.1 2002/01/10 19:56:22 thorpej Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.1.6.2 2002/02/11 20:09:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.1.6.1 2002/01/10 19:56:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.1.6.2 2002/02/11 20:09:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ pckbc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 		    || bus_space_map(iot, regs[1].addr, regs[1].len, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

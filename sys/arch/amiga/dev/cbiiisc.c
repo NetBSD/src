@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.6 2001/04/25 17:53:06 bouyer Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.6.2.1 2002/02/11 20:06:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -36,6 +36,9 @@
  *	@(#)dma.c
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.6.2.1 2002/02/11 20:06:51 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -54,11 +57,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void cbiiiscattach __P((struct device *, struct device *, void *));
-int  cbiiiscmatch __P((struct device *, struct cfdata *, void *));
-int  cbiiisc_dmaintr __P((void *));
+void cbiiiscattach(struct device *, struct device *, void *);
+int  cbiiiscmatch(struct device *, struct cfdata *, void *);
+int  cbiiisc_dmaintr(void *);
 #ifdef DEBUG
-void cbiiisc_dump __P((void));
+void cbiiisc_dump(void);
 #endif
 
 #ifdef DEBUG
@@ -72,11 +75,7 @@ struct cfattach cbiiisc_ca = {
  * if we are a CyberStorm MK III SCSI
  */
 int
-cbiiiscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-
-	void *auxp;
+cbiiiscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -87,9 +86,7 @@ cbiiiscmatch(pdp, cfp, auxp)
 }
 
 void
-cbiiiscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
@@ -152,8 +149,7 @@ cbiiiscattach(pdp, dp, auxp)
 }
 
 int
-cbiiisc_dmaintr(arg)
-	void *arg;
+cbiiisc_dmaintr(void *arg)
 {
 	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
@@ -178,7 +174,7 @@ cbiiisc_dmaintr(arg)
 
 #ifdef DEBUG
 void
-cbiiisc_dump()
+cbiiisc_dump(void)
 {
 	extern struct cfdriver cbiiisc_cd;
 	int i;

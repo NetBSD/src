@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2.10.1 2002/02/11 20:07:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -33,6 +33,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
+
+#include <machine/intr_machdep.h>
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.3.2.2 2002/01/10 19:36:32 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.3.2.3 2002/02/11 20:06:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -208,7 +208,7 @@ escinitialize(dev)
 	pte = pmap_pte(pmap_kernel(), (vm_offset_t)dev->sc_bump_va);
 	*pte &= ~PT_C;
 	cpu_tlb_flushD();
-	cpu_cache_purgeD_rng((vm_offset_t)dev->sc_bump_va, NBPG);
+	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
@@ -873,7 +873,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 /* Flush the caches. */
 
 	if (len && !(mode & ESC_SELECT_I))
-		cpu_cache_purgeD_rng((vm_offset_t)buf, len);
+		cpu_dcache_wbinv_range((vm_offset_t)buf, len);
 }
 
 int

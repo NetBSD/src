@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.14.2.2 2002/01/10 19:54:00 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.14.2.3 2002/02/11 20:09:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.14.2.2 2002/01/10 19:54:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.14.2.3 2002/02/11 20:09:41 jdolecek Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -370,8 +370,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 #endif
 
 	/* Allocate message wrappers. */
-	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT);
-	memset(im, 0, sizeof(*im) * sc->sc_maxib);
+	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT|M_ZERO);
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
 
@@ -486,9 +485,8 @@ iop_config_interrupts(struct device *self)
 		i = sizeof(struct i2o_systab_entry) * (niop - 1) +
 		    sizeof(struct i2o_systab);
 		iop_systab_size = i;
-		iop_systab = malloc(i, M_DEVBUF, M_NOWAIT);
+		iop_systab = malloc(i, M_DEVBUF, M_NOWAIT|M_ZERO);
 
-		memset(iop_systab, 0, i);
 		iop_systab->numentries = niop;
 		iop_systab->version = I2O_VERSION_11;
 
@@ -703,8 +701,7 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	if (sc->sc_tidmap != NULL)
 		free(sc->sc_tidmap, M_DEVBUF);
 	sc->sc_tidmap = malloc(sc->sc_nlctent * sizeof(struct iop_tidmap),
-	    M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_tidmap, 0, sizeof(sc->sc_tidmap));
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	/* Allow 1 queued command per device while we're configuring. */
 	iop_adjqparam(sc, 1);

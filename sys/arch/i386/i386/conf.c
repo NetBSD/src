@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.142.2.3 2002/01/10 19:44:36 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.142.2.4 2002/02/11 20:08:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.142.2.3 2002/01/10 19:44:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.142.2.4 2002/02/11 20:08:24 jdolecek Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -258,6 +258,9 @@ cdev_decl(wsfont);
 #include "pci.h"
 cdev_decl(pci);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -356,6 +359,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -486,6 +490,7 @@ static int chrtoblktbl[] = {
 	/* 86 */	NODEV,
 	/* 87 */	NODEV,
 	/* 88 */	NODEV,
+	/* 89 */	NODEV,
 };
 
 /*

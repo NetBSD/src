@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.10.2.1 2002/01/10 19:44:17 thorpej Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.10.2.2 2002/02/11 20:08:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -33,9 +33,9 @@
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/debug.h>
 
-#include <hpcmips/vr/vripvar.h>
-#include <hpcmips/vr/vripreg.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrpmuvar.h>
 #include <hpcmips/vr/vrpmureg.h>
 
@@ -122,12 +122,12 @@ vrpmuattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 
 	if (!(sc->sc_handler = 
-	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	    vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 		vrpmu_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;
 	}
-	if (!vrip_intr_establish(va->va_vc, VRIP_INTR_BAT, IPL_TTY,
+	if (!vrip_intr_establish(va->va_vc, va->va_unit, 1, IPL_TTY,
 	    vrpmu_intr, sc)) {
 		printf (": can't map interrupt line.\n");
 		return;
@@ -229,10 +229,10 @@ vrpmu_dump_regs(void *arg)
 	/* others? XXXX */
 	reg = vrpmu_read(sc, PMUCNT_REG_W);
 	printf("vrpmu: cnt 0x%x: ", reg);
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 	reg = vrpmu_read(sc, PMUCNT2_REG_W);
 	printf("vrpmu: cnt2 0x%x: ", reg);
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 #if NVRBCU > 0
 	cpuid = vrbcu_vrip_getcpuid();
 	if (cpuid >= BCUREVID_RID_4111){

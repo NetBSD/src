@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.19 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.19.2.1 2002/02/11 20:07:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -214,26 +214,26 @@ struct	siop_softc {
 #define	STS_EXT		0x80	/* Extended status valid */
 
 #ifdef ARCH_720
-void siopng_minphys __P((struct buf *bp));
-void siopng_scsipi_request __P((struct scsipi_channel *,
-			scsipi_adapter_req_t, void *));
-void siopnginitialize __P((struct siop_softc *));
-void siopngintr __P((struct siop_softc *));
-void siopng_dump_registers __P((struct siop_softc *));
+void siopng_minphys(struct buf *bp);
+void siopng_scsipi_request(struct scsipi_channel *,
+			scsipi_adapter_req_t, void *);
+void siopnginitialize(struct siop_softc *);
+void siopngintr(struct siop_softc *);
+void siopng_dump_registers(struct siop_softc *);
 #ifdef DEBUG
-void siopng_dump __P((struct siop_softc *));
+void siopng_dump(struct siop_softc *);
 #endif
 
 #else
 
-void siop_minphys __P((struct buf *bp));
-void siop_scsipi_request __P((struct scsipi_channel *,
-			scsipi_adapter_req_t, void *));
-void siopinitialize __P((struct siop_softc *));
-void siopintr __P((struct siop_softc *));
-void siop_dump_registers __P((struct siop_softc *));
+void siop_minphys(struct buf *bp);
+void siop_scsipi_request(struct scsipi_channel *,
+			scsipi_adapter_req_t, void *);
+void siopinitialize(struct siop_softc *);
+void siopintr(struct siop_softc *);
+void siop_dump_registers(struct siop_softc *);
 #ifdef DEBUG
-void siop_dump __P((struct siop_softc *));
+void siop_dump(struct siop_softc *);
 #endif
 #endif
 

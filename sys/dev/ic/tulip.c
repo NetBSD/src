@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.94.2.3 2002/01/10 19:55:06 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.94.2.4 2002/02/11 20:09:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.94.2.3 2002/01/10 19:55:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.94.2.4 2002/02/11 20:09:47 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -3856,8 +3856,7 @@ tlp_add_srom_media(sc, type, get, set, list, cnt)
 
 	for (i = 0; i < cnt; i++) {
 		tsti = tlp_srom_to_ifmedia(list[i]);
-		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-		memset(tm, 0, sizeof(*tm));
+		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 		tlp_srom_media_info(sc, tsti, tm);
 		tm->tm_type = type;
 		tm->tm_get = get;
@@ -4252,8 +4251,7 @@ tlp_21040_tmsw_init(sc)
 	/*
 	 * No SROM type for External SIA.
 	 */
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-	memset(tm, 0, sizeof(*tm));
+	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 	tm->tm_name = "manual";
 	tm->tm_opmode = 0;
 	tm->tm_siaconn = SIACONN_21040_EXTSIA;
@@ -4368,8 +4366,7 @@ tlp_21041_tmsw_init(sc)
 	for (; m_cnt != 0;
 	     m_cnt--, mb_offset += TULIP_ROM_MB_SIZE(mb)) {
 		mb = sc->sc_srom[mb_offset];
-		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-		memset(tm, 0, sizeof(*tm));
+		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 		switch (mb & TULIP_ROM_MB_MEDIA_CODE) {
 		case TULIP_ROM_MB_MEDIA_TP_FDX:
 		case TULIP_ROM_MB_MEDIA_TP:
@@ -4557,8 +4554,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21140_GPR;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-			memset(tm, 0, sizeof(*tm));
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 
 			tm->tm_type = TULIP_ROM_MB_21140_GPR;
 			tm->tm_get = tlp_21140_gpio_get;
@@ -4602,8 +4598,7 @@ tlp_2114x_isv_tmsw_init(sc)
 		case TULIP_ROM_MB_21140_MII:
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21140_MII;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-			memset(tm, 0, sizeof(*tm));
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 
 			tm->tm_type = TULIP_ROM_MB_21140_MII;
 			tm->tm_get = tlp_mii_getmedia;
@@ -4719,8 +4714,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21142_SIA;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-			memset(tm, 0, sizeof(*tm));
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 
 			tm->tm_type = TULIP_ROM_MB_21142_SIA;
 			tm->tm_get = tlp_sia_get;
@@ -4762,8 +4756,7 @@ tlp_2114x_isv_tmsw_init(sc)
 		case TULIP_ROM_MB_21142_MII:
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21142_MII;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-			memset(tm, 0, sizeof(*tm));
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 
 			tm->tm_type = TULIP_ROM_MB_21142_MII;
 			tm->tm_get = tlp_mii_getmedia;
@@ -4879,8 +4872,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21143_SYM;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
-			memset(tm, 0, sizeof(*tm));
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 
 			tm->tm_type = TULIP_ROM_MB_21143_SYM;
 			tm->tm_get = tlp_sia_get;

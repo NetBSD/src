@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.1.2.1 2002/01/10 19:41:53 thorpej Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.1.2.2 2002/02/11 20:07:40 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -72,8 +72,6 @@ extern char *_intrnames;
 /* Prototypes */
 
 int podule_irqhandler		__P((void));
-extern int fiq_setregs		__P((fiqhandler_t *));
-extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));
 
 /*
@@ -485,35 +483,3 @@ stray_irqhandler(mask)
 		log(LOG_ERR, "Stray interrupt %08x%s\n", mask,
 		    stray_irqs >= 8 ? ": stopped logging" : "");
 }
-
-
-/*
- * int fiq_claim(fiqhandler_t *handler)
- *
- * Claim FIQ's and install a handler for them.
- */
-
-int
-fiq_claim(handler)
-	fiqhandler_t *handler;
-{
-	/* Not supported. */
-	return(-1);
-}
-
-
-/*
- * int fiq_release(fiqhandler_t *handler)
- *
- * Release FIQ's and remove a handler for them.
- */
-
-int
-fiq_release(handler)
-	fiqhandler_t *handler;
-{
-	/* Not supported. */
-	return(-1);
-}
-
-/* End of ofw_irqhandler.c */

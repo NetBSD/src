@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.3 2002/01/10 19:41:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.4 2002/02/11 20:07:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -57,6 +57,7 @@
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+#include <machine/intr_machdep.h>
 #include <mips/locore.h>
 
 #include <machine/nvram.h>
@@ -435,10 +436,7 @@ delay(n)
 
 #define NINTR	6
 
-static struct {
-	int (*func)(void *);
-	void *arg;
-} intrtab[NINTR];
+static struct cobalt_intr intrtab[NINTR];
 
 void *
 cpu_intr_establish(level, ipl, func, arg)
@@ -453,10 +451,23 @@ cpu_intr_establish(level, ipl, func, arg)
 	if (intrtab[level].func != NULL)
 		panic("cannot share CPU interrupts");
 
+	intrtab[level].cookie_type = COBALT_COOKIE_TYPE_CPU;
 	intrtab[level].func = func;
 	intrtab[level].arg = arg;
 
-	return (void *)-1;
+	return &intrtab[level];
+}
+
+void
+cpu_intr_disestablish(cookie)
+	void *cookie;
+{
+	struct cobalt_intr *p = cookie;
+
+        if (p->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+		p->func = NULL;
+		p->arg = NULL;
+	}
 }
 
 void

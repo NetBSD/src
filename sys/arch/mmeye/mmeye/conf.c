@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2000/08/22 11:48:23 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.6.4.1 2002/02/11 20:08:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -135,6 +135,9 @@ cdev_decl(scsibus);
 #include "ipfilter.h"
 #include "rnd.h"
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -189,6 +192,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 49: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 50: HIPPI (esh) raw device */
 	cdev_wdog_init(NWDOG,wdog),	/* 51: watchdog timer */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -282,6 +286,7 @@ static int chrtoblktbl[] = {
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
 	/* 51 */	NODEV,
+	/* 52 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.44 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.44.2.1 2002/02/11 20:07:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -45,6 +45,9 @@
 
 #include "opt_ddb.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.44.2.1 2002/02/11 20:07:07 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -72,20 +75,20 @@
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void siop_select __P((struct siop_softc *));
-void siopabort __P((struct siop_softc *, siop_regmap_p, char *));
-void sioperror __P((struct siop_softc *, siop_regmap_p, u_char));
-void siopstart __P((struct siop_softc *));
-int  siop_checkintr __P((struct siop_softc *, u_char, u_char, u_char, int *));
-void siopreset __P((struct siop_softc *));
-void siopsetdelay __P((int));
-void siop_scsidone __P((struct siop_acb *, int));
-void siop_sched __P((struct siop_softc *));
-void siop_poll __P((struct siop_softc *, struct siop_acb *));
-void siopintr __P((struct siop_softc *));
-void scsi_period_to_siop __P((struct siop_softc *, int));
-void siop_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, int)); 
-void siop_dump_acb __P((struct siop_acb *));
+void siop_select(struct siop_softc *);
+void siopabort(struct siop_softc *, siop_regmap_p, char *);
+void sioperror(struct siop_softc *, siop_regmap_p, u_char);
+void siopstart(struct siop_softc *);
+int  siop_checkintr(struct siop_softc *, u_char, u_char, u_char, int *);
+void siopreset(struct siop_softc *);
+void siopsetdelay(int);
+void siop_scsidone(struct siop_acb *, int);
+void siop_sched(struct siop_softc *);
+void siop_poll(struct siop_softc *, struct siop_acb *);
+void siopintr(struct siop_softc *);
+void scsi_period_to_siop(struct siop_softc *, int);
+void siop_start(struct siop_softc *, int, int, u_char *, int, u_char *, int);
+void siop_dump_acb(struct siop_acb *);
 
 /* 53C710 script */
 const
@@ -164,8 +167,8 @@ int	siopphmm = 0;
 	siop_trix = (siop_trix + 4) & (SIOP_TRACE_SIZE - 1);
 u_char	siop_trbuf[SIOP_TRACE_SIZE];
 int	siop_trix;
-void siop_dump __P((struct siop_softc *));
-void siop_dump_trace __P((void));
+void siop_dump(struct siop_softc *);
+void siop_dump_trace(void);
 #else
 #define SIOP_TRACE(a,b,c,d)
 #endif
@@ -175,8 +178,7 @@ void siop_dump_trace __P((void));
  * default minphys routine for siop based controllers
  */
 void
-siop_minphys(bp)
-	struct buf *bp;
+siop_minphys(struct buf *bp)
 {
 
 	/*
@@ -190,10 +192,8 @@ siop_minphys(bp)
  *
  */
 void
-siop_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+                    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -263,9 +263,7 @@ siop_scsipi_request(chan, req, arg)
 }
 
 void
-siop_poll(sc, acb)
-	struct siop_softc *sc;
-	struct siop_acb *acb;
+siop_poll(struct siop_softc *sc, struct siop_acb *acb)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	struct scsipi_xfer *xs = acb->xs;
@@ -329,8 +327,7 @@ siop_poll(sc, acb)
  * start next command that's ready
  */
 void
-siop_sched(sc)
-	struct siop_softc *sc;
+siop_sched(struct siop_softc *sc)
 {
 	struct scsipi_periph *periph;
 	struct siop_acb *acb;
@@ -380,9 +377,7 @@ siop_sched(sc)
 }
 
 void
-siop_scsidone(acb, stat)
-	struct siop_acb *acb;
-	int stat;
+siop_scsidone(struct siop_acb *acb, int stat)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -400,7 +395,7 @@ siop_scsidone(acb, stat)
 	}
 	periph = xs->xs_periph;
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
-	 
+
 	xs->status = stat;
 	xs->resid = 0;		/* XXXX */
 
@@ -465,10 +460,7 @@ siop_scsidone(acb, stat)
 }
 
 void
-siopabort(sc, rp, where)
-	register struct siop_softc *sc;
-	siop_regmap_p rp;
-	char *where;
+siopabort(register struct siop_softc *sc, siop_regmap_p rp, char *where)
 {
 #ifdef fix_this
 	int i;
@@ -520,8 +512,7 @@ siopabort(sc, rp, where)
 }
 
 void
-siopinitialize(sc)
-	struct siop_softc *sc;
+siopinitialize(struct siop_softc *sc)
 {
 	int i;
 	u_int inhibit_sync;
@@ -539,9 +530,9 @@ siopinitialize(sc)
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct siop_acb *, 
+	MALLOC(sc->sc_acb, struct siop_acb *,
 		sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_acb == NULL) 
+	if (sc->sc_acb == NULL)
 		panic("siopinitialize: ACB malloc failed!");
 
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
@@ -581,8 +572,7 @@ siopinitialize(sc)
 }
 
 void
-siopreset(sc)
-	struct siop_softc *sc;
+siopreset(struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	u_int i, s;
@@ -681,14 +671,8 @@ siopreset(sc)
  */
 
 void
-siop_start (sc, target, lun, cbuf, clen, buf, len)
-	struct siop_softc *sc;
-	int target;
-	int lun;
-	u_char *cbuf;
-	int clen;
-	u_char *buf;
-	int len;
+siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
+           u_char *buf, int len)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	int nchain;
@@ -859,12 +843,8 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
  */
 
 int
-siop_checkintr(sc, istat, dstat, sstat0, status)
-	struct	siop_softc *sc;
-	u_char	istat;
-	u_char	dstat;
-	u_char	sstat0;
-	int	*status;
+siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
+               u_char sstat0, int *status)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	struct siop_acb *acb = sc->sc_nexus;
@@ -1396,8 +1376,7 @@ bad_phase:
 }
 
 void
-siop_select(sc)
-	struct siop_softc *sc;
+siop_select(struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	struct siop_acb *acb = sc->sc_nexus;
@@ -1443,8 +1422,7 @@ siop_select(sc)
  */
 
 void
-siopintr (sc)
-	register struct siop_softc *sc;
+siopintr(register struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	register u_char istat, dstat, sstat0;
@@ -1518,9 +1496,7 @@ siopintr (sc)
  *
  */
 void
-scsi_period_to_siop (sc, target)
-	struct siop_softc *sc;
-	int target;
+scsi_period_to_siop(struct siop_softc *sc, int target)
 {
 	int period, offset, sxfer, sbcl = 0;
 #ifdef DEBUG_SYNC
@@ -1575,7 +1551,7 @@ scsi_period_to_siop (sc, target)
 
 #if SIOP_TRACE_SIZE
 void
-siop_dump_trace()
+siop_dump_trace(void)
 {
 	int i;
 
@@ -1590,8 +1566,7 @@ siop_dump_trace()
 #endif
 
 void
-siop_dump_acb(acb)
-	struct siop_acb *acb;
+siop_dump_acb(struct siop_acb *acb)
 {
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
@@ -1614,8 +1589,7 @@ siop_dump_acb(acb)
 }
 
 void
-siop_dump(sc)
-	struct siop_softc *sc;
+siop_dump(struct siop_softc *sc)
 {
 	struct siop_acb *acb;
 	siop_regmap_p rp = sc->sc_siopp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7.2.2 2002/01/10 19:46:03 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.7.2.3 2002/02/11 20:08:36 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -114,6 +114,7 @@ struct mips_cache_ops mips_cache_ops;
 #include <mips/cache_tx39.h>
 void	tx3900_get_cache_config(void);
 void	tx3920_get_cache_config(void);
+void	tx39_cache_config_write_through(void);
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
 
@@ -277,6 +278,8 @@ mips_config_cache(void)
 
 		mips_pdcache_ways = 2;
 		tx3900_get_cache_config();
+		/* change to write-through mode */
+		tx39_cache_config_write_through();
 
 		uvmexp.ncolors = atop(mips_pdcache_size) / mips_pdcache_ways;
 		break;
@@ -451,6 +454,16 @@ primary_cache_is_2way:
 			    r4600v2_pdcache_inv_range_32;
 			mips_cache_ops.mco_pdcache_wb_range =
 			    r4600v2_pdcache_wb_range_32;
+		}
+
+		/*
+		 * Deal with VR4131 chip bugs.
+		 */
+		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100 &&
+		    MIPS_PRID_REV_MAJ(cpu_id) == 8) {
+			KASSERT(mips_pdcache_line_size == 16);
+			mips_cache_ops.mco_pdcache_wbinv_range =
+			    vr4131v1_pdcache_wbinv_range_16;
 		}
 
 		/* Virtually-indexed cache; no use for colors. */
@@ -649,6 +662,25 @@ tx3920_get_cache_config(void)
 	if ((tx3900_cp0_config_read() & R3900_CONFIG_WBON) == 0)
 		mips_pdcache_write_through = 1;
 }
+
+/*
+ * tx39_cache_config_write_through:
+ *
+ *	TX3922 write-through D-cache mode.
+ *	for TX3912, no meaning. (no write-back mode)
+ */
+void
+tx39_cache_config_write_through(void)
+{
+	u_int32_t r;
+
+	mips_dcache_wbinv_all();
+
+	__asm__ __volatile__("mfc0 %0, $3" : "=r"(r));
+	r &= 0xffffdfff;
+	__asm__ __volatile__("mtc0 %0, $3" : : "r"(r));
+}
+
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
 

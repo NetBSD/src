@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.3 2002/01/10 19:57:27 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.4 2002/02/11 20:10:09 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
+ *	NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -302,6 +302,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Dual NE2000",	}
 	,
 	{
+	    PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
+	    PCMCIA_CIS_EDIMAX_EP4000A,
+	    0,
+	    "Edimax Technology Inc.",
+	    "Edimax EP4000A",	}
+	,
+	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
 	    PCMCIA_CIS_ELSA_MC2_IEEE,
 	    0,
@@ -328,6 +335,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "EMTAC Technology Corporation",
 	    "EMTAC A2424i 11Mbps WLAN Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_ERICSSON, PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN,
+	    PCMCIA_CIS_ERICSSON_WIRELESSLAN,
+	    0,
+	    "Ericsson",
+	    "DSSS Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
@@ -1163,6 +1177,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IO-DATA PCLA/T",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
+	    PCMCIA_CIS_LANTECH_FASTNETTX,
+	    0,
+	    "Lantech Computer Company",
+	    "Lantech Fastnet/TX",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LINKSYS_ECARD_2,
 	    PCMCIA_CIS_LINKSYS_ECARD_2,
 	    0,
@@ -1583,6 +1604,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_ERICSSON,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Ericsson",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_PSION,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1687,6 +1716,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_LINKSYS2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "The Linksys Group",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_IODATA2,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1740,6 +1777,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Dual",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EDIMAX,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Edimax Technology Inc.",
 	    NULL,
 	},
 	{
@@ -1828,14 +1873,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "EMTAC Technology Corporation",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_LINKSYS2,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "The Linksys Group",
 	    NULL,
 	},
 	{
@@ -1948,6 +1985,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Intersil",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_LANTECH,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Lantech Computer Company",
 	    NULL,
 	},
 	{

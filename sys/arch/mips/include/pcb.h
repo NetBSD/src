@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11.4.1 2002/01/10 19:46:01 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.4.2 2002/02/11 20:08:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,4 +67,6 @@ struct md_coredump {
 #ifdef _KERNEL
 extern struct pcb *curpcb;			/* the current running pcb */
 extern struct segtab *segbase;			/* current segtab base */
+
+#define	PCB_FSR(pcb)	((pcb)->pcb_fpregs.r_regs[FSR - FPBASE])
 #endif

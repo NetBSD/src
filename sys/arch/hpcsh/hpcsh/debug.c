@@ -1,7 +1,7 @@
-/*	$NetBSD: debug.c,v 1.2 2001/06/28 18:59:06 uch Exp $	*/
+/*	$NetBSD: debug.c,v 1.2.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,48 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef DEBUG
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <hpcsh/hpcsh/debug.h>
-#include <hpc/hpc/bootinfo.h>
-
-#define BANNER_LENGTH		80
-
-static const char onoff[2] = "_x";
-static void __dbg_draw_line(int);
-
-void
-dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
-{
-	printf("%s[%c] ", name, onoff[reg & mask ? 1 : 0]);
-}
-
-void
-dbg_banner_start(const char *name, size_t len)
-{
-	int n = (BANNER_LENGTH - (len + 2)) >> 1;
-	__dbg_draw_line(n);
-	printf("[%s]", name);
-	__dbg_draw_line(n);
-	printf("\n");
-}
-
-void
-dbg_banner_end()
-{
-	__dbg_draw_line(BANNER_LENGTH);
-	printf("\n");
-}
-
-void
-__dbg_draw_line(int n)
-{
-	int i;
-	for (i = 0; i < n; i++)
-		printf("-");
-}
+#include <machine/debug.h>
+#include <machine/bootinfo.h>
 
 #ifdef INTERRUPT_MONITOR
 void
@@ -115,5 +78,3 @@ __dbg_heart_beat(enum heart_beat cause) /* 16bpp R:G:B = 5:6:5 only */
 #undef LINE_STEP
 }
 #endif /* INTERRUPT_MONITOR */
-
-#endif /* DEBUG */

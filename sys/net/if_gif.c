@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.29.2.3 2002/01/10 20:02:05 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.29.2.4 2002/02/11 20:10:28 jdolecek Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.29.2.3 2002/01/10 20:02:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.29.2.4 2002/02/11 20:10:28 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.29.2.3 2002/01/10 20:02:05 thorpej Exp 
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>

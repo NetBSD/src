@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciomanvar.h,v 1.1 2001/04/30 11:42:17 takemura Exp $ */
+/*	$NetBSD: hpciomanvar.h,v 1.1.4.1 2002/02/11 20:09:41 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct hpcioman_attach_args {
 	int hma_initvalue;
 	int hma_on;
 	int hma_off;
+	int hma_connect;
 };
 
 #define cf_iochip	cf_loc[HPCIOMANCF_IOCHIP]
@@ -58,5 +59,7 @@ struct hpcioman_attach_args {
 #define cf_edge		cf_loc[HPCIOMANCF_EDGE]
 #define cf_active	cf_loc[HPCIOMANCF_ACTIVE]
 #define cf_initvalue	cf_loc[HPCIOMANCF_INITVALUE]
+#define cf_hold		cf_loc[HPCIOMANCF_HOLD]
+#define cf_connect	cf_loc[HPCIOMANCF_CONNECT]
 
 #endif /* !_DEV_HPC_HPCIOMANVAR_H_ */

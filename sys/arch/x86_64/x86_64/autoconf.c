@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/06/19 00:21:15 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.1 2002/02/11 20:09:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -444,7 +444,9 @@ device_register(dev, aux)
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
-			if (bin->addr.iobase == iaa->ia_iobase)
+			/* XXXJRT what about multiple I/O addrs? */
+			if (iaa->ia_nio > 0 &&
+			    bin->addr.iobase == iaa->ia_io[0].ir_addr)
 				goto found;
 		}
 #if NPCI > 0

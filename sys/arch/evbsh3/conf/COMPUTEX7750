@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.8.4.1 2002/01/10 19:42:39 thorpej Exp $
+#	$NetBSD: COMPUTEX7750,v 1.8.4.2 2002/02/11 20:07:45 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -61,6 +61,8 @@ options 	HZ=64		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores

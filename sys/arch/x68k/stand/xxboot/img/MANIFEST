@@ -1,5 +1,0 @@
-#	$NetBSD: MANIFEST,v 1.1 1998/09/01 20:04:04 itohy Exp $
-
-netbsd.xpm	Default boot image.  The BSD Daemon is used by permission.
-xpm2bootimg.c	Convert *.xpm to boot title image format.
-setbootimg.c	Change boot title image of specified boot block (or file).

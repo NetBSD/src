@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.24 2001/04/25 17:53:08 bouyer Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.24.2.1 2002/02/11 20:07:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,6 +35,10 @@
  *
  *	@(#)csa12gdma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.24.2.1 2002/02/11 20:07:04 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -48,18 +52,18 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void otgscattach __P((struct device *, struct device *, void *));
-int otgscmatch __P((struct device *, struct cfdata *, void *));
+void otgscattach(struct device *, struct device *, void *);
+int otgscmatch(struct device *, struct cfdata *, void *);
 
-int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int otgsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int otgsc_intr __P((void *));
+int otgsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int otgsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int otgsc_intr(void *);
 
 
 #ifdef DEBUG
-extern int sci_debug;  
+extern int sci_debug;
 #define QPRINTF(a) if (sci_debug > 1) printf a
 #else
 #define QPRINTF(a)
@@ -75,10 +79,7 @@ struct cfattach otgsc_ca = {
  * if we are my Hacker's SCSI board we are here.
  */
 int
-otgscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+otgscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -94,9 +95,7 @@ otgscmatch(pdp, cfp, auxp)
 }
 
 void
-otgscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+otgscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc = (struct sci_softc *)dp;
@@ -107,7 +106,7 @@ otgscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	sc = (struct sci_softc *)dp;
 	rp = (u_char *)zap->va + 0x2000;
 	sc->sci_data = rp;
@@ -163,11 +162,8 @@ otgscattach(pdp, dp, auxp)
 }
 
 int
-otgsc_dma_xfer_in (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+otgsc_dma_xfer_in(struct sci_softc *dev, int len, register u_char *buf,
+                  int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_data + 0x100;
@@ -212,11 +208,8 @@ otgsc_dma_xfer_in (dev, len, buf, phase)
 }
 
 int
-otgsc_dma_xfer_out (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+otgsc_dma_xfer_out(struct sci_softc *dev, int len, register u_char *buf,
+                   int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_data + 0x100;
@@ -263,8 +256,7 @@ otgsc_dma_xfer_out (dev, len, buf, phase)
 }
 
 int
-otgsc_intr(arg)
-	void *arg;
+otgsc_intr(void *arg)
 {
 	struct sci_softc *dev = arg;
 	u_char stat;

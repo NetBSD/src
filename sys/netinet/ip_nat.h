@@ -1,14 +1,12 @@
-/*	$NetBSD: ip_nat.h,v 1.23 2001/04/06 15:32:41 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.23.2.1 2002/02/11 20:10:36 jdolecek Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.17.2.14 2000/11/18 03:58:04 darrenr Exp
+ * Id: ip_nat.h,v 2.17.2.25 2002/01/01 15:10:49 darrenr Exp
  */
 
 #ifndef _NETINET_IP_NAT_H_
@@ -37,10 +35,18 @@
 			 * appropriate sizes.  The figures below were used for
 			 * a setup with 1000-2000 networks to NAT.
 			 */
-#define	NAT_SIZE	127
-#define	RDR_SIZE	127
-#define	HOSTMAP_SIZE	127
-#define	NAT_TABLE_SZ	127
+#ifndef	NAT_SIZE
+# define	NAT_SIZE	127
+#endif
+#ifndef	RDR_SIZE
+# define	RDR_SIZE	127
+#endif
+#ifndef	HOSTMAP_SIZE
+# define	HOSTMAP_SIZE	127
+#endif
+#ifndef	NAT_TABLE_SZ
+# define	NAT_TABLE_SZ	127
+#endif
 #ifdef	LARGE_NAT
 #undef	NAT_SIZE
 #undef	RDR_SIZE
@@ -84,6 +90,7 @@ typedef	struct	nat	{
 	struct	nat	*nat_next;
 	struct	nat	*nat_hnext[2];
 	struct	nat	**nat_phnext[2];
+	struct	nat	**nat_me;
 	void	*nat_ifp;
 	int	nat_dir;
 	char	nat_ifname[IFNAMSIZ];
@@ -114,6 +121,7 @@ typedef	struct	ipnat	{
 	struct	in_addr	in_out[2];
 	struct	in_addr	in_src[2];
 	struct	frtuc	in_tuc;
+	u_int	in_age[2];	/* Aging for NAT entries. Not for TCP */
 	int	in_redir; /* 0 if it's a mapping, 1 if it's a hard redir */
 	char	in_ifname[IFNAMSIZ];
 	char	in_plabel[APR_LABELLEN];	/* proxy label */
@@ -203,11 +211,13 @@ typedef	struct	natstat	{
 	u_long	ns_memfail;
 	u_long	ns_badnat;
 	nat_t	**ns_table[2];
+	hostmap_t **ns_maptable;
 	ipnat_t	*ns_list;
 	void	*ns_apslist;
 	u_int	ns_nattab_sz;
 	u_int	ns_rultab_sz;
 	u_int	ns_rdrtab_sz;
+	u_int	ns_hostmap_sz;
 	nat_t	*ns_instances;
 	u_int	ns_wilds;
 } natstat_t;
@@ -222,7 +232,7 @@ typedef	struct	natstat	{
 #define	IPN_AUTOPORTMAP	0x010
 #define	IPN_IPRANGE	0x020
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
-			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST)
+			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|IPN_FRAG)
 #define	IPN_FILTER	0x040
 #define	IPN_SPLIT	0x080
 #define	IPN_ROUNDR	0x100
@@ -280,31 +290,35 @@ extern	nat_t	**nat_table[2];
 extern	nat_t	*nat_instances;
 extern	ipnat_t	**nat_rules;
 extern	ipnat_t	**rdr_rules;
+extern	ipnat_t	*nat_list;
 extern	natstat_t	nat_stats;
+#if defined(__OpenBSD__)
+extern	void	nat_ifdetach __P((void *));
+#endif
 #if defined(__NetBSD__) || defined(__OpenBSD__) || (__FreeBSD_version >= 300003)
 extern	int	nat_ioctl __P((caddr_t, u_long, int));
 #else
 extern	int	nat_ioctl __P((caddr_t, int, int));
 #endif
 extern	int	nat_init __P((void));
-extern	nat_t	*nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_int, int));
-extern	nat_t	*nat_outlookup __P((void *, u_int, u_int, struct in_addr,
-				 struct in_addr, u_32_t, int));
-extern	nat_t	*nat_inlookup __P((void *, u_int, u_int, struct in_addr,
-				struct in_addr, u_32_t, int));
-extern	nat_t	*nat_maplookup __P((void *, u_int, struct in_addr,
-				struct in_addr));
+extern	nat_t	*nat_new __P((fr_info_t *, ip_t *, ipnat_t *, nat_t **,
+			      u_int, int));
+extern	nat_t	*nat_outlookup __P((fr_info_t *, u_int, u_int, struct in_addr,
+				 struct in_addr, int));
+extern	nat_t	*nat_inlookup __P((fr_info_t *, u_int, u_int, struct in_addr,
+				struct in_addr, int));
 extern	nat_t	*nat_lookupredir __P((natlookup_t *));
 extern	nat_t	*nat_icmplookup __P((ip_t *, fr_info_t *, int));
 extern	nat_t	*nat_icmp __P((ip_t *, fr_info_t *, u_int *, int));
+extern	int	nat_clearlist __P((void));
 extern	void	nat_insert __P((nat_t *));
 
 extern	int	ip_natout __P((ip_t *, fr_info_t *));
 extern	int	ip_natin __P((ip_t *, fr_info_t *));
 extern	void	ip_natunload __P((void)), ip_natexpire __P((void));
 extern	void	nat_log __P((struct nat *, u_int));
-extern	void	fix_incksum __P((u_short *, u_32_t));
-extern	void	fix_outcksum __P((u_short *, u_32_t));
+extern	void	fix_incksum __P((fr_info_t *, u_short *, u_32_t));
+extern	void	fix_outcksum __P((fr_info_t *, u_short *, u_32_t));
 extern	void	fix_datacksum __P((u_short *, u_32_t));
 
 #endif /* _NETINET_IP_NAT_H_ */

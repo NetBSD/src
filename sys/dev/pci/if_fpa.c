@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.36.2.1 2002/01/10 19:56:39 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.36.2.2 2002/02/11 20:09:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.36.2.1 2002/01/10 19:56:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.36.2.2 2002/02/11 20:09:58 jdolecek Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -205,11 +205,10 @@ pdq_pci_attach(
 	pci_conf_write(config_id, PCI_CFLT, data);
     }
 
-    sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+    sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
     if (sc == NULL)
 	return;
 
-    bzero(sc, sizeof(pdq_softc_t));	/* Zero out the softc*/
     if (!pci_map_mem(config_id, PCI_CBMA, &va_csrs, &pa_csrs)) {
 	free((void *) sc, M_DEVBUF);
 	return;
