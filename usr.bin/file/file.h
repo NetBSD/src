@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.16 1999/11/02 21:05:20 jwise Exp $	*/
+/*	$NetBSD: file.h,v 1.17 1999/12/31 13:09:20 tron Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -43,7 +43,7 @@ typedef unsigned int uint32;
 #ifndef HOWMANY
 # define HOWMANY 16384		/* how much of the file to look at */
 #endif
-#define MAXMAGIS 2048		/* max entries in /etc/magic */
+#define MAXMAGIS 4096		/* max entries in /etc/magic */
 #define MAXDESC	50		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
 
