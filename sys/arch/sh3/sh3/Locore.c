@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.12 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.13 2002/12/16 01:56:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -156,55 +156,6 @@ idle()
 	uvm_pageidlezero();
 	__asm__ __volatile__("sleep");
 	splsched();
-}
-
-/*
- * Put process p on the run queue indicated by its priority.
- * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
- */
-void
-setrunqueue(struct proc *p)
-{
-	struct prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
-
-#ifdef DIAGNOSTIC
-	if (p->p_back || which >= 32 || which < 0)
-		panic("setrunqueue");
-#endif
-	q = &sched_qs[which];
-	sched_whichqs |= 0x00000001 << which;
-	if (sched_whichqs == 0) {
-		panic("setrunqueue[whichqs == 0 ]");
-	}
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
-}
-
-/*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.
- * Calls should be made at splstatclock().
- */
-void
-remrunqueue(struct proc *p)
-{
-	int which = p->p_priority >> 2;
-	struct prochd *q;
-
-#ifdef DIAGNOSTIC
-	if (!(sched_whichqs & (0x00000001 << which)))
-		panic("remrunqueue");
-#endif
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
-		sched_whichqs &= ~(0x00000001 << which);
 }
 
 /*
