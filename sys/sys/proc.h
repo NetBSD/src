@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.187 2004/01/11 18:37:52 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.188 2004/01/11 19:39:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -277,9 +277,8 @@ struct proc {
 #define	SACTIVE		2		/* Process is not stopped */
 #define	SSTOP		4		/* Process debugging or suspension */
 #define	SZOMB		5		/* Awaiting collection by parent */
-#define	SDEAD		6		/* Process is almost a zombie */
 
-#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
+#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB)
 
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
