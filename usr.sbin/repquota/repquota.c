@@ -34,15 +34,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.9 1996/03/30 23:49:48 mark Exp $";
+#if 0
+static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
+#else
+__RCSID("$NetBSD: repquota.c,v 1.10 1997/10/17 07:35:05 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -50,6 +53,7 @@ static char *rcsid = "$Id: repquota.c,v 1.9 1996/03/30 23:49:48 mark Exp $";
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 #include <ufs/ufs/quota.h>
 #include <fstab.h>
 #include <pwd.h>
