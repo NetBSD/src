@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 1998/05/07 21:13:24 kleink Exp $ */
+/*	$NetBSD: machdep.c,v 1.114 1998/06/03 04:35:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1325,6 +1325,9 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	/*
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
+	if (map->_dm_boundary != 0)
+		panic("bus_dmamap_load: boundaries not implemented");
+
 	dvmaddr = dvmamap_alloc(sgsize, flags);
 	if (dvmaddr != 0)
 		return (ENOMEM);
