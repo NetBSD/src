@@ -297,7 +297,8 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage * res,
 	 entry = ldap_next_entry(dict_ldap->ld, entry)) {
 	attr = ldap_first_attribute(dict_ldap->ld, entry, &ber);
 	if (attr == NULL) {
-	    msg_warn("%s: no attributes found", myname);
+	    if (msg_verbose)
+		msg_info("%s: no attributes found", myname);
 	    continue;
 	}
 	for (; attr != NULL;
@@ -305,8 +306,9 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage * res,
 
 	    vals = ldap_get_values(dict_ldap->ld, entry, attr);
 	    if (vals == NULL) {
-		msg_warn("%s: Entry doesn't have any values for %s",
-			 myname, attr);
+		if (msg_verbose)
+		    msg_info("%s: Entry doesn't have any values for %s",
+			     myname, attr);
 		continue;
 	    }
 	    for (i = 0; dict_ldap->result_attributes->argv[i]; i++) {

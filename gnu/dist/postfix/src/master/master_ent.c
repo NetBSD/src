@@ -84,6 +84,8 @@
 #include <stringops.h>
 #include <readlline.h>
 #include <inet_addr_list.h>
+#include <inet_util.h>
+#include <inet_addr_host.h>
 
 /* Global library. */
 
@@ -222,6 +224,8 @@ MASTER_SERV *get_master_ent()
     MASTER_SERV *serv;
     char   *cp;
     char   *name;
+    char   *host;
+    char   *port;
     char   *transport;
     int     private;
     int     unprivileged;		/* passed on to child */
@@ -229,6 +233,7 @@ MASTER_SERV *get_master_ent()
     char   *command;
     int     n;
     char   *bufp;
+    char   *atmp;
 
     if (master_fp == 0)
 	msg_panic("get_master_ent: config file not open");
@@ -270,13 +275,23 @@ MASTER_SERV *get_master_ent()
     transport = get_str_ent(&bufp, "transport type", (char *) 0);
     if (STR_SAME(transport, MASTER_XPORT_NAME_INET)) {
 	serv->type = MASTER_SERV_TYPE_INET;
-	if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
-	    serv->addr_list.inet = 0;		/* wild-card */
+	atmp = inet_parse(name, &host, &port);
+	if (*host) {
+	    serv->flags |= MASTER_FLAG_INETHOST;/* host:port */
+	    MASTER_INET_ADDRLIST(serv) = (INET_ADDR_LIST *)
+		mymalloc(sizeof(*MASTER_INET_ADDRLIST(serv)));
+	    inet_addr_list_init(MASTER_INET_ADDRLIST(serv));
+	    inet_addr_host(MASTER_INET_ADDRLIST(serv), host);
+	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
+	} else if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
+	    MASTER_INET_ADDRLIST(serv) = 0;	/* wild-card */
 	    serv->listen_fd_count = 1;
 	} else {
-	    serv->addr_list.inet = own_inet_addr_list();	/* virtual */
-	    serv->listen_fd_count = serv->addr_list.inet->used;
+	    MASTER_INET_ADDRLIST(serv) = own_inet_addr_list();	/* virtual */
+	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}
+	MASTER_INET_PORT(serv) = mystrdup(port);
+	myfree(atmp);
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_UNIX)) {
 	serv->type = MASTER_SERV_TYPE_UNIX;
 	serv->listen_fd_count = 1;
@@ -449,6 +464,12 @@ void    free_master_ent(MASTER_SERV *serv)
     /*
      * Undo what get_master_ent() created.
      */
+    if (serv->flags & MASTER_FLAG_INETHOST) {
+	inet_addr_list_free(MASTER_INET_ADDRLIST(serv));
+	myfree((char *) MASTER_INET_ADDRLIST(serv));
+    }
+    if (serv->type == MASTER_SERV_TYPE_INET)
+	myfree(MASTER_INET_PORT(serv));
     myfree(serv->name);
     myfree(serv->path);
     argv_free(serv->args);

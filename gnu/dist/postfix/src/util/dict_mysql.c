@@ -201,6 +201,12 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 	if (i > 0)
 	    vstring_strcat(result, ",");
 	for (j = 0; j < mysql_num_fields(query_res); j++) {
+	    if (row[j] == 0) {
+		if (msg_verbose > 1)
+		    msg_info("dict_mysql_lookup: null field #%d row #%d", j, i);
+		mysql_free_result(query_res);
+		return (0);
+	    }
 	    if (j > 0)
 		vstring_strcat(result, ",");
 	    vstring_strcat(result, row[j]);

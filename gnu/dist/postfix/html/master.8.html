@@ -9,7 +9,7 @@ MASTER(8)                                               MASTER(8)
        master - Postfix master process
 
 <b>SYNOPSIS</b>
-       <b>master</b> [<b>-c</b> <i>config_dir</i>] [<b>-D</b>] [<b>-t</b>] [<b>-v</b>]
+       <b>master</b> [<b>-c</b> <i>config_dir</i>] [<b>-e</b> <i>exit_time</i>] [<b>-D</b>] [<b>-t</b>] [<b>-v</b>]
 
 <b>DESCRIPTION</b>
        The  <b>master</b> daemon is the resident process that runs Post-
@@ -37,6 +37,11 @@ MASTER(8)                                               MASTER(8)
               in the named directory instead of the default  con-
               figuration directory.
 
+       <b>-e</b> <i>exit_time</i>
+              Terminate  the  master process after <i>exit_time</i> sec-
+              onds. Child processes  terminate  at  their  conve-
+              nience.
+
        <b>-D</b>     After  initialization, run a debugger on the master
               process. The debugging command  is  specified  with
               the <b>debugger</b><i>_</i><b>command</b> in the <b>main.cf</b> global configu-
@@ -54,11 +59,6 @@ MASTER(8)                                               MASTER(8)
        Signals:
 
        <b>SIGHUP</b> Upon  receipt  of a <b>HUP</b> signal (e.g., after <b>postfix</b>
-              <b>reload</b>), the master process re-reads its configura-
-              tion  files. If a service has been removed from the
-              <b>master.cf</b> file, its running  processes  are  termi-
-              nated  immediately.   Otherwise,  running processes
-              are allowed to terminate as soon as is  convenient,
 
 
 
@@ -71,6 +71,11 @@ MASTER(8)                                               MASTER(8)
 MASTER(8)                                               MASTER(8)
 
 
+              <b>reload</b>), the master process re-reads its configura-
+              tion  files. If a service has been removed from the
+              <b>master.cf</b> file, its running  processes  are  termi-
+              nated  immediately.   Otherwise,  running processes
+              are allowed to terminate as soon as is  convenient,
               so  that  changes  in configuration settings affect
               only new service requests.
 
@@ -119,11 +124,6 @@ MASTER(8)                                               MASTER(8)
        <b>daemon</b><i>_</i><b>directory</b>
               Directory with Postfix daemon programs.
 
-       <b>queue</b><i>_</i><b>directory</b>
-              Top-level  directory  of the Postfix queue. This is
-              also the root directory of Postfix daemons that run
-              chrooted.
-
 
 
 
@@ -136,6 +136,11 @@ MASTER(8)                                               MASTER(8)
 
 MASTER(8)                                               MASTER(8)
 
+
+       <b>queue</b><i>_</i><b>directory</b>
+              Top-level  directory  of the Postfix queue. This is
+              also the root directory of Postfix daemons that run
+              chrooted.
 
 <b>Resource</b> <b>controls</b>
        <b>default</b><i>_</i><b>process</b><i>_</i><b>limit</b>
@@ -173,11 +178,6 @@ MASTER(8)                                               MASTER(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
 
 
 

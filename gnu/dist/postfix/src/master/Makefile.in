@@ -121,6 +121,8 @@ master_ent.o: ../../include/argv.h
 master_ent.o: ../../include/stringops.h
 master_ent.o: ../../include/readlline.h
 master_ent.o: ../../include/inet_addr_list.h
+master_ent.o: ../../include/inet_util.h
+master_ent.o: ../../include/inet_addr_host.h
 master_ent.o: ../../include/mail_proto.h
 master_ent.o: ../../include/iostuff.h
 master_ent.o: ../../include/mail_params.h
