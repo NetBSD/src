@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.22 2001/11/13 07:24:43 lukem Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.23 2001/12/24 12:39:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.22 2001/11/13 07:24:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.23 2001/12/24 12:39:55 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -383,20 +383,6 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(86),  KS_less,		KS_greater,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
- 
-static const keysym_t pckbd_keydesc_pl[] = {
-/*  pos	     normal             shifted         altgr           shift-altgr */
-    KC(18),  KS_e,              KS_E,           KS_ecircumflex,	KS_Ecircumflex,
-    KC(24),  KS_o,              KS_O,           KS_oacute,	KS_Oacute,
-    KC(30),  KS_a,		KS_A,		KS_plusminus,	KS_exclamdown,
-    KC(31),  KS_s,              KS_S,           KS_paragraph,	KS_brokenbar,
-    KC(38),  KS_l,		KS_L,		KS_threesuperior,	KS_sterling,
-    KC(44),  KS_z,		KS_Z,		KS_questiondown,	KS_macron,
-    KC(45),  KS_x,		KS_X,		KS_onequarter,	KS_notsign,
-    KC(46),  KS_c,              KS_C,           KS_ae,		KS_AE,
-    KC(49),  KS_n,              KS_N,           KS_ntilde,	KS_Ntilde,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
-};
 
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
@@ -527,7 +513,6 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
-	KBD_MAP(KB_PL,                  KB_US,  pckbd_keydesc_pl),
 	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
 	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
 	KBD_NULLMAP(KB_US | KB_MACHDEP | KB_SWAPCTRLCAPS,
