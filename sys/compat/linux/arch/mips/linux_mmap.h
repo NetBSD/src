@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.2 2001/08/26 16:21:56 manu Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.3 2001/09/02 07:26:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,11 @@
  * LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h */
  */
 
+/*
+ * From Linux's include/asm-mips/mman.h 
+ */
 #define LINUX_MAP_FIXED		0x0010
-#define LINUX_MAP_ANON		0x0800
+#define LINUX_MAP_ANON		0x0800	/* MAP_ANONYMOUS for Linux */
 
 /* Ignored */
 #define LINUX_MAP_RENAME	0x0020
