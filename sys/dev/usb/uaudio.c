@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.91 2004/11/05 17:46:14 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.91 2004/11/05 17:46:14 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,6 +235,9 @@ Static const usb_interface_descriptor_t *uaudio_find_iface
 Static void	uaudio_mixer_add_ctl(struct uaudio_softc *, struct mixerctl *);
 Static char	*uaudio_id_name
 	(struct uaudio_softc *, const struct io_terminal *, int);
+#ifdef UAUDIO_DEBUG
+Static void	uaudio_dump_cluster(const struct usb_audio_cluster *);
+#endif
 Static struct usb_audio_cluster uaudio_get_cluster
 	(int, const struct io_terminal *);
 Static void	uaudio_add_input
@@ -665,6 +668,33 @@ uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 	snprintf(buf, sizeof(buf), "i%d", id);
 	return (buf);
 }
+
+#ifdef UAUDIO_DEBUG
+Static void
+uaudio_dump_cluster(const struct usb_audio_cluster *cl)
+{
+	static const char *channel_names[16] = {
+		"LEFT", "RIGHT", "CENTER", "LFE",
+		"LEFT_SURROUND", "RIGHT_SURROUND", "LEFT_CENTER", "RIGHT_CENTER",
+		"SURROUND", "LEFT_SIDE", "RIGHT_SIDE", "TOP",
+		"RESERVED12", "RESERVED13", "RESERVED14", "RESERVED15",
+	};
+	int cc, i, first;
+
+	cc = UGETW(cl->wChannelConfig);
+	logprintf("cluster: bNrChannels=%u wChannelConfig=0x%.4x",
+		  cl->bNrChannels, cc);
+	first = TRUE;
+	for (i = 0; cc != 0; i++) {
+		if (cc & 1) {
+			logprintf("%c%s", first ? '<' : ',', channel_names[i]);
+			first = FALSE;
+		}
+		cc = cc >> 1;
+	}
+	logprintf("> iChannelNames=%u", cl->iChannelNames);
+}
+#endif
 
 Static struct usb_audio_cluster
 uaudio_get_cluster(int id, const struct io_terminal *iot)
@@ -1859,6 +1889,8 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 
 #ifdef UAUDIO_DEBUG
 	for (i = 0; i < 256; i++) {
+		struct usb_audio_cluster cluster;
+
 		if (iot[i].d.desc == NULL)
 			continue;
 		logprintf("id %d:\t", i);
@@ -1866,6 +1898,10 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		case UDESCSUB_AC_INPUT:
 			logprintf("AC_INPUT type=%s\n", uaudio_get_terminal_name
 				  (UGETW(iot[i].d.it->wTerminalType)));
+			logprintf("\t");
+			cluster = uaudio_get_cluster(i, iot);
+			uaudio_dump_cluster(&cluster);
+			logprintf("\n");
 			break;
 		case UDESCSUB_AC_OUTPUT:
 			logprintf("AC_OUTPUT type=%s ", uaudio_get_terminal_name
@@ -1876,6 +1912,9 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			logprintf("AC_MIXER src=");
 			for (j = 0; j < iot[i].d.mu->bNrInPins; j++)
 				logprintf("%d ", iot[i].d.mu->baSourceId[j]);
+			logprintf("\n\t");
+			cluster = uaudio_get_cluster(i, iot);
+			uaudio_dump_cluster(&cluster);
 			logprintf("\n");
 			break;
 		case UDESCSUB_AC_SELECTOR:
@@ -1891,12 +1930,18 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			logprintf("AC_PROCESSING src=");
 			for (j = 0; j < iot[i].d.pu->bNrInPins; j++)
 				logprintf("%d ", iot[i].d.pu->baSourceId[j]);
+			logprintf("\n\t");
+			cluster = uaudio_get_cluster(i, iot);
+			uaudio_dump_cluster(&cluster);
 			logprintf("\n");
 			break;
 		case UDESCSUB_AC_EXTENSION:
 			logprintf("AC_EXTENSION src=");
 			for (j = 0; j < iot[i].d.eu->bNrInPins; j++)
 				logprintf("%d ", iot[i].d.eu->baSourceId[j]);
+			logprintf("\n\t");
+			cluster = uaudio_get_cluster(i, iot);
+			uaudio_dump_cluster(&cluster);
 			logprintf("\n");
 			break;
 		default:
