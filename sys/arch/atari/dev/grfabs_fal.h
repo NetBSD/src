@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.h,v 1.1 1996/01/02 20:59:24 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.h,v 1.2 1996/03/10 11:42:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -38,7 +38,7 @@
 
 
 struct videl {
-    u_short vm_reg;		/* video mode			    */
+    u_short video_mode;		/* video mode			    */
     u_char  vd_syncmode;	/* Syncronisation		    */
     u_short vd_line_wide;	/* Falcon line word distance        */
     u_short vd_vert_wrap;	/* Falcon line length		    */

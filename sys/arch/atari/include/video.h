@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.4 1996/01/02 20:59:43 leo Exp $	*/
+/*	$NetBSD: video.h,v 1.5 1996/03/10 11:42:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -132,6 +132,12 @@ struct video {
 #define RES_FAL_STMID	7	/* 640x200,   4 colors			*/
 #define RES_FAL_STHIGH	8	/* 640x400,   2 colors			*/
 #define RES_FAL_TTLOW	9	/* 320x480, 256 colors			*/
+
+/* Falcon monitor types */
+#define FAL_SM		0x0000
+#define FAL_SC		0x0100
+#define FAL_VGA		0x0200
+#define FAL_TV		0x0300
 
 /*
  * Yahama YM-2149 Programmable Sound Generator
