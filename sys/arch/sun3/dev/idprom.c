@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.14 1996/12/13 19:50:10 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.15 1996/12/17 21:10:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,13 +43,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
-
-extern long hostid;	/* in kern_sysctl.c */
 
 /*
  * This structure is what this driver is all about.
@@ -61,7 +60,8 @@ struct idprom identity_prom;
  * This is called very early during startup to
  * get a copy of the idprom from control space.
  */
-int idprom_init()
+int
+idprom_init()
 {
 	struct idprom *idp;
 	char *src, *dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.21 1996/11/20 18:56:55 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.22 1996/12/17 21:10:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@
 
 #include <dev/cons.h>
 #include <dev/sun/kbd_xlate.h>
+#include <sun3/dev/zs_cons.h>
+
+extern void fb_unblank __P((void)); /* XXX */
 
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
@@ -390,9 +393,6 @@ kd_input(c)
  * kd console support
  ****************************************************************/
 
-extern void *zs_conschan;
-extern int zs_getc();
-extern void nullcnprobe();
 cons_decl(kd);
 
 /* The debugger gets its own key translation state. */
@@ -464,7 +464,6 @@ kdcnputc(dev, c)
 	(romVectorPtr->fbWriteChar)(c & 0x7f);
 }
 
-extern void fb_unblank();
 void kdcnpollc(dev, on)
 	dev_t dev;
 	int on;
