@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.274 2003/10/28 15:25:27 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.275 2003/12/13 10:26:13 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2003/10/28 15:25:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2003/12/13 10:26:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1407,8 +1407,17 @@ mmu_reservemon4m(kpmap)
 	unsigned int rom_ctxtbl;
 	int te;
 
+#if !(defined(PROM_AT_F0) || defined(MSIIEP))
 	prom_vstart = OPENPROM_STARTVADDR;
 	prom_vend = OPENPROM_ENDVADDR;
+#else /* OBP3/OFW in JavaStations */
+	prom_vstart = 0xf0000000;
+#if defined(MSIIEP)
+	prom_vend = 0xf0800000;
+#else
+	prom_vend = 0xf0080000;
+#endif
+#endif
 
 	/*
 	 * XXX: although the sun4m can handle 36 bits of physical
@@ -3828,7 +3837,13 @@ pmap_bootstrap4m(top)
 			&sp->sg_pte[VA_SUN4M_VPG(cpuinfo.vpage[i])];
 	}
 
+#if !(defined(PROM_AT_F0) || defined(MSIIEP))
 	virtual_avail = p;
+#elif defined(MSIIEP)
+	virtual_avail = (vaddr_t)0xf0800000; /* Krups */
+#else
+	virtual_avail = (vaddr_t)0xf0080000; /* Mr.Coffee/OFW */
+#endif
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	p = q;			/* retract to first free phys */
