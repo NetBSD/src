@@ -34,8 +34,8 @@
 #endif
 #include "getarg.h"
 
-__RCSID("$Heimdal: ftpd.c,v 1.166 2003/04/16 15:02:05 lha Exp $"
-        "$NetBSD: ftpd.c,v 1.2 2003/08/07 09:15:21 agc Exp $");
+__RCSID("$Heimdal: ftpd.c,v 1.166.2.2 2004/03/14 17:16:39 lha Exp $"
+        "$NetBSD: ftpd.c,v 1.2.2.1 2004/04/21 04:55:36 jmc Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -220,6 +220,9 @@ struct getargs args[] = {
     { NULL, 'v', arg_flag, &debug, "enable debugging" },
     { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
     { "good-chars", 0, arg_string, &good_chars, "allowed anonymous upload filename chars" },
+#ifdef KRB5    
+    { "gss-bindings", 0,  arg_flag, &ftp_do_gss_bindings, "Require GSS-API bindings", NULL},
+#endif
     { "version", 0, arg_flag, &version_flag },
     { "help", 'h', arg_flag, &help_flag }
 };
@@ -271,11 +274,11 @@ main(int argc, char **argv)
 		 "/tmp/ftp_%u", (unsigned)getpid());
 	krb_set_tkt_string(tkfile);
 #endif
-#if defined(KRB4) && defined(KRB5)
-	if(k_hasafs())
-	    k_setpag();
-#endif
     }
+#if defined(KRB4) || defined(KRB5)
+    if(k_hasafs())
+	k_setpag();
+#endif
 
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);

@@ -1,9 +1,9 @@
-dnl $Heimdal: wflags.m4,v 1.3 1999/03/11 12:11:41 joda Exp $
-dnl $NetBSD: wflags.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: wflags.m4,v 1.3.34.1 2004/04/01 07:27:35 joda Exp $
+dnl $NetBSD: wflags.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl set WFLAGS
 
-AC_DEFUN(AC_WFLAGS,[
+AC_DEFUN([AC_WFLAGS],[
 WFLAGS_NOUNUSED=""
 WFLAGS_NOIMPLICITINT=""
 if test -z "$WFLAGS" -a "$GCC" = "yes"; then

@@ -1,11 +1,11 @@
-dnl $Heimdal: mips-abi.m4,v 1.6 2002/04/30 16:46:05 joda Exp $
-dnl $NetBSD: mips-abi.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: mips-abi.m4,v 1.6.8.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: mips-abi.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl
 dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
 dnl value.
 
-AC_DEFUN(AC_MIPS_ABI, [
+AC_DEFUN([AC_MIPS_ABI], [
 AC_ARG_WITH(mips_abi,
 	AC_HELP_STRING([--with-mips-abi=abi],[ABI to use for IRIX (32, n32, or 64)]))
 

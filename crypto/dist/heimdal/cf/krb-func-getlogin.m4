@@ -1,12 +1,12 @@
 dnl
-dnl $Heimdal: krb-func-getlogin.m4,v 1.1 1999/07/13 17:45:30 assar Exp $
-dnl $NetBSD: krb-func-getlogin.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: krb-func-getlogin.m4,v 1.1.32.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: krb-func-getlogin.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl test for POSIX (broken) getlogin
 dnl
 
 
-AC_DEFUN(AC_FUNC_GETLOGIN, [
+AC_DEFUN([AC_FUNC_GETLOGIN], [
 AC_CHECK_FUNCS(getlogin setlogin)
 if test "$ac_cv_func_getlogin" = yes; then
 AC_CACHE_CHECK(if getlogin is posix, ac_cv_func_getlogin_posix, [

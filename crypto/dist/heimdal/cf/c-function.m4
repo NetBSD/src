@@ -1,13 +1,13 @@
 dnl
-dnl $Heimdal: c-function.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
-dnl $NetBSD: c-function.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: c-function.m4,v 1.2.34.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: c-function.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 
 dnl
 dnl Test for __FUNCTION__
 dnl
 
-AC_DEFUN(AC_C___FUNCTION__, [
+AC_DEFUN([AC_C___FUNCTION__], [
 AC_MSG_CHECKING(for __FUNCTION__)
 AC_CACHE_VAL(ac_cv___function__, [
 AC_TRY_RUN([

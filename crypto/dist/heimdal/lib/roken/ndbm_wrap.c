@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: ndbm_wrap.c,v 1.1 2002/04/30 16:37:08 joda Exp $"
-        "$NetBSD: ndbm_wrap.c,v 1.1.1.1 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: ndbm_wrap.c,v 1.1.8.1 2003/08/29 17:00:34 lha Exp $"
+        "$NetBSD: ndbm_wrap.c,v 1.1.1.1.2.1 2004/04/21 04:55:42 jmc Exp $");
 #endif
 
 #include "ndbm_wrap.h"
@@ -166,7 +166,12 @@ dbm_open (const char *file, int flags, mode_t mode)
 	free(fn);
 	return NULL;
     }
+
+#if (DB_VERSION_MAJOR > 3) && (DB_VERSION_MINOR > 0)
+    if(db->open(db, NULL, fn, NULL, DB_BTREE, myflags, mode) != 0) {
+#else
     if(db->open(db, fn, NULL, DB_BTREE, myflags, mode) != 0) {
+#endif
 	free(fn);
 	db->close(db, 0);
 	return NULL;

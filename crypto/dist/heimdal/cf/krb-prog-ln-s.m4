@@ -1,11 +1,11 @@
-dnl $Heimdal: krb-prog-ln-s.m4,v 1.1 1997/12/14 15:59:01 joda Exp $
-dnl $NetBSD: krb-prog-ln-s.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: krb-prog-ln-s.m4,v 1.1.42.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: krb-prog-ln-s.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl
 dnl Better test for ln -s, ln or cp
 dnl
 
-AC_DEFUN(AC_KRB_PROG_LN_S,
+AC_DEFUN([AC_KRB_PROG_LN_S],
 [AC_MSG_CHECKING(for ln -s or something else)
 AC_CACHE_VAL(ac_cv_prog_LN_S,
 [rm -f conftestdata

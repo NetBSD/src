@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: add_cred.c,v 1.2 2003/04/06 00:29:17 lha Exp $"
-        "$NetBSD: add_cred.c,v 1.1.1.1 2003/05/15 20:28:46 lha Exp $");
+__RCSID("$Heimdal: add_cred.c,v 1.2.2.1 2003/10/21 21:00:47 lha Exp $"
+        "$NetBSD: add_cred.c,v 1.1.1.1.2.1 2004/04/21 04:55:40 jmc Exp $");
 
 OM_uint32 gss_add_cred (
      OM_uint32           *minor_status,
@@ -153,25 +153,43 @@ OM_uint32 gss_add_cred (
 		goto failure;
 	    }
 
-	    name = krb5_cc_get_name(gssapi_krb5_context, cred->ccache);
-	    if (name == NULL) {
-		*minor_status = ENOMEM;
-		goto failure;
-	    }
+	    if (strcmp(type, "MEMORY") == 0) {
+		ret = krb5_cc_gen_new(gssapi_krb5_context, &krb5_mcc_ops,
+				      &handle->ccache);
+		if (ret) {
+		    *minor_status = ret;
+		    goto failure;
+		}
 
-	    asprintf(&type_name, "%s:%s", type, name);
-	    if (type_name == NULL) {
-		*minor_status = ENOMEM;
-		goto failure;
-	    }
+		ret = krb5_cc_copy_cache(gssapi_krb5_context, cred->ccache,
+					 handle->ccache);
+		if (ret) {
+		    *minor_status = ret;
+		    goto failure;
+		}
 
-	    kret = krb5_cc_resolve(gssapi_krb5_context, type_name,
-				   &handle->ccache);
-	    free(type_name);
-	    if (kret) {
-		*minor_status = kret;
-		goto failure;
-	    }	    
+	    } else {
+
+		name = krb5_cc_get_name(gssapi_krb5_context, cred->ccache);
+		if (name == NULL) {
+		    *minor_status = ENOMEM;
+		    goto failure;
+		}
+		
+		asprintf(&type_name, "%s:%s", type, name);
+		if (type_name == NULL) {
+		    *minor_status = ENOMEM;
+		    goto failure;
+		}
+		
+		kret = krb5_cc_resolve(gssapi_krb5_context, type_name,
+				       &handle->ccache);
+		free(type_name);
+		if (kret) {
+		    *minor_status = kret;
+		    goto failure;
+		}	    
+	    }
 	}
 
 	ret = gss_create_empty_oid_set(minor_status, &handle->mechanisms);

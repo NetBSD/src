@@ -1,9 +1,9 @@
-dnl $Heimdal: krb-struct-spwd.m4,v 1.3 1999/07/13 21:04:11 assar Exp $
-dnl $NetBSD: krb-struct-spwd.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: krb-struct-spwd.m4,v 1.3.32.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: krb-struct-spwd.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl Test for `struct spwd'
 
-AC_DEFUN(AC_KRB_STRUCT_SPWD, [
+AC_DEFUN([AC_KRB_STRUCT_SPWD], [
 AC_MSG_CHECKING(for struct spwd)
 AC_CACHE_VAL(ac_cv_struct_spwd, [
 AC_TRY_COMPILE(

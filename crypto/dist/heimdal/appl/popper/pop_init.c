@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_init.c,v 1.58 2001/02/20 01:44:47 assar Exp $"
-        "$NetBSD: pop_init.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_init.c,v 1.58.12.1 2003/10/13 12:01:35 lha Exp $"
+        "$NetBSD: pop_init.c,v 1.1.1.5.2.1 2004/04/21 04:55:37 jmc Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -395,5 +395,8 @@ pop_init(POP *p,int argcount,char **argmessage)
 #endif /* DEBUG */
 
 
-    return((p->kerberosp ? krb_authenticate : plain_authenticate)(p, cs));
+    if(p->kerberosp)
+	return krb_authenticate(p, cs);
+    else
+	return plain_authenticate(p, cs);
 }

@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: afslog.c,v 1.21.2.1 2003/04/23 18:04:26 lha Exp $"
-        "$NetBSD: afslog.c,v 1.1.1.6 2003/05/15 20:28:40 lha Exp $");
+__RCSID("$Heimdal: afslog.c,v 1.21.2.2 2003/08/25 11:43:51 lha Exp $"
+        "$NetBSD: afslog.c,v 1.1.1.6.2.1 2004/04/21 04:55:35 jmc Exp $");
 #endif
 #include <ctype.h>
 #ifdef KRB5
@@ -247,6 +247,8 @@ do_afslog(const char *cell)
 	    return 0;
     }
 #endif
+    if (cell == NULL)
+	cell = "<default cell>";
 #ifdef KRB5
     if (k5ret)
 	warnx("krb5_afslog(%s): %s", cell, krb5_get_err_text(context, k5ret));

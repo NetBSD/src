@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 
 #ifdef __RCSID
 __RCSID("$Heimdal: gen_free.c,v 1.9 2001/09/25 13:39:26 assar Exp $"
-        "$NetBSD: gen_free.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+        "$NetBSD: gen_free.c,v 1.2.2.1 2004/04/21 04:55:40 jmc Exp $");
 #endif
 
 static void
@@ -85,7 +85,8 @@ free_type (const char *name, const Type *t)
 	  if(m->optional)
 	      fprintf(codefile, 
 		      "free(%s);\n"
-		      "}\n",s);
+		      "%s = NULL;\n"
+		      "}\n", s, s);
 	  if (tag == -1)
 	      tag = m->val;
 	  free (s);
@@ -103,7 +104,8 @@ free_type (const char *name, const Type *t)
 	      "}\n",
 	      name);
       fprintf(codefile,
-	      "free((%s)->val);\n", name);
+	      "free((%s)->val);\n"
+	      "(%s)->val = NULL;\n", name, name);
       free(n);
       break;
   }
