@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.13 2003/10/05 12:50:21 tron Exp $
+# $NetBSD: mi,v 1.478.2.14 2003/10/05 12:53:44 tron Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -765,6 +765,7 @@
 ./usr/share/man/cat4/macppc/gm.0		man-sys-catman
 ./usr/share/man/cat4/macppc/intro.0		man-sys-catman
 ./usr/share/man/cat4/macppc/obio.0		man-sys-catman
+./usr/share/man/cat4/macppc/mesh.0		man-sys-catman
 ./usr/share/man/cat4/mainbus.0			man-sys-catman
 ./usr/share/man/cat4/makphy.0			man-sys-catman
 ./usr/share/man/cat4/mbe.0			man-sys-catman
@@ -2479,6 +2480,7 @@
 ./usr/share/man/man4/macppc/bm.4		man-sys-man
 ./usr/share/man/man4/macppc/gm.4		man-sys-man
 ./usr/share/man/man4/macppc/intro.4		man-sys-man
+./usr/share/man/man4/macppc/mesh.4		man-sys-man
 ./usr/share/man/man4/macppc/obio.4		man-sys-man
 ./usr/share/man/man4/mainbus.4			man-sys-man
 ./usr/share/man/man4/makphy.4			man-sys-man
