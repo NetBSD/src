@@ -1,7 +1,7 @@
 #
 # DUALITY -- Mycroft's 486 box
 #
-#	$Id: DUALITY,v 1.10 1993/06/06 04:15:32 cgd Exp $
+#	$Id: DUALITY,v 1.11 1993/06/09 00:11:46 mycroft Exp $
 #
 
 machine		"i386"
@@ -9,11 +9,12 @@ cpu		"I486_CPU"
 ident		DUALITY
 timezone	5 dst
 maxusers	16
-options		INET,NFSCLIENT,NFSSERVER
+options		INET,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
+options		DDB
 options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0
@@ -21,7 +22,7 @@ config		netbsd	root on wd0 swap on wd0
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
 disk		wd0	at wdc0 drive 0
-disk		wd1	at wdc0 drive 1
+#disk		wd1	at wdc0 drive 1
 
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		fd0	at fdc0 drive 0
@@ -43,7 +44,7 @@ pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl	1
 pseudo-device	log
-pseudo-device	pty	16
+pseudo-device	pty	32
 
 pseudo-device	swappager
 pseudo-device	vnodepager
