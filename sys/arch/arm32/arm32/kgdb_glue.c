@@ -1,8 +1,9 @@
-/*	$NetBSD: kgdb_glue.c,v 1.4 1996/10/13 03:05:53 christos Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.5 1996/10/15 02:11:31 mark Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1996 Frank Lancaster.
+ * Copyright (C) 1994-1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,8 +38,13 @@
 
 #include <kgdb/kgdb.h>
 
+#include <vm/vm.h>
+
 #include <machine/cpu.h>
+#include <machine/katelib.h>
 #include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/pmap.h>
 #include <machine/kgdb.h>
 
 int kgdbregs[NREG];
@@ -66,55 +72,9 @@ dump(p, l)
 	}
 }
 
-#define	NDBGSTKS	8	/* number of debugstacks */
-#define	SZDBGSTK	512	/* size of one debugstack */
-static int debugstack[NDBGSTKS * SZDBGSTK];
-static int dbgstkused;
-
-int *
-kgdb_find_stack()
-{
-	int i;
-	
-	for (i = 0; i < NDBGSTKS; i++)
-		if (!(dbgstkused&(1 << i))) {
-			dbgstkused |= 1 << i;
-			return debugstack + (i + 1) * SZDBGSTK;
-		}
-	panic("KGDB: no stack");
-}
-
-void
-kgdb_free_stack(sp)
-	int *sp;
-{
-	int i;
-	
-	for (i = 0; i < NDBGSTKS; i++)
-		if (sp == debugstack + (i + 1) * SZDBGSTK) {
-			if (!(dbgstkused&(1 << i)))
-				panic("KGDB: free free stack");
-			dbgstkused &= ~(1 << i);
-			return;
-		}
-	panic("KGDB: free non-stack");
-}
-
 void
 kgdbinit()
 {
-	/* initialize undefined mode & setup trap vector */
-	initmode(PSR_UND32_MODE|F32_bit|I32_bit, kgdb_find_stack());
-}
-
-void
-kgdb_connect(when)
-	int when;
-{
-	boothowto |= RB_KDB;
-	if (when == 0)
-		printf("waiting for remote GDB\n");
-	__asm(".word 0xe6000010");
 }
 
 int
@@ -124,9 +84,8 @@ kgdb_poll()
 }
 
 void
-kgdb_panic()
+kgdb_trap()
 {
-	kgdbpanic = 1;
 	__asm(".word 0xe6000010");
 }
 
@@ -136,14 +95,12 @@ kgdb_trap_glue(regs)
 {
 	int inst;
 	int cnt;
-	
+
 	inst = fetchinst(regs[PC] - 4);
 	switch (inst) {
 	default:
-		/* unexpected */
-#ifdef	__notyet__
+		/* non KGDB undefined instruction */
 		return 0;
-#endif
 	case 0xe6000011:	/* KGDB installed breakpoint */
 		regs[PC] -= 4;
 		break;
@@ -165,7 +122,8 @@ kgdb_trap_glue(regs)
 		break;
 	}
 	kgdbcopy(kgdbregs, regs, sizeof kgdbregs);
-	if (PSR_USER(regs[PSR]) || !PSR_32(regs[PSR]))
+	if (PSR_IN_USR_MODE(regs[PSR]) ||
+	    !PSR_IN_32_MODE(regs[PSR]))
 		panic("KGDB: invalid mode %x", regs[PSR]);
 	return 1;
 }
@@ -176,22 +134,7 @@ kgdbcopy(vs, vd, n)
 	int n;
 {
 	char *s = vs, *d = vd;
-	long *ls, *ld;
-	int ln;
 	
-	if (((int)s&(sizeof(long)-1)) == ((int)d&(sizeof(long)-1))
-	    && n >= 2 * sizeof(long)) {
-		while (((int)s&(sizeof(long)-1)) && --n >= 0)
-			*d++ = *s++;
-		ln = n / sizeof(long);
-		n -= ln * sizeof(long);
-		ls = (long *)s;
-		ld = (long *)d;
-		while (--ln >= 0)
-			*ld++ = *ls++;
-		s = (char *)ls;
-		d = (char *)ld;
-	}
 	while (--n >= 0)
 		*d++ = *s++;
 }
@@ -202,22 +145,7 @@ kgdbzero(vd, n)
 	int n;
 {
 	char *d = vd;
-	long *ld;
-	int ln;
-	
-	if (n >= 2 * sizeof(long)) {
-		while (--n >= 0) {
-			if (!((int)d&sizeof(long)-1))
-				break;
-			*d++ = 0;
-		}
-		ln = n / sizeof(long);
-		n -= ln * sizeof(long);
-		ld = (long *)d;
-		while (--ln >= 0)
-			*ld++ = 0;
-		d = (char *)ld;
-	}
+
 	while (--n >= 0)
 		*d++ = 0;
 }
@@ -228,31 +156,59 @@ kgdbcmp(vs, vd, n)
 	int n;
 {
 	char *s = vs, *d = vd;
-	long *ls, *ld;
-	int ln;
 	
-	if (((int)s&(sizeof(long)-1)) == ((int)d&(sizeof(long)-1))
-	    && n >= 2 * sizeof(long)) {
-		while (--n >= 0) {
-			if (!((int)s&(sizeof(long)-1)))
-				break;
-			if (*d++ != *s++)
-				return *--d - *--s;
-		}
-		ln = n / sizeof(long);
-		n -= ln * sizeof(long);
-		ls = (long *)s;
-		ld = (long *)d;
-		while (--ln >= 0)
-			if (*ld++ != *ls++) {
-				n += ++ln * sizeof(long);
-				break;
-			}
-		s = (char *)ls;
-		d = (char *)ld;
-	}
 	while (--n >= 0)
 		if (*d++ != *s++)
 			return *--d - *--s;
 	return 0;
 }
+
+
+int kgdbfbyte(src)
+unsigned char *src;
+{
+  /* modified db_interface.c source */
+  pt_entry_t *ptep;
+  vm_offset_t va;
+  int ch;
+         
+  va = (unsigned long)src & (~PGOFSET);
+  ptep = vtopte(va);
+  
+  if ((*ptep & L2_MASK) == L2_INVAL) {
+    return -1;
+  }        
+         
+  ch = *src;
+  
+  return ch;
+ } /* kgdbfbyte */
+
+
+int kgdbsbyte(dst, ch)
+unsigned char *dst;
+int ch;
+{
+  /* modified db_interface.c source */
+  pt_entry_t *ptep, pte, pteo;
+  vm_offset_t va;
+         
+  va = (unsigned long)dst & (~PGOFSET);
+  ptep = vtopte(va);
+  
+  if ((*ptep & L2_MASK) == L2_INVAL) {
+    return -1;
+  }        
+  
+  pteo = ReadWord(ptep);
+  pte = pteo | PT_AP(AP_KRW);
+  WriteWord(ptep, pte);
+  tlbflush();
+         
+  *dst = (unsigned char)ch;
+  
+  WriteWord(ptep, pteo);
+  tlbflush();
+        
+  return 0;
+ } /* kgdbsbyte */
